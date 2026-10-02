@@ -299,6 +299,13 @@ put(sec.doc_url(EXDV, X_8K, "exdv-20260924xex991.htm"), release_doc([
         ("Depreciation expense and amortization of intangible assets", [2000, 1600]), ("Stock-based compensation", [400, 320]),
         ("Net cash provided by operating activities", [5600, 4200]), ("Cash flows from investing activities", None),
         ("Expenditures for property, plant, and equipment", [-4000, -3000]), ("Net cash used for investing activities", [-3900, -2950])])),
+    ("Business Unit Information", "(in millions)", table(
+        [[("", 1), ("FQ4-26", 3), ("FQ3-26", 3), ("FQ4-25", 3)]], [
+        ("Data Center Business Unit (DCBU)", None), ("Revenue", [3000, 2550, 1950]), ("Operating income", [900, 600, 350]),
+        ("Client Business Unit (CBU)", None), ("Revenue", [1500, 1390, 1350]), ("Operating income", [180, 150, 120]),
+        ("Embedded Business Unit (EBU)", None), ("Revenue", [740, 670, 600]), ("Operating income", [60, 60, 40])])),
+    ("Revenue by Geographic Region", "(in millions)", table(
+        [[("", 1), ("FQ4-26", 3)]], [("United States", [2000]), ("China", [1800]), ("Rest of world", [1440])])),
     ("Reconciliation of GAAP to Non-GAAP Financial Measures", "(in millions)", table(
         [[("", 1), ("FQ4-26", 3)]], [("GAAP gross margin", [2370]), ("Stock-based compensation", [25]), ("Non-GAAP gross margin", [2395]),
                                      ("GAAP net income", [932]), ("Non-GAAP net income", [990])])),

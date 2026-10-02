@@ -73,7 +73,26 @@ class Spec:
         v = self.val(self.Qc, key, sign)
         if v is None or v <= 0:
             return
-        self.links.append({"s": s, "t": t, "v": v, "q": self.val(self.Qq, key, sign), "color": color})
+        self.links.append({"s": s, "t": t, "v": v, "q": self.val(self.Qq, key, sign), "y": self.val(self.Qy, key, sign),
+                           "color": color})
+
+    def delta_line(self, n, p, attr, missing):
+        """Comparison-variant line vs an earlier period: delta = scale + mix (same parent as the share line)."""
+        f = self.f
+        if n[attr] is None:
+            return f"Δ n/a ({missing})"
+        dlt = n["v"] - n[attr]
+        txt = f"Δ {f.delta(dlt)}"
+        if p and p[attr] is not None:
+            c0, c1, p0, p1 = n[attr], n["v"], p[attr], p["v"]
+            if p0 <= 0 or p1 <= 0 or c0 < 0 or c1 < 0:
+                txt += " · scale/mix n/m"
+            else:
+                scale = (p1 - p0) * c0 / p0
+                mix = p1 * (c1 / p1 - c0 / p0)
+                assert abs(scale + mix - dlt) <= 1e-6 * max(1, abs(dlt)) + 1
+                txt += f" · scale {f.num(scale)} · mix {f.num(mix)}"
+        return txt
 
     def finish(self):
         f = self.f
@@ -90,22 +109,9 @@ class Spec:
             for e in n["extra"]:
                 lines.append(["mut", e])
             n["lines"] = lines
-            # comparison-variant line: delta vs previous quarter = scale + mix
-            if n["q"] is None:
-                n["cmp"] = "Δ n/a (no prior quarter)"
-            else:
-                dlt = n["v"] - n["q"]
-                txt = f"Δ {f.delta(dlt)}"
-                if p and p["q"] is not None:
-                    c0, c1, p0, p1 = n["q"], n["v"], p["q"], p["v"]
-                    if p0 <= 0 or p1 <= 0 or c0 < 0 or c1 < 0:
-                        txt += " · scale/mix n/m"
-                    else:
-                        scale = (p1 - p0) * c0 / p0
-                        mix = p1 * (c1 / p1 - c0 / p0)
-                        assert abs(scale + mix - dlt) <= 1e-6 * max(1, abs(dlt)) + 1
-                        txt += f" · scale {f.num(scale)} · mix {f.num(mix)}"
-                n["cmp"] = txt
+            # comparison-variant lines: vs the previous quarter and vs the same quarter a year earlier
+            n["cmp"] = self.delta_line(n, p, "q", "no prior quarter")
+            n["cmp_y"] = self.delta_line(n, p, "y", "no year-ago quarter")
         for n in self.nodes:
             for k in ("key", "sign", "parent", "plabel", "extra", "style"):
                 n.pop(k, None)

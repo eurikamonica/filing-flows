@@ -184,6 +184,12 @@ td .name { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; display: 
 .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .filters select, .filters input { font: inherit; font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line);
   background: var(--surface); color: var(--ink); }
+.checks { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; border: 1px solid var(--line); border-radius: 8px;
+  padding: 5px 12px; margin: 0; background: var(--surface); font-size: 14px; }
+.checks legend { float: left; padding: 0 10px 0 0; color: var(--muted); font-size: 13px; }
+.checks label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; white-space: nowrap; }
+.checks input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
+.checks .muted { font-size: 12.5px; }
 .thumbs { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); }
 .thumb { display: grid; gap: 8px; text-decoration: none; color: var(--ink); }
 .thumb .sheet { box-shadow: none; }

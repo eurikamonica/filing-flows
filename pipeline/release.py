@@ -194,18 +194,39 @@ def pick_tables(tables):
     return best_is, best_cf
 
 
-def period_end(html_text, tables, last_end, filed):
-    """Quarter end named in the release: a date 75-110 days after the last quarter in XBRL (or before filing)."""
-    dates = set(_date(m) for m in DATE_RE.finditer(html_text))
-    for t in tables:
-        dates.update(_date(m) for m in DATE_RE.finditer(_header(t)))
-    if last_end:
-        cands = [x for x in dates if 75 <= (x - last_end).days <= 110 and x < filed]
-        target = last_end + dt.timedelta(days=91)
-    else:
-        cands = [x for x in dates if 0 < (filed - x).days <= 100]
-        target = filed - dt.timedelta(days=30)
-    return min(cands, key=lambda x: abs((x - target).days)) if cands else None
+MONTH_DAY = re.compile(r"\b(January|February|March|April|May|June|July|August|September|October|November|December|"
+                       r"Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept|Sep|Oct|Nov|Dec)\.?\s+(\d{1,2})\b(?:,?\s+(20\d\d))?", re.I)
+ENDED_RE = re.compile(r"(?:ended|ending|end(?:ed)? on)\s+", re.I)
+
+
+def _plausible(d, filed):
+    return d is not None and 7 <= (filed - d).days <= 120             # results come out 1-17 weeks after a quarter ends
+
+
+def header_end(header_text):
+    """First date in a statement's column header = the current period end ('June 30' + the first year if split)."""
+    m = MONTH_DAY.search(header_text)
+    if not m:
+        return None
+    year = m.group(3) or (re.search(r"\b(20\d\d)\b", header_text[m.end():]) or re.search(r"\b(20\d\d)\b", header_text) or [None, None])[1]
+    if not year:
+        return None
+    try:
+        return dt.date(int(year), MONTHS[m.group(1)[:3].lower()], int(m.group(2)))
+    except ValueError:
+        return None
+
+
+def period_end(html_text, t_is, filed):
+    """The quarter the release reports: from the statement header, else an '... ended <date>' phrase in the text."""
+    d = header_end(_header(t_is))
+    if _plausible(d, filed):
+        return d
+    for m in ENDED_RE.finditer(html_text):
+        dm = DATE_RE.match(html_text, m.end())
+        if dm and _plausible(_date(dm), filed):
+            return _date(dm)
+    return None
 
 
 def parse(html, filed, last_end=None, prior_revenue=None):
@@ -223,22 +244,54 @@ def parse(html, filed, last_end=None, prior_revenue=None):
             scale = next((s for s in (1e6, 1e3, 1e9, 1.0) if ok(s)), None)
     if not scale:
         raise ValueError("cannot tell the units of the release tables")
+    if prior_revenue and not (0.3 <= m_is["revenue"] * scale / prior_revenue <= 3.5):
+        raise ValueError(f"revenue is {m_is['revenue'] * scale / prior_revenue:.1f}x the previous quarter; "
+                         "the table is probably a full year or a different period")
     text = BeautifulSoup(html, "lxml").get_text(" ", strip=True)
-    end = period_end(text[:6000], [t_is], last_end, filed)
+    end = period_end(text[:8000], t_is, filed)
     if not end:
         raise ValueError("cannot find the quarter end date in the release")
     full = _map_rows(t_is, IS_KEYS, full=True)
     out = {"end": end.isoformat(), "scale": scale, "is_quarter": _first_is_quarter(_header(t_is)),
            "is": {k: v * scale for k, v in m_is.items()}, "cf": {}, "cf_quarter": None,
            "labels": {k: x[1] for k, x in full.items()},
-           "cols": {k: [v * scale for v in x[2]] for k, x in full.items()}}       # every column, for sign checks
+           "cols": {k: [v * scale for v in x[2]] for k, x in full.items()},       # every column, for sign checks
+           "tables": tables}
     if best_cf:
         _, t_cf, m_cf = best_cf
         u_is, u_cf = _units(t_is), _units(t_cf)
         s_cf = u_cf if (u_cf and u_is and u_cf != u_is) else scale    # same units as the income statement unless stated
         out["cf"] = {k: v * s_cf for k, v in m_cf.items()}
         out["cf_quarter"] = _first_is_quarter(_header(t_cf))
+        out["cf_cols"] = {k: [v * s_cf for v in x[2]] for k, x in _map_rows(t_cf, CF_KEYS, full=True).items()}
     return out
+
+
+def close(a, b, unit, tol=0.005):
+    """Equal within tol, allowing for the rounding of numbers printed in `unit` (thousands, millions)."""
+    return a is not None and b is not None and abs(a - b) <= max(tol * abs(b), 0.6 * unit)
+
+
+def anchor(rel, refs, current_ref=None):
+    """The release must agree with what the company already filed: one of its earlier-period columns has to equal
+    XBRL revenue and net income for the previous quarter or the year-ago quarter. This catches a wrong column, wrong
+    units or a wrong period (a full year read as a quarter) before anything is drawn. Returns the matching period."""
+    cols, unit = rel["cols"], rel["scale"]
+    rev = cols.get("revenue") or []
+    net = cols.get("pl") or cols.get("ni") or []
+    nets = lambda ref: [x for x in (ref.get("pl"), ref.get("ni")) if x is not None]
+    if current_ref and rev and close(rev[0], current_ref.get("revenue"), unit, 0.001) and net and \
+            any(close(net[0], x, unit, 0.002) for x in nets(current_ref)):
+        raise ValueError("the release repeats figures the company has already filed")
+    for name, ref in refs.items():
+        if not ref or not ref.get("revenue"):
+            continue
+        for j in range(1, len(rev)):
+            if close(rev[j], ref["revenue"], unit) and (not nets(ref) or len(net) <= j
+                                                        or any(close(net[j], x, unit, 0.01) for x in nets(ref))):
+                return name
+    raise ValueError("no column of the release matches the figures already filed for the previous quarter "
+                     "or the year-ago quarter (XBRL)")
 
 
 def calibrate_tax(raw, cols, refs):
@@ -287,6 +340,71 @@ def reconcile(raw, labels=None, tax_checked=False):
     if r.get("gp") is not None and r.get("cor") is not None and abs(r["revenue"] - r["cor"] - r["gp"]) > 0.01 * r["revenue"]:
         r["cor"] = None
     return r
+
+
+GENERIC_REV = re.compile(r"^(total )?(net )?(revenues?|sales|net sales|net revenues?)$")
+NOT_A_LINE = re.compile(r"per share|margin|%|income|expense|cost|profit|loss|eps|tax|depreciation|amortization|"
+                        r"compensation|cash|assets|liabilities|equity|shares|interest|capital|total$")
+SEG_CTX = re.compile(r"segment|business unit|business group|by product|product line|division|reportable|by market|end market", re.I)
+GEO_CTX = re.compile(r"geograph|region|country|by location|domestic|international", re.I)
+
+
+def _clean_label(s):
+    return re.sub(r"\s*\((\d{1,2}|[a-z])\)|[*†‡]", "", s).strip(" :")
+
+
+def revenue_lines(tables, revenue, scale, refs):
+    """Revenue by segment or product from the release: rows of one table that add up to total revenue.
+
+    refs = {"q1": previous-quarter revenue, "py": year-ago revenue} (from XBRL) identify which other columns of
+    that table hold the comparison periods, so the lines get Q/Q and Y/Y as well."""
+    from .dims import best_partition
+    best = None
+    for t in tables:
+        members, colvals, section = {}, {}, None
+        for r in t["rows"]:
+            if r["label"] and not r["vals"]:
+                section = _clean_label(r["label"])
+                continue
+            if not r["label"] or not r["vals"] or r["pct"]:
+                continue
+            key, label = r["key"], _clean_label(r["label"])
+            if GENERIC_REV.match(key):
+                if not section:
+                    continue                              # the total itself
+                label = section                           # "Revenue" under a segment heading
+            elif NOT_A_LINE.search(key) or any(PATTERNS[k].search(key) for k in IS_KEYS):
+                continue
+            mid = "R:" + re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")
+            if mid in members or len(mid) < 3:
+                continue                                  # first occurrence wins (revenue before operating income)
+            members[mid] = (label, r["vals"][0] * scale)
+            colvals[mid] = [v * scale for v in r["vals"]]
+        if len(members) < 2:
+            continue
+        part = best_partition(members, revenue)
+        if not part:
+            continue
+        leaves = [l["id"] for l in part["leaves"]]
+        ncol = min(len(colvals[m]) for m in leaves)
+        sums = [sum(colvals[m][j] for m in leaves) for j in range(ncol)]
+        cols = {}
+        for name, ref in refs.items():
+            j = next((j for j in range(1, ncol) if ref and abs(sums[j] - ref) <= 0.005 * abs(ref)), None)
+            if j is not None:
+                cols[name] = j
+        ctx = t["before"][-500:] + " " + t["text"][:400]
+        score = len(leaves) + 3 * len(cols) + (4 if SEG_CTX.search(ctx) else 0) - (4 if GEO_CTX.search(ctx) else 0)
+        if best is None or score > best[0]:
+            best = (score, part, colvals, cols)
+    if not best or best[0] < 3:
+        return None
+    _, part, colvals, cols = best
+    cur = {l["id"]: colvals[l["id"]][0] for l in part["leaves"]}
+    out = {"struct": {"leaves": part["leaves"], "groups": part["groups"], "axis": "release"}, "cur": cur}
+    for name, j in cols.items():
+        out[name] = {m: colvals[m][j] for m in cur}
+    return out
 
 
 def note_paragraphs(html):

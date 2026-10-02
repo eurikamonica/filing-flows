@@ -14,8 +14,12 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
 - **Click any node** to read what the company wrote about that line in the same filing (MD&A paragraphs, quoted
   verbatim). Company pages open with the first paragraphs of Item 1 *Business* from the latest 10-K.
 - **Analysis paragraphs** are written by fixed rules from the numbers. No language model is used anywhere.
-- **Comparison view**: the same chart with a dark strip on every band that grew since the previous quarter and a
-  `Δ = scale + mix` line per node.
+- **Comparison views**, vs the previous quarter and vs the same quarter a year earlier: the same chart with a dark
+  strip on every band that grew and a `Δ = scale + mix` line per node.
+- **History on first sight**: when a company's earnings 8-K is found, its last five 10-Q/10-K filings are fetched
+  too (it then keeps six quarters), so comparisons and the quarter-by-quarter view work straight away.
+- **Segments from releases**: revenue by business unit or product is read from the release when a table of rows
+  adds up to total revenue; its other columns supply Q/Q and Y/Y when they match the earlier quarters in XBRL.
 - **Export** PNG, JPG or PDF. Exports contain the chart only; the notes panel and note markers stay on screen.
 
 ## Deploy (GitHub Pages, about five minutes)

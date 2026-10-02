@@ -6,6 +6,7 @@
 import argparse
 import datetime as dt
 import json
+import math
 import os
 import re
 import sys
@@ -184,6 +185,9 @@ def process_filing(store, cik, accn, form, starred=False):
         print(f"  intro skipped for {cik}: {e}", file=sys.stderr)
 
     label, fq, fy = facts.fiscal_label(end, c["profile"]["fye"])
+    replaced = c["quarters"].get(end) if (c["quarters"].get(end) or {}).get("form") == "8-K" else None
+    if replaced:
+        audit_release(store.state, cik, replaced, raw, end)
     c["quarters"][end] = {
         "end": end, "label": label, "fq": fq, "fy": fy, "cal": facts.calendar_quarter(end), "form": form,
         "accn": accn, "filed": row.get("filingDate"), "doc_url": doc_url,
@@ -191,10 +195,12 @@ def process_filing(store, cik, accn, form, starred=False):
         "raw": raw, **comp, "lines_struct": lines_struct, "lines": lines_cur, "lines_py": lines_py, "notes": notes,
     }
     e0 = dt.date.fromisoformat(end)                               # the 10-Q/10-K replaces a preliminary 8-K quarter
-    for k in [k for k, q in c["quarters"].items() if q.get("form") == "8-K" and k != end
+    for k in [k for k, q in c["quarters"].items() if q.get("form") == "8-K"
               and abs((dt.date.fromisoformat(k) - e0).days) <= 10]:
-        del c["quarters"][k]
-    keep = KEEP_STARRED if starred else KEEP_QUARTERS
+        audit_release(store.state, cik, c["quarters"][k], raw, end)
+        if k != end:
+            del c["quarters"][k]
+    keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
     c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
     store.put(cik, c)
     return end
@@ -233,6 +239,70 @@ def _release_quarter(vals, quarterly, fx, q1_end, keys):
     return out
 
 
+AUDIT_KEYS = ("revenue", "oi", "ni", "ocf")
+
+
+def audit_release(st, cik, old, raw, end):
+    """When the 10-Q/10-K arrives, record how the figures read from the earnings release compare with it."""
+    fields, ok = {}, True
+    for k in AUDIT_KEYS:
+        a, b = (old.get("raw") or {}).get(k), raw.get(k)
+        if a is None or b is None:
+            continue
+        good = abs(a - b) <= 0.005 * abs(b) + 1e3
+        fields[k] = [a, b, good]
+        ok = ok and good
+    if fields:
+        st.setdefault("audit", []).append({"cik": cik, "end": end, "accn": old.get("accn"), "ok": ok, "fields": fields,
+                                           "t": dt.datetime.utcnow().isoformat(timespec="seconds")})
+        st["audit"] = st["audit"][-500:]
+
+
+HISTORY_ON_RELEASE = 5          # an earnings 8-K brings in the company's last five 10-Q/10-K filings
+
+
+def _queue_history(store, cik, sub, n=HISTORY_ON_RELEASE):
+    st, c = store.state, store.company(cik)
+    if c.get("keep", 0) >= n + 1:
+        return
+    have = c.get("quarters", {})
+    rows = [r for r in recent_rows(sub) if r["form"] in ("10-Q", "10-K") and r.get("reportDate")][:n]
+    for r in rows:
+        a = r["accessionNumber"]
+        if r["reportDate"] not in have and a not in st["pending"] and a not in st["seen"]:
+            st["pending"][a] = {"cik": cik, "form": r["form"], "filed": r["filingDate"], "tries": 0, "items": None}
+    c["keep"] = n + 1
+    c["profile"] = profile_of(sub)
+    store.put(cik, c)
+
+
+def _release_cash(rel, fx, q1_end, fq, py_end=None):
+    """Cash-flow tables are quarterly or year-to-date. First anchor the table: its earlier column equals either the
+    year-ago year-to-date or a filed quarter in XBRL. Otherwise take the reading whose D&A (or share-based pay) is
+    closest to the previous quarter's; if neither is plausible, leave the cash bridge out rather than draw it wrong."""
+    if not rel["cf"]:
+        return {}
+    direct = _release_quarter(rel["cf"], True, fx, q1_end, release.CF_KEYS)
+    ytd = direct if fq == 1 else _release_quarter(rel["cf"], False, fx, q1_end, release.CF_KEYS)
+    ocf_cols = (rel.get("cf_cols") or {}).get("ocf") or []
+    if fq != 1 and py_end and len(ocf_cols) > 1:
+        ytd_ref = facts.ytd_value(fx, "ocf", py_end)
+        q_refs = [facts.value(fx, "ocf", e) for e in (q1_end, py_end) if e]
+        for v in ocf_cols[1:]:
+            if release.close(v, ytd_ref, rel["scale"]):
+                return ytd
+            if any(release.close(v, r, rel["scale"]) for r in q_refs):
+                return direct
+    hint = direct if rel["cf_quarter"] is True or fq == 1 else ytd
+    for key in ("da", "sbc"):
+        ref = facts.value(fx, key, q1_end) if q1_end else None
+        if ref and ref > 0 and (direct.get(key) or ytd.get(key)):
+            dist = lambda c: abs(math.log(c[key] / ref)) if c.get(key) and c[key] > 0 else math.inf
+            pick = min((hint, direct, ytd), key=dist)                 # the hint wins ties
+            return pick if dist(pick) <= math.log(2.5) else {}
+    return hint
+
+
 def process_release(store, cik, accn, form, starred=False):
     """A preliminary quarter from an earnings release (8-K Item 2.02); the 10-Q/10-K replaces it when filed."""
     sub = submissions(cik)
@@ -241,6 +311,7 @@ def process_release(store, cik, accn, form, starred=False):
         raise Pending("filing not yet in submissions")
     if "2.02" not in (row.get("items") or ""):
         raise NotApplicable("8-K without Item 2.02 (not an earnings release)")
+    _queue_history(store, cik, sub)                   # earlier 10-Q/10-K filings, for history and comparisons
     fx = companyfacts(cik)
     ends = facts.period_ends(fx)
     if not ends:
@@ -258,15 +329,19 @@ def process_release(store, cik, accn, form, starred=False):
         rel = release.parse(doc, dt.date.fromisoformat(row["filingDate"]), last, prior_rev)
         end = rel["end"]
         e0 = dt.date.fromisoformat(end)
+        if e0 <= last + dt.timedelta(days=10):
+            raise NotApplicable(f"the release covers {end}, already filed in a 10-Q/10-K")
         if any(q.get("form") != "8-K" and abs((dt.date.fromisoformat(k) - e0).days) <= 10 for k, q in c["quarters"].items()):
             raise NotApplicable("the 10-Q/10-K for this quarter is already in")
         q1_end, py_end = facts.comparison_ends(fx, end)
         label, fq, fy = facts.fiscal_label(end, c["profile"]["fye"])
         if rel["is_quarter"] is False and fq != 1:
             raise ValueError("the income statement shows year-to-date figures first")
+        release.anchor(rel, {"q1": facts.extract(fx, q1_end) if q1_end else None,
+                             "py": facts.extract(fx, py_end) if py_end else None}, facts.extract(fx, ends[-1]))
         raw = {k: None for k in facts.CONCEPTS}
         raw.update(_release_quarter(rel["is"], True, fx, q1_end, release.IS_KEYS))
-        raw.update(_release_quarter(rel["cf"], rel["cf_quarter"] is True or fq == 1, fx, q1_end, release.CF_KEYS))
+        raw.update(_release_cash(rel, fx, q1_end, fq, py_end))
         refs = [facts.value(fx, "tax", e) for e in (q1_end, py_end) if e]
         checked = release.calibrate_tax(raw, rel["cols"], refs)
         raw = release.reconcile(raw, rel["labels"], checked)
@@ -274,9 +349,13 @@ def process_release(store, cik, accn, form, starred=False):
         raise NotApplicable(f"earnings release not readable: {e}")
     if not normalize(raw):
         raise NotApplicable("earnings release lacks revenue or net income")
+    rev_ref = {"q1": facts.value(fx, "revenue", q1_end) if q1_end else None,
+               "py": facts.value(fx, "revenue", py_end) if py_end else None}
+    segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref)
+    ls = segs["struct"] if segs else None
     notes = {}
     paras = release.note_paragraphs(doc)
-    for key, words in note_keys_for(None).items():
+    for key, words in note_keys_for(ls).items():
         m = text.match_notes(paras, words)
         if m:
             notes[key] = m
@@ -285,9 +364,10 @@ def process_release(store, cik, accn, form, starred=False):
         "accn": accn, "filed": row.get("filingDate"), "doc_url": ex_url,
         "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", "raw": raw,
         "q1_end": q1_end, "py_end": py_end, "raw_q1": facts.extract(fx, q1_end), "raw_py": facts.extract(fx, py_end),
-        "lines_struct": None, "lines": None, "lines_py": None, "notes": notes,
+        "lines_struct": ls, "lines": segs and segs["cur"], "lines_q1": segs and segs.get("q1"),
+        "lines_py": segs and segs.get("py"), "notes": notes,
     }
-    keep = KEEP_STARRED if starred else KEEP_QUARTERS
+    keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
     c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
     store.put(cik, c)
     return end
@@ -321,6 +401,33 @@ def starred_ciks(path="config/starred.txt"):
     return {m[t]: t for t in tickers if t in m}
 
 
+RELEASE_READER = 3              # bump when the 8-K reader changes: stored 8-K quarters are read again once
+
+
+def _reread_releases(store):
+    st = store.state
+    if st.get("release_reader", 1) >= RELEASE_READER:
+        return
+    n = 0
+    for cik in store.ciks():
+        c = store.company(cik)
+        old = [k for k, q in c.get("quarters", {}).items() if q.get("form") == "8-K"]
+        for k in old:
+            q = c["quarters"].pop(k)
+            st["seen"].pop(q["accn"], None)
+            st["pending"][q["accn"]] = {"cik": cik, "form": "8-K", "filed": q["filed"], "tries": 0, "items": "2.02"}
+            n += 1
+        if old:
+            store.put(cik, c)
+    for accn, v in list(st["seen"].items()):                     # earlier rejections get another try too
+        if str(v.get("s", "")).startswith("skip: earnings release not readable") and v.get("cik"):
+            del st["seen"][accn]
+            st["pending"][accn] = {"cik": v["cik"], "form": "8-K", "filed": v.get("t", "")[:10], "tries": 0, "items": "2.02"}
+            n += 1
+    st["release_reader"] = RELEASE_READER
+    print(f"re-reading {n} earnings releases with reader v{RELEASE_READER}")
+
+
 def run(args):
     store = Store(args.store)
     st = store.state
@@ -334,6 +441,7 @@ def run(args):
         if f["accn"] not in st["seen"] and f["accn"] not in st["pending"] and not f["form"].endswith("/A"):
             st["pending"][f["accn"]] = {"cik": f["cik"], "form": f["form"], "filed": f["filed"], "tries": 0,
                                         "items": f.get("items")}
+    _reread_releases(store)
     stars = starred_ciks()
     for cik in stars:                                            # multi-quarter history for starred companies
         try:
@@ -345,40 +453,51 @@ def run(args):
             if r.get("reportDate") and r["reportDate"] not in have and r["accessionNumber"] not in st["pending"] \
                     and r["accessionNumber"] not in st["seen"]:
                 st["pending"][r["accessionNumber"]] = {"cik": cik, "form": r["form"], "filed": r["filingDate"], "tries": 0}
-    done = 0
-    order = sorted(st["pending"].items(), key=lambda kv: kv[1]["filed"], reverse=True)
-    order.sort(key=lambda kv: kv[1]["form"] == "8-K" and kv[1].get("items") is None)   # unclassified 8-Ks last
-    for accn, p in order:
-        if done >= args.max_filings:
+    done, tried = 0, set()
+    while done < args.max_filings:                    # rounds: an earnings 8-K can queue the company's earlier filings
+        order = [kv for kv in sorted(st["pending"].items(), key=lambda kv: kv[1]["filed"], reverse=True) if kv[0] not in tried]
+        if not order:
             break
-        done += 1
-        try:
-            end = process_filing(store, p["cik"], accn, p["form"], starred=p["cik"] in stars)
-            st["seen"][accn] = {"t": now, "s": "ok", "cik": p["cik"], "end": end, "form": p["form"], "filed": p["filed"]}
-            del st["pending"][accn]
-            print(f"ok   {p['form']:5} {p['cik']:>10} {accn} {end}")
-        except Pending as e:
-            p["tries"] += 1
-            if p["tries"] >= PENDING_TRIES:
-                st["seen"][accn] = {"t": now, "s": f"skip: {e}", "cik": p["cik"]}
-                del st["pending"][accn]
-            print(f"wait {p['form']:5} {p['cik']:>10} {accn} {e}")
-        except NotApplicable as e:
-            st["seen"][accn] = {"t": now, "s": f"skip: {e}", "cik": p["cik"]}
-            del st["pending"][accn]
-            print(f"skip {p['form']:5} {p['cik']:>10} {accn} {e}")
-        except sec.NotFound as e:
-            st["seen"][accn] = {"t": now, "s": f"missing: {e}", "cik": p["cik"]}
-            del st["pending"][accn]
-        except Exception as e:
-            traceback.print_exc()
-            st["seen"][accn] = {"t": now, "s": f"error: {e}"[:200], "cik": p["cik"]}
-            del st["pending"][accn]
-        if done % 25 == 0:
-            store.commit()
+        order.sort(key=lambda kv: kv[1]["form"] == "8-K" and kv[1].get("items") is None)   # unclassified 8-Ks last
+        for accn, p in order:
+            if done >= args.max_filings:
+                break
+            done += 1
+            tried.add(accn)
+            _process_one(store, st, accn, p, stars, now)
+            if done % 25 == 0:
+                store.commit()
     st["log"].append({"t": now, "processed": done, "pending": len(st["pending"])})
     store.commit()
     render(store, args.out, set(stars))
+
+
+def _process_one(store, st, accn, p, stars, now):
+    """Process one pending filing and record the outcome in the state."""
+    try:
+        end = process_filing(store, p["cik"], accn, p["form"], starred=p["cik"] in stars)
+        st["seen"][accn] = {"t": now, "s": "ok", "cik": p["cik"], "end": end, "form": p["form"], "filed": p["filed"]}
+        del st["pending"][accn]
+        print(f"ok   {p['form']:5} {p['cik']:>10} {accn} {end}")
+    except Pending as e:
+        p["tries"] += 1
+        if p["tries"] >= PENDING_TRIES:
+            st["seen"][accn] = {"t": now, "s": f"skip: {e}", "cik": p["cik"]}
+            del st["pending"][accn]
+        print(f"wait {p['form']:5} {p['cik']:>10} {accn} {e}")
+    except NotApplicable as e:
+        st["seen"][accn] = {"t": now, "s": f"skip: {e}", "cik": p["cik"]}
+        del st["pending"][accn]
+        print(f"skip {p['form']:5} {p['cik']:>10} {accn} {e}")
+    except sec.NotFound as e:
+        st["seen"][accn] = {"t": now, "s": f"missing: {e}", "cik": p["cik"]}
+        del st["pending"][accn]
+    except Exception as e:
+        traceback.print_exc()
+        st["seen"][accn] = {"t": now, "s": f"error: {e}"[:200], "cik": p["cik"]}
+        del st["pending"][accn]
+
+
 
 
 # ---------------------------------------------------------------- render website data
@@ -409,7 +528,7 @@ def quarter_payload(c, q, prev_q):
     if not Nc:
         return None
     ls = q.get("lines_struct")
-    lines_q1 = prev_q.get("lines") if prev_q and prev_q.get("end") == q.get("q1_end") else None
+    lines_q1 = q.get("lines_q1") or (prev_q.get("lines") if prev_q and prev_q.get("end") == q.get("q1_end") else None)
     if lines_q1 and ls and not all(l["id"] in lines_q1 for l in ls["leaves"]):
         lines_q1 = None
     try:
@@ -433,12 +552,17 @@ def quarter_payload(c, q, prev_q):
     name = p["name"]
     q1_label = labels.get(q.get("q1_end")) or (facts.fiscal_label(q["q1_end"], p.get("fye") or "1231")[0]
                                                if q.get("q1_end") else None)
-    compare = None
+    compare = compare_y = None
     if Nq and q1_label:
         compare = {"vs": q1_label, "title": f"{name} {q['label']} vs {q1_label}: what changed",
                    "bullets": analysis.compare_bullets(f, q1_label, Nc, Nq, ls, (q.get("lines"), lines_q1, None))}
+    py_name = labels.get(q.get("py_end")) or (facts.fiscal_label(q["py_end"], p.get("fye") or "1231")[0]
+                                              if q.get("py_end") else None)
+    if Ny and py_name:
+        compare_y = {"vs": py_name, "title": f"{name} {q['label']} vs {py_name}: what changed",
+                     "bullets": analysis.compare_bullets(f, py_name, Nc, Ny, ls, (q.get("lines"), q.get("lines_py"), None))}
     return {
-        "compare": compare, "preliminary": q["form"] == "8-K",
+        "compare": compare, "compare_y": compare_y, "preliminary": q["form"] == "8-K",
         "end": q["end"], "label": q["label"], "cal": q["cal"], "form": q["form"], "filed": q["filed"],
         "doc_url": q.get("doc_url"), "index_url": q.get("index_url"), "kind": kind,
         "title": f"{name} {q['label']} earnings &amp; cash flow",
@@ -532,6 +656,10 @@ def render(store, out, stars=frozenset()):
                                  "title": f"{name} {cal_label(cal)} vs {cal_label(prev_cal(cal))}: what changed",
                                  "bullets": analysis.compare_bullets(f, cal_label(prev_cal(cal)), Nc, Nq, ls,
                                                                      (lv[0], lv[1], None))} if Nq else None),
+                    "compare_y": ({"vs": cal_label(prev_year(cal)),
+                                   "title": f"{name} {cal_label(cal)} vs {cal_label(prev_year(cal))}: what changed",
+                                   "bullets": analysis.compare_bullets(f, cal_label(prev_year(cal)), Nc, Ny, ls,
+                                                                       (lv[0], lv[2], None))} if Ny else None),
                     "companies": [{"cik": ck, "ticker": t, "revenue": a["R"]} for t, a, b, d, ck in
                                   sorted(members, key=lambda m: -m[1]["R"])],
                 })
@@ -545,17 +673,27 @@ def render(store, out, stars=frozenset()):
                                      "cal": quarters[0]["cal"],
                                      "sector": sectors.sector_of(gid) if level == "industry" else gid})
     recent = sorted(index, key=lambda x: (x["filed"] or "", x["cik"]), reverse=True)
+    audit = store.state.get("audit", [])
+    tick = {x["cik"]: x["ticker"] or x["name"] for x in index}
+    audit_out = {"checked": len(audit), "matched": sum(1 for a in audit if a["ok"]),
+                 "mismatches": [{"ticker": tick.get(a["cik"], str(a["cik"])), "cik": a["cik"], "end": a["end"],
+                                 "fields": {k: v[:2] for k, v in a["fields"].items() if not v[2]}}
+                                for a in audit if not a["ok"]][-20:]}
     save(os.path.join(out, "index.json"), {
         "generated": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z", "companies": recent,
         "sectors": sorted(agg_index["sector"], key=lambda x: x["name"]),
         "industries": sorted(agg_index["industry"], key=lambda x: x["name"]),
-        "sector_names": sectors.SECTORS,
+        "sector_names": sectors.SECTORS, "release_audit": audit_out,
     })
     print(f"rendered {len(index)} companies, {len(agg_index['sector'])} sectors, {len(agg_index['industry'])} industries")
 
 
 def cal_label(cal):
     return f"Q{cal[-1]} {cal[2:6]}"
+
+
+def prev_year(cal):
+    return f"CY{int(cal[2:6]) - 1}Q{cal[-1]}"
 
 
 def prev_cal(cal):

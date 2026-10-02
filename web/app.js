@@ -22,7 +22,8 @@
     get(k, d) { try { const v = localStorage.getItem('ff:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem('ff:' + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
   };
-  const state = { compare: prefs.get('compare', false), zoom: prefs.get('zoom', 'fit'), charts: [] };
+  const savedCmp = prefs.get('compare', null);                       // 'q' | 'y' | null (older builds stored true)
+  const state = { compare: savedCmp === true ? 'q' : savedCmp, zoom: prefs.get('zoom', 'fit'), charts: [] };
   const t = (s) => S.esc(S.dec(s == null ? '' : s));
   const sign = (x) => (x > 0 ? '+' : x < 0 ? '−' : '');
   const pct = (x, d) => (x == null || isNaN(x) ? '—' : sign(+x.toFixed(d || 0)) + Math.abs(x).toFixed(d || 0) + '%');
@@ -120,12 +121,14 @@
   // ---------- the chart component: Sankey + notes panel + view / zoom / export controls ----------
   function chartUI(spec, ctx) {
     const el = document.createElement('section');
-    const hasCmp = !!(spec.compare && spec.compare.bullets && spec.compare.bullets.length);
+    const has = (c) => !!(c && c.bullets && c.bullets.length);
+    const cmpOf = (m) => (m === 'y' ? spec.compare_y : m === 'q' ? spec.compare : null);
     el.innerHTML = `
       <div class="controls">
         <div class="seg" role="group" aria-label="Chart view">
           <button type="button" data-view="std">Standard</button>
-          <button type="button" data-view="cmp" ${hasCmp ? '' : 'disabled title="No previous quarter on file"'}>Compare vs ${hasCmp ? t(spec.compare.vs) : 'previous quarter'}</button>
+          <button type="button" data-view="q" ${has(spec.compare) ? '' : 'disabled title="No previous quarter on file"'}>vs ${has(spec.compare) ? t(spec.compare.vs) : 'previous quarter'}</button>
+          <button type="button" data-view="y" ${has(spec.compare_y) ? '' : 'disabled title="No year-ago quarter on file"'}>vs ${has(spec.compare_y) ? t(spec.compare_y.vs) : 'year ago'}</button>
         </div>
         <div class="seg" role="group" aria-label="Zoom">
           <button type="button" data-zoom="fit">Fit</button>
@@ -146,10 +149,11 @@
     const sheet = $('.sheet', el), notes = $('.notes', el);
     const byId = new Map(spec.nodes.map((n) => [n.id, n]));
     let scene = null, selected = null;
-    const cmpOn = () => state.compare && hasCmp;
+    const mode = () => (has(cmpOf(state.compare)) ? state.compare : null);   // active comparison, if this chart has it
+    const cmpOn = () => !!mode();
 
     function sync() {
-      $$('[data-view]', el).forEach((b) => b.classList.toggle('on', (b.dataset.view === 'cmp') === cmpOn()));
+      $$('[data-view]', el).forEach((b) => b.classList.toggle('on', b.dataset.view === (mode() || 'std')));
       $$('[data-zoom]', el).forEach((b) => b.classList.toggle('on', b.dataset.zoom === state.zoom));
       sheet.classList.toggle('fit', state.zoom === 'fit');
       if (scene) sheet.style.setProperty('--min-w', `${Math.round(scene.W * 0.5)}px`);   // never shrink below half size
@@ -166,7 +170,7 @@
         <p class="empty">Notes stay on the page: exported PNG, JPG and PDF files show the chart only.</p>`;
     }
     function nodeNotes(n) {
-      const lines = (n.lines || []).slice(1).map((l) => `<div>${t(l[1])}</div>`).join('') + (cmpOn() && n.cmp ? `<div>${t(n.cmp)}</div>` : '');
+      const lines = (n.lines || []).slice(1).map((l) => `<div>${t(l[1])}</div>`).join('') + (mode() && (mode() === 'y' ? n.cmp_y : n.cmp) ? `<div>${t(mode() === 'y' ? n.cmp_y : n.cmp)}</div>` : '');
       let body;
       const m = /^L:m(\d+)$/.exec(n.id);
       if (ctx.group && m && ctx.companies && ctx.companies[+m[1]]) {
@@ -211,8 +215,8 @@
     }
     async function draw() {
       await fontsReady();
-      scene = S.layout(spec, { compare: cmpOn() });
-      sheet.innerHTML = S.toSVG(scene, S.dec(cmpOn() ? spec.compare.title : spec.title));
+      scene = S.layout(spec, { compare: mode() });
+      sheet.innerHTML = S.toSVG(scene, S.dec(mode() ? cmpOf(mode()).title : spec.title));
       $$('.node', sheet).forEach((g) => {
         const n = byId.get(g.dataset.node);
         g.setAttribute('tabindex', '0');
@@ -231,10 +235,10 @@
       if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(g.dataset.node); }
     });
     $$('[data-view]', el).forEach((b) => b.addEventListener('click', () => {
-      state.compare = b.dataset.view === 'cmp';
+      state.compare = b.dataset.view === 'std' ? null : b.dataset.view;
       prefs.set('compare', state.compare);
       draw();
-      if (ctx.onView) ctx.onView(cmpOn());
+      if (ctx.onView) ctx.onView(mode());
     }));
     $$('[data-zoom]', el).forEach((b) => b.addEventListener('click', () => {
       state.zoom = b.dataset.zoom;
@@ -247,7 +251,7 @@
       b.disabled = true;
       try {
         const blob = await S.exportScene(scene, fmt);
-        const name = `${ctx.slug}${cmpOn() ? '-vs-prev' : ''}-sankey.${fmt}`;
+        const name = `${ctx.slug}${mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? '-vs-year-ago' : ''}-sankey.${fmt}`;
         const res = await saveBlob(blob, name);
         toast(res === 'declined' ? 'Export cancelled' : res === 'failed' ? 'Download unavailable here; use Preview to save the image'
           : `Exported ${name}`, () => previewDialog(blob, fmt, name, scene));
@@ -259,6 +263,7 @@
     }));
     el.redraw = draw;
     el.cmpOn = cmpOn;
+    el.mode = mode;
     el.className = 'chart-ui';
     el.getScene = () => scene;                       // used by tests/e2e.py to check exports
     state.charts.push(el);
@@ -292,6 +297,7 @@
 
   async function home() {
     setNav('home');
+    const forms = new Set(prefs.get('forms', ['10-Q', '10-K', '8-K']));
     const ix = await getJSON('index.json');
     const site = await getJSON('site.json').catch(() => ({}));
     const sectors = ix.sector_names || {};
@@ -299,9 +305,9 @@
     const groups = ix.sectors.length + ix.industries.length;
     app.innerHTML = `
       <section class="hero">
-        <div class="eyebrow">SEC EDGAR · 10-Q and 10-K · XBRL</div>
+        <div class="eyebrow">SEC EDGAR · 10-Q, 10-K and 8-K earnings releases</div>
         <h1>Every new quarterly report, drawn as one flow from revenue to cash</h1>
-        <p>An hourly scan of EDGAR picks up new 10-Q and 10-K filings, reads their XBRL financial data and draws revenue, costs, profit and operating cash flow as a Sankey. Click any node for what the company itself wrote about that line.</p>
+        <p>An hourly scan of EDGAR picks up new 10-Q and 10-K filings and earnings releases (8-K), reads their financial statements and draws revenue, costs, profit and operating cash flow as a Sankey. Click any node for what the company itself wrote about that line.</p>
         ${ix.demo ? `<p class="note-rule">${t(ix.demo)}</p>` : ''}
         <div class="status"><span>Last update <b>${date(ix.generated)}</b> ${t((ix.generated || '').slice(11, 16))} UTC</span>
           <span><b>${ix.companies.length}</b> companies</span><span><b>${groups}</b> sector and industry charts</span><span>Scans every hour</span></div>
@@ -319,7 +325,8 @@
           <input id="f-text" type="search" placeholder="Filter by name" aria-label="Filter by name">
           <select id="f-sector" aria-label="Sector"><option value="">All sectors</option>${
             Object.entries(sectors).map(([k, v]) => `<option value="${k}">${t(v)}</option>`).join('')}</select>
-          <select id="f-form" aria-label="Form"><option value="">10-Q and 10-K</option><option>10-Q</option><option>10-K</option></select>
+          <fieldset class="checks" id="f-forms"><legend>Form</legend>${['10-Q', '10-K', '8-K'].map((f) =>
+            `<label><input type="checkbox" value="${f}" ${forms.has(f) ? 'checked' : ''}> ${f}${f === '8-K' ? ' <span class="muted">earnings release</span>' : ''}</label>`).join('')}</fieldset>
         </div>
         <div class="tbl-wrap"><table>
           <thead><tr><th>Filed</th><th>Company</th><th>Period</th><th>Form</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Op. margin</th><th>Sector</th></tr></thead>
@@ -334,9 +341,9 @@
       </section>`;
     let limit = 60;
     const draw = () => {
-      const q = $('#f-text').value.trim().toLowerCase(), sec = $('#f-sector').value, form = $('#f-form').value;
+      const q = $('#f-text').value.trim().toLowerCase(), sec = $('#f-sector').value;
       const list = ix.companies.filter((c) => (!q || c.name.toLowerCase().includes(q) || (c.ticker || '').toLowerCase().startsWith(q)) &&
-        (!sec || c.sector === sec) && (!form || c.form === form));
+        (!sec || c.sector === sec) && forms.has(c.form));
       $('#rows').innerHTML = list.slice(0, limit).map((c) => row(`c-${c.cik}`, [
         `<td>${date(c.filed)}</td>`, companyCell(c), `<td>${t(c.label)}</td>`, `<td class="mono">${t(c.form)}${c.prelim ? ' <span class="tag prelim">prelim</span>' : ''}</td>`,
         `<td class="num">${t(c.rev)}</td>`, `<td class="num ${tone(c.yoy)}">${pct(c.yoy)}</td>`, `<td class="num">${margin(c.om)}</td>`,
@@ -344,7 +351,14 @@
       $('#more').hidden = list.length <= limit;
       bindRows($('#rows'));
     };
-    ['#f-text', '#f-sector', '#f-form'].forEach((s) => $(s).addEventListener('input', () => { limit = 60; draw(); }));
+    ['#f-text', '#f-sector'].forEach((s) => $(s).addEventListener('input', () => { limit = 60; draw(); }));
+    $$('#f-forms input').forEach((box) => box.addEventListener('change', () => {
+      forms.clear();
+      $$('#f-forms input:checked').forEach((x) => forms.add(x.value));
+      prefs.set('forms', [...forms]);
+      limit = 60;
+      draw();
+    }));
     $('#more').addEventListener('click', () => { limit += 120; draw(); });
     draw();
   }
@@ -428,10 +442,15 @@
     function renderChanges() {
       const box = $('#changes');
       if (!box) return;
-      box.innerHTML = q.compare && q.compare.bullets && q.compare.bullets.length
-        ? `<h3>What changed vs ${t(q.compare.vs)}</h3><ul class="changes">${q.compare.bullets.map((b) => `<li>${t(b)}</li>`).join('')}</ul>` : '';
+      box.innerHTML = changesHTML(q);
     }
     renderChanges();
+  }
+
+  // "what changed" bullets vs the previous quarter and vs the year-ago quarter
+  function changesHTML(q) {
+    return [q.compare, q.compare_y].filter((c) => c && c.bullets && c.bullets.length)
+      .map((c) => `<h3>What changed vs ${t(c.vs)}</h3><ul class="changes">${c.bullets.map((b) => `<li>${t(b)}</li>`).join('')}</ul>`).join('');
   }
 
   function introHTML(intro) {
@@ -485,7 +504,7 @@
     text.className = 'cols';
     text.innerHTML = `
       <div class="prose"><h2>Analysis</h2>${(q.analysis || []).map((x) => `<p>${t(x)}</p>`).join('')}
-        ${q.compare && q.compare.bullets && q.compare.bullets.length ? `<h3>What changed vs ${t(q.compare.vs)}</h3><ul class="changes">${q.compare.bullets.map((b) => `<li>${t(b)}</li>`).join('')}</ul>` : ''}
+        ${changesHTML(q)}
         <p class="note-rule">Sum of each company’s fiscal quarter that ends in this calendar quarter. Written by fixed rules from the reported figures.</p></div>
       <div class="prose">${inds.length ? `<h2>Industries</h2><div class="cards">${inds.map((x) => `<a class="card" href="#i-${x.id}"><div class="t"><span>${t(x.name)}</span></div>
         <div class="n">${x.count} companies · ${calLabel(x.cal)}</div></a>`).join('')}</div>` : ''}</div>`;
@@ -525,21 +544,32 @@
       }).join('')}`;
   }
 
-  function methodPage() {
+  async function methodPage() {
     setNav('method');
+    const ix = await getJSON('index.json').catch(() => ({}));
+    const au = ix.release_audit || { checked: 0, matched: 0, mismatches: [] };
+    const names = { revenue: 'revenue', oi: 'operating profit', ni: 'net earnings', ocf: 'operating cash flow' };
+    const auditHTML = `<h2>Checking the 8-K reader</h2>
+        <p>Every quarter first drawn from an earnings release is compared with the company’s 10-Q or 10-K when it arrives (revenue, operating profit, net earnings and operating cash flow, within 0.5%).</p>
+        <p><b>${au.checked}</b> release${au.checked === 1 ? '' : 's'} checked so far${au.checked ? `, <b>${au.matched}</b> matched (${(au.matched / au.checked * 100).toFixed(0)}%)` : ''}.</p>
+        ${au.mismatches.length ? `<div class="tbl-wrap"><table><thead><tr><th>Company</th><th>Quarter end</th><th>Line</th><th class="num">8-K</th><th class="num">10-Q/10-K</th></tr></thead><tbody>${
+          au.mismatches.slice().reverse().flatMap((m) => Object.entries(m.fields).map(([k, [a, b]]) =>
+            `<tr><td><a href="#c-${m.cik}">${t(m.ticker)}</a></td><td>${date(m.end)}</td><td>${names[k] || k}</td><td class="num">${money(a)}</td><td class="num">${money(b)}</td></tr>`)).join('')
+        }</tbody></table></div>` : ''}`;
     app.innerHTML = `
       <div class="page-head"><div class="eyebrow">Method</div><h1>How each chart is built</h1></div>
       <div class="cols"><div class="prose">
         <h2>Scanning</h2>
         <p>Every hour a scheduled job reads EDGAR’s live feed of new 10-Q and 10-K filings (plus the daily index as a fallback). Each new filing is processed once its XBRL data appears in the SEC’s company-facts API, which can lag the filing by a few hours; until then it waits in a retry queue.</p>
         <h2>Earnings releases (8-K)</h2>
-        <p>Most companies publish results in an 8-K press release days or weeks before the 10-Q or 10-K. The scan also reads 8-K filings with Item 2.02 (results of operations): the statements printed in the release are read by fixed rules, units are checked against the previous quarter in XBRL, and the figures must reconcile before they are drawn. These charts are marked preliminary and are replaced automatically when the 10-Q or 10-K arrives.</p>
+        <p>Most companies publish results in an 8-K press release days or weeks before the 10-Q or 10-K. The scan also reads 8-K filings with Item 2.02 (results of operations): the statements printed in the release are read by fixed rules. Before anything is drawn, one of the release’s earlier-period columns must equal the revenue and net earnings the company already filed in XBRL (this pins down the columns, the units and the period), the statement must reconcile, and the quarter must end at least a week before the release. These charts are marked preliminary and are replaced automatically when the 10-Q or 10-K arrives.</p>
         <h2>Numbers</h2>
         <p>All figures are GAAP values reported in XBRL. A quarter is taken directly when a three-month value exists; otherwise it is year-to-date minus the prior year-to-date, which is how fourth quarters (10-K) and all quarterly cash flows are derived. Revenue lines and segments come from the dimensional facts in the filing’s own XBRL instance and are used only when they add up to total revenue.</p>
         <h2>Layout</h2>
         <p>Revenue lines merge into revenue; profit stays on top and costs peel downward; operating profit plus other income becomes pre-tax earnings, which splits into tax, minority interests and net earnings; operating cash flow is bridged directly from net earnings. Each label shows the amount, its share of the node it splits from or flows into, and the change year over year and quarter over quarter. Loss-making quarters use a funding view: revenue, other income and the net loss together fund all costs.</p>
         <p>The comparison view keeps the same picture and marks the part of every band that grew since the previous quarter as a dark strip. Each label adds Δ = scale + mix: scale is the change explained by the parent node growing, mix the change in the item’s share of its parent.</p>
       </div><div class="prose">
+        ${auditHTML}
         <h2>Text</h2>
         <p>No language model is used anywhere. Company descriptions are the opening paragraphs of Item 1 (Business) of the latest 10-K. Node notes are the paragraphs under the matching heading in Management’s Discussion and Analysis of the same filing, quoted verbatim. Analysis paragraphs are sentences filled from the numbers by fixed rules.</p>
         <h2>Starred companies</h2>
@@ -605,7 +635,7 @@
       if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
       else if ((m = /^([si])-([a-z0-9-]+?)(?:-(CY\d{4}Q\d))?$/.exec(h))) await group(m[1], m[2], m[3]);
       else if (h === 'sectors') await sectorsPage();
-      else if (h === 'method') methodPage();
+      else if (h === 'method') await methodPage();
       else await home();
     } catch (err) {
       app.innerHTML = `<div class="page-head"><h1>Not available</h1><p class="muted">${t(err.message)}. The data may not have been generated yet; the scan runs every hour.</p><p><a href="#home">Back to the latest filings</a></p></div>`;

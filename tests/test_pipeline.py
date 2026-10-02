@@ -88,3 +88,81 @@ def test_earnings_release_8k(tmp_path):
     assert "0009999901-26-000046" not in seen                     # Item 5.02 8-K is never queued
     page = json.load(open(tmp_path / "data" / "c" / "9999901.json"))["quarters"][0]
     assert page["preliminary"] and "earnings release" in page["subtitle"]
+
+
+def _statement(header_cells, rows, text=""):
+    cell = lambda v: f"<td>$</td><td>({-v:,}</td><td>)</td>" if v < 0 else f"<td>$</td><td>{v:,}</td><td></td>"
+    head = "".join(f"<tr><td></td>{''.join(f'<td colspan=3>{h}</td>' for h in hr)}</tr>" for hr in header_cells)
+    body = "".join(f"<tr><td>{lab}</td>{''.join(cell(v) for v in vals)}</tr>" for lab, vals in rows)
+    return f"<p>{text}</p><p>(in thousands)</p><table>{head}{body}</table>"
+
+
+FULL_YEAR = [("Revenue", [23300, 20100]), ("Cost of revenue", [3300, 3000]), ("Gross profit", [20000, 17100]),
+             ("Operating income", [7800, 6000]), ("Income before income taxes", [9500, 7000]),
+             ("Provision for income taxes", [1900, 1400]), ("Net income", [7600, 5600])]
+
+
+def test_release_full_year_is_not_a_quarter():
+    """ReposiTrak-type case: an annual release must not be read as a quarter ending on some other date in the text."""
+    import datetime as dt
+    from pipeline import release
+    html = _statement([["Year Ended June 30,"], ["2026", "2025"]], FULL_YEAR,
+                      "Annual results. The company will host a conference call on September 28, 2026.")
+    try:
+        release.parse(html, dt.date(2026, 9, 30), dt.date(2026, 6, 30), prior_revenue=5.6e6)
+        raise AssertionError("an annual table was accepted as a quarter")
+    except ValueError as e:
+        assert "previous quarter" in str(e)
+    rel = release.parse(html, dt.date(2026, 9, 30), dt.date(2026, 6, 30), prior_revenue=None)
+    assert rel["end"] == "2026-06-30"            # the header date; the build then skips it as already filed
+
+
+def test_release_end_must_precede_filing():
+    """EQUATOR-type case: a 'quarter' ending the day before the 8-K was filed is not a results release."""
+    import datetime as dt
+    from pipeline import release
+    html = _statement([["Three Months Ended September 30,"], ["2026", "2025"]], FULL_YEAR)
+    try:
+        release.parse(html, dt.date(2026, 10, 1), dt.date(2026, 6, 30), prior_revenue=None)
+        raise AssertionError("accepted a period that ended one day before filing")
+    except ValueError as e:
+        assert "quarter end" in str(e)
+
+
+def test_cash_flow_reading_checked_against_prior_quarter():
+    """Jabil-type case: a year-to-date cash-flow table whose header looks quarterly is still read as year-to-date."""
+    from pipeline import build, facts
+    fx = facts.index_facts(json.load(open(os.path.join(ROOT, "tests", "fixtures",
+                                                       "data.sec.gov_api_xbrl_companyfacts_CIK0009999901.json"))))
+    rel = {"cf": {"ocf": 5600e6, "da": 2000e6, "sbc": 400e6, "capex": -4000e6}, "cf_quarter": True}
+    q = build._release_cash(rel, fx, "2026-05-31", 4)
+    assert abs(q["da"] - 520e6) < 1 and abs(q["ocf"] - 1600e6) < 1 and abs(q["capex"] - 1100e6) < 1
+
+
+def test_release_must_match_filed_columns():
+    """A release whose earlier columns disagree with XBRL (wrong column, units or period) is rejected."""
+    from pipeline import release
+    rel = {"scale": 1e6, "cols": {"revenue": [5240e6, 4610e6, 3900e6], "pl": [932e6, 657e6, 404e6]}}
+    ref_q1 = {"revenue": 4610e6, "ni": 657e6, "pl": None}
+    assert release.anchor(rel, {"q1": ref_q1, "py": None}) == "q1"
+    wrong = {"revenue": 4100e6, "ni": 600e6, "pl": None}
+    try:
+        release.anchor(rel, {"q1": wrong, "py": None})
+        raise AssertionError("accepted a release that disagrees with the filed quarter")
+    except ValueError:
+        pass
+    try:                                                     # the "new" quarter is one already filed
+        release.anchor(rel, {"q1": ref_q1}, current_ref={"revenue": 5240e6, "ni": 932e6, "pl": None})
+        raise AssertionError("accepted figures that were already filed")
+    except ValueError:
+        pass
+
+
+def test_audit_compares_release_with_10q():
+    from pipeline import build
+    st = {}
+    old = {"accn": "x", "raw": {"revenue": 5240e6, "oi": 1110e6, "ni": 932e6, "ocf": 1600e6}}
+    build.audit_release(st, 1, old, {"revenue": 5240e6, "oi": 1110e6, "ni": 932e6, "ocf": 1600e6}, "2026-08-30")
+    build.audit_release(st, 1, old, {"revenue": 5240e6, "oi": 1110e6, "ni": 932e6, "ocf": 1200e6}, "2026-08-30")
+    assert [a["ok"] for a in st["audit"]] == [True, False]
+    assert st["audit"][1]["fields"]["ocf"][2] is False

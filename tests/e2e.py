@@ -93,11 +93,11 @@ def main():
         index = json.load(open(os.path.join(args.site, "data", "index.json")))
         for co in index["companies"]:
             cik = co["cik"]
-            for view in ("std", "cmp"):
+            for view in ("std", "q", "y"):
                 pg.goto(f"{base}#c-{cik}")
                 pg.wait_for_selector(".sheet svg")
-                if view == "cmp":
-                    btn = pg.locator('[data-view="cmp"]')
+                if view != "std":
+                    btn = pg.locator(f'[data-view="{view}"]')
                     if btn.is_disabled():
                         continue
                     btn.click()
@@ -108,7 +108,7 @@ def main():
                     pg.wait_for_timeout(100)
                 issues = pg.evaluate(CHECK_LABELS)
                 print(f"{co['ticker']:6} {view}: {len(issues)} layout issues", issues[:4])
-                (warns if view == "cmp" else fails).extend(f"{co['ticker']} {view}: {i}" for i in issues)
+                (warns if view != "std" else fails).extend(f"{co['ticker']} {view}: {i}" for i in issues)
                 shot(pg, f"c_{co['ticker']}_{view}.png", full_page=True)
             pg.locator('[data-view="std"]').click()
 

@@ -1,6 +1,6 @@
 /* Earnings Sankey: layout + rendering in the earnings-sankey standard format.
  *
- * layout(spec, {compare}) turns the pipeline's JSON (nodes with column, colour role, label lines and a
+ * layout(spec, {compare: 'q'|'y'}) turns the pipeline's JSON (nodes with column, colour role, label lines and a
  * preferred label side; links with current and previous-quarter values) into a scene: a flat display
  * list of bands, bars and text. The same scene is drawn as interactive SVG on screen and onto a canvas
  * for PNG/JPG/PDF export. Shapes flagged `ui` (note markers, hit areas) exist only on screen.
@@ -56,9 +56,10 @@
     return out;
   }
 
-  function labelBlock(n, compare) {
+  function labelBlock(n, mode) {
     const lines = (n.lines || [['name', n.name]]).map(([st, t]) => ({ st: STY[st] ? st : 'mut', t: dec(t) }));
-    if (compare && n.cmp) lines.push({ st: 'cmp', t: dec(n.cmp) });
+    const cmp = mode === 'y' ? n.cmp_y : mode === 'q' ? n.cmp : null;
+    if (cmp) lines.push({ st: 'cmp', t: dec(cmp) });
     let w = 0, h = 0;
     lines.forEach((l, i) => {
       const [size, weight, lh] = STY[l.st];
@@ -89,7 +90,11 @@
   // ---------- layout ----------
   function layout(spec, opts) {
     opts = opts || {};
-    const compare = !!opts.compare && !!spec.compare;
+    // comparison variant: 'q' = vs the previous quarter, 'y' = vs the same quarter a year earlier
+    const mode = opts.compare === 'y' || opts.compare === 'q' ? opts.compare : opts.compare === true ? 'q' : null;
+    const cmpSpec = mode === 'y' ? spec.compare_y : mode === 'q' ? spec.compare : null;
+    const compare = !!cmpSpec;
+    const prior = (l) => (mode === 'y' ? l.y : l.q);
     const nodes = spec.nodes.map((n, i) => Object.assign({}, n, { idx: i, ins: [], outs: [] }));
     const byId = new Map(nodes.map((n) => [n.id, n]));
     const links = spec.links
@@ -105,7 +110,7 @@
     const K = REV_PX / maxV;
     nodes.forEach((n) => {
       n.h = Math.max(Math.abs(n.v || 0) * K, 2);
-      n.lab = labelBlock(n, compare);
+      n.lab = labelBlock(n, compare ? mode : null);
       n.light = !n.ins.length || !n.outs.length;
     });
     links.forEach((l) => { l.th = l.v * K; });
@@ -385,7 +390,7 @@
     nodes.forEach((n) => { n.top += dy; n.lr = labelRect(n, n.at); });
     let bottom = maxY + dy;
 
-    const title = dec(compare ? spec.compare.title : spec.title);
+    const title = dec(compare ? cmpSpec.title : spec.title);
     const subtitle = dec(spec.subtitle || '');
     let W = Math.max(maxX + MARGIN, 1500, measure(title, 40, 600) + 2 * MARGIN, measure(subtitle, 18, 400) + 2 * MARGIN);
     W = Math.ceil(W);
@@ -395,11 +400,11 @@
     links.forEach((l) => {
       const g = bandGeom(l), pal = PALETTE[l.color] || PALETTE.rev;
       const cls = { ls: l.s, lt: l.t };            // link ends (not `s`/`t`: `t` is the shape type)
-      if (compare && l.q != null) {
-        if (l.q <= 0) {
+      if (compare && prior(l) != null) {
+        if (prior(l) <= 0) {
           shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, l.th), fill: pal.node, band: true }, cls));
         } else {
-          const base = Math.min(l.q, l.v) * K, strip = l.th - base;
+          const base = Math.min(prior(l), l.v) * K, strip = l.th - base;
           shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, base), fill: pal.flow, band: true }, cls));
           if (strip > 0.05) {
             shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0 + base, g.x1, g.a1 + base, Math.max(strip, 0.6)),
@@ -439,10 +444,10 @@
     });
 
     // comparison callout in an empty corner
-    if (compare && spec.compare && spec.compare.bullets && spec.compare.bullets.length) {
+    if (compare && cmpSpec.bullets && cmpSpec.bullets.length) {
       const bw = 560, items = [];
       let bh = 30;
-      spec.compare.bullets.forEach((b) => {
+      cmpSpec.bullets.forEach((b) => {
         const lines = wrap(dec(b), 16, 400, bw - 22);
         items.push(lines);
         bh += lines.length * 22 + 8;
@@ -454,7 +459,7 @@
       let pos = cands.find(([x, y]) => free([x, y, bw, bh]));
       if (!pos) { pos = [MARGIN, bottom + 36]; bottom += 36 + bh; }
       const [cx, cy] = pos;
-      shapes.push({ t: 'text', x: cx, y: cy + 18, text: `What changed vs ${dec(spec.compare.vs)}`, size: 18, weight: 600, fill: INK, anchor: 'start' });
+      shapes.push({ t: 'text', x: cx, y: cy + 18, text: `What changed vs ${dec(cmpSpec.vs)}`, size: 18, weight: 600, fill: INK, anchor: 'start' });
       let yy = cy + 30;
       items.forEach((lines) => {
         shapes.push({ t: 'circle', cx: cx + 5, cy: yy + 11, r: 3, fill: INK2 });
@@ -474,12 +479,12 @@
     const used = new Set(nodes.map((n) => n.color).concat(links.map((l) => l.color)));
     const legend = LEGEND.filter(([k]) => used.has(k) || k === 'rev' || k === 'profit' || k === 'cost');
     const lgItems = legend.map(([k, t]) => ({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
-    if (compare) lgItems.push({ k: 'strip', t: `Dark strip = increase vs ${dec(spec.compare.vs)}`, w: 0 });
+    if (compare) lgItems.push({ k: 'strip', t: `Dark strip = increase vs ${dec(cmpSpec.vs)}`, w: 0 });
     if (compare) lgItems[lgItems.length - 1].w = 14 + 8 + measure(lgItems[lgItems.length - 1].t, 14, 400);
     const lgW = lgItems.reduce((s, it) => s + it.w, 0) + 20 * (lgItems.length - 1);
     const footer = (spec.footer || []).map(dec);
     if (compare) {
-      footer.push(`Comparison view: band width = current quarter; dark strip = increase vs ${dec(spec.compare.vs)} (no strip = it fell). ` +
+      footer.push(`Comparison view: band width = current quarter; dark strip = increase vs ${dec(cmpSpec.vs)} (no strip = it fell). ` +
         'Δ = scale + mix: scale = change explained by the parent node growing, mix = change in the item’s share of its parent. ' +
         'n/m = a comparison period was negative.');
     }
