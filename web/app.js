@@ -255,6 +255,8 @@
     }));
     el.redraw = draw;
     el.cmpOn = cmpOn;
+    el.className = 'chart-ui';
+    el.getScene = () => scene;                       // used by tests/e2e.py to check exports
     state.charts.push(el);
     draw();
     return el;

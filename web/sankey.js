@@ -382,7 +382,7 @@
     // bands
     links.forEach((l) => {
       const g = bandGeom(l), pal = PALETTE[l.color] || PALETTE.rev;
-      const cls = { s: l.s, t: l.t };
+      const cls = { ls: l.s, lt: l.t };            // link ends (not `s`/`t`: `t` is the shape type)
       if (compare && l.q != null) {
         if (l.q <= 0) {
           shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, l.th), fill: pal.node, band: true }, cls));
@@ -507,7 +507,7 @@
     scene.shapes.forEach((s) => {
       if (s.band) {
         close();
-        out.push(`<path class="band" data-s="${esc(s.s)}" data-t="${esc(s.t)}" d="${s.d}" fill="${s.fill}"/>`);
+        out.push(`<path class="band" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}" d="${s.d}" fill="${s.fill}"/>`);
         return;
       }
       if ((s.group || null) !== group) {
