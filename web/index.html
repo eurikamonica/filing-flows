@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Filing Flows</title>
+<meta name="description" content="Every new 10-Q and 10-K on SEC EDGAR, drawn as an income-statement and cash-flow Sankey from XBRL data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--SHELL-->
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="Filing Flows home">
+      <svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true">
+        <rect x="0" y="2" width="4" height="18" fill="#7a7974"/>
+        <path d="M4 2 C11 2 11 2 18 2 L18 11 C11 11 11 11 4 11 Z" fill="#a8d1b9"/>
+        <path d="M4 11 C11 11 11 14 18 14 L18 20 C11 20 11 20 4 20 Z" fill="#f6c3b8"/>
+        <rect x="18" y="2" width="4" height="9" fill="#17734a"/>
+        <rect x="18" y="14" width="4" height="6" fill="#ea6a52"/>
+      </svg>
+      <span>Filing Flows</span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#home" data-nav="home">Latest</a>
+      <a href="#sectors" data-nav="sectors">Sectors</a>
+      <a href="#method" data-nav="method">Method</a>
+    </nav>
+    <div class="search">
+      <input id="q" type="search" placeholder="Search ticker or company" autocomplete="off" aria-label="Search companies">
+      <div class="suggest" id="suggest" hidden></div>
+    </div>
+    <button class="theme-btn" id="theme" type="button" aria-label="Toggle colour theme" title="Toggle colour theme">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1.5v11a5.5 5.5 0 0 1 0-11z" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+<main id="app" class="wrap"><div class="loading">Loading…</div></main>
+<footer class="site-foot">
+  <div class="wrap">
+    <div>Data: SEC EDGAR — XBRL company facts and the filing documents themselves. Scanned every hour.</div>
+    <div>Company descriptions and node notes are quoted verbatim from the filings. Analysis paragraphs are produced by fixed rules from the reported numbers; no language model is involved. Not investment advice.</div>
+  </div>
+</footer>
+<!--/SHELL-->
+<script src="sankey.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
