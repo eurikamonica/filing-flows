@@ -166,3 +166,107 @@ def test_audit_compares_release_with_10q():
     build.audit_release(st, 1, old, {"revenue": 5240e6, "oi": 1110e6, "ni": 932e6, "ocf": 1200e6}, "2026-08-30")
     assert [a["ok"] for a in st["audit"]] == [True, False]
     assert st["audit"][1]["fields"]["ocf"][2] is False
+
+
+def _site(tmp_path):
+    env = dict(os.environ, SEC_FIXTURES=os.path.join(ROOT, "tests", "fixtures"), SEC_USER_AGENT="test test@example.com")
+    subprocess.run([sys.executable, "-m", "pipeline.build", "run", "--store", str(tmp_path / "store"),
+                    "--out", str(tmp_path / "site" / "data")], cwd=ROOT, env=env, check=True, capture_output=True)
+    subprocess.run([sys.executable, "scripts/build_site.py", "--data", str(tmp_path / "site" / "data"),
+                    "--out", str(tmp_path / "site")], cwd=ROOT, check=True, capture_output=True)
+    return tmp_path / "site"
+
+
+def test_social_threads_fit_and_cite(tmp_path):
+    import datetime as dt
+    from pipeline import social
+    site = _site(tmp_path)
+    cfg = dict(social.DEFAULTS, min_revenue=0, max_age_days=10000, max_per_run=50)
+    todo = social.candidates(str(site), {"posted": {}}, cfg, today=dt.date(2026, 10, 2))
+    assert len(todo) == 6
+    for e in todo:
+        c, q = social.quarter_of(str(site), e)
+        c["intro"] = {"text": "Example text. " * 60, "filed": "2025-10-27"}
+        posts = social.compose(c, q, cfg)
+        assert all(social.xlen(p) <= 280 for p in posts), [social.xlen(p) for p in posts]
+        assert posts[0].startswith("$") and "Revenue" in posts[0]
+        assert posts[1].startswith("About ") and "” — 10-K filed Oct 27, 2025, Item 1" in posts[1]
+        assert posts[-1].startswith("Source: SEC EDGAR") and "http" not in posts[-1]
+    brk = next(e for e in todo if e["cik"] == 1067983)
+    assert social.compose(*social.quarter_of(str(site), brk), cfg)[0].startswith("$BRK.B ")
+
+
+def test_social_posts_thread_in_order_and_never_twice(tmp_path):
+    from pipeline import social
+    calls = []
+
+    class Resp:
+        def __init__(self, data):
+            self.status_code, self._d, self.text = 200, data, ""
+
+        def json(self):
+            return self._d
+
+    class Session:
+        def post(self, url, **kw):
+            calls.append((url.rsplit("/", 1)[-1], kw.get("json")))
+            return Resp({"data": {"id": f"id{len(calls)}"}})
+
+    x = social.X.__new__(social.X)
+    x.auth, x.s = None, Session()
+    ids = social.post_thread(x, ["one", "two", "three"], [b"png1", b"png2"])
+    assert [c[0] for c in calls] == ["upload", "upload", "tweets", "tweets", "tweets"]
+    assert calls[2][1]["media"]["media_ids"] == ["id1", "id2"] and "reply" not in calls[2][1]
+    assert calls[3][1]["reply"]["in_reply_to_tweet_id"] == ids[0] and calls[4][1]["reply"]["in_reply_to_tweet_id"] == ids[1]
+    st = {"posted": {"9999901:2026-08-30": {}}}                     # the 8-K was posted ...
+    assert social.posted_already(st, 9999901, "2026-08-30") and social.posted_already(st, 9999901, "2026-09-01")
+    assert not social.posted_already(st, 9999901, "2026-05-31")    # ... a different quarter is not blocked
+
+
+def test_social_renders_chart_png(tmp_path):
+    from pipeline import social
+    site = _site(tmp_path)
+    c = json.load(open(site / "data" / "c" / "320193.json"))
+    pngs = social.render_charts(str(site), [(c["quarters"][0], None), (c["quarters"][0], "y")])
+    assert len(pngs) == 2 and all(p.startswith(b"\x89PNG") and len(p) > 100_000 for p in pngs)
+
+
+def test_social_email_digest(tmp_path):
+    import datetime as dt
+    import smtplib
+    from pipeline import social
+    site = _site(tmp_path)
+    cfg = dict(social.DEFAULTS, min_revenue=0, max_age_days=10000, max_per_run=3, site_url="https://example.github.io/ff/")
+    items = []
+    for e in social.candidates(str(site), {"posted": {}}, cfg, today=dt.date(2026, 10, 2)):
+        c, q = social.quarter_of(str(site), e)
+        items.append((e, c, q, social.compose(c, q, cfg), list(zip(social.image_names(e, q, 2), [b"\x89PNG" + b"0" * 900_000] * 2))))
+    msg = social.build_email(items, cfg, "me@example.com", "me@example.com")
+    assert msg["Subject"].startswith("Filing Flows: 3 new charts ready to post")
+    html = msg.get_body(preferencelist=("html",)).get_content()
+    assert html.count("<pre") == sum(len(i[3]) for i in items) and "x.com/intent/post?text=" in html
+    assert len(list(msg.iter_attachments())) == 6
+    assert [len(b) for b in social.batches(items, max_bytes=2_000_000)] == [1, 1, 1]
+    sent = []
+
+    class FakeSMTP:
+        def __init__(self, host, port, timeout=None):
+            sent.append(host)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            pass
+
+        def login(self, u, p):
+            sent.append(u)
+
+        def send_message(self, m):
+            sent.append(m["To"])
+    real, smtplib.SMTP_SSL = smtplib.SMTP_SSL, FakeSMTP
+    try:
+        social.send_email(msg, "me@example.com", "app-password")
+    finally:
+        smtplib.SMTP_SSL = real
+    assert sent == ["smtp.gmail.com", "me@example.com", "me@example.com"]

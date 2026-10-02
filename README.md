@@ -44,6 +44,47 @@ re-enable it from the Actions tab or push any commit.
 Add its ticker to `config/starred.txt` (one per line) and commit. The next hourly run back-fills its last eight
 10-Q/10-K filings. The home page links to the file when the site runs on GitHub Pages.
 
+## New charts as ready-to-post X threads (by e-mail)
+
+Each new company quarter becomes a short X thread: headline figures with the chart (and the year-ago comparison
+chart), the company in its own words (10-K Item 1, quoted), the analysis, a quote from the filing about revenue,
+and the source (form, filing date, accession number). Everything comes from the site data; no language model
+writes any of it. Every post fits X's 280-character limit.
+
+By default the threads are **e-mailed** (one e-mail per hourly run that finds new charts): each post sits in its
+own block with its character count, the first post has an "Open in X" link that pre-fills it, and the chart images
+are attached. Post by hand; nothing is published automatically.
+
+Set up (Gmail):
+
+1. Turn on 2-Step Verification for the Google account, then create an app password at
+   myaccount.google.com/apppasswords (name it "Filing Flows").
+2. Add repository secrets `MAIL_USERNAME` (the Gmail address) and `MAIL_PASSWORD` (the 16-character app password,
+   without spaces). Optional: `MAIL_TO` to send to another address.
+
+Until the secrets exist, each run prints the threads it would send in the Actions log
+("Send new charts as X threads" step).
+
+Posting straight to X instead: set `"mode": "api"` in `config/x.json` and add `X_API_KEY`, `X_API_SECRET`,
+`X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET` (an app with Read and write permission at console.x.com). X's API is
+pay-per-use: $0.015 per post, $0.20 per post with a link (docs.x.com/x-api/getting-started/pricing).
+
+`config/x.json`
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `enabled` | `true` | master switch |
+| `mode` | `"email"` | `"email"` (send to yourself) or `"api"` (post through the X API) |
+| `scope` | `"all"` | `"all"` or `"starred"` (only companies in `config/starred.txt`) |
+| `min_revenue` | `1000000000` | only quarters with at least this revenue (USD); `0` for every company |
+| `max_per_run` | `4` | threads per hourly run |
+| `max_age_days` | `3` | skip filings older than this |
+| `preliminary` | `true` | include quarters read from 8-K earnings releases |
+| `include_link` | `false` | add a link to the chart page in the last post |
+| `images` | `["standard", "year_ago"]` | charts attached to the first post |
+
+A company quarter is sent once: when the 10-Q/10-K replaces an 8-K chart that was already sent, it is not sent again.
+
 ## How it works
 
 ```
@@ -72,6 +113,7 @@ EDGAR daily index (backfill)         ─┴─► pending queue (state.json)
 | `pipeline/model.py` | one consistent statement per quarter (derived operating profit, cost items, cash bridge) |
 | `pipeline/sankey.py` | chart spec in the standard format (profit view, loss "funding" view) |
 | `pipeline/release.py` | 8-K earnings releases: statement tables → quarter values (units, signs, YTD cash flow, reconciliation) |
+| `pipeline/social.py` | X threads: candidates, text (fits 280 characters), chart PNGs via headless Chromium, e-mail or X API |
 | `pipeline/text.py` | MD&A note matching and Item 1 introduction |
 | `pipeline/build.py` | `run` (scan + process + render) and `render` |
 | `web/sankey.js` | layout (column spacing from label widths, collision-free labels), SVG, canvas/PDF export |
