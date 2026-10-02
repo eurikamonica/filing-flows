@@ -33,6 +33,9 @@ def latest_filings(max_pages=10):
                 entries = _parse_atom(sec.get(sec.current_feed_url(form, start=page * 100)))
             except sec.NotFound:
                 break
+            except Exception as e:                                # keep going with what was found
+                print(f"  feed {form} page {page} failed: {e}")
+                break
             new = [e for e in entries if e["form"] in FORMS and e["accn"] not in seen]
             for e in new:
                 seen.add(e["accn"])
@@ -46,7 +49,10 @@ def daily_index(day):
     """All 10-Q/10-K filings listed in one day's form index (used for backfill)."""
     try:
         text = sec.get(sec.daily_index_url(day))
-    except sec.NotFound:
+    except sec.NotFound:                                          # today's index appears only after the day ends
+        return []
+    except Exception as e:
+        print(f"  daily index {day} failed: {e}")
         return []
     out = []
     for line in text.splitlines():

@@ -49,6 +49,15 @@ def get(url, binary=False):
             continue
         if r.status_code == 404:
             raise NotFound(url)
+        if r.status_code == 403:
+            body = r.text[:3000]
+            if "Request Rate Threshold" in body:              # SEC throttling: back off and retry
+                time.sleep(20 * (attempt + 1))
+                continue
+            if "Undeclared Automated Tool" in body:
+                raise SystemExit("SEC refused the request as an undeclared automated tool. "
+                                 "Check SEC_USER_AGENT: 'Your Name your@email.com' in plain ASCII.")
+            raise NotFound(url)                               # EDGAR answers 403 for files that do not exist (yet)
         if r.status_code in (429, 503) or r.status_code >= 500:
             time.sleep(5 * (attempt + 1))
             continue
