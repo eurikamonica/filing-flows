@@ -69,3 +69,22 @@ def test_fixture_run_renders_site(tmp_path):
     assert iphone["notes"][0]["text"].startswith("iPhone net sales increased")
     assert q["compare"]["vs"] == "Q2 FY26" and len(q["compare"]["bullets"]) == 3
     assert all(isinstance(p, str) and p for p in q["analysis"])
+
+
+def test_earnings_release_8k(tmp_path):
+    """Fictional companies EXDV / SMCL: quarter read from the press release tables, units, signs and YTD cash flow."""
+    env = dict(os.environ, SEC_FIXTURES=os.path.join(ROOT, "tests", "fixtures"), SEC_USER_AGENT="test test@example.com")
+    store = tmp_path / "store"
+    subprocess.run([sys.executable, "-m", "pipeline.build", "run", "--store", str(store), "--out", str(tmp_path / "data")],
+                   cwd=ROOT, env=env, check=True, capture_output=True)
+    x = json.load(open(store / "companies" / "9999901.json"))["quarters"]["2026-08-30"]
+    assert x["form"] == "8-K" and x["label"] == "Q4 FY26"
+    want = dict(revenue=5240, cor=2870, gp=2370, oi=1110, pretax=1097, tax=165, ni=932, ocf=1600, da=520, sbc=105, capex=1100)
+    assert all(abs(x["raw"][k] / 1e6 - v) < 0.01 for k, v in want.items())
+    s = json.load(open(store / "companies" / "9999902.json"))["quarters"]["2026-06-30"]
+    want = dict(revenue=412.5, oi=-41.1, pretax=-50.3, tax=1.2, pl=-51.5, ni=-51.0, nci=-0.5, ocf=36, capex=65)
+    assert all(abs(s["raw"][k] / 1e6 - v) < 0.01 for k, v in want.items())
+    seen = json.load(open(store / "state.json"))["seen"]
+    assert "0009999901-26-000046" not in seen                     # Item 5.02 8-K is never queued
+    page = json.load(open(tmp_path / "data" / "c" / "9999901.json"))["quarters"][0]
+    assert page["preliminary"] and "earnings release" in page["subtitle"]

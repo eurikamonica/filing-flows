@@ -5,6 +5,9 @@ income-statement and cash-flow Sankey in the *earnings-sankey* standard format: 
 gross profit / costs → operating profit → pre-tax → tax, minority interests, net earnings → operating cash flow.
 
 - **Every filing** with XBRL revenue and net income gets a chart (latest three quarters kept).
+- **Earnings releases (8-K, Item 2.02)** are read too, so a quarter appears days or weeks before its 10-Q/10-K.
+  The press release tables are read by fixed rules, checked against the previous quarter's XBRL and required to
+  reconcile; the chart is marked *preliminary* and is replaced automatically when the 10-Q/10-K is filed.
 - **Starred companies** (`config/starred.txt`) keep eight quarters and are back-filled from their filing history.
 - **Sector and industry charts** add up every company whose fiscal quarter ends in the same calendar quarter
   (SIC-code groups; the ten largest companies appear by name).
@@ -40,7 +43,7 @@ Add its ticker to `config/starred.txt` (one per line) and commit. The next hourl
 ## How it works
 
 ```
-EDGAR "getcurrent" feed (10-Q, 10-K) ─┐
+EDGAR "getcurrent" feed (10-Q, 10-K, 8-K) ─┐
 EDGAR daily index (backfill)         ─┴─► pending queue (state.json)
                                              │  retried hourly until XBRL facts appear (up to 24 h)
                                              ▼
@@ -64,6 +67,7 @@ EDGAR daily index (backfill)         ─┴─► pending queue (state.json)
 | `pipeline/dims.py` | revenue breakdown from the filing's XBRL instance |
 | `pipeline/model.py` | one consistent statement per quarter (derived operating profit, cost items, cash bridge) |
 | `pipeline/sankey.py` | chart spec in the standard format (profit view, loss "funding" view) |
+| `pipeline/release.py` | 8-K earnings releases: statement tables → quarter values (units, signs, YTD cash flow, reconciliation) |
 | `pipeline/text.py` | MD&A note matching and Item 1 introduction |
 | `pipeline/build.py` | `run` (scan + process + render) and `render` |
 | `web/sankey.js` | layout (column spacing from label widths, collision-free labels), SVG, canvas/PDF export |
@@ -80,7 +84,8 @@ python scripts/build_site.py --data _site/data --out _site
 python -m http.server -d _site 8000        # open http://localhost:8000
 ```
 
-Offline, with the bundled fixtures (Apple, Meta, CoreWeave, Berkshire Hathaway):
+Offline, with the bundled fixtures (Apple, Meta, CoreWeave, Berkshire Hathaway, plus two fictional companies that
+exercise the 8-K reader):
 
 ```bash
 SEC_FIXTURES=tests/fixtures SEC_USER_AGENT="test test@example.com" \

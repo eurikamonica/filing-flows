@@ -89,6 +89,19 @@ def value(facts, key, end):
     return max(vals) if vals else None
 
 
+def ytd_value(facts, key, end):
+    """Year-to-date value ending at `end` (the longest duration reported), e.g. nine months of cash flow."""
+    vals = []
+    for concept in CONCEPTS[key]:
+        at_end = [(s, f) for (s, e), f in facts.get(concept, {}).items() if e == end]
+        if at_end:
+            s0, f0 = min(at_end, key=lambda x: x[0])
+            if key not in MAX_KEYS:
+                return f0["val"]
+            vals.append(f0["val"])
+    return max(vals) if vals else None
+
+
 def period_ends(facts):
     ends = set()
     for concept in CONCEPTS["revenue"] + CONCEPTS["ni"] + CONCEPTS["oi"]:

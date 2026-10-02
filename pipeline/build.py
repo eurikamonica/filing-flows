@@ -11,7 +11,7 @@ import re
 import sys
 import traceback
 
-from . import analysis, dims, facts, scan, sec, sectors, text
+from . import analysis, dims, facts, release, scan, sec, sectors, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -113,6 +113,8 @@ def note_keys_for(lines_struct):
 
 
 def process_filing(store, cik, accn, form, starred=False):
+    if form.startswith("8-K"):
+        return process_release(store, cik, accn, form, starred)
     sub = submissions(cik)
     row = next((r for r in recent_rows(sub) if r["accessionNumber"] == accn), None)
     if not row or not row.get("reportDate"):
@@ -188,6 +190,103 @@ def process_filing(store, cik, accn, form, starred=False):
         "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm",
         "raw": raw, **comp, "lines_struct": lines_struct, "lines": lines_cur, "lines_py": lines_py, "notes": notes,
     }
+    e0 = dt.date.fromisoformat(end)                               # the 10-Q/10-K replaces a preliminary 8-K quarter
+    for k in [k for k, q in c["quarters"].items() if q.get("form") == "8-K" and k != end
+              and abs((dt.date.fromisoformat(k) - e0).days) <= 10]:
+        del c["quarters"][k]
+    keep = KEEP_STARRED if starred else KEEP_QUARTERS
+    c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
+    store.put(cik, c)
+    return end
+
+
+EXHIBIT_PATTERNS = (r"ex[-_]?99[-_.]?0?1(?!\d)", r"ex[-_]?99", r"press|release|earnings")
+
+
+def _exhibit(cik, accn, primary):
+    """File name of the press release (Exhibit 99.1) inside an 8-K filing."""
+    idx = sec.get_json(sec.filing_index_url(cik, accn))
+    names = [i["name"] for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)]
+    for pat in EXHIBIT_PATTERNS:
+        hits = [n for n in names if re.search(pat, n, re.I)]
+        if hits:
+            return hits[0]
+    rest = [n for n in names if n != primary and "index" not in n.lower()]
+    return rest[0] if rest else primary
+
+
+def _release_quarter(vals, quarterly, fx, q1_end, keys):
+    """Release values -> quarter values (cash flow tables are usually year-to-date)."""
+    out = {}
+    for k in keys:
+        v = vals.get(k)
+        if v is None:
+            continue
+        if k in release.COST_KEYS:
+            v = abs(v)
+        if quarterly:
+            out[k] = v
+        else:
+            prev = facts.ytd_value(fx, k, q1_end) if q1_end else None
+            if prev is not None:
+                out[k] = v - (abs(prev) if k in release.COST_KEYS else prev)
+    return out
+
+
+def process_release(store, cik, accn, form, starred=False):
+    """A preliminary quarter from an earnings release (8-K Item 2.02); the 10-Q/10-K replaces it when filed."""
+    sub = submissions(cik)
+    row = next((r for r in recent_rows(sub) if r["accessionNumber"] == accn), None)
+    if not row:
+        raise Pending("filing not yet in submissions")
+    if "2.02" not in (row.get("items") or ""):
+        raise NotApplicable("8-K without Item 2.02 (not an earnings release)")
+    fx = companyfacts(cik)
+    ends = facts.period_ends(fx)
+    if not ends:
+        raise NotApplicable("no earlier quarters in XBRL to check the release against")
+    last = dt.date.fromisoformat(ends[-1])
+    prior_rev = facts.value(fx, "revenue", ends[-1])
+    c = store.company(cik)
+    c["profile"] = profile_of(sub)
+    ex_name = _exhibit(cik, accn, row.get("primaryDocument"))
+    if not ex_name:
+        raise NotApplicable("no press release in the filing")
+    ex_url = sec.doc_url(cik, accn, ex_name)
+    doc = sec.get(ex_url)
+    try:
+        rel = release.parse(doc, dt.date.fromisoformat(row["filingDate"]), last, prior_rev)
+        end = rel["end"]
+        e0 = dt.date.fromisoformat(end)
+        if any(q.get("form") != "8-K" and abs((dt.date.fromisoformat(k) - e0).days) <= 10 for k, q in c["quarters"].items()):
+            raise NotApplicable("the 10-Q/10-K for this quarter is already in")
+        q1_end, py_end = facts.comparison_ends(fx, end)
+        label, fq, fy = facts.fiscal_label(end, c["profile"]["fye"])
+        if rel["is_quarter"] is False and fq != 1:
+            raise ValueError("the income statement shows year-to-date figures first")
+        raw = {k: None for k in facts.CONCEPTS}
+        raw.update(_release_quarter(rel["is"], True, fx, q1_end, release.IS_KEYS))
+        raw.update(_release_quarter(rel["cf"], rel["cf_quarter"] is True or fq == 1, fx, q1_end, release.CF_KEYS))
+        refs = [facts.value(fx, "tax", e) for e in (q1_end, py_end) if e]
+        checked = release.calibrate_tax(raw, rel["cols"], refs)
+        raw = release.reconcile(raw, rel["labels"], checked)
+    except ValueError as e:
+        raise NotApplicable(f"earnings release not readable: {e}")
+    if not normalize(raw):
+        raise NotApplicable("earnings release lacks revenue or net income")
+    notes = {}
+    paras = release.note_paragraphs(doc)
+    for key, words in note_keys_for(None).items():
+        m = text.match_notes(paras, words)
+        if m:
+            notes[key] = m
+    c["quarters"][end] = {
+        "end": end, "label": label, "fq": fq, "fy": fy, "cal": facts.calendar_quarter(end), "form": "8-K",
+        "accn": accn, "filed": row.get("filingDate"), "doc_url": ex_url,
+        "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", "raw": raw,
+        "q1_end": q1_end, "py_end": py_end, "raw_q1": facts.extract(fx, q1_end), "raw_py": facts.extract(fx, py_end),
+        "lines_struct": None, "lines": None, "lines_py": None, "notes": notes,
+    }
     keep = KEEP_STARRED if starred else KEEP_QUARTERS
     c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
     store.put(cik, c)
@@ -230,8 +329,11 @@ def run(args):
     if args.backfill_days:
         queue += scan.latest_filings()
     for f in queue:
+        if f["form"] == "8-K" and f.get("items") is not None and "2.02" not in f["items"]:
+            continue                                             # 8-K that is not an earnings release
         if f["accn"] not in st["seen"] and f["accn"] not in st["pending"] and not f["form"].endswith("/A"):
-            st["pending"][f["accn"]] = {"cik": f["cik"], "form": f["form"], "filed": f["filed"], "tries": 0}
+            st["pending"][f["accn"]] = {"cik": f["cik"], "form": f["form"], "filed": f["filed"], "tries": 0,
+                                        "items": f.get("items")}
     stars = starred_ciks()
     for cik in stars:                                            # multi-quarter history for starred companies
         try:
@@ -244,7 +346,9 @@ def run(args):
                     and r["accessionNumber"] not in st["seen"]:
                 st["pending"][r["accessionNumber"]] = {"cik": cik, "form": r["form"], "filed": r["filingDate"], "tries": 0}
     done = 0
-    for accn, p in sorted(st["pending"].items(), key=lambda kv: kv[1]["filed"], reverse=True):
+    order = sorted(st["pending"].items(), key=lambda kv: kv[1]["filed"], reverse=True)
+    order.sort(key=lambda kv: kv[1]["form"] == "8-K" and kv[1].get("items") is None)   # unclassified 8-Ks last
+    for accn, p in order:
         if done >= args.max_filings:
             break
         done += 1
@@ -282,8 +386,13 @@ SOURCE_NOTE = ("Source: SEC EDGAR XBRL data ({form} filed {filed}). Percentages 
                "it splits from or flows into. n/m = not meaningful (a comparison period was ≤ 0 or changed sign).")
 
 
+RELEASE_NOTE = ("Source: earnings release (8-K Exhibit 99.1, filed {filed}), read from its tables; earlier quarters from SEC EDGAR "
+                "XBRL data. Preliminary: replaced by the 10-Q/10-K when it is filed. Percentages show each item’s share of the node "
+                "it splits from or flows into. n/m = not meaningful (a comparison period was ≤ 0 or changed sign).")
+
+
 def _footer(q, kind, Nc):
-    lines = [SOURCE_NOTE.format(form=q["form"], filed=q["filed"])]
+    lines = [(RELEASE_NOTE if q["form"] == "8-K" else SOURCE_NOTE).format(form=q["form"], filed=q["filed"])]
     if "oi_derived" in Nc["flags"]:
         lines.append("Operating profit = revenue minus total costs and expenses (derived; the company does not tag operating income).")
     if kind == "loss":
@@ -309,10 +418,13 @@ def quarter_payload(c, q, prev_q):
         print(f"  spec without breakdown for {c['profile']['name']}: {e}", file=sys.stderr)
         ls = None
         nodes, links, kind = build_spec(Nc, Nq, Ny)
+    by_words = {tuple(v): k for k, v in NOTE_KEYS.items()}          # nodes carry search phrases; notes are keyed by name
+    notes = q.get("notes", {})
     for n in nodes:
-        for k in n.pop("notekeys"):
-            if k in q.get("notes", {}):
-                n["notes"] = q["notes"][k]
+        nk = n.pop("notekeys")
+        for k in list(nk) + [by_words.get(tuple(nk))]:
+            if k and k in notes:
+                n["notes"] = notes[k]
                 break
     f = Fmt(Nc["R"])
     labels = {e: x["label"] for e, x in c["quarters"].items()}
@@ -326,12 +438,12 @@ def quarter_payload(c, q, prev_q):
         compare = {"vs": q1_label, "title": f"{name} {q['label']} vs {q1_label}: what changed",
                    "bullets": analysis.compare_bullets(f, q1_label, Nc, Nq, ls, (q.get("lines"), lines_q1, None))}
     return {
-        "compare": compare,
+        "compare": compare, "preliminary": q["form"] == "8-K",
         "end": q["end"], "label": q["label"], "cal": q["cal"], "form": q["form"], "filed": q["filed"],
         "doc_url": q.get("doc_url"), "index_url": q.get("index_url"), "kind": kind,
         "title": f"{name} {q['label']} earnings &amp; cash flow",
         "subtitle": (f"Quarter ended {_date(q['end'])} · GAAP · Y/Y vs. {_short(q.get('py_end'))} "
-                     f"· Q/Q vs. {_short(q.get('q1_end'))}"),
+                     f"· Q/Q vs. {_short(q.get('q1_end'))}" + (" · preliminary, from the earnings release" if q["form"] == "8-K" else "")),
         "footer": _footer(q, kind, Nc), "nodes": nodes, "links": links,
         "analysis": analysis.paragraphs(f, q["label"], Nc, Nq, Ny, ls, (q.get("lines"), lines_q1, q.get("lines_py")),
                                         py_label=py_label),
@@ -391,7 +503,7 @@ def render(store, out, stars=frozenset()):
                       "cal": latest["cal"], "filed": latest["filed"], "form": latest["form"],
                       "rev": latest["headline"]["rev_fmt"], "revenue": latest["headline"]["revenue"],
                       "yoy": latest["headline"]["yoy"], "om": round(latest["headline"]["om"], 1),
-                      "starred": cik in stars, "kind": latest["kind"]})
+                      "starred": cik in stars, "kind": latest["kind"], "prelim": latest["form"] == "8-K"})
     agg_index = {"sector": [], "industry": []}
     for (level, gid), by_cal in groups.items():
         quarters = []

@@ -300,7 +300,7 @@
         n.at = best.pos;
         n.lr = best.r;
         done.push({ r: best.r, n });
-        if (best.hard > 0 || best.band) issues.push({ n, best });
+        if (best.hard > 0 || best.band) issues.push({ n, best, boxes });
       });
       return issues;
     }
@@ -314,7 +314,7 @@
         shift(target, dir * Math.min(Math.max(amt, 6), 240));
         moved = true;
       };
-      issues.forEach(({ n, best }) => {
+      issues.forEach(({ n, best, boxes }) => {
         const r = best.r;
         const other = best.withLabel || best.withBar;
         if (other) {
@@ -325,8 +325,20 @@
         }
         if (best.band) {
           const l = best.band.b.l, br = best.band.b.r;
-          if (n.light) away(n, r, br);
-          else {
+          if (n.light) {
+            // smallest vertical shift that clears every band (down first; up only while the column order holds)
+            const others = boxes.filter((b) => b.l.S !== n && b.l.T !== n);
+            const clear = (dy) => !others.some((b) => overlap([r[0], r[1] + dy, r[2], r[3]], b.r, 4));
+            const list = cols[n.col].slice().sort((a, b) => a.top + a.h / 2 - (b.top + b.h / 2));
+            const i = list.indexOf(n);
+            const floor = i > 0 ? footprint(list[i - 1])[1] + PAD : -Infinity;
+            let dy = null;
+            for (let k = 1; k <= 60 && dy === null; k++) {
+              if (clear(k * 6)) dy = k * 6;
+              else if (footprint(n)[0] - k * 6 >= floor && clear(-k * 6)) dy = -k * 6;
+            }
+            if (dy !== null) { shift(n, dy); moved = true; } else away(n, r, br);
+          } else {
             const src = l.S !== n && l.S.light && !l.S.ins.length ? l.S : l.T !== n && l.T.light && !l.T.outs.length ? l.T : null;
             if (src) {
               // pull the far end of the band towards the label's level so the band clears it

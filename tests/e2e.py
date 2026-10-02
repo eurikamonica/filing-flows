@@ -141,6 +141,18 @@ def main():
                 w, h = struct.unpack(">II", data[16:24])
                 if abs(w - 2 * W) > 2:
                     fails.append(f"export png width {w} != 2 x {W}")
+        # the export must contain the flows: count flow-coloured pixels on the exported canvas
+        px = pg.evaluate("""() => {
+          const sc = document.querySelector('.chart-ui').getScene();
+          const c = window.Sankey.toCanvas(sc, 1), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+          const want = [[217, 216, 211], [168, 209, 185], [246, 195, 184]];   // revenue, profit, cost flow colours
+          let n = 0;
+          for (let i = 0; i < d.length; i += 4) if (want.some(([r, g, b]) => Math.abs(d[i] - r) < 3 && Math.abs(d[i + 1] - g) < 3 && Math.abs(d[i + 2] - b) < 3)) n++;
+          return { n, total: c.width * c.height };
+        }""")
+        print(f"export flow pixels: {px['n']} of {px['total']}")
+        if px["n"] < 0.05 * px["total"]:
+            fails.append("export: flows missing from the exported image")
         # the exported scene must not contain screen-only shapes
         leaked = pg.evaluate("""() => {
           const c = document.createElement('canvas');

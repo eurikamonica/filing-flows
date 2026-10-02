@@ -43,6 +43,10 @@
   const calLabel = (cal) => (cal ? `Q${cal.slice(-1)} ${cal.slice(2, 6)}` : '');
   const accession = (url) => { const m = /(\d{10}-\d{2}-\d{6})-index/.exec(url || ''); return m ? m[1] : null; };
   const mdnaItem = (form) => (form === '10-K' ? 'Item 7' : 'Item 2');
+  // where node notes come from: the MD&A of a 10-Q/10-K, or the press release of an 8-K
+  const noteSource = (form) => (form === '8-K' ? 'the earnings release (8-K, Exhibit 99.1)'
+    : `the ${form} (${mdnaItem(form)}, Management’s Discussion and Analysis)`);
+  const prelimTag = '<span class="tag prelim" title="Read from the 8-K earnings release; replaced by the 10-Q/10-K when filed">Preliminary · 8-K</span>';
 
   let fontsP = null;
   function fontsReady() {
@@ -158,7 +162,7 @@
       }
       const withNotes = spec.nodes.filter((n) => n.notes).length;
       return `<div class="eyebrow">Notes from the filing</div>
-        <p class="hint"><span class="dot"></span><span>Click any node to read what ${t(ctx.company)} wrote about it in this ${t(ctx.form)}. A green dot marks the ${withNotes} line${withNotes === 1 ? '' : 's'} with their own passage in the MD&amp;A.</span></p>
+        <p class="hint"><span class="dot"></span><span>Click any node to read what ${t(ctx.company)} wrote about it in this ${ctx.form === '8-K' ? 'earnings release' : t(ctx.form)}. A green dot marks the ${withNotes} line${withNotes === 1 ? '' : 's'} with their own passage in ${ctx.form === '8-K' ? 'the release' : 'the MD&amp;A'}.</span></p>
         <p class="empty">Notes stay on the page: exported PNG, JPG and PDF files show the chart only.</p>`;
     }
     function nodeNotes(n) {
@@ -174,10 +178,10 @@
         const same = (h) => S.dec(h).trim().toLowerCase() === S.dec(n.name).trim().toLowerCase();
         body = n.notes.map((x) => `<blockquote>${x.heading && !same(x.heading) ? `<h4>${t(x.heading)}</h4>` : ''}${
           String(x.text).split(/\n\n+/).map((p) => `<p>${t(p)}</p>`).join('')}</blockquote>`).join('') +
-          `<div class="src">Quoted verbatim from the ${t(ctx.form)} (${mdnaItem(ctx.form)}, Management’s Discussion and Analysis)${
+          `<div class="src">Quoted verbatim from ${t(noteSource(ctx.form))}${
             ctx.docUrl ? ` · <a href="${t(ctx.docUrl)}" target="_blank" rel="noopener">open filing ↗</a>` : ''}</div>`;
       } else {
-        body = `<p class="empty">The ${t(ctx.form)} has no separate MD&amp;A passage about this line.</p>`;
+        body = `<p class="empty">${ctx.form === '8-K' ? 'The earnings release has no passage about this line.' : `The ${t(ctx.form)} has no separate MD&amp;A passage about this line.`}</p>`;
       }
       return `<div class="eyebrow">${ctx.group ? t(ctx.groupName) : t(ctx.company)} · ${t(ctx.label)}</div>
         <div class="k">${t(n.name)}</div><div class="v">${lines}</div>${body}
@@ -334,7 +338,7 @@
       const list = ix.companies.filter((c) => (!q || c.name.toLowerCase().includes(q) || (c.ticker || '').toLowerCase().startsWith(q)) &&
         (!sec || c.sector === sec) && (!form || c.form === form));
       $('#rows').innerHTML = list.slice(0, limit).map((c) => row(`c-${c.cik}`, [
-        `<td>${date(c.filed)}</td>`, companyCell(c), `<td>${t(c.label)}</td>`, `<td class="mono">${t(c.form)}</td>`,
+        `<td>${date(c.filed)}</td>`, companyCell(c), `<td>${t(c.label)}</td>`, `<td class="mono">${t(c.form)}${c.prelim ? ' <span class="tag prelim">prelim</span>' : ''}</td>`,
         `<td class="num">${t(c.rev)}</td>`, `<td class="num ${tone(c.yoy)}">${pct(c.yoy)}</td>`, `<td class="num">${margin(c.om)}</td>`,
         `<td>${t(sectors[c.sector] || '')}</td>`])).join('') || '<tr><td colspan="8" class="muted">No filings match.</td></tr>';
       $('#more').hidden = list.length <= limit;
@@ -363,14 +367,14 @@
         <h1>${t(p.name)}</h1>
         <div class="meta">
           ${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}${(p.exchanges || []).filter(Boolean).slice(0, 1).map((x) => `<span>${t(x)}</span>`).join('')}
-          ${c.starred ? '<span class="tag star">★ Starred · multi-quarter history</span>' : ''}
+          ${c.starred ? '<span class="tag star">★ Starred · multi-quarter history</span>' : ''}${q.form === '8-K' ? prelimTag : ''}
           <span>CIK <span class="mono">${p.cik}</span></span><span>SIC <span class="mono">${t(p.sic)}</span> ${t(p.industry)}</span>
           ${fye ? `<span>Fiscal year ends ${fye}</span>` : ''}${p.category ? `<span>${t(p.category)}</span>` : ''}
         </div>
         ${introHTML(c.intro)}
       </div>
       <div class="pills" role="tablist" aria-label="Quarter">
-        ${qs.map((x) => `<a class="pill ${!all && x === q ? 'on' : ''}" href="#c-${cik}-${x.end}">${t(x.label)}</a>`).join('')}
+        ${qs.map((x) => `<a class="pill ${!all && x === q ? 'on' : ''}" href="#c-${cik}-${x.end}">${t(x.label)}${x.form === '8-K' ? ' · 8-K' : ''}</a>`).join('')}
         ${qs.length > 1 ? `<a class="pill ${all ? 'on' : ''}" href="#c-${cik}-all">All ${qs.length} quarters</a>` : ''}
       </div>
       <div id="body"></div>`;
@@ -404,13 +408,14 @@
       <div class="prose">
         <h2>Filing</h2>
         <dl class="facts">
-          <dt>Form</dt><dd class="mono">${t(q.form)}</dd>
+          <dt>Form</dt><dd><span class="mono">${t(q.form)}</span>${q.form === '8-K' ? ' · Item 2.02 earnings release, preliminary until the 10-Q/10-K is filed' : ''}</dd>
           <dt>Period</dt><dd>${t(q.label)} · quarter ended ${date(q.end)} (calendar ${calLabel(q.cal)})</dd>
           <dt>Filed</dt><dd>${date(q.filed)}</dd>
           ${acc ? `<dt>Accession</dt><dd class="mono">${acc}</dd>` : ''}
-          <dt>Documents</dt><dd>${q.doc_url ? `<a href="${t(q.doc_url)}" target="_blank" rel="noopener">Report ↗</a> · ` : ''}${
+          <dt>Documents</dt><dd>${q.doc_url ? `<a href="${t(q.doc_url)}" target="_blank" rel="noopener">${q.form === '8-K' ? 'Press release' : 'Report'} ↗</a> · ` : ''}${
             q.index_url ? `<a href="${t(q.index_url)}" target="_blank" rel="noopener">Filing index ↗</a>` : `<a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${p.cik}&type=10-&dateb=&owner=include&count=40" target="_blank" rel="noopener">EDGAR filings ↗</a>`}</dd>
-          <dt>Data</dt><dd>XBRL company facts; revenue lines from the filing’s own XBRL instance</dd>
+          <dt>Data</dt><dd>${q.form === '8-K' ? 'This quarter read from the tables in the press release (Exhibit 99.1); earlier quarters from XBRL company facts'
+            : 'XBRL company facts; revenue lines from the filing’s own XBRL instance'}</dd>
         </dl>
       </div>`;
     body.appendChild(text);
@@ -527,6 +532,8 @@
       <div class="cols"><div class="prose">
         <h2>Scanning</h2>
         <p>Every hour a scheduled job reads EDGAR’s live feed of new 10-Q and 10-K filings (plus the daily index as a fallback). Each new filing is processed once its XBRL data appears in the SEC’s company-facts API, which can lag the filing by a few hours; until then it waits in a retry queue.</p>
+        <h2>Earnings releases (8-K)</h2>
+        <p>Most companies publish results in an 8-K press release days or weeks before the 10-Q or 10-K. The scan also reads 8-K filings with Item 2.02 (results of operations): the statements printed in the release are read by fixed rules, units are checked against the previous quarter in XBRL, and the figures must reconcile before they are drawn. These charts are marked preliminary and are replaced automatically when the 10-Q or 10-K arrives.</p>
         <h2>Numbers</h2>
         <p>All figures are GAAP values reported in XBRL. A quarter is taken directly when a three-month value exists; otherwise it is year-to-date minus the prior year-to-date, which is how fourth quarters (10-K) and all quarterly cash flows are derived. Revenue lines and segments come from the dimensional facts in the filing’s own XBRL instance and are used only when they add up to total revenue.</p>
         <h2>Layout</h2>

@@ -33,7 +33,8 @@ def facts_json(cik, name, periods):
 
 
 def submissions(cik, name, tickers, sic, sic_desc, fye, rows):
-    keys = ["accessionNumber", "filingDate", "reportDate", "form", "primaryDocument"]
+    keys = ["accessionNumber", "filingDate", "reportDate", "form", "primaryDocument", "items"]
+    rows = [list(r) + [""] * (len(keys) - len(r)) for r in rows]
     return {"cik": str(cik), "name": name, "tickers": tickers, "exchanges": ["Nasdaq"], "sic": sic,
             "sicDescription": sic_desc, "fiscalYearEnd": fye, "stateOfIncorporation": "", "category": "Large accelerated filer",
             "filings": {"recent": {k: [r[i] for r in rows] for i, k in enumerate(keys)}}}
@@ -42,10 +43,10 @@ def submissions(cik, name, tickers, sic, sic_desc, fye, rows):
 def atom(entries):
     body = "".join(
         f"<entry><title>{form} - {name} ({cik:010d}) (Filer)</title>"
-        f"<summary type=\"html\"> &lt;b&gt;Filed:&lt;/b&gt; {filed} &lt;b&gt;AccNo:&lt;/b&gt; {accn}</summary>"
+        f"<summary type=\"html\"> &lt;b&gt;Filed:&lt;/b&gt; {filed} &lt;b&gt;AccNo:&lt;/b&gt; {accn}{items}</summary>"
         f"<updated>{filed}T16:05:00-04:00</updated><category scheme=\"https://www.sec.gov/\" label=\"form type\" term=\"{form}\"/>"
         f"<id>urn:tag:sec.gov,2008:accession-number={accn}</id></entry>"
-        for form, name, cik, accn, filed in entries)
+        for form, name, cik, accn, filed, *rest in entries for items in [rest[0] if rest else ""])
     return f'<?xml version="1.0" encoding="ISO-8859-1" ?><feed xmlns="http://www.w3.org/2005/Atom">{body}</feed>'
 
 
@@ -225,7 +226,133 @@ put(sec.current_feed_url("10-Q", 0), atom([
     ("10-Q", "CoreWeave, Inc.", CRWV, C_Q2, "2026-08-12"), ("10-Q", "Berkshire Hathaway Inc.", BRK, B_Q2, "2026-08-03"),
     ("10-Q", "Apple Inc.", AAPL, A_Q3, "2026-07-31"), ("10-Q", "Meta Platforms, Inc.", META, M_Q2, "2026-07-30")]))
 put(sec.current_feed_url("10-K", 0), atom([]))
+
+# ------------------------------------------------------------------ FICTIONAL companies for the 8-K earnings-release reader
+# Not real data: two invented companies whose press releases imitate common EDGAR table layouts
+# ($ and ")" in separate cells, millions vs thousands, losses, minority interests, year-to-date cash flow).
+
+def money_cells(v):
+    if v is None:
+        return "<td></td><td>—</td><td></td>"
+    if v < 0:
+        return f"<td>$</td><td style=\"text-align:right\">({-v:,.0f}</td><td>)</td>"
+    return f"<td>$</td><td style=\"text-align:right\">{v:,.0f}</td><td></td>"
+
+
+def table(head_rows, rows):
+    head = "".join("<tr>" + "".join(f"<td colspan=\"{span}\"><b>{t}</b></td>" for t, span in hr) + "</tr>" for hr in head_rows)
+    body = "".join(f"<tr><td>{lab}</td>" + ("".join(money_cells(v) for v in vals) if vals else "") + "</tr>" for lab, vals in rows)
+    return f"<table>{head}{body}</table>"
+
+
+def release_doc(paras, tables):
+    return ("<html><body>" + "".join(f"<p>{p}</p>" for p in paras) +
+            "".join(f"<p><b>{title}</b></p><p>{unit}</p>{t}" for title, unit, t in tables) + "</body></html>")
+
+
+EXDV, SMCL = 9999901, 9999902
+X_8K, X_8K_OTHER, X_Q3 = "0009999901-26-000045", "0009999901-26-000046", "0009999901-26-000030"
+x_is = ["Revenues", "CostOfGoodsAndServicesSold", "GrossProfit", "ResearchAndDevelopmentExpense",
+        "SellingGeneralAndAdministrativeExpense", "OperatingIncomeLoss",
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+        "IncomeTaxExpenseBenefit", "NetIncomeLoss"]
+x_isv = {("2026-03-01", "2026-05-31"): [4610, 2610, 2000, 790, 400, 800, 777, 120, 657],
+         ("2024-09-01", "2025-05-31"): [11300, 6700, 4600, 2000, 1100, 1450, 1400, 200, 1200],
+         ("2024-09-01", "2025-08-31"): [15200, 9000, 6200, 2700, 1480, 1950, 1874, 270, 1604]}
+x_cfv = {("2025-09-01", "2026-05-31"): [4000, 1480, 295, 2900], ("2025-09-01", "2026-02-28"): [2700, 960, 190, 1900],
+         ("2024-09-01", "2025-08-31"): [4200, 1600, 320, 3000], ("2024-09-01", "2025-05-31"): [3000, 1190, 240, 2200]}
+xp = [(st, en, X_Q3, "10-Q", "2026-06-26", dict(zip(x_is, v))) for (st, en), v in x_isv.items()]
+xp += [(st, en, X_Q3, "10-Q", "2026-06-26", dict(zip(CF, v))) for (st, en), v in x_cfv.items()]
+put(sec.companyfacts_url(EXDV), facts_json(EXDV, "Example Devices Inc.", xp))
+put(sec.submissions_url(EXDV), submissions(EXDV, "Example Devices Inc.", ["EXDV"], "3674",
+    "Semiconductors & Related Devices", "0830", [
+        [X_8K_OTHER, "2026-09-28", "2026-09-25", "8-K", "exdv-20260925.htm", "5.02"],
+        [X_8K, "2026-09-24", "2026-09-24", "8-K", "exdv-20260924.htm", "2.02,9.01"],
+        [X_Q3, "2026-06-26", "2026-05-31", "10-Q", "exdv-20260531.htm", ""]]))
+put(sec.filing_index_url(EXDV, X_8K), {"directory": {"item": [
+    {"name": f"{X_8K}-index.htm"}, {"name": "exdv-20260924.htm"}, {"name": "exdv-20260924xex991.htm"}]}})
+x_head = [[("", 1), ("Three Months Ended", 9), ("Twelve Months Ended", 6)],
+          [("", 1), ("Aug 30, 2026", 3), ("May 31, 2026", 3), ("Aug 31, 2025", 3), ("Aug 30, 2026", 3), ("Aug 31, 2025", 3)]]
+put(sec.doc_url(EXDV, X_8K, "exdv-20260924xex991.htm"), release_doc([
+    "Example Devices Inc. Reports Results for the Fourth Quarter and Full Year of Fiscal 2026",
+    "Example Devices Inc. today announced results for its fourth quarter and full fiscal year 2026, which ended August 30, 2026.",
+    "Revenue of $5.24 billion versus $4.61 billion for the prior quarter and $3.90 billion for the same period last year, driven by higher volumes of data-center products.",
+    "Gross margin of 45.2 percent, up from 43.4 percent in the prior quarter, reflecting improved pricing and a richer product mix.",
+    "Operating cash flow of $1.60 billion versus $1.30 billion for the prior quarter, as receivables collections improved.",
+], [
+    ("Highlights", "(in millions, except per share amounts)", table(
+        [[("", 1), ("FQ4-26", 3), ("FQ3-26", 3), ("FQ4-25", 3)]],
+        [("Revenue", [5240, 4610, 3900]), ("Operating income", [1110, 800, 500]), ("Net income", [932, 657, 404])])),
+    ("Consolidated Statements of Operations", "(in millions, except per share amounts)", table(x_head, [
+        ("Net sales", [5240, 4610, 3900, 18300, 15200]), ("Cost of goods sold", [2870, 2610, 2300, 10300, 9000]),
+        ("Gross margin", [2370, 2000, 1600, 8000, 6200]), ("Research and development", [820, 790, 700, 3150, 2700]),
+        ("Selling, general, and administrative", [410, 400, 380, 1590, 1480]),
+        ("Restructure and asset impairments", [30, 10, 20, 60, 70]), ("Operating income", [1110, 800, 500, 3200, 1950]),
+        ("Interest income (expense), net", [-25, -28, -30, -110, -120]),
+        ("Other non-operating income (expense), net", [12, 5, 4, 30, 44]),
+        ("Income before income taxes", [1097, 777, 474, 3120, 1874]),
+        ("Income tax (provision) benefit", [-165, -120, -70, -480, -270]), ("Net income", [932, 657, 404, 2640, 1604]),
+        ("Earnings per share", None), ("Basic", [0.83, 0.59, 0.36, 2.36, 1.43]), ("Diluted", [0.82, 0.58, 0.36, 2.34, 1.42])])),
+    ("Consolidated Statements of Cash Flows", "(in millions)", table(
+        [[("", 1), ("Twelve Months Ended", 6)], [("", 1), ("Aug 30, 2026", 3), ("Aug 31, 2025", 3)]], [
+        ("Cash flows from operating activities", None), ("Net income", [2640, 1604]),
+        ("Depreciation expense and amortization of intangible assets", [2000, 1600]), ("Stock-based compensation", [400, 320]),
+        ("Net cash provided by operating activities", [5600, 4200]), ("Cash flows from investing activities", None),
+        ("Expenditures for property, plant, and equipment", [-4000, -3000]), ("Net cash used for investing activities", [-3900, -2950])])),
+    ("Reconciliation of GAAP to Non-GAAP Financial Measures", "(in millions)", table(
+        [[("", 1), ("FQ4-26", 3)]], [("GAAP gross margin", [2370]), ("Stock-based compensation", [25]), ("Non-GAAP gross margin", [2395]),
+                                     ("GAAP net income", [932]), ("Non-GAAP net income", [990])])),
+]))
+
+S_8K, S_Q1 = "0009999902-26-000021", "0009999902-26-000012"
+s_is = ["Revenues", "CostOfRevenue", "GrossProfit", "ResearchAndDevelopmentExpense", "SellingAndMarketingExpense",
+        "GeneralAndAdministrativeExpense", "OperatingIncomeLoss",
+        "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+        "IncomeTaxExpenseBenefit", "ProfitLoss", "NetIncomeLoss"]
+s_isv = {("2026-01-01", "2026-03-31"): [380, 236, 144, 95, 58, 44, -53, -61, 1.0, -62, -61.6],
+         ("2025-04-01", "2025-06-30"): [300, 195, 105, 85, 50, 40, -70, -76, 0.8, -76.8, -76.5]}
+s_cfv = {("2026-01-01", "2026-03-31"): [25, 42, 19, 55], ("2025-01-01", "2025-06-30"): [30, 70, 30, 90],
+         ("2025-01-01", "2025-03-31"): [10, 34, 14, 40]}
+sp = [(st, en, S_Q1, "10-Q", "2026-05-07", dict(zip(s_is, v))) for (st, en), v in s_isv.items()]
+sp += [(st, en, S_Q1, "10-Q", "2026-05-07", dict(zip(CF, v))) for (st, en), v in s_cfv.items()]
+put(sec.companyfacts_url(SMCL), facts_json(SMCL, "Sample Cloud Holdings, Inc.", sp))
+put(sec.submissions_url(SMCL), submissions(SMCL, "Sample Cloud Holdings, Inc.", ["SMCL"], "7372",
+    "Services-Prepackaged Software", "1231", [
+        [S_8K, "2026-08-05", "2026-08-05", "8-K", "smcl-8k_20260805.htm", "2.02,9.01"],
+        [S_Q1, "2026-05-07", "2026-03-31", "10-Q", "smcl-20260331.htm", ""]]))
+put(sec.filing_index_url(SMCL, S_8K), {"directory": {"item": [{"name": "smcl-8k_20260805.htm"}, {"name": "ex99-1.htm"}]}})
+put(sec.doc_url(SMCL, S_8K, "ex99-1.htm"), release_doc([
+    "Sample Cloud Holdings Announces Second Quarter 2026 Results",
+    "Sample Cloud Holdings, Inc. today reported financial results for the second quarter ended June 30, 2026.",
+    "Revenue grew 38% year over year to $412.5 million, led by new enterprise customers on the analytics platform.",
+    "Net loss was $51.5 million, compared with a net loss of $76.8 million in the second quarter of 2025.",
+], [
+    ("Condensed Consolidated Statements of Operations", "(Unaudited; in thousands, except per share data)", table(
+        [[("", 1), ("Three Months Ended June 30,", 6), ("Six Months Ended June 30,", 6)],
+         [("", 1), ("2026", 3), ("2025", 3), ("2026", 3), ("2025", 3)]], [
+        ("Revenue", [412500, 300000, 792500, 560000]), ("Cost of revenue", [250100, 195000, 486100, 370000]),
+        ("Gross profit", [162400, 105000, 306400, 190000]), ("Operating expenses:", None),
+        ("Technology and development", [98000, 85000, 193000, 168000]), ("Sales and marketing", [60200, 50000, 118200, 98000]),
+        ("General and administrative", [45300, 40000, 89300, 79000]), ("Total operating expenses", [203500, 175000, 400500, 345000]),
+        ("Loss from operations", [-41100, -70000, -94100, -155000]), ("Interest expense", [-12400, -8000, -24000, -15000]),
+        ("Other income, net", [3200, 2000, 5100, 3500]), ("Loss before income taxes", [-50300, -76000, -113000, -166500]),
+        ("Provision for income taxes", [1200, 800, 2200, 1500]), ("Net loss", [-51500, -76800, -115200, -168000]),
+        ("Net loss attributable to noncontrolling interests", [-500, -300, -900, -600]),
+        ("Net loss attributable to Sample Cloud Holdings, Inc.", [-51000, -76500, -114300, -167400])])),
+    ("Condensed Consolidated Statements of Cash Flows", "(Unaudited; in thousands)", table(
+        [[("", 1), ("Six Months Ended June 30,", 6)], [("", 1), ("2026", 3), ("2025", 3)]], [
+        ("Net loss", [-115200, -168000]), ("Depreciation and amortization", [88000, 70000]),
+        ("Stock-based compensation", [40000, 30000]), ("Net cash provided by operating activities", [61000, 30000]),
+        ("Purchases of property and equipment", [-120000, -90000])])),
+]))
+
+put(sec.current_feed_url("8-K", 0), atom([
+    ("8-K", "Example Devices Inc.", EXDV, X_8K_OTHER, "2026-09-28", " &lt;br&gt;Item 5.02: Departure of Directors"),
+    ("8-K", "Example Devices Inc.", EXDV, X_8K, "2026-09-24",
+     " &lt;br&gt;Item 2.02: Results of Operations and Financial Condition &lt;br&gt;Item 9.01: Financial Statements and Exhibits"),
+    ("8-K", "Sample Cloud Holdings, Inc.", SMCL, S_8K, "2026-08-05")]))           # no item text: checked via submissions
 put("https://www.sec.gov/files/company_tickers.json", {
     "0": {"cik_str": AAPL, "ticker": "AAPL", "title": "Apple Inc."}, "1": {"cik_str": META, "ticker": "META", "title": "Meta"},
-    "2": {"cik_str": CRWV, "ticker": "CRWV", "title": "CoreWeave"}, "3": {"cik_str": BRK, "ticker": "BRK-B", "title": "Berkshire"}})
+    "2": {"cik_str": CRWV, "ticker": "CRWV", "title": "CoreWeave"}, "3": {"cik_str": BRK, "ticker": "BRK-B", "title": "Berkshire"},
+    "4": {"cik_str": EXDV, "ticker": "EXDV", "title": "Example Devices"}, "5": {"cik_str": SMCL, "ticker": "SMCL", "title": "Sample Cloud"}})
 print("fixtures written to", OUT)
