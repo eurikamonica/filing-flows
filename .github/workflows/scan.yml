@@ -64,12 +64,14 @@ jobs:
       - name: Save the data store
         if: always()
         run: |
+          [ -d store/.git ] || exit 0          # nothing to save when an earlier step stopped the run
           cd store
           git add -A
           git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" \
             commit --quiet --amend -m "data $(date -u +%Y-%m-%dT%H:%MZ)" \
           || git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" \
             commit --quiet -m "data $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git rev-parse --verify --quiet HEAD >/dev/null || exit 0   # nothing was stored yet
           git push --quiet --force origin HEAD:data
 
       - name: Assemble site
