@@ -1,6 +1,6 @@
 # Filing Flows
 
-A static website that scans SEC EDGAR every hour for new 10-Q and 10-K filings and draws each one as an
+A static website that scans SEC EDGAR every 15 minutes for new 10-Q and 10-K filings and draws each one as an
 income-statement and cash-flow Sankey in the *earnings-sankey* standard format: revenue lines → revenue →
 gross profit / costs → operating profit → pre-tax → tax, minority interests, net earnings → operating cash flow.
 
@@ -11,8 +11,14 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
 - **Starred companies** (`config/starred.txt`) keep eight quarters and are back-filled from their filing history.
 - **Sector and industry charts** add up every company whose fiscal quarter ends in the same calendar quarter
   (SIC-code groups; the ten largest companies appear by name).
-- **Click any node** to read what the company wrote about that line in the same filing (MD&A paragraphs, quoted
-  verbatim). Company pages open with the first paragraphs of Item 1 *Business* from the latest 10-K.
+- **Free cash flow**: operating cash flow splits into capital expenditures and free cash flow. When capex is larger
+  than operating cash flow, all of it goes to capex and the gap enters as *Negative free cash flow* (paid from cash or
+  financing), so no band ever has a negative width.
+- **Click any node** for a small chart of that line over the last five quarters on file (amount as columns, change
+  against a year earlier as a line; hover a quarter for its figures), and for what the company wrote about that line in the same filing (MD&A paragraphs, quoted
+  verbatim). Company pages open with the first paragraphs of Item 1 *Business* from the latest 10-K; a company
+  without a 10-K yet (a recent listing) gets the "About …" paragraph of its earnings release, or else the description
+  of business in Note 1 of its 10-Q, labelled with where it came from.
 - **Analysis paragraphs** are written by fixed rules from the numbers. No language model is used anywhere.
 - **Comparison views**, vs the previous quarter and vs the same quarter a year earlier: the same chart with a dark
   strip on every band that grew and a `Δ = scale + mix` line per node. **Show decreases** (off by default) also draws
@@ -45,7 +51,8 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
    (rather than a variable) keeps the email out of the public Actions logs.
 4. **Actions → Scan EDGAR and publish → Run workflow.** For the first run set `backfill_days` to 3–7 so the
    site starts with recent filings instead of only the last hour.
-5. The workflow then runs every hour (`17 * * * *`). The site is at `https://<user>.github.io/<repo>/`.
+5. The workflow then runs every 15 minutes (`4,19,34,49 * * * *`; GitHub often starts scheduled runs 5–20 minutes late
+   and skips some when busy: see *Scan more often* below). The site is at `https://<user>.github.io/<repo>/`.
 
 State (which filings were seen, the per-company data) lives on a `data` branch that the workflow rewrites as a
 single commit each run, so `main` history stays clean. Delete the branch to start over.
@@ -53,9 +60,32 @@ single commit each run, so `main` history stays clean. Delete the branch to star
 GitHub disables scheduled workflows in public repositories after 60 days without activity on the default branch;
 re-enable it from the Actions tab or push any commit.
 
+### Scan more often
+
+The workflow is scheduled every 15 minutes, but GitHub starts scheduled runs late (often 5–20 minutes) and skips some
+when it is busy. For runs on time, let Supabase's clock start them (free plan included):
+
+1. A fine-grained GitHub token (Settings → Developer settings → Fine-grained tokens): only this repository, permission
+   *Contents: Read and write*. The token from the optional wake-up below works too.
+2. Supabase → **Database → Extensions**: enable `pg_net` and `pg_cron`. Run `supabase/schema.sql` again (it adds the
+   function `github_dispatch`, which only the database itself may call).
+3. SQL Editor (leave out the first two lines if the wake-up secrets already exist):
+
+```sql
+select vault.create_secret('github_pat_…', 'github_dispatch_token');
+select vault.create_secret('<user>/<repo>', 'github_repo');
+select cron.schedule('filing-flows-scan', '*/10 * * * *', $$select public.github_dispatch('scan')$$);
+```
+
+Runs started this way show as *repository_dispatch* on the Actions page. Stop with
+`select cron.unschedule('filing-flows-scan');`. A run that is still busy when the next one is due simply makes the next
+one wait. Faster scans mostly help earnings releases (8-K), which are read straight from the press release; a 10-Q/10-K
+still waits for SEC's XBRL data, which can lag the filing by hours (retried every scan for up to 24 hours). Readers on
+"as soon as a chart is out" get one e-mail per run that finds new charts for them.
+
 ### Star a company
 
-Add its ticker to `config/starred.txt` (one per line) and commit. The next hourly run back-fills its last eight
+Add its ticker to `config/starred.txt` (one per line) and commit. The next run back-fills its last eight
 10-Q/10-K filings. The home page links to the file when the site runs on GitHub Pages.
 
 ## New charts as ready-to-post X threads (by e-mail)
@@ -65,7 +95,7 @@ chart), the company in its own words (10-K Item 1, quoted), the analysis, a quot
 and the source (form, filing date, accession number). Everything comes from the site data; no language model
 writes any of it. Every post fits X's 280-character limit.
 
-By default the threads are **e-mailed** (one e-mail per hourly run that finds new charts): each post sits in its
+By default the threads are **e-mailed** (one e-mail per run that finds new charts): each post sits in its
 own block with its character count, the first post has an "Open in X" link that pre-fills it, and the chart images
 are attached. Post by hand; nothing is published automatically.
 
@@ -78,7 +108,11 @@ Set up (Gmail):
 
 Company pages can also show the quarter's thread with Copy buttons and an **Email me this thread** button. It is an
 owner tool, hidden from readers: open `https://<you>.github.io/<repo>/#owner` once in each browser you use and turn it
-on (the setting stays in that browser). The
+on (the setting stays in that browser). With accounts switched on, only addresses on the owner list can do that: run
+`insert into public.site_owners (email) values ('you@example.com');` once in the Supabase SQL Editor (after
+`supabase/schema.sql`) and sign in with that address. The list cannot be read through the site. The thread text
+itself is built from public filings and sits in the site's public data files; the gate keeps the tools off readers'
+pages. The
 site is static, so the button opens a pre-filled GitHub issue; when you (the repository owner) press Create, the
 workflow `.github/workflows/email-thread.yml` e-mails that quarter's thread with both charts and closes the issue.
 Issues opened by anyone else are ignored.
@@ -98,7 +132,7 @@ pay-per-use: $0.015 per post, $0.20 per post with a link (docs.x.com/x-api/getti
 | `mode` | `"email"` | `"email"` (send to yourself) or `"api"` (post through the X API) |
 | `scope` | `"all"` | `"all"` or `"starred"` (only companies in `config/starred.txt`) |
 | `min_revenue` | `1000000000` | only quarters with at least this revenue (USD); `0` for every company |
-| `max_per_run` | `4` | threads per hourly run |
+| `max_per_run` | `4` | threads per run |
 | `max_age_days` | `3` | skip filings older than this |
 | `preliminary` | `true` | include quarters read from 8-K earnings releases |
 | `include_link` | `false` | add a link to the chart page in the last post |
@@ -110,7 +144,7 @@ A company quarter is sent once: when the 10-Q/10-K replaces an 8-K chart that wa
 
 Readers sign up with their e-mail address only: the site sends a 6-digit code, they type it in, done (no password).
 On the **Alerts** page they choose companies (or press **☆ Follow** on any company or sector page), sectors, "every
-company above $X billion of revenue" or the starred list, and how often: as soon as a chart is out (checked hourly)
+company above $X billion of revenue" or the starred list, and how often: as soon as a chart is out (checked every 15 minutes)
 or one digest a day. Each alert e-mail carries the chart itself, the headline figures, the analysis, what changed
 against the year-ago quarter, a quote from the filing, and links to the interactive chart and the filing.
 Every e-mail has an unsubscribe link; the Alerts page also has **Delete my account**.
@@ -127,8 +161,10 @@ Every e-mail has an unsubscribe link; the Alerts page also has **Delete my accou
 
 - **Compare any two periods** (Alerts → *On company pages*, off by default): see the feature list above. At most
   20 comparisons a day per reader; needs `requests.yml` and the `SEC_USER_AGENT` secret, which it shares with the scan.
-- **Build a company** from the search: at most 10 a day per reader. `requests.yml` starts the scan straight away
-  (it has `actions: write` for that); otherwise the next hourly scan picks it up.
+- **Build a company** from the search: at most 10 a day per reader, and at most 25 companies per scan for all readers
+  together (the rest wait for the next scan). `requests.yml` starts the scan straight away (it has `actions: write`
+  for that); otherwise the next scan picks it up. The site owner can skip the sign-in: **Actions → Scan EDGAR
+  and publish → Run workflow → companies** = `MS, GS` (tickers or CIKs), or add tickers to `config/starred.txt`.
 
 - **Preliminary, then final.** A quarter read from an 8-K earnings release is sent as *preliminary*. When the
   10-Q/10-K replaces it, the final version is sent too (setting on by default, can be turned off), marked *final*,
@@ -169,7 +205,7 @@ Optional variables: `CONTACT_EMAIL` (shown on the privacy and terms pages; other
 provider, e.g. Resend: `smtp.resend.com`, `465`, user `resend`, password = API key), `MAIL_DAILY_LIMIT` (default 400),
 `DIGEST_HOUR_UTC` (default 22, about 6 pm in New York), `SITE_URL` (a custom domain).
 
-After the next hourly run the sign-up box appears on the home page, and the **alerts** job of the workflow sends the
+After the next run the sign-up box appears on the home page, and the **alerts** job of the workflow sends the
 e-mails right after each deploy. Upload `.github/workflows/requests.yml` as well for **Email me**, **Compare any two
 periods** and **Build its charts**.
 
@@ -245,7 +281,7 @@ first time the reader follows something in the app.
 ```
 EDGAR "getcurrent" feed (10-Q, 10-K, 8-K) ─┐
 EDGAR daily index (backfill)         ─┴─► pending queue (state.json)
-                                             │  retried hourly until XBRL facts appear (up to 24 h)
+                                             │  retried every scan until XBRL facts appear (up to 24 h)
                                              ▼
    data.sec.gov/submissions  ──► profile, SIC sector, period end, primary document
    data.sec.gov/companyfacts ──► quarter values (3-month facts, or YTD − prior YTD)
@@ -307,7 +343,13 @@ python tests/e2e.py /tmp/site --shots /tmp/shots   # browser test (needs: pip in
 - Operating profit is derived as revenue minus total costs when a company does not tag it (noted in the footer).
 - Quarterly cash flows, and every fourth quarter from a 10-K, are year-to-date minus the prior year-to-date.
 - Working capital & other = operating cash flow minus net earnings and the listed non-cash items.
-- FCF = operating cash flow minus capital expenditures (companies' own FCF definitions may differ).
+- Capital expenditures: the company's own cash-flow line, from SEC's standard XBRL tags (the general ones, then those
+  oil & gas, real-estate and utility filers use; the largest when several are tagged, so a small sub-line is never
+  taken for the total); when none is tagged, the filing's own XBRL is searched for the line by its printed name
+  ("Purchases of property and equipment", "Capital expenditures" ...), which also finds company-specific tags.
+  Clicking the Capex node shows the line and the tag used.
+- FCF = operating cash flow minus capital expenditures; asset-sale proceeds and finance-lease repayments are not netted
+  (companies' own FCF definitions may differ).
 - Comparison view: band width is the current quarter; the dark strip is the increase since the previous quarter.
   A requested comparison works the same way: band width is the first period, the strip the increase over the second.
   With *Show decreases*, every band and node keeps room for its larger value of the two quarters, and the part the

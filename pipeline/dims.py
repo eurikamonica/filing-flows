@@ -51,6 +51,132 @@ def parse_labels(xml_text):
     return out
 
 
+def label_roles(xml_text):
+    """element id (e.g. 'us-gaap_PaymentsToAcquirePropertyPlantAndEquipment') -> {label role (short): text}."""
+    root = ET.fromstring(xml_text.encode() if isinstance(xml_text, str) else xml_text)
+    xl = "{http://www.w3.org/1999/xlink}"
+    loc, res, out = {}, {}, {}
+    arcs = []
+    for el in root.iter():
+        name = _local(el.tag)
+        if name == "loc":
+            loc[el.get(xl + "label")] = el.get(xl + "href", "").split("#")[-1]
+        elif name == "label":
+            res.setdefault(el.get(xl + "label"), []).append((el.get(xl + "role", "").rsplit("/", 1)[-1], (el.text or "").strip()))
+        elif name == "labelArc":
+            arcs.append((el.get(xl + "from"), el.get(xl + "to")))
+    for frm, to in arcs:
+        elid = loc.get(frm)
+        if elid:
+            out.setdefault(elid, {}).update({r: t for r, t in res.get(to, []) if t})
+    return out
+
+
+def statement_label(roles):
+    """The line name as printed in the statement: the negated or terse label, else the standard one."""
+    for r in ("negatedLabel", "negatedTerseLabel", "terseLabel", "label"):
+        if (roles or {}).get(r):
+            return roles[r]
+    return next(iter((roles or {}).values()), None)
+
+
+CAPEX_LABEL = re.compile(r"^(purchases?|acquisitions?|additions?|expenditures?|investments?|payments?|capital "
+                         r"expenditures?)\b.*\b(property|plant|equipment|premises|fixed assets|oil and gas|capital)"
+                         r"|^capital (expenditures?|spending|investments?)\b", re.I)
+CAPEX_NOT = re.compile(r"proceeds|sale|dispos|accrued|unpaid|non-?cash|included in|financ|lease|deposit|business|"
+                       r"intangible|software|acquired|accounts payable|liabilit|interest|reimburse|dividend|"
+                       r"distribution|stock|shares?\b|repurchase|debt|loan|notes?\b", re.I)
+
+
+def _contexts(root):
+    out = {}
+    for ctx in root.iter():
+        if _local(ctx.tag) != "context":
+            continue
+        start = end = None
+        dims = False
+        for el in ctx.iter():
+            n = _local(el.tag)
+            if n == "startDate":
+                start = el.text.strip()
+            elif n == "endDate":
+                end = el.text.strip()
+            elif n in ("explicitMember", "typedMember"):
+                dims = True
+        if start and end and not dims:
+            out[ctx.get("id")] = (start, end)
+    return out
+
+
+def capex_lines(xml_text, roles):
+    """The capital-expenditure line of a filing found by its printed name, standard or company-specific tag:
+    {"concept": "abc:PaymentsForEquipment", "label": "Purchases of property and equipment", "facts": [(start, end, v)]}."""
+    root = ET.fromstring(xml_text.encode() if isinstance(xml_text, str) else xml_text)
+    ctx = _contexts(root)
+    by_local = {}
+    for elid in roles:
+        by_local.setdefault(elid.split("_", 1)[-1], []).append(elid)
+    found = {}
+    for el in root.iter():
+        cref = el.get("contextRef")
+        if cref not in ctx or not (el.text or "").strip():
+            continue
+        local = _local(el.tag)
+        ids = by_local.get(local)
+        if not ids:
+            continue
+        label = statement_label(roles[ids[0]])
+        names = label + " | " + (roles[ids[0]].get("label") or "")
+        if not label or not CAPEX_LABEL.search(label) or CAPEX_NOT.search(names):
+            continue
+        try:
+            val = abs(float(el.text.strip()))
+        except ValueError:
+            continue
+        start, end = ctx[cref]
+        found.setdefault(ids[0], {"label": label, "facts": {}})["facts"][(start, end)] = val
+    if not found:
+        return None
+    latest = lambda f: max(f["facts"].items(), key=lambda kv: (kv[0][1], kv[1]))[1]
+    elid, f = max(found.items(), key=lambda kv: latest(kv[1]))        # the main line, not a sub-line
+    prefix, local = elid.split("_", 1) if "_" in elid else ("", elid)
+    return {"concept": f"{prefix}:{local}" if prefix else local, "label": f["label"],
+            "facts": sorted((s, e, v) for (s, e), v in f["facts"].items())}
+
+
+def concept_facts(xml_text, concept):
+    """Non-dimensional duration facts [(start, end, value)] of one concept ('prefix:Local') in an instance."""
+    root = ET.fromstring(xml_text.encode() if isinstance(xml_text, str) else xml_text)
+    ctx = _contexts(root)
+    local = concept.split(":")[-1]
+    out = {}
+    for el in root.iter():
+        if _local(el.tag) == local and el.get("contextRef") in ctx and (el.text or "").strip():
+            try:
+                out[ctx[el.get("contextRef")]] = abs(float(el.text.strip()))
+            except ValueError:
+                pass
+    return sorted((s, e, v) for (s, e), v in out.items())
+
+
+def period_value(facts_, end, annual=False):
+    """A quarter (or, annual, a fiscal year) ending at `end` from duration facts: a 3-month fact, or the longest
+    year-to-date minus the year-to-date before it with the same start (Q4 = full year - nine months)."""
+    at = [(s, v) for s, e, v in facts_ if e == end]
+    if not at:
+        return None
+    if annual:
+        return next((v for s, v in at if 350 <= _span(s, end) <= 380), None)
+    for s, v in at:
+        if 75 <= _span(s, end) <= 100:
+            return v
+    s0, v0 = min(at)
+    for s, e, v in facts_:
+        if s == s0 and e != end and 75 <= _span(e, end) <= 105:
+            return v0 - v
+    return None
+
+
 def humanize(qname):
     name = qname.split(":")[-1]
     name = re.sub(r"Member$", "", name)

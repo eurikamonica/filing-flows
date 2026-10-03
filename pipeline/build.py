@@ -25,7 +25,7 @@ HISTORY_VERSION = 2          # bump to fetch the default history again for every
 BACKFILL_PER_RUN = 25        # companies stored before HISTORY_VERSION get their history a few at a time
 PERIODS_Q, PERIODS_FY = 72, 18   # "compare any two periods" offers up to 18 years (XBRL starts in 2009-2011)
 PERIODS_PER_RUN = 150        # companies stored before that list existed get it a few at a time (one SEC request each)
-PENDING_TRIES = 24         # companyfacts can lag a filing by hours
+PENDING_HOURS = 24         # companyfacts can lag a filing by hours: keep trying this long (however often the scan runs)
 
 
 # ---------------------------------------------------------------- store helpers
@@ -85,6 +85,29 @@ def companyfacts(cik):
     if cik not in _cf:
         _cf[cik] = facts.index_facts(sec.get_json(sec.companyfacts_url(cik)))
     return _cf[cik]
+
+
+INTRO_RANK = {"10-K": 3, "8-K": 2, "10-Q": 1}    # where the company description comes from, best first
+
+
+def intro_rank(c):
+    it = c.get("intro")
+    if not it:
+        return 0
+    return INTRO_RANK.get(it.get("source", "10-K"), 0) if isinstance(it, dict) else INTRO_RANK["10-K"]
+
+
+def set_intro(c, words, url, filed, source):
+    """Keep the best description: a 10-K's Item 1 over an earnings release's "About" paragraph over a 10-Q's Note 1;
+    the newer filing of the same kind wins."""
+    if not words:
+        return False
+    old = c.get("intro") if isinstance(c.get("intro"), dict) else ({"text": c["intro"]} if c.get("intro") else {})
+    rank, old_rank = INTRO_RANK[source], intro_rank(c)
+    if rank > old_rank or (rank == old_rank and (filed or "") >= (old.get("filed") or "")):
+        c["intro"] = {"text": words, "url": url, "filed": filed, "source": source}
+        return True
+    return False
 
 
 def periods_of(fx):
@@ -169,13 +192,15 @@ def process_filing(store, cik, accn, form, starred=False):
 
     # revenue breakdown from the XBRL instance (dimensional facts)
     lines_struct = lines_cur = lines_py = None
-    dfx = None
+    dfx = inst_text = lab_text = None
     c["periods"] = periods_of(fx)                         # for "compare any two periods"
     try:
         inst_url, lab_url = dims.find_files(cik, accn)
         if inst_url:
-            labels = dims.parse_labels(sec.get(lab_url)) if lab_url else {}
-            dfx = dims.parse_instance(sec.get(inst_url), labels)
+            lab_text = sec.get(lab_url) if lab_url else None
+            labels = dims.parse_labels(lab_text) if lab_text else {}
+            inst_text = sec.get(inst_url)
+            dfx = dims.parse_instance(inst_text, labels)
             prev_ytd = None
             if form.startswith("10-K"):
                 prev_ytd = _prior_ytd(c, sub, cik, end)
@@ -192,6 +217,11 @@ def process_filing(store, cik, accn, form, starred=False):
             c["dims_ytd"] = dict(sorted(c["dims_ytd"].items())[-6:])
     except (sec.NotFound, Exception) as e:                       # breakdown is optional
         print(f"  dims skipped for {cik} {accn}: {e}", file=sys.stderr)
+    capex_src = None
+    try:
+        capex_src = capex_from_filing(cik, sub, fx, raw, comp, end, inst_text, lab_text)
+    except Exception as e:
+        print(f"  capex source skipped for {cik} {accn}: {e}", file=sys.stderr)
 
     # the company's own words: MD&A notes and Item 1 introduction
     notes, doc = {}, None
@@ -208,16 +238,15 @@ def process_filing(store, cik, accn, form, starred=False):
         print(f"  notes skipped for {cik} {accn}: {e}", file=sys.stderr)
     try:
         if form.startswith("10-K") and doc:
-            it = text.intro(doc)
-            if it:
-                c["intro"] = {"text": it, "url": doc_url, "filed": row.get("filingDate")}
-        elif not c.get("intro"):
+            set_intro(c, text.intro(doc), doc_url, row.get("filingDate"), "10-K")
+        elif intro_rank(c) < INTRO_RANK["10-K"]:
             k = next((r for r in recent_rows(sub) if r["form"] == "10-K" and r.get("primaryDocument")), None)
             if k:
                 u = sec.doc_url(cik, k["accessionNumber"], k["primaryDocument"])
-                it = text.intro(sec.get(u))
-                if it:
-                    c["intro"] = {"text": it, "url": u, "filed": k.get("filingDate")}
+                set_intro(c, text.intro(sec.get(u)), u, k.get("filingDate"), "10-K")
+        if intro_rank(c) < INTRO_RANK["10-Q"] and doc and form.startswith("10-Q"):   # no 10-K yet: Note 1
+            p = c["profile"]
+            set_intro(c, text.note1(doc, [p["name"]], p.get("tickers")), doc_url, row.get("filingDate"), "10-Q")
     except Exception as e:
         print(f"  intro skipped for {cik}: {e}", file=sys.stderr)
 
@@ -230,6 +259,7 @@ def process_filing(store, cik, accn, form, starred=False):
         "accn": accn, "filed": row.get("filingDate"), "doc_url": doc_url,
         "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm",
         "raw": raw, **comp, "lines_struct": lines_struct, "lines": lines_cur, "lines_py": lines_py, "notes": notes,
+        "capex_src": capex_src,
     }
     e0 = dt.date.fromisoformat(end)                               # the 10-Q/10-K replaces a preliminary 8-K quarter
     releases = [replaced] if replaced else []
@@ -242,7 +272,7 @@ def process_filing(store, cik, accn, form, starred=False):
     if releases and form != "8-K":
         c["quarters"][end]["from_release"] = release_check(releases[0], raw)
     if form.startswith("10-K"):
-        year = annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes)
+        year = annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_text, lab_text)
         if year:
             c.setdefault("years", {})[end] = year
             c["years"] = dict(sorted(c["years"].items())[-(KEEP_STARRED_YEARS if starred else KEEP_YEARS):])
@@ -252,12 +282,18 @@ def process_filing(store, cik, accn, form, starred=False):
     return end
 
 
-def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes):
+def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_text=None, lab_text=None):
     """The full fiscal year of a 10-K, with the year before for comparison."""
     raw = facts.extract(fx, end, annual=True)
     if not raw.get("revenue") or (raw.get("ni") is None and raw.get("pl") is None):
         return None
     py_end = facts.prior_year_end(fx, end)
+    comp = {"py_end": py_end, "raw_py": facts.extract(fx, py_end, annual=True) if py_end else None}
+    try:
+        capex_src = capex_from_filing(cik, None, fx, raw, comp, end, inst_text, lab_text, annual=True)
+    except Exception as e:
+        print(f"  annual capex source skipped for {cik} {accn}: {e}", file=sys.stderr)
+        capex_src = None
     ls = cur = prev = None
     if dfx:
         try:
@@ -276,8 +312,89 @@ def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes):
     label, fy = facts.fiscal_year_label(end, c["profile"]["fye"])
     return {"end": end, "label": label, "fy": fy, "form": form, "accn": accn, "filed": row.get("filingDate"),
             "doc_url": doc_url, "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", "period": "fy",
-            "raw": raw, "py_end": py_end, "raw_py": facts.extract(fx, py_end, annual=True) if py_end else None,
+            "raw": raw, "py_end": py_end, "raw_py": comp["raw_py"], "capex_src": capex_src,
             "lines_struct": ls, "lines": cur, "lines_py": prev, "notes": notes}
+
+
+def capex_from_filing(cik, sub, fx, raw, comp, end, inst_text, lab_text, annual=False):
+    """Where this period's capital expenditures come from: SEC's standard tags (companyfacts) when the company used
+    one; else the filing's own XBRL, where the line is found by its printed name ("Purchases of property and
+    equipment", "Capital expenditures" ...), company-specific tags included. The fallback fills raw / comp in place.
+    Returns {"concept", "label", "how": "xbrl" | "instance"} or None."""
+    roles = dims.label_roles(lab_text) if lab_text else {}
+    concept = facts.source(fx, "capex", end, annual=annual)
+    if raw.get("capex") is not None and concept:
+        label = dims.statement_label(roles.get("us-gaap_" + concept)) or (fx.get("__labels__") or {}).get(concept)
+        return {"concept": "us-gaap:" + concept, "label": label, "how": "xbrl"}
+    if not inst_text or not roles:
+        return None
+    found = dims.capex_lines(inst_text, roles)
+    if not found:
+        return None
+    mine, prev = found["facts"], None
+
+    def with_prev():                     # cash flow is year-to-date: a quarter needs the filing before's year-to-date
+        nonlocal prev
+        if prev is None:
+            prev = _previous_concept_facts(cik, sub, end, found["concept"]) if sub else []
+        return mine + prev
+    v = dims.period_value(mine, end, annual)
+    if v is None and not annual:
+        v = dims.period_value(with_prev(), end)
+    if v is None:
+        return None
+    raw["capex"] = v
+    if comp.get("raw_py") and comp.get("py_end"):
+        pv = dims.period_value(mine, comp["py_end"], annual)
+        if pv is None and not annual:
+            pv = dims.period_value(with_prev(), comp["py_end"])
+        if pv is not None:
+            comp["raw_py"] = dict(comp["raw_py"], capex=pv)
+    if not annual and comp.get("raw_q1") and comp.get("q1_end"):
+        qv = dims.period_value(mine + (prev or []), comp["q1_end"])
+        if qv is not None:
+            comp["raw_q1"] = dict(comp["raw_q1"], capex=qv)
+    return {"concept": found["concept"], "label": found["label"], "how": "instance"}
+
+
+def _previous_concept_facts(cik, sub, end, concept):
+    """The same XBRL line in the 10-Q/10-K for the period about a quarter before `end` (its year-to-date figures)."""
+    e0 = dt.date.fromisoformat(end)
+    for r in recent_rows(sub):
+        if r["form"] in ("10-Q", "10-K") and r.get("reportDate") and \
+                75 <= (e0 - dt.date.fromisoformat(r["reportDate"])).days <= 105:
+            inst, _ = dims.find_files(cik, r["accessionNumber"])
+            return dims.concept_facts(sec.get(inst), concept) if inst else []
+    return []
+
+
+FCF_NOTE = ("Free cash flow = operating cash flow minus capital expenditures. Proceeds from selling assets and "
+            "finance-lease repayments are not netted, so it can differ from a free cash flow figure the company "
+            "reports itself.")
+
+
+def capex_note(src):
+    """Where the capital-expenditure figure came from, for the node's note on the site."""
+    if not src or not src.get("label"):
+        return None
+    lab = src["label"] if " " in src["label"] else dims.humanize(src["label"])     # a bare tag name: spaced out
+    lab = lab[:1].upper() + lab[1:]
+    if src.get("how") == "release":
+        return f"Capital expenditures as printed in the earnings release’s cash-flow table: “{lab}”."
+    tag = src.get("concept") or ""
+    own = "" if tag.startswith("us-gaap:") else ", the company’s own XBRL tag"
+    where = "SEC’s XBRL company facts" if src.get("how") == "xbrl" else "the filing’s own XBRL data"
+    return f"Capital expenditures = the cash-flow line “{lab}” ({tag}{own}), from {where}."
+
+
+def _sources(nodes, capex_src):
+    for n in nodes:
+        if n["id"] == "capex":
+            note = capex_note(capex_src)
+            if note:
+                n["source"] = note
+        elif n["id"] in ("fcf", "fcf_neg"):
+            n["source"] = FCF_NOTE
 
 
 EXHIBIT_PATTERNS = (r"ex[-_]?99[-_.]?0?1(?!\d)", r"ex[-_]?99", r"press|release|earnings")
@@ -447,6 +564,13 @@ def process_release(store, cik, accn, form, starred=False):
         raise NotApplicable("no press release in the filing")
     ex_url = sec.doc_url(cik, accn, ex_name)
     doc = sec.get(ex_url)
+    if intro_rank(c) < INTRO_RANK["8-K"]:                # no 10-K description yet: the release's "About" paragraph
+        try:
+            if set_intro(c, text.about(doc, [c["profile"]["name"]], c["profile"].get("tickers")), ex_url,
+                         row.get("filingDate"), "8-K"):
+                store.put(cik, c)                       # kept even if the release's tables turn out unreadable
+        except Exception as e:
+            print(f"  about skipped for {cik}: {e}", file=sys.stderr)
     try:
         rel = release.parse(doc, dt.date.fromisoformat(row["filingDate"]), last, prior_rev)
         end = rel["end"]
@@ -488,6 +612,8 @@ def process_release(store, cik, accn, form, starred=False):
         "q1_end": q1_end, "py_end": py_end, "raw_q1": facts.extract(fx, q1_end), "raw_py": facts.extract(fx, py_end),
         "lines_struct": ls, "lines": segs and segs["cur"], "lines_q1": segs and segs.get("q1"),
         "lines_py": segs and segs.get("py"), "notes": notes,
+        "capex_src": ({"label": (rel.get("cf_labels") or {}).get("capex"), "how": "release"}
+                      if raw.get("capex") is not None else None),
     }
     keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
     c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
@@ -521,6 +647,29 @@ def starred_ciks(path="config/starred.txt"):
     data = sec.get_json("https://www.sec.gov/files/company_tickers.json")
     m = {v["ticker"].upper(): int(v["cik_str"]) for v in data.values()}
     return {m[t]: t for t in tickers if t in m}
+
+
+def company_ciks(tokens):
+    """CIKs (digits) and tickers (MS, BRK.B) -> CIKs; unknown tickers are reported and skipped."""
+    out, tickers = [], []
+    for x in (t.strip() for t in tokens):
+        if x.isdigit() and int(x) > 0:
+            out.append(int(x))
+        elif re.fullmatch(r"[A-Za-z][A-Za-z0-9.\-]{0,9}", x or ""):
+            tickers.append(x.upper().replace(".", "-"))
+    if tickers:
+        try:
+            data = sec.get_json("https://www.sec.gov/files/company_tickers.json")
+            m = {str(v["ticker"]).upper(): int(v["cik_str"]) for v in data.values()}
+        except Exception as e:
+            print(f"::warning::tickers not looked up ({e}): {', '.join(tickers)}")
+            m = {}
+        for t in tickers:
+            if t in m:
+                out.append(m[t])
+            else:
+                print(f"::warning::no SEC company with ticker {t}")
+    return sorted(set(out))
 
 
 RELEASE_READER = 3              # bump when the 8-K reader changes: stored 8-K quarters are read again once
@@ -640,7 +789,9 @@ def _process_one(store, st, accn, p, stars, now):
                 print(f"  history not queued for {p['cik']}: {e}", file=sys.stderr)
     except Pending as e:
         p["tries"] += 1
-        if p["tries"] >= PENDING_TRIES:
+        since = p.setdefault("since", now)
+        waited = (dt.datetime.fromisoformat(now) - dt.datetime.fromisoformat(since)).total_seconds() / 3600
+        if waited >= PENDING_HOURS and p["tries"] >= 3:
             st["seen"][accn] = {"t": now, "s": f"skip: {e}", "cik": p["cik"]}
             del st["pending"][accn]
         print(f"wait {p['form']:5} {p['cik']:>10} {accn} {e}")
@@ -704,6 +855,7 @@ def quarter_payload(c, q, prev_q):
             if k and k in notes:
                 n["notes"] = notes[k]
                 break
+    _sources(nodes, q.get("capex_src"))
     f = Fmt(Nc["R"])
     labels = {e: x["label"] for e, x in c["quarters"].items()}
     py_label = labels.get(q.get("py_end")) or "a year earlier"
@@ -775,6 +927,7 @@ def year_payload(c, y):
                 ln[1] = ln[1].split(" · Q/Q ")[0]
         n.pop("q", None)
         n.pop("cmp", None)
+    _sources(nodes, y.get("capex_src"))
     for l in links:
         l.pop("q", None)
     f = Fmt(Nc["R"])
@@ -979,7 +1132,7 @@ def main():
     args = ap.parse_args()
     args.build_ciks = []
     if args.build_ciks_file and os.path.exists(args.build_ciks_file):
-        args.build_ciks = [int(x) for x in open(args.build_ciks_file).read().split() if x.strip().isdigit()]
+        args.build_ciks = company_ciks(re.split(r"[\s,;]+", open(args.build_ciks_file).read()))
     if args.cmd == "run":
         run(args)
     else:

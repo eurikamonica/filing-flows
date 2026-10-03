@@ -97,6 +97,11 @@ def quantities(N, lines=None):
         Q["r_nci"] = r + N["nci"]
         Q["ni_to_ocf"] = N["ni"] + min(r + N["nci"], 0)
         Q["bridge"] = N["da"] + N["sbc"] + max(r, 0) + max(N["pl"], 0) + max(-N["ocf"], 0)
+        if N.get("capex") is not None:                    # operating cash flow -> capital expenditures + free cash flow
+            Q["capex"] = N["capex"]
+            Q["fcf"] = N["ocf"] - N["capex"]
+            Q["fcf_neg"] = N["capex"] - N["ocf"]          # the part of capex operating cash flow did not cover
+            Q["capex_from_ocf"] = min(N["capex"], max(N["ocf"], 0))
     Q["pretax_less_nci"] = N["pretax"] - N["nci"]
     Q["opcosts"] = N["R"] - N["oi"]
     Q["funding"] = N["R"] + max(N["nonop"], 0) + max(-N["tax"], 0) + max(-N["pl"], 0)

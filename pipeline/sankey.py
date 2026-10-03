@@ -320,9 +320,8 @@ def _bridge(S, Nc, nc, net_id, net_key, has_nci, f):
             S.node("wc_out", oc, rkey, "noncash", "Working capital &amp; other", "right", "net", "net earnings",
                    sign=-1, extra=["non-cash or timing, removed"] + note, notekeys=NOTE_KEYS["wc"])
         conv = round(Nc["ocf"] / nib * 100) if nib else None
-        capex = f"capex {f.money(Nc['capex'])} · FCF {f.money(Nc['ocf'] - Nc['capex'])}" if Nc.get("capex") else None
         S.node("ocf", oc, "ocf", "profit", "Operating cash flow", "right", "revenue", "revenue", style="ocf",
-               extra=[x for x in (f"{conv}% of net earnings" if conv is not None else None, capex) if x],
+               extra=[f"{conv}% of net earnings"] if conv is not None else [],
                notekeys=NOTE_KEYS["ocf"])
         S.Qc["_net_to_ocf"] = nib + min(rx, 0)
         if S.Qq.get(net_key) is not None and S.Qq.get(rkey) is not None:
@@ -335,8 +334,35 @@ def _bridge(S, Nc, nc, net_id, net_key, has_nci, f):
                 S.link(k, "ocf", k, "profit")
         if rx > 0:
             S.link("wc_in", "ocf", rkey, "profit")
+        _capex(S, Nc, oc, f)
     else:
         _bridge_general(S, Nc, nc + 1, f, net_id=net_id, net_key=net_key, rkey=rkey)
+
+
+def _capex(S, Nc, oc, f):
+    """Operating cash flow -> capital expenditures + free cash flow, one column to the right of the OCF node.
+    When capex is larger than OCF, free cash flow is negative: OCF goes entirely into capex and the rest of capex
+    enters from below as 'Negative free cash flow' (paid from cash or financing), so no band has a negative width."""
+    cap, ocf = Nc.get("capex"), Nc["ocf"]
+    if not cap or cap <= 0 or ocf is None or ocf <= 0 or "ocf" not in S.ids:
+        return False
+    S.ids["ocf"]["pos"] = "above"                               # no longer the last node: its label moves off the edge
+    cc, R = oc + 1, Nc["R"]
+    if cap <= ocf:
+        margin = share(ocf - cap, R)
+        S.node("fcf", cc, "fcf", "profit", "Free cash flow", "right", "ocf", "OCF",
+               extra=[f"FCF margin {margin}"] if margin else [], notekeys=NOTE_KEYS["fcf"])
+        S.node("capex", cc, "capex", "cost", "Capital expenditures", "right", "ocf", "OCF", notekeys=NOTE_KEYS["capex"])
+        S.link("ocf", "fcf", "fcf", "profit")
+        S.link("ocf", "capex", "capex_from_ocf", "cost")
+    else:
+        S.node("capex", cc, "capex", "cost", "Capital expenditures", "right", "ocf", "OCF",
+               extra=[f"{f.money(cap - ocf)} more than operating cash flow"], notekeys=NOTE_KEYS["capex"])
+        S.node("fcf_neg", oc, "fcf_neg", "cost", "Negative free cash flow", "below", "capex", "capex",
+               extra=["paid from cash or financing", "Y/Y, Q/Q compare the size of the gap"], notekeys=NOTE_KEYS["fcf"])
+        S.link("ocf", "capex", "capex_from_ocf", "cost")
+        S.link("fcf_neg", "capex", "fcf_neg", "cost")
+    return True
 
 
 def _bridge_general(S, Nc, c0, f, net_id=None, net_key=None, rkey="r"):
@@ -380,8 +406,6 @@ def _bridge_general(S, Nc, c0, f, net_id=None, net_key=None, rkey="r"):
         extra = []
         if nid == "ocf":
             extra = [f"{share(S.Qc['ocf'], S.Qc['bridge_total'])} of cash sources"]
-            if Nc.get("capex"):
-                extra.append(f"capex {f.money(Nc['capex'])} \u00b7 FCF {f.money(Nc['ocf'] - Nc['capex'])}")
         if nid == "loss_abs":
             extra = ["same loss as in the income statement"]
         if nid == "wc_out":
@@ -390,6 +414,8 @@ def _bridge_general(S, Nc, c0, f, net_id=None, net_key=None, rkey="r"):
                "revenue" if nid == "ocf" else "sources", sign=sign, style="ocf" if nid == "ocf" else "name",
                extra=extra, notekeys=NOTE_KEYS[nk])
         S.link("bridge", nid, key, color, sign=sign)
+    if "ocf" in S.ids:
+        _capex(S, Nc, c0 + 2, f)
 
 
 def _check(nodes, links):
@@ -426,4 +452,6 @@ NOTE_KEYS = {
     "da": ["depreciation and amortization", "depreciation"],
     "sbc": ["share-based compensation", "stock-based compensation"],
     "wc": ["working capital", "deferred revenue", "accounts receivable"],
+    "capex": ["capital expenditures", "purchases of property", "property and equipment", "capital spending"],
+    "fcf": ["free cash flow"],
 }

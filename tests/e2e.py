@@ -52,7 +52,7 @@ FAKE_SUPABASE = """
   const db = { subscriptions: [], send_requests: [], chart_requests: [], company_requests: [] }, log = [];
   let session = null;
   try { session = JSON.parse(sessionStorage.getItem('fake-session') || 'null'); } catch (e) {}
-  window.__ff = { db, log, native: [] };
+  window.__ff = { db, log, native: [], owners: [] };
   window.FilingFlowsApp = { setFollows: (j) => window.__ff.native.push(j) };
   const copy = (x) => JSON.parse(JSON.stringify(x));
   const auth = {
@@ -134,6 +134,7 @@ FAKE_SUPABASE = """
   }
   async function rpc(name, args) {
     log.push(['rpc', name, args]);
+    if (name === 'am_i_owner') return { data: !!session && (window.__ff.owners || []).includes(session.user.email), error: null };
     if (name === 'delete_account') {
       const i = session ? db.subscriptions.findIndex((x) => x.user_id === session.user.id) : -1;
       if (i >= 0) db.subscriptions.splice(i, 1);
@@ -177,6 +178,9 @@ def _with_years(route):
              title=q["title"].replace(q["label"], "FY25"))
     y["compare_y"] = dict(q["compare_y"] or q["compare"], vs="FY24")
     c["years"], c["periods"] = [y], AAPL_PERIODS
+    c["intro"] = {"text": "Apple designs, manufactures and markets smartphones, personal computers, tablets, wearables and "
+                          "accessories, and sells a variety of related services.", "source": "8-K", "filed": "2026-07-30",
+                  "url": "https://www.sec.gov/"}
     route.fulfill(response=resp, body=_json.dumps(c))
 
 
@@ -339,6 +343,9 @@ def check_accounts(b, base, fails, shot, site):
 
     # a full fiscal year (10-K): its own pill and page; "Email me" asks for the year, not the fourth quarter
     pg.goto(base + "#c-320193")
+    pg.wait_for_selector(".intro .src")
+    if "earnings release (8-K) filed Jul 30, 2026" not in pg.inner_text(".intro .src"):
+        fails.append(f"intro: source line says {pg.inner_text('.intro .src')!r}")
     pg.wait_for_selector(".pill.year")
     pg.click(".pill.year")
     pg.wait_for_function("location.hash === '#c-320193-fy-2025-09-27'")
@@ -437,6 +444,35 @@ def check_accounts(b, base, fails, shot, site):
     pg.wait_for_selector(".pills", timeout=15000)
     if "Alphabet" not in pg.inner_text("h1"):
         fails.append("search: the page did not fill in once the company was built")
+
+    # owner tools: only an account on the owner list (Supabase site_owners) can turn them on
+    pg.goto(base + "#owner")
+    pg.wait_for_function("document.querySelector('.page-head') && document.querySelector('.page-head').textContent.includes('not a site owner')")
+    if pg.locator("#owner-toggle").count():
+        fails.append("owner tools: a reader's account was offered the switch")
+    pg.evaluate("() => { window.__ff.owners = ['reader@example.com']; }")
+    pg.goto(base + "#account")
+    pg.wait_for_selector("#sign-out")
+    pg.click("#sign-out")
+    pg.wait_for_selector("#cta-form")
+    pg.goto(base + "#owner")
+    pg.wait_for_selector("#owner-signin")
+    pg.click("#owner-signin")
+    pg.wait_for_selector("#auth-email")
+    pg.fill("#auth-email input", "reader@example.com")
+    pg.click("#auth-email button")
+    pg.wait_for_selector("#auth-code:not([hidden])")
+    pg.fill("#auth-code input", "123456")
+    pg.click("#auth-code button[type=submit]")
+    pg.wait_for_function("location.hash === '#owner'")
+    pg.wait_for_selector("#owner-toggle")
+    if "Verified: signed in as reader@example.com" not in pg.inner_text(".page-head"):
+        fails.append("owner tools: the owner's sign-in was not confirmed on the page")
+    pg.click("#owner-toggle")
+    pg.goto(base + "#c-320193")
+    pg.wait_for_selector("#thread pre")
+    print("owner tools: thread shown to the verified owner:", pg.locator("#thread pre").count(), "posts")
+    shot(pg, "owner_thread.png")
 
     # home shows "Manage alerts" when signed in; sign out
     pg.goto(base + "#home")
@@ -617,6 +653,16 @@ def main():
             fails.append("notes panel did not show the 10-Q passage for iPhone")
         if pg.locator("svg.has-sel path.band.on").count() < 1:
             fails.append("selected node's bands are not highlighted")
+        cols = pg.locator(".notes .trend .tr-col").count()             # the line's quarters on file, as a small chart
+        print("trend columns in the note:", cols, pg.inner_text(".notes .tr-read"))
+        if cols != 2 or "Q3 FY26 · $54.3B" not in pg.inner_text(".notes .tr-read"):
+            fails.append(f"note: trend chart missing or wrong ({cols} columns)")
+        for node, words in (("capex", "Capital expenditures = the cash-flow line"), ("fcf", "Free cash flow = operating cash flow minus")):
+            pg.locator(f'g.node[data-node="{node}"] rect.hit').dispatch_event("click")
+            pg.wait_for_selector(".notes .node-src")
+            if words not in pg.inner_text(".notes .node-src"):
+                fails.append(f"note: {node} does not say where its figure comes from")
+        print("capex note:", pg.inner_text(".notes .node-src")[:120])
         shot(pg, "c_AAPL_note.png")
         if pg.locator("#thread").count():
             fails.append("X thread panel shows to readers (it is an owner tool)")

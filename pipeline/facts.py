@@ -33,9 +33,15 @@ CONCEPTS = {
     "da": ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet",
            "DepreciationAndAmortization", "DepreciationDepletionAndAmortizationPropertyPlantAndEquipment", "Depreciation"],
     "sbc": ["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"],
-    "capex": ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
+    # capital expenditures: the general tags, then the ones oil & gas, real-estate and utility filers use
+    "capex": ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets",
+              "PaymentsToAcquireOilAndGasPropertyAndEquipment", "PaymentsToAcquireOilAndGasProperty",
+              "PaymentsToExploreAndDevelopOilAndGasProperties", "PaymentsForCapitalImprovements",
+              "PaymentsToDevelopRealEstateAssets", "PaymentsForConstructionInProcess",
+              "PaymentsToAcquireOtherPropertyPlantAndEquipment"],
 }
-MAX_KEYS = {"revenue"}          # several revenue tags can coexist; the largest is the total
+# several tags can coexist: the largest is the total (revenue), or the main capex line rather than a small sub-line
+MAX_KEYS = {"revenue", "capex"}
 
 
 def d(s):
@@ -44,9 +50,11 @@ def d(s):
 
 def index_facts(companyfacts):
     """concept -> {(start, end): fact} keeping the most recently filed fact per period (USD only)."""
-    out = {}
+    out, names = {}, {}
+    out["__labels__"] = names                            # concept -> SEC's standard label, to say where a figure came from
     for taxonomy in ("us-gaap", "ifrs-full"):
         for concept, body in companyfacts.get("facts", {}).get(taxonomy, {}).items():
+            names.setdefault(concept, body.get("label"))
             for unit, facts in body.get("units", {}).items():
                 if unit != "USD":
                     continue
@@ -95,6 +103,23 @@ def value(facts, key, end, annual=False):
                 return v
             vals.append(v)
     return max(vals) if vals else None
+
+
+def source(facts, key, end, annual=False):
+    """The concept value() takes its figure from (for MAX_KEYS, the largest), or None."""
+    best = None
+    for concept in CONCEPTS[key]:
+        per = facts.get(concept)
+        if not per:
+            continue
+        v = _year_from(per, end) if annual else _quarter_from(per, end)
+        if v is None:
+            continue
+        if key not in MAX_KEYS:
+            return concept
+        if best is None or v > best[0]:
+            best = (v, concept)
+    return best[1] if best else None
 
 
 def ytd_value(facts, key, end):

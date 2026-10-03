@@ -1,4 +1,4 @@
-"""Find new 10-Q / 10-K filings: EDGAR 'latest filings' Atom feed (hourly) and daily form indexes (backfill)."""
+"""Find new 10-Q / 10-K filings: EDGAR 'latest filings' Atom feed (every scan) and daily form indexes (backfill)."""
 import datetime as dt
 import html
 import re

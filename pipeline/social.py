@@ -28,6 +28,8 @@ import threading
 
 import requests
 
+from . import text as filing_text
+
 API = "https://api.x.com/2"
 SECRETS = ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_TOKEN_SECRET")
 MAIL_SECRETS = ("MAIL_USERNAME", "MAIL_PASSWORD")
@@ -189,7 +191,7 @@ def compose(c, q, cfg):
     intro = c.get("intro")
     if intro:
         text = intro["text"] if isinstance(intro, dict) else intro
-        src = f" — 10-K{' filed ' + fdate(intro.get('filed')) if isinstance(intro, dict) and intro.get('filed') else ''}, Item 1"
+        src = " — " + filing_text.intro_cite(intro, short=True)
         posts.append(fit(f"About {name}, in its own words: “", text, "”" + src))
     posts += pack(q.get("analysis") or [], max_posts=2)
 

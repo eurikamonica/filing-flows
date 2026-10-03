@@ -24,6 +24,7 @@ from . import build, dims, facts, sec
 from .notify import Supa, setting
 
 MAX_CHARTS_PER_RUN = 40
+MAX_COMPANIES_PER_SCAN = 25      # readers' new companies per scan, all readers together; the rest wait for the next scan
 STALE_MINUTES = 20
 
 
@@ -87,6 +88,12 @@ def _member_values(dfx, end, kind):
     return dims.year_values(dfx, end) if kind == "fy" else dims.member_values(dfx, end)
 
 
+def _capex_src(fx, raw, end, kind):
+    concept = facts.source(fx, "capex", end, annual=kind == "fy") if raw.get("capex") is not None else None
+    return {"concept": "us-gaap:" + concept, "label": (fx.get("__labels__") or {}).get(concept), "how": "xbrl"} \
+        if concept else None
+
+
 # ------------------------------------------------------------------ the comparison chart
 def comparison(cik, kind, a_end, b_end):
     """Chart payload of period A with its comparison view set to period B (same shape as a quarter on the site)."""
@@ -119,7 +126,8 @@ def comparison(cik, kind, a_end, b_end):
     q = {"end": a_end, "label": A["label"], "cal": A["cal"], "form": A["form"], "filed": A["filed"] or "",
          "doc_url": A.get("doc_url"), "index_url": A.get("index_url"), "raw": A["raw"],
          "q1_end": b_end, "raw_q1": B["raw"], "py_end": None, "raw_py": None,
-         "lines_struct": ls, "lines": lines_a, "lines_q1": lines_b, "lines_py": None, "notes": {}}
+         "lines_struct": ls, "lines": lines_a, "lines_q1": lines_b, "lines_py": None, "notes": {},
+         "capex_src": _capex_src(fx, A["raw"], a_end, kind)}
     pl = build.quarter_payload(c, q, None)
     if not pl:
         raise ValueError("the figures for these periods do not add up to a chart")
@@ -188,9 +196,27 @@ def process_charts(supa, now=None, limit=MAX_CHARTS_PER_RUN):
     return done
 
 
-def claim_companies(supa, now=None):
-    rows = claim(supa, "company_requests", now or _now(), done_status="queued")
-    return sorted({int(r["cik"]) for r in rows})
+def claim_companies(supa, now=None, limit=MAX_COMPANIES_PER_SCAN):
+    """Companies to build in this scan: ones a stopped scan left behind, then the oldest requests, at most `limit`
+    companies in all (however many readers ask, one scan never takes on more)."""
+    now = now or _now()
+    stamp = now.isoformat()
+    stale = (now - dt.timedelta(minutes=STALE_MINUTES)).isoformat()
+    again = supa.update("company_requests", {"status": "eq.queued", "claimed_at": f"lt.{stale}"}, {"claimed_at": stamp})
+    ciks = {int(r["cik"]) for r in again}
+    waiting = supa.select("company_requests", {"select": "id,cik,created_at", "status": "eq.pending", "order": "created_at.asc"})
+    take = []
+    for r in sorted(waiting, key=lambda r: (r.get("created_at") or "", r["id"])):
+        c = int(r["cik"])
+        if c in ciks or len(ciks) < limit:
+            ciks.add(c)
+            take.append(r["id"])
+    if take:
+        supa.update("company_requests", {"id": f"in.({','.join(map(str, take))})", "status": "eq.pending"},
+                    {"status": "queued", "claimed_at": stamp})
+    if len(waiting) > len(take):
+        print(f"{len(waiting) - len(take)} company requests wait for the next scan (at most {limit} companies per scan)")
+    return sorted(ciks)
 
 
 def finish_companies(supa, site):

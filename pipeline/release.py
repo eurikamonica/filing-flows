@@ -263,7 +263,9 @@ def parse(html, filed, last_end=None, prior_revenue=None):
         s_cf = u_cf if (u_cf and u_is and u_cf != u_is) else scale    # same units as the income statement unless stated
         out["cf"] = {k: v * s_cf for k, v in m_cf.items()}
         out["cf_quarter"] = _first_is_quarter(_header(t_cf))
-        out["cf_cols"] = {k: [v * s_cf for v in x[2]] for k, x in _map_rows(t_cf, CF_KEYS, full=True).items()}
+        cf_rows = _map_rows(t_cf, CF_KEYS, full=True)
+        out["cf_cols"] = {k: [v * s_cf for v in x[2]] for k, x in cf_rows.items()}
+        out["cf_labels"] = {k: x[1] for k, x in cf_rows.items()}
     return out
 
 

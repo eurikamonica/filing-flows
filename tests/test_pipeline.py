@@ -57,7 +57,7 @@ def test_formatting_rules():
 
 def test_fixture_run_renders_site(tmp_path):
     env = dict(os.environ, SEC_FIXTURES=os.path.join(ROOT, "tests", "fixtures"), SEC_USER_AGENT="test test@example.com")
-    out = tmp_path / "data"
+    out = out_dir = tmp_path / "data"
     subprocess.run([sys.executable, "-m", "pipeline.build", "run", "--store", str(tmp_path / "store"), "--out", str(out)],
                    cwd=ROOT, env=env, check=True, capture_output=True)
     ix = json.load(open(out / "index.json"))
@@ -69,6 +69,18 @@ def test_fixture_run_renders_site(tmp_path):
     assert iphone["notes"][0]["text"].startswith("iPhone net sales increased")
     assert q["compare"]["vs"] == "Q2 FY26" and len(q["compare"]["bullets"]) == 3
     assert all(isinstance(p, str) and p for p in q["analysis"])
+    # operating cash flow splits into capital expenditures and free cash flow
+    by = {n["id"]: n for n in q["nodes"]}
+    assert abs(by["fcf"]["v"] - (by["ocf"]["v"] - by["capex"]["v"])) < 1 and by["ocf"]["pos"] == "above"
+    out = {l["t"]: l["v"] for l in q["links"] if l["s"] == "ocf"}
+    assert set(out) == {"fcf", "capex"} and abs(sum(out.values()) - by["ocf"]["v"]) < 1
+    assert by["fcf"]["lines"][1][1].endswith("of OCF") and any("FCF margin" in l[1] for l in by["fcf"]["lines"])
+    # capex larger than operating cash flow: all of OCF goes to capex, the gap enters as negative free cash flow
+    smcl = json.load(open(out_dir / "c" / "9999902.json"))["quarters"][0]
+    sb = {n["id"]: n for n in smcl["nodes"]}
+    into = {l["s"]: l["v"] for l in smcl["links"] if l["t"] == "capex"}
+    assert "fcf" not in sb and set(into) == {"ocf", "fcf_neg"}
+    assert abs(into["ocf"] - sb["ocf"]["v"]) < 1 and abs(sum(into.values()) - sb["capex"]["v"]) < 1
 
 
 def test_earnings_release_8k(tmp_path):
@@ -865,13 +877,22 @@ def test_request_queues(tmp_path):
     finally:
         custom.comparison = real
     assert f.rows["chart_requests"][0]["status"] == "done" and f.rows["chart_requests"][0]["result"]["label"] == "X"
+    f.rows["company_requests"] += [{"id": 9, "cik": 1652044, "status": "pending", "created_at": "2026-10-03T03:30:00Z"},
+                                   {"id": 10, "cik": 320193, "status": "pending", "created_at": "2026-10-03T03:40:00Z"}]
+    assert custom.claim_companies(f, now, limit=1) == [320193]          # one company per scan here: the oldest ask
+    st = {r["id"]: r["status"] for r in f.rows["company_requests"]}
+    assert st[7] == st[10] == "queued" and st[9] == "pending"            # the same company asked twice rides along
+    for r in f.rows["company_requests"]:
+        if r["id"] in (7, 10):
+            r.update(status="pending", claimed_at=None)
+    f.rows["company_requests"] = [r for r in f.rows["company_requests"] if r["id"] != 9]
     assert custom.claim_companies(f, now) == [320193]
     site = tmp_path / "site"
     (site / "data" / "c").mkdir(parents=True)
     (site / "data" / "c" / "320193.json").write_text("{}")
     custom.finish_companies(f, str(site))
     st = {r["id"]: r["status"] for r in f.rows["company_requests"]}
-    assert st == {7: "done", 8: "failed"}
+    assert st == {7: "done", 8: "failed", 10: "done"}
 
 
 def test_email_me_a_fiscal_year(tmp_path):
@@ -922,6 +943,13 @@ def test_company_list_and_reader_requests_first(tmp_path):
     r = subprocess.run([sys.executable, "-m", "pipeline.build", "run", "--store", str(tmp_path / "store"), "--out", str(out),
                         "--build-ciks-file", str(ciks), "--max-filings", "40"], cwd=ROOT, env=env, check=True,
                        capture_output=True, text=True)
+    old = os.environ.get("SEC_FIXTURES")
+    from pipeline import sec
+    sec.FIXTURES = env["SEC_FIXTURES"]
+    try:
+        assert build.company_ciks(["ms", "AAPL", "brk.b", "320193", "", "NOPE", "x;y"]) == [320193, 1067983]
+    finally:
+        sec.FIXTURES = old or ""
     lst = json.load(open(out / "companies.json"))["companies"]
     assert lst[0] == [320193, "AAPL", "Apple Inc."] and len({x[0] for x in lst}) == len(lst)
     st = json.load(open(tmp_path / "store" / "state.json"))
@@ -942,3 +970,143 @@ def test_company_list_and_reader_requests_first(tmp_path):
         sec.FIXTURES = old or ""
         build._cf.clear()
     assert store.company(320193)["periods"]["q"][-1] == "2026-06-27"
+
+
+def test_pending_filings_wait_by_hours_not_by_runs(tmp_path):
+    """Scans every few minutes must not give up on a filing whose XBRL data is a few hours late."""
+    from pipeline import build
+    store = build.Store(str(tmp_path / "store"))
+    st = store.state
+    real = build.process_filing
+    build.process_filing = lambda *a, **k: (_ for _ in ()).throw(build.Pending("XBRL facts not available yet"))
+    try:
+        st["pending"]["a1"] = {"cik": 1, "form": "10-Q", "filed": "2026-10-03", "tries": 0}
+        for i in range(40):                                   # 40 runs, 15 minutes apart: 10 hours
+            t = (__import__("datetime").datetime(2026, 10, 3, 0, 0) + __import__("datetime").timedelta(minutes=15 * i)).isoformat()
+            build._process_one(store, st, "a1", st["pending"]["a1"], {}, t)
+        assert "a1" in st["pending"] and st["pending"]["a1"]["tries"] == 40
+        build._process_one(store, st, "a1", st["pending"]["a1"], {}, "2026-10-04T00:05:00")
+        assert "a1" not in st["pending"] and st["seen"]["a1"]["s"].startswith("skip: XBRL")
+    finally:
+        build.process_filing = real
+
+
+def test_company_description_without_a_10k():
+    """No 10-K yet: the earnings release's "About" paragraph, else Note 1 of the 10-Q; a 10-K's Item 1 always wins."""
+    from pipeline import build, notify, social, text
+    release = """<p><b>Micron Technology, Inc. Reports Results for the Fourth Quarter of Fiscal 2026</b></p>
+      <p><b>About Non-GAAP Financial Measures</b></p><p>Non-GAAP gross margin excludes stock-based compensation and other
+      items that management believes are not indicative of ongoing results of operations.</p>
+      <p><b>About Micron Technology, Inc.</b></p><p>We are an industry leader in innovative memory and storage solutions
+      transforming how the world uses information to enrich life for all, delivering DRAM, NAND and NOR products.</p>
+      <p>To learn more about Micron Technology, Inc. (Nasdaq: MU), visit micron.com.</p>
+      <p><b>Forward-Looking Statements</b></p><p>This press release contains forward-looking statements.</p>"""
+    about = text.about(release, ["MICRON TECHNOLOGY INC"], ["MU"])
+    assert about.startswith("We are an industry leader") and "micron.com" not in about and "Non-GAAP" not in about
+    inline = ('<div><span style="font-weight:700">About NVIDIA</span><br/>NVIDIA (NASDAQ: NVDA) is the world leader in '
+              'accelerated computing, with a full-stack platform for data centers, gaming and automotive markets.</div>'
+              '<div>Certain statements in this press release including the benefits of NVIDIA products are forward-looking '
+              'statements that are subject to risks and uncertainties.</div>')
+    nv = text.about(inline, ["NVIDIA CORP"], ["NVDA"])
+    assert nv.startswith("NVIDIA (NASDAQ: NVDA) is the world leader") and "forward-looking" not in nv
+    assert text.about("<p><b>About the Conference Call</b></p><p>" + "Example will host a call. " * 6 + "</p>",
+                      ["EXAMPLE CORP"], ["EXC"]) is None
+    tenq = """<p>NOTES TO CONDENSED CONSOLIDATED FINANCIAL STATEMENTS</p>
+      <p><b>Note 1 — Organization and Description of Business</b></p>
+      <p>Sample Cloud Holdings, Inc. (the “Company”) provides cloud infrastructure for artificial intelligence workloads,
+      operating data centers in the United States and Europe.</p>
+      <p><b>Basis of Presentation</b></p><p>The accompanying unaudited condensed consolidated financial statements have
+      been prepared in accordance with U.S. GAAP for interim financial information and should be read with the 10-K.</p>"""
+    n1 = text.note1(tenq, ["SAMPLE CLOUD HOLDINGS INC"], ["SMCL"])
+    assert n1.startswith("Sample Cloud Holdings, Inc. (the “Company”) provides") and "accompanying" not in n1
+    apple = open(os.path.join(ROOT, "tests", "fixtures",
+                              "www.sec.gov_Archives_edgar_data_320193_000032019326000020_aapl-20260627.htm")).read()
+    assert text.note1(apple, ["Apple Inc."], ["AAPL"]) is None          # Note 1 is only accounting policies there
+    # ranking: 10-K > 8-K > 10-Q; the newer filing of the same kind wins
+    c = {}
+    assert build.set_intro(c, "from the 10-Q", "u1", "2026-05-01", "10-Q")
+    assert build.set_intro(c, "from the release", "u2", "2026-04-20", "8-K") and c["intro"]["source"] == "8-K"
+    assert not build.set_intro(c, "older 10-Q", "u3", "2026-08-01", "10-Q")
+    assert build.set_intro(c, "Item 1", "u4", "2025-10-31", "10-K") and not build.set_intro(c, "release", "u5", "2026-10-01", "8-K")
+    assert not build.set_intro(c, "an older 10-K", "u6", "2024-10-31", "10-K") and c["intro"]["text"] == "Item 1"
+    assert build.intro_rank({"intro": {"text": "stored before sources existed"}}) == 3
+    # every place that quotes it says where it is from
+    rel = {"intro": {"text": "We make memory.", "filed": "2026-09-23", "source": "8-K"}}
+    assert notify.intro_source(rel) == "From the company’s earnings release (8-K) filed Sep 23, 2026, “About” section"
+    assert text.intro_cite({"text": "x", "filed": "2026-05-01", "source": "10-Q"}, short=True) == "10-Q filed May 1, 2026, Note 1"
+    assert notify.intro_source({"intro": {"text": "x", "filed": "2025-10-31"}}).endswith("Item 1. Business")
+
+
+def _xbrl_files(d, cik, accn, stem, facts_, labels):
+    """A filing directory with an XBRL instance and label linkbase (fixture files for sec.get)."""
+    from pipeline import sec
+    ctx, body = [], []
+    for i, (concept, start, end, v) in enumerate(facts_):
+        ctx.append(f'<xbrli:context id="c{i}"><xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">{cik}'
+                   f'</xbrli:identifier></xbrli:entity><xbrli:period><xbrli:startDate>{start}</xbrli:startDate>'
+                   f'<xbrli:endDate>{end}</xbrli:endDate></xbrli:period></xbrli:context>')
+        prefix, local = concept.split(":")
+        body.append(f'<{prefix}:{local} contextRef="c{i}" unitRef="usd" decimals="-6">{v}</{prefix}:{local}>')
+    inst = ('<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance" xmlns:us-gaap="http://fasb.org/us-gaap/2025" '
+            'xmlns:abc="http://abc.example/2026">' + "".join(ctx) + "".join(body) + "</xbrli:xbrl>")
+    locs = "".join(f'<link:loc xlink:type="locator" xlink:href="abc.xsd#{k}" xlink:label="loc_{k}"/>'
+                   f'<link:label xlink:type="resource" xlink:label="lab_{k}_{r}" xlink:role="http://www.xbrl.org/2003/role/{r}">{t}</link:label>'
+                   f'<link:labelArc xlink:type="arc" xlink:from="loc_{k}" xlink:to="lab_{k}_{r}"/>'
+                   for k, roles in labels.items() for r, t in roles.items())
+    lab = ('<link:linkbase xmlns:link="http://www.xbrl.org/2003/linkbase" xmlns:xlink="http://www.w3.org/1999/xlink">'
+           f'<link:labelLink>{locs}</link:labelLink></link:linkbase>')
+    files = {f"{stem}_htm.xml": inst, f"{stem}_lab.xml": lab}
+    idx = {"directory": {"item": [{"name": n} for n in files]}}
+    open(sec._fixture_path(sec.filing_index_url(cik, accn)), "w").write(json.dumps(idx))
+    for n, t in files.items():
+        open(sec._fixture_path(sec.doc_url(cik, accn, n)), "w").write(t)
+    return inst, lab
+
+
+def test_capex_found_by_its_printed_name_when_the_tag_is_the_companys_own(tmp_path):
+    """No standard capex tag in companyfacts: the filing's own line "Purchases of property and equipment" (a custom
+    tag) is used; the quarter is year-to-date minus the previous filing's year-to-date; the note says where it is from."""
+    from pipeline import build, dims, sec
+    d = tmp_path / "fx"
+    d.mkdir()
+    old = sec.FIXTURES
+    sec.FIXTURES = str(d)
+    try:
+        roles = {"abc_PaymentsForPropertyAndEquipmentNet": {"label": "Payments For Property And Equipment Net",
+                                                             "negatedLabel": "Purchases of property and equipment"},
+                 "us-gaap_ProceedsFromSaleOfPropertyPlantAndEquipment": {"label": "Proceeds from sale of equipment"},
+                 "abc_PaymentsForCapitalizedSoftware": {"negatedLabel": "Capitalized software"}}
+        cur = [("abc:PaymentsForPropertyAndEquipmentNet", "2026-01-01", "2026-06-30", 900e6),    # six months
+               ("abc:PaymentsForPropertyAndEquipmentNet", "2025-01-01", "2025-06-30", 700e6),
+               ("us-gaap:ProceedsFromSaleOfPropertyPlantAndEquipment", "2026-01-01", "2026-06-30", 950e6),
+               ("abc:PaymentsForCapitalizedSoftware", "2026-01-01", "2026-06-30", 80e6)]
+        inst, lab = _xbrl_files(d, 4242, "0000004242-26-000020", "abc-20260630", cur, roles)
+        _xbrl_files(d, 4242, "0000004242-26-000010", "abc-20260331",
+                    [("abc:PaymentsForPropertyAndEquipmentNet", "2026-01-01", "2026-03-31", 400e6),   # three months
+                     ("abc:PaymentsForPropertyAndEquipmentNet", "2025-01-01", "2025-03-31", 300e6)], roles)
+        found = dims.capex_lines(inst, dims.label_roles(lab))
+        assert found["concept"] == "abc:PaymentsForPropertyAndEquipmentNet" and found["label"] == "Purchases of property and equipment"
+        sub = {"filings": {"recent": {"accessionNumber": ["0000004242-26-000020", "0000004242-26-000010"],
+                                      "reportDate": ["2026-06-30", "2026-03-31"], "form": ["10-Q", "10-Q"],
+                                      "filingDate": ["2026-08-01", "2026-05-01"], "primaryDocument": ["a.htm", "b.htm"]}}}
+        raw, comp = {"capex": None}, {"q1_end": "2026-03-31", "py_end": "2025-06-30",
+                                      "raw_q1": {"capex": None}, "raw_py": {"capex": None}}
+        src = build.capex_from_filing(4242, sub, {}, raw, comp, "2026-06-30", inst, lab)
+        assert raw["capex"] == 500e6                                  # 900 (six months) - 400 (three months)
+        assert comp["raw_py"]["capex"] == 400e6 and comp["raw_q1"]["capex"] == 400e6
+        note = build.capex_note(src)
+        assert note.startswith("Capital expenditures = the cash-flow line “Purchases of property and equipment” "
+                               "(abc:PaymentsForPropertyAndEquipmentNet, the company’s own XBRL tag)")
+        # a standard tag in companyfacts wins, and the largest of the capex tags is the main line
+        fx = {"PaymentsToAcquirePropertyPlantAndEquipment": {("2026-04-01", "2026-06-30"): {"val": 20e6, "filed": "x"}},
+              "PaymentsToAcquireOilAndGasPropertyAndEquipment": {("2026-04-01", "2026-06-30"): {"val": 2e9, "filed": "x"}},
+              "__labels__": {"PaymentsToAcquireOilAndGasPropertyAndEquipment": "Payments to Acquire Oil and Gas Property and Equipment"}}
+        from pipeline import facts
+        assert facts.value(fx, "capex", "2026-06-30") == 2e9
+        raw2 = {"capex": 2e9}
+        src2 = build.capex_from_filing(4242, sub, fx, raw2, {}, "2026-06-30", None, None)
+        assert src2 == {"concept": "us-gaap:PaymentsToAcquireOilAndGasPropertyAndEquipment",
+                        "label": "Payments to Acquire Oil and Gas Property and Equipment", "how": "xbrl"}
+        assert "Proceeds from selling assets" in build.FCF_NOTE
+    finally:
+        sec.FIXTURES = old

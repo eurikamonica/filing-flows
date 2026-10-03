@@ -30,7 +30,7 @@ from email.utils import formataddr, make_msgid, parseaddr
 
 import requests
 
-from . import social
+from . import social, text
 
 MAX_AGE_DAYS = 3            # charts for filings older than this are not sent
 FULL_ITEMS = 6              # charts shown in full per e-mail; the rest are listed with a link
@@ -470,7 +470,7 @@ def cmp_note(vs, decreases, unit="quarter"):
 
 
 def intro_text(c, limit):
-    """The company's own description (10-K, Item 1), cut at a sentence end near `limit` characters."""
+    """The company's own description (10-K Item 1, or an earnings release / 10-Q), cut near `limit` characters."""
     intro = c.get("intro")
     text = (intro if isinstance(intro, str) else (intro or {}).get("text") or "").strip()
     if len(text) <= limit:
@@ -480,9 +480,7 @@ def intro_text(c, limit):
 
 
 def intro_source(c):
-    intro = c.get("intro")
-    filed = intro.get("filed") if isinstance(intro, dict) else None
-    return f"From the company’s 10-K{' filed ' + social.fdate(filed) if filed else ''}, Item 1. Business"
+    return text.intro_cite(c.get("intro"))
 
 
 def report_html(e, c, q, views, svgs, site_url, decreases=False, detail=False):

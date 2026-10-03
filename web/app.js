@@ -223,8 +223,10 @@
       } else {
         body = `<p class="empty">${ctx.form === '8-K' ? 'The earnings release has no passage about this line.' : `The ${t(ctx.form)} has no separate MD&amp;A passage about this line.`}</p>`;
       }
+      const trend = ctx.trend ? trendBlock(ctx.trend(n.id), n) : '';
+      const source = n.source ? `<p class="node-src">${t(n.source)}</p>` : '';    // where the figure was taken from
       return `<div class="eyebrow">${ctx.group ? t(ctx.groupName) : t(ctx.company)} · ${t(ctx.label)}</div>
-        <div class="k">${t(n.name)}</div><div class="v">${lines}</div>${body}
+        <div class="k">${t(n.name)}</div><div class="v">${lines}</div>${source}${trend}${body}
         <button class="btn" type="button" data-clear>Close note</button>`;
     }
     function select(id) {
@@ -244,6 +246,7 @@
       $$('.node', svg).filter((g) => g.dataset.node === id).forEach((g) => g.classList.add('sel'));
       $$('.band', svg).filter((p) => p.dataset.s === id || p.dataset.t === id).forEach((p) => p.classList.add('on'));
       notes.innerHTML = nodeNotes(byId.get(id));
+      wireTrend(notes);
       notes.classList.add('open');
       notes.scrollTop = 0;
       const clear = $('[data-clear]', notes);
@@ -361,10 +364,10 @@
       <section class="hero">
         <div class="eyebrow">SEC EDGAR · 10-Q, 10-K and 8-K earnings releases</div>
         <h1>Every new quarterly report, drawn as one flow from revenue to cash</h1>
-        <p>An hourly scan of EDGAR picks up new 10-Q and 10-K filings and earnings releases (8-K), reads their financial statements and draws revenue, costs, profit and operating cash flow as a Sankey. Click any node for what the company itself wrote about that line.</p>
+        <p>A scan of EDGAR every 15 minutes picks up new 10-Q and 10-K filings and earnings releases (8-K), reads their financial statements and draws revenue, costs, profit and operating cash flow as a Sankey. Click any node for what the company itself wrote about that line.</p>
         ${ix.demo ? `<p class="note-rule">${t(ix.demo)}</p>` : ''}
         <div class="status"><span>Last update <b>${date(ix.generated)}</b> ${t((ix.generated || '').slice(11, 16))} UTC</span>
-          <span><b>${ix.companies.length}</b> companies</span><span><b>${groups}</b> sector and industry charts</span><span>Scans every hour</span></div>
+          <span><b>${ix.companies.length}</b> companies</span><span><b>${groups}</b> sector and industry charts</span><span>Scans every 15 minutes</span></div>
       </section>
       ${stars.length ? `<section class="section">
         <div class="section-head"><h2>Starred</h2><span class="muted">Multi-quarter history${site.repo ? ` · add companies in <a href="https://github.com/${t(site.repo)}/edit/main/config/starred.txt" target="_blank" rel="noopener">config/starred.txt</a>` : ''}</span></div>
@@ -514,6 +517,7 @@
       company: S.dec(p.name), form: q.form, label: q.label, docUrl: q.doc_url,
       slug: `${(ticker || p.cik)}-${q.label}`.replace(/\s+/g, '-'),
       onView: () => renderChanges(),
+      trend: (id) => trendSeries(fy ? ys : qs, q, id, fy),
     });
     body.appendChild(ui);
     const acc = accession(q.index_url);
@@ -542,8 +546,12 @@
         </dl>
       </div>`;
     body.appendChild(text);
-    const thread = prefs.get('owner', false) && !fy ? threadSection(q, p, site.repo) : null;   // owner tool: see #owner
-    if (thread) body.appendChild(thread);
+    if (prefs.get('owner', false) && !fy) {               // owner tool (see #owner): only for the verified owner
+      ownerVerified().then((ok) => {
+        const thread = ok && text.isConnected ? threadSection(q, p, site.repo) : null;
+        if (thread) text.after(thread);
+      });
+    }
     if (qs.length > 1) {
       const h = document.createElement('div');
       h.innerHTML = historyTable(qs, cik);
@@ -617,8 +625,11 @@
     if (!intro) return '';
     const text = typeof intro === 'string' ? intro : intro.text;
     if (!text) return '';
-    const url = intro.url, filed = intro.filed;
-    return `<p class="intro">${t(text)}<span class="src">Quoted verbatim from the company’s 10-K${filed ? ` filed ${date(filed)}` : ''}, Item 1. Business${
+    const url = intro.url, filed = intro.filed, when = filed ? ` filed ${date(filed)}` : '';
+    const where = intro.source === '8-K' ? `earnings release (8-K)${when}, “About” section`
+      : intro.source === '10-Q' ? `10-Q${when}, Note 1 to the financial statements (no 10-K on file yet)`
+      : `10-K${when}, Item 1. Business`;
+    return `<p class="intro">${t(text)}<span class="src">Quoted verbatim from the company’s ${where}${
       url ? ` · <a href="${t(url)}" target="_blank" rel="noopener">open ↗</a>` : ''}</span></p>`;
   }
 
@@ -634,6 +645,106 @@
         `<td class="num ${tone(x.headline.yoy)}">${pct(x.headline.yoy)}</td>`, `<td class="num">${margin(x.headline.om)}</td>`,
         `<td class="num">${money(x.headline.ni)}</td>`, `<td class="num">${money(ocf(x))}</td>`])).join('')}
       </tbody></table></div></div>`;
+  }
+
+  // ---------- a node's last five quarters (or fiscal years), in its note ----------
+  // Two small panels on one time axis (never two scales on one axis): the amount as columns, and its change against a
+  // year earlier as a line. The current period is drawn at full strength; a readout above names the hovered period.
+  const TREND_N = 5;
+  function nodeAt(spec, id) {
+    const find = (k) => (spec.nodes || []).find((x) => x.id === k);
+    const own = find(id);
+    if (own) return { v: own.v, y: own.y };
+    if (id === 'fcf' || id === 'fcf_neg') {                       // free cash flow changes sides when it turns negative
+      const o = find('ocf'), c = find('capex');
+      if (!o || !c || o.v == null || c.v == null) return null;
+      const sg = id === 'fcf' ? 1 : -1;
+      return { v: sg * (o.v - c.v), y: o.y != null && c.y != null ? sg * (o.y - c.y) : null };
+    }
+    return null;
+  }
+  function trendSeries(specs, cur, id, years) {
+    const keep = specs.filter((x) => x.end <= cur.end).slice(0, TREND_N).reverse();
+    const pts = keep.map((x) => {
+      const a = nodeAt(x, id);
+      const v = a ? a.v : null, y = a ? a.y : null;
+      return { label: x.label, end: x.end, cur: x.end === cur.end, v, yoy: v != null && y != null && v > 0 && y > 0 ? (v / y - 1) * 100 : null };
+    });
+    return { years: !!years, pts: pts.filter((p) => p.v != null) };
+  }
+  const MARK_ROLE = { rev: 'rev', profit: 'profit', cost: 'cost', noncash: 'noncash' };
+  function trendBlock(series, n) {
+    const pts = series && series.pts;
+    if (!pts || pts.length < 2) return '';
+    const W = 320, PL = 6, PR = 6, TOP = 18, BH = 92, GAP = 22, LH = 58, XL = 18;
+    const H = TOP + BH + GAP + LH + XL;
+    const role = MARK_ROLE[n.color] || 'rev';
+    const band = (W - PL - PR) / pts.length, bw = Math.min(24, band * 0.5);
+    const cx = (i) => PL + band * i + band / 2;
+    const vals = pts.map((p) => p.v), vmax = Math.max(0, ...vals), vmin = Math.min(0, ...vals);
+    const vy = (v) => TOP + (vmax - v) / ((vmax - vmin) || 1) * BH;
+    const base = vy(0);
+    const f = (x) => x.toFixed(1);
+    const col = (p, i) => {                                         // 4px rounded data end, square at the baseline
+      const x = cx(i) - bw / 2, top = vy(Math.max(p.v, 0)), bot = vy(Math.min(p.v, 0)), r = Math.min(4, Math.abs(bot - top) / 2);
+      const d = p.v >= 0
+        ? `M${f(x)} ${f(bot)}V${f(top + r)}Q${f(x)} ${f(top)} ${f(x + r)} ${f(top)}H${f(x + bw - r)}Q${f(x + bw)} ${f(top)} ${f(x + bw)} ${f(top + r)}V${f(bot)}Z`
+        : `M${f(x)} ${f(top)}V${f(bot - r)}Q${f(x)} ${f(bot)} ${f(x + r)} ${f(bot)}H${f(x + bw - r)}Q${f(x + bw)} ${f(bot)} ${f(x + bw)} ${f(bot - r)}V${f(top)}Z`;
+      return `<path class="tr-col${p.cur ? ' cur' : ''}" data-i="${i}" d="${d}" fill="var(--mk-${role})"/>`;
+    };
+    const last = pts.length - 1, lp = pts[last];
+    const capY = lp.v >= 0 ? vy(lp.v) - 5 : vy(lp.v) + 13;
+    const yoys = pts.map((p) => p.yoy).filter((x) => x != null);
+    let line = '';
+    const y0 = TOP + BH + GAP;
+    if (yoys.length >= 2) {
+      const ymax = Math.max(0, ...yoys), ymin = Math.min(0, ...yoys), span = (ymax - ymin) || 1;
+      const yy = (v) => y0 + 8 + (ymax - v) / span * (LH - 16);
+      const segs = [];
+      let run = [];
+      pts.forEach((p, i) => { if (p.yoy == null) { if (run.length) segs.push(run); run = []; } else run.push([cx(i), yy(p.yoy)]); });
+      if (run.length) segs.push(run);
+      const li = pts.map((p) => p.yoy != null).lastIndexOf(true);
+      line = `<line x1="${PL}" x2="${W - PR}" y1="${f(yy(0))}" y2="${f(yy(0))}" class="tr-axis"/>` +
+        segs.map((sg) => `<polyline points="${sg.map(([x, y]) => `${f(x)},${f(y)}`).join(' ')}" class="tr-line"/>`).join('') +
+        pts.map((p, i) => (p.yoy == null ? '' : `<circle class="tr-dot${p.cur ? ' cur' : ''}" data-i="${i}" cx="${f(cx(i))}" cy="${f(yy(p.yoy))}" r="4"/>`)).join('') +
+        `<text class="tr-lab" x="${f(Math.min(cx(li) + 8, W - PR))}" y="${f(yy(pts[li].yoy) - 8)}" text-anchor="${cx(li) + 40 > W ? 'end' : 'start'}">${pct(pts[li].yoy)}</text>`;
+    } else {
+      line = `<text class="tr-cap" x="${PL}" y="${y0 + 24}">Change vs a year earlier: not enough periods on file</text>`;
+    }
+    const hits = pts.map((p, i) => `<rect class="tr-hit" data-i="${i}" x="${f(PL + band * i)}" y="0" width="${f(band)}" height="${H - XL}" fill="transparent"><title>${t(p.label)}: ${money(p.v)}${p.yoy != null ? ` · Y/Y ${pct(p.yoy)}` : ''}</title></rect>`).join('');
+    const unit = series.years ? 'fiscal years' : 'quarters';
+    const aria = `${S.dec(n.name)}, last ${pts.length} ${unit}: ` + pts.map((p) => `${S.dec(p.label)} ${money(p.v)}${p.yoy != null ? ` (Y/Y ${pct(p.yoy)})` : ''}`).join('; ');
+    const data = t(JSON.stringify(pts.map((p) => [S.dec(p.label), money(p.v), p.yoy != null ? pct(p.yoy) : null])));
+    return `<figure class="trend" data-pts="${data}">
+      <figcaption><span class="tr-title">Last ${pts.length} ${unit}</span><span class="tr-read" aria-live="polite"></span></figcaption>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(aria)}">
+        <text class="tr-cap" x="${PL}" y="11">Amount</text>
+        <line x1="${PL}" x2="${W - PR}" y1="${f(base)}" y2="${f(base)}" class="tr-axis"/>
+        ${pts.map(col).join('')}
+        <text class="tr-lab" x="${f(cx(last))}" y="${f(capY)}" text-anchor="middle">${money(lp.v)}</text>
+        <text class="tr-cap" x="${PL}" y="${y0 - 4}">Change vs a year earlier</text>
+        ${line}
+        ${pts.map((p, i) => `<text class="tr-x${p.cur ? ' cur' : ''}" x="${f(cx(i))}" y="${H - 4}" text-anchor="middle">${t(p.label)}</text>`).join('')}
+        ${hits}
+      </svg></figure>`;
+  }
+  function wireTrend(root) {
+    const fig = $('.trend', root);
+    if (!fig) return;
+    const pts = JSON.parse(S.dec(fig.dataset.pts));
+    const read = $('.tr-read', fig);
+    const show = (i) => {
+      const [label, v, yoy] = pts[i];
+      read.textContent = `${label} · ${v}${yoy ? ` · Y/Y ${yoy}` : ''}`;
+      $$('[data-i]', fig).forEach((el) => el.classList.toggle('on', +el.dataset.i === i));
+    };
+    show(pts.length - 1);
+    $$('.tr-hit', fig).forEach((h) => {
+      h.addEventListener('pointerenter', () => show(+h.dataset.i));
+      h.addEventListener('click', () => show(+h.dataset.i));
+    });
+    $('svg', fig).addEventListener('pointerleave', () => show(pts.length - 1));
   }
 
   // ---------- "Compare any two periods" (readers who turned it on in their alerts) ----------
@@ -688,7 +799,7 @@
       <div class="cmp-bar"><span id="cmp-sum">Pick two periods</span>
         <button class="btn small" type="button" id="cmp-swap" disabled title="Which period is drawn, and which it is compared with">⇄ Swap</button>
         <button class="btn primary" type="button" id="cmp-go" disabled>Draw comparison</button></div>`
-        : '<p class="muted">The list of this company’s periods arrives with its next update (the hourly scan adds it a few companies at a time).</p>'}
+        : '<p class="muted">The list of this company’s periods arrives with its next update (each scan adds it for a few companies at a time).</p>'}
       <p class="muted small" id="cmp-msg" role="status"></p>
       <div id="cmp-recent"></div>`;
     let sel = [], swapped = false;
@@ -851,7 +962,7 @@
       </div>
       <section class="build-box" id="build-box">
         <h2>No charts for this company yet</h2>
-        <p>Companies are drawn when they file a 10-Q, 10-K or earnings release during the hourly scan.
+        <p>Companies are drawn when they file a 10-Q, 10-K or earnings release during the regular scan (every 15 minutes).
           <span id="build-how">Ask for it and the next scan reads its last five 10-Qs and two 10-Ks from SEC; this page fills in by itself (usually 10–30 minutes).</span></p>
         <div class="row"><button class="btn primary" id="build-go" type="button" hidden>Build its charts</button>
           <span class="muted" id="build-msg" role="status"></span></div>
@@ -991,20 +1102,20 @@
       <div class="page-head"><div class="eyebrow">Method</div><h1>How each chart is built</h1></div>
       <div class="cols"><div class="prose">
         <h2>Scanning</h2>
-        <p>Every hour a scheduled job reads EDGAR’s live feed of new 10-Q and 10-K filings (plus the daily index as a fallback). Each new filing is processed once its XBRL data appears in the SEC’s company-facts API, which can lag the filing by a few hours; until then it waits in a retry queue.</p>
+        <p>Every 15 minutes a scheduled job reads EDGAR’s live feed of new 10-Q and 10-K filings (plus the daily index as a fallback). Each new filing is processed once its XBRL data appears in the SEC’s company-facts API, which can lag the filing by a few hours; until then it waits in a retry queue.</p>
         <h2>Earnings releases (8-K)</h2>
         <p>Most companies publish results in an 8-K press release days or weeks before the 10-Q or 10-K. The scan also reads 8-K filings with Item 2.02 (results of operations): the statements printed in the release are read by fixed rules. Before anything is drawn, one of the release’s earlier-period columns must equal the revenue and net earnings the company already filed in XBRL (this pins down the columns, the units and the period), the statement must reconcile, and the quarter must end at least a week before the release. These charts are marked preliminary and are replaced automatically when the 10-Q or 10-K arrives.</p>
         <h2>Numbers</h2>
         <p>All figures are GAAP values reported in XBRL. A quarter is taken directly when a three-month value exists; otherwise it is year-to-date minus the prior year-to-date, which is how fourth quarters (10-K) and all quarterly cash flows are derived. Revenue lines and segments come from the dimensional facts in the filing’s own XBRL instance and are used only when they add up to total revenue.</p>
         <h2>Layout</h2>
-        <p>Revenue lines merge into revenue; profit stays on top and costs peel downward; operating profit plus other income becomes pre-tax earnings, which splits into tax, minority interests and net earnings; operating cash flow is bridged directly from net earnings. Each label shows the amount, its share of the node it splits from or flows into, and the change year over year and quarter over quarter. Loss-making quarters use a funding view: revenue, other income and the net loss together fund all costs.</p>
+        <p>Revenue lines merge into revenue; profit stays on top and costs peel downward; operating profit plus other income becomes pre-tax earnings, which splits into tax, minority interests and net earnings; operating cash flow is bridged directly from net earnings and splits into capital expenditures and free cash flow (when capex exceeds operating cash flow, the gap enters as negative free cash flow). Each label shows the amount, its share of the node it splits from or flows into, and the change year over year and quarter over quarter. Loss-making quarters use a funding view: revenue, other income and the net loss together fund all costs.</p>
         <p>The comparison view keeps the same picture and marks the part of every band that grew since the previous quarter as a dark strip. Each label adds Δ = scale + mix: scale is the change explained by the parent node growing, mix the change in the item’s share of its parent.</p>
         <h2>Full years and any two periods</h2>
         <p>Each 10-K also gets a full-year chart from the year’s reported totals, compared with the year before. Signed-in readers who turn on “Compare any two periods” can pick any two quarters (or two fiscal years) that SEC’s XBRL data covers, back to 2009–2011; the comparison is drawn from SEC data on request by the same rules, the first period against the second.</p>
       </div><div class="prose">
         ${auditHTML}
         <h2>Text</h2>
-        <p>No language model is used anywhere. Company descriptions are the opening paragraphs of Item 1 (Business) of the latest 10-K. Node notes are the paragraphs under the matching heading in Management’s Discussion and Analysis of the same filing, quoted verbatim. Analysis paragraphs are sentences filled from the numbers by fixed rules.</p>
+        <p>No language model is used anywhere. Company descriptions are the opening paragraphs of Item 1 (Business) of the latest 10-K; for a company that has not filed a 10-K yet, the “About” paragraph of its earnings release, or else the description of business in Note 1 of its 10-Q. Node notes are the paragraphs under the matching heading in Management’s Discussion and Analysis of the same filing, quoted verbatim. Analysis paragraphs are sentences filled from the numbers by fixed rules.</p>
         <h2>Starred companies</h2>
         <p>Companies listed in <span class="mono">config/starred.txt</span> keep eight quarters and three fiscal years (others keep seven and two) and are back-filled from their filing history when first added.</p>
         <h2>Sectors</h2>
@@ -1083,7 +1194,7 @@
     frequency: 'instant', email_on: true, push_on: true, final_too: true };
   const MAIL_DEFAULTS = { chart_q: false, chart_y: false, chart_history: false, attach_images: 'png', attach_pdf: true, cmp_decreases: false,
     changes_detail: false, custom_compare: false };     // columns added after the first release (see savePrefs)
-  const acct = { client: undefined, prefs: null, flash: null };
+  const acct = { client: undefined, prefs: null, flash: null, owner: undefined };
 
   function loadScript(src, ms) {
     return new Promise((res, rej) => {
@@ -1265,7 +1376,7 @@
     if (!(await currentUser())) return signInView(c);
     const p = await loadPrefs();
     const pending = prefs.get('pending-follow', null), pendingSend = prefs.get('pending-send', null);
-    const pendingBuild = prefs.get('pending-build', null);
+    const pendingBuild = prefs.get('pending-build', null), pendingOwner = prefs.get('pending-owner', false);
     if (pending) {                                    // a Follow click from before signing in
       prefs.set('pending-follow', null);
       const [kind, value] = pending.split(':');
@@ -1282,7 +1393,8 @@
       prefs.set('pending-build', null);
       acct.flash = (await askForCompany(pendingBuild)).msg;
     }
-    if (pending || pendingSend || pendingBuild) {
+    if (pendingOwner) prefs.set('pending-owner', false);       // signing in from the owner tools page
+    if (pending || pendingSend || pendingBuild || pendingOwner) {
       const back = prefs.get('after-signin', null);
       prefs.set('after-signin', null);
       if (back && back !== 'account') { location.hash = back; return; }
@@ -1354,7 +1466,7 @@
               $<input type="number" id="min-rev" min="0" step="0.1" value="${(p.min_revenue / 1e9).toFixed(1).replace(/\.0$/, '')}" style="width:5em"> billion</label>
             <label><input type="checkbox" id="starred" ${p.starred ? 'checked' : ''}> The site’s starred companies</label></fieldset>
           <fieldset><legend>When</legend>
-            <label><input type="radio" name="freq" value="instant" ${p.frequency !== 'daily' ? 'checked' : ''}> As soon as a chart is out (checked every hour)</label>
+            <label><input type="radio" name="freq" value="instant" ${p.frequency !== 'daily' ? 'checked' : ''}> As soon as a chart is out (checked every 15 minutes)</label>
             <label><input type="radio" name="freq" value="daily" ${p.frequency === 'daily' ? 'checked' : ''}> Once a day, early evening New York time</label>
             <label class="long"><input type="checkbox" id="final-too" ${p.final_too !== false ? 'checked' : ''}><span>After a preliminary chart from an earnings release (8-K), also send the final one when the 10-Q/10-K is filed, marked as final and compared with the release</span></label></fieldset>
           <fieldset><legend>How</legend>
@@ -1401,7 +1513,7 @@
       };
       $('#add-btn').addEventListener('click', add);
       $('#add-ticker').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
-      $('#sign-out').addEventListener('click', async () => { await c.auth.signOut(); acct.prefs = null; syncApp(); location.hash = 'home'; });
+      $('#sign-out').addEventListener('click', async () => { await c.auth.signOut(); acct.prefs = null; acct.owner = undefined; syncApp(); location.hash = 'home'; });
       $('#del-acct').addEventListener('click', () => { $('#del-confirm').hidden = false; $('#del-acct').hidden = true; });
       $('#del-no').addEventListener('click', () => { $('#del-confirm').hidden = true; $('#del-acct').hidden = false; });
       $('#del-yes').addEventListener('click', async () => {
@@ -1469,16 +1581,47 @@
   }
 
   // ---------- owner tools: the X thread panel on company pages, for the site owner only ----------
-  // Readers never see it. Visiting #owner once in a browser turns it on there (kept in that browser only).
-  function ownerPage() {
+  // With accounts switched on, only an account listed in Supabase's site_owners table (signed in) can use them; the
+  // database answers "am I the owner?" without revealing the list. Without accounts, the switch is per browser only.
+  async function ownerVerified() {
+    const c = await sb();
+    if (!c) return true;                                     // no accounts on this site: the browser switch decides
+    if (!(await currentUser())) return false;
+    if (acct.owner === undefined) {
+      const r = await c.rpc('am_i_owner');
+      acct.owner = !r.error && r.data === true;
+    }
+    return acct.owner;
+  }
+  async function ownerPage() {
+    setNav('');
+    const c = await sb();
+    const user = c ? await currentUser() : null;
+    const head = '<div class="eyebrow">Site owner</div><h1>Owner tools</h1>';
+    const back = '<p><a href="#home">Back to the latest filings</a></p>';
+    if (c && !user) {
+      app.innerHTML = `<div class="page-head">${head}
+        <p class="muted" style="max-width:68ch">Sign in with the site owner’s e-mail address to use the owner tools.</p>
+        <p><a class="btn primary" href="#account" id="owner-signin">Sign in</a></p>${back}</div>`;
+      $('#owner-signin').addEventListener('click', () => { prefs.set('pending-owner', true); prefs.set('after-signin', 'owner'); });
+      return;
+    }
+    if (c && !(await ownerVerified())) {
+      prefs.set('owner', false);
+      app.innerHTML = `<div class="page-head">${head}
+        <p class="muted" style="max-width:68ch">Signed in as <b>${t(user.email)}</b>, which is not a site owner’s address.
+          The owner adds their address once in Supabase (SQL Editor:
+          <span class="mono">insert into public.site_owners (email) values ('…');</span>).</p>${back}</div>`;
+      return;
+    }
     const on = prefs.get('owner', false);
-    app.innerHTML = `<div class="page-head"><div class="eyebrow">Site owner</div><h1>Owner tools</h1>
+    app.innerHTML = `<div class="page-head">${head}
       <p class="muted" style="max-width:68ch">Shows the X thread panel on company pages in this browser: the ready-to-post
-        thread, Copy buttons and “Email me this thread”. Readers never see it. The setting stays in this browser,
-        so open this page once on each computer or phone you use.</p>
+        thread, Copy buttons and “Email me this thread”. Readers never see it. ${c ? `Verified: signed in as <b>${t(user.email)}</b>.`
+          : 'Accounts are not switched on for this site, so this switch only stays in this browser.'}</p>
       <p><button class="btn${on ? '' : ' primary'}" type="button" id="owner-toggle">${on ? 'Turn off in this browser' : 'Turn on in this browser'}</button></p>
       <p class="muted" id="owner-state">${on ? 'On: company pages show the X thread.' : 'Off: company pages look the same as for readers.'}</p>
-      <p><a href="#home">Back to the latest filings</a></p></div>`;
+      ${back}</div>`;
     $('#owner-toggle').addEventListener('click', () => { prefs.set('owner', !on); ownerPage(); });
   }
 
@@ -1504,14 +1647,14 @@
       else if (h === 'sectors') await sectorsPage();
       else if (h === 'method') await methodPage();
       else if (h === 'account') await accountPage();
-      else if (h === 'owner') ownerPage();
+      else if (h === 'owner') await ownerPage();
       else if ((m = /^unsubscribe-([0-9a-f-]{36})$/.exec(h))) await unsubscribePage(m[1]);
       else await home();
       initFollowButtons();
       initSendButtons();
       if (acct.flash) { toast(acct.flash); acct.flash = null; }
     } catch (err) {
-      app.innerHTML = `<div class="page-head"><h1>Not available</h1><p class="muted">${t(err.message)}. The data may not have been generated yet; the scan runs every hour.</p><p><a href="#home">Back to the latest filings</a></p></div>`;
+      app.innerHTML = `<div class="page-head"><h1>Not available</h1><p class="muted">${t(err.message)}. The data may not have been generated yet; the scan runs every 15 minutes.</p><p><a href="#home">Back to the latest filings</a></p></div>`;
     }
   }
   let lastPage = null;
