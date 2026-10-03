@@ -654,21 +654,22 @@
   function nodeAt(spec, id) {
     const find = (k) => (spec.nodes || []).find((x) => x.id === k);
     const own = find(id);
-    if (own) return { v: own.v, y: own.y };
+    if (own) return { v: own.v, y: own.y, q: own.q };
     if (id === 'fcf' || id === 'fcf_neg') {                       // free cash flow changes sides when it turns negative
       const o = find('ocf'), c = find('capex');
       if (!o || !c || o.v == null || c.v == null) return null;
-      const sg = id === 'fcf' ? 1 : -1;
-      return { v: sg * (o.v - c.v), y: o.y != null && c.y != null ? sg * (o.y - c.y) : null };
+      const sg = id === 'fcf' ? 1 : -1, d = (k) => (o[k] != null && c[k] != null ? sg * (o[k] - c[k]) : null);
+      return { v: sg * (o.v - c.v), y: d('y'), q: d('q') };
     }
     return null;
   }
   function trendSeries(specs, cur, id, years) {
     const keep = specs.filter((x) => x.end <= cur.end).slice(0, TREND_N).reverse();
+    const chg = (v, b) => (v != null && b != null && v > 0 && b > 0 ? (v / b - 1) * 100 : null);   // n/m when ≤ 0
     const pts = keep.map((x) => {
-      const a = nodeAt(x, id);
-      const v = a ? a.v : null, y = a ? a.y : null;
-      return { label: x.label, end: x.end, cur: x.end === cur.end, v, yoy: v != null && y != null && v > 0 && y > 0 ? (v / y - 1) * 100 : null };
+      const a = nodeAt(x, id) || {};
+      return { label: x.label, end: x.end, cur: x.end === cur.end, v: a.v == null ? null : a.v,
+        yoy: chg(a.v, a.y), qoq: years ? null : chg(a.v, a.q) };
     });
     return { years: !!years, pts: pts.filter((p) => p.v != null) };
   }
@@ -676,8 +677,14 @@
   function trendBlock(series, n) {
     const pts = series && series.pts;
     if (!pts || pts.length < 2) return '';
-    const W = 320, PL = 6, PR = 6, TOP = 18, BH = 92, GAP = 22, LH = 58, XL = 18;
-    const H = TOP + BH + GAP + LH + XL;
+    const panels = [['yoy', series.years ? 'Change vs the year before' : 'Change vs a year earlier']]
+      .concat(series.years ? [] : [['qoq', 'Change vs the previous quarter']]);
+    const W = 320, PL = 6, PR = 40, TOP = 18, BH = 92, GAP = 22, LH = 58, XL = 18, SHORT = 20;   // PR: room for end labels
+    const enough = (key) => pts.filter((p) => p[key] != null).length >= 2;
+    const tops = [];                                          // where each change panel starts (a short note when empty)
+    let yAt = TOP + BH + GAP;
+    panels.forEach(([key]) => { tops.push(yAt); yAt += enough(key) ? LH + GAP : SHORT; });
+    const H = yAt - GAP + XL + (enough(panels[panels.length - 1][0]) ? 0 : GAP);
     const role = MARK_ROLE[n.color] || 'rev';
     const band = (W - PL - PR) / pts.length, bw = Math.min(24, band * 0.5);
     const cx = (i) => PL + band * i + band / 2;
@@ -694,28 +701,31 @@
     };
     const last = pts.length - 1, lp = pts[last];
     const capY = lp.v >= 0 ? vy(lp.v) - 5 : vy(lp.v) + 13;
-    const yoys = pts.map((p) => p.yoy).filter((x) => x != null);
-    let line = '';
-    const y0 = TOP + BH + GAP;
-    if (yoys.length >= 2) {
-      const ymax = Math.max(0, ...yoys), ymin = Math.min(0, ...yoys), span = (ymax - ymin) || 1;
+    // a change panel: its own zero line and scale (each panel reads on its own; never two scales on one axis)
+    const linePanel = ([key, title], k) => {
+      const y0 = tops[k];
+      const vals = pts.map((p) => p[key]).filter((x) => x != null);
+      const head = `<text class="tr-cap" x="${PL}" y="${y0 - 4}">${title}${vals.length < 2 ? ': not enough periods on file' : ''}</text>`;
+      if (vals.length < 2) return head;
+      const ymax = Math.max(0, ...vals), ymin = Math.min(0, ...vals), span = (ymax - ymin) || 1;
       const yy = (v) => y0 + 8 + (ymax - v) / span * (LH - 16);
       const segs = [];
       let run = [];
-      pts.forEach((p, i) => { if (p.yoy == null) { if (run.length) segs.push(run); run = []; } else run.push([cx(i), yy(p.yoy)]); });
+      pts.forEach((p, i) => { if (p[key] == null) { if (run.length) segs.push(run); run = []; } else run.push([cx(i), yy(p[key])]); });
       if (run.length) segs.push(run);
-      const li = pts.map((p) => p.yoy != null).lastIndexOf(true);
-      line = `<line x1="${PL}" x2="${W - PR}" y1="${f(yy(0))}" y2="${f(yy(0))}" class="tr-axis"/>` +
+      const li = pts.map((p) => p[key] != null).lastIndexOf(true);
+      const ly = yy(pts[li][key]);                                             // the value at the end of the line
+      return head + `<line x1="${PL}" x2="${W - PR}" y1="${f(yy(0))}" y2="${f(yy(0))}" class="tr-axis"/>` +
         segs.map((sg) => `<polyline points="${sg.map(([x, y]) => `${f(x)},${f(y)}`).join(' ')}" class="tr-line"/>`).join('') +
-        pts.map((p, i) => (p.yoy == null ? '' : `<circle class="tr-dot${p.cur ? ' cur' : ''}" data-i="${i}" cx="${f(cx(i))}" cy="${f(yy(p.yoy))}" r="4"/>`)).join('') +
-        `<text class="tr-lab" x="${f(Math.min(cx(li) + 8, W - PR))}" y="${f(yy(pts[li].yoy) - 8)}" text-anchor="${cx(li) + 40 > W ? 'end' : 'start'}">${pct(pts[li].yoy)}</text>`;
-    } else {
-      line = `<text class="tr-cap" x="${PL}" y="${y0 + 24}">Change vs a year earlier: not enough periods on file</text>`;
-    }
-    const hits = pts.map((p, i) => `<rect class="tr-hit" data-i="${i}" x="${f(PL + band * i)}" y="0" width="${f(band)}" height="${H - XL}" fill="transparent"><title>${t(p.label)}: ${money(p.v)}${p.yoy != null ? ` · Y/Y ${pct(p.yoy)}` : ''}</title></rect>`).join('');
+        pts.map((p, i) => (p[key] == null ? '' : `<circle class="tr-dot${p.cur ? ' cur' : ''}" data-i="${i}" cx="${f(cx(i))}" cy="${f(yy(p[key]))}" r="4"/>`)).join('') +
+        `<text class="tr-lab" x="${f(cx(li) + 9)}" y="${f(ly + 4)}" text-anchor="start">${pct(pts[li][key])}</text>`;
+    };
+    const line = panels.map(linePanel).join('');
+    const chgs = (p) => [p.yoy != null ? `Y/Y ${pct(p.yoy)}` : null, p.qoq != null ? `Q/Q ${pct(p.qoq)}` : null].filter(Boolean);
+    const hits = pts.map((p, i) => `<rect class="tr-hit" data-i="${i}" x="${f(PL + band * i)}" y="0" width="${f(band)}" height="${H - XL}" fill="transparent"><title>${t(p.label)}: ${[money(p.v)].concat(chgs(p)).join(' · ')}</title></rect>`).join('');
     const unit = series.years ? 'fiscal years' : 'quarters';
-    const aria = `${S.dec(n.name)}, last ${pts.length} ${unit}: ` + pts.map((p) => `${S.dec(p.label)} ${money(p.v)}${p.yoy != null ? ` (Y/Y ${pct(p.yoy)})` : ''}`).join('; ');
-    const data = t(JSON.stringify(pts.map((p) => [S.dec(p.label), money(p.v), p.yoy != null ? pct(p.yoy) : null])));
+    const aria = `${S.dec(n.name)}, last ${pts.length} ${unit}: ` + pts.map((p) => `${S.dec(p.label)} ${money(p.v)}${chgs(p).length ? ` (${chgs(p).join(', ')})` : ''}`).join('; ');
+    const data = t(JSON.stringify(pts.map((p) => [S.dec(p.label), money(p.v)].concat(chgs(p)))));
     return `<figure class="trend" data-pts="${data}">
       <figcaption><span class="tr-title">Last ${pts.length} ${unit}</span><span class="tr-read" aria-live="polite"></span></figcaption>
       <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(aria)}">
@@ -723,7 +733,6 @@
         <line x1="${PL}" x2="${W - PR}" y1="${f(base)}" y2="${f(base)}" class="tr-axis"/>
         ${pts.map(col).join('')}
         <text class="tr-lab" x="${f(cx(last))}" y="${f(capY)}" text-anchor="middle">${money(lp.v)}</text>
-        <text class="tr-cap" x="${PL}" y="${y0 - 4}">Change vs a year earlier</text>
         ${line}
         ${pts.map((p, i) => `<text class="tr-x${p.cur ? ' cur' : ''}" x="${f(cx(i))}" y="${H - 4}" text-anchor="middle">${t(p.label)}</text>`).join('')}
         ${hits}
@@ -735,8 +744,7 @@
     const pts = JSON.parse(S.dec(fig.dataset.pts));
     const read = $('.tr-read', fig);
     const show = (i) => {
-      const [label, v, yoy] = pts[i];
-      read.textContent = `${label} · ${v}${yoy ? ` · Y/Y ${yoy}` : ''}`;
+      read.textContent = pts[i].join(' · ');                    // "Q3 FY26 · $2.4B · Y/Y +15% · Q/Q +10%"
       $$('[data-i]', fig).forEach((el) => el.classList.toggle('on', +el.dataset.i === i));
     };
     show(pts.length - 1);
