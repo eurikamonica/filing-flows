@@ -91,7 +91,8 @@ object Links {
     const val EXTRA_TITLE = "title"
     const val EXTRA_TAB = "tab"
 
-    fun chart(context: Context, e: Entry): Intent = chart(context, "c-${e.cik}-${e.end}", Feed.line(e))
+    fun chart(context: Context, e: Entry): Intent =
+        chart(context, if (e.onSite) "c-${e.cik}-${e.end}" else "c-${e.cik}", Feed.line(e))
 
     fun chart(context: Context, hash: String, title: String?): Intent =
         Intent(context, ChartActivity::class.java).putExtra(EXTRA_HASH, hash).putExtra(EXTRA_TITLE, title)

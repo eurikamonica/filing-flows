@@ -190,7 +190,8 @@ class ChartRow(context: Context) : LinearLayout(context) {
         val b = Feed.badge(e)
         badge.visibility = if (b == null) View.GONE else View.VISIBLE
         badge.text = b ?: ""
-        badgeBg.setColor(color(if (e.prelim) R.color.chip_prelim else R.color.chip_final))
-        contentDescription = listOfNotNull(Feed.title(e), Feed.subtitle(e), b, "revenue ${e.rev}", Feed.yoy(e)).joinToString(", ")
+        badgeBg.setColor(color(if (e.prelim || !e.onSite) R.color.chip_prelim else R.color.chip_final))
+        contentDescription = listOfNotNull(Feed.title(e), Feed.subtitle(e), b, e.rev.ifBlank { null }?.let { "revenue $it" }, Feed.yoy(e))
+            .joinToString(", ")
     }
 }

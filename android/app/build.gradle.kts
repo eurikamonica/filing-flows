@@ -70,4 +70,5 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")          // the real org.json for unit tests (android.jar only has stubs)
 }

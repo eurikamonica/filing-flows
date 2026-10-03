@@ -35,6 +35,8 @@ class MainActivity : AppCompatActivity(), AppHost {
     private lateinit var repo: ChartsRepo
     private var web: WebView? = null
     private var entries: List<Entry> = emptyList()
+    private var companies: List<Entry> = emptyList()      // SEC's list, loaded the first time the reader searches
+    private var companiesState = 0                        // 0 not loaded, 1 loading, 2 loaded (or failed)
     private var query = ""
     private var current = 0
     private var loading = false
@@ -73,7 +75,11 @@ class MainActivity : AppCompatActivity(), AppHost {
         latest = ChartListView(this, true)
         latest.onOpen = { open(it) }
         latest.onRefresh = { refresh(true) }
-        latest.onQuery = { query = it; render() }
+        latest.onQuery = {
+            query = it
+            render()
+            if (it.isNotBlank()) loadCompanies()
+        }
 
         entries = repo.cached()
         nav.setOnItemSelectedListener { show(it.itemId); true }
@@ -178,7 +184,22 @@ class MainActivity : AppCompatActivity(), AppHost {
                 nav.selectedItemId = R.id.tab_alerts
             }
         }
-        latest.show(Feed.search(entries, query), getString(if (entries.isEmpty()) R.string.latest_empty else R.string.search_none))
+        latest.show(Feed.search(entries, query, companies), getString(if (entries.isEmpty()) R.string.latest_empty else R.string.search_none))
+    }
+
+    /** SEC's company list, so the search finds companies the site has not drawn yet (cached for a day). */
+    private fun loadCompanies() {
+        if (companiesState != 0) return
+        companiesState = 1
+        lifecycleScope.launch {
+            companies = withContext(Dispatchers.IO) {
+                val cached = repo.cachedCompanies()
+                if (cached.isNotEmpty() && repo.companiesAge() < DAY_MS) cached
+                else runCatching { repo.refreshCompanies() }.getOrDefault(cached)
+            }
+            companiesState = if (companies.isEmpty()) 0 else 2      // offline: the next search tries again
+            render()
+        }
     }
 
     private fun refresh(force: Boolean) {
@@ -251,5 +272,6 @@ class MainActivity : AppCompatActivity(), AppHost {
 
     companion object {
         private const val STALE_MS = 15 * 60_000L
+        private const val DAY_MS = 24 * 60 * 60_000L
     }
 }

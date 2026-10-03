@@ -12,6 +12,7 @@ import java.net.URL
 class ChartsRepo(context: Context) {
     private val app = context.applicationContext
     private val file = File(app.filesDir, "index.json")
+    private val companiesFile = File(app.filesDir, "companies.json")
 
     fun cached(): List<Entry> = runCatching { Store.parseIndex(file.readText()) }.getOrDefault(emptyList())
 
@@ -28,6 +29,22 @@ class ChartsRepo(context: Context) {
         }
         file.writeText(text)
         return entries
+    }
+
+    /** SEC's company list for the search (changes slowly: kept for a day). */
+    fun cachedCompanies(): List<Entry> = runCatching { Companies.parse(companiesFile.readText()) }.getOrDefault(emptyList())
+
+    fun companiesAge(): Long = if (companiesFile.exists()) System.currentTimeMillis() - companiesFile.lastModified() else Long.MAX_VALUE
+
+    fun refreshCompanies(): List<Entry> {
+        val text = Net.get(BuildConfig.SITE_URL + "data/companies.json")
+        val list = try {
+            Companies.parse(text)
+        } catch (e: org.json.JSONException) {
+            throw IOException("unreadable company list", e)
+        }
+        companiesFile.writeText(text)
+        return list
     }
 }
 

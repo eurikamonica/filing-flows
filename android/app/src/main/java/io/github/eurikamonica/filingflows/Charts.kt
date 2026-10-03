@@ -22,6 +22,7 @@ data class Entry(
     val starred: Boolean,
     val afterRelease: String? = null,      // filing date of the 8-K whose preliminary chart this 10-Q/10-K replaces
     val releaseOk: Boolean? = null,        // the release's figures matched the filing
+    val onSite: Boolean = true,            // false: a company on SEC's list the site has no chart for yet (search only)
 ) {
     val prelim: Boolean get() = form == "8-K"
 }
