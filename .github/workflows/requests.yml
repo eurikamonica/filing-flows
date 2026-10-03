@@ -1,6 +1,9 @@
 name: Send requested reports
 
-# "✉ Email me" on a company page queues a request in Supabase; this e-mails the report to that reader's own address.
+# What signed-in readers ask for on the site, answered from Supabase:
+#   "✉ Email me" on a company page   -> e-mails that report to the reader's own address
+#   "Compare any two periods"        -> draws the comparison from SEC data and hands it back to the page
+#   a company found by the search    -> starts the scan, which builds its charts
 # Runs every 10 minutes, or within a minute or two when Supabase wakes it (optional, see README).
 # The hourly scan's alerts job also sends whatever is waiting.
 
@@ -8,11 +11,12 @@ on:
   schedule:
     - cron: "*/10 * * * *"
   repository_dispatch:
-    types: [send-request]
+    types: [send-request, chart-request]
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: write       # start "Scan EDGAR and publish" at once when a reader asks for a new company
 
 concurrency:
   group: send-requests
@@ -22,10 +26,11 @@ jobs:
   send:
     if: vars.SUPABASE_URL != ''
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
       MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
       MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
       MAIL_FROM: ${{ vars.MAIL_FROM }}
@@ -40,6 +45,22 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
+
+      - name: Draw the comparisons readers asked for
+        continue-on-error: true                 # trouble here never blocks the e-mails below
+        run: python -m pipeline.custom charts
+
+      - name: Start the scan for companies readers asked for
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if python -m pipeline.custom has-companies; then
+            curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/workflows/scan.yml/dispatches" \
+              -d "{\"ref\":\"${{ github.ref_name }}\"}" && echo "scan started"
+          fi
+
       - name: Send what readers asked for
         run: |
           owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')

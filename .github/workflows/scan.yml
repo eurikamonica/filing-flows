@@ -3,6 +3,8 @@ name: Scan EDGAR and publish
 on:
   schedule:
     - cron: "17 * * * *"          # every hour, off the top of the hour
+  repository_dispatch:
+    types: [company-request]       # a reader asked for a company the site does not have (Supabase wake, optional)
   workflow_dispatch:
     inputs:
       backfill_days:
@@ -55,11 +57,25 @@ jobs:
             git -C store remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           fi
 
+      - name: Companies readers asked for (site search)
+        continue-on-error: true                 # without Supabase, or before schema.sql is run again: none
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python -m pipeline.custom claim-companies --out build-ciks.txt
+
       - name: Scan new 10-Q / 10-K filings and build charts
         run: |
-          python -m pipeline.build run --store store --out _site/data \
+          python -m pipeline.build run --store store --out _site/data --build-ciks-file build-ciks.txt \
             --backfill-days "${{ github.event.inputs.backfill_days || 0 }}" \
             --max-filings "${{ github.event.inputs.max_filings || 1500 }}"
+
+      - name: Tell readers their companies are in
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python -m pipeline.custom finish-companies --site _site
 
       - name: Assemble site
         env:                                   # public values (repository variables): the sign-in box on the site
@@ -81,8 +97,9 @@ jobs:
           X_API_SECRET: ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
-          X_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
         run: |
+          owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          export X_SITE_URL="https://$owner.github.io/${GITHUB_REPOSITORY#*/}/"   # works on scheduled runs too
           if python -m pipeline.social --site _site --store store --check; then
             pip install playwright
             python -m playwright install --with-deps chromium
