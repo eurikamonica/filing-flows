@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_following"
+        android:shortcutId="following"
+        android:shortcutShortLabel="@string/tab_following">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="io.github.eurikamonica.filingflows.MainActivity"
+            android:targetPackage="io.github.eurikamonica.filingflows">
+            <extra android:name="tab" android:value="following" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_latest"
+        android:shortcutId="latest"
+        android:shortcutShortLabel="@string/tab_latest">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="io.github.eurikamonica.filingflows.MainActivity"
+            android:targetPackage="io.github.eurikamonica.filingflows">
+            <extra android:name="tab" android:value="latest" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_alerts"
+        android:shortcutId="alerts"
+        android:shortcutShortLabel="@string/tab_alerts">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="io.github.eurikamonica.filingflows.MainActivity"
+            android:targetPackage="io.github.eurikamonica.filingflows">
+            <extra android:name="tab" android:value="alerts" />
+        </intent>
+    </shortcut>
+</shortcuts>

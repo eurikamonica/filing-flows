@@ -54,6 +54,25 @@ def mask(addr):
     return f"{name[:2]}***@{domain[:1]}***" if domain else "***"
 
 
+def setting(name, url=False):
+    """An environment setting as pasted into GitHub, forgiving the usual slips: quotes, spaces, a whole
+    "NAME = value" line, and for the project URL a trailing /rest/v1 copied from the API page."""
+    raw = os.environ.get(name, "")
+    v = raw.strip().strip("'\"").strip()
+    m = re.match(r"^[A-Z][A-Z0-9_]*\s*[=:]\s*(.*)$", v)
+    if m:
+        v = m.group(1).strip().strip("'\"").strip()
+    if url:
+        v = v.rstrip("/")
+        for tail in ("/rest/v1", "/auth/v1"):
+            if v.endswith(tail):
+                v = v[: -len(tail)].rstrip("/")
+    if v != raw:
+        shown = f"using {v}" if url else "using the value inside it"     # never print any part of a key
+        print(f"::warning::{name} had extra text around the value; {shown}. Fix it in Settings → Secrets and variables → Actions.")
+    return v
+
+
 def parse_ts(s):
     t = dt.datetime.fromisoformat(str(s).replace("Z", "+00:00"))
     return t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)
@@ -664,7 +683,7 @@ def main():
     ap.add_argument("--due", action="store_true", help="exit 0 when some reader has an e-mail due now; send nothing")
     ap.add_argument("--requests", action="store_true", help="only the reports readers asked for with \"Email me\"")
     args = ap.parse_args()
-    url, key = os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_KEY", "")
+    url, key = setting("SUPABASE_URL", url=True), setting("SUPABASE_SERVICE_KEY")
     user, password = os.environ.get("MAIL_USERNAME", ""), os.environ.get("MAIL_PASSWORD", "")
     if args.check:
         sys.exit(0 if url and key else 1)

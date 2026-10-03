@@ -6,7 +6,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -44,7 +43,7 @@ object Notifications {
                     .setContentTitle(NewCharts.title(e, final))
                     .setContentText(text)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-                    .setContentIntent(open(context, "c-${e.cik}-${e.end}", e.cik.toInt()))
+                    .setContentIntent(FollowingWidget.chartIntent(context, e, e.cik.toInt()))
                     .setAutoCancel(true)
                     .setGroup(GROUP)
                     .build()
@@ -58,7 +57,8 @@ object Notifications {
                     .setColor(ContextCompat.getColor(context, R.color.accent))
                     .setContentTitle(context.getString(R.string.new_charts, charts.size))
                     .setStyle(inbox)
-                    .setContentIntent(open(context, "home", 0))
+                    .setContentIntent(PendingIntent.getActivity(context, 0, Links.home(context, "following"),
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
                     .setAutoCancel(true)
                     .setGroup(GROUP)
                     .setGroupSummary(true)
@@ -72,11 +72,4 @@ object Notifications {
 
     private const val SUMMARY_ID = -1
 
-    private fun open(context: Context, hash: String, requestCode: Int): PendingIntent {
-        val intent = Intent(context, MainActivity::class.java)
-            .putExtra(MainActivity.EXTRA_HASH, hash)
-            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        return PendingIntent.getActivity(context, requestCode, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
 }

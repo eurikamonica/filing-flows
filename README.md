@@ -64,7 +64,9 @@ Set up (Gmail):
 2. Add repository secrets `MAIL_USERNAME` (the Gmail address) and `MAIL_PASSWORD` (the 16-character app password,
    without spaces). Optional: `MAIL_TO` to send to another address.
 
-Every company page also shows the quarter's thread with Copy buttons and an **Email me this thread** button. The
+Company pages can also show the quarter's thread with Copy buttons and an **Email me this thread** button. It is an
+owner tool, hidden from readers: open `https://<you>.github.io/<repo>/#owner` once in each browser you use and turn it
+on (the setting stays in that browser). The
 site is static, so the button opens a pre-filled GitHub issue; when you (the repository owner) press Create, the
 workflow `.github/workflows/email-thread.yml` e-mails that quarter's thread with both charts and closes the issue.
 Issues opened by anyone else are ignored.
@@ -160,10 +162,22 @@ reader signed up are not sent; **Email me** covers those.
 
 ### 3. Android app
 
-`android/` is a small Kotlin app: the site in a full-screen WebView (same pages, same sign-in, exports saved to
-Downloads) plus a background check every 30 minutes that reads `data/index.json` and shows a notification for each
-new chart that matches what the reader follows (tap → that chart), including the final 10-Q/10-K after an 8-K chart
-unless that setting is off. It needs no server of its own.
+`android/` is a Kotlin app built around native screens, with the site's pages only where they are interactive:
+
+- **Following** and **Latest** tabs are native lists of charts (ticker, quarter, form, revenue and Y/Y, a badge for 8-K
+  preliminary or final). Latest has search; both pull to refresh and keep working offline from a cached
+  `data/index.json`.
+- **Home-screen widget** with the three newest charts of what the reader follows (or the newest overall), each one tap
+  from its chart; **launcher shortcuts** (long-press the icon) for Following, Latest and Alerts.
+- A **background check** every 30 minutes (WorkManager) shows a notification for each new chart that matches what the
+  reader follows (tap → that chart), including the final 10-Q/10-K after an 8-K chart unless that setting is off.
+- A chart opens under a native toolbar (back, share link); the page's **Share** button hands the chart image to the
+  Android share sheet and exports are saved to Downloads. **Sectors** and **Alerts** (sign-in, settings) are the
+  site's pages; inside the app the site hides its own header. Links to the site (for example in alert e-mails) can
+  open in the app.
+
+It needs no server of its own. These native parts are also what keeps Google Play from treating it as a website
+wrapper (Minimum functionality / Webview policies): show them in the store screenshots and description.
 
 - **Build on GitHub** (nothing to install): upload `android/` and `.github/workflows/android.yml`. The **Android app**
   workflow builds `filing-flows.apk` and publishes it at `https://github.com/<you>/<repo>/releases/tag/android`; the
@@ -226,7 +240,7 @@ EDGAR daily index (backfill)         ─┴─► pending queue (state.json)
 | `pipeline/social.py` | X threads: candidates, text (fits 280 characters), chart PNGs via headless Chromium, e-mail or X API |
 | `pipeline/notify.py` | reader alerts and **Email me** requests: matches charts to subscriptions, e-mails chart + analysis, records deliveries |
 | `supabase/schema.sql` | accounts, report requests, row-level security, unsubscribe and delete-account functions (safe to run again) |
-| `android/` | Kotlin WebView app with background checks and notifications (built by `.github/workflows/android.yml`) |
+| `android/` | Kotlin app: native chart lists, home-screen widget, shortcuts, background checks and notifications; chart pages in a WebView (built by `.github/workflows/android.yml`) |
 | `pipeline/text.py` | MD&A note matching and Item 1 introduction |
 | `pipeline/build.py` | `run` (scan + process + render) and `render` |
 | `web/sankey.js` | layout (column spacing from label widths, collision-free labels), SVG, canvas/PDF export |

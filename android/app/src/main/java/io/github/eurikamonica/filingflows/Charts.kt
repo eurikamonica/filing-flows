@@ -39,8 +39,13 @@ data class Follows(
     val pushOn: Boolean = true,
     val finalToo: Boolean = true,          // after an 8-K chart, also announce the 10-Q/10-K version
 ) {
+    /** Follows anything at all (for the native lists). */
+    val any: Boolean
+        get() = tickers.isNotEmpty() || sectors.isNotEmpty() || allAbove || starred
+
+    /** Wants notifications. */
     val active: Boolean
-        get() = pushOn && (tickers.isNotEmpty() || sectors.isNotEmpty() || allAbove || starred)
+        get() = pushOn && any
 
     fun matches(e: Entry): Boolean =
         (e.ticker.isNotEmpty() && normTicker(e.ticker) in tickers.map(::normTicker)) ||

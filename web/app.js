@@ -9,9 +9,11 @@
 
   // ---------- small utilities ----------
   const cache = new Map();
+  const FRESH = new Set(['index.json', 'site.json']);          // small files that change: ask the server each time
   function getJSON(p) {
     if (!cache.has(p)) {
-      cache.set(p, fetch(BASE + p).then((r) => {
+      const get = FRESH.has(p) ? fetch(BASE + p, { cache: 'no-cache' }).catch(() => fetch(BASE + p)) : fetch(BASE + p);
+      cache.set(p, get.then((r) => {
         if (!r.ok) throw new Error(`${p}: HTTP ${r.status}`);
         return r.json();
       }));
@@ -80,13 +82,19 @@
   // ---------- export helpers ----------
   // Inside the claude.ai artifact viewer files go through its `downloads` capability (the viewer confirms);
   // everywhere else (GitHub Pages, local) a normal browser download.
+  async function blobBase64(blob) {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 32768) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+    return btoa(bin);
+  }
+  const nativeApp = window.FilingFlowsApp || null;               // set when the page runs inside the Android app
+  const canShare = !!(nativeApp && typeof nativeApp.shareFile === 'function');
+  if (nativeApp) document.documentElement.classList.add('in-app');  // the app has its own tabs and toolbar
   async function saveBlob(blob, name) {
     const native = window.FilingFlowsApp;                       // the Android app saves files itself
     if (native && typeof native.saveFile === 'function') {
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-      let bin = '';
-      for (let i = 0; i < bytes.length; i += 32768) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
-      native.saveFile(name, blob.type || 'application/octet-stream', btoa(bin));
+      native.saveFile(name, blob.type || 'application/octet-stream', await blobBase64(blob));
       return 'saved';
     }
     const host = window.claude;
@@ -156,6 +164,7 @@
           <button class="btn" type="button" data-x="png">PNG</button>
           <button class="btn" type="button" data-x="jpg">JPG</button>
           <button class="btn" type="button" data-x="pdf">PDF</button>
+          ${canShare ? '<button class="btn" type="button" data-x="share">Share</button>' : ''}
         </div>
       </div>
       <div class="hintline">${ctx.group ? 'Click a company bar to open its own chart.' :
@@ -265,11 +274,16 @@
     }));
     $$('[data-x]', el).forEach((b) => b.addEventListener('click', async () => {
       if (!scene) return;
-      const fmt = b.dataset.x;
+      const share = b.dataset.x === 'share';
+      const fmt = share ? 'png' : b.dataset.x;
       b.disabled = true;
       try {
         const blob = await S.exportScene(scene, fmt);
         const name = `${ctx.slug}${mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? '-vs-year-ago' : ''}-sankey.${fmt}`;
+        if (share) {                                               // Android share sheet (X, messages, mail …)
+          nativeApp.shareFile(name, 'image/png', await blobBase64(blob));
+          return;
+        }
         const res = await saveBlob(blob, name);
         toast(res === 'declined' ? 'Export cancelled' : res === 'failed' ? 'Download unavailable here; use Preview to save the image'
           : `Exported ${name}`, () => previewDialog(blob, fmt, name, scene));
@@ -476,7 +490,7 @@
         </dl>
       </div>`;
     body.appendChild(text);
-    const thread = threadSection(q, p, site.repo);
+    const thread = prefs.get('owner', false) ? threadSection(q, p, site.repo) : null;   // owner tool: see #owner
     if (thread) body.appendChild(thread);
     if (qs.length > 1) {
       const h = document.createElement('div');
@@ -721,17 +735,20 @@
   }
 
   // ---------- accounts: passwordless sign-in (a code by e-mail) and alert preferences, stored in Supabase ----------
-  const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js';
+  const SUPABASE_JS = ['cdn.jsdelivr.net/npm', 'fastly.jsdelivr.net/npm', 'unpkg.com']   // tried in turn (some networks block one)
+    .map((h) => `https://${h}/@supabase/supabase-js@2.58.0/dist/umd/supabase.js`);
   const PREF_DEFAULTS = { tickers: [], sectors: [], all_above: false, min_revenue: 1e9, starred: false,
     frequency: 'instant', email_on: true, push_on: true, final_too: true };
   const acct = { client: undefined, prefs: null, flash: null };
 
-  function loadScript(src) {
+  function loadScript(src, ms) {
     return new Promise((res, rej) => {
       const el = document.createElement('script');
+      const fail = () => { clearTimeout(timer); el.remove(); rej(new Error('could not load ' + src)); };
+      const timer = setTimeout(fail, ms || 6000);                // a blocked host can hang instead of failing
       el.src = src;
-      el.onload = res;
-      el.onerror = () => rej(new Error('could not load ' + src));
+      el.onload = () => { clearTimeout(timer); res(); };
+      el.onerror = fail;
       document.head.appendChild(el);
     });
   }
@@ -741,9 +758,13 @@
     const site = await getJSON('site.json').catch(() => ({}));
     if (!site.supabase_url || !site.supabase_key) return (acct.client = null);
     try {
-      if (!window.supabase) await loadScript(SUPABASE_JS);
+      for (const src of SUPABASE_JS) {
+        if (window.supabase && window.supabase.createClient) break;
+        await loadScript(src).catch((e) => console.warn(e.message));
+      }
       acct.client = window.supabase.createClient(site.supabase_url, site.supabase_key);
     } catch (e) {
+      console.warn('accounts are off on this page:', e.message);
       acct.client = null;
     }
     return acct.client;
@@ -925,7 +946,9 @@
       const btn = $('#auth-email button');
       btn.disabled = true;
       msg('Sending…');
-      const r = await c.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+      // emailRedirectTo: where a link in the e-mail lands if a template still sends one (without it Supabase uses the
+      // browser's Referer, which is only the domain: https://you.github.io/ instead of the site)
+      const r = await c.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
       btn.disabled = false;
       if (r.error) { msg(`Could not send the code: ${r.error.message}`); return; }
       prefs.set('signin-email', email);
@@ -1061,6 +1084,20 @@
         : 'The link may be old or already used. Sign in to change your alerts.'}</p><p><a href="#account">Manage alerts</a></p></div>`;
   }
 
+  // ---------- owner tools: the X thread panel on company pages, for the site owner only ----------
+  // Readers never see it. Visiting #owner once in a browser turns it on there (kept in that browser only).
+  function ownerPage() {
+    const on = prefs.get('owner', false);
+    app.innerHTML = `<div class="page-head"><div class="eyebrow">Site owner</div><h1>Owner tools</h1>
+      <p class="muted" style="max-width:68ch">Shows the X thread panel on company pages in this browser: the ready-to-post
+        thread, Copy buttons and “Email me this thread”. Readers never see it. The setting stays in this browser,
+        so open this page once on each computer or phone you use.</p>
+      <p><button class="btn${on ? '' : ' primary'}" type="button" id="owner-toggle">${on ? 'Turn off in this browser' : 'Turn on in this browser'}</button></p>
+      <p class="muted" id="owner-state">${on ? 'On: company pages show the X thread.' : 'Off: company pages look the same as for readers.'}</p>
+      <p><a href="#home">Back to the latest filings</a></p></div>`;
+    $('#owner-toggle').addEventListener('click', () => { prefs.set('owner', !on); ownerPage(); });
+  }
+
   // ---------- router ----------
   async function route() {
     state.charts = [];
@@ -1073,6 +1110,7 @@
       else if (h === 'sectors') await sectorsPage();
       else if (h === 'method') await methodPage();
       else if (h === 'account') await accountPage();
+      else if (h === 'owner') ownerPage();
       else if ((m = /^unsubscribe-([0-9a-f-]{36})$/.exec(h))) await unsubscribePage(m[1]);
       else await home();
       initFollowButtons();

@@ -13,6 +13,27 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEB = os.path.join(ROOT, "web")
 
 
+def setting(name, url=False):
+    """An environment setting as pasted into GitHub, forgiving quotes, spaces, a whole "NAME = value" line and,
+    for the Supabase project URL, a trailing /rest/v1 (same rules as pipeline.notify.setting)."""
+    raw = os.environ.get(name, "")
+    v = raw.strip().strip("'\"").strip()
+    m = re.match(r"^[A-Z][A-Z0-9_]*\s*[=:]\s*(.*)$", v)
+    if m:
+        v = m.group(1).strip().strip("'\"").strip()
+    if url:
+        v = v.rstrip("/")
+        for tail in ("/rest/v1", "/auth/v1"):
+            if v.endswith(tail):
+                v = v[: -len(tail)].rstrip("/")
+    if v != raw:
+        shown = f"using {v}" if url else "using the value inside it"
+        print(f"::warning::{name} had extra text around the value; {shown}. Fix it in Settings → Secrets and variables → Actions.")
+    if url and v and not v.startswith("https://"):
+        print(f"::warning::{name} should look like https://xxxx.supabase.co")
+    return v
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="_site/data", help="directory written by `pipeline.build render`")
@@ -45,8 +66,8 @@ def main():
         shutil.copytree(args.data, data_out)
     site = {"repo": os.environ.get("GITHUB_REPOSITORY", ""),
             # accounts: the project URL and the public (publishable / anon) key; row-level security protects the data
-            "supabase_url": os.environ.get("SUPABASE_URL", ""), "supabase_key": os.environ.get("SUPABASE_ANON_KEY", ""),
-            "contact": os.environ.get("CONTACT_EMAIL", "")}       # shown on the privacy and terms pages
+            "supabase_url": setting("SUPABASE_URL", url=True), "supabase_key": setting("SUPABASE_ANON_KEY"),
+            "contact": setting("CONTACT_EMAIL")}       # shown on the privacy and terms pages
     json.dump(site, open(os.path.join(data_out, "site.json"), "w"))
     # privacy policy and terms: plain pages (app stores and crawlers read them without running the site's script)
     if site["contact"]:

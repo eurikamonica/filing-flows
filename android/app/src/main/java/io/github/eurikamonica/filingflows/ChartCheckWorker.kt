@@ -9,8 +9,6 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.URL
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
@@ -26,10 +24,8 @@ class ChartCheckWorker(context: Context, params: WorkerParameters) : CoroutineWo
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val store = Store(applicationContext)
         val entries = try {
-            Store.parseIndex(fetch(BuildConfig.SITE_URL + "data/index.json"))
+            ChartsRepo(applicationContext).refresh()             // also keeps the lists and the widget current offline
         } catch (e: IOException) {
-            return@withContext Result.retry()
-        } catch (e: org.json.JSONException) {
             return@withContext Result.retry()
         }
         val (fresh, seen) = NewCharts.diff(store.seen(), entries, LocalDate.now(ZoneOffset.UTC))
@@ -38,21 +34,8 @@ class ChartCheckWorker(context: Context, params: WorkerParameters) : CoroutineWo
         if (follows != null && follows.active) {
             Notifications.show(applicationContext, fresh.filter { follows.wants(it) })
         }
+        FollowingWidget.updateAll(applicationContext)
         Result.success()
-    }
-
-    private fun fetch(url: String): String {
-        val c = URL(url).openConnection() as HttpURLConnection
-        c.connectTimeout = 20_000
-        c.readTimeout = 30_000
-        c.setRequestProperty("Cache-Control", "no-cache")
-        c.setRequestProperty("User-Agent", "FilingFlowsApp/${BuildConfig.VERSION_NAME}")
-        try {
-            if (c.responseCode != 200) throw IOException("HTTP ${c.responseCode}")
-            return c.inputStream.bufferedReader().use { it.readText() }
-        } finally {
-            c.disconnect()
-        }
     }
 
     companion object {
