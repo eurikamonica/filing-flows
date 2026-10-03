@@ -75,13 +75,21 @@ def _quarter_from(per, end):
     return None
 
 
-def value(facts, key, end):
+def _year_from(per, end):
+    """Full fiscal-year value ending at `end` (a 52/53-week or 12-month duration)."""
+    for (s, e), f in per.items():
+        if e == end and 350 <= (d(e) - d(s)).days <= 380:
+            return f["val"]
+    return None
+
+
+def value(facts, key, end, annual=False):
     vals = []
     for concept in CONCEPTS[key]:
         per = facts.get(concept)
         if not per:
             continue
-        v = _quarter_from(per, end)
+        v = _year_from(per, end) if annual else _quarter_from(per, end)
         if v is not None:
             if key not in MAX_KEYS:
                 return v
@@ -110,6 +118,29 @@ def period_ends(facts):
     return sorted(ends)
 
 
+def year_ends(facts):
+    """Fiscal-year ends with a full-year revenue figure."""
+    ends = set()
+    for concept in CONCEPTS["revenue"]:
+        for (s, e) in facts.get(concept, {}):
+            if 350 <= (d(e) - d(s)).days <= 380:
+                ends.add(e)
+    return sorted(ends)
+
+
+def quarter_ends(facts):
+    """Quarter ends whose quarterly revenue can be read (directly or as year-to-date minus the earlier year-to-date)."""
+    out = []
+    per = {}
+    for concept in CONCEPTS["revenue"]:
+        for k, f in facts.get(concept, {}).items():
+            per.setdefault(k, f)
+    for e in sorted({e for (s, e) in per}):
+        if _quarter_from(per, e) is not None:
+            out.append(e)
+    return out
+
+
 def comparison_ends(facts, end):
     """(previous quarter end, same quarter last year end) available in the facts."""
     ends = [d(e) for e in period_ends(facts)]
@@ -120,8 +151,15 @@ def comparison_ends(facts, end):
     return pick(q1, 91), pick(py, 364)
 
 
-def extract(facts, end):
-    return {k: value(facts, k, end) for k in CONCEPTS} if end else None
+def extract(facts, end, annual=False):
+    return {k: value(facts, k, end, annual) for k in CONCEPTS} if end else None
+
+
+def prior_year_end(facts, end):
+    """The fiscal year before the one ending at `end`, if its full-year figures are in the facts."""
+    e0 = d(end)
+    xs = [d(e) for e in year_ends(facts) if 350 <= (e0 - d(e)).days <= 380]
+    return min(xs, key=lambda x: abs((e0 - x).days - 364)).isoformat() if xs else None
 
 
 def fiscal_label(end, fiscal_year_end):
@@ -139,6 +177,12 @@ def fiscal_label(end, fiscal_year_end):
     if mm == 12 and dd >= 25:
         return f"Q{q} {fy}", q, fy
     return f"Q{q} FY{str(fy)[2:]}", q, fy
+
+
+def fiscal_year_label(end, fiscal_year_end):
+    """'FY2025' for calendar years, 'FY26' for other fiscal years (the year the fiscal year ends in)."""
+    label, q, fy = fiscal_label(end, fiscal_year_end)
+    return (f"FY{fy}" if label.startswith("Q") and " FY" not in label else f"FY{str(fy)[2:]}"), fy
 
 
 def calendar_quarter(end):

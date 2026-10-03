@@ -539,7 +539,7 @@ def test_notify_sends_reports_readers_ask_for(tmp_path):
     assert "The 2 reports you asked for." in mail.sent[0].get_body(("plain",)).get_content()
     assert "Why you got this: you asked for this report." in mail.sent[0].get_body(("plain",)).get_content()
     assert [st[i]["status"] for i in (1, 2, 3, 4, 5)] == ["sent", "sent", "failed", "failed", "sent"]
-    assert st[3]["error"] == "that quarter is no longer on the site" and st[4]["error"].startswith("no e-mail")
+    assert st[3]["error"] == "that period is no longer on the site" and st[4]["error"].startswith("no e-mail")
     # nothing left: a second run sends nothing
     mail.sent.clear()
     assert notify.run(notify.Site(site), supa, mail, "x", "", now=now, images=False, hour=22, daily_limit=50,
@@ -559,3 +559,386 @@ def test_notify_sends_reports_readers_ask_for(tmp_path):
     mail.sent.clear()
     assert notify.run(notify.Site(site), supa, mail, "x", "", now=now, images=False, hour=22, daily_limit=50,
                       requests_only=True) == 1
+
+
+def test_settings_forgive_pasted_names_and_rest_path(monkeypatch=None):
+    import os
+    from pipeline import notify
+    old = {k: os.environ.get(k) for k in ("SUPABASE_URL", "SUPABASE_SERVICE_KEY")}
+    try:
+        os.environ["SUPABASE_URL"] = "SUPABASE_URL = https://abc.supabase.co/rest/v1/"
+        assert notify.setting("SUPABASE_URL", url=True) == "https://abc.supabase.co"
+        os.environ["SUPABASE_URL"] = "https://abc.supabase.co"
+        assert notify.setting("SUPABASE_URL", url=True) == "https://abc.supabase.co"
+        os.environ["SUPABASE_SERVICE_KEY"] = " SUPABASE_SERVICE_KEY: 'sb_secret_xyz'\n"
+        assert notify.setting("SUPABASE_SERVICE_KEY") == "sb_secret_xyz"
+        os.environ["SUPABASE_SERVICE_KEY"] = "eyJhbGciOiJIUzI1NiJ9.e30.sig"
+        assert notify.setting("SUPABASE_SERVICE_KEY") == "eyJhbGciOiJIUzI1NiJ9.e30.sig"
+    finally:
+        for k, v in old.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
+
+def test_email_extra_charts_and_attachments_follow_preferences():
+    import email
+    from pipeline import notify
+    c = {"profile": {"name": "Apple Inc.", "cik": 320193, "tickers": ["AAPL"]},
+         "quarters": [{"end": "2026-06-27", "label": "Q3 FY26", "form": "10-Q", "filed": "2026-07-31", "nodes": [],
+                       "headline": {"revenue": 109.4e9, "rev_fmt": "$109.4B", "yoy": 16.4, "ni": 29.8e9, "ni_fmt": "$29.8B", "om": 32.6},
+                       "analysis": ["Revenue was $109.4B."],
+                       "compare": {"vs": "Q2 FY26", "bullets": ["Revenue fell $1.8B versus Q2 FY26."]},
+                       "compare_y": {"vs": "Q3 FY25", "bullets": ["Revenue rose $15.4B versus Q3 FY25."]}},
+                      {"end": "2026-03-28", "label": "Q2 FY26", "form": "10-Q", "filed": "2026-05-01", "nodes": [],
+                       "headline": {"revenue": 111.2e9, "yoy": 17, "ni": 29.6e9, "om": 32.3}}]}
+    q = c["quarters"][0]
+    e = {"cik": 320193, "end": q["end"], "form": "10-Q", "ticker": "AAPL", "name": "Apple Inc.", "rev": "$109.4B"}
+    sub = {"email": "r@example.com", "unsub_token": "t", "chart_q": True, "chart_y": False, "chart_history": True,
+           "attach_images": "jpg", "attach_pdf": True}
+    assert notify.views_for(sub, c, q) == ["std", "q", "h"]
+    assert notify.views_for({}, c, q) == ["std"]
+    k = notify.item_key(e)
+    extras = {k: {"inline": {"q": b"Q" * 100, "h": b"H" * 100},
+                  "files": [("AAPL-Q3-FY26-report.pdf", b"%PDF" * 50, "application", "pdf"),
+                            ("AAPL-Q3-FY26-sankey.jpg", b"J" * 300, "image", "jpeg")]}}
+    msg = notify.build_message(sub, [(e, c, q, ["you asked for this report"])], "https://x.io/ff", {k: b"S" * 100},
+                               "FF <a@b.c>", requested=True, extras=extras)
+    m = email.message_from_bytes(msg.as_bytes())
+    parts = [(p.get_content_type(), p.get_content_disposition(), p.get_filename()) for p in m.walk()]
+    inline = [x for x in parts if x[1] == "inline"]
+    attached = [x[2] for x in parts if x[1] == "attachment"]
+    assert len(inline) == 3, parts                          # this quarter + vs previous quarter + history
+    assert attached == ["AAPL-Q3-FY26-report.pdf", "AAPL-Q3-FY26-sankey.jpg"], attached
+    html = [p for p in m.walk() if p.get_content_type() == "text/html"][0].get_payload(decode=True).decode()
+    assert "What changed vs Q2 FY26" in html and "Quarter by quarter" in html and "Attached: AAPL-Q3-FY26-report.pdf" in html
+    assert "#c-320193-all" in html
+
+    os.environ["MAIL_MAX_BYTES"] = "520"                     # room for the pictures (300) and the PDF (200), not the image file
+    try:
+        msg = notify.build_message(sub, [(e, c, q, ["x"])], "https://x.io/ff", {k: b"S" * 100}, "FF <a@b.c>",
+                                   requested=True, extras=extras)
+    finally:
+        del os.environ["MAIL_MAX_BYTES"]
+    m = email.message_from_bytes(msg.as_bytes())
+    attached = [p.get_filename() for p in m.walk() if p.get_content_disposition() == "attachment"]
+    assert attached == ["AAPL-Q3-FY26-report.pdf"], attached
+    assert "Some files were left out" in m.as_string()
+
+
+def test_report_html_has_profile_charts_and_analysis():
+    from pipeline import notify
+    c = {"profile": {"name": "NIKE, Inc.", "cik": 320187, "tickers": ["NKE"], "exchanges": ["NYSE"], "sic": "3021",
+                     "industry": "Rubber & Plastics Footwear", "fye": "0531", "category": "Large accelerated filer"},
+         "intro": {"text": "NIKE, Inc. was incorporated in 1967 under the laws of the State of Oregon.", "filed": "2025-07-17"},
+         "quarters": [{"end": "2026-08-31", "label": "Q1 FY27", "form": "10-Q", "filed": "2026-10-02", "nodes": [],
+                       "index_url": "https://www.sec.gov/Archives/edgar/data/320187/000032018726000045/0000320187-26-000045-index.htm",
+                       "headline": {"revenue": 11.2e9, "rev_fmt": "$11.2B", "yoy": -4, "ni": 0.71e9, "ni_fmt": "$0.71B", "om": 8.2},
+                       "analysis": ["Revenue was $11.2B in Q1 FY27."],
+                       "compare_y": {"vs": "Q1 FY26", "bullets": ["Revenue fell $0.51B versus Q1 FY26."]}}]}
+    q = c["quarters"][0]
+    e = {"cik": 320187, "end": q["end"], "form": "10-Q", "ticker": "NKE"}
+    html = notify.report_html(e, c, q, ["std", "y"], {"std": '<svg viewBox="0 0 2400 1200"></svg>', "y": '<svg viewBox="0 0 2400 1300"></svg>'},
+                              "https://x.io/ff")
+    for want in ("NIKE, Inc.", "incorporated in 1967", "Fiscal year ends May 31", "Revenue was $11.2B", "What changed vs Q1 FY26",
+                 "compared with Q1 FY26", "0000320187-26-000045", "Not investment advice", "Rubber &amp; Plastics Footwear"):
+        assert want in html, want
+    assert html.count("<figure") == 2
+
+
+def test_quotes_skip_footnotes_and_small_amounts_keep_their_size():
+    from pipeline import social
+    from pipeline.sankey import Fmt
+    q = {"form": "10-Q", "nodes": [{"id": "revenue", "v": 1, "notes": [{"text": "(1) The percent change excluding currency changes "
+         "represents a non-GAAP financial measure.\nRevenues decreased 4% due to lower wholesale shipments in Greater China."}]}]}
+    assert social.filing_quote(q)[0].startswith("Revenues decreased 4%")
+    assert Fmt(11e9).money(-3e6) == "−$3.0M" and Fmt(11e9).money(0.19e9) == "$0.19B"
+
+
+def test_decreases_setting_reaches_the_drawings_and_the_intro_reaches_the_email():
+    import email
+    from pipeline import notify
+
+    class FakeCharts:
+        def __init__(self):
+            self.calls = []
+
+        def image(self, what, fmt="png", scale=2, quality=None, width=None):
+            self.calls.append(("image", what[0], what[2] if what[0] == "chart" else None,
+                               (what[3] if len(what) > 3 else {}) if what[0] == "chart" else None, fmt))
+            return b"IMG" * 10
+
+        def svg(self, what, aria="Chart"):
+            self.calls.append(("svg", what[0], what[2] if what[0] == "chart" else None,
+                               (what[3] if len(what) > 3 else {}) if what[0] == "chart" else None, "svg"))
+            return '<svg viewBox="0 0 2400 1200"></svg>'
+
+        def pdf(self, html, footer=""):
+            self.calls.append(("pdf", "hatched area" in html, None, None, "pdf"))
+            return b"%PDF-1.4"
+
+    q = {"end": "2026-08-31", "label": "Q1 FY27", "form": "10-Q", "filed": "2026-10-02", "nodes": [],
+         "headline": {"revenue": 11.2e9, "rev_fmt": "$11.2B", "yoy": -4, "ni": 0.71e9, "ni_fmt": "$0.71B", "om": 8.2},
+         "analysis": ["Revenue was $11.2B."], "compare": {"vs": "Q4 FY26", "bullets": ["Revenue rose."]},
+         "compare_y": {"vs": "Q1 FY26", "bullets": ["Revenue fell."]}}
+    c = {"profile": {"name": "NIKE, Inc.", "cik": 320187, "tickers": ["NKE"]},
+         "intro": {"text": "NIKE, Inc. was incorporated in 1967 under the laws of the State of Oregon. " * 12, "filed": "2025-07-17"},
+         "quarters": [q]}
+    e = {"cik": 320187, "end": q["end"], "form": "10-Q", "ticker": "NKE"}
+    sub = {"email": "r@example.com", "chart_y": True, "cmp_decreases": True, "attach_images": "png", "attach_pdf": True}
+    fake = FakeCharts()
+    with notify.Assets(None, charts=fake) as a:
+        pics, extras = a.for_message(sub, [(e, c, q, ["x"])], "https://x.io/ff", 10)
+    drawn = {(k, mode): opts for k, kind, mode, opts, fmt in fake.calls if kind == "chart"}
+    assert drawn[("image", "y")] == {"decreases": True}          # the year-ago comparison, with decreases
+    assert drawn[("image", None)] == {"decreases": False}        # this quarter's chart has nothing to compare
+    assert ("pdf", True, None, None, "pdf") in fake.calls         # the PDF explains the hatching
+    msg = notify.build_message(sub, [(e, c, q, ["x"])], "https://x.io/ff", pics, "FF <a@b.c>", requested=True, extras=extras)
+    html = [p for p in email.message_from_bytes(msg.as_bytes()).walk() if p.get_content_type() == "text/html"][0]
+    html = html.get_payload(decode=True).decode()
+    assert "incorporated in 1967" in html and "Item 1. Business" in html
+    assert len(notify.intro_text(c, 420)) <= 421
+    assert "hatched area with a dashed outline" in html
+
+    sub["cmp_decreases"] = False
+    fake.calls.clear()
+    with notify.Assets(None, charts=fake) as a:
+        a.for_message(sub, [(e, c, q, ["x"])], "https://x.io/ff", 10)
+    assert all(opts == {"decreases": False} for k, kind, mode, opts, fmt in fake.calls if kind == "chart")
+
+
+def test_detail_option_lists_every_change():
+    import email
+    from pipeline import notify
+    q = {"end": "2026-06-27", "label": "Q3 FY26", "form": "10-Q", "filed": "2026-07-31",
+         "headline": {"revenue": 109.4e9, "rev_fmt": "$109.4B", "yoy": 16, "ni": 29.8e9, "ni_fmt": "$29.8B", "om": 32.6},
+         "compare": {"vs": "Q2 FY26", "bullets": ["a"]}, "compare_y": {"vs": "Q3 FY25", "bullets": ["Revenue rose."]},
+         "nodes": [{"id": "revenue", "col": 1, "color": "rev", "name": "Revenue", "v": 109.4e9, "q": 111.2e9, "y": 94.0e9,
+                    "cmp": "Δ −$1.8B", "cmp_y": "Δ +$15.4B"},
+                   {"id": "L:a", "col": 0, "color": "rev", "name": "iPhone", "v": 54.3e9, "q": 57.0e9, "y": 44.6e9,
+                    "cmp": "Δ −$2.7B · scale −1.1 · mix −1.7", "cmp_y": "Δ +$9.7B · scale +8.1 · mix +1.6"},
+                   {"id": "rd", "col": 4, "color": "cost", "name": "Research &amp; development", "v": 11.7e9, "q": 11.4e9, "y": None}]}
+    rows = notify.change_rows(q)
+    assert [r["name"] for r in rows] == ["iPhone", "Revenue", "Research & development"]   # left to right
+    assert rows[0]["dy"] == "+$9.7B" and rows[0]["py"] == "+22%" and rows[0]["mix_y"] == "scale +8.1 · mix +1.6"
+    assert rows[1]["mix_q"] == "" and rows[2]["dy"] == "—"
+    c = {"profile": {"name": "Apple Inc.", "cik": 320193}, "quarters": [q]}
+    e = {"cik": 320193, "end": q["end"], "form": "10-Q", "ticker": "AAPL"}
+    for detail, want in ((False, False), (True, True)):
+        msg = notify.build_message({"email": "r@x.io", "changes_detail": detail}, [(e, c, q, ["x"])], "https://x.io", {},
+                                   "FF <a@b.c>", requested=True)
+        html = [p for p in email.message_from_bytes(msg.as_bytes()).walk() if p.get_content_type() == "text/html"][0]
+        html = html.get_payload(decode=True).decode()
+        assert ("All changes" in html) is want and "What changed vs Q3 FY25" in html
+    page = notify.report_html(e, c, q, ["std"], {}, "", detail=True)
+    assert "all changes" in page and "scale +8.1 · mix +1.6" in page
+
+
+def _fictional_10k(tmp_path):
+    """A fictional calendar-year filer with two 10-Ks and quarterly 10-Qs in companyfacts (dollars)."""
+    from pipeline import sec
+    M = 1_000_000
+    def fact(start, end, v, form="10-K"):
+        return {"start": start, "end": end, "val": int(v * M), "accn": "0009999903-26-000001", "form": form, "filed": "2026-02-20"}
+    years = {"2024": (900, 500, 150, 60, 110, 180), "2025": (1100, 580, 220, 80, 150, 240)}   # rev, cor, opex, tax, ni, ocf
+    g = {"Revenues": [], "CostOfRevenue": [], "OperatingExpenses": [], "OperatingIncomeLoss": [], "IncomeTaxExpenseBenefit": [],
+         "NetIncomeLoss": [], "NetCashProvidedByUsedInOperatingActivities": [],
+         "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": []}
+    for y, (rev, cor, opex, tax, ni, ocf) in years.items():
+        s, e = f"{y}-01-01", f"{y}-12-31"
+        oi = rev - cor - opex
+        for k, v in (("Revenues", rev), ("CostOfRevenue", cor), ("OperatingExpenses", opex), ("OperatingIncomeLoss", oi),
+                     ("IncomeTaxExpenseBenefit", tax), ("NetIncomeLoss", ni), ("NetCashProvidedByUsedInOperatingActivities", ocf),
+                     ("IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest", ni + tax)):
+            g[k].append(fact(s, e, v))
+            g[k].append(fact(s, f"{y}-09-30", v * 0.74, "10-Q"))                # nine months, for the fourth quarter
+            if k != "NetCashProvidedByUsedInOperatingActivities":
+                g[k].append(fact(f"{y}-07-01", f"{y}-09-30", v * 0.25, "10-Q"))
+    cf = {"cik": 9999903, "entityName": "Annual Example Corp", "facts": {"us-gaap": {k: {"units": {"USD": v}} for k, v in g.items()}}}
+    sub = {"cik": "9999903", "name": "Annual Example Corp", "tickers": ["ANEX"], "exchanges": ["NYSE"], "sic": "3571",
+           "sicDescription": "Electronic Computers", "fiscalYearEnd": "1231", "category": "Large accelerated filer",
+           "filings": {"recent": {"accessionNumber": ["0009999903-26-000001"], "filingDate": ["2026-02-20"],
+                                  "reportDate": ["2025-12-31"], "form": ["10-K"], "primaryDocument": ["anex-20251231.htm"],
+                                  "items": [""]}}}
+    d = tmp_path / "fx"
+    d.mkdir()
+    old = sec.FIXTURES
+    sec.FIXTURES = str(d)
+    for url, body in ((sec.companyfacts_url(9999903), cf), (sec.submissions_url(9999903), sub)):
+        open(sec._fixture_path(url), "w").write(json.dumps(body))
+    return old
+
+
+def test_annual_chart_from_a_10k(tmp_path):
+    from pipeline import build, sec
+    old = _fictional_10k(tmp_path)
+    try:
+        build._sub.clear(); build._cf.clear()
+        store = build.Store(str(tmp_path / "store"))
+        end = build.process_filing(store, 9999903, "0009999903-26-000001", "10-K")
+        c = store.company(9999903)
+        assert end == "2025-12-31" and "2025-12-31" in c["years"]
+        assert c["periods"]["fy"] == ["2024-12-31", "2025-12-31"]
+        build.render(store, str(tmp_path / "out"))
+        out = json.load(open(tmp_path / "out" / "c" / "9999903.json"))
+        fy = out["years"][0]
+        assert fy["label"] == "FY2025" and fy["key"] == "fy-2025-12-31" and fy["headline"]["revenue"] == 1100e6
+        assert fy["compare_y"]["vs"] == "FY2024" and fy["compare"] is None
+        rev = next(n for n in fy["nodes"] if n["id"] == "revenue")
+        assert any(l[1].startswith("Y/Y +22%") and "Q/Q" not in l[1] for l in rev["lines"]), rev["lines"]
+        assert "quarter" not in " ".join(fy["analysis"]).lower().replace("quarterly", "")
+        q4 = out["quarters"][0]
+        assert q4["label"] == "Q4 2025" and abs(q4["headline"]["revenue"] - 1100e6 * 0.26) < 2e6   # full year minus nine months
+        assert [p["label"] for p in out["periods"]["fy"]] == ["FY2025", "FY2024"]
+        assert out["periods"]["fy"][0]["fy"] == 2025                         # the picker groups periods by fiscal year
+        assert {(p["label"], p["q"], p["fy"]) for p in out["periods"]["q"]} >= {("Q4 2025", 4, 2025), ("Q3 2024", 3, 2024)}
+    finally:
+        sec.FIXTURES = old
+        build._sub.clear(); build._cf.clear()
+
+
+def test_compare_any_two_periods(tmp_path):
+    from pipeline import build, custom, sec
+    old = _fictional_10k(tmp_path)
+    try:
+        build._sub.clear(); build._cf.clear()
+        pl = custom.comparison(9999903, "fy", "2025-12-31", "2024-12-31")
+        assert pl["label"] == "FY2025" and pl["compare"]["vs"] == "FY2024" and pl["compare_y"] is None
+        assert pl["custom"]["b_label"] == "FY2024" and "compared with" in pl["subtitle"]
+        rev = next(n for n in pl["nodes"] if n["id"] == "revenue")
+        assert any(l[1] == "vs FY2024 +22%" for l in rev["lines"]), rev["lines"]
+        assert rev["q"] == 900e6 and "cmp" in rev                # the comparison strips read B's values
+        assert "previous quarter" not in " ".join(pl["analysis"] + pl["compare"]["bullets"])
+        q = custom.comparison(9999903, "q", "2025-09-30", "2024-09-30")
+        assert q["label"] == "Q3 2025" and q["compare"]["vs"] == "Q3 2024"
+        for bad in (("q", "2025-09-30", "2025-09-30"), ("fy", "2025-12-31", "2019-12-31")):
+            try:
+                custom.comparison(9999903, *bad)
+                raise AssertionError(f"accepted {bad}")
+            except ValueError:
+                pass
+    finally:
+        sec.FIXTURES = old
+        build._sub.clear(); build._cf.clear()
+
+
+def test_request_queues(tmp_path):
+    from pipeline import custom
+    now = __import__("datetime").datetime(2026, 10, 3, 4, 0, tzinfo=__import__("datetime").timezone.utc)
+
+    class Fake:
+        def __init__(self):
+            self.rows = {"chart_requests": [{"id": 1, "cik": 1, "kind": "q", "a_end": "2025-09-30", "b_end": "2024-09-30",
+                                             "status": "pending", "created_at": "2026-10-03T03:59:00Z"}],
+                         "company_requests": [{"id": 7, "cik": 320193, "status": "pending", "created_at": "2026-10-03T03:00:00Z"},
+                                              {"id": 8, "cik": 4242, "status": "queued", "created_at": "2026-10-02T03:00:00Z"}]}
+            self.updates = []
+
+        def _match(self, row, params):
+            for k, v in params.items():
+                op, _, val = v.partition(".")
+                if op == "eq" and str(row.get(k)) != val:
+                    return False
+                if op == "lt" and (row.get(k) is None or not (str(row.get(k)) < val)):   # NULL never matches, as in SQL
+                    return False
+                if op == "in" and str(row.get(k)) not in val.strip("()").split(","):
+                    return False
+            return True
+
+        def update(self, table, params, fields):
+            got = [r for r in self.rows[table] if self._match(r, params)]
+            for r in got:
+                r.update(fields)
+            self.updates.append((table, params, fields))
+            return [dict(r) for r in got]
+
+        def select(self, table, params):
+            return [dict(r) for r in self.rows[table] if self._match(r, {k: v for k, v in params.items() if k != "select"})]
+
+    f = Fake()
+    real = custom.comparison
+    custom.comparison = lambda cik, kind, a, b: {"label": "X", "nodes": [], "links": []}
+    try:
+        assert custom.process_charts(f, now) == 1
+    finally:
+        custom.comparison = real
+    assert f.rows["chart_requests"][0]["status"] == "done" and f.rows["chart_requests"][0]["result"]["label"] == "X"
+    assert custom.claim_companies(f, now) == [320193]
+    site = tmp_path / "site"
+    (site / "data" / "c").mkdir(parents=True)
+    (site / "data" / "c" / "320193.json").write_text("{}")
+    custom.finish_companies(f, str(site))
+    st = {r["id"]: r["status"] for r in f.rows["company_requests"]}
+    assert st == {7: "done", 8: "failed"}
+
+
+def test_email_me_a_fiscal_year(tmp_path):
+    """'Email me' on a full-year page: the annual chart, not the fourth quarter that ends the same day."""
+    import datetime as dt
+    from pipeline import build, notify, sec
+    old = _fictional_10k(tmp_path)
+    try:
+        build._sub.clear(); build._cf.clear()
+        store = build.Store(str(tmp_path / "store"))
+        build.process_filing(store, 9999903, "0009999903-26-000001", "10-K")
+        build.render(store, str(tmp_path / "site" / "data"))
+    finally:
+        sec.FIXTURES = old
+        build._sub.clear(); build._cf.clear()
+    reqs = [{"id": 1, "user_id": "ann", "cik": 9999903, "period_end": "2025-12-31", "kind": "fy", "status": "pending",
+             "attempts": 0, "created_at": "2026-10-02T10:00:00+00:00"},
+            {"id": 2, "user_id": "ann", "cik": 9999903, "period_end": "2025-12-31", "kind": "q", "status": "pending",
+             "attempts": 0, "created_at": "2026-10-02T10:00:01+00:00"},
+            {"id": 3, "user_id": "cat", "cik": 9999903, "period_end": "2025-12-31", "status": "pending",   # an older row: no kind
+             "attempts": 0, "created_at": "2026-10-02T10:00:02+00:00"}]
+    supa, mail = _FakeSupa([_sub("ann", chart_y=True, chart_history=True, changes_detail=True), _sub("cat")], (), reqs), _FakeMailer()
+    now = dt.datetime(2026, 10, 2, 10, 5, tzinfo=dt.timezone.utc)
+    assert notify.run(notify.Site(tmp_path / "site"), supa, mail, "x", "https://ex.github.io/ff", now=now, images=False,
+                      hour=22, daily_limit=50, requests_only=True) == 2
+    assert [r["status"] for r in supa.t["send_requests"]] == ["sent", "sent", "sent"]
+    ann = mail.sent[0]
+    assert ann["Subject"] == "Your reports: ANEX FY2025, ANEX Q4 2025"
+    text = ann.get_body(("plain",)).get_content()
+    assert "#c-9999903-fy-2025-12-31" in text and "#c-9999903-2025-12-31" in text
+    assert "ANEX · FY2025 full year · 10-K filed" in text
+    assert "All changes (vs FY2024):" in text                       # a year has no previous-quarter column
+    assert mail.sent[1]["Subject"].startswith("ANEX Q4 2025")
+    c = json.load(open(tmp_path / "site" / "data" / "c" / "9999903.json"))
+    y = c["years"][0]
+    e = {"cik": 9999903, "end": y["end"], "period": "fy"}
+    assert notify.item_key(e) == "9999903:2025-12-31:fy" and notify.views_for({"chart_history": True}, c, y) == ["std"]
+    html = notify.report_html(e, c, y, ["std"], {}, "https://ex", detail=True)
+    assert "fiscal year ended" in html and "this year against the year before" in html
+
+
+def test_company_list_and_reader_requests_first(tmp_path):
+    from pipeline import build
+    env = dict(os.environ, SEC_FIXTURES=os.path.join(ROOT, "tests", "fixtures"), SEC_USER_AGENT="test test@example.com")
+    out = tmp_path / "data"
+    ciks = tmp_path / "ciks.txt"
+    ciks.write_text("1067983\nnot-a-cik\n")
+    r = subprocess.run([sys.executable, "-m", "pipeline.build", "run", "--store", str(tmp_path / "store"), "--out", str(out),
+                        "--build-ciks-file", str(ciks), "--max-filings", "40"], cwd=ROOT, env=env, check=True,
+                       capture_output=True, text=True)
+    lst = json.load(open(out / "companies.json"))["companies"]
+    assert lst[0] == [320193, "AAPL", "Apple Inc."] and len({x[0] for x in lst}) == len(lst)
+    st = json.load(open(tmp_path / "store" / "state.json"))
+    assert not any(p["cik"] == 1067983 for p in st["pending"].values())        # the asked-for company was processed
+    assert os.path.exists(out / "c" / "1067983.json"), r.stdout[-2000:]
+    # companies stored before the period list existed get it on a later run
+    store = build.Store(str(tmp_path / "store"))
+    c = store.company(320193)
+    c.pop("periods", None)
+    store.put(320193, c)
+    old = os.environ.get("SEC_FIXTURES")
+    from pipeline import sec
+    sec.FIXTURES = env["SEC_FIXTURES"]
+    try:
+        build._cf.clear()
+        build.refresh_periods(store)
+    finally:
+        sec.FIXTURES = old or ""
+        build._cf.clear()
+    assert store.company(320193)["periods"]["q"][-1] == "2026-06-27"

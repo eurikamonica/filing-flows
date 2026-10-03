@@ -22,6 +22,7 @@ create table if not exists public.subscriptions (
   attach_pdf   boolean not null default true,           -- a PDF report attached (profile, charts, analysis)
   cmp_decreases boolean not null default false,         -- comparison charts also draw decreases (hatched, dashed)
   changes_detail boolean not null default false,        -- list every line's change, not only the three main ones
+  custom_compare boolean not null default false,        -- company pages offer "compare any two periods"
   unsub_token  uuid    not null default gen_random_uuid(),
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
@@ -36,6 +37,7 @@ alter table public.subscriptions add column if not exists attach_images text not
 alter table public.subscriptions add column if not exists attach_pdf boolean not null default true;
 alter table public.subscriptions add column if not exists cmp_decreases boolean not null default false;
 alter table public.subscriptions add column if not exists changes_detail boolean not null default false;
+alter table public.subscriptions add column if not exists custom_compare boolean not null default false;
 do $$ begin
   alter table public.subscriptions add constraint subscriptions_attach_images_check check (attach_images in ('png', 'jpg', 'none'));
 exception when duplicate_object then null;
@@ -114,7 +116,13 @@ create table if not exists public.send_requests (
   claimed_at  timestamptz,
   sent_at     timestamptz
 );
-create unique index if not exists send_requests_one_pending on public.send_requests (user_id, cik, period_end)
+alter table public.send_requests add column if not exists kind text not null default 'q';
+do $$ begin
+  alter table public.send_requests add constraint send_requests_kind_check check (kind in ('q', 'fy'));
+exception when duplicate_object then null;
+end $$;
+drop index if exists public.send_requests_one_pending;       -- a quarter and a fiscal year can end on the same day
+create unique index if not exists send_requests_one_pending_kind on public.send_requests (user_id, cik, period_end, kind)
   where status in ('pending', 'sending');
 create index if not exists send_requests_status on public.send_requests (status, created_at);
 
@@ -144,7 +152,7 @@ create trigger send_requests_guard before insert on public.send_requests
 -- Needs the pg_net extension (Database -> Extensions) and two Vault secrets (see README); without them nothing happens.
 create or replace function public.send_requests_wake() returns trigger
 language plpgsql security definer set search_path = public as $$
-declare tok text; repo text;
+declare tok text; repo text; evt text := coalesce(tg_argv[0], 'send-request');
 begin
   begin
     select decrypted_secret into tok from vault.decrypted_secrets where name = 'github_dispatch_token';
@@ -152,7 +160,7 @@ begin
     if tok is not null and repo is not null then
       perform net.http_post(
         url := 'https://api.github.com/repos/' || repo || '/dispatches',
-        body := jsonb_build_object('event_type', 'send-request'),
+        body := jsonb_build_object('event_type', evt),
         headers := jsonb_build_object('Authorization', 'Bearer ' || tok, 'Accept', 'application/vnd.github+json',
                                       'User-Agent', 'filing-flows', 'Content-Type', 'application/json'));
     end if;
@@ -164,3 +172,83 @@ end $$;
 drop trigger if exists send_requests_wake on public.send_requests;
 create trigger send_requests_wake after insert on public.send_requests
   for each statement execute function public.send_requests_wake();
+
+-- "Compare any two periods" on a company page (readers who turned it on in their alerts): the sender draws the chart
+-- from SEC data and writes it back into the row; the page shows it. At most 20 a day per reader.
+create table if not exists public.chart_requests (
+  id          bigint generated always as identity primary key,
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  cik         integer not null check (cik > 0),
+  kind        text not null default 'q' check (kind in ('q', 'fy')),
+  a_end       date not null,
+  b_end       date not null,
+  status      text not null default 'pending' check (status in ('pending', 'working', 'done', 'failed')),
+  error       text,
+  result      jsonb,
+  created_at  timestamptz not null default now(),
+  claimed_at  timestamptz,
+  done_at     timestamptz,
+  check (a_end <> b_end)
+);
+create index if not exists chart_requests_status on public.chart_requests (status, created_at);
+create index if not exists chart_requests_user on public.chart_requests (user_id, cik, created_at desc);
+alter table public.chart_requests enable row level security;
+drop policy if exists "read own charts" on public.chart_requests;
+drop policy if exists "ask for charts" on public.chart_requests;
+create policy "read own charts" on public.chart_requests for select using (auth.uid() = user_id);
+create policy "ask for charts" on public.chart_requests for insert with check (auth.uid() = user_id);
+
+create or replace function public.chart_requests_guard() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  new.status := 'pending'; new.error := null; new.result := null; new.claimed_at := null; new.done_at := null;
+  new.created_at := now();
+  if (select count(*) from public.chart_requests r
+      where r.user_id = new.user_id and r.created_at > now() - interval '24 hours') >= 20 then
+    raise exception 'limit: 20 comparisons a day' using errcode = 'P0001';
+  end if;
+  return new;
+end $$;
+drop trigger if exists chart_requests_guard on public.chart_requests;
+create trigger chart_requests_guard before insert on public.chart_requests
+  for each row execute function public.chart_requests_guard();
+drop trigger if exists chart_requests_wake on public.chart_requests;
+create trigger chart_requests_wake after insert on public.chart_requests
+  for each statement execute function public.send_requests_wake('chart-request');
+
+-- "Build this company" from the site's search: the next scan fetches its last five 10-Qs and two 10-Ks.
+create table if not exists public.company_requests (
+  id          bigint generated always as identity primary key,
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  cik         integer not null check (cik > 0),
+  status      text not null default 'pending' check (status in ('pending', 'queued', 'done', 'failed')),
+  error       text,
+  created_at  timestamptz not null default now(),
+  claimed_at  timestamptz,
+  done_at     timestamptz
+);
+create unique index if not exists company_requests_one_open on public.company_requests (user_id, cik)
+  where status in ('pending', 'queued');
+create index if not exists company_requests_status on public.company_requests (status, created_at);
+alter table public.company_requests enable row level security;
+drop policy if exists "read own companies" on public.company_requests;
+drop policy if exists "ask for companies" on public.company_requests;
+create policy "read own companies" on public.company_requests for select using (auth.uid() = user_id);
+create policy "ask for companies" on public.company_requests for insert with check (auth.uid() = user_id);
+
+create or replace function public.company_requests_guard() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  new.status := 'pending'; new.error := null; new.claimed_at := null; new.done_at := null; new.created_at := now();
+  if (select count(*) from public.company_requests r
+      where r.user_id = new.user_id and r.created_at > now() - interval '24 hours') >= 10 then
+    raise exception 'limit: 10 companies a day' using errcode = 'P0001';
+  end if;
+  return new;
+end $$;
+drop trigger if exists company_requests_guard on public.company_requests;
+create trigger company_requests_guard before insert on public.company_requests
+  for each row execute function public.company_requests_guard();
+drop trigger if exists company_requests_wake on public.company_requests;
+create trigger company_requests_wake after insert on public.company_requests
+  for each statement execute function public.send_requests_wake('company-request');

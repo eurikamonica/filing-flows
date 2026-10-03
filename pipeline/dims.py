@@ -119,6 +119,15 @@ def member_values(facts, end, prev_ytd=None):
     return out
 
 
+def year_values(facts, end):
+    """axis -> member -> value for the fiscal year ending `end`."""
+    out = {}
+    for axis, member, label, start, e, val in facts:
+        if e == end and 350 <= _span(start, e) <= 380:
+            out.setdefault(axis, {})[member] = (label, val)
+    return out
+
+
 def ytd_values(facts, end):
     out = {}
     for axis, member, label, start, e, val in facts:

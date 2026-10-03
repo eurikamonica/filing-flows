@@ -10,13 +10,16 @@
   // ---------- small utilities ----------
   const cache = new Map();
   const FRESH = new Set(['index.json', 'site.json']);          // small files that change: ask the server each time
-  function getJSON(p) {
+  function getJSON(p, fresh) {
+    if (fresh) cache.delete(p);
     if (!cache.has(p)) {
-      const get = FRESH.has(p) ? fetch(BASE + p, { cache: 'no-cache' }).catch(() => fetch(BASE + p)) : fetch(BASE + p);
-      cache.set(p, get.then((r) => {
-        if (!r.ok) throw new Error(`${p}: HTTP ${r.status}`);
+      const get = FRESH.has(p) || fresh ? fetch(BASE + p, { cache: 'no-cache' }).catch(() => fetch(BASE + p)) : fetch(BASE + p);
+      const got = get.then((r) => {
+        if (!r.ok) { const err = new Error(`${p}: HTTP ${r.status}`); err.status = r.status; throw err; }
         return r.json();
-      }));
+      });
+      got.catch(() => cache.delete(p));                          // a failure is not kept: the next visit asks again
+      cache.set(p, got);
     }
     return cache.get(p);
   }
@@ -149,12 +152,13 @@
     const el = document.createElement('section');
     const has = (c) => !!(c && c.bullets && c.bullets.length);
     const cmpOf = (m) => (m === 'y' ? spec.compare_y : m === 'q' ? spec.compare : null);
+    const yearly = spec.period === 'fy' && !ctx.custom;      // a full year has no "previous quarter"
     el.innerHTML = `
       <div class="controls">
         <div class="seg" role="group" aria-label="Chart view">
           <button type="button" data-view="std">Standard</button>
-          <button type="button" data-view="q" ${has(spec.compare) ? '' : 'disabled title="No previous quarter on file"'}>vs ${has(spec.compare) ? t(spec.compare.vs) : 'previous quarter'}</button>
-          <button type="button" data-view="y" ${has(spec.compare_y) ? '' : 'disabled title="No year-ago quarter on file"'}>vs ${has(spec.compare_y) ? t(spec.compare_y.vs) : 'year ago'}</button>
+          <button type="button" data-view="q" ${yearly ? 'hidden' : ''} ${has(spec.compare) ? '' : 'disabled title="No previous quarter on file"'}>vs ${has(spec.compare) ? t(spec.compare.vs) : 'previous quarter'}</button>
+          <button type="button" data-view="y" ${ctx.custom ? 'hidden' : ''} ${has(spec.compare_y) ? '' : `disabled title="No ${yearly ? 'earlier year' : 'year-ago quarter'} on file"`}>vs ${has(spec.compare_y) ? t(spec.compare_y.vs) : 'year ago'}</button>
         </div>
         <label class="dec-toggle" hidden title="Hatched areas with a dashed outline show what each line lost"><input type="checkbox" data-dec ${state.decreases ? 'checked' : ''}> Show decreases</label>
         <div class="seg" role="group" aria-label="Zoom">
@@ -177,7 +181,9 @@
     const sheet = $('.sheet', el), notes = $('.notes', el);
     const byId = new Map(spec.nodes.map((n) => [n.id, n]));
     let scene = null, selected = null;
-    const mode = () => (has(cmpOf(state.compare)) ? state.compare : null);   // active comparison, if this chart has it
+    let own = ctx.custom ? 'q' : undefined;                     // a requested comparison opens on its comparison
+    const pick = () => (own !== undefined ? own : state.compare);
+    const mode = () => (has(cmpOf(pick())) ? pick() : null);   // active comparison, if this chart has it
     if (acct.prefs && typeof acct.prefs.cmp_decreases === 'boolean') state.decreases = acct.prefs.cmp_decreases;
     const cmpOn = () => !!mode();
 
@@ -265,8 +271,9 @@
       if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(g.dataset.node); }
     });
     $$('[data-view]', el).forEach((b) => b.addEventListener('click', () => {
-      state.compare = b.dataset.view === 'std' ? null : b.dataset.view;
-      prefs.set('compare', state.compare);
+      const v = b.dataset.view === 'std' ? null : b.dataset.view;
+      if (ctx.custom) own = v;
+      else { state.compare = v; prefs.set('compare', v); }
       draw();
       if (ctx.onView) ctx.onView(mode());
     }));
@@ -294,7 +301,7 @@
       b.disabled = true;
       try {
         const blob = await S.exportScene(scene, fmt);
-        const name = `${ctx.slug}${mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? '-vs-year-ago' : ''}-sankey.${fmt}`;
+        const name = `${ctx.slug}${ctx.custom ? (mode() ? `-vs-${ctx.vsSlug}` : '') : mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? (yearly ? '-vs-prior-year' : '-vs-year-ago') : ''}-sankey.${fmt}`;
         if (share) {                                               // Android share sheet (X, messages, mail …)
           nativeApp.shareFile(name, 'image/png', await blobBase64(blob));
           return;
@@ -431,11 +438,22 @@
     draw();
   }
 
-  async function company(cik, end, all) {
+  async function company(cik, end, all, opt) {
+    opt = opt || {};
     setNav('');
-    const [ix, c, site] = await Promise.all([getJSON('index.json'), getJSON(`c/${cik}.json`), getJSON('site.json').catch(() => ({}))]);
-    const p = c.profile, qs = c.quarters;
-    const q = (end && qs.find((x) => x.end === end)) || qs[0];
+    const [ix, site] = await Promise.all([getJSON('index.json'), getJSON('site.json').catch(() => ({}))]);
+    let c;
+    try {
+      c = await getJSON(`c/${cik}.json`);
+    } catch (err) {
+      if (err.status === 404) return missingCompany(cik);          // found by the search, not drawn yet
+      throw err;
+    }
+    const p = c.profile, qs = c.quarters, ys = c.years || [];
+    const fy = !!opt.fy && ys.length > 0;                           // a full fiscal year (10-K)
+    const cmpId = opt.cmp || null;                                  // a comparison this reader asked for
+    if (cmpId) all = false;
+    const q = fy ? (ys.find((x) => x.end === end) || ys[0]) : ((end && qs.find((x) => x.end === end)) || qs[0]);
     const sectors = ix.sector_names || {};
     const ticker = (p.tickers || [])[0] || '';
     const indSlug = String(p.sic || 'none');
@@ -450,20 +468,28 @@
         <div class="meta">
           ${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}${(p.exchanges || []).filter(Boolean).slice(0, 1).map((x) => `<span>${t(x)}</span>`).join('')}
           ${ticker ? `<button class="btn follow" type="button" hidden data-follow="ticker:${t(ticker)}">☆ Follow</button>` : ''}
-          <button class="btn send" type="button" hidden data-send="${p.cik}|${(all ? qs : [q]).map((x) => x.end).join(',')}"
-            title="Sent to the address you signed in with: chart, analysis and what changed">✉ Email me ${all ? `all ${qs.length} quarters` : t(q.label)}</button>
-          ${c.starred ? '<span class="tag star">★ Starred · multi-quarter history</span>' : ''}${!all && q.form === '8-K' ? prelimTag : ''}${!all && q.release_check ? finalTag(q.release_check) : ''}
+          ${cmpId ? '' : `<button class="btn send" type="button" hidden data-send="${p.cik}|${(all ? qs : [q]).map((x) => x.end).join(',')}|${fy ? 'fy' : 'q'}"
+            title="Sent to the address you signed in with: chart, analysis and what changed">✉ Email me ${all ? `all ${qs.length} quarters` : t(q.label) + (fy ? ' full year' : '')}</button>`}
+          ${c.starred ? '<span class="tag star">★ Starred · multi-quarter history</span>' : ''}${!all && !cmpId && q.form === '8-K' ? prelimTag : ''}${!all && !cmpId && q.release_check ? finalTag(q.release_check) : ''}
           <span>CIK <span class="mono">${p.cik}</span></span><span>SIC <span class="mono">${t(p.sic)}</span> ${t(p.industry)}</span>
           ${fye ? `<span>Fiscal year ends ${fye}</span>` : ''}${p.category ? `<span>${t(p.category)}</span>` : ''}
         </div>
         ${introHTML(c.intro)}
       </div>
-      <div class="pills" role="tablist" aria-label="Quarter">
-        ${qs.map((x) => `<a class="pill ${!all && x === q ? 'on' : ''}" href="#c-${cik}-${x.end}">${t(x.label)}${x.form === '8-K' ? ' · 8-K' : ''}</a>`).join('')}
+      <div class="pills" role="tablist" aria-label="Period">
+        ${qs.map((x) => `<a class="pill ${!all && !fy && !cmpId && x === q ? 'on' : ''}" href="#c-${cik}-${x.end}">${t(x.label)}${x.form === '8-K' ? ' · 8-K' : ''}</a>`).join('')}
+        ${ys.map((x) => `<a class="pill year ${fy && x === q ? 'on' : ''}" href="#c-${cik}-fy-${x.end}" title="The full fiscal year, from the 10-K">${t(x.label)} · full year</a>`).join('')}
         ${qs.length > 1 ? `<a class="pill ${all ? 'on' : ''}" href="#c-${cik}-all">All ${qs.length} quarters</a>` : ''}
+        <button class="pill cmp ${cmpId ? 'on' : ''}" type="button" id="cmp-open" hidden aria-expanded="false" aria-controls="cmp-panel">⇄ Compare any two</button>
       </div>
+      <section class="section cmp-panel" id="cmp-panel" hidden></section>
       <div id="body"></div>`;
     const body = $('#body');
+    initCompare(c, cik);
+    if (cmpId) {
+      showComparison(body, c, cmpId, ticker);
+      return;
+    }
     if (all) {
       body.innerHTML = `<div class="section"><div class="section-head"><h2>Trend</h2>
         <span class="muted">Revenue, operating profit, net earnings and operating cash flow; each row to its own scale</span></div>
@@ -504,18 +530,19 @@
         <h2>Filing</h2>
         <dl class="facts">
           <dt>Form</dt><dd><span class="mono">${t(q.form)}</span>${q.form === '8-K' ? ' · Item 2.02 earnings release, preliminary until the 10-Q/10-K is filed' : ''}</dd>
-          <dt>Period</dt><dd>${t(q.label)} · quarter ended ${date(q.end)} (calendar ${calLabel(q.cal)})</dd>
+          <dt>Period</dt><dd>${fy ? `${t(q.label)} · fiscal year ended ${date(q.end)}` : `${t(q.label)} · quarter ended ${date(q.end)} (calendar ${calLabel(q.cal)})`}</dd>
           <dt>Filed</dt><dd>${date(q.filed)}</dd>
           ${q.release_check ? `<dt>Earnings release</dt><dd>${t(releaseCheckText(q.release_check))}</dd>` : ''}
           ${acc ? `<dt>Accession</dt><dd class="mono">${acc}</dd>` : ''}
           <dt>Documents</dt><dd>${q.doc_url ? `<a href="${t(q.doc_url)}" target="_blank" rel="noopener">${q.form === '8-K' ? 'Press release' : 'Report'} ↗</a> · ` : ''}${
             q.index_url ? `<a href="${t(q.index_url)}" target="_blank" rel="noopener">Filing index ↗</a>` : `<a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${p.cik}&type=10-&dateb=&owner=include&count=40" target="_blank" rel="noopener">EDGAR filings ↗</a>`}</dd>
           <dt>Data</dt><dd>${q.form === '8-K' ? 'This quarter read from the tables in the press release (Exhibit 99.1); earlier quarters from XBRL company facts'
+            : fy ? 'Full-year values as reported in the 10-K (XBRL company facts); revenue lines from the filing’s own XBRL instance'
             : 'XBRL company facts; revenue lines from the filing’s own XBRL instance'}</dd>
         </dl>
       </div>`;
     body.appendChild(text);
-    const thread = prefs.get('owner', false) ? threadSection(q, p, site.repo) : null;   // owner tool: see #owner
+    const thread = prefs.get('owner', false) && !fy ? threadSection(q, p, site.repo) : null;   // owner tool: see #owner
     if (thread) body.appendChild(thread);
     if (qs.length > 1) {
       const h = document.createElement('div');
@@ -607,6 +634,276 @@
         `<td class="num ${tone(x.headline.yoy)}">${pct(x.headline.yoy)}</td>`, `<td class="num">${margin(x.headline.om)}</td>`,
         `<td class="num">${money(x.headline.ni)}</td>`, `<td class="num">${money(ocf(x))}</td>`])).join('')}
       </tbody></table></div></div>`;
+  }
+
+  // ---------- "Compare any two periods" (readers who turned it on in their alerts) ----------
+  // The page cannot read SEC itself (no CORS), so the request goes into Supabase; the GitHub workflow draws the
+  // comparison from SEC data within a few minutes and writes it back into the reader's row; this page shows it.
+  const monthYear = (s) => new Date(s + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  function periodLabel(co, kind, end) {
+    const x = ((co.periods || {})[kind] || []).find((y) => y.end === end) ||
+      (kind === 'fy' ? (co.years || []) : co.quarters).find((y) => y.end === end);
+    return x ? x.label : `${kind === 'fy' ? 'year' : 'quarter'} ended ${date(end)}`;
+  }
+  function tableMissing(err) {                       // supabase/schema.sql not run again since this feature arrived
+    return !!err && (err.code === '42P01' || err.code === 'PGRST205' || err.code === 'PGRST204' || /does not exist|schema cache/i.test(err.message || ''));
+  }
+  const OWNER_UPDATE = 'The site owner has to update the database first (run supabase/schema.sql again)';
+
+  async function initCompare(co, cik) {
+    const btn = $('#cmp-open'), panel = $('#cmp-panel');
+    if (!btn) return;
+    const cl = await sb();
+    if (!cl || !(await currentUser())) return;
+    const pr = acct.prefs || await loadPrefs().catch(() => null);
+    if (!pr || !pr.custom_compare || !btn.isConnected) return;
+    btn.hidden = false;
+    btn.addEventListener('click', () => {
+      const open = panel.hidden;
+      panel.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+      btn.classList.toggle('open', open);
+      if (open && !panel.dataset.ready) comparePanel(panel, co, cik, cl);
+      if (open) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  function comparePanel(panel, co, cik, cl) {
+    panel.dataset.ready = '1';
+    const per = co.periods || { q: [], fy: [] };
+    const rows = new Map();                          // fiscal year -> { q: {1..4: period}, y: period }
+    const row = (fy) => { if (!rows.has(fy)) rows.set(fy, { fy, q: {}, y: null }); return rows.get(fy); };
+    (per.q || []).forEach((x) => { if (x.fy && x.q) row(x.fy).q[x.q] = x; });
+    (per.fy || []).forEach((x) => { if (x.fy) row(x.fy).y = x; });
+    const years = [...rows.values()].sort((a, b) => b.fy - a.fy);
+    const calendar = !(per.q || []).some((x) => / FY\d/.test(x.label));
+    const fyName = (fy) => (calendar ? String(fy) : `FY${String(fy).slice(2)}`);
+    const cell = (x, kind) => (x ? `<td><label class="pick" title="${t(x.label)} · ${kind === 'fy' ? 'fiscal year' : 'quarter'} ended ${date(x.end)}">
+      <input type="checkbox" data-end="${x.end}" data-kind="${kind}" data-label="${t(x.label)}"><span>${monthYear(x.end)}</span></label></td>` : '<td class="none">—</td>');
+    panel.innerHTML = `
+      <div class="section-head"><h2>Compare any two periods</h2><span class="muted">Tick two quarters, or two full fiscal years. Drawn from SEC data on request, usually within 1–3 minutes.</span></div>
+      ${years.length ? `<div class="tbl-wrap"><table class="period-grid"><thead><tr><th>Fiscal year</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Full year</th></tr></thead><tbody>
+        ${years.map((r) => `<tr><th>${fyName(r.fy)}</th>${[1, 2, 3, 4].map((n) => cell(r.q[n], 'q')).join('')}${cell(r.y, 'fy')}</tr>`).join('')}
+        </tbody></table></div>
+      <div class="cmp-bar"><span id="cmp-sum">Pick two periods</span>
+        <button class="btn small" type="button" id="cmp-swap" disabled title="Which period is drawn, and which it is compared with">⇄ Swap</button>
+        <button class="btn primary" type="button" id="cmp-go" disabled>Draw comparison</button></div>`
+        : '<p class="muted">The list of this company’s periods arrives with its next update (the hourly scan adds it a few companies at a time).</p>'}
+      <p class="muted small" id="cmp-msg" role="status"></p>
+      <div id="cmp-recent"></div>`;
+    let sel = [], swapped = false;
+    const msg = (x) => { $('#cmp-msg', panel).textContent = x || ''; };
+    const pair = () => {
+      if (sel.length !== 2) return null;
+      const [x, y] = sel.slice().sort((m, n) => (m.dataset.end < n.dataset.end ? 1 : -1));   // the later one is drawn
+      return swapped ? [y, x] : [x, y];
+    };
+    const update = () => {
+      const ab = pair();
+      $('#cmp-sum', panel).innerHTML = ab ? `<b>${ab[0].dataset.label}</b> compared with <b>${ab[1].dataset.label}</b>`
+        : sel.length === 1 ? `${sel[0].dataset.label} compared with …` : 'Pick two periods';
+      $('#cmp-go', panel).disabled = !ab;
+      $('#cmp-swap', panel).disabled = !ab;
+    };
+    $$('input[data-end]', panel).forEach((box) => box.addEventListener('change', () => {
+      msg('');
+      if (box.checked) {
+        if (sel.length && sel[0].dataset.kind !== box.dataset.kind) {
+          sel.forEach((x) => { x.checked = false; });
+          sel = [];
+          msg('Quarters are compared with quarters, fiscal years with fiscal years.');
+        }
+        sel.push(box);
+        if (sel.length > 2) sel.shift().checked = false;
+      } else {
+        sel = sel.filter((x) => x !== box);
+      }
+      swapped = false;
+      update();
+    }));
+    if (years.length) {
+      $('#cmp-swap', panel).addEventListener('click', () => { swapped = !swapped; update(); });
+      $('#cmp-go', panel).addEventListener('click', async (ev) => {
+        const ab = pair();
+        if (!ab) return;
+        ev.currentTarget.disabled = true;
+        msg('Asking…');
+        const r = await cl.from('chart_requests').insert({ cik: +cik, kind: ab[0].dataset.kind, a_end: ab[0].dataset.end, b_end: ab[1].dataset.end })
+          .select('id').single();
+        if (r.error) {
+          ev.currentTarget.disabled = false;
+          msg(tableMissing(r.error) ? OWNER_UPDATE : /limit/i.test(r.error.message) ? 'Limit reached: 20 comparisons a day' : `Could not ask: ${r.error.message}`);
+          return;
+        }
+        location.hash = `c-${cik}-cmp-${r.data.id}`;
+      });
+    }
+    recentComparisons($('#cmp-recent', panel), co, cik, cl);
+  }
+
+  async function recentComparisons(box, co, cik, cl) {
+    const r = await cl.from('chart_requests').select('id,kind,a_end,b_end,status,created_at').eq('cik', +cik)
+      .order('created_at', { ascending: false }).limit(8);
+    if (!box.isConnected || r.error || !r.data || !r.data.length) return;
+    const word = { pending: 'waiting', working: 'drawing', done: 'ready', failed: 'failed' };
+    box.innerHTML = `<h3>Your comparisons of this company</h3><ul class="cmp-list">${r.data.map((x) =>
+      `<li><a href="#c-${cik}-cmp-${x.id}">${t(periodLabel(co, x.kind, x.a_end))} vs ${t(periodLabel(co, x.kind, x.b_end))}</a>
+       <span class="muted">· ${word[x.status] || t(x.status)} · asked ${date(x.created_at)}</span></li>`).join('')}</ul>`;
+  }
+
+  async function showComparison(body, co, id, ticker) {
+    body.innerHTML = '<div class="cmp-wait"><div class="loading">Loading your comparison…</div></div>';
+    const cl = await sb();
+    const user = cl ? await currentUser() : null;
+    if (!cl || !user) {
+      body.innerHTML = `<div class="cmp-wait"><h2>Sign in to see this comparison</h2><p class="muted">Comparisons you ask for are kept with your account.</p>
+        <p><a class="btn primary" href="#account">Sign in</a></p></div>`;
+      prefs.set('after-signin', location.hash.replace(/^#/, ''));
+      return;
+    }
+    const started = Date.now();
+    const poll = async () => {
+      if (!body.isConnected) return;
+      const r = await cl.from('chart_requests').select('*').eq('id', +id).maybeSingle();
+      if (!body.isConnected) return;
+      const row = r.data;
+      if (r.error || !row) {
+        body.innerHTML = `<div class="cmp-wait"><h2>This comparison is not available</h2><p class="muted">${r.error ? t(r.error.message) : 'It may belong to another account.'}</p></div>`;
+        return;
+      }
+      const a = periodLabel(co, row.kind, row.a_end), b = periodLabel(co, row.kind, row.b_end);
+      if (row.status === 'pending' || row.status === 'working') {
+        const secs = Math.max(0, Math.round((Date.now() - new Date(row.created_at).getTime()) / 1000));
+        body.innerHTML = `<div class="cmp-wait"><div class="spinner" aria-hidden="true"></div>
+          <h2>${t(a)} compared with ${t(b)}</h2>
+          <p>${row.status === 'working' ? 'Reading both filings from SEC and drawing the chart…' : 'Waiting for the next run of the request workflow…'}</p>
+          <p class="muted">Usually 1–3 minutes (up to 10 when nothing wakes the workflow) · asked ${secs < 90 ? `${secs} s` : `${Math.round(secs / 60)} min`} ago.
+            This page updates itself; you can also leave and find it later under ⇄ Compare any two.</p></div>`;
+        setTimeout(poll, Date.now() - started < 30 * 60e3 ? 5000 : 30000);
+        return;
+      }
+      if (row.status === 'failed') {
+        body.innerHTML = `<div class="cmp-wait"><h2>Could not draw ${t(a)} compared with ${t(b)}</h2><p>${t(row.error || 'Unknown error')}</p>
+          <p class="muted">Pick two other periods under ⇄ Compare any two.</p></div>`;
+        return;
+      }
+      renderComparison(body, co, row, ticker);
+    };
+    poll();
+  }
+
+  function renderComparison(body, co, row, ticker) {
+    const spec = row.result, cu = spec.custom || {}, p = co.profile, cik = p.cik;
+    const slug = (x) => String(x || '').replace(/\s+/g, '-');
+    body.innerHTML = `<div class="cmp-head"><div class="eyebrow">Your comparison · ${cu.kind === 'fy' ? 'fiscal years' : 'quarters'}</div>
+      <h2>${t(cu.a_label)} compared with ${t(cu.b_label)}</h2>
+      <p class="muted">Drawn on request from SEC data${row.done_at ? ` on ${date(row.done_at)}` : ''}. Band width is ${t(cu.a_label)}; a dark strip is the increase over ${t(cu.b_label)}.
+        <a href="#c-${cik}">Back to the latest chart</a></p></div>`;
+    const ui = chartUI(spec, {
+      company: S.dec(p.name), form: spec.form, label: spec.label, docUrl: spec.doc_url, custom: true,
+      slug: slug(`${ticker || cik}-${cu.a_label}`), vsSlug: slug(cu.b_label), onView: () => {},
+    });
+    body.appendChild(ui);
+    const acc = accession(spec.index_url), accB = accession(cu.b_index_url);
+    const text = document.createElement('div');
+    text.className = 'cols';
+    text.innerHTML = `
+      <div class="prose"><h2>Analysis</h2>${(spec.analysis || []).map((x) => `<p>${t(x)}</p>`).join('')}
+        ${changesHTML(spec)}
+        <p class="note-rule">Written by fixed rules from the reported figures (no language model).</p></div>
+      <div class="prose"><h2>Filings</h2>
+        <dl class="facts">
+          <dt>${t(cu.a_label)}</dt><dd><span class="mono">${t(spec.form)}</span> filed ${date(spec.filed)}${acc ? ` · <span class="mono">${acc}</span>` : ''}${
+            spec.index_url ? ` · <a href="${t(spec.index_url)}" target="_blank" rel="noopener">filing ↗</a>` : ''}</dd>
+          <dt>${t(cu.b_label)}</dt><dd>filed ${date(cu.b_filed)}${accB ? ` · <span class="mono">${accB}</span>` : ''}${
+            cu.b_index_url ? ` · <a href="${t(cu.b_index_url)}" target="_blank" rel="noopener">filing ↗</a>` : ''}</dd>
+          <dt>Data</dt><dd>${cu.kind === 'fy' ? 'Full-year values' : 'Quarterly values (fourth quarters and cash flows as year-to-date minus the prior year-to-date)'} from SEC’s XBRL company facts; revenue lines from the filings’ own XBRL instances when both report them the same way</dd>
+        </dl></div>`;
+    body.appendChild(text);
+  }
+
+  // ---------- a company the site has no chart for yet (found by the search) ----------
+  let secList = null;
+  function secCompanies() {                          // [cik, ticker, name] for every company on SEC's ticker list
+    if (!secList) secList = getJSON('companies.json').then((d) => d.companies || []).catch(() => { secList = null; return []; });
+    return secList;
+  }
+  async function askForCompany(cik) {
+    const cl = await sb();
+    const r = await cl.from('company_requests').insert({ cik: +cik });
+    if (r.error && r.error.code === '23505') return { ok: true, msg: 'Already asked: the next scan builds it' };
+    if (r.error && tableMissing(r.error)) return { ok: false, msg: OWNER_UPDATE };
+    if (r.error && /limit/i.test(r.error.message)) return { ok: false, msg: 'Limit reached: 10 companies a day' };
+    if (r.error) return { ok: false, msg: `Could not ask: ${r.error.message}` };
+    return { ok: true, msg: 'Asked: the next scan reads its filings from SEC' };
+  }
+  async function missingCompany(cik) {
+    setNav('');
+    const all = await secCompanies();
+    const hit = all.find((x) => x[0] === +cik);
+    const name = hit ? hit[2] : `CIK ${cik}`, ticker = hit ? hit[1] : '';
+    app.innerHTML = `
+      <div class="page-head">
+        <div class="crumbs"><a href="#home">Latest</a></div>
+        <h1>${t(name)}</h1>
+        <div class="meta">${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}<span>CIK <span class="mono">${+cik}</span></span>
+          <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${+cik}&type=10-&dateb=&owner=include&count=40" target="_blank" rel="noopener">EDGAR filings ↗</a></div>
+      </div>
+      <section class="build-box" id="build-box">
+        <h2>No charts for this company yet</h2>
+        <p>Companies are drawn when they file a 10-Q, 10-K or earnings release during the hourly scan.
+          <span id="build-how">Ask for it and the next scan reads its last five 10-Qs and two 10-Ks from SEC; this page fills in by itself (usually 10–30 minutes).</span></p>
+        <div class="row"><button class="btn primary" id="build-go" type="button" hidden>Build its charts</button>
+          <span class="muted" id="build-msg" role="status"></span></div>
+      </section>`;
+    const box = $('#build-box'), btn = $('#build-go'), msg = (x) => { $('#build-msg').textContent = x || ''; };
+    const cl = await sb();
+    if (!cl) {
+      $('#build-how').textContent = 'Its charts appear here after its next filing.';
+      return;
+    }
+    btn.hidden = false;
+    let watching = false;
+    const watch = async () => {                      // the scan publishes data/c/<cik>.json; the request row says how it went
+      if (!box.isConnected) return;
+      watching = true;
+      btn.disabled = true;
+      try {
+        await getJSON(`c/${+cik}.json`, true);
+        if (box.isConnected) { acct.flash = 'Its charts are ready'; route(); }
+        return;
+      } catch (e) { /* not published yet */ }
+      const r = await cl.from('company_requests').select('status,error,created_at').eq('cik', +cik)
+        .order('created_at', { ascending: false }).limit(1);
+      const last = r.data && r.data[0];
+      if (!box.isConnected) return;
+      if (last && last.status === 'failed') {
+        msg(`Not built: ${last.error || 'SEC has no 10-Q or 10-K figures for it'}`);
+        btn.disabled = false;
+        watching = false;
+        return;
+      }
+      msg(last && last.status === 'done' ? 'Built: publishing the site…'
+        : last && last.status === 'queued' ? 'The scan is reading its filings from SEC…' : 'Waiting for the next scan…');
+      setTimeout(watch, 20000);
+    };
+    if (await currentUser()) {
+      const r = await cl.from('company_requests').select('status').eq('cik', +cik).order('created_at', { ascending: false }).limit(1);
+      if (r.data && r.data[0] && ['pending', 'queued', 'done'].includes(r.data[0].status)) watch();
+    }
+    btn.addEventListener('click', async () => {
+      if (!(await currentUser())) {
+        prefs.set('pending-build', String(+cik));
+        prefs.set('after-signin', `c-${+cik}`);
+        location.hash = 'account';
+        return;
+      }
+      btn.disabled = true;
+      const res = await askForCompany(cik);
+      msg(res.msg);
+      if (res.ok && !watching) setTimeout(watch, 3000);
+      else btn.disabled = false;
+    });
   }
 
   async function group(level, id, cal) {
@@ -702,12 +999,14 @@
         <h2>Layout</h2>
         <p>Revenue lines merge into revenue; profit stays on top and costs peel downward; operating profit plus other income becomes pre-tax earnings, which splits into tax, minority interests and net earnings; operating cash flow is bridged directly from net earnings. Each label shows the amount, its share of the node it splits from or flows into, and the change year over year and quarter over quarter. Loss-making quarters use a funding view: revenue, other income and the net loss together fund all costs.</p>
         <p>The comparison view keeps the same picture and marks the part of every band that grew since the previous quarter as a dark strip. Each label adds Δ = scale + mix: scale is the change explained by the parent node growing, mix the change in the item’s share of its parent.</p>
+        <h2>Full years and any two periods</h2>
+        <p>Each 10-K also gets a full-year chart from the year’s reported totals, compared with the year before. Signed-in readers who turn on “Compare any two periods” can pick any two quarters (or two fiscal years) that SEC’s XBRL data covers, back to 2009–2011; the comparison is drawn from SEC data on request by the same rules, the first period against the second.</p>
       </div><div class="prose">
         ${auditHTML}
         <h2>Text</h2>
         <p>No language model is used anywhere. Company descriptions are the opening paragraphs of Item 1 (Business) of the latest 10-K. Node notes are the paragraphs under the matching heading in Management’s Discussion and Analysis of the same filing, quoted verbatim. Analysis paragraphs are sentences filled from the numbers by fixed rules.</p>
         <h2>Starred companies</h2>
-        <p>Companies listed in <span class="mono">config/starred.txt</span> keep eight quarters of history (others keep three) and are back-filled from their filing history when first added.</p>
+        <p>Companies listed in <span class="mono">config/starred.txt</span> keep eight quarters and three fiscal years (others keep seven and two) and are back-filled from their filing history when first added.</p>
         <h2>Sectors</h2>
         <p>Sector and industry charts sum every company whose fiscal quarter ends in the same calendar quarter, grouped by SIC code. Detail lines appear only when every company reports them; comparisons need at least 90% of the revenue to have prior-period data.</p>
         <h2>Limits</h2>
@@ -724,12 +1023,30 @@
       const q = input.value.trim().toLowerCase();
       if (!q) { close(); return; }
       const ix = await getJSON('index.json');
-      items = ix.companies.filter((c) => (c.ticker || '').toLowerCase().startsWith(q) || c.name.toLowerCase().includes(q))
-        .sort((a, b) => ((b.ticker || '').toLowerCase() === q) - ((a.ticker || '').toLowerCase() === q) || b.revenue - a.revenue).slice(0, 8);
-      hi = 0;
-      box.innerHTML = items.map((c, i) => `<a href="#c-${c.cik}" class="${i === hi ? 'hi' : ''}"><span class="mono">${t(c.ticker)}</span><span>${t(c.name)}</span></a>`).join('') ||
-        '<div class="muted" style="padding:8px 10px">No company on file yet</div>';
-      box.hidden = false;
+      const exact = (c) => (c.ticker || '').toLowerCase() === q;
+      const match = (c) => (c.ticker || '').toLowerCase().startsWith(q) || c.name.toLowerCase().includes(q);
+      const here = ix.companies.filter(match).sort((a, b) => exact(b) - exact(a) || b.revenue - a.revenue);
+      const draw = (list) => {
+        items = list.slice(0, 8);
+        hi = 0;
+        box.innerHTML = items.map((c, i) => `<a href="#c-${c.cik}" class="${i === hi ? 'hi' : ''}${c.off ? ' off' : ''}"><span class="mono">${t(c.ticker)}</span><span>${t(c.name)}</span>${
+          c.off ? '<span class="tag">no chart yet</span>' : ''}</a>`).join('') ||
+          '<div class="muted" style="padding:8px 10px">No company found</div>';
+        box.hidden = false;
+      };
+      draw(here);
+      const all = await secCompanies();                 // every SEC company with a ticker, also those not drawn yet
+      if (input.value.trim().toLowerCase() !== q || !all.length) return;
+      const have = new Set(ix.companies.map((c) => +c.cik));
+      const there = [];
+      for (const [cik, ticker, name] of all) {          // SEC lists the largest first
+        if (have.has(cik)) continue;
+        const c = { cik, ticker, name, off: true };
+        if (match(c)) there.push(c);
+        if (there.length >= 16) break;
+      }
+      if (!there.length) return;
+      draw(here.filter(exact).concat(there.filter(exact), here.filter((c) => !exact(c)), there.filter((c) => !exact(c))));
     });
     input.addEventListener('keydown', (e) => {
       if (box.hidden || !items.length) return;
@@ -764,7 +1081,8 @@
     .map((h) => `https://${h}/@supabase/supabase-js@2.58.0/dist/umd/supabase.js`);
   const PREF_DEFAULTS = { tickers: [], sectors: [], all_above: false, min_revenue: 1e9, starred: false,
     frequency: 'instant', email_on: true, push_on: true, final_too: true };
-  const MAIL_DEFAULTS = { chart_q: false, chart_y: false, chart_history: false, attach_images: 'png', attach_pdf: true, cmp_decreases: false, changes_detail: false };
+  const MAIL_DEFAULTS = { chart_q: false, chart_y: false, chart_history: false, attach_images: 'png', attach_pdf: true, cmp_decreases: false,
+    changes_detail: false, custom_compare: false };     // columns added after the first release (see savePrefs)
   const acct = { client: undefined, prefs: null, flash: null };
 
   function loadScript(src, ms) {
@@ -891,10 +1209,10 @@
   }
 
   // "Email me this report": a queued request; the sender mails it to the signed-in address (any quarter on the site)
-  async function requestReports(cik, ends) {
+  async function requestReports(cik, ends, kind) {
     const c = await sb();
     const user = await currentUser();
-    const rows = ends.map((end) => ({ cik: +cik, period_end: end }));
+    const rows = ends.map((end) => Object.assign({ cik: +cik, period_end: end }, kind === 'fy' ? { kind: 'fy' } : {}));
     let r = await c.from('send_requests').insert(rows);
     let dup = 0;
     if (r.error && r.error.code === '23505' && rows.length > 1) {     // some already on their way: add the rest
@@ -907,6 +1225,7 @@
     }
     if (r.error && r.error.code === '23505') return 'Already on its way to your inbox';
     if (r.error && /limit/i.test(r.error.message)) return 'Limit reached: 30 reports a day';
+    if (r.error && kind === 'fy' && tableMissing(r.error)) return OWNER_UPDATE;
     if (r.error) return `Could not send: ${r.error.message}`;
     const n = rows.length - dup;
     if (!n) return 'Already on its way to your inbox';
@@ -927,9 +1246,9 @@
           location.hash = 'account';
           return;
         }
-        const [cik, ends] = b.dataset.send.split('|');
+        const [cik, ends, kind] = b.dataset.send.split('|');
         b.disabled = true;
-        toast(await requestReports(cik, ends.split(',')));
+        toast(await requestReports(cik, ends.split(','), kind));
         b.disabled = false;
       });
     });
@@ -946,6 +1265,7 @@
     if (!(await currentUser())) return signInView(c);
     const p = await loadPrefs();
     const pending = prefs.get('pending-follow', null), pendingSend = prefs.get('pending-send', null);
+    const pendingBuild = prefs.get('pending-build', null);
     if (pending) {                                    // a Follow click from before signing in
       prefs.set('pending-follow', null);
       const [kind, value] = pending.split(':');
@@ -955,10 +1275,14 @@
     }
     if (pendingSend) {                                // an "Email me" click from before signing in
       prefs.set('pending-send', null);
-      const [cik, ends] = pendingSend.split('|');
-      acct.flash = await requestReports(cik, ends.split(','));
+      const [cik, ends, kind] = pendingSend.split('|');
+      acct.flash = await requestReports(cik, ends.split(','), kind);
     }
-    if (pending || pendingSend) {
+    if (pendingBuild) {                               // "Build its charts" from before signing in
+      prefs.set('pending-build', null);
+      acct.flash = (await askForCompany(pendingBuild)).msg;
+    }
+    if (pending || pendingSend || pendingBuild) {
       const back = prefs.get('after-signin', null);
       prefs.set('after-signin', null);
       if (back && back !== 'account') { location.hash = back; return; }
@@ -1047,6 +1371,8 @@
             <div class="inline-radios" role="radiogroup" aria-label="Chart image files"><span>Chart images</span>${[['png', 'PNG'], ['jpg', 'JPG'], ['none', 'None']].map(([v, l]) =>
               `<label><input type="radio" name="attach" value="${v}" ${m.attach_images === v ? 'checked' : ''}> ${l}</label>`).join('')}</div>
             <label class="long"><input type="checkbox" id="attach-pdf" ${m.attach_pdf ? 'checked' : ''}><span>PDF report: company profile, the charts and the analysis</span></label></fieldset>
+          <fieldset><legend>On company pages</legend>
+            <label class="long"><input type="checkbox" id="custom-compare" ${m.custom_compare ? 'checked' : ''}><span>Compare any two periods: company pages get a ⇄ Compare any two button. Tick any two quarters (or two fiscal years) back to 2009–2011, when SEC’s XBRL data starts, and the comparison Sankey is drawn from SEC data within a few minutes</span></label></fieldset>
           <div class="row"><button class="btn primary" type="submit">Save</button><span class="muted" id="save-msg" role="status"></span></div>
         </form>
         <section class="section" id="requests"></section>
@@ -1099,6 +1425,7 @@
             chart_q: $('#chart-q').checked, chart_y: $('#chart-y').checked, chart_history: $('#chart-history').checked,
             attach_images: ($('input[name="attach"]:checked') || {}).value || 'png', attach_pdf: $('#attach-pdf').checked,
             cmp_decreases: $('#cmp-decreases').checked, changes_detail: $('#changes-detail').checked,
+            custom_compare: $('#custom-compare').checked,
           });
           state.decreases = $('#cmp-decreases').checked;           // company pages follow the account setting
           prefs.set('decreases', state.decreases);
@@ -1113,17 +1440,18 @@
 
   async function showRequests(c, ix) {
     const box = $('#requests');
-    const r = await c.from('send_requests').select('cik,period_end,status,created_at,sent_at,error')
+    const r = await c.from('send_requests').select('*')            // '*': with or without the newer kind column
       .order('created_at', { ascending: false }).limit(10);
     if (!box || !box.isConnected) return;
     const byCik = new Map(ix.companies.map((x) => [String(x.cik), x]));
     const state = (x) => (x.status === 'sent' ? `sent ${date(x.sent_at)}` : x.status === 'failed' ? `not sent: ${t(x.error || 'error')}` : 'on its way');
     const rows = (r.data || []).map((x) => {
       const co = byCik.get(String(x.cik));
-      return `<tr><td>${co ? `<a href="#c-${x.cik}-${x.period_end}">${t(co.ticker || co.name)}</a>` : x.cik}</td>
-        <td>quarter ended ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
+      const fy = x.kind === 'fy';
+      return `<tr><td>${co ? `<a href="#c-${x.cik}-${fy ? 'fy-' : ''}${x.period_end}">${t(co.ticker || co.name)}</a>` : x.cik}</td>
+        <td>${fy ? 'fiscal year' : 'quarter'} ended ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
     }).join('');
-    box.innerHTML = `<div class="section-head"><h2>Reports you asked for</h2><span class="muted">✉ Email me on any company page sends that quarter, old ones included</span></div>
+    box.innerHTML = `<div class="section-head"><h2>Reports you asked for</h2><span class="muted">✉ Email me on any company page sends that quarter or fiscal year, old ones included</span></div>
       ${rows ? `<div class="tbl-wrap"><table><tbody>${rows}</tbody></table></div>` : '<p class="muted small">None yet.</p>'}`;
   }
 
@@ -1169,7 +1497,9 @@
     }
     let m;
     try {
-      if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
+      if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
+      else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
+      else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
       else if ((m = /^([si])-([a-z0-9-]+?)(?:-(CY\d{4}Q\d))?$/.exec(h))) await group(m[1], m[2], m[3]);
       else if (h === 'sectors') await sectorsPage();
       else if (h === 'method') await methodPage();

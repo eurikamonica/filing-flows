@@ -154,9 +154,14 @@ def is_prelim(e):
     return e.get("form") == "8-K" or bool(e.get("prelim"))
 
 
+def is_year(x):
+    """A full fiscal year (10-K annual chart) rather than a quarter."""
+    return (x or {}).get("period") == "fy"
+
+
 def item_key(e):
-    """"<cik>:<quarter end>", plus ":8-K" for a chart read from an earnings release."""
-    return f"{int(e['cik'])}:{e['end']}" + (":8-K" if is_prelim(e) else "")
+    """"<cik>:<quarter end>", plus ":8-K" for a chart read from an earnings release, ":fy" for a full fiscal year."""
+    return f"{int(e['cik'])}:{e['end']}" + (":8-K" if is_prelim(e) else ":fy" if is_year(e) else "")
 
 
 def _split(k):
@@ -278,7 +283,8 @@ def headline(e, q):
 
 def eyebrow(e, q):
     form = "8-K earnings release" if q.get("form") == "8-K" else q.get("form", "")
-    return " · ".join(x for x in (e.get("ticker"), q.get("label"), f"{form} filed {social.fdate(q.get('filed'))}",
+    return " · ".join(x for x in (e.get("ticker"), q.get("label") + (" full year" if is_year(q) else ""),
+                                  f"{form} filed {social.fdate(q.get('filed'))}",
                                   "final" if q.get("release_check") else "") if x)
 
 
@@ -305,7 +311,7 @@ def release_note(q, got_at=None):
 
 
 def page_url(site_url, e):
-    return f"{site_url}/#c-{e['cik']}-{e['end']}" if site_url else ""
+    return f"{site_url}/#c-{e['cik']}-{'fy-' if is_year(e) else ''}{e['end']}" if site_url else ""
 
 
 def subject(items, daily, requested=False):
@@ -370,21 +376,25 @@ def changes_email_html(q):
     vq = (q.get("compare") or {}).get("vs") or "prev. quarter"
     th = f'padding:4px 6px;border-bottom:1px solid {LINE};font:600 11.5px/1.3 {FONT};color:{MUTED};text-align:right;white-space:nowrap'
     td = f'padding:4px 6px;border-bottom:1px solid {LINE};font:13px/1.35 {FONT};color:{INK};text-align:right;white-space:nowrap'
+    yq = not is_year(q)                                  # a fiscal year has no "previous quarter" columns
     body = "".join(
         f'<tr><td style="{td};text-align:left;white-space:normal"><span style="display:inline-block;width:8px;height:8px;'
         f'border-radius:2px;background:{r["color"]};margin-right:6px"></span>{H.escape(r["name"])}</td>'
         f'<td style="{td}">{r["now"]}</td><td style="{td}">{r["dy"]}</td><td style="{td};color:{MUTED}">{r["py"]}</td>'
-        f'<td style="{td}">{r["dq"]}</td><td style="{td};color:{MUTED}">{r["pq"]}</td></tr>' for r in rows)
+        + (f'<td style="{td}">{r["dq"]}</td><td style="{td};color:{MUTED}">{r["pq"]}</td>' if yq else "") + '</tr>' for r in rows)
     return (f'<p style="margin:4px 0 6px;font:600 15px/1.4 {FONT};color:{INK}">All changes</p>'
             f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 14px">'
             f'<tr><td style="{th};text-align:left">Line</td><td style="{th}">{H.escape(q.get("label") or "Now")}</td>'
-            f'<td style="{th}" colspan="2">vs {H.escape(vy)}</td><td style="{th}" colspan="2">vs {H.escape(vq)}</td></tr>{body}</table>')
+            f'<td style="{th}" colspan="2">vs {H.escape(vy)}</td>'
+            + (f'<td style="{th}" colspan="2">vs {H.escape(vq)}</td>' if yq else "") + f'</tr>{body}</table>')
 
 
 def changes_text(q):
     rows = change_rows(q)
     vy = (q.get("compare_y") or {}).get("vs") or "year ago"
     vq = (q.get("compare") or {}).get("vs") or "previous quarter"
+    if is_year(q):
+        return [f"All changes (vs {vy}):"] + [f"- {r['name']}: {r['now']}; {r['dy']} ({r['py']})" for r in rows] + [""]
     return [f"All changes (vs {vy}; vs {vq}):"] + [
         f"- {r['name']}: {r['now']}; {r['dy']} ({r['py']}); {r['dq']} ({r['pq']})" for r in rows] + [""]
 
@@ -397,12 +407,15 @@ def changes_pdf_html(q):
     vy = (q.get("compare_y") or {}).get("vs") or "Year ago"
     vq = (q.get("compare") or {}).get("vs") or "Prev. quarter"
     esc = H.escape
+    yq = not is_year(q)
     head = (f"<tr><th>Line</th><th class=n>{esc(q.get('label') or '')}</th><th class=n>{esc(vy)}</th><th class=n>Change</th>"
-            f"<th class=n>%</th><th>scale · mix</th><th class=n>{esc(vq)}</th><th class=n>Change</th><th class=n>%</th><th>scale · mix</th></tr>")
+            f"<th class=n>%</th><th>scale · mix</th>"
+            + (f"<th class=n>{esc(vq)}</th><th class=n>Change</th><th class=n>%</th><th>scale · mix</th>" if yq else "") + "</tr>")
     body = "".join(
         f'<tr><td><i style="background:{r["color"]}"></i>{esc(r["name"])}</td><td class=n>{r["now"]}</td><td class=n>{r["y"]}</td>'
-        f'<td class=n>{r["dy"]}</td><td class=n>{r["py"]}</td><td class=m>{esc(r["mix_y"])}</td><td class=n>{r["q"]}</td>'
-        f'<td class=n>{r["dq"]}</td><td class=n>{r["pq"]}</td><td class=m>{esc(r["mix_q"])}</td></tr>' for r in rows)
+        f'<td class=n>{r["dy"]}</td><td class=n>{r["py"]}</td><td class=m>{esc(r["mix_y"])}</td>'
+        + (f'<td class=n>{r["q"]}</td><td class=n>{r["dq"]}</td><td class=n>{r["pq"]}</td><td class=m>{esc(r["mix_q"])}</td>' if yq else "")
+        + '</tr>' for r in rows)
     return f'<table class="hist changes"><thead>{head}</thead><tbody>{body}</tbody></table>'
 
 
@@ -421,7 +434,7 @@ def views_for(sub, c, q):
         out.append("y")
     if sub.get("chart_q") and q.get("compare"):
         out.append("q")
-    if sub.get("chart_history") and sum(1 for x in c["quarters"] if x["end"] <= q["end"]) >= 2:
+    if sub.get("chart_history") and not is_year(q) and sum(1 for x in c["quarters"] if x["end"] <= q["end"]) >= 2:
         out.append("h")
     return out
 
@@ -446,14 +459,14 @@ def view_file(e, q, view, ext):
     return f"{file_base(e, q)}-{tail}.{ext}"
 
 
-CMP_NOTE = ("Band width is this quarter; a dark strip inside a band is the increase over {vs}, "
+CMP_NOTE = ("Band width is this {unit}; a dark strip inside a band is the increase over {vs}, "
             "a band without a strip fell (its Δ is negative).")
-CMP_NOTE_DEC = ("Band width is this quarter; a dark strip inside a band is the increase over {vs}; "
-                "a hatched area with a dashed outline beside a band is the decrease: what that line had in {vs} beyond this quarter.")
+CMP_NOTE_DEC = ("Band width is this {unit}; a dark strip inside a band is the increase over {vs}; "
+                "a hatched area with a dashed outline beside a band is the decrease: what that line had in {vs} beyond this {unit}.")
 
 
-def cmp_note(vs, decreases):
-    return (CMP_NOTE_DEC if decreases else CMP_NOTE).format(vs=vs)
+def cmp_note(vs, decreases, unit="quarter"):
+    return (CMP_NOTE_DEC if decreases else CMP_NOTE).format(vs=vs, unit=unit)
 
 
 def intro_text(c, limit):
@@ -511,7 +524,7 @@ def report_html(e, c, q, views, svgs, site_url, decreases=False, detail=False):
                 "".join(f"<li>{esc(b)}</li>" for b in cmp["bullets"]) + "</ul>")
 
     facts = [("Form", esc(q.get("form") or "") + (" \u00b7 earnings release (Item 2.02), preliminary" if prelim else "")),
-             ("Period", f"{esc(q.get('label') or '')} \u00b7 quarter ended {esc(social.fdate(q.get('end')))}"),
+             ("Period", f"{esc(q.get('label') or '')} \u00b7 {'fiscal year' if is_year(q) else 'quarter'} ended {esc(social.fdate(q.get('end')))}"),
              ("Filed", esc(social.fdate(q.get("filed"))))]
     if acc:
         facts.append(("Accession", "-".join(acc.groups())))
@@ -545,14 +558,15 @@ def report_html(e, c, q, views, svgs, site_url, decreases=False, detail=False):
     extra = []
     if detail and change_rows(q):
         extra.append(f'<section class="page"><h2>{esc(name)} {esc(q.get("label") or "")}: all changes</h2>'
-                     '<p class="muted">Every line of the chart, this quarter against a year earlier and against the previous quarter. '
+                     '<p class="muted">' + ('Every line of the chart, this year against the year before. ' if is_year(q) else
+                     'Every line of the chart, this quarter against a year earlier and against the previous quarter. ') +
                      'Δ = scale + mix: scale = change explained by the parent line growing, mix = change in the line’s share of it.</p>'
                      + changes_pdf_html(q) + "</section>")
     for v in views[1:]:
         cmp = q.get("compare_y") if v == "y" else q.get("compare") if v == "q" else None
         head = f"{esc(name)} {esc(q.get('label') or '')}: " + (f"compared with {esc(cmp.get('vs') or '')}" if cmp else "quarter by quarter")
         extra.append(f'<section class="page"><h2>{head}</h2>'
-                     + (f'<p class="muted">{esc(cmp_note(cmp.get("vs"), decreases))}</p>' if cmp else "")
+                     + (f'<p class="muted">{esc(cmp_note(cmp.get("vs"), decreases, "year" if is_year(q) else "quarter"))}</p>' if cmp else "")
                      + fig(v, 4.6 if v == "h" else 5.4) + (bullets(cmp) if cmp else "") + (hist_rows if v == "h" else "") + "</section>")
 
     css = """
@@ -825,7 +839,7 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
                 return
             if cmp:
                 rich.append(f'<p style="margin:0 0 8px;font:13px/1.5 {FONT};color:{MUTED}">'
-                            f'{H.escape(cmp_note(cmp.get("vs"), sub.get("cmp_decreases")))}</p>')
+                            f'{H.escape(cmp_note(cmp.get("vs"), sub.get("cmp_decreases"), "year" if is_year(q) else "quarter"))}</p>')
             rich.append(pic(img, link, f"{name} {q.get('label')}: {view_caption(view, q).lower()}", view_file(e, q, view, "jpg")))
 
         about = intro_text(c, 420)
@@ -999,15 +1013,16 @@ def claim_requests(supa, now):
     return sorted(got, key=lambda r: (r.get("created_at") or "", r["id"]))
 
 
-def find_quarter(site, cik, end):
-    """The quarter a reader asked for; an 8-K quarter that a 10-Q/10-K has since replaced resolves to the latter."""
+def find_quarter(site, cik, end, kind="q"):
+    """The quarter (or, kind "fy", the fiscal year) a reader asked for; an 8-K quarter that a 10-Q/10-K has since
+    replaced resolves to the latter."""
     try:
         c = site.json(f"c/{int(cik)}.json")
     except Exception:
         return None, None
     e0 = dt.date.fromisoformat(str(end)[:10])
     best = None
-    for q in c["quarters"]:
+    for q in (c.get("years") or []) if kind == "fy" else c["quarters"]:
         d = abs((dt.date.fromisoformat(q["end"]) - e0).days)
         if d <= SAME_QUARTER_DAYS and (best is None or d < best[0]):
             best = (d, q)
@@ -1017,7 +1032,7 @@ def find_quarter(site, cik, end):
 def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets, budget):
     """E-mail the reports readers asked for with "Email me". Returns the number of e-mails sent."""
     if dry_run:
-        reqs = supa.select("send_requests", {"select": "id,user_id,cik,period_end,attempts,created_at", "status": "eq.pending"})
+        reqs = supa.select("send_requests", {"select": "*", "status": "eq.pending"})   # "*": with or without the kind column
     else:
         reqs = claim_requests(supa, now)
     if not reqs:
@@ -1042,15 +1057,18 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
             continue
         items, missing = [], []
         for r in rows:
-            c, q = find_quarter(site, r["cik"], r["period_end"])
+            kind = r.get("kind") or "q"
+            c, q = find_quarter(site, r["cik"], r["period_end"], kind)
             if not q:
                 missing.append(r)
                 continue
             e = {"cik": int(r["cik"]), "end": q["end"], "form": q.get("form"), "ticker": (c["profile"].get("tickers") or [""])[0],
                  "name": c["profile"]["name"], "rev": (q.get("headline") or {}).get("rev_fmt")}
+            if kind == "fy":
+                e["period"] = "fy"
             if all(item_key(x[0]) != item_key(e) for x in items):     # the same quarter asked twice: one copy
                 items.append((e, c, q, ["you asked for this report"]))
-        finish(missing, status="failed", error="that quarter is no longer on the site")
+        finish(missing, status="failed", error="that period is no longer on the site")
         if items:
             jobs.append((sub, rows, [r for r in rows if r not in missing], items))
     if not jobs:

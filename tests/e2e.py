@@ -49,7 +49,7 @@ CHECK_LABELS = """() => {
 FAKE_SUPABASE = """
 (() => {
   const GOOD_UNSUB = '11111111-2222-4333-8444-555555555555';
-  const db = { subscriptions: [], send_requests: [] }, log = [];
+  const db = { subscriptions: [], send_requests: [], chart_requests: [], company_requests: [] }, log = [];
   let session = null;
   try { session = JSON.parse(sessionStorage.getItem('fake-session') || 'null'); } catch (e) {}
   window.__ff = { db, log, native: [] };
@@ -89,7 +89,7 @@ FAKE_SUPABASE = """
         user_id: session.user.id, status: 'pending', created_at: new Date().toISOString() }));
       for (const x of add) {
         if (mine.concat(add.filter((y) => y !== x && add.indexOf(y) < add.indexOf(x)))
-          .some((y) => y.status === 'pending' && y.cik === x.cik && y.period_end === x.period_end))
+          .some((y) => y.status === 'pending' && y.cik === x.cik && y.period_end === x.period_end && (y.kind || 'q') === (x.kind || 'q')))
           return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint' } };
       }
       if (mine.length + add.length > 30) return { data: null, error: { code: 'P0001', message: 'limit: 30 reports a day' } };
@@ -97,7 +97,19 @@ FAKE_SUPABASE = """
       log.push(['insert', table, add.length]);
       return { data: null, error: null };
     };
+    // chart_requests / company_requests: own rows, an id, pending; one open request per company
+    const asks = () => {
+      if (!session) return { data: null, error: { code: '42501', message: 'new row violates row-level security policy' } };
+      const x = Object.assign(copy(q.row), { id: rows.length + 1, user_id: session.user.id, status: 'pending', created_at: new Date().toISOString() });
+      if (table === 'company_requests' && rows.some((y) => y.user_id === x.user_id && y.cik === x.cik && ['pending', 'queued'].includes(y.status)))
+        return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint' } };
+      rows.push(x);
+      log.push(['insert', table, 1]);
+      return { data: copy(x), error: null };
+    };
+    const isAsk = () => (table === 'chart_requests' || table === 'company_requests') && q.op === 'insert';
     const run = () => {
+      if (isAsk()) { const r = asks(); return r.error ? r : { data: [r.data], error: null }; }
       if (table === 'send_requests' && q.op === 'insert') return requests();
       if (q.op === 'select') {
         let m = rows.filter((r) => session && r.user_id === session.user.id && match(r));
@@ -115,7 +127,7 @@ FAKE_SUPABASE = """
       insert(r) { q.op = 'insert'; q.row = r; return b; },
       upsert(r) { q.op = 'upsert'; q.row = r; return b; },
       async maybeSingle() { const m = rows.filter((r) => session && r.user_id === session.user.id && match(r)); return { data: m[0] ? copy(m[0]) : null, error: null }; },
-      async single() { return q.op === 'select' ? b.maybeSingle() : write(); },
+      async single() { return isAsk() ? asks() : q.op === 'select' ? b.maybeSingle() : write(); },
       then(ok, bad) { return Promise.resolve().then(run).then(ok, bad); },
     };
     return b;
@@ -147,11 +159,62 @@ def _final_quarter(route):
     route.fulfill(response=resp, body=_json.dumps(c))
 
 
-def check_accounts(b, base, fails, shot):
+AAPL_PERIODS = {
+    "q": [{"end": e, "label": l, "q": n, "fy": f} for e, l, n, f in (
+        ("2026-06-27", "Q3 FY26", 3, 2026), ("2026-03-28", "Q2 FY26", 2, 2026), ("2025-12-27", "Q1 FY26", 1, 2026),
+        ("2025-09-27", "Q4 FY25", 4, 2025), ("2025-06-28", "Q3 FY25", 3, 2025), ("2024-06-29", "Q3 FY24", 3, 2024))],
+    "fy": [{"end": "2025-09-27", "label": "FY25", "fy": 2025}, {"end": "2024-09-28", "label": "FY24", "fy": 2024}]}
+
+
+def _with_years(route):
+    """Apple with a full fiscal year (from a 10-K) and the period list, as the pipeline writes them."""
+    import json as _json
+    resp = route.fetch()
+    c = _json.loads(resp.text())
+    q = c["quarters"][0]
+    y = _json.loads(_json.dumps(q))
+    y.update(period="fy", key="fy-2025-09-27", end="2025-09-27", label="FY25", form="10-K", filed="2025-10-31", compare=None,
+             title=q["title"].replace(q["label"], "FY25"))
+    y["compare_y"] = dict(q["compare_y"] or q["compare"], vs="FY24")
+    c["years"], c["periods"] = [y], AAPL_PERIODS
+    route.fulfill(response=resp, body=_json.dumps(c))
+
+
+def _comparison_result(site):
+    """What the workflow writes back for 'Q3 FY26 compared with Q3 FY24' (the shape pipeline.custom produces)."""
+    import json as _json
+    q = _json.load(open(os.path.join(site, "data", "c", "320193.json")))["quarters"][0]
+    q.update(compare=dict(q["compare"], vs="Q3 FY24"), compare_y=None, period="q", x_thread=[],
+             custom={"a": "2026-06-27", "b": "2024-06-29", "a_label": "Q3 FY26", "b_label": "Q3 FY24", "kind": "q",
+                     "b_filed": "2024-08-02", "b_index_url": None})
+    return q
+
+
+def check_accounts(b, base, fails, shot, site):
     """Sign in with a code, save alert settings, Follow on a company page, unsubscribe link."""
     ctx = b.new_context(viewport={"width": 1280, "height": 900})
     ctx.add_init_script(FAKE_SUPABASE)
     ctx.route("**/data/c/9999901.json", _final_quarter)
+    ctx.route("**/data/c/320193.json", _with_years)
+    built = {"done": False}
+
+    def companies(route):                       # SEC's list has a company the site has not drawn yet
+        import json as _json
+        resp = route.fetch()
+        d = _json.loads(resp.text())
+        d["companies"].append([1652044, "GOOGL", "Alphabet Inc."])
+        route.fulfill(response=resp, body=_json.dumps(d))
+
+    def alphabet(route):                        # published once "the scan" has built it
+        if not built["done"]:
+            route.fulfill(status=404, body="not found")
+            return
+        import json as _json
+        c = _json.load(open(os.path.join(site, "data", "c", "320193.json")))
+        c["profile"].update(name="Alphabet Inc.", cik=1652044, tickers=["GOOGL"])
+        route.fulfill(status=200, content_type="application/json", body=_json.dumps(c))
+    ctx.route("**/data/companies.json", companies)
+    ctx.route("**/data/c/1652044.json", alphabet)
     pg = ctx.new_page()
     errors = []
     pg.on("pageerror", lambda e: errors.append(str(e)))
@@ -185,12 +248,42 @@ def check_accounts(b, base, fails, shot):
     if not pg.is_checked("#final-too"):
         fails.append("accounts: 'also send the final 10-Q' should be on by default")
     pg.uncheck("#final-too")
+    defaults = (pg.is_checked("#chart-q"), pg.is_checked("#chart-y"), pg.is_checked("#chart-history"),
+                pg.is_checked('input[name="attach"][value="png"]'), pg.is_checked("#attach-pdf"))
+    if defaults != (False, False, False, True, True):
+        fails.append(f"accounts: e-mail content defaults should be this quarter only, PNG and PDF: {defaults}")
+    if pg.is_checked("#cmp-decreases") or pg.is_checked("#changes-detail"):
+        fails.append("accounts: decreases and the full list of changes should be off by default")
+    pg.check("#changes-detail")
+    pg.check("#chart-y")
+    pg.check("#chart-history")
+    pg.check("#cmp-decreases")
+    pg.check('input[name="attach"][value="jpg"]')
+    pg.uncheck("#attach-pdf")
     pg.click("#prefs-form button[type=submit]")
     pg.wait_for_function("document.querySelector('#save-msg').textContent === 'Saved.'")
     row = ff("window.__ff.db.subscriptions[0]")
     print("saved prefs:", {k: row[k] for k in ("tickers", "sectors", "frequency", "all_above", "min_revenue", "email")})
     if row.get("final_too") is not False:
         fails.append("accounts: final_too not saved")
+    got = {k: row.get(k) for k in ("chart_q", "chart_y", "chart_history", "attach_images", "attach_pdf", "cmp_decreases", "changes_detail")}
+    print("e-mail content:", got)
+    if got != {"chart_q": False, "chart_y": True, "chart_history": True, "attach_images": "jpg", "attach_pdf": False,
+               "cmp_decreases": True, "changes_detail": True}:
+        fails.append(f"accounts: e-mail content options not saved: {got}")
+    # the company page's "Show decreases" follows the account and changes it
+    pg.goto(base + "#c-320193")
+    pg.wait_for_selector(".sheet svg")
+    pg.locator('[data-view="y"]').click()
+    pg.wait_for_selector(".dec-toggle:not([hidden])")
+    if not pg.is_checked("[data-dec]"):
+        fails.append("accounts: company page did not take 'Show decreases' from the account")
+    pg.uncheck("[data-dec]")
+    pg.wait_for_function("window.__ff.db.subscriptions[0].cmp_decreases === false", timeout=5000)
+    print("company page toggle saved to the account:", ff("window.__ff.db.subscriptions[0].cmp_decreases"))
+    pg.locator('[data-view="std"]').click()
+    pg.goto(base + "#account")
+    pg.wait_for_selector("#prefs-form")
     if row["tickers"] != ["AAPL"] or row["frequency"] != "daily" or len(row["sectors"]) != 1 or row["min_revenue"] != 5e9 or not row["all_above"]:
         fails.append(f"accounts: settings not saved as entered: {row}")
     if not ff("window.__ff.native.length"):
@@ -243,6 +336,107 @@ def check_accounts(b, base, fails, shot):
     if "Revised: operating cash flow $1.6B in the release, $1.2B as filed" not in facts:
         fails.append(f"final label: facts say {facts!r}")
     shot(pg, "final_label.png")
+
+    # a full fiscal year (10-K): its own pill and page; "Email me" asks for the year, not the fourth quarter
+    pg.goto(base + "#c-320193")
+    pg.wait_for_selector(".pill.year")
+    pg.click(".pill.year")
+    pg.wait_for_function("location.hash === '#c-320193-fy-2025-09-27'")
+    pg.wait_for_function("(document.querySelector('.facts') || {}).textContent?.includes('fiscal year ended')")   # the new page, not the old one
+    pg.wait_for_selector(".sheet svg")
+    if pg.locator('[data-view="q"]').is_visible() or not pg.locator('[data-view="y"]').is_visible():
+        fails.append("fiscal year: should offer 'vs FY24' and no previous-quarter view")
+    if "fiscal year ended" not in pg.inner_text(".facts"):
+        fails.append("fiscal year: the facts do not say 'fiscal year ended'")
+    pg.wait_for_selector(".btn.send:not([hidden])")
+    if "FY25 full year" not in pg.inner_text(".btn.send"):
+        fails.append(f"fiscal year: Email me says {pg.inner_text('.btn.send')!r}")
+    pg.click(".btn.send")
+    pg.wait_for_function("window.__ff.db.send_requests.some((r) => r.kind === 'fy' && r.period_end === '2025-09-27')")
+    pg.locator('[data-view="y"]').click()
+    pg.wait_for_function("[...document.querySelectorAll('.sheet svg text')].some((x) => x.textContent.includes('what changed'))")
+    shot(pg, "fiscal_year.png", full_page=True)
+    pg.locator('[data-view="std"]').click()
+
+    # "Compare any two periods": off by default; on in the alerts, a picker on company pages
+    if pg.locator("#cmp-open").is_visible():
+        fails.append("compare: the button shows although the reader has not turned it on")
+    pg.goto(base + "#account")
+    pg.wait_for_selector("#prefs-form")
+    if pg.is_checked("#custom-compare"):
+        fails.append("compare: should be off by default")
+    pg.check("#custom-compare")
+    pg.click("#prefs-form button[type=submit]")
+    pg.wait_for_function("window.__ff.db.subscriptions[0].custom_compare === true")
+    pg.goto(base + "#c-320193")
+    pg.wait_for_selector("#cmp-open:not([hidden])")
+    pg.click("#cmp-open")
+    pg.wait_for_selector(".period-grid")
+    rows = pg.locator(".period-grid tbody tr").count()
+    if rows != 3:
+        fails.append(f"compare: the picker should list fiscal years 2026, 2025 and 2024, got {rows} rows")
+    pick = lambda end, kind="q": pg.locator(f'input[data-end="{end}"][data-kind="{kind}"]')
+    pick("2026-06-27").check()
+    pick("2025-09-27", "fy").check()
+    if "Quarters are compared with quarters" not in pg.inner_text("#cmp-msg") or pick("2026-06-27").is_checked():
+        fails.append("compare: a quarter and a fiscal year were allowed together")
+    pick("2026-06-27").check()
+    pick("2024-06-29").check()
+    pick("2025-06-28").check()                     # a third tick drops the first one
+    pick("2026-06-27").check()
+    if pg.inner_text("#cmp-sum") != "Q3 FY26 compared with Q3 FY25" or pick("2024-06-29").is_checked():
+        fails.append(f"compare: picked {pg.inner_text('#cmp-sum')!r}")
+    pick("2025-06-28").uncheck()
+    pick("2024-06-29").check()
+    pg.click("#cmp-swap")
+    if pg.inner_text("#cmp-sum") != "Q3 FY24 compared with Q3 FY26":
+        fails.append(f"compare: swap shows {pg.inner_text('#cmp-sum')!r}")
+    pg.click("#cmp-swap")
+    shot(pg, "compare_picker.png", full_page=True)
+    pg.click("#cmp-go")
+    pg.wait_for_function("location.hash === '#c-320193-cmp-1'")
+    pg.wait_for_selector(".cmp-wait h2")
+    req = ff("window.__ff.db.chart_requests[0]")
+    if (req["cik"], req["kind"], req["a_end"], req["b_end"]) != (320193, "q", "2026-06-27", "2024-06-29"):
+        fails.append(f"compare: request saved as {req}")
+    if "Q3 FY26 compared with Q3 FY24" not in pg.inner_text(".cmp-wait h2"):
+        fails.append(f"compare: waiting page says {pg.inner_text('.cmp-wait')!r}")
+    shot(pg, "compare_wait.png")
+    import json as _json
+    pg.evaluate("(r) => Object.assign(window.__ff.db.chart_requests[0], {status: 'done', done_at: new Date().toISOString(), result: r})",
+                _comparison_result(site))
+    pg.wait_for_selector(".cmp-head", timeout=15000)
+    pg.wait_for_function("[...document.querySelectorAll('.sheet svg text')].some((x) => x.textContent.includes('what changed'))")
+    if pg.locator('[data-view="y"]').is_visible() or "vs Q3 FY24" not in pg.inner_text('[data-view="q"]'):
+        fails.append("compare: the chart should open on 'vs Q3 FY24' with no year-ago view")
+    issues = pg.evaluate(CHECK_LABELS)
+    if issues:
+        print("compare layout:", issues[:4])
+    shot(pg, "compare_done.png", full_page=True)
+    pg.goto(base + "#c-320193")
+    pg.wait_for_selector("#cmp-open:not([hidden])")
+    pg.click("#cmp-open")
+    pg.wait_for_selector(".cmp-list li")
+    if "Q3 FY26 vs Q3 FY24" not in pg.inner_text(".cmp-list") or "ready" not in pg.inner_text(".cmp-list"):
+        fails.append(f"compare: earlier comparisons list says {pg.inner_text('.cmp-list')!r}")
+
+    # search: a company SEC lists but the site has not drawn yet; "Build its charts"; the page fills in
+    pg.evaluate("document.documentElement.classList.remove('in-app')")   # the stand-in app bridge hides the site header
+    pg.fill("#q", "alph")
+    pg.wait_for_selector(".suggest a.off")
+    if "no chart yet" not in pg.inner_text(".suggest a.off"):
+        fails.append("search: companies without charts are not marked")
+    pg.click(".suggest a.off")
+    pg.wait_for_selector("#build-go:not([hidden])")
+    if pg.inner_text("h1") != "Alphabet Inc.":
+        fails.append(f"search: missing company page shows {pg.inner_text('h1')!r}")
+    shot(pg, "build_company.png")
+    pg.click("#build-go")
+    pg.wait_for_function("window.__ff.db.company_requests.length === 1 && window.__ff.db.company_requests[0].cik === 1652044")
+    built["done"] = True
+    pg.wait_for_selector(".pills", timeout=15000)
+    if "Alphabet" not in pg.inner_text("h1"):
+        fails.append("search: the page did not fill in once the company was built")
 
     # home shows "Manage alerts" when signed in; sign out
     pg.goto(base + "#home")
@@ -395,6 +589,22 @@ def main():
                 print(f"{co['ticker']:6} {view}: {len(issues)} layout issues", issues[:4])
                 (warns if view != "std" else fails).extend(f"{co['ticker']} {view}: {i}" for i in issues)
                 shot(pg, f"c_{co['ticker']}_{view}.png", full_page=True)
+                if view != "std":                          # the same comparison with decreases drawn (hatched)
+                    if pg.locator(".dec-toggle").is_hidden():
+                        fails.append(f"{co['ticker']} {view}: 'Show decreases' not offered in a comparison")
+                    pg.check("[data-dec]")
+                    pg.wait_for_timeout(150)
+                    issues = pg.evaluate(CHECK_LABELS)
+                    hatched = pg.locator(".sheet svg .ghost").count()
+                    if not hatched:
+                        fails.append(f"{co['ticker']} {view}: 'Show decreases' drew nothing")
+                    if not pg.locator(".sheet svg .ghost path[clip-path]").count():
+                        fails.append(f"{co['ticker']} {view}: decreases have no hatch lines")
+                    print(f"{co['ticker']:6} {view}+decreases: {len(issues)} layout issues, {hatched} hatched", issues[:4])
+                    warns.extend(f"{co['ticker']} {view}+decreases: {i}" for i in issues)
+                    shot(pg, f"c_{co['ticker']}_{view}_dec.png", full_page=True)
+                    pg.uncheck("[data-dec]")
+                    pg.wait_for_timeout(100)
             pg.locator('[data-view="std"]').click()
 
         # notes on click (Apple fixture has MD&A text for iPhone)
@@ -408,8 +618,15 @@ def main():
         if pg.locator("svg.has-sel path.band.on").count() < 1:
             fails.append("selected node's bands are not highlighted")
         shot(pg, "c_AAPL_note.png")
+        if pg.locator("#thread").count():
+            fails.append("X thread panel shows to readers (it is an owner tool)")
+        pg.goto(f"{base}#owner")
+        pg.locator("#owner-toggle").click()
+        pg.wait_for_selector("text=On: company pages show the X thread.")
+        pg.goto(f"{base}#c-320193")
+        pg.wait_for_selector(".sheet svg")
         n_posts = pg.locator("#thread pre").count()
-        print("X thread posts on the page:", n_posts)
+        print("X thread posts on the page (owner on):", n_posts)
         if n_posts < 3:
             fails.append("company page has no X thread")
 
@@ -516,7 +733,7 @@ def main():
         if "not switched on" not in pg.inner_text("h1"):
             fails.append("account page without configuration should say alerts are not switched on")
 
-        check_accounts(b, base, fails, shot)
+        check_accounts(b, base, fails, shot, os.path.abspath(args.site))
 
         if errors:
             fails.extend(f"console: {e}" for e in errors)

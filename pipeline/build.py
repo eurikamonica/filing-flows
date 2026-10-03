@@ -16,8 +16,15 @@ from . import analysis, dims, facts, release, scan, sec, sectors, social, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
-KEEP_QUARTERS = 3          # per ordinary company
+KEEP_QUARTERS = 7          # per company: the last five 10-Q quarters and the fourth quarters of the last two 10-Ks
+KEEP_YEARS = 2             # full-year charts from the last two 10-Ks
 KEEP_STARRED = 8           # multi-quarter history for starred companies
+KEEP_STARRED_YEARS = 3
+HISTORY_Q, HISTORY_K = 5, 2  # filings fetched when a company first appears: its last five 10-Qs and two 10-Ks
+HISTORY_VERSION = 2          # bump to fetch the default history again for every company
+BACKFILL_PER_RUN = 25        # companies stored before HISTORY_VERSION get their history a few at a time
+PERIODS_Q, PERIODS_FY = 72, 18   # "compare any two periods" offers up to 18 years (XBRL starts in 2009-2011)
+PERIODS_PER_RUN = 150        # companies stored before that list existed get it a few at a time (one SEC request each)
 PENDING_TRIES = 24         # companyfacts can lag a filing by hours
 
 
@@ -80,6 +87,34 @@ def companyfacts(cik):
     return _cf[cik]
 
 
+def periods_of(fx):
+    """Every quarter and fiscal year whose revenue SEC's XBRL data has (newest last)."""
+    return {"q": facts.quarter_ends(fx)[-PERIODS_Q:], "fy": facts.year_ends(fx)[-PERIODS_FY:]}
+
+
+def refresh_periods(store, limit=PERIODS_PER_RUN):
+    """Companies stored before the period list existed get it (largest first), a few per run."""
+    todo = []
+    for cik in store.ciks():
+        c = store.company(cik)
+        if c.get("periods") is None and c.get("quarters") and c.get("profile"):
+            last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
+            todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik))
+    n = 0
+    for _, cik in sorted(todo)[:limit]:
+        try:
+            c = store.company(cik)
+            c["periods"] = periods_of(companyfacts(cik))
+            store.put(cik, c)
+            n += 1
+        except Exception as e:
+            print(f"  periods not read for {cik}: {e}", file=sys.stderr)
+        finally:
+            _cf.pop(cik, None)                            # big files: do not keep them all in memory
+    if todo:
+        print(f"period lists: {n} companies updated, {max(len(todo) - n, 0)} to go")
+
+
 def recent_rows(sub):
     r = sub.get("filings", {}).get("recent", {})
     keys = list(r.keys())
@@ -134,6 +169,8 @@ def process_filing(store, cik, accn, form, starred=False):
 
     # revenue breakdown from the XBRL instance (dimensional facts)
     lines_struct = lines_cur = lines_py = None
+    dfx = None
+    c["periods"] = periods_of(fx)                         # for "compare any two periods"
     try:
         inst_url, lab_url = dims.find_files(cik, accn)
         if inst_url:
@@ -204,10 +241,43 @@ def process_filing(store, cik, accn, form, starred=False):
             del c["quarters"][k]
     if releases and form != "8-K":
         c["quarters"][end]["from_release"] = release_check(releases[0], raw)
+    if form.startswith("10-K"):
+        year = annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes)
+        if year:
+            c.setdefault("years", {})[end] = year
+            c["years"] = dict(sorted(c["years"].items())[-(KEEP_STARRED_YEARS if starred else KEEP_YEARS):])
     keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
     c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
     store.put(cik, c)
     return end
+
+
+def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes):
+    """The full fiscal year of a 10-K, with the year before for comparison."""
+    raw = facts.extract(fx, end, annual=True)
+    if not raw.get("revenue") or (raw.get("ni") is None and raw.get("pl") is None):
+        return None
+    py_end = facts.prior_year_end(fx, end)
+    ls = cur = prev = None
+    if dfx:
+        try:
+            yv = dims.year_values(dfx, end)
+            ls = dims.revenue_lines(yv, raw["revenue"])
+            if ls:
+                ids = [l["id"] for l in ls["leaves"]] + [g["id"] for g in ls["groups"]]
+                axis = ls["axis"]
+                cur = {m: yv[axis][m][1] for m in ids if m in yv.get(axis, {})}
+                if py_end:
+                    pv = dims.year_values(dfx, py_end).get(axis, {})
+                    prev = {m: pv[m][1] for m in ids if m in pv} or None
+        except Exception as e:
+            print(f"  annual breakdown skipped for {cik} {accn}: {e}", file=sys.stderr)
+            ls = cur = prev = None
+    label, fy = facts.fiscal_year_label(end, c["profile"]["fye"])
+    return {"end": end, "label": label, "fy": fy, "form": form, "accn": accn, "filed": row.get("filingDate"),
+            "doc_url": doc_url, "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", "period": "fy",
+            "raw": raw, "py_end": py_end, "raw_py": facts.extract(fx, py_end, annual=True) if py_end else None,
+            "lines_struct": ls, "lines": cur, "lines_py": prev, "notes": notes}
 
 
 EXHIBIT_PATTERNS = (r"ex[-_]?99[-_.]?0?1(?!\d)", r"ex[-_]?99", r"press|release|earnings")
@@ -282,17 +352,50 @@ HISTORY_ON_RELEASE = 5          # an earnings 8-K brings in the company's last f
 
 def _queue_history(store, cik, sub, n=HISTORY_ON_RELEASE):
     st, c = store.state, store.company(cik)
-    if c.get("keep", 0) >= n + 1:
+    if c.get("keep", 0) >= n + 1 and c.get("hist", 0) >= HISTORY_VERSION:
         return
     have = c.get("quarters", {})
-    rows = [r for r in recent_rows(sub) if r["form"] in ("10-Q", "10-K") and r.get("reportDate")][:n]
-    for r in rows:
+    years = c.get("years", {})
+    rows = [r for r in recent_rows(sub) if r.get("reportDate")]
+    pick = [r for r in rows if r["form"] == "10-Q"][:HISTORY_Q] + [r for r in rows if r["form"] == "10-K"][:HISTORY_K]
+    for r in pick:
         a = r["accessionNumber"]
-        if r["reportDate"] not in have and a not in st["pending"] and a not in st["seen"]:
-            st["pending"][a] = {"cik": cik, "form": r["form"], "filed": r["filingDate"], "tries": 0, "items": None}
-    c["keep"] = n + 1
+        done = r["reportDate"] in have and (r["form"] != "10-K" or r["reportDate"] in years)
+        if not done and a not in st["pending"]:
+            st["seen"].pop(a, None)                          # a 10-K read before annual charts existed is read again
+            st["pending"][a] = {"cik": cik, "form": r["form"], "filed": r["filingDate"], "tries": 0, "items": None,
+                                "history": True}
+    c["keep"] = max(c.get("keep", 0), n + 1, KEEP_QUARTERS)
+    c["hist"] = HISTORY_VERSION
     c["profile"] = profile_of(sub)
     store.put(cik, c)
+
+
+def queue_history(store, cik):
+    """Default history (last five 10-Qs and two 10-Ks) for one company; returns False when SEC has no such filer."""
+    try:
+        _queue_history(store, cik, submissions(cik))
+        return True
+    except sec.NotFound:
+        return False
+
+
+def backfill_history(store, limit=BACKFILL_PER_RUN):
+    """Companies stored before the current default history get it, a few per run."""
+    n = 0
+    for cik in sorted(store.ciks()):
+        if n >= limit:
+            break
+        c = store.company(cik)
+        if c.get("hist", 0) >= HISTORY_VERSION or not c.get("profile"):
+            continue
+        try:
+            queue_history(store, cik)
+        except Exception as e:
+            print(f"  history not queued for {cik}: {e}", file=sys.stderr)
+        n += 1
+    if n:
+        print(f"queued the default history for {n} more companies")
 
 
 def _release_cash(rel, fx, q1_end, fq, py_end=None):
@@ -461,6 +564,15 @@ def run(args):
             st["pending"][f["accn"]] = {"cik": f["cik"], "form": f["form"], "filed": f["filed"], "tries": 0,
                                         "items": f.get("items")}
     _reread_releases(store)
+    asked = set(getattr(args, "build_ciks", None) or [])
+    for cik in sorted(asked):                                  # companies readers asked for (site search)
+        try:
+            if not queue_history(store, cik):
+                print(f"  no SEC filer with CIK {cik}")
+        except Exception as e:
+            print(f"  could not queue {cik} for a reader: {e}", file=sys.stderr)
+    backfill_history(store)
+    refresh_periods(store)
     stars = starred_ciks()
     for cik in stars:                                            # multi-quarter history for starred companies
         try:
@@ -477,7 +589,8 @@ def run(args):
         order = [kv for kv in sorted(st["pending"].items(), key=lambda kv: kv[1]["filed"], reverse=True) if kv[0] not in tried]
         if not order:
             break
-        order.sort(key=lambda kv: kv[1]["form"] == "8-K" and kv[1].get("items") is None)   # unclassified 8-Ks last
+        order.sort(key=lambda kv: (kv[1]["cik"] not in asked,                              # what readers asked for first
+                                   kv[1]["form"] == "8-K" and kv[1].get("items") is None))   # unclassified 8-Ks last
         for accn, p in order:
             if done >= args.max_filings:
                 break
@@ -489,6 +602,28 @@ def run(args):
     st["log"].append({"t": now, "processed": done, "pending": len(st["pending"])})
     store.commit()
     render(store, args.out, set(stars))
+    company_list(args.out)
+
+
+def company_list(out):
+    """data/companies.json: every company with a ticker on SEC's list [cik, ticker, name], so the site's search finds
+    companies it has no chart for yet (a reader can then ask for them)."""
+    try:
+        data = sec.get_json("https://www.sec.gov/files/company_tickers.json")
+    except Exception as e:
+        print(f"::warning::SEC company list not fetched ({e}); the search shows only companies on the site")
+        return
+    seen, rows = set(), []
+    for v in data.values():                               # SEC lists the largest companies first: kept, for the search
+        cik = int(v["cik_str"])
+        if cik in seen:                                   # one row per company: its first (main) ticker
+            continue
+        seen.add(cik)
+        rows.append([cik, str(v.get("ticker") or "").upper(), str(v.get("title") or "")])
+    with open(os.path.join(out, "companies.json"), "w") as f:
+        json.dump({"generated": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z", "companies": rows}, f,
+                  separators=(",", ":"))
+    print(f"company list: {len(rows)} SEC companies")
 
 
 def _process_one(store, st, accn, p, stars, now):
@@ -498,6 +633,11 @@ def _process_one(store, st, accn, p, stars, now):
         st["seen"][accn] = {"t": now, "s": "ok", "cik": p["cik"], "end": end, "form": p["form"], "filed": p["filed"]}
         del st["pending"][accn]
         print(f"ok   {p['form']:5} {p['cik']:>10} {accn} {end}")
+        if store.company(p["cik"]).get("hist", 0) < HISTORY_VERSION:   # a new company: its earlier filings too
+            try:
+                queue_history(store, p["cik"])
+            except Exception as e:
+                print(f"  history not queued for {p['cik']}: {e}", file=sys.stderr)
     except Pending as e:
         p["tries"] += 1
         if p["tries"] >= PENDING_TRIES:
@@ -598,6 +738,89 @@ def quarter_payload(c, q, prev_q):
     }
 
 
+ANNUAL_NOTE = ("Source: SEC EDGAR XBRL data ({form} filed {filed}): the full fiscal year as reported. Percentages show each "
+               "item’s share of the node it splits from or flows into. n/m = not meaningful (a comparison period was ≤ 0 or changed sign).")
+
+
+def _yearly(text):
+    """Analysis written for quarters, reworded for a full year."""
+    for a, b in (("The quarter ended", "The year ended"), ("previous quarter's", "previous year's"),
+                 ("the previous quarter", "the previous year"), ("Loss-making quarter", "Loss-making year")):
+        text = text.replace(a, b)
+    return text
+
+
+def year_payload(c, y):
+    """A full fiscal year (10-K) in the same format; Y/Y against the year before."""
+    Nc, Ny = normalize(y["raw"]), normalize(y.get("raw_py"))
+    if not Nc:
+        return None
+    ls = y.get("lines_struct")
+    try:
+        nodes, links, kind = build_spec(Nc, None, Ny, ls, (y.get("lines"), None, y.get("lines_py")))
+    except Exception as e:
+        print(f"  annual spec without breakdown for {c['profile']['name']}: {e}", file=sys.stderr)
+        ls = None
+        nodes, links, kind = build_spec(Nc, None, Ny)
+    notes = y.get("notes", {})
+    by_words = {tuple(v): k for k, v in NOTE_KEYS.items()}
+    for n in nodes:
+        nk = n.pop("notekeys")
+        for k in list(nk) + [by_words.get(tuple(nk))]:
+            if k and k in notes:
+                n["notes"] = notes[k]
+                break
+        for ln in n.get("lines") or []:                       # a year has no "previous quarter"
+            if ln[0] == "mut" and ln[1].startswith("Y/Y "):
+                ln[1] = ln[1].split(" · Q/Q ")[0]
+        n.pop("q", None)
+        n.pop("cmp", None)
+    for l in links:
+        l.pop("q", None)
+    f = Fmt(Nc["R"])
+    p = c["profile"]
+    name = p["name"]
+    py_label = facts.fiscal_year_label(y["py_end"], p.get("fye") or "1231")[0] if y.get("py_end") else None
+    compare_y = None
+    if Ny and py_label:
+        compare_y = {"vs": py_label, "title": f"{name} {y['label']} vs {py_label}: what changed",
+                     "bullets": [_yearly(b) for b in analysis.compare_bullets(f, py_label, Nc, Ny, ls,
+                                                                            (y.get("lines"), y.get("lines_py"), None))]}
+    foot = [ANNUAL_NOTE.format(form=y["form"], filed=y["filed"])]
+    if "oi_derived" in Nc["flags"]:
+        foot.append("Operating profit = revenue minus total costs and expenses (derived; the company does not tag operating income).")
+    foot.append("Working capital &amp; other is the residual between operating cash flow and the listed items."
+                + (" FCF = operating cash flow minus capital expenditures." if Nc.get("capex") else ""))
+    return {
+        "period": "fy", "key": "fy-" + y["end"], "compare": None, "compare_y": compare_y, "preliminary": False,
+        "end": y["end"], "label": y["label"], "cal": f"FY{y['fy']}", "form": y["form"], "filed": y["filed"],
+        "doc_url": y.get("doc_url"), "index_url": y.get("index_url"), "kind": kind,
+        "title": f"{name} {y['label']} earnings &amp; cash flow",
+        "subtitle": f"Fiscal year ended {_date(y['end'])} · GAAP · Y/Y vs. {_short(y.get('py_end'))}",
+        "footer": foot, "nodes": nodes, "links": links,
+        "analysis": [_yearly(x) for x in analysis.paragraphs(f, y["label"], Nc, None, Ny, ls,
+                                                             (y.get("lines"), None, y.get("lines_py")), py_label=py_label or "a year earlier")],
+        "headline": {"revenue": Nc["R"], "rev_fmt": f.money(Nc["R"]), "yoy": _g(Nc["R"], Ny and Ny["R"]),
+                     "ni": Nc["pl"], "ni_fmt": f.money(Nc["pl"]), "om": Nc["oi"] / Nc["R"] * 100,
+                     "oi": Nc["oi"], "ocf": Nc.get("ocf")},
+    }
+
+
+def periods_payload(c):
+    """Every quarter and fiscal year SEC has XBRL figures for: the choices for "compare any two"."""
+    per = c.get("periods") or {}
+    fye = c["profile"].get("fye") or "1231"
+    q = []
+    for e in reversed(per.get("q") or []):
+        label, fq, fy = facts.fiscal_label(e, fye)
+        q.append({"end": e, "label": label, "q": fq, "fy": fy})
+    y = []
+    for e in reversed(per.get("fy") or []):
+        label, fy = facts.fiscal_year_label(e, fye)
+        y.append({"end": e, "label": label, "fy": fy})
+    return {"q": q, "fy": y}
+
+
 def _g(a, b):
     return None if not a or not b or a <= 0 or b <= 0 else round((a / b - 1) * 100, 1)
 
@@ -648,8 +871,18 @@ def render(store, out, stars=frozenset()):
                 pl["x_thread"] = [{"text": t, "len": social.xlen(t)} for t in posts]
             except Exception as e:
                 print(f"  thread failed {cik} {pl['end']}: {e}", file=sys.stderr)
+        years = []
+        for y in sorted((c.get("years") or {}).values(), key=lambda y: y["end"], reverse=True):
+            try:
+                yp = year_payload(c, y)
+            except Exception as e:
+                print(f"  render failed {cik} FY {y['end']}: {e}", file=sys.stderr)
+                yp = None
+            if yp:
+                years.append(yp)
         save(os.path.join(out, "c", f"{cik}.json"), {
-            "profile": p, "intro": c.get("intro"), "starred": cik in stars, "quarters": payloads[::-1]})
+            "profile": p, "intro": c.get("intro"), "starred": cik in stars, "quarters": payloads[::-1],
+            "years": years, "periods": periods_payload(c)})
         index.append({"cik": cik, "ticker": (p["tickers"] or [""])[0], "name": p["name"], "sector": p["sector"],
                       "industry": p["industry"], "sic": p["sic"], "label": latest["label"], "end": latest["end"],
                       "cal": latest["cal"], "filed": latest["filed"], "form": latest["form"],
@@ -742,7 +975,11 @@ def main():
     ap.add_argument("--out", default="_site/data")
     ap.add_argument("--backfill-days", type=int, default=0)
     ap.add_argument("--max-filings", type=int, default=1500)
+    ap.add_argument("--build-ciks-file", default=None, help="CIKs readers asked for (one per line): fetch their history")
     args = ap.parse_args()
+    args.build_ciks = []
+    if args.build_ciks_file and os.path.exists(args.build_ciks_file):
+        args.build_ciks = [int(x) for x in open(args.build_ciks_file).read().split() if x.strip().isdigit()]
     if args.cmd == "run":
         run(args)
     else:

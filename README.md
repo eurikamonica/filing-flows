@@ -4,7 +4,7 @@ A static website that scans SEC EDGAR every hour for new 10-Q and 10-K filings a
 income-statement and cash-flow Sankey in the *earnings-sankey* standard format: revenue lines → revenue →
 gross profit / costs → operating profit → pre-tax → tax, minority interests, net earnings → operating cash flow.
 
-- **Every filing** with XBRL revenue and net income gets a chart (latest three quarters kept).
+- **Every filing** with XBRL revenue and net income gets a chart (the latest seven quarters and two fiscal years are kept).
 - **Earnings releases (8-K, Item 2.02)** are read too, so a quarter appears days or weeks before its 10-Q/10-K.
   The press release tables are read by fixed rules, checked against the previous quarter's XBRL and required to
   reconcile; the chart is marked *preliminary* and is replaced automatically when the 10-Q/10-K is filed.
@@ -18,8 +18,18 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
   strip on every band that grew and a `Δ = scale + mix` line per node. **Show decreases** (off by default) also draws
   what each line lost as a hatched area with a dashed outline beside its band; signed-in readers' choice is saved to
   their account and used for their e-mailed charts too.
-- **History on first sight**: when a company's earnings 8-K is found, its last five 10-Q/10-K filings are fetched
-  too (it then keeps six quarters), so comparisons and the quarter-by-quarter view work straight away.
+- **History on first sight**: when a company first appears (a 10-Q, 10-K or earnings 8-K), its last five 10-Qs and
+  last two 10-Ks are fetched too, so comparisons and the quarter-by-quarter view work straight away. Companies stored
+  before this default get it a few at a time on later runs.
+- **Full fiscal years**: each 10-K also gets a full-year chart (pill *FY25 · full year* on the company page, compared
+  with the year before), next to its fourth quarter.
+- **Compare any two periods** (readers who switch it on under Alerts): a ⇄ button on company pages opens a table of
+  every quarter and fiscal year SEC's XBRL data has for the company (from 2009–2011 on, up to 18 years). Tick two
+  quarters or two fiscal years; the request workflow reads both from SEC and draws the comparison Sankey within a few
+  minutes (the browser cannot read SEC itself). The result stays in the reader's list on that company's page.
+- **Search every SEC company**: the search box also lists companies the site has not drawn yet (SEC's ticker list,
+  `data/companies.json`). Their page offers **Build its charts**: the next scan fetches the default five 10-Qs and
+  two 10-Ks and the page fills in by itself.
 - **Segments from releases**: revenue by business unit or product is read from the release when a table of rows
   adds up to total revenue; its other columns supply Q/Q and Y/Y when they match the earlier quarters in XBRL.
 - **Export** PNG, JPG or PDF. Exports contain the chart only; the notes panel and note markers stay on screen.
@@ -115,13 +125,18 @@ Every e-mail has an unsubscribe link; the Alerts page also has **Delete my accou
   vector graphics, the analysis, what changed, the filing's own words and the filing details. An e-mail stays under
   15 MB (`MAIL_MAX_BYTES`); files that do not fit are left out with a note.
 
+- **Compare any two periods** (Alerts → *On company pages*, off by default): see the feature list above. At most
+  20 comparisons a day per reader; needs `requests.yml` and the `SEC_USER_AGENT` secret, which it shares with the scan.
+- **Build a company** from the search: at most 10 a day per reader. `requests.yml` starts the scan straight away
+  (it has `actions: write` for that); otherwise the next hourly scan picks it up.
+
 - **Preliminary, then final.** A quarter read from an 8-K earnings release is sent as *preliminary*. When the
   10-Q/10-K replaces it, the final version is sent too (setting on by default, can be turned off), marked *final*,
   with how the release compared with the filing ("Revenue and net earnings match the release. Revised: operating cash
   flow $1.6B in the release, $1.2B as filed"). The company page shows the same label and comparison.
-- **✉ Email me** on every company page sends the quarter on screen (or all quarters, on the "All quarters" view) to
-  the reader's own address, alerts on or off: old quarters included, as far back as the site keeps them (three
-  quarters for most companies, six after an 8-K brought in the history, eight for starred ones). Signed-out readers
+- **✉ Email me** on every company page sends the quarter or fiscal year on screen (or all quarters, on the "All quarters" view) to
+  the reader's own address, alerts on or off: old quarters included, as far back as the site keeps them (seven
+  quarters and two fiscal years for most companies, eight quarters and three years for starred ones). Signed-out readers
   sign in first and the request goes through afterwards. Up to 30 reports a day per reader; the Alerts page lists
   recent requests and whether they were sent. They go out within about 10 minutes (`.github/workflows/requests.yml`),
   or within a minute or two with the optional wake-up below.
@@ -155,9 +170,11 @@ provider, e.g. Resend: `smtp.resend.com`, `465`, user `resend`, password = API k
 `DIGEST_HOUR_UTC` (default 22, about 6 pm in New York), `SITE_URL` (a custom domain).
 
 After the next hourly run the sign-up box appears on the home page, and the **alerts** job of the workflow sends the
-e-mails right after each deploy. Upload `.github/workflows/requests.yml` as well for the **Email me** button.
+e-mails right after each deploy. Upload `.github/workflows/requests.yml` as well for **Email me**, **Compare any two
+periods** and **Build its charts**.
 
-Faster **Email me** (optional): Supabase can wake the GitHub workflow the moment a reader asks. Create a fine-grained
+Faster **Email me**, comparisons and company builds (optional): Supabase can wake the GitHub workflows the moment a
+reader asks. Create a fine-grained
 GitHub token (Settings → Developer settings → Fine-grained tokens; only this repository; permission *Contents: Read and
 write*), enable **Database → Extensions → pg_net**, then run in the SQL Editor:
 
@@ -178,8 +195,9 @@ reader signed up are not sent; **Email me** covers those.
 `android/` is a Kotlin app built around native screens, with the site's pages only where they are interactive:
 
 - **Following** and **Latest** tabs are native lists of charts (ticker, quarter, form, revenue and Y/Y, a badge for 8-K
-  preliminary or final). Latest has search; both pull to refresh and keep working offline from a cached
-  `data/index.json`.
+  preliminary or final). Latest has search, which also lists companies the site has no chart for yet (SEC's list,
+  `data/companies.json`, kept for a day); opening one shows the site's **Build its charts** page. Both lists pull to
+  refresh and keep working offline from a cached `data/index.json`.
 - **Home-screen widget** with the three newest charts of what the reader follows (or the newest overall), each one tap
   from its chart; **launcher shortcuts** (long-press the icon) for Following, Latest and Alerts.
 - A **background check** every 30 minutes (WorkManager) shows a notification for each new chart that matches what the
@@ -252,6 +270,7 @@ EDGAR daily index (backfill)         ─┴─► pending queue (state.json)
 | `pipeline/release.py` | 8-K earnings releases: statement tables → quarter values (units, signs, YTD cash flow, reconciliation) |
 | `pipeline/social.py` | X threads: candidates, text (fits 280 characters), chart PNGs via headless Chromium, e-mail or X API |
 | `pipeline/notify.py` | reader alerts and **Email me** requests: matches charts to subscriptions, e-mails chart + analysis, records deliveries |
+| `pipeline/custom.py` | readers' requests answered from SEC: any two periods as one comparison chart; companies to build in the next scan |
 | `supabase/schema.sql` | accounts, report requests, row-level security, unsubscribe and delete-account functions (safe to run again) |
 | `android/` | Kotlin app: native chart lists, home-screen widget, shortcuts, background checks and notifications; chart pages in a WebView (built by `.github/workflows/android.yml`) |
 | `pipeline/text.py` | MD&A note matching and Item 1 introduction |
@@ -290,6 +309,7 @@ python tests/e2e.py /tmp/site --shots /tmp/shots   # browser test (needs: pip in
 - Working capital & other = operating cash flow minus net earnings and the listed non-cash items.
 - FCF = operating cash flow minus capital expenditures (companies' own FCF definitions may differ).
 - Comparison view: band width is the current quarter; the dark strip is the increase since the previous quarter.
+  A requested comparison works the same way: band width is the first period, the strip the increase over the second.
   With *Show decreases*, every band and node keeps room for its larger value of the two quarters, and the part the
   current quarter does not fill is hatched: that is the decrease.
   `scale = (parent_now − parent_prior) × child_prior / parent_prior`, `mix = parent_now × (share_now − share_prior)`.
