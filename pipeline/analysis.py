@@ -154,6 +154,9 @@ def compare_bullets(f, q1_label, Nc, Nq, lines_struct=None, lines=(None, None, N
     elif dR > 0:
         out.append(f"Revenue rose {f.money(dR)} versus {q1_label}, but operating profit fell {f.money(-dO)}: "
                    f"costs grew by more than sales.")
+    elif dR < 0 and abs(dO) < 0.001 * abs(R1):
+        out.append(f"Revenue fell {f.money(-dR)} versus {q1_label}; operating profit was nearly unchanged "
+                   f"({f.delta(dO)}).")
     elif dR < 0:
         out.append(f"Revenue fell {f.money(-dR)} versus {q1_label}; operating profit "
                    f"{'rose' if dO > 0 else 'fell'} {f.money(abs(dO))}.")

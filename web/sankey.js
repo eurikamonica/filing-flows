@@ -1,9 +1,10 @@
 /* Earnings Sankey: layout + rendering in the earnings-sankey standard format.
  *
- * layout(spec, {compare: 'q'|'y'}) turns the pipeline's JSON (nodes with column, colour role, label lines and a
+ * layout(spec, {compare: 'q'|'y', decreases: true}) turns the pipeline's JSON (nodes with column, colour role, label lines and a
  * preferred label side; links with current and previous-quarter values) into a scene: a flat display
  * list of bands, bars and text. The same scene is drawn as interactive SVG on screen and onto a canvas
  * for PNG/JPG/PDF export. Shapes flagged `ui` (note markers, hit areas) exist only on screen.
+ * In a comparison, `decreases` also draws what each line lost (hatched, dashed outline) in room reserved beside it.
  */
 (function (global) {
   'use strict';
@@ -36,6 +37,19 @@
   const ENT = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
   const dec = (s) => String(s == null ? '' : s).replace(/&(amp|lt|gt|quot|#39);/g, (m) => ENT[m]);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const HATCH = 8;                                    // spacing of the diagonal lines that mark a decrease
+  const HATCH_W = 1.8;                                // their width
+  // the diagonal lines ("/") that cover a box, as plain geometry: drawn clipped to the area, so they print and
+  // scale like any other line (SVG patterns can turn into a flat tint in PDFs)
+  function hatchLines(b) {
+    const [x, y, w, h] = b, step = HATCH * Math.SQRT2, segs = [];
+    for (let c = x + y + step / 2; c < x + w + y + h; c += step) {
+      const xa = Math.max(x, c - (y + h)), xb = Math.min(x + w, c - y);
+      if (xb > xa) segs.push([xa, c - xa, xb, c - xb]);
+    }
+    return segs;
+  }
+  const shapeBox = (s) => s.box || [s.x, s.y, s.w, s.h];
 
   let mctx = null;
   function measure(text, size, weight) {
@@ -94,6 +108,7 @@
     const mode = opts.compare === 'y' || opts.compare === 'q' ? opts.compare : opts.compare === true ? 'q' : null;
     const cmpSpec = mode === 'y' ? spec.compare_y : mode === 'q' ? spec.compare : null;
     const compare = !!cmpSpec;
+    const ghosts = compare && !!opts.decreases;       // draw decreases as hatched, dashed areas
     const prior = (l) => (mode === 'y' ? l.y : l.q);
     const nodes = spec.nodes.map((n, i) => Object.assign({}, n, { idx: i, ins: [], outs: [] }));
     const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -113,12 +128,20 @@
       n.lab = labelBlock(n, compare ? mode : null);
       n.light = !n.ins.length || !n.outs.length;
     });
-    links.forEach((l) => { l.th = l.v * K; });
+    links.forEach((l) => {
+      l.th = l.v * K;
+      const pv = ghosts ? prior(l) : null;
+      l.ghost = pv != null && pv > l.v ? (pv - l.v) * K : 0;    // room for what the line lost
+      l.slot = l.th + l.ghost;
+    });
     nodes.forEach((n) => {
       let o = 0;
-      n.outs.forEach((l) => { l.so = o; o += l.th; });
+      n.outs.forEach((l) => { l.so = o; o += l.slot; });
+      n.outSum = o;
       o = 0;
-      n.ins.forEach((l) => { l.to = o; o += l.th; });
+      n.ins.forEach((l) => { l.to = o; o += l.slot; });
+      n.inSum = o;
+      if (ghosts) n.h = Math.max(n.h, n.outSum, n.inSum);
     });
 
     // 1. tree placement: profit stays level, siblings peel downward
@@ -257,7 +280,7 @@
         let px = g.x0, py = g.a0;
         for (let i = 1; i <= N; i++) {
           const t = i / N, x = bezX(g.x0, g.x1, t), y = g.a0 + (g.a1 - g.a0) * ease(t);
-          boxes.push({ r: [px, Math.min(py, y), x - px, Math.abs(y - py) + Math.max(l.th, 0.8)], l });
+          boxes.push({ r: [px, Math.min(py, y), x - px, Math.abs(y - py) + Math.max(l.slot, 0.8)], l });
           px = x; py = y;
         }
       });
@@ -384,7 +407,7 @@
     links.forEach((l) => {
       const g = bandGeom(l);
       minY = Math.min(minY, g.a0, g.a1);
-      maxY = Math.max(maxY, g.a0 + l.th, g.a1 + l.th);
+      maxY = Math.max(maxY, g.a0 + l.slot, g.a1 + l.slot);
     });
     const dy = HEAD - minY;
     nodes.forEach((n) => { n.top += dy; n.lr = labelRect(n, n.at); });
@@ -414,12 +437,27 @@
       } else {
         shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, Math.max(l.th, 0.8)), fill: pal.flow, band: true }, cls));
       }
+      if (l.ghost > 0.3) {
+        shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0 + l.th, g.x1, g.a1 + l.th, l.ghost), fill: 'none',
+          hatch: pal.node, band: true, ghost: true,
+          box: [g.x0, Math.min(g.a0, g.a1) + l.th, g.x1 - g.x0, Math.abs(g.a1 - g.a0) + l.ghost] }, cls));
+      }
     });
     // bars + labels
     const hit = [];
     nodes.forEach((n) => {
       const pal = PALETTE[n.color] || PALETTE.rev;
-      shapes.push({ t: 'rect', x: n.x, y: n.top, w: NW, h: n.h, fill: pal.node, group: n.id });
+      const side = n.outs.length ? n.outs : n.ins, off = n.outs.length ? 'so' : 'to';
+      const sideSum = n.outs.length ? n.outSum : n.inSum;
+      if (ghosts && side.length && (side.some((l) => l.ghost > 0.3) || n.h - sideSum > 0.5)) {
+        side.forEach((l) => {
+          shapes.push({ t: 'rect', x: n.x, y: n.top + l[off], w: NW, h: Math.max(l.th, 0.8), fill: pal.node, group: n.id });
+          if (l.ghost > 0.3) shapes.push({ t: 'rect', x: n.x, y: n.top + l[off] + l.th, w: NW, h: l.ghost, fill: 'none', hatch: pal.node, group: n.id });
+        });
+        if (n.h - sideSum > 0.5) shapes.push({ t: 'rect', x: n.x, y: n.top + sideSum, w: NW, h: n.h - sideSum, fill: 'none', hatch: pal.node, group: n.id });
+      } else {
+        shapes.push({ t: 'rect', x: n.x, y: n.top, w: NW, h: n.h, fill: pal.node, group: n.id });
+      }
       const [lx, ly, lw, lh, anchor] = n.lr;
       let y = ly;
       n.lab.lines.forEach((ln, i) => {
@@ -479,12 +517,17 @@
     const used = new Set(nodes.map((n) => n.color).concat(links.map((l) => l.color)));
     const legend = LEGEND.filter(([k]) => used.has(k) || k === 'rev' || k === 'profit' || k === 'cost');
     const lgItems = legend.map(([k, t]) => ({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
-    if (compare) lgItems.push({ k: 'strip', t: `Dark strip = increase vs ${dec(cmpSpec.vs)}`, w: 0 });
-    if (compare) lgItems[lgItems.length - 1].w = 14 + 8 + measure(lgItems[lgItems.length - 1].t, 14, 400);
+    if (compare) {                     // increases are drawn as dark strips; a decrease leaves the band light (its Δ is negative)
+      [['strip', `Dark strip = increase vs ${dec(cmpSpec.vs)}`],
+        ghosts ? ['ghost', `Hatched = decrease vs ${dec(cmpSpec.vs)}`] : ['nostrip', 'No strip = decrease (Δ below the value is negative)']]
+        .forEach(([k, t]) => lgItems.push({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
+    }
     const lgW = lgItems.reduce((s, it) => s + it.w, 0) + 20 * (lgItems.length - 1);
     const footer = (spec.footer || []).map(dec);
     if (compare) {
-      footer.push(`Comparison view: band width = current quarter; dark strip = increase vs ${dec(cmpSpec.vs)} (no strip = it fell). ` +
+      footer.push(`Comparison view: band width = current quarter; dark strip = increase vs ${dec(cmpSpec.vs)} ` +
+        (ghosts ? `(hatched area with a dashed outline = decrease: what the line had in ${dec(cmpSpec.vs)} beyond this quarter). `
+          : '(no strip = it fell). ') +
         'Δ = scale + mix: scale = change explained by the parent node growing, mix = change in the item’s share of its parent. ' +
         'n/m = a comparison period was negative.');
     }
@@ -504,6 +547,10 @@
       if (it.k === 'strip') {
         shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE.profit.flow, r: 3 });
         shapes.push({ t: 'rect', x: lx, y: ly + 10, w: 14, h: 5, fill: PALETTE.profit.node });
+      } else if (it.k === 'nostrip') {
+        shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE.profit.flow, r: 3 });
+      } else if (it.k === 'ghost') {
+        shapes.push({ t: 'rect', x: lx + 0.5, y: ly + 1.5, w: 13, h: 13, fill: 'none', hatch: PALETTE.profit.node });
       } else {
         shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE[it.k].node, r: 3 });
       }
@@ -514,24 +561,152 @@
     return { W, H, bg: BG, shapes, hit, issues: issues.map((i) => i.n.id), nodes: nodes.map((n) => ({ id: n.id, label: n.lr, bar: [n.x, n.top, NW, n.h] })) };
   }
 
+  // ---------- history: one company quarter by quarter ----------
+  // Rows: revenue, operating profit, net earnings, operating cash flow; one column per quarter (oldest left, up to 8).
+  // Each row has its own scale; every bar carries its value, so the rows read as a table drawn to scale.
+  function history(company, opts) {
+    const o = opts || {};
+    const p = company.profile || {};
+    const qs = (company.quarters || []).slice(0, o.max || 8).reverse();
+    const nodeV = (q, id) => { const n = (q.nodes || []).find((m) => m.id === id); return n ? +n.v : null; };
+    const vals = qs.map((q) => {
+      const h = q.headline || {};
+      const rev = h.revenue == null ? null : +h.revenue;
+      const op = h.oi != null ? +h.oi : (h.om != null && rev != null ? rev * h.om / 100 : null);
+      const ocf = h.ocf !== undefined ? h.ocf : nodeV(q, 'ocf');
+      return { rev, op, ni: h.ni == null ? null : +h.ni, ocf, yoy: h.yoy, om: h.om };
+    });
+    const big = Math.max(...vals.map((v) => Math.abs(v.rev || 0))) >= 1e9;
+    const money = (v) => {
+      const a = Math.abs(v), sg = v < 0 ? '−' : '';
+      if (a >= 0.95e9 || (big && a >= 5e6)) return `${sg}$${a >= 0.95e9 ? (a / 1e9).toFixed(1) : (a / 1e9).toFixed(2)}B`;
+      if (a >= 0.95e6) return `${sg}$${(a / 1e6).toFixed(1)}M`;
+      return `${sg}$${Math.round(a / 1e3)}K`;
+    };
+    const pct = (x, d) => `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toFixed(d || 0)}%`;
+    const share = (x) => `${x < 0 ? '−' : ''}${Math.abs(x).toFixed(1)}%`;
+    const rows = [
+      { name: 'Revenue', note: 'as reported', get: (v) => v.rev, sub: (v) => (v.yoy == null ? '' : `Y/Y ${pct(v.yoy)}`), color: () => PALETTE.rev.node },
+      { name: 'Operating profit', note: 'revenue − operating costs', get: (v) => v.op,
+        sub: (v) => (v.op != null && v.rev ? `margin ${share(v.op / v.rev * 100)}` : '') },
+      { name: 'Net earnings', note: 'attributable to shareholders', get: (v) => v.ni,
+        sub: (v) => (v.ni != null && v.rev ? `margin ${share(v.ni / v.rev * 100)}` : '') },
+      { name: 'Operating cash flow', note: 'cash from operations', get: (v) => v.ocf,
+        sub: (v) => (v.ocf != null && v.ni > 0 ? `${Math.round(v.ocf / v.ni * 100)}% of net earnings` : '') },
+    ].filter((r) => vals.some((v) => r.get(v) != null));
+    rows.forEach((r) => { if (!r.color) r.color = (v) => (v < 0 ? PALETTE.cost.node : PALETTE.profit.node); });
+
+    const fdate = (x) => (x ? new Date(x + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '');
+    const heads = qs.map((q) => [dec(q.label), `${q.form === '8-K' ? '8-K, preliminary' : q.form} · ${fdate(q.filed)}`]);
+    let textW = 0;
+    rows.forEach((r) => vals.forEach((v) => {
+      const x = r.get(v);
+      if (x == null) return;
+      textW = Math.max(textW, measure(money(x), 17, 600), measure(r.sub(v), 13, 400));
+    }));
+    heads.forEach(([a, b]) => { textW = Math.max(textW, measure(a, 18, 600), measure(b, 13, 400)); });
+    const LABW = 250, N = qs.length;
+    const name = dec(p.name || '');
+    const title = `${name} quarter by quarter`;
+    const titleSize = 40;
+    const first = heads[0] ? heads[0][0] : '', last = heads.length ? heads[heads.length - 1][0] : '';
+    const subtitle = `${N} quarter${N === 1 ? '' : 's'} on file${N > 1 ? `, ${first} to ${last}` : ''} · GAAP · each row drawn to its own scale`;
+    const W = Math.ceil(Math.max(760, MARGIN * 2 + LABW + N * Math.max(150, textW + 28), measure(title, titleSize, 600) + MARGIN * 2,
+      measure(subtitle, 18, 400) + MARGIN * 2));
+    const colW = (W - 2 * MARGIN - LABW) / N;               // columns share the width after the row names
+    const x0 = MARGIN + LABW;
+    const shapes = [];
+    const RH = 176, TOPL = 46, BOTL = 46;
+    let y = HEAD + 6;
+    // newest quarter highlighted
+    shapes.push({ t: 'rect', x: x0 + (N - 1) * colW + 4, y: y - 8, w: colW - 8, h: 54 + rows.length * RH + 8, fill: '#f1f0eb', r: 8 });
+    heads.forEach(([a, b], i) => {
+      const cx = x0 + i * colW + colW / 2;
+      shapes.push({ t: 'text', x: cx, y: y + 18, text: a, size: 18, weight: 600, fill: INK, anchor: 'middle' });
+      shapes.push({ t: 'text', x: cx, y: y + 38, text: b, size: 13, weight: 400, fill: INK3, anchor: 'middle' });
+    });
+    y += 54;
+    rows.forEach((r) => {
+      const xs = vals.map((v) => r.get(v));
+      const pos = Math.max(0, ...xs.filter((x) => x != null));
+      const neg = Math.max(0, ...xs.filter((x) => x != null).map((x) => -x));
+      const pad = pos > 0 ? 8 : 22;                         // an all-negative row starts a little below its rule
+      const avail = RH - 8 - pad - (pos > 0 ? TOPL : 0) - (neg > 0 ? BOTL : 0);
+      const sc = pos + neg > 0 ? avail / (pos + neg) : 0;
+      const zero = y + pad + (pos > 0 ? TOPL : 0) + pos * sc;
+      shapes.push({ t: 'rect', x: MARGIN, y, w: W - 2 * MARGIN, h: 1, fill: '#e2e0da' });
+      shapes.push({ t: 'text', x: MARGIN, y: y + 30, text: r.name, size: 18, weight: 600, fill: INK, anchor: 'start' });
+      shapes.push({ t: 'text', x: MARGIN, y: y + 50, text: r.note, size: 13, weight: 400, fill: INK3, anchor: 'start' });
+      shapes.push({ t: 'rect', x: x0 + 10, y: zero, w: N * colW - 20, h: 1, fill: '#bdbbb4' });
+      const bw = Math.min(64, colW * 0.42);
+      xs.forEach((x, i) => {
+        const cx = x0 + i * colW + colW / 2;
+        if (x == null) {
+          shapes.push({ t: 'text', x: cx, y: zero - 10, text: 'n/a', size: 13, weight: 400, fill: INK3, anchor: 'middle' });
+          return;
+        }
+        const h = Math.max(2, Math.abs(x) * sc);
+        const top = x >= 0 ? zero - h : zero;
+        shapes.push({ t: 'rect', x: cx - bw / 2, y: top, w: bw, h, fill: r.color(x), r: 2 });
+        const sub = r.sub(vals[i]);
+        if (x >= 0) {
+          shapes.push({ t: 'text', x: cx, y: top - (sub ? 24 : 8), text: money(x), size: 17, weight: 600, fill: INK, anchor: 'middle' });
+          if (sub) shapes.push({ t: 'text', x: cx, y: top - 7, text: sub, size: 13, weight: 400, fill: INK3, anchor: 'middle' });
+        } else {
+          shapes.push({ t: 'text', x: cx, y: top + h + 20, text: money(x), size: 17, weight: 600, fill: INK, anchor: 'middle' });
+          if (sub) shapes.push({ t: 'text', x: cx, y: top + h + 37, text: sub, size: 13, weight: 400, fill: INK3, anchor: 'middle' });
+        }
+      });
+      y += RH;
+    });
+    shapes.push({ t: 'rect', x: MARGIN, y, w: W - 2 * MARGIN, h: 1, fill: '#e2e0da' });
+    shapes.push({ t: 'text', x: MARGIN, y: 44 + 38, text: title, size: titleSize, weight: 600, fill: INK, anchor: 'start', spacing: -0.5 });
+    shapes.push({ t: 'text', x: MARGIN, y: 44 + 48 + 4 + 19, text: subtitle, size: 18, weight: 400, fill: SUBINK, anchor: 'start' });
+    const foot = ['Source: SEC EDGAR filings; 8-K quarters are preliminary figures from the earnings release. Fourth-quarter and cash-flow ' +
+      'figures are derived as the year to date minus the prior year to date. Operating profit = revenue minus operating costs; ' +
+      'margins are shares of revenue. Green = profit or cash in, red = loss or cash out.'];
+    let fy = y + 30;
+    foot.forEach((t) => wrap(t, 13, 400, W - 2 * MARGIN).forEach((l) => {
+      shapes.push({ t: 'text', x: MARGIN, y: fy, text: l, size: 13, weight: 400, fill: INK3, anchor: 'start' });
+      fy += 18;
+    }));
+    return { W, H: Math.ceil(fy + 18), bg: BG, shapes, hit: [], issues: [], nodes: [] };
+  }
+
   // ---------- renderers ----------
   function toSVG(scene, aria) {
     const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${scene.W} ${scene.H}" width="${scene.W}" height="${scene.H}" ` +
       `role="img" aria-label="${esc(aria || 'Earnings Sankey')}" font-family="${esc(FONT)}" style="font-variant-numeric: tabular-nums">`,
       `<rect x="0" y="0" width="${scene.W}" height="${scene.H}" fill="${scene.bg}"/>`];
+    const uid = Math.random().toString(36).slice(2, 8);       // clip ids stay unique with several charts on a page
+    let nclip = 0;
+    const f2 = (v) => v.toFixed(2);
+    function hatched(s, attrs) {                     // a decrease: hatched area with a dashed outline
+      const id = `ffc-${uid}-${nclip++}`;
+      const shape = s.t === 'path' ? `<path d="${s.d}"/>` : `<rect x="${f2(s.x)}" y="${f2(s.y)}" width="${f2(s.w)}" height="${f2(s.h)}"/>`;
+      const lines = hatchLines(shapeBox(s)).map(([a, b, c, d]) => `M${f2(a)} ${f2(b)}L${f2(c)} ${f2(d)}`).join('');
+      const outline = s.t === 'path' ? `<path d="${s.d}"` : `<rect x="${f2(s.x)}" y="${f2(s.y)}" width="${f2(s.w)}" height="${f2(s.h)}"`;
+      return `<g${attrs}><clipPath id="${id}">${shape}</clipPath>` +
+        outline.replace(/^<(path|rect)/, '<$1') + ` fill="${scene.bg}" fill-opacity="0.85"/>` +
+        (lines ? `<path clip-path="url(#${id})" d="${lines}" fill="none" stroke="${s.hatch}" stroke-width="${HATCH_W}"/>` : '') +
+        outline + ` fill="none" stroke="${s.hatch}" stroke-width="1.2" stroke-dasharray="5 3.5"/></g>`;
+    }
     let group = null;
     const close = () => { if (group !== null) out.push('</g>'); group = null; };
     scene.shapes.forEach((s) => {
       if (s.band) {
         close();
-        out.push(`<path class="band" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}" d="${s.d}" fill="${s.fill}"/>`);
+        if (s.hatch) out.push(hatched(s, ` class="band ghost" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}"`));
+        else out.push(`<path class="band" data-s="${esc(s.ls)}" data-t="${esc(s.lt)}" d="${s.d}" fill="${s.fill}"/>`);
         return;
       }
       if ((s.group || null) !== group) {
         close();
         if (s.group) { out.push(`<g class="node" data-node="${esc(s.group)}">`); group = s.group; }
       }
-      if (s.t === 'rect') {
+      if (s.t === 'rect' && s.hatch) {
+        out.push(hatched(s, s.group ? ' class="bar ghost"' : ''));
+      } else if (s.t === 'rect') {
         const cls = s.hit ? ' class="hit"' : s.group ? ' class="bar"' : '';
         out.push(`<rect${cls} x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" width="${s.w.toFixed(2)}" height="${s.h.toFixed(2)}"` +
           `${s.r ? ` rx="${s.r}"` : ''} fill="${s.fill}"/>`);
@@ -557,6 +732,22 @@
     ctx.fillRect(0, 0, scene.W, scene.H);
     scene.shapes.forEach((s) => {
       if (s.ui) return;                         // notes markers and hit areas are screen-only
+      if (s.hatch) {                            // a decrease: hatched area with a dashed outline
+        const path = s.t === 'path' ? new Path2D(s.d) : new Path2D();
+        if (s.t !== 'path') path.rect(s.x, s.y, s.w, s.h);
+        ctx.save();
+        ctx.globalAlpha = 0.85; ctx.fillStyle = scene.bg; ctx.fill(path); ctx.globalAlpha = 1;
+        ctx.clip(path);
+        ctx.beginPath();
+        hatchLines(shapeBox(s)).forEach(([a, b, c2, d]) => { ctx.moveTo(a, b); ctx.lineTo(c2, d); });
+        ctx.strokeStyle = s.hatch; ctx.lineWidth = HATCH_W; ctx.stroke();
+        ctx.restore();
+        ctx.save();
+        ctx.setLineDash([5, 3.5]); ctx.lineWidth = 1.2; ctx.strokeStyle = s.hatch;
+        ctx.stroke(path);
+        ctx.restore();
+        return;
+      }
       ctx.fillStyle = s.fill;
       if (s.t === 'path') ctx.fill(new Path2D(s.d));
       else if (s.t === 'rect') {
@@ -614,5 +805,5 @@
     return new Blob([pdf], { type: 'application/pdf' });
   }
 
-  global.Sankey = { layout, toSVG, toCanvas, exportScene, PALETTE, dec, esc };
+  global.Sankey = { layout, history, toSVG, toCanvas, exportScene, PALETTE, dec, esc };
 })(window);

@@ -15,7 +15,9 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
   verbatim). Company pages open with the first paragraphs of Item 1 *Business* from the latest 10-K.
 - **Analysis paragraphs** are written by fixed rules from the numbers. No language model is used anywhere.
 - **Comparison views**, vs the previous quarter and vs the same quarter a year earlier: the same chart with a dark
-  strip on every band that grew and a `Δ = scale + mix` line per node.
+  strip on every band that grew and a `Δ = scale + mix` line per node. **Show decreases** (off by default) also draws
+  what each line lost as a hatched area with a dashed outline beside its band; signed-in readers' choice is saved to
+  their account and used for their e-mailed charts too.
 - **History on first sight**: when a company's earnings 8-K is found, its last five 10-Q/10-K filings are fetched
   too (it then keeps six quarters), so comparisons and the quarter-by-quarter view work straight away.
 - **Segments from releases**: revenue by business unit or product is read from the release when a table of rows
@@ -103,6 +105,16 @@ or one digest a day. Each alert e-mail carries the chart itself, the headline fi
 against the year-ago quarter, a quote from the filing, and links to the interactive chart and the filing.
 Every e-mail has an unsubscribe link; the Alerts page also has **Delete my account**.
 
+- **What each e-mail holds** (Alerts → *In each e-mail*). Always this quarter's chart (tap it for the interactive
+  one), the analysis and what changed. Optional: the chart compared with the previous quarter, compared with the same
+  quarter a year earlier (optionally with decreases hatched), **Detail** (every line of the chart with its change
+  against a year earlier and the previous quarter, instead of only the three main changes), and a **history** chart (revenue, operating profit, net earnings and operating cash flow for
+  every quarter on file, also shown on the site's "All quarters" view). Attached files: the charts as **PNG** (default)
+  or **JPG** at 2400 px, and a **PDF report** (on by default): the company profile from its 10-K (also at the top of
+  each company in the e-mail), every chart as
+  vector graphics, the analysis, what changed, the filing's own words and the filing details. An e-mail stays under
+  15 MB (`MAIL_MAX_BYTES`); files that do not fit are left out with a note.
+
 - **Preliminary, then final.** A quarter read from an 8-K earnings release is sent as *preliminary*. When the
   10-Q/10-K replaces it, the final version is sent too (setting on by default, can be turned off), marked *final*,
   with how the release compared with the filing ("Revenue and net earnings match the release. Revised: operating cash
@@ -118,7 +130,8 @@ Until the steps below are done the site simply hides the sign-up box and the Fol
 
 ### 1. Supabase (accounts and settings; free plan is enough)
 
-1. Create a project at supabase.com. **SQL Editor** → paste `supabase/schema.sql` → Run.
+1. Create a project at supabase.com. **SQL Editor** → paste `supabase/schema.sql` → Run. Run it again after each
+   update of this repository: it only adds what is new (for example the e-mail content options) and keeps the data.
 2. **Authentication → Emails → SMTP Settings**: enable custom SMTP so codes can reach any address (the built-in
    sender only mails your own team): host `smtp.gmail.com`, port `465`, user = your Gmail address, password = the
    Gmail app password (the same one as `MAIL_PASSWORD`), sender name `Filing Flows`.
@@ -277,6 +290,8 @@ python tests/e2e.py /tmp/site --shots /tmp/shots   # browser test (needs: pip in
 - Working capital & other = operating cash flow minus net earnings and the listed non-cash items.
 - FCF = operating cash flow minus capital expenditures (companies' own FCF definitions may differ).
 - Comparison view: band width is the current quarter; the dark strip is the increase since the previous quarter.
+  With *Show decreases*, every band and node keeps room for its larger value of the two quarters, and the part the
+  current quarter does not fill is hatched: that is the decrease.
   `scale = (parent_now − parent_prior) × child_prior / parent_prior`, `mix = parent_now × (share_now − share_prior)`.
 
 ## Limits

@@ -592,7 +592,8 @@ def quarter_payload(c, q, prev_q):
         "analysis": analysis.paragraphs(f, q["label"], Nc, Nq, Ny, ls, (q.get("lines"), lines_q1, q.get("lines_py")),
                                         py_label=py_label),
         "headline": {"revenue": Nc["R"], "rev_fmt": f.money(Nc["R"]), "yoy": _g(Nc["R"], Ny and Ny["R"]),
-                     "ni": Nc["pl"], "ni_fmt": f.money(Nc["pl"]), "om": Nc["oi"] / Nc["R"] * 100},
+                     "ni": Nc["pl"], "ni_fmt": f.money(Nc["pl"]), "om": Nc["oi"] / Nc["R"] * 100,
+                     "oi": Nc["oi"], "ocf": Nc.get("ocf")},
         "_N": (Nc, Nq, Ny),
     }
 

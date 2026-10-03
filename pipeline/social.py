@@ -102,7 +102,7 @@ def display_name(name):
 
 def money(v, big):
     a, s = abs(v), "−" if v < 0 else ""
-    if big:
+    if big and a >= 5e6:                                # below $0.01B a billions figure would read "$0.00B"
         b = a / 1e9
         return f"{s}${b:.1f}B" if b >= 0.95 else f"{s}${b:.2f}B"
     m = a / 1e6
@@ -120,15 +120,29 @@ def fdate(s):
     return dt.date.fromisoformat(s[:10]).strftime("%b %-d, %Y") if s else ""
 
 
+FOOTNOTE = re.compile(r"^\s*(\(\s*[0-9a-z]{1,2}\s*\)|\[\s*\d{1,2}\s*\]|\*+|†|‡|\d{1,2}\s*[).]\s)")
+
+
+def is_footnote(text):
+    """A footnote or a cross-reference rather than something the company says about the quarter."""
+    t = text.strip()
+    if len(t) < 60 or FOOTNOTE.match(t):
+        return True
+    low = t.lower()
+    return len(t) < 400 and ("non-gaap financial measure" in low or low.startswith(("see ", "refer to ", "for additional information")))
+
+
 def filing_quote(q):
     """The company's own words about its revenue (or its largest revenue line): (paragraph, where it is from)."""
     nodes = {n["id"]: n for n in q["nodes"]}
     order = [nodes.get("revenue")] + sorted([n for n in q["nodes"] if n["id"].startswith("L:")], key=lambda n: -n["v"])
+    where = ("earnings release" if q.get("form") == "8-K"
+             else f"{q.get('form')} ({'Item 7' if q.get('form') == '10-K' else 'Item 2'}, MD&A)")
     for n in order:
-        if n and n.get("notes"):
-            where = ("earnings release" if q.get("form") == "8-K"
-                     else f"{q.get('form')} ({'Item 7' if q.get('form') == '10-K' else 'Item 2'}, MD&A)")
-            return n["notes"][0]["text"].split("\n")[0], where
+        for note in (n or {}).get("notes") or []:
+            for para in (note.get("text") or "").split("\n"):
+                if para.strip() and not is_footnote(para):
+                    return para.strip(), where
     return None
 
 
@@ -253,43 +267,97 @@ def quarter_of(site, e):
 
 
 # ------------------------------------------------------------------ chart images (the site's own renderer, headless)
-def render_charts(site, jobs, fmt="png", scale=2, quality=None, width=None):
-    """jobs: list of (spec, compare mode or None) -> list of image bytes, drawn by web/sankey.js in Chromium.
-    site: the built site folder, or the URL of the published site."""
-    from playwright.sync_api import sync_playwright
+class Charts:
+    """One headless Chromium for all the drawing in a run, using the site's own web/sankey.js:
+    PNG/JPG images, SVG (for PDF reports) and PDF printing of an HTML page.
+    site: the built site folder, or the URL of the published site.
 
-    srv = None
-    if re.match(r"https?://", str(site)):
-        base = str(site).rstrip("/") + "/"
-    else:
-        class Quiet(http.server.SimpleHTTPRequestHandler):
-            def log_message(self, *a):
+        with Charts("_site") as ch:
+            png = ch.image(("chart", spec, None), "png")
+            svg = ch.svg(("history", company_json))
+            pdf = ch.pdf(html)
+    """
+
+    DRAW = """async ([kind, data, mode, fmt, opts, lopts]) => {
+      await document.fonts.ready;
+      const sc = kind === 'history' ? Sankey.history(data) : Sankey.layout(data, Object.assign({ compare: mode }, lopts || {}));
+      if (fmt === 'svg') return Sankey.toSVG(Object.assign({}, sc, { shapes: sc.shapes.filter((s) => !s.ui) }), opts.aria || 'Chart');
+      const blob = await Sankey.exportScene(sc, fmt, opts);
+      const buf = new Uint8Array(await blob.arrayBuffer());
+      let s = '';
+      for (let i = 0; i < buf.length; i += 32768) s += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
+      return btoa(s);
+    }"""
+
+    def __init__(self, site):
+        self.site = str(site)
+        self.srv = self.pw = self.browser = self.page = None
+
+    def __enter__(self):
+        from playwright.sync_api import sync_playwright
+        if re.match(r"https?://", self.site):
+            self.base = self.site.rstrip("/") + "/"
+        else:
+            class Quiet(http.server.SimpleHTTPRequestHandler):
+                def log_message(self, *a):
+                    pass
+            self.srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=os.path.abspath(self.site)))
+            threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+            self.base = f"http://127.0.0.1:{self.srv.server_address[1]}/"
+        try:
+            self.pw = sync_playwright().start()
+            self.browser = self.pw.chromium.launch()
+            self.page = self.browser.new_page()
+            self.page.goto(self.base + "index.html#method")
+            self.page.wait_for_function("window.Sankey && document.fonts")
+        except Exception:
+            self.__exit__(None, None, None)
+            raise
+        return self
+
+    def __exit__(self, *exc):
+        for close in (lambda: self.browser and self.browser.close(), lambda: self.pw and self.pw.stop(),
+                      lambda: self.srv and self.srv.shutdown()):
+            try:
+                close()
+            except Exception:
                 pass
-        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=os.path.abspath(site)))
-        threading.Thread(target=srv.serve_forever, daemon=True).start()
-        base = f"http://127.0.0.1:{srv.server_address[1]}/"
-    out = []
-    try:
-        with sync_playwright() as pw:
-            b = pw.chromium.launch()
-            pg = b.new_page()
-            pg.goto(base + "index.html#method")
-            pg.wait_for_function("window.Sankey && document.fonts")
-            for spec, mode in jobs:
-                b64 = pg.evaluate("""async ([spec, mode, fmt, opts]) => {
-                  await document.fonts.ready;
-                  const blob = await Sankey.exportScene(Sankey.layout(spec, { compare: mode }), fmt, opts);
-                  const buf = new Uint8Array(await blob.arrayBuffer());
-                  let s = '';
-                  for (let i = 0; i < buf.length; i += 32768) s += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
-                  return btoa(s);
-                }""", [spec, mode, fmt, {"scale": scale, "quality": quality, "width": width}])
-                out.append(base64.b64decode(b64))
-            b.close()
-    finally:
-        if srv:
-            srv.shutdown()
-    return out
+        self.srv = self.pw = self.browser = self.page = None
+        return False
+
+    def _draw(self, what, fmt, opts):
+        kind, data, mode, lopts = (tuple(what) + (None, None))[:4]
+        return self.page.evaluate(self.DRAW, [kind, data, mode, fmt, opts, lopts or {}])
+
+    def image(self, what, fmt="png", scale=2, quality=None, width=None):
+        """what: ("chart", spec, compare mode or None[, layout options such as {"decreases": True}])
+        or ("history", company json) -> image bytes."""
+        return base64.b64decode(self._draw(what, fmt, {"scale": scale, "quality": quality, "width": width}))
+
+    def svg(self, what, aria="Chart"):
+        """The same drawing as standalone SVG markup (screen-only marks removed), for printing."""
+        return self._draw(what, "svg", {"aria": aria})
+
+    def pdf(self, html, footer=""):
+        """Print an HTML page (US Letter, landscape) with Chromium: vector text and charts."""
+        pg = self.browser.new_page()
+        try:
+            pg.set_content(html, wait_until="load", timeout=60000)
+            pg.evaluate("document.fonts.ready.then(() => true)")
+            foot = ('<div style="width:100%;padding:0 0.5in;font:7.5px Helvetica,Arial,sans-serif;color:#6b6a66;'
+                    'display:flex;justify-content:space-between"><span>' + footer + '</span>'
+                    '<span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>')
+            return pg.pdf(format="Letter", landscape=True, print_background=True, display_header_footer=True,
+                          header_template="<div></div>", footer_template=foot,
+                          margin={"top": "0.45in", "bottom": "0.55in", "left": "0.5in", "right": "0.5in"})
+        finally:
+            pg.close()
+
+
+def render_charts(site, jobs, fmt="png", scale=2, quality=None, width=None):
+    """jobs: list of (spec, compare mode or None) -> list of image bytes, drawn by web/sankey.js in Chromium."""
+    with Charts(site) as ch:
+        return [ch.image(("chart", spec, mode), fmt, scale, quality, width) for spec, mode in jobs]
 
 
 # ------------------------------------------------------------------ X API v2 (OAuth 1.0a user context)

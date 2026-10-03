@@ -20,7 +20,7 @@ class Fmt:
             return "n/a"
         a = abs(v)
         sign = "−" if v < 0 else ""
-        if self.unit == "B":
+        if self.unit == "B" and a >= 5e6:               # below $0.01B a billions figure would read "$0.00B"
             b = a / 1e9
             return f"{sign}${b:.1f}B" if b >= 0.95 else f"{sign}${b:.2f}B"
         m = a / 1e6

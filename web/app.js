@@ -25,7 +25,7 @@
     set(k, v) { try { localStorage.setItem('ff:' + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
   };
   const savedCmp = prefs.get('compare', null);                       // 'q' | 'y' | null (older builds stored true)
-  const state = { compare: savedCmp === true ? 'q' : savedCmp, zoom: prefs.get('zoom', 'fit'), charts: [] };
+  const state = { compare: savedCmp === true ? 'q' : savedCmp, zoom: prefs.get('zoom', 'fit'), decreases: prefs.get('decreases', false), charts: [] };
   const t = (s) => S.esc(S.dec(s == null ? '' : s));
   const sign = (x) => (x > 0 ? '+' : x < 0 ? '−' : '');
   const pct = (x, d) => (x == null || isNaN(x) ? '—' : sign(+x.toFixed(d || 0)) + Math.abs(x).toFixed(d || 0) + '%');
@@ -156,6 +156,7 @@
           <button type="button" data-view="q" ${has(spec.compare) ? '' : 'disabled title="No previous quarter on file"'}>vs ${has(spec.compare) ? t(spec.compare.vs) : 'previous quarter'}</button>
           <button type="button" data-view="y" ${has(spec.compare_y) ? '' : 'disabled title="No year-ago quarter on file"'}>vs ${has(spec.compare_y) ? t(spec.compare_y.vs) : 'year ago'}</button>
         </div>
+        <label class="dec-toggle" hidden title="Hatched areas with a dashed outline show what each line lost"><input type="checkbox" data-dec ${state.decreases ? 'checked' : ''}> Show decreases</label>
         <div class="seg" role="group" aria-label="Zoom">
           <button type="button" data-zoom="fit">Fit</button>
           <button type="button" data-zoom="full">100%</button>
@@ -177,10 +178,12 @@
     const byId = new Map(spec.nodes.map((n) => [n.id, n]));
     let scene = null, selected = null;
     const mode = () => (has(cmpOf(state.compare)) ? state.compare : null);   // active comparison, if this chart has it
+    if (acct.prefs && typeof acct.prefs.cmp_decreases === 'boolean') state.decreases = acct.prefs.cmp_decreases;
     const cmpOn = () => !!mode();
 
     function sync() {
       $$('[data-view]', el).forEach((b) => b.classList.toggle('on', b.dataset.view === (mode() || 'std')));
+      $('.dec-toggle', el).hidden = !mode();
       $$('[data-zoom]', el).forEach((b) => b.classList.toggle('on', b.dataset.zoom === state.zoom));
       sheet.classList.toggle('fit', state.zoom === 'fit');
       if (scene) sheet.style.setProperty('--min-w', `${Math.round(scene.W * 0.5)}px`);   // never shrink below half size
@@ -222,7 +225,7 @@
       const svg = $('svg', sheet);
       if (!svg) return;
       $$('.node.sel', svg).forEach((g) => g.classList.remove('sel'));
-      $$('path.band.on', svg).forEach((p) => p.classList.remove('on'));
+      $$('.band.on', svg).forEach((p) => p.classList.remove('on'));
       selected = id;
       if (!id || !byId.has(id)) {
         selected = null;
@@ -233,7 +236,7 @@
       }
       svg.classList.add('has-sel');
       $$('.node', svg).filter((g) => g.dataset.node === id).forEach((g) => g.classList.add('sel'));
-      $$('path.band', svg).filter((p) => p.dataset.s === id || p.dataset.t === id).forEach((p) => p.classList.add('on'));
+      $$('.band', svg).filter((p) => p.dataset.s === id || p.dataset.t === id).forEach((p) => p.classList.add('on'));
       notes.innerHTML = nodeNotes(byId.get(id));
       notes.classList.add('open');
       notes.scrollTop = 0;
@@ -242,7 +245,7 @@
     }
     async function draw() {
       await fontsReady();
-      scene = S.layout(spec, { compare: mode() });
+      scene = S.layout(spec, { compare: mode(), decreases: state.decreases });
       sheet.innerHTML = S.toSVG(scene, S.dec(mode() ? cmpOf(mode()).title : spec.title));
       $$('.node', sheet).forEach((g) => {
         const n = byId.get(g.dataset.node);
@@ -267,6 +270,18 @@
       draw();
       if (ctx.onView) ctx.onView(mode());
     }));
+    $('[data-dec]', el).addEventListener('change', (ev) => {
+      state.decreases = ev.target.checked;
+      prefs.set('decreases', state.decreases);
+      draw();
+      if (acct.prefs && acct.prefs.cmp_decreases !== state.decreases) {   // signed in: e-mailed charts follow
+        const on = state.decreases;
+        savePrefs({ cmp_decreases: on })
+          .then(() => toast(acct.flash || (on ? 'Your e-mailed comparison charts will show decreases too' : 'Your e-mailed comparison charts will not show decreases')))
+          .catch(() => {})
+          .finally(() => { acct.flash = null; });
+      }
+    });
     $$('[data-zoom]', el).forEach((b) => b.addEventListener('click', () => {
       state.zoom = b.dataset.zoom;
       prefs.set('zoom', state.zoom);
@@ -450,11 +465,21 @@
       <div id="body"></div>`;
     const body = $('#body');
     if (all) {
-      body.innerHTML = `<div class="section"><div class="section-head"><h2>Quarter by quarter</h2>
+      body.innerHTML = `<div class="section"><div class="section-head"><h2>Trend</h2>
+        <span class="muted">Revenue, operating profit, net earnings and operating cash flow; each row to its own scale</span></div>
+        <div class="sheet fit" id="trend"></div></div>
+        <div class="section"><div class="section-head"><h2>Quarter by quarter</h2>
         <span class="muted">Same format each quarter; open one for notes, comparison and export</span></div>
         <div class="thumbs">${qs.map((x, i) => `<a class="thumb" href="#c-${cik}-${x.end}"><div class="sheet fit" data-i="${i}"><div class="loading">Drawing…</div></div>
         <span><b>${t(x.label)}</b> <span class="muted">· ${t(x.form)} filed ${date(x.filed)} · revenue ${money(x.headline.revenue)} · net ${money(x.headline.ni)}</span></span></a>`).join('')}</div></div>
         ${historyTable(qs, cik)}`;
+      fontsReady().then(() => {
+        const h = $('#trend');
+        if (!h) return;
+        const sc = S.history(c);
+        h.style.maxWidth = `${sc.W}px`;                          // a few quarters make a narrow chart: never blown up
+        h.innerHTML = S.toSVG(sc, `${S.dec(p.name)} quarter by quarter`);
+      });
       $$('.thumb .sheet', body).forEach((h) => staticChart(h, qs[+h.dataset.i]));
       bindRows(body);
       return;
@@ -739,6 +764,7 @@
     .map((h) => `https://${h}/@supabase/supabase-js@2.58.0/dist/umd/supabase.js`);
   const PREF_DEFAULTS = { tickers: [], sectors: [], all_above: false, min_revenue: 1e9, starred: false,
     frequency: 'instant', email_on: true, push_on: true, final_too: true };
+  const MAIL_DEFAULTS = { chart_q: false, chart_y: false, chart_history: false, attach_images: 'png', attach_pdf: true, cmp_decreases: false, changes_detail: false };
   const acct = { client: undefined, prefs: null, flash: null };
 
   function loadScript(src, ms) {
@@ -797,6 +823,12 @@
       row = ins.data;
     }
     acct.prefs = row;
+    if (typeof row.cmp_decreases === 'boolean' && row.cmp_decreases !== state.decreases) {   // the account setting wins
+      state.decreases = row.cmp_decreases;
+      prefs.set('decreases', state.decreases);
+      $$('[data-dec]').forEach((cb) => { cb.checked = state.decreases; });
+      state.charts.forEach((c) => c.redraw && c.redraw());
+    }
     syncApp();
     return row;
   }
@@ -805,7 +837,13 @@
     const user = await currentUser();
     const row = Object.assign({}, PREF_DEFAULTS, acct.prefs || {}, patch, { user_id: user.id, email: user.email });
     ['unsub_token', 'created_at', 'updated_at'].forEach((k) => delete row[k]);
-    const up = await c.from('subscriptions').upsert(row).select().single();
+    let up = await c.from('subscriptions').upsert(row).select().single();
+    if (up.error && up.error.code === 'PGRST204' && Object.keys(MAIL_DEFAULTS).some((k) => k in row)) {
+      // the database predates the e-mail content options (supabase/schema.sql not run again yet): save the rest
+      Object.keys(MAIL_DEFAULTS).forEach((k) => delete row[k]);
+      up = await c.from('subscriptions').upsert(row).select().single();
+      if (!up.error) acct.flash = 'Saved, except the e-mail content options: the site owner has to update the database first';
+    }
     if (up.error) throw new Error(up.error.message);
     acct.prefs = up.data;
     syncApp();
@@ -975,6 +1013,7 @@
       const appLink = !inApp && site.repo ? ` · <a href="https://github.com/${t(site.repo)}/releases/tag/android" target="_blank" rel="noopener">get the app</a>` : '';
       const names = ix.sector_names || {};
       const tickers = ix.companies.map((x) => x.ticker).filter(Boolean).sort();
+      const m = Object.assign({}, MAIL_DEFAULTS, p);
       app.innerHTML = `<div class="page-head"><div class="eyebrow">Alerts</div><h1>Your alerts</h1>
           <div class="meta"><span>Signed in as <b>${t(user.email)}</b></span><button class="btn small" type="button" id="sign-out">Sign out</button></div></div>
         <form class="prefs" id="prefs-form">
@@ -997,6 +1036,17 @@
           <fieldset><legend>How</legend>
             <label><input type="checkbox" id="email-on" ${p.email_on ? 'checked' : ''}> E-mail to ${t(user.email)}: the chart, the analysis and what changed</label>
             <label><input type="checkbox" id="push-on" ${p.push_on ? 'checked' : ''}> Notifications in the Android app${appLink}</label></fieldset>
+          <fieldset><legend>In each e-mail</legend>
+            <p class="muted small">Every e-mail shows this quarter’s chart (tap it for the interactive one), the analysis and what changed. Also show:</p>
+            <label><input type="checkbox" id="chart-q" ${m.chart_q ? 'checked' : ''}> The chart compared with the previous quarter</label>
+            <label><input type="checkbox" id="chart-y" ${m.chart_y ? 'checked' : ''}> The chart compared with the same quarter a year earlier</label>
+            <label class="long"><input type="checkbox" id="chart-history" ${m.chart_history ? 'checked' : ''}><span>History: revenue, operating profit, net earnings and operating cash flow for every quarter on file</span></label>
+            <label class="long"><input type="checkbox" id="changes-detail" ${m.changes_detail ? 'checked' : ''}><span>Detail: every line of the chart with its change against a year earlier and the previous quarter (by default the e-mail lists the three main changes)</span></label>
+            <label class="long"><input type="checkbox" id="cmp-decreases" ${m.cmp_decreases ? 'checked' : ''}><span>In comparison charts, also draw decreases as hatched areas with a dashed outline (the same as “Show decreases” on company pages)</span></label>
+            <p class="muted small">Attached files</p>
+            <div class="inline-radios" role="radiogroup" aria-label="Chart image files"><span>Chart images</span>${[['png', 'PNG'], ['jpg', 'JPG'], ['none', 'None']].map(([v, l]) =>
+              `<label><input type="radio" name="attach" value="${v}" ${m.attach_images === v ? 'checked' : ''}> ${l}</label>`).join('')}</div>
+            <label class="long"><input type="checkbox" id="attach-pdf" ${m.attach_pdf ? 'checked' : ''}><span>PDF report: company profile, the charts and the analysis</span></label></fieldset>
           <div class="row"><button class="btn primary" type="submit">Save</button><span class="muted" id="save-msg" role="status"></span></div>
         </form>
         <section class="section" id="requests"></section>
@@ -1046,8 +1096,14 @@
             all_above: $('#all-above').checked, min_revenue: Math.round(Math.max(0, +$('#min-rev').value || 0) * 1e9),
             starred: $('#starred').checked, frequency: $('input[name="freq"]:checked').value, final_too: $('#final-too').checked,
             email_on: $('#email-on').checked, push_on: $('#push-on').checked,
+            chart_q: $('#chart-q').checked, chart_y: $('#chart-y').checked, chart_history: $('#chart-history').checked,
+            attach_images: ($('input[name="attach"]:checked') || {}).value || 'png', attach_pdf: $('#attach-pdf').checked,
+            cmp_decreases: $('#cmp-decreases').checked, changes_detail: $('#changes-detail').checked,
           });
-          $('#save-msg').textContent = 'Saved.';
+          state.decreases = $('#cmp-decreases').checked;           // company pages follow the account setting
+          prefs.set('decreases', state.decreases);
+          $('#save-msg').textContent = acct.flash || 'Saved.';
+          acct.flash = null;
         } catch (err) {
           $('#save-msg').textContent = `Could not save: ${err.message}`;
         }
@@ -1102,7 +1158,15 @@
   async function route() {
     state.charts = [];
     if (toastEl) { toastEl.remove(); toastEl = null; }
-    const h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
+    let h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
+    if (/^(access_token|error)=/.test(h)) {               // back from a link in a sign-in e-mail (if a template sends links)
+      const failed = h.startsWith('error=');
+      const user = failed ? null : await currentUser().catch(() => null);   // Supabase reads the sign-in from the address
+      acct.flash = failed ? 'That sign-in link has expired or was used already. Enter your e-mail for a new code.'
+        : user ? 'Signed in' : null;
+      history.replaceState(null, '', location.pathname + location.search + '#account');
+      h = 'account';
+    }
     let m;
     try {
       if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

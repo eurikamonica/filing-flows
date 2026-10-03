@@ -15,6 +15,13 @@ create table if not exists public.subscriptions (
   email_on     boolean not null default true,
   push_on      boolean not null default true,           -- Android app notifications
   final_too    boolean not null default true,           -- after an 8-K chart, also send the 10-Q/10-K version
+  chart_q      boolean not null default false,          -- also the chart compared with the previous quarter
+  chart_y      boolean not null default false,          -- also the chart compared with the same quarter a year earlier
+  chart_history boolean not null default false,         -- also the multi-quarter history chart
+  attach_images text   not null default 'png' check (attach_images in ('png', 'jpg', 'none')),   -- chart files attached
+  attach_pdf   boolean not null default true,           -- a PDF report attached (profile, charts, analysis)
+  cmp_decreases boolean not null default false,         -- comparison charts also draw decreases (hatched, dashed)
+  changes_detail boolean not null default false,        -- list every line's change, not only the three main ones
   unsub_token  uuid    not null default gen_random_uuid(),
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
@@ -22,6 +29,17 @@ create table if not exists public.subscriptions (
 
 -- added after the first release: keeps older projects in step when this file is run again
 alter table public.subscriptions add column if not exists final_too boolean not null default true;
+alter table public.subscriptions add column if not exists chart_q boolean not null default false;
+alter table public.subscriptions add column if not exists chart_y boolean not null default false;
+alter table public.subscriptions add column if not exists chart_history boolean not null default false;
+alter table public.subscriptions add column if not exists attach_images text not null default 'png';
+alter table public.subscriptions add column if not exists attach_pdf boolean not null default true;
+alter table public.subscriptions add column if not exists cmp_decreases boolean not null default false;
+alter table public.subscriptions add column if not exists changes_detail boolean not null default false;
+do $$ begin
+  alter table public.subscriptions add constraint subscriptions_attach_images_check check (attach_images in ('png', 'jpg', 'none'));
+exception when duplicate_object then null;
+end $$;
 
 -- what each user has already been sent (written by the notifier with the secret key only)
 create table if not exists public.deliveries (

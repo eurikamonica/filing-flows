@@ -100,6 +100,8 @@ main { padding-block: 28px 64px; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button.on { background: var(--surface-2); color: var(--ink); font-weight: 500; }
 .seg button:disabled { color: var(--muted); cursor: not-allowed; opacity: .6; }
+.dec-toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; color: var(--ink-2); cursor: pointer; }
+.dec-toggle input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
 .export { display: flex; gap: 6px; align-items: center; margin-left: auto; }
 .export span { font-size: 13px; color: var(--muted); }
 .btn { font: inherit; font-size: 13.5px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
@@ -120,8 +122,8 @@ main { padding-block: 28px 64px; }
 .sheet .node.sel .bar { stroke: #1d1d1b; stroke-width: 2; }
 .sheet .node:focus { outline: none; }
 .sheet .node:focus-visible .bar { stroke: #17734a; stroke-width: 3; }
-.sheet svg.has-sel path.band { opacity: .28; transition: opacity .15s; }
-.sheet svg.has-sel path.band.on { opacity: 1; }
+.sheet svg.has-sel .band { opacity: .28; transition: opacity .15s; }
+.sheet svg.has-sel .band.on { opacity: 1; }
 .loading { padding: 80px 20px; text-align: center; color: var(--muted); }
 
 .notes { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 18px 20px; display: grid; gap: 12px;
@@ -213,6 +215,9 @@ td .name { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; display: 
 .prefs label.long { flex-wrap: nowrap; align-items: flex-start; }
 .prefs label.long input { margin-top: 3px; flex: none; }
 .prefs label.long span { min-width: 0; }
+.prefs .inline-radios { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-size: 14.5px; }
+.prefs .inline-radios > span { color: var(--ink-2); margin-right: 2px; }
+.prefs fieldset > p.small { margin: 2px 0 0; }
 #requests { max-width: 760px; }
 .foot-links { display: flex; gap: 16px; }
 .legal { max-width: 72ch; }

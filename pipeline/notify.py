@@ -39,6 +39,7 @@ REQUEST_ATTEMPTS = 3
 STALE_CLAIM_MINUTES = 30
 SAME_QUARTER_DAYS = 10      # an 8-K quarter and the 10-Q/10-K that replaces it count as one item
 KEEP_DELIVERIES_DAYS = 120
+MAIL_MAX_BYTES = 15_000_000  # images and attachments per e-mail (about 20 MB once encoded; Gmail takes 25 MB)
 
 
 def env_int(name, default):
@@ -324,8 +325,413 @@ def subject(items, daily, requested=False):
     return f"{len(items)} new charts: {', '.join(tick[:5])}{more}"
 
 
-def build_message(sub, items, site_url, images, sender, daily=False, requested=False):
-    """items: [(index entry, company json, quarter, reasons)]; images: {item key: jpeg bytes}."""
+# ------------------------------------------------------------------ what each reader gets drawn
+VIEW_ORDER = ("std", "y", "q", "h")
+
+
+DOT = {"rev": "#7a7974", "profit": "#17734a", "cost": "#ea6a52", "noncash": "#5b7fa6"}
+
+
+def change_rows(q):
+    """Every line of the chart with its change vs the year-ago and the previous quarter, in reading order."""
+    big = ((q.get("headline") or {}).get("revenue") or 0) >= 1e9
+    money = lambda v: "—" if v is None else social.money(v, big)
+
+    def delta(now, then):
+        if then is None or now is None:
+            return "—", "—"
+        d = now - then
+        dm = ("+" if d > 0 else "−" if d < 0 else "±") + social.money(abs(d), big)
+        pc = social.chg(now, then) if now > 0 and then > 0 else "n/m"
+        return dm, pc or "0%"
+
+    def mix(cmp):                                   # "Δ +$9.7B · scale +8.1 · mix +1.6" -> "scale +8.1 · mix +1.6"
+        parts = H.unescape(cmp or "").split(" \u00b7 ", 1)
+        return parts[1] if len(parts) > 1 else ""
+
+    nodes = sorted(enumerate(q.get("nodes") or []), key=lambda x: (x[1].get("col", 0), x[0]))
+    out = []
+    for _, n in nodes:
+        v = n.get("v")
+        dy, py = delta(v, n.get("y"))
+        dq, pq = delta(v, n.get("q"))
+        out.append({"name": H.unescape(str(n.get("name") or "")), "color": DOT.get(n.get("color"), "#7a7974"),
+                    "now": money(v), "y": money(n.get("y")), "q": money(n.get("q")), "dy": dy, "py": py, "dq": dq, "pq": pq,
+                    "mix_y": mix(n.get("cmp_y")), "mix_q": mix(n.get("cmp"))})
+    return out
+
+
+def changes_email_html(q):
+    """All changes as a compact table for the e-mail (fits 632 px)."""
+    rows = change_rows(q)
+    if not rows:
+        return ""
+    vy = (q.get("compare_y") or {}).get("vs") or "year ago"
+    vq = (q.get("compare") or {}).get("vs") or "prev. quarter"
+    th = f'padding:4px 6px;border-bottom:1px solid {LINE};font:600 11.5px/1.3 {FONT};color:{MUTED};text-align:right;white-space:nowrap'
+    td = f'padding:4px 6px;border-bottom:1px solid {LINE};font:13px/1.35 {FONT};color:{INK};text-align:right;white-space:nowrap'
+    body = "".join(
+        f'<tr><td style="{td};text-align:left;white-space:normal"><span style="display:inline-block;width:8px;height:8px;'
+        f'border-radius:2px;background:{r["color"]};margin-right:6px"></span>{H.escape(r["name"])}</td>'
+        f'<td style="{td}">{r["now"]}</td><td style="{td}">{r["dy"]}</td><td style="{td};color:{MUTED}">{r["py"]}</td>'
+        f'<td style="{td}">{r["dq"]}</td><td style="{td};color:{MUTED}">{r["pq"]}</td></tr>' for r in rows)
+    return (f'<p style="margin:4px 0 6px;font:600 15px/1.4 {FONT};color:{INK}">All changes</p>'
+            f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 14px">'
+            f'<tr><td style="{th};text-align:left">Line</td><td style="{th}">{H.escape(q.get("label") or "Now")}</td>'
+            f'<td style="{th}" colspan="2">vs {H.escape(vy)}</td><td style="{th}" colspan="2">vs {H.escape(vq)}</td></tr>{body}</table>')
+
+
+def changes_text(q):
+    rows = change_rows(q)
+    vy = (q.get("compare_y") or {}).get("vs") or "year ago"
+    vq = (q.get("compare") or {}).get("vs") or "previous quarter"
+    return [f"All changes (vs {vy}; vs {vq}):"] + [
+        f"- {r['name']}: {r['now']}; {r['dy']} ({r['py']}); {r['dq']} ({r['pq']})" for r in rows] + [""]
+
+
+def changes_pdf_html(q):
+    """All changes for the PDF: values of all three quarters, the changes and the scale/mix split."""
+    rows = change_rows(q)
+    if not rows:
+        return ""
+    vy = (q.get("compare_y") or {}).get("vs") or "Year ago"
+    vq = (q.get("compare") or {}).get("vs") or "Prev. quarter"
+    esc = H.escape
+    head = (f"<tr><th>Line</th><th class=n>{esc(q.get('label') or '')}</th><th class=n>{esc(vy)}</th><th class=n>Change</th>"
+            f"<th class=n>%</th><th>scale · mix</th><th class=n>{esc(vq)}</th><th class=n>Change</th><th class=n>%</th><th>scale · mix</th></tr>")
+    body = "".join(
+        f'<tr><td><i style="background:{r["color"]}"></i>{esc(r["name"])}</td><td class=n>{r["now"]}</td><td class=n>{r["y"]}</td>'
+        f'<td class=n>{r["dy"]}</td><td class=n>{r["py"]}</td><td class=m>{esc(r["mix_y"])}</td><td class=n>{r["q"]}</td>'
+        f'<td class=n>{r["dq"]}</td><td class=n>{r["pq"]}</td><td class=m>{esc(r["mix_q"])}</td></tr>' for r in rows)
+    return f'<table class="hist changes"><thead>{head}</thead><tbody>{body}</tbody></table>'
+
+
+def history_company(c, q):
+    """The company's quarters up to this one (newest first), trimmed to what the history chart reads."""
+    keep = [x for x in c["quarters"] if x["end"] <= q["end"]]
+    return {"profile": c["profile"], "quarters": [
+        {k: x.get(k) for k in ("label", "form", "filed", "end", "headline")} |
+        {"nodes": [n for n in x.get("nodes") or [] if n.get("id") == "ocf"]} for x in keep[:8]]}
+
+
+def views_for(sub, c, q):
+    """The charts a reader gets for one quarter: always this quarter; the comparisons and history they ticked."""
+    out = ["std"]
+    if sub.get("chart_y") and q.get("compare_y"):
+        out.append("y")
+    if sub.get("chart_q") and q.get("compare"):
+        out.append("q")
+    if sub.get("chart_history") and sum(1 for x in c["quarters"] if x["end"] <= q["end"]) >= 2:
+        out.append("h")
+    return out
+
+
+def view_caption(view, q):
+    if view == "y":
+        return f"Compared with {(q.get('compare_y') or {}).get('vs')}"
+    if view == "q":
+        return f"Compared with {(q.get('compare') or {}).get('vs')}"
+    if view == "h":
+        return "Quarter by quarter"
+    return q.get("label") or ""
+
+
+def file_base(e, q):
+    return re.sub(r"[^A-Za-z0-9.]+", "-", f"{e.get('ticker') or e['cik']}-{q.get('label')}").strip("-")
+
+
+def view_file(e, q, view, ext):
+    vs = (q.get("compare_y") if view == "y" else q.get("compare") if view == "q" else None) or {}
+    tail = {"std": "sankey", "h": "history"}.get(view) or "vs-" + re.sub(r"[^A-Za-z0-9.]+", "-", str(vs.get("vs") or view))
+    return f"{file_base(e, q)}-{tail}.{ext}"
+
+
+CMP_NOTE = ("Band width is this quarter; a dark strip inside a band is the increase over {vs}, "
+            "a band without a strip fell (its Δ is negative).")
+CMP_NOTE_DEC = ("Band width is this quarter; a dark strip inside a band is the increase over {vs}; "
+                "a hatched area with a dashed outline beside a band is the decrease: what that line had in {vs} beyond this quarter.")
+
+
+def cmp_note(vs, decreases):
+    return (CMP_NOTE_DEC if decreases else CMP_NOTE).format(vs=vs)
+
+
+def intro_text(c, limit):
+    """The company's own description (10-K, Item 1), cut at a sentence end near `limit` characters."""
+    intro = c.get("intro")
+    text = (intro if isinstance(intro, str) else (intro or {}).get("text") or "").strip()
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(". ", 1)[0]
+    return cut + "." if len(cut) > limit * 0.5 else text[:limit].rsplit(" ", 1)[0] + " …"
+
+
+def intro_source(c):
+    intro = c.get("intro")
+    filed = intro.get("filed") if isinstance(intro, dict) else None
+    return f"From the company’s 10-K{' filed ' + social.fdate(filed) if filed else ''}, Item 1. Business"
+
+
+def report_html(e, c, q, views, svgs, site_url, decreases=False, detail=False):
+    """A printable report of one quarter: the charts (vector), company profile, analysis, what changed, the filing."""
+    esc = H.escape
+    p = c["profile"]
+    name = social.display_name(p["name"])
+    url = page_url(site_url.rstrip("/"), e) if site_url else ""
+    h = q.get("headline") or {}
+    big = (h.get("revenue") or 0) >= 1e9
+    fye = ""
+    if p.get("fye") and len(str(p["fye"])) == 4:
+        try:
+            fye = dt.date(2001, int(p["fye"][:2]), int(p["fye"][2:])).strftime("%b %-d")
+        except ValueError:
+            fye = ""
+    meta = [x for x in (e.get("ticker"), ((p.get("exchanges") or [None])[0]),
+                        f"SIC {p['sic']} {p.get('industry') or ''}".strip() if p.get("sic") else None,
+                        f"Fiscal year ends {fye}" if fye else None, p.get("category"), f"CIK {p.get('cik')}") if x]
+    profile = intro_text(c, 1400)
+    profile_src = intro_source(c) if profile else ""
+    note = release_note(q, e.get("_release_sent"))
+    prelim = q.get("form") == "8-K"
+    quote = social.filing_quote(q)
+    acc = re.search(r"/(\d{10})-?(\d{2})-?(\d{6})", q.get("index_url") or "")
+
+    def fig(view, room=6.0):
+        svg = svgs.get(view)
+        if not svg:
+            return ""
+        m = re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', svg)
+        width = min(10.0, room * float(m.group(1)) / float(m.group(2))) if m else 10.0   # inches: fits 10 x room
+        return f'<figure class="chart" style="width:{width:.2f}in">{svg}</figure>'
+
+    def bullets(cmp):
+        if not cmp or not cmp.get("bullets"):
+            return ""
+        return (f'<h3>What changed vs {esc(cmp.get("vs") or "")}</h3><ul>' +
+                "".join(f"<li>{esc(b)}</li>" for b in cmp["bullets"]) + "</ul>")
+
+    facts = [("Form", esc(q.get("form") or "") + (" \u00b7 earnings release (Item 2.02), preliminary" if prelim else "")),
+             ("Period", f"{esc(q.get('label') or '')} \u00b7 quarter ended {esc(social.fdate(q.get('end')))}"),
+             ("Filed", esc(social.fdate(q.get("filed"))))]
+    if acc:
+        facts.append(("Accession", "-".join(acc.groups())))
+    links = [(u, label) for u, label in ((url, "Interactive chart"), (q.get("index_url"), "Filing on SEC EDGAR"),
+                                         (q.get("doc_url"), "Press release" if prelim else "The report")) if u]
+    if links:
+        facts.append(("Links", " \u00b7 ".join(f'<a href="{esc(u)}">{label}</a>' for u, label in links)))
+
+    hist_rows = ""
+    if "h" in views:
+        qs = [x for x in c["quarters"] if x["end"] <= q["end"]][:8]
+        def money(v):
+            return "\u2014" if v is None else social.money(v, big)
+        cells = []
+        for x in qs:
+            hx = x.get("headline") or {}
+            ocf = hx.get("ocf")
+            if ocf is None:
+                ocf = next((n.get("v") for n in x.get("nodes") or [] if n.get("id") == "ocf"), None)
+            om = hx.get("om")
+            dash = "\u2014"
+            yoy = esc(pct(hx.get("yoy")) or dash)
+            omt = dash if om is None else f"{om:.1f}%".replace("-", "\u2212")
+            cells.append(f"<tr><td>{esc(x.get('label') or '')}</td><td>{esc(x.get('form') or '')}</td><td>{esc(social.fdate(x.get('filed')))}</td>"
+                         f"<td class=n>{money(hx.get('revenue'))}</td><td class=n>{yoy}</td><td class=n>{omt}</td>"
+                         f"<td class=n>{money(hx.get('ni'))}</td><td class=n>{money(ocf)}</td></tr>")
+        hist_rows = ('<table class="hist"><thead><tr><th>Quarter</th><th>Form</th><th>Filed</th><th class=n>Revenue</th><th class=n>Y/Y</th>'
+                     '<th class=n>Op. margin</th><th class=n>Net earnings</th><th class=n>Operating cash flow</th></tr></thead>'
+                     f'<tbody>{"".join(cells)}</tbody></table>')
+
+    extra = []
+    if detail and change_rows(q):
+        extra.append(f'<section class="page"><h2>{esc(name)} {esc(q.get("label") or "")}: all changes</h2>'
+                     '<p class="muted">Every line of the chart, this quarter against a year earlier and against the previous quarter. '
+                     'Δ = scale + mix: scale = change explained by the parent line growing, mix = change in the line’s share of it.</p>'
+                     + changes_pdf_html(q) + "</section>")
+    for v in views[1:]:
+        cmp = q.get("compare_y") if v == "y" else q.get("compare") if v == "q" else None
+        head = f"{esc(name)} {esc(q.get('label') or '')}: " + (f"compared with {esc(cmp.get('vs') or '')}" if cmp else "quarter by quarter")
+        extra.append(f'<section class="page"><h2>{head}</h2>'
+                     + (f'<p class="muted">{esc(cmp_note(cmp.get("vs"), decreases))}</p>' if cmp else "")
+                     + fig(v, 4.6 if v == "h" else 5.4) + (bullets(cmp) if cmp else "") + (hist_rows if v == "h" else "") + "</section>")
+
+    css = """
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1d1d1b;
+             font-size: 10pt; line-height: 1.45; font-variant-numeric: tabular-nums; }
+      .eyebrow { font-size: 8pt; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6b6a66; }
+      .brand { color: #17734a; }
+      h1 { font-size: 22pt; line-height: 1.15; margin: 3pt 0 3pt; font-weight: 600; }
+      h2 { font-size: 13pt; margin: 0 0 6pt; font-weight: 600; }
+      h3 { font-size: 10.5pt; margin: 10pt 0 4pt; font-weight: 600; }
+      p { margin: 0 0 7pt; }
+      .headline { font-size: 11.5pt; font-weight: 500; color: #3d3c39; margin: 0 0 3pt; }
+      .meta { color: #6b6a66; font-size: 8.5pt; }
+      .meta span + span::before { content: " \u00b7 "; }
+      .note { background: #dcebe2; color: #0f5134; border-radius: 4pt; padding: 5pt 8pt; font-size: 9pt; margin: 6pt 0 0; }
+      .muted { color: #6b6a66; font-size: 9pt; }
+      figure.chart { margin: 8pt 0 0; break-inside: avoid; max-width: 100%; }
+      figure.chart svg { display: block; width: 100%; height: auto; border: 0.75pt solid #e3e1db; border-radius: 4pt; }
+      .page { break-before: page; }
+      .cols { display: grid; grid-template-columns: 1.45fr 1fr; gap: 0 26pt; }
+      ul { margin: 0 0 8pt; padding-left: 14pt; } li { margin: 0 0 3pt; }
+      blockquote { margin: 4pt 0 8pt; padding: 1pt 0 1pt 9pt; border-left: 2.5pt solid #a8d1b9; color: #3d3c39; font-size: 9.5pt; }
+      blockquote .src { display: block; color: #6b6a66; font-size: 8.5pt; margin-top: 3pt; }
+      .profile { border-left: 2.5pt solid #a8d1b9; padding-left: 9pt; color: #3d3c39; font-size: 9.5pt; margin: 7pt 0 0; max-width: 9.2in; }
+      .profile .src { display: block; color: #6b6a66; font-size: 8pt; margin-top: 3pt; }
+      dl { display: grid; grid-template-columns: auto 1fr; gap: 3pt 10pt; margin: 6pt 0 8pt; font-size: 9pt; }
+      dt { color: #6b6a66; } dd { margin: 0; }
+      a { color: #17734a; text-decoration: none; }
+      table.hist { width: 100%; border-collapse: collapse; margin-top: 10pt; font-size: 9pt; break-inside: avoid; }
+      table.hist th, table.hist td { padding: 3pt 6pt; border-bottom: 0.75pt solid #e3e1db; text-align: left; }
+      table.hist th { color: #6b6a66; font-weight: 600; } table.hist .n { text-align: right; }
+      table.changes { font-size: 8.5pt; } table.changes td, table.changes th { padding: 2.2pt 5pt; white-space: nowrap; }
+      table.changes td.m { color: #6b6a66; font-size: 7.5pt; } table.changes tbody tr { break-inside: avoid; }
+      table.changes i { display: inline-block; width: 6pt; height: 6pt; border-radius: 1.5pt; margin-right: 4pt; }
+      .legal { margin-top: 14pt; color: #6b6a66; font-size: 8pt; }
+    """
+    analysis = "".join(f"<p>{esc(x)}</p>" for x in q.get("analysis") or [])
+    quote_html = ""
+    if quote:
+        words = quote[0] if len(quote[0]) <= 900 else quote[0][:900].rsplit(" ", 1)[0] + " \u2026"
+        quote_html = f'<h3>In the company\u2019s words</h3><blockquote>\u201c{esc(words)}\u201d<span class="src">\u2014 {esc(quote[1])}</span></blockquote>'
+    made_at = (" \u00b7 " + esc(site_url.rstrip("/"))) if site_url else ""
+    prelim_html = ('<p class="note">Preliminary: read from the earnings release; replaced by the 10-Q/10-K when it is filed.</p>'
+                   if prelim else "")
+    note_html = f'<p class="note">{esc(note)}</p>' if note else ""
+    meta_html = "".join(f"<span>{esc(str(x))}</span>" for x in meta)
+    company_html = "<h2>The filing</h2>"
+    profile_html = f'<div class="profile">{esc(profile)}<span class="src">{esc(profile_src)}</span></div>' if profile else ""
+    room1 = max(3.4, 6.0 - (len(profile) / 175 * 0.2 + 0.25 if profile else 0))   # the chart shares page 1 with the profile
+    facts_html = "".join(f"<dt>{k}</dt><dd>{v}</dd>" for k, v in facts)
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<title>{esc(name)} {esc(q.get('label') or '')}</title><style>{css}</style></head><body>
+<section>
+  <div class="eyebrow"><span class="brand">Filing Flows</span> \u00b7 {esc(eyebrow(e, q))}</div>
+  <h1>{esc(name)}</h1>
+  <p class="headline">{esc(headline(e, q))}</p>
+  <div class="meta">{meta_html}</div>
+  {profile_html}
+  {prelim_html}
+  {note_html}
+  {fig('std', room1)}
+</section>
+<section class="page cols">
+  <div>
+    <h2>Analysis</h2>{analysis}
+    {bullets(q.get('compare_y'))}
+    <p class="muted">Written by fixed rules from the reported figures: growth, margins, the line that drove the change and cash conversion.</p>
+    <p class="legal">Charts and analysis are generated by fixed rules from SEC filings; quotes are the companies\u2019 own words.
+    Not investment advice. Made by Filing Flows{made_at}.</p>
+  </div>
+  <div>
+    {company_html}
+    <dl>{facts_html}</dl>
+    {quote_html}
+  </div>
+</section>
+{''.join(extra)}
+</body></html>"""
+
+
+class Assets:
+    """Everything drawn for one run's e-mails, in one headless Chromium, each drawing made once and shared:
+    the inline JPGs, the PNG/JPG files and the PDF reports. Without Chromium the e-mails go out with links only."""
+    INLINE = {"fmt": "jpg", "width": 1400, "quality": 0.85}
+    FILE = {"png": {"fmt": "png", "width": 2400}, "jpg": {"fmt": "jpg", "width": 2400, "quality": 0.92}}
+
+    def __init__(self, site, enabled=True, charts=None):
+        self.site, self.enabled = site, enabled
+        self.ch, self.broken, self.cache = charts, not enabled, {}
+        self.own = charts is None
+
+    def close(self):
+        if self.ch is not None and self.own:
+            self.ch.__exit__(None, None, None)
+        self.ch = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+        return False
+
+    def _charts(self):
+        if self.broken:
+            return None
+        if self.ch is None:
+            try:
+                self.ch = social.Charts(self.site.src).__enter__()
+            except Exception as err:                     # e-mails still go out, with links instead of pictures
+                print(f"charts not rendered ({err.__class__.__name__}: {err}); sending without images", file=sys.stderr)
+                self.broken = True
+                return None
+        return self.ch
+
+    @staticmethod
+    def what(c, q, view, decreases=False):
+        if view == "h":
+            return ("history", history_company(c, q))
+        return ("chart", q, None if view == "std" else view, {"decreases": bool(decreases and view in ("q", "y"))})
+
+    def _get(self, key, make):
+        if key not in self.cache:
+            ch = self._charts()
+            if ch is None:
+                return None
+            try:
+                self.cache[key] = make(ch)
+            except Exception as err:
+                print(f"::warning::could not draw {key[0]} {key[1]} ({err.__class__.__name__}: {err})")
+                self.cache[key] = None
+        return self.cache[key]
+
+    def image(self, e, c, q, view, kind="inline", decreases=False):
+        o = self.INLINE if kind == "inline" else self.FILE[kind]
+        dec = bool(decreases and view in ("q", "y"))
+        return self._get((item_key(e), view + ("+dec" if dec else ""), kind),
+                         lambda ch: ch.image(self.what(c, q, view, dec), o["fmt"], width=o["width"], quality=o.get("quality")))
+
+    def pdf(self, e, c, q, views, site_url, decreases=False, detail=False):
+        def make(ch):
+            svgs = {v: ch.svg(self.what(c, q, v, decreases), view_caption(v, q)) for v in views}
+            name = H.escape(f"Filing Flows \u00b7 {social.display_name(c['profile']['name'])} {q.get('label')}")
+            return ch.pdf(report_html(e, c, q, views, svgs, site_url, decreases, detail), footer=name)
+        return self._get((item_key(e), "pdf:" + ",".join(views) + ("+dec" if decreases else "") + ("+all" if detail else ""), "pdf"),
+                         make)
+
+    def for_message(self, sub, items, site_url, full):
+        """(inline images, extras) for one reader's e-mail; extras[key] = {"inline": {view: jpg}, "files": [...]}."""
+        images, extras = {}, {}
+        if self.broken:
+            return images, extras
+        fmt = sub.get("attach_images") or "png"
+        want_pdf = sub.get("attach_pdf", True) is not False
+        dec = bool(sub.get("cmp_decreases"))
+        for e, c, q, _ in items[:full]:
+            k = item_key(e)
+            views = views_for(sub, c, q)
+            images[k] = self.image(e, c, q, "std")
+            inline = {v: self.image(e, c, q, v, decreases=dec) for v in views[1:]}
+            files = []
+            if want_pdf:
+                pdf = self.pdf(e, c, q, views, site_url, dec, bool(sub.get("changes_detail")))
+                if pdf:
+                    files.append((f"{file_base(e, q)}-report.pdf", pdf, "application", "pdf"))
+            if fmt in self.FILE:
+                for v in views:
+                    data = self.image(e, c, q, v, fmt, decreases=dec)
+                    if data:
+                        files.append((view_file(e, q, v, fmt), data, "image", "jpeg" if fmt == "jpg" else "png"))
+            extras[k] = {"inline": {v: x for v, x in inline.items() if x}, "files": files}
+        return images, extras
+
+
+def build_message(sub, items, site_url, images, sender, daily=False, requested=False, extras=None):
+    """items: [(index entry, company json, quarter, reasons)]; images: {item key: jpeg bytes} (this quarter's chart);
+    extras: {item key: {"inline": {view: jpeg}, "files": [(file name, bytes, maintype, subtype)]}} (Assets.for_message)."""
     site_url = site_url.rstrip("/")
     msg = EmailMessage()
     msg["Subject"] = subject(items, daily, requested)
@@ -340,6 +746,31 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
     cut = REQUEST_FULL_ITEMS if requested else FULL_ITEMS
     full, rest = items[:cut], items[cut:]
     n = len(items)
+    # size budget: this quarter's charts, then the extra charts, then the PDF reports, then the image files
+    extras = extras or {}
+    budget = env_int("MAIL_MAX_BYTES", MAIL_MAX_BYTES)
+    used = sum(len(images.get(item_key(e)) or b"") for e, *_ in full)
+    keep_inline, keep_files, dropped = {}, {}, 0
+    for e, *_ in full:
+        k = item_key(e)
+        keep_inline[k] = {}
+        for v, data in ((extras.get(k) or {}).get("inline") or {}).items():
+            if data and used + len(data) <= budget:
+                keep_inline[k][v] = data
+                used += len(data)
+            elif data:
+                dropped += 1
+    for want_pdf in (True, False):
+        for e, *_ in full:
+            k = item_key(e)
+            for f in (extras.get(k) or {}).get("files") or []:
+                if (f[2] == "application") != want_pdf:
+                    continue
+                if used + len(f[1]) <= budget:
+                    keep_files.setdefault(k, []).append(f)
+                    used += len(f[1])
+                else:
+                    dropped += 1
     intro = ("The report you asked for." if requested and n == 1 else f"The {n} reports you asked for." if requested
              else f"{n} new chart{'s' if n != 1 else ''} since your last digest." if daily
              else "The final figures for a quarter you first got from its earnings release."
@@ -370,24 +801,59 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
         if note:
             rich.append(f'<p style="margin:0 0 12px;padding:8px 12px;border-radius:6px;background:#dcebe2;font:14px/1.5 {FONT};'
                         f'color:#0f5134">{H.escape(note)}</p>')
-        img = images.get(item_key(e))
-        if img:
+        k = item_key(e)
+
+        def pic(img, link, alt, fname):
             cid = make_msgid(domain="filing-flows")
-            related.append((img, cid, re.sub(r"[^A-Za-z0-9.]+", "-", f"{e.get('ticker') or e['cik']}-{q.get('label')}") + ".jpg"))
-            pic = (f'<img src="cid:{cid[1:-1]}" width="632" alt="{H.escape(q.get("title") or name)} Sankey chart" '
+            related.append((img, cid, fname))
+            tag = (f'<img src="cid:{cid[1:-1]}" width="632" alt="{H.escape(alt)}" '
                    f'style="display:block;width:100%;max-width:632px;height:auto;border:1px solid {LINE};border-radius:6px">')
-            rich.append((f'<a href="{H.escape(url)}">{pic}</a>' if url else pic) + '<div style="height:14px"></div>')
+            return (f'<a href="{H.escape(link)}">{tag}</a>' if link else tag) + '<div style="height:14px"></div>'
+
+        def changed(cmp, fallback):
+            if not cmp.get("bullets"):
+                return
+            text.append(f"What changed vs {cmp.get('vs')}:")
+            text.extend([f"- {b}" for b in cmp["bullets"]] + [""])
+            rich.append(f'<p style="margin:4px 0 6px;font:600 15px/1.4 {FONT};color:{INK}">What changed vs {H.escape(cmp.get("vs") or fallback)}</p>'
+                        f'<ul style="margin:0 0 12px;padding-left:20px;font:15px/1.55 {FONT};color:{INK}">'
+                        + "".join(f'<li style="margin:0 0 4px">{H.escape(b)}</li>' for b in cmp["bullets"]) + "</ul>")
+
+        def extra_chart(view, cmp, link):
+            img = keep_inline.get(k, {}).get(view)
+            if not img:
+                return
+            if cmp:
+                rich.append(f'<p style="margin:0 0 8px;font:13px/1.5 {FONT};color:{MUTED}">'
+                            f'{H.escape(cmp_note(cmp.get("vs"), sub.get("cmp_decreases")))}</p>')
+            rich.append(pic(img, link, f"{name} {q.get('label')}: {view_caption(view, q).lower()}", view_file(e, q, view, "jpg")))
+
+        about = intro_text(c, 420)
+        if about:
+            text += [f"About the company: {about} ({intro_source(c)})", ""]
+            rich.append(f'<p style="margin:0 0 14px;padding:2px 0 2px 12px;border-left:3px solid #a8d1b9;font:14px/1.55 {FONT};color:{INK2}">'
+                        f'{H.escape(about)}<span style="display:block;margin-top:3px;font-size:12.5px;color:{MUTED}">'
+                        f'{H.escape(intro_source(c))}</span></p>')
+        img = images.get(k)
+        if img:
+            rich.append(pic(img, url, f"{q.get('title') or name} Sankey chart".replace("&amp;", "&"), view_file(e, q, "std", "jpg")))
         for para in q.get("analysis") or []:
             text.append(para)
             text.append("")
             rich.append(f'<p style="{p_style}">{H.escape(para)}</p>')
-        cy = q.get("compare_y") or {}
-        if cy.get("bullets"):
-            text.append(f"What changed vs {cy.get('vs')}:")
-            text += [f"- {b}" for b in cy["bullets"]] + [""]
-            rich.append(f'<p style="margin:4px 0 6px;font:600 15px/1.4 {FONT};color:{INK}">What changed vs {H.escape(cy.get("vs") or "a year earlier")}</p>'
-                        f'<ul style="margin:0 0 12px;padding-left:20px;font:15px/1.55 {FONT};color:{INK}">'
-                        + "".join(f'<li style="margin:0 0 4px">{H.escape(b)}</li>' for b in cy["bullets"]) + "</ul>")
+        views = views_for(sub, c, q)
+        changed(q.get("compare_y") or {}, "a year earlier")
+        if "y" in views:
+            extra_chart("y", q.get("compare_y") or {}, url)
+        if "q" in views:
+            changed(q.get("compare") or {}, "the previous quarter")
+            extra_chart("q", q.get("compare") or {}, url)
+        if sub.get("changes_detail"):
+            text.extend(changes_text(q))
+            rich.append(changes_email_html(q))
+        if "h" in views and keep_inline.get(k, {}).get("h"):
+            rich.append(f'<p style="margin:4px 0 6px;font:600 15px/1.4 {FONT};color:{INK}">Quarter by quarter</p>')
+            extra_chart("h", None, f"{site_url}/#c-{e['cik']}-all" if site_url else "")
         quote = social.filing_quote(q)
         if quote:
             words = quote[0] if len(quote[0]) <= 700 else quote[0][:700].rsplit(" ", 1)[0] + " …"
@@ -396,6 +862,10 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
                         f'“{H.escape(words)}”<div style="margin-top:4px;font-size:13px;color:{MUTED}">— {H.escape(quote[1])}</div></blockquote>')
         links = [(u, label) for u, label in ((url, "Open the interactive chart"), (q.get("index_url"), "The filing on SEC EDGAR")) if u]
         text += [f"{label}: {u}" for u, label in links]
+        files = [f[0] for f in keep_files.get(k, [])]
+        if files:
+            text.append(f"Attached: {', '.join(files)}")
+            rich.append(f'<p style="margin:0 0 8px;font:13px/1.5 {FONT};color:{MUTED}">Attached: {H.escape(", ".join(files))}</p>')
         text += [f"Why you got this: {'; '.join(why)}.", ""]
         rich.append(f'<p style="margin:0 0 8px;font:600 14.5px/1.5 {FONT}">'
                     + " &nbsp;·&nbsp; ".join(f'<a href="{H.escape(u)}" style="color:{ACCENT}">{label}</a>' for u, label in links) + "</p>"
@@ -419,6 +889,9 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
                     f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">{"".join(rows)}</table></td></tr>')
     foot = ("Charts and analysis are generated by fixed rules from SEC filings; quotes are the companies' own words. "
             "Not investment advice.")
+    if dropped:
+        foot = (f"Some files were left out to keep this e-mail under {budget // 1_000_000} MB; the interactive chart "
+                "exports any view as PNG, JPG or PDF. ") + foot
     text += ["-" * 64, foot]
     if manage:
         text.append(f"Change what you get: {manage}")
@@ -439,7 +912,10 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
     msg.add_alternative(html, subtype="html")
     part = msg.get_payload()[1]
     for img, cid, fname in related:
-        part.add_related(img, maintype="image", subtype="jpeg", cid=cid, filename=fname)
+        part.add_related(img, maintype="image", subtype="jpeg", cid=cid, filename=fname, disposition="inline")
+    for e, *_ in full:
+        for fname, data, maintype, subtype in keep_files.get(item_key(e), []):
+            msg.add_attachment(data, maintype=maintype, subtype=subtype, filename=fname)
     return msg
 
 
@@ -478,16 +954,12 @@ class Mailer:
 
 
 def render_images(site, wanted):
-    """{item key: (index entry, quarter)} -> {item key: jpeg}; empty when Chromium is not available."""
+    """{item key: (index entry, quarter)} -> {item key: jpeg} of this quarter's chart; empty without Chromium."""
     if not wanted:
         return {}
-    try:
-        keys = list(wanted)
-        jpgs = social.render_charts(site.src, [(wanted[k][1], None) for k in keys], fmt="jpg", width=1400, quality=0.85)
-        return dict(zip(keys, jpgs))
-    except Exception as err:                                  # e-mails still go out, with a link instead
-        print(f"charts not rendered ({err.__class__.__name__}: {err}); sending without images", file=sys.stderr)
-        return {}
+    with Assets(site) as a:
+        out = {k: a.image(e, None, q, "std") for k, (e, q) in wanted.items()}
+    return {k: v for k, v in out.items() if v}
 
 
 def _load_items(site, cache, pairs):
@@ -542,7 +1014,7 @@ def find_quarter(site, cik, end):
     return c, (best[1] if best else None)
 
 
-def process_requests(site, supa, mailer, sender, site_url, now, dry_run, images, budget):
+def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets, budget):
     """E-mail the reports readers asked for with "Email me". Returns the number of e-mails sent."""
     if dry_run:
         reqs = supa.select("send_requests", {"select": "id,user_id,cik,period_end,attempts,created_at", "status": "eq.pending"})
@@ -551,8 +1023,8 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, images,
     if not reqs:
         return 0
     users = sorted({r["user_id"] for r in reqs})
-    subs = {s_["user_id"]: s_ for s_ in supa.select("subscriptions", {
-        "select": "user_id,email,unsub_token", "user_id": f"in.({','.join(users)})"})}
+    subs = {s_["user_id"]: s_ for s_ in supa.select("subscriptions", {          # "*": works before and after new columns
+        "select": "*", "user_id": f"in.({','.join(users)})"})}
     by_user = {}
     for r in reqs:
         by_user.setdefault(r["user_id"], []).append(r)
@@ -588,10 +1060,9 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, images,
         for _, _, ok_rows, _ in jobs[max(budget, 0):]:
             finish(ok_rows, status="pending", claimed_at=None)
         jobs = jobs[:max(budget, 0)]
-    wanted = {item_key(e): (e, q) for _, _, _, items in jobs for e, c, q, _ in items}
-    pics = render_images(site, wanted) if images and not dry_run else {}
     for sub, rows, ok_rows, items in jobs:
-        msg = build_message(sub, items, site_url, pics, sender, requested=True)
+        pics, extras = assets.for_message(sub, items, site_url, REQUEST_FULL_ITEMS)
+        msg = build_message(sub, items, site_url, pics, sender, requested=True, extras=extras)
         if _send(mailer, msg, dry_run, mask(sub["email"])):
             finish(ok_rows, status="sent", sent_at=_now_iso(), error=None)
             sent += 1
@@ -630,28 +1101,24 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
         return n
 
     sent = 0
+    assets = Assets(site, enabled=images and not dry_run)
     try:
-        sent += process_requests(site, supa, mailer, sender, site_url, now, dry_run, images, budget)
+        sent += process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets, budget)
         budget -= sent
         if requests_only:
             return sent
         ix = site.json("index.json")
-        subs = supa.select("subscriptions", {"select": "user_id,email,tickers,sectors,all_above,min_revenue,starred,frequency,"
-                                             "email_on,final_too,unsub_token,created_at", "email_on": "is.true",
-                                             "order": "created_at.asc"})
+        subs = supa.select("subscriptions", {"select": "*", "email_on": "is.true", "order": "created_at.asc"})
         todo = plan(subs, dels, ix, now, hour, MAX_AGE_DAYS)
         print(f"{len(subs)} readers with e-mail on; {len(todo)} due now; {max(budget, 0)} e-mails left in the 24-hour limit")
         if budget < len(todo):
             print(f"::warning::daily e-mail limit reached; {len(todo) - max(budget, 0)} readers wait for the next run")
             todo = todo[:max(budget, 0)]
-        cache, wanted = {}, {}
+        cache = {}
         loaded = [(sub, _load_items(site, cache, items)) for sub, items in todo]
         for sub, items in loaded:
-            for e, c, q, _ in items[:FULL_ITEMS]:
-                wanted[item_key(e)] = (e, q)
-        pics = render_images(site, wanted) if images and not dry_run and loaded else {}
-        for sub, items in loaded:
-            msg = build_message(sub, items, site_url, pics, sender, daily=sub.get("frequency") == "daily")
+            pics, extras = assets.for_message(sub, items, site_url, FULL_ITEMS)
+            msg = build_message(sub, items, site_url, pics, sender, daily=sub.get("frequency") == "daily", extras=extras)
             if not _send(mailer, msg, dry_run, mask(sub["email"])):
                 continue
             if dry_run:
@@ -663,6 +1130,7 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
             sent += 1
             print(f"e-mailed {mask(sub['email'])}: {msg['Subject']}")
     finally:
+        assets.close()
         if mailer:
             mailer.close()
     if not dry_run and not requests_only:
