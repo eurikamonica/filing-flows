@@ -224,7 +224,7 @@
         body = `<p class="empty">${ctx.form === '8-K' ? 'The earnings release has no passage about this line.' : `The ${t(ctx.form)} has no separate MD&amp;A passage about this line.`}</p>`;
       }
       const trend = ctx.trend ? trendBlock(ctx.trend(n.id), n) : '';
-      const source = n.source ? `<p class="node-src">${t(n.source)}</p>` : '';    // where the figure was taken from
+      const source = sourceBlock(n, spec.cite, ctx.cik);                    // where the figure was taken from
       return `<div class="eyebrow">${ctx.group ? t(ctx.groupName) : t(ctx.company)} · ${t(ctx.label)}</div>
         <div class="k">${t(n.name)}</div><div class="v">${lines}</div>${source}${trend}${body}
         <button class="btn" type="button" data-clear>Close note</button>`;
@@ -517,7 +517,7 @@
       company: S.dec(p.name), form: q.form, label: q.label, docUrl: q.doc_url,
       slug: `${(ticker || p.cik)}-${q.label}`.replace(/\s+/g, '-'),
       onView: () => renderChanges(),
-      trend: (id) => trendSeries(fy ? ys : qs, q, id, fy),
+      trend: (id) => trendSeries(fy ? ys : qs, q, id, fy), cik: p.cik,
     });
     body.appendChild(ui);
     const acc = accession(q.index_url);
@@ -645,6 +645,22 @@
         `<td class="num ${tone(x.headline.yoy)}">${pct(x.headline.yoy)}</td>`, `<td class="num">${margin(x.headline.om)}</td>`,
         `<td class="num">${money(x.headline.ni)}</td>`, `<td class="num">${money(ocf(x))}</td>`])).join('')}
       </tbody></table></div></div>`;
+  }
+
+  // ---------- where a figure comes from: the line or calculation, the filing it is in, links to check it ----------
+  function sourceBlock(n, cite, cik) {
+    if (!n.source && !cite) return '';
+    const links = [];
+    if (cite && cite.doc) links.push([cite.doc, /Exhibit 99/.test(cite.text) ? 'Press release' : 'The filing']);
+    if (cite && cite.ix) links.push([cite.ix, 'Inline XBRL viewer']);
+    const tag = /^us-gaap:(\w+)$/.exec(n.tag || '');
+    if (tag && cik) links.push([`https://data.sec.gov/api/xbrl/companyconcept/CIK${String(cik).padStart(10, '0')}/us-gaap/${tag[1]}.json`,
+      `XBRL data for ${tag[1]}`]);
+    if (cite && cite.index) links.push([cite.index, 'Filing index']);
+    return `<div class="node-src"><div class="eyebrow">Source</div>
+      ${n.source ? `<p>${t(n.source)}</p>` : ''}
+      ${cite ? `<p class="cite">${t(cite.text)}.</p>` : ''}
+      ${links.length ? `<p class="links">${links.map(([u, l]) => `<a href="${t(u)}" target="_blank" rel="noopener">${t(l)} ↗</a>`).join(' · ')}</p>` : ''}</div>`;
   }
 
   // ---------- a node's last five quarters (or fiscal years), in its note ----------
@@ -919,7 +935,7 @@
       <p class="muted">Drawn on request from SEC data${row.done_at ? ` on ${date(row.done_at)}` : ''}. Band width is ${t(cu.a_label)}; a dark strip is the increase over ${t(cu.b_label)}.
         <a href="#c-${cik}">Back to the latest chart</a></p></div>`;
     const ui = chartUI(spec, {
-      company: S.dec(p.name), form: spec.form, label: spec.label, docUrl: spec.doc_url, custom: true,
+      company: S.dec(p.name), form: spec.form, label: spec.label, docUrl: spec.doc_url, custom: true, cik: p.cik,
       slug: slug(`${ticker || cik}-${cu.a_label}`), vsSlug: slug(cu.b_label), onView: () => {},
     });
     body.appendChild(ui);

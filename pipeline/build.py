@@ -115,19 +115,34 @@ def periods_of(fx):
     return {"q": facts.quarter_ends(fx)[-PERIODS_Q:], "fy": facts.year_ends(fx)[-PERIODS_FY:]}
 
 
+def _needs_facts(c):
+    """Stored before the period list or the per-figure sources existed."""
+    return c.get("periods") is None or any(q.get("src") is None and q.get("form") != "8-K" for q in c["quarters"].values()) \
+        or any(y.get("src") is None for y in (c.get("years") or {}).values())
+
+
 def refresh_periods(store, limit=PERIODS_PER_RUN):
-    """Companies stored before the period list existed get it (largest first), a few per run."""
+    """Companies stored before the period list or the per-figure sources existed get them from SEC's company facts
+    (largest first, a few per run): which tag each stored figure was read from, with SEC's standard label."""
     todo = []
     for cik in store.ciks():
         c = store.company(cik)
-        if c.get("periods") is None and c.get("quarters") and c.get("profile"):
+        if c.get("quarters") and c.get("profile") and _needs_facts(c):
             last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
             todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik))
     n = 0
     for _, cik in sorted(todo)[:limit]:
         try:
             c = store.company(cik)
-            c["periods"] = periods_of(companyfacts(cik))
+            fx = companyfacts(cik)
+            if c.get("periods") is None:
+                c["periods"] = periods_of(fx)
+            for q in c["quarters"].values():
+                if q.get("src") is None and q.get("form") != "8-K":
+                    q["src"] = sources.from_xbrl(fx, q["end"])
+            for y in (c.get("years") or {}).values():
+                if y.get("src") is None:
+                    y["src"] = sources.from_xbrl(fx, y["end"], annual=True)
             store.put(cik, c)
             n += 1
         except Exception as e:
@@ -135,7 +150,7 @@ def refresh_periods(store, limit=PERIODS_PER_RUN):
         finally:
             _cf.pop(cik, None)                            # big files: do not keep them all in memory
     if todo:
-        print(f"period lists: {n} companies updated, {max(len(todo) - n, 0)} to go")
+        print(f"period lists and sources: {n} companies updated, {max(len(todo) - n, 0)} to go")
 
 
 def recent_rows(sub):
@@ -876,6 +891,7 @@ def quarter_payload(c, q, prev_q):
         compare_y = {"vs": py_name, "title": f"{name} {q['label']} vs {py_name}: what changed",
                      "bullets": analysis.compare_bullets(f, py_name, Nc, Ny, ls, (q.get("lines"), q.get("lines_py"), None))}
     return {
+        "cite": sources.citation(name, q),
         "compare": compare, "compare_y": compare_y, "preliminary": q["form"] == "8-K",
         "release_check": q.get("from_release"),
         "end": q["end"], "label": q["label"], "cal": q["cal"], "form": q["form"], "filed": q["filed"],
@@ -948,6 +964,7 @@ def year_payload(c, y):
     foot.append("Working capital &amp; other is the residual between operating cash flow and the listed items."
                 + (" FCF = operating cash flow minus capital expenditures." if Nc.get("capex") else ""))
     return {
+        "cite": sources.citation(name, y, "fy"),
         "period": "fy", "key": "fy-" + y["end"], "compare": None, "compare_y": compare_y, "preliminary": False,
         "end": y["end"], "label": y["label"], "cal": f"FY{y['fy']}", "form": y["form"], "filed": y["filed"],
         "doc_url": y.get("doc_url"), "index_url": y.get("index_url"), "kind": kind,

@@ -123,7 +123,7 @@ def comparison(cik, kind, a_end, b_end):
                 lines_b = {m: pv[m][1] for m in ids if m in pv} or None
 
     c = {"profile": profile, "quarters": {a_end: {"label": A["label"]}, b_end: {"label": B["label"]}}}
-    q = {"end": a_end, "label": A["label"], "cal": A["cal"], "form": A["form"], "filed": A["filed"] or "",
+    q = {"end": a_end, "label": A["label"], "cal": A["cal"], "form": A["form"], "filed": A["filed"] or "", "accn": A.get("accn"),
          "doc_url": A.get("doc_url"), "index_url": A.get("index_url"), "raw": A["raw"],
          "q1_end": b_end, "raw_q1": B["raw"], "py_end": None, "raw_py": None,
          "lines_struct": ls, "lines": lines_a, "lines_q1": lines_b, "lines_py": None, "notes": {},

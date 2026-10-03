@@ -29,6 +29,33 @@ def from_release(rel, raw):
     return out
 
 
+def _long_date(s):
+    import datetime as _dt
+    try:
+        return _dt.date.fromisoformat(str(s)[:10]).strftime("%B %-d, %Y")
+    except (TypeError, ValueError):
+        return str(s or "")
+
+
+def ix_url(doc_url):
+    """SEC's inline XBRL viewer for a filing's primary document (click any number to see its tag)."""
+    m = re.search(r"https?://www\.sec\.gov(/Archives/edgar/data/.+\.html?)$", doc_url or "", re.I)
+    return f"https://www.sec.gov/ix?doc={m.group(1)}" if m else None
+
+
+def citation(company, q, period="q"):
+    """How to cite the filing a chart was read from, with links: the document, SEC's inline XBRL viewer (10-Q/10-K),
+    the filing index. Shared by every node of the chart."""
+    form = q.get("form") or ""
+    acc = re.search(r"(\d{10}-\d{2}-\d{6})", q.get("index_url") or "") or re.search(r"(\d{10}-\d{2}-\d{6})", q.get("accn") or "")
+    span = "fiscal year" if period == "fy" else "quarter"
+    what = "Form 8-K, Exhibit 99.1 (earnings release)" if form == "8-K" else f"Form {form}"
+    text = (f"{company}, {what} for the {span} ended {_long_date(q.get('end'))}, filed {_long_date(q.get('filed'))}"
+            + (f" (accession {acc.group(1)})" if acc else ""))
+    return {"text": text, "doc": q.get("doc_url"), "ix": ix_url(q.get("doc_url")) if form != "8-K" else None,
+            "index": q.get("index_url")}
+
+
 def _quote(s):
     return f"“{s['l']}”" if s and s.get("l") else "the line"
 
@@ -121,8 +148,11 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
         elif nid in ("tax", "taxben"):
             out = get("tax") or "Calculated: pre-tax earnings − net earnings."
         elif nid in ("net", "netinc", "netloss"):
-            out = get("ni") if n.get("name", "").startswith("Net earnings") and "attributable" in " ".join(
-                str(x[1]) for x in n.get("lines") or []) else (get("pl") or get("ni"))
+            attributable = "attributable" in " ".join(str(x[1]) for x in n.get("lines") or [])
+            key = "ni" if attributable or not src.get("pl") else "pl"
+            out = get(key)
+            if out:
+                n["_tagkey"] = key
         elif nid == "nci":
             out = get("nci") or CALC["nci"]
         elif nid in ("ocf", "burn"):
@@ -147,4 +177,13 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
             out = CALC["loss_abs"]
         if out:
             n["source"] = re.sub(r"\s+", " ", out).strip()
+            tag = (src.get(n.pop("_tagkey", None) or TAG_KEY.get(nid, "")) or {}).get("c") \
+                if out.startswith("Reported line") else None
+            if tag:
+                n["tag"] = tag                          # the site links SEC's XBRL data for this tag
     return nodes
+
+
+TAG_KEY = {"revenue": "revenue", "gp": "gp", "I:cor": "cor", "I:rd": "rd", "I:sm": "sm", "I:ga": "ga", "I:sga": "sga",
+           "oi": "oi", "pretax": "pretax", "tax": "tax", "taxben": "tax", "net": "ni", "netinc": "pl", "netloss": "pl",
+           "nci": "nci", "ocf": "ocf", "burn": "ocf", "da": "da", "sbc": "sbc", "capex": "capex"}
