@@ -20,7 +20,7 @@ import os
 import re
 import sys
 
-from . import build, dims, facts, sec
+from . import build, dims, facts, sec, sources
 from .notify import Supa, setting
 
 MAX_CHARTS_PER_RUN = 40
@@ -127,7 +127,7 @@ def comparison(cik, kind, a_end, b_end):
          "doc_url": A.get("doc_url"), "index_url": A.get("index_url"), "raw": A["raw"],
          "q1_end": b_end, "raw_q1": B["raw"], "py_end": None, "raw_py": None,
          "lines_struct": ls, "lines": lines_a, "lines_q1": lines_b, "lines_py": None, "notes": {},
-         "capex_src": _capex_src(fx, A["raw"], a_end, kind)}
+         "capex_src": _capex_src(fx, A["raw"], a_end, kind), "src": sources.from_xbrl(fx, a_end, None, kind == "fy")}
     pl = build.quarter_payload(c, q, None)
     if not pl:
         raise ValueError("the figures for these periods do not add up to a chart")

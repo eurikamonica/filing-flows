@@ -122,6 +122,22 @@ def source(facts, key, end, annual=False):
     return best[1] if best else None
 
 
+def _quarter_how(per, end):
+    """'3m' when a three-month fact exists for the quarter ending `end`, else 'ytd' (year-to-date minus the prior)."""
+    return "3m" if any(e == end and 75 <= (d(end) - d(s)).days <= 100 for (s, e) in per) else "ytd"
+
+
+def provenance(facts, end, annual=False):
+    """{key: {"c": concept, "ytd": True when the quarter is year-to-date minus the prior year-to-date}} for every
+    figure found for the period: which tag each number on the chart was read from."""
+    out = {}
+    for key in CONCEPTS:
+        concept = source(facts, key, end, annual)
+        if concept:
+            out[key] = {"c": concept, "ytd": (not annual) and _quarter_how(facts[concept], end) == "ytd"}
+    return out
+
+
 def ytd_value(facts, key, end):
     """Year-to-date value ending at `end` (the longest duration reported), e.g. nine months of cash flow."""
     vals = []

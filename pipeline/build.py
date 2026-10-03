@@ -12,7 +12,7 @@ import re
 import sys
 import traceback
 
-from . import analysis, dims, facts, release, scan, sec, sectors, social, text
+from . import analysis, dims, facts, release, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -217,11 +217,15 @@ def process_filing(store, cik, accn, form, starred=False):
             c["dims_ytd"] = dict(sorted(c["dims_ytd"].items())[-6:])
     except (sec.NotFound, Exception) as e:                       # breakdown is optional
         print(f"  dims skipped for {cik} {accn}: {e}", file=sys.stderr)
-    capex_src = None
+    capex_src = src = None
     try:
         capex_src = capex_from_filing(cik, sub, fx, raw, comp, end, inst_text, lab_text)
     except Exception as e:
         print(f"  capex source skipped for {cik} {accn}: {e}", file=sys.stderr)
+    try:                                                  # which line and tag every figure was read from
+        src = sources.from_xbrl(fx, end, dims.label_roles(lab_text) if lab_text else None)
+    except Exception as e:
+        print(f"  sources skipped for {cik} {accn}: {e}", file=sys.stderr)
 
     # the company's own words: MD&A notes and Item 1 introduction
     notes, doc = {}, None
@@ -259,7 +263,7 @@ def process_filing(store, cik, accn, form, starred=False):
         "accn": accn, "filed": row.get("filingDate"), "doc_url": doc_url,
         "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm",
         "raw": raw, **comp, "lines_struct": lines_struct, "lines": lines_cur, "lines_py": lines_py, "notes": notes,
-        "capex_src": capex_src,
+        "capex_src": capex_src, "src": src,
     }
     e0 = dt.date.fromisoformat(end)                               # the 10-Q/10-K replaces a preliminary 8-K quarter
     releases = [replaced] if replaced else []
@@ -290,6 +294,11 @@ def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_tex
     py_end = facts.prior_year_end(fx, end)
     comp = {"py_end": py_end, "raw_py": facts.extract(fx, py_end, annual=True) if py_end else None}
     try:
+        src = sources.from_xbrl(fx, end, dims.label_roles(lab_text) if lab_text else None, annual=True)
+    except Exception as e:
+        print(f"  annual sources skipped for {cik} {accn}: {e}", file=sys.stderr)
+        src = None
+    try:
         capex_src = capex_from_filing(cik, None, fx, raw, comp, end, inst_text, lab_text, annual=True)
     except Exception as e:
         print(f"  annual capex source skipped for {cik} {accn}: {e}", file=sys.stderr)
@@ -312,7 +321,7 @@ def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_tex
     label, fy = facts.fiscal_year_label(end, c["profile"]["fye"])
     return {"end": end, "label": label, "fy": fy, "form": form, "accn": accn, "filed": row.get("filingDate"),
             "doc_url": doc_url, "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", "period": "fy",
-            "raw": raw, "py_end": py_end, "raw_py": comp["raw_py"], "capex_src": capex_src,
+            "raw": raw, "py_end": py_end, "raw_py": comp["raw_py"], "capex_src": capex_src, "src": src,
             "lines_struct": ls, "lines": cur, "lines_py": prev, "notes": notes}
 
 
@@ -387,14 +396,7 @@ def capex_note(src):
     return f"Capital expenditures = the cash-flow line “{lab}” ({tag}{own}), from {where}."
 
 
-def _sources(nodes, capex_src):
-    for n in nodes:
-        if n["id"] == "capex":
-            note = capex_note(capex_src)
-            if note:
-                n["source"] = note
-        elif n["id"] in ("fcf", "fcf_neg"):
-            n["source"] = FCF_NOTE
+
 
 
 EXHIBIT_PATTERNS = (r"ex[-_]?99[-_.]?0?1(?!\d)", r"ex[-_]?99", r"press|release|earnings")
@@ -614,6 +616,7 @@ def process_release(store, cik, accn, form, starred=False):
         "lines_py": segs and segs.get("py"), "notes": notes,
         "capex_src": ({"label": (rel.get("cf_labels") or {}).get("capex"), "how": "release"}
                       if raw.get("capex") is not None else None),
+        "src": sources.from_release(rel, raw),
     }
     keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
     c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
@@ -855,7 +858,7 @@ def quarter_payload(c, q, prev_q):
             if k and k in notes:
                 n["notes"] = notes[k]
                 break
-    _sources(nodes, q.get("capex_src"))
+    sources.attach(nodes, q.get("src"), Nc, ls, "q", q.get("capex_src"))
     f = Fmt(Nc["R"])
     labels = {e: x["label"] for e, x in c["quarters"].items()}
     py_label = labels.get(q.get("py_end")) or "a year earlier"
@@ -927,7 +930,7 @@ def year_payload(c, y):
                 ln[1] = ln[1].split(" · Q/Q ")[0]
         n.pop("q", None)
         n.pop("cmp", None)
-    _sources(nodes, y.get("capex_src"))
+    sources.attach(nodes, y.get("src"), Nc, ls, "fy", y.get("capex_src"))
     for l in links:
         l.pop("q", None)
     f = Fmt(Nc["R"])
