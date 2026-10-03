@@ -120,6 +120,18 @@ def fdate(s):
     return dt.date.fromisoformat(s[:10]).strftime("%b %-d, %Y") if s else ""
 
 
+def filing_quote(q):
+    """The company's own words about its revenue (or its largest revenue line): (paragraph, where it is from)."""
+    nodes = {n["id"]: n for n in q["nodes"]}
+    order = [nodes.get("revenue")] + sorted([n for n in q["nodes"] if n["id"].startswith("L:")], key=lambda n: -n["v"])
+    for n in order:
+        if n and n.get("notes"):
+            where = ("earnings release" if q.get("form") == "8-K"
+                     else f"{q.get('form')} ({'Item 7' if q.get('form') == '10-K' else 'Item 2'}, MD&A)")
+            return n["notes"][0]["text"].split("\n")[0], where
+    return None
+
+
 # ------------------------------------------------------------------ the thread
 def compose(c, q, cfg):
     p = c["profile"]
@@ -167,15 +179,9 @@ def compose(c, q, cfg):
         posts.append(fit(f"About {name}, in its own words: “", text, "”" + src))
     posts += pack(q.get("analysis") or [], max_posts=2)
 
-    note = None                                    # the company's own words about its revenue
-    order = [nodes.get("revenue")] + sorted([n for n in q["nodes"] if n["id"].startswith("L:")], key=lambda n: -n["v"])
-    for n in order:
-        if n and n.get("notes"):
-            note = (n, n["notes"][0]["text"])
-            break
+    note = filing_quote(q)
     if note:
-        where = "earnings release" if prelim else f"{q.get('form')} ({'Item 7' if q.get('form') == '10-K' else 'Item 2'}, MD&A)"
-        posts.append(fit("From the filing: “", note[1].split("\n")[0], f"” — {where}"))
+        posts.append(fit("From the filing: “", note[0], f"” — {note[1]}"))
 
     acc = re.search(r"(\d{10}-\d{2}-\d{6})", q.get("index_url") or "")
     src = (f"Source: SEC EDGAR, {form} filed {fdate(q.get('filed'))}" + (f", accession {acc.group(1)}" if acc else "") + ". "
@@ -247,35 +253,42 @@ def quarter_of(site, e):
 
 
 # ------------------------------------------------------------------ chart images (the site's own renderer, headless)
-def render_charts(site, jobs):
-    """jobs: list of (spec, compare mode or None) -> list of PNG bytes, drawn by web/sankey.js in Chromium."""
+def render_charts(site, jobs, fmt="png", scale=2, quality=None, width=None):
+    """jobs: list of (spec, compare mode or None) -> list of image bytes, drawn by web/sankey.js in Chromium.
+    site: the built site folder, or the URL of the published site."""
     from playwright.sync_api import sync_playwright
 
-    class Quiet(http.server.SimpleHTTPRequestHandler):
-        def log_message(self, *a):
-            pass
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=os.path.abspath(site)))
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    srv = None
+    if re.match(r"https?://", str(site)):
+        base = str(site).rstrip("/") + "/"
+    else:
+        class Quiet(http.server.SimpleHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=os.path.abspath(site)))
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{srv.server_address[1]}/"
     out = []
     try:
         with sync_playwright() as pw:
             b = pw.chromium.launch()
             pg = b.new_page()
-            pg.goto(f"http://127.0.0.1:{srv.server_address[1]}/index.html#method")
+            pg.goto(base + "index.html#method")
             pg.wait_for_function("window.Sankey && document.fonts")
             for spec, mode in jobs:
-                b64 = pg.evaluate("""async ([spec, mode]) => {
+                b64 = pg.evaluate("""async ([spec, mode, fmt, opts]) => {
                   await document.fonts.ready;
-                  const blob = await Sankey.exportScene(Sankey.layout(spec, { compare: mode }), 'png');
+                  const blob = await Sankey.exportScene(Sankey.layout(spec, { compare: mode }), fmt, opts);
                   const buf = new Uint8Array(await blob.arrayBuffer());
                   let s = '';
                   for (let i = 0; i < buf.length; i += 32768) s += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
                   return btoa(s);
-                }""", [spec, mode])
+                }""", [spec, mode, fmt, {"scale": scale, "quality": quality, "width": width}])
                 out.append(base64.b64decode(b64))
             b.close()
     finally:
-        srv.shutdown()
+        if srv:
+            srv.shutdown()
     return out
 
 
@@ -375,11 +388,25 @@ def build_email(items, cfg, sender, to):
     return msg
 
 
-def send_email(msg, user, password, host="smtp.gmail.com", port=465):
+def sender_address(user):
+    """The From line: MAIL_FROM when set (another provider, your own domain), else the login address."""
+    return os.environ.get("MAIL_FROM") or user
+
+
+def send_email(msg, user, password, host=None, port=None):
+    """SMTP_HOST / SMTP_PORT choose the provider (default Gmail, port 465 over SSL; 587 uses STARTTLS)."""
     import smtplib
-    with smtplib.SMTP_SSL(host, port, timeout=60) as smtp:
-        smtp.login(user, password)
-        smtp.send_message(msg)
+    host = host or os.environ.get("SMTP_HOST") or "smtp.gmail.com"
+    port = int(port or os.environ.get("SMTP_PORT") or 465)
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, timeout=60) as smtp:
+            smtp.login(user, password)
+            smtp.send_message(msg)
+    else:
+        with smtplib.SMTP(host, port, timeout=60) as smtp:
+            smtp.starttls()
+            smtp.login(user, password)
+            smtp.send_message(msg)
 
 
 def batches(items, max_bytes=MAIL_MAX_BYTES):
@@ -397,6 +424,23 @@ def batches(items, max_bytes=MAIL_MAX_BYTES):
     return out
 
 
+def send_one(site, cfg, cik, end):
+    """E-mail one company quarter's thread with its charts, whatever was sent before (the site's "Email me" button)."""
+    user, password = os.environ.get("MAIL_USERNAME", ""), os.environ.get("MAIL_PASSWORD", "")
+    if not (user and password):
+        raise SystemExit("MAIL_USERNAME and MAIL_PASSWORD secrets are required")
+    e = {"cik": int(cik), "end": end}
+    c, q = quarter_of(site, e)
+    if q["end"] != end:
+        raise SystemExit(f"no quarter ending {end} on the site for CIK {cik}")
+    e["ticker"] = (c["profile"].get("tickers") or [""])[0]
+    modes = [None] + (["y"] if "year_ago" in cfg["images"] and q.get("compare_y") else [])
+    pngs = render_charts(site, [(q, m) for m in modes])
+    item = (e, c, q, compose(c, q, cfg), list(zip(image_names(e, q, len(modes)), pngs)))
+    send_email(build_email([item], cfg, sender_address(user), os.environ.get("MAIL_TO") or user), user, password)
+    print(f"e-mailed {e['ticker'] or cik} {q['label']}")
+
+
 # ------------------------------------------------------------------ main
 def main():
     ap = argparse.ArgumentParser()
@@ -405,8 +449,12 @@ def main():
     ap.add_argument("--config", default="config/x.json")
     ap.add_argument("--check", action="store_true", help="exit 0 if sending is set up and something is waiting")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--one", metavar="CIK:END", help="e-mail the thread for one company quarter now (on request)")
     args = ap.parse_args()
     cfg, st = load_cfg(args.config), load_state(args.store)
+    if args.one:
+        send_one(args.site, cfg, *args.one.split(":", 1))
+        return
     mode = cfg.get("mode", "email")
     keys = {k: os.environ.get(k, "") for k in (MAIL_SECRETS if mode == "email" else SECRETS)}
     ready = cfg["enabled"] and mode in ("email", "api") and all(keys.values())
@@ -436,7 +484,8 @@ def main():
     if mode == "email":
         to = os.environ.get("MAIL_TO") or keys["MAIL_USERNAME"]
         for group in batches(items):
-            send_email(build_email(group, cfg, keys["MAIL_USERNAME"], to), keys["MAIL_USERNAME"], keys["MAIL_PASSWORD"])
+            send_email(build_email(group, cfg, sender_address(keys["MAIL_USERNAME"]), to),
+                       keys["MAIL_USERNAME"], keys["MAIL_PASSWORD"])
             for e, c, q, *_ in group:
                 st["posted"][f"{e['cik']}:{e['end']}"] = {"t": now(), "via": "email"}
                 print(f"e-mailed {e.get('ticker') or e['cik']} {q['label']}")

@@ -21,6 +21,8 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
 - **Segments from releases**: revenue by business unit or product is read from the release when a table of rows
   adds up to total revenue; its other columns supply Q/Q and Y/Y when they match the earlier quarters in XBRL.
 - **Export** PNG, JPG or PDF. Exports contain the chart only; the notes panel and note markers stay on screen.
+- **Alerts for readers**: sign up with an e-mail code (no password), follow companies or sectors, receive each new
+  chart with its analysis by e-mail or as a notification in the Android app.
 
 ## Deploy (GitHub Pages, about five minutes)
 
@@ -62,6 +64,11 @@ Set up (Gmail):
 2. Add repository secrets `MAIL_USERNAME` (the Gmail address) and `MAIL_PASSWORD` (the 16-character app password,
    without spaces). Optional: `MAIL_TO` to send to another address.
 
+Every company page also shows the quarter's thread with Copy buttons and an **Email me this thread** button. The
+site is static, so the button opens a pre-filled GitHub issue; when you (the repository owner) press Create, the
+workflow `.github/workflows/email-thread.yml` e-mails that quarter's thread with both charts and closes the issue.
+Issues opened by anyone else are ignored.
+
 Until the secrets exist, each run prints the threads it would send in the Actions log
 ("Send new charts as X threads" step).
 
@@ -84,6 +91,109 @@ pay-per-use: $0.015 per post, $0.20 per post with a link (docs.x.com/x-api/getti
 | `images` | `["standard", "year_ago"]` | charts attached to the first post |
 
 A company quarter is sent once: when the 10-Q/10-K replaces an 8-K chart that was already sent, it is not sent again.
+
+## Accounts and alerts (website + Android app)
+
+Readers sign up with their e-mail address only: the site sends a 6-digit code, they type it in, done (no password).
+On the **Alerts** page they choose companies (or press **☆ Follow** on any company or sector page), sectors, "every
+company above $X billion of revenue" or the starred list, and how often: as soon as a chart is out (checked hourly)
+or one digest a day. Each alert e-mail carries the chart itself, the headline figures, the analysis, what changed
+against the year-ago quarter, a quote from the filing, and links to the interactive chart and the filing.
+Every e-mail has an unsubscribe link; the Alerts page also has **Delete my account**.
+
+- **Preliminary, then final.** A quarter read from an 8-K earnings release is sent as *preliminary*. When the
+  10-Q/10-K replaces it, the final version is sent too (setting on by default, can be turned off), marked *final*,
+  with how the release compared with the filing ("Revenue and net earnings match the release. Revised: operating cash
+  flow $1.6B in the release, $1.2B as filed"). The company page shows the same label and comparison.
+- **✉ Email me** on every company page sends the quarter on screen (or all quarters, on the "All quarters" view) to
+  the reader's own address, alerts on or off: old quarters included, as far back as the site keeps them (three
+  quarters for most companies, six after an 8-K brought in the history, eight for starred ones). Signed-out readers
+  sign in first and the request goes through afterwards. Up to 30 reports a day per reader; the Alerts page lists
+  recent requests and whether they were sent. They go out within about 10 minutes (`.github/workflows/requests.yml`),
+  or within a minute or two with the optional wake-up below.
+
+Until the steps below are done the site simply hides the sign-up box and the Follow buttons.
+
+### 1. Supabase (accounts and settings; free plan is enough)
+
+1. Create a project at supabase.com. **SQL Editor** → paste `supabase/schema.sql` → Run.
+2. **Authentication → Emails → SMTP Settings**: enable custom SMTP so codes can reach any address (the built-in
+   sender only mails your own team): host `smtp.gmail.com`, port `465`, user = your Gmail address, password = the
+   Gmail app password (the same one as `MAIL_PASSWORD`), sender name `Filing Flows`.
+3. **Authentication → Emails → Templates**: in both **Magic Link** and **Confirm signup**, set the subject to
+   `Your Filing Flows sign-in code` and the body to `supabase/email-otp-template.html` (it shows `{{ .Token }}`).
+4. **Authentication → URL Configuration → Site URL**: your site address, e.g. `https://<user>.github.io/<repo>/`.
+5. **Project Settings → API Keys**: copy the project URL, the *publishable* key (`sb_publishable_…`, or the legacy
+   `anon` key) and the *secret* key (`sb_secret_…`, or the legacy `service_role` key).
+
+### 2. GitHub settings (Settings → Secrets and variables → Actions)
+
+| Where | Name | Value |
+| --- | --- | --- |
+| Variables | `SUPABASE_URL` | `https://<project>.supabase.co` |
+| Variables | `SUPABASE_ANON_KEY` | the publishable key (safe to publish: every row is protected by row-level security) |
+| Secrets | `SUPABASE_SERVICE_KEY` | the secret key (only the alert sender uses it) |
+| Secrets | `MAIL_USERNAME`, `MAIL_PASSWORD` | already there if X threads are e-mailed to you |
+
+Optional variables: `CONTACT_EMAIL` (shown on the privacy and terms pages; otherwise they point to GitHub issues), `MAIL_FROM` (e.g. `Filing Flows <alerts@yourdomain.com>`), `SMTP_HOST` / `SMTP_PORT` (another
+provider, e.g. Resend: `smtp.resend.com`, `465`, user `resend`, password = API key), `MAIL_DAILY_LIMIT` (default 400),
+`DIGEST_HOUR_UTC` (default 22, about 6 pm in New York), `SITE_URL` (a custom domain).
+
+After the next hourly run the sign-up box appears on the home page, and the **alerts** job of the workflow sends the
+e-mails right after each deploy. Upload `.github/workflows/requests.yml` as well for the **Email me** button.
+
+Faster **Email me** (optional): Supabase can wake the GitHub workflow the moment a reader asks. Create a fine-grained
+GitHub token (Settings → Developer settings → Fine-grained tokens; only this repository; permission *Contents: Read and
+write*), enable **Database → Extensions → pg_net**, then run in the SQL Editor:
+
+```sql
+select vault.create_secret('github_pat_…', 'github_dispatch_token');
+select vault.create_secret('<user>/<repo>', 'github_repo');
+```
+
+Renew the token before it expires; without it the 10-minute check still sends everything. Gmail sends about 500 messages a day, sign-in codes included; for more readers use
+a provider with your own domain (Resend, Postmark, Amazon SES) through `SMTP_HOST`. Supabase limits sign-in e-mails to
+30 an hour by default (Authentication → Rate Limits).
+
+Each chart reaches a reader once (the 8-K version and the final 10-Q/10-K version count as two). Charts filed before a
+reader signed up are not sent; **Email me** covers those.
+
+### 3. Android app
+
+`android/` is a small Kotlin app: the site in a full-screen WebView (same pages, same sign-in, exports saved to
+Downloads) plus a background check every 30 minutes that reads `data/index.json` and shows a notification for each
+new chart that matches what the reader follows (tap → that chart), including the final 10-Q/10-K after an 8-K chart
+unless that setting is off. It needs no server of its own.
+
+- **Build on GitHub** (nothing to install): upload `android/` and `.github/workflows/android.yml`. The **Android app**
+  workflow builds `filing-flows.apk` and publishes it at `https://github.com/<you>/<repo>/releases/tag/android`; the
+  Alerts page links there. Open that page on the phone, download, allow "install unknown apps" for the browser.
+- **Keep updates installable**: without a signing key each build has a new signature and the phone refuses to update
+  over the previous one (uninstall first). To fix that once: in Android Studio, **Build → Generate Signed App Bundle or
+  APK → APK → Create new** keystore (alias `filingflows`), then in PowerShell
+  `[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\filingflows.jks")) | Set-Clipboard` and add secrets
+  `ANDROID_KEYSTORE_BASE64` (paste), `ANDROID_KEYSTORE_PASSWORD`, and `ANDROID_KEY_PASSWORD` if it differs. Keep the
+  .jks file safe; never upload it to the repository.
+- **Google Play**: with the signing-key secrets set, the workflow also produces `filing-flows.aab` (artifact
+  *filing-flows-aab-for-google-play*), the bundle Play Console asks for. The 512 px icon and the 1024 × 500 feature
+  graphic are in `android/store/`; the privacy policy is the site's `privacy.html`.
+- **Build locally**: open `android/` in Android Studio (Meerkat Feature Drop or newer), Run. The site address is
+  `filingflows.siteUrl` in `android/gradle.properties`.
+
+Targets API 36 (required on Google Play since Aug 31, 2026) and runs on Android 8.0+ (API 26). Notifications need the Android 13+ permission prompt, shown the
+first time the reader follows something in the app.
+
+### Running parts on your own computer instead
+
+- **Alert e-mails from your laptop** (Windows): follow the comments at the top of `scripts/alerts-laptop.ps1`
+  (Python, `pip install -r requirements.txt playwright`, `playwright install chromium`, fill in
+  `scripts/alerts.env`, register the 10-minute task with `schtasks`). Leave `SUPABASE_SERVICE_KEY` out of GitHub so the
+  two never both send. The computer must be on and online at the scheduled times.
+- **Supabase itself on your laptop**: the same `schema.sql` works on self-hosted Supabase (Docker; see
+  supabase.com/docs/guides/self-hosting/docker). The website and the app must reach it over HTTPS from anywhere, so it
+  also needs a fixed public address, e.g. a Cloudflare named tunnel on your own domain; then set `SUPABASE_URL` to that
+  address. While the laptop sleeps nobody can sign in or change settings (charts keep working). The hosted free plan
+  avoids that (it pauses a project after about a week of inactivity; the hourly alert check queries it every hour).
 
 ## How it works
 
@@ -114,10 +224,13 @@ EDGAR daily index (backfill)         ─┴─► pending queue (state.json)
 | `pipeline/sankey.py` | chart spec in the standard format (profit view, loss "funding" view) |
 | `pipeline/release.py` | 8-K earnings releases: statement tables → quarter values (units, signs, YTD cash flow, reconciliation) |
 | `pipeline/social.py` | X threads: candidates, text (fits 280 characters), chart PNGs via headless Chromium, e-mail or X API |
+| `pipeline/notify.py` | reader alerts and **Email me** requests: matches charts to subscriptions, e-mails chart + analysis, records deliveries |
+| `supabase/schema.sql` | accounts, report requests, row-level security, unsubscribe and delete-account functions (safe to run again) |
+| `android/` | Kotlin WebView app with background checks and notifications (built by `.github/workflows/android.yml`) |
 | `pipeline/text.py` | MD&A note matching and Item 1 introduction |
 | `pipeline/build.py` | `run` (scan + process + render) and `render` |
 | `web/sankey.js` | layout (column spacing from label widths, collision-free labels), SVG, canvas/PDF export |
-| `web/app.js` | pages: latest filings, company (quarters, compare, notes, history), sector, industry, method |
+| `web/app.js` | pages: latest filings, company (quarters, compare, notes, history), sector, industry, method, alerts |
 | `scripts/build_site.py` | copies `web/` and data into `_site/` (or a single inlined page with `--inline`) |
 
 ## Run locally

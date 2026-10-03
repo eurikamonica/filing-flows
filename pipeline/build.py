@@ -12,7 +12,7 @@ import re
 import sys
 import traceback
 
-from . import analysis, dims, facts, release, scan, sec, sectors, text
+from . import analysis, dims, facts, release, scan, sec, sectors, social, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -195,11 +195,15 @@ def process_filing(store, cik, accn, form, starred=False):
         "raw": raw, **comp, "lines_struct": lines_struct, "lines": lines_cur, "lines_py": lines_py, "notes": notes,
     }
     e0 = dt.date.fromisoformat(end)                               # the 10-Q/10-K replaces a preliminary 8-K quarter
+    releases = [replaced] if replaced else []
     for k in [k for k, q in c["quarters"].items() if q.get("form") == "8-K"
               and abs((dt.date.fromisoformat(k) - e0).days) <= 10]:
         audit_release(store.state, cik, c["quarters"][k], raw, end)
+        releases.append(c["quarters"][k])
         if k != end:
             del c["quarters"][k]
+    if releases and form != "8-K":
+        c["quarters"][end]["from_release"] = release_check(releases[0], raw)
     keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
     c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
     store.put(cik, c)
@@ -256,6 +260,21 @@ def audit_release(st, cik, old, raw, end):
         st.setdefault("audit", []).append({"cik": cik, "end": end, "accn": old.get("accn"), "ok": ok, "fields": fields,
                                            "t": dt.datetime.utcnow().isoformat(timespec="seconds")})
         st["audit"] = st["audit"][-500:]
+
+
+AUDIT_NAMES = {"revenue": "Revenue", "oi": "Operating profit", "ni": "Net earnings", "ocf": "Operating cash flow"}
+
+
+def release_check(old, raw):
+    """How the figures drawn from the earnings release (8-K) compare with the 10-Q/10-K that replaces them."""
+    fields = []
+    for k in AUDIT_KEYS:
+        a, b = (old.get("raw") or {}).get(k), raw.get(k)
+        if a is None or b is None:
+            continue
+        fields.append({"key": k, "name": AUDIT_NAMES[k], "release": a, "final": b,
+                       "ok": abs(a - b) <= 0.005 * abs(b) + 1e3})
+    return {"filed": old.get("filed"), "accn": old.get("accn"), "fields": fields, "ok": all(f["ok"] for f in fields)}
 
 
 HISTORY_ON_RELEASE = 5          # an earnings 8-K brings in the company's last five 10-Q/10-K filings
@@ -563,6 +582,7 @@ def quarter_payload(c, q, prev_q):
                      "bullets": analysis.compare_bullets(f, py_name, Nc, Ny, ls, (q.get("lines"), q.get("lines_py"), None))}
     return {
         "compare": compare, "compare_y": compare_y, "preliminary": q["form"] == "8-K",
+        "release_check": q.get("from_release"),
         "end": q["end"], "label": q["label"], "cal": q["cal"], "form": q["form"], "filed": q["filed"],
         "doc_url": q.get("doc_url"), "index_url": q.get("index_url"), "kind": kind,
         "title": f"{name} {q['label']} earnings &amp; cash flow",
@@ -595,6 +615,7 @@ def slug(s):
 
 def render(store, out, stars=frozenset()):
     os.makedirs(os.path.join(out, "c"), exist_ok=True)
+    x_cfg = social.load_cfg("config/x.json")
     index, groups = [], {}
     for cik in store.ciks():
         c = store.company(cik)
@@ -620,6 +641,12 @@ def render(store, out, stars=frozenset()):
             for key in (("sector", p["sector"]), ("industry", p["sic"] or "none")):
                 groups.setdefault(key, {}).setdefault(pl["cal"], []).append(
                     (p["tickers"][0] if p["tickers"] else p["name"][:18], Nc, Nq, Ny, cik))
+        for pl in payloads:                      # the ready-to-post X thread (same text as the e-mails)
+            try:
+                posts = social.compose({"profile": p, "intro": c.get("intro")}, pl, x_cfg)
+                pl["x_thread"] = [{"text": t, "len": social.xlen(t)} for t in posts]
+            except Exception as e:
+                print(f"  thread failed {cik} {pl['end']}: {e}", file=sys.stderr)
         save(os.path.join(out, "c", f"{cik}.json"), {
             "profile": p, "intro": c.get("intro"), "starred": cik in stars, "quarters": payloads[::-1]})
         index.append({"cik": cik, "ticker": (p["tickers"] or [""])[0], "name": p["name"], "sector": p["sector"],
@@ -627,7 +654,9 @@ def render(store, out, stars=frozenset()):
                       "cal": latest["cal"], "filed": latest["filed"], "form": latest["form"],
                       "rev": latest["headline"]["rev_fmt"], "revenue": latest["headline"]["revenue"],
                       "yoy": latest["headline"]["yoy"], "om": round(latest["headline"]["om"], 1),
-                      "starred": cik in stars, "kind": latest["kind"], "prelim": latest["form"] == "8-K"})
+                      "starred": cik in stars, "kind": latest["kind"], "prelim": latest["form"] == "8-K",
+                      **({"after_release": latest["release_check"]["filed"], "release_ok": latest["release_check"]["ok"]}
+                         if latest.get("release_check") else {})})
     agg_index = {"sector": [], "industry": []}
     for (level, gid), by_cal in groups.items():
         quarters = []

@@ -602,11 +602,12 @@
     return new Promise((res) => canvas.toBlob(res, type, quality));
   }
 
-  async function exportScene(scene, format) {
+  async function exportScene(scene, format, opts) {
+    const o = opts || {};
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    const canvas = toCanvas(scene, 2);
+    const canvas = toCanvas(scene, o.width ? o.width / scene.W : (o.scale || 2));
     if (format === 'png') return canvasBlob(canvas, 'image/png');
-    if (format === 'jpg') return canvasBlob(canvas, 'image/jpeg', 0.94);
+    if (format === 'jpg') return canvasBlob(canvas, 'image/jpeg', o.quality || 0.94);
     const blob = await canvasBlob(canvas, 'image/jpeg', 0.95);
     const jpeg = new Uint8Array(await blob.arrayBuffer());
     const pdf = pdfFromJpeg(jpeg, canvas.width, canvas.height, +(scene.W * 0.75).toFixed(2), +(scene.H * 0.75).toFixed(2));

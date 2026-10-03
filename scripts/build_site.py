@@ -43,8 +43,21 @@ def main():
     if os.path.abspath(args.data) != os.path.abspath(data_out):
         shutil.rmtree(data_out, ignore_errors=True)
         shutil.copytree(args.data, data_out)
-    site = {"repo": os.environ.get("GITHUB_REPOSITORY", "")}
+    site = {"repo": os.environ.get("GITHUB_REPOSITORY", ""),
+            # accounts: the project URL and the public (publishable / anon) key; row-level security protects the data
+            "supabase_url": os.environ.get("SUPABASE_URL", ""), "supabase_key": os.environ.get("SUPABASE_ANON_KEY", ""),
+            "contact": os.environ.get("CONTACT_EMAIL", "")}       # shown on the privacy and terms pages
     json.dump(site, open(os.path.join(data_out, "site.json"), "w"))
+    # privacy policy and terms: plain pages (app stores and crawlers read them without running the site's script)
+    if site["contact"]:
+        contact = f'e-mail <a href="mailto:{site["contact"]}">{site["contact"]}</a>'
+    elif site["repo"]:
+        contact = f'open an issue at <a href="https://github.com/{site["repo"]}/issues">github.com/{site["repo"]}</a>'
+    else:
+        contact = "contact the site owner"
+    for name in ("privacy.html", "terms.html"):
+        page = open(os.path.join(WEB, name), encoding="utf-8").read().replace("<!--CONTACT-->", contact)
+        open(os.path.join(args.out, name), "w", encoding="utf-8").write(page)
     open(os.path.join(args.out, ".nojekyll"), "w").close()
     n = sum(len(f) for _, _, f in os.walk(data_out))
     print(f"site written to {args.out} ({n} data files)")
