@@ -1,0 +1,52 @@
+name: Send requested reports
+
+# "✉ Email me" on a company page queues a request in Supabase; this e-mails the report to that reader's own address.
+# Runs every 10 minutes, or within a minute or two when Supabase wakes it (optional, see README).
+# The hourly scan's alerts job also sends whatever is waiting.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  repository_dispatch:
+    types: [send-request]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: send-requests
+  cancel-in-progress: false
+
+jobs:
+  send:
+    if: vars.SUPABASE_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      MAIL_FROM: ${{ vars.MAIL_FROM }}
+      SMTP_HOST: ${{ vars.SMTP_HOST }}
+      SMTP_PORT: ${{ vars.SMTP_PORT }}
+      MAIL_DAILY_LIMIT: ${{ vars.MAIL_DAILY_LIMIT }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Send what readers asked for
+        run: |
+          owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          site="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"
+          rc=0; python -m pipeline.notify --site "$site" --requests --due || rc=$?
+          if [ $rc = 1 ]; then exit 0; fi            # nothing waiting
+          if [ $rc != 0 ]; then exit $rc; fi         # wrong key, Supabase down: show the error
+          pip install playwright
+          python -m playwright install --with-deps chromium
+          python -m pipeline.notify --site "$site" --site-url "$site" --requests

@@ -61,6 +61,36 @@ jobs:
             --backfill-days "${{ github.event.inputs.backfill_days || 0 }}" \
             --max-filings "${{ github.event.inputs.max_filings || 1500 }}"
 
+      - name: Assemble site
+        env:                                   # public values (repository variables): the sign-in box on the site
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}       # optional: shown on the privacy and terms pages
+        run: python scripts/build_site.py --data _site/data --out _site
+
+      - name: Send new charts as X threads (e-mail, or the X API)
+        continue-on-error: true                 # sending trouble never blocks the site
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          X_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: |
+          if python -m pipeline.social --site _site --store store --check; then
+            pip install playwright
+            python -m playwright install --with-deps chromium
+            python -m pipeline.social --site _site --store store
+          else
+            python -m pipeline.social --site _site --store store --dry-run
+          fi
+
       - name: Save the data store
         if: always()
         run: |
@@ -74,8 +104,6 @@ jobs:
           git rev-parse --verify --quiet HEAD >/dev/null || exit 0   # nothing was stored yet
           git push --quiet --force origin HEAD:data
 
-      - name: Assemble site
-        run: python scripts/build_site.py --data _site/data --out _site
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -87,6 +115,48 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # E-mail alerts to readers who signed up on the site (after the new charts are live, so the links work).
+  # Needs the repository variable SUPABASE_URL and the secret SUPABASE_SERVICE_KEY; uses the same MAIL_* secrets.
+  # Sending from your own computer instead (scripts/alerts-laptop.ps1)? Leave SUPABASE_SERVICE_KEY out of GitHub.
+  alerts:
+    needs: deploy
+    if: vars.SUPABASE_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      MAIL_FROM: ${{ vars.MAIL_FROM }}
+      SMTP_HOST: ${{ vars.SMTP_HOST }}
+      SMTP_PORT: ${{ vars.SMTP_PORT }}
+      MAIL_DAILY_LIMIT: ${{ vars.MAIL_DAILY_LIMIT }}
+      DIGEST_HOUR_UTC: ${{ vars.DIGEST_HOUR_UTC }}
+      SITE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: The site that was just published
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+      - run: mkdir _site && tar -xf artifact.tar -C _site
+      - name: Send alert e-mails
+        run: |
+          rc=0; python -m pipeline.notify --site _site --due || rc=$?
+          if [ $rc = 1 ]; then exit 0; fi            # nothing due this hour
+          if [ $rc != 0 ]; then exit $rc; fi         # wrong key, Supabase down: show the error
+          pip install playwright
+          python -m playwright install --with-deps chromium
+          python -m pipeline.notify --site _site
