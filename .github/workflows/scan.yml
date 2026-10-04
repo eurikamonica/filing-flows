@@ -2,9 +2,11 @@ name: Scan EDGAR and publish
 
 on:
   schedule:
-    - cron: "17 * * * *"          # every hour, off the top of the hour
+    - cron: "4,19,34,49 * * * *"   # every 15 minutes, away from :00 and :30 (GitHub delays busy minutes most)
   repository_dispatch:
-    types: [company-request]       # a reader asked for a company the site does not have (Supabase wake, optional)
+    types:
+      - company-request            # a reader asked for a company the site does not have (Supabase wake, optional)
+      - scan                       # an outside clock (Supabase pg_cron, see README): on time, unlike GitHub's schedule
   workflow_dispatch:
     inputs:
       backfill_days:
@@ -15,6 +17,10 @@ on:
         description: "Most filings to process in this run"
         required: false
         default: "1500"
+      companies:
+        description: "Owner: also build these companies now (tickers or CIKs, comma-separated, e.g. MS, GS)"
+        required: false
+        default: ""
 
 permissions:
   contents: write      # push the data branch
@@ -62,7 +68,10 @@ jobs:
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python -m pipeline.custom claim-companies --out build-ciks.txt
+          OWNER_COMPANIES: ${{ github.event.inputs.companies }}
+        run: |
+          python -m pipeline.custom claim-companies --out build-ciks.txt || true
+          printf '%s\n' "$OWNER_COMPANIES" >> build-ciks.txt     # the owner's own list (Run workflow), no sign-in needed
 
       - name: Scan new 10-Q / 10-K filings and build charts
         run: |
@@ -84,9 +93,11 @@ jobs:
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}       # optional: shown on the privacy and terms pages
         run: python scripts/build_site.py --data _site/data --out _site
 
-      - name: Send new charts as X threads (e-mail, or the X API)
+      - name: The owner's daily report (8:00 owner time) and X threads (e-mail, or the X API)
         continue-on-error: true                 # sending trouble never blocks the site
         env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}               # the owner's settings (#owner page) and address
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
           MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
@@ -155,7 +166,8 @@ jobs:
       SMTP_HOST: ${{ vars.SMTP_HOST }}
       SMTP_PORT: ${{ vars.SMTP_PORT }}
       MAIL_DAILY_LIMIT: ${{ vars.MAIL_DAILY_LIMIT }}
-      DIGEST_HOUR_UTC: ${{ vars.DIGEST_HOUR_UTC }}
+      DIGEST_HOUR: ${{ vars.DIGEST_HOUR }}              # optional: the daily report's hour for readers without a saved one (8)
+      DIGEST_TZ: ${{ vars.DIGEST_TZ }}                  # optional: their time zone (America/New_York)
       SITE_URL: ${{ needs.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4

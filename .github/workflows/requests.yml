@@ -2,6 +2,8 @@ name: Send requested reports
 
 # What signed-in readers ask for on the site, answered from Supabase:
 #   "✉ Email me" on a company page   -> e-mails that report to the reader's own address
+#   "Email me the report for …"      -> the daily report of one filing date (home page)
+#   "Email me this thread" (owner)   -> the X thread of a quarter with its chart PNGs, to the site owner
 #   "Compare any two periods"        -> draws the comparison from SEC data and hands it back to the page
 #   a company found by the search    -> starts the scan, which builds its charts
 # Runs every 10 minutes, or within a minute or two when Supabase wakes it (optional, see README).

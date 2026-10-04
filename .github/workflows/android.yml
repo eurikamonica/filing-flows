@@ -81,6 +81,7 @@ jobs:
         run: |
           notes="Download filing-flows.apk on your Android phone (8.0 or newer), open it and allow installing from this source.
           Sign in with your e-mail inside the app, follow companies or sectors, and new charts arrive as notifications.
+          Money tab: personal bookkeeping kept on the phone (no sign-in): journal, T-accounts, Sankey and the three statements.
           Built from ${GITHUB_SHA::7}."
           gh release view android >/dev/null 2>&1 || gh release create android --title "Android app" --notes "$notes" --latest=false
           gh release edit android --notes "$notes"
