@@ -266,6 +266,25 @@ td .name { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; display: 
 .thread-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
 .thread pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 15px/1.5 var(--sans); color: var(--ink); background: var(--surface);
   border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.thread-meta b { color: var(--ink-2); font-weight: 500; }
+.thread-info { max-width: 760px; margin: 0 0 14px; }
+.thread-img { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 2px 0; }
+.thread-img span { min-width: 0; }
+.thread-img .btn { flex: none; }
+.prefs select { font: inherit; font-size: 14.5px; padding: 3px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+
+/* the daily report of one filing date: today and the five days before */
+.daily .days { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; max-width: 900px; margin: 0 0 12px; }
+.day { font: inherit; text-align: left; display: grid; gap: 1px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink-2); cursor: pointer; min-width: 0; }
+.day b { font-weight: 600; font-size: 14px; color: var(--ink); }
+.day span { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.day:hover:not(:disabled) { border-color: var(--muted); }
+.day.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.day.on b, .day.on span { color: var(--accent-ink); }
+.day:disabled { cursor: not-allowed; opacity: .55; }
+.daily > p { max-width: 78ch; }
+@media (max-width: 720px) { .daily .days { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .thumbs { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); }
 .thumb { display: grid; gap: 8px; text-decoration: none; color: var(--ink); }
 .thumb .sheet { box-shadow: none; }

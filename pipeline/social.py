@@ -135,7 +135,8 @@ def is_footnote(text):
 
 
 def filing_quote(q):
-    """The company's own words about its revenue (or its largest revenue line): (paragraph, where it is from)."""
+    """The company's own words about its revenue (or its largest revenue line):
+    (paragraph, where it is from, the line it is about)."""
     nodes = {n["id"]: n for n in q["nodes"]}
     order = [nodes.get("revenue")] + sorted([n for n in q["nodes"] if n["id"].startswith("L:")], key=lambda n: -n["v"])
     where = ("earnings release" if q.get("form") == "8-K"
@@ -144,70 +145,185 @@ def filing_quote(q):
         for note in (n or {}).get("notes") or []:
             for para in (note.get("text") or "").split("\n"):
                 if para.strip() and not is_footnote(para):
-                    return para.strip(), where
+                    return para.strip(), where, dec(n.get("name") or "revenue")
     return None
 
 
-# ------------------------------------------------------------------ the thread
-def compose(c, q, cfg):
+def form_words(q):
+    """'10-Q', '10-K' or 'earnings release (8-K)'."""
+    return "earnings release (8-K)" if q.get("form") == "8-K" else q.get("form", "")
+
+
+def filing_line(q, short=False):
+    """'10-Q filed Jul 31, 2026 · quarter ended Jun 27, 2026': which document, when, for what period.
+    short: the period end without its year when it is the filing's year."""
+    period = "fiscal year" if q.get("period") == "fy" else "quarter"
+    end = fdate(q.get("end"))
+    if short and q.get("end") and q.get("filed") and q["end"][:4] == q["filed"][:4]:
+        end = end.rsplit(",", 1)[0]
+    words = form_words(q)
+    return f"{words[:1].upper() + words[1:]} filed {fdate(q.get('filed'))} · {period} ended {end}"
+
+
+def chart_captions(q, with_year_ago=True):
+    """What each attached image shows, in order: [(short name, caption)]."""
+    out = [("Chart 1", f"{q['label']}: where the revenue went, from costs to profit and operating cash flow")]
+    vs = (q.get("compare_y") or {}).get("vs")
+    if with_year_ago and vs:
+        out.append(("Chart 2", f"The same flows compared with {vs}: band width is {q['label']}, "
+                               f"a dark strip inside a band is growth over {vs}"))
+    return out
+
+
+def revenue_mix(q, top=5):
+    """The revenue lines (segments or products) of this quarter, largest first: [(name, value, share of revenue)]."""
+    rev = next((n for n in q["nodes"] if n["id"] == "revenue"), None)
+    if not rev or not rev.get("v") or rev["v"] <= 0:
+        return []
+    leaves = sorted([n for n in q["nodes"] if n["id"].startswith("L:") and (n.get("v") or 0) > 0], key=lambda n: -n["v"])
+    if len(leaves) < 2:
+        return []
+    out = [(dec(n["name"]), n["v"], n["v"] / rev["v"] * 100) for n in leaves[:top]]
+    rest = sum(n["v"] for n in leaves[top:])
+    if rest > 0:
+        out.append(("Other lines", rest, rest / rev["v"] * 100))
+    return out
+
+
+def industry_words(p, sector_names=None):
+    """'Electronic Computers (Technology sector)' from the SEC's industry code."""
+    from .sectors import SECTORS
+    ind = (p.get("industry") or "").strip()
+    sec = (sector_names or SECTORS).get(p.get("sector") or "", "")
+    if ind and sec and sec != "Other":
+        return f"{ind} ({sec} sector)"
+    return ind or (f"{sec} sector" if sec else "")
+
+
+def share_words(s):
+    return f"{s:.0f}%" if s >= 9.5 else f"{s:.1f}%".replace(".0%", "%")
+
+
+def business(c, q, top=5):
+    """What the company does, from the filing: its SEC industry and where this quarter's revenue came from."""
     p = c["profile"]
-    tick = (p.get("tickers") or [""])[0].replace("-", ".")          # cashtags use BRK.B, not BRK-B
-    name = display_name(p["name"])
+    big = (next((n["v"] for n in q["nodes"] if n["id"] == "revenue"), 0) or 0) >= 1e9
+    return {"industry": industry_words(p),
+            "mix": [(n, money(v, big), share_words(s)) for n, v, s in revenue_mix(q, top)]}
+
+
+ROLES = {"headline": "Headline and charts", "business": "What the company does", "about": "The company in its own words",
+         "analysis": "Analysis", "quote": "From the filing", "source": "Source"}
+
+
+def _post1(c, q, cfg, tick, name, n_images):
+    """Headline post: which filing, when, the main figures, and what the attached charts show; trimmed to fit."""
     nodes = {n["id"]: n for n in q["nodes"]}
     rev = nodes["revenue"]
     big = rev["v"] >= 1e9
     m = lambda v: money(v, big)
     prelim = q.get("form") == "8-K"
-    form = "earnings release (8-K)" if prelim else q.get("form", "")
-
-    head = (f"${tick} " if tick else "") + f"{name} {q['label']}" + (" (preliminary, 8-K)" if prelim else "")
-    rows = []
+    h = q.get("headline") or {}
     ry, rq = chg(rev["v"], rev.get("y")), chg(rev["v"], rev.get("q"))
-    rows.append(f"Revenue {m(rev['v'])}" + (f" ({', '.join(x for x in (ry and ry + ' Y/Y', rq and rq + ' Q/Q') if x)})" if ry or rq else ""))
-    gp, oi = nodes.get("gp"), nodes.get("oi")
-    margins = []
-    if gp:
-        margins.append(f"gross margin {gp['v'] / rev['v'] * 100:.1f}%")
-    om = (q.get("headline") or {}).get("om")
-    if om is not None:
-        margins.append(f"operating margin {om:.1f}%")
-    if margins:
-        rows.append(margins[0][0].upper() + " · ".join(margins)[1:])
-    ni = (q.get("headline") or {}).get("ni")
-    net = nodes.get("net") or nodes.get("netinc")
-    if ni is not None:
-        ny = chg(net["v"], net.get("y")) if net else None
-        rows.append((f"Net earnings {m(ni)}" if ni >= 0 else f"Net loss {m(-ni)}") + (f" ({ny} Y/Y)" if ny else ""))
-    ocf = nodes.get("ocf")
-    if ocf and ocf.get("v") is not None:
-        rows.append(f"Operating cash flow {m(ocf['v'])}")
-    lines = [head, ""] + rows
-    post1 = "\n".join(lines)
-    while xlen(post1) > LIMIT and len(lines) > 3:
-        lines.pop()
-        post1 = "\n".join(lines)
+    head = (f"${tick} " if tick else "") + f"{name} {q['label']} results" + (" (preliminary)" if prelim else "")
 
-    posts = [post1]
+    def rev_line(qq=True):
+        parts = [x for x in (ry and ry + " Y/Y", qq and rq and rq + " Q/Q") if x]
+        return f"Revenue {m(rev['v'])}" + (f" ({', '.join(parts)})" if parts else "")
+
+    gp, om = nodes.get("gp"), h.get("om")
+    pc = lambda x: f"{x:.1f}%".replace("-", "−")
+    margin_full = " · ".join(x for x in ((f"Gross margin {pc(gp['v'] / rev['v'] * 100)}" if gp else None),
+                                          (f"operating margin {pc(om)}" if om is not None else None)) if x)
+    margin_full = margin_full[:1].upper() + margin_full[1:]
+    margin_short = f"Operating margin {pc(om)}" if om is not None else margin_full
+    ni = h.get("ni")
+    net = nodes.get("net") or nodes.get("netinc")
+    ny = chg(net["v"], net.get("y")) if net and ni is not None else None
+    net_line = "" if ni is None else (f"Net earnings {m(ni)}" if ni >= 0 else f"Net loss {m(-ni)}") + (f" ({ny} Y/Y)" if ny else "")
+    ocf, fcf = nodes.get("ocf"), nodes.get("fcf")
+    cash_full = (f"Operating cash flow {m(ocf['v'])}" + (f" · free cash flow {m(fcf['v'])}" if fcf else "")) if ocf else ""
+    cash_short = f"Operating cash flow {m(ocf['v'])}" if ocf else ""
+    vs = (q.get("compare_y") or {}).get("vs")
+    two = n_images > 1 and vs
+    lab = q["label"]
+    charts_full = (f"Charts: {lab} from revenue to profit and cash, then the same vs {vs} (dark strips = growth)"
+                   if two else f"Chart: {lab} from revenue to profit and cash")
+    charts_mid = f"Charts: {lab} revenue to cash; vs {vs} (dark = growth)" if two else f"Chart: {lab} revenue to cash"
+    charts_short = f"Charts: {lab}, and vs {vs}" if two else f"Chart: {lab}"
+    # the figures first, then the chart explanation: the first version that fits wins
+    variants = [(True, margin_full, cash_full, charts_full), (True, margin_full, cash_short, charts_full),
+                (True, margin_full, cash_full, charts_mid), (True, margin_full, cash_short, charts_mid),
+                (False, margin_full, cash_short, charts_mid), (False, margin_short, cash_short, charts_mid),
+                (False, margin_short, cash_short, charts_short), (False, margin_short, "", charts_short),
+                (False, "", "", charts_short)]
+    room = cfg.get("_room", LIMIT)
+    post = ""
+    for qq, mg, cash, charts in variants:
+        for short in (False, True):
+            rows = [x for x in (rev_line(qq), mg, net_line, cash) if x]
+            post = "\n".join([head, filing_line(q, short), ""] + rows + ["", charts])
+            if xlen(post) <= room:
+                return post
+    return fit("", post, limit=room)
+
+
+def compose_parts(c, q, cfg):
+    """The thread as [{"role", "text"}]: headline and charts, what the company does, the company in its own words,
+    the analysis (one post per paragraph), a quote from the filing, the source. Every post fits 280 characters."""
+    p = c["profile"]
+    tick = (p.get("tickers") or [""])[0].replace("-", ".")          # cashtags use BRK.B, not BRK-B
+    name = display_name(p["name"])
+    prelim = q.get("form") == "8-K"
+    numbered = cfg.get("numbered", True)
+    room = LIMIT - (6 if numbered else 0)                          # "\n\n3/8" (up to 9/9)
+    n_images = 1 + ("year_ago" in (cfg.get("images") or []) and bool(q.get("compare_y")))
+    parts = [("headline", _post1(c, q, dict(cfg, _room=room), tick, name, n_images))]
+
+    biz = business(c, q)
     intro = c.get("intro")
-    if intro:
-        text = intro["text"] if isinstance(intro, dict) else intro
-        src = " — " + filing_text.intro_cite(intro, short=True)
-        posts.append(fit(f"About {name}, in its own words: “", text, "”" + src))
-    posts += pack(q.get("analysis") or [], max_posts=2)
+    intro_text = (intro.get("text") if isinstance(intro, dict) else intro) or ""
+    if biz["mix"]:
+        head = [x for x in (f"What {name} does", f"Industry: {biz['industry']}" if biz["industry"] else "",
+                            f"Where {q['label']} revenue came from:") if x]
+        for top in (5, 4, 3, 2):                                   # fewer lines (the rest as "Other lines") until it fits
+            post = "\n".join(head + [f"· {n} {v} ({s})" for n, v, s in business(c, q, top)["mix"]])
+            if xlen(post) <= room:
+                parts.append(("business", post))
+                break
+    if intro_text.strip():
+        cite = filing_text.intro_cite(intro, short=True)
+        ind = f" ({biz['industry']})" if biz["industry"] and not any(r == "business" for r, _ in parts) else ""
+        parts.append(("about", fit(f"About {name}{ind}, in its own words ({cite}):\n“", intro_text, "”", limit=room)))
+    elif biz["industry"] and not any(r == "business" for r, _ in parts):
+        parts.append(("business", f"What {name} does\nIndustry: {biz['industry']}"))
+
+    for para in (q.get("analysis") or [])[:3]:
+        if para.strip():
+            parts.append(("analysis", fit("", para, limit=room)))
 
     note = filing_quote(q)
     if note:
-        posts.append(fit("From the filing: “", note[0], f"” — {note[1]}"))
+        about = "" if note[2].lower() == "revenue" else f", on {note[2]}"
+        parts.append(("quote", fit(f"From the {note[1]}{about}:\n“", note[0], "”", limit=room)))
 
     acc = re.search(r"(\d{10}-\d{2}-\d{6})", q.get("index_url") or "")
-    src = (f"Source: SEC EDGAR, {form} filed {fdate(q.get('filed'))}" + (f", accession {acc.group(1)}" if acc else "") + ". "
-           + ("Figures read from the earnings release; preliminary until the 10-Q/10-K. " if prelim else "")
-           + "Generated automatically from the filing; not investment advice.")
+    period = "fiscal year" if q.get("period") == "fy" else "quarter"
+    src = (f"Source: {name} {form_words(q)} for the {period} ended {fdate(q.get('end'))}, filed with the SEC on "
+           f"{fdate(q.get('filed'))}" + (f" (accession {acc.group(1)})" if acc else "") + ". "
+           + ("Preliminary: read from the earnings release until the 10-Q/10-K. " if prelim else "GAAP figures as reported. ")
+           + "Generated automatically; not investment advice.")
     link = cfg.get("site_url", "").rstrip("/")
     if cfg.get("include_link") and link:
-        src = fit("", src, f" {link}/#c-{p['cik']}")
-    posts.append(src if xlen(src) <= LIMIT else fit("", src))
-    return posts
+        src = fit("", src, f" {link}/#c-{p['cik']}", limit=room)
+    parts.append(("source", src if xlen(src) <= room else fit("", src, limit=room)))
+    n = len(parts)
+    return [{"role": r, "text": t + (f"\n\n{i + 1}/{n}" if numbered else "")} for i, (r, t) in enumerate(parts)]
+
+
+def compose(c, q, cfg):
+    """The thread as a list of post texts."""
+    return [x["text"] for x in compose_parts(c, q, cfg)]
 
 
 # ------------------------------------------------------------------ what to post
@@ -421,29 +537,38 @@ def image_names(e, q, n):
 
 
 def build_email(items, cfg, sender, to):
-    """items: list of (e, c, q, posts, [(filename, png)]) -> EmailMessage with plain-text and HTML bodies."""
+    """items: list of (e, c, q, posts, [(filename, png)]); posts: texts or compose_parts() dicts.
+    -> EmailMessage with plain-text and HTML bodies: per company the filing, what each attached chart shows, the posts."""
     import html as H
     from email.message import EmailMessage
     tickers = ", ".join(e.get("ticker") or str(e["cik"]) for e, *_ in items)
     msg = EmailMessage()
-    msg["Subject"] = f"Filing Flows: {len(items)} new chart{'s' if len(items) != 1 else ''} ready to post — {tickers}"
+    msg["Subject"] = (f"X thread: {display_name(items[0][1]['profile']['name'])} {items[0][2].get('label')} — {tickers}" if len(items) == 1
+                      else f"Filing Flows: {len(items)} new charts ready to post — {tickers}")
     msg["From"], msg["To"] = sender, to
     site = cfg.get("site_url", "").rstrip("/")
     text, rich = [], []
+    small = "font:14px/1.5 Helvetica,Arial,sans-serif;color:#555;margin:0 0 6px"
     for e, c, q, posts, images in items:
-        title = posts[0].split("\n")[0]
-        page = f"{site}/#c-{e['cik']}" if site else ""
-        files = ", ".join(name for name, _ in images)
-        text.append(f"{'=' * 60}\n{title}\nAttach to post 1: {files}\nOpen post 1 in X: {intent_url(posts[0])}"
-                    + (f"\nChart page: {page}" if page else "") + "\n")
-        rich.append(f'<h2 style="font:600 19px/1.3 Helvetica,Arial,sans-serif;margin:28px 0 6px">{H.escape(title)}</h2>'
-                    f'<p style="font:14px/1.5 Helvetica,Arial,sans-serif;color:#555;margin:0 0 12px">Attach to post 1: '
-                    f'<b>{H.escape(files)}</b> · <a href="{H.escape(intent_url(posts[0]))}">Open post 1 in X</a>'
+        posts = [p if isinstance(p, dict) else {"role": "", "text": p} for p in posts]
+        title = f"{display_name(c['profile']['name'])} ({e.get('ticker') or c['profile'].get('cik')}) · {q.get('label')}"
+        page = f"{site}/#c-{e['cik']}-{q['end']}" if site else ""
+        caps = chart_captions(q, len(images) > 1)
+        files = [(name, f"{short}: {cap}") for (name, _), (short, cap) in zip(images, caps)]
+        text.append(f"{'=' * 60}\n{title}\n{filing_line(q)}\n"
+                    + "".join(f"Attach to post 1: {name} ({what})\n" for name, what in files)
+                    + f"Open post 1 in X: {intent_url(posts[0]['text'])}" + (f"\nChart page: {page}" if page else "") + "\n")
+        rich.append(f'<h2 style="font:600 19px/1.3 Helvetica,Arial,sans-serif;margin:28px 0 4px">{H.escape(title)}</h2>'
+                    f'<p style="{small}">{H.escape(filing_line(q))}</p>'
+                    + "".join(f'<p style="{small}">Attach to post 1: <b>{H.escape(name)}</b> · {H.escape(what)}</p>' for name, what in files)
+                    + f'<p style="{small};margin-bottom:12px"><a href="{H.escape(intent_url(posts[0]["text"]))}">Open post 1 in X</a>'
                     + (f' · <a href="{H.escape(page)}">Chart page</a>' if page else "") + "</p>")
-        for i, ptxt in enumerate(posts):
-            label = f"Post {i + 1} of {len(posts)} · {xlen(ptxt)}/{LIMIT}" + (" · reply to the post above" if i else "")
+        for i, p in enumerate(posts):
+            ptxt = p["text"]
+            label = (f"Post {i + 1} of {len(posts)}" + (f" · {ROLES[p['role']]}" if p["role"] in ROLES else "")
+                     + f" · {xlen(ptxt)}/{LIMIT}" + (" · reply to the post above" if i else " · attach the charts"))
             text.append(f"--- {label} ---\n{ptxt}\n")
-            rich.append(f'<div style="font:12px Helvetica,Arial,sans-serif;color:#888;margin:10px 0 3px">{label}</div>'
+            rich.append(f'<div style="font:12px Helvetica,Arial,sans-serif;color:#888;margin:10px 0 3px">{H.escape(label)}</div>'
                         f'<pre style="white-space:pre-wrap;font:15px/1.45 Helvetica,Arial,sans-serif;background:#f4f3ef;'
                         f'border-radius:6px;padding:10px 12px;margin:0">{H.escape(ptxt)}</pre>')
     footer = ("Each block is one post: paste the first as a new post with the attached images, then add the others as "
@@ -525,12 +650,40 @@ def main():
     if args.one:
         send_one(args.site, cfg, *args.one.split(":", 1))
         return
+    from . import notify, owner                        # (they import this module)
+    supa = owner.supa_from_env()
+    osets = owner.settings(supa, cfg)
+    now = dt.datetime.now(dt.timezone.utc)
+    mail_keys = {k: os.environ.get(k, "") for k in MAIL_SECRETS}
+    slot = owner.due_slot(now, osets, st) if cfg["enabled"] and all(mail_keys.values()) else None
     mode = cfg.get("mode", "email")
+    instant = mode == "api" or bool(osets.get("instant_threads"))     # e-mail threads after each scan: an owner setting
     keys = {k: os.environ.get(k, "") for k in (MAIL_SECRETS if mode == "email" else SECRETS)}
-    ready = cfg["enabled"] and mode in ("email", "api") and all(keys.values())
+    ready = cfg["enabled"] and instant and mode in ("email", "api") and all(keys.values())
     todo = candidates(args.site, st, cfg)
     if args.check:
-        sys.exit(0 if ready and todo else 1)
+        if slot and not owner.pending(notify.Site(args.site).json("index.json"), st, osets, cfg, now):
+            owner.mark_sent(st, [], slot, now)         # a morning with nothing new: done, no browser needed
+            save_state(args.store, st)
+            print("owner daily report: nothing new since the last one")
+            slot = None
+        sys.exit(0 if (ready and todo) or slot else 1)
+    if slot:                                           # the owner's daily report (8:00 in the owner's time zone)
+        site = notify.Site(args.site)
+        user, password = mail_keys["MAIL_USERNAME"], mail_keys["MAIL_PASSWORD"]
+        mailer = notify.Mailer(os.environ.get("SMTP_HOST") or "smtp.gmail.com", os.environ.get("SMTP_PORT") or 465, user, password)
+        try:
+            owner.send_daily(site, st, cfg, osets, now, slot, mailer.send, sender_address(user), owner.addresses(supa),
+                             cfg.get("site_url", ""), dry_run=args.dry_run)
+        except Exception as err:
+            print(f"::warning::owner daily report not sent: {err}")
+        finally:
+            mailer.close()
+        if not args.dry_run:
+            save_state(args.store, st)
+    if not instant:
+        print("X threads after each scan: off (owner setting); the daily report carries them.")
+        return
     if not ready or args.dry_run:
         why = ("dry run" if args.dry_run else "config/x.json has enabled: false" if not cfg["enabled"]
                else f"secrets missing: {', '.join(k for k, v in keys.items() if not v)}")

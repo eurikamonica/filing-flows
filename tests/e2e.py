@@ -49,7 +49,8 @@ CHECK_LABELS = """() => {
 FAKE_SUPABASE = """
 (() => {
   const GOOD_UNSUB = '11111111-2222-4333-8444-555555555555';
-  const db = { subscriptions: [], send_requests: [], chart_requests: [], company_requests: [] }, log = [];
+  const db = { subscriptions: [], send_requests: [], chart_requests: [], company_requests: [],
+    owner_settings: [{ id: true, thread_direct: true, daily_on: true, daily_hour: 8, tz: 'Asia/Shanghai', min_revenue: 1e9, instant_threads: false }] }, log = [];
   let session = null;
   try { session = JSON.parse(sessionStorage.getItem('fake-session') || 'null'); } catch (e) {}
   window.__ff = { db, log, native: [], owners: [] };
@@ -66,7 +67,25 @@ FAKE_SUPABASE = """
     },
     async signOut() { session = null; return { error: null }; },
   };
+  const isOwner = () => !!session && (window.__ff.owners || []).includes(session.user.email);
+  // owner_settings: one row, read and changed by the site owner only (row-level security)
+  function ownerTable() {
+    const q = { op: 'select', row: null };
+    const run = () => {
+      if (q.op === 'update') {
+        if (!isOwner()) return { data: null, error: { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' } };
+        Object.assign(db.owner_settings[0], copy(q.row));
+        log.push(['update', 'owner_settings']);
+        return { data: copy(db.owner_settings[0]), error: null };
+      }
+      return { data: isOwner() ? copy(db.owner_settings[0]) : null, error: null };
+    };
+    const b = { select() { return b; }, eq() { return b; }, update(r) { q.op = 'update'; q.row = r; return b; },
+      async maybeSingle() { return run(); }, async single() { return run(); }, then(ok, bad) { return Promise.resolve().then(run).then(ok, bad); } };
+    return b;
+  }
   function from(table) {
+    if (table === 'owner_settings') return ownerTable();
     const rows = db[table], q = { f: [], op: 'select', row: null };
     const match = (r) => q.f.every(([k, v]) => r[k] === v);
     const write = () => {
@@ -87,6 +106,9 @@ FAKE_SUPABASE = """
       const mine = rows.filter((x) => x.user_id === session.user.id);
       const add = (Array.isArray(q.row) ? q.row : [q.row]).map((x) => Object.assign(copy(x), {
         user_id: session.user.id, status: 'pending', created_at: new Date().toISOString() }));
+      if (add.some((x) => x.kind === 'thread') && !isOwner()) return { data: null, error: { code: '42501', message: 'new row violates row-level security policy' } };
+      if (add.some((x) => !(x.cik > 0 || (x.kind === 'day' && x.cik === 0))))
+        return { data: null, error: { code: '23514', message: 'new row violates check constraint "send_requests_cik_check"' } };
       for (const x of add) {
         if (mine.concat(add.filter((y) => y !== x && add.indexOf(y) < add.indexOf(x)))
           .some((y) => y.status === 'pending' && y.cik === x.cik && y.period_end === x.period_end && (y.kind || 'q') === (x.kind || 'q')))
@@ -126,8 +148,18 @@ FAKE_SUPABASE = """
       limit(n) { q.limit = n; return b; },
       insert(r) { q.op = 'insert'; q.row = r; return b; },
       upsert(r) { q.op = 'upsert'; q.row = r; return b; },
+      update(r) { q.op = 'update'; q.row = r; return b; },
       async maybeSingle() { const m = rows.filter((r) => session && r.user_id === session.user.id && match(r)); return { data: m[0] ? copy(m[0]) : null, error: null }; },
-      async single() { return isAsk() ? asks() : q.op === 'select' ? b.maybeSingle() : write(); },
+      async single() {
+        if (q.op === 'update') {                               // a partial update of the reader's own row
+          const r = rows.find((x) => session && x.user_id === session.user.id && match(x));
+          if (!r) return { data: null, error: { code: 'PGRST116', message: 'no rows' } };
+          Object.assign(r, copy(q.row));
+          log.push(['update', table]);
+          return { data: copy(r), error: null };
+        }
+        return isAsk() ? asks() : q.op === 'select' ? b.maybeSingle() : write();
+      },
       then(ok, bad) { return Promise.resolve().then(run).then(ok, bad); },
     };
     return b;
@@ -217,8 +249,21 @@ def check_accounts(b, base, fails, shot, site):
         c = _json.load(open(os.path.join(site, "data", "c", "320193.json")))
         c["profile"].update(name="Alphabet Inc.", cik=1652044, tickers=["GOOGL"])
         route.fulfill(status=200, content_type="application/json", body=_json.dumps(c))
+    def recent_index(route):                    # filings dated yesterday and the day before, for the daily report picker
+        import datetime as _dt
+        import json as _json
+        resp = route.fetch()
+        ix = _json.loads(resp.text())
+        today = _dt.date.today()
+        for e in ix["companies"]:
+            if e["ticker"] in ("AAPL", "META"):
+                e["filed"] = (today - _dt.timedelta(days=1)).isoformat()
+            elif e["ticker"] == "EXDV":
+                e["filed"] = (today - _dt.timedelta(days=2)).isoformat()
+        route.fulfill(response=resp, body=_json.dumps(ix))
     ctx.route("**/data/companies.json", companies)
     ctx.route("**/data/c/1652044.json", alphabet)
+    ctx.route("**/data/index.json", recent_index)
     pg = ctx.new_page()
     errors = []
     pg.on("pageerror", lambda e: errors.append(str(e)))
@@ -275,6 +320,34 @@ def check_accounts(b, base, fails, shot, site):
     if got != {"chart_q": False, "chart_y": True, "chart_history": True, "attach_images": "jpg", "attach_pdf": False,
                "cmp_decreases": True, "changes_detail": True}:
         fails.append(f"accounts: e-mail content options not saved: {got}")
+    tz = pg.evaluate("Intl.DateTimeFormat().resolvedOptions().timeZone")
+    if row.get("digest_hour") != 8 or row.get("tz") != tz:
+        fails.append(f"accounts: daily report hour / time zone not saved: {row.get('digest_hour')} {row.get('tz')} (browser {tz})")
+
+    # the home page's daily report: today and the five days before; the report of one day by e-mail
+    pg.goto(base + "#home")
+    pg.wait_for_selector("#daily:not([hidden]) .day")
+    days = pg.locator("#daily .day").count()
+    on = pg.inner_text("#daily .day.on")
+    print("daily report picker:", days, "days; picked:", " ".join(on.split()))
+    if days != 6 or "Yesterday" not in on or "you follow" not in on:
+        fails.append(f"daily report: expected six days with yesterday picked, got {days}: {on!r}")
+    if pg.locator("#daily .day:disabled").count() != 4:
+        fails.append("daily report: days without filings should be disabled")
+    pg.locator("#daily .day:not(:disabled)").nth(1).click()
+    if "report for" not in pg.inner_text("#day-send"):
+        fails.append(f"daily report: button says {pg.inner_text('#day-send')!r}")
+    pg.click("#day-send")
+    pg.wait_for_function("window.__ff.db.send_requests.some((r) => r.kind === 'day')")
+    req = ff("window.__ff.db.send_requests.find((r) => r.kind === 'day')")
+    import datetime as _dt
+    if req["cik"] != 0 or req["period_end"] != (_dt.date.today() - _dt.timedelta(days=2)).isoformat():
+        fails.append(f"daily report: request saved as {req}")
+    pg.wait_for_function("document.querySelector('#day-msg').textContent !== ''")
+    if "Report on the way" not in pg.inner_text("#day-msg"):
+        fails.append(f"daily report: message {pg.inner_text('#day-msg')!r}")
+    shot(pg, "home_daily.png")
+    pg.evaluate("window.__ff.db.send_requests.length = 0")
     # the company page's "Show decreases" follows the account and changes it
     pg.goto(base + "#c-320193")
     pg.wait_for_selector(".sheet svg")
@@ -469,10 +542,38 @@ def check_accounts(b, base, fails, shot, site):
     if "Verified: signed in as reader@example.com" not in pg.inner_text(".page-head"):
         fails.append("owner tools: the owner's sign-in was not confirmed on the page")
     pg.click("#owner-toggle")
+    if not pg.locator("#owner-form").count() or "Send a daily report now" not in pg.inner_text("#daily h2", timeout=10000):
+        fails.append("owner tools: settings form or 'send a daily report now' missing")
     pg.goto(base + "#c-320193")
     pg.wait_for_selector("#thread pre")
-    print("owner tools: thread shown to the verified owner:", pg.locator("#thread pre").count(), "posts")
-    shot(pg, "owner_thread.png")
+    n_posts = pg.locator("#thread pre").count()
+    print("owner tools: thread shown to the verified owner:", n_posts, "posts")
+    if pg.locator("#thread .thread-meta b").count() != n_posts or pg.locator("#thread [data-img]").count() != 2:
+        fails.append("owner tools: thread posts need role labels and both images need Save PNG")
+    if "Filing" not in pg.inner_text("#thread .thread-info") or "Chart 2" not in pg.inner_text("#thread .thread-info"):
+        fails.append(f"owner tools: thread header says {pg.inner_text('#thread .thread-info')!r}")
+    with pg.expect_download() as dl:
+        pg.click('#thread [data-img="std"]')
+    if not dl.value.suggested_filename.endswith("-1-chart.png"):
+        fails.append(f"owner tools: image saved as {dl.value.suggested_filename}")
+    pg.click("#thread-mail")                       # straight to the inbox: a queued request, no GitHub page
+    pg.wait_for_function("window.__ff.db.send_requests.some((r) => r.kind === 'thread' && r.cik === 320193)")
+    shot(pg, "owner_thread.png", full_page=True)
+    pg.goto(base + "#owner")
+    pg.wait_for_selector("#owner-form")
+    pg.check('input[name="thread-mail"][value="github"]')
+    pg.select_option("#daily-hour", "9")
+    pg.fill("#daily-min", "2")
+    pg.click("#owner-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#owner-msg').textContent === 'Saved.'")
+    o = ff("window.__ff.db.owner_settings[0]")
+    if (o["thread_direct"], o["daily_hour"], o["min_revenue"]) != (False, 9, 2e9):
+        fails.append(f"owner tools: settings saved as {o}")
+    shot(pg, "owner_settings.png", full_page=True)
+    pg.goto(base + "#c-320193")
+    pg.wait_for_selector("#thread pre")
+    if pg.locator("#thread-mail").count():
+        fails.append("owner tools: 'send straight to my inbox' was turned off but the button still sends directly")
 
     # home shows "Manage alerts" when signed in; sign out
     pg.goto(base + "#home")
@@ -520,7 +621,7 @@ def check_accounts(b, base, fails, shot, site):
 
     # sector follow
     pg.goto(base + "#s-technology")
-    pg.wait_for_selector(".btn.follow:not([hidden])")
+    pg.wait_for_selector('.btn.follow[data-follow="sector:technology"]:not([hidden])')   # not the company page's button
     if "Following" in pg.inner_text(".btn.follow"):
         fails.append("accounts: sector shown as followed before Follow was clicked")
     pg.click(".btn.follow")
@@ -657,12 +758,20 @@ def main():
         print("trend columns in the note:", cols, pg.inner_text(".notes .tr-read"))
         if cols != 2 or "Q3 FY26 · $54.3B" not in pg.inner_text(".notes .tr-read"):
             fails.append(f"note: trend chart missing or wrong ({cols} columns)")
-        for node, words in (("capex", "Capital expenditures = the cash-flow line"), ("fcf", "Free cash flow = operating cash flow minus")):
+        for node, words in (("capex", "Reported line: “Payments To Acquire"), ("fcf", "Calculated: operating cash flow − capital expenditures"),
+                            ("L:aapl:IPhoneMember", "aapl:IPhoneMember on ProductOrServiceAxis")):
             pg.locator(f'g.node[data-node="{node}"] rect.hit').dispatch_event("click")
             pg.wait_for_selector(".notes .node-src")
             if words not in pg.inner_text(".notes .node-src"):
                 fails.append(f"note: {node} does not say where its figure comes from")
         print("capex note:", pg.inner_text(".notes .node-src")[:120])
+        pg.locator('g.node[data-node="revenue"] rect.hit').dispatch_event("click")
+        pg.wait_for_selector(".notes .node-src .links a")
+        hrefs = pg.eval_on_selector_all(".notes .node-src .links a", "(as) => as.map((a) => a.textContent + ' ' + a.href)")
+        print("revenue source links:", hrefs)
+        want = ("The filing", "Inline XBRL viewer", "XBRL data for RevenueFromContractWithCustomerExcludingAssessedTax", "Filing index")
+        if not all(any(h.startswith(w) for h in hrefs) for w in want) or "accession 0000320193-26-000020" not in pg.inner_text(".notes .cite"):
+            fails.append(f"note: source links or citation missing: {hrefs}")
         shot(pg, "c_AAPL_note.png")
         if pg.locator("#thread").count():
             fails.append("X thread panel shows to readers (it is an owner tool)")

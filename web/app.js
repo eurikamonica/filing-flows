@@ -378,10 +378,11 @@
       </section>` : ''}
       <section class="cta" id="cta" hidden>
         <div><h2>Get new charts by e-mail</h2>
-          <p class="muted">Pick companies or sectors; each new chart and its analysis arrives as soon as the filing is out, or once a day. No password: sign in with a code sent to your inbox.</p></div>
+          <p class="muted">Pick companies or sectors; a daily report arrives every morning at 8:00 your time with each new filing’s chart and analysis (or get each one as soon as it is out). No password: sign in with a code sent to your inbox.</p></div>
         <form class="cta-form" id="cta-form"><input type="email" required placeholder="you@example.com" aria-label="E-mail address" autocomplete="email">
           <button class="btn primary" type="submit">Get alerts</button></form>
       </section>
+      <section class="section daily" id="daily" hidden></section>
       <section class="section">
         <div class="section-head"><h2>Latest filings</h2><span class="muted">Newest first</span></div>
         <div class="filters">
@@ -417,6 +418,7 @@
       }
       box.hidden = false;
     }).catch(() => {});
+    dailyPanel($('#daily'), ix).catch((e) => console.warn('daily report panel:', e.message));
     let limit = 60;
     const draw = () => {
       const q = $('#f-text').value.trim().toLowerCase(), sec = $('#f-sector').value;
@@ -547,8 +549,9 @@
       </div>`;
     body.appendChild(text);
     if (prefs.get('owner', false) && !fy) {               // owner tool (see #owner): only for the verified owner
-      ownerVerified().then((ok) => {
-        const thread = ok && text.isConnected ? threadSection(q, p, site.repo) : null;
+      ownerVerified().then(async (ok) => {
+        const osets = ok ? await ownerSettings() : null;
+        const thread = ok && text.isConnected ? threadSection(q, p, site.repo, osets) : null;
         if (thread) text.after(thread);
       });
     }
@@ -566,33 +569,48 @@
     renderChanges();
   }
 
-  // the ready-to-post X thread for a quarter (the same text the e-mails carry), with copy buttons and "Email me"
-  function threadSection(q, p, repo) {
+  // the ready-to-post X thread for a quarter (the same text the e-mails carry): which filing, what each image shows (with
+  // Save buttons), every post with its role and a Copy button, and "Email me this thread"
+  const ROLES = { headline: 'Headline and charts', business: 'What the company does', about: 'The company in its own words',
+    analysis: 'Analysis', quote: 'From the filing', source: 'Source' };
+  function threadSection(q, p, repo, osets) {
     const posts = q.x_thread || [];
     if (!posts.length) return null;
     const ticker = (p.tickers || [])[0] || String(p.cik);
     const intent = 'https://x.com/intent/post?text=' + encodeURIComponent(posts[0].text);
+    const direct = !!acct.client && (!osets || osets.thread_direct !== false);   // straight to the inbox (owner setting)
     let mail = '';
-    if (repo) {
+    if (direct) mail = '<button class="btn primary" type="button" id="thread-mail">✉ Email me this thread</button>';
+    else if (repo) {
       const title = `Email thread: ${ticker} ${S.dec(q.label)} [${p.cik} ${q.end}]`;
-      const bodyTxt = 'Sends this quarter\u2019s X thread and its charts to the inbox in the MAIL_USERNAME (or MAIL_TO) secret. ' +
+      const bodyTxt = 'Sends this quarter’s X thread and its charts to the inbox in the MAIL_USERNAME (or MAIL_TO) secret. ' +
         'Press Create; the issue closes itself once the e-mail has gone out (about two minutes).';
       mail = `<a class="btn primary" target="_blank" rel="noopener" href="https://github.com/${t(repo)}/issues/new?title=${
         encodeURIComponent(title)}&body=${encodeURIComponent(bodyTxt)}">Email me this thread</a>`;
     }
+    const acc = accession(q.index_url);
+    const form = q.form === '8-K' ? 'Earnings release (8-K)' : q.form;
+    const vs = q.compare_y && q.compare_y.vs;
+    const charts = [['std', 'Chart 1', `${S.dec(q.label)}: where the revenue went, from costs to profit and operating cash flow`]]
+      .concat(vs ? [['y', 'Chart 2', `the same flows compared with ${S.dec(vs)}; a dark strip inside a band is growth`]] : []);
     const sec = document.createElement('section');
     sec.className = 'section';
     sec.id = 'thread';
     sec.innerHTML = `
-      <div class="section-head"><h2>X thread</h2><span class="muted">Ready to post by hand · every post fits 280 characters</span></div>
+      <div class="section-head"><h2>X thread</h2><span class="muted">Ready to post by hand · ${posts.length} posts · every post fits 280 characters</span></div>
+      <dl class="facts thread-info">
+        <dt>Filing</dt><dd>${t(form)} filed ${date(q.filed)} · quarter ended ${date(q.end)}${acc ? ` · <span class="mono">${acc}</span>` : ''}</dd>
+        <dt>Images for post 1</dt><dd>${charts.map(([m, name, cap]) => `<div class="thread-img"><span><b>${name}</b> · ${t(cap)}</span>
+          <button class="btn small" type="button" data-img="${m}">Save PNG</button></div>`).join('')}</dd>
+      </dl>
       <div class="thread-actions">${mail}<a class="btn" target="_blank" rel="noopener" href="${t(intent)}">Open post 1 in X</a>
         <button class="btn" type="button" data-copy-all>Copy all</button></div>
-      ${repo ? '<p class="note-rule">“Email me” opens GitHub with the request filled in: press Create and the thread arrives with both charts attached.</p>' : ''}
+      ${mail ? `<p class="note-rule" id="thread-mail-note">${direct ? 'Sends the thread with both chart PNGs attached to the address you signed in with, usually within two minutes.'
+        : '“Email me” opens GitHub with the request filled in: press Create and the thread arrives with both charts attached. Change this in Owner tools.'}</p>` : ''}
       <ol class="thread">${posts.map((x, i) => `<li>
-        <div class="thread-meta"><span>Post ${i + 1} of ${posts.length} · ${x.len}/280${i ? ' · reply to the post above' : ' · attach the charts'}</span>
+        <div class="thread-meta"><span>Post ${i + 1} of ${posts.length}${ROLES[x.role] ? ` · <b>${ROLES[x.role]}</b>` : ''} · ${x.len}/280${i ? ' · reply to the post above' : ' · attach the charts'}</span>
           <button class="btn small" type="button" data-copy="${i}">Copy</button></div>
-        <pre>${t(x.text)}</pre></li>`).join('')}</ol>
-      <p class="note-rule">Charts for post 1: Export → PNG with the Standard view and with the year-ago view.</p>`;
+        <pre>${t(x.text)}</pre></li>`).join('')}</ol>`;
     const copy = async (txt, btn) => {
       try {
         const native = window.FilingFlowsApp;
@@ -612,6 +630,27 @@
     };
     $$('[data-copy]', sec).forEach((b) => b.addEventListener('click', () => copy(posts[+b.dataset.copy].text, b)));
     $('[data-copy-all]', sec).addEventListener('click', (ev) => copy(posts.map((x) => x.text).join('\n\n---\n\n'), ev.currentTarget));
+    $$('[data-img]', sec).forEach((b) => b.addEventListener('click', async () => {
+      const m = b.dataset.img === 'y' ? 'y' : null;
+      b.disabled = true;
+      try {
+        await fontsReady();
+        const blob = await S.exportScene(S.layout(q, { compare: m, decreases: state.decreases }), 'png');
+        const name = `${ticker}-${S.dec(q.label)}-${m ? '2-vs-' + S.dec(vs) : '1-chart'}.png`.replace(/[^A-Za-z0-9.]+/g, '-');
+        const res = await saveBlob(blob, name);
+        toast(res === 'saved' ? `Saved ${name}` : 'Download unavailable here');
+      } catch (err) {
+        toast(`Could not save: ${err.message}`);
+      } finally {
+        b.disabled = false;
+      }
+    }));
+    const btn = $('#thread-mail', sec);
+    if (btn) btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      toast(await askFor({ cik: +p.cik, period_end: q.end, kind: 'thread' }, 'Thread'));
+      btn.disabled = false;
+    });
     return sec;
   }
 
@@ -1215,10 +1254,14 @@
   const SUPABASE_JS = ['cdn.jsdelivr.net/npm', 'fastly.jsdelivr.net/npm', 'unpkg.com']   // tried in turn (some networks block one)
     .map((h) => `https://${h}/@supabase/supabase-js@2.58.0/dist/umd/supabase.js`);
   const PREF_DEFAULTS = { tickers: [], sectors: [], all_above: false, min_revenue: 1e9, starred: false,
-    frequency: 'instant', email_on: true, push_on: true, final_too: true };
+    frequency: 'daily', email_on: true, push_on: true, final_too: true };
   const MAIL_DEFAULTS = { chart_q: false, chart_y: false, chart_history: false, attach_images: 'png', attach_pdf: true, cmp_decreases: false,
-    changes_detail: false, custom_compare: false };     // columns added after the first release (see savePrefs)
-  const acct = { client: undefined, prefs: null, flash: null, owner: undefined };
+    changes_detail: false, custom_compare: false, digest_hour: 8, tz: null };   // columns added after the first release (see savePrefs)
+  const acct = { client: undefined, prefs: null, flash: null, owner: undefined, osets: undefined };
+  function browserTZ() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch (e) { return null; }
+  }
+  const hourWords = (h) => `${+h}:00`;
 
   function loadScript(src, ms) {
     return new Promise((res, rej) => {
@@ -1271,9 +1314,14 @@
     if (got.error) throw new Error(got.error.message);
     let row = got.data;
     if (!row) {
-      const ins = await c.from('subscriptions').insert(Object.assign({ user_id: user.id, email: user.email }, PREF_DEFAULTS)).select().single();
+      const base = Object.assign({ user_id: user.id, email: user.email }, PREF_DEFAULTS);
+      let ins = await c.from('subscriptions').insert(Object.assign({ tz: browserTZ() }, base)).select().single();
+      if (ins.error && ins.error.code === 'PGRST204') ins = await c.from('subscriptions').insert(base).select().single();   // older database
       if (ins.error) throw new Error(ins.error.message);
       row = ins.data;
+    } else if ('tz' in row && !row.tz && browserTZ()) {          // the daily report's time zone: this browser's
+      const up = await c.from('subscriptions').update({ tz: browserTZ() }).eq('user_id', user.id).select().single();
+      if (!up.error && up.data) row = up.data;
     }
     acct.prefs = row;
     if (typeof row.cmp_decreases === 'boolean' && row.cmp_decreases !== state.decreases) {   // the account setting wins
@@ -1289,6 +1337,7 @@
     const c = await sb();
     const user = await currentUser();
     const row = Object.assign({}, PREF_DEFAULTS, acct.prefs || {}, patch, { user_id: user.id, email: user.email });
+    if (browserTZ()) row.tz = browserTZ();                      // the daily report goes out at its hour in this time zone
     ['unsub_token', 'created_at', 'updated_at'].forEach((k) => delete row[k]);
     let up = await c.from('subscriptions').upsert(row).select().single();
     if (up.error && up.error.code === 'PGRST204' && Object.keys(MAIL_DEFAULTS).some((k) => k in row)) {
@@ -1366,6 +1415,98 @@
     if (!n) return 'Already on its way to your inbox';
     return `${n === 1 ? 'Report' : n + ' reports'} on the way to ${user.email}, usually within 10 minutes`;
   }
+  // one queued e-mail of any kind (send_requests): a day's report, or the owner's X thread of a quarter
+  async function askFor(row, what) {
+    const c = await sb();
+    const user = c ? await currentUser() : null;
+    if (!user) return 'Sign in first';
+    if (!acct.prefs) await loadPrefs().catch(() => null);      // the sender reads the address from the account's row
+    const r = await c.from('send_requests').insert([row]);
+    if (r.error && r.error.code === '23505') return `${what} already on its way to your inbox`;
+    if (r.error && /limit/i.test(r.error.message)) return 'Limit reached: 30 e-mails a day';
+    if (r.error && (tableMissing(r.error) || /check constraint|violates row-level/i.test(r.error.message))) return OWNER_UPDATE;
+    if (r.error) return `Could not send: ${r.error.message}`;
+    return `${what} on the way to ${user.email}, usually within a few minutes`;
+  }
+
+  // ---------- the daily report of one filing date (home page and owner tools): today and the five days before ----------
+  function localISO(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function dayEntries(ix, day) {                       // the same filings pipeline/notify.py entries_for_day() picks
+    const out = [], seen = new Set();
+    ix.companies.forEach((e) => {
+      const found = [];
+      if (e.filed === day || e.after_release === day) found.push(e);
+      (e.also || []).forEach((a) => { if (a.filed === day) found.push(Object.assign({}, e, a, { prelim: a.form === '8-K' })); });
+      found.forEach((x) => { const k = `${x.cik}:${x.end}:${x.form}`; if (!seen.has(k)) { seen.add(k); out.push(x); } });
+    });
+    return out;
+  }
+  const normTicker = (x) => String(x || '').trim().toUpperCase().replace(/\./g, '-');
+  const followsAny = (p) => !!(p && ((p.tickers || []).length || (p.sectors || []).length || p.all_above || p.starred));
+  function followed(e, p) {                            // the same rules as pipeline/notify.py reasons()
+    return (e.ticker && (p.tickers || []).map(normTicker).includes(normTicker(e.ticker))) || (p.sectors || []).includes(e.sector)
+      || (p.all_above && (e.revenue || 0) >= (p.min_revenue || 0)) || (p.starred && e.starred);
+  }
+  async function dailyPanel(box, ix, opt) {
+    opt = opt || {};
+    const c = await sb();
+    if (!c || !box.isConnected) return;
+    const user = await currentUser();
+    const p = user ? (acct.prefs || await loadPrefs().catch(() => null)) : null;
+    const owner = user ? await ownerVerified() : false;
+    const osets = owner ? await ownerSettings() : null;
+    const minOwner = osets && osets.min_revenue != null ? +osets.min_revenue : 1e9;
+    const scope = owner ? (e) => (e.revenue || 0) >= minOwner
+      : followsAny(p) ? (e) => followed(e, p) : (e) => (e.revenue || 0) >= 1e9;
+    const mineWord = owner ? 'in your report' : followsAny(p) ? 'you follow' : 'over $1B';
+    const now = new Date();
+    const days = [0, 1, 2, 3, 4, 5].map((i) => {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const iso = localISO(d), all = dayEntries(ix, iso);
+      const name = i === 0 ? 'Today' : i === 1 ? 'Yesterday' : d.toLocaleDateString('en-US', { weekday: 'short' });
+      return { iso, i, name, short: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        long: d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }), all: all.length, mine: all.filter(scope).length };
+    });
+    const first = days.find((d) => d.mine) || days.find((d) => d.all) || days[1];
+    let pick = first.iso;
+    const hour = owner && osets ? osets.daily_hour : p && p.digest_hour != null ? p.digest_hour : 8;
+    const auto = owner ? (osets && osets.daily_on === false ? 'Your scheduled owner report is off (Owner tools).'
+      : `Your owner report also arrives by itself every morning at ${hourWords(hour)} ${t((osets && osets.tz) || 'Asia/Shanghai')} time.`)
+      : p && p.email_on && p.frequency === 'daily' ? `The report of new filings also arrives by itself every morning at ${hourWords(hour)} your time (change it in <a href="#account">Alerts</a>).`
+      : `Get it every morning by itself: choose “Daily report” in <a href="#account">${user ? 'your alerts' : 'Alerts'}</a>.`;
+    const what = owner ? `every company with quarterly revenue of $${(minOwner / 1e9).toLocaleString('en-US', { maximumFractionDigits: 2 })}B or more, with its X thread`
+      : followsAny(p) ? 'the companies you follow' : 'every company with quarterly revenue of $1B or more (follow companies to narrow it)';
+    box.innerHTML = `<div class="section-head"><h2>${opt.title || 'Daily report'}</h2>
+        <span class="muted">One e-mail for a day’s filings: what each company does, its chart and the analysis</span></div>
+      <div class="days" role="radiogroup" aria-label="Filing date">${days.map((d) => `<button type="button" class="day${d.iso === pick ? ' on' : ''}"
+          role="radio" aria-checked="${d.iso === pick}" data-day="${d.iso}" ${d.all ? '' : 'disabled'}>
+          <b>${d.name}</b><span>${d.short}</span><span class="n">${d.all ? `${d.all} filing${d.all === 1 ? '' : 's'}${user ? ` · ${d.mine} ${mineWord}` : ''}` : 'no filings'}</span></button>`).join('')}</div>
+      <div class="row"><button class="btn primary" type="button" id="day-send"></button><span class="muted small" id="day-msg" role="status"></span></div>
+      <p class="muted small">Covers ${what}. Dates are filing dates on SEC EDGAR. ${auto}</p>`;
+    const label = () => { const d = days.find((x) => x.iso === pick); $('#day-send', box).textContent = `✉ Email me the report for ${d.i < 2 ? d.name.toLowerCase() : d.long}`; };
+    label();
+    $$('[data-day]', box).forEach((b) => b.addEventListener('click', () => {
+      pick = b.dataset.day;
+      $$('[data-day]', box).forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); });
+      label();
+    }));
+    $('#day-send', box).addEventListener('click', async (ev) => {
+      if (!(await currentUser())) {
+        prefs.set('pending-day', pick);
+        prefs.set('after-signin', location.hash.replace(/^#/, '') || 'home');
+        location.hash = 'account';
+        return;
+      }
+      const btn = ev.currentTarget;
+      btn.disabled = true;
+      $('#day-msg', box).textContent = await askFor({ cik: 0, period_end: pick, kind: 'day' }, 'Report');
+      btn.disabled = false;
+    });
+    box.hidden = false;
+  }
+
   async function initSendButtons() {
     const btns = $$('[data-send]');
     if (!btns.length) return;
@@ -1401,6 +1542,11 @@
     const p = await loadPrefs();
     const pending = prefs.get('pending-follow', null), pendingSend = prefs.get('pending-send', null);
     const pendingBuild = prefs.get('pending-build', null), pendingOwner = prefs.get('pending-owner', false);
+    const pendingDay = prefs.get('pending-day', null);
+    if (pendingDay) {                                 // "Email me the report for …" from before signing in
+      prefs.set('pending-day', null);
+      acct.flash = await askFor({ cik: 0, period_end: pendingDay, kind: 'day' }, 'Report');
+    }
     if (pending) {                                    // a Follow click from before signing in
       prefs.set('pending-follow', null);
       const [kind, value] = pending.split(':');
@@ -1418,7 +1564,7 @@
       acct.flash = (await askForCompany(pendingBuild)).msg;
     }
     if (pendingOwner) prefs.set('pending-owner', false);       // signing in from the owner tools page
-    if (pending || pendingSend || pendingBuild || pendingOwner) {
+    if (pending || pendingSend || pendingBuild || pendingOwner || pendingDay) {
       const back = prefs.get('after-signin', null);
       prefs.set('after-signin', null);
       if (back && back !== 'account') { location.hash = back; return; }
@@ -1490,8 +1636,10 @@
               $<input type="number" id="min-rev" min="0" step="0.1" value="${(p.min_revenue / 1e9).toFixed(1).replace(/\.0$/, '')}" style="width:5em"> billion</label>
             <label><input type="checkbox" id="starred" ${p.starred ? 'checked' : ''}> The site’s starred companies</label></fieldset>
           <fieldset><legend>When</legend>
+            <label class="long"><input type="radio" name="freq" value="daily" ${p.frequency === 'daily' ? 'checked' : ''}><span>Daily report every morning at
+              <select id="digest-hour" aria-label="Hour of the daily report">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${+m.digest_hour === h ? 'selected' : ''}>${hourWords(h)}</option>`).join('')}</select>
+              your time${browserTZ() ? ` (${t(browserTZ())})` : ''}: every new chart since the last report, with what each company does and the analysis, in one e-mail</span></label>
             <label><input type="radio" name="freq" value="instant" ${p.frequency !== 'daily' ? 'checked' : ''}> As soon as a chart is out (checked every 15 minutes)</label>
-            <label><input type="radio" name="freq" value="daily" ${p.frequency === 'daily' ? 'checked' : ''}> Once a day, early evening New York time</label>
             <label class="long"><input type="checkbox" id="final-too" ${p.final_too !== false ? 'checked' : ''}><span>After a preliminary chart from an earnings release (8-K), also send the final one when the 10-Q/10-K is filed, marked as final and compared with the release</span></label></fieldset>
           <fieldset><legend>How</legend>
             <label><input type="checkbox" id="email-on" ${p.email_on ? 'checked' : ''}> E-mail to ${t(user.email)}: the chart, the analysis and what changed</label>
@@ -1537,7 +1685,7 @@
       };
       $('#add-btn').addEventListener('click', add);
       $('#add-ticker').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
-      $('#sign-out').addEventListener('click', async () => { await c.auth.signOut(); acct.prefs = null; acct.owner = undefined; syncApp(); location.hash = 'home'; });
+      $('#sign-out').addEventListener('click', async () => { await c.auth.signOut(); acct.prefs = null; acct.owner = undefined; acct.osets = undefined; syncApp(); location.hash = 'home'; });
       $('#del-acct').addEventListener('click', () => { $('#del-confirm').hidden = false; $('#del-acct').hidden = true; });
       $('#del-no').addEventListener('click', () => { $('#del-confirm').hidden = true; $('#del-acct').hidden = false; });
       $('#del-yes').addEventListener('click', async () => {
@@ -1561,7 +1709,7 @@
             chart_q: $('#chart-q').checked, chart_y: $('#chart-y').checked, chart_history: $('#chart-history').checked,
             attach_images: ($('input[name="attach"]:checked') || {}).value || 'png', attach_pdf: $('#attach-pdf').checked,
             cmp_decreases: $('#cmp-decreases').checked, changes_detail: $('#changes-detail').checked,
-            custom_compare: $('#custom-compare').checked,
+            custom_compare: $('#custom-compare').checked, digest_hour: +$('#digest-hour').value,
           });
           state.decreases = $('#cmp-decreases').checked;           // company pages follow the account setting
           prefs.set('decreases', state.decreases);
@@ -1584,8 +1732,9 @@
     const rows = (r.data || []).map((x) => {
       const co = byCik.get(String(x.cik));
       const fy = x.kind === 'fy';
+      if (x.kind === 'day') return `<tr><td>Daily report</td><td>filings dated ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
       return `<tr><td>${co ? `<a href="#c-${x.cik}-${fy ? 'fy-' : ''}${x.period_end}">${t(co.ticker || co.name)}</a>` : x.cik}</td>
-        <td>${fy ? 'fiscal year' : 'quarter'} ended ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
+        <td>${x.kind === 'thread' ? 'X thread · ' : ''}${fy ? 'fiscal year' : 'quarter'} ended ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
     }).join('');
     box.innerHTML = `<div class="section-head"><h2>Reports you asked for</h2><span class="muted">✉ Email me on any company page sends that quarter or fiscal year, old ones included</span></div>
       ${rows ? `<div class="tbl-wrap"><table><tbody>${rows}</tbody></table></div>` : '<p class="muted small">None yet.</p>'}`;
@@ -1639,14 +1788,63 @@
       return;
     }
     const on = prefs.get('owner', false);
+    const osets = c ? await ownerSettings(true) : null;
+    const o = Object.assign({ thread_direct: true, daily_on: true, daily_hour: 8, tz: browserTZ() || 'Asia/Shanghai',
+      min_revenue: 1e9, instant_threads: false }, osets || {});
+    const settingsHTML = !c ? `<p class="muted" style="max-width:68ch">Accounts are not switched on, so these settings come from
+        <span class="mono">config/x.json</span> (keys daily_on, daily_hour, tz, min_revenue, instant_threads).</p>`
+      : !osets ? `<p class="muted" style="max-width:68ch">${OWNER_UPDATE}: the owner settings table is new.</p>`
+      : `<form class="prefs" id="owner-form">
+        <fieldset><legend>“Email me this thread”</legend>
+          <label class="long"><input type="radio" name="thread-mail" value="direct" ${o.thread_direct ? 'checked' : ''}><span>Send it straight to my inbox
+            (${t(user.email)}), with both chart PNGs attached, usually within two minutes</span></label>
+          <label class="long"><input type="radio" name="thread-mail" value="github" ${o.thread_direct ? '' : 'checked'}><span>Open a GitHub issue with the
+            request filled in (the older way: press Create on GitHub)</span></label></fieldset>
+        <fieldset><legend>Daily report</legend>
+          <label class="long"><input type="checkbox" id="daily-on" ${o.daily_on ? 'checked' : ''}><span>Every morning at
+            <select id="daily-hour" aria-label="Hour of the daily report">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${+o.daily_hour === h ? 'selected' : ''}>${hourWords(h)}</option>`).join('')}</select>
+            ${t(browserTZ() || o.tz)} time: every filing since the last report — what the company does, the charts, the analysis and the
+            ready-to-post X thread — in one e-mail to ${t(user.email)}</span></label>
+          <label>Companies with quarterly revenue of at least $<input type="number" id="daily-min" min="0" step="0.1"
+            value="${(+o.min_revenue / 1e9).toFixed(2).replace(/\.?0+$/, '')}" style="width:5em"> billion</label>
+          <label class="long"><input type="checkbox" id="instant-threads" ${o.instant_threads ? 'checked' : ''}><span>Also e-mail the new X threads
+            right after each scan (as before the daily report)</span></label></fieldset>
+        <div class="row"><button class="btn primary" type="submit">Save</button><span class="muted" id="owner-msg" role="status"></span></div>
+      </form>`;
     app.innerHTML = `<div class="page-head">${head}
-      <p class="muted" style="max-width:68ch">Shows the X thread panel on company pages in this browser: the ready-to-post
-        thread, Copy buttons and “Email me this thread”. Readers never see it. ${c ? `Verified: signed in as <b>${t(user.email)}</b>.`
-          : 'Accounts are not switched on for this site, so this switch only stays in this browser.'}</p>
-      <p><button class="btn${on ? '' : ' primary'}" type="button" id="owner-toggle">${on ? 'Turn off in this browser' : 'Turn on in this browser'}</button></p>
-      <p class="muted" id="owner-state">${on ? 'On: company pages show the X thread.' : 'Off: company pages look the same as for readers.'}</p>
-      ${back}</div>`;
+      <p class="muted" style="max-width:68ch">Readers never see these. ${c ? `Verified: signed in as <b>${t(user.email)}</b>.`
+          : 'Accounts are not switched on for this site, so the switch below only stays in this browser.'}</p></div>
+      <section class="section"><div class="section-head"><h2>X thread on company pages</h2></div>
+        <p class="muted" style="max-width:68ch">Shows the ready-to-post thread under each quarter in this browser: the filing, what each image shows
+          (with Save PNG), every post with Copy, and “Email me this thread”.</p>
+        <p><button class="btn${on ? '' : ' primary'}" type="button" id="owner-toggle">${on ? 'Turn off in this browser' : 'Turn on in this browser'}</button></p>
+        <p class="muted" id="owner-state">${on ? 'On: company pages show the X thread.' : 'Off: company pages look the same as for readers.'}</p></section>
+      <section class="section"><div class="section-head"><h2>Settings</h2></div>${settingsHTML}</section>
+      <section class="section daily" id="daily" hidden></section>
+      ${back}`;
     $('#owner-toggle').addEventListener('click', () => { prefs.set('owner', !on); ownerPage(); });
+    const form = $('#owner-form');
+    if (form) form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      $('#owner-msg').textContent = 'Saving…';
+      const patch = { thread_direct: $('input[name="thread-mail"]:checked').value === 'direct', daily_on: $('#daily-on').checked,
+        daily_hour: +$('#daily-hour').value, tz: browserTZ() || o.tz, min_revenue: Math.round(Math.max(0, +$('#daily-min').value || 0) * 1e9),
+        instant_threads: $('#instant-threads').checked, updated_at: new Date().toISOString() };
+      const r = await c.from('owner_settings').update(patch).eq('id', true).select().single();
+      if (r.error) { $('#owner-msg').textContent = `Could not save: ${r.error.message}`; return; }
+      acct.osets = r.data;
+      $('#owner-msg').textContent = 'Saved.';
+      getJSON('index.json').then((ix) => dailyPanel($('#daily'), ix, { title: 'Send a daily report now' })).catch(() => {});
+    });
+    if (c) getJSON('index.json').then((ix) => dailyPanel($('#daily'), ix, { title: 'Send a daily report now' })).catch(() => {});
+  }
+  async function ownerSettings(fresh) {
+    const c = await sb();
+    if (!c) return null;
+    if (acct.osets !== undefined && !fresh) return acct.osets;
+    const r = await c.from('owner_settings').select('*').maybeSingle();
+    acct.osets = r.error ? null : (r.data || null);
+    return acct.osets;
   }
 
   // ---------- router ----------

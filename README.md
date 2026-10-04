@@ -14,8 +14,14 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
 - **Free cash flow**: operating cash flow splits into capital expenditures and free cash flow. When capex is larger
   than operating cash flow, all of it goes to capex and the gap enters as *Negative free cash flow* (paid from cash or
   financing), so no band ever has a negative width.
+- **Every node says where its number comes from**: the reported line as printed in the filing and its XBRL tag
+  (and, for a quarter read from year-to-date figures, that it is year-to-date minus the prior year-to-date), the row
+  of the earnings release, or the calculation (for example operating expenses = gross profit − operating profit).
+  Under it is the full citation (company, form, period, filing date, accession number) with links to the filing
+  itself, SEC's inline XBRL viewer, SEC's XBRL data for that tag across all periods, and the filing index.
+  Quarters stored before this was added get their source lines filled in from SEC company facts during later scans.
 - **Click any node** for a small chart of that line over the last five quarters on file (amount as columns, change
-  against a year earlier as a line; hover a quarter for its figures), and for what the company wrote about that line in the same filing (MD&A paragraphs, quoted
+  against a year earlier and against the previous quarter as lines; hover a quarter for its figures), and for what the company wrote about that line in the same filing (MD&A paragraphs, quoted
   verbatim). Company pages open with the first paragraphs of Item 1 *Business* from the latest 10-K; a company
   without a 10-K yet (a recent listing) gets the "About …" paragraph of its earnings release, or else the description
   of business in Note 1 of its 10-Q, labelled with where it came from.
@@ -88,16 +94,30 @@ still waits for SEC's XBRL data, which can lag the filing by hours (retried ever
 Add its ticker to `config/starred.txt` (one per line) and commit. The next run back-fills its last eight
 10-Q/10-K filings. The home page links to the file when the site runs on GitHub Pages.
 
-## New charts as ready-to-post X threads (by e-mail)
+## The owner's daily report and ready-to-post X threads (by e-mail)
 
-Each new company quarter becomes a short X thread: headline figures with the chart (and the year-ago comparison
-chart), the company in its own words (10-K Item 1, quoted), the analysis, a quote from the filing about revenue,
-and the source (form, filing date, accession number). Everything comes from the site data; no language model
-writes any of it. Every post fits X's 280-character limit.
+Each new company quarter becomes a short X thread, numbered 1/7, 2/7 …:
 
-By default the threads are **e-mailed** (one e-mail per run that finds new charts): each post sits in its
-own block with its character count, the first post has an "Open in X" link that pre-fills it, and the chart images
-are attached. Post by hand; nothing is published automatically.
+1. **Headline and charts**: ticker, company, quarter; which filing and when (`10-Q filed Jul 31, 2026 · quarter ended
+   Jun 27`); revenue, margins, net earnings, operating cash flow; and what the attached images show (*Charts: Q3 FY26
+   revenue to cash; vs Q3 FY25 (dark = growth)*).
+2. **What the company does**: its SEC industry and sector, and where the quarter's revenue came from (each segment or
+   product line with its amount and share).
+3. **The company in its own words**: the opening of Item 1 of its 10-K (or its earnings release / 10-Q), quoted, with
+   where it is from.
+4. **Analysis**: one post per paragraph (revenue, profit, cash).
+5. **From the filing**: what the 10-Q/10-K says about revenue or its largest line, quoted.
+6. **Source**: company, form, period, filing date, accession number.
+
+Everything comes from the site data; no language model writes any of it. Every post fits X's 280-character limit.
+
+**Daily report (default).** Every morning at 8:00 (owner's time zone; set on the `#owner` page) one e-mail carries every
+filing since the last report, largest first: a table of contents, then for each company the filing, what the company
+does, its description, both charts with what they show, the analysis, what changed and the X thread post by post (with
+an "Open post 1 in X" link). Companies below the owner's revenue minimum (default $1B a quarter) are left out. It goes to
+the addresses in Supabase's `site_owners` table (else `MAIL_TO`, else `MAIL_USERNAME`). Mornings with nothing new send
+nothing. The scan's sending step sends it, so it arrives with the first scan after 8:00 (within a few hours at most;
+see *Scan more often* for an on-time clock). Nothing is published automatically.
 
 Set up (Gmail):
 
@@ -106,19 +126,24 @@ Set up (Gmail):
 2. Add repository secrets `MAIL_USERNAME` (the Gmail address) and `MAIL_PASSWORD` (the 16-character app password,
    without spaces). Optional: `MAIL_TO` to send to another address.
 
-Company pages can also show the quarter's thread with Copy buttons and an **Email me this thread** button. It is an
-owner tool, hidden from readers: open `https://<you>.github.io/<repo>/#owner` once in each browser you use and turn it
-on (the setting stays in that browser). With accounts switched on, only addresses on the owner list can do that: run
-`insert into public.site_owners (email) values ('you@example.com');` once in the Supabase SQL Editor (after
-`supabase/schema.sql`) and sign in with that address. The list cannot be read through the site. The thread text
-itself is built from public filings and sits in the site's public data files; the gate keeps the tools off readers'
-pages. The
-site is static, so the button opens a pre-filled GitHub issue; when you (the repository owner) press Create, the
-workflow `.github/workflows/email-thread.yml` e-mails that quarter's thread with both charts and closes the issue.
-Issues opened by anyone else are ignored.
+**Owner tools** (`https://<you>.github.io/<repo>/#owner`), hidden from readers. With accounts switched on, only
+addresses on the owner list can use them: run `insert into public.site_owners (email) values ('you@example.com');` once
+in the Supabase SQL Editor (after `supabase/schema.sql`) and sign in with that address. The list cannot be read through
+the site.
 
-Until the secrets exist, each run prints the threads it would send in the Actions log
-("Send new charts as X threads" step).
+- **X thread on company pages** (per browser): under each quarter, the filing, what each image shows with **Save PNG**,
+  every post with its role and **Copy**, and **Email me this thread**.
+- **Settings** (saved in Supabase, table `owner_settings`, readable and changeable by the owner only):
+  - *Email me this thread*: **straight to my inbox** (default; a queued request that `requests.yml` sends within a
+    couple of minutes, both chart PNGs attached) or **open a GitHub issue** (the older way: press Create, and
+    `.github/workflows/email-thread.yml` sends it; issues opened by anyone else are ignored).
+  - *Daily report*: on/off, the hour (your browser's time zone is saved with it), the revenue minimum.
+  - *Also e-mail new X threads right after each scan* (off by default; the behaviour before the daily report).
+- **Send a daily report now**: pick a filing date, today or one of the five days before, and that day's report arrives
+  within a few minutes.
+
+Without accounts the same settings can go in `config/x.json` (`daily_on`, `daily_hour`, `tz`, `min_revenue`,
+`instant_threads`). Until the mail secrets exist, each run prints the threads it would send in the Actions log.
 
 Posting straight to X instead: set `"mode": "api"` in `config/x.json` and add `X_API_KEY`, `X_API_SECRET`,
 `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET` (an app with Read and write permission at console.x.com). X's API is
@@ -132,7 +157,7 @@ pay-per-use: $0.015 per post, $0.20 per post with a link (docs.x.com/x-api/getti
 | `mode` | `"email"` | `"email"` (send to yourself) or `"api"` (post through the X API) |
 | `scope` | `"all"` | `"all"` or `"starred"` (only companies in `config/starred.txt`) |
 | `min_revenue` | `1000000000` | only quarters with at least this revenue (USD); `0` for every company |
-| `max_per_run` | `4` | threads per run |
+| `max_per_run` | `4` | threads per run (with *instant* threads or the X API) |
 | `max_age_days` | `3` | skip filings older than this |
 | `preliminary` | `true` | include quarters read from 8-K earnings releases |
 | `include_link` | `false` | add a link to the chart page in the last post |
@@ -144,9 +169,15 @@ A company quarter is sent once: when the 10-Q/10-K replaces an 8-K chart that wa
 
 Readers sign up with their e-mail address only: the site sends a 6-digit code, they type it in, done (no password).
 On the **Alerts** page they choose companies (or press **☆ Follow** on any company or sector page), sectors, "every
-company above $X billion of revenue" or the starred list, and how often: as soon as a chart is out (checked every 15 minutes)
-or one digest a day. Each alert e-mail carries the chart itself, the headline figures, the analysis, what changed
-against the year-ago quarter, a quote from the filing, and links to the interactive chart and the filing.
+company above $X billion of revenue" or the starred list, and how often: a **daily report** every morning at 8:00 their
+own time (the default; the hour can be changed, the time zone comes from their browser) or as soon as a chart is out
+(checked every 15 minutes). The daily report lists every company first, then for each one the filing and its date, what
+the company does (industry, revenue by line, its own description), the chart, the analysis and what changed. Each alert
+e-mail carries the chart itself, the headline figures, the analysis, what changed against the year-ago quarter, a quote
+from the filing, and links to the interactive chart and the filing.
+- **Daily report of any day** (home page): pick today or one of the five days before and **Email me the report**:
+  that day's filings for the companies the reader follows (every company above $1B when they follow none yet).
+  Days without filings (weekends) are greyed out.
 Every e-mail has an unsubscribe link; the Alerts page also has **Delete my account**.
 
 - **What each e-mail holds** (Alerts → *In each e-mail*). Always this quarter's chart (tap it for the interactive
@@ -203,7 +234,8 @@ Until the steps below are done the site simply hides the sign-up box and the Fol
 
 Optional variables: `CONTACT_EMAIL` (shown on the privacy and terms pages; otherwise they point to GitHub issues), `MAIL_FROM` (e.g. `Filing Flows <alerts@yourdomain.com>`), `SMTP_HOST` / `SMTP_PORT` (another
 provider, e.g. Resend: `smtp.resend.com`, `465`, user `resend`, password = API key), `MAIL_DAILY_LIMIT` (default 400),
-`DIGEST_HOUR_UTC` (default 22, about 6 pm in New York), `SITE_URL` (a custom domain).
+`DIGEST_HOUR` / `DIGEST_TZ` (default 8 and `America/New_York`: the daily report time for readers whose own is not saved
+yet; each reader's browser time zone is saved with their alerts), `SITE_URL` (a custom domain).
 
 After the next run the sign-up box appears on the home page, and the **alerts** job of the workflow sends the
 e-mails right after each deploy. Upload `.github/workflows/requests.yml` as well for **Email me**, **Compare any two
@@ -242,6 +274,20 @@ reader signed up are not sent; **Email me** covers those.
   Android share sheet and exports are saved to Downloads. **Sectors** and **Alerts** (sign-in, settings) are the
   site's pages; inside the app the site hides its own header. Links to the site (for example in alert e-mails) can
   open in the app.
+- **Money** tab (app only, not on the website): personal bookkeeping kept on the phone, no sign-in and nothing sent
+  anywhere (`files/books.json`; Android's own backup includes it). Every entry is a journal entry whose debits equal
+  its credits, entered as *Spending*, *Income*, *Transfer* (saving, investing, paying a card, borrowing, repaying),
+  *Opening balance* or a free *Journal entry* with any number of lines; each form shows the entry it will record. For a
+  month, a year or all time the tab shows:
+  - the **journal** (date, accounts, debit and credit columns; tap an entry to edit or delete it);
+  - **T-accounts** for every account with activity (balance brought forward, debits left, credits right, totals, balance);
+  - a **Sankey** of income into spending (red) and savings (green), or savings used when spending is larger (slate),
+    each line with its share and the change against the previous month or year;
+  - the **income statement**, **balance sheet** (assets = liabilities + equity, checked) and **cash flow statement**
+    (direct method: cash & bank accounts; operating, investing and financing by the account on the other side; plus
+    the reconciliation from savings to operating cash flow), the first two with the previous period alongside.
+  Accounts (add, rename, archive; each balance-sheet account's type decides its cash-flow section), a currency symbol,
+  an example month to explore, CSV export of the journal, and a JSON backup to restore on another phone.
 
 It needs no server of its own. These native parts are also what keeps Google Play from treating it as a website
 wrapper (Minimum functionality / Webview policies): show them in the store screenshots and description.
@@ -305,6 +351,7 @@ EDGAR daily index (backfill)         ─┴─► pending queue (state.json)
 | `pipeline/sankey.py` | chart spec in the standard format (profit view, loss "funding" view) |
 | `pipeline/release.py` | 8-K earnings releases: statement tables → quarter values (units, signs, YTD cash flow, reconciliation) |
 | `pipeline/social.py` | X threads: candidates, text (fits 280 characters), chart PNGs via headless Chromium, e-mail or X API |
+| `pipeline/owner.py` | the owner's daily report, owner settings, X threads on request |
 | `pipeline/notify.py` | reader alerts and **Email me** requests: matches charts to subscriptions, e-mails chart + analysis, records deliveries |
 | `pipeline/custom.py` | readers' requests answered from SEC: any two periods as one comparison chart; companies to build in the next scan |
 | `supabase/schema.sql` | accounts, report requests, row-level security, unsubscribe and delete-account functions (safe to run again) |

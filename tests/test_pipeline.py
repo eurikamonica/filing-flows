@@ -203,11 +203,21 @@ def test_social_threads_fit_and_cite(tmp_path):
     for e in todo:
         c, q = social.quarter_of(str(site), e)
         c["intro"] = {"text": "Example text. " * 60, "filed": "2025-10-27"}
-        posts = social.compose(c, q, cfg)
+        parts = social.compose_parts(c, q, cfg)
+        posts = [x["text"] for x in parts]
+        n = len(posts)
         assert all(social.xlen(p) <= 280 for p in posts), [social.xlen(p) for p in posts]
-        assert posts[0].startswith("$") and "Revenue" in posts[0]
-        assert posts[1].startswith("About ") and "” — 10-K filed Oct 27, 2025, Item 1" in posts[1]
-        assert posts[-1].startswith("Source: SEC EDGAR") and "http" not in posts[-1]
+        assert posts[0].startswith("$") and "Revenue" in posts[0] and f" filed {social.fdate(q['filed'])}" in posts[0]
+        assert "Chart" in posts[0].split("\n\n")[-2]                       # what the attached images show
+        assert all(p.endswith(f"\n\n{i + 1}/{n}") for i, p in enumerate(posts))
+        about = next(p for p in posts if p.startswith("About "))
+        assert "in its own words (10-K filed Oct 27, 2025, Item 1):\n“" in about
+        roles = [x["role"] for x in parts]
+        assert roles[0] == "headline" and roles[-1] == "source" and "analysis" in roles
+        assert posts[-1].startswith(f"Source: {social.display_name(c['profile']['name'])} ") and "http" not in posts[-1]
+        if social.revenue_mix(q):
+            biz = posts[roles.index("business")]
+            assert biz.startswith("What ") and "Industry: " in biz and "revenue came from:" in biz
     brk = next(e for e in todo if e["cik"] == 1067983)
     assert social.compose(*social.quarter_of(str(site), brk), cfg)[0].startswith("$BRK.B ")
 
@@ -324,9 +334,9 @@ def test_social_send_one_on_request(tmp_path, monkeypatch=None):
 # ------------------------------------------------------------------ reader alerts (pipeline/notify.py)
 class _FakeSupa:
     """Supabase REST stand-in: eq / in / lt / gte / is filters, insert that ignores duplicates, PATCH that returns rows."""
-    def __init__(self, subs, dels=(), requests=()):
+    def __init__(self, subs, dels=(), requests=(), **tables):
         self.t = {"subscriptions": [dict(r) for r in subs], "deliveries": [dict(r) for r in dels],
-                  "send_requests": [dict(r) for r in requests]}
+                  "send_requests": [dict(r) for r in requests], **{k: [dict(r) for r in v] for k, v in tables.items()}}
         self.deleted = []
 
     @property
@@ -394,7 +404,7 @@ def test_notify_matches_follows_and_sends_once(tmp_path):
     site = _site(tmp_path)
     subs = [
         _sub("ann", tickers=["aapl"]),                                     # instant, one company
-        _sub("bea", sectors=["technology"], frequency="daily"),            # daily digest of a sector
+        _sub("bea", sectors=["technology"], frequency="daily", tz="Asia/Shanghai", digest_hour=8),   # daily report, 8:00 Shanghai
         _sub("cal", all_above=True, min_revenue=50_000_000_000),           # every company >= $50B
         _sub("dan", tickers=["META"]),                                     # already got META
         _sub("eve", tickers=["AAPL"], email_on=False),                     # unsubscribed
@@ -418,13 +428,26 @@ def test_notify_matches_follows_and_sends_once(tmp_path):
         assert got["ann"]["List-Unsubscribe"].startswith("<https://ex.github.io/ff/#unsubscribe-")
         cal = {k.split(":")[0] for k in (d["item"] for d in supa.dels if d["user_id"] == "cal")}
         assert cal == {"320193", "1326801", "1067983"}, cal                  # Apple, Meta, Berkshire
-        # the same run again sends nothing; the daily digest waits for its hour and then goes out once
+        # the same run again sends nothing; the daily report waits for 8:00 in the reader's time zone, then goes out once
         mail.sent.clear()
-        assert notify.run(notify.Site(site), supa, mail, "x", "", now=afternoon, images=False, hour=22, daily_limit=100) == 0
-        evening = afternoon.replace(hour=22, minute=20)
-        assert notify.run(notify.Site(site), supa, mail, "x", "", now=evening, images=False, hour=22, daily_limit=100) == 1
-        assert mail.sent[0]["To"] == "bea@example.com" and mail.sent[0]["Subject"].startswith("Your daily charts: ")
-        assert notify.run(notify.Site(site), supa, mail, "x", "", now=evening.replace(hour=23), images=False, hour=22, daily_limit=100) == 0
+        assert notify.run(notify.Site(site), supa, mail, "x", "", now=afternoon, images=False, daily_limit=100) == 0
+        morning = dt.datetime(2026, 9, 26, 0, 20, tzinfo=dt.timezone.utc)          # 8:20 in Shanghai
+        assert notify.run(notify.Site(site), supa, mail, "x", "", now=morning, images=False, daily_limit=100) == 1
+        m = mail.sent[0]
+        assert m["To"] == "bea@example.com" and m["Subject"].startswith("Your daily report, Sep 26: "), m["Subject"]
+        body = m.get_body(("plain",)).get_content()
+        assert body.startswith("Your daily report for Saturday, September 26, 2026: ") and "In this report:" in body
+        assert "What the company does:" in body and "Industry: Electronic Computers (Technology sector)" in body
+        assert notify.run(notify.Site(site), supa, mail, "x", "", now=morning.replace(hour=1), images=False, daily_limit=100) == 0
+        # the window: a report that could not go out by noon waits for the next morning
+        sub = {"frequency": "daily", "tz": "Asia/Shanghai", "digest_hour": 8}
+        assert notify.is_due(sub, None, dt.datetime(2026, 9, 26, 3, 59, tzinfo=dt.timezone.utc))
+        assert not notify.is_due(sub, None, dt.datetime(2026, 9, 26, 4, 1, tzinfo=dt.timezone.utc))
+        assert not notify.is_due(sub, None, dt.datetime(2026, 9, 25, 23, 59, tzinfo=dt.timezone.utc))
+        assert notify.is_due(dict(sub, tz=None), None, dt.datetime(2026, 9, 26, 12, 30, tzinfo=dt.timezone.utc))   # New York
+        assert notify.is_due(dict(sub, tz="Not/AZone"), None, dt.datetime(2026, 9, 26, 12, 30, tzinfo=dt.timezone.utc))
+        # across a clock change: 8:00 in New York is 13:00 UTC in winter
+        assert notify.local_slot(dt.datetime(2026, 11, 2, 13, 30, tzinfo=dt.timezone.utc), 8, "America/New_York").hour == 13
         # 8-K and 10-Q charts of one quarter are different items; final_too off skips the 10-Q after a sent 8-K
         got = {"9999901:2026-08-30:8-K": "2026-09-24T21:00:00+00:00"}
         tenq = {"cik": 9999901, "end": "2026-08-30", "form": "10-Q"}
@@ -1110,3 +1133,127 @@ def test_capex_found_by_its_printed_name_when_the_tag_is_the_companys_own(tmp_pa
         assert "Proceeds from selling assets" in build.FCF_NOTE
     finally:
         sec.FIXTURES = old
+
+
+def test_every_node_says_where_its_figure_comes_from(tmp_path):
+    """Reported lines name the line and its XBRL tag (and how a quarter was derived); calculated ones say how."""
+    env = dict(os.environ, SEC_FIXTURES=os.path.join(ROOT, "tests", "fixtures"), SEC_USER_AGENT="test test@example.com")
+    out = tmp_path / "data"
+    subprocess.run([sys.executable, "-m", "pipeline.build", "run", "--store", str(tmp_path / "store"), "--out", str(out)],
+                   cwd=ROOT, env=env, check=True, capture_output=True)
+    q = json.load(open(out / "c" / "320193.json"))["quarters"][0]
+    src = {n["id"]: n.get("source") for n in q["nodes"]}
+    assert all(src.values()), [k for k, v in src.items() if not v]               # nothing left unexplained
+    assert src["revenue"].startswith("Reported line:") and "(us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax)" in src["revenue"]
+    assert "year-to-date figure minus the prior year-to-date" in src["ocf"]          # cash flow: year-to-date in a 10-Q
+    assert src["cor"] == "Calculated: revenue − gross profit." and src["opex"].startswith("Calculated: gross profit − operating profit")
+    assert src["wc_out"].startswith("Calculated: operating cash flow − net earnings")
+    assert "aapl:IPhoneMember on ProductOrServiceAxis" in src["L:aapl:IPhoneMember"]
+    assert src["capex"].startswith("Reported line: “Payments To Acquire Property Plant And Equipment”")
+    by = {n["id"]: n for n in q["nodes"]}
+    assert by["revenue"]["tag"] == "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax" and "tag" not in by["cor"]
+    assert q["cite"]["text"] == ("Apple Inc., Form 10-Q for the quarter ended June 27, 2026, filed July 31, 2026 "
+                                 "(accession 0000320193-26-000020)")
+    assert q["cite"]["ix"].startswith("https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/") and q["cite"]["index"]
+    # quarters stored before sources existed get them on a later run, from SEC's company facts
+    from pipeline import build, sec
+    store = build.Store(str(tmp_path / "store"))
+    c = store.company(320193)
+    for x in c["quarters"].values():
+        x.pop("src", None)
+    store.put(320193, c)
+    old = sec.FIXTURES
+    sec.FIXTURES = env["SEC_FIXTURES"]
+    try:
+        build._cf.clear()
+        build.refresh_periods(store)
+    finally:
+        sec.FIXTURES = old
+        build._cf.clear()
+    assert all(x["src"]["revenue"]["c"] == "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"
+               for x in store.company(320193)["quarters"].values())
+    rel = json.load(open(out / "c" / "9999902.json"))["quarters"][0]                 # read from an earnings release
+    rs = {n["id"]: n.get("source") for n in rel["nodes"]}
+    assert rs["I:rd"] == "Reported line: “Technology and development” in the earnings release’s tables (8-K, Exhibit 99.1)."
+    assert rs["capex"].startswith("Reported line: “Purchases of property and equipment” in the earnings release")
+    assert rs["fcf_neg"].startswith("Calculated: capital expenditures − operating cash flow")
+    assert rel["cite"]["text"].startswith("Sample Cloud Holdings, Inc., Form 8-K, Exhibit 99.1 (earnings release) for the quarter ended")
+    assert rel["cite"]["ix"] is None and rel["cite"]["doc"].endswith("ex99-1.htm")
+
+
+# ------------------------------------------------------------------ daily reports and the owner's e-mails
+def test_owner_daily_report(tmp_path):
+    """Every morning at the owner's hour: every filing since the last report in one e-mail, largest first, with the
+    filing, what the company does, both charts, the analysis and the X thread; then not again until the next morning."""
+    import datetime as dt
+    from pipeline import notify, owner, social
+    site = notify.Site(_site(tmp_path))
+    cfg = dict(social.DEFAULTS, max_age_days=10000, site_url="https://ex.github.io/ff")
+    s = dict(owner.DEFAULTS, min_revenue=2e9)
+    st = {}
+    morning = dt.datetime(2026, 9, 25, 0, 30, tzinfo=dt.timezone.utc)            # 8:30 in Shanghai
+    assert owner.due_slot(morning - dt.timedelta(hours=1), s, st) is None           # 7:30: not yet
+    slot = owner.due_slot(morning, s, st)
+    assert slot == dt.datetime(2026, 9, 25, 0, 0, tzinfo=dt.timezone.utc)
+    got = []
+    assert owner.send_daily(site, st, cfg, s, morning, slot, got.append, "me@example.com", ["owner@example.com"], cfg["site_url"]) == 1
+    m = got[0]
+    assert m["Subject"].startswith("Daily report, Sep 25: 5 new filings — AAPL, BRK-B, META, EXDV, CRWV"), m["Subject"]  # SMCL < $2B
+    text = m.get_body(("plain",)).get_content()
+    html = m.get_body(("html",)).get_content()
+    assert "In this report:" in text and "What the company does:" in text and "Chart 2: The same flows compared with Q3 FY25" in text
+    assert "X thread (" in text and "--- Post 1 · Headline and charts · " in text and "accession 0000320193-26-000020" in text
+    imgs = [p for p in m.walk() if p.get_content_type() == "image/jpeg"]
+    assert len(imgs) == 10 and all(f'cid:{p["Content-ID"][1:-1]}' in html for p in imgs)       # two charts each
+    assert html.count("<pre") == sum(len(social.compose_parts(*site.quarter(e), cfg))
+                                     for e in owner.pending(site.json("index.json"), {}, s, cfg, morning))
+    assert owner.due_slot(morning + dt.timedelta(minutes=30), s, st) is None        # sent: not again this morning
+    tomorrow = morning + dt.timedelta(days=1)
+    slot2 = owner.due_slot(tomorrow, s, st)
+    assert slot2 and owner.send_daily(site, st, cfg, s, tomorrow, slot2, got.append, "me", ["o@x.com"], "") == 0   # nothing new
+    assert owner.due_slot(tomorrow, s, st) is None and len(got) == 1
+    assert owner.due_slot(morning, dict(s, daily_on=False), {}) is None
+    # settings: Supabase's row over config/x.json over the defaults; the report goes to the site owners
+    supa = _FakeSupa([], owner_settings=[{"id": True, "daily_hour": 7, "tz": "Europe/Berlin", "thread_direct": False}],
+                     site_owners=[{"email": "Owner@Example.com"}])
+    got_s = owner.settings(supa, {"min_revenue": 5e9})
+    assert (got_s["daily_hour"], got_s["tz"], got_s["min_revenue"], got_s["thread_direct"]) == (7, "Europe/Berlin", 5e9, False)
+    assert owner.addresses(supa) == ["owner@example.com"] and owner.settings(None)["daily_hour"] == 8
+
+
+def test_requests_for_threads_and_days(tmp_path):
+    """The owner's "Email me this thread" (PNG files attached, owner only) and a day's report from the home page."""
+    import datetime as dt
+    from pipeline import notify
+    site = _site(tmp_path)
+    ix = json.load(open(site / "data" / "index.json"))
+    meta = next(e for e in ix["companies"] if e["ticker"] == "META")
+    meta["also"] = [dict(end="2026-03-31", label="Q1 2026", filed="2026-07-31", form="10-Q", rev="$56.3B", revenue=56.3e9, yoy=20)]
+    json.dump(ix, open(site / "data" / "index.json", "w"))
+    assert [notify.item_key(e) for e in notify.entries_for_day(ix, "2026-07-31")] == ["320193:2026-06-27", "1326801:2026-03-31"]
+    mk = lambda i, u, cik, end, kind: {"id": i, "user_id": u, "cik": cik, "period_end": end, "kind": kind, "status": "pending",
+                                       "attempts": 0, "created_at": f"2026-10-02T10:00:0{i}+00:00"}
+    reqs = [mk(1, "own", 320193, "2026-06-27", "thread"), mk(2, "ann", 320193, "2026-06-27", "thread"),
+            mk(3, "ann", 0, "2026-07-30", "day"), mk(4, "bob", 0, "2026-07-30", "day"), mk(5, "own", 0, "2026-07-31", "day"),
+            mk(6, "bob", 0, "2026-10-03", "day")]
+    subs = [_sub("own"), _sub("ann", tickers=["AAPL"]), _sub("bob")]
+    supa = _FakeSupa(subs, (), reqs, site_owners=[{"email": "own@example.com"}], owner_settings=[{"id": True, "min_revenue": 0}])
+    mail = _FakeMailer()
+    now = dt.datetime(2026, 10, 2, 10, 5, tzinfo=dt.timezone.utc)
+    n = notify.run(notify.Site(site), supa, mail, "x", "https://ex.github.io/ff", now=now, images=True, daily_limit=50,
+                   requests_only=True)
+    st = {r["id"]: r for r in supa.t["send_requests"]}
+    assert [st[i]["status"] for i in range(1, 7)] == ["sent", "failed", "sent", "sent", "sent", "failed"], st
+    assert st[2]["error"] == "only the site owner can ask for X threads" and st[6]["error"] == "no filings that day"
+    assert n == 4 and len(mail.sent) == 4
+    thread = next(m for m in mail.sent if m["Subject"].startswith("X thread: Apple Inc. Q3 FY26"))
+    assert [p.get_filename() for p in thread.iter_attachments()] == ["AAPL-Q3-FY26-1-chart.png", "AAPL-Q3-FY26-2-vs-Q3-FY25.png"]
+    assert "Attach to post 1: AAPL-Q3-FY26-1-chart.png (Chart 1: Q3 FY26: where the revenue went" in thread.get_body(("plain",)).get_content()
+    ann = next(m for m in mail.sent if m["To"] == "ann@example.com")            # follows AAPL; META filed that day
+    body = ann.get_body(("plain",)).get_content()
+    assert body.startswith("None of the companies you follow filed on Thursday, July 30, 2026.") and "META" in body
+    bob = next(m for m in mail.sent if m["To"] == "bob@example.com")            # follows nothing: every company over $1B
+    assert bob["Subject"].startswith("Your daily report, Jul 30: META") and "you follow no companies yet" in bob.get_body(("plain",)).get_content()
+    own = next(m for m in mail.sent if m["To"] == "own@example.com" and m["Subject"].startswith("Daily report"))
+    assert own["Subject"].startswith("Daily report, Jul 31: 2 new filings — AAPL, META"), own["Subject"]
+    assert "X thread (" in own.get_body(("plain",)).get_content()

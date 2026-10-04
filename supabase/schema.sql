@@ -11,7 +11,9 @@ create table if not exists public.subscriptions (
   all_above    boolean not null default false,          -- every company with quarterly revenue >= min_revenue
   min_revenue  bigint  not null default 1000000000,
   starred      boolean not null default false,          -- the site's starred list
-  frequency    text    not null default 'instant' check (frequency in ('instant', 'daily')),
+  frequency    text    not null default 'daily' check (frequency in ('instant', 'daily')),
+  digest_hour  smallint not null default 8,               -- the daily report's hour, in the reader's time zone
+  tz           text,                                    -- the reader's time zone (from the browser), e.g. Asia/Shanghai
   email_on     boolean not null default true,
   push_on      boolean not null default true,           -- Android app notifications
   final_too    boolean not null default true,           -- after an 8-K chart, also send the 10-Q/10-K version
@@ -38,8 +40,15 @@ alter table public.subscriptions add column if not exists attach_pdf boolean not
 alter table public.subscriptions add column if not exists cmp_decreases boolean not null default false;
 alter table public.subscriptions add column if not exists changes_detail boolean not null default false;
 alter table public.subscriptions add column if not exists custom_compare boolean not null default false;
+alter table public.subscriptions add column if not exists digest_hour smallint not null default 8;
+alter table public.subscriptions add column if not exists tz text;
+alter table public.subscriptions alter column frequency set default 'daily';   -- new accounts: the 8:00 daily report
 do $$ begin
   alter table public.subscriptions add constraint subscriptions_attach_images_check check (attach_images in ('png', 'jpg', 'none'));
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  alter table public.subscriptions add constraint subscriptions_digest_check check (digest_hour between 0 and 23 and length(tz) <= 64);
 exception when duplicate_object then null;
 end $$;
 
@@ -117,10 +126,12 @@ create table if not exists public.send_requests (
   sent_at     timestamptz
 );
 alter table public.send_requests add column if not exists kind text not null default 'q';
-do $$ begin
-  alter table public.send_requests add constraint send_requests_kind_check check (kind in ('q', 'fy'));
-exception when duplicate_object then null;
-end $$;
+-- kinds: q a quarter, fy a fiscal year, thread the X thread of a quarter (site owner only), day the daily report of one
+-- filing date (period_end; cik 0)
+alter table public.send_requests drop constraint if exists send_requests_kind_check;
+alter table public.send_requests add constraint send_requests_kind_check check (kind in ('q', 'fy', 'thread', 'day'));
+alter table public.send_requests drop constraint if exists send_requests_cik_check;
+alter table public.send_requests add constraint send_requests_cik_check check (cik > 0 or (kind = 'day' and cik = 0));
 drop index if exists public.send_requests_one_pending;       -- a quarter and a fiscal year can end on the same day
 create unique index if not exists send_requests_one_pending_kind on public.send_requests (user_id, cik, period_end, kind)
   where status in ('pending', 'sending');
@@ -130,7 +141,7 @@ alter table public.send_requests enable row level security;
 drop policy if exists "read own requests" on public.send_requests;
 drop policy if exists "ask for reports" on public.send_requests;
 create policy "read own requests" on public.send_requests for select using (auth.uid() = user_id);
-create policy "ask for reports" on public.send_requests for insert with check (auth.uid() = user_id);
+-- the insert policy ("ask for reports") is created further down, after public.am_i_owner()
 
 -- a request starts pending, and at most 30 reports a day per reader (it only ever goes to their own inbox)
 create or replace function public.send_requests_guard() returns trigger
@@ -172,6 +183,77 @@ end $$;
 drop trigger if exists send_requests_wake on public.send_requests;
 create trigger send_requests_wake after insert on public.send_requests
   for each statement execute function public.send_requests_wake();
+
+-- The site owner: only accounts listed here see the owner tools (#owner: the X thread panel on company pages).
+-- Add your own address once in the SQL Editor:  insert into public.site_owners (email) values ('you@example.com');
+-- The list cannot be read through the website (no policies); the site only asks "am I the owner?".
+create table if not exists public.site_owners (email text primary key);
+alter table public.site_owners enable row level security;
+create or replace function public.am_i_owner() returns boolean
+language sql stable security definer set search_path = public, auth as $$
+  select exists (select 1 from public.site_owners o join auth.users u on lower(u.email) = lower(o.email)
+                 where u.id = auth.uid());
+$$;
+revoke all on function public.am_i_owner() from public;
+do $$ begin
+  revoke all on function public.am_i_owner() from anon;
+  grant execute on function public.am_i_owner() to authenticated;
+exception when undefined_object then null;            -- plain Postgres without Supabase's roles
+end $$;
+
+-- "Email me this thread" goes straight to the owner's inbox: only the site owner may ask for a thread
+drop policy if exists "ask for reports" on public.send_requests;
+create policy "ask for reports" on public.send_requests for insert
+  with check (auth.uid() = user_id and (kind <> 'thread' or public.am_i_owner()));
+
+-- The owner's preferences (#owner page): read and changed by the site owner only; read by the workflows with the secret key.
+create table if not exists public.owner_settings (
+  id              boolean primary key default true check (id),      -- a single row
+  thread_direct   boolean not null default true,     -- "Email me this thread" sends at once (false: opens a GitHub issue)
+  daily_on        boolean not null default true,     -- the owner's daily report: new filings with charts, analysis, X threads
+  daily_hour      smallint not null default 8 check (daily_hour between 0 and 23),
+  tz              text not null default 'Asia/Shanghai' check (length(tz) <= 64),
+  min_revenue     bigint not null default 1000000000 check (min_revenue >= 0),   -- companies in the daily report
+  instant_threads boolean not null default false,    -- also e-mail new X threads right after each scan
+  updated_at      timestamptz not null default now()
+);
+insert into public.owner_settings (id) values (true) on conflict do nothing;
+alter table public.owner_settings enable row level security;
+drop policy if exists "owner reads settings" on public.owner_settings;
+drop policy if exists "owner changes settings" on public.owner_settings;
+do $$ begin
+  create policy "owner reads settings" on public.owner_settings for select to authenticated using (public.am_i_owner());
+  create policy "owner changes settings" on public.owner_settings for update to authenticated
+    using (public.am_i_owner()) with check (public.am_i_owner());
+exception when undefined_object then                  -- plain Postgres without Supabase's roles
+  create policy "owner reads settings" on public.owner_settings for select using (public.am_i_owner());
+  create policy "owner changes settings" on public.owner_settings for update using (public.am_i_owner()) with check (public.am_i_owner());
+end $$;
+
+-- Optional outside clock for the scan (README: "Scan more often"): GitHub starts scheduled runs late or skips them when
+-- busy; Supabase's pg_cron can call this every few minutes instead. Uses the same two Vault secrets as the wake-up above.
+-- Only the database itself may call it (never the website): the grants below take it away from everyone else.
+create or replace function public.github_dispatch(evt text) returns void
+language plpgsql security definer set search_path = public as $$
+declare tok text; repo text;
+begin
+  select decrypted_secret into tok from vault.decrypted_secrets where name = 'github_dispatch_token';
+  select decrypted_secret into repo from vault.decrypted_secrets where name = 'github_repo';
+  if tok is null or repo is null then
+    raise notice 'github_dispatch: add the Vault secrets github_dispatch_token and github_repo first';
+    return;
+  end if;
+  perform net.http_post(
+    url := 'https://api.github.com/repos/' || repo || '/dispatches',
+    body := jsonb_build_object('event_type', evt),
+    headers := jsonb_build_object('Authorization', 'Bearer ' || tok, 'Accept', 'application/vnd.github+json',
+                                  'User-Agent', 'filing-flows', 'Content-Type', 'application/json'));
+end $$;
+revoke all on function public.github_dispatch(text) from public;
+do $$ begin
+  revoke all on function public.github_dispatch(text) from anon, authenticated;
+exception when undefined_object then null;            -- plain Postgres without Supabase's roles
+end $$;
 
 -- "Compare any two periods" on a company page (readers who turned it on in their alerts): the sender draws the chart
 -- from SEC data and writes it back into the row; the page shows it. At most 20 a day per reader.

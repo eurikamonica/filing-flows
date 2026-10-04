@@ -16,7 +16,9 @@ Environment
     SITE_URL                                   public address of the site, for links (default X_SITE_URL)
     MAIL_DAILY_LIMIT                           most alert e-mails in 24 hours (default 400; Gmail allows about 500,
                                                and the sign-in codes go through the same account)
-    DIGEST_HOUR_UTC                            when daily digests go out (default 22 = 6 pm New York in summer)
+    DIGEST_HOUR, DIGEST_TZ                     the daily report's default hour and time zone (8, America/New_York) for
+                                               readers whose own choice is not saved yet; each reader's browser time
+                                               zone is saved with their alert settings
 """
 import argparse
 import datetime as dt
@@ -40,6 +42,10 @@ STALE_CLAIM_MINUTES = 30
 SAME_QUARTER_DAYS = 10      # an 8-K quarter and the 10-Q/10-K that replaces it count as one item
 KEEP_DELIVERIES_DAYS = 120
 MAIL_MAX_BYTES = 15_000_000  # images and attachments per e-mail (about 20 MB once encoded; Gmail takes 25 MB)
+DIGEST_HOUR = 8              # the daily report goes out at 8:00 in the reader's own time zone ...
+DEFAULT_TZ = "America/New_York"   # ... or this one while the reader's is not known
+DIGEST_WINDOW_HOURS = 4      # a report that could not go out within 4 hours of its time waits for the next morning
+DAILY_FULL_ITEMS = 15        # companies shown in full in a daily report; the rest are listed with a link
 
 
 def env_int(name, default):
@@ -208,20 +214,44 @@ def reasons(sub, e, sector_names):
     return out
 
 
-def digest_slot(now, hour):
-    return now.replace(hour=hour, minute=0, second=0, microsecond=0)
+def zone(name):
+    """A time zone by its IANA name (Asia/Shanghai), or None when the name is unknown."""
+    from zoneinfo import ZoneInfo
+    try:
+        return ZoneInfo(str(name)) if name else None
+    except Exception:
+        return None
 
 
-def is_due(sub, last_sent, now, hour):
+def local_slot(now, hour, tz):
+    """The latest hour:00 in time zone tz at or before now, in UTC (the time the daily report was due)."""
+    z = zone(tz) or zone(DEFAULT_TZ) or dt.timezone.utc
+    loc = now.astimezone(z)
+    slot = loc.replace(hour=int(hour), minute=0, second=0, microsecond=0)
+    if slot > loc:
+        slot = (slot - dt.timedelta(days=1)).replace(tzinfo=z)
+    return slot.astimezone(dt.timezone.utc)
+
+
+def day_words(now, tz, short=False):
+    """'Sunday, October 4, 2026' (or 'Oct 4') as it is in time zone tz."""
+    d = now.astimezone(zone(tz) or zone(DEFAULT_TZ) or dt.timezone.utc)
+    return d.strftime("%b %-d") if short else d.strftime("%A, %B %-d, %Y")
+
+
+def is_due(sub, last_sent, now, hour=DIGEST_HOUR, tz=DEFAULT_TZ):
+    """Instant alerts are always due; a daily report is due from its hour (in the reader's time zone) for a few hours,
+    once a day."""
     if sub.get("frequency") != "daily":
         return True
-    slot = digest_slot(now, hour)
-    if now < slot:
+    h = sub.get("digest_hour")
+    slot = local_slot(now, hour if h is None else h, sub.get("tz") or tz)
+    if now - slot >= dt.timedelta(hours=DIGEST_WINDOW_HOURS):
         return False
     return last_sent is None or last_sent < slot
 
 
-def plan(subs, deliveries, ix, now, hour=22, max_age=MAX_AGE_DAYS):
+def plan(subs, deliveries, ix, now, hour=DIGEST_HOUR, max_age=MAX_AGE_DAYS, tz=DEFAULT_TZ):
     """-> [(subscription, [(index entry, reasons)])] for every reader with something due now."""
     names = ix.get("sector_names") or {}
     recent = [e for e in ix["companies"]
@@ -248,9 +278,31 @@ def plan(subs, deliveries, ix, now, hour=22, max_age=MAX_AGE_DAYS):
             if why and not delivered(keys, e, final_too):
                 got = None if is_prelim(e) else release_sent(keys, e)
                 items.append((dict(e, _release_sent=got) if got else e, why))
-        if items and is_due(sub, last.get(sub["user_id"]), now, hour):
+        if items and is_due(sub, last.get(sub["user_id"]), now, hour, tz):
             out.append((sub, items))
     return out
+
+
+def entries_for_day(ix, day):
+    """Index-like entries of the filings dated `day` (YYYY-MM-DD): latest filings, earlier ones of the last days, and
+    the earnings releases (8-K) a 10-Q/10-K has since replaced (shown with the final figures)."""
+    out, seen = [], set()
+    for e in ix["companies"]:
+        found = []
+        if e.get("filed") == day or e.get("after_release") == day:
+            found.append(e)
+        for a in e.get("also") or []:
+            if a.get("filed") == day:
+                found.append(dict(e, **a, prelim=a.get("form") == "8-K"))
+        for x in found:
+            if item_key(x) not in seen:
+                seen.add(item_key(x))
+                out.append(x)
+    return out
+
+
+def follows_anything(sub):
+    return bool(sub.get("tickers") or sub.get("sectors") or sub.get("all_above") or sub.get("starred"))
 
 
 def emails_last_24h(rows, now):
@@ -274,7 +326,7 @@ def headline(e, q):
     h = q.get("headline") or {}
     parts = [f"Revenue {h.get('rev_fmt') or e.get('rev')}" + (f" ({pct(h.get('yoy'))} Y/Y)" if h.get("yoy") is not None else "")]
     if h.get("om") is not None:
-        parts.append(f"operating margin {h['om']:.1f}%")
+        parts.append(f"operating margin {h['om']:.1f}%".replace("-", "−"))
     if h.get("ni") is not None:
         ni = h["ni"]
         parts.append(f"net earnings {h.get('ni_fmt')}" if ni >= 0 else f"net loss {social.money(-ni, abs(ni) >= 1e9 or (h.get('revenue') or 0) >= 1e9)}")
@@ -314,11 +366,11 @@ def page_url(site_url, e):
     return f"{site_url}/#c-{e['cik']}-{'fy-' if is_year(e) else ''}{e['end']}" if site_url else ""
 
 
-def subject(items, daily, requested=False):
+def subject(items, daily, requested=False, day=None):
     tick = [e.get("ticker") or social.display_name(e.get("name") or c["profile"]["name"]) for e, c, *_ in items]
     more = " and more" if len(tick) > 5 else ""
     if daily:
-        return f"Your daily charts: {', '.join(tick[:5])}{more}"
+        return f"Your daily report{', ' + day if day else ''}: {', '.join(tick[:5])}{more}"
     if len(items) == 1:
         e, q = items[0][0], items[0][2]
         h = q.get("headline") or {}
@@ -741,12 +793,39 @@ class Assets:
         return images, extras
 
 
-def build_message(sub, items, site_url, images, sender, daily=False, requested=False, extras=None):
+def business_rows(c, q):
+    """'What the company does' for the e-mails: (industry line, revenue-by-line text) from the filing's own figures."""
+    b = social.business(c, q)
+    ind = f"Industry: {b['industry']}" if b["industry"] else ""
+    mix = (f"Revenue by line in {q.get('label')}: " + " · ".join(f"{n} {v} ({s})" for n, v, s in b["mix"])) if b["mix"] else ""
+    return ind, mix
+
+
+def summary_rows_html(items, site_url):
+    """The table at the top of a report: one row per company (ticker, name, filing, revenue, change)."""
+    rows = []
+    for e, c, q, *_ in items:
+        url = page_url(site_url, e)
+        h = q.get("headline") or {}
+        name = social.display_name(c["profile"]["name"])
+        rows.append(f'<tr><td style="padding:6px 8px 6px 0;border-top:1px solid {LINE};font:600 13px {FONT};color:{INK};white-space:nowrap">{H.escape(e.get("ticker") or "")}</td>'
+                    f'<td style="padding:6px 8px;border-top:1px solid {LINE};font:14px/1.4 {FONT}">'
+                    + (f'<a href="{H.escape(url)}" style="color:{ACCENT};text-decoration:none">' if url else "") + H.escape(name) + ("</a>" if url else "")
+                    + f'<div style="font-size:12.5px;color:{MUTED}">{H.escape(q.get("label") or "")} · {H.escape(social.form_words(q))} filed {H.escape(social.fdate(q.get("filed")))}</div></td>'
+                    f'<td style="padding:6px 0;border-top:1px solid {LINE};font:14px {FONT};text-align:right;white-space:nowrap">'
+                    f'{H.escape(h.get("rev_fmt") or e.get("rev") or "")}<div style="font-size:12.5px;color:{MUTED}">'
+                    f'{H.escape(pct(h.get("yoy")) + " Y/Y" if h.get("yoy") is not None else "")}</div></td></tr>')
+    return "".join(rows)
+
+
+def build_message(sub, items, site_url, images, sender, daily=False, requested=False, extras=None, day=None,
+                  day_short=None, lead=None, full_count=None, rest_title="Also new"):
     """items: [(index entry, company json, quarter, reasons)]; images: {item key: jpeg bytes} (this quarter's chart);
-    extras: {item key: {"inline": {view: jpeg}, "files": [(file name, bytes, maintype, subtype)]}} (Assets.for_message)."""
+    extras: {item key: {"inline": {view: jpeg}, "files": [(file name, bytes, maintype, subtype)]}} (Assets.for_message).
+    day: the daily report's date in words; lead: a sentence for the top; full_count: companies shown in full."""
     site_url = site_url.rstrip("/")
     msg = EmailMessage()
-    msg["Subject"] = subject(items, daily, requested)
+    msg["Subject"] = subject(items, daily, requested and not day, day_short)
     msg["From"] = sender
     msg["To"] = sub["email"]
     msg["Auto-Submitted"] = "auto-generated"
@@ -755,7 +834,7 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
     if unsub:
         msg["List-Unsubscribe"] = f"<{unsub}>"
 
-    cut = REQUEST_FULL_ITEMS if requested else FULL_ITEMS
+    cut = full_count if full_count is not None else DAILY_FULL_ITEMS if daily else REQUEST_FULL_ITEMS if requested else FULL_ITEMS
     full, rest = items[:cut], items[cut:]
     n = len(items)
     # size budget: this quarter's charts, then the extra charts, then the PDF reports, then the image files
@@ -783,13 +862,23 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
                     used += len(f[1])
                 else:
                     dropped += 1
-    intro = ("The report you asked for." if requested and n == 1 else f"The {n} reports you asked for." if requested
-             else f"{n} new chart{'s' if n != 1 else ''} since your last digest." if daily
+    plural = "s" if n != 1 else ""
+    intro = (lead if lead else
+             f"Your daily report for {day}: {n} new chart{plural} since the last one." if daily and day
+             else f"{n} new chart{plural} since your last daily report." if daily
+             else "The report you asked for." if requested and n == 1 else f"The {n} reports you asked for." if requested
              else "The final figures for a quarter you first got from its earnings release."
              if n == 1 and items[0][2].get("release_check") and items[0][0].get("_release_sent")
              else "A new chart for a company you follow." if n == 1 else f"{n} new charts for companies you follow.")
     text, rich, related = [intro, ""], [], []
     p_style = f"margin:0 0 12px;font:15px/1.55 {FONT};color:{INK}"
+    h3_style = f"margin:14px 0 6px;font:600 12px/1.4 {FONT};letter-spacing:.06em;text-transform:uppercase;color:{MUTED}"
+    if daily and n > 1 and full:
+        text += ["In this report:"] + [f"- {e.get('ticker') or ''} {social.display_name(c['profile']['name'])} {q.get('label')}: "
+                                       f"{social.form_words(q)} filed {social.fdate(q.get('filed'))}" for e, c, q, *_ in items] + [""]
+        rich.append(f'<tr><td style="padding:0 0 18px"><p style="{h3_style};margin-top:0">In this report</p>'
+                    f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">'
+                    f'{summary_rows_html(items, site_url)}</table></td></tr>')
     for e, c, q, why in full:
         name = social.display_name(c["profile"]["name"])
         url = page_url(site_url, e)
@@ -841,14 +930,29 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
             rich.append(pic(img, link, f"{name} {q.get('label')}: {view_caption(view, q).lower()}", view_file(e, q, view, "jpg")))
 
         about = intro_text(c, 420)
+        ind, mix = business_rows(c, q)
+        if ind or mix or about:
+            text += ["What the company does:"] + [x for x in (ind, mix) if x]
+            rich.append(f'<p style="{h3_style}">What the company does</p>')
+            if ind or mix:
+                rich.append(f'<p style="margin:0 0 10px;font:14px/1.55 {FONT};color:{INK2}">'
+                            + "<br>".join(H.escape(x) for x in (ind, mix) if x) + "</p>")
         if about:
-            text += [f"About the company: {about} ({intro_source(c)})", ""]
+            text += [f"In its own words: {about} ({intro_source(c)})"]
             rich.append(f'<p style="margin:0 0 14px;padding:2px 0 2px 12px;border-left:3px solid #a8d1b9;font:14px/1.55 {FONT};color:{INK2}">'
                         f'{H.escape(about)}<span style="display:block;margin-top:3px;font-size:12.5px;color:{MUTED}">'
                         f'{H.escape(intro_source(c))}</span></p>')
+        if ind or mix or about:
+            text.append("")
         img = images.get(k)
+        cap = social.chart_captions(q, False)[0][1] + f" ({'fiscal year' if is_year(q) else 'quarter'} ended {social.fdate(q.get('end'))})"
         if img:
+            rich.append(f'<p style="{h3_style}">The chart</p><p style="margin:0 0 8px;font:13.5px/1.5 {FONT};color:{INK2}">{H.escape(cap)}. '
+                        f'Click it for the interactive chart.</p>')
             rich.append(pic(img, url, f"{q.get('title') or name} Sankey chart".replace("&amp;", "&"), view_file(e, q, "std", "jpg")))
+        if q.get("analysis"):
+            rich.append(f'<p style="{h3_style}">Analysis</p>')
+            text.append("Analysis:")
         for para in q.get("analysis") or []:
             text.append(para)
             text.append("")
@@ -883,7 +987,7 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
                     + " &nbsp;·&nbsp; ".join(f'<a href="{H.escape(u)}" style="color:{ACCENT}">{label}</a>' for u, label in links) + "</p>"
                     f'<p style="margin:0 0 22px;font:13px/1.5 {FONT};color:{MUTED}">Why you got this: {H.escape("; ".join(why))}.</p></td></tr>')
     if rest:
-        text += ["=" * 64, f"Also new ({len(rest)}):"]
+        text += ["=" * 64, f"{rest_title} ({len(rest)}):"]
         rows = []
         for e, c, q, why in rest:
             url = page_url(site_url, e)
@@ -897,7 +1001,7 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
                         + ("</a>" if url else "") + f' <span style="color:{MUTED}">{H.escape(q.get("label") or "")}</span></td>'
                         f'<td style="padding:6px 0;border-top:1px solid {LINE};font:14px {FONT};text-align:right;white-space:nowrap">'
                         f'{H.escape(h.get("rev_fmt") or e.get("rev") or "")} <span style="color:{MUTED}">{H.escape(pct(h.get("yoy")) + " Y/Y" if h.get("yoy") is not None else "")}</span></td></tr>')
-        rich.append(f'<tr><td style="padding:8px 0 18px;border-top:1px solid {LINE}"><p style="margin:14px 0 6px;font:600 16px {FONT};color:{INK}">Also new</p>'
+        rich.append(f'<tr><td style="padding:8px 0 18px;border-top:1px solid {LINE}"><p style="margin:14px 0 6px;font:600 16px {FONT};color:{INK}">{H.escape(rest_title)}</p>'
                     f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">{"".join(rows)}</table></td></tr>')
     foot = ("Charts and analysis are generated by fixed rules from SEC filings; quotes are the companies' own words. "
             "Not investment advice.")
@@ -1027,8 +1131,40 @@ def find_quarter(site, cik, end, kind="q"):
     return c, (best[1] if best else None)
 
 
+def day_report_message(site, sub, day, sender, site_url, assets):
+    """A reader's report of one filing date (the home page's "Email me this day's report"): the companies they follow
+    that filed that day (everything with revenue of $1B or more when they follow nothing yet). None: nothing filed."""
+    ix = site.json("index.json")
+    names = ix.get("sector_names") or {}
+    entries = entries_for_day(ix, day)
+    if not entries:
+        return None
+    entries.sort(key=lambda e: -(e.get("revenue") or 0))
+    words = dt.date.fromisoformat(day).strftime("%A, %B %-d, %Y")
+    short = dt.date.fromisoformat(day).strftime("%b %-d")
+    if follows_anything(sub):
+        pairs = [(e, reasons(sub, e, names)) for e in entries]
+        mine = [(e, why) for e, why in pairs if why]
+    else:
+        mine = [(e, ["you follow no companies yet, so this lists every company with quarterly revenue of $1B or more"])
+                for e in entries if (e.get("revenue") or 0) >= 1e9]
+    cache = {}
+    if mine:
+        items = _load_items(site, cache, mine)
+        pics, extras = assets.for_message(sub, items, site_url, DAILY_FULL_ITEMS)
+        n = len(items)
+        lead = f"The report for filings dated {words}: {n} new chart{'s' if n != 1 else ''}."
+        return build_message(sub, items, site_url, pics, sender, daily=True, extras=extras, day=words, day_short=short, lead=lead)
+    items = _load_items(site, cache, [(e, ["filed that day"]) for e in entries[:40]])
+    lead = (f"None of the companies you follow filed on {words}. These {len(items)} companies did; "
+            "open any of them for its chart and analysis.")
+    return build_message(sub, items, site_url, {}, sender, daily=True, day=words, day_short=short, lead=lead, full_count=0,
+                         rest_title=f"Filed on {short}")
+
+
 def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets, budget):
-    """E-mail the reports readers asked for with "Email me". Returns the number of e-mails sent."""
+    """E-mail what readers asked for: reports of quarters and fiscal years ("Email me"), a day's report (home page),
+    and, for the site owner only, a quarter's X thread with its chart files. Returns the number of e-mails sent."""
     if dry_run:
         reqs = supa.select("send_requests", {"select": "*", "status": "eq.pending"})   # "*": with or without the kind column
     else:
@@ -1041,44 +1177,82 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
     by_user = {}
     for r in reqs:
         by_user.setdefault(r["user_id"], []).append(r)
+    lazy = {}
+
+    def owner_info():
+        """(owner addresses, X config, owner settings), read once per run and only when needed."""
+        from . import owner
+        if not lazy:
+            cfg = social.load_cfg("config/x.json")
+            cfg["site_url"] = cfg.get("site_url") or site_url
+            lazy.update(emails=owner.owner_emails(supa), cfg=cfg, s=owner.settings(supa, cfg))
+        return owner, lazy["emails"], lazy["cfg"], lazy["s"]
 
     def finish(rows, **fields):
         if rows and not dry_run:
             supa.update("send_requests", {"id": f"in.({','.join(str(r['id']) for r in rows)})"}, fields)
 
     sent = 0
-    jobs = []
+    jobs = []                       # (subscription, request rows, a function that builds the e-mail)
     for uid, rows in by_user.items():
         sub = subs.get(uid)
         if not sub or not sub.get("email"):
             finish(rows, status="failed", error="no e-mail address on the account")
             continue
-        items, missing = [], []
+        items, missing, plain = [], [], []
         for r in rows:
             kind = r.get("kind") or "q"
-            c, q = find_quarter(site, r["cik"], r["period_end"], kind)
+            if kind == "day":
+                day = str(r["period_end"])[:10]
+                owner, owners, cfg, osets = owner_info()
+                if str(sub["email"]).lower() in owners:          # the owner gets the owner's report (with X threads)
+                    jobs.append((sub, [r], lambda sub=sub, day=day: owner.day_message(site, day, osets, cfg, sender, sub["email"],
+                                                                                      site_url, assets)))
+                else:
+                    jobs.append((sub, [r], lambda sub=sub, day=day: day_report_message(site, sub, day, sender, site_url, assets)))
+                continue
+            c, q = find_quarter(site, r["cik"], r["period_end"], "fy" if kind == "fy" else "q")
             if not q:
                 missing.append(r)
                 continue
             e = {"cik": int(r["cik"]), "end": q["end"], "form": q.get("form"), "ticker": (c["profile"].get("tickers") or [""])[0],
                  "name": c["profile"]["name"], "rev": (q.get("headline") or {}).get("rev_fmt")}
+            if kind == "thread":
+                owner, owners, cfg, _ = owner_info()
+                if str(sub["email"]).lower() not in owners:
+                    finish([r], status="failed", error="only the site owner can ask for X threads")
+                    continue
+                jobs.append((sub, [r], lambda sub=sub, e=e, c=c, q=q, cfg=cfg, owner=owner:
+                             owner.thread_message(e, c, q, assets, cfg, sender, sub["email"])))
+                continue
             if kind == "fy":
                 e["period"] = "fy"
+            plain.append(r)
             if all(item_key(x[0]) != item_key(e) for x in items):     # the same quarter asked twice: one copy
                 items.append((e, c, q, ["you asked for this report"]))
         finish(missing, status="failed", error="that period is no longer on the site")
         if items:
-            jobs.append((sub, rows, [r for r in rows if r not in missing], items))
+            def make(sub=sub, items=items):
+                pics, extras = assets.for_message(sub, items, site_url, REQUEST_FULL_ITEMS)
+                return build_message(sub, items, site_url, pics, sender, requested=True, extras=extras)
+            jobs.append((sub, plain, make))
     if not jobs:
         return 0
     if len(jobs) > budget:
         print(f"::warning::daily e-mail limit reached; {len(jobs) - max(budget, 0)} requests wait for the next run")
-        for _, _, ok_rows, _ in jobs[max(budget, 0):]:
+        for _, ok_rows, _ in jobs[max(budget, 0):]:
             finish(ok_rows, status="pending", claimed_at=None)
         jobs = jobs[:max(budget, 0)]
-    for sub, rows, ok_rows, items in jobs:
-        pics, extras = assets.for_message(sub, items, site_url, REQUEST_FULL_ITEMS)
-        msg = build_message(sub, items, site_url, pics, sender, requested=True, extras=extras)
+    for sub, ok_rows, make in jobs:
+        try:
+            msg = make()
+        except Exception as err:
+            print(f"::warning::request not built ({err.__class__.__name__}: {err})")
+            finish(ok_rows, status="failed", error="the report could not be made")
+            continue
+        if msg is None:
+            finish(ok_rows, status="failed", error="no filings that day")
+            continue
         if _send(mailer, msg, dry_run, mask(sub["email"])):
             finish(ok_rows, status="sent", sent_at=_now_iso(), error=None)
             sent += 1
@@ -1095,9 +1269,10 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
 
 
 def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=True, hour=None, daily_limit=None,
-        due_only=False, requests_only=False):
+        due_only=False, requests_only=False, tz=None):
     now = now or dt.datetime.now(dt.timezone.utc)
-    hour = env_int("DIGEST_HOUR_UTC", 22) if hour is None else hour
+    hour = env_int("DIGEST_HOUR", DIGEST_HOUR) if hour is None else hour
+    tz = tz or os.environ.get("DIGEST_TZ") or DEFAULT_TZ
     daily_limit = env_int("MAIL_DAILY_LIMIT", 400) if daily_limit is None else daily_limit
     day_ago = (now - dt.timedelta(hours=24)).isoformat()
     since = (now - dt.timedelta(days=KEEP_DELIVERIES_DAYS)).isoformat()
@@ -1110,9 +1285,8 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
         n = len(supa.select("send_requests", {"select": "id", "status": "eq.pending"})) + \
             len(supa.select("send_requests", {"select": "id", "status": "eq.sending", "claimed_at": f"lt.{stale}"}))
         if not requests_only:
-            subs = supa.select("subscriptions", {"select": "user_id,email,tickers,sectors,all_above,min_revenue,starred,"
-                                                 "frequency,email_on,final_too,unsub_token,created_at", "email_on": "is.true"})
-            n += len(plan(subs, dels, site.json("index.json"), now, hour, MAX_AGE_DAYS))
+            subs = supa.select("subscriptions", {"select": "*", "email_on": "is.true"})    # "*": before and after new columns
+            n += len(plan(subs, dels, site.json("index.json"), now, hour, MAX_AGE_DAYS, tz))
         print(f"{n} e-mails due")
         return n
 
@@ -1125,7 +1299,7 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
             return sent
         ix = site.json("index.json")
         subs = supa.select("subscriptions", {"select": "*", "email_on": "is.true", "order": "created_at.asc"})
-        todo = plan(subs, dels, ix, now, hour, MAX_AGE_DAYS)
+        todo = plan(subs, dels, ix, now, hour, MAX_AGE_DAYS, tz)
         print(f"{len(subs)} readers with e-mail on; {len(todo)} due now; {max(budget, 0)} e-mails left in the 24-hour limit")
         if budget < len(todo):
             print(f"::warning::daily e-mail limit reached; {len(todo) - max(budget, 0)} readers wait for the next run")
@@ -1133,8 +1307,11 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
         cache = {}
         loaded = [(sub, _load_items(site, cache, items)) for sub, items in todo]
         for sub, items in loaded:
-            pics, extras = assets.for_message(sub, items, site_url, FULL_ITEMS)
-            msg = build_message(sub, items, site_url, pics, sender, daily=sub.get("frequency") == "daily", extras=extras)
+            daily = sub.get("frequency") == "daily"
+            pics, extras = assets.for_message(sub, items, site_url, DAILY_FULL_ITEMS if daily else FULL_ITEMS)
+            where = sub.get("tz") or tz
+            msg = build_message(sub, items, site_url, pics, sender, daily=daily, extras=extras,
+                                day=day_words(now, where) if daily else None, day_short=day_words(now, where, True) if daily else None)
             if not _send(mailer, msg, dry_run, mask(sub["email"])):
                 continue
             if dry_run:

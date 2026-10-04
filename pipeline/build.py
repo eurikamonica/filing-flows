@@ -1040,8 +1040,8 @@ def render(store, out, stars=frozenset()):
                     (p["tickers"][0] if p["tickers"] else p["name"][:18], Nc, Nq, Ny, cik))
         for pl in payloads:                      # the ready-to-post X thread (same text as the e-mails)
             try:
-                posts = social.compose({"profile": p, "intro": c.get("intro")}, pl, x_cfg)
-                pl["x_thread"] = [{"text": t, "len": social.xlen(t)} for t in posts]
+                posts = social.compose_parts({"profile": p, "intro": c.get("intro")}, pl, x_cfg)
+                pl["x_thread"] = [{"text": x["text"], "len": social.xlen(x["text"]), "role": x["role"]} for x in posts]
             except Exception as e:
                 print(f"  thread failed {cik} {pl['end']}: {e}", file=sys.stderr)
         years = []
@@ -1056,12 +1056,18 @@ def render(store, out, stars=frozenset()):
         save(os.path.join(out, "c", f"{cik}.json"), {
             "profile": p, "intro": c.get("intro"), "starred": cik in stars, "quarters": payloads[::-1],
             "years": years, "periods": periods_payload(c)})
+        # earlier filings of the last ten days (an 8-K release before its 10-Q), for the daily report of their day
+        cut = (dt.date.fromisoformat(latest["filed"]) - dt.timedelta(days=10)).isoformat() if latest.get("filed") else "9999"
+        also = [{"end": pl["end"], "label": pl["label"], "filed": pl["filed"], "form": pl["form"],
+                 "rev": pl["headline"]["rev_fmt"], "revenue": pl["headline"]["revenue"], "yoy": pl["headline"]["yoy"]}
+                for pl in payloads[:-1] if (pl.get("filed") or "") >= cut]
         index.append({"cik": cik, "ticker": (p["tickers"] or [""])[0], "name": p["name"], "sector": p["sector"],
                       "industry": p["industry"], "sic": p["sic"], "label": latest["label"], "end": latest["end"],
                       "cal": latest["cal"], "filed": latest["filed"], "form": latest["form"],
                       "rev": latest["headline"]["rev_fmt"], "revenue": latest["headline"]["revenue"],
                       "yoy": latest["headline"]["yoy"], "om": round(latest["headline"]["om"], 1),
                       "starred": cik in stars, "kind": latest["kind"], "prelim": latest["form"] == "8-K",
+                      **({"also": also} if also else {}),
                       **({"after_release": latest["release_check"]["filed"], "release_ok": latest["release_check"]["ok"]}
                          if latest.get("release_check") else {})})
     agg_index = {"sector": [], "industry": []}
