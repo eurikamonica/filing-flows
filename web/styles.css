@@ -245,6 +245,9 @@ td .name { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; display: 
 .prefs .inline-radios { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-size: 14.5px; }
 .prefs .inline-radios > span { color: var(--ink-2); margin-right: 2px; }
 .prefs fieldset > p.small { margin: 2px 0 0; }
+/* a choice that belongs to the option above it (what the daily report covers) */
+.prefs .sub-choice { display: grid; gap: 6px; margin: -2px 0 4px 24px; padding: 8px 0 8px 12px; border-left: 2px solid var(--line); }
+.prefs .sub-choice > span { margin-bottom: 2px; }
 #requests { max-width: 760px; }
 .foot-links { display: flex; gap: 16px; }
 .legal { max-width: 72ch; }

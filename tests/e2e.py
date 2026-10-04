@@ -50,7 +50,8 @@ FAKE_SUPABASE = """
 (() => {
   const GOOD_UNSUB = '11111111-2222-4333-8444-555555555555';
   const db = { subscriptions: [], send_requests: [], chart_requests: [], company_requests: [],
-    owner_settings: [{ id: true, thread_direct: true, daily_on: true, daily_hour: 8, tz: 'Asia/Shanghai', min_revenue: 1e9, instant_threads: false }] }, log = [];
+    owner_settings: [{ id: true, thread_direct: true, daily_on: true, daily_hour: 8, tz: 'Asia/Shanghai', min_revenue: 1e9, instant_threads: false,
+      daily_scope: 'min_revenue', reader_copy: false }] }, log = [];
   let session = null;
   try { session = JSON.parse(sessionStorage.getItem('fake-session') || 'null'); } catch (e) {}
   window.__ff = { db, log, native: [], owners: [] };
@@ -350,6 +351,33 @@ def check_accounts(b, base, fails, shot, site):
         fails.append(f"daily report: message {pg.inner_text('#day-msg')!r}")
     shot(pg, "home_daily.png")
     pg.evaluate("window.__ff.db.send_requests.length = 0")
+    # the full daily report (Alerts): every company that filed, the followed ones first
+    pg.goto(base + "#account")
+    pg.wait_for_selector("#prefs-form")
+    if pg.locator("#scope-box").is_hidden() or not pg.is_checked('input[name="scope"][value="follows"]'):
+        fails.append("full report: the choice should show under the daily report, with 'the companies I follow' picked")
+    if pg.locator("legend", has_text="Site owner").count():
+        fails.append("full report: a reader's Alerts page shows the owner's switch")
+    pg.check('input[name="freq"][value="instant"]')
+    if not pg.locator("#scope-box").is_hidden():
+        fails.append("full report: the choice should hide with alerts as soon as a chart is out")
+    pg.check('input[name="freq"][value="daily"]')
+    pg.check('input[name="scope"][value="all"]')
+    shot(pg, "acct_scope.png")
+    pg.click("#prefs-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#save-msg').textContent === 'Saved.'")
+    if ff("window.__ff.db.subscriptions[0].daily_scope") != "all":
+        fails.append(f"full report: saved as {ff('window.__ff.db.subscriptions[0].daily_scope')!r}")
+    pg.goto(base + "#home")
+    pg.wait_for_selector("#daily:not([hidden]) .day")
+    if "your full report), the ones you follow first" not in pg.inner_text("#daily") or "you follow" not in pg.inner_text("#daily .day.on"):
+        fails.append(f"full report: home panel says {pg.inner_text('#daily')!r}")
+    shot(pg, "home_daily_full.png")
+    pg.goto(base + "#account")                      # back to the default for the checks below
+    pg.wait_for_selector("#prefs-form")
+    pg.check('input[name="scope"][value="follows"]')
+    pg.click("#prefs-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#save-msg').textContent === 'Saved.'")
     # the company page's "Show decreases" follows the account and changes it
     pg.goto(base + "#c-320193")
     pg.wait_for_selector(".sheet svg")
@@ -572,9 +600,36 @@ def check_accounts(b, base, fails, shot, site):
     pg.click("#owner-form button[type=submit]")
     pg.wait_for_function("document.querySelector('#owner-msg').textContent === 'Saved.'")
     o = ff("window.__ff.db.owner_settings[0]")
-    if (o["thread_direct"], o["daily_hour"], o["min_revenue"]) != (False, 9, 2e9):
+    if (o["thread_direct"], o["daily_hour"], o["min_revenue"], o["daily_scope"]) != (False, 9, 2e9, "min_revenue"):
         fails.append(f"owner tools: settings saved as {o}")
+    if "Reader version: off" not in pg.inner_text("#reader-copy-state"):
+        fails.append(f"owner tools: reader version should start off: {pg.inner_text('#reader-copy-state')!r}")
+    pg.check('input[name="owner-scope"][value="all"]')            # the full report
+    pg.click("#owner-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#owner-msg').textContent === 'Saved.'")
+    if ff("window.__ff.db.owner_settings[0].daily_scope") != "all":
+        fails.append("owner tools: the full report was not saved")
+    pg.wait_for_function("document.querySelector('#daily') && document.querySelector('#daily').textContent.includes('your full report')")
+    if "all in your report" not in pg.inner_text("#daily .day.on"):
+        fails.append(f"owner tools: the day picker should count every filing: {pg.inner_text('#daily .day.on')!r}")
     shot(pg, "owner_settings.png", full_page=True)
+    # the reader version, on the owner's Alerts page
+    pg.goto(base + "#account")
+    pg.wait_for_selector("#prefs-form")
+    if not pg.locator("#reader-copy").count() or pg.is_checked("#reader-copy"):
+        fails.append("owner alerts: the reader-version switch is missing or on by default")
+    else:
+        pg.check("#reader-copy")
+        pg.click("#prefs-form button[type=submit]")
+        pg.wait_for_function("document.querySelector('#save-msg').textContent.startsWith('Saved')")
+        if ff("window.__ff.db.owner_settings[0].reader_copy") is not True:
+            fails.append("owner alerts: the reader version was not saved")
+        pg.evaluate("window.scrollTo(0, 0)")
+        shot(pg, "owner_alerts.png")
+        pg.goto(base + "#owner")
+        pg.wait_for_selector("#reader-copy-state")
+        if "Reader version: on" not in pg.inner_text("#reader-copy-state"):
+            fails.append(f"owner tools: reader version shown as {pg.inner_text('#reader-copy-state')!r}")
     pg.goto(base + "#c-320193")
     pg.wait_for_selector("#thread pre")
     if pg.locator("#thread-mail").count():

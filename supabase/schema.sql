@@ -13,6 +13,8 @@ create table if not exists public.subscriptions (
   starred      boolean not null default false,          -- the site's starred list
   frequency    text    not null default 'daily' check (frequency in ('instant', 'daily')),
   digest_hour  smallint not null default 8,               -- the daily report's hour, in the reader's time zone
+  daily_scope  text    not null default 'follows' check (daily_scope in ('follows', 'all')),   -- the daily report: the
+                                                        -- companies followed, or every company that filed (full report)
   tz           text,                                    -- the reader's time zone (from the browser), e.g. Asia/Shanghai
   email_on     boolean not null default true,
   push_on      boolean not null default true,           -- Android app notifications
@@ -42,6 +44,7 @@ alter table public.subscriptions add column if not exists changes_detail boolean
 alter table public.subscriptions add column if not exists custom_compare boolean not null default false;
 alter table public.subscriptions add column if not exists digest_hour smallint not null default 8;
 alter table public.subscriptions add column if not exists tz text;
+alter table public.subscriptions add column if not exists daily_scope text not null default 'follows';
 alter table public.subscriptions alter column frequency set default 'daily';   -- new accounts: the 8:00 daily report
 do $$ begin
   alter table public.subscriptions add constraint subscriptions_attach_images_check check (attach_images in ('png', 'jpg', 'none'));
@@ -49,6 +52,10 @@ exception when duplicate_object then null;
 end $$;
 do $$ begin
   alter table public.subscriptions add constraint subscriptions_digest_check check (digest_hour between 0 and 23 and length(tz) <= 64);
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  alter table public.subscriptions add constraint subscriptions_daily_scope_check check (daily_scope in ('follows', 'all'));
 exception when duplicate_object then null;
 end $$;
 
@@ -215,8 +222,17 @@ create table if not exists public.owner_settings (
   tz              text not null default 'Asia/Shanghai' check (length(tz) <= 64),
   min_revenue     bigint not null default 1000000000 check (min_revenue >= 0),   -- companies in the daily report
   instant_threads boolean not null default false,    -- also e-mail new X threads right after each scan
+  daily_scope     text not null default 'min_revenue' check (daily_scope in ('min_revenue', 'all')),   -- 'all': every
+                                                     -- company that filed (the full report), not only those over min_revenue
+  reader_copy     boolean not null default false,    -- the owner also gets the reader e-mails their own alert settings ask for
   updated_at      timestamptz not null default now()
 );
+alter table public.owner_settings add column if not exists daily_scope text not null default 'min_revenue';
+alter table public.owner_settings add column if not exists reader_copy boolean not null default false;
+do $$ begin
+  alter table public.owner_settings add constraint owner_settings_daily_scope_check check (daily_scope in ('min_revenue', 'all'));
+exception when duplicate_object then null;
+end $$;
 insert into public.owner_settings (id) values (true) on conflict do nothing;
 alter table public.owner_settings enable row level security;
 drop policy if exists "owner reads settings" on public.owner_settings;

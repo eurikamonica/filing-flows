@@ -46,6 +46,8 @@ DIGEST_HOUR = 8              # the daily report goes out at 8:00 in the reader's
 DEFAULT_TZ = "America/New_York"   # ... or this one while the reader's is not known
 DIGEST_WINDOW_HOURS = 4      # a report that could not go out within 4 hours of its time waits for the next morning
 DAILY_FULL_ITEMS = 15        # companies shown in full in a daily report; the rest are listed with a link
+REST_MAX = 150               # companies listed at the end of a report; any more are on the site (keeps e-mails readable)
+FULL_WHY = "your daily report covers every company that filed"   # the reason given in a full report
 
 
 def env_int(name, default):
@@ -270,14 +272,16 @@ def plan(subs, deliveries, ix, now, hour=DIGEST_HOUR, max_age=MAX_AGE_DAYS, tz=D
         since = parse_ts(sub["created_at"]).date() - dt.timedelta(days=1) if sub.get("created_at") else None
         keys = by_user.get(sub["user_id"], {})
         final_too = sub.get("final_too") is not False
-        items = []
+        full = sub.get("frequency") == "daily" and full_report(sub)
+        items, more = [], []                      # more: the full report's other companies, after the followed ones
         for e in recent:
             if since and dt.date.fromisoformat(e["filed"]) < since:
                 continue                          # nothing from before the reader signed up
-            why = reasons(sub, e, names)
+            why = reasons(sub, e, names) or ([FULL_WHY] if full else [])
             if why and not delivered(keys, e, final_too):
                 got = None if is_prelim(e) else release_sent(keys, e)
-                items.append((dict(e, _release_sent=got) if got else e, why))
+                (more if why == [FULL_WHY] else items).append((dict(e, _release_sent=got) if got else e, why))
+        items += more
         if items and is_due(sub, last.get(sub["user_id"]), now, hour, tz):
             out.append((sub, items))
     return out
@@ -303,6 +307,21 @@ def entries_for_day(ix, day):
 
 def follows_anything(sub):
     return bool(sub.get("tickers") or sub.get("sectors") or sub.get("all_above") or sub.get("starred"))
+
+
+def full_report(sub):
+    """The reader chose the full daily report: every company that filed, the ones they follow first (Alerts page)."""
+    return sub.get("daily_scope") == "all"
+
+
+def readers_only(supa, subs):
+    """The subscriptions that get reader e-mails: the site owners' own accounts only when the owner asked for the
+    reader version as well (Alerts page, kept in owner_settings.reader_copy); otherwise the owner gets the owner's report."""
+    from . import owner
+    owners = owner.owner_emails(supa)
+    if not owners or owner.settings(supa).get("reader_copy"):
+        return subs
+    return [x for x in subs if str(x.get("email") or "").strip().lower() not in owners]
 
 
 def emails_last_24h(rows, now):
@@ -818,6 +837,15 @@ def summary_rows_html(items, site_url):
     return "".join(rows)
 
 
+def more_row_html(n, where, link=""):
+    """A last table row: "and 12 more, listed at the end" (nothing when n <= 0)."""
+    if n <= 0:
+        return ""
+    words = H.escape(f"and {n} more {where}")
+    return (f'<tr><td colspan="3" style="padding:6px 0;border-top:1px solid {LINE};font:13.5px/1.4 {FONT};color:{MUTED}">'
+            + (f'<a href="{H.escape(link)}" style="color:{ACCENT}">{words}</a>' if link else words) + "</td></tr>")
+
+
 def build_message(sub, items, site_url, images, sender, daily=False, requested=False, extras=None, day=None,
                   day_short=None, lead=None, full_count=None, rest_title="Also new"):
     """items: [(index entry, company json, quarter, reasons)]; images: {item key: jpeg bytes} (this quarter's chart);
@@ -874,11 +902,13 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
     p_style = f"margin:0 0 12px;font:15px/1.55 {FONT};color:{INK}"
     h3_style = f"margin:14px 0 6px;font:600 12px/1.4 {FONT};letter-spacing:.06em;text-transform:uppercase;color:{MUTED}"
     if daily and n > 1 and full:
-        text += ["In this report:"] + [f"- {e.get('ticker') or ''} {social.display_name(c['profile']['name'])} {q.get('label')}: "
-                                       f"{social.form_words(q)} filed {social.fdate(q.get('filed'))}" for e, c, q, *_ in items] + [""]
+        listed = full if rest else items                 # with a list at the end, the top names the companies in full
+        text += (["In this report:"] + [f"- {e.get('ticker') or ''} {social.display_name(c['profile']['name'])} {q.get('label')}: "
+                                        f"{social.form_words(q)} filed {social.fdate(q.get('filed'))}" for e, c, q, *_ in listed]
+                 + ([f"- and {len(rest)} more, listed at the end"] if rest else []) + [""])
         rich.append(f'<tr><td style="padding:0 0 18px"><p style="{h3_style};margin-top:0">In this report</p>'
                     f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">'
-                    f'{summary_rows_html(items, site_url)}</table></td></tr>')
+                    f'{summary_rows_html(listed, site_url)}{more_row_html(len(rest), "listed at the end")}</table></td></tr>')
     for e, c, q, why in full:
         name = social.display_name(c["profile"]["name"])
         url = page_url(site_url, e)
@@ -989,7 +1019,7 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
     if rest:
         text += ["=" * 64, f"{rest_title} ({len(rest)}):"]
         rows = []
-        for e, c, q, why in rest:
+        for e, c, q, why in rest[:REST_MAX]:
             url = page_url(site_url, e)
             h = q.get("headline") or {}
             line = f"{e.get('ticker') or ''} {social.display_name(c['profile']['name'])} {q.get('label')}: revenue {h.get('rev_fmt') or e.get('rev')}" \
@@ -1001,8 +1031,12 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
                         + ("</a>" if url else "") + f' <span style="color:{MUTED}">{H.escape(q.get("label") or "")}</span></td>'
                         f'<td style="padding:6px 0;border-top:1px solid {LINE};font:14px {FONT};text-align:right;white-space:nowrap">'
                         f'{H.escape(h.get("rev_fmt") or e.get("rev") or "")} <span style="color:{MUTED}">{H.escape(pct(h.get("yoy")) + " Y/Y" if h.get("yoy") is not None else "")}</span></td></tr>')
+        hidden = len(rest) - REST_MAX
+        if hidden > 0:
+            text.append(f"- and {hidden} more on the site" + (f": {site_url}/#home" if site_url else ""))
         rich.append(f'<tr><td style="padding:8px 0 18px;border-top:1px solid {LINE}"><p style="margin:14px 0 6px;font:600 16px {FONT};color:{INK}">{H.escape(rest_title)}</p>'
-                    f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">{"".join(rows)}</table></td></tr>')
+                    f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">{"".join(rows)}'
+                    f'{more_row_html(hidden, "on the site", f"{site_url}/#home" if site_url else "")}</table></td></tr>')
     foot = ("Charts and analysis are generated by fixed rules from SEC filings; quotes are the companies' own words. "
             "Not investment advice.")
     if dropped:
@@ -1142,6 +1176,16 @@ def day_report_message(site, sub, day, sender, site_url, assets):
     entries.sort(key=lambda e: -(e.get("revenue") or 0))
     words = dt.date.fromisoformat(day).strftime("%A, %B %-d, %Y")
     short = dt.date.fromisoformat(day).strftime("%b %-d")
+    if full_report(sub):                          # every company that filed, the ones the reader follows first
+        pairs = [(e, reasons(sub, e, names)) for e in entries]
+        k = sum(1 for _, why in pairs if why)
+        items = _load_items(site, {}, [(e, why) for e, why in pairs if why] + [(e, [FULL_WHY]) for e, why in pairs if not why])
+        pics, extras = assets.for_message(sub, items, site_url, DAILY_FULL_ITEMS)
+        n = len(items)
+        lead = (f"The full report for filings dated {words}: {n} filing{'s' if n != 1 else ''}"
+                + (f", {k} by companies you follow (listed first)" if k else "") + ".")
+        return build_message(sub, items, site_url, pics, sender, daily=True, extras=extras, day=words, day_short=short, lead=lead,
+                             rest_title="Also filed")
     if follows_anything(sub):
         pairs = [(e, reasons(sub, e, names)) for e in entries]
         mine = [(e, why) for e, why in pairs if why]
@@ -1208,6 +1252,8 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
                 if str(sub["email"]).lower() in owners:          # the owner gets the owner's report (with X threads)
                     jobs.append((sub, [r], lambda sub=sub, day=day: owner.day_message(site, day, osets, cfg, sender, sub["email"],
                                                                                       site_url, assets)))
+                    if osets.get("reader_copy"):                  # ... and the reader version, when asked for
+                        jobs.append((sub, [], lambda sub=sub, day=day: day_report_message(site, sub, day, sender, site_url, assets)))
                 else:
                     jobs.append((sub, [r], lambda sub=sub, day=day: day_report_message(site, sub, day, sender, site_url, assets)))
                 continue
@@ -1286,7 +1332,7 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
             len(supa.select("send_requests", {"select": "id", "status": "eq.sending", "claimed_at": f"lt.{stale}"}))
         if not requests_only:
             subs = supa.select("subscriptions", {"select": "*", "email_on": "is.true"})    # "*": before and after new columns
-            n += len(plan(subs, dels, site.json("index.json"), now, hour, MAX_AGE_DAYS, tz))
+            n += len(plan(readers_only(supa, subs), dels, site.json("index.json"), now, hour, MAX_AGE_DAYS, tz))
         print(f"{n} e-mails due")
         return n
 
@@ -1298,7 +1344,7 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
         if requests_only:
             return sent
         ix = site.json("index.json")
-        subs = supa.select("subscriptions", {"select": "*", "email_on": "is.true", "order": "created_at.asc"})
+        subs = readers_only(supa, supa.select("subscriptions", {"select": "*", "email_on": "is.true", "order": "created_at.asc"}))
         todo = plan(subs, dels, ix, now, hour, MAX_AGE_DAYS, tz)
         print(f"{len(subs)} readers with e-mail on; {len(todo)} due now; {max(budget, 0)} e-mails left in the 24-hour limit")
         if budget < len(todo):
@@ -1310,7 +1356,12 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
             daily = sub.get("frequency") == "daily"
             pics, extras = assets.for_message(sub, items, site_url, DAILY_FULL_ITEMS if daily else FULL_ITEMS)
             where = sub.get("tz") or tz
-            msg = build_message(sub, items, site_url, pics, sender, daily=daily, extras=extras,
+            lead = None
+            if daily and full_report(sub):
+                k, n_ = sum(1 for *_, why in items if why != [FULL_WHY]), len(items)
+                lead = (f"Your full daily report for {day_words(now, where)}: {n_} new chart{'s' if n_ != 1 else ''} since the last one"
+                        + (f", {k} for companies you follow (listed first)" if k else "") + ".")
+            msg = build_message(sub, items, site_url, pics, sender, daily=daily, extras=extras, lead=lead,
                                 day=day_words(now, where) if daily else None, day_short=day_words(now, where, True) if daily else None)
             if not _send(mailer, msg, dry_run, mask(sub["email"])):
                 continue

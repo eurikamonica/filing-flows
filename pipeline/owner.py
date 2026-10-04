@@ -1,7 +1,8 @@
 """The site owner's e-mails: the daily report, and one X thread on request ("Email me this thread").
 
 Daily report: every morning at the owner's hour (8:00 by default, in the owner's time zone), one e-mail with every
-company that filed since the last report, largest first. For each: which filing and when, what the company does
+company that filed since the last report (over the owner's minimum revenue, or all of them: "the full report"), largest
+first. For each: which filing and when, what the company does
 (its SEC industry, revenue by line, its own description), the charts (this quarter, and against a year earlier),
 the analysis and the ready-to-post X thread.
 
@@ -20,7 +21,9 @@ from email.utils import make_msgid
 from . import notify, social
 
 DEFAULTS = {"thread_direct": True, "daily_on": True, "daily_hour": 8, "tz": "Asia/Shanghai", "min_revenue": 1e9,
-            "instant_threads": False}
+            "instant_threads": False,
+            "daily_scope": "min_revenue",     # "all": every company that filed (the full report), whatever its revenue
+            "reader_copy": False}             # also the reader e-mails the owner's own alert settings ask for (notify.py)
 FULL_ITEMS = 20             # companies shown in full; the rest are listed with links
 KEEP_SENT_DAYS = 30
 
@@ -69,14 +72,27 @@ def addresses(supa):
 
 
 # ------------------------------------------------------------------ what goes in
+def is_full(s):
+    return s.get("daily_scope") == "all"
+
+
+def scope_words(s):
+    """What the owner's report covers, for its first line."""
+    if is_full(s):
+        return "every company that filed (the full report)"
+    min_b = (s.get("min_revenue") or 0) / 1e9
+    return f"companies with quarterly revenue of ${min_b:g}B or more" if min_b else "every company that filed"
+
+
 def pending(ix, st, s, cfg, now):
-    """Filings not in an earlier daily report: filed in the last few days, revenue at least the owner's minimum."""
+    """Filings not in an earlier daily report: filed in the last few days, revenue at least the owner's minimum (any
+    revenue in the full report)."""
     sent = (st.get("daily") or {}).get("sent") or {}
     out = []
     for e in ix["companies"]:
         if not e.get("filed") or (now.date() - dt.date.fromisoformat(e["filed"])).days > cfg.get("max_age_days", 3):
             continue
-        if (e.get("revenue") or 0) < (s.get("min_revenue") or 0):
+        if not is_full(s) and (e.get("revenue") or 0) < (s.get("min_revenue") or 0):
             continue
         if e.get("prelim") and not cfg.get("preliminary", True):
             continue
@@ -146,11 +162,14 @@ def report_message(items, images, cfg, sender, to, subject, lead, site_url, full
     p_style = f"margin:0 0 12px;font:15px/1.55 {FONT};color:{INK}"
 
     if len(items) > 1:
-        text += ["In this report:"] + [f"- {e.get('ticker') or ''} {social.display_name(c['profile']['name'])} {q.get('label')}: "
-                                       f"{social.form_words(q)} filed {social.fdate(q.get('filed'))}" for e, c, q, _ in items] + [""]
+        listed = shown if rest else items             # with a list at the end, the top names the companies in full
+        text += (["In this report:"] + [f"- {e.get('ticker') or ''} {social.display_name(c['profile']['name'])} {q.get('label')}: "
+                                        f"{social.form_words(q)} filed {social.fdate(q.get('filed'))}" for e, c, q, _ in listed]
+                 + ([f"- and {len(rest)} more, listed at the end"] if rest else []) + [""])
         rich.append(f'<tr><td style="padding:0 0 18px">{_h3("In this report")}'
                     f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">'
-                    f'{notify.summary_rows_html([(e, c, q) for e, c, q, _ in items], site_url)}</table></td></tr>')
+                    f'{notify.summary_rows_html([(e, c, q) for e, c, q, _ in listed], site_url)}'
+                    f'{notify.more_row_html(len(rest), "listed at the end")}</table></td></tr>')
 
     def pic(img, link, alt, fname):
         cid = make_msgid(domain="filing-flows")
@@ -238,13 +257,17 @@ def report_message(items, images, cfg, sender, to, subject, lead, site_url, full
 
     if rest:
         text += ["=" * 64, f"{rest_title} ({len(rest)}):"]
-        for e, c, q, _ in rest:
+        listed, hidden = rest[:notify.REST_MAX], len(rest) - notify.REST_MAX
+        for e, c, q, _ in listed:
             u = notify.page_url(site_url, e)
             text.append(f"- {e.get('ticker') or ''} {social.display_name(c['profile']['name'])} {q.get('label')}"
                         + (f"  {u}" if u else ""))
+        if hidden > 0:
+            text.append(f"- and {hidden} more on the site" + (f": {site_url}/#home" if site_url else ""))
         rich.append(f'<tr><td style="padding:8px 0 18px;border-top:1px solid {LINE}"><p style="margin:14px 0 6px;font:600 16px {FONT};color:{INK}">'
                     f'{_esc(rest_title)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">'
-                    f'{notify.summary_rows_html([(e, c, q) for e, c, q, _ in rest], site_url)}</table></td></tr>')
+                    f'{notify.summary_rows_html([(e, c, q) for e, c, q, _ in listed], site_url)}'
+                    f'{notify.more_row_html(hidden, "on the site", f"{site_url}/#home" if site_url else "")}</table></td></tr>')
     foot = ("Charts, analysis and threads are generated by fixed rules from SEC filings; quotes are the companies' own words. "
             "Not investment advice. Change this report on the site's #owner page.")
     text += ["-" * 64, foot]
@@ -316,9 +339,8 @@ def send_daily(site, st, cfg, s, now, slot, mailer_send, sender, to_list, site_u
         if own:
             assets.close()
     tz = s.get("tz")
-    min_b = (s.get("min_revenue") or 0) / 1e9
-    lead = (f"Your daily report for {notify.day_words(now, tz)}: {len(items)} filing{'s' if len(items) != 1 else ''} since the "
-            f"last report" + (f", companies with quarterly revenue of ${min_b:g}B or more" if min_b else "") + ", largest first.")
+    lead = (f"Your {'full ' if is_full(s) else ''}daily report for {notify.day_words(now, tz)}: {len(items)} "
+            f"filing{'s' if len(items) != 1 else ''} since the last report, {scope_words(s)}, largest first.")
     sent = 0
     for to in to_list:
         msg = report_message(items, pics, cfg, sender, to, subject_line(items, notify.day_words(now, tz, True)), lead, site_url)
@@ -336,16 +358,16 @@ def send_daily(site, st, cfg, s, now, slot, mailer_send, sender, to_list, site_u
 
 def day_message(site, day, s, cfg, sender, to, site_url, assets):
     """The owner's report of one filing date (the home page's "Email me this day's report"), or None if nothing filed."""
-    entries = [e for e in notify.entries_for_day(site.json("index.json"), day) if (e.get("revenue") or 0) >= (s.get("min_revenue") or 0)]
+    entries = [e for e in notify.entries_for_day(site.json("index.json"), day)
+               if is_full(s) or (e.get("revenue") or 0) >= (s.get("min_revenue") or 0)]
     if not entries:
         return None
     entries.sort(key=lambda e: -(e.get("revenue") or 0))
     items = load(site, entries, cfg)
     pics = images_for(assets, items, cfg)
     words = dt.date.fromisoformat(day).strftime("%A, %B %-d, %Y")
-    min_b = (s.get("min_revenue") or 0) / 1e9
-    lead = (f"The report for filings dated {words}: {len(items)} filing{'s' if len(items) != 1 else ''}"
-            + (f" by companies with quarterly revenue of ${min_b:g}B or more" if min_b else "") + ", largest first.")
+    lead = (f"The {'full ' if is_full(s) else ''}report for filings dated {words}: {len(items)} "
+            f"filing{'s' if len(items) != 1 else ''}, {scope_words(s)}, largest first.")
     return report_message(items, pics, cfg, sender, to, subject_line(items, dt.date.fromisoformat(day).strftime("%b %-d")), lead, site_url)
 
 

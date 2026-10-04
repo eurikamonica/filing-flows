@@ -1271,7 +1271,7 @@
   const PREF_DEFAULTS = { tickers: [], sectors: [], all_above: false, min_revenue: 1e9, starred: false,
     frequency: 'daily', email_on: true, push_on: true, final_too: true };
   const MAIL_DEFAULTS = { chart_q: false, chart_y: false, chart_history: false, attach_images: 'png', attach_pdf: true, cmp_decreases: false,
-    changes_detail: false, custom_compare: false, digest_hour: 8, tz: null };   // columns added after the first release (see savePrefs)
+    changes_detail: false, custom_compare: false, digest_hour: 8, tz: null, daily_scope: 'follows' };   // columns added after the first release (see savePrefs)
   const acct = { client: undefined, prefs: null, flash: null, owner: undefined, osets: undefined };
   function browserTZ() {
     try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch (e) { return null; }
@@ -1522,16 +1522,20 @@
     const owner = user ? await ownerVerified() : false;
     const osets = owner ? await ownerSettings() : null;
     const minOwner = osets && osets.min_revenue != null ? +osets.min_revenue : 1e9;
-    const scope = owner ? (e) => (e.revenue || 0) >= minOwner
+    const full = owner ? !!osets && osets.daily_scope === 'all' : !!p && p.daily_scope === 'all';   // the full report
+    const scope = full ? () => true : owner ? (e) => (e.revenue || 0) >= minOwner
       : followsAny(p) ? (e) => followed(e, p) : (e) => (e.revenue || 0) >= 1e9;
     const mineWord = owner ? 'in your report' : followsAny(p) ? 'you follow' : 'over $1B';
+    const countWords = (d) => (full && owner ? 'all in your report' : full && !followsAny(p) ? 'all in your report'
+      : `${full ? d.fol : d.mine} ${mineWord}`);
     const now = new Date();
     const days = [0, 1, 2, 3, 4, 5].map((i) => {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
       const iso = localISO(d), all = dayEntries(ix, iso);
       const name = i === 0 ? 'Today' : i === 1 ? 'Yesterday' : d.toLocaleDateString('en-US', { weekday: 'short' });
       return { iso, i, name, short: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        long: d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }), all: all.length, mine: all.filter(scope).length };
+        long: d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }), all: all.length, mine: all.filter(scope).length,
+        fol: p && followsAny(p) ? all.filter((e) => followed(e, p)).length : 0 };
     });
     const first = days.find((d) => d.mine) || days.find((d) => d.all) || days[1];
     let pick = first.iso;
@@ -1540,13 +1544,16 @@
       : `Your owner report also arrives by itself every morning at ${hourWords(hour)} ${t((osets && osets.tz) || 'Asia/Shanghai')} time.`)
       : p && p.email_on && p.frequency === 'daily' ? `The report of new filings also arrives by itself every morning at ${hourWords(hour)} your time (change it in <a href="#account">Alerts</a>).`
       : `Get it every morning by itself: choose “Daily report” in <a href="#account">${user ? 'your alerts' : 'Alerts'}</a>.`;
-    const what = owner ? `every company with quarterly revenue of $${(minOwner / 1e9).toLocaleString('en-US', { maximumFractionDigits: 2 })}B or more, with its X thread`
+    const what = owner ? (full ? 'every company that filed that day (your full report), largest first, with the X threads'
+        : `every company with quarterly revenue of $${(minOwner / 1e9).toLocaleString('en-US', { maximumFractionDigits: 2 })}B or more, with its X thread`)
+        + (osets && osets.reader_copy ? '; the reader version as set in your <a href="#account">alerts</a> comes too' : '')
+      : full ? `every company that filed that day (your full report)${followsAny(p) ? ', the ones you follow first' : ''}`
       : followsAny(p) ? 'the companies you follow' : 'every company with quarterly revenue of $1B or more (follow companies to narrow it)';
     box.innerHTML = `<div class="section-head"><h2>${opt.title || 'Daily report'}</h2>
         <span class="muted">One e-mail for a day’s filings: what each company does, its chart and the analysis</span></div>
       <div class="days" role="radiogroup" aria-label="Filing date">${days.map((d) => `<button type="button" class="day${d.iso === pick ? ' on' : ''}"
           role="radio" aria-checked="${d.iso === pick}" data-day="${d.iso}" ${d.all ? '' : 'disabled'}>
-          <b>${d.name}</b><span>${d.short}</span><span class="n">${d.all ? `${d.all} filing${d.all === 1 ? '' : 's'}${user ? ` · ${d.mine} ${mineWord}` : ''}` : 'no filings'}</span></button>`).join('')}</div>
+          <b>${d.name}</b><span>${d.short}</span><span class="n">${d.all ? `${d.all} filing${d.all === 1 ? '' : 's'}${user ? ` · ${countWords(d)}` : ''}` : 'no filings'}</span></button>`).join('')}</div>
       <div class="row"><button class="btn primary" type="button" id="day-send"></button><span class="muted small" id="day-msg" role="status"></span></div>
       <p class="muted small">Covers ${what}. Dates are filing dates on SEC EDGAR. ${auto}</p>`;
     const label = () => { const d = days.find((x) => x.iso === pick); $('#day-send', box).textContent = `✉ Email me the report for ${d.i < 2 ? d.name.toLowerCase() : d.long}`; };
@@ -1685,7 +1692,8 @@
 
   function settingsView(c, user, p) {
     const here = live();
-    Promise.all([getJSON('index.json'), getJSON('site.json').catch(() => ({}))]).then(([ix, site]) => {
+    const ownerSets = ownerVerified().then((ok) => (ok ? ownerSettings(true).then((o) => o || {}) : null)).catch(() => null);
+    Promise.all([getJSON('index.json'), getJSON('site.json').catch(() => ({})), ownerSets]).then(([ix, site, osets]) => {
       const inApp = !!window.FilingFlowsApp;
       const appLink = !inApp && site.repo ? ` · <a href="https://github.com/${t(site.repo)}/releases/tag/android" target="_blank" rel="noopener">get the app</a>` : '';
       const names = ix.sector_names || {};
@@ -1695,6 +1703,12 @@
       app.innerHTML = `<div class="page-head"><div class="eyebrow">Alerts</div><h1>Your alerts</h1>
           <div class="meta"><span>Signed in as <b>${t(user.email)}</b></span><button class="btn small" type="button" id="sign-out">Sign out</button></div></div>
         <form class="prefs" id="prefs-form">
+          ${osets ? `<fieldset><legend>Site owner</legend>
+            <p class="muted small">Your owner report with the X threads comes either way (<a href="#owner">Owner tools</a>). The settings on
+              this page are the reader version.</p>
+            ${'reader_copy' in osets ? `<label class="long"><input type="checkbox" id="reader-copy" ${osets.reader_copy ? 'checked' : ''}><span>Also send me
+              the reader version: the e-mails these alert settings ask for, the same as any reader gets them</span></label>`
+              : `<p class="muted small">${OWNER_UPDATE} to choose the reader version as well.</p>`}</fieldset>` : ''}
           <fieldset><legend>Companies</legend>
             <div class="chips" id="chips"></div>
             <div class="row"><input id="add-ticker" list="ticker-list" placeholder="Ticker, e.g. AAPL" autocomplete="off" aria-label="Add a company">
@@ -1711,6 +1725,11 @@
             <label class="long"><input type="radio" name="freq" value="daily" ${p.frequency === 'daily' ? 'checked' : ''}><span>Daily report every morning at
               <select id="digest-hour" aria-label="Hour of the daily report">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${+m.digest_hour === h ? 'selected' : ''}>${hourWords(h)}</option>`).join('')}</select>
               your time${browserTZ() ? ` (${t(browserTZ())})` : ''}: every new chart since the last report, with what each company does and the analysis, in one e-mail</span></label>
+            <div class="sub-choice" id="scope-box" role="radiogroup" aria-label="What the daily report covers" ${p.frequency === 'daily' ? '' : 'hidden'}>
+              <span class="muted small">The daily report covers</span>
+              <label class="long"><input type="radio" name="scope" value="follows" ${m.daily_scope !== 'all' ? 'checked' : ''}><span>The companies I follow (above)</span></label>
+              <label class="long"><input type="radio" name="scope" value="all" ${m.daily_scope === 'all' ? 'checked' : ''}><span>Every company that filed: the full
+                report, with the ones I follow first. The first 15 come in full (chart, what the company does, analysis); the rest are listed with links</span></label></div>
             <label><input type="radio" name="freq" value="instant" ${p.frequency !== 'daily' ? 'checked' : ''}> As soon as a chart is out (checked every 15 minutes)</label>
             <label class="long"><input type="checkbox" id="final-too" ${p.final_too !== false ? 'checked' : ''}><span>After a preliminary chart from an earnings release (8-K), also send the final one when the 10-Q/10-K is filed, marked as final and compared with the release</span></label></fieldset>
           <fieldset><legend>How</legend>
@@ -1738,6 +1757,9 @@
           <button class="btn small warn" type="button" id="del-yes">Delete</button> <button class="btn small" type="button" id="del-no">Keep it</button></span>
           <span class="muted small" id="del-msg" role="status"></span></div>`;
       showRequests(c, ix);
+      $$('input[name="freq"]').forEach((r) => r.addEventListener('change', () => {
+        $('#scope-box').hidden = $('input[name="freq"]:checked').value !== 'daily';
+      }));
       let list = (p.tickers || []).slice();
       const chips = () => {
         $('#chips').innerHTML = list.length ? list.map((x) => `<span class="chip"><a href="#home" data-tk="${t(x)}">${t(x)}</a>
@@ -1782,10 +1804,18 @@
             attach_images: ($('input[name="attach"]:checked') || {}).value || 'png', attach_pdf: $('#attach-pdf').checked,
             cmp_decreases: $('#cmp-decreases').checked, changes_detail: $('#changes-detail').checked,
             custom_compare: $('#custom-compare').checked, digest_hour: +$('#digest-hour').value,
+            daily_scope: (($('input[name="scope"]:checked') || {}).value === 'all') ? 'all' : 'follows',
           });
           state.decreases = $('#cmp-decreases').checked;           // company pages follow the account setting
           prefs.set('decreases', state.decreases);
-          $('#save-msg').textContent = acct.flash || 'Saved.';
+          let note = '';
+          if ($('#reader-copy')) {                                   // the site owner: also the reader version?
+            const r = await c.from('owner_settings').update({ reader_copy: $('#reader-copy').checked, updated_at: new Date().toISOString() })
+              .eq('id', true).select().single();
+            if (r.error) note = tableMissing(r.error) ? ` The reader-version switch was not saved: ${OWNER_UPDATE}.` : ` The reader-version switch was not saved: ${r.error.message}.`;
+            else acct.osets = r.data;
+          }
+          $('#save-msg').textContent = (acct.flash || 'Saved.') + note;
           acct.flash = null;
         } catch (err) {
           $('#save-msg').textContent = `Could not save: ${err.message}`;
@@ -1867,7 +1897,8 @@
     const on = prefs.get('owner', false);
     const osets = c ? await ownerSettings(true) : null;
     const o = Object.assign({ thread_direct: true, daily_on: true, daily_hour: 8, tz: browserTZ() || 'Asia/Shanghai',
-      min_revenue: 1e9, instant_threads: false }, osets || {});
+      min_revenue: 1e9, instant_threads: false, daily_scope: 'min_revenue', reader_copy: false }, osets || {});
+    const newCols = !!osets && 'daily_scope' in osets;              // supabase/schema.sql run again since these arrived
     const settingsHTML = !c ? `<p class="muted" style="max-width:68ch">Accounts are not switched on, so these settings come from
         <span class="mono">config/x.json</span> (keys daily_on, daily_hour, tz, min_revenue, instant_threads).</p>`
       : !osets ? `<p class="muted" style="max-width:68ch">${OWNER_UPDATE}: the owner settings table is new.</p>`
@@ -1882,10 +1913,18 @@
             <select id="daily-hour" aria-label="Hour of the daily report">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${+o.daily_hour === h ? 'selected' : ''}>${hourWords(h)}</option>`).join('')}</select>
             ${t(browserTZ() || o.tz)} time: every filing since the last report — what the company does, the charts, the analysis and the
             ready-to-post X thread — in one e-mail to ${t(user.email)}</span></label>
-          <label>Companies with quarterly revenue of at least $<input type="number" id="daily-min" min="0" step="0.1"
-            value="${(+o.min_revenue / 1e9).toFixed(2).replace(/\.?0+$/, '')}" style="width:5em"> billion</label>
+          <div class="sub-choice" role="radiogroup" aria-label="Which companies"><span class="muted small">Which companies</span>
+            <label><input type="radio" name="owner-scope" value="min_revenue" ${o.daily_scope !== 'all' ? 'checked' : ''}> Companies with
+              quarterly revenue of at least $<input type="number" id="daily-min" min="0" step="0.1"
+              value="${(+o.min_revenue / 1e9).toFixed(2).replace(/\.?0+$/, '')}" style="width:5em"> billion</label>
+            <label class="long"><input type="radio" name="owner-scope" value="all" ${o.daily_scope === 'all' ? 'checked' : ''} ${newCols ? '' : 'disabled'}><span>Every
+              company that filed: the full report, largest first. The largest 20 come in full with the charts and X threads; the rest
+              are listed with links${newCols ? '' : ` (${t(OWNER_UPDATE)})`}</span></label></div>
           <label class="long"><input type="checkbox" id="instant-threads" ${o.instant_threads ? 'checked' : ''}><span>Also e-mail the new X threads
-            right after each scan (as before the daily report)</span></label></fieldset>
+            right after each scan (as before the daily report)</span></label>
+          <p class="muted small" id="reader-copy-state">Reader version: ${o.reader_copy ? 'on. You also get the reader e-mails your'
+            : 'off. You get only this report, not the reader e-mails your'} <a href="#account">alert settings</a> describe; change it there.</p>
+        </fieldset>
         <div class="row"><button class="btn primary" type="submit">Save</button><span class="muted" id="owner-msg" role="status"></span></div>
       </form>`;
     if (!here()) return;
@@ -1908,6 +1947,7 @@
       const patch = { thread_direct: $('input[name="thread-mail"]:checked').value === 'direct', daily_on: $('#daily-on').checked,
         daily_hour: +$('#daily-hour').value, tz: browserTZ() || o.tz, min_revenue: Math.round(Math.max(0, +$('#daily-min').value || 0) * 1e9),
         instant_threads: $('#instant-threads').checked, updated_at: new Date().toISOString() };
+      if (newCols) patch.daily_scope = $('input[name="owner-scope"]:checked').value === 'all' ? 'all' : 'min_revenue';
       const r = await c.from('owner_settings').update(patch).eq('id', true).select().single();
       if (r.error) { $('#owner-msg').textContent = `Could not save: ${r.error.message}`; return; }
       acct.osets = r.data;

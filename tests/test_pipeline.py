@@ -1266,3 +1266,77 @@ def test_requests_for_threads_and_days(tmp_path):
     own = next(m for m in mail.sent if m["To"] == "own@example.com" and m["Subject"].startswith("Daily report"))
     assert own["Subject"].startswith("Daily report, Jul 31: 2 new filings — AAPL, META"), own["Subject"]
     assert "X thread (" in own.get_body(("plain",)).get_content()
+
+
+def test_full_daily_report_and_owner_reader_copy(tmp_path):
+    """Alerts → "Daily report covers: every company that filed"; the owner's full report; the owner's reader copy."""
+    import datetime as dt
+    from pipeline import notify, owner, social
+    site = _site(tmp_path)
+    ix = json.load(open(site / "data" / "index.json"))
+    morning = dt.datetime(2026, 9, 26, 0, 20, tzinfo=dt.timezone.utc)              # 8:20 in Shanghai
+    daily = dict(frequency="daily", tz="Asia/Shanghai", digest_hour=8)
+    subs = [_sub("fio", tickers=["META"], daily_scope="all", **daily),          # the full report, follows META
+            _sub("gil", tickers=["META"], **daily),                             # the usual report: only META
+            _sub("own", tickers=["AAPL"], **daily)]                             # the site owner's own alerts
+    osets = [{"id": True, "reader_copy": False}]
+    supa = _FakeSupa(subs, site_owners=[{"email": "Own@example.com"}], owner_settings=osets)
+    mail = _FakeMailer()
+    notify.MAX_AGE_DAYS = 100
+    try:
+        n = notify.run(notify.Site(site), supa, mail, "x", "https://ex.github.io/ff", now=morning, images=False, daily_limit=100)
+        got = {m["To"].split("@")[0]: m for m in mail.sent}
+        assert n == 2 and sorted(got) == ["fio", "gil"], sorted(got)          # the owner: no reader copy unless asked for
+        body = got["fio"].get_body(("plain",)).get_content()
+        assert body.startswith("Your full daily report for Saturday, September 26, 2026: 6 new charts since the last one, "
+                               "1 for companies you follow (listed first)."), body[:200]
+        assert got["fio"]["Subject"].startswith("Your daily report, Sep 26: META, ")      # the followed company first
+        assert f"Why you got this: {notify.FULL_WHY}." in body and "Why you got this: you follow META." in body
+        assert len({d["item"] for d in supa.dels if d["user_id"] == "fio"}) == 6
+        assert got["gil"]["Subject"] == "Your daily report, Sep 26: META"
+        # the owner asks for the reader version too: their own alerts (AAPL) arrive as for any reader
+        osets[0]["reader_copy"] = True
+        supa.t["owner_settings"] = [dict(osets[0])]
+        mail.sent.clear()
+        assert notify.run(notify.Site(site), supa, mail, "x", "", now=morning, images=False, daily_limit=100) == 1
+        assert mail.sent[0]["To"] == "own@example.com" and mail.sent[0]["Subject"] == "Your daily report, Sep 26: AAPL"
+    finally:
+        notify.MAX_AGE_DAYS = 3
+
+    # a day's report on request: the reader's full version; the owner gets the owner's report and, asked for, the reader's
+    mk = lambda i, u: {"id": i, "user_id": u, "cik": 0, "period_end": "2026-07-31", "kind": "day", "status": "pending",
+                       "attempts": 0, "created_at": f"2026-10-02T10:00:0{i}+00:00"}
+    supa2 = _FakeSupa([_sub("fio", tickers=["BRK.B"], daily_scope="all"), _sub("own", tickers=["META"])], (),
+                      [mk(1, "fio"), mk(2, "own")], site_owners=[{"email": "own@example.com"}],
+                      owner_settings=[{"id": True, "reader_copy": True, "daily_scope": "all", "min_revenue": 900e9}])
+    mail2 = _FakeMailer()
+    now = dt.datetime(2026, 10, 2, 10, 5, tzinfo=dt.timezone.utc)
+    assert notify.run(notify.Site(site), supa2, mail2, "x", "", now=now, images=False, daily_limit=50, requests_only=True) == 3
+    fio = next(m for m in mail2.sent if m["To"] == "fio@example.com")
+    assert fio.get_body(("plain",)).get_content().startswith("The full report for filings dated Friday, July 31, 2026: 1 filing.")
+    mine = [m for m in mail2.sent if m["To"] == "own@example.com"]
+    assert sorted(m["Subject"].split(",")[0] for m in mine) == ["Daily report", "Your daily report"], [m["Subject"] for m in mine]
+    own_body = next(m for m in mine if m["Subject"].startswith("Daily report")).get_body(("plain",)).get_content()
+    assert own_body.startswith("The full report for filings dated Friday, July 31, 2026: 1 filing, every company that filed "
+                               "(the full report), largest first."), own_body[:200]       # $900B minimum, yet AAPL is in
+    assert [r["status"] for r in supa2.t["send_requests"]] == ["sent", "sent"]
+
+    # the owner's scheduled report: over the minimum, or everything with the full report
+    s = dict(owner.DEFAULTS, min_revenue=900e9)
+    cfg = dict(social.DEFAULTS, max_age_days=10000)
+    assert owner.pending(ix, {}, s, cfg, morning) == []
+    assert len(owner.pending(ix, {}, dict(s, daily_scope="all"), cfg, morning)) == 6
+    assert owner.scope_words(s) == "companies with quarterly revenue of $900B or more"
+
+    # long reports: the top names the companies in full, the end list stops at REST_MAX with a link to the rest
+    items = notify._load_items(notify.Site(site), {}, [(e, [notify.FULL_WHY]) for e in ix["companies"]])
+    keep = notify.REST_MAX
+    notify.REST_MAX = 2
+    try:
+        m = notify.build_message(_sub("fio"), items, "https://ex.github.io/ff", {}, "x", daily=True, full_count=1, day="Today")
+    finally:
+        notify.REST_MAX = keep
+    text = m.get_body(("plain",)).get_content()
+    assert "- and 5 more, listed at the end" in text and "- and 3 more on the site: https://ex.github.io/ff/#home" in text
+    html = m.get_body(("html",)).get_content()
+    assert "and 5 more listed at the end" in html and 'href="https://ex.github.io/ff/#home"' in html
