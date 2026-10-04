@@ -93,6 +93,18 @@ jobs:
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}       # optional: shown on the privacy and terms pages
         run: python scripts/build_site.py --data _site/data --out _site
 
+      # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
+      # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.
+      - name: Publish the site to the "site" branch (for your own server)
+        if: vars.SELF_HOST == 'true'
+        continue-on-error: true
+        run: |
+          rm -rf "$RUNNER_TEMP/site" && cp -r _site "$RUNNER_TEMP/site" && cd "$RUNNER_TEMP/site"
+          git init -q -b site
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "site $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:site
+
       - name: The owner's daily report (8:00 owner time) and X threads (e-mail, or the X API)
         continue-on-error: true                 # sending trouble never blocks the site
         env:
@@ -108,9 +120,10 @@ jobs:
           X_API_SECRET: ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          SITE_URL: ${{ vars.SITE_URL }}                       # your own domain, when the site has one
         run: |
           owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
-          export X_SITE_URL="https://$owner.github.io/${GITHUB_REPOSITORY#*/}/"   # works on scheduled runs too
+          export X_SITE_URL="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"   # works on scheduled runs too
           if python -m pipeline.social --site _site --store store --check; then
             pip install playwright
             python -m playwright install --with-deps chromium
@@ -168,7 +181,7 @@ jobs:
       MAIL_DAILY_LIMIT: ${{ vars.MAIL_DAILY_LIMIT }}
       DIGEST_HOUR: ${{ vars.DIGEST_HOUR }}              # optional: the daily report's hour for readers without a saved one (8)
       DIGEST_TZ: ${{ vars.DIGEST_TZ }}                  # optional: their time zone (America/New_York)
-      SITE_URL: ${{ needs.deploy.outputs.page_url }}
+      SITE_URL: ${{ vars.SITE_URL || needs.deploy.outputs.page_url }}   # links in the e-mails: your own domain if set
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
