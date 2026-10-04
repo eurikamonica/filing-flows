@@ -215,11 +215,20 @@ def test_social_threads_fit_and_cite(tmp_path):
         roles = [x["role"] for x in parts]
         assert roles[0] == "headline" and roles[-1] == "source" and "analysis" in roles
         assert posts[-1].startswith(f"Source: {social.display_name(c['profile']['name'])} ") and "http" not in posts[-1]
+        assert " #earnings" in posts[0].split("\n")[0] and " results" not in posts[0].split("\n")[0]   # the headline tag
+        tagged = [i for i, p in enumerate(posts) if f"\n\n#stocks #investing\n\n{i + 1}/{n}" in p]          # the general tags
+        assert len(tagged) == 1 and tagged[0] > 0 and (tagged[0] == n - 1 or social.xlen(posts[-1]) > 250), tagged
+        assert sum(p.count("#earnings") for p in posts) == 1
         if social.revenue_mix(q):
             biz = posts[roles.index("business")]
             assert biz.startswith("What ") and "Industry: " in biz and "revenue came from:" in biz
     brk = next(e for e in todo if e["cik"] == 1067983)
     assert social.compose(*social.quarter_of(str(site), brk), cfg)[0].startswith("$BRK.B ")
+    # hashtags come from config/x.json: cleaned, no repeats, none at all when switched off
+    assert social.hashtags(["stocks", "#Stocks", "#S&P 500!", "#2026", ""]) == ["#stocks", "#SP500"]
+    assert social.hashtags("#a, b") == ["#a", "#b"]
+    plain = social.compose(*social.quarter_of(str(site), brk), dict(cfg, headline_tag="", hashtags=[]))
+    assert " results" in plain[0].split("\n")[0] and not any("#" in p.replace("#c-", "") for p in plain)
 
 
 def test_social_posts_thread_in_order_and_never_twice(tmp_path):

@@ -94,6 +94,23 @@ still waits for SEC's XBRL data, which can lag the filing by hours (retried ever
 Add its ticker to `config/starred.txt` (one per line) and commit. The next run back-fills its last eight
 10-Q/10-K filings. The home page links to the file when the site runs on GitHub Pages.
 
+### Your own domain and server
+
+GitHub Pages keeps running; your own server is added next to it.
+
+1. Repository variable `SELF_HOST` = `true`: every scan also pushes the built site to the branch `site` (newest copy only).
+2. The server pulls that branch every few minutes and serves it as static files, e.g. with Caddy (automatic HTTPS):
+   `git clone --depth 1 --branch site https://github.com/<you>/<repo>.git /srv/filing-flows`, then a cron line
+   `*/5 * * * * cd /srv/filing-flows && git fetch -q --depth 1 origin site && git reset -q --hard FETCH_HEAD`.
+   The server needs no GitHub key: it only reads the public repository.
+3. Repository variable `SITE_URL` = `https://your-domain/`: links in e-mails, X threads and the Android app use it.
+   In Supabase (Authentication → URL Configuration) set the Site URL to it and add `https://your-domain/**` to the
+   redirect URLs.
+4. Sending from your domain instead of a personal mailbox (e.g. Resend): `SMTP_HOST` = `smtp.resend.com`,
+   `SMTP_PORT` = `465`, `MAIL_FROM` = `Filing Flows <alerts@mail.your-domain>` (variables), `MAIL_USERNAME` = `resend`,
+   `MAIL_PASSWORD` = the API key and `MAIL_TO` = where your own copies go (secrets); the same SMTP settings in
+   Supabase → Authentication → Emails → SMTP Settings for the sign-in codes.
+
 ## The owner's daily report and ready-to-post X threads (by e-mail)
 
 Each new company quarter becomes a short X thread, numbered 1/7, 2/7 …:
@@ -162,6 +179,8 @@ pay-per-use: $0.015 per post, $0.20 per post with a link (docs.x.com/x-api/getti
 | `preliminary` | `true` | include quarters read from 8-K earnings releases |
 | `include_link` | `false` | add a link to the chart page in the last post |
 | `images` | `["standard", "year_ago"]` | charts attached to the first post |
+| `headline_tag` | `"#earnings"` | hashtag in the first post, in place of the word "results" (`""`: no hashtag there) |
+| `hashtags` | `["#stocks", "#investing"]` | hashtags on the last post, as many as fit (`[]`: none) |
 
 A company quarter is sent once: when the 10-Q/10-K replaces an 8-K chart that was already sent, it is not sent again.
 

@@ -35,7 +35,9 @@ SECRETS = ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_TOKEN_SECRET
 MAIL_SECRETS = ("MAIL_USERNAME", "MAIL_PASSWORD")
 MAIL_MAX_BYTES = 18_000_000            # Gmail accepts 25 MB; attachments grow by a third when encoded
 DEFAULTS = {"enabled": True, "mode": "email", "scope": "all", "min_revenue": 1e9, "max_per_run": 4, "max_age_days": 3,
-            "preliminary": True, "include_link": False, "images": ["standard", "year_ago"], "site_url": ""}
+            "preliminary": True, "include_link": False, "images": ["standard", "year_ago"], "site_url": "",
+            # general X hashtags: one in the headline in place of the word "results", the others on the last post
+            "headline_tag": "#earnings", "hashtags": ["#stocks", "#investing"]}
 LIMIT = 280
 KEEP_UPPER = {"PLC", "LLC", "LP", "AG", "SA", "NV", "SE", "ETF", "REIT", "II", "III", "IV", "USA", "US", "UK", "AI",
               "NA", "SPA", "AB", "ASA", "BV", "HK", "IBM", "AMD", "CSX", "PG&E", "AT&T", "3M"}
@@ -216,6 +218,24 @@ ROLES = {"headline": "Headline and charts", "business": "What the company does",
          "analysis": "Analysis", "quote": "From the filing", "source": "Source"}
 
 
+def hashtag(word):
+    """'#earnings' from 'earnings', '#Earnings', ' #earnings! ': letters, digits and _ only; '' when nothing is left."""
+    w = re.sub(r"[^\w]", "", str(word or "").replace("#", ""), flags=re.ASCII)
+    return f"#{w}" if w and not w.isdigit() else ""
+
+
+def hashtags(words):
+    """The configured hashtags, cleaned, without repeats (config/x.json "hashtags": a list, or one string)."""
+    if isinstance(words, str):
+        words = words.replace(",", " ").split()
+    out = []
+    for w in words or []:
+        t = hashtag(w)
+        if t and t.lower() not in [x.lower() for x in out]:
+            out.append(t)
+    return out
+
+
 def _post1(c, q, cfg, tick, name, n_images):
     """Headline post: which filing, when, the main figures, and what the attached charts show; trimmed to fit."""
     nodes = {n["id"]: n for n in q["nodes"]}
@@ -225,7 +245,8 @@ def _post1(c, q, cfg, tick, name, n_images):
     prelim = q.get("form") == "8-K"
     h = q.get("headline") or {}
     ry, rq = chg(rev["v"], rev.get("y")), chg(rev["v"], rev.get("q"))
-    head = (f"${tick} " if tick else "") + f"{name} {q['label']} results" + (" (preliminary)" if prelim else "")
+    tag = hashtag(cfg.get("headline_tag", DEFAULTS["headline_tag"]))     # "$AAPL Apple Inc. Q3 FY26 #earnings"
+    head = (f"${tick} " if tick else "") + f"{name} {q['label']} {tag or 'results'}" + (" (preliminary)" if prelim else "")
 
     def rev_line(qq=True):
         parts = [x for x in (ry and ry + " Y/Y", qq and rq and rq + " Q/Q") if x]
@@ -317,6 +338,18 @@ def compose_parts(c, q, cfg):
     if cfg.get("include_link") and link:
         src = fit("", src, f" {link}/#c-{p['cik']}", limit=room)
     parts.append(("source", src if xlen(src) <= room else fit("", src, limit=room)))
+
+    # the general hashtags: on the last post, or (when it is full) on the reply with the most room; never in the headline
+    tags = [t for t in hashtags(cfg.get("hashtags", DEFAULTS["hashtags"]))
+            if t.lower() != hashtag(cfg.get("headline_tag", DEFAULTS["headline_tag"])).lower()]
+    while tags:
+        line = "\n\n" + " ".join(tags)
+        fits = [i for i in range(1, len(parts)) if xlen(parts[i][1] + line) <= room]
+        if fits:
+            i = len(parts) - 1 if len(parts) - 1 in fits else max(fits, key=lambda k: room - xlen(parts[k][1]))
+            parts[i] = (parts[i][0], parts[i][1] + line)
+            break
+        tags.pop()                                                 # fewer tags, first ones first
     n = len(parts)
     return [{"role": r, "text": t + (f"\n\n{i + 1}/{n}" if numbered else "")} for i, (r, t) in enumerate(parts)]
 

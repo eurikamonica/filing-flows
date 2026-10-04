@@ -57,7 +57,9 @@ FAKE_SUPABASE = """
   window.FilingFlowsApp = { setFollows: (j) => window.__ff.native.push(j) };
   const copy = (x) => JSON.parse(JSON.stringify(x));
   const auth = {
-    async getSession() { return { data: { session } }; },
+    // answers a moment later, like the real client (its sign-in lock and storage are asynchronous): code that reads
+    // the click event after an await sees what a real browser gives it (event.currentTarget is null by then)
+    async getSession() { await new Promise((r) => setTimeout(r, 30)); return { data: { session } }; },
     async signInWithOtp({ email, options }) { log.push(['otp', email, !!(options && options.shouldCreateUser)]); return { data: {}, error: null }; },
     async verifyOtp({ email, token, type }) {
       log.push(['verify', email, token, type]);
@@ -343,7 +345,7 @@ def check_accounts(b, base, fails, shot, site):
     import datetime as _dt
     if req["cik"] != 0 or req["period_end"] != (_dt.date.today() - _dt.timedelta(days=2)).isoformat():
         fails.append(f"daily report: request saved as {req}")
-    pg.wait_for_function("document.querySelector('#day-msg').textContent !== ''")
+    pg.wait_for_function("/on the way|already|Could not|No answer/i.test(document.querySelector('#day-msg').textContent)")
     if "Report on the way" not in pg.inner_text("#day-msg"):
         fails.append(f"daily report: message {pg.inner_text('#day-msg')!r}")
     shot(pg, "home_daily.png")
@@ -386,6 +388,9 @@ def check_accounts(b, base, fails, shot, site):
     label = pg.inner_text(".btn.send")
     pg.click(".btn.send")
     pg.wait_for_selector(".toast")
+    if pg.inner_text(".toast").strip() != "Sending…":                     # something on screen at once
+        fails.append(f"email-me: no 'Sending…' right after the click, got {pg.inner_text('.toast')!r}")
+    pg.wait_for_function("!/Sending/.test(document.querySelector('.toast').textContent)")
     if "on the way to reader@example.com" not in pg.inner_text(".toast"):
         fails.append(f"email-me: unexpected message {pg.inner_text('.toast')!r}")
     shot(pg, "send_one.png")

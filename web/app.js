@@ -6,6 +6,10 @@
   const $ = (sel, el) => (el || document).querySelector(sel);
   const $$ = (sel, el) => Array.from((el || document).querySelectorAll(sel));
   const app = $('#app');
+  // every navigation gets a number: a page still loading when the reader moves on (a slow connection) draws nothing,
+  // instead of drawing over the page they went to
+  let view = 0;
+  const live = () => { const mine = view; return () => mine === view; };
 
   // ---------- small utilities ----------
   const cache = new Map();
@@ -353,6 +357,7 @@
   }
 
   async function home() {
+    const here = live();
     setNav('home');
     const forms = new Set(prefs.get('forms', ['10-Q', '10-K', '8-K']));
     const ix = await getJSON('index.json');
@@ -360,6 +365,7 @@
     const sectors = ix.sector_names || {};
     const stars = ix.companies.filter((c) => c.starred);
     const groups = ix.sectors.length + ix.industries.length;
+    if (!here()) return;
     app.innerHTML = `
       <section class="hero">
         <div class="eyebrow">SEC EDGAR · 10-Q, 10-K and 8-K earnings releases</div>
@@ -444,6 +450,7 @@
   }
 
   async function company(cik, end, all, opt) {
+    const here = live();
     opt = opt || {};
     setNav('');
     const [ix, site] = await Promise.all([getJSON('index.json'), getJSON('site.json').catch(() => ({}))]);
@@ -451,9 +458,10 @@
     try {
       c = await getJSON(`c/${cik}.json`);
     } catch (err) {
-      if (err.status === 404) return missingCompany(cik);          // found by the search, not drawn yet
+      if (err.status === 404) return here() ? missingCompany(cik) : null;   // found by the search, not drawn yet
       throw err;
     }
+    if (!here()) return;
     const p = c.profile, qs = c.quarters, ys = c.years || [];
     const fy = !!opt.fy && ys.length > 0;                           // a full fiscal year (10-K)
     const cmpId = opt.cmp || null;                                  // a comparison this reader asked for
@@ -646,10 +654,9 @@
       }
     }));
     const btn = $('#thread-mail', sec);
-    if (btn) btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      toast(await askFor({ cik: +p.cik, period_end: q.end, kind: 'thread' }, 'Thread'));
-      btn.disabled = false;
+    if (btn) btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      withProgress(btn, (text) => { if (text) toast(text); }, () => askFor({ cik: +p.cik, period_end: q.end, kind: 'thread' }, 'Thread'));
     });
     return sec;
   }
@@ -898,14 +905,14 @@
     if (years.length) {
       $('#cmp-swap', panel).addEventListener('click', () => { swapped = !swapped; update(); });
       $('#cmp-go', panel).addEventListener('click', async (ev) => {
-        const ab = pair();
+        const ab = pair(), go = ev.currentTarget;      // read before any await: the event forgets its target afterwards
         if (!ab) return;
-        ev.currentTarget.disabled = true;
+        go.disabled = true;
         msg('Asking…');
         const r = await cl.from('chart_requests').insert({ cik: +cik, kind: ab[0].dataset.kind, a_end: ab[0].dataset.end, b_end: ab[1].dataset.end })
           .select('id').single();
         if (r.error) {
-          ev.currentTarget.disabled = false;
+          go.disabled = false;
           msg(tableMissing(r.error) ? OWNER_UPDATE : /limit/i.test(r.error.message) ? 'Limit reached: 20 comparisons a day' : `Could not ask: ${r.error.message}`);
           return;
         }
@@ -1012,10 +1019,12 @@
     return { ok: true, msg: 'Asked: the next scan reads its filings from SEC' };
   }
   async function missingCompany(cik) {
+    const here = live();
     setNav('');
     const all = await secCompanies();
     const hit = all.find((x) => x[0] === +cik);
     const name = hit ? hit[2] : `CIK ${cik}`, ticker = hit ? hit[1] : '';
+    if (!here()) return;
     app.innerHTML = `
       <div class="page-head">
         <div class="crumbs"><a href="#home">Latest</a></div>
@@ -1081,6 +1090,7 @@
   }
 
   async function group(level, id, cal) {
+    const here = live();
     setNav('sectors');
     const [ix, g] = await Promise.all([getJSON('index.json'), getJSON(`${level}/${id}.json`)]);
     const q = (cal && g.quarters.find((x) => x.cal === cal)) || g.quarters[0];
@@ -1089,6 +1099,7 @@
     const secId = level === 'i' ? (ix.industries.find((x) => x.id === id) || {}).sector : id;
     const inds = level === 's' ? ix.industries.filter((x) => x.sector === id) : [];
     const total = q.companies.reduce((s, c) => s + c.revenue, 0);
+    if (!here()) return;
     app.innerHTML = `
       <div class="page-head">
         <div class="crumbs"><a href="#home">Latest</a><span>/</span><a href="#sectors">Sectors</a>${
@@ -1130,12 +1141,14 @@
   }
 
   async function sectorsPage() {
+    const here = live();
     setNav('sectors');
     const ix = await getJSON('index.json');
     const names = ix.sector_names || {};
     const counts = {};
     ix.companies.forEach((c) => { counts[c.sector] = (counts[c.sector] || 0) + 1; });
     const have = new Map(ix.sectors.map((s) => [s.id, s]));
+    if (!here()) return;
     app.innerHTML = `
       <div class="page-head"><div class="eyebrow">Sectors and industries</div><h1>Combined Sankeys by sector and industry</h1>
         <p class="muted" style="max-width:72ch">Companies are grouped by the SIC code on their EDGAR profile. A group chart adds up every company whose fiscal quarter ends in the same calendar quarter; the ten largest appear by name.</p></div>
@@ -1150,6 +1163,7 @@
   }
 
   async function methodPage() {
+    const here = live();
     setNav('method');
     const ix = await getJSON('index.json').catch(() => ({}));
     const au = ix.release_audit || { checked: 0, matched: 0, mismatches: [] };
@@ -1161,6 +1175,7 @@
           au.mismatches.slice().reverse().flatMap((m) => Object.entries(m.fields).map(([k, [a, b]]) =>
             `<tr><td><a href="#c-${m.cik}">${t(m.ticker)}</a></td><td>${date(m.end)}</td><td>${names[k] || k}</td><td class="num">${money(a)}</td><td class="num">${money(b)}</td></tr>`)).join('')
         }</tbody></table></div>` : ''}`;
+    if (!here()) return;
     app.innerHTML = `
       <div class="page-head"><div class="eyebrow">Method</div><h1>How each chart is built</h1></div>
       <div class="cols"><div class="prose">
@@ -1274,6 +1289,19 @@
       document.head.appendChild(el);
     });
   }
+  // every request to the accounts service gives up after 20 seconds: a stalled connection (or a token refresh that never
+  // answers) would otherwise leave buttons waiting forever with nothing on screen
+  const NET_MS = 20000;
+  function timedFetch(input, init) {
+    init = init || {};
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), NET_MS);
+    if (init.signal) {
+      if (init.signal.aborted) ctl.abort();
+      else init.signal.addEventListener('abort', () => ctl.abort(), { once: true });
+    }
+    return fetch(input, Object.assign({}, init, { signal: ctl.signal })).finally(() => clearTimeout(timer));
+  }
   async function sb() {
     if (acct.client !== undefined) return acct.client;
     if (window.FF_SUPABASE) return (acct.client = window.FF_SUPABASE);          // injected by tests
@@ -1284,7 +1312,13 @@
         if (window.supabase && window.supabase.createClient) break;
         await loadScript(src).catch((e) => console.warn(e.message));
       }
-      acct.client = window.supabase.createClient(site.supabase_url, site.supabase_key);
+      const lib = window.supabase;
+      // processLock: the sign-in lock is this tab's own. The default lock is shared by every tab of the site, and a
+      // sleeping background tab that holds it makes the session check of this tab (and every button) wait forever.
+      acct.client = lib.createClient(site.supabase_url, site.supabase_key, {
+        auth: lib.processLock ? { lock: lib.processLock } : {},
+        global: { fetch: timedFetch },
+      });
     } catch (e) {
       console.warn('accounts are off on this page:', e.message);
       acct.client = null;
@@ -1296,6 +1330,36 @@
     if (!c) return null;
     const { data } = await c.auth.getSession();
     return data && data.session ? data.session.user : null;
+  }
+  // for buttons: the signed-in user, or null when signed out; an error (not "signed out") when the service did not answer
+  async function buttonUser() {
+    const c = await sb();
+    if (!c) return null;
+    const { data, error } = await c.auth.getSession();
+    if (data && data.session) return data.session.user;
+    if (error && /fetch|network|abort|timed? ?out|load failed/i.test(`${error.name} ${error.message}`)) throw new Error(NO_ANSWER);
+    return null;
+  }
+  const NO_ANSWER = 'No answer from the accounts service. Check your connection and try again';
+  // a button's request with something on screen the whole time: "Sending…" at once, a note when it is slow, and the
+  // answer when it comes (even after the button gave up waiting)
+  function withProgress(btn, show, work) {
+    let done = false;
+    const free = () => { btn.disabled = false; btn.removeAttribute('aria-busy'); };
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    show('Sending…');
+    const slow = setTimeout(() => { if (!done) show('Still waiting for the accounts service…'); }, 8000);
+    const late = setTimeout(() => { if (!done) { show(NO_ANSWER); free(); } }, 45000);
+    return Promise.resolve().then(work).catch((e) => (e && e.message === NO_ANSWER ? NO_ANSWER : `Could not send: ${e && e.message}`))
+      .then((text) => {
+        done = true;
+        clearTimeout(slow);
+        clearTimeout(late);
+        free();
+        if (text != null) show(text);
+        return text;
+      });
   }
   function syncApp() {                     // the Android app checks for new charts in the background with these
     const native = window.FilingFlowsApp;
@@ -1492,17 +1556,18 @@
       $$('[data-day]', box).forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); });
       label();
     }));
-    $('#day-send', box).addEventListener('click', async (ev) => {
-      if (!(await currentUser())) {
-        prefs.set('pending-day', pick);
-        prefs.set('after-signin', location.hash.replace(/^#/, '') || 'home');
-        location.hash = 'account';
-        return;
-      }
-      const btn = ev.currentTarget;
-      btn.disabled = true;
-      $('#day-msg', box).textContent = await askFor({ cik: 0, period_end: pick, kind: 'day' }, 'Report');
-      btn.disabled = false;
+    $('#day-send', box).addEventListener('click', (ev) => {
+      const btn = ev.currentTarget, day = pick, msg = $('#day-msg', box);
+      if (btn.disabled) return;
+      withProgress(btn, (text) => { msg.textContent = text; }, async () => {
+        if (!(await buttonUser())) {
+          prefs.set('pending-day', day);
+          prefs.set('after-signin', location.hash.replace(/^#/, '') || 'home');
+          location.hash = 'account';
+          return '';
+        }
+        return askFor({ cik: 0, period_end: day, kind: 'day' }, 'Report');
+      });
     });
     box.hidden = false;
   }
@@ -1515,31 +1580,35 @@
       b.hidden = false;
       if (b.dataset.wired) return;
       b.dataset.wired = '1';
-      b.addEventListener('click', async () => {
-        if (!(await currentUser())) {
-          prefs.set('pending-send', b.dataset.send);
-          prefs.set('after-signin', location.hash.replace(/^#/, ''));
-          location.hash = 'account';
-          return;
-        }
-        const [cik, ends, kind] = b.dataset.send.split('|');
-        b.disabled = true;
-        toast(await requestReports(cik, ends.split(','), kind));
-        b.disabled = false;
+      b.addEventListener('click', () => {
+        if (b.disabled) return;
+        withProgress(b, (text) => { if (text) toast(text); }, async () => {
+          if (!(await buttonUser())) {
+            prefs.set('pending-send', b.dataset.send);
+            prefs.set('after-signin', location.hash.replace(/^#/, ''));
+            location.hash = 'account';
+            return '';
+          }
+          const [cik, ends, kind] = b.dataset.send.split('|');
+          return requestReports(cik, ends.split(','), kind);
+        });
       });
     });
   }
 
   async function accountPage() {
+    const here = live();
     setNav('account');
     const c = await sb();
+    if (!here()) return;
     if (!c) {
       app.innerHTML = `<div class="page-head"><div class="eyebrow">Alerts</div><h1>E-mail alerts are not switched on yet</h1>
         <p class="muted" style="max-width:70ch">The site owner still has to connect the accounts service (see “Accounts and alerts” in the README).</p></div>`;
       return;
     }
-    if (!(await currentUser())) return signInView(c);
+    if (!(await currentUser())) return here() ? signInView(c) : null;
     const p = await loadPrefs();
+    if (!here()) return;
     const pending = prefs.get('pending-follow', null), pendingSend = prefs.get('pending-send', null);
     const pendingBuild = prefs.get('pending-build', null), pendingOwner = prefs.get('pending-owner', false);
     const pendingDay = prefs.get('pending-day', null);
@@ -1569,7 +1638,8 @@
       prefs.set('after-signin', null);
       if (back && back !== 'account') { location.hash = back; return; }
     }
-    settingsView(c, await currentUser(), acct.prefs);
+    const user = await currentUser();
+    if (here()) settingsView(c, user, acct.prefs);
   }
 
   function signInView(c) {
@@ -1614,12 +1684,14 @@
   }
 
   function settingsView(c, user, p) {
+    const here = live();
     Promise.all([getJSON('index.json'), getJSON('site.json').catch(() => ({}))]).then(([ix, site]) => {
       const inApp = !!window.FilingFlowsApp;
       const appLink = !inApp && site.repo ? ` · <a href="https://github.com/${t(site.repo)}/releases/tag/android" target="_blank" rel="noopener">get the app</a>` : '';
       const names = ix.sector_names || {};
       const tickers = ix.companies.map((x) => x.ticker).filter(Boolean).sort();
       const m = Object.assign({}, MAIL_DEFAULTS, p);
+      if (!here()) return;
       app.innerHTML = `<div class="page-head"><div class="eyebrow">Alerts</div><h1>Your alerts</h1>
           <div class="meta"><span>Signed in as <b>${t(user.email)}</b></span><button class="btn small" type="button" id="sign-out">Sign out</button></div></div>
         <form class="prefs" id="prefs-form">
@@ -1741,6 +1813,7 @@
   }
 
   async function unsubscribePage(token) {
+    const here = live();
     setNav('account');
     const c = await sb();
     let ok = false;
@@ -1748,6 +1821,7 @@
       const r = await c.rpc('unsubscribe', { token });
       ok = !r.error && r.data === true;
     }
+    if (!here()) return;
     app.innerHTML = `<div class="page-head"><div class="eyebrow">Alerts</div><h1>${ok ? 'You are unsubscribed' : 'This link did not work'}</h1>
       <p class="muted" style="max-width:68ch">${ok ? 'No more alert e-mails will be sent. To turn them back on, sign in and tick “E-mail” in your alerts.'
         : 'The link may be old or already used. Sign in to change your alerts.'}</p><p><a href="#account">Manage alerts</a></p></div>`;
@@ -1767,11 +1841,13 @@
     return acct.owner;
   }
   async function ownerPage() {
+    const here = live();
     setNav('');
     const c = await sb();
     const user = c ? await currentUser() : null;
     const head = '<div class="eyebrow">Site owner</div><h1>Owner tools</h1>';
     const back = '<p><a href="#home">Back to the latest filings</a></p>';
+    if (!here()) return;
     if (c && !user) {
       app.innerHTML = `<div class="page-head">${head}
         <p class="muted" style="max-width:68ch">Sign in with the site owner’s e-mail address to use the owner tools.</p>
@@ -1780,6 +1856,7 @@
       return;
     }
     if (c && !(await ownerVerified())) {
+      if (!here()) return;
       prefs.set('owner', false);
       app.innerHTML = `<div class="page-head">${head}
         <p class="muted" style="max-width:68ch">Signed in as <b>${t(user.email)}</b>, which is not a site owner’s address.
@@ -1811,6 +1888,7 @@
             right after each scan (as before the daily report)</span></label></fieldset>
         <div class="row"><button class="btn primary" type="submit">Save</button><span class="muted" id="owner-msg" role="status"></span></div>
       </form>`;
+    if (!here()) return;
     app.innerHTML = `<div class="page-head">${head}
       <p class="muted" style="max-width:68ch">Readers never see these. ${c ? `Verified: signed in as <b>${t(user.email)}</b>.`
           : 'Accounts are not switched on for this site, so the switch below only stays in this browser.'}</p></div>
@@ -1822,7 +1900,7 @@
       <section class="section"><div class="section-head"><h2>Settings</h2></div>${settingsHTML}</section>
       <section class="section daily" id="daily" hidden></section>
       ${back}`;
-    $('#owner-toggle').addEventListener('click', () => { prefs.set('owner', !on); ownerPage(); });
+    $('#owner-toggle').addEventListener('click', () => { prefs.set('owner', !on); route(); });
     const form = $('#owner-form');
     if (form) form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
@@ -1849,6 +1927,7 @@
 
   // ---------- router ----------
   async function route() {
+    const here = (view++, live());
     state.charts = [];
     if (toastEl) { toastEl.remove(); toastEl = null; }
     let h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
@@ -1876,6 +1955,7 @@
       initSendButtons();
       if (acct.flash) { toast(acct.flash); acct.flash = null; }
     } catch (err) {
+      if (!here()) return;
       app.innerHTML = `<div class="page-head"><h1>Not available</h1><p class="muted">${t(err.message)}. The data may not have been generated yet; the scan runs every 15 minutes.</p><p><a href="#home">Back to the latest filings</a></p></div>`;
     }
   }

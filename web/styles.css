@@ -111,6 +111,8 @@ main { padding-block: 28px 64px; }
   color: var(--ink); cursor: pointer; }
 .btn:hover { border-color: var(--ink-2); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn[aria-busy="true"] { cursor: progress; }
 
 /* chart + notes */
 .stage { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
