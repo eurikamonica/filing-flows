@@ -1,6 +1,8 @@
 package io.github.eurikamonica.filingflows
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.os.Bundle
@@ -10,10 +12,12 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -22,18 +26,21 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 /**
  * Home: native tabs. "Following" and "Latest" are native lists of charts (from the site's data, cached for offline use);
  * "Sectors" and "Alerts" (sign-in and settings) are the site's own pages. A chart opens in ChartActivity.
+ * "Money" is personal bookkeeping kept on the phone only (MoneyView): no sign-in, not part of the website.
  */
-class MainActivity : AppCompatActivity(), AppHost {
+class MainActivity : AppCompatActivity(), AppHost, MoneyHost {
     private lateinit var content: FrameLayout
     private lateinit var nav: BottomNavigationView
     private lateinit var following: ChartListView
     private lateinit var latest: ChartListView
     private lateinit var repo: ChartsRepo
     private var web: WebView? = null
+    private var money: MoneyView? = null
     private var entries: List<Entry> = emptyList()
     private var companies: List<Entry> = emptyList()      // SEC's list, loaded the first time the reader searches
     private var companiesState = 0                        // 0 not loaded, 1 loading, 2 loaded (or failed)
@@ -42,6 +49,7 @@ class MainActivity : AppCompatActivity(), AppHost {
     private var loading = false
     private var asked = false
     private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    private val pickBackup = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) readBackup(uri) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +66,7 @@ class MainActivity : AppCompatActivity(), AppHost {
         nav.menu.add(Menu.NONE, R.id.tab_latest, 1, R.string.tab_latest).setIcon(R.drawable.ic_tab_latest)
         nav.menu.add(Menu.NONE, R.id.tab_sectors, 2, R.string.tab_sectors).setIcon(R.drawable.ic_tab_sectors)
         nav.menu.add(Menu.NONE, R.id.tab_alerts, 3, R.string.tab_alerts).setIcon(R.drawable.ic_tab_alerts)
+        nav.menu.add(Menu.NONE, R.id.tab_money, 4, R.string.tab_money).setIcon(R.drawable.ic_tab_money)
         styleNav()
         root.addView(nav, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         setContentView(root)
@@ -142,6 +151,7 @@ class MainActivity : AppCompatActivity(), AppHost {
         "latest" -> R.id.tab_latest
         "sectors" -> R.id.tab_sectors
         "alerts" -> R.id.tab_alerts
+        "money" -> R.id.tab_money
         else -> null
     }
 
@@ -159,8 +169,11 @@ class MainActivity : AppCompatActivity(), AppHost {
             R.id.tab_latest -> content.addView(latest, full)
             R.id.tab_sectors -> showWeb(full, Web.url("sectors"))
             R.id.tab_alerts -> showWeb(full, Web.url("account"))
+            R.id.tab_money -> content.addView(moneyView(), full)
         }
     }
+
+    private fun moneyView(): MoneyView = money ?: MoneyView(this, this).also { money = it }
 
     private fun webView(): WebView = web ?: WebView(this).also {
         Web.configure(this, it)
@@ -268,6 +281,42 @@ class MainActivity : AppCompatActivity(), AppHost {
 
     override fun onFollowsChanged() {
         render()
+    }
+
+    // ---------------------------------------------------------------- MoneyHost (the Money tab)
+    override fun shareMoneyFile(name: String, mime: String, text: String) {
+        try {
+            val dir = File(cacheDir, "shared").apply { mkdirs() }
+            val f = File(dir, name.replace(Regex("[^A-Za-z0-9._-]+"), "-"))
+            f.writeText(text)
+            val uri = FileProvider.getUriForFile(this, "$packageName.files", f)
+            val send = Intent(Intent.ACTION_SEND)
+                .setType(mime)
+                .putExtra(Intent.EXTRA_STREAM, uri)
+                .putExtra(Intent.EXTRA_SUBJECT, f.name)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            startActivity(Intent.createChooser(send, f.name))
+        } catch (e: Exception) {
+            Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun pickMoneyBackup() {
+        try {
+            pickBackup.launch(arrayOf("application/json", "text/plain", "application/octet-stream", "*/*"))
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, "No app to pick a file with", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun readBackup(uri: Uri) {
+        val text = runCatching { contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) } }.getOrNull()
+        if (text == null) {
+            Toast.makeText(this, getString(R.string.save_failed), Toast.LENGTH_SHORT).show()
+            return
+        }
+        nav.selectedItemId = R.id.tab_money
+        moneyView().restore(text)
     }
 
     companion object {
