@@ -1,0 +1,191 @@
+name: Scan EDGAR and publish
+
+on:
+  schedule:
+    - cron: "4,19,34,49 * * * *"   # every 15 minutes, away from :00 and :30 (GitHub delays busy minutes most)
+  repository_dispatch:
+    types:
+      - company-request            # a reader asked for a company the site does not have (Supabase wake, optional)
+      - scan                       # an outside clock (Supabase pg_cron, see README): on time, unlike GitHub's schedule
+  workflow_dispatch:
+    inputs:
+      backfill_days:
+        description: "Also read EDGAR's daily index for this many past days (first run: 3-7)"
+        required: false
+        default: "0"
+      max_filings:
+        description: "Most filings to process in this run"
+        required: false
+        default: "1500"
+      companies:
+        description: "Owner: also build these companies now (tickers or CIKs, comma-separated, e.g. MS, GS)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write      # push the data branch
+  pages: write
+  id-token: write
+
+concurrency:
+  group: scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}   # a secret keeps the email out of public logs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check configuration
+        run: |
+          if [[ "$SEC_USER_AGENT" != *@* ]]; then
+            echo "::error::Add the repository secret SEC_USER_AGENT = 'Your Name your@email.com' (Settings → Secrets and variables → Actions → New repository secret). The SEC requires it."
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Restore the data store (branch "data")
+        run: |
+          if git ls-remote --exit-code --heads origin data >/dev/null; then
+            git clone --quiet --depth 1 --branch data "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" store
+          else
+            mkdir store && git -C store init --quiet -b data
+            git -C store remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          fi
+
+      - name: Companies readers asked for (site search)
+        continue-on-error: true                 # without Supabase, or before schema.sql is run again: none
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OWNER_COMPANIES: ${{ github.event.inputs.companies }}
+        run: |
+          python -m pipeline.custom claim-companies --out build-ciks.txt || true
+          printf '%s\n' "$OWNER_COMPANIES" >> build-ciks.txt     # the owner's own list (Run workflow), no sign-in needed
+
+      - name: Scan new 10-Q / 10-K filings and build charts
+        run: |
+          python -m pipeline.build run --store store --out _site/data --build-ciks-file build-ciks.txt \
+            --backfill-days "${{ github.event.inputs.backfill_days || 0 }}" \
+            --max-filings "${{ github.event.inputs.max_filings || 1500 }}"
+
+      - name: Tell readers their companies are in
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python -m pipeline.custom finish-companies --site _site
+
+      - name: Assemble site
+        env:                                   # public values (repository variables): the sign-in box on the site
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}       # optional: shown on the privacy and terms pages
+        run: python scripts/build_site.py --data _site/data --out _site
+
+      - name: The owner's daily report (8:00 owner time) and X threads (e-mail, or the X API)
+        continue-on-error: true                 # sending trouble never blocks the site
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}               # the owner's settings (#owner page) and address
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+        run: |
+          owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          export X_SITE_URL="https://$owner.github.io/${GITHUB_REPOSITORY#*/}/"   # works on scheduled runs too
+          if python -m pipeline.social --site _site --store store --check; then
+            pip install playwright
+            python -m playwright install --with-deps chromium
+            python -m pipeline.social --site _site --store store
+          else
+            python -m pipeline.social --site _site --store store --dry-run
+          fi
+
+      - name: Save the data store
+        if: always()
+        run: |
+          [ -d store/.git ] || exit 0          # nothing to save when an earlier step stopped the run
+          cd store
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" \
+            commit --quiet --amend -m "data $(date -u +%Y-%m-%dT%H:%MZ)" \
+          || git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" \
+            commit --quiet -m "data $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git rev-parse --verify --quiet HEAD >/dev/null || exit 0   # nothing was stored yet
+          git push --quiet --force origin HEAD:data
+
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: scan
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  # E-mail alerts to readers who signed up on the site (after the new charts are live, so the links work).
+  # Needs the repository variable SUPABASE_URL and the secret SUPABASE_SERVICE_KEY; uses the same MAIL_* secrets.
+  # Sending from your own computer instead (scripts/alerts-laptop.ps1)? Leave SUPABASE_SERVICE_KEY out of GitHub.
+  alerts:
+    needs: deploy
+    if: vars.SUPABASE_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      MAIL_FROM: ${{ vars.MAIL_FROM }}
+      SMTP_HOST: ${{ vars.SMTP_HOST }}
+      SMTP_PORT: ${{ vars.SMTP_PORT }}
+      MAIL_DAILY_LIMIT: ${{ vars.MAIL_DAILY_LIMIT }}
+      DIGEST_HOUR: ${{ vars.DIGEST_HOUR }}              # optional: the daily report's hour for readers without a saved one (8)
+      DIGEST_TZ: ${{ vars.DIGEST_TZ }}                  # optional: their time zone (America/New_York)
+      SITE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: The site that was just published
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+      - run: mkdir _site && tar -xf artifact.tar -C _site
+      - name: Send alert e-mails
+        run: |
+          rc=0; python -m pipeline.notify --site _site --due || rc=$?
+          if [ $rc = 1 ]; then exit 0; fi            # nothing due this hour
+          if [ $rc != 0 ]; then exit $rc; fi         # wrong key, Supabase down: show the error
+          pip install playwright
+          python -m playwright install --with-deps chromium
+          python -m pipeline.notify --site _site
