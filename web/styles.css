@@ -248,6 +248,8 @@ td .name { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; display: 
 /* a choice that belongs to the option above it (what the daily report covers) */
 .prefs .sub-choice { display: grid; gap: 6px; margin: -2px 0 4px 24px; padding: 8px 0 8px 12px; border-left: 2px solid var(--line); }
 .prefs .sub-choice > span { margin-bottom: 2px; }
+.prefs .sub-choice.off { opacity: .6; }             /* alerts "as soon as a chart is out": the choice applies to the daily report */
+.prefs .sub-choice.off:hover, .prefs .sub-choice.off:focus-within { opacity: 1; }
 #requests { max-width: 760px; }
 .foot-links { display: flex; gap: 16px; }
 .legal { max-width: 72ch; }

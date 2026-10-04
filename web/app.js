@@ -1548,7 +1548,8 @@
         : `every company with quarterly revenue of $${(minOwner / 1e9).toLocaleString('en-US', { maximumFractionDigits: 2 })}B or more, with its X thread`)
         + (osets && osets.reader_copy ? '; the reader version as set in your <a href="#account">alerts</a> comes too' : '')
       : full ? `every company that filed that day (your full report)${followsAny(p) ? ', the ones you follow first' : ''}`
-      : followsAny(p) ? 'the companies you follow' : 'every company with quarterly revenue of $1B or more (follow companies to narrow it)';
+      : (followsAny(p) ? 'the companies you follow' : 'every company with quarterly revenue of $1B or more (follow companies to narrow it)')
+        + (user ? '; for every company that filed, choose the full report in <a href="#account">your alerts</a>' : '');
     box.innerHTML = `<div class="section-head"><h2>${opt.title || 'Daily report'}</h2>
         <span class="muted">One e-mail for a day’s filings: what each company does, its chart and the analysis</span></div>
       <div class="days" role="radiogroup" aria-label="Filing date">${days.map((d) => `<button type="button" class="day${d.iso === pick ? ' on' : ''}"
@@ -1690,6 +1691,7 @@
     });
   }
 
+  const SCOPE_NOTE = ' (picking one switches you to the daily report)';
   function settingsView(c, user, p) {
     const here = live();
     const ownerSets = ownerVerified().then((ok) => (ok ? ownerSettings(true).then((o) => o || {}) : null)).catch(() => null);
@@ -1725,8 +1727,8 @@
             <label class="long"><input type="radio" name="freq" value="daily" ${p.frequency === 'daily' ? 'checked' : ''}><span>Daily report every morning at
               <select id="digest-hour" aria-label="Hour of the daily report">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${+m.digest_hour === h ? 'selected' : ''}>${hourWords(h)}</option>`).join('')}</select>
               your time${browserTZ() ? ` (${t(browserTZ())})` : ''}: every new chart since the last report, with what each company does and the analysis, in one e-mail</span></label>
-            <div class="sub-choice" id="scope-box" role="radiogroup" aria-label="What the daily report covers" ${p.frequency === 'daily' ? '' : 'hidden'}>
-              <span class="muted small">The daily report covers</span>
+            <div class="sub-choice${p.frequency === 'daily' ? '' : ' off'}" id="scope-box" role="radiogroup" aria-label="What the daily report covers">
+              <span class="muted small">The daily report covers<span id="scope-note">${p.frequency === 'daily' ? '' : SCOPE_NOTE}</span></span>
               <label class="long"><input type="radio" name="scope" value="follows" ${m.daily_scope !== 'all' ? 'checked' : ''}><span>The companies I follow (above)</span></label>
               <label class="long"><input type="radio" name="scope" value="all" ${m.daily_scope === 'all' ? 'checked' : ''}><span>Every company that filed: the full
                 report, with the ones I follow first. The first 15 come in full (chart, what the company does, analysis); the rest are listed with links</span></label></div>
@@ -1757,8 +1759,16 @@
           <button class="btn small warn" type="button" id="del-yes">Delete</button> <button class="btn small" type="button" id="del-no">Keep it</button></span>
           <span class="muted small" id="del-msg" role="status"></span></div>`;
       showRequests(c, ix);
-      $$('input[name="freq"]').forEach((r) => r.addEventListener('change', () => {
-        $('#scope-box').hidden = $('input[name="freq"]:checked').value !== 'daily';
+      // what the daily report covers: always on show; picking it (with alerts "as soon as a chart is out") switches to the daily report
+      const syncScope = () => {
+        const daily = $('input[name="freq"]:checked').value === 'daily';
+        $('#scope-box').classList.toggle('off', !daily);
+        $('#scope-note').textContent = daily ? '' : SCOPE_NOTE;
+      };
+      $$('input[name="freq"]').forEach((r) => r.addEventListener('change', syncScope));
+      $$('input[name="scope"]').forEach((r) => r.addEventListener('click', () => {
+        $('input[name="freq"][value="daily"]').checked = true;
+        syncScope();
       }));
       let list = (p.tickers || []).slice();
       const chips = () => {

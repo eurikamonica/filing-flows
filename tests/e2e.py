@@ -352,6 +352,8 @@ def check_accounts(b, base, fails, shot, site):
     shot(pg, "home_daily.png")
     pg.evaluate("window.__ff.db.send_requests.length = 0")
     # the full daily report (Alerts): every company that filed, the followed ones first
+    if "choose the full report in your alerts" not in pg.inner_text("#daily"):
+        fails.append(f"full report: the home panel should point readers to it: {pg.inner_text('#daily')!r}")
     pg.goto(base + "#account")
     pg.wait_for_selector("#prefs-form")
     if pg.locator("#scope-box").is_hidden() or not pg.is_checked('input[name="scope"][value="follows"]'):
@@ -359,10 +361,12 @@ def check_accounts(b, base, fails, shot, site):
     if pg.locator("legend", has_text="Site owner").count():
         fails.append("full report: a reader's Alerts page shows the owner's switch")
     pg.check('input[name="freq"][value="instant"]')
-    if not pg.locator("#scope-box").is_hidden():
-        fails.append("full report: the choice should hide with alerts as soon as a chart is out")
-    pg.check('input[name="freq"][value="daily"]')
-    pg.check('input[name="scope"][value="all"]')
+    if pg.locator("#scope-box").is_hidden() or "switches you to the daily report" not in pg.inner_text("#scope-box"):
+        fails.append("full report: with alerts as soon as a chart is out the choice should stay on show, with a note")
+    shot(pg, "acct_scope_instant.png")
+    pg.check('input[name="scope"][value="all"]')                 # picking it switches to the daily report
+    if not pg.is_checked('input[name="freq"][value="daily"]') or "switches" in pg.inner_text("#scope-box"):
+        fails.append("full report: picking it should switch to the daily report")
     shot(pg, "acct_scope.png")
     pg.click("#prefs-form button[type=submit]")
     pg.wait_for_function("document.querySelector('#save-msg').textContent === 'Saved.'")

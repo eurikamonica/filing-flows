@@ -131,7 +131,8 @@ Everything comes from the site data; no language model writes any of it. Every p
 **Daily report (default).** Every morning at 8:00 (owner's time zone; set on the `#owner` page) one e-mail carries every
 filing since the last report, largest first: a table of contents, then for each company the filing, what the company
 does, its description, both charts with what they show, the analysis, what changed and the X thread post by post (with
-an "Open post 1 in X" link). Companies below the owner's revenue minimum (default $1B a quarter) are left out. It goes to
+an "Open post 1 in X" link). Companies below the owner's revenue minimum (default $1B a quarter) are left out, unless
+the owner picks **the full report** (every company that filed: the largest 20 in full, the rest listed). It goes to
 the addresses in Supabase's `site_owners` table (else `MAIL_TO`, else `MAIL_USERNAME`). Mornings with nothing new send
 nothing. The scan's sending step sends it, so it arrives with the first scan after 8:00 (within a few hours at most;
 see *Scan more often* for an on-time clock). Nothing is published automatically.
@@ -154,13 +155,16 @@ the site.
   - *Email me this thread*: **straight to my inbox** (default; a queued request that `requests.yml` sends within a
     couple of minutes, both chart PNGs attached) or **open a GitHub issue** (the older way: press Create, and
     `.github/workflows/email-thread.yml` sends it; issues opened by anyone else are ignored).
-  - *Daily report*: on/off, the hour (your browser's time zone is saved with it), the revenue minimum.
+  - *Daily report*: on/off, the hour (your browser's time zone is saved with it), and which companies: those over the
+    revenue minimum, or every company that filed (the full report).
+  - *Reader version* (on the owner's **Alerts** page): off by default, so the owner gets only the owner report. On: the
+    owner also gets the reader e-mails their own alert settings ask for, and "Send a daily report now" sends both.
   - *Also e-mail new X threads right after each scan* (off by default; the behaviour before the daily report).
 - **Send a daily report now**: pick a filing date, today or one of the five days before, and that day's report arrives
   within a few minutes.
 
 Without accounts the same settings can go in `config/x.json` (`daily_on`, `daily_hour`, `tz`, `min_revenue`,
-`instant_threads`). Until the mail secrets exist, each run prints the threads it would send in the Actions log.
+`instant_threads`, `daily_scope`: `"min_revenue"` or `"all"`). Until the mail secrets exist, each run prints the threads it would send in the Actions log.
 
 Posting straight to X instead: set `"mode": "api"` in `config/x.json` and add `X_API_KEY`, `X_API_SECRET`,
 `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET` (an app with Read and write permission at console.x.com). X's API is
@@ -190,12 +194,15 @@ Readers sign up with their e-mail address only: the site sends a 6-digit code, t
 On the **Alerts** page they choose companies (or press **☆ Follow** on any company or sector page), sectors, "every
 company above $X billion of revenue" or the starred list, and how often: a **daily report** every morning at 8:00 their
 own time (the default; the hour can be changed, the time zone comes from their browser) or as soon as a chart is out
-(checked every 15 minutes). The daily report lists every company first, then for each one the filing and its date, what
+(checked every 15 minutes). The daily report covers the companies they follow (the default) or, if they choose,
+**every company that filed** (the full report: the ones they follow first, the first 15 in full, the rest listed with
+links, at most 150 in the list and the rest on the site). The daily report lists every company first, then for each one the filing and its date, what
 the company does (industry, revenue by line, its own description), the chart, the analysis and what changed. Each alert
 e-mail carries the chart itself, the headline figures, the analysis, what changed against the year-ago quarter, a quote
 from the filing, and links to the interactive chart and the filing.
 - **Daily report of any day** (home page): pick today or one of the five days before and **Email me the report**:
-  that day's filings for the companies the reader follows (every company above $1B when they follow none yet).
+  that day's filings for the companies the reader follows (every company above $1B when they follow none yet), or
+  every filing of that day for readers who chose the full report.
   Days without filings (weekends) are greyed out.
 Every e-mail has an unsubscribe link; the Alerts page also has **Delete my account**.
 
