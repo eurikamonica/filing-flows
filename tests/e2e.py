@@ -393,6 +393,69 @@ def check_accounts(b, base, fails, shot, site):
     pg.wait_for_function("window.__ff.db.subscriptions[0].cmp_decreases === false", timeout=5000)
     print("company page toggle saved to the account:", ff("window.__ff.db.subscriptions[0].cmp_decreases"))
     pg.locator('[data-view="std"]').click()
+    # free cash flow: the company's own figure by default (Meta's release reconciles it); Alerts switches to OCF − capex
+    fcf_text = lambda: " ".join(pg.locator('.sheet svg g.node[data-node="fcf"]').first.text_content().split())
+    pg.goto(base + "#c-1326801")
+    pg.wait_for_selector('.sheet svg g.node[data-node="fcf"]')
+    print("META free cash flow, default:", fcf_text()[:90])
+    if "Free cash flow (company-reported)" not in fcf_text() or pg.locator("ul.checks a.fcf-pref").count() != 1:
+        fails.append(f"free cash flow: Meta should show the company's figure with a link to the setting: {fcf_text()!r}")
+    pg.goto(base + "#account")
+    pg.wait_for_selector("#prefs-form")
+    if not pg.is_checked('input[name="fcf"][value="company"]'):
+        fails.append("free cash flow: the company's own figure should be the default choice")
+    pg.check('input[name="fcf"][value="ocf"]')
+    pg.click("#prefs-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#save-msg').textContent === 'Saved.'")
+    if ff("window.__ff.db.subscriptions[0].fcf_basis") != "ocf":
+        fails.append(f"free cash flow: saved as {ff('window.__ff.db.subscriptions[0].fcf_basis')!r}")
+    pg.goto(base + "#c-1326801")
+    pg.wait_for_selector('.sheet svg g.node[data-node="fcf"]')
+    print("META free cash flow, OCF − capex chosen:", fcf_text()[:110])
+    if "Free cash flow (OCF − capex)" not in fcf_text() or "company reports $0.78B" not in fcf_text():
+        fails.append(f"free cash flow: the chosen definition not drawn: {fcf_text()!r}")
+    if "left free cash flow of $1.7B" not in pg.inner_text(".prose"):
+        fails.append("free cash flow: the analysis did not follow the chosen definition")
+    shot(pg, "c_META_fcf_ocf.png")
+    pg.evaluate("window.__ff.db.subscriptions[0].fcf_basis = 'company'")     # changed elsewhere (another browser)
+    pg.goto(base + "#account")
+    pg.wait_for_selector("#prefs-form")
+    if not pg.is_checked('input[name="fcf"][value="company"]'):
+        fails.append("free cash flow: Alerts does not show the account's choice")
+    pg.goto(base + "#c-1326801")                                            # the account's choice wins on company pages
+    pg.wait_for_selector('.sheet svg g.node[data-node="fcf"]')
+    if "Free cash flow (company-reported)" not in fcf_text():
+        fails.append(f"free cash flow: the account's choice did not reach the company page: {fcf_text()!r}")
+    # "noted": where no company figure was found, the chart says it is calculated and why
+    pg.goto(base + "#account")
+    pg.wait_for_selector("#prefs-form")
+    pg.check('input[name="fcf"][value="noted"]')
+    pg.click("#prefs-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#save-msg').textContent === 'Saved.'")
+    if ff("window.__ff.db.subscriptions[0].fcf_basis") != "noted":
+        fails.append(f"free cash flow: 'noted' saved as {ff('window.__ff.db.subscriptions[0].fcf_basis')!r}")
+    any_fcf = '.sheet svg g.node[data-node="fcf"], .sheet svg g.node[data-node="fcf_neg"]'
+    for cik, words in (("320193", "company figure: no earnings release found"), ("9999902", "company figure: not in its earnings release"),
+                       ("1326801", None)):
+        pg.goto(base + f"#c-{cik}")
+        pg.wait_for_selector(any_fcf)
+        txt = " ".join(pg.locator(any_fcf).first.text_content().split())
+        issues = pg.evaluate(CHECK_LABELS)
+        checks_txt = pg.inner_text("ul.checks") if pg.locator("ul.checks").count() else ""
+        print(f"noted {cik}: {txt[-60:]!r}; {len(issues)} layout issues")
+        if words and (words not in txt or "so free cash flow is calculated" not in checks_txt):
+            fails.append(f"free cash flow: 'noted' did not explain the formula on {cik}: {txt!r}")
+        if not words and ("company figure:" in txt or "company-reported" not in txt):
+            fails.append(f"free cash flow: 'noted' changed a chart with the company's own figure: {txt!r}")
+        if issues:
+            fails.append(f"free cash flow: 'noted' label layout on {cik}: {issues[:3]}")
+        if cik == "9999902":
+            shot(pg, "c_SMCL_fcf_noted.png")
+    pg.goto(base + "#account")
+    pg.wait_for_selector("#prefs-form")
+    pg.check('input[name="fcf"][value="company"]')
+    pg.click("#prefs-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#save-msg').textContent === 'Saved.'")
     pg.goto(base + "#account")
     pg.wait_for_selector("#prefs-form")
     if row["tickers"] != ["AAPL"] or row["frequency"] != "daily" or len(row["sectors"]) != 1 or row["min_revenue"] != 5e9 or not row["all_above"]:

@@ -6,6 +6,7 @@ label side; links carry values (current and previous quarter, for the comparison
 import datetime as dt
 import math
 
+from . import reported
 from .model import ITEM_LABELS, quantities
 
 FOLD = 0.003            # lines smaller than 0.3% of revenue are folded into a label note
@@ -345,14 +346,32 @@ def _capex(S, Nc, oc, f):
     When capex is larger than OCF, free cash flow is negative: OCF goes entirely into capex and the rest of capex
     enters from below as 'Negative free cash flow' (paid from cash or financing), so no band has a negative width."""
     cap, ocf = Nc.get("capex"), Nc["ocf"]
+    use = Nc.get("co_fcf_use")
+    if use and ocf and ocf > 0 and "ocf" in S.ids:              # the company's own definition (pipeline/reported.py)
+        S.ids["ocf"]["pos"] = "above"
+        cc = oc + 1
+        margin = share(use["fcf"], Nc["R"])
+        S.node("fcf", cc, "co_fcf", "profit", f"{use['name']} (company-reported)", "right", "ocf", "OCF",
+               extra=[f"= {reported.definition(use['parts'])}"] + ([f"FCF margin {margin}"] if margin else []),
+               notekeys=NOTE_KEYS["fcf"])["basis"] = "company"         # trends compare it only with the same definition
+        for i, p in enumerate(use["parts"]):
+            nid = "capex" if i == 0 and reported.short(p["label"]) == "capex" else "co:" + p["key"]
+            extra = [f"after {f.money(p['netted'])} of {p['netted_words']}"] if p.get("netted") else []
+            S.node(nid, cc, "co:" + p["key"], "cost", p["label"], "right", "ocf", "OCF", extra=extra,
+                   notekeys=NOTE_KEYS["capex"] if nid == "capex" else [p["label"].lower()])["basis"] = "company"
+            S.link("ocf", nid, "co:" + p["key"], "cost")
+        S.link("ocf", "fcf", "co_fcf", "profit")
+        return True
     if not cap or cap <= 0 or ocf is None or ocf <= 0 or "ocf" not in S.ids:
         return False
     S.ids["ocf"]["pos"] = "above"                               # no longer the last node: its label moves off the edge
     cc, R = oc + 1, Nc["R"]
+    said = Nc.get("co_fcf_said")                                # the company reports another figure: say so on the node
+    said_line = [f"company reports {f.money(said['fcf'])}: {said['definition']}"] if said else []
     if cap <= ocf:
         margin = share(ocf - cap, R)
         S.node("fcf", cc, "fcf", "profit", "Free cash flow (OCF − capex)", "right", "ocf", "OCF",
-               extra=[f"FCF margin {margin}"] if margin else [], notekeys=NOTE_KEYS["fcf"])
+               extra=([f"FCF margin {margin}"] if margin else []) + said_line, notekeys=NOTE_KEYS["fcf"])
         S.node("capex", cc, "capex", "cost", "Capital expenditures", "right", "ocf", "OCF", notekeys=NOTE_KEYS["capex"])
         S.link("ocf", "fcf", "fcf", "profit")
         S.link("ocf", "capex", "capex_from_ocf", "cost")
@@ -360,7 +379,8 @@ def _capex(S, Nc, oc, f):
         S.node("capex", cc, "capex", "cost", "Capital expenditures", "right", "ocf", "OCF",
                extra=[f"{f.money(cap - ocf)} more than operating cash flow"], notekeys=NOTE_KEYS["capex"])
         S.node("fcf_neg", oc, "fcf_neg", "cost", "Negative free cash flow (OCF − capex)", "below", "capex", "capex",
-               extra=["paid from cash or financing", "Y/Y, Q/Q compare the size of the gap"], notekeys=NOTE_KEYS["fcf"])
+               extra=["paid from cash or financing", "Y/Y, Q/Q compare the size of the gap"] + said_line,
+               notekeys=NOTE_KEYS["fcf"])
         S.link("ocf", "capex", "capex_from_ocf", "cost")
         S.link("fcf_neg", "capex", "fcf_neg", "cost")
     return True

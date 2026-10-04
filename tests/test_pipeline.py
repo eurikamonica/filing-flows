@@ -1433,3 +1433,167 @@ def test_depreciation_and_amortization_tagged_apart():
     # an earnings release whose row is "Depreciation" alone
     assert release.depreciation_only({"cf_labels": {"da": "depreciation"}})
     assert not release.depreciation_only({"cf_labels": {"da": "depreciation and amortization"}})
+
+
+def test_company_reported_free_cash_flow():
+    """pipeline/reported.py: the company's own free cash flow is read from its release, checked against SEC's operating
+    cash flow and its own arithmetic, then drawn (Meta) or, when it cannot be, named beside ours."""
+    from pipeline import build, release, reported
+    from pipeline.model import normalize
+    from pipeline.sankey import build as build_spec
+    table = lambda rows: "<table>" + "".join(f"<tr><td>{a}</td>" + "".join(f"<td>{v}</td>" for v in vs) + "</tr>"
+                                             for a, vs in rows) + "</table>"
+    meta = table([("", ["Three Months Ended June 30,"]), ("", ["2026", "2025"]),
+                  ("Net cash provided by operating activities", ["31,862", "25,561"]),
+                  ("Purchases of property and equipment, net", ["(30,116)", "(16,538)"]),
+                  ("Principal payments on finance leases", ["(962)", "(476)"]), ("Free cash flow", ["784", "8,547"])])
+    co = reported.from_release_doc(meta, 31862e6, 25561e6)
+    assert co["cur"]["fcf"] == 784e6 and co["py"]["fcf"] == 8547e6 and len(co["cur"]["parts"]) == 2
+    # checks that reject: another quarter's operating cash flow, lines that do not add up, no reconciliation at all
+    assert reported.from_release_doc(meta, 30000e6) is None
+    assert ">784<" in meta and reported.from_release_doc(meta.replace(">784<", ">900<"), 31862e6, 25561e6) is None
+    assert reported.from_release_doc(table([("Net cash provided by operating activities", ["31,862"]),
+                                            ("Purchases of property and equipment", ["(30,116)"]),
+                                            ("Free cash flow", ["900"])]), 31862e6) is None
+    assert reported.from_release_doc(table([("Revenue", ["60,801"])]), 31862e6) is None
+    # replace: the chart draws Meta's definition, with the year-ago quarter on the same definition
+    raw = lambda ocf, capex: {"revenue": 60.8e9, "ni": 15.85e9, "tax": 2.9e9, "pretax": 18.75e9, "oi": 18.78e9,
+                              "ocf": ocf, "da": 6.36e9, "sbc": 7.66e9, "capex": capex}
+    q = {"co_fcf": co}
+    Nc, Ny = normalize(raw(31862e6, 30116e6)), normalize(raw(25561e6, 16538e6))
+    build.apply_reported(q, Nc, Ny)
+    nodes, links, _ = build_spec(Nc, None, Ny)
+    by = {n["id"]: n for n in nodes}
+    assert by["fcf"]["lines"][0][1] == "Free cash flow (company-reported)" and abs(by["fcf"]["v"] - 784e6) < 1
+    assert by["fcf"]["y"] == 8547e6 and abs(by["co:principal-payments-on-finance-leases"]["v"] - 962e6) < 1
+    assert "= OCF − capex − finance lease principal" in [l[1] for l in by["fcf"]["lines"]]
+    assert by["capex"]["lines"][0][1] == "Purchases of property and equipment, net"
+    assert by["fcf"]["basis"] == by["capex"]["basis"] == "company"       # the site's trends keep definitions apart
+    # disclaim: a negative company figure cannot be drawn as a band; our node names it instead
+    neg = dict(co, cur=dict(co["cur"], fcf=-100e6, parts=[{"key": "capex", "label": "Capital expenditures", "v": -31962e6}]))
+    Nc2 = normalize(raw(31862e6, 30116e6))
+    build.apply_reported({"co_fcf": neg}, Nc2, None)
+    assert "co_fcf_use" not in Nc2 and Nc2["co_fcf_said"]["fcf"] == -100e6
+    nodes2, _, _ = build_spec(Nc2, None, None)
+    fcf2 = next(n for n in nodes2 if n["id"] == "fcf")
+    assert fcf2["lines"][0][1] == "Free cash flow (OCF − capex)" and any("company reports" in l[1] for l in fcf2["lines"])
+    # the same figure as ours: nothing to say
+    same = {"name": "Free cash flow", "cur": {"ocf": 31862e6, "fcf": 1746e6, "parts": [{"key": "c", "label": "Capex", "v": -30116e6}]}}
+    Nc3 = normalize(raw(31862e6, 30116e6))
+    build.apply_reported({"co_fcf": same}, Nc3, None)
+    assert Nc3["co_fcf_use"]["fcf"] == 1746e6
+    # Micron: proceeds and incentives are netted against capex, so no band runs backwards
+    mu = {"cur": {"ocf": 43973e6, "fcf": 33199e6, "parts": [{"key": "e", "label": "Expenditures for PP&E", "v": -11110e6},
+                                                            {"key": "p", "label": "Proceeds from government incentives", "v": 336e6}]}}
+    parts = reported.netted(mu["cur"])
+    assert len(parts) == 1 and parts[0]["amount"] == 10774e6 and parts[0]["netted"] == 336e6
+    # names: principal payments are not capex; '(non-GAAP)' is not part of the name; another layout (five columns,
+    # newest last, in thousands) is anchored by its operating cash flow
+    nv = [{"label": "Purchases related to property and equipment and intangible assets"},
+          {"label": "Principal payments on property and equipment and intangible assets"}]
+    assert reported.definition(nv) == "OCF − capex − principal payments"
+    assert reported.fcf_name("Free cash flow—non-GAAP") == "Free cash flow" == reported.fcf_name("Non-GAAP free cash flow (1)")
+    five = table([("", ["Q2-25", "Q3-25", "Q4-25", "Q1-26", "Q2-26"]),
+                  ("Cash provided by operating activities", ["2,540", "6,238", "4,814", "2,156", "3,000"]),
+                  ("Less: Capital expenditures", ["2,394", "2,248", "2,393", "1,492", "2,100"]),
+                  ("Free cash flow (non-GAAP)", ["146", "3,990", "2,421", "664", "900"])])
+    t = reported.from_release_doc(five, 3000e3, 2540e3)
+    assert t["name"] == "Free cash flow" and t["cur"]["col"] == 4 and t["cur"]["fcf"] == 900e3 and t["py"]["fcf"] == 146e3
+    # trailing-twelve-month tables (Amazon) do not match the quarter's operating cash flow: not used
+    assert reported.from_release_doc(table([("Net cash provided by (used in) operating activities", ["121,137", "140,000"]),
+                                            ("Purchases of property and equipment, net", ["(102,288)", "(130,000)"]),
+                                            ("Free cash flow", ["18,849", "10,000"])]), 32533e6, 17015e6) is None
+    # the release of a quarter: filed after the quarter ended, no later than the 10-Q
+    rows = [{"form": "8-K", "items": "2.02,9.01", "filingDate": "2026-07-29", "accessionNumber": "a"},
+            {"form": "8-K", "items": "5.07", "filingDate": "2026-07-30", "accessionNumber": "b"},
+            {"form": "8-K", "items": "2.02", "filingDate": "2026-04-29", "accessionNumber": "c"}]
+    assert reported.find_release(rows, "2026-06-30", "2026-07-30")["accessionNumber"] == "a"
+    assert reported.find_release(rows, "2026-06-30", "2026-07-28") is None
+    # the search result: found, a release without the line, one whose line does not check out; errors are tried again
+    tabs = lambda html: release.read_tables(html)
+    assert reported.status_of(tabs(meta), co) == "found"
+    assert reported.status_of(tabs(meta), None) == "unmatched"
+    assert reported.status_of(tabs(table([("Revenue", ["60,801"])])), None) == "not_reported"
+    q2 = {}
+    build.set_reported(q2, None, "error")
+    assert "co_tried" not in q2 and q2["co_errors"] == 1
+    build.set_reported(q2, None, "error"), build.set_reported(q2, None, "error")
+    assert q2["co_tried"] == build.REPORTED_VERSION and q2["co_status"] == "error"
+    build.set_reported(q2, co, "found")
+    assert q2["co_errors"] == 0 and q2["co_fcf"] is co
+
+
+def test_free_cash_flow_definition_is_the_readers_choice(tmp_path):
+    """Where the company's own free cash flow is drawn, the site data also carries the quarter on operating cash flow −
+    capex ("fcf_alt"); each reader's choice (subscriptions.fcf_basis) decides which one their e-mails show."""
+    import email
+    from pipeline import notify, reported
+    site = _site(tmp_path)
+    c = json.load(open(site / "data" / "c" / "1326801.json"))         # Meta: its release's reconciliation is in the fixtures
+    q = c["quarters"][0]
+    assert q["fcf_basis"] == "company" and set(q["fcf_alt"]) == {"nodes", "links", "kind", "footer", "checks", "analysis"}
+    label = lambda v: next(n for n in v["nodes"] if n["id"] == "fcf")["lines"][0][1]
+    assert label(q) == "Free cash flow (company-reported)"
+    alt = reported.fcf_view(q, "ocf")
+    assert label(alt) == "Free cash flow (OCF − capex)" and alt["fcf_basis"] == "ocf" and "fcf_alt" not in alt
+    assert [x["code"] for x in alt["checks"]] == ["fcf_definition"] and alt["title"] == q["title"]
+    assert reported.fcf_view(alt, "ocf") is alt and reported.fcf_view(q, "company") is q
+    apple_c = json.load(open(site / "data" / "c" / "320193.json"))
+    apple = apple_c["quarters"][0]
+    assert "fcf_alt" not in apple and reported.fcf_view(apple, "ocf") is apple   # nothing to choose: one definition
+    # "noted": a chart drawn by the formula says why there is no company figure; Meta's (drawn) is unchanged
+    assert reported.fcf_view(q, "noted") is q and "fcf_note" not in q
+    noted = reported.fcf_view(apple, "noted")
+    fcf_lines = [l[1] for l in next(n for n in noted["nodes"] if n["id"] == "fcf")["lines"]]
+    assert fcf_lines[0] == "Free cash flow (OCF − capex)" and fcf_lines[-1] == "company figure: no earnings release found"
+    assert noted["checks"][-1]["code"] == "fcf_formula" and "so free cash flow is calculated" in noted["checks"][-1]["text"]
+    assert noted["footer"][-1].startswith("No company-reported free cash flow") and noted["fcf_basis"] == "noted"
+    assert len(apple["checks"]) == len(noted["checks"]) - 1 and "fcf_note" not in noted      # the stored quarter is untouched
+    assert reported.fcf_view(apple, "company") is apple
+    from pipeline import build
+    yn = build._formula_note("annual", [{"id": "ocf"}, {"id": "fcf_neg"}], {"R": 1e9, "ocf": 1e8, "capex": 3e8})
+    assert yn["node"] == "fcf_neg" and yn["line"] == "company figure: read for quarters only"   # full years: the formula
+    assert "quarters only, so free cash flow is calculated: operating cash flow − capital expenditures (−$0.20B)" in yn["check"]["text"]
+    assert build._formula_note("annual", [{"id": "ocf"}], {"R": 1e9, "ocf": 1e8}) is None        # no free cash flow drawn
+    exdv = json.load(open(site / "data" / "c" / "9999901.json"))["quarters"][0]     # an earnings release without the line
+    assert exdv["form"] == "8-K" and exdv["fcf_note"]["line"] == "company figure: not in its earnings release"
+
+    class FakeCharts:
+        def __init__(self):
+            self.drawn = []
+
+        def image(self, what, fmt="png", scale=2, quality=None, width=None):
+            if what[0] == "chart":
+                self.drawn.append(label(what[1]))
+            return b"IMG" * 10
+
+        def svg(self, what, aria="Chart"):
+            return '<svg viewBox="0 0 2400 1200"></svg>'
+
+        def pdf(self, html, footer=""):
+            return b"%PDF-1.4"
+
+    e = {"cik": 1326801, "end": q["end"], "form": "10-Q", "ticker": "META", "name": "Meta Platforms, Inc."}
+    fake, bodies = FakeCharts(), {}
+    with notify.Assets(None, charts=fake) as a:                     # one run, two readers: two drawings, not one cached
+        for basis in ("company", "ocf", None, "noted"):
+            sub = _sub("r" + str(basis), attach_images="none", attach_pdf=False, **({"fcf_basis": basis} if basis else {}))
+            pics, extras = a.for_message(sub, [(e, c, q, ["x"])], "https://x.io/ff", 10)
+            msg = notify.build_message(sub, [(e, c, q, ["x"])], "https://x.io/ff", pics, "FF <a@b.c>", extras=extras)
+            part = [p for p in email.message_from_bytes(msg.as_bytes()).walk() if p.get_content_type() == "text/html"][0]
+            bodies[basis] = part.get_payload(decode=True).decode()
+    assert fake.drawn == ["Free cash flow (company-reported)", "Free cash flow (OCF − capex)"]
+    assert "free cash flow as the company reports it was $0.78B" in bodies["company"]
+    assert "left free cash flow of $1.7B" in bodies["ocf"] and "The company reports free cash flow of $0.78B" in bodies["ocf"]
+    assert "as the company reports it was $0.78B" in bodies[None]       # no choice saved yet: the company's figure
+    assert "as the company reports it was $0.78B" in bodies["noted"] and "so free cash flow is calculated" not in bodies["noted"]
+    # Apple has no earnings release in the fixtures: a reader who chose "noted" is told so
+    ea = {"cik": 320193, "end": apple["end"], "form": "10-Q", "ticker": "AAPL", "name": "Apple Inc."}
+    for basis in ("company", "noted"):
+        sub = _sub("a" + basis, attach_images="none", attach_pdf=False, fcf_basis=basis)
+        msg = notify.build_message(sub, [(ea, apple_c, apple, ["x"])], "https://x.io/ff", {}, "FF <a@b.c>")
+        part = [p for p in email.message_from_bytes(msg.as_bytes()).walk() if p.get_content_type() == "text/html"][0]
+        bodies["apple-" + basis] = part.get_payload(decode=True).decode()
+    assert "No earnings release (8-K, Item 2.02) was found for this quarter" in bodies["apple-noted"]
+    assert "No earnings release" not in bodies["apple-company"]
+    assert notify.chart_key(ea, noted) == "320193:" + apple["end"] + "~noted" and notify.chart_key(ea, apple) == "320193:" + apple["end"]

@@ -12,7 +12,7 @@ import re
 import sys
 import traceback
 
-from . import analysis, checks, dims, facts, release, scan, sec, sectors, social, sources, text
+from . import analysis, checks, dims, facts, release, reported, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -151,6 +151,69 @@ def refresh_periods(store, limit=PERIODS_PER_RUN):
             _cf.pop(cik, None)                            # big files: do not keep them all in memory
     if todo:
         print(f"period lists and sources: {n} companies updated, {max(len(todo) - n, 0)} to go")
+
+
+REPORTED_VERSION = 1     # bump when the company-reported figures are read differently: latest quarters read again
+REPORTED_PER_RUN = 30
+
+
+def _reported_from_tables(tables, ocf, ocf_py):
+    """(the company's free cash flow or None, the search status: reported.status_of)."""
+    try:
+        co = reported.parse_fcf(tables, ocf, ocf_py) if ocf else None
+        return co, reported.status_of(tables, co)
+    except Exception as e:
+        print(f"  company free cash flow not read: {e}", file=sys.stderr)
+        return None, "error"
+
+
+def fetch_reported(cik, sub, end, filed, ocf, ocf_py):
+    """(the company's own free cash flow for the quarter ending `end` or None, the search status), from that quarter's
+    earnings release (two SEC requests). None: no release, no reconciliation table, or one that does not match SEC."""
+    try:
+        row = reported.find_release(recent_rows(sub), end, filed)
+        if not row:
+            return None, "no_release"
+        name = _exhibit(cik, row["accessionNumber"], row.get("primaryDocument"))
+        if not name:
+            return None, "no_release"
+        return _reported_from_tables(release.read_tables(sec.get(sec.doc_url(cik, row["accessionNumber"], name))), ocf, ocf_py)
+    except Exception as e:
+        print(f"  company free cash flow not read for {cik} {end}: {e}", file=sys.stderr)
+        return None, "error"
+
+
+def set_reported(q, co, status):
+    """Store a search result. A release that could not be read is tried again on later runs (three times)."""
+    q["co_fcf"], q["co_status"] = co, status
+    q["co_errors"] = q.get("co_errors", 0) + 1 if status == "error" else 0
+    if status != "error" or q["co_errors"] >= 3:
+        q["co_tried"] = REPORTED_VERSION
+
+
+def refresh_reported(store, limit=REPORTED_PER_RUN):
+    """Latest quarters stored before company-reported figures were read get them, largest companies first."""
+    todo = []
+    for cik in store.ciks():
+        c = store.company(cik)
+        if not c.get("quarters") or not c.get("profile"):
+            continue
+        last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
+        if last.get("co_tried", 0) < REPORTED_VERSION and (last.get("raw") or {}).get("ocf"):
+            todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik, last["end"]))
+    n = 0
+    for _, cik, end in sorted(todo)[:limit]:
+        try:
+            c = store.company(cik)
+            q = c["quarters"][end]
+            set_reported(q, *fetch_reported(cik, submissions(cik), end, q.get("filed"), q["raw"]["ocf"],
+                                            (q.get("raw_py") or {}).get("ocf")))
+            store.put(cik, c)
+            n += 1
+        except Exception as e:
+            print(f"  company figures not read for {cik}: {e}", file=sys.stderr)
+    if todo:
+        print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
 DA_VERSION = 1           # bump when the way D&A is read changes: stored figures are read again (refresh_da)
@@ -344,6 +407,10 @@ def process_filing(store, cik, accn, form, starred=False):
             del c["quarters"][k]
     if releases and form != "8-K":
         c["quarters"][end]["from_release"] = release_check(releases[0], raw)
+    co = next((r["co_fcf"] for r in releases if r.get("co_fcf")), None)
+    set_reported(c["quarters"][end], *((co, "found") if co else
+                                       fetch_reported(cik, sub, end, row.get("filingDate"), raw.get("ocf"),
+                                                      (comp.get("raw_py") or {}).get("ocf"))))
     if form.startswith("10-K"):
         year = annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_text, lab_text)
         if year:
@@ -691,6 +758,8 @@ def process_release(store, cik, accn, form, starred=False):
                       if raw.get("capex") is not None else None),
         "src": sources.from_release(rel, raw),
     }
+    set_reported(c["quarters"][end], *_reported_from_tables(rel["tables"], raw.get("ocf"),
+                                                            facts.value(fx, "ocf", py_end) if py_end else None))
     keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
     c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
     store.put(cik, c)
@@ -799,6 +868,7 @@ def run(args):
     backfill_history(store)
     refresh_periods(store)
     refresh_da(store)
+    refresh_reported(store)
     stars = starred_ciks()
     for cik in stars:                                            # multi-quarter history for starred companies
         try:
@@ -910,17 +980,77 @@ def _footer(q, kind, Nc):
     if kind == "loss":
         lines.append("Loss-making quarter: revenue, other income and the net loss together fund all costs; "
                      "the cash bridge starts from non-cash charges.")
+    use, said = Nc.get("co_fcf_use"), Nc.get("co_fcf_said")
+    fcf_def = (f" {use['name']} is the company’s own (non-GAAP) figure from its earnings release: "
+               f"{reported.definition(use['parts'])}." if use
+               else FCF_DEF + (f" The company reports {said['name'].lower()} of {Fmt(Nc['R']).money(said['fcf'])} "
+                               f"({said['definition']})." if said else "") if Nc.get("capex") else "")
     lines.append("Quarterly figures for 10-K periods and all cash flows are derived as year-to-date minus the prior year-to-date. "
-                 "Working capital &amp; other is the residual between operating cash flow and the listed items."
-                 + (FCF_DEF if Nc.get("capex") else ""))
+                 "Working capital &amp; other is the residual between operating cash flow and the listed items." + fcf_def)
     lines.append(DERIVED_NOTE)
     return lines
 
 
+def apply_reported(q, Nc, Ny, draw=True):
+    """The company's own free cash flow (pipeline/reported.py): drawn when it can be (Nc/Ny["co_fcf_use"]), else
+    named on our node (Nc["co_fcf_said"]) when it differs from operating cash flow − capex. draw=False: never drawn,
+    only named (the readers who chose operating cash flow − capex for every company)."""
+    co = q.get("co_fcf")
+    if not co or not co.get("cur"):
+        return
+    use, use_py = reported.for_chart(co, Nc.get("ocf"), Ny and Ny.get("ocf"))
+    if use and draw:
+        Nc["co_fcf_use"] = use
+        if Ny is not None and use_py:
+            Ny["co_fcf_use"] = use_py
+        return
+    ours, theirs = reported.our_fcf(Nc), co["cur"]["fcf"]
+    if ours is None or not reported.close(ours, theirs, 1e6, 0.02):
+        Nc["co_fcf_said"] = {"fcf": theirs, "name": reported.fcf_name(co.get("name") or "Free cash flow"),
+                             "definition": reported.definition(reported.netted(co["cur"]) or [])
+                             if reported.netted(co["cur"]) else "its own definition"}
+
+
+# what changes when free cash flow is drawn on the other definition (the reader's choice, see quarter_payload)
+FCF_ALT_KEYS = ("nodes", "links", "kind", "footer", "checks", "analysis")
+
+
 def quarter_payload(c, q, prev_q):
+    """A quarter's chart, analysis and checks. When the company's own free cash flow is drawn, the payload also carries
+    the same quarter on operating cash flow − capex ("fcf_alt"): readers choose the definition in their alerts
+    (subscriptions.fcf_basis), and the site and their e-mails swap these fields in (reported.fcf_view)."""
+    pl = _quarter_payload(c, q, prev_q)
+    if not pl:
+        return pl
+    Nc = pl["_N"][0]
+    if Nc.get("co_fcf_use"):
+        try:
+            alt = _quarter_payload(c, q, prev_q, draw_company=False)
+        except Exception as e:
+            print(f"  no OCF − capex version for {c['profile']['name']} {q['end']}: {e}", file=sys.stderr)
+            alt = None
+        if alt:
+            pl["fcf_basis"] = "company"
+            pl["fcf_alt"] = {k: alt[k] for k in FCF_ALT_KEYS}
+    elif not Nc.get("co_fcf_said") and not q.get("co_fcf"):        # drawn by the formula: why, for the "noted" choice
+        status = q.get("co_status") or ("not_found" if q.get("co_tried") else "unchecked")
+        note = _formula_note(status, pl["nodes"], Nc)
+        if note:
+            pl["fcf_note"] = note
+    return pl
+
+
+def _formula_note(status, nodes, Nc):
+    """reported.formula_note for the chart's free cash flow node (none when the chart has no free cash flow)."""
+    node = next((n["id"] for n in nodes if n["id"] in ("fcf", "fcf_neg")), None)
+    return reported.formula_note(status, node, reported.our_fcf(Nc), Fmt(Nc["R"]).money) if node else None
+
+
+def _quarter_payload(c, q, prev_q, draw_company=True):
     Nc, Nq, Ny = normalize(q["raw"]), normalize(q.get("raw_q1")), normalize(q.get("raw_py"))
     if not Nc:
         return None
+    apply_reported(q, Nc, Ny, draw=draw_company)
     ls = q.get("lines_struct")
     lines_q1 = q.get("lines_q1") or (prev_q.get("lines") if prev_q and prev_q.get("end") == q.get("q1_end") else None)
     if lines_q1 and ls and not all(l["id"] in lines_q1 for l in ls["leaves"]):
@@ -1039,6 +1169,7 @@ def year_payload(c, y):
         "title": f"{name} {y['label']} earnings &amp; cash flow",
         "subtitle": f"Fiscal year ended {_date(y['end'])} · GAAP · Y/Y vs. {_short(y.get('py_end'))}",
         "footer": foot, "nodes": nodes, "links": links,
+        **({"fcf_note": note} if (note := _formula_note("annual", nodes, Nc)) else {}),
         "checks": checks.checks(y, c, Nc, None, Ny, annual=True),
         "analysis": [_yearly(x) for x in analysis.paragraphs(f, y["label"], Nc, None, Ny, ls,
                                                              (y.get("lines"), None, y.get("lines_py")), py_label=py_label or "a year earlier")],

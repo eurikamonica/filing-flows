@@ -108,6 +108,11 @@ def quantities(N, lines=None):
             Q["fcf"] = N["ocf"] - N["capex"]
             Q["fcf_neg"] = N["capex"] - N["ocf"]          # the part of capex operating cash flow did not cover
             Q["capex_from_ocf"] = min(N["capex"], max(N["ocf"], 0))
+    use = N.get("co_fcf_use")                          # the company's own free cash flow (pipeline/reported.py)
+    if use:
+        Q["co_fcf"] = use["fcf"]
+        for p in use["parts"]:
+            Q["co:" + p["key"]] = p["amount"]
     Q["pretax_less_nci"] = N["pretax"] - N["nci"]
     Q["opcosts"] = N["R"] - N["oi"]
     Q["funding"] = N["R"] + max(N["nonop"], 0) + max(-N["tax"], 0) + max(-N["pl"], 0)

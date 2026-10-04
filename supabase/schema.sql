@@ -27,6 +27,9 @@ create table if not exists public.subscriptions (
   cmp_decreases boolean not null default false,         -- comparison charts also draw decreases (hatched, dashed)
   changes_detail boolean not null default false,        -- list every line's change, not only the three main ones
   custom_compare boolean not null default false,        -- company pages offer "compare any two periods"
+  fcf_basis    text    not null default 'company' check (fcf_basis in ('company', 'noted', 'ocf')),   -- free cash flow: the
+                                                        -- company's own figure where it can be drawn ('noted': and say why
+                                                        -- when it is not), or operating cash flow − capex for every company
   unsub_token  uuid    not null default gen_random_uuid(),
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
@@ -45,6 +48,7 @@ alter table public.subscriptions add column if not exists custom_compare boolean
 alter table public.subscriptions add column if not exists digest_hour smallint not null default 8;
 alter table public.subscriptions add column if not exists tz text;
 alter table public.subscriptions add column if not exists daily_scope text not null default 'follows';
+alter table public.subscriptions add column if not exists fcf_basis text not null default 'company';
 alter table public.subscriptions alter column frequency set default 'daily';   -- new accounts: the 8:00 daily report
 do $$ begin
   alter table public.subscriptions add constraint subscriptions_attach_images_check check (attach_images in ('png', 'jpg', 'none'));
@@ -58,6 +62,8 @@ do $$ begin
   alter table public.subscriptions add constraint subscriptions_daily_scope_check check (daily_scope in ('follows', 'all'));
 exception when duplicate_object then null;
 end $$;
+alter table public.subscriptions drop constraint if exists subscriptions_fcf_basis_check;   -- re-made: choices may grow
+alter table public.subscriptions add constraint subscriptions_fcf_basis_check check (fcf_basis in ('company', 'noted', 'ocf'));
 
 -- what each user has already been sent (written by the notifier with the secret key only)
 create table if not exists public.deliveries (

@@ -32,7 +32,7 @@ from email.utils import formataddr, make_msgid, parseaddr
 
 import requests
 
-from . import checks, social, text
+from . import checks, reported, social, text
 
 MAX_AGE_DAYS = 3            # charts for filings older than this are not sent
 FULL_ITEMS = 6              # charts shown in full per e-mail; the rest are listed with a link
@@ -170,6 +170,25 @@ def is_year(x):
 def item_key(e):
     """"<cik>:<quarter end>", plus ":8-K" for a chart read from an earnings release, ":fy" for a full fiscal year."""
     return f"{int(e['cik'])}:{e['end']}" + (":8-K" if is_prelim(e) else ":fy" if is_year(e) else "")
+
+
+def fcf_basis(sub):
+    """The reader's free cash flow definition: "company" (its own figure where the chart can draw it, the default),
+    "noted" (the same, and a chart drawn by the formula says why) or "ocf" (operating cash flow − capex for every company)."""
+    b = (sub or {}).get("fcf_basis")
+    return b if b in reported.BASES else "company"
+
+
+def for_reader(sub, items):
+    """items with each quarter as this reader sees it (their free cash flow definition, reported.fcf_view)."""
+    basis = fcf_basis(sub)
+    return [(e, c, reported.fcf_view(q, basis), *rest) for e, c, q, *rest in items]
+
+
+def chart_key(e, q):
+    """item_key, plus the free cash flow choice when it changed the quarter (each version is drawn separately)."""
+    b = (q or {}).get("fcf_basis")
+    return item_key(e) + (f"~{b}" if b in ("noted", "ocf") else "")
 
 
 def _split(k):
@@ -774,7 +793,7 @@ class Assets:
     def image(self, e, c, q, view, kind="inline", decreases=False):
         o = self.INLINE if kind == "inline" else self.FILE[kind]
         dec = bool(decreases and view in ("q", "y"))
-        return self._get((item_key(e), view + ("+dec" if dec else ""), kind),
+        return self._get((chart_key(e, q), view + ("+dec" if dec else ""), kind),
                          lambda ch: ch.image(self.what(c, q, view, dec), o["fmt"], width=o["width"], quality=o.get("quality")))
 
     def pdf(self, e, c, q, views, site_url, decreases=False, detail=False):
@@ -782,7 +801,7 @@ class Assets:
             svgs = {v: ch.svg(self.what(c, q, v, decreases), view_caption(v, q)) for v in views}
             name = H.escape(f"Filing Flows \u00b7 {social.display_name(c['profile']['name'])} {q.get('label')}")
             return ch.pdf(report_html(e, c, q, views, svgs, site_url, decreases, detail), footer=name)
-        return self._get((item_key(e), "pdf:" + ",".join(views) + ("+dec" if decreases else "") + ("+all" if detail else ""), "pdf"),
+        return self._get((chart_key(e, q), "pdf:" + ",".join(views) + ("+dec" if decreases else "") + ("+all" if detail else ""), "pdf"),
                          make)
 
     def for_message(self, sub, items, site_url, full):
@@ -790,6 +809,7 @@ class Assets:
         images, extras = {}, {}
         if self.broken:
             return images, extras
+        items = for_reader(sub, items)
         fmt = sub.get("attach_images") or "png"
         want_pdf = sub.get("attach_pdf", True) is not False
         dec = bool(sub.get("cmp_decreases"))
@@ -852,6 +872,7 @@ def build_message(sub, items, site_url, images, sender, daily=False, requested=F
     extras: {item key: {"inline": {view: jpeg}, "files": [(file name, bytes, maintype, subtype)]}} (Assets.for_message).
     day: the daily report's date in words; lead: a sentence for the top; full_count: companies shown in full."""
     site_url = site_url.rstrip("/")
+    items = for_reader(sub, items)
     msg = EmailMessage()
     msg["Subject"] = subject(items, daily, requested and not day, day_short)
     msg["From"] = sender

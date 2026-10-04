@@ -105,6 +105,9 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
         src["capex"] = {"c": capex_src.get("concept"), "l": lab[:1].upper() + lab[1:], "how": capex_src.get("how"),
                         "ytd": (src.get("capex") or {}).get("ytd", False)}
     flags = set(Nc.get("flags") or [])
+    use = Nc.get("co_fcf_use")                            # the company's own free cash flow (pipeline/reported.py)
+    co_line = ("From the company’s free cash flow reconciliation in its earnings release (8-K, Exhibit 99.1), checked "
+               "against SEC’s operating cash flow for the quarter.")
     axis = (lines_struct or {}).get("axis")
     rev = src.get("revenue")
     for n in nodes:
@@ -170,8 +173,15 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
             out = get(nid)
         elif nid in ("wc_in", "wc_out"):
             out = CALC["wc"]
+        elif nid == "capex" and use:
+            out = co_line
+        elif nid.startswith("co:"):
+            out = co_line
         elif nid == "capex":
             out = get("capex")
+        elif nid == "fcf" and use:
+            from .reported import definition
+            out = (f"Reported by the company (non-GAAP): {use['name'].lower()} = {definition(use['parts'])}. " + co_line)
         elif nid == "fcf":
             out = FCF
         elif nid == "fcf_neg":

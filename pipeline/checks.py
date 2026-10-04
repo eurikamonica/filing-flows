@@ -29,6 +29,8 @@ def money(v):
     a, s = abs(v), "−" if v < 0 else ""
     if a >= 0.95e9:
         return f"{s}${a / 1e9:.1f}B"
+    if a >= 1e8:
+        return f"{s}${a / 1e9:.2f}B"
     if a >= 0.95e6:
         return f"{s}${a / 1e6:.1f}M"
     return f"{s}${a / 1e3:.0f}K"
@@ -125,6 +127,19 @@ def checks(q, c, Nc, Nq=None, Ny=None, annual=False):
                                           "year-to-date figure; check the cash flow statement.")
         if capex and capex > 0.05 * R and not Nc["da"]:
             add("note", "da_missing", "Depreciation is not tagged separately: it sits in working capital & other.")
+        # free cash flow as the company defines it (pipeline/reported.py): drawn, or named beside ours
+        from .reported import definition
+        use, said = Nc.get("co_fcf_use"), Nc.get("co_fcf_said")
+        ours = ocf - capex if capex else None
+        if use:
+            add("note", "fcf_company", f"{use['name']} is the company's own figure from its earnings release "
+                                       f"({money(use['fcf'])} = {definition(use['parts'])})"
+                                       + (f"; operating cash flow − capex alone would be {money(ours)}." if ours is not None
+                                          and abs(ours - use['fcf']) > 0.02 * abs(use['fcf']) else "."))
+        elif said:
+            add("note", "fcf_definition", f"The company reports {said['name'].lower()} of {money(said['fcf'])} "
+                                          f"({said['definition']}); this chart shows operating cash flow − capex"
+                                          + (f" ({money(ours)})." if ours is not None else "."))
 
     # the earnings release did not match the 10-Q/10-K that replaced it
     rc = q.get("from_release") if isinstance(q.get("from_release"), dict) else {}

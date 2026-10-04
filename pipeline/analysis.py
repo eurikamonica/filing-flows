@@ -128,7 +128,11 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
         r = Nc["ocf"] - Nc["pl"] - Nc["da"] - Nc["sbc"]
         if abs(r) > 0.05 * abs(Nc["ocf"]):
             s += f" Working capital and other items {'added' if r > 0 else 'used'} {f.money(abs(r))}."
-        if Nc.get("capex"):
+        use = Nc.get("co_fcf_use")
+        if use:                                          # the company's own free cash flow, as the chart draws it
+            items = " and ".join(f"{p['label'][:1].lower() + p['label'][1:]} ({f.money(p['amount'])})" for p in use["parts"])
+            s += f" After {items}, {use['name'].lower()} as the company reports it was {f.money(use['fcf'])}."
+        elif Nc.get("capex"):
             fcf = Nc["ocf"] - Nc["capex"]
             s += (f" Capital expenditures of {f.money(Nc['capex'])} left free cash flow of {f.money(fcf)}." if fcf >= 0 else
                   f" Capital expenditures of {f.money(Nc['capex'])} exceeded it, leaving free cash flow of {f.money(fcf)}.")

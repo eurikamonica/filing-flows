@@ -173,8 +173,11 @@ m_vals = {
 }
 put(sec.companyfacts_url(META), facts_json(META, "Meta Platforms, Inc.",
     [(s, e, M_Q2, "10-Q", "2026-07-30", dict(zip(m_cols, v))) for (s, e), v in m_vals.items()]))
+M_8K = "0001326801-26-000063"                        # the Q2 2026 earnings release (8-K, Item 2.02)
 put(sec.submissions_url(META), submissions(META, "Meta Platforms, Inc.", ["META"], "7370",
-    "Services-Computer Programming, Data Processing, Etc.", "1231", [[M_Q2, "2026-07-30", "2026-06-30", "10-Q", "meta-20260630.htm"]]))
+    "Services-Computer Programming, Data Processing, Etc.", "1231", [
+        [M_Q2, "2026-07-30", "2026-06-30", "10-Q", "meta-20260630.htm"],
+        [M_8K, "2026-07-29", "2026-07-29", "8-K", "meta-20260729.htm", "2.02,9.01"]]))
 seg = {"meta:FamilyOfAppsMember": ("Family of Apps", 60370, 47146), "meta:RealityLabsMember": ("Reality Labs", 431, 370)}
 ctx, fx = {}, []
 for i, (m, (_, a, b)) in enumerate(seg.items()):
@@ -248,6 +251,18 @@ def table(head_rows, rows):
 def release_doc(paras, tables):
     return ("<html><body>" + "".join(f"<p>{p}</p>" for p in paras) +
             "".join(f"<p><b>{title}</b></p><p>{unit}</p>{t}" for title, unit, t in tables) + "</body></html>")
+
+
+# Meta's earnings release: its free cash flow reconciliation ($ millions as printed): Meta also subtracts principal payments on finance leases
+put(sec.filing_index_url(META, M_8K), {"directory": {"item": [
+    {"name": f"{M_8K}-index.htm"}, {"name": "meta-20260729.htm"}, {"name": "meta-06302026xex991.htm"}]}})
+put(sec.doc_url(META, M_8K, "meta-06302026xex991.htm"), release_doc([
+    "Meta Reports Second Quarter 2026 Results"], [
+    ("Reconciliation of GAAP to Non-GAAP Results", "(In millions) (Unaudited)", table(
+        [[("", 1), ("Three Months Ended June 30,", 6)], [("", 1), ("2026", 3), ("2025", 3)]], [
+        ("Net cash provided by operating activities", [31862, 25561]),
+        ("Purchases of property and equipment, net", [-30116, -16538]),
+        ("Principal payments on finance leases", [-962, -476]), ("Free cash flow", [784, 8547])]))]))
 
 
 EXDV, SMCL = 9999901, 9999902

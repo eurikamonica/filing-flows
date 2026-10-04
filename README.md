@@ -14,6 +14,24 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
 - **Free cash flow**: operating cash flow splits into capital expenditures and free cash flow. When capex is larger
   than operating cash flow, all of it goes to capex and the gap enters as *Negative free cash flow* (paid from cash or
   financing), so no band ever has a negative width.
+- **Company-reported free cash flow** (`pipeline/reported.py`): companies define free cash flow differently (Meta
+  also subtracts finance-lease principal; Micron nets asset sales and government incentives). For each quarter the
+  free cash flow reconciliation is read from the company's earnings release (8-K, Exhibit 99.1) and accepted only
+  when its operating cash flow equals SEC's figure for that quarter and its own lines add up. Then the chart draws the
+  company's definition, labelled *company-reported*, with each item it subtracts as its own band (the year-ago
+  quarter on the same definition; trends only line up quarters on the same definition). When it cannot be drawn
+  (negative, or the table cannot be read), the chart keeps *Free cash flow (OCF − capex)* and names the company's
+  figure on the node, in the data checks and in the footer. Latest quarters stored earlier are checked 30 per scan.
+  Readers choose under **Alerts → Free cash flow** (`subscriptions.fcf_basis`; run `supabase/schema.sql` again to add
+  the column): the company's own figure where one is found, else the formula (`company`, the default); the same, and a
+  chart drawn by the formula says so and why — no earnings release found, not in the release, did not match SEC data,
+  or not checked (`noted`); or operating cash flow − capex for every company (`ocf`). The site data carries what each
+  choice changes (`fcf_alt`: the quarter on OCF − capex where the company's figure is drawn; `fcf_note`: the note), and
+  company pages and that reader's e-mails show the one they chose. Full fiscal years always use the formula.
+- **Data checks** (`pipeline/checks.py`): periods of unusual length, revenue jumps, odd margins, cash flow out of
+  scale, and definitions that differ from the company's are listed under every chart; probable errors are marked on
+  the chart, the owner's e-mail says to check before posting, and automatic X posting holds them. Every chart and
+  e-mail carries a disclaimer that figures are read by fixed rules and can contain errors.
 - **Every node says where its number comes from**: the reported line as printed in the filing and its XBRL tag
   (and, for a quarter read from year-to-date figures, that it is year-to-date minus the prior year-to-date), the row
   of the earnings release, or the calculation (for example operating expenses = gross profit − operating profit).

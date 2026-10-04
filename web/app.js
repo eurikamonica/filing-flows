@@ -32,7 +32,29 @@
     set(k, v) { try { localStorage.setItem('ff:' + k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
   };
   const savedCmp = prefs.get('compare', null);                       // 'q' | 'y' | null (older builds stored true)
-  const state = { compare: savedCmp === true ? 'q' : savedCmp, zoom: prefs.get('zoom', 'fit'), decreases: prefs.get('decreases', false), charts: [] };
+  const state = { compare: savedCmp === true ? 'q' : savedCmp, zoom: prefs.get('zoom', 'fit'), decreases: prefs.get('decreases', false),
+    fcf: fcfBasis(prefs.get('fcf', 'company')), charts: [] };
+  // Free cash flow as the reader chose in their alerts (pipeline/reported.py fcf_view does the same for e-mails):
+  // 'company' draws the company's own figure where the pipeline could check it against SEC data, else the formula;
+  // 'noted' also says, on a chart drawn by the formula, why there is no company figure ("fcf_note");
+  // 'ocf' swaps in the quarter on operating cash flow − capex where the company's figure is drawn ("fcf_alt")
+  function fcfBasis(v) { return v === 'ocf' || v === 'noted' ? v : 'company'; }
+  function fcfView(q) {
+    if (!q) return q;
+    let out;
+    if (state.fcf === 'ocf' && q.fcf_alt) out = Object.assign({}, q, q.fcf_alt);
+    else if (state.fcf === 'noted' && q.fcf_note) {
+      const n = q.fcf_note;
+      out = Object.assign({}, q, {
+        nodes: (q.nodes || []).map((x) => (x.id === n.node ? Object.assign({}, x, { lines: (x.lines || []).concat([['mut', n.line]]) }) : x)),
+        checks: (q.checks || []).concat([n.check]), footer: (q.footer || []).concat([n.footer]),
+      });
+    } else return q;
+    delete out.fcf_alt;
+    delete out.fcf_note;
+    out.fcf_basis = state.fcf;
+    return out;
+  }
   const t = (s) => S.esc(S.dec(s == null ? '' : s));
   const sign = (x) => (x > 0 ? '+' : x < 0 ? '−' : '');
   const pct = (x, d) => (x == null || isNaN(x) ? '—' : sign(+x.toFixed(d || 0)) + Math.abs(x).toFixed(d || 0) + '%');
@@ -449,6 +471,7 @@
     draw();
   }
 
+  const FCF_CODES = new Set(['fcf_company', 'fcf_definition', 'fcf_formula']);   // data checks about the free cash flow definition
   async function company(cik, end, all, opt) {
     const here = live();
     opt = opt || {};
@@ -462,7 +485,7 @@
       throw err;
     }
     if (!here()) return;
-    const p = c.profile, qs = c.quarters, ys = c.years || [];
+    const p = c.profile, qs = c.quarters.map(fcfView), ys = (c.years || []).map(fcfView);
     const fy = !!opt.fy && ys.length > 0;                           // a full fiscal year (10-K)
     const cmpId = opt.cmp || null;                                  // a comparison this reader asked for
     if (cmpId) all = false;
@@ -554,7 +577,8 @@
             : fy ? 'Full-year values as reported in the 10-K (XBRL company facts); revenue lines from the filing’s own XBRL instance'
             : 'XBRL company facts; revenue lines from the filing’s own XBRL instance'}</dd>
           ${(q.checks || []).length ? `<dt>Data checks</dt><dd><ul class="checks">${q.checks.map((x) => `<li class="${x.level === 'warn' ? 'warn' : ''}">${
-            x.level === 'warn' ? '<b>Please verify:</b> ' : ''}${t(x.text)}</li>`).join('')}</ul></dd>` : ''}
+            x.level === 'warn' ? '<b>Please verify:</b> ' : ''}${t(x.text)}${FCF_CODES.has(x.code) && (q.fcf_alt || q.fcf_basis === 'ocf' || x.code === 'fcf_formula')
+            ? ` <a href="#account" class="fcf-pref" title="Alerts → Free cash flow: the company’s own figure or operating cash flow − capex">Change this in Alerts</a>` : ''}</li>`).join('')}</ul></dd>` : ''}
           <dt>Accuracy</dt><dd>Read automatically from the filing; errors are possible, so check the filing before relying on a figure.${
             site.repo ? ` <a href="https://github.com/${t(site.repo)}/issues/new?title=${encodeURIComponent(`Data error: ${ticker || p.cik} ${S.dec(q.label)}`)}&body=${
               encodeURIComponent(`Chart: ${location.href}\nWhich figure looks wrong, and what does the filing say?\n`)}" target="_blank" rel="noopener">Report an error ↗</a>` : ''}</dd>
@@ -721,10 +745,10 @@
   function nodeAt(spec, id) {
     const find = (k) => (spec.nodes || []).find((x) => x.id === k);
     const own = find(id);
-    if (own) return { v: own.v, y: own.y, q: own.q };
+    if (own) return { v: own.v, y: own.y, q: own.q, basis: own.basis || '' };
     if (id === 'fcf' || id === 'fcf_neg') {                       // free cash flow changes sides when it turns negative
       const o = find('ocf'), c = find('capex');
-      if (!o || !c || o.v == null || c.v == null) return null;
+      if (!o || !c || o.v == null || c.v == null || c.basis) return null;
       const sg = id === 'fcf' ? 1 : -1, d = (k) => (o[k] != null && c[k] != null ? sg * (o[k] - c[k]) : null);
       return { v: sg * (o.v - c.v), y: d('y'), q: d('q') };
     }
@@ -733,8 +757,11 @@
   function trendSeries(specs, cur, id, years) {
     const keep = specs.filter((x) => x.end <= cur.end).slice(0, TREND_N).reverse();
     const chg = (v, b) => (v != null && b != null && v > 0 && b > 0 ? (v / b - 1) * 100 : null);   // n/m when ≤ 0
+    // a company-reported figure (its own free cash flow definition) is only lined up with the same definition
+    const basis = (nodeAt(cur, id) || {}).basis || '';
     const pts = keep.map((x) => {
-      const a = nodeAt(x, id) || {};
+      let a = nodeAt(x, id) || {};
+      if ((a.basis || '') !== basis) a = {};
       return { label: x.label, end: x.end, cur: x.end === cur.end, v: a.v == null ? null : a.v,
         yoy: chg(a.v, a.y), qoq: years ? null : chg(a.v, a.q) };
     });
@@ -1276,7 +1303,7 @@
   const PREF_DEFAULTS = { tickers: [], sectors: [], all_above: false, min_revenue: 1e9, starred: false,
     frequency: 'daily', email_on: true, push_on: true, final_too: true };
   const MAIL_DEFAULTS = { chart_q: false, chart_y: false, chart_history: false, attach_images: 'png', attach_pdf: true, cmp_decreases: false,
-    changes_detail: false, custom_compare: false, digest_hour: 8, tz: null, daily_scope: 'follows' };   // columns added after the first release (see savePrefs)
+    changes_detail: false, custom_compare: false, digest_hour: 8, tz: null, daily_scope: 'follows', fcf_basis: 'company' };   // columns added after the first release (see savePrefs)
   const acct = { client: undefined, prefs: null, flash: null, owner: undefined, osets: undefined };
   function browserTZ() {
     try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch (e) { return null; }
@@ -1398,6 +1425,12 @@
       prefs.set('decreases', state.decreases);
       $$('[data-dec]').forEach((cb) => { cb.checked = state.decreases; });
       state.charts.forEach((c) => c.redraw && c.redraw());
+    }
+    const fcf = fcfBasis(row.fcf_basis);
+    if ('fcf_basis' in row && fcf !== state.fcf) {                       // the account setting wins here too
+      state.fcf = fcf;
+      prefs.set('fcf', fcf);
+      if (/^#c-/.test(location.hash)) setTimeout(route, 0);              // a company page drawn on the other definition
     }
     syncApp();
     return row;
@@ -1753,6 +1786,18 @@
             <div class="inline-radios" role="radiogroup" aria-label="Chart image files"><span>Chart images</span>${[['png', 'PNG'], ['jpg', 'JPG'], ['none', 'None']].map(([v, l]) =>
               `<label><input type="radio" name="attach" value="${v}" ${m.attach_images === v ? 'checked' : ''}> ${l}</label>`).join('')}</div>
             <label class="long"><input type="checkbox" id="attach-pdf" ${m.attach_pdf ? 'checked' : ''}><span>PDF report: company profile, the charts and the analysis</span></label></fieldset>
+          <fieldset><legend>Free cash flow</legend>
+            <p class="muted small">Companies define free cash flow differently: Meta also subtracts finance-lease payments, Micron nets
+              asset sales and government incentives. On company pages and in your e-mails, show:</p>
+              <label class="long"><input type="radio" name="fcf" value="company" ${fcfBasis(m.fcf_basis) === 'company' ? 'checked' : ''}><span>The company’s own
+                figure when its earnings release reports one that matches SEC’s data, labelled “company-reported”, with each item it
+                subtracts. Otherwise operating cash flow − capital expenditures</span></label>
+              <label class="long"><input type="radio" name="fcf" value="noted" ${m.fcf_basis === 'noted' ? 'checked' : ''}><span>The same, and when no
+                company figure is found the chart says so: calculated by the formula, and why (no earnings release found, not in
+                the release, or not matching SEC’s data)</span></label>
+              <label class="long"><input type="radio" name="fcf" value="ocf" ${m.fcf_basis === 'ocf' ? 'checked' : ''}><span>Always operating
+                cash flow − capital expenditures: one definition for every company and quarter. The company’s own figure is named on the
+                chart</span></label></fieldset>
           <fieldset><legend>On company pages</legend>
             <label class="long"><input type="checkbox" id="custom-compare" ${m.custom_compare ? 'checked' : ''}><span>Compare any two periods: company pages get a ⇄ Compare any two button. Tick any two quarters (or two fiscal years) back to 2009–2011, when SEC’s XBRL data starts, and the comparison Sankey is drawn from SEC data within a few minutes</span></label></fieldset>
           <div class="row"><button class="btn primary" type="submit">Save</button><span class="muted" id="save-msg" role="status"></span></div>
@@ -1820,9 +1865,12 @@
             cmp_decreases: $('#cmp-decreases').checked, changes_detail: $('#changes-detail').checked,
             custom_compare: $('#custom-compare').checked, digest_hour: +$('#digest-hour').value,
             daily_scope: (($('input[name="scope"]:checked') || {}).value === 'all') ? 'all' : 'follows',
+            fcf_basis: fcfBasis(($('input[name="fcf"]:checked') || {}).value),
           });
           state.decreases = $('#cmp-decreases').checked;           // company pages follow the account setting
           prefs.set('decreases', state.decreases);
+          state.fcf = fcfBasis(($('input[name="fcf"]:checked') || {}).value);
+          prefs.set('fcf', state.fcf);
           let note = '';
           if ($('#reader-copy')) {                                   // the site owner: also the reader version?
             const r = await c.from('owner_settings').update({ reader_copy: $('#reader-copy').checked, updated_at: new Date().toISOString() })
