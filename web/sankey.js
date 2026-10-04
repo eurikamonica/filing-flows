@@ -18,6 +18,10 @@
   const LEGEND = [['rev', 'Revenue'], ['profit', 'Profit & gains'], ['cost', 'Costs'], ['noncash', 'Non-cash items']];
   const BG = '#fcfcfb';
   const INK = '#1d1d1b', INK2 = '#3d3c39', INK3 = '#6b6a66', SUBINK = '#5c5b57', MARK = '#17734a';
+  const WARN = '#8a4b00';            // a data check that flags a probable error (pipeline/checks.py)
+  // on every chart, also when it is saved as an image or posted (the same words as pipeline/checks.py DISCLAIMER)
+  const DISCLAIMER = 'Figures are read automatically from SEC filings by fixed rules and can contain errors, in the company’s own ' +
+    'XBRL tags or in this reading; check the filing before relying on them. Not investment advice.';
   const FONT = "'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif";
   // style: [font size, weight, line height, colour]
   const STY = {
@@ -414,7 +418,9 @@
     let bottom = maxY + dy;
 
     const title = dec(compare ? cmpSpec.title : spec.title);
-    const subtitle = dec(spec.subtitle || '');
+    const checks = spec.checks || [];
+    const flagged = checks.some((c) => c.level === 'warn');
+    const subtitle = dec(spec.subtitle || '') + (flagged ? ' · data check flagged: see the notes below' : '');
     let W = Math.max(maxX + MARGIN, 1500, measure(title, 40, 600) + 2 * MARGIN, measure(subtitle, 18, 400) + 2 * MARGIN);
     W = Math.ceil(W);
 
@@ -532,13 +538,17 @@
         'n/m = a comparison period was negative.');
     }
     const fW = W - 2 * MARGIN - lgW - 40;
+    // the data checks first (a probable error in amber), then how the chart was made, then the disclaimer
+    const parts = checks.map((c) => ({ text: `${c.level === 'warn' ? 'Data check' : 'Note'}: ${dec(c.text)}`,
+      fill: c.level === 'warn' ? WARN : INK2, weight: c.level === 'warn' ? 600 : 400 }))
+      .concat(footer.map((t) => ({ text: t, fill: INK3, weight: 400 })), [{ text: DISCLAIMER, fill: INK3, weight: 400 }]);
     const fLines = [];
-    footer.forEach((p) => wrap(p, 13, 400, fW).forEach((l) => fLines.push(l)));
+    parts.forEach((p) => wrap(p.text, 13, p.weight, fW).forEach((l) => fLines.push({ text: l, fill: p.fill, weight: p.weight })));
     const fH = fLines.length * 18;
     const H = Math.ceil(bottom + 44 + fH + 30);
     let fy = H - 30 - fH;
     fLines.forEach((l) => {
-      shapes.push({ t: 'text', x: MARGIN, y: fy + 13, text: l, size: 13, weight: 400, fill: INK3, anchor: 'start' });
+      shapes.push({ t: 'text', x: MARGIN, y: fy + 13, text: l.text, size: 13, weight: l.weight, fill: l.fill, anchor: 'start' });
       fy += 18;
     });
     let lx = W - MARGIN - lgW;
@@ -664,7 +674,7 @@
     shapes.push({ t: 'text', x: MARGIN, y: 44 + 48 + 4 + 19, text: subtitle, size: 18, weight: 400, fill: SUBINK, anchor: 'start' });
     const foot = ['Source: SEC EDGAR filings; 8-K quarters are preliminary figures from the earnings release. Fourth-quarter and cash-flow ' +
       'figures are derived as the year to date minus the prior year to date. Operating profit = revenue minus operating costs; ' +
-      'margins are shares of revenue. Green = profit or cash in, red = loss or cash out.'];
+      'margins are shares of revenue. Green = profit or cash in, red = loss or cash out.', DISCLAIMER];
     let fy = y + 30;
     foot.forEach((t) => wrap(t, 13, 400, W - 2 * MARGIN).forEach((l) => {
       shapes.push({ t: 'text', x: MARGIN, y: fy, text: l, size: 13, weight: 400, fill: INK3, anchor: 'start' });

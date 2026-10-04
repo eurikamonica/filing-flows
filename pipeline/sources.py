@@ -157,7 +157,16 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
             out = get("nci") or CALC["nci"]
         elif nid in ("ocf", "burn"):
             out = get("ocf")
-        elif nid in ("da", "sbc"):
+        elif nid == "da":
+            out = get("da")
+            if not out and src.get("dep") and src.get("amort"):   # tagged apart (Oracle): the sum of the two lines
+                out = (f"Calculated: depreciation ({_quote(src['dep'])}, {src['dep'].get('c')}) + amortization of intangible "
+                       f"assets ({_quote(src['amort'])}, {src['amort'].get('c')}), from SEC’s XBRL company facts.")
+            elif not out:
+                out = get("dep")
+                if out:
+                    n["_tagkey"] = "dep"
+        elif nid == "sbc":
             out = get(nid)
         elif nid in ("wc_in", "wc_out"):
             out = CALC["wc"]

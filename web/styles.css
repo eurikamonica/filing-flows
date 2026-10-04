@@ -17,18 +17,19 @@
   --sans: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   --mk-rev: #7a7974; --mk-profit: #17734a; --mk-cost: #ea6a52; --mk-noncash: #5b7fa6;   /* the chart's node colours */
+  --warn-ink: #8a4b00;                                   /* a data check that flags a probable error */
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #151514; --surface: #1d1d1b; --surface-2: #2a2927; --ink: #ecebe6; --ink-2: #cfcdc6; --muted: #9a9891;
     --line: #353431; --accent: #5fb88a; --accent-ink: #8fd3ad; --accent-soft: #1f3a2b; --neg: #ee8a75; --slate: #8fb0d6;
     --sheet: #fcfcfb; --sheet-line: #3a3936; --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
-    --mk-rev: #a3a29c; --mk-profit: #5fb88a; --mk-cost: #f08a76; --mk-noncash: #8fb0d6;
+    --mk-rev: #a3a29c; --mk-profit: #5fb88a; --mk-cost: #f08a76; --mk-noncash: #8fb0d6; --warn-ink: #f0b860;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --mk-rev: #a3a29c; --mk-profit: #5fb88a; --mk-cost: #f08a76; --mk-noncash: #8fb0d6;
+  --mk-rev: #a3a29c; --mk-profit: #5fb88a; --mk-cost: #f08a76; --mk-noncash: #8fb0d6; --warn-ink: #f0b860;
   --bg: #151514; --surface: #1d1d1b; --surface-2: #2a2927; --ink: #ecebe6; --ink-2: #cfcdc6; --muted: #9a9891;
   --line: #353431; --accent: #5fb88a; --accent-ink: #8fd3ad; --accent-soft: #1f3a2b; --neg: #ee8a75; --slate: #8fb0d6;
   --sheet: #fcfcfb; --sheet-line: #3a3936; --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
@@ -354,3 +355,8 @@ td .name { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; display: 
   .export { margin-left: 0; }
   .notes { left: 8px; right: 8px; width: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* data checks under a chart (pipeline/checks.py): a probable error in amber */
+ul.checks { margin: 0; padding-left: 18px; }
+ul.checks li { margin: 0 0 4px; }
+ul.checks li.warn { color: var(--warn-ink); }

@@ -1340,3 +1340,96 @@ def test_full_daily_report_and_owner_reader_copy(tmp_path):
     assert "- and 5 more, listed at the end" in text and "- and 3 more on the site: https://ex.github.io/ff/#home" in text
     html = m.get_body(("html",)).get_content()
     assert "and 5 more listed at the end" in html and 'href="https://ex.github.io/ff/#home"' in html
+
+
+def test_data_checks(tmp_path):
+    """pipeline/checks.py: what is flagged as a probable error (warn) or explained (note), and where it shows."""
+    import datetime as dt
+    from pipeline import checks, notify, social
+    from pipeline.model import normalize
+    raw = lambda R, **kw: dict({"revenue": R, "ni": 0.1 * R, "tax": 0.02 * R, "pretax": 0.12 * R, "oi": 0.12 * R,
+                                "ocf": 0.2 * R, "da": 0.03 * R, "capex": 0.05 * R}, **kw)
+    codes = lambda found: sorted((x["level"], x["code"]) for x in found)
+    c = {"quarters": {"2025-08-28": {"end": "2025-08-28", "q1_end": "2025-05-29"}}}
+    # a 14-week quarter (53-week fiscal year) and big but real growth: notes only
+    q = {"end": "2026-09-03", "q1_end": "2026-05-28", "py_end": "2025-08-28", "form": "8-K"}
+    got = checks.checks(q, c, normalize(raw(54e9)), normalize(raw(41e9)), normalize(raw(11.3e9)))
+    assert codes(got) == [("note", "long_quarter"), ("note", "revenue_jump")], got
+    assert "14 weeks (98 days)" in got[0]["text"] and "4.8× the year-ago quarter ($11.3B then)" in got[1]["text"]
+    # a fourth quarter derived from the 10-K that collapses: a probable error
+    q4 = {"end": "2026-06-30", "q1_end": "2026-03-31", "py_end": "2025-06-30", "form": "10-K"}
+    got = checks.checks(q4, {}, normalize(raw(13460)), normalize(raw(2.0e6)), normalize(raw(4.75e6)))
+    assert codes(got) == [("warn", "derived_jump")] and "0.3% of the year-ago quarter" in got[0]["text"]
+    assert checks.has_warning(got)
+    # cash flow far above revenue: unusual (note), or out of scale with revenue and earnings alike (warn)
+    assert codes(checks.checks({}, {}, normalize(raw(19.3e9, ocf=23.1e9)))) == [("note", "ocf_over_revenue")]
+    assert codes(checks.checks({}, {}, normalize(raw(1e7, ocf=9e7, ni=1e6)))) == [("warn", "ocf_scale")]
+    small = normalize(raw(1e5, ni=-9e5, pretax=-9e5, tax=0, oi=-9e5, ocf=-8e5))      # tiny revenue, cash burn = the loss
+    assert ("warn", "ocf_scale") not in codes(checks.checks({}, {}, small))
+    # restated year-to-date capex, a rare tax rate, a pre-tax figure that did not reconcile
+    assert ("warn", "capex_negative") in codes(checks.checks({}, {}, normalize(raw(1e9, capex=-5e7))))
+    assert ("note", "tax_rate") in codes(checks.checks({}, {}, normalize(raw(1e9, tax=0.1e9, ni=0.02e9, pretax=0.12e9))))
+    assert ("note", "pretax_fixed") in codes(checks.checks({}, {}, normalize(raw(1e9, pretax=0.5e9))))
+    # a 53-week fiscal year
+    yr = {"end": "2026-09-03", "py_end": "2025-08-28", "form": "10-K"}
+    assert codes(checks.checks(yr, {}, normalize(raw(1e9)), None, normalize(raw(0.9e9)), annual=True)) == [("note", "long_year")]
+
+    # the built site: checks on the chart data, a flag in the index for the latest quarter
+    site = _site(tmp_path)
+    exdv = json.load(open(site / "data" / "c" / "9999901.json"))
+    assert all(isinstance(q.get("checks"), list) for q in exdv["quarters"])
+    # the thread's last post keeps the disclaimer even when the source line has to be cut
+    cfg = dict(social.DEFAULTS, min_revenue=0, max_age_days=10000, max_per_run=50)
+    for e in social.candidates(str(site), {"posted": {}}, cfg, today=dt.date(2026, 10, 2)):
+        c_, q_ = social.quarter_of(str(site), e)
+        last = social.compose(c_, q_, dict(cfg, numbered=False))[-1]
+        assert social.SOURCE_DISCLAIMER in last and social.xlen(last) <= 280, last
+    # API posting holds a flagged quarter; the e-mails say what to check
+    ix = json.load(open(site / "data" / "index.json"))
+    ix["companies"][0]["check"] = "warn"
+    json.dump(ix, open(site / "data" / "index.json", "w"))
+    held = ix["companies"][0]["cik"]
+    api = [e["cik"] for e in social.candidates(str(site), {"posted": {}}, dict(cfg, mode="api"), today=dt.date(2026, 10, 2))]
+    mail = [e["cik"] for e in social.candidates(str(site), {"posted": {}}, cfg, today=dt.date(2026, 10, 2))]
+    assert held not in api and held in mail
+    e0 = ix["companies"][0]
+    c0, q0 = social.quarter_of(str(site), e0)
+    q0["checks"] = [{"level": "warn", "code": "derived_jump", "text": "Revenue is 0.3% of the year-ago quarter."}]
+    thread = social.build_email([(e0, c0, q0, social.compose_parts(c0, q0, cfg), [])], cfg, "x", "o@x.com")
+    assert "Check before posting: a probable data error" in thread.get_body(("html",)).get_content()
+    assert "CHECK BEFORE POSTING" in thread.get_body(("plain",)).get_content()
+    reader = notify.build_message(_sub("ann"), [(e0, c0, q0, ["you follow it"])], "https://ex.github.io/ff", {}, "x")
+    html = reader.get_body(("html",)).get_content()
+    assert "Data check: please verify in the filing" in html and "can contain errors" in html
+
+
+def test_depreciation_and_amortization_tagged_apart():
+    """Oracle tags depreciation and amortization of intangibles apart: D&A is their sum; depreciation alone is labelled so."""
+    from pipeline import facts, release
+    from pipeline.model import normalize
+    F = lambda s, e, v: {"start": s, "end": e, "val": v, "filed": "2026-09-11"}
+    fx = facts.index_facts({"facts": {"us-gaap": {
+        "Depreciation": {"label": "Depreciation", "units": {"USD": [F("2026-06-01", "2026-08-31", 3156e6),
+                                                                   F("2025-06-01", "2025-08-31", 1351e6)]}},
+        "AmortizationOfIntangibleAssets": {"label": "Amortization", "units": {"USD": [F("2026-06-01", "2026-08-31", 202e6),
+                                                                                     F("2025-06-01", "2025-08-31", 420e6)]}}}}})
+    assert facts.value(fx, "da", "2026-08-31") == 3358e6 and facts.value(fx, "da", "2025-08-31") == 1771e6
+    assert facts.ytd_value(fx, "da", "2026-08-31") == 3358e6
+    raw = facts.extract(fx, "2026-08-31")
+    assert (raw["da"], raw["dep"], raw["amort"]) == (3358e6, 3156e6, 202e6)
+    base = {"revenue": 19345e6, "ni": 4760e6, "tax": 847e6, "pretax": 5607e6, "oi": 6728e6, "ocf": 23103e6}
+    filled = lambda r: dict(base, **{k: v for k, v in r.items() if v is not None})
+    assert normalize(filled(raw))["da_label"] == "Depreciation &amp; amortization"
+    # a combined tag wins, nothing is added twice
+    fx2 = facts.index_facts({"facts": {"us-gaap": {
+        "DepreciationDepletionAndAmortization": {"units": {"USD": [F("2026-06-01", "2026-08-31", 500e6)]}},
+        "Depreciation": {"units": {"USD": [F("2026-06-01", "2026-08-31", 400e6)]}},
+        "AmortizationOfIntangibleAssets": {"units": {"USD": [F("2026-06-01", "2026-08-31", 100e6)]}}}}})
+    assert facts.value(fx2, "da", "2026-08-31") == 500e6
+    # depreciation alone: the chart says "Depreciation", never D&A
+    fx3 = facts.index_facts({"facts": {"us-gaap": {"Depreciation": {"units": {"USD": [F("2026-06-01", "2026-08-31", 400e6)]}}}}})
+    raw3 = facts.extract(fx3, "2026-08-31")
+    assert raw3["da"] == 400e6 and normalize(filled(raw3))["da_label"] == "Depreciation"
+    # an earnings release whose row is "Depreciation" alone
+    assert release.depreciation_only({"cf_labels": {"da": "depreciation"}})
+    assert not release.depreciation_only({"cf_labels": {"da": "depreciation and amortization"}})

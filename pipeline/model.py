@@ -28,9 +28,11 @@ def normalize(raw):
         tax = pretax - pl
     if pretax is None:
         pretax, tax = pl, 0.0
+    flags = []
     if not _close(pretax - tax, pl, 0.005):          # inconsistent tags: trust net income and tax
         pretax = pl + tax
-    oi, flags = raw.get("oi"), []
+        flags.append("pretax_fixed")
+    oi = raw.get("oi")
     if oi is None and raw.get("costs_total") is not None:
         oi = R - raw["costs_total"]
         flags.append("oi_derived")
@@ -69,6 +71,9 @@ def normalize(raw):
         items = []
 
     ocf, da, sbc = raw.get("ocf"), raw.get("da"), raw.get("sbc")
+    # what the D&A figure holds: depreciation alone when that is all the filing tags (or the release prints)
+    dep_only = (da is not None and raw.get("dep") is not None and raw.get("amort") is None
+                and abs(da - raw["dep"]) <= 0.001 * abs(da) + 1)
     if da is not None and da < 0:
         da = None
     if sbc is not None and sbc < 0:
@@ -78,6 +83,7 @@ def normalize(raw):
         "pool": pool, "items": items, "oi": oi, "nonop": nonop, "pretax": pretax, "tax": tax,
         "ni": ni, "nci": nci, "pl": pl, "ocf": ocf, "da": da or 0.0, "sbc": sbc or 0.0,
         "capex": raw.get("capex"), "flags": flags,
+        "da_label": "Depreciation" if dep_only else "Depreciation &amp; amortization",
     }
 
 

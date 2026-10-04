@@ -12,7 +12,7 @@ import re
 import sys
 import traceback
 
-from . import analysis, dims, facts, release, scan, sec, sectors, social, sources, text
+from . import analysis, checks, dims, facts, release, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -151,6 +151,60 @@ def refresh_periods(store, limit=PERIODS_PER_RUN):
             _cf.pop(cik, None)                            # big files: do not keep them all in memory
     if todo:
         print(f"period lists and sources: {n} companies updated, {max(len(todo) - n, 0)} to go")
+
+
+DA_VERSION = 1           # bump when the way D&A is read changes: stored figures are read again (refresh_da)
+DA_PER_RUN = 40
+
+
+def _da_parts(fx, end, annual=False):
+    return {k: facts.value(fx, k, end, annual) for k in ("da", "dep", "amort")}
+
+
+def refresh_da(store, limit=DA_PER_RUN):
+    """Figures stored before D&A was read as depreciation + amortization of intangible assets (a filing that tags the
+    two apart used to give depreciation alone, labelled D&A) are read again from SEC's company facts, largest
+    companies first, a few per run. Earnings-release quarters keep their own figures; only the row's kind is noted."""
+    todo = []
+    for cik in store.ciks():
+        c = store.company(cik)
+        if c.get("quarters") and c.get("profile") and c.get("da_v", 0) < DA_VERSION:
+            last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
+            todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik))
+    n = 0
+    for _, cik in sorted(todo)[:limit]:
+        try:
+            c = store.company(cik)
+            fx = companyfacts(cik)
+            for annual, items in ((False, c.get("quarters") or {}), (True, c.get("years") or {})):
+                for q in items.values():
+                    release_row = q.get("form") == "8-K"
+                    for rk, ek in (("raw", "end"), ("raw_q1", "q1_end"), ("raw_py", "py_end")):
+                        r, end = q.get(rk), q.get(ek)
+                        if not isinstance(r, dict) or not end or (annual and rk == "raw_q1"):
+                            continue
+                        if rk == "raw" and release_row:          # the release's own D&A row stays; say what it holds
+                            lab = ((q.get("src") or {}).get("da") or {}).get("l") or ""
+                            if r.get("da") is not None and lab and "amortization" not in lab.lower():
+                                r["dep"] = r["da"]
+                            continue
+                        r.update(_da_parts(fx, end, annual))
+                    if not release_row and isinstance(q.get("src"), dict):
+                        new = sources.from_xbrl(fx, q["end"], annual=annual)
+                        for k in ("da", "dep", "amort"):
+                            if k in new:
+                                q["src"][k] = new[k]
+                            else:
+                                q["src"].pop(k, None)
+            c["da_v"] = DA_VERSION
+            store.put(cik, c)
+            n += 1
+        except Exception as e:
+            print(f"  D&A not read again for {cik}: {e}", file=sys.stderr)
+        finally:
+            _cf.pop(cik, None)
+    if todo:
+        print(f"D&A read again: {n} companies updated, {max(len(todo) - n, 0)} to go")
 
 
 def recent_rows(sub):
@@ -429,8 +483,9 @@ def _exhibit(cik, accn, primary):
     return rest[0] if rest else primary
 
 
-def _release_quarter(vals, quarterly, fx, q1_end, keys):
-    """Release values -> quarter values (cash flow tables are usually year-to-date)."""
+def _release_quarter(vals, quarterly, fx, q1_end, keys, prior_keys=None):
+    """Release values -> quarter values (cash flow tables are usually year-to-date). prior_keys: the XBRL figure to
+    subtract for a key when the release's row is narrower than ours (its "Depreciation" row: depreciation alone)."""
     out = {}
     for k in keys:
         v = vals.get(k)
@@ -441,7 +496,7 @@ def _release_quarter(vals, quarterly, fx, q1_end, keys):
         if quarterly:
             out[k] = v
         else:
-            prev = facts.ytd_value(fx, k, q1_end) if q1_end else None
+            prev = facts.ytd_value(fx, (prior_keys or {}).get(k, k), q1_end) if q1_end else None
             if prev is not None:
                 out[k] = v - (abs(prev) if k in release.COST_KEYS else prev)
     return out
@@ -538,8 +593,9 @@ def _release_cash(rel, fx, q1_end, fq, py_end=None):
     closest to the previous quarter's; if neither is plausible, leave the cash bridge out rather than draw it wrong."""
     if not rel["cf"]:
         return {}
+    alias = {"da": "dep"} if release.depreciation_only(rel) else None
     direct = _release_quarter(rel["cf"], True, fx, q1_end, release.CF_KEYS)
-    ytd = direct if fq == 1 else _release_quarter(rel["cf"], False, fx, q1_end, release.CF_KEYS)
+    ytd = direct if fq == 1 else _release_quarter(rel["cf"], False, fx, q1_end, release.CF_KEYS, alias)
     ocf_cols = (rel.get("cf_cols") or {}).get("ocf") or []
     if fq != 1 and py_end and len(ocf_cols) > 1:
         ytd_ref = facts.ytd_value(fx, "ocf", py_end)
@@ -605,6 +661,8 @@ def process_release(store, cik, accn, form, starred=False):
         raw = {k: None for k in facts.CONCEPTS}
         raw.update(_release_quarter(rel["is"], True, fx, q1_end, release.IS_KEYS))
         raw.update(_release_cash(rel, fx, q1_end, fq, py_end))
+        if raw.get("da") is not None and release.depreciation_only(rel):
+            raw["dep"] = raw["da"]                     # the chart then says "Depreciation", not D&A
         refs = [facts.value(fx, "tax", e) for e in (q1_end, py_end) if e]
         checked = release.calibrate_tax(raw, rel["cols"], refs)
         raw = release.reconcile(raw, rel["labels"], checked)
@@ -740,6 +798,7 @@ def run(args):
             print(f"  could not queue {cik} for a reader: {e}", file=sys.stderr)
     backfill_history(store)
     refresh_periods(store)
+    refresh_da(store)
     stars = starred_ciks()
     for cik in stars:                                            # multi-quarter history for starred companies
         try:
@@ -838,6 +897,12 @@ RELEASE_NOTE = ("Source: earnings release (8-K Exhibit 99.1, filed {filed}), rea
                 "it splits from or flows into. n/m = not meaningful (a comparison period was ≤ 0 or changed sign).")
 
 
+DERIVED_NOTE = ("GAAP: the statement lines as reported. Derived here, not line items in the filing: other income or expense "
+                "(net), working capital &amp; other, free cash flow and the Δ scale/mix figures.")
+FCF_DEF = (" Free cash flow = operating cash flow − capital expenditures (gross purchases of property and equipment); a "
+           "company’s own (adjusted) free cash flow may net asset sales or incentives and differ.")
+
+
 def _footer(q, kind, Nc):
     lines = [(RELEASE_NOTE if q["form"] == "8-K" else SOURCE_NOTE).format(form=q["form"], filed=q["filed"])]
     if "oi_derived" in Nc["flags"]:
@@ -847,7 +912,8 @@ def _footer(q, kind, Nc):
                      "the cash bridge starts from non-cash charges.")
     lines.append("Quarterly figures for 10-K periods and all cash flows are derived as year-to-date minus the prior year-to-date. "
                  "Working capital &amp; other is the residual between operating cash flow and the listed items."
-                 + (" FCF = operating cash flow minus capital expenditures." if Nc.get("capex") else ""))
+                 + (FCF_DEF if Nc.get("capex") else ""))
+    lines.append(DERIVED_NOTE)
     return lines
 
 
@@ -900,6 +966,7 @@ def quarter_payload(c, q, prev_q):
         "subtitle": (f"Quarter ended {_date(q['end'])} · GAAP · Y/Y vs. {_short(q.get('py_end'))} "
                      f"· Q/Q vs. {_short(q.get('q1_end'))}" + (" · preliminary, from the earnings release" if q["form"] == "8-K" else "")),
         "footer": _footer(q, kind, Nc), "nodes": nodes, "links": links,
+        "checks": checks.checks(q, c, Nc, Nq, Ny),
         "analysis": analysis.paragraphs(f, q["label"], Nc, Nq, Ny, ls, (q.get("lines"), lines_q1, q.get("lines_py")),
                                         py_label=py_label),
         "headline": {"revenue": Nc["R"], "rev_fmt": f.money(Nc["R"]), "yoy": _g(Nc["R"], Ny and Ny["R"]),
@@ -962,7 +1029,8 @@ def year_payload(c, y):
     if "oi_derived" in Nc["flags"]:
         foot.append("Operating profit = revenue minus total costs and expenses (derived; the company does not tag operating income).")
     foot.append("Working capital &amp; other is the residual between operating cash flow and the listed items."
-                + (" FCF = operating cash flow minus capital expenditures." if Nc.get("capex") else ""))
+                + (FCF_DEF if Nc.get("capex") else ""))
+    foot.append(DERIVED_NOTE)
     return {
         "cite": sources.citation(name, y, "fy"),
         "period": "fy", "key": "fy-" + y["end"], "compare": None, "compare_y": compare_y, "preliminary": False,
@@ -971,6 +1039,7 @@ def year_payload(c, y):
         "title": f"{name} {y['label']} earnings &amp; cash flow",
         "subtitle": f"Fiscal year ended {_date(y['end'])} · GAAP · Y/Y vs. {_short(y.get('py_end'))}",
         "footer": foot, "nodes": nodes, "links": links,
+        "checks": checks.checks(y, c, Nc, None, Ny, annual=True),
         "analysis": [_yearly(x) for x in analysis.paragraphs(f, y["label"], Nc, None, Ny, ls,
                                                              (y.get("lines"), None, y.get("lines_py")), py_label=py_label or "a year earlier")],
         "headline": {"revenue": Nc["R"], "rev_fmt": f.money(Nc["R"]), "yoy": _g(Nc["R"], Ny and Ny["R"]),
@@ -1067,6 +1136,7 @@ def render(store, out, stars=frozenset()):
                       "rev": latest["headline"]["rev_fmt"], "revenue": latest["headline"]["revenue"],
                       "yoy": latest["headline"]["yoy"], "om": round(latest["headline"]["om"], 1),
                       "starred": cik in stars, "kind": latest["kind"], "prelim": latest["form"] == "8-K",
+                      **({"check": "warn"} if checks.has_warning(latest.get("checks")) else {}),
                       **({"also": also} if also else {}),
                       **({"after_release": latest["release_check"]["filed"], "release_ok": latest["release_check"]["ok"]}
                          if latest.get("release_check") else {})})

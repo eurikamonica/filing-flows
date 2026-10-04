@@ -30,8 +30,11 @@ CONCEPTS = {
     "pl": ["ProfitLoss"],
     "nci": ["NetIncomeLossAttributableToNoncontrollingInterest", "MinorityInterestInNetIncomeLossOfConsolidatedEntities"],
     "ocf": ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
-    "da": ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet",
-           "DepreciationAndAmortization", "DepreciationDepletionAndAmortizationPropertyPlantAndEquipment", "Depreciation"],
+    # depreciation & amortization: a combined tag, else depreciation + amortization of intangibles (see _da: Oracle,
+    # for one, tags the two apart; depreciation alone is labelled "Depreciation" on the chart, never D&A)
+    "da": ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"],
+    "dep": ["DepreciationDepletionAndAmortizationPropertyPlantAndEquipment", "Depreciation"],
+    "amort": ["AmortizationOfIntangibleAssets"],
     "sbc": ["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"],
     # capital expenditures: the general tags, then the ones oil & gas, real-estate and utility filers use
     "capex": ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets",
@@ -91,7 +94,33 @@ def _year_from(per, end):
     return None
 
 
+def _first(facts, key, get):
+    """(value, concept) of the first tag of CONCEPTS[key] that has a figure, else (None, None)."""
+    for concept in CONCEPTS[key]:
+        per = facts.get(concept)
+        if per:
+            v = get(per)
+            if v is not None:
+                return v, concept
+    return None, None
+
+
+def _da(facts, get):
+    """Depreciation & amortization: the combined tag, else depreciation + amortization of intangible assets, else
+    depreciation alone. `get` reads one tag's figure for the period."""
+    v, _ = _first(facts, "da", get)
+    if v is not None:
+        return v
+    dep, _ = _first(facts, "dep", get)
+    if dep is None:
+        return None
+    amort, _ = _first(facts, "amort", get)
+    return dep + (amort or 0)
+
+
 def value(facts, key, end, annual=False):
+    if key == "da":
+        return _da(facts, lambda per: _year_from(per, end) if annual else _quarter_from(per, end))
     vals = []
     for concept in CONCEPTS[key]:
         per = facts.get(concept)
@@ -138,8 +167,15 @@ def provenance(facts, end, annual=False):
     return out
 
 
+def _ytd(per, end):
+    at_end = [(s, f) for (s, e), f in per.items() if e == end]
+    return min(at_end, key=lambda x: x[0])[1]["val"] if at_end else None
+
+
 def ytd_value(facts, key, end):
     """Year-to-date value ending at `end` (the longest duration reported), e.g. nine months of cash flow."""
+    if key == "da":
+        return _da(facts, lambda per: _ytd(per, end))
     vals = []
     for concept in CONCEPTS[key]:
         at_end = [(s, f) for (s, e), f in facts.get(concept, {}).items() if e == end]

@@ -269,6 +269,12 @@ def parse(html, filed, last_end=None, prior_revenue=None):
     return out
 
 
+def depreciation_only(rel):
+    """The release's D&A row is depreciation alone ("Depreciation", "Depreciation expense"), no amortization."""
+    lab = ((rel.get("cf_labels") or {}).get("da") or "").lower()
+    return bool(lab) and "amortization" not in lab
+
+
 def close(a, b, unit, tol=0.005):
     """Equal within tol, allowing for the rounding of numbers printed in `unit` (thousands, millions)."""
     return a is not None and b is not None and abs(a - b) <= max(tol * abs(b), 0.6 * unit)

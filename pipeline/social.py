@@ -28,6 +28,7 @@ import threading
 
 import requests
 
+from . import checks
 from . import text as filing_text
 
 API = "https://api.x.com/2"
@@ -214,6 +215,7 @@ def business(c, q, top=5):
             "mix": [(n, money(v, big), share_words(s)) for n, v, s in revenue_mix(q, top)]}
 
 
+SOURCE_DISCLAIMER = "Read automatically from the filing; errors are possible. Not investment advice."
 ROLES = {"headline": "Headline and charts", "business": "What the company does", "about": "The company in its own words",
          "analysis": "Analysis", "quote": "From the filing", "source": "Source"}
 
@@ -332,12 +334,12 @@ def compose_parts(c, q, cfg):
     period = "fiscal year" if q.get("period") == "fy" else "quarter"
     src = (f"Source: {name} {form_words(q)} for the {period} ended {fdate(q.get('end'))}, filed with the SEC on "
            f"{fdate(q.get('filed'))}" + (f" (accession {acc.group(1)})" if acc else "") + ". "
-           + ("Preliminary: read from the earnings release until the 10-Q/10-K. " if prelim else "GAAP figures as reported. ")
-           + "Generated automatically; not investment advice.")
+           + ("Preliminary: read from the earnings release until the 10-Q/10-K." if prelim else "GAAP figures as reported."))
+    tail = " " + SOURCE_DISCLAIMER                 # always kept: the source sentence is shortened first
     link = cfg.get("site_url", "").rstrip("/")
     if cfg.get("include_link") and link:
-        src = fit("", src, f" {link}/#c-{p['cik']}", limit=room)
-    parts.append(("source", src if xlen(src) <= room else fit("", src, limit=room)))
+        tail += f" {link}/#c-{p['cik']}"
+    parts.append(("source", src + tail if xlen(src + tail) <= room else fit("", src, tail, limit=room)))
 
     # the general hashtags: on the last post, or (when it is full) on the reply with the most room; never in the headline
     tags = [t for t in hashtags(cfg.get("hashtags", DEFAULTS["hashtags"]))
@@ -405,6 +407,9 @@ def candidates(site, st, cfg, today=None):
         if e.get("prelim") and not cfg["preliminary"]:
             continue
         if e.get("filed") and (today - dt.date.fromisoformat(e["filed"])).days > cfg["max_age_days"]:
+            continue
+        if e.get("check") == "warn" and cfg.get("mode") == "api":     # a probable data error: never posted unseen
+            print(f"held for review (data check): {e.get('ticker') or e['cik']} {e.get('label')}")
             continue
         out.append(e)
     out.sort(key=lambda e: (e.get("filed") or "", e.get("revenue") or 0), reverse=True)
@@ -591,8 +596,10 @@ def build_email(items, cfg, sender, to):
         text.append(f"{'=' * 60}\n{title}\n{filing_line(q)}\n"
                     + "".join(f"Attach to post 1: {name} ({what})\n" for name, what in files)
                     + f"Open post 1 in X: {intent_url(posts[0]['text'])}" + (f"\nChart page: {page}" if page else "") + "\n")
+        text.extend(([f"CHECK BEFORE POSTING: a probable data error."] if checks.has_warning(q.get("checks")) else [])
+                    + checks.lines(q))
         rich.append(f'<h2 style="font:600 19px/1.3 Helvetica,Arial,sans-serif;margin:28px 0 4px">{H.escape(title)}</h2>'
-                    f'<p style="{small}">{H.escape(filing_line(q))}</p>'
+                    f'<p style="{small}">{H.escape(filing_line(q))}</p>' + checks.html_box(q, owner=True)
                     + "".join(f'<p style="{small}">Attach to post 1: <b>{H.escape(name)}</b> · {H.escape(what)}</p>' for name, what in files)
                     + f'<p style="{small};margin-bottom:12px"><a href="{H.escape(intent_url(posts[0]["text"]))}">Open post 1 in X</a>'
                     + (f' · <a href="{H.escape(page)}">Chart page</a>' if page else "") + "</p>")

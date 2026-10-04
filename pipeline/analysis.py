@@ -121,7 +121,8 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
         if Nc["pl"] > 0 and Nc["ocf"] > 0:
             s += f", {Nc['ocf'] / Nc['pl'] * 100:.0f}% of net earnings"
         s += "."
-        adds = [(n, v) for n, v in (("depreciation and amortization", Nc["da"]), ("share-based compensation", Nc["sbc"])) if v]
+        da_words = (Nc.get("da_label") or "depreciation and amortization").replace("&amp;", "and").lower()
+        adds = [(n, v) for n, v in ((da_words, Nc["da"]), ("share-based compensation", Nc["sbc"])) if v]
         if adds:
             s += " Non-cash charges added back " + " and ".join(f"{f.money(v)} of {n}" for n, v in adds) + "."
         r = Nc["ocf"] - Nc["pl"] - Nc["da"] - Nc["sbc"]

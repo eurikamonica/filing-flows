@@ -309,7 +309,8 @@ def _bridge(S, Nc, nc, net_id, net_key, has_nci, f):
     if nib > 0 and Nc["ocf"] > 0 and nib + min(rx, 0) >= 0:
         ac, oc = nc + 1, nc + 2
         if Nc["da"] > 0:
-            S.node("da", ac, "da", "profit", "Depreciation &amp; amortization", "left", "ocf", "OCF", notekeys=NOTE_KEYS["da"])
+            S.node("da", ac, "da", "profit", Nc.get("da_label") or "Depreciation &amp; amortization", "left", "ocf", "OCF",
+                   notekeys=NOTE_KEYS["da"])
         if Nc["sbc"] > 0:
             S.node("sbc", ac, "sbc", "profit", "Share-based compensation", "left", "ocf", "OCF", notekeys=NOTE_KEYS["sbc"])
         note = ["incl. minority interests"] if has_nci else []
@@ -350,7 +351,7 @@ def _capex(S, Nc, oc, f):
     cc, R = oc + 1, Nc["R"]
     if cap <= ocf:
         margin = share(ocf - cap, R)
-        S.node("fcf", cc, "fcf", "profit", "Free cash flow", "right", "ocf", "OCF",
+        S.node("fcf", cc, "fcf", "profit", "Free cash flow (OCF − capex)", "right", "ocf", "OCF",
                extra=[f"FCF margin {margin}"] if margin else [], notekeys=NOTE_KEYS["fcf"])
         S.node("capex", cc, "capex", "cost", "Capital expenditures", "right", "ocf", "OCF", notekeys=NOTE_KEYS["capex"])
         S.link("ocf", "fcf", "fcf", "profit")
@@ -358,7 +359,7 @@ def _capex(S, Nc, oc, f):
     else:
         S.node("capex", cc, "capex", "cost", "Capital expenditures", "right", "ocf", "OCF",
                extra=[f"{f.money(cap - ocf)} more than operating cash flow"], notekeys=NOTE_KEYS["capex"])
-        S.node("fcf_neg", oc, "fcf_neg", "cost", "Negative free cash flow", "below", "capex", "capex",
+        S.node("fcf_neg", oc, "fcf_neg", "cost", "Negative free cash flow (OCF − capex)", "below", "capex", "capex",
                extra=["paid from cash or financing", "Y/Y, Q/Q compare the size of the gap"], notekeys=NOTE_KEYS["fcf"])
         S.link("ocf", "capex", "capex_from_ocf", "cost")
         S.link("fcf_neg", "capex", "fcf_neg", "cost")
@@ -372,7 +373,7 @@ def _bridge_general(S, Nc, c0, f, net_id=None, net_key=None, rkey="r"):
     if net_id and S.Qc[net_key] > 0:
         srcs.append((net_id, net_key, 1, None, "net"))
     if Nc["da"] > 0:
-        srcs.append(("da", "da", 1, "Depreciation &amp; amortization", "da"))
+        srcs.append(("da", "da", 1, Nc.get("da_label") or "Depreciation &amp; amortization", "da"))
     if Nc["sbc"] > 0:
         srcs.append(("sbc", "sbc", 1, "Share-based compensation", "sbc"))
     if rx > 0:

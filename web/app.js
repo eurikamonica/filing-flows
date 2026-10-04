@@ -553,6 +553,11 @@
           <dt>Data</dt><dd>${q.form === '8-K' ? 'This quarter read from the tables in the press release (Exhibit 99.1); earlier quarters from XBRL company facts'
             : fy ? 'Full-year values as reported in the 10-K (XBRL company facts); revenue lines from the filing’s own XBRL instance'
             : 'XBRL company facts; revenue lines from the filing’s own XBRL instance'}</dd>
+          ${(q.checks || []).length ? `<dt>Data checks</dt><dd><ul class="checks">${q.checks.map((x) => `<li class="${x.level === 'warn' ? 'warn' : ''}">${
+            x.level === 'warn' ? '<b>Please verify:</b> ' : ''}${t(x.text)}</li>`).join('')}</ul></dd>` : ''}
+          <dt>Accuracy</dt><dd>Read automatically from the filing; errors are possible, so check the filing before relying on a figure.${
+            site.repo ? ` <a href="https://github.com/${t(site.repo)}/issues/new?title=${encodeURIComponent(`Data error: ${ticker || p.cik} ${S.dec(q.label)}`)}&body=${
+              encodeURIComponent(`Chart: ${location.href}\nWhich figure looks wrong, and what does the filing say?\n`)}" target="_blank" rel="noopener">Report an error ↗</a>` : ''}</dd>
         </dl>
       </div>`;
     body.appendChild(text);

@@ -788,6 +788,14 @@ def main():
                     pg.wait_for_timeout(100)
                 issues = pg.evaluate(CHECK_LABELS)
                 print(f"{co['ticker']:6} {view}: {len(issues)} layout issues", issues[:4])
+                if view == "std":                        # every chart and page carries the accuracy statement
+                    svg_text = pg.evaluate("[...document.querySelectorAll('.sheet svg text')].map((x) => x.textContent).join(' ')")
+                    if "can contain errors" not in svg_text or "Not investment advice" not in svg_text:
+                        fails.append(f"{co['ticker']}: the chart has no accuracy statement")
+                    has_repo = bool(json.load(open(os.path.join(args.site, "data", "site.json"))).get("repo"))
+                    if "Accuracy" not in pg.inner_text(".facts") or (
+                            has_repo and not pg.locator(".facts a", has_text="Report an error").count()):
+                        fails.append(f"{co['ticker']}: the filing facts have no accuracy row or report link")
                 (warns if view != "std" else fails).extend(f"{co['ticker']} {view}: {i}" for i in issues)
                 shot(pg, f"c_{co['ticker']}_{view}.png", full_page=True)
                 if view != "std":                          # the same comparison with decreases drawn (hatched)

@@ -157,7 +157,9 @@ def comparison(cik, kind, a_end, b_end):
                     "n/m = not meaningful (a comparison period was ≤ 0 or changed sign)."]
     if kind == "q":
         pl["footer"].append("Fourth quarters and cash flows are derived as year-to-date minus the prior year-to-date. "
-                            "Working capital &amp; other is the residual between operating cash flow and the listed items.")
+                            "Working capital &amp; other is the residual between operating cash flow and the listed items."
+                            + build.FCF_DEF)
+    pl["footer"].append(build.DERIVED_NOTE)
     pl["x_thread"] = []
     return pl
 
