@@ -30,6 +30,7 @@ create table if not exists public.subscriptions (
   fcf_basis    text    not null default 'company' check (fcf_basis in ('company', 'noted', 'ocf')),   -- free cash flow: the
                                                         -- company's own figure where it can be drawn ('noted': and say why
                                                         -- when it is not), or operating cash flow − capex for every company
+  chart_drag_zoom boolean not null default false,       -- company pages: drag charts with the mouse, wheel to zoom
   unsub_token  uuid    not null default gen_random_uuid(),
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
@@ -49,6 +50,7 @@ alter table public.subscriptions add column if not exists digest_hour smallint n
 alter table public.subscriptions add column if not exists tz text;
 alter table public.subscriptions add column if not exists daily_scope text not null default 'follows';
 alter table public.subscriptions add column if not exists fcf_basis text not null default 'company';
+alter table public.subscriptions add column if not exists chart_drag_zoom boolean not null default false;
 alter table public.subscriptions alter column frequency set default 'daily';   -- new accounts: the 8:00 daily report
 do $$ begin
   alter table public.subscriptions add constraint subscriptions_attach_images_check check (attach_images in ('png', 'jpg', 'none'));

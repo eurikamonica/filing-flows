@@ -38,6 +38,9 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
   Under it is the full citation (company, form, period, filing date, accession number) with links to the filing
   itself, SEC's inline XBRL viewer, SEC's XBRL data for that tag across all periods, and the filing index.
   Quarters stored before this was added get their source lines filled in from SEC company facts during later scans.
+- **Drag and zoom** (optional, Alerts → On company pages; off by default): hold the left mouse button on an empty part of
+  a chart to move it (the pointer turns into a hand), use the wheel to zoom around the pointer, double-click or *Reset
+  view* to see it whole. Only the on-screen view changes; exports are the whole chart (`subscriptions.chart_drag_zoom`).
 - **Click any node** for a small chart of that line over the last five quarters on file (amount as columns, change
   against a year earlier and against the previous quarter as lines; hover a quarter for its figures), and for what the company wrote about that line in the same filing (MD&A paragraphs, quoted
   verbatim). Company pages open with the first paragraphs of Item 1 *Business* from the latest 10-K; a company

@@ -118,11 +118,14 @@ main { padding-block: 28px 64px; }
 /* chart + notes */
 .stage { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 1500px) { .stage { grid-template-columns: minmax(0, 1fr) 340px; } }
-.hintline { display: flex; gap: 8px; align-items: center; font-size: 13.5px; color: var(--muted); margin: -2px 0 10px; }
+.hintline { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 13.5px; color: var(--muted); margin: -2px 0 10px; }
 .sheet { background: var(--sheet); border: 1px solid var(--sheet-line); border-radius: 10px; overflow-x: auto; box-shadow: var(--shadow); min-width: 0; }
 .sheet svg { display: block; height: auto; }
 .sheet.fit svg { width: max(100%, var(--min-w, 0px)); }
 .sheet .node { cursor: pointer; }
+.sheet.panzoom.grabbing, .sheet.panzoom.grabbing * { cursor: grabbing !important; user-select: none; }
+.pz-hint { color: var(--muted); }
+@media (hover: none) { .pz-hint { display: none !important; } }      /* a mouse feature: phones keep pinch and swipe */
 .sheet .node .hit { pointer-events: all; }
 .sheet .node:hover .bar { filter: brightness(.88); }
 .sheet .node.sel .bar { stroke: #1d1d1b; stroke-width: 2; }

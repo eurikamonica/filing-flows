@@ -33,7 +33,7 @@
   };
   const savedCmp = prefs.get('compare', null);                       // 'q' | 'y' | null (older builds stored true)
   const state = { compare: savedCmp === true ? 'q' : savedCmp, zoom: prefs.get('zoom', 'fit'), decreases: prefs.get('decreases', false),
-    fcf: fcfBasis(prefs.get('fcf', 'company')), charts: [] };
+    fcf: fcfBasis(prefs.get('fcf', 'company')), dragZoom: prefs.get('drag-zoom', false) === true, charts: [] };
   // Free cash flow as the reader chose in their alerts (pipeline/reported.py fcf_view does the same for e-mails):
   // 'company' draws the company's own figure where the pipeline could check it against SEC data, else the formula;
   // 'noted' also says, on a chart drawn by the formula, why there is no company figure ("fcf_note");
@@ -191,6 +191,7 @@
           <button type="button" data-zoom="fit">Fit</button>
           <button type="button" data-zoom="full">100%</button>
         </div>
+        <button class="btn small" type="button" data-reset hidden title="Show the whole chart again (or double-click an empty part of it)">Reset view</button>
         <div class="export" role="group" aria-label="Export chart"><span>Export</span>
           <button class="btn" type="button" data-x="png">PNG</button>
           <button class="btn" type="button" data-x="jpg">JPG</button>
@@ -199,7 +200,8 @@
         </div>
       </div>
       <div class="hintline">${ctx.group ? 'Click a company bar to open its own chart.' :
-        '<span class="dot"></span><span>Click any node for what the company wrote about it in the filing. Exports show the chart only.</span>'}</div>
+        '<span class="dot"></span><span>Click any node for what the company wrote about it in the filing. Exports show the chart only.</span>'}
+        <span class="pz-hint" hidden>· Hold the left button on an empty part to drag the chart, use the wheel to zoom, double-click to reset.</span></div>
       <div class="stage">
         <div class="sheet"><div class="loading">Drawing…</div></div>
         <aside class="notes" aria-live="polite"></aside>
@@ -213,7 +215,74 @@
     if (acct.prefs && typeof acct.prefs.cmp_decreases === 'boolean') state.decreases = acct.prefs.cmp_decreases;
     const cmpOn = () => !!mode();
 
+    // drag and zoom (Alerts → On company pages): hold the left mouse button on an empty part of the chart (not a node)
+    // to move it, the pointer turning into a hand; the wheel zooms around the pointer; double-click or "Reset view" shows
+    // it whole again. It changes the SVG's viewBox only: exports and the notes are unaffected.
+    const MAX_ZOOM = 8;
+    let vb = null, drag = null, dragged = false;              // vb: [x, y, w, h] of the chart in view; null = all of it
+    function applyView() {
+      const svg = $('svg', sheet);
+      if (!svg || !scene) return;
+      svg.setAttribute('viewBox', (vb || [0, 0, scene.W, scene.H]).map((x) => +x.toFixed(2)).join(' '));
+      $('[data-reset]', el).hidden = !vb;
+      sheet.classList.toggle('zoomed', !!vb);
+    }
+    function setView(v) {                                       // kept inside the chart, the chart's own proportions
+      const W = scene.W, H = scene.H;
+      const w = Math.min(W, Math.max(W / MAX_ZOOM, v[2])), h = w * H / W;
+      vb = w >= W - 0.5 ? null : [Math.min(Math.max(0, v[0]), W - w), Math.min(Math.max(0, v[1]), H - h), w, h];
+      applyView();
+    }
+    const blank = (target) => !(target.closest && target.closest('[data-node], .note-mark'));
+    const at = (e) => {                                         // the pointer in chart coordinates
+      const r = $('svg', sheet).getBoundingClientRect(), v = vb || [0, 0, scene.W, scene.H];
+      return [v[0] + (e.clientX - r.left) / r.width * v[2], v[1] + (e.clientY - r.top) / r.height * v[3], r];
+    };
+    sheet.addEventListener('wheel', (e) => {
+      if (!state.dragZoom || !scene || !$('svg', sheet)) return;
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
+      if (dy > 0 && !vb) return;                                // whole chart already: the page scrolls on
+      e.preventDefault();
+      const [px, py] = at(e), v = vb || [0, 0, scene.W, scene.H];
+      const k = Math.exp(Math.max(-300, Math.min(300, dy)) * 0.0015);   // > 1 zooms out
+      const w = v[2] * k, h = v[3] * k;
+      setView([px - (px - v[0]) * (w / v[2]), py - (py - v[1]) * (h / v[3]), w, h]);
+    }, { passive: false });
+    sheet.addEventListener('pointerdown', (e) => {
+      if (!state.dragZoom || e.pointerType !== 'mouse' || e.button !== 0 || !scene || !blank(e.target)) return;
+      e.preventDefault();                                       // no text selection while dragging
+      drag = { x: e.clientX, y: e.clientY, vb: vb && vb.slice(), left: sheet.scrollLeft, id: e.pointerId, moved: false };
+      sheet.classList.add('grabbing');
+      try { sheet.setPointerCapture(e.pointerId); } catch (err) { /* older browsers */ }
+    });
+    sheet.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) < 3) return;
+      drag.moved = true;
+      if (drag.vb) {
+        const r = $('svg', sheet).getBoundingClientRect();
+        setView([drag.vb[0] - dx / r.width * drag.vb[2], drag.vb[1] - dy / r.height * drag.vb[3], drag.vb[2], drag.vb[3]]);
+      } else {
+        sheet.scrollLeft = drag.left - dx;                      // whole chart at 100%: the sheet scrolls sideways
+      }
+    });
+    const endDrag = (e) => {
+      if (!drag || (e && e.pointerId !== drag.id)) return;
+      dragged = drag.moved;                                     // the click that ends a drag does not close the note
+      drag = null;
+      sheet.classList.remove('grabbing');
+    };
+    sheet.addEventListener('pointerup', endDrag);
+    sheet.addEventListener('pointercancel', endDrag);
+    sheet.addEventListener('dblclick', (e) => {
+      if (state.dragZoom && blank(e.target) && vb) { vb = null; applyView(); }
+    });
+
     function sync() {
+      sheet.classList.toggle('panzoom', state.dragZoom);
+      $('.pz-hint', el).hidden = !state.dragZoom;
+      if (!state.dragZoom && vb) { vb = null; applyView(); }
       $$('[data-view]', el).forEach((b) => b.classList.toggle('on', b.dataset.view === (mode() || 'std')));
       $('.dec-toggle', el).hidden = !mode();
       $$('[data-zoom]', el).forEach((b) => b.classList.toggle('on', b.dataset.zoom === state.zoom));
@@ -282,6 +351,8 @@
       await fontsReady();
       scene = S.layout(spec, { compare: mode(), decreases: state.decreases });
       sheet.innerHTML = S.toSVG(scene, S.dec(mode() ? cmpOf(mode()).title : spec.title));
+      vb = null;                                                // another layout: shown whole
+      applyView();
       $$('.node', sheet).forEach((g) => {
         const n = byId.get(g.dataset.node);
         g.setAttribute('tabindex', '0');
@@ -292,6 +363,7 @@
       select(selected);
     }
     sheet.addEventListener('click', (e) => {
+      if (dragged) { dragged = false; return; }
       const g = e.target.closest('[data-node]');
       select(g ? g.dataset.node : null);
     });
@@ -323,6 +395,7 @@
       prefs.set('zoom', state.zoom);
       sync();
     }));
+    $('[data-reset]', el).addEventListener('click', () => { vb = null; applyView(); });
     $$('[data-x]', el).forEach((b) => b.addEventListener('click', async () => {
       if (!scene) return;
       const share = b.dataset.x === 'share';
@@ -345,6 +418,7 @@
       }
     }));
     el.redraw = draw;
+    el.sync = sync;
     el.cmpOn = cmpOn;
     el.mode = mode;
     el.className = 'chart-ui';
@@ -1303,7 +1377,7 @@
   const PREF_DEFAULTS = { tickers: [], sectors: [], all_above: false, min_revenue: 1e9, starred: false,
     frequency: 'daily', email_on: true, push_on: true, final_too: true };
   const MAIL_DEFAULTS = { chart_q: false, chart_y: false, chart_history: false, attach_images: 'png', attach_pdf: true, cmp_decreases: false,
-    changes_detail: false, custom_compare: false, digest_hour: 8, tz: null, daily_scope: 'follows', fcf_basis: 'company' };   // columns added after the first release (see savePrefs)
+    changes_detail: false, custom_compare: false, digest_hour: 8, tz: null, daily_scope: 'follows', fcf_basis: 'company', chart_drag_zoom: false };   // columns added after the first release (see savePrefs)
   const acct = { client: undefined, prefs: null, flash: null, owner: undefined, osets: undefined };
   function browserTZ() {
     try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch (e) { return null; }
@@ -1425,6 +1499,11 @@
       prefs.set('decreases', state.decreases);
       $$('[data-dec]').forEach((cb) => { cb.checked = state.decreases; });
       state.charts.forEach((c) => c.redraw && c.redraw());
+    }
+    if (typeof row.chart_drag_zoom === 'boolean' && row.chart_drag_zoom !== state.dragZoom) {   // drag and zoom charts
+      state.dragZoom = row.chart_drag_zoom;
+      prefs.set('drag-zoom', state.dragZoom);
+      state.charts.forEach((c) => c.sync && c.sync());
     }
     const fcf = fcfBasis(row.fcf_basis);
     if ('fcf_basis' in row && fcf !== state.fcf) {                       // the account setting wins here too
@@ -1799,6 +1878,9 @@
                 cash flow − capital expenditures: one definition for every company and quarter. The company’s own figure is named on the
                 chart</span></label></fieldset>
           <fieldset><legend>On company pages</legend>
+            <label class="long"><input type="checkbox" id="drag-zoom" ${m.chart_drag_zoom ? 'checked' : ''}><span>Drag and zoom charts with the mouse:
+              hold the left button on an empty part of a chart to move it (the pointer turns into a hand), use the wheel to zoom in
+              and out, double-click to see it whole again</span></label>
             <label class="long"><input type="checkbox" id="custom-compare" ${m.custom_compare ? 'checked' : ''}><span>Compare any two periods: company pages get a ⇄ Compare any two button. Tick any two quarters (or two fiscal years) back to 2009–2011, when SEC’s XBRL data starts, and the comparison Sankey is drawn from SEC data within a few minutes</span></label></fieldset>
           <div class="row"><button class="btn primary" type="submit">Save</button><span class="muted" id="save-msg" role="status"></span></div>
         </form>
@@ -1865,11 +1947,13 @@
             cmp_decreases: $('#cmp-decreases').checked, changes_detail: $('#changes-detail').checked,
             custom_compare: $('#custom-compare').checked, digest_hour: +$('#digest-hour').value,
             daily_scope: (($('input[name="scope"]:checked') || {}).value === 'all') ? 'all' : 'follows',
-            fcf_basis: fcfBasis(($('input[name="fcf"]:checked') || {}).value),
+            fcf_basis: fcfBasis(($('input[name="fcf"]:checked') || {}).value), chart_drag_zoom: $('#drag-zoom').checked,
           });
           state.decreases = $('#cmp-decreases').checked;           // company pages follow the account setting
           prefs.set('decreases', state.decreases);
           state.fcf = fcfBasis(($('input[name="fcf"]:checked') || {}).value);
+          state.dragZoom = $('#drag-zoom').checked;
+          prefs.set('drag-zoom', state.dragZoom);
           prefs.set('fcf', state.fcf);
           let note = '';
           if ($('#reader-copy')) {                                   // the site owner: also the reader version?

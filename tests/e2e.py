@@ -456,6 +456,70 @@ def check_accounts(b, base, fails, shot, site):
     pg.check('input[name="fcf"][value="company"]')
     pg.click("#prefs-form button[type=submit]")
     pg.wait_for_function("document.querySelector('#save-msg').textContent === 'Saved.'")
+    # drag and zoom (Alerts → On company pages, off by default): hand while dragging, wheel zooms, double-click resets
+    vbox = lambda: [float(x) for x in pg.get_attribute(".sheet svg", "viewBox").split()]
+    pg.goto(base + "#c-320193")
+    pg.wait_for_selector(".sheet svg g.node")
+    full = vbox()
+    box = pg.locator(".sheet").first.bounding_box()
+    pg.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    pg.mouse.wheel(0, -400)
+    pg.wait_for_timeout(200)
+    if vbox() != full or pg.locator(".pz-hint").first.is_visible():
+        fails.append("drag and zoom: on before it was chosen in Alerts")
+    pg.goto(base + "#account")
+    pg.wait_for_selector("#prefs-form")
+    if pg.is_checked("#drag-zoom"):
+        fails.append("drag and zoom: should be off by default")
+    pg.check("#drag-zoom")
+    pg.click("#prefs-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#save-msg').textContent === 'Saved.'")
+    if ff("window.__ff.db.subscriptions[0].chart_drag_zoom") is not True:
+        fails.append("drag and zoom: not saved to the account")
+    pg.goto(base + "#c-320193")
+    pg.wait_for_selector(".sheet svg g.node")
+    box = pg.locator(".sheet").first.bounding_box()
+    pg.mouse.move(box["x"] + box["width"] * 0.5, box["y"] + box["height"] * 0.5)
+    pg.mouse.wheel(0, -400)
+    pg.wait_for_timeout(200)
+    z = vbox()
+    if not (z[2] < full[2] * 0.8 and pg.locator("[data-reset]").first.is_visible() and pg.locator(".pz-hint").first.is_visible()):
+        fails.append(f"drag and zoom: the wheel did not zoom in: {z} vs {full}")
+    spot = pg.evaluate("""() => {                 // an empty part of the chart (no node there)
+      const r = document.querySelector('.sheet svg').getBoundingClientRect();
+      for (let fy = 0.15; fy < 0.9; fy += 0.05) for (let fx = 0.1; fx < 0.9; fx += 0.05) {
+        const x = r.left + r.width * fx, y = r.top + r.height * fy, el = document.elementFromPoint(x, y);
+        if (el && el.closest('.sheet') && !el.closest('[data-node], .note-mark')) return [x, y];
+      }
+      return null; }""")
+    if not spot:
+        fails.append("drag and zoom: no empty spot found to drag from")
+    else:
+        pg.mouse.move(*spot)
+        pg.mouse.down()
+        hand = pg.evaluate("getComputedStyle(document.querySelector('.sheet svg')).cursor")
+        for i in range(1, 6):
+            pg.mouse.move(spot[0] - 30 * i, spot[1] - 12 * i)
+        pg.mouse.up()
+        moved = vbox()
+        print(f"drag and zoom: zoomed {full[2] / z[2]:.1f}x, hand while held: {hand}, dragged from x {z[0]:.0f} to {moved[0]:.0f}")
+        if hand != "grabbing" or not moved[0] > z[0] or moved[2] != z[2]:
+            fails.append(f"drag and zoom: dragging did not move the chart with a hand: {hand} {z} -> {moved}")
+        if pg.locator(".notes.open").count():
+            fails.append("drag and zoom: the click that ends a drag opened or closed a note")
+        pg.locator('g.node[data-node="revenue"] rect.hit').dispatch_event("click")   # nodes still open their notes
+        if not pg.locator(".notes.open").count():
+            fails.append("drag and zoom: clicking a node no longer opens its note")
+        shot(pg, "c_AAPL_zoomed.png")
+        pg.mouse.dblclick(*spot)
+        pg.wait_for_timeout(150)
+        if vbox() != full or pg.locator("[data-reset]").first.is_visible():
+            fails.append(f"drag and zoom: double-click did not show the whole chart: {vbox()}")
+    pg.goto(base + "#account")                                  # off again for the checks below
+    pg.wait_for_selector("#prefs-form")
+    pg.uncheck("#drag-zoom")
+    pg.click("#prefs-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#save-msg').textContent === 'Saved.'")
     pg.goto(base + "#account")
     pg.wait_for_selector("#prefs-form")
     if row["tickers"] != ["AAPL"] or row["frequency"] != "daily" or len(row["sectors"]) != 1 or row["min_revenue"] != 5e9 or not row["all_above"]:
