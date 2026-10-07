@@ -7,6 +7,7 @@ on:
     types:
       - company-request            # a reader asked for a company the site does not have (Supabase wake, optional)
       - scan                       # an outside clock (Supabase pg_cron, see README): on time, unlike GitHub's schedule
+      - reread                     # the owner asked to re-read stored figures (Owner tools; Supabase wake, optional)
   workflow_dispatch:
     inputs:
       backfill_days:
@@ -19,6 +20,10 @@ on:
         default: "1500"
       companies:
         description: "Owner: also build these companies now (tickers or CIKs, comma-separated, e.g. MS, GS)"
+        required: false
+        default: ""
+      reread:
+        description: "Owner: re-read these companies' stored figures from SEC now (tickers or CIKs; ALL = every company, a few dozen per run)"
         required: false
         default: ""
 
@@ -69,13 +74,18 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           OWNER_COMPANIES: ${{ github.event.inputs.companies }}
+          OWNER_REREAD: ${{ github.event.inputs.reread }}
         run: |
           python -m pipeline.custom claim-companies --out build-ciks.txt || true
           printf '%s\n' "$OWNER_COMPANIES" >> build-ciks.txt     # the owner's own list (Run workflow), no sign-in needed
+          python -m pipeline.custom claim-rereads --out reread-ciks.txt || true    # Owner tools: "Re-read stored figures"
+          printf '%s\n' "$OWNER_REREAD" >> reread-ciks.txt
 
       - name: Scan new 10-Q / 10-K filings and build charts
         run: |
+          touch reread-ciks.txt
           python -m pipeline.build run --store store --out _site/data --build-ciks-file build-ciks.txt \
+            --reread-ciks-file reread-ciks.txt \
             --backfill-days "${{ github.event.inputs.backfill_days || 0 }}" \
             --max-filings "${{ github.event.inputs.max_filings || 1500 }}"
 
@@ -84,7 +94,9 @@ jobs:
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python -m pipeline.custom finish-companies --site _site
+        run: |
+          python -m pipeline.custom finish-rereads || true
+          python -m pipeline.custom finish-companies --site _site
 
       - name: Assemble site
         env:                                   # public values (repository variables): the sign-in box on the site
