@@ -33,7 +33,8 @@
   };
   const savedCmp = prefs.get('compare', null);                       // 'q' | 'y' | null (older builds stored true)
   const state = { compare: savedCmp === true ? 'q' : savedCmp, zoom: prefs.get('zoom', 'fit'), decreases: prefs.get('decreases', false),
-    fcf: fcfBasis(prefs.get('fcf', 'company')), dragZoom: prefs.get('drag-zoom', false) === true, charts: [] };
+    fcf: fcfBasis(prefs.get('fcf', 'company')), dragZoom: prefs.get('drag-zoom', false) === true,
+    linesUnmatched: prefs.get('lines-unmatched', false) === true, charts: [] };
   // Free cash flow as the reader chose in their alerts (pipeline/reported.py fcf_view does the same for e-mails):
   // 'company' draws the company's own figure where the pipeline could check it against SEC data, else the formula;
   // 'noted' also says, on a chart drawn by the formula, why there is no company figure ("fcf_note");
@@ -41,6 +42,10 @@
   function fcfBasis(v) { return v === 'ocf' || v === 'noted' ? v : 'company'; }
   function fcfView(q) {
     if (!q) return q;
+    if (state.linesUnmatched && q.lines_alt) {      // revenue lines that match neither total: shown with the difference
+      q = Object.assign({}, q, q.lines_alt, { lines_shown: true });
+      delete q.lines_alt;
+    }
     let out;
     if (state.fcf === 'ocf' && q.fcf_alt) out = Object.assign({}, q, q.fcf_alt);
     else if (state.fcf === 'noted' && q.fcf_note) {
@@ -546,7 +551,8 @@
   }
 
   // data checks about a figure the company reports differently from the arithmetic: they link to the choice in Alerts
-  const FCF_CODES = new Set(['fcf_company', 'fcf_definition', 'fcf_formula', 'revenue_recon', 'revenue_calc']);
+  const FCF_CODES = new Set(['fcf_company', 'fcf_definition', 'fcf_formula', 'revenue_recon', 'revenue_calc', 'lines_hidden',
+    'lines_unmatched']);
   async function company(cik, end, all, opt) {
     const here = live();
     opt = opt || {};
@@ -652,7 +658,7 @@
             : fy ? 'Full-year values as reported in the 10-K (XBRL company facts); revenue lines from the filing’s own XBRL instance'
             : 'XBRL company facts; revenue lines from the filing’s own XBRL instance'}</dd>
           ${(q.checks || []).length ? `<dt>Data checks</dt><dd><ul class="checks">${q.checks.map((x) => `<li class="${x.level === 'warn' ? 'warn' : ''}">${
-            x.level === 'warn' ? '<b>Please verify:</b> ' : ''}${t(x.text)}${FCF_CODES.has(x.code) && (q.fcf_alt || q.fcf_basis === 'ocf' || x.code === 'fcf_formula')
+            x.level === 'warn' ? '<b>Please verify:</b> ' : ''}${t(x.text)}${FCF_CODES.has(x.code) && (q.fcf_alt || q.fcf_basis === 'ocf' || x.code === 'fcf_formula' || /^lines_/.test(x.code))
             ? ` <a href="#account" class="fcf-pref" title="Alerts → Free cash flow: the company’s own figure or operating cash flow − capex">Change this in Alerts</a>` : ''}</li>`).join('')}</ul></dd>` : ''}
           <dt>Accuracy</dt><dd>Read automatically from the filing; errors are possible, so check the filing before relying on a figure.${
             site.repo ? ` <a href="https://github.com/${t(site.repo)}/issues/new?title=${encodeURIComponent(`Data error: ${ticker || p.cik} ${S.dec(q.label)}`)}&body=${
@@ -660,6 +666,24 @@
         </dl>
       </div>`;
     body.appendChild(text);
+    if (prefs.get('owner', false)) {                      // owner tool: re-read this company's stored figures
+      ownerVerified().then(async (ok) => {
+        const cl = await sb();
+        const meta = $('.page-head .meta');
+        if (!ok || !cl || !meta || !meta.isConnected) return;
+        const b = document.createElement('button');
+        b.className = 'btn';
+        b.type = 'button';
+        b.dataset.reread = p.cik;
+        b.title = 'Owner: the next scan reads this company’s stored figures again from SEC';
+        b.textContent = '↻ Re-read figures';
+        meta.insertBefore(b, meta.querySelector('.tag.star, span:not(.tag)'));
+        b.addEventListener('click', (ev) => withProgress(ev.currentTarget, toast, async () => {
+          const r = await askReread([+p.cik]);
+          return r.ok ? 'Re-read asked: the next scan reads this company again' : r.msg;
+        }));
+      });
+    }
     if (prefs.get('owner', false) && !fy) {               // owner tool (see #owner): only for the verified owner
       ownerVerified().then(async (ok) => {
         const osets = ok ? await ownerSettings() : null;
@@ -1378,7 +1402,8 @@
   const PREF_DEFAULTS = { tickers: [], sectors: [], all_above: false, min_revenue: 1e9, starred: false,
     frequency: 'daily', email_on: true, push_on: true, final_too: true };
   const MAIL_DEFAULTS = { chart_q: false, chart_y: false, chart_history: false, attach_images: 'png', attach_pdf: true, cmp_decreases: false,
-    changes_detail: false, custom_compare: false, digest_hour: 8, tz: null, daily_scope: 'follows', fcf_basis: 'company', chart_drag_zoom: false };   // columns added after the first release (see savePrefs)
+    changes_detail: false, custom_compare: false, digest_hour: 8, tz: null, daily_scope: 'follows', fcf_basis: 'company', chart_drag_zoom: false,
+    lines_unmatched: false };   // columns added after the first release (see savePrefs)
   const acct = { client: undefined, prefs: null, flash: null, owner: undefined, osets: undefined };
   function browserTZ() {
     try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch (e) { return null; }
@@ -1500,6 +1525,11 @@
       prefs.set('decreases', state.decreases);
       $$('[data-dec]').forEach((cb) => { cb.checked = state.decreases; });
       state.charts.forEach((c) => c.redraw && c.redraw());
+    }
+    if (typeof row.lines_unmatched === 'boolean' && row.lines_unmatched !== state.linesUnmatched) {   // unmatched lines
+      state.linesUnmatched = row.lines_unmatched;
+      prefs.set('lines-unmatched', state.linesUnmatched);
+      if (/^#c-/.test(location.hash)) setTimeout(route, 0);
     }
     if (typeof row.chart_drag_zoom === 'boolean' && row.chart_drag_zoom !== state.dragZoom) {   // drag and zoom charts
       state.dragZoom = row.chart_drag_zoom;
@@ -1878,7 +1908,10 @@
                 without a note</span></label>
               <label class="long"><input type="radio" name="fcf" value="ocf" ${m.fcf_basis === 'ocf' ? 'checked' : ''}><span><b>Calculated throughout.</b>
                 One rule for every company: free cash flow = operating cash flow − capital expenditures, revenue = what the revenue
-                lines add up to. The company’s own figures are named on the chart</span></label></fieldset>
+                lines add up to. The company’s own figures are named on the chart</span></label>
+              <label class="long"><input type="checkbox" id="lines-unmatched" ${m.lines_unmatched ? 'checked' : ''}><span>When a filing’s revenue
+                lines add up to neither total revenue nor contract revenue, show them anyway, with the difference as its own line.
+                Off: the chart shows total revenue without them, and says why</span></label></fieldset>
           <fieldset><legend>On company pages</legend>
             <label class="long"><input type="checkbox" id="drag-zoom" ${m.chart_drag_zoom ? 'checked' : ''}><span>Drag and zoom charts with the mouse:
               hold the left button on an empty part of a chart to move it (the pointer turns into a hand), use the wheel to zoom in
@@ -1950,11 +1983,14 @@
             custom_compare: $('#custom-compare').checked, digest_hour: +$('#digest-hour').value,
             daily_scope: (($('input[name="scope"]:checked') || {}).value === 'all') ? 'all' : 'follows',
             fcf_basis: fcfBasis(($('input[name="fcf"]:checked') || {}).value), chart_drag_zoom: $('#drag-zoom').checked,
+            lines_unmatched: $('#lines-unmatched').checked,
           });
           state.decreases = $('#cmp-decreases').checked;           // company pages follow the account setting
           prefs.set('decreases', state.decreases);
           state.fcf = fcfBasis(($('input[name="fcf"]:checked') || {}).value);
           state.dragZoom = $('#drag-zoom').checked;
+          state.linesUnmatched = $('#lines-unmatched').checked;
+          prefs.set('lines-unmatched', state.linesUnmatched);
           prefs.set('drag-zoom', state.dragZoom);
           prefs.set('fcf', state.fcf);
           let note = '';
@@ -2086,6 +2122,17 @@
         <p><button class="btn${on ? '' : ' primary'}" type="button" id="owner-toggle">${on ? 'Turn off in this browser' : 'Turn on in this browser'}</button></p>
         <p class="muted" id="owner-state">${on ? 'On: company pages show the X thread.' : 'Off: company pages look the same as for readers.'}</p></section>
       <section class="section"><div class="section-head"><h2>Settings</h2></div>${settingsHTML}</section>
+      ${c ? `<section class="section" id="reread"><div class="section-head"><h2>Re-read stored figures</h2>
+          <span class="muted">After a fix to how figures are read; otherwise the scan re-reads ${'a few dozen'} companies per run</span></div>
+        <p class="muted" style="max-width:72ch">The next scan (usually within minutes) reads these companies’ stored quarters and years again
+          from SEC: D&amp;A, share-based compensation, revenue and its lines, and the latest quarter’s company-reported free cash flow.
+          Then their charts and e-mails use the new figures.</p>
+        <form class="row" id="reread-form"><input id="reread-list" placeholder="Tickers or CIKs, e.g. VST, ORCL, 1692819" style="min-width:min(28em,100%)"
+            aria-label="Companies to re-read" autocomplete="off">
+          <button class="btn primary" type="submit">Re-read now</button>
+          <button class="btn" type="button" id="reread-all" title="Every stored company, a few dozen per scan">Re-read every company</button></form>
+        <p class="muted small" id="reread-msg" role="status"></p>
+        <div id="reread-list-box"></div></section>` : ''}
       <section class="section daily" id="daily" hidden></section>
       ${back}`;
     $('#owner-toggle').addEventListener('click', () => { prefs.set('owner', !on); route(); });
@@ -2104,6 +2151,56 @@
       getJSON('index.json').then((ix) => dailyPanel($('#daily'), ix, { title: 'Send a daily report now' })).catch(() => {});
     });
     if (c) getJSON('index.json').then((ix) => dailyPanel($('#daily'), ix, { title: 'Send a daily report now' })).catch(() => {});
+    if (c && $('#reread-form')) {
+      const msg = (x) => { $('#reread-msg').textContent = x; };
+      const ask = async (ciks, words, btn) => withProgress(btn, msg, async () => {
+        const r = await askReread(ciks);
+        showRereads(c);
+        return r.ok ? `${words}: the next scan reads them again.` : r.msg;
+      });
+      $('#reread-form').addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const btn = ev.submitter || $('#reread-form button[type=submit]');
+        const { ciks, unknown } = await rereadCiks($('#reread-list').value);
+        if (!ciks.length) { msg(unknown.length ? `Not found: ${unknown.join(', ')}` : 'Enter tickers or CIKs first'); return; }
+        await ask(ciks, `Asked for ${ciks.length} compan${ciks.length === 1 ? 'y' : 'ies'}` + (unknown.length ? ` (not found: ${unknown.join(', ')})` : ''), btn);
+        $('#reread-list').value = '';
+      });
+      $('#reread-all').addEventListener('click', (ev) => ask([0], 'Every stored company is queued, a few dozen per scan', ev.currentTarget));
+      showRereads(c);
+    }
+  }
+  // the owner's re-read requests (table reread_requests): tickers or CIKs -> CIKs; cik 0 = every stored company
+  async function rereadCiks(text) {
+    const words = String(text || '').split(/[\s,;]+/).map((w) => w.trim()).filter(Boolean);
+    const ix = await getJSON('index.json').catch(() => ({ companies: [] }));
+    const all = await secCompanies();
+    const ciks = [], unknown = [];
+    for (const w of words) {
+      if (/^\d+$/.test(w) && +w > 0) { ciks.push(+w); continue; }
+      const tk = w.toUpperCase().replace('.', '-');
+      const hit = ix.companies.find((x) => (x.ticker || '').toUpperCase() === tk) || all.find((x) => String(x[1]).toUpperCase() === tk);
+      if (hit) ciks.push(+(hit.cik || hit[0])); else unknown.push(w);
+    }
+    return { ciks: [...new Set(ciks)], unknown };
+  }
+  async function askReread(ciks) {
+    const cl = await sb();
+    const r = await cl.from('reread_requests').insert(ciks.map((cik) => ({ cik })));
+    if (r.error && tableMissing(r.error)) return { ok: false, msg: OWNER_UPDATE };
+    if (r.error && /limit/i.test(r.error.message)) return { ok: false, msg: 'Limit reached: 200 re-reads a day' };
+    if (r.error) return { ok: false, msg: `Could not ask: ${r.error.message}` };
+    return { ok: true };
+  }
+  async function showRereads(c) {
+    const box = $('#reread-list-box');
+    const r = await c.from('reread_requests').select('*').order('created_at', { ascending: false }).limit(12);
+    if (!box || !box.isConnected || r.error || !(r.data || []).length) return;
+    const ix = await getJSON('index.json').catch(() => ({ companies: [] }));
+    const name = (cik) => (+cik === 0 ? 'Every stored company' : ((ix.companies.find((x) => +x.cik === +cik) || {}).ticker || `CIK ${cik}`));
+    const st = (x) => (x.status === 'done' ? `done ${date(x.done_at)}` : x.status === 'queued' ? 'reading in this scan' : x.status === 'failed' ? `failed: ${t(x.error || '')}` : 'waiting for the next scan');
+    box.innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>Company</th><th>Asked</th><th>State</th></tr></thead><tbody>${
+      r.data.map((x) => `<tr><td>${+x.cik ? `<a href="#c-${+x.cik}">${t(name(x.cik))}</a>` : t(name(x.cik))}</td><td>${date(x.created_at)}</td><td class="muted">${st(x)}</td></tr>`).join('')}</tbody></table></div>`;
   }
   async function ownerSettings(fresh) {
     const c = await sb();

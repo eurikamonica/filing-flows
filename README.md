@@ -38,6 +38,13 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
 - **Cash-flow bridge figures** come from the cash-flow statement's tags: when the income statement tags a narrower
   D&A (Vistra: $445M) than the cash-flow statement adds back ($645M, nuclear fuel amortization included), the tag
   reported only year to date (the cash-flow statement's) is used. Stored quarters are read again a few companies per run.
+- **Revenue lines that add up to neither total** (found when a stored quarter is read again): hidden by default, the
+  chart showing total revenue and a note why; readers can show them with the difference as its own line (Alerts,
+  `subscriptions.lines_unmatched`).
+- **Re-read stored figures** (Owner tools, or ↻ *Re-read figures* on a company page; table `reread_requests`, owner
+  only): the next scan reads those companies' stored quarters and years again from SEC at once, instead of waiting
+  for the few dozen re-read per run. *Re-read every company* queues them all for the regular runs. The *Run workflow*
+  form has the same as the `reread` field (tickers, CIKs or ALL).
 - **Data checks** (`pipeline/checks.py`): periods of unusual length, revenue jumps, odd margins, cash flow out of
   scale, and definitions that differ from the company's are listed under every chart; probable errors are marked on
   the chart, the owner's e-mail says to check before posting, and automatic X posting holds them. Every chart and

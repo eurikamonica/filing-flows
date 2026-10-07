@@ -181,14 +181,14 @@ def fcf_basis(sub):
 
 def for_reader(sub, items):
     """items with each quarter as this reader sees it (their free cash flow definition, reported.fcf_view)."""
-    basis = fcf_basis(sub)
-    return [(e, c, reported.fcf_view(q, basis), *rest) for e, c, q, *rest in items]
+    basis, lines = fcf_basis(sub), bool((sub or {}).get("lines_unmatched"))
+    return [(e, c, reported.reader_view(q, basis, lines), *rest) for e, c, q, *rest in items]
 
 
 def chart_key(e, q):
     """item_key, plus the free cash flow choice when it changed the quarter (each version is drawn separately)."""
     b = (q or {}).get("fcf_basis")
-    return item_key(e) + (f"~{b}" if b in ("noted", "ocf") else "")
+    return item_key(e) + (f"~{b}" if b in ("noted", "ocf") else "") + ("~lines" if (q or {}).get("lines_shown") else "")
 
 
 def _split(k):

@@ -1667,4 +1667,58 @@ def test_total_revenue_and_cash_flow_da_vistra():
     assert old["lines_struct"]["recon"]
     lost = {"raw": dict(raw, rev_contract=None), "lines_struct": dict(ls), "lines": vals}
     build.mark_recon(lost)
-    assert lost["lines_struct"] is None
+    assert lost["lines_struct"]["recon"]["unmatched"]                   # kept, hidden unless a reader asks (Alerts)
+
+
+def test_unmatched_lines_are_a_choice_and_the_owner_can_ask_for_a_reread(tmp_path):
+    """Revenue lines that add up to neither total revenue nor contract revenue are hidden by default and shown, with the
+    difference as its own line, to readers who ask (subscriptions.lines_unmatched). The owner's re-read requests
+    (reread_requests) are claimed by the scan and re-read those companies at once; CIK 0 queues every company."""
+    from pipeline import build, custom, notify, reported
+    M = 1e6
+    st = build.Store(str(tmp_path / "store"))
+    lines = {"a": ("Retail", 2600), "b": ("Wholesale", 1600)}           # 4,200: neither 4,017 nor 4,401
+    raw = {"revenue": 4017 * M, "rev_contract": 4401 * M, "oi": 553 * M, "pretax": 427 * M, "tax": 122 * M, "ni": 305 * M,
+           "ocf": 1023 * M, "da": 645 * M, "sbc": 35 * M, "capex": 689 * M}
+    q = {"end": "2026-06-30", "label": "Q2 2026", "cal": "CY2026Q2", "form": "10-Q", "filed": "2026-08-07", "raw": raw,
+         "lines_struct": {"axis": "ProductOrServiceAxis", "leaves": [{"id": k, "label": v[0]} for k, v in lines.items()], "groups": []},
+         "lines": {k: v[1] * M for k, v in lines.items()}, "co_tried": 1, "co_status": "not_reported"}
+    build.mark_recon(q)
+    assert q["lines_struct"]["recon"]["unmatched"]
+    c = {"profile": {"name": "Example Power", "cik": 7, "tickers": ["EXP"], "sector": "utilities", "sic": "4911",
+                     "industry": "Electric Services", "fye": "1231"}, "quarters": {q["end"]: q}}
+    pl = build.quarter_payload(c, q, None)
+    ids = {n["id"] for n in pl["nodes"]}
+    assert not any(i.startswith("L:") for i in ids) and pl["checks"][-1]["code"] == "lines_hidden"
+    assert "$4.2B" in pl["checks"][-1]["text"] and "lines_alt" in pl
+    shown = reported.reader_view(pl, "company", lines=True)
+    sid = {n["id"]: n for n in shown["nodes"]}
+    assert {"L:a", "L:b", "contract", "rev_less"} <= set(sid) and sid["contract"]["lines"][0][1] == "Sum of the revenue lines"
+    assert sid["rev_less"]["lines"][0][1] == "Difference to total revenue" and abs(sid["rev_less"]["v"] - 183 * M) < 1
+    assert any(x["code"] == "lines_unmatched" for x in shown["checks"]) and shown["lines_shown"]
+    assert reported.reader_view(pl, "company", lines=False) is pl
+    e = {"cik": 7, "end": q["end"], "form": "10-Q"}
+    assert notify.chart_key(e, shown) == "7:2026-06-30~lines"
+    assert notify.for_reader({"lines_unmatched": True}, [(e, c, pl, [])])[0][2]["lines_shown"]
+
+    # the owner's re-read requests: claimed by the scan (a stopped scan's too), done when it finishes
+    supa = _FakeSupa([], reread_requests=[{"id": 1, "cik": 7, "status": "pending", "created_at": "2026-10-06T00:00:00+00:00"},
+                                          {"id": 2, "cik": 0, "status": "pending", "created_at": "2026-10-06T00:01:00+00:00"}])
+    assert custom.claim_rereads(supa) == [0, 7]
+    assert {r["status"] for r in supa.t["reread_requests"]} == {"queued"} and custom.claim_rereads(supa) == []
+    custom.finish_rereads(supa)
+    assert {r["status"] for r in supa.t["reread_requests"]} == {"done"}
+    # re-read now: these companies whatever they were read with; 0 resets every company's markers for the regular runs
+    c["da_v"] = build.DA_VERSION
+    st.put(7, c)
+    calls = []
+    real_da, real_rep = build.refresh_da, build.refresh_reported
+    build.refresh_da = lambda store, limit=0, only=None: calls.append(("da", only))
+    build.refresh_reported = lambda store, limit=0, only=None: calls.append(("reported", only))
+    try:
+        build.reread(st, [7, 99])
+        assert calls == [("da", [7]), ("reported", [7])]
+        build.reread(st, [0])
+        assert st.company(7)["da_v"] == 0 and "co_tried" not in st.company(7)["quarters"][q["end"]]
+    finally:
+        build.refresh_da, build.refresh_reported = real_da, real_rep

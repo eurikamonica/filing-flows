@@ -231,6 +231,14 @@ BASES = ("company", "noted", "ocf")
 # and a chart drawn by the formula says why ("noted"); or operating cash flow − capex for every company ("ocf")
 
 
+def reader_view(q, basis, lines=False):
+    """A quarter as one reader sees it: their unmatched-lines choice ("lines_alt"), then their figures (fcf_view)."""
+    if lines and (q or {}).get("lines_alt"):
+        q = dict(q, **q["lines_alt"], lines_shown=True)
+        q.pop("lines_alt", None)
+    return fcf_view(q, basis)
+
+
 def fcf_view(q, basis):
     """A site quarter or year (data/c/<cik>.json) as a reader who chose `basis` sees it:
     "ocf"    swaps in the version on operating cash flow − capex ("fcf_alt", written where the company's figure is drawn)

@@ -191,15 +191,16 @@ def set_reported(q, co, status):
         q["co_tried"] = REPORTED_VERSION
 
 
-def refresh_reported(store, limit=REPORTED_PER_RUN):
-    """Latest quarters stored before company-reported figures were read get them, largest companies first."""
+def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
+    """Latest quarters stored before company-reported figures were read get them, largest companies first.
+    only: these CIKs now, whatever they were read with (the owner's re-read request)."""
     todo = []
-    for cik in store.ciks():
+    for cik in (only if only is not None else store.ciks()):
         c = store.company(cik)
         if not c.get("quarters") or not c.get("profile"):
             continue
         last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
-        if last.get("co_tried", 0) < REPORTED_VERSION and (last.get("raw") or {}).get("ocf"):
+        if (only is not None or last.get("co_tried", 0) < REPORTED_VERSION) and (last.get("raw") or {}).get("ocf"):
             todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik, last["end"]))
     n = 0
     for _, cik, end in sorted(todo)[:limit]:
@@ -232,7 +233,7 @@ def _da_parts(fx, end, annual=False):
 
 def mark_recon(q):
     """A stored breakdown whose lines add up to contract revenue rather than (the new) total revenue gets "recon";
-    one that adds up to neither is dropped (the chart then shows revenue without lines)."""
+    one that adds up to neither is marked unmatched (dims.UNMATCHED: hidden unless the reader asks for it)."""
     ls, vals, raw = q.get("lines_struct"), q.get("lines") or {}, q.get("raw") or {}
     if not ls or not raw.get("revenue") or not all(l["id"] in vals for l in ls["leaves"]):
         return
@@ -243,17 +244,18 @@ def mark_recon(q):
     elif near(total, raw.get("rev_contract")):
         ls["recon"] = dict(dims.RECON)
     else:
-        q["lines_struct"] = None
+        ls["recon"] = dict(dims.UNMATCHED)                # kept: readers choose whether to see them (Alerts)
 
 
-def refresh_da(store, limit=DA_PER_RUN):
+def refresh_da(store, limit=DA_PER_RUN, only=None):
     """Figures stored before D&A was read as depreciation + amortization of intangible assets (a filing that tags the
     two apart used to give depreciation alone, labelled D&A) are read again from SEC's company facts, largest
-    companies first, a few per run. Earnings-release quarters keep their own figures; only the row's kind is noted."""
+    companies first, a few per run. Earnings-release quarters keep their own figures; only the row's kind is noted.
+    only: these CIKs now, whatever they were read with (the owner's re-read request)."""
     todo = []
-    for cik in store.ciks():
+    for cik in (only if only is not None else store.ciks()):
         c = store.company(cik)
-        if c.get("quarters") and c.get("profile") and c.get("da_v", 0) < DA_VERSION:
+        if c.get("quarters") and c.get("profile") and (only is not None or c.get("da_v", 0) < DA_VERSION):
             last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
             todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik))
     n = 0
@@ -292,6 +294,41 @@ def refresh_da(store, limit=DA_PER_RUN):
             _cf.pop(cik, None)
     if todo:
         print(f"D&A, share-based compensation and revenue read again: {n} companies updated, {max(len(todo) - n, 0)} to go")
+
+
+REREAD_MAX = 60          # companies re-read at once on the owner's request (each needs SEC's company facts)
+
+
+def reread(store, ciks):
+    """The owner's re-read request (Owner tools, table reread_requests): stored figures of these companies are read
+    again from SEC now (D&A, share-based compensation, revenue and its lines; the latest quarter's company-reported
+    free cash flow). CIK 0 = every stored company: their markers are reset, so the regular runs re-read them all,
+    a few dozen per run."""
+    ciks = sorted({int(x) for x in ciks})
+    if not ciks:
+        return
+    if 0 in ciks:
+        n = 0
+        for cik in store.ciks():
+            c = store.company(cik)
+            if not c.get("quarters"):
+                continue
+            c["da_v"] = 0
+            last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
+            last.pop("co_tried", None)
+            store.put(cik, c)
+            n += 1
+        print(f"re-read requested for every stored company: {n} queued, {DA_PER_RUN} per run")
+        ciks = [x for x in ciks if x]
+    have = set(store.ciks())
+    now = [c for c in ciks if c in have][:REREAD_MAX]
+    if now:
+        refresh_da(store, limit=len(now), only=now)
+        refresh_reported(store, limit=len(now), only=now)
+        print(f"re-read now: {', '.join(map(str, now))}")
+    missing = [c for c in ciks if c not in have]
+    if missing:
+        print(f"re-read: not on the site (ask for them with the search instead): {', '.join(map(str, missing))}")
 
 
 def recent_rows(sub):
@@ -891,6 +928,7 @@ def run(args):
             print(f"  could not queue {cik} for a reader: {e}", file=sys.stderr)
     backfill_history(store)
     refresh_periods(store)
+    reread(store, getattr(args, "reread_ciks", None) or [])
     refresh_da(store)
     refresh_reported(store)
     stars = starred_ciks()
@@ -1043,9 +1081,19 @@ def quarter_payload(c, q, prev_q):
     """A quarter's chart, analysis and checks. When the company's own free cash flow is drawn, the payload also carries
     the same quarter on operating cash flow − capex ("fcf_alt"): readers choose the definition in their alerts
     (subscriptions.fcf_basis), and the site and their e-mails swap these fields in (reported.fcf_view)."""
+    shown = q
+    if _unmatched(q):                                   # lines that do not add up: hidden unless the reader asks
+        q = dict(q, lines_struct=None)
     pl = _quarter_payload(c, q, prev_q)
     if not pl:
         return pl
+    if shown is not q:
+        pl["checks"].append(_lines_hidden_note(shown))
+        try:
+            alt = _quarter_payload(c, shown, prev_q)
+            pl["lines_alt"] = {k: alt[k] for k in LINES_ALT_KEYS}
+        except Exception as e:
+            print(f"  unmatched lines not drawn for {c['profile']['name']} {shown['end']}: {e}", file=sys.stderr)
     Nc = pl["_N"][0]
     if Nc.get("co_fcf_use") or _has_recon(q):
         try:
@@ -1072,7 +1120,24 @@ def _formula_note(status, nodes, Nc):
 
 def _has_recon(q):
     """The revenue lines add up to contract revenue, not total revenue (dims.revenue_lines_for)."""
-    return bool((q.get("lines_struct") or {}).get("recon")) and (q.get("raw") or {}).get("rev_contract") is not None
+    r = (q.get("lines_struct") or {}).get("recon")
+    return bool(r) and not r.get("unmatched") and (q.get("raw") or {}).get("rev_contract") is not None
+
+
+def _unmatched(x):
+    return bool(((x.get("lines_struct") or {}).get("recon") or {}).get("unmatched"))
+
+
+LINES_ALT_KEYS = ("nodes", "links", "kind", "footer", "checks", "analysis")
+
+
+def _lines_hidden_note(q):
+    ls, vals, R = q["lines_struct"], q.get("lines") or {}, (q.get("raw") or {}).get("revenue") or 0
+    total = sum(vals.get(l["id"], 0) for l in ls["leaves"])
+    return {"level": "note", "code": "lines_hidden",
+            "text": f"The filing’s revenue lines add up to {checks.money(total)}, which matches neither total revenues "
+                    f"({checks.money(R)}) nor revenue from contracts with customers, so the chart shows total revenue "
+                    "without them. Alerts can show them, with the difference as its own line."}
 
 
 def calculated_revenue(q):
@@ -1167,7 +1232,7 @@ def year_payload(c, y):
     Nc, Ny = normalize(y["raw"]), normalize(y.get("raw_py"))
     if not Nc:
         return None
-    ls = y.get("lines_struct")
+    ls = None if _unmatched(y) else y.get("lines_struct")
     try:
         nodes, links, kind = build_spec(Nc, None, Ny, ls, (y.get("lines"), None, y.get("lines_py")))
     except Exception as e:
@@ -1400,8 +1465,14 @@ def main():
     ap.add_argument("--backfill-days", type=int, default=0)
     ap.add_argument("--max-filings", type=int, default=1500)
     ap.add_argument("--build-ciks-file", default=None, help="CIKs readers asked for (one per line): fetch their history")
+    ap.add_argument("--reread-ciks-file", default=None, help="companies the owner asked to re-read (CIKs or tickers; 0 or ALL: every one)")
     args = ap.parse_args()
     args.build_ciks = []
+    args.reread_ciks = []
+    if getattr(args, "reread_ciks_file", None) and os.path.exists(args.reread_ciks_file):
+        words = [w for w in re.split(r"[\s,;]+", open(args.reread_ciks_file).read()) if w]
+        args.reread_ciks = ([0] if "0" in words or "ALL" in (w.upper() for w in words) else []) + \
+            company_ciks([w for w in words if w != "0" and w.upper() != "ALL"])
     if args.build_ciks_file and os.path.exists(args.build_ciks_file):
         args.build_ciks = company_ciks(re.split(r"[\s,;]+", open(args.build_ciks_file).read()))
     if args.cmd == "run":

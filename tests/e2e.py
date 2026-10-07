@@ -49,7 +49,7 @@ CHECK_LABELS = """() => {
 FAKE_SUPABASE = """
 (() => {
   const GOOD_UNSUB = '11111111-2222-4333-8444-555555555555';
-  const db = { subscriptions: [], send_requests: [], chart_requests: [], company_requests: [],
+  const db = { subscriptions: [], send_requests: [], chart_requests: [], company_requests: [], reread_requests: [],
     owner_settings: [{ id: true, thread_direct: true, daily_on: true, daily_hour: 8, tz: 'Asia/Shanghai', min_revenue: 1e9, instant_threads: false,
       daily_scope: 'min_revenue', reader_copy: false }] }, log = [];
   let session = null;
@@ -124,7 +124,14 @@ FAKE_SUPABASE = """
     };
     // chart_requests / company_requests: own rows, an id, pending; one open request per company
     const asks = () => {
-      if (!session) return { data: null, error: { code: '42501', message: 'new row violates row-level security policy' } };
+      if (!session || (table === 'reread_requests' && !isOwner()))
+        return { data: null, error: { code: '42501', message: 'new row violates row-level security policy' } };
+      if (Array.isArray(q.row)) {                       // several rows at once (re-read requests)
+        const out = q.row.map((r) => Object.assign(copy(r), { id: rows.length + 1, user_id: session.user.id, status: 'pending',
+          created_at: new Date().toISOString() })).map((x) => { rows.push(x); return x; });
+        log.push(['insert', table, out.length]);
+        return { data: copy(out), error: null };
+      }
       const x = Object.assign(copy(q.row), { id: rows.length + 1, user_id: session.user.id, status: 'pending', created_at: new Date().toISOString() });
       if (table === 'company_requests' && rows.some((y) => y.user_id === x.user_id && y.cik === x.cik && ['pending', 'queued'].includes(y.status)))
         return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint' } };
@@ -132,9 +139,9 @@ FAKE_SUPABASE = """
       log.push(['insert', table, 1]);
       return { data: copy(x), error: null };
     };
-    const isAsk = () => (table === 'chart_requests' || table === 'company_requests') && q.op === 'insert';
+    const isAsk = () => ['chart_requests', 'company_requests', 'reread_requests'].includes(table) && q.op === 'insert';
     const run = () => {
-      if (isAsk()) { const r = asks(); return r.error ? r : { data: [r.data], error: null }; }
+      if (isAsk()) { const r = asks(); return r.error ? r : { data: Array.isArray(r.data) ? r.data : [r.data], error: null }; }
       if (table === 'send_requests' && q.op === 'insert') return requests();
       if (q.op === 'select') {
         let m = rows.filter((r) => session && r.user_id === session.user.id && match(r));
@@ -744,6 +751,24 @@ def check_accounts(b, base, fails, shot, site):
     if "all in your report" not in pg.inner_text("#daily .day.on"):
         fails.append(f"owner tools: the day picker should count every filing: {pg.inner_text('#daily .day.on')!r}")
     shot(pg, "owner_settings.png", full_page=True)
+    # re-read stored figures: the owner asks for companies (tickers or CIKs) or for every one; the scan claims them
+    pg.fill("#reread-list", "AAPL, 1067983, NOPE")
+    pg.click("#reread-form button[type=submit]")
+    pg.wait_for_function("/next scan|Could not|Limit|update/.test(document.querySelector('#reread-msg').textContent)")
+    asked = ff("window.__ff.db.reread_requests.map((r) => r.cik)")
+    print("re-read asked:", asked, "·", pg.inner_text("#reread-msg"))
+    if sorted(asked) != [320193, 1067983] or "not found: NOPE" not in pg.inner_text("#reread-msg"):
+        fails.append(f"re-read: owner request saved as {asked}: {pg.inner_text('#reread-msg')!r}")
+    pg.click("#reread-all")
+    pg.wait_for_function("window.__ff.db.reread_requests.some((r) => r.cik === 0)")
+    pg.wait_for_function("document.querySelectorAll('#reread-list-box tr').length >= 4")
+    if "Every stored company" not in pg.inner_text("#reread-list-box"):
+        fails.append("re-read: the list of requests does not show 'every stored company'")
+    shot(pg, "owner_reread.png", full_page=True)
+    pg.goto(base + "#c-1326801")
+    pg.wait_for_selector("[data-reread]")
+    pg.click("[data-reread]")
+    pg.wait_for_function("window.__ff.db.reread_requests.some((r) => r.cik === 1326801)")
     # the reader version, on the owner's Alerts page
     pg.goto(base + "#account")
     pg.wait_for_selector("#prefs-form")

@@ -221,6 +221,29 @@ def claim_companies(supa, now=None, limit=MAX_COMPANIES_PER_SCAN):
     return sorted(ciks)
 
 
+def claim_rereads(supa, now=None):
+    """The owner's re-read requests (Owner tools): CIKs whose stored figures this scan reads again from SEC (0 = every
+    stored company). Requests a stopped scan left queued are taken again."""
+    now = now or _now()
+    stamp = now.isoformat()
+    stale = (now - dt.timedelta(minutes=STALE_MINUTES)).isoformat()
+    again = supa.update("reread_requests", {"status": "eq.queued", "claimed_at": f"lt.{stale}"}, {"claimed_at": stamp})
+    waiting = supa.select("reread_requests", {"select": "id,cik", "status": "eq.pending", "order": "created_at.asc"})
+    if waiting:
+        supa.update("reread_requests", {"id": f"in.({','.join(str(r['id']) for r in waiting)})", "status": "eq.pending"},
+                    {"status": "queued", "claimed_at": stamp})
+    return sorted({int(r["cik"]) for r in again + waiting})
+
+
+def finish_rereads(supa):
+    """The scan finished: its re-read requests are done."""
+    rows = supa.select("reread_requests", {"select": "id", "status": "eq.queued"})
+    if rows:
+        supa.update("reread_requests", {"id": f"in.({','.join(str(r['id']) for r in rows)})"},
+                    {"status": "done", "done_at": _now().isoformat()})
+    print(f"re-read requests done: {len(rows)}")
+
+
 def finish_companies(supa, site):
     """Requests for companies that are on the site now are done; the rest stay queued for the next scan."""
     rows = supa.select("company_requests", {"select": "id,cik,created_at", "status": "eq.queued"})
@@ -239,14 +262,15 @@ def finish_companies(supa, site):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["charts", "claim-companies", "finish-companies", "has-companies"])
+    ap.add_argument("cmd", choices=["charts", "claim-companies", "finish-companies", "has-companies", "claim-rereads",
+                                    "finish-rereads"])
     ap.add_argument("--out", default="build-ciks.txt")
     ap.add_argument("--site", default="_site")
     args = ap.parse_args()
     url, key = setting("SUPABASE_URL", url=True), setting("SUPABASE_SERVICE_KEY")
     if not (url and key):
         print("SUPABASE_URL / SUPABASE_SERVICE_KEY not set: reader requests are off.")
-        if args.cmd == "claim-companies":
+        if args.cmd in ("claim-companies", "claim-rereads"):
             open(args.out, "w").close()
         sys.exit(1 if args.cmd == "has-companies" else 0)
     supa = Supa(url, key)
@@ -262,13 +286,19 @@ def main():
             print(f"{len(ciks)} companies to build: {', '.join(map(str, ciks)) or 'none'}")
         elif args.cmd == "finish-companies":
             finish_companies(supa, args.site)
+        elif args.cmd == "claim-rereads":
+            ciks = claim_rereads(supa)
+            open(args.out, "w").write("".join(f"{c}\n" for c in ciks))
+            print(f"re-read requests: {', '.join('every company' if c == 0 else str(c) for c in ciks) or 'none'}")
+        elif args.cmd == "finish-rereads":
+            finish_rereads(supa)
         else:
             n = len(supa.select("company_requests", {"select": "id", "status": "eq.pending"}))
             print(f"{n} company requests waiting")
             sys.exit(0 if n else 1)
     except RuntimeError as e:                      # a missing table (schema.sql not run again yet) must not break the run
         print(f"::warning::reader requests skipped: {e}")
-        if args.cmd == "claim-companies":
+        if args.cmd in ("claim-companies", "claim-rereads"):
             open(args.out, "w").close()
         sys.exit(1 if args.cmd == "has-companies" else 0)
 

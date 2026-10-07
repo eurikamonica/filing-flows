@@ -305,6 +305,9 @@ def revenue_lines(member_vals, total):
 
 
 RECON = {"label": "Revenue from contracts with customers"}
+# lines that add up to neither total revenue nor contract revenue (found when a stored quarter is read again): hidden
+# by default, drawn with the difference as its own line for readers who ask for it (Alerts)
+UNMATCHED = {"label": "Sum of the revenue lines", "unmatched": True}
 
 
 def revenue_lines_for(member_vals, raw):

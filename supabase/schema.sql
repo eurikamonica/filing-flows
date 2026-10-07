@@ -31,6 +31,7 @@ create table if not exists public.subscriptions (
                                                         -- company's own figure where it can be drawn ('noted': and say why
                                                         -- when it is not), or operating cash flow − capex for every company
   chart_drag_zoom boolean not null default false,       -- company pages: drag charts with the mouse, wheel to zoom
+  lines_unmatched boolean not null default false,       -- show revenue lines that add up to neither total, with the gap
   unsub_token  uuid    not null default gen_random_uuid(),
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
@@ -51,6 +52,7 @@ alter table public.subscriptions add column if not exists tz text;
 alter table public.subscriptions add column if not exists daily_scope text not null default 'follows';
 alter table public.subscriptions add column if not exists fcf_basis text not null default 'company';
 alter table public.subscriptions add column if not exists chart_drag_zoom boolean not null default false;
+alter table public.subscriptions add column if not exists lines_unmatched boolean not null default false;
 alter table public.subscriptions alter column frequency set default 'daily';   -- new accounts: the 8:00 daily report
 do $$ begin
   alter table public.subscriptions add constraint subscriptions_attach_images_check check (attach_images in ('png', 'jpg', 'none'));
@@ -358,3 +360,39 @@ create trigger company_requests_guard before insert on public.company_requests
 drop trigger if exists company_requests_wake on public.company_requests;
 create trigger company_requests_wake after insert on public.company_requests
   for each statement execute function public.send_requests_wake('company-request');
+
+-- The owner's "Re-read stored figures" (Owner tools): the next scan reads these companies' stored figures again from SEC
+-- (cik 0 = every stored company, a few dozen per scan). Only the site owner can ask; the scan claims them with the secret key.
+create table if not exists public.reread_requests (
+  id          bigint generated always as identity primary key,
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  cik         integer not null check (cik >= 0),
+  status      text not null default 'pending' check (status in ('pending', 'queued', 'done', 'failed')),
+  error       text,
+  created_at  timestamptz not null default now(),
+  claimed_at  timestamptz,
+  done_at     timestamptz
+);
+create index if not exists reread_requests_status on public.reread_requests (status, created_at);
+alter table public.reread_requests enable row level security;
+drop policy if exists "owner reads rereads" on public.reread_requests;
+drop policy if exists "owner asks rereads" on public.reread_requests;
+create policy "owner reads rereads" on public.reread_requests for select using (auth.uid() = user_id and public.am_i_owner());
+create policy "owner asks rereads" on public.reread_requests for insert with check (auth.uid() = user_id and public.am_i_owner());
+create or replace function public.reread_requests_guard() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  new.status := 'pending'; new.error := null; new.claimed_at := null; new.done_at := null; new.created_at := now();
+  if (select count(*) from public.reread_requests r
+      where r.user_id = new.user_id and r.created_at > now() - interval '24 hours') >= 200 then
+    raise exception 'limit: 200 re-reads a day' using errcode = 'P0001';
+  end if;
+  return new;
+end $$;
+drop trigger if exists reread_requests_guard on public.reread_requests;
+create trigger reread_requests_guard before insert on public.reread_requests
+  for each row execute function public.reread_requests_guard();
+drop trigger if exists reread_requests_wake on public.reread_requests;
+create trigger reread_requests_wake after insert on public.reread_requests
+  for each statement execute function public.send_requests_wake('reread');
+

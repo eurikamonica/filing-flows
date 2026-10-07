@@ -157,7 +157,7 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
 
     # ---- revenue sources ----
     col = 0
-    recon = None                                    # the lines add up to contract revenue, not to total revenue
+    recon, unmatched = None, False                  # the lines add up to contract revenue, not to total revenue
     if lines_struct and all(("line:" + l["id"]) in Qc for l in lines_struct["leaves"]):
         grouped = {m for g in lines_struct["groups"] for m in g["members"]}
         has_groups = bool(lines_struct["groups"])
@@ -179,9 +179,11 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
             if leaf["id"] not in grouped:
                 S.node("L:" + leaf["id"], rcol - 1, "line:" + leaf["id"], "rev", leaf["label"], "left", top,
                        top_label, notekeys=[leaf["label"]])
+        unmatched = bool(lines_struct["recon"].get("unmatched")) if recon else False
         if recon == "more":                         # other revenues add to the lines: one more line into revenue
-            S.node("rev_more", rcol - 1, "rev_more", "rev", "Other revenues", "left", "revenue", "revenue",
-                   extra=["not from contracts with customers"])
+            S.node("rev_more", rcol - 1, "rev_more", "rev", "Revenue not in the lines" if unmatched else "Other revenues",
+                   "left", "revenue", "revenue",
+                   extra=["the filing’s lines add up to less" if unmatched else "not from contracts with customers"])
         for leaf in lines_struct["leaves"]:
             t = "G:" + target_of[leaf["id"]] if leaf["id"] in grouped else top
             S.link("L:" + leaf["id"], t, "line:" + leaf["id"], "rev")
@@ -191,7 +193,7 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
             S.link("rev_more", "revenue", "rev_more", "rev")
         col = rcol
         if recon == "less":                         # contract revenue -> total revenue + other revenues (a reduction)
-            S.node("contract", rcol, "line:__contract", "rev", RECON_LABEL, "above",
+            S.node("contract", rcol, "line:__contract", "rev", lines_struct["recon"].get("label") or RECON_LABEL, "above",
                    extra=["what the revenue lines add up to"])
             col = rcol + 1
     loss = Nc["oi"] < 0 or Nc["pretax"] < 0 or Nc["pl"] < 0
@@ -199,8 +201,10 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
            extra=[f"sum of the revenue lines; total revenues {f.money(Nc['rev_calc'])}"] if Nc.get("rev_calc") else [],
            notekeys=["net sales", "total revenue", "revenue"])
     if recon == "less":
-        S.node("rev_less", col, "rev_less", "cost", "Other revenues (net loss)", "below", "contract", "contract revenue",
-               extra=["not from contracts with customers: reduces total revenue"])
+        S.node("rev_less", col, "rev_less", "cost", "Difference to total revenue" if unmatched else "Other revenues (net loss)",
+               "below", "contract", "the lines",
+               extra=["the filing’s lines add up to more" if unmatched
+                      else "not from contracts with customers: reduces total revenue"])
         S.link("contract", "revenue", "revenue", "rev")
         S.link("contract", "rev_less", "rev_less", "cost")
     nonop_small = abs(Nc["nonop"]) < FOLD * R

@@ -97,6 +97,11 @@ def checks(q, c, Nc, Nq=None, Ny=None, annual=False):
                                     f"customers ({money(R)}), as chosen in Alerts. The income statement’s total revenues "
                                     f"are {money(Nc['rev_calc'])}; the difference, other revenues of "
                                     f"{money(Nc['rev_calc'] - R)}, is counted in costs here.")
+    elif (ls.get("recon") or {}).get("unmatched") and all(l["id"] in vals for l in ls.get("leaves") or []):
+        C = sum(vals[l["id"]] for l in ls["leaves"])
+        add("note", "lines_unmatched", f"The filing’s revenue lines add up to {money(C)}, which matches neither total "
+                                       f"revenues ({money(R)}) nor revenue from contracts with customers; the difference "
+                                       f"({money(R - C)}) is drawn as its own line, as chosen in Alerts.")
     elif ls.get("recon") and all(l["id"] in vals for l in ls.get("leaves") or []):
         C = sum(vals[l["id"]] for l in ls["leaves"])
         if abs(C - R) > 0.0005 * R:
