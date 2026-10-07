@@ -1722,3 +1722,24 @@ def test_unmatched_lines_are_a_choice_and_the_owner_can_ask_for_a_reread(tmp_pat
         assert st.company(7)["da_v"] == 0 and "co_tried" not in st.company(7)["quarters"][q["end"]]
     finally:
         build.refresh_da, build.refresh_reported = real_da, real_rep
+
+
+def test_run_keeps_to_its_time_budget(monkeypatch=None):
+    """A run that would overrun GitHub's 55 minutes saves nothing; catch-up work stops at its share of the budget."""
+    import os
+    from pipeline import build
+    old = os.environ.get("RUN_BUDGET_MINUTES")
+    os.environ["RUN_BUDGET_MINUTES"] = "10"
+    try:
+        build._t0[0] = build.time.monotonic()
+        assert not build.time_up(build.CATCH_UP_SHARE) and not build.time_up()
+        build._t0[0] = build.time.monotonic() - 4 * 60          # 4 of 10 minutes used: catch-up waits, filings go on
+        assert build.time_up(build.CATCH_UP_SHARE, "re-reading stored figures") and not build.time_up()
+        build._t0[0] = build.time.monotonic() - 11 * 60
+        assert build.time_up()
+    finally:
+        build._t0[0] = build.time.monotonic()
+        if old is None:
+            os.environ.pop("RUN_BUDGET_MINUTES", None)
+        else:
+            os.environ["RUN_BUDGET_MINUTES"] = old

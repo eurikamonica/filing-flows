@@ -10,6 +10,7 @@ import math
 import os
 import re
 import sys
+import time
 import traceback
 
 from . import analysis, checks, dims, facts, release, reported, scan, sec, sectors, social, sources, text
@@ -69,6 +70,34 @@ class Store:
             self.state["seen"] = dict(sorted(seen.items(), key=lambda kv: kv[1].get("t", ""))[-40000:])
         self.state["log"] = self.state["log"][-200:]
         save(os.path.join(self.root, "state.json"), self.state)
+
+
+# ---------------------------------------------------------------- the run's time budget
+# GitHub stops the job after 55 minutes, and a stopped job saves nothing: the next run would redo the same work and be
+# stopped again. So the run keeps to a budget (RUN_BUDGET_MINUTES, default 32): catch-up work (re-reading stored
+# figures, history, company-reported figures) may use the first part of it, new filings the rest; rendering the site
+# and the steps after it (e-mails, saving the data) fit in the time left. Unfinished work waits for the next run.
+_t0 = [time.monotonic()]
+CATCH_UP_SHARE = 0.35
+
+
+def budget_s():
+    try:
+        return max(1.0, float(os.environ.get("RUN_BUDGET_MINUTES", "32"))) * 60
+    except ValueError:
+        return 32 * 60
+
+
+def time_up(share=1.0, what=None):
+    """True once the run has used `share` of its budget (prints what waits, once per kind)."""
+    over = time.monotonic() - _t0[0] >= share * budget_s()
+    if over and what and what not in _said:
+        _said.add(what)
+        print(f"time budget: {what} continue in the next run")
+    return over
+
+
+_said = set()
 
 
 # ---------------------------------------------------------------- per-run caches
@@ -132,6 +161,8 @@ def refresh_periods(store, limit=PERIODS_PER_RUN):
             todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik))
     n = 0
     for _, cik in sorted(todo)[:limit]:
+        if time_up(CATCH_UP_SHARE, "period lists"):
+            break
         try:
             c = store.company(cik)
             fx = companyfacts(cik)
@@ -204,6 +235,8 @@ def refresh_reported(store, limit=REPORTED_PER_RUN, only=None):
             todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik, last["end"]))
     n = 0
     for _, cik, end in sorted(todo)[:limit]:
+        if only is None and time_up(CATCH_UP_SHARE, "company-reported figures"):
+            break
         try:
             c = store.company(cik)
             q = c["quarters"][end]
@@ -260,6 +293,8 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
             todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik))
     n = 0
     for _, cik in sorted(todo)[:limit]:
+        if only is None and time_up(CATCH_UP_SHARE, "re-reading stored figures"):
+            break
         try:
             c = store.company(cik)
             fx = companyfacts(cik)
@@ -296,7 +331,7 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
         print(f"D&A, share-based compensation and revenue read again: {n} companies updated, {max(len(todo) - n, 0)} to go")
 
 
-REREAD_MAX = 60          # companies re-read at once on the owner's request (each needs SEC's company facts)
+REREAD_MAX = 25          # companies re-read at once on the owner's request (each needs SEC's company facts)
 
 
 def reread(store, ciks):
@@ -701,7 +736,7 @@ def backfill_history(store, limit=BACKFILL_PER_RUN):
     """Companies stored before the current default history get it, a few per run."""
     n = 0
     for cik in sorted(store.ciks()):
-        if n >= limit:
+        if n >= limit or time_up(CATCH_UP_SHARE, "history back-fill"):
             break
         c = store.company(cik)
         if c.get("hist", 0) >= HISTORY_VERSION or not c.get("profile"):
@@ -906,6 +941,7 @@ def _reread_releases(store):
 
 
 def run(args):
+    _t0[0] = time.monotonic()
     store = Store(args.store)
     st = store.state
     now = dt.datetime.utcnow().isoformat(timespec="seconds")
@@ -933,6 +969,8 @@ def run(args):
     refresh_reported(store)
     stars = starred_ciks()
     for cik in stars:                                            # multi-quarter history for starred companies
+        if time_up(CATCH_UP_SHARE, "starred companies' history"):
+            break
         try:
             rows = [r for r in recent_rows(submissions(cik)) if r["form"] in ("10-Q", "10-K")][:KEEP_STARRED]
         except Exception:
@@ -949,8 +987,10 @@ def run(args):
             break
         order.sort(key=lambda kv: (kv[1]["cik"] not in asked,                              # what readers asked for first
                                    kv[1]["form"] == "8-K" and kv[1].get("items") is None))   # unclassified 8-Ks last
+        if time_up(1.0, "the remaining filings"):
+            break
         for accn, p in order:
-            if done >= args.max_filings:
+            if done >= args.max_filings or time_up(1.0, "the remaining filings"):
                 break
             done += 1
             tried.add(accn)
