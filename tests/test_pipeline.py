@@ -1527,11 +1527,11 @@ def test_free_cash_flow_definition_is_the_readers_choice(tmp_path):
     """Where the company's own free cash flow is drawn, the site data also carries the quarter on operating cash flow −
     capex ("fcf_alt"); each reader's choice (subscriptions.fcf_basis) decides which one their e-mails show."""
     import email
-    from pipeline import notify, reported
+    from pipeline import build, notify, reported
     site = _site(tmp_path)
     c = json.load(open(site / "data" / "c" / "1326801.json"))         # Meta: its release's reconciliation is in the fixtures
     q = c["quarters"][0]
-    assert q["fcf_basis"] == "company" and set(q["fcf_alt"]) == {"nodes", "links", "kind", "footer", "checks", "analysis"}
+    assert q["fcf_basis"] == "company" and set(q["fcf_alt"]) == set(build.FCF_ALT_KEYS)
     label = lambda v: next(n for n in v["nodes"] if n["id"] == "fcf")["lines"][0][1]
     assert label(q) == "Free cash flow (company-reported)"
     alt = reported.fcf_view(q, "ocf")
@@ -1550,7 +1550,6 @@ def test_free_cash_flow_definition_is_the_readers_choice(tmp_path):
     assert noted["footer"][-1].startswith("No company-reported free cash flow") and noted["fcf_basis"] == "noted"
     assert len(apple["checks"]) == len(noted["checks"]) - 1 and "fcf_note" not in noted      # the stored quarter is untouched
     assert reported.fcf_view(apple, "company") is apple
-    from pipeline import build
     yn = build._formula_note("annual", [{"id": "ocf"}, {"id": "fcf_neg"}], {"R": 1e9, "ocf": 1e8, "capex": 3e8})
     assert yn["node"] == "fcf_neg" and yn["line"] == "company figure: read for quarters only"   # full years: the formula
     assert "quarters only, so free cash flow is calculated: operating cash flow − capital expenditures (−$0.20B)" in yn["check"]["text"]
@@ -1597,3 +1596,75 @@ def test_free_cash_flow_definition_is_the_readers_choice(tmp_path):
     assert "No earnings release (8-K, Item 2.02) was found for this quarter" in bodies["apple-noted"]
     assert "No earnings release" not in bodies["apple-company"]
     assert notify.chart_key(ea, noted) == "320193:" + apple["end"] + "~noted" and notify.chart_key(ea, apple) == "320193:" + apple["end"]
+
+
+def test_total_revenue_and_cash_flow_da_vistra():
+    """Vistra Q2 2026: total revenues (us-gaap:Revenues, $4,017M) are less than revenue from contracts with customers
+    ($4,401M, what the revenue lines add up to) because other revenues (hedging) were −$384M; the cash-flow statement
+    adds back $645M of D&A (a year-to-date-only tag) while the income statement shows $445M."""
+    from pipeline import build, checks, dims, facts
+    from pipeline.model import normalize
+    from pipeline.sankey import build as build_spec
+    F = lambda s, e, v: {"start": s, "end": e, "val": v * 1e6, "filed": "2026-08-07"}
+    fx = facts.index_facts({"facts": {"us-gaap": {
+        "Revenues": {"units": {"USD": [F("2026-04-01", "2026-06-30", 4017), F("2025-04-01", "2025-06-30", 3840)]}},
+        "RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": [
+            F("2026-04-01", "2026-06-30", 4401), F("2025-04-01", "2025-06-30", 4251)]}},
+        "DepreciationDepletionAndAmortization": {"units": {"USD": [      # income statement: three months and six
+            F("2026-04-01", "2026-06-30", 445), F("2026-01-01", "2026-06-30", 929), F("2026-01-01", "2026-03-31", 484)]}},
+        "DepreciationAmortizationAndAccretionNet": {"units": {"USD": [   # cash-flow statement: year to date only
+            F("2026-01-01", "2026-06-30", 1363), F("2026-01-01", "2026-03-31", 718), F("2025-01-01", "2025-12-31", 3000)]}},
+    }}})
+    assert facts.value(fx, "revenue", "2026-06-30") == 4017e6 and facts.source(fx, "revenue", "2026-06-30") == "Revenues"
+    assert facts.value(fx, "rev_contract", "2026-06-30") == 4401e6
+    assert facts.value(fx, "da", "2026-06-30") == 645e6 and facts.value(fx, "da", "2026-03-31") == 718e6
+    assert facts.source(fx, "da", "2026-06-30") == "DepreciationAmortizationAndAccretionNet"
+    assert facts.cash_flow_only(fx["DepreciationAmortizationAndAccretionNet"])
+    assert not facts.cash_flow_only(fx["DepreciationDepletionAndAmortization"])
+    # without us-gaap:Revenues the largest tag is still the total
+    fx2 = facts.index_facts({"facts": {"us-gaap": {k: v for k, v in [
+        ("RevenueFromContractWithCustomerExcludingAssessedTax", {"units": {"USD": [F("2026-04-01", "2026-06-30", 900)]}}),
+        ("OperatingLeasesIncomeStatementLeaseRevenue", {"units": {"USD": [F("2026-04-01", "2026-06-30", 100)]}})]}}})
+    assert facts.value(fx2, "revenue", "2026-06-30") == 900e6
+
+    # the revenue lines add up to contract revenue: the breakdown is kept, marked "recon"
+    lines = {"ercot": 2253, "nemw": 1091, "iso": 620, "cap": 134, "whl": 303}
+    mv = {"srt:ProductOrServiceAxis": {k: (k.upper(), v * 1e6) for k, v in lines.items()}}
+    raw = {"revenue": 4017e6, "rev_contract": 4401e6, "oi": 553e6, "pretax": 427e6, "tax": 122e6, "ni": 305e6,
+           "sga": 392e6, "ocf": 1023e6, "da": 645e6, "sbc": 35e6, "capex": 689e6}
+    ls = dims.revenue_lines_for({"ProductOrServiceAxis": mv["srt:ProductOrServiceAxis"]}, raw)
+    assert ls and ls["recon"]["label"] == "Revenue from contracts with customers" and len(ls["leaves"]) == 5
+    assert dims.revenue_lines_for({"ProductOrServiceAxis": mv["srt:ProductOrServiceAxis"]}, dict(raw, rev_contract=None)) is None
+    vals = {k: v * 1e6 for k, v in lines.items()}
+    Nc = normalize(raw)
+    nodes, links, kind = build_spec(Nc, None, None, ls, (vals, None, None))
+    by = {n["id"]: n for n in nodes}
+    assert abs(by["revenue"]["v"] - 4017e6) < 1 and abs(by["contract"]["v"] - 4401e6) < 1 and abs(by["rev_less"]["v"] - 384e6) < 1
+    assert abs(by["costs"]["v"] - 3464e6) < 1                                 # 4,017 − 553: the income statement's costs
+    assert abs(by["da"]["v"] - 645e6) < 1 and abs(by["wc_in"]["v"] - 38e6) < 1  # 1,023 − 305 − 645 − 35
+    assert {(l["s"], l["t"]) for l in links} >= {("L:ercot", "contract"), ("contract", "revenue"), ("contract", "rev_less")}
+    q = {"end": "2026-06-30", "raw": raw, "lines_struct": ls, "lines": vals}
+    found = checks.checks(q, {"quarters": {}}, Nc)
+    assert any(x["code"] == "revenue_recon" and "($4.4B)" in x["text"] and "−$0.38B" in x["text"] for x in found)
+    # more revenue than the lines: other revenues come in as one more line
+    raw_more = dict(raw, revenue=4500e6, rev_contract=4401e6)
+    nodes3, links3, _ = build_spec(normalize(raw_more), None, None, ls, (vals, None, None))
+    assert abs({n["id"]: n for n in nodes3}["rev_more"]["v"] - 99e6) < 1 and "contract" not in {n["id"] for n in nodes3}
+
+    # "calculated throughout": revenue = what the lines add up to, the gap left in costs, and said so
+    qc = build.calculated_revenue(q)
+    assert qc["raw"]["revenue"] == 4401e6 and "recon" not in qc["lines_struct"] and "recon" in q["lines_struct"]
+    Ncc = normalize(qc["raw"])
+    Ncc["rev_calc"] = qc["raw"]["rev_reported"]
+    nodes2, _, _ = build_spec(Ncc, None, None, qc["lines_struct"], (vals, None, None))
+    rev2 = next(n for n in nodes2 if n["id"] == "revenue")
+    assert abs(rev2["v"] - 4401e6) < 1 and "sum of the revenue lines; total revenues $4.0B" in [l[1] for l in rev2["lines"]]
+    assert any(x["code"] == "revenue_calc" for x in checks.checks(qc, {"quarters": {}}, Ncc))
+
+    # stored quarters: lines that added up to the old (largest) revenue are marked when revenue is read again
+    old = {"raw": dict(raw), "lines_struct": {k: v for k, v in ls.items() if k != "recon"}, "lines": vals}
+    build.mark_recon(old)
+    assert old["lines_struct"]["recon"]
+    lost = {"raw": dict(raw, rev_contract=None), "lines_struct": dict(ls), "lines": vals}
+    build.mark_recon(lost)
+    assert lost["lines_struct"] is None

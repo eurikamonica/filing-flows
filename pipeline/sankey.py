@@ -119,6 +119,9 @@ class Spec:
         return self.nodes, self.links
 
 
+RECON_LABEL = "Revenue from contracts with customers"
+
+
 def _lines_values(lines_struct, vals):
     out = {}
     if not lines_struct or not vals:
@@ -129,7 +132,16 @@ def _lines_values(lines_struct, vals):
     for g in lines_struct["groups"]:
         if all(m in vals for m in g["members"]):
             out[g["id"]] = sum(vals[m] for m in g["members"])
+    if lines_struct.get("recon") and all(l["id"] in vals for l in lines_struct["leaves"]):
+        out["__contract"] = sum(vals[l["id"]] for l in lines_struct["leaves"])   # what the lines add up to
     return out
+
+
+def _recon(Q):
+    """Other revenues: total revenues − the lines' total (revenue from contracts with customers), both ways round."""
+    if Q and Q.get("line:__contract") is not None and Q.get("revenue") is not None:
+        Q["rev_less"] = Q["line:__contract"] - Q["revenue"]     # > 0: other revenues reduce revenue (hedging losses)
+        Q["rev_more"] = -Q["rev_less"]                          # > 0: other revenues add to it
 
 
 def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
@@ -137,15 +149,21 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
     Qc = quantities(Nc, _lines_values(lines_struct, lines_vals[0]))
     Qq = quantities(Nq, _lines_values(lines_struct, lines_vals[1])) if Nq else {}
     Qy = quantities(Ny, _lines_values(lines_struct, lines_vals[2])) if Ny else {}
+    for Q in (Qc, Qq, Qy):
+        _recon(Q)
     f = Fmt(Nc["R"])
     S = Spec(Qc, Qq, Qy, f)
     R = Nc["R"]
 
     # ---- revenue sources ----
     col = 0
+    recon = None                                    # the lines add up to contract revenue, not to total revenue
     if lines_struct and all(("line:" + l["id"]) in Qc for l in lines_struct["leaves"]):
         grouped = {m for g in lines_struct["groups"] for m in g["members"]}
         has_groups = bool(lines_struct["groups"])
+        if lines_struct.get("recon") and Qc.get("rev_less") is not None and abs(Qc["rev_less"]) > 0.0005 * R:
+            recon = "less" if Qc["rev_less"] > 0 else "more"
+        top, top_label = ("contract", "contract revenue") if recon == "less" else ("revenue", "revenue")
         target_of = {m: g["id"] for g in lines_struct["groups"] for m in g["members"]}
         for leaf in lines_struct["leaves"]:
             if leaf["id"] in grouped:
@@ -155,21 +173,36 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
                        glabel, notekeys=[leaf["label"]])
         rcol = 2 if has_groups else 1
         for g in lines_struct["groups"]:
-            S.node("G:" + g["id"], 1, "line:" + g["id"], "rev", g["label"], "above", "revenue", "revenue",
+            S.node("G:" + g["id"], 1, "line:" + g["id"], "rev", g["label"], "above", top, top_label,
                    notekeys=[g["label"]])
         for leaf in lines_struct["leaves"]:
             if leaf["id"] not in grouped:
-                S.node("L:" + leaf["id"], rcol - 1, "line:" + leaf["id"], "rev", leaf["label"], "left", "revenue",
-                       "revenue", notekeys=[leaf["label"]])
+                S.node("L:" + leaf["id"], rcol - 1, "line:" + leaf["id"], "rev", leaf["label"], "left", top,
+                       top_label, notekeys=[leaf["label"]])
+        if recon == "more":                         # other revenues add to the lines: one more line into revenue
+            S.node("rev_more", rcol - 1, "rev_more", "rev", "Other revenues", "left", "revenue", "revenue",
+                   extra=["not from contracts with customers"])
         for leaf in lines_struct["leaves"]:
-            t = "G:" + target_of[leaf["id"]] if leaf["id"] in grouped else "revenue"
+            t = "G:" + target_of[leaf["id"]] if leaf["id"] in grouped else top
             S.link("L:" + leaf["id"], t, "line:" + leaf["id"], "rev")
         for g in lines_struct["groups"]:
-            S.link("G:" + g["id"], "revenue", "line:" + g["id"], "rev")
+            S.link("G:" + g["id"], top, "line:" + g["id"], "rev")
+        if recon == "more":
+            S.link("rev_more", "revenue", "rev_more", "rev")
         col = rcol
+        if recon == "less":                         # contract revenue -> total revenue + other revenues (a reduction)
+            S.node("contract", rcol, "line:__contract", "rev", RECON_LABEL, "above",
+                   extra=["what the revenue lines add up to"])
+            col = rcol + 1
     loss = Nc["oi"] < 0 or Nc["pretax"] < 0 or Nc["pl"] < 0
     S.node("revenue", col, "revenue", "rev", "Revenue", "above" if col else "left", style="big",
+           extra=[f"sum of the revenue lines; total revenues {f.money(Nc['rev_calc'])}"] if Nc.get("rev_calc") else [],
            notekeys=["net sales", "total revenue", "revenue"])
+    if recon == "less":
+        S.node("rev_less", col, "rev_less", "cost", "Other revenues (net loss)", "below", "contract", "contract revenue",
+               extra=["not from contracts with customers: reduces total revenue"])
+        S.link("contract", "revenue", "revenue", "rev")
+        S.link("contract", "rev_less", "rev_less", "cost")
     nonop_small = abs(Nc["nonop"]) < FOLD * R
     fold_note = (f"after {f.delta(Nc['nonop'])} interest &amp; other" if nonop_small and abs(Nc["nonop"]) > 0 else None)
     item_parent = "opex" if Nc["gp_path"] else "costs"

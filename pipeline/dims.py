@@ -302,3 +302,23 @@ def revenue_lines(member_vals, total):
             part["axis"] = axis
             best = part
     return best
+
+
+RECON = {"label": "Revenue from contracts with customers"}
+
+
+def revenue_lines_for(member_vals, raw):
+    """revenue_lines against total revenue; failing that, against revenue from contracts with customers when that
+    differs from the total (Vistra: lines add up to $4.40B of contract revenue; other revenues of −$0.38B, hedging
+    results, make the $4.02B total). Then the breakdown carries "recon" and the chart draws the difference."""
+    R = raw.get("revenue")
+    ls = revenue_lines(member_vals, R)
+    if ls:
+        return ls
+    C = raw.get("rev_contract")
+    if R and C and abs(C - R) > TOL * abs(R):
+        ls = revenue_lines(member_vals, C)
+        if ls:
+            ls["recon"] = dict(RECON)
+    return ls
+

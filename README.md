@@ -22,12 +22,22 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
   quarter on the same definition; trends only line up quarters on the same definition). When it cannot be drawn
   (negative, or the table cannot be read), the chart keeps *Free cash flow (OCF − capex)* and names the company's
   figure on the node, in the data checks and in the footer. Latest quarters stored earlier are checked 30 per scan.
-  Readers choose under **Alerts → Free cash flow** (`subscriptions.fcf_basis`; run `supabase/schema.sql` again to add
-  the column): the company's own figure where one is found, else the formula (`company`, the default); the same, and a
-  chart drawn by the formula says so and why — no earnings release found, not in the release, did not match SEC data,
-  or not checked (`noted`); or operating cash flow − capex for every company (`ocf`). The site data carries what each
-  choice changes (`fcf_alt`: the quarter on OCF − capex where the company's figure is drawn; `fcf_note`: the note), and
-  company pages and that reader's e-mails show the one they chose. Full fiscal years always use the formula.
+  Readers choose under **Alerts → Company-reported or calculated figures** (`subscriptions.fcf_basis`; run
+  `supabase/schema.sql` again to add the column): *company-reported* (`noted`: the company's figures, and a chart
+  drawn by the formula says so and why — no earnings release found, not in the release, did not match SEC data, or
+  not checked); *company-reported first, then calculated* (`company`, the default: the same without the note); or
+  *calculated throughout* (`ocf`: free cash flow = OCF − capex and revenue = what the revenue lines add up to, for
+  every company, with the company's own figures named on the chart). The site data carries what each choice changes
+  (`fcf_alt`: the quarter calculated throughout; `fcf_note`: the note), and company pages and that reader's e-mails
+  show the one they chose. Full fiscal years always use the formula for free cash flow.
+- **Total revenue and the revenue lines**: revenue is the income statement's total (`us-gaap:Revenues`) when the
+  company tags it, even when another tag is larger (Vistra: $4.40B of revenue from contracts with customers, $4.02B of
+  total revenues after −$0.38B of other revenues such as hedging results). Revenue lines that add up to contract
+  revenue rather than the total flow into a *Revenue from contracts with customers* node, which splits into revenue and
+  *Other revenues (net loss)*; when other revenues are positive they enter as one more line.
+- **Cash-flow bridge figures** come from the cash-flow statement's tags: when the income statement tags a narrower
+  D&A (Vistra: $445M) than the cash-flow statement adds back ($645M, nuclear fuel amortization included), the tag
+  reported only year to date (the cash-flow statement's) is used. Stored quarters are read again a few companies per run.
 - **Data checks** (`pipeline/checks.py`): periods of unusual length, revenue jumps, odd margins, cash flow out of
   scale, and definitions that differ from the company's are listed under every chart; probable errors are marked on
   the chart, the owner's e-mail says to check before posting, and automatic X posting holds them. Every chart and

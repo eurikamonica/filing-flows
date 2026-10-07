@@ -216,12 +216,34 @@ def refresh_reported(store, limit=REPORTED_PER_RUN):
         print(f"company-reported free cash flow: {n} quarters checked, {max(len(todo) - n, 0)} to go")
 
 
-DA_VERSION = 1           # bump when the way D&A is read changes: stored figures are read again (refresh_da)
+DA_VERSION = 2           # bump when the way D&A is read changes: stored figures are read again (refresh_da)
+# 2: D&A and share-based compensation from the cash-flow statement's tag (facts.CASH_FLOW_KEYS); total revenues
+#    (us-gaap:Revenues) before larger sub-totals, with revenue lines that add up to contract revenue marked "recon"
+REFRESH_KEYS = ("da", "dep", "amort", "sbc", "revenue", "rev_contract")
 DA_PER_RUN = 40
 
 
 def _da_parts(fx, end, annual=False):
-    return {k: facts.value(fx, k, end, annual) for k in ("da", "dep", "amort")}
+    out = {k: facts.value(fx, k, end, annual) for k in REFRESH_KEYS}
+    if out["revenue"] is None:
+        out.pop("revenue")                            # never drop a stored revenue figure
+    return out
+
+
+def mark_recon(q):
+    """A stored breakdown whose lines add up to contract revenue rather than (the new) total revenue gets "recon";
+    one that adds up to neither is dropped (the chart then shows revenue without lines)."""
+    ls, vals, raw = q.get("lines_struct"), q.get("lines") or {}, q.get("raw") or {}
+    if not ls or not raw.get("revenue") or not all(l["id"] in vals for l in ls["leaves"]):
+        return
+    total = sum(vals[l["id"]] for l in ls["leaves"])
+    near = lambda a, b: a is not None and b is not None and abs(a - b) <= dims.TOL * abs(b)
+    if near(total, raw["revenue"]):
+        ls.pop("recon", None)
+    elif near(total, raw.get("rev_contract")):
+        ls["recon"] = dict(dims.RECON)
+    else:
+        q["lines_struct"] = None
 
 
 def refresh_da(store, limit=DA_PER_RUN):
@@ -252,9 +274,11 @@ def refresh_da(store, limit=DA_PER_RUN):
                                 r["dep"] = r["da"]
                             continue
                         r.update(_da_parts(fx, end, annual))
+                    if not release_row:
+                        mark_recon(q)
                     if not release_row and isinstance(q.get("src"), dict):
                         new = sources.from_xbrl(fx, q["end"], annual=annual)
-                        for k in ("da", "dep", "amort"):
+                        for k in REFRESH_KEYS:
                             if k in new:
                                 q["src"][k] = new[k]
                             else:
@@ -267,7 +291,7 @@ def refresh_da(store, limit=DA_PER_RUN):
         finally:
             _cf.pop(cik, None)
     if todo:
-        print(f"D&A read again: {n} companies updated, {max(len(todo) - n, 0)} to go")
+        print(f"D&A, share-based compensation and revenue read again: {n} companies updated, {max(len(todo) - n, 0)} to go")
 
 
 def recent_rows(sub):
@@ -337,7 +361,7 @@ def process_filing(store, cik, accn, form, starred=False):
             if form.startswith("10-K"):
                 prev_ytd = _prior_ytd(c, sub, cik, end)
             mv = dims.member_values(dfx, end, prev_ytd)
-            lines_struct = dims.revenue_lines(mv, raw["revenue"])
+            lines_struct = dims.revenue_lines_for(mv, raw)
             if lines_struct:
                 ids = [l["id"] for l in lines_struct["leaves"]] + [g["id"] for g in lines_struct["groups"]]
                 axis = lines_struct["axis"]
@@ -443,7 +467,7 @@ def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_tex
     if dfx:
         try:
             yv = dims.year_values(dfx, end)
-            ls = dims.revenue_lines(yv, raw["revenue"])
+            ls = dims.revenue_lines_for(yv, raw)
             if ls:
                 ids = [l["id"] for l in ls["leaves"]] + [g["id"] for g in ls["groups"]]
                 axis = ls["axis"]
@@ -1012,7 +1036,7 @@ def apply_reported(q, Nc, Ny, draw=True):
 
 
 # what changes when free cash flow is drawn on the other definition (the reader's choice, see quarter_payload)
-FCF_ALT_KEYS = ("nodes", "links", "kind", "footer", "checks", "analysis")
+FCF_ALT_KEYS = ("nodes", "links", "kind", "footer", "checks", "analysis", "headline", "compare", "compare_y")
 
 
 def quarter_payload(c, q, prev_q):
@@ -1023,7 +1047,7 @@ def quarter_payload(c, q, prev_q):
     if not pl:
         return pl
     Nc = pl["_N"][0]
-    if Nc.get("co_fcf_use"):
+    if Nc.get("co_fcf_use") or _has_recon(q):
         try:
             alt = _quarter_payload(c, q, prev_q, draw_company=False)
         except Exception as e:
@@ -1046,10 +1070,30 @@ def _formula_note(status, nodes, Nc):
     return reported.formula_note(status, node, reported.our_fcf(Nc), Fmt(Nc["R"]).money) if node else None
 
 
+def _has_recon(q):
+    """The revenue lines add up to contract revenue, not total revenue (dims.revenue_lines_for)."""
+    return bool((q.get("lines_struct") or {}).get("recon")) and (q.get("raw") or {}).get("rev_contract") is not None
+
+
+def calculated_revenue(q):
+    """The quarter as "calculated throughout" (Alerts): revenue = what the revenue lines add up to (contract revenue) in
+    every period, the gap to total revenues left in costs; the reported total is kept as raw["rev_reported"]."""
+    q = dict(q, lines_struct={k: v for k, v in q["lines_struct"].items() if k != "recon"})
+    for rk in ("raw", "raw_q1", "raw_py"):
+        r = q.get(rk)
+        if isinstance(r, dict) and r.get("rev_contract"):
+            q[rk] = dict(r, revenue=r["rev_contract"], rev_reported=r.get("revenue"))
+    return q
+
+
 def _quarter_payload(c, q, prev_q, draw_company=True):
+    if not draw_company and _has_recon(q):
+        q = calculated_revenue(q)
     Nc, Nq, Ny = normalize(q["raw"]), normalize(q.get("raw_q1")), normalize(q.get("raw_py"))
     if not Nc:
         return None
+    if q["raw"].get("rev_reported") is not None:
+        Nc["rev_calc"] = q["raw"]["rev_reported"]
     apply_reported(q, Nc, Ny, draw=draw_company)
     ls = q.get("lines_struct")
     lines_q1 = q.get("lines_q1") or (prev_q.get("lines") if prev_q and prev_q.get("end") == q.get("q1_end") else None)

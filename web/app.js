@@ -545,7 +545,8 @@
     draw();
   }
 
-  const FCF_CODES = new Set(['fcf_company', 'fcf_definition', 'fcf_formula']);   // data checks about the free cash flow definition
+  // data checks about a figure the company reports differently from the arithmetic: they link to the choice in Alerts
+  const FCF_CODES = new Set(['fcf_company', 'fcf_definition', 'fcf_formula', 'revenue_recon', 'revenue_calc']);
   async function company(cik, end, all, opt) {
     const here = live();
     opt = opt || {};
@@ -1865,18 +1866,19 @@
             <div class="inline-radios" role="radiogroup" aria-label="Chart image files"><span>Chart images</span>${[['png', 'PNG'], ['jpg', 'JPG'], ['none', 'None']].map(([v, l]) =>
               `<label><input type="radio" name="attach" value="${v}" ${m.attach_images === v ? 'checked' : ''}> ${l}</label>`).join('')}</div>
             <label class="long"><input type="checkbox" id="attach-pdf" ${m.attach_pdf ? 'checked' : ''}><span>PDF report: company profile, the charts and the analysis</span></label></fieldset>
-          <fieldset><legend>Free cash flow</legend>
-            <p class="muted small">Companies define free cash flow differently: Meta also subtracts finance-lease payments, Micron nets
-              asset sales and government incentives. On company pages and in your e-mails, show:</p>
-              <label class="long"><input type="radio" name="fcf" value="company" ${fcfBasis(m.fcf_basis) === 'company' ? 'checked' : ''}><span>The company’s own
-                figure when its earnings release reports one that matches SEC’s data, labelled “company-reported”, with each item it
-                subtracts. Otherwise operating cash flow − capital expenditures</span></label>
-              <label class="long"><input type="radio" name="fcf" value="noted" ${m.fcf_basis === 'noted' ? 'checked' : ''}><span>The same, and when no
-                company figure is found the chart says so: calculated by the formula, and why (no earnings release found, not in
-                the release, or not matching SEC’s data)</span></label>
-              <label class="long"><input type="radio" name="fcf" value="ocf" ${m.fcf_basis === 'ocf' ? 'checked' : ''}><span>Always operating
-                cash flow − capital expenditures: one definition for every company and quarter. The company’s own figure is named on the
-                chart</span></label></fieldset>
+          <fieldset><legend>Company-reported or calculated figures</legend>
+            <p class="muted small">Sometimes the company’s own figure and the arithmetic disagree. Free cash flow: Meta also subtracts
+              finance-lease payments, Micron nets asset sales. Revenue: Vistra’s revenue lines add up to $4.40B of contract revenue,
+              but hedging losses make total revenues $4.02B. On company pages and in your e-mails, show:</p>
+              <label class="long"><input type="radio" name="fcf" value="noted" ${m.fcf_basis === 'noted' ? 'checked' : ''}><span><b>Company-reported.</b>
+                The company’s own figures: its free cash flow when its earnings release reports one that matches SEC’s data, its total
+                revenue with a line for the difference. Where it reports none, the chart says the figure is calculated and why</span></label>
+              <label class="long"><input type="radio" name="fcf" value="company" ${fcfBasis(m.fcf_basis) === 'company' ? 'checked' : ''}><span><b>Company-reported
+                first, then calculated</b> (default). The same, and where the company reports no figure the calculation stands in
+                without a note</span></label>
+              <label class="long"><input type="radio" name="fcf" value="ocf" ${m.fcf_basis === 'ocf' ? 'checked' : ''}><span><b>Calculated throughout.</b>
+                One rule for every company: free cash flow = operating cash flow − capital expenditures, revenue = what the revenue
+                lines add up to. The company’s own figures are named on the chart</span></label></fieldset>
           <fieldset><legend>On company pages</legend>
             <label class="long"><input type="checkbox" id="drag-zoom" ${m.chart_drag_zoom ? 'checked' : ''}><span>Drag and zoom charts with the mouse:
               hold the left button on an empty part of a chart to move it (the pointer turns into a hand), use the wheel to zoom in

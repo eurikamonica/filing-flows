@@ -90,6 +90,20 @@ def checks(q, c, Nc, Nq=None, Ny=None, annual=False):
             add("note", "revenue_jump", f"Revenue is {rel} {then}: an unusually large change; the figures are as filed.")
         break
 
+    # revenue lines that add up to contract revenue, not to total revenues (dims.revenue_lines_for)
+    ls, vals = q.get("lines_struct") or {}, q.get("lines") or {}
+    if Nc.get("rev_calc") is not None:
+        add("note", "revenue_calc", f"Revenue here is what the revenue lines add up to: revenue from contracts with "
+                                    f"customers ({money(R)}), as chosen in Alerts. The income statement’s total revenues "
+                                    f"are {money(Nc['rev_calc'])}; the difference, other revenues of "
+                                    f"{money(Nc['rev_calc'] - R)}, is counted in costs here.")
+    elif ls.get("recon") and all(l["id"] in vals for l in ls.get("leaves") or []):
+        C = sum(vals[l["id"]] for l in ls["leaves"])
+        if abs(C - R) > 0.0005 * R:
+            add("note", "revenue_recon", f"The revenue lines add up to revenue from contracts with customers ({money(C)}); "
+                                         f"other revenues of {money(R - C)} (not from contracts with customers, such as "
+                                         f"hedging results) make total revenues {money(R)}, the income statement’s figure.")
+
     # income statement shapes that are rare
     if Nc.get("gp") is not None and Nc["gp"] > 0.95 * R:
         add("note", "gross_margin", f"Gross margin is {Nc['gp'] / R * 100:.0f}%: almost no cost of revenue is tagged.")

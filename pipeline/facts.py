@@ -36,6 +36,9 @@ CONCEPTS = {
     "dep": ["DepreciationDepletionAndAmortizationPropertyPlantAndEquipment", "Depreciation"],
     "amort": ["AmortizationOfIntangibleAssets"],
     "sbc": ["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"],
+    # revenue from contracts with customers: the total the revenue lines usually add up to (Vistra: $4.40B of contract
+    # revenue, minus $0.38B of other revenues such as hedging results, = $4.02B of total revenues)
+    "rev_contract": ["RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax"],
     # capital expenditures: the general tags, then the ones oil & gas, real-estate and utility filers use
     "capex": ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets",
               "PaymentsToAcquireOilAndGasPropertyAndEquipment", "PaymentsToAcquireOilAndGasProperty",
@@ -45,6 +48,13 @@ CONCEPTS = {
 }
 # several tags can coexist: the largest is the total (revenue), or the main capex line rather than a small sub-line
 MAX_KEYS = {"revenue", "capex"}
+# ... except that "Revenues" is the income statement's total by definition: it wins even when contract revenue is larger
+# (other revenues can be negative: hedging losses). The largest tag is only for filers without it.
+TOTAL_FIRST = {"revenue": "Revenues"}
+# cash-flow bridge items: an income statement can tag a narrower figure than the cash-flow statement adds back (Vistra:
+# D&A $445M on the income statement, $645M in the cash flow, which includes nuclear fuel amortization). A tag reported
+# only year-to-date (no three-month figure after the first quarter) is the cash-flow statement's, and it wins.
+CASH_FLOW_KEYS = {"da", "sbc", "dep", "amort"}
 
 
 def d(s):
@@ -94,15 +104,47 @@ def _year_from(per, end):
     return None
 
 
-def _first(facts, key, get):
-    """(value, concept) of the first tag of CONCEPTS[key] that has a figure, else (None, None)."""
+def cash_flow_only(per):
+    """True when a tag is reported only year-to-date (as in a 10-Q's cash-flow statement): every quarter-long figure
+    starts where a longer one starts (a first quarter), and some longer one exists."""
+    long_starts = {s for (s, e) in per if (d(e) - d(s)).days >= 170}
+    quarters = [s for (s, e) in per if 75 <= (d(e) - d(s)).days <= 100]
+    return bool(long_starts) and all(s in long_starts for s in quarters)
+
+
+def _candidates(facts, key, get):
+    """[(value, concept)] of the tags of CONCEPTS[key] that have a figure, in the list's order."""
+    out = []
     for concept in CONCEPTS[key]:
         per = facts.get(concept)
         if per:
             v = get(per)
             if v is not None:
-                return v, concept
-    return None, None
+                out.append((v, concept))
+    return out
+
+
+def _pick(facts, key, get):
+    """(value, concept) for a key (see MAX_KEYS, TOTAL_FIRST, CASH_FLOW_KEYS), else (None, None)."""
+    c = _candidates(facts, key, get)
+    if not c:
+        return None, None
+    if key in TOTAL_FIRST:
+        hit = next((x for x in c if x[1] == TOTAL_FIRST[key]), None)
+        if hit:
+            return hit
+    if key in MAX_KEYS:
+        return max(c, key=lambda x: x[0])
+    if key in CASH_FLOW_KEYS and len(c) > 1:
+        cf = [x for x in c if cash_flow_only(facts[x[1]])]
+        if cf:
+            return cf[0]
+    return c[0]
+
+
+def _first(facts, key, get):
+    """(value, concept) for the key's figure: see _pick."""
+    return _pick(facts, key, get)
 
 
 def _da(facts, get):
@@ -119,36 +161,19 @@ def _da(facts, get):
 
 
 def value(facts, key, end, annual=False):
+    get = lambda per: _year_from(per, end) if annual else _quarter_from(per, end)
     if key == "da":
-        return _da(facts, lambda per: _year_from(per, end) if annual else _quarter_from(per, end))
-    vals = []
-    for concept in CONCEPTS[key]:
-        per = facts.get(concept)
-        if not per:
-            continue
-        v = _year_from(per, end) if annual else _quarter_from(per, end)
-        if v is not None:
-            if key not in MAX_KEYS:
-                return v
-            vals.append(v)
-    return max(vals) if vals else None
+        return _da(facts, get)
+    return _pick(facts, key, get)[0]
 
 
 def source(facts, key, end, annual=False):
-    """The concept value() takes its figure from (for MAX_KEYS, the largest), or None."""
-    best = None
-    for concept in CONCEPTS[key]:
-        per = facts.get(concept)
-        if not per:
-            continue
-        v = _year_from(per, end) if annual else _quarter_from(per, end)
-        if v is None:
-            continue
-        if key not in MAX_KEYS:
-            return concept
-        if best is None or v > best[0]:
-            best = (v, concept)
-    return best[1] if best else None
+    """The concept value() takes its figure from (see _pick), or None."""
+    get = lambda per: _year_from(per, end) if annual else _quarter_from(per, end)
+    if key == "da":
+        v, concept = _pick(facts, "da", get)
+        return concept if v is not None else _pick(facts, "dep", get)[1]
+    return _pick(facts, key, get)[1]
 
 
 def _quarter_how(per, end):
@@ -176,15 +201,7 @@ def ytd_value(facts, key, end):
     """Year-to-date value ending at `end` (the longest duration reported), e.g. nine months of cash flow."""
     if key == "da":
         return _da(facts, lambda per: _ytd(per, end))
-    vals = []
-    for concept in CONCEPTS[key]:
-        at_end = [(s, f) for (s, e), f in facts.get(concept, {}).items() if e == end]
-        if at_end:
-            s0, f0 = min(at_end, key=lambda x: x[0])
-            if key not in MAX_KEYS:
-                return f0["val"]
-            vals.append(f0["val"])
-    return max(vals) if vals else None
+    return _pick(facts, key, lambda per: _ytd(per, end))[0]
 
 
 def period_ends(facts):

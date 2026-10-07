@@ -113,15 +113,26 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
     for n in nodes:
         nid, out = n["id"], None
         get = lambda k: reported(src.get(k), period)
+        recon = (lines_struct or {}).get("recon")
         if nid == "revenue":
             out = get("revenue")
             if out and rev and rev.get("how") == "xbrl":
-                out += " When a company tags revenue more than one way, the largest (the total) is used."
+                out += (" Total revenues (us-gaap:Revenues) when the company tags them; otherwise, when it tags revenue "
+                        "more than one way, the largest.")
+            if Nc.get("rev_calc"):
+                out = ("Calculated: the sum of the revenue lines (revenue from contracts with customers), as chosen in "
+                       "Alerts; the income statement’s total revenues differ by the other revenues.")
+        elif nid == "contract":
+            out = (get("rev_contract") or "Revenue from contracts with customers.") + " The revenue lines add up to it."
+        elif nid in ("rev_less", "rev_more"):
+            out = ("Calculated: total revenues − revenue from contracts with customers, both as the filing tags them "
+                   "(other revenues, such as derivative and hedging results, that are not from contracts with customers).")
         elif nid.startswith(("L:", "G:")):
             member = nid[2:]
             kind = "A subtotal the company reports" if nid.startswith("G:") else "A revenue line"
             out = (f"{kind}: revenue tagged {member} on {axis or 'a breakdown axis'} in the filing’s own XBRL "
-                   "(the lines add up to total revenue).")
+                   + ("(the lines add up to revenue from contracts with customers)." if recon or Nc.get("rev_calc")
+                      else "(the lines add up to total revenue)."))
         elif nid == "gp":
             out = get("gp")
         elif nid == "cor":
