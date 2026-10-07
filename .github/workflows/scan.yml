@@ -82,6 +82,9 @@ jobs:
           printf '%s\n' "$OWNER_REREAD" >> reread-ciks.txt
 
       - name: Scan new 10-Q / 10-K filings and build charts
+        timeout-minutes: 42          # never the whole job: the data store is still saved below, so no work is lost
+        env:
+          RUN_BUDGET_MINUTES: "32"   # the pipeline stops taking on new work after this (pipeline/build.py time_up)
         run: |
           touch reread-ciks.txt
           python -m pipeline.build run --store store --out _site/data --build-ciks-file build-ciks.txt \
@@ -119,6 +122,7 @@ jobs:
 
       - name: The owner's daily report (8:00 owner time) and X threads (e-mail, or the X API)
         continue-on-error: true                 # sending trouble never blocks the site
+        timeout-minutes: 8                      # leaves time to save the data store within the job's 55 minutes
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}               # the owner's settings (#owner page) and address
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
