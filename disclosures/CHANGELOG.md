@@ -8,7 +8,10 @@ declarations); Texas and Canada SEDI as imports with an honest status (no public
 protection probed every run). Optional price-based cost estimates: Stooq daily closes + OpenFIGI CUSIP→ticker;
 13F quantity change × quarter-average close, reviewed transactions priced on their date; toggle in the UI, stored
 per browser. Jurisdiction filter, per-jurisdiction health table, `prices` module. HTTP client gained POST/JSON,
-cookies and challenge-page detection.
+cookies and challenge-page detection. Verified against the live sources: California downloads use the portal's
+`GET GetRedactedFormPdf?indexID&fileNameInfo.*` call; New York statements are served as PDFs; the Canadian registry
+lives at ethicscanada.ca (profile pages); SEDI is probed at its root. Per-jurisdiction batch shares, cursors for the
+NY index, CA partition rotation and the Canada listing, resilient data commits.
 
 ## 4.0.0
 

@@ -246,7 +246,8 @@ def apply_prices(data, client, cfg, root):
                  est_shares_max=round(r['amount_max'] / close, 2) if r.get('amount_max') is not None else None)
         records_priced += 1
     unmapped = sum(1 for c in set(cusips) if store.cusips.get(c) and not store.cusips[c].get('ticker'))
-    return {'status': 'partial' if store.errors else 'ok', 'errors': store.errors[:50], 'last_attempt': now(), 'updated_at': now(), 'error': None,
+    systemic = any(e.startswith('OpenFIGI') for e in store.errors) or (store.fetched_tickers and positions_priced == 0 and records_priced == 0)
+    return {'status': 'partial' if systemic else 'ok', 'errors': store.errors[:50],   # unmapped or delisted tickers are notes, not a failed source 'last_attempt': now(), 'updated_at': now(), 'error': None,
             'counts': {'cusips_seen': len(set(cusips)), 'cusips_mapped': sum(1 for c in set(cusips) if store.ticker_for(c)), 'cusips_unmapped': unmapped,
                        'cusips_pending': sum(1 for c in set(cusips) if c not in store.cusips), 'tickers_fetched_this_run': store.fetched_tickers,
                        'positions_priced': positions_priced, 'positions_total': positions_total, 'records_priced': records_priced},
