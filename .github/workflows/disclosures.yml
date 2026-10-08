@@ -98,9 +98,11 @@ jobs:
           BANK_CERT: ${{ inputs.bank_cert }}
           MARKET_ID: ${{ inputs.market_id }}
           EVENT_SCHEDULE: ${{ github.event.schedule }}
+          EVENT_NAME: ${{ github.event_name }}
         shell: bash
         run: |
           module="${REQUESTED_MODULE:-all}"
+          if [ "$EVENT_NAME" = push ]; then module=congress; fi   # code pushes: a quick officials run; schedules cover the rest
           case "$EVENT_SCHEDULE" in
             '7,22,37,52 * * * *') module=holdings ;;
             '17 * * * *') module=congress ;;
@@ -118,15 +120,25 @@ jobs:
           fi
           python app/collect.py "${args[@]}"
       - name: Persist official snapshot and failure status
+        shell: bash
         run: |
           git config user.name "Eurika"
           git config user.email "eurikamonica@gmail.com"
-          git add docs/data/
-          if ! git diff --cached --quiet; then
-            git commit -m "Update disclosure data and source status"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+          git add -A docs/data/
+          if git diff --cached --quiet; then echo "No data changes"; exit 0; fi
+          git commit -qm "Update disclosure data and source status"
+          git stash --include-untracked -q || true      # anything else the run left in the tree
+          for attempt in 1 2 3 4; do
+            git fetch -q origin main
+            # another run may have committed meanwhile; replay our data commit on top, keeping our files where both changed
+            if git rebase -q -X theirs origin/main; then
+              if git push -q origin HEAD:main; then echo "Pushed on attempt $attempt"; exit 0; fi
+            else
+              git rebase --abort || true
+            fi
+            sleep $((attempt * 15))
+          done
+          echo "::error::Could not push the data snapshot after 4 attempts"; exit 1
       - name: Preserve downloaded files and OCR evidence
         if: always()
         uses: actions/upload-artifact@v4
