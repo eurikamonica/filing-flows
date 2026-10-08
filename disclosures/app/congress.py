@@ -173,7 +173,7 @@ def process_document(raw,meta,client,options,force_ocr=False):
     else:raise ValueError('Source did not return a PDF')
     write_json(folder/(digest+'.pages.json'),pages)
     categories=(options.get('jurisdictions',{}).get('ny',{}).get('value_categories') or {}) if str(meta.get('report_id','')).startswith('ny-') else None
-    preview=public_excerpt(pages[0]['text'][:4000]) if pages and pages[0]['method']=='html' else ''
+    preview=public_excerpt(pages[0]['text'][:4000]) if pages else ''
     return {**meta,'source_sha256':digest,'first_seen_at':now(),'extracted_at':now(),
             'page_count':len(pages),'page_methods':[{'page':p['page'],'method':p['method'],'mean_word_confidence':p['mean_word_confidence']}for p in pages],
             'candidates':make_candidates(pages,meta['report_id'],digest,categories),'text_preview':preview,'status':'extracted','stale':False}
@@ -250,7 +250,8 @@ def collect_congress(client,cfg,old,revalidate=False):
     history={k:{**r,'last_success':r.get('extracted_at',r.get('first_seen_at')) if r.get('source_sha256') else None} for k,r in previous.items()}
     target=cfg.get('priority_report_id')
     if target and target not in catalog:raise ValueError('Requested report ID not found in the discovered catalog')
-    eligible=[r for r in catalog.values() if r.get('status')!='unsupported' and (not target or r['report_id']==target)]
+    # California rows discovered before their download fields were recorded wait for the sweep to upgrade them.
+    eligible=[r for r in catalog.values() if r.get('status')!='unsupported' and (not target or r['report_id']==target) and not (r.get('doc_kind')=='ca-pdf' and len(r.get('ca') or [])!=5)]
     if target:selected=select_batch(eligible,history,1,'report_id',cfg.get('refresh_hours',168),revalidate)
     else:
         # Every jurisdiction gets a share of the batch so a 25,000-row catalog cannot starve the others.

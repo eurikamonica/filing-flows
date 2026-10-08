@@ -101,7 +101,7 @@ def ny_meta(url, title, office):
         year, rest = int(slug[:4]), slug[5:]
     else:
         year = int(slug[-4:]); rest = slug[:-9]
-    person = re.sub(r'\s*FDS\s*\(\d{4}\)\s*$', '', title).strip()      # "Last, First M. FDS (2025)"
+    person = re.sub(r'\s*FDS(\s*\(\d{4}\))?\s*$', '', title).strip()   # "Last, First M. FDS (2025)" / "… FDS"
     person = re.sub(r'^\d{4}\s+', '', person).strip()                   # "2024 Governor Kathleen Hochul"
     office_name = office
     if ' - ' in person:
