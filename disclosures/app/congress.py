@@ -170,9 +170,10 @@ def process_document(raw,meta,client,options,force_ocr=False):
     else:raise ValueError('Source did not return a PDF')
     write_json(folder/(digest+'.pages.json'),pages)
     categories=(options.get('jurisdictions',{}).get('ny',{}).get('value_categories') if meta.get('doc_kind')=='ny-html' else None)
+    preview=public_excerpt(pages[0]['text'][:4000]) if pages and pages[0]['method']=='html' else ''
     return {**{k:v for k,v in meta.items() if k!='ca'},'source_sha256':digest,'first_seen_at':now(),'extracted_at':now(),
             'page_count':len(pages),'page_methods':[{'page':p['page'],'method':p['method'],'mean_word_confidence':p['mean_word_confidence']}for p in pages],
-            'candidates':make_candidates(pages,meta['report_id'],digest,categories),'status':'extracted','stale':False}
+            'candidates':make_candidates(pages,meta['report_id'],digest,categories),'text_preview':preview,'status':'extracted','stale':False}
 
 def load_reviewed(path,reports):
     if not path.exists():return [],[]

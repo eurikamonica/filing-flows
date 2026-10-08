@@ -93,6 +93,11 @@ class NewYorkTests(unittest.TestCase):
         unconfigured = congress.make_candidates(pages, 'ny-x', 'deadbeef', None)
         self.assertTrue(any('not configured' in c['amount_text'] for c in unconfigured))
 
+    def test_fetch_ny_document_pdf_direct(self):
+        c = FakeClient({'ethics.ny.gov/addabbo': '%PDF-1.6 fake'})
+        raw, extra = officials.fetch_ny_document(c, {'source_url': 'https://ethics.ny.gov/addabbo-jr-joseph-p-fds-2025'})
+        self.assertTrue(raw.startswith(b'%PDF')); self.assertEqual(extra['document_url'], 'https://ethics.ny.gov/addabbo-jr-joseph-p-fds-2025')
+
     def test_fetch_ny_document_follows_printable(self):
         c = FakeClient({'ethics.ny.gov/2025-governor': NY_PAGE, 'public.ethics.ny.gov/FDS': NY_STATEMENT})
         raw, extra = officials.fetch_ny_document(c, {'source_url': 'https://ethics.ny.gov/2025-governor-kathleen-hochul'})

@@ -19,6 +19,7 @@ holding or transaction until a human reviews it against the source.
 import datetime as dt
 import hashlib
 import html
+import json
 import re
 from urllib.parse import urljoin, urlparse, parse_qs, quote
 
@@ -179,8 +180,10 @@ def discover_ny(client, cfg, old_catalog, prior_state=None):
 
 
 def fetch_ny_document(client, meta):
-    page = client.get(meta['source_url']).decode('utf-8', 'replace')
-    printable = ny_printable_url(page)
+    first = client.get(meta['source_url'])
+    if first[:5] == b'%PDF-':
+        return first, {'document_url': meta['source_url']}      # legislators' statements are served as PDFs directly
+    printable = ny_printable_url(first.decode('utf-8', 'replace'))
     raw = client.get(printable)
     return raw, {'document_url': printable}
 
@@ -327,17 +330,23 @@ def ca_probe(client):
                     if re.search(r'pdf|download|document|form', e, re.I):
                         i = js.find(e.split('/')[-1])
                         findings.append(f'{src.split("/")[-1]} {e}: …{js[max(0, i - 220):i + 260]!r}')
-        for block in re.findall(r'<script\b[^>]*>(.*?)</script>', home, re.I | re.S):
-            for name in ('GetRedactedFormPdf', 'GetBootstrap', 'ExportSubmit', 'ExportTicket'):
-                i = block.find(name)
-                if i >= 0:
-                    findings.append(f'inline {name}: …{re.sub(chr(10) + "|" + chr(13) + "| {2,}", " ", block[max(0, i - 500):i + 500])!r}')
-        for verb, path in (('GET', '/Home/GetBootstrap'), ('POST', '/Home/GetBootstrap')):
+        squeeze = lambda t: re.sub(r'\s+', ' ', t)
+        for name in ('GetRedactedFormPdf', 'ExportSubmit'):
+            for m in list(re.finditer(name, home))[:2]:
+                findings.append(f'home context {name}: …{squeeze(home[max(0, m.start() - 700):m.end() + 500])!r}')
+        for src in scripts[:12]:
+            if urlparse(src).hostname != 'form700search.fppc.ca.gov':
+                continue
             try:
-                body = client.get(CA + path) if verb == 'GET' else client.request(CA + path, data=b'{}', headers={'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'})[0]
-                findings.append(f'{verb} {path}: {re.sub(chr(10) + "|" + chr(13) + "| {2,}", " ", body.decode("utf-8", "replace"))[:600]!r}')
-            except Exception as exc:
-                findings.append(f'{verb} {path}: {exc}')
+                js = client.get(src).decode('utf-8', 'replace')
+            except Exception:
+                continue
+            for m in list(re.finditer(r'GetRedactedFormPdf|RedactedFormPdf|formInfo', js))[:2]:
+                findings.append(f'{src.split("/")[-1].split("?")[0]} context: …{squeeze(js[max(0, m.start() - 600):m.end() + 400])!r}')
+        try:
+            findings.append('GET /Home/GetBootstrap keys: ' + str(list(json.loads(client.get(CA + '/Home/GetBootstrap')).keys()))[:300])
+        except Exception as exc:
+            findings.append(f'GET /Home/GetBootstrap: {exc}')
         findings.insert(0, 'endpoints: ' + ', '.join(sorted(endpoints)))
     except Exception as exc:
         findings.append('probe failed: ' + str(exc))
@@ -345,13 +354,39 @@ def ca_probe(client):
     return findings
 
 
+def ca_download_variants(payload):
+    """Payload shapes to try against GetRedactedFormPdf, most likely first."""
+    info, index_id = payload['formInfo'], payload['indexID']
+    as_int = {**info, 'FilingYear': int(info['FilingYear']) if str(info['FilingYear']).isdigit() else info['FilingYear']}
+    return [('formInfo+indexID', payload),
+            ('formInfo(int year)+indexID', {'formInfo': as_int, 'indexID': index_id}),
+            ('indexID only', {'indexID': index_id}),
+            ('indexId only', {'indexId': index_id}),
+            ('FormInfo+IndexID', {'FormInfo': info, 'IndexID': index_id}),
+            ('formInfo with middleName', {'formInfo': {**info, 'MiddleName': ''}, 'indexID': index_id})]
+
+
 def fetch_ca_document(client, meta):
     payload = ca_form_info(meta)
-    try:
-        answer = client.post_json(CA + '/Home/GetRedactedFormPdf', payload)
-    except Exception as exc:
+    answer, problems = None, []
+    for label, variant in ca_download_variants(payload):
+        try:
+            answer = client.post_json(CA + '/Home/GetRedactedFormPdf', variant)
+            if isinstance(answer, dict) and any(answer.get(k) for k in ('PDFDownloadUrl', 'pdfDownloadUrl', 'PdfDownloadUrl', 'url')):
+                break
+            problems.append(f'{label}: {str(answer)[:160]}')
+        except Exception as exc:
+            problems.append(f'{label}: {str(exc)[:160]}')
+        answer = None
+    if answer is None:
+        try:
+            answer = json.loads(client.get(f'{CA}/Home/GetRedactedFormPdf?indexID={quote(payload["indexID"])}').decode('utf-8', 'replace'))
+        except Exception as exc:
+            problems.append(f'GET ?indexID=: {str(exc)[:160]}'); answer = None
+    if answer is None:
+        first_time = not CA_PROBE['done']
         probe = ca_probe(client)
-        raise ValueError(f'{exc} · payload {payload!r} · ' + ' ‖ '.join(probe)[:6000]) from None
+        raise ValueError('all download variants failed · ' + ' | '.join(problems) + (' · ' + ' ‖ '.join(probe)[:7000] if first_time else '')) from None
     url = next((answer[k] for k in ('PDFDownloadUrl', 'pdfDownloadUrl', 'PdfDownloadUrl', 'url') if isinstance(answer, dict) and answer.get(k)), None)
     if not url:
         raise ValueError('Portal returned no PDFDownloadUrl: ' + str(answer)[:200])
