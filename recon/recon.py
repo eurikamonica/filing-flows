@@ -91,3 +91,44 @@ post('openfigi', 'https://api.openfigi.com/v3/mapping', json_body=[{'idType': 'I
 
 json.dump(log, open(os.path.join(OUT, '_log.json'), 'w'), indent=1)
 print(json.dumps(log, indent=1))
+
+# ---- digest to stdout (artifacts/pushes are not reachable from the analysis side) ----
+import html as _html
+def digest(path):
+    raw = open(path, 'rb').read()
+    try: t = raw.decode('utf-8', 'replace')
+    except Exception: t = ''
+    print('\n' + '=' * 100 + '\n### ' + path + ' (' + str(len(raw)) + ' bytes)')
+    if path.endswith('.json') or path.endswith('.pdf') or 'stooq' in path:
+        print(t[:1500]); return
+    for tag in ['form', 'input', 'select', 'script', 'a', 'iframe', 'link']:
+        items = re.findall(r'<' + tag + r'\b[^>]*>', t, re.I)
+        keep = []
+        for it in items:
+            if tag == 'a':
+                h = re.search(r'href=["\']([^"\']+)', it, re.I)
+                if not h: continue
+                hv = h.group(1)
+                if hv.startswith('#') or 'javascript:' in hv: continue
+                keep.append(hv)
+            elif tag == 'script':
+                s = re.search(r'src=["\']([^"\']+)', it, re.I)
+                if s: keep.append(s.group(1))
+            elif tag == 'link':
+                s = re.search(r'href=["\']([^"\']+)', it, re.I)
+                if s and 'css' not in s.group(1): keep.append(s.group(1))
+            else:
+                keep.append(it[:300])
+        keep = list(dict.fromkeys(keep))
+        if keep:
+            print('--', tag, len(keep))
+            for k in keep[:80]: print('   ', k)
+    for m in re.findall(r'(?:url|endpoint|api)[A-Za-z]*\s*[:=]\s*["\']([^"\']{4,160})["\']', t, re.I)[:40]:
+        print('   js-url:', m)
+    text = re.sub(r'<script.*?</script>|<style.*?</style>', ' ', t, flags=re.S | re.I)
+    text = _html.unescape(re.sub(r'<[^>]+>', ' ', text))
+    text = re.sub(r'\s+', ' ', text)
+    print('-- text:', text[:2500])
+for f in sorted(os.listdir(OUT)):
+    if f.startswith('_'): continue
+    digest(os.path.join(OUT, f))
