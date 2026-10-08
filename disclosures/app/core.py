@@ -12,7 +12,7 @@ from urllib.parse import urlencode, urlparse, quote
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 
-VERSION = '4.0.0'
+VERSION = '4.1.0'
 
 def now():
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
@@ -36,17 +36,28 @@ def write_json(path, obj):
 def read_json(path, default):
     return json.loads(Path(path).read_text(encoding='utf-8')) if Path(path).exists() else default
 
+HOSTS = ('publicreporting.cftc.gov', 'api.fdic.gov', 'data.sec.gov', 'www.sec.gov', 'disclosures-clerk.house.gov',
+         # officials' disclosures (state and Canada) and price sources, added in 4.1
+         'ethics.ny.gov', 'public.ethics.ny.gov', 'form700search.fppc.ca.gov',
+         'prciec-rpccie.parl.gc.ca', 'ciec-ccie.parl.gc.ca', 'www.sedi.ca', 'sedi.ca',
+         'stooq.com', 'api.openfigi.com')
+
+class BlockedError(RuntimeError):
+    """The source answered with a bot-protection / challenge page instead of data."""
+
 class Client:
     def __init__(self, root, options):
         self.root = Path(root)
         self.options = options
         self.last = 0
         self.manifest = []
+        import http.cookiejar
+        from urllib.request import build_opener, install_opener, HTTPCookieProcessor
+        self.jar = http.cookiejar.CookieJar()          # session cookies some portals need between two requests
+        install_opener(build_opener(HTTPCookieProcessor(self.jar)))
+        self.hosts = tuple(HOSTS) + tuple(options.get('extra_hosts', []))
 
-    def get(self, url, sec=False):
-        host = urlparse(url).hostname
-        if host not in ('publicreporting.cftc.gov', 'api.fdic.gov', 'data.sec.gov', 'www.sec.gov', 'disclosures-clerk.house.gov'):
-            raise ValueError('Unapproved data host')
+    def headers_for(self, host, sec):
         headers = {'User-Agent': (os.environ.get('SEC_USER_AGENT') or self.options.get('sec_user_agent') or 'DisclosureLab/1.1 public-data-reader'), 'Accept': '*/*'}
         if sec:
             ua = (os.environ.get('SEC_USER_AGENT') or self.options.get('sec_user_agent', '')).strip()
@@ -57,26 +68,48 @@ class Client:
             headers['X-Api-Key'] = os.environ['FDIC_API_KEY']
         if host == 'publicreporting.cftc.gov' and os.environ.get('CFTC_APP_TOKEN'):
             headers['X-App-Token'] = os.environ['CFTC_APP_TOKEN']
+        if host == 'api.openfigi.com' and os.environ.get('OPENFIGI_API_KEY'):
+            headers['X-OPENFIGI-APIKEY'] = os.environ['OPENFIGI_API_KEY']
+        if host in ('www.sedi.ca', 'sedi.ca', 'ethics.ny.gov', 'public.ethics.ny.gov', 'form700search.fppc.ca.gov', 'prciec-rpccie.parl.gc.ca', 'ciec-ccie.parl.gc.ca'):
+            # Portals built for browsers; the contact address stays in the UA string.
+            headers['User-Agent'] = 'Mozilla/5.0 (compatible; FilingFlows disclosure reader; ' + headers['User-Agent'] + ')'
+            headers['Accept'] = 'text/html,application/xhtml+xml,application/json;q=0.9,application/pdf;q=0.9,*/*;q=0.8'
+            headers['Accept-Language'] = 'en-US,en;q=0.9,fr-CA;q=0.5'
+        return headers
+
+    def request(self, url, sec=False, data=None, headers=None, allow_block=False):
+        """GET (or POST when data is given). Returns (bytes, final_url, content_type)."""
+        host = urlparse(url).hostname
+        if host not in self.hosts:
+            raise ValueError('Unapproved data host')
+        hdrs = self.headers_for(host, sec)
+        hdrs.update(headers or {})
         last_error = 'Request failed'
         for attempt in range(self.options.get('retries', 3)):
             time.sleep(max(0, self.options.get('min_interval_seconds', .55) - (time.monotonic() - self.last)))
             self.last = time.monotonic()
             try:
-                with urlopen(Request(url, headers=headers), timeout=self.options.get('timeout', 40)) as res:
-                    if urlparse(res.url).hostname not in ('publicreporting.cftc.gov','api.fdic.gov','data.sec.gov','www.sec.gov','disclosures-clerk.house.gov'):
+                with urlopen(Request(url, data=data, headers=hdrs, method='POST' if data is not None else 'GET'), timeout=self.options.get('timeout', 40)) as res:
+                    final = res.url
+                    if urlparse(final).hostname not in self.hosts:
+                        if allow_block:
+                            raise BlockedError('Redirected to a challenge/bot-protection page at ' + str(urlparse(final).hostname))
                         raise ValueError('Unexpected redirect host')
                     limit = self.options.get('max_response_mb', 80) * 1024 * 1024
-                    data = res.read(limit + 1)
-                    if len(data) > limit:
+                    body = res.read(limit + 1)
+                    if len(body) > limit:
                         raise ValueError('Response exceeds configured size; not marked complete')
-                digest = hashlib.sha256(data).hexdigest()
+                    ctype = str(res.headers.get('content-type', '') or '')
+                digest = hashlib.sha256(body).hexdigest()
                 path = self.root / 'raw' / digest[:2] / (digest + '.bin')
                 path.parent.mkdir(parents=True, exist_ok=True)
                 if not path.exists():
-                    path.write_bytes(data)
+                    path.write_bytes(body)
                 self.manifest.append({'source_url': url, 'sha256': digest,
-                                      'fetched_at': now(), 'path': str(path.relative_to(self.root)), 'bytes': len(data)})
-                return data
+                                      'fetched_at': now(), 'path': str(path.relative_to(self.root)), 'bytes': len(body)})
+                return body, final, ctype
+            except BlockedError:
+                raise
             except HTTPError as exc:
                 last_error = f'HTTP {exc.code} from {host}'
                 if exc.code not in (429, 500, 502, 503, 504):
@@ -88,8 +121,18 @@ class Client:
                 time.sleep(2 ** attempt)
         raise RuntimeError(last_error)
 
+    def get(self, url, sec=False, headers=None, allow_block=False):
+        return self.request(url, sec=sec, headers=headers, allow_block=allow_block)[0]
+
     def json(self, url, sec=False):
         return json.loads(self.get(url, sec=sec))
+
+    def post_json(self, url, payload, headers=None):
+        body = self.request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json', **(headers or {})})[0]
+        parsed = json.loads(body)
+        if isinstance(parsed, str):   # some portals double-encode their JSON
+            parsed = json.loads(parsed)
+        return parsed
 
 COT_FIELDS = {
     'disaggregated': {

@@ -83,6 +83,80 @@
     "imports_manifest": "config/imports.json",
     "batch_size": 30,
     "refresh_hours": 168,
-    "auto_current_year": true
+    "auto_current_year": true,
+    "jurisdictions": {
+      "house": {
+        "enabled": true
+      },
+      "ny": {
+        "enabled": true,
+        "years": [
+          2024,
+          2025,
+          2026
+        ],
+        "offices": [
+          "Statewide Elected Officials",
+          "Senate",
+          "Assembly"
+        ],
+        "max_index_pages_per_run": 60,
+        "value_categories": {},
+        "_note": "COELIG statements disclose value categories (letters). Fill value_categories with the statutory bounds from the current FDS instructions, e.g. {\"A\":[0,4999],\"B\":[5000,19999]}; until then candidates carry the letter and the reviewer enters the bounds."
+      },
+      "ca": {
+        "enabled": true,
+        "years": [
+          2025,
+          2026
+        ],
+        "result_cap": 1000,
+        "positions": [
+          "Governor",
+          "Lieutenant Governor",
+          "Attorney General",
+          "Secretary of State",
+          "Controller",
+          "Treasurer",
+          "Insurance Commissioner",
+          "Superintendent of Public Instruction",
+          "Board of Equalization Member",
+          "Senator",
+          "Assembly Member",
+          "Judge",
+          "Justice",
+          "Commissioner",
+          "Executive Director",
+          "Director",
+          "Chief Deputy Director",
+          "General Counsel",
+          "Member"
+        ]
+      },
+      "tx": {
+        "enabled": true,
+        "_note": "No public online viewer; add PFS copies obtained by open-records request to config/imports.json with jurisdiction \"Texas\"."
+      },
+      "canada": {
+        "enabled": true,
+        "start_pages": [
+          "https://prciec-rpccie.parl.gc.ca/EN/PublicRegistries/Pages/PublicRegistryHome.aspx"
+        ],
+        "max_index_pages_per_run": 40
+      },
+      "sedi": {
+        "enabled": true,
+        "_note": "Probed every run; automatic collection is blocked by bot protection. Add saved SEDI reports (PDF) to config/imports.json with jurisdiction \"Canada (SEDI insider reports)\"."
+      }
+    }
+  },
+  "prices": {
+    "enabled": true,
+    "source": "stooq",
+    "ticker_batch": 60,
+    "cusip_batch": 200,
+    "refresh_hours": 24,
+    "history_since": "2023-01-01",
+    "_note": "Optional cost estimates: quarter-average close \u00d7 quantity change for 13F, close on the transaction date for reviewed transactions. Estimates, never disclosed figures."
   }
 }

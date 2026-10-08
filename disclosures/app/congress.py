@@ -14,6 +14,7 @@ import tempfile
 from urllib.parse import urljoin
 import zipfile
 from core import now, read_json, write_json
+import officials
 
 ROOT=Path(__file__).resolve().parents[1]
 HOUSE='https://disclosures-clerk.house.gov'
@@ -100,7 +101,9 @@ def public_excerpt(text):
     # Minimize residential address details in the public review preview.
     return re.sub(r"\b\d{1,6}\s+[A-Za-z][A-Za-z0-9 .'-]{0,65}\s+-\s+Home\b", '[Residential address omitted] - Home', text)
 
-def make_candidates(pages,report_id,digest):
+CATEGORY=re.compile(r'\bCategory\s+([A-Z])\b')
+
+def make_candidates(pages,report_id,digest,categories=None):
     result=[]
     for p in pages:
         text=p['text']
@@ -112,6 +115,12 @@ def make_candidates(pages,report_id,digest):
                 try:low,high=parse_amount(m[0])
                 except ValueError:continue
                 candidates.append({'amount_min':low,'amount_max':high,'amount_text':m[0],'excerpt':text[max(0,m.start()-240):min(len(text),m.end()+200)]})
+            # Statements that disclose value categories (New York FDS) rather than dollar ranges. Bounds come from
+            # the configured category table; without one the reviewer enters the statutory range by hand.
+            for m in CATEGORY.finditer(text):
+                bounds=(categories or {}).get(m[1])
+                low,high=(int(bounds[0]),(int(bounds[1]) if bounds[1] is not None else None)) if bounds else (0,None)
+                candidates.append({'amount_min':low,'amount_max':high,'amount_text':m[0]+('' if bounds else ' (range not configured; enter the statutory bounds)'),'excerpt':text[max(0,m.start()-240):min(len(text),m.end()+200)]})
         for i,candidate in enumerate(candidates):
             low,high=candidate['amount_min'],candidate['amount_max']
             excerpt=candidate['excerpt']
@@ -147,15 +156,23 @@ def house_meta(row):
             'source_url':f'{HOUSE}/public_disc/{route}/{year}/{doc}.pdf'}
 
 def process_document(raw,meta,client,options,force_ocr=False):
-    if not raw.startswith(b'%PDF'):raise ValueError('Source did not return a PDF')
     digest=hashlib.sha256(raw).hexdigest()
     folder=client.root/'congress';folder.mkdir(parents=True,exist_ok=True)
-    path=folder/(digest+'.pdf');path.write_bytes(raw)
-    pages=extract_pdf(path,options,force_ocr)
+    head=raw[:2048].lower()
+    if raw.startswith(b'%PDF'):
+        path=folder/(digest+'.pdf');path.write_bytes(raw)
+        pages=extract_pdf(path,options,force_ocr)
+    elif meta.get('doc_kind') in ('ny-html','html') or b'<html' in head or b'<!doctype html' in head:
+        if b'<html' not in head and b'<!doctype html' not in head and b'<body' not in head:raise ValueError('Source did not return an HTML statement')
+        (folder/(digest+'.html')).write_bytes(raw)
+        pages=officials.html_to_pages(raw)
+        if options.get('max_pdf_pages') and len(pages)>int(options['max_pdf_pages']):raise ValueError(f'HTML statement spans {len(pages)} text pages; limit is {options["max_pdf_pages"]}')
+    else:raise ValueError('Source did not return a PDF')
     write_json(folder/(digest+'.pages.json'),pages)
-    return {**meta,'source_sha256':digest,'first_seen_at':now(),'extracted_at':now(),
+    categories=(options.get('jurisdictions',{}).get('ny',{}).get('value_categories') if meta.get('doc_kind')=='ny-html' else None)
+    return {**{k:v for k,v in meta.items() if k!='ca'},'source_sha256':digest,'first_seen_at':now(),'extracted_at':now(),
             'page_count':len(pages),'page_methods':[{'page':p['page'],'method':p['method'],'mean_word_confidence':p['mean_word_confidence']}for p in pages],
-            'candidates':make_candidates(pages,meta['report_id'],digest),'status':'extracted','stale':False}
+            'candidates':make_candidates(pages,meta['report_id'],digest,categories),'status':'extracted','stale':False}
 
 def load_reviewed(path,reports):
     if not path.exists():return [],[]
@@ -216,10 +233,18 @@ def collect_congress(client,cfg,old,revalidate=False):
                 discovery_failed=True;errors.append(f'House index {year}: {exc}')
                 catalog.update({r['report_id']:r for r in old.get('directory',[]) if r.get('index_year')==year})
     except Exception as exc:
-        discovery_failed=True;errors.append('House discovery: '+str(exc));catalog={r['report_id']:r for r in old.get('directory',[])}
+        discovery_failed=True;errors.append('House discovery: '+str(exc));catalog={r['report_id']:r for r in old.get('directory',[]) if r.get('jurisdiction','US House')=='US House'}
+    # 4.1: New York, California, Canada (and the Texas / SEDI notes) join the same catalog and review pipeline.
+    jurisdiction_notes={}
+    try:
+        extra,extra_errors,extra_coverage,jurisdiction_notes=officials.discover_all(client,cfg,old)
+        catalog.update(extra);errors.extend(extra_errors);coverage.extend(extra_coverage)
+    except Exception as exc:
+        errors.append('Officials discovery: '+str(exc))
+        catalog.update({r['report_id']:r for r in old.get('directory',[]) if r.get('jurisdiction','US House')!='US House'})
     history={k:{**r,'last_success':r.get('extracted_at',r.get('first_seen_at')) if r.get('source_sha256') else None} for k,r in previous.items()}
     target=cfg.get('priority_report_id')
-    if target and target not in catalog:raise ValueError('Requested report ID not found in selected House years')
+    if target and target not in catalog:raise ValueError('Requested report ID not found in the discovered catalog')
     selected=select_batch([r for r in catalog.values() if r.get('status')!='unsupported' and (not target or r['report_id']==target)],history,int(cfg.get('batch_size',30)),'report_id',cfg.get('refresh_hours',168),revalidate)
     for meta in selected:
         rid=meta['report_id'];prior=previous.get(rid)
@@ -227,20 +252,21 @@ def collect_congress(client,cfg,old,revalidate=False):
             if prior and prior.get('shard'):
                 from shards import safe_path
                 prior=read_json(safe_path(cfg['_data_root'],prior['shard']),prior)
-            record=process_document(client.get(meta['source_url']),meta,client,cfg)
+            raw,extra=officials.fetch_document(client,meta)
+            record=process_document(raw,{**meta,**extra},client,cfg)
             record['last_attempt']=now();record['extracted_at']=now()
             if prior:record['first_seen_at']=prior.get('first_seen_at',record['first_seen_at'])
             result[rid]=record
         except Exception as exc:
             errors.append(f'{rid}: {exc}')
-            result[rid]={**(prior or meta),'last_attempt':now(),'stale':True,'status':'error','error':str(exc),'candidates':(prior or{}).get('candidates',[])}
+            result[rid]={**{k:v for k,v in (prior or meta).items() if k!='ca'},'last_attempt':now(),'stale':True,'status':'error','error':str(exc),'candidates':(prior or{}).get('candidates',[])}
     reports=list(result.values())
     # Explicit imports support Senate/state/local PDFs after their access process.
     for item in read_json(safe_local(cfg.get('imports_manifest','config/imports.json')),[]):
         try:
             meta={k:item[k]for k in ('report_id','person','jurisdiction','report_type','filed_date','source_url')}
             dt.date.fromisoformat(meta['filed_date'])
-            if meta['report_id'] in catalog:raise ValueError('Import conflicts with House report ID')
+            if meta['report_id'] in catalog:raise ValueError('Import conflicts with a discovered report ID')
             raw=safe_local(item['path']).read_bytes()
             prior=previous.get(meta['report_id']);digest=hashlib.sha256(raw).hexdigest()
             if prior and prior.get('source_sha256')==digest and not revalidate:record=prior
@@ -251,8 +277,15 @@ def collect_congress(client,cfg,old,revalidate=False):
         for candidate in report.get('candidates',[]):candidate['excerpt']=public_excerpt(candidate['excerpt'])
     reviewed,review_errors=load_reviewed(safe_local(cfg.get('reviewed_file','config/reviewed-disclosures.csv')),reports)
     errors.extend(review_errors)
-    directory=[{**r,'status':result.get(r['report_id'],{}).get('status',r.get('status','pending'))} for r in catalog.values()]
-    return {'reports':reports,'records':reviewed,'errors':errors,'coverage':coverage,'directory':directory,
-            'counts':{'discovered_reports':len(directory),'discovered_filer_names':len({(r['person'],r.get('office','')) for r in directory}),'extracted_reports':sum(bool(r.get('source_sha256')) for r in reports),'pending_reports':sum(r['status']=='pending' for r in directory),'unsupported_reports':sum(r['status']=='unsupported' for r in directory),'reviewed_records':len(reviewed),'attempted_this_run':len(selected)},
+    directory=[{**{k:v for k,v in r.items() if k!='ca'},'status':result.get(r['report_id'],{}).get('status',r.get('status','pending'))} for r in catalog.values()]
+    by_jurisdiction={}
+    for r in directory:
+        j=by_jurisdiction.setdefault(r.get('jurisdiction','US House'),{'discovered':0,'extracted':0,'pending':0,'error':0,'unsupported':0})
+        j['discovered']+=1;j[{'extracted':'extracted','pending':'pending','error':'error','unsupported':'unsupported'}.get(r['status'],'pending')]+=1
+    for r in reports:
+        if r['report_id'] not in catalog:
+            j=by_jurisdiction.setdefault(r.get('jurisdiction','Imports'),{'discovered':0,'extracted':0,'pending':0,'error':0,'unsupported':0});j['discovered']+=1;j['extracted']+=bool(r.get('source_sha256'))
+    return {'reports':reports,'records':reviewed,'errors':errors,'coverage':coverage,'directory':directory,'jurisdiction_notes':jurisdiction_notes,
+            'counts':{'discovered_reports':len(directory),'discovered_filer_names':len({(r['person'],r.get('office','')) for r in directory}),'extracted_reports':sum(bool(r.get('source_sha256')) for r in reports),'pending_reports':sum(r['status']=='pending' for r in directory),'unsupported_reports':sum(r['status']=='unsupported' for r in directory),'reviewed_records':len(reviewed),'attempted_this_run':len(selected),'by_jurisdiction':by_jurisdiction},
             'status':'partial' if errors else 'ok',
-            'coverage_note':'All names in selected House index years (includes candidates/former members); names are not verified unique person IDs. Annual/PTR PDF processing continues in batches. Senate/state/local imports only. Reviewed excerpts are partial, not current portfolios.'}
+            'coverage_note':'US House: all names in selected index years (includes candidates/former members). New York: COELIG statements for statewide officials, Senate and Assembly (HTML statements, value categories). California: FPPC portal filings since 2025 (Form 700 PDFs). Canada: federal public registry declarations. Texas and SEDI: imports only. Names are not verified unique person IDs. Document processing continues in batches. Reviewed excerpts are partial, not current portfolios.'}

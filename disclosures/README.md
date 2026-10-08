@@ -12,6 +12,27 @@ system (same header, type, colours, dark mode and theme preference), with links 
 - **Secrets**: the repository's `SEC_USER_AGENT`; `FDIC_API_KEY` and `CFTC_APP_TOKEN` optional.
 - **Local preview**: `python disclosures/app/serve.py` → http://127.0.0.1:8080
 
+## 4.1 — state and Canadian officials, optional cost estimates
+
+| Jurisdiction | Source | How it is collected |
+|---|---|---|
+| US House | Clerk's annual indexes | unchanged (PDF → text/OCR → review desk) |
+| New York State | COELIG index of statements (statewide officials, Senate, Assembly; `jurisdictions.ny.years`) | index pages → statement page → printable HTML statement → text candidates. NY discloses **value categories** (letters); fill `jurisdictions.ny.value_categories` from the current FDS instructions, otherwise reviewers enter the bounds |
+| California | FPPC Public Official Financial Disclosure Portal (filings since 2025-01-01; statewide officials, legislators, judges and other §87200 filers) | JSON search per year (split by position / initial above the portal's 1,000-row cap) → redacted Form 700 PDF → text/OCR |
+| Texas | Texas Ethics Commission | **imports only** — PFS copies are not published online; obtain them by open-records request and list them in `config/imports.json` with jurisdiction `Texas` |
+| Canada (federal) | Office of the Conflict of Interest and Ethics Commissioner public registry | registry pages → declaration pages (HTML) → text candidates |
+| Canada (SEDI) | SEDI insider reports | **probe + imports** — SEDI answers scheduled jobs with a bot-protection challenge; the Health card shows the probe result each run; saved reports can be imported |
+
+All of these share the House pipeline: nothing becomes a holding or transaction until it is reviewed against the
+source page. The Officials view has a jurisdiction filter; the Health card lists discovered / extracted / queued per
+jurisdiction. The hourly House schedule now rotates through every jurisdiction (`congress.batch_size` documents per
+run; `--report-id` prioritises one).
+
+**Optional cost estimates** (`prices` in `config/settings.json`, module `prices` in Actions, toggle in the UI):
+daily closes from Stooq and CUSIP→ticker from OpenFIGI (both keyless; `OPENFIGI_API_KEY` raises the mapping batch).
+13F: quantity change × average daily close of the report quarter; reviewed transactions: close on or just before the
+event date → implied share range. Labelled as estimates everywhere; actual execution prices are not disclosed.
+
 The original package documentation follows. Where it mentions the separate `Filing-Flows-Disclosure-Lab`
 repository, its own `update-and-deploy.yml` or the `docs/` folder at the repository root, read `disclosures/…`
 and the workflow above instead.

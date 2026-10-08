@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=4.1">
+<link rel="stylesheet" href="styles.css?v=4.2">
 <script>
 /* Same colour-theme preference as the Sankey site (localStorage "ff:theme"), applied before first paint. */
 try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
@@ -48,13 +48,13 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
   <section class="page-head">
     <div class="crumbs"><a href="../">Filing Flows</a><span>›</span><span>Disclosures</span></div>
     <h1>Disclosures</h1>
-    <p class="intro">Institutional ownership, public officials' disclosures and market positioning, read from the public record: SEC 13F and N-PX filings, House financial disclosures, CFTC Commitments of Traders and FDIC bank financials.
+    <p class="intro">Institutional ownership, public officials' disclosures and market positioning, read from the public record: SEC 13F and N-PX filings; financial disclosures of the US House, New York State, California, Texas (imports) and Canada's federal public office holders; CFTC Commitments of Traders and FDIC bank financials.
       <span class="src" id="buildtime"></span></p>
   </section>
   <nav class="pills modules" aria-label="Data modules">
     <button class="pill" data-tab="directory" aria-pressed="false">Explore directory</button>
     <button class="pill on" data-tab="holdings" aria-pressed="true">13F holdings</button>
-    <button class="pill" data-tab="congress" aria-pressed="false">Congress</button>
+    <button class="pill" data-tab="congress" aria-pressed="false">Officials</button>
     <button class="pill" data-tab="review" aria-pressed="false">PDF / OCR</button>
     <button class="pill" data-tab="cot" aria-pressed="false">COT</button>
     <button class="pill" data-tab="banks" aria-pressed="false">Banks</button>

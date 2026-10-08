@@ -6,13 +6,14 @@ from core import Client, read_json, now, publish, refresh_module, collect_cot, c
 from holdings import collect_holdings
 from expanded import collect_cot_expanded, collect_banks_expanded, collect_npx_expanded
 from congress import collect_congress
+from prices import apply_prices
 from shards import hydrate, hydrate_catalogs, publish_shards
 
 ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser(description='Collect official public disclosures; demo never substitutes for real data')
-    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets'],default='all')
+    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices'],default='all')
     parser.add_argument('--config',type=Path,default=ROOT/'config/settings.json')
     parser.add_argument('--output',type=Path,default=ROOT/'docs/data')
     parser.add_argument('--storage',type=Path,default=ROOT/'storage')
@@ -47,6 +48,17 @@ def main():
         failed |= result['status'] != 'ok'
         print(key+': '+result['status']+((' — '+result['error']) if result.get('error') else ''),flush=True)
         data['generated_at'] = now()
+        publish_shards(args.output,data)
+    # 4.1: optional price-based cost estimates, refreshed with 13F and officials' runs or on demand.
+    if cfg.get('prices',{}).get('enabled') and args.only in ('all','prices','holdings','congress'):
+        print('Collecting prices',flush=True)
+        try:
+            data['modules']['prices']=apply_prices(data,client,cfg['prices'],args.output)
+        except Exception as exc:
+            data['modules']['prices']={**data['modules'].get('prices',{}),'status':'error','error':str(exc),'last_attempt':now()}
+        failed|=data['modules']['prices']['status']!='ok'
+        print('prices: '+data['modules']['prices']['status']+((' — '+data['modules']['prices']['error']) if data['modules']['prices'].get('error') else ''),flush=True)
+        data['generated_at']=now()
         publish_shards(args.output,data)
     write_json(args.storage/'last-run-manifest.json',client.manifest)
     if failed:

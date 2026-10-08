@@ -8,7 +8,7 @@ on:
       module:
         description: Data module to update
         type: choice
-        options: [all, holdings, congress, cot, banks, npx, markets]
+        options: [all, holdings, congress, cot, banks, npx, markets, prices]
         default: all
       batch_size:
         description: Optional entity/filer/PDF batch size (blank uses config)
@@ -71,6 +71,7 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Install system OCR tools
         if: github.event.schedule != '7,22,37,52 * * * *' && github.event.schedule != '43 0-9,11-23 * * *' && (inputs.module == '' || inputs.module == 'all' || inputs.module == 'congress')
+        # 'congress' covers every officials' jurisdiction (US House, New York, California, Canada + imports)
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y tesseract-ocr poppler-utils
@@ -88,6 +89,7 @@ jobs:
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
           FDIC_API_KEY: ${{ secrets.FDIC_API_KEY }}
           CFTC_APP_TOKEN: ${{ secrets.CFTC_APP_TOKEN }}
+          OPENFIGI_API_KEY: ${{ secrets.OPENFIGI_API_KEY }}
           REQUESTED_MODULE: ${{ inputs.module }}
           REVALIDATE: ${{ inputs.revalidate }}
           BATCH_SIZE: ${{ inputs.batch_size }}

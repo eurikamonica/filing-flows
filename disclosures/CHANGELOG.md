@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.1.0
+
+Officials' disclosures beyond the US House: New York State (COELIG statements, HTML, value categories), California
+(FPPC Public Official Financial Disclosure Portal, Form 700 PDFs since 2025), Canada (federal public registry
+declarations); Texas and Canada SEDI as imports with an honest status (no public online PFS viewer; SEDI bot
+protection probed every run). Optional price-based cost estimates: Stooq daily closes + OpenFIGI CUSIP→ticker;
+13F quantity change × quarter-average close, reviewed transactions priced on their date; toggle in the UI, stored
+per browser. Jurisdiction filter, per-jurisdiction health table, `prices` module. HTTP client gained POST/JSON,
+cookies and challenge-page detection.
+
 ## 4.0.0
 
 Broad COT and active-FDIC catalogs with rotating history queues; two-stage N-PX discovery/download queue; per-entity histories and 1,000-row vote chunks; demand-loaded catalogs; priority bank/market inputs and hourly markets run; v3 data migration; source-count validation and COT consolidated-code support.
