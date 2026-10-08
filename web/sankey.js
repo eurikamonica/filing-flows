@@ -105,6 +105,38 @@
       `L${f(x1)} ${f(a1 + th)} C${f(xm)} ${f(a1 + th)} ${f(xm)} ${f(a0 + th)} ${f(x0)} ${f(a0 + th)} Z`;
   }
 
+  // ---------- brand: the Filing Flows mark, name and address in the blank top-right of every chart ----------
+  // Drawn into the scene itself, so the on-page chart and every export (PNG, JPG, PDF, the posted images) carry it.
+  // It never overlaps the data: the title row is widened when a long title would reach it.
+  const BRAND = { name: 'Filing Flows', url: '' };          // url: set from the page (app.js) or derived from the address bar
+  function brandUrl() {
+    if (BRAND.url) return BRAND.url;
+    try {
+      if (typeof location !== 'undefined' && /^https?:$/.test(location.protocol) && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        return (location.host + location.pathname.replace(/index\.html$/, '')).replace(/\/$/, '');
+      }
+    } catch (e) { /* no window */ }
+    return '';
+  }
+  const BRAND_K = 1.6, BRAND_MARK = 26 * 1.6, BRAND_GAP = 14;
+  function brandWidth() {
+    return BRAND_MARK + BRAND_GAP + Math.max(measure(BRAND.name, 26, 600), measure(brandUrl(), 14, 400));
+  }
+  function brandShapes(shapes, W, top) {
+    const bw = brandWidth(), k = BRAND_K, x = W - MARGIN - bw, y = top;
+    const p = (v) => (x + v * k).toFixed(2), q = (v) => (y + v * k).toFixed(2);
+    // the site logo (web/index.html) at 1.35×: source bar, two bands, two result bars
+    shapes.push({ t: 'rect', x: x, y: y + 2 * k, w: 4 * k, h: 18 * k, fill: PALETTE.rev.node });
+    shapes.push({ t: 'path', d: `M${p(4)} ${q(2)} C${p(11)} ${q(2)} ${p(11)} ${q(2)} ${p(18)} ${q(2)} L${p(18)} ${q(11)} C${p(11)} ${q(11)} ${p(11)} ${q(11)} ${p(4)} ${q(11)} Z`, fill: PALETTE.profit.flow });
+    shapes.push({ t: 'path', d: `M${p(4)} ${q(11)} C${p(11)} ${q(11)} ${p(11)} ${q(14)} ${p(18)} ${q(14)} L${p(18)} ${q(20)} C${p(11)} ${q(20)} ${p(11)} ${q(20)} ${p(4)} ${q(20)} Z`, fill: PALETTE.cost.flow });
+    shapes.push({ t: 'rect', x: x + 18 * k, y: y + 2 * k, w: 4 * k, h: 9 * k, fill: PALETTE.profit.node });
+    shapes.push({ t: 'rect', x: x + 18 * k, y: y + 14 * k, w: 4 * k, h: 6 * k, fill: PALETTE.cost.node });
+    const tx = x + BRAND_MARK + BRAND_GAP;
+    shapes.push({ t: 'text', x: tx, y: y + 15 * k, text: BRAND.name, size: 26, weight: 600, fill: INK, anchor: 'start', spacing: -0.3 });
+    const url = brandUrl();
+    if (url) shapes.push({ t: 'text', x: tx, y: y + 15 * k + 20, text: url, size: 14, weight: 400, fill: INK3, anchor: 'start' });
+  }
+
   // ---------- layout ----------
   function layout(spec, opts) {
     opts = opts || {};
@@ -421,7 +453,7 @@
     const checks = spec.checks || [];
     const flagged = checks.some((c) => c.level === 'warn');
     const subtitle = dec(spec.subtitle || '') + (flagged ? ' · data check flagged: see the notes below' : '');
-    let W = Math.max(maxX + MARGIN, 1500, measure(title, 40, 600) + 2 * MARGIN, measure(subtitle, 18, 400) + 2 * MARGIN);
+    let W = Math.max(maxX + MARGIN, 1500, measure(title, 40, 600) + 2 * MARGIN + brandWidth() + 40, measure(subtitle, 18, 400) + 2 * MARGIN);
     W = Math.ceil(W);
 
     const shapes = [];
@@ -518,6 +550,7 @@
     // header
     shapes.push({ t: 'text', x: MARGIN, y: 44 + 38, text: title, size: 40, weight: 600, fill: INK, anchor: 'start', spacing: -0.5 });
     shapes.push({ t: 'text', x: MARGIN, y: 44 + 48 + 4 + 19, text: subtitle, size: 18, weight: 400, fill: SUBINK, anchor: 'start' });
+    brandShapes(shapes, W, 48);
 
     // legend + footer
     const used = new Set(nodes.map((n) => n.color).concat(links.map((l) => l.color)));
@@ -621,7 +654,7 @@
     const titleSize = 40;
     const first = heads[0] ? heads[0][0] : '', last = heads.length ? heads[heads.length - 1][0] : '';
     const subtitle = `${N} quarter${N === 1 ? '' : 's'} on file${N > 1 ? `, ${first} to ${last}` : ''} · GAAP · each row drawn to its own scale`;
-    const W = Math.ceil(Math.max(760, MARGIN * 2 + LABW + N * Math.max(150, textW + 28), measure(title, titleSize, 600) + MARGIN * 2,
+    const W = Math.ceil(Math.max(760, MARGIN * 2 + LABW + N * Math.max(150, textW + 28), measure(title, titleSize, 600) + MARGIN * 2 + brandWidth() + 40,
       measure(subtitle, 18, 400) + MARGIN * 2));
     const colW = (W - 2 * MARGIN - LABW) / N;               // columns share the width after the row names
     const x0 = MARGIN + LABW;
@@ -671,6 +704,7 @@
     });
     shapes.push({ t: 'rect', x: MARGIN, y, w: W - 2 * MARGIN, h: 1, fill: '#e2e0da' });
     shapes.push({ t: 'text', x: MARGIN, y: 44 + 38, text: title, size: titleSize, weight: 600, fill: INK, anchor: 'start', spacing: -0.5 });
+    brandShapes(shapes, W, 48);
     shapes.push({ t: 'text', x: MARGIN, y: 44 + 48 + 4 + 19, text: subtitle, size: 18, weight: 400, fill: SUBINK, anchor: 'start' });
     const foot = ['Source: SEC EDGAR filings; 8-K quarters are preliminary figures from the earnings release. Fourth-quarter and cash-flow ' +
       'figures are derived as the year to date minus the prior year to date. Operating profit = revenue minus operating costs; ' +
@@ -720,6 +754,8 @@
         const cls = s.hit ? ' class="hit"' : s.group ? ' class="bar"' : '';
         out.push(`<rect${cls} x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" width="${s.w.toFixed(2)}" height="${s.h.toFixed(2)}"` +
           `${s.r ? ` rx="${s.r}"` : ''} fill="${s.fill}"/>`);
+      } else if (s.t === 'path') {
+        out.push(`<path d="${s.d}" fill="${s.fill}"/>`);
       } else if (s.t === 'circle') {
         out.push(`<circle${s.marker ? ' class="note-mark"' : ''} cx="${s.cx.toFixed(2)}" cy="${s.cy.toFixed(2)}" r="${s.r}" fill="${s.fill}"/>`);
       } else if (s.t === 'text') {
@@ -815,5 +851,5 @@
     return new Blob([pdf], { type: 'application/pdf' });
   }
 
-  global.Sankey = { layout, history, toSVG, toCanvas, exportScene, PALETTE, dec, esc };
+  global.Sankey = { layout, history, toSVG, toCanvas, exportScene, PALETTE, dec, esc, brand: BRAND };
 })(window);

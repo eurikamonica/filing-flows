@@ -666,6 +666,7 @@
         </dl>
       </div>`;
     body.appendChild(text);
+    holdersSection(body, ticker, here);                     // who holds it: 13F managers and public officials (Disclosures)
     if (prefs.get('owner', false)) {                      // owner tool: re-read this company's stored figures
       ownerVerified().then(async (ok) => {
         const cl = await sb();
@@ -703,6 +704,53 @@
       box.innerHTML = changesHTML(q);
     }
     renderChanges();
+  }
+
+  // ---------- holders: the Disclosures hub's 13F positions and officials' reviewed records for this ticker ----------
+  const amountRange = (r) => (r.amount_max == null ? `over $${Math.round((r.amount_min || 1) - 1).toLocaleString('en-US')}`
+    : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
+  const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
+  async function holdersSection(body, ticker, here) {
+    const sym = normTicker(ticker);
+    if (!sym) return;
+    const box = document.createElement('div');
+    box.className = 'section holders';
+    box.innerHTML = `<div class="section-head"><h2>Holders</h2><span class="muted">Loading 13F positions and officials’ disclosures…</span></div>`;
+    body.appendChild(box);
+    let h = null;
+    try {
+      const r = await fetch(`disclosures/data/holders/${encodeURIComponent(sym)}.json`);
+      if (r.ok) h = await r.json();
+    } catch (e) { /* the hub has not published yet */ }
+    if (!here() || !box.isConnected) return;
+    const inst = (h && h.institutional) || [], off = (h && h.officials) || [];
+    const SHOW = 12;
+    const instRows = (all) => (all ? inst : inst.slice(0, SHOW)).map((x) => `<tr><td><b>${t(x.manager)}</b><br><span class="muted mono">CIK ${t(x.cik)}</span></td>
+        <td>${t(x.period)}<br><span class="muted">filed ${date(x.filed)}</span></td><td class="num">${whole(x.shares)}</td><td class="num">${money(x.value_usd)}</td>
+        <td class="num">${x.weight == null ? '—' : (x.weight * 100).toFixed(1) + '%'}</td>
+        <td class="num ${x.status === 'INCREASE' || x.status === 'NEW' ? 'pos' : x.status === 'DECREASE' ? 'neg' : ''}">${t(x.status === 'BASE' ? 'first filing' : x.status.toLowerCase())}${
+          x.delta_shares ? `<br><span class="muted">${sign(x.delta_shares)}${whole(Math.abs(x.delta_shares))}</span>` : ''}</td>
+        <td>${x.source_url ? `<a href="${t(x.source_url)}" target="_blank" rel="noopener">13F ↗</a>` : '—'}</td></tr>`).join('');
+    box.innerHTML = `<div class="section-head"><h2>Holders</h2>
+        <span class="muted">${inst.length} institutional position${inst.length === 1 ? '' : 's'} · ${off.length} reviewed record${off.length === 1 ? '' : 's'} by public officials
+        · from <a href="disclosures/">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}</span></div>
+      <h3>Institutional investors (13F)</h3>
+      ${inst.length ? `<div class="tbl-wrap"><table><thead><tr><th>Manager</th><th>Quarter</th><th class="num">Shares</th><th class="num">Value</th>
+        <th class="num">Of its portfolio</th><th class="num">Change vs prior quarter</th><th>Source</th></tr></thead><tbody id="inst-rows">${instRows(false)}</tbody></table></div>
+        ${inst.length > SHOW ? `<button class="btn" type="button" id="inst-more">Show all ${inst.length} managers</button>` : ''}
+        <p class="muted">Quarter-end positions from 13F-HR filings of the managers processed so far (the hub works through SEC’s filer list in batches); not real-time holdings, and not every holder.</p>`
+        : `<p class="muted">No processed 13F manager lists ${t(sym)} yet. Managers are processed in batches; prioritise one under Disclosures → Health.</p>`}
+      <h3>Public officials (reviewed disclosures)</h3>
+      ${off.length ? `<div class="tbl-wrap"><table><thead><tr><th>Person</th><th>Jurisdiction</th><th>Record</th><th>Disclosed amount</th><th>Date</th><th>Source</th></tr></thead><tbody>
+        ${off.map((r) => `<tr><td><b>${t(r.person)}</b>${r.owner ? `<br><span class="muted">${t(r.owner)}</span>` : ''}</td><td>${t(r.jurisdiction)}</td>
+          <td>${t(r.kind === 'transaction' ? (r.transaction_type || 'transaction') : 'asset')}<br><span class="muted">${t(r.asset)}</span></td>
+          <td class="num">${t(amountRange(r))}${r.price_on_date ? `<br><span class="muted">≈ ${whole(r.est_shares_min)}${r.est_shares_max != null ? '–' + whole(r.est_shares_max) : '+'} sh at $${r.price_on_date.toFixed(2)} · est.</span>` : ''}</td>
+          <td>${date(r.date)}</td><td>${r.source_url ? `<a href="${t(r.source_url)}${r.page ? '#page=' + r.page : ''}" target="_blank" rel="noopener">${r.page ? 'Page ' + r.page : 'Document'} ↗</a>` : '—'}</td></tr>`).join('')}
+        </tbody></table></div>
+        <p class="muted">Disclosed value ranges from annual statements and transaction reports (US House, New York, California, Canada, imports), each checked against its source page by a reviewer. Ranges are not share counts; estimates use the close on the event date.</p>`
+        : `<p class="muted">No reviewed officials’ record names ${t(sym)} yet. Records appear here once a disclosure is checked against its source page in Disclosures → PDF / OCR.</p>`}`;
+    const more = $('#inst-more', box);
+    if (more) more.addEventListener('click', () => { $('#inst-rows', box).innerHTML = instRows(true); more.remove(); });
   }
 
   // the ready-to-post X thread for a quarter (the same text the e-mails carry): which filing, what each image shows (with
