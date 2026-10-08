@@ -174,7 +174,7 @@ def process_document(raw,meta,client,options,force_ocr=False):
     write_json(folder/(digest+'.pages.json'),pages)
     categories=(options.get('jurisdictions',{}).get('ny',{}).get('value_categories') or {}) if str(meta.get('report_id','')).startswith('ny-') else None
     preview=public_excerpt(pages[0]['text'][:4000]) if pages and pages[0]['method']=='html' else ''
-    return {**{k:v for k,v in meta.items() if k!='ca'},'source_sha256':digest,'first_seen_at':now(),'extracted_at':now(),
+    return {**meta,'source_sha256':digest,'first_seen_at':now(),'extracted_at':now(),
             'page_count':len(pages),'page_methods':[{'page':p['page'],'method':p['method'],'mean_word_confidence':p['mean_word_confidence']}for p in pages],
             'candidates':make_candidates(pages,meta['report_id'],digest,categories),'text_preview':preview,'status':'extracted','stale':False}
 
@@ -273,8 +273,8 @@ def collect_congress(client,cfg,old,revalidate=False):
             if prior:record['first_seen_at']=prior.get('first_seen_at',record['first_seen_at'])
             result[rid]=record
         except Exception as exc:
-            errors.append(f'{rid}: {exc}')
-            result[rid]={**{k:v for k,v in (prior or meta).items() if k!='ca'},'last_attempt':now(),'stale':True,'status':'error','error':str(exc),'candidates':(prior or{}).get('candidates',[])}
+            errors.append(f'{rid}: {str(exc)[:3000]}')
+            result[rid]={**(prior or meta),'last_attempt':now(),'stale':True,'status':'error','error':str(exc)[:300],'candidates':(prior or{}).get('candidates',[])}
     reports=list(result.values())
     for r in reports:   # keep names/offices in step with the (re-cleaned) catalog
         c=catalog.get(r['report_id'])
@@ -295,7 +295,7 @@ def collect_congress(client,cfg,old,revalidate=False):
         for candidate in report.get('candidates',[]):candidate['excerpt']=public_excerpt(candidate['excerpt'])
     reviewed,review_errors=load_reviewed(safe_local(cfg.get('reviewed_file','config/reviewed-disclosures.csv')),reports)
     errors.extend(review_errors)
-    directory=[{**{k:v for k,v in r.items() if k!='ca'},'status':result.get(r['report_id'],{}).get('status',r.get('status','pending'))} for r in catalog.values()]
+    directory=[{**r,'status':result.get(r['report_id'],{}).get('status',r.get('status','pending'))} for r in catalog.values()]
     by_jurisdiction={}
     for r in directory:
         j=by_jurisdiction.setdefault(r.get('jurisdiction','US House'),{'discovered':0,'extracted':0,'pending':0,'error':0,'unsupported':0})

@@ -21,7 +21,7 @@ NY_STATEMENT = '''<html><body><h1>Financial Disclosure Statement</h1><table>
 <tr><td>Bond fund</td><td>$5,000 - $20,000</td></tr></table></body></html>'''
 
 CA_RESPONSE = json.dumps(json.dumps({'documents': [
-    {'indexID': 'ABC-123', 'filer': {'firstName': 'Gavin', 'lastName': 'Newsom'}, 'filingDate': '2025-03-28T00:00:00',
+    {'indexID': '773645e8-5511-4f3e-9339-a920d210e619', 'filer': {'firstName': 'Gavin', 'lastName': 'Newsom'}, 'filingDate': '2025-03-28T00:00:00',
      'filingPositions': [{'agency': 'Office of the Governor', 'position': 'Governor', 'filingType': 'Annual', 'filingYear': '2024'}]},
     {'indexID': 'DEF-456', 'filer': {'firstName': 'Pat', 'lastName': 'Lee'},
      'filingPositions': [{'agency': 'Superior Court', 'position': 'Judge', 'filingType': 'Assuming Office', 'filingYear': '2025'}]}],
@@ -113,7 +113,7 @@ class CaliforniaTests(unittest.TestCase):
         self.assertEqual(metas[1]['office'], 'Judge · Superior Court'); self.assertEqual(metas[0]['doc_kind'], 'ca-pdf')
 
     def test_discovery_and_download(self):
-        c = FakeClient({'Download/abc.pdf': '%PDF-1.4 fake', 'GetRedactedFormPdf?indexID=ABC-123': json.dumps({'Message': '', 'PDFDownloadUrl': 'https://form700search.fppc.ca.gov/Download/abc.pdf'})})
+        c = FakeClient({'Download/abc.pdf': '%PDF-1.4 fake', 'GetRedactedFormPdf?indexID=773645e8-5511-4f3e-9339-a920d210e619': json.dumps({'Message': '', 'PDFDownloadUrl': 'https://form700search.fppc.ca.gov/Download/abc.pdf'})})
         catalog, errors, coverage, state = officials.discover_ca(c, {'years': [2025], 'positions': ['Governor']}, {})
         self.assertEqual(len(catalog), 2); self.assertFalse(errors); self.assertEqual(state, {'uncovered': []})
         meta = next(iter(catalog.values()))
@@ -126,6 +126,10 @@ class CaliforniaTests(unittest.TestCase):
         bare = {'report_id': 'ca-773645e855114f3e9339a920d210e619', 'person': 'Susanna Alcala Wood', 'office': 'City/Town Attorney · City of Sacramento', 'index_year': 2025, 'filing_type_code': 'Leaving'}
         info = officials.ca_form_info(bare)
         self.assertEqual(info['indexID'], '773645e8-5511-4f3e-9339-a920d210e619'); self.assertEqual(info['formInfo']['Agency'], 'City of Sacramento'); self.assertEqual(info['formInfo']['LastName'], 'Wood')
+        compact = {**bare, 'ca': ['Alcala Wood', 'Susanna', 'A', False, '2026-10-07T16:03:01']}
+        info = officials.ca_form_info(compact)
+        self.assertEqual((info['formInfo']['LastName'], info['formInfo']['MiddleName'], info['formInfo']['FilingDate']), ('Alcala Wood', 'A', '2026-10-07T16:03:01'))
+        self.assertEqual(meta['ca'][0], 'Newsom'); self.assertEqual(len(meta['ca']), 5)
 
     def test_search_payload_shape(self):
         p = officials.ca_search_payload(2025, position='Senator')

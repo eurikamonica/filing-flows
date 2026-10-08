@@ -234,9 +234,9 @@ def ca_documents(response):
                       'report_type': 'Form 700 ' + str(pos.get('filingType') or d.get('filingType') or ''),
                       'filing_type_code': str(pos.get('filingType') or ''), 'filed_date': filed,
                       'source_url': CA + '/', 'doc_kind': 'ca-pdf',
-                      # compact; the download payload is rebuilt by ca_form_info()
-                      'ca': [filer.get('lastName', ''), filer.get('firstName', ''), pos.get('agency', ''), pos.get('position', ''), str(year), str(pos.get('filingType') or ''), index_id,
-                             filer.get('middleName', ''), bool((d.get('filingInfo') or {}).get('isAmendment', False)), str((d.get('filingInfo') or {}).get('filedDate') or '')]})
+                      # compact (kept in the public catalog): only what ca_form_info() cannot rebuild from the other fields
+                      'ca': [filer.get('lastName', ''), filer.get('firstName', ''), filer.get('middleName', '') or '',
+                             bool((d.get('filingInfo') or {}).get('isAmendment', False)), str((d.get('filingInfo') or {}).get('filedDate') or '')]})
     return metas, int(total or 0)
 
 
@@ -261,7 +261,7 @@ def discover_ca(client, cfg, old_catalog, prior_state=None):
         metas, total = ca_documents(answer)
         for m in metas:
             old = catalog.get(m['report_id'])
-            if old is None or len(old.get('ca') or []) < 10:      # upgrade rows discovered before the download payload was recorded
+            if old is None or len(old.get('ca') or []) != 5:      # upgrade rows discovered before the download fields were recorded
                 catalog[m['report_id']] = m
         if total > len(metas) or total >= cap:
             if len(prefix) < 3:
@@ -293,22 +293,21 @@ def discover_ca(client, cfg, old_catalog, prior_state=None):
 
 def ca_form_info(meta):
     info = meta.get('ca')
-    if isinstance(info, dict):
-        return {'formInfo': {k: info.get(k, '') for k in ('LastName', 'FirstName', 'Agency', 'Position', 'FilingYear', 'FilingType')}, 'indexID': info.get('indexID', '')}
-    middle, amendment, filed = '', False, ''
-    if isinstance(info, list) and len(info) >= 7:
+    parts = (meta.get('office') or '').split(' · ', 1)
+    position, agency = (parts + [''])[:2]
+    year, ftype = str(meta.get('index_year') or ''), meta.get('filing_type_code', '')
+    hexid = meta['report_id'][3:]
+    index_id = f'{hexid[:8]}-{hexid[8:12]}-{hexid[12:16]}-{hexid[16:20]}-{hexid[20:]}' if len(hexid) == 32 else hexid
+    if isinstance(info, list) and len(info) == 5:
+        last, first, middle, amendment, filed = info[0], info[1], info[2], bool(info[3]), info[4]
+    elif isinstance(info, list) and len(info) >= 7:          # transitional 4.1 shape
         last, first, agency, position, year, ftype, index_id = info[:7]
-        if len(info) >= 10:
-            middle, amendment, filed = info[7], bool(info[8]), info[9]
+        middle, amendment, filed = (info[7], bool(info[8]), info[9]) if len(info) >= 10 else ('', False, '')
     else:
-        # catalog rows from the first 4.1 run carried no payload: rebuild it from the public fields
-        parts = (meta.get('office') or '').split(' · ', 1)
-        position, agency = (parts + [''])[:2]
+        # rows from the first 4.1 run carried nothing: best effort from the public fields (the sweep upgrades them)
         names = (meta.get('person') or '').split(' ')
         first, last = (' '.join(names[:-1]), names[-1]) if len(names) > 1 else ('', names[0] if names else '')
-        year, ftype = str(meta.get('index_year') or ''), meta.get('filing_type_code', '')
-        hexid = meta['report_id'][3:]
-        index_id = f'{hexid[:8]}-{hexid[8:12]}-{hexid[12:16]}-{hexid[16:20]}-{hexid[20:]}' if len(hexid) == 32 else hexid
+        middle, amendment, filed = '', False, ''
     return {'formInfo': {'LastName': last, 'FirstName': first, 'Agency': agency, 'Position': position, 'FilingYear': year, 'FilingType': ftype,
                          'MiddleName': middle, 'IsAmendment': amendment, 'FilingDate': filed or (meta.get('filed_date') or '')}, 'indexID': index_id}
 
