@@ -1,5 +1,7 @@
 name: recon (temporary)
 on:
+  push:
+    branches: [recon-tmp]
   workflow_dispatch:
 jobs:
   recon:
