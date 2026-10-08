@@ -1,3 +1,23 @@
+# Disclosures — part of Filing Flows
+
+This folder is the Disclosure Hub (v4) as it lives inside the `filing-flows` repository, published at
+`https://<user>.github.io/<repo>/disclosures/` next to the earnings Sankeys. The page uses the Filing Flows design
+system (same header, type, colours, dark mode and theme preference), with links back to the Sankey sections.
+
+- **Collection**: `.github/workflows/disclosures.yml` runs the package's schedules (15-minute 13F, hourly House, hourly
+  markets, daily all) with `disclosures/` as its working directory and commits `disclosures/docs/data/` to `main`.
+  Run it by hand under Actions → *Collect disclosures*; the inputs are the stand-alone package's.
+- **Publishing**: the Sankey scan workflow copies `disclosures/docs` into `_site/disclosures/`
+  (`automation/stage-public.py`; caches and queue state left out) on its normal hourly publish. No second Pages deploy.
+- **Secrets**: the repository's `SEC_USER_AGENT`; `FDIC_API_KEY` and `CFTC_APP_TOKEN` optional.
+- **Local preview**: `python disclosures/app/serve.py` → http://127.0.0.1:8080
+
+The original package documentation follows. Where it mentions the separate `Filing-Flows-Disclosure-Lab`
+repository, its own `update-and-deploy.yml` or the `docs/` folder at the repository root, read `disclosures/…`
+and the workflow above instead.
+
+---
+
 # Disclosure Hub v4
 
 English-first disclosure dashboard, separate from the original Filing Flows repository. The original repository has not been modified. SEC contact: **Eurika eurikamonica@gmail.com**.

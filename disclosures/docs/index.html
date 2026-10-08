@@ -1,19 +1,92 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Independent 13F, congressional disclosure, COT, bank financial and proxy-vote dashboard.">
-<title>Disclosure Hub · Public Disclosure Hub</title>
-<link rel="stylesheet" href="styles.css?v=4">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Disclosures · Filing Flows</title>
+<meta name="description" content="Filing Flows Disclosures: 13F holdings, congressional financial disclosures, CFTC Commitments of Traders, FDIC bank financials and N-PX proxy votes, from the public record.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css?v=4.1">
+<script>
+/* Same colour-theme preference as the Sankey site (localStorage "ff:theme"), applied before first paint. */
+try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
 </head>
 <body>
-<header><a class="brand" href="index.html"><span class="brand-icon">F<span>↗</span></span><span>DISCLOSURE HUB<small>Filing Flows · Independent research workspace</small></span></a><div class="header-right"><span class="dot"></span> PUBLIC DATA / OPEN RESEARCH</div></header>
-<main>
-<section class="intro"><div><div class="eyebrow">THE PUBLIC RECORD, IN FOCUS</div><h1>Disclosure intelligence<span>.</span></h1><p>Explore institutional ownership, public officials’ disclosures and market positioning.</p></div><div class="intro-aside"><label for="mode">Workspace data</label><select id="mode"><option value="official">Official snapshot</option><option value="demo">Fictional demo</option></select><div id="buildtime"></div></div></section>
-<nav aria-label="Data modules"><div class="nav-heading">RESEARCH WORKSPACE</div><button data-tab="directory" aria-pressed="false">⌕ <span>Explore directory</span></button><button data-tab="holdings" class="active" aria-pressed="true">01 <span>13F holdings</span></button><button data-tab="congress" aria-pressed="false">02 <span>Congress</span></button><button data-tab="review" aria-pressed="false">03 <span>PDF / OCR</span></button><button data-tab="cot" aria-pressed="false">04 <span>COT</span></button><button data-tab="banks" aria-pressed="false">05 <span>Banks</span></button><button data-tab="npx" aria-pressed="false">06 <span>N-PX</span></button><button data-tab="status" aria-pressed="false">07 <span>Health</span></button></nav>
-<div id="notice" role="status"></div>
-<section id="workspace" aria-live="polite"></section>
-<footer><span>DISCLOSURE HUB / v4.0</span><p>For information and research, not investment advice. Report dates differ from publication dates. Historical snapshots are not a complete point-in-time archive.</p><a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" rel="noopener">CFTC ↗</a><a href="https://api.fdic.gov/banks/docs/" target="_blank" rel="noopener">FDIC ↗</a><a href="https://www.sec.gov/edgar/search/" target="_blank" rel="noopener">SEC ↗</a></footer>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="../" aria-label="Filing Flows home">
+      <svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true">
+        <rect x="0" y="2" width="4" height="18" fill="#7a7974"/>
+        <path d="M4 2 C11 2 11 2 18 2 L18 11 C11 11 11 11 4 11 Z" fill="#a8d1b9"/>
+        <path d="M4 11 C11 11 11 14 18 14 L18 20 C11 20 11 20 4 20 Z" fill="#f6c3b8"/>
+        <rect x="18" y="2" width="4" height="9" fill="#17734a"/>
+        <rect x="18" y="14" width="4" height="6" fill="#ea6a52"/>
+      </svg>
+      <span>Filing Flows</span>
+    </a>
+    <div class="nav" aria-label="Sections">
+      <a href="../#home">Latest</a>
+      <a href="../#sectors">Sectors</a>
+      <a href="../#method">Method</a>
+      <a href="../#account">Alerts</a>
+      <a href="./" class="on" aria-current="page">Disclosures</a>
+    </div>
+    <div class="top-right">
+      <label class="mode-pick" for="mode"><span class="muted">Data</span>
+        <select id="mode"><option value="official">Official snapshot</option><option value="demo">Fictional demo</option></select>
+      </label>
+      <button class="theme-btn" id="theme" type="button" aria-label="Toggle colour theme" title="Toggle colour theme">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1.5v11a5.5 5.5 0 0 1 0-11z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<main class="wrap">
+  <section class="page-head">
+    <div class="crumbs"><a href="../">Filing Flows</a><span>›</span><span>Disclosures</span></div>
+    <h1>Disclosures</h1>
+    <p class="intro">Institutional ownership, public officials' disclosures and market positioning, read from the public record: SEC 13F and N-PX filings, House financial disclosures, CFTC Commitments of Traders and FDIC bank financials.
+      <span class="src" id="buildtime"></span></p>
+  </section>
+  <nav class="pills modules" aria-label="Data modules">
+    <button class="pill" data-tab="directory" aria-pressed="false">Explore directory</button>
+    <button class="pill on" data-tab="holdings" aria-pressed="true">13F holdings</button>
+    <button class="pill" data-tab="congress" aria-pressed="false">Congress</button>
+    <button class="pill" data-tab="review" aria-pressed="false">PDF / OCR</button>
+    <button class="pill" data-tab="cot" aria-pressed="false">COT</button>
+    <button class="pill" data-tab="banks" aria-pressed="false">Banks</button>
+    <button class="pill" data-tab="npx" aria-pressed="false">N-PX</button>
+    <button class="pill" data-tab="status" aria-pressed="false">Health</button>
+  </nav>
+  <div id="notice" role="status"></div>
+  <section id="workspace" aria-live="polite"></section>
 </main>
+<footer class="site-foot">
+  <div class="wrap">
+    <div>Data: SEC EDGAR (13F, N-PX), the House Clerk's financial-disclosure index, CFTC Commitments of Traders and the FDIC BankFind API. Collected on a schedule in batches; coverage grows run by run.</div>
+    <div>For information and research, not investment advice. Report dates differ from publication dates. Historical snapshots are not a complete point-in-time archive.</div>
+    <div class="foot-links"><a href="../">Earnings Sankeys</a><a href="https://www.sec.gov/edgar/search/" target="_blank" rel="noopener">SEC</a><a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" rel="noopener">CFTC</a><a href="https://api.fdic.gov/banks/docs/" target="_blank" rel="noopener">FDIC</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a></div>
+  </div>
+</footer>
 <script src="data/live.js"></script><script src="data/demo.js"></script><script src="dashboard.js"></script><script src="extensions.js"></script><script src="app.js"></script>
-</body></html>
+<script>
+/* Module pills: keep the Sankey site's "on" look in step with the app's own "active" state. */
+document.querySelectorAll('nav button[data-tab]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('nav button[data-tab]').forEach(function (x) { x.classList.toggle('on', x === b); });
+  });
+});
+/* Theme toggle, shared with the Sankey site. */
+document.getElementById('theme').addEventListener('click', function () {
+  var cur = document.documentElement.getAttribute('data-theme') ||
+    (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  var next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('ff:theme', JSON.stringify(next)); } catch (e) {}
+});
+</script>
+</body>
+</html>
