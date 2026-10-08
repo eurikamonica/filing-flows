@@ -117,26 +117,32 @@ def ny_meta(url, title, office):
 
 
 def ny_printable_url(page_html):
-    m = re.search(r'https?://public\.ethics\.ny\.gov/FDS/Form/_ViewPrintable/\d+/\d+', page_html)
-    if not m:
-        m = re.search(r'(/FDS/Form/_ViewPrintable/\d+/\d+)', page_html)
-        if not m:
-            raise ValueError('No printable statement link on the NY filing page')
+    m = re.search(r'https?://public\.ethics\.ny\.gov/FDS/[^"\'\s<>]+', page_html)
+    if m:
+        return html.unescape(m[0])
+    m = re.search(r'(/FDS/Form/_ViewPrintable/\d+/\d+)', page_html)
+    if m:
         return 'https://public.ethics.ny.gov' + m[1]
-    return m[0]
+    # diagnostics: what does the page link to or embed?
+    refs = re.findall(r'(?:href|src|data-src|data-url)=["\']([^"\']+)["\']', page_html, re.I)
+    refs = [r for r in dict.fromkeys(refs) if re.search(r'fds|ethics|pdf|print|statement|iframe|embed', r, re.I) and not re.search(r'\.(css|js|png|svg|ico|woff2?)(\?|$)', r, re.I)]
+    iframes = re.findall(r'<iframe\b[^>]*>', page_html, re.I)
+    raise ValueError('No printable statement link on the NY filing page · refs: ' + ' | '.join(refs[:25])[:900] + ' · iframes: ' + ' | '.join(iframes[:3])[:400] + ' · text: ' + strip_tags(page_html)[:300].replace('\n', ' '))
 
 
-def discover_ny(client, cfg, old_catalog):
+def discover_ny(client, cfg, old_catalog, prior_state=None):
+    """Walk the COELIG index a few pages per run; a cursor per (office, year) persists across runs."""
     years = [int(y) for y in cfg.get('years', [])]
     offices = cfg.get('offices', ['Statewide Elected Officials', 'Senate', 'Assembly'])
-    max_pages = int(cfg.get('max_index_pages_per_run', 40))
+    max_pages = int(cfg.get('max_index_pages_per_run', 10))
     catalog = {k: v for k, v in old_catalog.items() if k.startswith('ny-')}   # keep what earlier runs found
     errors, coverage = [], []
+    cursors = dict((prior_state or {}).get('cursors', {}))
     first = client.get(NY_INDEX + '?page=0').decode('utf-8', 'replace')
     filters = ny_filters(first)
     if not filters:
         raise ValueError('NY index page has no filter links; layout changed (first 300 chars: %r)' % strip_tags(first)[:300])
-    fetched = 0
+    fetched = 1
     for office in offices:
         if office not in filters:
             errors.append(f'NY: office filter "{office}" not on the index page (have: {", ".join(sorted(filters))[:200]})')
@@ -145,10 +151,15 @@ def discover_ny(client, cfg, old_catalog):
             if str(year) not in filters:
                 coverage.append({'jurisdiction': 'ny', 'office': office, 'year': year, 'discovered': 0, 'note': 'year not yet on the index'})
                 continue
-            count, page = 0, 0
+            key = f'{office}|{year}'
+            page = int(cursors.get(key, 0)); count = 0; pages_now = 0
             while fetched < max_pages:
                 url = f'{NY_INDEX}?f%5B0%5D=filter_term%3A{filters[office]}&f%5B1%5D=filter_term%3A{filters[str(year)]}&page={page}'
-                body = client.get(url).decode('utf-8', 'replace'); fetched += 1
+                try:
+                    body = client.get(url).decode('utf-8', 'replace')
+                except Exception as exc:
+                    errors.append(f'NY {office} {year} page {page}: {exc}'); fetched = max_pages; break
+                fetched += 1; pages_now += 1
                 rows = ny_listing(body)
                 matched = 0
                 for link, title in rows:
@@ -159,14 +170,12 @@ def discover_ny(client, cfg, old_catalog):
                     if meta['report_id'] not in catalog:
                         catalog[meta['report_id']] = meta; count += 1
                 if not rows or matched == 0 or f'page={page + 1}' not in body:
-                    break
+                    page = 0; break      # end of this listing: start again from the first page next time
                 page += 1
-            coverage.append({'jurisdiction': 'ny', 'office': office, 'year': year, 'new_this_run': count, 'index_pages': page + 1,
-                             'discovered': sum(1 for m in catalog.values() if m.get('office') == office and m.get('index_year') == year) if office != 'Statewide Elected Officials' else sum(1 for m in catalog.values() if m.get('index_year') == year and m.get('office') not in ('Senate', 'Assembly')),
-                             'truncated': fetched >= max_pages})
-    if not catalog and not errors:
-        errors.append('NY: filters found but no statement links matched the expected slug patterns')
-    return catalog, errors, coverage
+            cursors[key] = page
+            coverage.append({'jurisdiction': 'ny', 'office': office, 'year': year, 'new_this_run': count, 'index_pages_this_run': pages_now, 'next_page': page,
+                             'discovered': sum(1 for m in catalog.values() if m.get('index_year') == year and (m.get('office') == office if office != 'Statewide Elected Officials' else m.get('office') not in ('Senate', 'Assembly')))})
+    return catalog, errors, coverage, {'cursors': cursors}
 
 
 def fetch_ny_document(client, meta):
@@ -318,6 +327,17 @@ def ca_probe(client):
                     if re.search(r'pdf|download|document|form', e, re.I):
                         i = js.find(e.split('/')[-1])
                         findings.append(f'{src.split("/")[-1]} {e}: …{js[max(0, i - 220):i + 260]!r}')
+        for block in re.findall(r'<script\b[^>]*>(.*?)</script>', home, re.I | re.S):
+            for name in ('GetRedactedFormPdf', 'GetBootstrap', 'ExportSubmit', 'ExportTicket'):
+                i = block.find(name)
+                if i >= 0:
+                    findings.append(f'inline {name}: …{re.sub(chr(10) + "|" + chr(13) + "| {2,}", " ", block[max(0, i - 500):i + 500])!r}')
+        for verb, path in (('GET', '/Home/GetBootstrap'), ('POST', '/Home/GetBootstrap')):
+            try:
+                body = client.get(CA + path) if verb == 'GET' else client.request(CA + path, data=b'{}', headers={'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'})[0]
+                findings.append(f'{verb} {path}: {re.sub(chr(10) + "|" + chr(13) + "| {2,}", " ", body.decode("utf-8", "replace"))[:600]!r}')
+            except Exception as exc:
+                findings.append(f'{verb} {path}: {exc}')
         findings.insert(0, 'endpoints: ' + ', '.join(sorted(endpoints)))
     except Exception as exc:
         findings.append('probe failed: ' + str(exc))
@@ -331,7 +351,7 @@ def fetch_ca_document(client, meta):
         answer = client.post_json(CA + '/Home/GetRedactedFormPdf', payload)
     except Exception as exc:
         probe = ca_probe(client)
-        raise ValueError(f'{exc} · payload {payload!r} · ' + ' ‖ '.join(probe)[:1500]) from None
+        raise ValueError(f'{exc} · payload {payload!r} · ' + ' ‖ '.join(probe)[:6000]) from None
     url = next((answer[k] for k in ('PDFDownloadUrl', 'pdfDownloadUrl', 'PdfDownloadUrl', 'url') if isinstance(answer, dict) and answer.get(k)), None)
     if not url:
         raise ValueError('Portal returned no PDFDownloadUrl: ' + str(answer)[:200])
@@ -420,12 +440,7 @@ def discover_all(client, cfg, old):
         if not settings or not settings.get('enabled', True):
             continue
         try:
-            if key == 'canada':
-                found, errs, cov, state['canada'] = fn(client, settings, old_catalog, state.get('canada'))
-            elif key == 'ca':
-                found, errs, cov, state['ca'] = fn(client, settings, old_catalog, state.get('ca'))
-            else:
-                found, errs, cov = fn(client, settings, old_catalog)
+            found, errs, cov, state[key] = fn(client, settings, old_catalog, state.get(key))
             catalog.update(found); errors.extend(errs); coverage.extend(cov)
         except Exception as exc:
             errors.append(f'{JURISDICTIONS[key]} discovery: {exc}')

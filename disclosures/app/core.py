@@ -86,8 +86,9 @@ class Client:
         hdrs = self.headers_for(host, sec)
         hdrs.update(headers or {})
         last_error = 'Request failed'
+        interval = float(self.options.get('host_intervals', {}).get(host, self.options.get('min_interval_seconds', .55)))
         for attempt in range(self.options.get('retries', 3)):
-            time.sleep(max(0, self.options.get('min_interval_seconds', .55) - (time.monotonic() - self.last)))
+            time.sleep(max(0, interval - (time.monotonic() - self.last)))
             self.last = time.monotonic()
             try:
                 with urlopen(Request(url, data=data, headers=hdrs, method='POST' if data is not None else 'GET'), timeout=self.options.get('timeout', 40)) as res:

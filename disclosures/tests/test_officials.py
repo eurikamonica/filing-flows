@@ -73,10 +73,14 @@ class NewYorkTests(unittest.TestCase):
 
     def test_discovery_filters_by_year_and_office(self):
         c = FakeClient({'ethics.ny.gov/financial-disclosure': NY_INDEX})
-        catalog, errors, coverage = officials.discover_ny(c, {'years': [2025], 'offices': ['Statewide Elected Officials', 'Senate']}, {})
+        catalog, errors, coverage, state = officials.discover_ny(c, {'years': [2025], 'offices': ['Statewide Elected Officials', 'Senate']}, {}, None)
         self.assertEqual(sorted(m['person'] for m in catalog.values()), ['Addabbo Jr., Joseph P.', 'Kathleen Hochul'])
         self.assertFalse(errors)
         self.assertTrue(all(cv['jurisdiction'] == 'ny' for cv in coverage))
+        self.assertIn('cursors', state)
+        with self.assertRaises(ValueError) as ctx:
+            officials.ny_printable_url('<html><a href="/some/fds-page">x</a></html>')
+        self.assertIn('refs:', str(ctx.exception))
 
     def test_html_statement_candidates_include_categories(self):
         pages = officials.html_to_pages(NY_STATEMENT.encode())

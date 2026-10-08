@@ -52,7 +52,13 @@
     "retries": 3,
     "min_interval_seconds": 0.55,
     "max_response_mb": 80,
-    "sec_user_agent": "Eurika eurikamonica@gmail.com"
+    "sec_user_agent": "Eurika eurikamonica@gmail.com",
+    "host_intervals": {
+      "ethics.ny.gov": 2.5,
+      "public.ethics.ny.gov": 2.5,
+      "www.ethicscanada.ca": 1.2,
+      "form700search.fppc.ca.gov": 1.0
+    }
   },
   "holdings": {
     "since": "2025-01-01",
@@ -100,7 +106,7 @@
           "Senate",
           "Assembly"
         ],
-        "max_index_pages_per_run": 60,
+        "max_index_pages_per_run": 10,
         "value_categories": {},
         "_note": "COELIG statements disclose value categories (letters). Fill value_categories with the statutory bounds from the current FDS instructions, e.g. {\"A\":[0,4999],\"B\":[5000,19999]}; until then candidates carry the letter and the reviewer enters the bounds."
       },

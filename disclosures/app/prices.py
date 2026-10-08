@@ -131,7 +131,9 @@ class PriceStore:
                 break
             for cusip, item in zip(jobs, answer):
                 rows = item.get('data') or []
-                pick = next((r for r in rows if r.get('exchCode') == 'US'), rows[0] if rows else None)
+                pick = next((r for r in rows if r.get('exchCode') == 'US'), None)   # US listing only; others have no usable price feed here
+                if rows and pick is None:
+                    item = {**item, 'error': 'no US listing (' + ', '.join(sorted({str(r.get('exchCode')) for r in rows})[:5]) + ')'}; rows = []
                 self.cusips[cusip] = {'ticker': (pick or {}).get('ticker'), 'name': (pick or {}).get('name'),
                                       'security_type': (pick or {}).get('securityType'), 'checked_at': now(),
                                       'error': item.get('error') if not rows else None}
