@@ -136,7 +136,11 @@ def discover_ny(client, cfg, old_catalog, prior_state=None):
     years = [int(y) for y in cfg.get('years', [])]
     offices = cfg.get('offices', ['Statewide Elected Officials', 'Senate', 'Assembly'])
     max_pages = int(cfg.get('max_index_pages_per_run', 10))
-    catalog = {k: v for k, v in old_catalog.items() if k.startswith('ny-')}   # keep what earlier runs found
+    catalog = {}
+    for k, v in old_catalog.items():                                          # keep what earlier runs found, names re-cleaned
+        if k.startswith('ny-'):
+            fixed = ny_meta(v['source_url'], v.get('person', ''), v.get('office', ''))
+            catalog[k] = {**v, 'person': fixed['person'], 'office': fixed['office'] if v.get('office') in ('Statewide Elected Officials', '', None) else v['office']}
     errors, coverage = [], []
     cursors = dict((prior_state or {}).get('cursors', {}))
     first = client.get(NY_INDEX + '?page=0').decode('utf-8', 'replace')
@@ -231,7 +235,8 @@ def ca_documents(response):
                       'filing_type_code': str(pos.get('filingType') or ''), 'filed_date': filed,
                       'source_url': CA + '/', 'doc_kind': 'ca-pdf',
                       # compact; the download payload is rebuilt by ca_form_info()
-                      'ca': [filer.get('lastName', ''), filer.get('firstName', ''), pos.get('agency', ''), pos.get('position', ''), str(year), str(pos.get('filingType') or ''), index_id]})
+                      'ca': [filer.get('lastName', ''), filer.get('firstName', ''), pos.get('agency', ''), pos.get('position', ''), str(year), str(pos.get('filingType') or ''), index_id,
+                             filer.get('middleName', ''), bool((d.get('filingInfo') or {}).get('isAmendment', False)), str((d.get('filingInfo') or {}).get('filedDate') or '')]})
     return metas, int(total or 0)
 
 
@@ -288,8 +293,11 @@ def ca_form_info(meta):
     info = meta.get('ca')
     if isinstance(info, dict):
         return {'formInfo': {k: info.get(k, '') for k in ('LastName', 'FirstName', 'Agency', 'Position', 'FilingYear', 'FilingType')}, 'indexID': info.get('indexID', '')}
-    if isinstance(info, list) and len(info) == 7:
-        last, first, agency, position, year, ftype, index_id = info
+    middle, amendment, filed = '', False, ''
+    if isinstance(info, list) and len(info) >= 7:
+        last, first, agency, position, year, ftype, index_id = info[:7]
+        if len(info) >= 10:
+            middle, amendment, filed = info[7], bool(info[8]), info[9]
     else:
         # catalog rows from the first 4.1 run carried no payload: rebuild it from the public fields
         parts = (meta.get('office') or '').split(' · ', 1)
@@ -299,7 +307,8 @@ def ca_form_info(meta):
         year, ftype = str(meta.get('index_year') or ''), meta.get('filing_type_code', '')
         hexid = meta['report_id'][3:]
         index_id = f'{hexid[:8]}-{hexid[8:12]}-{hexid[12:16]}-{hexid[16:20]}-{hexid[20:]}' if len(hexid) == 32 else hexid
-    return {'formInfo': {'LastName': last, 'FirstName': first, 'Agency': agency, 'Position': position, 'FilingYear': year, 'FilingType': ftype}, 'indexID': index_id}
+    return {'formInfo': {'LastName': last, 'FirstName': first, 'Agency': agency, 'Position': position, 'FilingYear': year, 'FilingType': ftype,
+                         'MiddleName': middle, 'IsAmendment': amendment, 'FilingDate': filed or (meta.get('filed_date') or '')}, 'indexID': index_id}
 
 
 CA_PROBE = {'done': False, 'findings': []}
@@ -341,8 +350,14 @@ def ca_probe(client):
                 js = client.get(src).decode('utf-8', 'replace')
             except Exception:
                 continue
-            for m in list(re.finditer(r'GetRedactedFormPdf|RedactedFormPdf|formInfo', js))[:2]:
-                findings.append(f'{src.split("/")[-1].split("?")[0]} context: …{squeeze(js[max(0, m.start() - 600):m.end() + 400])!r}')
+            var = re.search(r'(\w+)=\$\("#hdnGetRedactedFormPdfUrl"\)\.val\(\)', js)
+            name = src.split('/')[-1].split('?')[0]
+            if var:
+                v = var[1]
+                for m in list(re.finditer(r'url:' + re.escape(v) + r'\b|\b' + re.escape(v) + r'[,)]', js))[:3]:
+                    findings.append(f'{name} call using {v}: …{squeeze(js[max(0, m.start() - 900):m.end() + 700])!r}')
+            for m in list(re.finditer(r'PDFDownloadUrl|formInfo:|indexID:', js))[:4]:
+                findings.append(f'{name} context: …{squeeze(js[max(0, m.start() - 500):m.end() + 300])!r}')
         try:
             findings.append('GET /Home/GetBootstrap keys: ' + str(list(json.loads(client.get(CA + '/Home/GetBootstrap')).keys()))[:300])
         except Exception as exc:
@@ -355,15 +370,20 @@ def ca_probe(client):
 
 
 def ca_download_variants(payload):
-    """Payload shapes to try against GetRedactedFormPdf, most likely first."""
+    """Payload shapes to try against GetRedactedFormPdf, most likely first. The portal's own script builds
+    {lastName, firstName, middleName, filingYear, agency, position, filingType, isAmendment, filingDate}."""
     info, index_id = payload['formInfo'], payload['indexID']
-    as_int = {**info, 'FilingYear': int(info['FilingYear']) if str(info['FilingYear']).isdigit() else info['FilingYear']}
-    return [('formInfo+indexID', payload),
-            ('formInfo(int year)+indexID', {'formInfo': as_int, 'indexID': index_id}),
-            ('indexID only', {'indexID': index_id}),
-            ('indexId only', {'indexId': index_id}),
-            ('FormInfo+IndexID', {'FormInfo': info, 'IndexID': index_id}),
-            ('formInfo with middleName', {'formInfo': {**info, 'MiddleName': ''}, 'indexID': index_id})]
+    year = int(info['FilingYear']) if str(info['FilingYear']).isdigit() else info['FilingYear']
+    camel = {'lastName': info['LastName'], 'firstName': info['FirstName'], 'middleName': info.get('MiddleName', ''), 'filingYear': year,
+             'agency': info['Agency'], 'position': info['Position'], 'filingType': info['FilingType'], 'isAmendment': bool(info.get('IsAmendment')),
+             'filingDate': info.get('FilingDate') or None}
+    legacy = {k: info[k] for k in ('LastName', 'FirstName', 'Agency', 'Position', 'FilingYear', 'FilingType')}
+    return [('camelCase formInfo+indexID', {'formInfo': camel, 'indexID': index_id}),
+            ('camelCase formInfo+indexId', {'formInfo': camel, 'indexId': index_id}),
+            ('camelCase flat', {**camel, 'indexID': index_id}),
+            ('legacy formInfo+indexID', {'formInfo': legacy, 'indexID': index_id}),
+            ('legacy flat', {**legacy, 'indexID': index_id}),
+            ('indexID only', {'indexID': index_id})]
 
 
 def fetch_ca_document(client, meta):

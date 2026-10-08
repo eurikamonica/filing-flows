@@ -115,8 +115,11 @@ def make_candidates(pages,report_id,digest,categories=None):
                 try:low,high=parse_amount(m[0])
                 except ValueError:continue
                 candidates.append({'amount_min':low,'amount_max':high,'amount_text':m[0],'excerpt':text[max(0,m.start()-240):min(len(text),m.end()+200)]})
-            # Statements that disclose value categories (New York FDS) rather than dollar ranges. Bounds come from
-            # the configured category table; without one the reviewer enters the statutory range by hand.
+        else:candidates=list(candidates)
+        # Statements that disclose value categories (New York FDS) rather than dollar ranges, whether the text came
+        # from a text layer, OCR or HTML. Bounds come from the configured category table; without one the reviewer
+        # enters the statutory range by hand.
+        if categories is not None or p.get('method')=='html' or 'ny-' in report_id:
             for m in CATEGORY.finditer(text):
                 bounds=(categories or {}).get(m[1])
                 low,high=(int(bounds[0]),(int(bounds[1]) if bounds[1] is not None else None)) if bounds else (0,None)
@@ -169,7 +172,7 @@ def process_document(raw,meta,client,options,force_ocr=False):
         if options.get('max_pdf_pages') and len(pages)>int(options['max_pdf_pages']):raise ValueError(f'HTML statement spans {len(pages)} text pages; limit is {options["max_pdf_pages"]}')
     else:raise ValueError('Source did not return a PDF')
     write_json(folder/(digest+'.pages.json'),pages)
-    categories=(options.get('jurisdictions',{}).get('ny',{}).get('value_categories') if meta.get('doc_kind')=='ny-html' else None)
+    categories=(options.get('jurisdictions',{}).get('ny',{}).get('value_categories') or {}) if str(meta.get('report_id','')).startswith('ny-') else None
     preview=public_excerpt(pages[0]['text'][:4000]) if pages and pages[0]['method']=='html' else ''
     return {**{k:v for k,v in meta.items() if k!='ca'},'source_sha256':digest,'first_seen_at':now(),'extracted_at':now(),
             'page_count':len(pages),'page_methods':[{'page':p['page'],'method':p['method'],'mean_word_confidence':p['mean_word_confidence']}for p in pages],
