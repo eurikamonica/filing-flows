@@ -235,9 +235,10 @@ def collect_congress(client,cfg,old,revalidate=False):
     except Exception as exc:
         discovery_failed=True;errors.append('House discovery: '+str(exc));catalog={r['report_id']:r for r in old.get('directory',[]) if r.get('jurisdiction','US House')=='US House'}
     # 4.1: New York, California, Canada (and the Texas / SEDI notes) join the same catalog and review pipeline.
-    jurisdiction_notes={}
+    jurisdiction_notes={};officials_state=old.get('officials_state',{})
     try:
         extra,extra_errors,extra_coverage,jurisdiction_notes=officials.discover_all(client,cfg,old)
+        officials_state=jurisdiction_notes.pop('_state',old.get('officials_state',{}))
         catalog.update(extra);errors.extend(extra_errors);coverage.extend(extra_coverage)
     except Exception as exc:
         errors.append('Officials discovery: '+str(exc))
@@ -285,7 +286,7 @@ def collect_congress(client,cfg,old,revalidate=False):
     for r in reports:
         if r['report_id'] not in catalog:
             j=by_jurisdiction.setdefault(r.get('jurisdiction','Imports'),{'discovered':0,'extracted':0,'pending':0,'error':0,'unsupported':0});j['discovered']+=1;j['extracted']+=bool(r.get('source_sha256'))
-    return {'reports':reports,'records':reviewed,'errors':errors,'coverage':coverage,'directory':directory,'jurisdiction_notes':jurisdiction_notes,
+    return {'reports':reports,'records':reviewed,'errors':errors,'coverage':coverage,'directory':directory,'jurisdiction_notes':jurisdiction_notes,'officials_state':officials_state,
             'counts':{'discovered_reports':len(directory),'discovered_filer_names':len({(r['person'],r.get('office','')) for r in directory}),'extracted_reports':sum(bool(r.get('source_sha256')) for r in reports),'pending_reports':sum(r['status']=='pending' for r in directory),'unsupported_reports':sum(r['status']=='unsupported' for r in directory),'reviewed_records':len(reviewed),'attempted_this_run':len(selected),'by_jurisdiction':by_jurisdiction},
             'status':'partial' if errors else 'ok',
             'coverage_note':'US House: all names in selected index years (includes candidates/former members). New York: COELIG statements for statewide officials, Senate and Assembly (HTML statements, value categories). California: FPPC portal filings since 2025 (Form 700 PDFs). Canada: federal public registry declarations. Texas and SEDI: imports only. Names are not verified unique person IDs. Document processing continues in batches. Reviewed excerpts are partial, not current portfolios.'}

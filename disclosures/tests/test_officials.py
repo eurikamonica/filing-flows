@@ -47,6 +47,8 @@ class FakeClient:
         raise RuntimeError('HTTP 404 from test ' + url)
     def request(self, url, **kw):
         return self.get(url), url, 'text/html'
+    def json(self, url, **kw):
+        return json.loads(self.get(url))
     def post_json(self, url, payload, headers=None):
         self.calls.append(('POST', url, payload))
         if 'SearchDocuments' in url:
@@ -117,10 +119,17 @@ class CaliforniaTests(unittest.TestCase):
 
 
 class CanadaTests(unittest.TestCase):
-    def test_registry_listing(self):
-        body = '<a href="/EN/PublicRegistries/Pages/DeclarationView.aspx?id=123">Jane Minister</a><a href="/EN/PublicRegistries/Pages/Other.aspx">Other</a>'
-        rows = officials.canada_listing(body, officials.CANADA + '/EN/PublicRegistries/Pages/PublicRegistryHome.aspx')
-        self.assertEqual(rows, [(officials.CANADA + '/EN/PublicRegistries/Pages/DeclarationView.aspx?id=123', 'Jane Minister')])
+    def test_registry_listing_and_paging(self):
+        body = '''<p>11097 Result(s) — page 2 of 370</p>
+        <a href="/en/client?clientId=9384ECEA-ee00-f011-8193-001dd8b72449">Mark Carney</a> Prime Minister
+        <a href="/en/client?clientId=9384ecea-ee00-f011-8193-001dd8b72449">Mark Carney</a>
+        <a href="/en/public-registry/Details?declarationId=23a7babd-c591-f111-81ad-001dd8b72449">Gift</a>'''
+        rows = officials.canada_listing(body, officials.CANADA + '/en/public-registry')
+        self.assertEqual(rows, [(officials.CANADA + '/en/client?clientId=9384ecea-ee00-f011-8193-001dd8b72449', 'Mark Carney')])
+        self.assertEqual(officials.canada_page_info(body), (11097, 2, 370))
+        c = FakeClient({'ethicscanada.ca/en/public-registry': body})
+        catalog, errors, coverage, state = officials.discover_canada(c, {'max_index_pages_per_run': 2}, {}, {'next_page': 369})
+        self.assertEqual(len(catalog), 1); self.assertEqual(state['next_page'], 1); self.assertFalse(errors)
 
     def test_sedi_probe_reports_block(self):
         class Blocked(FakeClient):
@@ -137,10 +146,14 @@ class PriceTests(unittest.TestCase):
         self.assertEqual(prices.close_on(rows, '2026-05-17'), (110.0, '2026-05-15'))
         self.assertEqual(prices.close_on(rows, '2026-08-30'), (None, None))
         self.assertEqual(prices.stooq_symbol('BRK/B'), 'brk-b.us')
+        with self.assertRaises(ValueError):
+            prices.parse_stooq('<html><body>Exceeded the daily hits limit</body></html>', '2026-01-01')
+        payload = {'chart': {'result': [{'timestamp': [1782777600, 1782864000], 'indicators': {'quote': [{'close': [100.5, None]}]}}]}}
+        self.assertEqual(prices.parse_yahoo(payload, '2026-01-01'), [['2026-06-30', 100.5]])
 
     def test_apply_prices_annotates_positions_and_records(self):
         import tempfile
-        c = FakeClient({'stooq.com': STOOQ})
+        c = FakeClient({'stooq.com': '<html>Exceeded the daily hits limit</html>', 'yahoo.com': json.dumps({'chart': {'result': [{'timestamp': [1774915200, 1775001600, 1775088000, 1778889600, 1782777600], 'indicators': {'quote': [{'close': [100.0, 102.0, 104.0, 110.0, 120.0]}]}}]}})})
         data = {'modules': {'holdings': {'managers': [{'cik': '1', 'snapshots': [{'period': '2026-06-30', 'positions': [
             {'cusip': '037833100', 'put_call': 'NONE', 'share_type': 'SH', 'shares': 10, 'value_usd': 1200},
             {'cusip': '037833100', 'put_call': 'CALL', 'share_type': 'SH', 'shares': 1, 'value_usd': 1}]}]}]},
@@ -148,7 +161,7 @@ class PriceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             status = prices.apply_prices(data, c, {'ticker_batch': 5, 'cusip_batch': 10}, tmp)
         pos = data['modules']['holdings']['managers'][0]['snapshots'][0]['positions']
-        self.assertEqual(pos[0]['ticker'], 'AAPL'); self.assertAlmostEqual(pos[0]['price_avg_q'], round((104 + 110 + 120) / 3, 4))
+        self.assertEqual(pos[0]['ticker'], 'AAPL'); self.assertAlmostEqual(pos[0]['price_avg_q'], 109.0)
         self.assertNotIn('ticker', pos[1])
         rec = data['modules']['congress']['records'][0]
         self.assertEqual(rec['price_on_date'], 110.0); self.assertAlmostEqual(rec['est_shares_min'], 9.1); self.assertAlmostEqual(rec['est_shares_max'], 136.36)

@@ -19,6 +19,32 @@ from core import now, read_json, write_json
 
 OPENFIGI = 'https://api.openfigi.com/v3/mapping'
 STOOQ = 'https://stooq.com/q/d/l/?s={symbol}&i=d'
+YAHOO = 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5y&interval=1d&events=div%2Csplit'
+
+
+def yahoo_symbol(ticker):
+    t = ticker.strip().upper().replace('/', '-').replace('.', '-')
+    if not re.fullmatch(r'[A-Z0-9-]{1,10}', t):
+        raise ValueError('Unsupported ticker for price lookup: ' + ticker)
+    return t
+
+
+def parse_yahoo(payload, since):
+    result = (payload.get('chart') or {}).get('result') or []
+    if not result:
+        raise ValueError('No chart result: ' + str((payload.get('chart') or {}).get('error') or payload)[:160])
+    stamps = result[0].get('timestamp') or []
+    closes = ((result[0].get('indicators') or {}).get('quote') or [{}])[0].get('close') or []
+    rows = []
+    for ts, close in zip(stamps, closes):
+        if close is None:
+            continue
+        day = dt.datetime.fromtimestamp(ts, dt.timezone.utc).date().isoformat()
+        if day >= since:
+            rows.append([day, float(close)])
+    if not rows:
+        raise ValueError('No daily rows in the chart response')
+    return sorted(rows)
 
 
 def stooq_symbol(ticker):
@@ -29,6 +55,8 @@ def stooq_symbol(ticker):
 
 
 def parse_stooq(text, since):
+    if '<html' in text[:400].lower() or 'Exceeded' in text[:200]:
+        raise ValueError('Stooq answered with a page instead of CSV: ' + re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', text))[:120].strip())
     rows = []
     for r in csv.DictReader(io.StringIO(text)):
         day, close = (r.get('Date') or '').strip(), (r.get('Close') or '').strip()
@@ -119,16 +147,24 @@ class PriceStore:
                 return cached['rows']
         if self.fetched_tickers >= budget:
             return None
-        try:
-            text = self.client.get(STOOQ.format(symbol=stooq_symbol(ticker))).decode('utf-8', 'replace')
-            rows = parse_stooq(text, self.since)
-        except Exception as exc:
-            self.errors.append(f'{ticker}: {exc}')
-            self.fetched_tickers += 1
-            return cached['rows'] if cached else None
+        rows, source, problems = None, None, []
+        for src in self.cfg.get('sources', ['stooq', 'yahoo']):
+            try:
+                if src == 'stooq':
+                    rows = parse_stooq(self.client.get(STOOQ.format(symbol=stooq_symbol(ticker))).decode('utf-8', 'replace'), self.since)
+                elif src == 'yahoo':
+                    rows = parse_yahoo(self.client.json(YAHOO.format(symbol=yahoo_symbol(ticker))), self.since)
+                else:
+                    raise ValueError('Unknown price source ' + src)
+                source = src; break
+            except Exception as exc:
+                problems.append(f'{src}: {exc}')
         self.fetched_tickers += 1
+        if rows is None:
+            self.errors.append(f'{ticker}: ' + ' | '.join(problems))
+            return cached['rows'] if cached else None
         with gzip.open(path.with_suffix('.tmp'), 'wt', encoding='utf-8') as f:
-            json.dump({'ticker': ticker, 'source': 'stooq', 'fetched_at': now(), 'rows': rows}, f, separators=(',', ':'))
+            json.dump({'ticker': ticker, 'source': source, 'fetched_at': now(), 'rows': rows}, f, separators=(',', ':'))
         path.with_suffix('.tmp').replace(path)
         return rows
 
@@ -206,5 +242,5 @@ def apply_prices(data, client, cfg, root):
             'counts': {'cusips_seen': len(set(cusips)), 'cusips_mapped': sum(1 for c in set(cusips) if store.ticker_for(c)), 'cusips_unmapped': unmapped,
                        'cusips_pending': sum(1 for c in set(cusips) if c not in store.cusips), 'tickers_fetched_this_run': store.fetched_tickers,
                        'positions_priced': positions_priced, 'positions_total': positions_total, 'records_priced': records_priced},
-            'coverage_note': 'Estimates only. 13F: quantity change × average daily close of the report quarter; transactions: close on or just before the disclosed date (up to 7 days back). Source: Stooq daily closes; CUSIP→ticker via OpenFIGI. Options, non-share quantities and unmapped securities have no estimate. Actual execution prices are not disclosed.',
-            'source': 'stooq + openfigi', 'history_since': store.since}
+            'coverage_note': 'Estimates only. 13F: quantity change × average daily close of the report quarter; transactions: close on or just before the disclosed date (up to 7 days back). Sources: Stooq daily closes, Yahoo Finance chart data as fallback; CUSIP→ticker via OpenFIGI. Options, non-share quantities and unmapped securities have no estimate. Actual execution prices are not disclosed.',
+            'source': ' / '.join(cfg.get('sources', ['stooq', 'yahoo'])) + ' + openfigi', 'history_since': store.since}

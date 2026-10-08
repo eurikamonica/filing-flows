@@ -25,8 +25,8 @@ from urllib.parse import urljoin, urlparse, parse_qs, quote
 NY = 'https://ethics.ny.gov'
 NY_INDEX = NY + '/financial-disclosure-statements-elected-officials'
 CA = 'https://form700search.fppc.ca.gov'
-CANADA = 'https://prciec-rpccie.parl.gc.ca'
-SEDI = 'https://www.sedi.ca/sedi/SVTSelectInsiderIssuerType?locale=en_CA'
+CANADA = 'https://www.ethicscanada.ca'   # the registry moved here from prciec-rpccie.parl.gc.ca in 2026
+SEDI = 'https://www.sedi.ca/'
 TX_INFO = 'https://www.ethics.texas.gov/filers/state/pfs/'
 
 JURISDICTIONS = {
@@ -100,11 +100,16 @@ def ny_meta(url, title, office):
         year, rest = int(slug[:4]), slug[5:]
     else:
         year = int(slug[-4:]); rest = slug[:-9]
-    person = title
+    person = re.sub(r'\s*FDS\s*\(\d{4}\)\s*$', '', title).strip()      # "Last, First M. FDS (2025)"
+    person = re.sub(r'^\d{4}\s+', '', person).strip()                   # "2024 Governor Kathleen Hochul"
     office_name = office
-    if ' - ' in title:
-        parts = [p.strip() for p in title.split(' - ')]
+    if ' - ' in person:
+        parts = [p.strip() for p in person.split(' - ')]
         person = parts[-1]; office_name = parts[0]
+    else:
+        for title_word in ('Lieutenant Governor', 'Governor', 'Attorney General', 'Comptroller'):
+            if person.startswith(title_word + ' '):
+                office_name = title_word; person = person[len(title_word) + 1:].strip(); break
     return {'report_id': 'ny-' + hashlib.sha256(slug.encode()).hexdigest()[:16], 'person': person,
             'jurisdiction': JURISDICTIONS['ny'], 'office': office_name, 'index_year': year,
             'report_type': 'Annual FDS', 'filing_type_code': 'FDS', 'filed_date': '', 'source_url': url,
@@ -125,7 +130,8 @@ def discover_ny(client, cfg, old_catalog):
     years = [int(y) for y in cfg.get('years', [])]
     offices = cfg.get('offices', ['Statewide Elected Officials', 'Senate', 'Assembly'])
     max_pages = int(cfg.get('max_index_pages_per_run', 40))
-    catalog, errors, coverage = {}, [], []
+    catalog = {k: v for k, v in old_catalog.items() if k.startswith('ny-')}   # keep what earlier runs found
+    errors, coverage = [], []
     first = client.get(NY_INDEX + '?page=0').decode('utf-8', 'replace')
     filters = ny_filters(first)
     if not filters:
@@ -137,7 +143,7 @@ def discover_ny(client, cfg, old_catalog):
             continue
         for year in years:
             if str(year) not in filters:
-                errors.append(f'NY: year filter {year} not on the index page')
+                coverage.append({'jurisdiction': 'ny', 'office': office, 'year': year, 'discovered': 0, 'note': 'year not yet on the index'})
                 continue
             count, page = 0, 0
             while fetched < max_pages:
@@ -199,7 +205,7 @@ def ca_documents(response):
         if not index_id:
             continue
         person = ' '.join(x for x in [filer.get('firstName', ''), filer.get('lastName', '')] if x).strip()
-        filed = str(d.get('filingDate') or d.get('dateFiled') or '')[:10]
+        filed = str(d.get('filingDate') or d.get('dateFiled') or d.get('filedDate') or d.get('dateReceived') or pos.get('filingDate') or pos.get('dateFiled') or '')[:10]
         try:
             dt.date.fromisoformat(filed)
         except ValueError:
@@ -220,32 +226,41 @@ def discover_ca(client, cfg, old_catalog):
     years = [int(y) for y in cfg.get('years', [])]
     positions = cfg.get('positions', [])
     cap = int(cfg.get('result_cap', 1000))
-    catalog, errors, coverage = {}, [], []
-    for year in years:
-        try:
-            metas, total = ca_documents(client.post_json(CA + '/Home/SearchDocuments', ca_search_payload(year)))
-        except Exception as exc:
-            errors.append(f'CA {year}: {exc}')
-            continue
+    budget = int(cfg.get('max_queries_per_run', 160))
+    catalog = {k: v for k, v in old_catalog.items() if k.startswith('ca-')}
+    errors, coverage, state = [], [], {'queries': 0, 'uncovered': []}
+    sample = {}
+
+    def run(year, position=None, prefix=''):
+        """One portal query; splits itself by last-name prefix while the portal cap hides rows."""
+        if state['queries'] >= budget:
+            state['uncovered'].append({'year': year, 'position': position, 'prefix': prefix}); return
+        state['queries'] += 1
+        answer = client.post_json(CA + '/Home/SearchDocuments', ca_search_payload(year, position=position, last_initial=prefix or None))
+        if not sample and isinstance(answer, dict) and answer.get('documents'):
+            d = answer['documents'][0]
+            sample.update({k: (str(v)[:80] if not isinstance(v, (dict, list)) else v) for k, v in d.items()})
+        metas, total = ca_documents(answer)
         for m in metas:
             catalog.setdefault(m['report_id'], m)
-        truncated = total > len(metas) or total >= cap
-        splits = 0
-        if truncated:
-            # The portal returns at most 1,000 rows; split the year by position and by last-name initial.
-            queries = [('position', p) for p in positions] + [('initial', ch) for ch in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ']
-            for kind, value in queries:
-                try:
-                    payload = ca_search_payload(year, position=value) if kind == 'position' else ca_search_payload(year, last_initial=value)
-                    part, part_total = ca_documents(client.post_json(CA + '/Home/SearchDocuments', payload)); splits += 1
-                    for m in part:
-                        catalog.setdefault(m['report_id'], m)
-                    if part_total > len(part):
-                        errors.append(f'CA {year} {kind} {value}: {part_total} results, {len(part)} returned (portal cap)')
-                except Exception as exc:
-                    errors.append(f'CA {year} {kind} {value}: {exc}')
-        coverage.append({'jurisdiction': 'ca', 'year': year, 'reported_total': total, 'discovered': sum(1 for m in catalog.values() if m['index_year'] == year),
-                         'split_queries': splits, 'truncated': truncated and not splits})
+        if total > len(metas) or total >= cap:
+            if len(prefix) < 3:
+                for ch in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                    run(year, position, prefix + ch)
+            else:
+                errors.append(f'CA {year} {position or "all"} {prefix}: {total} results, {len(metas)} returned (portal cap)')
+
+    for year in years:
+        before = sum(1 for m in catalog.values() if m.get('index_year') == year)
+        try:
+            run(year)
+        except Exception as exc:
+            errors.append(f'CA {year}: {exc}')
+        coverage.append({'jurisdiction': 'ca', 'year': year, 'discovered': sum(1 for m in catalog.values() if m.get('index_year') == year),
+                         'new_this_run': sum(1 for m in catalog.values() if m.get('index_year') == year) - before, 'queries_this_run': state['queries'],
+                         'uncovered_partitions': len(state['uncovered']), 'truncated': bool(state['uncovered'])})
+    if sample:
+        coverage.append({'jurisdiction': 'ca', 'sample_document_fields': sample})
     return catalog, errors, coverage
 
 
@@ -253,7 +268,7 @@ def fetch_ca_document(client, meta):
     info = meta['ca']
     payload = {'formInfo': {k: info[k] for k in ('LastName', 'FirstName', 'Agency', 'Position', 'FilingYear', 'FilingType')}, 'indexID': info['indexID']}
     answer = client.post_json(CA + '/Home/GetRedactedFormPdf', payload)
-    url = answer.get('PDFDownloadUrl') if isinstance(answer, dict) else None
+    url = next((answer[k] for k in ('PDFDownloadUrl', 'pdfDownloadUrl', 'PdfDownloadUrl', 'url') if isinstance(answer, dict) and answer.get(k)), None)
     if not url:
         raise ValueError('Portal returned no PDFDownloadUrl: ' + str(answer)[:200])
     if urlparse(url).hostname is None:
@@ -262,57 +277,57 @@ def fetch_ca_document(client, meta):
     return raw, {'document_url': url}
 
 
-# ---------------------------------------------------------------- Canada: public registry
+# ---------------------------------------------------------------- Canada: public registry (ethicscanada.ca)
+PROFILE = re.compile(r'href=["\']([^"\']*?/en/client\?clientId=([0-9a-fA-F-]{36}))["\'][^>]*>(.*?)</a>', re.I | re.S)
+PAGE_OF = re.compile(r'(\d[\d,]*)\s*Result\(s\)\s*[—–-]+\s*page\s*(\d+)\s*of\s*(\d+)', re.I)
+
+
 def canada_listing(page_html, base):
-    rows = []
-    for href, label in LINK.findall(page_html):
-        title = strip_tags(label)
-        full = urljoin(base, href)
-        if urlparse(full).hostname not in ('prciec-rpccie.parl.gc.ca',):
-            continue
-        low = full.lower()
-        if any(k in low for k in ('declaration', 'summary', 'statement', 'disclosure', 'publicregistr')) and re.search(r'[?&](id|itemid|declarationid|poh|member)[^&]*=\d+', low):
-            rows.append((full, title))
-        elif re.search(r'/(DeclarationView|SummaryStatement|ViewDeclaration|PublicDeclaration)[^"]*', full, re.I):
-            rows.append((full, title))
-    seen, out = set(), []
-    for u, t in rows:
-        if u not in seen and t:
-            seen.add(u); out.append((u, t))
-    return out
+    """Profile links on one registry listing page: (profile URL, name, context text)."""
+    rows, seen = [], set()
+    for href, guid, label in PROFILE.findall(page_html):
+        name = strip_tags(label)
+        url = CANADA + '/en/client?clientId=' + guid.lower()
+        if name and url not in seen:
+            seen.add(url); rows.append((url, name))
+    return rows
 
 
-def discover_canada(client, cfg, old_catalog):
-    starts = cfg.get('start_pages', [CANADA + '/EN/PublicRegistries/Pages/PublicRegistryHome.aspx'])
-    max_pages = int(cfg.get('max_index_pages_per_run', 30))
-    catalog, errors, coverage = {}, [], []
-    queue, seen, fetched = list(starts), set(), 0
-    while queue and fetched < max_pages:
-        url = queue.pop(0)
-        if url in seen:
-            continue
-        seen.add(url)
+def canada_page_info(page_html):
+    m = PAGE_OF.search(strip_tags(page_html))
+    return (int(m[1].replace(',', '')), int(m[2]), int(m[3])) if m else (None, None, None)
+
+
+def discover_canada(client, cfg, old_catalog, state=None):
+    base = cfg.get('registry_url', CANADA + '/en/public-registry')
+    max_pages = int(cfg.get('max_index_pages_per_run', 20))
+    catalog = {k: v for k, v in old_catalog.items() if k.startswith('cafed-')}
+    errors, coverage = [], []
+    state = dict(state or {})
+    page = int(state.get('next_page', 1)); fetched = 0; total_pages = None; results = None
+    while fetched < max_pages:
         try:
-            body = client.get(url, allow_block=True).decode('utf-8', 'replace'); fetched += 1
+            body = client.get(f'{base}?p={page}', allow_block=True).decode('utf-8', 'replace'); fetched += 1
         except Exception as exc:
-            errors.append(f'Canada registry {url}: {exc}')
-            continue
-        found = canada_listing(body, url)
-        for link, title in found:
+            errors.append(f'Canada registry page {page}: {exc}'); break
+        results, this_page, total_pages = canada_page_info(body)
+        found = canada_listing(body, base)
+        if not found:
+            errors.append(f'Canada registry page {page}: no profile links recognised; text starts: ' + strip_tags(body)[:200].replace('\n', ' '))
+            break
+        for link, name in found:
             rid = 'cafed-' + hashlib.sha256(link.encode()).hexdigest()[:16]
-            catalog.setdefault(rid, {'report_id': rid, 'person': title, 'jurisdiction': JURISDICTIONS['canada'], 'office': '',
-                                     'index_year': None, 'report_type': 'Public declaration', 'filing_type_code': 'DECL', 'filed_date': '',
+            catalog.setdefault(rid, {'report_id': rid, 'person': name, 'jurisdiction': JURISDICTIONS['canada'], 'office': '',
+                                     'index_year': None, 'report_type': 'Public registry profile', 'filing_type_code': 'PROFILE', 'filed_date': '',
                                      'source_url': link, 'doc_kind': 'html'})
-        # follow registry list pages (not declarations) one level deep
-        for href, label in LINK.findall(body):
-            full = urljoin(url, href)
-            if urlparse(full).hostname == 'prciec-rpccie.parl.gc.ca' and '/PublicRegistries/' in full and full not in seen and 'Pages/' in full and not any(full == l for l, _ in found):
-                if len(queue) < 200:
-                    queue.append(full.split('#')[0])
-        if not found and fetched == 1:
-            errors.append('Canada registry: no declaration links recognised on the start page; sample text: ' + strip_tags(body)[:300].replace('\n', ' '))
-    coverage.append({'jurisdiction': 'canada', 'pages_fetched': fetched, 'discovered': len(catalog), 'truncated': bool(queue) and fetched >= max_pages})
-    return catalog, errors, coverage
+        if total_pages and page >= total_pages:
+            page = 0; break      # wrap around: next run starts again from page 1 (profiles change over time)
+        page += 1
+    state['next_page'] = max(1, page) if page else 1
+    state['total_pages'] = total_pages; state['results'] = results
+    coverage.append({'jurisdiction': 'canada', 'pages_fetched': fetched, 'next_page': state['next_page'], 'total_pages': total_pages,
+                     'registry_results': results, 'discovered': len(catalog), 'truncated': bool(total_pages) and state['next_page'] > 1})
+    return catalog, errors, coverage, state
 
 
 # ---------------------------------------------------------------- Canada: SEDI probe
@@ -322,7 +337,7 @@ def probe_sedi(client, cfg):
     except Exception as exc:
         return {'status': 'blocked' if 'challenge' in str(exc) or 'bot' in str(exc).lower() else 'error', 'detail': str(exc), 'checked_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')}
     text = strip_tags(body.decode('utf-8', 'replace'))
-    blocked = 'perfdrive' in final or 'validate' in final or 'Access Denied' in text or 'enable JavaScript' in text
+    blocked = 'perfdrive' in final or 'validate' in final or 'Access Denied' in text or 'enable JavaScript' in text or 'shieldsquare' in text.lower()
     return {'status': 'blocked' if blocked else 'reachable', 'detail': ('Reached ' + final + '; the SEDI pages are session-driven forms, automatic collection not implemented') if not blocked else 'SEDI answered with a bot-protection challenge; automatic collection is not possible from a scheduled job',
             'checked_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')}
 
@@ -332,13 +347,17 @@ def discover_all(client, cfg, old):
     """Catalog entries, errors and coverage for every configured non-House jurisdiction."""
     catalog, errors, coverage, notes = {}, [], [], {}
     old_catalog = {r['report_id']: r for r in old.get('directory', [])}
+    state = dict(old.get('officials_state', {}))
     jur = cfg.get('jurisdictions', {})
     for key, fn in (('ny', discover_ny), ('ca', discover_ca), ('canada', discover_canada)):
         settings = jur.get(key)
         if not settings or not settings.get('enabled', True):
             continue
         try:
-            found, errs, cov = fn(client, settings, old_catalog)
+            if key == 'canada':
+                found, errs, cov, state['canada'] = fn(client, settings, old_catalog, state.get('canada'))
+            else:
+                found, errs, cov = fn(client, settings, old_catalog)
             catalog.update(found); errors.extend(errs); coverage.extend(cov)
         except Exception as exc:
             errors.append(f'{JURISDICTIONS[key]} discovery: {exc}')
@@ -349,6 +368,7 @@ def discover_all(client, cfg, old):
         notes['tx'] = 'Texas Personal Financial Statements are not published online by the Texas Ethics Commission; copies come through an open-records request (' + TX_INFO + '). Add them as imports with jurisdiction "Texas".'
     if jur.get('sedi', {}).get('enabled', True):
         notes['sedi'] = probe_sedi(client, jur.get('sedi', {}))
+    notes['_state'] = state
     return catalog, errors, coverage, notes
 
 

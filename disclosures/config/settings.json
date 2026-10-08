@@ -131,7 +131,8 @@
           "Chief Deputy Director",
           "General Counsel",
           "Member"
-        ]
+        ],
+        "max_queries_per_run": 160
       },
       "tx": {
         "enabled": true,
@@ -139,10 +140,9 @@
       },
       "canada": {
         "enabled": true,
-        "start_pages": [
-          "https://prciec-rpccie.parl.gc.ca/EN/PublicRegistries/Pages/PublicRegistryHome.aspx"
-        ],
-        "max_index_pages_per_run": 40
+        "registry_url": "https://www.ethicscanada.ca/en/public-registry",
+        "max_index_pages_per_run": 20,
+        "_note": "Registry listing (30 profiles per page, ~370 pages) is walked a few pages per run and wraps around; each profile page (assets, income, summary statement, gifts) is one document."
       },
       "sedi": {
         "enabled": true,
@@ -157,6 +157,10 @@
     "cusip_batch": 200,
     "refresh_hours": 24,
     "history_since": "2023-01-01",
-    "_note": "Optional cost estimates: quarter-average close \u00d7 quantity change for 13F, close on the transaction date for reviewed transactions. Estimates, never disclosed figures."
+    "_note": "Optional cost estimates: quarter-average close \u00d7 quantity change for 13F, close on the transaction date for reviewed transactions. Estimates, never disclosed figures.",
+    "sources": [
+      "stooq",
+      "yahoo"
+    ]
   }
 }
