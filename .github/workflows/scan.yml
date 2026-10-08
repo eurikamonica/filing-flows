@@ -108,6 +108,9 @@ jobs:
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}       # optional: shown on the privacy and terms pages
         run: python scripts/build_site.py --data _site/data --out _site
 
+      - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
+        run: python disclosures/automation/stage-public.py --out _site/disclosures
+
       # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
       # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.
       - name: Publish the site to the "site" branch (for your own server)

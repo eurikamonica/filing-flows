@@ -1,0 +1,210 @@
+[
+  {
+    "arguments": [
+      "--only",
+      "markets",
+      "--batch-size",
+      "2"
+    ],
+    "exit_code": 0,
+    "generated_at": "2026-10-07T02:20:03+00:00",
+    "modules": {
+      "cot": {
+        "counts": {
+          "discovered": 507,
+          "processed": 11,
+          "pending": 496,
+          "attempted_this_run": 2
+        },
+        "status": "ok",
+        "errors": []
+      },
+      "banks": {
+        "counts": {
+          "discovered": 4223,
+          "processed": 9,
+          "pending": 4214,
+          "attempted_this_run": 2
+        },
+        "status": "ok",
+        "errors": []
+      },
+      "npx": {
+        "counts": {
+          "discovered_filers": 11495,
+          "scanned_filers": 7,
+          "available_filers": 7,
+          "pending_filers": 11488,
+          "discovered_filings": 18,
+          "downloaded_filings": 18,
+          "pending_filings": 0,
+          "filers_attempted_this_run": 2,
+          "documents_attempted_this_run": 4
+        },
+        "status": "ok",
+        "errors": []
+      }
+    },
+    "requests": [
+      {
+        "source_url": "https://publicreporting.cftc.gov/resource/72hh-3qpy.json?%24where=report_date_as_yyyy_mm_dd+%3E%3D+%272023-01-01T00%3A00%3A00%27+AND+cftc_contract_market_code+in+%28%27005603%27%29&%24order=report_date_as_yyyy_mm_dd%2Ccftc_contract_market_code&%24limit=1000&%24offset=0",
+        "sha256": "1d0c9be77a26fbc59e0b598246ff8f6e1e7ed4e3b15bbfab01cf899361579258",
+        "fetched_at": "2026-10-07T02:18:52+00:00",
+        "bytes": 225662
+      },
+      {
+        "source_url": "https://publicreporting.cftc.gov/resource/72hh-3qpy.json?%24where=report_date_as_yyyy_mm_dd+%3E%3D+%272023-01-01T00%3A00%3A00%27+AND+cftc_contract_market_code+in+%28%270063CC%27%29&%24order=report_date_as_yyyy_mm_dd%2Ccftc_contract_market_code&%24limit=1000&%24offset=0",
+        "sha256": "382ea542117e183d1a4182d86c7be400ac28ee1326c1c9e3b6d6705086a40093",
+        "fetched_at": "2026-10-07T02:18:56+00:00",
+        "bytes": 1263595
+      },
+      {
+        "source_url": "https://api.fdic.gov/banks/financials?filters=CERT%3A10044+AND+REPDTE%3A%5B20200101+TO+%2A%5D&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CLNLSNET%2CEQ%2CNETINC%2CROA%2CROE&sort_by=REPDTE&sort_order=ASC&limit=1000&offset=0&format=json",
+        "sha256": "c9e944cb0a8c75b6215f3e94507895998fe8fb0e897218bbaeb0f1075d5f19a0",
+        "fetched_at": "2026-10-07T02:19:02+00:00",
+        "bytes": 6131
+      },
+      {
+        "source_url": "https://api.fdic.gov/banks/financials?filters=CERT%3A1005+AND+REPDTE%3A%5B20200101+TO+%2A%5D&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CLNLSNET%2CEQ%2CNETINC%2CROA%2CROE&sort_by=REPDTE&sort_order=ASC&limit=1000&offset=0&format=json",
+        "sha256": "e4491c8c23fd4aed260a9321d737cded2893df93d73dac267357798ef11f6f4d",
+        "fetched_at": "2026-10-07T02:19:06+00:00",
+        "bytes": 5701
+      },
+      {
+        "source_url": "https://data.sec.gov/submissions/CIK0001001011.json",
+        "sha256": "0a0c29c4b80f358f67d731ab7d38bd6a30d9a4412eaf11f3f37be00b422450b4",
+        "fetched_at": "2026-10-07T02:19:12+00:00",
+        "bytes": 5438
+      },
+      {
+        "source_url": "https://data.sec.gov/submissions/CIK0001001085.json",
+        "sha256": "e47fe0b66f4f2a9a933d99a6cfe57e1d2bc5372b8a884cd1d4bef3d5ea3d6a1b",
+        "fetched_at": "2026-10-07T02:19:15+00:00",
+        "bytes": 164656
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001011/000100101126000008/index.json",
+        "sha256": "de486eabd76735d52e7aed09dcaca09c3d3ac99a10fa23c8fe97ad24ecf7afd2",
+        "fetched_at": "2026-10-07T02:19:19+00:00",
+        "bytes": 563
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001011/000100101126000008/primary_doc.xml",
+        "sha256": "a30fad4e19d32cad7fc541a8aa0b841d3dd1bc5b76627a968ffc819dd541c9d6",
+        "fetched_at": "2026-10-07T02:19:24+00:00",
+        "bytes": 2358
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001085/000100108524000035/index.json",
+        "sha256": "c338e312f6a247f2a13936326a21bd7225b126cc3a999760126e30d0a53f425e",
+        "fetched_at": "2026-10-07T02:19:30+00:00",
+        "bytes": 668
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001085/000100108524000035/primary_doc.xml",
+        "sha256": "21c57d0ee5abd2d3a76f6d9c290b9a59fca4985eb840975baeeeb0664b3a1fcb",
+        "fetched_at": "2026-10-07T02:19:34+00:00",
+        "bytes": 2438
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001085/000100108524000035/ProxyVotingTable.xml",
+        "sha256": "4b4f77eddb227f2e410edac8c17a9c498e333c3f61839635e53555badb7152a3",
+        "fetched_at": "2026-10-07T02:19:39+00:00",
+        "bytes": 140497
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001085/000100108526000024/index.json",
+        "sha256": "d046b2538a311120c2d3398de2f1f5a96b00b3bf134f769a0938f5abcb494cb4",
+        "fetched_at": "2026-10-07T02:19:43+00:00",
+        "bytes": 668
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001085/000100108526000024/primary_doc.xml",
+        "sha256": "d7fe7cb02ce69356c6f82d3e2a7fa570a1b5a5c759a0f9a530a50d76dc453f30",
+        "fetched_at": "2026-10-07T02:19:47+00:00",
+        "bytes": 2236
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001085/000100108526000024/ProxyVotingTable.xml",
+        "sha256": "171efa8bf7468fc63f729b8164043b23b408890fc2a04c0ed92eefdacf21836b",
+        "fetched_at": "2026-10-07T02:19:51+00:00",
+        "bytes": 120041
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001085/000119312525193951/index.json",
+        "sha256": "c147fcc0d87b148e90c560d199d02cd528a618b6bc42699b7e3f80f2d826ef93",
+        "fetched_at": "2026-10-07T02:19:55+00:00",
+        "bytes": 667
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001085/000119312525193951/primary_doc.xml",
+        "sha256": "2772ede150d31ffc4f878e20de21a8b640419ff6f4e163d70deea2e811d5137f",
+        "fetched_at": "2026-10-07T02:19:59+00:00",
+        "bytes": 2236
+      },
+      {
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1001085/000119312525193951/ProxyVotingTable.xml",
+        "sha256": "bf6ba30077590e02b20de8fe389415b53df94237f0fdfa12dd7031c4d4e644e8",
+        "fetched_at": "2026-10-07T02:20:02+00:00",
+        "bytes": 71231
+      }
+    ]
+  },
+  {
+    "arguments": [
+      "--only",
+      "cot",
+      "--market-id",
+      "gpe5-46if-13874+",
+      "--batch-size",
+      "1"
+    ],
+    "exit_code": 0,
+    "generated_at": "2026-10-07T02:20:08+00:00",
+    "modules": {
+      "cot": {
+        "counts": {
+          "discovered": 507,
+          "processed": 12,
+          "pending": 495,
+          "attempted_this_run": 1
+        },
+        "status": "ok",
+        "errors": []
+      },
+      "banks": {
+        "counts": {
+          "discovered": 4223,
+          "processed": 9,
+          "pending": 4214,
+          "attempted_this_run": 2
+        },
+        "status": "ok",
+        "errors": []
+      },
+      "npx": {
+        "counts": {
+          "discovered_filers": 11495,
+          "scanned_filers": 7,
+          "available_filers": 7,
+          "pending_filers": 11488,
+          "discovered_filings": 18,
+          "downloaded_filings": 18,
+          "pending_filings": 0,
+          "filers_attempted_this_run": 2,
+          "documents_attempted_this_run": 4
+        },
+        "status": "ok",
+        "errors": []
+      }
+    },
+    "requests": [
+      {
+        "source_url": "https://publicreporting.cftc.gov/resource/gpe5-46if.json?%24where=report_date_as_yyyy_mm_dd+%3E%3D+%272023-01-01T00%3A00%3A00%27+AND+cftc_contract_market_code+in+%28%2713874%2B%27%29&%24order=report_date_as_yyyy_mm_dd%2Ccftc_contract_market_code&%24limit=1000&%24offset=0",
+        "sha256": "29ee5d11b12a9ea88a0db1118d6692a612b6ef1ca8e9818d3c6f6ae2dbec9ed0",
+        "fetched_at": "2026-10-07T02:20:08+00:00",
+        "bytes": 640602
+      }
+    ]
+  }
+]

@@ -1,0 +1,88 @@
+{
+  "cot": {
+    "since": "2023-01-01",
+    "datasets": [
+      {
+        "id": "72hh-3qpy",
+        "family": "disaggregated",
+        "codes": [
+          "067651",
+          "088691"
+        ]
+      },
+      {
+        "id": "gpe5-46if",
+        "family": "tff",
+        "codes": [
+          "097741"
+        ]
+      }
+    ],
+    "discover_all": true,
+    "batch_size": 10,
+    "refresh_hours": 168,
+    "discovery_hours": 24
+  },
+  "banks": {
+    "since": "20200101",
+    "certs": [
+      628,
+      3510,
+      3511
+    ],
+    "discover_all": true,
+    "active_only": true,
+    "batch_size": 20,
+    "refresh_hours": 168,
+    "discovery_hours": 24
+  },
+  "npx": {
+    "since": "2024-01-01",
+    "ciks": [
+      "0001630243"
+    ],
+    "discover_all": true,
+    "discovery_since": "2025-01-01",
+    "batch_size": 4,
+    "document_batch_size": 12,
+    "refresh_hours": 168
+  },
+  "http": {
+    "timeout": 40,
+    "retries": 3,
+    "min_interval_seconds": 0.55,
+    "max_response_mb": 80,
+    "sec_user_agent": "Eurika eurikamonica@gmail.com"
+  },
+  "holdings": {
+    "since": "2025-01-01",
+    "managers": [
+      {
+        "cik": "1067983",
+        "name": "Berkshire Hathaway"
+      },
+      {
+        "cik": "1336528",
+        "name": "Pershing Square Capital Management"
+      }
+    ],
+    "discover_all": true,
+    "batch_size": 8,
+    "refresh_hours": 24
+  },
+  "congress": {
+    "years": [
+      2024,
+      2025,
+      2026
+    ],
+    "last_names": [],
+    "max_pdf_pages": 100,
+    "ocr_dpi": 200,
+    "reviewed_file": "config/reviewed-disclosures.csv",
+    "imports_manifest": "config/imports.json",
+    "batch_size": 30,
+    "refresh_hours": 168,
+    "auto_current_year": true
+  }
+}

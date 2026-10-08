@@ -386,6 +386,21 @@ first time the reader follows something in the app.
   address. While the laptop sleeps nobody can sign in or change settings (charts keep working). The hosted free plan
   avoids that (it pauses a project after about a week of inactivity; the hourly alert check queries it every hour).
 
+## Disclosure Hub (`disclosures/`, published at `/disclosures/`)
+
+A second, independent dashboard lives in `disclosures/` (Disclosure Hub v4): 13F holdings, House financial
+disclosures (PDF/OCR), CFTC COT, FDIC bank financials and SEC N-PX votes. Its own docs are in that folder
+(`disclosures/README.md`, `METHODOLOGY.md`, `DEPLOY-GITHUB.md`). It shares nothing with the Sankey pipeline:
+
+- **Collection** runs in `.github/workflows/disclosures.yml` (15-minute 13F, hourly House, hourly markets, daily all),
+  entirely inside `disclosures/`, and commits `disclosures/docs/data/` to `main`. Run it by hand under
+  Actions → *Collect disclosures* with the same module/priority inputs as the stand-alone package.
+- **Publishing** is done by the normal scan workflow: after the Sankey site is assembled, `disclosures/docs` is copied
+  into `_site/disclosures/` (collector caches and queue state left out), so the hub appears at
+  `https://<user>.github.io/<repo>/disclosures/` on the next hourly publish. The site footer links to it.
+- Uses the same `SEC_USER_AGENT` secret; `FDIC_API_KEY` and `CFTC_APP_TOKEN` are optional.
+- Preview locally with `python disclosures/app/serve.py` (http://127.0.0.1:8080).
+
 ## How it works
 
 ```
