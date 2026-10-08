@@ -23,7 +23,7 @@ YAHOO = 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5y&int
 
 
 def yahoo_symbol(ticker):
-    t = ticker.strip().upper().replace('/', '-').replace('.', '-')
+    t = clean_ticker(ticker)
     if not re.fullmatch(r'[A-Z0-9-]{1,10}', t):
         raise ValueError('Unsupported ticker for price lookup: ' + ticker)
     return t
@@ -47,8 +47,14 @@ def parse_yahoo(payload, since):
     return sorted(rows)
 
 
+def clean_ticker(ticker):
+    t = (ticker or '').strip().upper().replace('/', '-').replace('.', '-').rstrip('*')
+    t = re.sub(r'(USD|CAD)$', '', t) if len(t) > 6 else t
+    return t
+
+
 def stooq_symbol(ticker):
-    t = ticker.strip().upper().replace('/', '-').replace('.', '-')
+    t = clean_ticker(ticker)
     if not re.fullmatch(r'[A-Z0-9-]{1,10}', t):
         raise ValueError('Unsupported ticker for price lookup: ' + ticker)
     return t.lower() + '.us'
@@ -148,7 +154,7 @@ class PriceStore:
         if self.fetched_tickers >= budget:
             return None
         rows, source, problems = None, None, []
-        for src in self.cfg.get('sources', ['stooq', 'yahoo']):
+        for src in self.cfg.get('sources', ['yahoo', 'stooq']):
             try:
                 if src == 'stooq':
                     rows = parse_stooq(self.client.get(STOOQ.format(symbol=stooq_symbol(ticker))).decode('utf-8', 'replace'), self.since)
@@ -243,4 +249,4 @@ def apply_prices(data, client, cfg, root):
                        'cusips_pending': sum(1 for c in set(cusips) if c not in store.cusips), 'tickers_fetched_this_run': store.fetched_tickers,
                        'positions_priced': positions_priced, 'positions_total': positions_total, 'records_priced': records_priced},
             'coverage_note': 'Estimates only. 13F: quantity change × average daily close of the report quarter; transactions: close on or just before the disclosed date (up to 7 days back). Sources: Stooq daily closes, Yahoo Finance chart data as fallback; CUSIP→ticker via OpenFIGI. Options, non-share quantities and unmapped securities have no estimate. Actual execution prices are not disclosed.',
-            'source': ' / '.join(cfg.get('sources', ['stooq', 'yahoo'])) + ' + openfigi', 'history_since': store.since}
+            'source': ' / '.join(cfg.get('sources', ['yahoo', 'stooq'])) + ' + openfigi', 'history_since': store.since}

@@ -246,7 +246,17 @@ def collect_congress(client,cfg,old,revalidate=False):
     history={k:{**r,'last_success':r.get('extracted_at',r.get('first_seen_at')) if r.get('source_sha256') else None} for k,r in previous.items()}
     target=cfg.get('priority_report_id')
     if target and target not in catalog:raise ValueError('Requested report ID not found in the discovered catalog')
-    selected=select_batch([r for r in catalog.values() if r.get('status')!='unsupported' and (not target or r['report_id']==target)],history,int(cfg.get('batch_size',30)),'report_id',cfg.get('refresh_hours',168),revalidate)
+    eligible=[r for r in catalog.values() if r.get('status')!='unsupported' and (not target or r['report_id']==target)]
+    if target:selected=select_batch(eligible,history,1,'report_id',cfg.get('refresh_hours',168),revalidate)
+    else:
+        # Every jurisdiction gets a share of the batch so a 25,000-row catalog cannot starve the others.
+        groups={}
+        for r in eligible:groups.setdefault(r.get('jurisdiction','US House'),[]).append(r)
+        shares=cfg.get('batch_shares',{});budget=int(cfg.get('batch_size',30));selected=[]
+        default=max(1,budget//max(1,len(groups)))
+        for name,items in sorted(groups.items()):
+            selected+=select_batch(items,history,int(shares.get(name,default)),'report_id',cfg.get('refresh_hours',168),revalidate)
+        selected=selected[:max(budget,len(groups))]
     for meta in selected:
         rid=meta['report_id'];prior=previous.get(rid)
         try:

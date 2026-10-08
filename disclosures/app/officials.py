@@ -150,18 +150,19 @@ def discover_ny(client, cfg, old_catalog):
                 url = f'{NY_INDEX}?f%5B0%5D=filter_term%3A{filters[office]}&f%5B1%5D=filter_term%3A{filters[str(year)]}&page={page}'
                 body = client.get(url).decode('utf-8', 'replace'); fetched += 1
                 rows = ny_listing(body)
-                new = 0
+                matched = 0
                 for link, title in rows:
                     meta = ny_meta(link, title, office)
                     if meta['index_year'] != year:
                         continue
+                    matched += 1
                     if meta['report_id'] not in catalog:
-                        catalog[meta['report_id']] = meta; new += 1
-                count += new
-                if not rows or new == 0 or f'page={page + 1}' not in body:
+                        catalog[meta['report_id']] = meta; count += 1
+                if not rows or matched == 0 or f'page={page + 1}' not in body:
                     break
                 page += 1
-            coverage.append({'jurisdiction': 'ny', 'office': office, 'year': year, 'discovered': count, 'index_pages': page + 1,
+            coverage.append({'jurisdiction': 'ny', 'office': office, 'year': year, 'new_this_run': count, 'index_pages': page + 1,
+                             'discovered': sum(1 for m in catalog.values() if m.get('office') == office and m.get('index_year') == year) if office != 'Statewide Elected Officials' else sum(1 for m in catalog.values() if m.get('index_year') == year and m.get('office') not in ('Senate', 'Assembly')),
                              'truncated': fetched >= max_pages})
     if not catalog and not errors:
         errors.append('NY: filters found but no statement links matched the expected slug patterns')
@@ -217,19 +218,19 @@ def ca_documents(response):
                       'report_type': 'Form 700 ' + str(pos.get('filingType') or d.get('filingType') or ''),
                       'filing_type_code': str(pos.get('filingType') or ''), 'filed_date': filed,
                       'source_url': CA + '/', 'doc_kind': 'ca-pdf',
-                      'ca': {'LastName': filer.get('lastName', ''), 'FirstName': filer.get('firstName', ''), 'Agency': pos.get('agency', ''),
-                             'Position': pos.get('position', ''), 'FilingYear': str(year), 'FilingType': pos.get('filingType', ''), 'indexID': index_id}})
+                      # compact; the download payload is rebuilt by ca_form_info()
+                      'ca': [filer.get('lastName', ''), filer.get('firstName', ''), pos.get('agency', ''), pos.get('position', ''), str(year), str(pos.get('filingType') or ''), index_id]})
     return metas, int(total or 0)
 
 
-def discover_ca(client, cfg, old_catalog):
+def discover_ca(client, cfg, old_catalog, prior_state=None):
     years = [int(y) for y in cfg.get('years', [])]
-    positions = cfg.get('positions', [])
     cap = int(cfg.get('result_cap', 1000))
     budget = int(cfg.get('max_queries_per_run', 160))
     catalog = {k: v for k, v in old_catalog.items() if k.startswith('ca-')}
     errors, coverage, state = [], [], {'queries': 0, 'uncovered': []}
     sample = {}
+    carried = list((prior_state or {}).get('uncovered', []))
 
     def run(year, position=None, prefix=''):
         """One portal query; splits itself by last-name prefix while the portal cap hides rows."""
@@ -250,6 +251,12 @@ def discover_ca(client, cfg, old_catalog):
             else:
                 errors.append(f'CA {year} {position or "all"} {prefix}: {total} results, {len(metas)} returned (portal cap)')
 
+    # partitions the previous run could not afford come first, so the sweep rotates instead of repeating itself
+    for part in carried:
+        try:
+            run(part['year'], part.get('position'), part.get('prefix', ''))
+        except Exception as exc:
+            errors.append(f'CA carried partition {part}: {exc}')
     for year in years:
         before = sum(1 for m in catalog.values() if m.get('index_year') == year)
         try:
@@ -261,13 +268,70 @@ def discover_ca(client, cfg, old_catalog):
                          'uncovered_partitions': len(state['uncovered']), 'truncated': bool(state['uncovered'])})
     if sample:
         coverage.append({'jurisdiction': 'ca', 'sample_document_fields': sample})
-    return catalog, errors, coverage
+    # keep at most one run's worth of carried partitions
+    return catalog, errors, coverage, {'uncovered': state['uncovered'][:budget]}
+
+
+def ca_form_info(meta):
+    info = meta.get('ca')
+    if isinstance(info, dict):
+        return {'formInfo': {k: info.get(k, '') for k in ('LastName', 'FirstName', 'Agency', 'Position', 'FilingYear', 'FilingType')}, 'indexID': info.get('indexID', '')}
+    if isinstance(info, list) and len(info) == 7:
+        last, first, agency, position, year, ftype, index_id = info
+    else:
+        # catalog rows from the first 4.1 run carried no payload: rebuild it from the public fields
+        parts = (meta.get('office') or '').split(' · ', 1)
+        position, agency = (parts + [''])[:2]
+        names = (meta.get('person') or '').split(' ')
+        first, last = (' '.join(names[:-1]), names[-1]) if len(names) > 1 else ('', names[0] if names else '')
+        year, ftype = str(meta.get('index_year') or ''), meta.get('filing_type_code', '')
+        hexid = meta['report_id'][3:]
+        index_id = f'{hexid[:8]}-{hexid[8:12]}-{hexid[12:16]}-{hexid[16:20]}-{hexid[20:]}' if len(hexid) == 32 else hexid
+    return {'formInfo': {'LastName': last, 'FirstName': first, 'Agency': agency, 'Position': position, 'FilingYear': year, 'FilingType': ftype}, 'indexID': index_id}
+
+
+CA_PROBE = {'done': False, 'findings': []}
+
+
+def ca_probe(client):
+    """Once per run after a download failure: record which endpoints the portal's own scripts call."""
+    if CA_PROBE['done']:
+        return CA_PROBE['findings']
+    CA_PROBE['done'] = True
+    findings = []
+    try:
+        home = client.get(CA + '/').decode('utf-8', 'replace')
+        scripts = [urljoin(CA + '/', m) for m in re.findall(r'<script[^>]+src=["\']([^"\']+)["\']', home, re.I)]
+        findings.append('home scripts: ' + ', '.join(scripts)[:600])
+        endpoints = set(re.findall(r'/Home/[A-Za-z]+', home))
+        for src in scripts[:12]:
+            if urlparse(src).hostname != 'form700search.fppc.ca.gov':
+                continue
+            try:
+                js = client.get(src).decode('utf-8', 'replace')
+            except Exception as exc:
+                findings.append(f'{src}: {exc}'); continue
+            found = set(re.findall(r'/Home/[A-Za-z]+', js)) | set(re.findall(r'["\'](?:\./)?(Home/[A-Za-z]+)["\']', js))
+            if found:
+                endpoints |= {e if e.startswith('/') else '/' + e for e in found}
+                for e in sorted(found):
+                    if re.search(r'pdf|download|document|form', e, re.I):
+                        i = js.find(e.split('/')[-1])
+                        findings.append(f'{src.split("/")[-1]} {e}: …{js[max(0, i - 220):i + 260]!r}')
+        findings.insert(0, 'endpoints: ' + ', '.join(sorted(endpoints)))
+    except Exception as exc:
+        findings.append('probe failed: ' + str(exc))
+    CA_PROBE['findings'] = findings
+    return findings
 
 
 def fetch_ca_document(client, meta):
-    info = meta['ca']
-    payload = {'formInfo': {k: info[k] for k in ('LastName', 'FirstName', 'Agency', 'Position', 'FilingYear', 'FilingType')}, 'indexID': info['indexID']}
-    answer = client.post_json(CA + '/Home/GetRedactedFormPdf', payload)
+    payload = ca_form_info(meta)
+    try:
+        answer = client.post_json(CA + '/Home/GetRedactedFormPdf', payload)
+    except Exception as exc:
+        probe = ca_probe(client)
+        raise ValueError(f'{exc} · payload {payload!r} · ' + ' ‖ '.join(probe)[:1500]) from None
     url = next((answer[k] for k in ('PDFDownloadUrl', 'pdfDownloadUrl', 'PdfDownloadUrl', 'url') if isinstance(answer, dict) and answer.get(k)), None)
     if not url:
         raise ValueError('Portal returned no PDFDownloadUrl: ' + str(answer)[:200])
@@ -336,10 +400,12 @@ def probe_sedi(client, cfg):
         body, final, ctype = client.request(SEDI, allow_block=True)
     except Exception as exc:
         return {'status': 'blocked' if 'challenge' in str(exc) or 'bot' in str(exc).lower() else 'error', 'detail': str(exc), 'checked_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')}
-    text = strip_tags(body.decode('utf-8', 'replace'))
+    page = body.decode('utf-8', 'replace'); text = strip_tags(page)
     blocked = 'perfdrive' in final or 'validate' in final or 'Access Denied' in text or 'enable JavaScript' in text or 'shieldsquare' in text.lower()
+    links = [urljoin(final, h) for h, _ in LINK.findall(page)]
+    links = [l for l in dict.fromkeys(links) if urlparse(l).hostname in ('www.sedi.ca', 'sedi.ca')][:40]
     return {'status': 'blocked' if blocked else 'reachable', 'detail': ('Reached ' + final + '; the SEDI pages are session-driven forms, automatic collection not implemented') if not blocked else 'SEDI answered with a bot-protection challenge; automatic collection is not possible from a scheduled job',
-            'checked_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')}
+            'checked_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'links': links, 'text_start': text[:300]}
 
 
 # ---------------------------------------------------------------- orchestration
@@ -356,6 +422,8 @@ def discover_all(client, cfg, old):
         try:
             if key == 'canada':
                 found, errs, cov, state['canada'] = fn(client, settings, old_catalog, state.get('canada'))
+            elif key == 'ca':
+                found, errs, cov, state['ca'] = fn(client, settings, old_catalog, state.get('ca'))
             else:
                 found, errs, cov = fn(client, settings, old_catalog)
             catalog.update(found); errors.extend(errs); coverage.extend(cov)

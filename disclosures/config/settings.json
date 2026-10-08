@@ -148,6 +148,12 @@
         "enabled": true,
         "_note": "Probed every run; automatic collection is blocked by bot protection. Add saved SEDI reports (PDF) to config/imports.json with jurisdiction \"Canada (SEDI insider reports)\"."
       }
+    },
+    "batch_shares": {
+      "US House": 10,
+      "New York State": 6,
+      "California": 8,
+      "Canada (federal public office holders)": 6
     }
   },
   "prices": {
@@ -159,8 +165,8 @@
     "history_since": "2023-01-01",
     "_note": "Optional cost estimates: quarter-average close \u00d7 quantity change for 13F, close on the transaction date for reviewed transactions. Estimates, never disclosed figures.",
     "sources": [
-      "stooq",
-      "yahoo"
+      "yahoo",
+      "stooq"
     ]
   }
 }

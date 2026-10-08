@@ -104,13 +104,17 @@ class CaliforniaTests(unittest.TestCase):
 
     def test_discovery_and_download(self):
         c = FakeClient({'Download/abc.pdf': '%PDF-1.4 fake'})
-        catalog, errors, coverage = officials.discover_ca(c, {'years': [2025], 'positions': ['Governor']}, {})
-        self.assertEqual(len(catalog), 2); self.assertFalse(errors)
+        catalog, errors, coverage, state = officials.discover_ca(c, {'years': [2025], 'positions': ['Governor']}, {})
+        self.assertEqual(len(catalog), 2); self.assertFalse(errors); self.assertEqual(state, {'uncovered': []})
         meta = next(iter(catalog.values()))
         raw, extra = officials.fetch_ca_document(c, meta)
         self.assertTrue(raw.startswith(b'%PDF'))
         post = [x for x in c.calls if isinstance(x, tuple) and 'GetRedactedFormPdf' in x[1]][0]
-        self.assertEqual(post[2]['indexID'], meta['ca']['indexID'])
+        self.assertEqual(post[2]['indexID'], 'ABC-123'); self.assertEqual(post[2]['formInfo']['Position'], 'Governor')
+        # rows published by the first 4.1 run carry no payload: it is rebuilt from the public fields
+        bare = {'report_id': 'ca-773645e855114f3e9339a920d210e619', 'person': 'Susanna Alcala Wood', 'office': 'City/Town Attorney · City of Sacramento', 'index_year': 2025, 'filing_type_code': 'Leaving'}
+        info = officials.ca_form_info(bare)
+        self.assertEqual(info['indexID'], '773645e8-5511-4f3e-9339-a920d210e619'); self.assertEqual(info['formInfo']['Agency'], 'City of Sacramento'); self.assertEqual(info['formInfo']['LastName'], 'Wood')
 
     def test_search_payload_shape(self):
         p = officials.ca_search_payload(2025, position='Senator')
