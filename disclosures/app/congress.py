@@ -276,6 +276,9 @@ def collect_congress(client,cfg,old,revalidate=False):
             errors.append(f'{rid}: {exc}')
             result[rid]={**{k:v for k,v in (prior or meta).items() if k!='ca'},'last_attempt':now(),'stale':True,'status':'error','error':str(exc),'candidates':(prior or{}).get('candidates',[])}
     reports=list(result.values())
+    for r in reports:   # keep names/offices in step with the (re-cleaned) catalog
+        c=catalog.get(r['report_id'])
+        if c and c.get('person'):r['person']=c['person'];r['office']=c.get('office',r.get('office',''))
     # Explicit imports support Senate/state/local PDFs after their access process.
     for item in read_json(safe_local(cfg.get('imports_manifest','config/imports.json')),[]):
         try:

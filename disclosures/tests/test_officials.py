@@ -39,6 +39,7 @@ STOOQ = '''Date,Open,High,Low,Close,Volume
 class FakeClient:
     def __init__(self, pages):
         self.pages = pages; self.options = {}; self.calls = []
+    hosts = ()
     def get(self, url, **kw):
         self.calls.append(url)
         for key, body in self.pages.items():
@@ -112,14 +113,15 @@ class CaliforniaTests(unittest.TestCase):
         self.assertEqual(metas[1]['office'], 'Judge · Superior Court'); self.assertEqual(metas[0]['doc_kind'], 'ca-pdf')
 
     def test_discovery_and_download(self):
-        c = FakeClient({'Download/abc.pdf': '%PDF-1.4 fake'})
+        c = FakeClient({'Download/abc.pdf': '%PDF-1.4 fake', 'GetRedactedFormPdf?indexID=ABC-123': json.dumps({'Message': '', 'PDFDownloadUrl': 'https://form700search.fppc.ca.gov/Download/abc.pdf'})})
         catalog, errors, coverage, state = officials.discover_ca(c, {'years': [2025], 'positions': ['Governor']}, {})
         self.assertEqual(len(catalog), 2); self.assertFalse(errors); self.assertEqual(state, {'uncovered': []})
         meta = next(iter(catalog.values()))
         raw, extra = officials.fetch_ca_document(c, meta)
         self.assertTrue(raw.startswith(b'%PDF'))
-        post = [x for x in c.calls if isinstance(x, tuple) and 'GetRedactedFormPdf' in x[1]][0]
-        self.assertEqual(post[2]['indexID'], 'ABC-123'); self.assertEqual(post[2]['formInfo']['position'], 'Governor'); self.assertEqual(post[2]['formInfo']['filingYear'], 2024)
+        call = [x for x in c.calls if isinstance(x, str) and 'GetRedactedFormPdf' in x][0]
+        self.assertIn('fileNameInfo.Position=Governor', call); self.assertIn('fileNameInfo.FilingYear=2024', call); self.assertIn('fileNameInfo.IsAmendment=false', call)
+        self.assertIn('fileNameInfo.FilingDate=2025-03-28', call)
         # rows published by the first 4.1 run carry no payload: it is rebuilt from the public fields
         bare = {'report_id': 'ca-773645e855114f3e9339a920d210e619', 'person': 'Susanna Alcala Wood', 'office': 'City/Town Attorney · City of Sacramento', 'index_year': 2025, 'filing_type_code': 'Leaving'}
         info = officials.ca_form_info(bare)

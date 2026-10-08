@@ -260,7 +260,9 @@ def discover_ca(client, cfg, old_catalog, prior_state=None):
             sample.update({k: (str(v)[:80] if not isinstance(v, (dict, list)) else v) for k, v in d.items()})
         metas, total = ca_documents(answer)
         for m in metas:
-            catalog.setdefault(m['report_id'], m)
+            old = catalog.get(m['report_id'])
+            if old is None or len(old.get('ca') or []) < 10:      # upgrade rows discovered before the download payload was recorded
+                catalog[m['report_id']] = m
         if total > len(metas) or total >= cap:
             if len(prefix) < 3:
                 for ch in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
@@ -369,51 +371,38 @@ def ca_probe(client):
     return findings
 
 
-def ca_download_variants(payload):
-    """Payload shapes to try against GetRedactedFormPdf, most likely first. The portal's own script builds
-    {lastName, firstName, middleName, filingYear, agency, position, filingType, isAmendment, filingDate}."""
-    info, index_id = payload['formInfo'], payload['indexID']
-    year = int(info['FilingYear']) if str(info['FilingYear']).isdigit() else info['FilingYear']
-    camel = {'lastName': info['LastName'], 'firstName': info['FirstName'], 'middleName': info.get('MiddleName', ''), 'filingYear': year,
-             'agency': info['Agency'], 'position': info['Position'], 'filingType': info['FilingType'], 'isAmendment': bool(info.get('IsAmendment')),
-             'filingDate': info.get('FilingDate') or None}
-    legacy = {k: info[k] for k in ('LastName', 'FirstName', 'Agency', 'Position', 'FilingYear', 'FilingType')}
-    return [('camelCase formInfo+indexID', {'formInfo': camel, 'indexID': index_id}),
-            ('camelCase formInfo+indexId', {'formInfo': camel, 'indexId': index_id}),
-            ('camelCase flat', {**camel, 'indexID': index_id}),
-            ('legacy formInfo+indexID', {'formInfo': legacy, 'indexID': index_id}),
-            ('legacy flat', {**legacy, 'indexID': index_id}),
-            ('indexID only', {'indexID': index_id})]
+def ca_download_url(payload):
+    """The portal's own call (searchExportBundle): GET GetRedactedFormPdf?indexID=…&fileNameInfo.LastName=…&… → {Message, PDFDownloadUrl}."""
+    from urllib.parse import urlencode
+    info = payload['formInfo']
+    params = [('indexID', payload['indexID']),
+              ('fileNameInfo.LastName', info.get('LastName', '')), ('fileNameInfo.FirstName', info.get('FirstName', '')),
+              ('fileNameInfo.FilingYear', str(info.get('FilingYear', ''))), ('fileNameInfo.Agency', info.get('Agency', '')),
+              ('fileNameInfo.Position', info.get('Position', '')), ('fileNameInfo.FilingType', info.get('FilingType', '')),
+              ('fileNameInfo.IsAmendment', 'true' if info.get('IsAmendment') else 'false'),
+              ('fileNameInfo.FilingDate', info.get('FilingDate') or '')]
+    return CA + '/Home/GetRedactedFormPdf?' + urlencode(params)
 
 
 def fetch_ca_document(client, meta):
     payload = ca_form_info(meta)
-    answer, problems = None, []
-    for label, variant in ca_download_variants(payload):
-        try:
-            answer = client.post_json(CA + '/Home/GetRedactedFormPdf', variant)
-            if isinstance(answer, dict) and any(answer.get(k) for k in ('PDFDownloadUrl', 'pdfDownloadUrl', 'PdfDownloadUrl', 'url')):
-                break
-            problems.append(f'{label}: {str(answer)[:160]}')
-        except Exception as exc:
-            problems.append(f'{label}: {str(exc)[:160]}')
-        answer = None
-    if answer is None:
-        try:
-            answer = json.loads(client.get(f'{CA}/Home/GetRedactedFormPdf?indexID={quote(payload["indexID"])}').decode('utf-8', 'replace'))
-        except Exception as exc:
-            problems.append(f'GET ?indexID=: {str(exc)[:160]}'); answer = None
-    if answer is None:
+    url = ca_download_url(payload)
+    raw = client.get(url, headers={'Accept': 'application/json, text/plain, */*', 'X-Requested-With': 'XMLHttpRequest'})
+    try:
+        answer = json.loads(raw)
+    except ValueError:
         first_time = not CA_PROBE['done']
-        probe = ca_probe(client)
-        raise ValueError('all download variants failed · ' + ' | '.join(problems) + (' · ' + ' ‖ '.join(probe)[:7000] if first_time else '')) from None
-    url = next((answer[k] for k in ('PDFDownloadUrl', 'pdfDownloadUrl', 'PdfDownloadUrl', 'url') if isinstance(answer, dict) and answer.get(k)), None)
-    if not url:
-        raise ValueError('Portal returned no PDFDownloadUrl: ' + str(answer)[:200])
-    if urlparse(url).hostname is None:
-        url = urljoin(CA, url)
-    raw = client.get(url)          # the session cookie from the POST travels in the client's cookie jar
-    return raw, {'document_url': url}
+        probe = ca_probe(client) if first_time else []
+        raise ValueError('GetRedactedFormPdf answered a page instead of JSON · ' + re.sub(r'\s+', ' ', raw.decode('utf-8', 'replace'))[:200] + (' · ' + ' ‖ '.join(probe)[:5000] if first_time else '')) from None
+    pdf_url = next((answer[k] for k in ('PDFDownloadUrl', 'pdfDownloadUrl', 'PdfDownloadUrl', 'url') if isinstance(answer, dict) and answer.get(k)), None)
+    if not pdf_url:
+        raise ValueError('Portal declined the download: ' + str((answer or {}).get('Message') if isinstance(answer, dict) else answer)[:300])
+    if urlparse(pdf_url).hostname is None:
+        pdf_url = urljoin(CA, pdf_url)
+    if urlparse(pdf_url).hostname != 'form700search.fppc.ca.gov':
+        client.hosts = tuple(client.hosts) + (urlparse(pdf_url).hostname,)   # signed storage URL on another host
+    pdf = client.get(pdf_url)
+    return pdf, {'document_url': CA + '/'}      # the signed URL expires; the portal home is the durable reference
 
 
 # ---------------------------------------------------------------- Canada: public registry (ethicscanada.ca)
