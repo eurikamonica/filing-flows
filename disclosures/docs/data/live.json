@@ -29499,6 +29499,86 @@
           "total_usd": 1118174926,
           "cache": "cache/holdings/1056827.json.gz",
           "shard": "shards/holdings/1056827.json"
+        },
+        {
+          "cik": "1056831",
+          "name": "FAIRHOLME CAPITAL MANAGEMENT LLC",
+          "label": "FAIRHOLME CAPITAL MANAGEMENT LLC",
+          "since": "2025-01-01",
+          "as_of": null,
+          "notices": [],
+          "last_success": "2026-10-09T07:26:10+00:00",
+          "stale": false,
+          "period_count": 7,
+          "latest_period": "2026-06-30",
+          "position_count": 13,
+          "total_usd": 1489888626,
+          "cache": "cache/holdings/1056831.json.gz",
+          "shard": "shards/holdings/1056831.json"
+        },
+        {
+          "cik": "1056859",
+          "name": "CHILTON CAPITAL MANAGEMENT LLC",
+          "label": "CHILTON CAPITAL MANAGEMENT LLC",
+          "since": "2025-01-01",
+          "as_of": null,
+          "notices": [],
+          "last_success": "2026-10-09T07:26:22+00:00",
+          "stale": false,
+          "period_count": 7,
+          "latest_period": "2026-06-30",
+          "position_count": 592,
+          "total_usd": 3166709920,
+          "cache": "cache/holdings/1056859.json.gz",
+          "shard": "shards/holdings/1056859.json"
+        },
+        {
+          "cik": "1056943",
+          "name": "PEOPLES FINANCIAL SERVICES CORP.",
+          "label": "PEOPLES FINANCIAL SERVICES CORP.",
+          "since": "2025-01-01",
+          "as_of": null,
+          "notices": [],
+          "last_success": "2026-10-09T07:26:37+00:00",
+          "stale": false,
+          "period_count": 7,
+          "latest_period": "2026-06-30",
+          "position_count": 270,
+          "total_usd": 231445942,
+          "cache": "cache/holdings/1056943.json.gz",
+          "shard": "shards/holdings/1056943.json"
+        },
+        {
+          "cik": "1056947",
+          "name": "CAISSE DES DEPOTS ET CONSIGNATIONS",
+          "label": "CAISSE DES DEPOTS ET CONSIGNATIONS",
+          "since": "2025-01-01",
+          "as_of": null,
+          "notices": [],
+          "last_success": "2026-10-09T07:26:49+00:00",
+          "stale": false,
+          "period_count": 7,
+          "latest_period": "2026-06-30",
+          "position_count": 235,
+          "total_usd": 5911955285,
+          "cache": "cache/holdings/1056947.json.gz",
+          "shard": "shards/holdings/1056947.json"
+        },
+        {
+          "cik": "1058231",
+          "name": "MORGUARD LINCLUDEN GLOBAL INVESTMENTS Ltd",
+          "label": "LINCLUDEN MANAGEMENT LTD",
+          "since": "2025-01-01",
+          "as_of": null,
+          "notices": [],
+          "last_success": "2026-10-09T07:27:17+00:00",
+          "stale": false,
+          "period_count": 7,
+          "latest_period": "2026-06-30",
+          "position_count": 68,
+          "total_usd": 1018711,
+          "cache": "cache/holdings/1058231.json.gz",
+          "shard": "shards/holdings/1058231.json"
         }
       ],
       "attempts": {
@@ -30621,24 +30701,64 @@
         "1056827": {
           "last_attempt": "2026-10-09T06:04:27+00:00",
           "last_success": "2026-10-09T06:04:40+00:00"
+        },
+        "1056831": {
+          "last_attempt": "2026-10-09T07:25:58+00:00",
+          "last_success": "2026-10-09T07:26:10+00:00"
+        },
+        "1056859": {
+          "last_attempt": "2026-10-09T07:26:10+00:00",
+          "last_success": "2026-10-09T07:26:22+00:00"
+        },
+        "1056907": {
+          "last_attempt": "2026-10-09T07:26:22+00:00",
+          "error": "Entry reconciliation failed: 1 vs 0"
+        },
+        "1056943": {
+          "last_attempt": "2026-10-09T07:26:24+00:00",
+          "last_success": "2026-10-09T07:26:37+00:00"
+        },
+        "1056947": {
+          "last_attempt": "2026-10-09T07:26:37+00:00",
+          "last_success": "2026-10-09T07:26:49+00:00"
+        },
+        "1056973": {
+          "last_attempt": "2026-10-09T07:26:49+00:00",
+          "error": "Entry reconciliation failed: 63 vs 64"
+        },
+        "1058022": {
+          "last_attempt": "2026-10-09T07:26:56+00:00",
+          "error": "Entry reconciliation failed: 99 vs 100"
+        },
+        "1058231": {
+          "last_attempt": "2026-10-09T07:27:05+00:00",
+          "last_success": "2026-10-09T07:27:17+00:00"
         }
       },
       "errors": [
         {
-          "cik": "1056559",
-          "error": "Entry reconciliation failed: 415 vs 417"
+          "cik": "1056907",
+          "error": "Entry reconciliation failed: 1 vs 0"
+        },
+        {
+          "cik": "1056973",
+          "error": "Entry reconciliation failed: 63 vs 64"
+        },
+        {
+          "cik": "1058022",
+          "error": "Entry reconciliation failed: 99 vs 100"
         }
       ],
       "counts": {
         "discovered_managers": 11795,
-        "processed_managers": 249,
-        "pending_managers": 11546,
+        "processed_managers": 254,
+        "pending_managers": 11541,
         "attempted_this_run": 8
       },
       "coverage": "SEC index discovery since 2025-01-01; processing continues in batches. Indexes may lag publication. Public 13F positions are not real-time portfolios.",
       "status": "partial",
-      "last_attempt": "2026-10-09T06:02:47+00:00",
-      "updated_at": "2026-10-09T06:04:40+00:00",
+      "last_attempt": "2026-10-09T07:25:58+00:00",
+      "updated_at": "2026-10-09T07:27:17+00:00",
       "error": null,
       "directory_shard": "catalogs/holdings.json"
     },
@@ -90257,13 +90377,13 @@
         "CMA: yahoo: HTTP 404 from query1.finance.yahoo.com | stooq: Stooq answered with a page instead of CSV: This site requires JavaScript to verify your browser. Please enable JavaScript and reload. (async()=>{const c=\"AAAAAGrI"
       ],
       "counts": {
-        "cusips_seen": 11429,
-        "cusips_mapped": 7230,
-        "cusips_unmapped": 1770,
-        "cusips_pending": 2429,
+        "cusips_seen": 11435,
+        "cusips_mapped": 7243,
+        "cusips_unmapped": 1957,
+        "cusips_pending": 2235,
         "tickers_fetched_this_run": 60,
-        "positions_priced": 287988,
-        "positions_total": 538940,
+        "positions_priced": 297231,
+        "positions_total": 546956,
         "records_priced": 0
       },
       "coverage_note": "Estimates only. 13F: quantity change × average daily close of the report quarter; transactions: close on or just before the disclosed date (up to 7 days back). Sources: Stooq daily closes, Yahoo Finance chart data as fallback; CUSIP→ticker via OpenFIGI. Options, non-share quantities and unmapped securities have no estimate. Actual execution prices are not disclosed.",
@@ -90271,5 +90391,5 @@
       "history_since": "2023-01-01"
     }
   },
-  "generated_at": "2026-10-09T07:11:52+00:00"
+  "generated_at": "2026-10-09T07:28:48+00:00"
 }
