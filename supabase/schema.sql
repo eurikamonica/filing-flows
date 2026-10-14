@@ -144,9 +144,10 @@ create table if not exists public.send_requests (
 );
 alter table public.send_requests add column if not exists kind text not null default 'q';
 -- kinds: q a quarter, fy a fiscal year, thread the X thread of a quarter (site owner only), day the daily report of one
--- filing date (period_end; cik 0)
+-- filing date (period_end; cik 0), post / post_holders (owner only): queue an X post in Buffer now — the quarter's
+-- earnings post, or a post about who bought the company (13F changes, from Disclosures)
 alter table public.send_requests drop constraint if exists send_requests_kind_check;
-alter table public.send_requests add constraint send_requests_kind_check check (kind in ('q', 'fy', 'thread', 'day'));
+alter table public.send_requests add constraint send_requests_kind_check check (kind in ('q', 'fy', 'thread', 'day', 'post', 'post_holders'));
 alter table public.send_requests drop constraint if exists send_requests_cik_check;
 alter table public.send_requests add constraint send_requests_cik_check check (cik > 0 or (kind = 'day' and cik = 0));
 drop index if exists public.send_requests_one_pending;       -- a quarter and a fiscal year can end on the same day

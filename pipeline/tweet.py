@@ -111,15 +111,50 @@ def clean(post, ticker, tags, xlen, limit=270):
     return post
 
 
-def compose_one(c, q, cfg, ticker, hashtags, xlen):
-    """One post with hashtags, written by the model from the guide, the figures and the filing. Raises on failure."""
+def holders_lines(ticker, site_url):
+    """Who holds / bought the company, from the site's Disclosures index (13F quarter-end changes)."""
+    if not (ticker and site_url):
+        return ""
+    try:
+        r = requests.get(f"{site_url.rstrip('/')}/disclosures/data/holders/{ticker}.json", timeout=30)
+        if r.status_code != 200:
+            return ""
+        h = r.json()
+    except Exception:
+        return ""
+    inst = h.get("institutional") or []
+    buys = [x for x in inst if x.get("status") in ("NEW", "INCREASE")]
+    sells = [x for x in inst if x.get("status") in ("DECREASE", "NOT DISCLOSED")]
+    m = lambda v: ("" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.0f}M")
+    row = lambda x: f"- {x.get('manager')} ({x.get('period')}): {x.get('status', '').lower()} {('%+d' % x['delta_shares']) if x.get('delta_shares') else ''} shares, holds {x.get('shares'):,} worth {m(x.get('value_usd'))}, {round((x.get('weight') or 0) * 100, 1)}% of its portfolio"
+    lines = [f"13F holders on file for {ticker}: {len(inst)} managers ({len(buys)} added or opened, {len(sells)} cut or closed); quarter-end positions, not trades.",
+             "Largest buyers this quarter:"] + [row(x) for x in sorted(buys, key=lambda x: -(x.get('delta_shares') or 0))[:6]]
+    lines += ["Largest sellers:"] + [row(x) for x in sorted(sells, key=lambda x: (x.get('delta_shares') or 0))[:4]]
+    offs = h.get("officials") or []
+    if offs:
+        lines.append(f"Public officials' reviewed records naming {ticker}: " + "; ".join(
+            f"{o.get('person')} ({o.get('jurisdiction')}) {o.get('kind')} {o.get('transaction_type') or ''} {o.get('date') or ''}".strip() for o in offs[:5]))
+    return "\n".join(lines)
+
+
+def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url=""):
+    """One post with hashtags, written by the model from the guide, the figures and the filing (kind "post") or the
+    13F holder changes (kind "post_holders"). Raises on failure."""
     tags = list(hashtags)
+    if kind == "post_holders":
+        holders = holders_lines(ticker, site_url)
+        if not holders:
+            raise RuntimeError("no holders data on the site for this ticker yet")
+        task = ("TASK: this post is about WHO BOUGHT OR SOLD the company according to 13F filings (quarter-end positions), not the "
+                "earnings. Name the two or three most notable buyers/sellers with the change in shares; say the period; attach no "
+                "earnings figures beyond one line of context. Same rules otherwise (cashtag first, factual, hashtags last).\n\n"
+                + holders + "\n\nContext on the company:\n" + headline_lines(c, q, ticker))
+    else:
+        task = ("Headline figures (source of truth for numbers):\n" + headline_lines(c, q, ticker)
+                + "\n\nBusiness, in the company's words:\n" + ((c.get("intro") or {}).get("text", "") if isinstance(c.get("intro"), dict) else str(c.get("intro") or ""))[:1200]
+                + "\n\nFiling excerpts:\n" + (filing_text(q) or "(not available; use the headline figures and analysis lines)"))
     msgs = [{"role": "system", "content": guide()},
-            {"role": "user", "content": "Headline figures (source of truth for numbers):\n" + headline_lines(c, q, ticker)
-             + "\n\nHashtags to end with, in this order: " + " ".join(tags)
-             + "\n\nBusiness, in the company's words:\n" + ((c.get("intro") or {}).get("text", "") if isinstance(c.get("intro"), dict) else str(c.get("intro") or ""))[:1200]
-             + "\n\nFiling excerpts:\n" + (filing_text(q) or "(not available; use the headline figures and analysis lines)")
-             + "\n\nWrite the post now."}]
+            {"role": "user", "content": task + "\n\nHashtags to end with, in this order: " + " ".join(tags) + "\n\nWrite the post now."}]
     draft = chat(msgs)
     try:
         return clean(draft, ticker, tags, xlen)
@@ -130,11 +165,11 @@ def compose_one(c, q, cfg, ticker, hashtags, xlen):
         return clean(chat(msgs), ticker, tags, xlen)
 
 
-def post_for(c, q, cfg, ticker, fallback, xlen):
+def post_for(c, q, cfg, ticker, fallback, xlen, kind="post", site_url=""):
     """The model's post, or the rule-based headline post when the model is unavailable or its draft fails the checks."""
-    tags = [t for t in [cfg.get("headline_tag", "#earnings")] + list(cfg.get("hashtags") or []) if t]
+    tags = [t for t in ([cfg.get("headline_tag", "#earnings")] if kind == "post" else ["#13F"]) + list(cfg.get("hashtags") or []) if t]
     try:
-        post = compose_one(c, q, cfg, ticker, tags, xlen)
+        post = compose_one(c, q, cfg, ticker, tags, xlen, kind=kind, site_url=site_url)
         return post, "model"
     except Exception as err:
         print(f"::warning::model post for {ticker or c['profile'].get('cik')} {q.get('label')} not used ({str(err)[:160]}); rule-based post instead")

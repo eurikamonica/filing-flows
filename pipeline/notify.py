@@ -1287,6 +1287,21 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
                 continue
             e = {"cik": int(r["cik"]), "end": q["end"], "form": q.get("form"), "ticker": (c["profile"].get("tickers") or [""])[0],
                  "name": c["profile"]["name"], "rev": (q.get("headline") or {}).get("rev_fmt")}
+            if kind in ("post", "post_holders"):          # owner: queue an X post in Buffer now (media branch + pipeline/buffer.py)
+                owner, owners, cfg, _ = owner_info()
+                if str(sub["email"]).lower() not in owners:
+                    finish([r], status="failed", error="only the site owner can post to X")
+                    continue
+                if dry_run:
+                    continue
+                try:
+                    post, via = owner.buffer_post(e, c, q, assets, cfg, kind, os.environ.get("MEDIA_DIR", "media"), site_url)
+                    print(f"queued for Buffer ({via}, {kind}) {e.get('ticker') or e['cik']} {q['label']}: {post}")
+                    finish([r], status="sent", sent_at=_now_iso(), error=None)
+                except Exception as err:
+                    print(f"::warning::post not made ({err.__class__.__name__}: {err})")
+                    finish([r], status="failed", error=f"post not made: {str(err)[:150]}")
+                continue
             if kind == "thread":
                 owner, owners, cfg, _ = owner_info()
                 if str(sub["email"]).lower() not in owners:

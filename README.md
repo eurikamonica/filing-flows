@@ -158,6 +158,13 @@ Add the repository secret `BUFFER_API_KEY` (Buffer → Settings → API → Pers
 optionally, the variable `BUFFER_CHANNEL_ID` (otherwise the first X channel on the account). Threads with a flagged
 data check are still held back, as with the X API mode.
 
+**Post to X from a company page (owner only, any time)**: with Owner tools on and signed in as the owner, each
+quarter's thread section has two buttons — *Earnings post* and *Who bought it (13F)*. They queue a request
+(`send_requests`, kinds `post` / `post_holders`; run `supabase/schema.sql` again once to allow them); the request
+runner (every 10 minutes) draws the chart, has the model write the post from `config/tweet-guide.md` plus the filing or
+the Disclosures holders data, publishes the images on the repository's `media` branch and queues the post in Buffer.
+No new keys beyond `BUFFER_API_KEY`; GitHub Models is used with the workflow's own token (`OPENAI_API_KEY` optional).
+
 **Your own domain**: set the repository variable `SITE_URL` to it (e.g. `https://filing-flows.com/`). The build
 writes the `CNAME` file GitHub Pages needs, e-mails and posts link to it, and the chart logo shows it. Then, under
 Settings → Pages, enter the same domain and tick *Enforce HTTPS*; at the DNS side point the apex at GitHub Pages

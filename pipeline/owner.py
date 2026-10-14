@@ -384,3 +384,31 @@ def thread_message(e, c, q, assets, cfg, sender, to):
     files = [(n, p) for n, p in zip(names, pngs) if p]
     item = (e, c, q, social.compose_parts(c, q, cfg), files)
     return social.build_email([item], cfg, sender, to)
+
+
+def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url):
+    """Owner's "Post to X" buttons: write the chart PNGs and one model-written post into media_dir/x/ and the
+    pending manifest; the workflow publishes media_dir to the "media" branch and pipeline/buffer.py queues the post.
+    kind: "post" (the quarter's earnings) or "post_holders" (who bought it: 13F changes from Disclosures)."""
+    import json
+    import os
+    from . import tweet
+    modes = ["std"] + (["y"] if kind == "post" and "year_ago" in (cfg.get("images") or []) and q.get("compare_y") else [])
+    pngs = [assets.image(e, c, q, m, "png") for m in modes]
+    names = social.image_names(e, q, len(modes))
+    if kind == "post_holders":
+        names = [n.replace("-1-chart", "-holders-chart") for n in names]
+    files = [(n, p) for n, p in zip(names, pngs) if p]
+    xdir = os.path.join(media_dir, "x")
+    os.makedirs(xdir, exist_ok=True)
+    for n, png in files:
+        with open(os.path.join(xdir, n), "wb") as f:
+            f.write(png)
+    fallback = social.compose_parts(c, q, cfg)[0][1]
+    post, via = tweet.post_for(c, q, cfg, e.get("ticker") or "", fallback, social.xlen, kind=kind, site_url=site_url)
+    path = os.path.join(xdir, "pending.json")
+    pending = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else []
+    pending.append({"cik": e["cik"], "end": e["end"], "label": f"{e.get('ticker') or e['cik']} {q['label']} ({kind})",
+                    "posts": [post], "written_by": via, "images": [n for n, _ in files]})
+    json.dump(pending, open(path, "w", encoding="utf-8"), ensure_ascii=False)
+    return post, via

@@ -834,6 +834,15 @@
       if (btn.disabled) return;
       withProgress(btn, (text) => { if (text) toast(text); }, () => askFor({ cik: +p.cik, period_end: q.end, kind: 'thread' }, 'Thread'));
     });
+    // Post to X now, through Buffer's queue (config/x.json mode "buffer"): the quarter's earnings post, or who bought it (13F)
+    const bar = document.createElement('div');
+    bar.className = 'controls';
+    bar.innerHTML = `<span class="muted">Post to X via Buffer (written by the model from the filing, checked, then queued):</span>
+      <button class="btn" type="button" data-post="post">✦ Earnings post</button>
+      <button class="btn" type="button" data-post="post_holders">✦ Who bought it (13F)</button>`;
+    $$('[data-post]', bar).forEach((b) => b.addEventListener('click', () => withProgress(b, (text) => { if (text) toast(text); },
+      () => askFor({ cik: +p.cik, period_end: q.end, kind: b.dataset.post }, b.dataset.post === 'post' ? 'Earnings post' : 'Holders post'))));
+    sec.appendChild(bar);
     return sec;
   }
 
@@ -1686,6 +1695,7 @@
     if (r.error && /limit/i.test(r.error.message)) return 'Limit reached: 30 e-mails a day';
     if (r.error && (tableMissing(r.error) || /check constraint|violates row-level/i.test(r.error.message))) return OWNER_UPDATE;
     if (r.error) return `Could not send: ${r.error.message}`;
+    if (/post/i.test(row.kind || '')) return `${what} queued: it reaches Buffer within about ten minutes, then follows your posting schedule`;
     return `${what} on the way to ${user.email}, usually within a few minutes`;
   }
 
@@ -2069,7 +2079,7 @@
       const fy = x.kind === 'fy';
       if (x.kind === 'day') return `<tr><td>Daily report</td><td>filings dated ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
       return `<tr><td>${co ? `<a href="#c-${x.cik}-${fy ? 'fy-' : ''}${x.period_end}">${t(co.ticker || co.name)}</a>` : x.cik}</td>
-        <td>${x.kind === 'thread' ? 'X thread · ' : ''}${fy ? 'fiscal year' : 'quarter'} ended ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
+        <td>${x.kind === 'thread' ? 'X thread · ' : x.kind === 'post' ? 'X post (Buffer) · ' : x.kind === 'post_holders' ? 'X post, holders (Buffer) · ' : ''}${fy ? 'fiscal year' : 'quarter'} ended ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
     }).join('');
     box.innerHTML = `<div class="section-head"><h2>Reports you asked for</h2><span class="muted">✉ Email me on any company page sends that quarter or fiscal year, old ones included</span></div>
       ${rows ? `<div class="tbl-wrap"><table><tbody>${rows}</tbody></table></div>` : '<p class="muted small">None yet.</p>'}`;
