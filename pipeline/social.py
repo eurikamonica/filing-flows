@@ -34,6 +34,7 @@ from . import text as filing_text
 API = "https://api.x.com/2"
 SECRETS = ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_TOKEN_SECRET")
 MAIL_SECRETS = ("MAIL_USERNAME", "MAIL_PASSWORD")
+BUFFER_SECRETS = ("BUFFER_API_KEY",)            # mode "buffer": threads go to Buffer's queue (pipeline/buffer.py)
 MAIL_MAX_BYTES = 18_000_000            # Gmail accepts 25 MB; attachments grow by a third when encoded
 DEFAULTS = {"enabled": True, "mode": "email", "scope": "all", "min_revenue": 1e9, "max_per_run": 4, "max_age_days": 3,
             "preliminary": True, "include_link": False, "images": ["standard", "year_ago"], "site_url": "",
@@ -697,9 +698,9 @@ def main():
     mail_keys = {k: os.environ.get(k, "") for k in MAIL_SECRETS}
     slot = owner.due_slot(now, osets, st) if cfg["enabled"] and all(mail_keys.values()) else None
     mode = cfg.get("mode", "email")
-    instant = mode == "api" or bool(osets.get("instant_threads"))     # e-mail threads after each scan: an owner setting
-    keys = {k: os.environ.get(k, "") for k in (MAIL_SECRETS if mode == "email" else SECRETS)}
-    ready = cfg["enabled"] and instant and mode in ("email", "api") and all(keys.values())
+    instant = mode in ("api", "buffer") or bool(osets.get("instant_threads"))     # e-mail threads after each scan: an owner setting
+    keys = {k: os.environ.get(k, "") for k in (MAIL_SECRETS if mode == "email" else BUFFER_SECRETS if mode == "buffer" else SECRETS)}
+    ready = cfg["enabled"] and instant and mode in ("email", "api", "buffer") and all(keys.values())
     todo = candidates(args.site, st, cfg)
     if args.check:
         if slot and not owner.pending(notify.Site(args.site).json("index.json"), st, osets, cfg, now):
@@ -753,6 +754,23 @@ def main():
                 st["posted"][f"{e['cik']}:{e['end']}"] = {"t": now(), "via": "email"}
                 print(f"e-mailed {e.get('ticker') or e['cik']} {q['label']}")
             save_state(args.store, st)
+        return
+    if mode == "buffer":
+        # Buffer fetches images by public URL: put them on the site and leave a manifest for pipeline/buffer.py,
+        # which runs once the site is deployed (scan.yml, job "buffer").
+        xdir = os.path.join(args.site, "x")
+        os.makedirs(xdir, exist_ok=True)
+        pending = []
+        for e, c, q, posts, images in items:
+            for name, png in images:
+                with open(os.path.join(xdir, name), "wb") as f:
+                    f.write(png)
+            pending.append({"cik": e["cik"], "end": e["end"], "label": f"{e.get('ticker') or e['cik']} {q['label']}",
+                            "posts": [p["text"] if isinstance(p, dict) else p for p in posts], "images": [n for n, _ in images]})
+            st["posted"][f"{e['cik']}:{e['end']}"] = {"t": now(), "via": "buffer"}
+            print(f"queued for Buffer {e.get('ticker') or e['cik']} {q['label']}")
+        json.dump(pending, open(os.path.join(xdir, "pending.json"), "w", encoding="utf-8"), ensure_ascii=False)
+        save_state(args.store, st)
         return
     x = X(keys)
     for e, c, q, posts, images in items:

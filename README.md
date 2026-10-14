@@ -149,6 +149,21 @@ GitHub Pages keeps running; your own server is added next to it.
    `MAIL_PASSWORD` = the API key and `MAIL_TO` = where your own copies go (secrets); the same SMTP settings in
    Supabase → Authentication → Emails → SMTP Settings for the sign-in codes.
 
+## Threads queued in Buffer, and your own domain
+
+**Buffer** (`config/x.json` → `"mode": "buffer"`): instead of e-mailing the threads, each scan writes the chart images
+into the site (`/x/…png`) and, once the site is live, the `buffer` job queues every new thread in your Buffer X
+channel (Buffer's own posting schedule decides when it goes out; nothing is published without a queue slot).
+Add the repository secret `BUFFER_API_KEY` (Buffer → Settings → API → Personal Access, free plan included) and,
+optionally, the variable `BUFFER_CHANNEL_ID` (otherwise the first X channel on the account). Threads with a flagged
+data check are still held back, as with the X API mode.
+
+**Your own domain**: set the repository variable `SITE_URL` to it (e.g. `https://filing-flows.com/`). The build
+writes the `CNAME` file GitHub Pages needs, e-mails and posts link to it, and the chart logo shows it. Then, under
+Settings → Pages, enter the same domain and tick *Enforce HTTPS*; at the DNS side point the apex at GitHub Pages
+(A records 185.199.108.153 / .109.153 / .110.153 / .111.153, or Cloudflare's CNAME flattening to
+`<user>.github.io`) and `www` as a CNAME to `<user>.github.io`.
+
 ## The owner's daily report and ready-to-post X threads (by e-mail)
 
 Each new company quarter becomes a short X thread, numbered 1/7, 2/7 …:

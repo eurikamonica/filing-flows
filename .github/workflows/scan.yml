@@ -106,6 +106,7 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}       # optional: shown on the privacy and terms pages
+          SITE_URL: ${{ vars.SITE_URL }}                 # optional: your own domain → CNAME file for GitHub Pages
         run: python scripts/build_site.py --data _site/data --out _site
 
       - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
@@ -139,6 +140,7 @@ jobs:
           X_API_SECRET: ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}            # config/x.json mode "buffer": threads queued in Buffer
           SITE_URL: ${{ vars.SITE_URL }}                       # your own domain, when the site has one
         run: |
           owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
@@ -221,3 +223,28 @@ jobs:
           pip install playwright
           python -m playwright install --with-deps chromium
           python -m pipeline.notify --site _site
+
+  # Threads queued in Buffer (config/x.json "mode": "buffer"): after the site is live, because Buffer loads the chart
+  # images from their public URLs. Needs the secret BUFFER_API_KEY; BUFFER_CHANNEL_ID (variable) picks the X channel.
+  buffer:
+    needs: deploy
+    if: always() && needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+      BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
+      SITE_URL: ${{ vars.SITE_URL || needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - name: The site that was just published
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+      - run: mkdir _site && tar -xf artifact.tar -C _site
+      - name: Queue new threads in Buffer
+        run: python -m pipeline.buffer --site _site --site-url "$SITE_URL"

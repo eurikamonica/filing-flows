@@ -80,6 +80,10 @@ def main():
         page = open(os.path.join(WEB, name), encoding="utf-8").read().replace("<!--CONTACT-->", contact)
         open(os.path.join(args.out, name), "w", encoding="utf-8").write(page)
     open(os.path.join(args.out, ".nojekyll"), "w").close()
+    # a custom domain (repository variable SITE_URL, e.g. https://filing-flows.com/): GitHub Pages reads the CNAME file
+    host = re.sub(r"^https?://", "", setting("SITE_URL", url=True)).split("/")[0]
+    if host and not host.endswith("github.io"):
+        open(os.path.join(args.out, "CNAME"), "w").write(host + "\n")
     n = sum(len(f) for _, _, f in os.walk(data_out))
     print(f"site written to {args.out} ({n} data files)")
 
