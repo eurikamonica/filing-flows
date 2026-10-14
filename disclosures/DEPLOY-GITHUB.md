@@ -49,7 +49,7 @@ Default budgets: 8 13F managers, 30 House documents, 10 COT markets, 20 banks, 4
 
 ## Contact, optional keys and permissions
 
-SEC User-Agent defaults to **Eurika eurikamonica@gmail.com**. Optional Actions secrets: SEC_USER_AGENT, FDIC_API_KEY and CFTC_APP_TOKEN. Do not put API keys in public configuration. No SEC login is used for these public downloads.
+SEC User-Agent defaults to **Filing Flows filingflows@gmail.com**. Optional Actions secrets: SEC_USER_AGENT, FDIC_API_KEY and CFTC_APP_TOKEN. Do not put API keys in public configuration. No SEC login is used for these public downloads.
 
 The workflow declares contents:write, pages:write and id-token:write. Repository/organization policies must permit the snapshot commit and deployment. It does not bypass protected branches.
 

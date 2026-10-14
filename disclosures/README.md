@@ -41,7 +41,7 @@ and the workflow above instead.
 
 # Disclosure Hub v4
 
-English-first disclosure dashboard, separate from the original Filing Flows repository. The original repository has not been modified. SEC contact: **Eurika eurikamonica@gmail.com**.
+English-first disclosure dashboard, separate from the original Filing Flows repository. The original repository has not been modified. SEC contact: **Filing Flows filingflows@gmail.com**.
 
 ## This release finishes three more automatic collection paths
 

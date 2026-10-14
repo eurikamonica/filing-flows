@@ -27,4 +27,4 @@ Integrated prior 13F library and tests, House watchlist PDF/OCR, reviewed record
 
 ## 1.1
 
-Configured COT, bank financials and N-PX; SEC contact set to Eurika eurikamonica@gmail.com.
+Configured COT, bank financials and N-PX; SEC contact set to Filing Flows filingflows@gmail.com.

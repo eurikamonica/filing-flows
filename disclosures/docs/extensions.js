@@ -119,7 +119,7 @@ function bindExtensions(){
  if(state.tab!=='review')return;
  const reports=data().modules.congress?.reports||[],report=reports.find(r=>r.report_id===state.rreport),source=report?.candidates?.find(c=>c.id===state.candidate);
  if(!source)return;
- if($('r_reviewer')&&!$('r_reviewer').value)$('r_reviewer').value='Eurika';
+ if($('r_reviewer')&&!$('r_reviewer').value)$('r_reviewer').value='Filing Flows';
  if($('r_reviewed_at')&&!$('r_reviewed_at').value)$('r_reviewed_at').value=new Date().toISOString().slice(0,10);
  $('approve').onclick=()=>{
   const rec={id:source.id,report_id:source.report_id,source_sha256:source.source_sha256,page:source.page};

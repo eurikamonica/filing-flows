@@ -173,8 +173,8 @@ class DataTests(unittest.TestCase):
             response.url = 'https://data.sec.gov/test'
             response.read.return_value = b'{}'
             opener.return_value.__enter__.return_value = response
-            Client(tmp, {'sec_user_agent': 'Eurika eurikamonica@gmail.com'}).get(response.url, sec=True)
-            self.assertEqual(opener.call_args.args[0].get_header('User-agent'), 'Eurika eurikamonica@gmail.com')
+            Client(tmp, {'sec_user_agent': 'Filing Flows filingflows@gmail.com'}).get(response.url, sec=True)
+            self.assertEqual(opener.call_args.args[0].get_header('User-agent'), 'Filing Flows filingflows@gmail.com')
 
     def test_sec_environment_overrides_configured_identity(self):
         with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {'SEC_USER_AGENT': 'Override contact@sample.org'}), patch('core.urlopen') as opener:
@@ -182,7 +182,7 @@ class DataTests(unittest.TestCase):
             response.url = 'https://data.sec.gov/test'
             response.read.return_value = b'{}'
             opener.return_value.__enter__.return_value = response
-            Client(tmp, {'sec_user_agent': 'Eurika eurikamonica@gmail.com'}).get(response.url, sec=True)
+            Client(tmp, {'sec_user_agent': 'Filing Flows filingflows@gmail.com'}).get(response.url, sec=True)
             self.assertEqual(opener.call_args.args[0].get_header('User-agent'), 'Override contact@sample.org')
 
 if __name__=='__main__':unittest.main()

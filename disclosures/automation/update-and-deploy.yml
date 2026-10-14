@@ -115,8 +115,8 @@ jobs:
           python app/collect.py "${args[@]}"
       - name: Persist official snapshot and failure status
         run: |
-          git config user.name "Eurika"
-          git config user.email "eurikamonica@gmail.com"
+          git config user.name "Filing Flows"
+          git config user.email "filingflows@gmail.com"
           git add docs/data/
           if ! git diff --cached --quiet; then
             git commit -m "Update disclosure data and source status"

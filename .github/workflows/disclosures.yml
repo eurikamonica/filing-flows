@@ -122,8 +122,8 @@ jobs:
       - name: Persist official snapshot and failure status
         shell: bash
         run: |
-          git config user.name "Eurika"
-          git config user.email "eurikamonica@gmail.com"
+          git config user.name "Filing Flows"
+          git config user.email "filingflows@gmail.com"
           git add -A docs/data/
           if git diff --cached --quiet; then echo "No data changes"; exit 0; fi
           git commit -qm "Update disclosure data and source status"

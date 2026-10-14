@@ -222,7 +222,7 @@ end $$;
 -- "Email me this thread" goes straight to the owner's inbox: only the site owner may ask for a thread
 drop policy if exists "ask for reports" on public.send_requests;
 create policy "ask for reports" on public.send_requests for insert
-  with check (auth.uid() = user_id and (kind <> 'thread' or public.am_i_owner()));
+  with check (auth.uid() = user_id and (kind not in ('thread', 'post', 'post_holders') or public.am_i_owner()));
 
 -- The owner's preferences (#owner page): read and changed by the site owner only; read by the workflows with the secret key.
 create table if not exists public.owner_settings (
