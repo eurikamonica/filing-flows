@@ -31,6 +31,7 @@ permissions:
   contents: write      # push the data branch
   pages: write
   id-token: write
+  models: read         # GitHub Models writes the Buffer post (pipeline/tweet.py); free with the Actions token
 
 concurrency:
   group: scan
@@ -140,7 +141,10 @@ jobs:
           X_API_SECRET: ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
-          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}            # config/x.json mode "buffer": threads queued in Buffer
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}            # config/x.json mode "buffer": posts queued in Buffer
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}                # GitHub Models (free) writes the post…
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}            # …or OpenAI when this is set
+          TWEET_MODEL: ${{ vars.TWEET_MODEL }}                     # optional: model name override
           SITE_URL: ${{ vars.SITE_URL }}                       # your own domain, when the site has one
         run: |
           owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')

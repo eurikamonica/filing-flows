@@ -53,7 +53,12 @@ def create_thread(key, channel_id, parts, due_at=None):
     thread = [{"text": p["text"], **({"assets": [{"image": {"url": u}} for u in p.get("images", [])[:4]]} if p.get("images") else {})}
               for p in parts]
     inp = {"channelId": channel_id, "text": parts[0]["text"], "schedulingType": "automatic",
-           "mode": "customScheduled" if due_at else "addToQueue", "metadata": {"twitter": {"thread": thread}}}
+           "mode": "customScheduled" if due_at else "addToQueue"}
+    if len(parts) == 1:
+        if parts[0].get("images"):
+            inp["assets"] = [{"image": {"url": u}} for u in parts[0]["images"][:4]]
+    else:
+        inp["metadata"] = {"twitter": {"thread": thread}}
     if due_at:
         inp["dueAt"] = due_at
     data = gql(key, """mutation($input: CreatePostInput!) { createPost(input: $input) {

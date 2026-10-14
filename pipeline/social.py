@@ -758,6 +758,9 @@ def main():
     if mode == "buffer":
         # Buffer fetches images by public URL: put them on the site and leave a manifest for pipeline/buffer.py,
         # which runs once the site is deployed (scan.yml, job "buffer").
+        # One post per quarter: written by a model from config/tweet-guide.md, the figures and the filing itself
+        # (pipeline/tweet.py); the rule-based headline post is the fallback. Chart images attach to it.
+        from . import tweet
         xdir = os.path.join(args.site, "x")
         os.makedirs(xdir, exist_ok=True)
         pending = []
@@ -765,10 +768,12 @@ def main():
             for name, png in images:
                 with open(os.path.join(xdir, name), "wb") as f:
                     f.write(png)
+            first = posts[0]["text"] if isinstance(posts[0], dict) else posts[0]
+            post, via = tweet.post_for(c, q, cfg, e.get("ticker") or "", first, xlen)
             pending.append({"cik": e["cik"], "end": e["end"], "label": f"{e.get('ticker') or e['cik']} {q['label']}",
-                            "posts": [p["text"] if isinstance(p, dict) else p for p in posts], "images": [n for n, _ in images]})
-            st["posted"][f"{e['cik']}:{e['end']}"] = {"t": now(), "via": "buffer"}
-            print(f"queued for Buffer {e.get('ticker') or e['cik']} {q['label']}")
+                            "posts": [post], "written_by": via, "images": [n for n, _ in images]})
+            st["posted"][f"{e['cik']}:{e['end']}"] = {"t": now(), "via": "buffer", "written_by": via}
+            print(f"queued for Buffer ({via}) {e.get('ticker') or e['cik']} {q['label']}: {post}")
         json.dump(pending, open(os.path.join(xdir, "pending.json"), "w", encoding="utf-8"), ensure_ascii=False)
         save_state(args.store, st)
         return
