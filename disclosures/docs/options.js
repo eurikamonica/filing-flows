@@ -16,6 +16,7 @@ function optDetail(t){
 const ivp=v=>v==null?'—':fmt(v*100,1)+'%';
 const iv30=v=>v==null?'—':fmt(v,1)+'%';                 // CBOE's iv30 is already in percent
 const px=v=>v==null?'—':'$'+fmt(v,v>=100?0:2);
+const emove=r=>r&&r.iv30!=null&&r.spot?r.spot*r.iv30/100*Math.sqrt(30/365):null;   // one standard deviation over 30 days, from IV30
 
 function optionsView(){
  state.omode=state.omode==='13f'?'13f':'chains';
@@ -38,8 +39,9 @@ function optionsTable(d,rows){
  out+=`<div class="panel"><h3>Put / call open interest</h3><p class="sub">Above 1: more puts open than calls · the 12 most put-heavy</p>${divergingChart(put.slice(0,12).map(r=>({label:r.ticker,value:r.pc_oi,tip:[[r.ticker,''],[fmt(r.pc_oi,2),'put / call open interest'],[fmt(r.oi_put),'puts open'],[fmt(r.oi_call),'calls open']]})),{unit:'count',label:'Put / call ratio',format:v=>fmt(v,2),neutral:true})}</div></div>`;
  exported=rows.map(({history,...r})=>r);
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>Every underlying</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- out+=table(['Underlying','Spot','IV30','IV30 change','IV30 percentile','Put/call OI','25Δ skew','Net GEX (per 1%)','Call wall','Put wall','Gamma flip','Max pain'],rows.map(r=>[
-  `<button class="text-button" data-opt="${esc(r.ticker)}"><b>${esc(r.ticker)}</b></button>`,px(r.spot),iv30(r.iv30),r.iv30_chg==null?'—':(r.iv30_chg>0?'+':'')+fmt(r.iv30_chg,1),r.iv30_pct==null?'—':fmt(r.iv30_pct*100,0)+'%',
+ out=out.replace('<div class="explain">',`<div class="panel"><h3>Implied volatility against put/call open interest</h3><p class="sub">→ IV30 · ↑ puts open per call · each dot one underlying; the top-right are names where options price big moves and puts dominate</p>${ivMap(rows)}</div><div class="explain">`);
+ out+=table(['Underlying','Spot','IV30','Expected move, 30 days','IV30 change','IV30 percentile','Put/call OI','25Δ skew','Net GEX (per 1%)','Call wall','Put wall','Gamma flip','Max pain'],rows.map(r=>[
+  `<button class="text-button" data-opt="${esc(r.ticker)}"><b>${esc(r.ticker)}</b></button>`,px(r.spot),iv30(r.iv30),emove(r)==null?'—':`±${px(emove(r))} <span class="muted">(±${fmt(r.iv30*Math.sqrt(30/365),1)}%)</span>`,r.iv30_chg==null?'—':(r.iv30_chg>0?'+':'')+fmt(r.iv30_chg,1),r.iv30_pct==null?'—':fmt(r.iv30_pct*100,0)+'%',
   r.pc_oi==null?'—':fmt(r.pc_oi,2),r.skew25==null?'—':ivp(r.skew25),`<span class="${r.net_gex>=0?'positive':'negative'}">${smoney(r.net_gex)}</span>`,px(r.call_wall),px(r.put_wall),px(r.gamma_flip),
   r.max_pain==null?'—':`${px(r.max_pain)} <span class="muted">${esc(r.max_pain_exp||'')}</span>`]));
  return out;
@@ -48,6 +50,7 @@ function optionsTable(d,rows){
 function optionsOne(r,d){
  const m=optDetail(r.ticker);
  let out=`<div class="metrics">${kpi('Spot',px(r.spot),`as of ${esc(d.generated_at||'')}`)}${kpi('IV30',iv30(r.iv30),r.iv30_chg==null?'':`${r.iv30_chg>0?'+':''}${fmt(r.iv30_chg,1)} pts on the day${r.iv30_pct!=null?' · '+fmt(r.iv30_pct*100,0)+'th percentile':''}`)}${kpi('Put / call open interest',r.pc_oi==null?'—':fmt(r.pc_oi,2),`${fmt(r.oi_put)} puts · ${fmt(r.oi_call)} calls`)}${kpi('Net dealer gamma',smoney(r.net_gex),'Per 1% move, model: calls +, puts −')}</div>`;
+ out+=`<div class="metrics">${kpi('Expected move, 30 days',emove(r)==null?'—':'±'+px(emove(r)),r.iv30!=null?`one standard deviation from IV30: ±${fmt(r.iv30*Math.sqrt(30/365),1)}% (about two months in three stay inside)`:'')}</div>`;
  out+=`<div class="metrics">${kpi('Call wall',px(r.call_wall),'Strike with the most call open interest')}${kpi('Put wall',px(r.put_wall),'Strike with the most put open interest')}${kpi('Gamma flip (approx.)',px(r.gamma_flip),'Where cumulative GEX by strike changes sign')}${kpi('Max pain',px(r.max_pain),r.max_pain_exp?'Expiry '+r.max_pain_exp:'')}</div>`;
  if(m.err)return out+empty('Chain details could not load ('+m.err+').');
  if(!m.data)return out+empty('Loading the chain…');
@@ -63,6 +66,20 @@ function optionsOne(r,d){
  return out;
 }
 
+function ivMap(rows){
+ const pts=rows.filter(r=>r.iv30!=null&&r.pc_oi!=null);if(pts.length<5)return empty('Not enough underlyings yet');
+ const W=1000,H=400,L=48,R=16,T=14,B=36,xs=pts.map(r=>r.iv30).sort((a,b)=>a-b),ys=pts.map(r=>Math.log2(Math.max(.05,r.pc_oi))).sort((a,b)=>a-b);
+ const x0=0,x1=Math.max(40,quantile(xs,.98)*1.1),y0=Math.max(-3,Math.min(-1.5,quantile(ys,.02)-.3)),y1=Math.min(3,Math.max(1.5,quantile(ys,.98)+.3));
+ const sx=v=>L+(Math.min(v,x1)-x0)/(x1-x0)*(W-L-R),sy=v=>T+(y1-Math.max(y0,Math.min(y1,Math.log2(Math.max(.05,v)))))/(y1-y0)*(H-T-B);
+ let s=`<svg class="plot mk-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="IV30 against put/call open interest; values in the table below">`;
+ [.25,.5,1,2,4].filter(v=>Math.log2(v)>=y0&&Math.log2(v)<=y1).forEach(v=>{s+=`<line class="${v===1?'mk-axis':'mk-grid'}" x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}"/><text class="axis" x="${L-6}" y="${sy(v)+4}" text-anchor="end">${fmt(v,2)}</text>`});
+ niceTicks(x0,x1,6).forEach(v=>{s+=`<text class="axis" x="${sx(v)}" y="${H-B+16}" text-anchor="middle">${fmt(v)}%</text>`});
+ s+=`<text class="axis" x="${(L+W-R)/2}" y="${H-4}" text-anchor="middle">IV30 →</text>`;
+ const lab=new Set([...pts].sort((a,b)=>b.iv30-a.iv30).slice(0,6).map(r=>r.ticker).concat([...pts].sort((a,b)=>b.pc_oi-a.pc_oi).slice(0,4).map(r=>r.ticker)));
+ pts.forEach(r=>{const x=sx(r.iv30),y=sy(r.pc_oi);s+=`<g data-tip="${tip([[r.ticker,''],[iv30(r.iv30),'IV30'],[fmt(r.pc_oi,2),'put/call open interest'],[emove(r)==null?'—':'±'+px(emove(r)),'expected move, 30 days']])}" tabindex="0" class="mk-hit" data-opt="${esc(r.ticker)}" style="cursor:pointer"><circle cx="${x}" cy="${y}" r="9" fill="transparent"/><circle cx="${x}" cy="${y}" r="4" class="mk-dot"/></g>`;
+  if(lab.has(r.ticker)){const left=x>W-R-50;s+=`<text class="mk-label mk-halo" x="${left?x-7:x+7}" y="${y-6}" text-anchor="${left?'end':'start'}">${esc(r.ticker)}</text>`}});
+ return s+'</svg>';
+}
 function smileSVG(c){
  const sm=(c.smiles||[]).slice(0,3);if(!sm.length)return empty('No smile with enough quoted strikes');
  const W=720,H=320,L=52,R=110,T=16,B=36,all=sm.flatMap(s=>s.pts);

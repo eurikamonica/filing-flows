@@ -12,7 +12,8 @@
 const ROT_SERIES=['var(--rot-1)','var(--rot-2)','var(--rot-3)'];
 const ROT_TRAIL=[['4','4 quarters'],['8','8 quarters'],['12','12 quarters'],['16','16 quarters']];
 const ROT_TRAIL_M=[['6','6 months'],['12','12 months'],['24','24 months'],['48','48 months']];
-const ROT_VIEWS=[['clock','Momentum clock'],['3d','3-D (drag to turn)'],['solar','Solar system'],['rs','Relative strength ranking'],['scan','Find the best axes']];
+const ROT_VIEWS=[['clock','Momentum clock'],['3d','3-D (drag to turn)'],['solar','Solar system'],['map','Market map (treemap)'],['heat','Sector heatmap'],['rs','Relative strength ranking'],['breadth','Breadth and dispersion'],['corr','How the variables move together'],['scan','Find the best axes']];
+const ROT_SIMPLE=new Set(['rs','scan','map','heat','breadth','corr']);     // views without the x / y / z, scale and smoothing controls
 const ROT_SCALES=[['raw','As reported'],['log','Signed log (tames outliers)'],['rank','Rank within the period (0–100)'],['z','Standard score within the period']];
 const ROT_SMOOTH=[['none','None'],['ewma','Exponential (recent weighs more)'],['ma','Moving average'],['holt','Holt (level + trend)'],['kalman','Kalman (noise-filtered level)'],['median','Rolling median (ignores spikes)']];
 const ROT_FILL=[['line','Straight line between quarter-ends'],['step','Last reported, from the quarter-end'],['avail','Last reported, from about the filing date'],['points','Quarter-end months only']];
@@ -224,15 +225,20 @@ function rotationView(){
  const varField=(id,label,value,extra=[])=>`<div class="field"><label for="${id}">${label}</label><select id="${id}">${extra.map(([k,l])=>`<option value="${esc(k)}" ${value===k?'selected':''}>${esc(l)}</option>`).join('')}${groups.map(gname=>`<optgroup label="${esc(gname)}">${options(avail.filter(v=>v.group===gname).map(v=>[v.key,v.label]),value)}</optgroup>`).join('')}</select></div>`;
  const three=state.rview==='3d';
  out+=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${state.rview==='scan'?'':field('rfreq','Frequency',[['q','Quarterly (16 quarters)'],['m','Monthly (48 months)']],state.rfreq)}${field('rsec','Sector',[['','All sectors'],...secs.map(s=>[s.id,s.name])],state.rsec)}`;
- if(state.rview!=='scan'&&state.rview!=='rs')out+=`${varField('rx','→ Horizontal (x)',state.rx)}${varField('ry','↑ Vertical (y)',state.ry)}${three?varField('rz3','↗ Depth (z)',state.rz3,[['__time','Time — rotations become spirals']]):varField('rz','Dot size',state.rz,[['','Revenue']])}`;
+ if(['map','heat'].includes(state.rview)){state.rcol=has(state.rcol)?state.rcol:has('rel')?'rel':avail[0].key;out+=varField('rcol','Colour by',state.rcol)}
+ if(!ROT_SIMPLE.has(state.rview))out+=`${varField('rx','→ Horizontal (x)',state.rx)}${varField('ry','↑ Vertical (y)',state.ry)}${three?varField('rz3','↗ Depth (z)',state.rz3,[['__time','Time — rotations become spirals']]):varField('rz','Dot size',state.rz,[['','Revenue']])}`;
  out+=`<div class="field wide"><label for="rtk">Companies to trace (up to three tickers)</label><input id="rtk" value="${esc(state.rtk||'')}" placeholder="e.g. NVDA, AMD, INTC · Enter"></div></div>`;
- if(state.rview!=='scan'&&state.rview!=='rs')out+=`<div class="toolbar rot-display">${field('rscl','Scale',ROT_SCALES,state.rscl)}${field('rsm','Smoothing',ROT_SMOOTH,state.rsm)}${field(tk,'Trail',trails,state[tk])}${state.rview==='solar'?'':field('rshow','Dots',[['','Automatic'],['avg','Averages and traced only'],['all','Every company too']],state.rshow)}${P.monthly?field('rfill','Quarterly figures in months',ROT_FILL,state.rfill):''}</div>`;
+ if(!ROT_SIMPLE.has(state.rview))out+=`<div class="toolbar rot-display">${field('rscl','Scale',ROT_SCALES,state.rscl)}${field('rsm','Smoothing',ROT_SMOOTH,state.rsm)}${field(tk,'Trail',trails,state[tk])}${state.rview==='solar'?'':field('rshow','Dots',[['','Automatic'],['avg','Averages and traced only'],['all','Every company too']],state.rshow)}${P.monthly?field('rfill','Quarterly figures in months',ROT_FILL,state.rfill):''}</div>`;
  out+=mnote;
  const picks=String(state.rtk||'').toUpperCase().split(/[\s,]+/).filter(Boolean).slice(0,3).map(t=>P.byT.get(t)||P.byT.get(t.replace('.','-'))||P.byT.get(t.replace('-','.'))).filter(Boolean);
  const o={P,Q,qi:new Map(Q.map((c,i)=>[c,i])),x:P.V[state.rx],y:P.V[state.ry],z:three?(state.rz3==='__time'?ROT_TIME:P.V[state.rz3]):(state.rz?P.V[state.rz]:null),
   trail:+state[tk],picks,sec:state.rsec,scl:state.rscl,sm:state.rsm,sig:[P.monthly?'m':'q',state.rscl,state.rsm].join('|')};
  if(state.rview==='scan')out+=scanView(Pq,state.rsec);
  else if(state.rview==='rs')out+=rsView(P,state.rsec,picks);
+ else if(state.rview==='map')out+=mapView(o);
+ else if(state.rview==='heat')out+=heatView(o);
+ else if(state.rview==='breadth')out+=breadthView(P,state.rsec);
+ else if(state.rview==='corr')out+=corrView(Pq,state.rsec);
  else out+=state.rview==='solar'?solarView(o):three?view3d(o):clockView(o);
  out+=`<details><summary>How these charts are built</summary><p>${esc(g.data.note||'')}</p><p class="sub">Scales: “signed log” keeps small values as they are and compresses large ones (k·asinh(x/k), k = the variable's typical spread), so one outlier no longer flattens everyone else; “rank” and “standard score” place each company against all companies in the same period, which also removes market-wide swings. Smoothing uses past values only (exponential: half-life one quarter or three months; moving average: two quarters or three months), so a smoothed path never knows the future. In the monthly view the stock, volatility and volume are monthly; the quarterly figures (margins, growth, 13F, officials) are drawn in a straight line between quarter-ends — that is a drawing, not new information.</p><p class="sub">A path that circles clockwise means the vertical variable turns first and the horizontal one follows; counter-clockwise, the reverse. With the default axes, clockwise = the stock turned before profit momentum (the market anticipating). A pattern, not a forecast.</p></details>`;
  return out;
@@ -270,7 +276,7 @@ function rotTable(o){
  const quad=c=>{const a=val(o,c,x,cal),b=val(o,c,y,cal);return a==null||b==null?'—':`${vshort(x)} ${a>=xc?'↑':'↓'} · ${vshort(y)} ${b>=yc?'↑':'↓'}`};
  let out=`<div class="section-head"><h3>${fmt(rows.length)} companies · ${esc(rotFlabel(P,cal))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  return out+table(['Company',vshort(x),vshort(y),zv?vshort(zv):'Revenue','Quadrant','13F net managers'],rows.map(({c,p})=>[
-  `<b>${esc(c.t)}</b> <span class="muted">${esc(c.n)}</span>`,vcell(x,p[x.key]),vcell(y,p[y.key]),zv?vcell(zv,p[zv.key]):money(p.rev),esc(quad(c)),p.f13!=null?signed(Math.round(p.f13)):c.net13f==null?'—':signed(c.net13f)]));
+  coLink(c),vcell(x,p[x.key]),vcell(y,p[y.key]),zv?vcell(zv,p[zv.key]):money(p.rev),esc(quad(c)),p.f13!=null?signed(Math.round(p.f13)):c.net13f==null?'—':signed(c.net13f)]));
 }
 const vcell=(v,x)=>x==null?'—':v.centred?`<span class="${x>=0?'positive':'negative'}">${vfmt(v,x)}</span>`:vfmt(v,x);
 
@@ -551,6 +557,144 @@ function spin(){
   ROT.yaw+=.006;ROT.ctx.paint(state.rf);requestAnimationFrame(step)};
  requestAnimationFrame(step);
 }
+const coLink=c=>`<a href="../#c-${esc(c.cik)}" title="Earnings Sankey and filings"><b>${esc(c.t)}</b></a> <span class="muted">${esc(c.n)}</span>`;
+
+/* ---------- diverging colour (blue = higher / better, red = lower, grey = middle), five steps per arm ---------- */
+function divColor(t){                                    // t in [-1, 1]
+ if(t==null||!Number.isFinite(t))return 'var(--div-none)';
+ const k=Math.round(Math.max(-1,Math.min(1,t))*5);if(!k)return 'var(--div-mid)';
+ return `color-mix(in oklab, var(${k>0?'--div-pos':'--div-neg'}) ${Math.abs(k)*18+8}%, var(--div-mid))`;
+}
+function divT(v,x,cal,P){                              // a value → [-1, 1]: centred variables against zero, levels against the period's median
+ if(x==null)return null;
+ if(v.key==='rs')return (x-50)/40;
+ if(v.key==='hi52')return Math.max(-1,x/25+0.6);
+ const st=v.centred?null:crossStats(P,v.key,cal),c=v.centred?0:(st?st.med:v.median||0),k=(v.scale||1)*1.5;
+ return (x-c)/k;
+}
+function divLegend(v){
+ const lo=v.key==='rs'?'weak':v.centred?'below zero':'below the median',hi=v.key==='rs'?'strong':v.centred?'above zero':'above the median';
+ return `<div class="mk-legend rot-divlegend"><span class="muted">${esc(lo)}</span>${[-1,-.6,-.2,0,.2,.6,1].map(t=>`<i class="mk-key" style="background:${divColor(t)}"></i>`).join('')}<span class="muted">${esc(hi)}</span><span class="muted">· grey: no figure</span></div>`;
+}
+
+/* ---------- market map: a treemap of every company, grouped by sector, sized by revenue ---------- */
+function squarify(items,x,y,w,h){                      // items [{v,...}] sorted desc → rects (Bruls et al.)
+ const out=[],total=items.reduce((s,i)=>s+i.v,0);if(!total||w<=0||h<=0)return out;
+ const scale=w*h/total;let rest=items.map(i=>({...i,a:i.v*scale}));
+ while(rest.length){
+  const short=Math.min(w,h);let row=[],best=Infinity;
+  for(const it of rest){const r=[...row,it],s=r.reduce((a,b)=>a+b.a,0),mx=Math.max(...r.map(q=>q.a)),mn=Math.min(...r.map(q=>q.a));
+   const worst=Math.max(short*short*mx/(s*s),(s*s)/(short*short*mn));if(worst>best)break;best=worst;row=r}
+  const s=row.reduce((a,b)=>a+b.a,0);
+  if(w>=h){const cw=s/h;let cy=y;for(const it of row){const ch=it.a/cw;out.push({...it,x,y:cy,w:cw,h:ch});cy+=ch}x+=cw;w-=cw}
+  else{const ch=s/w;let cx=x;for(const it of row){const cw2=it.a/ch;out.push({...it,x:cx,y,w:cw2,h:ch});cx+=cw2}y+=ch;h-=ch}
+  rest=rest.slice(row.length);
+ }
+ return out;
+}
+function mapView(o){
+ const {P,Q}=o,v=P.V[state.rcol];
+ ROT.ctx={Q,P,draw:f=>mapFrame(o,v,f)};
+ let out=`<div class="panel"><h3>Market map</h3><p class="sub">Every company as a tile, grouped by sector; tile size = quarterly revenue, colour = ${esc(v.label)} for the period shown. Press play to watch the map change.</p>`;
+ out+=rotPlayer(Q,P)+`<div id="rot-plot">${mapFrame(o,v,state.rf)}</div>${divLegend(v)}</div>`;
+ const cal=Q[state.rf],rows=rotScope(P,o.sec).map(c=>({c,p:c.by.get(cal)})).filter(r=>r.p&&r.p.rev);
+ exported=rows.map(({c,p})=>({ticker:c.t,name:c.n,sector:c.s,period:cal,revenue:p.rev,[v.key]:p[v.key]}));
+ return out+`<div class="section-head"><h3>${fmt(rows.length)} companies · ${esc(rotFlabel(P,cal))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`
+  +table(['Company','Sector','Revenue (quarter)',vshort(v)],rows.sort((a,b)=>b.p.rev-a.p.rev).map(({c,p})=>[coLink(c),esc((P.suns[c.s]||{}).name||c.s),money(p.rev),vcell(v,p[v.key])]));
+}
+function mapFrame(o,v,f){
+ const {P,Q,sec}=o,cal=Q[f],[W,H]=rotSize(.6,420,640);
+ const groups=Object.values(P.suns).filter(s=>!sec||s.id===sec).map(s=>{const kids=rotScope(P,s.id).map(c=>({c,p:c.by.get(cal)})).filter(r=>r.p&&r.p.rev>0).map(r=>({...r,v:Math.sqrt(r.p.rev)}));
+  return {s,kids:kids.sort((a,b)=>b.v-a.v),v:kids.reduce((a,b)=>a+b.v,0)}}).filter(g=>g.v>0).sort((a,b)=>b.v-a.v);
+ if(!groups.length)return empty('No company has revenue for this period.');
+ let s=`<svg class="plot mk-plot rot-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Market map for ${esc(qlabel(cal))}; the table below lists every value">`;
+ for(const g of squarify(groups,0,0,W,H)){
+  const hdr=g.h>40&&g.w>60?16:0;
+  for(const k of squarify(g.kids,g.x+1,g.y+1+hdr,g.w-2,g.h-2-hdr)){const x=k.p[v.key],t=divT(v,x,cal,P);
+   s+=`<g data-tip="${tip([[k.c.t,k.c.n||''],[vfmt(v,x),v.label],[money(k.p.rev),'quarterly revenue · '+g.s.name]])}" tabindex="-1" class="mk-hit"><rect x="${(k.x+.5).toFixed(1)}" y="${(k.y+.5).toFixed(1)}" width="${Math.max(0,k.w-1).toFixed(1)}" height="${Math.max(0,k.h-1).toFixed(1)}" rx="2" style="fill:${divColor(t)}" class="rot-tile"/>`;
+   if(k.w>34&&k.h>16){const fs=Math.max(9,Math.min(16,Math.sqrt(k.w*k.h)/5));s+=`<text class="rot-tile-label" x="${(k.x+k.w/2).toFixed(1)}" y="${(k.y+k.h/2+fs*.35-(k.h>fs*3?fs*.55:0)).toFixed(1)}" text-anchor="middle" style="font-size:${fs.toFixed(1)}px">${esc(k.c.t)}</text>`;
+    if(k.h>fs*3&&k.w>44)s+=`<text class="rot-tile-value" x="${(k.x+k.w/2).toFixed(1)}" y="${(k.y+k.h/2+fs*.95).toFixed(1)}" text-anchor="middle" style="font-size:${(fs*.72).toFixed(1)}px">${esc(vfmt(v,x))}</text>`}
+   s+='</g>'}
+  s+=`<rect x="${g.x}" y="${g.y}" width="${g.w}" height="${g.h}" class="rot-group"/>`;
+  if(hdr)s+=`<text class="rot-group-label" x="${g.x+5}" y="${g.y+12}">${esc(g.s.name.length*6.5>g.w-10?g.s.name.slice(0,Math.max(3,Math.floor((g.w-10)/6.5)))+'…':g.s.name)}</text>`;
+ }
+ return s+`<text class="rot-watermark" x="${W-12}" y="${H-12}" text-anchor="end">${esc(qlabel(cal))}</text></svg>`;
+}
+
+/* ---------- sector heatmap: sectors × periods ---------- */
+function heatView(o){
+ const {P,Q}=o,v=P.V[state.rcol],cols=Q.slice(-(P.monthly?24:16)),secs=Object.values(P.suns).sort((a,b)=>a.name.localeCompare(b.name));
+ const rel=v.centred?null:'market';
+ const W=Math.max(560,rotSize(.5,300)[0]),L=150,R=10,T=26,rowH=26,H=T+(secs.length+1)*rowH+8,cw=(W-L-R)/cols.length;
+ let s=`<svg class="plot mk-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(v.label)} by sector and period; the table below lists every value">`;
+ const step=Math.ceil(cols.length/(W>700?12:6));
+ cols.forEach((c,i)=>{if(i%step===0||i===cols.length-1)s+=`<text class="axis" x="${L+cw*i+cw/2}" y="${T-8}" text-anchor="middle">${esc(qlabel(c).replace(/^(\w{3}) (\d{2})(\d{2})$/,'$1 $3').replace(/^Q(\d) (\d{2})(\d{2})$/,'Q$1 $3'))}</text>`});
+ const rowsData=[...secs.map(sn=>({name:sn.name,id:sn.id,ent:sn})),{name:'Market',id:'',ent:P.market}];
+ rowsData.forEach((r,j)=>{const y=T+j*rowH+(r.id===''?6:0);
+  s+=`<text class="mk-label" x="${L-8}" y="${y+rowH/2+4}" text-anchor="end"${r.id?` data-rsec="${esc(r.id)}" style="cursor:pointer"`:''}>${esc(r.name.length>22?r.name.slice(0,21)+'…':r.name)}</text>`;
+  cols.forEach((c,i)=>{const p=r.ent.by.get(c),x=p?p[v.key]:null,t=x==null?null:divT(v,x,c,P);
+   s+=`<g data-tip="${tip([[r.name+' · '+qlabel(c),r.id?'sector average':'all companies'],[vfmt(v,x),v.label],...(p&&p.n?[[fmt(p.n),'companies']]:[])])}" tabindex="-1" class="mk-hit"><rect x="${(L+cw*i+1).toFixed(1)}" y="${y+1}" width="${Math.max(1,cw-2).toFixed(1)}" height="${rowH-2}" rx="2" style="fill:${divColor(t)}"/>${cw>=38?`<text class="rot-cell" x="${(L+cw*i+cw/2).toFixed(1)}" y="${y+rowH/2+4}" text-anchor="middle">${esc(x==null?'':vfmt(v,x).replace(' pts',''))}</text>`:''}</g>`})});
+ s+='</svg>';
+ const last=cols[cols.length-1];
+ exported=rowsData.flatMap(r=>cols.map(c=>({sector:r.name,period:c,[v.key]:(r.ent.by.get(c)||{})[v.key]??null})));
+ return `<div class="panel"><h3>Sector heatmap — ${esc(v.label)}</h3><p class="sub">Each cell is a sector's average for the period (revenue-weighted, outliers clipped); the bottom row is every company. Blue: ${v.centred?'above zero':'above the period\'s median company'}, red: below. Click a sector name to open it in the solar system.</p>${s}${divLegend(v)}</div>`
+  +`<div class="section-head"><h3>Every cell</h3><button class="action" id="csv">Export CSV ↓</button></div>`
+  +table(['Sector',...cols.slice(-6).map(qlabel)],rowsData.map(r=>[esc(r.name),...cols.slice(-6).map(c=>vcell(v,(r.ent.by.get(c)||{})[v.key]??null))]));
+}
+
+/* ---------- breadth and dispersion ---------- */
+function breadthView(P,sec){
+ const Q=P.quarters,cos=rotScope(P,sec),unit=P.monthly?'month':'quarter';
+ const share=(test)=>Q.map(c=>{let n=0,k=0;for(const co of cos){const p=co.by.get(c);if(!p)continue;const r=test(p);if(r==null)continue;n++;if(r)k++}return n>=20?[c,100*k/n,n]:[c,null,n]});
+ const iqr=Q.map(c=>{const xs=cos.map(co=>(co.by.get(c)||{}).rel).filter(fin).sort((a,b)=>a-b);return [c,xs.length>=20?quantile(xs,.75)-quantile(xs,.25):null,xs.length]});
+ const series=[
+  ['Share of companies beating the S&P 500 that '+unit,share(p=>p.rel==null?null:p.rel>0),'%','Above 50%: most stocks did better than the index — a broad market; below: a few large stocks carried it.'],
+  ['Share within 10% of their 52-week high',share(p=>p.hi52==null?null:p.hi52>=-10),'%','How many stocks are near their highs.'],
+  ['Share with positive 12–1 momentum',share(p=>p.mom121==null?null:p.mom121>0),'%','Stocks that beat the S&P 500 over the year, leaving out the last month.'],
+  ['Dispersion: spread between the 25th and 75th percentile company',iqr,'pts','High: stocks went very different ways (a stock-picker’s market); low: everything moved together.']];
+ exported=Q.map((c,i)=>({period:c,beating_sp500:series[0][1][i][1],near_high:series[1][1][i][1],positive_momentum:series[2][1][i][1],dispersion:series[3][1][i][1]}));
+ return `<div class="explain">Market breadth across the ${fmt(cos.length)} companies${sec?' in '+esc(P.suns[sec].name):''} on Filing Flows, ${unit} by ${unit}. Breadth says how many stocks take part in a move; dispersion how differently they move.</div><div class="rot-multiples rot-breadth">${series.map(([t,d,u,note])=>`<div class="panel">${bigLine(d,t,u,note)}</div>`).join('')}</div><div class="section-head"><h3>Every ${unit}</h3><button class="action" id="csv">Export CSV ↓</button></div>`
+  +table(['Period','Beating the S&P 500','Near 52-week high','Positive 12–1 momentum','Dispersion (pts)'],exported.slice().reverse().map(r=>[esc(qlabel(r.period)),r.beating_sp500==null?'—':fmt(r.beating_sp500,0)+'%',r.near_high==null?'—':fmt(r.near_high,0)+'%',r.positive_momentum==null?'—':fmt(r.positive_momentum,0)+'%',r.dispersion==null?'—':fmt(r.dispersion,1)]));
+}
+function bigLine(d,title,unit,note){
+ const pts=d.filter(x=>x[1]!=null);if(pts.length<2)return `<h3>${esc(title)}</h3>${empty('Not enough periods yet')}`;
+ const W=520,H=220,L=40,R=12,T=14,B=28,n=d.length,lo=unit==='%'?0:Math.min(...pts.map(p=>p[1]))*.9,hi=unit==='%'?100:Math.max(...pts.map(p=>p[1]))*1.08;
+ const x=i=>L+i/Math.max(1,n-1)*(W-L-R),y=v=>T+(hi-v)/((hi-lo)||1)*(H-T-B);
+ let s=`<h3>${esc(title)}</h3><p class="sub">${esc(note)}</p><svg class="plot mk-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">`;
+ niceTicks(lo,hi,4).forEach(v=>{s+=`<line class="mk-grid" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${L-6}" y="${y(v)+4}" text-anchor="end">${fmt(v)}${unit==='%'?'%':''}</text>`});
+ if(unit==='%')s+=`<line class="mk-axis" x1="${L}" x2="${W-R}" y1="${y(50)}" y2="${y(50)}"/>`;
+ const idx=d.map((p,i)=>[i,p]).filter(a=>a[1][1]!=null);
+ s+=`<path class="rot-line" style="stroke:var(--rot-1)" d="${curve(idx.map(([i,p])=>[x(i),y(p[1])]),false)}"/>`;
+ idx.forEach(([i,p],k)=>{s+=`<g data-tip="${tip([[fmt(p[1],1)+(unit==='%'?'%':' pts'),qlabel(p[0])],[fmt(p[2]),'companies with the figure']])}" tabindex="-1" class="mk-hit"><circle cx="${x(i)}" cy="${y(p[1])}" r="9" fill="transparent"/><circle cx="${x(i)}" cy="${y(p[1])}" r="${k===idx.length-1?4.5:2.2}" style="fill:var(--rot-1)"/></g>`});
+ const lastP=idx[idx.length-1];
+ s+=`<text class="mk-label mk-halo" x="${x(lastP[0])-6}" y="${y(lastP[1][1])-9}" text-anchor="end">${fmt(lastP[1][1],0)}${unit==='%'?'%':' pts'}</text>`;
+ s+=`<text class="axis" x="${L}" y="${H-6}">${esc(qlabel(d[0][0]))}</text><text class="axis" x="${W-R}" y="${H-6}" text-anchor="end">${esc(qlabel(d[n-1][0]))}</text>`;
+ return s+'</svg>';
+}
+
+/* ---------- how the variables move together: rank correlations ---------- */
+function corrView(P,sec){
+ const key='corr|'+sec;
+ if(!P.cache[key]){const {qs,vars}=rotRanks(P,sec),k=vars.length,acc=Array.from({length:k},()=>Array.from({length:k},()=>[0,0,0,0,0,0]));
+  for(const q of qs)for(let a=0;a<k;a++){const ra=q.r[vars[a].key];for(let b=a;b<k;b++){const rb=q.r[vars[b].key],m=acc[a][b];
+   for(let i=0;i<ra.length;i++){const u=ra[i],w=rb[i];if(u==null||w==null)continue;m[0]++;m[1]+=u;m[2]+=w;m[3]+=u*u;m[4]+=w*w;m[5]+=u*w}}}
+  const corr=acc.map(row=>row.map(m=>{const n=m[0];if(n<50)return null;const cv=m[5]/n-m[1]/n*m[2]/n,va=m[3]/n-(m[1]/n)**2,vb=m[4]/n-(m[2]/n)**2;return va>0&&vb>0?cv/Math.sqrt(va*vb):null}));
+  for(let a=0;a<k;a++)for(let b=0;b<a;b++)corr[a][b]=corr[b][a];
+  P.cache[key]={vars,corr}}
+ const {vars,corr}=P.cache[key],k=vars.length,cell=Math.max(26,Math.min(44,Math.floor((rotSize(.5,300)[0]-170)/k))),L=170,T=150,W=L+k*cell+90,H=T+k*cell+10;
+ let s=`<svg class="plot mk-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="Rank correlation between every pair of variables; values in the tooltips and the table">`;
+ vars.forEach((v,i)=>{s+=`<text class="mk-label" x="${L-8}" y="${T+i*cell+cell/2+4}" text-anchor="end">${esc(vshort(v))}</text><text class="mk-label" transform="translate(${L+i*cell+cell/2+4} ${T-8}) rotate(-55)">${esc(vshort(v))}</text>`});
+ for(let a=0;a<k;a++)for(let b=0;b<k;b++){const r=corr[a][b];
+  s+=`<g data-tip="${tip([[r==null?'—':fmt(r,2),'rank correlation'],[vshort(vars[a])+' × '+vshort(vars[b]),a===b?'itself':'click to put this pair on the momentum clock']])}" tabindex="-1" class="mk-hit"${a!==b?` data-raxes="${esc(vars[b].key)}|${esc(vars[a].key)}|"`:''} style="cursor:${a!==b?'pointer':'default'}"><rect x="${L+b*cell+1}" y="${T+a*cell+1}" width="${cell-2}" height="${cell-2}" rx="2" style="fill:${a===b?'var(--div-none)':divColor(r==null?null:r/0.6)}"/>${cell>=30&&a!==b&&r!=null&&Math.abs(r)>=.05?`<text class="rot-cell" x="${L+b*cell+cell/2}" y="${T+a*cell+cell/2+4}" text-anchor="middle">${fmt(r,1).replace(/^0/,'').replace(/^-0/,'−')}</text>`:''}</g>`}
+ s+='</svg>';
+ const pairs=[];for(let a=0;a<k;a++)for(let b=a+1;b<k;b++)if(corr[a][b]!=null)pairs.push([vars[a],vars[b],corr[a][b]]);
+ pairs.sort((p,q)=>Math.abs(q[2])-Math.abs(p[2]));
+ exported=pairs.map(([a,b,r])=>({a:a.key,b:b.key,rank_correlation:r}));
+ return `<div class="panel"><h3>How the variables move together</h3><p class="sub">Rank correlation of every pair, pooled over all companies and quarters (each variable ranked within its quarter). Blue: high together; red: one high when the other is low; grey: unrelated. Pairs that move together tell the same story twice — for the clock pick pairs that do not. Click a cell to plot that pair.</p>${s}${divLegend({key:'corr',centred:true})}</div>`
+  +`<div class="section-head"><h3>Strongest pairs</h3><button class="action" id="csv">Export CSV ↓</button></div>`
+  +table(['Variable','Variable','Rank correlation'],pairs.slice(0,25).map(([a,b,r])=>[esc(a.label),esc(b.label),`<span class="${r>=0?'positive':'negative'}">${fmt(r,2)}</span>`]));
+}
+
 /* ---------- relative strength ranking ---------- */
 function rsView(P,sec,picks){
  const Q=P.quarters,f=P.full,cal=Q[f],back=P.monthly?1:1,cal0=Q[Math.max(0,f-back)],cal3=Q[Math.max(0,f-(P.monthly?3:1))];
@@ -574,7 +718,7 @@ function rsView(P,sec,picks){
  const chg=v=>v==null?'—':`<span class="${v>=0?'positive':'negative'}">${v>0?'+':v<0?'−':''}${fmt(Math.abs(v),0)}</span>`;
  const rv=P.V.rel3||P.V.rel;
  out+=table(['#','Company','Sector','RS rating','RS change, 1 '+unit,...(P.monthly?['RS change, 3 months']:[]),vshort(rv),'12–1 momentum','From 52-week high','13F net managers','RS, last 12 '+unit+'s'],rows.map((r,i)=>[
-  String(i+1),`<b>${esc(r.c.t)}</b> <span class="muted">${esc(r.c.n)}</span>`,esc((P.suns[r.c.s]||{}).name||r.c.s),`<b>${fmt(r.rs,0)}</b>`,chg(r.d1),...(P.monthly?[chg(r.d3)]:[]),vcell(rv,r.p[rv.key]),vcell(P.V.mom121||rv,r.p.mom121),r.p.hi52==null?'—':vfmt(P.V.hi52,r.p.hi52),r.f13==null?'—':signed(r.f13),rsSpark(r.hist)]));
+  String(i+1),coLink(r.c),esc((P.suns[r.c.s]||{}).name||r.c.s),`<b>${fmt(r.rs,0)}</b>`,chg(r.d1),...(P.monthly?[chg(r.d3)]:[]),vcell(rv,r.p[rv.key]),vcell(P.V.mom121||rv,r.p.mom121),r.p.hi52==null?'—':vfmt(P.V.hi52,r.p.hi52),r.f13==null?'—':signed(r.f13),rsSpark(r.hist)]));
  return out;
 }
 function rsSpark(h){
@@ -705,7 +849,7 @@ function rotToggle(){
 }
 function bindRotSuns(){document.querySelectorAll('#workspace [data-rsec]').forEach(b=>b.onclick=()=>{rotStop();state.rsec=b.dataset.rsec;state.rview=state.rview==='scan'?'solar':state.rview;render()})}
 function bindRotation(){
- for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rscl','rsm','rfreq','rfill','rsort'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';render()};
+ for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rscl','rsm','rfreq','rfill','rsort','rcol'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';render()};
  if($('rtk')){$('rtk').onchange=e=>{state.rtk=e.target.value;render()};$('rtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rplay'))$('rplay').onclick=rotToggle;
  if($('rframe')){$('rframe').oninput=e=>{rotStop();state.rf=+e.target.value;rotDraw()};$('rframe').onchange=e=>{state.rf=+e.target.value;render()}}
