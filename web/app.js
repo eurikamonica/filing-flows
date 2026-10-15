@@ -2220,6 +2220,9 @@
           <button class="btn" type="button" data-engage="engage_peers" title="The mover against its closest peers: price, today’s move, growth, margin, price/sales">✦ Mover vs peers</button>
           <button class="btn" type="button" data-engage="engage_insider" title="The largest recent open-market purchase by an officer or director (Form 4)">✦ Insider buy</button>
           <button class="btn" type="button" data-engage="engage_event8k" title="The most important 8-K filed in the last day by a company on the site: a deal, a CEO change, a bankruptcy, a buyback … BREAKING when material">✦ 8-K event</button>
+          <button class="btn" type="button" data-engage="engage_ivmove" title="The biggest one-day jump in 30-day implied volatility among companies on the site (CBOE delayed quotes)">✦ Options IV move</button>
+          <button class="btn" type="button" data-engage="engage_opt13f" title="The biggest change in disclosed 13F puts or calls on a company on the site">✦ 13F puts & calls</button>
+          <button class="btn" type="button" data-engage="engage_rsleaders" title="Companies whose relative-strength rating jumped into the 90s over three months">✦ RS leaders</button>
         </div>
         <p class="muted small" id="engage-msg" role="status"></p></section>` : ''}
       <section class="section daily" id="daily" hidden></section>

@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       kinds:
-        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider, calendar, fund13f, weekly, event8k"
+        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider, calendar, fund13f, weekly, event8k, ivmove, opt13f, rsleaders"
         type: string
         default: "question,list,reddit_question,reddit_list,insider,calendar,fund13f"
       dry_run:
@@ -80,12 +80,12 @@ jobs:
           site="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"
           kinds="${KINDS_INPUT:-question,list,reddit_question,reddit_list}"
           case "$EVENT_SCHEDULE" in
-            '40 12 * * 1-5') kinds=list,reddit_question,reddit_list,insider,fund13f ;;
+            '40 12 * * 1-5') kinds=list,reddit_question,reddit_list,insider,fund13f,opt13f,rsleaders ;;
             '40 21 * * 1-5') kinds=question,insider,calendar,fund13f ;;
             '30 14 * * 6') kinds=weekly ;;
-            '20 13,17,21,23 * * 1-5') kinds=event8k ;;
+            '20 13,17,21,23 * * 1-5') kinds=event8k; [ "$(date -u +%H)" = "23" ] && kinds=event8k,ivmove ;;
           esac
-          if [ "$kinds" = "event8k" ] && [ "$DRY_RUN" != "true" ]; then     # skip the browser install when there is nothing new
+          if [ "${kinds%%,*}" = "event8k" ] && [ "$DRY_RUN" != "true" ]; then     # skip the browser install when there is nothing new
             rc=0; python -m pipeline.engage --site "$site" --site-url "$site" --kinds "$kinds" --plan-only || rc=$?
             if [ "$rc" = "3" ]; then echo "no material 8-K to post"; touch media/x/.nothing; exit 0; fi
           fi

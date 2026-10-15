@@ -59,6 +59,14 @@ Formats are named in the task; follow the one you are given.
   closely paraphrased. Add nothing the quote does not say, never predict the stock's reaction, end with one short question.
   `BREAKING: $ABC agreed to be acquired for $42.50 a share in cash, its 8-K says. Fair price? 1) yes 2) too low #earnings #stocks`
 
+- **ivmove** — the options market moved: one company's 30-day implied volatility jumped or dropped. Give the level and the
+  change, one supporting options number, say implied volatility is the size of the move priced in (not a direction),
+  ask what is being priced in.
+- **opt13f** — 13F filings show a big change in the puts or calls managers hold on one company. Give the totals and the
+  change, note in a few words that many holders are hedging market makers, ask what the audience reads into it.
+- **rsleaders** — the companies whose relative-strength rating jumped into the 90s, as cashtags with `old→new`, the
+  biggest climber named, then which one holds up.
+
 ## Rules
 1. Output only the post text. No quotes around it, no preamble.
 2. At most 255 characters as X counts them (URLs count 23). The first six words must make someone stop scrolling:

@@ -654,6 +654,111 @@ def display(e):
     return social.display_name(e.get("name") or "")
 
 
+# ------------------------------------------------------------------ options and relative strength (from the Disclosures hub)
+def plan_ivmove(site, rows, c, by_ticker, state_ok, today):
+    """The biggest one-day jump in 30-day implied volatility among the companies on the site (CBOE delayed quotes)."""
+    try:
+        d = hub_json(site, "options.json")
+    except Exception as err:
+        print(f"ivmove: no option data ({str(err)[:100]})")
+        return None
+    cands = [r for r in d.get("rows", []) if r.get("iv30_chg") is not None and (r.get("iv30") or 0) >= 15
+             and r["ticker"].replace("-", ".") in by_ticker and state_ok("ivmove", r["ticker"], hours=24 * 5)]
+    cands.sort(key=lambda r: -abs(r["iv30_chg"]))
+    if not cands or abs(cands[0]["iv30_chg"]) < 4:
+        print("ivmove: no implied-volatility move of 4 points or more")
+        return None
+    r = cands[0]
+    tk = r["ticker"].replace("-", ".")
+    e = by_ticker[tk]
+    cj, fq = figures(site, e)
+    lvl = lambda v: f"${v:,.0f}" if v and v >= 100 else (f"${v:,.2f}" if v else "—")
+    task = (f"OPTIONS (CBOE delayed quotes, end of day {str(d.get('generated_at') or '')[:10]}): ${tk} 30-day implied volatility "
+            f"{r['iv30']:.1f}% ({r['iv30_chg']:+.1f} points on the day). Stock {lvl(r.get('spot'))}. Put/call open interest "
+            f"{r.get('pc_oi') or '—'}. Largest call open interest at {lvl(r.get('call_wall'))}, largest put open interest at "
+            f"{lvl(r.get('put_wall'))}; max pain {lvl(r.get('max_pain'))} for {r.get('max_pain_exp') or 'the next monthly expiry'}.\n\n"
+            + (f"Latest filing figures (context, at most one):\n{tweet.headline_lines(cj, fq, tk)}\n\n" if fq else "")
+            + "Say what the options market did in plain words (implied volatility = the move option prices expect, not a direction). "
+              "Never say why. Ask the audience what they think is being priced in.")
+    fb = (f"${tk} options: 30-day implied volatility {r['iv30']:.1f}%, {r['iv30_chg']:+.1f} points today. Put/call open interest "
+          f"{r.get('pc_oi') or '—'}. What is the market pricing in?")
+    return {"kind": "ivmove", "task": task, "cashtags": [tk], "items": [(e, cj, fq)] if fq else [], "fallback": fb}
+
+
+def plan_opt13f(site, rows, c, by_ticker, state_ok, today):
+    """The biggest change in disclosed put or call positions (13F) on a company on the site, once per quarter and name."""
+    try:
+        d = hub_json(site, "options13f.json")
+    except Exception as err:
+        print(f"opt13f: no 13F option data ({str(err)[:100]})")
+        return None
+    qtr = d.get("quarter") or ""
+    cands = []
+    for r in d.get("rows", []):
+        tk = (r.get("ticker") or "").replace("-", ".")
+        if r.get("fund") or tk not in by_ticker or not state_ok("opt13f", f"{qtr}:{tk}", hours=24 * 120):
+            continue
+        for side, key in (("puts", "d_put_usd"), ("calls", "d_call_usd")):
+            if abs(r.get(key) or 0) >= 1e9:
+                cands.append((abs(r[key]), side, key, tk, r))
+    if not cands:
+        print("opt13f: no disclosed option change of $1B or more on a site company")
+        return None
+    _, side, key, tk, r = max(cands)
+    e = by_ticker[tk]
+    cj, fq = figures(site, e)
+    top = "; ".join(f"{x['manager'].title()} {'puts' if x['pc'] == 'PUT' else 'calls'} {money(x['usd'])}" for x in (r.get("top") or [])[:3])
+    task = (f"13F FILINGS for the quarter ended {qtr} (filed up to 45 days later): managers disclosed {money(r['put_usd'])} of ${tk} puts "
+            f"({r['put_mgrs']} managers) and {money(r['call_usd'])} of calls ({r['call_mgrs']} managers), valued at the underlying shares. "
+            f"Since each holder's previous quarter: puts {'+' if r['d_put_usd'] >= 0 else '−'}{money(abs(r['d_put_usd']))}, calls "
+            f"{'+' if r['d_call_usd'] >= 0 else '−'}{money(abs(r['d_call_usd']))}. Largest holders: {top}.\n\n"
+            "Rules: 13F shows long options only and many holders are market makers hedging, so a put is NOT necessarily a bet against "
+            "the stock — say so in a few words. Never say the stock will fall or rise. Ask what the audience reads into it.")
+    fb = (f"${tk}: managers' disclosed {side} {'rose' if r[key] >= 0 else 'fell'} {money(abs(r[key]))} in the {qtr[:7]} 13Fs — now "
+          f"{money(r['put_usd'])} puts vs {money(r['call_usd'])} calls (many are hedges). Read anything into it?")
+    return {"kind": "opt13f", "task": task, "cashtags": [tk], "items": [(e, cj, fq)] if fq else [], "fallback": fb,
+            "event_key": f"opt13f:{qtr}:{tk}"}
+
+
+def plan_rsleaders(site, rows, c, by_ticker, state_ok, today):
+    """New relative-strength leaders: companies whose RS rating (1–99) climbed into the 90s over the last three months."""
+    try:
+        d = hub_json(site, "rotation-monthly.json")
+    except Exception as err:
+        print(f"rsleaders: no relative-strength data ({str(err)[:100]})")
+        return None
+    f = d.get("fields") or []
+    if "rs" not in f:
+        return None
+    i = f.index("rs")
+    leaders = []
+    for tk, m in (d.get("companies") or {}).items():
+        t = tk.replace("-", ".")
+        if t not in by_ticker or len(m) < 4 or m[-1][i] is None or m[-4][i] is None:
+            continue
+        if m[-1][i] >= 90 and m[-1][i] - m[-4][i] >= 20:
+            leaders.append((m[-1][i] - m[-4][i], m[-1][i], m[-4][i], t))
+    leaders.sort(reverse=True)
+    picks = leaders[:5]
+    if len(picks) < 3:
+        print("rsleaders: fewer than three new leaders")
+        return None
+    month = (d.get("months") or [""])[-1]
+    lines = [f"- ${t}: RS rating {now} (was {then} three months earlier) · {one_liner(by_ticker[t])}" for _, now, then, t in picks]
+    items = []
+    for _, _, _, t in picks[:4]:
+        cj, fq = figures(site, by_ticker[t])
+        if fq:
+            items.append((by_ticker[t], cj, fq))
+    task = (f"NEW RELATIVE-STRENGTH LEADERS at the end of {month} (RS rating 1–99: 3/6/9/12-month returns ranked against ~600 large "
+            "companies; it describes past price strength, not the future):\n" + "\n".join(lines)
+            + "\n\nList them as cashtags with their rating jump, name the biggest climber in a few words, ask which one the audience "
+              "thinks holds up.")
+    fb = ("New relative-strength leaders: " + ", ".join(f"${t} {then}→{now}" for _, now, then, t in picks)
+          + " (RS rating, 3 months). Which one holds up?")
+    return {"kind": "rsleaders", "task": task, "cashtags": [t for *_, t in picks], "items": items, "fallback": fb}
+
+
 # ------------------------------------------------------------------ main
 def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_only=False):
     """Plan, write, polish and check the posts of these kinds; draw the charts into media/x/ and append to
@@ -692,7 +797,8 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
                 print(f"{kind}: {len(log)} mover posts already today (max_per_day)")
                 return False
             return not log or log[-1][0] < (now - dt.timedelta(minutes=c["movers"]["min_gap_minutes"])).isoformat()
-        return force or (state.get(f"kind:{kind}") or "") < (now - dt.timedelta(hours=c["kind_cooldown_hours"])).isoformat()
+        hours = (c.get("kind_cooldown") or {}).get(kind, c["kind_cooldown_hours"])
+        return force or (state.get(f"kind:{kind}") or "") < (now - dt.timedelta(hours=hours)).isoformat()
 
     if "movers" in kinds:                  # the workflow's rotation: mover, then peers, then explain
         kinds = [k for k in kinds if k != "movers"] + [MOVER_KINDS[[0, 2, 1][len(log) % 3]]]
@@ -722,7 +828,10 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
              "calendar": lambda: plan_calendar(site, rows, c, by_ticker, today),
              "fund13f": lambda: plan_fund13f(site, rows, c, by_ticker, state, today),
              "weekly": lambda: plan_weekly(site, rows, c, by_ticker, state, today),
-             "event8k": lambda: plan_event8k(site, rows, c, by_ticker, state_ok, today)}.get(kind, lambda: None)()
+             "event8k": lambda: plan_event8k(site, rows, c, by_ticker, state_ok, today),
+             "ivmove": lambda: plan_ivmove(site, rows, c, by_ticker, state_ok, today),
+             "opt13f": lambda: plan_opt13f(site, rows, c, by_ticker, state_ok, today),
+             "rsleaders": lambda: plan_rsleaders(site, rows, c, by_ticker, state_ok, today)}.get(kind, lambda: None)()
         if p:
             plans.append(p)
         else:
