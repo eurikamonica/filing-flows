@@ -72,6 +72,8 @@ Formats are named in the task; follow the one you are given.
 7. Neutral and factual: no side-taking, no advice (no buy/sell/bullish/bearish/undervalued/overvalued), no "massive",
    "crushes", "to the moon"; at most one emoji; no exclamation marks.
 8. Reddit titles may be paraphrased as "what Reddit is discussing"; never present them as fact and never name users.
+10. Name the filing exactly as the inputs give it: an 8-K earnings release is "preliminary, from the earnings release",
+   never a 10-K or 10-Q; "BREAKING" only when you are told to use it.
 9. Prices are delayed quotes: say "today" and give the price as given; never round a move up ("−13.6%" may become
    "−14%", never "−15%"), never call it a crash, collapse, squeeze or rally unless those words are in the inputs.
 

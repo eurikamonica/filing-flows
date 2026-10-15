@@ -1,0 +1,70 @@
+name: Checks (offline)
+
+# Offline gate for code changes: the earnings pipeline tests (fixtures stand in for SEC), JavaScript syntax of the
+# site and the hub, and the hub's unit tests (its template tests need the data snapshot and run in disclosures.yml). No secrets, no network calls to SEC, X, mail or Buffer.
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - 'pipeline/**'
+      - 'web/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'config/**'
+      - 'requirements.txt'
+      - 'disclosures/app/**'
+      - 'disclosures/automation/**'
+      - 'disclosures/tests/**'
+      - 'disclosures/docs/*.js'
+      - '.github/workflows/ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            pipeline
+            web
+            scripts
+            tests
+            config
+            requirements.txt
+            disclosures/app
+            disclosures/automation
+            disclosures/tests
+            disclosures/config
+            disclosures/docs/app.js
+            disclosures/docs/dashboard.js
+            disclosures/docs/extensions.js
+            disclosures/docs/market.js
+            disclosures/docs/rotation.js
+            disclosures/docs/options.js
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Earnings pipeline tests (offline fixtures)
+        env:
+          SEC_USER_AGENT: 'Filing Flows CI ci@example.org'
+        run: |
+          pip install -r requirements.txt pytest
+          python -m pytest -q tests
+      - name: Site JavaScript syntax
+        run: for f in web/*.js; do node --check "$f"; done
+      - name: Hub unit and template tests
+        working-directory: disclosures
+        run: |
+          python -m unittest discover -s tests
+          for f in docs/app.js docs/extensions.js docs/dashboard.js docs/market.js docs/rotation.js docs/options.js; do node --check "$f"; done

@@ -176,6 +176,18 @@ def main():
                   f"quarters {rot.get('quarters', [''])[0] if rot.get('quarters') else '-'}…{rot['quarters'][-1] if rot.get('quarters') else '-'}")
         except Exception as exc:
             print(f'::warning::rotation not built: {exc}')
+    # which snapshot this build publishes (U07): the commit, when it was built, when each data set was last made
+    import datetime as _dt, os as _os
+    def _stamp(path, key):
+        try:
+            return json.loads(Path(path).read_text(encoding='utf-8')).get(key)
+        except Exception:
+            return None
+    build = {'published_at': _dt.datetime.now(_dt.timezone.utc).isoformat(timespec='seconds'), 'commit': (_os.environ.get('GITHUB_SHA') or '')[:12],
+             'collected_at': _stamp(DATA / 'live.json', 'generated_at'), 'market_built_at': _stamp(DATA / 'market' / 'meta.json', 'built_at'),
+             'options_at': _stamp(DATA / 'market' / 'options.json', 'generated_at')}
+    (out / 'data' / 'build.json').write_text(json.dumps(build), encoding='utf-8')
+    print(f"::notice::disclosures snapshot: collected {build['collected_at']}, market views {build['market_built_at']}, commit {build['commit']}")
     holders = holders_index()
     hdir = out / 'data' / 'holders'
     hdir.mkdir(parents=True, exist_ok=True)

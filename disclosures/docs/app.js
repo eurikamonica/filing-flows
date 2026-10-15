@@ -20,7 +20,7 @@ function empty(text){return `<div class="empty">${esc(text)}</div>`}
 function bind(id,key){if($(id))$(id).onchange=e=>{state[key]=e.target.value;state.page=0;render()}}
 function baseRender(){
  const d=data(),m=moduleData();
- $('buildtime').textContent='Snapshot built: '+(d.generated_at||'Not generated');
+ $('buildtime').textContent='Snapshot built: '+(d.generated_at||'Not generated')+(window.HUB_BUILD&&window.HUB_BUILD.published_at?` · published ${window.HUB_BUILD.published_at}${window.HUB_BUILD.commit?' (build '+window.HUB_BUILD.commit+')':''}`:'');
  $('notice').className=state.mode==='demo'||['error','partial'].includes(m.status)?'warn':'';
  $('notice').textContent=state.mode==='demo'?'DEMO: All figures in this mode are fictional. Use only to explore the interface.':
    state.tab==='status'?'Sources run independently. Errors retain the previous valid data and never substitute demo figures.':
@@ -164,3 +164,4 @@ function fromHash(){const h=location.hash.slice(1);if(TABS.includes(h)&&h!==stat
 addEventListener('hashchange',()=>{if(fromHash())render()});
 fromHash();syncPills();
 render();
+if(typeof fetch==='function')fetch('data/build.json').then(r=>r.ok?r.json():null).then(b=>{if(b){window.HUB_BUILD=b;baseRender()}}).catch(()=>{});

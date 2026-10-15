@@ -12,17 +12,18 @@
 const ROT_SERIES=['var(--rot-1)','var(--rot-2)','var(--rot-3)'];
 const ROT_TRAIL=[['4','4 quarters'],['8','8 quarters'],['12','12 quarters'],['16','16 quarters']];
 const ROT_TRAIL_M=[['6','6 months'],['12','12 months'],['24','24 months'],['48','48 months']];
-const ROT_VIEWS=[['clock','Momentum clock'],['3d','3-D (drag to turn)'],['solar','Solar system'],['scan','Find the best axes']];
+const ROT_VIEWS=[['clock','Momentum clock'],['3d','3-D (drag to turn)'],['solar','Solar system'],['rs','Relative strength ranking'],['scan','Find the best axes']];
 const ROT_SCALES=[['raw','As reported'],['log','Signed log (tames outliers)'],['rank','Rank within the period (0–100)'],['z','Standard score within the period']];
-const ROT_SMOOTH=[['none','None'],['ewma','Exponential (recent weighs more)'],['ma','Moving average']];
-const ROT_SHORT={dom:'Op. margin Δ',om:'Op. margin',dgm:'Gross margin Δ',gm:'Gross margin',dnm:'Net margin Δ',nm:'Net margin',revg:'Revenue growth',reva:'Growth acceleration',rel:'Stock vs S&P',rel3:'Stock vs S&P, 3 mo',rel6:'Stock vs S&P, 6 mo',ret:'Stock return',vola:'Volatility',volz:'Volume',f13:'13F net managers',gov:'Officials net buys',__time:'Time'};
+const ROT_SMOOTH=[['none','None'],['ewma','Exponential (recent weighs more)'],['ma','Moving average'],['holt','Holt (level + trend)'],['kalman','Kalman (noise-filtered level)'],['median','Rolling median (ignores spikes)']];
+const ROT_FILL=[['line','Straight line between quarter-ends'],['step','Last reported, from the quarter-end'],['avail','Last reported, from about the filing date'],['points','Quarter-end months only']];
+const ROT_SHORT={rs:'RS rating',mom121:'12–1 momentum',hi52:'From 52-wk high',pc13:'13F put/call',iv30:'IV30',pcoi:'Put/call OI',dom:'Op. margin Δ',om:'Op. margin',dgm:'Gross margin Δ',gm:'Gross margin',dnm:'Net margin Δ',nm:'Net margin',revg:'Revenue growth',reva:'Growth acceleration',rel:'Stock vs S&P',rel3:'Stock vs S&P, 3 mo',rel6:'Stock vs S&P, 6 mo',ret:'Stock return',vola:'Volatility',volz:'Volume',f13:'13F net managers',gov:'Officials net buys',__time:'Time'};
 const ROT_DEFAULT_VARS=[{key:'dom',label:'Operating margin vs a year earlier',unit:'pts',centred:true,group:'Profitability'},{key:'rel',label:'Stock vs the S&P 500, the quarter',unit:'%',centred:true,group:'Price'},{key:'volz',label:'Trading volume vs its own average',unit:'%',centred:true,group:'Trading'}];
 const ROT_MONTH_LABELS={rel:'Stock vs the S&P 500, the month',ret:'Stock return, the month',rel3:'Stock vs the S&P 500, three months',rel6:'Stock vs the S&P 500, six months',vola:'Realised volatility in the month (annualised)',volz:'Trading volume vs its own average (month)'};
 const ROT_TIME={key:'__time',label:'Time',unit:'',centred:false,group:'Time'};
 const ROT={timer:null,ctx:null,yaw:-.75,pitch:.38,spin:false,hits:[]};
 // when a variable is public: price-based ones at the period's last close; figures from 10-Q / 10-K, 13F and officials'
 // reports only weeks after the quarter ends — so the scan compares those with the stock two quarters later, not the next
-const ROT_PRICE=new Set(['rel','rel6','ret','vola','volz']);
+const ROT_PRICE=new Set(['rel','rel3','rel6','ret','vola','volz','rs','mom121','hi52','iv30','pcoi']);
 const ROT_SCAN_SKIP=new Set(['ret']);           // the raw return duplicates the return against the S&P 500 in a scan
 const MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const qlabel=c=>{c=String(c||'');let m=/^CY(\d{4})Q(\d)$/.exec(c);if(m)return `Q${m[2]} ${m[1]}`;m=/^(\d{4})-(\d{2})$/.exec(c);return m?`${MONTH_NAMES[+m[2]-1]} ${m[1]}`:c};
@@ -35,6 +36,8 @@ function vfmt(v,x){
  if(u==='pts')return s+fmt(a,1)+' pts';
  if(u==='%')return v.centred?s+fmt(a,1)+'%':(x<0?'−':'')+fmt(a,1)+'%';
  if(u==='managers'||u==='trades')return s+fmt(a,0);
+ if(u==='rank')return fmt(x,0);
+ if(u==='x')return fmt(x,2)+'×';
  return fmt(x,1);
 }
 const quantile=(xs,q)=>xs.length?xs[Math.min(xs.length-1,Math.max(0,Math.floor(q*(xs.length-1))))]:null;
@@ -76,30 +79,36 @@ function rotPrep(d){
  const market={name:'Market',pts:d.market&&SF?(d.market.p||[]).map(r=>row(SF,r)):rotAverage(cos,vars,quarters)};
  return d._prep=rotFinish(cos,suns,market,vars,quarters);
 }
-function rotPrepMonthly(Pq,dm){                       // prices month by month; quarterly figures drawn through the months
- if(dm._prep)return dm._prep;
+function rotPrepMonthly(Pq,dm,fill='line'){            // prices month by month; quarterly figures drawn through the months
+ dm._preps=dm._preps||{};if(dm._preps[fill])return dm._preps[fill];
  const M=dm.months||[],MF=dm.fields||[],mnum=s=>{const m=/^(\d{4})-(\d{2})$/.exec(s);return m?+m[1]*12+(+m[2]-1):null};
  const qnum=cal=>{const m=/^CY(\d{4})Q(\d)$/.exec(cal);return m?+m[1]*12+3*+m[2]-1:null};
  const fund=Pq.vars.map(v=>v.key).filter(k=>!MF.includes(k)).concat(['rev']);
  const cos=[];
  for(const c of Pq.cos){const rows=(dm.companies||{})[c.t];if(!rows)continue;
   const anchors={};for(const k of fund)anchors[k]=c.pts.map(p=>[qnum(p.cal),p[k]]).filter(a=>a[0]!=null&&fin(a[1])).sort((a,b)=>a[0]-b[0]);
-  const at=(k,n)=>{const a=anchors[k];if(!a.length||n<a[0][0])return null;
-   for(let i=0;i<a.length;i++){if(a[i][0]===n)return a[i][1];if(a[i][0]>n){const [n0,v0]=a[i-1],[n1,v1]=a[i];return v0+(v1-v0)*(n-n0)/(n1-n0)}}
-   return n-a[a.length-1][0]<=6?a[a.length-1][1]:null};          // after the latest quarter: the latest reported, for six months
-  const pts=M.map((ym,i)=>{const p={cal:ym},n=mnum(ym);MF.forEach((k,j)=>{p[k]=rows[i]?rows[i][j]:null});for(const k of fund)p[k]=at(k,n);return p});
+  // how a quarterly figure fills the months: a line between quarter-ends, the last reported value (from the quarter-end
+  // or from about when the 10-Q / 10-K is public, ~2 months later), or only the quarter-end month
+  const lag=fill==='avail'?2:0;
+  const at=(k,n)=>{const a=anchors[k];n-=lag;if(!a.length||n<a[0][0])return [null,false];
+   if(fill==='points'){const h=a.find(x=>x[0]===n);return h?[h[1],false]:[null,false]}
+   for(let i=0;i<a.length;i++){if(a[i][0]===n)return [a[i][1],false];
+    if(a[i][0]>n){const [n0,v0]=a[i-1],[n1,v1]=a[i];return fill==='line'?[v0+(v1-v0)*(n-n0)/(n1-n0),true]:[v0,true]}}
+   return n-a[a.length-1][0]<=6?[a[a.length-1][1],true]:[null,false]};   // after the latest quarter: the latest reported, for six months
+  const pts=M.map((ym,i)=>{const p={cal:ym,_fill:[]},n=mnum(ym);MF.forEach((k,j)=>{p[k]=rows[i]?rows[i][j]:null});
+   for(const k of fund){const [v,f]=at(k,n);p[k]=v;if(f&&v!=null)p._fill.push(k)}return p});
   cos.push({...c,pts});
  }
  const vars=[...Pq.vars.map(({lo,hi,median,scale,n,...v})=>({...v,label:ROT_MONTH_LABELS[v.key]||v.label})),
   ...(MF.includes('rel3')&&!Pq.V.rel3?[{key:'rel3',label:ROT_MONTH_LABELS.rel3,unit:'%',centred:true,group:'Price'}]:[])];
- vars.sort((a,b)=>['Profitability','Growth','Price','Trading','Ownership'].indexOf(a.group)-['Profitability','Growth','Price','Trading','Ownership'].indexOf(b.group));
+ const GO=['Profitability','Growth','Price','Trading','Ownership','Options'];vars.sort((a,b)=>GO.indexOf(a.group)-GO.indexOf(b.group));
  for(const c of cos)c.by=new Map(c.pts.map(p=>[p.cal,p]));
  rotFinish(cos,{},{pts:[]},vars,M);
  const suns={};
  for(const [k,s] of Object.entries(Pq.suns)){const mine=cos.filter(c=>c.s===k);if(mine.length)suns[k]={id:k,name:s.name,pts:rotAverage(mine,vars,M)}}
  const P=rotFinish(cos,suns,{name:'Market',pts:rotAverage(cos,vars,M)},vars,M);
- P.monthly=true;
- return dm._prep=P;
+ P.monthly=true;P.fill=fill;
+ return dm._preps[fill]=P;
 }
 
 /* ---------- the value pipeline: scale → smoothing ---------- */
@@ -126,6 +135,12 @@ function rotSer(o,ent,k){                              // Map period → coordin
  let out=raw;
  if(o.sm==='ewma'){const a=1-Math.pow(.5,1/(o.P.monthly?3:1));let prev=null;out=raw.map(x=>{if(x==null){prev=null;return null}prev=prev==null?x:prev+a*(x-prev);return prev})}
  else if(o.sm==='ma'){const w=o.P.monthly?3:2;out=raw.map((x,i)=>{if(x==null)return null;let s=0,n=0;for(let j=Math.max(0,i-w+1);j<=i;j++)if(raw[j]!=null){s+=raw[j];n++}return s/n})}
+ else if(o.sm==='median'){const w=3;out=raw.map((x,i)=>{if(x==null)return null;const win=raw.slice(Math.max(0,i-w+1),i+1).filter(v=>v!=null).sort((a,b)=>a-b);return win[(win.length-1)>>1]})}
+ else if(o.sm==='holt'){const a=o.P.monthly?.35:.5,b=.3;let L=null,T=0;out=raw.map(x=>{if(x==null){L=null;T=0;return null}if(L==null){L=x;T=0;return x}const L0=L;L=a*x+(1-a)*(L+T);T=b*(L-L0)+(1-b)*T;return L})}
+ else if(o.sm==='kalman'){                          // local-level model; noise variances from this series' own changes
+  const d=[];for(let i=1;i<raw.length;i++)if(raw[i]!=null&&raw[i-1]!=null)d.push(raw[i]-raw[i-1]);
+  const vd=d.length>2?d.reduce((s,v)=>s+v*v,0)/d.length:1,R=vd/2||1,Qn=R*(o.P.monthly?.15:.3);let m=null,Pv=0;
+  out=raw.map(x=>{if(x==null){m=null;return null}if(m==null){m=x;Pv=R;return x}Pv+=Qn;const K=Pv/(Pv+R);m+=K*(x-m);Pv*=(1-K);return m})}
  const m=new Map(o.Q.map((cal,i)=>[cal,out[i]]));C.set(key,m);return m;
 }
 function val(o,ent,v,cal){if(!v)return null;if(v.key==='__time')return o.qi.get(cal)??null;const x=rotSer(o,ent,v.key).get(cal);return x==null?null:x}
@@ -184,10 +199,12 @@ function rotationView(){
  const Pq=rotPrep(g.data);
  if(!Pq.cos.length||!Pq.quarters.length)return out+empty('No company has enough quarters yet. The figures arrive with the collector’s XBRL frames run (module market).');
  state.rview=ROT_VIEWS.some(v=>v[0]===state.rview)?state.rview:state.rview==='orbits'?'solar':'clock';
+ if(state.rview==='rs'&&!state.rsSeen){state.rsSeen=1;state.rfreq='m'}       // the ranking is fresher monthly
  state.rfreq=state.rfreq==='m'&&state.rview!=='scan'?'m':'q';
  let P=Pq,mnote='';
+ state.rfill=ROT_FILL.some(f=>f[0]===state.rfill)?state.rfill:'line';
  if(state.rfreq==='m'){const gm=marketGate('rotation-monthly','Monthly rotation data');
-  if(gm.data){P=rotPrepMonthly(Pq,gm.data);if(!P.cos.length){P=Pq;state.rfreq='q';mnote=empty('No monthly prices yet; showing quarters.')}}
+  if(gm.data){P=rotPrepMonthly(Pq,gm.data,state.rfill);if(!P.cos.length){P=Pq;state.rfreq='q';mnote=empty('No monthly prices yet; showing quarters.')}}
   else{P=Pq;mnote=gm.html}}
  const Q=P.quarters,avail=P.vars.filter(v=>v.n>0);
  const secs=Object.values(P.suns).sort((a,b)=>a.name.localeCompare(b.name));
@@ -207,14 +224,15 @@ function rotationView(){
  const varField=(id,label,value,extra=[])=>`<div class="field"><label for="${id}">${label}</label><select id="${id}">${extra.map(([k,l])=>`<option value="${esc(k)}" ${value===k?'selected':''}>${esc(l)}</option>`).join('')}${groups.map(gname=>`<optgroup label="${esc(gname)}">${options(avail.filter(v=>v.group===gname).map(v=>[v.key,v.label]),value)}</optgroup>`).join('')}</select></div>`;
  const three=state.rview==='3d';
  out+=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${state.rview==='scan'?'':field('rfreq','Frequency',[['q','Quarterly (16 quarters)'],['m','Monthly (48 months)']],state.rfreq)}${field('rsec','Sector',[['','All sectors'],...secs.map(s=>[s.id,s.name])],state.rsec)}`;
- if(state.rview!=='scan')out+=`${varField('rx','→ Horizontal (x)',state.rx)}${varField('ry','↑ Vertical (y)',state.ry)}${three?varField('rz3','↗ Depth (z)',state.rz3,[['__time','Time — rotations become spirals']]):varField('rz','Dot size',state.rz,[['','Revenue']])}`;
+ if(state.rview!=='scan'&&state.rview!=='rs')out+=`${varField('rx','→ Horizontal (x)',state.rx)}${varField('ry','↑ Vertical (y)',state.ry)}${three?varField('rz3','↗ Depth (z)',state.rz3,[['__time','Time — rotations become spirals']]):varField('rz','Dot size',state.rz,[['','Revenue']])}`;
  out+=`<div class="field wide"><label for="rtk">Companies to trace (up to three tickers)</label><input id="rtk" value="${esc(state.rtk||'')}" placeholder="e.g. NVDA, AMD, INTC · Enter"></div></div>`;
- if(state.rview!=='scan')out+=`<div class="toolbar rot-display">${field('rscl','Scale',ROT_SCALES,state.rscl)}${field('rsm','Smoothing',ROT_SMOOTH,state.rsm)}${field(tk,'Trail',trails,state[tk])}${state.rview==='solar'?'':field('rshow','Dots',[['','Automatic'],['avg','Averages and traced only'],['all','Every company too']],state.rshow)}</div>`;
+ if(state.rview!=='scan'&&state.rview!=='rs')out+=`<div class="toolbar rot-display">${field('rscl','Scale',ROT_SCALES,state.rscl)}${field('rsm','Smoothing',ROT_SMOOTH,state.rsm)}${field(tk,'Trail',trails,state[tk])}${state.rview==='solar'?'':field('rshow','Dots',[['','Automatic'],['avg','Averages and traced only'],['all','Every company too']],state.rshow)}${P.monthly?field('rfill','Quarterly figures in months',ROT_FILL,state.rfill):''}</div>`;
  out+=mnote;
  const picks=String(state.rtk||'').toUpperCase().split(/[\s,]+/).filter(Boolean).slice(0,3).map(t=>P.byT.get(t)||P.byT.get(t.replace('.','-'))||P.byT.get(t.replace('-','.'))).filter(Boolean);
  const o={P,Q,qi:new Map(Q.map((c,i)=>[c,i])),x:P.V[state.rx],y:P.V[state.ry],z:three?(state.rz3==='__time'?ROT_TIME:P.V[state.rz3]):(state.rz?P.V[state.rz]:null),
   trail:+state[tk],picks,sec:state.rsec,scl:state.rscl,sm:state.rsm,sig:[P.monthly?'m':'q',state.rscl,state.rsm].join('|')};
  if(state.rview==='scan')out+=scanView(Pq,state.rsec);
+ else if(state.rview==='rs')out+=rsView(P,state.rsec,picks);
  else out+=state.rview==='solar'?solarView(o):three?view3d(o):clockView(o);
  out+=`<details><summary>How these charts are built</summary><p>${esc(g.data.note||'')}</p><p class="sub">Scales: “signed log” keeps small values as they are and compresses large ones (k·asinh(x/k), k = the variable's typical spread), so one outlier no longer flattens everyone else; “rank” and “standard score” place each company against all companies in the same period, which also removes market-wide swings. Smoothing uses past values only (exponential: half-life one quarter or three months; moving average: two quarters or three months), so a smoothed path never knows the future. In the monthly view the stock, volatility and volume are monthly; the quarterly figures (margins, growth, 13F, officials) are drawn in a straight line between quarter-ends — that is a drawing, not new information.</p><p class="sub">A path that circles clockwise means the vertical variable turns first and the horizontal one follows; counter-clockwise, the reverse. With the default axes, clockwise = the stock turned before profit momentum (the market anticipating). A pattern, not a forecast.</p></details>`;
  return out;
@@ -273,7 +291,8 @@ function clockFrame(o,f){
  const sx=v=>Lm+(cx(v)-xd[0])/(xd[1]-xd[0])*(W-Lm-R),sy=v=>T+(yd[1]-cy(v))/(yd[1]-yd[0])*(H-T-B);
  const XY=(e,c)=>{const a=val(o,e,x,c),b=val(o,e,y,c);return a==null||b==null?null:[sx(a),sy(b),a,b]};
  const zr=(p,lo=2,hi=7)=>{if(z){const t=p[z.key]==null?null:(Math.max(z.lo,Math.min(z.hi,p[z.key]))-z.lo)/((z.hi-z.lo)||1);return t==null?lo:lo+(hi-lo)*t}const t=Math.log10(Math.max(1e7,p.rev||1e7));return lo+(hi-lo)*Math.min(1,Math.max(0,(t-7)/4.5))};
- const tipRows=(name,full,p)=>[[name+' · '+qlabel(p.cal),full||''],[vfmt(x,p[x.key]),x.label],[vfmt(y,p[y.key]),y.label],...(z?[[vfmt(z,p[z.key]),z.label]]:[]),...(p.rev?[[money(p.rev),'quarterly revenue']]:[])];
+ const fl=(p,k)=>p._fill&&p._fill.includes(k)?(o.P.fill==='line'?' · drawn between quarter-ends':' · last reported quarter'):'';
+ const tipRows=(name,full,p)=>[[name+' · '+qlabel(p.cal),full||''],[vfmt(x,p[x.key]),x.label+fl(p,x.key)],[vfmt(y,p[y.key]),y.label+fl(p,y.key)],...(z?[[vfmt(z,p[z.key]),z.label+fl(p,z.key)]]:[]),...(p.rev?[[money(p.rev),'quarterly revenue']]:[])];
  let s=`<svg class="plot mk-plot rot-clock" viewBox="0 0 ${W} ${H}" role="img" aria-label="Momentum clock for ${esc(qlabel(cal))}; the table below lists every value">`;
  s+=`<text class="rot-watermark" x="${W-R-10}" y="${H-B-14}" text-anchor="end">${esc(qlabel(cal))}</text>`;
  axisTicks(o,y,yd[0],yd[1],H-T-B).forEach(([v,l])=>{s+=`<line class="mk-grid" x1="${Lm}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}"/><text class="axis" x="${Lm-8}" y="${sy(v)+4}" text-anchor="end">${esc(l)}</text>`});
@@ -524,12 +543,61 @@ function bind3d(){
  repaint();
  if(ROT.spin)spin();
 }
+const rotReduced=()=>typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 function spin(){
+ if(rotReduced()){ROT.spin=false;ROT.yaw+=Math.PI/8;ROT.ctx&&ROT.ctx.paint&&ROT.ctx.paint(state.rf);if($('rspin'))$('rspin').textContent='Turn 22°';return}   // reduced motion: one step per click
  if(ROT.spinning)return;ROT.spinning=true;
  const step=()=>{if(!ROT.spin||state.tab!=='rotation'||!document.getElementById('rot-3d')||!ROT.ctx||!ROT.ctx.paint){ROT.spinning=false;return}
   ROT.yaw+=.006;ROT.ctx.paint(state.rf);requestAnimationFrame(step)};
  requestAnimationFrame(step);
 }
+/* ---------- relative strength ranking ---------- */
+function rsView(P,sec,picks){
+ const Q=P.quarters,f=P.full,cal=Q[f],back=P.monthly?1:1,cal0=Q[Math.max(0,f-back)],cal3=Q[Math.max(0,f-(P.monthly?3:1))];
+ if(!P.V.rs||!P.V.rs.n)return empty('The relative-strength rating arrives with the next publish (it needs a year of daily closes per company).');
+ const scope=rotScope(P,sec),rows=[];
+ for(const c of scope){const p=c.by.get(cal);if(!p||p.rs==null)continue;const p0=c.by.get(cal0),p3=c.by.get(cal3);
+  rows.push({c,p,rs:p.rs,d1:p0&&p0.rs!=null?p.rs-p0.rs:null,d3:p3&&p3.rs!=null?p.rs-p3.rs:null,f13:c.net13f,hist:Q.slice(Math.max(0,f-11),f+1).map(q=>{const x=c.by.get(q);return x?x.rs:null})})}
+ state.rsort=['rs','d3','f13'].includes(state.rsort)?state.rsort:'rs';
+ const key={rs:r=>-r.rs,d3:r=>-(r.d3??-999),f13:r=>-(r.f13??-999)}[state.rsort];
+ rows.sort((a,b)=>key(a)-key(b)||b.rs-a.rs);
+ const unit=P.monthly?'month':'quarter';
+ let out=`<div class="explain">Relative strength (RS) rating: each company's stock return over the last 3, 6, 9 and 12 months (the last 3 months counting double), ranked against every company here — 99 is the strongest, 1 the weakest — as of the end of ${esc(qlabel(cal))}. It describes what the price did, not what it will do.${P.monthly?'':' Switch Frequency to monthly for a fresher rating.'}</div>`;
+ out+=`<div class="toolbar">${field('rsort','Sort',[['rs','Highest rating'],['d3','Biggest rise in 3 '+(P.monthly?'months':'quarters').replace('3 quarters','a quarter')],['f13','Most 13F managers adding']],state.rsort)}</div>`;
+ // sectors
+ const secRows=Object.values(P.suns).map(sn=>{const xs=rotScope(P,sn.id).map(c=>(c.by.get(cal)||{}).rs).filter(v=>v!=null),x0=rotScope(P,sn.id).map(c=>(c.by.get(cal3)||{}).rs).filter(v=>v!=null);
+  const avg=xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null,avg0=x0.length?x0.reduce((a,b)=>a+b,0)/x0.length:null;return {sn,avg,d:avg!=null&&avg0!=null?avg-avg0:null,n:xs.length}}).filter(r=>r.avg!=null&&r.n>=3).sort((a,b)=>b.avg-a.avg);
+ out+=`<div class="charts even"><div class="panel"><h3>Sectors by average RS rating</h3><p class="sub">Bars from the middle (50): right of it, the sector's stocks have been stronger than most · ${esc(qlabel(cal))}</p>${divergingChart(secRows.map(r=>({label:r.sn.name.replace(/ (Services|Discretionary)$/,m=>m===' Discretionary'?' Disc.':''),value:r.avg-50,tip:[[r.sn.name,fmt(r.n)+' companies'],[fmt(r.avg,0),'average RS rating'],[r.d==null?'—':(r.d>=0?'+':'−')+fmt(Math.abs(r.d),0),'change since '+qlabel(cal3)]]})),{unit:'count',label:'Average RS rating by sector',format:v=>fmt(v+50,0)})}</div>`;
+ out+=`<div class="panel"><h3>Strength and 13F buying</h3><p class="sub">→ RS rating · ↑ net 13F managers in the latest quarter on file (buyers − sellers) · the top-right are strong stocks institutions were adding</p>${rsScatter(rows,picks)}</div></div>`;
+ exported=rows.map(r=>({ticker:r.c.t,name:r.c.n,sector:r.c.s,rs:r.rs,rs_change_1:r.d1,rs_change_3:r.d3,rel3:r.p.rel3??r.p.rel,mom121:r.p.mom121,hi52:r.p.hi52,net13f:r.f13}));
+ out+=`<div class="section-head"><h3>${fmt(rows.length)} companies ranked · ${esc(qlabel(cal))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+ const chg=v=>v==null?'—':`<span class="${v>=0?'positive':'negative'}">${v>0?'+':v<0?'−':''}${fmt(Math.abs(v),0)}</span>`;
+ const rv=P.V.rel3||P.V.rel;
+ out+=table(['#','Company','Sector','RS rating','RS change, 1 '+unit,...(P.monthly?['RS change, 3 months']:[]),vshort(rv),'12–1 momentum','From 52-week high','13F net managers','RS, last 12 '+unit+'s'],rows.map((r,i)=>[
+  String(i+1),`<b>${esc(r.c.t)}</b> <span class="muted">${esc(r.c.n)}</span>`,esc((P.suns[r.c.s]||{}).name||r.c.s),`<b>${fmt(r.rs,0)}</b>`,chg(r.d1),...(P.monthly?[chg(r.d3)]:[]),vcell(rv,r.p[rv.key]),vcell(P.V.mom121||rv,r.p.mom121),r.p.hi52==null?'—':vfmt(P.V.hi52,r.p.hi52),r.f13==null?'—':signed(r.f13),rsSpark(r.hist)]));
+ return out;
+}
+function rsSpark(h){
+ const v=h.map((x,i)=>[i,x]).filter(a=>a[1]!=null);if(v.length<2)return '—';
+ const W=96,H=24,x=i=>2+i/(h.length-1)*(W-4),y=r=>H-2-(r-1)/98*(H-4);
+ return `<svg class="mk-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="RS rating from ${v[0][1]} to ${v[v.length-1][1]}"><line x1="0" x2="${W}" y1="${y(50)}" y2="${y(50)}" class="mk-axis"/><polyline points="${v.map(([i,r])=>x(i).toFixed(1)+','+y(r).toFixed(1)).join(' ')}" class="mk-spark-line"/><circle cx="${x(v[v.length-1][0])}" cy="${y(v[v.length-1][1])}" r="2.6" class="${v[v.length-1][1]>=50?'mk-buy':'mk-sell'}"/></svg>`;
+}
+function rsScatter(rows,picks){
+ const pts=rows.filter(r=>r.f13!=null);if(pts.length<5)return empty('No 13F changes on file for these companies yet.');
+ const W=720,H=360,L=48,R=16,T=14,B=36,ys=pts.map(r=>r.f13).sort((a,b)=>a-b),lo=Math.min(-5,quantile(ys,.02)),hi=Math.max(5,quantile(ys,.98));
+ const sx=v=>L+(v-1)/98*(W-L-R),sy=v=>T+(hi-Math.max(lo,Math.min(hi,v)))/(hi-lo)*(H-T-B);
+ let s=`<svg class="plot mk-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="RS rating against net 13F managers; the table below lists every value">`;
+ niceTicks(lo,hi,5).forEach(v=>{s+=`<line class="mk-grid" x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}"/><text class="axis" x="${L-6}" y="${sy(v)+4}" text-anchor="end">${v>0?'+':''}${fmt(v)}</text>`});
+ [1,25,50,75,99].forEach(v=>{s+=`<text class="axis" x="${sx(v)}" y="${H-B+16}" text-anchor="middle">${v}</text>`});
+ s+=`<line class="mk-axis" x1="${sx(50)}" x2="${sx(50)}" y1="${T}" y2="${H-B}"/><line class="mk-axis" x1="${L}" x2="${W-R}" y1="${sy(0)}" y2="${sy(0)}"/>`;
+ s+=`<text class="mk-quad" x="${W-R-4}" y="${T+12}" text-anchor="end">Strong · being bought</text><text class="mk-quad" x="${L+6}" y="${T+12}">Weak · being bought</text><text class="mk-quad" x="${W-R-4}" y="${H-B-8}" text-anchor="end">Strong · being sold</text><text class="mk-quad" x="${L+6}" y="${H-B-8}">Weak · being sold</text><text class="axis" x="${(L+W-R)/2}" y="${H-4}" text-anchor="middle">RS rating →</text>`;
+ const pk=new Set(picks.map(c=>c.t)),lab=new Set(pts.filter(r=>r.f13>0).sort((a,b)=>(b.rs*1+b.f13)-(a.rs*1+a.f13)).slice(0,8).map(r=>r.c.t));
+ pts.forEach(r=>{const i=picks.findIndex(c=>c.t===r.c.t),x=sx(r.rs),y=sy(r.f13);
+  s+=`<g data-tip="${tip([[r.c.t,r.c.n||''],[fmt(r.rs,0),'RS rating'],[signed(r.f13),'net 13F managers'],...(r.d3!=null?[[(r.d3>=0?'+':'−')+fmt(Math.abs(r.d3),0),'RS change']]:[])])}" tabindex="-1" class="mk-hit"><circle cx="${x}" cy="${y}" r="9" fill="transparent"/><circle cx="${x}" cy="${y}" r="${i>=0?5.5:3}" class="${i>=0?'rot-dot':r.rs>=50&&r.f13>0?'mk-hot':'rot-cloud'}" style="${i>=0?'fill:'+ROT_SERIES[i]:''}"/></g>`;
+  if(i>=0||lab.has(r.c.t)){const left=x>W-R-60;s+=`<text class="mk-label mk-halo" x="${left?x-7:x+7}" y="${y-6}" text-anchor="${left?'end':'start'}">${esc(r.c.t)}</text>`}});
+ return s+'</svg>';
+}
+
 /* ---------- find the best axes: an exhaustive scan ---------- */
 function rotRanks(P,sec){                            // per quarter: centred percentile ranks of every variable, and next quarter's stock vs S&P
  const key='ranks|'+sec;if(P.cache[key])return P.cache[key];
@@ -567,7 +635,7 @@ function scanSorters(P,sec){
  for(const r of rows.slice(0,25))r.spread=(evalCombo(r.keys,r.signs,true)||{}).spread;   // top − bottom fifth: only for the rows shown
  return P.cache[key]={rows,tested:rows.length,quarters:Math.max(0,...rows.map(r=>r.n))};
 }
-const ROT_FAMILY={om:'om',dom:'om',gm:'gm',dgm:'gm',nm:'nm',dnm:'nm',revg:'rev',reva:'rev',rel:'px',rel6:'px',ret:'px'};
+const ROT_FAMILY={om:'om',dom:'om',gm:'gm',dgm:'gm',nm:'nm',dnm:'nm',revg:'rev',reva:'rev',rel:'px',rel3:'px',rel6:'px',ret:'px',rs:'px',mom121:'px',hi52:'px'};
 const sameFamily=(a,b)=>ROT_FAMILY[a]&&ROT_FAMILY[a]===ROT_FAMILY[b];   // one is built from the other: they circle by construction
 function scanCycles(P,sec){
  const key='cyc|'+sec;if(P.cache[key])return P.cache[key];
@@ -632,12 +700,12 @@ function rotToggle(){
  ROT.timer=setInterval(()=>{
   if(state.tab!=='rotation'||!(document.getElementById('rot-plot')||document.getElementById('rot-3d'))){rotStop();return}
   if(state.rf>=n-1){rotStop();render();return}
-  state.rf++;rotDraw()},c.P&&c.P.monthly?380:850);
+  state.rf++;rotDraw()},(c.P&&c.P.monthly?380:850)*(rotReduced()?2.5:1));
  rotDraw();
 }
 function bindRotSuns(){document.querySelectorAll('#workspace [data-rsec]').forEach(b=>b.onclick=()=>{rotStop();state.rsec=b.dataset.rsec;state.rview=state.rview==='scan'?'solar':state.rview;render()})}
 function bindRotation(){
- for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rscl','rsm','rfreq'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';render()};
+ for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rscl','rsm','rfreq','rfill','rsort'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';render()};
  if($('rtk')){$('rtk').onchange=e=>{state.rtk=e.target.value;render()};$('rtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rplay'))$('rplay').onclick=rotToggle;
  if($('rframe')){$('rframe').oninput=e=>{rotStop();state.rf=+e.target.value;rotDraw()};$('rframe').onchange=e=>{state.rf=+e.target.value;render()}}
