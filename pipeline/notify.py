@@ -1106,7 +1106,11 @@ class Mailer:
         else:
             self.smtp = smtplib.SMTP(self.host, self.port, timeout=60)
             self.smtp.starttls()
-        self.smtp.login(self.user, self.password)
+        try:
+            self.smtp.login(self.user, self.password)
+        except Exception as err:
+            raise RuntimeError(f"SMTP login as {self.user} on {self.host}:{self.port} failed ({err}). Gmail: MAIL_PASSWORD must be a "
+                               "16-character App password of that account (needs 2-Step Verification), not the account's password") from err
 
     def send(self, msg):
         import smtplib
@@ -1439,12 +1443,15 @@ def main():
     ap.add_argument("--check", action="store_true", help="exit 0 when the Supabase settings are present")
     ap.add_argument("--due", action="store_true", help="exit 0 when some reader has an e-mail due now; send nothing")
     ap.add_argument("--requests", action="store_true", help="only the reports readers asked for with \"Email me\"")
+    ap.add_argument("--mail-test", metavar="ADDRESS", help="log in to the SMTP server and send one test e-mail there; nothing else")
     ap.add_argument("--posts", action="store_true", help="with --requests: only the owner's Post-to-X requests (post-to-x.yml); without it they are left alone")
     args = ap.parse_args()
     url, key = setting("SUPABASE_URL", url=True), setting("SUPABASE_SERVICE_KEY")
     user, password = os.environ.get("MAIL_USERNAME", ""), os.environ.get("MAIL_PASSWORD", "")
     if args.check:
         sys.exit(0 if url and key else 1)
+    if args.mail_test:
+        sys.exit(mail_test(args.mail_test, user, password))
     if not (url and key):
         print("SUPABASE_URL / SUPABASE_SERVICE_KEY not set: reader alerts are off.")
         sys.exit(1 if args.due else 0)
@@ -1460,13 +1467,42 @@ def main():
     mailer = None
     if not args.dry_run:
         if not (user and password):
+            if os.environ.get("GITHUB_ACTIONS"):
+                print("::error::MAIL_USERNAME / MAIL_PASSWORD are not set (Settings → Secrets and variables → Actions → Secrets): nothing can be e-mailed")
+                sys.exit(2)
             print("MAIL_USERNAME / MAIL_PASSWORD not set: printing what would be sent.")
             args.dry_run = True
         else:
             mailer = Mailer(os.environ.get("SMTP_HOST") or "smtp.gmail.com", os.environ.get("SMTP_PORT") or 465, user, password)
     sender = os.environ.get("MAIL_FROM") or formataddr(("Filing Flows", parseaddr(user)[1] or user))
-    run(site, Supa(url, key), mailer, sender, site_url.rstrip("/"), dry_run=args.dry_run, images=not args.no_images,
-        requests_only=args.requests, posts=args.posts)
+    n = run(site, Supa(url, key), mailer, sender, site_url.rstrip("/"), dry_run=args.dry_run, images=not args.no_images,
+            requests_only=args.requests, posts=args.posts)
+    if n and not args.dry_run and os.environ.get("GITHUB_ACTIONS"):
+        print(f"::notice::{n} e-mail(s) sent from {sender}")
+
+
+def mail_test(to, user, password):
+    """`--mail-test address`: one plain e-mail, so the SMTP secrets can be checked from the Actions tab."""
+    from email.message import EmailMessage
+    if not (user and password):
+        print("::error::MAIL_USERNAME / MAIL_PASSWORD are not set")
+        return 2
+    sender = os.environ.get("MAIL_FROM") or formataddr(("Filing Flows", parseaddr(user)[1] or user))
+    host, port = os.environ.get("SMTP_HOST") or "smtp.gmail.com", os.environ.get("SMTP_PORT") or 465
+    msg = EmailMessage()
+    msg["Subject"] = "Filing Flows: test e-mail"
+    msg["From"], msg["To"] = sender, to
+    msg.set_content(f"This is a test from the Filing Flows mail setup.\nSMTP {host}:{port}, login {user}, sent {_now_iso()}.\n"
+                    "If you read this, reader reports and the daily report can be delivered from this address.")
+    try:
+        m = Mailer(host, port, user, password)
+        m.send(msg)
+        m.close()
+    except Exception as err:
+        print(f"::error::test e-mail not sent: {err}")
+        return 1
+    print(f"::notice::test e-mail sent from {sender} to {to} via {host}:{port} (login {user}). Check the inbox and the spam folder.")
+    return 0
 
 
 if __name__ == "__main__":

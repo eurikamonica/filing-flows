@@ -1,0 +1,40 @@
+name: Mail test
+
+# Checks the e-mail secrets: logs in to the SMTP server with MAIL_USERNAME / MAIL_PASSWORD and sends one test
+# e-mail. The result shows as an annotation on the run (green notice = sent; red error = what went wrong).
+# Actions → Mail test → Run workflow → the address to send to.
+
+on:
+  workflow_dispatch:
+    inputs:
+      to:
+        description: "Send the test e-mail to"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      MAIL_FROM: ${{ vars.MAIL_FROM }}
+      SMTP_HOST: ${{ vars.SMTP_HOST }}
+      SMTP_PORT: ${{ vars.SMTP_PORT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Log in and send one e-mail
+        run: |
+          echo "MAIL_USERNAME set: $([ -n "$MAIL_USERNAME" ] && echo yes || echo NO)"
+          echo "MAIL_PASSWORD set: $([ -n "$MAIL_PASSWORD" ] && echo "yes (${#MAIL_PASSWORD} characters)" || echo NO)"
+          echo "MAIL_FROM: ${MAIL_FROM:-(default: Filing Flows <MAIL_USERNAME>)}   SMTP: ${SMTP_HOST:-smtp.gmail.com}:${SMTP_PORT:-465}"
+          python -m pipeline.notify --mail-test "${{ inputs.to }}"
