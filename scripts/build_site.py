@@ -80,6 +80,20 @@ def main():
         page = open(os.path.join(WEB, name), encoding="utf-8").read().replace("<!--CONTACT-->", contact)
         open(os.path.join(args.out, name), "w", encoding="utf-8").write(page)
     open(os.path.join(args.out, ".nojekyll"), "w").close()
+    # search-engine pages (c/<ticker>/, sector/<id>/, sitemap.xml, robots.txt): the app's #c-… routes are not indexed
+    if not args.inline:
+        import sys
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import seo
+        for name in ("seo.css", "og.png"):
+            if os.path.exists(os.path.join(WEB, name)):
+                shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
+        base = setting("SITE_URL", url=True)
+        if not base and os.environ.get("GITHUB_REPOSITORY"):
+            owner, repo = os.environ["GITHUB_REPOSITORY"].split("/", 1)
+            base = f"https://{owner.lower()}.github.io/{repo}"
+        if base:
+            print(f"search pages: {seo.write_pages(data_out, args.out, base)} companies, sitemap at {base}/sitemap.xml")
     # a custom domain (repository variable SITE_URL, e.g. https://filing-flows.com/): GitHub Pages reads the CNAME file
     host = re.sub(r"^https?://", "", setting("SITE_URL", url=True)).split("/")[0]
     if host and not host.endswith("github.io"):

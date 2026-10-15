@@ -1,0 +1,26 @@
+/* Search-engine pages (scripts/seo.py): the same tokens as the app, a plain reading layout. */
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--sans); }
+.seo-top { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding: 14px max(16px, calc((100vw - 980px) / 2)); border-bottom: 1px solid var(--line); background: var(--surface); }
+.seo-brand { font-weight: 600; font-size: 17px; color: var(--ink); text-decoration: none; }
+.seo-top nav { display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px; }
+.seo-top nav a { color: var(--ink-2); text-decoration: none; }
+.seo { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }
+.seo h1 { font-size: clamp(26px, 4vw, 36px); line-height: 1.2; letter-spacing: -.01em; margin: 6px 0 10px; }
+.seo h2 { font-size: 20px; margin: 30px 0 10px; }
+.seo .lead { color: var(--ink-2); max-width: 75ch; }
+.seo .crumbs { font-size: 13px; color: var(--muted); margin: 0; }
+.seo .crumbs a { color: var(--muted); }
+.seo-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 18px 0; }
+.seo-tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.seo-tile span { display: block; font-size: 12.5px; color: var(--muted); }
+.seo-tile b { display: block; font-size: 22px; font-weight: 600; margin-top: 4px; }
+.seo-cta { display: inline-block; background: var(--ink); color: var(--bg); text-decoration: none; padding: 10px 16px; border-radius: 8px; font-weight: 500; margin-right: 10px; }
+.seo-cta:hover { background: var(--accent); color: #fff; }
+.seo blockquote { margin: 0; padding: 10px 14px; border-left: 3px solid var(--line); color: var(--ink-2); background: var(--surface); border-radius: 0 8px 8px 0; }
+.seo table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 640px; }
+.seo th, .seo td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.seo th { background: var(--surface-2); font-size: 12px; color: var(--muted); font-weight: 500; }
+.seo td.num, .seo th.num { text-align: right; font-family: var(--mono); font-size: 13px; }
+.seo-list { padding-left: 18px; line-height: 1.9; }
+.seo .muted { color: var(--muted); font-size: 13.5px; }
+.seo-foot { max-width: 980px; margin: 0 auto; padding: 16px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); }
