@@ -28,6 +28,13 @@ jobs:
       PAGES: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
     steps:
       - uses: actions/checkout@v4
+        with:                      # the app only: skip disclosures/ (the hub's multi-GB data), which this job never reads
+          sparse-checkout: |
+            pipeline
+            config
+            scripts
+            web
+            supabase
 
       - uses: actions/setup-python@v5
         with:

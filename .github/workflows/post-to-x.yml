@@ -58,6 +58,13 @@ jobs:
       REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
     steps:
       - uses: actions/checkout@v4
+        with:                      # the app only: skip disclosures/ (the hub's multi-GB data), which this job never reads
+          sparse-checkout: |
+            pipeline
+            config
+            scripts
+            web
+            supabase
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
