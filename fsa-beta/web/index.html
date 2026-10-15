@@ -1,0 +1,14 @@
+<!doctype html>
+<!-- Created by ChatGPT (OpenAI). Isolated FSA Beta. -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FSA Lab · Isolated Beta</title><link rel="stylesheet" href="/style.css"></head>
+<body><header><span class="brand">F↗ / FSA LAB</span><span class="badge">ISOLATED BETA · CHATGPT (OPENAI)</span></header>
+<main><section class="hero"><div class="eyebrow">BEHIND THE EARNINGS</div><h1>Follow the profit.<br>Question the quality.</h1><p>Reserves, accruals and operating returns, with the evidence kept beside the numbers.</p></section>
+<div class="toolbar"><button id="demo">Load fictional example</button><label class="button">Import JSON<input id="file" type="file" accept=".json,application/json" hidden></label><button id="analyze" class="primary">Analyze input</button><button id="download">Export analysis</button></div>
+<p id="status" role="status">Loading local workspace…</p><details><summary>Input data · edit or paste a sourced report</summary><textarea id="input" aria-label="Financial report JSON" spellcheck="false"></textarea></details>
+<section id="report" hidden><div class="sectionhead"><div><span class="eyebrow" id="unit"></span><h2 id="company"></h2></div><label>Period <select id="period"></select></label></div><p id="demo-note"></p><div id="kpis" class="kpis"></div>
+<div class="grid"><article><h2>Income → cash</h2><p class="muted">Signed amounts; calculated FCF = OCF − capex.</p><div id="income"></div></article><article><h2>Operating / financing</h2><p class="muted">Reviewed classifications supplied by you.</p><div id="reform"></div></article></div>
+<article><h2>Reserve rollforwards</h2><p class="muted">Opening + additions − releases − utilization + other = closing. A release is a review signal, not proof of manipulation.</p><div id="reserves"></div></article>
+<div class="grid"><article><h2>Earnings-quality review</h2><div id="findings"></div></article><article><h2>Formulas & assumptions</h2><div id="formulas"></div></article></div>
+<article><h2>Evidence register</h2><div id="sources"></div><div id="warnings"></div></article>
+<article><span class="eyebrow">YOUR FINANCIAL ASSISTANT</span><h2>Ask the local specialist</h2><p class="muted">A small trained topic classifier selects deterministic financial calculations. It is not a distilled language model.</p><div class="ask"><input id="question" placeholder="Explain accruals / 准备转回 / RNOA"><button id="ask">Ask locally</button><button id="gemini">Explain with Gemini</button></div><p class="muted">Gemini sends this report and evidence excerpts to Google. Use public data only. Setup and free-tier eligibility are server-side. Model wording is unverified.</p><pre id="answer"></pre></article></section>
+<footer>Created by ChatGPT (OpenAI) · Standalone research beta · Original Filing Flows application is not connected.</footer></main><script src="/app.js"></script></body></html>

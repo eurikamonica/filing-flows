@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "author": "ChatGPT (OpenAI)",
+  "demo": true,
+  "company": "Example Manufacturing \u00b7 FICTIONAL",
+  "currency": "USD",
+  "unit": "millions",
+  "sources": {
+    "demo-2024": {
+      "excerpt": "Fictional 2024 financial statements and warranty rollforward for software testing; not an SEC filing.",
+      "url": ""
+    },
+    "demo-2025": {
+      "excerpt": "Fictional 2025 financial statements and warranty rollforward for software testing; not an SEC filing.",
+      "url": ""
+    }
+  },
+  "periods": [
+    {
+      "label": "2024",
+      "kind": "annual",
+      "start": "2024-01-01",
+      "end": "2024-12-31",
+      "operating_tax_rate": 0.25,
+      "values": {
+        "revenue": {
+          "value": 1000,
+          "source_ids": [
+            "demo-2024"
+          ]
+        },
+        "operating_income": {
+          "value": 120,
+          "source_ids": [
+            "demo-2024"
+          ]
+        },
+        "net_income": {
+          "value": 80,
+          "source_ids": [
+            "demo-2024"
+          ]
+        },
+        "ocf": {
+          "value": 90,
+          "source_ids": [
+            "demo-2024"
+          ]
+        },
+        "capex": {
+          "value": 40,
+          "source_ids": [
+            "demo-2024"
+          ]
+        },
+        "assets": {
+          "value": 800,
+          "source_ids": [
+            "demo-2024"
+          ]
+        },
+        "operating_assets": {
+          "value": 650,
+          "source_ids": [
+            "demo-2024"
+          ]
+        },
+        "operating_liabilities": {
+          "value": 220,
+          "source_ids": [
+            "demo-2024"
+          ]
+        },
+        "financial_assets": {
+          "value": 150,
+          "source_ids": [
+            "demo-2024"
+          ]
+        },
+        "financial_liabilities": {
+          "value": 250,
+          "source_ids": [
+            "demo-2024"
+          ]
+        },
+        "equity": {
+          "value": 330,
+          "source_ids": [
+            "demo-2024"
+          ]
+        }
+      },
+      "reserves": [
+        {
+          "name": "Warranty provision",
+          "release_in_income": true,
+          "opening": {
+            "value": 20,
+            "source_ids": [
+              "demo-2024"
+            ]
+          },
+          "additions": {
+            "value": 30,
+            "source_ids": [
+              "demo-2024"
+            ]
+          },
+          "releases": {
+            "value": 0,
+            "source_ids": [
+              "demo-2024"
+            ]
+          },
+          "utilization": {
+            "value": 15,
+            "source_ids": [
+              "demo-2024"
+            ]
+          },
+          "other": {
+            "value": 0,
+            "source_ids": [
+              "demo-2024"
+            ]
+          },
+          "closing": {
+            "value": 35,
+            "source_ids": [
+              "demo-2024"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "label": "2025",
+      "kind": "annual",
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "operating_tax_rate": 0.25,
+      "values": {
+        "revenue": {
+          "value": 1100,
+          "source_ids": [
+            "demo-2025"
+          ]
+        },
+        "operating_income": {
+          "value": 140,
+          "source_ids": [
+            "demo-2025"
+          ]
+        },
+        "net_income": {
+          "value": 100,
+          "source_ids": [
+            "demo-2025"
+          ]
+        },
+        "ocf": {
+          "value": 65,
+          "source_ids": [
+            "demo-2025"
+          ]
+        },
+        "capex": {
+          "value": 40,
+          "source_ids": [
+            "demo-2025"
+          ]
+        },
+        "assets": {
+          "value": 900,
+          "source_ids": [
+            "demo-2025"
+          ]
+        },
+        "operating_assets": {
+          "value": 740,
+          "source_ids": [
+            "demo-2025"
+          ]
+        },
+        "operating_liabilities": {
+          "value": 240,
+          "source_ids": [
+            "demo-2025"
+          ]
+        },
+        "financial_assets": {
+          "value": 160,
+          "source_ids": [
+            "demo-2025"
+          ]
+        },
+        "financial_liabilities": {
+          "value": 300,
+          "source_ids": [
+            "demo-2025"
+          ]
+        },
+        "equity": {
+          "value": 360,
+          "source_ids": [
+            "demo-2025"
+          ]
+        }
+      },
+      "reserves": [
+        {
+          "name": "Warranty provision",
+          "release_in_income": true,
+          "opening": {
+            "value": 35,
+            "source_ids": [
+              "demo-2025"
+            ]
+          },
+          "additions": {
+            "value": 10,
+            "source_ids": [
+              "demo-2025"
+            ]
+          },
+          "releases": {
+            "value": 20,
+            "source_ids": [
+              "demo-2025"
+            ]
+          },
+          "utilization": {
+            "value": 10,
+            "source_ids": [
+              "demo-2025"
+            ]
+          },
+          "other": {
+            "value": 0,
+            "source_ids": [
+              "demo-2025"
+            ]
+          },
+          "closing": {
+            "value": 15,
+            "source_ids": [
+              "demo-2025"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
