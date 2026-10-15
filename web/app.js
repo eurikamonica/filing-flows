@@ -1695,7 +1695,7 @@
     if (r.error && /limit/i.test(r.error.message)) return 'Limit reached: 30 e-mails a day';
     if (r.error && (tableMissing(r.error) || /check constraint|violates row-level/i.test(r.error.message))) return OWNER_UPDATE;
     if (r.error) return `Could not send: ${r.error.message}`;
-    if (/post/i.test(row.kind || '')) return `${what} queued: it reaches Buffer within about ten minutes, then follows your posting schedule`;
+    if (/post|engage/i.test(row.kind || '')) return `${what} queued: it reaches Buffer within a few minutes, then follows your posting schedule`;
     return `${what} on the way to ${user.email}, usually within a few minutes`;
   }
 
@@ -2078,6 +2078,7 @@
       const co = byCik.get(String(x.cik));
       const fy = x.kind === 'fy';
       if (x.kind === 'day') return `<tr><td>Daily report</td><td>filings dated ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
+      if (/^engage_/.test(x.kind || '')) return `<tr><td>X post (Buffer)</td><td>${t(x.kind.slice(7).replace(/_/g, ' '))} · asked ${date(x.created_at)}</td><td class="muted">${state(x)}</td></tr>`;
       return `<tr><td>${co ? `<a href="#c-${x.cik}-${fy ? 'fy-' : ''}${x.period_end}">${t(co.ticker || co.name)}</a>` : x.cik}</td>
         <td>${x.kind === 'thread' ? 'X thread · ' : x.kind === 'post' ? 'X post (Buffer) · ' : x.kind === 'post_holders' ? 'X post, holders (Buffer) · ' : ''}${fy ? 'fiscal year' : 'quarter'} ended ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
     }).join('');
@@ -2191,9 +2192,21 @@
           <button class="btn" type="button" id="reread-all" title="Every stored company, a few dozen per scan">Re-read every company</button></form>
         <p class="muted small" id="reread-msg" role="status"></p>
         <div id="reread-list-box"></div></section>` : ''}
+      ${c ? `<section class="section" id="engage"><div class="section-head"><h2>Engagement posts to X</h2>
+          <span class="muted">Written by the model from the real charts, queued in Buffer. They also run on their own schedule
+          (before the open: today’s filers + Reddit; after the close: question of the day); these buttons write one now.</span></div>
+        <div class="row" id="engage-bar">
+          <button class="btn" type="button" data-engage="engage_question" title="The most striking filing of the last day: one fact, 2–3 options to reply with">✦ Question of the day</button>
+          <button class="btn" type="button" data-engage="engage_list" title="Every company that filed in the last day, as cashtags, with up to four charts">✦ Today’s filers</button>
+          <button class="btn" type="button" data-engage="engage_reddit_question" title="The company trending hardest on investing subreddits">✦ Reddit question</button>
+          <button class="btn" type="button" data-engage="engage_reddit_list" title="The three to five companies trending on Reddit">✦ Reddit list</button>
+        </div>
+        <p class="muted small" id="engage-msg" role="status"></p></section>` : ''}
       <section class="section daily" id="daily" hidden></section>
       ${back}`;
     $('#owner-toggle').addEventListener('click', () => { prefs.set('owner', !on); route(); });
+    $$('[data-engage]').forEach((b) => b.addEventListener('click', () => withProgress(b, (x) => { $('#engage-msg').textContent = x || ''; },
+      () => askFor({ cik: 0, period_end: localISO(new Date()), kind: b.dataset.engage }, b.textContent.replace(/^✦\s*/, '')))));
     const form = $('#owner-form');
     if (form) form.addEventListener('submit', async (ev) => {
       ev.preventDefault();

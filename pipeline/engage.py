@@ -209,18 +209,10 @@ def plan_reddit_list(site, rows, c, trends, by_ticker, state_ok):
 
 
 # ------------------------------------------------------------------ main
-def main():
-    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--site", default=os.environ.get("SITE_URL") or "_site")
-    ap.add_argument("--site-url", default=None)
-    ap.add_argument("--media", default=os.environ.get("MEDIA_DIR", "media"))
-    ap.add_argument("--kinds", default="question,list,reddit_question,reddit_list")
-    ap.add_argument("--dry-run", action="store_true")
-    args = ap.parse_args()
+def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
+    """Plan, write, polish and check the posts of these kinds; draw the charts into media/x/ and append to
+    media/x/pending.json. force=True ignores the per-format cooldown (Owner tools "write it now"). Returns the labels made."""
     c = cfg()
-    kinds = [k.strip() for k in args.kinds.split(",") if k.strip()]
-    site = notify.Site(args.site)
-    site_url = (args.site_url or os.environ.get("SITE_URL") or (args.site if site.remote else "")).rstrip("/")
     ix = site.json("index.json")
     rows = ix["companies"] if isinstance(ix, dict) else ix
     for e in rows:
@@ -234,7 +226,7 @@ def main():
     today = dt.datetime.now(dt.timezone.utc).date()
     now = dt.datetime.now(dt.timezone.utc)
 
-    xdir = os.path.join(args.media, "x")
+    xdir = os.path.join(media, "x")
     state_path = os.path.join(xdir, "engage-state.json")
     state = json.load(open(state_path, encoding="utf-8")) if os.path.exists(state_path) else {}
 
@@ -242,7 +234,7 @@ def main():
         return (state.get(f"{kind}:{ticker}") or "") < (now - dt.timedelta(days=c["cooldown_days"])).isoformat()
 
     def kind_ok(kind):
-        return (state.get(f"kind:{kind}") or "") < (now - dt.timedelta(hours=c["kind_cooldown_hours"])).isoformat()
+        return force or (state.get(f"kind:{kind}") or "") < (now - dt.timedelta(hours=c["kind_cooldown_hours"])).isoformat()
 
     trends = None
     plans = []
@@ -263,40 +255,57 @@ def main():
 
     tags = [t for t in c["hashtags"] if t]
     made = []
+    for p in plans:
+        try:
+            post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True))
+        except Exception as err:
+            print(f"::warning::{p['kind']}: no post ({str(err)[:160]})")
+            continue
+        e0, cj0, q0 = p["items"][0] if p["items"] else (None, None, None)
+        reply = ("Charts: " + "; ".join(f"${e['ticker']} {q['label']} ({q.get('form')} filed {q.get('filed')})" for e, _, q in p["items"])
+                 + f". Read automatically from the filings; not investment advice. {site_url}/#c-{e0['cik']}") if e0 else ""
+        print(f"[{p['kind']}] {post}" + (f"\n   ↳ {reply}" if reply else ""))
+        if dry_run:
+            made.append(f"{p['kind']}: {post}")
+            continue
+        os.makedirs(xdir, exist_ok=True)
+        images = []
+        for e, cj, q in p["items"][:4]:
+            png = assets.image(e, cj, q, "std", "png")
+            if png:
+                name = social.image_names(e, q, 1)[0].replace("-1-chart", f"-{p['kind']}")
+                open(os.path.join(xdir, name), "wb").write(png)
+                images.append(name)
+        pend_path = os.path.join(xdir, "pending.json")
+        pending = json.load(open(pend_path, encoding="utf-8")) if os.path.exists(pend_path) else []
+        pending.append({"cik": e0["cik"] if e0 else None, "end": e0["end"] if e0 else None, "label": f"{p['kind']}: " + " ".join(p["cashtags"]),
+                        "posts": [post] + ([reply] if reply else []), "written_by": "model", "images": images})
+        json.dump(pending, open(pend_path, "w", encoding="utf-8"), ensure_ascii=False)
+        stamp = now.isoformat()
+        state[f"kind:{p['kind']}"] = stamp
+        for t in p["cashtags"]:
+            state[f"{p['kind']}:{t}"] = stamp
+        json.dump(state, open(state_path, "w", encoding="utf-8"))
+        made.append(f"{p['kind']}: {post}")
+    return made
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--site", default=os.environ.get("SITE_URL") or "_site")
+    ap.add_argument("--site-url", default=None)
+    ap.add_argument("--media", default=os.environ.get("MEDIA_DIR", "media"))
+    ap.add_argument("--kinds", default="question,list,reddit_question,reddit_list")
+    ap.add_argument("--force", action="store_true", help="ignore the per-format cooldown")
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+    kinds = [k.strip() for k in args.kinds.split(",") if k.strip()]
+    site = notify.Site(args.site)
+    site_url = (args.site_url or os.environ.get("SITE_URL") or (args.site if site.remote else "")).rstrip("/")
     with notify.Assets(site, enabled=not args.dry_run) as assets:
-        for p in plans:
-            try:
-                post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True))
-            except Exception as err:
-                print(f"::warning::{p['kind']}: no post ({str(err)[:160]})")
-                continue
-            e0, cj0, q0 = p["items"][0] if p["items"] else (None, None, None)
-            reply = ("Charts: " + "; ".join(f"${e['ticker']} {q['label']} ({q.get('form')} filed {q.get('filed')})" for e, _, q in p["items"])
-                     + f". Read automatically from the filings; not investment advice. {site_url}/#c-{e0['cik']}") if e0 else ""
-            print(f"[{p['kind']}] {post}" + (f"\n   ↳ {reply}" if reply else ""))
-            if args.dry_run:
-                continue
-            os.makedirs(xdir, exist_ok=True)
-            images = []
-            for e, cj, q in p["items"][:4]:
-                png = assets.image(e, cj, q, "std", "png")
-                if png:
-                    name = social.image_names(e, q, 1)[0].replace("-1-chart", f"-{p['kind']}")
-                    open(os.path.join(xdir, name), "wb").write(png)
-                    images.append(name)
-            pend_path = os.path.join(xdir, "pending.json")
-            pending = json.load(open(pend_path, encoding="utf-8")) if os.path.exists(pend_path) else []
-            pending.append({"cik": e0["cik"] if e0 else None, "end": e0["end"] if e0 else None, "label": f"{p['kind']}: " + " ".join(p["cashtags"]),
-                            "posts": [post] + ([reply] if reply else []), "written_by": "model", "images": images})
-            json.dump(pending, open(pend_path, "w", encoding="utf-8"), ensure_ascii=False)
-            stamp = now.isoformat()
-            state[f"kind:{p['kind']}"] = stamp
-            for t in p["cashtags"]:
-                state[f"{p['kind']}:{t}"] = stamp
-            json.dump(state, open(state_path, "w", encoding="utf-8"))
-            made.append(p["kind"])
-    if made and os.environ.get("GITHUB_ACTIONS"):
-        print(f"::notice::engagement post(s) written for Buffer: {', '.join(made)}")
+        made = make(kinds, site, site_url, args.media, assets, dry_run=args.dry_run, force=args.force)
+    if made and not args.dry_run and os.environ.get("GITHUB_ACTIONS"):
+        print(f"::notice::engagement post(s) written for Buffer: {'; '.join(m.split(':')[0] for m in made)}")
     return 0
 
 

@@ -1167,7 +1167,8 @@ def _now_iso():
     return dt.datetime.now(dt.timezone.utc).isoformat()
 
 
-POST_KINDS = ("post", "post_holders")          # the owner's "Post to X" requests: their own workflow (post-to-x.yml)
+ENGAGE_KINDS = ("engage_question", "engage_list", "engage_reddit_question", "engage_reddit_list")   # Owner tools: write that post now
+POST_KINDS = ("post", "post_holders") + ENGAGE_KINDS   # the owner's X requests: their own workflow (post-to-x.yml)
 
 
 def claim_requests(supa, now, posts=None):
@@ -1289,6 +1290,25 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
                         jobs.append((sub, [], lambda sub=sub, day=day: day_report_message(site, sub, day, sender, site_url, assets)))
                 else:
                     jobs.append((sub, [r], lambda sub=sub, day=day: day_report_message(site, sub, day, sender, site_url, assets)))
+                continue
+            if kind in ENGAGE_KINDS:                      # owner: an engagement post now (pipeline/engage.py), no company
+                owner, owners, cfg, _ = owner_info()
+                if str(sub["email"]).lower() not in owners:
+                    finish([r], status="failed", error="only the site owner can post to X")
+                    continue
+                if dry_run:
+                    continue
+                try:
+                    from . import engage
+                    made = engage.make([kind[len("engage_"):]], site, site_url, os.environ.get("MEDIA_DIR", "media"), assets, force=True)
+                    if made:
+                        print(f"queued for Buffer ({kind}): " + " | ".join(made))
+                        finish([r], status="sent", sent_at=_now_iso(), error=None)
+                    else:
+                        finish([r], status="failed", error="nothing to post for that format right now (no filings / no trend)")
+                except Exception as err:
+                    print(f"::warning::{kind} not made ({err.__class__.__name__}: {err})")
+                    finish([r], status="failed", error=f"post not made: {str(err)[:150]}")
                 continue
             c, q = find_quarter(site, r["cik"], r["period_end"], "fy" if kind == "fy" else "q")
             if not q:

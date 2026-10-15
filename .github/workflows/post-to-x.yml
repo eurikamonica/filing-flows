@@ -50,6 +50,8 @@ jobs:
       TWEET_MODEL: ${{ vars.TWEET_MODEL }}
       BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
       BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
+      REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}          # Owner tools: Reddit question / list posts
+      REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -81,6 +83,8 @@ jobs:
       - name: Draw the chart and write the post
         if: steps.due.outputs.go == 'yes'
         run: |
+          mkdir -p media/x      # the engagement posts' cooldown state lives on the media branch
+          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/x/engage-state.json" -o media/x/engage-state.json || true
           pip install playwright
           python -m playwright install --with-deps chromium
           python -m pipeline.notify --site "${{ steps.due.outputs.site }}" --site-url "${{ steps.due.outputs.site }}" --requests --posts
