@@ -868,6 +868,8 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
                                              'fields': ['buyers', 'sellers', 'new', 'exits', 'usd_net', 'holders'], 'rows': by})
         if by_quarter:
             _write(out_dir / 'by-ticker-history.json', {'generated_at': stamp, **by_quarter})
+        # CUSIP → ticker for the securities in 13F, so other tools (Owner tools' 13F posts) can name holdings
+        _write(out_dir / 'cusip-tickers.json', {c: t for c, t in universe.cusip_ticker.items() if t})
         try:
             o13 = options13f(opts, ctx['managers'], universe, ctx['coverage'], ctx['quarter'], ctx['prices'])
             if o13:

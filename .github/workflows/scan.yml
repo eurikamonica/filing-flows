@@ -253,5 +253,16 @@ jobs:
         with:
           name: github-pages
       - run: mkdir _site && tar -xf artifact.tar -C _site
-      - name: Queue new threads in Buffer
-        run: python -m pipeline.buffer --site _site --site-url "$SITE_URL"
+      - name: Queue new threads in Buffer (images from the media branch)
+        # Buffer posts from its queue hours later; by then the next deploy has replaced the site and its x/ images,
+        # so the charts go to the long-lived media branch and Buffer is given those URLs (raw.githubusercontent.com)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f _site/x/pending.json ]; then
+            mkdir -p media/x && cp _site/x/pending.json _site/x/*.png media/x/ 2>/dev/null || true
+            cp _site/x/*.gif media/x/ 2>/dev/null || true
+            MEDIA_DIR=media bash scripts/publish-media.sh
+          else
+            echo "buffer: nothing queued by the scan"
+          fi

@@ -143,17 +143,20 @@ create table if not exists public.send_requests (
   sent_at     timestamptz
 );
 alter table public.send_requests add column if not exists kind text not null default 'q';
+alter table public.send_requests add column if not exists ref text;      -- post_8k: an 8-K accession; post_13f: a 13F accession (blank = latest)
+alter table public.send_requests add column if not exists draft boolean not null default false;   -- owner posts: a Buffer draft to review
 -- kinds: q a quarter, fy a fiscal year, thread the X thread of a quarter (site owner only), day the daily report of one
 -- filing date (period_end; cik 0), post / post_holders / post_gif (owner only): queue an X post in Buffer now — the quarter's
 -- earnings post, or a post about who bought the company (13F changes, from Disclosures); engage_question / engage_list /
 -- engage_reddit_question / engage_reddit_list / engage_mover / engage_explain / engage_peers (owner only; cik 0,
 -- period_end today): write that engagement post now
--- (pipeline/engage.py) instead of waiting for its schedule
+-- (pipeline/engage.py) instead of waiting for its schedule; post_8k (cik = the company, ref = accession or blank for its most
+-- material recent 8-K) / post_13f (cik = the manager, ref = accession or blank for the latest 13F): a post about that filing
 alter table public.send_requests drop constraint if exists send_requests_kind_check;
 alter table public.send_requests add constraint send_requests_kind_check check (kind in ('q', 'fy', 'thread', 'day', 'post', 'post_holders', 'post_gif',
-  'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders'));
+  'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'post_8k', 'post_13f'));
 alter table public.send_requests drop constraint if exists send_requests_cik_check;
-alter table public.send_requests add constraint send_requests_cik_check check (cik > 0 or (kind in ('day', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders') and cik = 0));
+alter table public.send_requests add constraint send_requests_cik_check check (cik > 0 or (kind in ('day', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'post_8k', 'post_13f') and cik = 0));
 drop index if exists public.send_requests_one_pending;       -- a quarter and a fiscal year can end on the same day
 create unique index if not exists send_requests_one_pending_kind on public.send_requests (user_id, cik, period_end, kind)
   where status in ('pending', 'sending');
@@ -172,7 +175,7 @@ language plpgsql security definer set search_path = public, auth as $$
 begin
   new.status := 'pending'; new.attempts := 0; new.error := null; new.claimed_at := null; new.sent_at := null;
   new.created_at := now();
-  if new.kind in ('post', 'post_holders', 'post_gif') or new.kind like 'engage\_%' then
+  if new.kind in ('post', 'post_holders', 'post_gif', 'post_8k', 'post_13f') or new.kind like 'engage\_%' then
     return new;
   end if;
   if exists (select 1 from public.site_owners o join auth.users u on lower(u.email) = lower(o.email) where u.id = new.user_id) then
@@ -216,7 +219,7 @@ create trigger send_requests_wake after insert on public.send_requests
 -- the owner's "Post to X" requests wake their own workflow (post-to-x.yml) so they never queue behind e-mails
 drop trigger if exists post_requests_wake on public.send_requests;
 create trigger post_requests_wake after insert on public.send_requests
-  for each row when (new.kind in ('post', 'post_holders', 'post_gif', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders'))
+  for each row when (new.kind in ('post', 'post_holders', 'post_gif', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'post_8k', 'post_13f'))
   execute function public.send_requests_wake('post-request');
 
 -- The site owner: only accounts listed here see the owner tools (#owner: the X thread panel on company pages).
@@ -239,7 +242,7 @@ end $$;
 -- "Email me this thread" goes straight to the owner's inbox: only the site owner may ask for a thread
 drop policy if exists "ask for reports" on public.send_requests;
 create policy "ask for reports" on public.send_requests for insert
-  with check (auth.uid() = user_id and (kind not in ('thread', 'post', 'post_holders', 'post_gif', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders') or public.am_i_owner()));
+  with check (auth.uid() = user_id and (kind not in ('thread', 'post', 'post_holders', 'post_gif', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'post_8k', 'post_13f') or public.am_i_owner()));
 
 -- The owner's preferences (#owner page): read and changed by the site owner only; read by the workflows with the secret key.
 create table if not exists public.owner_settings (

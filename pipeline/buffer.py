@@ -48,7 +48,7 @@ def x_channel(key, wanted=None):
     raise BufferError("no X channel found" + (f" with id {wanted}" if wanted else "") + "; connect X in Buffer or set BUFFER_CHANNEL_ID")
 
 
-def create_thread(key, channel_id, parts, due_at=None):
+def create_thread(key, channel_id, parts, due_at=None, draft=False):
     """parts: [{"text": str, "images": [public url, ...]}]; the first part carries the charts."""
     thread = [{"text": p["text"], **({"assets": [{"image": {"url": u}} for u in p.get("images", [])[:4]]} if p.get("images") else {})}
               for p in parts]
@@ -61,6 +61,8 @@ def create_thread(key, channel_id, parts, due_at=None):
         inp["metadata"] = {"twitter": {"thread": thread}}
     if due_at:
         inp["dueAt"] = due_at
+    if draft:                       # Owner tools "draft": lands in Buffer's drafts for review and editing, not in the queue
+        inp["saveToDraft"] = True
     data = gql(key, """mutation($input: CreatePostInput!) { createPost(input: $input) {
         ... on PostActionSuccess { post { id status dueAt } } ... on MutationError { message } } }""", {"input": inp})
     res = data["createPost"]
@@ -100,8 +102,8 @@ def main():
             print(f"would queue {it['label']}: {len(parts)} posts, images {parts[0]['images']}")
             continue
         try:
-            post = create_thread(key, ch["id"], parts)
-            print(f"queued {it['label']}: post {post['id']} ({post.get('status')}, due {post.get('dueAt')})")
+            post = create_thread(key, ch["id"], parts, draft=bool(it.get("draft")))
+            print(f"{'saved as a Buffer draft' if it.get('draft') else 'queued'} {it['label']}: post {post['id']} ({post.get('status')}, due {post.get('dueAt')})")
         except BufferError as err:
             failed += 1
             print(f"::warning::{it['label']} not queued: {err}")

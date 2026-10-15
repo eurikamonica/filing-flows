@@ -386,7 +386,7 @@ def thread_message(e, c, q, assets, cfg, sender, to):
     return social.build_email([item], cfg, sender, to)
 
 
-def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url):
+def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url, draft=False):
     """Owner's "Post to X" buttons: write the chart PNGs and one model-written post into media_dir/x/ and the
     pending manifest; the workflow publishes media_dir to the "media" branch and pipeline/buffer.py queues the post.
     kind: "post" (the quarter's earnings) or "post_holders" (who bought it: 13F changes from Disclosures)."""
@@ -394,7 +394,7 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url):
     import os
     from . import tweet
     if kind == "post_gif":
-        return gif_post(e, c, q, assets, cfg, media_dir, site_url)
+        return gif_post(e, c, q, assets, cfg, media_dir, site_url, draft)
     modes = ["std"] + (["y"] if kind == "post" and "year_ago" in (cfg.get("images") or []) and q.get("compare_y") else [])
     pngs = [assets.image(e, c, q, m, "png") for m in modes]
     names = social.image_names(e, q, len(modes))
@@ -414,12 +414,12 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url):
     path = os.path.join(xdir, "pending.json")
     pending = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else []
     pending.append({"cik": e["cik"], "end": e["end"], "label": f"{e.get('ticker') or e['cik']} {q['label']} ({kind})",
-                    "posts": posts, "written_by": via, "images": [n for n, _ in files]})
+                    "posts": posts, "written_by": via, "images": [n for n, _ in files], **({"draft": True} if draft else {})})
     json.dump(pending, open(path, "w", encoding="utf-8"), ensure_ascii=False)
     return post, via
 
 
-def gif_post(e, c, q, assets, cfg, media_dir, site_url):
+def gif_post(e, c, q, assets, cfg, media_dir, site_url, draft=False):
     """Owner's "8-quarter GIF" button: an animated flip-book of the last eight quarters' Sankeys and one post on the
     two-year trend (model-written, rule-based fallback), queued like the other posts."""
     import json
@@ -447,7 +447,7 @@ def gif_post(e, c, q, assets, cfg, media_dir, site_url):
     path = os.path.join(xdir, "pending.json")
     pending = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else []
     pending.append({"cik": e["cik"], "end": e["end"], "label": f"{t or e['cik']} 8-quarter GIF", "posts": posts, "written_by": via,
-                    "images": [name]})
+                    "images": [name], **({"draft": True} if draft else {})})
     json.dump(pending, open(path, "w", encoding="utf-8"), ensure_ascii=False)
     return post, via
 

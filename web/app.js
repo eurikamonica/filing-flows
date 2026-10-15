@@ -851,12 +851,22 @@
     // Post to X now, through Buffer's queue (config/x.json mode "buffer"): the quarter's earnings post, or who bought it (13F)
     const bar = document.createElement('div');
     bar.className = 'controls';
-    bar.innerHTML = `<span class="muted">Post to X via Buffer (written by the model from the filing, checked, then queued):</span>
-      <button class="btn" type="button" data-post="post">✦ Earnings post</button>
+    bar.innerHTML = `<span class="muted">Post to X via Buffer (written by the model from the filing, checked). The earnings post uses the quarter shown above — pick another quarter to post that 10-Q / 10-K:</span>
+      ${draftToggle('post-draft')}
+      <button class="btn" type="button" data-post="post">✦ Earnings post (${t(q.label)} ${t(q.form || '')})</button>
       <button class="btn" type="button" data-post="post_holders">✦ Who bought it (13F)</button>
-      <button class="btn" type="button" data-post="post_gif" title="An animated flip-book of the last eight quarters' Sankeys, with a post on the two-year trend">✦ 8-quarter GIF</button>`;
-    $$('[data-post]', bar).forEach((b) => b.addEventListener('click', () => withProgress(b, (text) => { if (text) toast(text); },
-      () => askFor({ cik: +p.cik, period_end: q.end, kind: b.dataset.post }, b.dataset.post === 'post' ? 'Earnings post' : b.dataset.post === 'post_gif' ? '8-quarter GIF post' : 'Holders post'))));
+      <button class="btn" type="button" data-post="post_gif" title="An animated flip-book of the last eight quarters' Sankeys, with a post on the two-year trend">✦ 8-quarter GIF</button>
+      <span class="post-8k"><input class="input mono" id="post-8k-ref" placeholder="8-K accession or EDGAR link (blank = most material, 45 days)" aria-label="8-K accession number"><button class="btn" type="button" data-post="post_8k" title="A post about one 8-K: the accession you paste, or this company's most material 8-K of the last 45 days">✦ 8-K post</button></span>`;
+    $$('[data-post]', bar).forEach((b) => b.addEventListener('click', () => withProgress(b, (text) => { if (text) toast(text); }, () => {
+      const kind = b.dataset.post, draft = !!($('#post-draft') && $('#post-draft').checked);
+      if (kind === 'post_8k') {
+        const raw = ($('#post-8k-ref').value || '').trim(), m = raw.match(/(\d{10})-?(\d{2})-?(\d{6})/);
+        if (raw && !m) return Promise.resolve('That does not look like an accession number (0001234567-26-000123) or an EDGAR filing link');
+        return askFor({ cik: +p.cik, period_end: localISO(new Date()), kind, ref: m ? `${m[1]}-${m[2]}-${m[3]}` : null, draft }, '8-K post');
+      }
+      return askFor({ cik: +p.cik, period_end: q.end, kind, draft }, kind === 'post' ? 'Earnings post' : kind === 'post_gif' ? '8-quarter GIF post' : 'Holders post');
+    })));
+    setTimeout(() => bindDraft('post-draft'), 0);
     sec.appendChild(bar);
     return sec;
   }
@@ -1700,6 +1710,10 @@
     return `${n === 1 ? 'Report' : n + ' reports'} on the way to ${user.email}, usually within 10 minutes`;
   }
   // one queued e-mail of any kind (send_requests): a day's report, or the owner's X thread of a quarter
+  // Owner tools: posts land in Buffer's drafts (review / edit there) unless "Queue directly" is chosen; remembered
+  const draftOn = () => { try { return localStorage.getItem('ff:postDraft') !== '0'; } catch (e) { return true; } };
+  const draftToggle = (id) => `<label class="check small" title="Draft: the post and its charts wait in Buffer's Drafts for you to read, edit and schedule. Off: straight into the posting queue."><input type="checkbox" id="${id}" ${draftOn() ? 'checked' : ''}> Save as a Buffer draft (review first)</label>`;
+  const bindDraft = (id) => { const el = $('#' + id); if (el) el.addEventListener('change', () => { try { localStorage.setItem('ff:postDraft', el.checked ? '1' : '0'); } catch (e) { /* private mode */ } }); };
   async function askFor(row, what) {
     const c = await sb();
     const user = c ? await currentUser() : null;
@@ -1708,9 +1722,9 @@
     const r = await c.from('send_requests').insert([row]);
     if (r.error && r.error.code === '23505') return `${what} already on its way to your inbox`;
     if (r.error && /limit/i.test(r.error.message)) return 'Limit reached: 30 e-mails a day';
-    if (r.error && (tableMissing(r.error) || /check constraint|violates row-level/i.test(r.error.message))) return OWNER_UPDATE;
+    if (r.error && (tableMissing(r.error) || /check constraint|violates row-level|column/i.test(r.error.message))) return OWNER_UPDATE;
     if (r.error) return `Could not send: ${r.error.message}`;
-    if (/post|engage/i.test(row.kind || '')) return `${what} queued: it reaches Buffer within a few minutes, then follows your posting schedule`;
+    if (/post|engage/i.test(row.kind || '')) return row.draft ? `${what}: writing it now — it appears in Buffer → Drafts within a few minutes for you to review` : `${what} queued: it reaches Buffer within a few minutes, then follows your posting schedule`;
     return `${what} on the way to ${user.email}, usually within a few minutes`;
   }
 
@@ -2210,6 +2224,7 @@
       ${c ? `<section class="section" id="engage"><div class="section-head"><h2>Engagement posts to X</h2>
           <span class="muted">Written by the model from the real charts, queued in Buffer. They also run on their own schedule
           (before the open: today’s filers + Reddit; after the close: question of the day; market hours: the biggest movers); these buttons write one now.</span></div>
+        <div class="row">${draftToggle('engage-draft')}</div>
         <div class="row" id="engage-bar">
           <button class="btn" type="button" data-engage="engage_question" title="The most striking filing of the last day: one fact, 2–3 options to reply with">✦ Question of the day</button>
           <button class="btn" type="button" data-engage="engage_list" title="Every company that filed in the last day, as cashtags, with up to four charts">✦ Today’s filers</button>
@@ -2224,12 +2239,35 @@
           <button class="btn" type="button" data-engage="engage_opt13f" title="The biggest change in disclosed 13F puts or calls on a company on the site">✦ 13F puts & calls</button>
           <button class="btn" type="button" data-engage="engage_rsleaders" title="Companies whose relative-strength rating jumped into the 90s over three months">✦ RS leaders</button>
         </div>
-        <p class="muted small" id="engage-msg" role="status"></p></section>` : ''}
+        <p class="muted small" id="engage-msg" role="status"></p>
+        <h3>A fund's 13F</h3>
+        <form class="row" id="fund-form"><input class="input" id="fund-cik" list="fund-list" placeholder="Manager CIK or a watched fund's name" aria-label="13F manager" autocomplete="off" required>
+          <datalist id="fund-list"></datalist>
+          <input class="input mono" id="fund-ref" placeholder="13F accession (blank = latest)" aria-label="13F accession">
+          <button class="btn" type="submit">✦ 13F post</button></form>
+        <p class="muted small">Any manager the Disclosures hub has processed: new positions, largest additions and cuts, exits and top holdings, with the 13F link.</p></section>` : ''}
       <section class="section daily" id="daily" hidden></section>
       ${back}`;
     $('#owner-toggle').addEventListener('click', () => { prefs.set('owner', !on); route(); });
     $$('[data-engage]').forEach((b) => b.addEventListener('click', () => withProgress(b, (x) => { $('#engage-msg').textContent = x || ''; },
-      () => askFor({ cik: 0, period_end: localISO(new Date()), kind: b.dataset.engage }, b.textContent.replace(/^✦\s*/, '')))));
+      () => askFor({ cik: 0, period_end: localISO(new Date()), kind: b.dataset.engage, draft: !!($('#engage-draft') && $('#engage-draft').checked) }, b.textContent.replace(/^✦\s*/, '')))));
+    bindDraft('engage-draft');
+    const funds = {};
+    fetch('disclosures/data/market/watchlist.json').then((r) => r.ok ? r.json() : null).then((w) => {
+      const dl = $('#fund-list'); if (!w || !dl) return;
+      (w.funds || []).forEach((f) => { funds[f.name] = f.cik; const o2 = document.createElement('option'); o2.value = f.name; dl.appendChild(o2); });
+    }).catch(() => {});
+    const ff = $('#fund-form');
+    if (ff) ff.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const v = $('#fund-cik').value.trim(), cik = /^\d+$/.test(v) ? +v : funds[v];
+      const ref = ($('#fund-ref').value || '').trim().match(/(\d{10})-?(\d{2})-?(\d{6})/);
+      const btn = ff.querySelector('button');
+      if (!cik) { $('#engage-msg').textContent = 'Enter a manager CIK (e.g. 1067983 for Berkshire Hathaway) or pick a watched fund'; return; }
+      withProgress(btn, (x) => { $('#engage-msg').textContent = x || ''; },
+        () => askFor({ cik, period_end: localISO(new Date()), kind: 'post_13f', ref: ref ? `${ref[1]}-${ref[2]}-${ref[3]}` : null,
+          draft: !!($('#engage-draft') && $('#engage-draft').checked) }, '13F post'));
+    });
     const form = $('#owner-form');
     if (form) form.addEventListener('submit', async (ev) => {
       ev.preventDefault();

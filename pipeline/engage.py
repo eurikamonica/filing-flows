@@ -436,6 +436,76 @@ def plan_weekly(site, rows, c, by_ticker, state, today):
 
 
 # ------------------------------------------------------------------ watched funds' 13F
+def hub_file(site, rel):
+    """Any published file of the Disclosures hub (rel: a path under disclosures/data/)."""
+    import requests
+    if site.remote:
+        r = requests.get(site.src.rstrip("/") + "/disclosures/data/" + rel, timeout=60)
+        r.raise_for_status()
+        return r.json()
+    return json.load(open(os.path.join(site.src, "disclosures", "data", rel), encoding="utf-8"))
+
+
+def fund_summary(site, cik, accn=None):
+    """One manager's 13F as the watchlist shape: new / added / cut / exited / top, from its published shards."""
+    m = hub_file(site, f"shards/holdings/{int(cik)}.json")
+    snaps = [s for s in m.get("snapshots", []) if s.get("complete") and s.get("positions_shard")]
+    if accn:
+        a = re.sub(r"[^0-9]", "", accn)
+        pick = [i for i, s in enumerate(snaps) if a and a in re.sub(r"[^0-9]", "", json.dumps(s.get("sources") or ""))]
+        if not pick:
+            raise ValueError(f"accession {accn} not among the processed 13Fs of CIK {cik}")
+        i = pick[-1]
+    else:
+        i = len(snaps) - 1
+    if i < 0:
+        raise ValueError(f"no processed 13F for CIK {cik} yet (the hub collects managers in batches)")
+    cur = hub_file(site, snaps[i]["positions_shard"])
+    prev = hub_file(site, snaps[i - 1]["positions_shard"]) if i > 0 else []
+    try:
+        cmap = hub_file(site, "market/cusip-tickers.json")
+    except Exception:
+        cmap = {}
+    def book(rows):
+        out = {}
+        for r in rows or []:
+            if r.get("put_call", "NONE") != "NONE" or r.get("share_type", "SH") != "SH":
+                continue
+            a = out.setdefault(r["cusip"], {"cusip": r["cusip"], "issuer": r.get("issuer"), "shares": 0, "usd": 0})
+            a["shares"] += r.get("shares") or 0
+            a["usd"] += r.get("value_usd") or 0
+        return out
+    now_, before = book(cur), book(prev)
+    total = sum(x["usd"] for x in now_.values()) or 1
+    rows = []
+    for c_, x in now_.items():
+        b = before.get(c_)
+        px = x["usd"] / x["shares"] if x["shares"] else 0
+        rows.append({"ticker": cmap.get(c_, ""), "issuer": x["issuer"], "usd": round((x["shares"] - (b["shares"] if b else 0)) * px),
+                     "new": b is None and i > 0, "weight": round(100 * x["usd"] / total, 1), "value": x["usd"]})
+    gone = [{"ticker": cmap.get(c_, ""), "issuer": b["issuer"], "usd": b["usd"]} for c_, b in before.items() if c_ not in now_]
+    s = snaps[i]
+    return {"cik": int(cik), "name": m.get("label") or m.get("name"), "period": s["period"], "filed": s.get("filed"),
+            "positions": len(now_), "total_usd": total,
+            "new": sorted([r for r in rows if r["new"]], key=lambda r: -r["value"]),
+            "added": sorted([r for r in rows if not r["new"] and r["usd"] > 0], key=lambda r: -r["usd"]),
+            "cut": sorted([{**r, "usd": -r["usd"]} for r in rows if r["usd"] < 0], key=lambda r: -r["usd"]),
+            "exited": sorted(gone, key=lambda r: -r["usd"]), "top": sorted(rows, key=lambda r: -r["weight"])[:6],
+            "source": f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={int(cik)}&type=13F-HR&dateb=&owner=include&count=40"}
+
+
+def plan_fund13f_for(site, rows, by_ticker, target):
+    """Owner tools: a post about one manager's 13F (target cik = the manager; ref = an accession, or the latest)."""
+    try:
+        f = fund_summary(site, target["cik"], target.get("ref") or None)
+    except Exception as err:
+        print(f"fund13f: {str(err)[:200]}")
+        return None
+    p = fund_plan(site, f, by_ticker)
+    p["fund_key"] = f"fund13f:{f['cik']}:{f['period']}"
+    return p
+
+
 def plan_fund13f(site, rows, c, by_ticker, state, today):
     try:
         d = hub_json(site, "watchlist.json")
@@ -447,7 +517,10 @@ def plan_fund13f(site, rows, c, by_ticker, state, today):
     if not fresh:
         print("fund13f: no watched fund filed a new 13F in the last four days")
         return None
-    f = fresh[0]
+    return fund_plan(site, fresh[0], by_ticker)
+
+
+def fund_plan(site, f, by_ticker):
     tag = lambda r: f"${r['ticker'].replace('-', '.')}" if r.get("ticker") else r.get("issuer", "")
     line = lambda rs: ", ".join(f"{tag(r)} ({money(r['usd'])})" for r in rs[:4]) or "none"
     task = (f"13F JUST FILED: {f['name']} — holdings at the quarter ended {f['period']}, filed {f['filed']} "
@@ -467,8 +540,17 @@ def plan_fund13f(site, rows, c, by_ticker, state, today):
             cj, fq = figures(site, by_ticker[t])
             if fq:
                 items.append((by_ticker[t], cj, fq))
+    nm = lambda r: f"${r['ticker'].replace('-', '.')}" if r.get("ticker") and r["ticker"].replace("-", ".") in cash[:2] + cash else (r.get("issuer") or "").title()
+    bits = ([f"new: {', '.join(nm(r) for r in f['new'][:2])}"] if f["new"] else []) \
+        + ([f"biggest cut: {nm(f['cut'][0])} −{money(f['cut'][0]['usd'])}"] if f["cut"] else []) \
+        + ([f"biggest add: {nm(f['added'][0])} +{money(f['added'][0]['usd'])}"] if f["added"] else []) \
+        + ([f"largest holding: {nm(f['top'][0])} {f['top'][0]['weight']}%"] if f["top"] else [])
+    fb = f"13F: {f['name']} (quarter ended {f['period']}) — " + "; ".join(bits) + ". Which move stands out?"
+    for t in cash[:2]:
+        if f"${t}" not in fb:
+            fb = fb.replace(". Which move", f" · ${t}. Which move", 1)
     return {"kind": "fund13f", "task": task, "cashtags": cash[:2], "allowed": cash, "items": items, "fund_key": f"fund13f:{f['cik']}:{f['period']}",
-            "fund_url": f.get("source")}
+            "fund_url": f.get("source"), "fallback": fb}
 
 
 # ------------------------------------------------------------------ tomorrow's earnings
@@ -616,38 +698,75 @@ def plan_event8k(site, rows, c, by_ticker, state_ok, today):
     cands.sort(key=lambda x: -x[0])
     print("::notice::event8k: " + (", ".join(f"{e['ticker']} {','.join(i)}" for _, e, _, i in cands[:8]) or "no material 8-K from a site company"))
     for score, e, f, items in cands[:6]:
-        sub = {"accn": f["accn"], "form": f["form"], "filed": f["filed"], "accepted": f.get("updated") or "", "items": items}
+        p = event_plan(site, e, {"accn": f["accn"], "form": f["form"], "filed": f["filed"], "accepted": f.get("updated") or "", "items": items})
+        if p:
+            return p
+    return None
+
+
+def event_plan(site, e, sub, require_deal=True, fresh=True):
+    """The post for one 8-K of company e (sub: accn, form, filed, accepted, items[, primary]), or None."""
+    if not sub.get("primary"):
         try:
             idx = sec.get_json(sec.filing_index_url(e["cik"], f["accn"]))
             names = [i["name"] for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)]
             sub["primary"] = next((n for n in names if not re.search(r"(?i)ex[-_]?\d", n)), names[0] if names else "")
         except (Exception, SystemExit) as err:
             print(f"event8k: {e['ticker']} filing index not read ({str(err)[:100]})")
-            continue
+            return None
+    if True:
         ev = events.describe(e["cik"], sub)
-        if ev["code"] in ("8.01", "7.01") and not DEAL.search(ev["quote"] or ""):
-            continue                                   # "other events" only when the text names a deal, buyback or the like
+        if require_deal and ev["code"] in ("8.01", "7.01") and not DEAL.search(ev["quote"] or ""):
+            return None                                # "other events" only when the text names a deal, buyback or the like
         cj, fq = figures(site, e)
         if not fq:
-            continue
+            return None
         label = event_label(ev["code"], ev["quote"])
-        breaking = ev["code"] in BREAKING_ITEMS or label in ("a merger or acquisition", "a CEO change")
+        breaking = fresh and (ev["code"] in BREAKING_ITEMS or label in ("a merger or acquisition", "a CEO change"))
         when = f"{ev['filed']}" + (f" {ev['accepted'][11:16]} ET" if len(ev.get("accepted") or "") >= 16 else "")
         task = (f"8-K CURRENT REPORT filed {when} by ${e['ticker']} ({display(e)}): Item {ev['code']} — {ev['label']}"
                 + (f" ({label})" if label != ev["label"] else "") + f".\nWhat the filing says (quote; the only facts you may use about the event):\n"
                 f"“{ev['quote'] or '(text not read; name the item only)'}”\n\nLatest filing figures (context, at most one):\n"
                 f"{tweet.headline_lines(cj, fq, e['ticker'])}\n\n"
-                + ("Start the post with “BREAKING:” — this is a material event filed in the last day. " if breaking else "Start with “JUST FILED:”. ")
+                + ("Start the post with “BREAKING:” — this is a material event filed in the last day. " if breaking else "Start with “JUST FILED:”. " if fresh else "Say when it was filed. ")
                 + "Say what the company filed in plain words, quote or closely paraphrase the key sentence, add no facts that are not in the "
                   "quote, never predict the stock's reaction, then ask the audience one short question.")
         short = (ev["quote"] or "").split(". ")[0][:150].rstrip(".")
-        fb = (f"{'BREAKING' if breaking else 'JUST FILED'}: ${e['ticker']} filed an 8-K — {label}."
-              + (f" “{short}.”" if short else "") + " How do you read it?")
+        lead = "BREAKING" if breaking else "JUST FILED" if fresh else f"8-K, {ev['filed']}"
+        fb = f"{lead}: ${e['ticker']} filed an 8-K — {label}." + (f" “{short}.”" if short else "") + " How do you read it?"
         if social.xlen(fb) > 235:
-            fb = f"{'BREAKING' if breaking else 'JUST FILED'}: ${e['ticker']} filed an 8-K — {label}. How do you read it?"
+            fb = f"{lead}: ${e['ticker']} filed an 8-K — {label}. How do you read it?"
         return {"kind": "event8k", "task": task, "cashtags": [e["ticker"]], "items": [(e, cj, fq)], "event": ev,
-                "event_key": f"event8k:{f['accn']}", "fallback": fb}
-    return None
+                "event_key": f"event8k:{sub['accn']}", "fallback": fb}
+
+
+def plan_filing8k(site, rows, target, today):
+    """Owner tools: a post about one company's 8-K — the accession given (target['ref']), or else its most material 8-K of
+    the last 45 days (earnings releases included)."""
+    cik = int(target["cik"])
+    e = next((r for r in rows if r.get("cik") == cik and r.get("ticker")), None)
+    if not e:
+        print(f"filing8k: CIK {cik} is not on the site")
+        return None
+    want = re.sub(r"[^0-9-]", "", str(target.get("ref") or ""))
+    if want and "-" not in want and len(want) == 18:
+        want = f"{want[:10]}-{want[10:12]}-{want[12:]}"
+    try:
+        fs = events.recent_8ks(cik, (today - dt.timedelta(days=400 if want else 45)).isoformat())
+    except (Exception, SystemExit) as err:
+        print(f"filing8k: 8-Ks of {cik} not listed ({str(err)[:120]})")
+        return None
+    if want:
+        fs = [f for f in fs if f["accn"] == want]
+        if not fs:
+            print(f"filing8k: accession {want} is not among {e['ticker']}'s 8-Ks")
+            return None
+    if not fs:
+        print(f"filing8k: {e['ticker']} filed no 8-K in 45 days")
+        return None
+    f = min(fs, key=lambda f: min([events.PRIORITY.index(x) for x in f["items"] if x in events.PRIORITY] or [99]))
+    fresh = f["filed"] >= (today - dt.timedelta(days=1)).isoformat()
+    return event_plan(site, e, dict(f), require_deal=False, fresh=fresh)
 
 
 def display(e):
@@ -760,7 +879,7 @@ def plan_rsleaders(site, rows, c, by_ticker, state_ok, today):
 
 
 # ------------------------------------------------------------------ main
-def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_only=False):
+def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_only=False, target=None, draft=False):
     """Plan, write, polish and check the posts of these kinds; draw the charts into media/x/ and append to
     media/x/pending.json. force=True ignores the per-format cooldown (Owner tools "write it now"). Returns the labels made."""
     c = cfg()
@@ -831,7 +950,9 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
              "event8k": lambda: plan_event8k(site, rows, c, by_ticker, state_ok, today),
              "ivmove": lambda: plan_ivmove(site, rows, c, by_ticker, state_ok, today),
              "opt13f": lambda: plan_opt13f(site, rows, c, by_ticker, state_ok, today),
-             "rsleaders": lambda: plan_rsleaders(site, rows, c, by_ticker, state_ok, today)}.get(kind, lambda: None)()
+             "rsleaders": lambda: plan_rsleaders(site, rows, c, by_ticker, state_ok, today),
+             "filing8k": lambda: plan_filing8k(site, rows, target or {}, today),
+             "fund13f_for": lambda: plan_fund13f_for(site, rows, by_ticker, target or {})}.get(kind, lambda: None)()
         if p:
             plans.append(p)
         else:
@@ -884,7 +1005,8 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
         pend_path = os.path.join(xdir, "pending.json")
         pending = json.load(open(pend_path, encoding="utf-8")) if os.path.exists(pend_path) else []
         pending.append({"cik": e0["cik"] if e0 else None, "end": e0["end"] if e0 else None, "label": f"{p['kind']}: " + " ".join(p["cashtags"]),
-                        "posts": [post] + list(p.get("thread") or []) + [x for x in (filing, reply) if x], "written_by": "model", "images": images})
+                        "posts": [post] + list(p.get("thread") or []) + [x for x in (filing, reply) if x], "written_by": "model", "images": images,
+                        **({"draft": True} if draft else {})})
         json.dump(pending, open(pend_path, "w", encoding="utf-8"), ensure_ascii=False)
         stamp = now.isoformat()
         state[f"kind:{p['kind']}"] = stamp
