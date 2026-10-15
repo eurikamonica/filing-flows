@@ -404,11 +404,30 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url):
     for n, png in files:
         with open(os.path.join(xdir, n), "wb") as f:
             f.write(png)
-    fallback = social.compose_parts(c, q, dict(cfg, numbered=False))[0]["text"]
-    post, via = tweet.post_for(c, q, cfg, e.get("ticker") or "", fallback, social.xlen, kind=kind, site_url=site_url)
+    thread = bool(cfg.get("owner_thread", True))
+    parts = social.compose_parts(c, q, dict(cfg, numbered=False, include_link=True, site_url=site_url or cfg.get("site_url", "")))
+    fallback = parts[0]["text"]
+    post, via = tweet.post_for(c, q, cfg, e.get("ticker") or "", fallback, social.xlen, kind=kind, site_url=site_url, thread=thread)
+    posts = [post] + (thread_replies(parts, kind) if thread else [])
     path = os.path.join(xdir, "pending.json")
     pending = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else []
     pending.append({"cik": e["cik"], "end": e["end"], "label": f"{e.get('ticker') or e['cik']} {q['label']} ({kind})",
-                    "posts": [post], "written_by": via, "images": [n for n, _ in files]})
+                    "posts": posts, "written_by": via, "images": [n for n, _ in files]})
     json.dump(pending, open(path, "w", encoding="utf-8"), ensure_ascii=False)
     return post, via
+
+
+def thread_replies(parts, kind="post"):
+    """The replies under the owner's post, from the rule-based thread parts: what the company does / its own words,
+    the fixed-rule analysis (revenue, margins, cash), then the source line with the chart's link. The general
+    hashtags that compose_parts() hung on one reply are dropped (the opener already carries them)."""
+    import re
+    want = ("business", "about", "analysis", "source") if kind == "post" else ("source",)
+    out = []
+    for p in parts[1:]:
+        if p["role"] not in want:
+            continue
+        text = re.sub(r"(\n\s*)+(#\w+\s*)+$", "", p["text"]).rstrip()
+        if text:
+            out.append(text)
+    return out

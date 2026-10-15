@@ -99,7 +99,7 @@ def chat(messages):
 def clean(post, ticker, tags, xlen, limit=270):
     post = post.strip().strip('"“”').strip()
     post = re.sub(r"\s*\n+\s*", " ", post)
-    if ticker and not post.upper().startswith(f"${ticker.upper()}"):
+    if ticker and not re.match(r"^(\W*[A-Z0-9][A-Z0-9 \-·:]{0,24}\W+)?\$" + re.escape(ticker.upper()) + r"\b", post.upper()):
         post = f"${ticker} " + post
     present = [t for t in tags if t.lower() in post.lower()]
     if len(present) < len(tags):
@@ -138,7 +138,7 @@ def holders_lines(ticker, site_url):
     return "\n".join(lines)
 
 
-def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url=""):
+def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url="", thread=False):
     """One post with hashtags, written by the model from the guide, the figures and the filing (kind "post") or the
     13F holder changes (kind "post_holders"). Raises on failure."""
     tags = list(hashtags)
@@ -154,6 +154,13 @@ def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url=""):
         task = ("Headline figures (source of truth for numbers):\n" + headline_lines(c, q, ticker)
                 + "\n\nBusiness, in the company's words:\n" + ((c.get("intro") or {}).get("text", "") if isinstance(c.get("intro"), dict) else str(c.get("intro") or ""))[:1200]
                 + "\n\nFiling excerpts:\n" + (filing_text(q) or "(not available; use the headline figures and analysis lines)"))
+    if thread:
+        task += ("\n\nTHIS POST OPENS A THREAD (the replies carry the business mix, the analysis and the source link), so it is the "
+                 "hook: begin with a short attention word before the cashtag — BREAKING, JUST FILED, NEW 10-Q or EARNINGS (pick what "
+                 "is true: BREAKING / JUST FILED only when filed within the last two days) — e.g. `BREAKING · $TICK Q3 FY26:`; give the "
+                 "single most striking fact with its number; and end, right before the hashtags, with a pointer into the thread "
+                 "such as `Full breakdown ↓` or `Charts + what drove it ↓`. One arrow or emoji at most. Still factual, no advice, "
+                 "under 250 characters.")
     msgs = [{"role": "system", "content": guide()},
             {"role": "user", "content": task + "\n\nHashtags to end with, in this order: " + " ".join(tags) + "\n\nWrite the post now."}]
     draft = chat(msgs)
@@ -166,11 +173,11 @@ def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url=""):
         return clean(chat(msgs), ticker, tags, xlen)
 
 
-def post_for(c, q, cfg, ticker, fallback, xlen, kind="post", site_url=""):
+def post_for(c, q, cfg, ticker, fallback, xlen, kind="post", site_url="", thread=False):
     """The model's post, or the rule-based headline post when the model is unavailable or its draft fails the checks."""
     tags = [t for t in ([cfg.get("headline_tag", "#earnings")] if kind == "post" else ["#13F"]) + list(cfg.get("hashtags") or []) if t]
     try:
-        post = compose_one(c, q, cfg, ticker, tags, xlen, kind=kind, site_url=site_url)
+        post = compose_one(c, q, cfg, ticker, tags, xlen, kind=kind, site_url=site_url, thread=thread)
         return post, "model"
     except Exception as err:
         print(f"::warning::model post for {ticker or c['profile'].get('cik')} {q.get('label')} not used ({str(err)[:160]}); rule-based post instead")

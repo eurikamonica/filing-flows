@@ -3,7 +3,13 @@ name: Post to X
 # The owner's "Post to X" buttons on a company page (send_requests kinds post / post_holders): draw the chart, have the
 # model write one post from config/tweet-guide.md + the filing (or the Disclosures holders data), publish the images on
 # the "media" branch and queue the post in Buffer. Separate from "Send requested reports" so it never waits behind
-# reader e-mails. Runs every 5 minutes, or at once when Supabase wakes it (repository_dispatch "post-request").
+# reader e-mails.
+#
+# How it stays quick: GitHub runs cron schedules late and unevenly (a "*/5" schedule often fires every 20-40 minutes),
+# so a run does not rely on cron. Each watch run keeps checking Supabase for ~4 minutes and, when it ends, starts the
+# next watch run itself (workflow_dispatch with chained=true) — a continuous relay, one run at a time, with a button
+# press picked up within about 20 seconds. The cron only restarts the relay if it ever breaks; the repository variable
+# POST_WATCH=off stops it (runs then happen only on the cron / a Supabase wake / Run workflow).
 
 on:
   schedule:
@@ -11,10 +17,16 @@ on:
   repository_dispatch:
     types: [post-request]
   workflow_dispatch:
+    inputs:
+      chained:
+        description: "Started by the previous watch run (leave off when running by hand)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write      # the "media" branch holds the chart images Buffer loads
   models: read         # GitHub Models writes the post text (pipeline/tweet.py)
+  actions: write       # starts the next watch run
 
 concurrency:
   group: post-to-x
@@ -50,8 +62,8 @@ jobs:
         env:
           # GitHub runs schedules at most every 5 minutes, so a scheduled run keeps watching for most of its slot
           # (one check every POLL_SECONDS, up to WATCH_SECONDS) — a button press is picked up within ~20 seconds.
-          # A manual run or a Supabase wake (repository_dispatch) checks once.
-          WATCH_SECONDS: ${{ github.event_name == 'schedule' && 250 || 0 }}
+          # A manual run or a Supabase wake (repository_dispatch) checks once; a relay run (schedule / chained) watches.
+          WATCH_SECONDS: ${{ (github.event_name == 'schedule' || inputs.chained) && vars.POST_WATCH != 'off' && 240 || 0 }}
           POLL_SECONDS: 20
         run: |
           owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
@@ -85,3 +97,13 @@ jobs:
           git push -q origin HEAD:media
           cd ..
           python -m pipeline.buffer --site media --site-url "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media"
+      - name: Start the next watch run
+        if: always() && (github.event_name == 'schedule' || inputs.chained) && vars.POST_WATCH != 'off'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # one relay at a time: skip if another watch run is already queued or running
+          n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --status queued --json databaseId --jq length)
+          m=$(gh run list -R "$GITHUB_REPOSITORY" --workflow post-to-x.yml --status in_progress --json databaseId --jq length)
+          if [ "${n:-0}" -gt 0 ] || [ "${m:-0}" -gt 1 ]; then echo "another watch run is already waiting"; exit 0; fi
+          gh workflow run post-to-x.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f chained=true
