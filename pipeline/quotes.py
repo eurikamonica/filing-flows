@@ -85,9 +85,12 @@ def quotes(tickers, yahoo_limit=400, log=print):
         allq = nasdaq_all()
         got = {t: q for t, q in allq.items() if t in want}
         log(f"quotes: Nasdaq screener answered ({len(allq)} US stocks, {len(got)} on the site)")
+        # the screener lists every exchange-listed stock: a site ticker it lacks trades over the counter, was delisted
+        # or renamed — no market value to check, and its "move" is often a reverse split or a stale quote. Skip them.
+        return got
     except Exception as err:
         log(f"::warning::Nasdaq screener not reached ({str(err)[:120]}); Yahoo per ticker instead")
-    rest = sorted(want - set(got))[:yahoo_limit]
+    rest = sorted(want)[:yahoo_limit]
     if rest:
         with cf.ThreadPoolExecutor(8) as pool:
             for t, q in zip(rest, pool.map(lambda x: _safe(yahoo_one, x), rest)):

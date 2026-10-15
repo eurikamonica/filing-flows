@@ -13,6 +13,7 @@ Repository variables: TWEET_MODEL (default openai/gpt-4.1-mini on GitHub Models,
 import json
 import os
 import re
+import time
 
 import requests
 
@@ -81,19 +82,47 @@ def headline_lines(c, q, ticker):
 
 # ------------------------------------------------------------------ the model
 def chat(messages):
+    """One completion. OpenAI when OPENAI_API_KEY is set; otherwise GitHub Models with the Actions token, trying the
+    current endpoint and then the older Azure-hosted one. Busy / non-JSON answers are retried; the error says what came
+    back (status, content type, start of the body) so a failing run shows why."""
     if os.environ.get("OPENAI_API_KEY"):
-        url, key = "https://api.openai.com/v1/chat/completions", os.environ["OPENAI_API_KEY"]
-        model = os.environ.get("TWEET_MODEL") or "gpt-4.1-mini"
+        targets = [("https://api.openai.com/v1/chat/completions", os.environ["OPENAI_API_KEY"], os.environ.get("TWEET_MODEL") or "gpt-4.1-mini")]
     elif os.environ.get("GITHUB_TOKEN"):
-        url, key = "https://models.github.ai/inference/chat/completions", os.environ["GITHUB_TOKEN"]
-        model = os.environ.get("TWEET_MODEL") or "openai/gpt-4.1-mini"
+        key, model = os.environ["GITHUB_TOKEN"], os.environ.get("TWEET_MODEL") or "openai/gpt-4.1-mini"
+        targets = [("https://models.github.ai/inference/chat/completions", key, model),
+                   ("https://models.inference.ai.azure.com/chat/completions", key, model.split("/")[-1] if "/" in model else model)]
     else:
         raise RuntimeError("no model credentials (GITHUB_TOKEN with models: read, or OPENAI_API_KEY)")
-    r = requests.post(url, json={"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 200},
-                      headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json", "Accept": "application/json"}, timeout=90)
-    if r.status_code >= 400:
-        raise RuntimeError(f"{model}: HTTP {r.status_code} {r.text[:200]}")
-    return r.json()["choices"][0]["message"]["content"].strip()
+    problems = []
+    for url, key, model in targets:
+        for attempt in range(3):
+            try:
+                r = requests.post(url, json={"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 220},
+                                  headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json", "Accept": "application/json"},
+                                  timeout=90)
+            except requests.RequestException as err:
+                problems.append(f"{url.split('/')[2]}: {err.__class__.__name__}")
+                time.sleep(3 * (attempt + 1))
+                continue
+            host = url.split("/")[2]
+            if r.status_code in (429, 500, 502, 503, 504):
+                wait = r.headers.get("retry-after")
+                problems.append(f"{host}: HTTP {r.status_code}")
+                time.sleep(min(30, int(wait)) if wait and wait.isdigit() else 4 * (attempt + 1))
+                continue
+            if r.status_code >= 400:
+                problems.append(f"{host} {model}: HTTP {r.status_code} {r.text[:160]!r}")
+                break                                   # wrong model / no permission: try the next endpoint
+            try:
+                content = ((r.json().get("choices") or [{}])[0].get("message") or {}).get("content")
+            except ValueError:
+                problems.append(f"{host}: HTTP {r.status_code}, not JSON ({r.headers.get('content-type')}): {r.text[:120]!r}")
+                time.sleep(3 * (attempt + 1))
+                continue
+            if content and content.strip():
+                return content.strip()
+            problems.append(f"{host}: empty answer")
+    raise RuntimeError("model unavailable — " + " | ".join(problems[-4:]))
 
 
 def clean(post, ticker, tags, xlen, limit=270):

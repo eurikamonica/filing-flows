@@ -244,8 +244,11 @@ def movers_today(rows, c, live):
         q = live.get(Q.canon(t)) if t else None
         if not q or q.get("chg_pct") is None:
             continue
-        big = (q.get("mcap") or 0) >= m["min_mcap"] if q.get("mcap") else (e.get("revenue") or 0) >= m["min_quarter_revenue"]
-        if big and abs(q["chg_pct"]) >= m["min_move_pct"]:
+        if q.get("mcap"):
+            big, sane = q["mcap"] >= m["min_mcap"], abs(q["chg_pct"]) <= m.get("max_move_pct", 150)
+        else:                                  # Yahoo fallback: no market value, so revenue as the size test and a tighter cap
+            big, sane = (e.get("revenue") or 0) >= m["min_quarter_revenue"], abs(q["chg_pct"]) <= m.get("max_move_unverified_pct", 50)
+        if big and sane and abs(q["chg_pct"]) >= m["min_move_pct"]:
             out.append((e, q))
     return sorted(out, key=lambda eq: -abs(eq[1]["chg_pct"]))
 
