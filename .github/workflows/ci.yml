@@ -3,6 +3,7 @@ name: Checks (offline)
 # Offline gate for code changes: the earnings pipeline tests (fixtures stand in for SEC), JavaScript syntax of the
 # site and the hub, and the hub's unit tests (its template tests need the data snapshot and run in disclosures.yml). No secrets, no network calls to SEC, X, mail or Buffer.
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches: [main]
@@ -60,7 +61,8 @@ jobs:
           SEC_USER_AGENT: 'Filing Flows CI ci@example.org'
         run: |
           pip install -r requirements.txt pytest
-          python -m pytest -q tests
+          python -m pytest -q -rf tests > pytest.log 2>&1 || { grep -E "^(FAILED|ERROR)|Error:|assert" pytest.log | head -25 | sed 's/^/::error::/'; tail -30 pytest.log; exit 1; }
+          tail -3 pytest.log
       - name: Site JavaScript syntax
         run: for f in web/*.js; do node --check "$f"; done
       - name: Hub unit and template tests
