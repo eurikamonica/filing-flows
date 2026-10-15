@@ -142,3 +142,34 @@ class Rotation(unittest.TestCase):
     def test_calendar_quarters(self):
         import datetime as dt
         self.assertEqual(frames.calendar_quarters(3, dt.date(2026, 1, 5)), ['CY2025Q2', 'CY2025Q3', 'CY2025Q4'])
+
+
+import options
+
+
+def _chain(spot=100.0):
+    """A small synthetic chain: two expiries (a monthly and one ~30 days out), strikes 80–120."""
+    rows = []
+    for exp, days in (('261120', 36), ('261218', 64)):           # 2026-11-20 and 2026-12-18 are third Fridays
+        for k in range(80, 125, 5):
+            for t in 'CP':
+                m = (k - spot) / spot
+                rows.append({'option': f'XYZ{exp}{t}{k * 1000:08d}', 'iv': round(0.30 + (0.4 * m * m) - (0.05 * m), 4),
+                             'open_interest': 1000 if (t == 'P' and k == 90) or (t == 'C' and k == 110) else 100, 'volume': 10,
+                             'delta': (0.5 - m * 2) if t == 'C' else (-0.5 - m * 2), 'gamma': max(0.0, 0.05 - abs(m) * 0.2),
+                             'bid': 1.0, 'ask': 1.2})
+    return {'timestamp': '2026-10-15 16:15:00', 'data': {'current_price': spot, 'iv30': 31.2, 'iv30_change': 0.4, 'options': rows}}
+
+
+class Options(unittest.TestCase):
+    def test_summary(self):
+        import datetime as dt
+        spot, iv30, chg, chain = options.parse_chain(_chain())
+        s, d = options.summarise('XYZ', spot, iv30, chg, chain, today=dt.date(2026, 10, 15))
+        self.assertEqual((s['call_wall'], s['put_wall']), (110, 90))
+        self.assertEqual(s['max_pain_exp'], '2026-11-20')
+        self.assertTrue(80 <= s['max_pain'] <= 120)
+        self.assertEqual(len(d['term']), 2)
+        self.assertTrue(d['smiles'] and all(len(x['pts']) >= 5 for x in d['smiles']))
+        self.assertAlmostEqual(s['pc_oi'], 1.0)                      # symmetric open interest
+        self.assertEqual(options.cboe_symbol('SPX'), '_SPX')

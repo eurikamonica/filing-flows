@@ -41,7 +41,9 @@ HOSTS = ('publicreporting.cftc.gov', 'api.fdic.gov', 'data.sec.gov', 'www.sec.go
          'ethics.ny.gov', 'public.ethics.ny.gov', 'form700search.fppc.ca.gov',
          'prciec-rpccie.parl.gc.ca', 'ciec-ccie.parl.gc.ca', 'www.ethicscanada.ca', 'ethicscanada.ca', 'www.ethiquecanada.ca',
          'www.sedi.ca', 'sedi.ca',
-         'stooq.com', 'api.openfigi.com', 'query1.finance.yahoo.com', 'query2.finance.yahoo.com')
+         'stooq.com', 'api.openfigi.com', 'query1.finance.yahoo.com', 'query2.finance.yahoo.com',
+         # 4.5 option chains (CBOE delayed quotes)
+         'cdn.cboe.com')
 
 class BlockedError(RuntimeError):
     """The source answered with a bot-protection / challenge page instead of data."""

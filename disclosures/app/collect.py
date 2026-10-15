@@ -11,12 +11,13 @@ from shards import hydrate, hydrate_catalogs, publish_shards
 import market
 import insiders
 import frames
+import options
 
 ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser(description='Collect official public disclosures; demo never substitutes for real data')
-    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market','insiders'],default='all')
+    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market','insiders','options'],default='all')
     parser.add_argument('--config',type=Path,default=ROOT/'config/settings.json')
     parser.add_argument('--output',type=Path,default=ROOT/'docs/data')
     parser.add_argument('--storage',type=Path,default=ROOT/'storage')
@@ -74,6 +75,13 @@ def main():
             write_json(args.output/'insiders-status.json',data['modules']['insiders'])
         except Exception as exc:
             print('insiders: error — '+str(exc),flush=True)
+    # 4.5: option chains (CBOE delayed quotes) once a day after the close
+    if args.only in ('all','options'):
+        print('Collecting option chains',flush=True)
+        try:
+            print('options: '+json.dumps(options.collect(client,args.output,cfg.get('options',{}))),flush=True)
+        except Exception as exc:
+            print('options: error — '+str(exc),flush=True)
     # 4.4: SEC XBRL frames (16+ quarters of revenue and operating income for every filer) for the momentum clock
     if args.only in ('all','market'):
         print('Collecting XBRL frames',flush=True)

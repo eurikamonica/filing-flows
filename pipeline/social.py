@@ -463,7 +463,10 @@ class Charts:
             self.base = f"http://127.0.0.1:{self.srv.server_address[1]}/"
         try:
             self.pw = sync_playwright().start()
-            self.browser = self.pw.chromium.launch()
+            try:
+                self.browser = self.pw.chromium.launch()
+            except Exception:                     # no Playwright browser downloaded: the runner's own Google Chrome
+                self.browser = self.pw.chromium.launch(channel="chrome")
             self.page = self.browser.new_page()
             self.page.goto(self.base + "index.html#method")
             self.page.wait_for_function("window.Sankey && document.fonts")

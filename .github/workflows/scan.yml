@@ -154,7 +154,7 @@ jobs:
           export X_SITE_URL="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"   # works on scheduled runs too
           if python -m pipeline.social --site _site --store store --check; then
             pip install playwright
-            python -m playwright install --with-deps chromium
+            python -m playwright install chromium || echo 'using the runner’s Google Chrome'
             python -m pipeline.social --site _site --store store
           else
             python -m pipeline.social --site _site --store store --dry-run
@@ -228,7 +228,7 @@ jobs:
           if [ $rc = 1 ]; then exit 0; fi            # nothing due this hour
           if [ $rc != 0 ]; then exit $rc; fi         # wrong key, Supabase down: show the error
           pip install playwright
-          python -m playwright install --with-deps chromium
+          python -m playwright install chromium || echo 'using the runner’s Google Chrome'
           python -m pipeline.notify --site _site
 
   # Threads queued in Buffer (config/x.json "mode": "buffer"): after the site is live, because Buffer loads the chart

@@ -87,7 +87,7 @@ jobs:
             python -m pipeline.engage --site "$site" --site-url "$site" --kinds "$kinds" --dry-run
           else
             pip install playwright
-            python -m playwright install --with-deps chromium
+            python -m playwright install chromium || echo 'using the runner’s Google Chrome'
             python -m pipeline.engage --site "$site" --site-url "$site" --kinds "$kinds"
           fi
       - name: Publish the images and queue the posts in Buffer

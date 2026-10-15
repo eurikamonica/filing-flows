@@ -301,5 +301,22 @@
   },
   "market": {
     "min_interval_hours": 3
+  },
+  "options": {
+    "always": [
+      "SPX",
+      "SPY",
+      "QQQ",
+      "IWM",
+      "NDX",
+      "VIX",
+      "TLT",
+      "GLD"
+    ],
+    "from_signals": 25,
+    "from_13f": 60,
+    "max_tickers": 90,
+    "keep_days": 400,
+    "_note": "CBOE delayed option chains, summarised daily: IV30, smile, term structure, OI and GEX by strike, walls, max pain, skew."
   }
 }

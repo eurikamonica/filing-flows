@@ -82,8 +82,11 @@ jobs:
           if [ "$DRY_RUN" = "true" ]; then
             python -m pipeline.engage --site "$site" --site-url "$site" --kinds "${KINDS_INPUT:-movers}" --dry-run
           else
+            # first a cheap pass (quotes + 8-K look-ups, no browser): most half-hours have no mover past the threshold
+            rc=0; python -m pipeline.engage --site "$site" --site-url "$site" --kinds "${KINDS_INPUT:-movers}" --plan-only || rc=$?
+            if [ $rc = 3 ]; then echo "nothing to post this time"; exit 0; fi
             pip install playwright
-            python -m playwright install --with-deps chromium
+            python -m playwright install chromium || echo 'using the runner’s Google Chrome'
             python -m pipeline.engage --site "$site" --site-url "$site" --kinds "${KINDS_INPUT:-movers}"
           fi
       - name: Publish the images and queue the post in Buffer

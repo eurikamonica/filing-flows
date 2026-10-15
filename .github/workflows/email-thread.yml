@@ -44,7 +44,7 @@ jobs:
       - name: Install
         run: |
           pip install -r requirements.txt playwright
-          python -m playwright install --with-deps chromium
+          python -m playwright install chromium || echo 'using the runner’s Google Chrome'
 
       - name: Fetch the company's data from the published site
         run: |

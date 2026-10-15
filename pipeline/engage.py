@@ -528,7 +528,7 @@ def plan_insider(site, rows, c, by_ticker, state_ok, today):
 
 
 # ------------------------------------------------------------------ main
-def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
+def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_only=False):
     """Plan, write, polish and check the posts of these kinds; draw the charts into media/x/ and append to
     media/x/pending.json. force=True ignores the per-format cooldown (Owner tools "write it now"). Returns the labels made."""
     c = cfg()
@@ -600,6 +600,10 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
         else:
             print(f"{kind}: nothing to post")
 
+    if plan_only:                          # the workflow's cheap first pass: is there anything to post at all?
+        for p in plans:
+            print(f"planned: {p['kind']} " + " ".join("$" + t for t in p["cashtags"]))
+        return [p["kind"] for p in plans]
     tags = [t for t in c["hashtags"] if t]
     made = []
     for p in plans:
@@ -660,10 +664,13 @@ def main():
                     help="comma-separated: question, list, reddit_question, reddit_list, mover, explain, peers, movers (rotation)")
     ap.add_argument("--force", action="store_true", help="ignore the per-format cooldown")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--plan-only", action="store_true", help="only decide whether anything would be posted; exit 3 when nothing")
     args = ap.parse_args()
     kinds = [k.strip() for k in args.kinds.split(",") if k.strip()]
     site = notify.Site(args.site)
     site_url = (args.site_url or os.environ.get("SITE_URL") or (args.site if site.remote else "")).rstrip("/")
+    if args.plan_only:
+        return 0 if make(kinds, site, site_url, args.media, None, plan_only=True, force=args.force) else 3
     with notify.Assets(site, enabled=not args.dry_run) as assets:
         made = make(kinds, site, site_url, args.media, assets, dry_run=args.dry_run, force=args.force)
     if made and not args.dry_run and os.environ.get("GITHUB_ACTIONS"):

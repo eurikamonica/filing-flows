@@ -97,7 +97,7 @@ jobs:
           mkdir -p media/x      # the engagement posts' cooldown state lives on the media branch
           curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/x/engage-state.json" -o media/x/engage-state.json || true
           pip install playwright
-          python -m playwright install --with-deps chromium
+          python -m playwright install chromium || echo 'using the runner’s Google Chrome'
           python -m pipeline.notify --site "${{ steps.due.outputs.site }}" --site-url "${{ steps.due.outputs.site }}" --requests --posts
       - name: Publish the images and queue the post in Buffer
         if: steps.due.outputs.go == 'yes'

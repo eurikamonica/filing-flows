@@ -79,5 +79,5 @@ jobs:
           if [ $rc = 1 ]; then exit 0; fi            # nothing waiting
           if [ $rc != 0 ]; then exit $rc; fi         # wrong key, Supabase down: show the error
           pip install playwright
-          python -m playwright install --with-deps chromium
+          python -m playwright install chromium || echo 'using the runner’s Google Chrome'
           python -m pipeline.notify --site "$site" --site-url "$site" --requests
