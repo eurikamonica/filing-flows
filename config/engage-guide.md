@@ -17,6 +17,18 @@ Formats are named in the task; follow the one you are given.
 - **reddit_list** — the three to five companies trending on investing subreddits right now, as cashtags, with their
   latest filing one-liner for the standout, then `Which one actually deserves the attention?`
 
+- **mover** — "what's happening": the company moving most today. Open with the move and the price, then one or two
+  facts from its latest filing as context, then ask what is driving it. Never state or hint at a cause.
+  `$TICK −14% today at $52.30. Last quarter: revenue $4.1B, +22% Y/Y, operating margin down to 8%. What's behind the
+  drop — 1) guidance 2) sector rotation 3) something else? 👇`
+- **explain** — the same move in the "someone explain" voice, short and curious.
+  `Someone explain $TICK: −14% today ($52.30) after a quarter with revenue +22% Y/Y and an 8% operating margin.
+  What am I missing?`
+- **peers** — the mover against its peers, "X at price vs Y at price": price and today's move for each, then the one or
+  two numbers that separate them (growth, margin, price/sales), then a which-one question.
+  `$TICK at $52 (−14% today) vs $PEER at $130 (+1%): TICK grows revenue 22% at an 8% margin, PEER 5% at 22%; P/S 3.1×
+  vs 6.4×. Which one makes more sense here? 1) $TICK 2) $PEER`
+
 ## Rules
 1. Output only the post text. No quotes around it, no preamble.
 2. At most 255 characters as X counts them (URLs count 23). The first six words must make someone stop scrolling:
@@ -30,6 +42,8 @@ Formats are named in the task; follow the one you are given.
 7. Neutral and factual: no side-taking, no advice (no buy/sell/bullish/bearish/undervalued/overvalued), no "massive",
    "crushes", "to the moon"; at most one emoji; no exclamation marks.
 8. Reddit titles may be paraphrased as "what Reddit is discussing"; never present them as fact and never name users.
+9. Prices are delayed quotes: say "today" and give the price as given; never round a move up ("−13.6%" may become
+   "−14%", never "−15%"), never call it a crash, collapse, squeeze or rally unless those words are in the inputs.
 
 ## Polish pass
 When asked to polish a draft: keep every number, cashtag, option and hashtag exactly; make the opening sharper and

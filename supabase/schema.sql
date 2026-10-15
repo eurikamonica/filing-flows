@@ -146,13 +146,14 @@ alter table public.send_requests add column if not exists kind text not null def
 -- kinds: q a quarter, fy a fiscal year, thread the X thread of a quarter (site owner only), day the daily report of one
 -- filing date (period_end; cik 0), post / post_holders (owner only): queue an X post in Buffer now — the quarter's
 -- earnings post, or a post about who bought the company (13F changes, from Disclosures); engage_question / engage_list /
--- engage_reddit_question / engage_reddit_list (owner only; cik 0, period_end today): write that engagement post now
+-- engage_reddit_question / engage_reddit_list / engage_mover / engage_explain / engage_peers (owner only; cik 0,
+-- period_end today): write that engagement post now
 -- (pipeline/engage.py) instead of waiting for its schedule
 alter table public.send_requests drop constraint if exists send_requests_kind_check;
 alter table public.send_requests add constraint send_requests_kind_check check (kind in ('q', 'fy', 'thread', 'day', 'post', 'post_holders',
-  'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list'));
+  'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers'));
 alter table public.send_requests drop constraint if exists send_requests_cik_check;
-alter table public.send_requests add constraint send_requests_cik_check check (cik > 0 or (kind in ('day', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list') and cik = 0));
+alter table public.send_requests add constraint send_requests_cik_check check (cik > 0 or (kind in ('day', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers') and cik = 0));
 drop index if exists public.send_requests_one_pending;       -- a quarter and a fiscal year can end on the same day
 create unique index if not exists send_requests_one_pending_kind on public.send_requests (user_id, cik, period_end, kind)
   where status in ('pending', 'sending');
@@ -207,7 +208,7 @@ create trigger send_requests_wake after insert on public.send_requests
 -- the owner's "Post to X" requests wake their own workflow (post-to-x.yml) so they never queue behind e-mails
 drop trigger if exists post_requests_wake on public.send_requests;
 create trigger post_requests_wake after insert on public.send_requests
-  for each row when (new.kind in ('post', 'post_holders', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list'))
+  for each row when (new.kind in ('post', 'post_holders', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers'))
   execute function public.send_requests_wake('post-request');
 
 -- The site owner: only accounts listed here see the owner tools (#owner: the X thread panel on company pages).
@@ -230,7 +231,7 @@ end $$;
 -- "Email me this thread" goes straight to the owner's inbox: only the site owner may ask for a thread
 drop policy if exists "ask for reports" on public.send_requests;
 create policy "ask for reports" on public.send_requests for insert
-  with check (auth.uid() = user_id and (kind not in ('thread', 'post', 'post_holders', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list') or public.am_i_owner()));
+  with check (auth.uid() = user_id and (kind not in ('thread', 'post', 'post_holders', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers') or public.am_i_owner()));
 
 -- The owner's preferences (#owner page): read and changed by the site owner only; read by the workflows with the secret key.
 create table if not exists public.owner_settings (

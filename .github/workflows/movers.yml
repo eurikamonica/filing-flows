@@ -1,0 +1,73 @@
+name: Movers to X
+
+# During US market hours: which Filing Flows companies are moving most today (delayed quotes, pipeline/quotes.py), and
+# one post at a time — "what's happening?", "someone explain", or the mover against its peers — written by GitHub Models
+# from config/engage-guide.md with the company's chart, queued in Buffer (pipeline/engage.py kind "movers").
+# Thresholds, daily cap and spacing: config/engage.json → movers (default: a move of 8%+, market value $5B+, at most
+# three posts a day, 45 minutes apart, the same company once a day). The repository variable MOVERS=off pauses it.
+
+on:
+  schedule:
+    - cron: "10,40 13-20 * * 1-5"      # 13:10–20:40 UTC ≈ 9:10 am – 4:40 pm New York (EDT)
+  workflow_dispatch:
+    inputs:
+      kinds:
+        description: "movers (rotation), or one of mover, explain, peers"
+        type: string
+        default: "movers"
+      dry_run:
+        description: "Only print today's movers and the post (nothing drawn or queued)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  models: read
+
+concurrency:
+  group: movers
+  cancel-in-progress: false
+
+jobs:
+  movers:
+    if: vars.MOVERS != 'off'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+      MEDIA_DIR: media
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      TWEET_MODEL: ${{ vars.TWEET_MODEL }}
+      BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+      BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
+      REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+      REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Cooldowns and today's count
+        run: |
+          mkdir -p media/x
+          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/x/engage-state.json" -o media/x/engage-state.json || true
+      - name: Find today's movers and write the post
+        env:
+          KINDS_INPUT: ${{ inputs.kinds }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          site="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"
+          if [ "$DRY_RUN" = "true" ]; then
+            python -m pipeline.engage --site "$site" --site-url "$site" --kinds "${KINDS_INPUT:-movers}" --dry-run
+          else
+            pip install playwright
+            python -m playwright install --with-deps chromium
+            python -m pipeline.engage --site "$site" --site-url "$site" --kinds "${KINDS_INPUT:-movers}"
+          fi
+      - name: Publish the images and queue the post in Buffer
+        if: inputs.dry_run != true
+        run: scripts/publish-media.sh

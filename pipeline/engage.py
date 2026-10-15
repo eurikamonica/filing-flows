@@ -1,5 +1,5 @@
-"""Engagement posts for X — question of the day, today's filers, Reddit trends — written by the model, polished, queued
-in Buffer with the real charts.
+"""Engagement posts for X — question of the day, today's filers, Reddit trends, today's biggest price moves — written by
+the model, polished, queued in Buffer with the real charts.
 
     python -m pipeline.engage --site https://filing-flows.com/ --kinds question,list --dry-run
     python -m pipeline.engage --site https://filing-flows.com/ --kinds reddit_question,reddit_list --media media
@@ -9,6 +9,12 @@ Kinds (config/engage-guide.md describes each format):
   list             every company that filed in the last `days` (cashtags, up to 4 charts) -> "which surprised you?"
   reddit_question  the company trending hardest on investing subreddits -> fact + options  (pipeline/reddit.py)
   reddit_list      the 3-5 companies trending on Reddit, with the standout's filing line (up to 4 charts)
+  mover            the site company moving most today (delayed quote, pipeline/quotes.py): "what's happening?" + its
+                   latest filing figures; the cause is never guessed, the audience is asked
+  explain          the same move as a "someone explain $X" post
+  peers            the mover against its closest listed peers (same SIC industry): price, today's move, growth, margin,
+                   price/sales — "which one makes more sense?"
+  movers           (workflow) rotates mover → peers → explain over the day, within movers.max_per_day
 Each post is drafted from the guide, then polished (sharper opening, same facts), then checked (length, cashtags,
 hashtags, no advice words). Written to media/x/pending.json for pipeline/buffer.py; media/x/engage-state.json keeps
 what was posted so a company or a format is not repeated within the cooldown. Settings: config/engage.json.
@@ -21,7 +27,7 @@ import re
 import sys
 import time
 
-from . import notify, reddit, social, tweet
+from . import notify, quotes as Q, reddit, social, tweet
 
 CFG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "engage.json")
 GUIDE = os.path.join(os.path.dirname(CFG), "engage-guide.md")
@@ -33,7 +39,10 @@ DEFAULTS = {
     "kind_cooldown_hours": 20,      # the same format at most once a day
     "hashtags": ["#earnings", "#stocks"],
     "polish": True,
+    "movers": {"min_move_pct": 8, "min_mcap": 5e9, "min_quarter_revenue": 250e6, "max_per_day": 3, "min_gap_minutes": 45,
+               "ticker_cooldown_hours": 20, "peers": 2},
 }
+MOVER_KINDS = ("mover", "explain", "peers")
 
 
 def cfg():
@@ -208,6 +217,87 @@ def plan_reddit_list(site, rows, c, trends, by_ticker, state_ok):
     return {"kind": "reddit_list", "task": task, "cashtags": [a["ticker"] for a in picks], "items": items}
 
 
+# ------------------------------------------------------------------ price moves
+def money(v):
+    if v is None:
+        return "—"
+    a = abs(v)
+    s = f"${a / 1e12:.2f}T" if a >= 1e12 else f"${a / 1e9:.1f}B" if a >= 1e9 else f"${a / 1e6:.0f}M"
+    return ("−" if v < 0 else "") + s
+
+
+def quote_line(t, q, e):
+    bits = [f"${t} at ${q['price']:,.2f} ({q['chg_pct']:+.1f}% today)" if q.get("chg_pct") is not None else f"${t} at ${q['price']:,.2f}"]
+    if q.get("mcap"):
+        bits.append(f"market value {money(q['mcap'])}")
+        if e and e.get("revenue"):
+            bits.append(f"price/sales ≈ {q['mcap'] / (e['revenue'] * 4):.1f}× (market value ÷ latest quarter's revenue × 4)")
+    return " · ".join(bits)
+
+
+def movers_today(rows, c, live):
+    """Site companies by size of today's move, filtered by the movers settings. live: {ticker: quote}."""
+    m = c["movers"]
+    out = []
+    for e in rows:
+        t = e.get("ticker")
+        q = live.get(Q.canon(t)) if t else None
+        if not q or q.get("chg_pct") is None:
+            continue
+        big = (q.get("mcap") or 0) >= m["min_mcap"] if q.get("mcap") else (e.get("revenue") or 0) >= m["min_quarter_revenue"]
+        if big and abs(q["chg_pct"]) >= m["min_move_pct"]:
+            out.append((e, q))
+    return sorted(out, key=lambda eq: -abs(eq[1]["chg_pct"]))
+
+
+def peers_of(e, rows, live, n):
+    same = [x for x in rows if x is not e and x.get("ticker") and x.get("sic") and x.get("sic") == e.get("sic") and live.get(Q.canon(x["ticker"]))]
+    if len(same) < n:
+        same += [x for x in rows if x is not e and x not in same and x.get("ticker") and x.get("industry") == e.get("industry")
+                 and live.get(Q.canon(x["ticker"]))]
+    seen, out = {e["ticker"]}, []
+    for x in sorted(same, key=lambda x: -(x.get("revenue") or 0)):
+        if x["ticker"] not in seen:
+            seen.add(x["ticker"]); out.append(x)
+    return out[:n]
+
+
+def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%H:%M UTC")
+    for e, q in movers_today(rows, c, live):
+        if not state_ok("mover", e["ticker"], hours=c["movers"]["ticker_cooldown_hours"]):
+            continue
+        cj, fq = figures(site, e)
+        if not fq:
+            continue
+        chatter = ""
+        for a in trends or []:
+            if a["ticker"] == e["ticker"]:
+                chatter = "\n\nWhat Reddit is discussing about it (titles, not facts):\n" + thread_lines(a)
+        task = (f"PRICE MOVE (delayed quote, {stamp}): {quote_line(e['ticker'], q, e)}.\n\n"
+                f"Latest filing figures (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, e['ticker'])}{chatter}\n\n"
+                "The cause of today's move is NOT in these inputs: do not guess or imply one; ask the audience.")
+        items = [(e, cj, fq)]
+        cashtags = [e["ticker"]]
+        if kind == "peers":
+            ps = peers_of(e, rows, live, c["movers"]["peers"])
+            if not ps:
+                continue
+            lines = []
+            for x in ps:
+                cx, qx = figures(site, x)
+                lines.append(f"- {quote_line(x['ticker'], live[Q.canon(x['ticker'])], x)} · {one_liner(x)}")
+                if qx:
+                    items.append((x, cx, qx))
+            task = (f"THE MOVER (delayed quote, {stamp}): {quote_line(e['ticker'], q, e)} · {one_liner(e)}\n\n"
+                    f"Its closest listed peers on Filing Flows (same industry: {e.get('industry') or e.get('sic')}):\n" + "\n".join(lines)
+                    + "\n\nCompare them on price, today's move, growth, margin and price/sales — only these numbers. Do not guess "
+                      "why the mover moved.")
+            cashtags += [x["ticker"] for x in ps]
+        return {"kind": kind, "task": task, "cashtags": cashtags, "items": items, "mover": e["ticker"]}
+    return None
+
+
 # ------------------------------------------------------------------ main
 def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
     """Plan, write, polish and check the posts of these kinds; draw the charts into media/x/ and append to
@@ -230,24 +320,46 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
     state_path = os.path.join(xdir, "engage-state.json")
     state = json.load(open(state_path, encoding="utf-8")) if os.path.exists(state_path) else {}
 
-    def state_ok(kind, ticker):
-        return (state.get(f"{kind}:{ticker}") or "") < (now - dt.timedelta(days=c["cooldown_days"])).isoformat()
+    def state_ok(kind, ticker, hours=None):
+        since = now - (dt.timedelta(hours=hours) if hours else dt.timedelta(days=c["cooldown_days"]))
+        return (state.get(f"{kind}:{ticker}") or "") < since.isoformat()
+
+    log = [x for x in state.get("movers_log", []) if x[0][:10] == today.isoformat()]
 
     def kind_ok(kind):
+        if kind in MOVER_KINDS:            # movers: a daily cap and a minimum gap instead of once a day per format
+            if force:
+                return True
+            if len(log) >= c["movers"]["max_per_day"]:
+                print(f"{kind}: {len(log)} mover posts already today (max_per_day)")
+                return False
+            return not log or log[-1][0] < (now - dt.timedelta(minutes=c["movers"]["min_gap_minutes"])).isoformat()
         return force or (state.get(f"kind:{kind}") or "") < (now - dt.timedelta(hours=c["kind_cooldown_hours"])).isoformat()
 
+    if "movers" in kinds:                  # the workflow's rotation: mover, then peers, then explain
+        kinds = [k for k in kinds if k != "movers"] + [MOVER_KINDS[[0, 2, 1][len(log) % 3]]]
     trends = None
+    live = None
     plans = []
     for kind in kinds:
         if not kind_ok(kind):
-            print(f"{kind}: posted within the last {c['kind_cooldown_hours']} hours; skipped")
+            print(f"{kind}: posted recently; skipped")
             continue
         if kind in ("reddit_question", "reddit_list") and trends is None:
             trends = reddit_trends(rows, c)
+        if kind in MOVER_KINDS and live is None:
+            wanted = sorted({e["ticker"] for e in rows if e.get("ticker") and (e.get("revenue") or 0) >= c["movers"]["min_quarter_revenue"] / 4},
+                            key=lambda t: -(by_ticker[t].get("revenue") or 0))
+            live = Q.quotes(wanted)
+            top = movers_today(rows, c, live)[:8]
+            print("movers: " + (", ".join(f"{e['ticker']} {q['chg_pct']:+.1f}%" for e, q in top) or "none past the threshold"))
         p = {"question": lambda: plan_question(site, rows, c, today, state_ok),
              "list": lambda: plan_list(site, rows, c, today, state_ok),
              "reddit_question": lambda: plan_reddit_question(site, rows, c, trends, by_ticker, state_ok),
-             "reddit_list": lambda: plan_reddit_list(site, rows, c, trends, by_ticker, state_ok)}.get(kind, lambda: None)()
+             "reddit_list": lambda: plan_reddit_list(site, rows, c, trends, by_ticker, state_ok),
+             "mover": lambda: plan_mover("mover", site, rows, c, live, state_ok, trends),
+             "explain": lambda: plan_mover("explain", site, rows, c, live, state_ok, trends),
+             "peers": lambda: plan_mover("peers", site, rows, c, live, state_ok, trends)}.get(kind, lambda: None)()
         if p:
             plans.append(p)
         else:
@@ -285,6 +397,10 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
         state[f"kind:{p['kind']}"] = stamp
         for t in p["cashtags"]:
             state[f"{p['kind']}:{t}"] = stamp
+        if p.get("mover"):
+            state[f"mover:{p['mover']}"] = stamp
+            log.append([stamp, p["kind"], p["mover"]])
+            state["movers_log"] = [x for x in state.get("movers_log", []) if x[0] >= (now - dt.timedelta(days=7)).isoformat()] + [log[-1]]
         json.dump(state, open(state_path, "w", encoding="utf-8"))
         made.append(f"{p['kind']}: {post}")
     return made
@@ -295,7 +411,8 @@ def main():
     ap.add_argument("--site", default=os.environ.get("SITE_URL") or "_site")
     ap.add_argument("--site-url", default=None)
     ap.add_argument("--media", default=os.environ.get("MEDIA_DIR", "media"))
-    ap.add_argument("--kinds", default="question,list,reddit_question,reddit_list")
+    ap.add_argument("--kinds", default="question,list,reddit_question,reddit_list",
+                    help="comma-separated: question, list, reddit_question, reddit_list, mover, explain, peers, movers (rotation)")
     ap.add_argument("--force", action="store_true", help="ignore the per-format cooldown")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()

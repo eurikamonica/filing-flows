@@ -1743,3 +1743,27 @@ def test_run_keeps_to_its_time_budget(monkeypatch=None):
             os.environ.pop("RUN_BUDGET_MINUTES", None)
         else:
             os.environ["RUN_BUDGET_MINUTES"] = old
+
+
+# ---------- movers posts (pipeline/quotes.py, pipeline/engage.py) ----------
+def test_quote_parsers():
+    from pipeline import quotes
+    got = quotes.parse_nasdaq({"data": {"rows": [{"symbol": "BRK/B", "lastsale": "$470.12", "pctchange": "-0.655%",
+                                                   "marketCap": "1,014,000,000,000"}, {"symbol": "X", "lastsale": "NA"}]}})
+    assert got["BRK-B"]["price"] == 470.12 and got["BRK-B"]["chg_pct"] == -0.655 and "X" not in got
+    y = quotes.parse_yahoo({"chart": {"result": [{"meta": {"regularMarketPrice": 52.3, "chartPreviousClose": 70},
+                                                  "indicators": {"quote": [{"close": [60, 61, 60.9, 52.3]}]}}]}})
+    assert round(y["chg_pct"], 1) == -14.1          # against the prior session's close, not the 5-day range start
+
+
+def test_movers_and_peers():
+    from pipeline import engage
+    c = engage.cfg()
+    rows = [{"ticker": "AAA", "sic": "3674", "revenue": 5e9}, {"ticker": "BBB", "sic": "3674", "revenue": 9e9},
+            {"ticker": "CCC", "sic": "3674", "revenue": 1e9}, {"ticker": "DDD", "sic": "7372", "revenue": 8e9}]
+    live = {"AAA": {"price": 10, "chg_pct": -12.0, "mcap": 9e9}, "BBB": {"price": 50, "chg_pct": 1.0, "mcap": 8e10},
+            "CCC": {"price": 5, "chg_pct": 20.0, "mcap": 1e9}, "DDD": {"price": 7, "chg_pct": 9.0, "mcap": 6e9}}
+    moved = [e["ticker"] for e, q in engage.movers_today(rows, c, live)]
+    assert moved == ["AAA", "DDD"]                  # CCC moved most but is below the market-value floor
+    assert [x["ticker"] for x in engage.peers_of(rows[0], rows, live, 2)] == ["BBB", "CCC"]
+    assert "price/sales ≈ 0.5×" in engage.quote_line("AAA", live["AAA"], rows[0])

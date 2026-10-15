@@ -1167,7 +1167,8 @@ def _now_iso():
     return dt.datetime.now(dt.timezone.utc).isoformat()
 
 
-ENGAGE_KINDS = ("engage_question", "engage_list", "engage_reddit_question", "engage_reddit_list")   # Owner tools: write that post now
+ENGAGE_KINDS = ("engage_question", "engage_list", "engage_reddit_question", "engage_reddit_list", "engage_mover", "engage_explain",
+                "engage_peers")   # Owner tools: write that post now
 POST_KINDS = ("post", "post_holders") + ENGAGE_KINDS   # the owner's X requests: their own workflow (post-to-x.yml)
 
 

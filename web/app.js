@@ -2199,12 +2199,15 @@
         <div id="reread-list-box"></div></section>` : ''}
       ${c ? `<section class="section" id="engage"><div class="section-head"><h2>Engagement posts to X</h2>
           <span class="muted">Written by the model from the real charts, queued in Buffer. They also run on their own schedule
-          (before the open: today’s filers + Reddit; after the close: question of the day); these buttons write one now.</span></div>
+          (before the open: today’s filers + Reddit; after the close: question of the day; market hours: the biggest movers); these buttons write one now.</span></div>
         <div class="row" id="engage-bar">
           <button class="btn" type="button" data-engage="engage_question" title="The most striking filing of the last day: one fact, 2–3 options to reply with">✦ Question of the day</button>
           <button class="btn" type="button" data-engage="engage_list" title="Every company that filed in the last day, as cashtags, with up to four charts">✦ Today’s filers</button>
           <button class="btn" type="button" data-engage="engage_reddit_question" title="The company trending hardest on investing subreddits">✦ Reddit question</button>
           <button class="btn" type="button" data-engage="engage_reddit_list" title="The three to five companies trending on Reddit">✦ Reddit list</button>
+          <button class="btn" type="button" data-engage="engage_mover" title="The site company moving most right now (delayed quote): the move, its latest filing, “what’s happening?”">✦ Biggest mover now</button>
+          <button class="btn" type="button" data-engage="engage_explain" title="The same move as a “someone explain $X” post">✦ Plz explain</button>
+          <button class="btn" type="button" data-engage="engage_peers" title="The mover against its closest peers: price, today’s move, growth, margin, price/sales">✦ Mover vs peers</button>
         </div>
         <p class="muted small" id="engage-msg" role="status"></p></section>` : ''}
       <section class="section daily" id="daily" hidden></section>

@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       kinds:
-        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list"
+        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers"
         type: string
         default: "question,list,reddit_question,reddit_list"
       dry_run:
