@@ -43,7 +43,7 @@ HOSTS = ('publicreporting.cftc.gov', 'api.fdic.gov', 'data.sec.gov', 'www.sec.go
          'www.sedi.ca', 'sedi.ca',
          'stooq.com', 'api.openfigi.com', 'query1.finance.yahoo.com', 'query2.finance.yahoo.com',
          # 4.5 option chains (CBOE delayed quotes)
-         'cdn.cboe.com', 'www.cboe.com')
+         'cdn.cboe.com', 'cdn-api.cboe.com', 'www.cboe.com')
 
 class BlockedError(RuntimeError):
     """The source answered with a bot-protection / challenge page instead of data."""
@@ -73,7 +73,7 @@ class Client:
             headers['X-App-Token'] = os.environ['CFTC_APP_TOKEN']
         if host == 'api.openfigi.com' and os.environ.get('OPENFIGI_API_KEY'):
             headers['X-OPENFIGI-APIKEY'] = os.environ['OPENFIGI_API_KEY']
-        if host in ('www.sedi.ca', 'sedi.ca', 'ethics.ny.gov', 'public.ethics.ny.gov', 'form700search.fppc.ca.gov', 'prciec-rpccie.parl.gc.ca', 'ciec-ccie.parl.gc.ca', 'www.ethicscanada.ca', 'ethicscanada.ca', 'stooq.com', 'query1.finance.yahoo.com', 'query2.finance.yahoo.com', 'cdn.cboe.com', 'www.cboe.com'):
+        if host in ('www.sedi.ca', 'sedi.ca', 'ethics.ny.gov', 'public.ethics.ny.gov', 'form700search.fppc.ca.gov', 'prciec-rpccie.parl.gc.ca', 'ciec-ccie.parl.gc.ca', 'www.ethicscanada.ca', 'ethicscanada.ca', 'stooq.com', 'query1.finance.yahoo.com', 'query2.finance.yahoo.com', 'cdn.cboe.com', 'cdn-api.cboe.com', 'www.cboe.com'):
             # Portals built for browsers; the contact address stays in the UA string.
             headers['User-Agent'] = 'Mozilla/5.0 (compatible; FilingFlows disclosure reader; ' + headers['User-Agent'] + ')'
             headers['Accept'] = 'text/html,application/xhtml+xml,application/json;q=0.9,application/pdf;q=0.9,*/*;q=0.8'
