@@ -65,9 +65,10 @@ def headline_lines(c, q, ticker):
     node = {n["id"]: n for n in q.get("nodes", [])}
     m = lambda v: ("—" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.0f}M")
     pc = lambda v: ("—" if v is None else f"{v:+.0f}%")
+    om = "—" if h.get("om") is None else f"{h['om']:.1f}%"
     lines = [f"Company: {c['profile']['name']} ({ticker or 'no ticker'})",
              f"Quarter: {q.get('label')} · form {q.get('form')} · period ended {q.get('end')} · filed {q.get('filed')}",
-             f"Revenue {m(h.get('revenue'))} · Y/Y {pc(h.get('yoy'))} · operating margin {('—' if h.get('om') is None else f'{h['om']:.1f}%')}",
+             f"Revenue {m(h.get('revenue'))} · Y/Y {pc(h.get('yoy'))} · operating margin {om}",
              f"Net earnings {m(h.get('ni'))}" + (f" · operating cash flow {m(node['ocf']['v'])}" if node.get("ocf") else "")]
     if q.get("form") == "8-K":
         lines.append("Status: preliminary (8-K earnings release; the 10-Q/10-K follows)")
