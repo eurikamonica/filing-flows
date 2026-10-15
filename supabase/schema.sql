@@ -144,13 +144,13 @@ create table if not exists public.send_requests (
 );
 alter table public.send_requests add column if not exists kind text not null default 'q';
 -- kinds: q a quarter, fy a fiscal year, thread the X thread of a quarter (site owner only), day the daily report of one
--- filing date (period_end; cik 0), post / post_holders (owner only): queue an X post in Buffer now — the quarter's
+-- filing date (period_end; cik 0), post / post_holders / post_gif (owner only): queue an X post in Buffer now — the quarter's
 -- earnings post, or a post about who bought the company (13F changes, from Disclosures); engage_question / engage_list /
 -- engage_reddit_question / engage_reddit_list / engage_mover / engage_explain / engage_peers (owner only; cik 0,
 -- period_end today): write that engagement post now
 -- (pipeline/engage.py) instead of waiting for its schedule
 alter table public.send_requests drop constraint if exists send_requests_kind_check;
-alter table public.send_requests add constraint send_requests_kind_check check (kind in ('q', 'fy', 'thread', 'day', 'post', 'post_holders',
+alter table public.send_requests add constraint send_requests_kind_check check (kind in ('q', 'fy', 'thread', 'day', 'post', 'post_holders', 'post_gif',
   'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider'));
 alter table public.send_requests drop constraint if exists send_requests_cik_check;
 alter table public.send_requests add constraint send_requests_cik_check check (cik > 0 or (kind in ('day', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider') and cik = 0));
@@ -172,7 +172,7 @@ language plpgsql security definer set search_path = public, auth as $$
 begin
   new.status := 'pending'; new.attempts := 0; new.error := null; new.claimed_at := null; new.sent_at := null;
   new.created_at := now();
-  if new.kind in ('post', 'post_holders') or new.kind like 'engage\_%' then
+  if new.kind in ('post', 'post_holders', 'post_gif') or new.kind like 'engage\_%' then
     return new;
   end if;
   if exists (select 1 from public.site_owners o join auth.users u on lower(u.email) = lower(o.email) where u.id = new.user_id) then
@@ -180,7 +180,7 @@ begin
   end if;
   if (select count(*) from public.send_requests r
       where r.user_id = new.user_id and r.created_at > now() - interval '24 hours'
-        and r.kind not in ('post', 'post_holders') and r.kind not like 'engage\_%') >= 30 then
+        and r.kind not in ('post', 'post_holders', 'post_gif') and r.kind not like 'engage\_%') >= 30 then
     raise exception 'limit: 30 reports a day' using errcode = 'P0001';
   end if;
   return new;
@@ -216,7 +216,7 @@ create trigger send_requests_wake after insert on public.send_requests
 -- the owner's "Post to X" requests wake their own workflow (post-to-x.yml) so they never queue behind e-mails
 drop trigger if exists post_requests_wake on public.send_requests;
 create trigger post_requests_wake after insert on public.send_requests
-  for each row when (new.kind in ('post', 'post_holders', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider'))
+  for each row when (new.kind in ('post', 'post_holders', 'post_gif', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider'))
   execute function public.send_requests_wake('post-request');
 
 -- The site owner: only accounts listed here see the owner tools (#owner: the X thread panel on company pages).
@@ -239,7 +239,7 @@ end $$;
 -- "Email me this thread" goes straight to the owner's inbox: only the site owner may ask for a thread
 drop policy if exists "ask for reports" on public.send_requests;
 create policy "ask for reports" on public.send_requests for insert
-  with check (auth.uid() = user_id and (kind not in ('thread', 'post', 'post_holders', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider') or public.am_i_owner()));
+  with check (auth.uid() = user_id and (kind not in ('thread', 'post', 'post_holders', 'post_gif', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider') or public.am_i_owner()));
 
 -- The owner's preferences (#owner page): read and changed by the site owner only; read by the workflows with the secret key.
 create table if not exists public.owner_settings (

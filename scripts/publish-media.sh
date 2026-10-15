@@ -9,7 +9,7 @@ git init -q -b media
 git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 git fetch -q --depth 1 origin media 2>/dev/null && git checkout -q media || true
 mkdir -p x
-cp ../"$media"/x/*.png x/ 2>/dev/null || true
+cp ../"$media"/x/*.png ../"$media"/x/*.gif x/ 2>/dev/null || true
 cp ../"$media"/x/*-state.json x/ 2>/dev/null || true
 git add -A
 git -c user.name=filing-flows -c user.email=actions@users.noreply.github.com commit -qm "post images $(date -u +%Y-%m-%dT%H:%MZ)" || true

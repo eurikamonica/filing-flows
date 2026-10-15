@@ -393,6 +393,8 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url):
     import json
     import os
     from . import tweet
+    if kind == "post_gif":
+        return gif_post(e, c, q, assets, cfg, media_dir, site_url)
     modes = ["std"] + (["y"] if kind == "post" and "year_ago" in (cfg.get("images") or []) and q.get("compare_y") else [])
     pngs = [assets.image(e, c, q, m, "png") for m in modes]
     names = social.image_names(e, q, len(modes))
@@ -413,6 +415,39 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url):
     pending = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else []
     pending.append({"cik": e["cik"], "end": e["end"], "label": f"{e.get('ticker') or e['cik']} {q['label']} ({kind})",
                     "posts": posts, "written_by": via, "images": [n for n, _ in files]})
+    json.dump(pending, open(path, "w", encoding="utf-8"), ensure_ascii=False)
+    return post, via
+
+
+def gif_post(e, c, q, assets, cfg, media_dir, site_url):
+    """Owner's "8-quarter GIF" button: an animated flip-book of the last eight quarters' Sankeys and one post on the
+    two-year trend (model-written, rule-based fallback), queued like the other posts."""
+    import json
+    import os
+    from . import animate, tweet
+    gif = animate.flipbook(assets, e, c)
+    if not gif:
+        raise RuntimeError("fewer than three quarters could be drawn for the flip-book")
+    t = (e.get("ticker") or "").replace("-", ".")
+    name = social.image_names(e, q, 1)[0].replace("-1-chart.png", "-8q.gif")
+    xdir = os.path.join(media_dir, "x")
+    os.makedirs(xdir, exist_ok=True)
+    with open(os.path.join(xdir, name), "wb") as f:
+        f.write(gif)
+    lines = animate.trend_lines(c)
+    first, last = lines[0].split(":", 1), lines[-1].split(":", 1)
+    fallback = (f"${t} " if t else "") + f"{social.display_name(c['profile']['name'])}, {first[0]} → {last[0]}, one Sankey per quarter." \
+               f"\n\nThen:{first[1]}\nNow:{last[1]}"
+    fallback = fallback if social.xlen(fallback) <= 280 else fallback[:270].rsplit("\n", 1)[0]
+    post, via = tweet.post_for(c, q, cfg, t, fallback, social.xlen, kind="post_trend", site_url=site_url)
+    link = (site_url or cfg.get("site_url", "")).rstrip("/")
+    reply = "Every quarter, oldest first:\n" + "\n".join("· " + l.split(", net earnings")[0] for l in lines[-6:])
+    reply = reply if social.xlen(reply) <= 280 else reply[:270].rsplit("\n", 1)[0]
+    posts = [post, reply] + ([f"Interactive charts, read from the SEC filings: {link}/#c-{c['profile']['cik']}"] if link else [])
+    path = os.path.join(xdir, "pending.json")
+    pending = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else []
+    pending.append({"cik": e["cik"], "end": e["end"], "label": f"{t or e['cik']} 8-quarter GIF", "posts": posts, "written_by": via,
+                    "images": [name]})
     json.dump(pending, open(path, "w", encoding="utf-8"), ensure_ascii=False)
     return post, via
 

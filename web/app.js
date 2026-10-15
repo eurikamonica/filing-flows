@@ -853,9 +853,10 @@
     bar.className = 'controls';
     bar.innerHTML = `<span class="muted">Post to X via Buffer (written by the model from the filing, checked, then queued):</span>
       <button class="btn" type="button" data-post="post">✦ Earnings post</button>
-      <button class="btn" type="button" data-post="post_holders">✦ Who bought it (13F)</button>`;
+      <button class="btn" type="button" data-post="post_holders">✦ Who bought it (13F)</button>
+      <button class="btn" type="button" data-post="post_gif" title="An animated flip-book of the last eight quarters' Sankeys, with a post on the two-year trend">✦ 8-quarter GIF</button>`;
     $$('[data-post]', bar).forEach((b) => b.addEventListener('click', () => withProgress(b, (text) => { if (text) toast(text); },
-      () => askFor({ cik: +p.cik, period_end: q.end, kind: b.dataset.post }, b.dataset.post === 'post' ? 'Earnings post' : 'Holders post'))));
+      () => askFor({ cik: +p.cik, period_end: q.end, kind: b.dataset.post }, b.dataset.post === 'post' ? 'Earnings post' : b.dataset.post === 'post_gif' ? '8-quarter GIF post' : 'Holders post'))));
     sec.appendChild(bar);
     return sec;
   }
@@ -2094,7 +2095,7 @@
       if (x.kind === 'day') return `<tr><td>Daily report</td><td>filings dated ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
       if (/^engage_/.test(x.kind || '')) return `<tr><td>X post (Buffer)</td><td>${t(x.kind.slice(7).replace(/_/g, ' '))} · asked ${date(x.created_at)}</td><td class="muted">${state(x)}</td></tr>`;
       return `<tr><td>${co ? `<a href="#c-${x.cik}-${fy ? 'fy-' : ''}${x.period_end}">${t(co.ticker || co.name)}</a>` : x.cik}</td>
-        <td>${x.kind === 'thread' ? 'X thread · ' : x.kind === 'post' ? 'X post (Buffer) · ' : x.kind === 'post_holders' ? 'X post, holders (Buffer) · ' : ''}${fy ? 'fiscal year' : 'quarter'} ended ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
+        <td>${x.kind === 'thread' ? 'X thread · ' : x.kind === 'post' ? 'X post (Buffer) · ' : x.kind === 'post_holders' ? 'X post, holders (Buffer) · ' : x.kind === 'post_gif' ? 'X post, 8-quarter GIF (Buffer) · ' : ''}${fy ? 'fiscal year' : 'quarter'} ended ${date(x.period_end)}</td><td class="muted">${state(x)}</td></tr>`;
     }).join('');
     box.innerHTML = `<div class="section-head"><h2>Reports you asked for</h2><span class="muted">✉ Email me on any company page sends that quarter or fiscal year, old ones included</span></div>
       ${rows ? `<div class="tbl-wrap"><table><tbody>${rows}</tbody></table></div>` : '<p class="muted small">None yet.</p>'}`;

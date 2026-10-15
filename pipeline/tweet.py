@@ -213,7 +213,12 @@ def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url="", thr
     """One post with hashtags, written by the model from the guide, the figures and the filing (kind "post") or the
     13F holder changes (kind "post_holders"). Raises on failure."""
     tags = list(hashtags)
-    if kind == "post_holders":
+    if kind == "post_trend":
+        from . import animate
+        task = ("TASK: the attached GIF shows this company's Sankey for each of the last quarters, oldest first. Write about the "
+                "two-year TREND (how revenue, margin and earnings moved from the first to the last quarter), using only these "
+                "figures:\n" + "\n".join(animate.trend_lines(c)) + "\n\nContext:\n" + headline_lines(c, q, ticker))
+    elif kind == "post_holders":
         holders = holders_lines(ticker, site_url)
         if not holders:
             raise RuntimeError("no holders data on the site for this ticker yet")
@@ -246,7 +251,7 @@ def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url="", thr
 
 def post_for(c, q, cfg, ticker, fallback, xlen, kind="post", site_url="", thread=False):
     """The model's post, or the rule-based headline post when the model is unavailable or its draft fails the checks."""
-    tags = [t for t in ([cfg.get("headline_tag", "#earnings")] if kind == "post" else ["#13F"]) + list(cfg.get("hashtags") or []) if t]
+    tags = [t for t in ([cfg.get("headline_tag", "#earnings")] if kind in ("post", "post_trend") else ["#13F"]) + list(cfg.get("hashtags") or []) if t]
     try:
         post = compose_one(c, q, cfg, ticker, tags, xlen, kind=kind, site_url=site_url, thread=thread)
         return post, "model"
