@@ -34,14 +34,16 @@ def parse_yahoo(payload, since):
     if not result:
         raise ValueError('No chart result: ' + str((payload.get('chart') or {}).get('error') or payload)[:160])
     stamps = result[0].get('timestamp') or []
-    closes = ((result[0].get('indicators') or {}).get('quote') or [{}])[0].get('close') or []
+    quote = ((result[0].get('indicators') or {}).get('quote') or [{}])[0]
+    closes, volumes = quote.get('close') or [], quote.get('volume') or []
     rows = []
-    for ts, close in zip(stamps, closes):
+    for i, (ts, close) in enumerate(zip(stamps, closes)):
         if close is None:
             continue
         day = dt.datetime.fromtimestamp(ts, dt.timezone.utc).date().isoformat()
         if day >= since:
-            rows.append([day, float(close)])
+            vol = volumes[i] if i < len(volumes) else None
+            rows.append([day, float(close)] + ([int(vol)] if vol is not None else []))     # [date, close, volume] (4.4)
     if not rows:
         raise ValueError('No daily rows in the chart response')
     return sorted(rows)
@@ -69,7 +71,8 @@ def parse_stooq(text, since):
         if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', day) or day < since:
             continue
         try:
-            rows.append([day, float(close)])
+            vol = (r.get('Volume') or '').strip()
+            rows.append([day, float(close)] + ([int(float(vol))] if re.fullmatch(r'[\d.]+', vol) else []))
         except ValueError:
             continue
     if not rows:
@@ -85,14 +88,14 @@ def quarter_window(period):
 
 def quarter_average(rows, period):
     start, end = quarter_window(period)
-    inside = [c for d, c in rows if start <= d <= end]
-    before = [(d, c) for d, c in rows if d <= end]
+    inside = [r[1] for r in rows if start <= r[0] <= end]          # rows: [date, close] or [date, close, volume]
+    before = [(r[0], r[1]) for r in rows if r[0] <= end]
     close = before[-1][1] if before and before[-1][0] >= start else None
     return (sum(inside) / len(inside) if inside else None), close, len(inside)
 
 
 def close_on(rows, day, max_gap_days=7):
-    before = [(d, c) for d, c in rows if d <= day]
+    before = [(r[0], r[1]) for r in rows if r[0] <= day]
     if not before:
         return None, None
     d, c = before[-1]

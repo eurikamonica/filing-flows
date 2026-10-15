@@ -10,6 +10,7 @@ from prices import apply_prices
 from shards import hydrate, hydrate_catalogs, publish_shards
 import market
 import insiders
+import frames
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -73,6 +74,13 @@ def main():
             write_json(args.output/'insiders-status.json',data['modules']['insiders'])
         except Exception as exc:
             print('insiders: error — '+str(exc),flush=True)
+    # 4.4: SEC XBRL frames (16+ quarters of revenue and operating income for every filer) for the momentum clock
+    if args.only in ('all','market'):
+        print('Collecting XBRL frames',flush=True)
+        try:
+            print('frames: '+json.dumps(frames.collect(client,args.output,int(cfg.get('frames',{}).get('quarters',21)))),flush=True)
+        except Exception as exc:
+            print('frames: error — '+str(exc),flush=True)
     # 4.3: market-wide views (13F flows, officials' trades, signals) from the caches; at most every few hours unless asked for
     if args.only in ('all','holdings','congress','prices','market','insiders'):
         print('Building market views',flush=True)

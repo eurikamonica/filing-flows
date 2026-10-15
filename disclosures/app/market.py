@@ -545,7 +545,7 @@ def price_stats(root, ticker):
         return None
     if len(rows) < 30:
         return None
-    closes = [c for _, c in rows]
+    closes = [r[1] for r in rows]
     last = closes[-1]
     ret = lambda n: (last / closes[-1 - n] - 1) if len(closes) > n and closes[-1 - n] else None
     year = closes[-252:]

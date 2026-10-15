@@ -122,3 +122,23 @@ class Insiders(unittest.TestCase):
         s = insiders.summary(tr)[0]
         self.assertTrue(s['cluster'])
         self.assertEqual(s['buy_value'], 180000)
+
+
+import frames, rotation
+
+
+class Rotation(unittest.TestCase):
+    def test_series_from_frames_and_prices(self):
+        periods = ['CY2024Q1', 'CY2024Q2', 'CY2024Q3', 'CY2024Q4', 'CY2025Q1', 'CY2025Q2']
+        marg = {p: (100.0, m, m) for p, m in zip(periods, [10, 11, 12, 13, 15, 12])}     # margin % by quarter
+        rows = [['2024-12-31', 100.0, 1000], ['2025-03-31', 110.0, 1000], ['2025-06-30', 99.0, 3000]]
+        spy = [['2024-12-31', 500.0], ['2025-03-31', 500.0], ['2025-06-30', 550.0]]
+        pts = rotation.series(marg, rows, spy, periods)
+        self.assertEqual([p['cal'] for p in pts], ['CY2025Q1', 'CY2025Q2'])
+        self.assertEqual(pts[0]['dom'], 5.0)                  # 15% vs 10% a year earlier
+        self.assertAlmostEqual(pts[0]['rel'], 0.10)           # +10% vs a flat market
+        self.assertAlmostEqual(pts[1]['rel'], -0.2, places=3) # −10% vs +10%
+
+    def test_calendar_quarters(self):
+        import datetime as dt
+        self.assertEqual(frames.calendar_quarters(3, dt.date(2026, 1, 5)), ['CY2025Q2', 'CY2025Q3', 'CY2025Q4'])

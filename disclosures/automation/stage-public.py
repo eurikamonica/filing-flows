@@ -163,6 +163,15 @@ def main():
     shutil.copytree(DOCS, out, ignore=shutil.ignore_patterns('cache', 'discovery-state.json', 'npx-queue-state.json', 'meta.json'))
     if args.site_data:
         print(f'signals joined with earnings for {join_earnings(out, args.site_data)} tickers')
+        try:
+            import sys
+            sys.path.insert(0, str(ROOT / 'app'))
+            import rotation
+            rot = rotation.build(args.site_data, DATA)
+            (out / 'data' / 'market' / 'rotation.json').write_text(json.dumps(rot, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+            print(f"rotation: {len(rot['companies'])} companies, {len(rot['sectors'])} sectors")
+        except Exception as exc:
+            print(f'rotation not built: {exc}')
     holders = holders_index()
     hdir = out / 'data' / 'holders'
     hdir.mkdir(parents=True, exist_ok=True)

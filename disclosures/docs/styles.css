@@ -288,3 +288,22 @@ th[aria-sort=ascending] .sort-mark, th[aria-sort=descending] .sort-mark { opacit
 .charts.even { grid-template-columns: 1fr 1fr; }
 @media (max-width: 1150px) { .charts.even { grid-template-columns: 1fr; } }
 .mk-halo { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+
+/* 4.4 rotation: momentum clock and sector orbits (categorical slots 1–3 of the validated reference palette) */
+:root { --rot-1: #2a78d6; --rot-2: #eb6834; --rot-3: #1baf7a; --rot-sun: #eda100; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --rot-1: #3987e5; --rot-2: #d95926; --rot-3: #199e70; --rot-sun: #c98500; } }
+:root[data-theme="dark"] { --rot-1: #3987e5; --rot-2: #d95926; --rot-3: #199e70; --rot-sun: #c98500; }
+.rot-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.rot-ctx { fill: none; stroke: var(--flow-dot); stroke-width: 1.5; opacity: .55; }
+.rot-ref { fill: none; stroke: var(--flow-dot); stroke-width: 2; }
+.rot-dot { stroke: var(--surface); stroke-width: 2; }
+.rot-sell { fill: var(--flow-sell); stroke: var(--surface); stroke-width: 1.5; }
+.rot-ring { fill: none; stroke: var(--line); stroke-width: 1; }
+.rot-sun { fill: var(--rot-sun); stroke: var(--surface); stroke-width: 2; }
+.rot-multiples { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin: 16px 0; }
+.rot-card h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
+.rot-mini h4, .rot-orbit h4 { font-size: 12.5px; font-weight: 500; color: var(--muted); margin: 12px 0 0; }
+.rot-mini .plot { margin-top: 4px; }
+.rot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 10px; }
+.rot-orbit { border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px 2px; }
+.rot-cap { margin: 0 0 6px; font-size: 12px; }

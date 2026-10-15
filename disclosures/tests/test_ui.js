@@ -14,7 +14,7 @@ for(const key of ['cot','banks'])for(let i=0;i<(live.modules[key]?.series||[]).l
 for(let i=0;i<(live.modules.npx?.filings||[]).length;i++){let f=live.modules.npx.filings[i];if(f.shard){f=JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.shard),'utf8'));f.votes=f.vote_chunks?.length?JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.vote_chunks[0]),'utf8')):[];f._loaded_chunks=f.vote_chunks?.length?1:0;live.modules.npx.filings[i]=f}}
 for(const m of Object.values(live.modules))if(m.directory_shard)m.directory=JSON.parse(fs.readFileSync(path.join(root,'docs/data',m.directory_shard),'utf8'));
 context.window.DISCLOSURE_LIVE=live;
-for(const f of ['data/demo.js','dashboard.js','extensions.js','market.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
+for(const f of ['data/demo.js','dashboard.js','extensions.js','market.js','rotation.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
 let checks=0;
 for(const mode of ['official','demo'])for(const tab of ['holdings','congress','review','cot','banks','npx','status','directory']){
  vm.runInContext(`state.mode='${mode}';state.tab='${tab}';state.date='';state.page=0;render();`,context);
@@ -70,6 +70,9 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
    assert.ok(!html.includes('NaN')&&!html.includes('undefined'),`${tab} shows NaN/undefined`);
    assert.ok(html.includes('data-sort-col'),`${tab} table is not sortable`);n++;
    vm.runInContext(`state.sort={sig:state.tab+'|'+'x',col:1,dir:'asc'};render()`,context);n++;
+  }
+  if(fs.existsSync(path.join(mdir,'rotation.json'))){
+   for(const view of ['clock','orbits'])for(const sec of ['','technology']){vm.runInContext(`state.tab='rotation';state.rview='${view}';state.rsec='${sec}';state.rtk='NVDA, AMD';render()`,context);await vm.runInContext(`marketStore['rotation'].loading`,context);vm.runInContext(`render()`,context);const h=elements.get('workspace').innerHTML;assert.ok(!h.includes('NaN')&&!h.includes('undefined'),`rotation ${view} shows NaN/undefined`);n++}
   }
   for(const list of ['net_sell','first_on_file','retired','most_sellers']){vm.runInContext(`state.tab='flows';state.flist='${list}';render()`,context);assert.ok(!elements.get('workspace').innerHTML.includes('NaN'));n++}
   for(const win of ['ytd','early']){vm.runInContext(`state.tab='flows';state.fwin='${win}';render()`,context);assert.ok(!elements.get('workspace').innerHTML.includes('NaN'));n++}
