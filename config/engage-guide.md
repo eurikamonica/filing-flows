@@ -39,6 +39,20 @@ Formats are named in the task; follow the one you are given.
   Conviction or optics? 1) conviction 2) optics 3) too small to matter`
   When a cluster is given, lead with it: `Three $TICK insiders bought in two weeks …`.
 
+- **calendar** — tomorrow's earnings: who reports and when (before the open / after the close), one fact from the
+  biggest one's last quarter, then a which-one question.
+  `Reporting tomorrow: $AAA before the open, $BBB and $CCC after the close. $AAA grew revenue 22% last quarter at a
+  31% margin. Which report are you watching? 1) $AAA 2) $BBB 3) $CCC`
+
+- **fund13f** — a well-known fund's 13F just landed. Lead with the fund and the one move that stands out, then two or
+  three more, then a question. Say these are quarter-end holdings.
+  `Berkshire's 13F is out (holdings at Jun 30): new stake in $AAA ($1.2B), added $BBB, sold out of $CCC. Which move
+  surprises you most?`
+
+- **weekly** — the opener of the Saturday recap thread: the single most striking item of the week with its number,
+  then `Thread ↓`. The lists follow in the replies, so do not repeat them.
+  `$AAA grew revenue 64% this week's filing — the fastest of 40 companies that reported. The week in filings, thread ↓`
+
 ## Rules
 1. Output only the post text. No quotes around it, no preamble.
 2. At most 255 characters as X counts them (URLs count 23). The first six words must make someone stop scrolling:

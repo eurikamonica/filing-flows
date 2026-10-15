@@ -16,6 +16,7 @@ import requests
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 NASDAQ = "https://api.nasdaq.com/api/screener/stocks"
+CALENDAR = "https://api.nasdaq.com/api/calendar/earnings"
 YAHOO = "https://query1.finance.yahoo.com/v8/finance/chart/{sym}"
 
 
@@ -55,6 +56,28 @@ def nasdaq_all(timeout=40):
                               "Origin": "https://www.nasdaq.com", "Referer": "https://www.nasdaq.com/"})
     r.raise_for_status()
     return parse_nasdaq(r.json())
+
+
+def parse_calendar(payload):
+    """Nasdaq's earnings calendar for one day → [{ticker, name, when, mcap, eps_estimate, estimates, fiscal_quarter}]."""
+    rows = (((payload or {}).get("data") or {}).get("rows")) or []
+    when = {"time-pre-market": "before the open", "time-after-hours": "after the close"}
+    out = []
+    for r in rows:
+        t = canon(r.get("symbol"))
+        if t:
+            out.append({"ticker": t, "name": r.get("name"), "when": when.get(r.get("time"), "time not given"),
+                        "mcap": _num(r.get("marketCap")), "eps_estimate": r.get("epsForecast") or None,
+                        "estimates": _num(r.get("noOfEsts")), "fiscal_quarter": r.get("fiscalQuarterEnding")})
+    return out
+
+
+def earnings_calendar(day, timeout=40):
+    r = requests.get(CALENDAR, params={"date": str(day)}, timeout=timeout,
+                     headers={"User-Agent": UA, "Accept": "application/json, text/plain, */*", "Origin": "https://www.nasdaq.com",
+                              "Referer": "https://www.nasdaq.com/"})
+    r.raise_for_status()
+    return parse_calendar(r.json())
 
 
 def parse_yahoo(payload):

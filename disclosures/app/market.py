@@ -671,6 +671,48 @@ TAGS = {
 }
 
 
+# ------------------------------------------------------------------ watched funds (superinvestors)
+def watchlist(root, watch, universe, top=6):
+    """The latest complete 13F of each watched fund: new positions, the largest adds and cuts, exits — in dollars."""
+    funds, missing = [], []
+    for w in watch:
+        cik = str(int(w['cik']))
+        path = Path(root) / 'cache' / 'holdings' / f'{cik}.json.gz'
+        try:
+            with gzip.open(path, 'rt', encoding='utf-8') as f:
+                m = json.load(f)
+        except Exception:
+            missing.append({'cik': cik, 'name': w.get('name')})
+            continue
+        if w.get('key') and w['key'].upper() not in (m.get('name') or '').upper():
+            missing.append({'cik': cik, 'name': w.get('name'), 'error': f"CIK belongs to {m.get('name')}"})
+            continue
+        snaps = [s for s in m.get('snapshots', []) if s.get('complete')]
+        if not snaps:
+            missing.append({'cik': cik, 'name': w.get('name')})
+            continue
+        s = snaps[-1]
+        rows = []
+        for c in s.get('changes', []):
+            if c.get('put_call') != 'NONE' or c.get('share_type') != 'SH' or not c.get('delta_shares'):
+                continue
+            px = (c['value_usd'] / c['shares']) if c.get('shares') and c.get('value_usd') else (
+                (c.get('prior_value_usd') or 0) / c['prior_shares'] if c.get('prior_shares') else 0)
+            t = universe.cusip_ticker.get(c.get('cusip'), '')
+            rows.append({'ticker': t, 'issuer': c.get('issuer'), 'status': c.get('status'), 'usd': round(abs(c['delta_shares']) * px),
+                         'shares': c['delta_shares'], 'weight': round((c.get('weight') or 0) * 100, 2), 'value': c.get('value_usd')})
+        pick = lambda st: sorted([r for r in rows if r['status'] == st], key=lambda r: -r['usd'])[:top]
+        funds.append({'cik': cik, 'name': w.get('name') or m.get('name'), 'filer': m.get('name'), 'period': s.get('period'),
+                      'filed': s.get('filed'), 'total_usd': s.get('total_usd'), 'positions': len(s.get('positions', [])),
+                      'new': pick('NEW'), 'added': pick('INCREASE'), 'cut': pick('DECREASE'), 'exited': pick('EXIT'),
+                      'top': sorted(({'ticker': universe.cusip_ticker.get(p.get('cusip'), ''), 'issuer': p.get('issuer'),
+                                      'weight': round((p.get('weight') or 0) * 100, 2)} for p in s.get('positions', [])
+                                     if p.get('put_call') == 'NONE'), key=lambda r: -r['weight'])[:5],
+                      'source': ((s.get('sources') or [{}])[-1]).get('url')})
+    funds.sort(key=lambda f: f.get('filed') or '', reverse=True)
+    return {'generated_at': now(), 'funds': funds, 'missing': missing}
+
+
 # ------------------------------------------------------------------ publish
 def publish(root, client=None, min_interval_hours=3, force=False, live=None):
     root = Path(root)
@@ -718,6 +760,9 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
                                       'thresholds': cuts, 'tags': TAGS, 'rows': signals,
                                       'note': ('Signals are descriptive flags computed from public filings and daily closes — what '
                                                'happened, not what will happen, and never a recommendation.')})
+    watch = (read_json(Path(__file__).resolve().parents[1] / 'config' / 'settings.json', {}).get('holdings') or {}).get('watch') or []
+    if watch:
+        _write(out_dir / 'watchlist.json', watchlist(root, watch, universe))
     write_json(out_dir / 'meta.json', {'built_at': stamp, 'errors': errors, 'trades': tstats.get('trades'), 'signals': len(signals)})
     return {'status': 'ok' if not errors else 'partial', 'errors': errors, 'trades': tstats.get('trades'), 'signals': len(signals),
             'securities': (flows or {}).get('windows', {}).get('quarter', {}).get('securities')}

@@ -15,6 +15,12 @@ Kinds (config/engage-guide.md describes each format):
   peers            the mover against its closest listed peers (same SIC industry): price, today's move, growth, margin,
                    price/sales — "which one makes more sense?"
   movers           (workflow) rotates mover → peers → explain over the day, within movers.max_per_day
+  calendar         who reports earnings on the next trading day (Nasdaq calendar), site companies by market value, with
+                   their last quarter's figures and charts
+  fund13f          a watched fund's 13F just landed (Berkshire, Scion, Pershing Square …: Disclosures config holdings.watch):
+                   new positions, largest adds and cuts, exits
+  weekly           Saturday recap thread: fastest growers and biggest margin gains among the week's filers, the week's
+                   largest insider purchases, the hottest names on the Signals board, the week's movers
   insider          the largest recent Form 4 open-market purchase by an officer or director of a site company
                    (Disclosures → Insider trades), with the company's latest figures
 Each post is drafted from the guide, then polished (sharper opening, same facts), then checked (length, cashtags,
@@ -96,11 +102,15 @@ def one_liner(e):
 
 
 # ------------------------------------------------------------------ writing
-def clean(post, cashtags, tags, limit=255):
+def clean(post, cashtags, tags, limit=255, allowed=None):
     post = re.sub(r"\s*\n+\s*", " ", post.strip().strip('"“”')).strip()
     missing = [t for t in cashtags if f"${t.upper()}" not in post.upper()]
     if missing:
         raise ValueError("cashtag missing: " + " ".join(missing))
+    ok = {t.upper() for t in list(cashtags) + list(allowed or [])}
+    extra = {m.upper() for m in re.findall(r"\$([A-Za-z][A-Za-z.]{0,6})\b", post)} - ok
+    if extra:
+        raise ValueError("only these cashtags may appear: " + " ".join("$" + t for t in sorted(ok)) + f" (not {' '.join('$' + x for x in sorted(extra))})")
     if not all(t.lower() in post.lower() for t in tags):
         post = re.sub(r"(\s*#\w+)+\s*$", "", post).rstrip() + " " + " ".join(tags)
     if tweet.ADVICE.search(re.sub(r"#\w+", "", post)) or "!" in post:
@@ -110,9 +120,11 @@ def clean(post, cashtags, tags, limit=255):
     return post
 
 
-def write(kind, task, cashtags, tags, polish=True):
+def write(kind, task, cashtags, tags, polish=True, allowed=None):
+    others = [t for t in (allowed or []) if t not in cashtags]
     msgs = [{"role": "system", "content": guide()},
             {"role": "user", "content": f"FORMAT: {kind}\n\n{task}\n\nCashtags that must appear: " + " ".join(f"${t}" for t in cashtags)
+             + (("\nOther cashtags you may use (no others): " + " ".join(f"${t}" for t in others)) if others else "")
              + "\nHashtags to end with, in this order: " + " ".join(tags) + "\n\nWrite the post now."}]
     draft = tweet.chat(msgs)
     if polish:
@@ -121,11 +133,11 @@ def write(kind, task, cashtags, tags, polish=True):
                                              "opening; cut filler; under 250 characters. Output only the polished post."}]
         draft = tweet.chat(msgs)
     try:
-        return clean(draft, cashtags, tags)
+        return clean(draft, cashtags, tags, allowed=allowed)
     except ValueError as why:
         msgs += [{"role": "assistant", "content": draft},
-                 {"role": "user", "content": f"Rewrite: {why}. Under 240 characters, every cashtag present, ending with the hashtags."}]
-        return clean(tweet.chat(msgs), cashtags, tags)
+                 {"role": "user", "content": f"Rewrite: {why}. Under 240 characters, every required cashtag present, ending with the hashtags."}]
+        return clean(tweet.chat(msgs), cashtags, tags, allowed=allowed)
 
 
 # ------------------------------------------------------------------ the kinds
@@ -317,6 +329,156 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
     return None
 
 
+# ------------------------------------------------------------------ Saturday recap thread
+def _year_ago_om(cj, q):
+    try:
+        end = dt.date.fromisoformat(q["end"])
+    except (KeyError, ValueError):
+        return None
+    for x in cj.get("quarters") or []:
+        try:
+            d = abs((dt.date.fromisoformat(x["end"]) - (end - dt.timedelta(days=365))).days)
+        except (KeyError, ValueError):
+            continue
+        if d <= 20:
+            return (x.get("headline") or {}).get("om")
+    return None
+
+
+def plan_weekly(site, rows, c, by_ticker, state, today):
+    since = (today - dt.timedelta(days=7)).isoformat()
+    week = [e for e in rows if (e.get("filed") or "") >= since and e.get("ticker") and (e.get("revenue") or 0) >= 500e6]
+    if len(week) < 3:
+        print(f"weekly: only {len(week)} sizeable filers this week")
+        return None
+    growers = sorted((e for e in week if isinstance(e.get("yoy"), (int, float)) and e["yoy"] > 0), key=lambda e: -e["yoy"])[:3]
+    margin = []
+    for e in sorted(week, key=lambda e: -(e.get("revenue") or 0))[:60]:
+        cj, q = figures(site, e)
+        if not q:
+            continue
+        now_om, ago = (q.get("headline") or {}).get("om"), _year_ago_om(cj, q)
+        if isinstance(now_om, (int, float)) and isinstance(ago, (int, float)) and abs(now_om) < 200 and abs(ago) < 200:
+            margin.append((now_om - ago, e, now_om))
+    margin = sorted((m for m in margin if m[0] > 0), key=lambda x: -x[0])[:3]
+    try:
+        ins = [t for t in hub_json(site, "insiders.json").get("latest", []) if t.get("code") == "P" and (t.get("date") or "") >= since]
+    except Exception:
+        ins = []
+    ins = sorted(ins, key=lambda t: -(t.get("value") or 0))[:3]
+    try:
+        hot = [r for r in hub_json(site, "signals.json").get("rows", []) if r.get("heat", 0) >= 3][:3]
+    except Exception:
+        hot = []
+    moved = [x for x in state.get("movers_log", []) if x[0][:10] >= since]
+    T = lambda t: "$" + t.replace("-", ".")
+    posts, allowed = [], []
+    if growers:
+        posts.append("Fastest revenue growth among this week's filers:\n" + "\n".join(
+            f"· {T(e['ticker'])} {e.get('rev')} ({e['yoy']:+.0f}% Y/Y, {e.get('label')})" for e in growers))
+        allowed += [e["ticker"] for e in growers]
+    if margin:
+        posts.append("Biggest operating-margin gains vs a year ago:\n" + "\n".join(
+            f"· {T(e['ticker'])} {om:.1f}% ({d:+.1f} pts)" for d, e, om in margin))
+        allowed += [e["ticker"] for _, e, _ in margin]
+    if ins:
+        posts.append("Largest insider purchases filed this week (Form 4):\n" + "\n".join(
+            f"· {T(t['ticker'])} {t.get('role')} {t.get('insider', '').title()}: {money(t.get('value'))}" for t in ins))
+        allowed += [t["ticker"] for t in ins]
+    if hot:
+        posts.append("Hottest on the Signals board (13F crowding, insiders, officials, momentum):\n" + "\n".join(
+            f"· {T(r['ticker'])}: " + ", ".join(x.replace("_", " ") for x in r["tags"][:3]) for r in hot))
+        allowed += [r["ticker"] for r in hot]
+    if moved:
+        posts.append("This week's big moves we covered: " + ", ".join(sorted({T(x[2]) for x in moved})))
+        allowed += [x[2] for x in moved]
+    posts = [p if social.xlen(p) <= 280 else p[:270].rsplit("\n", 1)[0] for p in posts]
+    allowed = list(dict.fromkeys(t.replace("-", ".") for t in allowed))
+    items = []
+    for t in allowed:
+        if t in by_ticker and len(items) < 4:
+            cj, q = figures(site, by_ticker[t])
+            if q:
+                items.append((by_ticker[t], cj, q))
+    task = (f"WEEKLY RECAP, week ending {today:%b} {today.day}. The thread below this post lists:\n" + "\n\n".join(posts)
+            + "\n\nWrite the opening post of the thread: the single most striking item, then 'Thread ↓'. One or two cashtags.")
+    lead = (growers[0]["ticker"] if growers else allowed[0]) if allowed else None
+    return {"kind": "weekly", "task": task, "cashtags": [lead] if lead else [], "allowed": allowed, "items": items, "thread": posts}
+
+
+# ------------------------------------------------------------------ watched funds' 13F
+def plan_fund13f(site, rows, c, by_ticker, state, today):
+    try:
+        d = hub_json(site, "watchlist.json")
+    except Exception as err:
+        print(f"fund13f: no watchlist ({str(err)[:100]})")
+        return None
+    since = (today - dt.timedelta(days=4)).isoformat()
+    fresh = [f for f in d.get("funds", []) if (f.get("filed") or "") >= since and f"fund13f:{f['cik']}:{f['period']}" not in state]
+    if not fresh:
+        print("fund13f: no watched fund filed a new 13F in the last four days")
+        return None
+    f = fresh[0]
+    tag = lambda r: f"${r['ticker'].replace('-', '.')}" if r.get("ticker") else r.get("issuer", "")
+    line = lambda rs: ", ".join(f"{tag(r)} ({money(r['usd'])})" for r in rs[:4]) or "none"
+    task = (f"13F JUST FILED: {f['name']} — holdings at the quarter ended {f['period']}, filed {f['filed']} "
+            f"({f['positions']} positions, {money(f['total_usd'])} disclosed).\n"
+            f"New positions: {line(f['new'])}\nLargest additions: {line(f['added'])}\nLargest cuts: {line(f['cut'])}\n"
+            f"Sold out of: {line(f['exited'])}\nLargest holdings now: " + ", ".join(f"{tag(r)} {r['weight']}%" for r in f["top"][:4])
+            + "\n\nDollar figures are the change in shares × the quarter-end price. These are quarter-end holdings, not trades on a "
+              "known date. Ask the audience which move stands out.")
+    cash = []
+    for r in f["new"] + f["added"] + f["exited"] + f["cut"]:
+        t = (r.get("ticker") or "").replace("-", ".")
+        if t and t not in cash and f"${t}" in task:
+            cash.append(t)
+    items = []
+    for t in cash:
+        if t in by_ticker and len(items) < 2:
+            cj, fq = figures(site, by_ticker[t])
+            if fq:
+                items.append((by_ticker[t], cj, fq))
+    return {"kind": "fund13f", "task": task, "cashtags": cash[:2], "allowed": cash, "items": items, "fund_key": f"fund13f:{f['cik']}:{f['period']}",
+            "fund_url": f.get("source")}
+
+
+# ------------------------------------------------------------------ tomorrow's earnings
+def next_trading_day(today):
+    d = today + dt.timedelta(days=1)
+    while d.weekday() >= 5:
+        d += dt.timedelta(days=1)
+    return d
+
+
+def plan_calendar(site, rows, c, by_ticker, today):
+    day = next_trading_day(today)
+    try:
+        cal = Q.earnings_calendar(day)
+    except Exception as err:
+        print(f"calendar: Nasdaq calendar not reached ({str(err)[:100]})")
+        return None
+    ours = [r for r in cal if r["ticker"].replace("-", ".") in by_ticker]
+    ours.sort(key=lambda r: -(r.get("mcap") or 0))
+    picks = ours[:c["list_max"]]
+    print(f"calendar: {len(cal)} companies report on {day}, {len(ours)} of them on the site")
+    if len(picks) < 2:
+        return None
+    lines, items = [], []
+    for r in picks:
+        e = by_ticker[r["ticker"].replace("-", ".")]
+        est = f" · EPS estimate {r['eps_estimate']} ({r['estimates']:.0f} analysts, per Nasdaq)" if r.get("eps_estimate") and r.get("estimates") else ""
+        lines.append(f"- ${e['ticker']} reports {r['when']}{' · market value ' + money(r['mcap']) if r.get('mcap') else ''}{est}\n"
+                     f"  last quarter on Filing Flows: {one_liner(e)}")
+        if len(items) < 4:
+            cj, fq = figures(site, e)
+            if fq:
+                items.append((e, cj, fq))
+    task = (f"EARNINGS ON {day:%A %b} {day.day} (Nasdaq calendar), the largest companies first:\n" + "\n".join(lines)
+            + "\n\nThe charts attached show each one's LAST quarter. Say who reports and when; one fact for the biggest; ask "
+              "which report the audience is watching or what number matters most.")
+    return {"kind": "calendar", "task": task, "cashtags": [by_ticker[r["ticker"].replace("-", ".")]["ticker"] for r in picks], "items": items}
+
+
 # ------------------------------------------------------------------ insider purchases (Form 4)
 def hub_json(site, name):
     """A file of the Disclosures hub's market data, from the published site or the built folder."""
@@ -394,6 +556,8 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
     log = [x for x in state.get("movers_log", []) if x[0][:10] == today.isoformat()]
 
     def kind_ok(kind):
+        if kind == "fund13f":              # one post per fund and filing, however many funds file the same day
+            return True
         if kind in MOVER_KINDS:            # movers: a daily cap and a minimum gap instead of once a day per format
             if force:
                 return True
@@ -427,7 +591,10 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
              "mover": lambda: plan_mover("mover", site, rows, c, live, state_ok, trends),
              "explain": lambda: plan_mover("explain", site, rows, c, live, state_ok, trends),
              "peers": lambda: plan_mover("peers", site, rows, c, live, state_ok, trends),
-             "insider": lambda: plan_insider(site, rows, c, by_ticker, state_ok, today)}.get(kind, lambda: None)()
+             "insider": lambda: plan_insider(site, rows, c, by_ticker, state_ok, today),
+             "calendar": lambda: plan_calendar(site, rows, c, by_ticker, today),
+             "fund13f": lambda: plan_fund13f(site, rows, c, by_ticker, state, today),
+             "weekly": lambda: plan_weekly(site, rows, c, by_ticker, state, today)}.get(kind, lambda: None)()
         if p:
             plans.append(p)
         else:
@@ -437,7 +604,7 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
     made = []
     for p in plans:
         try:
-            post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True))
+            post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True), allowed=p.get("allowed"))
         except Exception as err:
             print(f"::warning::{p['kind']}: no post ({str(err)[:160]})")
             continue
@@ -446,13 +613,13 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
                  + f". Read automatically from the filings; not investment advice. {site_url}/#c-{e0['cik']}") if e0 else ""
         if reply and social.xlen(reply) > 280:
             reply = reply.replace(" Read automatically from the filings; not investment advice.", " Not investment advice.")
-        filing = f"The Form 4: {p['insider_url']}" if p.get("insider_url") else ""
+        filing = f"The Form 4: {p['insider_url']}" if p.get("insider_url") else f"The 13F: {p['fund_url']}" if p.get("fund_url") else ""
         if p.get("event"):
             ev = p["event"]
             filing = f"The filing: 8-K Item {ev['code']} ({ev['label']}), filed {ev['filed']}. {ev['url']}"
             if social.xlen(filing) > 280:
                 filing = f"The filing: 8-K Item {ev['code']}, filed {ev['filed']}. {ev['url']}"
-        print(f"[{p['kind']}] {post}" + "".join(f"\n   ↳ {x}" for x in (filing, reply) if x))
+        print(f"[{p['kind']}] {post}" + "".join(f"\n   ↳ {x}" for x in list(p.get("thread") or []) + [filing, reply] if x))
         if dry_run:
             made.append(f"{p['kind']}: {post}")
             continue
@@ -467,12 +634,14 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
         pend_path = os.path.join(xdir, "pending.json")
         pending = json.load(open(pend_path, encoding="utf-8")) if os.path.exists(pend_path) else []
         pending.append({"cik": e0["cik"] if e0 else None, "end": e0["end"] if e0 else None, "label": f"{p['kind']}: " + " ".join(p["cashtags"]),
-                        "posts": [post] + [x for x in (filing, reply) if x], "written_by": "model", "images": images})
+                        "posts": [post] + list(p.get("thread") or []) + [x for x in (filing, reply) if x], "written_by": "model", "images": images})
         json.dump(pending, open(pend_path, "w", encoding="utf-8"), ensure_ascii=False)
         stamp = now.isoformat()
         state[f"kind:{p['kind']}"] = stamp
         for t in p["cashtags"]:
             state[f"{p['kind']}:{t}"] = stamp
+        if p.get("fund_key"):
+            state[p["fund_key"]] = stamp
         if p.get("mover"):
             state[f"mover:{p['mover']}"] = stamp
             log.append([stamp, p["kind"], p["mover"]])

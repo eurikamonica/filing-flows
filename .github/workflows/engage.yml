@@ -12,12 +12,13 @@ on:
   schedule:
     - cron: "40 12 * * 1-5"
     - cron: "40 21 * * 1-5"
+    - cron: "30 14 * * 6"                # Saturday 14:30 UTC: the weekly recap thread
   workflow_dispatch:
     inputs:
       kinds:
-        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider"
+        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider, calendar, fund13f, weekly"
         type: string
-        default: "question,list,reddit_question,reddit_list,insider"
+        default: "question,list,reddit_question,reddit_list,insider,calendar,fund13f"
       dry_run:
         description: "Only print the picks and the posts (nothing drawn or queued)"
         type: boolean
@@ -78,8 +79,9 @@ jobs:
           site="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"
           kinds="${KINDS_INPUT:-question,list,reddit_question,reddit_list}"
           case "$EVENT_SCHEDULE" in
-            '40 12 * * 1-5') kinds=list,reddit_question,reddit_list,insider ;;
-            '40 21 * * 1-5') kinds=question,insider ;;
+            '40 12 * * 1-5') kinds=list,reddit_question,reddit_list,insider,fund13f ;;
+            '40 21 * * 1-5') kinds=question,insider,calendar,fund13f ;;
+            '30 14 * * 6') kinds=weekly ;;
           esac
           if [ "$DRY_RUN" = "true" ]; then
             python -m pipeline.engage --site "$site" --site-url "$site" --kinds "$kinds" --dry-run

@@ -24,6 +24,19 @@ def collect_holdings(client,cfg,old,revalidate=False):
     if target:items.setdefault(str(int(target)),{'cik':str(int(target)),'name':'CIK '+str(int(target))})
     work=[items[str(int(target))]] if target else list(items.values())
     selected=select_batch(work,history,int(cfg.get('batch_size',8)),'cik',cfg.get('refresh_hours',24),revalidate)
+    # 4.4 watched funds (config holdings.watch): processed first, and re-checked every few hours so a new 13F is picked
+    # up the day it is filed (market.py writes their changes to market/watchlist.json for the X alerts)
+    if not target:
+        import datetime as _dt
+        due=(_dt.datetime.now(_dt.timezone.utc)-_dt.timedelta(hours=float(cfg.get('watch_refresh_hours',6)))).isoformat()
+        hot=[]
+        for w in cfg.get('watch',[]):
+            c=str(int(w['cik']))
+            items.setdefault(c,{'cik':c,'name':w.get('name') or 'CIK '+c})
+            if c not in old_managers or (attempts.get(c,{}).get('last_attempt') or '')<due:
+                hot.append(items[c])
+        hot=hot[:max(2,int(cfg.get('batch_size',8))//2)]
+        selected=hot+[x for x in selected if str(int(x['cik'])) not in {str(int(h['cik'])) for h in hot}][:max(0,int(cfg.get('batch_size',8))-len(hot))]
     for item in selected:
         cik=str(int(item['cik']))
         cached=old_managers.get(cik,{})
