@@ -79,6 +79,28 @@ def holders_index():
             'date': r.get('transaction_date') or r.get('valuation_date') or r.get('filed_date'), 'transaction_type': r.get('transaction_type'),
             'report_type': r.get('report_type'), 'filed_date': r.get('filed_date'), 'source_url': r.get('source_url'), 'page': r.get('page'),
             'price_on_date': r.get('price_on_date'), 'est_shares_min': r.get('est_shares_min'), 'est_shares_max': r.get('est_shares_max')})
+    # officials: US House transaction reports read by machine (the filer's own ticker, checked against SEC listings)
+    trades = load_json(DATA / 'market' / 'officials-trades.json', {}).get('trades', [])
+    per = {}
+    for tr in trades:
+        ticker = clean_ticker(tr.get('ticker_canon') or tr.get('ticker'))
+        if not ticker or tr.get('read') != 'machine' or tr.get('ticker_status') != 'listed' or per.get(ticker, 0) >= 40:
+            continue
+        per[ticker] = per.get(ticker, 0) + 1
+        out.setdefault(ticker, {'ticker': ticker, 'generated_at': generated, 'institutional': [], 'officials': []})['officials'].append({
+            'person': tr.get('person'), 'jurisdiction': tr.get('jurisdiction'), 'kind': 'transaction', 'asset': tr.get('asset_raw'),
+            'owner': tr.get('owner'), 'amount_min': tr.get('amount_min'), 'amount_max': tr.get('amount_max'), 'date': tr.get('date'),
+            'transaction_type': tr.get('type'), 'report_type': 'PTR', 'filed_date': tr.get('filed_date'), 'source_url': tr.get('source_url'),
+            'page': tr.get('page'), 'read': 'machine', 'name_check': tr.get('name_check')})
+    # this quarter's 13F flow and the signal flags, for the company page's summary line
+    flows = load_json(DATA / 'market' / 'by-ticker.json', {})
+    sig = {r['ticker']: r for r in load_json(DATA / 'market' / 'signals.json', {}).get('rows', [])}
+    for ticker, v in out.items():
+        f = (flows.get('rows') or {}).get(ticker)
+        if f:
+            v['flows'] = dict(zip(flows.get('fields', []), f), label=flows.get('label'))
+        if ticker in sig:
+            v['signal'] = {k: sig[ticker].get(k) for k in ('tags', 'heat', 'pressure')}
     for v in out.values():
         v['institutional'].sort(key=lambda x: -(x.get('value_usd') or 0))
         v['officials'].sort(key=lambda x: (x.get('date') or ''), reverse=True)
@@ -86,13 +108,45 @@ def holders_index():
     return out
 
 
+def join_earnings(out, site_data):
+    """Signals + the Sankey site's latest quarter per ticker (revenue, growth, margin, link), with two more flags."""
+    path = Path(out) / 'data' / 'market' / 'signals.json'
+    sig, ix = load_json(path, None), load_json(Path(site_data) / 'index.json', None)
+    if not sig or not ix:
+        return 0
+    by = {}
+    for e in ix.get('companies', []) if isinstance(ix, dict) else ix:
+        t = clean_ticker(e.get('ticker'))
+        if t and (t not in by or (e.get('filed') or '') > (by[t].get('filed') or '')):
+            by[t] = e
+    n = 0
+    for r in sig.get('rows', []):
+        e = by.get(clean_ticker(r.get('ticker')))
+        if not e:
+            continue
+        r['earn'] = {'cik': e.get('cik'), 'label': e.get('label'), 'rev': e.get('rev'), 'yoy': e.get('yoy'), 'om': e.get('om'),
+                     'filed': e.get('filed'), 'form': e.get('form')}
+        yoy, om = e.get('yoy'), e.get('om')
+        if isinstance(yoy, (int, float)) and yoy >= 25 and 'revenue_surge' not in r['tags']:
+            r['tags'].append('revenue_surge'); r['heat'] += 1
+        if isinstance(yoy, (int, float)) and isinstance(om, (int, float)) and yoy >= 15 and om >= 15 and 'profitable_growth' not in r['tags']:
+            r['tags'].append('profitable_growth')
+        n += 1
+    sig['rows'].sort(key=lambda r: (-r['heat'], -((r.get('f13') or {}).get('usd_net') or 0)))
+    path.write_text(json.dumps(sig, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+    return n
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default='_site/disclosures')
+    ap.add_argument('--site-data', default=None, help="the Sankey site's data folder (index.json), to join earnings into signals")
     args = ap.parse_args()
     out = Path(args.out)
     shutil.rmtree(out, ignore_errors=True)
-    shutil.copytree(DOCS, out, ignore=shutil.ignore_patterns('cache', 'discovery-state.json', 'npx-queue-state.json'))
+    shutil.copytree(DOCS, out, ignore=shutil.ignore_patterns('cache', 'discovery-state.json', 'npx-queue-state.json', 'meta.json'))
+    if args.site_data:
+        print(f'signals joined with earnings for {join_earnings(out, args.site_data)} tickers')
     holders = holders_index()
     hdir = out / 'data' / 'holders'
     hdir.mkdir(parents=True, exist_ok=True)

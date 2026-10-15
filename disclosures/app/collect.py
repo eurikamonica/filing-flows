@@ -8,12 +8,13 @@ from expanded import collect_cot_expanded, collect_banks_expanded, collect_npx_e
 from congress import collect_congress
 from prices import apply_prices
 from shards import hydrate, hydrate_catalogs, publish_shards
+import market
 
 ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser(description='Collect official public disclosures; demo never substitutes for real data')
-    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices'],default='all')
+    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market'],default='all')
     parser.add_argument('--config',type=Path,default=ROOT/'config/settings.json')
     parser.add_argument('--output',type=Path,default=ROOT/'docs/data')
     parser.add_argument('--storage',type=Path,default=ROOT/'storage')
@@ -60,6 +61,15 @@ def main():
         print('prices: '+data['modules']['prices']['status']+((' — '+data['modules']['prices']['error']) if data['modules']['prices'].get('error') else ''),flush=True)
         data['generated_at']=now()
         publish_shards(args.output,data)
+    # 4.3: market-wide views (13F flows, officials' trades, signals) from the caches; at most every few hours unless asked for
+    if args.only in ('all','holdings','congress','prices','market'):
+        print('Building market views',flush=True)
+        try:
+            r=market.publish(args.output,client=client,min_interval_hours=float(cfg.get('market',{}).get('min_interval_hours',3)),
+                             force=args.only=='market')
+            print('market: '+json.dumps(r),flush=True)
+        except Exception as exc:
+            print('market: error — '+str(exc),flush=True)
     write_json(args.storage/'last-run-manifest.json',client.manifest)
     if failed:
         print('One or more sources failed/partial. Previous valid data retained; inspect source status.')

@@ -6,7 +6,7 @@ const vm=require('node:vm');
 const root=path.resolve(__dirname,'..');
 const elements=new Map();
 const doc={getElementById(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',className:'',value:'',setAttribute(){},classList:{toggle(){}}});return elements.get(id)},querySelectorAll(){return []}};
-const context=vm.createContext({document:doc,window:{},console,setTimeout,URL,Blob});
+const context=vm.createContext({document:doc,window:{},console,setTimeout,URL,Blob,location:{hash:''},history:{replaceState(){}},addEventListener(){},innerWidth:1200});
 const live=JSON.parse(fs.readFileSync(path.join(root,'docs/data/live.json'),'utf8'));
 for(const [key,field] of [['holdings','managers'],['congress','reports']])for(let i=0;i<(live.modules[key]?.[field]||[]).length;i++){const r=live.modules[key][field][i];if(r.shard)live.modules[key][field][i]=JSON.parse(fs.readFileSync(path.join(root,'docs/data',r.shard),'utf8'))}
 for(const m of live.modules.holdings?.managers||[])for(const s of m.snapshots||[])if(s.positions_shard)s.positions=JSON.parse(fs.readFileSync(path.join(root,'docs/data',s.positions_shard),'utf8'));
@@ -14,7 +14,7 @@ for(const key of ['cot','banks'])for(let i=0;i<(live.modules[key]?.series||[]).l
 for(let i=0;i<(live.modules.npx?.filings||[]).length;i++){let f=live.modules.npx.filings[i];if(f.shard){f=JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.shard),'utf8'));f.votes=f.vote_chunks?.length?JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.vote_chunks[0]),'utf8')):[];f._loaded_chunks=f.vote_chunks?.length?1:0;live.modules.npx.filings[i]=f}}
 for(const m of Object.values(live.modules))if(m.directory_shard)m.directory=JSON.parse(fs.readFileSync(path.join(root,'docs/data',m.directory_shard),'utf8'));
 context.window.DISCLOSURE_LIVE=live;
-for(const f of ['data/demo.js','dashboard.js','extensions.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
+for(const f of ['data/demo.js','dashboard.js','extensions.js','market.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
 let checks=0;
 for(const mode of ['official','demo'])for(const tab of ['holdings','congress','review','cot','banks','npx','status','directory']){
  vm.runInContext(`state.mode='${mode}';state.tab='${tab}';state.date='';state.page=0;render();`,context);
@@ -55,4 +55,30 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
  await vm.runInContext(`inflight.get('catalogs/banks.json')`,context);
  assert.equal(vm.runInContext(`data().modules.banks.directory[0].name`,context),'CATALOG TEST');
  console.log('8 asynchronous shard/loading checks passed.');
+ // 4.3 market views: signals, flows and officials' trades from data/market/*.json (when built)
+ const mdir=path.join(root,'docs/data/market');
+ if(fs.existsSync(path.join(mdir,'signals.json'))){
+  vm.runInContext(`for(const k of Object.keys(marketStore))delete marketStore[k]`,context);
+  context.fetch=async url=>{const f=path.join(root,'docs',url);return fs.existsSync(f)?{ok:true,json:async()=>JSON.parse(fs.readFileSync(f,'utf8'))}:{ok:false,status:404}};
+  let n=0;
+  for(const [tab,name,expect] of [['signals','signals','Hype map'],['flows','flows','Net buying and selling'],['trades','officials-trades','Most bought by officials']]){
+   vm.runInContext(`state.mode='official';state.tab='${tab}';state.page=0;state.sort=null;render()`,context);
+   await vm.runInContext(`marketStore['${name}'].loading`,context);
+   vm.runInContext(`render()`,context);
+   const html=elements.get('workspace').innerHTML;
+   assert.ok(html.includes(expect),`${tab} did not render its chart`);
+   assert.ok(!html.includes('NaN')&&!html.includes('undefined'),`${tab} shows NaN/undefined`);
+   assert.ok(html.includes('data-sort-col'),`${tab} table is not sortable`);n++;
+   vm.runInContext(`state.sort={sig:state.tab+'|'+'x',col:1,dir:'asc'};render()`,context);n++;
+  }
+  for(const list of ['net_sell','first_on_file','retired','most_sellers']){vm.runInContext(`state.tab='flows';state.flist='${list}';render()`,context);assert.ok(!elements.get('workspace').innerHTML.includes('NaN'));n++}
+  for(const win of ['ytd','early']){vm.runInContext(`state.tab='flows';state.fwin='${win}';render()`,context);assert.ok(!elements.get('workspace').innerHTML.includes('NaN'));n++}
+  vm.runInContext(`state.mode='demo';state.tab='signals';render()`,context);assert.ok(elements.get('workspace').innerHTML.includes('official snapshot'));n++;
+  console.log(`${n} market-view checks passed.`);
+ }
+ // sortable tables: numbers, money and dashes
+ assert.equal(vm.runInContext(`JSON.stringify(sortKey('−$25.1B'))`,context),'[0,-25100000000]');
+ assert.equal(vm.runInContext(`JSON.stringify(sortKey('—'))`,context),'[2,0]');
+ vm.runInContext(`state.tab='t';state.sort={sig:'t|A',col:0,dir:'desc'}`,context);
+ assert.deepEqual(JSON.parse(vm.runInContext(`JSON.stringify(sortRows('t|A',[['$1M'],['—'],['$3B'],['$20K']]).map(r=>r[0]))`,context)),['$3B','$1M','$20K','—']);
 })().catch(e=>{console.error(e);process.exitCode=1});

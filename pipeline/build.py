@@ -378,7 +378,7 @@ def profile_of(sub):
     return {"cik": int(sub["cik"]), "name": sub.get("name", ""), "tickers": sub.get("tickers", []),
             "exchanges": sub.get("exchanges", []), "sic": sic, "industry": sub.get("sicDescription") or "",
             "sector": sectors.sector_of(sic), "fye": sub.get("fiscalYearEnd") or "1231",
-            "state": sub.get("stateOfIncorporation") or "", "category": sub.get("category") or ""}
+            "state": sub.get("stateOfIncorporation") or "", "category": " · ".join(x.strip() for x in re.split(r"<br\s*/?>", sub.get("category") or "", flags=re.I) if x.strip())}
 
 
 # ---------------------------------------------------------------- one filing

@@ -7,10 +7,10 @@ const signed=v=>v==null?'—':(v>0?'+':'')+fmt(v);
 const compact=v=>v==null?'—':Math.abs(v)>=1e9?fmt(v/1e9,2)+'B':Math.abs(v)>=1e6?fmt(v/1e6,2)+'M':Math.abs(v)>=1e3?fmt(v/1e3,1)+'K':fmt(v,1);
 const link=(url,label='Source ↗')=>/^https:\/\//.test(url||'')?`<a target="_blank" rel="noopener" href="${esc(url)}">${esc(label)}</a>`:'—';
 const uniq=a=>[...new Set(a)];
-const state={tab:'holdings',mode:'official',page:0,market:'',group:'',cert:'',filing:'',metric:'assets',date:'',base:'',from:'',to:'',query:'',direction:''};
+const state={tab:'signals',mode:'official',page:0,market:'',group:'',cert:'',filing:'',metric:'assets',date:'',base:'',from:'',to:'',query:'',direction:''};
 let exported=[];
 const data=()=>state.mode==='demo'?(window.DISCLOSURE_DEMO||{modules:{}}):(window.DISCLOSURE_LIVE||{modules:{}});
-const moduleData=()=>data().modules[state.tab==='review'?'congress':state.tab==='directory'?'holdings':state.tab]||{};
+const moduleData=()=>data().modules[state.tab==='review'||state.tab==='trades'?'congress':state.tab==='directory'||state.tab==='flows'||state.tab==='signals'?'holdings':state.tab]||{};
 function options(items,value){return items.map(x=>{const [v,l]=Array.isArray(x)?x:[x,x];return `<option value="${esc(v)}" ${String(v)===String(value)?'selected':''}>${esc(l)}</option>`}).join('')}
 function choose(current,values){return values.includes(String(current))?String(current):values[0]||''}
 function field(id,label,items,value,wide=false){return `<div class="field ${wide?'wide':''}"><label for="${id}">${label}</label><select id="${id}">${options(items,value)}</select></div>`}
@@ -46,12 +46,32 @@ function bars(items,caption){
  const max=Math.max(1,...items.map(x=>Math.abs(x.value??0)));
  return items.map(x=>`<div class="bar-row"><div class="bar-label"><span>${esc(x.label)}</span><span>${esc(fmt(x.value,2))}${caption?' '+esc(caption):''}</span></div><div class="bar-track"><div class="bar-fill" style="width:${x.value==null?0:Math.abs(x.value)/max*100}%;background:${x.color||'var(--mk-profit)'}"></div></div></div>`).join('');
 }
+/* Sortable tables: click a header to sort by that column (numbers, $/K/M/B amounts, percentages, dates, text);
+   click again to reverse. "—" and blanks always sort last. The sort is remembered per table (header set) while browsing. */
+function sortKey(html){
+ const t=String(html??'').replace(/<br\s*\/?>/gi,' ').replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&#39;|&quot;/g,'').trim();
+ if(!t||t==='—'||t==='-')return [2,0];
+ const m=t.replace(/,/g,'').match(/^([+\u2212-]?)\s*\$?\s*([+\u2212-]?)(\d+(?:\.\d+)?)\s*(%|pp|K|M|B|T)?(?![A-Za-z])/);
+ if(m&&!/^\d{4}-\d{2}-\d{2}/.test(t)){let v=parseFloat(m[3])*({K:1e3,M:1e6,B:1e9,T:1e12}[m[4]]||1);if(/[\u2212-]/.test(m[1]+m[2]))v=-v;return [0,v]}
+ return [1,t.toLowerCase()];
+}
+function sortRows(sig,rows){
+ const s=state.sort;if(!s||s.sig!==sig)return rows;
+ const keyed=rows.map(r=>[sortKey(r[s.col]),r]);
+ keyed.sort((a,b)=>{const x=a[0],y=b[0];if(x[0]!==y[0])return (x[0]===2)-(y[0]===2)||x[0]-y[0];if(x[0]===2)return 0;const c=x[1]<y[1]?-1:x[1]>y[1]?1:0;return s.dir==='asc'?c:-c});
+ return keyed.map(k=>k[1]);
+}
 function table(headers,rows){
- const size=25,start=state.page*size,total=rows.length;
- if(start>=total)state.page=0;
- return `<div class="tablebox"><table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.slice(state.page*size,state.page*size+size).map(c=>`<tr>${c.map((v,i)=>`<td class="${i?'num':''}">${v}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${headers.length}">No matching records</td></tr>`}</tbody></table></div><div class="pager"><span>${total} rows · ${state.page+1}/${Math.max(1,Math.ceil(total/size))} pages</span><button class="action" id="prev" ${state.page===0?'disabled':''}>Previous</button><button class="action" id="next" ${(state.page+1)*size>=total?'disabled':''}>Next</button></div>`;
+ const size=25,sig=state.tab+'|'+headers.join('|');
+ rows=sortRows(sig,rows);
+ const total=rows.length;if(state.page*size>=total)state.page=0;
+ const s=state.sort&&state.sort.sig===sig?state.sort:null;
+ const th=(h,i)=>`<th aria-sort="${s&&s.col===i?(s.dir==='asc'?'ascending':'descending'):'none'}"><button type="button" class="th-sort" data-sort-col="${i}" data-sort-sig="${esc(sig)}" title="Sort by ${esc(h)}">${esc(h)}<span class="sort-mark" aria-hidden="true">${s&&s.col===i?(s.dir==='asc'?'▲':'▼'):'↕'}</span></button></th>`;
+ return `<div class="tablebox"><table><thead><tr>${headers.map(th).join('')}</tr></thead><tbody>${rows.slice(state.page*size,state.page*size+size).map(c=>`<tr>${c.map((v,i)=>`<td class="${i?'num':''}">${v}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${headers.length}">No matching records</td></tr>`}</tbody></table></div><div class="pager"><span>${total} rows · ${state.page+1}/${Math.max(1,Math.ceil(total/size))} pages${s?` · sorted by ${esc(headers[s.col])} ${s.dir==='asc'?'↑':'↓'}`:' · click a column header to sort'}</span><button class="action" id="prev" ${state.page===0?'disabled':''}>Previous</button><button class="action" id="next" ${(state.page+1)*size>=total?'disabled':''}>Next</button></div>`;
 }
 function actions(){
+ document.querySelectorAll('button[data-sort-col]').forEach(b=>b.onclick=()=>{const col=+b.dataset.sortCol,sig=b.dataset.sortSig,cur=state.sort;
+  state.sort={sig,col,dir:cur&&cur.sig===sig&&cur.col===col&&cur.dir==='desc'?'asc':'desc'};state.page=0;render()});
  if($('prev'))$('prev').onclick=()=>{state.page--;render()};
  if($('next'))$('next').onclick=()=>{state.page++;render()};
  if($('csv'))$('csv').onclick=downloadCSV;
@@ -122,15 +142,23 @@ function npx(){
 function status(){return health()}
 function render(){
  baseRender();exported=[];
- $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory}[state.tab])();
+ tipData.length=0;
+ $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView}[state.tab])();
  bind('market','market');bind('group','group');bind('from','from');bind('to','to');bind('asof','date');bind('cert','cert');bind('metric','metric');bind('base','base');bind('filing','filing');bind('direction','direction');
  if($('query')){$('query').onchange=e=>{state.query=e.target.value;state.page=0;render()};$('query').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  actions();
  bindExtensions();
  bindDashboard();
+ bindMarket();
 }
 function csvCell(v){let s=typeof v==='object'&&v!==null?JSON.stringify(v):String(v??'');if(/^[=+@\t\r]/.test(s)||(/^[-]/.test(s)&&!/^[-]\d+(\.\d+)?$/.test(s)))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
 function downloadCSV(){if(!exported.length)return;const keys=uniq(exported.flatMap(Object.keys));const csv='\ufeff'+[keys.map(csvCell).join(','),...exported.map(r=>keys.map(k=>csvCell(r[k])).join(','))].join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`disclosure-${state.tab}-${state.mode}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 $('mode').onchange=e=>{state.mode=e.target.value;state.page=0;state.date='';state.filing='';render()};
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.page=0;state.date='';document.querySelectorAll('nav button').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b))});render()});
+const TABS=[...document.querySelectorAll('nav button[data-tab]')].map(b=>b.dataset.tab);
+function syncPills(){document.querySelectorAll('nav button[data-tab]').forEach(x=>{const on=x.dataset.tab===state.tab;x.classList.toggle('active',on);x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))})}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.page=0;state.date='';syncPills();try{history.replaceState(null,'','#'+state.tab)}catch(e){}render()});
+/* deep links: disclosures/#signals, #flows, #trades, #holdings … */
+function fromHash(){const h=location.hash.slice(1);if(TABS.includes(h)&&h!==state.tab){state.tab=h;state.page=0;syncPills();return true}return false}
+addEventListener('hashchange',()=>{if(fromHash())render()});
+fromHash();syncPills();
 render();

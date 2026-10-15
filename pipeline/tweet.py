@@ -125,7 +125,7 @@ def holders_lines(ticker, site_url):
         return ""
     inst = h.get("institutional") or []
     buys = [x for x in inst if x.get("status") in ("NEW", "INCREASE")]
-    sells = [x for x in inst if x.get("status") in ("DECREASE", "NOT DISCLOSED")]
+    sells = [x for x in inst if x.get("status") in ("DECREASE", "EXIT", "NOT DISCLOSED")]
     m = lambda v: ("" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.0f}M")
     row = lambda x: f"- {x.get('manager')} ({x.get('period')}): {x.get('status', '').lower()} {('%+d' % x['delta_shares']) if x.get('delta_shares') else ''} shares, holds {x.get('shares'):,} worth {m(x.get('value_usd'))}, {round((x.get('weight') or 0) * 100, 1)}% of its portfolio"
     lines = [f"13F holders on file for {ticker}: {len(inst)} managers ({len(buys)} added or opened, {len(sells)} cut or closed); quarter-end positions, not trades.",
