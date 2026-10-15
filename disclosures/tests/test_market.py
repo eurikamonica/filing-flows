@@ -130,18 +130,63 @@ import frames, rotation
 class Rotation(unittest.TestCase):
     def test_series_from_frames_and_prices(self):
         periods = ['CY2024Q1', 'CY2024Q2', 'CY2024Q3', 'CY2024Q4', 'CY2025Q1', 'CY2025Q2']
-        marg = {p: (100.0, m, m) for p, m in zip(periods, [10, 11, 12, 13, 15, 12])}     # margin % by quarter
+        fig = {p: {'rev': r, 'oi': r * m / 100, 'gp': r * 0.5, 'ni': None}
+               for p, r, m in zip(periods, [100, 100, 100, 100, 110, 120], [10, 11, 12, 13, 15, 12])}
         rows = [['2024-12-31', 100.0, 1000], ['2025-03-31', 110.0, 1000], ['2025-06-30', 99.0, 3000]]
         spy = [['2024-12-31', 500.0], ['2025-03-31', 500.0], ['2025-06-30', 550.0]]
-        pts = rotation.series(marg, rows, spy, periods)
+        pts = rotation.series(fig, rows, spy, periods, f13={'CY2025Q2': 7}, gov={'CY2025Q1': 0})
         self.assertEqual([p['cal'] for p in pts], ['CY2025Q1', 'CY2025Q2'])
         self.assertEqual(pts[0]['dom'], 5.0)                  # 15% vs 10% a year earlier
-        self.assertAlmostEqual(pts[0]['rel'], 0.10)           # +10% vs a flat market
-        self.assertAlmostEqual(pts[1]['rel'], -0.2, places=3) # −10% vs +10%
+        self.assertAlmostEqual(pts[0]['rel'], 10.0)           # +10% vs a flat market (percent)
+        self.assertAlmostEqual(pts[1]['rel'], -20.0, places=3)
+        self.assertAlmostEqual(pts[0]['revg'], 10.0)          # 110 vs 100 a year earlier
+        self.assertAlmostEqual(pts[1]['reva'], 10.0)          # 20% growth after 10%
+        self.assertAlmostEqual(pts[1]['rel6'], -11.0, places=3)   # 99/100 − 1 vs 550/500 − 1
+        self.assertEqual(pts[0]['dgm'], 0.0)
+        self.assertIsNone(pts[0]['nm'])
+        self.assertEqual((pts[1]['f13'], pts[0]['gov'], pts[0]['f13']), (7, 0, None))
 
     def test_calendar_quarters(self):
         import datetime as dt
         self.assertEqual(frames.calendar_quarters(3, dt.date(2026, 1, 5)), ['CY2025Q2', 'CY2025Q3', 'CY2025Q4'])
+
+    def test_fourth_quarter_from_the_annual_frame(self):
+        import gzip, json, tempfile
+        root = tempfile.mkdtemp()
+
+        def put(concept, period, vals):
+            p = frames.path_for(root, concept, period)
+            p.parent.mkdir(parents=True, exist_ok=True)
+            with gzip.open(p, 'wt') as f:
+                json.dump(vals, f)
+        for q, v in (('CY2024Q4', 90), ('CY2025Q1', 100), ('CY2025Q2', 110)):
+            put('Revenues', q, {'1': v})
+        put('Revenues', 'CY2025', {'1': [420, '2025-09-27']})      # fiscal year ending in September: Q3 is the missing one
+        got = frames.quarterly(root, 'Revenues', ['CY2025Q1', 'CY2025Q2', 'CY2025Q3'])
+        self.assertEqual(got['CY2025Q3'], {'1': 120})
+        self.assertEqual(frames._quarter_of('2026-01-31'), 'CY2025Q4')
+
+
+class Options13F(unittest.TestCase):
+    def test_positions_and_changes(self):
+        class U:
+            cusip_ticker = {'111111111': 'ABC'}
+            cusip_type = {}
+            def name(self, t):
+                return 'Abc Corp'
+        mgrs = [{'cik': '1', 'name': 'Fund One'}, {'cik': '2', 'name': 'Fund Two'}]
+        opts = {0: {'2026-03-31': {('111111111', 'PUT'): [100, 1000, 'ABC CORP']},
+                    '2026-06-30': {('111111111', 'PUT'): [300, 3600, 'ABC CORP'], ('111111111', 'CALL'): [50, 600, 'ABC CORP']}},
+                1: {'2026-03-31': {('111111111', 'CALL'): [200, 2000, 'ABC CORP']}, '2026-06-30': {}}}
+        cov = {'2026-03-31': 2, '2026-06-30': 2}
+        o = market.options13f(opts, mgrs, U(), cov, '2026-06-30', {})
+        r = o['rows'][0]
+        self.assertEqual((r['ticker'], r['put_usd'], r['call_usd'], r['put_mgrs'], r['call_mgrs']), ('ABC', 3600, 600, 1, 1))
+        self.assertEqual(r['d_put_usd'], 2400)               # 200 more shares at 12
+        self.assertEqual((r['new_call'], r['closed_call']), (1, 1))
+        kinds = sorted(m['kind'] for m in o['moves'])
+        self.assertEqual(kinds, ['added', 'closed', 'new'])
+        self.assertEqual(o['books'][0]['manager'], 'Fund One')
 
 
 import options

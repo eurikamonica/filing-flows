@@ -54,7 +54,8 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: disclosures
+  # light runs (insiders, options + frames, market views) queue separately so the long 13F / officials runs never cancel them
+  group: disclosures-${{ (github.event.schedule == '28,58 * * * *' || github.event.schedule == '20 21 * * 1-5' || inputs.module == 'insiders' || inputs.module == 'options' || inputs.module == 'market') && 'light' || 'main' }}
   cancel-in-progress: false
 defaults:
   run:

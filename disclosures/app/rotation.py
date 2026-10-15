@@ -1,9 +1,19 @@
-"""Rotation data (4.4) for the momentum clock and the sector orbits: per company and calendar quarter, how profitability
-moved (operating margin vs the same quarter a year earlier, in points; SEC XBRL frames, frames.py) and how the stock
-moved (the quarter's return minus the S&P 500's, SPY as the benchmark), plus how busy trading was (average daily volume
-vs the company's own average) and the latest 13F crowding. Sector "suns" average their companies (weighted by log revenue).
+"""Rotation data (4.4) for the momentum clock and the solar system: per company and calendar quarter, a set of variables
+the charts can put on any axis —
+
+  profitability  operating, gross and net margin, and each against the same quarter a year earlier (points)
+  growth         revenue against a year earlier (%) and its acceleration (this quarter's growth minus last quarter's)
+  price          the quarter's return, the return against the S&P 500 (SPY) over one and two quarters, realised volatility
+  trading        average daily volume against the company's own average
+  ownership      net 13F managers that quarter (buyers − sellers), officials' purchases − sales that quarter
+
+Figures from SEC XBRL frames (frames.py, fourth quarters filled from the annual frames), quarter-end closes and daily
+volume from the price cache, 13F from market/by-ticker-history.json, officials from market/officials-trades.json.
+Sector suns and the market centre average their companies, weighted by the log of revenue, with every variable clipped
+to its 3rd–97th percentile so one outlier does not drag a sun.
 
 Built at publish time (automation/stage-public.py --site-data): the Sankey site's index gives tickers and sectors.
+Output is columnar to stay small: 'fields' names the columns of every company's and sun's 'p' rows.
 """
 import bisect
 import datetime as dt
@@ -14,6 +24,28 @@ import re
 from pathlib import Path
 
 import frames as FR
+
+# key, label, unit, centred (True: a change, 0 is neutral; False: a level), group
+VARS = [
+    ('dom', 'Operating margin vs a year earlier', 'pts', True, 'Profitability'),
+    ('om', 'Operating margin', '%', False, 'Profitability'),
+    ('dgm', 'Gross margin vs a year earlier', 'pts', True, 'Profitability'),
+    ('gm', 'Gross margin', '%', False, 'Profitability'),
+    ('dnm', 'Net margin vs a year earlier', 'pts', True, 'Profitability'),
+    ('nm', 'Net margin', '%', False, 'Profitability'),
+    ('revg', 'Revenue growth vs a year earlier', '%', True, 'Growth'),
+    ('reva', 'Revenue growth acceleration', 'pts', True, 'Growth'),
+    ('rel', 'Stock vs the S&P 500, the quarter', '%', True, 'Price'),
+    ('rel6', 'Stock vs the S&P 500, two quarters', '%', True, 'Price'),
+    ('ret', 'Stock return, the quarter', '%', True, 'Price'),
+    ('vola', 'Realised volatility (annualised)', '%', False, 'Price'),
+    ('volz', 'Trading volume vs its own average', '%', True, 'Trading'),
+    ('f13', 'Net 13F managers (buyers − sellers)', 'managers', True, 'Ownership'),
+    ('gov', "Officials' purchases − sales", 'trades', True, 'Ownership'),
+]
+KEYS = [v[0] for v in VARS]
+FIELDS = ['cal'] + KEYS + ['rev']
+SUN_FIELDS = ['cal'] + KEYS + ['n']
 
 
 def _rows(root, ticker):
@@ -35,9 +67,24 @@ def _close(rows, day, gap=7):
     return best[1]
 
 
-def _volume(rows, start, end):
-    v = [r[2] for r in rows if start < r[0] <= end and len(r) > 2 and r[2]]
+def _window(rows, start, end):
+    lo = bisect.bisect_right(rows, [start, float('inf')])
+    hi = bisect.bisect_right(rows, [end, float('inf')])
+    return rows[lo:hi]
+
+
+def _volume(win):
+    v = [r[2] for r in win if len(r) > 2 and r[2]]
     return sum(v) / len(v) if len(v) >= 20 else None
+
+
+def _vola(win, before):
+    closes = ([before] if before else []) + [r[1] for r in win if r[1]]
+    rets = [math.log(b / a) for a, b in zip(closes, closes[1:]) if a and b and a > 0 and b > 0]
+    if len(rets) < 20:
+        return None
+    m = sum(rets) / len(rets)
+    return math.sqrt(sum((r - m) ** 2 for r in rets) / (len(rets) - 1) * 252) * 100
 
 
 def _qdates(period):
@@ -49,31 +96,119 @@ def _qdates(period):
     return start.isoformat(), end.isoformat()
 
 
-def series(marg, rows, spy, periods, quarters=16):
-    """Points for the periods that have a margin a year earlier and closes at both quarter ends."""
+def cal_of(day):
+    """'2025-09-30' → 'CY2025Q3'."""
+    d = dt.date.fromisoformat(day[:10])
+    return f'CY{d.year}Q{(d.month - 1) // 3 + 1}'
+
+
+def _r(v, n=2):
+    return None if v is None else round(v, n)
+
+
+def _margin(num, rev, cap=300):
+    if num is None or not rev or rev <= 0:
+        return None
+    m = 100.0 * num / rev
+    return m if abs(m) <= cap else None
+
+
+def series(fig, rows, spy, periods, quarters=16, f13=None, gov=None):
+    """Points (dicts keyed by FIELDS) for the periods that have revenue and closes at both quarter ends.
+    fig: {period: {'rev', 'oi', 'gp', 'ni'}} (frames.figures for one company); f13 / gov: {period: value}."""
     pts = []
     for i, period in enumerate(periods):
-        if i < 4 or period not in marg or periods[i - 4] not in marg:
-            continue
-        om, om_ago = marg[period][2], marg[periods[i - 4]][2]
-        if abs(om) > 300 or abs(om_ago) > 300:
+        f = fig.get(period)
+        if i < 4 or not f:
             continue
         start, end = _qdates(period)
         a, b = _close(rows, start), _close(rows, end)
         if not a or not b:
             continue
+        ago = fig.get(periods[i - 4]) or {}
+        p = {'cal': period, 'rev': f['rev']}
+        for key, num in (('om', 'oi'), ('gm', 'gp'), ('nm', 'ni')):
+            now_, then = _margin(f.get(num), f['rev']), _margin(ago.get(num), ago.get('rev'))
+            p[key] = _r(now_)
+            p['d' + key] = _r(now_ - then) if now_ is not None and then is not None else None
+        if p['gm'] is not None and p['gm'] > 100:
+            p['gm'] = p['dgm'] = None
+        growth = lambda f1, f0: (100.0 * (f1['rev'] / f0['rev'] - 1)) if f1 and f0 and f0.get('rev') and f0['rev'] > 0 else None
+        g = growth(f, ago)
+        p['revg'] = _r(g) if g is not None and abs(g) <= 1000 else None
+        g1 = growth(fig.get(periods[i - 1]), fig.get(periods[i - 5])) if i >= 5 else None
+        p['reva'] = _r(g - g1) if p['revg'] is not None and g1 is not None and abs(g1) <= 1000 else None
+        ret = 100.0 * (b / a - 1)
         sa, sb = (_close(spy, start), _close(spy, end)) if spy else (None, None)
-        ret = b / a - 1
-        pts.append({'cal': period, 'om': round(om, 2), 'dom': round(om - om_ago, 2), 'ret': round(ret, 4),
-                    'rel': round(ret - (sb / sa - 1), 4) if sa and sb else round(ret, 4), 'rev': marg[period][0],
-                    'vol': _volume(rows, start, end)})
+        p['ret'] = _r(ret)
+        p['rel'] = _r(ret - 100.0 * (sb / sa - 1)) if sa and sb else _r(ret)
+        s2 = _qdates(periods[i - 1])[0]
+        a2, sa2 = _close(rows, s2), (_close(spy, s2) if spy else None)
+        p['rel6'] = _r(100.0 * (b / a2 - 1) - (100.0 * (sb / sa2 - 1) if sa2 and sb else 0)) if a2 else None
+        win = _window(rows, start, end)
+        p['vola'] = _r(_vola(win, a), 1)
+        p['vol'] = _volume(win)
+        p['f13'] = (f13 or {}).get(period)
+        p['gov'] = (gov or {}).get(period)
+        pts.append(p)
     pts = pts[-quarters:]
     vols = [p['vol'] for p in pts if p['vol']]
     avg = sum(vols) / len(vols) if vols else None
     for p in pts:
-        p['volz'] = round(p['vol'] / avg - 1, 3) if p['vol'] and avg else None
+        p['volz'] = _r(100.0 * (p['vol'] / avg - 1), 1) if p['vol'] and avg else None
         p.pop('vol')
     return pts
+
+
+def _quantile(vals, q):
+    if not vals:
+        return None
+    s = sorted(vals)
+    return s[min(len(s) - 1, max(0, int(q * (len(s) - 1))))]
+
+
+def _f13_history(root):
+    """{TICKER: {period: net managers}} for the well-covered 13F quarters."""
+    try:
+        h = json.loads((Path(root) / 'market' / 'by-ticker-history.json').read_text(encoding='utf-8'))
+    except Exception:
+        return {}
+    cov = h.get('coverage') or []
+    best = max(cov) if cov else 0
+    keep = [i for i, n in enumerate(cov) if best and n >= 0.6 * best]
+    cals = [cal_of(p) for p in h.get('periods', [])]
+    out = {}
+    for t, vals in (h.get('rows') or {}).items():
+        out[t.replace('-', '.')] = {cals[i]: vals[i] for i in keep if i < len(vals) and vals[i] is not None}
+    # a ticker missing from a covered quarter had no net change that quarter
+    out['_covered'] = [cals[i] for i in keep]
+    return out
+
+
+def _gov_history(root):
+    """{TICKER: {period: purchases − sales}} from the officials' trades on file, for quarters the file fully covers."""
+    try:
+        d = json.loads((Path(root) / 'market' / 'officials-trades.json').read_text(encoding='utf-8'))
+    except Exception:
+        return {}, []
+    trades = d.get('trades') or []
+    dates = sorted(t['date'] for t in trades if t.get('date'))
+    if not dates:
+        return {}, []
+    first = cal_of(dates[0])
+    out = {}
+    for t in trades:
+        tk = (t.get('ticker_canon') or t.get('ticker') or '').upper().replace('-', '.')
+        if not tk or not t.get('date'):
+            continue
+        k = cal_of(t['date'])
+        if k <= first:                       # the earliest quarter is only partly on file
+            continue
+        sign = 1 if t.get('type') == 'purchase' else -1 if 'sale' in (t.get('type') or '') else 0
+        if sign:
+            out.setdefault(tk, {})[k] = out.get(tk, {}).get(k, 0) + sign
+    covered = sorted({cal_of(x) for x in dates if cal_of(x) > first})
+    return out, covered
 
 
 def build(site_data, root, top=600, quarters=16):
@@ -90,38 +225,76 @@ def build(site_data, root, top=600, quarters=16):
         flows = {t.replace('-', '.'): dict(zip(f['fields'], v)) for t, v in f.get('rows', {}).items()}
     except Exception:
         pass
+    h13 = _f13_history(root)
+    covered13 = set(h13.pop('_covered', []))
+    hgov, covered_gov = _gov_history(root)
     periods = FR.calendar_quarters(quarters + 5)
-    marg = FR.margins(root, periods)
+    figs = FR.figures(root, periods)
     spy = _rows(root, 'SPY')
     out = []
     for r in sorted(latest.values(), key=lambda r: -(r.get('revenue') or 0)):
         if len(out) >= top:
             break
-        m = marg.get(str(r['cik']))
-        rows = _rows(root, r['ticker']) if m else None
+        fig = figs.get(str(r['cik']))
+        rows = _rows(root, r['ticker']) if fig else None
         if not rows:
             continue
-        pts = series(m, rows, spy, periods, quarters)
+        tk = r['ticker'].replace('-', '.')
+        f13 = {p: (h13.get(tk) or {}).get(p, 0) for p in covered13}
+        gov = {p: (hgov.get(tk) or {}).get(p, 0) for p in covered_gov}
+        pts = series(fig, rows, spy, periods, quarters, f13, gov)
         if len(pts) < 3:
             continue
-        fl = flows.get(r['ticker'].replace('-', '.')) or {}
+        fl = flows.get(tk) or {}
         out.append({'t': r['ticker'], 'n': r.get('name'), 'cik': r['cik'], 's': r.get('sector') or 'other', 'ind': r.get('industry'),
                     'rev': r.get('revenue'), 'net13f': (fl.get('buyers', 0) - fl.get('sellers', 0)) if fl else None,
                     'usd13f': fl.get('usd_net'), 'pts': pts})
-    # sector suns: revenue-weighted averages per calendar quarter (clipped so one outlier does not drag the sun)
-    sectors = {}
+    # clip bounds and robust scales per variable, pooled over every company-quarter
+    bounds, meta = {}, []
+    for key, label, unit, centred, group in VARS:
+        vals = [p[key] for c in out for p in c['pts'] if p.get(key) is not None]
+        lo, hi = _quantile(vals, 0.03), _quantile(vals, 0.97)
+        q1, q3 = _quantile(vals, 0.25), _quantile(vals, 0.75)
+        bounds[key] = (lo, hi)
+        meta.append({'key': key, 'label': label, 'unit': unit, 'centred': centred, 'group': group, 'n': len(vals),
+                     'lo': _r(lo), 'hi': _r(hi), 'median': _r(_quantile(vals, 0.5)),
+                     'scale': _r(((q3 - q1) / 1.349) if vals and q3 is not None and q3 > q1 else None, 4)})
+    clip = lambda k, v: None if v is None or bounds[k][0] is None else max(bounds[k][0], min(bounds[k][1], v))
+
+    def average(cos):
+        per = {}
+        for co in cos:
+            w = math.log10(max(co['rev'] or 1e6, 1e6))
+            for p in co['pts']:
+                a = per.setdefault(p['cal'], {'n': 0, **{k: [0.0, 0.0] for k in KEYS}})
+                a['n'] += 1
+                for k in KEYS:
+                    v = clip(k, p.get(k))
+                    if v is not None:
+                        a[k][0] += w * v; a[k][1] += w
+        rows = []
+        for cal, a in sorted(per.items()):
+            if a['n'] >= 3:
+                rows.append([cal] + [_r(a[k][0] / a[k][1]) if a[k][1] else None for k in KEYS] + [a['n']])
+        return rows[-quarters:]
+
+    by_sector = {}
     for co in out:
-        w = math.log10(max(co['rev'] or 1e6, 1e6))
-        for p in co['pts']:
-            a = sectors.setdefault(co['s'], {}).setdefault(p['cal'], [0.0, 0.0, 0.0, 0])
-            a[0] += w * max(-30, min(30, p['dom'])); a[1] += w * max(-1, min(1, p['rel'])); a[2] += w; a[3] += 1
-    sun = {}
-    for s, per in sectors.items():
-        pts = [{'cal': cal, 'dom': round(a[0] / a[2], 2), 'rel': round(a[1] / a[2], 4), 'n': a[3]} for cal, a in sorted(per.items()) if a[3] >= 3]
-        sun[s] = {'name': names.get(s, s), 'pts': pts[-quarters:]}
+        by_sector.setdefault(co['s'], []).append(co)
+    sun = {s: {'name': names.get(s, s), 'p': average(cos)} for s, cos in by_sector.items()}
+    market = {'name': 'Market', 'p': average(out)}
+    for co in out:
+        co['p'] = [[p.get(k) for k in FIELDS] for p in co.pop('pts')]
+    cals = sorted({row[0] for co in out for row in co['p']})[-quarters:]
     return {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'benchmark': 'SPY' if spy else None,
-            'note': ('x: operating margin minus the same quarter a year earlier (points). y: the stock\'s return over the fiscal '
-                     'quarter minus the S&P 500 (SPY) over the same dates. Dot size: average daily trading volume in the quarter '
-                     'against the company\'s own average. Sector suns weight companies by the log of revenue. Quarter-end closes '
-                     'from daily prices; margins from the 10-Q / 10-K figures on Filing Flows.'),
-            'companies': out, 'sectors': sun}
+            'fields': FIELDS, 'sun_fields': SUN_FIELDS, 'vars': meta, 'quarters': cals,
+            'note': ('Calendar quarters (SEC frames align fiscal quarters to the nearest calendar quarter; a fourth quarter a '
+                     'company did not tag on its own is the year minus its first three). Returns run from one calendar '
+                     'quarter-end close to the next; "vs the S&P 500" subtracts SPY over the same dates. Margins are against '
+                     'revenue; growth and margin changes compare with the same quarter a year earlier. Realised volatility: '
+                     'daily log returns in the quarter, annualised. Volume: average daily volume in the quarter against the '
+                     "company's own average. 13F: managers that added minus managers that cut, in quarters most managers on "
+                     "file have reported. Officials: purchases minus sales in the US House reports on file. Sector suns and "
+                     'the market centre weight companies by the log of revenue, each variable clipped to its 3rd–97th '
+                     'percentile.'),
+            'companies': out, 'sectors': sun, 'market': market}

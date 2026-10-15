@@ -11,7 +11,7 @@ from shards import hydrate, hydrate_catalogs, publish_shards
 import market
 import insiders
 import frames
-import options
+import options as option_chains
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -79,11 +79,12 @@ def main():
     if args.only in ('all','options'):
         print('Collecting option chains',flush=True)
         try:
-            print('options: '+json.dumps(options.collect(client,args.output,cfg.get('options',{}))),flush=True)
+            print('options: '+json.dumps(option_chains.collect(client,args.output,cfg.get("options",{}))),flush=True)
         except Exception as exc:
             print('options: error — '+str(exc),flush=True)
-    # 4.4: SEC XBRL frames (16+ quarters of revenue and operating income for every filer) for the momentum clock
-    if args.only in ('all','market'):
+    # 4.4: SEC XBRL frames (21 quarters and the annual frames of revenue, operating income, gross profit and net income
+    # for every filer) for the rotation charts; cached quarters are never fetched again, so the daily options run keeps them fresh
+    if args.only in ('all','market','options'):
         print('Collecting XBRL frames',flush=True)
         try:
             print('frames: '+json.dumps(frames.collect(client,args.output,int(cfg.get('frames',{}).get('quarters',21)))),flush=True)

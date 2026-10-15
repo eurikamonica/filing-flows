@@ -1,6 +1,10 @@
-/* 4.5 Options: CBOE delayed option chains summarised daily (app/options.py) — the cross-section of one underlying
-   (IV smile, open interest and dealer gamma by strike, term structure) and a table of every underlying covered.
-   Data: data/market/options.json and data/market/options/<TICKER>.json. Uses the helpers of market.js / rotation.js. */
+/* 4.5 Options, two sources:
+   · Option chains — CBOE delayed quotes summarised daily (app/options.py): the cross-section of one underlying (IV smile,
+     open interest and dealer gamma by strike, term structure) and a table of every underlying covered.
+     Data: data/market/options.json and data/market/options/<TICKER>.json.
+   · Disclosed in 13F — the long put and call positions managers report each quarter (app/market.py options13f):
+     per underlying, by manager, and the largest changes. Data: data/market/options13f.json.
+   Uses the helpers of market.js / rotation.js. */
 const optStore={};
 function optDetail(t){
  const m=optStore[t]||(optStore[t]={});
@@ -14,12 +18,15 @@ const iv30=v=>v==null?'—':fmt(v,1)+'%';                 // CBOE's iv30 is alre
 const px=v=>v==null?'—':'$'+fmt(v,v>=100?0:2);
 
 function optionsView(){
- let out=head('Options','The cross-section of option chains: where open interest and dealer gamma sit by strike, the implied-volatility smile and term structure. CBOE delayed quotes, summarised daily after the close.','CBOE · DAILY');
- const g=marketGate('options','Option chains');if(!g.data)return out+g.html;
+ state.omode=state.omode==='13f'?'13f':'chains';
+ let out=head('Options',state.omode==='13f'?'The put and call positions investment managers disclose in their quarterly 13F reports: who holds them, on which underlyings, and what changed since the quarter before.':'The cross-section of option chains: where open interest and dealer gamma sit by strike, the implied-volatility smile and term structure. CBOE delayed quotes, summarised daily after the close.',state.omode==='13f'?'SEC 13F · QUARTERLY':'CBOE · DAILY');
+ const src=field('omode','Source',[['chains','Option chains (CBOE, daily)'],['13f','Disclosed in 13F (managers, quarterly)']],state.omode);
+ if(state.omode==='13f')return out+options13fView(src);
+ const g=marketGate('options','Option chains');if(!g.data)return out+`<div class="toolbar">${src}</div>`+g.html;
  const d=g.data,rows=d.rows||[];
- if(!rows.length)return out+empty('No option chains collected yet — the collector runs each weekday after the close (Actions → Collect disclosures → module options).');
+ if(!rows.length)return out+`<div class="toolbar">${src}</div>`+empty('No option chains collected yet — the collector runs each weekday after the close (Actions → Collect disclosures → module options).');
  state.oq=rows.some(r=>r.ticker===state.oq)?state.oq:'';
- out+=`<div class="toolbar">${field('oq','Underlying',[['','Every underlying (table)'],...rows.map(r=>[r.ticker,`${r.ticker} · ${px(r.spot)} · IV30 ${iv30(r.iv30)}`])],state.oq,true)}</div>`;
+ out+=`<div class="toolbar">${src}${field('oq','Underlying',[['','Every underlying (table)'],...rows.map(r=>[r.ticker,`${r.ticker} · ${px(r.spot)} · IV30 ${iv30(r.iv30)}`])],state.oq,true)}</div>`;
  if(!state.oq)return out+optionsTable(d,rows);
  return out+optionsOne(rows.find(r=>r.ticker===state.oq),d);
 }
@@ -49,6 +56,8 @@ function optionsOne(r,d){
  out+=`<div class="panel"><h3>Term structure</h3><p class="sub">At-the-money IV by expiry</p>${termSVG(c)}</div></div>`;
  out+=`<div class="charts even"><div class="panel"><h3>Open interest by strike</h3><p class="sub">Calls above the line, puts below · strikes within 30% of spot · all expiries</p>${strikeSVG(c.oi.map(([k,cl,pu])=>[k,cl,-pu]),c,'contracts',v=>(v>=0?'calls ':'puts ')+fmt(Math.abs(v)))}</div>`;
  out+=`<div class="panel"><h3>Dealer gamma exposure by strike</h3><p class="sub">GEX per 1% move (model: dealers long calls, short puts) · above zero dampens moves, below amplifies</p>${strikeSVG(c.gex.map(([k,v])=>[k,v]),c,'usd',v=>smoney(v))}</div></div>`;
+ const o13=marketData('options13f').data,h13=o13&&(o13.rows||[]).find(x=>x.ticker===r.ticker);
+ if(h13)out+=`<div class="panel"><h3>Disclosed in 13F — ${esc(h13.ticker)} options held by managers</h3><p class="sub">Quarter ended ${esc(o13.quarter)}: ${money(h13.call_usd)} of calls (${fmt(h13.call_mgrs)} managers) and ${money(h13.put_usd)} of puts (${fmt(h13.put_mgrs)}), valued at the underlying shares · change since the quarter before: calls ${smoney(h13.d_call_usd)}, puts ${smoney(h13.d_put_usd)}</p>${o13Bars(h13.hist)}<p class="sub"><button class="text-button" data-o13="${esc(h13.cusip)}">Every holder and the history →</button></p></div>`;
  if((r.history||[]).length>=2){const h=r.history;out+=`<div class="panel"><h3>History</h3><p class="sub">IV30 and put/call open interest, one point per collection day</p><div class="rot-multiples">${miniLine(h.map(x=>[x[0],x[2]]),'IV30',v=>fmt(v,1)+'%')}${miniLine(h.map(x=>[x[0],x[3]]),'Put / call OI',v=>fmt(v,2))}</div></div>`}
  out+=`<div class="explain">${esc(d.note||'')} Strikes with no open interest and stale quotes are left out of the smile.</div>`;
  return out;
@@ -102,7 +111,75 @@ function miniLine(pts,label,f){
  const W=300,H=120,L=40,R=8,T=10,B=22,lo=Math.min(...pts.map(p=>p[1])),hi=Math.max(...pts.map(p=>p[1])),pad=(hi-lo)*.15||1,x=i=>L+i/(pts.length-1)*(W-L-R),y=v=>T+(hi+pad-v)/((hi-lo)+2*pad)*(H-T-B);
  return `<div class="rot-mini"><h4>${esc(label)}</h4><svg viewBox="0 0 ${W} ${H}" class="plot mk-plot"><text class="axis" x="${L-6}" y="${y(hi)+4}" text-anchor="end">${esc(f(hi))}</text><text class="axis" x="${L-6}" y="${y(lo)+4}" text-anchor="end">${esc(f(lo))}</text><polyline class="rot-line" style="stroke:var(--rot-1)" points="${pts.map((p,i)=>x(i).toFixed(1)+','+y(p[1]).toFixed(1)).join(' ')}"/><text class="axis" x="${L}" y="${H-6}">${esc(pts[0][0])}</text><text class="axis" x="${W-R}" y="${H-6}" text-anchor="end">${esc(pts[pts.length-1][0])}</text></svg></div>`;
 }
+/* ---------- disclosed in 13F ---------- */
+const O13_LISTS=[['under','By underlying'],['moves','Largest position changes'],['books','Largest option books (managers)']];
+function o13Bars(hist){                               // calls and puts disclosed per quarter, side by side
+ const h=(hist||[]).filter(x=>x[1]||x[2]);if(!h.length)return empty('No quarter on file');
+ const W=900,H=220,L=70,R=16,T=14,B=34,max=Math.max(1,...h.flatMap(x=>[x[1],x[2]])),gw=(W-L-R)/h.length,bw=Math.min(28,gw/2-6);
+ const y=v=>T+(1-v/max)*(H-T-B);
+ let s=`<svg class="plot mk-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="Disclosed calls and puts per quarter; values in the tooltips">`;
+ niceTicks(0,max,4).forEach(v=>{s+=`<line class="mk-grid" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${L-8}" y="${y(v)+4}" text-anchor="end">${esc(money(v))}</text>`});
+ h.forEach((x,i)=>{const cx=L+gw*i+gw/2;
+  [[x[1],0,'calls',x[3]],[x[2],1,'puts',x[4]]].forEach(([v,k,word,n])=>{const X=cx+(k?2:-bw-2),top=y(v);
+   s+=`<g data-tip="${tip([[money(v),word+' disclosed · quarter ended '+x[0]],...(n!=null?[[fmt(n),'managers holding '+word]]:[])])}" tabindex="0" class="mk-hit"><rect x="${X-2}" y="${T}" width="${bw+4}" height="${H-T-B}" fill="transparent"/><rect x="${X}" y="${top}" width="${bw}" height="${Math.max(1,H-B-top)}" rx="2" style="fill:${ROT_SERIES[k]}"/></g>`});
+  s+=`<text class="axis" x="${cx}" y="${H-B+16}" text-anchor="middle">${esc(x[0].slice(0,7))}</text>`});
+ return s+`</svg><div class="mk-legend"><span><i class="mk-key" style="background:${ROT_SERIES[0]}"></i>Calls</span><span><i class="mk-key" style="background:${ROT_SERIES[1]}"></i>Puts</span><span class="muted">Valued at the underlying shares at quarter-end</span></div>`;
+}
+function options13fView(src){
+ const g=marketGate('options13f','13F option positions');
+ if(!g.data)return `<div class="toolbar">${src}</div>`+g.html;
+ const d=g.data,all=d.rows||[];
+ state.o13u=state.o13u==='all'?'all':'stocks';
+ state.o13l=O13_LISTS.some(x=>x[0]===state.o13l)?state.o13l:'under';
+ const one=state.o13?all.find(r=>r.cusip===state.o13):null;
+ let out=`<div class="toolbar">${src}${one?'':field('o13l','List',O13_LISTS,state.o13l)}${one||state.o13l!=='under'?'':field('o13u','Underlyings',[['stocks','Stocks'],['all','Stocks, ETFs and funds']],state.o13u)}${one?'':`<div class="field wide"><label for="o13q">Find an underlying or manager</label><input id="o13q" value="${esc(state.o13q||'')}" placeholder="e.g. NVDA, SPY, Citadel · Enter"></div>`}</div>`;
+ const t=d.totals||{},bp=t.by_period||[];
+ if(one)return out+o13One(one,d);
+ out+=`<div class="metrics">${kpi('Quarter',d.quarter||'—',`${fmt(d.managers)} managers disclosed options`)}${kpi('Calls disclosed',money(t.call_usd),'Long calls, valued at the underlying shares')}${kpi('Puts disclosed',money(t.put_usd),'Long puts, valued at the underlying shares')}${kpi('Put / call by value',t.call_usd?fmt(t.put_usd/t.call_usd,2):'—',bp.length>1&&bp[bp.length-2][1]?`${fmt(bp[bp.length-2][2]/bp[bp.length-2][1],2)} the quarter before`:'')}</div>`;
+ const rows=all.filter(r=>state.o13u==='all'||!r.fund);
+ const dc=rows.filter(r=>r.d_call_usd).sort((a,b)=>Math.abs(b.d_call_usd)-Math.abs(a.d_call_usd)).slice(0,10),dp=rows.filter(r=>r.d_put_usd).sort((a,b)=>Math.abs(b.d_put_usd)-Math.abs(a.d_put_usd)).slice(0,10);
+ const it=(r,k,word)=>({label:r.ticker||shortName(r.issuer),value:r[k],tip:[[r.ticker||r.issuer,r.name||r.issuer||''],[smoney(r[k]),'change in '+word+' disclosed'],[money(r[word==='calls'?'call_usd':'put_usd']),word+' now · '+fmt(r[word==='calls'?'call_mgrs':'put_mgrs'])+' managers']]});
+ out+=`<div class="panel"><h3>Calls and puts disclosed, by quarter</h3><p class="sub">Every manager on file; coverage grows as more managers are processed, so compare the shape more than the level</p>${o13Bars(bp.map(x=>[x[0],x[1],x[2],null,null]))}</div>`;
+ out+=`<div class="charts even"><div class="panel"><h3>Biggest changes in calls</h3><p class="sub">Change in disclosed calls since each holder's previous quarter</p>${divergingChart(dc.map(r=>it(r,'d_call_usd','calls')),{label:'Change in disclosed calls'})}</div>`;
+ out+=`<div class="panel"><h3>Biggest changes in puts</h3><p class="sub">Change in disclosed puts since each holder's previous quarter</p>${divergingChart(dp.map(r=>it(r,'d_put_usd','puts')),{label:'Change in disclosed puts'})}</div></div>`;
+ out+=`<div class="explain">${esc(d.note||'')}</div>`;
+ const q=String(state.o13q||'').trim().toUpperCase();
+ const match=(...xs)=>!q||xs.some(x=>String(x||'').toUpperCase().includes(q));
+ if(state.o13l==='moves'){
+  const ms=(d.moves||[]).filter(m=>match(m.ticker,m.issuer,m.manager));
+  exported=ms;
+  out+=`<div class="section-head"><h3>Largest position changes · ${fmt(ms.length)}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+  return out+table(['Manager','Underlying','Option','Change','Change (est. $)','Position now'],ms.map(m=>[esc(m.manager),`<b>${esc(m.ticker||'')}</b> <span class="muted">${esc(m.issuer||'')}</span>`,m.pc==='PUT'?'Put':'Call',{new:'Opened',added:'Added',cut:'Cut',closed:'Closed'}[m.kind]||esc(m.kind),`<span class="${m.chg_usd>=0?'positive':'negative'}">${smoney(m.chg_usd)}</span>`,money(m.usd)]));
+ }
+ if(state.o13l==='books'){
+  const bs=(d.books||[]).filter(b=>match(b.manager,...b.top.map(x=>x.ticker)));
+  exported=bs.map(b=>({...b,top:b.top.map(x=>`${x.ticker||x.issuer} ${x.pc} ${x.usd}`).join('; ')}));
+  out+=`<div class="section-head"><h3>Largest option books · ${fmt(bs.length)} managers</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+  return out+table(['Manager','Calls','Puts','Positions','Largest'],bs.map(b=>[esc(b.manager),money(b.call_usd),money(b.put_usd),fmt(b.positions),b.top.slice(0,3).map(x=>`${esc(x.ticker||shortName(x.issuer))} ${x.pc==='PUT'?'puts':'calls'} ${money(x.usd)}`).join(' · ')]));
+ }
+ const list=rows.filter(r=>match(r.ticker,r.issuer,r.name,...(r.top||[]).map(x=>x.manager)));
+ exported=list.map(({top,hist,...r})=>({...r,largest:(top||[]).map(x=>`${x.manager} ${x.pc} ${x.usd}`).join('; ')}));
+ out+=`<div class="section-head"><h3>By underlying · ${fmt(list.length)}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+ return out+table(['Underlying','Calls (managers)','Puts (managers)','Put / call','Calls change','Puts change','New holders (calls / puts)','Largest holder'],list.map(r=>[
+  `<button class="text-button" data-o13="${esc(r.cusip)}"><b>${esc(r.ticker||'—')}</b></button> <span class="muted">${esc(r.name||r.issuer||'')}</span>`,`${money(r.call_usd)} <span class="muted">(${fmt(r.call_mgrs)})</span>`,`${money(r.put_usd)} <span class="muted">(${fmt(r.put_mgrs)})</span>`,
+  r.pc_usd==null?'—':fmt(r.pc_usd,2),`<span class="${r.d_call_usd>=0?'positive':'negative'}">${smoney(r.d_call_usd)}</span>`,`<span class="${r.d_put_usd>=0?'positive':'negative'}">${smoney(r.d_put_usd)}</span>`,`${fmt(r.new_call)} / ${fmt(r.new_put)}`,
+  r.top&&r.top[0]?`${esc(shortName(r.top[0].manager))} <span class="muted">${r.top[0].pc==='PUT'?'puts':'calls'} ${money(r.top[0].usd)}</span>`:'—']));
+}
+function o13One(r,d){
+ let out=`<p><button class="text-button" data-o13="">← Every underlying</button></p>`;
+ out+=`<div class="metrics">${kpi('Underlying',r.ticker||'—',`${r.name||r.issuer||''} · CUSIP ${r.cusip} · quarter ended ${d.quarter}`)}${kpi('Calls disclosed',money(r.call_usd),`${fmt(r.call_mgrs)} managers · ${smoney(r.d_call_usd)} vs the quarter before`)}${kpi('Puts disclosed',money(r.put_usd),`${fmt(r.put_mgrs)} managers · ${smoney(r.d_put_usd)} vs the quarter before`)}${kpi('Put / call by value',r.pc_usd==null?'—':fmt(r.pc_usd,2),`New holders: ${fmt(r.new_call)} calls, ${fmt(r.new_put)} puts · closed: ${fmt(r.closed_call)} / ${fmt(r.closed_put)}`)}</div>`;
+ out+=`<div class="panel"><h3>Calls and puts disclosed, by quarter</h3><p class="sub">Managers holding each in the tooltips</p>${o13Bars(r.hist)}</div>`;
+ const tops=r.top||[];
+ exported=tops.map(x=>({underlying:r.ticker||r.issuer,...x}));
+ out+=`<div class="section-head"><h3>Largest holders</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+ out+=table(['Manager','Option','Position (underlying value)','Change in contracts’ shares'],tops.map(x=>[esc(x.manager),x.pc==='PUT'?'Put':'Call',money(x.usd),x.chg_sh==null?'— (no prior quarter on file)':`<span class="${x.chg_sh>=0?'positive':'negative'}">${x.chg_sh>0?'+':''}${fmt(x.chg_sh)}</span>`]));
+ if(r.ticker&&((marketStore.options||{}).data?.rows||[]).some(x=>x.ticker===r.ticker))out+=`<p><button class="text-button" data-optchain="${esc(r.ticker)}">${esc(r.ticker)} option chain: smile, open interest and gamma by strike →</button></p>`;
+ return out+`<div class="explain">${esc(d.note||'')}</div>`;
+}
 function bindOptions(){
- bind('oq','oq');
+ bind('oq','oq');bind('omode','omode');bind('o13l','o13l');bind('o13u','o13u');
+ if($('o13q')){$('o13q').onchange=e=>{state.o13q=e.target.value;state.page=0;render()};$('o13q').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
+ document.querySelectorAll('[data-o13]').forEach(b=>b.onclick=()=>{state.omode='13f';state.o13=b.dataset.o13;state.page=0;render();scrollTo({top:0,behavior:'smooth'})});
+ document.querySelectorAll('[data-optchain]').forEach(b=>b.onclick=()=>{state.omode='chains';state.oq=b.dataset.optchain;state.o13='';state.page=0;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('[data-opt]').forEach(b=>b.onclick=()=>{state.oq=b.dataset.opt;state.page=0;render();scrollTo({top:0,behavior:'smooth'})});
 }

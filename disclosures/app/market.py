@@ -6,6 +6,10 @@ flows.json            13F money flows across every processed manager: per securi
 officials-trades.json transactions machine-read from US House periodic transaction reports (the filer states the
                       ticker, e.g. "NVIDIA Corporation (NVDA) [ST] P 06/26/2024"), plus reviewed transaction records;
                       every ticker checked against SEC's listed-company tickers and the CUSIP map, with a name check
+options13f.json       the put and call positions managers disclose in 13F (long options only; value = the underlying's value):
+                      per underlying, call and put notional, how many managers hold each, changes since the prior quarter,
+                      the largest holders; per manager, the largest option books; the biggest position changes
+by-ticker-history.json net 13F managers (buyers − sellers) per ticker and quarter, for the rotation charts
 signals.json          one row per ticker joining the three: institutional crowding, officials' trades, price momentum
                       (daily closes), with transparent tags and a heat score. The Filing Flows publish step adds the
                       latest earnings figures (stage-public.py --site-data).
@@ -139,10 +143,11 @@ NICE_SPLITS = (2, 3, 4, 5, 6, 8, 10, 15, 20, 25, 30, 40, 50, 1 / 2, 1 / 3, 1 / 4
                1 / 40, 1 / 50, 3 / 2, 5 / 4)
 
 
-def scan_13f(root, keep_after):
+def scan_13f(root, keep_after, opts=None):
     """One pass over every cached manager, keeping per (period, cusip) the holder count, price samples (value ÷ shares)
     and each manager's quantity change (shares, prior shares). Only periods after keep_after are kept. Returns
-    (raw, prices, coverage, managers); summarise() turns raw into flows after split detection."""
+    (raw, prices, coverage, managers); summarise() turns raw into flows after split detection. When opts is a dict it
+    is filled with each manager's option positions: opts[manager index][period] = {(cusip, 'PUT'|'CALL'): [shares, usd, issuer]}."""
     raw = defaultdict(lambda: defaultdict(lambda: {'issuer': None, 'holders': 0, 'moves': []}))
     samples = defaultdict(lambda: defaultdict(list))
     coverage = defaultdict(int)
@@ -162,6 +167,11 @@ def scan_13f(root, keep_after):
             coverage[period] += 1
             per, smp = raw[period], samples[period]
             for p in s.get('positions', []):
+                if opts is not None and p.get('put_call') in ('PUT', 'CALL') and p.get('cusip'):
+                    book = opts.setdefault(idx, {}).setdefault(period, {})
+                    a = book.setdefault((p['cusip'], p['put_call']), [0, 0, p.get('issuer')])
+                    a[0] += p.get('shares') or 0
+                    a[1] += p.get('value_usd') or 0
                 if p.get('put_call') != 'NONE' or p.get('share_type') != 'SH':
                     continue
                 st = per[p.get('cusip')]
@@ -367,10 +377,10 @@ def history(summ, prices, periods, cusips):
     return out
 
 
-def build_flows(root, universe, scan=None):
+def build_flows(root, universe, scan=None, opts=None):
     today = dt.datetime.now(dt.timezone.utc).date()
     keep_after = (_quarter_end(today) - dt.timedelta(days=2 * 366)).isoformat()
-    raw, prices, coverage, managers = scan or scan_13f(root, keep_after)
+    raw, prices, coverage, managers = scan or scan_13f(root, keep_after, opts)
     quarter, ytd, early = pick_periods(coverage)
     if not quarter:
         return None, None
@@ -405,7 +415,116 @@ def build_flows(root, universe, scan=None):
                                'lists': lists}
     out['history_periods'] = hist_periods
     out['history'] = history(summ, prices, hist_periods, listed)
+    out['_by_quarter'] = ticker_history(summ, universe, [p for p in sorted(coverage) if coverage[p] >= 10], coverage)
+    out['_ctx'] = {'prices': prices, 'coverage': coverage, 'managers': managers, 'quarter': quarter}
     return out, every
+
+
+def ticker_history(summ, universe, periods, coverage):
+    """Net 13F managers (distinct buyers − sellers) per listed stock and quarter: {'periods', 'coverage', 'rows': {T: [n…]}}."""
+    rows = {}
+    for i, period in enumerate(periods):
+        per = defaultdict(lambda: [set(), set()])
+        for c, st in summ.get(period, {}).items():
+            t = universe.cusip_ticker.get(c)
+            if not t or universe.cusip_type.get(c) in FUND_TYPES:
+                continue
+            per[t][0] |= st['b']; per[t][1] |= st['s']
+        for t, (b, s_) in per.items():
+            rows.setdefault(t, [None] * len(periods))[i] = len(b) - len(s_)
+    return {'periods': periods, 'coverage': [coverage.get(p, 0) for p in periods], 'rows': rows}
+
+
+# ------------------------------------------------------------------ 13F option positions (puts and calls managers disclose)
+def options13f(opts, managers, universe, coverage, quarter, equity_prices, n=300):
+    """Disclosed long put and call positions per underlying for the latest well-covered quarter, with changes against
+    each manager's previous complete 13F, the largest holders, the largest option books and the biggest moves."""
+    if not opts or not quarter:
+        return None
+    periods = sorted(p for p in coverage if p <= quarter)[-6:]
+    prev_of = {}
+    agg = {}                                     # (cusip) → per period {'C': [usd, managers, shares], 'P': …}
+    holders = defaultdict(list)                  # cusip → [(usd, manager, pc, shares, chg_sh)] for the latest quarter
+    moves = []
+    books = []
+    for idx, per in opts.items():
+        mine = sorted(per)
+        for period in mine:
+            if period not in periods:
+                continue
+            for (c, pc), (sh, usd, issuer) in per[period].items():
+                a = agg.setdefault(c, {'issuer': issuer, 'p': {}})
+                b = a['p'].setdefault(period, {'CALL': [0, 0, 0], 'PUT': [0, 0, 0]})[pc]
+                b[0] += usd; b[1] += 1; b[2] += sh
+        if quarter not in per:
+            continue
+        before = [p for p in mine if p < quarter]
+        old = per[before[-1]] if before and before[-1] == _prev_q(quarter) else None
+        call = put = 0
+        for (c, pc), (sh, usd, issuer) in per[quarter].items():
+            px = usd / sh if sh else None
+            o = (old or {}).get((c, pc))
+            chg = None if old is None else sh - (o[0] if o else 0)
+            holders[c].append((usd, managers[idx]['name'], pc, sh, chg))
+            call += usd if pc == 'CALL' else 0
+            put += usd if pc == 'PUT' else 0
+            if chg and px:
+                moves.append({'manager': managers[idx]['name'], 'cusip': c, 'pc': pc, 'usd': round(usd), 'chg_usd': round(chg * px),
+                              'kind': 'new' if not o else 'added' if chg > 0 else 'cut'})
+        if old is not None:
+            for (c, pc), (sh, usd, issuer) in old.items():
+                if (c, pc) not in per[quarter] and sh:
+                    px = equity_prices.get(quarter, {}).get(c) or (usd / sh)
+                    moves.append({'manager': managers[idx]['name'], 'cusip': c, 'pc': pc, 'usd': 0, 'chg_usd': -round(sh * px), 'kind': 'closed'})
+                    holders[c].append((0, managers[idx]['name'], pc, 0, -sh))
+        if call or put:
+            top = sorted(per[quarter].items(), key=lambda kv: -kv[1][1])[:5]
+            books.append({'manager': managers[idx]['name'], 'cik': managers[idx]['cik'], 'call_usd': round(call), 'put_usd': round(put),
+                          'positions': len(per[quarter]),
+                          'top': [{'ticker': universe.cusip_ticker.get(c, ''), 'issuer': v[2], 'pc': pc, 'usd': round(v[1])} for (c, pc), v in top]})
+    rows = []
+    for c, a in agg.items():
+        now_ = a['p'].get(quarter)
+        if not now_:
+            continue
+        t = universe.cusip_ticker.get(c, '')
+        hs = holders.get(c, [])
+        d = {pc: sum(h[4] * ((now_[pc][0] / now_[pc][2]) if now_[pc][2] else 0) for h in hs if h[2] == pc and h[4]) for pc in ('CALL', 'PUT')}
+        rows.append({'cusip': c, 'ticker': t, 'name': universe.name(t) if t else '', 'issuer': a['issuer'],
+                     'fund': universe.cusip_type.get(c) in FUND_TYPES,
+                     'call_usd': round(now_['CALL'][0]), 'put_usd': round(now_['PUT'][0]), 'call_mgrs': now_['CALL'][1],
+                     'put_mgrs': now_['PUT'][1], 'call_sh': now_['CALL'][2], 'put_sh': now_['PUT'][2],
+                     'pc_usd': round(now_['PUT'][0] / now_['CALL'][0], 3) if now_['CALL'][0] else None,
+                     'd_call_usd': round(d['CALL']), 'd_put_usd': round(d['PUT']),
+                     'new_call': sum(1 for h in hs if h[2] == 'CALL' and h[4] is not None and h[4] == h[3] and h[3] > 0),
+                     'new_put': sum(1 for h in hs if h[2] == 'PUT' and h[4] is not None and h[4] == h[3] and h[3] > 0),
+                     'closed_call': sum(1 for h in hs if h[2] == 'CALL' and h[3] == 0),
+                     'closed_put': sum(1 for h in hs if h[2] == 'PUT' and h[3] == 0),
+                     'top': [{'manager': m, 'pc': pc, 'usd': round(u), 'chg_sh': ch} for u, m, pc, sh, ch in sorted(hs, key=lambda h: -h[0])[:6] if u],
+                     'hist': [[p, round(a['p'][p]['CALL'][0]), round(a['p'][p]['PUT'][0]), a['p'][p]['CALL'][1], a['p'][p]['PUT'][1]]
+                              for p in periods if p in a['p']]})
+    rows.sort(key=lambda r: -(r['call_usd'] + r['put_usd']))
+    for m in moves:
+        m['ticker'] = universe.cusip_ticker.get(m['cusip'], '')
+        m['issuer'] = agg.get(m['cusip'], {}).get('issuer')
+    moves.sort(key=lambda m: -abs(m['chg_usd']))
+    books.sort(key=lambda b: -(b['call_usd'] + b['put_usd']))
+    tot = lambda pc: sum(r[pc] for r in rows)
+    return {'generated_at': now(), 'quarter': quarter, 'periods': periods, 'managers': len(books),
+            'totals': {'call_usd': tot('call_usd'), 'put_usd': tot('put_usd'),
+                       'by_period': [[p, round(sum(a['p'].get(p, {}).get('CALL', [0])[0] for a in agg.values())),
+                                      round(sum(a['p'].get(p, {}).get('PUT', [0])[0] for a in agg.values())),
+                                      sum(1 for per in opts.values() if p in per)] for p in periods]},
+            'rows': rows[:n], 'books': books[:80], 'moves': moves[:150],
+            'note': ('13F lists long put and call positions only (options written are not reported), valued at the underlying '
+                     'shares, not the premium paid. Many holders are market makers hedging other books, so a put is not '
+                     'necessarily a bearish bet. Changes compare each manager with its own previous quarter; values are '
+                     'quarter-end, up to 45 days old when filed.')}
+
+
+def _prev_q(period):
+    d = dt.date.fromisoformat(period)
+    return _quarter_end(d).isoformat()
 
 
 # ------------------------------------------------------------------ officials' trades (House PTRs, machine-read)
@@ -729,7 +848,9 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
         except Exception as exc:
             errors.append(f'SEC tickers: {exc}')
     universe = Universe(root)
-    flows, every = build_flows(root, universe)
+    opts = {}
+    flows, every = build_flows(root, universe, opts=opts)
+    by_quarter, ctx = (flows.pop('_by_quarter', None), flows.pop('_ctx', None)) if flows else (None, None)
     trades, tstats = officials_trades(root, universe, live)
     signals, cuts = build_signals(root, every, trades, universe)
     stamp = now()
@@ -745,6 +866,14 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
                 a[i] += r[k] or 0
         _write(out_dir / 'by-ticker.json', {'generated_at': stamp, 'label': flows['windows']['quarter']['label'],
                                              'fields': ['buyers', 'sellers', 'new', 'exits', 'usd_net', 'holders'], 'rows': by})
+        if by_quarter:
+            _write(out_dir / 'by-ticker-history.json', {'generated_at': stamp, **by_quarter})
+        try:
+            o13 = options13f(opts, ctx['managers'], universe, ctx['coverage'], ctx['quarter'], ctx['prices'])
+            if o13:
+                _write(out_dir / 'options13f.json', o13)
+        except Exception as exc:
+            errors.append(f'13F options: {exc}')
     today = dt.date.today()
     off = {'generated_at': stamp, 'stats': tstats,
            'note': ('US House periodic transaction reports read by machine: the ticker is the one the filer wrote next to the '
