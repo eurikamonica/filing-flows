@@ -198,7 +198,8 @@ def reddit_trends(site_rows, c):
     if not threads:                        # Reddit refused (no OAuth secrets on a cloud runner): mention counts instead
         try:
             trends = [a for a in reddit.apewisdom(known) if a["mentions"] >= rc.get("min_mentions", 15)]
-            print(f"reddit: no threads read; ApeWisdom mention counts used ({len(trends)} companies on the site)")
+            print(f"::notice::reddit: no threads read; ApeWisdom mention counts used ({len(trends)} companies on the site: "
+                  + ", ".join(f"{a['ticker']} {a['mentions']}" for a in trends[:8]) + ")")
         except Exception as err:
             print(f"::warning::ApeWisdom not read either ({str(err)[:120]})")
     print(f"reddit: {len(threads)} threads, {len(trends)} companies on the site trending: "
@@ -613,7 +614,7 @@ def plan_event8k(site, rows, c, by_ticker, state_ok, today):
         if len(entries) < 100:
             break
     cands.sort(key=lambda x: -x[0])
-    print("event8k: " + (", ".join(f"{e['ticker']} {','.join(i)}" for _, e, _, i in cands[:8]) or "no material 8-K from a site company"))
+    print("::notice::event8k: " + (", ".join(f"{e['ticker']} {','.join(i)}" for _, e, _, i in cands[:8]) or "no material 8-K from a site company"))
     for score, e, f, items in cands[:6]:
         sub = {"accn": f["accn"], "form": f["form"], "filed": f["filed"], "accepted": f.get("updated") or "", "items": items}
         try:
@@ -760,6 +761,7 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
                 filing = f"The filing: 8-K Item {ev['code']}, filed {ev['filed']}. {ev['url']}"
         print(f"[{p['kind']}] {post}" + "".join(f"\n   ↳ {x}" for x in list(p.get("thread") or []) + [filing, reply] if x))
         if dry_run:
+            print(f"::notice title=dry run {p['kind']}::{post}")
             made.append(f"{p['kind']}: {post}")
             continue
         os.makedirs(xdir, exist_ok=True)
