@@ -621,6 +621,33 @@ def officials_trades(root, universe, live=None):
     return trades, dict(stats)
 
 
+def latest_reports(root, live=None, trades=None, n=40):
+    """The newest US House periodic transaction reports, read or still waiting, with how many trades each gave —
+    and the collector's freshness check (newest filed vs newest read)."""
+    root = Path(root)
+    live = live if live is not None else read_json(root / 'live.json', {})
+    cong = (live.get('modules') or {}).get('congress') or {}
+    directory = cong.get('directory') or (read_json(root / cong['directory_shard'], []) if cong.get('directory_shard') else [])
+    read = {r['report_id']: r for r in cong.get('reports', [])}
+    per = defaultdict(list)
+    for t in trades or []:
+        if t.get('report_id'):
+            per[t['report_id']].append(t)
+    ptr = [r for r in directory if r.get('jurisdiction', 'US House') == 'US House' and r.get('report_type') == 'PTR']
+    ptr.sort(key=lambda r: (r.get('filed_date') or '', r['report_id']), reverse=True)
+    out = []
+    for r in ptr[:n]:
+        got = read.get(r['report_id']) or {}
+        ts = per.get(r['report_id'], [])
+        out.append({'report_id': r['report_id'], 'person': r.get('person'), 'office': r.get('office'), 'filed_date': r.get('filed_date'),
+                    'status': 'read' if got.get('source_sha256') else ('error' if got.get('status') == 'error' else 'waiting'),
+                    'pages': got.get('page_count'), 'trades': len(ts), 'buys': sum(t.get('type') == 'purchase' for t in ts),
+                    'sells': sum('sale' in (t.get('type') or '') for t in ts),
+                    'tickers': list(dict.fromkeys(t['ticker_canon'] for t in ts if t.get('ticker_canon')))[:6],
+                    'source_url': r.get('source_url')})
+    return out, (cong.get('counts') or {}).get('house_ptr') or {}
+
+
 def _checked(t, universe):
     tk = canon(t.get('ticker'))
     t['ticker_canon'] = tk
@@ -852,6 +879,7 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
     flows, every = build_flows(root, universe, opts=opts)
     by_quarter, ctx = (flows.pop('_by_quarter', None), flows.pop('_ctx', None)) if flows else (None, None)
     trades, tstats = officials_trades(root, universe, live)
+    latest, monitor = latest_reports(root, live, trades)
     signals, cuts = build_signals(root, every, trades, universe)
     stamp = now()
     if flows:
@@ -885,6 +913,7 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
                                      key=lambda r: (-len(r['people_buy']), -r['buys'], -r['buy_min']))[:TOP],
                        'ytd': sorted(officials_summary(trades, f'{today.year}-01-01'),
                                      key=lambda r: (-len(r['people_buy']), -r['buys'], -r['buy_min']))[:TOP]},
+           'latest_reports': latest, 'monitor': monitor,
            'trades': trades[:4000]}
     _write(out_dir / 'officials-trades.json', off)
     _write(out_dir / 'signals.json', {'generated_at': stamp, 'quarter': (flows or {}).get('windows', {}).get('quarter', {}).get('label'),

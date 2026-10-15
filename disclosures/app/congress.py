@@ -224,6 +224,41 @@ def load_reviewed(path,reports):
             except Exception as exc:errors.append(f'Review CSV line {i}: {exc}')
     return records,errors
 
+def house_select(items,history,budget,revalidate=False):
+    """US House queue: periodic transaction reports first, newest filing first (trades are what readers look for and
+    they go stale), then annual reports newest first. House PDFs never change once filed, so a processed report is
+    only read again on the weekly revalidation; a failed one is retried after six hours."""
+    current=dt.datetime.now(dt.timezone.utc);fresh=[];retry=[];due=[]
+    for item in items:
+        old=history.get(str(item['report_id']),{})
+        last=old.get('last_attempt') or old.get('last_success')
+        age=(current-dt.datetime.fromisoformat(last)).total_seconds()/3600 if last else float('inf')
+        if old.get('status')=='error' or old.get('stale'):
+            if age>=6:retry.append(item)
+        elif not old.get('last_success'):fresh.append(item)
+        elif revalidate:due.append(item)
+    order=lambda r:(r.get('report_type')!='PTR',''.join(chr(255-ord(ch)) for ch in (r.get('filed_date') or '')))
+    fresh.sort(key=order);retry.sort(key=order)
+    picked=fresh[:budget]
+    picked+=retry[:max(0,min(len(retry),budget-len(picked),max(2,budget//5)))]
+    picked+=due[:max(0,budget-len(picked))]
+    return picked
+
+def house_monitor(catalog,result,today=None):
+    """How current the officials' trades are: the newest PTR discovered vs the newest one read, and the backlog."""
+    today=today or dt.date.today()
+    ptr=[r for r in catalog.values() if r.get('jurisdiction','US House')=='US House' and r.get('report_type')=='PTR']
+    done=[r for r in ptr if (result.get(r['report_id']) or {}).get('source_sha256')]
+    pending=[r for r in ptr if not (result.get(r['report_id']) or {}).get('source_sha256')]
+    newest=max((r.get('filed_date') or '' for r in ptr),default='');newest_done=max((r.get('filed_date') or '' for r in done),default='')
+    month=(today-dt.timedelta(days=30)).isoformat()
+    lag=(dt.date.fromisoformat(newest)-dt.date.fromisoformat(newest_done)).days if newest and newest_done else None
+    oldest_pending=min((r.get('filed_date') or '9999' for r in pending),default=None)
+    return {'ptr_discovered':len(ptr),'ptr_read':len(done),'ptr_pending':len(pending),'newest_ptr_filed':newest or None,
+            'newest_ptr_read':newest_done or None,'lag_days':lag,'oldest_pending_ptr':oldest_pending,
+            'ptr_last_30_days':sum((r.get('filed_date') or '')>=month for r in ptr),
+            'ptr_last_30_days_read':sum((r.get('filed_date') or '')>=month for r in done)}
+
 def collect_congress(client,cfg,old,revalidate=False):
     from discovery import select_batch
     previous={r['report_id']:r for r in old.get('reports',[])}
@@ -276,6 +311,7 @@ def collect_congress(client,cfg,old,revalidate=False):
         shares=cfg.get('batch_shares',{});budget=int(cfg.get('batch_size',30));selected=[]
         default=max(1,budget//max(1,len(groups)))
         for name,items in sorted(groups.items()):
+            if name=='US House':selected+=house_select(items,history,int(shares.get(name,default)),revalidate);continue
             selected+=select_batch(items,history,int(shares.get(name,default)),'report_id',cfg.get('refresh_hours',168),revalidate)
         selected=selected[:max(budget,len(groups))]
     for meta in selected:
@@ -293,6 +329,10 @@ def collect_congress(client,cfg,old,revalidate=False):
             errors.append(f'{rid}: {str(exc)[:3000]}')
             result[rid]={**(prior or meta),'last_attempt':now(),'stale':True,'status':'error','error':str(exc)[:300],'candidates':(prior or{}).get('candidates',[])}
     reports=list(result.values())
+    monitor=house_monitor(catalog,result)
+    print('house PTRs: '+json.dumps(monitor),flush=True)
+    if (monitor['lag_days'] or 0)>3 or monitor['ptr_pending']>40:
+        print(f"::warning::officials: {monitor['ptr_pending']} House PTRs waiting; newest read {monitor['newest_ptr_read']} vs newest filed {monitor['newest_ptr_filed']}",flush=True)
     for r in reports:   # keep names/offices in step with the (re-cleaned) catalog
         c=catalog.get(r['report_id'])
         if c and c.get('person'):r['person']=c['person'];r['office']=c.get('office',r.get('office',''))
@@ -321,6 +361,6 @@ def collect_congress(client,cfg,old,revalidate=False):
         if r['report_id'] not in catalog:
             j=by_jurisdiction.setdefault(r.get('jurisdiction','Imports'),{'discovered':0,'extracted':0,'pending':0,'error':0,'unsupported':0});j['discovered']+=1;j['extracted']+=bool(r.get('source_sha256'))
     return {'reports':reports,'records':reviewed,'errors':errors,'coverage':coverage,'directory':directory,'jurisdiction_notes':jurisdiction_notes,'officials_state':officials_state,
-            'counts':{'discovered_reports':len(directory),'discovered_filer_names':len({(r['person'],r.get('office','')) for r in directory}),'extracted_reports':sum(bool(r.get('source_sha256')) for r in reports),'pending_reports':sum(r['status']=='pending' for r in directory),'unsupported_reports':sum(r['status']=='unsupported' for r in directory),'reviewed_records':len(reviewed),'attempted_this_run':len(selected),'by_jurisdiction':by_jurisdiction},
+            'counts':{'discovered_reports':len(directory),'discovered_filer_names':len({(r['person'],r.get('office','')) for r in directory}),'extracted_reports':sum(bool(r.get('source_sha256')) for r in reports),'pending_reports':sum(r['status']=='pending' for r in directory),'unsupported_reports':sum(r['status']=='unsupported' for r in directory),'reviewed_records':len(reviewed),'attempted_this_run':len(selected),'by_jurisdiction':by_jurisdiction,'house_ptr':monitor},
             'status':'partial' if errors else 'ok',
             'coverage_note':'US House: all names in selected index years (includes candidates/former members). New York: COELIG statements for statewide officials, Senate and Assembly (HTML statements, value categories). California: FPPC portal filings since 2025 (Form 700 PDFs). Canada: federal public registry declarations. Texas and SEDI: imports only. Names are not verified unique person IDs. Document processing continues in batches. Reviewed excerpts are partial, not current portfolios.'}

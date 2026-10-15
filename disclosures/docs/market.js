@@ -185,10 +185,19 @@ function flowsView(){
 }
 
 /* ---------- Officials' trades ---------- */
+function latestReports(d){                            // the newest House PTRs and whether the collector is keeping up
+ const L=d.latest_reports||[],m=d.monitor||{};if(!L.length)return '';
+ const behind=(m.lag_days||0)>3||(m.ptr_pending||0)>40;
+ let out=`<div class="${behind?'warn-box':'explain'}">${behind?'<b>Catching up.</b> ':''}Newest House transaction report filed ${esc(m.newest_ptr_filed||'—')}; newest one read ${esc(m.newest_ptr_read||'—')}${m.ptr_pending!=null?` · ${fmt(m.ptr_pending)} waiting to be read (newest first)`:''}${m.ptr_last_30_days!=null?` · last 30 days: ${fmt(m.ptr_last_30_days_read)} of ${fmt(m.ptr_last_30_days)} read`:''}. Reports arrive up to 45 days after a trade.</div>`;
+ out+=`<details class="panel" ${state.tlatest?'open':''} id="tlatest"><summary><b>Latest reports filed</b> <span class="muted">— the ${fmt(L.length)} newest periodic transaction reports, read or waiting</span></summary>`;
+ out+=`<div class="tablebox"><table><thead><tr><th>Filed</th><th>Official</th><th>Status</th><th class="num">Trades read</th><th>Tickers</th><th>Source</th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.filed_date||'')}</td><td>${esc(r.person||'')} <span class="muted">${esc(r.office||'')}</span></td><td><span class="badge ${r.status==='read'?'ready':r.status==='error'?'error':''}">${r.status==='read'?'Read':r.status==='error'?'Failed — retrying':'Waiting'}</span></td><td class="num">${r.status==='read'?`${fmt(r.trades)} <span class="muted">(${fmt(r.buys)} buys · ${fmt(r.sells)} sales)</span>`:'—'}</td><td>${r.tickers.map(t=>`<b>${esc(t)}</b>`).join(' ')||'—'}</td><td>${link(r.source_url,'PDF ↗')}</td></tr>`).join('')}</tbody></table></div></details>`;
+ return out;
+}
 function tradesView(){
  let out=head("Officials' trades",'Transactions in US House periodic transaction reports, read by machine with the ticker the filer wrote, plus reviewed rows from any jurisdiction. Each ticker is checked against SEC listings.','HOUSE PTR · AUTO-READ');
  const g=marketGate('officials-trades',"Officials' trades");if(!g.data)return out+g.html;
  const d=g.data,all=d.trades||[];
+ out+=latestReports(d);
  const people=Object.entries(all.reduce((a,t)=>{a[t.person]=(a[t.person]||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]);
  state.tperson=people.some(p=>p[0]===state.tperson)?state.tperson:'';state.twin=state.twin==='ytd'?'ytd':'d90';
  out+=`<div class="toolbar">${field('tperson','Official',[['','Everyone'],...people.map(([p,n])=>[p,`${p} (${n})`])],state.tperson,true)}${field('ttype','Transaction',[['','All'],['purchase','Purchases'],['sale','Sales (full or partial)'],['exchange','Exchanges']],state.ttype||'')}${field('tcheck','Ticker check',[['','All rows'],['listed','Listed ticker'],['unlisted','Not in listings'],['name','Name differs — check'],['suggested','Has a suggested ticker']],state.tcheck||'')}<div class="field"><label for="tq">Ticker or asset</label><input id="tq" value="${esc(state.tq||'')}" placeholder="e.g. NVDA · Enter"></div></div>`;
