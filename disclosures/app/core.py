@@ -43,7 +43,7 @@ HOSTS = ('publicreporting.cftc.gov', 'api.fdic.gov', 'data.sec.gov', 'www.sec.go
          'www.sedi.ca', 'sedi.ca',
          'stooq.com', 'api.openfigi.com', 'query1.finance.yahoo.com', 'query2.finance.yahoo.com',
          # 4.5 option chains (CBOE delayed quotes)
-         'cdn.cboe.com')
+         'cdn.cboe.com', 'www.cboe.com')
 
 class BlockedError(RuntimeError):
     """The source answered with a bot-protection / challenge page instead of data."""
@@ -73,7 +73,7 @@ class Client:
             headers['X-App-Token'] = os.environ['CFTC_APP_TOKEN']
         if host == 'api.openfigi.com' and os.environ.get('OPENFIGI_API_KEY'):
             headers['X-OPENFIGI-APIKEY'] = os.environ['OPENFIGI_API_KEY']
-        if host in ('www.sedi.ca', 'sedi.ca', 'ethics.ny.gov', 'public.ethics.ny.gov', 'form700search.fppc.ca.gov', 'prciec-rpccie.parl.gc.ca', 'ciec-ccie.parl.gc.ca', 'www.ethicscanada.ca', 'ethicscanada.ca', 'stooq.com', 'query1.finance.yahoo.com', 'query2.finance.yahoo.com'):
+        if host in ('www.sedi.ca', 'sedi.ca', 'ethics.ny.gov', 'public.ethics.ny.gov', 'form700search.fppc.ca.gov', 'prciec-rpccie.parl.gc.ca', 'ciec-ccie.parl.gc.ca', 'www.ethicscanada.ca', 'ethicscanada.ca', 'stooq.com', 'query1.finance.yahoo.com', 'query2.finance.yahoo.com', 'cdn.cboe.com', 'www.cboe.com'):
             # Portals built for browsers; the contact address stays in the UA string.
             headers['User-Agent'] = 'Mozilla/5.0 (compatible; FilingFlows disclosure reader; ' + headers['User-Agent'] + ')'
             headers['Accept'] = 'text/html,application/xhtml+xml,application/json;q=0.9,application/pdf;q=0.9,*/*;q=0.8'
@@ -98,7 +98,7 @@ class Client:
                     if urlparse(final).hostname not in self.hosts:
                         if allow_block:
                             raise BlockedError('Redirected to a challenge/bot-protection page at ' + str(urlparse(final).hostname))
-                        raise ValueError('Unexpected redirect host')
+                        raise ValueError('Unexpected redirect host ' + str(urlparse(final).hostname))
                     limit = self.options.get('max_response_mb', 80) * 1024 * 1024
                     body = res.read(limit + 1)
                     if len(body) > limit:
