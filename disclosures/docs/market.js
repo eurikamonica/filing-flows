@@ -45,20 +45,20 @@ function barPath(x0,x1,y,h,r=4){                    // rounded at the data end (
  const xe=x1-dir*r;
  return `M${x0},${y}H${xe}Q${x1},${y} ${x1},${y+r}V${y+h-r}Q${x1},${y+h} ${xe},${y+h}H${x0}Z`;
 }
-function divergingChart(items,{unit='usd',label='Estimated net flow'}={}){
+function divergingChart(items,{unit='usd',label='Estimated net flow',format=null,neutral=false}={}){
  if(!items.length)return empty('Nothing to chart');
  const W=720,row=26,bar=14,L=120,R=22,T=10,H=T+items.length*row+26,valW=70;
  const max=Math.max(1,...items.map(x=>Math.abs(x.value))),hasNeg=items.some(x=>x.value<0),hasPos=items.some(x=>x.value>0);
  const x0=hasNeg&&hasPos?L+valW+(W-L-R-2*valW)/2:hasNeg?W-R:L+4;
  const span=hasNeg&&hasPos?(W-L-R-2*valW)/2:hasNeg?W-R-L-valW:W-R-valW-L-4;
  const sx=v=>x0+v/max*span;
- const f=unit==='usd'?smoney:v=>fmt(v);
+ const f=format||(unit==='usd'?smoney:v=>fmt(v));
  let s=`<svg class="plot mk-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}; values are in the table below">`;
  s+=`<line class="mk-axis" x1="${x0}" x2="${x0}" y1="${T-4}" y2="${H-22}"/>`;
  items.forEach((x,i)=>{const y=T+i*row+(row-bar)/2,x1=sx(x.value),neg=x.value<0;
   s+=`<g data-tip="${tip(x.tip)}" tabindex="0" class="mk-hit"><rect x="0" y="${T+i*row}" width="${W}" height="${row}" fill="transparent"/>`;
   s+=`<text class="mk-label" x="${L-10}" y="${y+bar-3}" text-anchor="end">${esc(x.label.slice(0,16))}</text>`;
-  s+=`<path d="${barPath(x0,x1,y,bar)}" class="${neg?'mk-sell':'mk-buy'}"/>`;
+  s+=`<path d="${barPath(x0,x1,y,bar)}" class="${neutral?'mk-neutral':neg?'mk-sell':'mk-buy'}"/>`;
   s+=`<text class="mk-value" x="${neg?x1-6:x1+6}" y="${y+bar-3}" text-anchor="${neg?'end':'start'}">${esc(f(x.value))}</text></g>`});
  s+=`<text class="axis" x="${x0}" y="${H-6}" text-anchor="middle">0</text>`;
  return s+'</svg>';

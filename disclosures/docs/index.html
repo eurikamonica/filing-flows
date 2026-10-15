@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=4.4">
+<link rel="stylesheet" href="styles.css?v=4.5">
 <script>
 /* Same colour-theme preference as the Sankey site (localStorage "ff:theme"), applied before first paint. */
 try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
@@ -57,6 +57,7 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
     <button class="pill" data-tab="trades" aria-pressed="false">Officials' trades</button>
     <button class="pill" data-tab="insiders" aria-pressed="false">Insider trades</button>
     <button class="pill" data-tab="rotation" aria-pressed="false">Rotation</button>
+    <button class="pill" data-tab="options" aria-pressed="false">Options</button>
     <button class="pill" data-tab="directory" aria-pressed="false">Explore directory</button>
     <button class="pill" data-tab="holdings" aria-pressed="false">13F holdings</button>
     <button class="pill" data-tab="congress" aria-pressed="false">Officials</button>
@@ -76,7 +77,7 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
     <div class="foot-links"><a href="../">Earnings Sankeys</a><a href="https://www.sec.gov/edgar/search/" target="_blank" rel="noopener">SEC</a><a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" rel="noopener">CFTC</a><a href="https://api.fdic.gov/banks/docs/" target="_blank" rel="noopener">FDIC</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a></div>
   </div>
 </footer>
-<script src="data/live.js"></script><script src="data/demo.js"></script><script src="dashboard.js"></script><script src="extensions.js"></script><script src="market.js"></script><script src="rotation.js"></script><script src="app.js"></script>
+<script src="data/live.js"></script><script src="data/demo.js"></script><script src="dashboard.js"></script><script src="extensions.js"></script><script src="market.js"></script><script src="rotation.js"></script><script src="options.js"></script><script src="app.js"></script>
 <script>
 /* Module pills: keep the Sankey site's "on" look in step with the app's own "active" state. */
 document.querySelectorAll('nav button[data-tab]').forEach(function (b) {
