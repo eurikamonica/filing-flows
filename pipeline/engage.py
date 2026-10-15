@@ -51,6 +51,8 @@ def cfg():
         out.update(json.load(open(CFG, encoding="utf-8")))
     except FileNotFoundError:
         pass
+    if os.environ.get("MOVERS_MIN_MOVE_PCT"):              # Run workflow → "min_move": try a lower threshold once
+        out["movers"] = {**DEFAULTS["movers"], **out.get("movers", {}), "min_move_pct": float(os.environ["MOVERS_MIN_MOVE_PCT"])}
     return out
 
 

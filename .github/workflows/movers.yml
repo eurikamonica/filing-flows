@@ -19,6 +19,10 @@ on:
         description: "Only print today's movers and the post (nothing drawn or queued)"
         type: boolean
         default: false
+      min_move:
+        description: "Optional: a lower move threshold in % for this run (blank = config, 8)"
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -53,11 +57,13 @@ jobs:
       - name: Cooldowns and today's count
         run: |
           mkdir -p media/x
-          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/x/engage-state.json" -o media/x/engage-state.json || true
+          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/x/engage-state.json" -o media/x/engage-state.json \
+            || echo "no state yet (first run): nothing posted before"
       - name: Find today's movers and write the post
         env:
           KINDS_INPUT: ${{ inputs.kinds }}
           DRY_RUN: ${{ inputs.dry_run }}
+          MOVERS_MIN_MOVE_PCT: ${{ inputs.min_move }}
         run: |
           owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
           site="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"
