@@ -1,10 +1,129 @@
-# Proposed Updates for Filing Flows
+# Filing Flows — Update Record and Feature Roadmap
 
 > Author: ChatGPT (OpenAI)  
 > Date: October 15, 2026  
-> Status: Recommendations only; none of the changes below are implemented by this document.  
+> Status: Source-verified progress plus proposed work; this document implements no runtime features.  
 > Basis: The repository review summarized in [CHATGPT_REPOSITORY_UNDERSTANDING.md](CHATGPT_REPOSITORY_UNDERSTANDING.md), with the current root listing and scan/request workflows checked again when preparing this file.  
-> Scope: This commit adds only `UPDATE.md`. Existing code, configuration, workflows, data, and documentation remain unchanged.
+> Scope: This refresh modifies only `UPDATE.md`. Existing code, configuration, workflows and other documentation remain unchanged.
+
+
+## October 15 update — Current implementation and revised roadmap
+
+Prepared by **ChatGPT (OpenAI)**. This section supersedes the original implementation order below where they differ. It records source-level observations and proposals separately.
+
+### Verified repository changes
+
+Review baseline: main commit [66d4c882](https://github.com/eurikamonica/filing-flows/commit/66d4c882c3d0c70663dccb8cdc6f4b92c1db6703).
+
+| Area | Observed change | Status and limits |
+| --- | --- | --- |
+| Rotation visualization | [1933ba02](https://github.com/eurikamonica/filing-flows/commit/1933ba026aa52911465a187a6437873fbd8a25fd) adds a rotatable 3-D canvas, monthly price-derived observations over 48 complete months, signed-log/rank/standard-score scales and smoothing. | Implemented in main source. Quarterly fundamentals interpolated into monthly views are not monthly reported fundamentals. No fresh browser or production-data validation is claimed here. |
+| SEO company pages | [1f3e415f](https://github.com/eurikamonica/filing-flows/commit/1f3e415f050df245c4ffe93133e4586913dab221) embeds the latest-quarter Sankey using the shared renderer and adds a wider chart container. | Implemented in main source. The chart is drawn with JavaScript; a table and noscript explanation remain. Repository implementation does not establish search indexing or deployment of this exact commit. |
+| Disclosure snapshots | Recent main commits refresh disclosure data and source status. | A collection commit is not evidence that all sources succeeded or that the identical snapshot is already published. |
+| Advanced FSA workbench | [Separate Beta branch](https://github.com/eurikamonica/filing-flows/tree/beta/fsa-chatgpt/fsa-beta) contains reserve rollforwards, accruals, operating/financing reformulation, reconciliation and earnings-quality explanations. | Isolated local implementation; not integrated into the production site. Inputs still require supported structured data and reviewed classifications. |
+| Optional Gemini explanations | Beta includes server-side configuration, caching, call limits and evidence-ID validation. | Mock-tested only. Live quota, billing and response quality have not been validated. |
+| Local AI training | Beta includes synthetic-data generation, a topic classifier and optional Qwen LoRA training/evaluation scripts. | The classifier is not a generative financial model. No LLM adapter training or measured accuracy improvement has occurred. |
+| Model acquisition | Qwen3-0.6B weights and tokenizer were downloaded in the assistant work environment; the weight SHA-256 was checked. | Not installed on the user's laptop. A persistent package-save attempt failed. Weights are not committed to this repository. |
+
+The Beta [validation record](https://github.com/eurikamonica/filing-flows/blob/beta/fsa-chatgpt/fsa-beta/VALIDATION.md) records 23 passing unit/HTTP tests, Python compilation and JavaScript syntax checks. Browser rendering, live Gemini calls and LoRA execution remain unverified. Its earlier statement that weights were not installed describes that validation run; the later download above does not establish a successful ML runtime.
+
+### Revised implementation order
+
+1. **Trust and reproducibility:** retain U02–U04; add explicit observed/interpolated/revised labels to the new rotation views.
+2. **Useful FSA output:** implement B01–B03 below against reviewed English examples before expanding model size.
+3. **Local training:** implement B04–B05; compare the unmodified model with the adapter on a locked test set.
+4. **Website delivery:** implement B06 as a separate static Beta artifact. No always-on GPU is necessary for precomputed analysis.
+5. **User experience and discovery:** implement B07–B09, extending the existing charts and SEO pages.
+6. **Optional interactive AI:** B10 only after measured demand and reliability justify a hosted inference backend.
+
+### New feature recommendations
+
+| ID | Priority | Proposed feature | Concrete deliverable |
+| --- | --- | --- | --- |
+| B01 | P0 | Evidence-backed English filing extraction | Financial values with period, unit, source accession, excerpt and review status |
+| B02 | P0 | Reserve movement and earnings-quality workbench | Reconciled rollforwards, release classification and explicit unresolved differences |
+| B03 | P1 | Auditable statement reformulation | Editable operating/financing mapping, NOA/NFO/NOPAT/RNOA and bridges |
+| B04 | P0 | Laptop training preflight and smoke run | GPU/VRAM/dependency/disk check, bounded training run and measured resource report |
+| B05 | P0 | Financial evaluation and model registry | Locked company/year holdouts, baseline comparison and versioned adapter metadata |
+| B06 | P1 | Local analysis to static Beta publishing | Versioned JSON manifest, validation gate, review status and rollback |
+| B07 | P1 | Rotation methodology and data-availability controls | Reported versus interpolated values, benchmark coverage and availability-date mode |
+| B08 | P1 | SEO and shareable research pages | Indexing diagnostics, accessible chart/table consistency and stable share links |
+| B09 | P2 | Comparable earnings-quality history | Definition-consistent trends and explainable review flags |
+| B10 | P2 | Optional cited filing Q&A | Retrieval-backed English answers through an authenticated inference backend |
+
+### B01–B03 — Financial analysis that can be inspected
+
+**B01: Extraction.** Read a bounded filing section or table rather than an entire 10-K in a small-model prompt. Produce English JSON containing company/CIK, accession, statement period boundaries, fiscal period, currency, scale, reported label, normalized concept, value and source excerpt. Missing information must remain null with a reason. Treat documents as evidence, not instructions to the model.
+
+Acceptance: a reviewed fixture set checks exact amounts, signs, units, periods and source alignment. The interface distinguishes reported facts, derived calculations and generated interpretation. A valid source identifier alone is not proof that an explanation is supported.
+
+**B02: Reserves.** Extend the existing Beta rollforward to allowance for credit losses, warranties, inventory allowances and restructuring provisions using category-specific schemas. Separate additions, releases, utilization, acquisitions/FX and other movements. Check:
+
+`closing = opening + additions - releases - utilization + other`
+
+Do not assume every decline is an income-statement benefit: utilization can reduce a reserve without increasing profit. A release-benefit claim needs explicit evidence of its accounting treatment. Do not equate a reconciled reserve with an adequate reserve or describe a flag as proof of a cookie-jar practice.
+
+Acceptance: the bridge reconciles within a disclosed rounding tolerance or displays a residual; unsupported profit effects remain unresolved.
+
+**B03: Reformulation.** Provide reviewed operating/financing classifications and an adjustment ledger. Record tax assumptions, leases, pensions, excess cash and noncontrolling interests explicitly. Use consistent opening/closing balances and distinguish annual, quarterly and trailing-period returns.
+
+Acceptance: displayed totals reconcile to the source statements and each adjustment is reversible and sourced. Banks and insurers require separate treatment rather than the default industrial-company mapping.
+
+### B04–B05 — Train locally, measure before upgrading
+
+The current hardware information is incomplete: the user reported an RTX 3050 and 32 GB system RAM, while the supplied Windows summary displays 8 GB graphics memory and multiple GPUs without identifying the NVIDIA model. Confirm dedicated VRAM with:
+
+`nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv`
+
+Do not treat system/shared memory as CUDA VRAM. The screenshot also indicates approximately 42 GB of remaining disk space; avoid duplicate model downloads and retain only a small number of checkpoints. Do not publish device identifiers.
+
+**B04 proposed starting experiment:** Qwen3-0.6B, English extraction examples, sequence length 512 including input and output, microbatch 1, gradient accumulation 16, LoRA rank 8, gradient checkpointing and training KV cache disabled. Consider 4-bit QLoRA where dependencies and hardware support it. These are starting settings, not a measured fit guarantee. Run 20–50 steps and record peak VRAM, step time, loss and free disk before expanding. Confirm training targets are not truncated.
+
+Advance to Qwen3-1.7B only after baseline measurements. The English project does not need multiple simultaneously loaded models. Separate models can review shared evidence sequentially; adapters cannot be assumed portable between architectures.
+
+**B05 evaluation:** split by company and time, keep related filings/amendments together and prevent synthetic template/entity leakage. Evaluate schema validity, exact numeric extraction, unit/period correctness, source support, appropriate abstention and formula reconciliation separately. Compare the base model, fine-tuned model and deterministic baseline where applicable. Report denominators and errors, not only one aggregate accuracy score.
+
+Store base-model revision, adapter version, training-data version, settings and evaluation report together. Model weights and caches belong outside normal Git history. The existing synthetic examples are a pipeline test, not sufficient evidence of real-filing quality. Additional human-reviewed real examples are required.
+
+### B06 — Local analysis to the website without an always-on GPU
+
+Proposed flow: local filing preparation → model extraction → deterministic calculations → validation/review → static JSON export → separate Beta site build.
+
+Define a versioned artifact containing source accessions, financial period, source availability time, generation time, model/adapter version, checks, review status and explanations. Generate outputs in a temporary directory and publish an immutable manifest only after all required files validate. Keep the last good version for rollback. Failed runs must not replace valid data with empty output.
+
+Acceptance: a user can open a precomputed analysis while the training computer is off. A new analysis requires another processing/publishing run. Store runtime, data and publishing configuration separately from production. This document does not add a deployment workflow or authorize an automatic merge of Beta code into main.
+
+### B07 — Make new rotation views interpretable
+
+- Show separate dates for fiscal period end, filing availability and market observation.
+- Label interpolated quarterly values visibly; offer reported-points-only and last-known-value modes.
+- Use availability timestamps for research/backtest views. Smooth chart paths are not evidence that a future filing was knowable earlier.
+- Document whether scaling, clipping, volume baselines and universe selection use full-history information; use past-only fitting for predictive evaluation.
+- Review the new monthly relative-return fallback: the inspected implementation can subtract zero when SPY data is unavailable. Prefer null plus a coverage reason for a metric labeled “versus S&P 500,” rather than silently displaying raw return.
+- Keep exploratory axis scans distinct from out-of-sample validation; record the number of tested combinations and use chronological evaluation.
+- Add keyboard/table alternatives and reduced-motion controls for 3-D and animated views.
+
+Acceptance: a synthetic late-filing fixture cannot influence an earlier availability-date view; missing benchmark observations cannot masquerade as relative returns. These are proposed checks, not an executed audit of the new charts.
+
+### B08–B10 — Discovery, comparison and optional questions
+
+**B08:** extend existing SEO rather than rebuilding it. Verify generated company-page canonical URLs, sitemap membership, HTTP status and visible table/chart consistency. Ensure the static heading and table use the same financial snapshot as the dynamically fetched chart, or disclose a version mismatch. Inspect Search Console separately for indexing; HTTP 200 does not prove indexing. Add stable links encoding company, period and selected definition, plus source-bearing exports. Public Beta pages should be deliberately included or excluded from indexing according to their readiness.
+
+**B09:** add comparable historical accruals, cash conversion and reserve movements with metric definitions and sector context. Distinguish rule-triggered review flags from calibrated probabilities. Do not combine incompatible periods or definitions into a single score. Start with explainable individual measures before considering a composite earnings-quality score.
+
+**B10:** when interactive Q&A is justified, retrieve the relevant filing passages and send them to a separately hosted model backend. Keep numeric calculations in the engine and cite the selected filing version. Include authentication where appropriate, request limits and latency measurement. A static website cannot itself keep a server-side API secret or run a Python inference server.
+
+Gemini remains an optional explanation provider. Verify current provider quota and terms before use; local request limits do not guarantee free billing. The current Beta excludes Gemini outputs from training. Do not assume a free tier or personal use automatically permits distillation.
+
+### Recommended next deliverable
+
+Build **one end-to-end, reviewed English reserve-analysis example**: source excerpt → structured extraction → reconciliation → short explanation → static Beta JSON/page. Then evaluate the same workflow on held-out companies before scaling the model or adding more providers.
+
+### Scope of this documentation refresh
+
+Only the root `UPDATE.md` is changed. Existing production code, data, workflows and the Beta branch are not modified by this refresh. Earlier U01–U12 recommendations below are retained as a backlog; their observations reflect the earlier review and must be rechecked before implementation.
+
+## Earlier roadmap — retained backlog
 
 ## Recommended direction
 
