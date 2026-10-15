@@ -7,8 +7,12 @@ Order of work for each new quarter, after the scan drew its chart:
   4. the post is checked (length, cashtag, hashtags, no advice words); if anything fails, the rule-based headline post
      from pipeline/social.py is used instead, so the queue never stalls on the model
 
-Models: GitHub Models (free with the Actions GITHUB_TOKEN; the job needs `models: read`) unless OPENAI_API_KEY is set.
-Repository variables: TWEET_MODEL (default openai/gpt-4.1-mini on GitHub Models, gpt-4.1-mini on OpenAI).
+Model (GitHub Models was retired on 30 Jul 2026): the first of these secrets that is set —
+  GEMINI_API_KEY     Google Gemini, free tier (aistudio.google.com → Get API key); model: the newest "flash" model
+  ANTHROPIC_API_KEY  Claude (console.anthropic.com); model claude-haiku-5-5
+  OPENAI_API_KEY     OpenAI (platform.openai.com); model gpt-4.1-mini
+  MODEL_API_URL + MODEL_API_KEY   any OpenAI-compatible chat-completions endpoint (Groq, OpenRouter, Azure…)
+Repository variable TWEET_MODEL overrides the model name. Without any of them the rule-based post is used.
 """
 import json
 import os
@@ -81,48 +85,86 @@ def headline_lines(c, q, ticker):
 
 
 # ------------------------------------------------------------------ the model
+GEMINI = "https://generativelanguage.googleapis.com/v1beta/openai/"
+_gemini_model = None
+
+
+def _gemini_default(key):
+    """The newest general "flash" model this key can use (falls back to the gemini-flash-latest alias)."""
+    global _gemini_model
+    if _gemini_model:
+        return _gemini_model
+    _gemini_model = "gemini-flash-latest"
+    try:
+        r = requests.get(GEMINI + "models", headers={"Authorization": f"Bearer {key}"}, timeout=30)
+        ids = [m.get("id", "").split("/")[-1] for m in r.json().get("data", [])]
+        flash = [i for i in ids if re.fullmatch(r"gemini-(\d+(?:\.\d+)?)-flash", i)]
+        if flash:
+            _gemini_model = max(flash, key=lambda i: float(re.search(r"(\d+(?:\.\d+)?)", i).group(1)))
+    except Exception:
+        pass
+    return _gemini_model
+
+
+def provider():
+    """(name, url, key, model) of the configured model, or None."""
+    env = os.environ.get
+    if env("GEMINI_API_KEY"):
+        return "gemini", GEMINI + "chat/completions", env("GEMINI_API_KEY"), env("TWEET_MODEL") or _gemini_default(env("GEMINI_API_KEY"))
+    if env("ANTHROPIC_API_KEY"):
+        return "anthropic", "https://api.anthropic.com/v1/messages", env("ANTHROPIC_API_KEY"), env("TWEET_MODEL") or "claude-haiku-5-5"
+    if env("OPENAI_API_KEY"):
+        return "openai", "https://api.openai.com/v1/chat/completions", env("OPENAI_API_KEY"), env("TWEET_MODEL") or "gpt-4.1-mini"
+    if env("MODEL_API_URL") and env("MODEL_API_KEY"):
+        return "custom", env("MODEL_API_URL"), env("MODEL_API_KEY"), env("TWEET_MODEL") or "gpt-4.1-mini"
+    return None
+
+
 def chat(messages):
-    """One completion. OpenAI when OPENAI_API_KEY is set; otherwise GitHub Models with the Actions token, trying the
-    current endpoint and then the older Azure-hosted one. Busy / non-JSON answers are retried; the error says what came
-    back (status, content type, start of the body) so a failing run shows why."""
-    if os.environ.get("OPENAI_API_KEY"):
-        targets = [("https://api.openai.com/v1/chat/completions", os.environ["OPENAI_API_KEY"], os.environ.get("TWEET_MODEL") or "gpt-4.1-mini")]
-    elif os.environ.get("GITHUB_TOKEN"):
-        key, model = os.environ["GITHUB_TOKEN"], os.environ.get("TWEET_MODEL") or "openai/gpt-4.1-mini"
-        targets = [("https://models.github.ai/inference/chat/completions", key, model),
-                   ("https://models.inference.ai.azure.com/chat/completions", key, model.split("/")[-1] if "/" in model else model)]
+    """One completion from the configured model. Busy / non-JSON answers are retried; the error says what came back
+    (status, content type, start of the body) so a failing run shows why."""
+    p = provider()
+    if not p:
+        raise RuntimeError("no model key: set the secret GEMINI_API_KEY (free), ANTHROPIC_API_KEY or OPENAI_API_KEY "
+                           "(GitHub Models was retired on 30 Jul 2026)")
+    name, url, key, model = p
+    if name == "anthropic":
+        system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
+        body = {"model": model, "max_tokens": 300, "temperature": 0.4, "system": system,
+                "messages": [m for m in messages if m["role"] != "system"]}
+        headers = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
     else:
-        raise RuntimeError("no model credentials (GITHUB_TOKEN with models: read, or OPENAI_API_KEY)")
+        body = {"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 300}
+        headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json", "Accept": "application/json"}
     problems = []
-    for url, key, model in targets:
-        for attempt in range(3):
-            try:
-                r = requests.post(url, json={"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 220},
-                                  headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json", "Accept": "application/json"},
-                                  timeout=90)
-            except requests.RequestException as err:
-                problems.append(f"{url.split('/')[2]}: {err.__class__.__name__}")
-                time.sleep(3 * (attempt + 1))
-                continue
-            host = url.split("/")[2]
-            if r.status_code in (429, 500, 502, 503, 504):
-                wait = r.headers.get("retry-after")
-                problems.append(f"{host}: HTTP {r.status_code}")
-                time.sleep(min(30, int(wait)) if wait and wait.isdigit() else 4 * (attempt + 1))
-                continue
-            if r.status_code >= 400:
-                problems.append(f"{host} {model}: HTTP {r.status_code} {r.text[:160]!r}")
-                break                                   # wrong model / no permission: try the next endpoint
-            try:
-                content = ((r.json().get("choices") or [{}])[0].get("message") or {}).get("content")
-            except ValueError:
-                problems.append(f"{host}: HTTP {r.status_code}, not JSON ({r.headers.get('content-type')}): {r.text[:120]!r}")
-                time.sleep(3 * (attempt + 1))
-                continue
-            if content and content.strip():
-                return content.strip()
-            problems.append(f"{host}: empty answer")
-    raise RuntimeError("model unavailable — " + " | ".join(problems[-4:]))
+    for attempt in range(3):
+        try:
+            r = requests.post(url, json=body, headers=headers, timeout=90)
+        except requests.RequestException as err:
+            problems.append(f"{name}: {err.__class__.__name__}")
+            time.sleep(3 * (attempt + 1))
+            continue
+        if r.status_code in (429, 500, 502, 503, 504, 529):
+            wait = r.headers.get("retry-after")
+            problems.append(f"{name}: HTTP {r.status_code}")
+            time.sleep(min(30, int(wait)) if wait and wait.isdigit() else 5 * (attempt + 1))
+            continue
+        if r.status_code >= 400:
+            raise RuntimeError(f"{name} {model}: HTTP {r.status_code} {r.text[:200]!r}")
+        try:
+            data = r.json()
+        except ValueError:
+            problems.append(f"{name}: HTTP {r.status_code}, not JSON ({r.headers.get('content-type')}): {r.text[:120]!r}")
+            time.sleep(3 * (attempt + 1))
+            continue
+        if name == "anthropic":
+            content = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+        else:
+            content = ((data.get("choices") or [{}])[0].get("message") or {}).get("content")
+        if content and content.strip():
+            return content.strip()
+        problems.append(f"{name}: empty answer")
+    raise RuntimeError("model unavailable — " + " | ".join(problems[-3:]))
 
 
 def clean(post, ticker, tags, xlen, limit=270):

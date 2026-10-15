@@ -47,6 +47,10 @@ jobs:
       MEDIA_DIR: media
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      MODEL_API_URL: ${{ vars.MODEL_API_URL }}
+      MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
       TWEET_MODEL: ${{ vars.TWEET_MODEL }}
       BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
       BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}

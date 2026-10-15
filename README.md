@@ -163,7 +163,7 @@ quarter's thread section has two buttons — *Earnings post* and *Who bought it 
 (`send_requests`, kinds `post` / `post_holders`; run `supabase/schema.sql` again once to allow them); the *Post to X*
 workflow (`post-to-x.yml`: every 5 minutes, or at once with the Supabase wake-up, separate from reader e-mails) draws the chart, has the model write the post from `config/tweet-guide.md` plus the filing or
 the Disclosures holders data, publishes the images on the repository's `media` branch and queues the post in Buffer.
-No new keys beyond `BUFFER_API_KEY`; GitHub Models is used with the workflow's own token (`OPENAI_API_KEY` optional).
+Besides `BUFFER_API_KEY`, the post-writing model needs one secret: `GEMINI_API_KEY` (free tier, aistudio.google.com), `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`. GitHub Models was retired on 30 Jul 2026; without a key the rule-based post is used.
 
 **Your own domain**: set the repository variable `SITE_URL` to it (e.g. `https://filing-flows.com/`). The build
 writes the `CNAME` file GitHub Pages needs, e-mails and posts link to it, and the chart logo shows it. Then, under

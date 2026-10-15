@@ -142,8 +142,11 @@ jobs:
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}            # config/x.json mode "buffer": posts queued in Buffer
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}                # GitHub Models (free) writes the post…
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}            # …or OpenAI when this is set
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}            # the model that writes the post: Gemini (free tier)…
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}      # …or Claude…
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}            # …or OpenAI (GitHub Models was retired 30 Jul 2026)
+          MODEL_API_URL: ${{ vars.MODEL_API_URL }}
+          MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
           TWEET_MODEL: ${{ vars.TWEET_MODEL }}                     # optional: model name override
           SITE_URL: ${{ vars.SITE_URL }}                       # your own domain, when the site has one
         run: |
