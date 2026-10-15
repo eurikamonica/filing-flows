@@ -362,7 +362,7 @@ function solarView(o){
   const sp=P.suns[sec].by.get(cal),rows=rotScope(P,sec).map(c=>({c,p:c.by.get(cal)})).filter(r=>r.p);
   exported=rows.map(({c,p})=>({ticker:c.t,name:c.n,period:cal,...Object.fromEntries(P.vars.map(v=>[v.key,p[v.key]]))}));
   out+=`<div class="section-head"><h3>${fmt(rows.length)} companies · ${esc(rotFlabel(P,cal))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
-  out+=table(['Company',vshort(x),'vs the sector ('+vshort(x)+')',vshort(y),'vs the sector ('+vshort(y)+')','13F net managers'],rows.map(({c,p})=>[`<b>${esc(c.t)}</b> <span class="muted">${esc(c.n)}</span>`,vfmt(x,p[x.key]),sp?vcell({...x,centred:true},p[x.key]==null||sp[x.key]==null?null:p[x.key]-sp[x.key]):'—',vfmt(y,p[y.key]),sp?vcell({...y,centred:true},p[y.key]==null||sp[y.key]==null?null:p[y.key]-sp[y.key]):'—',p.f13!=null?signed(Math.round(p.f13)):'—']));
+  out+=table(['Company',vshort(x),'vs the sector ('+vshort(x)+')',vshort(y),'vs the sector ('+vshort(y)+')','13F net managers'],rows.map(({c,p})=>[`${tkLink(c.t,c.cik)} <span class="muted">${esc(c.n)}</span>`,vfmt(x,p[x.key]),sp?vcell({...x,centred:true},p[x.key]==null||sp[x.key]==null?null:p[x.key]-sp[x.key]):'—',vfmt(y,p[y.key]),sp?vcell({...y,centred:true},p[y.key]==null||sp[y.key]==null?null:p[y.key]-sp[y.key]):'—',p.f13!=null?signed(Math.round(p.f13)):'—']));
  }
  return out;
 }

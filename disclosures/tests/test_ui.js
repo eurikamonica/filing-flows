@@ -61,7 +61,7 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   vm.runInContext(`for(const k of Object.keys(marketStore))delete marketStore[k]`,context);
   context.fetch=async url=>{const f=path.join(root,'docs',url);return fs.existsSync(f)?{ok:true,json:async()=>JSON.parse(fs.readFileSync(f,'utf8'))}:{ok:false,status:404}};
   let n=0;
-  for(const [tab,name,expect] of [['signals','signals','Hype map'],['flows','flows','Net buying and selling'],['trades','officials-trades','Most bought by officials']]){
+  for(const [tab,name,expect] of [['signals','signals','Hype map'],['flows','flows','Net buying and selling'],['trades','officials-trades','Most bought by officials'],['insiders','insiders','Most insider buying']]){
    vm.runInContext(`state.mode='official';state.tab='${tab}';state.page=0;state.sort=null;render()`,context);
    await vm.runInContext(`marketStore['${name}'].loading`,context);
    vm.runInContext(`render()`,context);
@@ -69,6 +69,8 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
    assert.ok(html.includes(expect),`${tab} did not render its chart`);
    assert.ok(!html.includes('NaN')&&!html.includes('undefined'),`${tab} shows NaN/undefined`);
    assert.ok(html.includes('data-sort-col'),`${tab} table is not sortable`);n++;
+   if(tab==='insiders')assert.ok(/class="tk" href="\.\.\/#c-\d+"/.test(html),'insider tickers do not link to the company page');
+   if(tab==='trades')assert.ok(/class="tk" href="\.\.\/#t-[A-Z]/.test(html),'officials tickers do not link to the main site');
    vm.runInContext(`state.sort={sig:state.tab+'|'+'x',col:1,dir:'asc'};render()`,context);n++;
   }
   if(fs.existsSync(path.join(mdir,'rotation.json'))){

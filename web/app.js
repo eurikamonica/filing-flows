@@ -1222,6 +1222,12 @@
     if (!secList) secList = getJSON('companies.json').then((d) => d.companies || []).catch(() => { secList = null; return []; });
     return secList;
   }
+  async function cikForTicker(tk) {                  // BRK.B, BRK/B and BRK-B are the same ticker; SEC writes BRK-B
+    const norm = (x) => String(x || '').toUpperCase().replace(/[./\s]+/g, '-');
+    const want = norm(tk), all = await secCompanies();
+    const hit = all.find((x) => norm(x[1]) === want) || all.find((x) => norm(x[1]).replace(/-/g, '') === want.replace(/-/g, ''));
+    return hit ? hit[0] : null;
+  }
   async function askForCompany(cik) {
     const cl = await sb();
     const r = await cl.from('company_requests').insert({ cik: +cik });
@@ -2359,6 +2365,13 @@
     }
     let m;
     try {
+      if ((m = /^t-(.+)$/.exec(h))) {                    // a ticker link from the disclosures hub: open that company's page
+        const cik = await cikForTicker(m[1]);
+        if (!here()) return;
+        if (!cik) throw new Error(`No SEC-registered company has the ticker ${m[1].toUpperCase()}`);
+        history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
+        h = 'c-' + cik;
+      }
       if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

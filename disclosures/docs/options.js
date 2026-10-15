@@ -166,7 +166,7 @@ function options13fView(src){
   const ms=(d.moves||[]).filter(m=>match(m.ticker,m.issuer,m.manager));
   exported=ms;
   out+=`<div class="section-head"><h3>Largest position changes · ${fmt(ms.length)}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
-  return out+table(['Manager','Underlying','Option','Change','Change (est. $)','Position now'],ms.map(m=>[esc(m.manager),`<b>${esc(m.ticker||'')}</b> <span class="muted">${esc(m.issuer||'')}</span>`,m.pc==='PUT'?'Put':'Call',{new:'Opened',added:'Added',cut:'Cut',closed:'Closed'}[m.kind]||esc(m.kind),`<span class="${m.chg_usd>=0?'positive':'negative'}">${smoney(m.chg_usd)}</span>`,money(m.usd)]));
+  return out+table(['Manager','Underlying','Option','Change','Change (est. $)','Position now'],ms.map(m=>[esc(m.manager),`${tkLink(m.ticker)} <span class="muted">${esc(m.issuer||'')}</span>`,m.pc==='PUT'?'Put':'Call',{new:'Opened',added:'Added',cut:'Cut',closed:'Closed'}[m.kind]||esc(m.kind),`<span class="${m.chg_usd>=0?'positive':'negative'}">${smoney(m.chg_usd)}</span>`,money(m.usd)]));
  }
  if(state.o13l==='books'){
   const bs=(d.books||[]).filter(b=>match(b.manager,...b.top.map(x=>x.ticker)));
