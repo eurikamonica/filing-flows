@@ -60,8 +60,9 @@ jobs:
         env:
           SEC_USER_AGENT: 'Filing Flows CI ci@example.org'
         run: |
-          pip install -r requirements.txt pytest
-          python -m pytest -q -rf tests > pytest.log 2>&1 || { grep -E "^(FAILED|ERROR)|Error:|assert" pytest.log | head -25 | sed 's/^/::error::/'; tail -30 pytest.log; exit 1; }
+          pip install -r requirements.txt pytest playwright
+          python -m playwright install chromium || echo "using the runner's Chrome"
+          python -m pytest -q -rf tests > pytest.log 2>&1 || { grep -E "^(FAILED|ERROR) " pytest.log | head -30 | sed 's/^/::error::/'; tail -30 pytest.log; exit 1; }
           tail -3 pytest.log
       - name: Site JavaScript syntax
         run: for f in web/*.js; do node --check "$f"; done
