@@ -72,10 +72,12 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
    vm.runInContext(`state.sort={sig:state.tab+'|'+'x',col:1,dir:'asc'};render()`,context);n++;
   }
   if(fs.existsSync(path.join(mdir,'rotation.json'))){
-   for(const view of ['clock','solar','scan'])for(const sec of ['','technology'])for(const tk of ['','NVDA, AMD'])for(const [x,y,z] of [['dom','rel','volz'],['revg','vola','f13']]){
-    vm.runInContext(`state.tab='rotation';state.rview='${view}';state.rsec='${sec}';state.rtk='${tk}';state.rx='${x}';state.ry='${y}';state.rz='${z}';state.rshow='';render()`,context);await vm.runInContext(`marketStore['rotation'].loading`,context);vm.runInContext(`render()`,context);
-    const h=elements.get('workspace').innerHTML;assert.ok(h.includes(view==='scan'?'Clearest cycles':'rot-plot'),`rotation ${view} did not render`);assert.ok(!h.includes('NaN')&&!h.includes('undefined')&&!h.includes('Infinity'),`rotation ${view} ${sec} ${tk} ${x}/${y} shows NaN/undefined`);n++}
-   for(let f=0;f<4;f++){vm.runInContext(`state.rview='clock';state.rsec='';state.rf=${f};render();ROT.ctx.draw(${f})`,context);assert.ok(!elements.get('workspace').innerHTML.includes('NaN'));n++}
+   for(const freq of ['q','m'])for(const view of ['clock','solar','3d','scan'])for(const sec of ['','technology'])for(const tk of ['','NVDA, AMD'])for(const [x,y,z,scl,sm] of [['dom','rel','volz','raw','none'],['revg','vola','f13','log','ewma'],['rel','dom','__time','rank','ma'],['om','rel','revg','z','none']]){
+    if(view==='scan'&&(freq==='m'||scl!=='raw'))continue;
+    vm.runInContext(`state.tab='rotation';state.rfreq='${freq}';state.rview='${view}';state.rsec='${sec}';state.rtk='${tk}';state.rx='${x}';state.ry='${y}';state.rz='${z==='__time'?'':z}';state.rz3='${z}';state.rscl='${scl}';state.rsm='${sm}';state.rshow='';render()`,context);await vm.runInContext(`marketStore['rotation'].loading`,context);vm.runInContext(`render()`,context);
+    if(freq==='m'&&fs.existsSync(path.join(mdir,'rotation-monthly.json'))){await vm.runInContext(`marketStore['rotation-monthly'].loading`,context);vm.runInContext(`render()`,context)}
+    const h=elements.get('workspace').innerHTML;assert.ok(h.includes(view==='scan'?'Clearest cycles':view==='3d'?'rot-3d':'rot-plot'),`rotation ${view} did not render`);assert.ok(!h.includes('NaN')&&!h.includes('undefined')&&!h.includes('Infinity'),`rotation ${view} ${sec} ${tk} ${x}/${y} shows NaN/undefined`);n++}
+   for(let f=0;f<4;f++){vm.runInContext(`state.rfreq='q';state.rview='clock';state.rsec='';state.rf=${f};render();ROT.ctx.draw(${f})`,context);assert.ok(!elements.get('workspace').innerHTML.includes('NaN'));n++}
   }
   if(fs.existsSync(path.join(mdir,'options13f.json'))){
    for(const [list,univ,one] of [['under','stocks',false],['under','all',false],['moves','stocks',false],['books','stocks',false],['under','stocks',true]]){

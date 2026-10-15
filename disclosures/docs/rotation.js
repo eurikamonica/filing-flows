@@ -1,21 +1,31 @@
-/* 4.4 rotation views. Data: data/market/rotation.json (app/rotation.py, built at publish). Uses the helpers of market.js.
-   · Momentum clock — any two variables as x and y (a third as dot size), every company's path quarter by quarter,
-     played as an animation over 16 quarters with trails.
-   · Solar system — the market average at the centre, every sector a sun orbiting it (with its trail), each sector's
+/* 4.4 rotation views. Data: data/market/rotation.json and rotation-monthly.json (app/rotation.py, built at publish).
+   Uses the helpers of market.js.
+   · Momentum clock — any two variables as x and y (a third as dot size), every company's path period by period,
+     played as an animation over 16 quarters or 48 months with trails.
+   · 3-D — three variables (or two and time) in a box you can turn; with time as depth a rotation becomes a spiral.
+   · Solar system — the market average at the centre, every sector a sun orbiting it (with its tail), each sector's
      companies as moons; pick a sector to see its companies as planets around their sun.
    · Find the best axes — every pair of variables scanned for the clearest cycle, and every single, pair and triple
-     scanned for how well it sorted the next quarter's stock moves (with a split-half check and the chance level). */
+     scanned for how well it sorted the stock's later moves (with a split-half check and the chance level).
+   Every chart reads its coordinates through one pipeline: scale (as reported, signed log, rank or standard score
+   within the period) → smoothing (exponential or moving average, using past values only) → drawing (curved trails). */
 const ROT_SERIES=['var(--rot-1)','var(--rot-2)','var(--rot-3)'];
 const ROT_TRAIL=[['4','4 quarters'],['8','8 quarters'],['12','12 quarters'],['16','16 quarters']];
-const ROT_VIEWS=[['clock','Momentum clock'],['solar','Solar system'],['scan','Find the best axes']];
-const ROT_SHORT={dom:'Op. margin Δ',om:'Op. margin',dgm:'Gross margin Δ',gm:'Gross margin',dnm:'Net margin Δ',nm:'Net margin',revg:'Revenue growth',reva:'Growth acceleration',rel:'Stock vs S&P',rel6:'Stock vs S&P, 6 mo',ret:'Stock return',vola:'Volatility',volz:'Volume',f13:'13F net managers',gov:'Officials net buys'};
+const ROT_TRAIL_M=[['6','6 months'],['12','12 months'],['24','24 months'],['48','48 months']];
+const ROT_VIEWS=[['clock','Momentum clock'],['3d','3-D (drag to turn)'],['solar','Solar system'],['scan','Find the best axes']];
+const ROT_SCALES=[['raw','As reported'],['log','Signed log (tames outliers)'],['rank','Rank within the period (0–100)'],['z','Standard score within the period']];
+const ROT_SMOOTH=[['none','None'],['ewma','Exponential (recent weighs more)'],['ma','Moving average']];
+const ROT_SHORT={dom:'Op. margin Δ',om:'Op. margin',dgm:'Gross margin Δ',gm:'Gross margin',dnm:'Net margin Δ',nm:'Net margin',revg:'Revenue growth',reva:'Growth acceleration',rel:'Stock vs S&P',rel3:'Stock vs S&P, 3 mo',rel6:'Stock vs S&P, 6 mo',ret:'Stock return',vola:'Volatility',volz:'Volume',f13:'13F net managers',gov:'Officials net buys',__time:'Time'};
 const ROT_DEFAULT_VARS=[{key:'dom',label:'Operating margin vs a year earlier',unit:'pts',centred:true,group:'Profitability'},{key:'rel',label:'Stock vs the S&P 500, the quarter',unit:'%',centred:true,group:'Price'},{key:'volz',label:'Trading volume vs its own average',unit:'%',centred:true,group:'Trading'}];
-const ROT={timer:null,ctx:null};
-// when a variable is public: price-based ones at the quarter's last close; figures from 10-Q / 10-K, 13F and officials'
+const ROT_MONTH_LABELS={rel:'Stock vs the S&P 500, the month',ret:'Stock return, the month',rel3:'Stock vs the S&P 500, three months',rel6:'Stock vs the S&P 500, six months',vola:'Realised volatility in the month (annualised)',volz:'Trading volume vs its own average (month)'};
+const ROT_TIME={key:'__time',label:'Time',unit:'',centred:false,group:'Time'};
+const ROT={timer:null,ctx:null,yaw:-.75,pitch:.38,spin:false,hits:[]};
+// when a variable is public: price-based ones at the period's last close; figures from 10-Q / 10-K, 13F and officials'
 // reports only weeks after the quarter ends — so the scan compares those with the stock two quarters later, not the next
 const ROT_PRICE=new Set(['rel','rel6','ret','vola','volz']);
 const ROT_SCAN_SKIP=new Set(['ret']);           // the raw return duplicates the return against the S&P 500 in a scan
-const qlabel=c=>String(c||'').replace(/^CY(\d{4})Q(\d)$/,'Q$2 $1');
+const MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const qlabel=c=>{c=String(c||'');let m=/^CY(\d{4})Q(\d)$/.exec(c);if(m)return `Q${m[2]} ${m[1]}`;m=/^(\d{4})-(\d{2})$/.exec(c);return m?`${MONTH_NAMES[+m[2]-1]} ${m[1]}`:c};
 function niceTicks(lo,hi,n=5){const raw=(hi-lo)/n,p=10**Math.floor(Math.log10(raw||1)),st=[1,2,2.5,5,10].map(m=>m*p).find(x=>x>=raw);const out=[];for(let v=Math.ceil(lo/st)*st;v<=hi+1e-9;v+=st)out.push(+v.toFixed(6));return out}
 const pp=v=>v==null?'—':(v>0?'+':v<0?'−':'')+fmt(Math.abs(v),1)+' pts';
 const vshort=v=>v?(ROT_SHORT[v.key]||v.label):'';
@@ -28,170 +38,282 @@ function vfmt(v,x){
  return fmt(x,1);
 }
 const quantile=(xs,q)=>xs.length?xs[Math.min(xs.length-1,Math.max(0,Math.floor(q*(xs.length-1))))]:null;
+const fin=x=>x!=null&&Number.isFinite(x);
 
 /* ---------- data: columnar rows → objects, once per file ---------- */
-function rotPrep(d){
- if(d._prep)return d._prep;
- const F=d.fields,SF=d.sun_fields,row=(fields,r)=>{const o={};fields.forEach((k,i)=>{o[k]=r[i]});return o};
- const fix=p=>({...p,rel:p.rel==null?null:p.rel*100,ret:p.ret==null?null:p.ret*100,volz:p.volz==null?null:p.volz*100});   // first file format
- const cos=(d.companies||[]).map(c=>{const pts=F?(c.p||[]).map(r=>row(F,r)):(c.pts||[]).map(fix);return {...c,pts,by:new Map(pts.map(p=>[p.cal,p]))}});
- const suns={};
- for(const [k,v] of Object.entries(d.sectors||{})){const pts=SF?(v.p||[]).map(r=>row(SF,r)):(v.pts||[]).map(fix);if(pts.length)suns[k]={id:k,name:v.name,pts,by:new Map(pts.map(p=>[p.cal,p]))}}
- const vars=(d.vars&&d.vars.length?d.vars:ROT_DEFAULT_VARS).map(v=>({...v}));
- for(const v of vars){                               // older files carry no bounds: derive them
-  const xs=cos.flatMap(c=>c.pts.map(p=>p[v.key])).filter(x=>x!=null&&Number.isFinite(x)).sort((a,b)=>a-b);
+function rotFinish(cos,suns,market,vars,quarters){
+ for(const v of vars){                               // bounds where the file carries none
+  const xs=cos.flatMap(c=>c.pts.map(p=>p[v.key])).filter(fin).sort((a,b)=>a-b);
   if(v.n==null)v.n=xs.length;
   if(v.lo==null&&xs.length){v.lo=quantile(xs,.03);v.hi=quantile(xs,.97);v.median=quantile(xs,.5)}
   if(!v.scale&&xs.length){const s=(quantile(xs,.75)-quantile(xs,.25))/1.349;v.scale=s>0?s:((v.hi-v.lo)/4||1)}
  }
- const V=Object.fromEntries(vars.map(v=>[v.key,v]));
- const quarters=d.quarters&&d.quarters.length?d.quarters:[...new Set(cos.flatMap(c=>c.pts.map(p=>p.cal)))].sort();
- let market;
- if(d.market&&SF)market={id:'market',name:'Market',pts:(d.market.p||[]).map(r=>row(SF,r))};
- else market={id:'market',name:'Market',pts:quarters.map(cal=>{const ps=cos.map(c=>c.by.get(cal)).filter(Boolean),o={cal,n:ps.length};
-  for(const v of vars){const xs=ps.map(p=>p[v.key]).filter(x=>x!=null).map(x=>Math.max(v.lo,Math.min(v.hi,x)));o[v.key]=xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null}return o}).filter(p=>p.n>=3)};
- market.by=new Map(market.pts.map(p=>[p.cal,p]));
- // the newest quarters are only partly reported (10-Qs arrive over six weeks): start on the last well-covered one
+ for(const c of cos){c.id='t:'+c.t;c.by=new Map(c.pts.map(p=>[p.cal,p]))}
+ for(const s of Object.values(suns)){s.id=s.id||s.key;s.by=new Map(s.pts.map(p=>[p.cal,p]))}
+ market.by=new Map(market.pts.map(p=>[p.cal,p]));market.id='market';
  const most=Math.max(0,...market.pts.map(p=>p.n||0)),partial=new Set(quarters.filter(c=>((market.by.get(c)||{}).n||0)<.5*most));
  let full=quarters.length-1;while(full>0&&partial.has(quarters[full]))full--;
- return d._prep={cos,suns,market,vars,V,quarters,partial,full,byT:new Map(cos.map(c=>[c.t,c])),cache:{}};
+ const V=Object.fromEntries(vars.map(v=>[v.key,v]));
+ return {cos,suns,market,vars,V,quarters,partial,full,byT:new Map(cos.map(c=>[c.t,c])),cache:{ser:new Map(),stats:new Map()}};
 }
-const rotClip=(v,x)=>x==null?null:Math.max(v.lo,Math.min(v.hi,x));
+function rotAverage(cos,vars,cals){                   // log-revenue-weighted mean, each variable clipped to its 3rd–97th percentile
+ return cals.map(cal=>{const o={cal,n:0},acc={};
+  for(const c of cos){const p=c.by?c.by.get(cal):c.pts.find(q=>q.cal===cal);if(!p)continue;o.n++;const w=Math.log10(Math.max(1e6,p.rev||c.rev||1e6));
+   for(const v of vars){const x=p[v.key];if(!fin(x)||v.lo==null)continue;const a=acc[v.key]||(acc[v.key]=[0,0]);a[0]+=w*Math.max(v.lo,Math.min(v.hi,x));a[1]+=w}}
+  for(const v of vars)o[v.key]=acc[v.key]&&acc[v.key][1]?acc[v.key][0]/acc[v.key][1]:null;return o}).filter(p=>p.n>=3);
+}
+function rotPrep(d){
+ if(d._prep)return d._prep;
+ const F=d.fields,SF=d.sun_fields,row=(fields,r)=>{const o={};fields.forEach((k,i)=>{o[k]=r[i]});return o};
+ const fix=p=>({...p,rel:p.rel==null?null:p.rel*100,ret:p.ret==null?null:p.ret*100,volz:p.volz==null?null:p.volz*100});   // first file format
+ const cos=(d.companies||[]).map(c=>({...c,pts:F?(c.p||[]).map(r=>row(F,r)):(c.pts||[]).map(fix)}));
+ const suns={};
+ for(const [k,v] of Object.entries(d.sectors||{})){const pts=SF?(v.p||[]).map(r=>row(SF,r)):(v.pts||[]).map(fix);if(pts.length)suns[k]={id:k,name:v.name,pts}}
+ const vars=(d.vars&&d.vars.length?d.vars:ROT_DEFAULT_VARS).map(v=>({...v}));
+ const quarters=d.quarters&&d.quarters.length?d.quarters:[...new Set(cos.flatMap(c=>c.pts.map(p=>p.cal)))].sort();
+ for(const c of cos)c.by=new Map(c.pts.map(p=>[p.cal,p]));
+ rotFinish(cos,{},{pts:[]},vars,quarters);            // bounds first: the averages below clip with them
+ const market={name:'Market',pts:d.market&&SF?(d.market.p||[]).map(r=>row(SF,r)):rotAverage(cos,vars,quarters)};
+ return d._prep=rotFinish(cos,suns,market,vars,quarters);
+}
+function rotPrepMonthly(Pq,dm){                       // prices month by month; quarterly figures drawn through the months
+ if(dm._prep)return dm._prep;
+ const M=dm.months||[],MF=dm.fields||[],mnum=s=>{const m=/^(\d{4})-(\d{2})$/.exec(s);return m?+m[1]*12+(+m[2]-1):null};
+ const qnum=cal=>{const m=/^CY(\d{4})Q(\d)$/.exec(cal);return m?+m[1]*12+3*+m[2]-1:null};
+ const fund=Pq.vars.map(v=>v.key).filter(k=>!MF.includes(k)).concat(['rev']);
+ const cos=[];
+ for(const c of Pq.cos){const rows=(dm.companies||{})[c.t];if(!rows)continue;
+  const anchors={};for(const k of fund)anchors[k]=c.pts.map(p=>[qnum(p.cal),p[k]]).filter(a=>a[0]!=null&&fin(a[1])).sort((a,b)=>a[0]-b[0]);
+  const at=(k,n)=>{const a=anchors[k];if(!a.length||n<a[0][0])return null;
+   for(let i=0;i<a.length;i++){if(a[i][0]===n)return a[i][1];if(a[i][0]>n){const [n0,v0]=a[i-1],[n1,v1]=a[i];return v0+(v1-v0)*(n-n0)/(n1-n0)}}
+   return n-a[a.length-1][0]<=6?a[a.length-1][1]:null};          // after the latest quarter: the latest reported, for six months
+  const pts=M.map((ym,i)=>{const p={cal:ym},n=mnum(ym);MF.forEach((k,j)=>{p[k]=rows[i]?rows[i][j]:null});for(const k of fund)p[k]=at(k,n);return p});
+  cos.push({...c,pts});
+ }
+ const vars=[...Pq.vars.map(({lo,hi,median,scale,n,...v})=>({...v,label:ROT_MONTH_LABELS[v.key]||v.label})),
+  ...(MF.includes('rel3')&&!Pq.V.rel3?[{key:'rel3',label:ROT_MONTH_LABELS.rel3,unit:'%',centred:true,group:'Price'}]:[])];
+ vars.sort((a,b)=>['Profitability','Growth','Price','Trading','Ownership'].indexOf(a.group)-['Profitability','Growth','Price','Trading','Ownership'].indexOf(b.group));
+ for(const c of cos)c.by=new Map(c.pts.map(p=>[p.cal,p]));
+ rotFinish(cos,{},{pts:[]},vars,M);
+ const suns={};
+ for(const [k,s] of Object.entries(Pq.suns)){const mine=cos.filter(c=>c.s===k);if(mine.length)suns[k]={id:k,name:s.name,pts:rotAverage(mine,vars,M)}}
+ const P=rotFinish(cos,suns,{name:'Market',pts:rotAverage(cos,vars,M)},vars,M);
+ P.monthly=true;
+ return dm._prep=P;
+}
+
+/* ---------- the value pipeline: scale → smoothing ---------- */
+function crossStats(P,k,cal){                         // one period's cross-section of a variable
+ const key=k+'|'+cal;if(P.cache.stats.has(key))return P.cache.stats.get(key);
+ const xs=[];for(const c of P.cos){const p=c.by.get(cal);if(p&&fin(p[k]))xs.push(p[k])}
+ xs.sort((a,b)=>a-b);
+ const st=xs.length>=5?{xs,med:quantile(xs,.5),sc:((quantile(xs,.75)-quantile(xs,.25))/1.349)||1}:null;
+ P.cache.stats.set(key,st);return st;
+}
+function rotT(o,v,x,cal){
+ if(!fin(x))return null;
+ if(o.scl==='log'){const c=v.centred?0:(v.median||0),k=v.scale||1;return c+k*Math.asinh((x-c)/k)}
+ if(o.scl==='rank'||o.scl==='z'){const st=crossStats(o.P,v.key,cal);if(!st)return null;
+  if(o.scl==='z')return Math.max(-5,Math.min(5,(x-st.med)/st.sc));
+  let lo=0,hi=st.xs.length;while(lo<hi){const m=(lo+hi)>>1;if(st.xs[m]<x)lo=m+1;else hi=m}let eq=lo;while(eq<st.xs.length&&st.xs[eq]===x)eq++;
+  return 100*(lo+(eq-lo)/2)/st.xs.length}
+ return x;
+}
+function rotInv(o,v,u){if(o.scl!=='log')return u;const c=v.centred?0:(v.median||0),k=v.scale||1;return c+k*Math.sinh((u-c)/k)}
+function rotSer(o,ent,k){                              // Map period → coordinate, for one company / sun / the market
+ const key=o.sig+'|'+ent.id+'|'+k,C=o.P.cache.ser;if(C.has(key))return C.get(key);
+ const v=o.P.V[k],raw=o.Q.map(cal=>{const p=ent.by.get(cal);return p?rotT(o,v,p[k],cal):null});
+ let out=raw;
+ if(o.sm==='ewma'){const a=1-Math.pow(.5,1/(o.P.monthly?3:1));let prev=null;out=raw.map(x=>{if(x==null){prev=null;return null}prev=prev==null?x:prev+a*(x-prev);return prev})}
+ else if(o.sm==='ma'){const w=o.P.monthly?3:2;out=raw.map((x,i)=>{if(x==null)return null;let s=0,n=0;for(let j=Math.max(0,i-w+1);j<=i;j++)if(raw[j]!=null){s+=raw[j];n++}return s/n})}
+ const m=new Map(o.Q.map((cal,i)=>[cal,out[i]]));C.set(key,m);return m;
+}
+function val(o,ent,v,cal){if(!v)return null;if(v.key==='__time')return o.qi.get(cal)??null;const x=rotSer(o,ent,v.key).get(cal);return x==null?null:x}
+function centreOf(o,v,cal){
+ if(v.key==='__time')return o.qi.get(cal);
+ if(o.scl==='rank')return 50;if(o.scl==='z')return 0;
+ if(v.centred)return 0;const m=val(o,o.P.market,v,cal);return m==null?rotT(o,v,v.median||0,cal):m;
+}
+function axisDomain(o,v,ents,cloud){                   // fixed over every period so the animation does not rescale
+ if(v.key==='__time')return [-.5,o.Q.length-.5];
+ if(o.scl==='rank')return [-4,104];
+ const T=x=>o.scl==='z'?x:rotT(o,v,x,null),lo0=o.scl==='z'?-2.5:T(v.lo),hi0=o.scl==='z'?2.5:T(v.hi),pad=(hi0-lo0)*.25;
+ let xs=[];for(const e of ents)for(const cal of o.Q){const x=val(o,e,v,cal);if(x!=null)xs.push(Math.max(lo0-pad,Math.min(hi0+pad,x)))}
+ if(cloud||!xs.length)xs.push(lo0,hi0);
+ let lo=Math.min(...xs),hi=Math.max(...xs);if(v.centred||o.scl==='z'){lo=Math.min(lo,0);hi=Math.max(hi,0)}
+ const p=(hi-lo)*.06||1;return [lo-p,hi+p];
+}
+function axisTicks(o,v,lo,hi,len){
+ if(v.key==='__time'){const step=Math.max(1,Math.ceil(o.Q.length/Math.max(2,len/80)));const n=o.Q.length;return o.Q.map((c,i)=>[i,qlabel(c)]).filter(t=>t[0]===n-1||(t[0]%step===0&&n-1-t[0]>=step/2))}
+ if(o.scl==='rank')return [0,25,50,75,100].filter(t=>t>=lo&&t<=hi).map(t=>[t,t===50?'median':fmt(t)+'th']);
+ if(o.scl==='z')return niceTicks(lo,hi,6).map(t=>[t,(t>0?'+':t<0?'−':'')+fmt(Math.abs(t),1)+'σ']);
+ if(o.scl==='log'){
+  const c=v.centred?0:(v.median||0),k=v.scale||1,nice=x=>{if(!x)return 0;const p=10**Math.floor(Math.log10(Math.abs(x))-1);return Math.round(x/p)*p};
+  const cand=[c,...[1,3,10,30,100,300,1000].flatMap(m=>[c+k*m,c-k*m])].map(nice);
+  const gap=(hi-lo)*(34/Math.max(1,len)),out=[];
+  for(const r of [...new Set(cand)].map(r=>[rotT(o,v,r,null),r]).filter(t=>t[0]>=lo&&t[0]<=hi).sort((a,b)=>a[0]-b[0]))if(!out.length||r[0]-out[out.length-1][0]>=gap)out.push(r);
+  return out.map(([t,r])=>[t,vfmt(v,r)]);
+ }
+ return niceTicks(lo,hi,Math.max(3,Math.round(len/90))).map(t=>[t,vfmt(v,t)]);
+}
+const scaleNote=o=>({raw:'',log:' (signed log)',rank:' (rank within the period)',z:' (standard score)'}[o.scl]||'');
+function trailCals(o,ent,cal,n,ks){                   // the periods up to cal where every coordinate exists, the last n
+ const out=[];for(let i=o.qi.get(cal);i>=0&&out.length<n;i--){const c=o.Q[i];if(ks.every(v=>val(o,ent,v,c)!=null))out.unshift(c)}return out;
+}
+function curve(pts,smooth){                           // straight segments, or a Catmull-Rom curve through the points
+ if(pts.length<2)return '';
+ const f=p=>p[0].toFixed(1)+','+p[1].toFixed(1);
+ if(!smooth||pts.length<3)return 'M'+pts.map(f).join('L');
+ let d='M'+f(pts[0]);
+ for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+  d+=`C${(p1[0]+(p2[0]-p0[0])/6).toFixed(1)},${(p1[1]+(p2[1]-p0[1])/6).toFixed(1)} ${(p2[0]-(p3[0]-p1[0])/6).toFixed(1)},${(p2[1]-(p3[1]-p1[1])/6).toFixed(1)} ${f(p2)}`}
+ return d;
+}
+
 function rotSize(ratio,minH,maxH){            // the drawing follows the page width so text stays near its real size
  const ws=document.getElementById('workspace'),cw=ws&&ws.clientWidth?ws.clientWidth:900;
  const W=Math.round(Math.max(320,Math.min(1080,cw-44)));return [W,Math.min(maxH||9999,Math.max(Math.min(minH,W),Math.round(W*ratio)))];
 }
+const rotScope=(P,sec)=>P.cos.filter(c=>!sec||c.s===sec);
+const rotFlabel=(P,cal)=>qlabel(cal)+(P&&P.partial.has(cal)?' · early filers':'');
 
 /* ---------- the page ---------- */
 function rotationView(){
- let out=head('Rotation','How companies move through several cycles at once — profitability, growth, the stock, trading and ownership — quarter by quarter. Pick any two variables for the axes and a third for dot size, press play to watch 16 quarters, or let the scan find the pairs with the clearest cycle.','XBRL · PRICES · 13F');
+ let out=head('Rotation','How companies move through several cycles at once — profitability, growth, the stock, trading and ownership. Pick any variables for the axes, turn the 3-D box, press play to watch 16 quarters or 48 months, or let the scan find the pairs with the clearest cycle.','XBRL · PRICES · 13F');
  const g=marketGate('rotation','Rotation charts');if(!g.data)return out+g.html;
- const P=rotPrep(g.data),Q=P.quarters,avail=P.vars.filter(v=>v.n>0);
- if(!P.cos.length||!Q.length)return out+empty('No company has enough quarters yet. The figures arrive with the collector’s XBRL frames run (module market).');
- const secs=Object.values(P.suns).sort((a,b)=>a.name.localeCompare(b.name));
+ const Pq=rotPrep(g.data);
+ if(!Pq.cos.length||!Pq.quarters.length)return out+empty('No company has enough quarters yet. The figures arrive with the collector’s XBRL frames run (module market).');
  state.rview=ROT_VIEWS.some(v=>v[0]===state.rview)?state.rview:state.rview==='orbits'?'solar':'clock';
+ state.rfreq=state.rfreq==='m'&&state.rview!=='scan'?'m':'q';
+ let P=Pq,mnote='';
+ if(state.rfreq==='m'){const gm=marketGate('rotation-monthly','Monthly rotation data');
+  if(gm.data){P=rotPrepMonthly(Pq,gm.data);if(!P.cos.length){P=Pq;state.rfreq='q';mnote=empty('No monthly prices yet; showing quarters.')}}
+  else{P=Pq;mnote=gm.html}}
+ const Q=P.quarters,avail=P.vars.filter(v=>v.n>0);
+ const secs=Object.values(P.suns).sort((a,b)=>a.name.localeCompare(b.name));
  state.rsec=P.suns[state.rsec]?state.rsec:'';
  const has=k=>avail.some(v=>v.key===k);
  state.rx=has(state.rx)?state.rx:has('dom')?'dom':avail[0].key;
  state.ry=has(state.ry)&&state.ry!==state.rx?state.ry:has('rel')&&state.rx!=='rel'?'rel':avail.find(v=>v.key!==state.rx).key;
  state.rz=state.rz===''||has(state.rz)?state.rz:has('volz')?'volz':'';
- state.rq=['4','8','12','16'].includes(state.rq)?state.rq:'4';
+ state.rz3=state.rz3==='__time'||(has(state.rz3)&&state.rz3!==state.rx&&state.rz3!==state.ry)?state.rz3:'__time';
+ const tk=P.monthly?'rqm':'rq',trails=P.monthly?ROT_TRAIL_M:ROT_TRAIL;
+ state[tk]=trails.some(t=>t[0]===state[tk])?state[tk]:P.monthly?'12':'4';
  state.rshow=['','avg','all'].includes(state.rshow)?state.rshow:'';
- state.rf=Number.isInteger(state.rf)&&state.rf>=0&&state.rf<Q.length?state.rf:P.full;
+ state.rscl=ROT_SCALES.some(s=>s[0]===state.rscl)?state.rscl:'raw';
+ state.rsm=ROT_SMOOTH.some(s=>s[0]===state.rsm)?state.rsm:'none';
+ if(!(Number.isInteger(state.rf)&&state.rf>=0&&state.rf<Q.length)||state.rfn!==Q.length){state.rf=P.full;state.rfn=Q.length}
  const groups=[...new Set(avail.map(v=>v.group))];
- const varField=(id,label,value,blank)=>`<div class="field"><label for="${id}">${label}</label><select id="${id}">${blank?`<option value="" ${value===''?'selected':''}>${esc(blank)}</option>`:''}${groups.map(gname=>`<optgroup label="${esc(gname)}">${options(avail.filter(v=>v.group===gname).map(v=>[v.key,v.label]),value)}</optgroup>`).join('')}</select></div>`;
- out+=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${field('rsec','Sector',[['','All sectors'],...secs.map(s=>[s.id,s.name])],state.rsec)}`;
- if(state.rview!=='scan')out+=`${varField('rx','→ Horizontal (x)',state.rx)}${varField('ry','↑ Vertical (y)',state.ry)}${varField('rz','Dot size (z)',state.rz,'Revenue')}${field('rq','Trail',ROT_TRAIL,state.rq)}${state.rview==='clock'?field('rshow','Dots',[['','Automatic'],['avg','Averages and traced only'],['all','Every company too']],state.rshow):''}`;
+ const varField=(id,label,value,extra=[])=>`<div class="field"><label for="${id}">${label}</label><select id="${id}">${extra.map(([k,l])=>`<option value="${esc(k)}" ${value===k?'selected':''}>${esc(l)}</option>`).join('')}${groups.map(gname=>`<optgroup label="${esc(gname)}">${options(avail.filter(v=>v.group===gname).map(v=>[v.key,v.label]),value)}</optgroup>`).join('')}</select></div>`;
+ const three=state.rview==='3d';
+ out+=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${state.rview==='scan'?'':field('rfreq','Frequency',[['q','Quarterly (16 quarters)'],['m','Monthly (48 months)']],state.rfreq)}${field('rsec','Sector',[['','All sectors'],...secs.map(s=>[s.id,s.name])],state.rsec)}`;
+ if(state.rview!=='scan')out+=`${varField('rx','→ Horizontal (x)',state.rx)}${varField('ry','↑ Vertical (y)',state.ry)}${three?varField('rz3','↗ Depth (z)',state.rz3,[['__time','Time — rotations become spirals']]):varField('rz','Dot size',state.rz,[['','Revenue']])}`;
  out+=`<div class="field wide"><label for="rtk">Companies to trace (up to three tickers)</label><input id="rtk" value="${esc(state.rtk||'')}" placeholder="e.g. NVDA, AMD, INTC · Enter"></div></div>`;
+ if(state.rview!=='scan')out+=`<div class="toolbar rot-display">${field('rscl','Scale',ROT_SCALES,state.rscl)}${field('rsm','Smoothing',ROT_SMOOTH,state.rsm)}${field(tk,'Trail',trails,state[tk])}${state.rview==='solar'?'':field('rshow','Dots',[['','Automatic'],['avg','Averages and traced only'],['all','Every company too']],state.rshow)}</div>`;
+ out+=mnote;
  const picks=String(state.rtk||'').toUpperCase().split(/[\s,]+/).filter(Boolean).slice(0,3).map(t=>P.byT.get(t)||P.byT.get(t.replace('.','-'))||P.byT.get(t.replace('-','.'))).filter(Boolean);
- const o={P,Q,x:P.V[state.rx],y:P.V[state.ry],z:state.rz?P.V[state.rz]:null,trail:+state.rq,picks,sec:state.rsec};
- if(state.rview==='scan')out+=scanView(P,state.rsec);
- else out+=state.rview==='solar'?solarView(o):clockView(o);
- out+=`<details><summary>How these charts are built</summary><p>${esc(g.data.note||'')}</p><p class="sub">A path that circles clockwise means the vertical variable turns first and the horizontal one follows a quarter or two later; counter-clockwise, the reverse. With the default axes, clockwise = the stock turned before profit momentum (the market anticipating); counter-clockwise = profits turned first and the price caught up. A pattern, not a forecast.</p></details>`;
+ const o={P,Q,qi:new Map(Q.map((c,i)=>[c,i])),x:P.V[state.rx],y:P.V[state.ry],z:three?(state.rz3==='__time'?ROT_TIME:P.V[state.rz3]):(state.rz?P.V[state.rz]:null),
+  trail:+state[tk],picks,sec:state.rsec,scl:state.rscl,sm:state.rsm,sig:[P.monthly?'m':'q',state.rscl,state.rsm].join('|')};
+ if(state.rview==='scan')out+=scanView(Pq,state.rsec);
+ else out+=state.rview==='solar'?solarView(o):three?view3d(o):clockView(o);
+ out+=`<details><summary>How these charts are built</summary><p>${esc(g.data.note||'')}</p><p class="sub">Scales: “signed log” keeps small values as they are and compresses large ones (k·asinh(x/k), k = the variable's typical spread), so one outlier no longer flattens everyone else; “rank” and “standard score” place each company against all companies in the same period, which also removes market-wide swings. Smoothing uses past values only (exponential: half-life one quarter or three months; moving average: two quarters or three months), so a smoothed path never knows the future. In the monthly view the stock, volatility and volume are monthly; the quarterly figures (margins, growth, 13F, officials) are drawn in a straight line between quarter-ends — that is a drawing, not new information.</p><p class="sub">A path that circles clockwise means the vertical variable turns first and the horizontal one follows; counter-clockwise, the reverse. With the default axes, clockwise = the stock turned before profit momentum (the market anticipating). A pattern, not a forecast.</p></details>`;
  return out;
 }
-const rotFlabel=(P,cal)=>qlabel(cal)+(P&&P.partial.has(cal)?' · early filers':'');
 function rotPlayer(Q,P){
- return `<div class="rot-player"><button class="action" id="rplay" type="button">${ROT.timer?'❚❚ Pause':`▶ Play ${Math.min(16,Q.length)} quarters`}</button><input type="range" id="rframe" min="0" max="${Q.length-1}" step="1" value="${state.rf}" aria-label="Quarter shown"><span id="rflabel" class="rot-flabel">${esc(rotFlabel(P,Q[state.rf]))}</span></div>`;
+ const unit=P&&P.monthly?'months':'quarters';
+ return `<div class="rot-player"><button class="action" id="rplay" type="button">${ROT.timer?'❚❚ Pause':`▶ Play ${Math.min(P&&P.monthly?48:16,Q.length)} ${unit}`}</button><input type="range" id="rframe" min="0" max="${Q.length-1}" step="1" value="${state.rf}" aria-label="Period shown"><span id="rflabel" class="rot-flabel">${esc(rotFlabel(P,Q[state.rf]))}</span></div>`;
 }
-const rotScope=(P,sec)=>P.cos.filter(c=>!sec||c.s===sec);
-function trailOf(pts,cal,n,x,y){const t=pts.filter(p=>p.cal<=cal&&p[x.key]!=null&&p[y.key]!=null);return t.slice(-n)}
+function rotLayers(o){                                 // what the clock and the 3-D box draw
+ const {P,picks,sec}=o,ref=picks.length?P.suns[picks[0].s]:null;
+ o.cloud=state.rshow==='all'||(state.rshow===''&&!!sec&&!picks.length);
+ o.layers={picks:picks.map((c,i)=>({ent:c,name:c.t,full:c.n,color:ROT_SERIES[i]})),
+  ref:ref?{ent:ref,name:ref.name+' average'}:null,
+  sun:!picks.length&&sec?{ent:P.suns[sec],name:P.suns[sec].name+' average'}:null,
+  suns:!picks.length&&!sec?Object.values(P.suns).map(s=>({ent:s,name:s.name,id:s.id})):[],
+  market:!picks.length?{ent:P.market,name:'Market average'}:null,
+  cloud:o.cloud?rotScope(P,sec):[]};
+ const L=o.layers;o.lines=[...L.picks,...(L.ref?[L.ref]:[]),...(L.sun?[L.sun]:[]),...L.suns,...(L.market?[L.market]:[])].map(t=>t.ent);
+ return ref;
+}
+function rotLegend(o,ref){
+ const L=o.layers,z=o.z;
+ return [...L.picks.map(t=>`<span><i class="mk-key" style="background:${t.color}"></i>${esc(t.name)} <span class="muted">${esc(t.full||'')}</span></span>`),
+  ref?`<span><i class="mk-key" style="background:var(--flow-dot)"></i>${esc(ref.name)} sector average</span>`:'',
+  L.sun?`<span><i class="mk-key" style="background:var(--rot-1)"></i>${esc(L.sun.name)}</span>`:'',
+  L.market?`<span><i class="mk-key" style="background:var(--rot-sun)"></i>Market average</span>`:'',
+  L.suns.length?'<span><i class="mk-key" style="background:var(--flow-dot)"></i>Sector averages</span>':'',
+  o.cloud?`<span class="muted">Small dots: every company${o.sec?' in the sector':''} that period${state.rview==='3d'?'':' (hollow: off the scale, drawn at the edge) · size: '+esc(z?vshort(z):'revenue')}</span>`:''].filter(Boolean).join('');
+}
+function rotTable(o){
+ const {P,Q,x,y,z}=o,cal=Q[state.rf],scope=rotScope(P,o.sec);
+ const rows=scope.map(c=>({c,p:c.by.get(cal)})).filter(r=>r.p);
+ exported=rows.map(({c,p})=>({ticker:c.t,name:c.n,sector:c.s,period:p.cal,...Object.fromEntries(P.vars.map(v=>[v.key,p[v.key]]))}));
+ const zv=z&&z.key!=='__time'?z:null,xc=centreOf(o,x,cal),yc=centreOf(o,y,cal);
+ const quad=c=>{const a=val(o,c,x,cal),b=val(o,c,y,cal);return a==null||b==null?'—':`${vshort(x)} ${a>=xc?'↑':'↓'} · ${vshort(y)} ${b>=yc?'↑':'↓'}`};
+ let out=`<div class="section-head"><h3>${fmt(rows.length)} companies · ${esc(rotFlabel(P,cal))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+ return out+table(['Company',vshort(x),vshort(y),zv?vshort(zv):'Revenue','Quadrant','13F net managers'],rows.map(({c,p})=>[
+  `<b>${esc(c.t)}</b> <span class="muted">${esc(c.n)}</span>`,vcell(x,p[x.key]),vcell(y,p[y.key]),zv?vcell(zv,p[zv.key]):money(p.rev),esc(quad(c)),p.f13!=null?signed(Math.round(p.f13)):c.net13f==null?'—':signed(c.net13f)]));
+}
+const vcell=(v,x)=>x==null?'—':v.centred?`<span class="${x>=0?'positive':'negative'}">${vfmt(v,x)}</span>`:vfmt(v,x);
 
 /* ---------- momentum clock ---------- */
 function clockView(o){
- const {P,Q,x,y,z,picks,sec}=o;
- const scope=rotScope(P,sec);
- const ref=picks.length?P.suns[picks[0].s]:null;
- o.cloud=state.rshow==='all'||(state.rshow===''&&!!sec&&!picks.length);
- o.layers={
-  picks:picks.map((c,i)=>({name:c.t,full:c.n,color:ROT_SERIES[i],pts:c.pts,co:c})),
-  ref:ref?{name:ref.name+' average',pts:ref.pts}:null,
-  sun:!picks.length&&sec?{name:P.suns[sec].name+' average',pts:P.suns[sec].pts}:null,
-  suns:!picks.length&&!sec?Object.values(P.suns).map(s=>({name:s.name,pts:s.pts,id:s.id})):[],
-  market:!picks.length?{name:'Market average',pts:P.market.pts}:null,
-  cloud:o.cloud?scope:[]};
- o.dom=clockDomain(o);
- ROT.ctx={Q,P,draw:f=>clockFrame(o,f)};
- const legend=[...o.layers.picks.map(t=>`<span><i class="mk-key" style="background:${t.color}"></i>${esc(t.name)} <span class="muted">${esc(t.full||'')}</span></span>`),
-  ref?`<span><i class="mk-key" style="background:var(--flow-dot)"></i>${esc(ref.name)} sector average</span>`:'',
-  o.layers.sun?`<span><i class="mk-key" style="background:var(--rot-1)"></i>${esc(o.layers.sun.name)}</span>`:'',
-  o.layers.market?`<span><i class="mk-key" style="background:var(--rot-sun)"></i>Market average</span>`:'',
-  o.layers.suns.length?'<span><i class="mk-key" style="background:var(--flow-dot)"></i>Sector averages</span>':'',
-  o.cloud?`<span class="muted">Small dots: every company${sec?' in the sector':''} that quarter (hollow: off the scale, drawn at the edge) · size: ${esc(z?vshort(z):'revenue')}</span>`:''].filter(Boolean).join('');
- let out=`<div class="panel"><h3>Momentum clock</h3><p class="sub">→ ${esc(x.label)} · ↑ ${esc(y.label)} · each dot one quarter, the large dot the quarter shown · drag the slider or press play</p>`;
- out+=rotPlayer(Q,P)+`<div id="rot-plot">${clockFrame(o,state.rf)}</div><div class="mk-legend">${legend}</div></div>`;
- if(picks.length)out+=`<div class="rot-multiples">${picks.map((c,i)=>planar(c,Q,ROT_SERIES[i],[x,y,...(z?[z]:[])])).join('')}</div>`;
- const cal=Q[state.rf];
- const rows=scope.map(c=>({c,p:c.by.get(cal)})).filter(r=>r.p);
- exported=rows.map(({c,p})=>({ticker:c.t,name:c.n,sector:c.s,quarter:p.cal,...Object.fromEntries(P.vars.map(v=>[v.key,p[v.key]]))}));
- out+=`<div class="section-head"><h3>${fmt(rows.length)} companies · ${esc(qlabel(cal))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- const xc=centreOf(x,P,cal),yc=centreOf(y,P,cal);
- const quad=p=>p[x.key]==null||p[y.key]==null?'—':`${vshort(x)} ${p[x.key]>=xc?'↑':'↓'} · ${vshort(y)} ${p[y.key]>=yc?'↑':'↓'}`;
- out+=table(['Company',vshort(x),vshort(y),z?vshort(z):'Revenue','Quadrant','13F net managers'],rows.map(({c,p})=>[
-  `<b>${esc(c.t)}</b> <span class="muted">${esc(c.n)}</span>`,vcell(x,p[x.key]),vcell(y,p[y.key]),z?vcell(z,p[z.key]):money(p.rev),esc(quad(p)),p.f13!=null?signed(p.f13):c.net13f==null?'—':signed(c.net13f)]));
- return out;
-}
-const vcell=(v,x)=>x==null?'—':v.centred?`<span class="${x>=0?'positive':'negative'}">${vfmt(v,x)}</span>`:vfmt(v,x);
-function centreOf(v,P,cal){if(v.centred)return 0;const m=P.market.by.get(cal);return m&&m[v.key]!=null?m[v.key]:(v.median||0)}
-function clockDomain(o){
- const {x,y,layers}=o,L=layers,span=[];
- const lines=[...L.picks,...(L.ref?[L.ref]:[]),...(L.sun?[L.sun]:[]),...L.suns,...(L.market?[L.market]:[])];
- const dom=v=>{const pad=(v.hi-v.lo)*.25;let xs=lines.flatMap(t=>t.pts.map(p=>p[v.key])).filter(a=>a!=null).map(a=>Math.max(v.lo-pad,Math.min(v.hi+pad,a)));
-  if(L.cloud.length)xs.push(v.lo,v.hi);
-  if(!xs.length)xs=[v.lo??-1,v.hi??1];
-  let lo=Math.min(...xs),hi=Math.max(...xs);if(v.centred){lo=Math.min(lo,0);hi=Math.max(hi,0)}
-  const p=(hi-lo)*.06||1;return [lo-p,hi+p]};
- span.push(dom(x),dom(y));
- return span;
+ const ref=rotLayers(o);
+ o.dom=[axisDomain(o,o.x,o.lines,o.cloud),axisDomain(o,o.y,o.lines,o.cloud)];
+ ROT.ctx={Q:o.Q,P:o.P,draw:f=>clockFrame(o,f)};
+ let out=`<div class="panel"><h3>Momentum clock</h3><p class="sub">→ ${esc(o.x.label)} · ↑ ${esc(o.y.label)}${esc(scaleNote(o))}${o.sm!=='none'?' · smoothed':''} · each dot one ${o.P.monthly?'month':'quarter'}, the large dot the period shown · drag the slider or press play</p>`;
+ out+=rotPlayer(o.Q,o.P)+`<div id="rot-plot">${clockFrame(o,state.rf)}</div><div class="mk-legend">${rotLegend(o,ref)}</div></div>`;
+ if(o.picks.length)out+=`<div class="rot-multiples">${o.picks.map((c,i)=>planar(o,c,ROT_SERIES[i],[o.x,o.y,...(o.z&&o.z.key!=='__time'?[o.z]:[])])).join('')}</div>`;
+ return out+rotTable(o);
 }
 function clockFrame(o,f){
- const {P,Q,x,y,z,trail,layers:L}=o,cal=Q[f],[xd,yd]=o.dom;
+ const {P,Q,x,y,z,trail,layers:L}=o,cal=Q[f],[xd,yd]=o.dom,smooth=o.sm!=='none';
  const [W,H]=rotSize(.56,400,620),Lm=64,R=20,T=18,B=46;
  const cx=v=>Math.max(xd[0],Math.min(xd[1],v)),cy=v=>Math.max(yd[0],Math.min(yd[1],v));
  const sx=v=>Lm+(cx(v)-xd[0])/(xd[1]-xd[0])*(W-Lm-R),sy=v=>T+(yd[1]-cy(v))/(yd[1]-yd[0])*(H-T-B);
- const zr=(p,lo=2,hi=7)=>{if(z){const t=p[z.key]==null?null:(rotClip(z,p[z.key])-z.lo)/((z.hi-z.lo)||1);return t==null?lo:lo+(hi-lo)*t}const t=Math.log10(Math.max(1e7,p.rev||1e7));return lo+(hi-lo)*Math.min(1,Math.max(0,(t-7)/4.5))};
+ const XY=(e,c)=>{const a=val(o,e,x,c),b=val(o,e,y,c);return a==null||b==null?null:[sx(a),sy(b),a,b]};
+ const zr=(p,lo=2,hi=7)=>{if(z){const t=p[z.key]==null?null:(Math.max(z.lo,Math.min(z.hi,p[z.key]))-z.lo)/((z.hi-z.lo)||1);return t==null?lo:lo+(hi-lo)*t}const t=Math.log10(Math.max(1e7,p.rev||1e7));return lo+(hi-lo)*Math.min(1,Math.max(0,(t-7)/4.5))};
  const tipRows=(name,full,p)=>[[name+' · '+qlabel(p.cal),full||''],[vfmt(x,p[x.key]),x.label],[vfmt(y,p[y.key]),y.label],...(z?[[vfmt(z,p[z.key]),z.label]]:[]),...(p.rev?[[money(p.rev),'quarterly revenue']]:[])];
  let s=`<svg class="plot mk-plot rot-clock" viewBox="0 0 ${W} ${H}" role="img" aria-label="Momentum clock for ${esc(qlabel(cal))}; the table below lists every value">`;
  s+=`<text class="rot-watermark" x="${W-R-10}" y="${H-B-14}" text-anchor="end">${esc(qlabel(cal))}</text>`;
- niceTicks(yd[0],yd[1],6).forEach(v=>{s+=`<line class="mk-grid" x1="${Lm}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}"/><text class="axis" x="${Lm-8}" y="${sy(v)+4}" text-anchor="end">${esc(vfmt(y,v))}</text>`});
- niceTicks(xd[0],xd[1],7).forEach(v=>{s+=`<text class="axis" x="${sx(v)}" y="${H-B+16}" text-anchor="middle">${esc(vfmt(x,v))}</text>`});
- const x0=centreOf(x,P,cal),y0=centreOf(y,P,cal);
+ axisTicks(o,y,yd[0],yd[1],H-T-B).forEach(([v,l])=>{s+=`<line class="mk-grid" x1="${Lm}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}"/><text class="axis" x="${Lm-8}" y="${sy(v)+4}" text-anchor="end">${esc(l)}</text>`});
+ axisTicks(o,x,xd[0],xd[1],W-Lm-R).forEach(([v,l])=>{s+=`<text class="axis" x="${sx(v)}" y="${H-B+16}" text-anchor="middle">${esc(l)}</text>`});
+ const x0=centreOf(o,x,cal),y0=centreOf(o,y,cal);
  s+=`<line class="mk-axis" x1="${sx(x0)}" x2="${sx(x0)}" y1="${T}" y2="${H-B}"/><line class="mk-axis" x1="${Lm}" x2="${W-R}" y1="${sy(y0)}" y2="${sy(y0)}"/>`;
- const def=x.key==='dom'&&y.key==='rel',xs=vshort(x),ys=vshort(y);
- const narrow=W<600;
+ const def=x.key==='dom'&&y.key==='rel',xs=vshort(x),ys=vshort(y),narrow=W<600;
  const q=def?(narrow?['Profits ↑ · beating','Profits ↑ · lagging','Profits ↓ · beating','Profits ↓ · lagging']:['Profits ↑ · beating the market','Profits ↑ · lagging','Profits ↓ · beating the market','Profits ↓ · lagging'])
   :narrow?['x ↑ · y ↑','x ↑ · y ↓','x ↓ · y ↑','x ↓ · y ↓']:[`${xs} ↑ · ${ys} ↑`,`${xs} ↑ · ${ys} ↓`,`${xs} ↓ · ${ys} ↑`,`${xs} ↓ · ${ys} ↓`];
  s+=`<text class="mk-quad" x="${W-R-4}" y="${T+12}" text-anchor="end">${esc(q[0])}</text><text class="mk-quad" x="${W-R-4}" y="${H-B-8}" text-anchor="end">${esc(q[1])}</text><text class="mk-quad" x="${Lm+6}" y="${T+12}">${esc(q[2])}</text><text class="mk-quad" x="${Lm+6}" y="${H-B-8}">${esc(q[3])}</text>`;
- s+=`<text class="axis" x="${(Lm+W-R)/2}" y="${H-8}" text-anchor="middle">${esc(x.label)} →${!x.centred?' (lines: the market average)':''}</text>`;
- s+=`<text class="axis" transform="translate(13 ${(T+H-B)/2}) rotate(-90)" text-anchor="middle">${esc(y.label)} →</text>`;
- // every company that quarter
- for(const c of L.cloud){const p=c.by.get(cal);if(!p||p[x.key]==null||p[y.key]==null)continue;
-  const out=p[x.key]<xd[0]||p[x.key]>xd[1]||p[y.key]<yd[0]||p[y.key]>yd[1];      // off the scale: drawn at the edge, hollow
-  s+=`<g data-tip="${tip(tipRows(c.t,c.n,p))}" tabindex="-1" class="mk-hit"><circle cx="${sx(p[x.key]).toFixed(1)}" cy="${sy(p[y.key]).toFixed(1)}" r="${zr(p,1.6,6).toFixed(1)}" class="rot-cloud${out?' rot-out':''}"/></g>`}
- const path=(pts,cls,style='')=>pts.length>1?`<polyline class="${cls}" style="${style}" points="${pts.map(p=>sx(p[x.key]).toFixed(1)+','+sy(p[y.key]).toFixed(1)).join(' ')}"/>`:'';
+ const mid=o.scl==='rank'?' (lines: the median company)':o.scl==='z'?' (lines: the median company)':'';
+ s+=`<text class="axis" x="${(Lm+W-R)/2}" y="${H-8}" text-anchor="middle">${esc(x.label+scaleNote(o))} →${!x.centred&&!mid&&o.scl!=='z'?' (lines: the market average)':mid}</text>`;
+ s+=`<text class="axis" transform="translate(13 ${(T+H-B)/2}) rotate(-90)" text-anchor="middle">${esc(y.label+scaleNote(o))} →</text>`;
+ for(const c of L.cloud){const p=c.by.get(cal),xy=p&&XY(c,cal);if(!xy)continue;
+  const out=xy[2]<xd[0]||xy[2]>xd[1]||xy[3]<yd[0]||xy[3]>yd[1];            // off the scale: drawn at the edge, hollow
+  s+=`<g data-tip="${tip(tipRows(c.t,c.n,p))}" tabindex="-1" class="mk-hit"><circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="${zr(p,1.6,6).toFixed(1)}" class="rot-cloud${out?' rot-out':''}"/></g>`}
+ const path=(cals,e,cls,style='')=>{const pts=cals.map(c=>XY(e,c)).filter(Boolean);return pts.length>1?`<path class="${cls}" style="${style}" d="${curve(pts,smooth)}"/>`:''};
  const boxes=[],label=(px_,py_,text,cls='mk-label mk-halo')=>{const w=text.length*6.8,right=px_+10+w<W-R;let lx=right?px_+9:px_-9;const b=[right?lx:lx-w,py_-20,right?lx+w:lx,py_-6];
   if(boxes.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]))return '';boxes.push(b);return `<text class="${cls}" x="${lx}" y="${py_-9}" text-anchor="${right?'start':'end'}">${esc(text)}</text>`};
  let labels='';
- for(const t of L.suns){const tr=trailOf(t.pts,cal,trail,x,y);s+=path(tr,'rot-ctx');const h=tr[tr.length-1];if(h&&h.cal===cal){
-  s+=`<g data-tip="${tip(tipRows(t.name,'sector average · '+fmt(h.n)+' companies',h))}" tabindex="0" class="mk-hit" data-rsec="${esc(t.id)}"><circle cx="${sx(h[x.key])}" cy="${sy(h[y.key])}" r="10" fill="transparent"/><circle cx="${sx(h[x.key])}" cy="${sy(h[y.key])}" r="4" class="mk-dot"/></g>`;labels+=label(sx(h[x.key]),sy(h[y.key]),t.name)}}
+ for(const t of L.suns){const tr=trailCals(o,t.ent,cal,trail,[x,y]);s+=path(tr,t.ent,'rot-ctx');const h=tr[tr.length-1],xy=h===cal&&XY(t.ent,h);if(xy){const p=t.ent.by.get(h);
+  s+=`<g data-tip="${tip(tipRows(t.name,'sector average · '+fmt(p.n)+' companies',p))}" tabindex="0" class="mk-hit" data-rsec="${esc(t.id)}"><circle cx="${xy[0]}" cy="${xy[1]}" r="10" fill="transparent"/><circle cx="${xy[0]}" cy="${xy[1]}" r="4" class="mk-dot"/></g>`;labels+=label(xy[0],xy[1],t.name)}}
  for(const [t,cls,col] of [[L.ref,'rot-ref',''],[L.market,'rot-line','stroke:var(--rot-sun)'],[L.sun,'rot-line','stroke:var(--rot-1)']]){if(!t)continue;
-  const tr=trailOf(t.pts,cal,trail,x,y);s+=path(tr,cls,col);
-  tr.forEach((p,i)=>{const head=i===tr.length-1&&p.cal===cal;s+=`<g data-tip="${tip(tipRows(t.name,fmt(p.n)+' companies',p))}" tabindex="0" class="mk-hit"><circle cx="${sx(p[x.key])}" cy="${sy(p[y.key])}" r="${head?11:8}" fill="transparent"/><circle cx="${sx(p[x.key])}" cy="${sy(p[y.key])}" r="${head?(t===L.market?7:6):2.5}" class="${t===L.ref?'mk-dot':'rot-dot'}" style="${t===L.ref?'':'fill:'+(t===L.market?'var(--rot-sun)':'var(--rot-1)')};opacity:${head?1:.35+.5*i/Math.max(1,tr.length-1)}"/></g>`});
-  const h=tr[tr.length-1];if(h&&h.cal===cal&&t!==L.ref)labels+=label(sx(h[x.key]),sy(h[y.key]),t.name)}
- for(const t of L.picks){const tr=trailOf(t.pts,cal,trail,x,y);s+=path(tr,'rot-line','stroke:'+t.color);
-  tr.forEach((p,i)=>{const head=i===tr.length-1;s+=`<g data-tip="${tip(tipRows(t.name,t.full,p))}" tabindex="0" class="mk-hit"><circle cx="${sx(p[x.key])}" cy="${sy(p[y.key])}" r="11" fill="transparent"/><circle cx="${sx(p[x.key])}" cy="${sy(p[y.key])}" r="${(head?zr(p,5,9):zr(p,2,5)).toFixed(1)}" class="rot-dot" style="fill:${t.color};opacity:${head?1:(.3+.55*i/Math.max(1,tr.length-1)).toFixed(2)}"/></g>`});
-  const h=tr[tr.length-1];if(h)labels+=label(sx(h[x.key]),sy(h[y.key]),`${t.name} ${h.cal===cal?'':qlabel(h.cal)}`.trim())}
+  const tr=trailCals(o,t.ent,cal,trail,[x,y]);s+=path(tr,t.ent,cls,col);
+  tr.forEach((c,i)=>{const head=i===tr.length-1&&c===cal,xy=XY(t.ent,c),p=t.ent.by.get(c);s+=`<g data-tip="${tip(tipRows(t.name,fmt(p.n)+' companies',p))}" tabindex="0" class="mk-hit"><circle cx="${xy[0]}" cy="${xy[1]}" r="${head?11:8}" fill="transparent"/><circle cx="${xy[0]}" cy="${xy[1]}" r="${head?(t===L.market?7:6):2.5}" class="${t===L.ref?'mk-dot':'rot-dot'}" style="${t===L.ref?'':'fill:'+(t===L.market?'var(--rot-sun)':'var(--rot-1)')};opacity:${head?1:(.35+.5*i/Math.max(1,tr.length-1)).toFixed(2)}"/></g>`});
+  const h=tr[tr.length-1];if(h===cal&&t!==L.ref){const xy=XY(t.ent,h);labels+=label(xy[0],xy[1],t.name)}}
+ for(const t of L.picks){const tr=trailCals(o,t.ent,cal,trail,[x,y]);s+=path(tr,t.ent,'rot-line','stroke:'+t.color);
+  tr.forEach((c,i)=>{const head=i===tr.length-1,xy=XY(t.ent,c),p=t.ent.by.get(c);s+=`<g data-tip="${tip(tipRows(t.name,t.full,p))}" tabindex="0" class="mk-hit"><circle cx="${xy[0]}" cy="${xy[1]}" r="11" fill="transparent"/><circle cx="${xy[0]}" cy="${xy[1]}" r="${(head?zr(p,5,9):zr(p,2,5)).toFixed(1)}" class="rot-dot" style="fill:${t.color};opacity:${head?1:(.3+.55*i/Math.max(1,tr.length-1)).toFixed(2)}"/></g>`});
+  const h=tr[tr.length-1];if(h){const xy=XY(t.ent,h);labels+=label(xy[0],xy[1],`${t.name} ${h===cal?'':qlabel(h)}`.trim())}}
  if(!L.picks.length&&!L.suns.length&&!L.sun&&!L.cloud.length)return empty('Pick a sector or type tickers to trace.');
  return s+labels+'</svg>';
 }
-function planar(c,Q,color,vars){                      // the clock split into plain charts, one per variable
+function planar(o,c,color,vars){                      // the clock split into plain charts, one per variable (as reported)
  const pts=c.pts,W=300,H=120,L=44,R=8,T=10,B=22,n=pts.length,x=i=>L+i/Math.max(1,n-1)*(W-L-R);
- const at=f=>`<text class="axis" x="${L}" y="${H-6}">${esc(qlabel(pts[0].cal))}</text><text class="axis" x="${W-R}" y="${H-6}" text-anchor="end">${esc(qlabel(pts[n-1].cal))}</text>`;
- const one=v=>{const vals=pts.map(p=>p[v.key]);const ok=vals.filter(a=>a!=null);if(ok.length<2)return `<div class="rot-mini"><h4>${esc(v.label)}</h4><p class="sub">Not enough quarters with this figure.</p></div>`;
-  if(!v.centred){const lo=Math.min(...ok),hi=Math.max(...ok),pad=(hi-lo)*.15||1,y=a=>T+(hi+pad-a)/((hi-lo)+2*pad)*(H-T-B);
-   return `<div class="rot-mini"><h4>${esc(v.label)}</h4><svg viewBox="0 0 ${W} ${H}" class="plot mk-plot">${[lo,hi].map(a=>`<text class="axis" x="${L-6}" y="${y(a)+4}" text-anchor="end">${esc(vfmt(v,a))}</text><line class="mk-grid" x1="${L}" x2="${W-R}" y1="${y(a)}" y2="${y(a)}"/>`).join('')}<polyline class="rot-line" style="stroke:${color}" points="${vals.map((a,i)=>a==null?'':x(i).toFixed(1)+','+y(a).toFixed(1)).filter(Boolean).join(' ')}"/>${vals.map((a,i)=>a==null?'':`<circle cx="${x(i)}" cy="${y(a)}" r="${i===n-1?4.5:2.5}" style="fill:${color}"><title>${esc(qlabel(pts[i].cal))}: ${esc(vfmt(v,a))}</title></circle>`).join('')}${at()}</svg></div>`}
+ const at=()=>`<text class="axis" x="${L}" y="${H-6}">${esc(qlabel(pts[0].cal))}</text><text class="axis" x="${W-R}" y="${H-6}" text-anchor="end">${esc(qlabel(pts[n-1].cal))}</text>`;
+ const one=v=>{const vals=pts.map(p=>p[v.key]);const ok=vals.filter(fin);if(ok.length<2)return `<div class="rot-mini"><h4>${esc(v.label)}</h4><p class="sub">Not enough periods with this figure.</p></div>`;
+  if(!v.centred||n>20){const lo=Math.min(...ok),hi=Math.max(...ok),pad=(hi-lo)*.15||1,y=a=>T+(hi+pad-a)/((hi-lo)+2*pad)*(H-T-B),pt=vals.map((a,i)=>fin(a)?[x(i),y(a)]:null).filter(Boolean);
+   return `<div class="rot-mini"><h4>${esc(v.label)}</h4><svg viewBox="0 0 ${W} ${H}" class="plot mk-plot">${[lo,hi].map(a=>`<text class="axis" x="${L-6}" y="${y(a)+4}" text-anchor="end">${esc(vfmt(v,a))}</text><line class="mk-grid" x1="${L}" x2="${W-R}" y1="${y(a)}" y2="${y(a)}"/>`).join('')}${v.centred&&lo<0&&hi>0?`<line class="mk-axis" x1="${L}" x2="${W-R}" y1="${y(0)}" y2="${y(0)}"/>`:''}<path class="rot-line" style="stroke:${color}" d="${curve(pt,o.sm!=='none')}"/>${vals.map((a,i)=>!fin(a)?'':`<circle cx="${x(i)}" cy="${y(a)}" r="${i===n-1?4.5:n>20?1.6:2.5}" style="fill:${color}"><title>${esc(qlabel(pts[i].cal))}: ${esc(vfmt(v,a))}</title></circle>`).join('')}${at()}</svg></div>`}
   const m=Math.max(.01,...ok.map(Math.abs)),mid=T+(H-T-B)/2,bw=Math.max(4,(W-L-R)/n-4);
-  return `<div class="rot-mini"><h4>${esc(v.label)}</h4><svg viewBox="0 0 ${W} ${H}" class="plot mk-plot"><line class="mk-axis" x1="${L}" x2="${W-R}" y1="${mid}" y2="${mid}"/><text class="axis" x="${L-6}" y="${T+6}" text-anchor="end">${esc(vfmt(v,m))}</text><text class="axis" x="${L-6}" y="${H-B}" text-anchor="end">${esc(vfmt(v,-m))}</text>${vals.map((a,i)=>{if(a==null)return '';const h=Math.abs(a)/m*((H-T-B)/2);return `<rect x="${x(i)-bw/2}" y="${a>=0?mid-h:mid}" width="${bw}" height="${Math.max(1,h)}" rx="2" class="${a>=0?'mk-buy':'mk-sell'}"><title>${esc(qlabel(pts[i].cal))}: ${esc(vfmt(v,a))}</title></rect>`}).join('')}${at()}</svg></div>`};
+  return `<div class="rot-mini"><h4>${esc(v.label)}</h4><svg viewBox="0 0 ${W} ${H}" class="plot mk-plot"><line class="mk-axis" x1="${L}" x2="${W-R}" y1="${mid}" y2="${mid}"/><text class="axis" x="${L-6}" y="${T+6}" text-anchor="end">${esc(vfmt(v,m))}</text><text class="axis" x="${L-6}" y="${H-B}" text-anchor="end">${esc(vfmt(v,-m))}</text>${vals.map((a,i)=>{if(!fin(a))return '';const h=Math.abs(a)/m*((H-T-B)/2);return `<rect x="${x(i)-bw/2}" y="${a>=0?mid-h:mid}" width="${bw}" height="${Math.max(1,h)}" rx="2" class="${a>=0?'mk-buy':'mk-sell'}"><title>${esc(qlabel(pts[i].cal))}: ${esc(vfmt(v,a))}</title></rect>`}).join('')}${at()}</svg></div>`};
  return `<div class="panel rot-card"><h3><span class="mk-key" style="background:${color}"></span> ${esc(c.t)} <span class="muted">${esc(c.n)}</span></h3>${vars.map(one).join('')}${c.net13f!=null?`<p class="sub">13F this quarter: ${signed(c.net13f)} net managers · est. ${smoney(c.usd13f)}</p>`:''}</div>`;
 }
 
@@ -201,72 +323,72 @@ function solarView(o){
  o.scale=solarScale(o);
  ROT.ctx={Q,P,draw:f=>sec?sectorFrame(o,f):marketFrame(o,f)};
  let out=`<div class="panel"><h3>${sec?esc(P.suns[sec].name)+' — the sun and its planets':'Solar system — every sector orbiting the market'}</h3>`;
- out+=sec?`<p class="sub">The sun is the ${esc(P.suns[sec].name)} average for the quarter shown; each company is a planet. Direction: how it differs from its sector (→ higher ${esc(vshort(x))}, ↑ higher ${esc(vshort(y))}); distance: by how much, in typical company spreads (compressed so the far ones fit). Planet colour: that quarter's 13F crowding (green more managers added, red more cut).</p>`
-  :`<p class="sub">The market average sits at the centre. Each sector is a sun placed by how far its average is from the market's (→ higher ${esc(vshort(x))}, ↑ higher ${esc(vshort(y))}) with a tail of its last quarters; its companies are moons around it. Press play to watch the suns orbit. Click a sun to open its sector.</p>`;
+ out+=sec?`<p class="sub">The sun is the ${esc(P.suns[sec].name)} average for the period shown; each company is a planet. Direction: how it differs from its sector (→ higher ${esc(vshort(x))}, ↑ higher ${esc(vshort(y))})${esc(scaleNote(o))}; distance: by how much, in typical company spreads (compressed so the far ones fit). Planet colour: 13F crowding that quarter (green more managers added, red more cut).</p>`
+  :`<p class="sub">The market average sits at the centre. Each sector is a sun placed by how far its average is from the market's (→ higher ${esc(vshort(x))}, ↑ higher ${esc(vshort(y))})${esc(scaleNote(o))} with a tail of its last ${fmt(o.trail)} ${P.monthly?'months':'quarters'}; its companies are moons around it. Press play to watch the suns orbit. Click a sun to open its sector.</p>`;
  out+=rotPlayer(Q,P)+`<div id="rot-plot">${ROT.ctx.draw(state.rf)}</div>`;
- out+=`<div class="mk-legend"><span><i class="mk-key" style="background:var(--rot-sun)"></i>${sec?'Sector average':`Sector suns, with tails of their last ${o.trail} quarters · the centre is the market`}</span><span><i class="mk-key mk-hot"></i>More 13F managers added</span><span><i class="mk-key" style="background:var(--flow-sell)"></i>More cut</span><span><i class="mk-key mk-dot"></i>No 13F change on file</span>${o.picks.map((c,i)=>`<span><i class="mk-key" style="background:${ROT_SERIES[i]}"></i>${esc(c.t)}</span>`).join('')}</div></div>`;
+ out+=`<div class="mk-legend"><span><i class="mk-key" style="background:var(--rot-sun)"></i>${sec?'Sector average':'Sector suns, with their tails · the centre is the market'}</span><span><i class="mk-key mk-hot"></i>More 13F managers added</span><span><i class="mk-key" style="background:var(--flow-sell)"></i>More cut</span><span><i class="mk-key mk-dot"></i>No 13F change on file</span>${o.picks.map((c,i)=>`<span><i class="mk-key" style="background:${ROT_SERIES[i]}"></i>${esc(c.t)}</span>`).join('')}</div></div>`;
  const cal=Q[state.rf],m=P.market.by.get(cal);
  if(!sec){
   const rows=Object.values(P.suns).map(s=>({s,p:s.by.get(cal)})).filter(r=>r.p);
-  exported=rows.map(({s,p})=>({sector:s.name,quarter:cal,companies:p.n,...Object.fromEntries(P.vars.map(v=>[v.key,p[v.key]]))}));
-  out+=`<div class="section-head"><h3>Sector suns · ${esc(qlabel(cal))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+  exported=rows.map(({s,p})=>({sector:s.name,period:cal,companies:p.n,...Object.fromEntries(P.vars.map(v=>[v.key,p[v.key]]))}));
+  out+=`<div class="section-head"><h3>Sector suns · ${esc(rotFlabel(P,cal))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
   out+=table(['Sector','Companies',vshort(x),'vs the market ('+vshort(x)+')',vshort(y),'vs the market ('+vshort(y)+')'],rows.map(({s,p})=>[`<button class="text-button" data-rsec="${esc(s.id)}"><b>${esc(s.name)}</b></button>`,fmt(p.n),vfmt(x,p[x.key]),m?vcell({...x,centred:true},p[x.key]==null||m[x.key]==null?null:p[x.key]-m[x.key]):'—',vfmt(y,p[y.key]),m?vcell({...y,centred:true},p[y.key]==null||m[y.key]==null?null:p[y.key]-m[y.key]):'—']));
  }else{
   const sp=P.suns[sec].by.get(cal),rows=rotScope(P,sec).map(c=>({c,p:c.by.get(cal)})).filter(r=>r.p);
-  exported=rows.map(({c,p})=>({ticker:c.t,name:c.n,quarter:cal,...Object.fromEntries(P.vars.map(v=>[v.key,p[v.key]]))}));
-  out+=`<div class="section-head"><h3>${fmt(rows.length)} companies · ${esc(qlabel(cal))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
-  out+=table(['Company',vshort(x),'vs the sector ('+vshort(x)+')',vshort(y),'vs the sector ('+vshort(y)+')','13F net managers'],rows.map(({c,p})=>[`<b>${esc(c.t)}</b> <span class="muted">${esc(c.n)}</span>`,vfmt(x,p[x.key]),sp?vcell({...x,centred:true},p[x.key]==null||sp[x.key]==null?null:p[x.key]-sp[x.key]):'—',vfmt(y,p[y.key]),sp?vcell({...y,centred:true},p[y.key]==null||sp[y.key]==null?null:p[y.key]-sp[y.key]):'—',p.f13!=null?signed(p.f13):'—']));
+  exported=rows.map(({c,p})=>({ticker:c.t,name:c.n,period:cal,...Object.fromEntries(P.vars.map(v=>[v.key,p[v.key]]))}));
+  out+=`<div class="section-head"><h3>${fmt(rows.length)} companies · ${esc(rotFlabel(P,cal))}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+  out+=table(['Company',vshort(x),'vs the sector ('+vshort(x)+')',vshort(y),'vs the sector ('+vshort(y)+')','13F net managers'],rows.map(({c,p})=>[`<b>${esc(c.t)}</b> <span class="muted">${esc(c.n)}</span>`,vfmt(x,p[x.key]),sp?vcell({...x,centred:true},p[x.key]==null||sp[x.key]==null?null:p[x.key]-sp[x.key]):'—',vfmt(y,p[y.key]),sp?vcell({...y,centred:true},p[y.key]==null||sp[y.key]==null?null:p[y.key]-sp[y.key]):'—',p.f13!=null?signed(Math.round(p.f13)):'—']));
  }
  return out;
 }
-function solarScale(o){                               // fixed across quarters so the animation does not rescale
- const {P,x,y,sec}=o,key=['solar',x.key,y.key,sec].join('|');
+function robustSpread(a){const s=a.slice().sort((p,q)=>p-q);const v=(quantile(s,.75)-quantile(s,.25))/1.349;return v>0?v:(Math.max(...s.map(Math.abs))||1)}
+function solarScale(o){                               // fixed across periods so the animation does not rescale
+ const {P,Q,x,y,sec}=o,key=['solar',o.sig,x.key,y.key,sec].join('|');
  if(P.cache[key])return P.cache[key];
- const rs=a=>{const s=a.slice().sort((p,q)=>p-q);const v=(quantile(s,.75)-quantile(s,.25))/1.349;return v>0?v:(Math.max(...s.map(Math.abs))||1)};
+ const dev=(a,b,cal)=>{const ax=val(o,a,x,cal),ay=val(o,a,y,cal),bx=val(o,b,x,cal),by=val(o,b,y,cal);return ax==null||ay==null||bx==null||by==null?null:[ax-bx,ay-by]};
  let out;
  if(!sec){
-  const dx=[],dy=[];
-  for(const s of Object.values(P.suns))for(const p of s.pts){const m=P.market.by.get(p.cal);if(m&&p[x.key]!=null&&p[y.key]!=null&&m[x.key]!=null&&m[y.key]!=null){dx.push(p[x.key]-m[x.key]);dy.push(p[y.key]-m[y.key])}}
-  const kx=dx.length?rs(dx):1,ky=dy.length?rs(dy):1;
-  const D=Math.max(1,...dx.map((v,i)=>Math.hypot(v/kx,dy[i]/ky)))*1.05;
-  const mx=[],my=[];
-  for(const c of P.cos){const s=P.suns[c.s];if(!s)continue;for(const p of c.pts){const q=s.by.get(p.cal);if(q&&p[x.key]!=null&&p[y.key]!=null&&q[x.key]!=null&&q[y.key]!=null){mx.push(Math.abs(p[x.key]-q[x.key])/x.scale);my.push(Math.abs(p[y.key]-q[y.key])/y.scale)}}}
-  const Dm=Math.max(.5,quantile(mx.map((v,i)=>Math.hypot(v,my[i])).sort((a,b)=>a-b),.95)||1);
-  out={kx,ky,D,Dm};
+  const d=[];for(const s of Object.values(P.suns))for(const cal of Q){const v=dev(s,P.market,cal);if(v)d.push(v)}
+  const kx=d.length?robustSpread(d.map(v=>v[0])):1,ky=d.length?robustSpread(d.map(v=>v[1])):1;
+  const D=Math.max(1,...d.map(v=>Math.hypot(v[0]/kx,v[1]/ky)))*1.05;
+  const m=[];for(const c of P.cos){const s=P.suns[c.s];if(!s)continue;for(const cal of Q){const v=dev(c,s,cal);if(v)m.push(v)}}
+  const mx=m.length?robustSpread(m.map(v=>v[0])):1,my=m.length?robustSpread(m.map(v=>v[1])):1;
+  const Dm=Math.max(.5,quantile(m.map(v=>Math.hypot(v[0]/mx,v[1]/my)).sort((a,b)=>a-b),.95)||1);
+  out={kx,ky,D,mx,my,Dm};
  }else{
-  const s=P.suns[sec],ds=[];
-  for(const c of rotScope(P,sec))for(const p of c.pts){const q=s.by.get(p.cal);if(q&&p[x.key]!=null&&p[y.key]!=null&&q[x.key]!=null&&q[y.key]!=null)ds.push(Math.hypot((p[x.key]-q[x.key])/x.scale,(p[y.key]-q[y.key])/y.scale))}
-  out={D:Math.max(.5,quantile(ds.sort((a,b)=>a-b),.95)||1)};
+  const s=P.suns[sec],m=[];for(const c of rotScope(P,sec))for(const cal of Q){const v=dev(c,s,cal);if(v)m.push(v)}
+  const mx=m.length?robustSpread(m.map(v=>v[0])):1,my=m.length?robustSpread(m.map(v=>v[1])):1;
+  out={mx,my,D:Math.max(.5,quantile(m.map(v=>Math.hypot(v[0]/mx,v[1]/my)).sort((a,b)=>a-b),.95)||1)};
  }
  return P.cache[key]=out;
 }
 function compass(W,c0x,c0y,R,x,y){
  return `<text class="mk-quad" x="${W-4}" y="${c0y-6}" text-anchor="end">higher ${esc(vshort(x))} →</text><text class="mk-quad" x="4" y="${c0y-6}">← lower</text><text class="mk-quad" x="${c0x}" y="${c0y-R-14}" text-anchor="middle">↑ higher ${esc(vshort(y))}</text><text class="mk-quad" x="${c0x}" y="${c0y+R+24}" text-anchor="middle">lower ↓</text>`;
 }
-function moonColor(c,p){const n=p&&p.f13!=null?p.f13:c.net13f;return n>0?'mk-hot':n<0?'rot-sell':'mk-dot'}
+function moonColor(c,p){const n=p&&p.f13!=null?p.f13:c.net13f;return n>0.5?'mk-hot':n<-0.5?'rot-sell':'mk-dot'}
+function tailPath(pts,smooth,cls,style=''){return pts.length>1?`<path class="${cls}" style="${style}" d="${curve(pts,smooth)}"/>`:''}
 function marketFrame(o,f){
- const {P,Q,x,y,trail,picks}=o,cal=Q[f],{kx,ky,D,Dm}=o.scale;
+ const {P,Q,x,y,trail,picks}=o,cal=Q[f],{kx,ky,D,mx,my,Dm}=o.scale,smooth=o.sm!=='none';
  const [W,H]=rotSize(.68,520,720),c0x=W/2,c0y=H/2+6,R=Math.min(W,H)/2-58,Rm=R*.13;
  const m0=P.market.by.get(cal);
- const posAt=(s,c)=>{const p=s.by.get(c),m=P.market.by.get(c);if(!p||!m||p[x.key]==null||p[y.key]==null||m[x.key]==null||m[y.key]==null)return null;const dx=(p[x.key]-m[x.key])/kx,dy=(p[y.key]-m[y.key])/ky,d=Math.hypot(dx,dy),r=Math.pow(Math.min(1,d/D),.6)*R;return d?[c0x+dx/d*r,c0y-dy/d*r]:[c0x,c0y]};
- const moonAt=(c,s,ca)=>{const sp=posAt(s,ca),p=c.by.get(ca),q=s.by.get(ca);if(!sp||!p||!q||p[x.key]==null||p[y.key]==null)return null;const dx=(p[x.key]-q[x.key])/x.scale,dy=(p[y.key]-q[y.key])/y.scale,d=Math.hypot(dx,dy);if(!d)return sp;const r=Rm*Math.min(1,Math.sqrt(d/Dm));return [sp[0]+dx/d*r,sp[1]-dy/d*r]};
+ const posAt=(s,c)=>{const sx=val(o,s,x,c),sy=val(o,s,y,c),mx_=val(o,P.market,x,c),my_=val(o,P.market,y,c);if(sx==null||sy==null||mx_==null||my_==null)return null;
+  const dx=(sx-mx_)/kx,dy=(sy-my_)/ky,d=Math.hypot(dx,dy),r=Math.pow(Math.min(1,d/D),.6)*R;return d?[c0x+dx/d*r,c0y-dy/d*r]:[c0x,c0y]};
+ const moonAt=(c,s,ca)=>{const sp=posAt(s,ca),a=val(o,c,x,ca),b=val(o,c,y,ca),qa=val(o,s,x,ca),qb=val(o,s,y,ca);if(!sp||a==null||b==null||qa==null||qb==null)return null;
+  const dx=(a-qa)/mx,dy=(b-qb)/my,d=Math.hypot(dx,dy);if(!d)return sp;const r=Rm*Math.min(1,Math.sqrt(d/Dm));return [sp[0]+dx/d*r,sp[1]-dy/d*r]};
+ const span=Q.slice(Math.max(0,f-trail+1),f+1);
  let s=`<svg class="plot mk-plot rot-solar" viewBox="0 0 ${W} ${H}" role="img" aria-label="Sector suns around the market average, ${esc(qlabel(cal))}; the table below lists every value">`;
  s+=`<text class="rot-watermark" x="${W-16}" y="${H-16}" text-anchor="end">${esc(qlabel(cal))}</text>`;
  [1,2,4].filter(k=>k<D).forEach(k=>{const r=Math.pow(k/D,.6)*R;s+=`<circle cx="${c0x}" cy="${c0y}" r="${r}" class="rot-ring"/><text class="axis rot-ringlabel" x="${c0x+r*.866+3}" y="${c0y+r*.5+12}">${k===1?'typical gap':k+'× typical'}</text>`});
- s+=`<line class="mk-grid" x1="${c0x-R}" x2="${c0x+R}" y1="${c0y}" y2="${c0y}"/><line class="mk-grid" x1="${c0x}" x2="${c0x}" y1="${c0y-R}" y2="${c0y+R}"/>`;
- s+=compass(W,c0x,c0y,R,x,y);
+ s+=`<line class="mk-grid" x1="${c0x-R}" x2="${c0x+R}" y1="${c0y}" y2="${c0y}"/><line class="mk-grid" x1="${c0x}" x2="${c0x}" y1="${c0y-R}" y2="${c0y+R}"/>`+compass(W,c0x,c0y,R,x,y);
  const suns=Object.values(P.suns);
- // tails: the sun's last quarters, fading
- for(const sn of suns){const ps=Q.slice(Math.max(0,f-trail+1),f+1).map(c=>posAt(sn,c)).filter(Boolean);
-  for(let i=1;i<ps.length;i++)s+=`<line x1="${ps[i-1][0].toFixed(1)}" y1="${ps[i-1][1].toFixed(1)}" x2="${ps[i][0].toFixed(1)}" y2="${ps[i][1].toFixed(1)}" class="rot-tail" style="opacity:${(.15+.6*i/ps.length).toFixed(2)}"/>`}
- // moons
+ for(const sn of suns){const ps=span.map(c=>posAt(sn,c)).filter(Boolean);
+  if(smooth)s+=tailPath(ps,true,'rot-tailpath');
+  else for(let i=1;i<ps.length;i++)s+=`<line x1="${ps[i-1][0].toFixed(1)}" y1="${ps[i-1][1].toFixed(1)}" x2="${ps[i][0].toFixed(1)}" y2="${ps[i][1].toFixed(1)}" class="rot-tail" style="opacity:${(.15+.6*i/ps.length).toFixed(2)}"/>`}
  for(const c of P.cos){const sn=P.suns[c.s];if(!sn)continue;const mp=moonAt(c,sn,cal);if(!mp)continue;const p=c.by.get(cal);
-  s+=`<g data-tip="${tip([[c.t,c.n||''],[vfmt(x,p[x.key]),x.label],[vfmt(y,p[y.key]),y.label],[p.f13==null?'—':signed(p.f13),'net 13F managers that quarter']])}" tabindex="-1" class="mk-hit"><circle cx="${mp[0].toFixed(1)}" cy="${mp[1].toFixed(1)}" r="1.9" class="${moonColor(c,p)} rot-moon"/></g>`}
- // picks: their path through the system
- picks.forEach((c,i)=>{const sn=P.suns[c.s];if(!sn)return;const ps=Q.slice(Math.max(0,f-trail+1),f+1).map(ca=>moonAt(c,sn,ca)).filter(Boolean);
-  if(ps.length>1)s+=`<polyline class="rot-line" style="stroke:${ROT_SERIES[i]}" points="${ps.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>`;
+  s+=`<g data-tip="${tip([[c.t,c.n||''],[vfmt(x,p[x.key]),x.label],[vfmt(y,p[y.key]),y.label],[p.f13==null?'—':signed(Math.round(p.f13)),'net 13F managers that quarter']])}" tabindex="-1" class="mk-hit"><circle cx="${mp[0].toFixed(1)}" cy="${mp[1].toFixed(1)}" r="1.9" class="${moonColor(c,p)} rot-moon"/></g>`}
+ picks.forEach((c,i)=>{const sn=P.suns[c.s];if(!sn)return;const ps=span.map(ca=>moonAt(c,sn,ca)).filter(Boolean);
+  s+=tailPath(ps,smooth,'rot-line','stroke:'+ROT_SERIES[i]);
   const h=moonAt(c,sn,cal);if(h)s+=`<circle cx="${h[0]}" cy="${h[1]}" r="5" class="rot-dot" style="fill:${ROT_SERIES[i]}"/><text class="mk-label mk-halo" x="${h[0]+8}" y="${h[1]-6}">${esc(c.t)}</text>`});
- // suns and their names
  const boxes=[];let labels='';
  const sized=n=>5+Math.min(7,Math.sqrt(n||1)*.9);
  for(const sn of suns){const sp=posAt(sn,cal);if(!sp)continue;const p=sn.by.get(cal),r=sized(p.n);
@@ -280,22 +402,23 @@ function marketFrame(o,f){
  return s+labels+'</svg>';
 }
 function sectorFrame(o,f){
- const {P,Q,x,y,z,trail,picks,sec}=o,cal=Q[f],sun=P.suns[sec],last=sun.by.get(cal),{D}=o.scale;
+ const {P,Q,x,y,z,trail,picks,sec}=o,cal=Q[f],sun=P.suns[sec],last=sun.by.get(cal),{D,mx,my}=o.scale,smooth=o.sm!=='none';
  const [W,H]=rotSize(.68,520,720),c0x=W/2,c0y=H/2,R=Math.min(W,H)/2-64;
  if(!last)return empty(`No ${sun.name} average for ${qlabel(cal)} (fewer than three companies).`);
  const cos=rotScope(P,sec);
- const posAt=(c,ca)=>{const p=c.by.get(ca),q=sun.by.get(ca);if(!p||!q||p[x.key]==null||p[y.key]==null||q[x.key]==null||q[y.key]==null)return null;const dx=(p[x.key]-q[x.key])/x.scale,dy=(p[y.key]-q[y.key])/y.scale,d=Math.hypot(dx,dy);if(!d)return [c0x,c0y];const r=R*Math.pow(Math.min(1,d/D),.6);return [c0x+dx/d*r,c0y-dy/d*r,d>D]};
+ const posAt=(c,ca)=>{const a=val(o,c,x,ca),b=val(o,c,y,ca),qa=val(o,sun,x,ca),qb=val(o,sun,y,ca);if(a==null||b==null||qa==null||qb==null)return null;
+  const dx=(a-qa)/mx,dy=(b-qb)/my,d=Math.hypot(dx,dy);if(!d)return [c0x,c0y];const r=R*Math.pow(Math.min(1,d/D),.6);return [c0x+dx/d*r,c0y-dy/d*r,d>D]};
  const revs=cos.map(c=>(c.by.get(cal)||{}).rev||0),maxRev=Math.max(1,...revs);
- const size=p=>z?(()=>{const t=p[z.key]==null?.3:(rotClip(z,p[z.key])-z.lo)/((z.hi-z.lo)||1);return 3+9*t})():3+10*Math.sqrt((p.rev||0)/maxRev);
+ const size=p=>z?(()=>{const t=p[z.key]==null?.3:(Math.max(z.lo,Math.min(z.hi,p[z.key]))-z.lo)/((z.hi-z.lo)||1);return 3+9*t})():3+10*Math.sqrt((p.rev||0)/maxRev);
  let s=`<svg class="plot mk-plot rot-solar" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sun.name)} companies around the sector average, ${esc(qlabel(cal))}; the table below lists every value">`;
  s+=`<text class="rot-watermark" x="${W-16}" y="${H-16}" text-anchor="end">${esc(qlabel(cal))}</text>`;
  [.5,1,2,4].filter(k=>k<D).forEach(k=>{const r=R*Math.pow(k/D,.6);s+=`<circle cx="${c0x}" cy="${c0y}" r="${r}" class="rot-ring"/><text class="axis rot-ringlabel" x="${c0x+r*.866+3}" y="${c0y+r*.5+12}">${k===1?'typical spread':k+'×'}</text>`});
- s+=`<line class="mk-grid" x1="${c0x-R}" x2="${c0x+R}" y1="${c0y}" y2="${c0y}"/><line class="mk-grid" x1="${c0x}" x2="${c0x}" y1="${c0y-R}" y2="${c0y+R}"/>`;
- s+=compass(W,c0x,c0y,R,x,y);
+ s+=`<line class="mk-grid" x1="${c0x-R}" x2="${c0x+R}" y1="${c0y}" y2="${c0y}"/><line class="mk-grid" x1="${c0x}" x2="${c0x}" y1="${c0y-R}" y2="${c0y+R}"/>`+compass(W,c0x,c0y,R,x,y);
  const planets=cos.map(c=>({c,p:c.by.get(cal),xy:posAt(c,cal)})).filter(a=>a.p&&a.xy).sort((a,b)=>(a.p.rev||0)-(b.p.rev||0));
- picks.forEach((c,i)=>{if(c.s!==sec)return;const ps=Q.slice(Math.max(0,f-trail+1),f+1).map(ca=>posAt(c,ca)).filter(Boolean);if(ps.length>1)s+=`<polyline class="rot-line" style="stroke:${ROT_SERIES[i]}" points="${ps.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>`});
+ picks.forEach((c,i)=>{if(c.s!==sec)return;s+=tailPath(Q.slice(Math.max(0,f-trail+1),f+1).map(ca=>posAt(c,ca)).filter(Boolean),smooth,'rot-line','stroke:'+ROT_SERIES[i])});
+ const zv=z&&z.key!=='__time'?z:null;
  for(const a of planets){const {c,p,xy}=a,pi=picks.indexOf(c);
-  s+=`<g data-tip="${tip([[c.t,c.n||''],[vfmt(x,p[x.key]),x.label+' (sector '+vfmt(x,last[x.key])+')'],[vfmt(y,p[y.key]),y.label+' (sector '+vfmt(y,last[y.key])+')'],...(z?[[vfmt(z,p[z.key]),z.label]]:[]),[p.f13==null?'—':signed(p.f13),'net 13F managers that quarter'],[money(p.rev),'quarterly revenue']])}" tabindex="0" class="mk-hit"><circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="${Math.max(9,size(p)+3)}" fill="transparent"/><circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="${size(p).toFixed(1)}" class="${pi>=0?'rot-dot':moonColor(c,p)}" style="${pi>=0?'fill:'+ROT_SERIES[pi]:''}${xy[2]?';stroke-dasharray:2 2':''}"/></g>`}
+  s+=`<g data-tip="${tip([[c.t,c.n||''],[vfmt(x,p[x.key]),x.label+' (sector '+vfmt(x,last[x.key])+')'],[vfmt(y,p[y.key]),y.label+' (sector '+vfmt(y,last[y.key])+')'],...(zv?[[vfmt(zv,p[zv.key]),zv.label]]:[]),[p.f13==null?'—':signed(Math.round(p.f13)),'net 13F managers that quarter'],[money(p.rev),'quarterly revenue']])}" tabindex="0" class="mk-hit"><circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="${Math.max(9,size(p)+3)}" fill="transparent"/><circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="${size(p).toFixed(1)}" class="${pi>=0?'rot-dot':moonColor(c,p)}" style="${pi>=0?'fill:'+ROT_SERIES[pi]:''}${xy[2]?';stroke-dasharray:2 2':''}"/></g>`}
  const named=new Set([...picks.map(c=>c.t),...planets.slice().sort((a,b)=>(b.p.rev||0)-(a.p.rev||0)).slice(0,10).map(a=>a.c.t)]),boxes=[];
  planets.filter(a=>named.has(a.c.t)).sort((a,b)=>(b.p.rev||0)-(a.p.rev||0)).forEach(a=>{const r=size(a.p),w=a.c.t.length*7.4;let lx=a.xy[0]+r+3,anchor='start';if(lx+w>W-2){lx=a.xy[0]-r-3;anchor='end'}
   const b=anchor==='start'?[lx,a.xy[1]-14,lx+w,a.xy[1]]:[lx-w,a.xy[1]-14,lx,a.xy[1]];if(boxes.some(q=>b[0]<q[2]&&b[2]>q[0]&&b[1]<q[3]&&b[3]>q[1]))return;boxes.push(b);
@@ -305,6 +428,108 @@ function sectorFrame(o,f){
  return s+'</svg>';
 }
 
+/* ---------- 3-D: a box you can turn (canvas) ---------- */
+function view3d(o){
+ const ref=rotLayers(o);
+ o.dom=[axisDomain(o,o.x,o.lines,o.cloud),axisDomain(o,o.y,o.lines,o.cloud),axisDomain(o,o.z,o.lines,o.cloud)];
+ ROT.ctx={Q:o.Q,P:o.P,paint:f=>paint3d(o,f)};
+ const time=o.z.key==='__time';
+ let out=`<div class="panel"><h3>3-D${time?' — time as depth':''}</h3><p class="sub">→ ${esc(o.x.label)} · ↑ ${esc(o.y.label)} · ↗ ${esc(time?(o.P.monthly?'months':'quarters')+', oldest at the back':o.z.label)}${esc(scaleNote(o))}${o.sm!=='none'?' · smoothed':''}. ${time?'A company that keeps rotating through the same cycle draws a spiral along time. ':''}Drag to turn, hover a dot for its numbers.</p>`;
+ out+=rotPlayer(o.Q,o.P)+`<div class="rot-3d-wrap"><canvas id="rot-3d" class="rot-3d" role="img" aria-label="3-D chart of ${esc(o.x.label)}, ${esc(o.y.label)} and ${esc(o.z.label)}; the table below lists every value"></canvas><div class="rot-3d-tools"><button class="action" id="rspin" type="button">${ROT.spin?'Stop turning':'Turn slowly'}</button><button class="action" id="rreset" type="button">Front view</button></div></div><div class="mk-legend">${rotLegend(o,ref)}<span class="muted">Thin lines drop each traced dot to the floor so its depth is readable</span></div></div>`;
+ if(o.picks.length)out+=`<div class="rot-multiples">${o.picks.map((c,i)=>planar(o,c,ROT_SERIES[i],[o.x,o.y,...(time?[]:[o.z])])).join('')}</div>`;
+ return out+rotTable(o);
+}
+function rotColors(){
+ const css=getComputedStyle(document.documentElement),g=n=>(css.getPropertyValue(n)||'').trim();
+ return {ink:g('--ink-2')||'#3d3c39',muted:g('--muted')||'#6b6a66',line:g('--line')||'#dedcd5',dot:g('--flow-dot')||'#9b9a94',sun:g('--rot-sun')||'#eda100',
+  buy:g('--flow-buy')||'#17734a',sell:g('--flow-sell')||'#ea6a52',surface:g('--surface')||'#fcfcfb',series:[g('--rot-1')||'#2a78d6',g('--rot-2')||'#eb6834',g('--rot-3')||'#1baf7a']};
+}
+function paint3d(o,f){
+ const cv=document.getElementById('rot-3d');if(!cv||!cv.getContext)return;
+ const ctx=cv.getContext('2d');if(!ctx)return;
+ const cw=cv.clientWidth||900,ch=Math.round(Math.max(360,Math.min(640,cw*.62))),dpr=window.devicePixelRatio||1;
+ if(cv.width!==Math.round(cw*dpr)||cv.height!==Math.round(ch*dpr)){cv.width=Math.round(cw*dpr);cv.height=Math.round(ch*dpr);cv.style.height=ch+'px'}
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cw,ch);
+ const C=rotColors(),{P,Q,x,y,z,trail,layers:L}=o,cal=Q[f],time=z.key==='__time',[xd,yd,zd]=o.dom;
+ const nrm=(v,d)=>Math.max(-1.08,Math.min(1.08,(v-d[0])/(d[1]-d[0])*2-1));
+ const cy_=Math.cos(ROT.yaw),sy_=Math.sin(ROT.yaw),cp=Math.cos(ROT.pitch),sp=Math.sin(ROT.pitch),S=Math.min(cw*.9,ch)*.26,c0x=cw/2,c0y=ch/2-ch*.03,Dz=6.5;
+ const proj=(X,Y,Z)=>{const x1=X*cy_-Z*sy_,z1=X*sy_+Z*cy_,y2=Y*cp-z1*sp,z2=Y*sp+z1*cp,k=Dz/(Dz-z2);return [c0x+x1*k*S,c0y-y2*k*S,z2,k]};
+ const XYZ=(e,c)=>{const a=val(o,e,x,c),b=val(o,e,y,c),d=val(o,e,z,c);return a==null||b==null||d==null?null:[nrm(a,xd),nrm(b,yd),nrm(d,zd)]};
+ const line=(a,b,col,w=1,alpha=1,dash)=>{const p=proj(...a),q=proj(...b);ctx.globalAlpha=alpha;ctx.strokeStyle=col;ctx.lineWidth=w;ctx.setLineDash(dash||[]);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1};
+ const text=(pt,str,col,align='center',font='11px')=>{const p=proj(...pt);ctx.fillStyle=col;ctx.font=`${font} ${getComputedStyle(document.body).fontFamily||'sans-serif'}`;ctx.textAlign=align;ctx.fillText(str,p[0],p[1])};
+ // the box, the floor grid and the axes through the centre lines
+ const E=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+ for(const [a,b] of [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]])line(E[a],E[b],C.line,1);
+ for(let i=-1;i<=1;i+=.5){line([i,-1,-1],[i,-1,1],C.line,.7,.7);line([-1,-1,i],[1,-1,i],C.line,.7,.7)}
+ const x0=nrm(centreOf(o,x,cal),xd),y0=nrm(centreOf(o,y,cal),yd),z0=time?nrm(o.qi.get(cal),zd):nrm(centreOf(o,z,cal),zd);
+ line([-1,y0,z0],[1,y0,z0],C.muted,1,.6);line([x0,-1,z0],[x0,1,z0],C.muted,1,.6);if(!time)line([x0,y0,-1],[x0,y0,1],C.muted,1,.6);
+ if(time){const sl=[[-1,-1,z0],[1,-1,z0],[1,1,z0],[-1,1,z0]];for(let i=0;i<4;i++)line(sl[i],sl[(i+1)%4],C.sun,1.2,.55,[4,3])}
+ const tx=axisTicks(o,x,xd[0],xd[1],S*2),ty=axisTicks(o,y,yd[0],yd[1],S*2),tz=axisTicks(o,z,zd[0],zd[1],S*2);
+ const ends=t=>t.length>2?[t[0],t[t.length-1]]:t;
+ for(const [v,l] of ends(tx))text([nrm(v,xd),-1.12,1.12],l,C.muted);
+ for(const [v,l] of ends(ty))text([-1.12,nrm(v,yd),1.12],l,C.muted,'right');
+ for(const [v,l] of ends(tz))text([1.14,-1.12,nrm(v,zd)],l,C.muted,'left');
+ text([0,-1.3,1.12],vshort(x)+' →',C.ink,'center','600 12px');text([-1.18,1.12,1.0],'↑ '+vshort(y),C.ink,'right','600 12px');text([1.22,-1.28,0],time?'time →':vshort(z)+' →',C.ink,'left','600 12px');
+ // the marks: trails first, then dots far to near
+ const hits=[],dots=[];
+ const sizeOf=p=>{const t=Math.log10(Math.max(1e7,(p&&p.rev)||1e7));return 1.6+3.4*Math.min(1,Math.max(0,(t-7)/4.5))};
+ const tipFor=(name,full,p)=>[[name+' · '+qlabel(p.cal),full||''],[vfmt(x,p[x.key]),x.label],[vfmt(y,p[y.key]),y.label],...(time?[]:[[vfmt(z,p[z.key]),z.label]])];
+ const n=time?Math.max(trail,Q.length):trail;
+ const trace=(e,col,w,name,full,head,drop)=>{const cals=trailCals(o,e,cal,n,[x,y,z]);if(!cals.length)return;
+  const pts=cals.map(c=>XYZ(e,c));ctx.strokeStyle=col;ctx.lineWidth=w;
+  for(let i=1;i<pts.length;i++){const a=proj(...pts[i-1]),b=proj(...pts[i]);ctx.globalAlpha=.25+.7*i/pts.length;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
+  ctx.globalAlpha=1;
+  cals.forEach((c,i)=>{const pr=proj(...pts[i]),isHead=i===cals.length-1&&c===cal,p=e.by.get(c);dots.push({x:pr[0],y:pr[1],d:pr[2],r:(isHead?head:2)*pr[3],col,alpha:isHead?1:.35+.5*i/cals.length,rows:tipFor(name,full,p),stroke:isHead})});
+  const h=pts[pts.length-1];if(drop&&cals[cals.length-1]===cal)line(h,[h[0],-1,h[2]],col,1,.5,[2,3]);
+  if(cals[cals.length-1]===cal){const pr=proj(...h);dots.push({label:name,x:pr[0],y:pr[1],d:pr[2]+.001,col})}};
+ for(const c of L.cloud){const p=c.by.get(cal),q=p&&XYZ(c,cal);if(!q)continue;const pr=proj(...q);dots.push({x:pr[0],y:pr[1],d:pr[2],r:sizeOf(p)*pr[3],col:C.dot,alpha:.5,rows:tipFor(c.t,c.n,p)})}
+ for(const t of L.suns)trace(t.ent,L.cloud.length?C.muted:C.dot,1.2,t.name,'sector average',4,false);
+ if(L.ref)trace(L.ref.ent,C.dot,1.5,L.ref.name,'',4,false);
+ if(L.market)trace(L.market.ent,C.sun,2.2,'Market','average',7,true);
+ if(L.sun)trace(L.sun.ent,C.series[0],2.2,L.sun.name,'',6,true);
+ L.picks.forEach((t,i)=>trace(t.ent,C.series[i],2.2,t.name,t.full,6,true));
+ dots.sort((a,b)=>a.d-b.d);
+ const boxes=[];
+ for(const d of dots){
+  if(d.label){ctx.font=`500 12px ${getComputedStyle(document.body).fontFamily||'sans-serif'}`;const w=ctx.measureText(d.label).width,b=[d.x+8,d.y-20,d.x+12+w,d.y-6];
+   if(boxes.some(q=>b[0]<q[2]&&b[2]>q[0]&&b[1]<q[3]&&b[3]>q[1]))continue;boxes.push(b);
+   ctx.lineWidth=3;ctx.strokeStyle=C.surface;ctx.textAlign='left';ctx.strokeText(d.label,d.x+9,d.y-9);ctx.fillStyle=C.ink;ctx.fillText(d.label,d.x+9,d.y-9);continue}
+  ctx.globalAlpha=d.alpha;ctx.fillStyle=d.col;ctx.beginPath();ctx.arc(d.x,d.y,Math.max(1,d.r),0,Math.PI*2);ctx.fill();
+  if(d.stroke){ctx.globalAlpha=1;ctx.lineWidth=1.5;ctx.strokeStyle=C.surface;ctx.stroke()}
+  ctx.globalAlpha=1;hits.push(d)}
+ ctx.font=`700 40px ${getComputedStyle(document.body).fontFamily||'sans-serif'}`;ctx.textAlign='right';ctx.fillStyle=C.ink;ctx.globalAlpha=.08;ctx.fillText(qlabel(cal),cw-14,ch-14);ctx.globalAlpha=1;
+ ROT.hits=hits;
+}
+function rotTip(rows,x,y){
+ let el=document.getElementById('mk-tip');
+ if(!el){el=document.createElement('div');el.id='mk-tip';el.className='mk-tip';el.setAttribute('role','tooltip');document.body.appendChild(el)}
+ if(!rows){el.style.display='none';return}
+ el.replaceChildren(...rows.map(([v,l],i)=>{const d=document.createElement('div');d.className=i?'tt-row':'tt-head';const s=document.createElement('strong');s.textContent=v;d.appendChild(s);if(l){const sp=document.createElement('span');sp.textContent=' '+l;d.appendChild(sp)}return d}));
+ el.style.display='block';const w=el.offsetWidth,h=el.offsetHeight;el.style.left=Math.max(8,Math.min(innerWidth-w-8,x+14))+'px';el.style.top=Math.max(8,y-h-12)+'px';
+}
+function bind3d(){
+ const cv=document.getElementById('rot-3d');if(!cv||!cv.addEventListener)return;
+ let drag=null;
+ const repaint=()=>ROT.ctx&&ROT.ctx.paint&&ROT.ctx.paint(state.rf);
+ cv.onpointerdown=e=>{drag=[e.clientX,e.clientY,ROT.yaw,ROT.pitch];cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);rotTip(null)};
+ cv.onpointerup=cv.onpointercancel=()=>{drag=null};
+ cv.onpointermove=e=>{
+  if(drag){ROT.yaw=drag[2]+(e.clientX-drag[0])*.01;ROT.pitch=Math.max(-1.4,Math.min(1.4,drag[3]+(e.clientY-drag[1])*.01));repaint();return}
+  const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;let best=null,bd=12;
+  for(const h of ROT.hits){const d=Math.hypot(h.x-mx,h.y-my)-h.r;if(d<bd){bd=d;best=h}}
+  rotTip(best?best.rows:null,e.clientX,e.clientY)};
+ cv.onpointerleave=()=>rotTip(null);
+ if($('rspin'))$('rspin').onclick=()=>{ROT.spin=!ROT.spin;$('rspin').textContent=ROT.spin?'Stop turning':'Turn slowly';if(ROT.spin)spin()};
+ if($('rreset'))$('rreset').onclick=()=>{ROT.yaw=-.75;ROT.pitch=.38;repaint()};
+ repaint();
+ if(ROT.spin)spin();
+}
+function spin(){
+ if(ROT.spinning)return;ROT.spinning=true;
+ const step=()=>{if(!ROT.spin||state.tab!=='rotation'||!document.getElementById('rot-3d')||!ROT.ctx||!ROT.ctx.paint){ROT.spinning=false;return}
+  ROT.yaw+=.006;ROT.ctx.paint(state.rf);requestAnimationFrame(step)};
+ requestAnimationFrame(step);
+}
 /* ---------- find the best axes: an exhaustive scan ---------- */
 function rotRanks(P,sec){                            // per quarter: centred percentile ranks of every variable, and next quarter's stock vs S&P
  const key='ranks|'+sec;if(P.cache[key])return P.cache[key];
@@ -390,30 +615,33 @@ function scanView(P,sec){
 
 /* ---------- events ---------- */
 function rotDraw(){
- const c=ROT.ctx;if(!c||!document.getElementById('rot-plot'))return;
- $('rot-plot').innerHTML=c.draw(state.rf);
+ const c=ROT.ctx;if(!c)return;
+ if(c.paint){if(!document.getElementById('rot-3d'))return;c.paint(state.rf)}
+ else{if(!document.getElementById('rot-plot'))return;$('rot-plot').innerHTML=c.draw(state.rf)}
  if($('rframe'))$('rframe').value=state.rf;
  if($('rflabel'))$('rflabel').textContent=rotFlabel(c.P,c.Q[state.rf]);
- if($('rplay'))$('rplay').textContent=ROT.timer?'❚❚ Pause':`▶ Play ${Math.min(16,c.Q.length)} quarters`;
- bindTips();bindRotSuns();
+ if($('rplay'))$('rplay').textContent=ROT.timer?'❚❚ Pause':`▶ Play ${Math.min(c.P&&c.P.monthly?48:16,c.Q.length)} ${c.P&&c.P.monthly?'months':'quarters'}`;
+ if(!c.paint){bindTips();bindRotSuns()}
 }
 function rotStop(){if(ROT.timer){clearInterval(ROT.timer);ROT.timer=null}}
 function rotToggle(){
  if(ROT.timer){rotStop();render();return}
- const n=ROT.ctx?ROT.ctx.Q.length:0;if(!n)return;
- if(state.rf>=n-1)state.rf=Math.max(0,n-16);
+ const c=ROT.ctx,n=c?c.Q.length:0;if(!n)return;
+ const span=c.P&&c.P.monthly?48:16;
+ if(state.rf>=n-1)state.rf=Math.max(0,n-span);
  ROT.timer=setInterval(()=>{
-  if(state.tab!=='rotation'||!document.getElementById('rot-plot')){rotStop();return}
+  if(state.tab!=='rotation'||!(document.getElementById('rot-plot')||document.getElementById('rot-3d'))){rotStop();return}
   if(state.rf>=n-1){rotStop();render();return}
-  state.rf++;rotDraw()},850);
+  state.rf++;rotDraw()},c.P&&c.P.monthly?380:850);
  rotDraw();
 }
 function bindRotSuns(){document.querySelectorAll('#workspace [data-rsec]').forEach(b=>b.onclick=()=>{rotStop();state.rsec=b.dataset.rsec;state.rview=state.rview==='scan'?'solar':state.rview;render()})}
 function bindRotation(){
- for(const k of ['rview','rsec','rx','ry','rz','rq','rshow'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';render()};
+ for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rscl','rsm','rfreq'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';render()};
  if($('rtk')){$('rtk').onchange=e=>{state.rtk=e.target.value;render()};$('rtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rplay'))$('rplay').onclick=rotToggle;
  if($('rframe')){$('rframe').oninput=e=>{rotStop();state.rf=+e.target.value;rotDraw()};$('rframe').onchange=e=>{state.rf=+e.target.value;render()}}
  document.querySelectorAll('#workspace [data-raxes]').forEach(b=>b.onclick=()=>{const [x,y,z]=b.dataset.raxes.split('|');state.rview='clock';state.rx=x;state.ry=y;state.rz=z||state.rz;render();scrollTo({top:0,behavior:'smooth'})});
  bindRotSuns();
+ if(state.tab==='rotation')bind3d();
 }

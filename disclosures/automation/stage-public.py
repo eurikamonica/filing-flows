@@ -168,6 +168,9 @@ def main():
             sys.path.insert(0, str(ROOT / 'app'))
             import rotation
             rot = rotation.build(args.site_data, DATA)
+            mon = rot.pop('monthly', None)
+            if mon:
+                (out / 'data' / 'market' / 'rotation-monthly.json').write_text(json.dumps(mon, separators=(',', ':')), encoding='utf-8')
             (out / 'data' / 'market' / 'rotation.json').write_text(json.dumps(rot, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
             print(f"::notice::rotation: {len(rot['companies'])} companies, {len(rot['sectors'])} sectors, "
                   f"quarters {rot.get('quarters', [''])[0] if rot.get('quarters') else '-'}…{rot['quarters'][-1] if rot.get('quarters') else '-'}")

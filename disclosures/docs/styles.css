@@ -323,5 +323,11 @@ th[aria-sort=ascending] .sort-mark, th[aria-sort=descending] .sort-mark { opacit
 .rot-core { stroke-width: 3; }
 .rot-click { cursor: pointer; }
 .rot-ringlabel { font-size: 10.5px; opacity: .8; }
+.rot-display { margin-top: -4px; }
+.rot-tailpath { fill: none; stroke: var(--rot-sun); stroke-width: 1.8; opacity: .55; stroke-linecap: round; }
+.rot-3d-wrap { position: relative; margin-top: 6px; }
+.rot-3d { display: block; width: 100%; height: 420px; touch-action: none; cursor: grab; }
+.rot-3d:active { cursor: grabbing; }
+.rot-3d-tools { position: absolute; top: 6px; right: 6px; display: flex; gap: 6px; }
 [data-rsec] { cursor: pointer; }
 

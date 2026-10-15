@@ -13,7 +13,9 @@ Sector suns and the market centre average their companies, weighted by the log o
 to its 3rd–97th percentile so one outlier does not drag a sun.
 
 Built at publish time (automation/stage-public.py --site-data): the Sankey site's index gives tickers and sectors.
-Output is columnar to stay small: 'fields' names the columns of every company's and sun's 'p' rows.
+Output is columnar to stay small: 'fields' names the columns of every company's and sun's 'p' rows. A 'monthly' block
+(the price-based variables month by month over the last 48 complete months) is split into rotation-monthly.json by the
+publish step; the charts draw the quarterly figures through the months between quarter-ends.
 """
 import bisect
 import datetime as dt
@@ -160,6 +162,54 @@ def series(fig, rows, spy, periods, quarters=16, f13=None, gov=None):
     return pts
 
 
+MONTH_FIELDS = ['ret', 'rel', 'rel3', 'rel6', 'vola', 'volz']
+
+
+def last_months(n=48, today=None):
+    """The last n complete calendar months, oldest first: ['2022-10', …, '2026-09']."""
+    today = today or dt.date.today()
+    y, m = today.year, today.month - 1
+    out = []
+    for _ in range(n):
+        if m == 0:
+            y, m = y - 1, 12
+        out.append(f'{y}-{m:02d}')
+        m -= 1
+    return out[::-1]
+
+
+def _month_end(ym, back=0):
+    y, m = int(ym[:4]), int(ym[5:]) - back
+    while m <= 0:
+        y, m = y - 1, m + 12
+    return ((dt.date(y, m, 1) + dt.timedelta(days=32)).replace(day=1) - dt.timedelta(days=1)).isoformat()
+
+
+def monthly(rows, spy, months):
+    """One row per month (MONTH_FIELDS): the month's return and its return against SPY, against SPY over three and six
+    months, realised volatility in the month (annualised) and average daily volume against the company's own average."""
+    out, vols = [], []
+    for ym in months:
+        end, start = _month_end(ym), _month_end(ym, 1)
+        b, a = _close(rows, end), _close(rows, start)
+        sb = _close(spy, end) if spy else None
+        rel = lambda back: (lambda a0, s0: _r(100.0 * (b / a0 - 1) - (100.0 * (sb / s0 - 1) if s0 and sb else 0)) if a0 and b else None)(
+            _close(rows, _month_end(ym, back)), _close(spy, _month_end(ym, back)) if spy else None)
+        win = _window(rows, start, end)
+        v = [r[2] for r in win if len(r) > 2 and r[2]]
+        vol = sum(v) / len(v) if len(v) >= 12 else None
+        vols.append(vol)
+        closes = ([a] if a else []) + [r[1] for r in win if r[1]]
+        lr = [math.log(y / x) for x, y in zip(closes, closes[1:]) if x and y and x > 0 and y > 0]
+        vola = (math.sqrt(sum((r - sum(lr) / len(lr)) ** 2 for r in lr) / (len(lr) - 1) * 252) * 100) if len(lr) >= 12 else None
+        out.append([_r(100.0 * (b / a - 1)) if a and b else None, rel(1), rel(3), rel(6), _r(vola, 1), None])
+    ok = [v for v in vols if v]
+    avg = sum(ok) / len(ok) if ok else None
+    for row, v in zip(out, vols):
+        row[5] = _r(100.0 * (v / avg - 1), 1) if v and avg else None
+    return out
+
+
 def _quantile(vals, q):
     if not vals:
         return None
@@ -286,6 +336,14 @@ def build(site_data, root, top=600, quarters=16):
     for co in out:
         co['p'] = [[p.get(k) for k in FIELDS] for p in co.pop('pts')]
     cals = sorted({row[0] for co in out for row in co['p']})[-quarters:]
+    months = last_months(48)
+    month_rows = {}
+    for co in out:
+        rows = _rows(root, co['t'])
+        if rows:
+            m = monthly(rows, spy, months)
+            if sum(1 for r in m if r[1] is not None) >= 6:
+                month_rows[co['t']] = m
     return {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'benchmark': 'SPY' if spy else None,
             'fields': FIELDS, 'sun_fields': SUN_FIELDS, 'vars': meta, 'quarters': cals,
             'note': ('Calendar quarters (SEC frames align fiscal quarters to the nearest calendar quarter; a fourth quarter a '
@@ -297,4 +355,5 @@ def build(site_data, root, top=600, quarters=16):
                      "file have reported. Officials: purchases minus sales in the US House reports on file. Sector suns and "
                      'the market centre weight companies by the log of revenue, each variable clipped to its 3rd–97th '
                      'percentile.'),
-            'companies': out, 'sectors': sun, 'market': market}
+            'companies': out, 'sectors': sun, 'market': market,
+            'monthly': {'months': months, 'fields': MONTH_FIELDS, 'companies': month_rows}}
