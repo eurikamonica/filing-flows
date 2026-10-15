@@ -6,11 +6,15 @@
    · Find the best axes — every pair of variables scanned for the clearest cycle, and every single, pair and triple
      scanned for how well it sorted the next quarter's stock moves (with a split-half check and the chance level). */
 const ROT_SERIES=['var(--rot-1)','var(--rot-2)','var(--rot-3)'];
-const ROT_TRAIL=[['4','4 quarters'],['8','8 quarters'],['16','16 quarters']];
+const ROT_TRAIL=[['4','4 quarters'],['8','8 quarters'],['12','12 quarters'],['16','16 quarters']];
 const ROT_VIEWS=[['clock','Momentum clock'],['solar','Solar system'],['scan','Find the best axes']];
 const ROT_SHORT={dom:'Op. margin Δ',om:'Op. margin',dgm:'Gross margin Δ',gm:'Gross margin',dnm:'Net margin Δ',nm:'Net margin',revg:'Revenue growth',reva:'Growth acceleration',rel:'Stock vs S&P',rel6:'Stock vs S&P, 6 mo',ret:'Stock return',vola:'Volatility',volz:'Volume',f13:'13F net managers',gov:'Officials net buys'};
 const ROT_DEFAULT_VARS=[{key:'dom',label:'Operating margin vs a year earlier',unit:'pts',centred:true,group:'Profitability'},{key:'rel',label:'Stock vs the S&P 500, the quarter',unit:'%',centred:true,group:'Price'},{key:'volz',label:'Trading volume vs its own average',unit:'%',centred:true,group:'Trading'}];
 const ROT={timer:null,ctx:null};
+// when a variable is public: price-based ones at the quarter's last close; figures from 10-Q / 10-K, 13F and officials'
+// reports only weeks after the quarter ends — so the scan compares those with the stock two quarters later, not the next
+const ROT_PRICE=new Set(['rel','rel6','ret','vola','volz']);
+const ROT_SCAN_SKIP=new Set(['ret']);           // the raw return duplicates the return against the S&P 500 in a scan
 const qlabel=c=>String(c||'').replace(/^CY(\d{4})Q(\d)$/,'Q$2 $1');
 function niceTicks(lo,hi,n=5){const raw=(hi-lo)/n,p=10**Math.floor(Math.log10(raw||1)),st=[1,2,2.5,5,10].map(m=>m*p).find(x=>x>=raw);const out=[];for(let v=Math.ceil(lo/st)*st;v<=hi+1e-9;v+=st)out.push(+v.toFixed(6));return out}
 const pp=v=>v==null?'—':(v>0?'+':v<0?'−':'')+fmt(Math.abs(v),1)+' pts';
@@ -47,7 +51,10 @@ function rotPrep(d){
  else market={id:'market',name:'Market',pts:quarters.map(cal=>{const ps=cos.map(c=>c.by.get(cal)).filter(Boolean),o={cal,n:ps.length};
   for(const v of vars){const xs=ps.map(p=>p[v.key]).filter(x=>x!=null).map(x=>Math.max(v.lo,Math.min(v.hi,x)));o[v.key]=xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null}return o}).filter(p=>p.n>=3)};
  market.by=new Map(market.pts.map(p=>[p.cal,p]));
- return d._prep={cos,suns,market,vars,V,quarters,byT:new Map(cos.map(c=>[c.t,c])),cache:{}};
+ // the newest quarters are only partly reported (10-Qs arrive over six weeks): start on the last well-covered one
+ const most=Math.max(0,...market.pts.map(p=>p.n||0)),partial=new Set(quarters.filter(c=>((market.by.get(c)||{}).n||0)<.5*most));
+ let full=quarters.length-1;while(full>0&&partial.has(quarters[full]))full--;
+ return d._prep={cos,suns,market,vars,V,quarters,partial,full,byT:new Map(cos.map(c=>[c.t,c])),cache:{}};
 }
 const rotClip=(v,x)=>x==null?null:Math.max(v.lo,Math.min(v.hi,x));
 function rotSize(ratio,minH,maxH){            // the drawing follows the page width so text stays near its real size
@@ -68,9 +75,9 @@ function rotationView(){
  state.rx=has(state.rx)?state.rx:has('dom')?'dom':avail[0].key;
  state.ry=has(state.ry)&&state.ry!==state.rx?state.ry:has('rel')&&state.rx!=='rel'?'rel':avail.find(v=>v.key!==state.rx).key;
  state.rz=state.rz===''||has(state.rz)?state.rz:has('volz')?'volz':'';
- state.rq=['4','8','16'].includes(state.rq)?state.rq:'8';
+ state.rq=['4','8','12','16'].includes(state.rq)?state.rq:'4';
  state.rshow=['','avg','all'].includes(state.rshow)?state.rshow:'';
- state.rf=Number.isInteger(state.rf)&&state.rf>=0&&state.rf<Q.length?state.rf:Q.length-1;
+ state.rf=Number.isInteger(state.rf)&&state.rf>=0&&state.rf<Q.length?state.rf:P.full;
  const groups=[...new Set(avail.map(v=>v.group))];
  const varField=(id,label,value,blank)=>`<div class="field"><label for="${id}">${label}</label><select id="${id}">${blank?`<option value="" ${value===''?'selected':''}>${esc(blank)}</option>`:''}${groups.map(gname=>`<optgroup label="${esc(gname)}">${options(avail.filter(v=>v.group===gname).map(v=>[v.key,v.label]),value)}</optgroup>`).join('')}</select></div>`;
  out+=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${field('rsec','Sector',[['','All sectors'],...secs.map(s=>[s.id,s.name])],state.rsec)}`;
@@ -83,8 +90,9 @@ function rotationView(){
  out+=`<details><summary>How these charts are built</summary><p>${esc(g.data.note||'')}</p><p class="sub">A path that circles clockwise means the vertical variable turns first and the horizontal one follows a quarter or two later; counter-clockwise, the reverse. With the default axes, clockwise = the stock turned before profit momentum (the market anticipating); counter-clockwise = profits turned first and the price caught up. A pattern, not a forecast.</p></details>`;
  return out;
 }
-function rotPlayer(Q){
- return `<div class="rot-player"><button class="action" id="rplay" type="button">${ROT.timer?'❚❚ Pause':`▶ Play ${Math.min(16,Q.length)} quarters`}</button><input type="range" id="rframe" min="0" max="${Q.length-1}" step="1" value="${state.rf}" aria-label="Quarter shown"><span id="rflabel" class="rot-flabel">${esc(qlabel(Q[state.rf]))}</span></div>`;
+const rotFlabel=(P,cal)=>qlabel(cal)+(P&&P.partial.has(cal)?' · early filers':'');
+function rotPlayer(Q,P){
+ return `<div class="rot-player"><button class="action" id="rplay" type="button">${ROT.timer?'❚❚ Pause':`▶ Play ${Math.min(16,Q.length)} quarters`}</button><input type="range" id="rframe" min="0" max="${Q.length-1}" step="1" value="${state.rf}" aria-label="Quarter shown"><span id="rflabel" class="rot-flabel">${esc(rotFlabel(P,Q[state.rf]))}</span></div>`;
 }
 const rotScope=(P,sec)=>P.cos.filter(c=>!sec||c.s===sec);
 function trailOf(pts,cal,n,x,y){const t=pts.filter(p=>p.cal<=cal&&p[x.key]!=null&&p[y.key]!=null);return t.slice(-n)}
@@ -103,7 +111,7 @@ function clockView(o){
   market:!picks.length?{name:'Market average',pts:P.market.pts}:null,
   cloud:o.cloud?scope:[]};
  o.dom=clockDomain(o);
- ROT.ctx={Q,draw:f=>clockFrame(o,f)};
+ ROT.ctx={Q,P,draw:f=>clockFrame(o,f)};
  const legend=[...o.layers.picks.map(t=>`<span><i class="mk-key" style="background:${t.color}"></i>${esc(t.name)} <span class="muted">${esc(t.full||'')}</span></span>`),
   ref?`<span><i class="mk-key" style="background:var(--flow-dot)"></i>${esc(ref.name)} sector average</span>`:'',
   o.layers.sun?`<span><i class="mk-key" style="background:var(--rot-1)"></i>${esc(o.layers.sun.name)}</span>`:'',
@@ -111,7 +119,7 @@ function clockView(o){
   o.layers.suns.length?'<span><i class="mk-key" style="background:var(--flow-dot)"></i>Sector averages</span>':'',
   o.cloud?`<span class="muted">Small dots: every company${sec?' in the sector':''} that quarter (hollow: off the scale, drawn at the edge) · size: ${esc(z?vshort(z):'revenue')}</span>`:''].filter(Boolean).join('');
  let out=`<div class="panel"><h3>Momentum clock</h3><p class="sub">→ ${esc(x.label)} · ↑ ${esc(y.label)} · each dot one quarter, the large dot the quarter shown · drag the slider or press play</p>`;
- out+=rotPlayer(Q)+`<div id="rot-plot">${clockFrame(o,state.rf)}</div><div class="mk-legend">${legend}</div></div>`;
+ out+=rotPlayer(Q,P)+`<div id="rot-plot">${clockFrame(o,state.rf)}</div><div class="mk-legend">${legend}</div></div>`;
  if(picks.length)out+=`<div class="rot-multiples">${picks.map((c,i)=>planar(c,Q,ROT_SERIES[i],[x,y,...(z?[z]:[])])).join('')}</div>`;
  const cal=Q[state.rf];
  const rows=scope.map(c=>({c,p:c.by.get(cal)})).filter(r=>r.p);
@@ -191,11 +199,11 @@ function planar(c,Q,color,vars){                      // the clock split into pl
 function solarView(o){
  const {P,Q,x,y,sec}=o;
  o.scale=solarScale(o);
- ROT.ctx={Q,draw:f=>sec?sectorFrame(o,f):marketFrame(o,f)};
+ ROT.ctx={Q,P,draw:f=>sec?sectorFrame(o,f):marketFrame(o,f)};
  let out=`<div class="panel"><h3>${sec?esc(P.suns[sec].name)+' — the sun and its planets':'Solar system — every sector orbiting the market'}</h3>`;
  out+=sec?`<p class="sub">The sun is the ${esc(P.suns[sec].name)} average for the quarter shown; each company is a planet. Direction: how it differs from its sector (→ higher ${esc(vshort(x))}, ↑ higher ${esc(vshort(y))}); distance: by how much, in typical company spreads (compressed so the far ones fit). Planet colour: that quarter's 13F crowding (green more managers added, red more cut).</p>`
   :`<p class="sub">The market average sits at the centre. Each sector is a sun placed by how far its average is from the market's (→ higher ${esc(vshort(x))}, ↑ higher ${esc(vshort(y))}) with a tail of its last quarters; its companies are moons around it. Press play to watch the suns orbit. Click a sun to open its sector.</p>`;
- out+=rotPlayer(Q)+`<div id="rot-plot">${ROT.ctx.draw(state.rf)}</div>`;
+ out+=rotPlayer(Q,P)+`<div id="rot-plot">${ROT.ctx.draw(state.rf)}</div>`;
  out+=`<div class="mk-legend"><span><i class="mk-key" style="background:var(--rot-sun)"></i>${sec?'Sector average':`Sector suns, with tails of their last ${o.trail} quarters · the centre is the market`}</span><span><i class="mk-key mk-hot"></i>More 13F managers added</span><span><i class="mk-key" style="background:var(--flow-sell)"></i>More cut</span><span><i class="mk-key mk-dot"></i>No 13F change on file</span>${o.picks.map((c,i)=>`<span><i class="mk-key" style="background:${ROT_SERIES[i]}"></i>${esc(c.t)}</span>`).join('')}</div></div>`;
  const cal=Q[state.rf],m=P.market.by.get(cal);
  if(!sec){
@@ -300,31 +308,31 @@ function sectorFrame(o,f){
 /* ---------- find the best axes: an exhaustive scan ---------- */
 function rotRanks(P,sec){                            // per quarter: centred percentile ranks of every variable, and next quarter's stock vs S&P
  const key='ranks|'+sec;if(P.cache[key])return P.cache[key];
- const Q=P.quarters,cos=rotScope(P,sec),vars=P.vars.filter(v=>v.n>0);
+ const Q=P.quarters,cos=rotScope(P,sec),vars=P.vars.filter(v=>v.n>0&&!ROT_SCAN_SKIP.has(v.key));
  const rank=vals=>{const idx=vals.map((v,i)=>[v,i]).filter(a=>a[0]!=null&&Number.isFinite(a[0])).sort((a,b)=>a[0]-b[0]),out=new Array(vals.length).fill(null),n=idx.length;
   for(let i=0;i<n;){let j=i;while(j+1<n&&idx[j+1][0]===idx[i][0])j++;const r=n>1?((i+j)/2)/(n-1)-.5:0;for(let k=i;k<=j;k++)out[idx[k][1]]=r;i=j+1}return out};
  const qs=[];
  for(let qi=0;qi<Q.length;qi++){
-  const pts=cos.map(c=>c.by.get(Q[qi])),next=qi+1<Q.length?cos.map(c=>c.by.get(Q[qi+1])):null;
-  const r={};for(const v of vars)r[v.key]=rank(pts.map(p=>p?p[v.key]:null));
-  const tgt=next?next.map((p,i)=>pts[i]&&p?p.rel:null):null;
-  qs.push({cal:Q[qi],r,tgt,tr:tgt?rank(tgt):null});
+  const pts=cos.map(c=>c.by.get(Q[qi])),r={};
+  for(const v of vars)r[v.key]=rank(pts.map(p=>p?p[v.key]:null));
+  const ahead=k=>{if(qi+k>=Q.length)return null;const nx=cos.map(c=>c.by.get(Q[qi+k]));const t=nx.map((p,i)=>pts[i]&&p?p.rel:null);return {tgt:t,tr:rank(t)}};
+  qs.push({cal:Q[qi],r,t1:ahead(1),t2:ahead(2)});
  }
  return P.cache[key]={qs,vars,n:cos.length};
 }
 function scanSorters(P,sec){
  const key='sort|'+sec;if(P.cache[key])return P.cache[key];
- const {qs,vars}=rotRanks(P,sec),use=qs.filter(q=>q.tgt);
+ const {qs,vars}=rotRanks(P,sec);
  const ic=(comp,q)=>{let n=0,sx=0,sy=0,sxx=0,syy=0,sxy=0;for(let i=0;i<comp.length;i++){const a=comp[i],b=q.tr[i];if(a==null||b==null)continue;n++;sx+=a;sy+=b;sxx+=a*a;syy+=b*b;sxy+=a*b}
   if(n<20)return null;const cv=sxy/n-sx/n*sy/n,vx=sxx/n-(sx/n)**2,vy=syy/n-(sy/n)**2;return vx>0&&vy>0?cv/Math.sqrt(vx*vy):null};
  const spread=(comp,q)=>{const a=comp.map((v,i)=>[v,q.tgt[i]]).filter(p=>p[0]!=null&&p[1]!=null).sort((p,r)=>p[0]-r[0]);if(a.length<25)return null;const k=Math.floor(a.length/5),m=s=>s.reduce((t,p)=>t+p[1],0)/s.length;return m(a.slice(-k))-m(a.slice(0,k))};
- const evalCombo=(keys,signs,withSpread=false)=>{const ics=[],sps=[];
-  for(const q of use){const rs=keys.map(k=>q.r[k]);const comp=rs[0].map((_,i)=>{let t=0;for(let j=0;j<rs.length;j++){const v=rs[j][i];if(v==null)return null;t+=signs[j]*v}return t});
+ const evalCombo=(keys,signs,withSpread=false)=>{const ics=[],sps=[],lag=keys.every(k=>ROT_PRICE.has(k))?'t1':'t2';
+  for(const q0 of qs){const q=q0[lag]&&{r:q0.r,...q0[lag]};if(!q)continue;const rs=keys.map(k=>q.r[k]);const comp=rs[0].map((_,i)=>{let t=0;for(let j=0;j<rs.length;j++){const v=rs[j][i];if(v==null)return null;t+=signs[j]*v}return t});
    const c=ic(comp,q);if(c!=null){ics.push(c);if(withSpread)sps.push(spread(comp,q))}}
   if(ics.length<4)return null;
   const n=ics.length,mean=ics.reduce((a,b)=>a+b,0)/n,sd=Math.sqrt(ics.reduce((a,b)=>a+(b-mean)**2,0)/Math.max(1,n-1)),h=Math.floor(n/2);
   const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null,sp=sps.filter(v=>v!=null);
-  return {keys,signs,n,ic:mean,t:sd>0?mean/(sd/Math.sqrt(n)):0,hit:ics.filter(v=>v>0).length/n,early:avg(ics.slice(0,h)),late:avg(ics.slice(h)),spread:avg(sp)}};
+  return {keys,signs,n,lag,ic:mean,t:sd>0?mean/(sd/Math.sqrt(n)):0,hit:ics.filter(v=>v>0).length/n,early:avg(ics.slice(0,h)),late:avg(ics.slice(h)),spread:avg(sp)}};
  const singles=vars.map(v=>evalCombo([v.key],[1])).filter(Boolean);
  const sign=Object.fromEntries(singles.map(r=>[r.keys[0],r.ic>=0?1:-1]));
  const ks=singles.map(r=>r.keys[0]),rows=singles.map(r=>({...r,signs:[sign[r.keys[0]]],ic:Math.abs(r.ic),t:Math.abs(r.t),early:r.early*sign[r.keys[0]],late:r.late*sign[r.keys[0]],spread:r.spread==null?null:r.spread*sign[r.keys[0]],hit:sign[r.keys[0]]>0?r.hit:1-r.hit}));
@@ -332,7 +340,7 @@ function scanSorters(P,sec){
   for(let k=j+1;k<ks.length;k++){const r3=evalCombo([ks[i],ks[j],ks[k]],[sign[ks[i]],sign[ks[j]],sign[ks[k]]]);if(r3)rows.push(r3)}}
  rows.sort((a,b)=>b.t-a.t);
  for(const r of rows.slice(0,25))r.spread=(evalCombo(r.keys,r.signs,true)||{}).spread;   // top − bottom fifth: only for the rows shown
- return P.cache[key]={rows,tested:rows.length,quarters:use.length};
+ return P.cache[key]={rows,tested:rows.length,quarters:Math.max(0,...rows.map(r=>r.n))};
 }
 const ROT_FAMILY={om:'om',dom:'om',gm:'gm',dgm:'gm',nm:'nm',dnm:'nm',revg:'rev',reva:'rev',rel:'px',rel6:'px',ret:'px'};
 const sameFamily=(a,b)=>ROT_FAMILY[a]&&ROT_FAMILY[a]===ROT_FAMILY[b];   // one is built from the other: they circle by construction
@@ -361,21 +369,21 @@ function scanView(P,sec){
  const V=P.V,chance=n=>Math.sqrt(2*Math.log(Math.max(2,n)));
  const cyc=scanCycles(P,sec),srt=scanSorters(P,sec),cc=chance(cyc.tested),cs=chance(srt.tested);
  const name=k=>esc(vshort(V[k]));
- let out=`<div class="explain">Every combination of the ${fmt(P.vars.filter(v=>v.n>0).length)} variables was tried on ${fmt(rotScope(P,sec).length)} companies${sec?' in '+esc(P.suns[sec].name):''} over ${fmt(P.quarters.length)} quarters. Each variable is first turned into its rank among the companies that quarter, so units and market-wide swings do not matter. <b>With this many tries the best result looks good by chance alone</b>: rows are marked “worth a look” only when they clear the chance level and hold in both halves of the period. Past patterns, not forecasts.</div>`;
+ let out=`<div class="explain">Every combination of the ${fmt(P.vars.filter(v=>v.n>0).length)} variables was tried on ${fmt(rotScope(P,sec).length)} companies${sec?' in '+esc(P.suns[sec].name):''} over ${fmt(P.quarters.length)} quarters. Each variable is first turned into its rank among the companies that quarter, so units and market-wide swings do not matter (the raw stock return is left out: it duplicates the return against the S&P 500). <b>With this many tries the best result looks good by chance alone</b>: rows are marked “worth a look” only when they clear the chance level and hold in both halves of the period. The companies are today's largest by revenue, so firms that shrank or disappeared are missing — that flatters growth-type rankings. Past patterns, not forecasts.</div>`;
  out+=`<div class="panel"><h3>Clearest cycles — pairs for the momentum clock</h3><p class="sub">How many companies' paths circle the same way. Each pair is oriented so most paths go clockwise: the vertical variable turns first, the horizontal one follows. z: how far the clockwise count is from a coin toss (${fmt(cyc.tested)} pairs tested; chance alone reaches about ${fmt(cc,1)}; companies in one sector move together, so treat z as generous). Lead: the correlation of the vertical variable with the next quarter's horizontal one, against the other way round. Pairs where one variable is built from the other (a margin and its change, growth and its acceleration, one- and two-quarter returns) circle by construction and are left out.</p>`;
  out+=table(['Horizontal (x)','Vertical (y) — turns first','Clockwise','z','Lead y → next x','Lead x → next y','Verdict',''],cyc.rows.slice(0,20).map(r=>[name(r.x),name(r.y),`${fmt(r.share*100,0)}% of ${fmt(r.companies)}`,fmt(r.z,1),
-  r.lead_first==null?'—':fmt(r.lead_first,2),r.lead_second==null?'—':fmt(r.lead_second,2),
+  r.lead_first==null?'—':fmt(Math.abs(r.lead_first)<.005?0:r.lead_first,2),r.lead_second==null?'—':fmt(Math.abs(r.lead_second)<.005?0:r.lead_second,2),
   r.z>=cc?'<span class="badge ready">Worth a look</span>':'<span class="badge">Could be chance</span>',
   `<button class="text-button" data-raxes="${esc(r.x)}|${esc(r.y)}|">Show</button>`]))+'</div>';
  const dir=(k,s)=>`${s>0?'high':'low'} ${name(k)}`;
  const worth=r=>r.t>=cs&&r.early>0&&r.late>0;
- out+=`<div class="panel"><h3>Best sorters of the next quarter</h3><p class="sub">Companies ranked by one, two or three variables (equal weights, each pointing the way it worked over the whole period), then compared with how their stock did against the S&P 500 the following quarter. Rank IC: the correlation between the two rankings, averaged over ${fmt(srt.quarters)} quarters (0 = no link; 0.05 is already notable). Top − bottom: the best-ranked fifth's next-quarter return minus the worst fifth's. ${fmt(srt.tested)} combinations tested; chance alone reaches t ≈ ${fmt(cs,1)}.</p>`;
- out+=table(['Ranked by','Rank IC','t','Quarters right','Early half','Later half','Top − bottom fifth','Verdict',''],srt.rows.slice(0,25).map(r=>[
-  r.keys.map((k,i)=>dir(k,r.signs[i])).join(' + '),fmt(r.ic,3),fmt(r.t,1),`${fmt(r.hit*100,0)}%`,
+ out+=`<div class="panel"><h3>Best sorters of the next quarter</h3><p class="sub">Companies ranked by one, two or three variables (equal weights, each pointing the way it worked over the whole period), then compared with how their stock did against the S&P 500 <b>once the figures were public</b>: filings, 13F and officials' reports come out weeks after a quarter ends, so a ranking on them is compared with the stock two quarters later (comparing with the very next quarter would count the earnings reaction itself); a ranking only on prices, volatility and volume is compared with the next quarter. Rank IC: the correlation between the two rankings, averaged over up to ${fmt(srt.quarters)} quarters (0 = no link; 0.05 is already notable). Top − bottom: the best-ranked fifth's return minus the worst fifth's in that quarter. ${fmt(srt.tested)} combinations tested; chance alone reaches t ≈ ${fmt(cs,1)}.</p>`;
+ out+=table(['Ranked by','Compared with','Rank IC','t','Quarters right','Early half','Later half','Top − bottom fifth','Verdict',''],srt.rows.slice(0,25).map(r=>[
+  r.keys.map((k,i)=>dir(k,r.signs[i])).join(' + '),r.lag==='t1'?'next quarter':'two quarters on',fmt(r.ic,3),fmt(r.t,1),`${fmt(r.hit*100,0)}%`,
   `<span class="${r.early>0?'positive':'negative'}">${fmt(r.early,3)}</span>`,`<span class="${r.late>0?'positive':'negative'}">${fmt(r.late,3)}</span>`,
   r.spread==null?'—':pp(r.spread),worth(r)?'<span class="badge ready">Worth a look</span>':'<span class="badge">Could be chance</span>',
   `<button class="text-button" data-raxes="${esc(r.keys[0])}|${esc(r.keys[1]||(r.keys[0]==='rel'?'dom':'rel'))}|${esc(r.keys[2]||'')}">Show</button>`]))+'</div>';
- exported=srt.rows.map(r=>({variables:r.keys.join('+'),directions:r.signs.join(','),rank_ic:r.ic,t:r.t,hit:r.hit,early:r.early,late:r.late,top_minus_bottom:r.spread}));
+ exported=srt.rows.map(r=>({variables:r.keys.join('+'),directions:r.signs.join(','),compared_with:r.lag==='t1'?'next quarter':'two quarters on',quarters:r.n,rank_ic:r.ic,t:r.t,hit:r.hit,early:r.early,late:r.late,top_minus_bottom:r.spread}));
  out+=`<div class="section-head"><h3>Export</h3><button class="action" id="csv">Export every combination (CSV) ↓</button></div>`;
  return out;
 }
@@ -385,7 +393,7 @@ function rotDraw(){
  const c=ROT.ctx;if(!c||!document.getElementById('rot-plot'))return;
  $('rot-plot').innerHTML=c.draw(state.rf);
  if($('rframe'))$('rframe').value=state.rf;
- if($('rflabel'))$('rflabel').textContent=qlabel(c.Q[state.rf]);
+ if($('rflabel'))$('rflabel').textContent=rotFlabel(c.P,c.Q[state.rf]);
  if($('rplay'))$('rplay').textContent=ROT.timer?'❚❚ Pause':`▶ Play ${Math.min(16,c.Q.length)} quarters`;
  bindTips();bindRotSuns();
 }
