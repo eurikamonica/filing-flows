@@ -24,3 +24,6 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(-
 .seo-list { padding-left: 18px; line-height: 1.9; }
 .seo .muted { color: var(--muted); font-size: 13.5px; }
 .seo-foot { max-width: 980px; margin: 0 auto; padding: 16px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); }
+.seo-chart { box-sizing: border-box; width: min(1280px, calc(100vw - 32px)); margin: 18px 0 10px calc(50% - min(640px, 50vw - 16px)); background: #fcfcfb; border: 1px solid var(--line); border-radius: 12px; padding: 8px; overflow-x: auto; }
+.seo-chart svg { display: block; width: 100%; height: auto; min-width: 860px; }
+.seo-chart > p { margin: 40px 0; text-align: center; }
