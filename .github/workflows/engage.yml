@@ -13,10 +13,11 @@ on:
     - cron: "40 12 * * 1-5"
     - cron: "40 21 * * 1-5"
     - cron: "30 14 * * 6"                # Saturday 14:30 UTC: the weekly recap thread
+    - cron: "20 13,17,21,23 * * 1-5"     # material 8-Ks (deals, CEO changes, bankruptcies …): most land after 16:00 ET
   workflow_dispatch:
     inputs:
       kinds:
-        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider, calendar, fund13f, weekly"
+        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider, calendar, fund13f, weekly, event8k"
         type: string
         default: "question,list,reddit_question,reddit_list,insider,calendar,fund13f"
       dry_run:
@@ -68,7 +69,7 @@ jobs:
       - name: What was posted recently (cooldowns)
         run: |
           mkdir -p media/x
-          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/x/engage-state.json" -o media/x/engage-state.json || true
+          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/x/engage-state.json" -o media/x/engage-state.json || echo "no posting history yet (first run)"
       - name: Pick, write, polish
         env:
           EVENT_SCHEDULE: ${{ github.event.schedule }}
@@ -82,7 +83,12 @@ jobs:
             '40 12 * * 1-5') kinds=list,reddit_question,reddit_list,insider,fund13f ;;
             '40 21 * * 1-5') kinds=question,insider,calendar,fund13f ;;
             '30 14 * * 6') kinds=weekly ;;
+            '20 13,17,21,23 * * 1-5') kinds=event8k ;;
           esac
+          if [ "$kinds" = "event8k" ] && [ "$DRY_RUN" != "true" ]; then     # skip the browser install when there is nothing new
+            rc=0; python -m pipeline.engage --site "$site" --site-url "$site" --kinds "$kinds" --plan-only || rc=$?
+            if [ "$rc" = "3" ]; then echo "no material 8-K to post"; touch media/x/.nothing; exit 0; fi
+          fi
           if [ "$DRY_RUN" = "true" ]; then
             python -m pipeline.engage --site "$site" --site-url "$site" --kinds "$kinds" --dry-run
           else
@@ -92,4 +98,4 @@ jobs:
           fi
       - name: Publish the images and queue the posts in Buffer
         if: inputs.dry_run != true
-        run: scripts/publish-media.sh
+        run: if [ -f media/x/.nothing ]; then echo "nothing queued"; else scripts/publish-media.sh; fi

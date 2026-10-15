@@ -53,6 +53,12 @@ Formats are named in the task; follow the one you are given.
   then `Thread ↓`. The lists follow in the replies, so do not repeat them.
   `$AAA grew revenue 64% this week's filing — the fastest of 40 companies that reported. The week in filings, thread ↓`
 
+- **event8k** — a company just filed an 8-K reporting a material event (a deal, a CEO or CFO change, a bankruptcy, a
+  restatement, a cyber incident, an impairment, a delisting notice, a buyback). Open with the word you are told to use
+  (`BREAKING:` or `JUST FILED:`), the cashtag and the event in plain words, then the filing's own key sentence quoted or
+  closely paraphrased. Add nothing the quote does not say, never predict the stock's reaction, end with one short question.
+  `BREAKING: $ABC agreed to be acquired for $42.50 a share in cash, its 8-K says. Fair price? 1) yes 2) too low #earnings #stocks`
+
 ## Rules
 1. Output only the post text. No quotes around it, no preamble.
 2. At most 255 characters as X counts them (URLs count 23). The first six words must make someone stop scrolling:

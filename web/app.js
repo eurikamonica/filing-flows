@@ -2219,6 +2219,7 @@
           <button class="btn" type="button" data-engage="engage_explain" title="The same move as a “someone explain $X” post">✦ Plz explain</button>
           <button class="btn" type="button" data-engage="engage_peers" title="The mover against its closest peers: price, today’s move, growth, margin, price/sales">✦ Mover vs peers</button>
           <button class="btn" type="button" data-engage="engage_insider" title="The largest recent open-market purchase by an officer or director (Form 4)">✦ Insider buy</button>
+          <button class="btn" type="button" data-engage="engage_event8k" title="The most important 8-K filed in the last day by a company on the site: a deal, a CEO change, a bankruptcy, a buyback … BREAKING when material">✦ 8-K event</button>
         </div>
         <p class="muted small" id="engage-msg" role="status"></p></section>` : ''}
       <section class="section daily" id="daily" hidden></section>

@@ -84,6 +84,24 @@ def hot(sub, limit, token=None):
     return out
 
 
+def apewisdom(known, pages=2):
+    """Fallback when Reddit refuses the request (it blocks unauthenticated reads from cloud servers): ApeWisdom's free
+    count of ticker mentions across investing subreddits over 24 hours. No thread titles, only counts and ranks."""
+    out = []
+    for page in range(1, pages + 1):
+        r = requests.get(f"https://apewisdom.io/api/v1.0/filter/all-stocks/page/{page}", headers={"User-Agent": UA}, timeout=30)
+        r.raise_for_status()
+        for x in r.json().get("results", []):
+            t = str(x.get("ticker") or "").upper().replace("-", ".")
+            if t not in known:
+                continue
+            m, m0 = int(x.get("mentions") or 0), int(x.get("mentions_24h_ago") or 0)
+            out.append({"ticker": t, "score": m + int(x.get("upvotes") or 0) // 10, "threads": [], "source": "apewisdom",
+                        "mentions": m, "mentions_before": m0, "rank": int(x.get("rank") or 0),
+                        "rank_before": int(x["rank_24h_ago"]) if str(x.get("rank_24h_ago") or "").isdigit() else None})
+    return out
+
+
 def tickers_in(title, known, ignore):
     """Tickers a title names: $CASHTAGS always; bare upper-case words only when they are a known ticker and not a word."""
     found = set()

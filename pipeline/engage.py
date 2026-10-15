@@ -30,12 +30,13 @@ what was posted so a company or a format is not repeated within the cooldown. Se
 import argparse
 import datetime as dt
 import json
+import math
 import os
 import re
 import sys
 import time
 
-from . import events, notify, quotes as Q, reddit, social, tweet
+from . import events, notify, quotes as Q, reddit, sec, social, tweet
 
 CFG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "engage.json")
 GUIDE = os.path.join(os.path.dirname(CFG), "engage-guide.md")
@@ -194,12 +195,22 @@ def reddit_trends(site_rows, c):
         if not token:
             time.sleep(2)
     trends = reddit.trending(threads, known, rc)
+    if not threads:                        # Reddit refused (no OAuth secrets on a cloud runner): mention counts instead
+        try:
+            trends = [a for a in reddit.apewisdom(known) if a["mentions"] >= rc.get("min_mentions", 15)]
+            print(f"reddit: no threads read; ApeWisdom mention counts used ({len(trends)} companies on the site)")
+        except Exception as err:
+            print(f"::warning::ApeWisdom not read either ({str(err)[:120]})")
     print(f"reddit: {len(threads)} threads, {len(trends)} companies on the site trending: "
           + ", ".join(f"{a['ticker']}({a['score']})" for a in trends[:10]))
     return trends
 
 
 def thread_lines(trend):
+    if not trend.get("threads"):
+        before = f", {trend['mentions_before']} the day before" if trend.get("mentions_before") is not None else ""
+        rank = f"; #{trend['rank']} most-mentioned stock" + (f" (#{trend['rank_before']} a day earlier)" if trend.get("rank_before") else "") if trend.get("rank") else ""
+        return f"- mentioned {trend['mentions']} times across investing subreddits in 24 hours{before}{rank} (counts from ApeWisdom; no thread titles)"
     return "\n".join(f"- r/{t['sub']}: \"{t['title']}\" ({t['score']} points, {t['comments']} comments)" for t in trend["threads"][:4])
 
 
@@ -211,7 +222,7 @@ def plan_reddit_question(site, rows, c, trends, by_ticker, state_ok):
         cj, q = figures(site, e)
         if not q:
             continue
-        task = (f"Reddit threads behind the trend:\n{thread_lines(a)}\n\nHeadline figures from ${a['ticker']}'s latest filing:\n"
+        task = (f"{'Reddit threads behind the trend' if a.get('threads') else 'How much Reddit is talking about it (counts only — say nothing about what they say)'}:\n{thread_lines(a)}\n\nHeadline figures from ${a['ticker']}'s latest filing:\n"
                 + tweet.headline_lines(cj, q, a["ticker"]))
         return {"kind": "reddit_question", "task": task, "cashtags": [a["ticker"]], "items": [(e, cj, q)]}
     return None
@@ -225,7 +236,8 @@ def plan_reddit_list(site, rows, c, trends, by_ticker, state_ok):
     items = []
     for a in picks:
         e = by_ticker[a["ticker"]]
-        lines.append(f"- {one_liner(e)} — Reddit: {a['threads'][0]['title'][:90]!r} ({a['score']} points+comments)")
+        lines.append(f"- {one_liner(e)} — Reddit: {a['threads'][0]['title'][:90]!r} ({a['score']} points+comments)" if a.get("threads")
+                     else f"- {one_liner(e)} — {a['mentions']} Reddit mentions in 24 hours (was {a.get('mentions_before', '?')})")
         if len(items) < 4:
             cj, q = figures(site, e)
             if q:
@@ -303,6 +315,8 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
                     "You may say the company filed this (\"after an 8-K: …\", \"filed today: …\") and quote or closely paraphrase it. "
                     "Do not say it caused the move, and add nothing that is not in the quote.")
             ask = "Then ask the audience how they read it."
+            if ev["code"] in BREAKING_ITEMS or event_label(ev["code"], ev["quote"]) in ("a merger or acquisition", "a CEO change"):
+                ask = "Start the post with “BREAKING:” (a material 8-K filed today). " + ask
         else:
             news, ask = "", "The cause of today's move is NOT in these inputs: do not guess or imply one; ask the audience."
         task = (f"PRICE MOVE (delayed quote, {stamp}): {quote_line(e['ticker'], q, e)}.{news}\n\n"
@@ -327,12 +341,14 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
         h = (fq.get("headline") or {})
         fact = (f" Last quarter: revenue {h.get('rev_fmt')}" + (f" ({h['yoy']:+.0f}% Y/Y)" if h.get("yoy") is not None else "")
                 + (f", operating margin {h['om']:.1f}%" if h.get("om") is not None else "") + ".") if h.get("rev_fmt") else ""
-        filed = f" after an 8-K (Item {ev['code']}: {ev['label']})." if ev else "."
+        filed = f" after an 8-K ({event_label(ev['code'], ev['quote'])})." if ev else "."
         if kind == "peers":
             fb = f"${e['ticker']} {q['chg_pct']:+.1f}% today at ${q['price']:,.2f} vs " + ", ".join(
                 f"${x['ticker']} {live[Q.canon(x['ticker'])]['chg_pct']:+.1f}%" for x in peers_of(e, rows, live, c["movers"]["peers"])) + ". Which one makes more sense here?"
         else:
             lead = "Someone explain" if kind == "explain" else "What's happening with"
+            if ev and (ev["code"] in BREAKING_ITEMS or event_label(ev["code"], ev["quote"]) in ("a merger or acquisition", "a CEO change")):
+                lead = "BREAKING: " + lead
             fb = f"{lead} ${e['ticker']}? {q['chg_pct']:+.1f}% today at ${q['price']:,.2f}{filed}{fact}"
             if social.xlen(fb) > 235:
                 fb = f"{lead} ${e['ticker']}? {q['chg_pct']:+.1f}% today at ${q['price']:,.2f}{filed}"
@@ -547,6 +563,96 @@ def plan_insider(site, rows, c, by_ticker, state_ok, today):
     return {"kind": "insider", "task": task, "cashtags": [tk], "items": [(e, cj, fq)], "insider_url": t.get("url"), "fallback": fb}
 
 
+# ------------------------------------------------------------------ 8-K events (current reports)
+# the items worth a post on their own, with a weight; BREAKING only for the first group
+EVENT_ITEMS = {"1.03": 10, "4.02": 9, "5.01": 9, "2.01": 8, "1.05": 8, "1.01": 6, "5.02": 6, "2.06": 6, "3.01": 6, "2.05": 5,
+               "8.01": 3, "7.01": 2}
+BREAKING_ITEMS = {"1.03", "4.02", "5.01", "2.01", "1.05"}
+DEAL = re.compile(r"(?i)\b(merger|acquire|acquisition|to be acquired|definitive agreement|tender offer|all-cash|per share in cash|"
+                  r"buyback|repurchase program|share repurchase|spin-?off|strategic alternatives|chief executive officer|"
+                  r"resign|terminated|bankruptcy|chapter 11|restatement|delist)")
+
+
+def event_label(code, quote):
+    """A plain name for what the 8-K reports, sharper than the item title when the text says what it is."""
+    q = quote or ""
+    if code in ("1.01", "2.01", "8.01", "7.01") and re.search(r"(?i)merger|to be acquired|acquire|acquisition|tender offer", q):
+        return "a merger or acquisition"
+    if re.search(r"(?i)repurchase|buyback", q):
+        return "a share buyback"
+    if code == "5.02" and re.search(r"(?i)chief executive officer|\bCEO\b", q):
+        return "a CEO change"
+    if code == "5.02" and re.search(r"(?i)chief financial officer|\bCFO\b", q):
+        return "a CFO change"
+    return events.ITEMS.get(code, "a current report")
+
+
+def plan_event8k(site, rows, c, by_ticker, state_ok, today):
+    """The most important 8-K filed in the last day by a company on the site: deals, CEO/CFO changes, bankruptcies,
+    restatements, cyber incidents, impairments, delisting notices, buybacks. Earnings releases (2.02) have their own posts."""
+    from . import scan
+    by_cik = {}
+    for e in rows:
+        if e.get("ticker") and e.get("cik") and (e["cik"] not in by_cik or (e.get("filed") or "") > (by_cik[e["cik"]].get("filed") or "")):
+            by_cik[e["cik"]] = e
+    since = (today - dt.timedelta(days=1 if today.weekday() else 3)).isoformat()
+    cands = []
+    for page in range(3):
+        try:
+            entries = scan._parse_atom(sec.get(sec.current_feed_url("8-K", start=page * 100)))
+        except (Exception, SystemExit) as err:
+            print(f"event8k: EDGAR feed not read ({str(err)[:120]})")
+            break
+        for f in entries:
+            e = by_cik.get(f["cik"])
+            items = [x for x in (f.get("items") or "").split(",") if x]
+            w = max([EVENT_ITEMS.get(x, 0) for x in items] or [0])
+            if not e or not w or (f.get("filed") or "") < since or not state_ok("event8k", f["accn"], hours=24 * 30):
+                continue
+            cands.append((w * (1 + math.log10(max(1e8, e.get("revenue") or 1e8)) - 8), e, f, items))
+        if len(entries) < 100:
+            break
+    cands.sort(key=lambda x: -x[0])
+    print("event8k: " + (", ".join(f"{e['ticker']} {','.join(i)}" for _, e, _, i in cands[:8]) or "no material 8-K from a site company"))
+    for score, e, f, items in cands[:6]:
+        sub = {"accn": f["accn"], "form": f["form"], "filed": f["filed"], "accepted": f.get("updated") or "", "items": items}
+        try:
+            idx = sec.get_json(sec.filing_index_url(e["cik"], f["accn"]))
+            names = [i["name"] for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)]
+            sub["primary"] = next((n for n in names if not re.search(r"(?i)ex[-_]?\d", n)), names[0] if names else "")
+        except (Exception, SystemExit) as err:
+            print(f"event8k: {e['ticker']} filing index not read ({str(err)[:100]})")
+            continue
+        ev = events.describe(e["cik"], sub)
+        if ev["code"] in ("8.01", "7.01") and not DEAL.search(ev["quote"] or ""):
+            continue                                   # "other events" only when the text names a deal, buyback or the like
+        cj, fq = figures(site, e)
+        if not fq:
+            continue
+        label = event_label(ev["code"], ev["quote"])
+        breaking = ev["code"] in BREAKING_ITEMS or label in ("a merger or acquisition", "a CEO change")
+        when = f"{ev['filed']}" + (f" {ev['accepted'][11:16]} ET" if len(ev.get("accepted") or "") >= 16 else "")
+        task = (f"8-K CURRENT REPORT filed {when} by ${e['ticker']} ({display(e)}): Item {ev['code']} — {ev['label']}"
+                + (f" ({label})" if label != ev["label"] else "") + f".\nWhat the filing says (quote; the only facts you may use about the event):\n"
+                f"“{ev['quote'] or '(text not read; name the item only)'}”\n\nLatest filing figures (context, at most one):\n"
+                f"{tweet.headline_lines(cj, fq, e['ticker'])}\n\n"
+                + ("Start the post with “BREAKING:” — this is a material event filed in the last day. " if breaking else "Start with “JUST FILED:”. ")
+                + "Say what the company filed in plain words, quote or closely paraphrase the key sentence, add no facts that are not in the "
+                  "quote, never predict the stock's reaction, then ask the audience one short question.")
+        short = (ev["quote"] or "").split(". ")[0][:150].rstrip(".")
+        fb = (f"{'BREAKING' if breaking else 'JUST FILED'}: ${e['ticker']} filed an 8-K — {label}."
+              + (f" “{short}.”" if short else "") + " How do you read it?")
+        if social.xlen(fb) > 235:
+            fb = f"{'BREAKING' if breaking else 'JUST FILED'}: ${e['ticker']} filed an 8-K — {label}. How do you read it?"
+        return {"kind": "event8k", "task": task, "cashtags": [e["ticker"]], "items": [(e, cj, fq)], "event": ev,
+                "event_key": f"event8k:{f['accn']}", "fallback": fb}
+    return None
+
+
+def display(e):
+    return social.display_name(e.get("name") or "")
+
+
 # ------------------------------------------------------------------ main
 def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_only=False):
     """Plan, write, polish and check the posts of these kinds; draw the charts into media/x/ and append to
@@ -576,7 +682,7 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
     log = [x for x in state.get("movers_log", []) if x[0][:10] == today.isoformat()]
 
     def kind_ok(kind):
-        if kind == "fund13f":              # one post per fund and filing, however many funds file the same day
+        if kind in ("fund13f", "event8k"):  # one post per filing (event8k: at most one per run, any number a day)
             return True
         if kind in MOVER_KINDS:            # movers: a daily cap and a minimum gap instead of once a day per format
             if force:
@@ -614,7 +720,8 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
              "insider": lambda: plan_insider(site, rows, c, by_ticker, state_ok, today),
              "calendar": lambda: plan_calendar(site, rows, c, by_ticker, today),
              "fund13f": lambda: plan_fund13f(site, rows, c, by_ticker, state, today),
-             "weekly": lambda: plan_weekly(site, rows, c, by_ticker, state, today)}.get(kind, lambda: None)()
+             "weekly": lambda: plan_weekly(site, rows, c, by_ticker, state, today),
+             "event8k": lambda: plan_event8k(site, rows, c, by_ticker, state_ok, today)}.get(kind, lambda: None)()
         if p:
             plans.append(p)
         else:
@@ -674,6 +781,8 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
             state[f"{p['kind']}:{t}"] = stamp
         if p.get("fund_key"):
             state[p["fund_key"]] = stamp
+        if p.get("event_key"):
+            state[p["event_key"]] = stamp
         if p.get("mover"):
             state[f"mover:{p['mover']}"] = stamp
             log.append([stamp, p["kind"], p["mover"]])

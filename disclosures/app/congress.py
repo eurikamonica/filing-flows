@@ -94,7 +94,22 @@ def extract_pdf(path,options,force_ocr=False):
             for item in ranges:
                 near=[w['text']for w in positioned if abs(w['top']-item['top'])<40*(int(options.get('ocr_dpi',200))/72 if method=='ocr' else 1)]
                 item['excerpt']=' '.join(near).replace('\x00','')
-            result.append({'page':i,'method':method,'mean_word_confidence':confidence,'text':text,'money_ranges':ranges})
+            scale=(int(options.get('ocr_dpi',200))/72) if method=='ocr' else 1
+            result.append({'page':i,'method':method,'mean_word_confidence':confidence,'text':text,'money_ranges':ranges,
+                           '_h':float(page.height)*scale,'_scale':scale,'_words':positioned})
+    # a transaction row can break across pages (asset name at the foot of one page, amount at the top of the next):
+    # an amount near a page edge also gets the neighbouring page's nearest lines in its excerpt
+    for k,p in enumerate(result):
+        for item in p['money_ranges']:
+            edge=60*p['_scale']
+            if k and item['top']<edge:
+                prev=result[k-1];tail=[w['text'] for w in prev['_words'] if w['top']>prev['_h']-edge*2.5]
+                if tail:item['excerpt']=' '.join(tail)+' '+item['excerpt']
+            if k+1<len(result) and item['top']>p['_h']-edge:
+                nxt=result[k+1];head=[w['text'] for w in nxt['_words'] if w['top']<edge*2.5]
+                if head:item['excerpt']=item['excerpt']+' '+' '.join(head)
+    for p in result:
+        for key in ('_h','_scale','_words'):p.pop(key,None)
     return result
 
 def public_excerpt(text):
@@ -173,7 +188,8 @@ def process_document(raw,meta,client,options,force_ocr=False):
     else:raise ValueError('Source did not return a PDF')
     write_json(folder/(digest+'.pages.json'),pages)
     categories=(options.get('jurisdictions',{}).get('ny',{}).get('value_categories') or {}) if str(meta.get('report_id','')).startswith('ny-') else None
-    preview=public_excerpt(pages[0]['text'][:4000]) if pages else ''
+    # every page's text (not just the first), marked by page, capped so one long statement cannot bloat its shard
+    preview=public_excerpt('\n\n'.join(f"— Page {p['page']} —\n{p['text'].strip()}" for p in pages if p.get('text','').strip())[:int(options.get('preview_chars',24000))]) if pages else ''
     return {**meta,'source_sha256':digest,'first_seen_at':now(),'extracted_at':now(),
             'page_count':len(pages),'page_methods':[{'page':p['page'],'method':p['method'],'mean_word_confidence':p['mean_word_confidence']}for p in pages],
             'candidates':make_candidates(pages,meta['report_id'],digest,categories),'text_preview':preview,'status':'extracted','stale':False}
