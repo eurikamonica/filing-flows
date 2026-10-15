@@ -63,7 +63,7 @@ def filing_text(q):
 def headline_lines(c, q, ticker):
     h = q.get("headline") or {}
     node = {n["id"]: n for n in q.get("nodes", [])}
-    m = lambda v: ("—" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.0f}M")
+    m = lambda v: ("—" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.0f}M" if abs(v) >= 0.95e6 else f"${v / 1e3:.0f}K")
     pc = lambda v: ("—" if v is None else f"{v:+.0f}%")
     om = "—" if h.get("om") is None else f"{h['om']:.1f}%"
     lines = [f"Company: {c['profile']['name']} ({ticker or 'no ticker'})",

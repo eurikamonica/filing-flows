@@ -404,7 +404,7 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url):
     for n, png in files:
         with open(os.path.join(xdir, n), "wb") as f:
             f.write(png)
-    fallback = social.compose_parts(c, q, cfg)[0][1]
+    fallback = social.compose_parts(c, q, dict(cfg, numbered=False))[0]["text"]
     post, via = tweet.post_for(c, q, cfg, e.get("ticker") or "", fallback, social.xlen, kind=kind, site_url=site_url)
     path = os.path.join(xdir, "pending.json")
     pending = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else []
