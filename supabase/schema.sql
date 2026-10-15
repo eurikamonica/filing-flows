@@ -165,14 +165,22 @@ drop policy if exists "ask for reports" on public.send_requests;
 create policy "read own requests" on public.send_requests for select using (auth.uid() = user_id);
 -- the insert policy ("ask for reports") is created further down, after public.am_i_owner()
 
--- a request starts pending, and at most 30 reports a day per reader (it only ever goes to their own inbox)
+-- a request starts pending, and at most 30 reports a day per reader (it only ever goes to their own inbox).
+-- Site owners have no limit, and X posts (post / post_holders / engage_*) never count towards anyone's 30.
 create or replace function public.send_requests_guard() returns trigger
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, auth as $$
 begin
   new.status := 'pending'; new.attempts := 0; new.error := null; new.claimed_at := null; new.sent_at := null;
   new.created_at := now();
+  if new.kind in ('post', 'post_holders') or new.kind like 'engage\_%' then
+    return new;
+  end if;
+  if exists (select 1 from public.site_owners o join auth.users u on lower(u.email) = lower(o.email) where u.id = new.user_id) then
+    return new;
+  end if;
   if (select count(*) from public.send_requests r
-      where r.user_id = new.user_id and r.created_at > now() - interval '24 hours') >= 30 then
+      where r.user_id = new.user_id and r.created_at > now() - interval '24 hours'
+        and r.kind not in ('post', 'post_holders') and r.kind not like 'engage\_%') >= 30 then
     raise exception 'limit: 30 reports a day' using errcode = 'P0001';
   end if;
   return new;
