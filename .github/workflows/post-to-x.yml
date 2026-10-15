@@ -86,17 +86,7 @@ jobs:
           python -m pipeline.notify --site "${{ steps.due.outputs.site }}" --site-url "${{ steps.due.outputs.site }}" --requests --posts
       - name: Publish the images and queue the post in Buffer
         if: steps.due.outputs.go == 'yes'
-        run: |
-          [ -f media/x/pending.json ] || { echo "no post was made"; exit 0; }
-          rm -rf media-branch && mkdir media-branch && cd media-branch
-          git init -q -b media
-          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git fetch -q --depth 1 origin media 2>/dev/null && git checkout -q media || true
-          mkdir -p x && cp ../media/x/*.png x/ 2>/dev/null || true
-          git add -A && git -c user.name=filing-flows -c user.email=actions@users.noreply.github.com commit -qm "post images $(date -u +%Y-%m-%dT%H:%MZ)" || true
-          git push -q origin HEAD:media
-          cd ..
-          python -m pipeline.buffer --site media --site-url "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media"
+        run: scripts/publish-media.sh
       - name: Start the next watch run
         if: always() && (github.event_name == 'schedule' || inputs.chained) && vars.POST_WATCH != 'off'
         env:

@@ -1,0 +1,68 @@
+name: Reddit trends to X
+
+# Once a day (and on demand): which companies on the site are trending on investing subreddits, then one discussion
+# post each (config/reddit-guide.md, written by GitHub Models) with the company's chart, queued in Buffer.
+# Optional secrets REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET (a free "script" app at reddit.com/prefs/apps) switch
+# from the public listing to the OAuth API. Settings: config/reddit.json. Media go to the "media" branch.
+
+on:
+  schedule:
+    - cron: "40 12 * * 1-5"      # 12:40 UTC = 8:40 ET, before the US open (weekdays)
+  workflow_dispatch:
+    inputs:
+      top:
+        description: "How many companies to post about"
+        type: string
+        default: "2"
+      dry_run:
+        description: "Only print the trends and the posts (nothing drawn or queued)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  models: read
+
+concurrency:
+  group: reddit-trends
+  cancel-in-progress: false
+
+jobs:
+  trends:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+      MEDIA_DIR: media
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      TWEET_MODEL: ${{ vars.TWEET_MODEL }}
+      BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+      BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
+      REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+      REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Previous picks (cooldown)
+        run: |
+          mkdir -p media/x
+          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/x/reddit-state.json" -o media/x/reddit-state.json || true
+      - name: Read Reddit and write the posts
+        run: |
+          owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          site="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python -m pipeline.reddit --site "$site" --top "${{ inputs.top || '2' }}" --dry-run
+          else
+            pip install playwright
+            python -m playwright install --with-deps chromium
+            python -m pipeline.reddit --site "$site" --top "${{ inputs.top || '2' }}"
+          fi
+      - name: Publish the images and queue the posts in Buffer
+        if: inputs.dry_run != true
+        run: scripts/publish-media.sh
