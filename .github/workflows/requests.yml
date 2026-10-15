@@ -4,6 +4,7 @@ name: Send requested reports
 #   "✉ Email me" on a company page   -> e-mails that report to the reader's own address
 #   "Email me the report for …"      -> the daily report of one filing date (home page)
 #   "Email me this thread" (owner)   -> the X thread of a quarter with its chart PNGs, to the site owner
+#   (the owner's "Post to X" buttons are handled by post-to-x.yml, not here)
 #   "Compare any two periods"        -> draws the comparison from SEC data and hands it back to the page
 #   a company found by the search    -> starts the scan, which builds its charts
 # Runs every 10 minutes, or within a minute or two when Supabase wakes it (optional, see README).
@@ -17,9 +18,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write      # the "media" branch holds chart images for posts queued in Buffer (owner's "Post to X" buttons)
+  contents: read
   actions: write       # start "Scan EDGAR and publish" at once when a reader asks for a new company
-  models: read         # GitHub Models writes the post text (pipeline/tweet.py)
 
 concurrency:
   group: send-requests
@@ -41,12 +41,6 @@ jobs:
       SMTP_PORT: ${{ vars.SMTP_PORT }}
       MAIL_DAILY_LIMIT: ${{ vars.MAIL_DAILY_LIMIT }}
       SITE_URL: ${{ vars.SITE_URL }}
-      MEDIA_DIR: media
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      TWEET_MODEL: ${{ vars.TWEET_MODEL }}
-      BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
-      BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -80,18 +74,3 @@ jobs:
           pip install playwright
           python -m playwright install --with-deps chromium
           python -m pipeline.notify --site "$site" --site-url "$site" --requests
-
-      # Owner's "Post to X" requests: the images go to the public "media" branch, then the posts into Buffer's queue.
-      - name: Publish post images and queue the posts in Buffer
-        if: always()
-        run: |
-          [ -f media/x/pending.json ] || { echo "no posts asked for"; exit 0; }
-          rm -rf media-branch && mkdir media-branch && cd media-branch
-          git init -q -b media
-          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git fetch -q --depth 1 origin media 2>/dev/null && git checkout -q media || true
-          mkdir -p x && cp ../media/x/*.png x/ 2>/dev/null || true
-          git add -A && git -c user.name=filing-flows -c user.email=actions@users.noreply.github.com commit -qm "post images $(date -u +%Y-%m-%dT%H:%MZ)" || true
-          git push -q origin HEAD:media
-          cd ..
-          python -m pipeline.buffer --site media --site-url "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media"

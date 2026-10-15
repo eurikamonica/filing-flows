@@ -160,8 +160,8 @@ data check are still held back, as with the X API mode.
 
 **Post to X from a company page (owner only, any time)**: with Owner tools on and signed in as the owner, each
 quarter's thread section has two buttons — *Earnings post* and *Who bought it (13F)*. They queue a request
-(`send_requests`, kinds `post` / `post_holders`; run `supabase/schema.sql` again once to allow them); the request
-runner (every 10 minutes) draws the chart, has the model write the post from `config/tweet-guide.md` plus the filing or
+(`send_requests`, kinds `post` / `post_holders`; run `supabase/schema.sql` again once to allow them); the *Post to X*
+workflow (`post-to-x.yml`: every 5 minutes, or at once with the Supabase wake-up, separate from reader e-mails) draws the chart, has the model write the post from `config/tweet-guide.md` plus the filing or
 the Disclosures holders data, publishes the images on the repository's `media` branch and queues the post in Buffer.
 No new keys beyond `BUFFER_API_KEY`; GitHub Models is used with the workflow's own token (`OPENAI_API_KEY` optional).
 

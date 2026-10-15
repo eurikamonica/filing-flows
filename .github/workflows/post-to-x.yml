@@ -1,0 +1,76 @@
+name: Post to X
+
+# The owner's "Post to X" buttons on a company page (send_requests kinds post / post_holders): draw the chart, have the
+# model write one post from config/tweet-guide.md + the filing (or the Disclosures holders data), publish the images on
+# the "media" branch and queue the post in Buffer. Separate from "Send requested reports" so it never waits behind
+# reader e-mails. Runs every 5 minutes, or at once when Supabase wakes it (repository_dispatch "post-request").
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  repository_dispatch:
+    types: [post-request]
+  workflow_dispatch:
+
+permissions:
+  contents: write      # the "media" branch holds the chart images Buffer loads
+  models: read         # GitHub Models writes the post text (pipeline/tweet.py)
+
+concurrency:
+  group: post-to-x
+  cancel-in-progress: false
+
+jobs:
+  post:
+    if: vars.SUPABASE_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      SITE_URL: ${{ vars.SITE_URL }}
+      MEDIA_DIR: media
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      TWEET_MODEL: ${{ vars.TWEET_MODEL }}
+      BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+      BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Anything waiting?
+        id: due
+        run: |
+          owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          site="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"
+          echo "site=$site" >> "$GITHUB_OUTPUT"
+          rc=0; python -m pipeline.notify --site "$site" --requests --posts --due || rc=$?
+          if [ $rc = 1 ]; then echo "nothing waiting"; echo "go=no" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ $rc != 0 ]; then exit $rc; fi
+          echo "go=yes" >> "$GITHUB_OUTPUT"
+      - name: Draw the chart and write the post
+        if: steps.due.outputs.go == 'yes'
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+          python -m pipeline.notify --site "${{ steps.due.outputs.site }}" --site-url "${{ steps.due.outputs.site }}" --requests --posts
+      - name: Publish the images and queue the post in Buffer
+        if: steps.due.outputs.go == 'yes'
+        run: |
+          [ -f media/x/pending.json ] || { echo "no post was made"; exit 0; }
+          rm -rf media-branch && mkdir media-branch && cd media-branch
+          git init -q -b media
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 origin media 2>/dev/null && git checkout -q media || true
+          mkdir -p x && cp ../media/x/*.png x/ 2>/dev/null || true
+          git add -A && git -c user.name=filing-flows -c user.email=actions@users.noreply.github.com commit -qm "post images $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git push -q origin HEAD:media
+          cd ..
+          python -m pipeline.buffer --site media --site-url "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media"

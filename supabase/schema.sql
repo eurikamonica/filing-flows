@@ -201,6 +201,10 @@ end $$;
 drop trigger if exists send_requests_wake on public.send_requests;
 create trigger send_requests_wake after insert on public.send_requests
   for each statement execute function public.send_requests_wake();
+-- the owner's "Post to X" requests wake their own workflow (post-to-x.yml) so they never queue behind e-mails
+drop trigger if exists post_requests_wake on public.send_requests;
+create trigger post_requests_wake after insert on public.send_requests
+  for each row when (new.kind in ('post', 'post_holders')) execute function public.send_requests_wake('post-request');
 
 -- The site owner: only accounts listed here see the owner tools (#owner: the X thread panel on company pages).
 -- Add your own address once in the SQL Editor:  insert into public.site_owners (email) values ('you@example.com');

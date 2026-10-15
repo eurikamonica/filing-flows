@@ -1163,12 +1163,17 @@ def _now_iso():
     return dt.datetime.now(dt.timezone.utc).isoformat()
 
 
-def claim_requests(supa, now):
-    """Take the waiting "Email me" requests (and ones a crashed run left half-done). Each row is claimed by one run."""
+POST_KINDS = ("post", "post_holders")          # the owner's "Post to X" requests: their own workflow (post-to-x.yml)
+
+
+def claim_requests(supa, now, posts=None):
+    """Take the waiting "Email me" requests (and ones a crashed run left half-done). Each row is claimed by one run.
+    posts=True claims only the X-post kinds, posts=False everything else, None (older callers) all of them."""
     stamp = now.isoformat()
-    got = supa.update("send_requests", {"status": "eq.pending"}, {"status": "sending", "claimed_at": stamp})
+    kinds = {} if posts is None else {"kind": ("in.(" if posts else "not.in.(") + ",".join(POST_KINDS) + ")"}
+    got = supa.update("send_requests", {"status": "eq.pending", **kinds}, {"status": "sending", "claimed_at": stamp})
     stale = (now - dt.timedelta(minutes=STALE_CLAIM_MINUTES)).isoformat()
-    got += supa.update("send_requests", {"status": "eq.sending", "claimed_at": f"lt.{stale}"},
+    got += supa.update("send_requests", {"status": "eq.sending", "claimed_at": f"lt.{stale}", **kinds},
                        {"status": "sending", "claimed_at": stamp})
     return sorted(got, key=lambda r: (r.get("created_at") or "", r["id"]))
 
@@ -1230,13 +1235,13 @@ def day_report_message(site, sub, day, sender, site_url, assets):
                          rest_title=f"Filed on {short}")
 
 
-def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets, budget):
+def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets, budget, posts=False):
     """E-mail what readers asked for: reports of quarters and fiscal years ("Email me"), a day's report (home page),
     and, for the site owner only, a quarter's X thread with its chart files. Returns the number of e-mails sent."""
     if dry_run:
         reqs = supa.select("send_requests", {"select": "*", "status": "eq.pending"})   # "*": with or without the kind column
     else:
-        reqs = claim_requests(supa, now)
+        reqs = claim_requests(supa, now, posts)
     if not reqs:
         return 0
     users = sorted({r["user_id"] for r in reqs})
@@ -1354,7 +1359,7 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
 
 
 def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=True, hour=None, daily_limit=None,
-        due_only=False, requests_only=False, tz=None):
+        due_only=False, requests_only=False, tz=None, posts=False):
     now = now or dt.datetime.now(dt.timezone.utc)
     hour = env_int("DIGEST_HOUR", DIGEST_HOUR) if hour is None else hour
     tz = tz or os.environ.get("DIGEST_TZ") or DEFAULT_TZ
@@ -1367,8 +1372,9 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
 
     if due_only:
         stale = (now - dt.timedelta(minutes=STALE_CLAIM_MINUTES)).isoformat()
-        n = len(supa.select("send_requests", {"select": "id", "status": "eq.pending"})) + \
-            len(supa.select("send_requests", {"select": "id", "status": "eq.sending", "claimed_at": f"lt.{stale}"}))
+        kinds = {"kind": ("in.(" if posts else "not.in.(") + ",".join(POST_KINDS) + ")"} if requests_only else {}
+        n = len(supa.select("send_requests", {"select": "id", "status": "eq.pending", **kinds})) + \
+            len(supa.select("send_requests", {"select": "id", "status": "eq.sending", "claimed_at": f"lt.{stale}", **kinds}))
         if not requests_only:
             subs = supa.select("subscriptions", {"select": "*", "email_on": "is.true"})    # "*": before and after new columns
             n += len(plan(readers_only(supa, subs), dels, site.json("index.json"), now, hour, MAX_AGE_DAYS, tz))
@@ -1378,7 +1384,7 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
     sent = 0
     assets = Assets(site, enabled=images and not dry_run)
     try:
-        sent += process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets, budget)
+        sent += process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets, budget, posts=posts and requests_only)
         budget -= sent
         if requests_only:
             return sent
@@ -1433,6 +1439,7 @@ def main():
     ap.add_argument("--check", action="store_true", help="exit 0 when the Supabase settings are present")
     ap.add_argument("--due", action="store_true", help="exit 0 when some reader has an e-mail due now; send nothing")
     ap.add_argument("--requests", action="store_true", help="only the reports readers asked for with \"Email me\"")
+    ap.add_argument("--posts", action="store_true", help="with --requests: only the owner's Post-to-X requests (post-to-x.yml); without it they are left alone")
     args = ap.parse_args()
     url, key = setting("SUPABASE_URL", url=True), setting("SUPABASE_SERVICE_KEY")
     user, password = os.environ.get("MAIL_USERNAME", ""), os.environ.get("MAIL_PASSWORD", "")
@@ -1444,7 +1451,7 @@ def main():
     site = Site(args.site)
     if args.due:
         try:
-            n = run(site, Supa(url, key), None, "", "", due_only=True, requests_only=args.requests)
+            n = run(site, Supa(url, key), None, "", "", due_only=True, requests_only=args.requests, posts=args.posts)
         except Exception as err:
             print(f"::error::reader alerts: {err}")
             sys.exit(2)
@@ -1459,7 +1466,7 @@ def main():
             mailer = Mailer(os.environ.get("SMTP_HOST") or "smtp.gmail.com", os.environ.get("SMTP_PORT") or 465, user, password)
     sender = os.environ.get("MAIL_FROM") or formataddr(("Filing Flows", parseaddr(user)[1] or user))
     run(site, Supa(url, key), mailer, sender, site_url.rstrip("/"), dry_run=args.dry_run, images=not args.no_images,
-        requests_only=args.requests)
+        requests_only=args.requests, posts=args.posts)
 
 
 if __name__ == "__main__":
