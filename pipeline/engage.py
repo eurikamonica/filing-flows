@@ -324,8 +324,20 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
                     + "\n\nCompare them on price, today's move, growth, margin and price/sales — only these numbers. Do not guess "
                       "why the mover moved.")
             cashtags += [x["ticker"] for x in ps]
+        h = (fq.get("headline") or {})
+        fact = (f" Last quarter: revenue {h.get('rev_fmt')}" + (f" ({h['yoy']:+.0f}% Y/Y)" if h.get("yoy") is not None else "")
+                + (f", operating margin {h['om']:.1f}%" if h.get("om") is not None else "") + ".") if h.get("rev_fmt") else ""
+        filed = f" after an 8-K (Item {ev['code']}: {ev['label']})." if ev else "."
+        if kind == "peers":
+            fb = f"${e['ticker']} {q['chg_pct']:+.1f}% today at ${q['price']:,.2f} vs " + ", ".join(
+                f"${x['ticker']} {live[Q.canon(x['ticker'])]['chg_pct']:+.1f}%" for x in peers_of(e, rows, live, c["movers"]["peers"])) + ". Which one makes more sense here?"
+        else:
+            lead = "Someone explain" if kind == "explain" else "What's happening with"
+            fb = f"{lead} ${e['ticker']}? {q['chg_pct']:+.1f}% today at ${q['price']:,.2f}{filed}{fact}"
+            if social.xlen(fb) > 235:
+                fb = f"{lead} ${e['ticker']}? {q['chg_pct']:+.1f}% today at ${q['price']:,.2f}{filed}"
         return {"kind": kind, "task": task, "cashtags": cashtags, "items": items, "mover": e["ticker"],
-                "event": ev if kind != "peers" else None}
+                "event": ev if kind != "peers" else None, "fallback": fb}
     return None
 
 
@@ -476,7 +488,12 @@ def plan_calendar(site, rows, c, by_ticker, today):
     task = (f"EARNINGS ON {day:%A %b} {day.day} (Nasdaq calendar), the largest companies first:\n" + "\n".join(lines)
             + "\n\nThe charts attached show each one's LAST quarter. Say who reports and when; one fact for the biggest; ask "
               "which report the audience is watching or what number matters most.")
-    return {"kind": "calendar", "task": task, "cashtags": [by_ticker[r["ticker"].replace("-", ".")]["ticker"] for r in picks], "items": items}
+    tags_ = [by_ticker[r["ticker"].replace("-", ".")]["ticker"] for r in picks]
+    fb = f"Reporting on {day:%A}: " + ", ".join(f"${t} ({r['when']})" for t, r in zip(tags_, picks)) + ". Which one are you watching?"
+    while social.xlen(fb) > 235 and len(tags_) > 2:
+        tags_, picks = tags_[:-1], picks[:-1]
+        fb = f"Reporting on {day:%A}: " + ", ".join(f"${t} ({r['when']})" for t, r in zip(tags_, picks)) + ". Which one are you watching?"
+    return {"kind": "calendar", "task": task, "cashtags": tags_, "items": items, "fallback": fb}
 
 
 # ------------------------------------------------------------------ insider purchases (Form 4)
@@ -524,7 +541,10 @@ def plan_insider(site, rows, c, by_ticker, state_ok, today):
             + (f"\nCluster: {cl['buyers30']} insiders bought ${tk} within 30 days ({', '.join(cl['buyers'][:4])})." if cl else "")
             + f"\n\nLatest filing figures (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, tk)}"
             + "\n\nSay what the insider did and when; never say it means the stock will rise. Ask the audience how they read it.")
-    return {"kind": "insider", "task": task, "cashtags": [tk], "items": [(e, cj, fq)], "insider_url": t.get("url")}
+    who = t.get('title') if t.get('title') and len(t['title']) <= 24 else t['role']
+    fb = (f"${tk} {who} {t['insider'].title()} bought {money(t['value'])} of stock at ${t['price']:,.2f} on "
+          f"{t['date']} (Form 4)." + (f" {cl['buyers30']} insiders bought in 30 days." if cl else "") + " How do you read it?")
+    return {"kind": "insider", "task": task, "cashtags": [tk], "items": [(e, cj, fq)], "insider_url": t.get("url"), "fallback": fb}
 
 
 # ------------------------------------------------------------------ main
@@ -610,8 +630,16 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
         try:
             post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True), allowed=p.get("allowed"))
         except Exception as err:
-            print(f"::warning::{p['kind']}: no post ({str(err)[:160]})")
-            continue
+            post = None
+            if p.get("fallback"):                  # the model is down: a plain rule-based post with the same facts
+                try:
+                    post = clean(p["fallback"], p["cashtags"], tags, allowed=p.get("allowed"))
+                    print(f"::warning::{p['kind']}: model unavailable, rule-based post used ({str(err)[:160]})")
+                except ValueError as why:
+                    print(f"::warning::{p['kind']}: rule-based post not usable ({why})")
+            if not post:
+                print(f"::warning::{p['kind']}: no post ({str(err)[:160]})")
+                continue
         e0, cj0, q0 = p["items"][0] if p["items"] else (None, None, None)
         reply = ("Charts: " + "; ".join(f"${e['ticker']} {q['label']} ({q.get('form')} filed {q.get('filed')})" for e, _, q in p["items"])
                  + f". Read automatically from the filings; not investment advice. {site_url}/#c-{e0['cik']}") if e0 else ""

@@ -86,85 +86,111 @@ def headline_lines(c, q, ticker):
 
 # ------------------------------------------------------------------ the model
 GEMINI = "https://generativelanguage.googleapis.com/v1beta/openai/"
-_gemini_model = None
+_gemini_models = None
 
 
-def _gemini_default(key):
-    """The newest general "flash" model this key can use (falls back to the gemini-flash-latest alias)."""
-    global _gemini_model
-    if _gemini_model:
-        return _gemini_model
-    _gemini_model = "gemini-flash-latest"
+def _gemini_candidates(key):
+    """Models to try, best first: the newest stable "flash", the flash aliases, then the lighter flash-lite models (the
+    free tier answers 503 "overloaded" for a busy model now and then; the next one usually answers)."""
+    global _gemini_models
+    if _gemini_models is not None:
+        return _gemini_models
+    found = []
     try:
-        r = requests.get(GEMINI + "models", headers={"Authorization": f"Bearer {key}"}, timeout=30)
+        r = requests.get(GEMINI + "models", headers={"Authorization": f"Bearer {key}"}, timeout=20)
         ids = [m.get("id", "").split("/")[-1] for m in r.json().get("data", [])]
-        flash = [i for i in ids if re.fullmatch(r"gemini-(\d+(?:\.\d+)?)-flash", i)]
-        if flash:
-            _gemini_model = max(flash, key=lambda i: float(re.search(r"(\d+(?:\.\d+)?)", i).group(1)))
+        ver = lambda i: float(re.search(r"(\d+(?:\.\d+)?)", i).group(1))
+        flash = sorted((i for i in ids if re.fullmatch(r"gemini-\d+(?:\.\d+)?-flash", i)), key=ver, reverse=True)
+        lite = sorted((i for i in ids if re.fullmatch(r"gemini-\d+(?:\.\d+)?-flash-lite", i)), key=ver, reverse=True)
+        found = flash[:2] + lite[:1]
     except Exception:
         pass
-    return _gemini_model
+    _gemini_models = list(dict.fromkeys(found + ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-2.5-flash", "gemini-2.5-flash-lite"]))
+    return _gemini_models
+
+
+def providers():
+    """[(name, url, key, [models])] for every configured key, in order of preference."""
+    env = os.environ.get
+    out = []
+    if env("GEMINI_API_KEY"):
+        out.append(("gemini", GEMINI + "chat/completions", env("GEMINI_API_KEY"),
+                    [env("TWEET_MODEL")] if env("TWEET_MODEL") else _gemini_candidates(env("GEMINI_API_KEY"))))
+    if env("ANTHROPIC_API_KEY"):
+        out.append(("anthropic", "https://api.anthropic.com/v1/messages", env("ANTHROPIC_API_KEY"), [env("TWEET_MODEL") or "claude-haiku-5-5"]))
+    if env("OPENAI_API_KEY"):
+        out.append(("openai", "https://api.openai.com/v1/chat/completions", env("OPENAI_API_KEY"), [env("TWEET_MODEL") or "gpt-4.1-mini"]))
+    if env("MODEL_API_URL") and env("MODEL_API_KEY"):
+        out.append(("custom", env("MODEL_API_URL"), env("MODEL_API_KEY"), [env("TWEET_MODEL") or "gpt-4.1-mini"]))
+    return out
 
 
 def provider():
-    """(name, url, key, model) of the configured model, or None."""
-    env = os.environ.get
-    if env("GEMINI_API_KEY"):
-        return "gemini", GEMINI + "chat/completions", env("GEMINI_API_KEY"), env("TWEET_MODEL") or _gemini_default(env("GEMINI_API_KEY"))
-    if env("ANTHROPIC_API_KEY"):
-        return "anthropic", "https://api.anthropic.com/v1/messages", env("ANTHROPIC_API_KEY"), env("TWEET_MODEL") or "claude-haiku-5-5"
-    if env("OPENAI_API_KEY"):
-        return "openai", "https://api.openai.com/v1/chat/completions", env("OPENAI_API_KEY"), env("TWEET_MODEL") or "gpt-4.1-mini"
-    if env("MODEL_API_URL") and env("MODEL_API_KEY"):
-        return "custom", env("MODEL_API_URL"), env("MODEL_API_KEY"), env("TWEET_MODEL") or "gpt-4.1-mini"
-    return None
+    p = providers()
+    return (p[0][0], p[0][1], p[0][2], p[0][3][0]) if p else None
 
 
-def chat(messages):
-    """One completion from the configured model. Busy / non-JSON answers are retried; the error says what came back
-    (status, content type, start of the body) so a failing run shows why."""
-    p = provider()
-    if not p:
-        raise RuntimeError("no model key: set the secret GEMINI_API_KEY (free), ANTHROPIC_API_KEY or OPENAI_API_KEY "
-                           "(GitHub Models was retired on 30 Jul 2026)")
-    name, url, key, model = p
+def _ask(name, url, key, model, messages, timeout):
     if name == "anthropic":
         system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
-        body = {"model": model, "max_tokens": 300, "temperature": 0.4, "system": system,
+        body = {"model": model, "max_tokens": 400, "temperature": 0.4, "system": system,
                 "messages": [m for m in messages if m["role"] != "system"]}
         headers = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
     else:
-        body = {"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 300}
+        body = {"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 400}
+        if name == "gemini":
+            body["reasoning_effort"] = "low"          # a short post needs no long thinking; keeps answers fast
         headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json", "Accept": "application/json"}
+    r = requests.post(url, json=body, headers=headers, timeout=timeout)
+    if r.status_code == 400 and name == "gemini" and "reasoning" in r.text.lower():
+        body.pop("reasoning_effort", None)
+        r = requests.post(url, json=body, headers=headers, timeout=timeout)
+    return r
+
+
+def chat(messages):
+    """One completion. Every configured provider and, for Gemini, several models are tried in turn; busy (429/5xx),
+    slow and non-JSON answers move on to the next. The error lists what each one said, so a failing run shows why."""
+    ps = providers()
+    if not ps:
+        raise RuntimeError("no model key: set the secret GEMINI_API_KEY (free), ANTHROPIC_API_KEY or OPENAI_API_KEY "
+                           "(GitHub Models was retired on 30 Jul 2026)")
     problems = []
-    for attempt in range(3):
-        try:
-            r = requests.post(url, json=body, headers=headers, timeout=90)
-        except requests.RequestException as err:
-            problems.append(f"{name}: {err.__class__.__name__}")
-            time.sleep(3 * (attempt + 1))
-            continue
-        if r.status_code in (429, 500, 502, 503, 504, 529):
-            wait = r.headers.get("retry-after")
-            problems.append(f"{name}: HTTP {r.status_code}")
-            time.sleep(min(30, int(wait)) if wait and wait.isdigit() else 5 * (attempt + 1))
-            continue
-        if r.status_code >= 400:
-            raise RuntimeError(f"{name} {model}: HTTP {r.status_code} {r.text[:200]!r}")
-        try:
-            data = r.json()
-        except ValueError:
-            problems.append(f"{name}: HTTP {r.status_code}, not JSON ({r.headers.get('content-type')}): {r.text[:120]!r}")
-            time.sleep(3 * (attempt + 1))
-            continue
-        if name == "anthropic":
-            content = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
-        else:
-            content = ((data.get("choices") or [{}])[0].get("message") or {}).get("content")
-        if content and content.strip():
-            return content.strip()
-        problems.append(f"{name}: empty answer")
-    raise RuntimeError("model unavailable — " + " | ".join(problems[-3:]))
+    for name, url, key, models in ps:
+        for model in models:
+            for attempt in range(2):
+                try:
+                    r = _ask(name, url, key, model, messages, timeout=45)
+                except requests.RequestException as err:
+                    problems.append(f"{model}: {err.__class__.__name__}")
+                    break                                   # slow model: try the next one rather than wait again
+                if r.status_code in (429, 500, 502, 503, 504, 529):
+                    problems.append(f"{model}: HTTP {r.status_code}")
+                    if attempt == 0 and r.status_code == 429:
+                        wait = r.headers.get("retry-after")
+                        time.sleep(min(20, int(wait)) if wait and wait.isdigit() else 5)
+                        continue
+                    break
+                if r.status_code == 404:
+                    problems.append(f"{model}: not available")
+                    break
+                if r.status_code >= 400:
+                    problems.append(f"{model}: HTTP {r.status_code} {r.text[:120]!r}")
+                    break
+                try:
+                    data = r.json()
+                except ValueError:
+                    problems.append(f"{model}: not JSON ({r.headers.get('content-type')})")
+                    break
+                if name == "anthropic":
+                    content = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+                else:
+                    content = ((data.get("choices") or [{}])[0].get("message") or {}).get("content")
+                if content and content.strip():
+                    return content.strip()
+                problems.append(f"{model}: empty answer")
+                break
+    raise RuntimeError("model unavailable — " + " | ".join(problems[-5:]))
 
 
 def clean(post, ticker, tags, xlen, limit=270):
