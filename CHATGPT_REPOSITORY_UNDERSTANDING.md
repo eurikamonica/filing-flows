@@ -1,214 +1,214 @@
-# ChatGPT 对 Filing Flows 仓库的理解
+# ChatGPT's Understanding of the Filing Flows Repository
 
-> 作者：ChatGPT（OpenAI）  
-> 检查日期：2026-10-15（北京时间）  
-> 对象：`eurikamonica/filing-flows` 的 `main` 分支  
-> 检查时观察到的 main 提交：`a57ea80e29fcc6e83c093522577a1eade75e655e`  
-> 性质：基于仓库文件阅读的架构与业务理解，不代表仓库作者的正式设计说明，也不是完整审计或线上运行验收。仓库有自动数据提交，本文不是对一个固定提交全部文件的逐项审计。
+> Author: ChatGPT (OpenAI)  
+> Review date: October 15, 2026 (Asia/Shanghai)  
+> Repository and branch: `eurikamonica/filing-flows`, `main`  
+> Main commit observed during the review: `a57ea80e29fcc6e83c093522577a1eade75e655e`  
+> Status: An architectural and functional interpretation based on reading repository files. This is not the repository author's official specification, a complete audit, or a production acceptance report. Automated data commits occur in this repository; this review is not an exhaustive inspection of every file at one pinned commit.
 >
-> 本次任务仅新增本 Markdown 文档；不修改现有代码、配置、工作流、数据、原 README 或其他文件。
+> Change scope: This task added this Markdown document and then translated it into English. Existing code, configuration, workflows, data, the original README, and other files are unchanged by these documentation commits.
 
-## 1. 我的总体理解
+## 1. Overall understanding
 
-Filing Flows 是一个以 SEC 财报为核心的“披露获取—规则解析—财务口径统一—可追溯可视化—订阅分发”系统。浏览器主要读取预先生成的静态 JSON；需要访问 SEC、生成新图、处理邮件和社交发布的工作由 Python 与 GitHub Actions 承担。Supabase 为可选的账户、偏好和请求队列提供服务。
+Filing Flows is a system for acquiring SEC disclosures, parsing them with rules, normalizing financial definitions, producing traceable visualizations, and distributing subscription reports. The browser primarily consumes generated static JSON. Python and GitHub Actions handle SEC access, chart generation, email processing, and social publishing. Supabase optionally provides accounts, preferences, and request queues.
 
-当前仓库已超出最初的财报 Sankey 网站：它同时包含 Disclosure Hub、Android 客户端、邮件订阅、站长日报、X/Buffer 发布及互动选题工具。因此不能再把它理解为只有一个静态图表页面，也不能把早期 FastAPI/React 方案直接套在当前实现上。当前主站入口是原生 JavaScript、HTML 和 CSS，核心数据流水线是 Python。
+The current repository extends beyond the original earnings Sankey website. It includes the Disclosure Hub, an Android client, email subscriptions, owner reports, X/Buffer publishing, and engagement tools. The current main website uses plain JavaScript, HTML, and CSS, with a Python data pipeline. Earlier FastAPI/React designs should not be assumed to describe this implementation.
 
-核心价值在于：将不同公司、不同标签和不同报告期间的财务数据转为一致的图表，同时保留原始来源、计算方法、异常检查与口径选择。
+Its central value is turning financial data from different companies, tags, and reporting periods into consistent charts while retaining sources, calculation methods, checks, and choices of financial definition.
 
-## 2. 目录与职责
+## 2. Directories and responsibilities
 
-| 位置 | 我理解的职责 |
+| Location | My understanding of its responsibility |
 | --- | --- |
-| `pipeline/build.py` | 主流程、状态存储、申报处理、历史补齐、重读、预算控制和网站数据生成 |
-| `pipeline/sec.py`、`pipeline/scan.py` | SEC 网络访问及最新申报/历史日索引发现 |
-| `pipeline/facts.py` | companyfacts 标签映射、季度/年度取值、累计值差分与期间选择 |
-| `pipeline/dims.py` | 从申报 XBRL 实例与标签文件读取产品/业务分部收入等维度数据 |
-| `pipeline/release.py` | 8-K 业绩新闻稿表格解析与初步财报数据 |
-| `pipeline/reported.py` | 公司自报 FCF 对账、展示资格、定义和回退说明 |
-| `pipeline/model.py` | 将原始财务值规范化为统一损益及现金流结构 |
-| `pipeline/sankey.py` | 财务结构转成节点、连线及比较值的图表规格 |
-| `pipeline/checks.py`、`pipeline/sources.py` | 异常检查和每个数字的来源说明 |
-| `pipeline/text.py`、`pipeline/analysis.py` | 申报原文提取及规则生成的分析段落 |
-| `web/app.js` | 主站页面、路由、搜索、账户、偏好、比较请求和站长工具 |
-| `web/sankey.js` | 图表布局、SVG 交互和导出共用的绘制场景 |
-| `web/styles.css`、`web/index.html` | 主站样式与页面壳 |
-| `scripts/build_site.py`、`scripts/seo.py` | 静态站组装、公开配置、搜索引擎页面和域名文件 |
-| `pipeline/custom.py` | 用户请求的公司构建、历史比较和重读等异步任务 |
-| `pipeline/notify.py`、`pipeline/owner.py` | 读者通知与站长报告 |
-| `pipeline/social.py`、`tweet.py`、`buffer.py`、`engage.py` | 帖文、图片、模型辅助写作、Buffer 队列与互动内容 |
-| `config/` | 星标公司、发布配置和写作指南 |
-| `supabase/schema.sql` | 账户相关表、RLS、请求限制及可选工作流唤醒逻辑 |
-| `disclosures/` | 已集成的持仓、官员披露与其他市场/公共数据子系统 |
-| `android/` | Android 应用工程；清单包含主页面、图表页面、通知及链接处理 |
-| `tests/` | 财务流水线离线测试、测试夹具与 Playwright 端到端检查 |
-| `.github/workflows/` | 真正被 GitHub Actions 识别和执行的工作流目录 |
+| `pipeline/build.py` | Orchestration, state storage, filing processing, history backfill, rereads, time budgets, and website data generation |
+| `pipeline/sec.py`, `pipeline/scan.py` | SEC access and discovery through recent filings and historical daily indexes |
+| `pipeline/facts.py` | Companyfacts tag mapping, quarterly/annual values, YTD differencing, and period selection |
+| `pipeline/dims.py` | Product and business-segment revenue from filing XBRL instances and label files |
+| `pipeline/release.py` | Earnings-release tables in 8-K filings and preliminary financial data |
+| `pipeline/reported.py` | Company-reported FCF reconciliation, chart eligibility, definitions, and fallback explanations |
+| `pipeline/model.py` | Normalization into a consistent income-statement and cash-flow structure |
+| `pipeline/sankey.py` | Chart specifications containing financial nodes, links, and comparison values |
+| `pipeline/checks.py`, `pipeline/sources.py` | Data checks and explanations of where individual figures come from |
+| `pipeline/text.py`, `pipeline/analysis.py` | Filing text extraction and rule-generated analysis |
+| `web/app.js` | Pages, routing, search, accounts, preferences, comparison requests, and owner tools |
+| `web/sankey.js` | Chart layout and a drawing scene shared by SVG interaction and exports |
+| `web/styles.css`, `web/index.html` | Website styling and page shell |
+| `scripts/build_site.py`, `scripts/seo.py` | Static assembly, public configuration, search-engine pages, and domain files |
+| `pipeline/custom.py` | Asynchronous requests for company builds, historical comparisons, and rereads |
+| `pipeline/notify.py`, `pipeline/owner.py` | Reader notifications and owner reports |
+| `pipeline/social.py`, `pipeline/tweet.py`, `pipeline/buffer.py`, `pipeline/engage.py` | Posts, images, model-assisted writing, Buffer queues, and engagement content |
+| `config/` | Starred companies, publishing settings, and writing guides |
+| `supabase/schema.sql` | Account tables, RLS, request limits, and optional workflow wake-ups |
+| `disclosures/` | Integrated holdings, official disclosures, and other market/public-data modules |
+| `android/` | Android project; the manifest includes main/chart activities, notification permissions, and link handling |
+| `tests/` | Offline pipeline tests, fixtures, and Playwright end-to-end checks |
+| `.github/workflows/` | Workflow definitions recognized and executed by GitHub Actions |
 
-根目录也有 `scan.py`、`sec.py` 和多个 YAML 文件。理解实际部署时，应以工作流正在调用的 `pipeline.*` 和 `.github/workflows/*.yml` 为准；根目录的同名文件不会仅因存在就自动成为运行入口。
+The root also contains `scan.py`, `sec.py`, and several YAML files. Actual execution should be traced through the `pipeline.*` modules and `.github/workflows/*.yml` files that workflows invoke. Similarly named root files do not automatically become execution entry points.
 
-## 3. 财报从 SEC 到网页的过程
+## 3. From an SEC filing to a website chart
 
-1. `pipeline.scan` 发现 10-Q、10-K 和 8-K；8-K 财报入口关注业绩发布，不表示所有 8-K 都会生成季度损益图。
-2. `build.py` 结合 accession、已处理状态和待重试状态决定本轮任务，读取 submissions、companyfacts 和必要的申报文件。
-3. `facts.py` 提取非维度金额；`dims.py` 从实例文件补充产品/分部信息；新闻稿路径由 `release.py` 处理。
-4. `model.normalize()` 统一损益结构，推导必要的残差和缺失项目，记录相关标记。
-5. `sankey.py` 生成图表规格，结合来源、检查、比较及文字说明，写出供网站使用的数据。
-6. `scripts/build_site.py` 组装 `web/` 与生成的数据；`stage-public.py` 加入披露子站。
-7. Actions 部署 Pages；读者通知和 Buffer 队列等流程按各自条件执行。
+1. `pipeline.scan` discovers 10-Q, 10-K, and 8-K filings. The earnings path for 8-K focuses on earnings releases; it does not turn every 8-K into a quarterly income chart.
+2. `build.py` uses accession numbers, processed state, and pending retries to select work, then reads submissions, companyfacts, and necessary filing documents.
+3. `facts.py` extracts non-dimensional amounts. `dims.py` adds product/segment data from instances. `release.py` handles release tables.
+4. `model.normalize()` standardizes the financial structure, derives necessary residuals or missing items, and records flags.
+5. `sankey.py` creates chart specifications, combined with sources, checks, comparisons, and explanatory text for website data.
+6. `scripts/build_site.py` assembles `web/` and generated data; `stage-public.py` adds the disclosure site.
+7. Actions deploys Pages. Reader notifications and Buffer queue processing run under their own conditions.
 
-我的理解是：这是定时批处理、增量存储和静态发布相结合的架构。“新申报出现后自动更新”并不等于逐秒行情流。GitHub 排队、SEC companyfacts 延迟、批次预算以及部署耗时都会影响实际可见时间。
+This architecture combines scheduled batch processing, incremental storage, and static publishing. Automatic updates after new filings do not imply a second-by-second market feed. GitHub queues, SEC companyfacts latency, batch budgets, and deployment time affect when readers see updates.
 
-### 状态与发布的分离
+### State and publication are separate
 
-- `main` 保存源码及披露模块提交的数据。
-- 财报流水线将 `store/state.json`、`store/companies/{CIK}.json` 等状态保存到 `data` 分支；扫描工作流会恢复并重新保存该分支。
-- `_site/` 是构建产物，交给 Pages artifact 和部署任务。
-- 启用 `SELF_HOST` 时，可以额外把构建结果推到 `site` 分支。
-- `media` 是社交图片发布流程使用的分支路径之一，不能与财报状态分支混为一谈。
+- `main` holds source code and data committed by the disclosure module.
+- The earnings pipeline stores state such as `store/state.json` and `store/companies/{CIK}.json` on the `data` branch, restored and saved by the scanning workflow.
+- `_site/` is a build output supplied to the Pages artifact and deployment jobs.
+- When `SELF_HOST` is enabled, built files can also be pushed to the `site` branch.
+- `media` is used by social-image publishing and is distinct from the financial state branch.
 
-因此，不能只看 main 是否有最新财报 JSON 来判断财报扫描是否成功；也不能把披露模块的数据存储方式套到主财报流水线上。
+The presence or absence of fresh earnings JSON on main alone does not establish whether earnings collection succeeded. Disclosure storage and earnings-pipeline storage follow different paths.
 
-## 4. 财务口径与解析规则
+## 4. Financial definitions and parsing rules
 
-### 4.1 季度不一定是原始报表直接给出的三个月数字
+### 4.1 Quarterly values may require cumulative differencing
 
-`facts.py` 优先寻找季度期间值；若只有累计值，则尝试同起始日的累计差分：
+`facts.py` first looks for quarterly durations. When only cumulative values are available, it attempts differences between cumulative periods with the same start date:
 
 ```text
-Q2 = 前六个月累计 − 第一季度累计
-Q3 = 前九个月累计 − 前六个月累计
-Q4 = 全年 − 前九个月累计
+Q2 = First six months − First quarter
+Q3 = First nine months − First six months
+Q4 = Full year − First nine months
 ```
 
-代码用天数区间匹配季度和年度，也考虑 52/53 周财年。因此财年季度不应直接等同于自然年季度。行业聚合另有自然季度分组规则。
+The code matches quarterly and annual durations using day ranges, including 52/53-week fiscal years. Fiscal quarters should therefore be distinguished from calendar quarters. Industry aggregation has its own calendar-quarter grouping rule.
 
-companyfacts 索引保留同期间较新申报的事实。这有利于吸收后续更新，但也意味着当前历史图不一定严格重现“当时首次披露版本”；本文没有确认其为 point-in-time 回测数据库。
+The companyfacts index retains the more recently filed fact for the same period. This can incorporate later updates, but historical charts may consequently differ from what was first disclosed at the time. This review does not establish that the repository is a point-in-time backtesting database.
 
-### 4.2 收入标签存在优先级
+### 4.2 Revenue tags have selection priorities
 
-不同公司的收入标签不同。`facts.CONCEPTS` 有多个候选标签，但不是简单选择数值最大的一个：
+Companies use different revenue tags. `facts.CONCEPTS` lists candidates, with rules beyond simply taking the largest number:
 
-- 有 `Revenues` 时，优先把它当作损益表总收入。
-- 没有该标签时，收入候选才使用相应数值选择规则。
-- 合同客户收入可能与总收入不同，例如其他收入包含净损失。
-- 分部/产品明细必须检查是否与总额匹配；`dims.py` 的分部匹配容差为 0.4%。
-- 对只与合同收入相符或与两个总额都不符的明细，有不同的对账与展示处理。
+- When available, `Revenues` takes priority as total income-statement revenue.
+- Without that tag, the applicable candidate-selection rules are used.
+- Revenue from customer contracts can differ from total revenue, for example when other revenues include net losses.
+- Product/segment lines are checked against totals; the partition tolerance in `dims.py` is 0.4%.
+- Lines matching contract revenue, or matching neither total, receive different reconciliation and display treatment.
 
-这是通用财报适配规则，不是把所有公司的分部名称固定成某一家公司的产品。
+This is a general adaptation mechanism, rather than a fixed product list copied from one company.
 
-### 4.3 损益与现金流桥接
+### 4.3 Income and cash-flow bridges
 
-`model.py` 中明确存在：
+`model.py` explicitly implements:
 
 ```text
-营业外净额 = 税前利润 − 营业利润
-计算型 FCF = 经营现金流 − 资本支出
+Net non-operating income = Pretax income − Operating income
+Calculated FCF = Operating cash flow − Capital expenditures
 ```
 
-系统还处理毛利路径、营业费用拆分、少数股东损益、税收收益、净亏损，以及净利润到经营现金流的桥接。
+The system also handles gross-profit paths, operating-cost breakdowns, noncontrolling interests, tax benefits, losses, and the bridge from earnings to operating cash flow.
 
-部分缺失或不一致项目会根据恒等式补齐并标记；费用标签重叠时会退回总额展示。图上的每个节点因此不必然都是公司报表里原样存在的独立 line item。尤其现金流桥的剩余调整不能自动解释为全部都是营运资本变化。
+Some missing or inconsistent amounts are derived using accounting identities and flagged. Overlapping expense tags can cause a fallback to aggregate costs. A chart node is therefore not necessarily a separately reported line item. In particular, the residual cash-flow adjustment should not automatically be interpreted entirely as working-capital changes.
 
-Sankey 连线采用非负宽度表达正负经济含义；负利润、负现金流或 capex 超出 OCF 的缺口通过专门节点/方向处理。读图时应同时看节点名称、符号和说明。
+Sankey bands use nonnegative widths to represent signed economic values. Losses, negative operating cash flow, and capex exceeding OCF are represented through dedicated nodes or flow directions. Labels, signs, and explanations are essential to interpretation.
 
-### 4.4 公司自报 FCF 与公式 FCF 分开
+### 4.4 Company-reported FCF and calculated FCF are distinct
 
-`reported.py` 会从业绩新闻稿读取公司 FCF 对账表，要求经营现金流与 SEC 对应季度匹配，并验证表内加总。满足绘图条件时可展示公司定义，否则保留公式口径并说明公司自报值或未采用原因。
+`reported.py` reads company FCF reconciliations from earnings releases. Acceptance requires the relevant OCF to match the SEC quarterly figure and the reconciliation to add up. When eligible, the chart can use the company's definition. Otherwise, it retains the calculated definition and explains the company's figure or the fallback reason.
 
-例如，公司定义可能还扣除融资租赁本金，或将资产出售及政府激励计入资本支出调整。不能把这类差异直接判断为计算错误。
+Company definitions may deduct finance-lease principal or adjust capex for asset sales and government incentives. Such differences are not automatically calculation errors.
 
-账户中的 `fcf_basis` 对应三种选择：
+The account preference `fcf_basis` has three choices:
 
-| 值 | 我的理解 |
+| Value | My understanding |
 | --- | --- |
-| `company` | 公司口径优先，不可用时回退计算口径 |
-| `noted` | 公司口径优先，并显式提示未能采用的原因 |
-| `ocf` | 使用计算口径，并保留相关公司口径信息 |
+| `company` | Prefer the company definition; fall back to calculation when unavailable |
+| `noted` | Prefer the company definition and explicitly explain why it could not be used |
+| `ocf` | Use the calculated definition while retaining relevant company-definition information |
 
-这里的“计算口径”还可能影响收入明细与总额的对应方式，不仅仅影响 FCF。当前文档与构建逻辑还将全年 FCF 与季度公司口径处理区分。
+The calculated view may also affect revenue-line reconciliation, beyond FCF alone. Current documentation and build logic distinguish annual FCF treatment from quarterly company-reported treatment.
 
-## 5. 图表与前端
+## 5. Charts and frontend
 
-主站使用 hash 路由，例如公司、全年、行业、账户和站长页面；不是当前仓库中一个 React/Vite 应用。
+The main site uses hash routes for companies, fiscal years, sectors, accounts, and owner tools. Its current frontend is plain JavaScript.
 
-后端 Python 决定财务语义、节点和连线；`web/sankey.js` 决定布局与绘制。屏幕 SVG 与 PNG/JPG/PDF 导出使用共同的场景表示，屏幕上的交互标记可以从导出中排除。
+Python determines financial semantics, nodes, and links. `web/sankey.js` determines layout and drawing. Screen SVG and PNG/JPG/PDF exports share a scene representation, allowing screen-only interaction markers to be excluded from exports.
 
-已读代码体现的功能包括：
+Features visible in the reviewed implementation include:
 
-- 标准图、环比及同比比较，增长暗带与可选的减少阴影。
-- 节点点击后的历史趋势、来源引用和申报原文说明。
-- 季度与全年切换、行业/板块聚合。
-- 可选拖动缩放、PNG/JPG/PDF 导出、主题偏好。
-- 请求尚未构建公司的图表，以及请求任意两个同类期间的比较。
-- 主站公司页面读取披露子站生成的股票持有人信息。
+- Standard, quarter-over-quarter, and year-over-year charts, with dark growth strips and optional decrease hatching.
+- Node-level historical trends, source citations, and filing-text explanations.
+- Quarterly/annual switching and sector/industry aggregation.
+- Optional drag/zoom, PNG/JPG/PDF export, and theme preferences.
+- Requests to build previously unavailable companies and compare two periods of the same type.
+- Company-page holdings information generated by the disclosure module.
 
-历史比较需要后端任务读取 SEC 后生成结果，浏览器按钮不是直接在前端完成所有 SEC 抓取。
+Requested historical comparisons require backend work to read SEC data and generate results. The browser button does not perform the entire SEC retrieval process locally.
 
-## 6. 账户、通知与权限
+## 6. Accounts, notifications, and permissions
 
-Supabase 是可选服务。公开图表与账户能力分离：配置后，读者可通过邮件验证码登录、保存关注和展示偏好、请求报告并管理邮件通知。
+Supabase is optional. With it configured, readers can sign in using an email code, save follows and display preferences, request reports, and manage email delivery.
 
-`schema.sql` 定义 `subscriptions`、`deliveries`、`send_requests`、`chart_requests`、`company_requests`、`reread_requests`、`site_owners` 和 `owner_settings` 等表及相关函数。
+`schema.sql` defines tables and associated functions for `subscriptions`, `deliveries`, `send_requests`, `chart_requests`, `company_requests`, `reread_requests`, `site_owners`, and `owner_settings`.
 
-我的理解是，权限依据是数据库 RLS、用户身份与站长验证，不能仅依赖前端是否隐藏按钮。公开 anon key 与服务端 service key 用途不同，后者由工作流环境提供。本次没有读取任何 secret，也没有验证线上数据库是否已执行当前 schema。
+Authorization is intended to rely on database RLS, authenticated identity, and owner verification. Hiding frontend buttons alone is insufficient. The public anon key and server-side service key have different purposes; the latter is supplied through workflow environments. This review did not read secrets or verify whether the deployed database has applied the current schema.
 
-邮件、站长日报、用户按需报告和社交发帖是不同任务。代码存在并不证明 SMTP、Supabase、Buffer 或模型供应商当前配置成功。
+Reader alerts, owner reports, on-demand reports, and social posts are separate jobs. Their code being present does not establish that SMTP, Supabase, Buffer, or model providers are currently configured successfully.
 
-## 7. 当前仓库中的 Disclosure Hub
+## 7. Disclosure Hub in the current repository
 
-`disclosures/README.md` 开头明确说明该模块现在已放进原仓库，发布到 `/disclosures/`。所以“披露模块只存在于另一个独立仓库”已不适用于这里的当前结构。
+The beginning of `disclosures/README.md` explicitly states that this module now lives in the original repository and is published at `/disclosures/`. The current structure therefore includes an integrated disclosure subsystem.
 
-模块包含 13F、官员披露、COT、FDIC 银行数据、N-PX，并出现价格估算、市场视图、Form 4 内部人及期权相关代码入口。官员资料包含 PDF/OCR、候选提取及人工复核的设计；目录中存在某个采集器不等于全部地区、全部人员或全部历史均覆盖完成。
+It contains 13F holdings, officials' disclosures, COT, FDIC bank data, and N-PX, with additional entry points for price estimates, market views, Form 4 insiders, and options. The officials workflow includes PDF/OCR extraction, candidates, and human review. A collector's presence does not establish complete coverage of every jurisdiction, person, or historical period.
 
-`stage-public.py` 负责：
+`stage-public.py`:
 
-- 将披露静态站加入主站构建；
-- 排除采集专用缓存和队列状态；
-- 生成按 ticker 查询的持有人索引，供财报公司页使用。
+- Adds the disclosure static site to the main build.
+- Excludes collector-only caches and queue state.
+- Generates a ticker-based holders index for earnings company pages.
 
-阅读这些数据要保留各自语义：13F 是报告期持仓而非实时成交；官员披露可以是金额区间；价格推算不是实际成交价；COT 是分类持仓；银行机构与上市控股公司不必一致；N-PX 是投票披露。应结合来源、期间、处理进度和复核状态解释结果。
+Each dataset retains its own meaning: 13F describes reported holdings, officials' disclosures can use value ranges, estimated prices are not execution prices, COT describes trader categories, bank entities may differ from listed holding companies, and N-PX describes voting disclosures. Sources, reporting periods, processing progress, and review status should guide interpretation.
 
-披露 README 保留了一段旧独立版本说明，其中仍有“原始仓库未修改”“部分州级自动化未实现”等旧文字。应结合文件顶部的集成说明及当前代码判断，不能直接把旧段落当作现状。
+The disclosure README retains older standalone-package text, including statements that the original repository was unchanged or that some state-level automation was unimplemented. Its integration notes and current implementation should be consulted when interpreting those historical statements.
 
-## 8. 自动化的实际入口
+## 8. Automation entry points
 
-下表来自已读工作流；cron 使用 UTC，配置频率不是完成时间保证。
+The following reflects reviewed workflow definitions. Cron times use UTC; configured frequency does not guarantee completion times.
 
-| 工作流 | 作用 |
+| Workflow | Purpose |
 | --- | --- |
-| `scan.yml` | 分钟 4/19/34/49 扫描财报、构建、部署；支持手动与 dispatch；部署后按条件通知读者和排队 Buffer |
-| `disclosures.yml` | 分钟 7/22/37/52 跑 holdings；每小时 :17 跑 congress；多数小时 :43 跑 markets，10:43 跑 all；:28/:58 跑 insiders；工作日 21:20 跑 options |
-| `requests.yml` | 用户请求相关工作流入口 |
-| `email-thread.yml`、`mail-test.yml` | 单独的邮件线程与邮件测试入口 |
-| `post-to-x.yml`、`engage.yml`、`movers.yml` | 独立社交发布、互动选题和异动相关入口 |
-| `android.yml` | Android 构建相关入口 |
+| `scan.yml` | Scans, builds, and deploys at minutes 4/19/34/49; supports manual and dispatch triggers; conditionally notifies readers and queues Buffer posts after deployment |
+| `disclosures.yml` | Holdings at minutes 7/22/37/52; congress hourly at :17; markets at :43 in most hours and all modules at 10:43; insiders at :28/:58; options at 21:20 on weekdays |
+| `requests.yml` | Reader-request workflow entry point |
+| `email-thread.yml`, `mail-test.yml` | Separate email-thread and email-test entry points |
+| `post-to-x.yml`, `engage.yml`, `movers.yml` | Separate social publishing, engagement, and market-mover entry points |
+| `android.yml` | Android build entry point |
 
-披露采集工作流提交 `disclosures/docs/data/` 到 main，财报扫描工作流再将披露站纳入发布。它们不是同一个事务；采集成功与网站已展示最新数据需要分别判断。
+The disclosure collector commits `disclosures/docs/data/` to main; the earnings scan incorporates the disclosure site into publication. These are separate operations, so successful collection and publication of fresh data should be evaluated separately.
 
-`scan.yml` 使用 Python 3.11，`disclosures.yml` 使用 Python 3.12。主流水线还设置运行预算，将补历史、重读和新申报工作分配到多轮，避免一次无限扩张。
+`scan.yml` uses Python 3.11, while `disclosures.yml` uses Python 3.12. The earnings pipeline enforces a run budget, distributing backfills, rereads, and new filings across runs.
 
-## 9. 规则解析与语言模型的边界
+## 9. Rules and language-model boundaries
 
-财报数字解析、规范化、Sankey 构建与常规分析段落主要按固定规则实现。
+Financial extraction, normalization, Sankey construction, and regular analysis paragraphs are primarily implemented through fixed rules.
 
-但当前整个仓库不能概括为“完全没有语言模型”：`pipeline/tweet.py` 明确实现模型写帖入口，接收指南、数字和申报摘录，并对长度、cashtag 等做检查；失败时可回退规则文案。模型供应商是否可用取决于实际密钥和接口，本次未测试。
+The entire repository cannot be described as having no language-model usage. `pipeline/tweet.py` explicitly supports model-written posts using guides, figures, and filing excerpts. It checks properties such as length and cashtags and can fall back to rule-based wording. Provider availability depends on actual credentials and interfaces, which were not tested here.
 
-因此，我理解的边界是：模型可辅助传播内容，但不应被误认为核心财报数字的唯一来源。README 中“没有语言模型”的旧表述应限定到相应的财务分析路径，不能扩展成全仓库结论。
+My understanding is that models can assist distribution content while the financial pipeline supplies the core figures. The README's broad no-language-model statement should be interpreted in the context of the relevant financial-analysis path rather than applied to every module.
 
-## 10. 检查范围、限制和后续阅读顺序
+## 10. Review scope, limitations, and reading order
 
-本次读取了根目录及主要子目录清单、README，并重点检查财报主流程、取值与规范化、分部、公司 FCF、检查与来源相关入口、前端、静态组装、Supabase schema、扫描/披露工作流、披露采集与发布桥接、模型写帖入口和测试结构。
+This review inspected root and major directory listings, READMEs, and key files covering earnings orchestration, value extraction and normalization, dimensions, company FCF, checks and source-related entry points, frontend behavior, static assembly, Supabase schema, scan/disclosure workflows, disclosure collection and publication integration, model-assisted posts, and test structure.
 
-本次没有：
+This review did not:
 
-- 实际执行 SEC 扫描、完整测试套件或浏览器端到端测试；
-- 验证当前线上每家公司图表是否正确；
-- 查询私密配置或实际发送邮件、发布帖子、触发工作流；
-- 完整审计 Android、所有披露采集器或每个第三方接口；
-- 逐条核对 data 分支和披露快照的覆盖率。
+- Execute SEC collection, the full test suite, or browser end-to-end tests.
+- Verify the accuracy of every company chart currently online.
+- Read private configuration or send email, publish posts, or manually trigger workflows.
+- Fully audit Android, every disclosure collector, or every third-party interface.
+- Check every record or coverage statistic on the data branch or disclosure snapshots.
 
-仓库有离线财务测试、模拟接口、Playwright 检查及披露模块测试。测试文件存在只能证明项目定义了这些检查，本次不声称它们当前全部通过。
+The repository contains offline financial tests, simulated endpoints, Playwright checks, and disclosure tests. Their presence establishes that checks are defined; this review does not claim they all currently pass.
 
-后续维护时，我会先读 `build.py → facts.py/dims.py/release.py → model.py/reported.py → sankey.py → web/sankey.js/app.js`，再沿请求、通知或披露模块追踪具体功能。
+For future maintenance, I would begin with `build.py → facts.py/dims.py/release.py → model.py/reported.py → sankey.py → web/sankey.js/app.js`, then follow requests, notifications, or disclosures for the specific feature involved.
 
-我的最终理解：这个项目的中心是具有来源和口径约束的财报可视化流水线；静态网站是展示层，Supabase 是账户和任务协调层，Actions 是执行与发布层，Disclosure Hub 与传播工具则围绕同一家公司/证券扩展研究和分发能力。
+My overall interpretation is that Filing Flows centers on a financial visualization pipeline with source and definition constraints. The static site presents its output, Supabase coordinates accounts and requests, Actions executes and publishes jobs, and the Disclosure Hub and distribution tools extend research and delivery around the same companies and securities.
