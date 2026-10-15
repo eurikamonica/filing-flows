@@ -169,9 +169,10 @@ def main():
             import rotation
             rot = rotation.build(args.site_data, DATA)
             (out / 'data' / 'market' / 'rotation.json').write_text(json.dumps(rot, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
-            print(f"rotation: {len(rot['companies'])} companies, {len(rot['sectors'])} sectors")
+            print(f"::notice::rotation: {len(rot['companies'])} companies, {len(rot['sectors'])} sectors, "
+                  f"quarters {rot.get('quarters', [''])[0] if rot.get('quarters') else '-'}…{rot['quarters'][-1] if rot.get('quarters') else '-'}")
         except Exception as exc:
-            print(f'rotation not built: {exc}')
+            print(f'::warning::rotation not built: {exc}')
     holders = holders_index()
     hdir = out / 'data' / 'holders'
     hdir.mkdir(parents=True, exist_ok=True)
