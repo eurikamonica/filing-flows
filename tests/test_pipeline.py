@@ -1767,3 +1767,27 @@ def test_movers_and_peers():
     assert moved == ["AAA", "DDD"]                  # CCC moved most but is below the market-value floor
     assert [x["ticker"] for x in engage.peers_of(rows[0], rows, live, 2)] == ["BBB", "CCC"]
     assert "price/sales ≈ 0.5×" in engage.quote_line("AAA", live["AAA"], rows[0])
+
+
+def test_8k_events_pick_the_material_item(tmp_path):
+    import datetime as dt
+    from pipeline import events, sec
+    old = sec.FIXTURES
+    sec.FIXTURES = str(tmp_path)
+    try:
+        today = dt.date.today().isoformat()
+        def put(url, body):
+            (tmp_path / os.path.basename(sec._fixture_path(url))).write_text(body)
+        put(sec.submissions_url(123), json.dumps({"filings": {"recent": {
+            "form": ["8-K", "10-Q", "8-K"], "filingDate": [today, today, "2020-01-01"],
+            "acceptanceDateTime": [today + "T16:05:00.000Z", "", ""], "items": ["5.02,9.01", "", "2.02"],
+            "accessionNumber": ["0000000123-26-000001", "x", "y"], "primaryDocument": ["d8k.htm", "q.htm", "o.htm"]}}}))
+        put(sec.doc_url(123, "0000000123-26-000001", "d8k.htm"),
+            "<html><body><p>Item 5.02 Departure of Directors or Certain Officers</p>"
+            "<p>On October 14, 2026, Jane Roe notified the Board of Directors that she will resign as Chief Executive Officer, effective October 31, 2026. The Board appointed John Doe as interim Chief Executive Officer.</p>"
+            "<p>Item 9.01 Financial Statements and Exhibits</p></body></html>")
+        ev = events.explain(123)
+        assert ev["code"] == "5.02" and "resign as Chief Executive Officer" in ev["quote"]
+        assert ev["url"].endswith("d8k.htm")
+    finally:
+        sec.FIXTURES = old

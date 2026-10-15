@@ -21,6 +21,10 @@ Formats are named in the task; follow the one you are given.
   facts from its latest filing as context, then ask what is driving it. Never state or hint at a cause.
   `$TICK −14% today at $52.30. Last quarter: revenue $4.1B, +22% Y/Y, operating margin down to 8%. What's behind the
   drop — 1) guidance 2) sector rotation 3) something else? 👇`
+  When the inputs include WHAT THE COMPANY FILED WITH THE SEC, lead with the move and the filing instead of a
+  question about the cause: `$TICK −14% today after an 8-K: its CEO is stepping down, effective Friday. Revenue last
+  quarter $4.1B, +22% Y/Y. How do you read it — 1) overreaction 2) justified 3) wait for more?` Say what was filed
+  ("after an 8-K", "filed today"), never that it caused the move.
 - **explain** — the same move in the "someone explain" voice, short and curious.
   `Someone explain $TICK: −14% today ($52.30) after a quarter with revenue +22% Y/Y and an 8% operating margin.
   What am I missing?`

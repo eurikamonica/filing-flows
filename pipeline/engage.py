@@ -27,7 +27,7 @@ import re
 import sys
 import time
 
-from . import notify, quotes as Q, reddit, social, tweet
+from . import events, notify, quotes as Q, reddit, social, tweet
 
 CFG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "engage.json")
 GUIDE = os.path.join(os.path.dirname(CFG), "engage-guide.md")
@@ -279,9 +279,18 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
         for a in trends or []:
             if a["ticker"] == e["ticker"]:
                 chatter = "\n\nWhat Reddit is discussing about it (titles, not facts):\n" + thread_lines(a)
-        task = (f"PRICE MOVE (delayed quote, {stamp}): {quote_line(e['ticker'], q, e)}.\n\n"
-                f"Latest filing figures (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, e['ticker'])}{chatter}\n\n"
-                "The cause of today's move is NOT in these inputs: do not guess or imply one; ask the audience.")
+        ev = events.explain(e["cik"])
+        if ev:
+            filed = f"8-K filed {ev['filed']}" + (f" {ev['accepted'][11:16]} ET" if len(ev.get("accepted") or "") >= 16 else "")
+            news = (f"\n\nWHAT THE COMPANY FILED WITH THE SEC ({filed}, Item {ev['code']}: {ev['label']}):\n"
+                    f"“{ev['quote'] or '(text not read; name the item only)'}”\n"
+                    "You may say the company filed this (\"after an 8-K: …\", \"filed today: …\") and quote or closely paraphrase it. "
+                    "Do not say it caused the move, and add nothing that is not in the quote.")
+            ask = "Then ask the audience how they read it."
+        else:
+            news, ask = "", "The cause of today's move is NOT in these inputs: do not guess or imply one; ask the audience."
+        task = (f"PRICE MOVE (delayed quote, {stamp}): {quote_line(e['ticker'], q, e)}.{news}\n\n"
+                f"Latest filing figures (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, e['ticker'])}{chatter}\n\n{ask}")
         items = [(e, cj, fq)]
         cashtags = [e["ticker"]]
         if kind == "peers":
@@ -299,7 +308,8 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
                     + "\n\nCompare them on price, today's move, growth, margin and price/sales — only these numbers. Do not guess "
                       "why the mover moved.")
             cashtags += [x["ticker"] for x in ps]
-        return {"kind": kind, "task": task, "cashtags": cashtags, "items": items, "mover": e["ticker"]}
+        return {"kind": kind, "task": task, "cashtags": cashtags, "items": items, "mover": e["ticker"],
+                "event": ev if kind != "peers" else None}
     return None
 
 
@@ -381,7 +391,15 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
         e0, cj0, q0 = p["items"][0] if p["items"] else (None, None, None)
         reply = ("Charts: " + "; ".join(f"${e['ticker']} {q['label']} ({q.get('form')} filed {q.get('filed')})" for e, _, q in p["items"])
                  + f". Read automatically from the filings; not investment advice. {site_url}/#c-{e0['cik']}") if e0 else ""
-        print(f"[{p['kind']}] {post}" + (f"\n   ↳ {reply}" if reply else ""))
+        if reply and social.xlen(reply) > 280:
+            reply = reply.replace(" Read automatically from the filings; not investment advice.", " Not investment advice.")
+        filing = ""
+        if p.get("event"):
+            ev = p["event"]
+            filing = f"The filing: 8-K Item {ev['code']} ({ev['label']}), filed {ev['filed']}. {ev['url']}"
+            if social.xlen(filing) > 280:
+                filing = f"The filing: 8-K Item {ev['code']}, filed {ev['filed']}. {ev['url']}"
+        print(f"[{p['kind']}] {post}" + "".join(f"\n   ↳ {x}" for x in (filing, reply) if x))
         if dry_run:
             made.append(f"{p['kind']}: {post}")
             continue
@@ -396,7 +414,7 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
         pend_path = os.path.join(xdir, "pending.json")
         pending = json.load(open(pend_path, encoding="utf-8")) if os.path.exists(pend_path) else []
         pending.append({"cik": e0["cik"] if e0 else None, "end": e0["end"] if e0 else None, "label": f"{p['kind']}: " + " ".join(p["cashtags"]),
-                        "posts": [post] + ([reply] if reply else []), "written_by": "model", "images": images})
+                        "posts": [post] + [x for x in (filing, reply) if x], "written_by": "model", "images": images})
         json.dump(pending, open(pend_path, "w", encoding="utf-8"), ensure_ascii=False)
         stamp = now.isoformat()
         state[f"kind:{p['kind']}"] = stamp

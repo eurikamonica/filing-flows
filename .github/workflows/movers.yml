@@ -39,6 +39,7 @@ jobs:
     timeout-minutes: 20
     env:
       SITE_URL: ${{ vars.SITE_URL }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}   # 8-K look-ups
       MEDIA_DIR: media
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
