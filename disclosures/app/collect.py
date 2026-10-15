@@ -53,6 +53,20 @@ def main():
         print(key+': '+result['status']+((' — '+result['error']) if result.get('error') else ''),flush=True)
         data['generated_at'] = now()
         publish_shards(args.output,data)
+    # Officials' newest transaction reports ride along with every 13F run: the 13F schedule fills the shared run slot,
+    # so the hourly officials run is often superseded; this quick House-only pass keeps the trades current.
+    if args.only=='holdings' and cfg.get('congress',{}).get('quick_house_batch',12):
+        print('Collecting congress (quick House pass)',flush=True)
+        quick={**cfg['congress'],'_data_root':str(args.output),'quick_house':True,'batch_shares':{'US House':int(cfg['congress'].get('quick_house_batch',12))},
+               'batch_size':int(cfg['congress'].get('quick_house_batch',12))}
+        try:
+            result=refresh_module(data['modules'].get('congress',{}),collect_congress,client,quick,False)
+            data['modules']['congress']=result
+            print('congress (quick): '+result['status']+((' — '+result['error']) if result.get('error') else ''),flush=True)
+            data['generated_at']=now()
+            publish_shards(args.output,data)
+        except Exception as exc:
+            print('congress (quick): error — '+str(exc),flush=True)
     # 4.1: optional price-based cost estimates, refreshed with 13F and officials' runs or on demand.
     if cfg.get('prices',{}).get('enabled') and args.only in ('all','prices','holdings','congress'):
         print('Collecting prices',flush=True)

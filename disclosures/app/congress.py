@@ -224,13 +224,14 @@ def load_reviewed(path,reports):
             except Exception as exc:errors.append(f'Review CSV line {i}: {exc}')
     return records,errors
 
-def house_select(items,history,budget,revalidate=False):
+def house_select(items,history,budget,revalidate=False,quick=False):
     """US House queue: periodic transaction reports first, newest filing first (trades are what readers look for and
     they go stale), then annual reports newest first. House PDFs never change once filed, so a processed report is
     only read again on the weekly revalidation; a failed one is retried after six hours."""
     current=dt.datetime.now(dt.timezone.utc);fresh=[];retry=[];due=[]
     for item in items:
         old=history.get(str(item['report_id']),{})
+        if quick and old.get('needs_ocr'):continue        # scanned: left for the full officials run, which has OCR
         last=old.get('last_attempt') or old.get('last_success')
         age=(current-dt.datetime.fromisoformat(last)).total_seconds()/3600 if last else float('inf')
         if old.get('status')=='error' or old.get('stale'):
@@ -291,11 +292,16 @@ def collect_congress(client,cfg,old,revalidate=False):
         discovery_failed=True;errors.append('House discovery: '+str(exc));catalog={r['report_id']:r for r in old.get('directory',[]) if r.get('jurisdiction','US House')=='US House'}
     # 4.1: New York, California, Canada (and the Texas / SEDI notes) join the same catalog and review pipeline.
     jurisdiction_notes={};officials_state=old.get('officials_state',{})
-    try:
+    if cfg.get('quick_house'):      # the quick pass inside 13F runs: House only; other jurisdictions keep their catalog
+        catalog.update({r['report_id']:r for r in old.get('directory',[]) if r.get('jurisdiction','US House')!='US House'})
+        jurisdiction_notes=dict(old.get('jurisdiction_notes') or {})
+        coverage.extend(c for c in old.get('coverage',[]) if isinstance(c,dict) and c.get('jurisdiction') not in (None,'US House'))
+    else:
+      try:
         extra,extra_errors,extra_coverage,jurisdiction_notes=officials.discover_all(client,cfg,old)
         officials_state=jurisdiction_notes.pop('_state',old.get('officials_state',{}))
         catalog.update(extra);errors.extend(extra_errors);coverage.extend(extra_coverage)
-    except Exception as exc:
+      except Exception as exc:
         errors.append('Officials discovery: '+str(exc))
         catalog.update({r['report_id']:r for r in old.get('directory',[]) if r.get('jurisdiction','US House')!='US House'})
     history={k:{**r,'last_success':r.get('extracted_at',r.get('first_seen_at')) if r.get('source_sha256') else None} for k,r in previous.items()}
@@ -310,8 +316,9 @@ def collect_congress(client,cfg,old,revalidate=False):
         for r in eligible:groups.setdefault(r.get('jurisdiction','US House'),[]).append(r)
         shares=cfg.get('batch_shares',{});budget=int(cfg.get('batch_size',30));selected=[]
         default=max(1,budget//max(1,len(groups)))
+        if cfg.get('quick_house'):groups={k:v for k,v in groups.items() if k=='US House'}
         for name,items in sorted(groups.items()):
-            if name=='US House':selected+=house_select(items,history,int(shares.get(name,default)),revalidate);continue
+            if name=='US House':selected+=house_select(items,history,int(shares.get(name,default)),revalidate,bool(cfg.get('quick_house')));continue
             selected+=select_batch(items,history,int(shares.get(name,default)),'report_id',cfg.get('refresh_hours',168),revalidate)
         selected=selected[:max(budget,len(groups))]
     for meta in selected:
@@ -326,6 +333,8 @@ def collect_congress(client,cfg,old,revalidate=False):
             if prior:record['first_seen_at']=prior.get('first_seen_at',record['first_seen_at'])
             result[rid]=record
         except Exception as exc:
+            if cfg.get('quick_house') and 'OCR needs' in str(exc):
+                result[rid]={**(prior or meta),'needs_ocr':True};continue
             errors.append(f'{rid}: {str(exc)[:3000]}')
             result[rid]={**(prior or meta),'last_attempt':now(),'stale':True,'status':'error','error':str(exc)[:300],'candidates':(prior or{}).get('candidates',[])}
     reports=list(result.values())
