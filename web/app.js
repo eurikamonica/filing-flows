@@ -723,7 +723,7 @@
       if (r.ok) h = await r.json();
     } catch (e) { /* the hub has not published yet */ }
     if (!here() || !box.isConnected) return;
-    const inst = (h && h.institutional) || [], off = (h && h.officials) || [];
+    const inst = (h && h.institutional) || [], off = (h && h.officials) || [], ins = (h && h.insiders) || [];
     const SHOW = 12;
     const instRows = (all) => (all ? inst : inst.slice(0, SHOW)).map((x) => `<tr><td><b>${t(x.manager)}</b><br><span class="muted mono">CIK ${t(x.cik)}</span></td>
         <td>${t(x.period)}<br><span class="muted">filed ${date(x.filed)}</span></td><td class="num">${whole(x.shares)}</td><td class="num">${money(x.value_usd)}</td>
@@ -732,7 +732,7 @@
           x.delta_shares ? `<br><span class="muted">${sign(x.delta_shares)}${whole(Math.abs(x.delta_shares))}</span>` : ''}</td>
         <td>${x.source_url ? `<a href="${t(x.source_url)}" target="_blank" rel="noopener">13F ↗</a>` : '—'}</td></tr>`).join('');
     box.innerHTML = `<div class="section-head"><h2>Holders</h2>
-        <span class="muted">${inst.length} institutional position${inst.length === 1 ? '' : 's'} · ${off.length} record${off.length === 1 ? '' : 's'} by public officials
+        <span class="muted">${inst.length} institutional position${inst.length === 1 ? '' : 's'} · ${ins.length} insider trade${ins.length === 1 ? '' : 's'} · ${off.length} record${off.length === 1 ? '' : 's'} by public officials
         · from <a href="disclosures/">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}</span></div>
       ${h && (h.flows || h.signal) ? `<p class="holders-flow">${h.flows ? `<b>${t(h.flows.label || 'This quarter')}:</b> ${whole(h.flows.buyers)} managers added, ${whole(h.flows.sellers)} cut${h.flows.new ? ` (${whole(h.flows.new)} new positions)` : ''} · est. net ${h.flows.usd_net >= 0 ? '+' : '−'}${money(Math.abs(h.flows.usd_net))}` : ''}${
         h.signal && h.signal.tags && h.signal.tags.length ? ` · <a href="disclosures/#signals">Signals</a>: ${h.signal.tags.map((x) => `<span class="badge">${t(x.replace(/_/g, ' '))}</span>`).join(' ')}` : ''}</p>` : ''}
@@ -742,6 +742,15 @@
         ${inst.length > SHOW ? `<button class="btn" type="button" id="inst-more">Show all ${inst.length} managers</button>` : ''}
         <p class="muted">Quarter-end positions from 13F-HR filings of the managers processed so far (the hub works through SEC’s filer list in batches); not real-time holdings, and not every holder.</p>`
         : `<p class="muted">No processed 13F manager lists ${t(sym)} yet. Managers are processed in batches; prioritise one under Disclosures → Health.</p>`}
+      <h3>Insiders (Form 4)</h3>
+      ${ins.length ? `<div class="tbl-wrap"><table><thead><tr><th>Insider</th><th>Trade</th><th class="num">Shares</th><th class="num">Price</th><th class="num">Value</th><th>Date</th><th>Source</th></tr></thead><tbody>
+        ${ins.slice(0, 12).map((x) => `<tr><td><b>${t(x.insider)}</b><br><span class="muted">${t(x.title || x.role || '')}</span></td>
+          <td class="${x.code === 'P' ? 'pos' : 'neg'}">${x.code === 'P' ? 'purchase' : 'sale'}${x.plan_10b5_1 ? ' <span class="muted">· 10b5-1 plan</span>' : ''}</td>
+          <td class="num">${whole(x.shares)}</td><td class="num">${x.price != null ? '$' + Number(x.price).toFixed(2) : '—'}</td><td class="num">${x.value != null ? money(x.value) : '—'}</td>
+          <td>${date(x.date)}</td><td>${x.url ? `<a href="${t(x.url)}" target="_blank" rel="noopener">Form 4 ↗</a>` : '—'}</td></tr>`).join('')}
+        </tbody></table></div>
+        <p class="muted">Open-market purchases and sales (of $100K or more) by officers, directors and 10% owners, filed with the SEC within two business days of the trade. Grants, option exercises and tax withholding are left out.</p>`
+        : `<p class="muted">No open-market insider purchase or larger sale on file for ${t(sym)} in the last four months.</p>`}
       <h3>Public officials</h3>
       ${off.length ? `<div class="tbl-wrap"><table><thead><tr><th>Person</th><th>Jurisdiction</th><th>Record</th><th>Disclosed amount</th><th>Date</th><th>Source</th></tr></thead><tbody>
         ${off.map((r, i) => `<tr${i >= 10 ? ' class="off-more" hidden' : ''}><td><b>${t(r.person)}</b>${r.owner ? `<br><span class="muted">${t(r.owner)}</span>` : ''}</td><td>${t(r.jurisdiction)}</td>
@@ -2208,6 +2217,7 @@
           <button class="btn" type="button" data-engage="engage_mover" title="The site company moving most right now (delayed quote): the move, its latest filing, “what’s happening?”">✦ Biggest mover now</button>
           <button class="btn" type="button" data-engage="engage_explain" title="The same move as a “someone explain $X” post">✦ Plz explain</button>
           <button class="btn" type="button" data-engage="engage_peers" title="The mover against its closest peers: price, today’s move, growth, margin, price/sales">✦ Mover vs peers</button>
+          <button class="btn" type="button" data-engage="engage_insider" title="The largest recent open-market purchase by an officer or director (Form 4)">✦ Insider buy</button>
         </div>
         <p class="muted small" id="engage-msg" role="status"></p></section>` : ''}
       <section class="section daily" id="daily" hidden></section>

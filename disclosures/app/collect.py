@@ -9,12 +9,13 @@ from congress import collect_congress
 from prices import apply_prices
 from shards import hydrate, hydrate_catalogs, publish_shards
 import market
+import insiders
 
 ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser(description='Collect official public disclosures; demo never substitutes for real data')
-    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market'],default='all')
+    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market','insiders'],default='all')
     parser.add_argument('--config',type=Path,default=ROOT/'config/settings.json')
     parser.add_argument('--output',type=Path,default=ROOT/'docs/data')
     parser.add_argument('--storage',type=Path,default=ROOT/'storage')
@@ -61,8 +62,19 @@ def main():
         print('prices: '+data['modules']['prices']['status']+((' — '+data['modules']['prices']['error']) if data['modules']['prices'].get('error') else ''),flush=True)
         data['generated_at']=now()
         publish_shards(args.output,data)
+    # 4.4: Form 4 insider trades (the newest filings each run) and their published summary
+    if args.only in ('all','insiders'):
+        print('Collecting insiders',flush=True)
+        try:
+            r=insiders.collect(client,args.output,cfg.get('insiders',{}))
+            insiders.publish(args.output,args.output/'market')
+            print('insiders: '+json.dumps(r),flush=True)
+            data['modules']['insiders']={**r,'last_attempt':now()}
+            write_json(args.output/'insiders-status.json',data['modules']['insiders'])
+        except Exception as exc:
+            print('insiders: error — '+str(exc),flush=True)
     # 4.3: market-wide views (13F flows, officials' trades, signals) from the caches; at most every few hours unless asked for
-    if args.only in ('all','holdings','congress','prices','market'):
+    if args.only in ('all','holdings','congress','prices','market','insiders'):
         print('Building market views',flush=True)
         try:
             r=market.publish(args.output,client=client,min_interval_hours=float(cfg.get('market',{}).get('min_interval_hours',3)),

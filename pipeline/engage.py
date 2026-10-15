@@ -15,6 +15,8 @@ Kinds (config/engage-guide.md describes each format):
   peers            the mover against its closest listed peers (same SIC industry): price, today's move, growth, margin,
                    price/sales — "which one makes more sense?"
   movers           (workflow) rotates mover → peers → explain over the day, within movers.max_per_day
+  insider          the largest recent Form 4 open-market purchase by an officer or director of a site company
+                   (Disclosures → Insider trades), with the company's latest figures
 Each post is drafted from the guide, then polished (sharper opening, same facts), then checked (length, cashtags,
 hashtags, no advice words). Written to media/x/pending.json for pipeline/buffer.py; media/x/engage-state.json keeps
 what was posted so a company or a format is not repeated within the cooldown. Settings: config/engage.json.
@@ -43,6 +45,7 @@ DEFAULTS = {
                "ticker_cooldown_hours": 20, "peers": 2},
 }
 MOVER_KINDS = ("mover", "explain", "peers")
+INSIDER = {"min_value": 250_000, "max_age_days": 5, "cooldown_days": 14}
 
 
 def cfg():
@@ -224,7 +227,8 @@ def money(v):
     if v is None:
         return "—"
     a = abs(v)
-    s = f"${a / 1e12:.2f}T" if a >= 1e12 else f"${a / 1e9:.1f}B" if a >= 1e9 else f"${a / 1e6:.0f}M"
+    s = (f"${a / 1e12:.2f}T" if a >= 1e12 else f"${a / 1e9:.1f}B" if a >= 1e9 else f"${a / 1e6:.0f}M" if a >= 1e8
+         else f"${a / 1e6:.1f}M" if a >= 1e6 else f"${a / 1e3:.0f}K")
     return ("−" if v < 0 else "") + s
 
 
@@ -313,6 +317,54 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
     return None
 
 
+# ------------------------------------------------------------------ insider purchases (Form 4)
+def hub_json(site, name):
+    """A file of the Disclosures hub's market data, from the published site or the built folder."""
+    import requests
+    if site.remote:
+        r = requests.get(site.src.rstrip("/") + "/disclosures/data/market/" + name, timeout=60)
+        r.raise_for_status()
+        return r.json()
+    return json.load(open(os.path.join(site.src, "disclosures", "data", "market", name), encoding="utf-8"))
+
+
+def plan_insider(site, rows, c, by_ticker, state_ok, today):
+    cfg = {**INSIDER, **(c.get("insider") or {})}
+    try:
+        d = hub_json(site, "insiders.json")
+    except Exception as err:
+        print(f"insider: no Form 4 data ({str(err)[:100]})")
+        return None
+    since = (today - dt.timedelta(days=cfg["max_age_days"])).isoformat()
+    clusters = {a["ticker"]: a for a in d.get("summary", []) if a.get("cluster")}
+    cands = []
+    for t in d.get("latest", []):
+        tk = (t.get("ticker") or "").upper().replace("-", ".")
+        if t.get("code") != "P" or (t.get("value") or 0) < cfg["min_value"] or t.get("date", "") < since or tk not in by_ticker:
+            continue
+        if t.get("role") not in ("CEO", "CFO", "President", "COO", "Chair", "Officer", "Director"):
+            continue
+        if not state_ok("insider", tk, hours=24 * cfg["cooldown_days"]):
+            continue
+        cands.append((tk, t))
+    if not cands:
+        return None
+    tk, t = max(cands, key=lambda x: ((x[0] in clusters), x[1]["value"]))
+    e = by_ticker[tk]
+    cj, fq = figures(site, e)
+    if not fq:
+        return None
+    cl = clusters.get(tk)
+    after = f"; holds {t['after']:,.0f} shares after the trade" if t.get("after") else ""
+    task = (f"FORM 4 (filed with the SEC within two business days of the trade): {t['insider']} ({t.get('title') or t['role']}) bought "
+            f"{t['shares']:,.0f} shares of ${tk} at ${t['price']:,.2f} on {t['date']} — {money(t['value'])} in the open market{after}."
+            + (" This was NOT under a 10b5-1 plan." if t.get("plan_10b5_1") is False else "")
+            + (f"\nCluster: {cl['buyers30']} insiders bought ${tk} within 30 days ({', '.join(cl['buyers'][:4])})." if cl else "")
+            + f"\n\nLatest filing figures (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, tk)}"
+            + "\n\nSay what the insider did and when; never say it means the stock will rise. Ask the audience how they read it.")
+    return {"kind": "insider", "task": task, "cashtags": [tk], "items": [(e, cj, fq)], "insider_url": t.get("url")}
+
+
 # ------------------------------------------------------------------ main
 def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
     """Plan, write, polish and check the posts of these kinds; draw the charts into media/x/ and append to
@@ -374,7 +426,8 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
              "reddit_list": lambda: plan_reddit_list(site, rows, c, trends, by_ticker, state_ok),
              "mover": lambda: plan_mover("mover", site, rows, c, live, state_ok, trends),
              "explain": lambda: plan_mover("explain", site, rows, c, live, state_ok, trends),
-             "peers": lambda: plan_mover("peers", site, rows, c, live, state_ok, trends)}.get(kind, lambda: None)()
+             "peers": lambda: plan_mover("peers", site, rows, c, live, state_ok, trends),
+             "insider": lambda: plan_insider(site, rows, c, by_ticker, state_ok, today)}.get(kind, lambda: None)()
         if p:
             plans.append(p)
         else:
@@ -393,7 +446,7 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False):
                  + f". Read automatically from the filings; not investment advice. {site_url}/#c-{e0['cik']}") if e0 else ""
         if reply and social.xlen(reply) > 280:
             reply = reply.replace(" Read automatically from the filings; not investment advice.", " Not investment advice.")
-        filing = ""
+        filing = f"The Form 4: {p['insider_url']}" if p.get("insider_url") else ""
         if p.get("event"):
             ev = p["event"]
             filing = f"The filing: 8-K Item {ev['code']} ({ev['label']}), filed {ev['filed']}. {ev['url']}"

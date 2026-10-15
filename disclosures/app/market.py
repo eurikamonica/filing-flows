@@ -23,6 +23,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from core import now, read_json, write_json
+import insiders as INS
 
 TOP = 40
 FUND_TYPES = {'ETP', 'Open-End Fund', 'Closed-End Fund', 'Fund of Funds', 'Unit', 'Equity WRT', 'Right'}
@@ -555,6 +556,17 @@ def price_stats(root, ticker):
             'from_high': last / high - 1 if high else None, 'above_ma200': last > ma200, 'spark': spark}
 
 
+def insider_summary(root):
+    store = Path(root) / 'cache' / 'insiders' / 'trades.json.gz'
+    if not store.exists():
+        return {}
+    try:
+        with gzip.open(store, 'rt', encoding='utf-8') as f:
+            return {canon(a['ticker']): a for a in INS.summary(json.load(f)) if canon(a['ticker'])}
+    except Exception:
+        return {}
+
+
 def build_signals(root, flows_every, trades, universe):
     q = {r['ticker']: r for r in (flows_every or {}).get('quarter', []) if r.get('ticker') and not r['fund'] and not r['first'] and not r['gone']}
     today = dt.date.today()
@@ -568,7 +580,8 @@ def build_signals(root, flows_every, trades, universe):
     outflow_cut = min(-50e6, usd[-min(len(usd), 61)] if usd else -50e6)
     news = sorted((r['new'] for r in q.values()), reverse=True)
     new_cut = max(10, news[min(len(news) - 1, 100)] if news else 10)
-    tickers = set(q) | set(d365)
+    ins = insider_summary(root)
+    tickers = set(q) | set(d365) | {t for t, a in ins.items() if a['buys']}
     rows = []
     for tk in tickers:
         f = q.get(tk)
@@ -593,6 +606,14 @@ def build_signals(root, flows_every, trades, universe):
             tags.append('officials_cluster')
         if o90 and o90['sells'] > (o90['buys'] or 0):
             tags.append('officials_selling')
+        ia = ins.get(tk)
+        if ia:
+            if ia['buys'] and ia['buy_value'] >= 100_000:
+                tags.append('insider_buying')
+            if ia['cluster']:
+                tags.append('insider_cluster')
+            if ia['ceo_cfo_sell'] >= 1_000_000 and not ia['buys']:
+                tags.append('insider_selling')
         if px:
             if px['from_high'] is not None and px['from_high'] >= -0.03:
                 tags.append('near_high')
@@ -603,8 +624,10 @@ def build_signals(root, flows_every, trades, universe):
             if f and ('crowded_buy' in tags or 'big_inflow' in tags) and px['r3m'] is not None and px['r3m'] <= -0.1:
                 tags.append('buying_the_dip')
         heat = (2 * ('crowded_buy' in tags) + ('new_money' in tags) + ('big_inflow' in tags) + 2 * ('officials_buying' in tags)
-                + ('officials_cluster' in tags) + ('near_high' in tags) + ('momentum' in tags))
-        pressure = 2 * ('crowded_exit' in tags) + ('big_outflow' in tags) + ('officials_selling' in tags) + ('drawdown' in tags)
+                + ('officials_cluster' in tags) + ('near_high' in tags) + ('momentum' in tags)
+                + ('insider_buying' in tags) + 2 * ('insider_cluster' in tags))
+        pressure = (2 * ('crowded_exit' in tags) + ('big_outflow' in tags) + ('officials_selling' in tags) + ('drawdown' in tags)
+                    + ('insider_selling' in tags))
         if not tags:
             continue
         rows.append({'ticker': tk, 'name': universe.name(tk) or (f or {}).get('issuer') or (o365 or {}).get('name') or '',
@@ -614,13 +637,16 @@ def build_signals(root, flows_every, trades, universe):
                      'officials': ({'d90_buys': (o90 or {}).get('buys', 0), 'd90_sells': (o90 or {}).get('sells', 0),
                                     'y_buys': o365['buys'], 'y_sells': o365['sells'], 'people_buy': o365['people_buy'][:6],
                                     'people_sell': o365['people_sell'][:6], 'last': o365['last']} if o365 else None),
-                     'price': px})
+                     'price': px,
+                     'insiders': ({'buys': ia['buys'], 'buy_value': ia['buy_value'], 'buyers': ia['buyers'][:4], 'sells': ia['sells'],
+                                   'sell_value': ia['sell_value'], 'cluster': ia['cluster'], 'top_buy': ia['top_buy'], 'last': ia['last']}
+                                  if ia else None)})
     rows.sort(key=lambda r: (-r['heat'], -((r['f13'] or {}).get('usd_net') or 0)))
     # keep sparklines only where they are shown
     for r in rows[200:]:
         if r['price']:
             r['price'].pop('spark', None)
-    rows = [r for r in rows if r['heat'] >= 2 or r['pressure'] >= 2 or r['officials']][:800]
+    rows = [r for r in rows if r['heat'] >= 2 or r['pressure'] >= 2 or r['officials'] or (r['insiders'] or {}).get('buys')][:900]
     return rows, {'crowd_net_managers': crowd_cut, 'new_positions': new_cut, 'inflow_usd': inflow_cut, 'outflow_usd': outflow_cut}
 
 
@@ -637,6 +663,9 @@ TAGS = {
     'momentum': 'Momentum: up 20% or more over three months',
     'drawdown': 'Drawdown: down 20% or more over three months',
     'buying_the_dip': 'Buying the dip: managers crowding in while the price fell 10%+ over three months',
+    'insider_buying': 'Insider buying: officers or directors bought $100K+ of stock in the open market in the last 90 days (Form 4)',
+    'insider_cluster': 'Insider cluster: three or more insiders bought within 30 days (Form 4)',
+    'insider_selling': 'Insider selling: the CEO or CFO sold $1M+ in 90 days with no insider purchases (Form 4)',
     'revenue_surge': 'Revenue surge: latest quarter revenue up 25%+ year over year (Filing Flows)',
     'profitable_growth': 'Profitable growth: revenue up 15%+ with an operating margin of 15%+ (Filing Flows)',
 }

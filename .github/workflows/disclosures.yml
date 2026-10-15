@@ -8,7 +8,7 @@ on:
       module:
         description: Data module to update
         type: choice
-        options: [all, holdings, congress, cot, banks, npx, markets, prices, market]
+        options: [all, holdings, congress, cot, banks, npx, markets, prices, market, insiders]
         default: all
       batch_size:
         description: Optional entity/filer/PDF batch size (blank uses config)
@@ -39,6 +39,7 @@ on:
     - cron: '17 * * * *'
     - cron: '43 0-9,11-23 * * *'
     - cron: '43 10 * * *'
+    - cron: '28,58 * * * *'
   push:
     branches: [main]
     paths:
@@ -71,7 +72,7 @@ jobs:
       - name: Install PDF library
         run: python -m pip install -r requirements.txt
       - name: Install system OCR tools
-        if: github.event.schedule != '7,22,37,52 * * * *' && github.event.schedule != '43 0-9,11-23 * * *' && (inputs.module == '' || inputs.module == 'all' || inputs.module == 'congress')
+        if: github.event.schedule != '7,22,37,52 * * * *' && github.event.schedule != '43 0-9,11-23 * * *' && github.event.schedule != '28,58 * * * *' && (inputs.module == '' || inputs.module == 'all' || inputs.module == 'congress')
         # 'congress' covers every officials' jurisdiction (US House, New York, California, Canada + imports)
         run: |
           sudo apt-get update -qq
@@ -109,6 +110,7 @@ jobs:
             '17 * * * *') module=congress ;;
             '43 0-9,11-23 * * *') module=markets ;;
             '43 10 * * *') module=all ;;
+            '28,58 * * * *') module=insiders ;;
           esac
           args=(--only "$module")
           if [ -n "$BATCH_SIZE" ]; then args+=(--batch-size "$BATCH_SIZE"); fi

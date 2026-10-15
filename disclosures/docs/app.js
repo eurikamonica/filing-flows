@@ -10,7 +10,7 @@ const uniq=a=>[...new Set(a)];
 const state={tab:'signals',mode:'official',page:0,market:'',group:'',cert:'',filing:'',metric:'assets',date:'',base:'',from:'',to:'',query:'',direction:''};
 let exported=[];
 const data=()=>state.mode==='demo'?(window.DISCLOSURE_DEMO||{modules:{}}):(window.DISCLOSURE_LIVE||{modules:{}});
-const moduleData=()=>data().modules[state.tab==='review'||state.tab==='trades'?'congress':state.tab==='directory'||state.tab==='flows'||state.tab==='signals'?'holdings':state.tab]||{};
+const moduleData=()=>data().modules[state.tab==='review'||state.tab==='trades'?'congress':state.tab==='directory'||state.tab==='flows'||state.tab==='signals'||state.tab==='insiders'?'holdings':state.tab]||{};
 function options(items,value){return items.map(x=>{const [v,l]=Array.isArray(x)?x:[x,x];return `<option value="${esc(v)}" ${String(v)===String(value)?'selected':''}>${esc(l)}</option>`}).join('')}
 function choose(current,values){return values.includes(String(current))?String(current):values[0]||''}
 function field(id,label,items,value,wide=false){return `<div class="field ${wide?'wide':''}"><label for="${id}">${label}</label><select id="${id}">${options(items,value)}</select></div>`}
@@ -143,7 +143,7 @@ function status(){return health()}
 function render(){
  baseRender();exported=[];
  tipData.length=0;
- $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView}[state.tab])();
+ $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView}[state.tab])();
  bind('market','market');bind('group','group');bind('from','from');bind('to','to');bind('asof','date');bind('cert','cert');bind('metric','metric');bind('base','base');bind('filing','filing');bind('direction','direction');
  if($('query')){$('query').onchange=e=>{state.query=e.target.value;state.page=0;render()};$('query').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  actions();

@@ -92,6 +92,22 @@ def holders_index():
             'owner': tr.get('owner'), 'amount_min': tr.get('amount_min'), 'amount_max': tr.get('amount_max'), 'date': tr.get('date'),
             'transaction_type': tr.get('type'), 'report_type': 'PTR', 'filed_date': tr.get('filed_date'), 'source_url': tr.get('source_url'),
             'page': tr.get('page'), 'read': 'machine', 'name_check': tr.get('name_check')})
+    # insiders: Form 4 purchases and larger sales of the last 120 days
+    ipath = DATA / 'cache' / 'insiders' / 'trades.json.gz'
+    if ipath.exists():
+        try:
+            with gzip.open(ipath, 'rt', encoding='utf-8') as f:
+                itrades = json.load(f)
+        except Exception:
+            itrades = []
+        count = {}
+        for tr in itrades:
+            ticker = clean_ticker(tr.get('ticker'))
+            if not ticker or count.get(ticker, 0) >= 25 or not (tr['code'] == 'P' or (tr.get('value') or 0) >= 100_000):
+                continue
+            count[ticker] = count.get(ticker, 0) + 1
+            out.setdefault(ticker, {'ticker': ticker, 'generated_at': generated, 'institutional': [], 'officials': []}).setdefault('insiders', []).append(
+                {k: tr.get(k) for k in ('insider', 'role', 'title', 'code', 'date', 'shares', 'price', 'value', 'after', 'plan_10b5_1', 'url')})
     # this quarter's 13F flow and the signal flags, for the company page's summary line
     flows = load_json(DATA / 'market' / 'by-ticker.json', {})
     sig = {r['ticker']: r for r in load_json(DATA / 'market' / 'signals.json', {}).get('rows', [])}
@@ -104,7 +120,7 @@ def holders_index():
     for v in out.values():
         v['institutional'].sort(key=lambda x: -(x.get('value_usd') or 0))
         v['officials'].sort(key=lambda x: (x.get('date') or ''), reverse=True)
-        v['counts'] = {'institutional': len(v['institutional']), 'officials': len(v['officials'])}
+        v['counts'] = {'institutional': len(v['institutional']), 'officials': len(v['officials']), 'insiders': len(v.get('insiders', []))}
     return out
 
 

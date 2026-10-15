@@ -33,6 +33,12 @@ Formats are named in the task; follow the one you are given.
   `$TICK at $52 (−14% today) vs $PEER at $130 (+1%): TICK grows revenue 22% at an 8% margin, PEER 5% at 22%; P/S 3.1×
   vs 6.4×. Which one makes more sense here? 1) $TICK 2) $PEER`
 
+- **insider** — an officer or director bought stock in the open market (Form 4). Who, what title, how much, at what
+  price, when; one figure from the latest quarter; then a question.
+  `$TICK CFO Jane Doe bought $1.8M of stock at $180.50 on Oct 13 (Form 4). Revenue last quarter $96.2B, +106% Y/Y.
+  Conviction or optics? 1) conviction 2) optics 3) too small to matter`
+  When a cluster is given, lead with it: `Three $TICK insiders bought in two weeks …`.
+
 ## Rules
 1. Output only the post text. No quotes around it, no preamble.
 2. At most 255 characters as X counts them (URLs count 23). The first six words must make someone stop scrolling:

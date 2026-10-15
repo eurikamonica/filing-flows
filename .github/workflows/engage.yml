@@ -15,9 +15,9 @@ on:
   workflow_dispatch:
     inputs:
       kinds:
-        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers"
+        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider"
         type: string
-        default: "question,list,reddit_question,reddit_list"
+        default: "question,list,reddit_question,reddit_list,insider"
       dry_run:
         description: "Only print the picks and the posts (nothing drawn or queued)"
         type: boolean
@@ -71,8 +71,8 @@ jobs:
           site="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"
           kinds="${KINDS_INPUT:-question,list,reddit_question,reddit_list}"
           case "$EVENT_SCHEDULE" in
-            '40 12 * * 1-5') kinds=list,reddit_question,reddit_list ;;
-            '40 21 * * 1-5') kinds=question ;;
+            '40 12 * * 1-5') kinds=list,reddit_question,reddit_list,insider ;;
+            '40 21 * * 1-5') kinds=question,insider ;;
           esac
           if [ "$DRY_RUN" = "true" ]; then
             python -m pipeline.engage --site "$site" --site-url "$site" --kinds "$kinds" --dry-run

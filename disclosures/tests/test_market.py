@@ -83,3 +83,42 @@ class Tickers(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+import insiders
+
+FORM4 = b'''<?xml version="1.0"?>
+<ownershipDocument><schemaVersion>X0508</schemaVersion><documentType>4</documentType>
+<issuer><issuerCik>0001045810</issuerCik><issuerName>NVIDIA CORP</issuerName><issuerTradingSymbol>NVDA</issuerTradingSymbol></issuer>
+<reportingOwner><reportingOwnerId><rptOwnerName>Doe Jane</rptOwnerName></reportingOwnerId>
+<reportingOwnerRelationship><isDirector>0</isDirector><isOfficer>1</isOfficer><officerTitle>Chief Financial Officer</officerTitle></reportingOwnerRelationship></reportingOwner>
+<aff10b5One>0</aff10b5One>
+<nonDerivativeTable>
+<nonDerivativeTransaction><securityTitle><value>Common Stock</value></securityTitle><transactionDate><value>2026-10-13</value></transactionDate>
+<transactionCoding><transactionFormType>4</transactionFormType><transactionCode>P</transactionCode></transactionCoding>
+<transactionAmounts><transactionShares><value>10000</value></transactionShares><transactionPricePerShare><value>180.50</value></transactionPricePerShare>
+<transactionAcquiredDisposedCode><value>A</value></transactionAcquiredDisposedCode></transactionAmounts>
+<postTransactionAmounts><sharesOwnedFollowingTransaction><value>50000</value></sharesOwnedFollowingTransaction></postTransactionAmounts>
+<ownershipNature><directOrIndirectOwnership><value>D</value></directOrIndirectOwnership></ownershipNature></nonDerivativeTransaction>
+<nonDerivativeTransaction><securityTitle><value>Common Stock</value></securityTitle><transactionDate><value>2026-10-13</value></transactionDate>
+<transactionCoding><transactionCode>F</transactionCode></transactionCoding>
+<transactionAmounts><transactionShares><value>500</value></transactionShares><transactionPricePerShare><value>180</value></transactionPricePerShare></transactionAmounts></nonDerivativeTransaction>
+</nonDerivativeTable></ownershipDocument>'''
+
+
+class Insiders(unittest.TestCase):
+    def test_purchase_kept_withholding_skipped(self):
+        txt = b'<SEC-DOCUMENT>...<XML>\n' + FORM4 + b'\n</XML>...'
+        rows = insiders.parse_form4(insiders.xml_from_submission(txt), '0001-26-000001', 'https://www.sec.gov/x/')
+        self.assertEqual(len(rows), 1)
+        r = rows[0]
+        self.assertEqual((r['ticker'], r['role'], r['code'], r['value'], r['issuer_cik']), ('NVDA', 'CFO', 'P', 1805000, '1045810'))
+
+    def test_cluster(self):
+        import datetime as dt
+        d = dt.date.today().isoformat()
+        tr = [{'ticker': 'ABC', 'issuer': 'ABC', 'issuer_cik': '1', 'insider': n, 'role': 'Director', 'code': 'P', 'date': d, 'value': 60000}
+              for n in ('A', 'B', 'C')]
+        s = insiders.summary(tr)[0]
+        self.assertTrue(s['cluster'])
+        self.assertEqual(s['buy_value'], 180000)

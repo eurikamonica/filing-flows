@@ -117,15 +117,16 @@ function pointTip(r){
  if(r.f13)t.push([`${fmt(r.f13.buyers)} added · ${fmt(r.f13.sellers)} cut`,`· est. net ${smoney(r.f13.usd_net)}`]);
  if(r.price)t.push([spct(r.price.r3m),'over three months'+(r.price.from_high!=null?` · ${spct(r.price.from_high)} from 52-week high`:'')]);
  if(r.officials)t.push([`${r.officials.y_buys} buys / ${r.officials.y_sells} sales`,'by officials, last 12 months']);
+ if(r.insiders&&r.insiders.buys)t.push([money(r.insiders.buy_value),`bought by insiders in 90 days (${r.insiders.buyers.slice(0,2).join(', ')})`]);
  if(r.earn)t.push([`${r.earn.label}: revenue ${r.earn.rev||'—'}`,r.earn.yoy!=null?`${r.earn.yoy>0?'+':''}${fmt(r.earn.yoy,0)}% Y/Y`:'']);
  t.push([`Heat ${r.heat}`,r.tags.map(tagWord).join(', ')]);
  return t;
 }
 
 /* ---------- Signals ---------- */
-const TAG_WORDS={crowded_buy:'Crowded buy',new_money:'New money',big_inflow:'Big inflow',crowded_exit:'Crowded exit',big_outflow:'Big outflow',officials_buying:'Officials buying',officials_cluster:'Officials cluster',officials_selling:'Officials selling',near_high:'Near 52-week high',momentum:'Momentum',drawdown:'Drawdown',buying_the_dip:'Buying the dip',revenue_surge:'Revenue surge',profitable_growth:'Profitable growth'};
+const TAG_WORDS={crowded_buy:'Crowded buy',new_money:'New money',big_inflow:'Big inflow',crowded_exit:'Crowded exit',big_outflow:'Big outflow',officials_buying:'Officials buying',officials_cluster:'Officials cluster',officials_selling:'Officials selling',near_high:'Near 52-week high',momentum:'Momentum',drawdown:'Drawdown',buying_the_dip:'Buying the dip',revenue_surge:'Revenue surge',profitable_growth:'Profitable growth',insider_buying:'Insider buying',insider_cluster:'Insider cluster',insider_selling:'Insider selling'};
 const tagWord=t=>TAG_WORDS[t]||t;
-const BAD=new Set(['crowded_exit','big_outflow','officials_selling','drawdown']);
+const BAD=new Set(['crowded_exit','big_outflow','officials_selling','drawdown','insider_selling']);
 const tagBadges=tags=>tags.map(t=>`<span class="badge ${BAD.has(t)?'error':'ready'}">${esc(tagWord(t))}</span>`).join(' ');
 function signals(){
  let out=head('Signals','Where institutional money, public officials and the price line up — computed from 13F disclosures, officials’ transaction reports and daily closes. Descriptive flags, not predictions or advice.','13F · OFFICIALS · PRICES');
@@ -138,17 +139,18 @@ function signals(){
  const rows=all.filter(r=>(!state.stag||r.tags.includes(state.stag))&&(!q||(r.ticker+' '+r.name).toLowerCase().includes(q)))
   .sort((a,b)=>({pressure:b.pressure-a.pressure||a.heat-b.heat,flow:((b.f13||{}).usd_net||0)-((a.f13||{}).usd_net||0),r3m:((b.price||{}).r3m??-9)-((a.price||{}).r3m??-9)}[state.ssort]??(b.heat-a.heat||((b.f13||{}).usd_net||0)-((a.f13||{}).usd_net||0))));
  const n=t=>all.filter(r=>r.tags.includes(t)).length;
- out+=`<div class="metrics">${kpi('Heat 3 or more',fmt(all.filter(r=>r.heat>=3).length),'Three or more buying-side signals at once')}${kpi('Crowded buys',fmt(n('crowded_buy')),d.quarter||'')}${kpi('Officials buying',fmt(n('officials_buying')),'Purchases reported in the last 90 days')}${kpi('Near 52-week high',fmt(n('near_high')),'Within 3% of the year’s highest close')}</div>`;
+ out+=`<div class="metrics">${kpi('Heat 3 or more',fmt(all.filter(r=>r.heat>=3).length),'Three or more buying-side signals at once')}${kpi('Crowded buys',fmt(n('crowded_buy')),d.quarter||'')}${kpi('Insider clusters',fmt(n('insider_cluster')),'3+ insiders bought within 30 days (Form 4)')}${kpi('Officials buying',fmt(n('officials_buying')),'Purchases reported in the last 90 days')}</div>`;
  out+=`<div class="panel"><h3>Hype map</h3><p class="sub">Each dot is a flagged stock: how many more 13F managers added than cut it in ${esc(d.quarter||'the latest quarter')} (→), against its price move over the last three months (↑). Top-right: money and price agree. Bottom-right: managers buying into a fall.</p>${hypeMap(rows)}</div>`;
- out+=`<details><summary>What each signal means and how heat is scored</summary><p>${Object.entries(d.tags||{}).map(([k,v])=>`<b>${esc(tagWord(k))}</b> — ${esc(v.split(': ').slice(1).join(': ')||v)}`).join('<br>')}<br><br>Heat = 2 × crowded buy + 2 × officials buying + one each for new money, big inflow, officials cluster, near 52-week high, momentum and revenue surge. Pressure = 2 × crowded exit + big outflow + officials selling + drawdown. Thresholds this quarter: crowded = ${fmt(d.thresholds?.crowd_net_managers)} net managers; big flow = ${money(d.thresholds?.inflow_usd)}.</p><p class="sub">${esc(d.note||'')}</p></details>`;
- exported=rows.map(r=>({ticker:r.ticker,name:r.name,heat:r.heat,pressure:r.pressure,tags:r.tags.join(' '),...(r.f13||{}),officials_buys_12m:r.officials?.y_buys,officials_sales_12m:r.officials?.y_sells,officials_people:(r.officials?.people_buy||[]).join('; '),r1m:r.price?.r1m,r3m:r.price?.r3m,from_52w_high:r.price?.from_high,earnings_label:r.earn?.label,revenue_yoy_pct:r.earn?.yoy,operating_margin_pct:r.earn?.om}));
+ out+=`<details><summary>What each signal means and how heat is scored</summary><p>${Object.entries(d.tags||{}).map(([k,v])=>`<b>${esc(tagWord(k))}</b> — ${esc(v.split(': ').slice(1).join(': ')||v)}`).join('<br>')}<br><br>Heat = 2 × crowded buy + 2 × officials buying + 2 × insider cluster + one each for new money, big inflow, officials cluster, insider buying, near 52-week high, momentum and revenue surge. Pressure = 2 × crowded exit + big outflow + officials selling + insider selling + drawdown. Thresholds this quarter: crowded = ${fmt(d.thresholds?.crowd_net_managers)} net managers; big flow = ${money(d.thresholds?.inflow_usd)}.</p><p class="sub">${esc(d.note||'')}</p></details>`;
+ exported=rows.map(r=>({ticker:r.ticker,name:r.name,heat:r.heat,pressure:r.pressure,tags:r.tags.join(' '),...(r.f13||{}),insider_buy_value_90d:r.insiders?.buy_value,insider_sell_value_90d:r.insiders?.sell_value,officials_buys_12m:r.officials?.y_buys,officials_sales_12m:r.officials?.y_sells,officials_people:(r.officials?.people_buy||[]).join('; '),r1m:r.price?.r1m,r3m:r.price?.r3m,from_52w_high:r.price?.from_high,earnings_label:r.earn?.label,revenue_yoy_pct:r.earn?.yoy,operating_margin_pct:r.earn?.om}));
  out+=`<div class="section-head"><h3>${fmt(rows.length)} flagged securities</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- out+=table(['Security','Heat','Signals','Net managers','Est. net 13F $','New positions','Officials 12m (buys / sales)','3-month price','From 52w high','6-month trend','Latest earnings'],rows.map(r=>[
+ out+=table(['Security','Heat','Signals','Net managers','Est. net 13F $','New positions','Officials 12m (buys / sales)','Insiders 90d (Form 4)','3-month price','From 52w high','6-month trend','Latest earnings'],rows.map(r=>[
   `${tick(r)} <span class="muted">${esc(r.name)}</span>${r.earn?.cik?`<br><a href="../#c-${esc(r.earn.cik)}">Earnings chart ↗</a>`:''}`,
   `<b>${r.heat}</b>${r.pressure?` <span class="muted">/ −${r.pressure}</span>`:''}`,`<span class="mk-badges">${tagBadges(r.tags)}</span>`,
   r.f13?`${signed(r.f13.buyers-r.f13.sellers)} <span class="muted">(${fmt(r.f13.buyers)}↑ ${fmt(r.f13.sellers)}↓)</span>`:'—',
   r.f13?`<span class="${r.f13.usd_net>=0?'positive':'negative'}">${smoney(r.f13.usd_net)}</span>`:'—',r.f13?fmt(r.f13.new):'—',
   r.officials?`${r.officials.y_buys} / ${r.officials.y_sells}${r.officials.people_buy.length?`<br><span class="muted">${esc(r.officials.people_buy.slice(0,2).join(', '))}${r.officials.people_buy.length>2?' +'+(r.officials.people_buy.length-2):''}</span>`:''}`:'—',
+  r.insiders&&(r.insiders.buys||r.insiders.sells)?`${r.insiders.buys?`<span class="positive">${money(r.insiders.buy_value)} bought</span>`:''}${r.insiders.buys&&r.insiders.sells?'<br>':''}${r.insiders.sells?`<span class="muted">${money(r.insiders.sell_value)} sold</span>`:''}`:'—',
   r.price?`<span class="${r.price.r3m>=0?'positive':'negative'}">${spct(r.price.r3m)}</span>`:'—',r.price?spct(r.price.from_high):'—',
   r.price?spark(r.price.spark):'—',
   r.earn?`${esc(r.earn.label)} · ${esc(r.earn.rev||'')}${r.earn.yoy!=null?` · ${r.earn.yoy>0?'+':''}${fmt(r.earn.yoy,0)}% Y/Y`:''}`:'—']));
@@ -209,8 +211,28 @@ function tradesView(){
  return out;
 }
 
+/* ---------- Insider trades (Form 4) ---------- */
+function insidersView(){
+ let out=head('Insider trades','Open-market purchases and sales by officers, directors and 10% owners, from Form 4 filings (due two business days after the trade) — the most current ownership data the SEC publishes.','SEC / FORM 4');
+ const g=marketGate('insiders','Insider trades');if(!g.data)return out+g.html;
+ const d=g.data,all=d.latest||[],sum=d.summary||[];
+ state.itype=['','P','S'].includes(state.itype)?state.itype:'';state.irole=state.irole||'';
+ out+=`<div class="toolbar">${field('itype','Trades',[['','Purchases and sales'],['P','Purchases only'],['S','Sales only']],state.itype)}${field('irole','Who',[['','Everyone'],['ceo','CEO / CFO / President / Chair'],['officer','Any officer'],['Director','Directors'],['10% owner','10% owners']],state.irole)}<div class="field wide"><label for="iq">Ticker, company or insider</label><input id="iq" value="${esc(state.iq||'')}" placeholder="e.g. NVDA · Enter"></div></div>`;
+ const buys90=sum.filter(a=>a.buys),cl=sum.filter(a=>a.cluster),big=all.filter(t=>t.code==='P').sort((a,b)=>(b.value||0)-(a.value||0))[0];
+ out+=`<div class="metrics">${kpi('Trades on file',fmt(d.trades_on_file),'Since '+(d.since||'—'))}${kpi('Companies with insider buying',fmt(buys90.length),'Open-market purchases, last 90 days')}${kpi('Cluster buys',fmt(cl.length),'3+ insiders bought within 30 days')}${kpi('Largest recent purchase',big?money(big.value):'—',big?`${big.ticker} · ${big.insider} (${big.role}) · ${big.date}`:'')}</div>`;
+ const top=buys90.slice().sort((a,b)=>b.buy_value-a.buy_value).slice(0,14);
+ out+=`<div class="panel"><h3>Most insider buying, last 90 days</h3><p class="sub">Dollars bought in the open market by officers and directors · hover for who bought</p>${top.length?divergingChart(top.map(a=>({label:a.ticker,value:a.buy_value,tip:[[a.ticker,a.issuer||''],[money(a.buy_value),`bought in ${a.buys} trade${a.buys===1?'':'s'}`],[a.buyers.slice(0,4).join(', '),a.cluster?'cluster buy':'']]}))):empty('No purchases on file yet — the collector reads the newest Form 4 filings every half hour.')}</div>`;
+ const q=(state.iq||'').trim().toLowerCase(),CEO=new Set(['CEO','CFO','President','Chair']),OFF=new Set(['CEO','CFO','President','COO','Chair','Officer']);
+ const rows=all.filter(t=>(!state.itype||t.code===state.itype)&&(!state.irole||(state.irole==='ceo'?CEO.has(t.role):state.irole==='officer'?OFF.has(t.role):t.role===state.irole))&&(!q||[t.ticker,t.issuer,t.insider].join(' ').toLowerCase().includes(q)));
+ exported=rows;
+ out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} recent trades</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+ out+=table(['Trade date','Ticker','Company','Insider','Role','Trade','Shares','Price','Value','Held after','Source'],rows.map(t=>[esc(t.date),`<b>${esc(t.ticker||'—')}</b>`,esc(t.issuer),esc(t.insider),esc(t.title||t.role),
+  `<span class="${t.code==='P'?'positive':'negative'}">${t.code==='P'?'Purchase':'Sale'}</span>${t.plan_10b5_1?' <span class="muted">10b5-1</span>':''}`,fmt(t.shares),t.price!=null?'$'+fmt(t.price,2):'—',money(t.value),fmt(t.after),link(t.url,'Form 4 ↗')]));
+ return out;
+}
+
 function bindMarket(){
- for(const k of ['stag','ssort','fwin','funiv','flist','tperson','ttype','tcheck','twin'])bind(k,k);
- for(const k of ['sq','tq'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
+ for(const k of ['stag','ssort','fwin','funiv','flist','tperson','ttype','tcheck','twin','itype','irole'])bind(k,k);
+ for(const k of ['sq','tq','iq'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  bindTips();
 }

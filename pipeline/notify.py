@@ -1168,7 +1168,7 @@ def _now_iso():
 
 
 ENGAGE_KINDS = ("engage_question", "engage_list", "engage_reddit_question", "engage_reddit_list", "engage_mover", "engage_explain",
-                "engage_peers")   # Owner tools: write that post now
+                "engage_peers", "engage_insider")   # Owner tools: write that post now
 POST_KINDS = ("post", "post_holders") + ENGAGE_KINDS   # the owner's X requests: their own workflow (post-to-x.yml)
 
 
