@@ -257,8 +257,16 @@ def money(v):
     return ("−" if v < 0 else "") + s
 
 
+def move_day(q):
+    """'today' while the session is open; after the close (and in drafts read later) the session's date, e.g. 'on Oct 15'."""
+    if Q.after_close() and q.get("asof"):
+        d = dt.date.fromisoformat(q["asof"])
+        return f"on {d:%b} {d.day}"
+    return "today"
+
+
 def quote_line(t, q, e):
-    bits = [f"${t} at ${q['price']:,.2f} ({q['chg_pct']:+.1f}% today)" if q.get("chg_pct") is not None else f"${t} at ${q['price']:,.2f}"]
+    bits = [f"${t} at ${q['price']:,.2f} ({q['chg_pct']:+.1f}% {move_day(q)})" if q.get("chg_pct") is not None else f"${t} at ${q['price']:,.2f}"]
     if q.get("mcap"):
         bits.append(f"market value {money(q['mcap'])}")
         if e and e.get("revenue"):
@@ -297,10 +305,23 @@ def peers_of(e, rows, live, n):
 
 
 def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
-    stamp = dt.datetime.now(dt.timezone.utc).strftime("%H:%M UTC")
+    checked = {}
+
+    def sure(t):                       # every quoted price is re-read from Yahoo and dated to this session first
+        k = Q.canon(t)
+        if k not in checked:
+            checked[k] = Q.confirm(k, live[k]) if live.get(k) else None
+        return checked[k]
+
     for e, q in movers_today(rows, c, live):
         if not state_ok("mover", e["ticker"], hours=c["movers"]["ticker_cooldown_hours"]):
             continue
+        q = sure(e["ticker"])
+        if not q or q.get("chg_pct") is None or abs(q["chg_pct"]) < c["movers"]["min_move_pct"]:
+            continue
+        day = move_day(q)
+        stamp = (f"close of the {q['asof']} session; write “{day}”, never “today”" if day != "today"
+                 else f"delayed quote, {dt.datetime.now(Q.NY):%H:%M} ET")
         cj, fq = figures(site, e)
         if not fq:
             continue
@@ -319,24 +340,24 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
             if ev["code"] in BREAKING_ITEMS or event_label(ev["code"], ev["quote"]) in ("a merger or acquisition", "a CEO change"):
                 ask = "Start the post with “BREAKING:” (a material 8-K filed today). " + ask
         else:
-            news, ask = "", "The cause of today's move is NOT in these inputs: do not guess or imply one; ask the audience."
+            news, ask = "", "The cause of this move is NOT in these inputs: do not guess or imply one; ask the audience."
         task = (f"PRICE MOVE (delayed quote, {stamp}): {quote_line(e['ticker'], q, e)}.{news}\n\n"
                 f"Latest filing figures (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, e['ticker'])}{chatter}\n\n{ask}")
         items = [(e, cj, fq)]
         cashtags = [e["ticker"]]
         if kind == "peers":
-            ps = peers_of(e, rows, live, c["movers"]["peers"])
+            ps = [x for x in peers_of(e, rows, live, c["movers"]["peers"]) if sure(x["ticker"])]
             if not ps:
                 continue
             lines = []
             for x in ps:
                 cx, qx = figures(site, x)
-                lines.append(f"- {quote_line(x['ticker'], live[Q.canon(x['ticker'])], x)} · {one_liner(x)}")
+                lines.append(f"- {quote_line(x['ticker'], sure(x['ticker']), x)} · {one_liner(x)}")
                 if qx:
                     items.append((x, cx, qx))
             task = (f"THE MOVER (delayed quote, {stamp}): {quote_line(e['ticker'], q, e)} · {one_liner(e)}\n\n"
                     f"Its closest listed peers on Filing Flows (same industry: {e.get('industry') or e.get('sic')}):\n" + "\n".join(lines)
-                    + "\n\nCompare them on price, today's move, growth, margin and price/sales — only these numbers. Do not guess "
+                    + "\n\nCompare them on price, the day's move, growth, margin and price/sales — only these numbers. Do not guess "
                       "why the mover moved.")
             cashtags += [x["ticker"] for x in ps]
         h = (fq.get("headline") or {})
@@ -344,15 +365,15 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
                 + (f", operating margin {h['om']:.1f}%" if h.get("om") is not None else "") + ".") if h.get("rev_fmt") else ""
         filed = f" after an 8-K ({event_label(ev['code'], ev['quote'])})." if ev else "."
         if kind == "peers":
-            fb = f"${e['ticker']} {q['chg_pct']:+.1f}% today at ${q['price']:,.2f} vs " + ", ".join(
-                f"${x['ticker']} {live[Q.canon(x['ticker'])]['chg_pct']:+.1f}%" for x in peers_of(e, rows, live, c["movers"]["peers"])) + ". Which one makes more sense here?"
+            fb = f"${e['ticker']} {q['chg_pct']:+.1f}% {day} at ${q['price']:,.2f} vs " + ", ".join(
+                f"${x['ticker']} {sure(x['ticker'])['chg_pct']:+.1f}%" for x in ps) + ". Which one makes more sense here?"
         else:
             lead = "Someone explain" if kind == "explain" else "What's happening with"
             if ev and (ev["code"] in BREAKING_ITEMS or event_label(ev["code"], ev["quote"]) in ("a merger or acquisition", "a CEO change")):
                 lead = "BREAKING: " + lead
-            fb = f"{lead} ${e['ticker']}? {q['chg_pct']:+.1f}% today at ${q['price']:,.2f}{filed}{fact}"
+            fb = f"{lead} ${e['ticker']}? {q['chg_pct']:+.1f}% {day} at ${q['price']:,.2f}{filed}{fact}"
             if social.xlen(fb) > 235:
-                fb = f"{lead} ${e['ticker']}? {q['chg_pct']:+.1f}% today at ${q['price']:,.2f}{filed}"
+                fb = f"{lead} ${e['ticker']}? {q['chg_pct']:+.1f}% {day} at ${q['price']:,.2f}{filed}"
         return {"kind": kind, "task": task, "cashtags": cashtags, "items": items, "mover": e["ticker"],
                 "event": ev if kind != "peers" else None, "fallback": fb}
     return None

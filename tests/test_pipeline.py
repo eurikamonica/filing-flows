@@ -1769,6 +1769,40 @@ def test_movers_and_peers():
     assert "price/sales ≈ 0.5×" in engage.quote_line("AAA", live["AAA"], rows[0])
 
 
+def test_stale_quotes_are_not_posted():
+    """Oct 15 2026, 7 PM ET: the screener still served Oct 14 (XMTR $95.15, -12%); XMTR had closed at $99.54, +4.6%."""
+    import datetime as dt
+    from pipeline import quotes
+    now = dt.datetime(2026, 10, 15, 23, 7, tzinfo=dt.timezone.utc)
+    assert quotes.session_date(now) == dt.date(2026, 10, 15) and quotes.after_close(now)
+    assert quotes.session_date(dt.datetime(2026, 10, 18, 15, tzinfo=dt.timezone.utc)) == dt.date(2026, 10, 16)   # Sunday
+    assert quotes.session_date(dt.datetime(2026, 10, 16, 12, tzinfo=dt.timezone.utc)) == dt.date(2026, 10, 15)   # 8 AM ET
+    scr = quotes.parse_nasdaq({"data": {"asof": "Last price as of Oct 14, 2026", "rows": [
+        {"symbol": "XMTR", "lastsale": "$95.15", "pctchange": "-12.0%", "marketCap": "4,900,000,000"}]}})
+    assert scr["XMTR"]["asof"] == "2026-10-14"
+    ts = lambda d, h=20: int(dt.datetime(2026, 10, d, h, tzinfo=dt.timezone.utc).timestamp())
+    yahoo = {"chart": {"result": [{"meta": {"regularMarketPrice": 99.54, "regularMarketTime": ts(15)},
+                                   "timestamp": [ts(13, 13), ts(14, 13), ts(15, 13)],
+                                   "indicators": {"quote": [{"close": [108.1, 95.15, 99.54]}]}}]}}
+    y = quotes.parse_yahoo(yahoo)
+    assert y["asof"] == "2026-10-15" and round(y["chg_pct"], 2) == 4.61
+    old_one, old_all = quotes.yahoo_one, quotes.nasdaq_all
+    try:
+        quotes.yahoo_one = lambda t, timeout=20: quotes.parse_yahoo(yahoo)
+        assert quotes.confirm("XMTR", scr["XMTR"], now=now, log=lambda m: None) is None      # sources disagree: no post
+        quotes.nasdaq_all = lambda timeout=40: scr                                            # stale screener → Yahoo
+        got = quotes.quotes(["XMTR"], now=now, log=lambda m: None)
+        assert got["XMTR"]["price"] == 99.54 and got["XMTR"]["source"] == "yahoo" and got["XMTR"]["mcap"] > 4.9e9
+        fresh = dict(scr["XMTR"], price=99.6, chg_pct=4.7, asof="2026-10-15")
+        ok = quotes.confirm("XMTR", fresh, now=now, log=lambda m: None)
+        assert ok["price"] == 99.54 and ok["asof"] == "2026-10-15"                         # agrees: Yahoo's figure is used
+        quotes.yahoo_one = lambda t, timeout=20: None                                         # Yahoo down: only a dated quote
+        assert quotes.confirm("XMTR", fresh, now=now, log=lambda m: None)["price"] == 99.6
+        assert quotes.confirm("XMTR", dict(fresh, asof=None), now=now, log=lambda m: None) is None
+    finally:
+        quotes.yahoo_one, quotes.nasdaq_all = old_one, old_all
+
+
 def test_8k_events_pick_the_material_item(tmp_path):
     import datetime as dt
     from pipeline import events, sec
