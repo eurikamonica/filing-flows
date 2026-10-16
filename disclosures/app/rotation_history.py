@@ -291,8 +291,8 @@ def sector_indices(companies, series, weeks):
     out = {}
     by = {}
     for c in companies:
-        if c['t'] in series:
-            by.setdefault(c['s'] or 'other', []).append(c)
+        if c['t'] in series and c['s'] and c['s'] != 'other':      # "other" is not a sector
+            by.setdefault(c['s'], []).append(c)
     for sec, members in by.items():
         lvl, levels, counts = None, [None] * len(weeks), [0] * len(weeks)
         for i in range(1, len(weeks)):
@@ -382,10 +382,12 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=64, 
         import rotation
         months_long = months_long or max(48, (dt.date.today().year - 2008) * 12 + dt.date.today().month - 1)
         rows = lambda t: (load(root, symbol(t)) or {}).get('rows') if re.fullmatch(r'[A-Za-z0-9.\-]+', t or '') else None
-        rot = rotation.build(site_data, data_root, top=top_long, quarters=quarters_long, months=months_long, prices=rows, frames_root=root)
+        rot = rotation.build(site_data, data_root, top=top_long, quarters=quarters_long, months=months_long, prices=rows, frames_root=root,
+                             vol_windows=(8, 24))       # volume against the last two years, not the whole history
         mon = rot.pop('monthly', None)
         rot['note'] = rot.get('note', '') + (' Long history: weekly closes since 2000 (branch rotation-history); volatility and '
-                                             'volume from weekly figures, so they read slightly differently from the recent view.')
+                                             'volume from weekly figures, and volume against the trailing two years (eight '
+                                             'quarters, 24 months), so they read slightly differently from the recent view.')
         rot['history'] = 'long'
         (pub / 'rotation-long.json').write_text(json.dumps(rot, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
         if mon:

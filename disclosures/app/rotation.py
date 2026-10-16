@@ -164,7 +164,7 @@ def _avg_in(hist, start, end, i):
     return sum(v) / len(v) if v else None
 
 
-def series(fig, rows, spy, periods, quarters=16, f13=None, gov=None, opt=None, pc13=None):
+def series(fig, rows, spy, periods, quarters=16, f13=None, gov=None, opt=None, pc13=None, vol_window=None):
     """Points (dicts keyed by FIELDS) for the periods that have revenue and closes at both quarter ends.
     fig: {period: {'rev', 'oi', 'gp', 'ni'}} (frames.figures for one company); f13 / gov: {period: value}."""
     pts = []
@@ -209,8 +209,12 @@ def series(fig, rows, spy, periods, quarters=16, f13=None, gov=None, opt=None, p
     pts = pts[-quarters:]
     vols = [p['vol'] for p in pts if p['vol']]
     avg = sum(vols) / len(vols) if vols else None
-    for p in pts:
+    for i, p in enumerate(pts):
+        if vol_window:                      # the long history: against the trailing quarters, not 16 years of volume
+            w = [q['vol'] for q in pts[max(0, i - vol_window + 1):i + 1] if q['vol']]
+            avg = sum(w) / len(w) if len(w) >= min(4, vol_window) else None
         p['volz'] = _r(100.0 * (p['vol'] / avg - 1), 1) if p['vol'] and avg else None
+    for p in pts:
         p.pop('vol')
     return pts
 
@@ -238,7 +242,7 @@ def _month_end(ym, back=0):
     return ((dt.date(y, m, 1) + dt.timedelta(days=32)).replace(day=1) - dt.timedelta(days=1)).isoformat()
 
 
-def monthly(rows, spy, months, opt=None):
+def monthly(rows, spy, months, opt=None, vol_window=None):
     """One row per month (MONTH_FIELDS): the month's return and its return against SPY, against SPY over three and six
     months, realised volatility in the month (annualised) and average daily volume against the company's own average."""
     out, vols = [], []
@@ -259,7 +263,10 @@ def monthly(rows, spy, months, opt=None):
                     x.get('hi52'), _r(_avg_in(opt or [], start, end, 2)), _r(_avg_in(opt or [], start, end, 3), 3)])
     ok = [v for v in vols if v]
     avg = sum(ok) / len(ok) if ok else None
-    for row, v in zip(out, vols):
+    for i, (row, v) in enumerate(zip(out, vols)):
+        if vol_window:
+            w = [x for x in vols[max(0, i - vol_window + 1):i + 1] if x]
+            avg = sum(w) / len(w) if len(w) >= min(6, vol_window) else None
         row[5] = _r(100.0 * (v / avg - 1), 1) if v and avg else None
     return out
 
@@ -350,7 +357,7 @@ def _options_inputs(root):
     return hist, pc
 
 
-def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_root=None):
+def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_root=None, vol_windows=(None, None)):
     """prices: ticker → rows (default: the daily price cache under root); frames_root: where the XBRL frames are cached
     (default root). The long history (app/rotation_history.py) passes weekly closes since 2000 and its own frames."""
     site_data, root = Path(site_data), Path(root)
@@ -385,7 +392,7 @@ def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_
         tk = r['ticker'].replace('-', '.')
         f13 = {p: (h13.get(tk) or {}).get(p, 0) for p in covered13}
         gov = {p: (hgov.get(tk) or {}).get(p, 0) for p in covered_gov}
-        pts = series(fig, rows, spy, periods, quarters, f13, gov, opt_hist.get(tk), pc13.get(tk))
+        pts = series(fig, rows, spy, periods, quarters, f13, gov, opt_hist.get(tk), pc13.get(tk), vol_window=vol_windows[0])
         if len(pts) < 3:
             continue
         fl = flows.get(tk) or {}
@@ -440,7 +447,7 @@ def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_
     for co in out:
         rows = load(co['t'])
         if rows:
-            m = monthly(rows, spy, months, opt_hist.get(co['t'].replace('-', '.')))
+            m = monthly(rows, spy, months, opt_hist.get(co['t'].replace('-', '.')), vol_window=vol_windows[1])
             if sum(1 for r in m if r[1] is not None) >= 6:
                 month_rows[co['t']] = m
     ri = MONTH_FIELDS.index('rs')

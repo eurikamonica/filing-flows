@@ -116,7 +116,8 @@ function rrgView(){
  if(state.rrgm==='2d'){ROT.ctx={Q,P:o.P,draw:f=>rrgFrame(o,f)};out+=`<div id="rot-plot">${rrgFrame(o,state.rf)}</div>`}
  else{ROT.ctx={Q,P:o.P,paint:f=>rrgPaint3d(o,f)};
   out+=`<div class="rot-3d-wrap"><canvas id="rot-3d" class="rot-3d" role="img" aria-label="${esc(head)}; the table below lists every value"></canvas><div class="rot-3d-tools"><button class="action" id="rspin" type="button">${ROT.spin?'Stop turning':'Turn slowly'}</button><button class="action" id="rreset" type="button">Front view</button></div></div>`}
- out+=`<div class="mk-legend rrg-legend">${lines.map(l=>`<span><i class="mk-key" style="background:${l.col}"></i>${esc(l.e.name)} <span class="muted">${esc(rrgFull_(l.e))}</span></span>`).join('')}${RRG_Q.map(([k,name])=>`<span><i class="mk-key rrg-k-${k}"></i>${name}</span>`).join('')}</div>`;
+ out+=`<div class="mk-legend rrg-legend">${lines.map(l=>{const k0=l.calc.y.findIndex(v=>v!=null),late=k0<0||k0>state.rf;
+  return `<span${late?' class="muted"':''}><i class="mk-key" style="background:${l.col}"></i>${esc(l.e.name)} <span class="muted">${esc(rrgFull_(l.e))}${late&&k0>=0?' · from '+esc(rrgDay(Q[k0])):''}</span></span>`}).join('')}${RRG_Q.map(([k,name])=>`<span><i class="mk-key rrg-k-${k}"></i>${name}</span>`).join('')}</div>`;
  if(waiting.length||missing.length)out+=`<p class="sub">${waiting.length?'Loading '+esc(waiting.map(e=>e.id).join(', '))+'… ':''}${missing.length?'Not on file yet: '+esc(missing.map(e=>e.id).join(', '))+' (the collector fetches the site’s companies largest first; the workflow’s “tickers” input fetches any ticker now).':''}</p>`;
  out+='</div>'+rrgTable(o);
  out+=`<details><summary>How the RRG is computed</summary><p>RS = 100 × weekly close ÷ ${esc(D.benchmark||'SPY')} (both adjusted for splits and dividends), smoothed over ${W?'4 weeks':'2 months'}. RS-Ratio: how far RS stands above or below its own ${esc(n)}-${W?'week':'month'} trend (an exponential average); above 100 the line is outperforming its trend. RS-Momentum: how much that gap changed since the ${W?'week':'month'} before, smoothed the same way; above 100 the relative trend is gaining speed. Both are expressed in standard deviations of their own last ${W?'year or more':'two years or more'} around 100, so a quiet ETF and a volatile stock read on the same scale. This is an open approximation of the JdK RS-Ratio and RS-Momentum used by StockCharts (their formula is not published), so levels differ from theirs while the quadrants and the clockwise rotation read the same. Monthly lines sample the last weekly close of each month. 3-D puts time in depth, so each line becomes a spiral and the front slice is the standard chart for the date shown; 4-D puts a third measure in depth and plays time.</p><p class="sub">${esc(D.note||'')}</p></details>`;
@@ -165,9 +166,9 @@ function rrgFrame(o,f){
   const h=pts[pts.length-1],pv=pts.length>1?pts[pts.length-2]:null;
   if(pv&&ks[ks.length-1]===f){const a=Math.atan2(h[1]-pv[1],h[0]-pv[0]),tx=h[0]+Math.cos(a)*11,ty=h[1]+Math.sin(a)*11;
    marks+=`<path class="rrg-arrow" style="fill:${l.col}" d="M${tx.toFixed(1)},${ty.toFixed(1)} L${(tx-8*Math.cos(a-.45)).toFixed(1)},${(ty-8*Math.sin(a-.45)).toFixed(1)} L${(tx-8*Math.cos(a+.45)).toFixed(1)},${(ty-8*Math.sin(a+.45)).toFixed(1)} Z"/>`}
-  const text=l.e.name+(ks[ks.length-1]===f?'':' '+rrgDay(o.Q[ks[ks.length-1]])),w=text.length*6.8,right=h[0]+12+w<W-R;
-  const b=[right?h[0]+9:h[0]-9-w,h[1]-20,right?h[0]+9+w:h[0]-9,h[1]-6];
-  if(!boxes.some(q=>b[0]<q[2]&&b[2]>q[0]&&b[1]<q[3]&&b[3]>q[1])){boxes.push(b);labels+=`<text class="mk-label mk-halo" x="${right?h[0]+9:h[0]-9}" y="${h[1]-9}" text-anchor="${right?'start':'end'}">${esc(text)}</text>`}
+  const text=l.e.name+(ks[ks.length-1]===f?'':' '+rrgDay(o.Q[ks[ks.length-1]])),w=text.length*6.8,right=h[0]+12+w<W-R,low=h[1]-22<T,ly=low?h[1]+18:h[1]-9;
+  const b=[right?h[0]+9:h[0]-9-w,ly-11,right?h[0]+9+w:h[0]-9,ly+3];
+  if(!boxes.some(q=>b[0]<q[2]&&b[2]>q[0]&&b[1]<q[3]&&b[3]>q[1])){boxes.push(b);labels+=`<text class="mk-label mk-halo" x="${right?h[0]+9:h[0]-9}" y="${ly}" text-anchor="${right?'start':'end'}">${esc(text)}</text>`}
  }
  return s+marks+labels+'</svg>';
 }
