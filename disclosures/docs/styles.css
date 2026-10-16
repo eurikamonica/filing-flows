@@ -360,3 +360,16 @@ th[aria-sort=ascending] .sort-mark, th[aria-sort=descending] .sort-mark { opacit
 .xbar #xmsg:empty { display: none; }
 .text-button.xpost { white-space: nowrap; font-weight: 600; }
 .text-button.xpost.done { color: var(--ink-2); font-weight: 500; }
+
+/* 4.6 Relative Rotation Graph (rrg.js): quadrant fills, quadrant names, the head arrow and the table badges */
+.rrg-lead { fill: var(--flow-buy); opacity: .07; } .rrg-weak { fill: var(--rot-sun); opacity: .09; }
+.rrg-lag { fill: var(--flow-sell); opacity: .07; } .rrg-imp { fill: var(--rot-1); opacity: .07; }
+.rrg-qt { font: 600 13px var(--sans); opacity: .85; }
+.rrg-t-lead { fill: var(--flow-buy); } .rrg-t-weak { fill: var(--rot-sun); } .rrg-t-lag { fill: var(--flow-sell); } .rrg-t-imp { fill: var(--rot-1); }
+.rrg-k-lead { background: var(--flow-buy); } .rrg-k-weak { background: var(--rot-sun); } .rrg-k-lag { background: var(--flow-sell); } .rrg-k-imp { background: var(--rot-1); }
+.rrg-tail { opacity: .7; }
+.rrg-arrow { stroke: var(--surface); stroke-width: 1; }
+.badge.rrg-b-lead { background: color-mix(in srgb, var(--flow-buy) 16%, transparent); color: var(--flow-buy); }
+.badge.rrg-b-weak { background: color-mix(in srgb, var(--rot-sun) 20%, transparent); color: var(--ink-2); }
+.badge.rrg-b-lag { background: color-mix(in srgb, var(--flow-sell) 16%, transparent); color: var(--flow-sell); }
+.badge.rrg-b-imp { background: color-mix(in srgb, var(--rot-1) 16%, transparent); color: var(--rot-1); }

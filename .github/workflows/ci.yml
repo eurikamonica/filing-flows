@@ -54,6 +54,7 @@ jobs:
             disclosures/docs/rotation.js
             disclosures/docs/options.js
             disclosures/docs/xpost.js
+            disclosures/docs/rrg.js
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
         with:
@@ -75,4 +76,4 @@ jobs:
         working-directory: disclosures
         run: |
           python -m unittest discover -s tests
-          for f in docs/app.js docs/extensions.js docs/dashboard.js docs/market.js docs/rotation.js docs/options.js docs/xpost.js; do node --check "$f"; done
+          for f in docs/app.js docs/extensions.js docs/dashboard.js docs/market.js docs/rotation.js docs/options.js docs/xpost.js docs/rrg.js; do node --check "$f"; done

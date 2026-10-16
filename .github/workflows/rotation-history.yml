@@ -1,0 +1,101 @@
+# Long history for the rotation charts (Disclosures → Rotation: the RRG in 2-D / 3-D / 4-D and the momentum clock since
+# 2010). Weekly closes since 2000 for SPY, the sector and style ETFs and every company of the Sankey site, and the SEC
+# XBRL frames back to 2009, are kept on the branch "rotation-history" (data only; the first run creates it). Each run
+# fetches a batch of new tickers, refreshes the stalest ones, then rebuilds public/ (rrg.json, t/<TICKER>.json,
+# rotation-long*.json); scan.yml publishes public/ with the hub on its next run. The branch keeps one commit (force-pushed)
+# so history files never pile up. Run it by hand (Actions → Rotation history → Run workflow) to fetch tickers now.
+name: Rotation history
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Fetch these first, in full (comma separated, e.g. NVDA, SMH)'
+        default: ''
+      batch:
+        description: 'New tickers this run'
+        default: '350'
+      refresh:
+        description: 'Stale tickers to refresh this run (each a 6-month request)'
+        default: '400'
+      frames:
+        description: 'Also collect the XBRL frames back to 2009'
+        type: boolean
+        default: true
+      rebuild_only:
+        description: 'Only rebuild public/ from what is on file'
+        type: boolean
+        default: false
+  schedule:
+    - cron: '41 */3 * * *'           # every three hours: a new batch, until every company is on file; then refreshes
+permissions:
+  contents: write
+concurrency:
+  group: rotation-history
+  cancel-in-progress: false
+jobs:
+  history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            disclosures/app
+            disclosures/config
+            disclosures/docs/data/market/by-ticker-history.json
+            disclosures/docs/data/market/by-ticker.json
+            disclosures/docs/data/market/officials-trades.json
+            disclosures/docs/data/market/options13f.json
+            disclosures/docs/data/cache/options/history.json
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The history branch (created by the first run)
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" rotation-history >/dev/null; then
+            git clone --quiet --depth 1 --branch rotation-history "$url" hist
+          else
+            mkdir hist && git -C hist init --quiet -b rotation-history && git -C hist remote add origin "$url"
+          fi
+          du -sh hist; ls hist
+      - name: The Sankey site's companies (largest first)
+        run: |
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          mkdir -p site
+          curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
+          python -c "import json; d=json.load(open('site/index.json')); print(len(d.get('companies', [])), 'companies on the site')"
+      - name: Weekly prices (new tickers first, then the stalest)
+        if: ${{ !inputs.rebuild_only }}
+        timeout-minutes: 30
+        env:
+          TICKERS: ${{ inputs.tickers }}
+        run: |
+          python disclosures/app/rotation_history.py collect --root hist --site-index site/index.json \
+            --batch "${{ inputs.batch || '350' }}" --refresh "${{ inputs.refresh || '400' }}" --minutes 24 --tickers "$TICKERS"
+      - name: XBRL frames back to 2009 (quarters on file are final)
+        if: ${{ !inputs.rebuild_only && (github.event_name == 'schedule' || inputs.frames) }}
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python disclosures/app/rotation_history.py frames --root hist --quarters 72
+      - name: Build public/ (RRG lines, ticker files, the long momentum clock)
+        timeout-minutes: 12
+        run: python disclosures/app/rotation_history.py build --root hist --site-data site --data disclosures/docs/data
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd hist
+          printf '%s\n' '# rotation-history (data only)' '' \
+            'Weekly closes since 2000 (cache/weekly), SEC XBRL frames back to 2009 (cache/frames), progress (state.json) and' \
+            'the files the site publishes (public/), kept by .github/workflows/rotation-history.yml on main. Rebuilt and' \
+            'force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "rotation history $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "rotation history $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:rotation-history && break; sleep $((i * 10)); done
+          python -c "import json; s=json.load(open('state.json')).get('summary', {}); print(json.dumps(s))"
+          python -c "import json; print(json.dumps(json.load(open('public/status.json'))))"

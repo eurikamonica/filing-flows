@@ -112,8 +112,18 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}                 # optional: your own domain → CNAME file for GitHub Pages
         run: python scripts/build_site.py --data _site/data --out _site
 
+      - name: The long rotation history (public/ of the branch rotation-history, when it exists)
+        continue-on-error: true
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" rotation-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch rotation-history "$url" _hist
+            git -C _hist sparse-checkout set public
+            du -sh _hist/public
+          fi
+
       - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
-        run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data
+        run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public
 
       # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
       # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.

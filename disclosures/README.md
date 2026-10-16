@@ -11,6 +11,14 @@ system (same header, type, colours, dark mode and theme preference), with links 
   (`automation/stage-public.py`; caches and queue state left out) on its normal hourly publish. No second Pages deploy.
 - **Secrets**: the repository's `SEC_USER_AGENT`; `FDIC_API_KEY` and `CFTC_APP_TOKEN` optional.
 - **Local preview**: `python disclosures/app/serve.py` → http://127.0.0.1:8080
+- **Long rotation history** (branch `rotation-history`, data only): `.github/workflows/rotation-history.yml` runs every
+  three hours (or by hand, with tickers to fetch first) and keeps weekly closes since 2000 for SPY, the SPDR sector ETFs,
+  style / size / asset ETFs and every company of the Sankey site (largest first, a batch per run; failures retried
+  later, progress in `state.json`), plus the SEC XBRL frames back to 2009 (`app/rotation_history.py`). It rebuilds
+  `public/` — `rrg.json`, `t/<TICKER>.json` and the momentum clock since 2010 (`rotation-long*.json`) — and force-pushes the
+  branch as one commit; the scan workflow copies `public/` to `/disclosures/data/market/history/`. Rotation then offers
+  the **RRG** (JdK-style RS-Ratio / RS-Momentum against SPY, weekly or monthly, in 2-D, 3-D with time as depth, and 4-D
+  with a third measure as depth and time played) and **History: Long** for the momentum clock and its 3-D / 4-D view.
 
 ## 4.1 — state and Canadian officials, optional cost estimates
 

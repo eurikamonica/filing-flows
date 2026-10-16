@@ -157,10 +157,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default='_site/disclosures')
     ap.add_argument('--site-data', default=None, help="the Sankey site's data folder (index.json), to join earnings into signals")
+    ap.add_argument('--history', default=None, help="public/ of the branch rotation-history (the RRG and the long rotation)")
     args = ap.parse_args()
     out = Path(args.out)
     shutil.rmtree(out, ignore_errors=True)
     shutil.copytree(DOCS, out, ignore=shutil.ignore_patterns('cache', 'discovery-state.json', 'npx-queue-state.json', 'meta.json'))
+    if args.history and (Path(args.history) / 'rrg.json').exists():
+        shutil.copytree(args.history, out / 'data' / 'market' / 'history', dirs_exist_ok=True)
+        st = {}
+        try:
+            st = json.loads((Path(args.history) / 'status.json').read_text(encoding='utf-8'))
+        except Exception:
+            pass
+        print(f"::notice::rotation history: {st.get('tickers_published')} tickers, built {st.get('built_at')}, "
+              f"long momentum clock {st.get('long_quarters')}")
     if args.site_data:
         print(f'signals joined with earnings for {join_earnings(out, args.site_data)} tickers')
         try:

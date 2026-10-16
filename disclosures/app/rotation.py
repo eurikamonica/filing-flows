@@ -81,18 +81,30 @@ def _window(rows, start, end):
     return rows[lo:hi]
 
 
-def _volume(win):
+def _weekly(win):
+    """True when the rows are weekly closes (the long history, branch rotation-history) rather than daily ones."""
+    if len(win) < 2:
+        return False
+    d0, d1 = dt.date.fromisoformat(win[0][0]), dt.date.fromisoformat(win[-1][0])
+    return (d1 - d0).days / (len(win) - 1) > 3.5
+
+
+def _volume(win, need=20):
+    """Average daily volume in the window; weekly rows hold a week's volume, so they count as five days."""
     v = [r[2] for r in win if len(r) > 2 and r[2]]
-    return sum(v) / len(v) if len(v) >= 20 else None
+    if _weekly(win):
+        return sum(v) / len(v) / 5 if len(v) >= max(3, need * 2 // 5) else None
+    return sum(v) / len(v) if len(v) >= need else None
 
 
 def _vola(win, before):
     closes = ([before] if before else []) + [r[1] for r in win if r[1]]
     rets = [math.log(b / a) for a, b in zip(closes, closes[1:]) if a and b and a > 0 and b > 0]
-    if len(rets) < 20:
+    weekly = _weekly(win)
+    if len(rets) < (8 if weekly else 20):
         return None
     m = sum(rets) / len(rets)
-    return math.sqrt(sum((r - m) ** 2 for r in rets) / (len(rets) - 1) * 252) * 100
+    return math.sqrt(sum((r - m) ** 2 for r in rets) / (len(rets) - 1) * (52 if weekly else 252)) * 100
 
 
 def _qdates(period):
@@ -143,7 +155,7 @@ def price_extras(rows, spy, end):
     out['mom121'] = _r(100.0 * (a1 / a12 - 1) - 100.0 * (s1 / s12 - 1)) if a12 and a1 and s12 and s1 else None
     year = _window(rows, _months_back(end, 12), end)
     hi = max((x[1] for x in year if x[1]), default=None)
-    out['hi52'] = _r(100.0 * (b / hi - 1)) if hi and len(year) >= 150 else None
+    out['hi52'] = _r(100.0 * (b / hi - 1)) if hi and len(year) >= (45 if _weekly(year) else 150) else None
     return out
 
 
@@ -237,8 +249,7 @@ def monthly(rows, spy, months, opt=None):
         rel = lambda back: (lambda a0, s0: _r(100.0 * (b / a0 - 1) - 100.0 * (sb / s0 - 1)) if a0 and b and s0 and sb else None)(
             _close(rows, _month_end(ym, back)), _close(spy, _month_end(ym, back)) if spy else None)
         win = _window(rows, start, end)
-        v = [r[2] for r in win if len(r) > 2 and r[2]]
-        vol = sum(v) / len(v) if len(v) >= 12 else None
+        vol = _volume(win, 12)
         vols.append(vol)
         closes = ([a] if a else []) + [r[1] for r in win if r[1]]
         lr = [math.log(y / x) for x, y in zip(closes, closes[1:]) if x and y and x > 0 and y > 0]
@@ -339,8 +350,11 @@ def _options_inputs(root):
     return hist, pc
 
 
-def build(site_data, root, top=600, quarters=16):
+def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_root=None):
+    """prices: ticker → rows (default: the daily price cache under root); frames_root: where the XBRL frames are cached
+    (default root). The long history (app/rotation_history.py) passes weekly closes since 2000 and its own frames."""
     site_data, root = Path(site_data), Path(root)
+    load = prices or (lambda t: _rows(root, t))
     ix = json.loads((site_data / 'index.json').read_text(encoding='utf-8'))
     names = ix.get('sector_names') or {}
     latest = {}
@@ -358,14 +372,14 @@ def build(site_data, root, top=600, quarters=16):
     hgov, covered_gov = _gov_history(root)
     opt_hist, pc13 = _options_inputs(root)
     periods = FR.calendar_quarters(quarters + 5)
-    figs = FR.figures(root, periods)
-    spy = _rows(root, 'SPY')
+    figs = FR.figures(frames_root or root, periods)
+    spy = load('SPY')
     out = []
     for r in sorted(latest.values(), key=lambda r: -(r.get('revenue') or 0)):
         if len(out) >= top:
             break
         fig = figs.get(str(r['cik']))
-        rows = _rows(root, r['ticker']) if fig else None
+        rows = load(r['ticker']) if fig else None
         if not rows:
             continue
         tk = r['ticker'].replace('-', '.')
@@ -421,10 +435,10 @@ def build(site_data, root, top=600, quarters=16):
     for co in out:
         co['p'] = [[p.get(k) for k in FIELDS] for p in co.pop('pts')]
     cals = sorted({row[0] for co in out for row in co['p']})[-quarters:]
-    months = last_months(48)
+    months = last_months(months)
     month_rows = {}
     for co in out:
-        rows = _rows(root, co['t'])
+        rows = load(co['t'])
         if rows:
             m = monthly(rows, spy, months, opt_hist.get(co['t'].replace('-', '.')))
             if sum(1 for r in m if r[1] is not None) >= 6:
