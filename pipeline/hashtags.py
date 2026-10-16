@@ -23,6 +23,9 @@ KINDS = {
     "earnings": ["#earnings", "#EarningsSeason"],
     "13f": ["#13F", "#hedgefunds", "#smartmoney"],
     "insider": ["#InsiderBuying", "#Form4", "#insiders"],
+    "insider_sale": ["#InsiderSelling", "#Form4", "#insiders"],
+    "congress": ["#CongressTrades", "#STOCKAct", "#PoliticianTrades"],     # US House periodic transaction reports
+    "officials": ["#PoliticianTrades", "#disclosures"],                     # other jurisdictions' officials
     "8k": ["#8K", "#SEC"],
     "movers": ["#StockMovers", "#trading"],
     "capital": ["#buybacks", "#dividends"],

@@ -215,7 +215,9 @@ function tradesView(){
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')} Machine-read rows are not reviewed: open the page to confirm. A “name differs” flag means the listed company name does not appear in the filer’s description — often a share class or a renamed company, sometimes a wrong ticker.</div>`;
  out+=`<div class="section-head"><h3>${fmt(rows.length)} transactions</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- out+=table(['Transaction date','Official','Ticker','Ticker check','Asset as filed','Type','Amount (disclosed range)','Owner','Report filed','Source'],rows.map(t=>[
+ out+=xBar('one transaction');
+ out+=table([...(XPOST.on?['X']:[]),'Transaction date','Official','Ticker','Ticker check','Asset as filed','Type','Amount (disclosed range)','Owner','Report filed','Source'],rows.map(t=>[
+  ...(XPOST.on?[xBtn('post_official',0,[t.report_id,t.date,t.ticker||'',t.type,t.amount_min??null,t.amount_max??null,t.owner||''],`${t.person}'s ${t.type} of ${t.ticker||'this asset'}`)]:[]),
   esc(t.date),esc(t.person),t.ticker?`${tkLink(t.ticker)}${t.asset_type==='OP'?' <span class="muted">options</span>':''}`:'—',
   `<span class="badge ${t.ticker_status==='listed'?(t.name_check==='check'?'pending':'ready'):'error'}">${esc(t.ticker_status==='listed'?(t.name_check==='check'?'listed · name differs':'listed'):(t.ticker_status||'no ticker'))}</span>${t.listed_name?`<br><span class="muted">${esc(t.listed_name)}</span>`:''}${t.suggested?`<br>Suggested: <b>${esc(t.suggested)}</b> <span class="muted">(${esc(t.confidence)})</span>`:''}`,
   `<span class="mk-asset">${esc(t.asset_raw)}</span>`,`<span class="${t.type==='purchase'?'positive':/sale/.test(t.type)?'negative':''}">${esc(t.type)}</span>`,
@@ -238,7 +240,9 @@ function insidersView(){
  const rows=all.filter(t=>(!state.itype||t.code===state.itype)&&(!state.irole||(state.irole==='ceo'?CEO.has(t.role):state.irole==='officer'?OFF.has(t.role):t.role===state.irole))&&(!q||[t.ticker,t.issuer,t.insider].join(' ').toLowerCase().includes(q)));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} recent trades</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- out+=table(['Trade date','Ticker','Company','Insider','Role','Trade','Shares','Price','Value','Held after','Source'],rows.map(t=>[esc(t.date),t.ticker?tkLink(t.ticker,t.issuer_cik):'—',t.issuer_cik?`<a class="tk" href="${esc(coHref(t.ticker,t.issuer_cik))}">${esc(t.issuer)}</a>`:esc(t.issuer),esc(t.insider),esc(t.title||t.role),
+ out+=xBar('one trade');
+ out+=table([...(XPOST.on?['X']:[]),'Trade date','Ticker','Company','Insider','Role','Trade','Shares','Price','Value','Held after','Source'],rows.map(t=>[
+  ...(XPOST.on?[xBtn('post_insider',t.issuer_cik,[t.accession,t.date,t.code,t.shares??null,t.price??null],`${t.insider}'s ${t.code==='P'?'purchase':'sale'} of ${t.ticker||t.issuer}`)]:[]),esc(t.date),t.ticker?tkLink(t.ticker,t.issuer_cik):'—',t.issuer_cik?`<a class="tk" href="${esc(coHref(t.ticker,t.issuer_cik))}">${esc(t.issuer)}</a>`:esc(t.issuer),esc(t.insider),esc(t.title||t.role),
   `<span class="${t.code==='P'?'positive':'negative'}">${t.code==='P'?'Purchase':'Sale'}</span>${t.plan_10b5_1?' <span class="muted">10b5-1</span>':''}`,fmt(t.shares),t.price!=null?'$'+fmt(t.price,2):'—',money(t.value),fmt(t.after),link(t.url,'Form 4 ↗')]));
  return out;
 }

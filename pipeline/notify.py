@@ -1169,7 +1169,9 @@ def _now_iso():
 
 ENGAGE_KINDS = ("engage_question", "engage_list", "engage_reddit_question", "engage_reddit_list", "engage_mover", "engage_explain",
                 "engage_peers", "engage_insider", "engage_event8k", "engage_ivmove", "engage_opt13f", "engage_rsleaders")   # Owner tools: write that post now
-FILING_KINDS = ("post_8k", "post_13f")      # owner: a post about one chosen 8-K (cik = company) or 13F (cik = the manager)
+FILING_KINDS = ("post_8k", "post_13f",       # owner: a post about one chosen 8-K (cik = company) or 13F (cik = the manager)
+                "post_insider", "post_official")   # ... or one row of the hub's Insider trades / Officials' trades (ref = its key)
+FILING_PLANS = {"post_8k": "filing8k", "post_13f": "fund13f_for", "post_insider": "insider_for", "post_official": "official_for"}
 POST_KINDS = ("post", "post_holders", "post_gif") + ENGAGE_KINDS + FILING_KINDS   # the owner's X requests: their own workflow (post-to-x.yml)
 
 
@@ -1302,13 +1304,13 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
                     continue
                 try:
                     from . import engage
-                    made = engage.make(["filing8k" if kind == "post_8k" else "fund13f_for"], site, site_url, os.environ.get("MEDIA_DIR", "media"),
+                    made = engage.make([FILING_PLANS[kind]], site, site_url, os.environ.get("MEDIA_DIR", "media"),
                                        assets, force=True, target={"cik": r["cik"], "ref": r.get("ref")}, draft=bool(r.get("draft")))
                     if made:
                         print(f"{'Buffer draft' if r.get('draft') else 'queued for Buffer'} ({kind}): " + " | ".join(made))
                         finish([r], status="sent", sent_at=_now_iso(), error=None)
                     else:
-                        finish([r], status="failed", error="that filing could not be found or read (see the Post to X run)")
+                        finish([r], status="failed", error="that filing or row could not be found or read (see the Post to X run)")
                 except Exception as err:
                     print(f"::warning::{kind} not made ({err.__class__.__name__}: {err})")
                     finish([r], status="failed", error=f"post not made: {str(err)[:150]}")

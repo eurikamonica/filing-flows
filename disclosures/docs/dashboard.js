@@ -47,7 +47,8 @@ function directory(){
  out+=`<div class="explain">${esc(help[state.dtype])} Website clicks do not start authenticated GitHub jobs.</div>`;
  exported=rows.map(({key,label,detail,status,date})=>({identifier:key,name:label,detail,status,latest_report_or_filing:date}));
  out+=`<div class="section-head"><h3>${fmt(rows.length)} results</h3><button id="csv" class="action">Export directory ↓</button></div>`;
- return out+table(['Entity / filer','Identifier / disclosure','Latest report / filing','Status','Explore'],rows.map(r=>[esc(r.label),esc(r.detail),esc(r.date),`<span class="badge ${r.status}">${esc(r.status==='pending'?'Queued':r.status)}</span>`,r.status==='ready'?`<button class="text-button" data-open-kind="${r.kind}" data-open-id="${esc(r.key)}">View →</button>`:r.source_url?link(r.source_url,'Source ↗'):'Actions → Run workflow']));
+ if(state.dtype==='holdings')out+=xBar('a manager’s latest processed 13F');
+ return out+table(['Entity / filer','Identifier / disclosure','Latest report / filing','Status','Explore'],rows.map(r=>[esc(r.label),esc(r.detail),esc(r.date),`<span class="badge ${r.status}">${esc(r.status==='pending'?'Queued':r.status)}</span>`,r.status==='ready'?`<button class="text-button" data-open-kind="${r.kind}" data-open-id="${esc(r.key)}">View →</button>${r.kind==='holdings'?' '+xBtn('post_13f',r.key,null,`${r.label}'s latest 13F`):''}`:r.source_url?link(r.source_url,'Source ↗'):'Actions → Run workflow']));
 }
 function health(){
  const d=data();let out=head('Coverage & collection','Operational health and data completeness are separate measures. A successful run can still have a processing backlog.','SOURCE MONITOR');

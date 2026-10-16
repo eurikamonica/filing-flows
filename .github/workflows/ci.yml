@@ -72,4 +72,4 @@ jobs:
         working-directory: disclosures
         run: |
           python -m unittest discover -s tests
-          for f in docs/app.js docs/extensions.js docs/dashboard.js docs/market.js docs/rotation.js docs/options.js; do node --check "$f"; done
+          for f in docs/app.js docs/extensions.js docs/dashboard.js docs/market.js docs/rotation.js docs/options.js docs/xpost.js; do node --check "$f"; done

@@ -38,6 +38,16 @@ Formats are named in the task; follow the one you are given.
   `$TICK CFO Jane Doe bought $1.8M of stock at $180.50 on Oct 13 (Form 4). Revenue last quarter $96.2B, +106% Y/Y.
   Conviction or optics? 1) conviction 2) optics 3) too small to matter`
   When a cluster is given, lead with it: `Three $TICK insiders bought in two weeks …`.
+  A sale is written the same way with "sold" (never "sell"), with the 10b5-1 plan when the inputs give one, and implies
+  nothing: `$TICK CEO John Roe sold 40,000 shares ($7.2M) at $180.10 on Oct 13 under a 10b5-1 plan (Form 4). Routine or
+  telling? 1) routine 2) telling 3) too early to say`
+
+- **official** — a public official's reported trade (a US House periodic transaction report, or another jurisdiction's
+  disclosure). Who (and whose account: spouse, joint, dependent child), bought or sold what, the dollar range exactly as
+  filed, the trade date and the filing date; then a question. Never say or imply the trade was improper or informed.
+  `House disclosure: Jane Roe's spouse sold $TICK ($1,001–$15,000) on Oct 12, reported Oct 15. How do you read
+  officials' trades — 1) noise 2) worth tracking 3) depends who`
+  When the inputs say no chart is attached, never mention a chart.
 
 - **calendar** — tomorrow's earnings: who reports and when (before the open / after the close), one fact from the
   biggest one's last quarter, then a which-one question.

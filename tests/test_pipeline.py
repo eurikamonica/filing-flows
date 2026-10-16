@@ -2135,6 +2135,60 @@ def test_owner_x_post_options():
     assert H.pick("earnings", None, key="a", n=2, parts={"kind": False, "general": False}) == []
 
 
+def test_hub_rows_post_one_at_a_time(tmp_path):
+    """Owner: ✦ X on one row of the hub's Insider trades or Officials' trades table. The row is found again in the
+    published data by its key (the browser sends no figures); a sale says "sold" and never "sell"; a company with charts
+    on the site gets its chart, any other goes out as text; an official's range is given exactly as filed."""
+    import datetime as dt
+    from pipeline import engage, notify, social
+    site = _site(tmp_path)
+    mk = site / "disclosures" / "data" / "market"
+    mk.mkdir(parents=True)
+    (mk / "insiders.json").write_text(json.dumps({"summary": [], "latest": [
+        {"accession": "0002119764-26-000032", "url": "https://www.sec.gov/Archives/edgar/data/2119764/000211976426000032/",
+         "issuer_cik": "1034957", "issuer": "CRESUD INC", "ticker": "CRESY", "insider": "Elsztain Alejandro Gustavo", "role": "Director",
+         "title": "", "code": "P", "date": "2026-10-15", "shares": 8295.0, "price": 11.18, "value": 92738, "after": 1251393.0,
+         "plan_10b5_1": False},
+        {"accession": "0000320193-26-000101", "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000101/",
+         "issuer_cik": "320193", "issuer": "Apple Inc.", "ticker": "AAPL", "insider": "Doe Jane", "role": "CFO",
+         "title": "Chief Financial Officer", "code": "S", "date": "2026-10-14", "shares": 40000.0, "price": 250.5, "value": 10020000,
+         "after": 100000.0, "plan_10b5_1": True}]}))
+    (mk / "officials-trades.json").write_text(json.dumps({"trades": [
+        {"ticker": "AAPL", "asset_type": "ST", "type": "sale", "date": "2026-10-12", "owner": "SP", "asset_raw": "Apple Inc. (AAPL) [ST]",
+         "amount_min": 1001, "amount_max": 15000, "person": "Jane Roe", "jurisdiction": "US House", "report_id": "house-20035660",
+         "filed_date": "2026-10-15", "source_url": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035660.pdf",
+         "page": 1, "read": "machine", "ticker_canon": "AAPL", "ticker_status": "listed", "listed_name": "Apple Inc.",
+         "name_check": "matches"}]}))
+    s = notify.Site(str(site))
+    rows = s.json("index.json")["companies"]
+    by = {r["ticker"].upper(): r for r in rows if r.get("ticker")}
+    today = dt.date(2026, 10, 16)
+    ask = lambda plan, key: plan(s, rows, by, {"ref": json.dumps(key)}, today)
+    buy = ask(engage.plan_insider_for, ["0002119764-26-000032", "2026-10-15", "P", 8295, 11.18])
+    assert buy["cashtags"] == ["CRESY"] and buy["items"] == [] and "No chart is attached" in buy["task"]
+    assert "bought 8,295 shares of $CRESY at $11.18 on 2026-10-15" in buy["task"] and buy["tags"][0] == "#InsiderBuying"
+    engage.clean(buy["fallback"], buy["cashtags"], buy["tags"])
+    sale = ask(engage.plan_insider_for, ["0000320193-26-000101", "2026-10-14", "S", 40000, 250.5])
+    assert sale["items"] and sale["items"][0][0]["cik"] == 320193 and "Latest filing figures" in sale["task"]
+    assert "sold 40,000 shares of $AAPL" in sale["task"] and "10b5-1 trading plan" in sale["task"] and sale["tags"][0] == "#InsiderSelling"
+    post = engage.clean(sale["fallback"], sale["cashtags"], sale["tags"])
+    assert " sold 40,000 shares" in post and "#InsiderBuying" not in post
+    assert ask(engage.plan_insider_for, ["0000320193-26-000101", "2026-10-14", "S", 1, 250.5]) is None      # not that row
+    assert ask(engage.plan_insider_for, "not a list") is None
+    o = ask(engage.plan_official_for, ["house-20035660", "2026-10-12", "AAPL", "sale", 1001, 15000, "SP"])
+    assert o["cashtags"] == ["AAPL"] and o["items"] and o["tags"][0] == "#CongressTrades"
+    assert "Jane Roe's spouse sold $AAPL worth $1,001–$15,000 on 2026-10-12 — disclosed 3 days after the trade" in o["task"]
+    assert engage.clean(o["fallback"], o["cashtags"], o["tags"]).startswith("House disclosure: Jane Roe's spouse sold $AAPL ($1,001–$15,000)")
+    assert social.strip_links([o["source_reply"]]) == [
+        "Source: US House periodic transaction report house-20035660, filed 2026-10-15, page 1; read automatically from the PDF. "
+        "Not investment advice."]
+    assert engage.amount_range(50000001, None) == "over $50,000,001"
+    from pipeline import notify as N
+    assert set(N.FILING_PLANS) == set(N.FILING_KINDS) and {"post_insider", "post_official"} <= set(N.POST_KINDS)
+    sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
+    assert sql.count("'post_insider', 'post_official'") == 5                # kind check, cik check, guard, wake, owner-only policy
+
+
 def test_posts_are_never_cut_off_and_say_something():
     """Oct 16 2026: drafts went to Buffer as '$FNGR 8-K filed Sept 29: entered a definitive #earnings #stocks' and
     'JUST FILED · $FNGR Q2 FY2 #13F' — model answers cut at max_tokens, hashtags glued on. Such posts are rejected."""

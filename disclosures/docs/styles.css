@@ -351,3 +351,12 @@ th[aria-sort=ascending] .sort-mark, th[aria-sort=descending] .sort-mark { opacit
 .warn-box { padding: 10px 14px; margin: 14px 0; background: var(--warn-soft); border-left: 3px solid var(--warn-ink); border-radius: 0 8px 8px 0; font-size: 13px; color: var(--ink-2); line-height: 1.65; }
 #tlatest summary { cursor: pointer; padding: 4px 0; }
 #tlatest .tablebox { margin-top: 10px; }
+
+/* Owner only (xpost.js): ✦ X on a row queues one X post in Buffer */
+.xbar { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; margin: 8px 0 10px; padding: 8px 12px; border: 1px dashed var(--line);
+  border-radius: 10px; font-size: 13.5px; color: var(--ink-2); }
+.xbar label { display: inline-flex; gap: 6px; align-items: center; }
+.xbar #xmsg { color: var(--ink); }
+.xbar #xmsg:empty { display: none; }
+.text-button.xpost { white-space: nowrap; font-weight: 600; }
+.text-button.xpost.done { color: var(--ink-2); font-weight: 500; }

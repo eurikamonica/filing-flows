@@ -664,24 +664,160 @@ def plan_insider(site, rows, c, by_ticker, state_ok, today):
 
 
 def insider_plan(t, tk, e, cj, fq, cl, today):
-    """The post plan for one Form 4 purchase (t: a row of the hub's insiders.json; cl: its cluster summary or None)."""
+    """The post plan for one Form 4 trade (t: a row of the hub's insiders.json; cl: its cluster summary or None). A sale
+    (code S) is written as "sold"; without the company on the site (cj/fq None) the post has no chart and no other figures."""
+    sale = t.get("code") == "S"
+    verb = "sold" if sale else "bought"
     after = f"; holds {t['after']:,.0f} shares after the trade" if t.get("after") else ""
     filed = t.get("filed")
     fresh = bool(filed) and filed >= (today - dt.timedelta(days=2)).isoformat()
-    task = (f"FORM 4{f' filed {filed}' if filed else ' (filed within two business days of the trade)'}: {t['insider']} ({t.get('title') or t['role']}) bought "
-            f"{t['shares']:,.0f} shares of ${tk} at ${t['price']:,.2f} on {t['date']} — {money(t['value'])} in the open market{after}."
+    what = f"${tk}" if tk else social.display_name(t.get("issuer") or "the company")
+    at = f" at ${t['price']:,.2f}" if t.get("price") is not None else ""
+    plan = (" The sale was under a pre-arranged 10b5-1 trading plan." if sale and t.get("plan_10b5_1")
+            else " This was NOT under a 10b5-1 plan." if t.get("plan_10b5_1") is False else "")
+    figs = (f"\n\nLatest filing figures (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, tk)}" if fq
+            else "\n\nNo other figures: use only the numbers above. No chart is attached; do not mention one.")
+    task = (f"FORM 4{f' filed {filed}' if filed else ' (filed within two business days of the trade)'}: {t['insider']} ({t.get('title') or t['role']}) {verb} "
+            f"{t['shares']:,.0f} shares of {what}{at} on {t['date']} — {money(t['value'])} in the open market{after}."
             + (" Start the post with “JUST FILED:”." if fresh else "")
-            + " Say who bought, how many shares, at what price, the trade date and the filing date."
-            + (" This was NOT under a 10b5-1 plan." if t.get("plan_10b5_1") is False else "")
-            + (f"\nCluster: {cl['buyers30']} insiders bought ${tk} within 30 days ({', '.join(cl['buyers'][:4])})." if cl else "")
-            + f"\n\nLatest filing figures (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, tk)}"
-            + "\n\nSay what the insider did and when; never say it means the stock will rise. Ask the audience how they read it.")
+            + f" Say who {verb}, how many shares, at what price, the trade date and the filing date."
+            + plan
+            + (" Use the word “sold”, never “sell”. Insiders sell for many reasons (taxes, diversification, planned sales): state the "
+               "facts and imply nothing." if sale else "")
+            + (f"\nCluster: {cl['buyers30']} insiders bought ${tk} within 30 days ({', '.join(cl['buyers'][:4])})." if cl and not sale else "")
+            + figs
+            + "\n\nSay what the insider did and when; never say what it means for the stock. Ask the audience how they read it.")
     who = t.get('title') if t.get('title') and len(t['title']) <= 24 else t['role']
-    fb = (("JUST FILED: " if fresh else "") + f"${tk} {who} {t['insider'].title()} bought {t['shares']:,.0f} shares ({money(t['value'])}) at "
-          f"${t['price']:,.2f} on {t['date']}" + (f", Form 4 filed {filed}." if filed else " (Form 4).")
-          + (f" {cl['buyers30']} insiders bought in 30 days." if cl else "") + " How do you read it?")
-    return {"kind": "insider", "task": task, "cashtags": [tk], "items": [(e, cj, fq)], "insider_url": t.get("url"), "fallback": fb,
-            "tags": H.pick("insider", e, key=f"insider:{tk}:{t.get('date')}")}
+    fb = (("JUST FILED: " if fresh else "") + f"{what} {who} {t['insider'].title()} {verb} {t['shares']:,.0f} shares ({money(t['value'])}){at} "
+          f"on {t['date']}" + (f", Form 4 filed {filed}." if filed else " (Form 4).")
+          + (" Under a 10b5-1 plan." if sale and t.get("plan_10b5_1") else "")
+          + (f" {cl['buyers30']} insiders bought in 30 days." if cl and not sale else "") + " How do you read it?")
+    return {"kind": "insider", "task": task, "cashtags": [tk] if tk else [], "items": [(e, cj, fq)] if fq else [],
+            "insider_url": t.get("url"), "fallback": fb,
+            "tags": H.pick("insider_sale" if sale else "insider", e, key=f"insider:{tk or t.get('issuer_cik')}:{t.get('date')}")}
+
+
+# ------------------------------------------------------------------ one row of the Disclosures hub (Owner: ✦ X on a row)
+# The hub's tables (Insider trades, Officials' trades) send the row's own key as the request's ref (a JSON list); the
+# row is looked up again in the published data here, so every figure in the post comes from the data, not the browser.
+WHOSE = {"SP": "spouse", "DC": "dependent child"}
+
+
+def _ref(target):
+    try:
+        v = json.loads(target.get("ref") or "")
+    except ValueError:
+        v = None
+    if not isinstance(v, list):
+        raise ValueError("the request does not name a row of the table")
+    return v
+
+
+def _same(a, b):
+    if a in (None, "") or b in (None, ""):
+        return a in (None, "") and b in (None, "")
+    try:
+        return abs(float(a) - float(b)) < 1e-6
+    except (TypeError, ValueError):
+        return str(a) == str(b)
+
+
+def site_company(rows, by_ticker, cik=None, ticker=None):
+    """The site's index row of a company (by CIK, else by ticker), or None when it has no charts on the site."""
+    try:
+        hit = next((r for r in rows if cik and int(r.get("cik") or 0) == int(cik) and r.get("end")), None)
+    except (TypeError, ValueError):
+        hit = None
+    return hit or (by_ticker.get(ticker) if ticker else None)
+
+
+def plan_insider_for(site, rows, by_ticker, target, today):
+    """Owner: a post about one row of the hub's Insider trades table (ref: [accession, date, code, shares, price])."""
+    try:
+        accn, day, code, shares, price = (_ref(target) + [None] * 5)[:5]
+        d = hub_json(site, "insiders.json")
+    except Exception as err:
+        print(f"insider_for: {str(err)[:200]}")
+        return None
+    t = next((t for t in d.get("latest", []) if t.get("accession") == accn and t.get("date") == day and t.get("code") == code
+              and _same(t.get("shares"), shares) and _same(t.get("price"), price)), None)
+    if not t:
+        print(f"insider_for: the trade {accn} of {day} is no longer in the hub's insiders.json")
+        return None
+    tk = (t.get("ticker") or "").upper().replace("-", ".")
+    e = site_company(rows, by_ticker, t.get("issuer_cik"), tk)
+    cj, fq = figures(site, e) if e else (None, None)
+    cl = next((a for a in d.get("summary", []) if a.get("cluster") and (a.get("ticker") or "").upper().replace("-", ".") == tk), None)
+    p = insider_plan(t, tk, e if fq else None, cj, fq, cl, today)
+    p["manual"] = True
+    return p
+
+
+def amount_range(lo, hi):
+    """An official's disclosed range as filed: "$1,001–$15,000", "over $50,000,000"."""
+    if lo is None and hi is None:
+        return "an undisclosed amount"
+    if hi is None:
+        return f"over ${lo:,.0f}"
+    return f"${lo:,.0f}–${hi:,.0f}" if lo is not None else f"up to ${hi:,.0f}"
+
+
+def official_plan(t, e, cj, fq, today):
+    """The post plan for one official's reported transaction (a row of the hub's officials-trades.json)."""
+    listed = t.get("ticker_status") == "listed" and t.get("name_check") != "check"     # a doubtful ticker: no cashtag
+    tk = (t.get("ticker_canon") or t.get("ticker") or "").upper().replace("-", ".") if listed else ""
+    name = social.display_name(t.get("listed_name") or "") or re.sub(r"\s*\[[A-Z]{2}\]\s*$", "", t.get("asset_raw") or "the asset")[-80:]
+    what = (f"${tk}" if tk else name) + (" options" if t.get("asset_type") == "OP" else "")
+    verb = {"purchase": "bought", "sale": "sold", "partial sale": "sold part of a holding in", "exchange": "exchanged"}.get(t.get("type"), t.get("type") or "traded")
+    own = t.get("owner") or ""
+    who = f"{t['person']}'s {WHOSE[own]}" if own in WHOSE else f"{t['person']} (joint account)" if own == "JT" else t["person"]
+    amt = amount_range(t.get("amount_min"), t.get("amount_max"))
+    house = t.get("jurisdiction") == "US House"
+    src = "a US House periodic transaction report" if house else f"a {t.get('jurisdiction') or 'public'} disclosure"
+    filed, day = t.get("filed_date") or t.get("notified") or "", t.get("date") or ""
+    try:
+        lag = (dt.date.fromisoformat(filed[:10]) - dt.date.fromisoformat(day[:10])).days
+    except ValueError:
+        lag = None
+    figs = (f"\n\nLatest filing figures of the company (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, tk)}" if fq
+            else "\n\nNo other figures: use only the numbers above. No chart is attached; do not mention one.")
+    task = (f"OFFICIAL'S TRADE, from {src} filed {filed}: {who} {verb} {what} worth {amt} on {day}"
+            + (f" — disclosed {lag} days after the trade" if lag is not None and lag >= 0 else "") + ". "
+            "Officials report a dollar range, not the amount or the price: give the range exactly as written. Say who, what, the "
+            "range, the trade date and the filing date. Never say or imply the trade was improper, informed or a signal for the "
+            "stock; use “sold” or “bought”, never “sell” or “buy”. End with one short question to the audience."
+            + figs)
+    lead = "House disclosure" if house else f"{t.get('jurisdiction') or 'Official'} disclosure"
+    fb = f"{lead}: {who} {verb} {what} ({amt}) on {day}, reported {filed}. How do you read it?"
+    page = t.get("page") or 1
+    url = (t.get("source_url") or "") + (f"#page={page}" if t.get("source_url") else "")
+    reply = (f"Source: {src[2:] if src.startswith('a ') else src} {t.get('report_id') or ''}, filed {filed}, page {page}"
+             + ("; read automatically from the PDF" if t.get("read") != "reviewed" else "") + f". Not investment advice. {url}").strip()
+    return {"kind": "official", "task": task, "cashtags": [tk] if tk else [], "items": [(e, cj, fq)] if fq else [],
+            "source_reply": reply, "fallback": fb, "manual": True,
+            "tags": H.pick("congress" if house else "officials", e, key=f"official:{t.get('report_id')}:{day}:{tk}")}
+
+
+def plan_official_for(site, rows, by_ticker, target, today):
+    """Owner: a post about one row of the hub's Officials' trades table
+    (ref: [report_id, date, ticker, type, amount_min, amount_max, owner])."""
+    try:
+        rid, day, tick, typ, lo, hi, own = (_ref(target) + [None] * 7)[:7]
+        d = hub_json(site, "officials-trades.json")
+    except Exception as err:
+        print(f"official_for: {str(err)[:200]}")
+        return None
+    t = next((t for t in d.get("trades", []) if t.get("report_id") == rid and t.get("date") == day and (t.get("ticker") or "") == (tick or "")
+              and t.get("type") == typ and _same(t.get("amount_min"), lo) and _same(t.get("amount_max"), hi)
+              and (t.get("owner") or "") == (own or "")), None)
+    if not t:
+        print(f"official_for: that transaction of report {rid} is no longer in the hub's officials-trades.json")
+        return None
+    listed = t.get("ticker_status") == "listed" and t.get("name_check") != "check"
+    tk = (t.get("ticker_canon") or t.get("ticker") or "").upper().replace("-", ".") if listed else ""
+    e = site_company(rows, by_ticker, None, tk) if tk else None
+    cj, fq = figures(site, e) if e else (None, None)
+    return official_plan(t, e if fq else None, cj, fq, today)
 
 
 # ------------------------------------------------------------------ 8-K events (current reports)
@@ -699,7 +835,7 @@ def event_tags(code, label, profile=None, key=""):
     return H.pick("8k", profile, topic=TOPIC_TAG.get(label) or TOPIC_TAG.get(code), key=key or f"{code}:{label}")
 
 
-KIND_TAGS = {"event8k": "8k", "fund13f": "13f", "fund13f_for": "13f", "insider": "insider", "movers": "movers"}
+KIND_TAGS = {"event8k": "8k", "fund13f": "13f", "fund13f_for": "13f", "insider": "insider", "movers": "movers", "official": "congress"}
 
 
 ABBR = re.compile(r"\b(?:Inc|Ltd|Corp|Co|LLC|L\.P|LP|No|Nos|U\.S|Mr|Ms|Dr|St|Jr|S\.A|N\.V|plc)\.$")
@@ -1045,7 +1181,9 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
              "opt13f": lambda: plan_opt13f(site, rows, c, by_ticker, state_ok, today),
              "rsleaders": lambda: plan_rsleaders(site, rows, c, by_ticker, state_ok, today),
              "filing8k": lambda: plan_filing8k(site, rows, target or {}, today),
-             "fund13f_for": lambda: plan_fund13f_for(site, rows, by_ticker, target or {})}.get(kind, lambda: None)()
+             "fund13f_for": lambda: plan_fund13f_for(site, rows, by_ticker, target or {}),
+             "insider_for": lambda: plan_insider_for(site, rows, by_ticker, target or {}, today),
+             "official_for": lambda: plan_official_for(site, rows, by_ticker, target or {}, today)}.get(kind, lambda: None)()
         if p:
             plans.append(p)
         else:
@@ -1077,7 +1215,8 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
                  + f". Read automatically from the filings; not investment advice. {site_url}/#c-{e0['cik']}") if e0 else ""
         if reply and social.xlen(reply) > 280:
             reply = reply.replace(" Read automatically from the filings; not investment advice.", " Not investment advice.")
-        filing = f"The Form 4: {p['insider_url']}" if p.get("insider_url") else f"The 13F: {p['fund_url']}" if p.get("fund_url") else ""
+        filing = (p.get("source_reply") or (f"The Form 4: {p['insider_url']}" if p.get("insider_url")
+                                            else f"The 13F: {p['fund_url']}" if p.get("fund_url") else ""))
         if p.get("event"):
             ev = p["event"]
             filing = f"The filing: 8-K Item {ev['code']} ({ev['label']}), filed {ev['filed']}. {ev['url']}"
@@ -1103,7 +1242,8 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
                         **({"draft": True} if draft else {})})
         json.dump(pending, open(pend_path, "w", encoding="utf-8"), ensure_ascii=False)
         stamp = now.isoformat()
-        state[f"kind:{p['kind']}"] = stamp
+        if not p.get("manual"):            # one chosen row (hub ✦ X) leaves the scheduled format's daily turn alone
+            state[f"kind:{p['kind']}"] = stamp
         for t in p["cashtags"]:
             state[f"{p['kind']}:{t}"] = stamp
         if p.get("fund_key"):
