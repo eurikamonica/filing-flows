@@ -66,7 +66,6 @@ def _driver(q, limit=120):
 
 
 def earnings_examples(site, cfg, known, today, limit=None):
-    tags = [t for t in [cfg.get("headline_tag", "#earnings")] + list(cfg.get("hashtags") or []) if t]
     out = []
     files = sorted(glob.glob(os.path.join(site.src, "data", "c", "*.json")))
     for path in files[:limit] if limit else files:
@@ -88,6 +87,7 @@ def earnings_examples(site, cfg, known, today, limit=None):
             lag = int(_h("lag", key), 16) % 10
             day = dt.date.fromisoformat(q["filed"][:10]) + dt.timedelta(days=lag)
             lead = ("BREAKING" if lag <= 1 else "JUST FILED") if lag <= 2 else ("EARNINGS" if q.get("form") == "8-K" else f"NEW {q.get('form')}")
+            tags = tweet.post_tags(c, q, cfg, tk, "post")             # as the posting pipeline picks them
             msgs = tweet.post_messages(c, q, tk, tags, kind="post", thread=True, filing=False, today=day)
             rev, ni, label = _m(h.get("revenue")), _m(h.get("ni")), q.get("label")
             yoy = f"{h['yoy']:+.0f}% Y/Y" if h.get("yoy") is not None else ""
@@ -129,12 +129,13 @@ def holders_examples(site, site_url, known, tickers):
         if _h("post_holders", key) in known:
             continue
         q = (c.get("quarters") or [{}])[0]
+        tags = tweet.post_tags(c, q, {}, tk, "post_holders")
         try:
-            msgs = tweet.post_messages(c, q, tk, tweet.HOLDER_TAGS, kind="post_holders", site_url=site_url, thread=True)
+            msgs = tweet.post_messages(c, q, tk, tags, kind="post_holders", site_url=site_url, thread=True)
         except Exception:
             continue
         P = th["pieces"]
-        T, lead, t2 = " ".join(tweet.HOLDER_TAGS), th["lead"], P["tk"]
+        T, lead, t2 = " ".join(tags), th["lead"], P["tk"]
         b = [f"{w} {m} (filed {d})" for w, m, d in P["buys"]]
         s = [f"{w} {m} (filed {d})" for w, m, d in P["sells"]]
         phr = [th["post"] + " " + T]
@@ -145,7 +146,7 @@ def holders_examples(site, site_url, known, tickers):
             phr.append(f"{lead}: ${t2} 13F moves, quarter ended {P['period']}: {s[0]}" + (f", while {b[0]}" if b else "")
                        + f". {P['n_add']} added, {P['n_cut']} cut. Which side do you take? {T}")
         for text in _pick(key, phr):
-            ex = example("post_holders", key, msgs, text, "tweet", [tk.replace("-", ".")], tweet.HOLDER_TAGS, c["profile"]["cik"])
+            ex = example("post_holders", key, msgs, text, "tweet", [tk.replace("-", ".")], tags, c["profile"]["cik"])
             if ex:
                 ex["src"] = _h("post_holders", key)
                 out.append(ex)

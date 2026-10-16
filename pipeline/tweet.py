@@ -255,7 +255,17 @@ def clean(post, ticker, tags, xlen, limit=270):
     return post
 
 
-HOLDER_TAGS = ["#13F", "#hedgefunds", "#smartmoney", "#stocks", "#investing"]
+HOLDER_TAGS = ["#13F", "#hedgefunds", "#smartmoney", "#stocks", "#investing"]      # the pool's order (pipeline/hashtags.py)
+
+
+def post_tags(c, q, cfg, ticker, kind="post"):
+    """The hashtags of a company post (pipeline/hashtags.py): #earnings (config "headline_tag") or #13F first, then the
+    industry and one general tag that takes turns; at most config/x.json "hashtags_max"."""
+    from . import hashtags as H
+    key = f"{ticker}:{q.get('end')}:{kind}"
+    if kind in ("post", "post_trend", "post_gif"):
+        return H.pick("earnings", c.get("profile"), key=key, lead=cfg.get("headline_tag", "#earnings"))
+    return H.pick("13f", c.get("profile"), key=key)
 
 
 def holders_json(ticker, site_url):
@@ -404,8 +414,7 @@ def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url="", thr
 
 def post_for(c, q, cfg, ticker, fallback, xlen, kind="post", site_url="", thread=False):
     """The model's post, or the rule-based headline post when the model is unavailable or its draft fails the checks."""
-    tags = ([t for t in [cfg.get("headline_tag", "#earnings")] + list(cfg.get("hashtags") or []) if t] if kind in ("post", "post_trend")
-            else list(HOLDER_TAGS))
+    tags = post_tags(c, q, cfg, ticker, kind)
     try:
         post = compose_one(c, q, cfg, ticker, tags, xlen, kind=kind, site_url=site_url, thread=thread)
         return post, "model"

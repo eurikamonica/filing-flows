@@ -41,15 +41,20 @@ DEFAULTS = {"enabled": True, "mode": "email", "scope": "all", "min_revenue": 1e9
             # "links": false = no web address in any post or reply (Buffer, X, the hand-posting e-mail): text and the
             # chart images only (no_links below). The charts still carry the site's name, drawn into the image.
             "links": True,
-            # general X hashtags: one in the headline in place of the word "results", the others on the last post
-            "headline_tag": "#earnings", "hashtags": ["#stocks", "#investing"]}
+            # "media": the image types posts may carry; without "gif" the animated charts go out as still PNGs
+            "media": ["png", "jpg", "gif"],
+            # hashtags: "headline_tag" in the headline in place of the word "results"; "hashtags" is the pool of general
+            # tags that take turns; each post gets at most "hashtags_max", with its industry's tag (pipeline/hashtags.py)
+            "headline_tag": "#earnings", "hashtags": ["#stocks", "#investing"], "hashtags_max": 3}
 LIMIT = 280
 KEEP_UPPER = {"PLC", "LLC", "LP", "AG", "SA", "NV", "SE", "ETF", "REIT", "II", "III", "IV", "USA", "US", "UK", "AI",
               "NA", "SPA", "AB", "ASA", "BV", "HK", "IBM", "AMD", "CSX", "PG&E", "AT&T", "3M"}
 
 
 # ------------------------------------------------------------------ text helpers
-URL = re.compile(r"(?:https?://|www\.)[^\s)\]>]+", re.I)
+# web addresses: with a scheme or www., or a bare domain with a path ("sec.gov/cgi-bin/..."); a name such as
+# "Amazon.com" alone is a company's name and stays
+URL = re.compile(r"(?:https?://|www\.)[^\s)\]>]+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|io|org|net|gov|app|dev|co|ai)/[^\s)\]>]*", re.I)
 
 
 def no_links(text):
@@ -88,6 +93,11 @@ def strip_links(posts):
 
 def links_off(cfg):
     return cfg.get("links", True) is False
+
+
+def media_ok(cfg, kind):
+    """config/x.json "media": the image types posts may carry (["png", "jpg"] = still charts only, no GIF)."""
+    return kind in [str(m).lower() for m in (cfg.get("media") or ["png", "jpg", "gif"])]
 
 
 def xlen(text):
@@ -387,8 +397,11 @@ def compose_parts(c, q, cfg):
     parts.append(("source", src + tail if xlen(src + tail) <= room else fit("", src, tail, limit=room)))
 
     # the general hashtags: on the last post, or (when it is full) on the reply with the most room; never in the headline
-    tags = [t for t in hashtags(cfg.get("hashtags", DEFAULTS["hashtags"]))
-            if t.lower() != hashtag(cfg.get("headline_tag", DEFAULTS["headline_tag"])).lower()]
+    # the industry and a general tag from the configured pool (pipeline/hashtags.py); none when the pool is empty
+    from . import hashtags as H
+    lead, pool = hashtag(cfg.get("headline_tag", DEFAULTS["headline_tag"])), hashtags(cfg.get("hashtags", DEFAULTS["hashtags"]))
+    tags = [t for t in H.pick("earnings", p, key=f"{tick}:{q.get('end')}:post", lead=lead or None, general=pool,
+                              n=cfg.get("hashtags_max")) if not lead or t.lower() != lead.lower()] if pool else []
     while tags:
         line = "\n\n" + " ".join(tags)
         fits = [i for i in range(1, len(parts)) if xlen(parts[i][1] + line) <= room]

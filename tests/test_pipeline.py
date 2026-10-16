@@ -1,6 +1,7 @@
 """Offline tests: run with `python -m pytest tests` (fixtures stand in for SEC endpoints)."""
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -216,7 +217,9 @@ def test_social_threads_fit_and_cite(tmp_path):
         assert roles[0] == "headline" and roles[-1] == "source" and "analysis" in roles
         assert posts[-1].startswith(f"Source: {social.display_name(c['profile']['name'])} ") and "http" not in posts[-1]
         assert " #earnings" in posts[0].split("\n")[0] and " results" not in posts[0].split("\n")[0]   # the headline tag
-        tagged = [i for i, p in enumerate(posts) if f"\n\n#stocks #investing\n\n{i + 1}/{n}" in p]          # the general tags
+        # the end tags: the industry and one general tag from the pool (pipeline/hashtags.py), on one post only
+        tagged = [i for i, p in enumerate(posts) if re.search(r"\n\n(#\w+ ?){1,3}\n\n" + f"{i + 1}/{n}$", p)
+                  and re.search(r"#(stocks|investing)\b", p)]
         assert len(tagged) == 1 and tagged[0] > 0 and (tagged[0] == n - 1 or social.xlen(posts[-1]) > 250), tagged
         assert sum(p.count("#earnings") for p in posts) == 1
         if social.revenue_mix(q):
@@ -2088,6 +2091,26 @@ def test_links_off_leaves_text_and_images_only():
     assert S.load_cfg("config/x.json")["links"] is False                  # the site's setting: text and images only
 
 
+def test_hashtags_from_pools_and_posts_without_links():
+    """Each post: its kind's tag, the event's topic, the industry from the SIC code, one general tag that takes turns —
+    at most hashtags_max. With "links": false no web address survives; a reply that was only a link is dropped; a
+    company name such as Amazon.com stays. Without "gif" in "media", animated charts are not posted."""
+    from pipeline import hashtags as H, social
+    assert H.pick("earnings", {"sic": "3674"}, key="a", n=3)[:2] == ["#earnings", "#semiconductors"]
+    assert H.pick("8k", {"sic": "2834"}, topic="#MergersAndAcquisitions", key="a", n=3) == ["#8K", "#MergersAndAcquisitions", "#pharma"]
+    assert H.pick("13f", {"sector": "energy"}, key="a", n=2) == ["#13F", "#energy"]
+    pool = ["#stocks", "#investing", "#StockMarket", "#markets"]
+    turns = {H.pick("earnings", None, key=k, n=2, general=pool)[1] for k in "abcdefghij"}
+    assert len(turns) > 1 and turns <= set(pool)                          # the general tag changes from post to post
+    assert H.pick("insider", None, key="a", n=0) == [] and "#None" not in H.pick("insider", {}, key="a", n=5)
+    posts = social.strip_links(["$AMZN Amazon.com Q3: revenue $180B. Full breakdown ↓ #earnings #retail #stocks",
+                                "Every holder: https://example.github.io/ff/#c-1018724",
+                                "Read from the filings; not investment advice. sec.gov/cgi-bin/browse-edgar?CIK=1018724"])
+    assert posts == ["$AMZN Amazon.com Q3: revenue $180B. Full breakdown ↓ #earnings #retail #stocks",
+                     "Read from the filings; not investment advice."]
+    assert not social.media_ok({"media": ["png", "jpg"]}, "gif") and social.media_ok({}, "gif")
+
+
 def test_posts_are_never_cut_off_and_say_something():
     """Oct 16 2026: drafts went to Buffer as '$FNGR 8-K filed Sept 29: entered a definitive #earnings #stocks' and
     'JUST FILED · $FNGR Q2 FY2 #13F' — model answers cut at max_tokens, hashtags glued on. Such posts are rejected."""
@@ -2101,7 +2124,9 @@ def test_posts_are_never_cut_off_and_say_something():
             assert False, bad
         except ValueError as why:
             assert "mid-sentence" in str(why)
-    assert engage.event_tags("1.01", "a material agreement")[:3] == ["#8K", "#SEC", "#deal"]
+    tags = engage.event_tags("1.01", "a material agreement")
+    assert tags[:2] == ["#8K", "#deal"] and len(tags) == 3                 # kind, topic, a general tag (no industry known)
+    assert engage.event_tags("1.01", "a material agreement", {"sic": "2834"}, "k")[:3] == ["#8K", "#deal", "#pharma"]
     assert "#MergersAndAcquisitions" in engage.event_tags("8.01", "a merger or acquisition")
     long = "On September 26, 2026, FingerMotion, Inc. entered into a definitive Share Purchase Agreement with Example Holdings Ltd. " * 3
     q = "On October 13, 2026, FingerMotion, Inc. (the “Company”) entered into an agreement with Example Ltd. to sell shares. Closing follows."

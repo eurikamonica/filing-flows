@@ -394,7 +394,9 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url, draft=False):
     import os
     from . import tweet
     if kind == "post_gif":
-        return gif_post(e, c, q, assets, cfg, media_dir, site_url, draft)
+        if social.media_ok(cfg, "gif"):
+            return gif_post(e, c, q, assets, cfg, media_dir, site_url, draft)
+        kind = "post"                                # config/x.json "media" without "gif": the still PNG charts instead
     modes = ["std"] + (["y"] if kind == "post" and "year_ago" in (cfg.get("images") or []) and q.get("compare_y") else [])
     pngs = [assets.image(e, c, q, m, "png") for m in modes]
     names = social.image_names(e, q, len(modes))
@@ -412,7 +414,7 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url, draft=False):
     if kind == "post_holders":                       # who bought and sold, not the earnings: its own fallback and replies
         th = tweet.holders_thread(e.get("ticker") or "", site_url or cfg.get("site_url", ""), e["cik"])
         if th:
-            fallback, replies = th["post"] + " " + " ".join(tweet.HOLDER_TAGS), th["replies"]
+            fallback, replies = th["post"] + " " + " ".join(tweet.post_tags(c, q, cfg, e.get("ticker") or "", kind)), th["replies"]
     post, via = tweet.post_for(c, q, cfg, e.get("ticker") or "", fallback, social.xlen, kind=kind, site_url=site_url, thread=thread)
     posts = [post] + (replies if thread else [])
     path = os.path.join(xdir, "pending.json")

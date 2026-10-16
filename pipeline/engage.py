@@ -36,7 +36,7 @@ import re
 import sys
 import time
 
-from . import events, notify, quotes as Q, reddit, sec, social, tweet
+from . import events, hashtags as H, notify, quotes as Q, reddit, sec, social, tweet
 
 CFG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "engage.json")
 GUIDE = os.path.join(os.path.dirname(CFG), "engage-guide.md")
@@ -681,11 +681,11 @@ def insider_plan(t, tk, e, cj, fq, cl, today):
           f"${t['price']:,.2f} on {t['date']}" + (f", Form 4 filed {filed}." if filed else " (Form 4).")
           + (f" {cl['buyers30']} insiders bought in 30 days." if cl else "") + " How do you read it?")
     return {"kind": "insider", "task": task, "cashtags": [tk], "items": [(e, cj, fq)], "insider_url": t.get("url"), "fallback": fb,
-            "tags": TAGS["insider"]}
+            "tags": H.pick("insider", e, key=f"insider:{tk}:{t.get('date')}")}
 
 
 # ------------------------------------------------------------------ 8-K events (current reports)
-# hashtags per post kind (the general config hashtags are for earnings posts); an 8-K adds one for its topic
+# hashtags per post kind: now picked from pools by pipeline/hashtags.py (kept for reference and older callers)
 TAGS = {"event8k": ["#8K", "#SEC", "#stocks", "#investing"],
         "fund13f": ["#13F", "#hedgefunds", "#smartmoney", "#stocks", "#investing"],
         "insider": ["#insiders", "#Form4", "#stocks", "#investing"]}
@@ -694,9 +694,12 @@ TOPIC_TAG = {"a merger or acquisition": "#MergersAndAcquisitions", "a CEO change
              "3.01": "#delisting", "2.05": "#restructuring", "2.06": "#impairment"}
 
 
-def event_tags(code, label):
-    t = TOPIC_TAG.get(label) or TOPIC_TAG.get(code)
-    return TAGS["event8k"][:2] + ([t] if t else []) + TAGS["event8k"][2:]
+def event_tags(code, label, profile=None, key=""):
+    """#8K, the event's topic (a merger, a CEO change, ...), the industry, a general tag (pipeline/hashtags.py)."""
+    return H.pick("8k", profile, topic=TOPIC_TAG.get(label) or TOPIC_TAG.get(code), key=key or f"{code}:{label}")
+
+
+KIND_TAGS = {"event8k": "8k", "fund13f": "13f", "fund13f_for": "13f", "insider": "insider", "movers": "movers"}
 
 
 ABBR = re.compile(r"\b(?:Inc|Ltd|Corp|Co|LLC|L\.P|LP|No|Nos|U\.S|Mr|Ms|Dr|St|Jr|S\.A|N\.V|plc)\.$")
@@ -822,11 +825,11 @@ def event_plan(site, e, sub, require_deal=True, fresh=True):
                   "sentence; never predict the stock's reaction; end with one short question to the audience.")
         lead = "BREAKING: " if breaking else "JUST FILED: " if fresh else ""
         head = f"{lead}${e['ticker']} 8-K filed {filed_txt} — {label}"
-        room = 255 - sum(len(t) + 1 for t in event_tags(ev["code"], label)) - social.xlen(head) - len(": “” How do you read it?") - 2
+        room = 255 - sum(len(t) + 1 for t in event_tags(ev["code"], label, e, sub["accn"])) - social.xlen(head) - len(": “” How do you read it?") - 2
         short = first_sentence(ev["quote"], limit=max(0, room))
         fb = f"{head}: “{short}{'' if short.endswith('…') else '.'}” How do you read it?" if len(short) >= 40 else f"{head}. How do you read it?"
         return {"kind": "event8k", "task": task, "cashtags": [e["ticker"]], "items": [(e, cj, fq)], "event": ev,
-                "event_key": f"event8k:{sub['accn']}", "fallback": fb, "tags": event_tags(ev["code"], label),
+                "event_key": f"event8k:{sub['accn']}", "fallback": fb, "tags": event_tags(ev["code"], label, e, sub["accn"]),
                 "thread": quote_replies(ev["quote"])}
 
 
@@ -1052,10 +1055,10 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
         for p in plans:
             print(f"planned: {p['kind']} " + " ".join("$" + t for t in p["cashtags"]))
         return [p["kind"] for p in plans]
-    general = [t for t in c["hashtags"] if t]
     made = []
     for p in plans:
-        tags = p.get("tags") or TAGS.get(p["kind"]) or general
+        e0 = p["items"][0][0] if p.get("items") else None
+        tags = p.get("tags") or H.pick(KIND_TAGS.get(p["kind"], "earnings"), e0, key=f"{p['kind']}:" + ",".join(p["cashtags"]))
         try:
             post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True), allowed=p.get("allowed"))
         except Exception as err:
