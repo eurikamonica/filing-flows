@@ -66,10 +66,19 @@ def filing_text(q):
     return "\n".join(out)
 
 
+def usd(v):
+    """$4.1B, $661M, −$44M (the sign before the dollar)."""
+    if v is None:
+        return "—"
+    a = abs(v)
+    s = f"${a / 1e9:.1f}B" if a >= 0.95e9 else f"${a / 1e6:.0f}M" if a >= 0.95e6 else f"${a / 1e3:.0f}K"
+    return ("−" if v < 0 else "") + s
+
+
 def headline_lines(c, q, ticker):
     h = q.get("headline") or {}
     node = {n["id"]: n for n in q.get("nodes", [])}
-    m = lambda v: ("—" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.0f}M" if abs(v) >= 0.95e6 else f"${v / 1e3:.0f}K")
+    m = usd
     pc = lambda v: ("—" if v is None else f"{v:+.0f}%")
     om = "—" if h.get("om") is None else f"{h['om']:.1f}%"
     lines = [f"Company: {c['profile']['name']} ({ticker or 'no ticker'})",

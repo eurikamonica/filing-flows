@@ -27,7 +27,7 @@ import shutil
 import sys
 import time
 
-from . import engage, local_model as L, social, tweet
+from . import corpus as C, engage, local_model as L, social, tweet
 
 MAX_CORPUS = 30000
 REPLAY = 0.3                      # share of each run's training on examples work/ has seen before
@@ -121,7 +121,7 @@ def main():
     started = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
     # the corpus: old + new, deduplicated, newest kept
-    corpus = {ex["id"]: ex for ex in read_jsonl(os.path.join(md, "corpus.jsonl.gz"))}
+    corpus = {ex["id"]: ex for ex in read_jsonl(os.path.join(md, "corpus.jsonl.gz")) if ex.get("v", 1) >= C.VERSION}
     new = [ex for ex in read_jsonl(args.new) if ex["id"] not in corpus]
     for ex in new:
         corpus[ex["id"]] = ex
@@ -129,9 +129,11 @@ def main():
     with gzip.open(os.path.join(md, "corpus.jsonl.gz"), "wt", encoding="utf-8") as f:
         for ex in allx:
             f.write(json.dumps(ex, ensure_ascii=False) + "\n")
-    srcs = set(open(os.path.join(md, "corpus-ids.txt")).read().split()) if os.path.exists(os.path.join(md, "corpus-ids.txt")) else set()
+    ids_path = os.path.join(md, "corpus-ids.txt")
+    old_ids = open(ids_path).read().split() if os.path.exists(ids_path) else []
+    srcs = set(old_ids[1:]) if old_ids[:1] == [f"#v{C.VERSION}"] else set()
     srcs |= {ex.get("src") for ex in allx if ex.get("src")}
-    open(os.path.join(md, "corpus-ids.txt"), "w").write("\n".join(sorted(srcs)) + "\n")
+    open(ids_path, "w").write(f"#v{C.VERSION}\n" + "\n".join(sorted(srcs)) + "\n")
     by_kind = {}
     for ex in allx:
         by_kind[ex["kind"]] = by_kind.get(ex["kind"], 0) + 1
@@ -142,11 +144,13 @@ def main():
     rng = random.Random(len(hold) // 200)
     kinds = sorted({ex["kind"] for ex in hold})
     sample = []
-    for k in kinds:
-        xs = [ex for ex in hold if ex["kind"] == k]
+    per = {k: [ex for ex in hold if ex["kind"] == k] for k in kinds}
+    for xs in per.values():
         rng.shuffle(xs)
-        sample += xs[:max(4, args.eval // max(1, len(kinds)))]
-    sample = sample[:args.eval]
+    while len(sample) < args.eval and any(per.values()):                # equal shares, the rest from the larger kinds
+        for k in kinds:
+            if per[k] and len(sample) < args.eval:
+                sample.append(per[k].pop())
 
     # training order: examples work/ has not seen, then a replay of seen ones
     seen = set(state["seen"])
@@ -155,10 +159,21 @@ def main():
     old = [ex for ex in pool if ex["id"] in seen]
     random.Random(started).shuffle(fresh)
     random.Random(started + "r").shuffle(old)
-    plan = []
-    while fresh or old:
-        take_old = old and (not fresh or random.random() < REPLAY)
-        plan.append(old.pop() if take_old else fresh.pop())
+    # kinds take turns (earnings quarters outnumber 8-Ks a hundred to one): every kind is trained every run
+    def by_kind(xs):
+        q = {}
+        for ex in xs:
+            q.setdefault(ex["kind"], []).append(ex)
+        return q
+    fq, oq = by_kind(fresh), by_kind(old)
+    plan, kinds_all = [], sorted(set(fq) | set(oq))
+    while any(fq.values()) or any(oq.values()):
+        for k in kinds_all:
+            f, o = fq.get(k) or [], oq.get(k) or []
+            if o and (not f or random.random() < REPLAY):
+                plan.append(o.pop())
+            elif f:
+                plan.append(f.pop())
     if not plan or not sample:
         print("nothing to train or evaluate yet")
         json.dump(state, open(state_path, "w"))

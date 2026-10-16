@@ -22,6 +22,8 @@ import sys
 
 from . import engage, events, local_model as L, notify, social, tweet
 
+VERSION = 2          # bump when targets or prompts change: older examples are dropped and rebuilt (2: −$44M, no shells)
+
 
 def _h(*parts):
     return hashlib.sha1("|".join(str(p) for p in parts).encode()).hexdigest()[:16]
@@ -45,13 +47,13 @@ def example(kind, key, messages, target, check, cashtags, tags, cik):
         return None
     if L.unsupported(target, prompt):
         return None
-    return {"id": _h(kind, key, target), "kind": kind, "cik": cik, "prompt": prompt, "target": target, "check": check,
+    return {"id": _h(kind, key, target), "v": VERSION, "kind": kind, "cik": cik, "prompt": prompt, "target": target, "check": check,
             "cashtags": cashtags, "tags": tags, "created": dt.date.today().isoformat()}
 
 
 # ------------------------------------------------------------------ earnings (owner "Post to X", scan threads)
 def _m(v):
-    return "—" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.0f}M" if abs(v) >= 0.95e6 else f"${v / 1e3:.0f}K"
+    return tweet.usd(v)
 
 
 def _driver(q, limit=120):
@@ -77,8 +79,8 @@ def earnings_examples(site, cfg, known, today, limit=None):
             continue
         for q in (c.get("quarters") or [])[:2]:
             h = q.get("headline") or {}
-            if h.get("revenue") is None or not q.get("filed"):
-                continue
+            if (h.get("revenue") or 0) < 5e6 or not q.get("filed") or abs(h.get("yoy") or 0) > 500:
+                continue                               # shells and broken quarters: never posted, not worth learning
             key = f"{c['profile']['cik']}:{q['end']}"
             if _h("post", key) in known:
                 continue
@@ -238,10 +240,14 @@ def main():
     ap.add_argument("--insiders", default="disclosures/docs/data/market/insiders.json")
     ap.add_argument("--known", default="", help="source keys already in the corpus (one per line)")
     ap.add_argument("--out", default="new.jsonl")
-    ap.add_argument("--holders", type=int, default=120, help="companies whose 13F holders are read this run")
-    ap.add_argument("--events", type=int, default=30, help="8-Ks read from SEC this run")
+    ap.add_argument("--holders", type=int, default=300, help="companies whose 13F holders are read this run")
+    ap.add_argument("--events", type=int, default=80, help="8-Ks read from SEC this run")
     args = ap.parse_args()
-    known = set(open(args.known).read().split()) if args.known and os.path.exists(args.known) else set()
+    known = set()
+    if args.known and os.path.exists(args.known):
+        lines = open(args.known).read().split()
+        if lines and lines[0] == f"#v{VERSION}":           # keys from an older corpus version are rebuilt
+            known = set(lines[1:])
     site = notify.Site(args.site)
     cfg = social.load_cfg("config/x.json")
     ix = site.json("index.json")
