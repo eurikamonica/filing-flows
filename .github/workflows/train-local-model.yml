@@ -1,0 +1,96 @@
+# Keeps training the free fallback writer (pipeline/local_model.py) on the site's own data, every six hours.
+# 1. builds the site data from the "data" branch and turns what is new — company quarters, 13F holder changes,
+#    Form 4 purchases, 8-Ks — into training examples (pipeline/corpus.py; targets written by fixed rules, no model output)
+# 2. continues the LoRA adapter in training (work/) on the new examples plus a replay of older ones, on the CPU
+# 3. scores it on companies it never trains on and promotes it to adapter/ only when it beats the production adapter
+# Everything lives on the "model" branch (force-pushed: one commit, no growing history). See model/README.md there.
+name: Train the local fallback model
+
+on:
+  schedule:
+    - cron: "41 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Training minutes this run"
+        default: "40"
+  push:
+    branches: [main]
+    paths:
+      - pipeline/train_local.py
+      - pipeline/corpus.py
+      - pipeline/local_model.py
+      - .github/workflows/train-local-model.yml
+
+permissions:
+  contents: write        # the "model" branch
+
+concurrency:
+  group: train-local-model
+  cancel-in-progress: false
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+      LOCAL_BASE_MODEL: ${{ vars.LOCAL_BASE_MODEL }}
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      TOKENIZERS_PARALLELISM: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install (CPU PyTorch, Transformers, PEFT)
+        run: |
+          pip install -r requirements.txt
+          pip install "torch>=2.4" --index-url https://download.pytorch.org/whl/cpu
+          pip install "transformers>=4.51,<5" "peft>=0.15,<1" "accelerate>=1.0" safetensors
+
+      - name: Model weights cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-${{ vars.LOCAL_BASE_MODEL || 'Qwen-Qwen3-0.6B' }}-v1
+
+      - name: Data store and model branch
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git clone --quiet --depth 1 --branch data "$url" store
+          if git ls-remote --exit-code --heads origin model >/dev/null; then
+            git clone --quiet --depth 1 --branch model "$url" model
+          else
+            mkdir model
+          fi
+          rm -rf model/.git
+
+      - name: Build the site data
+        run: python -m pipeline.build render --store store --out _site/data
+
+      - name: New training examples
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          site_url="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}}"
+          python -m pipeline.corpus --site _site --site-url "$site_url" --known model/corpus-ids.txt --out new.jsonl
+
+      - name: Train, evaluate, promote
+        timeout-minutes: 120
+        run: python -m pipeline.train_local --model-dir model --new new.jsonl --minutes "${{ inputs.minutes || '40' }}" --eval 40
+
+      - name: Publish the model branch
+        if: always()
+        run: |
+          [ -f model/state.json ] || [ -f model/corpus.jsonl.gz ] || exit 0
+          cd model
+          rm -rf .work-new
+          git init --quiet -b model
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit --quiet -m "model $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push --quiet --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:model

@@ -123,12 +123,17 @@ def clean(post, cashtags, tags, limit=255, allowed=None):
     return post
 
 
-def write(kind, task, cashtags, tags, polish=True, allowed=None):
+def messages(kind, task, cashtags, tags, allowed=None):
+    """The chat messages for one engagement post (the API models, the local fallback model and its training examples)."""
     others = [t for t in (allowed or []) if t not in cashtags]
-    msgs = [{"role": "system", "content": guide()},
+    return [{"role": "system", "content": guide()},
             {"role": "user", "content": f"FORMAT: {kind}\n\n{task}\n\nCashtags that must appear: " + " ".join(f"${t}" for t in cashtags)
              + (("\nOther cashtags you may use (no others): " + " ".join(f"${t}" for t in others)) if others else "")
              + "\nHashtags to end with, in this order: " + " ".join(tags) + "\n\nWrite the post now."}]
+
+
+def write(kind, task, cashtags, tags, polish=True, allowed=None):
+    msgs = messages(kind, task, cashtags, tags, allowed)
     draft = tweet.chat(msgs)
     if polish:
         msgs += [{"role": "assistant", "content": draft},
@@ -655,7 +660,11 @@ def plan_insider(site, rows, c, by_ticker, state_ok, today):
     cj, fq = figures(site, e)
     if not fq:
         return None
-    cl = clusters.get(tk)
+    return insider_plan(t, tk, e, cj, fq, clusters.get(tk), today)
+
+
+def insider_plan(t, tk, e, cj, fq, cl, today):
+    """The post plan for one Form 4 purchase (t: a row of the hub's insiders.json; cl: its cluster summary or None)."""
     after = f"; holds {t['after']:,.0f} shares after the trade" if t.get("after") else ""
     filed = t.get("filed")
     fresh = bool(filed) and filed >= (today - dt.timedelta(days=2)).isoformat()

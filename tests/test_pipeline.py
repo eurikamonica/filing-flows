@@ -1967,3 +1967,35 @@ def test_holders_post_names_who_how_much_and_when():
     assert th["replies"][1].startswith("Sold or cut:") and "sold out, filed Aug 14" in th["replies"][1]
     assert th["replies"][-1].startswith("Source: 13F-HR filings")
     assert "https://filing-flows.com/#c-1602409" in th["replies"][-1]
+
+
+def test_local_fallback_prompt_corpus_and_grading():
+    """The free fallback model (pipeline/local_model.py): same prompt in training and use, targets that would be
+    published, held-out grading. The model itself (PyTorch) runs only in its own workflow."""
+    import os
+    from pipeline import corpus, engage, local_model as L, train_local, tweet
+    msgs = engage.messages("insider", "FORM 4 filed 2026-10-15: Jane Roe (CEO) bought 10,000 shares of $ABC at $12.50 on "
+                           "2026-10-13 — $125K in the open market.\n\nSay who bought.", ["ABC"], ["#insiders", "#Form4"])
+    p = L.compact(msgs)
+    assert p.startswith(L.INSTRUCTION) and p.endswith("Cashtags: $ABC\nHashtags: #insiders #Form4")
+    assert "Write the post now" not in p and "Say who bought." in p
+    big = tweet.post_messages({"profile": {"name": "X", "cik": 1}, "intro": {"text": "word " * 900}},
+                              {"label": "Q3 2026", "headline": {"revenue": 4.1e9}, "analysis": ["Revenue was $4.1B. " * 30]},
+                              "X", ["#earnings"], thread=True, filing=False)
+    p = L.compact(big)
+    assert len(p) <= L.MAX_CHARS + 400 and "Opens a thread" in p and "Today is" in p and "(not available" not in p
+    assert "Business, in the company's words" not in p            # dropped whole rather than cut to a stub
+    good = "JUST FILED: $ABC CEO Jane Roe bought 10,000 shares ($125K) at $12.50 on 2026-10-13, Form 4 filed 2026-10-15. How do you read it? #insiders #Form4"
+    ex = corpus.example("insider", "k", msgs, good, "engage", ["ABC"], ["#insiders", "#Form4"], 1)
+    assert ex and ex["target"] == good
+    assert corpus.example("insider", "k", msgs, good.replace("10,000", "40,000"), "engage", ["ABC"], ["#insiders", "#Form4"], 1) is None
+    assert train_local.grade(ex, good) == (True, "")
+    ok, why = train_local.grade(ex, "$ABC CEO Jane Roe bought 10,000 shares at")
+    assert not ok and "mid-sentence" in why
+    assert L.generate(msgs + [{"role": "assistant", "content": "draft"}, {"role": "user", "content": "Polish pass"}]) == "draft"
+    old = os.environ.get("LOCAL_MODEL")
+    os.environ["LOCAL_MODEL"] = "1"
+    try:
+        assert tweet.providers()[-1][0] == "local"
+    finally:
+        os.environ.pop("LOCAL_MODEL") if old is None else os.environ.__setitem__("LOCAL_MODEL", old)

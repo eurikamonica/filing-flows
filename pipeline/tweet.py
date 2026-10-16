@@ -123,6 +123,9 @@ def providers():
         out.append(("openai", "https://api.openai.com/v1/chat/completions", env("OPENAI_API_KEY"), [env("TWEET_MODEL") or "gpt-4.1-mini"]))
     if env("MODEL_API_URL") and env("MODEL_API_KEY"):
         out.append(("custom", env("MODEL_API_URL"), env("MODEL_API_KEY"), [env("TWEET_MODEL") or "gpt-4.1-mini"]))
+    from . import local_model
+    if local_model.enabled():                 # the free fallback: an open model on this machine's CPU (pipeline/local_model.py)
+        out.append(("local", None, None, [local_model.BASE]))
     return out
 
 
@@ -157,9 +160,20 @@ def chat(messages):
     ps = providers()
     if not ps:
         raise RuntimeError("no model key: set the secret GEMINI_API_KEY (free), ANTHROPIC_API_KEY or OPENAI_API_KEY "
-                           "(GitHub Models was retired on 30 Jul 2026)")
+                           "(GitHub Models was retired on 30 Jul 2026), or LOCAL_MODEL=1 for the local fallback model")
     problems = []
     for name, url, key, models in ps:
+        if name == "local":
+            from . import local_model
+            try:
+                content = local_model.generate(messages)
+                if content and content.strip():
+                    print(f"::notice::post written by the local fallback model ({models[0]})")
+                    return content.strip()
+                problems.append("local model: empty answer")
+            except Exception as err:
+                problems.append(f"local model: {str(err)[:120]}")
+            continue
         for model in models:
             budget = 1200
             for attempt in range(2):
@@ -302,7 +316,10 @@ def holders_thread(ticker, site_url, cik, today=None):
     link = f"{site_url.rstrip('/')}/#c-{cik}" if site_url else ""
     replies.append("Source: 13F-HR filings with the SEC — quarter-end positions, not trades, filed up to 45 days after the quarter. "
                    + (f"Every holder: {link}" if link else "Not investment advice."))
-    return {"post": post, "replies": replies, "lead": lead, "period": period, "filed": filed}
+    return {"post": post, "replies": replies, "lead": lead, "period": period, "filed": filed,
+            "pieces": {"buys": [(who(x), move(x), _day(x.get("filed"))) for x in buys[:3]],
+                       "sells": [(who(x), move(x), _day(x.get("filed"))) for x in sells[:3]],
+                       "n_add": len(buys), "n_cut": len(sells), "period": _day(period), "tk": tk}}
 
 
 def holders_lines(ticker, site_url):
@@ -325,10 +342,10 @@ def holders_lines(ticker, site_url):
     return "\n".join(lines)
 
 
-def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url="", thread=False):
-    """One post with hashtags, written by the model from the guide, the figures and the filing (kind "post") or the
-    13F holder changes (kind "post_holders"). Raises on failure."""
-    tags = list(hashtags)
+def post_messages(c, q, ticker, tags, kind="post", site_url="", thread=False, filing=True, today=None):
+    """The chat messages for one post (see compose_one). Built the same way for the API models, the local fallback
+    model and its training examples (pipeline/corpus.py, which passes filing=False: no SEC request per example)."""
+    tags = list(tags)
     if kind == "post_trend":
         from . import animate
         task = ("TASK: the attached GIF shows this company's Sankey for each of the last quarters, oldest first. Write about the "
@@ -348,16 +365,24 @@ def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url="", thr
     else:
         task = ("Headline figures (source of truth for numbers):\n" + headline_lines(c, q, ticker)
                 + "\n\nBusiness, in the company's words:\n" + ((c.get("intro") or {}).get("text", "") if isinstance(c.get("intro"), dict) else str(c.get("intro") or ""))[:1200]
-                + "\n\nFiling excerpts:\n" + (filing_text(q) or "(not available; use the headline figures and analysis lines)"))
+                + "\n\nFiling excerpts:\n" + ((filing_text(q) if filing else "") or "(not available; use the headline figures and analysis lines)"))
     if thread:
+        task += f"\n\nToday is {(today or dt.date.today()).isoformat()}."
         task += ("\n\nTHIS POST OPENS A THREAD (the replies carry the business mix, the analysis and the source link), so it is the "
                  "hook: begin with a short attention word before the cashtag — BREAKING, JUST FILED, NEW 10-Q or EARNINGS (pick what "
                  "is true: BREAKING / JUST FILED only when filed within the last two days) — e.g. `BREAKING · $TICK Q3 FY26:`; give the "
                  "single most striking fact with its number; and end, right before the hashtags, with a pointer into the thread "
                  "such as `Full breakdown ↓` or `Charts + what drove it ↓`. One arrow or emoji at most. Still factual, no advice, "
                  "under 250 characters.")
-    msgs = [{"role": "system", "content": guide()},
+    return [{"role": "system", "content": guide()},
             {"role": "user", "content": task + "\n\nHashtags to end with, in this order: " + " ".join(tags) + "\n\nWrite the post now."}]
+
+
+def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url="", thread=False):
+    """One post with hashtags, written by the model from the guide, the figures and the filing (kind "post") or the
+    13F holder changes (kind "post_holders"). Raises on failure."""
+    tags = list(hashtags)
+    msgs = post_messages(c, q, ticker, tags, kind=kind, site_url=site_url, thread=thread)
     draft = chat(msgs)
     try:
         return clean(draft, ticker, tags, xlen)

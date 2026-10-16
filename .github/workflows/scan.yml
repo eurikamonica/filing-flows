@@ -148,6 +148,9 @@ jobs:
           MODEL_API_URL: ${{ vars.MODEL_API_URL }}
           MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
           TWEET_MODEL: ${{ vars.TWEET_MODEL }}                     # optional: model name override
+          LOCAL_MODEL: ${{ vars.LOCAL_MODEL || '1' }}            # free fallback after the API models (pipeline/local_model.py); 0 turns it off
+          LOCAL_BASE_MODEL: ${{ vars.LOCAL_BASE_MODEL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}               # reads the trained adapter from the "model" branch
           SITE_URL: ${{ vars.SITE_URL }}                       # your own domain, when the site has one
         run: |
           owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
