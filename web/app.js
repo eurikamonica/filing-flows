@@ -712,7 +712,7 @@
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
   // ---------- company tabs: Earnings · Cash & quality · Valuation ----------
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Cash & quality'], ['capital', 'Capital allocation'], ['value', 'Valuation']]
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Cash & quality'], ['capital', 'Capital allocation'], ['value', 'Valuation'], ['revisions', 'Revisions']]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   async function analysisPage(cik, which) {
@@ -745,6 +745,7 @@
       qualitySection(body, c, (c.quarters || [])[0], false);
       cashSection(body, c);
     } else if (which === 'capital') capitalSection(body, c, ticker);
+    else if (which === 'revisions') revisionsSection(body, c);
     else valuationSection(body, c, ticker, here);
   }
 
@@ -1268,6 +1269,121 @@
           toast(`Export failed: ${err.message}`);
         } finally { b.disabled = false; }
       }));
+    }
+    render();
+    body.appendChild(box);
+  }
+
+  // ---------- Revisions, "As Known Then": every version of the headline figures (pipeline/history.py) ----------
+  const HKEY = { revenue: 'Revenue', oi: 'Operating income', ni: 'Net income', ocf: 'Operating cash flow' };
+  const HPAT = {
+    amended: ['Amendment', 'The company filed an amended report (10-K/A or 10-Q/A) that replaced figures it had filed.'],
+    results: ['Results changed', 'Net income changed: a restatement, a correction of an error, or an accounting change applied to earlier years (a new standard adopted retrospectively). The filing’s notes say which.'],
+    presentation: ['Presentation changed', 'Revenue or operating income moved but net income did not: a reclassification, usually a business reported as discontinued operations (sold or spun off) or segments recast.'],
+    'cash flow': ['Cash flow reclassified', 'Only operating cash flow changed: amounts moved between sections of the cash-flow statement, often after a new accounting standard.'],
+  };
+  // two amounts that would print the same are shown with one more digit ($1.41B → $1.43B, not $1.4B → $1.4B)
+  function twoMoney(a, b) {
+    if (money(a) !== money(b)) return [money(a), money(b)];
+    const f = (v) => { const x = Math.abs(v), s = v < 0 ? '−' : ''; return x >= 0.95e9 ? `${s}$${(x / 1e9).toFixed(3)}B` : `${s}$${(x / 1e6).toFixed(2)}M`; };
+    return [f(a), f(b)];
+  }
+  const filingUrl = (cik, accn) => `https://www.sec.gov/Archives/edgar/data/${cik}/${String(accn).replace(/-/g, '')}/${accn}-index.htm`;
+
+  function revisionsSection(body, c) {
+    const D = c.quality, H = D.hist, P = c.profile || {};
+    const box = document.createElement('section');
+    box.className = 'section revisions';
+    box.setAttribute('aria-labelledby', 'hv-title');
+    if (!H || !(H.periods || []).length) {
+      box.innerHTML = `<div class="section-head"><h2 id="hv-title">As known then</h2></div><p class="muted">Every version of the headline figures is read on the next scans for this company: a few dozen companies a run, largest first.</p>`;
+      body.appendChild(box);
+      return;
+    }
+    const S0 = D.src || { concepts: [], filings: [] };
+    const name = S.dec(P.name || '');
+    const fil = (ref) => S0.filings[ref[2][0]] || ['', '', ''];          // [accn, form, filed]
+    const hasQ = H.keys.some((k) => (H.v[k] || []).some(([i]) => H.periods[i][2] === 'q'));
+    const st = { key: 'revenue', kind: 'fy', asof: 'first' };
+    if (!(H.v.revenue || []).length) st.key = H.keys.find((k) => (H.v[k] || []).length) || 'ni';
+    const rows = () => (H.v[st.key] || []).filter(([i]) => H.periods[i][2] === st.kind).map(([i, vs]) => ({ p: H.periods[i], vs }));
+    // the version known before a date (a revising filing's day), or the first one
+    const then = (vs) => (st.asof === 'first' ? vs[0] : vs.slice().reverse().find(([, r]) => fil(r)[2] < st.asof) || null);
+    const vPay = (r, ver, title) => ({ title: `${HKEY[st.key]}, ${r.p[3]}`, value: money(ver[0]), period: `${title} · ${fil(ver[1])[1]} filed ${date(fil(ver[1])[2])}`, ref: ver[1] });
+
+    function chartHTML(L) {
+      const W = 760, H2 = 220, left = 52, top = 16, bottom = 28;
+      const vals = L.flatMap((r) => { const a = then(r.vs), n = r.vs[r.vs.length - 1]; return [n[0]].concat(a ? [a[0]] : []); });
+      const ax = qAxis(vals, H2, top, bottom);
+      const step = (W - left - 6) / Math.max(1, L.length), bw = Math.min(26, step * 0.36);
+      let g = qGrid(ax, W, left);
+      L.forEach((r, i) => {
+        const a = then(r.vs), n = r.vs[r.vs.length - 1], x = left + i * step + step / 2;
+        const diff = a && a[0] !== n[0];
+        if (diff) g += qRect(x - bw - 1, ax.y(0), ax.y(a[0]), bw, 'hv-then', `${r.p[3]}: ${money(a[0])} ${st.asof === 'first' ? 'as first reported' : 'as known then'}`);
+        g += qRect(diff ? x + 1 : x - bw / 2, ax.y(0), ax.y(n[0]), bw, `hv-now${diff ? ' on' : ''}`, `${r.p[3]}: ${money(n[0])} now`);
+        if (!a) g += `<text class="q-na" x="${(x - bw / 2).toFixed(1)}" y="${(ax.y(0) - 4).toFixed(1)}" text-anchor="middle">·</text>`;
+        if (L.length <= 12 || i % 2 === L.length % 2 - 1 || i === L.length - 1)
+          g += `<text class="q-x" x="${x.toFixed(1)}" y="${H2 - 8}" text-anchor="middle">${t(r.p[3].replace(/^FY/, st.kind === 'fy' ? 'FY' : ''))}</text>`;
+      });
+      return `<div class="ca-scroll"><svg class="q-chart hv-chart" viewBox="0 0 ${W} ${H2}" role="img" aria-label="${HKEY[st.key]}: then and now">${g}</svg></div>`;
+    }
+    function tableHTML(L) {
+      return `<div class="tbl-wrap"><table class="ca-table hv-table"><thead><tr><th>Period</th><th class="num">${st.asof === 'first' ? 'First reported' : 'As known then'}</th><th class="num">Now</th><th class="num">Change</th><th>Versions</th></tr></thead><tbody>
+        ${L.slice().reverse().map((r) => {
+          const a = then(r.vs), n = r.vs[r.vs.length - 1], diff = a && a[0] !== n[0];
+          const ch = diff ? (a[0] ? (n[0] / a[0] - 1) * 100 : null) : null;
+          const [ta, tn] = diff ? twoMoney(a[0], n[0]) : [a ? money(a[0]) : '', money(n[0])];
+          return `<tr class="${diff ? 'hv-diff' : ''}"><td>${t(r.p[3])}</td>
+            <td class="num">${a ? evBtn(ta, vPay(r, a, st.asof === 'first' ? 'first reported' : 'as known then')) : '<span class="muted">not yet reported</span>'}</td>
+            <td class="num">${evBtn(tn, vPay(r, n, 'now'))}</td>
+            <td class="num">${diff ? `${money(n[0] - a[0]).replace(/^(?!−)/, '+')}${ch != null && a[0] > 0 && n[0] > 0 ? ` <span class="muted">(${pct(ch, 1)})</span>` : ''}` : '<span class="muted">—</span>'}</td>
+            <td class="hv-vers">${r.vs.map((v, j) => `${j ? '→ ' : ''}<a href="${filingUrl(P.cik, fil(v[1])[0])}" target="_blank" rel="noopener" title="${t(money(v[0]))}">${t(fil(v[1])[1])} ${t(date(fil(v[1])[2]))}</a>`).join(' ')}</td></tr>`;
+        }).join('')}</tbody></table></div>`;
+    }
+    function eventsHTML() {
+      const E = H.events || [];
+      if (!E.length) return `<p class="muted">No filing has changed a figure ${t(name)} first reported (revenue, operating income, net income, operating cash flow, last ten years).</p>`;
+      const used = [...new Set(E.map((e) => e.pattern))];
+      const legend = `<dl class="hv-pats">${Object.entries(HPAT).filter(([k]) => used.includes(k)).map(([k, [tag, expl]]) => `<dt><span class="v-tag hv-${k.replace(/\s/g, '-')}">${t(tag)}</span></dt><dd>${t(expl)}</dd>`).join('')}</dl>
+        <p class="muted q-small">The kind of change is read from the numbers; the reason is in each filing’s notes (basis of presentation, or the explanatory note of an amendment).</p>`;
+      return `${legend}<div class="hv-events">${E.map((e) => {
+        const [accn, form, filed] = S0.filings[e.filing] || [];
+        const [tag, expl] = HPAT[e.pattern] || [e.pattern, ''];
+        const items = e.items.slice(0, 8).map(([k, i, a, b]) => { const [x, y] = twoMoney(a, b); return `<li>${t(H.periods[i][3])} ${t(HKEY[k].toLowerCase())}: <span class="nw">${x}</span> → <b class="nw">${y}</b>${a > 0 && b > 0 ? ` <span class="muted nw">(${pct((b / a - 1) * 100, 1)})</span>` : ''}</li>`; }).join('');
+        return `<article class="q-card hv-event"><div class="hv-ev-head"><a href="${filingUrl(P.cik, accn)}" target="_blank" rel="noopener"><b>${t(form)}</b> filed ${date(filed)} ↗</a><span class="v-tag hv-${e.pattern.replace(/\s/g, '-')}" title="${t(expl)}">${t(tag)}</span></div>
+          <ul class="hv-items">${items}${e.items.length > 8 ? `<li class="muted">and ${e.items.length - 8} more</li>` : ''}</ul>
+          ${e.why ? `<blockquote class="hv-why">${t(e.why.text || e.why)}${e.why.src ? `<span class="muted"> · ${t(e.why.src)}</span>` : ''}</blockquote>` : ''}</article>`;
+      }).join('')}</div>`;
+    }
+    function summary(L) {
+      const ch = L.map((r) => ({ r, a: r.vs[0], n: r.vs[r.vs.length - 1] })).filter((x) => x.a[0] !== x.n[0]);
+      const per = st.kind === 'fy' ? 'fiscal years' : 'quarters';
+      if (!ch.length) return `${t(HKEY[st.key])}: none of the ${L.length} ${per} on file differs from what ${t(name)} first reported.`;
+      const big = ch.reduce((m, x) => (Math.abs(x.n[0] - x.a[0]) > Math.abs(m.n[0] - m.a[0]) ? x : m));
+      const by = big.r.vs.find((v, j) => j && v[0] === big.n[0]) || big.n;
+      const [x, y] = twoMoney(big.a[0], big.n[0]);
+      return `${t(HKEY[st.key])}: ${ch.length} of ${L.length} ${per} now differ from what ${t(name)} first reported. The largest change: ${t(big.r.p[3])}, ${x} first reported, ${y} now${big.a[0] > 0 && big.n[0] > 0 ? ` (${pct((big.n[0] / big.a[0] - 1) * 100, 1)})` : ''}, changed by the ${t(fil(by[1])[1])} filed ${date(fil(by[1])[2])}.`;
+    }
+    function render() {
+      const L = rows();
+      const dates = [...new Set((H.events || []).map((e) => (S0.filings[e.filing] || [])[2]).filter(Boolean))].sort().reverse();
+      box.innerHTML = `<div class="section-head"><h2 id="hv-title">As known then</h2>
+          <span class="muted">Every version of the headline figures, as each filing reported them · SEC company facts, XBRL</span></div>
+        <div class="q-bar hv-bar">
+          <div class="seg" role="group" aria-label="Figure">${H.keys.filter((k) => (H.v[k] || []).length).map((k) => `<button type="button" data-hk="${k}" class="${k === st.key ? 'on' : ''}">${HKEY[k]}</button>`).join('')}</div>
+          <div class="seg" role="group" aria-label="Period type"><button type="button" data-hp="fy" class="${st.kind === 'fy' ? 'on' : ''}">Fiscal years</button><button type="button" data-hp="q" class="${st.kind === 'q' ? 'on' : ''}" ${hasQ ? '' : 'disabled'}>Quarters</button></div>
+          <label class="q-pick">Compare now with <select id="hv-asof"><option value="first" ${st.asof === 'first' ? 'selected' : ''}>as first reported</option>${dates.map((d) => `<option value="${d}" ${st.asof === d ? 'selected' : ''}>as known before ${date(d)}</option>`).join('')}</select></label></div>
+        <p class="q-sum">${summary(L)}</p>
+        ${L.length ? chartHTML(L) : ''}
+        <div class="q-legend"><span><i class="hv-key-then"></i>${st.asof === 'first' ? 'As first reported' : `As known before ${date(st.asof)}`} (only where it differs)</span><span><i class="hv-key-now"></i>As reported now</span></div>
+        ${L.length ? tableHTML(L) : ''}
+        <p class="muted q-small">“Versions” lists every filing that gave this figure a new value, oldest first. Quarters are three-month figures as tagged; a fourth quarter appears only where a filing tagged it on its own. Select a value to see the XBRL fact.</p>
+        <h3 class="cq-h3">Filings that changed earlier figures</h3>
+        ${eventsHTML()}`;
+      $$('[data-hk]', box).forEach((b) => b.addEventListener('click', () => { st.key = b.dataset.hk; render(); }));
+      $$('[data-hp]', box).forEach((b) => b.addEventListener('click', () => { st.kind = b.dataset.hp; render(); }));
+      $('#hv-asof', box).addEventListener('change', (e) => { st.asof = e.target.value; render(); });
     }
     render();
     body.appendChild(box);
@@ -3379,7 +3495,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|value)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|value|revisions)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

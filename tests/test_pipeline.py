@@ -2000,6 +2000,32 @@ def test_capital_trailing_twelve_months_shares_and_maturities():
     assert m["at"] == "2025-12-31" and [(b, v) for b, v, _ in m["buckets"]] == [(1, 5), (2, 6), (6, 30)] and m["cash"] == 12
 
 
+def test_as_known_then_keeps_every_version_and_reads_the_pattern():
+    """3M's 10-K of Feb 2025 took Solventum out of 2023 revenue (net income unchanged: presentation); AMD's 2019 10-K
+    adopted a revenue standard retrospectively (net income changed: results). Every version stays, oldest first."""
+    from pipeline import facts as F, quality as Q
+    def cf(rows):
+        return {"facts": {"us-gaap": {c: {"units": {"USD": [{"start": s, "end": e, "val": v, "filed": fd, "form": fm,
+                                                              "accn": a} for s, e, v, fd, fm, a in r]}} for c, r in rows.items()}}}
+    y = ("2023-01-01", "2023-12-31")
+    fx = F.index_facts(cf({
+        "Revenues": [(*y, 32.7e9, "2024-02-07", "10-K", "a1"), (*y, 24.6e9, "2025-02-05", "10-K", "a2"),
+                     (*y, 24.6e9, "2026-02-03", "10-K", "a3")],
+        "NetIncomeLoss": [(*y, -7.0e9, "2024-02-07", "10-K", "a1"), (*y, -7.0e9, "2025-02-05", "10-K", "a2")],
+    }))
+    h = Q.compute(fx)["hist"]
+    assert h["periods"] == [["2023-01-01", "2023-12-31", "fy", "FY2023"]]
+    (i, vs), = h["v"]["revenue"]
+    assert [v for v, _ in vs] == [32.7e9, 24.6e9]                       # unchanged repeats are not listed again
+    ev, = h["events"]
+    assert ev["pattern"] == "presentation" and ev["filed"] == "2025-02-05" and ev["items"] == [["revenue", 0, 32.7e9, 24.6e9]]
+    assert ev["why"] is None
+    fx = F.index_facts(cf({"NetIncomeLoss": [(*y, 43e6, "2024-02-07", "10-K", "a1"), (*y, -33e6, "2025-02-05", "10-K", "a2"),
+                                             (*y, -36e6, "2025-05-01", "10-K/A", "a3")]}))
+    pats = [e["pattern"] for e in Q.compute(fx)["hist"]["events"]]
+    assert pats == ["amended", "results"]                                # newest first
+
+
 def test_posts_are_never_cut_off_and_say_something():
     """Oct 16 2026: drafts went to Buffer as '$FNGR 8-K filed Sept 29: entered a definitive #earnings #stocks' and
     'JUST FILED · $FNGR Q2 FY2 #13F' — model answers cut at max_tokens, hashtags glued on. Such posts are rejected."""

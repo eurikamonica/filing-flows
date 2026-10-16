@@ -64,11 +64,13 @@ def d(s):
 def index_facts(companyfacts):
     """concept -> {(start, end): fact} keeping the most recently filed fact per period (USD only). Balances are
     point-in-time facts (no start): those quality.INSTANTS needs go to "__instants__" as concept -> {day: fact}."""
+    from .history import CONCEPTS as KEEP_ALL
     from .quality import INSTANTS, SHARES
-    out, names, inst, shares = {}, {}, {}, {}
+    out, names, inst, shares, vers = {}, {}, {}, {}, {}
     out["__labels__"] = names                            # concept -> SEC's standard label, to say where a figure came from
     out["__instants__"] = inst                           # balances pipeline/quality.py reads (assets, reserves, debt, ...)
     out["__shares__"] = shares                           # share counts: concept -> {(start, end) or end: fact}
+    out["__versions__"] = vers                           # every filing's version of the headline figures (history.py)
     for taxonomy in ("dei",):
         for concept, body in companyfacts.get("facts", {}).get(taxonomy, {}).items():
             if concept in SHARES:
@@ -101,6 +103,8 @@ def index_facts(companyfacts):
                     key = (f["start"], f["end"])
                     if key not in per or f.get("filed", "") >= per[key].get("filed", ""):
                         per[key] = f
+                    if concept in KEEP_ALL and taxonomy == "us-gaap":
+                        vers.setdefault(concept, {}).setdefault(key, []).append(f)
     return out
 
 
