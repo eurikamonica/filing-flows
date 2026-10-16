@@ -232,7 +232,7 @@ td .name { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; display: 
   padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .cta > div { flex: 1 1 360px; min-width: 0; display: grid; gap: 4px; }
 .cta-form, .auth, .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.cta-form input, .auth input, .prefs input[type="number"], #add-ticker, #reread-list { font: inherit; font-size: 15px; padding: 8px 12px; border-radius: 8px;
+.cta-form input, .auth input, .prefs input[type="number"], #add-ticker, #reread-list, #x-head, #x-add { font: inherit; font-size: 15px; padding: 8px 12px; border-radius: 8px;
   border: 1px solid var(--line); background: var(--surface); color: var(--ink); min-width: 0; }
 .cta-form input { flex: 1 1 240px; }
 .auth { margin: 10px 0; }
@@ -254,6 +254,14 @@ td .name { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; display: 
 /* a choice that belongs to the option above it (what the daily report covers) */
 .prefs .sub-choice { display: grid; gap: 6px; margin: -2px 0 4px 24px; padding: 8px 0 8px 12px; border-left: 2px solid var(--line); }
 .prefs .sub-choice > span { margin-bottom: 2px; }
+.prefs .x-pool { margin-top: 6px; }                /* owner tools: the X post options' general hashtag pool */
+.prefs label.x-chip { gap: 6px; padding: 3px 11px 3px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: 13.5px;
+  background: var(--bg); cursor: pointer; }
+.prefs label.x-chip:has(input:checked) { background: var(--accent-soft); border-color: transparent; color: var(--accent-ink); }
+.prefs label.x-chip input { width: 14px; height: 14px; }
+.prefs #x-head, .prefs #x-add { font-size: 14px; padding: 5px 10px; }
+.prefs details summary { cursor: pointer; color: var(--ink-2); }
+.prefs details p { margin: 6px 0 0; }
 .prefs .sub-choice.off { opacity: .6; }             /* alerts "as soon as a chart is out": the choice applies to the daily report */
 .prefs .sub-choice.off:hover, .prefs .sub-choice.off:focus-within { opacity: 1; }
 #requests { max-width: 760px; }

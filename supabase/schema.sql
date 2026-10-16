@@ -256,10 +256,18 @@ create table if not exists public.owner_settings (
   daily_scope     text not null default 'min_revenue' check (daily_scope in ('min_revenue', 'all')),   -- 'all': every
                                                      -- company that filed (the full report), not only those over min_revenue
   reader_copy     boolean not null default false,    -- the owner also gets the reader e-mails their own alert settings ask for
+  x_post          jsonb not null default '{}'::jsonb, -- the X post options (#owner page "X posts"; pipeline/xprefs.py):
+                                                     -- links, gif, hashtags_max, hashtags, headline_tag, tags
   updated_at      timestamptz not null default now()
 );
 alter table public.owner_settings add column if not exists daily_scope text not null default 'min_revenue';
 alter table public.owner_settings add column if not exists reader_copy boolean not null default false;
+alter table public.owner_settings add column if not exists x_post jsonb not null default '{}'::jsonb;
+do $$ begin
+  alter table public.owner_settings add constraint owner_settings_x_post_check
+    check (jsonb_typeof(x_post) = 'object' and length(x_post::text) <= 4000);
+exception when duplicate_object then null;
+end $$;
 do $$ begin
   alter table public.owner_settings add constraint owner_settings_daily_scope_check check (daily_scope in ('min_revenue', 'all'));
 exception when duplicate_object then null;

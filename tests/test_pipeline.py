@@ -227,10 +227,11 @@ def test_social_threads_fit_and_cite(tmp_path):
             assert biz.startswith("What ") and "Industry: " in biz and "revenue came from:" in biz
     brk = next(e for e in todo if e["cik"] == 1067983)
     assert social.compose(*social.quarter_of(str(site), brk), cfg)[0].startswith("$BRK.B ")
-    # hashtags come from config/x.json: cleaned, no repeats, none at all when switched off
+    # hashtags come from config/x.json: cleaned, no repeats, none at all with hashtags_max 0 (an empty general pool only
+    # drops the general tag)
     assert social.hashtags(["stocks", "#Stocks", "#S&P 500!", "#2026", ""]) == ["#stocks", "#SP500"]
     assert social.hashtags("#a, b") == ["#a", "#b"]
-    plain = social.compose(*social.quarter_of(str(site), brk), dict(cfg, headline_tag="", hashtags=[]))
+    plain = social.compose(*social.quarter_of(str(site), brk), dict(cfg, headline_tag="", hashtags=[], hashtags_max=0))
     assert " results" in plain[0].split("\n")[0] and not any("#" in p.replace("#c-", "") for p in plain)
 
 
@@ -2109,6 +2110,29 @@ def test_hashtags_from_pools_and_posts_without_links():
     assert posts == ["$AMZN Amazon.com Q3: revenue $180B. Full breakdown ↓ #earnings #retail #stocks",
                      "Read from the filings; not investment advice."]
     assert not social.media_ok({"media": ["png", "jpg"]}, "gif") and social.media_ok({}, "gif")
+
+
+def test_owner_x_post_options():
+    """The owner page's "X posts" options (owner_settings.x_post) become config/x.json keys, each checked, and win over
+    the file; each kind of hashtag can be switched off."""
+    from pipeline import hashtags as H, social, xprefs
+    v = xprefs.valid({"links": True, "gif": False, "hashtags_max": 9, "hashtags": ["fintwit", "#FinTwit", "#Wall Street!", 3, ""],
+                      "headline_tag": "earnings", "tags": {"industry": False, "general": "no", "other": True}, "evil": 1})
+    assert v == {"links": True, "media": ["png", "jpg"], "hashtags_max": 6, "hashtags": ["#fintwit", "#WallStreet"],
+                 "headline_tag": "#earnings", "hashtag_parts": {"industry": False}}
+    assert xprefs.valid("x") == {} and xprefs.valid({"hashtags_max": True, "links": "no"}) == {}
+    assert xprefs.valid({"gif": True})["media"] == ["png", "jpg", "gif"] and xprefs.valid({"hashtags": []}) == {"hashtags": []}
+    old = xprefs._cache
+    xprefs._cache = v
+    try:
+        cfg = social.load_cfg("config/x.json")
+        assert cfg["links"] is True and not social.media_ok(cfg, "gif") and social.media_ok(cfg, "jpeg") and cfg["hashtags_max"] == 6
+    finally:
+        xprefs._cache = old
+    assert H.pick("8k", {"sic": "2834"}, topic="#deal", key="a", n=3, parts={"industry": False, "general": False}) == ["#8K", "#deal", "#SEC"]
+    assert H.pick("earnings", {"sic": "3674"}, key="a", n=3, parts={"kind": False}, general=[]) == ["#semiconductors"]
+    assert H.pick("earnings", None, key="a", n=3, general=[]) == ["#earnings", "#EarningsSeason"]
+    assert H.pick("earnings", None, key="a", n=2, parts={"kind": False, "general": False}) == []
 
 
 def test_posts_are_never_cut_off_and_say_something():

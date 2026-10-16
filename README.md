@@ -220,6 +220,12 @@ the site.
   - *Reader version* (on the owner's **Alerts** page): off by default, so the owner gets only the owner report. On: the
     owner also gets the reader e-mails their own alert settings ask for, and "Send a daily report now" sends both.
   - *Also e-mail new X threads right after each scan* (off by default; the behaviour before the daily report).
+  - *X posts* (column `owner_settings.x_post`, read by `pipeline/xprefs.py` in every run that writes or queues a post):
+    **links** none (text, cashtags, hashtags and chart images only) or allowed; **animated GIF charts** on/off (off:
+    still PNG/JPG only); **hashtags per post** (0–6) and which kinds of tag (post kind, event topic, industry, a general
+    tag that takes turns); the **earnings headline tag**; and the **general pool** to pick from (ticked tags take turns,
+    any other tag can be added). Until the owner saves them, `config/x.json` decides (`links`, `media`, `hashtags_max`,
+    `hashtags`, `headline_tag`); the owner page's values win over the file. Cashtags are never touched.
 - **Send a daily report now**: pick a filing date, today or one of the five days before, and that day's report arrives
   within a few minutes.
 

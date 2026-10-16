@@ -39,6 +39,8 @@ jobs:
     timeout-minutes: 20
     env:
       SITE_URL: ${{ vars.SITE_URL }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}                 # the owner's X post options (#owner page)
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}   # 8-K look-ups
       MEDIA_DIR: media
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

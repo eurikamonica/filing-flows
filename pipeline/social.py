@@ -97,6 +97,7 @@ def links_off(cfg):
 
 def media_ok(cfg, kind):
     """config/x.json "media": the image types posts may carry (["png", "jpg"] = still charts only, no GIF)."""
+    kind = "jpg" if str(kind).lower() == "jpeg" else str(kind).lower()
     return kind in [str(m).lower() for m in (cfg.get("media") or ["png", "jpg", "gif"])]
 
 
@@ -397,11 +398,12 @@ def compose_parts(c, q, cfg):
     parts.append(("source", src + tail if xlen(src + tail) <= room else fit("", src, tail, limit=room)))
 
     # the general hashtags: on the last post, or (when it is full) on the reply with the most room; never in the headline
-    # the industry and a general tag from the configured pool (pipeline/hashtags.py); none when the pool is empty
+    # the industry and a general tag from the configured pool (pipeline/hashtags.py); none with hashtags_max 0
     from . import hashtags as H
     lead, pool = hashtag(cfg.get("headline_tag", DEFAULTS["headline_tag"])), hashtags(cfg.get("hashtags", DEFAULTS["hashtags"]))
     tags = [t for t in H.pick("earnings", p, key=f"{tick}:{q.get('end')}:post", lead=lead or None, general=pool,
-                              n=cfg.get("hashtags_max")) if not lead or t.lower() != lead.lower()] if pool else []
+                              n=cfg.get("hashtags_max"), parts=cfg.get("hashtag_parts"))
+            if not lead or t.lower() != lead.lower()]
     while tags:
         line = "\n\n" + " ".join(tags)
         fits = [i for i in range(1, len(parts)) if xlen(parts[i][1] + line) <= room]
@@ -426,6 +428,8 @@ def load_cfg(path):
         cfg.update(json.load(open(path)))
     except FileNotFoundError:
         pass
+    from . import xprefs
+    cfg = xprefs.overlay(cfg)                     # the owner's "X posts" options (#owner page) win over the file
     cfg["site_url"] = cfg.get("site_url") or os.environ.get("X_SITE_URL", "")
     return cfg
 

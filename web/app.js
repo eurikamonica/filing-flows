@@ -3522,6 +3522,9 @@
     const o = Object.assign({ thread_direct: true, daily_on: true, daily_hour: 8, tz: browserTZ() || 'Asia/Shanghai',
       min_revenue: 1e9, instant_threads: false, daily_scope: 'min_revenue', reader_copy: false }, osets || {});
     const newCols = !!osets && 'daily_scope' in osets;              // supabase/schema.sql run again since these arrived
+    const hasX = !!osets && 'x_post' in osets;                      // the X post options' column (schema.sql run again)
+    const xsite = c ? ((await getJSON('site.json').catch(() => ({}))).x || {}) : {};
+    const xo = xOptions(xsite, hasX ? osets.x_post : null);
     const settingsHTML = !c ? `<p class="muted" style="max-width:68ch">Accounts are not switched on, so these settings come from
         <span class="mono">config/x.json</span> (keys daily_on, daily_hour, tz, min_revenue, instant_threads).</p>`
       : !osets ? `<p class="muted" style="max-width:68ch">${OWNER_UPDATE}: the owner settings table is new.</p>`
@@ -3548,6 +3551,7 @@
           <p class="muted small" id="reader-copy-state">Reader version: ${o.reader_copy ? 'on. You also get the reader e-mails your'
             : 'off. You get only this report, not the reader e-mails your'} <a href="#account">alert settings</a> describe; change it there.</p>
         </fieldset>
+        ${xFieldset(xo, xsite, hasX)}
         <div class="row"><button class="btn primary" type="submit">Save</button><span class="muted" id="owner-msg" role="status"></span></div>
       </form>`;
     if (!here()) return;
@@ -3626,6 +3630,7 @@
         daily_hour: +$('#daily-hour').value, tz: browserTZ() || o.tz, min_revenue: Math.round(Math.max(0, +$('#daily-min').value || 0) * 1e9),
         instant_threads: $('#instant-threads').checked, updated_at: new Date().toISOString() };
       if (newCols) patch.daily_scope = $('input[name="owner-scope"]:checked').value === 'all' ? 'all' : 'min_revenue';
+      if (hasX) patch.x_post = xRead();
       const r = await c.from('owner_settings').update(patch).eq('id', true).select().single();
       if (r.error) { $('#owner-msg').textContent = `Could not save: ${r.error.message}`; return; }
       acct.osets = r.data;
@@ -3633,6 +3638,7 @@
       getJSON('index.json').then((ix) => dailyPanel($('#daily'), ix, { title: 'Send a daily report now' })).catch(() => {});
     });
     if (c) getJSON('index.json').then((ix) => dailyPanel($('#daily'), ix, { title: 'Send a daily report now' })).catch(() => {});
+    if ($('#x-post')) xBind(xsite);
     if (c && $('#reread-form')) {
       const msg = (x) => { $('#reread-msg').textContent = x; };
       const ask = async (ciks, words, btn) => withProgress(btn, msg, async () => {
@@ -3652,6 +3658,86 @@
       showRereads(c);
     }
   }
+  // ---------- owner tools: the X post options (owner_settings.x_post, read by pipeline/xprefs.py) ----------
+  // Every post that goes to Buffer: the scan's threads, "Post to X", the engagement and movers posts. Until the owner
+  // saves them, config/x.json decides (its values arrive in site.json "x"). Cashtags ($NVDA) are never touched.
+  const X_PARTS = [['kind', 'Post kind', '#earnings, #13F, #8K, #InsiderBuying …'], ['topic', 'Event topic', '8-K events: #MergersAndAcquisitions, #deal …'],
+    ['industry', 'Industry', 'from the SEC industry code: #semiconductors, #banks, #pharma …'], ['general', 'General', 'one from the pool below, taking turns']];
+  const xTag = (w) => { const v = String(w || '').replace(/#/g, '').replace(/[^A-Za-z0-9_]/g, '').slice(0, 40); return v && !/^\d+$/.test(v) ? '#' + v : ''; };
+  const xUniq = (tags) => tags.filter((x, i, a) => x && a.findIndex((y) => y.toLowerCase() === x.toLowerCase()) === i);
+  function xOptions(site, saved) {
+    const d = { links: false, gif: false, hashtags_max: 3, hashtags: ['#stocks', '#investing', '#StockMarket', '#markets', '#investors', '#finance'],
+      headline_tag: '#earnings', tags: { kind: true, topic: true, industry: true, general: true } };
+    const base = Object.assign({}, d, site || {});
+    const x = Object.assign({}, base, saved || {});
+    x.tags = Object.assign({}, d.tags, base.tags || {}, (saved && saved.tags) || {});
+    return x;
+  }
+  function xFieldset(x, site, ok) {
+    const pool = xUniq([...(site.candidates || []), ...(x.hashtags || [])].map(xTag));
+    const on = new Set((x.hashtags || []).map((t) => xTag(t).toLowerCase()));
+    const dis = ok ? '' : 'disabled';
+    const kinds = site.kinds || {};
+    return `<fieldset id="x-post"><legend>X posts</legend>
+      <p class="muted small">Every post that goes to Buffer: the scan’s threads, the Post to X buttons, the engagement and movers posts.
+        Cashtags ($NVDA) always stay.${ok ? '' : ` <b>Run <span class="mono">supabase/schema.sql</span> again</b> (Supabase → SQL Editor) to set
+        these here; until then <span class="mono">config/x.json</span> decides
+        (now: ${x.links ? 'links allowed' : 'no links'}, ${x.gif ? 'GIF allowed' : 'still images only'}, ${+x.hashtags_max} hashtags).`}</p>
+      <div role="radiogroup" aria-label="Links in posts" style="display:grid;gap:6px"><span>Links</span>
+        <label class="long"><input type="radio" name="x-links" value="off" ${x.links ? '' : 'checked'} ${dis}><span>None: text, cashtags, hashtags and the chart images only</span></label>
+        <label class="long"><input type="radio" name="x-links" value="on" ${x.links ? 'checked' : ''} ${dis}><span>Allowed (the filing, the company page)</span></label></div>
+      <p class="muted small">No links takes every web address out of every post, also <span class="mono">sec.gov/…</span> written without https; a reply that
+        was only a link is left out. Readers find the site from your profile link, the pinned post and the name on each chart.</p>
+      <label class="long"><input type="checkbox" id="x-gif" ${x.gif ? 'checked' : ''} ${dis}><span>Animated GIF charts too (the two-year trend posts).
+        Off: still PNG / JPG charts only; a GIF request goes out with the still charts.</span></label>
+      <div class="inline-radios"><span>Hashtags per post</span>
+        <select id="x-max" aria-label="Hashtags per post" ${dis}>${[0, 1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${+x.hashtags_max === n ? 'selected' : ''}>${n === 0 ? 'none' : n}</option>`).join('')}</select>
+        <span class="muted small">in this order:</span></div>
+      <div class="sub-choice" aria-label="Which kinds of tag">${X_PARTS.map(([k, name, ex]) => `<label><input type="checkbox" data-xpart="${k}"
+          ${x.tags[k] !== false ? 'checked' : ''} ${dis}> ${name} <span class="muted small">${t(ex)}</span></label>`).join('')}</div>
+      <label>Earnings headline tag <input id="x-head" class="mono" value="${t(x.headline_tag || '')}" placeholder="none" style="width:10em" ${dis}
+        aria-label="Earnings headline tag"><span class="muted small">first line of earnings posts: “$NVDA NVIDIA Q2 FY27 #earnings”</span></label>
+      <div><span class="muted small">General pool: the ticked tags take turns, one per post</span>
+        <div class="chips x-pool" id="x-pool">${pool.map((tg) => `<label class="x-chip"><input type="checkbox" value="${t(tg)}" ${on.has(tg.toLowerCase()) ? 'checked' : ''} ${dis}> ${t(tg)}</label>`).join('')}</div>
+        <div class="row" style="margin-top:6px"><input id="x-add" class="input mono" placeholder="#another" aria-label="Add a general tag" style="width:12em" ${dis}>
+          <button class="btn" type="button" id="x-add-btn" ${dis}>Add</button></div></div>
+      <p class="small" id="x-example" aria-live="polite"></p>
+      <details class="small"><summary>The other pools</summary>
+        <p class="muted">Post kinds: ${Object.entries(kinds).map(([k, v]) => `<b>${t(k)}</b> ${t(v.join(' '))}`).join(' · ') || '—'}</p>
+        <p class="muted">Industries: ${t((site.industry || []).join(' ')) || '—'}</p></details>
+    </fieldset>`;
+  }
+  function xRead() {
+    const tags = {};
+    $$('[data-xpart]').forEach((b) => { tags[b.dataset.xpart] = b.checked; });
+    return { links: ($('input[name="x-links"]:checked') || {}).value === 'on', gif: $('#x-gif').checked, hashtags_max: +$('#x-max').value,
+      hashtags: $$('#x-pool input:checked').map((b) => b.value), headline_tag: xTag($('#x-head').value), tags };
+  }
+  function xExample(x) {                                   // as pipeline/hashtags.py pick(): kind, topic, industry, one general
+    const one = (own, topic, industry) => xUniq([...(x.tags.kind ? own.slice(0, 1) : []), ...(x.tags.topic && topic ? [topic] : []),
+      ...(x.tags.industry ? [industry] : []), ...(x.tags.general ? x.hashtags.slice(0, 1) : []), ...(x.tags.kind ? own.slice(1) : []),
+      ...(x.tags.general ? x.hashtags.slice(1) : [])]).slice(0, x.hashtags_max).join(' ') || 'no hashtags';
+    return `Example — NVIDIA earnings: <span class="mono">$NVDA … ${t(one(xUniq([x.headline_tag, '#earnings', '#EarningsSeason'].map(xTag)), null, '#semiconductors'))}</span>;
+      a drug maker’s merger 8-K: <span class="mono">$XYZ … ${t(one(['#8K', '#SEC'], '#MergersAndAcquisitions', '#pharma'))}</span>. The general tag changes from post to post.`;
+  }
+  function xBind(site) {
+    const show = () => { const el = $('#x-example'); if (el) el.innerHTML = xExample(xRead()); };
+    $('#x-post').addEventListener('change', show);
+    $('#x-post').addEventListener('input', show);
+    const add = () => {
+      const tg = xTag($('#x-add').value);
+      if (!tg) return;
+      const have = $$('#x-pool input').find((b) => b.value.toLowerCase() === tg.toLowerCase());
+      if (have) have.checked = true;
+      else $('#x-pool').insertAdjacentHTML('beforeend', `<label class="x-chip"><input type="checkbox" value="${t(tg)}" checked> ${t(tg)}</label>`);
+      $('#x-add').value = '';
+      show();
+    };
+    $('#x-add-btn').addEventListener('click', add);
+    $('#x-add').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); add(); } });
+    show();
+  }
+
   // the owner's re-read requests (table reread_requests): tickers or CIKs -> CIKs; cik 0 = every stored company
   async function rereadCiks(text) {
     const words = String(text || '').split(/[\s,;]+/).map((w) => w.trim()).filter(Boolean);

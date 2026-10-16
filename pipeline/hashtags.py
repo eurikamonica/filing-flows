@@ -6,7 +6,9 @@ general tag that takes turns, so posts do not all end the same way.
 
 Order: the kind's own tag, the event's topic, the industry (from the SIC code; else the sector), one general tag (chosen
 by the post's key, so the same post always gets the same one), then the kind's other tags and more general ones until
-"hashtags_max" is reached (config/x.json; 3 by default). Cashtags are not hashtags and are never touched here.
+"hashtags_max" is reached (config/x.json; 3 by default). Each of the four kinds of tag can be switched off
+("hashtag_parts"); the owner page's "X posts" options (pipeline/xprefs.py) win over config/x.json. Cashtags are not
+hashtags and are never touched here.
 """
 import hashlib
 import json
@@ -16,6 +18,7 @@ from .sectors import sector_of
 
 CFG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "x.json")
 MAX = 3
+PARTS = {"kind": True, "topic": True, "industry": True, "general": True}
 KINDS = {
     "earnings": ["#earnings", "#EarningsSeason"],
     "13f": ["#13F", "#hedgefunds", "#smartmoney"],
@@ -25,6 +28,10 @@ KINDS = {
     "capital": ["#buybacks", "#dividends"],
 }
 GENERAL = ["#stocks", "#investing", "#StockMarket", "#markets", "#investors", "#finance"]
+# more general tags the owner page offers to pick from ("X posts"); any other tag can be typed in
+CANDIDATES = GENERAL + ["#fintwit", "#WallStreet", "#StocksToWatch", "#trading", "#investment", "#economy", "#business",
+                        "#money", "#valueinvesting", "#dividendinvesting", "#growthstocks", "#NASDAQ", "#SP500",
+                        "#DowJones", "#stockmarketnews", "#financialnews", "#equities", "#wealth"]
 # SIC code ranges, the specific before the broad
 INDUSTRY = [
     (3674, 3674, "#semiconductors"), (7371, 7372, "#software"), (3570, 3579, "#tech"), (3660, 3679, "#tech"),
@@ -60,14 +67,18 @@ _cfg = None
 
 
 def settings():
-    """("hashtags_max", the general pool "hashtags") from config/x.json, read once; the defaults without it."""
+    """("hashtags_max", the general pool "hashtags", "hashtag_parts") from config/x.json with the owner's options on top,
+    read once; the defaults without them. An empty pool means no general tag."""
     global _cfg
     if _cfg is None:
         try:
             c = json.load(open(CFG, encoding="utf-8"))
         except (OSError, ValueError):
             c = {}
-        _cfg = (int(c.get("hashtags_max", MAX)), clean(c.get("hashtags")) or GENERAL)
+        from . import xprefs
+        c = xprefs.overlay(c)
+        parts = {**PARTS, **{k: v for k, v in (c.get("hashtag_parts") or {}).items() if k in PARTS and isinstance(v, bool)}}
+        _cfg = (int(c.get("hashtags_max", MAX)), clean(c["hashtags"]) if isinstance(c.get("hashtags"), list) else GENERAL, parts)
     return _cfg
 
 
@@ -82,14 +93,17 @@ def clean(tags):
     return out
 
 
-def pick(kind, profile=None, topic=None, key="", n=None, general=None, lead=None):
+def pick(kind, profile=None, topic=None, key="", n=None, general=None, lead=None, parts=None):
     """Up to n hashtags for one post (see the module docstring). `general` replaces the general pool (config/x.json
-    "hashtags"); `lead` replaces the kind's own first tag (config/x.json "headline_tag" for earnings posts)."""
-    n_cfg, pool_cfg = settings()
+    "hashtags"; [] for none); `lead` replaces the kind's own first tag (config/x.json "headline_tag" for earnings
+    posts); `parts` switches kinds of tag off, e.g. {"industry": False}."""
+    n_cfg, pool_cfg, parts_cfg = settings()
     n = n_cfg if n is None else max(0, int(n))
-    own = clean(([lead] if lead else []) + KINDS.get(kind, []))
-    pool = clean(general) or pool_cfg
-    start = int(hashlib.sha1(str(key).encode()).hexdigest(), 16) % len(pool)
+    use = {**parts_cfg, **{k: v for k, v in (parts or {}).items() if k in PARTS}}
+    own = clean(([lead] if lead else []) + KINDS.get(kind, [])) if use["kind"] else []
+    pool = (pool_cfg if general is None else clean(general)) if use["general"] else []
+    start = int(hashlib.sha1(str(key).encode()).hexdigest(), 16) % len(pool) if pool else 0
     turn = pool[start:] + pool[:start]
-    order = own[:1] + clean([topic] if topic else []) + clean([industry_tag(profile)]) + turn[:1] + own[1:] + turn[1:]
+    order = (own[:1] + (clean([topic]) if topic and use["topic"] else []) + (clean([industry_tag(profile)]) if use["industry"] else [])
+             + turn[:1] + own[1:] + turn[1:])
     return clean(order)[:n]

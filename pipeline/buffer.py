@@ -101,7 +101,10 @@ def main():
     failed = 0
     for it in items:
         posts = social.strip_links(it["posts"]) if social.links_off(cfg) else it["posts"]   # config/x.json "links": false
-        parts = [{"text": p, "images": ([f"{base}/x/{n}" for n in it["images"]] if i == 0 else [])} for i, p in enumerate(posts)]
+        imgs = [n for n in it["images"] if social.media_ok(cfg, n.rsplit(".", 1)[-1].lower())]   # "media": no GIF unless allowed
+        if len(imgs) < len(it["images"]):
+            print(f"buffer: {it['label']}: left out {len(it['images']) - len(imgs)} image(s) of a type the X post options leave out")
+        parts = [{"text": p, "images": ([f"{base}/x/{n}" for n in imgs] if i == 0 else [])} for i, p in enumerate(posts)]
         if args.dry_run:
             print(f"would queue {it['label']}: {len(parts)} posts, images {parts[0]['images']}")
             continue

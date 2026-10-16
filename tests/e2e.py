@@ -51,7 +51,7 @@ FAKE_SUPABASE = """
   const GOOD_UNSUB = '11111111-2222-4333-8444-555555555555';
   const db = { subscriptions: [], send_requests: [], chart_requests: [], company_requests: [], reread_requests: [],
     owner_settings: [{ id: true, thread_direct: true, daily_on: true, daily_hour: 8, tz: 'Asia/Shanghai', min_revenue: 1e9, instant_threads: false,
-      daily_scope: 'min_revenue', reader_copy: false }] }, log = [];
+      daily_scope: 'min_revenue', reader_copy: false, x_post: {} }] }, log = [];
   let session = null;
   try { session = JSON.parse(sessionStorage.getItem('fake-session') || 'null'); } catch (e) {}
   window.__ff = { db, log, native: [], owners: [] };
@@ -751,6 +751,25 @@ def check_accounts(b, base, fails, shot, site):
     if "all in your report" not in pg.inner_text("#daily .day.on"):
         fails.append(f"owner tools: the day picker should count every filing: {pg.inner_text('#daily .day.on')!r}")
     shot(pg, "owner_settings.png", full_page=True)
+    # the X post options: config/x.json's values first (site.json "x"), then the owner's own, kept in owner_settings.x_post
+    if not pg.locator('input[name="x-links"][value="off"]').is_checked() or "#earnings #semiconductors" not in pg.inner_text("#x-example"):
+        fails.append(f"owner tools: X posts should start from config/x.json: {pg.inner_text('#x-example')!r}")
+    pg.check('input[name="x-links"][value="on"]')
+    pg.uncheck('[data-xpart="industry"]')
+    pg.select_option("#x-max", "2")
+    pg.uncheck('#x-pool input[value="#stocks"]')
+    pg.fill("#x-add", "Earnings Day!")
+    pg.press("#x-add", "Enter")
+    if "#semiconductors" in pg.inner_text("#x-example"):
+        fails.append(f"owner tools: the example should follow the form: {pg.inner_text('#x-example')!r}")
+    pg.click("#owner-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#owner-msg').textContent === 'Saved.'")
+    x = ff("window.__ff.db.owner_settings[0].x_post")
+    print("owner tools: X post options saved:", x)
+    if not (x.get("links") is True and x.get("gif") is False and x.get("hashtags_max") == 2 and x.get("tags", {}).get("industry") is False
+            and "#stocks" not in x.get("hashtags", []) and x.get("hashtags", [])[-1:] == ["#EarningsDay"] and x.get("headline_tag") == "#earnings"):
+        fails.append(f"owner tools: X post options saved as {x}")
+    shot(pg, "owner_x_posts.png", full_page=True)
     # re-read stored figures: the owner asks for companies (tickers or CIKs) or for every one; the scan claims them
     pg.fill("#reread-list", "AAPL, 1067983, NOPE")
     pg.click("#reread-form button[type=submit]")

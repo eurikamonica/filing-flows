@@ -34,6 +34,24 @@ def setting(name, url=False):
     return v
 
 
+def x_options():
+    """The owner page's "X posts" form: the starting values (config/x.json, until the owner saves their own) and the tag
+    pools posts pick from (pipeline/hashtags.py). Nothing secret: the same tags appear in every post."""
+    import sys
+    sys.path.insert(0, ROOT)
+    from pipeline import hashtags as H
+    try:
+        c = json.load(open(os.path.join(ROOT, "config", "x.json"), encoding="utf-8"))
+    except (OSError, ValueError):
+        c = {}
+    media = [str(m).lower() for m in (c.get("media") or ["png", "jpg", "gif"])]
+    return {"links": c.get("links", True) is not False, "gif": "gif" in media, "hashtags_max": int(c.get("hashtags_max", H.MAX)),
+            "hashtags": H.clean(c["hashtags"]) if isinstance(c.get("hashtags"), list) else H.GENERAL,
+            "headline_tag": c.get("headline_tag", "#earnings"), "tags": dict(H.PARTS), "kinds": H.KINDS,
+            "industry": sorted({t for _, _, t in H.INDUSTRY} | set(H.SECTOR.values()), key=str.lower),
+            "candidates": H.CANDIDATES}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="_site/data", help="directory written by `pipeline.build render`")
@@ -67,7 +85,8 @@ def main():
     site = {"repo": os.environ.get("GITHUB_REPOSITORY", ""),
             # accounts: the project URL and the public (publishable / anon) key; row-level security protects the data
             "supabase_url": setting("SUPABASE_URL", url=True), "supabase_key": setting("SUPABASE_ANON_KEY"),
-            "contact": setting("CONTACT_EMAIL")}       # shown on the privacy and terms pages
+            "contact": setting("CONTACT_EMAIL"),       # shown on the privacy and terms pages
+            "x": x_options()}                          # the owner page's "X posts" form
     json.dump(site, open(os.path.join(data_out, "site.json"), "w"))
     # privacy policy and terms: plain pages (app stores and crawlers read them without running the site's script)
     if site["contact"]:
