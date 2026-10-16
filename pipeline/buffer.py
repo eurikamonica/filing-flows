@@ -76,7 +76,10 @@ def main():
     ap.add_argument("--site", default="_site")
     ap.add_argument("--site-url", default=os.environ.get("SITE_URL", ""))
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--config", default="config/x.json")
     args = ap.parse_args()
+    from . import social
+    cfg = social.load_cfg(args.config)
     key = os.environ.get("BUFFER_API_KEY", "")
     path = os.path.join(args.site, "x", "pending.json")
     if not os.path.exists(path):
@@ -97,7 +100,8 @@ def main():
     print(f"buffer: channel {ch['name']} ({ch['service']}, {ch['id']}){' · queue paused' if ch.get('isQueuePaused') else ''}")
     failed = 0
     for it in items:
-        parts = [{"text": p, "images": ([f"{base}/x/{n}" for n in it["images"]] if i == 0 else [])} for i, p in enumerate(it["posts"])]
+        posts = social.strip_links(it["posts"]) if social.links_off(cfg) else it["posts"]   # config/x.json "links": false
+        parts = [{"text": p, "images": ([f"{base}/x/{n}" for n in it["images"]] if i == 0 else [])} for i, p in enumerate(posts)]
         if args.dry_run:
             print(f"would queue {it['label']}: {len(parts)} posts, images {parts[0]['images']}")
             continue

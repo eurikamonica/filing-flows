@@ -2072,6 +2072,22 @@ def test_reformulated_balance_sheet_balances_and_names_what_is_untagged():
     assert r["flows"][0]["int_exp"] == 2 and r["suggest"] is None
 
 
+def test_links_off_leaves_text_and_images_only():
+    """config/x.json "links": false: no web address in any post; a label that only introduced one goes with it, the
+    sentences around it stay, and a reply left empty is dropped. The images are untouched (Buffer gets the same
+    chart URLs as before: those are attachments, not links in the text)."""
+    from pipeline import social as S
+    assert S.no_links("Source: 13F-HR filings with the SEC. Not investment advice. Every holder: https://x.io/#c-1") == \
+        "Source: 13F-HR filings with the SEC. Not investment advice."
+    assert S.no_links("Charts: $AAPL Q3 FY26. Not investment advice. https://x.io/#c-320193\n\n#stocks") == \
+        "Charts: $AAPL Q3 FY26. Not investment advice.\n\n#stocks"
+    assert S.no_links("Revenue $94.0B (see https://x.io) and more.") == "Revenue $94.0B and more."
+    assert S.strip_links(["$AAPL post https://a.b/c", "The 13F: https://www.sec.gov/x", "#stocks https://x.io", "Reply."]) == \
+        ["$AAPL post", "Reply."]
+    assert S.links_off({"links": False}) and not S.links_off({}) and not S.links_off(S.DEFAULTS)
+    assert S.load_cfg("config/x.json")["links"] is False                  # the site's setting: text and images only
+
+
 def test_posts_are_never_cut_off_and_say_something():
     """Oct 16 2026: drafts went to Buffer as '$FNGR 8-K filed Sept 29: entered a definitive #earnings #stocks' and
     'JUST FILED · $FNGR Q2 FY2 #13F' — model answers cut at max_tokens, hashtags glued on. Such posts are rejected."""
