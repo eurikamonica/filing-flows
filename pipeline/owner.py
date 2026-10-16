@@ -408,9 +408,13 @@ def buffer_post(e, c, q, assets, cfg, kind, media_dir, site_url, draft=False):
             f.write(png)
     thread = bool(cfg.get("owner_thread", True))
     parts = social.compose_parts(c, q, dict(cfg, numbered=False, include_link=True, site_url=site_url or cfg.get("site_url", "")))
-    fallback = parts[0]["text"]
+    fallback, replies = parts[0]["text"], thread_replies(parts, kind)
+    if kind == "post_holders":                       # who bought and sold, not the earnings: its own fallback and replies
+        th = tweet.holders_thread(e.get("ticker") or "", site_url or cfg.get("site_url", ""), e["cik"])
+        if th:
+            fallback, replies = th["post"] + " " + " ".join(tweet.HOLDER_TAGS), th["replies"]
     post, via = tweet.post_for(c, q, cfg, e.get("ticker") or "", fallback, social.xlen, kind=kind, site_url=site_url, thread=thread)
-    posts = [post] + (thread_replies(parts, kind) if thread else [])
+    posts = [post] + (replies if thread else [])
     path = os.path.join(xdir, "pending.json")
     pending = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else []
     pending.append({"cik": e["cik"], "end": e["end"], "label": f"{e.get('ticker') or e['cik']} {q['label']} ({kind})",

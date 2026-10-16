@@ -47,7 +47,7 @@ def recent_8ks(cik, since, sub=None):
     return out
 
 
-def _sentences(paras, n=2, limit=420):
+def _sentences(paras, n=3, limit=560):
     out = []
     for p in paras:
         t = p["text"] if isinstance(p, dict) else str(p)

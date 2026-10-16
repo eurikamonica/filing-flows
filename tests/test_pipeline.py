@@ -1919,3 +1919,51 @@ def test_evidence_points_at_the_filing():
     ci, how, fis = out["fy"][0]["ev"]["ni"]
     assert out["src"]["concepts"][ci][0] == "NetIncomeLoss" and how == "fy"
     assert out["src"]["filings"][fis[0]] == ["0000000001-26-000001", "10-K", "2026-02-01"]
+
+
+def test_posts_are_never_cut_off_and_say_something():
+    """Oct 16 2026: drafts went to Buffer as '$FNGR 8-K filed Sept 29: entered a definitive #earnings #stocks' and
+    'JUST FILED · $FNGR Q2 FY2 #13F' — model answers cut at max_tokens, hashtags glued on. Such posts are rejected."""
+    from pipeline import engage, tweet, social
+    assert tweet.cut_off("$FNGR 8-K filed Sept 29: entered a definitive #earnings #stocks")
+    assert tweet.cut_off("JUST FILED · $FNGR Q2 FY2 #13F #stocks #investing")
+    assert not tweet.cut_off("BREAKING: $X agreed to buy Y for $2.1B in cash. How do you read it? #8K")
+    for bad in ("$FNGR 8-K filed Sept 29: entered a definitive", "JUST FILED · $FNGR Q2 FY2"):
+        try:
+            engage.clean(bad, ["FNGR"], ["#8K"])
+            assert False, bad
+        except ValueError as why:
+            assert "mid-sentence" in str(why)
+    assert engage.event_tags("1.01", "a material agreement")[:3] == ["#8K", "#SEC", "#deal"]
+    assert "#MergersAndAcquisitions" in engage.event_tags("8.01", "a merger or acquisition")
+    long = "On September 26, 2026, FingerMotion, Inc. entered into a definitive Share Purchase Agreement with Example Holdings Ltd. " * 3
+    q = "On October 13, 2026, FingerMotion, Inc. (the “Company”) entered into an agreement with Example Ltd. to sell shares. Closing follows."
+    assert engage.first_sentence(q) == "On October 13, 2026, FingerMotion, Inc. entered into an agreement with Example Ltd. to sell shares"
+    rs = engage.quote_replies(long)
+    assert len(rs) == 2 and all(social.xlen(r) <= 280 for r in rs)
+
+
+def test_holders_post_names_who_how_much_and_when():
+    import datetime as dt
+    from pipeline import tweet, social
+    rows = [{"manager": "Renaissance Technologies LLC", "period": "2026-06-30", "filed": "2026-10-15", "status": "INCREASE",
+             "delta_shares": 120000, "shares": 450000, "value_usd": 1.2e6},
+            {"manager": "Vanguard Group Inc", "period": "2026-06-30", "filed": "2026-08-12", "status": "NEW",
+             "delta_shares": 80000, "shares": 80000, "value_usd": 2.1e5},
+            {"manager": "Citadel Advisors LLC", "period": "2026-06-30", "filed": "2026-08-14", "status": "EXIT",
+             "delta_shares": -95000, "shares": 0, "value_usd": 0}]
+    old = tweet.holders_json
+    tweet.holders_json = lambda t, u: {"institutional": rows}
+    try:
+        th = tweet.holders_thread("FNGR", "https://filing-flows.com", 1602409, today=dt.date(2026, 10, 16))
+    finally:
+        tweet.holders_json = old
+    p = th["post"]
+    assert p.startswith("BREAKING: Who's trading $FNGR? 13F")
+    assert "quarter ended Jun 30" in p
+    assert "Renaissance Technologies LLC added 120K sh (filed Oct 15)" in p and "Citadel Advisors LLC sold out of 95K sh" in p
+    assert social.xlen(p + " " + " ".join(tweet.HOLDER_TAGS)) <= 280 and not tweet.cut_off(p)
+    assert th["replies"][0].startswith("Bought or added, quarter ended Jun 30:") and "filed Oct 15" in th["replies"][0]
+    assert th["replies"][1].startswith("Sold or cut:") and "sold out, filed Aug 14" in th["replies"][1]
+    assert th["replies"][-1].startswith("Source: 13F-HR filings")
+    assert "https://filing-flows.com/#c-1602409" in th["replies"][-1]

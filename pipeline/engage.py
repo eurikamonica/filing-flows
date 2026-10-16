@@ -105,6 +105,8 @@ def one_liner(e):
 # ------------------------------------------------------------------ writing
 def clean(post, cashtags, tags, limit=255, allowed=None):
     post = re.sub(r"\s*\n+\s*", " ", post.strip().strip('"“”')).strip()
+    if tweet.cut_off(post):
+        raise ValueError("the post stops mid-sentence; finish the last sentence")
     missing = [t for t in cashtags if f"${t.upper()}" not in post.upper()]
     if missing:
         raise ValueError("cashtag missing: " + " ".join(missing))
@@ -655,19 +657,69 @@ def plan_insider(site, rows, c, by_ticker, state_ok, today):
         return None
     cl = clusters.get(tk)
     after = f"; holds {t['after']:,.0f} shares after the trade" if t.get("after") else ""
-    task = (f"FORM 4 (filed with the SEC within two business days of the trade): {t['insider']} ({t.get('title') or t['role']}) bought "
+    filed = t.get("filed")
+    fresh = bool(filed) and filed >= (today - dt.timedelta(days=2)).isoformat()
+    task = (f"FORM 4{f' filed {filed}' if filed else ' (filed within two business days of the trade)'}: {t['insider']} ({t.get('title') or t['role']}) bought "
             f"{t['shares']:,.0f} shares of ${tk} at ${t['price']:,.2f} on {t['date']} — {money(t['value'])} in the open market{after}."
+            + (" Start the post with “JUST FILED:”." if fresh else "")
+            + " Say who bought, how many shares, at what price, the trade date and the filing date."
             + (" This was NOT under a 10b5-1 plan." if t.get("plan_10b5_1") is False else "")
             + (f"\nCluster: {cl['buyers30']} insiders bought ${tk} within 30 days ({', '.join(cl['buyers'][:4])})." if cl else "")
             + f"\n\nLatest filing figures (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, tk)}"
             + "\n\nSay what the insider did and when; never say it means the stock will rise. Ask the audience how they read it.")
     who = t.get('title') if t.get('title') and len(t['title']) <= 24 else t['role']
-    fb = (f"${tk} {who} {t['insider'].title()} bought {money(t['value'])} of stock at ${t['price']:,.2f} on "
-          f"{t['date']} (Form 4)." + (f" {cl['buyers30']} insiders bought in 30 days." if cl else "") + " How do you read it?")
-    return {"kind": "insider", "task": task, "cashtags": [tk], "items": [(e, cj, fq)], "insider_url": t.get("url"), "fallback": fb}
+    fb = (("JUST FILED: " if fresh else "") + f"${tk} {who} {t['insider'].title()} bought {t['shares']:,.0f} shares ({money(t['value'])}) at "
+          f"${t['price']:,.2f} on {t['date']}" + (f", Form 4 filed {filed}." if filed else " (Form 4).")
+          + (f" {cl['buyers30']} insiders bought in 30 days." if cl else "") + " How do you read it?")
+    return {"kind": "insider", "task": task, "cashtags": [tk], "items": [(e, cj, fq)], "insider_url": t.get("url"), "fallback": fb,
+            "tags": TAGS["insider"]}
 
 
 # ------------------------------------------------------------------ 8-K events (current reports)
+# hashtags per post kind (the general config hashtags are for earnings posts); an 8-K adds one for its topic
+TAGS = {"event8k": ["#8K", "#SEC", "#stocks", "#investing"],
+        "fund13f": ["#13F", "#hedgefunds", "#smartmoney", "#stocks", "#investing"],
+        "insider": ["#insiders", "#Form4", "#stocks", "#investing"]}
+TOPIC_TAG = {"a merger or acquisition": "#MergersAndAcquisitions", "a CEO change": "#leadership", "1.01": "#deal", "1.03": "#bankruptcy",
+             "4.02": "#restatement", "5.02": "#leadership", "2.01": "#MergersAndAcquisitions", "2.02": "#earnings", "1.05": "#cybersecurity",
+             "3.01": "#delisting", "2.05": "#restructuring", "2.06": "#impairment"}
+
+
+def event_tags(code, label):
+    t = TOPIC_TAG.get(label) or TOPIC_TAG.get(code)
+    return TAGS["event8k"][:2] + ([t] if t else []) + TAGS["event8k"][2:]
+
+
+ABBR = re.compile(r"\b(?:Inc|Ltd|Corp|Co|LLC|L\.P|LP|No|Nos|U\.S|Mr|Ms|Dr|St|Jr|S\.A|N\.V|plc)\.$")
+
+
+def first_sentence(quote, limit=170):
+    """The quote's first sentence, abbreviations (Inc., Ltd., U.S.) not taken for its end, asides like (the “Company”)
+    dropped, shortened at a word with … if long."""
+    q = re.sub(r"\s*\((?:the\s+)?[“\"][^)]{1,40}[”\"]\)", "", (quote or "").strip())
+    out, start = q, 0
+    for m in re.finditer(r"[.!?](?=\s+[A-Z“\"])", q):
+        if not ABBR.search(q[:m.end()]):
+            out = q[:m.end()]
+            break
+    out = out.strip().rstrip(".")
+    return out if len(out) <= limit else out[:limit].rsplit(" ", 1)[0].rstrip(",;") + " …"
+
+
+def quote_replies(quote, head="What the filing says:"):
+    """The filing's key sentences as one or two replies (each under 280 characters)."""
+    q = (quote or "").strip()
+    if not q:
+        return []
+    first = f"{head}\n“{q}”"
+    if social.xlen(first) <= 280:
+        return [first]
+    cut = q[:240].rsplit(" ", 1)[0]
+    rest = q[len(cut):].strip()
+    rest = rest if social.xlen(rest) <= 270 else rest[:262].rsplit(" ", 1)[0] + " …"
+    return [f"{head}\n“{cut} …", f"… {rest}”"]
+
+
 # the items worth a post on their own, with a weight; BREAKING only for the first group
 EVENT_ITEMS = {"1.03": 10, "4.02": 9, "5.01": 9, "2.01": 8, "1.05": 8, "1.01": 6, "5.02": 6, "2.06": 6, "3.01": 6, "2.05": 5,
                "8.01": 3, "7.01": 2}
@@ -743,22 +795,30 @@ def event_plan(site, e, sub, require_deal=True, fresh=True):
         if not fq:
             return None
         label = event_label(ev["code"], ev["quote"])
-        breaking = fresh and (ev["code"] in BREAKING_ITEMS or label in ("a merger or acquisition", "a CEO change"))
+        # BREAKING: any material item (weight 6+: agreements, officer changes, impairments, delisting notices, ...) filed in
+        # the last two days; an older filing is dated instead, never called breaking
+        breaking = fresh and (ev["code"] in BREAKING_ITEMS or EVENT_ITEMS.get(ev["code"], 0) >= 6
+                              or label in ("a merger or acquisition", "a CEO change"))
         when = f"{ev['filed']}" + (f" {ev['accepted'][11:16]} ET" if len(ev.get("accepted") or "") >= 16 else "")
+        filed_on = dt.date.fromisoformat(ev["filed"])
+        filed_txt = f"{filed_on:%b} {filed_on.day}"
         task = (f"8-K CURRENT REPORT filed {when} by ${e['ticker']} ({display(e)}): Item {ev['code']} — {ev['label']}"
                 + (f" ({label})" if label != ev["label"] else "") + f".\nWhat the filing says (quote; the only facts you may use about the event):\n"
                 f"“{ev['quote'] or '(text not read; name the item only)'}”\n\nLatest filing figures (context, at most one):\n"
                 f"{tweet.headline_lines(cj, fq, e['ticker'])}\n\n"
-                + ("Start the post with “BREAKING:” — this is a material event filed in the last day. " if breaking else "Start with “JUST FILED:”. " if fresh else "Say when it was filed. ")
-                + "Say what the company filed in plain words, quote or closely paraphrase the key sentence, add no facts that are not in the "
-                  "quote, never predict the stock's reaction, then ask the audience one short question.")
-        short = (ev["quote"] or "").split(". ")[0][:150].rstrip(".")
-        lead = "BREAKING" if breaking else "JUST FILED" if fresh else f"8-K, {ev['filed']}"
-        fb = f"{lead}: ${e['ticker']} filed an 8-K — {label}." + (f" “{short}.”" if short else "") + " How do you read it?"
-        if social.xlen(fb) > 235:
-            fb = f"{lead}: ${e['ticker']} filed an 8-K — {label}. How do you read it?"
+                + ("Start the post with “BREAKING:” — a material event filed in the last two days. " if breaking
+                   else "Start with “JUST FILED:”. " if fresh else f"Start with “8-K ({filed_txt}):” — it was filed on {filed_txt}, not today. ")
+                + "Then say concretely what happened, using the quote: WHO did WHAT with WHOM (name the counterparty), the dollar "
+                  "amounts, share counts and dates the quote gives, and the filing date. No facts beyond the quote; finish every "
+                  "sentence; never predict the stock's reaction; end with one short question to the audience.")
+        lead = "BREAKING: " if breaking else "JUST FILED: " if fresh else ""
+        head = f"{lead}${e['ticker']} 8-K filed {filed_txt} — {label}"
+        room = 255 - sum(len(t) + 1 for t in event_tags(ev["code"], label)) - social.xlen(head) - len(": “” How do you read it?") - 2
+        short = first_sentence(ev["quote"], limit=max(0, room))
+        fb = f"{head}: “{short}{'' if short.endswith('…') else '.'}” How do you read it?" if len(short) >= 40 else f"{head}. How do you read it?"
         return {"kind": "event8k", "task": task, "cashtags": [e["ticker"]], "items": [(e, cj, fq)], "event": ev,
-                "event_key": f"event8k:{sub['accn']}", "fallback": fb}
+                "event_key": f"event8k:{sub['accn']}", "fallback": fb, "tags": event_tags(ev["code"], label),
+                "thread": quote_replies(ev["quote"])}
 
 
 def plan_filing8k(site, rows, target, today):
@@ -786,7 +846,7 @@ def plan_filing8k(site, rows, target, today):
         print(f"filing8k: {e['ticker']} filed no 8-K in 45 days")
         return None
     f = min(fs, key=lambda f: min([events.PRIORITY.index(x) for x in f["items"] if x in events.PRIORITY] or [99]))
-    fresh = f["filed"] >= (today - dt.timedelta(days=1)).isoformat()
+    fresh = f["filed"] >= (today - dt.timedelta(days=2)).isoformat()
     return event_plan(site, e, dict(f), require_deal=False, fresh=fresh)
 
 
@@ -983,9 +1043,10 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
         for p in plans:
             print(f"planned: {p['kind']} " + " ".join("$" + t for t in p["cashtags"]))
         return [p["kind"] for p in plans]
-    tags = [t for t in c["hashtags"] if t]
+    general = [t for t in c["hashtags"] if t]
     made = []
     for p in plans:
+        tags = p.get("tags") or TAGS.get(p["kind"]) or general
         try:
             post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True), allowed=p.get("allowed"))
         except Exception as err:

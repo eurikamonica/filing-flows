@@ -14,6 +14,7 @@ Model (GitHub Models was retired on 30 Jul 2026): the first of these secrets tha
   MODEL_API_URL + MODEL_API_KEY   any OpenAI-compatible chat-completions endpoint (Groq, OpenRouter, Azure…)
 Repository variable TWEET_MODEL overrides the model name. Without any of them the rule-based post is used.
 """
+import datetime as dt
 import json
 import os
 import re
@@ -130,14 +131,16 @@ def provider():
     return (p[0][0], p[0][1], p[0][2], p[0][3][0]) if p else None
 
 
-def _ask(name, url, key, model, messages, timeout):
+def _ask(name, url, key, model, messages, timeout, max_tokens=1200):
+    # thinking models count their reasoning against max_tokens: 400 once cut posts off mid-sentence ("entered a
+    # definitive …"), so the budget is generous and a cut-off answer is detected below (chat) and never used
     if name == "anthropic":
         system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
-        body = {"model": model, "max_tokens": 400, "temperature": 0.4, "system": system,
+        body = {"model": model, "max_tokens": max_tokens, "temperature": 0.4, "system": system,
                 "messages": [m for m in messages if m["role"] != "system"]}
         headers = {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
     else:
-        body = {"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 400}
+        body = {"model": model, "messages": messages, "temperature": 0.4, "max_tokens": max_tokens}
         if name == "gemini":
             body["reasoning_effort"] = "low"          # a short post needs no long thinking; keeps answers fast
         headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json", "Accept": "application/json"}
@@ -158,9 +161,10 @@ def chat(messages):
     problems = []
     for name, url, key, models in ps:
         for model in models:
+            budget = 1200
             for attempt in range(2):
                 try:
-                    r = _ask(name, url, key, model, messages, timeout=45)
+                    r = _ask(name, url, key, model, messages, timeout=45, max_tokens=budget)
                 except requests.RequestException as err:
                     problems.append(f"{model}: {err.__class__.__name__}")
                     break                                   # slow model: try the next one rather than wait again
@@ -184,8 +188,17 @@ def chat(messages):
                     break
                 if name == "anthropic":
                     content = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+                    cut = data.get("stop_reason") == "max_tokens"
                 else:
-                    content = ((data.get("choices") or [{}])[0].get("message") or {}).get("content")
+                    choice = (data.get("choices") or [{}])[0]
+                    content = (choice.get("message") or {}).get("content")
+                    cut = choice.get("finish_reason") == "length"
+                if cut:                                     # ran out of tokens: the text stops mid-sentence
+                    problems.append(f"{model}: answer cut off at {budget} tokens")
+                    if attempt == 0:
+                        budget = 4000
+                        continue
+                    break
                 if content and content.strip():
                     return content.strip()
                 problems.append(f"{model}: empty answer")
@@ -193,9 +206,19 @@ def chat(messages):
     raise RuntimeError("model unavailable — " + " | ".join(problems[-5:]))
 
 
+def cut_off(text):
+    """True when the post (hashtags aside) stops mid-sentence — a truncated model answer."""
+    body = re.sub(r"(\s*#\w+)+\s*$", "", text.strip()).rstrip()
+    if len(body) < 40:                     # a lead and a cashtag but nothing said ("JUST FILED · $FNGR Q2 FY2")
+        return True
+    return bool(body) and not re.search(r"[.!?…:;)\]”\"'↓→⬇👇]$|\d%?$|[\U0001F300-\U0001FAFF]$", body)
+
+
 def clean(post, ticker, tags, xlen, limit=270):
     post = post.strip().strip('"“”').strip()
     post = re.sub(r"\s*\n+\s*", " ", post)
+    if cut_off(post):
+        raise ValueError("the post stops mid-sentence; finish the last sentence")
     if ticker and not re.match(r"^(\W*[A-Z0-9][A-Z0-9 \-·:]{0,24}\W+)?\$" + re.escape(ticker.upper()) + r"\b", post.upper()):
         post = f"${ticker} " + post
     present = [t for t in tags if t.lower() in post.lower()]
@@ -209,22 +232,89 @@ def clean(post, ticker, tags, xlen, limit=270):
     return post
 
 
-def holders_lines(ticker, site_url):
-    """Who holds / bought the company, from the site's Disclosures index (13F quarter-end changes)."""
+HOLDER_TAGS = ["#13F", "#hedgefunds", "#smartmoney", "#stocks", "#investing"]
+
+
+def holders_json(ticker, site_url):
     if not (ticker and site_url):
-        return ""
+        return None
     try:
         r = requests.get(f"{site_url.rstrip('/')}/disclosures/data/holders/{ticker}.json", timeout=30)
-        if r.status_code != 200:
-            return ""
-        h = r.json()
+        return r.json() if r.status_code == 200 else None
     except Exception:
+        return None
+
+
+def _shares(n):
+    a = abs(n)
+    return f"{a / 1e6:.1f}M" if a >= 1e6 else f"{a / 1e3:.0f}K" if a >= 1e4 else f"{a:,.0f}"
+
+
+def _day(s):
+    try:
+        d = dt.date.fromisoformat(str(s)[:10])
+        return f"{d:%b} {d.day}"
+    except ValueError:
+        return str(s or "")
+
+
+def holders_thread(ticker, site_url, cik, today=None):
+    """The 13F 'who bought it' post without a model: lead, the biggest buyers and sellers with share changes, the
+    quarter and the filing dates; replies listing them; a source line. None when the site has no 13F data yet."""
+    from . import social
+    h = holders_json(ticker, site_url)
+    inst = (h or {}).get("institutional") or []
+    if not inst:
+        return None
+    today = today or dt.date.today()
+    tk = ticker.replace("-", ".")
+    buys = sorted([x for x in inst if x.get("status") in ("NEW", "INCREASE") and x.get("delta_shares")], key=lambda x: -x["delta_shares"])
+    sells = sorted([x for x in inst if x.get("status") in ("DECREASE", "EXIT") and x.get("delta_shares")], key=lambda x: x["delta_shares"])
+    filed = max((x.get("filed") or "" for x in inst), default="")
+    periods = [x.get("period") for x in inst if x.get("period")]
+    period = max(set(periods), key=periods.count) if periods else ""
+    age = (today - dt.date.fromisoformat(filed[:10])).days if filed else 99
+    lead = "BREAKING" if age <= 2 else "JUST FILED" if age <= 10 else "13F"
+    who = lambda x: social.display_name(x.get("manager") or "").replace(" Inc", "").strip()[:28]
+    move = lambda x: (("opened" if x.get("status") == "NEW" else "added") + f" {_shares(x['delta_shares'])} sh" if x["delta_shares"] > 0
+                      else ("sold out of" if x.get("status") == "EXIT" else "cut") + f" {_shares(x['delta_shares'])} sh")
+    say = lambda x: f"{who(x)} {move(x)} (filed {_day(x.get('filed'))})"
+    bits = [say(x) for x in buys[:1] + sells[:1] + buys[1:2]]        # shortened from the end: biggest buyer and seller stay
+    post = (f"{lead}: Who's trading ${tk}? 13F filings for the quarter ended {_day(period)}: " + "; ".join(bits) + ". "
+            f"{len(buys)} funds added, {len(sells)} cut. Which side is right?")
+    while social.xlen(post) > 225 and len(bits) > 1:
+        bits.pop()
+        post = (f"{lead}: Who's trading ${tk}? 13F, quarter ended {_day(period)}: " + "; ".join(bits) + ". "
+                f"{len(buys)} funds added, {len(sells)} cut. Which side is right?")
+    m = lambda v: "" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.1f}M" if abs(v) >= 0.95e6 else f"${v / 1e3:.0f}K"
+
+    def listing(head, rows):
+        out = head
+        for x in rows:
+            now = "sold out" if x.get("status") == "EXIT" or not x.get("shares") else f"→ {_shares(x['shares'])} ({m(x.get('value_usd'))})"
+            line = f"\n· {who(x)}: {'+' if x['delta_shares'] > 0 else '−'}{_shares(x['delta_shares'])} sh {now}, filed {_day(x.get('filed'))}"
+            if social.xlen(out + line) > 275:
+                break
+            out += line
+        return out if out != head else ""
+    replies = [r for r in (listing(f"Bought or added, quarter ended {_day(period)}:", buys[:6]),
+                           listing("Sold or cut:", sells[:6])) if r]
+    link = f"{site_url.rstrip('/')}/#c-{cik}" if site_url else ""
+    replies.append("Source: 13F-HR filings with the SEC — quarter-end positions, not trades, filed up to 45 days after the quarter. "
+                   + (f"Every holder: {link}" if link else "Not investment advice."))
+    return {"post": post, "replies": replies, "lead": lead, "period": period, "filed": filed}
+
+
+def holders_lines(ticker, site_url):
+    """Who holds / bought the company, from the site's Disclosures index (13F quarter-end changes)."""
+    h = holders_json(ticker, site_url)
+    if not h:
         return ""
     inst = h.get("institutional") or []
     buys = [x for x in inst if x.get("status") in ("NEW", "INCREASE")]
     sells = [x for x in inst if x.get("status") in ("DECREASE", "EXIT", "NOT DISCLOSED")]
     m = lambda v: ("" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.0f}M")
-    row = lambda x: f"- {x.get('manager')} ({x.get('period')}): {x.get('status', '').lower()} {('%+d' % x['delta_shares']) if x.get('delta_shares') else ''} shares, holds {x.get('shares'):,} worth {m(x.get('value_usd'))}, {round((x.get('weight') or 0) * 100, 1)}% of its portfolio"
+    row = lambda x: f"- {x.get('manager')} (quarter ended {x.get('period')}, 13F filed {x.get('filed')}): {x.get('status', '').lower()} {('%+d' % x['delta_shares']) if x.get('delta_shares') else ''} shares, holds {x.get('shares'):,} worth {m(x.get('value_usd'))}, {round((x.get('weight') or 0) * 100, 1)}% of its portfolio"
     lines = [f"13F holders on file for {ticker}: {len(inst)} managers ({len(buys)} added or opened, {len(sells)} cut or closed); quarter-end positions, not trades.",
              "Largest buyers this quarter:"] + [row(x) for x in sorted(buys, key=lambda x: -(x.get('delta_shares') or 0))[:6]]
     lines += ["Largest sellers:"] + [row(x) for x in sorted(sells, key=lambda x: (x.get('delta_shares') or 0))[:4]]
@@ -248,10 +338,13 @@ def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url="", thr
         holders = holders_lines(ticker, site_url)
         if not holders:
             raise RuntimeError("no holders data on the site for this ticker yet")
+        th = holders_thread(ticker, site_url, (c.get("profile") or {}).get("cik")) or {}
+        lead = th.get("lead", "13F")
         task = ("TASK: this post is about WHO BOUGHT OR SOLD the company according to 13F filings (quarter-end positions), not the "
-                "earnings. Name the two or three most notable buyers/sellers with the change in shares; say the period; attach no "
-                "earnings figures beyond one line of context. Same rules otherwise (cashtag first, factual, hashtags last).\n\n"
-                + holders + "\n\nContext on the company:\n" + headline_lines(c, q, ticker))
+                f"earnings. Start with “{lead}:” then the cashtag. Name the two or three most notable buyers and sellers by name, "
+                "each with the change in shares (and value if it fits), say the quarter the positions are for and when the 13Fs "
+                "were filed. Attach no earnings figures. Finish every sentence; end with one short question, then the hashtags. "
+                "Same rules otherwise (factual, no advice).\n\n" + holders + "\n\nContext on the company:\n" + headline_lines(c, q, ticker))
     else:
         task = ("Headline figures (source of truth for numbers):\n" + headline_lines(c, q, ticker)
                 + "\n\nBusiness, in the company's words:\n" + ((c.get("intro") or {}).get("text", "") if isinstance(c.get("intro"), dict) else str(c.get("intro") or ""))[:1200]
@@ -277,7 +370,8 @@ def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url="", thr
 
 def post_for(c, q, cfg, ticker, fallback, xlen, kind="post", site_url="", thread=False):
     """The model's post, or the rule-based headline post when the model is unavailable or its draft fails the checks."""
-    tags = [t for t in ([cfg.get("headline_tag", "#earnings")] if kind in ("post", "post_trend") else ["#13F"]) + list(cfg.get("hashtags") or []) if t]
+    tags = ([t for t in [cfg.get("headline_tag", "#earnings")] + list(cfg.get("hashtags") or []) if t] if kind in ("post", "post_trend")
+            else list(HOLDER_TAGS))
     try:
         post = compose_one(c, q, cfg, ticker, tags, xlen, kind=kind, site_url=site_url, thread=thread)
         return post, "model"

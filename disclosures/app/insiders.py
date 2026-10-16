@@ -128,7 +128,11 @@ def collect(client, root, cfg=None):
             txt = client.get(folder + accession + '.txt', sec=True)
             xml = xml_from_submission(txt)
             if xml:
-                trades.extend(parse_form4(xml, accession, folder))
+                m = re.search(r'FILED AS OF DATE:\s*(\d{4})(\d{2})(\d{2})', txt[:4000])
+                for t in parse_form4(xml, accession, folder):
+                    if m:
+                        t['filed'] = f'{m.group(1)}-{m.group(2)}-{m.group(3)}'
+                    trades.append(t)
             seen.add(accession)
             read += 1
         except Exception as exc:
