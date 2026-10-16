@@ -2044,6 +2044,34 @@ def test_profit_bridge_adds_up_and_splits_the_tax_rate():
     assert noc["op"] == [["rev_all", -10], ["other_op", 5]] and noc["below"] is None
 
 
+def test_reformulated_balance_sheet_balances_and_names_what_is_untagged():
+    """Lines from standard tags with a default class; what they leave of total assets and liabilities is a line of its
+    own (negative when a line was also inside another one), so NOA − NFO = equity; shareholders' equity from the total
+    with minority interests when only that is tagged."""
+    from pipeline import facts as F, quality as Q
+    b = lambda v0, v1: [(None, "2024-12-31", v0), (None, "2025-12-31", v1)]
+    fy = lambda v0, v1: [("2024-01-01", "2024-12-31", v0), ("2025-01-01", "2025-12-31", v1)]
+    fx = F.index_facts(_cf({
+        "NetIncomeLoss": fy(8, 10), "Revenues": fy(90, 100), "OperatingIncomeLoss": fy(12, 14), "InterestExpense": fy(2, 2),
+        "Assets": b(180, 200), "CashAndCashEquivalentsAtCarryingValue": b(20, 30), "AccountsReceivableNetCurrent": b(40, 40),
+        "PropertyPlantAndEquipmentNet": b(100, 110),                                   # 20 + 40 + 110 = 180: 20 untagged
+        "LiabilitiesAndStockholdersEquity": b(180, 200), "AccountsPayableCurrent": b(30, 35),
+        "LongTermDebtNoncurrent": b(50, 50), "OperatingLeaseLiabilityNoncurrent": b(10, 10),
+        "OtherLiabilitiesNoncurrent": b(25, 30),                                       # leases inside it as well
+        "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest": b(75, 85), "MinorityInterest": b(5, 5),
+    }))
+    r = Q.compute(fx)["reform"]
+    assert r["ends"] == ["2024-12-31", "2025-12-31"] and r["totals"]["cse"] == [70, 80]
+    line = {x["k"]: x for x in r["lines"]}
+    assert line["oth_a"]["v"][1] == 20 and line["oth_l"]["v"][1] == 115 - (35 + 50 + 10 + 30) == -10
+    assert line["ltd"]["cls"] == "fin" and line["olease"]["cls"] == "op" and line["cash"]["cls"] == "fin"
+    for i in range(2):                                                                 # NOA − NFO = equity, both years
+        side = lambda s, c: sum(x["v"][i] or 0 for x in r["lines"] if x["side"] == s and x["cls"] == c)
+        noa, nfo = side("a", "op") - side("l", "op"), side("l", "fin") - side("a", "fin")
+        assert noa - nfo == r["totals"]["cse"][i] + r["totals"]["nci"][i]
+    assert r["flows"][0]["int_exp"] == 2 and r["suggest"] is None
+
+
 def test_posts_are_never_cut_off_and_say_something():
     """Oct 16 2026: drafts went to Buffer as '$FNGR 8-K filed Sept 29: entered a definitive #earnings #stocks' and
     'JUST FILED · $FNGR Q2 FY2 #13F' — model answers cut at max_tokens, hashtags glued on. Such posts are rejected."""

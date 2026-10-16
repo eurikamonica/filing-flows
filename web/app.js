@@ -712,7 +712,7 @@
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
   // ---------- company tabs: Earnings · Cash & quality · Valuation ----------
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['value', 'Valuation'], ['revisions', 'Revisions']]
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions']]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   async function analysisPage(cik, which) {
@@ -747,6 +747,7 @@
       cashSection(body, c);
     } else if (which === 'capital') capitalSection(body, c, ticker);
     else if (which === 'revisions') revisionsSection(body, c);
+    else if (which === 'bs') reformSection(body, c);
     else valuationSection(body, c, ticker, here);
   }
 
@@ -1382,6 +1383,113 @@
         <p class="muted q-small">Every bar is arithmetic on tagged figures and the bars add up exactly. The revenue bar cannot be split into price, volume and mix from these figures; the company’s MD&amp;A explains it in words. Select any figure for the formula and the XBRL facts behind it.</p>`;
       $$('[data-dm]', box).forEach((b) => b.addEventListener('click', () => { st.mode = b.dataset.dm; st.end = null; render(); }));
       $('#dv-period', box).addEventListener('change', (e) => { st.end = e.target.value; render(); });
+    }
+    render();
+    body.appendChild(box);
+  }
+
+  // ---------- Balance sheet reformulated: operating vs financing, RNOA (pipeline/reform.py) ----------
+  function reformSection(body, c) {
+    const R = (c.quality || {}).reform, P = c.profile || {};
+    const box = document.createElement('section');
+    box.className = 'section reform';
+    box.setAttribute('aria-labelledby', 'rf-title');
+    if (!R || !(R.lines || []).length) {
+      box.innerHTML = `<div class="section-head"><h2 id="rf-title">Balance sheet, reformulated</h2></div><p class="muted">The reformulated balance sheet is read on the next scans for this company: a few dozen companies a run, largest first.</p>`;
+      body.appendChild(box);
+      return;
+    }
+    const store = `ff-reform-${P.cik}`;
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(store) || '{}') || {}; } catch (e) { saved = {}; }
+    const st = { i: R.ends.length - 1, tax: saved.tax != null ? saved.tax : R.tax_rate, cls: { ...(saved.cls || {}) } };
+    const save = () => { try { localStorage.setItem(store, JSON.stringify({ cls: st.cls, tax: st.tax })); } catch (e) { /* private window */ } };
+    const financial = P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''));
+    const clsOf = (x) => st.cls[x.k] || x.cls;
+    const T = (k, i) => ((R.totals || {})[k] || [])[i];
+    const pctS = (v) => (v == null || !isFinite(v) ? 'n/m' : `${(v * 100).toFixed(1)}%`);
+    function bal(i) {
+      const sum = (side, cls) => R.lines.filter((x) => x.side === side && clsOf(x) === cls).reduce((s, x) => s + (x.v[i] || 0), 0);
+      const oa = sum('a', 'op'), fa = sum('a', 'fin'), ol = sum('l', 'op'), fo = sum('l', 'fin');
+      const cse = T('cse', i), nci = T('nci', i) || 0, temp = T('temp', i) || 0;
+      const noa = oa - ol, nfo = fo - fa;
+      return { oa, fa, ol, fo, noa, nfo, cse, nci, temp, eq: (cse || 0) + nci + temp, check: noa - nfo - ((cse || 0) + nci + temp) };
+    }
+    function rets(i) {
+      if (i < 1) return null;
+      const f = R.flows[i - 1] || {}, a = bal(i - 1), b = bal(i);
+      const income = f.pl != null ? f.pl : f.ni;
+      if (income == null) return null;
+      const hasInt = f.int_exp != null || f.int_inc != null;
+      const nfePre = hasInt ? Math.abs(f.int_exp || 0) - (f.int_inc || 0) : (f.pretax != null && f.oi != null ? -(f.pretax - f.oi) : 0);
+      const nfe = nfePre * (1 - st.tax), oi = income + nfe;
+      const avg = (k) => (a[k] + b[k]) / 2, noa = avg('noa'), nfo = avg('nfo'), eq = avg('eq');
+      const rnoa = noa > 0 ? oi / noa : null, nbc = Math.abs(nfo) > 1e3 ? nfe / nfo : null, flev = eq > 0 ? nfo / eq : null;
+      return { f, income, hasInt, nfePre, nfe, oi, noa, nfo, eq, rnoa, nbc, flev,
+        roe: rnoa != null && flev != null && nbc != null ? rnoa + flev * (rnoa - nbc) : null, roeAct: eq > 0 ? income / eq : null,
+        pm: f.revenue ? oi / f.revenue : null, ato: f.revenue && noa > 0 ? f.revenue / noa : null };
+    }
+    function amount(x, i) {
+      const v = x.v[i], rs = (x.ev || [])[i] || [], per = R.labels[i];
+      if (v == null) return '<span class="muted">—</span>';
+      if (x.derived) {
+        const tot = x.derived === 'assets' ? T('assets', i) : T('liab', i);
+        const shown = R.lines.filter((y) => y.side === x.side && !y.derived).reduce((s, y) => s + (y.v[i] || 0), 0);
+        return evBtn(money(v), { title: x.name, value: money(v), period: per, kind: 'Derived',
+          formula: `total ${x.derived === 'assets' ? 'assets' : 'liabilities'} ${money(tot)} − the lines above ${money(shown)}`,
+          note: v < 0 ? 'Negative: some lines above are already included in other lines of this balance sheet (taken twice), so this line takes them back out.' : x.why,
+          inputs: [{ title: x.derived === 'assets' ? 'Total assets' : 'Total liabilities', value: money(tot), period: per, ref: ((R.ev_totals || {})[x.derived === 'assets' ? 'assets' : 'liab'] || [])[i],
+            note: x.derived === 'liab' && !((R.ev_totals || {}).liab || [])[i] ? 'Not tagged: liabilities and equity minus equity.' : '' }] });
+      }
+      if (rs.length === 1) return evBtn(money(v), { title: x.name, value: money(v), period: per, ref: rs[0] });
+      return evBtn(money(v), { title: x.name, value: money(v), period: per, kind: 'Reported', formula: 'sum of the tagged lines', inputs: rs.map((r) => ({ title: x.name, value: '', period: per, ref: r })) });
+    }
+    function sideHTML(side, i) {
+      const L = R.lines.filter((x) => x.side === side && x.v[i] != null && (x.v[i] !== 0 || x.derived));
+      const b = bal(i);
+      const name = (x) => (x.derived && x.v[i] < 0 ? (side === 'a' ? 'Assets counted twice above' : 'Liabilities counted twice above') : x.name);
+      return `<table class="ca-table rf-table"><thead><tr><th>${side === 'a' ? 'Assets' : 'Liabilities'}</th><th class="num">${t(R.labels[i])}</th><th>Class</th></tr></thead><tbody>
+        ${L.map((x) => { const cl = clsOf(x), ed = st.cls[x.k] && st.cls[x.k] !== x.cls; return `<tr class="${ed ? 'rf-edited' : ''}">
+          <td><span class="rf-name">${t(name(x))}</span><small class="rf-why">${t(x.why)}${x.suggest ? ` <b>Suggested from the notes: ${t(x.suggest.cls === 'fin' ? 'financing' : 'operating')}</b> — ${t(x.suggest.why || '')}` : ''}</small></td>
+          <td class="num">${amount(x, i)}</td>
+          <td><div class="seg rf-seg" role="group" aria-label="Class of ${t(x.name)}"><button type="button" data-rk="${x.k}" data-rc="op" class="${cl === 'op' ? 'on' : ''}">Operating</button><button type="button" data-rk="${x.k}" data-rc="fin" class="${cl === 'fin' ? 'on' : ''}">Financing</button></div>${ed ? '<small class="rf-ed">changed by you</small>' : ''}</td></tr>`; }).join('')}
+        <tr class="ca-strong"><td>${side === 'a' ? 'Operating assets' : 'Operating liabilities'}</td><td class="num">${money(side === 'a' ? b.oa : b.ol)}</td><td></td></tr>
+        <tr class="ca-strong"><td>${side === 'a' ? 'Financial assets' : 'Financial obligations'}</td><td class="num">${money(side === 'a' ? b.fa : b.fo)}</td><td></td></tr></tbody></table>`;
+    }
+    function render() {
+      const i = st.i, b = bal(i), r = rets(i), edited = Object.keys(st.cls).some((k) => { const x = R.lines.find((y) => y.k === k); return x && st.cls[k] !== x.cls; });
+      const kpi = (label, v, sub) => `<div class="q-kpi"><small>${label}</small><strong>${v}</strong><span>${sub}</span></div>`;
+      const yrs = R.ends.map((e, j) => ({ j, r: rets(j) })).filter((x) => x.r);
+      box.innerHTML = `<div class="section-head"><h2 id="rf-title">Balance sheet, reformulated</h2>
+          <span class="muted">Operating against financing activities, and the return on net operating assets · the balance sheet and income statement, XBRL</span></div>
+        <div class="q-bar rf-bar"><label class="q-pick">Fiscal year <select id="rf-year">${R.ends.map((e, j) => `<option value="${j}" ${j === i ? 'selected' : ''}>${t(R.labels[j])}</option>`).join('')}</select></label>
+          <label class="q-pick">Tax rate on net interest <span class="v-in rf-tax"><input id="rf-tax" type="number" step="0.5" min="0" max="60" value="${(st.tax * 100).toFixed(1)}"><i>%</i></span></label>
+          ${edited || saved.tax != null ? '<button class="btn small" type="button" id="rf-reset">Reset to the defaults</button>' : ''}</div>
+        ${financial ? '<p class="q-warn">For banks and insurers, deposits, loans, policy reserves and investments are the business itself: the operating/financing split below says little.</p>' : ''}
+        <div class="q-kpis rf-kpis">
+          ${kpi('RNOA', pctS(r && r.rnoa), r ? `${pctS(r.pm)} margin × ${r.ato != null ? r.ato.toFixed(2) + '×' : 'n/m'} turnover` : 'needs the year before')}
+          ${kpi('Net operating assets', money(b.noa), `operating assets ${money(b.oa)} − operating liabilities ${money(b.ol)}`)}
+          ${kpi(b.nfo >= 0 ? 'Net financial obligations' : 'Net financial assets', money(Math.abs(b.nfo)), `financial obligations ${money(b.fo)} − financial assets ${money(b.fa)}`)}
+          ${kpi(r && r.nfo < 0 ? 'Return on net financial assets' : 'Net borrowing cost', pctS(r && r.nfo < 0 && r.nbc != null ? -r.nbc : r && r.nbc),
+            r ? `net financial ${r.nfePre >= 0 ? 'expense' : 'income'} ${money(Math.abs(r.nfePre))} before tax (${r.hasInt ? 'interest' : 'non-operating items'})` : '')}
+          ${kpi('ROE', pctS(r && r.roeAct), r && r.flev != null ? `= RNOA + leverage (${r.flev.toFixed(2)}) × (RNOA − ${r.nfo >= 0 ? 'borrowing cost' : 'return on NFA'})` : '')}
+        </div>
+        <p class="q-sum">${r ? `${t(R.labels[i])}: operating income after tax ${money(r.oi)} on average net operating assets of ${money(r.noa)} is a ${pctS(r.rnoa)} return (RNOA)${r.rnoa != null && r.rnoa > 1 ? ' — very high because operating liabilities (supplier credit, deferred revenue, accruals) fund most of the operating assets' : r.rnoa == null ? ' — not meaningful: net operating assets are zero or negative' : ''}. ${r.nfo >= 0 ? `Net debt of ${money(r.nfo)} at an after-tax cost of ${pctS(r.nbc)}` : `Net financial assets of ${money(-r.nfo)} earning ${pctS(-r.nbc)} after tax`} take the return on equity to ${pctS(r.roeAct)}.` : 'Returns need the balance sheet of the year before.'}
+          ${Math.abs(b.check) > Math.max(1e6, 0.002 * Math.abs(b.oa + b.fa)) ? `<span class="q-warmtext"> Balance check: net operating assets − net financial obligations differ from equity by ${money(b.check)} (equity or totals not tagged consistently).</span>` : ' <span class="pos">Balance check: net operating assets − net financial obligations = equity.</span>'}</p>
+        <div class="q-grid rf-grid"><article class="q-card"><div class="tbl-wrap">${sideHTML('a', i)}</div></article><article class="q-card"><div class="tbl-wrap">${sideHTML('l', i)}</div>
+          <p class="q-small muted">Equity: ${money(b.cse)}${b.nci ? ` · minority interests ${money(b.nci)}` : ''}${b.temp ? ` · redeemable / temporary equity ${money(b.temp)}` : ''}.</p></article></div>
+        ${yrs.length ? `<h3 class="cq-h3">Returns by year</h3><div class="tbl-wrap"><table class="ca-table"><thead><tr><th>Fiscal year</th><th class="num">Operating income after tax</th><th class="num">Avg. NOA</th><th class="num">RNOA</th><th class="num">Margin</th><th class="num">Turnover</th><th class="num">Net borrowing cost</th><th class="num">Leverage</th><th class="num">ROE</th></tr></thead><tbody>
+          ${yrs.slice().reverse().map(({ j, r: x }) => `<tr><td>${t(R.labels[j])}</td><td class="num">${evBtn(money(x.oi), { title: 'Operating income after tax', value: money(x.oi), period: R.labels[j], kind: 'Derived',
+            formula: `net income ${money(x.income)} + net financial expense after tax ${money(x.nfe)} (${x.hasInt ? `net interest ${money(x.nfePre)}` : `non-operating items ${money(x.nfePre)}`} × (1 − ${(st.tax * 100).toFixed(1)}%))`,
+            note: x.hasInt ? 'Interest expense minus interest income as tagged, after the tax it saves.' : 'No interest tags: every non-operating item (pretax income − operating income) is treated as financial.',
+            inputs: ['pl', 'ni', 'int_exp', 'int_inc', 'pretax', 'oi'].filter((k) => x.f[k] != null).map((k) => ({ title: { pl: 'Net income incl. minority interests', ni: 'Net income', int_exp: 'Interest expense', int_inc: 'Interest income', pretax: 'Pretax income', oi: 'Operating income' }[k], value: money(x.f[k]), period: R.labels[j], ref: (x.f.ev || {})[k] })) })}</td>
+            <td class="num">${money(x.noa)}</td><td class="num"><b>${pctS(x.rnoa)}</b></td><td class="num">${pctS(x.pm)}</td><td class="num">${x.ato != null ? x.ato.toFixed(2) + '×' : 'n/m'}</td><td class="num">${pctS(x.nbc)}${x.nfo < 0 ? '<sup>*</sup>' : ''}</td><td class="num">${x.flev != null ? x.flev.toFixed(2) : 'n/m'}</td><td class="num">${pctS(x.roeAct)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        <p class="muted q-small">${yrs.some((x) => x.r.nfo < 0) ? '* Net financial assets: the net financial expense ÷ NFO is minus the return they earned. ' : ''}NOA = operating assets − operating liabilities; NFO = financial obligations − financial assets; RNOA = operating income after tax ÷ average NOA; net borrowing cost = net financial expense after tax ÷ average NFO; ROE = RNOA + leverage × (RNOA − net borrowing cost), leverage = average NFO ÷ average equity. Net income is not comprehensive income. Each line’s class is a default with its reason: change any of them, and every figure is recomputed; your choices stay in this browser.</p>`;
+      $('#rf-year', box).addEventListener('change', (e) => { st.i = +e.target.value; render(); });
+      $('#rf-tax', box).addEventListener('change', (e) => { const v = parseFloat(e.target.value); if (isFinite(v) && v >= 0 && v < 100) { st.tax = v / 100; save(); render(); } });
+      $$('[data-rk]', box).forEach((btn) => btn.addEventListener('click', () => { st.cls[btn.dataset.rk] = btn.dataset.rc; save(); render(); }));
+      const rs = $('#rf-reset', box);
+      if (rs) rs.addEventListener('click', () => { st.cls = {}; st.tax = R.tax_rate; try { localStorage.removeItem(store); } catch (e) { /* ignore */ } saved = {}; render(); });
     }
     render();
     body.appendChild(box);
@@ -3608,7 +3716,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|value|revisions)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
