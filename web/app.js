@@ -712,7 +712,7 @@
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
   // ---------- company tabs: Earnings · Cash & quality · Valuation ----------
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Cash & quality'], ['capital', 'Capital allocation'], ['value', 'Valuation'], ['revisions', 'Revisions']]
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['value', 'Valuation'], ['revisions', 'Revisions']]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   async function analysisPage(cik, which) {
@@ -742,6 +742,7 @@
       return;
     }
     if (which === 'cash') {
+      driversSection(body, c);
       qualitySection(body, c, (c.quarters || [])[0], false);
       cashSection(body, c);
     } else if (which === 'capital') capitalSection(body, c, ticker);
@@ -1269,6 +1270,118 @@
           toast(`Export failed: ${err.message}`);
         } finally { b.disabled = false; }
       }));
+    }
+    render();
+    body.appendChild(box);
+  }
+
+  // ---------- What moved profit: last year → this year, operating income and net income (pipeline/drivers.py) ----------
+  const DRV = { rev: 'Revenue growth at last year’s gross margin', gm: 'Gross margin change', rd: 'Research and development',
+    sga: 'Selling, general and administrative', sm: 'Selling and marketing', ga: 'General and administrative',
+    other_op: 'Other operating items', rev_all: 'Revenue change', d_oi: 'Operating income change',
+    nonop: 'Non-operating items', tax_rate: 'Tax rate change', tax_base: 'Tax on the change in pretax profit', tax: 'Income tax',
+    after_tax: 'Below the tax line' };
+  const DRV_IN = { revenue: 'Revenue', cor: 'Cost of revenue', gp: 'Gross profit', rd: 'Research and development', sga: 'Selling, general and administrative',
+    sm: 'Selling and marketing', ga: 'General and administrative', oi: 'Operating income', pretax: 'Pretax income', tax: 'Income tax', ni: 'Net income' };
+
+  function driversSection(body, c) {
+    const D = (c.quality || {}).drivers, P = c.profile || {};
+    if (!D || !(D.q || D.fy)) return;
+    const box = document.createElement('section');
+    box.className = 'section drivers';
+    box.setAttribute('aria-labelledby', 'dv-title');
+    const st = { mode: D.q ? 'q' : 'fy', end: null };
+    const rate = (x, y) => (x != null && y ? `${(x / y * 100).toFixed(1)}%` : '—');
+    function input(p, side, k) {
+      const v = p[side][k], ref = (p.ev[side] || {})[k], lab = side === 'cur' ? p.label : p.prev_label;
+      if (k === 'gp' && !ref && p[side].revenue != null && p[side].cor != null)
+        return { title: `Gross profit, ${lab}`, value: money(v), period: lab, kind: 'Derived', formula: `revenue ${money(p[side].revenue)} − cost of revenue ${money(p[side].cor)}` };
+      return { title: `${DRV_IN[k]}, ${lab}`, value: money(v), period: lab, ref, note: v == null ? 'Not tagged for this period.' : '' };
+    }
+    function payload(p, k, v) {
+      const a = p.pri, b = p.cur, I = (side, ...ks) => ks.map((x) => input(p, side, x));
+      const m0 = a.gp / a.revenue, m1 = b.gp / b.revenue;
+      const base = { title: DRV[k] || k, value: money(v), period: `${p.label} vs ${p.prev_label}`, kind: 'Derived' };
+      const F = {
+        rev: [`(revenue ${money(b.revenue)} − ${money(a.revenue)}) × last year’s gross margin ${rate(a.gp, a.revenue)}`, I('cur', 'revenue').concat(I('pri', 'revenue', 'gp')),
+          'Price, volume and product mix cannot be told apart from these figures: the company’s MD&A explains the revenue change in words.'],
+        gm: [`revenue ${money(b.revenue)} × (gross margin ${rate(b.gp, b.revenue)} − ${rate(a.gp, a.revenue)})`, I('cur', 'revenue', 'gp').concat(I('pri', 'revenue', 'gp'))],
+        rev_all: [`revenue ${money(b.revenue)} − ${money(a.revenue)}`, I('cur', 'revenue').concat(I('pri', 'revenue')), 'No cost of revenue is tagged: costs are taken together in “Other operating items”.'],
+        other_op: [`operating income change ${money(b.oi - a.oi)} − the bars above`, I('cur', 'oi').concat(I('pri', 'oi')),
+          'Operating costs without a tag of their own in both years (restructuring, impairments, amortization of acquired intangibles, other operating income), or lines tagged in only one of the two years.'],
+        d_oi: [`operating income ${money(b.oi)} − ${money(a.oi)}`, I('cur', 'oi').concat(I('pri', 'oi'))],
+        nonop: [`(pretax ${money(b.pretax)} − operating ${money(b.oi)}) − (pretax ${money(a.pretax)} − operating ${money(a.oi)})`, I('cur', 'pretax', 'oi').concat(I('pri', 'pretax', 'oi')),
+          'Interest income and expense, investment gains and losses, and other income between operating income and pretax income.'],
+        tax_rate: [`−pretax ${money(b.pretax)} × (tax rate ${rate(b.tax, b.pretax)} − ${rate(a.tax, a.pretax)})`, I('cur', 'tax', 'pretax').concat(I('pri', 'tax', 'pretax')),
+          'What the change in the effective tax rate alone did to net income.'],
+        tax_base: [`−(pretax ${money(b.pretax)} − ${money(a.pretax)}) × last year’s tax rate ${rate(a.tax, a.pretax)}`, I('cur', 'pretax').concat(I('pri', 'tax', 'pretax')),
+          'The tax that would have come with the change in pretax profit at last year’s rate.'],
+        tax: [`−(income tax ${money(b.tax)} − ${money(a.tax)})`, I('cur', 'tax').concat(I('pri', 'tax')), 'A pretax loss in one of the years: the tax change is shown whole.'],
+        after_tax: [`(net income − (pretax − tax)) this year − last year`, I('cur', 'ni', 'pretax', 'tax').concat(I('pri', 'ni', 'pretax', 'tax')),
+          'Discontinued operations, minority interests and equity-method results that sit below the tax line.'],
+      };
+      if (['rd', 'sga', 'sm', 'ga'].includes(k)) return { ...base, formula: `−(${DRV_IN[k].toLowerCase()} ${money(b[k])} − ${money(a[k])})`, inputs: I('cur', k).concat(I('pri', k)),
+        note: v < 0 ? 'Higher spending lowered operating income.' : 'Lower spending raised operating income.' };
+      const [formula, inputs, note] = F[k] || ['', []];
+      return { ...base, formula, inputs, ...(note ? { note } : {}) };
+    }
+    function label(p, k, v) {
+      const a = p.pri, b = p.cur;
+      if (k === 'rev') return v < 0 && b.revenue < a.revenue ? 'Revenue decline at last year’s gross margin' : DRV.rev;
+      if (k === 'gm') return `Gross margin ${rate(a.gp, a.revenue)} → ${rate(b.gp, b.revenue)}`;
+      if (k === 'tax_rate') return `Tax rate ${rate(a.tax, a.pretax)} → ${rate(b.tax, b.pretax)}`;
+      return DRV[k] || k;
+    }
+    function rowsHTML(p, start, startLab, bars, end, endLab, aria) {
+      const rows = [[startLab, start, 'base', null]].concat(bars.map(([k, v]) => [label(p, k, v), v, k === 'other_op' || k === 'after_tax' ? 'gap' : 'step', k]), [[endLab, end, 'base', null]]);
+      let run = 0;
+      const spans = rows.map(([, v, kind]) => { if (kind === 'base') { run = v; return [0, v]; } const sp = [run, run + v]; run += v; return sp; });
+      const lo = Math.min(0, ...spans.flat()), hi = Math.max(0, ...spans.flat()), w = (hi - lo) || 1;
+      const pos = (v) => ((v - lo) / w * 100).toFixed(2);
+      return `<div class="cq-bridge dv-bridge" role="table" aria-label="${t(aria)}">${rows.map(([lab, v, kind, k], i) => {
+        const [x, z] = spans[i], left = pos(Math.min(x, z)), width = Math.max(0.4, Math.abs(pos(z) - pos(x))).toFixed(2);
+        const pay = kind === 'base' ? { title: lab, value: money(v), period: lab, ref: (i === 0 ? p.ev.pri : p.ev.cur)[rows.length > 0 && aria.startsWith('Operating') ? 'oi' : 'ni'] } : payload(p, k, v);
+        return `<div class="cq-row ${kind === 'gap' ? 'gap' : kind === 'base' ? 'base' : ''}" role="row"><span role="rowheader">${t(lab)}</span>
+          <span class="cq-track" role="cell"><i class="cq-bar ${kind === 'base' ? 'base' : kind === 'gap' ? `dv-gap ${v < 0 ? 'minus' : 'plus'}` : `nc ${v < 0 ? 'minus' : 'plus'}`}" style="left:${left}%;width:${width}%"></i>${kind === 'base' ? '' : `<i class="cq-zero" style="left:${pos(0)}%"></i>`}</span>
+          <span class="num" role="cell">${evBtn((kind === 'base' ? '' : v > 0 ? '+' : '') + money(v), pay)}</span></div>`;
+      }).join('')}</div>`;
+    }
+    function sentence(p) {
+      const a = p.pri, b = p.cur, d = b.oi - a.oi, get = (k) => (p.op.find((x) => x[0] === k) || [k, 0])[1];
+      const exp = p.op.filter(([k]) => ['rd', 'sga', 'sm', 'ga'].includes(k)).reduce((s, [, v]) => s + v, 0);
+      const bits = [];
+      if (get('rev')) bits.push(`${get('rev') >= 0 ? 'revenue growth added' : 'lower revenue took'} ${money(Math.abs(get('rev')))} at last year’s gross margin`);
+      if (get('gm')) bits.push(`${get('gm') >= 0 ? 'a higher' : 'a lower'} gross margin ${get('gm') >= 0 ? 'added' : 'took'} ${money(Math.abs(get('gm')))}`);
+      if (exp) bits.push(exp < 0 ? `higher operating expenses took ${money(-exp)}` : `lower operating expenses added ${money(exp)}`);
+      if (Math.abs(get('other_op')) > 0.02 * Math.abs(d || 1)) bits.push(`other operating items ${get('other_op') < 0 ? 'took' : 'added'} ${money(Math.abs(get('other_op')))}`);
+      let out = `Operating income ${d >= 0 ? 'rose' : 'fell'} ${money(Math.abs(d))} from ${t(p.prev_label)} to ${t(p.label)}${a.oi > 0 && b.oi > 0 ? ` (${pct((b.oi / a.oi - 1) * 100)})` : ''}${bits.length ? `: ${listJoin(bits)}` : ''}.`;
+      if (p.below) {
+        const tr = (p.below.find((x) => x[0] === 'tax_rate') || [0, 0])[1];
+        out += ` Net income ${b.ni >= a.ni ? 'rose' : 'fell'} ${money(Math.abs(b.ni - a.ni))}${Math.abs(tr) > 0.1 * Math.abs(b.ni - a.ni || 1) ? `; the change in the tax rate alone ${tr > 0 ? 'added' : 'took'} ${money(Math.abs(tr))}` : ''}.`;
+      }
+      return out;
+    }
+    function render() {
+      const L = (st.mode === 'fy' ? D.fy : D.q) || [];
+      const p = L.find((x) => x.end === st.end) || L[L.length - 1];
+      box.innerHTML = `<div class="section-head"><h2 id="dv-title">What moved profit</h2>
+          <span class="muted">${st.mode === 'q' ? 'Each quarter against the same quarter a year earlier' : 'Each fiscal year against the one before'} · the income statement, XBRL</span></div>
+        <div class="q-bar"><div class="seg" role="group" aria-label="Period type">
+            <button type="button" data-dm="q" class="${st.mode === 'q' ? 'on' : ''}" ${D.q ? '' : 'disabled'}>Quarters, year over year</button>
+            <button type="button" data-dm="fy" class="${st.mode === 'fy' ? 'on' : ''}" ${D.fy ? '' : 'disabled'}>Fiscal years</button></div>
+          <label class="q-pick">Period <select id="dv-period">${L.map((x) => `<option value="${t(x.end)}" ${x === p ? 'selected' : ''}>${t(x.label)} vs ${t(x.prev_label)}</option>`).join('')}</select></label></div>
+        <p class="q-sum">${sentence(p)}</p>
+        <div class="q-grid dv-grid">
+          <article class="q-card"><h3>Operating income, ${t(p.prev_label)} → ${t(p.label)}</h3>
+            ${rowsHTML(p, p.pri.oi, `Operating income, ${p.prev_label}`, p.op, p.cur.oi, `Operating income, ${p.label}`, 'Operating income bridge')}</article>
+          ${p.below ? `<article class="q-card"><h3>Net income, ${t(p.prev_label)} → ${t(p.label)}</h3>
+            ${rowsHTML(p, p.pri.ni, `Net income, ${p.prev_label}`, p.below, p.cur.ni, `Net income, ${p.label}`, 'Net income bridge')}</article>` : ''}
+        </div>
+        ${(p.mdna || []).length ? `<article class="q-card"><h3>Quantified by the company</h3><ul class="hv-items">${p.mdna.map((m) => `<li>${t(m.text)} <b>${money(m.amount)}</b>${m.src ? ` <span class="muted">· ${t(m.src)}</span>` : ''}</li>`).join('')}</ul></article>` : ''}
+        <div class="q-legend"><span><i class="cq-bar plus nc"></i>Raised profit</span><span><i class="cq-bar minus nc"></i>Lowered profit</span><span><i class="cq-gap-key"></i>Lines without a tag of their own</span></div>
+        <p class="muted q-small">Every bar is arithmetic on tagged figures and the bars add up exactly. The revenue bar cannot be split into price, volume and mix from these figures; the company’s MD&amp;A explains it in words. Select any figure for the formula and the XBRL facts behind it.</p>`;
+      $$('[data-dm]', box).forEach((b) => b.addEventListener('click', () => { st.mode = b.dataset.dm; st.end = null; render(); }));
+      $('#dv-period', box).addEventListener('change', (e) => { st.end = e.target.value; render(); });
     }
     render();
     body.appendChild(box);

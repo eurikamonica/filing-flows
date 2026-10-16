@@ -22,13 +22,15 @@ import itertools
 import sys
 
 from . import capital as K
+from . import drivers as DR
 from . import facts as F
 from . import fsa as W
 from . import history as H
 
-VERSION = 4               # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
+VERSION = 5               # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
                           # 3: capital allocation, share count and debt maturities (pipeline/capital.py)
                           # 4: every version of the headline figures, "As Known Then" (pipeline/history.py)
+                          # 5: what moved profit, last year to this year (pipeline/drivers.py)
 MAX_DIFF = 0.25            # untagged movement allowed, as a share of the larger of the opening and closing balance
 TOLERANCE = 0.005          # under this share of the balance the rollforward counts as reconciled (rounding)
 KEEP_Q, KEEP_FY = 8, 5
@@ -273,8 +275,9 @@ def compute(fx, fye="1231"):
     val = W.valuation_inputs(fx, ev, qe, ye)
     cap = K.compute(fx, ev, qe, ye, fye)
     hist = H.compute(fx, ev, fye)
+    drv = DR.compute(fx, ev, qe, ye, fye)
     return W.compact({"v": VERSION, "unit": "USD", "q": q, "fy": y, "reserves": reserves, "val": val, "cap": cap,
-                      "hist": hist, "src": ev.out()})
+                      "hist": hist, "drivers": drv, "src": ev.out()})
 
 
 if __name__ == "__main__":

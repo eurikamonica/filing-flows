@@ -2026,6 +2026,24 @@ def test_as_known_then_keeps_every_version_and_reads_the_pattern():
     assert pats == ["amended", "results"]                                # newest first
 
 
+def test_profit_bridge_adds_up_and_splits_the_tax_rate():
+    """Revenue 100 → 120 at a 40% gross margin, then 45%; R&D 10 → 12; SG&A 15 → 16; an untagged 1 of other costs this
+    year. Pretax 18 → 25, tax 18% → 20%. Every bar is arithmetic; each bridge adds up to the change."""
+    from pipeline import drivers as DR
+    a = {"revenue": 100, "gp": 40, "rd": 10, "sga": 15, "oi": 15, "pretax": 18, "tax": 3.24, "ni": 14.76}
+    b = {"revenue": 120, "gp": 54, "rd": 12, "sga": 16, "oi": 25, "pretax": 25, "tax": 5, "ni": 20}
+    br = DR.bridge(a, b)
+    op = dict((k, round(v, 6)) for k, v in br["op"])
+    assert op == {"rev": 8.0, "gm": 6.0, "rd": -2, "sga": -1, "other_op": -1.0}      # 20 × 40%; 120 × 5 points
+    assert abs(a["oi"] + sum(v for _, v in br["op"]) - b["oi"]) < 1e-9
+    below = dict((k, round(v, 6)) for k, v in br["below"])
+    assert below["tax_rate"] == round(-25 * (0.2 - 0.18), 6) and below["tax_base"] == round(-7 * 0.18, 6)
+    assert abs(a["ni"] + sum(v for _, v in br["below"]) - b["ni"]) < 1e-9
+    assert DR.bridge({"revenue": 1}, b) is None                           # no operating income last year: no bridge
+    noc = DR.bridge({"revenue": 100, "oi": 10}, {"revenue": 90, "oi": 5})
+    assert noc["op"] == [["rev_all", -10], ["other_op", 5]] and noc["below"] is None
+
+
 def test_posts_are_never_cut_off_and_say_something():
     """Oct 16 2026: drafts went to Buffer as '$FNGR 8-K filed Sept 29: entered a definitive #earnings #stocks' and
     'JUST FILED · $FNGR Q2 FY2 #13F' — model answers cut at max_tokens, hashtags glued on. Such posts are rejected."""
