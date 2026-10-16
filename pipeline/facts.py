@@ -62,9 +62,12 @@ def d(s):
 
 
 def index_facts(companyfacts):
-    """concept -> {(start, end): fact} keeping the most recently filed fact per period (USD only)."""
-    out, names = {}, {}
+    """concept -> {(start, end): fact} keeping the most recently filed fact per period (USD only). Balances are
+    point-in-time facts (no start): those quality.INSTANTS needs go to "__instants__" as concept -> {day: fact}."""
+    from .quality import INSTANTS
+    out, names, inst = {}, {}, {}
     out["__labels__"] = names                            # concept -> SEC's standard label, to say where a figure came from
+    out["__instants__"] = inst                           # total assets and reserve balances (pipeline/quality.py)
     for taxonomy in ("us-gaap", "ifrs-full"):
         for concept, body in companyfacts.get("facts", {}).get(taxonomy, {}).items():
             names.setdefault(concept, body.get("label"))
@@ -74,6 +77,10 @@ def index_facts(companyfacts):
                 per = out.setdefault(concept, {})
                 for f in facts:
                     if "start" not in f:
+                        if concept in INSTANTS and taxonomy == "us-gaap":
+                            day = inst.setdefault(concept, {})
+                            if f["end"] not in day or f.get("filed", "") >= day[f["end"]].get("filed", ""):
+                                day[f["end"]] = f
                         continue
                     key = (f["start"], f["end"])
                     if key not in per or f.get("filed", "") >= per[key].get("filed", ""):

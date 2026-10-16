@@ -13,7 +13,7 @@ import sys
 import time
 import traceback
 
-from . import analysis, checks, dims, facts, release, reported, scan, sec, sectors, social, sources, text
+from . import analysis, checks, dims, facts, quality, release, reported, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -321,6 +321,7 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
                             else:
                                 q["src"].pop(k, None)
             c["da_v"] = DA_VERSION
+            set_quality(c, fx)
             store.put(cik, c)
             n += 1
         except Exception as e:
@@ -329,6 +330,44 @@ def refresh_da(store, limit=DA_PER_RUN, only=None):
             _cf.pop(cik, None)
     if todo:
         print(f"D&A, share-based compensation and revenue read again: {n} companies updated, {max(len(todo) - n, 0)} to go")
+
+
+QUALITY_PER_RUN = 80     # companies stored before the "Profit and cash" section get its figures a few dozen per run
+
+
+def set_quality(c, fx):
+    """Profit vs operating cash flow, accruals and reserve rollforwards (pipeline/quality.py) for the company page.
+    Stored with its version even when empty, so a company without the figures is not asked for again every run."""
+    try:
+        c["quality"] = quality.compute(fx, (c.get("profile") or {}).get("fye") or "1231") or {"v": quality.VERSION}
+    except Exception as e:
+        print(f"  profit and cash figures not read: {e}", file=sys.stderr)
+        c["quality"] = {"v": quality.VERSION, "error": str(e)[:200]}
+
+
+def refresh_quality(store, limit=QUALITY_PER_RUN):
+    """Stored companies without the current "Profit and cash" figures get them from SEC's company facts, largest first."""
+    todo = []
+    for cik in store.ciks():
+        c = store.company(cik)
+        if c.get("quarters") and c.get("profile") and (c.get("quality") or {}).get("v") != quality.VERSION:
+            last = max(c["quarters"].values(), key=lambda q: q.get("end") or "")
+            todo.append((-((last.get("raw") or {}).get("revenue") or 0), cik))
+    n = 0
+    for _, cik in sorted(todo)[:limit]:
+        if time_up(CATCH_UP_SHARE, "profit and cash figures"):
+            break
+        try:
+            c = store.company(cik)
+            set_quality(c, companyfacts(cik))
+            store.put(cik, c)
+            n += 1
+        except Exception as e:
+            print(f"  profit and cash figures not read for {cik}: {e}", file=sys.stderr)
+        finally:
+            _cf.pop(cik, None)
+    if todo:
+        print(f"profit and cash figures: {n} companies updated, {max(len(todo) - n, 0)} to go")
 
 
 REREAD_MAX = 25          # companies re-read at once on the owner's request (each needs SEC's company facts)
@@ -514,6 +553,7 @@ def process_filing(store, cik, accn, form, starred=False):
             c["years"] = dict(sorted(c["years"].items())[-(KEEP_STARRED_YEARS if starred else KEEP_YEARS):])
     keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
     c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
+    set_quality(c, fx)
     store.put(cik, c)
     return end
 
@@ -967,6 +1007,7 @@ def run(args):
     reread(store, getattr(args, "reread_ciks", None) or [])
     refresh_da(store)
     refresh_reported(store)
+    refresh_quality(store)
     stars = starred_ciks()
     for cik in stars:                                            # multi-quarter history for starred companies
         if time_up(CATCH_UP_SHARE, "starred companies' history"):
@@ -1404,7 +1445,8 @@ def render(store, out, stars=frozenset()):
                 years.append(yp)
         save(os.path.join(out, "c", f"{cik}.json"), {
             "profile": p, "intro": c.get("intro"), "starred": cik in stars, "quarters": payloads[::-1],
-            "years": years, "periods": periods_payload(c)})
+            "years": years, "periods": periods_payload(c),
+            **({"quality": c["quality"]} if (c.get("quality") or {}).get("q") or (c.get("quality") or {}).get("fy") else {})})
         # earlier filings of the last ten days (an 8-K release before its 10-Q), for the daily report of their day
         cut = (dt.date.fromisoformat(latest["filed"]) - dt.timedelta(days=10)).isoformat() if latest.get("filed") else "9999"
         also = [{"end": pl["end"], "label": pl["label"], "filed": pl["filed"], "form": pl["form"],

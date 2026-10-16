@@ -1825,3 +1825,51 @@ def test_8k_events_pick_the_material_item(tmp_path):
         assert ev["url"].endswith("d8k.htm")
     finally:
         sec.FIXTURES = old
+
+
+# ---------- "Profit and cash" section (pipeline/quality.py) ----------
+def _cf(facts):
+    """companyfacts JSON from {concept: [(start or None, end, val)]} (USD, us-gaap)."""
+    return {"facts": {"us-gaap": {c: {"units": {"USD": [{**({"start": s} if s else {}), "end": e, "val": v, "filed": "2026-02-01"}
+                                                       for s, e, v in rows]}} for c, rows in facts.items()}}}
+
+
+def test_quality_accruals_and_warranty_rollforward():
+    from pipeline import facts as F, quality as Q
+    fx = F.index_facts(_cf({
+        "Revenues": [("2024-01-01", "2024-12-31", 1000), ("2025-01-01", "2025-12-31", 1200)],
+        "NetIncomeLoss": [("2024-01-01", "2024-12-31", 80), ("2025-01-01", "2025-12-31", 130)],
+        "NetCashProvidedByUsedInOperatingActivities": [("2024-01-01", "2024-12-31", 100), ("2025-01-01", "2025-12-31", 85)],
+        "Assets": [(None, "2023-12-31", 800), (None, "2024-12-31", 900), (None, "2025-12-31", 1000)],
+        # the prototype's FY2025 example: 45 + 28 − 18 − 20 + 2 = 37
+        "ProductWarrantyAccrual": [(None, "2024-12-31", 45), (None, "2025-12-31", 37)],
+        "ProductWarrantyAccrualWarrantiesIssued": [("2025-01-01", "2025-12-31", 28)],
+        "ProductWarrantyAccrualPreexistingIncreaseDecrease": [("2025-01-01", "2025-12-31", -18)],
+        "ProductWarrantyAccrualPayments": [("2025-01-01", "2025-12-31", 20)],
+        "ProductWarrantyAccrualCurrencyTranslationIncreaseDecrease": [("2025-01-01", "2025-12-31", 2)],
+        # a receivables allowance whose tags explain nothing like the balance change: left out, not drawn wrong
+        "AllowanceForDoubtfulAccountsReceivable": [(None, "2024-12-31", 10), (None, "2025-12-31", 40)],
+        "ProvisionForDoubtfulAccounts": [("2025-01-01", "2025-12-31", 2)],
+    }))
+    out = Q.compute(fx)
+    y = {p["end"]: p for p in out["fy"]}["2025-12-31"]
+    assert (y["ni"], y["ocf"], y["assets_open"], y["assets_close"], y["basis"]) == (130, 85, 900, 1000, "ni")
+    assert y["label"] == "FY2025"
+    [w] = [r for r in out["reserves"] if r["id"] == "warranty"]
+    assert (w["opening"], w["additions"], w["releases"], w["utilization"], w["other"], w["closing"]) == (45, 28, 18, 20, 2, 37)
+    assert w["diff"] == 0 and w["reconciled"] and w["release_in_income"]
+    assert not [r for r in out["reserves"] if r["id"] == "receivables"]          # 30 unexplained on a 40 balance
+
+
+def test_quality_loans_net_writeoffs_and_untagged_difference():
+    from pipeline import facts as F, quality as Q
+    fx = F.index_facts(_cf({
+        "Revenues": [("2024-01-01", "2024-12-31", 500), ("2025-01-01", "2025-12-31", 600)],
+        "NetIncomeLoss": [("2024-01-01", "2024-12-31", 50), ("2025-01-01", "2025-12-31", 60)],
+        "FinancingReceivableAllowanceForCreditLosses": [(None, "2024-12-31", 100), (None, "2025-12-31", 110)],
+        "ProvisionForLoanLossesExpensed": [("2025-01-01", "2025-12-31", 40)],
+        "FinancingReceivableAllowanceForCreditLossWriteoffAfterRecovery": [("2025-01-01", "2025-12-31", 35)],
+    }))
+    [r] = Q.compute(fx)["reserves"]
+    assert (r["additions"], r["utilization"], r["calc"], r["diff"]) == (40, 35, 105, 5)     # 5 not tagged: shown
+    assert not r["reconciled"] and not r["release_in_income"]

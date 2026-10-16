@@ -666,6 +666,7 @@
         </dl>
       </div>`;
     body.appendChild(text);
+    qualitySection(body, c, q, fy);                         // profit vs operating cash, accruals, reserves (pipeline/quality.py)
     holdersSection(body, ticker, here);                     // who holds it: 13F managers and public officials (Disclosures)
     if (prefs.get('owner', false)) {                      // owner tool: re-read this company's stored figures
       ownerVerified().then(async (ok) => {
@@ -710,6 +711,259 @@
   const amountRange = (r) => (r.amount_max == null ? `over $${Math.round((r.amount_min || 1) - 1).toLocaleString('en-US')}`
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
+  // ---------- profit and cash: net income vs operating cash flow, accruals, reserve rollforwards ----------
+  // Figures from pipeline/quality.py (SEC XBRL company facts). Definitions, waterfall and Crumb's transactions are
+  // adapted from the Cash & Cookie Visual Lab prototype on the beta/fsa-chatgpt branch (created by ChatGPT (OpenAI)).
+  const QM = {
+    accrual: (p) => (p && p.ni != null && p.ocf != null ? p.ni - p.ocf : null),
+    ratio(p) {
+      const a = QM.accrual(p);
+      return a != null && p.assets_open > 0 && p.assets_close > 0 ? a / ((p.assets_open + p.assets_close) / 2) : null;
+    },
+    conv: (p) => (p && p.ni > 0 && p.ocf != null ? p.ocf / p.ni : null),       // cash conversion: OCF ÷ net income
+    transact(s, action, amount) {        // the teaching scenario: a liability provision expensed through profit, no tax
+      if (!Number.isInteger(amount) || amount < 1 || amount > 100) throw Error('Choose a whole amount from 1 to 100.');
+      if (action !== 'add' && amount > s.reserve) throw Error('Crumb cannot use or release more than the jar holds.');
+      return { reserve: s.reserve + (action === 'add' ? amount : -amount),
+        profit: s.profit + (action === 'add' ? -amount : action === 'release' ? amount : 0),
+        cash: s.cash - (action === 'use' ? amount : 0) };
+    },
+  };
+  function qTicks(lo, hi, n) {
+    const span = hi - lo || 1, raw = span / (n || 4), mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw);
+    const out = [], end = Math.ceil(hi / step - 1e-9) * step;
+    for (let v = Math.floor(lo / step + 1e-9) * step; v <= end + step * 1e-9; v += step) out.push(Math.abs(v) < step * 1e-9 ? 0 : v);
+    return out;
+  }
+  function qAxis(vals, H, top, bottom) {           // y scale over the values and zero, with round gridlines
+    const lo = Math.min(0, ...vals), hi = Math.max(0, ...vals);
+    const ticks = qTicks(lo, hi === lo ? lo + 1 : hi, 4), a = ticks[0], b = ticks[ticks.length - 1];
+    return { ticks, y: (v) => top + (b - v) / (b - a || 1) * (H - top - bottom) };
+  }
+  function qGrid(ax, W, left) {
+    return ax.ticks.map((v) => `<line class="${v === 0 ? 'q-zero' : 'q-gl'}" x1="${left}" x2="${W - 6}" y1="${ax.y(v).toFixed(1)}" y2="${ax.y(v).toFixed(1)}"/>
+      <text class="q-tick" x="${left - 6}" y="${(ax.y(v) + 4).toFixed(1)}" text-anchor="end">${v === 0 ? '$0' : money(v).replace(/\.0(?=[BMK])/, '')}</text>`).join('');
+  }
+  const qm = (v) => (v === 0 ? '$0' : money(v));
+  const qRect = (x, y0, y1, w, cls, tip) => `<rect class="${cls}" x="${x.toFixed(1)}" y="${Math.min(y0, y1).toFixed(1)}" width="${w.toFixed(1)}"
+    height="${Math.max(1, Math.abs(y1 - y0)).toFixed(1)}" rx="2"><title>${t(tip)}</title></rect>`;
+
+  function qualitySection(body, c, q, fy) {
+    const D = c.quality;
+    if (!D || !((D.q || []).length || (D.fy || []).length)) return;
+    const P = c.profile || {};
+    const financial = P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''));
+    const box = document.createElement('section');
+    box.className = 'section quality';
+    box.setAttribute('aria-labelledby', 'q-title');
+    const st = { mode: fy && (D.fy || []).length ? 'fy' : (D.q || []).length ? 'q' : 'fy', end: q && q.end, fam: null, rEnd: null };
+    const reserves = D.reserves || [];
+    const fams = [...new Map(reserves.map((r) => [r.id, r.name])).entries()];
+    st.fam = fams.length ? fams[0][0] : null;
+    const list = () => (st.mode === 'fy' ? D.fy : D.q).slice(st.mode === 'fy' ? -5 : -8);
+    const cur = () => { const L = list(); return L.find((p) => p.end === st.end) || L[L.length - 1]; };
+
+    function compareChart(L, sel) {
+      const W = 560, H = 230, left = 58, top = 14, bottom = 30;
+      const ax = qAxis(L.flatMap((p) => [p.ni, p.ocf]).filter((v) => v != null), H, top, bottom);
+      const step = (W - left - 8) / L.length, bw = Math.min(22, step * 0.32);
+      let g = qGrid(ax, W, left);
+      L.forEach((p, i) => {
+        const x = left + i * step, mid = x + step / 2;
+        if (p === sel) g += `<rect class="q-selcol" x="${(x + 2).toFixed(1)}" y="${top - 6}" width="${(step - 4).toFixed(1)}" height="${H - top - bottom + 10}" rx="6"/>`;
+        if (p.ni != null) g += qRect(mid - bw - 1, ax.y(0), ax.y(p.ni), bw, 'q-ni', `${p.label} net income ${money(p.ni)}`);
+        else g += `<text class="q-na" x="${(mid - bw / 2).toFixed(1)}" y="${(ax.y(0) - 6).toFixed(1)}" text-anchor="middle">n/a</text>`;
+        if (p.ocf != null) g += qRect(mid + 1, ax.y(0), ax.y(p.ocf), bw, 'q-ocf', `${p.label} operating cash flow ${money(p.ocf)}`);
+        else g += `<text class="q-na" x="${(mid + bw / 2).toFixed(1)}" y="${(ax.y(0) - 6).toFixed(1)}" text-anchor="middle">n/a</text>`;
+        g += `<text class="q-x${p === sel ? ' on' : ''}" x="${mid.toFixed(1)}" y="${H - 10}" text-anchor="middle">${t(p.label)}</text>
+          <rect class="q-hit" data-end="${t(p.end)}" x="${x.toFixed(1)}" y="0" width="${step.toFixed(1)}" height="${H}"><title>${t(p.label)}: select</title></rect>`;
+      });
+      return `<svg class="q-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Net income and operating cash flow by period">${g}</svg>`;
+    }
+    function accrualChart(L, sel) {
+      const W = 560, H = 230, left = 58, top = 22, bottom = 30;
+      const vals = L.map(QM.accrual);
+      const ax = qAxis(vals.filter((v) => v != null), H, top, bottom);
+      const step = (W - left - 8) / L.length, bw = Math.min(34, step * 0.5);
+      let g = qGrid(ax, W, left);
+      L.forEach((p, i) => {
+        const x = left + i * step, mid = x + step / 2, v = vals[i], r = QM.ratio(p);
+        if (p === sel) g += `<rect class="q-selcol" x="${(x + 2).toFixed(1)}" y="${top - 14}" width="${(step - 4).toFixed(1)}" height="${H - top - bottom + 18}" rx="6"/>`;
+        if (v != null) {
+          g += qRect(mid - bw / 2, ax.y(0), ax.y(v), bw, v >= 0 ? 'q-acc-pos' : 'q-acc-neg',
+            `${p.label}: accruals ${money(v)}${r != null ? ` · ${(r * 100).toFixed(1)}% of average assets` : ''}`);
+          if (r != null) g += `<text class="q-val" x="${mid.toFixed(1)}" y="${(v >= 0 ? ax.y(v) - 5 : ax.y(v) + 13).toFixed(1)}" text-anchor="middle">${sign(r)}${Math.abs(r * 100).toFixed(1)}%</text>`;
+        } else g += `<text class="q-na" x="${mid.toFixed(1)}" y="${(ax.y(0) - 6).toFixed(1)}" text-anchor="middle">n/a</text>`;
+        g += `<text class="q-x${p === sel ? ' on' : ''}" x="${mid.toFixed(1)}" y="${H - 10}" text-anchor="middle">${t(p.label)}</text>
+          <rect class="q-hit" data-end="${t(p.end)}" x="${x.toFixed(1)}" y="0" width="${step.toFixed(1)}" height="${H}"><title>${t(p.label)}: select</title></rect>`;
+      });
+      return `<svg class="q-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Accruals (net income minus operating cash flow) by period">${g}</svg>`;
+    }
+    function waterfall(r) {
+      const steps = [['Opening', 0, r.opening, 'w-bal', `Balance at ${date(r.start)}`]];
+      let v = r.opening;
+      const move = (label, d, cls, tip) => { if (d == null) return; steps.push([label, v, v + d, cls, tip]); v += d; };
+      move('Added', r.additions, 'w-add', 'Charged to expense this year (new provisions)');
+      move('Released', r.releases == null ? null : -r.releases, 'w-rel', r.release_in_income ? 'Estimates reversed: back to profit' : 'Reversed');
+      move('Used', r.utilization == null ? null : -r.utilization, 'w-use', 'Paid out or written off: uses the reserve, no new expense');
+      move('Other', r.other, 'w-oth', 'Currency, acquisitions, recoveries');
+      if (!r.reconciled) move('Not tagged', r.diff, 'w-gap', 'Reported closing minus the tagged movements');
+      steps.push(['Closing', 0, r.closing, 'w-bal', `Balance at ${date(r.end)}`]);
+      const W = 640, H = 250, left = 58, top = 22, bottom = 30;
+      const ax = qAxis(steps.flatMap((s) => [s[1], s[2]]), H, top, bottom);
+      const step = (W - left - 8) / steps.length, bw = Math.min(56, step * 0.62);
+      let g = qGrid(ax, W, left);
+      steps.forEach(([label, a, b, cls, tip], i) => {
+        const x = left + i * step + (step - bw) / 2, d = cls === 'w-bal' ? b : b - a;
+        g += qRect(x, ax.y(a), ax.y(b), bw, cls, `${label}: ${money(d)} · ${tip}`);
+        g += `<text class="q-val" x="${(x + bw / 2).toFixed(1)}" y="${(Math.min(ax.y(a), ax.y(b)) - 5).toFixed(1)}" text-anchor="middle">${cls === 'w-bal' ? qm(d) : (d > 0 ? '+' : '') + qm(d)}</text>
+          <text class="q-x" x="${(x + bw / 2).toFixed(1)}" y="${H - 10}" text-anchor="middle">${label}</text>`;
+        if (i < steps.length - 1) g += `<line class="q-link" x1="${(x + bw).toFixed(1)}" x2="${(x + step).toFixed(1)}" y1="${ax.y(b).toFixed(1)}" y2="${ax.y(b).toFixed(1)}"/>`;
+      });
+      return `<svg class="q-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(r.name)} rollforward, ${t(r.label)}">${g}</svg>`;
+    }
+    function summary(p) {
+      const a = QM.accrual(p), r = QM.ratio(p), pName = p.basis === 'pl' ? 'net income (including noncontrolling interests)' : 'net income';
+      if (a == null) return `${t(p.label)}: ${p.ni == null ? 'no net income' : 'no operating cash flow'} figure tagged for this period.`;
+      const gap = Math.abs(a), lead = a > 0 ? 'profit ran ahead of operating cash by' : a < 0 ? 'operating cash ran ahead of profit by' : 'profit and operating cash matched';
+      return `${t(p.label)}: ${pName} ${money(p.ni)}, operating cash flow ${money(p.ocf)} — ${lead}${a ? ' ' + money(gap) : ''}${
+        r != null ? ` (${sign(r)}${Math.abs(r * 100).toFixed(1)}% of average total assets)` : ''}.`;
+    }
+    function trailing() {
+      const L = (D.q || []).slice(-4);
+      if (st.mode !== 'q' || L.length < 4 || L.some((p) => p.ni == null || p.ocf == null)) return '';
+      const ni = L.reduce((s, p) => s + p.ni, 0), ocf = L.reduce((s, p) => s + p.ocf, 0);
+      return ` Last four quarters: net income ${money(ni)}, operating cash flow ${money(ocf)}${ni > 0 ? `, ${(ocf / ni).toFixed(2)}× cash conversion` : ''}.`;
+    }
+    const kpi = (label, val, note, cls) => `<div class="q-kpi"><small>${label}</small><strong class="${cls || ''}">${val}</strong>${note ? `<span>${note}</span>` : ''}</div>`;
+
+    function render() {
+      const L = list(), sel = cur(), a = QM.accrual(sel), r = QM.ratio(sel), cv = QM.conv(sel);
+      const famRows = reserves.filter((x) => x.id === st.fam);
+      const rr = famRows.find((x) => x.end === st.rEnd) || famRows[famRows.length - 1];
+      box.innerHTML = `<div class="section-head"><h2 id="q-title">Profit and cash</h2>
+          <span class="muted">Net income against operating cash flow, the accrual gap between them${reserves.length ? ', and where reserves went' : ''} · SEC XBRL company facts</span></div>
+        <div class="q-bar">
+          <div class="seg" role="group" aria-label="Period type">
+            <button type="button" data-mode="q" class="${st.mode === 'q' ? 'on' : ''}" ${(D.q || []).length ? '' : 'disabled'}>Quarters</button>
+            <button type="button" data-mode="fy" class="${st.mode === 'fy' ? 'on' : ''}" ${(D.fy || []).length ? '' : 'disabled'}>Fiscal years</button></div>
+          <label class="q-pick">Period <select id="q-period">${L.map((p) => `<option value="${t(p.end)}" ${p === sel ? 'selected' : ''}>${t(p.label)}</option>`).join('')}</select></label>
+        </div>
+        <div class="q-kpis">
+          ${kpi('Net income', money(sel.ni), sel.basis === 'pl' ? 'incl. noncontrolling interests' : '')}
+          ${kpi('Operating cash flow', money(sel.ocf), '')}
+          ${kpi('Accruals', a == null ? '—' : money(a), 'net income − operating cash flow', a == null ? '' : a > 0 ? 'q-warm' : 'q-cool')}
+          ${kpi('Accrual ratio', r == null ? '—' : `${sign(r)}${Math.abs(r * 100).toFixed(1)}%`, r == null ? 'total assets not tagged' : 'of average total assets')}
+          ${kpi('Cash conversion', cv == null ? '—' : `${cv < 0 ? '−' : ''}${Math.abs(cv).toFixed(2)}×`, cv == null ? (sel.ni != null && sel.ni <= 0 ? 'not meaningful at a loss' : '') : 'operating cash ÷ net income')}
+        </div>
+        <p class="q-sum">${summary(sel)}${trailing()}</p>
+        ${financial ? '<p class="q-warn">For banks, insurers and brokers, operating cash flow includes lending, deposit and trading flows, so the gap between profit and cash says little about earnings quality here.</p>' : ''}
+        <div class="q-grid">
+          <article class="q-card"><h3>Profit vs operating cash</h3>
+            <p class="muted">Same periods, same scale, a shared zero line. Select a period to read it above.</p>
+            <div class="q-scroll">${compareChart(L, sel)}</div>
+            <div class="q-legend"><span><i class="q-ni"></i>Net income</span><span><i class="q-ocf"></i>Operating cash flow</span></div></article>
+          <article class="q-card"><h3>The accrual gap</h3>
+            <p class="muted">Net income − operating cash flow; labels show it as a share of average total assets (for the period, not annualised).</p>
+            <div class="q-scroll">${accrualChart(L, sel)}</div>
+            <div class="q-legend"><span><i class="q-acc-pos"></i>Profit ahead of cash</span><span><i class="q-acc-neg"></i>Cash ahead of profit</span></div></article>
+        </div>
+        ${rr ? `<article class="q-card q-res"><div class="q-res-head"><h3>Where did the reserve go?</h3>
+            <div class="q-bar">${fams.length > 1 ? `<div class="seg" role="group" aria-label="Reserve">${fams.map(([id, name]) => `<button type="button" data-fam="${t(id)}" class="${id === st.fam ? 'on' : ''}">${t(name.replace(/^Allowance for /, '').replace(/ reserve$/, '').replace(/^./, (x) => x.toUpperCase()))}</button>`).join('')}</div>` : ''}
+            <label class="q-pick">Year <select id="q-ryear">${famRows.map((x) => `<option value="${t(x.end)}" ${x === rr ? 'selected' : ''}>${t(x.label)}</option>`).join('')}</select></label></div></div>
+          <p class="muted"><b>${t(rr.name)}</b>: ${t(rr.what)}. Fiscal-year rollforward from the 10-K note.</p>
+          <div class="q-scroll">${waterfall(rr)}</div>
+          <div class="q-legend"><span><i class="w-add"></i>Charged to profit</span><span><i class="w-rel"></i>Released to profit</span><span><i class="w-use"></i>Used (paid or written off)</span><span><i class="w-oth"></i>Other</span>${rr.reconciled ? '' : '<span><i class="w-gap"></i>Not tagged</span>'}</div>
+          <p class="q-sum">Opening ${qm(rr.opening)} + added ${qm(rr.additions)} − released ${qm(rr.releases)} − used ${qm(rr.utilization)}${rr.other != null ? ` ${rr.other < 0 ? '−' : '+'} other ${qm(Math.abs(rr.other))}` : ''} = ${qm(rr.calc)}; reported closing ${qm(rr.closing)}.
+            ${rr.reconciled ? '<span class="pos">Reconciles.</span>' : `<span class="q-warmtext">${money(rr.diff)} the filing’s tags do not explain</span> (movements tagged elsewhere or not at all, such as acquisitions).`}
+            ${rr.releases ? ` Released to profit: ${money(rr.releases)}${rr.opening > 0 ? `, ${(rr.releases / rr.opening * 100).toFixed(0)}% of the opening balance` : ''}.` : ''}</p>
+          <p class="muted q-small">Tags: ${Object.entries(rr.tags).map(([k, v]) => `${k} <span class="mono">${t([].concat(v).join(' + '))}</span>`).join(' · ')}</p>
+        </article>` : ''}
+        <details class="q-card q-crumb"><summary><b>What is a “cookie jar” reserve?</b> <span class="muted">Try it with Crumb, a reserve jar (made-up numbers)</span></summary>
+          <div class="crumb">
+            <div class="crumb-stage"><svg class="crumb-pet" id="crumb-pet" viewBox="0 0 160 190" role="img" aria-label="Crumb the reserve jar">
+              <rect class="crumb-lid" x="26" y="8" width="108" height="20" rx="8"/>
+              <path class="crumb-jar" d="M30 30 h100 v6 q14 10 14 34 v78 q0 30 -30 30 h-68 q-30 0 -30 -30 v-78 q0 -24 14 -34z"/>
+              <g id="crumb-cookies"></g>
+              <g class="crumb-face"><rect x="44" y="58" width="72" height="34" rx="17"/><circle cx="64" cy="72" r="4"/><circle cx="96" cy="72" r="4"/><path d="M72 80 q8 7 16 0" fill="none"/></g>
+            </svg>
+            <div class="crumb-bal"><span class="eyebrow">Reserve balance</span><strong id="crumb-bal">50</strong><span class="muted">made-up units · not cash</span></div></div>
+            <div class="crumb-side">
+              <div class="crumb-meters" id="crumb-meters"></div>
+              <div class="crumb-actions"><label>Amount <input id="crumb-amt" type="number" value="10" min="1" max="100" step="1"></label>
+                <button class="btn" type="button" data-crumb="add">+ Record a provision</button>
+                <button class="btn" type="button" data-crumb="use">− Settle in cash</button>
+                <button class="btn" type="button" data-crumb="release">− Reverse an estimate</button>
+                <button class="btn small" type="button" id="crumb-reset">Reset</button>
+                <button class="btn small" type="button" id="crumb-motion" aria-pressed="false">Pause animation</button></div>
+              <p class="crumb-say" id="crumb-say" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+          <p class="muted q-small">“Cookie jar” accounting means building reserves too large in good years and releasing them later to smooth reported profit. A release or an ordinary settlement is not evidence of that by itself: judging whether a reserve was excessive needs the notes, the assumptions and the business context. Simplified scenario: a liability provision expensed through profit; no taxes or discounting.</p>
+        </details>
+        <p class="muted q-small">Accruals here are the cash-flow measure (net income − operating cash flow), a screening figure, not a verdict: growth, seasonality, working capital and non-cash items all move it. Figures are read automatically from XBRL; check the filing before relying on one.</p>`;
+      bind();
+      crumbDraw(false);
+    }
+    // Crumb: the reserve jar (made-up units, independent of the company's figures)
+    let pet = { reserve: 50, profit: 100, cash: 100 }, paused = false;
+    const SAY = {
+      add: 'Provision recorded: an expense, so pretax profit falls and my jar fills up. No cash moves yet.',
+      use: 'Obligation settled: cash goes out and the jar empties by the same amount. No new expense — it was charged when recorded.',
+      release: 'Estimate reversed: the jar shrinks and pretax profit rises, with no cash at all. Worth asking what evidence supports the revision.',
+    };
+    function crumbDraw(prev) {
+      const g = $('#crumb-cookies', box), bal = $('#crumb-bal', box), m = $('#crumb-meters', box);
+      if (!g) return;
+      const n = Math.min(15, Math.ceil(pet.reserve / 10));
+      g.innerHTML = Array.from({ length: n }, (_, i) => `<g class="crumb-cookie" style="--d:${i * 30}ms"><circle cx="${42 + (i % 4) * 25 + (Math.floor(i / 4) % 2) * 12}" cy="${164 - Math.floor(i / 4) * 22}" r="11"/>
+        <circle class="chip" cx="${39 + (i % 4) * 25 + (Math.floor(i / 4) % 2) * 12}" cy="${161 - Math.floor(i / 4) * 22}" r="1.8"/><circle class="chip" cx="${46 + (i % 4) * 25 + (Math.floor(i / 4) % 2) * 12}" cy="${167 - Math.floor(i / 4) * 22}" r="1.6"/></g>`).join('');
+      bal.textContent = pet.reserve;
+      $('#crumb-pet', box).setAttribute('aria-label', `Crumb the reserve jar: ${pet.reserve} units (cookies are decoration, capped at 15; the number is the balance)`);
+      const row = (k, label, v, max) => {
+        const d = prev ? v - prev[k] : 0;
+        return `<div class="crumb-m"><span>${label}</span><div class="crumb-track"><div class="crumb-fill ${k}" style="width:${Math.max(0, Math.min(100, v / max * 100)).toFixed(1)}%"></div></div>
+          <b>${v}</b><em class="${d ? 'show ' + (d > 0 ? 'up' : 'down') : ''}">${d ? (d > 0 ? '+' : '−') + Math.abs(d) : ''}</em></div>`;
+      };
+      m.innerHTML = row('reserve', 'Reserve', pet.reserve, 200) + row('profit', 'Pretax profit', pet.profit, 200) + row('cash', 'Cash', pet.cash, 200);
+    }
+    function crumbAct(action) {
+      const prev = pet;
+      try {
+        pet = QM.transact(pet, action, Number($('#crumb-amt', box).value));
+        $('#crumb-say', box).textContent = SAY[action];
+        crumbDraw(prev);
+        const el = $('#crumb-pet', box);
+        if (!paused) { el.classList.remove('react'); void el.getBoundingClientRect(); el.classList.add('react'); }
+      } catch (e) { $('#crumb-say', box).textContent = e.message; }
+    }
+    function bind() {
+      $$('.q-scroll', box).forEach((el) => { el.scrollLeft = el.scrollWidth; });   // phones: start at the latest period
+      $$('[data-mode]', box).forEach((b) => b.addEventListener('click', () => { st.mode = b.dataset.mode; render(); }));
+      $$('.q-hit', box).forEach((r) => r.addEventListener('click', () => { st.end = r.dataset.end; render(); }));
+      const ps = $('#q-period', box);
+      if (ps) ps.addEventListener('change', () => { st.end = ps.value; render(); });
+      $$('[data-fam]', box).forEach((b) => b.addEventListener('click', () => { st.fam = b.dataset.fam; st.rEnd = null; render(); }));
+      const ry = $('#q-ryear', box);
+      if (ry) ry.addEventListener('change', () => { st.rEnd = ry.value; render(); });
+      const det = $('.q-crumb', box);
+      if (det) {
+        det.open = !!st.crumbOpen;
+        det.addEventListener('toggle', () => { st.crumbOpen = det.open; });
+        $$('[data-crumb]', det).forEach((b) => b.addEventListener('click', () => crumbAct(b.dataset.crumb)));
+        $('#crumb-reset', det).addEventListener('click', () => { pet = { reserve: 50, profit: 100, cash: 100 }; crumbDraw(false); $('#crumb-say', det).textContent = 'Hi, I’m Crumb. My jar holds reserves, not cash. Try recording a provision.'; });
+        const mo = $('#crumb-motion', det);
+        mo.setAttribute('aria-pressed', String(paused)); mo.textContent = paused ? 'Resume animation' : 'Pause animation';
+        det.classList.toggle('still', paused);
+        mo.addEventListener('click', () => { paused = !paused; det.classList.toggle('still', paused); mo.setAttribute('aria-pressed', String(paused)); mo.textContent = paused ? 'Resume animation' : 'Pause animation'; });
+        if (!$('#crumb-say', det).textContent) $('#crumb-say', det).textContent = 'Hi, I’m Crumb. My jar holds reserves, not cash. Try recording a provision.';
+      }
+    }
+    render();
+    body.appendChild(box);
+  }
+
   async function holdersSection(body, ticker, here) {
     const sym = normTicker(ticker);
     if (!sym) return;
