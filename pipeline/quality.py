@@ -22,11 +22,12 @@ import itertools
 import sys
 
 from . import facts as F
+from . import fsa as W
 
-VERSION = 1
+VERSION = 2               # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
 MAX_DIFF = 0.25            # untagged movement allowed, as a share of the larger of the opening and closing balance
 TOLERANCE = 0.005          # under this share of the balance the rollforward counts as reconciled (rounding)
-KEEP_Q, KEEP_FY = 12, 5
+KEEP_Q, KEEP_FY = 8, 5
 
 # role -> candidate tags, best first. "add" and "use" are magnitudes; "est", "net" and "other" are signed.
 #   est   change in estimate for earlier periods: + adds to the reserve, − is a release back to profit
@@ -80,7 +81,8 @@ FAMILIES = [
      "other": [["RestructuringReserveTranslationAndOtherAdjustment", "RestructuringReserveTranslationAdjustment"]]},
 ]
 # balances the facts index keeps as point-in-time values (see facts.index_facts)
-INSTANTS = {"Assets"} | {t for f in FAMILIES for t in f["balance"]}
+INSTANTS = {"Assets"} | {t for f in FAMILIES for t in f["balance"]} | W.INSTANT_CONCEPTS
+SHARES = W.SHARE_CONCEPTS
 
 
 def _instant(fx, concept, day):
@@ -195,20 +197,40 @@ def _assets_at(fx, day, lo=0, hi=7):
     return per[max(xs)]["val"] if xs else None
 
 
-def _period(fx, end, prev, annual, fye, basis):
-    profit, ocf = F.value(fx, basis, end, annual), F.value(fx, "ocf", end, annual)
+def _period(fx, ev, end, prev, annual, fye, basis):
+    profit, r_ni = W.keyed(fx, ev, basis, end, annual)
+    ocf, r_ocf = W.keyed(fx, ev, "ocf", end, annual)
     if profit is None and ocf is None:
         return None
     label = F.fiscal_year_label(end, fye)[0] if annual else F.fiscal_label(end, fye)[0]
-    return {"end": end, "label": label, "ni": profit, "basis": basis, "ocf": ocf,
-            "assets_open": _assets_at(fx, prev) if prev else None, "assets_close": _assets_at(fx, end)}
+    a_o, r_ao, _ = W.balance(fx, ev, ["Assets"], prev) if prev else (None, None, None)
+    a_c, r_ac, _ = W.balance(fx, ev, ["Assets"], end)
+    wc, refs = W.working_capital(fx, ev, end, prev, annual)
+    refs.update({k: r for k, r in (("ni", r_ni), ("ocf", r_ocf), ("assets_open", r_ao), ("assets_close", r_ac)) if r})
+    br = W.bridge(fx, ev, end, annual)
+    return {"end": end, "start": prev, "label": label, "ni": profit, "basis": basis, "ocf": ocf,
+            "assets_open": a_o, "assets_close": a_c, "wc": wc, "bridge": br, "ev": refs}
 
 
-def _ends(fx, annual):
+def _fye_match(end, fye):
+    """`end` falls within a week of the fiscal year-end date (MMDD) — not the trailing twelve months some 10-Qs tag
+    (Amazon), nor any other 12-month span."""
+    e = F.d(end)
+    for y in (e.year - 1, e.year, e.year + 1):
+        try:
+            if abs((e - F.dt.date(y, int(fye[:2]), int(fye[2:]))).days) <= 7:
+                return True
+        except ValueError:                                    # 0229
+            if abs((e - F.dt.date(y, int(fye[:2]), 28)).days) <= 8:
+                return True
+    return False
+
+
+def _ends(fx, annual, fye="1231"):
     """Period ends with a net income figure (quarters directly or as year-to-date differences; fiscal years)."""
     keys = F.CONCEPTS["ni"] + F.CONCEPTS["pl"]
     ends = {e for c in keys for (s, e) in fx.get(c, {}) if F.d(e) >= F.d("2009-01-01")}
-    ok = (lambda e: any(_year(fx, c, e) is not None for c in keys)) if annual else \
+    ok = (lambda e: _fye_match(e, fye) and any(_year(fx, c, e) is not None for c in keys)) if annual else \
         (lambda e: any(fx.get(c) and F._quarter_from(fx[c], e) is not None for c in keys))
     return sorted(e for e in ends if ok(e))
 
@@ -221,18 +243,19 @@ def _basis(fx, ends, annual):
 
 def compute(fx, fye="1231"):
     """The section's data for one company from its indexed company facts (facts.index_facts), or None if empty."""
+    ev = W.Evidence(fx)
     qe = _ends(fx, False)
     assets = sorted((fx.get("__instants__") or {}).get("Assets") or {})
     q, basis = [], _basis(fx, qe[-KEEP_Q:], False)
     for e in qe[-KEEP_Q:]:
-        p = _period(fx, e, _near(qe, e, 75, 105) or _near(assets, e, 75, 105), False, fye, basis)
+        p = _period(fx, ev, e, _near(qe, e, 75, 105) or _near(assets, e, 75, 105), False, fye, basis)
         if p:
             q.append(p)
-    ye = _ends(fx, True)
+    ye = _ends(fx, True, fye)
     y, reserves, basis = [], [], _basis(fx, ye[-KEEP_FY:], True)
     for e in ye[-KEEP_FY:]:
         prev = _near(ye, e, 350, 380) or _near(assets, e, 350, 380)
-        p = _period(fx, e, prev, True, fye, basis)
+        p = _period(fx, ev, e, prev, True, fye, basis)
         if p:
             y.append(p)
         if prev:
@@ -243,7 +266,8 @@ def compute(fx, fye="1231"):
                     reserves.append(r)
     if not (q or y):
         return None
-    return {"v": VERSION, "unit": "USD", "q": q, "fy": y, "reserves": reserves}
+    val = W.valuation_inputs(fx, ev, qe, ye)
+    return W.compact({"v": VERSION, "unit": "USD", "q": q, "fy": y, "reserves": reserves, "val": val, "src": ev.out()})
 
 
 if __name__ == "__main__":

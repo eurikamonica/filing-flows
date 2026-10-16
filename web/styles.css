@@ -377,9 +377,9 @@ label.check input { accent-color: var(--accent); }
 #fund-form { gap: 8px; flex-wrap: wrap; margin: 6px 0; }
 
 /* ---------- Profit and cash (company page; pipeline/quality.py) ---------- */
-.quality { --q-warm: #b7792f; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .quality { --q-warm: #e3a75a; } }
-:root[data-theme="dark"] .quality { --q-warm: #e3a75a; }
+:root { --q-warm: #b7792f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --q-warm: #e3a75a; } }
+:root[data-theme="dark"] { --q-warm: #e3a75a; }
 .quality .q-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
 .q-pick { font-size: 13.5px; color: var(--muted); display: inline-flex; gap: 8px; align-items: center; }
 .q-pick select { font: inherit; font-size: 13.5px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; }
@@ -476,4 +476,110 @@ label.check input { accent-color: var(--accent); }
 @media (max-width: 480px) {
   .crumb-m { grid-template-columns: 84px minmax(0, 1fr) 34px 38px; }
   .q-kpi strong { font-size: 19px; }
+}
+
+/* ---------- company tabs ---------- */
+.co-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-top: 6px; overflow-x: auto; }
+.co-tabs a { padding: 8px 14px; color: var(--muted); text-decoration: none; font-weight: 500; font-size: 14.5px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.co-tabs a:hover { color: var(--ink); }
+.co-tabs a.on { color: var(--ink); border-bottom-color: var(--accent); }
+
+/* ---------- evidence: any figure that opens its source ---------- */
+button.ev { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
+button.ev:hover { color: var(--accent-ink); text-decoration-color: currentColor; }
+button.ev:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+.ev-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100vw); background: var(--surface); border-left: 1px solid var(--line);
+  box-shadow: var(--shadow); z-index: 60; padding: 18px 20px 28px; overflow-y: auto; transform: translateX(105%); transition: transform .22s ease; display: grid; gap: 12px; align-content: start; }
+.ev-drawer.open { transform: none; }
+.ev-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.ev-head h2 { font-size: 18px; margin-top: 2px; }
+.ev-val { font-size: 22px; font-weight: 600; margin-top: 4px; }
+.ev-val .muted { font-size: 14px; font-weight: 400; }
+.ev-formula { font-family: var(--mono); font-size: 13px; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; }
+.ev-dl { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 12px; font-size: 13.5px; margin: 0; }
+.ev-dl dt { color: var(--muted); }
+.ev-dl dd { margin: 0; overflow-wrap: anywhere; }
+.ev-input { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 6px; }
+@media (prefers-reduced-motion: reduce) { .ev-drawer { transition: none; } }
+
+/* ---------- Cash & quality: bridge and cash cycle ---------- */
+.cq-bridge { display: grid; gap: 2px; }
+.cq-row { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) 96px; gap: 12px; align-items: center; font-size: 13.5px; padding: 3px 0; }
+.cq-row.base { font-weight: 600; }
+.cq-row.gap { color: var(--muted); }
+.cq-track { position: relative; height: 16px; }
+.cq-bar { position: absolute; top: 2px; height: 12px; border-radius: 3px; display: inline-block; }
+.cq-bar.base { background: var(--mk-rev); }
+.cq-bar.nc.plus, .cq-bar.wc.plus { background: var(--mk-profit); }
+.cq-bar.nc.minus, .cq-bar.wc.minus { background: var(--mk-cost); }
+.cq-bar.wc { opacity: .7; }
+.cq-bar.gap { background: transparent; border: 1px dashed var(--muted); }
+.cq-zero { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.q-legend i.cq-bar { position: static; height: 10px; width: 10px; }
+.q-legend i.cq-gap-key { border: 1px dashed var(--muted); }
+.cq-h3 { margin-top: 6px; }
+.cq-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.cq-days-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cq-days-head strong { font-size: 20px; }
+.cq-days-head small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.q-chart .cq-d { fill: var(--slate); opacity: .55; }
+.q-chart .cq-d.ccc { fill: var(--accent); }
+.q-chart .cq-d.on { opacity: 1; }
+.cq-table th, .cq-table td { white-space: nowrap; }
+@media (max-width: 1100px) { .cq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .cq-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) {
+  .cq-row { grid-template-columns: minmax(0, 1fr) 84px; }
+  .cq-row .cq-track { grid-column: 1 / -1; grid-row: 2; }
+  .cq-grid .q-chart { min-width: 0; }
+}
+
+/* ---------- Valuation ---------- */
+.v-grid { display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); gap: 14px; align-items: start; }
+.v-out { display: grid; gap: 14px; min-width: 0; }
+.v-rep { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: 13.5px; margin: 0 0 6px; }
+.v-rep dt { color: var(--muted); }
+.v-rep dd { margin: 0; }
+.v-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+.v-f { display: grid; gap: 3px; font-size: 12.5px; color: var(--muted); }
+.v-in { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); overflow: hidden; }
+.v-in input, .v-in select { font: inherit; font-size: 14px; color: var(--ink); background: transparent; border: 0; padding: 6px 8px; width: 100%; min-width: 0; }
+.v-in i { font-style: normal; color: var(--muted); padding-right: 8px; font-size: 12.5px; white-space: nowrap; }
+.v-in:focus-within { border-color: var(--accent); }
+.v-tag { font-style: normal; font-size: 10.5px; padding: 0 5px; border-radius: 99px; background: var(--surface-2); color: var(--ink-2); }
+.v-tag.assumption { background: color-mix(in srgb, var(--q-warm, #b7792f) 18%, var(--surface)); }
+.v-tag.market { background: var(--accent-soft); color: var(--accent-ink); }
+.v-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.v-result { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.v-result > div { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.v-result small { color: var(--muted); font-size: 12.5px; }
+.v-result strong { font-size: 22px; }
+.v-result .muted { font-size: 12.5px; }
+.v-bridge { display: grid; gap: 4px; }
+.v-step { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) 90px; gap: 10px; align-items: center; font-size: 13.5px; }
+.v-step i { display: block; height: 10px; border-radius: 3px; background: var(--slate); }
+.v-step.v-ev i, .v-step.v-eq i { background: var(--mk-rev); }
+.v-step.v-eq { font-weight: 600; }
+.v-step.v-minus i { background: var(--mk-cost); }
+.v-step.v-plus i { background: var(--mk-profit); }
+.v-step b { text-align: right; font-weight: 500; }
+.v-table td, .v-table th { white-space: nowrap; }
+.v-table .v-strong td { font-weight: 600; }
+.v-solve { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.v-solve .v-f { width: 110px; }
+.v-implied b { font-size: 20px; }
+.v-h3 { margin-top: 6px; }
+.v-heat { max-width: 520px; }
+.v-heat .h-txt { fill: var(--ink); font-size: 11px; }
+.h-up2 { fill: color-mix(in srgb, var(--mk-profit) 55%, var(--surface)); background: color-mix(in srgb, var(--mk-profit) 55%, var(--surface)); }
+.h-up1 { fill: color-mix(in srgb, var(--mk-profit) 22%, var(--surface)); background: color-mix(in srgb, var(--mk-profit) 22%, var(--surface)); }
+.h-dn1 { fill: color-mix(in srgb, var(--mk-cost) 22%, var(--surface)); background: color-mix(in srgb, var(--mk-cost) 22%, var(--surface)); }
+.h-dn2 { fill: color-mix(in srgb, var(--mk-cost) 55%, var(--surface)); background: color-mix(in srgb, var(--mk-cost) 55%, var(--surface)); }
+.h-na { fill: var(--surface-2); }
+@media (max-width: 980px) { .v-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) {
+  .v-result { grid-template-columns: minmax(0, 1fr); }
+  .v-step { grid-template-columns: minmax(0, 1fr) 84px; }
+  .v-step i { grid-column: 1 / -1; grid-row: 2; }
+  .v-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }

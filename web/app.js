@@ -592,6 +592,7 @@
           ${fye ? `<span>Fiscal year ends ${fye}</span>` : ''}${p.category ? `<span>${t(String(p.category).split(/\s*<br\s*\/?>\s*/i).filter(Boolean).join(' · '))}</span>` : ''}
         </div>
         ${introHTML(c.intro)}
+        ${companyTabs(cik, '')}
       </div>
       <div class="pills" role="tablist" aria-label="Period">
         ${qs.map((x) => `<a class="pill ${!all && !fy && !cmpId && x === q ? 'on' : ''}" href="#c-${cik}-${x.end}">${t(x.label)}${x.form === '8-K' ? ' · 8-K' : ''}</a>`).join('')}
@@ -666,7 +667,6 @@
         </dl>
       </div>`;
     body.appendChild(text);
-    qualitySection(body, c, q, fy);                         // profit vs operating cash, accruals, reserves (pipeline/quality.py)
     holdersSection(body, ticker, here);                     // who holds it: 13F managers and public officials (Disclosures)
     if (prefs.get('owner', false)) {                      // owner tool: re-read this company's stored figures
       ownerVerified().then(async (ok) => {
@@ -711,6 +711,420 @@
   const amountRange = (r) => (r.amount_max == null ? `over $${Math.round((r.amount_min || 1) - 1).toLocaleString('en-US')}`
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
+  // ---------- company tabs: Earnings · Cash & quality · Valuation ----------
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Cash & quality'], ['value', 'Valuation']]
+    .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
+
+  async function analysisPage(cik, which) {
+    const here = live();
+    setNav('');
+    let c;
+    try {
+      c = await getJSON(`c/${cik}.json`);
+    } catch (err) {
+      if (err.status === 404) return here() ? missingCompany(cik) : null;
+      throw err;
+    }
+    if (!here()) return;
+    const p = c.profile, ticker = (p.tickers || [])[0] || '';
+    evReset(c);
+    app.innerHTML = `<div class="page-head">
+        <div class="crumbs"><a href="#home">Latest</a><span>/</span><a href="#c-${cik}">${t(p.name)}</a></div>
+        <h1>${t(p.name)}</h1>
+        <div class="meta">${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}<span>CIK <span class="mono">${p.cik}</span></span>${
+          p.industry ? `<span>${t(p.industry)}</span>` : ''}</div>
+        ${companyTabs(cik, which)}
+      </div><div id="body"></div>`;
+    const body = $('#body');
+    const D = c.quality;
+    if (!D || !((D.q || []).length || (D.fy || []).length)) {
+      body.innerHTML = `<p class="muted">The figures for this view have not been read for ${t(p.name)} yet: the scan reads a few dozen companies a run, largest first.</p>`;
+      return;
+    }
+    if (which === 'cash') {
+      qualitySection(body, c, (c.quarters || [])[0], false);
+      cashSection(body, c);
+    } else valuationSection(body, c, ticker, here);
+  }
+
+  // ---------- evidence drawer: where a figure comes from ----------
+  // A reference from pipeline/fsa.py is [concept index, how, [filing indexes], balance date?] into quality.src.
+  const HOW = {
+    '3m': 'Three-month figure as filed.',
+    ytd: 'Derived: the year-to-date figure minus the previous year-to-date figure of the same fiscal year (Q2 = H1 − Q1, Q3 = 9M − H1, Q4 = FY − 9M).',
+    fy: 'Full fiscal year as filed.',
+    bal: 'Balance sheet amount.',
+  };
+  const ev = { reg: new Map(), n: 0, c: null };
+  function evReset(c) { ev.reg.clear(); ev.n = 0; ev.c = c; }
+  // a figure the reader can open: payload = {title, value (formatted), period, ref} or {title, value, period, formula, inputs: [payload]}
+  function evBtn(text, payload, cls) {
+    if (!payload || (!payload.ref && !payload.formula)) return `<span class="${cls || ''}">${text}</span>`;
+    const id = 'e' + (++ev.n);
+    ev.reg.set(id, payload);
+    return `<button type="button" class="ev ${cls || ''}" data-ev="${id}" title="Where this figure comes from">${text}</button>`;
+  }
+  function evRefHTML(ref) {
+    const S = (ev.c && ev.c.quality && ev.c.quality.src) || { concepts: [], filings: [] };
+    if (!ref) return '<p class="muted">No XBRL fact behind this figure.</p>';
+    const [ci, how, fis, day] = ref, [concept, label] = S.concepts[ci] || ['?', ''];
+    const cik = ev.c.profile.cik;
+    const files = (fis || []).map((i) => S.filings[i]).filter(Boolean);
+    return `<dl class="ev-dl"><dt>XBRL concept</dt><dd><span class="mono">us-gaap:${t(concept)}</span>${label && label !== concept ? `<br><span class="muted">${t(label)}</span>` : ''}</dd>
+      <dt>How it was read</dt><dd>${t(HOW[how] || how)}${day ? ` ${date(day)}.` : ''}</dd>
+      <dt>${files.length > 1 ? 'Filings' : 'Filing'}</dt><dd>${files.length ? files.map(([accn, form, filed]) => `<a href="https://www.sec.gov/Archives/edgar/data/${cik}/${String(accn).replace(/-/g, '')}/${t(accn)}-index.htm" target="_blank" rel="noopener">${t(form || 'Filing')} filed ${date(filed)} ↗</a> <span class="mono muted">${t(accn)}</span>`).join('<br>') : '—'}</dd></dl>`;
+  }
+  function evOpen(payload, opener) {
+    let d = $('#ev-drawer');
+    if (!d) {
+      d = document.createElement('aside');
+      d.id = 'ev-drawer';
+      d.className = 'ev-drawer';
+      d.setAttribute('role', 'dialog');
+      d.setAttribute('aria-labelledby', 'ev-title');
+      document.body.appendChild(d);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && d.classList.contains('open')) evClose(); });
+    }
+    const kind = payload.kind || (payload.formula ? 'Derived' : 'Reported');
+    d.innerHTML = `<div class="ev-head"><div><span class="eyebrow">${t(kind)}</span><h2 id="ev-title">${t(payload.title)}</h2>
+        <p class="ev-val">${payload.value}${payload.period ? ` <span class="muted">· ${t(payload.period)}</span>` : ''}</p></div>
+        <button type="button" class="btn small" id="ev-close" aria-label="Close">✕</button></div>
+      ${payload.formula ? `<p class="ev-formula">${payload.formula}</p>` : ''}
+      ${payload.note ? `<p class="muted">${payload.note}</p>` : ''}
+      ${payload.ref ? evRefHTML(payload.ref) : ''}
+      ${(payload.inputs || []).length ? `<h3>Inputs</h3>${payload.inputs.map((x) => `<div class="ev-input"><p><b>${t(x.title)}</b> ${x.value}${x.period ? ` <span class="muted">· ${t(x.period)}</span>` : ''}</p>${x.ref ? evRefHTML(x.ref) : `<p class="muted">${t(x.note || 'Not reported for this period.')}</p>`}</div>`).join('')}` : ''}`;
+    d.classList.add('open');
+    d._opener = opener;
+    $('#ev-close', d).addEventListener('click', evClose);
+    $('#ev-close', d).focus();
+  }
+  function evClose() {
+    const d = $('#ev-drawer');
+    if (!d) return;
+    d.classList.remove('open');
+    if (d._opener && d._opener.isConnected) d._opener.focus();
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('[data-ev]');
+    if (b && ev.reg.has(b.dataset.ev)) { e.preventDefault(); evOpen(ev.reg.get(b.dataset.ev), b); }
+  });
+  window.addEventListener('hashchange', evClose);
+
+  // ---------- Cash & quality: net income → operating cash flow, and the cash conversion cycle ----------
+  const BRIDGE = { da: 'Depreciation and amortization', sbc: 'Share-based compensation', dtax: 'Deferred income taxes',
+    impair: 'Impairments', gain_inv: 'Gains on investments', gain_dis: 'Gains on disposals', other_nc: 'Other non-cash items',
+    d_ar: 'Receivables', d_inv: 'Inventories', d_ap: 'Payables', d_accr: 'Accrued liabilities', d_emp: 'Employee-related liabilities',
+    d_contract: 'Deferred revenue', d_casset: 'Contract assets', d_oassets: 'Prepaid and other assets', d_oliab: 'Other liabilities',
+    d_tax: 'Income taxes payable', d_onet: 'Other operating capital' };
+  const WC_KEYS = new Set(Object.keys(BRIDGE).filter((k) => k.startsWith('d_')));
+  const days = (v) => (v == null ? '—' : `${Math.round(v)}`);
+
+  function cashSection(body, c) {
+    const D = c.quality, P = c.profile || {};
+    const box = document.createElement('section');
+    box.className = 'section cashq';
+    box.setAttribute('aria-labelledby', 'cq-title');
+    const financial = P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''));
+    const st = { mode: (D.q || []).some((p) => p.bridge) ? 'q' : 'fy', end: null };
+    const list = () => (st.mode === 'fy' ? D.fy : D.q).filter((p) => p.wc || p.bridge);
+    if (!list().length && !(D.fy || []).some((p) => p.wc || p.bridge)) {
+      box.innerHTML = `<div class="section-head"><h2 id="cq-title">Where the cash went</h2></div><p class="muted">Working capital and the cash-flow bridge are read on the next scans for this company.</p>`;
+      body.appendChild(box);
+      return;
+    }
+    if (!list().length) st.mode = 'fy';
+    const ref = (p, k) => (p.ev || {})[k];
+    const per = (p) => `${p.label}${st.mode === 'q' ? '' : ' (fiscal year)'}`;
+
+    function bridgeHTML(p) {
+      const b = p.bridge;
+      if (!b) return `<p class="muted">${t(p.label)}: net income or operating cash flow is not tagged for this period.</p>`;
+      const rows = [['Net income' + (b.basis === 'pl' ? ' (incl. noncontrolling interests)' : ''), b.start, 'base', b.ref && b.ref.start]];
+      b.items.forEach(([k, v, r]) => rows.push([BRIDGE[k] || k, v, WC_KEYS.has(k) ? 'wc' : 'nc', r]));
+      rows.push(['Not explained by the tags', b.residual, 'gap', null]);
+      rows.push(['Operating cash flow', b.ocf, 'base', b.ref && b.ref.ocf]);
+      let run = 0;
+      const spans = rows.map(([, v, kind], i) => {
+        if (kind === 'base') { const s = [0, v]; run = v; return s; }
+        const s = [run, run + v]; run += v; return s;
+      });
+      const lo = Math.min(0, ...spans.flat()), hi = Math.max(0, ...spans.flat()), w = (hi - lo) || 1;
+      const pos = (v) => ((v - lo) / w * 100).toFixed(2);
+      const adj = b.items.reduce((s, x) => s + Math.abs(x[1]), 0);
+      return `<div class="cq-bridge" role="table" aria-label="Net income to operating cash flow, ${t(p.label)}">${rows.map(([label, v, kind, r], i) => {
+        const [a, z] = spans[i], left = pos(Math.min(a, z)), width = Math.max(0.4, Math.abs(pos(z) - pos(a))).toFixed(2);
+        const pay = { title: label, value: money(v), period: per(p), ref: r, kind: kind === 'gap' ? 'Derived' : 'Reported',
+          ...(kind === 'gap' ? { formula: `operating cash flow ${money(b.ocf)} − (net income ${money(b.start)} + tagged adjustments ${money(b.items.reduce((s, x) => s + x[1], 0))})`,
+            note: 'Adjustments the company reports under its own (extension) tags, or combines with others, land here. Nothing is filled in to make the bridge balance.' } : {}),
+          ...(kind !== 'base' && kind !== 'gap' ? { note: v < 0 ? 'Subtracted from net income: it lowered operating cash flow.' : 'Added to net income: it raised operating cash flow.' } : {}) };
+        return `<div class="cq-row ${kind}" role="row"><span role="rowheader">${t(label)}</span>
+          <span class="cq-track" role="cell"><i class="cq-bar ${kind}${kind === 'nc' || kind === 'wc' ? (v < 0 ? ' minus' : ' plus') : ''}" style="left:${left}%;width:${width}%"></i>${kind === 'base' ? '' : `<i class="cq-zero" style="left:${pos(0)}%"></i>`}</span>
+          <span class="num" role="cell">${evBtn((kind === 'base' ? '' : v > 0 ? '+' : '') + money(v), pay)}</span></div>`;
+      }).join('')}</div>
+      <p class="q-sum">${t(p.label)}: the tagged adjustments move ${money(b.start)} of net income to ${money(b.start + b.items.reduce((s, x) => s + x[1], 0))}; the company reports ${money(b.ocf)} of operating cash flow.
+        ${Math.abs(b.residual) <= 0.01 * Math.max(Math.abs(b.ocf), 1) ? '<span class="pos">The tags explain it fully.</span>' : `${money(Math.abs(b.residual))} is not explained by the standard tags (${adj ? Math.round(Math.abs(b.residual) / (adj + Math.abs(b.residual)) * 100) : 100}% of all adjustments), shown dashed.`}</p>`;
+    }
+    function daysChart(L, key, label, sel, note) {
+      const vals = L.map((p) => (p.wc || {})[key]);
+      const W = 300, H = 150, left = 34, top = 16, bottom = 24;
+      const ax = qAxis(vals.filter((v) => v != null), H, top, bottom);
+      const step = (W - left - 4) / L.length, bw = Math.min(22, step * 0.6);
+      let g = ax.ticks.map((v) => `<line class="${v === 0 ? 'q-zero' : 'q-gl'}" x1="${left}" x2="${W - 2}" y1="${ax.y(v).toFixed(1)}" y2="${ax.y(v).toFixed(1)}"/><text class="q-tick" x="${left - 4}" y="${(ax.y(v) + 4).toFixed(1)}" text-anchor="end">${Math.round(v)}</text>`).join('');
+      L.forEach((p, i) => {
+        const x = left + i * step + (step - bw) / 2, v = vals[i];
+        if (v != null) g += qRect(x, ax.y(0), ax.y(v), bw, `cq-d ${key}${p === sel ? ' on' : ''}`, `${p.label}: ${Math.round(v)} days`);
+        else g += `<text class="q-na" x="${(x + bw / 2).toFixed(1)}" y="${(ax.y(0) - 4).toFixed(1)}" text-anchor="middle">–</text>`;
+        if (i === 0 || i === Math.floor((L.length - 1) / 2) || i === L.length - 1)
+          g += `<text class="q-x${p === sel ? ' on' : ''}" x="${(x + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${t(p.label.replace(/^FY/, ''))}</text>`;
+      });
+      const v = (sel.wc || {})[key];
+      return `<article class="q-card cq-days"><div class="cq-days-head"><h3>${label}</h3><strong>${days(v)}<small> days</small></strong></div>
+        <svg class="q-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${label} by period">${g}</svg>${note ? `<p class="muted q-small">${note}</p>` : ''}</article>`;
+    }
+    function dayPayload(p, key) {
+      const w = p.wc || {}, R = (k) => ref(p, k);
+      const inp = (title, v, k) => ({ title, value: money(v), period: per(p), ref: R(k), note: v == null ? 'Not tagged for this date.' : '' });
+      const base = { title: { dso: 'Days sales outstanding', dio: 'Days inventory outstanding', dpo: 'Days payables outstanding', ccc: 'Cash conversion cycle' }[key],
+        value: `${days(w[key])} days`, period: per(p), kind: 'Derived' };
+      if (key === 'dso') return { ...base, formula: `average receivables (${money(w.ar_o)} + ${money(w.ar_c)}) ÷ 2 ÷ revenue ${money(w.rev)} × ${w.days} days`,
+        note: 'Total revenue stands in for credit sales (a proxy).', inputs: [inp('Receivables, opening', w.ar_o, 'ar_o'), inp('Receivables, closing', w.ar_c, 'ar_c'), inp('Revenue', w.rev, 'rev')] };
+      if (key === 'dio') return { ...base, formula: `average inventory (${money(w.inv_o)} + ${money(w.inv_c)}) ÷ 2 ÷ cost of revenue ${money(w.cor)} × ${w.days} days`,
+        inputs: [inp('Inventory, opening', w.inv_o, 'inv_o'), inp('Inventory, closing', w.inv_c, 'inv_c'), inp('Cost of revenue', w.cor, 'cor')] };
+      if (key === 'dpo') return { ...base, formula: `average payables (${money(w.ap_o)} + ${money(w.ap_c)}) ÷ 2 ÷ cost of revenue ${money(w.cor)} × ${w.days} days`,
+        note: `Cost of revenue stands in for purchases (a proxy).${w.ap_proxy ? ' Payables include accrued liabilities: the company tags them together.' : ''}`,
+        inputs: [inp('Payables, opening', w.ap_o, 'ap_o'), inp('Payables, closing', w.ap_c, 'ap_c'), inp('Cost of revenue', w.cor, 'cor')] };
+      return { ...base, formula: `DSO ${days(w.dso)} + DIO ${w.has_inv ? days(w.dio) : '0 (no inventory reported)'} − DPO ${days(w.dpo)}`,
+        inputs: [dayPayload(p, 'dso'), dayPayload(p, 'dio'), dayPayload(p, 'dpo')].map((x) => ({ ...x, ref: null, note: x.formula })) };
+    }
+    function tableHTML(L) {
+      const cell = (p, k, v) => evBtn(money(v), { title: { rev: 'Revenue', cor: 'Cost of revenue', ar_c: 'Receivables', inv_c: 'Inventory', ap_c: 'Payables' }[k], value: money(v), period: per(p), ref: ref(p, k) });
+      return `<div class="tbl-wrap"><table class="cq-table"><thead><tr><th>Period</th><th class="num">Revenue</th><th class="num">Cost of revenue</th><th class="num">Receivables</th><th class="num">Inventory</th><th class="num">Payables</th>
+        <th class="num">DSO</th><th class="num">DIO</th><th class="num">DPO</th><th class="num">CCC</th></tr></thead><tbody>${L.slice().reverse().map((p) => {
+          const w = p.wc || {};
+          return `<tr><td>${t(p.label)}</td><td class="num">${cell(p, 'rev', w.rev)}</td><td class="num">${cell(p, 'cor', w.cor)}</td><td class="num">${cell(p, 'ar_c', w.ar_c)}</td>
+            <td class="num">${w.has_inv ? cell(p, 'inv_c', w.inv_c) : '<span class="muted">none</span>'}</td><td class="num">${cell(p, 'ap_c', w.ap_c)}${w.ap_proxy ? '<sup>*</sup>' : ''}</td>
+            ${['dso', 'dio', 'dpo', 'ccc'].map((k) => `<td class="num">${w[k] == null ? '—' : evBtn(days(w[k]), dayPayload(p, k))}</td>`).join('')}</tr>`;
+        }).join('')}</tbody></table></div>
+        <p class="muted q-small">Balances at period end; days use the average of the opening and closing balance and need both. ${L.some((p) => (p.wc || {}).ap_proxy) ? '* Payables tagged together with accrued liabilities. ' : ''}Select any figure to see the XBRL fact and filing it comes from.</p>`;
+    }
+    function render() {
+      const L = list().slice(st.mode === 'fy' ? -5 : -8);
+      const sel = L.find((p) => p.end === st.end) || L[L.length - 1];
+      const w = sel.wc || {};
+      box.innerHTML = `<div class="section-head"><h2 id="cq-title">Where the cash went</h2>
+          <span class="muted">From net income to operating cash flow, and how long cash sits in receivables and inventory · the cash-flow statement and balance sheet, XBRL</span></div>
+        <div class="q-bar"><div class="seg" role="group" aria-label="Period type">
+            <button type="button" data-cm="q" class="${st.mode === 'q' ? 'on' : ''}" ${(D.q || []).some((p) => p.wc || p.bridge) ? '' : 'disabled'}>Quarters</button>
+            <button type="button" data-cm="fy" class="${st.mode === 'fy' ? 'on' : ''}" ${(D.fy || []).some((p) => p.wc || p.bridge) ? '' : 'disabled'}>Fiscal years</button></div>
+          <label class="q-pick">Period <select id="cq-period">${L.map((p) => `<option value="${t(p.end)}" ${p === sel ? 'selected' : ''}>${t(p.label)}</option>`).join('')}</select></label></div>
+        ${financial ? '<p class="q-warn">For banks, insurers and brokers, operating cash flow includes lending, deposit and trading flows, and receivables, inventory and payables do not describe the business: read these figures with care.</p>' : ''}
+        <article class="q-card"><h3>Net income → operating cash flow, ${t(sel.label)}</h3>
+          <p class="muted">The adjustments the cash-flow statement discloses, in its order. A dashed bar is what the standard tags do not explain.</p>
+          ${bridgeHTML(sel)}
+          <div class="q-legend"><span><i class="cq-bar plus nc"></i>Non-cash charges and gains</span><span><i class="cq-bar plus wc"></i>Working capital</span><span><i class="cq-gap-key"></i>Not explained</span></div></article>
+        <h3 class="cq-h3">Cash conversion cycle</h3>
+        <div class="cq-grid">
+          ${daysChart(L, 'dso', 'Receivables (DSO)', sel, 'Days of revenue not yet collected. Total revenue is a proxy for credit sales.')}
+          ${daysChart(L, 'dio', 'Inventory (DIO)', sel, w.has_inv === false ? 'No inventory reported.' : 'Days of cost of revenue held as inventory.')}
+          ${daysChart(L, 'dpo', 'Payables (DPO)', sel, 'Days of cost of revenue not yet paid. Cost of revenue is a proxy for purchases.')}
+          ${daysChart(L, 'ccc', 'Cash cycle (CCC)', sel, 'DSO + DIO − DPO: days between paying suppliers and collecting from customers.')}
+        </div>
+        ${tableHTML(L)}`;
+      $$('[data-cm]', box).forEach((b) => b.addEventListener('click', () => { st.mode = b.dataset.cm; st.end = null; render(); }));
+      const ps = $('#cq-period', box);
+      if (ps) ps.addEventListener('change', () => { st.end = ps.value; render(); });
+    }
+    render();
+    body.appendChild(box);
+  }
+
+  // ---------- Valuation: a forward FCFF DCF and what the price implies (web/fsa.js) ----------
+  async function valuationSection(body, c, ticker, here) {
+    const D = c.quality, V = D.val, P = c.profile || {};
+    const box = document.createElement('section');
+    box.className = 'section val';
+    box.setAttribute('aria-labelledby', 'v-title');
+    body.appendChild(box);
+    const financial = P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''));
+    if (!V || !V.revenue) {
+      box.innerHTML = `<div class="section-head"><h2 id="v-title">Valuation</h2></div><p class="muted">${financial
+        ? 'A free-cash-flow model does not describe banks, insurers or brokers, whose debt and cash flows are part of the business.'
+        : 'Trailing revenue and the balance sheet are read on the next scans for this company.'}</p>`;
+      return;
+    }
+    let px = null;
+    try {
+      const pr = await getJSON('prices.json');
+      const k = String(ticker || '').toUpperCase().replace(/[./]/g, '-');
+      if (pr && pr.p && pr.p[k]) px = { price: pr.p[k][0], mcap: pr.p[k][1], asof: pr.asof, source: pr.source };
+    } catch (e) { /* no price list: the reader enters one */ }
+    if (!here()) return;
+    const R = V.refs || {};
+    const rev = V.revenue, oi = V.oi, sh = V.diluted || V.outstanding;
+    const tr = V.pretax > 0 && V.tax != null ? Math.min(0.35, Math.max(0, V.tax / V.pretax)) : 0.21;
+    const qs = (D.q || []).filter((p) => p.wc && p.wc.rev != null);
+    const prior = qs.length >= 8 ? qs.slice(-8, -4).reduce((s, p) => s + p.wc.rev, 0) : null;
+    const g0 = prior > 0 ? Math.max(-0.2, Math.min(0.4, rev / prior - 1)) : 0.05;
+    const defaults = {
+      price: px ? px.price : null, shares: sh || null, years: 5,
+      growth: +(g0 * 100).toFixed(1), margin: oi != null ? +(oi / rev * 100).toFixed(1) : 10, tax: +(tr * 100).toFixed(1),
+      da: V.da != null ? +(V.da / rev * 100).toFixed(1) : 3, capex: V.capex != null ? +(V.capex / rev * 100).toFixed(1) : 4, wc: 10,
+      wacc: 9, g: 2.5, terminal: 'roic', roic: 15, lossTax: 'none',
+      debt: V.debt || 0, cash: V.cash_all || 0, claims: V.claims || 0, nonop: 0,
+      solveFor: 'growth', lo: -20, hi: 40,
+    };
+    let A = { ...defaults };
+    const periodTxt = V.basis === 'ttm' ? `trailing four quarters to ${date(V.end)}` : `fiscal year to ${date(V.end)}`;
+    const refsOf = (k) => (R[k] || []).filter(Boolean);
+    const rep = (title, val, k, note) => ({ title, value: money(val), period: periodTxt, ref: refsOf(k).length === 1 ? refsOf(k)[0] : null,
+      inputs: refsOf(k).length > 1 ? refsOf(k).map((r, i) => ({ title: `${title}, quarter ${i + 1} of 4`, value: '', ref: r })) : undefined,
+      kind: refsOf(k).length > 1 ? 'Derived (sum of four quarters)' : 'Reported', note });
+    const model = () => ({ rev0: rev, years: A.years, growth: A.growth / 100, margin: A.margin / 100, tax: A.tax / 100, da: A.da / 100,
+      capex: A.capex / 100, wc: A.wc / 100, wacc: A.wacc / 100, g: A.g / 100, terminal: A.terminal, roic: A.roic / 100, lossTax: A.lossTax,
+      debt: A.debt, cash: A.cash, claims: A.claims, nonop: A.nonop, shares: A.shares });
+    const pct = (v, d) => `${v < 0 ? '−' : ''}${Math.abs(v).toFixed(d == null ? 1 : d)}%`;
+    const usd = (v) => (v == null || !isFinite(v) ? '—' : `${v < 0 ? '−' : ''}$${Math.abs(v).toFixed(2)}`);
+    const field = (k, label, unit, opt) => {
+      const sc = (opt && opt.scale) || 1, v = A[k] == null ? '' : +(A[k] / sc).toFixed(sc > 1 ? 1 : 4);
+      return `<label class="v-f"><span>${label}${opt && opt.tag ? ` <em class="v-tag ${opt.tag}">${opt.tag}</em>` : ''}</span>
+      <span class="v-in"><input type="number" step="${opt && opt.step || 0.1}" data-k="${k}" data-scale="${sc}" value="${v}" ${opt && opt.min != null ? `min="${opt.min}"` : ''}>${unit ? `<i>${unit}</i>` : ''}</span></label>`;
+    };
+
+    function heat(grid, rows, cols, fmtR, fmtC, price, rl, cl, cap) {
+      const W = 360, H = 30 + rows.length * 26, left = 56, top = 26, cw = (W - left) / cols.length;
+      let g = '';
+      cols.forEach((cv, j) => { g += `<text class="q-tick" x="${(left + j * cw + cw / 2).toFixed(1)}" y="16" text-anchor="middle">${fmtC(cv)}</text>`; });
+      rows.forEach((rv, i) => {
+        g += `<text class="q-tick" x="${left - 6}" y="${(top + i * 26 + 17).toFixed(1)}" text-anchor="end">${fmtR(rv)}</text>`;
+        cols.forEach((cv, j) => {
+          const v = grid[i][j], ratio = price > 0 && isFinite(v) ? v / price : null;
+          const cls = ratio == null ? 'h-na' : ratio >= 1.2 ? 'h-up2' : ratio >= 1 ? 'h-up1' : ratio >= 0.8 ? 'h-dn1' : 'h-dn2';
+          g += `<rect class="${cls}" x="${(left + j * cw + 1).toFixed(1)}" y="${top + i * 26}" width="${(cw - 2).toFixed(1)}" height="24" rx="3"><title>${rl} ${fmtR(rv)}, ${cl} ${fmtC(cv)}: ${usd(v)} a share</title></rect>
+            <text class="h-txt" x="${(left + j * cw + cw / 2).toFixed(1)}" y="${(top + i * 26 + 16).toFixed(1)}" text-anchor="middle">${isFinite(v) ? (Math.abs(v) >= 1000 ? Math.round(v) : v.toFixed(0)) : '—'}</text>`;
+        });
+      });
+      return `<p class="muted q-small">Rows: ${t(rl)} · columns: ${t(cl)}</p><div class="q-scroll"><svg class="q-chart v-heat" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(cap)}">${g}</svg></div>`;
+    }
+
+    function render() {
+      const x = model(), r = FSA.dcf(x), price = A.price;
+      let out = '';
+      if (!r.ok) out = `<div class="q-warn">${r.errors.map(t).join('<br>')}</div>`;
+      else {
+        const up = price > 0 ? r.perShare / price - 1 : null;
+        const steps = [['Enterprise value', r.ev, 'v-ev'], ['− Debt', -A.debt, 'v-minus'], ['− Minority and preferred', -A.claims, 'v-minus'],
+          ['+ Cash and short-term investments', A.cash, 'v-plus'], ['+ Other nonoperating assets', A.nonop, 'v-plus'], ['= Equity value', r.equity, 'v-eq']].filter((s, i) => i === 0 || i === 5 || s[1]);
+        const hi = Math.max(...steps.map((s) => Math.abs(s[1])), 1);
+        out = `<div class="v-result"><div><small>Model value per share</small><strong>${usd(r.perShare)}</strong>
+              <span class="muted">${price > 0 ? `${up >= 0 ? '+' : '−'}${Math.abs(up * 100).toFixed(0)}% vs the price ${usd(price)}` : 'enter a price to compare'}</span></div>
+            <div><small>Enterprise value</small><strong>${money(r.ev)}</strong><span class="muted">terminal value ${r.ev > 0 ? Math.round(r.tvPv / r.ev * 100) + '%' : '—'} of it</span></div>
+            <div><small>Equity value</small><strong>${money(r.equity)}</strong><span class="muted">÷ ${(A.shares / 1e6).toFixed(0)}M diluted shares</span></div></div>
+          ${r.flags.length ? `<p class="q-warn">${r.flags.map((f) => t(f.charAt(0).toUpperCase() + f.slice(1))).join('. ')}. Treat this as a scenario to review, not an estimate.</p>` : ''}
+          <div class="v-bridge">${steps.map(([l, v, cls]) => `<div class="v-step ${cls}"><span>${t(l)}</span><i style="width:${(Math.abs(v) / hi * 100).toFixed(1)}%"></i><b>${money(v)}</b></div>`).join('')}</div>
+          <div class="tbl-wrap"><table class="v-table"><thead><tr><th>Year</th>${r.rows.map((x) => `<th class="num">+${x.t}</th>`).join('')}<th class="num">Terminal</th></tr></thead><tbody>
+            <tr><td>Revenue</td>${r.rows.map((x) => `<td class="num">${money(x.rev)}</td>`).join('')}<td></td></tr>
+            <tr><td>EBIT</td>${r.rows.map((x) => `<td class="num">${money(x.ebit)}</td>`).join('')}<td></td></tr>
+            <tr><td>NOPAT</td>${r.rows.map((x) => `<td class="num">${money(x.nopat)}</td>`).join('')}<td></td></tr>
+            <tr><td>+ D&amp;A − capex − Δ working capital</td>${r.rows.map((x) => `<td class="num">${money(x.da - x.capex - x.dwc)}</td>`).join('')}<td></td></tr>
+            <tr class="v-strong"><td>Free cash flow to the firm</td>${r.rows.map((x) => `<td class="num">${money(x.fcff)}</td>`).join('')}<td class="num">${money(r.fcffNext)}</td></tr>
+            <tr><td>Present value</td>${r.rows.map((x) => `<td class="num">${money(x.pv)}</td>`).join('')}<td class="num">${money(r.tvPv)}</td></tr>
+          </tbody></table></div>`;
+      }
+      // reverse: what the price needs, one parameter at a time
+      let revCard = '';
+      if (r.ok && price > 0) {
+        const P2 = { growth: ['Revenue growth (every forecast year)', '%'], margin: ['EBIT margin (every forecast year)', '%'], wacc: ['WACC', '%'] }[A.solveFor];
+        const s = FSA.solve(x, A.solveFor, price, A.lo / 100, A.hi / 100);
+        const msg = s.status === 'ok' ? `<p class="v-implied"><b>${pct(s.value * 100)}</b> ${t(P2[0].toLowerCase())} — with everything else as set — gives ${usd(price)} a share.
+              <span class="muted">Check: the forward model at ${pct(s.value * 100, 3)} gives ${usd(s.check)} (difference ${Math.abs(s.residual) < 0.005 ? 'under half a cent' : usd(s.residual)}).</span></p>`
+          : s.status === 'none' ? `<p class="q-warn">No ${t(P2[0].toLowerCase())} between ${A.lo}% and ${A.hi}% gives this price${s.range ? `: the model ranges from ${usd(s.range[0] + price)} to ${usd(s.range[1] + price)} a share` : ''}. Widen the range or change another assumption.</p>`
+            : s.status === 'multiple' ? `<p class="q-warn">More than one ${t(P2[0].toLowerCase())} gives this price (${s.brackets.map(([a, b]) => `${pct(a * 100)}–${pct(b * 100)}`).join(', ')}): narrow the range to pick one.</p>`
+              : '<p class="q-warn">The search did not converge in this range.</p>';
+        const gs = [-0.05, 0, 0.05, 0.1, 0.15, 0.2, 0.25].map((v) => +(v).toFixed(2));
+        const base = A.margin / 100, ms = [-0.1, -0.05, 0, 0.05, 0.1].map((d) => +(base + d).toFixed(3));
+        const grid = FSA.grid(x, 'margin', ms, 'growth', gs);
+        revCard = `<article class="q-card"><h3>What the price implies</h3>
+            <p class="muted">Solve for one assumption at a time, holding the others. A price cannot pin down growth, margin and risk together; the map below shows which combinations reach it.</p>
+            <div class="v-solve"><label class="q-pick">Solve for <select id="v-solve">${[['growth', 'Revenue growth'], ['margin', 'EBIT margin'], ['wacc', 'WACC']].map(([k, l]) => `<option value="${k}" ${A.solveFor === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+              ${field('lo', 'from', '%', { step: 1 })}${field('hi', 'to', '%', { step: 1 })}</div>
+            ${msg}
+            <h3 class="v-h3">Expectations map <span class="muted">· value per share at each growth × margin, against ${usd(price)}</span></h3>
+            ${heat(grid, ms, gs, (v) => pct(v * 100, 0), (v) => pct(v * 100, 0), price, 'Margin', 'Growth', 'Value per share by revenue growth and EBIT margin')}
+            <div class="q-legend"><span><i class="h-up2"></i>≥ 20% above the price</span><span><i class="h-up1"></i>0–20% above</span><span><i class="h-dn1"></i>0–20% below</span><span><i class="h-dn2"></i>more than 20% below</span></div>
+          </article>`;
+      }
+      let sens = '';
+      if (r.ok) {
+        const ws = [-2, -1, 0, 1, 2].map((d) => +(A.wacc / 100 + d / 100).toFixed(4)), gsn = [-1, -0.5, 0, 0.5, 1].map((d) => +(A.g / 100 + d / 100).toFixed(4));
+        sens = `<article class="q-card"><h3>Sensitivity: WACC × terminal growth</h3><p class="muted">Value per share; cells where WACC is not above growth are left blank.</p>
+          ${heat(FSA.grid(x, 'wacc', ws, 'g', gsn), ws, gsn, (v) => pct(v * 100), (v) => pct(v * 100), price || r.perShare, 'WACC', 'g', 'Value per share by WACC and terminal growth')}</article>`;
+      }
+      box.innerHTML = `<div class="section-head"><h2 id="v-title">Valuation</h2>
+          <span class="muted">A discounted cash flow model on the company’s reported figures. Reported figures start it; every forecast number is an assumption you can change. Not investment advice.</span></div>
+        ${financial ? '<p class="q-warn">A free-cash-flow model does not fit banks, insurers or brokers well: their debt and cash flows are part of the business.</p>' : ''}
+        <div class="v-grid">
+          <article class="q-card v-inputs"><h3>Starting point <span class="muted">· ${periodTxt}</span></h3>
+            <dl class="v-rep">
+              <dt>Revenue</dt><dd>${evBtn(money(rev), rep('Revenue', rev, 'revenue'))}</dd>
+              <dt>Operating income</dt><dd>${oi != null ? evBtn(money(oi), rep('Operating income', oi, 'oi')) : '—'} ${oi != null ? `<span class="muted">${pct(oi / rev * 100)} margin</span>` : ''}</dd>
+              <dt>Income tax</dt><dd>${V.tax != null ? evBtn(money(V.tax), rep('Income tax', V.tax, 'tax')) : '—'} <span class="muted">${V.pretax > 0 ? `${pct(V.tax / V.pretax * 100)} of pretax ${money(V.pretax)}` : 'pretax loss'}</span></dd>
+              <dt>D&amp;A · capex</dt><dd>${V.da != null ? evBtn(money(V.da), rep('Depreciation and amortization', V.da, 'da')) : '—'} · ${V.capex != null ? evBtn(money(V.capex), rep('Capital expenditures', V.capex, 'capex')) : '—'}</dd>
+              <dt>Debt</dt><dd>${evBtn(money(V.debt), { title: 'Debt', value: money(V.debt), period: `latest balance (${(V.bal_dates || []).map(date).join(', ')})`, kind: 'Derived', formula: t(V.debt_how || ''),
+                inputs: [['b_ltd', 'Long-term debt (incl. current)'], ['b_ltd_nc', 'Long-term debt, noncurrent'], ['b_ltd_c', 'Long-term debt, current'], ['b_debt_c', 'Debt, current'], ['b_stb', 'Short-term borrowings / commercial paper']]
+                  .filter(([k]) => V[k] != null).map(([k, l]) => ({ title: l, value: money(V[k]), ref: (R[k] || [])[0] })),
+                note: V.debt_how === 'no debt tagged' ? 'No standard debt tag was found: enter the debt from the balance sheet.' : 'Operating leases are not included.' })}${V.debt_how === 'no debt tagged' ? ' <span class="q-warmtext">not tagged: check</span>' : ''}</dd>
+              <dt>Cash and short-term investments</dt><dd>${evBtn(money(V.cash_all), { title: 'Cash and short-term investments', value: money(V.cash_all), kind: 'Derived', formula: 'cash and cash equivalents + short-term investments',
+                inputs: [['b_cash', 'Cash and cash equivalents'], ['b_sti', 'Short-term investments']].filter(([k]) => V[k] != null).map(([k, l]) => ({ title: l, value: money(V[k]), ref: (R[k] || [])[0] })) })}</dd>
+              <dt>Diluted shares</dt><dd>${sh ? evBtn(`${(sh / 1e6).toFixed(1)}M`, { title: V.diluted ? 'Diluted weighted-average shares' : 'Shares outstanding (cover page)', value: `${(sh / 1e6).toFixed(1)}M`, ref: (R[V.diluted ? 'diluted' : 'outstanding'] || [])[0] }) : '—'}</dd>
+              <dt>Price</dt><dd>${px ? `${usd(px.price)} <span class="muted">${t(px.source)}, ${date(px.asof)}</span>` : '<span class="muted">not available: enter one</span>'}</dd>
+            </dl>
+            <h3>Assumptions <span class="muted">· yours to change</span></h3>
+            <div class="v-fields">
+              ${field('price', 'Share price', '$', { step: 0.01, tag: px ? 'market' : 'enter' })}${field('shares', 'Diluted shares', 'M', { step: 1, scale: 1e6 })}
+              ${field('growth', 'Revenue growth', '%/yr', { tag: 'assumption' })}${field('margin', 'EBIT margin', '%', { tag: 'assumption' })}
+              ${field('tax', 'Tax rate', '%', { tag: 'assumption' })}${field('da', 'D&A', '% rev')}${field('capex', 'Capex', '% rev')}
+              ${field('wc', 'Working capital', '% of Δrev', { tag: 'assumption' })}${field('wacc', 'WACC', '%', { tag: 'assumption' })}${field('g', 'Terminal growth', '%', { tag: 'assumption' })}
+              <label class="v-f"><span>Terminal method</span><span class="v-in"><select data-k="terminal"><option value="roic" ${A.terminal === 'roic' ? 'selected' : ''}>Reinvestment = g ÷ ROIC</option><option value="simple" ${A.terminal === 'simple' ? 'selected' : ''}>Last FCFF × (1 + g)</option></select></span></label>
+              ${A.terminal === 'roic' ? field('roic', 'Terminal ROIC', '%', { tag: 'assumption' }) : ''}
+              <label class="v-f"><span>Tax on losses</span><span class="v-in"><select data-k="lossTax"><option value="none" ${A.lossTax === 'none' ? 'selected' : ''}>No benefit</option><option value="symmetric" ${A.lossTax === 'symmetric' ? 'selected' : ''}>Benefit at the tax rate</option></select></span></label>
+              ${field('debt', 'Debt', '$M', { step: 1, scale: 1e6 })}${field('cash', 'Cash + investments', '$M', { step: 1, scale: 1e6 })}${field('claims', 'Minority + preferred', '$M', { step: 1, scale: 1e6 })}${field('nonop', 'Other nonoperating assets', '$M', { step: 1, scale: 1e6 })}
+            </div>
+            <div class="v-actions"><button type="button" class="btn small" id="v-reset">Reset to the reported starting point</button><button type="button" class="btn small" id="v-export">Download scenario (JSON)</button></div>
+            <p class="muted q-small">Defaults: growth from the last four quarters against the four before (capped at −20%…40%); margin, D&amp;A and capex as a share of trailing revenue; tax from trailing tax ÷ pretax income (capped at 35%). WACC 9%, terminal growth 2.5%, ROIC 15% and working capital 10% of each revenue increase are placeholders, not estimates.</p>
+          </article>
+          <div class="v-out"><article class="q-card"><h3>Model result</h3>${out}</article>${revCard}${sens}</div>
+        </div>`;
+      bind();
+    }
+    function bind() {
+      $$('[data-k]', box).forEach((el) => el.addEventListener('change', () => {
+        const k = el.dataset.k;
+        A[k] = el.tagName === 'SELECT' ? el.value : (el.value === '' ? null : Number(el.value) * Number(el.dataset.scale || 1));
+        render();
+        const again = $(`[data-k="${k}"]`, box);
+        if (again) again.focus();
+      }));
+      const sv = $('#v-solve', box);
+      if (sv) sv.addEventListener('change', () => {
+        A.solveFor = sv.value;
+        [A.lo, A.hi] = { growth: [-20, 40], margin: [-20, 60], wacc: [Math.max(A.g + 0.5, 3), 25] }[sv.value];
+        render();
+      });
+      $('#v-reset', box).addEventListener('click', () => { A = { ...defaults }; render(); });
+      $('#v-export', box).addEventListener('click', () => {
+        const scenario = { schema: 'filing-flows-valuation-1', company: P.name, cik: P.cik, ticker, created: new Date().toISOString(),
+          starting_point: { basis: V.basis, end: V.end, revenue: rev, operating_income: oi, debt: V.debt, cash: V.cash_all, diluted_shares: sh, price: px },
+          assumptions: A, result: FSA.dcf(model()) };
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(scenario, null, 2)], { type: 'application/json' }));
+        a.download = `${(ticker || P.cik)}-dcf-scenario.json`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      });
+    }
+    render();
+  }
+
   // ---------- profit and cash: net income vs operating cash flow, accruals, reserve rollforwards ----------
   // Figures from pipeline/quality.py (SEC XBRL company facts). Definitions, waterfall and Crumb's transactions are
   // adapted from the Cash & Cookie Visual Lab prototype on the beta/fsa-chatgpt branch (created by ChatGPT (OpenAI)).
@@ -851,9 +1265,13 @@
           <label class="q-pick">Period <select id="q-period">${L.map((p) => `<option value="${t(p.end)}" ${p === sel ? 'selected' : ''}>${t(p.label)}</option>`).join('')}</select></label>
         </div>
         <div class="q-kpis">
-          ${kpi('Net income', money(sel.ni), sel.basis === 'pl' ? 'incl. noncontrolling interests' : '')}
-          ${kpi('Operating cash flow', money(sel.ocf), '')}
-          ${kpi('Accruals', a == null ? '—' : money(a), 'net income − operating cash flow', a == null ? '' : a > 0 ? 'q-warm' : 'q-cool')}
+          ${kpi('Net income', evBtn(money(sel.ni), { title: 'Net income', value: money(sel.ni), period: sel.label, ref: (sel.ev || {}).ni }), sel.basis === 'pl' ? 'incl. noncontrolling interests' : '')}
+          ${kpi('Operating cash flow', evBtn(money(sel.ocf), { title: 'Operating cash flow', value: money(sel.ocf), period: sel.label, ref: (sel.ev || {}).ocf }), '')}
+          ${kpi('Accruals', a == null ? '—' : evBtn(money(a), { title: 'Accruals', value: money(a), period: sel.label, formula: `net income ${money(sel.ni)} − operating cash flow ${money(sel.ocf)}`,
+            note: r == null ? '' : `Accrual ratio: accruals ÷ average total assets ((${money(sel.assets_open)} + ${money(sel.assets_close)}) ÷ 2).`,
+            inputs: [{ title: 'Net income', value: money(sel.ni), ref: (sel.ev || {}).ni }, { title: 'Operating cash flow', value: money(sel.ocf), ref: (sel.ev || {}).ocf },
+              ...(r == null ? [] : [{ title: 'Total assets, opening', value: money(sel.assets_open), ref: (sel.ev || {}).assets_open }, { title: 'Total assets, closing', value: money(sel.assets_close), ref: (sel.ev || {}).assets_close }])] }),
+            'net income − operating cash flow', a == null ? '' : a > 0 ? 'q-warm' : 'q-cool')}
           ${kpi('Accrual ratio', r == null ? '—' : `${sign(r)}${Math.abs(r * 100).toFixed(1)}%`, r == null ? 'total assets not tagged' : 'of average total assets')}
           ${kpi('Cash conversion', cv == null ? '—' : `${cv < 0 ? '−' : ''}${Math.abs(cv).toFixed(2)}×`, cv == null ? (sel.ni != null && sel.ni <= 0 ? 'not meaningful at a loss' : '') : 'operating cash ÷ net income')}
         </div>
@@ -2626,7 +3044,8 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
+      if ((m = /^c-(\d+)-(cash|value)$/.exec(h))) await analysisPage(m[1], m[2]);
+      else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
       else if ((m = /^([si])-([a-z0-9-]+?)(?:-(CY\d{4}Q\d))?$/.exec(h))) await group(m[1], m[2], m[3]);

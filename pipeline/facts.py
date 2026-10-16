@@ -64,14 +64,30 @@ def d(s):
 def index_facts(companyfacts):
     """concept -> {(start, end): fact} keeping the most recently filed fact per period (USD only). Balances are
     point-in-time facts (no start): those quality.INSTANTS needs go to "__instants__" as concept -> {day: fact}."""
-    from .quality import INSTANTS
-    out, names, inst = {}, {}, {}
+    from .quality import INSTANTS, SHARES
+    out, names, inst, shares = {}, {}, {}, {}
     out["__labels__"] = names                            # concept -> SEC's standard label, to say where a figure came from
-    out["__instants__"] = inst                           # total assets and reserve balances (pipeline/quality.py)
+    out["__instants__"] = inst                           # balances pipeline/quality.py reads (assets, reserves, debt, ...)
+    out["__shares__"] = shares                           # share counts: concept -> {(start, end) or end: fact}
+    for taxonomy in ("dei",):
+        for concept, body in companyfacts.get("facts", {}).get(taxonomy, {}).items():
+            if concept in SHARES:
+                names.setdefault(concept, body.get("label"))
+                for f in body.get("units", {}).get("shares", []):
+                    k = (f["start"], f["end"]) if "start" in f else f["end"]
+                    per = shares.setdefault(concept, {})
+                    if k not in per or f.get("filed", "") >= per[k].get("filed", ""):
+                        per[k] = f
     for taxonomy in ("us-gaap", "ifrs-full"):
         for concept, body in companyfacts.get("facts", {}).get(taxonomy, {}).items():
             names.setdefault(concept, body.get("label"))
             for unit, facts in body.get("units", {}).items():
+                if unit == "shares" and concept in SHARES and taxonomy == "us-gaap":
+                    per = shares.setdefault(concept, {})
+                    for f in facts:
+                        k = (f["start"], f["end"]) if "start" in f else f["end"]
+                        if k not in per or f.get("filed", "") >= per[k].get("filed", ""):
+                            per[k] = f
                 if unit != "USD":
                     continue
                 per = out.setdefault(concept, {})

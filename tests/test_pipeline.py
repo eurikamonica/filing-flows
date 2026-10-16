@@ -1873,3 +1873,49 @@ def test_quality_loans_net_writeoffs_and_untagged_difference():
     [r] = Q.compute(fx)["reserves"]
     assert (r["additions"], r["utilization"], r["calc"], r["diff"]) == (40, 35, 105, 5)     # 5 not tagged: shown
     assert not r["reconciled"] and not r["release_in_income"]
+
+
+def test_cash_bridge_residual_and_cash_cycle():
+    """fsa-beta/planning/02 acceptance: NI 100 + D&A 20 − receivables 15 + payables 5 = 110; reported OCF 112 → residual
+    2, shown. Missing opening inventory blocks DIO instead of using the closing balance alone."""
+    from pipeline import facts as F, quality as Q
+    fy = lambda v, s="2025-01-01", e="2025-12-31": [(s, e, v)]
+    fx = F.index_facts(_cf({
+        "Revenues": fy(365) + fy(300, "2024-01-01", "2024-12-31"),
+        "CostOfRevenue": fy(182.5),
+        "NetIncomeLoss": fy(100) + fy(90, "2024-01-01", "2024-12-31"),
+        "NetCashProvidedByUsedInOperatingActivities": fy(112),
+        "DepreciationDepletionAndAmortization": fy(20),
+        "IncreaseDecreaseInAccountsReceivable": fy(15),          # receivables up 15: uses cash
+        "IncreaseDecreaseInAccountsPayable": fy(5),               # payables up 5: provides cash
+        "AccountsReceivableNetCurrent": [(None, "2024-12-31", 30), (None, "2025-12-31", 50)],
+        "AccountsPayableCurrent": [(None, "2024-12-31", 20), (None, "2025-12-31", 30)],
+        "InventoryNet": [(None, "2025-12-31", 40)],               # no opening balance
+        "LongTermDebt": [(None, "2025-12-31", 70)],
+        "ShortTermBorrowings": [(None, "2025-12-31", 5)],
+        "CashAndCashEquivalentsAtCarryingValue": [(None, "2025-12-31", 25)],
+    }))
+    y = {p["end"]: p for p in Q.compute(fx)["fy"]}["2025-12-31"]
+    b = y["bridge"]
+    assert b["start"] == 100 and b["ocf"] == 112
+    assert [(k, v) for k, v, _ in b["items"]] == [("da", 20), ("d_ar", -15), ("d_ap", 5)]
+    assert b["residual"] == 2
+    w = y["wc"]
+    assert round(w["dso"], 6) == round(40 / 365 * 365, 6)      # average receivables 40 ÷ revenue 365 × 365 days
+    assert round(w["dpo"], 6) == round(25 / 182.5 * 365, 6)
+    assert w["has_inv"] and w["inv_o"] is None and w["dio"] is None and w["ccc"] is None
+    v = Q.compute(fx)["val"]
+    assert v["basis"] == "fy" and v["debt"] == 75 and v["cash_all"] == 25
+
+
+def test_evidence_points_at_the_filing():
+    from pipeline import facts as F, quality as Q
+    cf = _cf({"Revenues": [("2025-01-01", "2025-12-31", 10)], "NetIncomeLoss": [("2025-01-01", "2025-12-31", 3)],
+              "NetCashProvidedByUsedInOperatingActivities": [("2025-01-01", "2025-12-31", 4)]})
+    for c in cf["facts"]["us-gaap"].values():
+        for f in c["units"]["USD"]:
+            f.update(accn="0000000001-26-000001", form="10-K")
+    out = Q.compute(F.index_facts(cf))
+    ci, how, fis = out["fy"][0]["ev"]["ni"]
+    assert out["src"]["concepts"][ci][0] == "NetIncomeLoss" and how == "fy"
+    assert out["src"]["filings"][fis[0]] == ["0000000001-26-000001", "10-K", "2026-02-01"]

@@ -47,7 +47,7 @@ def main():
     if args.inline:
         css = open(os.path.join(WEB, "styles.css"), encoding="utf-8").read()
         html = html.replace('<link rel="stylesheet" href="styles.css">', f"<style>\n{css}</style>")
-        for name in ("sankey.js", "app.js"):
+        for name in ("sankey.js", "fsa.js", "app.js"):
             js = open(os.path.join(WEB, name), encoding="utf-8").read()
             html = html.replace(f'<script src="{name}"></script>', f"<script>\n{js}</script>")
         if args.fragment:
@@ -57,7 +57,7 @@ def main():
             scripts = re.findall(r"<script>.*?</script>", html, re.S)
             html = "\n".join(keep) + "\n" + shell + "\n".join(scripts) + "\n"
     else:
-        for name in ("styles.css", "sankey.js", "app.js", "favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"):
+        for name in ("styles.css", "sankey.js", "fsa.js", "app.js", "favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"):
             shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
     open(os.path.join(args.out, "index.html"), "w", encoding="utf-8").write(html)
     data_out = os.path.join(args.out, "data")

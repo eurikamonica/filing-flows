@@ -1042,6 +1042,7 @@ def run(args):
     store.commit()
     render(store, args.out, set(stars))
     company_list(args.out)
+    price_list(args.out)
 
 
 def company_list(out):
@@ -1063,6 +1064,29 @@ def company_list(out):
         json.dump({"generated": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z", "companies": rows}, f,
                   separators=(",", ":"))
     print(f"company list: {len(rows)} SEC companies")
+
+
+def price_list(out):
+    """data/prices.json: the last price and market value of every company on the site (Nasdaq's screener: one request,
+    delayed; "asof" is the session it belongs to) — the Valuation tab's default price, which the reader can change."""
+    if sec.FIXTURES:
+        return
+    from . import quotes
+    try:
+        allq = quotes.nasdaq_all()
+    except Exception as e:
+        print(f"::warning::prices not fetched ({str(e)[:120]}); the Valuation tab asks the reader for a price")
+        return
+    try:
+        tickers = {quotes.canon(c["ticker"]) for c in json.load(open(os.path.join(out, "index.json")))["companies"] if c.get("ticker")}
+    except Exception:
+        tickers = set(allq)
+    asof = next((q["asof"] for q in allq.values() if q.get("asof")), None)
+    rows = {t: [q["price"], q.get("mcap")] for t, q in allq.items() if t in tickers}
+    with open(os.path.join(out, "prices.json"), "w") as f:
+        json.dump({"asof": asof, "fetched": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                   "source": "Nasdaq (delayed)", "p": rows}, f, separators=(",", ":"))
+    print(f"prices: {len(rows)} companies, as of {asof or 'an unstated session'}")
 
 
 def _process_one(store, st, accn, p, stars, now):

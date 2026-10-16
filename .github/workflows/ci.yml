@@ -64,8 +64,10 @@ jobs:
           python -m playwright install chromium || echo "using the runner's Chrome"
           python -m pytest -q -rf tests > pytest.log 2>&1 || { grep -E "^(FAILED|ERROR) " pytest.log | head -30 | sed 's/^/::error::/'; tail -30 pytest.log; exit 1; }
           tail -3 pytest.log
-      - name: Site JavaScript syntax
-        run: for f in web/*.js; do node --check "$f"; done
+      - name: Site JavaScript syntax and valuation math
+        run: |
+          for f in web/*.js; do node --check "$f"; done
+          node tests/test_fsa.cjs
       - name: Hub unit and template tests
         working-directory: disclosures
         run: |
