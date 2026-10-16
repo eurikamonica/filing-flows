@@ -1921,6 +1921,85 @@ def test_evidence_points_at_the_filing():
     assert out["src"]["filings"][fis[0]] == ["0000000001-26-000001", "10-K", "2026-02-01"]
 
 
+# ---------- "Capital allocation" tab (pipeline/capital.py) ----------
+def test_capital_allocation_sources_uses_and_reconciliation():
+    """Every line is a tagged cash flow; other investing / financing = each section's total minus the lines shown; what
+    the sections do not explain against the change in cash is "unrec"; the items add up to zero (sources = uses)."""
+    from pipeline import facts as F, quality as Q
+    fy = lambda v: [("2025-01-01", "2025-12-31", v)]
+    fx = F.index_facts(_cf({
+        "NetIncomeLoss": fy(80), "NetCashProvidedByUsedInOperatingActivities": fy(100),
+        "PaymentsToAcquirePropertyPlantAndEquipment": fy(30), "PaymentsToAcquireBusinessesNetOfCashAcquired": fy(10),
+        "ProceedsFromSaleOfPropertyPlantAndEquipment": fy(2), "NetCashProvidedByUsedInInvestingActivities": fy(-50),
+        "PaymentsForRepurchaseOfCommonStock": fy(40), "PaymentsOfDividendsCommonStock": fy(15),
+        "ProceedsFromIssuanceOfLongTermDebt": fy(20), "RepaymentsOfLongTermDebt": fy(5),
+        "NetCashProvidedByUsedInFinancingActivities": fy(-41),
+        "EffectOfExchangeRateOnCashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": fy(-1),
+        "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect": fy(6),
+    }))
+    out = Q.compute(fx)
+    p = out["cap"]["fy"][-1]
+    assert p["items"] == {"ocf": 100, "capex": -30, "acq": -10, "sales": 2, "buyback": -40, "div": -15, "borrow": 15,
+                          "fx": -1, "inv_other": -12, "fin_other": -1, "unrec": -2, "cash": -6}
+    assert sum(p["items"].values()) == 0
+    assert [v for v, _ in p["ev"]["borrow"]] == [20, -5]                 # gross figures kept for the evidence
+    name = lambda ref: out["src"]["concepts"][ref[0]][0]
+    assert name(p["ev"]["capex"][0][1]) == "PaymentsToAcquirePropertyPlantAndEquipment" and p["ev"]["capex"][0][0] == -30
+    assert p["flags"] == []                                              # 2 of 102 moved: under the 5% flag
+
+
+def test_capital_debt_fit_and_withholding_inside_buybacks():
+    """Apple tags its commercial paper twice (the statement's net line and its split by maturity from the notes);
+    Microsoft's buyback line already contains the taxes paid on employee shares. The combination that adds up to the
+    financing total wins, with the fewest tags and statement lines before the notes' breakdown."""
+    from pipeline import facts as F, quality as Q
+    fy = lambda v: [("2025-01-01", "2025-12-31", v * 1e9)]                # $ billions (fits allow $1M of rounding)
+    base = {"NetIncomeLoss": fy(80), "NetCashProvidedByUsedInOperatingActivities": fy(100),
+            "PaymentsForRepurchaseOfCommonStock": fy(50), "PaymentsOfDividendsCommonStock": fy(10),
+            "PaymentsRelatedToTaxWithholdingForShareBasedCompensation": fy(7),
+            "ProceedsFromPaymentsForOtherFinancingActivities": fy(-1),
+            "ProceedsFromIssuanceOfLongTermDebt": fy(10), "RepaymentsOfLongTermDebt": fy(4),
+            "ProceedsFromRepaymentsOfCommercialPaper": fy(-2),                       # the statement line
+            "ProceedsFromRepaymentsOfShortTermDebtMaturingInThreeMonthsOrLess": fy(-5),  # ... and its breakdown
+            "ProceedsFromShortTermDebtMaturingInMoreThanThreeMonths": fy(6),
+            "RepaymentsOfShortTermDebtMaturingInMoreThanThreeMonths": fy(3)}
+    # taxes on employee shares are a line of their own: −50 −10 −7 −1 + 10 − 4 − 2 = −64
+    p = Q.compute(F.index_facts(_cf({**base, "NetCashProvidedByUsedInFinancingActivities": fy(-64)})))["cap"]["fy"][-1]
+    assert p["items"]["borrow"] == 4e9 and p["items"]["withhold"] == -7e9 and p["items"]["fin_other"] == -1e9
+    assert p["debt"]["fit"] and len(p["ev"]["borrow"]) == 3
+    # ... or inside the buybacks (the total is 7 smaller in magnitude): not counted twice
+    p = Q.compute(F.index_facts(_cf({**base, "NetCashProvidedByUsedInFinancingActivities": fy(-57)})))["cap"]["fy"][-1]
+    assert p["items"]["borrow"] == 4e9 and "withhold" not in p["items"] and p["debt"]["withhold_inside"] == 7e9
+    assert p["items"]["fin_other"] == -1e9
+
+
+def test_capital_trailing_twelve_months_shares_and_maturities():
+    """TTM = last fiscal year + this year to date − the same period a year earlier (a trailing-twelve-month fact some
+    filers add, as Amazon does, is not mistaken for the year to date). A share count that jumps tenfold is flagged as a
+    split; a debt maturity schedule older than the last two 10-Ks is not shown."""
+    from pipeline import facts as F, quality as Q
+    cf = _cf({
+        "NetIncomeLoss": [("2024-01-01", "2024-12-31", 50), ("2025-01-01", "2025-12-31", 80), ("2026-04-01", "2026-06-30", 20)],
+        "NetCashProvidedByUsedInOperatingActivities": [("2025-01-01", "2025-12-31", 100), ("2026-01-01", "2026-06-30", 60),
+                                                       ("2025-01-01", "2025-06-30", 40), ("2025-07-01", "2026-06-30", 999)],
+        "LongTermDebtMaturitiesRepaymentsOfPrincipalInNextTwelveMonths": [(None, "2025-12-31", 5), (None, "2021-12-31", 9)],
+        "LongTermDebtMaturitiesRepaymentsOfPrincipalInYearTwo": [(None, "2025-12-31", 6), (None, "2021-12-31", 9)],
+        "LongTermDebtMaturitiesRepaymentsOfPrincipalAfterYearFive": [(None, "2025-12-31", 30), (None, "2021-12-31", 9)],
+        "CashAndCashEquivalentsAtCarryingValue": [(None, "2025-12-31", 12)],
+    })
+    cf["facts"]["us-gaap"]["WeightedAverageNumberOfDilutedSharesOutstanding"] = {"units": {"shares": [
+        {"start": "2024-01-01", "end": "2024-12-31", "val": 100e6, "filed": "2025-02-01"},
+        {"start": "2025-01-01", "end": "2025-12-31", "val": 1000e6, "filed": "2026-02-01"}]}}
+    out = Q.compute(F.index_facts(cf))
+    ttm = out["cap"]["ttm"]
+    assert ttm["label"] == "TTM to Q2 2026" and ttm["items"]["ocf"] == 120
+    assert ttm["ev"]["ocf"][0][1][1] == "ttm"
+    sh = out["cap"]["shares"]
+    assert [r["diluted"] for r in sh] == [100e6, 1000e6] and sh[1]["split"] == ["diluted"]
+    m = out["cap"]["maturities"]
+    assert m["at"] == "2025-12-31" and [(b, v) for b, v, _ in m["buckets"]] == [(1, 5), (2, 6), (6, 30)] and m["cash"] == 12
+
+
 def test_posts_are_never_cut_off_and_say_something():
     """Oct 16 2026: drafts went to Buffer as '$FNGR 8-K filed Sept 29: entered a definitive #earnings #stocks' and
     'JUST FILED · $FNGR Q2 FY2 #13F' — model answers cut at max_tokens, hashtags glued on. Such posts are rejected."""

@@ -712,7 +712,7 @@
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
   // ---------- company tabs: Earnings · Cash & quality · Valuation ----------
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Cash & quality'], ['value', 'Valuation']]
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Cash & quality'], ['capital', 'Capital allocation'], ['value', 'Valuation']]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   async function analysisPage(cik, which) {
@@ -744,7 +744,8 @@
     if (which === 'cash') {
       qualitySection(body, c, (c.quarters || [])[0], false);
       cashSection(body, c);
-    } else valuationSection(body, c, ticker, here);
+    } else if (which === 'capital') capitalSection(body, c, ticker);
+    else valuationSection(body, c, ticker, here);
   }
 
   // ---------- evidence drawer: where a figure comes from ----------
@@ -753,6 +754,7 @@
     '3m': 'Three-month figure as filed.',
     ytd: 'Derived: the year-to-date figure minus the previous year-to-date figure of the same fiscal year (Q2 = H1 − Q1, Q3 = 9M − H1, Q4 = FY − 9M).',
     fy: 'Full fiscal year as filed.',
+    ttm: 'Derived: trailing twelve months = the last full fiscal year + this fiscal year to date − the same period a year earlier (three filings).',
     bal: 'Balance sheet amount.',
   };
   const ev = { reg: new Map(), n: 0, c: null };
@@ -933,6 +935,339 @@
       $$('[data-cm]', box).forEach((b) => b.addEventListener('click', () => { st.mode = b.dataset.cm; st.end = null; render(); }));
       const ps = $('#cq-period', box);
       if (ps) ps.addEventListener('change', () => { st.end = ps.value; render(); });
+    }
+    render();
+    body.appendChild(box);
+  }
+
+  // ---------- Capital allocation: where the cash came from and went, the share count, debt maturities ----------
+  // Figures from pipeline/capital.py: items are cash effects (+ in, − out); ev[key] = [[cash effect, ref], ...].
+  const CAP = {
+    ocf: ['Operating cash flow', 'Operating cash outflow'], borrow: ['Net borrowing', 'Debt repaid, net'],
+    stock: ['Shares issued', 'Shares issued'], sales: ['Asset and business sales', 'Asset and business sales'],
+    nci: ['From partners in subsidiaries', 'To partners in subsidiaries'], inv_other: ['Other investing, net', 'Other investing, net'],
+    fin_other: ['Other financing, net', 'Other financing, net'], fx: ['Exchange-rate effect', 'Exchange-rate effect'],
+    unrec: ['Not reconciled', 'Not reconciled'], cash: ['Drawn from cash on hand', 'Added to cash'],
+    capex: ['Capital expenditures', 'Capital expenditures'], realestate: ['Real estate bought', 'Real estate bought'],
+    acq: ['Acquisitions', 'Acquisitions'], buyback: ['Share buybacks', 'Share buybacks'], div: ['Dividends', 'Dividends'],
+    withhold: ['Taxes paid on employee shares', 'Taxes paid on employee shares'],
+  };
+  const capName = (k, v) => (CAP[k] || [k, k])[v >= 0 ? 0 : 1];
+  const CAP_ROW_NAME = { ocf: 'Operating cash flow', capex: 'Capital expenditures', realestate: 'Real estate bought', acq: 'Acquisitions',
+    sales: 'Asset and business sales', inv_other: 'Other investing, net', buyback: 'Share buybacks', div: 'Dividends',
+    withhold: 'Taxes paid on employee shares', stock: 'Shares issued', borrow: 'Borrowing, net of repayments', nci: 'Partners in subsidiaries, net',
+    fin_other: 'Other financing, net', fx: 'Exchange-rate effect', unrec: 'Not reconciled', cash: 'Change in cash' };
+  const CAP_ROWS = ['ocf', 'capex', 'realestate', 'acq', 'sales', 'inv_other', 'buyback', 'div', 'withhold', 'stock', 'borrow', 'nci', 'fin_other', 'fx', 'unrec', 'cash'];
+  const CAP_SRC = ['ocf', 'borrow', 'stock', 'sales', 'nci', 'inv_other', 'fin_other', 'fx', 'unrec', 'cash'];
+  const CAP_GROUPS = [['burn', null, ['ocf']], ['reinvest', 'Reinvested in the business', ['capex', 'realestate', 'acq']],
+    ['returned', 'Returned to shareholders', ['buyback', 'div']], ['debt', null, ['borrow']],
+    ['other', 'Other uses', ['withhold', 'nci', 'stock', 'sales', 'inv_other', 'fin_other', 'fx', 'unrec']]];
+  const capShare = (v, tot) => { const s = tot ? Math.abs(v) / tot * 100 : 0; return `${s < 10 ? s.toFixed(1) : Math.round(s)}%`; };
+  const fmtShares = (v) => (v == null ? '—' : v >= 0.95e9 ? `${(v / 1e9).toFixed(2)}B` : `${(v / 1e6).toFixed(1)}M`);
+
+  function capitalSection(body, c, ticker) {
+    const D = c.quality, K = D.cap, P = c.profile || {};
+    const box = document.createElement('section');
+    box.className = 'section capital';
+    box.setAttribute('aria-labelledby', 'ca-title');
+    const name = S.dec(P.name || '');
+    if (!K || !((K.fy || []).length || K.ttm || (K.shares || []).length || K.maturities)) {
+      box.innerHTML = `<div class="section-head"><h2 id="ca-title">Capital allocation</h2></div><p class="muted">Capital allocation is read on the next scans for this company: a few dozen companies a run, largest first.</p>`;
+      body.appendChild(box);
+      return;
+    }
+    const financial = P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''));
+    const periods = (K.fy || []).concat(K.ttm ? [K.ttm] : []);
+    const st = { end: ((K.fy || []).length ? K.fy[K.fy.length - 1] : K.ttm || {}).end, scene: null };
+    const S0 = D.src || { concepts: [] };
+    const per = (p) => `${p.label}${p.kind === 'ttm' ? ' (trailing twelve months)' : ' (fiscal year)'}`;
+    const prevOf = (p) => (p.kind === 'fy' ? (K.fy || [])[(K.fy || []).indexOf(p) - 1] : null);
+    const label = (ref) => { const x = S0.concepts[ref[0]]; return x ? S.dec(x[1] || x[0]) : 'XBRL fact'; };
+
+    // ---- the evidence for one line
+    function partsPayload(p, k, parts, title) {
+      if (parts.length === 1) return { title, value: money(parts[0][0]), period: per(p), ref: parts[0][1] };
+      return { title, value: money(parts.reduce((s, x) => s + x[0], 0)), period: per(p), kind: 'Reported',
+        formula: parts.map(([v]) => money(v)).join(' + ').replace(/\+ −/g, '− '),
+        inputs: parts.map(([v, r]) => ({ title: label(r), value: money(v), period: per(p), ref: r })) };
+    }
+    function capPayload(p, k) {
+      const it = p.items, v = it[k], ev1 = (key) => ((p.ev || {})[key] || [])[0];
+      const title = capName(k, v);
+      const total = (key, t2) => { const e = ev1(key); return { title: t2, value: money(e ? e[0] : null), period: per(p), ref: e && e[1] }; };
+      if (k === 'inv_other' || k === 'fin_other') {
+        const inv = k === 'inv_other', tot = inv ? p.inv : p.fin;
+        const keys = (inv ? ['capex', 'realestate', 'acq', 'sales'] : ['buyback', 'div', 'withhold', 'stock', 'borrow', 'nci']).filter((x) => it[x] != null);
+        return { title, value: money(v), period: per(p), kind: 'Derived',
+          formula: `${inv ? 'investing' : 'financing'} cash flow ${money(tot)} − the lines shown ${money(keys.reduce((s, x) => s + it[x], 0))}`,
+          note: inv ? 'Everything else in the investing section: usually purchases and sales of securities, and lines the company reports under tags of its own.'
+            : 'Everything else in the financing section: lines the company reports under tags of its own or that are not split out here (for banks, deposits).',
+          inputs: [total(inv ? 'inv' : 'fin', `Net cash from ${inv ? 'investing' : 'financing'} activities`)]
+            .concat(keys.map((x) => ({ ...capPayload(p, x), note: 'A line shown separately.' }))) };
+      }
+      if (k === 'unrec') {
+        return { title, value: money(v), period: per(p), kind: 'Derived',
+          formula: `change in cash ${money(p.dcash)} − (operating ${money(it.ocf)} + investing ${money(p.inv)} + financing ${money(p.fin)}${it.fx != null ? ` + exchange rate ${money(it.fx)}` : ''})`,
+          note: 'Usually cash flows of discontinued operations, reported outside the three sections. A large figure can also mean a tagging error in the filing: check the cash-flow statement.',
+          inputs: [total('dcash', 'Change in cash and equivalents'), total('ocf', 'Operating cash flow'), total('inv', 'Investing cash flow'), total('fin', 'Financing cash flow')]
+            .concat(it.fx != null ? [total('fx', 'Exchange-rate effect')] : []) };
+      }
+      if (k === 'cash') {
+        const parts = (p.ev || {}).dcash || [];
+        if (!parts.length) return { title, value: money(-v), period: per(p), kind: 'Derived', formula: 'operating + investing + financing cash flow + exchange-rate effect',
+          note: 'The change in cash is not tagged for this period: it is what the sections add up to.' };
+        return { ...partsPayload(p, k, parts, 'Change in cash and equivalents'), title,
+          note: v > 0 ? 'Cash, cash equivalents and restricted cash fell by this much: the uses were larger than the inflows.' : 'Cash, cash equivalents and restricted cash grew by this much.' };
+      }
+      const parts = (p.ev || {})[k] || [];
+      if (!parts.length) return { title, value: money(v), period: per(p), kind: 'Reported' };
+      const pay = partsPayload(p, k, parts, title);
+      const notes = [];
+      if (k === 'borrow') {
+        notes.push('Debt is shown net: everything borrowed minus everything repaid (positive figures are borrowing, negative repayments).');
+        if (p.debt && p.debt.fit) notes.push('The company tags its cash-flow lines and their breakdown from the notes: the combination of debt tags that, with the other lines, adds up to the financing total is used.');
+        if (p.debt && p.debt.withhold_inside) notes.push(`Taxes paid on employee shares (${money(p.debt.withhold_inside)}) are part of another line here, so they are not counted again.`);
+      }
+      if (k === 'capex' && parts.length === 1) notes.push('Payments for property, plant and equipment as tagged; where several capital-expenditure tags exist, the largest.');
+      if (k === 'withhold') notes.push('Cash paid to tax authorities for employees instead of issuing them all their vested shares: it reduces the share count like a buyback.');
+      if (k === 'nci') notes.push('Money from or to minority partners in subsidiaries (noncontrolling interests).');
+      if (k === 'fx') notes.push('The change in the dollar value of cash held in other currencies.');
+      return notes.length ? { ...pay, note: notes.join(' ') } : pay;
+    }
+
+    // ---- the Sankey: sources → cash to allocate → uses
+    function spec(p) {
+      const it = p.items, prev = prevOf(p);
+      const total = Object.values(it).filter((v) => v > 0).reduce((s, v) => s + v, 0);
+      const small = total * 0.012, nodes = [], links = [], pay = new Map();
+      const yoy = (k, v) => {
+        if (!prev) return null;
+        const pv = (prev.items || {})[k];
+        if (pv == null) return `none in ${prev.label}`;
+        if (Math.sign(pv) !== Math.sign(v)) return `Y/Y n/m · ${prev.label}: ${capName(k, pv).toLowerCase()} ${money(Math.abs(pv))}`;
+        return `Y/Y ${pct((Math.abs(v) / Math.abs(pv) - 1) * 100)}`;
+      };
+      const node = (id, col, color, nm, v, posn, k, payload) => {
+        const lines = [['name', nm], ['val', `${money(Math.abs(v))} · ${capShare(v, total)} of the total`]];
+        const y = k ? yoy(k, v) : null;
+        if (y) lines.push(['mut', y]);
+        nodes.push({ id, col, color, name: nm, pos: posn, v: Math.abs(v), lines });
+        if (payload) pay.set(id, payload);
+      };
+      node('pool', 1, 'rev', 'Cash to allocate', total, 'above', null, { title: 'Cash to allocate', value: money(total), period: per(p), kind: 'Derived',
+        formula: 'the inflows on the left = the uses on the right',
+        note: 'Operating cash flow and every other inflow of the period, with cash drawn from the balance sheet when cash fell. Every band is cash; nothing is estimated.' });
+      // sources
+      let other = 0; const otherKeys = [];
+      CAP_SRC.forEach((k) => {
+        const v = it[k];
+        if (!(v > 0)) return;
+        if (v < small && k !== 'ocf') { other += v; otherKeys.push(k); return; }
+        node('s_' + k, 0, k === 'ocf' ? 'profit' : 'noncash', capName(k, v), v, 'left', k, capPayload(p, k));
+        links.push({ s: 's_' + k, t: 'pool', v, color: k === 'ocf' ? 'profit' : 'noncash' });
+      });
+      if (other > 0) {
+        node('s_small', 0, 'noncash', 'Other inflows', other, 'left', null, { title: 'Other inflows', value: money(other), period: per(p), kind: 'Derived',
+          formula: otherKeys.map((k) => `${capName(k, it[k])} ${money(it[k])}`).join(' + '), inputs: otherKeys.map((k) => capPayload(p, k)) });
+        links.push({ s: 's_small', t: 'pool', v: other, color: 'noncash' });
+      }
+      // uses, grouped
+      CAP_GROUPS.forEach(([g, gname, keys]) => {
+        let leaves = keys.filter((k) => it[k] < 0).map((k) => [k, -it[k]]);
+        if (g === 'other') {                                   // the small ones in one leaf
+          const tiny = leaves.filter(([, v]) => v < small);
+          leaves = leaves.filter(([, v]) => v >= small);
+          if (tiny.length) leaves.push(['_tiny', tiny.reduce((s, [, v]) => s + v, 0), tiny]);
+        }
+        if (!leaves.length) return;
+        const sum = leaves.reduce((s, [, v]) => s + v, 0);
+        const leafPay = (k, v, tiny) => (k === '_tiny' ? { title: 'Smaller items', value: money(-v), period: per(p), kind: 'Derived',
+          formula: tiny.map(([x, w]) => `${capName(x, -w)} ${money(-w)}`).join(' + '), inputs: tiny.map(([x]) => capPayload(p, x)) } : capPayload(p, k));
+        const leafName = (k, v) => (k === '_tiny' ? 'Smaller items' : capName(k, -v));
+        if (leaves.length === 1 || !gname) {
+          leaves.forEach(([k, v, tiny]) => {
+            node('u_' + k, 2, 'cost', leafName(k, v), -v, 'right', k === '_tiny' ? null : k, leafPay(k, v, tiny));
+            links.push({ s: 'pool', t: 'u_' + k, v, color: 'cost' });
+          });
+          return;
+        }
+        node('g_' + g, 2, 'cost', gname, -sum, 'above', null, { title: gname, value: money(-sum), period: per(p), kind: 'Derived',
+          formula: leaves.map(([k, v]) => `${leafName(k, v)} ${money(v)}`).join(' + '), inputs: leaves.map(([k, v, tiny]) => leafPay(k, v, tiny)) });
+        links.push({ s: 'pool', t: 'g_' + g, v: sum, color: 'cost' });
+        leaves.forEach(([k, v, tiny]) => {
+          node('u_' + k, 3, 'cost', leafName(k, v), -v, 'right', k === '_tiny' ? null : k, leafPay(k, v, tiny));
+          links.push({ s: 'g_' + g, t: 'u_' + k, v, color: 'cost' });
+        });
+      });
+      if (it.cash < 0) {
+        node('u_kept', 2, 'profit', 'Added to cash', it.cash, 'right', 'cash', capPayload(p, 'cash'));
+        links.push({ s: 'pool', t: 'u_kept', v: -it.cash, color: 'profit' });
+      }
+      const flags = p.flags || [];
+      return { pay, spec: {
+        title: `${name}: where the cash went, ${p.kind === 'ttm' ? p.label.replace(/^TTM to /, 'twelve months to ') : p.label}`,
+        subtitle: 'Cash-flow statement as tagged in SEC filings (XBRL) · inflows on the left, uses on the right · debt shown net',
+        nodes, links,
+        legend: [['profit', 'Operating cash flow · cash kept'], ['noncash', 'Borrowing, shares issued, other inflows'], ['rev', 'Cash to allocate'], ['cost', 'Uses of cash']],
+        checks: flags.includes('unrec') ? [{ level: 'warn', text: `${money(Math.abs(it.unrec || 0))} of the change in cash is not explained by the operating, investing and financing totals (discontinued operations or a tagging error): see “Not reconciled”.` }] : [],
+        footer: [`${p.kind === 'ttm' ? 'Trailing twelve months: the last fiscal year + this year to date − the same period a year earlier. ' : ''}` +
+          '“Other investing” and “Other financing” are each section’s reported total minus the lines shown; debt is net of repayments; ' +
+          'lines under 1.2% of the total are combined. Shares: % of the cash to allocate.'],
+      } };
+    }
+
+    // ---- the summary in words
+    function sentence(p) {
+      const it = p.items, g = (k) => -(it[k] || 0);
+      const reinvest = ['capex', 'realestate', 'acq'].reduce((s, k) => s + Math.max(0, g(k)), 0);
+      const returned = Math.max(0, g('buyback')) + Math.max(0, g('div'));
+      const out = [];
+      out.push(it.ocf >= 0 ? `In ${p.label}, ${t(name)} generated ${money(it.ocf)} of operating cash flow.` : `In ${p.label}, ${t(name)}’s operations used ${money(-it.ocf)} of cash.`);
+      if (it.capex != null) out.push(`Free cash flow (operating cash flow − capital expenditures) was ${money(it.ocf + it.capex)}.`);
+      const bits = [];
+      if (reinvest > 0) bits.push(`spent ${money(reinvest)} on its business (${['capex', 'realestate', 'acq'].filter((k) => g(k) > 0).map((k) => `${capName(k, -1).toLowerCase()} ${money(g(k))}`).join(', ')})`);
+      if (returned > 0) bits.push(`returned ${money(returned)} to shareholders${it.ocf > 0 ? ` (${Math.round(returned / it.ocf * 100)}% of operating cash flow)` : ''}`);
+      if (it.borrow) bits.push(it.borrow > 0 ? `borrowed a net ${money(it.borrow)}` : `repaid a net ${money(-it.borrow)} of debt`);
+      if (it.stock > 0 && it.stock >= 0.05 * Math.abs(it.ocf)) bits.push(`raised ${money(it.stock)} by issuing shares`);
+      if (bits.length) out.push(`It ${listJoin(bits)}.`);
+      if (it.cash) out.push(it.cash < 0 ? `Cash on hand rose by ${money(-it.cash)}.` : `Cash on hand fell by ${money(it.cash)}.`);
+      return out.join(' ');
+    }
+
+    // ---- every period, line by line
+    function tableHTML() {
+      const rows = CAP_ROWS.filter((k) => periods.some((p) => p.items[k] != null));
+      const fcf = (p) => (p.items.capex != null ? p.items.ocf + p.items.capex : null);
+      const cell = (p, k) => { const v = p.items[k]; return v == null ? '<span class="muted">—</span>' : evBtn(money(k === 'cash' ? -v : v), capPayload(p, k)); };
+      return `<div class="tbl-wrap"><table class="ca-table"><thead><tr><th>Cash flow</th>${periods.map((p) => `<th class="num">${t(p.label)}</th>`).join('')}</tr></thead><tbody>
+        ${rows.map((k) => `<tr class="${k === 'ocf' || k === 'cash' ? 'ca-strong' : ''}"><td>${CAP_ROW_NAME[k] || k}</td>
+          ${periods.map((p) => `<td class="num">${cell(p, k)}</td>`).join('')}</tr>`).join('')}
+        <tr class="ca-derived"><td>Free cash flow <span class="muted">(operating − capex)</span></td>${periods.map((p) => {
+          const v = fcf(p);
+          return `<td class="num">${v == null ? '<span class="muted">—</span>' : evBtn(money(v), { title: 'Free cash flow', value: money(v), period: per(p), kind: 'Derived',
+            formula: `operating cash flow ${money(p.items.ocf)} − capital expenditures ${money(-p.items.capex)}`, inputs: [capPayload(p, 'ocf'), capPayload(p, 'capex')] })}</td>`;
+        }).join('')}</tr></tbody></table></div>
+        <p class="muted q-small">+ = cash in, − = cash out. “Change in cash” is the reported change in cash, cash equivalents and restricted cash. Select any figure to see the XBRL facts and filings behind it.</p>`;
+    }
+
+    // ---- share count: dilution against buybacks
+    function sharesHTML() {
+      const R = (K.shares || []).filter((r) => r.diluted || r.basic);
+      if (R.length < 2) return '';
+      const cnt = (r) => r.diluted || r.basic, key = R.every((r) => r.diluted) ? 'diluted' : 'basic';
+      const chg = R.map((r, i) => (i && cnt(R[i - 1]) && !(r.split || []).includes(key) && cnt(r) ? (cnt(r) / cnt(R[i - 1]) - 1) * 100 : null));
+      const W = 520, H = 170, left = 40, top = 22, bottom = 26;
+      const vals = chg.slice(1).filter((v) => v != null);
+      const ax = qAxis(vals.length ? vals : [0, 1], H, top, bottom);
+      const L = R.slice(1), step = (W - left - 6) / L.length, bw = Math.min(46, step * 0.55);
+      let g = ax.ticks.map((v) => `<line class="${v === 0 ? 'q-zero' : 'q-gl'}" x1="${left}" x2="${W - 4}" y1="${ax.y(v).toFixed(1)}" y2="${ax.y(v).toFixed(1)}"/><text class="q-tick" x="${left - 5}" y="${(ax.y(v) + 4).toFixed(1)}" text-anchor="end">${v > 0 ? '+' : ''}${+v.toFixed(1)}%</text>`).join('');
+      L.forEach((r, i) => {
+        const x = left + i * step + (step - bw) / 2, v = chg[i + 1];
+        if (v == null) g += `<text class="q-na" x="${(x + bw / 2).toFixed(1)}" y="${(ax.y(0) - 6).toFixed(1)}" text-anchor="middle">${(r.split || []).length ? 'split?' : '–'}</text>`;
+        else {
+          g += qRect(x, ax.y(0), ax.y(v), bw, `ca-sh ${v > 0 ? 'up' : 'down'}`, `${r.label}: ${pct(v, 1)} ${key} shares`);
+          g += `<text class="q-val" x="${(x + bw / 2).toFixed(1)}" y="${(v >= 0 ? ax.y(v) - 5 : ax.y(v) + 13).toFixed(1)}" text-anchor="middle">${pct(v, 1)}</text>`;
+        }
+        g += `<text class="q-x" x="${(x + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${t(r.label)}</text>`;
+      });
+      const first = R.find((r) => cnt(r)), last = R[R.length - 1];
+      const splitIn = R.some((r) => (r.split || []).includes(key));
+      const tot = !splitIn && first !== last ? (cnt(last) / cnt(first) - 1) * 100 : null;
+      const sum = (k) => R.slice(1).reduce((s, r) => s + (r[k] || 0), 0);
+      const shPay = (r, k, title) => (r[k] == null ? '<span class="muted">—</span>' : evBtn(k === 'diluted' || k === 'basic' || k === 'out' ? fmtShares(r[k]) : money(r[k]),
+        { title, value: k === 'diluted' || k === 'basic' || k === 'out' ? fmtShares(r[k]) + ' shares' : money(r[k]), period: `${r.label} (fiscal year)`, ref: (r.ev || {})[k] }));
+      return `<article class="q-card"><h3>Share count</h3>
+        <p class="q-sum">${tot == null ? `${splitIn ? 'A stock split (or listing) breaks the comparison across these years. ' : ''}` :
+          `From ${t(first.label)} to ${t(last.label)} the ${key} share count ${tot < 0 ? 'fell' : 'rose'} ${Math.abs(tot).toFixed(1)}% (${fmtShares(cnt(first))} → ${fmtShares(cnt(last))}). `}
+          ${sum('bb') || sum('sbc') ? `Over ${R.length - 1} years ${t(name)} spent ${money(sum('bb'))} on buybacks${sum('wh') ? ` and ${money(sum('wh'))} on taxes for employee shares` : ''}, against ${money(sum('sbc'))} of share-based compensation expense.` : ''}</p>
+        <div class="ca-scroll"><svg class="q-chart ca-shchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Change in ${key} weighted-average shares by fiscal year">${g}</svg></div>
+        <div class="tbl-wrap"><table class="ca-table"><thead><tr><th>Year</th><th class="num" title="Weighted-average ${key} shares for the year">${key === 'diluted' ? 'Diluted' : 'Basic'}, avg.</th><th class="num" title="Shares outstanding on the balance sheet date">Year end</th><th class="num" title="Share-based compensation expense">SBC</th><th class="num">Buybacks</th><th class="num" title="Taxes paid for employees on vested shares">Employee taxes</th></tr></thead>
+        <tbody>${R.slice().reverse().map((r) => `<tr><td>${t(r.label)}${(r.split || []).length ? ' <span class="muted" title="The count changed by more than 80% from the year before: a split or a listing">*</span>' : ''}</td>
+          <td class="num">${shPay(r, key, `${key === 'diluted' ? 'Diluted' : 'Basic'} weighted-average shares`)}</td><td class="num">${shPay(r, 'out', 'Shares outstanding at year end')}</td>
+          <td class="num">${shPay(r, 'sbc', 'Share-based compensation expense')}</td><td class="num">${shPay(r, 'bb', 'Share buybacks')}</td><td class="num">${shPay(r, 'wh', 'Taxes paid on employee shares')}</td></tr>`).join('')}</tbody></table></div>
+        <p class="muted q-small">Weighted-average shares from the income statement; red = more shares (dilution), green = fewer. Each 10-K restates its comparative years for a split; older years can still be on the old basis (*).</p></article>`;
+    }
+
+    // ---- when the long-term debt falls due
+    function maturitiesHTML() {
+      const m = K.maturities;
+      if (!m) return '';
+      const cal = /^FY\d{4}$/.test(m.label);
+      const yl = (b) => (b === 6 ? 'Later' : cal ? `FY${m.fy + b}` : `FY${String(m.fy + b).slice(2)}`);
+      const B = m.buckets, cashAll = (m.cash || 0) + (m.sti || 0), total = B.reduce((s, x) => s + x[1], 0);
+      const W = 560, H = 190, left = 48, top = 18, bottom = 26;
+      const ax = qAxis(B.map((x) => x[1]).concat(cashAll ? [cashAll] : []), H, top, bottom);
+      const step = (W - left - 6) / B.length, bw = Math.min(52, step * 0.6);
+      let g = qGrid(ax, W, left);
+      B.forEach(([b, v], i) => {
+        const x = left + i * step + (step - bw) / 2;
+        g += qRect(x, ax.y(0), ax.y(v), bw, `ca-mat${b === 6 ? ' later' : ''}`, `${yl(b)}: ${money(v)}`);
+        g += `<text class="q-val" x="${(x + bw / 2).toFixed(1)}" y="${(ax.y(v) - 5).toFixed(1)}" text-anchor="middle">${qm(v)}</text>`;
+        g += `<text class="q-x" x="${(x + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${yl(b)}</text>`;
+      });
+      if (cashAll) g += `<line class="ca-cashline" x1="${left}" x2="${W - 4}" y1="${ax.y(cashAll).toFixed(1)}" y2="${ax.y(cashAll).toFixed(1)}"/><text class="ca-cashlab" x="${left + 4}" y="${(ax.y(cashAll) - 5).toFixed(1)}">cash and short-term investments ${money(cashAll)}</text>`;
+      let run = 0, covered = 0;
+      B.filter((x) => x[0] <= 5).forEach(([b, v]) => { run += v; if (run <= cashAll) covered = b; });
+      const near = (B.find((x) => x[0] === 1) || [1, 0])[1];
+      const pay = (b, v, r) => evBtn(money(v), { title: `Long-term debt due ${b === 6 ? 'after five years' : b === 1 ? 'within twelve months' : `in year ${b}`}`, value: money(v), period: `as of ${date(m.at)}`, ref: r,
+        note: 'Principal of long-term debt falling due, from the debt note of the 10-K. Interest, leases and short-term borrowings are not included.' });
+      const cashPay = () => evBtn(money(cashAll), { title: 'Cash and short-term investments', value: money(cashAll), period: `as of ${date(m.at)}`, kind: 'Derived',
+        formula: `cash and equivalents ${money(m.cash)}${m.sti != null ? ` + short-term investments ${money(m.sti)}` : ''}`,
+        inputs: [{ title: 'Cash and equivalents', value: money(m.cash), period: date(m.at), ref: (m.ev || {}).cash }].concat(m.sti != null ? [{ title: 'Short-term investments', value: money(m.sti), period: date(m.at), ref: (m.ev || {}).sti }] : []) });
+      return `<article class="q-card"><h3>Debt maturities</h3>
+        <p class="q-sum">As of ${date(m.at)}, ${t(name)} owed ${money(total)} of long-term debt principal on this schedule: ${money(near)} due in ${yl(1)}${B.some((x) => x[0] === 6) ? `, ${money((B.find((x) => x[0] === 6) || [0, 0])[1])} after five years` : ''}.
+          ${cashAll ? `Cash and short-term investments of ${cashPay()} ${covered >= 5 ? 'exceed the next five years of maturities' : covered ? `cover the maturities through ${yl(covered)}` : near ? `cover ${Math.round(cashAll / near * 100)}% of the next year’s maturities` : ''}.` : ''}</p>
+        <div class="ca-scroll"><svg class="q-chart ca-matchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Long-term debt principal due by fiscal year">${g}</svg></div>
+        <div class="ca-mat-row">${B.map(([b, v, r]) => `<span><small>${yl(b)}</small>${pay(b, v, r)}</span>`).join('')}</div>
+        <p class="muted q-small">From the 10-K debt note (${t(m.label)}), the latest that tags it. Principal only; operating leases, interest and short-term borrowings are not part of this schedule.</p></article>`;
+    }
+
+    function render() {
+      const p = periods.find((x) => x.end === st.end && (x.kind === st.kind || !st.kind)) || periods[periods.length - 1];
+      const flags = (p && p.flags) || [];
+      box.innerHTML = `<div class="section-head"><h2 id="ca-title">Capital allocation</h2>
+          <span class="muted">Where the cash came from and where it went, the share count, and when the debt falls due · the cash-flow statement, XBRL</span></div>
+        ${periods.length ? `<div class="q-bar"><label class="q-pick">Period <select id="ca-period">${periods.map((x) => `<option value="${t(x.kind + '|' + x.end)}" ${x === p ? 'selected' : ''}>${t(x.label)}</option>`).join('')}</select></label>
+          <div class="export" role="group" aria-label="Export chart"><span>Export</span><button class="btn" type="button" data-cx="png">PNG</button><button class="btn" type="button" data-cx="jpg">JPG</button><button class="btn" type="button" data-cx="pdf">PDF</button></div></div>
+        ${financial ? '<p class="q-warn">For banks, insurers and brokers, the cash-flow statement is dominated by lending, deposits and trading: “Other investing” and “Other financing” carry most of it, and the chart says little about capital allocation.</p>' : ''}
+        ${flags.includes('unrec') ? `<p class="q-warn">${money(Math.abs(p.items.unrec || 0))} of the change in cash is not explained by the three section totals: usually discontinued operations, sometimes a tagging error. It is drawn as “Not reconciled”.</p>` : ''}
+        <p class="q-sum">${sentence(p)}</p>
+        <div class="hintline"><span class="dot"></span><span>Click any node for the XBRL facts and filings behind it.</span></div>
+        <div class="sheet fit ca-sheet"><div class="loading">Drawing…</div></div>
+        ${tableHTML()}` : ''}
+        <div class="q-grid ca-grid">${sharesHTML()}${maturitiesHTML()}</div>`;
+      const ps = $('#ca-period', box);
+      if (ps) ps.addEventListener('change', () => { const [k, e] = ps.value.split('|'); st.kind = k; st.end = e; render(); });
+      if (!p) return;
+      const { spec: sp, pay } = spec(p);
+      const sheet = $('.ca-sheet', box);
+      fontsReady().then(() => {
+        if (!sheet.isConnected) return;
+        st.scene = S.layout(sp, {});
+        sheet.innerHTML = S.toSVG(st.scene, S.dec(sp.title));
+        $$('.note-mark', sheet).forEach((x) => x.remove());
+        $$('.node', sheet).forEach((g) => {
+          const n = sp.nodes.find((x) => x.id === g.dataset.node);
+          g.setAttribute('tabindex', '0');
+          g.setAttribute('role', 'button');
+          if (n) g.setAttribute('aria-label', `${n.name}: ${n.lines[1][1]}`);
+        });
+      });
+      const open = (g) => { if (g && pay.has(g.dataset.node)) evOpen(pay.get(g.dataset.node), g); };
+      sheet.addEventListener('click', (e) => open(e.target.closest('[data-node]')));
+      sheet.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { const g = e.target.closest && e.target.closest('[data-node]'); if (g) { e.preventDefault(); open(g); } } });
+      $$('[data-cx]', box).forEach((b) => b.addEventListener('click', async () => {
+        if (!st.scene) return;
+        const fmt = b.dataset.cx, nm = `${(ticker || P.cik || 'company').toLowerCase()}-capital-allocation-${p.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.${fmt}`;
+        b.disabled = true;
+        try {
+          const blob = await S.exportScene(st.scene, fmt);
+          const res = await saveBlob(blob, nm);
+          toast(res === 'declined' ? 'Export cancelled' : res === 'failed' ? 'Download unavailable here; use Preview to save the image' : `Exported ${nm}`, () => previewDialog(blob, fmt, nm, st.scene));
+        } catch (err) {
+          toast(`Export failed: ${err.message}`);
+        } finally { b.disabled = false; }
+      }));
     }
     render();
     body.appendChild(box);
@@ -3044,7 +3379,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|value)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|value)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

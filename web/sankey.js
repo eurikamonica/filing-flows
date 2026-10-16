@@ -554,7 +554,9 @@
 
     // legend + footer
     const used = new Set(nodes.map((n) => n.color).concat(links.map((l) => l.color)));
-    const legend = LEGEND.filter(([k]) => used.has(k) || k === 'rev' || k === 'profit' || k === 'cost');
+    // a chart that is not an income statement (the capital allocation Sankey) names its own colours
+    const legend = spec.legend ? spec.legend.filter(([k]) => used.has(k) && PALETTE[k])
+      : LEGEND.filter(([k]) => used.has(k) || k === 'rev' || k === 'profit' || k === 'cost');
     const lgItems = legend.map(([k, t]) => ({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
     if (compare) {                     // increases are drawn as dark strips; a decrease leaves the band light (its Δ is negative)
       [['strip', `Dark strip = increase vs ${dec(cmpSpec.vs)}`],

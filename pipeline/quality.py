@@ -21,10 +21,12 @@ whose untagged difference is over 25% of the balance is left out rather than dra
 import itertools
 import sys
 
+from . import capital as K
 from . import facts as F
 from . import fsa as W
 
-VERSION = 2               # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
+VERSION = 3               # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
+                          # 3: capital allocation, share count and debt maturities (pipeline/capital.py)
 MAX_DIFF = 0.25            # untagged movement allowed, as a share of the larger of the opening and closing balance
 TOLERANCE = 0.005          # under this share of the balance the rollforward counts as reconciled (rounding)
 KEEP_Q, KEEP_FY = 8, 5
@@ -81,8 +83,8 @@ FAMILIES = [
      "other": [["RestructuringReserveTranslationAndOtherAdjustment", "RestructuringReserveTranslationAdjustment"]]},
 ]
 # balances the facts index keeps as point-in-time values (see facts.index_facts)
-INSTANTS = {"Assets"} | {t for f in FAMILIES for t in f["balance"]} | W.INSTANT_CONCEPTS
-SHARES = W.SHARE_CONCEPTS
+INSTANTS = {"Assets"} | {t for f in FAMILIES for t in f["balance"]} | W.INSTANT_CONCEPTS | K.INSTANT_CONCEPTS
+SHARES = W.SHARE_CONCEPTS | K.SHARE_CONCEPTS
 
 
 def _instant(fx, concept, day):
@@ -267,7 +269,8 @@ def compute(fx, fye="1231"):
     if not (q or y):
         return None
     val = W.valuation_inputs(fx, ev, qe, ye)
-    return W.compact({"v": VERSION, "unit": "USD", "q": q, "fy": y, "reserves": reserves, "val": val, "src": ev.out()})
+    cap = K.compute(fx, ev, qe, ye, fye)
+    return W.compact({"v": VERSION, "unit": "USD", "q": q, "fy": y, "reserves": reserves, "val": val, "cap": cap, "src": ev.out()})
 
 
 if __name__ == "__main__":
