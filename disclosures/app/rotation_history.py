@@ -45,8 +45,10 @@ STYLE_ETFS = [('QQQ', 'Nasdaq-100'), ('DIA', 'Dow Jones Industrials'), ('RSP', '
               ('KRE', 'Regional banks'), ('ITB', 'Home builders'), ('EFA', 'Developed markets ex-US'),
               ('EEM', 'Emerging markets'), ('TLT', 'Treasuries 20+ years'), ('GLD', 'Gold'), ('USO', 'Crude oil')]
 START = dt.date(2000, 1, 7)                       # a Friday: the first week of the grid
-YAHOO = ('https://query1.finance.yahoo.com/v8/finance/chart/{s}?range={r}&interval=1wk&events=div%2Csplit'
+# explicit dates: with range=max Yahoo quietly answers with quarterly bars, whatever the interval asked for
+YAHOO = ('https://query1.finance.yahoo.com/v8/finance/chart/{s}?period1={p1}&period2={p2}&interval=1wk&events=div%2Csplit'
          '&includeAdjustedClose=true')
+FORMAT = 2                                        # state.json format: 1 held quarterly bars from range=max; fetched again
 STOOQ = 'https://stooq.com/q/d/l/?s={s}&i=d'
 REFRESH_DAYS = 6
 
@@ -102,7 +104,16 @@ def parse_yahoo(payload):
     rows = weekly_rows(days, add_volume=False)
     if not rows:
         raise ValueError('no weekly rows in the chart response')
+    check_weekly(rows)
     return rows
+
+
+def check_weekly(rows):
+    """Refuse bars that are not weekly (a source answering with monthly or quarterly bars)."""
+    if len(rows) >= 8:
+        gaps = sorted((dt.date.fromisoformat(b[0]) - dt.date.fromisoformat(a[0])).days for a, b in zip(rows, rows[1:]))
+        if gaps[len(gaps) // 2] > 10:
+            raise ValueError(f'bars are {gaps[len(gaps) // 2]} days apart, not weekly')
 
 
 def parse_stooq(text):
@@ -158,7 +169,9 @@ def fetch(client, ticker, full=True, sources=('yahoo', 'stooq')):
     for src in sources:
         try:
             if src == 'yahoo':
-                return parse_yahoo(client.json(YAHOO.format(s=symbol(ticker), r='max' if full else '6mo'))), 'yahoo'
+                p2 = int(time.time()) + 86400
+                p1 = int(dt.datetime(1999, 12, 27, tzinfo=dt.timezone.utc).timestamp()) if full else p2 - 200 * 86400
+                return parse_yahoo(client.json(YAHOO.format(s=symbol(ticker), p1=p1, p2=p2))), 'yahoo'
             if src == 'stooq':
                 rows = parse_stooq(client.get(STOOQ.format(s=symbol(ticker).lower() + '.us')).decode('utf-8', 'replace'))
                 return (rows if full else rows[-30:]), 'stooq'
@@ -199,6 +212,10 @@ def collect(client, root, tickers, batch=300, refresh=400, minutes=25.0, refresh
     `first` (owner's request) is fetched in full again even when on file."""
     root = Path(root)
     state = read_json(root / 'state.json', {})
+    if state.get('format', 1) < FORMAT:               # an older format: every ticker is fetched again
+        for info in (state.get('tickers') or {}).values():
+            info.pop('fetched_at', None)
+        state['format'] = FORMAT
     tk = state.setdefault('tickers', {})
     t0, today = time.monotonic(), dt.datetime.now(dt.timezone.utc)
     stale_before = (today - dt.timedelta(days=refresh_days)).isoformat()

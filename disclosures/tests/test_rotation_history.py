@@ -29,7 +29,8 @@ class FakeClient:
         if t in self.fail:
             raise RuntimeError('HTTP 404 from query1.finance.yahoo.com')
         seed = sum(map(ord, t))
-        return yahoo_payload(26 if 'range=6mo' in url else 860, base=20 + seed % 80, drift=0.0005 * (seed % 7), period=30 + seed % 25)
+        recent = int(url.split('period2=')[1].split('&')[0]) - int(url.split('period1=')[1].split('&')[0]) < 400 * 86400
+        return yahoo_payload(26 if recent else 860, base=20 + seed % 80, drift=0.0005 * (seed % 7), period=30 + seed % 25)
 
     def get(self, url, sec=False):
         self.calls.append(url)
@@ -54,6 +55,11 @@ class Weeks(unittest.TestCase):
         self.assertEqual(rows[-1][2], 5)                  # the unfinished week's latest bar replaces it, volume not added
         with self.assertRaises(ValueError):
             RH.parse_yahoo({'chart': {'result': None, 'error': {'description': 'No data found'}}})
+        quarterly = yahoo_payload(40, extra_day=False)
+        r = quarterly['chart']['result'][0]
+        r['timestamp'] = [t + 13 * 7 * 86400 * i - 7 * 86400 * i for i, t in enumerate(r['timestamp'])]   # bars 13 weeks apart
+        with self.assertRaises(ValueError):                                   # what range=max answered: refused
+            RH.parse_yahoo(quarterly)
 
     def test_align_on_the_grid(self):
         weeks = ['2026-09-25', '2026-10-02', '2026-10-09', '2026-10-16']
@@ -70,6 +76,15 @@ class CollectAndBuild(unittest.TestCase):
                 'end': '2026-06-30'} for i, (t, s) in enumerate([('AAA', 'technology'), ('BBB', 'technology'), ('CCC', 'technology'),
                                                                   ('DDD', 'energy'), ('BRK.B', 'financials')])]
         (self.site / 'index.json').write_text(json.dumps({'companies': cos, 'sector_names': {'technology': 'Technology'}}))
+
+    def test_an_older_state_is_fetched_again(self):
+        root = self.dir / 'hist'
+        root.mkdir()
+        (root / 'state.json').write_text(json.dumps({'tickers': {'SPY': {'fetched_at': '2026-10-16T00:00:00+00:00'}}}))
+        c = FakeClient()
+        RH.collect(c, root, ['SPY'], batch=5, refresh=0)
+        self.assertEqual(len(c.calls), 1)
+        self.assertEqual(json.loads((root / 'state.json').read_text())['format'], RH.FORMAT)
 
     def test_collect_resumes_backs_off_and_refreshes(self):
         root = self.dir / 'hist'
@@ -92,7 +107,7 @@ class CollectAndBuild(unittest.TestCase):
         c = FakeClient()
         r = RH.collect(c, root, tickers, batch=0, refresh=10)
         self.assertEqual(r['refreshed'], 1)
-        self.assertIn('range=6mo', c.calls[0])
+        self.assertNotIn('period1=946', c.calls[0])                           # the last 200 days only
         self.assertGreater(len(RH.load(root, 'SPY')['rows']), 800)          # merged, not replaced
         c = FakeClient()
         RH.collect(c, root, tickers, batch=0, refresh=0, first=['XLC'])        # asked for: fetched now, whatever the wait

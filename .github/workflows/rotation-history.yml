@@ -13,7 +13,7 @@ on:
         default: ''
       batch:
         description: 'New tickers this run'
-        default: '350'
+        default: '1000'
       refresh:
         description: 'Stale tickers to refresh this run (each a 6-month request)'
         default: '400'
@@ -76,7 +76,7 @@ jobs:
           TICKERS: ${{ inputs.tickers }}
         run: |
           python disclosures/app/rotation_history.py collect --root hist --site-index site/index.json \
-            --batch "${{ inputs.batch || '350' }}" --refresh "${{ inputs.refresh || '400' }}" --minutes 24 --tickers "$TICKERS"
+            --batch "${{ inputs.batch || '1000' }}" --refresh "${{ inputs.refresh || '400' }}" --minutes 24 --tickers "$TICKERS"
       - name: XBRL frames back to 2009 (quarters on file are final)
         if: ${{ !inputs.rebuild_only && (github.event_name == 'schedule' || inputs.frames) }}
         continue-on-error: true
