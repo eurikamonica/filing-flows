@@ -160,12 +160,12 @@ def main():
     random.Random(started).shuffle(fresh)
     random.Random(started + "r").shuffle(old)
     # kinds take turns (earnings quarters outnumber 8-Ks a hundred to one): every kind is trained every run
-    def by_kind(xs):
+    def grouped(xs):
         q = {}
         for ex in xs:
             q.setdefault(ex["kind"], []).append(ex)
         return q
-    fq, oq = by_kind(fresh), by_kind(old)
+    fq, oq = grouped(fresh), grouped(old)
     plan, kinds_all = [], sorted(set(fq) | set(oq))
     while any(fq.values()) or any(oq.values()):
         for k in kinds_all:

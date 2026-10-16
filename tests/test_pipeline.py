@@ -1999,3 +1999,45 @@ def test_local_fallback_prompt_corpus_and_grading():
         assert tweet.providers()[-1][0] == "local"
     finally:
         os.environ.pop("LOCAL_MODEL") if old is None else os.environ.__setitem__("LOCAL_MODEL", old)
+
+
+def test_train_local_runs_to_its_report(tmp_path):
+    """The whole training run with stand-ins for the model (no PyTorch in CI): corpus kept, kinds take turns, the work
+    adapter promoted on a better held-out score, report and README written."""
+    import json, os, types
+    from pipeline import corpus, local_model as L, train_local as T
+    md = tmp_path / "model"
+    (md / "work").mkdir(parents=True)
+    (md / "work" / "adapter_config.json").write_text("{}")
+    (md / "adapter").mkdir()
+    (md / "adapter" / "adapter_config.json").write_text("{}")
+    kinds = ["post", "event8k", "insider", "post_holders"]
+    new = tmp_path / "new.jsonl"
+    with open(new, "w") as f:
+        for i in range(400):
+            f.write(json.dumps({"id": f"x{i}", "v": corpus.VERSION, "kind": kinds[i % 4], "cik": i, "prompt": "p", "target": "t",
+                                "check": "engage", "cashtags": ["A"], "tags": ["#a"], "src": f"s{i}", "created": "2026-10-16"}) + "\n")
+
+    class Model:
+        def save_pretrained(self, d):
+            os.makedirs(d, exist_ok=True)
+            open(os.path.join(d, "adapter_config.json"), "w").write("{}")
+    trained = []
+    old = (L.load, T.train, T.evaluate)
+    L.load = lambda adapter=None, trainable=False: (None, Model())
+    T.train = lambda tok, model, plan, minutes: (trained.extend(x["kind"] for x in plan[:8]) or
+                                                 ({"examples": 8, "steps": 2, "loss_first": 1.0, "loss_last": 0.5, "minutes": 1}, [x["id"] for x in plan[:8]]))
+    scores = iter([(0.9, [{"id": "a", "kind": "post", "ok": True, "why": "", "post": "fine", "secs": 1}]), (0.8, [])])
+    T.evaluate = lambda tok, model, sample: next(scores)
+    try:
+        import sys
+        argv = sys.argv
+        sys.argv = ["x", "--model-dir", str(md), "--new", str(new)]
+        assert T.main() == 0
+    finally:
+        sys.argv = argv
+        L.load, T.train, T.evaluate = old
+    assert set(trained[:4]) == set(kinds)                          # every kind in the first round
+    rep = json.loads((md / "reports.jsonl").read_text().splitlines()[-1])
+    assert rep["promoted"] and rep["work_score"] == 0.9 and rep["by_kind"]["event8k"] == 100
+    assert "promoted" in (md / "README.md").read_text() and (md / "corpus-ids.txt").read_text().startswith(f"#v{corpus.VERSION}")
