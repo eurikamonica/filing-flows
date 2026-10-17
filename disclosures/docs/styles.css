@@ -327,6 +327,16 @@ th[aria-sort=ascending] .sort-mark, th[aria-sort=descending] .sort-mark { opacit
 .rot-ringlabel { font-size: 10.5px; opacity: .8; }
 .rot-display { margin-top: -4px; }
 .rot-tailpath { fill: none; stroke: var(--rot-sun); stroke-width: 1.8; opacity: .55; stroke-linecap: round; }
+/* next-step forecasts (chaos.js) */
+.rot-trail-all { fill: none; stroke: var(--flow-dot); stroke-width: 1; opacity: .38; stroke-linecap: round; }
+.fc-arrow { stroke-linecap: round; opacity: .95; }
+.fc-arrow-head { stroke: none; opacity: .95; }
+.fc-still { fill: none; stroke-width: 1.4; opacity: .8; }
+.fc-cone { fill: none; stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
+.fc-actual { stroke-width: 1.2; stroke-dasharray: 2 3; opacity: .75; }
+.fc-actual-dot { fill: var(--surface); stroke-width: 1.5; }
+.fc-score summary { cursor: pointer; font-weight: 600; }
+.fc-score table { margin-top: 8px; }
 .rot-3d-wrap { position: relative; margin-top: 6px; }
 .rot-3d { display: block; width: 100%; height: 420px; touch-action: none; cursor: grab; }
 .rot-3d:active { cursor: grabbing; }

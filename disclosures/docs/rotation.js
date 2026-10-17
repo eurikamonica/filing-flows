@@ -3,6 +3,7 @@
    · Momentum clock — any two variables as x and y (a third as dot size), every company's path period by period,
      played as an animation over 16 quarters or 48 months with trails.
    · 3-D — three variables (or two and time) in a box you can turn; with time as depth a rotation becomes a spiral.
+   · Solar system 3-D / 4-D and next-step arrows with prices — chaos.js.
    · Solar system — the market average at the centre, every sector a sun orbiting it (with its tail), each sector's
      companies as moons; pick a sector to see its companies as planets around their sun.
    · Find the best axes — every pair of variables scanned for the clearest cycle, and every single, pair and triple
@@ -13,7 +14,7 @@ const ROT_SERIES=['var(--rot-1)','var(--rot-2)','var(--rot-3)'];
 const ROT_TRAIL=[['4','4 quarters'],['8','8 quarters'],['12','12 quarters'],['16','16 quarters'],['24','24 quarters'],['40','40 quarters']];
 const ROT_TRAIL_M=[['6','6 months'],['12','12 months'],['24','24 months'],['48','48 months'],['60','60 months'],['120','120 months']];
 const ROT_HIST=[['recent','Recent: 16 quarters · 48 months'],['long','Long: since 2010 · months since 2008']];
-const ROT_VIEWS=[['clock','Momentum clock'],['rrg','RRG — relative rotation (2-D, 3-D, 4-D)'],['3d','3-D / 4-D momentum clock (drag to turn, play for time)'],['solar','Solar system'],['map','Market map (treemap)'],['heat','Sector heatmap'],['rs','Relative strength ranking'],['breadth','Breadth and dispersion'],['corr','How the variables move together'],['scan','Find the best axes']];
+const ROT_VIEWS=[['clock','Momentum clock'],['rrg','RRG — relative rotation (2-D, 3-D, 4-D)'],['3d','3-D / 4-D momentum clock (drag to turn, play for time)'],['solar','Solar system'],['solar3d','Solar system 3-D / 4-D (drag to turn)'],['map','Market map (treemap)'],['heat','Sector heatmap'],['rs','Relative strength ranking'],['breadth','Breadth and dispersion'],['corr','How the variables move together'],['scan','Find the best axes']];
 const ROT_SIMPLE=new Set(['rs','scan','map','heat','breadth','corr']);     // views without the x / y / z, scale and smoothing controls
 const ROT_SCALES=[['raw','As reported'],['log','Signed log (tames outliers)'],['rank','Rank within the period (0–100)'],['z','Standard score within the period']];
 const ROT_SMOOTH=[['none','None'],['ewma','Exponential (recent weighs more)'],['ma','Moving average'],['holt','Holt (level + trend)'],['kalman','Kalman (noise-filtered level)'],['median','Rolling median (ignores spikes)']];
@@ -231,24 +232,30 @@ function rotationView(){
  if(!(Number.isInteger(state.rf)&&state.rf>=0&&state.rf<Q.length)||state.rfn!==Q.length){state.rf=P.full;state.rfn=Q.length}
  const groups=[...new Set(avail.map(v=>v.group))];
  const varField=(id,label,value,extra=[])=>`<div class="field"><label for="${id}">${label}</label><select id="${id}">${extra.map(([k,l])=>`<option value="${esc(k)}" ${value===k?'selected':''}>${esc(l)}</option>`).join('')}${groups.map(gname=>`<optgroup label="${esc(gname)}">${options(avail.filter(v=>v.group===gname).map(v=>[v.key,v.label]),value)}</optgroup>`).join('')}</select></div>`;
- const three=state.rview==='3d';
+ const three=state.rview==='3d'||state.rview==='solar3d',fcView=['clock','solar','solar3d','3d'].includes(state.rview);
+ state.rfc=FC_MODES.some(m=>m[0]===state.rfc)?state.rfc:'';
  const nq=Pq.quarters.length,nm=P.monthly?Q.length+' months':isLong?'since 2008':'48 months';
  out+=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${state.rview==='scan'?'':field('rhist','History',ROT_HIST,state.rhist)+field('rfreq','Frequency',[['q',`Quarterly (${nq} quarters)`],['m',`Monthly (${nm})`]],state.rfreq)}${field('rsec','Sector',[['','All sectors'],...secs.map(s=>[s.id,s.name])],state.rsec)}`;
  if(['map','heat'].includes(state.rview)){state.rcol=has(state.rcol)?state.rcol:has('rel')?'rel':avail[0].key;out+=varField('rcol','Colour by',state.rcol)}
  if(!ROT_SIMPLE.has(state.rview))out+=`${varField('rx','→ Horizontal (x)',state.rx)}${varField('ry','↑ Vertical (y)',state.ry)}${three?varField('rz3','↗ Depth (z)',state.rz3,[['__time','Time — rotations become spirals']]):varField('rz','Dot size',state.rz,[['','Revenue']])}`;
  out+=`<div class="field wide"><label for="rtk">Companies to trace (up to three tickers)</label><input id="rtk" value="${esc(state.rtk||'')}" placeholder="e.g. NVDA, AMD, INTC · Enter"></div></div>`;
- if(!ROT_SIMPLE.has(state.rview))out+=`<div class="toolbar rot-display">${field('rscl','Scale',ROT_SCALES,state.rscl)}${field('rsm','Smoothing',ROT_SMOOTH,state.rsm)}${field(tk,'Trail',trails,state[tk])}${state.rview==='solar'?'':field('rshow','Dots',[['','Automatic'],['avg','Averages and traced only'],['all','Every company too']],state.rshow)}${P.monthly?field('rfill','Quarterly figures in months',ROT_FILL,state.rfill):''}</div>`;
+ if(!ROT_SIMPLE.has(state.rview))out+=`<div class="toolbar rot-display">${field('rscl','Scale',ROT_SCALES,state.rscl)}${field('rsm','Smoothing',ROT_SMOOTH,state.rsm)}${field(tk,'Trail',trails,state[tk])}${state.rview==='solar'||state.rview==='solar3d'?'':field('rshow','Dots',[['','Automatic'],['avg','Averages and traced only'],['all','Every company too']],state.rshow)}${fcView?field('rfc','Next step',FC_MODES,state.rfc):''}${P.monthly?field('rfill','Quarterly figures in months',ROT_FILL,state.rfill):''}</div>`;
  out+=mnote;
  const picks=String(state.rtk||'').toUpperCase().split(/[\s,]+/).filter(Boolean).slice(0,3).map(t=>P.byT.get(t)||P.byT.get(t.replace('.','-'))||P.byT.get(t.replace('-','.'))).filter(Boolean);
  const o={P,Q,qi:new Map(Q.map((c,i)=>[c,i])),x:P.V[state.rx],y:P.V[state.ry],z:three?(state.rz3==='__time'?ROT_TIME:P.V[state.rz3]):(state.rz?P.V[state.rz]:null),
   trail:+state[tk],picks,sec:state.rsec,scl:state.rscl,sm:state.rsm,sig:[P.monthly?'m':'q',state.rscl,state.rsm].join('|')};
+ if(fcView&&fcOn()){const F=fcLoad(P);o.fc=F.data||null;o.fcErr=F.err}
  if(state.rview==='scan')out+=scanView(Pq,state.rsec);
  else if(state.rview==='rs')out+=rsView(P,state.rsec,picks);
  else if(state.rview==='map')out+=mapView(o);
  else if(state.rview==='heat')out+=heatView(o);
  else if(state.rview==='breadth')out+=breadthView(P,state.rsec);
  else if(state.rview==='corr')out+=corrView(Pq,state.rsec);
- else out+=state.rview==='solar'?solarView(o):three?view3d(o):clockView(o);
+ else{
+  out+=fcView?fcNotice(o):'';
+  if(state.rview==='solar3d')out+=solar3dView(o)+(fcOn()&&o.fc?fcTable(o):rotTable(o));
+  else out+=state.rview==='solar'?solarView(o)+fcTable(o):three?view3d(o)+fcTable(o):clockView(o)+fcTable(o);
+ }
  out+=`<details><summary>How these charts are built</summary><p>${esc(g.data.note||'')}</p><p class="sub">Scales: “signed log” keeps small values as they are and compresses large ones (k·asinh(x/k), k = the variable's typical spread), so one outlier no longer flattens everyone else; “rank” and “standard score” place each company against all companies in the same period, which also removes market-wide swings. Smoothing uses past values only (exponential: half-life one quarter or three months; moving average: two quarters or three months), so a smoothed path never knows the future. In the monthly view the stock, volatility and volume are monthly; the quarterly figures (margins, growth, 13F, officials) are drawn in a straight line between quarter-ends — that is a drawing, not new information.</p><p class="sub">A path that circles clockwise means the vertical variable turns first and the horizontal one follows; counter-clockwise, the reverse. With the default axes, clockwise = the stock turned before profit momentum (the market anticipating). A pattern, not a forecast.</p></details>`;
  return out;
 }
@@ -337,6 +344,7 @@ function clockFrame(o,f){
   tr.forEach((c,i)=>{const head=i===tr.length-1,xy=XY(t.ent,c),p=t.ent.by.get(c);s+=`<g data-tip="${tip(tipRows(t.name,t.full,p))}" tabindex="0" class="mk-hit"><circle cx="${xy[0]}" cy="${xy[1]}" r="11" fill="transparent"/><circle cx="${xy[0]}" cy="${xy[1]}" r="${(head?zr(p,5,9):zr(p,2,5)).toFixed(1)}" class="rot-dot" style="fill:${t.color};opacity:${head?1:(.3+.55*i/Math.max(1,tr.length-1)).toFixed(2)}"/></g>`});
   const h=tr[tr.length-1];if(h){const xy=XY(t.ent,h);labels+=label(xy[0],xy[1],`${t.name} ${h===cal?'':qlabel(h)}`.trim())}}
  if(!L.picks.length&&!L.suns.length&&!L.sun&&!L.cloud.length)return empty('Pick a sector or type tickers to trace.');
+ s+=fcClockLayer(o,cal,(a,b)=>[sx(a),sy(b)],L);
  return s+labels+'</svg>';
 }
 function planar(o,c,color,vars){                      // the clock split into plain charts, one per variable (as reported)
@@ -408,6 +416,7 @@ function marketFrame(o,f){
   const dx=(sx-mx_)/kx,dy=(sy-my_)/ky,d=Math.hypot(dx,dy),r=Math.pow(Math.min(1,d/D),.6)*R;return d?[c0x+dx/d*r,c0y-dy/d*r]:[c0x,c0y]};
  const moonAt=(c,s,ca)=>{const sp=posAt(s,ca),a=val(o,c,x,ca),b=val(o,c,y,ca),qa=val(o,s,x,ca),qb=val(o,s,y,ca);if(!sp||a==null||b==null||qa==null||qb==null)return null;
   const dx=(a-qa)/mx,dy=(b-qb)/my,d=Math.hypot(dx,dy);if(!d)return sp;const r=Rm*Math.min(1,Math.sqrt(d/Dm));return [sp[0]+dx/d*r,sp[1]-dy/d*r]};
+ const posXY=(a,b,ma,mb)=>{const dx=(a-ma)/kx,dy=(b-mb)/ky,d=Math.hypot(dx,dy),r=Math.pow(Math.min(1,d/D),.6)*R;return d?[c0x+dx/d*r,c0y-dy/d*r]:[c0x,c0y]};
  const span=Q.slice(Math.max(0,f-trail+1),f+1);
  let s=`<svg class="plot mk-plot rot-solar" viewBox="0 0 ${W} ${H}" role="img" aria-label="Sector suns around the market average, ${esc(qlabel(cal))}; the table below lists every value">`;
  s+=`<text class="rot-watermark" x="${W-16}" y="${H-16}" text-anchor="end">${esc(qlabel(cal))}</text>`;
@@ -422,6 +431,7 @@ function marketFrame(o,f){
  picks.forEach((c,i)=>{const sn=P.suns[c.s];if(!sn)return;const ps=span.map(ca=>moonAt(c,sn,ca)).filter(Boolean);
   s+=tailPath(ps,smooth,'rot-line','stroke:'+ROT_SERIES[i]);
   const h=moonAt(c,sn,cal);if(h)s+=`<circle cx="${h[0]}" cy="${h[1]}" r="5" class="rot-dot" style="fill:${ROT_SERIES[i]}"/><text class="mk-label mk-halo" x="${h[0]+8}" y="${h[1]-6}">${esc(c.t)}</text>`});
+ s+=fcSolarMarket(o,cal,posXY);
  const boxes=[];let labels='';
  const sized=n=>5+Math.min(7,Math.sqrt(n||1)*.9);
  for(const sn of suns){const sp=posAt(sn,cal);if(!sp)continue;const p=sn.by.get(cal),r=sized(p.n);
@@ -448,7 +458,10 @@ function sectorFrame(o,f){
  [.5,1,2,4].filter(k=>k<D).forEach(k=>{const r=R*Math.pow(k/D,.6);s+=`<circle cx="${c0x}" cy="${c0y}" r="${r}" class="rot-ring"/><text class="axis rot-ringlabel" x="${c0x+r*.866+3}" y="${c0y+r*.5+12}">${k===1?'typical spread':k+'×'}</text>`});
  s+=`<line class="mk-grid" x1="${c0x-R}" x2="${c0x+R}" y1="${c0y}" y2="${c0y}"/><line class="mk-grid" x1="${c0x}" x2="${c0x}" y1="${c0y-R}" y2="${c0y+R}"/>`+compass(W,c0x,c0y,R,x,y);
  const planets=cos.map(c=>({c,p:c.by.get(cal),xy:posAt(c,cal)})).filter(a=>a.p&&a.xy).sort((a,b)=>(a.p.rev||0)-(b.p.rev||0));
+ const posXY=(a,b,qa,qb)=>{const dx=(a-qa)/mx,dy=(b-qb)/my,d=Math.hypot(dx,dy);if(!d)return [c0x,c0y];const r=R*Math.pow(Math.min(1,d/D),.6);return [c0x+dx/d*r,c0y-dy/d*r]};
+ for(const a of planets)if(!picks.includes(a.c))s+=tailPath(Q.slice(Math.max(0,f-trail+1),f+1).map(ca=>posAt(a.c,ca)).filter(Boolean),smooth,'rot-trail-all');   // every company keeps its trail
  picks.forEach((c,i)=>{if(c.s!==sec)return;s+=tailPath(Q.slice(Math.max(0,f-trail+1),f+1).map(ca=>posAt(c,ca)).filter(Boolean),smooth,'rot-line','stroke:'+ROT_SERIES[i])});
+ s+=fcSolarSector(o,cal,sun,posXY);
  const zv=z&&z.key!=='__time'?z:null;
  for(const a of planets){const {c,p,xy}=a,pi=picks.indexOf(c);
   s+=`<g data-tip="${tip([[c.t,c.n||''],[vfmt(x,p[x.key]),x.label+' (sector '+vfmt(x,last[x.key])+')'],[vfmt(y,p[y.key]),y.label+' (sector '+vfmt(y,last[y.key])+')'],...(zv?[[vfmt(zv,p[zv.key]),zv.label]]:[]),[p.f13==null?'—':signed(Math.round(p.f13)),'net 13F managers that quarter'],[money(p.rev),'quarterly revenue']])}" tabindex="0" class="mk-hit"><circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="${Math.max(9,size(p)+3)}" fill="transparent"/><circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="${size(p).toFixed(1)}" class="${pi>=0?'rot-dot':moonColor(c,p)}" style="${pi>=0?'fill:'+ROT_SERIES[pi]:''}${xy[2]?';stroke-dasharray:2 2':''}"/></g>`}
@@ -487,7 +500,7 @@ function paint3d(o,f){
  const nrm=(v,d)=>Math.max(-1.08,Math.min(1.08,(v-d[0])/(d[1]-d[0])*2-1));
  const cy_=Math.cos(ROT.yaw),sy_=Math.sin(ROT.yaw),cp=Math.cos(ROT.pitch),sp=Math.sin(ROT.pitch),S=Math.min(cw*.9,ch)*.26,c0x=cw/2,c0y=ch/2-ch*.03,Dz=6.5;
  const proj=(X,Y,Z)=>{const x1=X*cy_-Z*sy_,z1=X*sy_+Z*cy_,y2=Y*cp-z1*sp,z2=Y*sp+z1*cp,k=Dz/(Dz-z2);return [c0x+x1*k*S,c0y-y2*k*S,z2,k]};
- const XYZ=(e,c)=>{const a=val(o,e,x,c),b=val(o,e,y,c),d=val(o,e,z,c);return a==null||b==null||d==null?null:[nrm(a,xd),nrm(b,yd),nrm(d,zd)]};
+ const XYZ=(e,c,ov)=>{const a=ov?ov[0]:val(o,e,x,c),b=ov?ov[1]:val(o,e,y,c),d=ov?ov[2]:val(o,e,z,c);return a==null||b==null||d==null?null:[nrm(a,xd),nrm(b,yd),nrm(d,zd)]};
  const line=(a,b,col,w=1,alpha=1,dash)=>{const p=proj(...a),q=proj(...b);ctx.globalAlpha=alpha;ctx.strokeStyle=col;ctx.lineWidth=w;ctx.setLineDash(dash||[]);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1};
  const text=(pt,str,col,align='center',font='11px')=>{const p=proj(...pt);ctx.fillStyle=col;ctx.font=`${font} ${getComputedStyle(document.body).fontFamily||'sans-serif'}`;ctx.textAlign=align;ctx.fillText(str,p[0],p[1])};
  // the box, the floor grid and the axes through the centre lines
@@ -522,6 +535,7 @@ function paint3d(o,f){
  if(L.market)trace(L.market.ent,C.sun,2.2,'Market','average',7,true);
  if(L.sun)trace(L.sun.ent,C.series[0],2.2,L.sun.name,'',6,true);
  L.picks.forEach((t,i)=>trace(t.ent,C.series[i],2.2,t.name,t.full,6,true));
+ fcPaint3d(o,cal,ctx,proj,XYZ,[...L.suns.map(t=>[t.ent,C.muted,1.2]),...(L.market?[[L.market.ent,C.sun,2]]:[]),...(L.sun?[[L.sun.ent,C.series[0],2]]:[]),...L.picks.map((t,i)=>[t.ent,C.series[i],2.2]),...L.cloud.filter(c=>!L.picks.some(t=>t.ent===c)).map(c=>[c,C.dot,.8])],C);
  dots.sort((a,b)=>a.d-b.d);
  const boxes=[];
  for(const d of dots){
@@ -859,7 +873,7 @@ function rotToggle(){
 }
 function bindRotSuns(){document.querySelectorAll('#workspace [data-rsec]').forEach(b=>b.onclick=()=>{rotStop();state.rsec=b.dataset.rsec;state.rview=state.rview==='scan'?'solar':state.rview;render()})}
 function bindRotation(){
- for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
+ for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
  if($('rrgtk')){$('rrgtk').onchange=e=>{state.rrgtk=e.target.value;render()};$('rrgtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rtk')){$('rtk').onchange=e=>{state.rtk=e.target.value;render()};$('rtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rplay'))$('rplay').onclick=rotToggle;

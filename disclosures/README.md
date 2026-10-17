@@ -19,6 +19,17 @@ system (same header, type, colours, dark mode and theme preference), with links 
   branch as one commit; the scan workflow copies `public/` to `/disclosures/data/market/history/`. Rotation then offers
   the **RRG** (JdK-style RS-Ratio / RS-Momentum against SPY, weekly or monthly, in 2-D, 3-D with time as depth, and 4-D
   with a third measure as depth and time played) and **History: Long** for the momentum clock and its 3-D / 4-D view.
+- **Next step and the solar system in 3-D / 4-D** (`app/chaos_forecast.py`, `docs/chaos.js`): after the history build the same
+  workflow writes `chaos-forecast.json` (quarters), `chaos-forecast-monthly.json` and `chaos-rrg.json` (weekly RRG) to `public/`.
+  Rotation → *Next step* draws, for every dot on the momentum clock, the solar system (2-D and the new 3-D / 4-D view, where a
+  sector's companies all keep their trails), the 3-D box and the RRG, an arrow to where it lands next on average among the
+  most similar past states (method of analogues, calibrated walk-forward), an 80% cone, the price read from it, and — for
+  past periods — what actually happened. The page shows the out-of-sample scorecard; the full backtest and the chaos tests
+  (S-map, horizon, embedding grid) are in `notes/chaos-forecast/README.md` (`app/chaos_experiments.py` reruns them).
+  The price coordinate and the price come from the gravity + tidal model (`app/gravity_pendulum.py`: company vs its sector and
+  sector vs SPY, short pendulum restoring, long pendulum momentum, the sector's motion carried to its companies), which
+  beats the analogues and is significant on the broad weekly test (`notes/gravity-pendulum/`); on the site's ~220 companies
+  its edge is not yet distinguishable from zero, so prices are shown as calibrated ranges.
 
 ## 4.1 — state and Canadian officials, optional cost estimates
 
