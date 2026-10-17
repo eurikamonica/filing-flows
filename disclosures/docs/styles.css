@@ -337,6 +337,13 @@ th[aria-sort=ascending] .sort-mark, th[aria-sort=descending] .sort-mark { opacit
 .fc-actual-dot { fill: var(--surface); stroke-width: 1.5; }
 .fc-score summary { cursor: pointer; font-weight: 600; }
 .fc-score table { margin-top: 8px; }
+/* galaxy (galaxy.js): the canvas is deep space in both themes */
+.gal-wrap { position: relative; margin-top: 10px; }
+.gal-canvas { display: block; width: 100%; border-radius: 12px; background: #03050b; touch-action: manipulation; }
+.gal-back { position: absolute; top: 12px; left: 12px; }
+.mk-key.gal-k0 { background: var(--flow-buy); } .mk-key.gal-k1 { background: var(--rot-sun); }
+.mk-key.gal-k2 { background: var(--flow-sell); } .mk-key.gal-k3 { background: var(--rot-1); }
+.mk-key.gal-kup { background: #4fd18b; } .mk-key.gal-kdn { background: #ff7a66; }
 .rot-3d-wrap { position: relative; margin-top: 6px; }
 .rot-3d { display: block; width: 100%; height: 420px; touch-action: none; cursor: grab; }
 .rot-3d:active { cursor: grabbing; }

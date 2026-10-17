@@ -999,6 +999,111 @@ def rrg_gravity_backtest(public, Gv, n=14, start='2012-01-06', every=2):
             'step_mean_cosine': float(np.mean(cos_)) if cos_ else None, 'from': start}
 
 
+def galaxy_site_file(public, Gv, n=14, weeks_out=104, per_sector=150, fc_weeks=13):
+    """galaxy.json for Rotation -> Galaxy: the market at the centre of a universe, every sector a galaxy, its companies the
+    stars, the style / asset ETFs distant bodies. Every position is a weekly RRG point (RS-Ratio, RS-Momentum; the chart's
+    exact formula, 14-week window): sectors and bodies against SPY, companies against their sector's index. Angle = where in
+    the rotation cycle, distance = how strong. Next step for the last weeks from the gravity + tidal model: next week's price
+    forecast, then the exact RRG step it implies. Values stored as round(100 x (v - 100))."""
+    public = Path(public)
+    D = json.loads((public / 'rrg.json').read_text(encoding='utf-8'))
+    grid0 = np.datetime64(D['start'])
+    W = int((np.datetime64(D['weeks']) - grid0).astype(int) // 7) + 1
+    def full(ent):
+        a = np.full(W, np.nan); o = int((np.datetime64(ent['start']) - grid0).astype(int) // 7)
+        c = np.array([np.nan if v is None else v for v in ent['c']], float); a[o:o + len(c)] = c[:W - o]; return a
+    spy = full(D['bench'])
+    w0 = W - weeks_out
+    enc = lambda a: [None if not np.isfinite(v) else int(round(100 * (v - 100))) for v in a]
+    def rrg_vs(c, base):
+        with np.errstate(all='ignore'):
+            rs = np.where((base > 0) & np.isfinite(base) & np.isfinite(c), 100 * c / base, np.nan)
+        return rs, rrg_series(rs, n)
+    fcw = list(range(W - fc_weeks, W))
+    gsat, gpla = Gv.preds(1, fcw) if Gv is not None else ({}, {})
+    names = {s['sector']: s['name'].replace(' · site companies', '') for s in D['series'] if s.get('group') == 'site-sector'}
+    levels = {s['sector']: full(s) for s in D['series'] if s.get('group') == 'site-sector'}
+    # the market of these companies: equal-weighted (in logs) average of the sector indices, each rebased to its first week
+    lv_ok = {k: v for k, v in levels.items() if k != 'other'}
+    with np.errstate(all='ignore'):
+        logs = np.array([np.log(v) - np.log(v[np.isfinite(v)][0]) for v in lv_ok.values()])
+    site_mkt = np.exp(np.nanmean(logs, axis=0)) * 100
+    galaxies = {}
+    for sec, lv in levels.items():
+        if sec == 'other':
+            continue
+        rs2, S2 = rrg_vs(lv, site_mkt)
+        rs, S = rrg_vs(lv, spy)
+        fx, fy = [None] * fc_weeks, [None] * fc_weeks
+        fxm, fym = [None] * fc_weeks, [None] * fc_weeks
+        if Gv is not None and sec in Gv.secs:
+            pi = Gv.secs.index(sec)
+            for k, w in enumerate(fcw):
+                if w in gpla and np.isfinite(S['x'][w]):
+                    pm = dict(zip(gpla[w][0], gpla[w][1]))
+                    if pi in pm:
+                        nx, ny = RRGStepper(S, w).points([rs[w] * math.exp(pm[pi])])[0]
+                        fx[k], fy[k] = int(round(100 * (nx - 100))), int(round(100 * (ny - 100)))
+                        # against the market of these companies: the sector's forecast minus the sectors' average forecast
+                        mx_, my_ = RRGStepper(S2, w).points([rs2[w] * math.exp(pm[pi] - float(np.mean(list(pm.values()))))])[0]
+                        fxm[k], fym[k] = int(round(100 * (mx_ - 100))), int(round(100 * (my_ - 100)))
+        galaxies[sec] = {'name': names.get(sec, sec), 'x': enc(S['x'][w0:]), 'y': enc(S['y'][w0:]), 'fx': fx, 'fy': fy,
+                         'xm': enc(S2['x'][w0:]), 'ym': enc(S2['y'][w0:]), 'fxm': fxm, 'fym': fym, 'members': 0}
+    bodies = []
+    for s_ in D['series']:
+        if s_.get('group') != 'style-etf':
+            continue
+        rs, S = rrg_vs(full(s_), spy)
+        if np.isfinite(S['x'][w0:]).sum() < 26:
+            continue
+        _, S2 = rrg_vs(full(s_), site_mkt)
+        bodies.append([s_['id'], s_['name'], enc(S['x'][w0:]), enc(S['y'][w0:]), enc(S2['x'][w0:]), enc(S2['y'][w0:])])
+    # stars: the largest liquid companies of each sector (liquid at the latest week, as the gravity model's universe)
+    meta = D.get('tickers') or {}
+    B = Gv.B if Gv is not None else None
+    stars = []
+    by_sec = {}
+    for i, t in enumerate(Gv.D['tick'] if Gv is not None else []):
+        sec = Gv.D['sec'][i]
+        if sec not in galaxies:
+            continue
+        liquid = np.isfinite(B['dv13'][i, -1]) and B['dv13'][i, -1] >= 10e6 and B['close'][i, -1] >= 3
+        if liquid:
+            by_sec.setdefault(sec, []).append((meta.get(t, {}).get('rev') or 0, i, t))
+    for sec, lst in by_sec.items():
+        lst.sort(reverse=True)
+        galaxies[sec]['members'] = len(lst)
+        for rev, i, t in lst[:per_sector]:
+            rs, S = rrg_vs(Gv.D['C'][i], levels[sec])
+            if np.isfinite(S['x'][w0:]).sum() < 13:
+                continue
+            fx, fy, fr = [None] * fc_weeks, [None] * fc_weeks, [None] * fc_weeks
+            for k, w in enumerate(fcw):
+                if w in gsat and np.isfinite(S['x'][w]):
+                    sm = dict(zip(gsat[w][0], gsat[w][1]))
+                    if i in sm:
+                        nx, ny = RRGStepper(S, w).points([rs[w] * math.exp(sm[i])])[0]
+                        fx[k], fy[k], fr[k] = int(round(100 * (nx - 100))), int(round(100 * (ny - 100))), int(round(1e4 * sm[i]))
+            c = Gv.D['C'][i]
+            stars.append([t, meta.get(t, {}).get('n') or t, sec, int(rev), enc(S['x'][w0:]), enc(S['y'][w0:]), fx, fy, fr,
+                          r4(c[-1], 2) if np.isfinite(c[-1]) else None])
+    days = [str(grid0 + 7 * k) for k in range(w0, W)]
+    doc = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'n': n, 'weeks': days, 'fc_from': weeks_out - fc_weeks,
+           'centres': {'mkt': 'the market of these companies (equal-weighted average of the sector indices)', 'spy': 'SPY'},
+           'scale': 'value = 100 + v / 100', 'benchmark': 'SPY',
+           'star_fields': ['ticker', 'name', 'sector', 'revenue', 'x', 'y', 'next_x', 'next_y', 'next_rel_logret_bp', 'close'],
+           'galaxies': galaxies, 'bodies': bodies, 'stars': stars,
+           'note': ('Universe: the market at the centre — either the market of these companies (the sector indices averaged with equal '
+                    'weight) or SPY (cap-weighted, dominated by the largest companies). Galaxies: the Sankey site\'s sectors (log-revenue-'
+                    'weighted indices of their companies) placed by their weekly RRG point against that centre. Stars: each sector\'s largest liquid companies, placed by their RRG point against '
+                    'their sector inside the galaxy. Distant bodies: style and asset ETFs against SPY. Angle = phase of the rotation '
+                    '(leading, weakening, lagging, improving, clockwise); distance = strength, compressed so the far ones fit. Next step: '
+                    'the gravity + tidal model\'s forecast of next week\'s price relative to the parent, drawn as the exact RRG step it '
+                    'implies. Today\'s companies only.')}
+    (public / 'galaxy.json').write_text(json.dumps(doc, separators=(',', ':')), encoding='utf-8')
+    return doc
+
+
 # ------------------------------------------------------------------ the site files
 def r4(x, nd=3):
     return None if x is None or not np.isfinite(x) else round(float(x), nd)
@@ -1260,6 +1365,14 @@ def build(public, backtest_dir=None, verbose=True, rrg_backtest=False):
             summ = rrg_summary(res, inv)
         if rrg_backtest and Gv is not None:
             summ = dict(summ or {}, gravity=rrg_gravity_backtest(public, Gv))
+        if Gv is not None:
+            try:
+                g = galaxy_site_file(public, Gv)
+                out['galaxy'] = {'stars': len(g['stars']), 'galaxies': len(g['galaxies']), 'bodies': len(g['bodies'])}
+                if verbose:
+                    print('galaxy:', out['galaxy'], flush=True)
+            except Exception as exc:
+                print('galaxy file skipped:', type(exc).__name__, exc, flush=True)
         doc = rrg_site_file(public, library_tickers=Pq.tickers, summary=summ, gravity=Gv)
         out['rrg'] = {'lines': len(doc['lines']), 'backtest': summ}
         if verbose:

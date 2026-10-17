@@ -86,7 +86,7 @@ jobs:
       - name: Build public/ (RRG lines, ticker files, the long momentum clock)
         timeout-minutes: 12
         run: python disclosures/app/rotation_history.py build --root hist --site-data site --data disclosures/docs/data
-      - name: Next-step forecasts (method of analogues; public/chaos-forecast*.json, chaos-rrg.json)
+      - name: Next-step forecasts and the galaxy (public/chaos-forecast*.json, chaos-rrg.json, galaxy.json)
         # Rotation → "Next step": arrows, cones and the price read from them. The weekly RRG walk-forward that scores the
         # RRG arrows is re-run on Saturdays (a few minutes); the other runs keep its last scores. A failure leaves the
         # previous forecast files in place and does not stop the history from being saved.
