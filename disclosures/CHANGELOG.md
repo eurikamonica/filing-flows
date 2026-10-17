@@ -1,5 +1,14 @@
 # Changelog
 
+## Rotation: next step and the 3-D / 4-D solar system
+
+Rotation gains a *Next step* control (momentum clock, solar system, 3-D box, RRG) and a new chart, *Solar system 3-D / 4-D*
+(market or one sector, a third coordinate or time as depth; in a sector every company keeps its trail, also in the 2-D
+solar view). Forecasts by the method of analogues in delay-embedded solar coordinates (`app/chaos_forecast.py`), calibrated
+walk-forward, with the price read from the stock-vs-S&P coordinate (quarters, months) or by inverting the RRG's exact
+one-week map. Built by the rotation-history workflow; tests in `tests/test_chaos_forecast.py` (including a check that
+changing the future leaves past forecasts bit-identical); backtest and chaos tests in `notes/chaos-forecast/`.
+
 ## 4.1.0
 
 Officials' disclosures beyond the US House: New York State (COELIG statements, HTML, value categories), California

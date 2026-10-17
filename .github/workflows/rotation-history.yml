@@ -2,7 +2,8 @@
 # 2010). Weekly closes since 2000 for SPY, the sector and style ETFs and every company of the Sankey site, and the SEC
 # XBRL frames back to 2009, are kept on the branch "rotation-history" (data only; the first run creates it). Each run
 # fetches a batch of new tickers, refreshes the stalest ones, then rebuilds public/ (rrg.json, t/<TICKER>.json,
-# rotation-long*.json); scan.yml publishes public/ with the hub on its next run. The branch keeps one commit (force-pushed)
+# rotation-long*.json) and the next-step forecasts (chaos-forecast*.json, chaos-rrg.json; app/chaos_forecast.py); scan.yml
+# publishes public/ with the hub on its next run. The branch keeps one commit (force-pushed)
 # so history files never pile up. Run it by hand (Actions → Rotation history → Run workflow) to fetch tickers now.
 name: Rotation history
 on:
@@ -85,6 +86,16 @@ jobs:
       - name: Build public/ (RRG lines, ticker files, the long momentum clock)
         timeout-minutes: 12
         run: python disclosures/app/rotation_history.py build --root hist --site-data site --data disclosures/docs/data
+      - name: Next-step forecasts (method of analogues; public/chaos-forecast*.json, chaos-rrg.json)
+        # Rotation → "Next step": arrows, cones and the price read from them. The weekly RRG walk-forward that scores the
+        # RRG arrows is re-run on Saturdays (a few minutes); the other runs keep its last scores. A failure leaves the
+        # previous forecast files in place and does not stop the history from being saved.
+        timeout-minutes: 15
+        continue-on-error: true
+        run: |
+          python -m pip install --quiet numpy pandas scikit-learn
+          extra=""; [ "$(date -u +%u)" = "6" ] && extra="--rrg-backtest"
+          python disclosures/app/chaos_forecast.py --public hist/public $extra
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd hist
