@@ -2,7 +2,8 @@
 # 2010). Weekly closes since 2000 for SPY, the sector and style ETFs and every company of the Sankey site, and the SEC
 # XBRL frames back to 2009, are kept on the branch "rotation-history" (data only; the first run creates it). Each run
 # fetches a batch of new tickers, refreshes the stalest ones, then rebuilds public/ (rrg.json, t/<TICKER>.json,
-# rotation-long*.json) and the next-step forecasts (chaos-forecast*.json, chaos-rrg.json; app/chaos_forecast.py); scan.yml
+# rotation-long*.json), the next-step forecasts (chaos-forecast*.json, chaos-rrg.json; app/chaos_forecast.py) and their
+# frozen track record (ledger/, forecast-ledger*.json; app/forecast_ledger.py); scan.yml
 # publishes public/ with the hub on its next run. The branch keeps one commit (force-pushed)
 # so history files never pile up. Run it by hand (Actions → Rotation history → Run workflow) to fetch tickers now.
 name: Rotation history
@@ -96,6 +97,12 @@ jobs:
           python -m pip install --quiet numpy pandas scikit-learn
           extra=""; [ "$(date -u +%u)" = "6" ] && extra="--rrg-backtest"
           python disclosures/app/chaos_forecast.py --public hist/public $extra
+      - name: Forecast track record (ledger/*.json frozen forecasts; public/forecast-ledger*.json)
+        # Each forecast is frozen the first time it is the newest one published and never edited; outcomes and gaps are
+        # added once its period has closed. The ledger lives in hist/ledger and so survives the force-push.
+        timeout-minutes: 5
+        continue-on-error: true
+        run: python disclosures/app/forecast_ledger.py --root hist --sha "$GITHUB_SHA"
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd hist

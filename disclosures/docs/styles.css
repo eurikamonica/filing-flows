@@ -390,3 +390,16 @@ th[aria-sort=ascending] .sort-mark, th[aria-sort=descending] .sort-mark { opacit
 .badge.rrg-b-weak { background: color-mix(in srgb, var(--rot-sun) 20%, transparent); color: var(--ink-2); }
 .badge.rrg-b-lag { background: color-mix(in srgb, var(--flow-sell) 16%, transparent); color: var(--flow-sell); }
 .badge.rrg-b-imp { background: color-mix(in srgb, var(--rot-1) 16%, transparent); color: var(--rot-1); }
+/* forecast track record (ledger.js) */
+.led-ok { color: var(--flow-buy); font-weight: 700; } .led-no { color: var(--flow-sell); font-weight: 700; }
+.led-live { fill: var(--rot-1); } .led-bt { fill: var(--rot-1); opacity: .38; }
+.led-sel { stroke: var(--ink); stroke-width: 1.5; opacity: 1; }
+.led-pend { fill: var(--muted); opacity: .6; }
+.led-up { stroke: var(--rot-sun); stroke-width: 2; }
+.led-mark { fill: var(--ink); }
+.led-bar { cursor: pointer; }
+.led-dot-ok { fill: var(--flow-buy); opacity: .75; } .led-dot-no { fill: var(--flow-sell); opacity: .75; }
+.led-range { stroke: var(--muted); stroke-width: 3; opacity: .35; stroke-linecap: round; }
+.led-fc { fill: var(--surface); stroke: var(--rot-sun); stroke-width: 1.6; } .led-fc-live { stroke-width: 2.4; }
+.led-kv { display: grid; grid-template-columns: minmax(140px, max-content) 1fr; gap: 6px 14px; margin: 8px 0 0; font-size: 14px; }
+.led-kv dt { color: var(--muted); } .led-kv dd { margin: 0; }
