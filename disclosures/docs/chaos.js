@@ -63,7 +63,7 @@ function fcTipRows(o,ent,name,cal,row){
  for(const v of [o.x,o.y,...(o.z&&o.z.key!=='__time'?[o.z]:[])]){const j=o.fc._prep.vi[v.key];if(j==null)continue;
   out.push([vfmt(v,row[1][j])+(row[2]&&row[2][j]!=null?' ± '+vfmt({...v,centred:false},row[2][j]).replace(/^−/,''):''),v.label])}
  if(row[3]!=null)out.push([fmt(row[3],2),'local divergence of the analogues (higher = they fan out)']);
- if(row[5]!=null)out.push(['$'+fmt(row[5],2)+(row[6]!=null?` (80%: $${fmt(row[6],2)}–$${fmt(row[7],2)})`:''),`price next ${o.P.monthly?'month':'quarter'}-end · now $${fmt(row[4],2)}`]);
+ if(row[5]!=null)out.push(['$'+fmt(row[5],2)+(row[6]!=null?` (80%: $${fmt(row[6],2)}–$${fmt(row[7],2)})`:''),`price next ${o.P.monthly?'month':'quarter'}-end · now $${fmt(row[4],2)} · ${row[8]===1?'gravity + tidal model':'analogues'}`]);
  return out;
 }
 
@@ -256,8 +256,8 @@ function fcTable(o){
   const ret=r[4]&&r[5]!=null?100*(r[5]/r[4]-1):null,act=check&&pn&&pn.ret!=null?pn.ret:null;
   const dx=fcHas(o,o.x)&&o.x.key!=='__time'?r[1][j[o.x.key]]:null,dy=fcHas(o,o.y)&&o.y.key!=='__time'?r[1][j[o.y.key]]:null;
   ex.push({ticker:c.t,origin:cal,target:next||o.fc.targets[o.fc.origins.indexOf(cal)]||'',close:r[4],price_forecast:r[5],price_lo80:r[6],price_hi80:r[7],
-   [o.x.key+'_next']:dx,[o.y.key+'_next']:dy,local_divergence:r[3],...(check?{actual_return_pct:act}:{})});
-  return [coLink(c),r[4]!=null?'$'+fmt(r[4],2):'—',r[5]!=null?'$'+fmt(r[5],2):'—',ret==null?'—':`<span class="${ret>=0?'positive':'negative'}">${(ret>=0?'+':'−')+fmt(Math.abs(ret),1)}%</span>`,
+   [o.x.key+'_next']:dx,[o.y.key+'_next']:dy,local_divergence:r[3],price_model:r[8]===1?'gravity':'analogues',...(check?{actual_return_pct:act}:{})});
+  return [coLink(c),r[4]!=null?'$'+fmt(r[4],2):'—',r[5]!=null?'$'+fmt(r[5],2)+(r[8]===1?'':' <span class="muted" title="price from the analogues (the gravity model does not cover this company)">ᴬ</span>'):'—',ret==null?'—':`<span class="${ret>=0?'positive':'negative'}">${(ret>=0?'+':'−')+fmt(Math.abs(ret),1)}%</span>`,
    r[6]!=null?'$'+fmt(r[6],2)+' – $'+fmt(r[7],2):'—',dx==null?'—':(p[o.x.key]==null?'':vfmt(o.x,p[o.x.key])+' → ')+vfmt(o.x,dx),dy==null?'—':(p[o.y.key]==null?'':vfmt(o.y,p[o.y.key])+' → ')+vfmt(o.y,dy),r[3]==null?'—':fmt(Math.abs(r[3])<.005?0:r[3],2),
    ...(check?[act==null?'—':`<span class="${act>=0?'positive':'negative'}">${(act>=0?'+':'−')+fmt(Math.abs(act),1)}%</span>${ret!=null&&act!=null?(Math.sign(ret)===Math.sign(act)?' ✓':' ✗'):''}`]:[])]});
  exported=ex;
@@ -267,17 +267,19 @@ function fcTable(o){
  return out+fcScore(o);
 }
 function fcScore(o){
- const b=o.fc.backtest||{},st=(b.state||{}),pr=b.price||{},a=st.analog_cal||{},s=st.sun||{},l=st.linear||{},sur=st.surrogate||{};
+ const b=o.fc.backtest||{},st=(b.state||{}),pr=b.price||{},pa=b.price_analog||{},a=st.analog_cal||{},s=st.sun||{},l=st.linear||{},sur=st.surrogate||{};
  const ci=v=>Array.isArray(v)&&v[0]!=null?`${fmt(v[0],3)} [${fmt(v[1],3)}, ${fmt(v[2],3)}]`:'—';
- const pc=v=>v==null?'—':fmt(100*v,1)+'%';
- return `<details class="fc-score" open><summary>How these arrows did out of sample (${esc(o.P.monthly?'months':'quarters')}, walk-forward)</summary>
- <p class="sub">Every arrow before the latest was made with data public at the time and checked against the next dot. “Back to the sun” is the naive rule that every dot returns to its sector average; the placebo uses the same analogues with their next steps shuffled.</p>
- ${table(['','Arrow points the right way','Price coordinate: landing vs “back to the sun”','Cross-sectional IC of the price coordinate (95% CI)','Top − bottom fifth, next return (pts)'],[
-  ['Analogues, calibrated (shown)',pc(a.arrow_hit),a.rel_landing_vs_sun==null?'—':fmt(100*a.rel_landing_vs_sun,1)+'%',ci(a.rel_landing_ic_ci),ci(a.rel_quintile_spread_ci)],
-  ['Linear phase-space map (damped rotation)',pc(l.arrow_hit),l.rel_landing_vs_sun==null?'—':fmt(100*l.rel_landing_vs_sun,1)+'%',ci(l.rel_landing_ic_ci),ci(l.rel_quintile_spread_ci)],
-  ['Back to the sun',pc(s.arrow_hit),'0%','—','—'],
-  ['Placebo (shuffled analogues)',pc(sur.arrow_hit),sur.rel_landing_vs_sun==null?'—':fmt(100*sur.rel_landing_vs_sun,1)+'%',ci(sur.rel_landing_ic_ci),ci(sur.rel_quintile_spread_ci)]])}
- <p class="sub">Price read from the arrows: ${fmt(pr.n||0)} forecasts over ${fmt(pr.periods||0)} periods; direction right ${pc(pr.price_direction_hit)} against ${pc(pr.share_of_up_moves)} of moves that were up anyway; 80% range held ${pc(pr.coverage80)}, 95% range ${pc(pr.coverage95)}; IC ${ci(pr.ic_calibrated_ci)}. The arrows describe how dots move — mostly back toward their sun, and slow coordinates (volatility, momentum, distance from the high, margins) better than naive rules — but the price coordinate itself has shown no reliable edge: read the price column as a range, not a call.</p></details>`;
+ const pc=v=>v==null?'—':fmt(100*v,1)+'%',grav=b.price_model==='gravity',u=o.P.monthly?'months':'quarters';
+ const edge=Array.isArray(pr.ic_calibrated_ci)&&pr.ic_calibrated_ci[1]>0;
+ const verdict=edge?`The price column has shown a small but real edge here (its interval excludes zero); it is still a forecast with a wide range, not a certainty.`
+  :`On this site's ${fmt(pr.n?Math.round(pr.n/Math.max(1,pr.periods)):0)} or so companies per ${u.slice(0,-1)} the price column's edge is not yet distinguishable from zero${grav?' — the same gravity model is significant on the broad test of about 1,230 companies a week (IC ≈ 0.02–0.03; disclosures/notes/gravity-pendulum)':''}; read the price as a calibrated range.`;
+ return `<details class="fc-score" open><summary>How these arrows did out of sample (${esc(u)}, walk-forward)</summary>
+ <p class="sub">Every arrow before the latest was made with data public at the time and checked against the next dot. “Back to the sun” is the naive rule that every dot returns to its sector average; the placebo uses the same analogues with their next steps shuffled.${grav?' The price coordinate (stock vs the S&amp;P) and the price come from the gravity + tidal model: the short pendulum pulls a company back toward its sector, the long one pushes (momentum), and the sector\'s own motion carries to its companies. The other coordinates come from the analogues.':''}</p>
+ ${table(['Arrows (direction of the move)','Points the right way','Placebo','Back to the sun'],[['Analogues, calibrated',pc(a.arrow_hit),pc(sur.arrow_hit),pc(s.arrow_hit)],['Linear phase-space map',pc(l.arrow_hit),'—','—']])}
+ ${table(['Price of the next '+u.slice(0,-1),'Forecasts','Cross-sectional IC (95% CI)','Direction right','Up anyway','80% range held','95% range held'],[
+  ...(grav?[['Gravity + tidal (shown)',fmt(pr.n||0),ci(pr.ic_calibrated_ci),pc(pr.price_direction_hit),pc(pr.share_of_up_moves),pc(pr.coverage80),pc(pr.coverage95)]]:[]),
+  [grav?'Analogues (for comparison)':'Analogues (shown)',fmt((grav?pa:pr).n||0),ci((grav?pa:pr).ic_calibrated_ci),pc((grav?pa:pr).price_direction_hit),pc((grav?pa:pr).share_of_up_moves),pc((grav?pa:pr).coverage80),pc((grav?pa:pr).coverage95)]])}
+ <p class="sub">${verdict} The arrows' direction is reliable mostly because dots fall back toward their sun. Survivorship: today's companies only, which flatters every model.</p></details>`;
 }
 
 /* ---------- the RRG: arrows on the weekly 14-week chart, price mapped back from the next point ---------- */
@@ -291,7 +293,7 @@ function rrgFcLayer(o,f,sx,sy){
   const p=[sx(c.x[f]),sy(c.y[f])],q=[sx(r[3]),sy(r[4])];
   if(state.rfc==='check'&&c.x[f+1]!=null)s+=fcCheckSvg(p,[sx(c.x[f+1]),sy(c.y[f+1])],l.col);
   const rows=[[l.e.name+' · next week','forecast made '+rrgDay(day)],[fmt(r[3],2)+' / '+fmt(r[4],2),'RS-Ratio / RS-Momentum next'],
-   [(r[5]>=0?'+':'−')+fmt(Math.abs(100*r[5]),2)+'%','vs '+(o.D.benchmark||'SPY')+', read back from the point'],...(r[7]!=null?[['$'+fmt(r[7],2),'close implied (now $'+fmt(r[6],2)+')']]:[])];
+   [(r[5]>=0?'+':'−')+fmt(Math.abs(100*r[5]),2)+'%','vs '+(o.D.benchmark||'SPY')+(r[8]===1?', gravity + tidal forecast (the point follows from it)':', read back from the point')],...(r[7]!=null?[['$'+fmt(r[7],2),'close implied (now $'+fmt(r[6],2)+')']]:[])];
   s+=`<g data-tip="${tip(rows)}" tabindex="-1" class="mk-hit">${fcArrowSvg(p,q,l.col,2)}</g>`}
  return s;
 }
@@ -299,7 +301,7 @@ function rrgFcNote(o){
  if(!fcOn())return '';
  if(o.freq!=='w'||o.n!==14)return '<div class="explain">Next-step arrows on the RRG are computed for the weekly chart with the 14-week window.</div>';
  const d=rrgFcLoad();if(!d)return '<div class="explain">Loading the RRG forecasts…</div>';
- const b=d.backtest||{},a=b.analog||{},r=b.rotation||{},pi=b.price_inversion||{};
+ const b=d.backtest||{},a=b.analog||{},r=b.rotation||{},pi=b.price_inversion||{},g=b.gravity||{};
  const pc=v=>v==null?'—':fmt(100*v,1)+'%',ci=v=>Array.isArray(v)&&v[0]!=null?`${fmt(v[0],3)} [${fmt(v[1],3)}, ${fmt(v[2],3)}]`:'—';
- return `<details class="fc-score"><summary>How the RRG arrows did out of sample (weekly, ${esc(b.from||'')} – ${esc(b.to||'')})</summary><p class="sub">Arrow points the right way: analogues ${pc(a.direction_hit)}, “keep rotating at the same speed” ${pc(r.direction_hit)}. Step skill vs standing still: analogues ${pc(a.step_skill_vs_persist)}, rotation ${pc(r.step_skill_vs_persist)}. Next week's return read back from the forecast point: IC ${ci(pi.ic_inverted_ci)}, sign right ${pc(pi.sign_hit_inverted)}. The rotation is smooth by construction (both coordinates are averages of the past), so where the dot goes next is easy; what the price does next is not.</p></details>`;
+ return `<details class="fc-score"><summary>How the RRG arrows did out of sample (weekly, ${esc(b.from||'')} – ${esc(b.to||'')})</summary><p class="sub">Arrow points the right way: analogues ${pc(a.direction_hit)}, “keep rotating at the same speed” ${pc(r.direction_hit)}. Step skill vs standing still: analogues ${pc(a.step_skill_vs_persist)}, rotation ${pc(r.step_skill_vs_persist)}. Next week's return read back from the forecast point: IC ${ci(pi.ic_inverted_ci)}, sign right ${pc(pi.sign_hit_inverted)}.${g.weeks?` Lines marked by the gravity + tidal model forecast next week's price first and draw the RRG step that price implies (exact formula): step right ${pc(g.step_direction_hit)}, price IC ${ci(g.ic_ci)} over ${fmt(g.weeks)} weeks.`:''} The rotation is smooth by construction (both coordinates are averages of the past), so where the dot goes next is easy; what the price does next is not.</p></details>`;
 }

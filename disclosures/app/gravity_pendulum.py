@@ -199,35 +199,99 @@ def fundamentals(public, D):
 
 
 # ------------------------------------------------------------------ the panel at one timescale
+def features_at(B, t, h, fund=None, min_price=3.0):
+    """The satellites' features at week t for an h-week step, and who is eligible (liquid, priced, with a full pendulum).
+    Uses data up to week t only."""
+    x, L, PL = B['x'], B['links'], B['plinks']
+    v = x[:, t] - x[:, t - h]
+    vp = B['y'][:, t] - B['y'][:, t - h]                           # planets' last velocity
+    feats = {'v': v}
+    for j in range(4):
+        feats[f'k{j + 1}'] = L[:, t, j]
+    feats['planet_v'] = vp[B['sidx']]
+    for j in range(4):
+        feats[f'pk{j + 1}'] = PL[B['sidx'], t, j]
+    for b, br in B['body_r'].items():
+        move = np.nansum(br[t - h + 1:t + 1]) if np.isfinite(br[t - h + 1:t + 1]).sum() >= max(1, h // 2) else np.nan
+        feats[f'b_{b}'] = B['beta'][b][:, t] * move
+    if fund is not None:
+        for j, f in enumerate(('om', 'revg', 'dom')):
+            feats[f'f_{f}'] = fund[:, t, j]
+    ok = np.isfinite(v) & np.isfinite(L[:, t]).all(-1) & (B['close'][:, t] >= min_price) & (B['dv13'][:, t] >= 10e6)
+    return ok, feats
+
+
 def panel(B, D, h, fund=None, start='2004-01-01', min_price=3.0):
     days = D['days']
     t0 = int(np.searchsorted(days, np.datetime64(start)))
     origins = np.arange(t0 + (t0 % h), len(days) - h, h)
     rows = []
-    x, L, PL = B['x'], B['links'], B['plinks']
+    x = B['x']
     for t in origins:
-        v = x[:, t] - x[:, t - h]
         tgt = x[:, t + h] - x[:, t]
-        vp = B['y'][:, t] - B['y'][:, t - h]                       # planets' last velocity
-        feats = {'v': v}
-        for j in range(4):
-            feats[f'k{j + 1}'] = L[:, t, j]
-        feats['planet_v'] = vp[B['sidx']]
-        for j in range(4):
-            feats[f'pk{j + 1}'] = PL[B['sidx'], t, j]
-        for b, br in B['body_r'].items():
-            move = np.nansum(br[t - h + 1:t + 1]) if np.isfinite(br[t - h + 1:t + 1]).sum() >= max(1, h // 2) else np.nan
-            feats[f'b_{b}'] = B['beta'][b][:, t] * move
-        if fund is not None:
-            for j, f in enumerate(('om', 'revg', 'dom')):
-                feats[f'f_{f}'] = fund[:, t, j]
-        ok = (np.isfinite(tgt) & np.isfinite(v) & np.isfinite(L[:, t]).all(-1) & (B['close'][:, t] >= min_price)
-              & (B['dv13'][:, t] >= 10e6))
+        ok, feats = features_at(B, t, h, fund, min_price)
+        ok = ok & np.isfinite(tgt)
         if ok.sum() < 30:
             continue
         rows.append({'t': t, 'idx': np.nonzero(ok)[0], 'y': tgt[ok], 'raw': tgt[ok], 'X': {k: f[ok] for k, f in feats.items()},
                      'calm': B['vol13'][t] <= np.nanmedian(B['vol13'][:t + 1])})
     return rows
+
+
+SITE_COLS = ['v', 'k1', 'k2', 'k3', 'k4', 'planet_v', 'pk1', 'pk2', 'pk3', 'pk4']     # M2: the layer that held out of sample
+
+
+def predict_satellites(B, D, h, weeks, cols=SITE_COLS, ridge=10.0):
+    """Walk-forward predictions of the next h-week log return relative to the sector, at any weeks (the latest included,
+    whose outcome is unknown). Training: the h-grid panel rows whose outcome had ended by the prediction week.
+    Returns {week: (company indices, prediction)}."""
+    rows = panel(B, D, h)
+    Xs, ys = design(rows, cols)
+    tt = [r['t'] for r in rows]
+    p = len(cols); G = np.zeros((p, p)); g = np.zeros(p); added = 0; out = {}
+    for t in sorted(set(int(w) for w in weeks)):
+        while added < len(rows) and tt[added] + h <= t:
+            G += Xs[added].T @ Xs[added]; g += Xs[added].T @ ys[added]; added += 1
+        if added < 20:
+            continue
+        b = np.linalg.solve(G + ridge * np.eye(p) * added, g)
+        ok, feats = features_at(B, t, h)
+        if ok.sum() < 30:
+            continue
+        X = np.column_stack([zcs(feats[c][ok]) for c in cols])
+        out[t] = (np.nonzero(ok)[0], X @ b)
+    return out
+
+
+def predict_planets(B, D, h, weeks, ridge=50.0):
+    """Walk-forward predictions of each sector's next h-week log return relative to SPY (its own pendulum and velocity)."""
+    y, PL = B['y'], B['plinks']
+    def feats(t):
+        v = y[:, t] - y[:, t - h]
+        X = {'v': v, **{f'k{j + 1}': PL[:, t, j] for j in range(4)}}
+        ok = np.isfinite(v) & np.isfinite(PL[:, t]).all(-1)
+        return ok, X
+    cols = ['v', 'k1', 'k2', 'k3', 'k4']
+    rows = []
+    for t in range(260, y.shape[1] - h, h):
+        ok, X = feats(t); tgt = y[:, t + h] - y[:, t]; ok = ok & np.isfinite(tgt)
+        if ok.sum() >= 6:
+            rows.append({'t': t, 'y': tgt[ok], 'X': {k: v[ok] for k, v in X.items()}, 'calm': True})
+    Xs, ys = design(rows, cols); tt = [r['t'] for r in rows]
+    p = len(cols); G = np.zeros((p, p)); g = np.zeros(p); added = 0; out = {}
+    for t in sorted(set(int(w) for w in weeks)):
+        while added < len(rows) and tt[added] + h <= t:
+            G += Xs[added].T @ Xs[added]; g += Xs[added].T @ ys[added]; added += 1
+        if added < 20:
+            continue
+        b = np.linalg.solve(G + ridge * np.eye(p) * added, g)
+        ok, X = feats(t)
+        if ok.sum() < 6:
+            continue
+        # the cross-sectional model predicts each sector relative to the average sector; add the planets' mean drift (0)
+        Z = np.column_stack([zcs(X[c][ok]) for c in cols])
+        out[t] = (np.nonzero(ok)[0], Z @ b)
+    return out
 
 
 def zcs(a):
@@ -283,7 +347,7 @@ def fama_macbeth(rows, cols, nw_lags=4):
     return {c: {'coef': float(m_), 't': float(m_ / s_) if s_ > 0 else float('nan')} for c, m_, s_ in zip(cols, mu, se)}
 
 
-def walk_forward(rows, cols, h, test_from, state=False, ridge=10.0):
+def walk_forward(rows, cols, h, test_from, state=False, ridge=10.0, keep=False):
     """Expanding pooled ridge on standardised features; at origin t only periods whose target ended by t are used."""
     Xs, ys = design(rows, cols, state)
     p = Xs[0].shape[1]
@@ -307,7 +371,8 @@ def walk_forward(rows, cols, h, test_from, state=False, ridge=10.0):
             turn = 1.0
         out.append({'t': r['t'], 'ic': spearman(pred, y), 'ls': float(raw[pred >= q[1]].mean() - raw[pred <= q[0]].mean()),
                     'top': top, 'bot': bot, 'turn': turn,
-                    'sse': float(((y - pred) ** 2).sum()), 'sst': float((y ** 2).sum()), 'n': len(y)})
+                    'sse': float(((y - pred) ** 2).sum()), 'sst': float((y ** 2).sum()), 'n': len(y),
+                    **({'pred': pred, 'ids': ids, 'raw': raw, 'b': b} if keep else {})})
     return out
 
 

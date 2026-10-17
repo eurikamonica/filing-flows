@@ -869,7 +869,7 @@ def rrg_summary(res, inv):
     return out
 
 
-def rrg_site_file(public, n=14, k=80, weeks_series=52, weeks_companies=13, library_tickers=None, summary=None):
+def rrg_site_file(public, n=14, k=80, weeks_series=52, weeks_companies=13, library_tickers=None, summary=None, gravity=None):
     """chaos-rrg.json: for the RRG lines the page offers (sector / style ETFs, site sectors, the largest companies per
     sector and the long-rotation companies), the forecast next point for each of the last weeks (out of sample: the
     library only holds weeks whose next point was known) and the next close read back from it."""
@@ -897,6 +897,19 @@ def rrg_site_file(public, n=14, k=80, weeks_series=52, weeks_companies=13, libra
     spy_mu = float(np.nanmean(np.diff(np.log(spy[np.isfinite(spy)]))))       # expected weekly benchmark log return
     out_weeks = weeks[-weeks_series:]
     series_ids = {s['id'] for s in D['series']}
+    sec_of = {s['id']: s.get('sector') for s in D['series'] if s.get('group') in ('sector-etf', 'site-sector')}
+    gw = {}
+    if gravity is not None:                       # weekly gravity forecasts vs SPY (satellite + planet), same weekly grid
+        widx = [int((w - grid0).astype('timedelta64[D]').astype(int) // 7) for w in out_weeks]
+        gsat, gpla = gravity.preds(1, widx)
+        for w in widx:
+            if w in gsat and w in gpla:
+                pm = dict(zip(gpla[w][0], gpla[w][1]))
+                sm = {gravity.D['tick'][i]: p_ + pm.get(gravity.secs.index(gravity.D['sec'][i]), np.nan) for i, p_ in zip(*gsat[w])}
+                for sid, sk in sec_of.items():
+                    if sk in gravity.secs and gravity.secs.index(sk) in pm:
+                        sm[sid] = pm[gravity.secs.index(sk)]
+                gw[w] = sm
     lines = {}
     for w in out_weeks:
         lib_m = (df.date < w).to_numpy() & np.isfinite(df.tx.to_numpy())
@@ -919,13 +932,21 @@ def rrg_site_file(public, n=14, k=80, weeks_series=52, weeks_companies=13, libra
         for row, m_ in zip(sub.itertuples(index=False), mu):
             d, rs, x, y, S = series[row.t]
             st = RRGStepper(S, int(row.i))
-            r_inv, _, _ = st.invert((row.x + m_[0], row.y + m_[1]), (sc[0], sc[1]), rs[int(row.i)])
             c_now = closes[row.t][1][int(row.i)]
+            g = gw.get(wi, {}).get(row.t)
+            if g is not None and np.isfinite(g):
+                # gravity + tidal: forecast next week's price vs SPY, then the exact RRG step that price implies
+                nx, ny = st.points([rs[int(row.i)] * math.exp(g)])[0]
+                lines.setdefault(row.t, []).append([wi, r4(row.x, 3), r4(row.y, 3), r4(nx, 3), r4(ny, 3), r4(g, 5),
+                                                    r4(c_now, 4), r4(c_now * math.exp(g + spy_mu), 4), 1])
+                continue
+            r_inv, _, _ = st.invert((row.x + m_[0], row.y + m_[1]), (sc[0], sc[1]), rs[int(row.i)])
             lines.setdefault(row.t, []).append([wi, r4(row.x, 3), r4(row.y, 3), r4(row.x + m_[0], 3), r4(row.y + m_[1], 3), r4(r_inv, 5),
-                                                r4(c_now, 4), r4(c_now * math.exp(r_inv + spy_mu), 4)])
+                                                r4(c_now, 4), r4(c_now * math.exp(r_inv + spy_mu), 4), 0])
     days = [str(grid0 + 7 * i) for i in range(int((weeks[-1] - grid0).astype('timedelta64[D]').astype(int) // 7) + 1)]
     doc = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'freq': 'w', 'n': n, 'k': k,
-           'weeks': days, 'fields': ['week', 'x', 'y', 'next_x', 'next_y', 'rel_logret', 'close', 'close_next'],
+           'weeks': days, 'fields': ['week', 'x', 'y', 'next_x', 'next_y', 'rel_logret', 'close', 'close_next', 'model'],
+           'models': ['analogues in RRG space, price read back', 'gravity + tidal price forecast, RRG step computed from it'],
            'lines': lines, 'backtest': summary or {},
            'note': ('Next RS-Ratio / RS-Momentum: kernel-weighted mean of the next steps of the 80 most similar past weekly states '
                     '(position and last step) of any line. The next point is an exact function of next week\'s close (same formula '
@@ -935,12 +956,136 @@ def rrg_site_file(public, n=14, k=80, weeks_series=52, weeks_companies=13, libra
     return doc
 
 
+def rrg_gravity_backtest(public, Gv, n=14, start='2012-01-06', every=2):
+    """Weekly walk-forward of the gravity + tidal forecast on the RRG: IC of next week's return vs SPY across companies,
+    and whether the RRG step computed from the forecast price points the way the dot actually moved (every 2nd week)."""
+    public = Path(public)
+    D = json.loads((public / 'rrg.json').read_text(encoding='utf-8'))
+    grid0 = np.datetime64(D['start'])
+    bc = np.array([np.nan if v is None else v for v in D['bench']['c']], float)
+    bench = (np.datetime64(D['bench']['start']) + 7 * np.arange(len(bc)), bc)
+    days = Gv.D['days']; t0 = int(np.searchsorted(days, np.datetime64(start)))
+    weeks = list(range(t0, len(days) - 1, every))
+    sat, pla = Gv.preds(1, weeks)
+    C = Gv.D['C']; spy = Gv.D['spy']
+    with np.errstate(all='ignore'):
+        rs = 100 * C / spy[None]
+    S_cache = {}
+    ics, hit, cos_ = [], [], []
+    for w in weeks:
+        if w not in sat or w not in pla:
+            continue
+        pm = dict(zip(pla[w][0], pla[w][1]))
+        idx, sp = sat[w]
+        pred = np.array([p_ + pm.get(Gv.secs.index(Gv.D['sec'][i]), np.nan) for i, p_ in zip(idx, sp)])
+        with np.errstate(all='ignore'):
+            act = np.log(rs[idx, w + 1] / rs[idx, w])
+        ok = np.isfinite(pred) & np.isfinite(act)
+        if ok.sum() < 30:
+            continue
+        ics.append(spearman(pred[ok], act[ok]))
+        for i, p_ in zip(idx[ok][:400:4], pred[ok][:400:4]):             # a sample of lines for the RRG step check
+            if i not in S_cache:
+                S_cache[i] = rrg_series(rs[i], n)
+            S = S_cache[i]
+            if not (np.isfinite(S['x'][w]) and np.isfinite(S['x'][w + 1])):
+                continue
+            nx, ny = RRGStepper(S, w).points([rs[i, w] * math.exp(p_)])[0]
+            ax, ay = S['x'][w + 1] - S['x'][w], S['y'][w + 1] - S['y'][w]
+            px, py = nx - S['x'][w], ny - S['y'][w]
+            c = (ax * px + ay * py) / (math.hypot(ax, ay) * math.hypot(px, py) + 1e-12)
+            cos_.append(c)
+    return {'weeks': len(ics), 'ic_ci': block_ci(ics), 'step_direction_hit': float(np.mean(np.array(cos_) > 0)) if cos_ else None,
+            'step_mean_cosine': float(np.mean(cos_)) if cos_ else None, 'from': start}
+
+
 # ------------------------------------------------------------------ the site files
 def r4(x, nd=3):
     return None if x is None or not np.isfinite(x) else round(float(x), nd)
 
 
-def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None):
+class Gravity:
+    """The gravity + tidal model of gravity_pendulum.py (satellite = company vs its sector, planet = sector vs SPY, short
+    pendulum restoring, long pendulum momentum, the planet's motion carried to its satellites), trained walk-forward on the
+    site's companies' weekly closes. It forecasts the price coordinate; the analogues keep forecasting the other ones."""
+
+    def __init__(self, public):
+        import gravity_pendulum as GP
+        self.GP = GP
+        self.D = GP.load(public)
+        self.B = GP.build(self.D)
+        self.idx = {}
+        for i, t in enumerate(self.D['tick']):
+            self.idx[t] = i; self.idx[t.replace('-', '.')] = i
+        self.secs = self.B['secs']
+        self.m = self.B['m']
+        self.cache = {}
+
+    def week(self, day):
+        return int(np.searchsorted(self.D['days'], np.datetime64(day), side='right') - 1)
+
+    def preds(self, h, weeks):
+        key = (h, tuple(sorted(set(weeks))))
+        if key not in self.cache:
+            self.cache[key] = (self.GP.predict_satellites(self.B, self.D, h, weeks), self.GP.predict_planets(self.B, self.D, h, weeks))
+        return self.cache[key]
+
+    def spy_mu(self, w, h):
+        r = self.m[:w + 1]; r = r[np.isfinite(r)]
+        return float(r.mean() * h) if len(r) > 52 else 0.0
+
+
+def gravity_price_rows(P, Gv, closes, first_test_cal):
+    """Next-period price of every company from the gravity + tidal model, on the chart's own calendar (quarter or month
+    ends): log price vs SPY forecast = satellite + its planet; plus the S&P's past average. Ranges: walk-forward conformal
+    in log price, scaled by the stock's trailing stock-vs-S&P moves (as the analogue rows)."""
+    h = 13 if P.freq == 'q' else 4
+    weeks = {t: Gv.week(cal_end(c)) for t, c in enumerate(P.cals) if t >= 1}
+    sat, pla = Gv.preds(h, list(weeks.values()))
+    jrel = P.vi['rel']; win = 8 if P.freq == 'q' else 12
+    rows, resid = [], []
+    for t in sorted(weeks):
+        w = weeks[t]
+        if w not in sat or w not in pla:
+            continue
+        si, sp = sat[w]; sm = dict(zip(si, sp)); pm = dict(zip(pla[w][0], pla[w][1]))
+        mu = Gv.spy_mu(w, h)
+        hist = np.array([z for (rt, z) in resid if rt <= t])
+        q80 = float(np.quantile(hist, .8)) if len(hist) > 200 else np.nan
+        q95 = float(np.quantile(hist, .95)) if len(hist) > 200 else np.nan
+        new = []
+        for e, tk in enumerate(P.tickers):
+            gi = Gv.idx.get(tk)
+            if gi is None or gi not in sm or tk not in closes:
+                continue
+            ps = Gv.secs.index(Gv.D['sec'][gi])
+            if ps not in pm:
+                continue
+            pred = sm[gi] + pm[ps]                                     # log return vs SPY over the next h weeks
+            p0, _ = close_at(closes[tk], cal_end(P.cals[t]))
+            if not np.isfinite(p0):
+                continue
+            lr = pred + mu
+            hst = P.U[e, max(0, t - win + 1):t + 1, jrel]; hst = hst[np.isfinite(hst)]
+            sd = (float(np.sqrt(np.mean(hst ** 2))) if len(hst) >= 3 else 10.0) / 100
+            last = t + 1 >= len(P.cals)
+            p1 = close_at(closes[tk], cal_end(P.cals[t + 1]))[0] if not last else np.nan
+            rel_act = P.U[e, t + 1, jrel] if not last else np.nan
+            rel_hat = 100 * (math.exp(lr) - math.exp(mu))
+            rows.append({'origin': P.cals[t], 'target': next_cal(P.cals[t]), 'ticker': tk, 'sector': P.meta[tk]['s'], 'close': p0,
+                         'rel_hat': rel_hat, 'rel_hat_raw': rel_hat, 'rel_actual': rel_act, 'rel_zero': 0.0, 'model': 'gravity',
+                         'price_hat': p0 * math.exp(lr), 'price_actual': p1, 'lam': np.nan, 'analog_sd': sd,
+                         'lo80': p0 * math.exp(lr - q80 * sd) if np.isfinite(q80) else np.nan, 'hi80': p0 * math.exp(lr + q80 * sd) if np.isfinite(q80) else np.nan,
+                         'lo95': p0 * math.exp(lr - q95 * sd) if np.isfinite(q95) else np.nan, 'hi95': p0 * math.exp(lr + q95 * sd) if np.isfinite(q95) else np.nan,
+                         'sun_rel_hat': 100 * (math.exp(pm[ps] + mu) - math.exp(mu)), 'sun_key': Gv.D['sec'][gi]})
+            if np.isfinite(p1) and p1 > 0:
+                new.append(abs(math.log(p1 / p0) - lr) / sd)
+        for z in new:
+            resid.append((t + 1, z))
+    return rows
+
+
+def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None, gravity_rows=None, price_analog=None):
     """Compact JSON for rotation.js: per company / sun / market and per origin, the forecast next value of each
     variable (raw units, as the chart shows them), the 80% half-width, the local divergence and the decoded price."""
     P, Lp, Ls, vars_ = R['P'], R['Lp'], R['Ls'], R['vars']
@@ -951,6 +1096,11 @@ def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None):
     pr = {(r['ticker'], r['origin']): r for r in price_rows}
     live_prices = live_price_rows(R, closes)
     pr.update({(r['ticker'], r['origin']): r for r in live_prices})
+    gr = {(r['ticker'], r['origin']): r for r in (gravity_rows or [])}
+    pr.update(gr)                                   # the gravity model's price where it covers the company
+    sun_over = {}
+    for r in gravity_rows or []:
+        sun_over.setdefault((r['sun_key'], r['origin']), r['sun_rel_hat'])
     origins = [P.cals[r['t']] for r in recs]
     cos = {}
     for e, tk in enumerate(P.tickers):
@@ -966,9 +1116,12 @@ def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None):
             nxt = r['mk_next'] + Ls.K[s, t] + np.nan_to_num(r['dS_cal'][s]) + Lp.K[e, t] + np.nan_to_num(r['dP_cal'][e])
             hw = 1.2816 * np.sqrt(fp['spread'][e] ** 2 + np.nan_to_num(r['fs']['spread'][s]) ** 2)   # planet and sun analogue spreads
             p = pr.get((tk, P.cals[t]))
+            g = gr.get((tk, P.cals[t]))
+            if g is not None:
+                nxt = nxt.copy(); nxt[j] = g['rel_hat']      # the price coordinate's landing from the gravity model
             rows.append([oi, [r4(v, 2) for v in nxt], [r4(v, 2) for v in hw], r4(fp['lam'][e], 2),
                          r4(p['close'], 4) if p else None, r4(p['price_hat'], 4) if p else None,
-                         r4(p['lo80'], 4) if p else None, r4(p['hi80'], 4) if p else None])
+                         r4(p['lo80'], 4) if p else None, r4(p['hi80'], 4) if p else None, 1 if g is not None else 0])
         if rows:
             cos[tk] = rows
     suns = {}
@@ -979,6 +1132,8 @@ def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None):
             if not fs['q'][s]:
                 continue
             nxt = r['mk_next'] + Ls.K[s, t] + np.nan_to_num(r['dS_cal'][s])
+            if (k, P.cals[t]) in sun_over:
+                nxt = nxt.copy(); nxt[j] = sun_over[(k, P.cals[t])]
             rows.append([oi, [r4(v, 2) for v in nxt], [r4(1.2816 * v, 2) for v in fs['spread'][s]], r4(fs['lam'][s], 2)])
         if rows:
             suns[k] = rows
@@ -987,13 +1142,17 @@ def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None):
             'method': 'method of analogues in delay-embedded solar coordinates, calibrated by local divergence tercile',
             'origins': origins, 'targets': [next_cal(c) for c in origins], 'vars': vars_, 'embed': [vars_[i] for i in R['Lp'].emb],
             'embed_m': R['Lp'].m, 'k': R['Lp'].k,
-            'fields': ['origin', 'next', 'half80', 'lam', 'close', 'price', 'lo80', 'hi80'],
+            'fields': ['origin', 'next', 'half80', 'lam', 'close', 'price', 'lo80', 'hi80', 'price_model'],
+            'price_models': ['analogues', 'gravity + tidal (short pendulum restoring, long pendulum momentum, sector carried to its companies)'],
             'companies': cos, 'suns': suns, 'market': market,
-            'backtest': {'state': summary, 'price': price_sum},
+            'backtest': {'state': summary, 'price': price_sum, 'price_analog': price_analog,
+                         'price_model': 'gravity' if gravity_rows else 'analog'},
             'note': ('Each arrow: where the dot\'s next period lands on average among the most similar past states (any company, '
                      'position and velocity), shrunk toward no move by how well such arrows did before. lam: local divergence '
                      'of those analogues (log ratio per step; higher = they fan out = less predictable). Not a Lyapunov exponent '
-                     'and not proof of chaos. Price = close x (1 + forecast stock-vs-S&P + the S&P\'s past average return). '
+                     'and not proof of chaos. The price coordinate (stock vs the S&P) and the price come from the gravity + tidal '
+                     'model where it covers the company (price_model 1), otherwise from the analogues: close x exp(forecast vs '
+                     'the S&P + the S&P\'s past average). '
                      'Origins before the last are out-of-sample backtest forecasts made with data public at the time.')}
 
 
@@ -1054,6 +1213,13 @@ def build(public, backtest_dir=None, verbose=True, rrg_backtest=False):
         if verbose:
             print('latest quarter price coordinates filled from monthly and weekly closes:', n)
     out = {}
+    try:
+        Gv = Gravity(public)
+        if verbose:
+            print('gravity model: companies on file', len(Gv.D['tick']), flush=True)
+    except Exception as exc:                          # the analogues still give every arrow and price
+        print('gravity model unavailable:', type(exc).__name__, exc, flush=True)
+        Gv = None
     for P, fvars, evars, first, keep, name in [(Pq, FORECAST_Q, EMBED_Q, '2015', None, 'chaos-forecast.json'),
                                                 (Pm, FORECAST_M, EMBED_M, '2013', 61, 'chaos-forecast-monthly.json')]:
         if P is None:
@@ -1068,9 +1234,17 @@ def build(public, backtest_dir=None, verbose=True, rrg_backtest=False):
         prow = price_backtest(R, closes)
         R['q80'], R['q95'] = conformal_q(prow, P.cals[ft])
         psum = price_summary(prow, P.cals[ft])
-        doc = site_file(R, closes, prow, jsonable(summ['summary']), jsonable(psum), keep_periods=keep)
+        grow, gsum = [], {}
+        if Gv is not None:
+            grow = gravity_price_rows(P, Gv, closes, P.cals[ft])
+            gsum = price_summary(grow, P.cals[ft])
+            if verbose:
+                print('  price: analogues IC', psum.get('ic_calibrated_ci'), '| gravity IC', gsum.get('ic_calibrated_ci'),
+                      'coverage80', gsum.get('coverage80'), flush=True)
+        doc = site_file(R, closes, prow, jsonable(summ['summary']), jsonable(gsum or psum), keep_periods=keep,
+                        gravity_rows=grow, price_analog=jsonable(psum))
         (public / name).write_text(json.dumps(jsonable(doc), separators=(',', ':')), encoding='utf-8')
-        out[P.freq] = {'summary': summ, 'price': psum, 'R': R, 'price_rows': prow}
+        out[P.freq] = {'summary': summ, 'price': gsum or psum, 'price_analog': psum, 'R': R, 'price_rows': grow or prow}
         if verbose:
             print(json.dumps(jsonable({'state': summ['summary'], 'price': psum}), indent=1)[:3000], flush=True)
     if (public / 'rrg.json').exists():
@@ -1084,7 +1258,9 @@ def build(public, backtest_dir=None, verbose=True, rrg_backtest=False):
             closes_all = weekly_closes(public / 't', Pq.tickers + ['SPY'])
             res, inv = rrg_experiment(closes_all, closes_all['SPY'], Pq.tickers, verbose=verbose)
             summ = rrg_summary(res, inv)
-        doc = rrg_site_file(public, library_tickers=Pq.tickers, summary=summ)
+        if rrg_backtest and Gv is not None:
+            summ = dict(summ or {}, gravity=rrg_gravity_backtest(public, Gv))
+        doc = rrg_site_file(public, library_tickers=Pq.tickers, summary=summ, gravity=Gv)
         out['rrg'] = {'lines': len(doc['lines']), 'backtest': summ}
         if verbose:
             print('RRG forecasts for', len(doc['lines']), 'lines', flush=True)

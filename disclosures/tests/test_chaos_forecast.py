@@ -6,6 +6,7 @@ try:
     import numpy as np
     import sklearn  # noqa: F401
     import chaos_forecast as CF
+    import gravity_pendulum as GP
 except ImportError:                                   # the hub's other tests need neither
     np = None
 
@@ -131,3 +132,38 @@ class Helpers(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+@unittest.skipIf(np is None, 'numpy / scikit-learn not installed')
+class GravityModel(unittest.TestCase):
+    def synthetic(self, seed=0, N=90, W=420):
+        rng = np.random.default_rng(seed)
+        days = np.datetime64('2010-01-01') + 7 * np.arange(W)
+        sec = np.array(list('abcdef') * (N // 6))
+        sect = {s: np.cumsum(rng.normal(0, .02, W)) for s in 'abcdef'}
+        mkt = np.cumsum(rng.normal(.001, .02, W))
+        C = np.array([50 * np.exp(mkt + sect[s] + np.cumsum(rng.normal(0, .03, W))) for s in sec])
+        V = np.full_like(C, 1e6)
+        bodies = {b: 30 * np.exp(np.cumsum(rng.normal(0, .02, W))) for b in GP.BODIES}
+        return {'days': days, 'tick': np.array([f'T{i}' for i in range(N)]), 'sec': sec, 'rev': np.full(N, 1e9), 'C': C, 'V': V,
+                'spy': 100 * np.exp(mkt), 'bodies': bodies}
+
+    def test_predictions_ignore_the_future(self):
+        D1 = self.synthetic(); w = 392
+        B1 = GP.build(D1)
+        p1 = GP.predict_satellites(B1, D1, 4, [w]); q1 = GP.predict_planets(B1, D1, 4, [w])
+        D2 = self.synthetic()
+        rng = np.random.default_rng(5)
+        D2['C'][:, w + 1:] *= np.exp(rng.normal(0, .3, D2['C'][:, w + 1:].shape))     # rewrite every price after week w
+        D2['spy'][w + 1:] *= 1.3
+        B2 = GP.build(D2)
+        p2 = GP.predict_satellites(B2, D2, 4, [w]); q2 = GP.predict_planets(B2, D2, 4, [w])
+        np.testing.assert_array_equal(p1[w][0], p2[w][0]); np.testing.assert_allclose(p1[w][1], p2[w][1], rtol=0, atol=1e-12)
+        np.testing.assert_allclose(q1[w][1], q2[w][1], rtol=0, atol=1e-12)
+
+    def test_position_is_relative_to_the_sector_without_the_company(self):
+        D = self.synthetic(); B = GP.build(D)
+        r = GP.logret(D['C'])
+        i, t = 4, 50
+        same = np.nonzero((D['sec'] == D['sec'][i]) & (np.arange(len(D['sec'])) != i))[0]
+        self.assertAlmostEqual(B['sat_r'][i, t], r[i, t] - r[same, t].mean(), places=10)

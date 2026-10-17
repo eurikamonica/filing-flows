@@ -26,8 +26,10 @@ system (same header, type, colours, dark mode and theme preference), with links 
   most similar past states (method of analogues, calibrated walk-forward), an 80% cone, the price read from it, and — for
   past periods — what actually happened. The page shows the out-of-sample scorecard; the full backtest and the chaos tests
   (S-map, horizon, embedding grid) are in `notes/chaos-forecast/README.md` (`app/chaos_experiments.py` reruns them).
-  Short version: the arrows' direction is reliable because dots fall back toward their sun; slow coordinates land better
-  than naive rules; the price coordinate has shown no edge, so prices are shown as calibrated ranges.
+  The price coordinate and the price come from the gravity + tidal model (`app/gravity_pendulum.py`: company vs its sector and
+  sector vs SPY, short pendulum restoring, long pendulum momentum, the sector's motion carried to its companies), which
+  beats the analogues and is significant on the broad weekly test (`notes/gravity-pendulum/`); on the site's ~220 companies
+  its edge is not yet distinguishable from zero, so prices are shown as calibrated ranges.
 
 ## 4.1 — state and Canadian officials, optional cost estimates
 

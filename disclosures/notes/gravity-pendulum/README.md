@@ -134,3 +134,38 @@ Half-life of the slowest mode = ln ½ / ln |λ_max| periods.
 
 Compared with the first experiment (250 companies, period returns as positions: IC ≈ 0), the two changes that mattered were
 position = cumulative relative price, and breadth (≈ 1,230 companies per period).
+
+## 6. Lower turnover: can the signal survive costs? (`gravity_portfolio.py`, `portfolio.json`)
+
+Sector-neutral long-short on the weekly M2 signal (about 1,230 liquid companies). 48 rules = score smoothing (span 1/4/13/26
+weeks) × exit buffer (leave the leg below the top / bottom 90/80/70/50%) × rebalancing (every 1/4/13 weeks), 10 bp per side.
+The rule was chosen on 2012–2018 only (best net Sharpe) and 2019–2026 is reported once.
+
+| Rule | Period | Net return / year (95% CI) | Net Sharpe | Turnover / year |
+|---|---|---:|---:|---:|
+| No reduction (weekly, top/bottom 10%) | 2012–2018 | -4.4% | -0.49 | 75× |
+| No reduction | 2019–2026 | +4.2% | 0.23 | 67× |
+| **Chosen: rebalance every 4 weeks, enter top/bottom 10%, leave below top/bottom 50%** | 2012–2018 (selection) | +3.2% [-1.3, +8.3] | 0.52 | 8.5× |
+| Chosen | **2019–2026 (untouched)** | **+9.4% [+2.7, +17.7]** | 0.77 | 7.1× |
+
+Chosen rule on 2019–2026 at other costs: 5bp +10.1% [+3.4, +18.5], 10bp +9.4% [+2.7, +17.7], 20bp +8.0% [+1.2, +16.3], 30bp +6.5% [-0.3, +14.8].
+
+Net by calendar year (10 bp): 2012 +6.1%, 2013 -3.8%, 2014 +2.6%, 2015 +1.6%, 2016 +4.1%, 2017 +9.4%, 2018 +2.2%, 2019 +6.8%, 2020 +13.8%, 2021 -9.4%, 2022 +9.0%, 2023 +17.9%, 2024 +12.6%, 2025 +21.6%, 2026 +1.0%.
+All 48 rules are positive on 2019–2026 and 46 on 2012–2018, so the result is not one lucky rule;
+but 2012–2018 alone is not significant, and the universe is today's companies only — buying recent losers against their
+sector (the restoring short pendulum) is exactly what survivorship flatters most. Treat this as promising, not proven.
+
+## 7. On the site (Rotation → Next step)
+
+The price coordinate (stock vs the S&P) and the price now come from this model where it covers the company (liquid, three
+years of history); the other coordinates keep the analogues. On the RRG the model forecasts next week's price and the step is
+computed from it with the chart's exact formula. Scores on the site's own calendars and companies:
+
+| Chart | Gravity + tidal: price IC (95% CI) | Analogues: price IC | 80% range held |
+|---|---:|---:|---:|
+| Quarterly (10,010 forecasts) | +0.035 [-0.007, +0.075] | +0.005 [-0.026, +0.037] | 80.5% |
+| Monthly (37,252 forecasts) | +0.011 [-0.013, +0.033] | +0.001 [-0.017, +0.020] | 81.0% |
+| RRG weekly (386 weeks) | +0.012 [-0.002, +0.024] | +0.005 [-0.001, +0.011] (read back) | step right 77.3% vs analogues 76.1% |
+
+Better than the analogues everywhere, but on the site's ~220 large companies the interval still includes zero: the effect
+(IC ≈ 0.01–0.035) needs the breadth of the broad test to be detected.
