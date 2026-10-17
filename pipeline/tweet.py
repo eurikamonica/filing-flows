@@ -237,6 +237,20 @@ def cut_off(text):
     return bool(body) and not re.search(r"[.!?…:;)\]”\"'↓→⬇👇]$|\d%?$|[\U0001F300-\U0001FAFF]$", body)
 
 
+def fit_tags(post, xlen, limit):
+    """A post over the limit with hashtags at its end loses them, the last first, until it fits (none at all if need be);
+    a post still too long without them is left as it is, for the length check to refuse."""
+    if xlen(post) <= limit:
+        return post
+    m = re.search(r"(\s*#\w+)+\s*$", post)
+    if not m:
+        return post
+    body, trail = post[:m.start()].rstrip(), re.findall(r"#\w+", m.group(0))
+    while trail and xlen(body + " " + " ".join(trail)) > limit:
+        trail.pop()
+    return body + (" " + " ".join(trail) if trail else "")
+
+
 def clean(post, ticker, tags, xlen, limit=270):
     post = post.strip().strip('"“”').strip()
     post = re.sub(r"\s*\n+\s*", " ", post)
@@ -250,6 +264,7 @@ def clean(post, ticker, tags, xlen, limit=270):
         post = post + " " + " ".join(tags)
     if ADVICE.search(re.sub(r"#\w+", "", post)):
         raise ValueError("advice / hype wording")
+    post = fit_tags(post, xlen, limit)                 # too long only because of the hashtags: fewer hashtags
     if xlen(post) > limit:
         raise ValueError(f"too long ({xlen(post)})")
     return post

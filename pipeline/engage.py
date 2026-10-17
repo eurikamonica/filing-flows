@@ -121,6 +121,7 @@ def clean(post, cashtags, tags, limit=255, allowed=None, must=None):
         post = re.sub(r"(\s*#\w+)+\s*$", "", post).rstrip() + " " + " ".join(tags)
     if tweet.ADVICE.search(re.sub(r"#\w+", "", post)) or "!" in post:
         raise ValueError("advice / hype wording or exclamation mark")
+    post = tweet.fit_tags(post, social.xlen, limit)    # too long only because of the hashtags: fewer hashtags
     if social.xlen(post) > limit:
         raise ValueError(f"too long ({social.xlen(post)})")
     return post

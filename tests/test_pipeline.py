@@ -2286,6 +2286,46 @@ def test_local_fallback_prompt_corpus_and_grading():
         os.environ.pop("LOCAL_MODEL") if old is None else os.environ.__setitem__("LOCAL_MODEL", old)
 
 
+def test_long_posts_lose_their_closing_hashtags_first():
+    """Oct 17 2026: most held-out posts the local model got wrong were a few characters too long (256–294) because of the
+    hashtags at the end. Those now go, the last first; a post too long without them is still refused."""
+    from pipeline import engage, social, tweet
+    body = "$ABC CFO Jane Doe bought 10,000 shares ($125K) at $12.50 on 2026-10-13. " + "Word " * 28 + "How do you read it?"
+    tags = ["#InsiderBuying", "#semiconductors", "#stocks"]
+    assert social.xlen(body) < 255 < social.xlen(body + " " + " ".join(tags))
+    out = engage.clean(body + " " + " ".join(tags), ["ABC"], tags)
+    assert social.xlen(out) <= 255 and out.startswith(body) and out.endswith("#InsiderBuying")
+    assert tweet.clean(body + " #earnings #stocks", "ABC", ["#earnings", "#stocks"], social.xlen, limit=len(body) + 2) == body
+    assert tweet.fit_tags("short #a #b", social.xlen, 255) == "short #a #b"
+    try:
+        engage.clean(body + " More words here. " * 4 + " ".join(tags), ["ABC"], tags)
+        assert False
+    except ValueError as why:
+        assert "too long" in str(why)
+
+
+def test_insider_examples_cover_sales_and_companies_without_charts():
+    """Form 4 training examples: purchases and sales from the collector's trade file, a sale says "sold" and its plan,
+    a company that has no charts on the site still gives a (text-only) example, and every target passes the grade."""
+    from pipeline import corpus, train_local
+    trades = [{"accession": "0000000001-26-000001", "issuer_cik": "999001", "issuer": "NOCHART INC", "ticker": "NOCH", "insider": "Roe Jane",
+               "role": "CEO", "title": "", "code": "S", "date": "2026-10-14", "shares": 40000.0, "price": 25.5, "value": 1020000,
+               "after": 100000.0, "plan_10b5_1": True},
+              {"accession": "0000000001-26-000002", "issuer_cik": "999002", "issuer": "BUYER CORP", "ticker": "BUYR", "insider": "Doe John",
+               "role": "Director", "title": "", "code": "P", "date": "2026-10-13", "shares": 5000.0, "price": 12.0, "value": 60000,
+               "after": 9000.0, "plan_10b5_1": False},
+              {"accession": "x", "ticker": "BADX", "code": "A", "date": "2026-10-13", "shares": 1, "price": 1}]      # a grant: no example
+    ex = corpus.insider_examples(None, [], {}, {"latest": trades[:1], "summary": []}, set(), trades)
+    sales = [e for e in ex if " sold " in e["target"]]
+    buys = [e for e in ex if " bought " in e["target"] or " put " in e["target"]]
+    assert len(sales) == 2 and len(buys) == 3                         # the sale once although it is in both files
+    assert all("10b5-1" in e["target"] and "#InsiderSelling" in e["target"] for e in sales)
+    assert all("No chart is attached" in e["prompt"] for e in ex)
+    assert {e["cik"] for e in ex} == {999001, 999002}
+    assert all(train_local.grade(e, e["target"]) == (True, "") for e in ex)
+    assert corpus.insider_examples(None, [], {}, {"latest": [], "summary": []}, {e["src"] for e in ex}, trades) == []
+
+
 def test_train_local_runs_to_its_report(tmp_path):
     """The whole training run with stand-ins for the model (no PyTorch in CI): corpus kept, kinds take turns, the work
     adapter promoted on a better held-out score, report and README written."""

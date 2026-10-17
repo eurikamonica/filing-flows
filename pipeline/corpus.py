@@ -6,7 +6,7 @@ written by fixed rules from the same facts, in several hand-written phrasings. N
 checked like a real post (length, cashtags, hashtags, finished sentences, no advice) and against its facts (each number
 in the post appears in the input), so the model only ever sees posts that would be accepted.
 
-Breadth: every company quarter, 13F holder change, Form 4 purchase and 8-K the scans add. Depth: targets carry two or
+Breadth: every company quarter, 13F holder change, Form 4 purchase and sale and 8-K the scans add. Depth: targets carry two or
 three facts with their context (growth, margin, earnings, the driver; who, how much, when bought, when filed).
 
     python -m pipeline.corpus --site _site --site-url https://filing-flows.com --known model/corpus-ids.txt --out new.jsonl
@@ -154,38 +154,51 @@ def holders_examples(site, site_url, known, tickers):
 
 
 # ------------------------------------------------------------------ Form 4 purchases
-def insider_examples(site, rows, by_ticker, insiders, known):
-    out = []
+def insider_examples(site, rows, by_ticker, insiders, known, trades=None):
+    """Form 4 posts: every purchase and sale in the collector's trade file (cache/insiders/trades.json.gz, the last ~120
+    days) and the published latest ones, sales written as "sold" with their 10b5-1 plan, companies without charts on the
+    site as text-only posts (the owner's ✦ X on any row of the hub writes those too)."""
+    out, done = [], set()
     clusters = {a["ticker"]: a for a in insiders.get("summary", []) if a.get("cluster")}
-    for t in insiders.get("latest", []):
+    for t in list(trades or []) + list(insiders.get("latest", [])):
         tk = (t.get("ticker") or "").upper().replace("-", ".")
-        if t.get("code") != "P" or tk not in by_ticker or not t.get("price") or not t.get("shares"):
+        code = t.get("code")
+        if code not in ("P", "S") or not tk or not re.fullmatch(r"[A-Z][A-Z0-9.]{0,6}", tk) or not t.get("price") or not t.get("shares"):
             continue
-        key = f"{t.get('accession')}:{t.get('date')}:{t.get('shares')}"
-        if _h("insider", key) in known:
+        key = f"{t.get('accession')}:{t.get('date')}:{t.get('shares')}" + ("" if code == "P" else ":S")   # purchases keep their old key
+        if key in done or _h("insider", key) in known:
             continue
-        e = by_ticker[tk]
+        done.add(key)
+        e = engage.site_company(rows, by_ticker, t.get("issuer_cik"), tk)
         try:
-            cj, fq = engage.figures(site, e)
+            cj, fq = engage.figures(site, e) if e else (None, None)
         except Exception:
-            continue
-        if not fq:
-            continue
+            cj, fq = None, None
         day = dt.date.fromisoformat((t.get("filed") or t["date"])[:10]) + dt.timedelta(days=int(_h("lag", key), 16) % 4)
-        p = engage.insider_plan(t, tk, e, cj, fq, clusters.get(tk), day)
+        p = engage.insider_plan(t, tk, e if fq else None, cj, fq, clusters.get(tk) if code == "P" else None, day)
         tags = p["tags"]
         msgs = engage.messages("insider", p["task"], [tk], tags)
         who = t.get("title") if t.get("title") and len(t["title"]) <= 24 else t["role"]
+        name = t["insider"].title()
         lead = "JUST FILED: " if p["task"].find("JUST FILED") >= 0 else ""
         filed = f", Form 4 filed {t['filed']}" if t.get("filed") else ""
         T = " ".join(tags)
-        phr = [p["fallback"] + " " + T,
-               f"{lead}Insider buy at ${tk}: {t['insider'].title()} ({who}) bought {t['shares']:,.0f} shares at ${t['price']:,.2f} "
-               f"on {t['date']}{filed}. How do you read it? {T}",
-               f"{lead}${tk} {who} {t['insider'].title()} put {engage.money(t['value'])} into the stock on {t['date']}: "
-               f"{t['shares']:,.0f} shares at ${t['price']:,.2f}{filed}. Signal or noise? {T}"]
-        for text in _pick(key, phr):
-            ex = example("insider", key, msgs, text, "engage", [tk], tags, e["cik"])
+        if code == "P":
+            phr = [p["fallback"] + " " + T,
+                   f"{lead}Insider purchase at ${tk}: {name} ({who}) bought {t['shares']:,.0f} shares at ${t['price']:,.2f} "
+                   f"on {t['date']}{filed}. How do you read it? {T}",
+                   f"{lead}${tk} {who} {name} put {engage.money(t['value'])} into the stock on {t['date']}: "
+                   f"{t['shares']:,.0f} shares at ${t['price']:,.2f}{filed}. Signal or noise? {T}"]
+        else:
+            plan = " under a pre-arranged 10b5-1 plan" if t.get("plan_10b5_1") else ""
+            phr = [p["fallback"] + " " + T,
+                   f"{lead}Insider sale at ${tk}: {name} ({who}) sold {t['shares']:,.0f} shares at ${t['price']:,.2f} "
+                   f"on {t['date']}{plan}{filed}. Routine or telling? {T}",
+                   f"{lead}${tk} {who} {name} sold {engage.money(t['value'])} of stock on {t['date']}: "
+                   f"{t['shares']:,.0f} shares at ${t['price']:,.2f}{plan}{filed}. How do you read it? {T}"]
+        cik = (e or {}).get("cik") or int(t.get("issuer_cik") or 0) or None
+        for text in _pick(key, phr, 3 if code == "P" else 2):      # purchases are rarer: every phrasing
+            ex = example("insider", key, msgs, text, "engage", [tk], tags, cik)
             if ex:
                 ex["src"] = _h("insider", key)
                 out.append(ex)
@@ -239,6 +252,8 @@ def main():
     ap.add_argument("--site", default="_site", help="the built site (with data/)")
     ap.add_argument("--site-url", default=os.environ.get("X_SITE_URL") or "", help="the published site, for 13F holder files")
     ap.add_argument("--insiders", default="disclosures/docs/data/market/insiders.json")
+    ap.add_argument("--insider-trades", default="disclosures/docs/data/cache/insiders/trades.json.gz",
+                    help="the collector's Form 4 trade file: every purchase and sale of the last ~120 days")
     ap.add_argument("--known", default="", help="source keys already in the corpus (one per line)")
     ap.add_argument("--out", default="new.jsonl")
     ap.add_argument("--holders", type=int, default=300, help="companies whose 13F holders are read this run")
@@ -270,7 +285,12 @@ def main():
 
     add("post", earnings_examples(site, cfg, known, today))
     try:
-        add("insider", insider_examples(site, rows, by_ticker, json.load(open(args.insiders, encoding="utf-8")), known))
+        trades = []
+        if args.insider_trades and os.path.exists(args.insider_trades):
+            import gzip
+            with gzip.open(args.insider_trades, "rt", encoding="utf-8") as f:
+                trades = json.load(f)
+        add("insider", insider_examples(site, rows, by_ticker, json.load(open(args.insiders, encoding="utf-8")), known, trades))
     except (OSError, ValueError) as err:
         print(f"::warning::insider examples skipped ({err})")
     if args.site_url and args.holders:
