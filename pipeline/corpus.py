@@ -145,7 +145,13 @@ def holders_examples(site, site_url, known, tickers):
         if s:
             phr.append(f"{lead}: ${t2} 13F moves, quarter ended {P['period']}: {s[0]}" + (f", while {b[0]}" if b else "")
                        + f". {P['n_add']} added, {P['n_cut']} cut. Which side do you take? {T}")
-        for text in _pick(key, phr):
+        if len(b) >= 2:
+            phr.append(f"{lead}: who bought ${t2} in the quarter ended {P['period']}? {b[0]}; {b[1]}. "
+                       f"{P['n_add']} funds added in all, {P['n_cut']} cut. Conviction or crowding? {T}")
+        if len(s) >= 2:
+            phr.append(f"{lead}: the biggest ${t2} sellers, quarter ended {P['period']} (13F): {s[0]}; {s[1]}. "
+                       f"{P['n_cut']} cut, {P['n_add']} added. Who's right? {T}")
+        for text in _pick(key, phr, 3):                  # 13F posts were the rarest kind: three phrasings each
             ex = example("post_holders", key, msgs, text, "tweet", [tk.replace("-", ".")], tags, c["profile"]["cik"])
             if ex:
                 ex["src"] = _h("post_holders", key)
@@ -256,7 +262,7 @@ def main():
                     help="the collector's Form 4 trade file: every purchase and sale of the last ~120 days")
     ap.add_argument("--known", default="", help="source keys already in the corpus (one per line)")
     ap.add_argument("--out", default="new.jsonl")
-    ap.add_argument("--holders", type=int, default=300, help="companies whose 13F holders are read this run")
+    ap.add_argument("--holders", type=int, default=2000, help="companies with 13F holders read this run (one request each)")
     ap.add_argument("--events", type=int, default=80, help="8-Ks read from SEC this run")
     args = ap.parse_args()
     known = set()
@@ -294,9 +300,20 @@ def main():
     except (OSError, ValueError) as err:
         print(f"::warning::insider examples skipped ({err})")
     if args.site_url and args.holders:
-        # a different slice of companies each day: breadth over time without reading every holder file every run
-        start = (today.toordinal() * args.holders) % max(1, len(rows))
-        pick = (rows[start:] + rows[:start])[:args.holders]
+        # only companies the site publishes 13F holders for (its index), a different slice each day when there are more
+        # than one run reads; a company already in the corpus for its latest 13F quarter costs one request and is skipped
+        have = None
+        try:
+            import requests
+            r = requests.get(f"{args.site_url.rstrip('/')}/disclosures/data/holders/index.json", timeout=60)
+            have = {t.upper().replace(".", "-") for t in (r.json().get("tickers") or [])} if r.status_code == 200 else None
+        except Exception as err:
+            print(f"::warning::holders index not read ({str(err)[:120]}); trying every company")
+        cand = [e for e in rows if e.get("ticker") and (have is None or e["ticker"].upper().replace(".", "-") in have)]
+        cand.sort(key=lambda e: -(e.get("revenue") or 0))
+        start = (today.toordinal() * args.holders) % max(1, len(cand)) if len(cand) > args.holders else 0
+        pick = (cand[start:] + cand[:start])[:args.holders]
+        print(f"13F holders: {len(cand)} companies with a holders file" + (" (index not read)" if have is None else "") + f", reading {len(pick)}")
         cs = []
         for e in pick:
             try:

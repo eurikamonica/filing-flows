@@ -2254,6 +2254,35 @@ def test_holders_post_names_who_how_much_and_when():
     assert "https://filing-flows.com/#c-1602409" in th["replies"][-1]
 
 
+def test_holder_posts_keep_to_one_quarter_and_give_three_examples(tmp_path):
+    """Oct 17 2026: 13F posts were the weakest held-out kind — "quarter ended Jun 30 … Vanguard cut 1.0M sh (filed Jan
+    29)" mixed a manager's older 13F in. Posts, prompts and training examples now keep to the quarter most managers
+    report; each company gives three phrasings; the holders file is read once per run."""
+    import datetime as dt
+    from pipeline import corpus, notify, train_local, tweet
+    site = _site(tmp_path)
+    url = "https://example.test"
+    q = lambda **k: {"period": "2026-06-30", "filed": "2026-08-13", "value_usd": 5e6, "weight": .001, **k}
+    tweet._HOLDERS[("AAPL", url)] = {"institutional": [
+        q(manager="Alpha Capital LLC", status="INCREASE", delta_shares=787254, shares=2000000),
+        q(manager="Beta Partners LP", status="NEW", delta_shares=250000, shares=250000, filed="2026-08-14"),
+        q(manager="Gamma Advisors", status="DECREASE", delta_shares=-410000, shares=90000, filed="2026-08-12"),
+        q(manager="Delta Fund", status="EXIT", delta_shares=-120000, shares=0, filed="2026-08-10"),
+        {"manager": "Vanguard Group Inc", "status": "DECREASE", "delta_shares": -1034000, "shares": 5000000, "value_usd": 1e8,
+         "period": "2025-12-31", "filed": "2026-01-29"}]}
+    try:
+        th = tweet.holders_thread("AAPL", url, 320193, today=dt.date(2026, 10, 1))
+        assert "Vanguard" not in th["post"] + " ".join(th["replies"]) + tweet.holders_lines("AAPL", url)
+        assert "4 funds" not in th["post"] and "2 funds added, 2 cut" in th["post"]
+        c = notify.Site(str(site)).json("c/320193.json")
+        ex = corpus.holders_examples(None, url, set(), [c])
+        assert len(ex) == 3 and len({e["target"] for e in ex}) == 3
+        assert all(train_local.grade(e, e["target"]) == (True, "") and "Vanguard" not in e["target"] for e in ex)
+        assert corpus.holders_examples(None, url, {e["src"] for e in ex}, [c]) == []
+    finally:
+        tweet._HOLDERS.pop(("AAPL", url), None)
+
+
 def test_local_fallback_prompt_corpus_and_grading():
     """The free fallback model (pipeline/local_model.py): same prompt in training and use, targets that would be
     published, held-out grading. The model itself (PyTorch) runs only in its own workflow."""

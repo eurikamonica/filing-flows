@@ -14,7 +14,7 @@ when it would be published: it passes the same checks as a real post (tweet.clea
 hashtags, finished sentences, no advice) and every number in it is in the facts. work/ replaces adapter/ only when it
 scores higher (the first adapter needs half of the held-out posts right).
 
-    python -m pipeline.train_local --model-dir model --new new.jsonl --minutes 40 --eval 40
+    python -m pipeline.train_local --model-dir model --new new.jsonl --minutes 40 --eval 80
 """
 import argparse
 import datetime as dt
@@ -111,7 +111,7 @@ def main():
     ap.add_argument("--model-dir", default="model")
     ap.add_argument("--new", default="new.jsonl")
     ap.add_argument("--minutes", type=float, default=40)
-    ap.add_argument("--eval", type=int, default=40)
+    ap.add_argument("--eval", type=int, default=80)        # 20 per kind: one post is 1.25 points, not 2.5
     args = ap.parse_args()
     md = args.model_dir
     os.makedirs(md, exist_ok=True)

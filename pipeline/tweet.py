@@ -283,14 +283,22 @@ def post_tags(c, q, cfg, ticker, kind="post"):
     return H.pick("13f", c.get("profile"), key=key)
 
 
+_HOLDERS = {}
+
+
 def holders_json(ticker, site_url):
+    """One company's 13F holders file from the published site, read once per run (the post, its prompt and the
+    training examples all ask for it)."""
     if not (ticker and site_url):
         return None
-    try:
-        r = requests.get(f"{site_url.rstrip('/')}/disclosures/data/holders/{ticker}.json", timeout=30)
-        return r.json() if r.status_code == 200 else None
-    except Exception:
-        return None
+    key = (ticker, site_url.rstrip("/"))
+    if key not in _HOLDERS:
+        try:
+            r = requests.get(f"{key[1]}/disclosures/data/holders/{ticker}.json", timeout=30)
+            _HOLDERS[key] = r.json() if r.status_code == 200 else None
+        except Exception:
+            return None                                  # a network error is not cached: the next caller tries again
+    return _HOLDERS[key]
 
 
 def _shares(n):
@@ -311,7 +319,7 @@ def holders_thread(ticker, site_url, cik, today=None):
     quarter and the filing dates; replies listing them; a source line. None when the site has no 13F data yet."""
     from . import social
     h = holders_json(ticker, site_url)
-    inst = (h or {}).get("institutional") or []
+    inst = latest_quarter((h or {}).get("institutional") or [])
     if not inst:
         return None
     today = today or dt.date.today()
@@ -356,12 +364,22 @@ def holders_thread(ticker, site_url, cik, today=None):
                        "n_add": len(buys), "n_cut": len(sells), "period": _day(period), "tk": tk}}
 
 
+def latest_quarter(inst):
+    """The 13F rows of the quarter most managers on file report (a manager whose latest 13F is for an older quarter
+    would mix two quarters in one post: "quarter ended Jun 30 … Vanguard cut 1.0M sh (filed Jan 29)")."""
+    periods = [x.get("period") for x in inst if x.get("period")]
+    if not periods:
+        return list(inst)
+    period = max(set(periods), key=lambda p: (periods.count(p), p))
+    return [x for x in inst if x.get("period") == period]
+
+
 def holders_lines(ticker, site_url):
     """Who holds / bought the company, from the site's Disclosures index (13F quarter-end changes)."""
     h = holders_json(ticker, site_url)
     if not h:
         return ""
-    inst = h.get("institutional") or []
+    inst = latest_quarter(h.get("institutional") or [])
     buys = [x for x in inst if x.get("status") in ("NEW", "INCREASE")]
     sells = [x for x in inst if x.get("status") in ("DECREASE", "EXIT", "NOT DISCLOSED")]
     m = lambda v: ("" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.0f}M")

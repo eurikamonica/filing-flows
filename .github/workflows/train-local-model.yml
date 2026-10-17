@@ -82,7 +82,7 @@ jobs:
 
       - name: Train, evaluate, promote
         timeout-minutes: 120
-        run: python -m pipeline.train_local --model-dir model --new new.jsonl --minutes "${{ inputs.minutes || '40' }}" --eval 40
+        run: python -m pipeline.train_local --model-dir model --new new.jsonl --minutes "${{ inputs.minutes || '40' }}" --eval 80
 
       - name: Publish the model branch
         if: always()
