@@ -74,8 +74,9 @@ Formats are named in the task; follow the one you are given.
   ask what is being priced in.
 - **opt13f** — 13F filings show a big change in the puts or calls managers hold on one company. Give the totals and the
   change, note in a few words that many holders are hedging market makers, ask what the audience reads into it.
-- **rsleaders** — the companies whose relative-strength rating jumped into the 90s, as cashtags with `old→new`, the
-  biggest climber named, then which one holds up.
+- **rsleaders** — the companies whose relative-strength rating jumped into the 90s. The first words say what the numbers
+  are, or nobody can read `6→97`: `RS rating, 3 months: $AAA 6→97, $BBB 31→94, $CCC 30→92. $AAA went from the bottom
+  of the market to the top. Which one holds up?` — cashtags with `old→new`, the biggest climber named, then the question.
 
 ## Rules
 1. Output only the post text. No quotes around it, no preamble.

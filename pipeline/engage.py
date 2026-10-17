@@ -103,8 +103,11 @@ def one_liner(e):
 
 
 # ------------------------------------------------------------------ writing
-def clean(post, cashtags, tags, limit=255, allowed=None):
+def clean(post, cashtags, tags, limit=255, allowed=None, must=None):
+    """must: (regex, what to say) — something the reader needs to understand the numbers, e.g. that 6→97 is an RS rating."""
     post = re.sub(r"\s*\n+\s*", " ", post.strip().strip('"“”')).strip()
+    if must and not re.search(must[0], re.sub(r"#\w+", "", post), re.I):
+        raise ValueError(must[1])
     if tweet.cut_off(post):
         raise ValueError("the post stops mid-sentence; finish the last sentence")
     missing = [t for t in cashtags if f"${t.upper()}" not in post.upper()]
@@ -132,7 +135,7 @@ def messages(kind, task, cashtags, tags, allowed=None):
              + "\nHashtags to end with, in this order: " + " ".join(tags) + "\n\nWrite the post now."}]
 
 
-def write(kind, task, cashtags, tags, polish=True, allowed=None):
+def write(kind, task, cashtags, tags, polish=True, allowed=None, must=None):
     msgs = messages(kind, task, cashtags, tags, allowed)
     draft = tweet.chat(msgs)
     if polish:
@@ -141,11 +144,11 @@ def write(kind, task, cashtags, tags, polish=True, allowed=None):
                                              "opening; cut filler; under 250 characters. Output only the polished post."}]
         draft = tweet.chat(msgs)
     try:
-        return clean(draft, cashtags, tags, allowed=allowed)
+        return clean(draft, cashtags, tags, allowed=allowed, must=must)
     except ValueError as why:
         msgs += [{"role": "assistant", "content": draft},
                  {"role": "user", "content": f"Rewrite: {why}. Under 240 characters, every required cashtag present, ending with the hashtags."}]
-        return clean(tweet.chat(msgs), cashtags, tags, allowed=allowed)
+        return clean(tweet.chat(msgs), cashtags, tags, allowed=allowed, must=must)
 
 
 # ------------------------------------------------------------------ the kinds
@@ -1100,11 +1103,15 @@ def plan_rsleaders(site, rows, c, by_ticker, state_ok, today):
             items.append((by_ticker[t], cj, fq))
     task = (f"NEW RELATIVE-STRENGTH LEADERS at the end of {month} (RS rating 1–99: 3/6/9/12-month returns ranked against ~600 large "
             "companies; it describes past price strength, not the future):\n" + "\n".join(lines)
-            + "\n\nList them as cashtags with their rating jump, name the biggest climber in a few words, ask which one the audience "
-              "thinks holds up.")
-    fb = ("New relative-strength leaders: " + ", ".join(f"${t} {then}→{now}" for _, now, then, t in picks)
-          + " (RS rating, 3 months). Which one holds up?")
-    return {"kind": "rsleaders", "task": task, "cashtags": [t for *_, t in picks], "items": items, "fallback": fb}
+            + "\n\nSay in the first sentence that the numbers are the RS rating (relative strength, 1–99) and that the jump "
+              "took three months, e.g. “RS rating, 3 months: $AAA 6→97 …”. Then list them as cashtags with their rating jump, "
+              "name the biggest climber in a few words, ask which one the audience thinks holds up.")
+    fb = ("RS rating (relative strength vs ~600 large companies, 1–99) jumped in 3 months: "
+          + ", ".join(f"${t} {then}→{now}" for _, now, then, t in picks) + ". Which one holds up?")
+    return {"kind": "rsleaders", "task": task, "cashtags": [t for *_, t in picks], "items": items, "fallback": fb,
+            "must": (r"\bRS\b|relative[ -]strength", "say that the numbers are the RS rating (relative strength, 1–99), "
+                                                     "e.g. “RS rating, 3 months: $AAA 6→97”"),
+            "tags": H.pick("rs", (items[0][0] if items else None), key="rsleaders:" + ",".join(t for *_, t in picks))}
 
 
 # ------------------------------------------------------------------ main
@@ -1198,12 +1205,12 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
         e0 = p["items"][0][0] if p.get("items") else None
         tags = p.get("tags") or H.pick(KIND_TAGS.get(p["kind"], "earnings"), e0, key=f"{p['kind']}:" + ",".join(p["cashtags"]))
         try:
-            post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True), allowed=p.get("allowed"))
+            post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True), allowed=p.get("allowed"), must=p.get("must"))
         except Exception as err:
             post = None
             if p.get("fallback"):                  # the model is down: a plain rule-based post with the same facts
                 try:
-                    post = clean(p["fallback"], p["cashtags"], tags, allowed=p.get("allowed"))
+                    post = clean(p["fallback"], p["cashtags"], tags, allowed=p.get("allowed"), must=p.get("must"))
                     print(f"::warning::{p['kind']}: model unavailable, rule-based post used ({str(err)[:160]})")
                 except ValueError as why:
                     print(f"::warning::{p['kind']}: rule-based post not usable ({why})")

@@ -2135,6 +2135,21 @@ def test_owner_x_post_options():
     assert H.pick("earnings", None, key="a", n=2, parts={"kind": False, "general": False}) == []
 
 
+def test_rs_leader_posts_say_what_the_numbers_are():
+    """Oct 17 2026: "$TEAM surged 6→97 past $ANF 31→94 …" went out with nothing saying the numbers are RS ratings.
+    Such a post is now rewritten; the rule-based one names the rating and the three months; its tags are about it."""
+    from pipeline import engage, hashtags as H
+    must = (r"\bRS\b|relative[ -]strength", "say that the numbers are the RS rating")
+    cash = ["TEAM", "ANF", "SMCI"]
+    try:
+        engage.clean("$TEAM surged 6→97 past $ANF 31→94 and $SMCI 30→92. Which one holds up?", cash, ["#RelativeStrength"], must=must)
+        assert False
+    except ValueError as why:
+        assert "RS rating" in str(why)
+    assert engage.clean("RS rating, 3 months: $TEAM 6→97, $ANF 31→94, $SMCI 30→92. Which one holds up?", cash, ["#RelativeStrength"], must=must)
+    assert H.pick("rs", None, key="a", n=3)[0] == "#RelativeStrength"
+
+
 def test_hub_rows_post_one_at_a_time(tmp_path):
     """Owner: ✦ X on one row of the hub's Insider trades or Officials' trades table. The row is found again in the
     published data by its key (the browser sends no figures); a sale says "sold" and never "sell"; a company with charts

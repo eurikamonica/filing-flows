@@ -28,6 +28,7 @@ KINDS = {
     "officials": ["#PoliticianTrades", "#disclosures"],                     # other jurisdictions' officials
     "8k": ["#8K", "#SEC"],
     "movers": ["#StockMovers", "#trading"],
+    "rs": ["#RelativeStrength", "#momentum"],                              # RS rating leaders (pipeline/engage.py)
     "capital": ["#buybacks", "#dividends"],
 }
 GENERAL = ["#stocks", "#investing", "#StockMarket", "#markets", "#investors", "#finance"]
