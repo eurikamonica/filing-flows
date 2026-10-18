@@ -79,7 +79,7 @@ FULL_TITLES = [
 # topics: (name, label, weight, items that suggest it, pattern one sentence of those items' text or of the press release
 # must match to confirm it — None: the item alone is enough); checked in this order
 ROLE_CHANGE = (r'\b(appoint|named|names|name[sd]? as|elect|resign|retire|depart|step(s|ped)? down|stepping down|succeed|successor|'
-               r'terminat|transition|separation|interim|will serve as|promot)')
+               r'terminat|transition|separation|will serve as|promot)')
 TOPICS = [
     ('bankruptcy', 'bankruptcy', 10, {'1.03'}, None),
     ('restatement', 'a restatement', 9, {'4.02'}, None),
@@ -216,7 +216,8 @@ WIRE = re.compile(r'/PRNewswire/|\((?:GLOBE NEWSWIRE|BUSINESS WIRE|ACCESSWIRE|AC
                   r'MARKETWIRE|Canada NewsWire|CNW)\)|^[A-Z][A-Za-z .,\'&-]{2,50}\s*[,–—-]+\s*\(?[A-Z][a-z]{2,8}\.?\s+\d{1,2},\s+\d{4}\)?\s*[–—-]+|'
                   r'\b(today|this morning) (announced|reported|reports|announces)\b')
 CONTACT = re.compile(r'(?i)@|\bcontacts?\b|\binvestor relations\b|\bmedia\b:|\(\d{3}\)\s?\d{3}|\d{3}[-.]\d{3}[-.]\d{4}|^exhibit|^ex-\d|'
-                     r'for immediate release|^(press|news) release$|^page \d')
+                     r'for immediate release|^(press|news) release$|^page \d|\b\d{5}(-\d{4})?\s*$|'
+                     r'^\d+\s+[A-Za-z .]+\b(street|st\.|avenue|ave\.?|road|rd\.|court|suite|blvd|boulevard|drive|parkway|way)\b')
 
 
 HEADVERB = re.compile(r'(?i)\b(announc|report|appoint|nam|complet|receiv|launch|enter|sign|declar|clos|pric|expand|provid|achiev|'
@@ -388,7 +389,7 @@ def parse_daily_index(text):
     return out
 
 
-PARSER = 3          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
+PARSER = 4          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
 
 
 def store(root):

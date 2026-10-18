@@ -111,6 +111,10 @@ class EightK(unittest.TestCase):
         self.assertFalse(E._says(off, 'On October 15, 2026, the Company closed its previously announced private offering of $730.0 million '
                                       'in aggregate principal amount of notes.'))
         self.assertTrue(E._says(off, 'On October 15, 2026, the Company closed its registered direct offering of 4,000,000 shares of common stock.'))
+        self.assertEqual(E.headline(['2900 Independence Court, Elkhart, Indiana 46514', 'New York, NY 10017-2630',
+                                     'THOR INDUSTRIES ANNOUNCES INCREASED REGULAR QUARTERLY DIVIDEND',
+                                     'Elkhart, Indiana, October 13, 2026 – THOR Industries, Inc. (NYSE: THO) today announced …']),
+                         'THOR INDUSTRIES ANNOUNCES INCREASED REGULAR QUARTERLY DIVIDEND')
         self.assertEqual(E.headline(['Chief Accounting Officer Financial Relations Board', 'Fox Factory Announces CEO Transition',
                                      'DULUTH, Ga., Oct. 16, 2026 (GLOBE NEWSWIRE) -- Fox Factory today announced …']), 'Fox Factory Announces CEO Transition')
         self.assertEqual(E.headline(['Exhibit 99.1', 'Contact: ir@example.com (408) 555-0100', 'Example Devices Reports Record Third Quarter Results',
