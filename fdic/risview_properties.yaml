@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>FDIC: BankFind Suite - API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="assets/css/swagger-ui.css" />
+    <style>
+      html {
+        box-sizing: border-box;
+        overflow: -moz-scrollbars-vertical;
+      }
+      *,
+      *:before,
+      *:after {
+        box-sizing: inherit;
+      }
+
+      body {
+        margin: 0;
+        background: #fafafa;
+        line-height: 1.5rem;
+        font-family: 'Source Sans Pro', sans-serif;
+      }
+      code {
+        color: #c7254e;
+        background-color: #f9f2f4;
+        border-radius: 4px;
+      }
+      pre code {
+        padding: 0;
+        font-size: inherit;
+        color: inherit;
+        white-space: pre-wrap;
+        background-color: transparent;
+        border-radius: 0;
+      }
+      .swagger-ui .parameters-col_description input {
+        max-width: 100% !important;
+      }
+      .renderedMarkdown p {
+        margin-bottom: 1rem !important;
+      }
+      .renderedMarkdown i {
+        color: black;
+      }
+      p {
+        margin-bottom: 2rem;
+      }
+      li {
+        font-family: 'Source Sans Pro', sans-serif;
+      }
+
+      #main-content h1 {
+        line-height: 2rem;
+        margin-top: 0;
+        margin-bottom: 2rem;
+        font-family: 'Merriweather Web', Georgia, Cambria, 'Times New Roman', Times, serif;
+        color: #1a4480;
+      }
+
+      h2 {
+        color: #1a4480;
+      }
+
+      #site-container {
+        padding: 0 1.5rem;
+        word-break: break-word;
+      }
+
+      #site-container i {
+        color: #3b4151;
+      }
+
+      div#breadcrumbs,
+      div#main-content,
+      div#page_foot {
+        margin: 0 auto;
+        max-width: 1366px;
+      }
+      #breadcrumbs {
+        padding-top: 12px;
+        font-size: 14px;
+      }
+      #breadcrumbs a {
+        padding: 0 5px;
+      }
+      div#page_foot {
+        margin-bottom: 1rem;
+      }
+      .topbar {
+        display: none;
+      }
+      .info {
+        display: none;
+      }
+      .scheme-container {
+        display: none;
+      }
+      /* Swagger style shims */
+      .swagger-ui h4.opblock-tag {
+        font-size: 14px;
+      }
+      .swagger-ui .opblock.opblock-get .opblock-summary-method {
+        background-color: #003366;
+      }
+      .swagger-ui .execute-wrapper,
+      .swagger-ui .btn-group {
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+      }
+      pre {
+        padding: 9.5px;
+        margin: 0 0 10px;
+        font-size: 13px;
+        word-break: break-all;
+        word-wrap: break-word;
+        background-color: #f5f5f5;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      /*styles for buttons*/
+
+      button#to-help-page-button {
+        float: right;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        height: 32px;
+        padding: 0 8px;
+        margin: 32px 0 0 0;
+        border: 1px solid #ACC8DF;
+        border-radius: 3px;
+        background-color: #d9e8f6;
+        color: #1A4480;
+        font-family: "Source Sans Pro", "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1;
+        text-transform: none;
+        cursor: pointer;
+        width: 90.5px
+      }
+      button#to-help-page-button svg {
+        width: 24px;
+        height: 24px;
+        fill: currentColor;
+      }
+      button#to-help-page-button:hover,
+      button#to-help-page-button:focus {
+        color: white;
+        background-color: #1A4480;
+        border-color: #1A4480;
+      }
+
+      button#to-help-page-button:hover svg,
+      button#to-help-page-button:focus svg {
+        background: none;
+      }
+      button#return-to-landing-page-button {
+        height: 32px;
+        width: 240px;
+        color: #1a4480;
+        font-weight: 500;
+        background-color: #d9e8f6;
+        border: 1px solid #acc8df;
+        font-size: 14px;
+        text-align: center;
+        transition: none;
+        border-radius: 5px;
+        text-transform: none;
+        margin: 2rem 0;
+        display: inline-block;
+        vertical-align: middle;
+        cursor: pointer;
+        font-family: 'Source Sans Pro, Helvetica Neue, Helvetica, Roboto, Arial',
+          sans-serif;
+      }
+
+      button#return-to-landing-page-button span {
+        display: inline-block;
+        vertical-align: middle;
+      }
+      button#return-to-landing-page-button span:first-child {
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: -4px;
+        margin-right: 4px;
+      }
+
+      button#return-to-landing-page-button svg:nth-child(2) {
+        display: inline-block;
+        vertical-align: middle;
+        fill: #1a4480;
+        width: 1em;
+        height: 1em;
+        font-size: 1.5rem;
+        transition: fill 200ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+        flex-shrink: 0;
+        user-select: none;
+        margin-left: -2px;
+      }
+      button#return-to-landing-page-button svg:nth-child(1) {
+        width: 1em;
+        height: 1em;
+        font-size: 20px;
+        fill: #1a4480;
+        margin: 2px;
+        margin-right: 0px;
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      button#return-to-landing-page-button:hover {
+        background-color: #ffffff;
+      }
+
+      button#return-to-landing-page-button:active {
+        background-color: #1a4480;
+        color: #ffffff;
+      }
+
+      button#return-to-landing-page-button:focus {
+        box-shadow: 0 0 1px 1px #1a4480;
+      }
+
+      button#return-to-landing-page-button:active svg {
+        fill: #ffffff;
+      }
+      button#return-to-api-home-button {
+        height: 32px;
+        width: 200px;
+        color: #d9e8f6;
+        font-weight: 500;
+        background-color: #1a4480;
+        border: 1px solid #1a4480;
+        font-size: 14px;
+        text-align: center;
+        transition: none;
+        border-radius: 5px;
+        text-transform: none;
+        margin: 2rem 1rem;
+        display: inline-block;
+        vertical-align: middle;
+        cursor: pointer;
+        font-family: 'Source Sans Pro, Helvetica Neue, Helvetica, Roboto, Arial',
+          sans-serif;
+      }
+      button#return-to-api-home-button:hover {
+        background-color: #d9e8f6;
+        color: #1a4480;
+        border-color:  #acc8df;
+      }
+
+      button#return-to-api-home-button:active {
+        background-color: #d9e8f6;
+        color: #1a4480;
+      }
+
+      button#return-to-api-home-button:focus {
+        box-shadow: 0 0 1px 1px #1a4480;
+      }
+
+
+      button#data-dot-gov {
+        background-color: #ffffff;
+        border: none;
+        padding: 0;
+        text-decoration: none;
+        color: #0033ff;
+        cursor: pointer;
+      }
+      button#data-dot-gov:hover {
+        text-decoration: underline;
+      }
+      .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        transition: 200ms;
+        border-radius: 5px;
+        z-index: 310;
+        background-color: white;
+        max-width: 800px;
+        height: 450px;
+        padding: 50px;
+        margin: 32;
+        box-shadow: 0px 11px 15px -7px rgba(0, 0, 0, 0.2),
+          0px 24px 38px 3px rgba(0, 0, 0, 0.14),
+          0px 9px 46px 8px rgba(0, 0, 0, 0.12);
+      }
+
+      .modal.active {
+        transform: translate(-50%, -50%) scale(1);
+      }
+      .modal-header {
+        flex: 0 0 auto;
+        margin: 0;
+        font-family: 'Source Sans Pro, Helvetica Neue, Helvetica, Roboto, Arial',
+          sans-serif;
+        padding: 16px 24px;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 700;
+        line-height: 1.6;
+      }
+      .modal-header .title {
+        color: #333;
+        font-size: 33px;
+      }
+      #modal-buttons {
+        flex: 0 0 auto;
+        display: flex;
+        padding: 8px;
+        justify-content: center;
+      }
+      button#close-modal-button {
+        cursor: pointer;
+        color: #1a4480;
+        font-weight: 500;
+        background-color: #d9e8f6;
+        border: 1px solid #acc8df;
+        border-radius: 4px;
+        box-shadow: none;
+        margin-right: 20px;
+        margin-bottom: 0;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        justify-content: center;
+        width: 160px;
+        height: 40px;
+      }
+      button#close-modal-button:hover {
+        background-color: #ffffff;
+      }
+      button#close-modal-button:active {
+        background-color: #1a4480;
+        color: #ffffff;
+      }
+      button#continue-modal-button {
+        cursor: pointer;
+        color: white;
+        font-weight: 500;
+        background-color: #1a4480;
+        border: 1px solid #1a4480;
+        border-radius: 4px;
+        box-shadow: none;
+        margin-left: 20px;
+        text-decoration: none;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        justify-content: center;
+        width: 160px;
+        height: 40px;
+      }
+      button#continue-modal-button:hover {
+        color: #ffffff;
+        border-color: #122f59;
+        background-color: #122f59;
+      }
+      button#continue-modal-button:active {
+        background-color: #1a4480;
+        color: #ffffff;
+      }
+      a#continue-modal:hover {
+        text-decoration: none;
+      }
+      a#continue-modal:active {
+        text-decoration: none;
+      }
+      .modal-body {
+        padding: 0;
+        font-size: 0.875rem;
+        font-family: 'Source Sans Pro', sans-serif;
+        font-weight: 400;
+        line-height: 1.5rem;
+        margin-bottom: 12px;
+      }
+      #overlay {
+        position: fixed;
+        opacity: 0;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 50%);
+        pointer-events: none;
+        z-index: 300;
+      }
+      #overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+      #banner-title {
+        margin-left: 50px;
+        margin-top: -1px;
+        margin-bottom: 0;
+        font-size: 24px;
+      }
+      #banner-text {
+        margin-left: 50px;
+      }
+      #banner-icon {
+        margin: 0px;
+      }
+      #maintenance-banner {
+        margin-top: 20px
+      }
+    </style>
+
+    <script src="https://www.fdic.gov/apps/head.js"></script>
+
+    <script> async function logMaintenance() {
+      const maintenanceLookup = {
+        '/TEST/fdic/banks-d/docs/': '/TEST/fdic/banks-d/maintenance' ,
+        '/TEST/fdic/banks-n/docs/': '/TEST/fdic/banks-n/maintenance' ,
+        '/TEST/fdic/banks-q/docs/': '/TEST/fdic/banks-q/maintenance' ,
+        '/banks/docs/': '/banks/maintenance',
+        '/docs/': '/api/maintenance'
+      };
+      const textToLink =(text) => {
+        const regex = /\[(.*?)\]/g;
+        const parts = text.split(regex);
+        const arrayParts = parts.map((part, index) => {
+          if (index % 2 === 1) {
+            const regex2 = /\{(.*?)\}/g;
+            const link = part.split(regex2);
+            if(link[1]?.includes("https")){
+              return `<a href="javascript:void(0)" onclick="openModal()">${link[0]}</a>`
+            } else {
+              const dataDotGovLookup = {
+                '/TEST/fdic/banks-d/docs/': 'https://pfabankfindui-d.app.cloud.gov/bankfind-suite',
+                '/TEST/fdic/banks-n/docs/': 'https://pfabankfindui-n.app.cloud.gov/bankfind-suite',
+                '/TEST/fdic/banks-q/docs/': 'https://pfabankfindui-q.app.cloud.gov/bankfind-suite'
+              }
+              const bfsUrlLookup = {
+              'localhost': 'http://localhost:5000/bankfind-suite',
+              'pfabankapi-n.app.cloud.gov':
+                'https://pfabankfindui-n.app.cloud.gov/bankfind-suite',
+              'pfabankapi-s.app.cloud.gov':
+                'https://pfabankfindui-s.app.cloud.gov/bankfind-suite',
+              'pfabankapi-q.app.cloud.gov':
+                'https://pfabankfindui-q.app.cloud.gov/bankfind-suite',
+              'pfabankapi-d.app.cloud.gov':
+                'https://pfabankfindui-d.app.cloud.gov/bankfind-suite',
+              'pfabankfindui.app.cloud.gov':
+                'https://banks.data.fdic.gov/bankfind-suite',
+              'banks.data.fdic.gov':
+                'https://banks.data.fdic.gov/bankfind-suite',
+              'banks-n.data.fdic.gov':
+                'https:///pfabankfindui-n.app.cloud.gov/bankfind-suite',
+              'banks-s.data.fdic.gov':
+                'https:///pfabankfindui-s.app.cloud.gov/bankfind-suite',
+              'banks-q.data.fdic.gov':
+                'https:///pfabankfindui-q.app.cloud.gov/bankfind-suite',
+              'api.fdic.gov': 
+                'https://banks.data.fdic.gov/bankfind-suite'
+            }
+          
+              const pathLookup = {
+                "Help" : "/help?previousApp=API",
+                "Api101": "/bulkData/api101"
+              }
+              const url = window.location.hostname === 'api.data.gov' 
+                  ? `${dataDotGovLookup[window.location.pathname]}${pathLookup[link[1]]}` 
+                  : `${bfsUrlLookup[window.location.hostname]}${pathLookup[link[1]]}`
+        
+              return `<a href=${url}>${link[0]}</a>`;
+            }   
+          }
+          return `${part}`;
+        })
+        return arrayParts.join("")
+      }
+      const maintenanceURL = maintenanceLookup[window.location.pathname] || "/maintenance"
+      const response = await fetch(maintenanceURL);
+      const maintenanceData = await response.json();
+        if(maintenanceData.data[0].data.is_active==="true") {
+          document.getElementById('maintenance-banner').style.display = 'block';
+          document.getElementById('banner-title').innerText = maintenanceData.data[0].data.title;
+          document.getElementById('banner-text').innerHTML =textToLink(maintenanceData.data[0].data.description);
+        } 
+        else {
+          document.getElementById('maintenance-banner').style.display = 'none'
+          document.getElementById('banner-title').innerText  ='';
+          document.getElementById('banner-text').innerText ='';
+        }
+      }
+      logMaintenance()</script>
+  <link rel="stylesheet" href="public/swagger/assets/css/uswds.css" />
+  </head>
+  <body>
+    <div id="div_fdic_standard_header" style="display: initial"></div>
+    <!-- BREADCRUMBS -->
+    <div id="site-container">
+      <div id="breadcrumbs">
+        <a href="https://www.fdic.gov/">Home</a> &gt;
+        <a href="https://www.fdic.gov/resources/">Resources</a>
+        &gt;
+        <a href="https://www.fdic.gov/resources/data-tools/">Data Tools</a>&gt;
+        <a id="bfs-breadcrumb-link" href="#">BankFind Suite</a>&gt;
+        <a href="#" onclick="HandleNavigation('Api Home')">
+          Bulk Data and API
+        </a>
+
+        &gt; API Documentation
+
+        
+      </div>
+    </div>
+      <div id="main-content">
+        <div id = "maintenance-banner" class="usa-alert usa-alert--info" style="display: none">
+          <div class="usa-alert__body">
+            <h4 id="banner-icon" class="usa-alert__heading"></h4>
+            <h4 id="banner-title"></h4>
+            <p id="banner-text"class="usa-alert__text">
+            </p>
+          </div> 
+        </div>
+        <button type="button" id="to-help-page-button" onclick="HandleNavigation('Help App')">
+          <span>Help</span>
+          <svg focusable="false" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"></path>
+          </svg>
+        </button>
+        <button
+          tabindex="0"
+          aria-disabled="false"
+          onclick="HandleNavigation('Landing Page')"
+          id="return-to-landing-page-button"
+        >
+          <span>
+            <svg focusable="false" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"
+              ></path>
+            </svg>
+            <svg focusable="false" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-4.5-9L2 6v2h19V6l-9.5-5z"
+              ></path>
+            </svg>
+          </span>
+          <span>BankFind Suite Home</span>
+        </button>
+        <button tabindex="0" aria-disabled="false" id="return-to-api-home-button" onclick="HandleNavigation('Api Home')">
+          <span>Back to API Home</span>
+        </button>
+
+        <!-- BEGIN CORE CONTENT -->
+        <h1 class="page_title">
+          BankFind Suite:
+          <span style="font-weight: normal;"
+            >API Documentation</span
+          >
+        </h1>
+        <p>
+          Provide
+          <a
+            href="https://ask.fdic.gov/fdicinformationandsupportcenter/s/fdicdirform?app=BankAPI"
+            >feedback or submit a question
+          </a>
+          about this page.
+        </p>
+        <h2>Overview</h2>
+        <p>
+          FDIC’s application programming interface (API) lets developers access
+          FDIC’s publicly available bank data. This portal provides a complete
+          API solution for building applications using this data. Everything you
+          need to integrate with this API is available below. More data will be
+          added to the portal on an ongoing basis.
+        </p>
+
+        <h2>API Keys</h2>
+        <p>
+          Many public APIs use keys as a way to secure and monitor API usage, and BankFind Suite follows this best practice. Users are currently not required to register and obtain a unique “key” to use with every query submitted to our API. The safekeeping of your key is your responsibility, and it is recommended that you save the original email that contains your key, as it also contains the email address and account ID associated with your key. Lost API keys are not retrievable. If you lose your API key, you will have to re-register to obtain a new one.
+        </p>
+        <button id="data-dot-gov" onclick="openModal()">
+          Obtain your API key here<br></br>
+        </button>
+
+        <div class="modal" id="leaving-fdic-modal">
+          <div class="modal-header">
+            <div class="title">You are about to leave FDIC.gov</div>
+          </div>
+          <div class="modal-body">
+            The Primary Internet Web Addresses listed have been reported to the
+            FDIC by each institution. The hyperlinks to institution Internet
+            sites are provided solely as a convenience to users of the FDIC
+            Internet site. The FDIC has made a limited effort to determine that
+            these links function properly. However, linked sites are not under
+            the control of FDIC, and FDIC is not responsible for the contents of
+            any linked site, or any link contained in a linked site. Even if you
+            access an institution's site by means of the link provided by FDIC,
+            you are responsible for confirming the identity and authenticity of
+            any institution you visit and transact business with online. The
+            inclusion of a link does not imply or constitute an endorsement by
+            FDIC of the institution, its ownership or management, the products
+            or services it offers, or any advertisers or sponsors appearing on
+            the institution's web site.
+          </div>
+          <div id="modal-buttons">
+            <button onclick="closeModal()" id="close-modal-button">
+              Go Back
+            </button>
+            <button
+              id="continue-modal-button"
+              onclick="modalContinue(`https://api.data.gov/signup/`)"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+        <div id="overlay" onclick="closeModal()"></div>
+
+        <h2>API Definition Files</h2>
+
+        <p>
+          The following definition files document the structure of the datasets:
+        </p>
+
+        <ul>
+          <li>
+            <a href="institution_properties.yaml" download >Institution API Definitions (YAML format)</a>
+            - for financial institutions.
+          </li>
+          <li>
+            <a
+              href="location_properties.yaml" download >Location API Definitions (YAML format)</a>
+            - for financial institutions locations/branches.
+          </li>
+          <li>
+            <a
+              href="history_properties.yaml" download >History API Definitions (YAML format)</a>
+            - for details on structure change events.
+          </li>
+          <li>
+            <a
+              href="summary_properties.yaml" download >Summary API Definitions (YAML format)</a>
+            - for historic aggregate financial and structure data, subtotaled by year, regarding financial institutions.
+          </li>
+          <li>
+            <a
+              href="failure_properties.yaml" download >Failure API Definitions (YAML format)</a>
+            - for details on failed financial institutions.
+          </li>
+          <li>
+            <a
+              href="sod_properties.yaml" download >SOD API Definitions (YAML format)</a>
+            - for details on Summary of Deposits.
+          </li>
+          <li>
+            <a
+              href="risview_properties.yaml" download >Financial API Definitions (YAML format)</a>
+            - for financial information for financial institutions.
+          </li>
+          <li>
+            <a
+              href="demographics_properties.yaml" download >Demographics Definitions (YAML format)</a>
+            - for details on demographics.
+          </li>
+        </ul>
+        <h2>Queries for Standard Financial Reports</h2>
+        <p>
+          The attached spreadsheet contains API queries for all of our standard financial reports. Use it as a starting point to help you craft your own:
+          <br/>
+          <a
+          href="All Financial Reports.xlsx" 
+          download >Common Financial Reports (.xlsx spreadsheet)</a>
+        </p>
+
+        <h2>API Documentation</h2>
+        <p>
+          See <a href="#api_endpoints">interactive documentation</a> available
+          below to provide an overview of the API.
+        </p>
+        <ul>
+          <li>
+            <a href="swagger.yaml"
+              >Full OpenAPI specification (formerly known as Swagger) for the
+              API</a
+            >
+          </li>
+        </ul>
+
+        <h3>Filter Syntax</h3>
+        <p>
+          The API uses the Elastic Search
+          <a
+            href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax"
+            target="_blank"
+            rel="noopener"
+            >query string syntax</a
+          >
+          for filtering. Some notes on the filter syntax include:
+        </p>
+        <ul class="swagger-ui opblock-body">
+          <li>
+            To match a phrase, use double quotes:
+            <pre><code>NAME:"First Bank"</code></pre>
+          </li>
+          <li>
+            To exclude a phrase or value:
+            <pre><code>!(STNAME:"Virginia")</code></pre>
+          </li>
+          <li>
+            The "AND" and "OR" operators can be used to combine filters:
+            <pre><code>NAME:"First Bank" AND STALP:IA</code></pre>
+            <pre><code>NAME:"First Bank" OR NAME:"Unibank"</code></pre>
+            <pre><code>!(BKCLASS:NM OR BKCLASS:N)</code></pre>
+          </li>
+          <li>
+            Dates must be entered in "yyyy-mm-dd" format:
+            <pre><code>DATEUPDT:2010-01-25</code></pre>
+          </li>
+          <li>
+            Ranges can be expressed with "[]" (inclusive) or "{}" (exclusive),
+            using "*" for an open ended range
+            <ul>
+              <li>
+                Date range that includes 2010-01-01 and 2010-12-31:
+                <pre><code>DATEUPDT:[2010-01-01 TO 2010-12-31]</code></pre>
+              </li>
+              <li>
+                Date range that includes only dates between 2010-01-01 and
+                2010-12-31:
+                <pre><code>DATEUPDT:{2010-01-01 TO 2010-12-31}</code></pre>
+              </li>
+              <li>
+                Number range including institutions with domestic deposits under
+                10,000 ($thousands)
+                <pre><code>DEPDOM:[* TO 10000]</code></pre>
+              </li>
+            </ul>
+          </li>
+          <li>
+            Open ended ranges can be expressed using a "*"
+            <pre><code>DATEUPDT:[2010-01-01 TO *]</code></pre>
+          </li>
+        </ul>
+
+        <h3>Output Formats</h3>
+        <p>
+          Data output is available as JSON or CSV. The format is controlled by
+          the
+          <code>Accept</code> header. See the Responses section in the
+          interactive documentation below for examples.
+        </p>
+
+        <h3>
+          <a id="api_endpoints" style="text-decoration:none">API Endpoints</a>
+        </h3>
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          style="position:absolute;width:0;height:0"
+        >
+          <defs>
+            <symbol viewBox="0 0 20 20" id="unlocked">
+              <path
+                d="M15.8 8H14V5.6C14 2.703 12.665 1 10 1 7.334 1 6 2.703 6 5.6V6h2v-.801C8 3.754 8.797 3 10 3c1.203 0 2 .754 2 2.199V8H4c-.553 0-1 .646-1 1.199V17c0 .549.428 1.139.951 1.307l1.197.387C5.672 18.861 6.55 19 7.1 19h5.8c.549 0 1.428-.139 1.951-.307l1.196-.387c.524-.167.953-.757.953-1.306V9.199C17 8.646 16.352 8 15.8 8z"
+              ></path>
+            </symbol>
+
+            <symbol viewBox="0 0 20 20" id="locked">
+              <path
+                d="M15.8 8H14V5.6C14 2.703 12.665 1 10 1 7.334 1 6 2.703 6 5.6V8H4c-.553 0-1 .646-1 1.199V17c0 .549.428 1.139.951 1.307l1.197.387C5.672 18.861 6.55 19 7.1 19h5.8c.549 0 1.428-.139 1.951-.307l1.196-.387c.524-.167.953-.757.953-1.306V9.199C17 8.646 16.352 8 15.8 8zM12 8H8V5.199C8 3.754 8.797 3 10 3c1.203 0 2 .754 2 2.199V8z"
+              />
+            </symbol>
+
+            <symbol viewBox="0 0 20 20" id="close">
+              <path
+                d="M14.348 14.849c-.469.469-1.229.469-1.697 0L10 11.819l-2.651 3.029c-.469.469-1.229.469-1.697 0-.469-.469-.469-1.229 0-1.697l2.758-3.15-2.759-3.152c-.469-.469-.469-1.228 0-1.697.469-.469 1.228-.469 1.697 0L10 8.183l2.651-3.031c.469-.469 1.228-.469 1.697 0 .469.469.469 1.229 0 1.697l-2.758 3.152 2.758 3.15c.469.469.469 1.229 0 1.698z"
+              />
+            </symbol>
+
+            <symbol viewBox="0 0 20 20" id="large-arrow">
+              <path
+                d="M13.25 10L6.109 2.58c-.268-.27-.268-.707 0-.979.268-.27.701-.27.969 0l7.83 7.908c.268.271.268.709 0 .979l-7.83 7.908c-.268.271-.701.27-.969 0-.268-.269-.268-.707 0-.979L13.25 10z"
+              />
+            </symbol>
+
+            <symbol viewBox="0 0 20 20" id="large-arrow-down">
+              <path
+                d="M17.418 6.109c.272-.268.709-.268.979 0s.271.701 0 .969l-7.908 7.83c-.27.268-.707.268-.979 0l-7.908-7.83c-.27-.268-.27-.701 0-.969.271-.268.709-.268.979 0L10 13.25l7.418-7.141z"
+              />
+            </symbol>
+
+            <symbol viewBox="0 0 24 24" id="jump-to">
+              <path
+                d="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7z"
+              />
+            </symbol>
+
+            <symbol viewBox="0 0 24 24" id="expand">
+              <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" />
+            </symbol>
+          </defs>
+        </svg>
+
+        <div id="swagger-ui"></div>
+        <script src="assets/js/swagger-ui-bundle.js"></script>
+        <script src="assets/js/swagger-ui-standalone-preset.js"></script>
+        <script>
+          if (window.location.pathname.endsWith('/docs')) {
+            window.location.pathname = window.location.pathname + '/'
+          }
+
+          const modal = document.getElementById('leaving-fdic-modal');
+          function openModal() {
+            modal.classList.add('active');
+            overlay.classList.add('active');
+          }
+          function closeModal() {
+            modal.classList.remove('active');
+            overlay.classList.remove('active');
+          }
+          function modalContinue(val) {
+            closeModal();
+            window.open(val);
+          }
+          function surveyUrl() {
+            return window.open('https://fdicfedramp.gov1.qualtrics.com/jfe/form/SV_cAYHhRaIU5lafb0?Q_LOC=BankFindSuiteWebsite','_blank')
+          }
+
+          // Handle navigation on button clicks
+          function HandleNavigation(val) {
+            const dataDotGovLookup = {
+              '/TEST/fdic/banks-d/docs/': 'https://pfabankfindui-d.app.cloud.gov/bankfind-suite',
+              '/TEST/fdic/banks-n/docs/': 'https://pfabankfindui-n.app.cloud.gov/bankfind-suite',
+              '/TEST/fdic/banks-q/docs/': 'https://pfabankfindui-q.app.cloud.gov/bankfind-suite'
+            }
+            const bfsUrlLookup = {
+              'localhost': 'http://localhost:5000/bankfind-suite',
+              'pfabankapi-n.app.cloud.gov':
+                'https://pfabankfindui-n.app.cloud.gov/bankfind-suite',
+              'pfabankapi-s.app.cloud.gov':
+                'https://pfabankfindui-s.app.cloud.gov/bankfind-suite',
+              'pfabankapi-q.app.cloud.gov':
+                'https://pfabankfindui-q.app.cloud.gov/bankfind-suite',
+              'pfabankapi-d.app.cloud.gov':
+                'https://pfabankfindui-d.app.cloud.gov/bankfind-suite',
+              'pfabankfindui.app.cloud.gov':
+                'https://banks.data.fdic.gov/bankfind-suite',
+              'banks.data.fdic.gov':
+                'https://banks.data.fdic.gov/bankfind-suite',
+              'banks-n.data.fdic.gov':
+                'https:///pfabankfindui-n.app.cloud.gov/bankfind-suite',
+              'banks-s.data.fdic.gov':
+                'https:///pfabankfindui-s.app.cloud.gov/bankfind-suite',
+              'banks-q.data.fdic.gov':
+                'https:///pfabankfindui-q.app.cloud.gov/bankfind-suite',
+              'api.fdic.gov': 
+                'https://banks.data.fdic.gov/bankfind-suite'
+            }
+
+            const pathLookup = {
+              'Landing Page': "",
+              'Api Home': '/bulkData',
+              'Help App': '/help?previousApp=API',
+            }
+
+            if(val){
+              const url = window.location.hostname === 'api.data.gov' 
+                ? `${dataDotGovLookup[window.location.pathname]}${pathLookup[val]}` 
+                : `${bfsUrlLookup[window.location.hostname]}${pathLookup[val]}`
+              window.location.href = url || `https://banks.data.fdic.gov/bankfind-suite${pathLookup[val]}`
+            } else {
+              const link = document.getElementById('bfs-breadcrumb-link');
+              const url = window.location.hostname === 'api.data.gov' 
+                ? dataDotGovLookup[window.location.pathname]
+                : bfsUrlLookup[window.location.hostname]
+              link.href = url || 'https://banks.data.fdic.gov/bankfind-suite'
+            }
+          }
+          // Sets bfs-breadcrumb-link
+          HandleNavigation();
+
+          // swagger.yaml path lookup
+          function swaggerYamlPath() {
+            const appUrlLookup = {
+              '/banks/docs/': '/banks/docs/swagger.yaml',
+              '/TEST/fdic/banks-d/docs/': '/TEST/fdic/banks-d/docs/development/swagger.yaml',
+              '/TEST/fdic/banks-n/docs/': '/TEST/fdic/banks-n/docs/preview/swagger.yaml',
+              '/TEST/fdic/banks-q/docs/': '/TEST/fdic/banks-q/docs/qa/swagger.yaml',
+              '/docs/': '/docs/local/swagger.yaml'
+            };
+              return appUrlLookup[window.location.pathname] ? appUrlLookup[window.location.pathname] : '/banks/docs/swagger.yaml' ;
+          }
+          
+          window.onload = function() {
+            // Build a system
+            const swaggerURL = swaggerYamlPath()
+            const ui = SwaggerUIBundle({
+              url: swaggerURL,
+              dom_id: '#swagger-ui',
+              deepLinking: true,
+              validatorUrl: null,
+              presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIStandalonePreset,
+              ],
+              plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+              layout: 'StandaloneLayout',
+            });
+
+            window.ui = ui;
+          };
+        </script>
+        <!-- END CORE CONTENT -->
+      </div>
+      <!-- site-container -->
+    </div>
+    <div id="div_fdic_standard_footer"></div>
+    <script src="https://www.fdic.gov/apps/header-footer.js"></script>
+  </body>
+</html>
