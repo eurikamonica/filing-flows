@@ -217,6 +217,7 @@ def main():
     ap.add_argument('--site-data', default=None, help="the Sankey site's data folder (index.json), to join earnings into signals")
     ap.add_argument('--history', default=None, help="public/ of the branch rotation-history (the RRG and the long rotation)")
     ap.add_argument('--debt', default=None, help="public/ of the branch debt-history (Debt & rates: app/debt.py)")
+    ap.add_argument('--consensus', default=None, help="public/ of the branch consensus-history (Consensus: app/consensus.py)")
     args = ap.parse_args()
     out = Path(args.out)
     shutil.rmtree(out, ignore_errors=True)
@@ -235,6 +236,13 @@ def main():
         try:
             st = json.loads((Path(args.debt) / 'status.json').read_text(encoding='utf-8'))
             print(f"::notice::debt & rates: {st.get('companies')} companies, {st.get('banks')} banks, built {st.get('built_at')}")
+        except Exception:
+            pass
+    if args.consensus and (Path(args.consensus) / 'index.json').exists():
+        shutil.copytree(args.consensus, out / 'data' / 'consensus', dirs_exist_ok=True)
+        try:
+            st = json.loads((Path(args.consensus) / 'status.json').read_text(encoding='utf-8'))
+            print(f"::notice::consensus: {st.get('companies')} companies, {st.get('markets')} prediction markets, built {st.get('built_at')}")
         except Exception:
             pass
     if args.site_data:
