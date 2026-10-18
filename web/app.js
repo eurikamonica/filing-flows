@@ -1720,12 +1720,19 @@
       solveFor: 'growth', lo: -20, hi: 40,
     };
     let A = { ...defaults };
+    let CS = null;                         // consensus (disclosures/data/consensus/c/<cik>.json): loaded after the first draw
     const periodTxt = V.basis === 'ttm' ? `trailing four quarters to ${date(V.end)}` : `fiscal year to ${date(V.end)}`;
     const refsOf = (k) => (R[k] || []).filter(Boolean);
     const rep = (title, val, k, note) => ({ title, value: money(val), period: periodTxt, ref: refsOf(k).length === 1 ? refsOf(k)[0] : null,
       inputs: refsOf(k).length > 1 ? refsOf(k).map((r, i) => ({ title: `${title}, quarter ${i + 1} of 4`, value: '', ref: r })) : undefined,
       kind: refsOf(k).length > 1 ? 'Derived (sum of four quarters)' : 'Reported', note });
-    const model = () => ({ rev0: rev, years: A.years, growth: A.growth / 100, margin: A.margin / 100, tax: A.tax / 100, da: A.da / 100,
+    const consPath = (g, m) => {                // the years analysts cover at their rates, then the reader's
+      const F = consFigures(), n = F.growth != null ? Math.min(A.years, Math.max(1, Math.round(F.span))) : 0;
+      const arr = (c, own) => (c == null || !n ? own : Array.from({ length: A.years }, (_, i) => (i < n ? c : own)));
+      return { growth: arr(F.growth, g), margin: arr(F.margin, m), n, F };
+    };
+    const model = () => ({ rev0: rev, years: A.years, ...(A.cons && CS ? (({ growth, margin }) => ({ growth, margin }))(consPath(A.growth / 100, A.margin / 100))
+      : { growth: A.growth / 100, margin: A.margin / 100 }), tax: A.tax / 100, da: A.da / 100,
       capex: A.capex / 100, wc: A.wc / 100, wacc: A.wacc / 100, g: A.g / 100, terminal: A.terminal, roic: A.roic / 100, lossTax: A.lossTax,
       debt: A.debt, cash: A.cash, claims: A.claims, nonop: A.nonop, shares: A.shares });
     const pct = (v, d) => `${v < 0 ? '−' : ''}${Math.abs(v).toFixed(d == null ? 1 : d)}%`;
@@ -1799,6 +1806,7 @@
             <div class="q-legend"><span><i class="h-up2"></i>≥ 20% above the price</span><span><i class="h-up1"></i>0–20% above</span><span><i class="h-dn1"></i>0–20% below</span><span><i class="h-dn2"></i>more than 20% below</span></div>
           </article>`;
       }
+      const consCard = r.ok ? consensusCard(x, price) : '';
       let sens = '';
       if (r.ok) {
         const ws = [-2, -1, 0, 1, 2].map((d) => +(A.wacc / 100 + d / 100).toFixed(4)), gsn = [-1, -0.5, 0, 0.5, 1].map((d) => +(A.g / 100 + d / 100).toFixed(4));
@@ -1827,7 +1835,8 @@
             <h3>Assumptions <span class="muted">· yours to change</span></h3>
             <div class="v-fields">
               ${field('price', 'Share price', '$', { step: 0.01, tag: px ? 'market' : 'enter' })}${field('shares', 'Diluted shares', 'M', { step: 1, scale: 1e6 })}
-              ${field('growth', 'Revenue growth', '%/yr', { tag: 'assumption' })}${field('margin', 'EBIT margin', '%', { tag: 'assumption' })}
+              ${A.cons && CS ? (() => { const cp = consPath(0, 0); return `<p class="v-consline">Year${cp.n > 1 ? 's 1–' + cp.n : ' 1'}: analysts’ consensus — revenue ${pct(cp.F.growth * 100)} a year${cp.F.margin != null ? `, EBIT margin ${pct(cp.F.margin * 100)}` : ''}. The fields below apply after that.</p>`; })() : ''}
+              ${field('growth', A.cons && CS ? 'Revenue growth, later years' : 'Revenue growth', '%/yr', { tag: 'assumption' })}${field('margin', 'EBIT margin', '%', { tag: 'assumption' })}
               ${field('tax', 'Tax rate', '%', { tag: 'assumption' })}${field('da', 'D&A', '% rev')}${field('capex', 'Capex', '% rev')}
               ${field('wc', 'Working capital', '% of Δrev', { tag: 'assumption' })}${field('wacc', 'WACC', '%', { tag: 'assumption' })}${field('g', 'Terminal growth', '%', { tag: 'assumption' })}
               <label class="v-f"><span>Terminal method</span><span class="v-in"><select data-k="terminal"><option value="roic" ${A.terminal === 'roic' ? 'selected' : ''}>Reinvestment = g ÷ ROIC</option><option value="simple" ${A.terminal === 'simple' ? 'selected' : ''}>Last FCFF × (1 + g)</option></select></span></label>
@@ -1838,11 +1847,88 @@
             <div class="v-actions"><button type="button" class="btn small" id="v-reset">Reset to the reported starting point</button><button type="button" class="btn small" id="v-export">Download scenario (JSON)</button></div>
             <p class="muted q-small">Defaults: growth from the last four quarters against the four before (capped at −20%…40%); margin, D&amp;A and capex as a share of trailing revenue; tax from trailing tax ÷ pretax income (capped at 35%). WACC 9%, terminal growth 2.5%, ROIC 15% and working capital 10% of each revenue increase are placeholders, not estimates.</p>
           </article>
-          <div class="v-out"><article class="q-card"><h3>Model result</h3>${out}</article>${revCard}${sens}</div>
+          <div class="v-out"><article class="q-card"><h3>Model result</h3>${out}</article>${revCard}${consCard}${sens}</div>
         </div>`;
       bind();
     }
+    // ---------- consensus, backed out: what each consensus price needs, and what the analysts' own estimates give ----------
+    function consFigures() {
+      const a = (CS && CS.analysts) || {}, per = (k) => (a.periods || []).find((p) => p.period === k) || {};
+      const y0 = per('0y'), y1 = per('+1y'), sh = A.shares;
+      const pick = [y1, y0].find((p) => p.rev && p.rev.avg > 0 && p.end && p.end > V.end);
+      let growth = null, margin = null, span = null;
+      if (pick) {
+        span = (Date.parse(pick.end) - Date.parse(V.end)) / (365.25 * 864e5);
+        if (span > 0.25) growth = Math.pow(pick.rev.avg / rev, 1 / span) - 1;
+        if (pick.eps && pick.eps.avg != null && sh > 0 && A.tax < 100) margin = pick.eps.avg * sh / (1 - A.tax / 100) / pick.rev.avg;
+      }
+      return { a, pick, growth, margin, span };
+    }
+    function consPrices(price) {
+      const out = [], a = (CS && CS.analysts) || {}, T = a.targets || {}, w = A.wacc / 100;
+      const back = (v, d) => (v > 0 ? v / Math.pow(1 + w, Math.max(0, (Date.parse(d) - Date.now()) / (365.25 * 864e5))) : null);
+      const in12 = new Date(Date.now() + 365.25 * 864e5).toISOString().slice(0, 10);
+      if (price > 0) out.push({ label: 'Today’s price', note: px ? t(px.source) : 'entered', p: price, today: price });
+      if (T.mean > 0) out.push({ label: 'Analysts’ mean target', note: `${T.n || '—'} analysts, 12 months`, p: T.mean, today: back(T.mean, in12), cls: 'an' });
+      if (T.high > 0) out.push({ label: 'Analysts’ highest target', note: '12 months', p: T.high, today: back(T.high, in12), cls: 'an' });
+      if (T.low > 0) out.push({ label: 'Analysts’ lowest target', note: '12 months', p: T.low, today: back(T.low, in12), cls: 'an' });
+      const soon = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+      const pm = (CS.markets || []).filter((m) => !m.closed && m.implied_price && m.implied_price.median > 0 && m.end >= soon).sort((x2, y2) => String(x2.end).localeCompare(String(y2.end)));
+      const m = pm.find((q) => q.kind === 'above') || pm[0];
+      if (m) out.push({ label: 'Prediction market', note: `${m.source === 'kalshi' ? 'Kalshi' : 'Polymarket'} median for ${date(m.end)}`, p: m.implied_price.median, today: back(m.implied_price.median, m.end), cls: 'pm' });
+      const o = (CS.ours || []).find((q) => q.horizon === 'next quarter') || (CS.ours || [])[0];
+      if (o && o.price > 0) out.push({ label: 'Our model', note: `${t(o.horizon)} (${date(o.date)})`, p: o.price, today: back(o.price, o.date), cls: 'ours' });
+      return out;
+    }
+    function consensusCard(x, price) {
+      if (!CS) return CS === false ? '' : `<article class="q-card"><h3>Consensus, backed out</h3><p class="muted">Loading analysts’ estimates and prediction markets…</p></article>`;
+      const F = consFigures(), rows = consPrices(price);
+      if (!rows.length) return '';
+      const BOUNDS = { growth: [-0.3, 0.8], margin: [-0.3, 0.95], wacc: [Math.max(A.g / 100 + 0.005, 0.02), 0.4] };
+      const need = (param, target) => {
+        const [lo, hi] = BOUNDS[param], s = FSA.solve(x, param, target, lo, hi);
+        if (s.status === 'ok') return { v: s.value };
+        if (s.status === 'none' && s.range) {
+          const above = target > s.range[1] + target;       // range is model − target
+          return { txt: param === 'wacc' ? (above ? `below ${pct(lo * 100, 0)}` : `above ${pct(hi * 100, 0)}`) : (above ? `above ${pct(hi * 100, 0)}` : `below ${pct(lo * 100, 0)}`) };
+        }
+        return { txt: s.status === 'multiple' ? 'two answers' : '—' };
+      };
+      const cell = (n, ref, higherIsMore) => {
+        if (n.v == null) return `<td class="num muted">${n.txt}</td>`;
+        const tone = ref == null ? '' : (higherIsMore ? n.v > ref + 0.005 : n.v < ref - 0.005) ? 'neg' : 'pos';
+        return `<td class="num ${tone}">${pct(n.v * 100)}</td>`;
+      };
+      const body = rows.map((rw) => {
+        const g = need('growth', rw.today), m = need('margin', rw.today), w = need('wacc', rw.today);
+        return `<tr><td><span class="v-dot ${rw.cls || ''}"></span>${t(rw.label)}<br><span class="muted q-small">${rw.note}</span></td><td class="num">${usd(rw.p)}${rw.today !== rw.p ? `<br><span class="muted q-small">${usd(rw.today)} today</span>` : ''}</td>
+          ${cell(g, F.growth, true)}${cell(m, F.margin, true)}${cell(w, null)}</tr>`;
+      }).join('');
+      let fwd = '';
+      if (F.growth != null || F.margin != null) {
+        const cp = consPath(A.growth / 100, F.margin != null ? F.margin : A.margin / 100);
+        const xc = { ...x, growth: cp.growth, margin: F.margin != null ? Array(A.years).fill(F.margin) : cp.margin };
+        const rc = FSA.dcf(xc), T = (F.a.targets || {});
+        fwd = `<div class="v-cons"><div><small>Analysts’ revenue growth</small><strong>${F.growth != null ? pct(F.growth * 100) : '—'}</strong><span class="muted">a year, from ${money(rev)} to ${money(F.pick.rev.avg)} by ${date(F.pick.end)} (${F.pick.rev.numberOfAnalysts || '—'} analysts)</span></div>
+            <div><small>EBIT margin in their EPS</small><strong>${F.margin != null ? pct(F.margin * 100) : '—'}</strong><span class="muted">EPS ${usd(F.pick.eps && F.pick.eps.avg)} × ${(A.shares / 1e6).toFixed(0)}M shares ÷ (1 − tax) ÷ revenue; net interest ignored</span></div>
+            <div><small>Model value on their estimates</small><strong>${rc.ok ? usd(rc.perShare) : '—'}</strong><span class="muted">${T.mean > 0 && rc.ok ? `${rc.perShare >= T.mean ? 'above' : 'below'} their mean target ${usd(T.mean)} · ` : ''}year${cp.n > 1 ? 's 1–' + cp.n : ' 1'} at their growth, then yours (${pct(A.growth)}); their margin throughout; your WACC and terminal</span></div></div>
+          <div class="v-actions">${A.cons ? '<button type="button" class="btn small" id="v-nocons">Back to one growth rate for every year</button>' : '<button type="button" class="btn small" id="v-usecons">Use the analysts’ estimates in the model</button>'}</div>`;
+      }
+      return `<article class="q-card"><h3>Consensus, backed out</h3>
+          <p class="muted">What each consensus price needs from the model — one assumption at a time, the others as set: revenue growth or EBIT margin for every one of the ${A.years} forecast years, or the WACC that discounts your cash flows to that price. Prices in the future are discounted back to today at the WACC. Green: needs no more than the analysts’ own estimates; red: needs more.</p>
+          <div class="tbl-wrap"><table class="v-table v-backout"><thead><tr><th>Consensus</th><th class="num">Price</th><th class="num">Growth needed</th><th class="num">Margin needed</th><th class="num">WACC</th></tr></thead><tbody>${body}</tbody></table></div>
+          ${fwd}<p class="muted q-small">Analysts: Yahoo Finance consensus. Prediction markets: Polymarket / Kalshi. Our model: the Rotation forecast. All in the Consensus tab.</p></article>`;
+    }
     function bind() {
+      const uc = $('#v-usecons', box);
+      if (uc) uc.addEventListener('click', () => {
+        const F = consFigures();
+        A.cons = F.growth != null;
+        if (F.margin != null) A.margin = +(F.margin * 100).toFixed(1);
+        render();
+      });
+      const nc = $('#v-nocons', box);
+      if (nc) nc.addEventListener('click', () => { A.cons = false; render(); });
       $$('[data-k]', box).forEach((el) => el.addEventListener('change', () => {
         const k = el.dataset.k;
         A[k] = el.tagName === 'SELECT' ? el.value : (el.value === '' ? null : Number(el.value) * Number(el.dataset.scale || 1));
@@ -1869,6 +1955,8 @@
       });
     }
     render();
+    fetch(`disclosures/data/consensus/c/${P.cik || c.cik}.json`).then((r) => (r.ok ? r.json() : false)).catch(() => false)
+      .then((d) => { if (!here()) return; CS = d || false; if (box.isConnected) render(); });
   }
 
   // ---------- profit and cash: net income vs operating cash flow, accruals, reserve rollforwards ----------
