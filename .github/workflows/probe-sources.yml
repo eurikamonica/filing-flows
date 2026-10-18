@@ -37,36 +37,13 @@ jobs:
               except Exception as e:
                   log.append([name, url, 'error', str(e)[:200]])
               time.sleep(0.6)
-          # second probe: the contract article, USAspending, more wire feeds, GDELT spaced out
-          rss = requests.get('https://www.war.gov/DesktopModules/ArticleCS/RSS.ashx?ContentType=400&Site=945&max=3', headers={'User-Agent': browser}, timeout=40).text
-          links = re.findall(r'<link>(https://www\.war\.gov/News/Contracts/Contract/Article/[^<]+)</link>', rss)
-          if links:
-              get('war-article.html', links[0].strip(), n=400000)
-              get('war-article-plain.html', links[0].strip(), n=400000, accept='text/html')
-          get('usaspending.json', 'https://api.usaspending.gov/api/v2/search/spending_by_award/', n=60000) if False else None
-          try:
-              r = requests.post('https://api.usaspending.gov/api/v2/search/spending_by_award/', json={
-                  'filters': {'time_period': [{'start_date': '2026-10-10', 'end_date': '2026-10-17', 'date_type': 'action_date'}],
-                              'award_type_codes': ['A', 'B', 'C', 'D'], 'agencies': [{'type': 'awarding', 'tier': 'toptier', 'name': 'Department of Defense'}],
-                              'award_amounts': [{'lower_bound': 50000000}]},
-                  'fields': ['Award ID', 'Recipient Name', 'Award Amount', 'Start Date', 'Description', 'Awarding Sub Agency', 'recipient_id'],
-                  'sort': 'Award Amount', 'order': 'desc', 'limit': 10, 'page': 1}, headers={'User-Agent': browser}, timeout=60)
-              open('out/usaspending.json', 'wb').write(r.content[:60000]); log.append(['usaspending.json', r.status_code, len(r.content)])
-          except Exception as e:
-              log.append(['usaspending', 'error', str(e)[:200]])
-          for name, url in [('prn-health.xml', 'https://www.prnewswire.com/rss/health-latest-news/health-latest-news-list.rss'),
-                            ('prn-tech.xml', 'https://www.prnewswire.com/rss/consumer-technology-latest-news/consumer-technology-latest-news-list.rss'),
-                            ('prn-energy.xml', 'https://www.prnewswire.com/rss/energy-latest-news/energy-latest-news-list.rss'),
-                            ('prn-business.xml', 'https://www.prnewswire.com/rss/business-technology-latest-news/business-technology-latest-news-list.rss'),
-                            ('prn-earnings.xml', 'https://www.prnewswire.com/rss/financial-services-latest-news/earnings-list.rss'),
-                            ('gnw-us.xml', 'https://www.globenewswire.com/RssFeed/country/United%20States/feedTitle/GlobeNewswire%20-%20News%20from%20United%20States'),
-                            ('gnw-search.xml', 'https://www.globenewswire.com/rss/list'),
-                            ('bw-all.xml', 'https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeGVtRWA=='),
-                            ('newsfile.xml', 'https://feeds.newsfilecorp.com/feed/newsfile-latest-news')]:
-              get(name, url)
-          for q in ['%22Boeing%22', '%22Pfizer%22']:
-              time.sleep(12)
-              get('gdelt-' + q.strip('%22').lower() + '.json', f'https://api.gdeltproject.org/api/v2/doc/doc?query={q}%20sourcelang:english&mode=artlist&maxrecords=10&format=json&timespan=48h&sort=hybridrel')
+          # third probe: per-company headline sources for the movers
+          get('yahoo-rss-nvda.xml', 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=NVDA&region=US&lang=en-US')
+          get('yahoo-search-nvda.json', 'https://query1.finance.yahoo.com/v1/finance/search?q=NVDA&newsCount=10&quotesCount=0')
+          get('google-news-nvda.xml', 'https://news.google.com/rss/search?q=%22NVIDIA%22+when:1d&hl=en-US&gl=US&ceid=US:en')
+          for i in range(4):
+              time.sleep(8)
+              get(f'gdelt-try{i}.json', 'https://api.gdeltproject.org/api/v2/doc/doc?query=%22Boeing%22%20sourcelang:english&mode=artlist&maxrecords=10&format=json&timespan=48h&sort=hybridrel')
           with open('out/log.json', 'w') as f:
               json.dump(log, f, indent=1)
           print(json.dumps(log, indent=1))
