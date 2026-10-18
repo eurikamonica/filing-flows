@@ -107,6 +107,12 @@ class EightK(unittest.TestCase):
         self.assertEqual(E.guidance(['The outlook reflects input costs at current levels and assumes no further increases.']), (None, None))
         self.assertEqual(E.guidance(['The Company lowered its fiscal 2026 adjusted EPS guidance to $1.10.'])[0], 'lowered')
         self.assertIsNone(E.dateline(['CONSENT OF INDEPENDENT VALUATION ADVISOR', 'We hereby consent to the use of our name.']))
+        off = dict((t[0], t[4]) for t in E.TOPICS)['offering']
+        self.assertFalse(E._says(off, 'On October 15, 2026, the Company closed its previously announced private offering of $730.0 million '
+                                      'in aggregate principal amount of notes.'))
+        self.assertTrue(E._says(off, 'On October 15, 2026, the Company closed its registered direct offering of 4,000,000 shares of common stock.'))
+        self.assertEqual(E.headline(['Chief Accounting Officer Financial Relations Board', 'Fox Factory Announces CEO Transition',
+                                     'DULUTH, Ga., Oct. 16, 2026 (GLOBE NEWSWIRE) -- Fox Factory today announced …']), 'Fox Factory Announces CEO Transition')
         self.assertEqual(E.headline(['Exhibit 99.1', 'Contact: ir@example.com (408) 555-0100', 'Example Devices Reports Record Third Quarter Results',
                                      'SAN JOSE, Calif., Oct. 16, 2026 (GLOBE NEWSWIRE) -- Example Devices today reported results.']),
                          'Example Devices Reports Record Third Quarter Results')

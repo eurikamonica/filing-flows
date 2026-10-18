@@ -98,9 +98,11 @@ TOPICS = [
     ('impairment', 'an impairment', 6, {'2.06'}, None),
     ('restructuring', 'layoffs or restructuring', 6, {'2.05'}, None),
     ('offering', 'a share offering (dilution)', 5, {'3.02', '1.01', '8.01', '7.01'},
-     r'\b(priced|pricing of|closed|closing of|announced|entered into|launch(ed|es)?|commenc(ed|es)|upsiz(ed|es))\b[^.]{0,100}\b'
-     r'(underwritten |registered direct |public |private |at-the-market |equity |follow-on )(offering|placement)|'
-     r'securities purchase agreement|at-the-market (offering|sales agreement|program)|equity distribution agreement'),
+     {'any': r'\b(priced|pricing of|closed|closing of|announced|entered into|launch(ed|es)?|commenc(ed|es)|upsiz(ed|es))\b[^.]{0,100}\b'
+             r'(underwritten |registered direct |public |private |at-the-market |equity |follow-on )(offering|placement)|'
+             r'securities purchase agreement|at-the-market (offering|sales agreement|program)|equity distribution agreement',
+      'not': r'\b(notes|debentures|bonds|principal amount|credit agreement|term loan)\b',
+      'unless': r'\b(common stock|ordinary shares|shares of|warrants|units|ADSs?|American depositary|preferred stock)\b'}),
     ('buyback', 'a share buyback', 5, {'8.01', '7.01', '1.01'},
      r'(repurchase|buyback) (program|authori[sz]ation)|authori[sz]ed[^.]{0,60}\b(repurchase|buyback)|new share repurchase'),
     ('dividend', 'a dividend change', 4, {'8.01', '7.01'},
@@ -217,6 +219,14 @@ CONTACT = re.compile(r'(?i)@|\bcontacts?\b|\binvestor relations\b|\bmedia\b:|\(\
                      r'for immediate release|^(press|news) release$|^page \d')
 
 
+HEADVERB = re.compile(r'(?i)\b(announc|report|appoint|nam|complet|receiv|launch|enter|sign|declar|clos|pric|expand|provid|achiev|'
+                      r'deliver|post|record|win|wins|won|award|acquir|agree|updat|reaffirm|rais|lower|issu|present|host|schedul|elect|'
+                      r'promot|initiat|begin|file|obtain|secur|unveil|introduc|partner|select|join|retir|resign|transition|grant|'
+                      r'approv|meet|reach|exceed|surpass|releas|publish|confirm|withdraw|suspend|terminat|settl|regain|transfer|'
+                      r'chang|increas|decreas|cut|pay|distribut|strengthen|extend|open|sell|sold|buy|purchas|merg|combin|'
+                      r'spin|divest|start|expect|forecast|reiterat|introduc)(e|es|ed|ing|s|d)?\b')
+
+
 def dateline(paras):
     """Index of the release's dateline paragraph ("SAN JOSE, Calif., Oct. 16, 2026 (GLOBE NEWSWIRE) -- …"), or None
     when the exhibit is not a press release."""
@@ -234,7 +244,7 @@ def headline(paras, line=None):
         return ''
     for p in paras[:line] if line > 0 else []:
         words = len(p.split())
-        if 5 <= words <= 40 and not CONTACT.search(p) and re.search(r'[a-z]', p):
+        if 4 <= words <= 40 and not CONTACT.search(p) and (HEADVERB.search(p) or re.search(r'[$%]|\d', p)):
             return p
     return ''
 
@@ -247,7 +257,12 @@ def _sentences_of(paras):
 
 
 def _says(pat, sentence):
-    """A topic pattern (one regex, or a pair that must both match the same sentence) against one sentence."""
+    """A topic pattern against one sentence: one regex; a pair that must both match; or {'any': regex, 'not': regex that
+    rules the sentence out, 'unless': regex that rules it back in} (an offering of notes is debt, not dilution)."""
+    if isinstance(pat, dict):
+        if not re.search(pat['any'], sentence, re.I):
+            return False
+        return not (pat.get('not') and re.search(pat['not'], sentence, re.I) and not (pat.get('unless') and re.search(pat['unless'], sentence, re.I)))
     if isinstance(pat, tuple):
         return all(re.search(p, sentence, re.I) for p in pat)
     return bool(re.search(pat, sentence, re.I))
@@ -330,7 +345,7 @@ def parse_8k(txt, accession, folder):
     score = max([TOPIC_WEIGHT.get(t, 0) for t in topics] + [2 if g in ('raised', 'lowered', 'withdrawn') else 0] + [0])
     if 'guidance' in topics and g in ('raised', 'lowered', 'withdrawn'):
         score = max(score, 6)
-    return {'accession': accession, 'url': folder, 'form': h['form'] or '8-K', 'filed': h['filed'], 'accepted': h['accepted'],
+    return {'v': PARSER, 'accession': accession, 'url': folder, 'form': h['form'] or '8-K', 'filed': h['filed'], 'accepted': h['accepted'],
             'period': h['period'], 'cik': (company.get('cik') or '').lstrip('0'), 'company': company.get('name', ''),
             'items': items, 'code': code or '', 'topics': topics, 'guidance': g, 'guidance_quote': (gq or '')[:300],
             'headline': headline(rel, line)[:200] if is_release else '', 'quote': quote, 'quote_src': src, 'score': score}
@@ -373,7 +388,7 @@ def parse_daily_index(text):
     return out
 
 
-PARSER = 2          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
+PARSER = 3          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
 
 
 def store(root):
