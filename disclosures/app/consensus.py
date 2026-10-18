@@ -851,7 +851,9 @@ def build(root, rot=None, verbose=True):
     for t, rec in recs.items():
         a = rec.get('analysts') or {}
         cutoff = (dt.date.today() - dt.timedelta(days=120)).isoformat()
-        live = sorted([m for m in by_t.get(t, []) if is_live(m, yday)], key=lambda m: m['end'] or '9999')
+        prio = {'beat': 0, 'metric': 1, 'above': 2, 'bracket': 3, 'mcap': 4, 'hit': 5, 'kpi': 6, 'mention': 7, 'updown': 8, 'other': 9}
+        live = sorted([m for m in by_t.get(t, []) if is_live(m, yday)], key=lambda m: (prio.get(m['kind'], 9), m['end'] or '9999'))
+        live = [m for m in live if m['kind'] != 'other'] + [m for m in live if m['kind'] == 'other'][:15]   # leaderboards etc. stay a few
         done = sorted([m for m in by_t.get(t, []) if not is_live(m, yday) and (m['end'] or '') >= cutoff], key=lambda m: m['end'] or '', reverse=True)
         ms = live + done
         shares = a.get('shares')
