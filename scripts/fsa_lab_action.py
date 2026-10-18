@@ -163,7 +163,12 @@ def assemble(root, destination, objective, seed, new_count, replay_count, owner_
     # Real owner Task A is explicitly excluded: weak unreviewed reason labels.
     owner = [r for r in rows(paths["owner_train"])
              if r.get("split") == "train" and r.get("task") == "bs_line_classification"]
-    spec = [("bfv4", fresh, new_count), ("historical_replay", replay, replay_count)]
+    # Require >=30% historical replay even when mixed and hourly examples are enabled.
+    non_replay_target = new_count + (owner_count if objective == "mixed" else 0) + hourly_count
+    effective_replay = max(replay_count, math.ceil(3 * non_replay_target / 7))
+    if effective_replay > 2000:
+        raise ValueError("Replay quota exceeds 2000; reduce new examples")
+    spec = [("bfv4", fresh, new_count), ("historical_replay", replay, effective_replay)]
     if objective == "mixed":
         spec.append(("owner_rule_labels", owner, owner_count))
     if hourly_count:
@@ -195,6 +200,9 @@ def assemble(root, destination, objective, seed, new_count, replay_count, owner_
                 break
     if not merged:
         raise ValueError("No training rows passed audit")
+    replay_actual = sum(x["source"] == "historical_replay" for x in merged)
+    if replay_actual / len(merged) < 0.30 - 1e-8:
+        raise ValueError("Historical replay under 30%; stop rather than silently regress older contracts")
     rng = random.Random(seed)
     rng.shuffle(merged)
     destination.mkdir(parents=True, exist_ok=True)
@@ -208,6 +216,7 @@ def assemble(root, destination, objective, seed, new_count, replay_count, owner_
         "base": BASE, "revision": BASE_REVISION,
         "sources": {k: {"path": str(p), "sha256": sha256(p)} for k, p in paths.items()},
         "counts": dict(Counter(r["source"] for r in merged)),
+        "effective_historical_replay_target": effective_replay,
         "tasks": dict(Counter(r["task"] for r in merged)),
         "dropped": dict(dropped),
         "protected_protocol_sizes": {k: len(v) for k, v in protocols.items()},
