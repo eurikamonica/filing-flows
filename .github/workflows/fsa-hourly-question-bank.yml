@@ -1,0 +1,90 @@
+name: FSA Hourly Question Bank
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: isolated-fsa-hourly-bank
+  cancel-in-progress: false
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate question generation
+        run: python -m unittest discover -s tests -p "test_fsa_hourly*.py" -v
+      - name: Restore independent bank branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$remote" fsa-question-bank >/dev/null; then
+            git clone --quiet --depth 1 --branch fsa-question-bank "$remote" bank
+          else
+            git init --quiet -b fsa-question-bank bank
+            mkdir -p bank/index
+            printf '# Independent FSA question bank\nNo model weights or proprietary reports.\n' > bank/README.md
+          fi
+          git -C bank config user.name "filing-flows-question-bank"
+          git -C bank config user.email "actions@users.noreply.github.com"
+          stamp="$(date -u +%Y-%m-%dT%H)"
+          printf 'STAMP=%s\n' "$stamp" >> "$GITHUB_ENV"
+          day="${stamp%%T*}"
+          hour="${stamp##*T}"
+          if [ -f "bank/hourly/$day/$hour.json" ]; then
+            echo 'Already published; no-op.'
+            printf 'ALREADY_PUBLISHED=1\n' >> "$GITHUB_ENV"
+          fi
+      - name: Generate fresh practice and tasks
+        if: env.ALREADY_PUBLISHED != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--out staged --hour "$STAMP" --count 18 --reports research_reports/approved_manifest.json --seen bank/index/seen_ids.txt)
+          if [ -f bank/index/latest_evaluation.json ]; then
+            args+=(--evaluation bank/index/latest_evaluation.json)
+          fi
+          python scripts/fsa_hourly_bank.py "${args[@]}"
+          day="${STAMP%%T*}"
+          hour="${STAMP##*T}"
+          mkdir -p "bank/hourly/$day" bank/index
+          cp staged/hourly_bank.json "bank/hourly/$day/$hour.json"
+          cp staged/tasks.json "bank/hourly/$day/$hour-tasks.json"
+          cp staged/seen_ids.txt bank/index/seen_ids.txt
+          cp staged/SUMMARY.md bank/LATEST.md
+          cat staged/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish only derived practice to separate branch
+        if: env.ALREADY_PUBLISHED != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C bank add README.md LATEST.md hourly index/seen_ids.txt
+          if git -C bank diff --cached --quiet; then
+            echo 'No new questions.'
+            exit 0
+          fi
+          git -C bank commit --quiet -m "Hourly FSA practice $STAMP"
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git -C bank push --quiet "$remote" HEAD:refs/heads/fsa-question-bank
+      - name: Downloadable question and task archive
+        if: env.ALREADY_PUBLISHED != '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: fsa-hourly-${{ github.run_id }}
+          path: |
+            staged/hourly_bank.json
+            staged/tasks.json
+            staged/SUMMARY.md
+          retention-days: 14
+          if-no-files-found: warn
