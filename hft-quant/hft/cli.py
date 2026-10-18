@@ -1,6 +1,7 @@
 """Command line entry point.
 
   python -m hft.cli backtest --config config/example.yaml
+  python -m hft.cli backtest --data data/BTCUSDT.csv.gz data/XAUUSDT.csv.gz   # tardis.dev snapshots
   python -m hft.cli paper    --config config/example.yaml   # live public data, simulated fills
   python -m hft.cli testnet  --config config/example.yaml   # exchange testnet, keys from env
   python -m hft.cli markets  --exchange binanceusdm --base XAU TSLA
@@ -46,8 +47,10 @@ async def run(args) -> None:
     symbols = list(insts)
 
     if args.cmd == "backtest":
-        if args.data:
-            feed = feeds.jsonl_feed(args.data)
+        if args.data and all(".csv" in d for d in args.data):
+            feed = feeds.tardis_csv_feed(args.data, symbols)
+        elif args.data:
+            feed = feeds.jsonl_feed(args.data[0])
         else:
             feed = feeds.synthetic_feed(list(insts.values()),
                                         {ic.instrument.symbol: ic.start_price for ic in cfg.instruments},
@@ -92,7 +95,9 @@ def main() -> None:
         sp.add_argument("--latency", type=float, default=0.0, help="simulated order latency, seconds")
         sp.add_argument("--max-books", type=int, default=None)
         if name == "backtest":
-            sp.add_argument("--data", help="JSONL file from `record`; synthetic data if omitted")
+            sp.add_argument("--data", nargs="+",
+                            help="JSONL file from `record`, or tardis.dev book_snapshot CSV(.gz) files; "
+                                 "synthetic data if omitted")
             sp.add_argument("--steps", type=int, default=None)
     mk = sub.add_parser("markets")
     mk.add_argument("--exchange", default="binanceusdm")

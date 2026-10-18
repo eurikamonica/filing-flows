@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import asyncio
+import csv
+import gzip
+import heapq
 import json
 import math
 import random
@@ -81,3 +84,40 @@ async def record(feed: AsyncIterator[OrderBook], path: str | Path, limit: int | 
             if limit and n >= limit:
                 break
     return n
+
+
+def exchange_symbol(symbol: str) -> str:
+    """ccxt unified perp symbol -> exchange-native id, e.g. BTC/USDT:USDT -> BTCUSDT."""
+    return symbol.split(":")[0].replace("/", "")
+
+
+def _tardis_rows(path: str | Path, symbols: dict[str, str], depth: int):
+    opener = gzip.open if str(path).endswith(".gz") else open
+    last = None
+    with opener(path, "rt", newline="") as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        col = {name: i for i, name in enumerate(header)}
+        ask_cols = [(col[f"asks[{k}].price"], col[f"asks[{k}].amount"]) for k in range(depth)]
+        bid_cols = [(col[f"bids[{k}].price"], col[f"bids[{k}].amount"]) for k in range(depth)]
+        ts_i, sym_i = col["timestamp"], col["symbol"]
+        for row in reader:
+            sym = symbols.get(row[sym_i])
+            if sym is None:
+                continue
+            bids = [(float(row[p]), float(row[a])) for p, a in bid_cols if row[p]]
+            asks = [(float(row[p]), float(row[a])) for p, a in ask_cols if row[p]]
+            if not bids or not asks or (bids, asks) == last:
+                continue  # skip one-sided books and updates that only changed deeper levels
+            last = (bids, asks)
+            yield OrderBook(sym, int(row[ts_i]) / 1e6, bids, asks)
+
+
+async def tardis_csv_feed(paths: list[str | Path], symbols: list[str], depth: int = 5) -> AsyncIterator[OrderBook]:
+    """Replay tardis.dev `book_snapshot_*` CSV(.gz) files, merged by exchange timestamp.
+
+    `symbols` are the config's ccxt symbols; rows for other symbols are ignored.
+    """
+    native = {exchange_symbol(s): s for s in symbols}
+    for book in heapq.merge(*(_tardis_rows(p, native, depth) for p in paths), key=lambda b: b.ts):
+        yield book
