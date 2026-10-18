@@ -22,6 +22,11 @@ on:
       question:
         type: string
         default: ''
+      hourly_count:
+        description: "Optional approved hourly question samples (0=disabled; 18/72/200)"
+        type: choice
+        default: '0'
+        options: ['0', '18', '72', '200']
 permissions:
   contents: read
 concurrency:
@@ -52,11 +57,21 @@ jobs:
             runs/v3-data-20261018T052500Z/dev-protocol.jsonl
             runs/corpus-v3-20261016T230644Z/dev-protocol.jsonl
             runs/20261016T171524Z/data/dev-protocol.json
+      - uses: actions/checkout@v4
+        if: inputs.hourly_count != '0'
+        with:
+          ref: fsa-question-bank
+          path: hourly-bank
+          persist-credentials: false
+          lfs: false
+          sparse-checkout: |
+            hourly
+          sparse-checkout-cone-mode: true
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Data integrity audit
-        run: python scripts/fsa_lab_action.py audit --root lab --out outputs --objective ${{ inputs.objective }}
+        run: python scripts/fsa_lab_action.py audit --root lab --out outputs --objective ${{ inputs.objective }} --hourly-count ${{ inputs.hourly_count }} --hourly-bank hourly-bank
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -91,6 +106,16 @@ jobs:
             runs/v3-data-20261018T052500Z/dev-protocol.jsonl
             runs/corpus-v3-20261016T230644Z/dev-protocol.jsonl
             runs/20261016T171524Z/data/dev-protocol.json
+      - uses: actions/checkout@v4
+        if: inputs.hourly_count != '0'
+        with:
+          ref: fsa-question-bank
+          path: hourly-bank
+          persist-credentials: false
+          lfs: false
+          sparse-checkout: |
+            hourly
+          sparse-checkout-cone-mode: true
       - name: GPU and Git LFS preflight
         shell: pwsh
         run: |
@@ -104,9 +129,13 @@ jobs:
           STEPS: ${{ inputs.steps }}
           ADAPTER: ${{ inputs.adapter }}
           QUESTION: ${{ inputs.question }}
+          HOURLY_COUNT: ${{ inputs.hourly_count }}
           TOKENIZERS_PARALLELISM: 'false'
         run: |
           $a = @('scripts/fsa_lab_action.py', $env:MODE, '--root', 'lab', '--out', 'outputs', '--objective', $env:OBJECTIVE, '--steps', $env:STEPS, '--adapter', $env:ADAPTER)
+          if ($env:MODE -eq 'train' -and $env:HOURLY_COUNT -ne '0') {
+            $a += @('--hourly-count', $env:HOURLY_COUNT, '--hourly-bank', 'hourly-bank')
+          }
           if ($env:MODE -eq 'ask') {
             if ([string]::IsNullOrWhiteSpace($env:QUESTION)) { throw 'Question is required' }
             $a += @('--question', $env:QUESTION)
