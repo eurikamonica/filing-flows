@@ -11,8 +11,8 @@ holders/{TICKER}.json joins the hub's data by ticker so a company page on the Sa
   (CUSIP → ticker from the price module's OpenFIGI cache)
 - officials: reviewed records (assets / transactions) whose verified ticker matches, US House PTRs read by machine and
   US Senate electronic PTRs
-- insiders (Form 4), stakes (Schedules 13D / 13G), form144 (notices of proposed sales) and short (FINRA short interest,
-  a year of settlement dates)
+- insiders (Form 4), stakes (Schedules 13D / 13G), form144 (notices of proposed sales), short (FINRA short interest,
+  a year of settlement dates), events8k (the latest 8-Ks, classified) and news (press releases, FDA, SEC actions)
 """
 import argparse
 import gzip
@@ -138,6 +138,23 @@ def holders_index():
                 'filed', 'seller', 'seller_name', 'relationship', 'shares', 'value', 'sale_date', 'acquired', 'plan_date', 'url') if r.get(k) not in (None, '')})
     except Exception as exc:
         print(f'::warning::holders index: 13D / 13G / Form 144 left out ({exc})')
+    # 8-K events (the latest 15 per company, 120 days) and news (press releases, FDA, SEC actions naming it)
+    try:
+        import events8k as EV
+        for t, rows in EV.by_ticker(DATA).items():
+            t = clean_ticker(t)
+            if t:
+                base(t)['events8k'] = rows
+    except Exception as exc:
+        print(f'::warning::holders index: 8-K events left out ({exc})')
+    try:
+        import news as NW
+        for t, rows in NW.by_ticker(DATA).items():
+            t = clean_ticker(t)
+            if t:
+                base(t)['news'] = rows
+    except Exception as exc:
+        print(f'::warning::holders index: news left out ({exc})')
     # FINRA short interest: each ticker's settlement dates (a year), for stocks already indexed or with a real position
     try:
         import shorts as SH
@@ -160,7 +177,8 @@ def holders_index():
         v['institutional'].sort(key=lambda x: -(x.get('value_usd') or 0))
         v['officials'].sort(key=lambda x: (x.get('date') or ''), reverse=True)
         v['counts'] = {'institutional': len(v['institutional']), 'officials': len(v['officials']), 'insiders': len(v.get('insiders', [])),
-                       'stakes': len(v.get('stakes', [])), 'form144': len(v.get('form144', [])), 'short': len(v.get('short', []))}
+                       'stakes': len(v.get('stakes', [])), 'form144': len(v.get('form144', [])), 'short': len(v.get('short', [])),
+                       'events8k': len(v.get('events8k', [])), 'news': len(v.get('news', []))}
     return out
 
 

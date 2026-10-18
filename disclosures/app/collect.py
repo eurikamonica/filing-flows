@@ -13,6 +13,8 @@ import insiders
 import ownership
 import shorts
 import senate
+import events8k
+import news
 import frames
 import options as option_chains
 
@@ -20,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser(description='Collect official public disclosures; demo never substitutes for real data')
-    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market','insiders','options','ownership','shorts','senate'],default='all')
+    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market','insiders','options','ownership','shorts','senate','events8k','news'],default='all')
     parser.add_argument('--config',type=Path,default=ROOT/'config/settings.json')
     parser.add_argument('--output',type=Path,default=ROOT/'docs/data')
     parser.add_argument('--storage',type=Path,default=ROOT/'storage')
@@ -94,8 +96,10 @@ def main():
             print('insiders: error — '+str(exc),flush=True)
     # 4.6: Schedules 13D / 13G and Form 144 (EDGAR feeds, then the daily indexes back `backfill_days`), FINRA short
     # interest (a new settlement date twice a month) and US Senate PTRs (eFD) — all with the light half-hourly runs
+    # 4.7: every 8-K (the feed, then the daily indexes) and the news wires / government releases (app/news.py)
     for key,mod,on in (('ownership',ownership,('all','insiders','ownership')),('shorts',shorts,('all','insiders','options','shorts')),
-                       ('senate',senate,('all','insiders','senate'))):
+                       ('senate',senate,('all','insiders','senate')),('events8k',events8k,('all','insiders','events8k')),
+                       ('news',news,('all','insiders','news'))):
         if args.only not in on or not cfg.get(key,{}).get('enabled',True):
             continue
         print('Collecting '+key,flush=True)
@@ -105,6 +109,8 @@ def main():
                 r['published']=ownership.publish(args.output,args.output/'market')
             elif key=='shorts':
                 r['published']=shorts.publish(args.output,args.output/'market',int(cfg.get('shorts',{}).get('min_short',500_000)))
+            elif key in ('events8k','news'):
+                r['published']=mod.publish(args.output,args.output/'market')
             print(key+': '+json.dumps(r),flush=True)
             data['modules'][key]={**r,'last_attempt':now()}
             write_json(args.output/f'{key}-status.json',data['modules'][key])

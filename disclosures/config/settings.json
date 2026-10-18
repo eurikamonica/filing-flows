@@ -59,7 +59,8 @@
       "www.ethicscanada.ca": 1.2,
       "form700search.fppc.ca.gov": 1.0,
       "efdsearch.senate.gov": 1.2,
-      "api.finra.org": 0.6
+      "api.finra.org": 0.6,
+      "www.sec.gov": 0.25
     }
   },
   "holdings": {
@@ -347,5 +348,18 @@
     "recent_days": 60,
     "max_pages": 6,
     "_note": "US Senate periodic transaction reports from eFD: the last `recent_days` searched every `min_interval_minutes`, one older month per run back to `since`; `batch` reports read per run."
+  },
+  "events8k": {
+    "batch": 300,
+    "feed_pages": 5,
+    "backfill_days": 30,
+    "index_days_per_run": 3,
+    "keep_days": 120,
+    "_note": "Every 8-K and 8-K/A: the newest from the EDGAR feed, then the daily indexes back `backfill_days`; `batch` filings read per run, kept `keep_days`."
+  },
+  "news": {
+    "keep_days": 60,
+    "fda_days": 10,
+    "_note": "PR Newswire RSS, openFDA approvals, FDA and SEC releases: headline, time and link only, kept `keep_days`."
   }
 }

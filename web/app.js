@@ -2059,7 +2059,7 @@
     if (!sym) return;
     const box = document.createElement('div');
     box.className = 'section holders';
-    box.innerHTML = `<div class="section-head"><h2>Holders</h2><span class="muted">Loading 13F positions and officials’ disclosures…</span></div>`;
+    box.innerHTML = `<div class="section-head"><h2>Holders and filings</h2><span class="muted">Loading 13F positions, filings and officials’ disclosures…</span></div>`;
     body.appendChild(box);
     let h = null;
     try {
@@ -2069,6 +2069,7 @@
     if (!here() || !box.isConnected) return;
     const inst = (h && h.institutional) || [], off = (h && h.officials) || [], ins = (h && h.insiders) || [];
     const stakes = (h && h.stakes) || [], f144 = (h && h.form144) || [], shortH = (h && h.short) || [];
+    const ev8 = (h && h.events8k) || [], news = (h && h.news) || [];
     const SHOW = 12;
     const mega = (v) => (v == null ? '—' : Math.abs(v) >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : whole(v));
     // short interest: one bar per settlement date (shares short), the latest date in words
@@ -2090,7 +2091,7 @@
         <td class="num ${x.status === 'INCREASE' || x.status === 'NEW' ? 'pos' : x.status === 'DECREASE' ? 'neg' : ''}">${t(x.status === 'BASE' ? 'first filing' : x.status.toLowerCase())}${
           x.delta_shares ? `<br><span class="muted">${sign(x.delta_shares)}${whole(Math.abs(x.delta_shares))}</span>` : ''}</td>
         <td>${x.source_url ? `<a href="${t(x.source_url)}" target="_blank" rel="noopener">13F ↗</a>` : '—'}</td></tr>`).join('');
-    box.innerHTML = `<div class="section-head"><h2>Holders</h2>
+    box.innerHTML = `<div class="section-head"><h2>Holders and filings</h2>
         <span class="muted">${inst.length} institutional position${inst.length === 1 ? '' : 's'} · ${ins.length} insider trade${ins.length === 1 ? '' : 's'} · ${stakes.length} 13D / 13G · ${f144.length} Form 144 · ${off.length} record${off.length === 1 ? '' : 's'} by public officials
         · from <a href="disclosures/">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}</span></div>
       ${h && (h.flows || h.signal) ? `<p class="holders-flow">${h.flows ? `<b>${t(h.flows.label || 'This quarter')}:</b> ${whole(h.flows.buyers)} managers added, ${whole(h.flows.sellers)} cut${h.flows.new ? ` (${whole(h.flows.new)} new positions)` : ''} · est. net ${h.flows.usd_net >= 0 ? '+' : '−'}${money(Math.abs(h.flows.usd_net))}` : ''}${
@@ -2110,6 +2111,19 @@
         </tbody></table></div>
         <p class="muted">Open-market purchases and sales (of $100K or more) by officers, directors and 10% owners, filed with the SEC within two business days of the trade. Grants, option exercises and tax withholding are left out.</p>`
         : `<p class="muted">No open-market insider purchase or larger sale on file for ${t(sym)} in the last four months.</p>`}
+      <h3>Recent 8-Ks</h3>
+      ${ev8.length ? `<div class="tbl-wrap"><table><thead><tr><th>Filed</th><th>What</th><th>Key sentence</th><th>Source</th></tr></thead><tbody>
+        ${ev8.slice(0, 8).map((x) => `<tr><td>${date(x.filed)}${x.accepted && x.accepted.length >= 16 ? `<br><span class="muted">${t(x.accepted.slice(11, 16))} ET</span>` : ''}</td>
+          <td>${t(x.label || '')}<br><span class="muted">Item${(x.items || []).length > 1 ? 's' : ''} ${t((x.items || []).join(', '))}${x.form === '8-K/A' ? ' · amended' : ''}</span></td>
+          <td class="wrap">${x.headline ? `<b>${t(x.headline.slice(0, 140))}</b><br>` : ''}<span class="muted">${t((x.quote || '').slice(0, 200))}${(x.quote || '').length > 200 ? '…' : ''}</span></td>
+          <td>${x.url ? `<a href="${t(x.url)}" target="_blank" rel="noopener">${t(x.form || '8-K')} ↗</a>` : '—'}</td></tr>`).join('')}
+        </tbody></table></div>
+        <p class="muted">Current reports filed with the SEC within four business days of a material event; what each one is about comes from its items and its own words.</p>`
+        : `<p class="muted">No 8-K from ${t(sym)} on file in the last four months.</p>`}
+      ${news.length ? `<h3>News</h3><div class="tbl-wrap"><table><thead><tr><th>Published</th><th>Source</th><th>Headline</th></tr></thead><tbody>
+        ${news.slice(0, 8).map((x) => `<tr><td>${date((x.published || '').slice(0, 10))}</td><td>${t(x.source || '')}</td>
+          <td class="wrap">${x.url ? `<a href="${t(x.url)}" target="_blank" rel="noopener">${t(x.title || '')}</a>` : t(x.title || '')}</td></tr>`).join('')}
+        </tbody></table></div><p class="muted">Headlines as the source published them (press-release wires, FDA, SEC) — open the link for the text.</p>` : ''}
       <h3>Holders above 5% (Schedules 13D / 13G)</h3>
       ${stakes.length ? `<div class="tbl-wrap"><table><thead><tr><th>Holder</th><th>Filing</th><th class="num">Stake</th><th class="num">Change</th><th>Filed</th><th>Source</th></tr></thead><tbody>
         ${stakes.slice(0, 12).map((x) => { const h = x.holder || x.filer || ''; return `<tr><td><b>${t(h)}</b>${

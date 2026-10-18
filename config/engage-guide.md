@@ -17,7 +17,9 @@ Formats are named in the task; follow the one you are given.
 - **reddit_list** — the three to five companies trending on investing subreddits right now, as cashtags, with their
   latest filing one-liner for the standout, then `Which one actually deserves the attention?`
 
-- **mover** — "what's happening": the company moving most today. Open with the move and the price, then one or two
+- **mover** — "what's happening": the company moving most today. The inputs may list what is known today (8-Ks,
+  releases, Form 4 / 144, 13D, short interest, options, the market, headlines): cite one or two, attributed and dated,
+  never as the cause — no "because", "due to", "on news of", "driven by". Open with the move and the price, then one or two
   facts from its latest filing as context, then ask what is driving it. Never state or hint at a cause.
   `$TICK −14% today at $52.30. Last quarter: revenue $4.1B, +22% Y/Y, operating margin down to 8%. What's behind the
   drop — 1) guidance 2) sector rotation 3) something else? 👇`
@@ -67,6 +69,11 @@ Formats are named in the task; follow the one you are given.
   price; "shares sold short" or "short interest", never "sell".
   `Short interest in $TICK: 311.4M shares as of Sep 30, +5.8% vs Sep 15 — 2.8 days to cover (FINRA). Rising bets or
   hedging? 1) bets 2) hedges 3) noise`
+
+- **news** — a headline from a press-release wire, the FDA or the SEC about one company. Say what was announced,
+  attributed to its source, in the headline's own terms — it is the source's claim, not a verified fact; an SEC action
+  states allegations unless it says the case was settled. No numbers beyond the headline.
+  `JUST IN: $TFC — Truist reports third quarter 2026 results (PR Newswire). What are you watching in the numbers?`
 
 - **calendar** — tomorrow's earnings: who reports and when (before the open / after the close), one fact from the
   biggest one's last quarter, then a which-one question.

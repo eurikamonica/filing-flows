@@ -233,8 +233,8 @@ def hub_examples(site, rows, by_ticker, known, market, limits=None):
     """Posts for one row of the hub's 13D / 13G, Form 144, Short interest and Officials' trades (House and Senate) tables,
     from the published files in `market` (disclosures/docs/data/market): the plan's rule-based post plus one or two other
     phrasings, each checked like a real post."""
-    lim = {"stake": 500, "form144": 400, "short": 300, "official": 600, **(limits or {})}
-    out = {"stake": [], "form144": [], "short": [], "official": []}
+    lim = {"stake": 500, "form144": 400, "short": 300, "official": 600, "event8k": 500, "news": 400, **(limits or {})}
+    out = {"stake": [], "form144": [], "short": [], "official": [], "event8k": [], "news": []}
     today = dt.date.today()
 
     def add(kind, key, p, phr, n, cik):
@@ -302,6 +302,34 @@ def hub_examples(site, rows, by_ticker, known, market, limits=None):
                f"{sh} shares of ${tk} sold short as of {engage._day(day)}, {r['change_pct']:+.1f}% vs {engage._day(prev)} (FINRA). "
                "What changed?"]
         add("short", key, p, phr, 2, (e or {}).get("cik"))
+
+    ev = _hub(os.path.join(market, "events8k.json"))
+    for r in ev.get("rows", []):
+        tk = (r.get("ticker") or "").upper().replace("-", ".")
+        key = f"8k:{r.get('accession')}"
+        if len(out["event8k"]) >= lim["event8k"] or not tk or not r.get("quote") or (r.get("score") or 0) < 3 or _h("event8k", key) in known:
+            continue
+        e, cj, fq = _company(site, rows, by_ticker, r.get("cik"), tk)
+        p = engage.event_row_plan(r, e, cj, fq, dt.date.fromisoformat(r["filed"]) + dt.timedelta(days=int(_h(key), 16) % 4))
+        if not p:
+            continue
+        head = p["fallback"].split(":", 1)[0] if p["fallback"].startswith(("BREAKING", "JUST")) else ""
+        what = p["event"]["label"]
+        phr = [f"{head + ': ' if head else ''}${tk} filed an 8-K on {engage._day(r['filed'])} — {what}. "
+               + (f"The press release: “{r['headline'][:110]}”. " if r.get("headline") and len(r["headline"]) <= 110 else "")
+               + "How do you read it?"]
+        add("event8k", key, p, phr, 2, (e or {}).get("cik") or int(r.get("cik") or 0) or None)
+
+    nw = _hub(os.path.join(market, "news.json"))
+    for r in nw.get("rows", []):
+        tks = [t.upper().replace("-", ".") for t in r.get("tickers") or []]
+        key = f"news:{r.get('id')}"
+        if len(out["news"]) >= lim["news"] or not tks or not r.get("title") or _h("news", key) in known:
+            continue
+        e, cj, fq = _company(site, rows, by_ticker, None, tks[0])
+        p = engage.news_plan(r, tks[0], e, cj, fq, dt.date.fromisoformat(r["published"][:10]) + dt.timedelta(days=int(_h(key), 16) % 3))
+        phr = [f"${tks[0]} on {r.get('source')}: “{r['title'][:160]}”. What do you make of it?"]
+        add("news", key, p, phr, 2, (e or {}).get("cik"))
 
     off = _hub(os.path.join(market, "officials-trades.json"))
     for t in off.get("trades", []):
@@ -373,7 +401,7 @@ def main():
     ap.add_argument("--insider-trades", default="disclosures/docs/data/cache/insiders/trades.json.gz",
                     help="the collector's Form 4 trade file: every purchase and sale of the last ~120 days")
     ap.add_argument("--market", default="disclosures/docs/data/market",
-                    help="the hub's published tables (13D / 13G, Form 144, short interest, officials' trades)")
+                    help="the hub's published tables (8-K events, news, 13D / 13G, Form 144, short interest, officials' trades)")
     ap.add_argument("--known", default="", help="source keys already in the corpus (one per line)")
     ap.add_argument("--out", default="new.jsonl")
     ap.add_argument("--holders", type=int, default=2000, help="companies with 13F holders read this run (one request each)")

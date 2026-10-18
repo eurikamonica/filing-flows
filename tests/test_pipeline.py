@@ -2282,13 +2282,88 @@ def test_new_hub_tables_post_one_row_at_a_time(tmp_path):
     assert sql.count("'post_official', 'post_stake', 'post_f144', 'post_short'") == 5
 
     ex = corpus.hub_examples(s, rows, by, set(), str(mk))
-    assert {k: len(v) > 0 for k, v in ex.items()} == {"stake": True, "form144": True, "short": True, "official": True}
+    assert {k: len(v) > 0 for k, v in ex.items()} == {"stake": True, "form144": True, "short": True, "official": True,
+                                                       "event8k": False, "news": False}       # no 8-K events / news file here
     for kind, xs in ex.items():
         for e in xs:
             assert e["kind"] == kind and e["check"] == "engage" and not engage.tweet.ADVICE.search(e["target"].split("#")[0])
     assert all("sold" not in e["target"] for e in ex["form144"])
     again = corpus.hub_examples(s, rows, by, {e["src"] for xs in ex.values() for e in xs}, str(mk))
     assert sum(len(v) for v in again.values()) == 0                               # rows already in the corpus are skipped
+
+
+def test_8k_news_and_mover_context(tmp_path, monkeypatch):
+    """Owner: ✦ X on a row of the hub's 8-K events (post_8k — a company without charts is written from the row alone) and
+    News tables; movers get "what is known today" (8-Ks, releases, Form 4 / 144, 13D, short interest, options, the market)
+    and may never give a cause."""
+    import datetime as dt
+    from pipeline import engage, notify, social, context, corpus
+    site = _site(tmp_path)
+    mk = site / "disclosures" / "data" / "market"
+    mk.mkdir(parents=True)
+    ev = {"accession": "0000000000-26-000001", "url": "https://www.sec.gov/Archives/edgar/data/999999/000000000026000001/", "form": "8-K",
+          "filed": "2026-10-16", "accepted": "2026-10-16T16:15", "cik": "999999", "company": "EXAMPLE DEVICES INC", "items": ["2.02", "1.01", "9.01"],
+          "code": "1.01", "topics": ["guidance", "deal", "earnings"], "guidance": "raised", "ticker": "EXDV", "label": "guidance raised",
+          "guidance_quote": "The Company raises its full-year 2026 revenue guidance to $3.10 billion to $3.15 billion.",
+          "headline": "Example Devices Reports Record Third Quarter Results and Raises Full-Year Outlook",
+          "quote": "On October 15, 2026, Example Devices Inc. entered into an Agreement and Plan of Merger with Widget Corp. for $41.00 per share in cash.",
+          "quote_src": "Item 1.01", "score": 8}
+    aapl = {**ev, "accession": "0000320193-26-000200", "cik": "320193", "company": "Apple Inc.", "ticker": "AAPL", "topics": ["ceo"], "guidance": None,
+            "guidance_quote": "", "headline": "", "label": "a CEO change", "code": "5.02", "items": ["5.02"], "score": 7,
+            "quote": "On October 15, 2026, the Board appointed Jane Roe as Chief Executive Officer, effective November 1, 2026."}
+    (mk / "events8k.json").write_text(json.dumps({"rows": [ev, aapl]}))
+    item = {"id": "abc123", "source": "PR Newswire", "kind": "release", "title": "Apple announces a new $110 billion share repurchase program",
+            "url": "https://www.prnewswire.com/news-releases/x.html", "published": "2026-10-16T20:05", "company": "Apple Inc.", "tickers": ["AAPL"], "match": "exchange tag"}
+    (mk / "news.json").write_text(json.dumps({"rows": [item]}))
+    (mk / "insiders.json").write_text(json.dumps({"latest": [{"ticker": "AAPL", "insider": "DOE JANE", "role": "CFO", "title": "Chief Financial Officer",
+                                                               "code": "S", "date": "2026-10-14", "shares": 40000, "value": 10020000}], "summary": []}))
+    (mk / "short-interest.json").write_text(json.dumps({"settlement_date": "2026-09-30", "previous_date": "2026-09-15",
+                                                        "rows": [{"ticker": "AAPL", "short": 120763539, "change_pct": -6.21, "dtc": 3.03}]}))
+    (mk / "options.json").write_text(json.dumps({"rows": [{"ticker": "AAPL", "iv30": 28.4, "iv30_chg": 3.1, "iv30_pct": 0.91}]}))
+    s = notify.Site(str(site))
+    rows = s.json("index.json")["companies"]
+    by = {r["ticker"].upper(): r for r in rows if r.get("ticker")}
+    today = dt.date(2026, 10, 17)
+
+    p = engage.plan_filing8k(s, rows, {"cik": 999999, "ref": "0000000000-26-000001"}, today)       # not on the site: from the hub row
+    assert p["kind"] == "event8k" and p["cashtags"] == ["EXDV"] and p["items"] == [] and "No chart is attached" in p["task"]
+    assert "Items 2.02, 1.01 — guidance raised" in p["task"] and "raises its full-year 2026 revenue guidance" in p["task"]
+    assert p["tags"][:2] == ["#8K", "#guidance"]
+    post = engage.clean(p["fallback"], p["cashtags"], p["tags"])
+    assert post.startswith("BREAKING: $EXDV 8-K filed Oct 16 — guidance raised: “The Company raises its full-year 2026 revenue guidance")
+    assert engage.plan_filing8k(s, rows, {"cik": 999999, "ref": "0000000000-26-000009"}, today) is None
+
+    n = engage.plan_news_for(s, rows, by, {"ref": json.dumps(["abc123"])}, today)
+    assert n["kind"] == "news" and n["cashtags"] == ["AAPL"] and n["items"] and n["tags"][0] == "#PressRelease"
+    assert "the headline is the source's claim" in n["task"]
+    assert engage.clean(n["fallback"], n["cashtags"], n["tags"]).startswith("JUST IN: Press release: $AAPL — “Apple announces a new $110 billion")
+    assert social.strip_links([n["source_reply"]]) == ["Source: PR Newswire, 2026-10-16 20:05 UTC. A headline, not investment advice."]
+
+    monkeypatch.setattr(context.Q, "yahoo_one", lambda t: {"chg_pct": 0.4 if t == "SPY" else 1.2, "asof": "2026-10-16"})
+    text, facts = context.known(lambda name: json.loads((mk / name).read_text()) if (mk / name).exists() else {},
+                                {**by["AAPL"], "sector": "technology"}, day=dt.date(2026, 10, 16), quote={"asof": "2026-10-16"}, with_headlines=False)
+    assert "WHAT IS KNOWN ABOUT $AAPL" in text and "(a CEO change)" in text and "PR Newswire" in text
+    assert "Form 4: Doe Jane (Chief Financial Officer) sold 40,000 shares ($10.0M) on 2026-10-14" in text
+    assert "Short interest 2026-09-30: 120.8M shares, -6.2% vs 2026-09-15, 3.03 days to cover" in text
+    assert "30-day implied volatility 28.4%, +3.1 pts on the day, 91st percentile" in text
+    assert "SPY +0.4%, XLK +1.2%" in text and "Never say or imply that any of them caused the move" in text
+    assert "a CEO change" not in context.known(lambda name: json.loads((mk / name).read_text()) if (mk / name).exists() else {},
+                                               by["AAPL"], day=dt.date(2026, 10, 16), with_headlines=False, skip_8k=True)[0]
+    forbid = (context.CAUSAL.pattern, "no cause")
+    for bad in ("$AAPL +3.1% today because of the buyback", "$AAPL rallies on news of a new CEO", "$AAPL up, driven by the buyback"):
+        try:
+            engage.clean(bad + ". How do you read it?", ["AAPL"], [], forbid=forbid)
+            assert False, bad
+        except ValueError as why:
+            assert "no cause" in str(why)
+    assert engage.clean("$AAPL +3.1% today after an 8-K naming a new CEO. How do you read it?", ["AAPL"], [], forbid=forbid)
+
+    from pipeline import notify as N
+    assert "post_news" in N.FILING_KINDS and N.FILING_PLANS["post_news"] == "news_for"
+    sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
+    assert sql.count("'post_short', 'post_news'") == 5
+    ex = corpus.hub_examples(s, rows, by, set(), str(mk))
+    assert len(ex["event8k"]) >= 2 and len(ex["news"]) >= 1
 
 
 def test_posts_are_never_cut_off_and_say_something():

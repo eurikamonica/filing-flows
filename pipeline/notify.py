@@ -1171,9 +1171,10 @@ ENGAGE_KINDS = ("engage_question", "engage_list", "engage_reddit_question", "eng
                 "engage_peers", "engage_insider", "engage_event8k", "engage_ivmove", "engage_opt13f", "engage_rsleaders")   # Owner tools: write that post now
 FILING_KINDS = ("post_8k", "post_13f",       # owner: a post about one chosen 8-K (cik = company) or 13F (cik = the manager)
                 "post_insider", "post_official",   # ... or one row of the hub's Insider trades / Officials' trades (ref = its key)
-                "post_stake", "post_f144", "post_short")   # ... 13D / 13G, Form 144 and Short interest tables
+                "post_stake", "post_f144", "post_short",   # ... 13D / 13G, Form 144 and Short interest tables
+                "post_news")                               # ... the News table (press releases, FDA, SEC actions)
 FILING_PLANS = {"post_8k": "filing8k", "post_13f": "fund13f_for", "post_insider": "insider_for", "post_official": "official_for",
-                "post_stake": "stake_for", "post_f144": "f144_for", "post_short": "short_for"}
+                "post_stake": "stake_for", "post_f144": "f144_for", "post_short": "short_for", "post_news": "news_for"}
 POST_KINDS = ("post", "post_holders", "post_gif") + ENGAGE_KINDS + FILING_KINDS   # the owner's X requests: their own workflow (post-to-x.yml)
 
 

@@ -31,6 +31,22 @@ system (same header, type, colours, dark mode and theme preference), with links 
   beats the analogues and is significant on the broad weekly test (`notes/gravity-pendulum/`); on the site's ~220 companies
   its edge is not yet distinguishable from zero, so prices are shown as calibrated ranges.
 
+## 4.7 — every 8-K, news, and what is known when a stock moves
+
+| Tab | Source | How it is collected |
+|---|---|---|
+| **8-K events** | SEC EDGAR 8-K and 8-K/A | `app/events8k.py`: the current-filings feed every half hour, then the daily form indexes back `events8k.backfill_days` (30); each submission read once (8-K and exhibits in one file). Items from the header, topics from the items and the filing's words (deal, CEO / CFO change, restatement, cyber incident, delisting, bankruptcy, buyback, dividend, offering, debt, restructuring, impairment, auditor, FDA, contract, earnings), guidance raised / lowered / withdrawn / reaffirmed from the press release, the release's title and the key sentences. One file per filing day (`cache/events8k/`) |
+| **News** | PR Newswire RSS (7 feeds), openFDA (new NDA / BLA approvals), FDA press releases, SEC press releases, litigation releases, administrative proceedings, trading suspensions | `app/news.py`: headline, time and link only (no body text); tickers from the release's exchange tag when its issuer matches the listed company, else an exact company-name match; law-firm class-action notices and non-English releases left out. War.gov contract pages and GlobeNewswire refuse GitHub's runners (403), so they are not collected |
+
+Rows have the owner's ✦ X (8-K: `post_8k` with the accession — a company without charts is written from the row alone;
+News: `post_news` — re-run `supabase/schema.sql`), feed the local model's training (`pipeline/corpus.py`) and the company
+pages (`events8k`, `news`). The movers' posts (`pipeline/context.py`) now get a block of what is known about the company
+that day — its 8-Ks and releases, 13D / 13G, Form 4 / 144, officials' trades, short interest, options IV, SPY and its
+sector ETF, and headlines (GDELT, best effort: it rate-limits shared runners; Yahoo Finance's headline feed) — with the
+rule that none of it may be given as the cause (the post is rejected if it says "because", "due to", "on news of" …).
+Gzipped caches are written byte-identical when unchanged and split by day or month (`core.Shards`), so the data commits
+carry only what changed.
+
 ## 4.6 — 13D / 13G, Form 144, short interest and the US Senate
 
 | Tab | Source | How it is collected |

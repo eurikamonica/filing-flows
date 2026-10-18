@@ -30,6 +30,9 @@ KINDS = {
     "stake_passive": ["#13G", "#ownership", "#SEC"],                       # Schedule 13G (passive holders)
     "form144": ["#Form144", "#insiders", "#SEC"],                          # notices of planned sales by affiliates
     "short": ["#ShortInterest", "#FINRA", "#shorts"],                      # FINRA short interest
+    "news": ["#PressRelease", "#news"],                                    # a wire press release (hub News table)
+    "fda": ["#FDA", "#biotech", "#pharma"],                                # FDA approvals
+    "sec_action": ["#SEC", "#enforcement"],                                # SEC charges, settlements, trading suspensions
     "officials": ["#PoliticianTrades", "#disclosures"],                     # other jurisdictions' officials
     "8k": ["#8K", "#SEC"],
     "movers": ["#StockMovers", "#trading"],

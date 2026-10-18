@@ -36,7 +36,7 @@ import re
 import sys
 import time
 
-from . import events, hashtags as H, notify, quotes as Q, reddit, sec, social, tweet
+from . import context as CTX, events, hashtags as H, notify, quotes as Q, reddit, sec, social, tweet
 
 CFG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "engage.json")
 GUIDE = os.path.join(os.path.dirname(CFG), "engage-guide.md")
@@ -103,11 +103,14 @@ def one_liner(e):
 
 
 # ------------------------------------------------------------------ writing
-def clean(post, cashtags, tags, limit=255, allowed=None, must=None):
-    """must: (regex, what to say) — something the reader needs to understand the numbers, e.g. that 6→97 is an RS rating."""
+def clean(post, cashtags, tags, limit=255, allowed=None, must=None, forbid=None):
+    """must: (regex, what to say) — something the reader needs to understand the numbers, e.g. that 6→97 is an RS rating;
+    forbid: (regex, why) — wording the post may not use, e.g. a cause for a price move."""
     post = re.sub(r"\s*\n+\s*", " ", post.strip().strip('"“”')).strip()
     if must and not re.search(must[0], re.sub(r"#\w+", "", post), re.I):
         raise ValueError(must[1])
+    if forbid and re.search(forbid[0], re.sub(r"#\w+", "", post), re.I):
+        raise ValueError(forbid[1])
     if tweet.cut_off(post):
         raise ValueError("the post stops mid-sentence; finish the last sentence")
     missing = [t for t in cashtags if f"${t.upper()}" not in post.upper()]
@@ -136,7 +139,7 @@ def messages(kind, task, cashtags, tags, allowed=None):
              + "\nHashtags to end with, in this order: " + " ".join(tags) + "\n\nWrite the post now."}]
 
 
-def write(kind, task, cashtags, tags, polish=True, allowed=None, must=None):
+def write(kind, task, cashtags, tags, polish=True, allowed=None, must=None, forbid=None):
     msgs = messages(kind, task, cashtags, tags, allowed)
     draft = tweet.chat(msgs)
     if polish:
@@ -145,11 +148,11 @@ def write(kind, task, cashtags, tags, polish=True, allowed=None, must=None):
                                              "opening; cut filler; under 250 characters. Output only the polished post."}]
         draft = tweet.chat(msgs)
     try:
-        return clean(draft, cashtags, tags, allowed=allowed, must=must)
+        return clean(draft, cashtags, tags, allowed=allowed, must=must, forbid=forbid)
     except ValueError as why:
         msgs += [{"role": "assistant", "content": draft},
                  {"role": "user", "content": f"Rewrite: {why}. Under 240 characters, every required cashtag present, ending with the hashtags."}]
-        return clean(tweet.chat(msgs), cashtags, tags, allowed=allowed, must=must)
+        return clean(tweet.chat(msgs), cashtags, tags, allowed=allowed, must=must, forbid=forbid)
 
 
 # ------------------------------------------------------------------ the kinds
@@ -352,7 +355,14 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
                 ask = "Start the post with “BREAKING:” (a material 8-K filed today). " + ask
         else:
             news, ask = "", "The cause of this move is NOT in these inputs: do not guess or imply one; ask the audience."
-        task = (f"PRICE MOVE (delayed quote, {stamp}): {quote_line(e['ticker'], q, e)}.{news}\n\n"
+        # what else is known today (the hub's 8-Ks, releases, 13D / Form 4 / 144, short interest, options, the market,
+        # headlines): context the post may cite, never a cause (pipeline/context.py)
+        try:
+            known, _facts = CTX.known(lambda n: hub_json(site, n), e, quote=q, skip_8k=bool(ev))
+        except Exception as err:
+            known = ""
+            print(f"::warning::mover context not built ({str(err)[:120]})")
+        task = (f"PRICE MOVE (delayed quote, {stamp}): {quote_line(e['ticker'], q, e)}.{news}{known}\n\n"
                 f"Latest filing figures (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, e['ticker'])}{chatter}\n\n{ask}")
         items = [(e, cj, fq)]
         cashtags = [e["ticker"]]
@@ -386,7 +396,8 @@ def plan_mover(kind, site, rows, c, live, state_ok, trends=None):
             if social.xlen(fb) > 235:
                 fb = f"{lead} ${e['ticker']}? {q['chg_pct']:+.1f}% {day} at ${q['price']:,.2f}{filed}"
         return {"kind": kind, "task": task, "cashtags": cashtags, "items": items, "mover": e["ticker"],
-                "event": ev if kind != "peers" else None, "fallback": fb}
+                "event": ev if kind != "peers" else None, "fallback": fb,
+                "forbid": (CTX.CAUSAL.pattern, "do not give a cause for the move (no “because”, “due to”, “on news of”, “driven by”)")}
     return None
 
 
@@ -628,8 +639,18 @@ def plan_calendar(site, rows, c, by_ticker, today):
 
 
 # ------------------------------------------------------------------ insider purchases (Form 4)
+_HUB = {}
+
+
 def hub_json(site, name):
-    """A file of the Disclosures hub's market data, from the published site or the built folder."""
+    """A file of the Disclosures hub's market data, from the published site or the built folder (read once per run)."""
+    key = (site.src, name)
+    if key not in _HUB:
+        _HUB[key] = _hub_json(site, name)
+    return _HUB[key]
+
+
+def _hub_json(site, name):
     import requests
     if site.remote:
         r = requests.get(site.src.rstrip("/") + "/disclosures/data/market/" + name, timeout=60)
@@ -1018,12 +1039,66 @@ def plan_short_for(site, rows, by_ticker, target, today):
     return short_plan(r, day, d.get("previous_date"), e if fq else None, cj, fq)
 
 
+NEWS_LEAD = {"release": "Press release", "fda": "FDA", "sec_action": "SEC action", "suspension": "SEC trading suspension",
+             "sec_release": "SEC"}
+
+
+def news_plan(r, tk, e, cj, fq, today):
+    """The post for one row of the hub's News table (app/news.py): the headline as the source published it, attributed."""
+    kind, src = r.get("kind") or "release", r.get("source") or "the source"
+    when = (r.get("published") or "").replace("T", " ")
+    fresh = (r.get("published") or "") >= (today - dt.timedelta(days=1)).isoformat()
+    who = social.display_name(r.get("company") or "") or f"${tk}"
+    title = (r.get("title") or "").strip()
+    what = {"release": f"a press release {who} published on {src}", "fda": f"an FDA record ({src})",
+            "sec_action": "an SEC enforcement release", "suspension": "an SEC trading-suspension order",
+            "sec_release": "an SEC press release"}.get(kind, f"a release on {src}")
+    task = (f"NEWS, {what}, {when} UTC, about ${tk}: “{title}”."
+            + " Say what was announced, attributed to its source, in the headline's own terms: the headline is the source's claim, "
+              "not a verified fact, and it is the only fact you may use about it; no numbers that are not in it."
+            + (" Start with “JUST IN:”." if fresh else "")
+            + (" An SEC action states allegations unless it says the case was settled or decided: say “alleges” / “charged”, "
+               "never that wrongdoing was proven." if kind in ("sec_action", "sec_release") else "")
+            + (f"\n\nLatest filing figures of the company (context, at most one):\n{tweet.headline_lines(cj, fq, tk)}" if fq
+               else "\n\nNo other figures. No chart is attached; do not mention one.")
+            + "\n\nEnd with one short question to the audience.")
+    lead = ("JUST IN: " if fresh else "") + NEWS_LEAD.get(kind, "News")
+    fb = f"{lead}: ${tk} — “{title[:170]}{'…' if len(title) > 170 else ''}” ({src}). How do you read it?"
+    reply = f"Source: {src}, {when} UTC. A headline, not investment advice. {r.get('url') or ''}".strip()
+    tagkind = {"fda": "fda", "sec_action": "sec_action", "suspension": "sec_action", "sec_release": "sec_action"}.get(kind, "news")
+    return {"kind": "news", "task": task, "cashtags": [tk], "items": [(e, cj, fq)] if fq else [], "source_reply": reply,
+            "fallback": fb, "manual": True, "tags": H.pick(tagkind, e, key=f"news:{r.get('id')}")}
+
+
+def plan_news_for(site, rows, by_ticker, target, today):
+    """Owner: a post about one row of the hub's News table (ref: [id])."""
+    try:
+        nid = (_ref(target) + [None])[0]
+        d = hub_json(site, "news.json")
+    except Exception as err:
+        print(f"news_for: {str(err)[:200]}")
+        return None
+    r = next((r for r in d.get("rows", []) if r.get("id") == nid), None)
+    if not r or not r.get("tickers"):
+        print(f"news_for: the item {nid} is not in the hub's news.json (or names no listed company)")
+        return None
+    tk = r["tickers"][0].upper().replace("-", ".")
+    e = site_company(rows, by_ticker, None, tk)
+    cj, fq = figures(site, e) if e else (None, None)
+    return news_plan(r, tk, e if fq else None, cj, fq, today)
+
+
 # ------------------------------------------------------------------ 8-K events (current reports)
 # hashtags per post kind: now picked from pools by pipeline/hashtags.py (kept for reference and older callers)
 TAGS = {"event8k": ["#8K", "#SEC", "#stocks", "#investing"],
         "fund13f": ["#13F", "#hedgefunds", "#smartmoney", "#stocks", "#investing"],
         "insider": ["#insiders", "#Form4", "#stocks", "#investing"]}
-TOPIC_TAG = {"a merger or acquisition": "#MergersAndAcquisitions", "a CEO change": "#leadership", "1.01": "#deal", "1.03": "#bankruptcy",
+TOPIC_TAG = {"guidance raised": "#guidance", "guidance lowered": "#guidance", "guidance withdrawn": "#guidance",
+             "a share buyback": "#buybacks", "a share offering (dilution)": "#dilution", "an FDA decision": "#FDA",
+             "a restatement": "#restatement", "a delisting notice": "#delisting", "a cybersecurity incident": "#cybersecurity",
+             "layoffs or restructuring": "#layoffs", "a contract award": "#contracts", "a dividend change": "#dividends",
+             "bankruptcy": "#bankruptcy", "a CFO change": "#leadership", "an impairment": "#impairment",
+             "a merger or acquisition": "#MergersAndAcquisitions", "a CEO change": "#leadership", "1.01": "#deal", "1.03": "#bankruptcy",
              "4.02": "#restatement", "5.02": "#leadership", "2.01": "#MergersAndAcquisitions", "2.02": "#earnings", "1.05": "#cybersecurity",
              "3.01": "#delisting", "2.05": "#restructuring", "2.06": "#impairment"}
 
@@ -1034,7 +1109,7 @@ def event_tags(code, label, profile=None, key=""):
 
 
 KIND_TAGS = {"event8k": "8k", "fund13f": "13f", "fund13f_for": "13f", "insider": "insider", "movers": "movers", "official": "congress",
-             "stake": "stake", "form144": "form144", "short": "short"}
+             "stake": "stake", "form144": "form144", "short": "short", "news": "news"}
 
 
 ABBR = re.compile(r"\b(?:Inc|Ltd|Corp|Co|LLC|L\.P|LP|No|Nos|U\.S|Mr|Ms|Dr|St|Jr|S\.A|N\.V|plc)\.$")
@@ -1128,7 +1203,7 @@ def event_plan(site, e, sub, require_deal=True, fresh=True):
     """The post for one 8-K of company e (sub: accn, form, filed, accepted, items[, primary]), or None."""
     if not sub.get("primary"):
         try:
-            idx = sec.get_json(sec.filing_index_url(e["cik"], f["accn"]))
+            idx = sec.get_json(sec.filing_index_url(e["cik"], sub["accn"]))
             names = [i["name"] for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)]
             sub["primary"] = next((n for n in names if not re.search(r"(?i)ex[-_]?\d", n)), names[0] if names else "")
         except (Exception, SystemExit) as err:
@@ -1168,17 +1243,68 @@ def event_plan(site, e, sub, require_deal=True, fresh=True):
                 "thread": quote_replies(ev["quote"])}
 
 
+def event_row_plan(r, e, cj, fq, today):
+    """The post for one row of the hub's 8-K events table (app/events8k.py), written from the row alone (no SEC request):
+    what the 8-K reports and its key sentences. e is the company's site row (with its figures) or None (text only)."""
+    tk = (r.get("ticker") or (e or {}).get("ticker") or "").upper().replace("-", ".")
+    if not tk:
+        return None
+    name = social.display_name(r.get("company") or (e or {}).get("name") or "")
+    filed = r.get("filed") or ""
+    when = filed + (f" {r['accepted'][11:16]} ET" if len(r.get("accepted") or "") >= 16 else "")
+    fresh = filed >= (today - dt.timedelta(days=2)).isoformat()
+    breaking = fresh and (r.get("score") or 0) >= 7
+    g = r.get("guidance") if r.get("guidance") in ("raised", "lowered", "withdrawn", "reaffirmed", "mixed") else None
+    label = f"guidance {g}" if g and (r.get("topics") or [""])[0] == "guidance" else (r.get("label") or events.ITEMS.get(r.get("code") or "", "a current report"))
+    quote = r.get("guidance_quote") if g in ("raised", "lowered", "withdrawn") and r.get("guidance_quote") else r.get("quote") or ""
+    try:
+        d = dt.date.fromisoformat(filed)
+        filed_txt = f"{d:%b} {d.day}"
+    except ValueError:
+        filed_txt = filed
+    items = ", ".join(x for x in r.get("items") or [] if x != "9.01") or "9.01"
+    figs = (f"\n\nLatest filing figures (context, at most one):\n{tweet.headline_lines(cj, fq, tk)}" if fq
+            else "\n\nNo other figures: use only the words above. No chart is attached; do not mention one.")
+    task = (f"8-K CURRENT REPORT filed {when} by ${tk} ({name}): Items {items} — {label}."
+            + (f"\nThe press release's title: “{r['headline']}”" if r.get("headline") else "")
+            + f"\nWhat the filing says (quote; the only facts you may use about the event):\n“{quote or '(text not read; name the item only)'}”"
+            + figs + "\n\n"
+            + ("Start the post with “BREAKING:” — a material event filed in the last two days. " if breaking
+               else "Start with “JUST FILED:”. " if fresh else f"Start with “8-K ({filed_txt}):” — it was filed on {filed_txt}, not today. ")
+            + "Then say concretely what happened, using the quote: who did what with whom, the amounts and dates it gives, and the "
+              "filing date. No facts beyond the quote; finish every sentence; never predict the stock's reaction; end with one short "
+              "question to the audience.")
+    lead = "BREAKING: " if breaking else "JUST FILED: " if fresh else ""
+    head = f"{lead}${tk} 8-K filed {filed_txt} — {label}"
+    tags = event_tags(r.get("code") or "", label, e, r.get("accession") or "")
+    room = 255 - sum(len(t) + 1 for t in tags) - social.xlen(head) - len(": “” How do you read it?") - 2
+    short = first_sentence(quote, limit=max(0, room))
+    fb = f"{head}: “{short}{'' if short.endswith('…') else '.'}” How do you read it?" if len(short) >= 40 else f"{head}. How do you read it?"
+    ev = {"code": r.get("code") or "", "label": label, "filed": filed, "url": r.get("url") or ""}
+    return {"kind": "event8k", "task": task, "cashtags": [tk], "items": [(e, cj, fq)] if fq else [], "event": ev,
+            "event_key": f"event8k:{r.get('accession')}", "fallback": fb, "tags": tags, "thread": quote_replies(quote), "manual": True}
+
+
 def plan_filing8k(site, rows, target, today):
     """Owner tools: a post about one company's 8-K — the accession given (target['ref']), or else its most material 8-K of
-    the last 45 days (earnings releases included)."""
+    the last 45 days (earnings releases included). A company without charts on the site is written from the hub's 8-K
+    events row (text only)."""
     cik = int(target["cik"])
-    e = next((r for r in rows if r.get("cik") == cik and r.get("ticker")), None)
-    if not e:
-        print(f"filing8k: CIK {cik} is not on the site")
-        return None
     want = re.sub(r"[^0-9-]", "", str(target.get("ref") or ""))
     if want and "-" not in want and len(want) == 18:
         want = f"{want[:10]}-{want[10:12]}-{want[12:]}"
+    e = next((r for r in rows if r.get("cik") == cik and r.get("ticker")), None)
+    if not e:
+        try:
+            hub = hub_json(site, "events8k.json")
+        except Exception as err:
+            hub = {}
+            print(f"filing8k: the hub's 8-K events not read ({str(err)[:100]})")
+        r = next((r for r in hub.get("rows", []) if want and r.get("accession") == want), None)
+        if r:
+            return event_row_plan(r, None, None, None, today)
+        print(f"filing8k: CIK {cik} is not on the site" + (f" and {want} is not in the hub's 8-K events" if want else ""))
+        return None
     try:
         fs = events.recent_8ks(cik, (today - dt.timedelta(days=400 if want else 45)).isoformat())
     except (Exception, SystemExit) as err:
@@ -1389,7 +1515,8 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
              "official_for": lambda: plan_official_for(site, rows, by_ticker, target or {}, today),
              "stake_for": lambda: plan_stake_for(site, rows, by_ticker, target or {}, today),
              "f144_for": lambda: plan_f144_for(site, rows, by_ticker, target or {}, today),
-             "short_for": lambda: plan_short_for(site, rows, by_ticker, target or {}, today)}.get(kind, lambda: None)()
+             "short_for": lambda: plan_short_for(site, rows, by_ticker, target or {}, today),
+             "news_for": lambda: plan_news_for(site, rows, by_ticker, target or {}, today)}.get(kind, lambda: None)()
         if p:
             plans.append(p)
         else:
@@ -1404,12 +1531,13 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
         e0 = p["items"][0][0] if p.get("items") else None
         tags = p.get("tags") or H.pick(KIND_TAGS.get(p["kind"], "earnings"), e0, key=f"{p['kind']}:" + ",".join(p["cashtags"]))
         try:
-            post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True), allowed=p.get("allowed"), must=p.get("must"))
+            post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True), allowed=p.get("allowed"), must=p.get("must"),
+                         forbid=p.get("forbid"))
         except Exception as err:
             post = None
             if p.get("fallback"):                  # the model is down: a plain rule-based post with the same facts
                 try:
-                    post = clean(p["fallback"], p["cashtags"], tags, allowed=p.get("allowed"), must=p.get("must"))
+                    post = clean(p["fallback"], p["cashtags"], tags, allowed=p.get("allowed"), must=p.get("must"), forbid=p.get("forbid"))
                     print(f"::warning::{p['kind']}: model unavailable, rule-based post used ({str(err)[:160]})")
                 except ValueError as why:
                     print(f"::warning::{p['kind']}: rule-based post not usable ({why})")
