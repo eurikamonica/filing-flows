@@ -1,0 +1,28 @@
+# TEMPORARY (removed before merge): fetch the FRED series once on this branch and keep them as an artifact.
+name: Macro probe
+on:
+  push:
+    branches: [feature/macro-2010]
+    paths: [disclosures/app/macro_history.py, .github/workflows/macro-probe.yml]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: disclosures/app
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install --quiet numpy
+          python disclosures/app/macro_history.py fetch --root hist
+          python disclosures/app/macro_history.py build --root hist
+          ls -la hist/cache/macro hist/public
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macro
+          path: hist
