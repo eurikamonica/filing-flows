@@ -712,7 +712,7 @@
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
   // ---------- company tabs: Earnings · Cash & quality · Valuation ----------
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates']]
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates'], ['consensus', 'Consensus']]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   async function analysisPage(cik, which) {
@@ -737,6 +737,7 @@
       </div><div id="body"></div>`;
     const body = $('#body');
     if (which === 'debt') return debtSection(body, cik, here);
+    if (which === 'consensus') return consensusSection(body, cik, here);
     const D = c.quality;
     if (!D || !((D.q || []).length || (D.fy || []).length)) {
       body.innerHTML = `<p class="muted">The figures for this view have not been read for ${t(p.name)} yet: the scan reads a few dozen companies a run, largest first.</p>`;
@@ -785,6 +786,42 @@
     const more = document.createElement('p');
     more.className = 'muted';
     more.innerHTML = `Compare with every company, market rates and banks’ CDs in the <a href="disclosures/#debt">Disclosure Hub → Debt &amp; rates</a>.`;
+    body.appendChild(more);
+  }
+
+  // ---------- consensus: analysts, prediction markets and our model, drawn by the Hub's shared view (disclosures/consensus-view.js, app/consensus.py) ----------
+  let consViewLoad = null;
+  const loadConsView = () => consViewLoad || (consViewLoad = new Promise((ok, bad) => {
+    if (window.ConsensusView) return ok();
+    const sc = document.createElement('script');
+    sc.src = 'disclosures/consensus-view.js';
+    sc.onload = () => ok();
+    sc.onerror = () => { consViewLoad = null; bad(new Error('consensus view did not load')); };
+    document.head.appendChild(sc);
+  }));
+  async function consensusSection(body, cik, here) {
+    body.innerHTML = `<div class="section"><p class="muted">Loading analysts' estimates and prediction markets…</p></div>`;
+    let d = null, err = null;
+    try {
+      const [r] = await Promise.all([fetch(`disclosures/data/consensus/c/${cik}.json`), loadConsView()]);
+      if (r.ok) d = await r.json();
+      else if (r.status !== 404) err = 'HTTP ' + r.status;
+    } catch (e) { err = e.message; }
+    if (!here()) return;
+    if (!d) {
+      body.innerHTML = `<div class="section"><p class="muted">${err ? 'The consensus data could not load (' + t(err) + ').'
+        : 'Analysts\u2019 estimates for this company have not been read yet: the collector reads every company over its first runs, largest first, then refreshes each daily.'}</p>
+        <p class="muted">The earnings calendar, every open prediction market and the track record are in the <a href="disclosures/#consensus">Disclosure Hub → Consensus</a>.</p></div>`;
+      return;
+    }
+    const box = document.createElement('div');
+    box.className = 'section consensus-section';
+    body.innerHTML = '';
+    body.appendChild(box);
+    window.ConsensusView.render(box, d);
+    const more = document.createElement('p');
+    more.className = 'muted';
+    more.innerHTML = `The earnings calendar, every open prediction market and how they did are in the <a href="disclosures/#consensus">Disclosure Hub → Consensus</a>.`;
     body.appendChild(more);
   }
 
@@ -3889,7 +3926,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

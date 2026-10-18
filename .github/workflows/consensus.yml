@@ -1,0 +1,69 @@
+# Market consensus (Disclosures → Consensus, and the "Consensus" tab of each company page on the main site).
+# Every three hours: every Polymarket and Kalshi market about a listed company (earnings beats, price ladders, market caps,
+# KPIs, earnings-call mentions, other company events); analysts' consensus from Yahoo Finance for a batch of companies
+# (largest first, each refreshed daily, with a dated snapshot kept); then public/ is rebuilt with our own forecasts from
+# the rotation history beside them, and every resolved market is scored (app/consensus.py).
+# Kept on the branch "consensus-history" (one commit, force-pushed); scan.yml publishes public/ with the hub.
+name: Market consensus
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for the collection'
+        default: '30'
+  schedule:
+    - cron: '41 */3 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: consensus-history
+  cancel-in-progress: false
+jobs:
+  consensus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            disclosures/app
+            disclosures/config
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The data branch and the inputs (site companies, our forecasts, weekly closes)
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" consensus-history >/dev/null; then
+            git clone --quiet --depth 1 --branch consensus-history "$url" cons
+          else
+            mkdir cons && git -C cons init --quiet -b consensus-history && git -C cons remote add origin "$url"
+          fi
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          mkdir -p site && curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
+          if git ls-remote --exit-code --heads "$url" rotation-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch rotation-history "$url" rh
+            git -C rh sparse-checkout set --no-cone /public/t/ /public/chaos-forecast.json /public/chaos-forecast-monthly.json
+          fi
+          du -sh cons; ls cons
+      - name: Prediction markets and analysts' consensus
+        timeout-minutes: 40
+        run: python disclosures/app/consensus.py collect --root cons --site-index site/index.json --minutes "${{ inputs.minutes || '30' }}"
+      - name: Build public/
+        timeout-minutes: 8
+        run: python disclosures/app/consensus.py build --root cons --rotation rh/public
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd cons
+          printf '%s\n' '# consensus-history (data only)' '' 'Analysts consensus per company with daily snapshots (companies/), prediction-market caches and the' \
+            'frozen market ledger (cache/), progress (state.json) and the files the site publishes (public/), kept by' \
+            '.github/workflows/consensus.yml on main. Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "consensus $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "consensus $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:consensus-history && break; sleep $((i * 10)); done
+          python -c "import json; print(json.dumps(json.load(open('public/status.json'))))"
