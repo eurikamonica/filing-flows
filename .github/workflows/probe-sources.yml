@@ -1,0 +1,82 @@
+# Temporary: fetches raw samples of candidate news sources (press-release wires, war.gov contracts, FDA, SEC news and
+# enforcement, GDELT, an EDGAR 8-K and the daily index) to the branch "probe-data" so the collectors can be written
+# against real answers. Removed once the collectors are in.
+name: Probe new data sources
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Fetch samples
+        shell: python
+        run: |
+          import json, os, re, time, requests
+          os.makedirs('out', exist_ok=True)
+          ua = os.environ['SEC_USER_AGENT']
+          browser = 'Mozilla/5.0 (compatible; FilingFlows news reader; ' + ua + ')'
+          log = []
+          def get(name, url, sec=False, n=60000, **kw):
+              try:
+                  h = {'User-Agent': ua if sec else browser, 'Accept': kw.pop('accept', '*/*')}
+                  r = requests.get(url, headers=h, timeout=40, **kw)
+                  body = r.content
+                  with open('out/' + name, 'wb') as f:
+                      f.write(body[:n])
+                  items = len(re.findall(rb'<item[ >]|<entry[ >]', body))
+                  log.append([name, url, r.status_code, r.headers.get('content-type'), len(body), items, r.url if r.url != url else ''])
+              except Exception as e:
+                  log.append([name, url, 'error', str(e)[:200]])
+              time.sleep(0.6)
+          # press-release wires (RSS)
+          get('prn-all.xml', 'https://www.prnewswire.com/rss/news-releases-list.rss')
+          get('prn-financial.xml', 'https://www.prnewswire.com/rss/financial-services-latest-news/financial-services-latest-news-list.rss')
+          get('prn-allnews.xml', 'https://www.prnewswire.com/rss/all-news-releases-from-PR-newswire-news.rss')
+          get('gnw-public.xml', 'https://www.globenewswire.com/RssFeed/orgclass/1/feedTitle/GlobeNewswire%20-%20News%20about%20Public%20Companies')
+          get('gnw-all.xml', 'https://www.globenewswire.com/RssFeed/feedTitle/GlobeNewswire%20-%20Latest%20News')
+          get('gnw-earnings.xml', 'https://www.globenewswire.com/RssFeed/subjectcode/13-Earnings%20Releases%20And%20Operating%20Results/feedTitle/GlobeNewswire%20-%20Earnings%20Releases%20And%20Operating%20Results')
+          get('bw-home.xml', 'https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFtRWA==')
+          get('accesswire.xml', 'https://www.accessnewswire.com/newsroom/api/rss')
+          # war.gov / defense.gov contract announcements
+          get('war-contracts.html', 'https://www.war.gov/News/Contracts/', n=200000)
+          get('war-contracts-rss.xml', 'https://www.war.gov/DesktopModules/ArticleCS/RSS.ashx?ContentType=400&Site=945&max=10')
+          get('defense-contracts-rss.xml', 'https://www.defense.gov/DesktopModules/ArticleCS/RSS.ashx?ContentType=400&Site=945&max=10')
+          # FDA
+          get('fda-press.xml', 'https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml')
+          get('openfda-drugsfda.json', 'https://api.fda.gov/drug/drugsfda.json?search=submissions.submission_status_date:[20261001+TO+20261017]+AND+submissions.submission_type:ORIG&limit=5')
+          get('openfda-device-pma.json', 'https://api.fda.gov/device/pma.json?search=decision_date:[20261001+TO+20261017]&limit=3')
+          # SEC news and enforcement
+          get('sec-press.xml', 'https://www.sec.gov/news/pressreleases.rss', sec=True)
+          get('sec-litigation.xml', 'https://www.sec.gov/enforcement-litigation/litigation-releases/rss', sec=True)
+          get('sec-litigation-old.xml', 'https://www.sec.gov/rss/litigation/litreleases.xml', sec=True)
+          get('sec-admin.xml', 'https://www.sec.gov/enforcement-litigation/administrative-proceedings/rss', sec=True)
+          get('sec-tradingsusp.xml', 'https://www.sec.gov/enforcement-litigation/trading-suspensions/rss', sec=True)
+          # GDELT DOC 2.0 (headlines by company name)
+          get('gdelt-nvidia.json', 'https://api.gdeltproject.org/api/v2/doc/doc?query=%22NVIDIA%22%20sourcelang:english&mode=artlist&maxrecords=15&format=json&timespan=24h&sort=datedesc')
+          time.sleep(5)
+          get('gdelt-boeing.json', 'https://api.gdeltproject.org/api/v2/doc/doc?query=%22Boeing%22%20sourcelang:english&mode=artlist&maxrecords=15&format=json&timespan=48h&sort=hybridrel')
+          # EDGAR: the 8-K current feed and one daily index, for the 8-K collector
+          get('feed-8k.xml', 'https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&company=&dateb=&owner=include&start=0&count=40&output=atom', sec=True)
+          get('form-20261016.idx', 'https://www.sec.gov/Archives/edgar/daily-index/2026/QTR4/form.20261016.idx', sec=True, n=400000)
+          m = re.findall(rb'/Archives/edgar/data/(\d+)/(\d{18})/(\d{10}-\d{2}-\d{6})-index', open('out/feed-8k.xml', 'rb').read())
+          for cik, folder, acc in m[:6:2]:
+              get(f'8k-{acc.decode()}.txt', f'https://www.sec.gov/Archives/edgar/data/{cik.decode()}/{folder.decode()}/{acc.decode()}.txt', sec=True, n=400000)
+          with open('out/log.json', 'w') as f:
+              json.dump(log, f, indent=1)
+          print(json.dumps(log, indent=1))
+      - name: Save to the branch probe-data
+        run: |
+          cd out
+          git init -q -b probe-data
+          git add -A
+          git -c user.name=filing-flows -c user.email=actions@users.noreply.github.com commit -qm "probe $(date -u +%FT%H:%MZ)"
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:probe-data
