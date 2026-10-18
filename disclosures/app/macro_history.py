@@ -80,6 +80,8 @@ FEATURES = [
     ('dy10', '10-year yield, 13-week change', 'pts', ('chg', 'DGS10', 13)),
     ('dcurve', 'Yield curve, 13-week change', 'pts', ('chg', 'T10Y3M', 13)),
     ('dcredit', 'Credit spread, 13-week change', 'pts', ('chg', 'BAA10Y', 13)),
+    ('usd', 'US dollar (broad index)', '', ('lvl', 'DTWEXBGS')),
+    ('oil', 'Crude oil (WTI)', '$', ('lvl', 'DCOILWTICO')),
     ('usd13', 'Dollar, 13-week change', '%', ('pct', 'DTWEXBGS', 13)),
     ('oil13', 'Oil, 13-week change', '%', ('pct', 'DCOILWTICO', 13)),
     ('fedbs', 'Fed balance sheet, year on year', '%', ('pct', 'WALCL', 52)),

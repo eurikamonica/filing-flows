@@ -5,7 +5,7 @@ on:
     branches: [feature/macro-2010]
     paths: [disclosures/app/macro_history.py, .github/workflows/macro-probe.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
   probe:
     runs-on: ubuntu-latest
@@ -31,8 +31,8 @@ jobs:
           python disclosures/app/macro_history.py fetch --root hist
           python disclosures/app/macro_history.py build --root hist
           ls -la hist/cache/macro hist/public || true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: macro
-          path: hist
+      - name: Push the files to a scratch branch (deleted after the merge)
+        run: |
+          cd hist && git init -q -b macro-probe-data && git add -A
+          git -c user.name=probe -c user.email=actions@users.noreply.github.com commit -q -m probe
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" macro-probe-data
