@@ -218,6 +218,7 @@ def main():
     ap.add_argument('--history', default=None, help="public/ of the branch rotation-history (the RRG and the long rotation)")
     ap.add_argument('--debt', default=None, help="public/ of the branch debt-history (Debt & rates: app/debt.py)")
     ap.add_argument('--consensus', default=None, help="public/ of the branch consensus-history (Consensus: app/consensus.py)")
+    ap.add_argument('--etf', default=None, help="public/ of the branch etf-history (ETFs: app/etf.py)")
     args = ap.parse_args()
     out = Path(args.out)
     shutil.rmtree(out, ignore_errors=True)
@@ -243,6 +244,13 @@ def main():
         try:
             st = json.loads((Path(args.consensus) / 'status.json').read_text(encoding='utf-8'))
             print(f"::notice::consensus: {st.get('companies')} companies, {st.get('markets')} prediction markets, built {st.get('built_at')}")
+        except Exception:
+            pass
+    if args.etf and (Path(args.etf) / 'index.json').exists():
+        shutil.copytree(args.etf, out / 'data' / 'etf', dirs_exist_ok=True)
+        try:
+            st = json.loads((Path(args.etf) / 'status.json').read_text(encoding='utf-8'))
+            print(f"::notice::etfs: {st.get('etfs')} ETFs, {st.get('holdings')} portfolios, {st.get('ncen')} N-CEN, built {st.get('built_at')}")
         except Exception:
             pass
     if args.site_data:
