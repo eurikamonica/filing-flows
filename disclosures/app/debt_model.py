@@ -154,10 +154,12 @@ def analyse(snap, instruments, agreements, price=None, sigma_E=None, r1=None, r5
     debt_known = g('total_debt') is not None
     debt = g('total_debt') or 0.0
     cash = (g('cash') or 0.0) + (g('investments') or 0.0)
-    ebit = g('operating_income')
-    ebitda = None if ebit is None else ebit + (g('da') or 0.0)
     intexp = g('interest_expense')
     intexp = abs(intexp) if intexp is not None else None
+    ebit = g('operating_income')
+    if ebit is None and g('pretax_income') is not None:   # companies that report no operating income line
+        ebit = g('pretax_income') + (intexp or 0.0)
+    ebitda = None if ebit is None else ebit + (g('da') or 0.0)
     out = {'total_debt': debt if debt_known else None, 'cash_and_investments': cash or None,
            'net_debt': (debt - cash) if debt_known else None, 'ebitda': ebitda, 'ebit': ebit, 'interest_expense': intexp}
     out['leverage'] = safe_div(debt, ebitda) if debt_known and ebitda and ebitda > 0 else None

@@ -90,6 +90,7 @@
     h += card('Implied 5-year CDS', fin(I.calibrated_5y_bps) ? bp(I.calibrated_5y_bps) : bp(I.spread_5y_bps), tone(I.calibrated_5y_bps || I.spread_5y_bps, false, 120, 400),
       (I.rating_band ? 'spread like ' + esc(I.rating_band) + ' bonds · ' : '') + 'DD ' + num(I.dd, 1));
     h += `</div>`;
+    if (A.bank) h += `<p class="dv-sub">A bank borrows mostly from depositors, so the industrial measures (coverage, leverage, the stock-implied spread, the cushion score) are left out; see deposits and CDs below.</p>`;
     if (fin(A.cushion_score)) h += `<div class="dv-score"><span>Debt safety cushion <b>${A.cushion_score}</b>/100</span><div class="dv-bar"><div class="dv-pin" style="left:calc(${A.cushion_score}% - 2px)"></div></div><span class="dv-sub" style="margin:0">riskier ← → safer</span></div>`;
     return h;
   }

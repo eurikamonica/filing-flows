@@ -60,6 +60,7 @@ FLOWS = {    # durations, trailing twelve months
     'interest_paid': ['InterestPaidNet', 'InterestPaid'],
     'operating_income': ['OperatingIncomeLoss'],
     'pretax_income': ['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest',
+                      'IncomeLossFromContinuingOperationsBeforeIncomeTaxesDomestic',
                       'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments'],
     'net_income': ['NetIncomeLoss', 'ProfitLoss'],
     'da': ['DepreciationDepletionAndAmortization', 'DepreciationAmortizationAndAccretionNet', 'DepreciationAndAmortization',

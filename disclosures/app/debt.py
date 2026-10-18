@@ -293,7 +293,8 @@ def collect(client, root, cos, minutes=30.0, refresh_days=21, first=()):
 
 # ------------------------------------------------------------------ banks (FDIC)
 def _norm_name(s):
-    s = re.sub(r'[^A-Z0-9 ]', ' ', (s or '').upper().replace('&', ' AND '))
+    s = re.sub(r'\s*/[A-Z]{2,3}/?\s*$', '', (s or '').upper())          # SEC state suffixes: 'BANK OF AMERICA CORP /DE/'
+    s = re.sub(r'[^A-Z0-9 ]', ' ', s.replace('&', ' AND '))
     s = re.sub(r'\b(INC|CORP|CORPORATION|CO|COMPANY|LTD|THE|GROUP|HOLDINGS?|BANCORPORATION|NA|N A|NATIONAL ASSOCIATION|FINANCIAL|BANCSHARES|AND)\b', ' ', s)
     return re.sub(r'\s+', '', s)
 
@@ -640,6 +641,11 @@ def build(root, prices=None, verbose=True):
         price_date = px[-1][0].isoformat() if px else None
         sig = vol_at(px, len(px) - 1) if px else None
         A = DM.analyse(snap, inst, ags, price=price, sigma_E=sig, r1=r1, r5=r5, fit=fit, oas_now=oas_now, sofr=sofr)
+        if str(rec.get('sic')) in BANK_SIC:
+            # a bank's borrowing is mostly deposits: the industrial ratios and the stock-implied spread do not apply
+            A['bank'] = True
+            for k in ('cushion_score', 'altman_z', 'liquidity_to_due12', 'liquidity_to_due24', 'implied', 'if_converted'):
+                A.pop(k, None)
         iss = issues_of(rec)
         bank = bank_summary(rec.get('fdic'))
         hist = []
