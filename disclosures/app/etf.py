@@ -687,9 +687,9 @@ def benchmarks_of(pr):
     b = [x for x in (pr or {}).get('benchmarks') or [] if x and not GENERIC_BENCH.match(x.strip())]
     if b:
         return b
-    st = (pr or {}).get('strategy') or ''
+    st = ((pr or {}).get('objective') or '') + ' ' + ((pr or {}).get('strategy') or '')
     for pat in (r'(?:track|replicate|correspond to)[^.]{0,120}?(?:results|performance) of (?:the\s+)?([A-Z0-9][^()“"]{2,90}?)\s*\((?:the\s+)?[“"]?(?:Underlying|Target|Benchmark) Index',
-                r'(?:track|replicate|correspond to)[^.]{0,160}?\b(?:the\s+)?((?:[A-Z0-9][\w&®.\-/]*\s+){1,9}Index)\b'):
+                r'(?:track|replicate|correspond to)[^.]{0,160}?\b(?:the\s+)?((?:[A-Z0-9][\w&®™℠.\-/]*\s+){1,9}Index)\b'):
         m = re.search(pat, st)
         if m:
             return [m.group(1).strip().rstrip(',')]
