@@ -18,11 +18,25 @@ def collect_holdings(client,cfg,old,revalidate=False):
     items.update({str(int(r['cik'])):r for r in cfg.get('managers',[])})
     managers=dict(old_managers);errors=list(discovery.get('errors',[]))
     attempts=dict(old.get('attempts',{}))
+    # managers the 13F back-fill workflow finished (app/backfill13f.py, holdings-backfill.json): lazy rows, merged once
+    from core import read_json
+    import os as _os
+    bf=read_json(_os.path.join(cfg.get('_data_root',''),'holdings-backfill.json'),{}) or {}
+    if bf.get('since')==cfg['since'] and bf.get('as_of')==cfg.get('as_of'):
+        for key,row in (bf.get('managers') or {}).items():
+            if key not in old_managers or (old_managers[key].get('last_success') or '')<(row.get('last_success') or ''):
+                old_managers[key]=row;managers[key]=row
+                attempts[key]={**attempts.get(key,{}),'last_attempt':row.get('last_success'),'last_success':row.get('last_success'),'error':None}
     history={key:{**m,**attempts.get(key,{})} for key,m in old_managers.items()}
     history.update({key:value for key,value in attempts.items() if key not in history})
     target=cfg.get('priority_cik')
     if target:items.setdefault(str(int(target)),{'cik':str(int(target)),'name':'CIK '+str(int(target))})
     work=[items[str(int(target))]] if target else list(items.values())
+    import datetime as _dt
+    live_bf=(bf.get('updated_at') or '')>(_dt.datetime.now(_dt.timezone.utc)-_dt.timedelta(hours=6)).isoformat()
+    if not target and cfg.get('backfill_separately') and live_bf:   # new managers are the (running) back-fill's: this run refreshes
+        mine={str(int(r['cik'])) for r in cfg.get('managers',[])}
+        work=[x for x in work if str(int(x['cik'])) in old_managers or str(int(x['cik'])) in mine]
     selected=select_batch(work,history,int(cfg.get('batch_size',8)),'cik',cfg.get('refresh_hours',24),revalidate)
     # 4.4 watched funds (config holdings.watch): processed first, and re-checked every few hours so a new 13F is picked
     # up the day it is filed (market.py writes their changes to market/watchlist.json for the X alerts)
