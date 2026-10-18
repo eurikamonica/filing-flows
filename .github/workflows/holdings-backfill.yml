@@ -1,0 +1,80 @@
+# 13F history back-fill (disclosures/app/backfill13f.py): every 13F manager on SEC's list that no run has processed yet,
+# as many as fit in ~33 minutes at ~6–7 SEC requests a second (SEC's fair-access limit is 10), then the next run starts
+# itself — a relay, one run at a time — until none is left. The regular collector (disclosures.yml, 8 managers a run in
+# the shared slot) keeps refreshing the managers it has and merges what this workflow finished into live.json.
+#
+# Writes only new per-manager files (cache/holdings/<cik>.json.gz, shards/holdings/<cik>*.json) and
+# holdings-backfill.json, so it never collides with the collector's commits.
+# Stop it: repository variable BACKFILL_13F = off. The schedule restarts the relay if it ever breaks.
+name: 13F back-fill
+on:
+  schedule:
+    - cron: '11 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      chained:
+        description: 'Started by the previous back-fill run (leave off when running by hand)'
+        type: boolean
+        default: false
+      hop:
+        description: 'Relay hop (the chain stops after 60)'
+        default: '0'
+      minutes:
+        description: 'Minutes of work in this run'
+        default: '33'
+permissions:
+  contents: write      # commits the new manager files to main
+  actions: write       # starts the next run of the relay
+concurrency:
+  group: holdings-backfill
+  cancel-in-progress: false
+jobs:
+  backfill:
+    if: vars.BACKFILL_13F != 'off'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:                   # the code, the settings, the 13F catalog and this workflow's state — not the multi-GB data
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/config/
+            /disclosures/docs/data/catalogs/holdings.json
+            /disclosures/docs/data/holdings-backfill.json
+          sparse-checkout-cone-mode: false
+          filter: blob:none
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Back-fill 13F managers
+        id: fill
+        working-directory: disclosures
+        run: python app/backfill13f.py --data docs/data --minutes "${{ inputs.minutes || '33' }}"
+      - name: Commit the new managers
+        working-directory: disclosures
+        run: |
+          git config user.name "Filing Flows"
+          git config user.email "filingflows@gmail.com"
+          git add --sparse docs/data/holdings-backfill.json docs/data/cache/holdings docs/data/shards/holdings 2>/dev/null || git add --sparse docs/data/holdings-backfill.json
+          if git diff --cached --quiet; then echo "nothing new"; exit 0; fi
+          git commit -qm "13F back-fill: ${{ steps.fill.outputs.managers }} managers (${{ steps.fill.outputs.remaining }} left)"
+          for attempt in 1 2 3 4 5; do
+            git fetch -q --depth 60 origin main
+            if git rebase -q origin/main && git push -q origin HEAD:main; then echo "pushed on attempt $attempt"; exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((attempt * 15))
+          done
+          echo "::error::could not push the back-fill after 5 attempts"; exit 1
+      - name: Start the next run of the relay
+        if: success() && steps.fill.outputs.remaining != '0' && steps.fill.outputs.blocked != 'yes' && vars.BACKFILL_13F != 'off'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOP: ${{ inputs.hop || '0' }}
+        run: |
+          if [ "$HOP" -ge 60 ]; then echo "relay cap reached (60 runs); the schedule picks it up again"; exit 0; fi
+          n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow holdings-backfill.yml --status queued --json databaseId --jq length)
+          if [ "${n:-0}" -gt 0 ]; then echo "another back-fill run is already waiting"; exit 0; fi
+          gh workflow run holdings-backfill.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f chained=true -f hop=$((HOP + 1)) -f minutes="${{ inputs.minutes || '33' }}"
+          echo "relay: hop $((HOP + 1)) started (${{ steps.fill.outputs.remaining }} managers left)"
