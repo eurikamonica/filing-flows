@@ -58,43 +58,70 @@ TITLES = [
     (r'shareholder (director )?nominations', '5.08'), (r'regulation fd disclosure', '7.01'), (r'^other events', '8.01'),
     (r'financial statements and exhibits', '9.01'),
 ]
-# topics: (name, label, weight, items that suggest it, pattern in the text that confirms it); checked in this order
+# the items' official titles, as filers repeat them after "Item 5.02" (stripped from the quoted text)
+FULL_TITLES = [
+    ('Entry into a Material Definitive Agreement', '1.01'), ('Termination of a Material Definitive Agreement', '1.02'),
+    ('Bankruptcy or Receivership', '1.03'), ('Material Cybersecurity Incidents', '1.05'),
+    ('Completion of Acquisition or Disposition of Assets', '2.01'), ('Results of Operations and Financial Condition', '2.02'),
+    ('Creation of a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement of a Registrant', '2.03'),
+    ('Triggering Events That Accelerate or Increase a Direct Financial Obligation or an Obligation under an Off-Balance Sheet Arrangement', '2.04'),
+    ('Costs Associated with Exit or Disposal Activities', '2.05'), ('Material Impairments', '2.06'),
+    ('Notice of Delisting or Failure to Satisfy a Continued Listing Rule or Standard; Transfer of Listing', '3.01'),
+    ('Unregistered Sales of Equity Securities', '3.02'), ('Material Modification to Rights of Security Holders', '3.03'),
+    ("Changes in Registrant's Certifying Accountant", '4.01'),
+    ('Non-Reliance on Previously Issued Financial Statements or a Related Audit Report or Completed Interim Review', '4.02'),
+    ('Changes in Control of Registrant', '5.01'),
+    ('Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers; Compensatory Arrangements of Certain Officers', '5.02'),
+    ('Amendments to Articles of Incorporation or Bylaws; Change in Fiscal Year', '5.03'),
+    ('Submission of Matters to a Vote of Security Holders', '5.07'), ('Regulation FD Disclosure', '7.01'), ('Other Events', '8.01'),
+    ('Financial Statements and Exhibits', '9.01'),
+]
+# topics: (name, label, weight, items that suggest it, pattern one sentence of those items' text or of the press release
+# must match to confirm it — None: the item alone is enough); checked in this order
+ROLE_CHANGE = (r'\b(appoint|named|names|name[sd]? as|elect|resign|retire|depart|step(s|ped)? down|stepping down|succeed|successor|'
+               r'terminat|transition|separation|interim|will serve as|promot)')
 TOPICS = [
-    ('bankruptcy', 'bankruptcy', 10, {'1.03'}, r'chapter 11|bankruptcy|receivership'),
+    ('bankruptcy', 'bankruptcy', 10, {'1.03'}, None),
     ('restatement', 'a restatement', 9, {'4.02'}, None),
     ('control', 'a change in control', 9, {'5.01'}, None),
     ('cyber', 'a cybersecurity incident', 8, {'1.05'}, None),
     ('deal', 'a merger or acquisition', 8, {'1.01', '2.01', '7.01', '8.01'},
-     r'\bmerger agreement\b|agreement and plan of merger|\bto acquire\b|\bto be acquired\b|\bacquisition of\b|\bwill acquire\b|'
-     r'\bcompleted (the|its) acquisition\b|\btender offer\b|\bper share in cash\b|\bbusiness combination\b'),
+     r'agreement and plan of merger|\bmerger agreement\b|definitive (merger |purchase |acquisition )?agreement[^.]{0,80}\b(acquire|acquisition|merge|purchase)|'
+     r'\b(to|will|agreed to) acquire\b[^.]{0,140}\$\s?[\d.,]+\s*(per share|million|billion)|\btender offer\b|\bper share in cash\b|'
+     r'business combination agreement|\bcompleted (the|its) (previously announced )?(acquisition|merger|sale of)|completion of (the|its) (acquisition|merger)'),
     ('delisting', 'a delisting notice', 7, {'3.01'}, None),
-    ('ceo', 'a CEO change', 7, {'5.02'}, r'chief executive officer|\bCEO\b'),
-    ('cfo', 'a CFO change', 6, {'5.02'}, r'chief financial officer|\bCFO\b'),
+    ('ceo', 'a CEO change', 7, {'5.02'}, (r'chief executive officer|\bCEO\b', ROLE_CHANGE)),
+    ('cfo', 'a CFO change', 6, {'5.02'}, (r'chief financial officer|\bCFO\b', ROLE_CHANGE)),
     ('fda', 'an FDA decision', 7, {'7.01', '8.01'},
      r'\bFDA\b[^.]{0,80}\b(approv|accept|clear|complete response|breakthrough|priority review|fast track|grant)|'
      r'complete response letter|\bPDUFA\b|marketing authori[sz]ation'),
     ('impairment', 'an impairment', 6, {'2.06'}, None),
-    ('restructuring', 'layoffs or restructuring', 6, {'2.05'}, r'restructur|workforce reduction|reduction in force|layoff|exit|dispos'),
+    ('restructuring', 'layoffs or restructuring', 6, {'2.05'}, None),
     ('offering', 'a share offering (dilution)', 5, {'3.02', '1.01', '8.01', '7.01'},
-     r'public offering|registered direct offering|at-the-market|\bATM\b offering|private placement|equity offering|'
-     r'pre-funded warrants|securities purchase agreement'),
-    ('buyback', 'a share buyback', 5, {'8.01', '7.01', '1.01'}, r'repurchase (program|authori[sz]ation|plan)|buyback|share repurchase'),
+     r'\b(priced|pricing of|closed|closing of|announced|entered into|launch(ed|es)?|commenc(ed|es)|upsiz(ed|es))\b[^.]{0,100}\b'
+     r'(underwritten |registered direct |public |private |at-the-market |equity |follow-on )(offering|placement)|'
+     r'securities purchase agreement|at-the-market (offering|sales agreement|program)|equity distribution agreement'),
+    ('buyback', 'a share buyback', 5, {'8.01', '7.01', '1.01'},
+     r'(repurchase|buyback) (program|authori[sz]ation)|authori[sz]ed[^.]{0,60}\b(repurchase|buyback)|new share repurchase'),
     ('dividend', 'a dividend change', 4, {'8.01', '7.01'},
-     r'(increase[sd]?|raise[sd]?|cut|suspend(s|ed)?|reduce[sd]?|special|initiat(es|ed))[^.]{0,40}\bdividend'),
-    ('contract', 'a contract award', 4, {'8.01', '7.01', '1.01'}, r'awarded (a|an|the)[^.]{0,60}contract|contract award|task order'),
+     r'\b(increas|rais|cut|suspend|reduc|initiat|reinstat|eliminat)\w*[^.]{0,60}\b(quarterly |special |cash |annual )*dividend|\bspecial (cash )?dividend'),
+    ('contract', 'a contract award', 4, {'8.01', '7.01', '1.01'}, r'\bawarded (a|an|the)\b[^.]{0,60}\bcontract|\bcontract award|\btask order'),
     ('debt', 'new debt', 3, {'2.03'}, None),
     ('auditor', 'an auditor change', 4, {'4.01'}, None),
-    ('director', 'a board change', 3, {'5.02'}, r'director'),
+    ('director', 'a board change', 3, {'5.02'}, (r'\bdirectors?\b|\bboard\b', ROLE_CHANGE)),
     ('earnings', 'earnings', 3, {'2.02'}, None),
     ('vote', 'shareholder vote results', 1, {'5.07'}, None),
 ]
 TOPIC_LABEL = {t[0]: t[1] for t in TOPICS}
 TOPIC_WEIGHT = {t[0]: t[2] for t in TOPICS}
-GUIDE = re.compile(r'\b(guidance|outlook|forecast|full[- ]year expectations?)\b', re.I)
-UP = re.compile(r'\b(rais(e|es|ed|ing)|increas(e|es|ed|ing)|lift(s|ed)?|boost(s|ed)?|upgrad(e|es|ed)|improv(es|ed))\b', re.I)
-DOWN = re.compile(r'\b(lower(s|ed|ing)?|reduc(e|es|ed|ing)|cut(s|ting)?|trim(s|med)?|downgrad(e|es|ed)|revis(es|ed) down(ward)?)\b', re.I)
-WITHDRAW = re.compile(r'\b(withdr(aw|aws|ew|awn)|suspend(s|ed)?|no longer provid)', re.I)
-KEEP = re.compile(r'\b(reaffirm(s|ed)?|reiterat(e|es|ed)|maintain(s|ed)?|confirm(s|ed)?)\b', re.I)
+_NOUN = r'(?:guidance|outlook|forecast|financial targets?)'
+_MOD = (r'(?:\s+(?:its|the|our|full[- ]year|fiscal(?:\s+year)?|annual|\d{4}|fy\s?\d{2,4}|revenue|sales|earnings|eps|adjusted|ebitda|'
+        r'non-gaap|gaap|net|operating|margin|income|per\s+share|and|,|range|for|year|quarter|fourth[- ]quarter|second[- ]half)){0,8}')
+GUIDE = re.compile(_NOUN, re.I)
+UP = re.compile(rf'\b(rais(es|ed|ing)|increas(es|ed|ing)|lift(s|ed|ing)|boost(s|ed)|upgrad(es|ed))\b{_MOD}\s+{_NOUN}|{_NOUN}\s+(is\s+|was\s+|has\s+been\s+)?(raised|increased|lifted)\b', re.I)
+DOWN = re.compile(rf'\b(lower(s|ed|ing)|reduc(es|ed|ing)|cut(s|ting)?|trim(s|med)|downgrad(es|ed))\b{_MOD}\s+{_NOUN}|{_NOUN}\s+(is\s+|was\s+|has\s+been\s+)?(lowered|reduced|cut)\b', re.I)
+WITHDRAW = re.compile(rf'\b(withdr(aws|ew|awn|awing)|suspend(s|ed|ing)|no longer (provides|providing))\b{_MOD}\s+{_NOUN}', re.I)
+KEEP = re.compile(rf'\b(reaffirm(s|ed|ing)?|reiterat(es|ed|ing)|maintain(s|ed|ing)|confirm(s|ed|ing))\b{_MOD}\s+{_NOUN}', re.I)
 BOILER = re.compile(r'(?i)^(the information (in|contained in|furnished)|this current report|pursuant to the requirements|'
                     r'forward[- ]looking statements|exhibit (no|number)|signatures?$|item \d\.\d\d|\(d\) exhibits|cautionary)')
 
@@ -154,8 +181,10 @@ def item_sections(paras):
             cur = f'{m.group(1)}.{m.group(2)}'
             out.setdefault(cur, [])
             rest = p[m.end():].strip(' .:-–—')
-            if len(rest) > 120:                     # heading and text on one line
-                out[cur].append(rest)
+            title = next((t for t, c in FULL_TITLES if c == cur), None)
+            cut = re.sub(r'(?i)^' + r'[\s,;:.\-–—]*'.join(map(re.escape, title.split())) + r'[\s.:;\-–—]*', '', rest) if title else rest
+            if len(cut) > (20 if cut != rest else 80):     # heading and text on one line
+                out[cur].append(cut)
             continue
         if cur:
             out[cur].append(p)
@@ -181,16 +210,47 @@ def sentences(paras, n=2, limit=420):
     return t if len(t) <= limit else t[:limit].rsplit(' ', 1)[0] + '…'
 
 
-def headline(paras):
-    """The press release's title: an early line of 25–220 characters that reads like a headline."""
-    for p in paras[:14]:
-        if not 25 <= len(p) <= 220 or re.search(r'(?i)^(exhibit|ex-|for immediate release|press release|news release|contact|investor|media)', p):
-            continue
-        if re.search(r'\d{4}\s*[–—-]\s*\(?[A-Z ]*WIRE', p) or p.endswith(':'):
-            continue
-        if re.search(r'[A-Za-z]', p) and not re.match(r'^[\d\s,().-]+$', p):
+WIRE = re.compile(r'/PRNewswire/|\((?:GLOBE NEWSWIRE|BUSINESS WIRE|ACCESSWIRE|ACCESS Newswire|Newsfile Corp\.?|EQS[- ]Newswire|PRNewswire|'
+                  r'MARKETWIRE|Canada NewsWire|CNW)\)|^[A-Z][A-Za-z .,\'&-]{2,50}\s*[,–—-]+\s*\(?[A-Z][a-z]{2,8}\.?\s+\d{1,2},\s+\d{4}\)?\s*[–—-]+|'
+                  r'\b(today|this morning) (announced|reported|reports|announces)\b')
+CONTACT = re.compile(r'(?i)@|\bcontacts?\b|\binvestor relations\b|\bmedia\b:|\(\d{3}\)\s?\d{3}|\d{3}[-.]\d{3}[-.]\d{4}|^exhibit|^ex-\d|'
+                     r'for immediate release|^(press|news) release$|^page \d')
+
+
+def dateline(paras):
+    """Index of the release's dateline paragraph ("SAN JOSE, Calif., Oct. 16, 2026 (GLOBE NEWSWIRE) -- …"), or None
+    when the exhibit is not a press release."""
+    for i, p in enumerate(paras[:25]):
+        if WIRE.search(p):
+            return i
+    return None
+
+
+def headline(paras, line=None):
+    """The press release's title: the first line before the dateline that reads like one (5–40 words, no contact
+    details)."""
+    line = dateline(paras) if line is None else line
+    if line is None:
+        return ''
+    for p in paras[:line] if line > 0 else []:
+        words = len(p.split())
+        if 5 <= words <= 40 and not CONTACT.search(p) and re.search(r'[a-z]', p):
             return p
     return ''
+
+
+def _sentences_of(paras):
+    for p in paras:
+        for x in re.split(r'(?<=[.!?])\s+(?=[A-Z“"])', p):
+            if not re.match(r'(?i)\s*as previously (reported|disclosed|announced)', x):
+                yield x
+
+
+def _says(pat, sentence):
+    """A topic pattern (one regex, or a pair that must both match the same sentence) against one sentence."""
+    if isinstance(pat, tuple):
+        return all(re.search(p, sentence, re.I) for p in pat)
+    return bool(re.search(pat, sentence, re.I))
 
 
 def guidance(paras):
@@ -201,11 +261,15 @@ def guidance(paras):
         for s in re.split(r'(?<=[.!?])\s+(?=[A-Z])', p):
             if len(s) > 400 or not GUIDE.search(s) or re.search(r'(?i)forward-looking|safe harbor|no assurance|undertakes no', s):
                 continue
+            up, down = UP.search(s), DOWN.search(s)
             if WITHDRAW.search(s):
                 found['withdrawn'].append(s)
-            elif UP.search(s) and not DOWN.search(s):
+            elif up and down:
                 found['up'].append(s)
-            elif DOWN.search(s) and not UP.search(s):
+                found['down'].append(s)
+            elif up:
+                found['up'].append(s)
+            elif down:
                 found['down'].append(s)
             elif KEEP.search(s):
                 found['keep'].append(s)
@@ -234,22 +298,23 @@ def parse_8k(txt, accession, folder):
     items = h['items'] or [c for c in secs if c in ITEMS]
     release = next((d for d in docs if re.match(r'EX-99(\.0?1)?$', d[0])), None) or next((d for d in docs if d[0].startswith('EX-99')), None)
     rel = html_text(release[2])[:600] if release else []
-    allt = ' '.join(body[:300] + rel[:300])
+    line = dateline(rel)
+    is_release = line is not None                     # a press release, not a consent, a presentation or financial statements
     topics = []
     for name, _, _, its, pat in TOPICS:
         hit_item = bool(set(items) & its)
+        if not hit_item:
+            continue
         if pat is None:
-            ok = hit_item
+            ok = True
         else:
-            scope = ' '.join(sum((secs.get(i, []) for i in its if i in secs), [])) + ' ' + ' '.join(rel[:80]) if hit_item else ''
-            ok = bool(scope and re.search(pat, scope, re.I))
-            if name in ('fda', 'deal', 'contract', 'offering', 'buyback', 'dividend') and not ok and not hit_item:
-                ok = False
+            scope = sum((secs.get(i, []) for i in its if i in secs), []) + (rel[:60] if is_release else [])
+            ok = any(_says(pat, x) for x in _sentences_of(scope))
         if ok and name not in topics:
             topics.append(name)
     if 'ceo' in topics or 'cfo' in topics:
         topics = [t for t in topics if t != 'director']
-    g, gq = guidance(rel) if rel else (None, None)
+    g, gq = guidance(rel) if is_release else (None, None)
     if g and 'guidance' not in topics:
         topics.insert(0 if g in ('raised', 'lowered', 'withdrawn') else len(topics), 'guidance')
     material = [c for c in items if c not in ('9.01',)] or items
@@ -268,7 +333,7 @@ def parse_8k(txt, accession, folder):
     return {'accession': accession, 'url': folder, 'form': h['form'] or '8-K', 'filed': h['filed'], 'accepted': h['accepted'],
             'period': h['period'], 'cik': (company.get('cik') or '').lstrip('0'), 'company': company.get('name', ''),
             'items': items, 'code': code or '', 'topics': topics, 'guidance': g, 'guidance_quote': (gq or '')[:300],
-            'headline': headline(rel)[:200] if rel else '', 'quote': quote, 'quote_src': src, 'score': score}
+            'headline': headline(rel, line)[:200] if is_release else '', 'quote': quote, 'quote_src': src, 'score': score}
 
 
 def _rank(code):
@@ -306,6 +371,9 @@ def parse_daily_index(text):
         seen.add(f.group(2))
         out.append((f.group(2), f'https://www.sec.gov/Archives/edgar/data/{f.group(1)}/{f.group(2).replace("-", "")}/'))
     return out
+
+
+PARSER = 2          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
 
 
 def store(root):
@@ -350,7 +418,14 @@ def collect(client, root, cfg=None, today=None):
                 print(f'daily index {ymd}: {exc}', flush=True)
     new = {a for a, _ in todo}
     queue = [x for x in dict.fromkeys(queue) if x[0] not in seen and x[0] not in new]
-    work = (todo + queue)[:int(cfg.get('batch', 300))]
+    # a better parser: the filings on file are read again, newest first, a share of each run's batch
+    if state.get('parser') != PARSER and not state.get('reparse'):
+        state['reparse'] = [[r['accession'], r['url']] for r in shards.all()]
+    redo = [tuple(x) for x in state.get('reparse') or []]
+    batch = int(cfg.get('batch', 300))
+    work = todo + redo[:max(0, batch - len(todo)) // 2]
+    work += queue[:max(0, batch - len(work))]
+    redone = {a for a, _ in redo[:max(0, batch - len(todo)) // 2]}
     for acc, folder in work:
         try:
             txt = client.get(folder + acc + '.txt', sec=True).decode('utf-8', 'replace')
@@ -368,11 +443,15 @@ def collect(client, root, cfg=None, today=None):
             if errors > 25:
                 break
     queue = [x for x in queue if x[0] not in seen]
+    redo = [x for x in redo if x[0] not in redone]
     shards.save(keep=(today - dt.timedelta(days=int(cfg.get('keep_days', 120)))).isoformat())
     window = {d.strftime('%Y%m%d') for d in OWN.business_days(today, int(cfg.get('backfill_days', 30)) + 10)}
-    write_json(cdir / 'state.json', {'index_days': sorted(done_days & window), 'queue': [list(x) for x in queue[:30000]], 'updated_at': now()})
+    write_json(cdir / 'state.json', {'index_days': sorted(done_days & window), 'queue': [list(x) for x in queue[:30000]],
+                                     'parser': PARSER if not redo else state.get('parser'), 'reparse': [list(x) for x in redo],
+                                     'updated_at': now()})
     write_json(cdir / 'seen.json', sorted(empty))
-    return {'status': 'ok' if errors <= 25 else 'partial', 'read': read, 'kept': kept, 'waiting': len(queue), 'errors': errors,
+    return {'status': 'ok' if errors <= 25 else 'partial', 'read': read, 'kept': kept, 'waiting': len(queue), 'reparse_left': len(redo),
+            'errors': errors,
             'on_file': len(shards.uids()), 'index_days': len(done_days & window), 'updated_at': now()}
 
 

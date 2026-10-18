@@ -93,6 +93,27 @@ class EightK(unittest.TestCase):
         self.assertEqual(E.guidance(['The company is withdrawing its 2026 guidance.'])[0], 'withdrawn')
         self.assertEqual(E.guidance(['We lowered our revenue outlook for the year.'])[0], 'lowered')
 
+    def test_what_is_not_news(self):
+        """Oct 18 2026, the first 300 real 8-Ks: a bonus for the CEO read as "a CEO change", an old merger repeated "as
+        previously reported" as a deal, "improved outlook on credit quality" as guidance raised, a consent as a press release."""
+        sec = lambda *ps: {'5.02': list(ps)}
+        self.assertFalse(any(E._says(dict((t[0], t[4]) for t in E.TOPICS)['ceo'], x) for x in E._sentences_of(
+            ['The Compensation Committee approved a cash bonus of $500,000 for the Chief Executive Officer.'])))
+        self.assertTrue(any(E._says(dict((t[0], t[4]) for t in E.TOPICS)['ceo'], x) for x in E._sentences_of(
+            ['On October 14, 2026, John Doe notified the Board of his decision to retire as Chief Executive Officer.'])))
+        self.assertFalse(any(E._says(dict((t[0], t[4]) for t in E.TOPICS)['deal'], x) for x in E._sentences_of(
+            ['As previously reported, on September 2, 2026, the Company entered into an Agreement and Plan of Merger with Parent.'])))
+        self.assertEqual(E.guidance(['The decrease was the result of improved outlook on credit quality.']), (None, None))
+        self.assertEqual(E.guidance(['The outlook reflects input costs at current levels and assumes no further increases.']), (None, None))
+        self.assertEqual(E.guidance(['The Company lowered its fiscal 2026 adjusted EPS guidance to $1.10.'])[0], 'lowered')
+        self.assertIsNone(E.dateline(['CONSENT OF INDEPENDENT VALUATION ADVISOR', 'We hereby consent to the use of our name.']))
+        self.assertEqual(E.headline(['Exhibit 99.1', 'Contact: ir@example.com (408) 555-0100', 'Example Devices Reports Record Third Quarter Results',
+                                     'SAN JOSE, Calif., Oct. 16, 2026 (GLOBE NEWSWIRE) -- Example Devices today reported results.']),
+                         'Example Devices Reports Record Third Quarter Results')
+        t = E.item_sections(['Item 5.02 Departure of Directors or Certain Officers; Election of Directors; Appointment of Certain Officers; '
+                             'Compensatory Arrangements of Certain Officers. On October 14, 2026, John Doe notified the Board of his decision to retire.'])
+        self.assertTrue(t['5.02'][0].startswith('On October 14, 2026'))
+
     def test_daily_index_and_collection(self):
         idx = ('8-K         EXAMPLE DEVICES INC                                          999999      20261016    edgar/data/999999/0000000000-26-000001.txt\n'
                '8-K         GoPro, Inc.                                                  1500435     20261016    edgar/data/1500435/0001500435-26-000064.txt\n'
@@ -122,6 +143,13 @@ class EightK(unittest.TestCase):
         n = len(c.calls)
         E.collect(c, root, {'backfill_days': 5, 'index_days_per_run': 10}, today=dt.date(2026, 10, 17))
         self.assertFalse(any(u.endswith('.txt') for u in c.calls[n:]))
+        st = json.loads((root / 'cache' / 'events8k' / 'state.json').read_text())
+        st['parser'] = E.PARSER - 1                                       # an older parser: everything on file is read again
+        (root / 'cache' / 'events8k' / 'state.json').write_text(json.dumps(st))
+        n = len(c.calls)
+        r = E.collect(c, root, {'backfill_days': 5, 'index_days_per_run': 10, 'batch': 10}, today=dt.date(2026, 10, 17))
+        self.assertEqual((sum(u.endswith('.txt') for u in c.calls[n:]), r['reparse_left']), (2, 0))
+        self.assertEqual(json.loads((root / 'cache' / 'events8k' / 'state.json').read_text())['parser'], E.PARSER)
         out = E.publish(root, root / 'market', today=dt.date(2026, 10, 17))
         d = json.loads((root / 'market' / 'events8k.json').read_text())
         self.assertEqual((out['rows'], d['rows'][0]['ticker'] in ('EXDV', 'GPRO')), (2, True))
