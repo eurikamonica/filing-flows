@@ -671,3 +671,19 @@ button.ev:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px;
   .rf-table td:nth-child(3) { grid-column: 1 / -1; padding-top: 0; }
   .rf-why { max-width: none; }
 }
+
+/* X Article composer (owner): copy the title, the text, then each chart */
+.art-modal { position: fixed; inset: 0; z-index: 60; background: rgba(20, 20, 18, .45); display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 16px; }
+.art-box { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); width: 100%; max-width: 760px; padding: 20px 22px; }
+.art-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.art-head h2 { margin: 4px 0 10px; font-size: 20px; line-height: 1.3; }
+.art-steps { margin: 6px 0 14px; padding-left: 20px; line-height: 1.9; }
+.art-steps li { margin: 4px 0; }
+.art-imgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 0 0 12px; }
+.art-img { margin: 0; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: var(--surface-2); }
+.art-img figcaption { font-size: 13px; line-height: 1.45; margin: 6px 0; color: var(--ink-2); }
+.art-thumb { min-height: 90px; display: flex; align-items: center; justify-content: center; background: var(--surface); border-radius: 6px; overflow: hidden; }
+.art-thumb img { width: 100%; height: auto; display: block; }
+.art-img .row { display: flex; gap: 6px; flex-wrap: wrap; }
+.art-prev summary { cursor: pointer; font-weight: 600; margin: 4px 0; }
+.art-prev .prose { max-height: 360px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 4px 14px; margin-top: 6px; }

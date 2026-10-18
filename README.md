@@ -220,6 +220,12 @@ the site.
 
 - **X thread on company pages** (per browser): under each quarter, the filing, what each image shows with **Save PNG**,
   every post with its role and **Copy**, and **Email me this thread**.
+- **✦ X Article** (company pages, and the daily report under *Send a daily report now*): the report as an X Article,
+  pasted by hand into x.com/compose/articles (X Premium): **Copy title**, **Copy article text** (headings, bold, lists
+  and links, with an `[Image n]` line where each chart goes), then **Copy image n** for each chart in turn (a browser
+  holds one image at a time), or **Copy text with images** for one paste when X's editor keeps pasted images. The daily
+  article has the six largest companies in full (chart, figures, analysis) and lists the rest. Nothing is posted from
+  the site.
 - **Settings** (saved in Supabase, table `owner_settings`, readable and changeable by the owner only):
   - *Email me this thread*: **straight to my inbox** (default; a queued request that `requests.yml` sends within a
     couple of minutes, both chart PNGs attached) or **open a GitHub issue** (the older way: press Create, and

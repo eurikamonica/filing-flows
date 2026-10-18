@@ -689,7 +689,7 @@
     if (prefs.get('owner', false) && !fy) {               // owner tool (see #owner): only for the verified owner
       ownerVerified().then(async (ok) => {
         const osets = ok ? await ownerSettings() : null;
-        const thread = ok && text.isConnected ? threadSection(q, p, site.repo, osets) : null;
+        const thread = ok && text.isConnected ? threadSection(q, p, site.repo, osets, c) : null;
         if (thread) text.after(thread);
       });
     }
@@ -2327,7 +2327,7 @@
   // Save buttons), every post with its role and a Copy button, and "Email me this thread"
   const ROLES = { headline: 'Headline and charts', business: 'What the company does', about: 'The company in its own words',
     analysis: 'Analysis', quote: 'From the filing', source: 'Source' };
-  function threadSection(q, p, repo, osets) {
+  function threadSection(q, p, repo, osets, c) {
     const posts = q.x_thread || [];
     if (!posts.length) return null;
     const ticker = (p.tickers || [])[0] || String(p.cik);
@@ -2358,7 +2358,8 @@
           <button class="btn small" type="button" data-img="${m}">Save PNG</button></div>`).join('')}</dd>
       </dl>
       <div class="thread-actions">${mail}<a class="btn" target="_blank" rel="noopener" href="${t(intent)}">Open post 1 in X</a>
-        <button class="btn" type="button" data-copy-all>Copy all</button></div>
+        <button class="btn" type="button" data-copy-all>Copy all</button>
+        ${c ? '<button class="btn" type="button" id="thread-article" title="This report as an X Article: copy the text, then each chart, and paste them into X’s editor">✦ X Article</button>' : ''}</div>
       ${mail ? `<p class="note-rule" id="thread-mail-note">${direct ? 'Sends the thread with both chart PNGs attached to the address you signed in with, usually within two minutes.'
         : '“Email me” opens GitHub with the request filled in: press Create and the thread arrives with both charts attached. Change this in Owner tools.'}</p>` : ''}
       <ol class="thread">${posts.map((x, i) => `<li>
@@ -2399,6 +2400,8 @@
         b.disabled = false;
       }
     }));
+    const art = $('#thread-article', sec);
+    if (art) art.addEventListener('click', () => articlePanel(articleCompany(c, q), `${S.dec(p.name)} ${S.dec(q.label)}`));
     const btn = $('#thread-mail', sec);
     if (btn) btn.addEventListener('click', () => {
       if (btn.disabled) return;
@@ -2425,6 +2428,204 @@
     setTimeout(() => bindDraft('post-draft'), 0);
     sec.appendChild(bar);
     return sec;
+  }
+
+  // ---------- X Article (owner): a company's report or a day's report as an X Article, copied and pasted by hand ----------
+  // X's article editor (x.com/compose/articles) takes rich text from the clipboard, but a browser can hold only one image
+  // at a time. So: one click copies the title, one the formatted text (headings, bold, lists, links), with an
+  // "[Image n]" line wherever a chart goes; then each chart is copied in turn and pasted over its marker. Nothing is
+  // posted from here: the article is written and published in X's own editor.
+  const artSite = () => `${location.origin}${location.pathname}`;
+  const artLine = (e, q) => {                       // "revenue $94.9B (+6% Y/Y), operating margin 31.2%, net earnings $23.4B"
+    const h = (q && q.headline) || {};
+    return [h.revenue != null ? `revenue ${money(h.revenue)}${h.yoy != null ? ` (${pct(h.yoy)} Y/Y)` : ''}` : '',
+      h.om != null ? `operating margin ${margin(h.om)}` : '', h.ni != null ? `net earnings ${money(h.ni)}` : ''].filter(Boolean).join(', ');
+  };
+  const artForm = (q) => (q.form === '8-K' ? 'earnings release (8-K)' : q.form);
+  const chartImage = (q, mode) => async () => {
+    await fontsReady();
+    return S.exportScene(S.layout(q, { compare: mode || null, decreases: state.decreases }), 'png');
+  };
+  // one company's quarter: the report the company page shows, in article form
+  function articleCompany(c, q) {
+    const p = c.profile, name = S.dec(p.name), tk = (p.tickers || [])[0] || '', who = tk ? `${name} ($${tk})` : name;
+    const B = [], images = [], url = `${artSite()}#c-${p.cik}-${q.end}`;
+    const img = (cap, make, file) => { images.push({ n: images.length + 1, cap, make, file }); B.push({ k: 'img', n: images.length, cap }); };
+    const h = q.headline || {};
+    B.push({ k: 'p', text: `${who} filed its ${artForm(q)} for ${S.dec(q.label)} (quarter ended ${date(q.end)}) on ${date(q.filed)}: ${artLine(null, q)}.`,
+      bold: `${who} filed its ${artForm(q)}` });
+    if (q.form === '8-K') B.push({ k: 'p', text: 'Preliminary: read from the earnings release; the 10-Q or 10-K replaces it when filed.', em: true });
+    img(`${S.dec(q.label)}: where the revenue went — costs, profit and operating cash flow`, chartImage(q),
+      `${tk || p.cik}-${S.dec(q.label)}-sankey.png`);
+    const intro = c.intro && (typeof c.intro === 'string' ? c.intro : c.intro.text);
+    if (intro) {
+      B.push({ k: 'h2', text: 'What the company does' });
+      const src = c.intro.source === '8-K' ? 'earnings release' : c.intro.source === '10-Q' ? '10-Q' : '10-K, Item 1';
+      B.push({ k: 'quote', text: S.dec(intro).slice(0, 600) + (S.dec(intro).length > 600 ? '…' : ''), src: `In its own words (${src})` });
+    }
+    if ((q.analysis || []).length) {
+      B.push({ k: 'h2', text: `The quarter` });
+      q.analysis.forEach((x) => B.push({ k: 'p', text: S.dec(x) }));
+    }
+    const cy = q.compare_y, cq = q.compare;
+    if (cy && (cy.bullets || []).length) {
+      B.push({ k: 'h2', text: `What changed vs ${S.dec(cy.vs)}` });
+      B.push({ k: 'ul', items: cy.bullets.map((x) => S.dec(x)) });
+      img(`${S.dec(q.label)} vs ${S.dec(cy.vs)}: the same flows; a dark strip inside a band is growth`, chartImage(q, 'y'),
+        `${tk || p.cik}-${S.dec(q.label)}-vs-${S.dec(cy.vs)}.png`);
+    } else if (cq && (cq.bullets || []).length) {
+      B.push({ k: 'h2', text: `What changed vs ${S.dec(cq.vs)}` });
+      B.push({ k: 'ul', items: cq.bullets.map((x) => S.dec(x)) });
+    }
+    B.push({ k: 'h2', text: 'Sources' });
+    B.push({ k: 'ul', links: [[url, 'Interactive chart on Filing Flows'], [q.index_url, 'The filing on SEC EDGAR'],
+      [q.doc_url, q.form === '8-K' ? 'The earnings release' : `The ${q.form}`]].filter((x) => x[0]) });
+    B.push({ k: 'p', em: true, text: 'Figures are read automatically from SEC filings by fixed rules and can contain errors: check the filing before relying on them. Not investment advice.' });
+    const title = `${name} ${S.dec(q.label)}: ${h.revenue != null ? money(h.revenue) + ' revenue' : 'the quarter'}${h.yoy != null ? `, ${pct(h.yoy)} Y/Y` : ''} — where it went`;
+    return { title: title.slice(0, 100), blocks: B, images };
+  }
+  // a day's filings: the owner's daily report as one article (the largest companies in full, the rest listed)
+  function articleDay(day, items, full) {
+    const B = [], images = [], long = new Date(day + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const shown = items.slice(0, full), rest = items.slice(full);
+    const tag = (e, c) => { const tk = e.ticker || ((c.profile.tickers || [])[0]) || ''; return tk ? `$${tk}` : S.dec(c.profile.name); };
+    B.push({ k: 'p', text: `${items.length} compan${items.length === 1 ? 'y' : 'ies'} filed quarterly results with the SEC on ${long}. Each chart shows where the revenue went: costs, profit and operating cash flow.` });
+    B.push({ k: 'h2', text: 'In this report' });
+    B.push({ k: 'ul', items: items.slice(0, 30).map(({ e, c, q }) => `${tag(e, c)} ${S.dec(c.profile.name)} · ${S.dec(q.label)}: ${artLine(e, q)}`)
+      .concat(items.length > 30 ? [`and ${items.length - 30} more on Filing Flows`] : []) });
+    shown.forEach(({ e, c, q }) => {
+      const name = S.dec(c.profile.name), url = `${artSite()}#c-${c.profile.cik}-${q.end}`;
+      B.push({ k: 'h2', text: `${name} (${tag(e, c).replace(/^\$/, '')}) · ${S.dec(q.label)}` });
+      B.push({ k: 'p', text: `${artForm(q)} filed ${date(q.filed)}: ${artLine(e, q)}.`, bold: `${artForm(q)} filed ${date(q.filed)}` });
+      images.push({ n: images.length + 1, cap: `${name} ${S.dec(q.label)}: where the revenue went`, make: chartImage(q),
+        file: `${e.ticker || c.profile.cik}-${S.dec(q.label)}-sankey.png` });
+      B.push({ k: 'img', n: images.length, cap: images[images.length - 1].cap });
+      (q.analysis || []).slice(0, 2).forEach((x) => B.push({ k: 'p', text: S.dec(x) }));
+      B.push({ k: 'ul', links: [[url, `${name} on Filing Flows: interactive chart and notes`]] });
+    });
+    if (rest.length) {
+      B.push({ k: 'h2', text: 'Also filed' });
+      B.push({ k: 'ul', items: rest.slice(0, 40).map(({ e, c, q }) => `${tag(e, c)} ${S.dec(c.profile.name)} · ${S.dec(q.label)}: ${artLine(e, q)}`) });
+    }
+    B.push({ k: 'p', em: true, text: `All charts: ${artSite()} — figures read automatically from SEC filings by fixed rules; check the filing before relying on them. Not investment advice.` });
+    const ticks = items.map(({ e, c }) => tag(e, c).replace(/^\$/, '')).slice(0, 4);
+    const title = `Earnings filed ${new Date(day + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${ticks.join(', ')}${items.length > 4 ? ` and ${items.length - 4} more` : ''}`;
+    return { title: title.slice(0, 100), blocks: B, images };
+  }
+  // the article as HTML (what the editor keeps) and as plain text (what it gets when it keeps nothing)
+  function articleHTML(a) {
+    const lk = ([u, l]) => `<a href="${t(u)}">${t(l)}</a>`;
+    return a.blocks.map((b) => {
+      if (b.k === 'h2') return `<h2>${t(b.text)}</h2>`;
+      if (b.k === 'img') return `<p><b>[Image ${b.n}]</b> <i>${t(b.cap)}</i></p>`;
+      if (b.k === 'quote') return `<blockquote>${t(b.text)}<br><i>${t(b.src)}</i></blockquote>`;
+      if (b.k === 'ul') return `<ul>${(b.links ? b.links.map((x) => `<li>${lk(x)}</li>`) : b.items.map((x) => `<li>${t(x)}</li>`)).join('')}</ul>`;
+      const body = b.bold && b.text.startsWith(b.bold) ? `<b>${t(b.bold)}</b>${t(b.text.slice(b.bold.length))}` : t(b.text);
+      return `<p>${b.em ? `<i>${body}</i>` : body}</p>`;
+    }).join('\n');
+  }
+  function articleText(a) {
+    return a.blocks.map((b) => {
+      if (b.k === 'h2') return b.text.toUpperCase();
+      if (b.k === 'img') return `[Image ${b.n}] ${b.cap}`;
+      if (b.k === 'quote') return `“${b.text}” — ${b.src}`;
+      if (b.k === 'ul') return (b.links ? b.links.map(([u, l]) => `• ${l}: ${u}`) : b.items.map((x) => `• ${x}`)).join('\n');
+      return b.text;
+    }).join('\n\n');
+  }
+  async function copyRich(html, text) {
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([text], { type: 'text/plain' }) })]);
+        return 'rich';
+      } catch (e) { /* plain text below */ }
+    }
+    const native = window.FilingFlowsApp;
+    if (native && typeof native.copyText === 'function') native.copyText(text);
+    else await navigator.clipboard.writeText(text);
+    return 'plain';
+  }
+  function articlePanel(a, what) {
+    let m = $('#art-modal');
+    if (m) m.remove();
+    m = document.createElement('div');
+    m.id = 'art-modal';
+    m.className = 'art-modal';
+    m.setAttribute('role', 'dialog');
+    m.setAttribute('aria-modal', 'true');
+    m.setAttribute('aria-labelledby', 'art-title');
+    const canImg = !!(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write);
+    m.innerHTML = `<div class="art-box">
+      <div class="art-head"><div><span class="eyebrow">X Article · ${t(what)}</span><h2 id="art-title">${t(a.title)}</h2></div>
+        <button type="button" class="btn small" data-art-close aria-label="Close">✕</button></div>
+      <ol class="art-steps">
+        <li><a class="btn small" href="https://x.com/compose/articles" target="_blank" rel="noopener">Open X Articles ↗</a> and press <b>Write</b> (X Premium).</li>
+        <li><button class="btn small primary" type="button" data-art="title">Copy title</button> paste it into the title field.</li>
+        <li><button class="btn small primary" type="button" data-art="text">Copy article text</button> click into the body and paste: headings, bold, lists and links come along, and
+          <b>[Image 1]</b>${a.images.length > 1 ? ` … <b>[Image ${a.images.length}]</b>` : ''} mark where the charts go.${a.images.length && canImg
+            ? ` <span class="muted">Or try <button class="btn small" type="button" data-art="all">Copy text with images</button>: one paste, if X’s editor keeps pasted images.</span>` : ''}</li>
+        <li>${a.images.length ? `For each image: select its <b>[Image n]</b> line in the editor, press <b>Copy image n</b> below, then paste (Ctrl/⌘ V).${canImg ? '' : ' This browser cannot copy images: use Save and drag the file in.'}` : 'No charts in this article.'}</li>
+      </ol>
+      <div class="art-imgs">${a.images.map((x) => `<figure class="art-img"><div class="art-thumb" data-thumb="${x.n}"><span class="muted">Drawing…</span></div>
+        <figcaption><b>Image ${x.n}</b> · ${t(x.cap)}</figcaption>
+        <div class="row"><button class="btn small primary" type="button" data-art-img="${x.n}" ${canImg ? '' : 'disabled'}>Copy image ${x.n}</button>
+          <button class="btn small" type="button" data-art-save="${x.n}">Save</button></div></figure>`).join('')}</div>
+      <details class="art-prev"><summary>Preview the text</summary><div class="prose">${articleHTML(a)}</div></details>
+      <p class="muted small" id="art-msg" role="status">Nothing is posted from here: you publish in X’s editor. Image 1 also works as the article’s cover.</p>
+    </div>`;
+    document.body.appendChild(m);
+    const say = (x) => { const e = $('#art-msg', m); if (e) e.textContent = x; };
+    const close = () => { m.remove(); document.removeEventListener('keydown', esc); };
+    const esc = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', esc);
+    m.addEventListener('click', (e) => { if (e.target === m) close(); });
+    $('[data-art-close]', m).addEventListener('click', close);
+    const blobs = {};
+    const blobOf = (x) => (blobs[x.n] = blobs[x.n] || x.make());
+    a.images.forEach((x) => blobOf(x).then((b) => {          // thumbnails (the same PNG the copy button puts on the clipboard)
+      const box = $(`[data-thumb="${x.n}"]`, m);
+      if (box) box.innerHTML = `<img alt="Image ${x.n}: ${t(x.cap)}" src="${URL.createObjectURL(b)}">`;
+    }).catch((err) => { const box = $(`[data-thumb="${x.n}"]`, m); if (box) box.textContent = `Could not draw: ${err.message}`; }));
+    $('[data-art="title"]', m).addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget;
+      try { await copyRich(t(a.title), a.title); btn.textContent = 'Title copied'; say('Title copied: paste it into the title field.'); }
+      catch (e) { say(`Could not copy: ${e.message}`); }
+    });
+    const all = $('[data-art="all"]', m);                // the text with the charts inside, in one paste (if X keeps them)
+    if (all) all.addEventListener('click', async () => {
+      const dataUrl = (b) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+      const html = Promise.all(a.images.map((x) => blobOf(x).then(dataUrl))).then((urls) => new Blob([articleHTML(a).replace(
+        /<p><b>\[Image (\d+)\]<\/b> <i>(.*?)<\/i><\/p>/g, (_, n, cap) => `<p><img src="${urls[+n - 1]}" alt="${cap}"></p><p><i>${cap}</i></p>`)], { type: 'text/html' }));
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': html, 'text/plain': new Blob([articleText(a)], { type: 'text/plain' }) })]);
+        all.textContent = 'Copied with images';
+        say('Copied with the charts inside: paste into the body. If X drops the images, paste them one by one below.');
+      } catch (e) { say(`Could not copy with images (${e.message}): use Copy article text and the image buttons.`); }
+    });
+    $('[data-art="text"]', m).addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget;
+      try {
+        const how = await copyRich(articleHTML(a), articleText(a));
+        btn.textContent = 'Text copied';
+        say(how === 'rich' ? 'Text copied with its formatting: paste it into the body, then add the images.'
+          : 'Copied as plain text (this browser does not copy formatting): headings are the lines in capitals.');
+      } catch (e) { say(`Could not copy: ${e.message}`); }
+    });
+    $$('[data-art-img]', m).forEach((b) => b.addEventListener('click', async () => {
+      const x = a.images[+b.dataset.artImg - 1];
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobOf(x) })]);   // the promise keeps Safari's gesture
+        b.textContent = `Image ${x.n} copied`;
+        say(`Image ${x.n} copied: select the [Image ${x.n}] line in the editor and paste.`);
+      } catch (e) { say(`Could not copy the image (${e.message}): use Save and drag the file in.`); }
+    }));
+    $$('[data-art-save]', m).forEach((b) => b.addEventListener('click', async () => {
+      const x = a.images[+b.dataset.artSave - 1];
+      try { const res = await saveBlob(await blobOf(x), x.file.replace(/[^A-Za-z0-9.-]+/g, '-')); say(res === 'saved' ? `Saved ${x.file}` : 'Download unavailable here'); }
+      catch (e) { say(`Could not save: ${e.message}`); }
+    }));
+    $('[data-art="title"]', m).focus();
   }
 
   // "what changed" bullets vs the previous quarter and vs the year-ago quarter
@@ -3352,7 +3553,7 @@
       <div class="days" role="radiogroup" aria-label="Filing date">${days.map((d) => `<button type="button" class="day${d.iso === pick ? ' on' : ''}"
           role="radio" aria-checked="${d.iso === pick}" data-day="${d.iso}" ${d.all ? '' : 'disabled'}>
           <b>${d.name}</b><span>${d.short}</span><span class="n">${d.all ? `${d.all} filing${d.all === 1 ? '' : 's'}${user ? ` · ${countWords(d)}` : ''}` : 'no filings'}</span></button>`).join('')}</div>
-      <div class="row"><button class="btn primary" type="button" id="day-send"></button><span class="muted small" id="day-msg" role="status"></span></div>
+      <div class="row"><button class="btn primary" type="button" id="day-send"></button>${owner ? '<button class="btn" type="button" id="day-article" title="This day’s report as an X Article: copy the text, then each chart, and paste them into X’s editor">✦ X Article</button>' : ''}<span class="muted small" id="day-msg" role="status"></span></div>
       <p class="muted small">Covers ${what}. Dates are filing dates on SEC EDGAR. ${auto}</p>`;
     const label = () => { const d = days.find((x) => x.iso === pick); $('#day-send', box).textContent = `✉ Email me the report for ${d.i < 2 ? d.name.toLowerCase() : d.long}`; };
     label();
@@ -3361,6 +3562,29 @@
       $$('[data-day]', box).forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); });
       label();
     }));
+    const artBtn = $('#day-article', box);
+    const msgBox = () => $('#day-msg', box);
+    if (artBtn) artBtn.addEventListener('click', async () => {
+      if (artBtn.disabled) return;
+      artBtn.disabled = true;
+      const say = (x) => { if (msgBox()) msgBox().textContent = x; };
+      say(await (async () => {
+      const day = pick, entries = dayEntries(ix, day).filter(scope).sort((x, y) => (y.revenue || 0) - (x.revenue || 0));
+      if (!entries.length) return 'No filing in your report on that day';
+      say(`Reading ${Math.min(60, entries.length)} compan${entries.length === 1 ? 'y' : 'ies'}…`);
+      const items = (await Promise.all(entries.slice(0, 60).map(async (e) => {
+        try {
+          const c = await getJSON(`c/${e.cik}.json`), qs = c.quarters.map(fcfView);
+          const q = qs.find((x) => x.end === e.end && x.form === e.form) || qs.find((x) => x.end === e.end);
+          return q ? { e, c, q } : null;
+        } catch (err) { return null; }
+      }))).filter(Boolean);
+      if (!items.length) return 'The companies of that day could not be read';
+      articlePanel(articleDay(day, items, osets && osets.article_full ? +osets.article_full : 6), `daily report ${day}`);
+      return '';
+      })().catch((e) => `Could not build the article: ${e && e.message}`));
+      artBtn.disabled = false;
+    });
     $('#day-send', box).addEventListener('click', (ev) => {
       const btn = ev.currentTarget, day = pick, msg = $('#day-msg', box);
       if (btn.disabled) return;

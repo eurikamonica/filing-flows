@@ -238,7 +238,7 @@ def _comparison_result(site):
 
 def check_accounts(b, base, fails, shot, site):
     """Sign in with a code, save alert settings, Follow on a company page, unsubscribe link."""
-    ctx = b.new_context(viewport={"width": 1280, "height": 900})
+    ctx = b.new_context(viewport={"width": 1280, "height": 900}, permissions=["clipboard-read", "clipboard-write"])
     ctx.add_init_script(FAKE_SUPABASE)
     ctx.route("**/data/c/9999901.json", _final_quarter)
     ctx.route("**/data/c/320193.json", _with_years)
@@ -730,6 +730,31 @@ def check_accounts(b, base, fails, shot, site):
     pg.click("#thread-mail")                       # straight to the inbox: a queued request, no GitHub page
     pg.wait_for_function("window.__ff.db.send_requests.some((r) => r.kind === 'thread' && r.cik === 320193)")
     shot(pg, "owner_thread.png", full_page=True)
+    # X Article: the report as formatted text with [Image n] markers, then each chart copied in turn (owner, by hand)
+    clip_html = "async () => { const it = (await navigator.clipboard.read())[0]; return it.types.includes('text/html') ? await (await it.getType('text/html')).text() : ''; }"
+    pg.click("#thread-article")
+    pg.wait_for_selector("#art-modal .art-thumb img")
+    prev = pg.text_content("#art-modal .art-prev .prose") or ""
+    if pg.locator("#art-modal [data-art-img]").count() != 2 or "[Image 1]" not in prev or "[Image 2]" not in prev or "Sources" not in prev:
+        fails.append(f"X article: two images and their markers expected; preview starts {prev[:160]!r}")
+    pg.click('#art-modal [data-art="title"]')
+    pg.click('#art-modal [data-art="text"]')
+    pg.wait_for_function("document.querySelector('#art-msg').textContent.startsWith('Text copied')")
+    html = pg.evaluate(clip_html)
+    if "<h2>The quarter</h2>" not in html or "<b>[Image 1]</b>" not in html or "<a href=" not in html:
+        fails.append(f"X article: the copied text should keep headings, image markers and links: {html[:200]!r}")
+    pg.click('#art-modal [data-art="all"]')
+    pg.wait_for_function("document.querySelector('#art-msg').textContent.includes('Copied with the charts inside')")
+    if pg.evaluate(clip_html).count('<img src="data:image/png;base64,') != 2:
+        fails.append("X article: 'Copy text with images' should carry both charts inside the text")
+    pg.click('#art-modal [data-art-img="2"]')
+    pg.wait_for_function("document.querySelector('#art-msg').textContent.includes('Image 2 copied')")
+    if "image/png" not in pg.evaluate("async () => (await navigator.clipboard.read())[0].types"):
+        fails.append("X article: Copy image did not put a PNG on the clipboard")
+    shot(pg, "owner_article.png")
+    pg.click("#art-modal [data-art-close]")
+    if pg.locator("#art-modal").count():
+        fails.append("X article: the panel did not close")
     pg.goto(base + "#owner")
     pg.wait_for_selector("#owner-form")
     pg.check('input[name="thread-mail"][value="github"]')
@@ -750,6 +775,15 @@ def check_accounts(b, base, fails, shot, site):
     pg.wait_for_function("document.querySelector('#daily') && document.querySelector('#daily').textContent.includes('your full report')")
     if "all in your report" not in pg.inner_text("#daily .day.on"):
         fails.append(f"owner tools: the day picker should count every filing: {pg.inner_text('#daily .day.on')!r}")
+    pg.click("#day-article")                                      # the day's report as an X Article
+    pg.wait_for_selector("#art-modal .art-thumb img")
+    day_prev = pg.text_content("#art-modal .art-prev .prose") or ""
+    if pg.locator("#art-modal [data-art-img]").count() < 2 or "In this report" not in day_prev or "[Image 2]" not in day_prev:
+        fails.append(f"X article (daily): every company in full needs its chart; preview starts {day_prev[:160]!r}")
+    if not pg.inner_text("#art-title").startswith("Earnings filed "):
+        fails.append(f"X article (daily): title {pg.inner_text('#art-title')!r}")
+    shot(pg, "owner_article_day.png")
+    pg.click("#art-modal [data-art-close]")
     shot(pg, "owner_settings.png", full_page=True)
     # the X post options: config/x.json's values first (site.json "x"), then the owner's own, kept in owner_settings.x_post
     if not pg.locator('input[name="x-links"][value="off"]').is_checked() or "#earnings #semiconductors" not in pg.inner_text("#x-example"):
