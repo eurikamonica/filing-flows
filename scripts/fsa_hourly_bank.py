@@ -167,11 +167,38 @@ def from_reports(filename):
     return out,warnings
 
 def error_report(filename):
-    if not filename or not Path(filename).is_file():return {"seen":0,"wrong":0,"by_task":{}}
-    doc=json.loads(Path(filename).read_text(encoding="utf-8"));all_rows=[]
-    for v in doc.get("protocols",{}).values():all_rows+=v.get("examples",v.get("details",[]))
-    failed=Counter(x.get("task","unknown") for x in all_rows if not x.get("correct",True))
-    return {"seen":len(all_rows),"wrong":sum(failed.values()),"by_task":dict(failed)}
+    if not filename or not Path(filename).is_file():
+        return {"seen":0,"wrong":0,"by_task":{},"by_cause":{}}
+    data=json.loads(Path(filename).read_text(encoding="utf-8"))
+    records=[]
+    for section in data.get("protocols",{}).values():
+        records+=section.get("examples",section.get("details",[]))
+    failed=Counter();causes=Counter()
+    for row in records:
+        if row.get("correct",True):continue
+        failed[row.get("task","unknown")]+=1
+        category="wrong_value_or_contract"
+        raw=row.get("output","")
+        try:
+            actual=json.loads(raw) if isinstance(raw,str) else raw
+            gold=row.get("expected",{})
+            if not isinstance(actual,dict):
+                category="invalid_json_shape"
+            else:
+                for key,value in gold.items():
+                    predicted=actual.get(key)
+                    if (type(value) in (int,float) and type(predicted) in (int,float)
+                            and math.isfinite(float(value)) and math.isfinite(float(predicted))):
+                        if value and math.isclose(predicted,-value,abs_tol=1e-8):
+                            category="sign_error"
+                        elif value and (math.isclose(predicted,100*value,rel_tol=1e-5) or
+                                        math.isclose(predicted/100,value,rel_tol=1e-5)):
+                            category="percent_or_unit_error"
+        except (TypeError,ValueError,KeyError):
+            category="invalid_json"
+        causes[category]+=1
+    return {"seen":len(records),"wrong":sum(failed.values()),
+            "by_task":dict(failed),"by_cause":dict(causes)}
 
 def main():
     a=argparse.ArgumentParser()
@@ -192,6 +219,21 @@ def main():
         if item["id"] not in seen:
             seen.add(item["id"]);item["generated_utc"]=hour.isoformat();emitted.append(item)
     errors=error_report(p.evaluation)
+    hourly_focus=[
+        ("Inventory costing", "New FIFO/LIFO/weighted-average journal scenarios"),
+        ("Revenue recognition", "Deferred revenue, refunds and multi-period services"),
+        ("Statement reconciliation", "Linked working capital and cash-flow exercises"),
+        ("Debt and interest", "Accrued interest, discount and maturity classification"),
+        ("Equity and EPS", "Retained earnings and diluted EPS calculation challenges"),
+        ("Tax and deferred tax", "Separate current tax, deferred tax assets and liabilities"),
+        ("Operating vs financing", "Nissim-Penman line classification and edge cases"),
+        ("SEC amendments", "Cross-filing revised figures with exact accession dates"),
+        ("Industry segmentation", "Verify segment revenue and eliminations from 10-K notes"),
+        ("Research evidence", "Differentiate historical facts, forecasts and opinions"),
+        ("Failure analysis", "Design sign and scaling adversarial exercises"),
+        ("Insufficient evidence", "Null output and abstention on partial reporting"),
+    ]
+    focus_title,focus_action=hourly_focus[int(hour.timestamp()//3600)%len(hourly_focus)]
     tasks=[
       {"priority":"P0","title":"Historical replay","next":"Keep >=30% reviewed earlier exercises; check regressions"},
       {"priority":"P0","title":"FSA journal entries and three statements","next":"Verify debits=credits, BS and cash bridge"},
@@ -199,7 +241,9 @@ def main():
       {"priority":"P1","title":"Wrong-answer mining","next":"Prioritize sign, scale, ratio and unit errors","weak_tasks":errors["by_task"]},
       {"priority":"P2","title":"Reasoning and abstention","next":"Require stepwise verification and unsupported-value nulls"},
       {"priority":"P2","title":"Larger model distillation","next":"Queue teacher answers; require independent gold verification"},
-      {"priority":"P1","title":"Research rights gate","next":"Human-approved licensed/public-domain/owned factual excerpts only"}]
+      {"priority":"P1","title":"Research rights gate","next":"Human-approved licensed/public-domain/owned factual excerpts only"},
+      {"priority":"P0","title":"New hourly experiment: "+focus_title,"next":focus_action,
+       "task_id":hashlib.sha256((hour.isoformat()+focus_title).encode()).hexdigest()[:16]}]
     counts=dict(Counter(r["task"] for r in emitted))
     bank={"hour_utc":hour.isoformat(),"new_questions":len(emitted),"task_counts":counts,
           "training_eligible":sum(x["training_eligible"] for x in emitted),
