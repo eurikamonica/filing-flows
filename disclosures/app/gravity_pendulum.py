@@ -543,3 +543,79 @@ if __name__ == '__main__':
     ap.add_argument('--test-from', default='2012-01-01')
     a = ap.parse_args()
     run(a.public, a.out, a.test_from)
+
+
+# ------------------------------------------------------------------ macro tide on the planets (experiment + site option)
+MACRO_TIDE = (('y10', 'diff'), ('curve', 'diff'), ('credit', 'diff'), ('vix', 'diff'), ('usd', 'log'), ('oil', 'log'))
+
+
+def macro_weekly(macro_doc, W):
+    """Macro levels on the gravity grid (index 0 = 2000-01-07), NaN before the series' first week."""
+    w = macro_doc['weekly']; i0 = w['grid_index0']; out = {}
+    for k, how in MACRO_TIDE:
+        a = w['data'].get(k)
+        if a is None:
+            continue
+        v = np.full(W, np.nan)
+        arr = np.array([np.nan if x is None else x for x in a], float)[:max(0, W - i0)]
+        v[i0:i0 + len(arr)] = arr
+        out[k] = (np.log(np.where(v > 0, v, np.nan)) if how == 'log' else v)
+    return out
+
+
+def macro_tide(B, M, win=156, min_obs=104):
+    """For every sector s and macro factor j: the sector's past-only rolling beta of its weekly return vs SPY on the
+    factor's weekly change, and the tide  beta_sj(t) x (factor change over the last h weeks)  — what the recent macro
+    move implies for the sector given how it has reacted to such moves before."""
+    y = B['y']; ry = np.full_like(y, np.nan); ry[:, 1:] = y[:, 1:] - y[:, :-1]
+    out = {}
+    for k, lvl in M.items():
+        d = np.full(len(lvl), np.nan); d[1:] = lvl[1:] - lvl[:-1]
+        out[k] = (lvl, rolling_beta(ry, d, win=win, min_obs=min_obs))
+    return out
+
+
+def tide_features(T, t, h):
+    X = {}
+    for k, (lvl, beta) in T.items():
+        if t - h < 0:
+            continue
+        chg = lvl[t] - lvl[t - h]
+        X['tide_' + k] = beta[:, t] * chg if np.isfinite(chg) else np.full(beta.shape[0], np.nan)
+    return X
+
+
+def planet_rows(B, D, h, T=None, start=260):
+    y, PL = B['y'], B['plinks']; rows = []
+    for t in range(start, y.shape[1] - h, h):
+        tgt = y[:, t + h] - y[:, t]; v = y[:, t] - y[:, t - h]
+        ok = np.isfinite(tgt) & np.isfinite(v) & np.isfinite(PL[:, t]).all(-1)
+        X = {'v': v, **{f'k{j + 1}': PL[:, t, j] for j in range(4)}}
+        if T is not None:
+            tf = tide_features(T, t, h)
+            if len(tf) < len(T):
+                continue
+            X.update(tf)
+        if ok.sum() >= 6:
+            rows.append({'t': t, 'idx': np.nonzero(ok)[0], 'y': tgt[ok], 'raw': tgt[ok], 'X': {k: a[ok] for k, a in X.items()}, 'calm': True})
+    return rows
+
+
+def macro_planet_test(public, macro_path, out_path=None, test_from='2012-01-01', horizons=(1, 4, 13)):
+    """Walk-forward: the planet layer with and without the macro tide, same weeks, same ridge. Kept only if it adds."""
+    D = load(public); B = build(D)
+    M = macro_weekly(json.loads(Path(macro_path).read_text(encoding='utf-8')), len(D['days']))
+    T = macro_tide(B, M)
+    tf = int(np.searchsorted(D['days'], np.datetime64(test_from)))
+    base_cols = ['v', 'k1', 'k2', 'k3', 'k4']; tide_cols = ['tide_' + k for k in T]
+    res = {}
+    for h in horizons:
+        rows = planet_rows(B, D, h, T)                     # the same weeks for both models (tide needs its history)
+        a = walk_forward(rows, base_cols, h, tf, ridge=50.0); b = walk_forward(rows, base_cols + tide_cols, h, tf, ridge=50.0)
+        diff = [x['ic'] - y_['ic'] for x, y_ in zip(b, a)]
+        res[f'h{h}'] = {'base': score(a, h), 'with_macro_tide': score(b, h), 'ic_difference': block_ci(diff),
+                        'fama_macbeth_tide': fama_macbeth(rows, base_cols + tide_cols)}
+        print(f'h={h}: base IC {res[f"h{h}"]["base"]["ic"]} | +tide IC {res[f"h{h}"]["with_macro_tide"]["ic"]} | diff {res[f"h{h}"]["ic_difference"]}', flush=True)
+    if out_path:
+        Path(out_path).write_text(json.dumps(res, indent=1, default=lambda o: None if isinstance(o, float) and not np.isfinite(o) else float(o) if isinstance(o, (np.floating,)) else str(o)), encoding='utf-8')
+    return res

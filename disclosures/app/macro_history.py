@@ -318,10 +318,10 @@ def clock_forecast(X, first_test, min_train=48, ridge=1.0):
         yhat = z @ W
         past = np.array([e for e in errs if e[0] < t]).reshape(-1, 3)
         if len(past) >= 24:
-            lo = np.percentile(past[:, 1:], 10, axis=0); hi = np.percentile(past[:, 1:], 90, axis=0)
+            lo = np.percentile(past[:, 1:], 6.5, axis=0); hi = np.percentile(past[:, 1:], 93.5, axis=0)   # ~80% for the box (two axes)
         else:
             res = Y[ok] - An @ W
-            lo = np.percentile(res, 10, axis=0); hi = np.percentile(res, 90, axis=0)
+            lo = np.percentile(res, 6.5, axis=0); hi = np.percentile(res, 93.5, axis=0)
         rows.append([t, float(yhat[0]), float(yhat[1]), float(yhat[0] + lo[0]), float(yhat[0] + hi[0]),
                      float(yhat[1] + lo[1]), float(yhat[1] + hi[1])])
         if t + 1 < T and np.isfinite(X[t + 1, 2:4]).all():

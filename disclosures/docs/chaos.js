@@ -10,8 +10,36 @@
      the forecast point is mapped back to the close whose point is nearest.
    · Solar 3-D / 4-D: the solar system with a third coordinate as depth (4-D: time played) or time as depth (3-D: every
      orbit becomes a spiral along the time axis); in a sector every company keeps its trail. */
-const FC_MODES=[['','Off'],['next','Next step — analogues (arrows + price)'],['check','Next step + what happened (backtest)']];
-const fcOn=()=>state.rfc==='next'||state.rfc==='check';
+const FC_MODES=[['','Off'],['next','Next step — analogues (arrows + price)'],['track','Last forecast (dashed range) + next forecast + error'],['check','Next step + what happened (backtest)']];
+const fcOn=()=>state.rfc==='next'||state.rfc==='check'||state.rfc==='track';
+const fcTrack=()=>state.rfc==='track';
+/* "track": the forecast made one period earlier for the period shown — its 80% range as a dashed outline in the
+   last-forecast colour, a hollow diamond at its centre and the error line to where the dot actually is (green: inside the
+   range, red: outside); the forecast for the next period as a solid arrow ending in a filled, undashed range. */
+function fcPrevSvg(q,rx,ry,a,tipRows,label){
+ const inside=rx>0&&ry>0?((a[0]-q[0])/rx)**2+((a[1]-q[1])/ry)**2<=1:Math.hypot(a[0]-q[0],a[1]-q[1])<3;
+ const d=4.2,dm=`M${q[0].toFixed(1)},${(q[1]-d).toFixed(1)} l${d},${d} l${-d},${d} l${-d},${-d} z`;
+ let s=`<g data-tip="${tip(tipRows.concat([[inside?'inside':'outside','the 80% range of that forecast']]))}" tabindex="-1" class="mk-hit">`;
+ if(rx>0&&ry>0)s+=`<ellipse class="fc-prev" cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" rx="${Math.max(2,rx).toFixed(1)}" ry="${Math.max(2,ry).toFixed(1)}"/>`;
+ s+=`<line class="fc-err ${inside?'fc-err-in':'fc-err-out'}" x1="${q[0].toFixed(1)}" y1="${q[1].toFixed(1)}" x2="${a[0].toFixed(1)}" y2="${a[1].toFixed(1)}"/><path class="fc-prev-dot" d="${dm}"/>`;
+ if(label)s+=`<text class="fc-err-label mk-halo" x="${((q[0]+a[0])/2+6).toFixed(1)}" y="${((q[1]+a[1])/2-4).toFixed(1)}">${esc(label)}</text>`;
+ return s+'</g>';
+}
+const fcNextCone=(q,rx,ry,col)=>rx>0&&ry>0?`<ellipse class="fc-next-cone" cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" rx="${Math.max(2,rx).toFixed(1)}" ry="${Math.max(2,ry).toFixed(1)}" style="fill:${col}"/>`:'';
+function fcErrLabel(o,ent,prev,cal,rowp){           // short error label: the price error when there is a price, else ✓ / ✗
+ const r=fcRow(o,ent,cal);
+ if(rowp[5]!=null&&r&&r[4]!=null){const e=100*(r[4]/rowp[5]-1);return 'err '+(e>=0?'+':'−')+fmt(Math.abs(e),1)+'%'}
+ return '';
+}
+function fcPrevTip(o,ent,name,prev,cal,rowp){       // what the last forecast said, what happened, the error
+ const out=[[name+' · forecast made '+qlabel(prev),'for '+qlabel(cal)]];
+ for(const v of [o.x,o.y]){if(!fcHas(o,v)||v.key==='__time')continue;const j=o.fc._prep.vi[v.key],p=ent.by.get(cal);
+  const f=rowp[1][j],h=rowp[2]&&rowp[2][j],a=p?p[v.key]:null;
+  out.push([vfmt(v,f)+(h!=null?' ± '+vfmt({...v,centred:false},h).replace(/^−/,''):'')+' → '+vfmt(v,a)+(a!=null&&f!=null?'  (error '+vfmt({...v,centred:true},a-f)+')':''),v.label+': forecast → actual'])}
+ const r=fcRow(o,ent,cal);
+ if(rowp[5]!=null&&r&&r[4]!=null)out.push(['$'+fmt(rowp[5],2)+' → $'+fmt(r[4],2)+'  (error '+(r[4]>=rowp[5]?'+':'−')+fmt(Math.abs(100*(r[4]/rowp[5]-1)),1)+'%)',`price forecast → actual${rowp[6]!=null?` · 80% range $${fmt(rowp[6],2)}–$${fmt(rowp[7],2)}`:''}`]);
+ return out;
+}
 
 function fcLoad(P){                                     // the forecast file for this frequency, indexed once
  const name=P&&P.monthly?'history/chaos-forecast-monthly':'history/chaos-forecast';
@@ -71,17 +99,22 @@ function fcTipRows(o,ent,name,cal,row){
 function fcClockLayer(o,cal,px,L){
  if(!fcOn()||!o.fc)return '';
  if(!fcHas(o,o.x)||!fcHas(o,o.y))return '';
- let s='';const check=state.rfc==='check';
- const one=(ent,name,col,w,cone)=>{const row=fcRow(o,ent,cal);if(!row)return;
-  const a=val(o,ent,o.x,cal),b=val(o,ent,o.y,cal),na=fcNext(o,ent,o.x,cal,row),nb=fcNext(o,ent,o.y,cal,row);
-  if(a==null||b==null||na==null||nb==null)return;
+ let s='';const check=state.rfc==='check',track=fcTrack(),i0=o.qi.get(cal),prev=i0>0?o.Q[i0-1]:null;
+ const one=(ent,name,col,w,cone)=>{const row=fcRow(o,ent,cal);
+  const a=val(o,ent,o.x,cal),b=val(o,ent,o.y,cal);if(a==null||b==null)return;
+  if(track&&cone&&prev){const rp=fcRow(o,ent,prev),pa=rp&&fcNext(o,ent,o.x,prev,rp),pb=rp&&fcNext(o,ent,o.y,prev,rp);
+   if(pa!=null&&pb!=null){const hx=fcHalf(o,ent,o.x,prev,rp),hy=fcHalf(o,ent,o.y,prev,rp),q0=px(pa,pb),e0=px(pa+hx,pb+hy),ac=px(a,b);
+    s+=fcPrevSvg(q0,Math.abs(e0[0]-q0[0]),Math.abs(e0[1]-q0[1]),ac,fcPrevTip(o,ent,name,prev,cal,rp),w>=2?fcErrLabel(o,ent,prev,cal,rp):'')}}
+  if(!row)return;
+  const na=fcNext(o,ent,o.x,cal,row),nb=fcNext(o,ent,o.y,cal,row);
+  if(na==null||nb==null)return;
   const p=px(a,b),q=px(na,nb);
   if(cone){const hx=fcHalf(o,ent,o.x,cal,row),hy=fcHalf(o,ent,o.y,cal,row),e1=px(na+hx,nb+hy);
-   s+=`<ellipse class="fc-cone" cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" rx="${Math.abs(e1[0]-q[0]).toFixed(1)}" ry="${Math.abs(e1[1]-q[1]).toFixed(1)}" style="stroke:${col}"/>`}
+   s+=track?fcNextCone(q,Math.abs(e1[0]-q[0]),Math.abs(e1[1]-q[1]),col):`<ellipse class="fc-cone" cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" rx="${Math.abs(e1[0]-q[0]).toFixed(1)}" ry="${Math.abs(e1[1]-q[1]).toFixed(1)}" style="stroke:${col}"/>`}
   if(check){const xa=fcActual(o,ent,o.x,cal),ya=fcActual(o,ent,o.y,cal);if(xa!=null&&ya!=null)s+=fcCheckSvg(p,px(xa,ya),col)}
   s+=`<g data-tip="${tip(fcTipRows(o,ent,name,cal,row))}" tabindex="-1" class="mk-hit">${fcArrowSvg(p,q,col,w)}</g>`};
  for(const c of L.cloud)if(!L.picks.some(t=>t.ent===c))one(c,c.t,'var(--flow-dot)',.9,false);
- for(const t of L.suns)one(t.ent,t.name,'var(--muted)',1.4,false);
+ for(const t of L.suns)one(t.ent,t.name,'var(--muted)',1.4,track);
  if(L.market)one(L.market.ent,'Market','var(--rot-sun)',2,true);
  if(L.sun)one(L.sun.ent,L.sun.name,'var(--rot-1)',2,true);
  L.picks.forEach(t=>one(t.ent,t.name,t.color,2.2,true));
@@ -93,10 +126,15 @@ function fcSolarMarket(o,cal,posXY){                   // posXY(sunX, sunY, mkX,
  if(!fcOn()||!o.fc||!fcHas(o,o.x)||!fcHas(o,o.y))return '';
  const M=o.P.market,mr=fcRow(o,M,cal);if(!mr)return '';
  const mx=fcNext(o,M,o.x,cal,mr),my=fcNext(o,M,o.y,cal,mr),mx0=val(o,M,o.x,cal),my0=val(o,M,o.y,cal);if(mx==null||my==null)return '';
- let s='';
+ let s='';const track=fcTrack(),i0=o.qi.get(cal),prev=i0>0?o.Q[i0-1]:null,mrp=prev&&fcRow(o,M,prev);
+ const mpx=mrp&&fcNext(o,M,o.x,prev,mrp),mpy=mrp&&fcNext(o,M,o.y,prev,mrp);
  for(const sn of Object.values(o.P.suns)){const r=fcRow(o,sn,cal);if(!r)continue;
   const a=val(o,sn,o.x,cal),b=val(o,sn,o.y,cal),na=fcNext(o,sn,o.x,cal,r),nb=fcNext(o,sn,o.y,cal,r);if(a==null||b==null||na==null||nb==null)continue;
   const p=posXY(a,b,mx0,my0),q=posXY(na,nb,mx,my);if(!p||!q)continue;
+  if(track){const rp=fcRow(o,sn,prev),pa=rp&&fcNext(o,sn,o.x,prev,rp),pb=rp&&fcNext(o,sn,o.y,prev,rp);
+   if(pa!=null&&pb!=null&&mpx!=null&&mpy!=null){const hx=fcHalf(o,sn,o.x,prev,rp),hy=fcHalf(o,sn,o.y,prev,rp),q0=posXY(pa,pb,mpx,mpy),e0=posXY(pa+hx,pb+hy,mpx,mpy);
+    s+=fcPrevSvg(q0,Math.abs(e0[0]-q0[0]),Math.abs(e0[1]-q0[1]),p,fcPrevTip(o,sn,sn.name,prev,cal,rp),'')}
+   const hx=fcHalf(o,sn,o.x,cal,r),hy=fcHalf(o,sn,o.y,cal,r),e1=posXY(na+hx,nb+hy,mx,my);s+=fcNextCone(q,Math.abs(e1[0]-q[0]),Math.abs(e1[1]-q[1]),'var(--rot-sun)')}
   if(state.rfc==='check'){const xa=fcActual(o,sn,o.x,cal),ya=fcActual(o,sn,o.y,cal),ma=fcActual(o,M,o.x,cal),mb=fcActual(o,M,o.y,cal);if(xa!=null&&ya!=null&&ma!=null&&mb!=null){const qa=posXY(xa,ya,ma,mb);if(qa)s+=fcCheckSvg(p,qa,'var(--rot-sun)')}}
   s+=`<g data-tip="${tip(fcTipRows(o,sn,sn.name,cal,r))}" tabindex="-1" class="mk-hit">${fcArrowSvg(p,q,'var(--rot-sun)',1.8)}</g>`}
  return s;
@@ -105,11 +143,17 @@ function fcSolarSector(o,cal,sun,posXY){              // posXY(cx, cy, sunX, sun
  if(!fcOn()||!o.fc||!fcHas(o,o.x)||!fcHas(o,o.y))return '';
  const sr=fcRow(o,sun,cal);if(!sr)return '';
  const sx=fcNext(o,sun,o.x,cal,sr),sy=fcNext(o,sun,o.y,cal,sr),sx0=val(o,sun,o.x,cal),sy0=val(o,sun,o.y,cal);if(sx==null||sy==null)return '';
- let s='';const check=state.rfc==='check';
- for(const c of rotScope(o.P,o.sec)){const r=fcRow(o,c,cal);if(!r)continue;
+ let s='';const check=state.rfc==='check',track=fcTrack(),i0=o.qi.get(cal),prev=i0>0?o.Q[i0-1]:null,srp=prev&&fcRow(o,sun,prev);
+ const spx=srp&&fcNext(o,sun,o.x,prev,srp),spy=srp&&fcNext(o,sun,o.y,prev,srp);
+ const cos=rotScope(o.P,o.sec),big=new Set(cos.slice().sort((a,b)=>((b.by.get(cal)||{}).rev||0)-((a.by.get(cal)||{}).rev||0)).slice(0,6));
+ for(const c of cos){const r=fcRow(o,c,cal);if(!r)continue;
   const a=val(o,c,o.x,cal),b=val(o,c,o.y,cal),na=fcNext(o,c,o.x,cal,r),nb=fcNext(o,c,o.y,cal,r);if(a==null||b==null||na==null||nb==null)continue;
   const p=posXY(a,b,sx0,sy0),q=posXY(na,nb,sx,sy);if(!p||!q)continue;
   const pi=o.picks.indexOf(c),col=pi>=0?ROT_SERIES[pi]:'var(--ink-2)';
+  if(track&&(pi>=0||(!o.picks.length&&big.has(c)))){const rp=fcRow(o,c,prev),pa=rp&&fcNext(o,c,o.x,prev,rp),pb=rp&&fcNext(o,c,o.y,prev,rp);
+   if(pa!=null&&pb!=null&&spx!=null&&spy!=null){const hx=fcHalf(o,c,o.x,prev,rp),hy=fcHalf(o,c,o.y,prev,rp),q0=posXY(pa,pb,spx,spy),e0=posXY(pa+hx,pb+hy,spx,spy);
+    s+=fcPrevSvg(q0,Math.abs(e0[0]-q0[0]),Math.abs(e0[1]-q0[1]),p,fcPrevTip(o,c,c.t,prev,cal,rp),pi>=0?fcErrLabel(o,c,prev,cal,rp):'')}
+   const hx=fcHalf(o,c,o.x,cal,r),hy=fcHalf(o,c,o.y,cal,r),e1=posXY(na+hx,nb+hy,sx,sy);s+=fcNextCone(q,Math.abs(e1[0]-q[0]),Math.abs(e1[1]-q[1]),col)}
   if(check){const xa=fcActual(o,c,o.x,cal),ya=fcActual(o,c,o.y,cal),ua=fcActual(o,sun,o.x,cal),va=fcActual(o,sun,o.y,cal);if(xa!=null&&ya!=null&&ua!=null&&va!=null){const qa=posXY(xa,ya,ua,va);if(qa)s+=fcCheckSvg(p,qa,col)}}
   s+=`<g data-tip="${tip(fcTipRows(o,c,c.t,cal,r))}" tabindex="-1" class="mk-hit">${fcArrowSvg(p,q,col,pi>=0?2.2:1.1)}</g>`}
  return s;
@@ -247,24 +291,86 @@ function fcNotice(o){
 }
 function fcTable(o){
  if(!fcOn()||!o.fc)return '';
- const {P,Q}=o,cal=Q[state.rf],next=Q[state.rf+1],u=P.monthly?'month':'quarter',check=state.rfc==='check'&&next;
+ const {P,Q}=o,cal=Q[state.rf],next=Q[state.rf+1],u=P.monthly?'month':'quarter',check=state.rfc==='check'&&next,prev=state.rf>0?Q[state.rf-1]:null,track=fcTrack()&&prev;
  // at the live origin a company that has not filed yet has no dot, but its price coordinates (from monthly closes) were forecast
  const rows=rotScope(P,o.sec).map(c=>({c,r:fcRow(o,c,cal),p:c.by.get(cal)||{},pn:next?c.by.get(next):null})).filter(a=>a.r);
  const j=o.fc._prep.vi;
  const ex=[];
  const body=rows.sort((a,b)=>((b.r[5]||0)/(b.r[4]||1))-((a.r[5]||0)/(a.r[4]||1))).map(({c,r,p,pn})=>{
   const ret=r[4]&&r[5]!=null?100*(r[5]/r[4]-1):null,act=check&&pn&&pn.ret!=null?pn.ret:null;
+  const rp=track?fcRow(o,c,prev):null,pe=rp&&rp[5]!=null&&r[4]!=null?100*(r[4]/rp[5]-1):null,pin=rp&&rp[6]!=null&&r[4]!=null?r[4]>=rp[6]&&r[4]<=rp[7]:null;
   const dx=fcHas(o,o.x)&&o.x.key!=='__time'?r[1][j[o.x.key]]:null,dy=fcHas(o,o.y)&&o.y.key!=='__time'?r[1][j[o.y.key]]:null;
   ex.push({ticker:c.t,origin:cal,target:next||o.fc.targets[o.fc.origins.indexOf(cal)]||'',close:r[4],price_forecast:r[5],price_lo80:r[6],price_hi80:r[7],
-   [o.x.key+'_next']:dx,[o.y.key+'_next']:dy,local_divergence:r[3],price_model:r[8]===1?'gravity':'analogues',...(check?{actual_return_pct:act}:{})});
+   [o.x.key+'_next']:dx,[o.y.key+'_next']:dy,local_divergence:r[3],price_model:r[8]===1?'gravity':'analogues',...(check?{actual_return_pct:act}:{}),
+   ...(track?{last_forecast_made:prev,last_forecast_price:rp?rp[5]:null,last_lo80:rp?rp[6]:null,last_hi80:rp?rp[7]:null,actual_close:r[4],last_error_pct:pe,last_inside80:pin}:{})});
   return [coLink(c),r[4]!=null?'$'+fmt(r[4],2):'—',r[5]!=null?'$'+fmt(r[5],2)+(r[8]===1?'':' <span class="muted" title="price from the analogues (the gravity model does not cover this company)">ᴬ</span>'):'—',ret==null?'—':`<span class="${ret>=0?'positive':'negative'}">${(ret>=0?'+':'−')+fmt(Math.abs(ret),1)}%</span>`,
-   r[6]!=null?'$'+fmt(r[6],2)+' – $'+fmt(r[7],2):'—',dx==null?'—':(p[o.x.key]==null?'':vfmt(o.x,p[o.x.key])+' → ')+vfmt(o.x,dx),dy==null?'—':(p[o.y.key]==null?'':vfmt(o.y,p[o.y.key])+' → ')+vfmt(o.y,dy),r[3]==null?'—':fmt(Math.abs(r[3])<.005?0:r[3],2),
-   ...(check?[act==null?'—':`<span class="${act>=0?'positive':'negative'}">${(act>=0?'+':'−')+fmt(Math.abs(act),1)}%</span>${ret!=null&&act!=null?(Math.sign(ret)===Math.sign(act)?' ✓':' ✗'):''}`]:[])]});
+   r[6]!=null?'$'+fmt(r[6],2)+' – $'+fmt(r[7],2):'—',dx==null?'—':(p[o.x.key]==null?'':vfmt(o.x,p[o.x.key])+' → ')+vfmt(o.x,dx),dy==null?'—':(p[o.y.key]==null?'':vfmt(o.y,p[o.y.key])+' → ')+vfmt(o.y,dy),...(track?[]:[r[3]==null?'—':fmt(Math.abs(r[3])<.005?0:r[3],2)]),
+   ...(check?[act==null?'—':`<span class="${act>=0?'positive':'negative'}">${(act>=0?'+':'−')+fmt(Math.abs(act),1)}%</span>${ret!=null&&act!=null?(Math.sign(ret)===Math.sign(act)?' ✓':' ✗'):''}`]:[]),
+   ...(track?[rp&&rp[5]!=null?'$'+fmt(rp[5],2)+` <span class="muted">${'$'+fmt(rp[6],2)+'–'+fmt(rp[7],2)}</span>`:'—',pe==null?'—':`<span class="${pin?'led-ok':'led-no'}">${(pe>=0?'+':'−')+fmt(Math.abs(pe),1)}% ${pin?'✓':'✗'}</span>`]:[])]});
  exported=ex;
  const live=cal===o.fc.origins[o.fc.origins.length-1];
  let out=`<div class="section-head"><h3>Next ${u} · ${fmt(rows.length)} companies · forecast made ${esc(qlabel(cal))}${live?' (live)':' (out-of-sample backtest)'}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- out+=table(['Company','Close','Forecast price','Change','80% range',vshort(o.x)+' now → next',vshort(o.y)+' now → next','Divergence',...(check?['What happened']:[])],body);
- return out+fcScore(o);
+ out+=table(['Company','Close','Forecast price','Change','80% range',vshort(o.x)+' now → next',vshort(o.y)+' now → next',...(track?[]:['Divergence']),...(check?['What happened']:[]),...(track?['Last forecast for '+qlabel(cal)+' (80%)','Error vs close']:[])],body);
+ return (track?fcLastSummary(o,rows.map(a=>a.c),prev,cal):'')+fcPriceTrack(o)+out+fcScore(o);
+}
+function fcLastSummary(o,cos,prev,cal){              // how last period's forecasts did for the period shown
+ const e=[],inside=[],dir=[];
+ for(const c of cos){const rp=fcRow(o,c,prev),r=fcRow(o,c,cal);if(!rp||!r||rp[5]==null||r[4]==null||!rp[4])continue;
+  e.push(100*(r[4]/rp[5]-1));if(rp[6]!=null)inside.push(r[4]>=rp[6]&&r[4]<=rp[7]);dir.push(Math.sign(rp[5]-rp[4])===Math.sign(r[4]-rp[4]))}
+ if(!e.length)return '';
+ const m=a=>a.reduce((x,y)=>x+y,0)/a.length,abs=e.map(Math.abs).sort((a,b)=>a-b);
+ return `<div class="explain fc-last"><b>Last forecast vs what happened</b> — made at ${esc(qlabel(prev))} for ${esc(qlabel(cal))}, ${fmt(e.length)} companies: average error (actual − forecast) ${fmt(m(e),1)}% (median miss ${fmt(abs[Math.floor(abs.length/2)],1)}%), ${fmt(100*m(inside.map(Number)),0)}% closed inside the 80% range, direction right ${fmt(100*m(dir.map(Number)),0)}%. On the chart: <span class="fc-key fc-key-prev"></span> the last forecast's 80% range (dashed) and centre ◇, <span class="fc-key fc-key-in"></span>/<span class="fc-key fc-key-out"></span> the error to where the dot is (inside / outside the range), <span class="fc-key fc-key-next"></span> the next forecast (arrow and filled range).</div>`;
+}
+/* Price track: each period's close, the forecast made one period earlier for it (dashed 80% range, hollow diamond) with
+   the error, and the forecast for the next period (filled fan and solid diamond). Shared by the Next-step table and the
+   track record (ledger.js). pts: [{label, close, f:{p,lo,hi}|null, live}] oldest first; next: {label, p, lo, hi} | null */
+function fcPriceSvg(pts,next,opt={}){
+ const W=opt.w||460,H=opt.h||210,L=50,R=next?58:12,T=12,B=26,n=pts.length+(next?1:0);
+ const vals=[];pts.forEach(p=>{if(p.close!=null)vals.push(p.close);if(p.f){vals.push(p.f.p);if(p.f.lo!=null)vals.push(p.f.lo,p.f.hi)}});if(next){vals.push(next.p);if(next.lo!=null)vals.push(next.lo,next.hi)}
+ const fin=vals.filter(v=>v!=null&&Number.isFinite(v)&&v>0);if(fin.length<2)return empty('Not enough forecasts yet');
+ const cl=pts.map(p=>p.close).filter(v=>v>0),cmin=Math.min(...cl),cmax=Math.max(...cl);
+ let lo=Math.max(Math.min(...fin),cmin/2.2),hi=Math.min(Math.max(...fin),cmax*2.2);const pad=(Math.log(hi)-Math.log(lo))*.06||.05;lo*=Math.exp(-pad);hi*=Math.exp(pad);
+ const x=i=>L+(n<2?.5:i/(n-1))*(W-L-R),y=v=>T+(Math.log(hi)-Math.log(Math.max(lo,Math.min(hi,v))))/(Math.log(hi)-Math.log(lo))*(H-T-B);
+ let s=`<svg class="plot mk-plot fc-price" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.title||'Price forecasts')}">`;
+ const lt=[];for(let e=Math.floor(Math.log10(lo));e<=Math.ceil(Math.log10(hi));e++)for(const m of (Math.log10(hi/lo)<.6?[1,1.5,2,2.5,3,4,5,6,8]:[1,2,5]))lt.push(m*10**e);
+ let lastY=1e9;lt.filter(v=>v>lo&&v<hi).forEach(v=>{if(Math.abs(y(v)-lastY)<20)return;lastY=y(v);s+=`<line class="mk-grid" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${L-6}" y="${y(v)+4}" text-anchor="end">$${fmt(v,v<10?2:0)}</text>`});
+ const act=pts.map((p,i)=>[i,p]).filter(a=>a[1].close!=null);
+ pts.forEach((p,i)=>{if(!p.f||p.f.p==null)return;const X=x(i),d=4;
+  const inside=p.close!=null&&p.f.lo!=null?p.close>=p.f.lo&&p.close<=p.f.hi:null,err=p.close!=null?100*(p.close/p.f.p-1):null;
+  const rows=[[p.label,'forecast made the period before'+(p.live?' (live)':'')],['$'+fmt(p.f.p,2)+(p.f.lo!=null?` (80%: $${fmt(p.f.lo,2)}–$${fmt(p.f.hi,2)})`:''),'forecast'],[p.close==null?'pending':'$'+fmt(p.close,2),'actual close'],...(err!=null?[[(err>=0?'+':'−')+fmt(Math.abs(err),1)+'%'+(inside==null?'':inside?' · inside':' · outside'),'error (actual vs forecast)']]:[])];
+  s+=`<g data-tip="${tip(rows)}" tabindex="-1" class="mk-hit"><rect x="${X-7}" y="${T}" width="14" height="${H-T-B}" fill="transparent"/>`;
+  if(p.f.lo!=null)s+=`<line class="fc-prev-range" x1="${X}" x2="${X}" y1="${y(p.f.hi)}" y2="${y(p.f.lo)}"/><line class="fc-prev-cap" x1="${X-4}" x2="${X+4}" y1="${y(p.f.hi)}" y2="${y(p.f.hi)}"/><line class="fc-prev-cap" x1="${X-4}" x2="${X+4}" y1="${y(p.f.lo)}" y2="${y(p.f.lo)}"/>`;
+  if(p.close!=null)s+=`<line class="fc-err ${inside===false?'fc-err-out':'fc-err-in'}" x1="${X+3}" x2="${X+3}" y1="${y(p.f.p)}" y2="${y(p.close)}"/>`;
+  s+=`<path class="fc-prev-dot" d="M${X},${y(p.f.p)-d} l${d},${d} l${-d},${d} l${-d},${-d} z"/></g>`});
+ if(act.length>1)s+=`<path class="fc-price-line" d="${act.map(([i,p],k)=>(k?'L':'M')+x(i).toFixed(1)+','+y(p.close).toFixed(1)).join('')}"/>`;
+ act.forEach(([i,p])=>{s+=`<circle class="fc-price-dot" cx="${x(i)}" cy="${y(p.close)}" r="2.6"/>`});
+ if(next&&next.p!=null&&act.length){const [li,lp]=act[act.length-1],X0=x(li),X1=x(n-1),d=4.6;
+  if(next.lo!=null)s+=`<path class="fc-next-fan" style="fill:${opt.col||'var(--rot-1)'}" d="M${X0},${y(lp.close)} L${X1},${y(next.hi)} L${X1},${y(next.lo)} Z"/>`;
+  s+=`<line class="fc-next-line" style="stroke:${opt.col||'var(--rot-1)'}" x1="${X0}" y1="${y(lp.close)}" x2="${X1}" y2="${y(next.p)}"/>`;
+  s+=`<g data-tip="${tip([[next.label,'next forecast'],['$'+fmt(next.p,2)+(next.lo!=null?` (80%: $${fmt(next.lo,2)}–$${fmt(next.hi,2)})`:''),'forecast close'],[(next.p>=lp.close?'+':'−')+fmt(Math.abs(100*(next.p/lp.close-1)),1)+'%','vs the last close']])}" tabindex="-1" class="mk-hit"><path class="fc-next-dot" style="fill:${opt.col||'var(--rot-1)'}" d="M${X1},${y(next.p)-d} l${d},${d} l${-d},${d} l${-d},${-d} z"/></g>`;
+  s+=`<text class="axis" x="${X1+7}" y="${y(next.p)+4}">$${fmt(next.p,next.p<10?2:0)}</text>`}
+ s+=`<text class="axis" x="${L}" y="${H-6}">${esc(pts[0].label)}</text><text class="axis" x="${x(n-1)}" y="${H-6}" text-anchor="end">${esc(next?next.label:pts[pts.length-1].label)}</text>`;
+ return s+'</svg>';
+}
+function fcPriceStats(pts){                           // mean |error|, share inside the range, direction right
+ const r=pts.filter(p=>p.f&&p.f.p!=null&&p.close!=null);if(!r.length)return '';
+ const ae=r.map(p=>Math.abs(100*(p.close/p.f.p-1))),ins=r.filter(p=>p.f.lo!=null),hit=r.filter(p=>p.prev!=null);
+ return `${fmt(r.length)} forecasts: mean miss ${fmt(ae.reduce((a,b)=>a+b,0)/ae.length,1)}%`+(ins.length?`, ${fmt(100*ins.filter(p=>p.close>=p.f.lo&&p.close<=p.f.hi).length/ins.length,0)}% inside the 80% range`:'')
+  +(hit.length?`, direction right ${fmt(100*hit.filter(p=>Math.sign(p.f.p-p.prev)===Math.sign(p.close-p.prev)).length/hit.length,0)}%`:'');
+}
+function fcPriceTrack(o){                             // the picked companies (or the sector's largest) on the Next-step charts
+ if(!o.fc)return '';
+ const f=state.rf,N=o.P.monthly?24:16,cals=o.Q.slice(Math.max(0,f-N+1),f+1),u=o.P.monthly?'month':'quarter';
+ let cos=o.picks.filter(c=>c.t);
+ if(!cos.length)cos=rotScope(o.P,o.sec).slice().sort((a,b)=>((b.by.get(o.Q[f])||{}).rev||0)-((a.by.get(o.Q[f])||{}).rev||0)).slice(0,3);
+ const panels=cos.slice(0,4).map((c,ci)=>{const col=o.picks.length?ROT_SERIES[o.picks.indexOf(c)]:'var(--rot-1)';
+  const live=o.fc.origins[o.fc.origins.length-1];
+  const pts=cals.map((cal,k)=>{const r=fcRow(o,c,cal),gi=o.qi.get(cal),pc=gi>0?o.Q[gi-1]:null,rp=pc&&fcRow(o,c,pc);
+   return {label:qlabel(cal),close:r&&r[4]!=null?r[4]:null,prev:rp&&rp[4]!=null?rp[4]:null,f:rp&&rp[5]!=null?{p:rp[5],lo:rp[6],hi:rp[7]}:null,live:pc===live}});
+  const r=fcRow(o,c,o.Q[f]),tgt=o.fc.targets[o.fc.origins.indexOf(o.Q[f])];
+  const next=r&&r[5]!=null?{label:qlabel(tgt||'next'),p:r[5],lo:r[6],hi:r[7]}:null;
+  return `<div class="panel"><h3>${esc(c.t)} <span class="muted">${esc(c.n||'')}</span></h3><p class="sub">Each ${u}'s close (dots), the forecast made the ${u} before (dashed 80% range, ◇) and its error (green inside the range, red outside); the filled fan is the forecast for ${esc(next?next.label:'the next '+u)}. ${esc(fcPriceStats(pts))}.</p>${fcPriceSvg(pts,next,{col,title:c.t+' price forecasts'})}</div>`});
+ return panels.length?`<div class="rot-multiples">${panels.join('')}</div>`:'';
 }
 function fcScore(o){
  const b=o.fc.backtest||{},st=(b.state||{}),pr=b.price||{},pa=b.price_analog||{},a=st.analog_cal||{},s=st.sun||{},l=st.linear||{},sur=st.surrogate||{};
@@ -292,6 +398,12 @@ function rrgFcLayer(o,f,sx,sy){
  for(const l of o.lines){const m=d._by.get(l.e.id);const r=m&&m.get(day);if(!r)continue;const c=l.calc;if(c.x[f]==null||c.y[f]==null)continue;
   const p=[sx(c.x[f]),sy(c.y[f])],q=[sx(r[3]),sy(r[4])];
   if(state.rfc==='check'&&c.x[f+1]!=null)s+=fcCheckSvg(p,[sx(c.x[f+1]),sy(c.y[f+1])],l.col);
+  if(fcTrack()){const rp=f>0&&m.get(o.Q[f-1]);
+   if(rp&&rp[3]!=null){const q0=[sx(rp[3]),sy(rp[4])],rx=rp[9]!=null?Math.abs(sx(rp[3]+rp[9])-q0[0]):0,ry=rp[10]!=null?Math.abs(sy(rp[4]+rp[10])-q0[1]):0;
+    const ex=c.x[f]-rp[3],ey=c.y[f]-rp[4],pe=rp[7]!=null&&r[6]!=null?100*(r[6]/rp[7]-1):null;
+    s+=fcPrevSvg(q0,rx,ry,p,[[l.e.name+' · forecast made '+rrgDay(o.Q[f-1]),'for '+rrgDay(day)],[fmt(rp[3],2)+' / '+fmt(rp[4],2)+' → '+fmt(c.x[f],2)+' / '+fmt(c.y[f],2),'RS-Ratio / RS-Momentum: forecast → actual'],
+     [(ex>=0?'+':'−')+fmt(Math.abs(ex),2)+' / '+(ey>=0?'+':'−')+fmt(Math.abs(ey),2)+'  (distance '+fmt(Math.hypot(ex,ey),2)+')','error'],...(pe!=null?[['$'+fmt(rp[7],2)+' → $'+fmt(r[6],2)+' ('+(pe>=0?'+':'−')+fmt(Math.abs(pe),1)+'%)','close: forecast → actual']]:[])],'')}
+   if(r[9]!=null)s+=fcNextCone(q,Math.abs(sx(r[3]+r[9])-q[0]),Math.abs(sy(r[4]+r[10])-q[1]),l.col)}
   const rows=[[l.e.name+' · next week','forecast made '+rrgDay(day)],[fmt(r[3],2)+' / '+fmt(r[4],2),'RS-Ratio / RS-Momentum next'],
    [(r[5]>=0?'+':'−')+fmt(Math.abs(100*r[5]),2)+'%','vs '+(o.D.benchmark||'SPY')+(r[8]===1?', gravity + tidal forecast (the point follows from it)':', read back from the point')],...(r[7]!=null?[['$'+fmt(r[7],2),'close implied (now $'+fmt(r[6],2)+')']]:[])];
   s+=`<g data-tip="${tip(rows)}" tabindex="-1" class="mk-hit">${fcArrowSvg(p,q,l.col,2)}</g>`}

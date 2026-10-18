@@ -12,11 +12,12 @@
                                       (the site's companies, weighted by the log of revenue), closes and volume; the
                                       charts compute the RRG (RS-Ratio, RS-Momentum) from these in the browser
              t/<TICKER>.json          one company's weekly closes and volume, loaded when a chart traces it
-             rotation-long.json       the momentum clock's variables (app/rotation.py) for 64 quarters (since 2010)
+             rotation-long.json       the momentum clock's variables (app/rotation.py) for 70 quarters (since 2009Q2, so
+                                      the arrows and charts start in 2010)
              rotation-long-monthly.json  … and month by month since 2008, from the weekly closes
 
     python app/rotation_history.py collect --root hist --site-index site/index.json --batch 300 --minutes 25
-    python app/rotation_history.py frames  --root hist --quarters 72
+    python app/rotation_history.py frames  --root hist --quarters 76
     python app/rotation_history.py build   --root hist --site-data site --data docs/data
 """
 import argparse
@@ -324,7 +325,7 @@ def sector_indices(companies, series, weeks):
     return out
 
 
-def build(root, site_data=None, data_root=None, top_long=250, quarters_long=64, months_long=None, today=None):
+def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, months_long=None, today=None):
     root = Path(root)
     pub = root / 'public'
     (pub / 't').mkdir(parents=True, exist_ok=True)
@@ -409,7 +410,7 @@ def main():
     ap.add_argument('--refresh', type=int, default=400)
     ap.add_argument('--minutes', type=float, default=25)
     ap.add_argument('--tickers', default='', help='fetch these first, in full (comma or space separated)')
-    ap.add_argument('--quarters', type=int, default=72)
+    ap.add_argument('--quarters', type=int, default=76)
     a = ap.parse_args()
     cfg = read_json(Path(__file__).resolve().parents[1] / 'config' / 'settings.json', {})
     http = cfg.get('http', {})

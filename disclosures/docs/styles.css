@@ -403,3 +403,31 @@ th[aria-sort=ascending] .sort-mark, th[aria-sort=descending] .sort-mark { opacit
 .led-fc { fill: var(--surface); stroke: var(--rot-sun); stroke-width: 1.6; } .led-fc-live { stroke-width: 2.4; }
 .led-kv { display: grid; grid-template-columns: minmax(140px, max-content) 1fr; gap: 6px 14px; margin: 8px 0 0; font-size: 14px; }
 .led-kv dt { color: var(--muted); } .led-kv dd { margin: 0; }
+/* last forecast (dashed range) vs next forecast (filled) and the error between them (chaos.js "track" mode) */
+:root { --fc-prev: #8a4fd6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --fc-prev: #b18cf0; } }
+:root[data-theme="dark"] { --fc-prev: #b18cf0; }
+.fc-prev { fill: none; stroke: var(--fc-prev); stroke-width: 1.5; stroke-dasharray: 5 3; opacity: .95; }
+.fc-prev-dot { fill: var(--surface); stroke: var(--fc-prev); stroke-width: 1.6; }
+.fc-err { stroke-width: 1.6; stroke-linecap: round; }
+.fc-err-in { stroke: var(--flow-buy); } .fc-err-out { stroke: var(--flow-sell); }
+.fc-err-label { font-size: 11px; fill: var(--ink-2); font-weight: 600; }
+.fc-next-cone { opacity: .16; stroke: none; }
+.fc-prev-range { stroke: var(--fc-prev); stroke-width: 2; stroke-dasharray: 4 3; }
+.fc-prev-cap { stroke: var(--fc-prev); stroke-width: 1.5; }
+.fc-price-line { fill: none; stroke: var(--ink); stroke-width: 1.6; }
+.fc-price-dot { fill: var(--ink); }
+.fc-next-fan { opacity: .18; stroke: none; }
+.fc-next-line { stroke-width: 1.8; }
+.fc-next-dot { stroke: var(--surface); stroke-width: 1.2; }
+.fc-key { display: inline-block; width: 18px; height: 0; vertical-align: middle; margin: 0 2px; border-top: 2px solid; }
+.fc-key-prev { border-top: 2px dashed var(--fc-prev); } .fc-key-in { border-color: var(--flow-buy); } .fc-key-out { border-color: var(--flow-sell); }
+.fc-key-next { height: 9px; border: 0; border-radius: 6px; background: var(--rot-1); opacity: .45; }
+/* macro clock (macro.js) */
+.mac-q { opacity: .05; }
+.mac-trail { stroke: var(--ink-2); stroke-width: 1.4; }
+.mac-head { stroke: var(--surface); stroke-width: 1.6; }
+.mac-best { font-weight: 700; }
+th.mac-now, td.mac-now { background: var(--accent-soft); }
+.mac-cursor { stroke: var(--muted); stroke-dasharray: 3 3; }
+.mac-small h3 { font-size: 14px; }

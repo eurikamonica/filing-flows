@@ -130,10 +130,6 @@ class Helpers(unittest.TestCase):
         self.assertTrue(np.isnan(CF.close_at((days, c), '2026-08-01')[0]))
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 @unittest.skipIf(np is None, 'numpy / scikit-learn not installed')
 class GravityModel(unittest.TestCase):
     def synthetic(self, seed=0, N=90, W=420):
@@ -167,3 +163,28 @@ class GravityModel(unittest.TestCase):
         i, t = 4, 50
         same = np.nonzero((D['sec'] == D['sec'][i]) & (np.arange(len(D['sec'])) != i))[0]
         self.assertAlmostEqual(B['sat_r'][i, t], r[i, t] - r[same, t].mean(), places=10)
+
+@unittest.skipIf(np is None, 'numpy / scikit-learn not installed')
+class RRGBands(unittest.TestCase):
+    def test_band_uses_only_errors_already_known(self):
+        g0 = np.datetime64('2000-01-07')
+        W = 120; d = g0 + 7 * np.arange(W)
+        x = np.linspace(99, 101, W); y = np.full(W, 100.0)
+        series = {'A': (d, None, x, y, None)}
+        rows = [[w, x[w], y[w], x[w] + 0.5, y[w], 0, 1, 1, 0] for w in range(10, W - 1)]
+        lines = {'A': [list(r) for r in rows]}
+        band = CF.rrg_bands(lines, series, g0, window=260, q=80)
+        first = min(band)
+        self.assertGreaterEqual(first - 10, 26)            # 26 weeks of errors before the first band
+        # changing an outcome after week w must not change the band at w
+        x2 = x.copy(); x2[80:] += 5
+        lines2 = {'A': [list(r) for r in rows]}
+        band2 = CF.rrg_bands(lines2, {'A': (d, None, x2, y, None)}, g0, window=260, q=80)
+        for w in band:
+            if w <= 78:
+                self.assertEqual(band[w], band2[w])
+        self.assertEqual(len(lines['A'][0]), 11)
+
+
+if __name__ == '__main__':
+    unittest.main()
