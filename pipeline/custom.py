@@ -11,6 +11,10 @@ for a User-Agent with a contact address).
     python -m pipeline.custom claim-companies --out ciks.txt # CIKs to build in this scan (one per line)
     python -m pipeline.custom finish-companies --site _site  # mark the ones now on the site as done
     python -m pipeline.custom has-companies                  # exit 0 when a company request is waiting
+    python -m pipeline.custom has-owner-companies            # exit 0 while the site owner's requests are open (fast lane)
+
+The site owner's requests (column owner, set by the database) take the fast lane: the scan that claims one runs short
+(scan.yml) and, while any owner request is still open, starts the next short scan itself (a relay with a hop cap).
 
 Environment: SUPABASE_URL, SUPABASE_SERVICE_KEY (secret key), SEC_USER_AGENT.
 """
@@ -26,6 +30,7 @@ from .notify import Supa, setting
 MAX_CHARTS_PER_RUN = 40
 MAX_COMPANIES_PER_SCAN = 25      # readers' new companies per scan, all readers together; the rest wait for the next scan
 STALE_MINUTES = 20
+FAST_LANE_MINUTES = 120          # the owner's fast lane: short, relayed scans for this long after the owner's request
 
 
 # ------------------------------------------------------------------ one period of one company
@@ -221,6 +226,34 @@ def claim_companies(supa, now=None, limit=MAX_COMPANIES_PER_SCAN):
     return sorted(ciks)
 
 
+def owner_open(supa, now=None, recent=False):
+    """The site owner's company requests that are not built yet (pending, or queued by a scan that has not finished
+    them); recent=True: only those asked within FAST_LANE_MINUTES, the ones the fast lane (scan.yml) still relays for."""
+    try:
+        rows = supa.select("company_requests", {"select": "id,cik,status,created_at", "owner": "eq.true",
+                                                "status": "in.(pending,queued)"})
+    except RuntimeError:                       # schema.sql not run again yet: no owner column, no fast lane
+        return []
+    if recent:
+        edge = (now or _now()) - dt.timedelta(minutes=FAST_LANE_MINUTES)
+        rows = [r for r in rows if r.get("created_at")
+                and dt.datetime.fromisoformat(str(r["created_at"]).replace("Z", "+00:00")) >= edge]
+    return rows
+
+
+def claim_owner_companies(supa, now=None):
+    """All of the owner's open requests, whatever their age (no per-scan limit, no stale wait). Returns (CIKs for this
+    scan, CIKs asked within FAST_LANE_MINUTES: these make the scan a short one of the fast lane)."""
+    now = now or _now()
+    rows = owner_open(supa)
+    pend = [r["id"] for r in rows if r.get("status") == "pending"]
+    if pend:
+        supa.update("company_requests", {"id": f"in.({','.join(map(str, pend))})", "status": "eq.pending"},
+                    {"status": "queued", "claimed_at": now.isoformat()})
+    fresh = {r["id"] for r in owner_open(supa, now, recent=True)} if rows else set()
+    return sorted({int(r["cik"]) for r in rows}), sorted({int(r["cik"]) for r in rows if r["id"] in fresh})
+
+
 def claim_rereads(supa, now=None):
     """The owner's re-read requests (Owner tools): CIKs whose stored figures this scan reads again from SEC (0 = every
     stored company). Requests a stopped scan left queued are taken again."""
@@ -262,9 +295,10 @@ def finish_companies(supa, site):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["charts", "claim-companies", "finish-companies", "has-companies", "claim-rereads",
-                                    "finish-rereads"])
+    ap.add_argument("cmd", choices=["charts", "claim-companies", "finish-companies", "has-companies", "has-owner-companies",
+                                    "claim-rereads", "finish-rereads"])
     ap.add_argument("--out", default="build-ciks.txt")
+    ap.add_argument("--owner-out", default=None, help="claim-companies: also write the owner's companies (fast lane) here")
     ap.add_argument("--site", default="_site")
     args = ap.parse_args()
     url, key = setting("SUPABASE_URL", url=True), setting("SUPABASE_SERVICE_KEY")
@@ -272,7 +306,9 @@ def main():
         print("SUPABASE_URL / SUPABASE_SERVICE_KEY not set: reader requests are off.")
         if args.cmd in ("claim-companies", "claim-rereads"):
             open(args.out, "w").close()
-        sys.exit(1 if args.cmd == "has-companies" else 0)
+        if args.owner_out:
+            open(args.owner_out, "w").close()
+        sys.exit(1 if args.cmd in ("has-companies", "has-owner-companies") else 0)
     supa = Supa(url, key)
     if args.cmd == "charts" and "@" not in os.environ.get("SEC_USER_AGENT", "") and not os.environ.get("SEC_FIXTURES"):
         print("::warning::SEC_USER_AGENT is not set for this workflow: comparisons wait until it is.")
@@ -281,9 +317,16 @@ def main():
         if args.cmd == "charts":
             process_charts(supa)
         elif args.cmd == "claim-companies":
-            ciks = claim_companies(supa)
+            own, fast = claim_owner_companies(supa)
+            ciks = sorted(set(claim_companies(supa)) | set(own))
             open(args.out, "w").write("".join(f"{c}\n" for c in ciks))
-            print(f"{len(ciks)} companies to build: {', '.join(map(str, ciks)) or 'none'}")
+            if args.owner_out:
+                open(args.owner_out, "w").write("".join(f"{c}\n" for c in fast))
+            print(f"{len(ciks)} companies to build: {', '.join(map(str, ciks)) or 'none'}" + (f" (owner fast lane: {', '.join(map(str, fast))})" if fast else ""))
+        elif args.cmd == "has-owner-companies":
+            n = len(owner_open(supa, recent=True))
+            print(f"{n} owner company requests open from the last {FAST_LANE_MINUTES} minutes")
+            sys.exit(0 if n else 1)
         elif args.cmd == "finish-companies":
             finish_companies(supa, args.site)
         elif args.cmd == "claim-rereads":
@@ -300,7 +343,9 @@ def main():
         print(f"::warning::reader requests skipped: {e}")
         if args.cmd in ("claim-companies", "claim-rereads"):
             open(args.out, "w").close()
-        sys.exit(1 if args.cmd == "has-companies" else 0)
+        if args.owner_out:
+            open(args.owner_out, "w").close()
+        sys.exit(1 if args.cmd in ("has-companies", "has-owner-companies") else 0)
 
 
 if __name__ == "__main__":

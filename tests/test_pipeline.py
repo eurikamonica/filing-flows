@@ -931,6 +931,49 @@ def test_request_queues(tmp_path):
     assert st == {7: "done", 8: "failed", 10: "done"}
 
 
+def test_owner_fast_lane():
+    """The owner's company requests: claimed whatever the per-scan limit, and only recent ones keep the fast lane going."""
+    import datetime as dt
+    from pipeline import custom
+    now = dt.datetime(2026, 10, 3, 4, 0, tzinfo=dt.timezone.utc)
+
+    class Fake:
+        def __init__(self, rows):
+            self.rows, self.updates = rows, []
+
+        def _match(self, row, params):
+            for k, v in params.items():
+                op, _, val = v.partition(".")
+                got = str(row.get(k)).lower() if isinstance(row.get(k), bool) else str(row.get(k))
+                if (op == "eq" and got != val) or (op == "in" and got not in val.strip("()").split(",")):
+                    return False
+            return True
+
+        def select(self, table, params):
+            return [dict(r) for r in self.rows if self._match(r, {k: v for k, v in params.items() if k != "select"})]
+
+        def update(self, table, params, fields):
+            got = [r for r in self.rows if self._match(r, params)]
+            for r in got:
+                r.update(fields)
+            self.updates.append(params)
+            return got
+
+    f = Fake([{"id": 1, "cik": 320193, "status": "pending", "owner": True, "created_at": "2026-10-03T03:50:00Z"},
+              {"id": 2, "cik": 789019, "status": "queued", "owner": True, "created_at": "2026-10-02T20:00:00Z"},
+              {"id": 3, "cik": 1652044, "status": "pending", "owner": False, "created_at": "2026-10-03T03:55:00Z"},
+              {"id": 4, "cik": 1018724, "status": "done", "owner": True, "created_at": "2026-10-03T03:00:00Z"}])
+    assert custom.claim_owner_companies(f, now) == ([320193, 789019], [320193])   # an old one rides along, not fast
+    assert [r["status"] for r in f.rows] == ["queued", "queued", "pending", "done"]   # readers' requests: claim_companies
+    assert [r["id"] for r in custom.owner_open(f, now, recent=True)] == [1]
+    assert custom.owner_open(f, now + dt.timedelta(hours=3), recent=True) == []      # the relay stops after the window
+
+    class NoColumn:
+        def select(self, table, params):
+            raise RuntimeError("Supabase 400: column company_requests.owner does not exist")
+    assert custom.claim_owner_companies(NoColumn(), now) == ([], [])
+
+
 def test_email_me_a_fiscal_year(tmp_path):
     """'Email me' on a full-year page: the annual chart, not the fourth quarter that ends the same day."""
     import datetime as dt

@@ -377,11 +377,17 @@ drop policy if exists "ask for companies" on public.company_requests;
 create policy "read own companies" on public.company_requests for select using (auth.uid() = user_id);
 create policy "ask for companies" on public.company_requests for insert with check (auth.uid() = user_id);
 
+-- The site owner's requests take the fast lane (owner = true): no daily limit, and the scan the wake below starts is a
+-- short one that relays until the owner's companies are built (scan.yml, pipeline/custom.py claim_owner_companies).
+alter table public.company_requests add column if not exists owner boolean not null default false;
 create or replace function public.company_requests_guard() returns trigger
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, auth as $$
+declare is_owner boolean;
 begin
+  is_owner := exists (select 1 from public.site_owners o join auth.users u on lower(u.email) = lower(o.email) where u.id = new.user_id);
   new.status := 'pending'; new.error := null; new.claimed_at := null; new.done_at := null; new.created_at := now();
-  if (select count(*) from public.company_requests r
+  new.owner := is_owner;
+  if not is_owner and (select count(*) from public.company_requests r
       where r.user_id = new.user_id and r.created_at > now() - interval '24 hours') >= 10 then
     raise exception 'limit: 10 companies a day' using errcode = 'P0001';
   end if;
