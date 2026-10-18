@@ -15,7 +15,7 @@ function consGate(name,title){
  return {data:m.data};
 }
 const CONS_VIEWS=[['calendar','Earnings calendar'],['screen','Every company'],['markets','Prediction markets'],['track','Track record'],['company','One company']];
-const CONS_KINDS=[['','All kinds'],['beat','Beat earnings?'],['above','Price ladders'],['bracket','Closing-price brackets'],['mcap','Market caps'],['hit','High / low touch'],['kpi','Company KPIs'],['mention','Earnings-call mentions'],['other','Other company events']];
+const CONS_KINDS=[['','All kinds'],['beat','Beat earnings?'],['above','Price ladders'],['bracket','Closing-price brackets'],['mcap','Market caps'],['hit','High / low touch'],['metric','Reported metrics (revenue, segments)'],['kpi','Company KPIs'],['mention','Earnings-call mentions'],['other','Other company events']];
 function consView(){
  state.cview=CONS_VIEWS.some(v=>v[0]===state.cview)?state.cview:'calendar';
  let out=`<div class="toolbar">${field('cview','View',CONS_VIEWS,state.cview)}`;
@@ -67,6 +67,7 @@ function consMarkets(){
  const what=m=>{if(m.kind==='beat')return `<b>${V.pct(m.p)}</b> beat <span class="muted">line ${V.usd(m.eps_strike)} · report ${esc(m.report_date||'')}</span>`;
   if(m.kind==='mcap')return m.median==null?'—':`median ${V.big(m.median)}${m.implied_price&&m.implied_price.median?` <span class="muted">≈ ${V.usd(m.implied_price.median)} a share</span>`:''}`;
   if(m.kind==='above'||m.kind==='bracket')return m.median==null?'—':`median ${V.usd(m.median)}${m.implied_price&&m.implied_price.q10!=null?` <span class="muted">80% ${V.usd(m.implied_price.q10)}–${V.usd(m.implied_price.q90)}</span>`:''}`;
+  if(m.kind==='metric')return m.median==null?'—':`median ${V.unitFmt(m.median,m.unit)}`;
   if(m.kind==='updown')return `up <b>${V.pct(m.p)}</b>`;
   if(m.kind==='hit')return `even odds: high ${V.usd(m.high)}, low ${V.usd(m.low)}`;
   if(m.kind==='kpi'&&m.median!=null)return `median ${fmt(m.median,2)}`;
@@ -89,8 +90,8 @@ function consTrack(){
  }else out+=empty('No resolved earnings market has been scored yet — each closed Polymarket earnings market is read once, with its price a day before the result.');
  if(P.n){
   const rows=D.price_rows||[];exported=rows;
-  out+=`<div class="panel"><h3>Price and market-cap ladders — ${fmt(P.n)} resolved</h3><p class="sub">The last implied median we saw before the date against where the price ended (the middle of the resolved bracket). Mean absolute error ${fmt(P.mean_abs_err_pct,1)}%; the end fell inside the 80% range ${V.pct(P.inside80)} of the time (80% would be right).</p>`+
-   table(['Date','Company','Market','Implied median','80% range','Ended','Error'],rows.slice(0,100).map(r=>{const f=r.kind==='mcap'?V.big:v=>V.usd(v);return [esc(r.end),consTk(r.ticker),`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>`,f(r.median),`${f(r.q10)} – ${f(r.q90)}`,`${f(r.actual[0])} – ${r.actual[1]==null?'…':f(r.actual[1])}`,`<span class="${r.inside80?'positive':'negative'}">${V.spct(r.err_pct/100)}</span>`]}))+'</div>';
+  out+=`<div class="panel"><h3>Price, market-cap and reported-metric ladders — ${fmt(P.n)} resolved</h3><p class="sub">The last implied median we saw before the date against where the price ended (the middle of the resolved bracket). Mean absolute error ${fmt(P.mean_abs_err_pct,1)}%; the end fell inside the 80% range ${V.pct(P.inside80)} of the time (80% would be right).</p>`+
+   table(['Date','Company','Market','Implied median','80% range','Ended','Error'],rows.slice(0,100).map(r=>{const f=r.kind==='mcap'?V.big:r.kind==='metric'?v=>V.unitFmt(v,r.unit):v=>V.usd(v);return [esc(r.end),consTk(r.ticker),`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>`,f(r.median),`${f(r.q10)} – ${f(r.q90)}`,`${f(r.actual[0])} – ${r.actual[1]==null?'…':f(r.actual[1])}`,`<span class="${r.inside80?'positive':'negative'}">${V.spct(r.err_pct/100)}</span>`]}))+'</div>';
  }else out+=empty('No price ladder has resolved since tracking began: the last implied median before each date is kept, then scored when the market resolves.');
  out+=`<p class="sub">Analysts' record: each company page shows the consensus against the reported EPS for every quarter on file. Our model's record is in the Rotation tab → Track record.</p>`;
  return out;

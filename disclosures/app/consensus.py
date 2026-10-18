@@ -346,12 +346,12 @@ def update_price_ledger(root, markets, today):
     p = Path(root) / 'cache' / 'price_ledger.json'
     L = read_json(p, {})
     for m in markets:
-        if m.get('source') != 'polymarket' or m['kind'] not in ('above', 'bracket', 'mcap'):
+        if m.get('source') != 'polymarket' or m['kind'] not in ('above', 'bracket', 'mcap', 'metric'):
             continue
         key = m['url']
         st = m.get('stats') or {}
         if not m['closed'] and st and (m['end'] or '') >= today:
-            L[key] = {**L.get(key, {}), 'ticker': m['ticker'], 'cik': m['cik'], 'kind': m['kind'], 'title': m['title'], 'end': m['end'],
+            L[key] = {**L.get(key, {}), 'ticker': m['ticker'], 'cik': m['cik'], 'kind': m['kind'], 'title': m['title'], 'end': m['end'], 'unit': m.get('unit'),
                       'median': (st.get('median') or {}).get('value'), 'q10': (st.get('q10') or {}).get('value'), 'q90': (st.get('q90') or {}).get('value'),
                       'as_of': today}
         elif m['closed'] and key in L and m.get('actual') and not L[key].get('actual'):
@@ -414,7 +414,8 @@ def poly_scan(h, mapper, verbose=True):
                 'bracket' if re.search(r'close[sd]?\b.*\bat _', title, re.I) else
                 'hit' if re.search(r'what will .* hit\b', title, re.I) else
                 'mcap' if re.search(r'market cap', title, re.I) else
-                'updown' if re.search(r'up or down', title, re.I) else 'other')
+                'updown' if re.search(r'up or down', title, re.I) else
+                'metric' if re.search(r'\bQ[1-4]\b|\bfiscal\b|\bFY\d', title) and (re.search(r'above\s*_', title) or re.search(r'growth|ratio|margin|\(MBR\)|RPO', title, re.I)) else 'other')
         base = {'source': 'polymarket', 'kind': kind, 'ticker': co['ticker'], 'cik': co['cik'], 'title': title,
                 'url': f'https://polymarket.com/event/{e.get("slug")}', 'end': (e.get('endDate') or '')[:10],
                 'closed': bool(e.get('closed')), 'volume': _f(e.get('volume')), 'liquidity': _f(e.get('liquidity'))}
@@ -444,6 +445,25 @@ def poly_scan(h, mapper, verbose=True):
                 row['actual'] = resolved_range(kind, pts)
             if st or row.get('actual'):
                 out.append(row)
+        elif kind == 'metric':
+            pts = []
+            for m in ms:
+                if m.get('closed') and not e.get('closed'):
+                    continue
+                g = m.get('groupItemTitle') or ''
+                k = strike_of(g)
+                if k:
+                    pts.append((k, poly_prob(m), poly_resolved(m), g))
+            sample = next((g for *_, g in pts if g), '')
+            unit = '$' if '$' in sample else '%' if '%' in sample else (re.sub(r'[\d.,<>$+\-–\s]+', ' ', sample).strip()[:12] or '')
+            ranged = any(k[0] != k[1] for k, *_ in pts)
+            st = (bracket_stats([((k[0] if k[0] != k[1] else None, k[1]) if k[0] != k[1] else (k[0], None), p) for k, p, _, _ in pts]) if ranged
+                  else ladder_stats([(k[0], p) for k, p, _, _ in pts]))
+            row = {**base, 'stats': None if e.get('closed') else st, 'unit': unit,
+                   'outcomes': [{'q': g, 'p': p, 'resolved': r} for k, p, r, g in sorted(pts, key=lambda x: x[0][0] if x[0][0] is not None else -1e30)][:16]}
+            if e.get('closed'):
+                row['actual'] = resolved_range('above' if not ranged else 'bracket', [(k, p, r) for k, p, r, _ in pts])
+            out.append(row)
         elif kind == 'hit':
             up, down = {}, {}
             for m in ms:
@@ -553,20 +573,28 @@ def calibrate_closed(h, root, markets, budget=150):
     c = read_json(p, {})
     new = 0
     for m in markets:
-        if m['kind'] != 'beat' or not m.get('closed') or m.get('resolved') is None or not m.get('token') or str(m['id']) in c:
+        old = c.get(str(m['id']))
+        if m['kind'] != 'beat' or not m.get('closed') or m.get('resolved') is None or not m.get('token') \
+                or (old and (old.get('p_day_before') is not None or (old.get('tries') or 1) >= 3)):
             continue
         if new >= budget:
             break
+        pre = None
         try:
             end = dt.datetime.fromisoformat((m.get('market_end') or m['end'] + 'T20:00:00Z').replace('Z', '+00:00'))
-            hist = h.json(f'{CLOB}/prices-history?market={m["token"]}&interval=max&fidelity=60').get('history', [])
-            cut = (end - dt.timedelta(hours=24)).timestamp()
-            before = [x for x in hist if x['t'] <= cut]
-            pre = before[-1]['p'] if before else None
+            if m.get('report_date'):                     # the report comes before the market's end: cut a day before the report
+                end = min(end, dt.datetime.fromisoformat(m['report_date'] + 'T12:00:00+00:00'))
+            cut = int((end - dt.timedelta(hours=24)).timestamp())
+            for q in (f'startTs={cut - 6 * 86400}&endTs={cut}&fidelity=60', 'interval=max&fidelity=60', 'interval=1m&fidelity=60'):
+                hist = h.json(f'{CLOB}/prices-history?market={m["token"]}&{q}').get('history', [])
+                before = [x for x in hist if x.get('t', 0) <= cut and x.get('p') is not None]
+                if before:
+                    pre = float(before[-1]['p'])
+                    break
         except Exception:
             pre = None
         c[str(m['id'])] = {'ticker': m['ticker'], 'report_date': m.get('report_date'), 'p_day_before': pre, 'yes': m['resolved'],
-                           'eps_strike': m.get('eps_strike'), 'basis': m.get('basis')}
+                           'eps_strike': m.get('eps_strike'), 'basis': m.get('basis'), 'tries': (old.get('tries') or 1) + 1 if old else 1}
         new += 1
     write_json(p, c)
     return c
@@ -871,7 +899,7 @@ def build(root, rot=None, verbose=True):
     write_json(pub / 'calendar.json', {'generated_at': now(), 'rows': _clean(sorted(cal_rows, key=lambda r: (r['date'], r['ticker'])))})
     recent = (dt.date.today() - dt.timedelta(days=30)).isoformat()
     write_json(pub / 'markets.json', {'generated_at': now(), 'rows': _clean([{k: m.get(k) for k in ('source', 'kind', 'ticker', 'cik', 'title', 'subtitle', 'url', 'end', 'closed',
-                                                                                                     'volume', 'p', 'eps_strike', 'report_date', 'basis', 'resolved', 'n', 'implied_price', 'implied_bounds')}
+                                                                                                     'volume', 'p', 'eps_strike', 'report_date', 'basis', 'resolved', 'n', 'implied_price', 'implied_bounds', 'unit')}
                                                                            | {'median': ((m.get('stats') or {}).get('median') or {}).get('value'),
                                                                               'top': (m.get('outcomes') or [])[:3],
                                                                               'high': ((m.get('stats_high') or {}).get('median') or {}).get('value'),
