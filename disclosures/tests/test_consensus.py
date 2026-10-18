@@ -170,6 +170,9 @@ class Indices(unittest.TestCase):
         self.assertEqual(C.parse_ishares(csv), [('NVDA', 7.1), ('BRKB', 1.6)])
         wt = "== Components ==\n{|\n| [[3M]] || {{NyseSymbol|MMM}}\n| [[Apple]] || {{nasdaq|AAPL}}\n|}\n== Former components ==\n{{NyseSymbol|T}}"
         self.assertEqual(C.wiki_symbols(wt), ['MMM', 'AAPL'])
+        html = '<td><a href="https://www.nyse.com/quote/XNYS:MMM">MMM</a></td><td><a href="https://www.nasdaq.com/market-activity/stocks/aapl">AAPL</a></td>' \
+               '<h2 id="Selected_changes">x</h2><a href="https://www.nyse.com/quote/XNYS:T">T</a>'
+        self.assertEqual(C.wiki_html_symbols(html), ['MMM', 'AAPL'])
 
     def test_bottom_up(self):
         def rec(t, price, shares, tmean, e0, e1, ago):
