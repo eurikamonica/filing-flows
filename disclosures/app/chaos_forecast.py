@@ -869,7 +869,7 @@ def rrg_summary(res, inv):
     return out
 
 
-def rrg_site_file(public, n=14, k=80, weeks_series=52, weeks_companies=13, library_tickers=None, summary=None, gravity=None):
+def rrg_site_file(public, n=14, k=80, weeks_series='2010-01-01', weeks_companies=13, library_tickers=None, summary=None, gravity=None):
     """chaos-rrg.json: for the RRG lines the page offers (sector / style ETFs, site sectors, the largest companies per
     sector and the long-rotation companies), the forecast next point for each of the last weeks (out of sample: the
     library only holds weeks whose next point was known) and the next close read back from it."""
@@ -895,7 +895,7 @@ def rrg_site_file(public, n=14, k=80, weeks_series=52, weeks_companies=13, libra
     weeks = np.sort(df.date.unique())
     spy = bench[1]
     spy_mu = float(np.nanmean(np.diff(np.log(spy[np.isfinite(spy)]))))       # expected weekly benchmark log return
-    out_weeks = weeks[-weeks_series:]
+    out_weeks = weeks[weeks >= np.datetime64(weeks_series)] if isinstance(weeks_series, str) else weeks[-weeks_series:]
     series_ids = {s['id'] for s in D['series']}
     sec_of = {s['id']: s.get('sector') for s in D['series'] if s.get('group') in ('sector-etf', 'site-sector')}
     gw = {}
@@ -911,11 +911,16 @@ def rrg_site_file(public, n=14, k=80, weeks_series=52, weeks_companies=13, libra
                         sm[sid] = pm[gravity.secs.index(sk)]
                 gw[w] = sm
     lines = {}
+    tree, tree_w, dates_np, tx_ok = None, None, df.date.to_numpy(), np.isfinite(df.tx.to_numpy())
     for w in out_weeks:
-        lib_m = (df.date < w).to_numpy() & np.isfinite(df.tx.to_numpy())
-        if lib_m.sum() < 1000:
-            continue
-        tree = KDTree(Z[lib_m]); T = df.loc[lib_m, ['tx', 'ty']].to_numpy()
+        # the library: weeks before w whose next point is known. Rebuilt every 13 weeks (older weeks keep the tree
+        # built at the start of their block, so a library is never later than its week; the last 13 weeks get their own)
+        recent_w = w >= weeks[-weeks_companies]
+        if tree is None or recent_w or (w - tree_w).astype('timedelta64[D]').astype(int) >= 91:
+            lib_m = (dates_np < w) & tx_ok
+            if lib_m.sum() < 1000:
+                continue
+            tree, tree_w = KDTree(Z[lib_m]), w; T = df.loc[lib_m, ['tx', 'ty']].to_numpy()
         qm = (df.date == w).to_numpy()
         if not qm.any():
             continue
@@ -943,9 +948,10 @@ def rrg_site_file(public, n=14, k=80, weeks_series=52, weeks_companies=13, libra
             r_inv, _, _ = st.invert((row.x + m_[0], row.y + m_[1]), (sc[0], sc[1]), rs[int(row.i)])
             lines.setdefault(row.t, []).append([wi, r4(row.x, 3), r4(row.y, 3), r4(row.x + m_[0], 3), r4(row.y + m_[1], 3), r4(r_inv, 5),
                                                 r4(c_now, 4), r4(c_now * math.exp(r_inv + spy_mu), 4), 0])
+    rrg_bands(lines, series, grid0)
     days = [str(grid0 + 7 * i) for i in range(int((weeks[-1] - grid0).astype('timedelta64[D]').astype(int) // 7) + 1)]
     doc = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'freq': 'w', 'n': n, 'k': k,
-           'weeks': days, 'fields': ['week', 'x', 'y', 'next_x', 'next_y', 'rel_logret', 'close', 'close_next', 'model'],
+           'weeks': days, 'fields': ['week', 'x', 'y', 'next_x', 'next_y', 'rel_logret', 'close', 'close_next', 'model', 'half80_x', 'half80_y'],
            'models': ['analogues in RRG space, price read back', 'gravity + tidal price forecast, RRG step computed from it'],
            'lines': lines, 'backtest': summary or {},
            'note': ('Next RS-Ratio / RS-Momentum: kernel-weighted mean of the next steps of the 80 most similar past weekly states '
@@ -954,6 +960,32 @@ def rrg_site_file(public, n=14, k=80, weeks_series=52, weeks_companies=13, libra
                     'benchmark\'s average weekly return.')}
     (public / 'chaos-rrg.json').write_text(json.dumps(jsonable(doc), separators=(',', ':')), encoding='utf-8')
     return doc
+
+
+def rrg_bands(lines, series, grid0, window=260, q=80):
+    """80% half-widths of the forecast next point, appended to every row: the q-th percentile of the absolute errors of
+    the forecasts (all lines pooled) whose outcome was public by that week — errors of the last `window` weeks before
+    it. Rows before 26 weeks of errors get None."""
+    errs = {}
+    for line, rows in lines.items():
+        d, _, x, y, _ = series[line]
+        for r in rows:
+            i = int(np.searchsorted(d, grid0 + 7 * r[0]))
+            if i + 1 < len(x) and i < len(d) and d[i] == grid0 + 7 * r[0] and np.isfinite(x[i + 1]) and np.isfinite(y[i + 1]) \
+                    and r[3] is not None and r[4] is not None:
+                errs.setdefault(r[0], []).append((abs(x[i + 1] - r[3]), abs(y[i + 1] - r[4])))
+    band = {}
+    weeks = sorted({r[0] for rows in lines.values() for r in rows})
+    known = sorted(errs)
+    for w in weeks:
+        use = [e for k in known if w - window <= k <= w - 1 for e in errs[k]]
+        if len({k for k in known if w - window <= k <= w - 1}) >= 26 and use:
+            a = np.array(use)
+            band[w] = (r4(np.percentile(a[:, 0], q), 3), r4(np.percentile(a[:, 1], q), 3))
+    for rows in lines.values():
+        for r in rows:
+            r.extend(band.get(r[0], (None, None)))
+    return band
 
 
 def rrg_gravity_backtest(public, Gv, n=14, start='2012-01-06', every=2):
@@ -1195,8 +1227,8 @@ def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None, grav
     variable (raw units, as the chart shows them), the 80% half-width, the local divergence and the decoded price."""
     P, Lp, Ls, vars_ = R['P'], R['Lp'], R['Ls'], R['vars']
     recs = R['recs'] + ([R['live']] if R['live'] else [])
-    if keep_periods:
-        recs = recs[-keep_periods:]
+    if keep_periods:                                # a count of origins, or the first origin kept ('2010-01')
+        recs = [r for r in recs if P.cals[r['t']] >= keep_periods] if isinstance(keep_periods, str) else recs[-keep_periods:]
     j = vars_.index('rel')
     pr = {(r['ticker'], r['origin']): r for r in price_rows}
     live_prices = live_price_rows(R, closes)
@@ -1326,7 +1358,7 @@ def build(public, backtest_dir=None, verbose=True, rrg_backtest=False):
         print('gravity model unavailable:', type(exc).__name__, exc, flush=True)
         Gv = None
     for P, fvars, evars, first, keep, name in [(Pq, FORECAST_Q, EMBED_Q, '2015', None, 'chaos-forecast.json'),
-                                                (Pm, FORECAST_M, EMBED_M, '2013', 61, 'chaos-forecast-monthly.json')]:
+                                                (Pm, FORECAST_M, EMBED_M, '2013', '2010-01', 'chaos-forecast-monthly.json')]:
         if P is None:
             continue
         fvars = [v for v in fvars if v in P.vi]

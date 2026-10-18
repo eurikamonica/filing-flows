@@ -116,26 +116,21 @@ function ledScatter(ids,rows,ix,W,meta){
  return s+'</svg>';
 }
 function ledHistory(picks,D,ix,O,f,meta){
- const W=f==='w',fk=W?'forecast_rel_pct':'forecast_change_pct',ak=W?'actual_rel_pct':'actual_change_pct';
+ // price levels: each target period's close, the frozen forecast for it (dashed 80% range, ◇) with the error, and the
+ // pending forecast as a filled fan (chaos.js fcPriceSvg)
+ const W=f==='w',N=W?26:f==='m'?36:80,u=W?'week':f==='m'?'month':'quarter';
  let out='<div class="rot-multiples">';
  for(const t of picks){
-  const ser=O.map(o=>{const r=(D.rows[o.origin]||{})[t];if(!r)return null;
-   const c=r[ix.close],lo=W?null:r[ix.lo80],hi=W?null:r[ix.hi80];
-   return {o,f:r[ix[fk]]??(W?100*r[ix.rel_logret]:100*(r[ix.price]/c-1)),a:r[ix[ak]],lo:lo&&c?100*(lo/c-1):null,hi:hi&&c?100*(hi/c-1):null}}).filter(Boolean);
   const m=meta[t]||[];
-  if(ser.length<1){out+=`<div class="panel"><h3>${esc(t)}</h3>${empty('No forecasts for this ticker at this frequency')}</div>`;continue}
-  const vals=ser.flatMap(p=>[p.f,p.a,p.lo,p.hi]).filter(v=>v!=null&&Number.isFinite(v)),lo=Math.min(0,...vals),hi=Math.max(0,...vals);
-  const Wd=420,H=200,Lm=40,R=8,T=10,B=24,n=ser.length,x=i=>Lm+(n<2?.5:i/(n-1))*(Wd-Lm-R),y=v=>T+(hi-v)/((hi-lo)||1)*(H-T-B);
-  let s=`<h3>${esc(t)} <span class="muted">${esc(m[0]||'')}</span></h3><p class="sub">Forecast (hollow, with the 80% range) and actual change (solid) each ${W?'week':f==='m'?'month':'quarter'}.</p><svg class="plot mk-plot" viewBox="0 0 ${Wd} ${H}" role="img" aria-label="${esc(t)} forecasts vs actual">`;
-  niceTicks(lo,hi,4).forEach(v=>{s+=`<line class="mk-grid" x1="${Lm}" x2="${Wd-R}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${Lm-5}" y="${y(v)+4}" text-anchor="end">${fmt(v)}%</text>`});
-  s+=`<line class="mk-axis" x1="${Lm}" x2="${Wd-R}" y1="${y(0)}" y2="${y(0)}"/>`;
-  ser.forEach((p,i)=>{if(p.lo!=null&&p.hi!=null)s+=`<line class="led-range" x1="${x(i)}" x2="${x(i)}" y1="${y(p.hi)}" y2="${y(p.lo)}"/>`});
-  const act=ser.map((p,i)=>[i,p]).filter(a=>a[1].a!=null);
-  if(act.length>1)s+=`<path class="rot-line" style="stroke:var(--rot-1)" d="${curve(act.map(([i,p])=>[x(i),y(p.a)]),false)}"/>`;
-  ser.forEach((p,i)=>{const rows=[[ledLabel(f,p.o.origin),p.o.source],[ledSgn(p.f,W?2:1)+'%','forecast'],[p.a==null?'pending':ledSgn(p.a,W?2:1)+'%','actual']];if(p.lo!=null)rows.push([ledSgn(p.lo)+'% … '+ledSgn(p.hi)+'%','80% range']);
-   s+=`<g data-tip="${tip(rows)}" tabindex="-1" class="mk-hit"><circle cx="${x(i)}" cy="${y(p.f)}" r="3.4" class="led-fc${p.o.source==='live'?' led-fc-live':''}"/>${p.a!=null?`<circle cx="${x(i)}" cy="${y(p.a)}" r="2.6" style="fill:var(--rot-1)"/>`:''}</g>`});
-  s+=`<text class="axis" x="${Lm}" y="${H-5}">${esc(ledLabel(f,ser[0].o.origin))}</text><text class="axis" x="${Wd-R}" y="${H-5}" text-anchor="end">${esc(ledLabel(f,ser[n-1].o.origin))}</text>`;
-  out+=`<div class="panel">${s}</svg></div>`;
+  const ser=O.map(o=>{const r=(D.rows[o.origin]||{})[t];return r?{o,r}:null}).filter(Boolean).slice(-N);
+  if(!ser.length){out+=`<div class="panel"><h3>${esc(t)}</h3>${empty('No forecasts for this ticker at this frequency')}</div>`;continue}
+  const tl=o=>W?rrgDay(o.target):qlabel(o.target);
+  const done=ser.filter(a=>a.r[ix.actual_close]!=null),pend=ser.filter(a=>a.r[ix.actual_close]==null);
+  const pts=done.map(({o,r})=>({label:tl(o),close:r[ix.actual_close],prev:r[ix.close],live:o.source==='live',
+   f:{p:W?r[ix.close_next]:r[ix.price],lo:W?null:r[ix.lo80],hi:W?null:r[ix.hi80]}}));
+  if(ser.length)pts.unshift({label:W?rrgDay(ser[0].o.origin):qlabel(ser[0].o.origin),close:ser[0].r[ix.close],f:null});
+  const nx=pend[pend.length-1],next=nx?{label:tl(nx.o),p:W?nx.r[ix.close_next]:nx.r[ix.price],lo:W?null:nx.r[ix.lo80],hi:W?null:nx.r[ix.hi80]}:null;
+  out+=`<div class="panel"><h3>${esc(t)} <span class="muted">${esc(m[0]||'')}</span></h3><p class="sub">Each ${u}'s close (dots), the frozen forecast for it (dashed 80% range, ◇) and the error (green inside the range, red outside)${next?'; the filled fan: the forecast still waiting for '+esc(next.label):''}. ${esc(fcPriceStats(pts))}.</p>${fcPriceSvg(pts,next,{title:t+' forecasts vs actual'})}</div>`;
  }
  return out+'</div>';
 }

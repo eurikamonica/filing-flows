@@ -25,7 +25,7 @@ import numpy as np
 
 import chaos_forecast as CF
 
-KEEP = {'q': 64, 'm': 72, 'w': 104}         # origins kept per frequency
+KEEP = {'q': 90, 'm': 240, 'w': 950}         # origins kept per frequency (everything since 2010)
 
 
 def _now():
