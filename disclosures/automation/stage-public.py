@@ -9,16 +9,21 @@ update-and-deploy workflow does.
 holders/{TICKER}.json joins the hub's data by ticker so a company page on the Sankey site can show who holds it:
 - institutional: the latest 13F snapshot of every processed manager that lists the ticker's CUSIP
   (CUSIP → ticker from the price module's OpenFIGI cache)
-- officials: reviewed records (assets / transactions) whose verified ticker matches
+- officials: reviewed records (assets / transactions) whose verified ticker matches, US House PTRs read by machine and
+  US Senate electronic PTRs
+- insiders (Form 4), stakes (Schedules 13D / 13G), form144 (notices of proposed sales) and short (FINRA short interest,
+  a year of settlement dates)
 """
 import argparse
 import gzip
 import json
 import re
 import shutil
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'app'))
 DOCS = ROOT / 'docs'
 DATA = DOCS / 'data'
 
@@ -84,14 +89,14 @@ def holders_index():
     per = {}
     for tr in trades:
         ticker = clean_ticker(tr.get('ticker_canon') or tr.get('ticker'))
-        if not ticker or tr.get('read') != 'machine' or tr.get('ticker_status') != 'listed' or per.get(ticker, 0) >= 40:
+        if not ticker or tr.get('read') not in ('machine', 'electronic') or tr.get('ticker_status') != 'listed' or per.get(ticker, 0) >= 40:
             continue
         per[ticker] = per.get(ticker, 0) + 1
         out.setdefault(ticker, {'ticker': ticker, 'generated_at': generated, 'institutional': [], 'officials': []})['officials'].append({
             'person': tr.get('person'), 'jurisdiction': tr.get('jurisdiction'), 'kind': 'transaction', 'asset': tr.get('asset_raw'),
             'owner': tr.get('owner'), 'amount_min': tr.get('amount_min'), 'amount_max': tr.get('amount_max'), 'date': tr.get('date'),
             'transaction_type': tr.get('type'), 'report_type': 'PTR', 'filed_date': tr.get('filed_date'), 'source_url': tr.get('source_url'),
-            'page': tr.get('page'), 'read': 'machine', 'name_check': tr.get('name_check')})
+            'page': tr.get('page'), 'read': tr.get('read'), 'name_check': tr.get('name_check')})
     # insiders: Form 4 purchases and larger sales of the last 120 days
     ipath = DATA / 'cache' / 'insiders' / 'trades.json.gz'
     if ipath.exists():
@@ -108,6 +113,40 @@ def holders_index():
             count[ticker] = count.get(ticker, 0) + 1
             out.setdefault(ticker, {'ticker': ticker, 'generated_at': generated, 'institutional': [], 'officials': []}).setdefault('insiders', []).append(
                 {k: tr.get(k) for k in ('insider', 'role', 'title', 'code', 'date', 'shares', 'price', 'value', 'after', 'plan_10b5_1', 'url')})
+    base = lambda t: out.setdefault(t, {'ticker': t, 'generated_at': generated, 'institutional': [], 'officials': []})
+    # Schedules 13D / 13G (largest holders, activists) and Form 144 notices, from the ownership cache (app/ownership.py)
+    try:
+        import ownership as OWN
+        tick = OWN.cik_tickers(DATA)
+        count = {}
+        for r in OWN.with_changes(OWN._load(DATA / 'cache' / 'ownership' / 'stakes.json.gz'), tick):
+            t = clean_ticker(r.get('ticker'))
+            if not t or count.get(t, 0) >= 25:
+                continue
+            count[t] = count.get(t, 0) + 1
+            r['label'] = OWN.stake_label(r)
+            base(t).setdefault('stakes', []).append({k: (OWN._clip(r[k], 280) if k == 'purpose' else r.get(k)) for k in (
+                'form', 'filed', 'event_date', 'filer', 'person', 'persons', 'percent', 'shares', 'change', 'prev_percent', 'label',
+                'rule', 'purpose', 'url') if r.get(k) not in (None, '')})
+        count = {}
+        for r in OWN._load(DATA / 'cache' / 'ownership' / 'form144.json.gz'):
+            t = clean_ticker(tick.get(r.get('issuer_cik') or '', ''))
+            if not t or count.get(t, 0) >= 25 or (r.get('value') or 0) < 25_000:
+                continue
+            count[t] = count.get(t, 0) + 1
+            base(t).setdefault('form144', []).append({k: r.get(k) for k in (
+                'filed', 'seller', 'seller_name', 'relationship', 'shares', 'value', 'sale_date', 'acquired', 'plan_date', 'url') if r.get(k) not in (None, '')})
+    except Exception as exc:
+        print(f'::warning::holders index: 13D / 13G / Form 144 left out ({exc})')
+    # FINRA short interest: each ticker's settlement dates (a year), for stocks already indexed or with a real position
+    try:
+        import shorts as SH
+        for t, h in SH.history_by_ticker(DATA, 24).items():
+            t = clean_ticker(t)
+            if t and (t in out or (h[-1][1] or 0) >= 250_000):
+                base(t)['short'] = h
+    except Exception as exc:
+        print(f'::warning::holders index: short interest left out ({exc})')
     # this quarter's 13F flow and the signal flags, for the company page's summary line
     flows = load_json(DATA / 'market' / 'by-ticker.json', {})
     sig = {r['ticker']: r for r in load_json(DATA / 'market' / 'signals.json', {}).get('rows', [])}
@@ -120,7 +159,8 @@ def holders_index():
     for v in out.values():
         v['institutional'].sort(key=lambda x: -(x.get('value_usd') or 0))
         v['officials'].sort(key=lambda x: (x.get('date') or ''), reverse=True)
-        v['counts'] = {'institutional': len(v['institutional']), 'officials': len(v['officials']), 'insiders': len(v.get('insiders', []))}
+        v['counts'] = {'institutional': len(v['institutional']), 'officials': len(v['officials']), 'insiders': len(v.get('insiders', [])),
+                       'stakes': len(v.get('stakes', [])), 'form144': len(v.get('form144', [])), 'short': len(v.get('short', []))}
     return out
 
 

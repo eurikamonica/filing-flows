@@ -6,7 +6,8 @@ written by fixed rules from the same facts, in several hand-written phrasings. N
 checked like a real post (length, cashtags, hashtags, finished sentences, no advice) and against its facts (each number
 in the post appears in the input), so the model only ever sees posts that would be accepted.
 
-Breadth: every company quarter, 13F holder change, Form 4 purchase and sale and 8-K the scans add. Depth: targets carry two or
+Breadth: every company quarter, 13F holder change, Form 4 purchase and sale, 8-K, and rows of the hub's 13D / 13G, Form 144,
+short interest and officials' trades (House and Senate) tables the scans add. Depth: targets carry two or
 three facts with their context (growth, margin, earnings, the driver; who, how much, when bought, when filed).
 
     python -m pipeline.corpus --site _site --site-url https://filing-flows.com --known model/corpus-ids.txt --out new.jsonl
@@ -211,6 +212,117 @@ def insider_examples(site, rows, by_ticker, insiders, known, trades=None):
     return out
 
 
+# ------------------------------------------------------------------ the hub's other tables (✦ X on any row)
+def _hub(path):
+    try:
+        return json.load(open(path, encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _company(site, rows, by_ticker, cik, tk):
+    e = engage.site_company(rows, by_ticker, cik, tk)
+    try:
+        cj, fq = engage.figures(site, e) if e else (None, None)
+    except Exception:
+        cj, fq = None, None
+    return (e if fq else None), cj, fq
+
+
+def hub_examples(site, rows, by_ticker, known, market, limits=None):
+    """Posts for one row of the hub's 13D / 13G, Form 144, Short interest and Officials' trades (House and Senate) tables,
+    from the published files in `market` (disclosures/docs/data/market): the plan's rule-based post plus one or two other
+    phrasings, each checked like a real post."""
+    lim = {"stake": 500, "form144": 400, "short": 300, "official": 600, **(limits or {})}
+    out = {"stake": [], "form144": [], "short": [], "official": []}
+    today = dt.date.today()
+
+    def add(kind, key, p, phr, n, cik):
+        tk = p["cashtags"]
+        msgs = engage.messages(kind, p["task"], tk, p["tags"])
+        T = " ".join(p["tags"])
+        for text in _pick(key, [p["fallback"] + " " + T] + [x + " " + T for x in phr], n):
+            ex = example(kind, key, msgs, text, "engage", tk, p["tags"], cik)
+            if ex:
+                ex["src"] = _h(kind, key)
+                out[kind].append(ex)
+
+    st = _hub(os.path.join(market, "stakes.json"))
+    for r in st.get("latest", []):
+        tk = (r.get("ticker") or "").upper().replace("-", ".")
+        key = f"stake:{r.get('accession')}"
+        if len(out["stake"]) >= lim["stake"] or not tk or r.get("percent") is None or _h("stake", key) in known:
+            continue
+        e, cj, fq = _company(site, rows, by_ticker, r.get("issuer_cik"), tk)
+        p = engage.stake_plan(r, tk, e, cj, fq, dt.date.fromisoformat((r.get("filed") or today.isoformat())[:10]) + dt.timedelta(days=int(_h(key), 16) % 4))
+        who, form, filed = engage.holder_name(r), r["form"], engage._day(r.get("filed"))
+        sh = engage.shares_txt(r.get("shares"))
+        lead = "JUST FILED: " if "JUST FILED" in p["task"] else ""
+        chg = (f", {'up' if r['change'] > 0 else 'down'} from {r['prev_percent']:g}%" if r.get("change") and r.get("prev_percent") is not None else "")
+        kind_txt = "may seek to influence the company" if form.startswith("13D") else "a passive holder"
+        phr = [f"{lead}{who} reports {r['percent']:g}% of ${tk} ({sh} shares){chg} in a Schedule {form} filed {filed} — {kind_txt}. "
+               f"What do you make of it?",
+               f"{lead}Schedule {form} on ${tk}: {who} holds {r['percent']:g}% ({sh} shares){chg}, filed {filed}. Who blinks first?"
+               if form.startswith("13D") else
+               f"{lead}Schedule {form} on ${tk}: {who} holds {r['percent']:g}% ({sh} shares){chg}, filed {filed}. Long-term holder or trade?"]
+        add("stake", key, p, phr, 2, (e or {}).get("cik") or int(r.get("issuer_cik") or 0) or None)
+
+    fm = _hub(os.path.join(market, "form144.json"))
+    for r in fm.get("latest", []):
+        tk = (r.get("ticker") or "").upper().replace("-", ".")
+        key = f"form144:{r.get('accession')}"
+        if len(out["form144"]) >= lim["form144"] or not tk or not r.get("shares") or _h("form144", key) in known:
+            continue
+        e, cj, fq = _company(site, rows, by_ticker, r.get("issuer_cik"), tk)
+        p = engage.f144_plan(r, tk, e, cj, fq, dt.date.fromisoformat((r.get("filed") or today.isoformat())[:10]) + dt.timedelta(days=int(_h(key), 16) % 4))
+        who = social.display_name(r.get("seller_name") or r.get("seller") or "")
+        rel = (r.get("relationship") or "insider").lower().replace(", ", " and ")
+        sh, val = engage.shares_txt(r["shares"]), (f" (~{engage.money(r['value'])})" if r.get("value") else "")
+        lead = "JUST FILED: " if "JUST FILED" in p["task"] else ""
+        phr = [f"{lead}${tk} {rel} {who} filed a Form 144 for a planned sale of {sh} shares{val}"
+               + (f", approx. sale date {engage._day(r['sale_date'])}" if r.get("sale_date") else "") + ". Routine or telling?",
+               f"{lead}Notice of a planned sale at ${tk}: {who} ({rel}), {sh} shares{val}"
+               + (f", shares from {r['acquired'].lower()}" if r.get("acquired") and len(r["acquired"]) <= 40 else "") + " (Form 144). How do you read it?"]
+        add("form144", key, p, phr, 2, (e or {}).get("cik") or int(r.get("issuer_cik") or 0) or None)
+
+    si = _hub(os.path.join(market, "short-interest.json"))
+    day, prev = si.get("settlement_date"), si.get("previous_date")
+    pick = [r for r in si.get("rows", []) if r.get("change_pct") is not None and (r.get("adv") or 0) >= 200_000]
+    pick.sort(key=lambda r: -abs(r["change_pct"]))
+    for r in pick:
+        tk = (r.get("ticker") or "").upper().replace("-", ".")
+        key = f"short:{tk}:{day}"
+        if len(out["short"]) >= lim["short"] or not day or not re.fullmatch(r"[A-Z][A-Z0-9.]{0,6}", tk) or _h("short", key) in known:
+            continue
+        e, cj, fq = _company(site, rows, by_ticker, None, tk)
+        p = engage.short_plan(r, day, prev, e, cj, fq)
+        sh = engage.shares_txt(r.get("short"))
+        phr = [f"${tk} short interest {'rose' if r['change_pct'] > 0 else 'fell'} {abs(r['change_pct']):.1f}% to {sh} shares as of "
+               f"{engage._day(day)}" + (f", {r['dtc']:g} days to cover" if r.get("dtc") is not None else "") + " (FINRA). Bets or hedges?",
+               f"{sh} shares of ${tk} sold short as of {engage._day(day)}, {r['change_pct']:+.1f}% vs {engage._day(prev)} (FINRA). "
+               "What changed?"]
+        add("short", key, p, phr, 2, (e or {}).get("cik"))
+
+    off = _hub(os.path.join(market, "officials-trades.json"))
+    for t in off.get("trades", []):
+        listed = t.get("ticker_status") == "listed" and t.get("name_check") != "check"
+        tk = (t.get("ticker_canon") or t.get("ticker") or "").upper().replace("-", ".") if listed else ""
+        key = f"official:{t.get('report_id')}:{t.get('date')}:{tk}:{t.get('type')}:{t.get('amount_min')}:{t.get('owner')}"
+        if len(out["official"]) >= lim["official"] or not tk or t.get("asset_type") == "OP" or _h("official", key) in known:
+            continue
+        e, cj, fq = _company(site, rows, by_ticker, None, tk)
+        p = engage.official_plan(t, e, cj, fq, today)
+        own = t.get("owner") or ""
+        who = (f"{t['person']}'s {engage.WHOSE[own]}" if own in engage.WHOSE else f"{t['person']} (joint account)" if own == "JT" else t["person"])
+        verb = {"purchase": "bought", "sale": "sold", "partial sale": "sold part of a holding in", "exchange": "exchanged"}.get(t.get("type"), "traded")
+        amt = engage.amount_range(t.get("amount_min"), t.get("amount_max"))
+        chamber = "Senate" if t.get("jurisdiction") == "US Senate" else "House"
+        phr = [f"{who} {verb} ${tk} ({amt}) on {t.get('date')}, per a {chamber} transaction report filed {t.get('filed_date')}. "
+               "Noise or worth tracking?"]
+        add("official", key, p, phr, 2, (e or {}).get("cik"))
+    return out
+
+
 # ------------------------------------------------------------------ 8-K current reports
 def event_examples(site, rows, known, today, limit=30):
     out, n = [], 0
@@ -260,6 +372,8 @@ def main():
     ap.add_argument("--insiders", default="disclosures/docs/data/market/insiders.json")
     ap.add_argument("--insider-trades", default="disclosures/docs/data/cache/insiders/trades.json.gz",
                     help="the collector's Form 4 trade file: every purchase and sale of the last ~120 days")
+    ap.add_argument("--market", default="disclosures/docs/data/market",
+                    help="the hub's published tables (13D / 13G, Form 144, short interest, officials' trades)")
     ap.add_argument("--known", default="", help="source keys already in the corpus (one per line)")
     ap.add_argument("--out", default="new.jsonl")
     ap.add_argument("--holders", type=int, default=2000, help="companies with 13F holders read this run (one request each)")
@@ -321,6 +435,12 @@ def main():
             except Exception:
                 pass
         add("post_holders", holders_examples(site, args.site_url, known, cs))
+    if args.market and os.path.isdir(args.market):
+        try:
+            for kind, xs in hub_examples(site, rows, by_ticker, known, args.market).items():
+                add(kind, xs)
+        except Exception as err:
+            print(f"::warning::hub table examples skipped ({str(err)[:160]})")
     if args.events:
         add("event8k", event_examples(site, rows, known, today, args.events))
     with open(args.out, "w", encoding="utf-8") as f:

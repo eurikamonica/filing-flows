@@ -25,6 +25,11 @@ KINDS = {
     "insider": ["#InsiderBuying", "#Form4", "#insiders"],
     "insider_sale": ["#InsiderSelling", "#Form4", "#insiders"],
     "congress": ["#CongressTrades", "#STOCKAct", "#PoliticianTrades"],     # US House periodic transaction reports
+    "senate": ["#SenateTrades", "#STOCKAct", "#PoliticianTrades"],         # US Senate periodic transaction reports
+    "stake": ["#13D", "#ShareholderActivism", "#SEC"],                     # Schedule 13D (may seek influence)
+    "stake_passive": ["#13G", "#ownership", "#SEC"],                       # Schedule 13G (passive holders)
+    "form144": ["#Form144", "#insiders", "#SEC"],                          # notices of planned sales by affiliates
+    "short": ["#ShortInterest", "#FINRA", "#shorts"],                      # FINRA short interest
     "officials": ["#PoliticianTrades", "#disclosures"],                     # other jurisdictions' officials
     "8k": ["#8K", "#SEC"],
     "movers": ["#StockMovers", "#trading"],

@@ -758,11 +758,12 @@ def plan_insider_for(site, rows, by_ticker, target, today):
 
 
 def amount_range(lo, hi):
-    """An official's disclosed range as filed: "$1,001–$15,000", "over $50,000,000"."""
+    """An official's disclosed range as filed: "$1,001–$15,000", "over $50,000,000" (the House's open top range is
+    stored as its first dollar, 50,000,001)."""
     if lo is None and hi is None:
         return "an undisclosed amount"
     if hi is None:
-        return f"over ${lo:,.0f}"
+        return f"over ${lo - 1 if lo % 1000 == 1 else lo:,.0f}"
     return f"${lo:,.0f}–${hi:,.0f}" if lo is not None else f"up to ${hi:,.0f}"
 
 
@@ -776,8 +777,9 @@ def official_plan(t, e, cj, fq, today):
     own = t.get("owner") or ""
     who = f"{t['person']}'s {WHOSE[own]}" if own in WHOSE else f"{t['person']} (joint account)" if own == "JT" else t["person"]
     amt = amount_range(t.get("amount_min"), t.get("amount_max"))
-    house = t.get("jurisdiction") == "US House"
-    src = "a US House periodic transaction report" if house else f"a {t.get('jurisdiction') or 'public'} disclosure"
+    jur = t.get("jurisdiction") or ""
+    house = jur in ("US House", "US Senate")             # Congress: periodic transaction reports under the STOCK Act
+    src = f"a {jur} periodic transaction report" if house else f"a {jur or 'public'} disclosure"
     filed, day = t.get("filed_date") or t.get("notified") or "", t.get("date") or ""
     try:
         lag = (dt.date.fromisoformat(filed[:10]) - dt.date.fromisoformat(day[:10])).days
@@ -791,15 +793,19 @@ def official_plan(t, e, cj, fq, today):
             "range, the trade date and the filing date. Never say or imply the trade was improper, informed or a signal for the "
             "stock; use “sold” or “bought”, never “sell” or “buy”. End with one short question to the audience."
             + figs)
-    lead = "House disclosure" if house else f"{t.get('jurisdiction') or 'Official'} disclosure"
+    lead = ("Senate disclosure" if jur == "US Senate" else "House disclosure") if house else f"{jur or 'Official'} disclosure"
     fb = f"{lead}: {who} {verb} {what} ({amt}) on {day}, reported {filed}. How do you read it?"
-    page = t.get("page") or 1
-    url = (t.get("source_url") or "") + (f"#page={page}" if t.get("source_url") else "")
-    reply = (f"Source: {src[2:] if src.startswith('a ') else src} {t.get('report_id') or ''}, filed {filed}, page {page}"
-             + ("; read automatically from the PDF" if t.get("read") != "reviewed" else "") + f". Not investment advice. {url}").strip()
+    if t.get("read") == "electronic":                    # a Senate eFD report: an HTML table, no pages
+        reply = f"Source: {src[2:]} (Senate eFD), filed {filed}. Not investment advice. {t.get('source_url') or ''}".strip()
+    else:
+        page = t.get("page") or 1
+        url = (t.get("source_url") or "") + (f"#page={page}" if t.get("source_url") else "")
+        reply = (f"Source: {src[2:] if src.startswith('a ') else src} {t.get('report_id') or ''}, filed {filed}, page {page}"
+                 + ("; read automatically from the PDF" if t.get("read") != "reviewed" else "") + f". Not investment advice. {url}").strip()
     return {"kind": "official", "task": task, "cashtags": [tk] if tk else [], "items": [(e, cj, fq)] if fq else [],
             "source_reply": reply, "fallback": fb, "manual": True,
-            "tags": H.pick("congress" if house else "officials", e, key=f"official:{t.get('report_id')}:{day}:{tk}")}
+            "tags": H.pick(("senate" if jur == "US Senate" else "congress") if house else "officials", e,
+                           key=f"official:{t.get('report_id')}:{day}:{tk}")}
 
 
 def plan_official_for(site, rows, by_ticker, target, today):
@@ -824,6 +830,186 @@ def plan_official_for(site, rows, by_ticker, target, today):
     return official_plan(t, e if fq else None, cj, fq, today)
 
 
+# ------------------------------------------------------------------ 13D / 13G, Form 144, short interest (hub rows)
+def shares_txt(n):
+    """12,927,442 → "12.9M"; 40,000 → "40,000"."""
+    if n is None:
+        return "an undisclosed number of"
+    return f"{n / 1e9:.2f}B" if n >= 1e9 else f"{n / 1e6:.1f}M" if n >= 1e6 else f"{n:,.0f}"
+
+
+def _day(iso):
+    """'2026-10-16' → 'Oct 16' (the year when it is not this one is kept by the caller's text)."""
+    try:
+        d = dt.date.fromisoformat(iso[:10])
+        return f"{d:%b} {d.day}"
+    except (TypeError, ValueError):
+        return iso or ""
+
+
+def _what(tk, name):
+    return f"${tk}" if tk else social.display_name(name or "the company")
+
+
+def _figs(fq, cj, tk):
+    return (f"\n\nLatest filing figures of the company (the only other numbers you may use):\n{tweet.headline_lines(cj, fq, tk)}" if fq
+            else "\n\nNo other figures: use only the numbers above. No chart is attached; do not mention one.")
+
+
+def holder_name(r):
+    """The largest reporting person when the filing spells the name properly, else the filer (EDGAR's upper case)."""
+    p = (r.get("person") or "").strip()
+    return p if p and p != p.upper() else social.display_name(r.get("filer") or p or "A holder")
+
+
+def stake_plan(r, tk, e, cj, fq, today):
+    """The post plan for one Schedule 13D / 13G (a row of the hub's stakes.json)."""
+    form, d13 = r.get("form") or "13D", (r.get("form") or "").startswith("13D")
+    who, what = holder_name(r), _what(tk, r.get("issuer"))
+    pct = r.get("percent")
+    stake = f"{pct:g}% of {what}" if pct is not None else f"a stake in {what}"
+    group = f" (one of {r['persons']} reporting persons filing together; the percent is the largest single holding)" if (r.get("persons") or 1) > 1 else ""
+    below = r.get("label") == "below 5%"
+    change = change_fb = ""
+    if r.get("prev_percent") is not None and r.get("change") is not None:
+        way = 'up' if r['change'] > 0 else 'down' if r['change'] < 0 else 'unchanged'
+        change = f", {way} from {r['prev_percent']:g}% in its previous filing ({r.get('prev_filed') or 'on file'})"
+        change_fb = f", {way} from {r['prev_percent']:g}%" + (f" ({_day(r['prev_filed'])})" if r.get("prev_filed") else "")
+    kind = ("a Schedule 13D: the holder may seek to influence the company" if d13
+            else f"a Schedule 13G: a passive holder{' (' + r['rule'] + ')' if r.get('rule') else ''}")
+    filed = r.get("filed") or ""
+    fresh = filed >= (today - dt.timedelta(days=2)).isoformat()
+    purpose = r.get("purpose") or ""
+    task = (f"SCHEDULE {form} filed {filed}{' (amendment no. ' + str(r['amendment']) + ')' if r.get('amendment') else ''}, {kind}. "
+            f"{who}{group} reports {stake} ({shares_txt(r.get('shares'))} shares) as of {r.get('event_date') or filed}{change}."
+            + (" The holding is now below 5%: the filer no longer has to report it." if below else "")
+            + (" This is a new 13D, not an amendment." if form == "13D" else "")
+            + (f"\nItem 4 (purpose), in the filer's words: {purpose[:400]}" if purpose else "")
+            + (" Start the post with “JUST FILED:”." if fresh else "")
+            + " Say who, how much (percent and shares), the change when given, and the filing date"
+            + ("; give the purpose in a few of the filer's own words." if purpose else ".")
+            + " Never call anyone an activist unless the purpose says they seek changes; never say what it means for the stock."
+            + _figs(fq, cj, tk)
+            + "\n\nEnd with one short question to the audience.")
+    lead = ("JUST FILED: " if fresh else "") + ("Below 5%" if below else f"New {form}" if not form.endswith("/A") else f"{form}")
+    fb = (f"{lead}: {who} reports {stake} ({shares_txt(r.get('shares'))} shares){change_fb}, "
+          f"filed {_day(filed)}. What happens next?")
+    url = r.get("url") or ""
+    reply = f"The filing: Schedule {form} on {social.display_name(r.get('issuer') or '')}, filed {filed}. Not investment advice. {url}".strip()
+    return {"kind": "stake", "task": task, "cashtags": [tk] if tk else [], "items": [(e, cj, fq)] if fq else [], "source_reply": reply,
+            "fallback": fb, "manual": True,
+            "tags": H.pick("stake" if d13 else "stake_passive", e, key=f"stake:{r.get('accession')}")}
+
+
+def plan_stake_for(site, rows, by_ticker, target, today):
+    """Owner: a post about one row of the hub's 13D / 13G table (ref: [accession])."""
+    try:
+        accn = (_ref(target) + [None])[0]
+        d = hub_json(site, "stakes.json")
+    except Exception as err:
+        print(f"stake_for: {str(err)[:200]}")
+        return None
+    r = next((r for r in d.get("latest", []) if r.get("accession") == accn), None)
+    if not r:
+        print(f"stake_for: the filing {accn} is no longer in the hub's stakes.json")
+        return None
+    tk = (r.get("ticker") or "").upper().replace("-", ".")
+    e = site_company(rows, by_ticker, r.get("issuer_cik"), tk)
+    cj, fq = figures(site, e) if e else (None, None)
+    return stake_plan(r, tk, e if fq else None, cj, fq, today)
+
+
+def f144_plan(r, tk, e, cj, fq, today):
+    """The post plan for one Form 144 notice (a row of the hub's form144.json)."""
+    who = social.display_name(r.get("seller_name") or r.get("seller") or "An insider")     # "Marc A. Nemati", not EDGAR's "Nemati Marc A."
+    rel = (r.get("relationship") or "").lower().replace(", ", " and ")
+    what = _what(tk, r.get("issuer"))
+    filed = r.get("filed") or ""
+    fresh = filed >= (today - dt.timedelta(days=2)).isoformat()
+    value = f" (market value about {money(r['value'])}, as given in the notice)" if r.get("value") else ""
+    task = (f"FORM 144 filed {filed}: {who}{', ' + rel + ',' if rel else ''} gave notice of a planned sale of {shares_txt(r.get('shares'))} "
+            f"shares of {what}{value}, approximate sale date {r.get('sale_date') or 'not given'}"
+            + (f", through {r['broker']}" if r.get("broker") else "") + "."
+            + (f" The shares were acquired by: {r['acquired']}." if r.get("acquired") else "")
+            + (f" The notice names a 10b5-1 trading plan adopted {r['plan_date']}." if r.get("plan_date") else "")
+            + (f" Sold in the past three months: {money(r['sold_3m'])}." if r.get("sold_3m") else "")
+            + (" Start the post with “JUST FILED:”." if fresh else "")
+            + " A Form 144 is a notice of an intended sale, not a trade: write “gave notice of a planned sale”, never “sold”, and never "
+              "the word “sell”. Insiders sell for many reasons (taxes, diversification, planned sales): state the facts and imply nothing."
+            + _figs(fq, cj, tk)
+            + "\n\nEnd with one short question to the audience.")
+    fb = (("JUST FILED: " if fresh else "") + f"Form 144: {what} {rel + ' ' if rel else ''}{who} gave notice of a planned sale of "
+          f"{shares_txt(r.get('shares'))} shares" + (f" (~{money(r['value'])})" if r.get("value") else "")
+          + (f" around {_day(r['sale_date'])}" if r.get("sale_date") else "")
+          + (f", under a 10b5-1 plan adopted {_day(r['plan_date'])}" if r.get("plan_date") else "") + ". Routine or telling?")
+    reply = f"The notice: Form 144 on {social.display_name(r.get('issuer') or '')}, filed {filed}. A notice is not a trade. {r.get('url') or ''}".strip()
+    return {"kind": "form144", "task": task, "cashtags": [tk] if tk else [], "items": [(e, cj, fq)] if fq else [], "source_reply": reply,
+            "fallback": fb, "manual": True, "tags": H.pick("form144", e, key=f"form144:{r.get('accession')}")}
+
+
+def plan_f144_for(site, rows, by_ticker, target, today):
+    """Owner: a post about one row of the hub's Form 144 table (ref: [accession])."""
+    try:
+        accn = (_ref(target) + [None])[0]
+        d = hub_json(site, "form144.json")
+    except Exception as err:
+        print(f"f144_for: {str(err)[:200]}")
+        return None
+    r = next((r for r in d.get("latest", []) if r.get("accession") == accn), None)
+    if not r:
+        print(f"f144_for: the notice {accn} is no longer in the hub's form144.json")
+        return None
+    tk = (r.get("ticker") or "").upper().replace("-", ".")
+    e = site_company(rows, by_ticker, r.get("issuer_cik"), tk)
+    cj, fq = figures(site, e) if e else (None, None)
+    return f144_plan(r, tk, e if fq else None, cj, fq, today)
+
+
+def short_plan(r, day, prev_day, e, cj, fq):
+    """The post plan for one stock's FINRA short interest (a row of the hub's short-interest.json)."""
+    tk = (r.get("ticker") or "").upper().replace("-", ".")
+    chg = r.get("change_pct")
+    move = f", {chg:+.1f}% from {shares_txt(r.get('prev'))} on {prev_day}" if chg is not None and prev_day else ""
+    hist = [h for h in (r.get("hist") or []) if h[1] is not None]
+    trend = (f" Over the last {len(hist)} settlement dates it went from {shares_txt(hist[0][1])} ({hist[0][0]}) to "
+             f"{shares_txt(hist[-1][1])}." if len(hist) >= 3 else "")
+    dtc = f"; {r['dtc']:g} days to cover at an average daily volume of {shares_txt(r.get('adv'))} shares" if r.get("dtc") is not None else ""
+    task = (f"FINRA SHORT INTEREST, settlement date {day} (published about a week later): {shares_txt(r.get('short'))} shares of ${tk} "
+            f"were sold short{move}{dtc}." + trend
+            + (" A stock split changed the share counts between the two dates." if r.get("split") else "")
+            + " Short interest is a snapshot of open short positions, not trades: never predict a squeeze or say what it means for the "
+              "price; write “shares sold short” or “short interest”, never the word “sell”."
+            + _figs(fq, cj, tk)
+            + "\n\nEnd with one short question to the audience.")
+    fb = (f"Short interest in ${tk}: {shares_txt(r.get('short'))} shares as of {_day(day)}"
+          + (f", {chg:+.1f}% vs {_day(prev_day)}" if chg is not None and prev_day else "")
+          + (f" — {r['dtc']:g} days to cover" if r.get("dtc") is not None else "") + " (FINRA). Bets or hedges?")
+    reply = f"Source: FINRA consolidated short interest, settlement date {day}. Not investment advice. https://www.finra.org/finra-data/browse-catalog/equity-short-interest"
+    return {"kind": "short", "task": task, "cashtags": [tk], "items": [(e, cj, fq)] if fq else [], "source_reply": reply,
+            "fallback": fb, "manual": True, "tags": H.pick("short", e, key=f"short:{tk}:{day}")}
+
+
+def plan_short_for(site, rows, by_ticker, target, today):
+    """Owner: a post about one row of the hub's Short interest table (ref: [ticker, settlement date])."""
+    try:
+        tick, day = (_ref(target) + [None, None])[:2]
+        d = hub_json(site, "short-interest.json")
+    except Exception as err:
+        print(f"short_for: {str(err)[:200]}")
+        return None
+    if d.get("settlement_date") != day:
+        print(f"short_for: the hub now shows {d.get('settlement_date')}, not {day}; nothing posted")
+        return None
+    r = next((r for r in d.get("rows", []) if r.get("ticker") == tick), None)
+    if not r:
+        print(f"short_for: {tick} is not in the hub's short-interest.json")
+        return None
+    tk = (tick or "").upper().replace("-", ".")
+    e = site_company(rows, by_ticker, None, tk)
+    cj, fq = figures(site, e) if e else (None, None)
+    return short_plan(r, day, d.get("previous_date"), e if fq else None, cj, fq)
+
+
 # ------------------------------------------------------------------ 8-K events (current reports)
 # hashtags per post kind: now picked from pools by pipeline/hashtags.py (kept for reference and older callers)
 TAGS = {"event8k": ["#8K", "#SEC", "#stocks", "#investing"],
@@ -839,7 +1025,8 @@ def event_tags(code, label, profile=None, key=""):
     return H.pick("8k", profile, topic=TOPIC_TAG.get(label) or TOPIC_TAG.get(code), key=key or f"{code}:{label}")
 
 
-KIND_TAGS = {"event8k": "8k", "fund13f": "13f", "fund13f_for": "13f", "insider": "insider", "movers": "movers", "official": "congress"}
+KIND_TAGS = {"event8k": "8k", "fund13f": "13f", "fund13f_for": "13f", "insider": "insider", "movers": "movers", "official": "congress",
+             "stake": "stake", "form144": "form144", "short": "short"}
 
 
 ABBR = re.compile(r"\b(?:Inc|Ltd|Corp|Co|LLC|L\.P|LP|No|Nos|U\.S|Mr|Ms|Dr|St|Jr|S\.A|N\.V|plc)\.$")
@@ -1191,7 +1378,10 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
              "filing8k": lambda: plan_filing8k(site, rows, target or {}, today),
              "fund13f_for": lambda: plan_fund13f_for(site, rows, by_ticker, target or {}),
              "insider_for": lambda: plan_insider_for(site, rows, by_ticker, target or {}, today),
-             "official_for": lambda: plan_official_for(site, rows, by_ticker, target or {}, today)}.get(kind, lambda: None)()
+             "official_for": lambda: plan_official_for(site, rows, by_ticker, target or {}, today),
+             "stake_for": lambda: plan_stake_for(site, rows, by_ticker, target or {}, today),
+             "f144_for": lambda: plan_f144_for(site, rows, by_ticker, target or {}, today),
+             "short_for": lambda: plan_short_for(site, rows, by_ticker, target or {}, today)}.get(kind, lambda: None)()
         if p:
             plans.append(p)
         else:

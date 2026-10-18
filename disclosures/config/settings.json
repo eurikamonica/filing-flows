@@ -57,7 +57,9 @@
       "ethics.ny.gov": 2.5,
       "public.ethics.ny.gov": 2.5,
       "www.ethicscanada.ca": 1.2,
-      "form700search.fppc.ca.gov": 1.0
+      "form700search.fppc.ca.gov": 1.0,
+      "efdsearch.senate.gov": 1.2,
+      "api.finra.org": 0.6
     }
   },
   "holdings": {
@@ -319,5 +321,31 @@
     "max_tickers": 90,
     "keep_days": 400,
     "_note": "CBOE delayed option chains, summarised daily: IV30, smile, term structure, OI and GEX by strike, walls, max pain, skew."
+  },
+  "ownership": {
+    "batch": 300,
+    "feed_pages": 3,
+    "backfill_days": 120,
+    "index_days_per_run": 4,
+    "keep_days": {
+      "stakes": 730,
+      "form144": 400
+    },
+    "_note": "Schedules 13D / 13G and Form 144: the newest filings from the EDGAR feeds, then the daily indexes back `backfill_days`; `batch` filings read per run."
+  },
+  "shorts": {
+    "keep_dates": 24,
+    "dates_per_run": 4,
+    "rechecks": 3,
+    "min_short": 500000,
+    "_note": "FINRA consolidated short interest (twice a month): the newest `keep_dates` settlement dates; rows of at least `min_short` shares are published."
+  },
+  "senate": {
+    "since": "2024-01-01",
+    "batch": 40,
+    "min_interval_minutes": 90,
+    "recent_days": 60,
+    "max_pages": 6,
+    "_note": "US Senate periodic transaction reports from eFD: the last `recent_days` searched every `min_interval_minutes`, one older month per run back to `since`; `batch` reports read per run."
   }
 }

@@ -49,7 +49,7 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
   <section class="page-head">
     <div class="crumbs"><a href="../">Filing Flows</a><span>›</span><span>Disclosures</span></div>
     <h1>Disclosures</h1>
-    <p class="intro">Where the money is moving — 13F flows across every processed manager, officials' trades and the signals where they line up — plus institutional ownership, public officials' disclosures and market positioning, read from the public record: SEC 13F and N-PX filings; financial disclosures of the US House, New York State, California, Texas (imports) and Canada's federal public office holders; CFTC Commitments of Traders and FDIC bank financials.
+    <p class="intro">Where the money is moving — 13F flows across every processed manager, officials' trades and the signals where they line up — plus institutional ownership, public officials' disclosures and market positioning, read from the public record: SEC 13F, Form 4, Schedule 13D / 13G, Form 144 and N-PX filings; FINRA short interest; financial disclosures of the US House and Senate, New York State, California, Texas (imports) and Canada's federal public office holders; CFTC Commitments of Traders and FDIC bank financials.
       <span class="src" id="buildtime"></span></p>
   </section>
   <nav class="pills modules" aria-label="Data modules">
@@ -57,6 +57,9 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
     <button class="pill" data-tab="flows" aria-pressed="false">Market flows</button>
     <button class="pill" data-tab="trades" aria-pressed="false">Officials' trades</button>
     <button class="pill" data-tab="insiders" aria-pressed="false">Insider trades</button>
+    <button class="pill" data-tab="stakes" aria-pressed="false">13D / 13G</button>
+    <button class="pill" data-tab="form144" aria-pressed="false">Form 144</button>
+    <button class="pill" data-tab="shorts" aria-pressed="false">Short interest</button>
     <button class="pill" data-tab="rotation" aria-pressed="false">Rotation</button>
     <button class="pill" data-tab="options" aria-pressed="false">Options</button>
     <button class="pill" data-tab="directory" aria-pressed="false">Explore directory</button>
@@ -73,12 +76,13 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
 </main>
 <footer class="site-foot">
   <div class="wrap">
-    <div>Data: SEC EDGAR (13F, N-PX), the House Clerk's financial-disclosure index, CFTC Commitments of Traders and the FDIC BankFind API. Collected on a schedule in batches; coverage grows run by run.</div>
+    <div>Data: SEC EDGAR (13F, Form 4, Schedules 13D / 13G, Form 144, N-PX), FINRA short interest, the House Clerk's financial-disclosure index, the Senate's electronic financial disclosures (eFD), CFTC Commitments of Traders and the FDIC BankFind API. Collected on a schedule in batches; coverage grows run by run.</div>
     <div>For information and research, not investment advice. Report dates differ from publication dates. Historical snapshots are not a complete point-in-time archive.</div>
-    <div class="foot-links"><a href="../">Earnings Sankeys</a><a href="https://www.sec.gov/edgar/search/" target="_blank" rel="noopener">SEC</a><a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" rel="noopener">CFTC</a><a href="https://api.fdic.gov/banks/docs/" target="_blank" rel="noopener">FDIC</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a></div>
+    <div class="foot-links"><a href="../">Earnings Sankeys</a><a href="https://www.sec.gov/edgar/search/" target="_blank" rel="noopener">SEC</a><a href="https://www.finra.org/finra-data/browse-catalog/equity-short-interest" target="_blank" rel="noopener">FINRA</a><a href="https://efdsearch.senate.gov/search/" target="_blank" rel="noopener">Senate eFD</a><a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" rel="noopener">CFTC</a><a href="https://api.fdic.gov/banks/docs/" target="_blank" rel="noopener">FDIC</a><a href="../privacy.html">Privacy</a><a href="../terms.html">Terms</a></div>
   </div>
 </footer>
-<script src="data/live.js"></script><script src="data/demo.js"></script><script src="dashboard.js"></script><script src="extensions.js"></script><script src="market.js"></script><script src="rotation.js"></script><script src="rrg.js"></script><script src="chaos.js"></script><script src="galaxy.js"></script><script src="ledger.js"></script><script src="options.js"></script><script src="xpost.js"></script><script src="app.js"></script>
+<script src="data/live.js"></script><script src="data/demo.js"></script><script src="dashboard.js"></script><script src="extensions.js"></script><script src="market.js"></script><script src="rotation.js"></script><script src="rrg.js"></script><script src="chaos.js"></script><script src="galaxy.js"></script><script src="ledger.js"></script><script src="options.js"></script><script src="ownership.js"></script>
+<script src="xpost.js"></script><script src="app.js"></script>
 <script>
 /* Module pills: keep the Sankey site's "on" look in step with the app's own "active" state. */
 document.querySelectorAll('nav button[data-tab]').forEach(function (b) {

@@ -42,12 +42,31 @@ Formats are named in the task; follow the one you are given.
   nothing: `$TICK CEO John Roe sold 40,000 shares ($7.2M) at $180.10 on Oct 13 under a 10b5-1 plan (Form 4). Routine or
   telling? 1) routine 2) telling 3) too early to say`
 
-- **official** — a public official's reported trade (a US House periodic transaction report, or another jurisdiction's
-  disclosure). Who (and whose account: spouse, joint, dependent child), bought or sold what, the dollar range exactly as
+- **official** — a public official's reported trade (a US House or US Senate periodic transaction report, or another
+  jurisdiction's disclosure). Who (and whose account: spouse, joint, dependent child), bought or sold what, the dollar range exactly as
   filed, the trade date and the filing date; then a question. Never say or imply the trade was improper or informed.
   `House disclosure: Jane Roe's spouse sold $TICK ($1,001–$15,000) on Oct 12, reported Oct 15. How do you read
   officials' trades — 1) noise 2) worth tracking 3) depends who`
   When the inputs say no chart is attached, never mention a chart.
+
+- **stake** — a Schedule 13D or 13G: someone reports more than 5% of a company (or, on an amendment, a new level or a
+  drop below 5%). Who, how much (percent and shares), the change from their previous filing when given, the filing
+  date; for a 13D, the purpose in a few of the filer's own words when given. A 13D holder may seek to influence the
+  company, a 13G holder is passive: say which, never call anyone an activist unless the purpose says they seek changes.
+  `New 13D: Gerald J. Ford reports 27.3% of $TICK (15.7M shares), filed Oct 16 — his letter to the board raises concerns
+  about the strategy. What happens next? 1) talks 2) a fight 3) nothing`
+
+- **form144** — a Form 144: an officer, director or other affiliate gave notice of a planned sale. Who, the
+  relationship, shares and market value as given, the approximate sale date, how the shares were acquired, the 10b5-1
+  plan date when given. It is a notice, not a trade: "gave notice of a planned sale", never "sold" and never "sell".
+  `Form 144: $TICK director Jane Doe gave notice of a planned sale of 40,000 shares (~$7.2M) around Oct 16, from
+  vested RSUs, under a 10b5-1 plan adopted Mar 3. Routine or telling? 1) routine 2) telling 3) too early to say`
+
+- **short** — FINRA short interest: shares sold short in one stock as of a settlement date, against the date before,
+  with days to cover. A snapshot of open positions, not trades; never predict a squeeze or say what it means for the
+  price; "shares sold short" or "short interest", never "sell".
+  `Short interest in $TICK: 311.4M shares as of Sep 30, +5.8% vs Sep 15 — 2.8 days to cover (FINRA). Rising bets or
+  hedging? 1) bets 2) hedges 3) noise`
 
 - **calendar** — tomorrow's earnings: who reports and when (before the open / after the close), one fact from the
   biggest one's last quarter, then a which-one question.

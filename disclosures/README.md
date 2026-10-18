@@ -31,6 +31,21 @@ system (same header, type, colours, dark mode and theme preference), with links 
   beats the analogues and is significant on the broad weekly test (`notes/gravity-pendulum/`); on the site's ~220 companies
   its edge is not yet distinguishable from zero, so prices are shown as calibrated ranges.
 
+## 4.6 — 13D / 13G, Form 144, short interest and the US Senate
+
+| Tab | Source | How it is collected |
+|---|---|---|
+| **13D / 13G** | SEC EDGAR Schedules 13D and 13G (structured XML since Dec 2024) | `app/ownership.py`: the "current filings" feed every half hour, then the daily form indexes back `ownership.backfill_days` (120); each accession read once. The stake is the largest single reporting person's; the change compares with the same filer's previous filing; 13D Item 4 (purpose) kept |
+| **Form 144** | SEC EDGAR Form 144 (XML since Apr 2023) | the same collector: seller, relationship, shares, market value, approximate sale date, how acquired, 10b5-1 plan date. A notice, not a trade |
+| **Short interest** | FINRA consolidated short interest (Query API, no key) | `app/shorts.py`: the settlement dates FINRA lists (twice a month), newest first, a year on file (`shorts.keep_dates`); the newest date re-read a few times for late revisions |
+| **Officials' trades** (Senate) | US Senate eFD electronic periodic transaction reports | `app/senate.py`: accepts eFD's terms each run (CSRF form), searches PTRs (the last 60 days every 90 minutes, one older month per run back to `senate.since`), reads the HTML tables; paper reports are listed, not read. Merged into `officials-trades.json` with jurisdiction `US Senate` |
+
+All three run with the light half-hourly schedule (module `insiders`; or `ownership`, `shorts`, `senate` by hand) and
+publish `market/stakes.json`, `market/form144.json`, `market/short-interest.json`. Every row has the owner's ✦ X
+(send_requests kinds `post_stake`, `post_f144`, `post_short`; Senate rows use `post_official` — re-run
+`supabase/schema.sql` once), the rows become training examples for the local fallback model (`pipeline/corpus.py`), and
+the company pages show them (holders index: `stakes`, `form144`, `short`).
+
 ## 4.1 — state and Canadian officials, optional cost estimates
 
 | Jurisdiction | Source | How it is collected |

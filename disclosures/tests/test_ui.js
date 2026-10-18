@@ -14,7 +14,7 @@ for(const key of ['cot','banks'])for(let i=0;i<(live.modules[key]?.series||[]).l
 for(let i=0;i<(live.modules.npx?.filings||[]).length;i++){let f=live.modules.npx.filings[i];if(f.shard){f=JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.shard),'utf8'));f.votes=f.vote_chunks?.length?JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.vote_chunks[0]),'utf8')):[];f._loaded_chunks=f.vote_chunks?.length?1:0;live.modules.npx.filings[i]=f}}
 for(const m of Object.values(live.modules))if(m.directory_shard)m.directory=JSON.parse(fs.readFileSync(path.join(root,'docs/data',m.directory_shard),'utf8'));
 context.window.DISCLOSURE_LIVE=live;
-for(const f of ['data/demo.js','dashboard.js','extensions.js','market.js','rotation.js','rrg.js','chaos.js','galaxy.js','ledger.js','options.js','xpost.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
+for(const f of ['data/demo.js','dashboard.js','extensions.js','market.js','rotation.js','rrg.js','chaos.js','galaxy.js','ledger.js','options.js','ownership.js','xpost.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
 let checks=0;
 for(const mode of ['official','demo'])for(const tab of ['holdings','congress','review','cot','banks','npx','status','directory']){
  vm.runInContext(`state.mode='${mode}';state.tab='${tab}';state.date='';state.page=0;render();`,context);
@@ -61,7 +61,9 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   vm.runInContext(`for(const k of Object.keys(marketStore))delete marketStore[k]`,context);
   context.fetch=async url=>{const f=path.join(root,'docs',url);return fs.existsSync(f)?{ok:true,json:async()=>JSON.parse(fs.readFileSync(f,'utf8'))}:{ok:false,status:404}};
   let n=0;
-  for(const [tab,name,expect] of [['signals','signals','Hype map'],['flows','flows','Net buying and selling'],['trades','officials-trades','Most bought by officials'],['insiders','insiders','Most insider buying']]){
+  const views=[['signals','signals','Hype map'],['flows','flows','Net buying and selling'],['trades','officials-trades','Most bought by officials'],['insiders','insiders','Most insider buying'],
+   ['stakes','stakes','Most 13D activity'],['form144','form144','Most planned selling'],['shorts','short-interest','Biggest changes in short interest']].filter(v=>fs.existsSync(path.join(mdir,v[1]+'.json')));
+  for(const [tab,name,expect] of views){
    vm.runInContext(`state.mode='official';state.tab='${tab}';state.page=0;state.sort=null;render()`,context);
    await vm.runInContext(`marketStore['${name}'].loading`,context);
    vm.runInContext(`render()`,context);

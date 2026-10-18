@@ -10,6 +10,9 @@ from prices import apply_prices
 from shards import hydrate, hydrate_catalogs, publish_shards
 import market
 import insiders
+import ownership
+import shorts
+import senate
 import frames
 import options as option_chains
 
@@ -17,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser(description='Collect official public disclosures; demo never substitutes for real data')
-    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market','insiders','options'],default='all')
+    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market','insiders','options','ownership','shorts','senate'],default='all')
     parser.add_argument('--config',type=Path,default=ROOT/'config/settings.json')
     parser.add_argument('--output',type=Path,default=ROOT/'docs/data')
     parser.add_argument('--storage',type=Path,default=ROOT/'storage')
@@ -89,6 +92,25 @@ def main():
             write_json(args.output/'insiders-status.json',data['modules']['insiders'])
         except Exception as exc:
             print('insiders: error — '+str(exc),flush=True)
+    # 4.6: Schedules 13D / 13G and Form 144 (EDGAR feeds, then the daily indexes back `backfill_days`), FINRA short
+    # interest (a new settlement date twice a month) and US Senate PTRs (eFD) — all with the light half-hourly runs
+    for key,mod,on in (('ownership',ownership,('all','insiders','ownership')),('shorts',shorts,('all','insiders','options','shorts')),
+                       ('senate',senate,('all','insiders','senate'))):
+        if args.only not in on or not cfg.get(key,{}).get('enabled',True):
+            continue
+        print('Collecting '+key,flush=True)
+        try:
+            r=mod.collect(client,args.output,cfg.get(key,{}))
+            if key=='ownership':
+                r['published']=ownership.publish(args.output,args.output/'market')
+            elif key=='shorts':
+                r['published']=shorts.publish(args.output,args.output/'market',int(cfg.get('shorts',{}).get('min_short',500_000)))
+            print(key+': '+json.dumps(r),flush=True)
+            data['modules'][key]={**r,'last_attempt':now()}
+            write_json(args.output/f'{key}-status.json',data['modules'][key])
+        except Exception as exc:
+            print(key+': error — '+str(exc),flush=True)
+            write_json(args.output/f'{key}-status.json',{**read_json(args.output/f'{key}-status.json',{}),'status':'error','error':str(exc)[:300],'last_attempt':now()})
     # 4.5: option chains (CBOE delayed quotes) once a day after the close
     if args.only in ('all','options'):
         print('Collecting option chains',flush=True)
@@ -105,11 +127,11 @@ def main():
         except Exception as exc:
             print('frames: error — '+str(exc),flush=True)
     # 4.3: market-wide views (13F flows, officials' trades, signals) from the caches; at most every few hours unless asked for
-    if args.only in ('all','holdings','congress','prices','market','insiders'):
+    if args.only in ('all','holdings','congress','prices','market','insiders','senate'):
         print('Building market views',flush=True)
         try:
             r=market.publish(args.output,client=client,min_interval_hours=float(cfg.get('market',{}).get('min_interval_hours',3)),
-                             force=args.only=='market')
+                             force=args.only in ('market','senate'))
             print('market: '+json.dumps(r),flush=True)
         except Exception as exc:
             print('market: error — '+str(exc),flush=True)

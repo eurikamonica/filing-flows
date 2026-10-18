@@ -2197,11 +2197,97 @@ def test_hub_rows_post_one_at_a_time(tmp_path):
     assert social.strip_links([o["source_reply"]]) == [
         "Source: US House periodic transaction report house-20035660, filed 2026-10-15, page 1; read automatically from the PDF. "
         "Not investment advice."]
-    assert engage.amount_range(50000001, None) == "over $50,000,001"
+    assert engage.amount_range(50000001, None) == "over $50,000,000"          # the open top range, as filed
     from pipeline import notify as N
     assert set(N.FILING_PLANS) == set(N.FILING_KINDS) and {"post_insider", "post_official"} <= set(N.POST_KINDS)
     sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
     assert sql.count("'post_insider', 'post_official'") == 5                # kind check, cik check, guard, wake, owner-only policy
+
+
+def test_new_hub_tables_post_one_row_at_a_time(tmp_path):
+    """Owner: ✦ X on a row of the hub's 13D / 13G, Form 144 and Short interest tables, and on a US Senate trade in
+    Officials' trades. The row is found again in the published data; a Form 144 is a notice ("planned sale"), never a
+    sale; short interest is a snapshot; the Senate is its own chamber (tags, source line, no PDF page)."""
+    import datetime as dt
+    from pipeline import engage, notify, social, corpus
+    site = _site(tmp_path)
+    mk = site / "disclosures" / "data" / "market"
+    mk.mkdir(parents=True)
+    stake = {"accession": "0001193125-26-424467", "url": "https://www.sec.gov/Archives/edgar/data/1265131/000119312526424467/",
+             "form": "13D/A", "filed": "2026-10-16", "amendment": 23, "event_date": "2026-10-16", "issuer_cik": "1265131",
+             "issuer": "HILLTOP HOLDINGS INC.", "filer": "FORD GERALD J", "filer_cik": "1021572", "person": "Gerald J. Ford",
+             "person_type": "IN", "persons": 5, "shares": 15651329.97, "percent": 27.3, "ticker": "HTH", "prev_percent": 25.1,
+             "prev_filed": "2026-05-01", "change": 2.2, "new": False, "label": "raised",
+             "purpose": "On October 16, 2026, counsel to Gerald J. Ford delivered a letter to the Board raising governance concerns."}
+    passive = {"accession": "0000950123-26-000777", "url": "https://www.sec.gov/Archives/edgar/data/320193/000095012326000777/",
+               "form": "13G", "filed": "2026-10-15", "event_date": "2026-09-30", "issuer_cik": "320193", "issuer": "Apple Inc.",
+               "filer": "BIG FUND LP", "person": "Big Fund LP", "persons": 1, "shares": 800_000_000, "percent": 5.4, "ticker": "AAPL",
+               "rule": "institution", "exit": False, "new": True, "label": "new 13G"}
+    (mk / "stakes.json").write_text(json.dumps({"latest": [stake, passive], "summary": []}))
+    notice = {"accession": "0002060619-26-000002", "url": "https://www.sec.gov/Archives/edgar/data/2060619/000206061926000002/",
+              "form": "144", "filed": "2026-10-16", "issuer_cik": "320193", "issuer": "Apple Inc.", "seller": "Doe Jane",
+              "relationship": "Officer, Director", "shares": 40000.0, "value": 7_200_000, "sale_date": "2026-10-16", "broker": "Morgan Stanley",
+              "acquired": "Vesting of restricted stock unit", "plan_date": "2026-03-03", "sold_3m": 1_050_000, "ticker": "AAPL"}
+    (mk / "form144.json").write_text(json.dumps({"latest": [notice], "summary": []}))
+    short = {"ticker": "NVDA", "name": "NVIDIA Corporation", "market": "NNM", "short": 311389688, "prev": 294225803, "change_pct": 5.83,
+             "adv": 110290688, "dtc": 2.82, "split": None, "revised": None, "change": 17163885,
+             "hist": [["2026-08-29", 280000000], ["2026-09-15", 294225803], ["2026-09-30", 311389688]]}
+    (mk / "short-interest.json").write_text(json.dumps({"settlement_date": "2026-09-30", "previous_date": "2026-09-15", "rows": [short]}))
+    sen = {"ticker": "AAPL", "asset_type": "ST", "type": "partial sale", "date": "2026-09-04", "notified": "", "owner": "SP",
+           "asset_raw": "Apple Inc. Common Stock", "amount_min": 15001, "amount_max": 50000, "person": "John Roe", "jurisdiction": "US Senate",
+           "report_id": "senate-6bf3b6f7-9e1b-499a-bd5a-990292ce2e72", "filed_date": "2026-10-01",
+           "source_url": "https://efdsearch.senate.gov/search/view/ptr/6bf3b6f7-9e1b-499a-bd5a-990292ce2e72/", "read": "electronic",
+           "ticker_canon": "AAPL", "ticker_status": "listed", "listed_name": "Apple Inc.", "name_check": "matches"}
+    (mk / "officials-trades.json").write_text(json.dumps({"trades": [sen]}))
+    s = notify.Site(str(site))
+    rows = s.json("index.json")["companies"]
+    by = {r["ticker"].upper(): r for r in rows if r.get("ticker")}
+    today = dt.date(2026, 10, 17)
+    ask = lambda plan, key: plan(s, rows, by, {"ref": json.dumps(key)}, today)
+
+    p = ask(engage.plan_stake_for, ["0001193125-26-424467"])
+    assert p["kind"] == "stake" and p["cashtags"] == ["HTH"] and p["items"] == [] and p["tags"][0] == "#13D"
+    assert "Gerald J. Ford (one of 5 reporting persons" in p["task"] and "27.3% of $HTH (15.7M shares)" in p["task"]
+    assert "up from 25.1% in its previous filing (2026-05-01)" in p["task"] and "Item 4 (purpose)" in p["task"]
+    post = engage.clean(p["fallback"], p["cashtags"], p["tags"])
+    assert post.startswith("JUST FILED: 13D/A: Gerald J. Ford reports 27.3% of $HTH (15.7M shares), up from 25.1% (May 1), filed Oct 16.")
+    assert social.strip_links([p["source_reply"]]) == ["The filing: Schedule 13D/A on Hilltop Holdings Inc., filed 2026-10-16. Not investment advice."]
+    g = ask(engage.plan_stake_for, ["0000950123-26-000777"])
+    assert g["items"] and g["tags"][0] == "#13G" and "a passive holder (institution)" in g["task"]
+    engage.clean(g["fallback"], g["cashtags"], g["tags"])
+    assert ask(engage.plan_stake_for, ["0000000000-26-000000"]) is None
+
+    f = ask(engage.plan_f144_for, ["0002060619-26-000002"])
+    assert f["kind"] == "form144" and f["items"] and f["tags"][0] == "#Form144"
+    assert "gave notice of a planned sale of 40,000 shares of $AAPL (market value about $7.2M" in f["task"] and "never “sold”" in f["task"]
+    post = engage.clean(f["fallback"], f["cashtags"], f["tags"])
+    assert "planned sale of 40,000 shares (~$7.2M) around Oct 16, under a 10b5-1 plan adopted Mar 3" in post and " sold " not in post
+
+    sh = ask(engage.plan_short_for, ["NVDA", "2026-09-30"])
+    assert sh["kind"] == "short" and sh["cashtags"] == ["NVDA"] and sh["tags"][0] == "#ShortInterest"
+    assert "311.4M shares of $NVDA were sold short, +5.8% from 294.2M on 2026-09-15; 2.82 days to cover" in sh["task"]
+    assert engage.clean(sh["fallback"], sh["cashtags"], sh["tags"]).startswith(
+        "Short interest in $NVDA: 311.4M shares as of Sep 30, +5.8% vs Sep 15 — 2.82 days to cover (FINRA).")
+    assert ask(engage.plan_short_for, ["NVDA", "2026-09-15"]) is None           # the table has moved on to another date
+
+    o = ask(engage.plan_official_for, ["senate-6bf3b6f7-9e1b-499a-bd5a-990292ce2e72", "2026-09-04", "AAPL", "partial sale", 15001, 50000, "SP"])
+    assert o["tags"][0] == "#SenateTrades" and "from a US Senate periodic transaction report filed 2026-10-01" in o["task"]
+    assert engage.clean(o["fallback"], o["cashtags"], o["tags"]).startswith("Senate disclosure: John Roe's spouse sold part of a holding in $AAPL")
+    assert social.strip_links([o["source_reply"]]) == ["Source: US Senate periodic transaction report (Senate eFD), filed 2026-10-01. Not investment advice."]
+
+    from pipeline import notify as N
+    assert {"post_stake", "post_f144", "post_short"} <= set(N.FILING_KINDS) and set(N.FILING_PLANS) == set(N.FILING_KINDS)
+    sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
+    assert sql.count("'post_official', 'post_stake', 'post_f144', 'post_short'") == 5
+
+    ex = corpus.hub_examples(s, rows, by, set(), str(mk))
+    assert {k: len(v) > 0 for k, v in ex.items()} == {"stake": True, "form144": True, "short": True, "official": True}
+    for kind, xs in ex.items():
+        for e in xs:
+            assert e["kind"] == kind and e["check"] == "engage" and not engage.tweet.ADVICE.search(e["target"].split("#")[0])
+    assert all("sold" not in e["target"] for e in ex["form144"])
+    again = corpus.hub_examples(s, rows, by, {e["src"] for xs in ex.values() for e in xs}, str(mk))
+    assert sum(len(v) for v in again.values()) == 0                               # rows already in the corpus are skipped
 
 
 def test_posts_are_never_cut_off_and_say_something():

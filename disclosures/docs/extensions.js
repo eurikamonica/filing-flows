@@ -51,7 +51,7 @@ function holdings(){
  exported=costOn()?rows.map(r=>({...r,est_cost_of_change_usd:estCost(r)})):rows;
  out+=`<div class="section-head"><h3>Disclosed positions and changes</h3><button class="action" id="csv">Export CSV ↓</button></div>`+table(['Issuer / CUSIP','Class / option / quantity type','Change','Quantity','Quantity change','Quantity change %','Value USD','Weight','Weight change pp',...(costOn()?['Avg close (quarter) · est.','Cost of change USD · est.']:[])],rows.map(r=>[esc(r.issuer)+'<br>'+esc(r.cusip)+(r.ticker?' · '+esc(r.ticker):''),esc(`${r.class} / ${r.put_call} / ${r.share_type}`),esc(r.status),fmt(r.shares,6),signed(r.delta_shares),r.delta_pct==null?'—':fmt(r.delta_pct,2)+'%',fmt(r.value_usd),pct(r.weight),fmt(r.delta_weight_pp,2),...(costOn()?[r.price_avg_q==null?'—':'$'+fmt(r.price_avg_q,2)+`<br><span class="muted">${r.price_days} days</span>`,estCost(r)==null?'—':`<span class="${estCost(r)>=0?'positive':'negative'}">${signed(Math.round(estCost(r)))}</span>`]:[])]));return out;
 }
-function amountLabel(r){return r.amount_max==null?'Over $'+fmt(r.amount_min-1):'$'+fmt(r.amount_min)+'–$'+fmt(r.amount_max)}
+function amountLabel(r){return r.amount_min==null&&r.amount_max==null?'Not disclosed':r.amount_max==null?'Over $'+fmt(r.amount_min-1):'$'+fmt(r.amount_min)+'–$'+fmt(r.amount_max)}
 function intervalChart(rows){
  const picked=[...rows].sort((a,b)=>(b.amount_max??b.amount_min)-(a.amount_max??a.amount_min)).slice(0,12);
  if(!picked.length)return empty('No reviewed asset ranges in this selection. Open PDF / OCR to review source records.');

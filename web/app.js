@@ -2068,7 +2068,22 @@
     } catch (e) { /* the hub has not published yet */ }
     if (!here() || !box.isConnected) return;
     const inst = (h && h.institutional) || [], off = (h && h.officials) || [], ins = (h && h.insiders) || [];
+    const stakes = (h && h.stakes) || [], f144 = (h && h.form144) || [], shortH = (h && h.short) || [];
     const SHOW = 12;
+    const mega = (v) => (v == null ? '—' : Math.abs(v) >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : whole(v));
+    // short interest: one bar per settlement date (shares short), the latest date in words
+    const shortBlock = () => {
+      if (!shortH.length) return `<p class="muted">FINRA publishes no short position for ${t(sym)} in the dates on file.</p>`;
+      const last = shortH[shortH.length - 1], max = Math.max(...shortH.map((x) => x[1] || 0)) || 1, W = 560, H = 90, bw = W / shortH.length;
+      const bars = shortH.map((x, i) => {
+        const hh = Math.max(1, ((x[1] || 0) / max) * (H - 14));
+        return `<rect x="${(i * bw + 1).toFixed(1)}" y="${(H - hh).toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${hh.toFixed(1)}" class="${i === shortH.length - 1 ? 'si-last' : 'si-bar'}"><title>${t(x[0])}: ${mega(x[1])} shares short${x[2] != null ? ` (${x[2] > 0 ? '+' : ''}${x[2]}%)` : ''}${x[3] != null ? ` · ${x[3]} days to cover` : ''}</title></rect>`;
+      }).join('');
+      return `<p class="holders-flow"><b>${date(last[0])}:</b> ${mega(last[1])} shares short${last[2] != null ? ` (${last[2] > 0 ? '+' : ''}${last[2]}% vs the prior date)` : ''}${
+        last[3] != null ? ` · ${last[3]} days to cover` : ''}${last[4] ? ` · average daily volume ${mega(last[4])}` : ''}</p>
+        <svg class="si-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Shares short in ${t(sym)}, ${t(shortH[0][0])} to ${t(last[0])}">${bars}</svg>
+        <p class="muted">FINRA consolidated short interest, twice a month (${t(shortH[0][0])} – ${t(last[0])}): short positions brokers carry as of each settlement date, published about a week later. Days to cover = short position ÷ average daily volume.</p>`;
+    };
     const instRows = (all) => (all ? inst : inst.slice(0, SHOW)).map((x) => `<tr><td><b>${t(x.manager)}</b><br><span class="muted mono">CIK ${t(x.cik)}</span></td>
         <td>${t(x.period)}<br><span class="muted">filed ${date(x.filed)}</span></td><td class="num">${whole(x.shares)}</td><td class="num">${money(x.value_usd)}</td>
         <td class="num">${x.weight == null ? '—' : (x.weight * 100).toFixed(1) + '%'}</td>
@@ -2076,7 +2091,7 @@
           x.delta_shares ? `<br><span class="muted">${sign(x.delta_shares)}${whole(Math.abs(x.delta_shares))}</span>` : ''}</td>
         <td>${x.source_url ? `<a href="${t(x.source_url)}" target="_blank" rel="noopener">13F ↗</a>` : '—'}</td></tr>`).join('');
     box.innerHTML = `<div class="section-head"><h2>Holders</h2>
-        <span class="muted">${inst.length} institutional position${inst.length === 1 ? '' : 's'} · ${ins.length} insider trade${ins.length === 1 ? '' : 's'} · ${off.length} record${off.length === 1 ? '' : 's'} by public officials
+        <span class="muted">${inst.length} institutional position${inst.length === 1 ? '' : 's'} · ${ins.length} insider trade${ins.length === 1 ? '' : 's'} · ${stakes.length} 13D / 13G · ${f144.length} Form 144 · ${off.length} record${off.length === 1 ? '' : 's'} by public officials
         · from <a href="disclosures/">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}</span></div>
       ${h && (h.flows || h.signal) ? `<p class="holders-flow">${h.flows ? `<b>${t(h.flows.label || 'This quarter')}:</b> ${whole(h.flows.buyers)} managers added, ${whole(h.flows.sellers)} cut${h.flows.new ? ` (${whole(h.flows.new)} new positions)` : ''} · est. net ${h.flows.usd_net >= 0 ? '+' : '−'}${money(Math.abs(h.flows.usd_net))}` : ''}${
         h.signal && h.signal.tags && h.signal.tags.length ? ` · <a href="disclosures/#signals">Signals</a>: ${h.signal.tags.map((x) => `<span class="badge">${t(x.replace(/_/g, ' '))}</span>`).join(' ')}` : ''}</p>` : ''}
@@ -2095,16 +2110,37 @@
         </tbody></table></div>
         <p class="muted">Open-market purchases and sales (of $100K or more) by officers, directors and 10% owners, filed with the SEC within two business days of the trade. Grants, option exercises and tax withholding are left out.</p>`
         : `<p class="muted">No open-market insider purchase or larger sale on file for ${t(sym)} in the last four months.</p>`}
+      <h3>Holders above 5% (Schedules 13D / 13G)</h3>
+      ${stakes.length ? `<div class="tbl-wrap"><table><thead><tr><th>Holder</th><th>Filing</th><th class="num">Stake</th><th class="num">Change</th><th>Filed</th><th>Source</th></tr></thead><tbody>
+        ${stakes.slice(0, 12).map((x) => { const nice = x.person && x.person !== x.person.toUpperCase(); return `<tr><td><b>${t(nice ? x.person : x.filer)}</b>${
+          x.persons > 1 ? `<br><span class="muted">${x.persons} reporting persons${nice ? (x.filer !== x.person ? ` · filed by ${t(x.filer)}` : '') : x.person && x.person !== x.filer ? ` · largest: ${t(x.person)}` : ''}</span>` : ''}</td>
+          <td class="wrap">${t(x.form)} <span class="muted">· ${t(x.label || '')}</span>${x.rule ? `<br><span class="muted">${t(x.rule)}</span>` : ''}${x.purpose ? `<br><span class="muted" title="${t(x.purpose)}">Purpose: ${t(x.purpose.slice(0, 140))}${x.purpose.length > 140 ? '…' : ''}</span>` : ''}</td>
+          <td class="num">${x.percent != null ? x.percent + '%' : '—'}<br><span class="muted">${mega(x.shares)} sh</span></td>
+          <td class="num ${x.change > 0 ? 'pos' : x.change < 0 ? 'neg' : ''}">${x.change != null ? `${x.change > 0 ? '+' : ''}${x.change.toFixed(2)} pts` : '—'}${x.prev_percent != null ? `<br><span class="muted">from ${x.prev_percent}%</span>` : ''}</td>
+          <td>${date(x.filed)}${x.event_date ? `<br><span class="muted">event ${date(x.event_date)}</span>` : ''}</td><td>${x.url ? `<a href="${t(x.url)}" target="_blank" rel="noopener">${t(x.form)} ↗</a>` : '—'}</td></tr>`; }).join('')}
+        </tbody></table></div>
+        <p class="muted">Anyone above 5% of a class of shares files a Schedule 13D (with its purpose, Item 4) — or, if passive, the short-form 13G. The stake is the largest single reporting person’s; the change compares with the same filer’s previous filing on file.</p>`
+        : `<p class="muted">No Schedule 13D or 13G on ${t(sym)} on file yet (filings since the collector started, back about four months).</p>`}
+      <h3>Planned insider sales (Form 144)</h3>
+      ${f144.length ? `<div class="tbl-wrap"><table><thead><tr><th>Seller</th><th class="num">Shares</th><th class="num">Market value</th><th>Approx. sale date</th><th>Acquired by</th><th>Source</th></tr></thead><tbody>
+        ${f144.slice(0, 10).map((x) => `<tr><td><b>${t(x.seller_name || x.seller)}</b><br><span class="muted">${t(x.relationship || '')}</span></td><td class="num">${whole(x.shares)}</td>
+          <td class="num">${x.value != null ? money(x.value) : '—'}</td><td>${date(x.sale_date)}<br><span class="muted">notice filed ${date(x.filed)}</span></td>
+          <td>${t(x.acquired || '—')}${x.plan_date ? `<br><span class="muted">10b5-1 plan adopted ${date(x.plan_date)}</span>` : ''}</td><td>${x.url ? `<a href="${t(x.url)}" target="_blank" rel="noopener">Form 144 ↗</a>` : '—'}</td></tr>`).join('')}
+        </tbody></table></div>
+        <p class="muted">A Form 144 is a notice of an intended sale of restricted or control shares by an officer, director or other affiliate — not a trade. The sale, if made, follows on Form 4.</p>`
+        : `<p class="muted">No Form 144 notice of $25K or more on ${t(sym)} on file.</p>`}
+      <h3>Short interest (FINRA)</h3>
+      ${shortBlock()}
       <h3>Public officials</h3>
       ${off.length ? `<div class="tbl-wrap"><table><thead><tr><th>Person</th><th>Jurisdiction</th><th>Record</th><th>Disclosed amount</th><th>Date</th><th>Source</th></tr></thead><tbody>
         ${off.map((r, i) => `<tr${i >= 10 ? ' class="off-more" hidden' : ''}><td><b>${t(r.person)}</b>${r.owner ? `<br><span class="muted">${t(r.owner)}</span>` : ''}</td><td>${t(r.jurisdiction)}</td>
-          <td>${t(r.kind === 'transaction' ? (r.transaction_type || 'transaction') : 'asset')}${r.read === 'machine' ? ' <span class="muted" title="Read by machine from the official report; the ticker is the one the filer wrote. Open the page to confirm.">· auto-read</span>' : ''}<br><span class="muted">${t(r.asset)}</span></td>
+          <td>${t(r.kind === 'transaction' ? (r.transaction_type || 'transaction') : 'asset')}${r.read === 'machine' ? ' <span class="muted" title="Read by machine from the official report; the ticker is the one the filer wrote. Open the page to confirm.">· auto-read</span>' : r.read === 'electronic' ? ' <span class="muted" title="From the Senate’s electronic report (eFD); the ticker is the one the filer entered.">· eFD</span>' : ''}<br><span class="muted">${t(r.asset)}</span></td>
           <td class="num">${t(amountRange(r))}${r.price_on_date ? `<br><span class="muted">≈ ${whole(r.est_shares_min)}${r.est_shares_max != null ? '–' + whole(r.est_shares_max) : '+'} sh at $${r.price_on_date.toFixed(2)} · est.</span>` : ''}</td>
-          <td>${date(r.date)}</td><td>${r.source_url ? `<a href="${t(r.source_url)}${r.page ? '#page=' + r.page : ''}" target="_blank" rel="noopener">${r.page ? 'Page ' + r.page : 'Document'} ↗</a>` : '—'}</td></tr>`).join('')}
+          <td>${date(r.date)}</td><td>${r.source_url ? `<a href="${t(r.source_url)}${r.page ? '#page=' + r.page : ''}" target="_blank" rel="noopener">${r.page ? 'Page ' + r.page : r.read === 'electronic' ? 'Report' : 'Document'} ↗</a>` : '—'}</td></tr>`).join('')}
         </tbody></table></div>
         ${off.length > 10 ? `<button class="btn" type="button" id="off-more">Show all ${off.length} records</button>` : ''}
-        <p class="muted">Disclosed value ranges from annual statements and transaction reports (US House, New York, California, Canada, imports). Reviewed rows were checked against their source page; “auto-read” rows come straight from US House transaction reports with the ticker the filer wrote. Ranges are not share counts.</p>`
-        : `<p class="muted">No official’s disclosure names ${t(sym)} yet. US House transaction reports are read in batches; other jurisdictions appear once a disclosure is reviewed in Disclosures → PDF / OCR.</p>`}`;
+        <p class="muted">Disclosed value ranges from annual statements and transaction reports (US House, US Senate, New York, California, Canada, imports). Reviewed rows were checked against their source page; “auto-read” rows come straight from US House transaction reports and “eFD” rows from US Senate electronic reports, with the ticker the filer wrote. Ranges are not share counts.</p>`
+        : `<p class="muted">No official’s disclosure names ${t(sym)} yet. US House and Senate transaction reports are read in batches; other jurisdictions appear once a disclosure is reviewed in Disclosures → PDF / OCR.</p>`}`;
     const more = $('#inst-more', box);
     if (more) more.addEventListener('click', () => { $('#inst-rows', box).innerHTML = instRows(true); more.remove(); });
     const offMore = $('#off-more', box);

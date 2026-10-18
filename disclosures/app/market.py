@@ -28,6 +28,7 @@ from pathlib import Path
 
 from core import now, read_json, write_json
 import insiders as INS
+import senate as SEN
 
 TOP = 40
 FUND_TYPES = {'ETP', 'Open-End Fund', 'Closed-End Fund', 'Fund of Funds', 'Unit', 'Equity WRT', 'Right'}
@@ -601,6 +602,20 @@ def officials_trades(root, universe, live=None):
             trades.append(_checked({**t, 'person': rep.get('person'), 'jurisdiction': 'US House', 'report_id': rep.get('report_id'),
                                     'filed_date': rep.get('filed_date'), 'source_url': rep.get('source_url'), 'page': c.get('page'),
                                     'read': 'machine'}, universe))
+    senate, _ = SEN.load(root)                              # US Senate electronic PTRs (app/senate.py), read from eFD's tables
+    first_report = {}
+    for t in senate:
+        if not t.get('ticker'):
+            stats['no ticker (bonds, funds, private)'] += 1
+            continue
+        if not ('2012-01-01' <= (t.get('date') or '') <= today):
+            stats['date out of range'] += 1
+            continue
+        key = (t.get('person'), t['ticker'], t['date'], t['type'], t.get('amount_min'), t.get('owner'))
+        if first_report.setdefault(key, t['report_id']) != t['report_id']:     # the same row in an amended report
+            stats['duplicate (amendment / repeated row)'] += 1
+            continue
+        trades.append(_checked({k: v for k, v in t.items() if k != 'row'}, universe))
     for r in cong.get('records', []):                       # reviewed transaction rows (any jurisdiction)
         if r.get('kind') != 'transaction':
             continue
@@ -634,9 +649,22 @@ def latest_reports(root, live=None, trades=None, n=40):
         if t.get('report_id'):
             per[t['report_id']].append(t)
     ptr = [r for r in directory if r.get('jurisdiction', 'US House') == 'US House' and r.get('report_type') == 'PTR']
+    _, senate = SEN.load(root)
+    for r in senate:                                        # US Senate PTRs: electronic ones read, paper ones listed
+        st = {'read': 'read', 'empty': 'read', 'error': 'error', 'listed': 'paper'}.get(r.get('status'), 'waiting')
+        ptr.append({**r, 'jurisdiction': 'US Senate', 'office': 'US Senate' + ('' if r.get('office') in (None, 'Senator') else f" · {r['office']}"),
+                    '_status': st})
     ptr.sort(key=lambda r: (r.get('filed_date') or '', r['report_id']), reverse=True)
     out = []
     for r in ptr[:n]:
+        if r.get('_status'):
+            ts = per.get(r['report_id'], [])
+            out.append({'report_id': r['report_id'], 'person': r.get('person'), 'office': r.get('office'), 'filed_date': r.get('filed_date'),
+                        'status': r['_status'], 'jurisdiction': 'US Senate', 'pages': None, 'trades': len(ts),
+                        'buys': sum(t.get('type') == 'purchase' for t in ts), 'sells': sum('sale' in (t.get('type') or '') for t in ts),
+                        'tickers': list(dict.fromkeys(t['ticker_canon'] for t in ts if t.get('ticker_canon')))[:6],
+                        'source_url': r.get('source_url')})
+            continue
         got = read.get(r['report_id']) or {}
         ts = per.get(r['report_id'], [])
         out.append({'report_id': r['report_id'], 'person': r.get('person'), 'office': r.get('office'), 'filed_date': r.get('filed_date'),
@@ -645,7 +673,13 @@ def latest_reports(root, live=None, trades=None, n=40):
                     'sells': sum('sale' in (t.get('type') or '') for t in ts),
                     'tickers': list(dict.fromkeys(t['ticker_canon'] for t in ts if t.get('ticker_canon')))[:6],
                     'source_url': r.get('source_url')})
-    return out, (cong.get('counts') or {}).get('house_ptr') or {}
+    monitor = dict((cong.get('counts') or {}).get('house_ptr') or {})
+    if senate:
+        monitor['senate'] = {'reports': len(senate), 'electronic_read': sum(r.get('status') in ('read', 'empty') for r in senate),
+                             'electronic_waiting': sum(r.get('format') == 'electronic' and r.get('status') not in ('read', 'empty') for r in senate),
+                             'paper': sum(r.get('format') == 'paper' for r in senate),
+                             'newest_filed': max((r.get('filed_date') or '' for r in senate), default=None)}
+    return out, monitor
 
 
 def _checked(t, universe):
@@ -906,9 +940,10 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
             errors.append(f'13F options: {exc}')
     today = dt.date.today()
     off = {'generated_at': stamp, 'stats': tstats,
-           'note': ('US House periodic transaction reports read by machine: the ticker is the one the filer wrote next to the '
-                    'asset, checked against SEC listed-company tickers and the CUSIP map; amounts are the disclosed ranges. '
-                    'Reviewed rows come from the review desk. Dates are transaction dates; reports can arrive up to 45 days later.'),
+           'note': ('US House periodic transaction reports read by machine and US Senate electronic periodic transaction '
+                    'reports (eFD): the ticker is the one the filer wrote next to the asset, checked against SEC listed-company '
+                    'tickers and the CUSIP map; amounts are the disclosed ranges. Reviewed rows come from the review desk. Dates '
+                    'are transaction dates; reports can arrive up to 45 days later. Senate paper reports are listed, not read.'),
            'summary': {'d90': sorted(officials_summary(trades, (today - dt.timedelta(days=90)).isoformat()),
                                      key=lambda r: (-len(r['people_buy']), -r['buys'], -r['buy_min']))[:TOP],
                        'ytd': sorted(officials_summary(trades, f'{today.year}-01-01'),
