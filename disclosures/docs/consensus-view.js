@@ -11,6 +11,9 @@
   const pct = (v, d = 0) => (fin(v) ? num(100 * v, d) + '%' : '—');
   const spct = (v, d = 1) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
   const unitFmt = (v, u) => (!fin(v) ? '—' : u === '$' ? (Math.abs(v) >= 1e6 ? big(v) : usd(v)) : u === '%' ? num(v, Math.abs(v) < 10 ? 1 : 0) + '%' : num(v, Math.abs(v) < 100 ? 2 : 0) + (u ? ' ' + u : ''));
+  const pts = (v) => (fin(v) ? num(v, Math.abs(v) >= 1000 ? 0 : 2) : '—');
+  let PX = usd;                                            // the unit of the fan chart: dollars a share, or index points
+  const mfmt = (m) => (m.kind === 'mcap' ? big : m.index && m.points ? pts : (v) => usd(v));
   const day = (s) => (s ? String(s).slice(0, 10) : '—');
   const ts = (s) => Date.parse(String(s).slice(0, 10) + 'T00:00:00Z');
   const C = { good: 'var(--mk-profit, #2e8b57)', bad: 'var(--mk-cost, #c0392b)', acc: 'var(--accent, #2a78d6)', mute: 'var(--muted, #888)', ink: 'var(--ink, #222)',
@@ -54,25 +57,26 @@
     const last = px[px.length - 1][0], horizon = last + 400 * 864e5;
     const bars = [];
     const T = a.targets || {};
-    if (fin(T.mean)) bars.push({ t: last + 365 * 864e5, lo: T.low, mid: T.mean, hi: T.high, col: C.an, label: `Analysts' 12-month price target (${num(T.n)} analysts): mean ${usd(T.mean)}, ${usd(T.low)}–${usd(T.high)}` });
+    if (fin(T.mean)) bars.push({ t: last + 365 * 864e5, lo: doc.unit === 'pts' ? null : T.low, mid: T.mean, hi: doc.unit === 'pts' ? null : T.high, col: C.an, label: doc.unit === 'pts' ? `Analysts, added up from ${num(T.n)} companies' 12-month targets: ${PX(T.mean)}, weighted lows–highs ${PX(T.low)}–${PX(T.high)}` : `Analysts' 12-month price target (${num(T.n)} analysts): mean ${usd(T.mean)}, ${usd(T.low)}–${usd(T.high)}` });
     const byEnd = {};
     for (const m of doc.markets || []) {                      // one market a date (a ladder before brackets), none ending within 3 days
       if (m.closed || !m.implied_price || !fin(m.implied_price.median) || !m.end || ts(m.end) < Date.now() + 3 * 864e5) continue;
-      if (!byEnd[m.end] || (m.kind === 'above' && byEnd[m.end].kind !== 'above')) byEnd[m.end] = m;
+      const k = m.end + (doc.unit === 'pts' ? m.source : '');
+      if (!byEnd[k] || (m.kind === 'above' && byEnd[k].kind !== 'above')) byEnd[k] = m;
     }
     for (const m of Object.values(byEnd)) {
       const t = ts(m.end); if (t > horizon) continue;
       const ip = m.implied_price;
-      bars.push({ t, lo: ip.q10, mid: ip.median, hi: ip.q90, col: C.pm, w: 5, label: `${m.title} — Polymarket-implied median ${usd(ip.median)}, 80% ${usd(ip.q10)}–${usd(ip.q90)}${m.implied_bounds && (m.implied_bounds.q10 || m.implied_bounds.q90) ? ' (an end of the range lies past the listed strikes)' : ''}` });
+      bars.push({ t, lo: ip.q10, mid: ip.median, hi: ip.q90, col: m.source === 'kalshi' ? C.ks : C.pm, w: 5, label: `${m.title} — ${m.source === 'kalshi' ? 'Kalshi' : 'Polymarket'}-implied median ${PX(ip.median)}, 80% ${PX(ip.q10)}–${PX(ip.q90)}${m.index && !m.points ? ` (traded in ${m.underlying} dollars, shown in index points)` : ''}${m.implied_bounds && (m.implied_bounds.q10 || m.implied_bounds.q90) ? ' (an end of the range lies past the listed strikes)' : ''}` });
     }
-    for (const o of doc.ours || []) if (fin(o.price)) bars.push({ t: ts(o.date), lo: o.lo80, mid: o.price, hi: o.hi80, col: C.ours, label: `Our model (${o.model}, ${o.horizon}, made ${day(o.from)}): ${usd(o.price)}, 80% ${usd(o.lo80)}–${usd(o.hi80)}` });
+    for (const o of doc.ours || []) if (fin(o.price)) bars.push({ t: ts(o.date), lo: o.lo80, mid: o.price, hi: o.hi80, col: C.ours, label: `Our model (${o.model}, ${o.horizon}, made ${day(o.from)}): ${PX(o.price)}, 80% ${PX(o.lo80)}–${PX(o.hi80)}` });
     const ys = px.map((p) => p[1]).concat(bars.flatMap((b) => [b.lo, b.mid, b.hi].filter(fin)));
     let y0 = Math.min(...ys), y1 = Math.max(...ys); const pad = (y1 - y0) * 0.06 || 1; y0 = Math.max(0, y0 - pad); y1 += pad;
     const x0 = px[0][0], x1 = Math.max(last + 30 * 864e5, ...bars.map((b) => b.t + 12 * 864e5));
     const W = 820, H = 300, L = 54, R = 16, Tp = 12, B = 26;
     const X = (v) => L + (v - x0) / (x1 - x0) * (W - L - R), Y = (v) => Tp + (y1 - v) / (y1 - y0) * (H - Tp - B);
     let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Price and the consensus ranges">`;
-    for (let k = 0; k <= 4; k++) { const v = y0 + (y1 - y0) * k / 4; s += `<line class="cv-grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${usd(v, v >= 100 ? 0 : 2)}</text>`; }
+    for (let k = 0; k <= 4; k++) { const v = y0 + (y1 - y0) * k / 4; s += `<line class="cv-grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${PX === usd ? usd(v, v >= 100 ? 0 : 2) : PX(v)}</text>`; }
     for (let y = new Date(x0).getUTCFullYear(); y <= new Date(x1).getUTCFullYear(); y++) {
       for (const m of [0, 3, 6, 9]) {
         const t = Date.UTC(y, m, 1); if (t < x0 || t > x1) continue;
@@ -81,18 +85,21 @@
     }
     s += `<line x1="${X(last)}" x2="${X(last)}" y1="${Tp}" y2="${H - B}" stroke="${C.mute}" stroke-dasharray="3 3"/>`;
     s += `<path d="${px.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="${C.ink}" stroke-width="1.6"/>`;
-    s += `<circle cx="${X(last)}" cy="${Y(px[px.length - 1][1])}" r="3" fill="${C.ink}"><title>Last weekly close ${usd(px[px.length - 1][1])} (${new Date(last).toISOString().slice(0, 10)})</title></circle>`;
+    s += `<circle cx="${X(last)}" cy="${Y(px[px.length - 1][1])}" r="3" fill="${C.ink}"><title>Last weekly close ${PX(px[px.length - 1][1])} (${new Date(last).toISOString().slice(0, 10)})</title></circle>`;
+    const same = {};
+    for (const b of bars) { const k = Math.round(X(b.t)); b.off = (same[k] = (same[k] || 0) + 1) - 1; }
     for (const b of bars) {
-      const x = X(b.t), w = b.w || 7;
+      const n = bars.filter((o) => Math.round(X(o.t)) === Math.round(X(b.t))).length;
+      const x = X(b.t) + (b.off - (n - 1) / 2) * 11, w = b.w || 7;
       s += `<g><title>${esc(b.label)}</title>`;
       if (fin(b.lo) && fin(b.hi)) s += `<rect x="${x - w / 2}" y="${Y(b.hi)}" width="${w}" height="${Math.max(1, Y(b.lo) - Y(b.hi))}" rx="2" fill="${b.col}" fill-opacity="0.22" stroke="${b.col}" stroke-width="1"/>`;
       s += `<line x1="${x - w}" x2="${x + w}" y1="${Y(b.mid)}" y2="${Y(b.mid)}" stroke="${b.col}" stroke-width="2.4"/>`;
       s += `<line x1="${X(last)}" x2="${x}" y1="${Y(px[px.length - 1][1])}" y2="${Y(b.mid)}" stroke="${b.col}" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/></g>`;
     }
     s += `<text x="${X(last) + 4}" y="${Tp + 10}">today</text></svg>`;
-    return `<h3>Where the price is expected to go</h3>
+    return `<h3>Where the ${doc.unit === 'pts' ? 'index' : 'price'} is expected to go</h3>
       <p class="cv-sub">Weekly closes, then each forecast's middle (thick tick) and range (box) at its date. Hover a box for the details.</p>
-      <div class="cv-legend"><span style="--k:${C.an}">Analysts' 12-month target (low – mean – high)</span><span style="--k:${C.pm}">Prediction markets: implied median and 80% range</span><span style="--k:#2a78d6">Our model: forecast and 80% range</span></div>${s}`;
+      <div class="cv-legend"><span style="--k:${C.an}">${doc.unit === 'pts' ? "Analysts, bottom-up 12-month target" : "Analysts' 12-month target (low – mean – high)"}</span><span style="--k:${C.pm}">Polymarket: implied median and 80% range</span>${doc.unit === 'pts' ? `<span style="--k:${C.ks}">Kalshi: implied median and 80% range</span>` : ''}<span style="--k:#2a78d6">Our model: forecast and 80% range</span></div>${s}`;
   }
 
   // ---------- analysts ----------
@@ -179,7 +186,7 @@
     if (!st || !st.strikes || st.strikes.length < 2) return '';
     const K = st.strikes, P = st.p_above, W = 360, H = 120, L = 40, R = 8, T = 8, B = 20;
     const X = (k) => L + (k - K[0]) / ((K[K.length - 1] - K[0]) || 1) * (W - L - R), Y = (p) => T + (1 - p) * (H - T - B);
-    const f = unit === 'mcap' ? big : (v) => usd(v, 0);
+    const f = unit === 'mcap' ? big : unit === 'pts' ? pts : (v) => usd(v, 0);
     let s = `<svg viewBox="0 0 ${W} ${H}" style="max-width:380px" role="img" aria-label="Probability the value ends above each level">`;
     for (const p of [0, 0.5, 1]) s += `<line class="cv-grid" x1="${L}" x2="${W - R}" y1="${Y(p)}" y2="${Y(p)}"/><text x="${L - 4}" y="${Y(p) + 4}" text-anchor="end">${pct(p)}</text>`;
     s += `<path d="${K.map((k, i) => (i ? 'L' : 'M') + X(k).toFixed(1) + ',' + Y(P[i]).toFixed(1)).join('')}" fill="none" stroke="${C.pm}" stroke-width="2"/>`;
@@ -197,11 +204,11 @@
       body = pbar('Beats', m.p, col) + `<div class="cv-sub">Beat = ${m.basis === 'gaap' ? 'GAAP' : 'adjusted (non-GAAP)'} EPS above ${usd(m.eps_strike)} — the Street consensus when the market opened${fin((q0.eps || {}).avg) ? `; today's consensus is ${usd(q0.eps.avg)}` : ''}. Report expected ${day(m.report_date)}.${m.resolved != null ? ` <b class="${m.resolved ? 'cv-good' : 'cv-bad'}">Resolved: ${m.resolved ? 'beat' : 'missed'}</b>` : ''}</div>`;
     } else if (m.kind === 'above' || m.kind === 'bracket' || m.kind === 'mcap') {
       const st = m.stats, ip = m.implied_price;
-      if (m.closed && m.actual) body = `<div class="cv-sub">Ended between ${m.kind === 'mcap' ? big(m.actual[0]) : usd(m.actual[0])} and ${m.actual[1] == null ? 'above' : m.kind === 'mcap' ? big(m.actual[1]) : usd(m.actual[1])}.</div>`;
+      const f = mfmt(m);
+      if (m.closed && m.actual) body = `<div class="cv-sub">Ended between ${f(m.actual[0])} and ${m.actual[1] == null ? 'above' : f(m.actual[1])}.</div>`;
       else if (st) {
-        const f = m.kind === 'mcap' ? big : (v) => usd(v);
         const bound = (q) => (q && q.bound === 'below' ? '≤ ' : q && q.bound === 'above' ? '≥ ' : '');
-        body = `<div class="cv-sub">Implied median <b>${bound(st.median)}${f(st.median && st.median.value)}</b> · 80% range ${bound(st.q10)}${f(st.q10 && st.q10.value)} – ${bound(st.q90)}${f(st.q90 && st.q90.value)}${m.kind === 'mcap' && ip && fin(ip.median) ? ` · per share ≈ ${usd(ip.median)}` : ''}${st.overround && st.overround > 1.05 ? ` · prices sum to ${pct(st.overround)}, normalised` : ''}</div>` + ladderSvg(st, m.kind);
+        body = `<div class="cv-sub">Implied median <b>${bound(st.median)}${f(st.median && st.median.value)}</b> · 80% range ${bound(st.q10)}${f(st.q10 && st.q10.value)} – ${bound(st.q90)}${f(st.q90 && st.q90.value)}${m.kind === 'mcap' && ip && fin(ip.median) ? ` · per share ≈ ${usd(ip.median)}` : ''}${m.index && !m.points && ip && fin(ip.median) ? ` · in index points ≈ ${pts(ip.median)}` : ''}${st.overround && st.overround > 1.05 ? ` · prices sum to ${pct(st.overround)}, normalised` : ''}</div>` + ladderSvg(st, m.kind === 'mcap' ? 'mcap' : m.index && m.points ? 'pts' : 'usd');
       }
     } else if (m.kind === 'metric') {
       const st = m.stats, u = m.unit || '';
@@ -216,7 +223,8 @@
       body = pbar('Closes up', m.p, col) + (m.resolved != null ? `<div class="cv-sub">Resolved: ${m.resolved ? 'up' : 'down'}</div>` : '');
     } else if (m.kind === 'hit') {
       const hi = m.stats_high && m.stats_high.median, lo = m.stats_low && m.stats_low.median;
-      body = `<div class="cv-sub">Even odds of touching ${hi && fin(hi.value) ? usd(hi.value) : '—'} on the way up and ${lo && fin(lo.value) ? usd(lo.value) : '—'} on the way down before the end.</div>`;
+      const f = mfmt(m);
+      body = `<div class="cv-sub">Even odds of touching ${hi && fin(hi.value) ? f(hi.value) : '—'} on the way up${lo || !m.index ? ` and ${lo && fin(lo.value) ? f(lo.value) : '—'} on the way down` : ''} before the end.</div>`;
       const O = (m.outcomes || []).filter((o) => fin(o.p) && o.p > 0.02 && o.p < 0.98);
       body += O.slice(0, 10).map((o) => pbar(o.q, o.p, col)).join('');
     } else if (m.kind === 'kpi' && m.stats && m.stats.median) {
@@ -228,13 +236,14 @@
   }
   function markets(doc, a) {
     const M = doc.markets || [];
+    if (!M.length && doc.unit === 'pts') return `<h3>Prediction markets</h3><p class="cv-sub">No Polymarket or Kalshi market about this index is open right now.</p>`;
     if (!M.length) return `<h3>Prediction markets</h3><p class="cv-sub">No Polymarket or Kalshi market about this company is open. They list markets for the most-traded names (earnings beats for a few hundred companies each season; price ladders and market caps for the largest; KPIs such as deliveries or subscribers for some).</p>`;
     const order = ['beat', 'metric', 'above', 'bracket', 'mcap', 'hit', 'kpi', 'mention', 'updown', 'other'];
     const yd = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
     const isLive = (m) => !m.closed && (!m.end || m.end >= yd);
     const live = M.filter(isLive).sort((x, y) => order.indexOf(x.kind) - order.indexOf(y.kind) || String(x.end).localeCompare(String(y.end)));
     const done = M.filter((m) => !isLive(m));
-    const head = `<h3>Prediction markets <span class="cv-tag">${live.length} open</span></h3><p class="cv-sub">Prices on Polymarket and Kalshi are what traders pay for a contract that pays $1 if the event happens — a crowd probability. Ladders of "closes above $K" contracts give a whole distribution of the price; we fit the probabilities to fall with the strike and read the median and the 80% range from it.</p>`;
+    const head = `<h3>Prediction markets <span class="cv-tag">${live.length} open</span></h3><p class="cv-sub">Prices on Polymarket and Kalshi are what traders pay for a contract that pays $1 if the event happens — a crowd probability. Ladders of "closes above $K" contracts give a whole distribution of the price; we fit the probabilities to fall with the strike and read the median and the 80% range from it.${doc.unit === 'pts' ? ' Kalshi lists ranges for the close of the day, the week, the month and the year; Polymarket some ladders in ETF dollars (SPY, QQQ), which we turn into index points at today\'s ratio of the two.' : ''}</p>`;
     const first = live.slice(0, 8).map((m) => marketBox(m, a)).join('');
     const rest = live.slice(8).map((m) => marketBox(m, a)).join('');
     return head + first + (rest ? `<details><summary>${live.length - 8} more open markets</summary>${rest}</details>` : '') +
@@ -256,6 +265,7 @@
 
   function render(el, doc) {
     css();
+    PX = usd;
     const a = doc.analysts || {};
     const q0 = (a.periods || []).find((p) => p.period === '0q') || {};
     const nx = a.next_earnings || {};
@@ -280,5 +290,81 @@
     el.innerHTML = h;
   }
 
-  window.ConsensusView = { render, fmt: { usd, big, pct, spct, num, day, unitFmt }, KIND };
+  // ---------- one index: the market ----------
+  function bottomUpPanel(doc) {
+    const B = doc.bottom_up;
+    if (!B) return doc.id === 'vix' ? '' : `<h3>Analysts, added up</h3><p class="cv-sub">No member list for this index this week${doc.members_errors ? ' (' + esc(doc.members_errors.join('; ')) + ')' : ''}, so no bottom-up consensus.</p>`;
+    const r = B.revisions_30d || {}, se = B.season || {};
+    const rows = [
+      ["12-month price-target return", `<b class="${B.target_ret >= 0 ? 'cv-good' : 'cv-bad'}">${spct(B.target_ret)}</b> <span class="cv-sub">weighted lows ${spct(B.target_low_ret)} · highs ${spct(B.target_high_ret)}</span>`, `${num(B.target_n)} companies, ${pct(B.target_coverage)} of the index`],
+      ['Earnings growth, this fiscal year', spct(B.eps_growth_this_fy), `index earnings = Σ shares × consensus EPS · ${num(B.eps_n)} companies profitable in both years`],
+      ['Earnings growth, next fiscal year', spct(B.eps_growth_next_fy), ''],
+      ['P/E on this year · next year (forward)', `${fin(B.pe_this_fy) ? num(B.pe_this_fy, 1) : '—'} · <b>${fin(B.fwd_pe) ? num(B.fwd_pe, 1) : '—'}</b>`, 'market value ÷ consensus earnings of the same companies'],
+      ['Mean rating', fin(B.rating_mean) ? num(B.rating_mean, 2) : '—', '1 strong buy – 5 strong sell, weighted'],
+      ['Estimates over 30 days (this fiscal year)', `<span class="cv-good">${num(r.up)} raised</span> · <span class="cv-bad">${num(r.down)} cut</span>`, `${pct(r.w_up)} of the index raised, ${pct(r.w_down)} cut`],
+      ['Reporting season, last 45 days', se.reported ? `${num(se.beat)} of ${num(se.reported)} beat (${pct(se.beat / se.reported)})` : '—', se.reported ? `${pct(se.w_reported)} of the index has reported · median surprise ${spct(se.median_surprise)}` : ''],
+    ];
+    let h = `<h3>Analysts, added up from the companies</h3><p class="cv-sub">The Yahoo Finance consensus of every member at its weight in the index (${B.weighting === 'price' ? 'price-weighted, as the Dow is' : 'market-value weights'}). Members: ${esc(doc.members_source || '—')} — ${num(B.members)} listed, ${num(B.matched)} with analysts' data.</p>` +
+      tbl(['', 'Consensus', 'Basis'], rows.map((x) => [esc(x[0]), x[1], `<span class="cv-sub">${x[2]}</span>`]));
+    const cm = B.coming || [];
+    if (cm.length) h += `<h3>Reporting in the next 7 days</h3><p class="cv-sub">The largest members first; the Polymarket price of "beats" where a market is open.</p>` +
+      tbl(['Company', 'Date', 'Weight', 'EPS estimate', 'Market: beats?'], cm.map((c) => [`<button class="text-button" data-cco="${esc(c.ticker)}"><b>${esc(c.ticker)}</b></button> <span class="cv-sub">${esc((c.name || '').slice(0, 34))}</span>`, esc(c.date), pct(c.weight, 1), usd(c.eps), fin(c.beat_prob) ? `<b>${pct(c.beat_prob)}</b>` : '—']), [2, 3, 4]);
+    return h;
+  }
+  function oursPanel(doc) {
+    const O = doc.ours || [];
+    if (!O.length) return doc.id === 'vix' ? '' : `<h3>Our model</h3><p class="cv-sub">Our model forecasts the largest companies with a long history; none of this index's members are among them yet.</p>`;
+    const dv = O[0].diversification;
+    return `<h3>Our model, added up from the companies</h3><p class="cv-sub">Each member's gravity / analogue forecast (Rotation tab) from the forecast's base date, at its weight, over the members the model covers. The 80% range adds the members' ranges${fin(dv) ? `, narrowed to ${pct(dv)} because over the past year the index swung that much less than its members on average (diversification)` : ' as if they all moved together — an upper bound'}.</p>` +
+      tbl(['Horizon', 'Made on', 'Index then', 'Forecast', 'Change', '80% range', 'Covered'], O.map((o) => [`<b>${esc(o.horizon)}</b> (${day(o.date)})`, day(o.from), pts(o.close_then), `<b>${pts(o.price)}</b>`,
+        `<span class="${o.ret >= 0 ? 'cv-good' : 'cv-bad'}">${spct(o.ret)}</span>`, `${pts(o.lo80)} – ${pts(o.hi80)}`, `${num(o.n)} companies, ${pct(o.coverage)}`]), [2, 3, 4, 5]);
+  }
+  function contribPanel(doc) {
+    const R = doc.contributors || [];
+    if (!R.length) return '';
+    return `<h3>The largest members</h3><p class="cv-sub">What each consensus says about the companies that move the index most. Click a ticker for its consensus page.</p>` +
+      tbl(['Company', 'Weight', 'Price', "Analysts' target", 'Our model, next month', 'Our model, next quarter', 'Next report', 'Market: beats?'], R.map((c) => [
+        `<button class="text-button" data-cco="${esc(c.ticker)}"><b>${esc(c.ticker)}</b></button> <span class="cv-sub">${esc((c.name || '').slice(0, 30))}</span>`, pct(c.weight, 1), usd(c.price),
+        `<span class="${fin(c.target_ret) ? (c.target_ret >= 0 ? 'cv-good' : 'cv-bad') : ''}">${spct(c.target_ret)}</span>`, spct(c.ours_m), spct(c.ours_q), esc(c.next_earnings || '—'), fin(c.beat_prob) ? pct(c.beat_prob) : '—']), [1, 2, 3, 4, 5, 7]);
+  }
+  function historyPanel(doc) {
+    const Hs = (doc.history || []).map(([d, r]) => ({ t: ts(d), lv: r[0], an: r[1], ou: r[2], pm: r[3] })).filter((x) => fin(x.lv));
+    if (Hs.length < 3) return '';
+    const ser = [['lv', 'Index', C.ink], ['an', "Analysts' bottom-up target", C.an], ['pm', 'Market, farthest date', C.pm], ['ou', 'Our model, next quarter', C.ours]]
+      .map(([k, l, c]) => ({ l, c, p: Hs.filter((x) => fin(x[k])).map((x) => [x.t, x[k]]) })).filter((s) => s.p.length >= 2);
+    const all = ser.flatMap((s) => s.p.map((p) => p[1])), t0 = Hs[0].t, t1 = Hs[Hs.length - 1].t;
+    let y0 = Math.min(...all), y1 = Math.max(...all); const pad = (y1 - y0) * 0.08 || 1; y0 -= pad; y1 += pad;
+    const W = 820, H = 200, L = 54, R = 12, Tp = 10, B = 22, X = (t) => L + (t - t0) / ((t1 - t0) || 1) * (W - L - R), Y = (v) => Tp + (y1 - v) / (y1 - y0) * (H - Tp - B);
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="How the consensus moved">`;
+    for (let k = 0; k <= 3; k++) { const v = y0 + (y1 - y0) * k / 3; s += `<line class="cv-grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${pts(v)}</text>`; }
+    for (const sr of ser) s += `<path d="${sr.p.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="${sr.c}" stroke-width="1.8"><title>${esc(sr.l)}</title></path>`;
+    s += `<text x="${L}" y="${H - 5}">${new Date(t0).toISOString().slice(0, 10)}</text><text x="${W - R}" y="${H - 5}" text-anchor="end">${new Date(t1).toISOString().slice(0, 10)}</text></svg>`;
+    return `<h3>How the consensus moved</h3><p class="cv-sub">One reading a day since tracking began.</p><div class="cv-legend">${ser.map((sr) => `<span style="--k:${sr.c}">${esc(sr.l)}</span>`).join('')}</div>${s}`;
+  }
+  function renderIndex(el, doc) {
+    css();
+    PX = pts;
+    const a = doc.analysts || {}, T = a.targets || {}, lv = doc.level;
+    const up = (v) => (fin(v) && fin(lv) && lv ? `${spct(v / lv - 1)} from today` : '');
+    const yd = new Date(Date.now() - 864e5).toISOString().slice(0, 10), soon = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+    const live = (doc.markets || []).filter((m) => !m.closed && (!m.end || m.end >= yd));
+    const pm = live.filter((m) => m.implied_price && fin(m.implied_price.median) && m.end >= soon).sort((x, y) => String(x.end).localeCompare(String(y.end)));
+    const near = pm[0], far = pm.length > 1 ? pm[pm.length - 1] : null;
+    const ud = live.filter((m) => m.kind === 'updown' && fin(m.p)).sort((x, y) => String(x.end).localeCompare(String(y.end)))[0];
+    const oq = (doc.ours || []).find((o) => o.horizon === 'next quarter'), om = (doc.ours || []).find((o) => o.horizon === 'next month');
+    const src = (m) => (m.source === 'kalshi' ? 'Kalshi' : 'Polymarket');
+    let h = `<div class="cv"><div class="cv-cards">` +
+      card(doc.short + ' level', pts(lv), doc.as_of ? 'as of ' + esc(doc.as_of) + (doc.etf ? ` · ${esc(doc.etf)} × ${fin(doc.ratio) ? num(doc.ratio, 2) : '—'}` : '') : '') +
+      card("Analysts, bottom-up", fin(T.mean) ? pts(T.mean) : '—', fin(T.mean) ? `12 months · ${up(T.mean)}` : 'no member data', C.an) +
+      card('Market-implied, ' + (near ? day(near.end) : 'next'), near ? pts(near.implied_price.median) : '—', near ? `${src(near)} median · ${up(near.implied_price.median)}` : 'no ladder open', near && near.source === 'kalshi' ? C.ks : C.pm) +
+      (far ? card('Market-implied, ' + day(far.end), pts(far.implied_price.median), `${src(far)} · 80% ${pts(far.implied_price.q10)}–${pts(far.implied_price.q90)}`, far.source === 'kalshi' ? C.ks : C.pm) : '') +
+      (ud ? card('Market: up?', pct(ud.p), `${src(ud)} · ${esc(ud.title).slice(0, 48)}`, ud.source === 'kalshi' ? C.ks : C.pm) : '') +
+      card('Our model', oq ? pts(oq.price) : om ? pts(om.price) : '—', oq ? `next quarter (${day(oq.date)}) · ${spct(oq.ret)} from ${day(oq.from)}` : om ? `next month · ${spct(om.ret)}` : 'not covered', C.ours) +
+      `</div>`;
+    h += fan(doc, a) + bottomUpPanel(doc) + oursPanel(doc) + markets(doc, a) + contribPanel(doc) + historyPanel(doc) + track(doc);
+    h += `<p class="cv-note">Index levels: Yahoo Finance (daily closes; weekly shown). Analysts: Yahoo Finance consensus of each member, added up at index weights — not a strategist's index target. Prediction markets: Polymarket and Kalshi public APIs, read every few hours. Our model: the Rotation tab's company forecasts added up. Nothing here is investment advice.</p></div>`;
+    el.innerHTML = h;
+  }
+
+  window.ConsensusView = { render, renderIndex, fmt: { usd, big, pct, spct, num, day, unitFmt }, KIND };
 })();

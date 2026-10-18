@@ -131,6 +131,64 @@ class KalshiScan(unittest.TestCase):
             self.assertAlmostEqual(out[0]['stats']['median']['value'], 1.6e6 - 0.2e6 * (0.5 - 0.46) / (0.86 - 0.46))
 
 
+class Indices(unittest.TestCase):
+    def test_index_markets_from_polymarket(self):
+        ev = [{'id': 1, 'title': 'S&P 500 (SPY) closes above ___ on October 30?', 'slug': 'spy-oct30', 'endDate': '2026-10-30T20:00:00Z', 'tags': [],
+               'markets': [mk('$650', 'a', 0.9), mk('$660', 'b', 0.5), mk('$670', 'c', 0.1)]},
+              {'id': 2, 'title': 'What will S&P 500 (SPX) close at end of 2026?', 'slug': 'spx-eoy', 'endDate': '2026-12-31T00:00:00Z', 'tags': [],
+               'markets': [mk('<6,500', 'd', 0.2), mk('6,500-7,000', 'e', 0.3), mk('7,000-7,500', 'f', 0.3), mk('>7,500', 'g', 0.2)]},
+              {'id': 3, 'title': 'Will Dow (DOW) beat quarterly earnings?', 'slug': 'dow-q3', 'endDate': '2026-10-22T00:00:00Z', 'tags': [],
+               'markets': [mk('Yes', 'h', 0.6, slug='dow-quarterly-earnings-nongaap-eps-10-22-2026-0pt20')]}]
+        h = FakeHttp({'tag_slug=earnings&closed=false&limit=100&offset=0': ev})
+        out = C.poly_scan(h, C.Mapper(COS + [{'cik': 8, 'ticker': 'DOW', 'name': 'Dow Inc.', 'revenue': 4e10}]), verbose=False)
+        ix = {m['title'][:12]: m for m in out if m.get('index')}
+        self.assertEqual(len(ix), 2)                                            # Dow Inc.'s earnings stay a company market
+        spy = ix['S&P 500 (SPY']
+        self.assertEqual((spy['index'], spy['kind'], spy['points'], spy['underlying']), ('spx', 'above', False, 'SPY'))
+        eoy = ix['What will S&']
+        self.assertEqual((eoy['kind'], eoy['points']), ('bracket', True))
+        self.assertAlmostEqual(eoy['stats']['median']['value'], 7000)
+        self.assertEqual([m['ticker'] for m in out if not m.get('index')], ['DOW'])
+
+    def test_kalshi_index_range_and_highs(self):
+        def km(st, lo=None, hi=None, p=0.1):
+            return {'strike_type': st, 'floor_strike': lo, 'cap_strike': hi, 'yes_bid_dollars': str(p), 'yes_ask_dollars': str(p), 'close_time': '2026-12-31T21:00:00Z'}
+        rng = {'title': 'S&P 500 at the end of 2026', 'markets': [km('less', hi=6499.99, p=.1), km('between', 6500, 6999.99, .4), km('between', 7000, 7499.99, .4), km('greater', lo=7500, p=.1)]}
+        r = C.kalshi_index_rows(rng, {'ticker': 'KXINXY'}, C.INDICES[0])[0]
+        self.assertEqual((r['kind'], r['index'], r['end']), ('bracket', 'spx', '2026-12-31'))
+        self.assertAlmostEqual(r['stats']['median']['value'], 7000, delta=1)
+        mx = {'title': 'S&P 500 high in 2026', 'markets': [km('greater', lo=k, p=p) for k, p in ((7000, .8), (7400, .5), (7800, .2))]}
+        h = C.kalshi_index_rows(mx, {'ticker': 'KXINXMAXY'}, C.INDICES[0])[0]
+        self.assertEqual(h['kind'], 'hit'); self.assertAlmostEqual(h['stats_high']['median']['value'], 7400)
+        S = [{'ticker': 'KXINX', 'frequency': 'daily'}, {'ticker': 'KXINXU', 'frequency': 'hourly'}, {'ticker': 'KXNASDAQ100E', 'frequency': 'custom'},
+             {'ticker': 'KXNASDAQ100W', 'frequency': 'weekly'}, {'ticker': 'KXDJIAPOS', 'frequency': 'one_off'}, {'ticker': 'KXNASDAQAAPL', 'frequency': 'daily'}]
+        self.assertEqual([(s['ticker'], ix['id']) for s, ix in C.kalshi_index_series(S)], [('KXINX', 'spx'), ('KXNASDAQ100W', 'ndx'), ('KXDJIAPOS', 'dji')])
+
+    def test_members_parsers(self):
+        csv = 'iShares Core S&P 500 ETF\nFund Holdings as of,"Oct 16, 2026"\n \nTicker,Name,Sector,Asset Class,Market Value,Weight (%)\n' \
+              'NVDA,NVIDIA,IT,Equity,"1,000",7.10\nBRKB,BERKSHIRE,Fin,Equity,500,1.60\nUSD,CASH,Cash,Cash,10,0.05\n'
+        self.assertEqual(C.parse_ishares(csv), [('NVDA', 7.1), ('BRKB', 1.6)])
+        wt = "== Components ==\n{|\n| [[3M]] || {{NyseSymbol|MMM}}\n| [[Apple]] || {{nasdaq|AAPL}}\n|}\n== Former components ==\n{{NyseSymbol|T}}"
+        self.assertEqual(C.wiki_symbols(wt), ['MMM', 'AAPL'])
+
+    def test_bottom_up(self):
+        def rec(t, price, shares, tmean, e0, e1, ago):
+            return {'ticker': t, 'cik': 1, 'analysts': {'price': price, 'shares': shares, 'targets': {'mean': tmean, 'low': tmean * .8, 'high': tmean * 1.2},
+                    'rating': {'mean': 2}, 'periods': [{'period': '0y', 'eps': {'avg': e0, 'yearAgoEps': ago}, 'eps_trend': {'current': e0, '30daysAgo': e0 * .99}},
+                                                       {'period': '+1y', 'eps': {'avg': e1}}]}}
+        recs = {'A': rec('A', 100, 10, 110, 5, 6, 4), 'B': rec('B', 50, 20, 45, 2, 2.2, 2)}       # equal market values
+        bu, rows = C.bottom_up([('A', None), ('B', None)], recs, 'cap', today='2026-10-18')
+        self.assertAlmostEqual(bu['target_ret'], (0.10 - 0.10) / 2)
+        self.assertAlmostEqual(bu['eps_growth_next_fy'], (10 * 6 + 20 * 2.2) / (10 * 5 + 20 * 2) - 1)
+        self.assertAlmostEqual(bu['fwd_pe'], 2000 / (10 * 6 + 20 * 2.2))
+        self.assertEqual(bu['revisions_30d']['up'], 2)
+        dow, _ = C.bottom_up([('A', None), ('B', None)], recs, 'price', today='2026-10-18')       # price-weighted: A counts twice B
+        self.assertAlmostEqual(dow['target_ret'], (2 / 3) * 0.1 + (1 / 3) * -0.1)
+        ours = C.bottom_up_ours(rows, {'A': [{'horizon': 'next quarter', 'date': '2026-12-31', 'from': '2026-09-30', 'model': 'm', 'price': 105, 'close_then': 100, 'lo80': 90, 'hi80': 120}]}, div=0.5)
+        o = ours['next quarter']
+        self.assertAlmostEqual(o['ret'], 0.05); self.assertAlmostEqual(o['lo'], 0.05 + 0.5 * (-0.10 - 0.05)); self.assertAlmostEqual(o['w'], 0.5)
+
+
 YAHOO = {'quoteSummary': {'result': [{
     'financialData': {'currentPrice': {'raw': 200.0}, 'targetMeanPrice': {'raw': 230.0}, 'targetHighPrice': {'raw': 300.0}, 'targetLowPrice': {'raw': 150.0},
                       'targetMedianPrice': {'raw': 228.0}, 'numberOfAnalystOpinions': {'raw': 40}, 'recommendationMean': {'raw': 1.8}, 'recommendationKey': 'buy'},

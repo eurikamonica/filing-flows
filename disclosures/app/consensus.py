@@ -14,9 +14,15 @@
               low, high and the number of analysts, the EPS trend over 90 days and revisions, price targets and
               ratings, next earnings date, estimate vs actual history; a dated snapshot is kept every day so the page
               can show how the consensus moved.
+    indices   the market itself — S&P 500, Nasdaq-100, Dow, Russell 2000, VIX: every Polymarket market whose title names
+              the index (or SPY / QQQ / DIA / IWM) and Kalshi's index series (daily / weekly / monthly / yearly ranges,
+              above-below, yearly highs and lows, up for the day or the year, comparisons); daily closes of each index and
+              its ETF (Yahoo chart API); the members (iShares IVV / IWM holdings, Nasdaq's Nasdaq-100 list, Wikipedia).
   build     public/: index.json, c/<cik>.json (company page), markets.json, calendar.json, calibration.json — with our
             own forecast (rotation history: the gravity model's next-quarter and next-month price and 80% range) beside
-            the analysts and the markets.
+            the analysts and the markets; market.json and ix/<id>.json for the indices: the analysts' consensus added up
+            from the members at their weights (target return, earnings growth, forward P/E, revisions, the season), the
+            markets' implied levels and our model added up from the members.
 
     python app/consensus.py collect --root cons --site-index site/index.json --minutes 25
     python app/consensus.py build   --root cons --rotation rh/public
@@ -43,7 +49,26 @@ KALSHI = 'https://api.elections.kalshi.com/trade-api/v2'
 YQ = 'https://query2.finance.yahoo.com'
 UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 FilingFlows/1.0'
 BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'   # Yahoo refuses other agents
-POLY_TAGS = ['earnings', 'stocks', 'equities', 'big-tech', 'tech', 'business', 'finance', 'ipos', 'market-cap', 'companies']
+POLY_TAGS = ['earnings', 'stocks', 'equities', 'big-tech', 'tech', 'business', 'finance', 'ipos', 'market-cap', 'companies', 'indicies', 'sp-500']
+# The market: the indices, with the ETF that tracks each (Polymarket quotes some ladders in ETF dollars), how prediction-market
+# titles and Kalshi series name them, and how the index weighs its companies (for the bottom-up analysts' consensus and our model).
+INDICES = [
+    {'id': 'spx', 'name': 'S&P 500', 'short': 'SPX', 'symbol': '^GSPC', 'etf': 'SPY', 'weighting': 'cap',
+     'pat': r'S&P\s?500|\bSPX\b|\bSPY\b', 'etf_pat': r'\bSPY\b', 'kalshi': ('INX',)},
+    {'id': 'ndx', 'name': 'Nasdaq-100', 'short': 'NDX', 'symbol': '^NDX', 'etf': 'QQQ', 'weighting': 'cap',
+     'pat': r'Nasdaq[- ]?100|\bNDX\b|\bQQQ\b|Nasdaq Composite', 'etf_pat': r'\bQQQ\b', 'kalshi': ('NASDAQ100', 'NASDAQ', 'NDX')},
+    {'id': 'dji', 'name': 'Dow Jones Industrial Average', 'short': 'DJIA', 'symbol': '^DJI', 'etf': 'DIA', 'weighting': 'price',
+     'pat': r'Dow Jones|\bDJIA\b|\bDJI\b', 'etf_pat': r'\bDIA\b', 'kalshi': ('DJIA',)},
+    {'id': 'rut', 'name': 'Russell 2000', 'short': 'RUT', 'symbol': '^RUT', 'etf': 'IWM', 'weighting': 'cap',
+     'pat': r'Russell\s?2000|\bRUT\b|\bIWM\b', 'etf_pat': r'\bIWM\b', 'kalshi': ('RUT',)},
+    {'id': 'vix', 'name': 'Cboe Volatility Index (VIX)', 'short': 'VIX', 'symbol': '^VIX', 'etf': None, 'weighting': None,
+     'pat': r'\bVIX\b', 'etf_pat': None, 'kalshi': ('VIX',)},
+]
+DOW_FALLBACK = 'AAPL AMGN AMZN AXP BA CAT CRM CSCO CVX DIS GS HD HON IBM JNJ JPM KO MCD MMM MRK MSFT NKE NVDA PG SHW TRV UNH V VZ WMT'.split()
+ISHARES = {'spx': 'https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf/1467271812596.ajax?fileType=csv&fileName=IVV_holdings&dataType=fund',
+           'rut': 'https://www.ishares.com/us/products/239710/ishares-russell-2000-etf/1467271812596.ajax?fileType=csv&fileName=IWM_holdings&dataType=fund'}
+WIKI = {'spx': 'List_of_S&P_500_companies', 'ndx': 'Nasdaq-100', 'dji': 'Dow_Jones_Industrial_Average'}
+MEMBERS_OK = {'spx': (480, 520), 'ndx': (95, 110), 'dji': (28, 32), 'rut': (1500, 2100)}
 YAHOO_MODULES = 'earningsTrend,earningsHistory,calendarEvents,financialData,recommendationTrend,upgradeDowngradeHistory,earnings,defaultKeyStatistics'
 
 
@@ -70,7 +95,7 @@ class Http:
                 time.sleep(wait)
             self.last[host] = time.monotonic()
             try:
-                ua = BROWSER_UA if 'yahoo.com' in (host or '') else UA
+                ua = BROWSER_UA if any(d in (host or '') for d in ('yahoo.com', 'nasdaq.com', 'ishares.com')) else UA
                 req = urllib.request.Request(url, headers={'User-Agent': ua, 'Accept': 'application/json,text/plain,*/*', **(headers or {})})
                 with self.op.open(req, timeout=timeout) as r:
                     self.calls += 1
@@ -113,15 +138,6 @@ AMBIGUOUS = {'super', 'micro', 'bank', 'home', 'data', 'real', 'life', 'star', '
              'water', 'river', 'lake', 'mountain', 'summit', 'pioneer', 'eagle', 'liberty', 'freedom', 'victory', 'apex', 'prime', 'core', 'target',
              'match', 'block', 'square', 'circle', 'snap', 'chase', 'alpha', 'beta', 'delta', 'gamma', 'omega', 'sigma', 'vision', 'future', 'fortune',
              'premier', 'select', 'standard', 'oracle', 'shell', 'visa', 'ford', 'boeing', 'intel'} - {'oracle', 'visa', 'ford', 'boeing', 'intel', 'delta'}
-ALIASES = {'GOOGL': ['google', 'alphabet', 'youtube', 'waymo'], 'META': ['facebook', 'instagram', 'whatsapp', 'meta'], 'MSTR': ['microstrategy', 'saylor'],
-           'NVDA': ['nvidia'], 'AMZN': ['amazon', 'aws'], 'MSFT': ['microsoft'], 'AAPL': ['apple', 'iphone'], 'TSLA': ['tesla'], 'BRK.B': ['berkshire'],
-           'JPM': ['jpmorgan'], 'GS': ['goldman'], 'DAL': ['delta air'], 'NFLX': ['netflix'], 'DIS': ['disney'], 'WMT': ['walmart']}
-
-
-def name_tokens(name):
-    return [x for x in re.findall(r'[a-z0-9]+', (name or '').lower().replace('’', '').replace("'", '').replace('&', ' ').replace('.com', ' ')) if x not in STOP]
-
-
 COMMON = set("""about above access action active advance after agent alliance alpha america american angel apex apple applied arena array atlas audio auto avenue award balance banner basic beacon beyond black blade blue board bold boost border bridge bright broad brother build bureau cable camden canyon capital carbon cardinal career carrier cascade castle center central century champion change charter cheap chief choice cinema circle citizen civic class clean clear clever climb cloud coast colony comfort command common compass concord connect contract copper corner cosmos country cover craft create credit crest crown crystal cycle daily dance dawn decision delta design diamond direct discovery dollar domain double dream drive dynamic eagle early earth echo edge element elite empire energy engine enterprise equity essential evolve exact excel express falcon family federal fidelity field final first flag fleet flex flight float focus force forest forge fortune forward foundation frame franklin freedom fresh front frontier fusion galaxy game garden gateway general genesis giant glacier global golden grand granite graphic gravity great green group growth guard guide harbor harmony harvest haven heart heritage hero highland horizon house hunter idea image impact independence index infinity inland insight integrity interactive iron island jet journey jupiter key kind king knight label land landmark laser launch leader legacy level liberty light lincoln link lion live local logic lumen lunar magnet main major maple marathon mark market marvel matrix maximum medical mercury merit meridian metro middle millennium mission model modern moment monarch monument motion motor mountain national native natural navigator network north nova oasis ocean office omega online open optimum orbit origin pacific palm paragon park partner patriot peak penn people phoenix pilot pinnacle pioneer planet platinum plus point polar portal power precision premier presidio price prime pro progress prospect public pulse pure quantum quest radiant rally range rapid ready realty regal regency reliance republic reserve resolute river rock rocket royal safe saga scale science score scout select sentinel service shield shift signal silver simple sky smart solar solid sound source south sovereign spark spectrum spirit spring square standard star state sterling stone strategy street strong summit sun superior supreme surge swift symbol synergy system talent target teach terra thunder tide titan total tower trade trail transit trend trinity triumph true trust union unity universal urban valley value vanguard vector velocity venture vertex victory view vintage vision vista vital voyager watch water wave wealth west wild wind wing winner wise wonder world yield zenith alabama alaska arizona arkansas california colorado connecticut delaware florida georgia hawaii idaho illinois indiana iowa kansas kentucky louisiana maine maryland massachusetts michigan minnesota mississippi missouri montana nebraska nevada hampshire jersey mexico york carolina dakota ohio oklahoma oregon pennsylvania rhode tennessee texas utah vermont virginia washington wisconsin wyoming canada china japan india brazil germany france britain europe israel korea taiwan russia ukraine iran africa asia australia january february march april june july august september october november december monday friday weekend bitcoin ethereum solana dogecoin ripple crypto election president congress senate court trump musk elon openai anthropic xai""".split())
 ALIASES = {'GOOGL': ['google', 'alphabet', 'youtube', 'waymo'], 'META': ['facebook', 'instagram', 'whatsapp', 'meta'], 'MSTR': ['microstrategy', 'saylor'],
            'NVDA': ['nvidia'], 'AMZN': ['amazon', 'aws'], 'MSFT': ['microsoft'], 'AAPL': ['apple', 'iphone'], 'TSLA': ['tesla'], 'BRK.B': ['berkshire'],
@@ -380,6 +396,94 @@ def score_price_ledger(L):
     return {'n': len(rows), 'mean_abs_err_pct': sum(errs) / len(errs) if errs else None, 'inside80': sum(ins) / len(ins) if ins else None, 'rows': rows[:400]}
 
 
+def index_of(title):
+    """The index a market is about (its title names it), else None. Comparisons go to the first index named."""
+    hits = [(m.start(), ix) for ix in INDICES for m in [re.search(ix['pat'], title or '', re.I if ix['id'] != 'vix' else 0)] if m]
+    return min(hits, key=lambda x: x[0])[1] if hits else None
+
+
+def poly_kind(title):
+    return ('beat' if re.search(r'beat quarterly earnings', title, re.I) else
+            'above' if re.search(r'(close[sd]?|finish\w*)\b.*\babove', title, re.I) else
+            'bracket' if re.search(r'close[sd]?\b.*\bat _|\bclose[sd]? at\b', title, re.I) else
+            'hit' if re.search(r'what will .* hit\b', title, re.I) else
+            'mcap' if re.search(r'market cap', title, re.I) else
+            'updown' if re.search(r'up or down', title, re.I) else
+            'metric' if re.search(r'\bQ[1-4]\b|\bfiscal\b|\bFY\d', title) and (re.search(r'above\s*_', title) or re.search(r'growth|ratio|margin|\(MBR\)|RPO', title, re.I)) else 'other')
+
+
+def poly_rows(e, base, title, ms):
+    """Rows of one Polymarket event about a company or an index (base: source, ticker, url …), by the kind of market."""
+    rows = []
+    kind = base['kind']
+    if kind == 'beat':
+        for m in ms:
+            slug = m.get('slug') or ''
+            mm = re.search(r'-(gaap|nongaap)-eps-(\d{2})-(\d{2})-(\d{4})-(-?[\dpt]+)$', slug)
+            strike = float(mm.group(5).replace('pt', '.')) if mm else None
+            rows.append({**base, 'basis': mm.group(1) if mm else None, 'report_date': f'{mm.group(4)}-{mm.group(2)}-{mm.group(3)}' if mm else None,
+                        'eps_strike': strike, 'p': poly_prob(m), 'resolved': poly_resolved(m), 'id': m.get('id'),
+                        'token': (json.loads(m.get('clobTokenIds') or '[]') or [None])[0], 'market_end': m.get('endDate'),
+                        'volume': _f(m.get('volume'))})
+    elif kind in ('above', 'mcap', 'bracket'):
+        pts = []
+        for m in ms:
+            s = strike_of(m.get('groupItemTitle') or m.get('question'))
+            if s:
+                pts.append((s, poly_prob(m), poly_resolved(m)))
+        if kind == 'above':
+            st = ladder_stats([(s[0], p) for s, p, _ in pts if s[0] is not None])
+        elif kind == 'bracket':
+            st = bracket_stats([((s[0] if s[0] != s[1] else None, s[1]) if s[0] != s[1] else (s[0], None), p) for s, p, _ in pts])
+        else:
+            st = bracket_stats([((s[0] if s[0] != s[1] else None, s[1]) if s[0] != s[1] else (s[0], None), p) for s, p, _ in pts])
+        row = {**base, 'stats': None if e.get('closed') else st, 'n': len(pts)}
+        if e.get('closed'):
+            row['actual'] = resolved_range(kind, pts)
+        if st or row.get('actual'):
+            rows.append(row)
+        elif ms:                               # a single "above K?" contract: show it as it is
+            rows.append({**base, 'kind': 'other', 'outcomes': [{'q': m.get('groupItemTitle') or m.get('question'), 'p': poly_prob(m), 'resolved': poly_resolved(m)} for m in ms[:12]]})
+    elif kind == 'metric':
+        pts = []
+        for m in ms:
+            if m.get('closed') and not e.get('closed'):
+                continue
+            g = m.get('groupItemTitle') or ''
+            k = strike_of(g)
+            if k:
+                pts.append((k, poly_prob(m), poly_resolved(m), g))
+        sample = next((g for *_, g in pts if g), '')
+        unit = '$' if '$' in sample else '%' if '%' in sample else (re.sub(r'[\d.,<>$+\-–\s]+', ' ', sample).strip()[:12] or '')
+        ranged = any(k[0] != k[1] for k, *_ in pts)
+        st = (bracket_stats([((k[0] if k[0] != k[1] else None, k[1]) if k[0] != k[1] else (k[0], None), p) for k, p, _, _ in pts]) if ranged
+              else ladder_stats([(k[0], p) for k, p, _, _ in pts]))
+        row = {**base, 'stats': None if e.get('closed') else st, 'unit': unit,
+               'outcomes': [{'q': g, 'p': p, 'resolved': r} for k, p, r, g in sorted(pts, key=lambda x: x[0][0] if x[0][0] is not None else -1e30)][:16]}
+        if e.get('closed'):
+            row['actual'] = resolved_range('above' if not ranged else 'bracket', [(k, p, r) for k, p, r, _ in pts])
+        rows.append(row)
+    elif kind == 'hit':
+        up, down = {}, {}
+        for m in ms:
+            if m.get('closed') and not e.get('closed'):
+                continue                       # a strike already touched / settled inside a live month
+            g = m.get('groupItemTitle') or ''
+            k = strike_of(g)
+            if not k or k[0] is None:
+                continue
+            (up if '↑' in g or 'HIGH' in (m.get('question') or '') else down)[k[0]] = poly_prob(m)
+        hi = ladder_stats(list(up.items()))                                   # P(month high ≥ K)
+        lo = ladder_stats([(k, None if p is None else 1 - p) for k, p in down.items()])   # P(month low > K)
+        rows.append({**base, 'stats_high': hi, 'stats_low': lo,
+                    'outcomes': [{'q': f'high ≥ {k:g}', 'p': p} for k, p in sorted(up.items())] + [{'q': f'low ≤ {k:g}', 'p': p} for k, p in sorted(down.items())]})
+    else:
+        outc = [{'q': m.get('groupItemTitle') or m.get('question'), 'p': poly_prob(m), 'resolved': poly_resolved(m)} for m in ms[:20]]
+        extra = {'p': outc[0]['p'], 'resolved': outc[0]['resolved']} if kind == 'updown' and outc else {}
+        rows.append({**base, 'outcomes': outc, **extra})
+    return rows
+
+
 def poly_scan(h, mapper, verbose=True):
     events, seen = [], set()
     for tag in POLY_TAGS:
@@ -399,8 +503,18 @@ def poly_scan(h, mapper, verbose=True):
     for e in events:
         tags = [t.get('slug') for t in e.get('tags') or [] if t.get('slug')]
         title = e.get('title') or ''
-        co = mapper.from_text(title, tags)
         ms = e.get('markets') or []
+        ix = index_of(title)
+        if ix:                                 # the market itself: S&P 500, Nasdaq-100, Dow, Russell 2000, VIX
+            kind = poly_kind(title)
+            kind = 'other' if kind in ('beat', 'mcap', 'metric') else kind
+            etf = bool(ix['etf_pat'] and re.search(ix['etf_pat'], title)) and not re.search(rf'\({ix["short"]}\)', title)
+            base = {'source': 'polymarket', 'kind': kind, 'ticker': ix['short'], 'cik': None, 'index': ix['id'], 'points': not etf,
+                    'underlying': ix['etf'] if etf else ix['short'], 'title': title, 'url': f'https://polymarket.com/event/{e.get("slug")}',
+                    'end': (e.get('endDate') or '')[:10], 'closed': bool(e.get('closed')), 'volume': _f(e.get('volume')), 'liquidity': _f(e.get('liquidity'))}
+            out += poly_rows(e, base, title, ms)
+            continue
+        co = mapper.from_text(title, tags)
         if not co:                             # "Which companies will be acquired …", "Largest company end of …": one row per company named
             for m in ms:
                 g = m.get('groupItemTitle') or ''
@@ -411,81 +525,14 @@ def poly_scan(h, mapper, verbose=True):
                                 'closed': bool(m.get('closed') or e.get('closed')), 'volume': _f(m.get('volume')),
                                 'outcomes': [{'q': g, 'p': poly_prob(m), 'resolved': poly_resolved(m)}]})
             continue
-        kind = ('beat' if re.search(r'beat quarterly earnings', title, re.I) else
-                'above' if re.search(r'(close[sd]?|finish\w*)\b.*\babove', title, re.I) else
-                'bracket' if re.search(r'close[sd]?\b.*\bat _', title, re.I) else
-                'hit' if re.search(r'what will .* hit\b', title, re.I) else
-                'mcap' if re.search(r'market cap', title, re.I) else
-                'updown' if re.search(r'up or down', title, re.I) else
-                'metric' if re.search(r'\bQ[1-4]\b|\bfiscal\b|\bFY\d', title) and (re.search(r'above\s*_', title) or re.search(r'growth|ratio|margin|\(MBR\)|RPO', title, re.I)) else 'other')
+        kind = poly_kind(title)
         base = {'source': 'polymarket', 'kind': kind, 'ticker': co['ticker'], 'cik': co['cik'], 'title': title,
                 'url': f'https://polymarket.com/event/{e.get("slug")}', 'end': (e.get('endDate') or '')[:10],
                 'closed': bool(e.get('closed')), 'volume': _f(e.get('volume')), 'liquidity': _f(e.get('liquidity'))}
-        if kind == 'beat':
-            for m in ms:
-                slug = m.get('slug') or ''
-                mm = re.search(r'-(gaap|nongaap)-eps-(\d{2})-(\d{2})-(\d{4})-(-?[\dpt]+)$', slug)
-                strike = float(mm.group(5).replace('pt', '.')) if mm else None
-                out.append({**base, 'basis': mm.group(1) if mm else None, 'report_date': f'{mm.group(4)}-{mm.group(2)}-{mm.group(3)}' if mm else None,
-                            'eps_strike': strike, 'p': poly_prob(m), 'resolved': poly_resolved(m), 'id': m.get('id'),
-                            'token': (json.loads(m.get('clobTokenIds') or '[]') or [None])[0], 'market_end': m.get('endDate'),
-                            'volume': _f(m.get('volume'))})
-        elif kind in ('above', 'mcap', 'bracket'):
-            pts = []
-            for m in ms:
-                s = strike_of(m.get('groupItemTitle') or m.get('question'))
-                if s:
-                    pts.append((s, poly_prob(m), poly_resolved(m)))
-            if kind == 'above':
-                st = ladder_stats([(s[0], p) for s, p, _ in pts if s[0] is not None])
-            elif kind == 'bracket':
-                st = bracket_stats([((s[0] if s[0] != s[1] else None, s[1]) if s[0] != s[1] else (s[0], None), p) for s, p, _ in pts])
-            else:
-                st = bracket_stats([((s[0] if s[0] != s[1] else None, s[1]) if s[0] != s[1] else (s[0], None), p) for s, p, _ in pts])
-            row = {**base, 'stats': None if e.get('closed') else st, 'n': len(pts)}
-            if e.get('closed'):
-                row['actual'] = resolved_range(kind, pts)
-            if st or row.get('actual'):
-                out.append(row)
-        elif kind == 'metric':
-            pts = []
-            for m in ms:
-                if m.get('closed') and not e.get('closed'):
-                    continue
-                g = m.get('groupItemTitle') or ''
-                k = strike_of(g)
-                if k:
-                    pts.append((k, poly_prob(m), poly_resolved(m), g))
-            sample = next((g for *_, g in pts if g), '')
-            unit = '$' if '$' in sample else '%' if '%' in sample else (re.sub(r'[\d.,<>$+\-–\s]+', ' ', sample).strip()[:12] or '')
-            ranged = any(k[0] != k[1] for k, *_ in pts)
-            st = (bracket_stats([((k[0] if k[0] != k[1] else None, k[1]) if k[0] != k[1] else (k[0], None), p) for k, p, _, _ in pts]) if ranged
-                  else ladder_stats([(k[0], p) for k, p, _, _ in pts]))
-            row = {**base, 'stats': None if e.get('closed') else st, 'unit': unit,
-                   'outcomes': [{'q': g, 'p': p, 'resolved': r} for k, p, r, g in sorted(pts, key=lambda x: x[0][0] if x[0][0] is not None else -1e30)][:16]}
-            if e.get('closed'):
-                row['actual'] = resolved_range('above' if not ranged else 'bracket', [(k, p, r) for k, p, r, _ in pts])
-            out.append(row)
-        elif kind == 'hit':
-            up, down = {}, {}
-            for m in ms:
-                if m.get('closed') and not e.get('closed'):
-                    continue                       # a strike already touched / settled inside a live month
-                g = m.get('groupItemTitle') or ''
-                k = strike_of(g)
-                if not k or k[0] is None:
-                    continue
-                (up if '↑' in g or 'HIGH' in (m.get('question') or '') else down)[k[0]] = poly_prob(m)
-            hi = ladder_stats(list(up.items()))                                   # P(month high ≥ K)
-            lo = ladder_stats([(k, None if p is None else 1 - p) for k, p in down.items()])   # P(month low > K)
-            out.append({**base, 'stats_high': hi, 'stats_low': lo,
-                        'outcomes': [{'q': f'high ≥ {k:g}', 'p': p} for k, p in sorted(up.items())] + [{'q': f'low ≤ {k:g}', 'p': p} for k, p in sorted(down.items())]})
-        else:
-            rows = [{'q': m.get('groupItemTitle') or m.get('question'), 'p': poly_prob(m), 'resolved': poly_resolved(m)} for m in ms[:20]]
-            extra = {'p': rows[0]['p'], 'resolved': rows[0]['resolved']} if kind == 'updown' and rows else {}
-            out.append({**base, 'outcomes': rows, **extra})
+        out += poly_rows(e, base, title, ms)
     if verbose:
-        print(f'polymarket: {len(events)} events, {len(out)} company markets', flush=True)
+        print(f'polymarket: {len(events)} events, {sum(1 for r in out if not r.get("index"))} company markets, '
+              f'{sum(1 for r in out if r.get("index"))} index markets', flush=True)
     return out
 
 
@@ -494,6 +541,92 @@ def kalshi_prob(m):
     if b is not None and a is not None and 0 < a and a - b <= 0.15:
         return (a + b) / 2
     return l if l else (b if b else None)
+
+
+def kalshi_dist(ms):
+    """Implied distribution of a Kalshi event: range buckets (with the open-ended tails as buckets) or an above/below ladder."""
+    above, buckets = [], []
+    for m in ms:
+        st, lo, hi, p = m.get('strike_type'), _f(m.get('floor_strike')), _f(m.get('cap_strike')), kalshi_prob(m)
+        if st == 'between' and lo is not None and hi is not None:
+            buckets.append(((lo, hi), p))
+        elif st in ('greater', 'greater_or_equal') and lo is not None:
+            above.append((lo, p)); buckets.append(((lo, None), p))
+        elif st in ('less', 'less_or_equal') and hi is not None:
+            above.append((hi, None if p is None else 1 - p)); buckets.append(((None, hi), p))
+    if any(lo is not None and hi is not None for (lo, hi), _ in buckets):
+        return bracket_stats(buckets)
+    return ladder_stats(above) if len(above) >= 2 else None
+
+
+def kalshi_index_series(series):
+    """(series, index) for Kalshi series about an index: ranges, above/below, highs and lows, up for the day / year,
+    comparisons and constituent changes — not the hourly and 15-minute ones, nor the election-day specials."""
+    out = []
+    for s in series:
+        t = (s.get('ticker') or '').upper()
+        core = re.sub(r'^KX', '', t)
+        if s.get('frequency') in ('hourly', 'fifteen_min') or re.search(r'(15M|EU|E)$', core) and not core.endswith('CLOSE'):
+            continue
+        for ix in INDICES:
+            if any(core.startswith(k) for k in ix['kalshi']) and not (ix['id'] == 'ndx' and core.startswith('NASDAQ') and not core.startswith('NASDAQ100')
+                                                                      and not re.match(r'NASDAQ(DUD|WUD)$', core)):
+                out.append((s, ix))
+                break
+    return out
+
+
+def kalshi_index_rows(e, s, ix):
+    ms = e.get('markets') or []
+    core = re.sub(r'^KX', '', (s.get('ticker') or '').upper())
+    base = {'source': 'kalshi', 'ticker': ix['short'], 'cik': None, 'index': ix['id'], 'points': True, 'underlying': ix['short'],
+            'title': e.get('title') or s.get('title'), 'subtitle': e.get('sub_title'), 'url': f'https://kalshi.com/markets/{(s.get("ticker") or "").lower()}',
+            'end': (max((m.get('close_time') or '') for m in ms) if ms else '')[:10], 'closed': False,
+            'volume': sum(_f(m.get('volume_fp')) or _f(m.get('volume')) or 0 for m in ms), 'series': s.get('ticker')}
+    rows = [{'q': m.get('yes_sub_title') or m.get('subtitle') or m.get('title'), 'p': kalshi_prob(m), 'k': _f(m.get('floor_strike')) or _f(m.get('cap_strike'))} for m in ms]
+    rows.sort(key=lambda r: (r['k'] is None, r['k'] or 0))
+    strikes = [m for m in ms if m.get('strike_type') in ('greater', 'greater_or_equal', 'less', 'less_or_equal', 'between')]
+    if re.search(r'MAX|MIN', core) and strikes:
+        hi = 'MAX' in core
+        pts = []
+        for m in strikes:
+            k = _f(m.get('floor_strike')) if m.get('strike_type', '').startswith('greater') else _f(m.get('cap_strike'))
+            p = kalshi_prob(m)
+            if k is None or p is None:
+                continue
+            if hi:
+                pts.append((k, p if m['strike_type'].startswith('greater') else 1 - p))
+            else:
+                pts.append((k, 1 - p if m['strike_type'].startswith('less') else p))     # P(low > K)
+        st = ladder_stats(pts)
+        return [{**base, 'kind': 'hit', 'stats_high' if hi else 'stats_low': st,
+                 'outcomes': [{'q': ('high ≥ ' if hi else 'low ≤ ') + f'{r["k"]:,.0f}', 'p': r['p']} for r in rows if r['k'] is not None][:24]}]
+    if len(strikes) >= 2:
+        st = kalshi_dist(strikes)
+        kind = 'bracket' if any(m.get('strike_type') == 'between' for m in strikes) else 'above'
+        if st:
+            return [{**base, 'kind': kind, 'stats': st, 'n': len(strikes), 'outcomes': [{'q': r['q'], 'p': r['p']} for r in rows][:30]}]
+    if len(ms) == 1 and re.search(r'POS|Z$|DUD$|WUD$|UP\b', core + ' ' + (e.get('title') or '').upper()):
+        return [{**base, 'kind': 'updown', 'p': kalshi_prob(ms[0]), 'outcomes': [{'q': rows[0]['q'], 'p': rows[0]['p']}]}]
+    return [{**base, 'kind': 'other', 'outcomes': sorted([{'q': r['q'], 'p': r['p']} for r in rows], key=lambda r: -(r['p'] or 0))[:30]}]
+
+
+def kalshi_index_scan(h, root, minutes=4.0, verbose=True):
+    t0 = time.time()
+    pairs = kalshi_index_series(kalshi_series(h, root))
+    out = []
+    for s, ix in pairs:
+        if time.time() - t0 > minutes * 60:
+            break
+        try:
+            ev = h.json(f'{KALSHI}/events?series_ticker={s["ticker"]}&status=open&with_nested_markets=true&limit=20').get('events', [])
+        except Exception as exc:
+            print(f'  kalshi {s["ticker"]}: {exc}', flush=True); continue
+        for e in ev:
+            out += kalshi_index_rows(e, s, ix)
+    if verbose:
+        print(f'kalshi: {len(pairs)} index series, {len(out)} index events', flush=True)
+    return out
 
 
 def kalshi_series(h, root, max_age_days=7):
@@ -549,16 +682,7 @@ def kalshi_scan(h, root, mapper, minutes=6.0, verbose=True):
                     'url': f'https://kalshi.com/markets/{s["ticker"].lower()}', 'end': (max((m.get('close_time') or '') for m in ms) if ms else '')[:10],
                     'closed': False, 'volume': sum(_f(m.get('volume_fp')) or 0 for m in ms)}
             if kind_e == 'kpi':
-                above, buckets = [], []
-                for m in ms:
-                    st, lo, hi, p = m.get('strike_type'), _f(m.get('floor_strike')), _f(m.get('cap_strike')), kalshi_prob(m)
-                    if st in ('greater', 'greater_or_equal') and lo is not None:
-                        above.append((lo, p))
-                    elif st in ('less', 'less_or_equal') and hi is not None:
-                        above.append((hi, None if p is None else 1 - p))
-                    elif st == 'between':
-                        buckets.append(((lo, hi), p))
-                stats = ladder_stats(above) if len(above) >= 2 else bracket_stats(buckets) if buckets else None
+                stats = kalshi_dist(ms)
                 rows = [{'q': m.get('yes_sub_title') or m.get('subtitle') or m.get('title'), 'p': kalshi_prob(m)} for m in ms[:24]]
                 out.append({**base, 'stats': stats, 'outcomes': rows})
             else:
@@ -748,21 +872,127 @@ def collect_analysts(h, root, cos, minutes=20.0, refresh_hours=20):
     return st['analysts_summary']
 
 
+# ------------------------------------------------------------------ the indices: levels and members
+def mkey(m):
+    return f'{m["source"]}:{m["kind"]}:{m["ticker"]}:{m["end"]}:{m.get("eps_strike") or ""}' + (f':{m.get("series") or m["url"]}' if m.get('index') else '')
+
+
+def collect_index_prices(h, root):
+    """Two years of daily closes for each index and its ETF (Yahoo chart API, unadjusted closes), kept between runs."""
+    p = Path(root) / 'cache' / 'index_prices.json'
+    c = read_json(p, {})
+    for sym in [ix['symbol'] for ix in INDICES] + [ix['etf'] for ix in INDICES if ix['etf']]:
+        try:
+            d = h.json(f'{YQ}/v8/finance/chart/{urllib.parse.quote(sym)}?range=2y&interval=1d')
+            r = d['chart']['result'][0]
+            q = r['indicators']['quote'][0]['close']
+            daily = [[dt.datetime.fromtimestamp(t, dt.timezone.utc).date().isoformat(), round(v, 4)] for t, v in zip(r.get('timestamp') or [], q) if v is not None]
+            meta = r.get('meta') or {}
+            if daily:
+                c[sym] = {'at': now(), 'price': meta.get('regularMarketPrice') or daily[-1][1],
+                          'time': dt.datetime.fromtimestamp(meta['regularMarketTime'], dt.timezone.utc).isoformat() if meta.get('regularMarketTime') else None,
+                          'daily': daily}
+        except Exception as exc:
+            print(f'  yahoo chart {sym}: {exc}', flush=True)
+    write_json(p, c)
+    return c
+
+
+def parse_ishares(text):
+    """iShares holdings CSV → [(ticker, weight %)] for the equity rows."""
+    import csv, io
+    lines = text.splitlines()
+    i = next((k for k, l in enumerate(lines) if l.startswith('Ticker,')), None)
+    if i is None:
+        return []
+    out = []
+    for r in csv.DictReader(io.StringIO('\n'.join(lines[i:]))):
+        t, w = (r.get('Ticker') or '').strip(), _f((r.get('Weight (%)') or '').replace(',', ''))
+        if t and t != '-' and (r.get('Asset Class') or 'Equity').strip() == 'Equity' and w is not None and w > 0:
+            out.append((t, w))
+    return out
+
+
+def wiki_symbols(wikitext):
+    """Ticker templates in the constituents table of a Wikipedia article ({{NyseSymbol|MMM}}, {{nasdaq|AAPL}} …),
+    before any 'changes' / 'former' section."""
+    w = re.split(r'\n==+\s*(?:Selected changes|Recent changes|Changes|Former|Historical|See also|References)', wikitext, maxsplit=1, flags=re.I)[0]
+    seen, out = set(), []
+    for t in re.findall(r'\{\{\s*(?:nyse|nasdaq|bats|cboe)[a-z ]*\|\s*([A-Za-z][A-Za-z.\-]{0,6})\s*(?:\||\}\})', w, re.I):
+        t = t.upper()
+        if t not in seen:
+            seen.add(t); out.append(t)
+    if len(out) < 20:                          # tables that list tickers as plain cells: "| [[Apple Inc.]] || AAPL ||"
+        for t in re.findall(r'^\|\s*\[\[[^\]]+\]\]\s*\|\|\s*([A-Z][A-Z.]{0,5})\s*(?:\|\||$)', w, re.M):
+            if t not in seen:
+                seen.add(t); out.append(t)
+    return out
+
+
+def collect_constituents(h, root, max_age_days=6):
+    """Members (and weights where the source has them) of each index: iShares holdings (S&P 500 through IVV, Russell 2000
+    through IWM), Nasdaq's Nasdaq-100 list, Wikipedia's tables; each must have about the right number of members."""
+    p = Path(root) / 'cache' / 'constituents.json'
+    c = read_json(p, {})
+    nowdt = dt.datetime.now(dt.timezone.utc)
+    for ix in INDICES:
+        i = ix['id']
+        if i not in MEMBERS_OK:
+            continue
+        old = c.get(i) or {}
+        if old.get('at') and (nowdt - dt.datetime.fromisoformat(old['at'])).days < max_age_days:
+            continue
+        lo, hi = MEMBERS_OK[i]
+        got, src, errs = None, None, []
+        tries = []
+        if i in ISHARES:
+            tries.append(('iShares ' + ('IVV' if i == 'spx' else 'IWM'), lambda i=i: parse_ishares(h.get(ISHARES[i], headers={'Accept': 'text/csv,*/*'}).decode('utf-8', 'replace'))))
+        if i == 'ndx':
+            def nasdaq():
+                d = h.json('https://api.nasdaq.com/api/quote/list-type/nasdaq100')
+                rows = (((d.get('data') or {}).get('data') or {}).get('rows')) or ((d.get('data') or {}).get('rows')) or []
+                return [(r['symbol'].strip().upper(), None) for r in rows if r.get('symbol')]
+            tries.append(('Nasdaq', nasdaq))
+        if i in WIKI:
+            tries.append(('Wikipedia', lambda i=i: [(t, None) for t in wiki_symbols(
+                h.json(f'https://en.wikipedia.org/w/api.php?action=parse&page={urllib.parse.quote(WIKI[i])}&prop=wikitext&format=json&formatversion=2')['parse']['wikitext'])]))
+        for name, fn in tries:
+            try:
+                rows = fn()
+                if lo <= len(rows) <= hi:
+                    got, src = rows, name
+                    break
+                errs.append(f'{name}: {len(rows)} members')
+            except Exception as exc:
+                errs.append(f'{name}: {str(exc)[:80]}')
+        if got:
+            c[i] = {'at': now(), 'source': src, 'members': got}
+        else:
+            if i == 'dji' and not old.get('members'):
+                c[i] = {'at': None, 'source': 'built-in list (Nov 2024)', 'members': [(t, None) for t in DOW_FALLBACK]}
+            c.setdefault(i, {})['errors'] = errs
+            print(f'::warning::constituents {i}: ' + '; '.join(errs), flush=True)
+    write_json(p, c)
+    return c
+
+
 def collect(root, site_index, minutes=25.0):
     root = Path(root)
     cos = universe(site_index)
     mapper = Mapper(cos)
     h = Http({'gamma-api.polymarket.com': 0.25, 'clob.polymarket.com': 0.25, 'api.elections.kalshi.com': 0.2, 'query2.finance.yahoo.com': 0.7,
-              'fc.yahoo.com': 0.5})
+              'fc.yahoo.com': 0.5, 'www.ishares.com': 2, 'api.nasdaq.com': 1, 'en.wikipedia.org': 1})
     t0 = time.time()
     poly = poly_scan(h, mapper)
-    kal = kalshi_scan(h, root, mapper, minutes=6)
+    kal = kalshi_scan(h, root, mapper, minutes=6) + kalshi_index_scan(h, root, minutes=4)
+    collect_index_prices(h, root)
+    collect_constituents(h, root)
     cal = calibrate_closed(h, root, poly)
     hist_path = root / 'cache' / 'market_history.json'
     hist = read_json(hist_path, {})                     # daily snapshot of every company's market-implied figures
     today = now()[:10]
     for m in poly + kal:
-        key = f'{m["source"]}:{m["kind"]}:{m["ticker"]}:{m["end"]}:{m.get("eps_strike") or ""}'
+        key = mkey(m)
         val = m.get('p') if m['kind'] == 'beat' else ((m.get('stats') or {}).get('median') or {}).get('value')
         if val is not None and not m.get('closed'):
             hist.setdefault(key, {})[today] = round(val, 4)
@@ -836,7 +1066,8 @@ def build(root, rot=None, verbose=True):
     pledger = score_price_ledger(read_json(root / 'cache' / 'price_ledger.json', {}))
     by_t = {}
     for m in mk:
-        by_t.setdefault(m['ticker'], []).append(m)
+        if not m.get('index'):
+            by_t.setdefault(m['ticker'], []).append(m)
     recs = {}
     for p in (root / 'companies').glob('*.json'):
         r = read_json(p, {})
@@ -858,7 +1089,7 @@ def build(root, rot=None, verbose=True):
         ms = live + done
         shares = a.get('shares')
         for m in ms:
-            key = f'{m["source"]}:{m["kind"]}:{m["ticker"]}:{m["end"]}:{m.get("eps_strike") or ""}'
+            key = mkey(m)
             m['history'] = sorted(mhist.get(key, {}).items())[-120:]
             ip, bounds = implied_price(m, shares)
             if ip:
@@ -901,9 +1132,11 @@ def build(root, rot=None, verbose=True):
                                                                     'pm_implied_price', 'pm_price_date', 'our_price', 'our_date', 'beat_rate', 'poly_markets', 'kalshi_events'],
                                     'rows': [_clean(r) for r in index]})
     write_json(pub / 'calendar.json', {'generated_at': now(), 'rows': _clean(sorted(cal_rows, key=lambda r: (r['date'], r['ticker'])))})
+    ixs = build_indices(root, recs, mk, mhist, ours, pledger, by_t, rot)
     recent = (dt.date.today() - dt.timedelta(days=30)).isoformat()
     write_json(pub / 'markets.json', {'generated_at': now(), 'rows': _clean([{k: m.get(k) for k in ('source', 'kind', 'ticker', 'cik', 'title', 'subtitle', 'url', 'end', 'closed',
-                                                                                                     'volume', 'p', 'eps_strike', 'report_date', 'basis', 'resolved', 'n', 'implied_price', 'implied_bounds', 'unit')}
+                                                                                                     'volume', 'p', 'eps_strike', 'report_date', 'basis', 'resolved', 'n', 'implied_price', 'implied_bounds', 'unit',
+                                                                                                     'index', 'points', 'underlying')}
                                                                            | {'median': ((m.get('stats') or {}).get('median') or {}).get('value'),
                                                                               'top': (m.get('outcomes') or [])[:3],
                                                                               'high': ((m.get('stats_high') or {}).get('median') or {}).get('value'),
@@ -913,10 +1146,247 @@ def build(root, rot=None, verbose=True):
                                                 'price_rows': pledger['rows'][:150]}))
     st = read_json(root / 'state.json', {})
     write_json(pub / 'status.json', {'built_at': now(), 'companies': len(index), 'markets': len(mk), 'calendar': len(cal_rows),
-                                     'analysts': st.get('analysts_summary')})
+                                     'analysts': st.get('analysts_summary'), 'indices': ixs})
     if verbose:
         print(f'consensus build: {len(index)} companies, {len(mk)} markets, {len(cal_rows)} upcoming reports', flush=True)
     return {'companies': len(index), 'markets': len(mk)}
+
+
+def _norm(t):
+    return re.sub(r'[^A-Z0-9]', '', (t or '').upper())
+
+
+def _close_on(daily, day):
+    """The last close on or before a date."""
+    v = None
+    for d, c in daily or []:
+        if d > day:
+            break
+        v = c
+    return v
+
+
+def _weekly(daily, n=110):
+    """Friday (last trading day of each week) closes from daily closes."""
+    wk = {}
+    for d, c in daily or []:
+        y, w, _ = dt.date.fromisoformat(d).isocalendar()
+        wk[(y, w)] = (d, c)
+    return [list(v) for _, v in sorted(wk.items())][-n:]
+
+
+def bottom_up(members, recs_n, weighting, beat_p=None, today=None):
+    """The analysts' consensus of an index added up from its companies (each at its weight): the price-target return,
+    the low and high targets, earnings growth (index earnings = Σ shares × EPS), forward P/E, the mean rating, how many
+    companies had their estimates raised or cut in 30 days, the reporting season so far and the reports coming up."""
+    today = today or dt.date.today().isoformat()
+    rows = []
+    for t, w in members:
+        rec = recs_n.get(_norm(t)) or {}
+        a = rec.get('analysts') or {}
+        price, shares = a.get('price'), a.get('shares')
+        cap = price * shares if price and shares else None
+        wt = w if w is not None else (price if weighting == 'price' else cap)
+        rows.append({'t': rec.get('ticker') or t, 'cik': rec.get('cik'), 'name': rec.get('name'), 'w': wt, 'a': a, 'rec': rec, 'price': price, 'shares': shares, 'cap': cap})
+    tot = sum(r['w'] for r in rows if r['w'])
+    if not tot:
+        return None, rows
+    for r in rows:
+        r['w'] = (r['w'] or 0) / tot
+    T = [r for r in rows if r['w'] and r['price'] and (r['a'].get('targets') or {}).get('mean')]
+    wT = sum(r['w'] for r in T)
+    agg = lambda key: sum(r['w'] * ((r['a']['targets'].get(key) or r['a']['targets']['mean']) / r['price'] - 1) for r in T) / wT if wT else None
+    per = lambda r, p: next((x for x in r['a'].get('periods') or [] if x['period'] == p), {})
+    E0 = E1 = Ep = C = 0.0
+    nE = 0
+    for r in rows:
+        y0, y1 = (per(r, '0y').get('eps') or {}), (per(r, '+1y').get('eps') or {})
+        if r['shares'] and r['cap'] and (y0.get('avg') or 0) > 0 and (y1.get('avg') or 0) > 0 and (y0.get('yearAgoEps') or 0) > 0 \
+                and 0.25 < y0['avg'] / y0['yearAgoEps'] < 4 and 0.25 < y1['avg'] / y0['avg'] < 4:     # profitable both years, no per-share breaks
+            E0 += r['shares'] * y0['avg']; E1 += r['shares'] * y1['avg']; Ep += r['shares'] * y0['yearAgoEps']; C += r['cap']; nE += 1
+    R = [r for r in rows if r['w'] and (r['a'].get('rating') or {}).get('mean')]
+    wR = sum(r['w'] for r in R)
+    up = dn = 0; wu = wd = 0.0
+    for r in rows:
+        tr = per(r, '0y').get('eps_trend') or {}
+        if tr.get('current') is not None and tr.get('30daysAgo'):
+            ch = tr['current'] / tr['30daysAgo'] - 1
+            if ch > 0.001:
+                up += 1; wu += r['w']
+            elif ch < -0.001:
+                dn += 1; wd += r['w']
+    since = (dt.date.fromisoformat(today) - dt.timedelta(days=45)).isoformat()
+    season = []
+    for r in rows:
+        for x in (r['rec'].get('surprises_all') or r['a'].get('surprises') or []):
+            if (x.get('reported') or '') >= since and x.get('surprise') is not None:
+                season.append({'t': r['t'], 'w': r['w'], 'surprise': x['surprise'], 'reported': x['reported']})
+    soon = (dt.date.fromisoformat(today) + dt.timedelta(days=7)).isoformat()
+    coming = []
+    for r in rows:
+        nx = r['a'].get('next_earnings') or {}
+        if nx.get('date') and today <= nx['date'] <= soon:
+            q0 = per(r, '0q').get('eps') or {}
+            coming.append({'ticker': r['t'], 'cik': r['cik'], 'name': r['name'], 'date': nx['date'], 'weight': r['w'], 'eps': q0.get('avg'),
+                           'beat_prob': (beat_p or {}).get(r['t'])})
+    coming.sort(key=lambda x: -x['weight'])
+    sur = sorted(x['surprise'] for x in season)
+    out = {'members': len(members), 'matched': sum(1 for r in rows if r['a']), 'weighting': weighting,
+           'target_ret': agg('mean'), 'target_low_ret': agg('low'), 'target_high_ret': agg('high'), 'target_coverage': wT, 'target_n': len(T),
+           'eps_growth_this_fy': E0 / Ep - 1 if Ep > 0 else None, 'eps_growth_next_fy': E1 / E0 - 1 if E0 > 0 else None,
+           'fwd_pe': C / E1 if E1 > 0 else None, 'pe_this_fy': C / E0 if E0 > 0 else None, 'eps_n': nE,
+           'rating_mean': sum(r['w'] * r['a']['rating']['mean'] for r in R) / wR if wR else None,
+           'revisions_30d': {'up': up, 'down': dn, 'w_up': wu, 'w_down': wd},
+           'season': {'reported': len(season), 'beat': sum(1 for x in season if x['surprise'] > 0), 'w_reported': sum(x['w'] for x in season),
+                      'median_surprise': sur[len(sur) // 2] if sur else None},
+           'coming': coming[:15]}
+    return out, rows
+
+
+def weekly_vol(rot, ticker, weeks=52):
+    """Standard deviation of weekly log returns over the last year (rotation history closes)."""
+    pts = prices(rot, ticker, weeks + 1)
+    r = [math.log(b[1] / a[1]) for a, b in zip(pts, pts[1:]) if a[1] and b[1] and a[1] > 0 and b[1] > 0]
+    if len(r) < 26:
+        return None
+    m = sum(r) / len(r)
+    return math.sqrt(sum((x - m) ** 2 for x in r) / (len(r) - 1))
+
+
+def diversification(rot, rows, etf):
+    """How much smaller the index's weekly swings were over the past year than its members' (weighted): σ(index) ÷ Σ w σ."""
+    if not rot or not etf:
+        return None
+    sp = weekly_vol(rot, etf)
+    top = sorted([r for r in rows if r['w']], key=lambda r: -r['w'])[:150]
+    num_, den = 0.0, 0.0
+    for r in top:
+        v = weekly_vol(rot, r['t'])
+        if v:
+            num_ += r['w'] * v; den += r['w']
+    if not sp or not den:
+        return None
+    return max(0.15, min(1.0, sp / (num_ / den)))
+
+
+def bottom_up_ours(rows, ours_n, div=None):
+    """Our model for an index: each company's forecast return from the forecast's base date, at its weight, over the
+    companies the model forecasts. The 80% range adds the companies' ranges, narrowed by the diversification ratio (the
+    index swung less than its members over the past year); without it, as if they all moved together."""
+    out = {}
+    for r in rows:
+        for f in ours_n.get(_norm(r['t'])) or []:
+            if not r['w'] or not f.get('close_then') or f.get('price') is None:
+                continue
+            o = out.setdefault(f['horizon'], {'horizon': f['horizon'], 'date': f['date'], 'from': f['from'], 'model': f['model'], 'w': 0.0, 'ret': 0.0, 'lo': 0.0, 'hi': 0.0, 'n': 0})
+            o['w'] += r['w']; o['n'] += 1
+            o['ret'] += r['w'] * (f['price'] / f['close_then'] - 1)
+            o['lo'] += r['w'] * ((f.get('lo80') or f['price']) / f['close_then'] - 1)
+            o['hi'] += r['w'] * ((f.get('hi80') or f['price']) / f['close_then'] - 1)
+            r.setdefault('ours', {})[f['horizon']] = f['price'] / f['close_then'] - 1
+    for o in out.values():
+        for k in ('ret', 'lo', 'hi'):
+            o[k] = o[k] / o['w'] if o['w'] else None
+        if div and o['ret'] is not None:
+            o['lo'] = o['ret'] + div * (o['lo'] - o['ret']); o['hi'] = o['ret'] + div * (o['hi'] - o['ret'])
+        o['diversification'] = div
+    return out
+
+
+def build_indices(root, recs, mk, mhist, ours, pledger, by_t, rot=None):
+    """public/market.json (every index side by side) and public/ix/<id>.json (one index): level history, the analysts'
+    consensus added up from the members, every prediction market about the index, our model added up from the members."""
+    root = Path(root); pub = root / 'public'
+    (pub / 'ix').mkdir(parents=True, exist_ok=True)
+    px = read_json(root / 'cache' / 'index_prices.json', {})
+    cons = read_json(root / 'cache' / 'constituents.json', {})
+    hist_p = root / 'cache' / 'index_history.json'
+    H = read_json(hist_p, {})
+    today = dt.date.today().isoformat()
+    yday = (dt.date.today() - dt.timedelta(days=1)).isoformat()
+    recs_n = {_norm(t): r for t, r in recs.items()}
+    ours_n = {_norm(t): v for t, v in ours.items()}
+    beat_p = {t: m['p'] for t, ms in by_t.items() for m in ms if m['kind'] == 'beat' and not m['closed'] and (m.get('report_date') or '9999') >= today}
+    overview, summary = [], {}
+    for ix in INDICES:
+        i = ix['id']
+        P = px.get(ix['symbol']) or {}
+        daily = P.get('daily') or []
+        level = P.get('price') or (daily[-1][1] if daily else None)
+        E = px.get(ix['etf']) if ix['etf'] else None
+        ratio = level / E['price'] if level and E and E.get('price') else None
+        ms = [m for m in mk if m.get('index') == i]
+        live = sorted([m for m in ms if is_live(m, yday)], key=lambda m: (m['end'] or '9999', m['kind'] != 'above'))
+        done = sorted([m for m in ms if not is_live(m, yday) and (m['end'] or '') >= (dt.date.today() - dt.timedelta(days=60)).isoformat()],
+                      key=lambda m: m['end'] or '', reverse=True)[:40]
+        for m in live + done:
+            m['history'] = sorted(mhist.get(mkey(m), {}).items())[-120:]
+            st = m.get('stats') or {}
+            f = 1.0 if m.get('points', True) else ratio
+            if st and f and m['kind'] in ('above', 'bracket'):
+                m['implied_price'] = {k: (st.get(k) or {}).get('value') * f if (st.get(k) or {}).get('value') is not None else None for k in ('q10', 'q25', 'median', 'q75', 'q90')}
+                m['implied_bounds'] = {k: (st.get(k) or {}).get('bound') for k in ('q10', 'median', 'q90')}
+        mem = (cons.get(i) or {}).get('members') or []
+        if i == 'spx' and not mem:                             # no list this week: the 500 largest companies on file stand in
+            big = sorted([r for r in recs.values() if (r.get('analysts') or {}).get('price') and (r.get('analysts') or {}).get('shares')],
+                         key=lambda r: -r['analysts']['price'] * r['analysts']['shares'])[:500]
+            mem = [(r['ticker'], None) for r in big]
+            cons.setdefault(i, {})['source'] = 'the 500 largest companies on file (no constituent list this week)'
+        bu, rows = (bottom_up(mem, recs_n, ix['weighting'], beat_p, today) if mem and ix['weighting'] else (None, []))
+        div = diversification(rot, rows, ix['etf']) if rows else None
+        our = bottom_up_ours(rows, ours_n, div) if rows else {}
+        ours_doc = []
+        for o in our.values():
+            l0 = _close_on(daily, o['from'])
+            if l0 and o['ret'] is not None:
+                ours_doc.append({'horizon': o['horizon'], 'date': o['date'], 'from': o['from'], 'close_then': l0, 'price': l0 * (1 + o['ret']),
+                                 'lo80': l0 * (1 + o['lo']), 'hi80': l0 * (1 + o['hi']), 'ret': o['ret'], 'coverage': o['w'], 'n': o['n'],
+                                 'model': 'bottom-up ' + o['model'], 'diversification': o.get('diversification')})
+        ours_doc.sort(key=lambda o: o['date'])
+        targets = {}
+        if bu and bu['target_ret'] is not None and level:
+            targets = {'mean': level * (1 + bu['target_ret']), 'low': level * (1 + bu['target_low_ret']), 'high': level * (1 + bu['target_high_ret']), 'n': bu['target_n']}
+        top = sorted([r for r in rows if r['w']], key=lambda r: -r['w'])[:20]
+        contrib = [{'ticker': r['t'], 'cik': r['cik'], 'name': r['name'], 'weight': r['w'], 'price': r['price'],
+                    'target_ret': (r['a']['targets']['mean'] / r['price'] - 1) if r['price'] and (r['a'].get('targets') or {}).get('mean') else None,
+                    'ours_q': (r.get('ours') or {}).get('next quarter'), 'ours_m': (r.get('ours') or {}).get('next month'),
+                    'next_earnings': (r['a'].get('next_earnings') or {}).get('date'), 'beat_prob': beat_p.get(r['t'])} for r in top]
+        pm = [m for m in live if m.get('implied_price') and m['implied_price'].get('median') and (m['end'] or '') >= (dt.date.today() + dt.timedelta(days=5)).isoformat()]
+        pm_pick = min(pm, key=lambda m: (m['end'], m['source'] != 'polymarket')) if pm else None
+        pm_far = max(pm, key=lambda m: (m['end'], m['source'] == 'kalshi')) if pm else None
+        ud = [m for m in live if m['kind'] == 'updown' and m.get('p') is not None]
+        ud_pick = min(ud, key=lambda m: (m['end'] or '9999')) if ud else None
+        oq = next((o for o in ours_doc if o['horizon'] == 'next quarter'), None)
+        H.setdefault(i, {})[today] = [_r(level, 2), _r(targets.get('mean'), 2), _r(oq['price'], 2) if oq else None,
+                                      _r(pm_far['implied_price']['median'], 2) if pm_far else None, pm_far['end'] if pm_far else None]
+        H[i] = dict(sorted(H[i].items())[-500:])
+        doc = {'id': i, 'name': ix['name'], 'short': ix['short'], 'symbol': ix['symbol'], 'etf': ix['etf'], 'ratio': ratio, 'unit': 'pts',
+               'level': level, 'as_of': (P.get('time') or P.get('at') or '')[:10] or None, 'generated_at': now(),
+               'prices': _weekly(daily), 'analysts': {'price': level, 'targets': targets, 'as_of': (P.get('time') or '')[:10] or None},
+               'bottom_up': bu, 'members_source': (cons.get(i) or {}).get('source'), 'members_errors': (cons.get(i) or {}).get('errors'),
+               'contributors': contrib, 'ours': ours_doc, 'markets': (live + done)[:80],
+               'history_fields': ['level', 'analysts_target', 'ours_next_quarter', 'market_far_median', 'market_far_date'],
+               'history': sorted(H[i].items()), 'price_track': [r for r in pledger['rows'] if r['ticker'] == ix['short']][:30]}
+        write_json(pub / 'ix' / f'{i}.json', _clean(doc))
+        wk = _weekly(daily, 60)
+        y0 = _close_on(daily, f'{today[:4]}-01-01') if daily else None
+        chg = lambda a, b: (a / b - 1) if a and b else None
+        overview.append({'id': i, 'name': ix['name'], 'short': ix['short'], 'etf': ix['etf'], 'level': level, 'as_of': doc['as_of'],
+                         'chg_1w': chg(level, wk[-2][1]) if len(wk) > 1 else None, 'chg_ytd': chg(level, y0),
+                         'target': targets.get('mean'), 'target_ret': bu and bu['target_ret'], 'target_coverage': bu and bu['target_coverage'],
+                         'eps_growth_next_fy': bu and bu['eps_growth_next_fy'], 'fwd_pe': bu and bu['fwd_pe'],
+                         'pm_near': {'median': pm_pick['implied_price']['median'], 'q10': pm_pick['implied_price']['q10'], 'q90': pm_pick['implied_price']['q90'],
+                                     'end': pm_pick['end'], 'source': pm_pick['source'], 'title': pm_pick['title']} if pm_pick else None,
+                         'pm_far': {'median': pm_far['implied_price']['median'], 'q10': pm_far['implied_price']['q10'], 'q90': pm_far['implied_price']['q90'],
+                                    'end': pm_far['end'], 'source': pm_far['source'], 'title': pm_far['title']} if pm_far and pm_far is not pm_pick else None,
+                         'pm_up': {'p': ud_pick['p'], 'end': ud_pick['end'], 'title': ud_pick['title'], 'source': ud_pick['source']} if ud_pick else None,
+                         'ours': [{k: o[k] for k in ('horizon', 'date', 'price', 'lo80', 'hi80', 'ret', 'coverage', 'close_then', 'from')} for o in ours_doc],
+                         'markets': len(live), 'spark': [w[1] for w in wk[-26:]]})
+        summary[i] = {'level': _r(level, 2), 'markets': len(live), 'members': len(mem), 'source': (cons.get(i) or {}).get('source'),
+                      'ours': len(ours_doc), 'target': _r(targets.get('mean'), 2)}
+    write_json(hist_p, H)
+    write_json(pub / 'market.json', _clean({'generated_at': now(), 'indices': overview}))
+    return summary
 
 
 def is_live(m, yday):

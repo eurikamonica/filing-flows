@@ -14,13 +14,15 @@ function consGate(name,title){
  if(!m.data)return {html:empty(`Loading ${title.toLowerCase()}…`)};
  return {data:m.data};
 }
-const CONS_VIEWS=[['calendar','Earnings calendar'],['screen','Every company'],['markets','Prediction markets'],['track','Track record'],['company','One company']];
-const CONS_KINDS=[['','All kinds'],['beat','Beat earnings?'],['above','Price ladders'],['bracket','Closing-price brackets'],['mcap','Market caps'],['hit','High / low touch'],['metric','Reported metrics (revenue, segments)'],['kpi','Company KPIs'],['mention','Earnings-call mentions'],['other','Other company events']];
+const CONS_VIEWS=[['market','The market — indices'],['calendar','Earnings calendar'],['screen','Every company'],['markets','Prediction markets'],['track','Track record'],['company','One company']];
+const CONS_KINDS=[['','All kinds'],['beat','Beat earnings?'],['above','Price ladders'],['bracket','Closing-price brackets'],['mcap','Market caps'],['hit','High / low touch'],['metric','Reported metrics (revenue, segments)'],['kpi','Company KPIs'],['mention','Earnings-call mentions'],['updown','Up or down'],['other','Other events']];
+const CONS_IX=[['spx','S&P 500'],['ndx','Nasdaq-100'],['dji','Dow Jones'],['rut','Russell 2000'],['vix','VIX']];
 function consView(){
- state.cview=CONS_VIEWS.some(v=>v[0]===state.cview)?state.cview:'calendar';
+ state.cview=CONS_VIEWS.some(v=>v[0]===state.cview)?state.cview:'market';
  let out=`<div class="toolbar">${field('cview','View',CONS_VIEWS,state.cview)}`;
  if(state.cview==='company')out+=`<div class="field wide"><label for="cq">Company (ticker)</label><input id="cq" value="${esc(state.cq||'')}" placeholder="e.g. NVDA · Enter"></div>`;
- if(state.cview==='markets')out+=field('ckind','Kind',CONS_KINDS,state.ckind||'')+field('csrc','Source',[['','Polymarket and Kalshi'],['polymarket','Polymarket'],['kalshi','Kalshi']],state.csrc||'');
+ if(state.cview==='market')out+=field('cidx','Index',CONS_IX,state.cidx||'spx');
+ if(state.cview==='markets')out+=field('cabout','About',[['','Companies and indices'],['co','Companies'],['ix','Indices']],state.cabout||'')+field('ckind','Kind',CONS_KINDS,state.ckind||'')+field('csrc','Source',[['','Polymarket and Kalshi'],['polymarket','Polymarket'],['kalshi','Kalshi']],state.csrc||'');
  if(state.cview==='screen')out+=field('cflt','Show',[['','All companies with estimates'],['pm','With prediction markets'],['up','EPS estimates rising (30 days)'],['down','EPS estimates falling (30 days)'],['soon','Reporting in the next 14 days']],state.cflt||'');
  out+='</div>';
  out+=`<div class="explain">Three kinds of consensus side by side: <b>analysts</b> (EPS and revenue estimates, price targets and ratings — Yahoo Finance consensus), <b>prediction markets</b> (Polymarket and Kalshi: the price of a contract paying $1 if the company beats, if the stock closes above a level, if deliveries pass a number… is a crowd probability) and <b>our own model</b> (the Rotation tab's forecast). Each is kept and scored when the result is known. Not investment advice.</div>`;
@@ -28,10 +30,33 @@ function consView(){
  if(state.cview==='markets')return out+consMarkets();
  if(state.cview==='track')return out+consTrack();
  if(state.cview==='company')return out+consCompany();
+ if(state.cview==='market')return out+consMarket();
  return out+consCalendar();
 }
 function consRow(F,r){const o={};F.forEach((k,i)=>o[k]=r[i]);return o}
-function consTk(t){return `<button class="text-button" data-cco="${esc(t)}"><b>${esc(t)}</b></button>`}
+function consTk(t,ix){return ix?`<button class="text-button" data-cix="${esc(ix)}"><b>${esc(t)}</b></button>`:`<button class="text-button" data-cco="${esc(t)}"><b>${esc(t)}</b></button>`}
+function consMarket(){
+ const g=consGate('market','The market');if(!g.data)return g.html;
+ const V=ConsensusView.fmt,P=v=>v==null?'—':fmt(v,Math.abs(v)>=1000?0:2),R=g.data.indices||[];
+ const id=CONS_IX.some(x=>x[0]===state.cidx)?state.cidx:'spx';
+ const rel=(v,l)=>v==null||!l?'':` <span class="${v>=l?'positive':'negative'}">${V.spct(v/l-1)}</span>`;
+ const spark=a=>{if(!a||a.length<3)return '';const lo=Math.min(...a),hi=Math.max(...a),W=90,H=24;return `<svg viewBox="0 0 ${W} ${H}" style="width:90px;height:24px;vertical-align:middle"><path d="${a.map((v,i)=>(i?'L':'M')+(i*W/(a.length-1)).toFixed(1)+','+(H-2-(v-lo)/((hi-lo)||1)*(H-4)).toFixed(1)).join('')}" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>`};
+ exported=R.map(r=>({index:r.name,level:r.level,as_of:r.as_of,chg_1w:r.chg_1w,chg_ytd:r.chg_ytd,analysts_target:r.target,target_return:r.target_ret,fwd_pe:r.fwd_pe,eps_growth_next_fy:r.eps_growth_next_fy,
+  market_near:r.pm_near&&r.pm_near.median,market_near_date:r.pm_near&&r.pm_near.end,market_far:r.pm_far&&r.pm_far.median,market_far_date:r.pm_far&&r.pm_far.end,market_up:r.pm_up&&r.pm_up.p,
+  ours_month:(r.ours.find(o=>o.horizon==='next month')||{}).price,ours_quarter:(r.ours.find(o=>o.horizon==='next quarter')||{}).price,open_markets:r.markets}));
+ let out=`<div class="section-head"><h3>The indices — analysts, prediction markets and our model</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">Analysts: the consensus price targets and earnings of each index's members added up at their weights. Markets: the median Polymarket / Kalshi traders imply for the nearest date more than five days out, and for the farthest. Our model: the Rotation forecasts of the members added up. Click an index for everything about it.</p>`;
+ out+=table(['Index','Level','1 week','This year','26 weeks','Analysts (12 months)','Forward P/E','Market, nearest','Market, farthest','Market: up?','Our model (next quarter)','Open markets'],R.map(r=>{const oq=r.ours.find(o=>o.horizon==='next quarter')||r.ours[0];return [
+  `${consTk(r.short,r.id)} <span class="muted">${esc(r.name)}</span>`,P(r.level),r.chg_1w==null?'—':`<span class="${r.chg_1w>=0?'positive':'negative'}">${V.spct(r.chg_1w)}</span>`,r.chg_ytd==null?'—':`<span class="${r.chg_ytd>=0?'positive':'negative'}">${V.spct(r.chg_ytd)}</span>`,spark(r.spark),
+  r.target==null?'—':`${P(r.target)}${rel(r.target,r.level)}`,r.fwd_pe==null?'—':fmt(r.fwd_pe,1),
+  r.pm_near?`${P(r.pm_near.median)}${rel(r.pm_near.median,r.level)} <span class="muted">${esc(r.pm_near.end.slice(5))}</span>`:'—',
+  r.pm_far?`${P(r.pm_far.median)}${rel(r.pm_far.median,r.level)} <span class="muted">${esc(r.pm_far.end)}</span>`:'—',r.pm_up?`<b>${V.pct(r.pm_up.p)}</b> <span class="muted">${esc((r.pm_up.end||'').slice(5))}</span>`:'—',
+  oq?`${P(oq.price)} <span class="${oq.ret>=0?'positive':'negative'}">${V.spct(oq.ret)}</span> <span class="muted">from ${esc(oq.from.slice(5))}</span>`:'—',fmt(r.markets)]}));
+ const c=consData('ix/'+id);
+ const name=(CONS_IX.find(x=>x[0]===id)||[])[1];
+ if(c.err)return out+empty(`Could not load ${name} (${c.err}).`);
+ if(!c.data)return out+empty(`Loading ${name}…`);
+ return out+`<div class="panel"><h3>${esc(c.data.name)} <span class="muted">${esc(c.data.short)}${c.data.etf?' · '+esc(c.data.etf):''}</span></h3><div id="cons-ix"></div></div>`;
+}
 function consCalendar(){
  const g=consGate('calendar','The earnings calendar');if(!g.data)return g.html;
  const V=ConsensusView.fmt,rows=g.data.rows;exported=rows;
@@ -61,19 +86,22 @@ function consScreen(){
 function consMarkets(){
  const g=consGate('markets','The prediction markets');if(!g.data)return g.html;
  const V=ConsensusView.fmt,K=ConsensusView.KIND;const yd=new Date(Date.now()-864e5).toISOString().slice(0,10);let rows=g.data.rows.filter(m=>!m.closed&&(!m.end||m.end>=yd));
+ if(state.cabout==='co')rows=rows.filter(m=>!m.index);else if(state.cabout==='ix')rows=rows.filter(m=>m.index);
  if(state.ckind)rows=rows.filter(m=>m.kind===state.ckind);if(state.csrc)rows=rows.filter(m=>m.source===state.csrc);
  rows.sort((a,b)=>String(a.end).localeCompare(String(b.end))||(b.volume||0)-(a.volume||0));
  exported=rows.map(m=>({source:m.source,kind:m.kind,ticker:m.ticker,title:m.title,end:m.end,p:m.p,eps_line:m.eps_strike,median:m.median,url:m.url}));
  const what=m=>{if(m.kind==='beat')return `<b>${V.pct(m.p)}</b> beat <span class="muted">line ${V.usd(m.eps_strike)} · report ${esc(m.report_date||'')}</span>`;
   if(m.kind==='mcap')return m.median==null?'—':`median ${V.big(m.median)}${m.implied_price&&m.implied_price.median?` <span class="muted">≈ ${V.usd(m.implied_price.median)} a share</span>`:''}`;
+  const pf=v=>v==null?'—':fmt(v,Math.abs(v)>=1000?0:2);
+  if((m.kind==='above'||m.kind==='bracket')&&m.index)return m.median==null?'—':`median ${m.points?pf(m.median):`${V.usd(m.median)} ${m.implied_price?'≈ '+pf(m.implied_price.median):''}`}${m.implied_price&&m.implied_price.q10!=null?` <span class="muted">80% ${pf(m.implied_price.q10)}–${pf(m.implied_price.q90)} pts</span>`:''}`;
   if(m.kind==='above'||m.kind==='bracket')return m.median==null?'—':`median ${V.usd(m.median)}${m.implied_price&&m.implied_price.q10!=null?` <span class="muted">80% ${V.usd(m.implied_price.q10)}–${V.usd(m.implied_price.q90)}</span>`:''}`;
   if(m.kind==='metric')return m.median==null?'—':`median ${V.unitFmt(m.median,m.unit)}`;
   if(m.kind==='updown')return `up <b>${V.pct(m.p)}</b>`;
-  if(m.kind==='hit')return `even odds: high ${V.usd(m.high)}, low ${V.usd(m.low)}`;
+  if(m.kind==='hit')return m.index&&m.points?`even odds: high ${fmt(m.high,0)}${m.low!=null?', low '+fmt(m.low,0):''}`:`even odds: high ${V.usd(m.high)}, low ${V.usd(m.low)}`;
   if(m.kind==='kpi'&&m.median!=null)return `median ${fmt(m.median,2)}`;
   return (m.top||[]).map(o=>`${esc(String(o.q||'').slice(0,40))} <b>${V.pct(o.p)}</b>`).join(' · ')||'—'};
- return `<div class="section-head"><h3>${fmt(rows.length)} open markets about listed companies</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">Every open Polymarket and Kalshi market we could tie to a company on Filing Flows, soonest first.</p>`+
-  table(['Ends','Company','Market','Kind','Consensus','Source'],rows.slice(0,800).map(m=>[esc(m.end||''),consTk(m.ticker),`<a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.title||'')}</a>${m.subtitle?` <span class="muted">${esc(m.subtitle)}</span>`:''}`,esc(K[m.kind]||m.kind),what(m),m.source==='kalshi'?'Kalshi':'Polymarket']));
+ return `<div class="section-head"><h3>${fmt(rows.length)} open markets about listed companies and the indices</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">Every open Polymarket and Kalshi market we could tie to a company on Filing Flows or to an index (S&P 500, Nasdaq-100, Dow, Russell 2000, VIX), soonest first.</p>`+
+  table(['Ends','About','Market','Kind','Consensus','Source'],rows.slice(0,800).map(m=>[esc(m.end||''),consTk(m.ticker,m.index),`<a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.title||'')}</a>${m.subtitle?` <span class="muted">${esc(m.subtitle)}</span>`:''}`,esc(K[m.kind]||m.kind),what(m),m.source==='kalshi'?'Kalshi':'Polymarket']));
 }
 function consTrack(){
  const g=consGate('calibration','The track record');if(!g.data)return g.html;
@@ -109,9 +137,12 @@ function consCompany(){
 }
 function bindConsensus(){
  if(state.tab!=='consensus')return;
- for(const k of ['cview','ckind','csrc','cflt'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
+ for(const k of ['cview','ckind','csrc','cflt','cidx','cabout'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
  if($('cq')){$('cq').onchange=e=>{state.cq=e.target.value;render()};$('cq').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-cco]').forEach(b=>b.onclick=()=>{state.cview='company';state.cq=b.dataset.cco;render();scrollTo({top:0,behavior:'smooth'})});
+ document.querySelectorAll('#workspace [data-cix]').forEach(b=>b.onclick=()=>{state.cview='market';state.cidx=b.dataset.cix;render();scrollTo({top:0,behavior:'smooth'})});
+ const ie=$('cons-ix');
+ if(ie){const c=consData('ix/'+(state.cidx||'spx'));if(c.data&&window.ConsensusView)ConsensusView.renderIndex(ie,c.data)}
  const el=$('cons-view');
  if(el){const g=consData('index');const q=String(state.cq||'').trim().toUpperCase();const r=g.data&&g.data.rows.map(x=>consRow(g.data.fields,x)).find(x=>String(x.ticker||'').toUpperCase()===q||String(x.cik)===q);
   const c=r&&consData('c/'+r.cik);if(c&&c.data&&window.ConsensusView)ConsensusView.render(el,c.data)}
