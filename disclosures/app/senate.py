@@ -21,7 +21,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlencode
 
-from core import now, read_json, write_json
+from core import now, read_json, write_gz, write_json
 
 BASE = 'https://efdsearch.senate.gov'
 HOME = BASE + '/search/home/'
@@ -197,9 +197,7 @@ def collect(client, root, cfg=None, today=None):
             if len(errors) > 8:
                 break
     trades = sorted((t for ts in by_report.values() for t in ts), key=lambda t: (t.get('date') or '', t['report_id']), reverse=True)
-    with gzip.open(store.with_suffix('.tmp'), 'wt', encoding='utf-8') as f:
-        json.dump(trades, f, separators=(',', ':'))
-    store.with_suffix('.tmp').replace(store)
+    write_gz(store, trades)                          # unchanged trades: the file is left as it is
     write_json(cdir / 'reports.json', sorted(reports.values(), key=lambda r: (r.get('filed_date') or '', r['report_id']), reverse=True))
     state['updated_at'] = now()
     write_json(cdir / 'state.json', state)

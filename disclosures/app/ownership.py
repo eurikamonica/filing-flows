@@ -13,7 +13,8 @@ Since December 2024 (13D / 13G) and April 2023 (Form 144) these are structured X
 "current filings" feed for each form (newest first), then works back through the daily form indexes (`backfill_days`)
 so the history fills in over a few runs; every accession is read once (the full submission .txt).
 
-Cache:   cache/ownership/{stakes,form144}.json.gz (rolling `keep_days`), seen.json (read accessions), state.json (daily
+Cache:   cache/ownership/{stakes,form144}/<YYYY-MM>.json.gz (one file per filing month, so a run rewrites only the
+         current months; rolling `keep_days`), seen.json (accessions read with nothing to keep), state.json (daily
          indexes read, backfill queue)
 Publish: market/stakes.json and market/form144.json — the latest filings with tickers, the change from the same filer's
          previous filing on the company, per-ticker summaries; used by the hub tables (✦ X per row), the company pages
@@ -26,7 +27,7 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-from core import localname, now, parse_xml, read_json, text_of, write_json
+from core import Shards, localname, now, parse_xml, read_gz, read_json, text_of, write_json
 
 FEED = ('https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type={form}&company=&dateb=&owner=include'
         '&start={start}&count=100&output=atom')
@@ -249,15 +250,21 @@ def business_days(today, days):
 
 
 # ------------------------------------------------------------------ collect
-def _load(path):
-    return json.load(gzip.open(path, 'rt', encoding='utf-8')) if path.exists() else []
+def stores(cdir):
+    """The two shard stores (one file per filing month); a single-file cache from the first version is split into them."""
+    out = {k: Shards(Path(cdir) / k, date='filed', uid='accession', size=7) for k in FEEDS}
+    for k, st in out.items():
+        old = Path(cdir) / f'{k}.json.gz'
+        if old.exists():
+            for r in read_gz(old, []):
+                st.add(r)
+            st.save()
+            old.unlink()
+    return out
 
 
-def _save(path, rows):
-    tmp = path.with_suffix('.tmp')
-    with gzip.open(tmp, 'wt', encoding='utf-8') as f:
-        json.dump(rows, f, separators=(',', ':'))
-    tmp.replace(path)
+def _load(cdir, kind):
+    return stores(cdir)[kind].all()
 
 
 def collect(client, root, cfg=None, today=None):
@@ -265,10 +272,10 @@ def collect(client, root, cfg=None, today=None):
     today = today or dt.date.today()
     cdir = Path(root) / 'cache' / 'ownership'
     cdir.mkdir(parents=True, exist_ok=True)
-    seen = set(read_json(cdir / 'seen.json', []))
+    shards = stores(cdir)
+    empty = set(read_json(cdir / 'seen.json', []))           # read, but nothing to keep (not XML, not a 13D / 13G / 144)
+    seen = empty | shards['stakes'].uids() | shards['form144'].uids()
     state = read_json(cdir / 'state.json', {})
-    stores = {k: cdir / f'{k}.json.gz' for k in FEEDS}
-    rows = {k: _load(p) for k, p in stores.items()}
     errors, read, found = 0, defaultdict(int), defaultdict(int)
     # 1. the newest filings of each form, from the current-filings feed
     todo = []
@@ -316,8 +323,10 @@ def collect(client, root, cfg=None, today=None):
             xml = xml_from_submission(txt)
             row = (parse_form144 if kind == 'form144' else parse_stake)(xml, acc, folder, head) if xml else None
             if row:
-                rows[kind].append(row)
+                shards[kind].add(row)
                 found[kind] += 1
+            else:
+                empty.add(acc)
             seen.add(acc)
             read[kind] += 1
         except Exception as exc:
@@ -328,16 +337,13 @@ def collect(client, root, cfg=None, today=None):
     done = {a for _, a, _ in work if a in seen}
     queue = [x for x in queue if x[1] not in done]
     keep_days = {'stakes': 730, 'form144': 400, **(cfg.get('keep_days') or {})}
-    for kind, path in stores.items():
-        keep = (today - dt.timedelta(days=int(keep_days[kind]))).isoformat()
-        uniq = {r['accession']: r for r in rows[kind] if (r.get('filed') or '9') >= keep}
-        rows[kind] = sorted(uniq.values(), key=lambda r: (r.get('filed') or '', r['accession']), reverse=True)
-        _save(path, rows[kind])
+    for kind, st in shards.items():
+        st.save(keep=(today - dt.timedelta(days=int(keep_days[kind]))).isoformat())
     window = {d.strftime('%Y%m%d') for d in business_days(today, int(cfg.get('backfill_days', 120)) + 10)}
     write_json(cdir / 'state.json', {'index_days': sorted(done_days & window), 'queue': [list(x) for x in queue[:40000]], 'updated_at': now()})
-    write_json(cdir / 'seen.json', sorted(seen)[-150000:])
+    write_json(cdir / 'seen.json', sorted(empty))
     return {'status': 'ok' if errors <= 25 else 'partial', 'read': dict(read), 'found': dict(found), 'waiting': len(queue),
-            'errors': errors, 'stakes': len(rows['stakes']), 'form144': len(rows['form144']),
+            'errors': errors, 'stakes': len(shards['stakes'].uids()), 'form144': len(shards['form144'].uids()),
             'index_days': len(done_days & window), 'updated_at': now()}
 
 
@@ -430,13 +436,14 @@ def _short(r):
 def publish(root, out_dir, today=None):
     root, today = Path(root), today or dt.date.today()
     cdir = root / 'cache' / 'ownership'
-    if not (cdir / 'stakes.json.gz').exists() and not (cdir / 'form144.json.gz').exists():
+    if not cdir.exists():
         return None
+    shards = stores(cdir)
     tickers = cik_tickers(root)
-    stakes = with_changes(_load(cdir / 'stakes.json.gz'), tickers)
+    stakes = with_changes(shards['stakes'].all(), tickers)
     for r in stakes:
         r['label'] = stake_label(r)
-    f144 = [{**r, 'ticker': tickers.get(r.get('issuer_cik') or '', '')} for r in _load(cdir / 'form144.json.gz')]
+    f144 = [{**r, 'ticker': tickers.get(r.get('issuer_cik') or '', '')} for r in shards['form144'].all()]
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     recent = (today - dt.timedelta(days=14)).isoformat()

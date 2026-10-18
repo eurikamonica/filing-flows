@@ -33,6 +33,73 @@ def write_json(path, obj):
     tmp.write_text(json.dumps(obj, ensure_ascii=False, allow_nan=False, indent=2), encoding='utf-8')
     tmp.replace(path)
 
+def write_gz(path, obj):
+    """Gzipped JSON written byte-for-byte the same for the same content (no timestamp in the gzip header), and not
+    rewritten at all when unchanged: the data commits then carry only the files that really changed. True if written."""
+    import gzip, io
+    path = Path(path)
+    raw = json.dumps(obj, ensure_ascii=False, separators=(',', ':'), allow_nan=False).encode('utf-8')
+    buf = io.BytesIO()
+    with gzip.GzipFile(fileobj=buf, mode='wb', mtime=0, compresslevel=9) as f:
+        f.write(raw)
+    data = buf.getvalue()
+    if path.exists() and path.read_bytes() == data:
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + '.tmp')
+    tmp.write_bytes(data)
+    tmp.replace(path)
+    return True
+
+def read_gz(path, default):
+    import gzip
+    try:
+        with gzip.open(path, 'rt', encoding='utf-8') as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return default
+
+class Shards:
+    """Rows (dicts with a unique `uid` field and an ISO date field) kept in one gzipped JSON file per month
+    (`size` 7, '2026-10') or per day (`size` 10): a run rewrites only the periods it touched, so the data commits stay
+    small however long the history grows. Older periods than `keep` are dropped on save."""
+
+    def __init__(self, folder, date='filed', uid='accession', size=7):
+        self.dir, self.date, self.uid, self.size = Path(folder), date, uid, size
+        self.rows, self.dirty = {}, set()
+        self.dir.mkdir(parents=True, exist_ok=True)
+        for p in sorted(self.dir.glob('*.json.gz')):
+            per = p.name[:-8]
+            self.rows[per] = {r[uid]: r for r in read_gz(p, [])}
+
+    def period(self, row):
+        d = (row.get(self.date) or '')[:self.size]
+        return d if len(d) == self.size else 'undated'
+
+    def add(self, row):
+        per = self.period(row)
+        self.rows.setdefault(per, {})[row[self.uid]] = row
+        self.dirty.add(per)
+
+    def uids(self):
+        return {u for rs in self.rows.values() for u in rs}
+
+    def all(self):
+        """Every row, newest date first."""
+        out = [r for rs in self.rows.values() for r in rs.values()]
+        return sorted(out, key=lambda r: (r.get(self.date) or '', r[self.uid]), reverse=True)
+
+    def save(self, keep=None):
+        for per in list(self.rows):
+            if keep and per != 'undated' and per < keep[:self.size]:
+                (self.dir / f'{per}.json.gz').unlink(missing_ok=True)
+                del self.rows[per]
+        for per in self.dirty:
+            if per in self.rows:
+                rows = sorted(self.rows[per].values(), key=lambda r: (r.get(self.date) or '', r[self.uid]), reverse=True)
+                write_gz(self.dir / f'{per}.json.gz', rows)
+        self.dirty = set()
+
 def read_json(path, default):
     return json.loads(Path(path).read_text(encoding='utf-8')) if Path(path).exists() else default
 

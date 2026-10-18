@@ -57,6 +57,17 @@ class Stakes(unittest.TestCase):
         self.assertEqual((r['shares'], r['value'], r['sale_date'], r['plan_date'], r['sold_3m']), (4108, 7601, '2026-10-16', '2025-09-30', 10493))
         self.assertEqual((r['broker'], r['acquired'], r['exchange']), ('Morgan Stanley', 'Vesting of restricted stock unit', 'NYSE'))
 
+    def test_first_version_cache_is_split_into_months(self):
+        root = Path(tempfile.mkdtemp())
+        cdir = root / 'cache' / 'ownership'
+        cdir.mkdir(parents=True)
+        with gzip.open(cdir / 'stakes.json.gz', 'wt') as f:
+            json.dump([{'accession': 'a', 'filed': '2026-09-30'}, {'accession': 'b', 'filed': '2026-10-01'}], f)
+        st = O.stores(cdir)['stakes']
+        self.assertEqual([r['accession'] for r in st.all()], ['b', 'a'])
+        self.assertFalse((cdir / 'stakes.json.gz').exists())
+        self.assertEqual(sorted(p.name for p in (cdir / 'stakes').iterdir()), ['2026-09.json.gz', '2026-10.json.gz'])
+
     def test_daily_index(self):
         idx = ('Form Type   Company Name                                                  CIK         Date Filed  File Name\n'
                '-' * 120 + '\n'
@@ -105,12 +116,14 @@ class Stakes(unittest.TestCase):
         O.collect(c, root, {'backfill_days': 6, 'index_days_per_run': 10}, today=dt.date(2026, 10, 17))
         self.assertFalse(any(u.endswith('.txt') for u in c.calls[n:]))                # nothing read twice
         # an earlier filing by the same holder: the change is computed against it
-        store = root / 'cache' / 'ownership' / 'stakes.json.gz'
-        rows = json.load(gzip.open(store, 'rt'))
-        old = {**next(x for x in rows if x['form'] == '13D/A'), 'accession': '0001193125-26-000001', 'filed': '2026-05-01', 'percent': 25.1,
+        st = O.stores(root / 'cache' / 'ownership')['stakes']
+        self.assertEqual(sorted(p.name for p in (root / 'cache' / 'ownership' / 'stakes').iterdir()), ['2026-10.json.gz'])
+        before = (root / 'cache' / 'ownership' / 'stakes' / '2026-10.json.gz').read_bytes()
+        old = {**next(x for x in st.all() if x['form'] == '13D/A'), 'accession': '0001193125-26-000001', 'filed': '2026-05-01', 'percent': 25.1,
                'form': '13D/A', 'amendment': 22}
-        with gzip.open(store, 'wt') as f:
-            json.dump(rows + [old], f)
+        st.add(old)
+        st.save()
+        self.assertEqual((root / 'cache' / 'ownership' / 'stakes' / '2026-10.json.gz').read_bytes(), before)   # untouched month
         O.publish(root, root / 'market', today=dt.date(2026, 10, 17))
         st = json.loads((root / 'market' / 'stakes.json').read_text())
         hth = next(x for x in st['latest'] if x['accession'] == '0001193125-26-424467')

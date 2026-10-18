@@ -119,7 +119,7 @@ def holders_index():
         import ownership as OWN
         tick = OWN.cik_tickers(DATA)
         count = {}
-        for r in OWN.with_changes(OWN._load(DATA / 'cache' / 'ownership' / 'stakes.json.gz'), tick):
+        for r in OWN.with_changes(OWN._load(DATA / 'cache' / 'ownership', 'stakes'), tick):
             t = clean_ticker(r.get('ticker'))
             if not t or count.get(t, 0) >= 25:
                 continue
@@ -129,7 +129,7 @@ def holders_index():
                 'form', 'filed', 'event_date', 'filer', 'holder', 'person', 'persons', 'percent', 'shares', 'change', 'prev_percent', 'label',
                 'rule', 'purpose', 'url') if r.get(k) not in (None, '')})
         count = {}
-        for r in OWN._load(DATA / 'cache' / 'ownership' / 'form144.json.gz'):
+        for r in OWN._load(DATA / 'cache' / 'ownership', 'form144'):
             t = clean_ticker(tick.get(r.get('issuer_cik') or '', ''))
             if not t or count.get(t, 0) >= 25 or (r.get('value') or 0) < 25_000:
                 continue
