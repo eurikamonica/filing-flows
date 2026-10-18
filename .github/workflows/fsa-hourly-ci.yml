@@ -1,0 +1,32 @@
+name: FSA Hourly Unit Tests
+on:
+  pull_request:
+    paths:
+      - 'scripts/fsa_hourly_bank.py'
+      - 'scripts/fsa_report_stage.py'
+      - 'scripts/fsa_distill_review.py'
+      - 'tests/test_fsa_hourly_generator.py'
+      - '.github/workflows/fsa-hourly-ci.yml'
+      - '.github/workflows/fsa-hourly-question-bank.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile offline Python modules
+        run: python -m py_compile scripts/fsa_hourly_bank.py scripts/fsa_report_stage.py scripts/fsa_distill_review.py
+      - name: Check deterministic balance, rights, SEC periods
+        run: python -m unittest discover -s tests -p 'test_fsa_hourly*.py' -v
+      - name: Test hourly output and metadata without network
+        run: |
+          python scripts/fsa_hourly_bank.py --hour 2026-10-18T20 --out /tmp/fsa-bank --reports research_reports/approved_manifest.json
+          python -c "import json; d=json.load(open('/tmp/fsa-bank/hourly_bank.json')); assert d['new_questions'] == 18; assert d['training_eligible'] == 18; print(d['task_counts'])"
