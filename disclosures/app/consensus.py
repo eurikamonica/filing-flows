@@ -42,6 +42,7 @@ CLOB = 'https://clob.polymarket.com'
 KALSHI = 'https://api.elections.kalshi.com/trade-api/v2'
 YQ = 'https://query2.finance.yahoo.com'
 UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 FilingFlows/1.0'
+BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'   # Yahoo refuses other agents
 POLY_TAGS = ['earnings', 'stocks', 'equities', 'big-tech', 'tech', 'business', 'finance', 'ipos', 'market-cap', 'companies']
 YAHOO_MODULES = 'earningsTrend,earningsHistory,calendarEvents,financialData,recommendationTrend,upgradeDowngradeHistory,earnings,defaultKeyStatistics'
 
@@ -69,7 +70,8 @@ class Http:
                 time.sleep(wait)
             self.last[host] = time.monotonic()
             try:
-                req = urllib.request.Request(url, headers={'User-Agent': UA, 'Accept': 'application/json,text/plain,*/*', **(headers or {})})
+                ua = BROWSER_UA if 'yahoo.com' in (host or '') else UA
+                req = urllib.request.Request(url, headers={'User-Agent': ua, 'Accept': 'application/json,text/plain,*/*', **(headers or {})})
                 with self.op.open(req, timeout=timeout) as r:
                     self.calls += 1
                     return r.read()
@@ -87,7 +89,7 @@ class Http:
 
 
 # ------------------------------------------------------------------ company names → tickers
-STOP = {'the', 'inc', 'corp', 'corporation', 'company', 'co', 'group', 'holdings', 'holding', 'ltd', 'plc', 'sa', 'nv', 'class', 'and',
+STOP = {'the', 'of', 'a', 'an', 'de', 'inc', 'corp', 'corporation', 'company', 'co', 'group', 'holdings', 'holding', 'ltd', 'plc', 'sa', 'nv', 'class', 'and',
         'international', 'technologies', 'technology', 'systems', 'global', 'financial', 'bancorp', 'energy', 'american', 'united',
         'first', 'general', 'national', 'new', 'resources', 'services', 'industries', 'brands', 'capital', 'trust', 'communications'}
 
@@ -117,11 +119,32 @@ ALIASES = {'GOOGL': ['google', 'alphabet', 'youtube', 'waymo'], 'META': ['facebo
 
 
 def name_tokens(name):
-    return [x for x in re.findall(r'[a-z0-9]+', (name or '').lower().replace('&', ' ').replace('.com', ' ')) if x not in STOP]
+    return [x for x in re.findall(r'[a-z0-9]+', (name or '').lower().replace('’', '').replace("'", '').replace('&', ' ').replace('.com', ' ')) if x not in STOP]
+
+
+COMMON = set("""about above access action active advance after agent alliance alpha america american angel apex apple applied arena array atlas audio auto avenue award balance banner basic beacon beyond black blade blue board bold boost border bridge bright broad brother build bureau cable camden canyon capital carbon cardinal career carrier cascade castle center central century champion change charter cheap chief choice cinema circle citizen civic class clean clear clever climb cloud coast colony comfort command common compass concord connect contract copper corner cosmos country cover craft create credit crest crown crystal cycle daily dance dawn decision delta design diamond direct discovery dollar domain double dream drive dynamic eagle early earth echo edge element elite empire energy engine enterprise equity essential evolve exact excel express falcon family federal fidelity field final first flag fleet flex flight float focus force forest forge fortune forward foundation frame franklin freedom fresh front frontier fusion galaxy game garden gateway general genesis giant glacier global golden grand granite graphic gravity great green group growth guard guide harbor harmony harvest haven heart heritage hero highland horizon house hunter idea image impact independence index infinity inland insight integrity interactive iron island jet journey jupiter key kind king knight label land landmark laser launch leader legacy level liberty light lincoln link lion live local logic lumen lunar magnet main major maple marathon mark market marvel matrix maximum medical mercury merit meridian metro middle millennium mission model modern moment monarch monument motion motor mountain national native natural navigator network north nova oasis ocean office omega online open optimum orbit origin pacific palm paragon park partner patriot peak penn people phoenix pilot pinnacle pioneer planet platinum plus point polar portal power precision premier presidio price prime pro progress prospect public pulse pure quantum quest radiant rally range rapid ready realty regal regency reliance republic reserve resolute river rock rocket royal safe saga scale science score scout select sentinel service shield shift signal silver simple sky smart solar solid sound source south sovereign spark spectrum spirit spring square standard star state sterling stone strategy street strong summit sun superior supreme surge swift symbol synergy system talent target teach terra thunder tide titan total tower trade trail transit trend trinity triumph true trust union unity universal urban valley value vanguard vector velocity venture vertex victory view vintage vision vista vital voyager watch water wave wealth west wild wind wing winner wise wonder world yield zenith alabama alaska arizona arkansas california colorado connecticut delaware florida georgia hawaii idaho illinois indiana iowa kansas kentucky louisiana maine maryland massachusetts michigan minnesota mississippi missouri montana nebraska nevada hampshire jersey mexico york carolina dakota ohio oklahoma oregon pennsylvania rhode tennessee texas utah vermont virginia washington wisconsin wyoming canada china japan india brazil germany france britain europe israel korea taiwan russia ukraine iran africa asia australia january february march april june july august september october november december monday friday weekend bitcoin ethereum solana dogecoin ripple crypto election president congress senate court trump musk elon openai anthropic xai""".split())
+ALIASES = {'GOOGL': ['google', 'alphabet', 'youtube', 'waymo'], 'META': ['facebook', 'instagram', 'whatsapp', 'meta'], 'MSTR': ['microstrategy', 'saylor'],
+           'NVDA': ['nvidia'], 'AMZN': ['amazon', 'aws'], 'MSFT': ['microsoft'], 'AAPL': ['apple', 'iphone'], 'TSLA': ['tesla'], 'BRK.B': ['berkshire'],
+           'JPM': ['jpmorgan'], 'GS': ['goldman'], 'DAL': ['delta air'], 'NFLX': ['netflix'], 'DIS': ['disney'], 'WMT': ['walmart'], 'AI': ['c3'],
+           'CRM': ['salesforce'], 'PM': ['zyn', 'philip morris'], 'TROW': ['t. rowe', 'rowe price'], 'SCHW': ['schwab'], 'ORCL': ['oracle'],
+           'INTC': ['intel'], 'AXP': ['american express', 'amex'], 'T': ['at&t'], 'TMUS': ['t-mobile'], 'ALK': ['alaska airlines'], 'BA': ['boeing'], 'F': ['ford motor'], 'V': ['visa inc'], 'TGT': ['target corp', 'target'], 'SPGI': ['s&p global']}
+
+
+def name_tokens(name):
+    return [x for x in re.findall(r'[a-z0-9]+', (name or '').lower().replace('’', '').replace("'", '').replace('&', ' ').replace('.com', ' ')) if x not in STOP]
+
+
+def _words(title):
+    return re.findall(r"[A-Za-z0-9][A-Za-z0-9&.']*", (title or '').replace('’', "'"))
+
+
+def _toks(text):
+    return re.findall(r'[a-z0-9]+', (text or '').lower().replace('’', '').replace("'", ''))
 
 
 class Mapper:
-    """Site company for a market: the (TICKER) in the title, else a ticker tag the title backs up by name, else a distinctive name."""
+    """Site company for a market. In order: a (TICKER) in the title that the title also names; a ticker tag the title names;
+    a curated alias; two consecutive words of the company name; one distinctive capitalised name word (not an everyday word)."""
 
     def __init__(self, cos, name_top=1500):
         self.by_t = {}
@@ -129,46 +152,65 @@ class Mapper:
             for k in {c['ticker'], c['ticker'].replace('-', '.'), c['ticker'].replace('.', '-'), c['ticker'].replace('.', '').replace('-', '')}:
                 self.by_t.setdefault(k, c)
         self.tokens = {}
-        first = {}
+        one, two = {}, {}
         for i, c in enumerate(cos):
             w = name_tokens(c.get('name'))
-            self.tokens[c['cik']] = {x for x in w if len(x) >= 4} | set(ALIASES.get(c['ticker'], []))
+            self.tokens[c['cik']] = {x for x in w if len(x) >= 3 and x not in AMBIGUOUS} | {a for a in ALIASES.get(c['ticker'], []) if ' ' not in a}
             if i >= name_top or not w:
                 continue
-            if len(w[0]) >= 4 and w[0] not in AMBIGUOUS:
-                first.setdefault(w[0], []).append(c)
-            if len(w) > 1:
-                first.setdefault(w[0] + ' ' + w[1], []).append(c)
-        self.names = {k: v[0] for k, v in first.items() if len(v) == 1}
+            if len(w[0]) >= 4 and w[0] not in AMBIGUOUS and w[0] not in COMMON and not w[0].isdigit():
+                one.setdefault(w[0], []).append(c)
+            if len(w) > 1 and len(w[0]) >= 3 and len(w[1]) >= 3:
+                two.setdefault(w[0] + ' ' + w[1], []).append(c)
+        self.one = {k: v[0] for k, v in one.items() if len(v) == 1}
+        self.two = {k: v[0] for k, v in two.items() if len(v) == 1}
+        self.alias = {}
         for t, al in ALIASES.items():
             if self.by_t.get(t):
                 for a in al:
-                    self.names[a] = self.by_t[t]
+                    self.alias[a] = self.by_t[t]
+        self.names = {**self.one, **self.two, **self.alias}
 
     def ticker(self, t):
         return self.by_t.get((t or '').upper())
 
     def mentions(self, c, title):
-        toks = set(re.findall(r'[a-z0-9]+', (title or '').lower().replace('’', "'")))
-        low = (title or '').lower()
-        return bool(self.tokens.get(c['cik'], set()) & toks) or any(' ' in a and a in low for a in ALIASES.get(c['ticker'], [])) \
-            or re.search(rf'(?<![A-Za-z]){re.escape(c["ticker"])}(?![A-Za-z])', title or '') is not None
+        low = (title or '').lower().replace('’', "'")
+        toks = set(_toks(title))
+        return bool(self.tokens.get(c['cik'], set()) & toks) or any(' ' in a and a in low for a in ALIASES.get(c['ticker'], []))
+
+    def by_name(self, title):
+        low = (title or '').lower().replace('’', "'")
+        for a, c in self.alias.items():
+            if re.search(rf'(?<![a-z0-9]){re.escape(a)}(?![a-z0-9])', low):
+                return c
+        words = [x for x in _words(title) if re.sub(r"[^a-z0-9]", '', x.lower().replace("'", '')) not in STOP]
+        toks = [re.sub(r"[^a-z0-9]", '', x.lower().replace("'", '')) for x in words]
+        for i in range(len(toks) - 1):
+            k = toks[i] + ' ' + toks[i + 1]
+            if k in self.two:
+                return self.two[k]
+        for wd, k in zip(words, toks):
+            if k in self.one and wd[:1].isupper():
+                return self.one[k]
+        return None
 
     def from_text(self, title, tags=()):
-        m = re.search(r'\(([A-Z][A-Z.\-]{0,5})\)', title or '')
-        if m and self.ticker(m.group(1)):
-            return self.ticker(m.group(1))
+        for m in re.finditer(r'\(([A-Z][A-Z.\-]{0,5})\)', title or ''):
+            c = self.ticker(m.group(1))
+            if not c:
+                continue
+            before = _words(title[:m.start()])
+            prev = before[-1] if before else ''
+            rest = title[:m.start()] + ' ' + title[m.end():]
+            if self.mentions(c, title) or re.search(rf'(?<![A-Za-z]){re.escape(m.group(1))}(?![A-Za-z])', rest) \
+                    or (prev[:1].isupper() and prev[:1] == m.group(1)[:1] and prev.lower().strip("'s") not in COMMON | AMBIGUOUS):
+                return c
         for tg in tags or ():
             c = self.ticker(tg)
             if c and self.mentions(c, title):
                 return c
-        toks = re.findall(r'[a-z0-9]+', (title or '').lower().replace('’', "'"))
-        for i in range(len(toks)):
-            for k in (2, 1):
-                key = ' '.join(toks[i:i + k])
-                if key in self.names:
-                    return self.names[key]
-        return None
+        return self.by_name(title)
 
 
 # ------------------------------------------------------------------ prediction markets
@@ -360,7 +402,7 @@ def poly_scan(h, mapper, verbose=True):
         if not co:                             # "Which companies will be acquired …", "Largest company end of …": one row per company named
             for m in ms:
                 g = m.get('groupItemTitle') or ''
-                c2 = mapper.ticker(g) or mapper.names.get(' '.join(name_tokens(g)[:2])) or mapper.names.get((name_tokens(g) or [''])[0])
+                c2 = mapper.from_text(g)
                 if c2 and (m.get('active') or e.get('closed')):
                     out.append({'source': 'polymarket', 'kind': 'other', 'ticker': c2['ticker'], 'cik': c2['cik'], 'title': title,
                                 'url': f'https://polymarket.com/event/{e.get("slug")}', 'end': (m.get('endDate') or e.get('endDate') or '')[:10],
@@ -589,11 +631,21 @@ def parse_yahoo(body):
 
 
 def yahoo_crumb(h):
-    try:
-        h.get('https://fc.yahoo.com', tries=1)
-    except Exception:
-        pass                                              # a 404 that still sets the cookie
-    return h.get(f'{YQ}/v1/test/getcrumb').decode().strip()
+    err = None
+    for cookie_url, crumb_url in (('https://fc.yahoo.com', f'{YQ}/v1/test/getcrumb'),
+                                  ('https://finance.yahoo.com/', 'https://query1.finance.yahoo.com/v1/test/getcrumb')):
+        try:
+            h.get(cookie_url, tries=1)
+        except Exception:
+            pass                                          # a 404 that still sets the cookie
+        try:
+            c = h.get(crumb_url).decode().strip()
+            if c and '<' not in c and len(c) < 40:
+                return c
+            err = f'bad crumb {c[:40]!r}'
+        except Exception as exc:
+            err = str(exc)
+    raise RuntimeError(err or 'no crumb')
 
 
 def collect_analysts(h, root, cos, minutes=20.0, refresh_hours=20):
@@ -603,8 +655,10 @@ def collect_analysts(h, root, cos, minutes=20.0, refresh_hours=20):
     try:
         crumb = yahoo_crumb(h)
     except Exception as exc:
-        print('yahoo crumb failed:', exc, flush=True)
-        return {'analysts': 0, 'error': str(exc)}
+        print('::warning::yahoo crumb failed:', exc, flush=True)
+        st['analysts_summary'] = {**(st.get('analysts_summary') or {}), 'companies': len(cos), 'this_run': 0, 'error': f'crumb: {exc}', 'at': now()}
+        write_json(root / 'state.json', st)
+        return st['analysts_summary']
     nowdt = dt.datetime.now(dt.timezone.utc)
 
     def due(c):
