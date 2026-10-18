@@ -102,7 +102,55 @@ def protocol_sets(paths):
     }
 
 
-def assemble(root, destination, objective, seed, new_count, replay_count, owner_count):
+def read_approved_hourly(bank_path, max_rows):
+    """Opt-in: read only reviewed eligible question rows; never use SEC review candidates."""
+    if max_rows <= 0:
+        return []
+    if not bank_path:
+        raise ValueError("An hourly bank path is required when hourly_count > 0")
+    where = Path(bank_path)
+    if where.is_dir():
+        files = sorted(where.glob("hourly/*/[0-2][0-9].json"))[-168:]
+    elif where.is_file():
+        files = [where]
+    else:
+        raise FileNotFoundError("Hour-bank path missing; run the scheduled bank job first")
+    if not files:
+        raise ValueError("No hourly question-bank files located")
+    selected = []
+    seen = set()
+    for file in reversed(files):
+        data = json.loads(file.read_text(encoding="utf-8"))
+        for record in data.get("questions", []):
+            if len(selected) >= max_rows:
+                break
+            if not record.get("training_eligible"):
+                continue
+            source = record.get("source", {})
+            status = record.get("review_status")
+            authorized = (source.get("kind") == "synthetic" and status == "synthetic_verified") or (
+                source.get("kind") == "research" and status == "human_verified_report_fact"
+                and source.get("rights") in ("owned", "licensed_for_training", "public_domain"))
+            if not authorized:
+                continue
+            prompt = record.get("input", "")
+            response = record.get("output", "")
+            if not isinstance(prompt, str) or not isinstance(response, str) or not prompt:
+                continue
+            try:
+                if not isinstance(json.loads(response), dict):
+                    continue
+            except (TypeError, ValueError):
+                continue
+            if prompt in seen:
+                continue
+            seen.add(prompt)
+            selected.append({"id": record["id"], "input": prompt, "output": response,
+                             "task": record.get("task", "hourly_reviewed")})
+    return selected
+
+
+def assemble(root, destination, objective, seed, new_count, replay_count, owner_count, hourly_bank=None, hourly_count=0):
     paths = required_sources(root)
     missing = [str(p) for p in paths.values() if not p.is_file()]
     if missing:
@@ -118,6 +166,10 @@ def assemble(root, destination, objective, seed, new_count, replay_count, owner_
     spec = [("bfv4", fresh, new_count), ("historical_replay", replay, replay_count)]
     if objective == "mixed":
         spec.append(("owner_rule_labels", owner, owner_count))
+    if hourly_count:
+        hourly = read_approved_hourly(hourly_bank, hourly_count)
+        if hourly:
+            spec.append(("hourly_approved", hourly, len(hourly)))
     taken = set(protected)
     merged = []
     dropped = Counter()
@@ -386,6 +438,8 @@ def main():
     p.add_argument("--new-count", type=int, default=1200)
     p.add_argument("--replay-count", type=int, default=600)
     p.add_argument("--owner-count", type=int, default=150)
+    p.add_argument("--hourly-bank", type=Path, help="Optional separate fsa-question-bank branch checkout")
+    p.add_argument("--hourly-count", type=int, default=0, help="0 disables integration; max 400 reviewed rows")
     p.add_argument("--steps", type=int, choices=[50, 100, 200], default=50)
     p.add_argument("--max-length", type=int, choices=[384, 512], default=384)
     p.add_argument("--lr", type=float, default=3e-5)
@@ -394,14 +448,15 @@ def main():
     p.add_argument("--interactive", action="store_true")
     args = p.parse_args()
     if not (0 < args.new_count <= 3000 and 0 <= args.replay_count <= 2000 and
-            0 <= args.owner_count <= 500 and 1e-6 <= args.lr <= 1e-4):
+            0 <= args.owner_count <= 500 and 0 <= args.hourly_count <= 400 and 1e-6 <= args.lr <= 1e-4):
         p.error("Quota or learning rate out of safe bounds")
     root = args.root.resolve()
     out = args.out.resolve()
     adapter = (root / CHAMPION) if args.adapter == "champion" else (out / "candidate")
     if args.mode in ("audit", "train"):
         report = assemble(root, out, args.objective, args.seed,
-                          args.new_count, args.replay_count, args.owner_count)
+                          args.new_count, args.replay_count, args.owner_count,
+                           hourly_bank=args.hourly_bank, hourly_count=args.hourly_count)
         print(json.dumps({"counts": report["counts"], "overlap": report["protected_prompt_overlap"],
                           "audit": str(out / "audit.json")}, indent=2), flush=True)
     if args.mode == "train":
