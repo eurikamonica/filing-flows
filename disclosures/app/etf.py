@@ -678,6 +678,24 @@ def classify(e, h, nc):
     return ac, strat
 
 
+GENERIC_BENCH = re.compile(r'^(the\s+)?(underlying|benchmark|target|reference|primary)?\s*(index|benchmark)$', re.I)
+
+
+def benchmarks_of(pr):
+    """The benchmark index names of a prospectus record; generic labels ("Underlying Index") replaced by the name the
+    strategy text gives ("… the S&P 500 (the "Underlying Index")")."""
+    b = [x for x in (pr or {}).get('benchmarks') or [] if x and not GENERIC_BENCH.match(x.strip())]
+    if b:
+        return b
+    st = (pr or {}).get('strategy') or ''
+    for pat in (r'(?:track|replicate|correspond to)[^.]{0,120}?(?:results|performance) of (?:the\s+)?([A-Z0-9][^()“"]{2,90}?)\s*\((?:the\s+)?[“"]?(?:Underlying|Target|Benchmark) Index',
+                r'(?:track|replicate|correspond to)[^.]{0,160}?\b(?:the\s+)?((?:[A-Z0-9][\w&®.\-/]*\s+){1,9}Index)\b'):
+        m = re.search(pat, st)
+        if m:
+            return [m.group(1).strip().rstrip(',')]
+    return []
+
+
 def norm_t(t):
     t = (t or '').upper().strip().replace('/', '.').replace(' ', '')
     return re.sub(r'\.?(US|UN|UW|UQ)$', '', t) if len(t) > 4 and re.search(r'\.?(US|UN|UW|UQ)$', t) else t
@@ -820,13 +838,10 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
 
     by = defaultdict(list)
     parties = {k: defaultdict(lambda: {'etfs': 0, 'aum': 0.0, 'x': 0.0, 'y': 0.0}) for k in ('aps', 'custodians', 'lending', 'advisers', 'subadvisers', 'auditors', 'distributors', 'administrators', 'transfer')}
-    pname = {}
+    raw_parties = defaultdict(list)            # kind → [(name, crd, aum, x, y)], merged after the loop
 
-    def pk(name):
-        k = re.sub(r'[^A-Z0-9]', '', (name or '').upper().replace('NATIONAL ASSOCIATION', 'NA').replace('N.A.', 'NA'))
-        k = re.sub(r'(LLC|INC|LP|LLP|CORP|CORPORATION|COMPANY|CO|LTD|PLC)$', '', k)
-        pname.setdefault(k, (name or '').strip())
-        return k
+    def pk(name, crd=None):
+        return (name or '').strip(), (crd or '').lstrip('0')
     index_rows = []
     for e in etfs:
         sym = e['symbol']
@@ -844,6 +859,11 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
             rows = uit[sym]['rows']
             h = {'date': uit[sym]['at'][:10], 'n': len(rows), 'source': 'sponsor holdings file', 'top': [[r[0], '', r[2], None, r[1], None, r[3], 'EC', 'CORP', 'US', 'Long'] for r in rows[:150]],
                  'weights': [[r[1], r[3], None] for r in rows], 'top10': sum(r[3] for r in sorted(rows, key=lambda x: -x[3])[:10]), 'mix': {'EC': sum(r[3] for r in rows)}}
+        if h and not h.get('_mapped'):        # tickers for every position the Hub can name (iShares reports CUSIPs only)
+            h = dict(h)
+            h['top'] = [x[:4] + [x[4] or key_ticker(x[2] or x[3] or '') if (x[7] in EQUITY) else x[4]] + x[5:] for x in h.get('top') or []]
+            h['weights'] = [[key_ticker(k) or k, w, v] for k, w, v in h.get('weights') or []]
+            h['_mapped'] = True
         ac, strat = classify(e, h, nc)
         fees = dict((pr or {}).get('fees') or {})
         cf = ((pr or {}).get('class_fees') or {}).get(e.get('cls') or '') or {}
@@ -872,10 +892,11 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                     by[t].append([sym, round(w, 6), v])
         issuer = M.issuer_of(e.get('name')) or ((nc or {}).get('registrant') or {}).get('family')
         sh = shorts.get(sym)
+        lev = bool(e.get('leveraged') or (nc or {}).get('multi_inverse'))
         row = {'symbol': sym, 'name': e.get('name'), 'issuer': issuer, 'exchange': e.get('exchange'), 'act': e.get('act'), 'asset_class': ac, 'strategy': strat,
                'leveraged': bool(e.get('leveraged') or (nc or {}).get('multi_inverse')), 'inverse': bool(e.get('inverse')), 'category': fund.get('y_category'),
                'expense': expense, 'aum': aum, 'flows_3m': f3, 'flows_12m': f12, 'n_holdings': (h or {}).get('n'), 'top10': (h or {}).get('top10'),
-               'track_diff': (nc or {}).get('track_diff'), 'track_err': (nc or {}).get('track_err'), 'r1m': st.get('r1m'), 'r3m': st.get('r3m'), 'ytd': st.get('ytd'),
+               'track_diff': None if lev else (nc or {}).get('track_diff'), 'track_err': None if lev else (nc or {}).get('track_err'), 'r1m': st.get('r1m'), 'r3m': st.get('r3m'), 'ytd': st.get('ytd'),
                'r1y': st.get('r1y'), 'r3y': st.get('r3y'), 'r5y': st.get('r5y'), 'vol': st.get('vol1y'), 'max_dd': st.get('max_dd'), 'dollar_vol': st.get('dollar_vol'),
                'premium': fund.get('premium'), 'yield': fund.get('y_yield'), 'inception': fund.get('y_inception'), 'price': st.get('price') or fund.get('y_price'),
                'holders13f': (o13 or {}).get('holders'), 'usd13f': (o13 or {}).get('usd'), 'holders13f_chg': ((o13['holders'] - o13['prev_holders']) if o13 and o13.get('prev_holders') is not None else None),
@@ -886,31 +907,29 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
         # parties
         a_ = aum or 0
         for a in active_aps:
-            p = parties['aps'][pk(a[0])]; p['etfs'] += 1; p['x'] += a[1] or 0; p['y'] += abs(a[2] or 0); p['aum'] += a_
+            raw_parties['aps'].append((a[0], (a[3] or '').lstrip('0'), a_, a[1] or 0, abs(a[2] or 0)))
         for k, src, flt in (('custodians', 'custodians', lambda x: not x[1]), ('lending', 'lending_agents', lambda x: True), ('administrators', 'administrators', lambda x: True),
                             ('transfer', 'transfer_agents', lambda x: True)):
             for x in {x[0]: x for x in (nc or {}).get(src) or [] if flt(x)}.values():
-                p = parties[k][pk(x[0])]; p['etfs'] += 1; p['aum'] += a_
-                if k == 'lending':
-                    p['x'] += (nc or {}).get('lending_income') or 0
+                raw_parties[k].append((x[0], '', a_, ((nc or {}).get('lending_income') or 0) if k == 'lending' else 0, 0))
         for x in (nc or {}).get('advisers') or []:
-            p = parties['subadvisers' if 'sub' in (x[1] or '').lower() else 'advisers'][pk(x[0])]; p['etfs'] += 1; p['aum'] += a_
+            raw_parties['subadvisers' if 'sub' in (x[1] or '').lower() else 'advisers'].append((x[0], (x[2] or '').lstrip('0'), a_, 0, 0))
         for x in set((nc or {}).get('accountant') or []):
-            p = parties['auditors'][pk(x)]; p['etfs'] += 1; p['aum'] += a_
+            raw_parties['auditors'].append((x, '', a_, 0, 0))
         for x in {d[0] for d in (nc or {}).get('distributor') or []}:
-            p = parties['distributors'][pk(x)]; p['etfs'] += 1; p['aum'] += a_
+            raw_parties['distributors'].append((x, '', a_, 0, 0))
         # the page
         doc = {'symbol': sym, 'generated_at': now(), **{k: row[k] for k in ('name', 'issuer', 'exchange', 'act', 'asset_class', 'strategy', 'leveraged', 'inverse', 'category', 'cik', 'series')},
-               'cls': e.get('cls'), 'registrant': e.get('registrant') or ((nc or {}).get('registrant') or {}).get('name') or (h or {}).get('registrant'),
+               'cls': e.get('cls'), 'series_classes': e.get('series_classes'), 'registrant': e.get('registrant') or ((nc or {}).get('registrant') or {}).get('name') or (h or {}).get('registrant'),
                'market': {**st, **{k: fund.get(k) for k in ('y_nav', 'premium', 'y_assets', 'y_yield', 'y_beta3y', 'y_family', 'y_expense', 'y_turnover', 'y_inception', 'y_avg_vol', 'y_duration', 'y_maturity', 'y_sectors', 'y_mix')},
                           'weekly': [[w[0], w[2]] for w in (mk.get('weekly') or [])][-261:], 'at': mk.get('at')},
                'prospectus': {'filed': (pr or {}).get('filed'), 'form': (pr or {}).get('form'), 'adsh': (pr or {}).get('adsh'), 'cik': (pr or {}).get('cik'), 'fees': fees,
                               'annual': (((pr or {}).get('annual') or {}).get(e.get('cls') or '') or next(iter(((pr or {}).get('annual') or {}).values()), {})),
-                              'benchmarks': (pr or {}).get('benchmarks'), 'objective': (pr or {}).get('objective'), 'strategy': (pr or {}).get('strategy'),
+                              'benchmarks': benchmarks_of(pr), 'objective': (pr or {}).get('objective'), 'strategy': (pr or {}).get('strategy'),
                               'risks': (pr or {}).get('risks'), 'risk_narrative': (pr or {}).get('risk_narrative')} if pr else None,
                'ncen': {k: v for k, v in (nc or {}).items() if k not in ('aps', 'classes', 'listings')} if nc else None,
                'aps': sorted(aps, key=lambda a: -((a[1] or 0) + abs(a[2] or 0)))[:40], 'aps_total': len(aps),
-               'holdings': {k: v for k, v in (h or {}).items() if k != 'weights'} if h else None, 'weights': (h or {}).get('weights', [])[:600] if h else [],
+               'holdings': {k: v for k, v in (h or {}).items() if k not in ('weights', '_mapped')} if h else None, 'weights': (h or {}).get('weights', [])[:600] if h else [],
                'flows': {'months': [[m] + v for m, v in months], 'net': net, 'assets': sorted(((hh or {}).get('assets') or {}).items())[-12:],
                          'returns': sorted((((hh or {}).get('returns') or {}).get(e.get('cls') or '') or next(iter(((hh or {}).get('returns') or {}).values()), {})).items())[-12:]} if hh else None,
                'holders13f': o13, 'periods13f': periods13, 'officials': sorted(off, key=lambda x: x.get('date') or '', reverse=True)[:40],
@@ -931,8 +950,8 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                                                                      'rows': [[x[0], names.get(x[0]), x[1], x[2], aum_of.get(x[0])] for x in lst[:400]]}))
     fields = list(index_rows[0].keys()) if index_rows else []
     wj(pub / 'index.json', _clean({'generated_at': now(), 'fields': fields, 'rows': [[r[k] for k in fields] for r in index_rows]}))
-    lt_ = {k: sorted([[pname.get(n, n), v['etfs'], round(v['aum']), round(v['x']), round(v['y'])] for n, v in d.items()], key=lambda x: (-x[2], -x[1]))[:80] for k, d in parties.items()}
-    wj(pub / 'parties.json', _clean({'generated_at': now(), 'fields': ['name', 'etfs', 'aum', 'x', 'y'], 'tables': lt_}))
+    lt_ = {k: merge_parties(raw_parties.get(k, []), k) for k in parties}
+    wj(pub / 'parties.json', _clean({'generated_at': now(), 'fields': ['name', 'etfs', 'aum', 'x', 'y', 'crd'], 'tables': lt_}))
     st = read_json(root / 'state.json', {}) or {}
     status = {'built_at': now(), 'etfs': len(index_rows), 'with_series': sum(1 for e in etfs if e.get('series')), 'ncen': len(ncen), 'prospectus': len(rr),
               'nport_funds': len(hist), 'holdings': len(holds), 'holdings_source': hd.get('source'), 'companies_held': len(by), 'market': st.get('market_summary'),
@@ -941,6 +960,45 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
     if verbose:
         print(f'etf build: {len(index_rows)} ETFs, {len(ncen)} N-CEN, {len(rr)} prospectus, {len(holds)} portfolios, {len(by)} companies held', flush=True)
     return {k: status[k] for k in ('etfs', 'ncen', 'prospectus', 'holdings', 'companies_held')}
+
+
+PARTY_STOP = {'LLC', 'INC', 'LP', 'LLP', 'LTD', 'CO', 'CORP', 'CORPORATION', 'COMPANY', 'CAPITAL', 'SECURITIES', 'MARKETS', 'AMERICAS', 'USA', 'US', 'NA',
+              'NATIONAL', 'ASSOCIATION', 'THE', 'AND', 'OF', 'GROUP', 'HOLDINGS', 'PRO', 'LIMITED', 'PLC', 'AG', 'SA', 'NV', 'BV', 'LLP', 'GLOBAL'}
+
+
+def party_tokens(name):
+    n = (name or '').upper().replace('&', ' ').replace('J.P.', 'JP').replace('J. P.', 'JP')
+    toks = [t for t in re.sub(r'[^A-Z0-9 ]', ' ', n.replace('.', '')).split() if t not in PARTY_STOP]
+    return tuple(toks[:2]) or (n.strip(),)
+
+
+def merge_parties(rows, kind):
+    """One line per firm: the same CRD number, or the same first two distinctive words ("Jane Street", "Goldman Sachs"),
+    with a one-word name folded into the longer one it begins ("Citigroup" → "Citigroup Global"). Sorted by activity."""
+    key_of_crd, groups = {}, {}
+    for name, crd, *_ in rows:
+        t = party_tokens(name)
+        if crd:
+            key_of_crd.setdefault(crd, t)
+    tok_crd = {t: c for c, t in key_of_crd.items()}
+    keys = {party_tokens(n) for n, *_ in rows}
+    fold = {}
+    for t in keys:
+        if len(t) == 1 and len(t[0]) >= 4:
+            longer = [u for u in keys if len(u) > 1 and u[0] == t[0]]
+            if len(longer) == 1:
+                fold[t] = longer[0]
+    for name, crd, aum, x, y in rows:
+        t = party_tokens(name)
+        t = key_of_crd.get(crd, fold.get(t, t))
+        g = groups.setdefault(t, {'names': defaultdict(int), 'etfs': 0, 'aum': 0.0, 'x': 0.0, 'y': 0.0, 'crd': crd or tok_crd.get(t)})
+        g['names'][name] += 1; g['etfs'] += 1; g['aum'] += aum or 0; g['x'] += x or 0; g['y'] += y or 0
+    out = []
+    for g in groups.values():
+        nm = max(g['names'].items(), key=lambda kv: (kv[1], any(c.islower() for c in kv[0])))[0]
+        out.append([nm, g['etfs'], round(g['aum']), round(g['x']), round(g['y']), g['crd'] or None])
+    order = (lambda r: -(r[3] + r[4])) if kind == 'aps' else (lambda r: -r[3]) if kind == 'lending' else (lambda r: -r[2])
+    return sorted(out, key=lambda r: (order(r), -r[1]))[:100]
 
 
 def _clean(o):

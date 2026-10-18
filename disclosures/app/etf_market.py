@@ -83,13 +83,16 @@ def build_universe(nasdaq_rows, mf, cos):
         d = dict(zip(G, r))
         if d.get('ticker'):
             by_t.setdefault(str(d['ticker']).upper(), d)
+    per_series = {}
+    for d in by_sym.values():
+        per_series[d.get('seriesId')] = per_series.get(d.get('seriesId'), 0) + 1
     out = []
     for r in nasdaq_rows:
         s = r['symbol'].upper()
         m, c = by_sym.get(s) or by_sym.get(s.replace('.', '-')), by_t.get(s) or by_t.get(s.replace('.', '-'))
         e = {**r, 'kind': kind_of(r['name'])}
         if m:
-            e.update(cik=int(m['cik']), series=m.get('seriesId'), cls=m.get('classId'), act='40')
+            e.update(cik=int(m['cik']), series=m.get('seriesId'), cls=m.get('classId'), act='40', series_classes=per_series.get(m.get('seriesId'), 1))
         elif c:
             e.update(cik=int(c['cik']), act='etn' if e['kind'] == 'etn' else '33', registrant=c.get('name'))
         else:
@@ -226,7 +229,7 @@ def collect_market(h, root, etfs, crumb_fn, minutes=20.0, refresh_hours=20):
         if s.get('retry_after') and s['retry_after'] > now():
             return None
         if not s.get('at'):
-            return (0, -(e.get('assets') or 0))
+            return (0, -(e.get('assets') or (5e10 if e.get('act') in ('33', 'uit') or e['symbol'] in ('SPY', 'DIA', 'MDY') else 0)))
         age = (nowdt - dt.datetime.fromisoformat(s['at'])).total_seconds() / 3600
         return (1, -age) if age >= refresh_hours else None
 
