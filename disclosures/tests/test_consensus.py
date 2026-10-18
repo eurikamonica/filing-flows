@@ -100,6 +100,8 @@ class Scan(unittest.TestCase):
                'markets': [mk('↑ $360', 'f', 0.3), mk('↑ $350', 'g', 0.7), mk('↓ $320', 'h', 0.2), mk('↓ $330', 'i', 0.6)]},
               {'id': 4, 'title': 'Which companies will be acquired before 2027?', 'slug': 'acq', 'endDate': '2027-01-01T00:00:00Z', 'tags': [],
                'markets': [mk('Super Micro', 'j', 0.05), mk('Unknown Co', 'k', 0.1)]}]
+        ev.append({'id': 5, 'title': 'Will FedEx (FDX) Q3 total revenue be above __?', 'slug': 'fdx-rev', 'endDate': '2026-12-17T00:00:00Z', 'tags': [],
+                   'markets': [mk('$21B', 'l', 0.9), mk('$22B', 'm', 0.5), mk('$23B', 'n', 0.1)]})
         h = FakeHttp({'tag_slug=earnings&closed=false&limit=100&offset=0': ev})
         out = C.poly_scan(h, C.Mapper(COS), verbose=False)
         by = {m['kind']: m for m in out}
@@ -109,6 +111,8 @@ class Scan(unittest.TestCase):
         self.assertAlmostEqual(by['hit']['stats_high']['median']['value'], 355.0)
         self.assertAlmostEqual(by['hit']['stats_low']['median']['value'], 327.5)
         self.assertEqual([(m['ticker'], m['outcomes'][0]['q']) for m in out if m['kind'] == 'other'], [('SMCI', 'Super Micro')])
+        self.assertEqual(by['metric']['unit'], '$')
+        self.assertAlmostEqual(by['metric']['stats']['median']['value'], 22e9)
 
 
 class KalshiScan(unittest.TestCase):

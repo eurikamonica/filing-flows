@@ -10,11 +10,12 @@
   const usd = (v, d = 2) => (fin(v) ? (v < 0 ? '−$' : '$') + num(Math.abs(v), d) : '—');
   const pct = (v, d = 0) => (fin(v) ? num(100 * v, d) + '%' : '—');
   const spct = (v, d = 1) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
+  const unitFmt = (v, u) => (!fin(v) ? '—' : u === '$' ? (Math.abs(v) >= 1e6 ? big(v) : usd(v)) : u === '%' ? num(v, Math.abs(v) < 10 ? 1 : 0) + '%' : num(v, Math.abs(v) < 100 ? 2 : 0) + (u ? ' ' + u : ''));
   const day = (s) => (s ? String(s).slice(0, 10) : '—');
   const ts = (s) => Date.parse(String(s).slice(0, 10) + 'T00:00:00Z');
   const C = { good: 'var(--mk-profit, #2e8b57)', bad: 'var(--mk-cost, #c0392b)', acc: 'var(--accent, #2a78d6)', mute: 'var(--muted, #888)', ink: 'var(--ink, #222)',
     an: '#d9822b', pm: '#8a4fd6', ours: '#2a78d6', ks: '#16a085' };
-  const KIND = { beat: 'Beat earnings?', above: 'Price ladder', bracket: 'Closing-price brackets', mcap: 'Market cap', hit: 'High / low touch', updown: 'Up or down', kpi: 'Company KPI', mention: 'Earnings-call mentions', other: 'Other events' };
+  const KIND = { beat: 'Beat earnings?', above: 'Price ladder', bracket: 'Closing-price brackets', mcap: 'Market cap', hit: 'High / low touch', metric: 'Reported metric (revenue, segments, KPIs)', updown: 'Up or down', kpi: 'Company KPI', mention: 'Earnings-call mentions', other: 'Other events' };
   const PERIOD = { '0q': 'This quarter', '+1q': 'Next quarter', '0y': 'This fiscal year', '+1y': 'Next fiscal year' };
 
   function css() {
@@ -202,6 +203,15 @@
         const bound = (q) => (q && q.bound === 'below' ? '≤ ' : q && q.bound === 'above' ? '≥ ' : '');
         body = `<div class="cv-sub">Implied median <b>${bound(st.median)}${f(st.median && st.median.value)}</b> · 80% range ${bound(st.q10)}${f(st.q10 && st.q10.value)} – ${bound(st.q90)}${f(st.q90 && st.q90.value)}${m.kind === 'mcap' && ip && fin(ip.median) ? ` · per share ≈ ${usd(ip.median)}` : ''}${st.overround && st.overround > 1.05 ? ` · prices sum to ${pct(st.overround)}, normalised` : ''}</div>` + ladderSvg(st, m.kind);
       }
+    } else if (m.kind === 'metric') {
+      const st = m.stats, u = m.unit || '';
+      const q0 = (a.periods || []).find((p) => p.period === '0q') || {};
+      if (m.closed && m.actual) body = `<div class="cv-sub">Ended between ${unitFmt(m.actual[0], u)} and ${m.actual[1] == null ? 'above' : unitFmt(m.actual[1], u)}.</div>`;
+      else if (st && st.median) {
+        const bound = (q) => (q && q.bound === 'below' ? '≤ ' : q && q.bound === 'above' ? '≥ ' : '');
+        body = `<div class="cv-sub">Implied median <b>${bound(st.median)}${unitFmt(st.median.value, u)}</b>${st.q10 ? ` · 80% range ${bound(st.q10)}${unitFmt(st.q10.value, u)} – ${bound(st.q90)}${unitFmt(st.q90.value, u)}` : ''}${/total (operating )?revenue|net sales/i.test(m.title || '') && fin((q0.rev || {}).avg) ? ` · analysts' revenue consensus for the quarter ${big(q0.rev.avg)}` : ''}</div>`;
+      }
+      body += (m.outcomes || []).filter((o) => fin(o.p)).slice(0, 10).map((o) => pbar(o.q, o.p, col)).join('');
     } else if (m.kind === 'updown') {
       body = pbar('Closes up', m.p, col) + (m.resolved != null ? `<div class="cv-sub">Resolved: ${m.resolved ? 'up' : 'down'}</div>` : '');
     } else if (m.kind === 'hit') {
@@ -219,7 +229,7 @@
   function markets(doc, a) {
     const M = doc.markets || [];
     if (!M.length) return `<h3>Prediction markets</h3><p class="cv-sub">No Polymarket or Kalshi market about this company is open. They list markets for the most-traded names (earnings beats for a few hundred companies each season; price ladders and market caps for the largest; KPIs such as deliveries or subscribers for some).</p>`;
-    const order = ['beat', 'above', 'bracket', 'mcap', 'hit', 'kpi', 'mention', 'updown', 'other'];
+    const order = ['beat', 'metric', 'above', 'bracket', 'mcap', 'hit', 'kpi', 'mention', 'updown', 'other'];
     const yd = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
     const isLive = (m) => !m.closed && (!m.end || m.end >= yd);
     const live = M.filter(isLive).sort((x, y) => order.indexOf(x.kind) - order.indexOf(y.kind) || String(x.end).localeCompare(String(y.end)));
@@ -236,7 +246,7 @@
     if (cal.length) out.push(tbl(['Report', 'EPS line', 'Beat price a day before', 'Result'], cal.slice().reverse().map((c) => [esc(c.report_date || '—'), usd(c.eps_strike), pct(c.p_day_before), `<b class="${c.yes ? 'cv-good' : 'cv-bad'}">${c.yes ? 'beat' : 'missed'}</b>`]), [1, 2]));
     const pt = (doc.price_track || []);
     if (pt.length) out.push(tbl(['Market', 'Date', 'Implied median (last before the date)', '80% range', 'Ended', 'Error'], pt.map((r) => {
-      const f = r.kind === 'mcap' ? big : (v) => usd(v);
+      const f = r.kind === 'mcap' ? big : r.kind === 'metric' ? (v) => unitFmt(v, r.unit) : (v) => usd(v);
       return [esc(r.title), esc(r.end), f(r.median), `${f(r.q10)} – ${f(r.q90)}`, `${f(r.actual[0])} – ${r.actual[1] == null ? '…' : f(r.actual[1])}`, `<span class="${r.inside80 ? 'cv-good' : 'cv-bad'}">${spct(r.err_pct / 100)}${r.inside80 ? ' · inside' : ' · outside'}</span>`];
     }), [2, 3, 4, 5]));
     const S = (doc.surprises || []).filter((s) => fin(s.surprise));
@@ -270,5 +280,5 @@
     el.innerHTML = h;
   }
 
-  window.ConsensusView = { render, fmt: { usd, big, pct, spct, num, day }, KIND };
+  window.ConsensusView = { render, fmt: { usd, big, pct, spct, num, day, unitFmt }, KIND };
 })();
