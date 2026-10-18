@@ -249,23 +249,25 @@ def poly_resolved(m):
 
 
 def strike_of(text):
-    """'$170', '170', '$1.25T', '<$2.50T', '$2.50-$3.00T', '>$5T' → (low, high) in units (T/B expanded)."""
-    t = (text or '').replace(',', '').replace('–', '-')
+    """'$170', '$1.25T', '<$2.50T', '$2.50-$3.00T', '>$5T', '71% to 73%', '77%+', '-2% to 0%' → (low, high), T/B/M/K expanded."""
+    t = (text or '').replace(',', '').replace('–', '-').replace('−', '-').replace('%', '')
+    t = re.sub(r'\s+to\s+', '~', t)
     mult = lambda u: {'T': 1e12, 'B': 1e9, 'M': 1e6, 'K': 1e3}.get((u or '').upper(), 1)
-    m = re.search(r'\$?(\d+(?:\.\d+)?)\s*([TBMK])?\s*-\s*\$?(\d+(?:\.\d+)?)\s*([TBMK])?', t)
+    N = r'(-?\d+(?:\.\d+)?)'
+    m = re.search(rf'\$?{N}\s*([TBMK])?\s*[~]\s*\$?{N}\s*([TBMK])?', t) or re.search(rf'\$?(\d+(?:\.\d+)?)\s*([TBMK])?\s*-\s*\$?(\d+(?:\.\d+)?)\s*([TBMK])?', t)
     if m:
         u2 = m.group(4) or m.group(2)
         return float(m.group(1)) * mult(m.group(2) or u2), float(m.group(3)) * mult(u2)
-    m = re.search(r'(<|less than|under|below)\s*\$?(\d+(?:\.\d+)?)\s*([TBMK])?', t, re.I)
+    m = re.search(rf'(<|less than|under|below)\s*\$?{N}\s*([TBMK])?', t, re.I)
     if m:
         return None, float(m.group(2)) * mult(m.group(3))
-    m = re.search(r'(>|more than|over|above|\+)\s*\$?(\d+(?:\.\d+)?)\s*([TBMK])?|\$?(\d+(?:\.\d+)?)\s*([TBMK])?\s*\+|\$?(\d+(?:\.\d+)?)\s*([TBMK])?\s*or (more|higher|above)', t, re.I)
+    m = re.search(rf'(>|more than|over|above|\+)\s*\$?{N}\s*([TBMK])?|\$?{N}\s*([TBMK])?\s*\+|\$?{N}\s*([TBMK])?\s*or (more|higher|above)', t, re.I)
     if m:
         g = [x for x in m.groups() if x]
-        nums = [x for x in g if re.match(r'\d', x)]
+        nums = [x for x in g if re.match(r'-?\d', x)]
         units = [x for x in g if re.match(r'^[TBMK]$', x, re.I)]
         return float(nums[0]) * mult(units[0] if units else None), None
-    m = re.search(r'\$?(\d+(?:\.\d+)?)\s*([TBMK])?', t)
+    m = re.search(rf'\$?{N}\s*([TBMK])?', t)
     if m:
         v = float(m.group(1)) * mult(m.group(2))
         return v, v

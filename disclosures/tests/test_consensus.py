@@ -43,6 +43,9 @@ class Ladders(unittest.TestCase):
         self.assertEqual(C.strike_of('$2.50-$3.00T'), (2.5e12, 3e12))
         self.assertEqual(C.strike_of('>$365'), (365.0, None))
         self.assertEqual(C.strike_of('↓ $280'), (280.0, 280.0))
+        self.assertEqual(C.strike_of('71% to 73%'), (71.0, 73.0))
+        self.assertEqual(C.strike_of('77%+'), (77.0, None))
+        self.assertEqual(C.strike_of('-2% to 0%'), (-2.0, 0.0))
 
     def test_isotonic(self):
         self.assertEqual(C.isotonic_decreasing([0.9, 0.5, 0.6, 0.1]), [0.9, 0.55, 0.55, 0.1])
