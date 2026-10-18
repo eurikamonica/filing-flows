@@ -77,6 +77,13 @@ jobs:
         run: |
           python -c "import json; print('::notice title=probe log::' + json.dumps(json.load(open('out/log.json')))[:60000])"
           cd out
+          rm -f accesswire.xml war-contracts.html gnw-*.xml sec-litigation-old.xml    # error pages, not samples
+          python - <<'PY'
+          import pathlib, re
+          for p in pathlib.Path('.').iterdir():          # page scripts carry map / analytics tokens push protection rejects
+              b = p.read_bytes()
+              p.write_bytes(re.sub(rb'[ps]k\.eyJ[A-Za-z0-9._-]+', b'TOKEN', b))
+          PY
           git init -q -b probe-news
           git add -A
           git -c user.name=filing-flows -c user.email=actions@users.noreply.github.com commit -qm "probe $(date -u +%FT%H:%MZ)"
