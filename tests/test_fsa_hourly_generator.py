@@ -66,6 +66,21 @@ class HourlyQuestionBankTests(unittest.TestCase):
         self.assertEqual(by["sec_fcf"]["expected"]["value"],50)
         self.assertFalse(by["sec_fcf"]["training_eligible"])
 
+    def test_10q_quarter_not_ytd(self):
+        def rec(end,start,val,form,fp):
+            return {"form":form,"fp":fp,"start":start,"end":end,"val":val,"accn":"x","filed":"2026-02-01"}
+        doc={"facts":{"us-gaap":{
+            "RevenueFromContractWithCustomerExcludingAssessedTax":{"units":{"USD":[
+                rec("2024-06-30","2024-04-01",50,"10-Q","Q2"),
+                rec("2025-06-30","2025-04-01",65,"10-Q","Q2"),
+                rec("2025-06-30","2025-01-01",130,"10-Q","Q2")]}}
+        }}}
+        rows=bank.from_sec(doc,"EXAMPLE","fixture")
+        self.assertEqual(len(rows),1)
+        self.assertEqual(rows[0]["task"],"sec_quarter_growth")
+        self.assertAlmostEqual(rows[0]["expected"]["value"],.30)
+        self.assertFalse(rows[0]["training_eligible"])
+
     def test_error_counts(self):
         with tempfile.TemporaryDirectory() as directory:
             p=Path(directory)/"evaluation.json"
