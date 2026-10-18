@@ -79,6 +79,27 @@ class Backfill(unittest.TestCase):
             self.assertEqual(out['counts']['attempted_this_run'], 0)
             self.assertTrue(next(r for r in out['directory'] if r['cik'] == '42')['processed'])
 
+    def test_only_an_sec_block_stops_the_run(self):
+        class Odd(FakeSec):                  # a parse error whose text happens to contain "403", then SEC's real block
+            def get(self, url, immutable=False):
+                if '/data/7/' in url or 'CIK0000000007' in url:
+                    raise ValueError('Value reconciliation failed: 124294149 vs 31312403')
+                if 'CIK0000000005' in url:
+                    raise B.Blocked('HTTP 403 from SEC (rate limit?)')
+                return super().get(url, immutable)
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            (d / 'catalogs').mkdir()
+            (d / 'catalogs' / 'holdings.json').write_text(json.dumps([
+                {'cik': '7', 'name': 'Odd', 'processed': False, 'latest_filing': '2025-09-01'},
+                {'cik': '42', 'name': 'Test Manager', 'processed': False, 'latest_filing': '2025-08-14'},
+                {'cik': '5', 'name': 'Blocked', 'processed': False, 'latest_filing': '2025-07-01'},
+                {'cik': '3', 'name': 'Never reached', 'processed': False, 'latest_filing': '2025-06-01'}]))
+            stats = B.run(d, {'since': '2025-01-01'}, minutes=1, sec=Odd())
+            self.assertEqual((stats['managers'], stats['errors']), (1, 2))
+            self.assertTrue(stats['blocked'].startswith('HTTP 403'))
+            self.assertNotIn('3', json.loads((d / 'holdings-backfill.json').read_text())['attempts'])
+
     def test_range_change_starts_over(self):
         with tempfile.TemporaryDirectory() as d:
             d = Path(d)
