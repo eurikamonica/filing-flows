@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+<title>NPORT_readme</title>
+<meta name="description" content="Our first page">
+<meta name="keywords" content="html tutorial template">
+</head>
+<div id="toc_container">
+<p class="toc_title">NPORT Data Sets</p>
+<ul class="toc_list">
+<li><a href="#Overview">1 Overview</a></li>
+<li><a href="#Scope">2 Scope</a></li>
+<li><a href="#Organization">3 Organization</a></li>
+<li><a href="#File Format">4 File Format</a></li>
+  <li><a href="#Table Definitions">5 Table Definitions</a>
+  <ul><li><a href="#SUBMISSION (Items A.3-4)">5.1 SUBMISSION (Items A.3-4)</a></li><li><a href="#REGISTRANT (Item A.1)">5.2 REGISTRANT (Item A.1)</a></li><li><a href="#FUND_REPORTED_INFO (Items A.2, B.1-B.6)">5.3 FUND_REPORTED_INFO (Items A.2, B.1-B.6)</a></li><li><a href="#INTEREST_RATE_RISK (Item B.3.a-b)">5.4 INTEREST_RATE_RISK (Item B.3.a-b)</a></li><li><a href="#BORROWER (Item B.4.a)">5.5 BORROWER (Item B.4.a)</a></li><li><a href="#BORROW_AGGREGATE (Item B.4.b)">5.6 BORROW_AGGREGATE (Item B.4.b)</a></li><li><a href="#MONTHLY_TOTAL_RETURN (Items B.5.a-b)">5.7 MONTHLY_TOTAL_RETURN (Items B.5.a-b)</a></li><li><a href="#MONTHLY_RETURN_CAT_INSTRUMENT (Item B.5.c)">5.8 MONTHLY_RETURN_CAT_INSTRUMENT (Item B.5.c)</a></li><li><a href="#FUND_VAR_INFO (Item B.10.b)">5.9 FUND_VAR_INFO (Item B.10.b)</a></li><li><a href="#FUND_REPORTED_HOLDING (Items C.1 - C.8, C.11)">5.10 FUND_REPORTED_HOLDING (Items C.1 - C.8, C.11)</a></li><li><a href="#IDENTIFIERS (Item C.1.e)">5.11 IDENTIFIERS (Item C.1.e)</a></li><li><a href="#DEBT_SECURITY (Item C.9)">5.12 DEBT_SECURITY (Item C.9)</a></li><li><a href="#DEBT_SECURITY_REF_INSTRUMENT (Item C.9.f.iii)">5.13 DEBT_SECURITY_REF_INSTRUMENT (Item C.9.f.iii)</a></li><li><a href="#CONVERTIBLE_SECURITY_CURRENCY (Item C.9.f.iv)">5.14 CONVERTIBLE_SECURITY_CURRENCY (Item C.9.f.iv)</a></li><li><a href="#REPURCHASE_AGREEMENT (Item C.10.a-e)">5.15 REPURCHASE_AGREEMENT (Item C.10.a-e)</a></li><li><a href="#REPURCHASE_COUNTERPARTY (Item C.10.b.ii)">5.16 REPURCHASE_COUNTERPARTY (Item C.10.b.ii)</a></li><li><a href="#REPURCHASE_COLLATERAL (Item C.10.f)">5.17 REPURCHASE_COLLATERAL (Item C.10.f)</a></li><li><a href="#DERIVATIVE_COUNTERPARTY (Item C.11.b.i)">5.18 DERIVATIVE_COUNTERPARTY (Item C.11.b.i)</a></li><li><a href="#SWAPTION_OPTION_WARNT_DERIV (Item C.11.c.i-ii, iv-vi, viii)">5.19 SWAPTION_OPTION_WARNT_DERIV (Item C.11.c.i-ii, iv-vi, viii)</a></li><li><a href="#DESC_REF_INDEX_BASKET (Item C.11.c.iii.2)">5.20 DESC_REF_INDEX_BASKET (Item C.11.c.iii.2)</a></li><li><a href="#DESC_REF_INDEX_COMPONENT (Item C.11.c.iii.2)">5.21 DESC_REF_INDEX_COMPONENT (Item C.11.c.iii.2)</a></li><li><a href="#DESC_REF_OTHER (Item C.11.c.iii.3)">5.22 DESC_REF_OTHER (Item C.11.c.iii.3)</a></li><li><a href="#FUT_FWD_NONFOREIGNCUR_CONTRACT (Item C.11.d)">5.23 FUT_FWD_NONFOREIGNCUR_CONTRACT (Item C.11.d)</a></li><li><a href="#FWD_FOREIGNCUR_CONTRACT_SWAP (Item C.11.e)">5.24 FWD_FOREIGNCUR_CONTRACT_SWAP (Item C.11.e)</a></li><li><a href="#NONFOREIGN_EXCHANGE_SWAP (Item C.11.f)">5.25 NONFOREIGN_EXCHANGE_SWAP (Item C.11.f)</a></li><li><a href="#FLOATING_RATE_RESET_TENOR (Item C.11.f.i)">5.26 FLOATING_RATE_RESET_TENOR (Item C.11.f.i)</a></li><li><a href="#OTHER_DERIV (Item C.11.g)">5.27 OTHER_DERIV (Item C.11.g)</a></li><li><a href="#OTHER_DERIV_NOTIONAL_AMOUNT (Item C.11.g.iii)">5.28 OTHER_DERIV_NOTIONAL_AMOUNT (Item C.11.g.iii)</a></li><li><a href="#SECURITIES_LENDING (Item C.12)">5.29 SECURITIES_LENDING (Item C.12)</a></li><li><a href="#EXPLANATORY_NOTE (Item E)">5.30 EXPLANATORY_NOTE (Item E)</a></li></ul>
+</li>
+</ul>
+</div>
+<h2 id="Overview">1. Overview</h2>
+Form N-PORT is used by registered investment companies and exchange-traded funds to report monthly portfolio holdings other than money market funds.  Form N-PORT filings are disseminated quarterly.  The NPORT Data Sets provides the portfolio holdings from the N-PORT filings that have been disseminated.  The NPORT Data Sets are extracted from Form N-PORT eXtensible Markup Language (XML) submissions in a flat file format to assist users in more easily constructing the data for analysis. These data sets includes any amendments to those submissions. The data has been automatically and directly taken from submissions created by the registrants and provided as-filed.  The data will be published quarterly. Data contained in documents filed after 5:30pm EST on the last business day of the quarter will be included in the next quarterly posting.
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>SUBMISSION TYPE</th>
+      <th>DESCRIPTION</th>

@@ -1,0 +1,26 @@
+{
+    "@context": "http://www.w3.org/ns/csvw",
+    "dialect": {
+        "header": true,
+        "headerRowCount": 1,
+        "delimiter": "\t"
+    },
+    "tables": [
+        {
+            "url": "SUBMISSION.tsv",
+            "tableSchema": {
+                "aboutUrl": "ncen_readme.htm",
+                "PrimaryKey": [
+                    "ACCESSION_NUMBER"
+                ],
+                "columns": [
+                    {
+                        "name": "ACCESSION_NUMBER",
+                        "titles": "ACCESSION NUMBER",
+                        "datatype": {
+                            "base": "string",
+                            "maxLength": 20
+                        },
+                        "dc:description": "The 20-character string formed from the 18-digit number assigned by the Commission to each EDGAR submission."
+                    },
+                    {
