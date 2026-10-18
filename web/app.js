@@ -3064,6 +3064,8 @@
     if (r.error && tableMissing(r.error)) return { ok: false, msg: OWNER_UPDATE };
     if (r.error && /limit/i.test(r.error.message)) return { ok: false, msg: 'Limit reached: 10 companies a day' };
     if (r.error) return { ok: false, msg: `Could not ask: ${r.error.message}` };
+    if (await ownerVerified().catch(() => false))   // the database marks the owner's requests: a short scan starts now (scan.yml)
+      return { ok: true, msg: 'Asked (owner fast lane): a short scan starts now and repeats until it is built, usually 10–20 minutes' };
     return { ok: true, msg: 'Asked: the next scan reads its filings from SEC' };
   }
   async function missingCompany(cik) {
