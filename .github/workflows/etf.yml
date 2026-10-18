@@ -1,0 +1,80 @@
+# ETF research (Disclosures → ETFs): every US-listed ETF read from its own filings, the market and the rest of the Hub.
+# Every four hours: the ETF list (Nasdaq Trader + SEC tickers); any new SEC data set — N-CEN, N-PORT, prospectus
+# risk/return — downloaded and processed once (newest first; N-PORT holdings for the newest quarter); Yahoo market data
+# for a batch of ETFs (largest first, each refreshed daily); then public/ is rebuilt and joined with the Hub's 13F
+# holders, officials' trades, short interest, N-PX filers, the consensus and debt data (app/etf.py).
+# Kept on the branch "etf-history" (one commit, force-pushed); scan.yml publishes public/ with the hub.
+name: ETF research
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for the market batch (after the filings sets)'
+        default: '35'
+  schedule:
+    - cron: '17 */4 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: etf-history
+  cancel-in-progress: false
+jobs:
+  etf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            disclosures/app
+            disclosures/config
+            disclosures/docs/data/market/*.json
+            disclosures/docs/data/catalogs/holdings.json
+            disclosures/docs/data/catalogs/npx.json
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The 13F shards of the two latest complete quarters, the data branch and the other branches' public files
+        run: |
+          python - <<'PY' > periods.txt
+          import json
+          cov = sorted((json.load(open('disclosures/docs/data/market/flows.json')).get('coverage') or {}).items())
+          full = [p for p, n in cov if cov and n >= 0.6 * max(x[1] for x in cov)]
+          print(' '.join(full[-2:]))
+          PY
+          for p in $(cat periods.txt); do git sparse-checkout add "/disclosures/docs/data/shards/holdings/*-$p.json"; done
+          ls disclosures/docs/data/shards/holdings | wc -l
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" etf-history >/dev/null; then
+            git clone --quiet --depth 1 --branch etf-history "$url" etf
+          else
+            mkdir etf && git -C etf init --quiet -b etf-history && git -C etf remote add origin "$url"
+          fi
+          for b in consensus-history debt-history; do
+            if git ls-remote --exit-code --heads "$url" $b >/dev/null; then
+              git clone --quiet --depth 1 --filter=blob:none --sparse --branch $b "$url" _$b
+              git -C _$b sparse-checkout set --no-cone /public/index.json
+            fi
+          done
+          du -sh etf; ls etf
+      - name: ETF list, filings sets and market data
+        timeout-minutes: 95
+        run: python disclosures/app/etf.py collect --root etf --minutes "${{ inputs.minutes || '35' }}"
+      - name: Build public/
+        timeout-minutes: 15
+        run: python disclosures/app/etf.py build --root etf --hub disclosures/docs/data --consensus _consensus-history/public --debt _debt-history/public
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd etf
+          printf '%s\n' '# etf-history (data only)' '' 'Processed SEC data sets (cache/ncen, cache/nport, cache/rr, cache/nport_holdings.json.gz), market data (cache/market),' \
+            'progress (state.json) and the files the site publishes (public/), kept by .github/workflows/etf.yml on main.' 'Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "etf $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "etf $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:etf-history && break; sleep $((i * 10)); done
+          python -c "import json; print(json.dumps(json.load(open('public/status.json')))[:2000])"
