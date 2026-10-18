@@ -1,0 +1,96 @@
+# Temporary: fetches a few raw samples (EDGAR 13D/13G/144 filings, FINRA short interest, Senate eFD) to the branch
+# "probe-data" so the parsers can be written against real files. Removed once the collectors are in.
+name: Probe new data sources
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Fetch samples
+        shell: python
+        run: |
+          import json, os, re, time, requests
+          os.makedirs('out', exist_ok=True)
+          ua = os.environ['SEC_USER_AGENT']
+          s = requests.Session(); s.headers['User-Agent'] = ua
+          def save(name, data):
+              mode = 'wb' if isinstance(data, bytes) else 'w'
+              with open('out/' + name, mode) as f: f.write(data)
+          log = []
+          for t in ['SCHEDULE 13D', 'SCHEDULE 13G', 'SC 13D', '144']:
+              u = 'https://www.sec.gov/cgi-bin/browse-edgar'
+              r = s.get(u, params={'action': 'getcurrent', 'type': t, 'company': '', 'dateb': '', 'owner': 'include', 'start': 0, 'count': 40, 'output': 'atom'}, timeout=40)
+              save(f'feed-{t.replace(" ", "_")}.xml', r.content); log.append([t, r.status_code, len(r.content)])
+              links = re.findall(r'/Archives/edgar/data/(\d+)/(\d{18})/(\d{10}-\d{2}-\d{6})-index\.htm', r.text)
+              forms = re.findall(r'<category[^>]*term="([^"]+)"', r.text)
+              log.append([t, 'forms', sorted(set(forms))[:12], 'links', len(links)])
+              done = set()
+              for cik, folder, acc in links:
+                  if acc in done or len(done) >= 2: continue
+                  done.add(acc); time.sleep(0.3)
+                  x = s.get(f'https://www.sec.gov/Archives/edgar/data/{cik}/{folder}/{acc}.txt', timeout=40)
+                  save(f'{t.replace(" ", "_")}-{acc}.txt', x.content[:300000]); log.append([acc, x.status_code, len(x.content)])
+              time.sleep(0.5)
+          # FINRA short interest
+          f = requests.Session()
+          for name, body in [('finra-latest', {'limit': 3, 'sortFields': ['-settlementDate']}),
+                             ('finra-aapl', {'limit': 5, 'compareFilters': [{'compareType': 'EQUAL', 'fieldName': 'issueSymbolIdentifier', 'fieldValue': 'AAPL'}], 'sortFields': ['-settlementDate']})]:
+              try:
+                  r = f.post('https://api.finra.org/data/group/otcMarket/name/equityShortInterest', json=body,
+                             headers={'Accept': 'application/json', 'Content-Type': 'application/json'}, timeout=60)
+                  save(name + '.json', json.dumps({'status': r.status_code, 'headers': dict(r.headers), 'body': r.text[:20000]}, indent=1))
+                  log.append([name, r.status_code, len(r.content)])
+              except Exception as e:
+                  log.append([name, 'error', str(e)])
+          try:
+              r = f.get('https://api.finra.org/partitions/group/otcMarket/name/equityShortInterest', headers={'Accept': 'application/json'}, timeout=60)
+              save('finra-partitions.json', r.text[:20000]); log.append(['partitions', r.status_code])
+          except Exception as e:
+              log.append(['partitions', 'error', str(e)])
+          # Senate eFD
+          try:
+              e = requests.Session(); e.headers['User-Agent'] = 'Mozilla/5.0 (compatible; FilingFlows disclosure reader; ' + ua + ')'
+              home = e.get('https://efdsearch.senate.gov/search/home/', timeout=40)
+              tok = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', home.text)
+              log.append(['senate home', home.status_code, bool(tok), list(e.cookies.keys())])
+              if tok:
+                  a = e.post('https://efdsearch.senate.gov/search/home/', data={'prohibition_agreement': '1', 'csrfmiddlewaretoken': tok.group(1)},
+                             headers={'Referer': 'https://efdsearch.senate.gov/search/home/'}, timeout=40)
+                  log.append(['senate agree', a.status_code, a.url])
+                  csrf = e.cookies.get('csrftoken')
+                  q = e.post('https://efdsearch.senate.gov/search/report/data/', data={
+                      'start': '0', 'length': '25', 'report_types': '[11]', 'filer_types': '[]', 'submitted_start_date': '09/01/2026 00:00:00',
+                      'submitted_end_date': '', 'candidate_state': '', 'senator_state': '', 'office_id': '', 'first_name': '', 'last_name': '',
+                      'csrfmiddlewaretoken': csrf}, headers={'Referer': 'https://efdsearch.senate.gov/search/', 'X-CSRFToken': csrf or ''}, timeout=40)
+                  save('senate-search.json', q.text[:40000]); log.append(['senate search', q.status_code, len(q.text)])
+                  try:
+                      rows = q.json().get('data') or []
+                      for row in rows[:3]:
+                          m = re.search(r'href="([^"]+)"', ' '.join(map(str, row)))
+                          if m:
+                              p = e.get('https://efdsearch.senate.gov' + m.group(1), timeout=40, headers={'Referer': 'https://efdsearch.senate.gov/search/'})
+                              save('senate-' + re.sub(r'[^a-z0-9]+', '-', m.group(1).lower()).strip('-') + '.html', p.text[:200000])
+                              log.append(['senate report', m.group(1), p.status_code, len(p.text)])
+                  except Exception as ex:
+                      log.append(['senate parse', str(ex)[:200]])
+          except Exception as ex:
+              log.append(['senate', 'error', str(ex)[:300]])
+          save('log.json', json.dumps(log, indent=1))
+          print(json.dumps(log))
+      - name: Save to the branch probe-data
+        run: |
+          cd out
+          git init -q -b probe-data
+          git add -A
+          git -c user.name=filing-flows -c user.email=actions@users.noreply.github.com commit -qm "probe $(date -u +%FT%H:%MZ)"
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:probe-data
