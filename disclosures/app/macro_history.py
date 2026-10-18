@@ -24,6 +24,7 @@ import datetime as dt
 import io
 import json
 import math
+import os
 import time
 import urllib.request
 from pathlib import Path
@@ -31,6 +32,8 @@ from pathlib import Path
 import numpy as np
 
 FRED = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id={id}&cosd=1990-01-01'
+FRED_API = ('https://api.stlouisfed.org/fred/series/observations?series_id={id}&api_key={key}&file_type=json'
+            '&observation_start=1990-01-01')
 GRID0 = dt.date(2000, 1, 7)                      # the RRG grid (rotation_history.START)
 # id: (label, unit, frequency, publication lag in days after the period ends, group)
 SERIES = {
@@ -100,20 +103,36 @@ PHASES = ['Recovery (growth ↑, inflation ↓)', 'Overheat (growth ↑, inflati
 
 
 # ------------------------------------------------------------------ fetch
-def fetch(root, ids=None, max_age_h=20, pause=1.0, verbose=True):
+def _get(url, timeout):
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) FilingFlows/1.0 (public data reader)',
+                                               'Accept': 'text/csv,application/json;q=0.9,*/*;q=0.5'})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read().decode('utf-8', 'replace')
+
+
+def fetch_one(sid, timeout=25):
+    """CSV text for one series: the FRED API when FRED_API_KEY is set (fast, reliable), else the public CSV download."""
+    key = os.environ.get('FRED_API_KEY', '').strip()
+    if key:
+        body = json.loads(_get(FRED_API.format(id=sid, key=key), timeout))
+        return 'observation_date,' + sid + '\n' + '\n'.join(f"{o['date']},{o['value']}" for o in body.get('observations', []))
+    return _get(FRED.format(id=sid), timeout)
+
+
+def fetch(root, ids=None, max_age_h=20, pause=0.5, budget_s=300, verbose=True):
     folder = Path(root) / 'cache' / 'macro'
     folder.mkdir(parents=True, exist_ok=True)
-    got, failed = [], []
+    got, failed, t0 = [], [], time.time()
     for sid in ids or SERIES:
         p = folder / f'{sid}.csv'
         if p.exists() and time.time() - p.stat().st_mtime < max_age_h * 3600:
             continue
-        url = FRED.format(id=sid)
-        for attempt in range(3):
+        if time.time() - t0 > budget_s:
+            failed.append(f'{sid}: time budget used up (next run)')
+            continue
+        for attempt in range(2):
             try:
-                req = urllib.request.Request(url, headers={'User-Agent': 'FilingFlows rotation history (public data reader)'})
-                with urllib.request.urlopen(req, timeout=60) as r:
-                    body = r.read().decode('utf-8', 'replace')
+                body = fetch_one(sid)
                 rows = parse_csv(body)
                 if len(rows) < 12:
                     raise ValueError(f'only {len(rows)} rows')
@@ -121,12 +140,14 @@ def fetch(root, ids=None, max_age_h=20, pause=1.0, verbose=True):
                 got.append(sid)
                 break
             except Exception as exc:              # keep the old file; the next run tries again
-                if attempt == 2:
-                    failed.append(f'{sid}: {type(exc).__name__} {exc}')
-                time.sleep(2 * (attempt + 1))
+                if attempt == 1:
+                    failed.append(f'{sid}: {type(exc).__name__} {str(exc)[:120]}')
+                time.sleep(2)
         time.sleep(pause)
     if verbose:
-        print(f'macro fetch: {len(got)} updated, {len(failed)} failed', *failed, sep='\n  ', flush=True)
+        print(f'macro fetch: {len(got)} updated, {len(failed)} failed in {time.time() - t0:.0f}s', *failed, sep='\n  ', flush=True)
+        if os.environ.get('GITHUB_ACTIONS'):
+            print(f'::notice title=macro fetch::{len(got)} updated, {len(failed)} failed; ' + ' | '.join(failed)[:900], flush=True)
     return got, failed
 
 
