@@ -73,6 +73,15 @@ def holders_index():
                 'issuer': p.get('issuer'), 'cusip': p.get('cusip'), 'shares': p.get('shares'), 'value_usd': p.get('value_usd'),
                 'weight': p.get('weight'), 'status': ch.get('status', 'BASE'), 'delta_shares': ch.get('delta_shares'),
                 'price_avg_q': p.get('price_avg_q'), 'source_url': (s.get('sources') or [{}])[-1].get('url')})
+        for c in s.get('changes', []):                       # sold out this quarter: gone from the positions, kept for the pie
+            if c.get('status') != 'EXIT' or c.get('put_call') != 'NONE' or c.get('share_type') != 'SH':
+                continue
+            ticker = clean_ticker(c.get('ticker')) or by_cusip.get(c.get('cusip', ''))
+            if ticker:
+                out.setdefault(ticker, {'ticker': ticker, 'generated_at': generated, 'institutional': [], 'officials': []}).setdefault('exits', []).append({
+                    'manager': m.get('label') or m.get('name'), 'cik': m.get('cik'), 'period': s.get('period'), 'filed': s.get('filed'),
+                    'prior_shares': c.get('prior_shares'), 'prior_value_usd': c.get('prior_value_usd'),
+                    'source_url': (s.get('sources') or [{}])[-1].get('url')})
     # officials: reviewed, source-checked rows only
     for r in (live.get('modules', {}).get('congress', {}) or {}).get('records', []):
         ticker = clean_ticker(r.get('ticker'))
@@ -286,6 +295,11 @@ def main():
     for ticker, payload in holders.items():
         (hdir / f'{ticker}.json').write_text(json.dumps(payload, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
     (hdir / 'index.json').write_text(json.dumps({'tickers': sorted(holders), 'generated_at': next(iter(holders.values()), {}).get('generated_at')}), encoding='utf-8')
+    try:                                                     # pictures next to managers' and officials' names
+        import avatars
+        avatars.stage(out)
+    except Exception as exc:
+        print(f'::warning::avatars not built: {exc}')
     n = sum(1 for p in out.rglob('*') if p.is_file())
     print(f'disclosure hub staged to {out} ({n} files, holders for {len(holders)} tickers)')
 

@@ -2216,6 +2216,75 @@
     body.appendChild(box);
   }
 
+  // ---------- avatars: Congress portraits and the owner's pictures (disclosures/data/avatars.json, disclosures/automation/avatars.py);
+  // anyone without one gets initials. Name keys match avatars.py person_key / org_key.
+  let avLoad = null;
+  const avData = () => avLoad || (avLoad = fetch('disclosures/data/avatars.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
+  const AV_SKIP = new Set(['hon', 'honorable', 'dr', 'mr', 'mrs', 'ms', 'rep', 'sen', 'senator', 'representative', 'the', 'jr', 'sr', 'ii', 'iii', 'iv', 'md', 'phd', 'esq', 'cpa']);
+  const avAscii = (x) => String(x || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  function avKey(name) {
+    let s = avAscii(name);
+    if ((s.match(/,/g) || []).length === 1 && !/,\s*(jr|sr|ii|iii|iv)\b/.test(s)) { const [l, f] = s.split(','); s = f + ' ' + l; }
+    const w = s.split(/[^a-z]+/).filter((x) => x && x.length > 1 && !AV_SKIP.has(x));
+    return !w.length ? '' : w.length === 1 ? w[0] : w[0] + ' ' + w[w.length - 1];
+  }
+  const avOrg = (name) => avAscii(name).split(/[^a-z0-9]+/).filter(Boolean).join(' ');
+  function avatar(av, name, cik) {
+    av = av || {};
+    const M = av.managers || {}, byName = (av.manager_names || {})[avOrg(name)];
+    const img = ((cik != null && M[String(+cik)]) || (byName && M[byName]) || (av.people || {})[avKey(name)] || {}).image;
+    const w = String(name || '?').replace(/[^A-Za-z0-9 ]+/g, ' ').trim().split(/\s+/).filter((x) => !/^(inc|llc|lp|ltd|co|corp|the|of|and|mr|mrs|ms|hon|dr)$/i.test(x));
+    const ini = ((w[0] || '?')[0] + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase();
+    let hsh = 0;
+    for (const ch of String(name || '')) hsh = (hsh * 31 + ch.charCodeAt(0)) % 360;
+    const src = img ? (/^https:\/\//.test(img) ? img : 'disclosures/' + img) : '';
+    return `<span class="av" style="--av-h:${hsh}" data-i="${t(ini)}" aria-hidden="true">${src ? `<img class="av-img" src="${t(src)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}</span>`;
+  }
+  document.addEventListener('error', (e) => { if (e.target && e.target.classList && e.target.classList.contains('av-img')) e.target.remove(); }, true);
+
+  // ---------- who bought it: a donut of the 13F managers who bought in the latest quarter on file (by dollars bought), and
+  // how every filer moved (new · added · unchanged · cut · sold out). From holders/<TICKER>.json (stage-public.py).
+  function buyersPie(inst, exits, sym, av) {
+    const per = {};
+    inst.filter((x) => x.status !== 'BASE').forEach((x) => { per[x.period] = (per[x.period] || 0) + 1; });
+    const top = Math.max(0, ...Object.values(per));
+    const P = Object.keys(per).sort().reverse().find((k) => per[k] >= top * 0.5);
+    if (!P) return '';
+    const rows = inst.filter((x) => x.period === P), gone = (exits || []).filter((x) => x.period === P);
+    const px = (x) => (x.shares ? (x.value_usd || 0) / x.shares : 0);
+    const buys = rows.filter((x) => x.status === 'NEW' || x.status === 'INCREASE').map((x) => ({ ...x, usd: Math.max(0, x.delta_shares || 0) * px(x) }))
+      .filter((x) => x.usd > 0).sort((a, b) => b.usd - a.usd);
+    const n = { NEW: 0, INCREASE: 0, UNCHANGED: 0, DECREASE: 0, EXIT: gone.length };
+    rows.forEach((x) => { if (n[x.status] != null) n[x.status]++; });
+    const filers = n.NEW + n.INCREASE + n.UNCHANGED + n.DECREASE + n.EXIT;
+    if (!buys.length || filers < 2) return '';
+    const total = buys.reduce((a, x) => a + x.usd, 0), SL = 6;
+    const slices = buys.slice(0, SL).map((x, i) => ({ label: x.manager, cik: x.cik, usd: x.usd, cls: `s${i + 1}`, isNew: x.status === 'NEW' }));
+    if (buys.length > SL) slices.push({ label: `${buys.length - SL} other buyer${buys.length - SL === 1 ? '' : 's'}`, usd: buys.slice(SL).reduce((a, x) => a + x.usd, 0), cls: 'so', other: true });
+    const R = 70, r0 = 44, C = 80;
+    let a0 = -Math.PI / 2, arcs = '';
+    const pt = (rad, a) => `${(C + rad * Math.cos(a)).toFixed(2)},${(C + rad * Math.sin(a)).toFixed(2)}`;
+    for (const sl of slices) {
+      const f = sl.usd / total, a1 = a0 + f * 2 * Math.PI, big = a1 - a0 > Math.PI ? 1 : 0;
+      const d = f >= 0.9999 ? `M${pt(R, -Math.PI / 2)}A${R},${R} 0 1 1 ${pt(R, Math.PI * 1.4999)}A${R},${R} 0 1 1 ${pt(R, -Math.PI / 2)}M${pt(r0, -Math.PI / 2)}A${r0},${r0} 0 1 0 ${pt(r0, Math.PI * 1.4999)}A${r0},${r0} 0 1 0 ${pt(r0, -Math.PI / 2)}Z`
+        : `M${pt(R, a0)}A${R},${R} 0 ${big} 1 ${pt(R, a1)}L${pt(r0, a1)}A${r0},${r0} 0 ${big} 0 ${pt(r0, a0)}Z`;
+      arcs += `<path class="${sl.cls}" d="${d}" fill-rule="evenodd"><title>${t(sl.label)}: bought ≈ ${money(sl.usd)} (${(f * 100).toFixed(1)}% of all 13F buying)${sl.isNew ? ' · new position' : ''}</title></path>`;
+      a0 = a1;
+    }
+    const svg = `<svg class="pie13-svg" viewBox="0 0 160 160" role="img" aria-label="Share of 13F buying in ${t(sym)}, ${t(P)}">${arcs}
+      <text x="80" y="76" text-anchor="middle" class="pie13-big">${money(total).replace(/\.\d+/, '')}</text><text x="80" y="94" text-anchor="middle" class="pie13-small">bought by ${buys.length}</text></svg>`;
+    const legend = slices.map((sl) => `<li><i class="${sl.cls}"></i>${sl.other ? '<span class="av av-none"></span>' : avatar(av, sl.label, sl.cik)}<span class="pie13-name">${t(sl.label)}${sl.isNew ? ' <span class="badge">new</span>' : ''}</span>
+      <span class="num">${money(sl.usd)}</span><span class="num muted">${(sl.usd / total * 100).toFixed(1)}%</span></li>`).join('');
+    const seg = [['NEW', 'new position', 'bn'], ['INCREASE', 'added', 'ba'], ['UNCHANGED', 'unchanged', 'bu'], ['DECREASE', 'cut', 'bc'], ['EXIT', 'sold out', 'bx']];
+    const bar = seg.filter(([k]) => n[k]).map(([k, l, c]) => `<i class="${c}" style="flex:${n[k]}" title="${n[k]} ${l} (${(n[k] / filers * 100).toFixed(0)}% of ${filers} filers)"></i>`).join('');
+    const bought = n.NEW + n.INCREASE;
+    return `<div class="pie13"><h3>Who bought it (13F, quarter ended ${date(P)})</h3>
+      <p class="muted">Of the ${filers} processed 13F filers with ${t(sym)} in this quarter's report or the one before, ${bought} bought (${(bought / filers * 100).toFixed(0)}%; ${n.NEW} new positions), ${n.DECREASE} cut, ${n.EXIT} sold out and ${n.UNCHANGED} held still. Dollars bought ≈ shares added × the quarter-end price each filer reported; the slices are the largest buyers.</p>
+      <div class="pie13-row">${svg}<ol class="pie13-legend">${legend}</ol></div>
+      <div class="pie13-bar" role="img" aria-label="${seg.filter(([k]) => n[k]).map(([k, l]) => `${n[k]} ${l}`).join(', ')}">${bar}</div>
+      <div class="pie13-key">${seg.map(([k, l, c]) => `<span><i class="${c}"></i>${l} <b>${n[k]}</b></span>`).join('')}</div></div>`;
+  }
+
   async function holdersSection(body, ticker, here) {
     const sym = normTicker(ticker);
     if (!sym) return;
@@ -2224,10 +2293,12 @@
     box.innerHTML = `<div class="section-head"><h2>Holders and filings</h2><span class="muted">Loading 13F positions, filings and officials’ disclosures…</span></div>`;
     body.appendChild(box);
     let h = null;
+    const avP = avData();
     try {
       const r = await fetch(`disclosures/data/holders/${encodeURIComponent(sym)}.json`);
       if (r.ok) h = await r.json();
     } catch (e) { /* the hub has not published yet */ }
+    const av = await avP;
     if (!here() || !box.isConnected) return;
     const inst = (h && h.institutional) || [], off = (h && h.officials) || [], ins = (h && h.insiders) || [];
     const stakes = (h && h.stakes) || [], f144 = (h && h.form144) || [], shortH = (h && h.short) || [];
@@ -2247,7 +2318,7 @@
         <svg class="si-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Shares short in ${t(sym)}, ${t(shortH[0][0])} to ${t(last[0])}">${bars}</svg>
         <p class="muted">FINRA consolidated short interest, twice a month (${t(shortH[0][0])} – ${t(last[0])}): short positions brokers carry as of each settlement date, published about a week later. Days to cover = short position ÷ average daily volume.</p>`;
     };
-    const instRows = (all) => (all ? inst : inst.slice(0, SHOW)).map((x) => `<tr><td><b>${t(x.manager)}</b><br><span class="muted mono">CIK ${t(x.cik)}</span></td>
+    const instRows = (all) => (all ? inst : inst.slice(0, SHOW)).map((x) => `<tr><td><div class="av-row">${avatar(av, x.manager, x.cik)}<span><b>${t(x.manager)}</b><br><span class="muted mono">CIK ${t(x.cik)}</span></span></div></td>
         <td>${t(x.period)}<br><span class="muted">filed ${date(x.filed)}</span></td><td class="num">${whole(x.shares)}</td><td class="num">${money(x.value_usd)}</td>
         <td class="num">${x.weight == null ? '—' : (x.weight * 100).toFixed(1) + '%'}</td>
         <td class="num ${x.status === 'INCREASE' || x.status === 'NEW' ? 'pos' : x.status === 'DECREASE' ? 'neg' : ''}">${t(x.status === 'BASE' ? 'first filing' : x.status.toLowerCase())}${
@@ -2258,6 +2329,7 @@
         · from <a href="disclosures/">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}</span></div>
       ${h && (h.flows || h.signal) ? `<p class="holders-flow">${h.flows ? `<b>${t(h.flows.label || 'This quarter')}:</b> ${whole(h.flows.buyers)} managers added, ${whole(h.flows.sellers)} cut${h.flows.new ? ` (${whole(h.flows.new)} new positions)` : ''} · est. net ${h.flows.usd_net >= 0 ? '+' : '−'}${money(Math.abs(h.flows.usd_net))}` : ''}${
         h.signal && h.signal.tags && h.signal.tags.length ? ` · <a href="disclosures/#signals">Signals</a>: ${h.signal.tags.map((x) => `<span class="badge">${t(x.replace(/_/g, ' '))}</span>`).join(' ')}` : ''}</p>` : ''}
+      ${buyersPie(inst, (h && h.exits) || [], sym, av)}
       <h3>Institutional investors (13F)</h3>
       ${inst.length ? `<div class="tbl-wrap"><table><thead><tr><th>Manager</th><th>Quarter</th><th class="num">Shares</th><th class="num">Value</th>
         <th class="num">Of its portfolio</th><th class="num">Change vs prior quarter</th><th>Source</th></tr></thead><tbody id="inst-rows">${instRows(false)}</tbody></table></div>
@@ -2309,7 +2381,7 @@
       ${shortBlock()}
       <h3>Public officials</h3>
       ${off.length ? `<div class="tbl-wrap"><table><thead><tr><th>Person</th><th>Jurisdiction</th><th>Record</th><th>Disclosed amount</th><th>Date</th><th>Source</th></tr></thead><tbody>
-        ${off.map((r, i) => `<tr${i >= 10 ? ' class="off-more" hidden' : ''}><td><b>${t(r.person)}</b>${r.owner ? `<br><span class="muted">${t(r.owner)}</span>` : ''}</td><td>${t(r.jurisdiction)}</td>
+        ${off.map((r, i) => `<tr${i >= 10 ? ' class="off-more" hidden' : ''}><td><div class="av-row">${avatar(av, r.person)}<span><b>${t(r.person)}</b>${r.owner ? `<br><span class="muted">${t(r.owner)}</span>` : ''}</span></div></td><td>${t(r.jurisdiction)}</td>
           <td>${t(r.kind === 'transaction' ? (r.transaction_type || 'transaction') : 'asset')}${r.read === 'machine' ? ' <span class="muted" title="Read by machine from the official report; the ticker is the one the filer wrote. Open the page to confirm.">· auto-read</span>' : r.read === 'electronic' ? ' <span class="muted" title="From the Senate’s electronic report (eFD); the ticker is the one the filer entered.">· eFD</span>' : ''}<br><span class="muted">${t(r.asset)}</span></td>
           <td class="num">${t(amountRange(r))}${r.price_on_date ? `<br><span class="muted">≈ ${whole(r.est_shares_min)}${r.est_shares_max != null ? '–' + whole(r.est_shares_max) : '+'} sh at $${r.price_on_date.toFixed(2)} · est.</span>` : ''}</td>
           <td>${date(r.date)}</td><td>${r.source_url ? `<a href="${t(r.source_url)}${r.page ? '#page=' + r.page : ''}" target="_blank" rel="noopener">${r.page ? 'Page ' + r.page : r.read === 'electronic' ? 'Report' : 'Document'} ↗</a>` : '—'}</td></tr>`).join('')}
