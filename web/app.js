@@ -677,12 +677,12 @@
         b.className = 'btn';
         b.type = 'button';
         b.dataset.reread = p.cik;
-        b.title = 'Owner: the next scan reads this company’s stored figures again from SEC';
+        b.title = 'Owner: a short scan (owner fast lane) reads this company’s stored figures again from SEC';
         b.textContent = '↻ Re-read figures';
         meta.insertBefore(b, meta.querySelector('.tag.star, span:not(.tag)'));
         b.addEventListener('click', (ev) => withProgress(ev.currentTarget, toast, async () => {
           const r = await askReread([+p.cik]);
-          return r.ok ? 'Re-read asked: the next scan reads this company again' : r.msg;
+          return r.ok ? 'Re-read asked (owner fast lane): a short scan starts within a minute, usually done in 5–15 minutes' : r.msg;
         }));
       });
     }
@@ -3065,7 +3065,7 @@
     if (r.error && /limit/i.test(r.error.message)) return { ok: false, msg: 'Limit reached: 10 companies a day' };
     if (r.error) return { ok: false, msg: `Could not ask: ${r.error.message}` };
     if (await ownerVerified().catch(() => false))   // the database marks the owner's requests: a short scan starts now (scan.yml)
-      return { ok: true, msg: 'Asked (owner fast lane): a short scan starts now and repeats until it is built, usually 10–20 minutes' };
+      return { ok: true, msg: 'Asked (owner fast lane): a short scan starts within a minute and repeats until it is built, usually 10–20 minutes' };
     return { ok: true, msg: 'Asked: the next scan reads its filings from SEC' };
   }
   async function missingCompany(cik) {
@@ -4076,7 +4076,7 @@
       <section class="section"><div class="section-head"><h2>Settings</h2></div>${settingsHTML}</section>
       ${c ? `<section class="section" id="reread"><div class="section-head"><h2>Re-read stored figures</h2>
           <span class="muted">After a fix to how figures are read; otherwise the scan re-reads ${'a few dozen'} companies per run</span></div>
-        <p class="muted" style="max-width:72ch">The next scan (usually within minutes) reads these companies’ stored quarters and years again
+        <p class="muted" style="max-width:72ch">A short scan starts within a minute (owner fast lane; a regular scan that is running wraps up first) and reads these companies’ stored quarters and years again
           from SEC: D&amp;A, share-based compensation, revenue and its lines, and the latest quarter’s company-reported free cash flow.
           Then their charts and e-mails use the new figures.</p>
         <form class="row" id="reread-form"><input id="reread-list" placeholder="Tickers or CIKs, e.g. VST, ORCL, 1692819" style="min-width:min(28em,100%)"
@@ -4154,7 +4154,7 @@
       const ask = async (ciks, words, btn) => withProgress(btn, msg, async () => {
         const r = await askReread(ciks);
         showRereads(c);
-        return r.ok ? `${words}: the next scan reads them again.` : r.msg;
+        return r.ok ? `${words}: a short scan starts within a minute (owner fast lane) and reads them again.` : r.msg;
       });
       $('#reread-form').addEventListener('submit', async (ev) => {
         ev.preventDefault();
@@ -4276,7 +4276,7 @@
     if (!box || !box.isConnected || r.error || !(r.data || []).length) return;
     const ix = await getJSON('index.json').catch(() => ({ companies: [] }));
     const name = (cik) => (+cik === 0 ? 'Every stored company' : ((ix.companies.find((x) => +x.cik === +cik) || {}).ticker || `CIK ${cik}`));
-    const st = (x) => (x.status === 'done' ? `done ${date(x.done_at)}` : x.status === 'queued' ? 'reading in this scan' : x.status === 'failed' ? `failed: ${t(x.error || '')}` : 'waiting for the next scan');
+    const st = (x) => (x.status === 'done' ? `done ${date(x.done_at)}` : x.status === 'queued' ? 'reading in this scan' : x.status === 'failed' ? `failed: ${t(x.error || '')}` : 'waiting: a short scan starts within a minute');
     box.innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>Company</th><th>Asked</th><th>State</th></tr></thead><tbody>${
       r.data.map((x) => `<tr><td>${+x.cik ? `<a href="#c-${+x.cik}">${t(name(x.cik))}</a>` : t(name(x.cik))}</td><td>${date(x.created_at)}</td><td class="muted">${st(x)}</td></tr>`).join('')}</tbody></table></div>`;
   }

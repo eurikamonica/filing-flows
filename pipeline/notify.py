@@ -1380,11 +1380,16 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
             jobs.append((sub, plain, make))
     if not jobs:
         return 0
-    if len(jobs) > budget:
-        print(f"::warning::daily e-mail limit reached; {len(jobs) - max(budget, 0)} requests wait for the next run")
-        for _, ok_rows, _ in jobs[max(budget, 0):]:
+    from . import owner as _owner                  # the owner lane: the site owner's requests first, never held back
+    owners = _owner.owner_emails(supa)
+    mine = lambda j: str(j[0].get("email") or "").strip().lower() in owners
+    jobs.sort(key=lambda j: not mine(j))            # stable: otherwise in the order asked
+    cap = max(budget, sum(1 for j in jobs if mine(j)))
+    if len(jobs) > cap:
+        print(f"::warning::daily e-mail limit reached; {len(jobs) - max(cap, 0)} requests wait for the next run")
+        for _, ok_rows, _ in jobs[max(cap, 0):]:
             finish(ok_rows, status="pending", claimed_at=None)
-        jobs = jobs[:max(budget, 0)]
+        jobs = jobs[:max(cap, 0)]
     for sub, ok_rows, make in jobs:
         try:
             msg = make()

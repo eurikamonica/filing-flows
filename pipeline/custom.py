@@ -183,8 +183,19 @@ def claim(supa, table, now, done_status="working"):
 
 
 def process_charts(supa, now=None, limit=MAX_CHARTS_PER_RUN):
-    """Draw the comparisons readers asked for; returns how many were answered."""
-    rows = claim(supa, "chart_requests", now or _now())[:limit]
+    """Draw the comparisons readers asked for, the site owner's first (owner lane); returns how many were answered.
+    Ones over this run's limit go back to the queue for the next run."""
+    rows = claim(supa, "chart_requests", now or _now())
+    if rows:
+        from .owner_lane import owner_ids
+        try:
+            mine = owner_ids(supa)
+        except Exception:                                 # no site_owners table yet: in the order asked
+            mine = set()
+        rows.sort(key=lambda r: r.get("user_id") not in mine)   # stable: otherwise in the order asked
+    rows, later = rows[:limit], rows[limit:]
+    if later:
+        supa.update("chart_requests", {"id": f"in.({','.join(str(r['id']) for r in later)})"}, {"status": "pending", "claimed_at": None})
     done = 0
     for r in rows:
         try:

@@ -42,7 +42,7 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
   chart showing total revenue and a note why; readers can show them with the difference as its own line (Alerts,
   `subscriptions.lines_unmatched`).
 - **Re-read stored figures** (Owner tools, or ↻ *Re-read figures* on a company page; table `reread_requests`, owner
-  only): the next scan reads those companies' stored quarters and years again from SEC at once, instead of waiting
+  only): a short scan (the owner lane, below) reads those companies' stored quarters and years again from SEC at once, instead of waiting
   for the few dozen re-read per run. *Re-read every company* queues them all for the regular runs. The *Run workflow*
   form has the same as the `reread` field (tickers, CIKs or ALL).
 - **Data checks** (`pipeline/checks.py`): periods of unusual length, revenue jumps, odd margins, cash flow out of
@@ -218,6 +218,13 @@ addresses on the owner list can use them: run `insert into public.site_owners (e
 in the Supabase SQL Editor (after `supabase/schema.sql`) and sign in with that address. The list cannot be read through
 the site.
 
+- **Owner lane**: whatever the owner asks for goes first and is picked up within seconds, without the Supabase
+  wake-up. The X-post watch relay (`post-to-x.yml`, always running, a check every 20 seconds) also runs
+  `pipeline/owner_lane.py`: the owner's new companies and re-reads start a short scan (`scan.yml` with `fast`, 9-minute
+  budget, relayed until the companies are built); the owner's report e-mails, threads and comparisons start *Send
+  requested reports*, where they are served before readers' and never held back by the daily e-mail limit. A regular
+  scan that is running when the owner asks wraps up early (`pipeline/build.py` `time_up`) so the short scan follows
+  within minutes. Nothing is started while a run of that workflow is already waiting, or started after the request.
 - **X thread on company pages** (per browser): under each quarter, the filing, what each image shows with **Save PNG**,
   every post with its role and **Copy**, and **Email me this thread**.
 - **✦ X Article** (company pages, and the daily report under *Send a daily report now*): the report as an X Article,

@@ -87,14 +87,19 @@ jobs:
           OWNER_COMPANIES: ${{ github.event.inputs.companies }}
           OWNER_REREAD: ${{ github.event.inputs.reread }}
         run: |
+          # requests the owner makes from now on are not this scan's: a regular scan wraps up early for them (owner lane)
+          echo "OWNER_CLAIMED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
           python -m pipeline.custom claim-companies --out build-ciks.txt --owner-out owner-ciks.txt || true
           printf '%s\n' "$OWNER_COMPANIES" >> build-ciks.txt     # the owner's own list (Run workflow), no sign-in needed
-          # the owner's fast lane: the owner's own companies (site request or Run workflow) make this a short scan
-          if [ -s owner-ciks.txt ] || [ -n "$(echo "$OWNER_COMPANIES" | tr -d ' ,')" ] || [ "${{ github.event.inputs.fast }}" = "true" ]; then
-            echo "fast=true" >> "$GITHUB_OUTPUT"; echo "::notice::owner fast lane: a short scan for $(tr '\n' ' ' < owner-ciks.txt 2>/dev/null)$OWNER_COMPANIES"
-          fi
           python -m pipeline.custom claim-rereads --out reread-ciks.txt || true    # Owner tools: "Re-read stored figures"
           printf '%s\n' "$OWNER_REREAD" >> reread-ciks.txt
+          # the owner's fast lane: the owner's own companies (site request or Run workflow) or re-reads (owner only) make
+          # this a short scan; the watch relay (post-to-x.yml → pipeline/owner_lane.py) starts one within seconds
+          if [ -s owner-ciks.txt ] || [ -n "$(echo "$OWNER_COMPANIES" | tr -d ' ,')" ] || grep -q '[0-9]' reread-ciks.txt \
+             || [ "${{ github.event.inputs.fast }}" = "true" ]; then
+            echo "fast=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::owner fast lane: a short scan for $(tr '\n' ' ' < owner-ciks.txt 2>/dev/null)$OWNER_COMPANIES$(grep -q '[0-9]' reread-ciks.txt && echo " re-read $(tr '\n' ' ' < reread-ciks.txt)")"
+          fi
 
       - name: Scan new 10-Q / 10-K filings and build charts
         timeout-minutes: 42          # never the whole job: the data store is still saved below, so no work is lost
@@ -102,6 +107,7 @@ jobs:
           RUN_BUDGET_MINUTES: ${{ steps.claim.outputs.fast == 'true' && '9' || '32' }}   # the pipeline stops taking on new work after this (pipeline/build.py time_up); the owner's fast lane: 9
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}               # the owner's X post options for the threads on company pages
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OWNER_FAST: ${{ steps.claim.outputs.fast }}          # a fast scan never makes way; a regular one does (owner lane)
         run: |
           touch reread-ciks.txt
           python -m pipeline.build run --store store --out _site/data --build-ciks-file build-ciks.txt \

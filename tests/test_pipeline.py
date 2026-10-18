@@ -363,9 +363,12 @@ class _FakeSupa:
                 continue
             op, _, val = v.partition(".")
             cur = row.get(k)
-            if op == "eq" and str(cur) != val:
+            txt = str(cur).lower() if isinstance(cur, bool) else str(cur)   # PostgREST writes booleans as true / false
+            if op == "ilike" and txt.lower() != val.lower():
                 return False
-            if op == "in" and str(cur) not in val.strip("()").split(","):
+            if op == "eq" and txt != val:
+                return False
+            if op == "in" and txt not in val.strip("()").split(","):
                 return False
             if op == "is" and cur is not (val == "true"):
                 return False
@@ -972,6 +975,97 @@ def test_owner_fast_lane():
         def select(self, table, params):
             raise RuntimeError("Supabase 400: column company_requests.owner does not exist")
     assert custom.claim_owner_companies(NoColumn(), now) == ([], [])
+
+
+def test_owner_lane_starts_what_the_owner_waits_for(monkeypatch):
+    """The watch relay's owner lane: the owner's companies / re-reads start a short scan, the owner's e-mails and
+    comparisons start the request workflow — unless a run is already on its way; a running regular scan makes way."""
+    import datetime as dt
+    from pipeline import owner_lane as OL
+    now = dt.datetime(2026, 10, 18, 23, 30, tzinfo=dt.timezone.utc)
+    f = _FakeSupa([_sub("own", email="Owner@Example.com"), _sub("ann")],
+                  requests=[{"id": 1, "user_id": "own", "kind": "q", "status": "pending", "created_at": "2026-10-18T23:29:00+00:00"},
+                            {"id": 2, "user_id": "own", "kind": "post_8k", "status": "pending", "created_at": "2026-10-18T23:29:10+00:00"},
+                            {"id": 3, "user_id": "ann", "kind": "q", "status": "pending", "created_at": "2026-10-18T23:28:00+00:00"}],
+                  site_owners=[{"email": "owner@example.com"}],
+                  company_requests=[{"id": 7, "cik": 320193, "status": "pending", "owner": True, "created_at": "2026-10-18T23:29:30+00:00"},
+                                    {"id": 8, "cik": 789019, "status": "pending", "owner": False, "created_at": "2026-10-18T23:29:00+00:00"},
+                                    {"id": 9, "cik": 1018724, "status": "pending", "owner": True, "created_at": "2026-10-18T10:00:00+00:00"}],
+                  reread_requests=[{"id": 4, "cik": 0, "status": "pending", "created_at": "2026-10-18T23:29:40+00:00"}],
+                  chart_requests=[{"id": 5, "cik": 320193, "user_id": "own", "status": "pending", "created_at": "2026-10-18T23:29:50+00:00"},
+                                  {"id": 6, "cik": 320193, "user_id": "ann", "status": "pending", "created_at": "2026-10-18T23:29:50+00:00"}])
+    assert OL.owner_ids(f) == {"own"}
+    w = OL.waiting(f, now)
+    assert [x["what"] for x in w["scan"]] == ["build CIK 320193", "re-read every company"]      # readers' and old ones: no
+    assert [x["what"] for x in w["requests"]] == ["e-mail (q)", "comparison CIK 320193"]       # X posts: post-to-x itself
+
+    class GH:
+        def __init__(self, runs):
+            self.r, self.started = runs, []
+
+        def runs(self, wf, n=20):
+            return self.r.get(wf, [])
+
+        def start(self, wf, inputs):
+            self.started.append((wf, inputs))
+
+    old = {"id": 1, "status": "completed", "created_at": "2026-10-18T23:00:00Z"}
+    gh, st = GH({"scan.yml": [old], "requests.yml": [old]}), {}
+    assert OL.wake(f, gh, now, state=st, log=lambda *a: None) == ["scan", "requests"]
+    assert gh.started == [("scan.yml", {"fast": "true", "hop": "0"}), ("requests.yml", {})]
+    assert OL.wake(f, gh, now + dt.timedelta(seconds=30), state=st, log=lambda *a: None) == []       # once per 90 s
+    later = now + dt.timedelta(minutes=5)
+    assert OL.wake(f, GH({"scan.yml": [{"id": 2, "status": "pending", "created_at": "2026-10-18T23:20:00Z"}],
+                          "requests.yml": [{"id": 3, "status": "in_progress", "created_at": "2026-10-18T23:29:55Z"}]}),
+                   later, state={}, log=lambda *a: None) == []        # one waits to start; one started after the asks
+    assert OL.covered([old], w["scan"][0]) is None
+
+    # a regular scan that is running makes way once (asks Supabase at most once a minute); a fast scan never does
+    monkeypatch.setattr(OL, "_supa", lambda: f)
+    monkeypatch.setattr(OL, "_now", lambda: now)
+    monkeypatch.setenv("OWNER_CLAIMED_AT", "2026-10-18T23:29:35Z")
+    monkeypatch.delenv("OWNER_FAST", raising=False)
+    OL._yield.update(at=None, answer=False)
+    assert OL.should_yield(now_mono=100.0)                                 # the re-read asked after this scan claimed
+    monkeypatch.setenv("OWNER_CLAIMED_AT", "2026-10-18T23:29:45Z")
+    OL._yield.update(at=None, answer=False)
+    assert not OL.should_yield(now_mono=100.0) and not OL.should_yield(now_mono=130.0)   # nothing new; no second query yet
+    f.t["company_requests"].append({"id": 10, "cik": 1045810, "status": "pending", "owner": True, "created_at": "2026-10-18T23:31:00+00:00"})
+    assert not OL.should_yield(now_mono=150.0) and OL.should_yield(now_mono=161.0)
+    monkeypatch.setenv("OWNER_FAST", "true")
+    OL._yield.update(at=None, answer=False)
+    assert not OL.should_yield(now_mono=500.0)
+    OL._yield.update(at=None, answer=False)
+
+
+def test_owner_reports_go_first_and_are_never_held_back(tmp_path):
+    """At the daily e-mail limit the owner's report still goes out, ahead of a reader who asked earlier."""
+    import datetime as dt
+    from pipeline import notify
+    site = _site(tmp_path)
+    reqs = [{"id": 1, "user_id": "ann", "cik": 320193, "period_end": "2026-06-27", "status": "pending", "attempts": 0, "created_at": "2026-10-02T10:00:00+00:00"},
+            {"id": 2, "user_id": "cat", "cik": 9999901, "period_end": "2026-08-30", "status": "pending", "attempts": 0, "created_at": "2026-10-02T10:00:04+00:00"}]
+    now = dt.datetime(2026, 10, 2, 10, 5, tzinfo=dt.timezone.utc)
+    for limit, sent in ((1, ["cat@example.com"]), (0, ["cat@example.com"])):
+        supa, mail = _FakeSupa([_sub("ann"), _sub("cat")], (), reqs, site_owners=[{"email": "cat@example.com"}]), _FakeMailer()
+        assert notify.run(notify.Site(site), supa, mail, "x", "", now=now, images=False, hour=22, daily_limit=limit,
+                          requests_only=True) == 1
+        assert [m["To"] for m in mail.sent] == sent
+        assert {r["id"]: r["status"] for r in supa.t["send_requests"]} == {1: "pending", 2: "sent"}
+
+
+def test_owner_comparisons_go_first(monkeypatch):
+    """Over the per-run limit, the owner's comparison is drawn first and the reader's goes back to the queue."""
+    from pipeline import custom
+    f = _FakeSupa([_sub("own", email="owner@example.com"), _sub("ann")], site_owners=[{"email": "owner@example.com"}],
+                  chart_requests=[{"id": 1, "cik": 1, "user_id": "ann", "kind": "q", "a_end": "2026-03-31", "b_end": "2025-03-31",
+                                   "status": "pending", "created_at": "2026-10-18T10:00:00+00:00"},
+                                  {"id": 2, "cik": 2, "user_id": "own", "kind": "q", "a_end": "2026-03-31", "b_end": "2025-03-31",
+                                   "status": "pending", "created_at": "2026-10-18T11:00:00+00:00"}])
+    drawn = []
+    monkeypatch.setattr(custom, "comparison", lambda cik, kind, a, b: drawn.append(cik) or {"cik": cik})
+    assert custom.process_charts(f, limit=1) == 1 and drawn == [2]
+    assert {r["id"]: r["status"] for r in f.t["chart_requests"]} == {1: "pending", 2: "done"}
 
 
 def test_email_me_a_fiscal_year(tmp_path):

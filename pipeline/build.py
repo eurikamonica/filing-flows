@@ -89,8 +89,10 @@ def budget_s():
 
 
 def time_up(share=1.0, what=None):
-    """True once the run has used `share` of its budget (prints what waits, once per kind)."""
-    over = time.monotonic() - _t0[0] >= share * budget_s()
+    """True once the run has used `share` of its budget (prints what waits, once per kind) — or as soon as the site owner
+    asks for a company or a re-read this scan did not claim: it then wraps up so the owner's short scan follows
+    (pipeline/owner_lane.py should_yield)."""
+    over = time.monotonic() - _t0[0] >= share * budget_s() or owner_waiting()
     if over and what and what not in _said:
         _said.add(what)
         print(f"time budget: {what} continue in the next run")
@@ -98,6 +100,14 @@ def time_up(share=1.0, what=None):
 
 
 _said = set()
+
+
+def owner_waiting():
+    """The owner lane's yield check (at most one Supabase query a minute; off without Supabase or in a fast scan)."""
+    if not os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SEC_FIXTURES"):
+        return False
+    from .owner_lane import should_yield
+    return should_yield()
 
 
 # ---------------------------------------------------------------- per-run caches
