@@ -2285,6 +2285,214 @@
       <div class="pie13-key">${seg.map(([k, l, c]) => `<span><i class="${c}"></i>${l} <b>${n[k]}</b></span>`).join('')}</div></div>`;
   }
 
+  // ---------- 13F buying and selling beyond the donut: the same quarter as "Who bought it", seen four more ways ----------
+  // flows13: per filer what it bought or sold in the latest well-filed quarter (dollars ≈ shares × each filer's own
+  // quarter-end price), and the share bridge prior holdings → new / added / cut / sold out → holdings now.
+  function flows13(inst, exits) {
+    const per = {};
+    inst.filter((x) => x.status !== 'BASE').forEach((x) => { per[x.period] = (per[x.period] || 0) + 1; });
+    const top = Math.max(0, ...Object.values(per));
+    const P = Object.keys(per).sort().reverse().find((k) => per[k] >= top * 0.5);
+    if (!P) return null;
+    const rows = inst.filter((x) => x.period === P && x.status !== 'BASE'), gone = (exits || []).filter((x) => x.period === P);
+    const px = (x) => (x.shares ? (x.value_usd || 0) / x.shares : 0);
+    const buys = rows.filter((x) => (x.status === 'NEW' || x.status === 'INCREASE') && (x.delta_shares || 0) > 0)
+      .map((x) => ({ manager: x.manager, cik: x.cik, status: x.status, sh: x.delta_shares, usd: x.delta_shares * px(x) })).sort((a, b) => b.usd - a.usd);
+    const sells = rows.filter((x) => x.status === 'DECREASE' && (x.delta_shares || 0) < 0)
+      .map((x) => ({ manager: x.manager, cik: x.cik, status: 'DECREASE', sh: -x.delta_shares, usd: -x.delta_shares * px(x) }))
+      .concat(gone.filter((x) => x.prior_shares > 0).map((x) => ({ manager: x.manager, cik: x.cik, status: 'EXIT', sh: x.prior_shares, usd: x.prior_value_usd || 0 })))
+      .sort((a, b) => b.usd - a.usd);
+    const sum = (a, f) => a.reduce((s, x) => s + (f(x) || 0), 0);
+    const nowSh = sum(rows, (x) => x.shares), newSh = sum(buys.filter((x) => x.status === 'NEW'), (x) => x.sh), addSh = sum(buys.filter((x) => x.status === 'INCREASE'), (x) => x.sh);
+    const cutSh = sum(sells.filter((x) => x.status === 'DECREASE'), (x) => x.sh), exitSh = sum(sells.filter((x) => x.status === 'EXIT'), (x) => x.sh);
+    const priceAll = nowSh ? sum(rows, (x) => x.value_usd) / nowSh : 0;
+    return { P, rows, buys, sells, filers: rows.length + gone.length, priceAll,
+      bridge: { prior: nowSh - newSh - addSh + cutSh + exitSh, newSh, addSh, cutSh, exitSh, now: nowSh },
+      bought: sum(buys, (x) => x.usd), sold: sum(sells, (x) => x.usd) };
+  }
+  const SHORT_NAME = (s, n) => { const x = String(s || ''); return x.length > n ? x.slice(0, n - 1) + '…' : x; };
+  const STATUS13 = { NEW: ['bn', 'new position'], INCREASE: ['ba', 'added'], DECREASE: ['bc', 'cut'], EXIT: ['bx', 'sold out'] };
+  const megaSh = (v) => { const a = Math.abs(v); return (a >= 1e9 ? (a / 1e9).toFixed(2) + 'B' : a >= 1e6 ? (a / 1e6).toFixed(1) + 'M' : a >= 1e3 ? (a / 1e3).toFixed(0) + 'K' : Math.round(a).toString()); };
+
+  // 1 · buyers and sellers side by side, on one scale
+  function butterfly13(f, sym, av) {
+    if (!f.buys.length && !f.sells.length) return '';
+    const N = 8, max = Math.max(f.buys[0] ? f.buys[0].usd : 0, f.sells[0] ? f.sells[0].usd : 0) || 1;
+    const side = (list, total, word) => {
+      const rows = list.slice(0, N).map((x) => {
+        const [c, l] = STATUS13[x.status];
+        return `<li title="${t(x.manager)}: ${t(l)}, ${megaSh(x.sh)} shares ≈ ${money(x.usd)}"><span class="bf13-name">${avatar(av, x.manager, x.cik)}<span>${t(SHORT_NAME(x.manager, 34))}</span>${x.status === 'NEW' ? ' <span class="badge">new</span>' : x.status === 'EXIT' ? ' <span class="badge">sold out</span>' : ''}</span>
+          <span class="num">${money(x.usd)}</span><i class="bf13-bar ${c}" style="width:${Math.max(1.5, x.usd / max * 100).toFixed(1)}%"></i></li>`;
+      }).join('');
+      const rest = list.slice(N), more = rest.length ? `<li class="bf13-more muted">+ ${rest.length} more ${word === 'Bought' ? 'buyer' : 'seller'}${rest.length === 1 ? '' : 's'} · ${money(rest.reduce((a, x) => a + x.usd, 0))}</li>` : '';
+      return `<div class="bf13-side"><div class="bf13-h">${word} <b>${money(total)}</b> <span class="muted">· ${list.length} manager${list.length === 1 ? '' : 's'}</span></div><ol>${rows || '<li class="muted">None</li>'}${more}</ol></div>`;
+    };
+    return `<h3>Buyers and sellers (13F, quarter ended ${date(f.P)})</h3>
+      <p class="muted">The largest sellers on the left, the largest buyers on the right, on one scale: dollars ≈ shares added or sold × the quarter-end price each filer reported (sold out: the value it reported a quarter earlier). Net: <b class="${f.bought >= f.sold ? 'pos' : 'neg'}">${f.bought >= f.sold ? '+' : '−'}${money(Math.abs(f.bought - f.sold))}</b>.</p>
+      <div class="bf13">${side(f.sells, f.sold, 'Sold')}${side(f.buys, f.bought, 'Bought')}</div>`;
+  }
+
+  // 2 · the share bridge: holdings a quarter earlier → new / added / cut / sold out → holdings now
+  function bridge13(f, sym) {
+    const b = f.bridge;
+    if (!(b.prior > 0 || b.now > 0)) return '';
+    const steps = [['prior', 'A quarter earlier', b.prior, 'bu'], ['new', 'New positions', b.newSh, 'bn'], ['add', 'Added', b.addSh, 'ba'],
+      ['cut', 'Cut', -b.cutSh, 'bc'], ['exit', 'Sold out', -b.exitSh, 'bx'], ['now', `Quarter ended ${date(f.P).replace(/,? \d{4}$/, '')}`, b.now, 'bu']];
+    let run = 0;
+    const bars = steps.map(([k, l, v, c]) => {
+      if (k === 'prior' || k === 'now') { run = v; return { k, l, v, c, y0: 0, y1: v, total: true }; }
+      const y0 = run; run += v; return { k, l, v, c, y0, y1: run };
+    });
+    const hi = Math.max(...bars.map((x) => Math.max(x.y0, x.y1))), loMove = Math.min(...bars.filter((x) => !x.total).map((x) => Math.min(x.y0, x.y1)), b.prior, b.now);
+    const span = hi - loMove || hi || 1, base = Math.max(0, loMove - span * 1.2);   // a broken axis when the moves are small next to the totals
+    const W = 640, H = 230, top = 26, bot = 40, bw = 64, gap = (W - bars.length * bw) / (bars.length + 1);
+    const Y = (v) => top + (H - top - bot) * (1 - (v - base) / (hi - base || 1));
+    const out = bars.map((x, i) => {
+      const xl = gap + i * (bw + gap), ya = Y(Math.max(x.y0, x.y1)), yb = x.total ? H - bot : Y(Math.min(x.y0, x.y1));
+      const lab = x.total ? megaSh(x.v) : (x.v >= 0 ? '+' : '−') + megaSh(x.v);
+      const tip = `${x.l}: ${x.total ? '' : x.v >= 0 ? '+' : '−'}${whole(Math.abs(x.v))} shares${f.priceAll ? ` (≈ ${money(Math.abs(x.v) * f.priceAll)})` : ''}`;
+      const brk = x.total && base > 0 ? `<path class="br13-break" d="M${xl - 3},${H - bot - 14} l${bw / 4 + 3},-6 l${bw / 4},6 l${bw / 4},-6 l${bw / 4 + 3},6"/>` : '';
+      return `<g><rect class="${x.c}" x="${xl.toFixed(1)}" y="${ya.toFixed(1)}" width="${bw}" height="${Math.max(1.5, yb - ya).toFixed(1)}" rx="3"><title>${t(tip)}</title></rect>${brk}
+        <text class="br13-v" x="${(xl + bw / 2).toFixed(1)}" y="${(ya - 7).toFixed(1)}" text-anchor="middle">${lab}</text>
+        <text class="br13-l" x="${(xl + bw / 2).toFixed(1)}" y="${H - bot + 16}" text-anchor="middle">${t(x.l.split(' ').slice(0, 2).join(' '))}</text>
+        <text class="br13-l" x="${(xl + bw / 2).toFixed(1)}" y="${H - bot + 30}" text-anchor="middle">${t(x.l.split(' ').slice(2).join(' '))}</text></g>`;
+    }).join('');
+    const net = b.now - b.prior;
+    return `<h3>Where the shares went (13F, quarter ended ${date(f.P)})</h3>
+      <p class="muted">Shares of ${t(sym)} held by the ${f.filers} processed filers that reported it this quarter or the one before: a quarter earlier, then what new positions and additions brought and what cuts and exits took away. Net <b class="${net >= 0 ? 'pos' : 'neg'}">${net >= 0 ? '+' : '−'}${megaSh(net)} shares</b>${b.prior ? ` (${pct(net / b.prior * 100, 1)})` : ''}.${base > 0 ? ` The axis starts at ${megaSh(base)} shares (zigzag) so the changes show next to the totals.` : ''}</p>
+      <svg class="br13" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(`Share bridge for ${sym}: ${steps.map((x) => `${x[1]} ${megaSh(x[2])}`).join(', ')}`)}"><line class="br13-axis" x1="0" x2="${W}" y1="${H - bot}" y2="${H - bot}"/>${out}</svg>`;
+  }
+
+  // 3 · a flow (Sankey): sellers → the stock → buyers, band width = dollars
+  function sankey13(f, sym) {
+    if (!f.buys.length && !f.sells.length) return '';
+    const K6 = 6, group = (list, word) => {
+      const g = list.slice(0, K6).map((x) => ({ ...x }));
+      if (list.length > K6) g.push({ manager: `${list.length - K6} other ${word}${list.length - K6 === 1 ? '' : 's'}`, usd: list.slice(K6).reduce((a, x) => a + x.usd, 0), status: 'OTHER' });
+      return g.filter((x) => x.usd > 0);
+    };
+    const L = group(f.sells, 'seller'), R = group(f.buys, 'buyer');
+    const W = 680, gapN = 6, slot = 30, xl = 178, xr = 494, cx0 = 318, cx1 = 354, nw = 9, cy = 12;
+    const K = 260 / Math.max(f.sold, f.bought, 1), cH = Math.max(f.sold, f.bought) * K;   // the stock's node: 260 px for the larger side
+    const cls = (x) => (x.status === 'OTHER' ? 'bu' : STATUS13[x.status][0]);
+    let yL = cy, yR = cy, cL = cy, cR = cy, out = '';
+    const band = (x0, a0, a1, x1, b0, b1, c, tip) => `<path class="sk13-band ${c}" d="M${x0},${a0.toFixed(1)} C${(x0 + x1) / 2},${a0.toFixed(1)} ${(x0 + x1) / 2},${b0.toFixed(1)} ${x1},${b0.toFixed(1)} L${x1},${b1.toFixed(1)} C${(x0 + x1) / 2},${b1.toFixed(1)} ${(x0 + x1) / 2},${a1.toFixed(1)} ${x0},${a1.toFixed(1)} Z"><title>${t(tip)}</title></path>`;
+    // each manager's node is as tall as its dollars, but its slot is at least `slot` px so the two label lines never collide
+    const node = (x, y, h, left) => {
+      const c = cls(x), ly = y + Math.max(h, slot) / 2, tx = left ? xl - 6 : xr + nw + 6, anchor = left ? ' text-anchor="end"' : '';
+      const tail = x.status === 'EXIT' ? ' · sold out' : x.status === 'NEW' ? ' · new' : '';
+      return `<rect class="${c}" x="${left ? xl : xr}" y="${y.toFixed(1)}" width="${nw}" height="${h.toFixed(1)}" rx="2"/>
+        <text class="sk13-l" x="${tx}" y="${(ly - 2).toFixed(1)}"${anchor}>${t(SHORT_NAME(x.manager, 24))}</text>
+        <text class="sk13-v" x="${tx}" y="${(ly + 11).toFixed(1)}"${anchor}>${money(x.usd)}${tail}</text>`;
+    };
+    for (const x of L) {
+      const h = Math.max(1.5, x.usd * K);
+      out += band(xl + nw, yL, yL + h, cx0, cL, cL + h, cls(x), `${x.manager}: sold ≈ ${money(x.usd)}`) + node(x, yL, h, true);
+      yL += Math.max(h, slot) + gapN; cL += h;
+    }
+    for (const x of R) {
+      const h = Math.max(1.5, x.usd * K);
+      out += band(cx1, cR, cR + h, xr, yR, yR + h, cls(x), `${x.manager}: bought ≈ ${money(x.usd)}`) + node(x, yR, h, false);
+      yR += Math.max(h, slot) + gapN; cR += h;
+    }
+    out += `<rect class="sk13-mid" x="${cx0}" y="${cy}" width="${cx1 - cx0}" height="${Math.max(2, cH).toFixed(1)}" rx="3"/>
+      <text class="sk13-sym" x="${(cx0 + cx1) / 2}" y="${(cy + cH + 16).toFixed(1)}" text-anchor="middle">${t(sym)}</text>`;
+    const H = Math.ceil(Math.max(yL, yR, cy + cH + 26) + 6);
+    return `<h3>The quarter’s flow (13F, quarter ended ${date(f.P)})</h3>
+      <p class="muted">Sellers on the left (${money(f.sold)}), buyers on the right (${money(f.bought)}); each band’s width is the dollars. Quarter-end disclosures do not say who traded with whom — the bands only show both sides of the same quarter.</p>
+      <svg class="sk13" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(`13F flow for ${sym}: sold ${money(f.sold)}, bought ${money(f.bought)}`)}">${out}</svg>`;
+  }
+
+  // 4 · quarter by quarter: how many processed managers bought (up) and sold (down) in each quarter on file
+  function quarters13(q, sym) {
+    if (!q || !(q.rows || []).length) return '';
+    const idx = q.rows.map((r, i) => (r ? i : -1)).filter((i) => i >= 0).slice(-9);
+    if (idx.length < 2) return '';
+    const cov = q.coverage || [], best = Math.max(...idx.map((i) => cov[i] || 0)) || 1;
+    const W = 640, H = 230, mid = 108, amp = 82, n = idx.length, bw = Math.min(36, (W - 40) / n - 14), step = (W - 40) / n;
+    const max = Math.max(1, ...idx.map((i) => Math.max(q.rows[i][0], q.rows[i][1])));
+    const ql = (p) => `Q${Math.floor((+p.slice(5, 7) - 1) / 3) + 1} ’${p.slice(2, 4)}`;
+    const out = idx.map((i, k) => {
+      const [b, s, usd, holders, nw, ex] = q.rows[i], x = 20 + k * step + (step - bw) / 2, early = k === n - 1 && (cov[i] || 0) < best * 0.6;
+      const hb = b / max * amp, hs = s / max * amp, net = b - s;
+      const tip = `Quarter ended ${date(q.periods[i])}: ${whole(b)} bought (${whole(nw)} new positions), ${whole(s)} sold (${whole(ex)} sold out) · net ${net >= 0 ? '+' : '−'}${whole(Math.abs(net))} managers · est. net ${money(usd)} · ${whole(holders)} holders among the ${whole(cov[i])} managers processed for that quarter${early ? ' (early filers only)' : ''}`;
+      return `<g class="${early ? 'q13-early' : ''}"><title>${t(tip)}</title>
+        <rect class="ba" x="${x.toFixed(1)}" y="${(mid - hb).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, hb).toFixed(1)}" rx="3"/>
+        <rect class="bc" x="${x.toFixed(1)}" y="${mid}" width="${bw.toFixed(1)}" height="${Math.max(1, hs).toFixed(1)}" rx="3"/>
+        <text class="q13-n ${net >= 0 ? 'pos' : 'neg'}" x="${(x + bw / 2).toFixed(1)}" y="${(mid - hb - 6).toFixed(1)}" text-anchor="middle">${net >= 0 ? '+' : '−'}${whole(Math.abs(net))}</text>
+        <text class="q13-l" x="${(x + bw / 2).toFixed(1)}" y="${H - 22}" text-anchor="middle">${ql(q.periods[i])}</text>
+        <text class="q13-l muted" x="${(x + bw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle">${early ? 'early' : !usd ? '$0' : money(usd).replace(/\.\d([BMK])/, '$1')}</text></g>`;
+    }).join('');
+    return `<h3>Quarter by quarter (13F)</h3>
+      <p class="muted">Each quarter on file: processed managers that bought ${t(sym)} (up) and sold it (down), the net count above, and the estimated net dollars below. Pale: the newest quarter, which only early filers have reported so far. Older quarters fill in as the 13F history is processed, so compare the balance of each quarter rather than the heights.</p>
+      <div class="pie13-key"><span><i class="ba"></i>bought</span><span><i class="bc"></i>sold</span></div>
+      <svg class="q13" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(`Managers buying and selling ${sym} by quarter`)}"><line class="br13-axis" x1="10" x2="${W - 10}" y1="${mid}" y2="${mid}"/>${out}</svg>`;
+  }
+
+  // the five 13F views, one at a time (the choice is remembered)
+  function own13(inst, exits, sym, av, q) {
+    const f = flows13(inst, exits);
+    const views = [['donut', 'Who bought', buyersPie(inst, exits, sym, av)], ['bf', 'Buyers vs sellers', f ? butterfly13(f, sym, av) : ''],
+      ['bridge', 'Share bridge', f ? bridge13(f, sym) : ''], ['flow', 'Flow', f ? sankey13(f, sym) : ''], ['quarters', 'Quarter by quarter', quarters13(q, sym)]].filter((v) => v[2]);
+    if (!views.length) return '';
+    let on = prefs.get('own13', 'donut');
+    if (!views.some((v) => v[0] === on)) on = views[0][0];
+    return `<div class="own13 pie13">${views.length > 1 ? `<div class="seg own13-seg" role="group" aria-label="13F view">${views.map(([k, l]) => `<button type="button" data-own13="${k}" class="${k === on ? 'on' : ''}" aria-pressed="${k === on}">${l}</button>`).join('')}</div>` : ''}
+      ${views.map(([k, , html]) => `<div class="own13-view" data-view13="${k}"${k === on ? '' : ' hidden'}>${html}</div>`).join('')}</div>`;
+  }
+  function bindOwn13(box) {
+    box.querySelectorAll('[data-own13]').forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.own13;
+      prefs.set('own13', k);
+      box.querySelectorAll('[data-own13]').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
+      box.querySelectorAll('[data-view13]').forEach((v) => { v.hidden = v.dataset.view13 !== k; });
+    }));
+  }
+
+  // ---------- ETFs that hold it (data/etf/by/<TICKER>.json, app/etf.py): the largest by dollars, and the creations and
+  // redemptions that passed through to the stock month by month (each ETF's N-PORT flows × the stock's weight in it)
+  async function etfBy(sym) {
+    for (const k of [...new Set([sym, sym.replace(/-/g, '.')])]) {
+      try {
+        const r = await fetch(`disclosures/data/etf/by/${encodeURIComponent(k)}.json`);
+        if (r.ok) return await r.json();
+      } catch (e) { /* not published yet */ }
+    }
+    return null;
+  }
+  function etfBlock(d, sym) {
+    if (!d || !(d.rows || []).length) return '';
+    const rows = d.rows.slice(0, 10), max = Math.max(...rows.map((r) => r[3] || 0)) || 1;
+    const list = rows.map((r) => `<li title="${t(`${r[0]} ${r[1] || ''}: ${money(r[3])} of ${sym}, ${((r[2] || 0) * 100).toFixed(2)}% of the ETF${r[4] ? `, ETF assets ${money(r[4])}` : ''}`)}">
+        <span class="etf13-name"><b>${t(r[0])}</b> <span class="muted">${t(SHORT_NAME(r[1] || '', 40))}</span></span>
+        <span class="num">${money(r[3])}</span><span class="num muted">${((r[2] || 0) * 100).toFixed(r[2] >= 0.1 ? 1 : 2)}%</span>
+        <i class="etf13-bar" style="width:${Math.max(1.5, (r[3] || 0) / max * 100).toFixed(1)}%"></i></li>`).join('');
+    let flows = '';
+    const fl = d.flows;
+    if (fl && (fl.months || []).length >= 3) {
+      const net = fl.months.map((m, i) => (fl.in[i] || 0) - (fl.out[i] || 0)), best = Math.max(...(fl.cov || []).map((x) => x || 0)) || 1;
+      const W = 640, H = 226, mid = 96, amp = 74, n = fl.months.length, step = (W - 40) / n, bw = Math.min(30, step - 10);
+      const mx = Math.max(1, ...net.map(Math.abs));
+      const mon = (m) => new Date(m + '-15T00:00:00Z').toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+      const bars = fl.months.map((m, i) => {
+        const v = net[i], h = Math.abs(v) / mx * amp, x = 20 + i * step + (step - bw) / 2, part = (fl.cov[i] || 0) < best * 0.6;
+        const tip = `${m}: in ≈ ${money(fl.in[i])} (creations), out ≈ ${money(fl.out[i])} (redemptions), net ${money(v)} · ${fl.etfs[i]} ETFs${part ? ' — partial: not every ETF has reported this month yet' : ''}`;
+        const vl = !Math.round(v / 1e6) ? '0' : `${v >= 0 ? '+' : '−'}${money(Math.abs(v)).replace(/\.\d([BMK])/, '$1')}`;
+        return `<g class="${part ? 'q13-early' : ''}"><title>${t(tip)}</title><rect class="${v >= 0 ? 'etf13-in' : 'etf13-out'}" x="${x.toFixed(1)}" y="${(v >= 0 ? mid - h : mid).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, h).toFixed(1)}" rx="3"/>
+          <text class="q13-n ${v >= 0 ? 'pos' : 'neg'}" x="${(x + bw / 2).toFixed(1)}" y="${(v >= 0 ? mid - h - 5 : mid + h + 13).toFixed(1)}" text-anchor="middle">${vl}</text>
+          <text class="q13-l" x="${(x + bw / 2).toFixed(1)}" y="${H - 22}" text-anchor="middle">${mon(m)}</text>
+          ${i === 0 || m.endsWith('-01') ? `<text class="q13-l muted" x="${(x + bw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle">${m.slice(0, 4)}</text>` : ''}</g>`;
+      }).join('');
+      const tot = net.reduce((a, x) => a + x, 0);
+      flows = `<h3>ETF money into ${t(sym)}, month by month</h3>
+        <p class="muted">An estimate: each ETF’s creations and redemptions (N-PORT, monthly) × ${t(sym)}’s weight in its latest portfolio, summed over the ETFs that hold it (leveraged and inverse funds left out). ${fl.months.length} months: net <b class="${tot >= 0 ? 'pos' : 'neg'}">${money(tot)}</b>. Pale: months not every ETF has reported yet.</p>
+        <svg class="q13" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(`Estimated ETF flows into ${sym} by month`)}"><line class="br13-axis" x1="10" x2="${W - 10}" y1="${mid}" y2="${mid}"/>${bars}</svg>`;
+    }
+    return `<h3>ETFs that hold it</h3>
+      <p class="muted">${whole(d.etfs)} ETFs hold ${money(d.usd)} of ${t(sym)} in their latest N-PORT portfolios; the largest by dollars, with ${t(sym)}’s weight in each. <a href="disclosures/#etf">All ETFs →</a></p>
+      <ol class="etf13">${list}</ol>${flows}`;
+  }
+
   async function holdersSection(body, ticker, here) {
     const sym = normTicker(ticker);
     if (!sym) return;
@@ -2293,12 +2501,12 @@
     box.innerHTML = `<div class="section-head"><h2>Holders and filings</h2><span class="muted">Loading 13F positions, filings and officials’ disclosures…</span></div>`;
     body.appendChild(box);
     let h = null;
-    const avP = avData();
+    const avP = avData(), etfP = etfBy(sym);
     try {
       const r = await fetch(`disclosures/data/holders/${encodeURIComponent(sym)}.json`);
       if (r.ok) h = await r.json();
     } catch (e) { /* the hub has not published yet */ }
-    const av = await avP;
+    const av = await avP, etf = await etfP;
     if (!here() || !box.isConnected) return;
     const inst = (h && h.institutional) || [], off = (h && h.officials) || [], ins = (h && h.insiders) || [];
     const stakes = (h && h.stakes) || [], f144 = (h && h.form144) || [], shortH = (h && h.short) || [];
@@ -2329,13 +2537,14 @@
         · from <a href="disclosures/">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}</span></div>
       ${h && (h.flows || h.signal) ? `<p class="holders-flow">${h.flows ? `<b>${t(h.flows.label || 'This quarter')}:</b> ${whole(h.flows.buyers)} managers added, ${whole(h.flows.sellers)} cut${h.flows.new ? ` (${whole(h.flows.new)} new positions)` : ''} · est. net ${h.flows.usd_net >= 0 ? '+' : '−'}${money(Math.abs(h.flows.usd_net))}` : ''}${
         h.signal && h.signal.tags && h.signal.tags.length ? ` · <a href="disclosures/#signals">Signals</a>: ${h.signal.tags.map((x) => `<span class="badge">${t(x.replace(/_/g, ' '))}</span>`).join(' ')}` : ''}</p>` : ''}
-      ${buyersPie(inst, (h && h.exits) || [], sym, av)}
+      ${own13(inst, (h && h.exits) || [], sym, av, h && h.q13f)}
       <h3>Institutional investors (13F)</h3>
       ${inst.length ? `<div class="tbl-wrap"><table><thead><tr><th>Manager</th><th>Quarter</th><th class="num">Shares</th><th class="num">Value</th>
         <th class="num">Of its portfolio</th><th class="num">Change vs prior quarter</th><th>Source</th></tr></thead><tbody id="inst-rows">${instRows(false)}</tbody></table></div>
         ${inst.length > SHOW ? `<button class="btn" type="button" id="inst-more">Show all ${inst.length} managers</button>` : ''}
         <p class="muted">Quarter-end positions from 13F-HR filings of the managers processed so far (the hub works through SEC’s filer list in batches); not real-time holdings, and not every holder.</p>`
         : `<p class="muted">No processed 13F manager lists ${t(sym)} yet. Managers are processed in batches; prioritise one under Disclosures → Health.</p>`}
+      ${etfBlock(etf, sym)}
       <h3>Insiders (Form 4)</h3>
       ${ins.length ? `<div class="tbl-wrap"><table><thead><tr><th>Insider</th><th>Trade</th><th class="num">Shares</th><th class="num">Price</th><th class="num">Value</th><th>Date</th><th>Source</th></tr></thead><tbody>
         ${ins.slice(0, 12).map((x) => `<tr><td><b>${t(x.insider)}</b><br><span class="muted">${t(x.title || x.role || '')}</span></td>
@@ -2389,6 +2598,7 @@
         ${off.length > 10 ? `<button class="btn" type="button" id="off-more">Show all ${off.length} records</button>` : ''}
         <p class="muted">Disclosed value ranges from annual statements and transaction reports (US House, US Senate, New York, California, Canada, imports). Reviewed rows were checked against their source page; “auto-read” rows come straight from US House transaction reports and “eFD” rows from US Senate electronic reports, with the ticker the filer wrote. Ranges are not share counts.</p>`
         : `<p class="muted">No official’s disclosure names ${t(sym)} yet. US House and Senate transaction reports are read in batches; other jurisdictions appear once a disclosure is reviewed in Disclosures → PDF / OCR.</p>`}`;
+    bindOwn13(box);
     const more = $('#inst-more', box);
     if (more) more.addEventListener('click', () => { $('#inst-rows', box).innerHTML = instRows(true); more.remove(); });
     const offMore = $('#off-more', box);

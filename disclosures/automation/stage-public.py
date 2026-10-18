@@ -176,10 +176,15 @@ def holders_index():
     # this quarter's 13F flow and the signal flags, for the company page's summary line
     flows = load_json(DATA / 'market' / 'by-ticker.json', {})
     sig = {r['ticker']: r for r in load_json(DATA / 'market' / 'signals.json', {}).get('rows', [])}
+    # quarter by quarter (the 13F history on file): buyers, sellers, est. net dollars, holders, new, exits per quarter
+    qh = load_json(DATA / 'market' / 'by-ticker-quarters.json', {})
     for ticker, v in out.items():
         f = (flows.get('rows') or {}).get(ticker)
         if f:
             v['flows'] = dict(zip(flows.get('fields', []), f), label=flows.get('label'))
+        q = (qh.get('rows') or {}).get(ticker)
+        if q and sum(1 for x in q if x) >= 2:
+            v['q13f'] = {'periods': qh.get('periods'), 'coverage': qh.get('coverage'), 'fields': qh.get('fields'), 'rows': q}
         if ticker in sig:
             v['signal'] = {k: sig[ticker].get(k) for k in ('tags', 'heat', 'pressure')}
     for v in out.values():

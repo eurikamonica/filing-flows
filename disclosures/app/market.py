@@ -10,6 +10,8 @@ options13f.json       the put and call positions managers disclose in 13F (long 
                       per underlying, call and put notional, how many managers hold each, changes since the prior quarter,
                       the largest holders; per manager, the largest option books; the biggest position changes
 by-ticker-history.json net 13F managers (buyers − sellers) per ticker and quarter, for the rotation charts
+by-ticker-quarters.json the same quarters per ticker with buyers, sellers, estimated net dollars, holders, new and exits
+                      (the company pages' quarter-by-quarter chart, through stage-public.py)
 signals.json          one row per ticker joining the three: institutional crowding, officials' trades, price momentum
                       (daily closes), with transparent tags and a heat score. The Filing Flows publish step adds the
                       latest earnings figures (stage-public.py --site-data).
@@ -416,24 +418,31 @@ def build_flows(root, universe, scan=None, opts=None):
                                'lists': lists}
     out['history_periods'] = hist_periods
     out['history'] = history(summ, prices, hist_periods, listed)
-    out['_by_quarter'] = ticker_history(summ, universe, [p for p in sorted(coverage) if coverage[p] >= 10], coverage)
+    out['_by_quarter'] = ticker_history(summ, universe, [p for p in sorted(coverage) if coverage[p] >= 10], coverage, prices)
     out['_ctx'] = {'prices': prices, 'coverage': coverage, 'managers': managers, 'quarter': quarter}
     return out, every
 
 
-def ticker_history(summ, universe, periods, coverage):
-    """Net 13F managers (distinct buyers − sellers) per listed stock and quarter: {'periods', 'coverage', 'rows': {T: [n…]}}."""
-    rows = {}
+def ticker_history(summ, universe, periods, coverage, prices=None):
+    """Net 13F managers (distinct buyers − sellers) per listed stock and quarter: {'periods', 'coverage', 'rows': {T: [n…]}},
+    plus 'detail': {T: [[buyers, sellers, est. net dollars, holders, new, exits] or None …]} for the company pages'
+    quarter-by-quarter chart (stage-public.py → holders/<T>.json q13f; dollars at each quarter's median implied price)."""
+    rows, detail = {}, {}
     for i, period in enumerate(periods):
-        per = defaultdict(lambda: [set(), set()])
+        per = defaultdict(lambda: [set(), set(), 0.0, 0, 0, 0])
+        px = (prices or {}).get(period, {})
         for c, st in summ.get(period, {}).items():
             t = universe.cusip_ticker.get(c)
             if not t or universe.cusip_type.get(c) in FUND_TYPES:
                 continue
-            per[t][0] |= st['b']; per[t][1] |= st['s']
-        for t, (b, s_) in per.items():
+            a = per[t]
+            a[0] |= st['b']; a[1] |= st['s']
+            a[2] += (st['add'] - st['sold']) * (px.get(c) or 0)
+            a[3] += st['holders']; a[4] += st['new']; a[5] += st['exits']
+        for t, (b, s_, usd, holders, new, exits) in per.items():
             rows.setdefault(t, [None] * len(periods))[i] = len(b) - len(s_)
-    return {'periods': periods, 'coverage': [coverage.get(p, 0) for p in periods], 'rows': rows}
+            detail.setdefault(t, [None] * len(periods))[i] = [len(b), len(s_), round(usd), holders, new, exits]
+    return {'periods': periods, 'coverage': [coverage.get(p, 0) for p in periods], 'rows': rows, 'detail': detail}
 
 
 # ------------------------------------------------------------------ 13F option positions (puts and calls managers disclose)
@@ -929,7 +938,13 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
         _write(out_dir / 'by-ticker.json', {'generated_at': stamp, 'label': flows['windows']['quarter']['label'],
                                              'fields': ['buyers', 'sellers', 'new', 'exits', 'usd_net', 'holders'], 'rows': by})
         if by_quarter:
+            detail = by_quarter.pop('detail', None)
             _write(out_dir / 'by-ticker-history.json', {'generated_at': stamp, **by_quarter})
+            if detail:                            # the company pages' quarter-by-quarter 13F chart (stage-public.py)
+                _write(out_dir / 'by-ticker-quarters.json', {'generated_at': stamp, 'periods': by_quarter['periods'],
+                                                             'coverage': by_quarter['coverage'],
+                                                             'fields': ['buyers', 'sellers', 'usd_net', 'holders', 'new', 'exits'],
+                                                             'rows': detail})
         # CUSIP → ticker for the securities in 13F, so other tools (Owner tools' 13F posts) can name holdings
         _write(out_dir / 'cusip-tickers.json', {c: t for c, t in universe.cusip_ticker.items() if t})
         try:

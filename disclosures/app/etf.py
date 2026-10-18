@@ -710,6 +710,26 @@ def merge_latest(kind, root):
     return out
 
 
+def implied_flows(lst, fl_of, n=12):
+    """What ETF creations and redemptions passed through to one company, month by month (an estimate): each ETF's
+    N-PORT sales (+ reinvestments) and redemptions × the company's weight in that ETF's latest portfolio, summed over the
+    ETFs that hold it. Leveraged and inverse funds are left out (they get their exposure from swaps). cov: the share of the
+    dollars ETFs hold in the company whose fund reported that month (the newest months fill in as N-PORT reports arrive).
+    lst: [[symbol, weight, value held] …]; fl_of: symbol → (leveraged or inverse, {month: (in, out)})."""
+    keep = [(sym, w, v) for sym, w, v in lst if w and not fl_of.get(sym, (True, {}))[0]]
+    held = sum(v or 0 for _, _, v in keep)
+    agg = defaultdict(lambda: [0.0, 0.0, 0.0, 0])
+    for sym, w, v in keep:
+        for m, (i, o) in fl_of[sym][1].items():
+            a = agg[m]
+            a[0] += w * i; a[1] += w * o; a[2] += v or 0; a[3] += 1
+    months = sorted(agg)[-n:]
+    if len(months) < 3:
+        return None
+    return {'months': months, 'in': [round(agg[m][0]) for m in months], 'out': [round(agg[m][1]) for m in months],
+            'cov': [round(agg[m][2] / held, 3) if held else None for m in months], 'etfs': [agg[m][3] for m in months]}
+
+
 def nport_history(root):
     """Every report of every ETF series across the kept quarters → monthly flows (one row a month) and net assets."""
     out = {}
@@ -837,6 +857,7 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                 'cds_bps': r('c', 'cw'), 'sectors': {k: round(v, 4) for k, v in sorted(sect.items(), key=lambda x: -x[1])[:12]}, 'rows': rows}
 
     by = defaultdict(list)
+    fl_of = {}                                 # symbol → (leveraged / inverse, {month: (sales + reinvestments, redemptions)})
     parties = {k: defaultdict(lambda: {'etfs': 0, 'aum': 0.0, 'x': 0.0, 'y': 0.0}) for k in ('aps', 'custodians', 'lending', 'advisers', 'subadvisers', 'auditors', 'distributors', 'administrators', 'transfer')}
     raw_parties = defaultdict(list)            # kind → [(name, crd, aum, x, y)], merged after the loop
 
@@ -893,6 +914,8 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
         issuer = M.issuer_of(e.get('name')) or ((nc or {}).get('registrant') or {}).get('family')
         sh = shorts.get(sym)
         lev = bool(e.get('leveraged') or (nc or {}).get('multi_inverse'))
+        fl_of[sym] = (lev or bool(e.get('inverse')), {m: ((v[0] or 0) + (v[1] or 0), v[2] or 0)
+                                                      for m, v in sorted(((hh or {}).get('months') or {}).items())[-15:]})
         row = {'symbol': sym, 'name': e.get('name'), 'issuer': issuer, 'exchange': e.get('exchange'), 'act': e.get('act'), 'asset_class': ac, 'strategy': strat,
                'leveraged': bool(e.get('leveraged') or (nc or {}).get('multi_inverse')), 'inverse': bool(e.get('inverse')), 'category': fund.get('y_category'),
                'expense': expense, 'aum': aum, 'flows_3m': f3, 'flows_12m': f12, 'n_holdings': (h or {}).get('n'), 'top10': (h or {}).get('top10'),
@@ -947,7 +970,8 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
         lst.sort(key=lambda x: -((x[2] or (x[1] * (aum_of.get(x[0]) or 0)))))
         tot = sum((x[2] or 0) for x in lst)
         wj(pub / 'by' / f'{t.replace("/", "-")}.json', _clean({'ticker': t, 'etfs': len(lst), 'usd': tot, 'name': (cons_rows.get(t) or {}).get('name'),
-                                                                     'rows': [[x[0], names.get(x[0]), x[1], x[2], aum_of.get(x[0])] for x in lst[:400]]}))
+                                                                     'rows': [[x[0], names.get(x[0]), x[1], x[2], aum_of.get(x[0])] for x in lst[:400]],
+                                                                     'flows': implied_flows(lst, fl_of)}))
     fields = list(index_rows[0].keys()) if index_rows else []
     wj(pub / 'index.json', _clean({'generated_at': now(), 'fields': fields, 'rows': [[r[k] for k in fields] for r in index_rows]}))
     lt_ = {k: merge_parties(raw_parties.get(k, []), k) for k in parties}

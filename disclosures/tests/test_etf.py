@@ -161,6 +161,18 @@ class Build(unittest.TestCase):
             self.assertEqual(page['look_through']['eps_up'], 0.6)
             self.assertEqual(rows['TQQQ']['asset_class'], 'Leveraged / inverse')
 
+    def test_implied_flows_through_to_a_company(self):
+        fl = {'IVV': (False, {'2026-07': (1000.0, 400.0), '2026-08': (0.0, 200.0), '2026-09': (500.0, 0.0)}),
+              'QQQ': (False, {'2026-08': (300.0, 0.0), '2026-09': (100.0, 100.0)}),
+              'SQQQ': (True, {'2026-09': (9e9, 0.0)})}
+        f = E.implied_flows([['IVV', 0.1, 600.0], ['QQQ', 0.5, 400.0], ['SQQQ', 0.2, 1.0]], fl)
+        self.assertEqual(f['months'], ['2026-07', '2026-08', '2026-09'])
+        self.assertEqual(f['in'], [100, 150, 100])                     # 0.1 × 1000; 0.5 × 300; 0.1 × 500 + 0.5 × 100
+        self.assertEqual(f['out'], [40, 20, 50])
+        self.assertEqual(f['cov'], [0.6, 1.0, 1.0])                    # July: only IVV (60% of the dollars held) reported
+        self.assertEqual(f['etfs'], [1, 2, 2])                         # the inverse fund is left out
+        self.assertIsNone(E.implied_flows([['IVV', 0.1, 1.0]], {'IVV': (False, {'2026-09': (1.0, 0.0)})}))
+
 
 if __name__ == '__main__':
     unittest.main()

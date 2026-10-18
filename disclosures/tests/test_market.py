@@ -54,6 +54,17 @@ class Flows(unittest.TestCase):
         self.assertEqual(s['2026-06-30']['A']['split'], 10)
         self.assertTrue(s['2026-06-30']['IPO']['first'])
 
+    def test_ticker_history_detail_for_company_pages(self):
+        raw = {'2026-03-31': {'A': {'issuer': 'A', 'holders': 3, 'moves': [(100, 0, 0), (100, 0, 1), (100, 0, 2)]}},
+               '2026-06-30': {'A': {'issuer': 'A', 'holders': 2, 'moves': [(150, 100, 0), (0, 100, 1), (100, 100, 2)]}}}
+        prices = {'2026-03-31': {'A': 10.0}, '2026-06-30': {'A': 10.0}}
+        cov = {'2026-03-31': 3, '2026-06-30': 3}
+        s = market.summarise(raw, prices, cov)
+        uni = type('U', (), {'cusip_ticker': {'A': 'AAA'}, 'cusip_type': {}})()
+        h = market.ticker_history(s, uni, ['2026-03-31', '2026-06-30'], cov, prices)
+        self.assertEqual(h['rows']['AAA'], [3, 0])                       # net managers, as before (rotation charts)
+        self.assertEqual(h['detail']['AAA'][1], [1, 1, -500, 2, 0, 1])   # 1 bought 50, 1 sold out 100: −50 sh × $10
+
     def test_periods(self):
         q, ytd, early = market.pick_periods({'2025-12-31': 1100, '2026-03-31': 1090, '2026-06-30': 1080, '2026-09-30': 40})
         self.assertEqual((q, ytd, early), ('2026-06-30', ['2026-03-31', '2026-06-30'], '2026-09-30'))
