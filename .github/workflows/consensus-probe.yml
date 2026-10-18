@@ -2,7 +2,7 @@
 name: Consensus probe
 on:
   push:
-    branches: [feature/consensus]
+    branches: [feature/market-consensus]
     paths: [disclosures/app/consensus_probe.py, .github/workflows/consensus-probe.yml]
 permissions:
   contents: write
@@ -21,6 +21,6 @@ jobs:
       - name: Push the samples to a scratch branch
         if: always()
         run: |
-          cd probe && git init -q -b consensus-probe-data && git add -A
+          cd probe && git init -q -b mc-probe-data && git add -A
           git -c user.name=probe -c user.email=actions@users.noreply.github.com commit -q -m probe
-          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" consensus-probe-data
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" mc-probe-data
