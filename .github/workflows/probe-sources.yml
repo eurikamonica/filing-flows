@@ -1,5 +1,5 @@
 # Temporary: fetches raw samples of candidate news sources (press-release wires, war.gov contracts, FDA, SEC news and
-# enforcement, GDELT, an EDGAR 8-K and the daily index) to the branch "probe-data" so the collectors can be written
+# enforcement, GDELT, an EDGAR 8-K and the daily index) as a run artifact so the collectors can be written
 # against real answers. Removed once the collectors are in.
 name: Probe new data sources
 on:
@@ -73,10 +73,9 @@ jobs:
           with open('out/log.json', 'w') as f:
               json.dump(log, f, indent=1)
           print(json.dumps(log, indent=1))
-      - name: Save to the branch probe-data
-        run: |
-          cd out
-          git init -q -b probe-data
-          git add -A
-          git -c user.name=filing-flows -c user.email=actions@users.noreply.github.com commit -qm "probe $(date -u +%FT%H:%MZ)"
-          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:probe-data
+      - name: Keep the samples as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-samples
+          path: out/
+          retention-days: 3
