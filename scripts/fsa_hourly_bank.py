@@ -76,6 +76,23 @@ def annual(concepts,tags):
         if items:return tag,sorted(items.values(),key=lambda x:x["end"],reverse=True)
     return None,[]
 
+def quarterly(concepts,tags):
+    """Return duration-specific 10-Q quarters, not YTD cash-flow or revenue facts."""
+    for tag in tags:
+        entries={}
+        for value in concepts.get(tag,{}).get("units",{}).get("USD",[]):
+            try:
+                days=(date.fromisoformat(value["end"])-date.fromisoformat(value["start"])).days
+                valid=(value.get("form")=="10-Q" and value.get("fp") in ("Q1","Q2","Q3") and
+                       65<=days<=115 and isinstance(value["val"],(int,float)) and math.isfinite(value["val"]))
+                if valid and (value["end"] not in entries or
+                              value.get("filed","")>entries[value["end"]].get("filed","")):
+                    entries[value["end"]]=value
+            except (KeyError,TypeError,ValueError):
+                continue
+        if entries:return tag,sorted(entries.values(),key=lambda x:x["end"],reverse=True)
+    return None,[]
+
 def from_sec(doc,ticker,url):
     usgaap=doc.get("facts",{}).get("us-gaap",{});out=[]
     tag,revs=annual(usgaap,TAGS)
@@ -86,6 +103,21 @@ def from_sec(doc,ticker,url):
             inp=f"Official SEC companyfacts {ticker} {tag}: FY ending {prev['end']} revenue USD {prev['val']}; FY ending {cur['end']} revenue USD {cur['val']}. Compute YoY revenue growth FRACTION and source_id SEC."
             src={"kind":"sec","url":url,"ticker":ticker,"tag":tag,"accessions":[prev.get("accn"),cur.get("accn")]}
             out.append(q("sec_revenue_growth",inp,{"value":round((cur["val"]-prev["val"])/prev["val"],8),"source_id":"SEC"},src,"P1",False,["Same tag, annual period, USD","Cross-check original filing"]))
+    qtag,qrevs=quarterly(usgaap,TAGS)
+    if qrevs:
+        current=qrevs[0]
+        previous=next((r for r in qrevs[1:] if r.get("fp")==current.get("fp") and
+                       320<=(date.fromisoformat(current["end"])-date.fromisoformat(r["end"])).days<=400),None)
+        if previous and previous["val"]>0:
+            question_text=(f"Official SEC 10-Q {ticker} {qtag}, same fiscal quarter {current['fp']}: "
+                           f"prior FY quarter ended {previous['end']} revenue USD {previous['val']}; "
+                           f"current FY quarter ended {current['end']} revenue USD {current['val']}. "
+                           "Compute quarter YoY revenue change as FRACTION, JSON value/source_id SEC.")
+            source={"kind":"sec","url":url,"ticker":ticker,"tag":qtag,"quarter":current["fp"],
+                    "accessions":[previous.get("accn"),current.get("accn")]}
+            out.append(q("sec_quarter_growth",question_text,
+                         {"value":round((current["val"]-previous["val"])/previous["val"],8),"source_id":"SEC"},
+                         source,"P1",False,["10-Q facts must represent 3-month quarters, not YTD","Match fiscal quarter and tag"]))
     x,ocfs=annual(usgaap,["NetCashProvidedByUsedInOperatingActivities"])
     y,capexes=annual(usgaap,["PaymentsToAcquirePropertyPlantAndEquipment"])
     by_end={v["end"]:v for v in capexes}
