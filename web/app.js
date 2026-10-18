@@ -712,7 +712,7 @@
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
   // ---------- company tabs: Earnings · Cash & quality · Valuation ----------
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions']]
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates']]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   async function analysisPage(cik, which) {
@@ -736,6 +736,7 @@
         ${companyTabs(cik, which)}
       </div><div id="body"></div>`;
     const body = $('#body');
+    if (which === 'debt') return debtSection(body, cik, here);
     const D = c.quality;
     if (!D || !((D.q || []).length || (D.fy || []).length)) {
       body.innerHTML = `<p class="muted">The figures for this view have not been read for ${t(p.name)} yet: the scan reads a few dozen companies a run, largest first.</p>`;
@@ -749,6 +750,42 @@
     else if (which === 'revisions') revisionsSection(body, c);
     else if (which === 'bs') reformSection(body, c);
     else valuationSection(body, c, ticker, here);
+  }
+
+  // ---------- debt & rates: drawn by the Disclosure Hub's shared view (disclosures/debt-view.js, data from app/debt.py) ----------
+  let debtViewLoad = null;
+  const loadDebtView = () => debtViewLoad || (debtViewLoad = new Promise((ok, bad) => {
+    if (window.DebtView) return ok();
+    const sc = document.createElement('script');
+    sc.src = 'disclosures/debt-view.js';
+    sc.onload = () => ok();
+    sc.onerror = () => { debtViewLoad = null; bad(new Error('debt view did not load')); };
+    document.head.appendChild(sc);
+  }));
+  async function debtSection(body, cik, here) {
+    body.innerHTML = `<div class="section"><p class="muted">Loading debt, rates and credit risk…</p></div>`;
+    let d = null, err = null;
+    try {
+      const [r] = await Promise.all([fetch(`disclosures/data/debt/c/${cik}.json`), loadDebtView()]);
+      if (r.ok) d = await r.json();
+      else if (r.status !== 404) err = 'HTTP ' + r.status;
+    } catch (e) { err = e.message; }
+    if (!here()) return;
+    if (!d) {
+      body.innerHTML = `<div class="section"><p class="muted">${err ? 'The debt data could not load (' + t(err) + ').'
+        : 'The debt figures for this company have not been read yet: the collector reads a few hundred companies every two hours, largest first.'}</p>
+        <p class="muted">Market rates, banks’ deposits and the screener of every company are in the <a href="disclosures/#debt">Disclosure Hub → Debt &amp; rates</a>.</p></div>`;
+      return;
+    }
+    const box = document.createElement('div');
+    box.className = 'section debt-section';
+    body.innerHTML = '';
+    body.appendChild(box);
+    window.DebtView.render(box, d);
+    const more = document.createElement('p');
+    more.className = 'muted';
+    more.innerHTML = `Compare with every company, market rates and banks’ CDs in the <a href="disclosures/#debt">Disclosure Hub → Debt &amp; rates</a>.`;
+    body.appendChild(more);
   }
 
   // ---------- evidence drawer: where a figure comes from ----------
@@ -3852,7 +3889,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

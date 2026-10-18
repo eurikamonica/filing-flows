@@ -216,6 +216,7 @@ def main():
     ap.add_argument('--out', default='_site/disclosures')
     ap.add_argument('--site-data', default=None, help="the Sankey site's data folder (index.json), to join earnings into signals")
     ap.add_argument('--history', default=None, help="public/ of the branch rotation-history (the RRG and the long rotation)")
+    ap.add_argument('--debt', default=None, help="public/ of the branch debt-history (Debt & rates: app/debt.py)")
     args = ap.parse_args()
     out = Path(args.out)
     shutil.rmtree(out, ignore_errors=True)
@@ -229,6 +230,13 @@ def main():
             pass
         print(f"::notice::rotation history: {st.get('tickers_published')} tickers, built {st.get('built_at')}, "
               f"long momentum clock {st.get('long_quarters')}")
+    if args.debt and (Path(args.debt) / 'index.json').exists():
+        shutil.copytree(args.debt, out / 'data' / 'debt', dirs_exist_ok=True)
+        try:
+            st = json.loads((Path(args.debt) / 'status.json').read_text(encoding='utf-8'))
+            print(f"::notice::debt & rates: {st.get('companies')} companies, {st.get('banks')} banks, built {st.get('built_at')}")
+        except Exception:
+            pass
     if args.site_data:
         print(f'signals joined with earnings for {join_earnings(out, args.site_data)} tickers')
         try:

@@ -1,0 +1,84 @@
+# Debt & rates (Disclosures → Debt & rates, and the "Debt & rates" tab of each company page on the main site).
+# Every two hours: a batch of companies (largest first, then those with new filings or the stalest) — XBRL debt figures
+# and instruments, bond term sheets, credit agreements, 8-K financing events; FDIC deposits and CDs for banks; market
+# rates from FRED and the FDIC; then public/ is rebuilt with the safety analysis and the implied CDS (app/debt.py).
+# Kept on the branch "debt-history" (one commit, force-pushed); scan.yml publishes public/ with the hub.
+name: Debt and rates
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Read these first (comma separated)'
+        default: ''
+      minutes:
+        description: 'Minutes for the company batch'
+        default: '32'
+  schedule:
+    - cron: '23 */2 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: debt-history
+  cancel-in-progress: false
+jobs:
+  debt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 58
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      FDIC_API_KEY: ${{ secrets.FDIC_API_KEY }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            disclosures/app
+            disclosures/config
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The data branch and the inputs (site companies, weekly closes)
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" debt-history >/dev/null; then
+            git clone --quiet --depth 1 --branch debt-history "$url" debt
+          else
+            mkdir debt && git -C debt init --quiet -b debt-history && git -C debt remote add origin "$url"
+          fi
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          mkdir -p site && curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
+          if git ls-remote --exit-code --heads "$url" rotation-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch rotation-history "$url" rh
+            git -C rh sparse-checkout set public/t
+          fi
+          python -m pip install --quiet numpy
+          du -sh debt; ls debt
+      - name: Companies (XBRL, instruments, term sheets, credit agreements, 8-K events)
+        timeout-minutes: 38
+        env:
+          TICKERS: ${{ inputs.tickers }}
+        run: python disclosures/app/debt.py collect --root debt --site-index site/index.json --minutes "${{ inputs.minutes || '32' }}" --tickers "$TICKERS"
+      - name: Banks (FDIC deposits, CDs, deposit cost)
+        continue-on-error: true
+        timeout-minutes: 8
+        run: python disclosures/app/debt.py banks --root debt --minutes 6
+      - name: Market rates (FRED, FDIC national deposit rates)
+        continue-on-error: true
+        timeout-minutes: 6
+        run: python disclosures/app/debt.py rates --root debt
+      - name: Build public/ (safety analysis, implied CDS, calibration)
+        timeout-minutes: 8
+        run: python disclosures/app/debt.py build --root debt --prices rh/public
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd debt
+          printf '%s\n' '# debt-history (data only)' '' 'Parsed debt data per company (companies/), caches (cache/), progress (state.json) and the files the' \
+            'site publishes (public/), kept by .github/workflows/debt.yml on main. Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "debt $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "debt $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:debt-history && break; sleep $((i * 10)); done
+          python -c "import json; print(json.dumps(json.load(open('public/status.json'))))"
