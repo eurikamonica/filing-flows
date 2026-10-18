@@ -699,8 +699,10 @@ def calibrate_closed(h, root, markets, budget=150):
     c = read_json(p, {})
     new = 0
     for m in markets:
+        if m['kind'] != 'beat' or 'id' not in m:
+            continue
         old = c.get(str(m['id']))
-        if m['kind'] != 'beat' or not m.get('closed') or m.get('resolved') is None or not m.get('token') \
+        if not m.get('closed') or m.get('resolved') is None or not m.get('token') \
                 or (old and (old.get('p_day_before') is not None or (old.get('tries') or 1) >= 3)):
             continue
         if new >= budget:
@@ -929,6 +931,18 @@ def wiki_symbols(wikitext):
     return out
 
 
+def wiki_html_symbols(html):
+    """Tickers from the exchange links of a rendered Wikipedia article (tables transcluded from templates included),
+    before a 'Selected changes' / 'Former' section."""
+    html = re.split(r'id="(?:Selected_changes|Recent_changes|Former_components|Changes|See_also|References)', html, maxsplit=1)[0]
+    seen, out = set(), []
+    for a, b in re.findall(r'nyse\.com/quote/X[A-Z]{3}:([A-Za-z.\-]+)|nasdaq\.com/market-activity/stocks/([A-Za-z.\-]+)', html):
+        t = (a or b).upper().rstrip('.')
+        if t and t not in seen:
+            seen.add(t); out.append(t)
+    return out
+
+
 def collect_constituents(h, root, max_age_days=6):
     """Members (and weights where the source has them) of each index: iShares holdings (S&P 500 through IVV, Russell 2000
     through IWM), Nasdaq's Nasdaq-100 list, Wikipedia's tables; each must have about the right number of members."""
@@ -946,7 +960,16 @@ def collect_constituents(h, root, max_age_days=6):
         got, src, errs = None, None, []
         tries = []
         if i in ISHARES:
-            tries.append(('iShares ' + ('IVV' if i == 'spx' else 'IWM'), lambda i=i: parse_ishares(h.get(ISHARES[i], headers={'Accept': 'text/csv,*/*'}).decode('utf-8', 'replace'))))
+            def ishares(i=i):
+                for k in range(2):
+                    txt = h.get(ISHARES[i], headers={'Accept': 'text/csv,*/*'}).decode('utf-8-sig', 'replace')
+                    rows = parse_ishares(txt)
+                    if rows:
+                        return rows
+                    print(f'  iShares {i}: no holdings table in {len(txt)} bytes: {txt[:160]!r}', flush=True)
+                    time.sleep(5)
+                return []
+            tries.append(('iShares ' + ('IVV' if i == 'spx' else 'IWM'), ishares))
         if i == 'ndx':
             def nasdaq():
                 d = h.json('https://api.nasdaq.com/api/quote/list-type/nasdaq100')
@@ -954,8 +977,9 @@ def collect_constituents(h, root, max_age_days=6):
                 return [(r['symbol'].strip().upper(), None) for r in rows if r.get('symbol')]
             tries.append(('Nasdaq', nasdaq))
         if i in WIKI:
-            tries.append(('Wikipedia', lambda i=i: [(t, None) for t in wiki_symbols(
-                h.json(f'https://en.wikipedia.org/w/api.php?action=parse&page={urllib.parse.quote(WIKI[i])}&prop=wikitext&format=json&formatversion=2')['parse']['wikitext'])]))
+            api = f'https://en.wikipedia.org/w/api.php?action=parse&page={urllib.parse.quote(WIKI[i])}&format=json&formatversion=2'
+            tries.append(('Wikipedia', lambda api=api: [(t, None) for t in wiki_html_symbols(h.json(api + '&prop=text')['parse']['text'])]))
+            tries.append(('Wikipedia (wikitext)', lambda api=api: [(t, None) for t in wiki_symbols(h.json(api + '&prop=wikitext')['parse']['wikitext'])]))
         for name, fn in tries:
             try:
                 rows = fn()
@@ -1327,6 +1351,11 @@ def build_indices(root, recs, mk, mhist, ours, pledger, by_t, rot=None):
                 m['implied_price'] = {k: (st.get(k) or {}).get('value') * f if (st.get(k) or {}).get('value') is not None else None for k in ('q10', 'q25', 'median', 'q75', 'q90')}
                 m['implied_bounds'] = {k: (st.get(k) or {}).get('bound') for k in ('q10', 'median', 'q90')}
         mem = (cons.get(i) or {}).get('members') or []
+        if i == 'rut' and not mem:                             # no list this week: the companies ranked 1,001–3,000 by market value stand in
+            by_cap = sorted([r for r in recs.values() if (r.get('analysts') or {}).get('price') and (r.get('analysts') or {}).get('shares')],
+                            key=lambda r: -r['analysts']['price'] * r['analysts']['shares'])
+            mem = [(r['ticker'], None) for r in by_cap[1000:3000]]
+            cons.setdefault(i, {})['source'] = 'the companies ranked 1,001–3,000 by market value on file, as the Russell 2000 is built (no holdings list this week)'
         if i == 'spx' and not mem:                             # no list this week: the 500 largest companies on file stand in
             big = sorted([r for r in recs.values() if (r.get('analysts') or {}).get('price') and (r.get('analysts') or {}).get('shares')],
                          key=lambda r: -r['analysts']['price'] * r['analysts']['shares'])[:500]
