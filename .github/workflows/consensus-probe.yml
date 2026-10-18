@@ -1,0 +1,26 @@
+# TEMPORARY (removed before merge): consensus source samples pushed to a scratch branch.
+name: Consensus probe
+on:
+  push:
+    branches: [feature/consensus]
+    paths: [disclosures/app/consensus_probe.py, .github/workflows/consensus-probe.yml]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: disclosures/app
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python disclosures/app/consensus_probe.py probe
+      - name: Push the samples to a scratch branch
+        if: always()
+        run: |
+          cd probe && git init -q -b consensus-probe-data && git add -A
+          git -c user.name=probe -c user.email=actions@users.noreply.github.com commit -q -m probe
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" consensus-probe-data
