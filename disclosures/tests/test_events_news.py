@@ -136,6 +136,16 @@ class EightK(unittest.TestCase):
         self.assertEqual(p.read_bytes(), b)
 
 
+class Hosts(unittest.TestCase):
+    def test_every_source_host_is_approved(self):
+        """Oct 18 2026: the first news run failed every PR Newswire and FDA feed with "Unapproved data host"."""
+        from urllib.parse import urlparse
+        import ownership, senate, shorts
+        urls = list(N.PRN) + [N.OPENFDA, N.FDA_PRESS] + [u for _, u in N.SEC_FEEDS] + [E.FEED, ownership.FEED, ownership.DAILY,
+                                                                                   shorts.PARTS, shorts.DATA, senate.HOME]
+        self.assertEqual([u for u in urls if urlparse(u).hostname not in core.HOSTS], [])
+
+
 class News(unittest.TestCase):
     def setUp(self):
         self.root = Path(tempfile.mkdtemp())
