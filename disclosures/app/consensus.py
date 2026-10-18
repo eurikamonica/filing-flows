@@ -943,6 +943,9 @@ def wiki_html_symbols(html):
     return out
 
 
+DIAG = {}
+
+
 def collect_constituents(h, root, max_age_days=6):
     """Members (and weights where the source has them) of each index: iShares holdings (S&P 500 through IVV, Russell 2000
     through IWM), Nasdaq's Nasdaq-100 list, Wikipedia's tables; each must have about the right number of members."""
@@ -967,6 +970,7 @@ def collect_constituents(h, root, max_age_days=6):
                     if rows:
                         return rows
                     print(f'  iShares {i}: no holdings table in {len(txt)} bytes: {txt[:160]!r}', flush=True)
+                    DIAG[i] = f'{len(txt)} bytes, starts {txt[:100]!r}'
                     time.sleep(5)
                 return []
             tries.append(('iShares ' + ('IVV' if i == 'spx' else 'IWM'), ishares))
@@ -978,7 +982,14 @@ def collect_constituents(h, root, max_age_days=6):
             tries.append(('Nasdaq', nasdaq))
         if i in WIKI:
             api = f'https://en.wikipedia.org/w/api.php?action=parse&page={urllib.parse.quote(WIKI[i])}&format=json&formatversion=2'
-            tries.append(('Wikipedia', lambda api=api: [(t, None) for t in wiki_html_symbols(h.json(api + '&prop=text')['parse']['text'])]))
+            def wiki(api=api, i=i):
+                html = h.json(api + '&prop=text')['parse']['text']
+                got = wiki_html_symbols(html)
+                if len(got) < 20:
+                    k = html.find('MMM') if i == 'dji' else html.find('AAPL')
+                    DIAG[i] = f'{len(html)} chars, ids {re.findall(r"<h2[^>]*id=.([A-Za-z_]+)", html)[:12]}, around ticker {html[max(0, k - 160):k + 40]!r}'
+                return [(t, None) for t in got]
+            tries.append(('Wikipedia', wiki))
             tries.append(('Wikipedia (wikitext)', lambda api=api: [(t, None) for t in wiki_symbols(h.json(api + '&prop=wikitext')['parse']['wikitext'])]))
         for name, fn in tries:
             try:
@@ -986,7 +997,7 @@ def collect_constituents(h, root, max_age_days=6):
                 if lo <= len(rows) <= hi:
                     got, src = rows, name
                     break
-                errs.append(f'{name}: {len(rows)} members')
+                errs.append(f'{name}: {len(rows)} members' + (f' ({DIAG.pop(i)})' if DIAG.get(i) else ''))
             except Exception as exc:
                 errs.append(f'{name}: {str(exc)[:80]}')
         if got:
@@ -1219,7 +1230,8 @@ def bottom_up(members, recs_n, weighting, beat_p=None, today=None):
         r['w'] = (r['w'] or 0) / tot
     T = [r for r in rows if r['w'] and r['price'] and (r['a'].get('targets') or {}).get('mean')]
     wT = sum(r['w'] for r in T)
-    agg = lambda key: sum(r['w'] * ((r['a']['targets'].get(key) or r['a']['targets']['mean']) / r['price'] - 1) for r in T) / wT if wT else None
+    clip = lambda v: max(-0.6, min(1.0, v))     # one company's target at most +100% / −60%: thinly covered small caps carry outliers
+    agg = lambda key: sum(r['w'] * clip((r['a']['targets'].get(key) or r['a']['targets']['mean']) / r['price'] - 1) for r in T) / wT if wT else None
     per = lambda r, p: next((x for x in r['a'].get('periods') or [] if x['period'] == p), {})
     E0 = E1 = Ep = C = 0.0
     nE = 0
@@ -1381,8 +1393,9 @@ def build_indices(root, recs, mk, mhist, ours, pledger, by_t, rot=None):
                     'ours_q': (r.get('ours') or {}).get('next quarter'), 'ours_m': (r.get('ours') or {}).get('next month'),
                     'next_earnings': (r['a'].get('next_earnings') or {}).get('date'), 'beat_prob': beat_p.get(r['t'])} for r in top]
         pm = [m for m in live if m.get('implied_price') and m['implied_price'].get('median') and (m['end'] or '') >= (dt.date.today() + dt.timedelta(days=5)).isoformat()]
-        pm_pick = min(pm, key=lambda m: (m['end'], m['source'] != 'polymarket')) if pm else None
-        pm_far = max(pm, key=lambda m: (m['end'], m['source'] == 'kalshi')) if pm else None
+        unb = lambda m: not any((m.get('implied_bounds') or {}).values())
+        pm_pick = min(pm, key=lambda m: (m['end'], not unb(m), m['kind'] != 'bracket')) if pm else None
+        pm_far = max(pm, key=lambda m: (m['end'], unb(m), m['kind'] == 'bracket', len((m.get('stats') or {}).get('buckets') or []))) if pm else None
         ud = [m for m in live if m['kind'] == 'updown' and m.get('p') is not None]
         ud_pick = min(ud, key=lambda m: (m['end'] or '9999')) if ud else None
         oq = next((o for o in ours_doc if o['horizon'] == 'next quarter'), None)
