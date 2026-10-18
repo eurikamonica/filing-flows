@@ -36,6 +36,10 @@ ROOT = Path(__file__).resolve().parents[1]
 STATE = 'holdings-backfill.json'
 
 
+class Blocked(RuntimeError):
+    """SEC answered 403: its fair-access block. The run stops (and the relay waits) instead of going on."""
+
+
 class SecGet:
     """SEC fetches at a fixed pace (one request every `interval` seconds across all hosts), with retries and back-off.
     Nothing is stored on disk (the collector's Client keeps every raw response; a back-fill would fill the runner)."""
@@ -66,7 +70,7 @@ class SecGet:
                 err = f'HTTP {exc.code}'
                 if exc.code == 403:                      # SEC's rate block: back off hard, then give up on this run
                     time.sleep(60)
-                    raise RuntimeError('HTTP 403 from SEC (rate limit?)') from None
+                    raise Blocked('HTTP 403 from SEC (rate limit?)') from None
                 if exc.code not in (429, 500, 502, 503, 504):
                     raise RuntimeError(err) from None
                 time.sleep(min(30, 3 * 2 ** attempt))
@@ -171,12 +175,12 @@ def run(data, cfg, minutes=33.0, interval=0.15, shard=None, sec=None, limit=None
             state['managers'][cik] = write_manager(data, row)
             a.update(last_success=row['last_success'], error=None, fails=0, retry_after=None)
             done += 1
-        except Exception as exc:
+        except Exception as exc:                 # a parse error's text can contain "403" too: only Blocked stops the run
             errors += 1
             a['error'] = str(exc)[:200]
             a['fails'] = int(a.get('fails') or 0) + 1
             a['retry_after'] = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=min(168, 6 * 2 ** a['fails']))).isoformat(timespec='seconds')
-            if '403' in str(exc):
+            if isinstance(exc, Blocked) or isinstance(exc.__cause__, Blocked):
                 blocked = str(exc)
                 break
         if (done + errors) % 25 == 0:
