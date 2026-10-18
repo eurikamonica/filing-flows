@@ -858,6 +858,8 @@ def _figs(fq, cj, tk):
 
 def holder_name(r):
     """The largest reporting person when the filing spells the name properly, else the filer (EDGAR's upper case)."""
+    if r.get("holder"):                                  # the hub's choice (app/ownership.py holder_of), in reading order
+        return social.display_name(r["holder"])
     p = (r.get("person") or "").strip()
     return p if p and p != p.upper() else social.display_name(r.get("filer") or p or "A holder")
 
@@ -919,10 +921,16 @@ def plan_stake_for(site, rows, by_ticker, target, today):
     return stake_plan(r, tk, e if fq else None, cj, fq, today)
 
 
+def relation(text):
+    """'Officer, Director, 10% Stockholder' → 'officer, director and 10% stockholder'."""
+    parts = [x.strip().lower() for x in (text or "").split(",") if x.strip()]
+    return ", ".join(parts[:-1]) + " and " + parts[-1] if len(parts) > 1 else (parts[0] if parts else "")
+
+
 def f144_plan(r, tk, e, cj, fq, today):
     """The post plan for one Form 144 notice (a row of the hub's form144.json)."""
     who = social.display_name(r.get("seller_name") or r.get("seller") or "An insider")     # "Marc A. Nemati", not EDGAR's "Nemati Marc A."
-    rel = (r.get("relationship") or "").lower().replace(", ", " and ")
+    rel = relation(r.get("relationship"))
     what = _what(tk, r.get("issuer"))
     filed = r.get("filed") or ""
     fresh = filed >= (today - dt.timedelta(days=2)).isoformat()

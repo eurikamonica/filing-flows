@@ -351,12 +351,21 @@ def cik_tickers(root):
     return out
 
 
+def holder_of(r):
+    """Who to name for a 13D / 13G: the largest reporting person, in reading order ("David James Donnalley", not EDGAR's
+    conformed "Donnalley David James"), or the filer when the person's name is in EDGAR's upper case."""
+    p, f = (r.get('person') or '').strip(), (r.get('filer') or '').strip()
+    if p and r.get('person_type') == 'IN' and p.upper() == f.upper():
+        return natural_name(p, True)
+    return p if p and p != p.upper() else f or p
+
+
 def with_changes(stakes, tickers):
     """Tickers, and each filing's change against the same filer's previous filing on the same company (oldest first)."""
     prev = {}
     out = []
     for r in sorted(stakes, key=lambda r: (r.get('filed') or '', r['accession'])):
-        r = {**r, 'ticker': tickers.get(r.get('issuer_cik') or '', '')}
+        r = {**r, 'ticker': tickers.get(r.get('issuer_cik') or '', ''), 'holder': holder_of(r)}
         k = (r.get('filer_cik') or r.get('filer'), r.get('issuer_cik'))
         p = prev.get(k)
         if p:

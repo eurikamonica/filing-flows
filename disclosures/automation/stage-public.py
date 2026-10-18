@@ -126,7 +126,7 @@ def holders_index():
             count[t] = count.get(t, 0) + 1
             r['label'] = OWN.stake_label(r)
             base(t).setdefault('stakes', []).append({k: (OWN._clip(r[k], 280) if k == 'purpose' else r.get(k)) for k in (
-                'form', 'filed', 'event_date', 'filer', 'person', 'persons', 'percent', 'shares', 'change', 'prev_percent', 'label',
+                'form', 'filed', 'event_date', 'filer', 'holder', 'person', 'persons', 'percent', 'shares', 'change', 'prev_percent', 'label',
                 'rule', 'purpose', 'url') if r.get(k) not in (None, '')})
         count = {}
         for r in OWN._load(DATA / 'cache' / 'ownership' / 'form144.json.gz'):

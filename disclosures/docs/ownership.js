@@ -22,13 +22,13 @@ function stakesView(){
  out+=`<div class="panel"><h3>Most 13D activity, last 90 days</h3><p class="sub">13D and 13D/A filings per company · hover for who filed</p>${top.length?divergingChart(top.map(a=>({label:a.ticker,value:a.d13,tip:[[a.ticker,a.issuer||''],[`${a.d13} 13D filing${a.d13===1?'':'s'}`,a.new13d?`${a.new13d} new`:''],[a.filers.slice(0,4).join(', '),''],[`largest stake ${fmt(a.max_percent,2)}%`,'']]})),{unit:'count',label:'13D filings by company',neutral:true}):empty('No 13D filings on file yet — the collector reads the newest filings every half hour and works back through the daily indexes.')}</div>`;
  const q=(state.oq||'').trim().toLowerCase();
  const rows=all.filter(r=>(!state.oform||(state.oform==='new'?r.new:state.oform==='exit'?r.label==='below 5%':state.oform==='up'?r.change>0:state.oform==='down'?r.change<0:r.form.startsWith(state.oform)))
-  &&(!q||[r.ticker,r.issuer,r.filer,r.person].join(' ').toLowerCase().includes(q)));
+  &&(!q||[r.ticker,r.issuer,r.filer,r.person,r.holder].join(' ').toLowerCase().includes(q)));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} filings</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=xBar('one filing');
  out+=table([...(XPOST.on?['X']:[]),'Filed','Ticker','Company','Holder','Filing','Stake','Change','Event date','Purpose / type','Source'],rows.map(r=>[
   ...(XPOST.on?[xBtn('post_stake',r.issuer_cik,[r.accession],`${r.filer}'s ${r.form} on ${r.ticker||r.issuer}`)]:[]),esc(r.filed),r.ticker?tkLink(r.ticker,r.issuer_cik):'—',coCell(r.issuer,r.ticker,r.issuer_cik),
-  (()=>{const nice=r.person&&r.person!==r.person.toUpperCase();return `<b>${esc(nice?r.person:r.filer)}</b>${r.persons>1?`<br><span class="muted">${fmt(r.persons)} reporting persons${nice?(r.filer!==r.person?' · filed by '+esc(r.filer):''):r.person&&r.person!==r.filer?' · largest: '+esc(r.person):''}</span>`:''}`})(),
+  (()=>{const h=r.holder||r.filer;return `<b>${esc(h)}</b>${r.persons>1?`<br><span class="muted">${fmt(r.persons)} reporting persons${h.toUpperCase()!==String(r.filer||'').toUpperCase()?' · filed by '+esc(r.filer):r.person&&r.person.toUpperCase()!==h.toUpperCase()?' · largest: '+esc(r.person):''}</span>`:''}`})(),
   `${esc(r.form)} <span class="badge ${r.label==='below 5%'?'error':r.new?'ready':''}">${esc(r.label||'')}</span>`,
   `${pctv(r.percent)}<br><span class="muted">${compact(r.shares)} sh</span>`,
   `<span class="${r.change>0?'positive':r.change<0?'negative':''}">${pts(r.change)}</span>${r.prev_percent!=null?`<br><span class="muted">from ${pctv(r.prev_percent)}</span>`:''}`,
@@ -65,16 +65,17 @@ function shortBars(hist){
  const W=78,H=24,max=Math.max(1,...v.map(x=>x||0)),bw=Math.max(2,Math.floor((W-2)/v.length)-2);
  return `<svg class="mk-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="shares short by settlement date: ${hist.map(h=>h[0]+' '+compact(h[1])).join(', ')}">${v.map((x,i)=>{const h=Math.max(1.5,(x||0)/max*(H-3));return `<rect x="${1+i*(bw+2)}" y="${H-h}" width="${bw}" height="${h}" rx="1" class="${i===v.length-1?'mk-buy':'mk-neutral'}"><title>${esc(hist[i][0])}: ${compact(x)} shares short</title></rect>`}).join('')}</svg>`;
 }
+const MARKETS={NYSE:'NYSE',NNM:'Nasdaq',SC:'Nasdaq CM',AMEX:'NYSE American',ARCA:'NYSE Arca',BZX:'Cboe BZX',OTC:'OTC'};
 function shortsView(){
  let out=head('Short interest','Shares sold short in each stock as of FINRA’s twice-monthly settlement dates — the consolidated figures brokers report for exchange-listed and OTC stocks, published about a week after each date.','FINRA / SHORT INTEREST');
  const g=marketGate('short-interest','Short interest');if(!g.data)return out+g.html;
  const d=g.data,all=d.rows||[],by=Object.fromEntries(all.map(r=>[r.ticker,r]));
  state.slist=['','rise','fall','dtc','largest'].includes(state.slist)?state.slist:'';
- out+=`<div class="toolbar">${field('slist','List',[['','Every stock shown'],['rise','Largest rises (2M+ shares short)'],['fall','Largest falls (2M+ shares short)'],['dtc','Most days to cover'],['largest','Largest positions']],state.slist)}${search('shq','Ticker or company','e.g. TSLA · Enter')}</div>`;
+ out+=`<div class="toolbar">${field('slist','List',[['','Every stock shown'],['rise','Largest rises (listed, 2M+ shares short)'],['fall','Largest falls (listed, 2M+ shares short)'],['dtc','Most days to cover (listed)'],['largest','Largest positions']],state.slist)}${search('shq','Ticker or company','e.g. TSLA · Enter')}</div>`;
  const T=d.top||{},rise=(T.rise||[]).map(t=>by[t]).filter(Boolean),fall=(T.fall||[]).map(t=>by[t]).filter(Boolean),top=(T.dtc||[]).map(t=>by[t]).filter(Boolean)[0];
  out+=`<div class="metrics">${kpi('Settlement date',d.settlement_date||'—',d.previous_date?'Compared with '+d.previous_date:'')}${kpi('Stocks reported',fmt(d.stocks),`${fmt(d.shown)} with ${compact(d.min_short)}+ shares short shown`)}${kpi('Largest rise',rise[0]?chg(rise[0].change_pct):'—',rise[0]?`${rise[0].ticker} · ${compact(rise[0].short)} shares short`:'')}${kpi('Most days to cover',top?fmt(top.dtc,2):'—',top?`${top.ticker} · ${compact(top.short)} shares short`:'')}</div>`;
  const moves=[...rise.slice(0,7),...fall.slice(0,7)];
- out+=`<div class="panel"><h3>Biggest changes in short interest</h3><p class="sub">${esc(d.settlement_date||'')} vs ${esc(d.previous_date||'the prior date')} · stocks with 2M+ shares short and 200K+ average daily volume · hover for details</p>${moves.length?divergingChart(moves.map(r=>({label:r.ticker,value:r.change_pct,tip:[[r.ticker,r.name||''],[chg(r.change_pct),`to ${compact(r.short)} shares short`],[`${fmt(r.dtc,2)} days to cover`,`ADV ${compact(r.adv)}`]]})),{label:'Change in short interest, percent',format:chg,neutral:true}):empty('No settlement date on file yet — FINRA publishes about a week after the 15th and the month-end.')}</div>`;
+ out+=`<div class="panel"><h3>Biggest changes in short interest</h3><p class="sub">${esc(d.settlement_date||'')} vs ${esc(d.previous_date||'the prior date')} · exchange-listed stocks with 2M+ shares short (from 1M+), 200K+ average daily volume · hover for details</p>${moves.length?divergingChart(moves.map(r=>({label:r.ticker,value:r.change_pct,tip:[[r.ticker,r.name||''],[chg(r.change_pct),`to ${compact(r.short)} shares short`],[`${fmt(r.dtc,2)} days to cover`,`ADV ${compact(r.adv)}`]]})),{label:'Change in short interest, percent',format:chg,neutral:true}):empty('No settlement date on file yet — FINRA publishes about a week after the 15th and the month-end.')}</div>`;
  const q=(state.shq||'').trim().toLowerCase();
  let rows=state.slist?(T[state.slist]||[]).map(t=>by[t]).filter(Boolean):all;
  rows=rows.filter(r=>!q||(r.ticker+' '+(r.name||'')).toLowerCase().includes(q));
@@ -82,7 +83,7 @@ function shortsView(){
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} stocks</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=xBar('one stock’s short interest');
  out+=table([...(XPOST.on?['X']:[]),'Ticker','Company','Market','Shares short','Change','Days to cover','Avg daily volume','Last dates','Note'],rows.map(r=>[
-  ...(XPOST.on?[xBtn('post_short',0,[r.ticker,d.settlement_date],`short interest in ${r.ticker}`)]:[]),tkLink(r.ticker),esc(r.name||''),esc(r.market||''),compact(r.short),
+  ...(XPOST.on?[xBtn('post_short',0,[r.ticker,d.settlement_date],`short interest in ${r.ticker}`)]:[]),tkLink(r.ticker),esc(r.name||''),esc(MARKETS[r.market]||r.market||''),compact(r.short),
   `${chg(r.change_pct)}<br><span class="muted">${r.change!=null?(r.change>0?'+':r.change<0?'−':'')+compact(Math.abs(r.change)):'—'}</span>`,
   fmt(r.dtc,2),compact(r.adv),shortBars(r.hist),[r.split?'stock split':'',r.revised?'revised':''].filter(Boolean).join(' · ')||'—']));
  return out;

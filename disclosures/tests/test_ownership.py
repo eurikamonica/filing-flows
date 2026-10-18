@@ -40,6 +40,11 @@ class Stakes(unittest.TestCase):
         self.assertEqual((r['form'], r['rule'], r['exit'], r['percent'], r['persons']), ('13G/A', 'passive investor', True, 4.5, 4))
         self.assertEqual((r['issuer_cik'], r['event_date']), ('1835856', '2026-09-30'))
         self.assertEqual(O.stake_label({**r, 'new': False}), 'below 5%')
+        self.assertEqual(O.holder_of(r), 'Millennium Management LLC')
+        self.assertEqual(O.holder_of({'person': 'Gerald J. Ford', 'filer': 'FORD GERALD J', 'person_type': 'IN'}), 'Gerald J. Ford')
+        self.assertEqual(O.holder_of({'person': 'Donnalley David James', 'filer': 'Donnalley David James', 'person_type': 'IN'}), 'David James Donnalley')
+        self.assertEqual(O.holder_of({'person': 'GOODMAN COREY S', 'filer': 'venBio Global Strategic Fund, L.P.', 'person_type': 'IN'}),
+                         'venBio Global Strategic Fund, L.P.')
 
     def test_form144(self):
         txt = read('form144.txt')

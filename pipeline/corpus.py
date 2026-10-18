@@ -276,7 +276,7 @@ def hub_examples(site, rows, by_ticker, known, market, limits=None):
         e, cj, fq = _company(site, rows, by_ticker, r.get("issuer_cik"), tk)
         p = engage.f144_plan(r, tk, e, cj, fq, dt.date.fromisoformat((r.get("filed") or today.isoformat())[:10]) + dt.timedelta(days=int(_h(key), 16) % 4))
         who = social.display_name(r.get("seller_name") or r.get("seller") or "")
-        rel = (r.get("relationship") or "insider").lower().replace(", ", " and ")
+        rel = engage.relation(r.get("relationship")) or "insider"
         sh, val = engage.shares_txt(r["shares"]), (f" (~{engage.money(r['value'])})" if r.get("value") else "")
         lead = "JUST FILED: " if "JUST FILED" in p["task"] else ""
         phr = [f"{lead}${tk} {rel} {who} filed a Form 144 for a planned sale of {sh} shares{val}"

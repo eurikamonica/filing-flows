@@ -2262,6 +2262,7 @@ def test_new_hub_tables_post_one_row_at_a_time(tmp_path):
     assert "gave notice of a planned sale of 40,000 shares of $AAPL (market value about $7.2M" in f["task"] and "never “sold”" in f["task"]
     post = engage.clean(f["fallback"], f["cashtags"], f["tags"])
     assert "planned sale of 40,000 shares (~$7.2M) around Oct 16, under a 10b5-1 plan adopted Mar 3" in post and " sold " not in post
+    assert engage.relation("Officer, Director, 10% Stockholder") == "officer, director and 10% stockholder"
 
     sh = ask(engage.plan_short_for, ["NVDA", "2026-09-30"])
     assert sh["kind"] == "short" and sh["cashtags"] == ["NVDA"] and sh["tags"][0] == "#ShortInterest"

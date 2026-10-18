@@ -2112,8 +2112,8 @@
         : `<p class="muted">No open-market insider purchase or larger sale on file for ${t(sym)} in the last four months.</p>`}
       <h3>Holders above 5% (Schedules 13D / 13G)</h3>
       ${stakes.length ? `<div class="tbl-wrap"><table><thead><tr><th>Holder</th><th>Filing</th><th class="num">Stake</th><th class="num">Change</th><th>Filed</th><th>Source</th></tr></thead><tbody>
-        ${stakes.slice(0, 12).map((x) => { const nice = x.person && x.person !== x.person.toUpperCase(); return `<tr><td><b>${t(nice ? x.person : x.filer)}</b>${
-          x.persons > 1 ? `<br><span class="muted">${x.persons} reporting persons${nice ? (x.filer !== x.person ? ` · filed by ${t(x.filer)}` : '') : x.person && x.person !== x.filer ? ` · largest: ${t(x.person)}` : ''}</span>` : ''}</td>
+        ${stakes.slice(0, 12).map((x) => { const h = x.holder || x.filer || ''; return `<tr><td><b>${t(h)}</b>${
+          x.persons > 1 ? `<br><span class="muted">${x.persons} reporting persons${h.toUpperCase() !== String(x.filer || '').toUpperCase() ? ` · filed by ${t(x.filer)}` : x.person && x.person.toUpperCase() !== h.toUpperCase() ? ` · largest: ${t(x.person)}` : ''}</span>` : ''}</td>
           <td class="wrap">${t(x.form)} <span class="muted">· ${t(x.label || '')}</span>${x.rule ? `<br><span class="muted">${t(x.rule)}</span>` : ''}${x.purpose ? `<br><span class="muted" title="${t(x.purpose)}">Purpose: ${t(x.purpose.slice(0, 140))}${x.purpose.length > 140 ? '…' : ''}</span>` : ''}</td>
           <td class="num">${x.percent != null ? x.percent + '%' : '—'}<br><span class="muted">${mega(x.shares)} sh</span></td>
           <td class="num ${x.change > 0 ? 'pos' : x.change < 0 ? 'neg' : ''}">${x.change != null ? `${x.change > 0 ? '+' : ''}${x.change.toFixed(2)} pts` : '—'}${x.prev_percent != null ? `<br><span class="muted">from ${x.prev_percent}%</span>` : ''}</td>

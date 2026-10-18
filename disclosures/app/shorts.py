@@ -158,8 +158,10 @@ def publish(root, out_dir, min_short=500_000):
         pick.append({'ticker': t, 'name': r[1], 'market': r[2], 'short': r[3], 'prev': r[4], 'change_pct': r[5], 'adv': r[6],
                      'dtc': r[7], 'split': r[8], 'revised': r[9], 'change': (r[3] - r[4]) if r[3] is not None and r[4] is not None else None,
                      'hist': hist.get(t, [])})
-    liquid = [r for r in pick if (r['adv'] or 0) >= 200_000]
-    sig = [r for r in liquid if r['change_pct'] is not None and r['short'] >= 2_000_000 and not r['split']]
+    # the top lists: exchange-listed stocks only (OTC foreign shares trade thinly here, so their days to cover run into the
+    # hundreds), and rises / falls measured from a real base (a jump from 100K shares is not news)
+    liquid = [r for r in pick if (r['adv'] or 0) >= 200_000 and r['market'] != 'OTC']
+    sig = [r for r in liquid if r['change_pct'] is not None and r['short'] >= 2_000_000 and (r['prev'] or 0) >= 1_000_000 and not r['split']]
     data = {'generated_at': now(), 'settlement_date': day, 'previous_date': prev_day, 'dates': [d for d, _ in dates],
             'stocks': len(rows), 'shown': len(pick), 'min_short': min_short,
             'note': ('FINRA consolidated short interest: the short positions broker-dealers carry for customers and themselves '
