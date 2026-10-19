@@ -17,7 +17,7 @@ import xml.etree.ElementTree as ET
 
 from .facts import CONCEPTS
 
-VERSION = 1                     # bump when the reading changes: chain companies are read again
+VERSION = 2                     # bump when the reading changes: chain companies are read again
 REV = set(CONCEPTS["revenue"])
 CONC = {"ConcentrationRiskPercentage1", "ConcentrationRiskPercentage"}
 RPO = {"RevenueRemainingPerformanceObligation", "ContractWithCustomerLiabilityAndRemainingPerformanceObligation"}
@@ -107,13 +107,21 @@ def parse(xml_text, labels=None):
                 continue
             if not bench and ctype and "Customer" not in ctype:
                 continue
+            if ctype and "Customer" not in ctype:
+                continue                                 # a concentration by region, product or supplier
             who = dd.get("MajorCustomersAxis")
             if not who:
-                rest = [m for a, m in dims if a not in ("ConcentrationRiskByBenchmarkAxis", "ConcentrationRiskByTypeAxis",
+                named = [m for a, m in dims if "Customer" in a and a != "ConcentrationRiskByTypeAxis"]
+                other = [a for a, m in dims if a not in ("ConcentrationRiskByBenchmarkAxis", "ConcentrationRiskByTypeAxis",
                                                          "StatementBusinessSegmentsAxis", "ConsolidationItemsAxis")]
-                who = rest[0] if rest else ""
+                if named:
+                    who = named[0]
+                elif other or "Customer" not in ctype:   # "China 28% of revenue" is a region, not a customer
+                    continue
+                else:
+                    who = ""                             # "one customer accounted for 12%"
             pct = v / 100 if v > 1.5 else v
-            if not 0 < pct <= 1:
+            if not 0 < pct < 0.995:                      # 100%: the total, not a customer
                 continue
             seg = dd.get("StatementBusinessSegmentsAxis")
             cust.append({"m": who, "l": _label(who, labels) if who else "", "pct": round(pct, 4), "s": start, "e": end,

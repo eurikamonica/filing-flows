@@ -167,3 +167,16 @@ def test_buyer_path_spreads_the_guided_year():
     assert gy == 2026 and abs(path[k + 1] - 38.0) < 1e-9 and abs(path[k + 2] - 38.0) < 1e-9   # (140 − 64) / 2
     path2, gy2 = CM.buyer_path(hist, None, "1231", k, k + 2)
     assert gy2 is None and path2[k + 1] > 34.0             # no guidance: the damped trend
+
+
+def test_region_and_product_concentrations_are_not_customers():
+    geo = [("us-gaap:ConcentrationRiskByBenchmarkAxis", "us-gaap:RevenueFromContractWithCustomerProductAndServiceBenchmarkMember"),
+           ("us-gaap:ConcentrationRiskByTypeAxis", "us-gaap:GeographicConcentrationRiskMember"), ("srt:StatementGeographicalAxis", "country:CN")]
+    one = [("us-gaap:ConcentrationRiskByBenchmarkAxis", "us-gaap:RevenueFromContractWithCustomerProductAndServiceBenchmarkMember"),
+           ("us-gaap:ConcentrationRiskByTypeAxis", "us-gaap:CustomerConcentrationRiskMember")]
+    doc = instance([ctx("g", "2025-01-01", "2025-12-31", dims=geo), ctx("o", "2025-01-01", "2025-12-31", dims=one),
+                    ctx("all", "2025-01-01", "2025-12-31", dims=one[:1])],
+                   [fact("us-gaap:ConcentrationRiskPercentage1", "g", 0.28, "pure"), fact("us-gaap:ConcentrationRiskPercentage1", "o", 0.12, "pure"),
+                    fact("us-gaap:ConcentrationRiskPercentage1", "all", 1.0, "pure")])
+    rows = xfacts.parse(doc, {})["cust"]
+    assert [(r["l"], r["pct"]) for r in rows] == [("", 0.12)]

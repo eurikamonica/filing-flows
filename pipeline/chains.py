@@ -328,7 +328,11 @@ class Co:
         """Named (and anonymous) major customers: [{"label", "pct", "v", "period", "how"}], newest filing first."""
         rev = self.ttm("revenue")
         out = []
+        region = re.compile(r"(?i)^(china|asia|asia pacific|apac|emea|europe|americas|north america|taiwan|korea|japan|united states|"
+                            r"u\.s\.|singapore|international|other countries)\b")
         for c in xfacts.customers(*self.parses()):
+            if c["pct"] >= 0.995 or region.search(c["l"] or ""):         # read before xfacts v2: regions, totals
+                continue
             out.append({"label": c["l"] or "a customer", "pct": c["pct"], "v": c["pct"] * rev["v"] if rev else None,
                         "period": [c["s"], c["e"]], "how": "share of revenue", **({"seg": c["seg"]} if c.get("seg") else {})})
         for m, d in (self._axes().get("MajorCustomersAxis") or {}).items():   # dollars tagged by customer
@@ -1135,7 +1139,9 @@ def refresh(store, sec, dims, text, time_up, queue_history=None, limit=REFRESH_P
         age = (now - dt.datetime.fromisoformat(checked)).total_seconds() / 3600 if checked else 1e9
         shallow = t in segs and len(xf.get("mh_accns") or []) < SEG_DEPTH and age >= 1
         if xf.get("v") != VERSION * 1000 + xfacts.VERSION or (newest and newest not in have) or age >= CHECK_HOURS or shallow:
-            todo.append((0 if not xf else 1 if newest and newest not in have else 2 if not shallow else 3, -age, t, cik))
+            pri = (0 if t in buyers and not xf.get("qh") else 1 if not xf else 2 if newest and newest not in have
+                   else 3 if not shallow else 4)                 # the forecast model's buyers first
+            todo.append((pri, -age, t, cik))
     todo.sort()
     done = 0
     for _, _, t, cik in todo:
