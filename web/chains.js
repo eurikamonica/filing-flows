@@ -65,7 +65,7 @@
   /* view: {cols, nodes [{id, col, label, v, color, est, t, sub}], links [{s, t, v, k}]}; o: {title, subtitle, footer,
      overlay: {ticker: {net, label}}, layerOrder}. Returns a scene for Sankey.toSVG / exportScene plus hit data. */
   function layout(view, o) {
-    const W = 1240, NW = 12, TOP = 96, BOTTOM = 92;
+    const W = 1240, NW = 12, TOP = (o.back && o.back.length) ? 96 + 14 + 18 * Math.min(o.back.length, 8) : 96, BOTTOM = 92;
     const cols = view.cols.length;
     const byCol = Array.from({ length: cols }, () => []);
     view.nodes.forEach((n) => { if (n.col < cols) byCol[n.col].push(n); });
@@ -118,6 +118,26 @@
       const alpha = 0.15 + 0.37 * Math.min(Math.max(l.k || 0, 0), 1);
       shapes.push({ band: true, t: 'path', d: bandPath(a.x + NW, y0.get(l), b.x, y1.get(l), th), fill: rgba(base, alpha), ls: l.s, lt: l.t });
     });
+    // money flowing back: a company's stake in another one of the chain (its 13F), drawn as an arc over the chart
+    let arcs = 0;
+    (o.back || []).forEach((b) => {
+      const a = pos.get(b.from), t = pos.get(b.to);
+      if (!a || !t || arcs >= 8) return;
+      // drawn with right angles out of the holder's right side, along a lane above the columns, into the held
+      // company's right side (thin rectangles, so the line prints and saves like the rest of the chart)
+      const C = '#8a4fbf', w = 2, off = 7 + arcs * 4, lane = TOP - 30 - arcs * 18;
+      const xs0 = a.x + NW, ys0 = a.y + 3 + arcs * 3, xt0 = t.x + NW, yt0 = t.y + 3 + arcs * 3;
+      const xa = xs0 + off, xb = xt0 + off;
+      const seg = (x, y, ww, hh) => shapes.push({ t: 'rect', x: Math.min(x, x + ww), y: Math.min(y, y + hh), w: Math.max(Math.abs(ww), w), h: Math.max(Math.abs(hh), w), fill: C });
+      seg(xs0, ys0, xa - xs0, w);
+      seg(xa, lane, w, ys0 - lane + w);
+      seg(Math.min(xa, xb), lane, Math.abs(xb - xa) + w, w);
+      seg(xb, lane, w, yt0 - lane);
+      seg(xt0 + 5, yt0, xb - xt0 - 5, w);
+      shapes.push({ t: 'path', d: `M${xt0} ${yt0 + w / 2}L${xt0 + 7} ${yt0 - 3}L${xt0 + 7} ${yt0 + w + 3}Z`, fill: C });
+      shapes.push({ t: 'text', x: (xa + xb) / 2, y: lane - 4, text: `${b.from} holds ${usd(b.v)} of ${b.to} (13F)`, size: 11, weight: 600, fill: '#6b3d99', anchor: 'middle' });
+      arcs++;
+    });
     // node bars and labels
     const grand = tot.map((x) => x || 1);
     pos.forEach((p, id) => {
@@ -166,13 +186,13 @@
   }
 
   // ---------------------------------------------------------------- the page
-  const ST = { view: 'flow', fund: false, tier2: true, ovl: '', sort: 'attr' };
+  const ST = { view: 'flow', fund: false, tier2: true, ovl: '', sort: 'attr', outlook: false, back: false };
 
   function prefsLoad(ctx) {
     const p = ctx.prefs.get('chains', {}) || {};
-    Object.assign(ST, { fund: !!p.fund, tier2: p.tier2 !== false, ovl: p.ovl || '' });
+    Object.assign(ST, { fund: !!p.fund, tier2: p.tier2 !== false, ovl: p.ovl || '', back: !!p.back });
   }
-  function prefsSave(ctx) { ctx.prefs.set('chains', { fund: ST.fund, tier2: ST.tier2, ovl: ST.ovl }); }
+  function prefsSave(ctx) { ctx.prefs.set('chains', { fund: ST.fund, tier2: ST.tier2, ovl: ST.ovl, back: ST.back }); }
 
   async function index(app, ctx) {
     const here = ctx.live();
@@ -206,6 +226,39 @@
       <p class="muted small">${esc(ix.about || '')} Updated ${fdate((ix.generated || '').slice(0, 10))}.</p>`;
   }
 
+  /* The buyers' own outlook: capital expenditures as guided in their latest earnings release (midpoint of a range),
+     where they gave one for a year after the twelve months shown; everything downstream scaled in proportion through
+     the balanced matrix. Buyers without an outlook keep their last twelve months. */
+  function guided(d) {
+    const out = {};
+    (d.buyers || []).forEach((b) => {
+      const r = b.guide && (b.guide.rows || []).find((x) => x.lo && x.year && +x.year >= +String(d.asof || '').slice(0, 4));
+      if (r && b.capex > 0) out[b.t] = { f: ((r.lo + r.hi) / 2) / b.capex, mid: (r.lo + r.hi) / 2, year: r.year, text: r.text, url: b.guide.url };
+    });
+    return out;
+  }
+  function scaleByOutlook(d, v) {
+    const g = guided(d);
+    if (!Object.keys(g).length) return v;
+    const fb = (b) => (g[b] ? g[b].f : 1);
+    const sup = {}, tot = {};
+    (d.matrix || []).forEach((m) => { sup[m.s] = (sup[m.s] || 0) + m.v * fb(m.b); tot[m.s] = (tot[m.s] || 0) + m.v; });
+    const fs = (s) => (tot[s] ? sup[s] / tot[s] : 1);
+    const buyers = new Set((d.buyers || []).map((b) => b.t));
+    const links = v.links.map((l) => {
+      let f = 1;
+      if (buyers.has(l.s)) f = fb(l.s);
+      else if (buyers.has(l.t) && String(l.s).startsWith('F:')) f = fb(l.t);
+      else if (String(l.s).startsWith('L:')) f = fs(l.t);
+      else if (tot[l.s] != null) f = fs(l.s);
+      return Object.assign({}, l, { v: l.v * f });
+    });
+    const inflow = {}, outflow = {};
+    links.forEach((l) => { outflow[l.s] = (outflow[l.s] || 0) + l.v; inflow[l.t] = (inflow[l.t] || 0) + l.v; });
+    const nodes = v.nodes.map((n) => Object.assign({}, n, { v: Math.max(inflow[n.id] || 0, outflow[n.id] || 0) || n.v * (buyers.has(n.id) ? fb(n.id) : 1),
+      label: g[n.id] ? n.label : n.label, sub: g[n.id] ? `outlook ${g[n.id].year}` : n.sub }));
+    return { cols: v.cols, nodes, links };
+  }
   function viewOf(d) {
     const v = d.views[ST.view] || d.views.flow;
     if (ST.view !== 'flow' || d.kind !== 'spend') return v;
@@ -228,7 +281,7 @@
       });
       nodes = Object.values(src).concat(nodes);
     }
-    return { cols, nodes, links };
+    return ST.outlook ? scaleByOutlook(d, { cols, nodes, links }) : { cols, nodes, links };
   }
 
   function subtitleOf(d) {
@@ -236,6 +289,10 @@
     const per = `Trailing twelve months to ${fdate(d.asof)}${d.oldest && d.oldest !== d.asof ? ` (latest filings; some end ${fdate(d.oldest)})` : ''}`;
     if (ST.view === 'profit') return `${per} · gross profit on the revenue attributed to this chain`;
     if (ST.view === 'cash') return `${per} · where the companies’ cash came from and went (cash-flow statements)`;
+    if (d.kind === 'spend' && c && ST.outlook && ST.view === 'flow') {
+      const g = guided(d), names = Object.keys(g);
+      if (names.length) return `Outlook: ${names.map((t) => `${t} ${usd(g[t].mid)} (${g[t].year})`).join(', ')} as guided in their latest earnings releases; other buyers at their last twelve months; suppliers scaled in proportion`;
+    }
     if (d.kind === 'spend' && c) return `${per} · ${usd(c.spend)} spent · ${usd(c.traced)} traced to ${c.suppliers} listed suppliers (${pct(c.traced / c.spend)}) · ${usd(c.untraced)} not traced`;
     return per;
   }
@@ -256,7 +313,9 @@
       <div class="toolbar chain-tools">
         <div class="seg" role="group" aria-label="View">${VIEWS.map(([k, l]) => `<button type="button" data-cv="${k}" class="${ST.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
         ${d.kind === 'spend' ? `<label class="dec-toggle"><input type="checkbox" id="cfund" ${ST.fund ? 'checked' : ''}> How the buyers paid</label>
-          <label class="dec-toggle"><input type="checkbox" id="ctier" ${ST.tier2 ? 'checked' : ''}> Suppliers’ suppliers</label>` : ''}
+          <label class="dec-toggle"><input type="checkbox" id="ctier" ${ST.tier2 ? 'checked' : ''}> Suppliers’ suppliers</label>
+          ${Object.keys(guided(d)).length ? `<label class="dec-toggle" title="Capital expenditures as guided in the buyers' latest earnings releases"><input type="checkbox" id="cout" ${ST.outlook ? 'checked' : ''}> Outlook year (${Object.keys(guided(d)).length} of ${(d.buyers || []).length} buyers guided)</label>` : ''}
+          ${(d.stakes || []).length ? `<label class="dec-toggle"><input type="checkbox" id="cback" ${ST.back ? 'checked' : ''}> Stakes flowing back</label>` : ''}` : ''}
         <label class="dec-toggle">Market money <select id="covl"><option value="">off</option></select></label>
         <span class="chain-legend"><i class="sw dark"></i> stated in filings <i class="sw light"></i> estimated <i class="sw hatch"></i> not traced</span>
       </div>
@@ -274,6 +333,7 @@
       scene = layout(v, {
         title: `${d.name} — ${VIEWS.find((x) => x[0] === ST.view)[1].toLowerCase()}`, subtitle: subtitleOf(d), layerOrder: order,
         overlay: ST.view === 'flow' || ST.view === 'profit' ? overlay : null,
+        back: ST.view === 'flow' && ST.back ? (d.stakes || []).slice(0, 8) : null,
         footer: [`Source: SEC EDGAR filings (10-K, 10-Q, 20-F, 6-K), read by fixed rules. Light bands are estimates: ${d.kind === 'spend' ? 'assumed shares balanced across buyers' : 'assumed shares'}; dark bands are stated in the filings.`,
           'Figures are read automatically and can contain errors; check the filings before relying on them. Not investment advice.'],
       });
@@ -331,6 +391,9 @@
     const fund = document.getElementById('cfund'), tier = document.getElementById('ctier');
     if (fund) fund.addEventListener('change', () => { ST.fund = fund.checked; prefsSave(ctx); draw(); });
     if (tier) tier.addEventListener('change', () => { ST.tier2 = tier.checked; prefsSave(ctx); draw(); });
+    const outl = document.getElementById('cout'), back = document.getElementById('cback');
+    if (outl) outl.addEventListener('change', () => { ST.outlook = outl.checked; draw(); });
+    if (back) back.addEventListener('change', () => { ST.back = back.checked; prefsSave(ctx); draw(); });
     app.querySelectorAll('[data-cx]').forEach((b) => b.addEventListener('click', async () => {
       if (!scene) return;
       const blob = await S.exportScene(scene, b.dataset.cx, { scale: 2 });
@@ -557,7 +620,11 @@
         suppliers, in-house work — is a node of its own (${esc(d.untraced_note || '')}). When the suppliers’ estimates add up to more than the buyers spent,
         the rest is shown as other buyers.</p>
         <p><b>How the buyers paid</b> splits each buyer’s capital expenditures pro rata to its cash sources in the same twelve months (operating cash
-        flow, new borrowing, share sales…), and adds its finance leases. <b>Suppliers’ suppliers</b> are estimated out of the suppliers’ cost of goods.</p>`);
+        flow, new borrowing, share sales…), and adds its finance leases. <b>Suppliers’ suppliers</b> are estimated out of the suppliers’ cost of goods.</p>
+        <p><b>Outlook year</b> replaces a buyer’s last twelve months with the capital expenditures it guided for a coming year in its latest earnings
+        release (the midpoint of a range; the sentence is quoted in the buyers table); every supplier is scaled by how much of its column came from
+        the buyers that moved. <b>Stakes flowing back</b> are shares of a chain company held by another one, from the holder’s latest 13F: money
+        that goes out as an investment and can come back as orders.</p>`);
     } else if (d.kind === 'customers') {
       parts.push('<p>Customers come from the companies’ concentration disclosures (a customer’s share of revenue) and revenue tagged by customer, where the filings name them; otherwise from the assumed shares shown in the configuration. The rest is “other customers”.</p>');
     } else if (d.kind === 'geo') {
