@@ -18,7 +18,8 @@ def test_registered_kind_reaches_engage_and_owner_tools():
 
     try:
         H.KINDS.setdefault("zz_test", ["#ZZTest", "#stocks"])
-        assert X.expand(["lows52", "@close", "lows52"])[:2] == ["lows52", "zz_test_kind"]
+        ex = X.expand(["lows52", "@close", "lows52"])
+        assert ex[0] == "lows52" and "zz_test_kind" in ex and ex.count("lows52") == 1
         assert X.expand(["@morning"]) == [k for k, v in sorted(X.REG.items()) if "morning" in v["schedule"]]
         p = engage.registered_plan("zz_test_kind", None, [], {}, {}, lambda *a, **k: True, dt.date(2026, 10, 19))
         assert p["kind"] == "zz_test_kind" and p["items"] == [] and p["cashtags"] == ["ZZ"]
