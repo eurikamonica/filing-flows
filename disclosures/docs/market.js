@@ -169,6 +169,9 @@ function flowsView(){
  state.fwin=wins.includes(state.fwin)?state.fwin:wins[0];state.funiv=state.funiv==='all'?'all':'stocks';state.flist=FLOW_LISTS.some(x=>x[0]===state.flist)?state.flist:'net_buy';
  const w=d.windows[state.fwin],lists=w.lists[state.funiv];
  out+=`<div class="toolbar">${field('fwin','Period',wins.map(k=>[k,d.windows[k].label]),state.fwin,true)}${field('funiv','Securities',[['stocks','Stocks only'],['all','Stocks, ETFs and funds']],state.funiv)}${field('flist','Ranking',FLOW_LISTS,state.flist,true)}</div>`;
+ if(typeof flowGroupBoxes==='function')out+=`<div class="toolbar">${flowGroupBoxes('fgrp','f13','The market flow is made of')}</div>`;
+ const fg=typeof flowGroups==='function'?flowGroups('fgrp','f13'):['f13'];
+ if(fg.length>1||fg[0]!=='f13')return out+mixedFlows(w,fg);
  out+=`<div class="metrics">${kpi('Managers reporting',fmt(w.managers),(w.periods||[]).join(' · '))}${kpi('Estimated $ added',money(w.totals.usd_add),'Stocks; quantity added × quarter-end price')}${kpi('Estimated $ sold',money(w.totals.usd_sold),'Stocks; quantity cut × quarter-end price')}${kpi('Net',smoney(w.totals.usd_add-w.totals.usd_sold),`${fmt(w.securities)} securities changed · ${fmt(w.splits)} splits adjusted`)}</div>`;
  const nm=r=>r.ticker||shortName(r.name||r.issuer)||r.cusip,full=r=>[r.ticker,r.name||r.issuer].filter(Boolean).join(' · ');
  const ftip=r=>[[full(r),''],[smoney(r.usd_net),'estimated net'],[`${money(r.usd_add)} added · ${money(r.usd_sold)} sold`,''],[`${fmt(r.buyers)} added · ${fmt(r.sellers)} cut`,`· ${fmt(r.new)} new · ${fmt(r.exits)} exits`],...(r.top_buy[0]?[[r.top_buy[0].manager,'largest buyer · '+money(r.top_buy[0].usd)]]:[])];
@@ -184,6 +187,37 @@ function flowsView(){
   fmt(r.buyers),fmt(r.sellers),fmt(r.new),fmt(r.exits),fmt(r.holders),columns(d.history?.[r.cusip]),
   r.top_buy[0]?`${hubAvatar(r.top_buy[0].manager)}${esc(r.top_buy[0].manager)}<br><span class="muted">${money(r.top_buy[0].usd)}</span>`:'—',
   [r.split?`split ${r.split>=1?fmt(r.split,2)+'-for-1':'1-for-'+fmt(1/r.split,0)} adjusted`:'',r.converted?.from?'converted from another CUSIP':r.converted?.to?'converted to a new CUSIP':'',r.fund?esc(r.type||'fund'):''].filter(Boolean).join('<br>')||'—']));
+ return out;
+}
+
+/* Market flow made of several groups (13F managers, active ETFs, insiders, their 10b5-1 plan trades, officials): the All flows
+   data (smart/combined/<period>.json) for the window whose quarter ends match this one's. */
+function flowPeriodFor(w,P){
+ const want=(w.periods||[]).join(','),qe=p=>{const out=[];let d=new Date(p.start+'T00:00:00Z');const e=new Date(p.end+'T00:00:00Z');
+  while(d<=e){const m=d.getUTCMonth();if([2,5,8,11].includes(m)){const last=new Date(Date.UTC(d.getUTCFullYear(),m+1,0));if(last<=e&&last>=new Date(p.start+'T00:00:00Z'))out.push(last.toISOString().slice(0,10))}d=new Date(Date.UTC(d.getUTCFullYear(),m+1,1))}return [...new Set(out)].join(',')};
+ return ['prev','prev2','both','ytd','ytdn','d90'].map(k=>P.find(p=>p.key===k)).filter(Boolean).find(p=>qe(p)===want)||null;
+}
+function mixedFlows(w,fg){
+ const ix=afData('smart/combined/index');
+ if(ix.err)return empty('The other groups\' flows could not load ('+ix.err+').');
+ if(!ix.data)return empty('Loading the other groups…');
+ const per=flowPeriodFor(w,ix.data.periods||[]);
+ if(!per)return empty('The other groups are not counted for this window yet: pick another period, or 13F managers alone.');
+ const pd=afData('smart/combined/'+per.key);
+ if(pd.err)return empty('Could not load the period ('+pd.err+').');
+ if(!pd.data)return empty('Loading the period…');
+ const rows=afRows(pd.data,fg).filter(r=>fg.some(g=>r[g+'_b']||r[g+'_s']||r[g+'_usd'])),G=per.groups||{};
+ const buy=rows.filter(r=>r.net>0).sort((a,b)=>b.net-a.net),sell=rows.filter(r=>r.net<0).sort((a,b)=>a.net-b.net);
+ const tb=fg.reduce((a,g)=>a+((G[g]||{}).usd_buy||0),0),ts=fg.reduce((a,g)=>a+((G[g]||{}).usd_sell||0),0);
+ let out=`<div class="metrics">${kpi('Bought',money(tb),fg.map(g=>AF_GN[g]).join(' + '))}${kpi('Sold',money(ts),esc(per.label))}${kpi('Net',smoney(tb-ts),`${fmt(rows.length)} stocks traded`)}${fg.map(g=>{const x=G[g]||{};return kpi(AF_GN[g],x.actors?smoney((x.usd_buy||0)-(x.usd_sell||0)):'—',x.actors?`${fmt(x.actors)} names · ${fmt(x.trades)} trades`:'none in this window')}).join('')}</div>`;
+ const tip=r=>[[r.ticker,r.name||''],[smoney(r.net),'net, the groups counted'],...fg.filter(g=>r[g+'_b']||r[g+'_s']).map(g=>[`${AF_GN[g]}: ${smoney(r[g+'_usd']||0)}`,`${fmt(r[g+'_b'])} buying · ${fmt(r[g+'_s'])} selling`])];
+ const top=[...buy.slice(0,10),...sell.slice(0,10).reverse()];
+ out+=`<div class="panel"><h3>Net buying and selling — ${esc(fg.map(g=>AF_GN[g]).join(' + '))}</h3><p class="sub">Top 10 each way · ${esc(per.label)}</p>${divergingChart(top.map(r=>({label:r.ticker,value:r.net,tip:tip(r)})))}</div>`;
+ out+=`<div class="explain">The market flow of the groups ticked: 13F managers (quarter-over-quarter changes × the quarter-end close), active ETFs (N-PORT, net of creations and redemptions), insiders' open-market Form 4 trades, insiders' pre-arranged 10b5-1 plan trades, and officials' reports (the middle of the disclosed ranges). The same data as All flows. ${esc(per.note||'')}</div>`;
+ const list=(state.flist==='net_sell'?sell:state.flist==='net_buy'?buy:rows.slice().sort((a,b)=>Math.abs(b.net)-Math.abs(a.net))).slice(0,200);
+ exported=list.map(r=>({ticker:r.ticker,name:r.name,net:r.net,...Object.fromEntries(fg.flatMap(g=>[[g+'_usd',r[g+'_usd']],[g+'_buyers',r[g+'_b']],[g+'_sellers',r[g+'_s']]]))}));
+ out+=`<div class="section-head"><div><h3>${state.flist==='net_sell'?'Net selling':state.flist==='net_buy'?'Net buying':'Largest net flows'} — ${fmt(list.length)} stocks</h3><p class="sub">Each group: net dollars, then buyers · sellers</p></div><button class="action" id="csv">Export CSV ↓</button></div>`;
+ out+=table(['Stock','Net',...fg.map(g=>AF_GN[g])],list.map(r=>[`${tick(r)} <span class="muted">${esc((r.name||'').slice(0,34))}</span>`,`<b>${afMoney(r.net)}</b>`,...fg.map(g=>r[g+'_b']||r[g+'_s']||r[g+'_usd']?`${afMoney(r[g+'_usd'])}<br><span class="muted">${fmt(r[g+'_b'])} · ${fmt(r[g+'_s'])}</span>`:'<span class="muted">—</span>')]));
  return out;
 }
 
@@ -266,5 +300,6 @@ function insidersView(){
 function bindMarket(){
  for(const k of ['stag','ssort','fwin','funiv','flist','tchamber','tperson','ttype','tcheck','twin','itype','irole'])bind(k,k);
  for(const k of ['sq','tq','iq'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
+ if(typeof bindFlowGroups==='function')bindFlowGroups();
  bindTips();
 }

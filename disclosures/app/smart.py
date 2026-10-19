@@ -61,7 +61,11 @@ import market as MK  # noqa: E402
 from prices import parse_yahoo  # noqa: E402
 
 GROUPS = ['f13', 'etf', 'ins', 'gov']
-LABEL = {'f13': '13F managers', 'etf': 'Active ETFs', 'ins': 'Insiders (Form 4)', 'gov': 'Officials (Congress)'}
+LABEL = {'f13': '13F managers', 'etf': 'Active ETFs', 'ins': 'Insiders (Form 4)', 'gov': 'Officials (Congress)',
+         'plan': 'Insiders\' 10b5-1 plan trades'}
+# the flows pages (public/combined/) also count insiders' pre-arranged 10b5-1 plan trades, as a group of their own: dollars
+# that moved, not decisions taken that day, so they never enter the skill scores
+CGROUPS = GROUPS + ['plan']
 H, H2 = 63, 126
 K_PRIOR = 8.0
 LAMBDA = 1.0
@@ -558,6 +562,7 @@ class Events:
         self.actors, self.aidx = [], {}
         self.tickers, self.tidx = [], {}
         self.cols = defaultdict(list)
+        self.plan = []                                      # (ticker, day, direction, dollars, owner key, owner name)
 
     def actor(self, aid, name, group, sub=''):
         i = self.aidx.get(aid)
@@ -706,7 +711,14 @@ def build_events(root, hub, etf_root, universe, log_stats):
         d = load_gz(p, {}) or {}
         last_q = max(last_q, d.get('quarter') or p.name[:6])
         for ocik, oname, role, tk, icik, iname, day, filed, dd, sh, val, plan in d.get('rows', []):
-            if plan or val < MIN_INS_USD:                  # pre-arranged 10b5-1 trades are not decisions made then; tiny ones are noise
+            if plan:                                       # pre-arranged 10b5-1 trades are not decisions made then: flows only
+                tk = issuer_ticker(icik, tk, ciks)
+                key = ('plan', norm_name(oname), tk, day, dd)
+                if tk and val and key not in seen:
+                    seen.add(key)
+                    E.plan.append((tk, ordinal(day), dd, float(val), norm_name(oname), oname))
+                continue
+            if val < MIN_INS_USD:                          # tiny ones are noise
                 continue
             tk = issuer_ticker(icik, tk, ciks)
             if not tk:
@@ -720,7 +732,14 @@ def build_events(root, hub, etf_root, universe, log_stats):
             nins += 1
     cut = quarter_end(last_q) if last_q else '0000'
     for r in load_gz(hub / 'cache' / 'insiders' / 'trades.json.gz', []) or []:
-        if (r.get('date') or '') <= cut or r.get('plan_10b5_1') or r.get('code') not in ('P', 'S'):
+        if (r.get('date') or '') <= cut or r.get('code') not in ('P', 'S'):
+            continue
+        if r.get('plan_10b5_1'):
+            tk = issuer_ticker(str(r.get('issuer_cik') or ''), tick(r.get('ticker')), ciks)
+            key = ('plan', norm_name(r.get('insider') or ''), tk, r['date'], 1 if r['code'] == 'P' else -1)
+            if tk and r.get('insider') and r.get('value') and key not in seen:
+                seen.add(key)
+                E.plan.append((tk, ordinal(r['date']), key[4], float(r['value']), key[1], r['insider']))
             continue
         tk = issuer_ticker(str(r.get('issuer_cik') or ''), tick(r.get('ticker')), ciks)
         if not tk or not r.get('insider') or (r.get('value') or 0) < MIN_INS_USD:
@@ -1070,10 +1089,27 @@ def combined_periods(today):
          'note': f'Insiders (the Form 4s read so far; SEC\'s full quarterly set comes after the quarter) and officials only: 13F and N-PORT reports for {qname(qs)} come after it ends.'},
         {'key': 'd90', 'label': f'Last 90 days ({md(t - dt.timedelta(days=90))} – {md(t)})', 'start': (t - dt.timedelta(days=90)).isoformat(), 'end': t.isoformat(),
          'note': '13F managers and ETFs count with the quarter ends inside these 90 days.'},
+        {'key': 'ytd', 'label': f'{pp_end.year} full quarters to date (Jan – {pp_end:%b})', 'start': dt.date(pp_end.year, 1, 1).isoformat(),
+         'end': pp_end.isoformat(), 'note': 'Every quarter of the year whose 13F reports are all in.'},
+        {'key': 'ytdn', 'label': f'{pp_end.year} to date, including {qname(p_start)}\'s filings so far (Jan 1 – {md(t)})',
+         'start': dt.date(pp_end.year, 1, 1).isoformat(), 'end': t.isoformat(),
+         'note': f'The year so far: {qname(p_start)} 13F reports are still arriving (early filers only), {qname(qs)} counts insiders and officials.'},
     ]
 
 
-CF = ['ticker', 'name', 'S', 'raw'] + [f'{g}_{k}' for g in GROUPS for k in ('b', 's', 'usd')] + ['actors', 'groups_buy', 'groups_sell', 'S_now']
+CF = ['ticker', 'name', 'S', 'raw'] + [f'{g}_{k}' for g in CGROUPS for k in ('b', 's', 'usd')] + ['actors', 'groups_buy', 'groups_sell', 'S_now']
+
+
+def plan_window(E, lo, hi):
+    """Insiders' 10b5-1 plan trades inside a window: per ticker {owner: net dollars} (each owner netted once)."""
+    by = {}
+    for tk, day, d, usd, okey, oname in getattr(E, 'plan', []):
+        if lo <= day <= hi:
+            o = by.setdefault(tk, {}).setdefault(okey, [oname, 0.0, 0.0, 0])
+            o[1] += d * usd
+            o[2] += usd
+            o[3] += 1
+    return by
 
 
 def publish_combined(pub, E, sk, V, universe, today):
@@ -1086,16 +1122,25 @@ def publish_combined(pub, E, sk, V, universe, today):
     Lside = sk['L_side']
     nt = len(E.tickers)
     S_now = V['all']['S'] if V else np.full(nt, np.nan)
-    index = {'generated_at': now(), 'fields': CF, 'groups': GROUPS, 'labels': LABEL, 'periods': []}
+    index = {'generated_at': now(), 'fields': CF, 'groups': CGROUPS, 'labels': LABEL, 'periods': []}
     for per in combined_periods(today):
         lo, hi = ordinal(per['start']), ordinal(per['end'])
         idx = np.flatnonzero((E.day >= lo) & (E.day <= hi) & (E.known <= today))
-        stats = {g: {'actors': 0, 'trades': 0, 'usd_buy': 0.0, 'usd_sell': 0.0} for g in GROUPS}
-        if not len(idx):
+        stats = {g: {'actors': 0, 'trades': 0, 'usd_buy': 0.0, 'usd_sell': 0.0} for g in CGROUPS}
+        plan = plan_window(E, lo, min(hi, today))
+        pnet = [o[1] for owners in plan.values() for o in owners.values()]
+        stats['plan'] = {'actors': len({k for owners in plan.values() for k in owners}), 'trades': sum(o[3] for owners in plan.values() for o in owners.values()),
+                         'usd_buy': round(sum(v for v in pnet if v > 0)), 'usd_sell': round(-sum(v for v in pnet if v < 0)), 'stocks': len(plan)}
+        if not len(idx) and not plan:
             index['periods'].append({**per, 'stocks': 0, 'groups': stats})
             wj(out_dir / f"{per['key']}.json", {'key': per['key'], 'fields': CF, 'rows': [], 'actors': {}})
             continue
-        va, vt, dv, cv, Lv, last, vg, unet, ugross, cnt = net_by_actor(E, idx, Lside)
+        if len(idx):
+            va, vt, dv, cv, Lv, last, vg, unet, ugross, cnt = net_by_actor(E, idx, Lside)
+        else:                                              # plan trades only in this window
+            z = np.zeros(0, dtype=np.int64)
+            va, vt, vg, last = z, z, z, z
+            dv, cv, Lv, unet, ugross, cnt = (np.zeros(0) for _ in range(6))
         per_t = {}
         Z = np.bincount(vt, dv * cv * Lv, nt)
         D = np.bincount(vt, cv * np.abs(Lv), nt)
@@ -1112,6 +1157,10 @@ def publish_combined(pub, E, sk, V, universe, today):
         lastd = np.zeros(nt, dtype=np.int64)
         np.maximum.at(lastd, vt, last)
         rows = []
+
+        def plan_cols(t):
+            owners = plan.get(t) or {}
+            return [sum(1 for o in owners.values() if o[1] > 0), sum(1 for o in owners.values() if o[1] < 0), round(sum(o[1] for o in owners.values()))]
         for ti in np.flatnonzero(tot > 0):
             t = E.tickers[ti]
             row = [t, universe.name(t)[:48], r4(100 * Z[ti] / (D[ti] + LAMBDA), 1), r4(100 * R[ti] / C[ti], 1) if C[ti] else None]
@@ -1123,9 +1172,16 @@ def publish_combined(pub, E, sk, V, universe, today):
                     direction = np.sign(b - s_) or np.sign(u)
                     gb += direction > 0
                     gs += direction < 0
+            row += plan_cols(t)                            # plan trades: dollars only, not a group's vote
             row += [int(tot[ti]), int(gb), int(gs), r4(S_now[ti], 1)]
             rows.append(row)
-        rows.sort(key=lambda r: -abs(sum(r[6 + 3 * k] for k in range(len(GROUPS)))))
+        have = {r[0] for r in rows}
+        for t in plan:                                     # stocks with plan trades and nothing else in the window
+            if t not in have:
+                ti = E.tidx.get(t)
+                rows.append([t, universe.name(t)[:48], None, None] + [0, 0, 0] * len(GROUPS) + plan_cols(t)
+                            + [0, 0, 0, r4(S_now[ti], 1) if ti is not None else None])
+        rows.sort(key=lambda r: -abs(sum(r[6 + 3 * k] for k in range(len(CGROUPS)))))
         # the most active names of each group: gross dollars traded in the window
         actors = {}
         for gi, g in enumerate(GROUPS):
@@ -1147,6 +1203,16 @@ def publish_combined(pub, E, sk, V, universe, today):
                             r4(sk['all']['p'][ai]), r4(sk['all']['L'][ai], 2), int(sk['all']['decisions'][ai]),
                             [[E.tickers[vt[k]], int(dv[k]), round(float(unet[k]))] for k in tops]])
             actors[g] = lst
+        if plan:                                           # the largest plan traders: gross dollars in the window
+            flat = sorted(((okey, o, t) for t, owners in plan.items() for okey, o in owners.items()), key=lambda x: -x[1][2])
+            by_owner = {}
+            for okey, o, t in flat:
+                a = by_owner.setdefault(okey, {'name': o[0], 'gross': 0.0, 'net': 0.0, 'trades': 0, 'top': []})
+                a['gross'] += o[2]; a['net'] += o[1]; a['trades'] += o[3]
+                if len(a['top']) < 4:
+                    a['top'].append([t, 1 if o[1] > 0 else -1, round(o[1])])
+            actors['plan'] = [['p:' + k, a['name'], 'insider · 10b5-1 plan', round(a['gross']), round(a['net']), a['trades'], len(a['top']),
+                               None, None, 0, a['top']] for k, a in sorted(by_owner.items(), key=lambda x: -x[1]['gross'])[:30]]
         wj(out_dir / f"{per['key']}.json", {'key': per['key'], 'fields': CF, 'rows': rows,
                                              'actor_fields': ['id', 'name', 'sub', 'gross', 'net', 'trades', 'stocks', 'p', 'L', 'decisions', 'top'], 'actors': actors})
         index['periods'].append({**per, 'stocks': len(rows), 'groups': stats})

@@ -731,7 +731,7 @@
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
   // ---------- company tabs: Earnings · Cash & quality · Valuation ----------
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates'], ['consensus', 'Consensus']]
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates'], ['consensus', 'Consensus'], ['posts', 'Posts']]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   function ccyBar(own, inUsd, hasUsd, q) {
@@ -767,6 +767,7 @@
     const body = $('#body');
     if (which === 'debt') return debtSection(body, cik, here);
     if (which === 'consensus') return consensusSection(body, cik, here);
+    if (which === 'posts') return postsSection(body, c, ticker, here);
     const D = c.quality;
     if (!D || !((D.q || []).length || (D.fy || []).length)) {
       body.innerHTML = `<p class="muted">The figures for this view have not been read for ${t(p.name)} yet: the scan reads a few dozen companies a run, largest first.</p>`;
@@ -789,10 +790,48 @@
       driversSection(body, c);
       qualitySection(body, c, (c.quarters || [])[0], false);
       cashSection(body, c);
-    } else if (which === 'capital') capitalSection(body, c, ticker);
+    } else if (which === 'capital') { capitalSection(body, c, ticker); postBelow(body, 'capital', c, ticker, here); }
     else if (which === 'revisions') revisionsSection(body, c);
     else if (which === 'bs') reformSection(body, c);
     else valuationSection(body, c, ticker, here);
+  }
+
+  // ---------- posts for X: every chart family of a company as a ready-to-post text with its analysis (disclosures/posts.js) ----------
+  let postsLoad = null;
+  const loadPosts = () => postsLoad || (postsLoad = new Promise((ok) => {
+    if (window.FFPosts) return ok();
+    const sc = document.createElement('script');
+    sc.src = 'disclosures/posts.js';
+    sc.onload = () => ok();
+    sc.onerror = () => { postsLoad = null; ok(); };
+    document.head.appendChild(sc);
+  }));
+  async function postBelow(body, kind, c, ticker, here) {
+    await loadPosts();
+    if (!window.FFPosts || (here && !here())) return;
+    const it = window.FFPosts.build(kind, { ticker, cik: c.profile.cik, name: S.dec(c.profile.name), site: c });
+    if (!it) return;
+    const box = document.createElement('div');
+    box.className = 'section';
+    box.innerHTML = window.FFPosts.box(it);
+    body.appendChild(box);
+    window.FFPosts.bind(box);
+  }
+  async function postsSection(body, c, ticker, here) {
+    const name = S.dec(c.profile.name);
+    body.innerHTML = `<div class="section"><div class="section-head"><h2>Posts for X</h2><span class="muted">Every chart family of ${t(name)}, written as a post</span></div>
+      <p class="muted" style="max-width:72ch">Each post comes with a paragraph of analysis and a short narrative, written by fixed rules from the data on this site (no language model; every number is in the charts):
+        the earnings Sankey, Polymarket and Kalshi against the options, the flows of 13F managers, ETFs, insiders (with their 10b5-1 plan trades) and officials,
+        capital allocation, debt, and the company's place in every rotation chart (RRG 2-D / 3-D / 4-D, the momentum clock, the solar system, the galaxy). Edit, then copy or open in X.</p>
+      <div id="posts-box"><p class="muted">Reading the data…</p></div></div>`;
+    await loadPosts();
+    if (!here() || !window.FFPosts) { if (here()) $('#posts-box').innerHTML = '<p class="muted">The posts could not load.</p>'; return; }
+    const B = await window.FFPosts.load(ticker, c.profile.cik);
+    B.site = c;
+    if (!here()) return;
+    const items = window.FFPosts.all(B), box = $('#posts-box');
+    window.FFPosts.render(box, items);
+    if (!items.length) box.innerHTML = '<p class="muted">No data for a post yet.</p>';
   }
 
   // ---------- debt & rates: drawn by the Disclosure Hub's shared view (disclosures/debt-view.js, data from app/debt.py) ----------
@@ -809,7 +848,7 @@
     body.innerHTML = `<div class="section"><p class="muted">Loading debt, rates and credit risk…</p></div>`;
     let d = null, err = null;
     try {
-      const [r] = await Promise.all([fetch(`disclosures/data/debt/c/${cik}.json`), loadDebtView()]);
+      const [r] = await Promise.all([fetch(`disclosures/data/debt/c/${cik}.json`), loadDebtView(), loadPosts()]);
       if (r.ok) d = await r.json();
       else if (r.status !== 404) err = 'HTTP ' + r.status;
     } catch (e) { err = e.message; }
@@ -2849,6 +2888,174 @@
     const title = `${name} ${S.dec(q.label)}: ${h.revenue != null ? money(h.revenue) + ' revenue' : 'the quarter'}${h.yoy != null ? `, ${pct(h.yoy)} Y/Y` : ''} — where it went`;
     return { title: title.slice(0, 100), blocks: B, images };
   }
+  // ---------- the owner's X report: the daily report or chosen tickers, with the chart families ticked, as one X Article ----------
+  const XR_KINDS = [['earnings', 'Earnings Sankey (with the chart)'], ['moves', 'Market move'], ['optmoves', 'Options move (IV, put/call, gamma, 13F options)'],
+    ['markets', 'Polymarket · Kalshi · options'], ['events', '8-Ks and news'], ['insiders', 'Insiders (Form 4, 10b5-1)'], ['officials', 'Officials\' trades'],
+    ['flows', 'Flows: 13F, ETFs, insiders, plan sales, officials'], ['capital', 'Capital allocation'], ['debt', 'Debt & rates'], ['rotation', 'Rotation: RRG 2-D / 3-D / 4-D, clock, solar system, galaxy']];
+  function xrCik(ix, tk) {
+    const want = String(tk || '').toUpperCase().replace(/\./g, '-');
+    const e = ix.companies.find((c) => String(c.ticker || '').toUpperCase().replace(/\./g, '-') === want);
+    return e ? e.cik : (/^\d+$/.test(tk) ? +tk : null);
+  }
+  async function xrEntries(ix, list, kinds, say) {
+    await loadPosts();
+    const other = kinds.filter((k) => k !== 'earnings');
+    let done = 0;
+    return (await Promise.all(list.map(async (x) => {
+      try {
+        const cik = x.cik || xrCik(ix, x.ticker), c = cik ? await getJSON(`c/${cik}.json`).catch(() => null) : null;
+        const qs = c ? c.quarters.map(fcfView) : [], q = x.end ? (qs.find((y) => y.end === x.end && (!x.form || y.form === x.form)) || qs.find((y) => y.end === x.end)) : qs[0];
+        const tk = x.ticker || (c && (c.profile.tickers || [])[0]) || '';
+        const B = window.FFPosts && other.length ? await window.FFPosts.load(tk, cik, other) : null;
+        if (B && c) B.site = c;
+        const items = B ? window.FFPosts.all(B, other) : [];
+        say(`Reading ${++done} of ${list.length}…`);
+        return (c || items.length) ? { x, c, q, tk, cik, items, name: c ? S.dec(c.profile.name) : (B && B.name) || tk } : null;
+      } catch (e) { return null; }
+    }))).filter(Boolean);
+  }
+  // the daily report's market-wide part: that day's 8-Ks, officials' reports, insider purchases, the biggest moves in the
+  // stocks and in their options (hub data: market/events8k, officials-trades, insiders, options)
+  async function xrMarketWide(day, kinds) {
+    const get = (f) => fetch(`disclosures/data/market/${f}.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const [ev, off, ins, opt] = await Promise.all([kinds.includes('events') ? get('events8k') : null, kinds.includes('officials') ? get('officials-trades') : null,
+      kinds.includes('insiders') ? get('insiders') : null, kinds.includes('moves') || kinds.includes('optmoves') ? get('options') : null]);
+    const B = [], tk = (x) => (x ? '$' + String(x).replace(/-/g, '.') : '');
+    const E = ((ev && ev.rows) || []).filter((r) => r.filed === day && r.ticker).sort((a, b) => (b.score || 0) - (a.score || 0));
+    if (E.length) {
+      B.push({ k: 'h2', text: `8-Ks filed that day: ${E.length}` });
+      B.push({ k: 'ul', items: E.slice(0, 12).map((r) => `${tk(r.ticker)} ${r.company || ''}: ${r.label || r.code || '8-K'}${r.headline ? ` — ${String(r.headline).slice(0, 120)}` : ''}`) });
+    }
+    const O = ((off && off.trades) || []).filter((r) => r.filed_date === day && r.ticker);
+    if (O.length) {
+      B.push({ k: 'h2', text: `Officials' trades reported that day: ${O.length}` });
+      B.push({ k: 'ul', items: O.slice(0, 15).map((r) => `${r.person} (${String(r.jurisdiction || '').replace(/^US /, '')}): ${r.type} of ${tk(r.ticker)}, $${(r.amount_min || 0).toLocaleString('en-US')}${r.amount_max ? '–$' + r.amount_max.toLocaleString('en-US') : '+'}, traded ${date(r.date)}`) });
+    }
+    const I = ((ins && ins.latest) || []).filter((r) => r.code === 'P' && (r.filed || r.date) && String(r.filed || r.date).slice(0, 10) >= day).sort((a, b) => (b.value || 0) - (a.value || 0));
+    if (I.length) {
+      B.push({ k: 'h2', text: 'Insider purchases (Form 4)' });
+      B.push({ k: 'ul', items: I.slice(0, 10).map((r) => `${tk(r.ticker)} ${r.insider} (${r.title || r.role}) bought ${money(r.value)}${r.price != null ? ` at $${(+r.price).toFixed(2)}` : ''} on ${date(r.date)}`) });
+    }
+    const R = ((opt && opt.rows) || []).filter((r) => !['SPX', 'NDX', 'VIX', 'RUT', 'XSP', 'DJX'].includes(r.ticker));
+    if (kinds.includes('moves') && R.length) {
+      const mv = R.map((r) => { const h = (r.history || []).filter((x) => x[1] != null); return h.length >= 2 ? [r.ticker, h[h.length - 1][1] / h[h.length - 2][1] - 1, h[h.length - 1][1], h[h.length - 1][0]] : null; })
+        .filter(Boolean).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+      if (mv.length) {
+        B.push({ k: 'h2', text: 'The biggest moves (end of day)' });
+        B.push({ k: 'ul', items: mv.slice(0, 8).map(([t2, r, px, d]) => `${tk(t2)} ${pct(r * 100, 1)} to $${(+px).toFixed(2)} (${date(d)})`) });
+      }
+    }
+    if (kinds.includes('optmoves') && R.length) {
+      const iv = R.filter((r) => r.iv30_chg != null).sort((a, b) => Math.abs(b.iv30_chg) - Math.abs(a.iv30_chg));
+      if (iv.length) {
+        B.push({ k: 'h2', text: 'Options: the biggest moves in implied volatility' });
+        B.push({ k: 'ul', items: iv.slice(0, 8).map((r) => `${tk(r.ticker)} 30-day IV ${r.iv30_chg > 0 ? '+' : '−'}${Math.abs(r.iv30_chg).toFixed(1)} pts to ${(+r.iv30).toFixed(1)}% · put/call OI ${r.pc_oi != null ? (+r.pc_oi).toFixed(2) : '—'} · walls $${r.put_wall} / $${r.call_wall}`) });
+      }
+    }
+    return B;
+  }
+  function articleCustom(entries, kinds, head) {
+    const B = [], images = [], K = Object.fromEntries(XR_KINDS);
+    const tag = (e) => (e.tk ? `$${String(e.tk).replace(/-/g, '.')}` : e.name);
+    B.push({ k: 'p', text: head.intro });
+    if ((head.wide || []).length) B.push(...head.wide);
+    if (entries.length) {
+      B.push({ k: 'h2', text: 'In this report' });
+      B.push({ k: 'ul', items: entries.slice(0, 30).map((e) => `${tag(e)} ${e.name}${e.q ? ` · ${S.dec(e.q.label)}: ${artLine(null, e.q)}` : ''}`) });
+    }
+    entries.forEach((e, i) => {
+      if (i >= head.full) return;
+      B.push({ k: 'h2', text: `${e.name}${e.tk ? ` (${String(e.tk).replace(/-/g, '.')})` : ''}${e.q && kinds.includes('earnings') ? ' · ' + S.dec(e.q.label) : ''}` });
+      kinds.forEach((k) => {
+        if (k === 'earnings') {
+          if (!e.q) return;
+          B.push({ k: 'p', text: `${artForm(e.q)} filed ${date(e.q.filed)}: ${artLine(null, e.q)}.`, bold: `${artForm(e.q)} filed ${date(e.q.filed)}` });
+          images.push({ n: images.length + 1, cap: `${e.name} ${S.dec(e.q.label)}: where the revenue went`, make: chartImage(e.q), file: `${e.tk || e.cik}-${S.dec(e.q.label)}-sankey.png` });
+          B.push({ k: 'img', n: images.length, cap: images[images.length - 1].cap });
+          (e.q.analysis || []).slice(0, 2).forEach((x) => B.push({ k: 'p', text: S.dec(x) }));
+          return;
+        }
+        const it = e.items.find((p) => p.kind === k);
+        if (!it) return;
+        B.push({ k: 'p', text: `${it.label}. ${it.story || ''}`.trim(), bold: it.label + '.' });
+        it.paras.forEach((x) => B.push({ k: 'p', text: x }));
+      });
+      const links = [[`${artSite()}#c-${e.cik}`, `${e.name} on Filing Flows`]].concat(e.items.map((p) => [p.link, `${p.label} on Filing Flows`]));
+      if (e.cik) B.push({ k: 'ul', links: links.filter((l, j) => l[0] && links.findIndex((m) => m[0] === l[0]) === j).slice(0, 4) });
+    });
+    const rest = entries.slice(head.full);
+    if (rest.length) {
+      B.push({ k: 'h2', text: 'Also in the report' });
+      B.push({ k: 'ul', items: rest.slice(0, 40).map((e) => `${tag(e)} ${e.name}${e.q ? ` · ${S.dec(e.q.label)}: ${artLine(null, e.q)}` : ''}`) });
+    }
+    B.push({ k: 'p', em: true, text: `What is inside: ${kinds.map((k) => K[k]).join('; ')}. All charts: ${artSite()} — figures read automatically from SEC filings, prediction markets and CBOE quotes by fixed rules; check the sources before relying on them. Not investment advice.` });
+    return { title: head.title.slice(0, 100), blocks: B, images };
+  }
+  async function xReportPanel(box, ix, osets) {
+    if (!box || !box.isConnected) return;
+    const now = new Date(), minOwner = osets && osets.min_revenue != null ? +osets.min_revenue : 1e9, full = osets && osets.daily_scope === 'all';
+    const days = [0, 1, 2, 3, 4, 5, 6].map((i) => { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i), iso = localISO(d);
+      return { iso, label: i === 0 ? 'Today' : i === 1 ? 'Yesterday' : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }), n: dayEntries(ix, iso).length }; });
+    const first = days.find((d) => d.n) || days[0];
+    const kSaved = prefs.get('xr-kinds', ['earnings', 'moves', 'optmoves', 'markets', 'events', 'insiders', 'officials', 'flows', 'debt']);
+    box.innerHTML = `<div class="section-head"><h2>X report generator</h2><span class="muted">One X Article: the daily report by default, or the companies you choose, with the chart families you tick</span></div>
+      <form id="xr-form" class="xr">
+        <div class="xr-mode" role="radiogroup" aria-label="What the report covers">
+          <label><input type="radio" name="xr-mode" value="day" checked> Daily report for
+            <select id="xr-day" aria-label="Filing date">${days.map((d) => `<option value="${d.iso}" ${d === first ? 'selected' : ''}>${d.label} (${d.n} filing${d.n === 1 ? '' : 's'})</option>`).join('')}</select>
+            <span class="muted small">${full ? 'every company that filed' : `companies with quarterly revenue of $${(minOwner / 1e9).toLocaleString('en-US', { maximumFractionDigits: 2 })}B or more`}, largest first</span></label>
+          <label><input type="radio" name="xr-mode" value="tickers"> These companies:
+            <input id="xr-tickers" placeholder="e.g. AAPL, NVDA, MSFT, TSLA" value="${t(prefs.get('xr-tickers', ''))}" style="min-width:min(22em,100%)" aria-label="Tickers"></label>
+        </div>
+        <fieldset class="xr-kinds"><legend>What goes in, for each company</legend>${XR_KINDS.map(([k, l]) => `<label><input type="checkbox" value="${k}" ${kSaved.includes(k) ? 'checked' : ''}> ${t(l)}</label>`).join('')}</fieldset>
+        <div class="row"><label class="muted small">In full: <select id="xr-full">${[3, 6, 10, 15, 25].map((n) => `<option value="${n}" ${n === (+(osets && osets.article_full) || 6) ? 'selected' : ''}>${n} companies</option>`).join('')}</select> (the rest are listed)</label>
+          <button class="btn primary" type="submit">✦ Build the X Article</button><button class="btn" type="button" id="xr-posts">Show each post</button><span class="muted small" id="xr-msg" role="status"></span></div>
+      </form>
+      <div id="xr-out"></div>`;
+    const say = (x) => { const m = $('#xr-msg', box); if (m) m.textContent = x; };
+    const read = () => {
+      const kinds = $$('.xr-kinds input', box).filter((x) => x.checked).map((x) => x.value);
+      const mode = ($('input[name="xr-mode"]:checked', box) || {}).value || 'day';
+      prefs.set('xr-kinds', kinds);
+      prefs.set('xr-tickers', $('#xr-tickers', box).value);
+      return { kinds: kinds.length ? kinds : ['earnings'], mode, full: +$('#xr-full', box).value || 6 };
+    };
+    const pick = (o) => {
+      if (o.mode === 'tickers') {
+        const tks = [...new Set($('#xr-tickers', box).value.toUpperCase().split(/[\s,;]+/).filter(Boolean))].slice(0, 30);
+        return { list: tks.map((tk) => ({ ticker: tk })), what: 'custom report', title: `${tks.slice(0, 4).map((x) => '$' + x).join(' ')}${tks.length > 4 ? ` +${tks.length - 4}` : ''}: ${o.kinds.length > 2 ? 'earnings, markets, flows and more' : o.kinds.map((k) => k).join(' & ')} — Filing Flows`,
+          intro: `${tks.length} compan${tks.length === 1 ? 'y' : 'ies'}, read from SEC filings, Polymarket and Kalshi, CBOE options and the disclosed trades of funds, insiders and officials: ${tks.map((x) => '$' + x).join(' ')}.` };
+      }
+      const day = $('#xr-day', box).value, all = dayEntries(ix, day).filter((e) => full || (e.revenue || 0) >= minOwner).sort((x, y) => (y.revenue || 0) - (x.revenue || 0));
+      const long = new Date(day + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      const ticks = all.map((e) => e.ticker).filter(Boolean).slice(0, 4);
+      return { day, list: all.slice(0, 60).map((e) => ({ ticker: e.ticker, cik: e.cik, end: e.end, form: e.form })), what: `daily report ${day}`,
+        title: all.length ? `Earnings filed ${new Date(day + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${ticks.join(', ')}${all.length > 4 ? ` and ${all.length - 4} more` : ''}`
+          : `Filings, trades and moves: ${new Date(day + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+        intro: all.length ? `${all.length} compan${all.length === 1 ? 'y' : 'ies'} filed quarterly results with the SEC on ${long}. Each chart shows where the revenue went: costs, profit and operating cash flow.`
+          : `No company in the report filed quarterly results on ${long}. The day in filings, trades and moves:` };
+    };
+    $('#xr-form', box).addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const o = read(), P = pick(o);
+      if (!P.list.length && o.mode === 'tickers') { say('Type at least one ticker'); return; }
+      say('Reading the companies…');
+      const [entries, wide] = await Promise.all([xrEntries(ix, P.list, o.kinds, say), P.day ? xrMarketWide(P.day, o.kinds) : []]);
+      if (!entries.length && !wide.length) { say('None of these could be read'); return; }
+      say('');
+      articlePanel(articleCustom(entries, o.kinds, { ...P, full: o.full, wide }), P.what);
+    });
+    $('#xr-posts', box).addEventListener('click', async () => {
+      const o = read(), P = pick(o);
+      if (!P.list.length) { say('Nothing to write about'); return; }
+      say('Writing the posts…');
+      const entries = await xrEntries(ix, P.list.slice(0, 12), o.kinds.filter((k) => k !== 'earnings'), say);
+      const out = $('#xr-out', box);
+      out.innerHTML = entries.map((e) => `<h3>${t(e.name)} <span class="muted">${t(e.tk || '')}</span></h3>${e.items.map((p) => window.FFPosts.box(p)).join('') || '<p class="muted">No data for these posts.</p>'}`).join('');
+      if (window.FFPosts) window.FFPosts.bind(out);
+      say(entries.length ? '' : 'None of these could be read');
+    });
+  }
   // a day's filings: the owner's daily report as one article (the largest companies in full, the rest listed)
   function articleDay(day, items, full) {
     const B = [], images = [], long = new Date(day + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -3921,7 +4128,7 @@
       <div class="days" role="radiogroup" aria-label="Filing date">${days.map((d) => `<button type="button" class="day${d.iso === pick ? ' on' : ''}"
           role="radio" aria-checked="${d.iso === pick}" data-day="${d.iso}" ${d.all ? '' : 'disabled'}>
           <b>${d.name}</b><span>${d.short}</span><span class="n">${d.all ? `${d.all} filing${d.all === 1 ? '' : 's'}${user ? ` · ${countWords(d)}` : ''}` : 'no filings'}</span></button>`).join('')}</div>
-      <div class="row"><button class="btn primary" type="button" id="day-send"></button>${owner ? '<button class="btn" type="button" id="day-article" title="This day’s report as an X Article: copy the text, then each chart, and paste them into X’s editor">✦ X Article</button>' : ''}<span class="muted small" id="day-msg" role="status"></span></div>
+      <div class="row"><button class="btn primary" type="button" id="day-send"></button>${owner ? '<button class="btn" type="button" id="day-article" title="This day’s report as an X Article: copy the text, then each chart, and paste them into X’s editor">✦ X Article</button><a class="btn" href="#owner-xreport" title="Choose the companies and what goes in: Sankey, Polymarket · Kalshi · options, flows, capital allocation, debt, rotation">✦ Custom X report…</a>' : ''}<span class="muted small" id="day-msg" role="status"></span></div>
       <p class="muted small">Covers ${what}. Dates are filing dates on SEC EDGAR. ${auto}</p>`;
     const label = () => { const d = days.find((x) => x.iso === pick); $('#day-send', box).textContent = `✉ Email me the report for ${d.i < 2 ? d.name.toLowerCase() : d.long}`; };
     label();
@@ -4418,9 +4625,11 @@
           <input class="input mono" id="fund-ref" placeholder="13F accession (blank = latest)" aria-label="13F accession">
           <button class="btn" type="submit">✦ 13F post</button></form>
         <p class="muted small">Any manager the Disclosures hub has processed: new positions, largest additions and cuts, exits and top holdings, with the 13F link.</p></section>` : ''}
+      <section class="section" id="xreport"></section>
       <section class="section daily" id="daily" hidden></section>
       ${back}`;
     $('#owner-toggle').addEventListener('click', () => { prefs.set('owner', !on); route(); });
+    getJSON('index.json').then((ix) => xReportPanel($('#xreport'), ix, osets)).catch((e) => console.warn('X report panel:', e.message));
     $$('[data-engage]').forEach((b) => b.addEventListener('click', () => withProgress(b, (x) => { $('#engage-msg').textContent = x || ''; },
       () => askFor({ cik: 0, period_end: localISO(new Date()), kind: b.dataset.engage, draft: !!($('#engage-draft') && $('#engage-draft').checked) }, b.textContent.replace(/^✦\s*/, '')))));
     bindDraft('engage-draft');
@@ -4621,7 +4830,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus|posts)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
@@ -4630,6 +4839,7 @@
       else if (h === 'method') await methodPage();
       else if (h === 'account') await accountPage();
       else if (h === 'owner') await ownerPage();
+      else if (h === 'owner-xreport') { await ownerPage(); const x = $('#xreport'); if (x) x.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       else if ((m = /^unsubscribe-([0-9a-f-]{36})$/.exec(h))) await unsubscribePage(m[1]);
       else await home();
       initFollowButtons();

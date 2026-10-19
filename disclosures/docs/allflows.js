@@ -13,12 +13,21 @@ function afData(path){
  return m;
 }
 const AF_VIEWS=[['stocks','Every stock, every group side by side'],['agree','Where the groups agree'],['split','Where they split'],['names','Most active names']];
-const AF_SORT=[['net','Largest net dollars (all groups)'],['gbuy','Most groups net buying'],['gsell','Most groups net selling'],['actors','Most names trading'],['S','Skill-weighted score in the period'],['f13','13F managers: net dollars'],['ins','Insiders: net dollars'],['gov','Officials: net dollars'],['etf','Active ETFs: net dollars']];
-const AF_G=['f13','etf','ins','gov'],AF_GN={f13:'13F managers',etf:'Active ETFs',ins:'Insiders',gov:'Officials'};
+const AF_SORT=[['net','Largest net dollars (the groups counted)'],['gbuy','Most groups net buying'],['gsell','Most groups net selling'],['actors','Most names trading'],['S','Skill-weighted score in the period'],['f13','13F managers: net dollars'],['ins','Insiders: net dollars'],['plan','Insider plan trades: net dollars'],['gov','Officials: net dollars'],['etf','Active ETFs: net dollars']];
+// the groups, and which of them make up the total (state.afc: a comma list; insiders' 10b5-1 plan trades are their own group)
+const AF_G=['f13','etf','ins','plan','gov'],AF_GN={f13:'13F managers',etf:'Active ETFs',ins:'Insiders',plan:'Insider plan trades (10b5-1)',gov:'Officials'};
+function flowGroups(key,dflt){const v=state[key];const L=(v==null?dflt:String(v)).split(',').filter(g=>AF_G.includes(g));return L.length?L:['f13']}
+function flowGroupBoxes(key,dflt,label){const on=new Set(flowGroups(key,dflt));
+ return `<div class="field af-groups"><label>${esc(label||'Count in the total')}</label><span class="af-checks">${AF_G.map(g=>`<label><input type="checkbox" data-fg="${key}" value="${g}"${on.has(g)?' checked':''}> ${esc(AF_GN[g])}</label>`).join('')}</span></div>`}
+function bindFlowGroups(){
+ document.querySelectorAll('#workspace [data-fg]').forEach(b=>b.onchange=()=>{const key=b.dataset.fg;
+  const on=[...document.querySelectorAll(`#workspace [data-fg="${key}"]`)].filter(x=>x.checked).map(x=>x.value);
+  state[key]=(on.length?on:['f13']).join(',');state.page=0;render()});
+}
 const afMoney=v=>v==null||!Number.isFinite(+v)||Math.round(v)===0?'—':`<span class="${v>0?'positive':'negative'}">${v>0?'+':'−'}$${compact(Math.abs(v))}</span>`;
 const afTk=t=>`<button class="text-button" data-aft="${esc(t)}"><b>${esc(t)}</b></button>`;
 function afCell(r,g){const b=r[g+'_b'],s=r[g+'_s'];if(!b&&!s)return '<span class="muted">—</span>';return `<span class="positive">${fmt(b)}</span> · <span class="negative">${fmt(s)}</span><br>${afMoney(r[g+'_usd'])}`}
-function afRows(d){const F=d.fields;return (d.rows||[]).map(x=>{const o={};F.forEach((k,i)=>o[k]=x[i]);o.net=AF_G.reduce((a,g)=>a+(o[g+'_usd']||0),0);return o})}
+function afRows(d,groups){const F=d.fields,G=groups||AF_G;return (d.rows||[]).map(x=>{const o={};F.forEach((k,i)=>o[k]=x[i]);o.net=G.reduce((a,g)=>a+(o[g+'_usd']||0),0);return o})}
 function afReddit(rows){
  const m=afData('market/reddit');
  if(m.err||!m.data||!m.data.hottest)return '';
@@ -45,11 +54,12 @@ function allflowsView(){
  out+=`<div class="toolbar">${field('afp','Period',P.map(p=>[p.key,p.label]),state.afp,true)}${field('afv','View',AF_VIEWS,state.afv)}`;
  if(state.afv==='stocks')out+=field('afs','Sort',AF_SORT,state.afs||'net')+field('afg','Groups trading it',[['1','Any'],['2','2 or more'],['3','3 or more']],state.afg||'1')+`<div class="field"><label for="afq">Ticker or name</label><input id="afq" value="${esc(state.afq||'')}" placeholder="e.g. NVDA"></div>`;
  out+='</div>';
+ if(state.afv!=='names')out+=`<div class="toolbar">${flowGroupBoxes('afc',AF_G.join(','))}</div>`;
  out+=`<div class="explain">Every disclosed decision maker on one page: <b>13F managers</b> (quarter-over-quarter position changes), <b>active ETFs</b> (N-PORT portfolios, net of their own creations and redemptions), <b>insiders</b> (Form 4 open-market purchases and sales, 10b5-1 plans left out) and <b>officials</b> (House and Senate reports). For each stock: how many of each group were net buyers · net sellers in the period, and their net dollars (13F: share change × the quarter-end close; officials: the middle of the disclosed ranges). Each name counts once per stock, all its trades in the period netted. Skill-weighted score: the same votes weighted by each name's record (Smart money tab). ${esc(per.note||'')} Not investment advice.</div>`;
  if(!pd.data)return out+afReddit([])+(pd.err?empty('Could not load this period ('+pd.err+').'):empty('Loading the period…'));
- const rows=afRows(pd.data),G=per.groups||{};
+ const cnt=flowGroups('afc',AF_G.join(',')),rows=afRows(pd.data,cnt),G=per.groups||{};
  out=afReddit(rows)+out;
- out+=`<div class="metrics">${AF_G.map(g=>{const x=G[g]||{};return kpi(AF_GN[g],x.actors?`${fmt(x.actors)} names`:'—',x.actors?`${fmt(x.trades)} trades in ${fmt(x.stocks)} stocks · bought $${compact(x.usd_buy||0)} · sold $${compact(x.usd_sell||0)}`:(g==='etf'?'active-ETF portfolios arrive with the next ETF run':state.afp==='qtd'&&(g==='f13'||g==='etf')?'reported after the quarter ends':'none in this period'))}).join('')}</div>`;
+ out+=`<div class="metrics">${AF_G.filter(g=>g!=='plan'||G.plan).map(g=>{const x=G[g]||{};return kpi(AF_GN[g],x.actors?`${fmt(x.actors)} names`:'—',x.actors?`${fmt(x.trades)} trades in ${fmt(x.stocks)} stocks · bought $${compact(x.usd_buy||0)} · sold $${compact(x.usd_sell||0)}`:(g==='etf'?'active-ETF portfolios arrive with the next ETF run':state.afp==='qtd'&&(g==='f13'||g==='etf')?'reported after the quarter ends':'none in this period'))}).join('')}</div>`;
  if(state.afv==='names')return out+afNames(pd.data);
  let list=rows;
  if(state.afv==='agree')return out+afAgree(rows);
@@ -58,15 +68,16 @@ function allflowsView(){
  if(q)list=list.filter(r=>r.ticker.toLowerCase()===q||(r.name||'').toLowerCase().includes(q));
  const ming=+(state.afg||1);list=list.filter(r=>r.groups_buy+r.groups_sell>=ming);
  const s=state.afs||'net';
- const key={net:r=>Math.abs(r.net),gbuy:r=>r.groups_buy*1e15+r.net,gsell:r=>r.groups_sell*1e15-r.net,actors:r=>r.actors,S:r=>r.S==null?-1e9:r.S,f13:r=>r.f13_usd,ins:r=>r.ins_usd,gov:r=>r.gov_usd,etf:r=>r.etf_usd}[s]||(r=>Math.abs(r.net));
+ const key={net:r=>Math.abs(r.net),gbuy:r=>r.groups_buy*1e15+r.net,gsell:r=>r.groups_sell*1e15-r.net,actors:r=>r.actors,S:r=>r.S==null?-1e9:r.S,f13:r=>r.f13_usd,ins:r=>r.ins_usd,plan:r=>-(r.plan_usd||0),gov:r=>r.gov_usd,etf:r=>r.etf_usd}[s]||(r=>Math.abs(r.net));
  list=list.slice().sort((a,b)=>key(b)-key(a));
  exported=list;
- out+=`<div class="section-head"><h3>${fmt(list.length)} stocks — ${esc(per.label||'')}</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">Each group cell: net buyers · net sellers, then net dollars. Click a ticker for who traded it and how their past trades did.</p>`;
+ out+=`<div class="section-head"><h3>${fmt(list.length)} stocks — ${esc(per.label||'')}</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">Each group cell: net buyers · net sellers, then net dollars. Net = ${cnt.map(g=>AF_GN[g]).join(' + ')}. Insiders' 10b5-1 plan trades were set up months ahead: they move dollars but are not a decision taken that day, so they never count as a group buying or selling. Click a ticker for who traded it and how their past trades did.</p>`;
  return out+afTable(list.slice(0,600));
 }
 function afTable(list){
- return table(['Stock','13F managers','Active ETFs','Insiders','Officials','Groups buying · selling','Skill-weighted (period)','Smart score now'],list.map(r=>[
-  `${afTk(r.ticker)} <span class="muted">${esc((r.name||'').slice(0,34))}</span>`,afCell(r,'f13'),afCell(r,'etf'),afCell(r,'ins'),afCell(r,'gov'),
+ const plan=list.some(r=>'plan_usd' in r);
+ return table(['Stock','Net (counted)','13F managers','Active ETFs','Insiders',...(plan?['Insider plan trades']:[]),'Officials','Groups buying · selling','Skill-weighted (period)','Smart score now'],list.map(r=>[
+  `${afTk(r.ticker)} <span class="muted">${esc((r.name||'').slice(0,34))}</span>`,afMoney(r.net),afCell(r,'f13'),afCell(r,'etf'),afCell(r,'ins'),...(plan?[afCell(r,'plan')]:[]),afCell(r,'gov'),
   `<span class="positive">${fmt(r.groups_buy)}</span> · <span class="negative">${fmt(r.groups_sell)}</span>`,smScore(r.S),smScore(r.S_now)]));
 }
 function afAgree(rows){
@@ -90,8 +101,8 @@ function afNames(d){
  for(const g of AF_G){
   const L=A[g]||[];if(!L.length)continue;
   const rows=L.map(x=>{const o={};F.forEach((k,i)=>o[k]=x[i]);return o});exported.push(...rows.map(r=>({group:g,...r,top:(r.top||[]).map(t=>t[0]+(t[1]>0?'+':'−')).join(' ')})));
-  out+=`<h3>${esc(AF_GN[g])}</h3>`+table(['Name','Traded','Net','Trades · stocks','Record','Biggest moves'],rows.map(r=>[smWho(r.id,r.name,r.sub),'$'+compact(r.gross),afMoney(r.net),`${fmt(r.trades)} · ${fmt(r.stocks)}`,
-   r.decisions?`<b>${pct(r.p,0)}</b> <span class="muted">(${fmt(r.decisions)} decisions)</span> ${smEdge(r.L)}`:'<span class="muted">no record yet</span>',
+  out+=`<h3>${esc(AF_GN[g])}</h3>`+table(['Name','Traded','Net','Trades · stocks','Record','Biggest moves'],rows.map(r=>[g==='plan'?`<b>${esc(r.name)}</b><br><span class="muted">${esc(r.sub||'')}</span>`:smWho(r.id,r.name,r.sub),'$'+compact(r.gross),afMoney(r.net),`${fmt(r.trades)} · ${fmt(r.stocks)}`,
+   r.decisions?`<b>${pct(r.p,0)}</b> <span class="muted">(${fmt(r.decisions)} decisions)</span> ${smEdge(r.L)}`:`<span class="muted">${g==='plan'?'plan trades are not scored':'no record yet'}</span>`,
    (r.top||[]).map(t=>`<button class="text-button" data-aft="${esc(t[0])}">${esc(t[0])}</button> <span class="${t[1]>0?'positive':'negative'}">${t[1]>0?'bought':'sold'}</span> ${t[2]?'$'+compact(Math.abs(t[2])):''}`).join('<br>')]));
  }
  return out+'<div class="explain">Click a name for the record behind it: every scored trade, its accuracy on buys and on sales, and the running alpha.</div>';
@@ -99,6 +110,7 @@ function afNames(d){
 function bindAllflows(){
  if(state.tab!=='allflows')return;
  for(const k of ['afp','afv','afs','afg'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
+ bindFlowGroups();
  if($('afq')){$('afq').onchange=e=>{state.afq=e.target.value;state.page=0;render()};$('afq').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-aft]').forEach(b=>b.onclick=()=>{state.tab='smart';state.mview='stock';state.mst=b.dataset.aft;syncPills();try{history.replaceState(null,'','#smart/'+encodeURIComponent(b.dataset.aft))}catch(e){}render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-sma]').forEach(b=>b.onclick=()=>{state.tab='smart';state.mview='actor';state.maid=b.dataset.sma;state.maq=b.textContent.trim();syncPills();render();scrollTo({top:0,behavior:'smooth'})});
