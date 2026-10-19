@@ -569,7 +569,7 @@
     const here = live();
     opt = opt || {};
     setNav('');
-    const [ix, site] = await Promise.all([getJSON('index.json'), getJSON('site.json').catch(() => ({}))]);
+    const [ix, site] = await Promise.all([getJSON('index.json'), getJSON('site.json').catch(() => ({})), loadExtViews()]);
     let c;
     try {
       c = await getJSON(`c/${cik}.json`);
@@ -619,9 +619,11 @@
       </div>
       ${own !== 'USD' ? ccyBar(own, inUsd, !!c.usd, q) : ''}
       <section class="section cmp-panel" id="cmp-panel" hidden></section>
+      <div id="ff-overview"></div>
       <div id="body"></div>`;
     if (ticker) coChains($('#co-chains'), ticker);
     const body = $('#body');
+    if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
     app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
     initCompare(c, cik);
     if (cmpId) {
@@ -655,6 +657,7 @@
       trend: (id) => trendSeries(fy ? ys : qs, q, id, fy), cik: p.cik,
     });
     body.appendChild(ui);
+    if (window.FFEditor && !fy && (own === 'USD' || inUsd)) window.FFEditor.mount(body, { q, c, ticker, slug: `${(ticker || p.cik)}-${q.label}`.replace(/\s+/g, '-') });   // web/editor.js: edit / what-if
     const acc = accession(q.index_url);
     const text = document.createElement('div');
     text.className = 'cols';
@@ -733,7 +736,33 @@
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
   // ---------- company tabs: Earnings · Cash & quality · Valuation ----------
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates'], ['consensus', 'Consensus'], ['posts', 'Posts']]
+  // more company views from the Disclosure Hub: disclosures/views.json lists them ({id, label, script, global}); each script
+  // is a shared view (like debt-view.js) exposing window[global].render(el, {cik, ticker, company, here, hub})
+  let EXT_VIEWS = [], extViewsLoad = null;
+  const loadExtViews = () => extViewsLoad || (extViewsLoad = fetch('disclosures/views.json', { cache: 'no-cache' })
+    .then((r) => (r.ok ? r.json() : [])).catch(() => []).then((v) => { EXT_VIEWS = Array.isArray(v) ? v.filter((x) => x && /^[a-z0-9]+$/.test(x.id || '')) : []; return EXT_VIEWS; }));
+  const extScripts = {};
+  const loadExtScript = (src) => extScripts[src] || (extScripts[src] = new Promise((ok, bad) => {
+    const sc = document.createElement('script');
+    sc.src = 'disclosures/' + src;
+    sc.onload = () => ok();
+    sc.onerror = () => { delete extScripts[src]; bad(new Error(src + ' did not load')); };
+    document.head.appendChild(sc);
+  }));
+  async function extView(body, id, c, ticker, here) {
+    const v = EXT_VIEWS.find((x) => x.id === id);
+    if (!v) { body.innerHTML = '<p class="muted">This view is not available.</p>'; return; }
+    body.innerHTML = '<p class="muted">Loading…</p>';
+    try {
+      await loadExtScript(v.script);
+      if (!here()) return;
+      body.innerHTML = '';
+      await window[v.global].render(body, { cik: c.profile.cik, ticker, company: c, here, hub: 'disclosures/' });
+    } catch (err) {
+      if (here()) body.innerHTML = `<p class="muted">${t(v.label)} could not load (${t(err.message)}).</p>`;
+    }
+  }
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates'], ['consensus', 'Consensus'], ['posts', 'Posts'], ...EXT_VIEWS.map((v) => ['x-' + v.id, v.label])]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   function ccyBar(own, inUsd, hasUsd, q) {
@@ -755,6 +784,7 @@
       if (err.status === 404) return here() ? missingCompany(cik) : null;
       throw err;
     }
+    await loadExtViews();
     if (!here()) return;
     const p = c.profile, ticker = (p.tickers || [])[0] || '';
     CUR = symOf(c.currency || 'USD');                       // these views are read from XBRL in the reported currency
@@ -770,6 +800,7 @@
     if (which === 'debt') return debtSection(body, cik, here);
     if (which === 'consensus') return consensusSection(body, cik, here);
     if (which === 'posts') return postsSection(body, c, ticker, here);
+    if (which.startsWith('x-')) return extView(body, which.slice(2), c, ticker, here);
     const D = c.quality;
     if (!D || !((D.q || []).length || (D.fy || []).length)) {
       body.innerHTML = `<p class="muted">The figures for this view have not been read for ${t(p.name)} yet: the scan reads a few dozen companies a run, largest first.</p>`;
@@ -3789,9 +3820,9 @@
       const draw = (list) => {
         items = list.slice(0, 8);
         hi = 0;
-        box.innerHTML = items.map((c, i) => `<a href="#c-${c.cik}" class="${i === hi ? 'hi' : ''}${c.off ? ' off' : ''}"><span class="mono">${t(c.ticker)}</span><span>${t(c.name)}</span>${
-          c.off ? '<span class="tag">no chart yet</span>' : ''}</a>`).join('') ||
-          '<div class="muted" style="padding:8px 10px">No company found</div>';
+        const more = window.FFSearch ? window.FFSearch.moreHTML(q) : '';      // web/search.js: 13F managers, officials, ETFs
+        box.innerHTML = (items.map((c, i) => `<a href="#c-${c.cik}" class="${i === hi ? 'hi' : ''}${c.off ? ' off' : ''}"><span class="mono">${t(c.ticker)}</span><span>${t(c.name)}</span>${
+          c.off ? '<span class="tag">no chart yet</span>' : ''}</a>`).join('') || (more ? '' : '<div class="muted" style="padding:8px 10px">No company found</div>')) + more;
         box.hidden = false;
       };
       draw(here);
@@ -4637,6 +4668,7 @@
           <button class="btn" type="button" data-engage="engage_near_lows" title="Profitable large companies near their 52-week lows">✦ Quality near lows</button>
           <button class="btn" type="button" data-engage="engage_records" title="New all-time highs (or lows) in the last session">✦ All-time highs / lows</button>
           <button class="btn" type="button" data-engage="engage_polymarket" title="Polymarket's odds that this week's reporters beat the EPS line">✦ Polymarket earnings odds</button>
+          ${(xsite.engage_more || []).map((b) => `<button class="btn" type="button" data-engage="${t(b.kind)}" title="${t(b.title || '')}">${t(b.label)}</button>`).join('')}
         </div>
         <p class="muted small" id="engage-msg" role="status"></p>
         <h3>A fund's 13F</h3>
@@ -4866,12 +4898,14 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus|posts)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus|posts|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
       else if ((m = /^([si])-([a-z0-9-]+?)(?:-(CY\d{4}Q\d))?$/.exec(h))) await group(m[1], m[2], m[3]);
       else if (h === 'sectors') await sectorsPage();
+      else if (h === 'feed' && window.FFFeed) await window.FFFeed.render(app, Object.assign({}, window.FFApp, { here }));
+      else if ((m = /^chart(?:\/(.*))?$/.exec(h)) && window.FFCharts) await window.FFCharts.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if (h === 'chains' && window.FFChains) await window.FFChains.index(app, chainCtx());
       else if ((m = /^chain-([a-z0-9-]+)$/.exec(h)) && window.FFChains) await window.FFChains.page(app, m[1], chainCtx());
       else if (h === 'method') await methodPage();
@@ -4893,6 +4927,16 @@
     const page = location.hash.split('-').slice(0, 2).join('-');
     route().then(() => { if (page !== lastPage) window.scrollTo(0, 0); lastPage = page; });
   });
+  // what the discovery & UX modules (web/feed.js, charts.js) need from the app
+  window.FFApp = {
+    getJSON, setNav, here: () => true,
+    async loadFollows() {
+      const user = await currentUser().catch(() => null);
+      if (!user) return { signedIn: false, tickers: [] };
+      const p = acct.prefs || await loadPrefs().catch(() => null);
+      return { signedIn: true, tickers: (p && p.tickers) || [] };
+    },
+  };
   setupSearch();
   setupTheme();
   route();

@@ -430,7 +430,8 @@ def market_examples(site, rows, by_ticker, known, today, limits=None):
     """{kind: [examples]} for the market post formats. A kind's plans are drawn one after another, each without the names
     the earlier ones used (as the posting cooldown would), up to MARKET[kind]; every rule-written phrasing ("fallbacks")
     of a plan is a target, checked with the plan's own rules (cashtags allowed in a list, line breaks, no forum talk)."""
-    lim = {**MARKET, **(limits or {})}
+    reg = engage.X.load()
+    lim = {**MARKET, **{k: v["corpus"] for k, v in reg.items()}, **(limits or {})}
     c = engage.cfg()
     ext, d = engage.extremes(site)
     asof = (d or {}).get("asof") or today.isoformat()
@@ -463,6 +464,8 @@ def market_examples(site, rows, by_ticker, known, today, limits=None):
                 p = one(lambda: engage.plan_reddit_question(site, rows, c, trends, by_ticker, ok))
             elif kind == "reddit_list":
                 p = one(lambda: engage.plan_reddit_list(site, rows, c, trends, by_ticker, ok))
+            elif kind in reg:
+                p = one(lambda: engage.registered_plan(kind, site, rows, c, by_ticker, ok, today))
             else:
                 p = one(lambda: getattr(engage, "plan_" + kind)(site, rows, c, by_ticker, ok, today))
             if not p:
@@ -484,7 +487,7 @@ def market_examples(site, rows, by_ticker, known, today, limits=None):
             if _h(kind, key) in known:
                 continue
             e0 = p["items"][0][0] if p.get("items") else None
-            tags = p.get("tags") or engage.H.pick(engage.KIND_TAGS.get(kind, "earnings"), e0, key=f"{kind}:" + ",".join(p["cashtags"]))
+            tags = p.get("tags") or engage.H.pick(engage.kind_tag(kind), e0, key=f"{kind}:" + ",".join(p["cashtags"]))
             msgs = engage.messages(kind, p["task"], p["cashtags"], tags, p.get("allowed"))
             first = by_ticker.get(p["cashtags"][0]) if p["cashtags"] else None
             for text in p.get("fallbacks") or ([p["fallback"]] if p.get("fallback") else []):

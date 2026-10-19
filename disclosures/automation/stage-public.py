@@ -260,6 +260,7 @@ def main():
     ap.add_argument('--etf', default=None, help="public/ of the branch etf-history (ETFs: app/etf.py)")
     ap.add_argument('--smart', default=None, help="public/ of the branch smart-history (Smart money: app/smart.py)")
     ap.add_argument('--ladders', default=None, help="public/ of the branch ladder-history (hourly price ladders: app/ladders.py)")
+    ap.add_argument('--research', default=None, help="a folder with one public/ per research-* branch (research-<name> → data/research/<name>/)")
     args = ap.parse_args()
     out = Path(args.out)
     shutil.rmtree(out, ignore_errors=True)
@@ -317,6 +318,15 @@ def main():
             print(f"::notice::smart money: {pub.get('actors')} actors, {pub.get('stocks')} stocks scored, events {st.get('events')}, built {st.get('finished')}")
         except Exception:
             pass
+    if args.research and Path(args.research).is_dir():
+        for d in sorted(p for p in Path(args.research).iterdir() if p.is_dir() and re.fullmatch(r'[a-z0-9-]+', p.name)):
+            shutil.copytree(d, out / 'data' / 'research' / d.name, dirs_exist_ok=True)
+            st = {}
+            try:
+                st = json.loads((d / 'status.json').read_text(encoding='utf-8'))
+            except Exception:
+                pass
+            print(f"::notice::research/{d.name}: " + (", ".join(f"{k} {v}" for k, v in st.items() if isinstance(v, (int, float, str)))[:200] or "staged"))
     if args.site_data:
         print(f'signals joined with earnings for {join_earnings(out, args.site_data)} tickers')
         try:

@@ -45,11 +45,26 @@ def x_options():
     except (OSError, ValueError):
         c = {}
     media = [str(m).lower() for m in (c.get("media") or ["png", "jpg", "gif"])]
+    more = engage_more()                          # first: the feature modules add their hashtag pools to H.KINDS
     return {"links": c.get("links", True) is not False, "gif": "gif" in media, "hashtags_max": int(c.get("hashtags_max", H.MAX)),
             "hashtags": H.clean(c["hashtags"]) if isinstance(c.get("hashtags"), list) else H.GENERAL,
             "headline_tag": c.get("headline_tag", "#earnings"), "tags": dict(H.PARTS), "kinds": H.KINDS,
             "industry": sorted({t for _, _, t in H.INDUSTRY} | set(H.SECTOR.values()), key=str.lower),
-            "candidates": H.CANDIDATES}
+            "candidates": H.CANDIDATES, "engage_more": more}
+
+
+def engage_more():
+    """The owner's buttons for the post formats feature modules register (pipeline/posts_*.py, pipeline/xkinds.py)."""
+    try:
+        from pipeline import xkinds
+        return xkinds.buttons()
+    except Exception as err:                     # noqa: BLE001 — the site builds without them
+        print(f"::warning::feature post formats not listed ({str(err)[:160]})")
+        return []
+
+
+# the page's scripts, in load order (web/index.html): the chart, the valuation maths, the discovery & UX modules, the app
+SCRIPTS = ("sankey.js", "fsa.js", "chains.js", "ux.js", "search.js", "overview.js", "feed.js", "charts.js", "editor.js", "app.js")
 
 
 def main():
@@ -63,9 +78,10 @@ def main():
     os.makedirs(args.out, exist_ok=True)
     html = open(os.path.join(WEB, "index.html"), encoding="utf-8").read()
     if args.inline:
-        css = open(os.path.join(WEB, "styles.css"), encoding="utf-8").read()
-        html = html.replace('<link rel="stylesheet" href="styles.css">', f"<style>\n{css}</style>")
-        for name in ("sankey.js", "fsa.js", "chains.js", "app.js"):
+        for name in ("styles.css", "ux.css"):
+            css = open(os.path.join(WEB, name), encoding="utf-8").read()
+            html = html.replace(f'<link rel="stylesheet" href="{name}">', f"<style>\n{css}</style>")
+        for name in SCRIPTS:
             js = open(os.path.join(WEB, name), encoding="utf-8").read()
             html = html.replace(f'<script src="{name}"></script>', f"<script>\n{js}</script>")
         if args.fragment:
@@ -75,7 +91,7 @@ def main():
             scripts = re.findall(r"<script>.*?</script>", html, re.S)
             html = "\n".join(keep) + "\n" + shell + "\n".join(scripts) + "\n"
     else:
-        for name in ("styles.css", "sankey.js", "fsa.js", "chains.js", "app.js", "favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"):
+        for name in ("styles.css", "ux.css") + SCRIPTS + ("favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"):
             shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
     open(os.path.join(args.out, "index.html"), "w", encoding="utf-8").write(html)
     data_out = os.path.join(args.out, "data")
@@ -113,6 +129,12 @@ def main():
             base = f"https://{owner.lower()}.github.io/{repo}"
         if base:
             print(f"search pages: {seo.write_pages(data_out, args.out, base)} companies, sitemap at {base}/sitemap.xml")
+        try:                                     # the global search index and Atom feeds (redone after the hub is staged)
+            import hub_extras
+            r = hub_extras.build(args.out, base or "https://filing-flows.com/")
+            print(f"search index: {r['managers']} managers, {r['officials']} officials, {r['etfs']} ETFs; {r['company_feeds']} company feeds")
+        except Exception as err:                 # noqa: BLE001 — never fails the site
+            print(f"::warning::search index / feeds not written ({str(err)[:160]})")
     # a custom domain (repository variable SITE_URL, e.g. https://filing-flows.com/): GitHub Pages reads the CNAME file
     host = re.sub(r"^https?://", "", setting("SITE_URL", url=True)).split("/")[0]
     if host and not host.endswith("github.io"):

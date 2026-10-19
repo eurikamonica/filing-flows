@@ -1,0 +1,77 @@
+# Fair value & credit (Disclosures → Valuation, and the "Fair value" view of each company page on the main site).
+# Weekdays after the close: SEC XBRL frames (EPS, shares, equity, goodwill, insurance and REIT lines) and each covered
+# company's figures from the published site, then public/ is rebuilt with the debt module's credit data, the consensus
+# module's targets / Polymarket / our model and the hub's daily prices: WACC, DCF + reverse DCF, Monte Carlo, PVGO, peer
+# multiples, residual income, bank / insurer / REIT models, valuation bands, distress probability (app/valuation.py).
+# Kept on the branch "research-valuation" (one commit, force-pushed); scan.yml publishes public/ at
+# disclosures/data/research/valuation/.
+name: Research — fair value & credit
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for the collection'
+        default: '20'
+  schedule:
+    - cron: '50 22 * * 1-5'
+permissions:
+  contents: write
+concurrency:
+  group: research-valuation
+  cancel-in-progress: false
+jobs:
+  valuation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/docs/data/cache/prices/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The data branch and the inputs (debt & rates, consensus)
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" research-valuation >/dev/null; then
+            git clone --quiet --depth 1 --branch research-valuation "$url" val
+          else
+            mkdir val && git -C val init --quiet -b research-valuation && git -C val remote add origin "$url"
+          fi
+          for b in debt-history consensus-history; do
+            if git ls-remote --exit-code --heads "$url" "$b" >/dev/null; then
+              git clone --quiet --depth 1 --filter=blob:none --sparse --branch "$b" "$url" "_$b"
+              git -C "_$b" sparse-checkout set public
+            fi
+          done
+          du -sh val _debt-history/public _consensus-history/public disclosures/docs/data/cache/prices 2>/dev/null || true
+      - name: Collect (SEC frames, the site's company figures)
+        timeout-minutes: 30
+        run: |
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          python disclosures/app/valuation.py collect --root val --site-url "$site" --minutes "${{ inputs.minutes || '20' }}"
+      - name: Build public/
+        timeout-minutes: 15
+        run: |
+          debt=""; cons=""
+          [ -d _debt-history/public ] && debt="--debt _debt-history/public"
+          [ -d _consensus-history/public ] && cons="--consensus _consensus-history/public"
+          python disclosures/app/valuation.py build --root val --prices disclosures/docs/data/cache/prices $debt $cons
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd val
+          printf '%s\n' '# research-valuation (data only)' '' 'SEC frames cache and slim site figures (cache/, site/), the frozen monthly ledger (cache/ledger/)' \
+            'and the files the site publishes (public/), kept by .github/workflows/research-valuation.yml on main. Force-pushed as a single commit.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "valuation $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "valuation $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:research-valuation && break; sleep $((i * 10)); done
+          python -c "import json; print('::notice::' + json.dumps(json.load(open('public/status.json'))))"
