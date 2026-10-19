@@ -1,5 +1,9 @@
+import sys
 import unittest
-from disclosures.app.ai_capital_flow import build, projection, validate, CATEGORY, VENDOR
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))     # the repository root: the module imports pipeline.*
+from disclosures.app.ai_capital_flow import build, projection, validate, CATEGORY, VENDOR  # noqa: E402
 
 class TestAICapex(unittest.TestCase):
     def test_weights(self):
