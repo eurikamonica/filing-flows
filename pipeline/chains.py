@@ -961,6 +961,10 @@ def build(store, out, index=None, usd=None, cfg=None, now=None):
               + (f"; not on file: {', '.join(sorted(set(missing)))}" if missing else ""))
     with open(os.path.join(out, "chains", "index.json"), "w") as f:
         json.dump({"generated": now, "about": cfg.get("about"), "chains": listing}, f, separators=(",", ":"))
+    if listing and not os.environ.get("PYTEST_CURRENT_TEST"):
+        with_x = sum(1 for c in cos.values() if c.xf.get("k") or c.xf.get("q"))
+        print(f"::notice::chains: {len(listing)} built; {with_x} of {len(cos)} companies have their segment and customer facts read; "
+              + "; ".join(f"{c['id']} {c['companies']}" + (f" (missing {c['missing']})" if c["missing"] else "") for c in listing))
     return listing
 
 
@@ -1058,7 +1062,7 @@ def refresh(store, sec, dims, text, time_up, queue_history=None, limit=REFRESH_P
         except Exception as e:
             print(f"  chain facts skipped for {t}: {e}", file=sys.stderr)
     if done:
-        print(f"chain facts: {done} companies read ({len(todo) - done} waiting)")
+        print(f"::notice::chain facts: {done} companies read ({len(todo) - done} waiting)")
 
 
 def _rows(sub):
