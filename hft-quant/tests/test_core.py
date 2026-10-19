@@ -111,3 +111,28 @@ def test_example_config_backtest_runs():
     stats = asyncio.run(engine.run(feed))
     assert stats.books == 1500 and stats.orders > 0
     assert not engine.exchange.open_orders()
+
+
+def test_tardis_csv_feed_merges_maps_and_dedupes(tmp_path):
+    import gzip
+    from hft.data import feeds
+
+    hdr = "exchange,symbol,timestamp,local_timestamp," + ",".join(
+        f"{s}[{k}].{f}" for k in range(2) for s in ("asks", "bids") for f in ("price", "amount"))
+    btc = tmp_path / "BTCUSDT.csv.gz"
+    with gzip.open(btc, "wt") as f:
+        f.write(hdr + "\n")
+        f.write("binance-futures,BTCUSDT,1000000,0,100.1,1,100.0,2,100.2,1,99.9,1\n")
+        f.write("binance-futures,BTCUSDT,3000000,0,100.1,1,100.0,2,100.2,1,99.9,1\n")  # duplicate top
+        f.write("binance-futures,BTCUSDT,4000000,0,100.2,1,100.1,2,100.3,1,100.0,1\n")
+    xau = tmp_path / "XAUUSDT.csv"
+    xau.write_text(hdr + "\nbinance-futures,XAUUSDT,2000000,0,2600.1,1,2600.0,1,,,2599.9,1\n")
+
+    async def collect():
+        return [b async for b in feeds.tardis_csv_feed([btc, xau], [BTC.symbol, "XAU/USDT:USDT"], depth=2)]
+
+    books = asyncio.run(collect())
+    assert [(b.symbol, b.ts) for b in books] == [
+        (BTC.symbol, 1.0), ("XAU/USDT:USDT", 2.0), (BTC.symbol, 4.0)]
+    assert books[0].bids == [(100.0, 2.0), (99.9, 1.0)]
+    assert books[1].asks == [(2600.1, 1.0)]

@@ -17,7 +17,7 @@
 | 模块 | 作用 |
 |---|---|
 | `hft/models.py` | Instrument、OrderBook、Order、Fill 等数据结构，含资产类别（crypto / commodity / equity） |
-| `hft/data/feeds.py` | 合成行情、ccxt.pro websocket 实时盘口（公开数据，无需密钥）、JSONL 录制与回放 |
+| `hft/data/feeds.py` | 合成行情、ccxt.pro websocket 实时盘口（公开数据，无需密钥）、JSONL 录制与回放、tardis.dev 盘口快照 CSV 回放 |
 | `hft/exchange/paper.py` | 本地撮合：吃单按对手价成交，挂单在对手价穿过后按 maker 成交，支持延迟模拟 |
 | `hft/exchange/ccxt_testnet.py` | ccxt 测试网适配器，强制 sandbox 模式，密钥只从环境变量读 |
 | `hft/risk.py` | 单笔/单品种/总敞口上限、价格偏离、下单频率、回撤熔断（触发后撤单并平仓） |
@@ -42,6 +42,11 @@ python -m hft.cli markets --exchange binanceusdm --base XAU TSLA
 # 录制真实盘口，再用录制数据回测
 python -m hft.cli record --exchange binanceusdm --symbols BTC/USDT:USDT --out data/btc.jsonl --limit 50000
 python -m hft.cli backtest --data data/btc.jsonl
+
+# 或者用 tardis.dev 的历史盘口快照（每月 1 号的数据免费，不需要 key）
+curl -L -A "Mozilla/5.0" -o data/BTCUSDT.csv.gz \
+  https://datasets.tardis.dev/v1/binance-futures/book_snapshot_25/2026/10/01/BTCUSDT.csv.gz
+python -m hft.cli backtest --data data/BTCUSDT.csv.gz   # 多个文件会按时间戳合并
 
 # 纸面交易：真实行情 + 本地模拟成交
 python -m hft.cli paper --config config/example.yaml
