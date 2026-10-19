@@ -1,0 +1,83 @@
+# Filings radar (Disclosures → Filings radar, and the "Filings radar" view of each company page on the main site).
+# Every six hours: EDGAR's daily form indexes (late filing notices, SEC comment letters, shelf registrations and ATM
+# programs, IPO prospectuses, merger proxies and tender offers), the hub's 8-K events that matter here (auditor changes,
+# restatements, listing notices, buybacks, dividends, merger agreements — read once more for the details), XBRL frames
+# (shares outstanding, repurchases, dividends, pay versus performance), Yahoo closes for deals and IPOs, USAspending
+# contract obligations and Senate LDA lobbying filings; then public/ is rebuilt (app/filings_radar.py).
+# Kept on the branch "research-filings" (one commit, force-pushed); scan.yml publishes public/ at
+# disclosures/data/research/filings/. Optional secret LDA_API_KEY (a free Senate LDA key) speeds up the lobbying reads.
+name: Filings radar
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for the collection'
+        default: '40'
+      backfill:
+        description: 'Business days of daily indexes on the first run'
+        default: '60'
+  schedule:
+    - cron: '17 3,9,15,21 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: research-filings
+  cancel-in-progress: false
+jobs:
+  filings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 58
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+      LDA_API_KEY: ${{ secrets.LDA_API_KEY }}
+    steps:
+      # only the code and the three hub files it reads: the hub's data folder is several GB
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/config/
+            /disclosures/docs/data/cache/events8k/
+            /disclosures/docs/data/market/events8k.json
+            /disclosures/docs/data/market/officials-trades.json
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The data branch and the weekly closes
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" research-filings >/dev/null; then
+            git clone --quiet --depth 1 --branch research-filings "$url" rf
+          else
+            mkdir rf && git -C rf init --quiet -b research-filings && git -C rf remote add origin "$url"
+          fi
+          if git ls-remote --exit-code --heads "$url" rotation-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch rotation-history "$url" rh
+            git -C rh sparse-checkout set public/t
+          fi
+          python -m pip install --quiet pypdf || echo "pypdf not installed: SEC letters in PDF are listed without topics"
+          du -sh rf; ls rf
+      - name: Collect and build
+        timeout-minutes: 50
+        run: |
+          ev=disclosures/docs/data/cache/events8k
+          [ -d "$ev" ] || ev=disclosures/docs/data/market/events8k.json
+          python disclosures/app/filings_radar.py all --root rf --events8k "$ev" \
+            --officials disclosures/docs/data/market/officials-trades.json --prices rh/public \
+            --minutes "${{ inputs.minutes || '40' }}" --backfill "${{ inputs.backfill || '60' }}"
+      - name: Save to the branch (one commit, force-pushed)
+        if: always()
+        run: |
+          cd rf
+          [ -f public/status.json ] || exit 0
+          printf '%s\n' '# research-filings (data only)' '' 'Daily index rows, parsed filings, XBRL frames, contracts, lobbying and prices (cache/), progress' \
+            '(state.json) and the files the site publishes (public/), kept by .github/workflows/research-filings.yml on main.' \
+            'Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "filings radar $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "filings radar $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:research-filings && break; sleep $((i * 10)); done
+          python -c "import json; s=json.load(open('public/status.json')); print(json.dumps(s)); print('::notice::filings radar: ' + ', '.join(f'{k} {v}' for k, v in s.items() if isinstance(v, int)))"
