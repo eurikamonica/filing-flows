@@ -1,0 +1,90 @@
+{
+  "author": "Created by Claude (Anthropic)",
+  "cycle": 1,
+  "created_utc": "2026-10-18T23:09:56.560542+00:00",
+  "init_adapter": "champions/qwen4-bfv3mix-20261017",
+  "new_train_rows": 797,
+  "replay_rows": 797,
+  "validation_rows": 39,
+  "test_rows": 88,
+  "max_steps": 399,
+  "config": {
+    "sec_companies": 30,
+    "web_companies": 40,
+    "sec_max_requests": 1500,
+    "synth_per_task": {
+      "train": 40,
+      "dev": 3,
+      "sealed_test": 3
+    },
+    "real_cap_per_task": {
+      "train": 40,
+      "dev": 3,
+      "sealed_test": 3
+    },
+    "fresh_protocol": {
+      "revision_reason": 20,
+      "bs_line_classification": 40,
+      "basic_per_task": 2
+    },
+    "replay_ratio": 1.0,
+    "max_length": 768,
+    "learning_rate": 5e-05,
+    "accumulation": 4,
+    "max_steps_cap": 600,
+    "eval_steps": 100,
+    "min_free_gib": 25,
+    "max_failures": 3,
+    "plateau": 5,
+    "push_timeout_s": 3600,
+    "gate": {
+      "fresh_core_min_gain": 2,
+      "gate2_joint_max_drop": 1,
+      "gate2_regression_max_drop": 1,
+      "bfv4_max_drop": 2,
+      "bfv3_max_drop": 2,
+      "valid_json_max_drop": 1
+    }
+  },
+  "train_tasks": {
+    "filing_route": 78,
+    "quarter_from_ytd": 76,
+    "reserve_calculation": 93,
+    "cash_conversion": 72,
+    "total_accruals": 74,
+    "accrual_ratio": 81,
+    "free_cash_flow": 76,
+    "bs_line_classification": 151,
+    "missing_field": 83,
+    "chart_data": 81,
+    "balance_equation": 77,
+    "period_alignment": 74,
+    "amended_ytd": 7,
+    "percent_change": 74,
+    "evidence_abstention": 65,
+    "basic_instruction": 11,
+    "unit_conversion": 56,
+    "note_heading": 65,
+    "operating_margin": 66,
+    "field_extraction": 101,
+    "filing_type": 7,
+    "Compute free cash flow.": 4,
+    "negative_number": 49,
+    "table_location": 17,
+    "Compute the closing reserve; no other movements.": 5,
+    "revision_reason": 24,
+    "Compute total accruals.": 5,
+    "Compute the annual accrual ratio.": 8,
+    "note_provenance": 6,
+    "reserve_movement": 8
+  },
+  "train_sources": {
+    "bf_v4": 444,
+    "cycle001_basic": 660,
+    "cycle001_v3": 137,
+    "v3_owner_first": 38,
+    "gate2_v1": 57,
+    "bfv3": 187,
+    "historical": 71
+  }
+}

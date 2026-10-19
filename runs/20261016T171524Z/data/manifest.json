@@ -1,0 +1,93 @@
+{
+  "author": "Created by ChatGPT (OpenAI)",
+  "splits": {
+    "train": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data\\open\\train.jsonl",
+      "sha256": "2b6d8f537bf88160e44453e3f170a7c0e7d35460b7e0dbfdfd17cca895b01bc2",
+      "rows": 628,
+      "tasks": {
+        "field_extraction": 32,
+        "filing_route": 32,
+        "evidence_abstention": 32,
+        "missing_field": 32,
+        "excerpt_heading": 20,
+        "reserve_calculation": 96,
+        "accrual_ratio": 96,
+        "amended_ytd": 96,
+        "table_location": 96,
+        "basic_instruction": 96
+      },
+      "companies": [
+        "1172358",
+        "1181412",
+        "1447362",
+        "1661779",
+        "1692415",
+        "1749723",
+        "1758699",
+        "1813603",
+        "1814287",
+        "1835022",
+        "1960355",
+        "2022626",
+        "2058707",
+        "2078856",
+        "56679",
+        "709337",
+        "751978",
+        "824416"
+      ]
+    },
+    "dev": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data\\open\\dev.jsonl",
+      "sha256": "23a2d3c5c74bb9984492a217b811bf31c08273643219d8ee6e74a57070a760e0",
+      "rows": 218,
+      "tasks": {
+        "field_extraction": 11,
+        "filing_route": 11,
+        "evidence_abstention": 11,
+        "missing_field": 11,
+        "excerpt_heading": 9,
+        "reserve_calculation": 33,
+        "accrual_ratio": 33,
+        "amended_ytd": 33,
+        "table_location": 33,
+        "basic_instruction": 33
+      },
+      "companies": [
+        "1093691",
+        "1376793",
+        "1620393",
+        "1652561",
+        "1701108",
+        "1953520"
+      ]
+    },
+    "sealed_test": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data\\sealed\\sealed_test.jsonl",
+      "sha256": "17f8c758f455d292c7b45d07c042263c6628207546538ba27aa29cca09da33ef",
+      "rows": 237,
+      "tasks": {
+        "field_extraction": 12,
+        "filing_route": 12,
+        "evidence_abstention": 12,
+        "missing_field": 12,
+        "excerpt_heading": 9,
+        "reserve_calculation": 36,
+        "accrual_ratio": 36,
+        "amended_ytd": 36,
+        "table_location": 36,
+        "basic_instruction": 36
+      },
+      "companies": [
+        "1275187",
+        "1801661",
+        "1812364",
+        "785557",
+        "862651",
+        "910638"
+      ]
+    }
+  },
+  "sealed_test_opened_for_evaluation": false
+}

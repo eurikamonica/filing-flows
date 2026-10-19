@@ -1,0 +1,755 @@
+{
+ "created_utc": "2026-10-18T05:40:44Z",
+ "run_dir": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\v3-data-20261018T052500Z",
+ "seed": 20261018,
+ "upstream": {
+  "history.py": {
+   "source": "C:\\Users\\Oliver Hu\\AppData\\Local\\Temp\\ff_history.py",
+   "pin": "eurikamonica/filing-flows main @ 04226e2",
+   "sha256": "44cac4bf989fa5bfc4c2dd18cd05cfe927d3da824eead5b4caf92d08cbc4b389",
+   "bytes": 5661
+  },
+  "reform.py": {
+   "source": "C:\\Users\\Oliver Hu\\AppData\\Local\\Temp\\ff_reform.py",
+   "pin": "eurikamonica/filing-flows main @ 04226e2",
+   "sha256": "c9c2534c29fa09c1391d809279f34693a735c5c323ed2808c798db0043d9b32c",
+   "bytes": 12869
+  }
+ },
+ "builder": "build_v3_owner.py",
+ "tasks_built": [
+  "revision_reason (A)",
+  "bs_line_classification (C)"
+ ],
+ "tasks_deferred": [
+  "mdna_driver_amount (B)"
+ ],
+ "companies": {
+  "cik-320193": {
+   "name": "Apple",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Apple Inc."
+  },
+  "cik-789019": {
+   "name": "Microsoft",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "MICROSOFT CORPORATION"
+  },
+  "cik-1652044": {
+   "name": "Alphabet",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Alphabet Inc."
+  },
+  "cik-1018724": {
+   "name": "Amazon",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "AMAZON COM INC"
+  },
+  "cik-1326801": {
+   "name": "Meta Platforms",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Meta Platforms, Inc."
+  },
+  "cik-1045810": {
+   "name": "NVIDIA",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "NVIDIA CORP"
+  },
+  "cik-50863": {
+   "name": "Intel",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "INTEL CORP"
+  },
+  "cik-858877": {
+   "name": "Cisco",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "CISCO SYSTEMS, INC."
+  },
+  "cik-51143": {
+   "name": "IBM",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "INTERNATIONAL BUSINESS MACHINES CORP"
+  },
+  "cik-40545": {
+   "name": "General Electric",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "GENERAL ELECTRIC CO"
+  },
+  "cik-12927": {
+   "name": "Boeing",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "THE BOEING COMPANY"
+  },
+  "cik-21344": {
+   "name": "Coca-Cola",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "COCA COLA CO"
+  },
+  "cik-77476": {
+   "name": "PepsiCo",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "PEPSICO INC"
+  },
+  "cik-80424": {
+   "name": "Procter & Gamble",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "PROCTER & GAMBLE Co"
+  },
+  "cik-200406": {
+   "name": "Johnson & Johnson",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Johnson & Johnson"
+  },
+  "cik-78003": {
+   "name": "Pfizer",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "PFIZER INC"
+  },
+  "cik-310158": {
+   "name": "Merck",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Merck\u00a0& Co., Inc."
+  },
+  "cik-104169": {
+   "name": "Walmart",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "WALMART INC."
+  },
+  "cik-354950": {
+   "name": "Home Depot",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "The Home Depot, Inc."
+  },
+  "cik-27419": {
+   "name": "Target",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Target Corporation"
+  },
+  "cik-63908": {
+   "name": "McDonald's",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "McDONALD\u2019S CORPORATION"
+  },
+  "cik-320187": {
+   "name": "Nike",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "NIKE, Inc."
+  },
+  "cik-829224": {
+   "name": "Starbucks",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Starbucks Corporation"
+  },
+  "cik-1744489": {
+   "name": "Walt Disney",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "WALT DISNEY CO/"
+  },
+  "cik-732712": {
+   "name": "Verizon",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "VERIZON COMMUNICATIONS INC"
+  },
+  "cik-34088": {
+   "name": "Exxon Mobil",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Exxon Mobil Corporation"
+  },
+  "cik-93410": {
+   "name": "Chevron",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Chevron Corp"
+  },
+  "cik-66740": {
+   "name": "3M",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "3M CO"
+  },
+  "cik-773840": {
+   "name": "Honeywell",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Honeywell International Inc"
+  },
+  "cik-18230": {
+   "name": "Caterpillar",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "CATERPILLAR INC"
+  },
+  "cik-37996": {
+   "name": "Ford",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Ford Motor Co"
+  },
+  "cik-1467858": {
+   "name": "General Motors",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "GENERAL MOTORS COMPANY"
+  },
+  "cik-1318605": {
+   "name": "Tesla",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Tesla, Inc."
+  },
+  "cik-1637459": {
+   "name": "Kraft Heinz",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Kraft Heinz Co"
+  },
+  "cik-40704": {
+   "name": "General Mills",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "GENERAL MILLS, INC."
+  },
+  "cik-1551152": {
+   "name": "AbbVie",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "AbbVie Inc."
+  },
+  "cik-14272": {
+   "name": "Bristol-Myers Squibb",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "BRISTOL-MYERS SQUIBB COMPANY"
+  },
+  "cik-59478": {
+   "name": "Eli Lilly",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "ELI LILLY AND COMPANY"
+  },
+  "cik-882095": {
+   "name": "Gilead",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "GILEAD SCIENCES, INC."
+  },
+  "cik-64803": {
+   "name": "CVS Health",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "CVS HEALTH CORPORATION"
+  },
+  "cik-1618921": {
+   "name": "Walgreens Boots Alliance",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "WALGREENS BOOTS ALLIANCE, INC."
+  },
+  "cik-60667": {
+   "name": "Lowe's",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "LOWES COMPANIES INC"
+  },
+  "cik-764478": {
+   "name": "Best Buy",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Best Buy Co., Inc."
+  },
+  "cik-1633917": {
+   "name": "PayPal",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "PayPal Holdings, Inc."
+  },
+  "cik-804328": {
+   "name": "Qualcomm",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "QUALCOMM INC/DE"
+  },
+  "cik-47217": {
+   "name": "HP Inc",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "HP INC."
+  },
+  "cik-1645590": {
+   "name": "Hewlett Packard Enterprise",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "HEWLETT PACKARD ENTERPRISE COMPANY"
+  },
+  "cik-1065280": {
+   "name": "Netflix",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "NETFLIX INC"
+  },
+  "cik-936468": {
+   "name": "Lockheed Martin",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "LOCKHEED MARTIN CORPORATION"
+  },
+  "cik-101829": {
+   "name": "RTX",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "RTX CORPORATION"
+  },
+  "cik-1048911": {
+   "name": "FedEx",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "FEDEX CORP"
+  },
+  "cik-1090727": {
+   "name": "UPS",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "UNITED PARCEL SERVICE INC"
+  },
+  "cik-764180": {
+   "name": "Altria",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Altria Group, Inc."
+  },
+  "cik-56873": {
+   "name": "Kroger",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "KROGER CO"
+  },
+  "cik-1666700": {
+   "name": "DuPont",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "DUPONT DE NEMOURS, INC."
+  },
+  "cik-1375365": {
+   "name": "Super Micro Computer",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Super Micro Computer, Inc."
+  },
+  "cik-1657853": {
+   "name": "Hertz Global",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "HERTZ GLOBAL HOLDINGS, INC"
+  },
+  "cik-1336917": {
+   "name": "Under Armour",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Under Armour, Inc."
+  },
+  "cik-108772": {
+   "name": "Xerox",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "XEROX CORPORATION"
+  }
+ },
+ "history_reimplementation": {
+  "concepts": {
+   "revenue": [
+    "Revenues",
+    "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "SalesRevenueNet"
+   ],
+   "oi": [
+    "OperatingIncomeLoss"
+   ],
+   "ni": [
+    "NetIncomeLoss",
+    "ProfitLoss"
+   ],
+   "ocf": [
+    "NetCashProvidedByUsedInOperatingActivities"
+   ]
+  },
+  "total_first": {
+   "revenue": "Revenues"
+  },
+  "max_keys": [
+   "revenue"
+  ],
+  "years": 10,
+  "move": 0.0005,
+  "abs_floor_usd": 500000.0,
+  "events_per_company_cap": 10,
+  "event_priority": "amended, results, cash flow, presentation; newest first"
+ },
+ "events_detected": {
+  "total": 447,
+  "by_pattern": {
+   "cash flow": 49,
+   "results": 203,
+   "presentation": 189,
+   "amended": 6
+  },
+  "by_form": {
+   "10-K": 111,
+   "10-Q": 307,
+   "8-K": 11,
+   "DEF 14A": 11,
+   "10-Q/A": 4,
+   "PRE 14A": 1,
+   "10-K/A": 2
+  }
+ },
+ "counts": {
+  "rows_by_split_task": {
+   "dev/bs_line_classification": 189,
+   "dev/revision_reason": 36,
+   "sealed_test/bs_line_classification": 176,
+   "sealed_test/revision_reason": 31,
+   "train/bs_line_classification": 487,
+   "train/revision_reason": 146
+  },
+  "A_label_by_split": {
+   "dev/accounting_change_retrospective": 13,
+   "dev/cash_flow_reclassification": 3,
+   "dev/discontinued_operations": 7,
+   "dev/income_statement_reclassification": 3,
+   "dev/insufficient_evidence": 8,
+   "dev/segment_recast": 2,
+   "sealed_test/cash_flow_reclassification": 2,
+   "sealed_test/discontinued_operations": 6,
+   "sealed_test/income_statement_reclassification": 7,
+   "sealed_test/insufficient_evidence": 13,
+   "sealed_test/segment_recast": 3,
+   "train/accounting_change_retrospective": 16,
+   "train/amendment_restatement": 5,
+   "train/amendment_tagging_or_clerical": 1,
+   "train/cash_flow_reclassification": 22,
+   "train/discontinued_operations": 19,
+   "train/error_correction_revision": 3,
+   "train/income_statement_reclassification": 26,
+   "train/insufficient_evidence": 39,
+   "train/restatement_non_reliance": 1,
+   "train/segment_recast": 14
+  },
+  "A_label": {
+   "accounting_change_retrospective": 29,
+   "amendment_restatement": 5,
+   "amendment_tagging_or_clerical": 1,
+   "cash_flow_reclassification": 27,
+   "discontinued_operations": 32,
+   "error_correction_revision": 3,
+   "income_statement_reclassification": 36,
+   "insufficient_evidence": 60,
+   "restatement_non_reliance": 1,
+   "segment_recast": 19
+  },
+  "A_pattern": {
+   "amended": 6,
+   "cash flow": 37,
+   "presentation": 99,
+   "results": 71
+  },
+  "A_source_form": {
+   "10-K": 65,
+   "10-K/A": 2,
+   "10-Q": 140,
+   "10-Q/A": 4,
+   "8-K": 2
+  },
+  "C_cls_by_split": {
+   "dev/fin": 38,
+   "dev/op": 151,
+   "sealed_test/fin": 35,
+   "sealed_test/op": 141,
+   "train/fin": 114,
+   "train/op": 373
+  },
+  "C_tag_by_split": {
+   "us-gaap:AccountsPayableAndAccruedLiabilitiesCurrent|train": 1,
+   "us-gaap:AccountsPayableCurrent|dev": 7,
+   "us-gaap:AccountsPayableCurrent|sealed_test": 9,
+   "us-gaap:AccountsPayableCurrent|train": 20,
+   "us-gaap:AccountsPayableTradeCurrent|dev": 2,
+   "us-gaap:AccountsPayableTradeCurrent|train": 3,
+   "us-gaap:AccountsReceivableNet|train": 1,
+   "us-gaap:AccountsReceivableNetCurrent|dev": 6,
+   "us-gaap:AccountsReceivableNetCurrent|sealed_test": 6,
+   "us-gaap:AccruedIncomeTaxesCurrent|dev": 4,
+   "us-gaap:AccruedIncomeTaxesCurrent|sealed_test": 4,
+   "us-gaap:AccruedIncomeTaxesCurrent|train": 16,
+   "us-gaap:AccruedLiabilitiesCurrent|dev": 3,
+   "us-gaap:AccruedLiabilitiesCurrent|sealed_test": 4,
+   "us-gaap:AccruedLiabilitiesCurrent|train": 18,
+   "us-gaap:AvailableForSaleSecuritiesDebtSecuritiesCurrent|sealed_test": 1,
+   "us-gaap:AvailableForSaleSecuritiesDebtSecuritiesCurrent|train": 3,
+   "us-gaap:AvailableForSaleSecuritiesDebtSecuritiesNoncurrent|dev": 1,
+   "us-gaap:Cash|sealed_test": 1,
+   "us-gaap:CashAndCashEquivalentsAtCarryingValue|dev": 6,
+   "us-gaap:CashAndCashEquivalentsAtCarryingValue|sealed_test": 7,
+   "us-gaap:CashAndCashEquivalentsAtCarryingValue|train": 20,
+   "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents|dev": 3,
+   "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents|sealed_test": 1,
+   "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents|train": 2,
+   "us-gaap:CommercialPaper|dev": 1,
+   "us-gaap:CommercialPaper|sealed_test": 1,
+   "us-gaap:CommercialPaper|train": 2,
+   "us-gaap:ContractWithCustomerLiabilityCurrent|dev": 4,
+   "us-gaap:ContractWithCustomerLiabilityCurrent|sealed_test": 4,
+   "us-gaap:ContractWithCustomerLiabilityNoncurrent|dev": 2,
+   "us-gaap:ContractWithCustomerLiabilityNoncurrent|sealed_test": 4,
+   "us-gaap:ContractWithCustomerLiabilityNoncurrent|train": 11,
+   "us-gaap:DebtCurrent|dev": 3,
+   "us-gaap:DebtCurrent|sealed_test": 2,
+   "us-gaap:DebtCurrent|train": 18,
+   "us-gaap:DeferredIncomeTaxAssetsNet|dev": 6,
+   "us-gaap:DeferredIncomeTaxAssetsNet|sealed_test": 3,
+   "us-gaap:DeferredIncomeTaxAssetsNet|train": 20,
+   "us-gaap:DeferredIncomeTaxLiabilitiesNet|dev": 6,
+   "us-gaap:DeferredIncomeTaxLiabilitiesNet|sealed_test": 7,
+   "us-gaap:DeferredIncomeTaxLiabilitiesNet|train": 20,
+   "us-gaap:DeferredRevenueCurrent|dev": 2,
+   "us-gaap:DeferredRevenueCurrent|train": 1,
+   "us-gaap:DeferredRevenueNoncurrent|dev": 2,
+   "us-gaap:DeferredRevenueNoncurrent|sealed_test": 1,
+   "us-gaap:DefinedBenefitPensionPlanLiabilitiesNoncurrent|dev": 1,
+   "us-gaap:DefinedBenefitPensionPlanLiabilitiesNoncurrent|sealed_test": 1,
+   "us-gaap:DefinedBenefitPensionPlanLiabilitiesNoncurrent|train": 4,
+   "us-gaap:EmployeeRelatedLiabilitiesCurrent|dev": 4,
+   "us-gaap:EmployeeRelatedLiabilitiesCurrent|sealed_test": 4,
+   "us-gaap:EmployeeRelatedLiabilitiesCurrent|train": 14,
+   "us-gaap:EquityMethodInvestments|dev": 6,
+   "us-gaap:EquityMethodInvestments|sealed_test": 4,
+   "us-gaap:EquityMethodInvestments|train": 14,
+   "us-gaap:FinanceLeaseLiabilityCurrent|dev": 1,
+   "us-gaap:FinanceLeaseLiabilityCurrent|sealed_test": 1,
+   "us-gaap:FinanceLeaseLiabilityNoncurrent|dev": 1,
+   "us-gaap:FinanceLeaseLiabilityNoncurrent|sealed_test": 1,
+   "us-gaap:FinanceLeaseLiabilityNoncurrent|train": 12,
+   "us-gaap:FiniteLivedIntangibleAssetsNet|dev": 1,
+   "us-gaap:FiniteLivedIntangibleAssetsNet|sealed_test": 2,
+   "us-gaap:FiniteLivedIntangibleAssetsNet|train": 6,
+   "us-gaap:Goodwill|dev": 9,
+   "us-gaap:Goodwill|sealed_test": 9,
+   "us-gaap:Goodwill|train": 20,
+   "us-gaap:IntangibleAssetsNetExcludingGoodwill|dev": 7,
+   "us-gaap:IntangibleAssetsNetExcludingGoodwill|sealed_test": 4,
+   "us-gaap:IntangibleAssetsNetExcludingGoodwill|train": 20,
+   "us-gaap:InventoryNet|dev": 9,
+   "us-gaap:InventoryNet|sealed_test": 8,
+   "us-gaap:LongTermDebtAndCapitalLeaseObligations|dev": 5,
+   "us-gaap:LongTermDebtAndCapitalLeaseObligations|sealed_test": 6,
+   "us-gaap:LongTermDebtAndCapitalLeaseObligations|train": 8,
+   "us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent|dev": 4,
+   "us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent|sealed_test": 4,
+   "us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent|train": 4,
+   "us-gaap:LongTermDebtCurrent|dev": 2,
+   "us-gaap:LongTermDebtCurrent|sealed_test": 2,
+   "us-gaap:LongTermDebtCurrent|train": 10,
+   "us-gaap:LongTermDebtNoncurrent|dev": 4,
+   "us-gaap:LongTermDebtNoncurrent|sealed_test": 2,
+   "us-gaap:LongTermDebtNoncurrent|train": 20,
+   "us-gaap:LongTermInvestments|dev": 3,
+   "us-gaap:LongTermInvestments|sealed_test": 2,
+   "us-gaap:LongTermInvestments|train": 6,
+   "us-gaap:OperatingLeaseLiabilityCurrent|dev": 8,
+   "us-gaap:OperatingLeaseLiabilityCurrent|sealed_test": 8,
+   "us-gaap:OperatingLeaseLiabilityCurrent|train": 20,
+   "us-gaap:OperatingLeaseLiabilityNoncurrent|dev": 9,
+   "us-gaap:OperatingLeaseLiabilityNoncurrent|sealed_test": 9,
+   "us-gaap:OperatingLeaseLiabilityNoncurrent|train": 20,
+   "us-gaap:OperatingLeaseRightOfUseAsset|dev": 9,
+   "us-gaap:OperatingLeaseRightOfUseAsset|sealed_test": 9,
+   "us-gaap:OperatingLeaseRightOfUseAsset|train": 20,
+   "us-gaap:OtherAssetsCurrent|dev": 5,
+   "us-gaap:OtherAssetsCurrent|sealed_test": 6,
+   "us-gaap:OtherAssetsCurrent|train": 20,
+   "us-gaap:OtherAssetsNoncurrent|dev": 8,
+   "us-gaap:OtherAssetsNoncurrent|sealed_test": 9,
+   "us-gaap:OtherLiabilitiesCurrent|dev": 4,
+   "us-gaap:OtherLiabilitiesCurrent|sealed_test": 3,
+   "us-gaap:OtherLiabilitiesCurrent|train": 20,
+   "us-gaap:OtherLiabilitiesNoncurrent|dev": 8,
+   "us-gaap:OtherLiabilitiesNoncurrent|sealed_test": 8,
+   "us-gaap:OtherLiabilitiesNoncurrent|train": 20,
+   "us-gaap:PensionAndOtherPostretirementDefinedBenefitPlansLiabilitiesNoncurrent|dev": 3,
+   "us-gaap:PensionAndOtherPostretirementDefinedBenefitPlansLiabilitiesNoncurrent|sealed_test": 3,
+   "us-gaap:PrepaidExpenseAndOtherAssetsCurrent|dev": 4,
+   "us-gaap:PrepaidExpenseAndOtherAssetsCurrent|sealed_test": 1,
+   "us-gaap:PrepaidExpenseAndOtherAssetsCurrent|train": 19,
+   "us-gaap:PrepaidExpenseCurrent|sealed_test": 1,
+   "us-gaap:PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization|dev": 4,
+   "us-gaap:PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization|sealed_test": 4,
+   "us-gaap:PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization|train": 10,
+   "us-gaap:PropertyPlantAndEquipmentNet|dev": 4,
+   "us-gaap:PropertyPlantAndEquipmentNet|sealed_test": 4,
+   "us-gaap:PropertyPlantAndEquipmentNet|train": 20,
+   "us-gaap:ReceivablesNetCurrent|dev": 3,
+   "us-gaap:ReceivablesNetCurrent|sealed_test": 2,
+   "us-gaap:ReceivablesNetCurrent|train": 6,
+   "us-gaap:ShortTermBorrowings|dev": 1,
+   "us-gaap:ShortTermBorrowings|sealed_test": 1,
+   "us-gaap:ShortTermBorrowings|train": 9,
+   "us-gaap:ShortTermInvestments|dev": 3,
+   "us-gaap:ShortTermInvestments|sealed_test": 3,
+   "us-gaap:TaxesPayableCurrent|dev": 1,
+   "us-gaap:TaxesPayableCurrent|train": 9
+  },
+  "C_eval_group_by_split": {
+   "dev/heldout_tag_seen_line": 20,
+   "dev/heldout_tag_unseen_line": 17,
+   "dev/seen_tag": 152,
+   "sealed_test/heldout_tag_seen_line": 20,
+   "sealed_test/heldout_tag_unseen_line": 17,
+   "sealed_test/seen_tag": 139,
+   "train/seen_tag": 487
+  },
+  "dev_protocol": {
+   "revision_reason": 17,
+   "bs_line_classification": 40
+  },
+  "A_exclusions": {
+   "no_usable_passage": 121
+  },
+  "C_exclusions": {
+   "ltd_only_total_LongTermDebt_not_in_66": 1,
+   "heldout_tag_in_train_company_dropped": 164,
+   "over_tag_split_cap": 152
+  }
+ },
+ "C_tags_never_observed": [
+  "ConvertibleNotesPayable",
+  "DeferredTaxAssetsNetNoncurrent",
+  "DeferredTaxLiabilitiesNoncurrent",
+  "LongTermLineOfCredit",
+  "LongTermNotesAndLoans",
+  "LongTermNotesPayable",
+  "MarketableSecuritiesCurrent",
+  "MarketableSecuritiesNoncurrent",
+  "NotesPayable",
+  "NotesPayableCurrent",
+  "OtherLongTermDebtNoncurrent",
+  "OtherShortTermBorrowings",
+  "SecuredDebt",
+  "SeniorLongTermNotes",
+  "SeniorNotes",
+  "UnsecuredDebt"
+ ],
+ "length": {
+  "chars_per_token_estimate": 4,
+  "limit_A": 900,
+  "limit_C": 900,
+  "A_max_est_tokens": 886,
+  "A_passage_chars_max": 2038,
+  "C_max_est_tokens": 311
+ },
+ "sha256": {
+  "train.jsonl": "fe1b8f8f0f50eb28c40d438d84fa350b26ca8cf8f7e28ed10b045c40b43f118a",
+  "dev.jsonl": "e8d048379f6b8b53697a2b1611aef8e8c6d67ab45d180d47f3283bff03fe1a07",
+  "sealed/test.jsonl": "c5a99927e040b4c21485043228df38aeea908a5f9d849598475586e6eaae4122",
+  "dev-protocol.jsonl": "5daf3d3284eab364c88c12b4ea2aff8305508ae030ee0fc4abb25034791815fa",
+  "heldout-tags.json": "766fe29a6dcef412b6a3989b1bc445791c9e41021759e7d0e00cf33e6e91b4f4",
+  "split-membership.json": "8832bb8413f9fd3cd0d038723acfcdb592865acfccccca93a1e45964e78e6341",
+  "build_v3_owner.py": "1debe230f5ed77c1031e5ba65936e0a5e0b46a086a6b004dc1804e708fab28f6"
+ },
+ "sec": {
+  "user_agent": "Filing Flows filingflows@gmail.com",
+  "min_gap_seconds": 0.125,
+  "max_requests": 3000,
+  "request_attempts_total": 484,
+  "stopped": null,
+  "failures_this_invocation": [],
+  "failures_logged_total": 0,
+  "status_counts": {
+   "200": 484
+  }
+ },
+ "checks_all_ok": true
+}

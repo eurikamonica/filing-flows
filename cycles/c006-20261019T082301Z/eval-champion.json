@@ -1,0 +1,1685 @@
+{
+  "author": "Created by Claude (Anthropic)",
+  "adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\champions\\cycle-004",
+  "adapter_sha256": "e080ffb5382868c337110530b995e4edaacbd36eae81ea56e782beb7151ea361",
+  "started_utc": "2026-10-19T09:55:12.746618+00:00",
+  "precision": "NF4 BF16",
+  "decoding": "greedy; thinking disabled",
+  "protocols": {
+    "fresh": {
+      "details": [
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1756699",
+          "expected": {
+            "pattern": "results",
+            "label": "insufficient_evidence",
+            "quote": null,
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"results\",\"label\":\"error_correction_revision\",\"quote\":\"We prepare our financial statements in conformity with U.S. GAAP, which requires us to make judgments, estimates and assumptions.\",\"source_id\":\"S1\"}",
+          "seconds": 15.784490499994718,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2927.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1053507",
+          "expected": {
+            "pattern": "results",
+            "label": "insufficient_evidence",
+            "quote": null,
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"results\",\"label\":\"error_correction_revision\",\"quote\":\"changed figures: ni. ni for 2022-01-01..2022-03-31: 711,700,000 -> 702,700,000 USD.\",\"source_id\":\"S1\"}",
+          "seconds": 24.796380799962208,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2991.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1053507",
+          "expected": {
+            "pattern": "results",
+            "label": "insufficient_evidence",
+            "quote": null,
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"results\",\"label\":\"error_correction_revision\",\"quote\":\"changed figures: ni. ni for 2022-07-01..2022-09-30: 839,700,000 -> 819,700,000 USD.\",\"source_id\":\"S1\"}",
+          "seconds": 24.186854400031734,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2991.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1053507",
+          "expected": {
+            "pattern": "presentation",
+            "label": "discontinued_operations",
+            "quote": "(1) Excludes the operating results of ATC TIPL, which are reported as discontinued operations.",
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"presentation\",\"label\":\"discontinued_operations\",\"quote\":\"Excludes the operating results of ATC TIPL, which are reported as discontinued operations. See Note 22 for further discussion.\",\"source_id\":\"S1\"}",
+          "seconds": 14.503884400008246,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2993.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1053507",
+          "expected": {
+            "pattern": "results",
+            "label": "insufficient_evidence",
+            "quote": null,
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"results\",\"label\":\"error_correction_revision\",\"quote\":\"See note 16 for a discussion of changes to the Company\u2019s noncontrolling interests during the year ended December 31, 2021.\",\"source_id\":\"S1\"}",
+          "seconds": 17.415480999974534,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1053507",
+          "expected": {
+            "pattern": "presentation",
+            "label": "discontinued_operations",
+            "quote": "Historical financial information included in this Quarterly Report on Form 10-Q has been adjusted to reflect the operating results of ATC TIPL as discontinued operations for all periods presented.",
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"presentation\",\"label\":\"discontinued_operations\",\"quote\":\"Historical financial information included in this Quarterly Report on Form 10-Q has been adjusted to reflect the operating results of ATC TIPL as discontinued operations for all periods presented.\",\"source_id\":\"S1\"}",
+          "seconds": 18.39344129996607,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1053507",
+          "expected": {
+            "pattern": "results",
+            "label": "insufficient_evidence",
+            "quote": null,
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"results\",\"label\":\"error_correction_revision\",\"quote\":\"changed figures: ni. ni for 2021-01-01..2021-03-31: 652,300,000 -> 645,000,000 USD.\",\"source_id\":\"S1\"}",
+          "seconds": 24.78921940003056,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1053507",
+          "expected": {
+            "pattern": "results",
+            "label": "insufficient_evidence",
+            "quote": null,
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"results\",\"label\":\"error_correction_revision\",\"quote\":\"changed figures: ni. ni for 2020-01-01..2020-03-31: 415,000,000 -> 418,600,000 USD.\",\"source_id\":\"S1\"}",
+          "seconds": 24.417945299996063,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1053507",
+          "expected": {
+            "pattern": "results",
+            "label": "insufficient_evidence",
+            "quote": null,
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"results\",\"label\":\"error_correction_revision\",\"quote\":\"changed figures: ni. ni for 2022-04-01..2022-06-30: 898,200,000 -> 890,900,000 USD.\",\"source_id\":\"S1\"}",
+          "seconds": 24.10276800004067,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:ContractWithCustomerLiabilityCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:ContractWithCustomerLiabilityCurrent\"}",
+          "seconds": 6.448645800002851,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccountsReceivableNetCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccountsReceivableNetCurrent\"}",
+          "seconds": 6.462695599999279,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherAssetsNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherAssetsNoncurrent\"}",
+          "seconds": 5.716218499990646,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization\"}",
+          "seconds": 12.57977240002947,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "fin",
+            "tag": "us-gaap:Cash"
+          },
+          "output": "{\"cls\":\"fin\",\"tag\":\"us-gaap:Cash\"}",
+          "seconds": 5.192584800010081,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "fin",
+            "tag": "us-gaap:LongTermInvestments"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:LongTermInvestments\"}",
+          "seconds": 6.495811800006777,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:ContractWithCustomerLiabilityCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:ContractWithCustomerLiabilityCurrent\"}",
+          "seconds": 6.791875299997628,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccruedIncomeTaxesCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccruedIncomeTaxesCurrent\"}",
+          "seconds": 6.834448999958113,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherAssetsNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherAssetsNoncurrent\"}",
+          "seconds": 6.117713799991179,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccountsReceivableNetCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccountsReceivableNetCurrent\"}",
+          "seconds": 6.745418100035749,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "fin",
+            "tag": "us-gaap:CashAndCashEquivalentsAtCarryingValue"
+          },
+          "output": "{\"cls\":\"fin\",\"tag\":\"us-gaap:CashAndCashEquivalentsAtCarryingValue\"}",
+          "seconds": 7.87686079996638,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "fin",
+            "tag": "us-gaap:LongTermDebtAndCapitalLeaseObligations"
+          },
+          "output": "{\"cls\":\"fin\",\"tag\":\"us-gaap:LongTermDebtAndCapitalLeaseObligations\"}",
+          "seconds": 8.429977699997835,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:PrepaidExpenseAndOtherAssetsCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:PrepaidExpenseAndOtherAssetsCurrent\"}",
+          "seconds": 7.118524499994237,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccruedLiabilitiesCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccruedLiabilitiesCurrent\"}",
+          "seconds": 6.591122300014831,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "fin",
+            "tag": "us-gaap:LongTermDebtCurrent"
+          },
+          "output": "{\"cls\":\"fin\",\"tag\":\"us-gaap:LongTermDebtCurrent\"}",
+          "seconds": 6.224014699982945,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:Goodwill"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:Goodwill\"}",
+          "seconds": 5.140788200020324,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:DeferredIncomeTaxLiabilitiesNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:DeferredIncomeTaxLiabilitiesNet\"}",
+          "seconds": 6.425288200029172,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:PrepaidExpenseAndOtherAssetsCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:PrepaidExpenseAndOtherAssetsCurrent\"}",
+          "seconds": 6.728433000040241,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccountsPayableCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccountsPayableCurrent\"}",
+          "seconds": 6.147979100001976,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OperatingLeaseLiabilityCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OperatingLeaseLiabilityCurrent\"}",
+          "seconds": 6.814694200002123,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OperatingLeaseLiabilityNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OperatingLeaseLiabilityNoncurrent\"}",
+          "seconds": 7.301132699998561,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "fin",
+            "tag": "us-gaap:LongTermDebtAndCapitalLeaseObligations"
+          },
+          "output": "{\"cls\":\"fin\",\"tag\":\"us-gaap:LongTermDebtAndCapitalLeaseObligations\"}",
+          "seconds": 8.817875700013246,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:DeferredIncomeTaxAssetsNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:DeferredIncomeTaxAssetsNet\"}",
+          "seconds": 6.276557400007732,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "fin",
+            "tag": "us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent"
+          },
+          "output": "{\"cls\":\"fin\",\"tag\":\"us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent\"}",
+          "seconds": 9.128827899985481,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OperatingLeaseRightOfUseAsset"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OperatingLeaseRightOfUseAsset\"}",
+          "seconds": 7.161996599985287,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccountsPayableCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccountsPayableCurrent\"}",
+          "seconds": 5.9623551000258885,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccruedLiabilitiesCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccruedLiabilitiesCurrent\"}",
+          "seconds": 6.553478999994695,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherLiabilitiesNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherLiabilitiesNoncurrent\"}",
+          "seconds": 6.4303486999706365,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:Goodwill"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:Goodwill\"}",
+          "seconds": 5.787700599990785,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:PropertyPlantAndEquipmentNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:PropertyPlantAndEquipmentNet\"}",
+          "seconds": 6.337000200001057,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1053507",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:IntangibleAssetsNetExcludingGoodwill"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:IntangibleAssetsNetExcludingGoodwill\"}",
+          "seconds": 7.453566299984232,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-50471",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:DeferredIncomeTaxAssetsNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:DeferredIncomeTaxAssetsNet\"}",
+          "seconds": 6.78832330001751,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-71000002",
+          "expected": {
+            "value": 0.155,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.155,\"source_id\":\"S1\"}",
+          "seconds": 5.752073199953884,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-71000000",
+          "expected": {
+            "value": 0.07,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.07,\"source_id\":\"S1\"}",
+          "seconds": 5.2359317999798805,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-71000001",
+          "expected": {
+            "value": 730,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":730,\"source_id\":\"S1\"}",
+          "seconds": 4.913343199994415,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-71000000",
+          "expected": {
+            "value": 1,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":1,\"source_id\":\"S1\"}",
+          "seconds": 4.154177700052969,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-71000002",
+          "expected": {
+            "value": 1.416,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":1.416,\"source_id\":\"S1\"}",
+          "seconds": 5.606103099999018,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-71000000",
+          "expected": {
+            "value": 0.1575,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.1575,\"source_id\":\"S1\"}",
+          "seconds": 6.028665699996054,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3113.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "1668010",
+          "expected": {
+            "value": 1604065,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":1604065,\"source_id\":\"S1\"}",
+          "seconds": 6.503822099999525,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "1668010",
+          "expected": {
+            "value": 1208170,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":1208170,\"source_id\":\"S1\"}",
+          "seconds": 6.251625599979889,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1668010",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 4.089762199961115,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1668010",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 4.117924700025469,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1668010",
+          "expected": {
+            "value": -7473206,
+            "period_end": "2026-06-30",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-7473206,\"period_end\":\"2026-06-30\",\"source_id\":\"S1\"}",
+          "seconds": 11.051908699970227,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1668010",
+          "expected": {
+            "value": -8983422,
+            "period_end": "2026-06-30",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-8983422,\"period_end\":\"2026-06-30\",\"source_id\":\"S1\"}",
+          "seconds": 10.437146899988875,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1668010",
+          "expected": {
+            "form": "10-Q",
+            "period_end": "2026-03-31",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-Q\",\"period_end\":\"2026-03-31\",\"source_id\":\"S1\"}",
+          "seconds": 9.149694500025362,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1668010",
+          "expected": {
+            "form": "10-Q",
+            "period_end": "2026-06-30",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-Q\",\"period_end\":\"2026-06-30\",\"source_id\":\"S1\"}",
+          "seconds": 9.141681600012816,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-71000002",
+          "expected": {
+            "value": 204,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":204,\"source_id\":\"S1\"}",
+          "seconds": 4.4991579000488855,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-71000000",
+          "expected": {
+            "value": -454,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-454,\"source_id\":\"S1\"}",
+          "seconds": 4.362065199995413,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1668010",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.9210615000338294,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1668010",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.8281719000078738,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-71000000",
+          "expected": {
+            "value": -231,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-231,\"source_id\":\"S1\"}",
+          "seconds": 4.229906100023072,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-71000002",
+          "expected": {
+            "value": -436,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-436,\"source_id\":\"S1\"}",
+          "seconds": 4.342496700002812,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "1668010",
+          "expected": {
+            "heading": "Net Revenues",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"Net Revenues\",\"source_id\":\"S1\"}",
+          "seconds": 4.612013899954036,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "1668010",
+          "expected": {
+            "heading": "Net Revenues",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"Net Revenues\",\"source_id\":\"S1\"}",
+          "seconds": 4.499755199998617,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-71000001",
+          "expected": {
+            "value": 0.446,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.446,\"source_id\":\"S1\"}",
+          "seconds": 4.878150900010951,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-71000002",
+          "expected": {
+            "value": -2.28,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-2.28,\"source_id\":\"S1\"}",
+          "seconds": 4.6549898000084795,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-71000002",
+          "expected": {
+            "value": -45.6,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-45.6,\"source_id\":\"S1\"}",
+          "seconds": 4.736858099990059,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-71000000",
+          "expected": {
+            "value": 167.5,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":167.5,\"source_id\":\"S1\"}",
+          "seconds": 4.880607699975371,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-71000000",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.796418500016443,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-71000001",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.69972749997396,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-71000001",
+          "expected": {
+            "value": -434,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-434,\"source_id\":\"S1\"}",
+          "seconds": 4.611350600025617,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-71000000",
+          "expected": {
+            "value": 17,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":17,\"source_id\":\"S1\"}",
+          "seconds": 4.294039700005669,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-71000001",
+          "expected": {
+            "value": 492,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":432,\"source_id\":\"S1\"}",
+          "seconds": 4.65243840002222,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": false,
+          "correct": false
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-71000002",
+          "expected": {
+            "value": 301,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":391,\"source_id\":\"S1\"}",
+          "seconds": 4.655461199989077,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": false,
+          "correct": false
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-71000000",
+          "expected": {
+            "value": 72,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":72,\"source_id\":\"S1\"}",
+          "seconds": 4.141730500035919,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-71000001",
+          "expected": {
+            "value": 101,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":101,\"source_id\":\"S1\"}",
+          "seconds": 4.943032499984838,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-71000001",
+          "expected": {
+            "value": 597000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":597000,\"source_id\":\"S1\"}",
+          "seconds": 5.51525739999488,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-71000002",
+          "expected": {
+            "value": 643000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":643000,\"source_id\":\"S1\"}",
+          "seconds": 5.536565100017469,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 3115.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        }
+      ],
+      "tasks": {
+        "revision_reason": {
+          "correct": 1,
+          "total": 9
+        },
+        "bs_line_classification": {
+          "correct": 31,
+          "total": 32
+        },
+        "accrual_ratio": {
+          "correct": 2,
+          "total": 2
+        },
+        "balance_equation": {
+          "correct": 2,
+          "total": 2
+        },
+        "cash_conversion": {
+          "correct": 2,
+          "total": 2
+        },
+        "chart_data": {
+          "correct": 2,
+          "total": 2
+        },
+        "evidence_abstention": {
+          "correct": 2,
+          "total": 2
+        },
+        "field_extraction": {
+          "correct": 2,
+          "total": 2
+        },
+        "filing_route": {
+          "correct": 2,
+          "total": 2
+        },
+        "free_cash_flow": {
+          "correct": 2,
+          "total": 2
+        },
+        "missing_field": {
+          "correct": 2,
+          "total": 2
+        },
+        "negative_number": {
+          "correct": 2,
+          "total": 2
+        },
+        "note_heading": {
+          "correct": 2,
+          "total": 2
+        },
+        "operating_margin": {
+          "correct": 2,
+          "total": 2
+        },
+        "percent_change": {
+          "correct": 2,
+          "total": 2
+        },
+        "period_alignment": {
+          "correct": 2,
+          "total": 2
+        },
+        "quarter_from_ytd": {
+          "correct": 2,
+          "total": 2
+        },
+        "reserve_calculation": {
+          "correct": 0,
+          "total": 2
+        },
+        "total_accruals": {
+          "correct": 2,
+          "total": 2
+        },
+        "unit_conversion": {
+          "correct": 2,
+          "total": 2
+        }
+      },
+      "macro_accuracy": 0.9039930555555555,
+      "joint_correct": 66,
+      "questions": 77,
+      "valid_json": 77,
+      "content_correct": 66,
+      "source_correct": 45,
+      "source_eligible": 45,
+      "numeric_correct": 24,
+      "numeric_eligible": 26,
+      "regression_correct": 0,
+      "regression_total": 0,
+      "latency_p50_s": 6.251625599979889,
+      "max_temperature_c": 42.0
+    }
+  },
+  "status": "completed",
+  "ended_utc": "2026-10-19T10:05:24.504692+00:00",
+  "memory": {
+    "cuda_available": true,
+    "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+    "allocated_mib": 2561.03271484375,
+    "reserved_mib": 3004.0,
+    "peak_allocated_mib": 2873.24951171875,
+    "peak_reserved_mib": 3004.0,
+    "free_mib": 2120.0,
+    "total_mib": 6143.5
+  }
+}

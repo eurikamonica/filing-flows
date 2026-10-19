@@ -1,0 +1,30 @@
+run dir: C:\Users\Oliver Hu\Downloads\filing-flows-beta-fsa-chatgpt\filing-flows-beta-fsa-chatgpt\fsa-beta\model-expansion-lab\cycles\c009-20261019T132853Z\v3
+{
+ "checks_ok": true,
+ "failed": [],
+ "counts": {
+  "dev/bs_line_classification": 31,
+  "dev/revision_reason": 3,
+  "sealed_test/bs_line_classification": 46,
+  "sealed_test/revision_reason": 18,
+  "train/bs_line_classification": 186,
+  "train/revision_reason": 26
+ },
+ "A_label": {
+  "accounting_change_retrospective": 3,
+  "amendment_restatement": 4,
+  "cash_flow_reclassification": 2,
+  "discontinued_operations": 14,
+  "error_correction_revision": 5,
+  "income_statement_reclassification": 1,
+  "insufficient_evidence": 17,
+  "restatement_non_reliance": 1
+ },
+ "sec": {
+  "request_attempts_total": 133,
+  "stopped": null,
+  "status_counts": {
+   "200": 133
+  }
+ }
+}

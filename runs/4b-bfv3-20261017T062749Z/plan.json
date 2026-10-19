@@ -1,0 +1,21 @@
+{
+  "author": "Created by Claude (Anthropic)",
+  "created_utc": "2026-10-17T06:27:50.038553+00:00",
+  "base": "Qwen/Qwen3-4B",
+  "init_adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\qwen4",
+  "init_adapter_sha256": "bb4a35f8f8b570a025a7795a7b51d51129ee90069ce15e1ec75eb2d84ee9ffb6",
+  "corpus": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\corpus-v3-20261016T230644Z",
+  "corpus_manifest_sha256": "1c6f99c69340ec0e21baad77e2f78fa6d50c0086689de2dcf3e106093810a81a",
+  "packed_sha256": "feb36e30ad2f940bccff2beb0ae3052ddc85fcc9d2d210c4631b43a922a3702a",
+  "packed_rows": {
+    "train": 3600,
+    "validation": 138,
+    "test": 20
+  },
+  "test_split_note": "Packed \"test\" = 22 corpus-dev rows from non-protocol companies, a format placeholder; the corpus sealed test is not read.",
+  "eval_protocols": {
+    "bfv3_dev40": "3d56c834e0c0021c80e21e909a1777b975f5709bfc5e1fef6bd20a5ae9fded24",
+    "gate2_dev48": "6cc07dcfebfd198430fcbc7c024b1e6d13e126143cee4a89290daa71a5978714"
+  },
+  "owner_decision": "2026-10-17: train Qwen3-4B on basic-finance-v3; no temperature cutoff."
+}

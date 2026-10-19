@@ -1,0 +1,72 @@
+{
+  "author": "Created by Claude (Anthropic)",
+  "created_utc": "2026-10-17T21:15:17.676848+00:00",
+  "base": "Qwen/Qwen3-4B",
+  "seed": 20261017,
+  "init_adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\qwen4",
+  "init_adapter_sha256": "bb4a35f8f8b570a025a7795a7b51d51129ee90069ce15e1ec75eb2d84ee9ffb6",
+  "previous_run": "runs/4b-bfv3-20261017T062749Z (bfv3 only; Gate 2 regression 18 -> 12, not promoted)",
+  "sources": {
+    "bfv3": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\corpus-v3-20261016T230644Z\\train.jsonl",
+    "historical": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\.runtime\\overnight\\initial-corpus-v4.jsonl",
+    "gate2_v1": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data\\open\\train.jsonl"
+  },
+  "source_sha256": {
+    "bfv3": "8a20df77d27af41cc830783c2fda1ce660d49d1a7bb054d5fa93a69d1d517851",
+    "historical": "89c7d79dfba2046bb9c6407ecf33265234437f689d3bf976e414dbdf3a0d6a48",
+    "gate2_v1": "2b6d8f537bf88160e44453e3f170a7c0e7d35460b7e0dbfdfd17cca895b01bc2"
+  },
+  "train_mix": {
+    "bfv3": 2400,
+    "historical": 1202,
+    "gate2_v1": 521
+  },
+  "train_tasks": {
+    "total_accruals": 120,
+    "Compute the annual accrual ratio.": 203,
+    "evidence_abstention": 152,
+    "reserve_movement": 120,
+    "missing_field": 152,
+    "quarter_from_ytd": 120,
+    "note_provenance": 149,
+    "Compute total accruals.": 68,
+    "Compute free cash flow.": 68,
+    "reserve_calculation": 216,
+    "field_extraction": 468,
+    "unit_conversion": 120,
+    "free_cash_flow": 120,
+    "table_location": 96,
+    "chart_data": 337,
+    "basic_instruction": 120,
+    "amended_ytd": 96,
+    "filing_route": 152,
+    "cash_conversion": 120,
+    "negative_number": 120,
+    "note_heading": 120,
+    "percent_change": 120,
+    "Compute the closing reserve; no other movements.": 68,
+    "filing_type": 96,
+    "accrual_ratio": 216,
+    "period_alignment": 120,
+    "operating_margin": 120,
+    "balance_equation": 120,
+    "excerpt_heading": 9,
+    "missing_data": 17
+  },
+  "dropped": {
+    "gate2_v1:over_length": 11
+  },
+  "max_length": 384,
+  "packed_sha256": "d4e75c80e9956a814bb01b78d43ed537e8294b35fbbe5e031059f4f3a48d9ba7",
+  "packed_rows": {
+    "train": 4123,
+    "validation": 138,
+    "test": 20
+  },
+  "excluded": "Gate 2 v1 basic_instruction (defective contract, DATA_QUALITY_REVIEW.md); all eval-protocol inputs; corpus sealed test",
+  "eval_protocols": {
+    "bfv3_dev40": "3d56c834e0c0021c80e21e909a1777b975f5709bfc5e1fef6bd20a5ae9fded24",
+    "gate2_dev48": "6cc07dcfebfd198430fcbc7c024b1e6d13e126143cee4a89290daa71a5978714"
+  },
+  "owner_decision": "2026-10-17: continue training 4B with old-contract replay; no temperature cutoff."
+}

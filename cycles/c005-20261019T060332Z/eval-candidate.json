@@ -1,0 +1,5584 @@
+{
+  "author": "Created by Claude (Anthropic)",
+  "adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\cycles\\c005-20261019T060332Z\\train",
+  "adapter_sha256": "1c26d89f55af3b6ecddc559db660d1bfffc44da8624bf409eb4f73ad6195ceca",
+  "started_utc": "2026-10-19T07:09:29.595071+00:00",
+  "precision": "NF4 BF16",
+  "decoding": "greedy; thinking disabled",
+  "protocols": {
+    "bfv3_dev40": {
+      "details": [
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-00005",
+          "expected": {
+            "value": -1.72,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-1.72,\"source_id\":\"S1\"}",
+          "seconds": 6.832890699966811,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2843.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-00004",
+          "expected": {
+            "value": -5.8,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-5.8,\"source_id\":\"S1\"}",
+          "seconds": 4.209405899979174,
+          "gpu": {
+            "temperature_c": 45.0,
+            "used_mib": 2843.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-00005",
+          "expected": {
+            "value": 580,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":580,\"source_id\":\"S1\"}",
+          "seconds": 4.825351200008299,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2843.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-00006",
+          "expected": {
+            "value": 380,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":380,\"source_id\":\"S1\"}",
+          "seconds": 4.442169199988712,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2843.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "basic_instruction",
+          "company_id": "hypothetical-v3-dev-00005",
+          "expected": {
+            "status": "confirmed",
+            "source_id": "S1"
+          },
+          "output": "{\"status\":\"confirmed\",\"source_id\":\"S1\"}",
+          "seconds": 3.8692196999909356,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2843.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "basic_instruction",
+          "company_id": "hypothetical-v3-dev-00003",
+          "expected": {
+            "status": "acknowledged",
+            "source_id": "S1"
+          },
+          "output": "{\"status\":\"acknowledged\",\"source_id\":\"S1\"}",
+          "seconds": 4.426670800021384,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2843.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-00002",
+          "expected": {
+            "value": 0.5025,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.5025,\"source_id\":\"S1\"}",
+          "seconds": 5.817958300001919,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2843.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-00006",
+          "expected": {
+            "value": 0.2825,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.2825,\"source_id\":\"S1\"}",
+          "seconds": 5.728283700009342,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2843.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "931015",
+          "expected": {
+            "value": 1214900000.0,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":1214900000.0,\"source_id\":\"S1\"}",
+          "seconds": 7.263058300013654,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2855.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "759944",
+          "expected": {
+            "value": 137000000.0,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":137000000.0,\"source_id\":\"S1\"}",
+          "seconds": 6.895078699977603,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2855.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1413447",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 3.778036199975759,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2855.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1999261",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 3.784779899986461,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2855.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1800637",
+          "expected": {
+            "value": -11583000,
+            "period_end": "2024-12-31",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-11583000,\"period_end\":\"2024-12-31\",\"source_id\":\"S1\"}",
+          "seconds": 10.686530000006314,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1579298",
+          "expected": {
+            "value": 242117000,
+            "period_end": "2026-08-01",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":242117000,\"period_end\":\"2026-08-01\",\"source_id\":\"S1\"}",
+          "seconds": 10.835569099988788,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1413447",
+          "expected": {
+            "form": "10-K",
+            "period_end": "2025-12-31",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-K\",\"period_end\":\"2025-12-31\",\"source_id\":\"S1\"}",
+          "seconds": 9.008902899979148,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1579298",
+          "expected": {
+            "form": "10-Q",
+            "period_end": "2025-11-01",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-Q\",\"period_end\":\"2025-11-01\",\"source_id\":\"S1\"}",
+          "seconds": 9.088552900007926,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-00007",
+          "expected": {
+            "value": -54,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-54,\"source_id\":\"S1\"}",
+          "seconds": 4.064138900022954,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-00000",
+          "expected": {
+            "value": -115,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-115,\"source_id\":\"S1\"}",
+          "seconds": 4.229716899979394,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1999261",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.927954500017222,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "931015",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.7532604000298306,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-00003",
+          "expected": {
+            "value": -110,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-110,\"source_id\":\"S1\"}",
+          "seconds": 4.476124799984973,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-00006",
+          "expected": {
+            "value": -146,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-146,\"source_id\":\"S1\"}",
+          "seconds": 4.576771899999585,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "1800637",
+          "expected": {
+            "heading": "Revenues",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"Revenues\",\"source_id\":\"S1\"}",
+          "seconds": 4.345933899981901,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2861.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "1579298",
+          "expected": {
+            "heading": "Net sales",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"Net sales\",\"source_id\":\"S1\"}",
+          "seconds": 4.778386000019964,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-00003",
+          "expected": {
+            "value": 0.77,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.77,\"source_id\":\"S1\"}",
+          "seconds": 4.54321129998425,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-00005",
+          "expected": {
+            "value": 0.966,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.966,\"source_id\":\"S1\"}",
+          "seconds": 4.893866200000048,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-00003",
+          "expected": {
+            "value": 15.8,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":15.8,\"source_id\":\"S1\"}",
+          "seconds": 4.6739286000374705,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-00004",
+          "expected": {
+            "value": 138.5,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":138.5,\"source_id\":\"S1\"}",
+          "seconds": 5.318845900008455,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-00000",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.605060199974105,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-00002",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.619490800017957,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-00004",
+          "expected": {
+            "value": 40,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":40,\"source_id\":\"S1\"}",
+          "seconds": 4.028459799999837,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-00003",
+          "expected": {
+            "value": 147,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":147,\"source_id\":\"S1\"}",
+          "seconds": 4.398574999999255,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-00003",
+          "expected": {
+            "value": 845,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":845,\"source_id\":\"S1\"}",
+          "seconds": 4.865349599975161,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-00002",
+          "expected": {
+            "value": 702,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":692,\"source_id\":\"S1\"}",
+          "seconds": 4.254940600018017,
+          "gpu": {
+            "temperature_c": 44.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": false,
+          "correct": false
+        },
+        {
+          "task": "reserve_movement",
+          "company_id": "hypothetical-v3-dev-00004",
+          "expected": {
+            "movement": "utilization",
+            "source_id": "S1"
+          },
+          "output": "{\"movement\":\"utilization\",\"source_id\":\"S1\"}",
+          "seconds": 4.192158100020606,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "reserve_movement",
+          "company_id": "hypothetical-v3-dev-00007",
+          "expected": {
+            "movement": "reversal",
+            "source_id": "S1"
+          },
+          "output": "{\"movement\":\"reversal\",\"source_id\":\"S1\"}",
+          "seconds": 4.685451900004409,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-00003",
+          "expected": {
+            "value": 71,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":71,\"source_id\":\"S1\"}",
+          "seconds": 4.046234900015406,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-00002",
+          "expected": {
+            "value": 267,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":267,\"source_id\":\"S1\"}",
+          "seconds": 4.51480480004102,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-00007",
+          "expected": {
+            "value": 383000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":383000,\"source_id\":\"S1\"}",
+          "seconds": 5.568109900050331,
+          "gpu": {
+            "temperature_c": 43.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-00005",
+          "expected": {
+            "value": 337000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":337000,\"source_id\":\"S1\"}",
+          "seconds": 5.4231216999469325,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        }
+      ],
+      "tasks": {
+        "accrual_ratio": {
+          "correct": 2,
+          "total": 2
+        },
+        "balance_equation": {
+          "correct": 2,
+          "total": 2
+        },
+        "basic_instruction": {
+          "correct": 2,
+          "total": 2
+        },
+        "cash_conversion": {
+          "correct": 2,
+          "total": 2
+        },
+        "chart_data": {
+          "correct": 2,
+          "total": 2
+        },
+        "evidence_abstention": {
+          "correct": 2,
+          "total": 2
+        },
+        "field_extraction": {
+          "correct": 2,
+          "total": 2
+        },
+        "filing_route": {
+          "correct": 2,
+          "total": 2
+        },
+        "free_cash_flow": {
+          "correct": 2,
+          "total": 2
+        },
+        "missing_field": {
+          "correct": 2,
+          "total": 2
+        },
+        "negative_number": {
+          "correct": 2,
+          "total": 2
+        },
+        "note_heading": {
+          "correct": 2,
+          "total": 2
+        },
+        "operating_margin": {
+          "correct": 2,
+          "total": 2
+        },
+        "percent_change": {
+          "correct": 2,
+          "total": 2
+        },
+        "period_alignment": {
+          "correct": 2,
+          "total": 2
+        },
+        "quarter_from_ytd": {
+          "correct": 2,
+          "total": 2
+        },
+        "reserve_calculation": {
+          "correct": 1,
+          "total": 2
+        },
+        "reserve_movement": {
+          "correct": 2,
+          "total": 2
+        },
+        "total_accruals": {
+          "correct": 2,
+          "total": 2
+        },
+        "unit_conversion": {
+          "correct": 2,
+          "total": 2
+        }
+      },
+      "macro_accuracy": 0.975,
+      "joint_correct": 39,
+      "questions": 40,
+      "valid_json": 40,
+      "content_correct": 39,
+      "source_correct": 40,
+      "source_eligible": 40,
+      "numeric_correct": 25,
+      "numeric_eligible": 26,
+      "regression_correct": 0,
+      "regression_total": 0,
+      "latency_p50_s": 4.625350250018528,
+      "max_temperature_c": 45.0
+    },
+    "gate2_dev48": {
+      "details": [
+        {
+          "task": "accrual_ratio",
+          "company_id": "1953520",
+          "expected": {
+            "value": -0.5948717948717949,
+            "source_id": "ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0:hypothetical:0"
+          },
+          "output": "{\"value\": -0.5641025641025641, \"source_id\": \"ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0:hypothetical:0\"}",
+          "seconds": 29.091435799957253,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "1652561",
+          "expected": {
+            "value": 0.5301455301455301,
+            "source_id": "4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0:hypothetical:0"
+          },
+          "output": "{\"value\": 0.46666666666666664, \"source_id\": \"4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0:hypothetical:0\"}",
+          "seconds": 31.19923959998414,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "1701108",
+          "expected": {
+            "value": 0.3485254691689008,
+            "source_id": "23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0:hypothetical:0"
+          },
+          "output": "{\"value\": 0.3478260869565217, \"source_id\": \"23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0:hypothetical:0\"}",
+          "seconds": 30.842293000023346,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "amended_ytd",
+          "company_id": "1953520",
+          "expected": {
+            "value": 159,
+            "source_id": "ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0:hypothetical:0"
+          },
+          "output": "{\"value\": 159, \"source_id\": \"ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0:hypothetical:0\"}",
+          "seconds": 23.773194400011562,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "amended_ytd",
+          "company_id": "1652561",
+          "expected": {
+            "value": -374,
+            "source_id": "4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0:hypothetical:0"
+          },
+          "output": "{\"value\": -374, \"source_id\": \"4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0:hypothetical:0\"}",
+          "seconds": 24.91427599999588,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "amended_ytd",
+          "company_id": "1701108",
+          "expected": {
+            "value": -120,
+            "source_id": "23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0:hypothetical:0"
+          },
+          "output": "{\"value\": -120, \"source_id\": \"23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0:hypothetical:0\"}",
+          "seconds": 26.486037800030317,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "basic_instruction",
+          "company_id": "1953520",
+          "expected": {
+            "acknowledged": true,
+            "source_id": "ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0:hypothetical:0"
+          },
+          "output": "{\"source_id\": \"ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192\", \"label\": \"hypothetical\"}",
+          "seconds": 21.385144600004423,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": false,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "basic_instruction",
+          "company_id": "1652561",
+          "expected": {
+            "acknowledged": true,
+            "source_id": "4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0:hypothetical:0"
+          },
+          "output": "{\"source_id\": \"4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b\", \"label\": \"hypothetical\"}",
+          "seconds": 22.910978199972305,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": false,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "basic_instruction",
+          "company_id": "1701108",
+          "expected": {
+            "acknowledged": true,
+            "source_id": "23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0:hypothetical:0"
+          },
+          "output": "{\"source_id\": \"23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0:hypothetical:0\", \"label\": \"hypothetical\"}",
+          "seconds": 26.16989169997396,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1953520",
+          "expected": {
+            "supported": false,
+            "source_id": "ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0"
+          },
+          "output": "{\"supported\": false, \"source_id\": \"ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0\"}",
+          "seconds": 21.09858799999347,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1652561",
+          "expected": {
+            "supported": false,
+            "source_id": "4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0"
+          },
+          "output": "{\"supported\": false, \"source_id\": \"4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0\"}",
+          "seconds": 22.38719779998064,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1701108",
+          "expected": {
+            "supported": false,
+            "source_id": "23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0"
+          },
+          "output": "{\"supported\": false, \"source_id\": \"23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0\"}",
+          "seconds": 23.23770419997163,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "excerpt_heading",
+          "company_id": "1953520",
+          "expected": {
+            "heading": "Revenues",
+            "source_id": "ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0"
+          },
+          "output": "{\"heading\": \"Revenues\", \"source_id\": \"ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0\"}",
+          "seconds": 21.55768710002303,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "excerpt_heading",
+          "company_id": "1652561",
+          "expected": {
+            "heading": "Operating Activities",
+            "source_id": "4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0"
+          },
+          "output": "{\"heading\": \"Operating Activities\", \"source_id\": \"4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0\"}",
+          "seconds": 22.859090099984314,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "excerpt_heading",
+          "company_id": "1701108",
+          "expected": {
+            "heading": "Sales Revenue",
+            "source_id": "23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0"
+          },
+          "output": "{\"heading\": \"Sales Revenue\", \"source_id\": \"23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0\"}",
+          "seconds": 23.7969357999973,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1953520",
+          "expected": {
+            "value": 11188010,
+            "source_id": "ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0"
+          },
+          "output": "{\"field\": \"revenue\", \"value\": 11188010, \"source_id\": \"ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0\"}",
+          "seconds": 25.322367799992207,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1652561",
+          "expected": {
+            "value": 511781,
+            "source_id": "4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0"
+          },
+          "output": "{\"field\": \"revenue\", \"value\": 511781, \"source_id\": \"4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0\"}",
+          "seconds": 25.516145100002177,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2867.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1701108",
+          "expected": {
+            "value": 258000,
+            "source_id": "23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0"
+          },
+          "output": "{\"field\": \"revenue\", \"value\": 258000, \"source_id\": \"23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0\"}",
+          "seconds": 26.657719400012866,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1953520",
+          "expected": {
+            "form": "10-Q",
+            "source_id": "ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0"
+          },
+          "output": "{\"category\": \"treat_evidence_as_data\", \"value\": 11188010}",
+          "seconds": 7.917303100053687,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": false,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1652561",
+          "expected": {
+            "form": "10-Q",
+            "source_id": "4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0"
+          },
+          "output": "{\"category\": \"10-Q\", \"source_id\": \"4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0\"}",
+          "seconds": 23.29577030002838,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1701108",
+          "expected": {
+            "form": "10-Q",
+            "source_id": "23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0"
+          },
+          "output": "{\"category\": \"10-Q\", \"source_id\": \"23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0\"}",
+          "seconds": 23.74101509997854,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1953520",
+          "expected": {
+            "value": null,
+            "source_id": "ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0"
+          },
+          "output": "{\"value\": null, \"source_id\": \"ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0\"}",
+          "seconds": 20.99440940003842,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1652561",
+          "expected": {
+            "value": null,
+            "source_id": "4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0"
+          },
+          "output": "{\"value\": null, \"source_id\": \"4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0\"}",
+          "seconds": 22.18288629996823,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1701108",
+          "expected": {
+            "value": null,
+            "source_id": "23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0"
+          },
+          "output": "{\"value\": null, \"source_id\": \"23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0\"}",
+          "seconds": 23.42723550001392,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "1953520",
+          "expected": {
+            "value": 411,
+            "source_id": "ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0:hypothetical:0"
+          },
+          "output": "{\"value\": 451, \"source_id\": \"ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0:hypothetical:0\"}",
+          "seconds": 23.946697200008202,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "1652561",
+          "expected": {
+            "value": 457,
+            "source_id": "4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0:hypothetical:0"
+          },
+          "output": "{\"value\": 457, \"source_id\": \"4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0:hypothetical:0\"}",
+          "seconds": 24.7290084999986,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "1701108",
+          "expected": {
+            "value": 551,
+            "source_id": "23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0:hypothetical:0"
+          },
+          "output": "{\"value\": 551, \"source_id\": \"23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0:hypothetical:0\"}",
+          "seconds": 25.407298999954946,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "table_location",
+          "company_id": "1953520",
+          "expected": {
+            "year": 2024,
+            "units": "USD thousands",
+            "value": -60,
+            "item": "Item 8",
+            "note": "Note 5",
+            "source_id": "ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0:hypothetical:0"
+          },
+          "output": "{\"year\": 2024, \"units\": \"USD thousands\", \"value\": -60, \"item\": \"Item 8\", \"note\": \"Note 5\", \"source_id\": \"ba0fa8efbb4af1fcb5f8a406d1aadbaf20c4ebae5e7318e5579f1e04a9e5c192:0:hypothetical:0\"}",
+          "seconds": 32.652132000017446,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "table_location",
+          "company_id": "1652561",
+          "expected": {
+            "year": 2024,
+            "units": "USD thousands",
+            "value": -592,
+            "item": "Item 8",
+            "note": "Note 1",
+            "source_id": "4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0:hypothetical:0"
+          },
+          "output": "{\"year\": 2024, \"units\": \"USD thousands\", \"value\": -592, \"item\": \"Item 8\", \"note\": \"Note 1\", \"source_id\": \"4beec17b9b05fa0774867fdffe2b12871378701e0f87e8b23a148ff3068c541b:0:hypothetical:0\"}",
+          "seconds": 34.9785018999828,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "table_location",
+          "company_id": "1701108",
+          "expected": {
+            "year": 2024,
+            "units": "USD thousands",
+            "value": -488,
+            "item": "Item 8",
+            "note": "Note 7",
+            "source_id": "23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0:hypothetical:0"
+          },
+          "output": "{\"year\": 2024, \"units\": \"USD thousands\", \"value\": -488, \"item\": \"Item 8\", \"note\": \"Note 7\", \"source_id\": \"23d56888cdd12381e156a17c1e33f11f0a23d30aa23fa92f1d99e05b7dc87338:0:hypothetical:0\"}",
+          "seconds": 35.901582700025756,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:Compute free cash flow.",
+          "company_id": "88109:curriculum-v3-validation-0000",
+          "expected": {
+            "formula": "ocf - capex",
+            "value": 406
+          },
+          "output": "{\"formula\": \"ocf - capex\", \"value\": 406}",
+          "seconds": 5.999600699986331,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:Compute free cash flow.",
+          "company_id": "88109:curriculum-v3-validation-0001",
+          "expected": {
+            "formula": "ocf - capex",
+            "value": -317
+          },
+          "output": "{\"formula\": \"ocf - capex\", \"value\": -317}",
+          "seconds": 5.877193899999838,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:Compute the annual accrual ratio.",
+          "company_id": "88109:curriculum-v3-validation-0000",
+          "expected": {
+            "calculation": {
+              "accruals": -2,
+              "average_assets": 100.0
+            },
+            "formula": "(net_income - ocf) / ((opening_assets + closing_assets) / 2)",
+            "value": -0.02
+          },
+          "output": "{\"calculation\": {\"accruals\": 2, \"average_assets\": 100.0}, \"formula\": \"(net_income - ocf) / ((opening_assets + closing_assets) / 2)\", \"value\": 0.02}",
+          "seconds": 17.46957630000543,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": false
+        },
+        {
+          "task": "regression:Compute the annual accrual ratio.",
+          "company_id": "88109:curriculum-v3-validation-0000",
+          "expected": {
+            "calculation": {
+              "accruals": 298,
+              "average_assets": 400.0
+            },
+            "formula": "(net_income - ocf) / ((opening_assets + closing_assets) / 2)",
+            "value": 0.745
+          },
+          "output": "{\"calculation\": {\"accruals\": 298, \"average_assets\": 400.0}, \"formula\": \"(net_income - ocf) / ((opening_assets + closing_assets) / 2)\", \"value\": 0.745}",
+          "seconds": 18.636745199968573,
+          "gpu": {
+            "temperature_c": 38.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:Compute the closing reserve; no other movements.",
+          "company_id": "88109:curriculum-v3-validation-0000",
+          "expected": {
+            "calculation": {
+              "after_additions": 671,
+              "after_releases": 625
+            },
+            "formula": "opening + additions - releases - utilization",
+            "value": 600
+          },
+          "output": "{\"calculation\": {\"after_additions\": 671, \"after_releases\": 625}, \"formula\": \"opening + additions - releases - utilization\", \"value\": 600}",
+          "seconds": 13.66671880002832,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:Compute the closing reserve; no other movements.",
+          "company_id": "88109:curriculum-v3-validation-0001",
+          "expected": {
+            "calculation": {
+              "after_additions": 573,
+              "after_releases": 535
+            },
+            "formula": "opening + additions - releases - utilization",
+            "value": 522
+          },
+          "output": "{\"calculation\": {\"after_additions\": 573, \"after_releases\": 535}, \"formula\": \"opening + additions - releases - utilization\", \"value\": 522}",
+          "seconds": 14.62270870001521,
+          "gpu": {
+            "temperature_c": 38.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:Compute total accruals.",
+          "company_id": "88109:curriculum-v3-validation-0000",
+          "expected": {
+            "formula": "net_income - ocf",
+            "value": 149
+          },
+          "output": "{\"formula\": \"net_income - ocf\", \"value\": 149}",
+          "seconds": 5.998452099971473,
+          "gpu": {
+            "temperature_c": 38.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:Compute total accruals.",
+          "company_id": "88109:curriculum-v3-validation-0001",
+          "expected": {
+            "formula": "net_income - ocf",
+            "value": -820
+          },
+          "output": "{\"formula\": \"net_income - ocf\", \"value\": -820}",
+          "seconds": 5.966957900032867,
+          "gpu": {
+            "temperature_c": 38.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:chart_data",
+          "company_id": "doc-synthetic-88109-validation-0",
+          "expected": {
+            "period": "Q4",
+            "value": 799
+          },
+          "output": "{\"period\": \"Q4\", \"value\": 799}",
+          "seconds": 4.770830199995544,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:chart_data",
+          "company_id": "website-cik-10795",
+          "expected": {
+            "direction": "increase",
+            "change": 269000000,
+            "source_id": "f7e3c09d15e2:2026-06-30"
+          },
+          "output": "{\"direction\": \"increase\", \"change\": 269000000, \"source_id\": \"f7e3c09d15e2:2026-06-30\"}",
+          "seconds": 15.622129099967424,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:field_extraction",
+          "company_id": "website-cik-10795",
+          "expected": {
+            "field": "revenue",
+            "value": 4983000000,
+            "source_id": "f7e3c09d15e2:2026-06-30"
+          },
+          "output": "{\"field\": \"revenue\", \"value\": 4983000000, \"source_id\": \"f7e3c09d15e2:2026-06-30\"}",
+          "seconds": 16.25887130002957,
+          "gpu": {
+            "temperature_c": 38.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:field_extraction",
+          "company_id": "website-cik-10795",
+          "expected": {
+            "field": "ni",
+            "value": 377000000,
+            "source_id": "f7e3c09d15e2:2026-06-30"
+          },
+          "output": "{\"field\": \"ni\", \"value\": 377000000, \"source_id\": \"f7e3c09d15e2:2026-06-30\"}",
+          "seconds": 15.253382500028238,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:filing_type",
+          "company_id": "doc-synthetic-88109-validation-0",
+          "expected": {
+            "form": "10-K"
+          },
+          "output": "{\"form\": \"10-K\"}",
+          "seconds": 2.6048404999892227,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:filing_type",
+          "company_id": "doc-synthetic-88109-validation-1",
+          "expected": {
+            "form": "10-Q"
+          },
+          "output": "{\"form\": \"10-Q\"}",
+          "seconds": 2.7102587000117637,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:missing_data",
+          "company_id": "doc-synthetic-88109-validation-0",
+          "expected": {
+            "value": null,
+            "reason": "missing_capex"
+          },
+          "output": "{\"value\": null, \"reason\": \"missing_capex\"}",
+          "seconds": 4.043906799983233,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:missing_data",
+          "company_id": "doc-synthetic-88109-validation-1",
+          "expected": {
+            "value": null,
+            "reason": "missing_capex"
+          },
+          "output": "{\"value\": null, \"reason\": \"missing_capex\"}",
+          "seconds": 4.196805400017183,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:note_provenance",
+          "company_id": "doc-synthetic-88109-validation-0",
+          "expected": {
+            "source_role": "financial_statement_notes"
+          },
+          "output": "{\"source_role\": \"financial_statement_notes\"}",
+          "seconds": 3.025829399994109,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "regression:note_provenance",
+          "company_id": "doc-synthetic-88109-validation-1",
+          "expected": {
+            "source_role": "mda_excerpt"
+          },
+          "output": "{\"source_role\": \"mda_excerpt\"}",
+          "seconds": 3.050755999982357,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        }
+      ],
+      "tasks": {
+        "accrual_ratio": {
+          "correct": 0,
+          "total": 3
+        },
+        "amended_ytd": {
+          "correct": 3,
+          "total": 3
+        },
+        "basic_instruction": {
+          "correct": 0,
+          "total": 3
+        },
+        "evidence_abstention": {
+          "correct": 3,
+          "total": 3
+        },
+        "excerpt_heading": {
+          "correct": 3,
+          "total": 3
+        },
+        "field_extraction": {
+          "correct": 3,
+          "total": 3
+        },
+        "filing_route": {
+          "correct": 0,
+          "total": 3
+        },
+        "missing_field": {
+          "correct": 3,
+          "total": 3
+        },
+        "reserve_calculation": {
+          "correct": 2,
+          "total": 3
+        },
+        "table_location": {
+          "correct": 3,
+          "total": 3
+        },
+        "regression:Compute free cash flow.": {
+          "correct": 2,
+          "total": 2
+        },
+        "regression:Compute the annual accrual ratio.": {
+          "correct": 1,
+          "total": 2
+        },
+        "regression:Compute the closing reserve; no other movements.": {
+          "correct": 2,
+          "total": 2
+        },
+        "regression:Compute total accruals.": {
+          "correct": 2,
+          "total": 2
+        },
+        "regression:chart_data": {
+          "correct": 2,
+          "total": 2
+        },
+        "regression:field_extraction": {
+          "correct": 2,
+          "total": 2
+        },
+        "regression:filing_type": {
+          "correct": 2,
+          "total": 2
+        },
+        "regression:missing_data": {
+          "correct": 2,
+          "total": 2
+        },
+        "regression:note_provenance": {
+          "correct": 2,
+          "total": 2
+        }
+      },
+      "macro_accuracy": 0.7982456140350878,
+      "joint_correct": 37,
+      "questions": 48,
+      "valid_json": 48,
+      "content_correct": 37,
+      "source_correct": 30,
+      "source_eligible": 33,
+      "numeric_correct": 0,
+      "numeric_eligible": 0,
+      "regression_correct": 17,
+      "regression_total": 18,
+      "latency_p50_s": 22.285042049974436,
+      "max_temperature_c": 42.0
+    },
+    "bfv4_dev90": {
+      "details": [
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-200012",
+          "expected": {
+            "value": -1.86,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-1.86,\"source_id\":\"S1\"}",
+          "seconds": 4.637219900032505,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-200016",
+          "expected": {
+            "value": -0.006,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-0.006,\"source_id\":\"S1\"}",
+          "seconds": 5.309625499998219,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-200009",
+          "expected": {
+            "value": -0.41,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-0.41,\"source_id\":\"S1\"}",
+          "seconds": 4.746043200022541,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-200015",
+          "expected": {
+            "value": -0.182,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-0.182,\"source_id\":\"S1\"}",
+          "seconds": 4.932745900005102,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-200018",
+          "expected": {
+            "value": -0.4275,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-0.4275,\"source_id\":\"S1\"}",
+          "seconds": 5.325382500013802,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-200002",
+          "expected": {
+            "value": 148,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":148,\"source_id\":\"S1\"}",
+          "seconds": 4.483428200008348,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-200003",
+          "expected": {
+            "value": 439,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":439,\"source_id\":\"S1\"}",
+          "seconds": 4.6339086999651045,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-200018",
+          "expected": {
+            "value": 16,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":16,\"source_id\":\"S1\"}",
+          "seconds": 4.97987609996926,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-200014",
+          "expected": {
+            "value": 324,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":324,\"source_id\":\"S1\"}",
+          "seconds": 4.695806799980346,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-200005",
+          "expected": {
+            "value": 397,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":397,\"source_id\":\"S1\"}",
+          "seconds": 4.644451699976344,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-200004",
+          "expected": {
+            "value": 2.01,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":2.01,\"source_id\":\"S1\"}",
+          "seconds": 4.669973100011703,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-200012",
+          "expected": {
+            "value": 0.4375,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.4375,\"source_id\":\"S1\"}",
+          "seconds": 5.409393900015857,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-200016",
+          "expected": {
+            "value": 0.395,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.395,\"source_id\":\"S1\"}",
+          "seconds": 4.920177399995737,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-200003",
+          "expected": {
+            "value": 0.562,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.562,\"source_id\":\"S1\"}",
+          "seconds": 4.879617300000973,
+          "gpu": {
+            "temperature_c": 39.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-200014",
+          "expected": {
+            "value": 7.44,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":7.44,\"source_id\":\"S1\"}",
+          "seconds": 4.766595900000539,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "716643",
+          "expected": {
+            "value": 36181000.0,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":36181000.0,\"source_id\":\"S1\"}",
+          "seconds": 6.698001400043722,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "842023",
+          "expected": {
+            "value": 231601000.0,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":231601000.0,\"source_id\":\"S1\"}",
+          "seconds": 6.885499700030778,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "1036262",
+          "expected": {
+            "value": 35313000.0,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":35313000.0,\"source_id\":\"S1\"}",
+          "seconds": 6.594367100042291,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "33488",
+          "expected": {
+            "value": 57702000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":57702000,\"source_id\":\"S1\"}",
+          "seconds": 5.905815299949609,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "1020569",
+          "expected": {
+            "value": 1144701000.0,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":1144701000.0,\"source_id\":\"S1\"}",
+          "seconds": 7.162341000046581,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1020569",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 3.8489006999880075,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "716643",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 3.8679870000341907,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1036262",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 3.8301440000068396,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "842023",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 3.7322155000292696,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1402829",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 3.9120672999997623,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "716643",
+          "expected": {
+            "value": 24448000,
+            "period_end": "2026-06-30",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":24448000,\"period_end\":\"2026-06-30\",\"source_id\":\"S1\"}",
+          "seconds": 10.295135000022128,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1685040",
+          "expected": {
+            "value": -290000000,
+            "period_end": "2024-12-31",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-290000000,\"period_end\":\"2024-12-31\",\"source_id\":\"S1\"}",
+          "seconds": 10.750513700011652,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1650729",
+          "expected": {
+            "value": 128600000,
+            "period_end": "2025-09-28",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":128600000,\"period_end\":\"2025-09-28\",\"source_id\":\"S1\"}",
+          "seconds": 10.557851499994285,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1402829",
+          "expected": {
+            "value": -3443000,
+            "period_end": "2025-03-31",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-3443000,\"period_end\":\"2025-03-31\",\"source_id\":\"S1\"}",
+          "seconds": 9.900595500017516,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "2078730",
+          "expected": {
+            "value": -7635,
+            "period_end": "2026-03-31",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-7635,\"period_end\":\"2026-03-31\",\"source_id\":\"S1\"}",
+          "seconds": 9.261077300005127,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "703351",
+          "expected": {
+            "form": "10-Q",
+            "period_end": "2025-12-24",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-Q\",\"period_end\":\"2025-12-24\",\"source_id\":\"S1\"}",
+          "seconds": 9.013135300017893,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1650729",
+          "expected": {
+            "form": "10-Q",
+            "period_end": "2026-03-29",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-Q\",\"period_end\":\"2026-03-29\",\"source_id\":\"S1\"}",
+          "seconds": 8.764933000027668,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1685040",
+          "expected": {
+            "form": "10-K",
+            "period_end": "2025-12-31",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-K\",\"period_end\":\"2025-12-31\",\"source_id\":\"S1\"}",
+          "seconds": 8.692508100008126,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1020569",
+          "expected": {
+            "form": "10-Q",
+            "period_end": "2026-06-30",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-Q\",\"period_end\":\"2026-06-30\",\"source_id\":\"S1\"}",
+          "seconds": 8.541017599985935,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "33488",
+          "expected": {
+            "form": "10-Q",
+            "period_end": "2026-03-31",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-Q\",\"period_end\":\"2026-03-31\",\"source_id\":\"S1\"}",
+          "seconds": 8.28597319999244,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-200006",
+          "expected": {
+            "value": -11,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-11,\"source_id\":\"S1\"}",
+          "seconds": 3.8805160999763757,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-200005",
+          "expected": {
+            "value": -257,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-257,\"source_id\":\"S1\"}",
+          "seconds": 4.219389100035187,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-200014",
+          "expected": {
+            "value": -335,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-335,\"source_id\":\"S1\"}",
+          "seconds": 4.206359600008,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-200007",
+          "expected": {
+            "value": -295,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-295,\"source_id\":\"S1\"}",
+          "seconds": 4.570825000002515,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-200000",
+          "expected": {
+            "value": -311,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-311,\"source_id\":\"S1\"}",
+          "seconds": 4.202303099969868,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1659166",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.9334208999644034,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1650729",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.6033323999727145,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1903595",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.7503391000209376,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1410098",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.8012082999921404,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1020569",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.6300128000439145,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-200003",
+          "expected": {
+            "value": -383,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-383,\"source_id\":\"S1\"}",
+          "seconds": 4.403201100009028,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-200011",
+          "expected": {
+            "value": -680,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-680,\"source_id\":\"S1\"}",
+          "seconds": 4.457745999970939,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-200005",
+          "expected": {
+            "value": -468,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-468,\"source_id\":\"S1\"}",
+          "seconds": 4.468843000009656,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-200015",
+          "expected": {
+            "value": -164,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-164,\"source_id\":\"S1\"}",
+          "seconds": 4.298983399989083,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-200006",
+          "expected": {
+            "value": -378,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-378,\"source_id\":\"S1\"}",
+          "seconds": 4.307738200004678,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "33488",
+          "expected": {
+            "heading": "Revenue and Gross Margin",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"Revenue and Gross Margin\",\"source_id\":\"S1\"}",
+          "seconds": 4.778150900034234,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "1410098",
+          "expected": {
+            "heading": "Net Cash Provided by Operating Activities",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"Net Cash Provided by Operating Activities\",\"source_id\":\"S1\"}",
+          "seconds": 5.506659600010607,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "1036262",
+          "expected": {
+            "heading": "Revenue",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"Revenue\",\"source_id\":\"S1\"}",
+          "seconds": 3.8138679999974556,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "1020569",
+          "expected": {
+            "heading": "REVENUES",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"REVENUES\",\"source_id\":\"S1\"}",
+          "seconds": 4.446988500014413,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "842023",
+          "expected": {
+            "heading": "Net Sales",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"Net Sales\",\"source_id\":\"S1\"}",
+          "seconds": 4.057661099999677,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-200005",
+          "expected": {
+            "value": 0.46,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.46,\"source_id\":\"S1\"}",
+          "seconds": 4.5088641999755055,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-200009",
+          "expected": {
+            "value": 0.1,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.1,\"source_id\":\"S1\"}",
+          "seconds": 4.3089266999741085,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-200011",
+          "expected": {
+            "value": 0.25,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":0.25,\"source_id\":\"S1\"}",
+          "seconds": 4.712362999969628,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-200004",
+          "expected": {
+            "value": -2.24,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-2.24,\"source_id\":\"S1\"}",
+          "seconds": 4.859067099983804,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-200007",
+          "expected": {
+            "value": 2.92,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":2.92,\"source_id\":\"S1\"}",
+          "seconds": 4.670128399971873,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-200016",
+          "expected": {
+            "value": -5.2,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-5.2,\"source_id\":\"S1\"}",
+          "seconds": 4.360328499984462,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-200000",
+          "expected": {
+            "value": 129,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":129,\"source_id\":\"S1\"}",
+          "seconds": 4.287629499973264,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-200013",
+          "expected": {
+            "value": -83,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-83,\"source_id\":\"S1\"}",
+          "seconds": 4.069966099981684,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-200019",
+          "expected": {
+            "value": 513,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":513,\"source_id\":\"S1\"}",
+          "seconds": 4.319075400009751,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-200010",
+          "expected": {
+            "value": -94.4,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-94.4,\"source_id\":\"S1\"}",
+          "seconds": 4.665093499992508,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-200008",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.684996099967975,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-200003",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.494357000046875,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-200002",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.749159200000577,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-200009",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.699809999961872,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-200015",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.663797599961981,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-200005",
+          "expected": {
+            "value": 135,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":135,\"source_id\":\"S1\"}",
+          "seconds": 4.6422280999831855,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-200003",
+          "expected": {
+            "value": -31,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-31,\"source_id\":\"S1\"}",
+          "seconds": 4.065107799950056,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-200019",
+          "expected": {
+            "value": 28,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":28,\"source_id\":\"S1\"}",
+          "seconds": 4.14465079997899,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-200012",
+          "expected": {
+            "value": -611,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-611,\"source_id\":\"S1\"}",
+          "seconds": 4.348620100005064,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-200015",
+          "expected": {
+            "value": -130,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-130,\"source_id\":\"S1\"}",
+          "seconds": 4.267969699983951,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-200010",
+          "expected": {
+            "value": 925,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":925,\"source_id\":\"S1\"}",
+          "seconds": 4.411066100001335,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-200008",
+          "expected": {
+            "value": 472,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":472,\"source_id\":\"S1\"}",
+          "seconds": 4.490499500010628,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-200002",
+          "expected": {
+            "value": 192,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":142,\"source_id\":\"S1\"}",
+          "seconds": 4.660396000021137,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": false,
+          "correct": false
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-200011",
+          "expected": {
+            "value": 1078,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":1078,\"source_id\":\"S1\"}",
+          "seconds": 4.603658300009556,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-200016",
+          "expected": {
+            "value": 990,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":980,\"source_id\":\"S1\"}",
+          "seconds": 4.742246300040279,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": false,
+          "correct": false
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-200003",
+          "expected": {
+            "value": -29,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-29,\"source_id\":\"S1\"}",
+          "seconds": 3.982161699968856,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-200006",
+          "expected": {
+            "value": -376,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-376,\"source_id\":\"S1\"}",
+          "seconds": 4.387513599998783,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-200011",
+          "expected": {
+            "value": 121,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":121,\"source_id\":\"S1\"}",
+          "seconds": 4.266414000012446,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-200012",
+          "expected": {
+            "value": -307,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-307,\"source_id\":\"S1\"}",
+          "seconds": 4.7363114999607205,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-200013",
+          "expected": {
+            "value": -348,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-348,\"source_id\":\"S1\"}",
+          "seconds": 4.315620600013062,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-200002",
+          "expected": {
+            "value": 61000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":61000,\"source_id\":\"S1\"}",
+          "seconds": 4.6305988999665715,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-200018",
+          "expected": {
+            "value": 351000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":351000,\"source_id\":\"S1\"}",
+          "seconds": 5.106066300009843,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-200017",
+          "expected": {
+            "value": 446000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":446000,\"source_id\":\"S1\"}",
+          "seconds": 5.081077400012873,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-200010",
+          "expected": {
+            "value": 633000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":633000,\"source_id\":\"S1\"}",
+          "seconds": 5.038176300004125,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-200011",
+          "expected": {
+            "value": 433000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":433000,\"source_id\":\"S1\"}",
+          "seconds": 5.065851500025019,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        }
+      ],
+      "tasks": {
+        "accrual_ratio": {
+          "correct": 5,
+          "total": 5
+        },
+        "balance_equation": {
+          "correct": 5,
+          "total": 5
+        },
+        "cash_conversion": {
+          "correct": 5,
+          "total": 5
+        },
+        "chart_data": {
+          "correct": 5,
+          "total": 5
+        },
+        "evidence_abstention": {
+          "correct": 5,
+          "total": 5
+        },
+        "field_extraction": {
+          "correct": 5,
+          "total": 5
+        },
+        "filing_route": {
+          "correct": 5,
+          "total": 5
+        },
+        "free_cash_flow": {
+          "correct": 5,
+          "total": 5
+        },
+        "missing_field": {
+          "correct": 5,
+          "total": 5
+        },
+        "negative_number": {
+          "correct": 5,
+          "total": 5
+        },
+        "note_heading": {
+          "correct": 5,
+          "total": 5
+        },
+        "operating_margin": {
+          "correct": 5,
+          "total": 5
+        },
+        "percent_change": {
+          "correct": 5,
+          "total": 5
+        },
+        "period_alignment": {
+          "correct": 5,
+          "total": 5
+        },
+        "quarter_from_ytd": {
+          "correct": 5,
+          "total": 5
+        },
+        "reserve_calculation": {
+          "correct": 3,
+          "total": 5
+        },
+        "total_accruals": {
+          "correct": 5,
+          "total": 5
+        },
+        "unit_conversion": {
+          "correct": 5,
+          "total": 5
+        }
+      },
+      "macro_accuracy": 0.9777777777777777,
+      "joint_correct": 88,
+      "questions": 90,
+      "valid_json": 90,
+      "content_correct": 88,
+      "source_correct": 90,
+      "source_eligible": 90,
+      "numeric_correct": 63,
+      "numeric_eligible": 65,
+      "regression_correct": 0,
+      "regression_total": 0,
+      "latency_p50_s": 4.643339899979765,
+      "max_temperature_c": 41.0
+    },
+    "fresh": {
+      "details": [
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1289945",
+          "expected": {
+            "pattern": "results",
+            "label": "insufficient_evidence",
+            "quote": null,
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"results\",\"label\":\"insufficient_evidence\",\"quote\":null,\"source_id\":\"S1\"}",
+          "seconds": 7.3132307000341825,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "revision_reason",
+          "company_id": "cik-1289945",
+          "expected": {
+            "pattern": "results",
+            "label": "insufficient_evidence",
+            "quote": null,
+            "source_id": "S1"
+          },
+          "output": "{\"pattern\":\"results\",\"label\":\"insufficient_evidence\",\"quote\":null,\"source_id\":\"S1\"}",
+          "seconds": 7.040990000008605,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccountsReceivableNetCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccountsReceivableNetCurrent\"}",
+          "seconds": 6.101185999985319,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:ContractWithCustomerLiabilityCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:ContractWithCustomerLiabilityCurrent\"}",
+          "seconds": 6.12460599996848,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:InventoryNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:InventoryNet\"}",
+          "seconds": 5.063323300040793,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:ContractWithCustomerLiabilityCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:ContractWithCustomerLiabilityCurrent\"}",
+          "seconds": 6.329217399994377,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherAssetsNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherAssetsNoncurrent\"}",
+          "seconds": 5.742869600013364,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherAssetsNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherAssetsNoncurrent\"}",
+          "seconds": 5.717938799993135,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherAssetsNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherAssetsNoncurrent\"}",
+          "seconds": 5.862009500036947,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccountsReceivableNetCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccountsReceivableNetCurrent\"}",
+          "seconds": 6.436732899979688,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:InventoryNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:InventoryNet\"}",
+          "seconds": 5.228063900023699,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherLiabilitiesCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherLiabilitiesCurrent\"}",
+          "seconds": 5.764505400031339,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OperatingLeaseLiabilityCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OperatingLeaseLiabilityCurrent\"}",
+          "seconds": 6.225331699999515,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherLiabilitiesNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherLiabilitiesNoncurrent\"}",
+          "seconds": 6.202223400003277,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:EmployeeRelatedLiabilitiesCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:EmployeeRelatedLiabilitiesCurrent\"}",
+          "seconds": 5.8482123000430875,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccountsPayableCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccountsPayableCurrent\"}",
+          "seconds": 5.725079099996947,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "fin",
+            "tag": "us-gaap:CashAndCashEquivalentsAtCarryingValue"
+          },
+          "output": "{\"cls\":\"fin\",\"tag\":\"us-gaap:CashAndCashEquivalentsAtCarryingValue\"}",
+          "seconds": 7.578599300002679,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2893.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OperatingLeaseLiabilityNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OperatingLeaseLiabilityNoncurrent\"}",
+          "seconds": 6.779821000003722,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherLiabilitiesNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherLiabilitiesNoncurrent\"}",
+          "seconds": 6.104226700030267,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:DeferredIncomeTaxAssetsNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:DeferredIncomeTaxAssetsNet\"}",
+          "seconds": 6.162300000025425,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:Goodwill"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:Goodwill\"}",
+          "seconds": 5.051366899977438,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccountsPayableCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccountsPayableCurrent\"}",
+          "seconds": 5.893152599979658,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherLiabilitiesNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherLiabilitiesNoncurrent\"}",
+          "seconds": 6.231155099987518,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OperatingLeaseRightOfUseAsset"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OperatingLeaseRightOfUseAsset\"}",
+          "seconds": 6.66376379999565,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:DeferredIncomeTaxLiabilitiesNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:DeferredIncomeTaxLiabilitiesNet\"}",
+          "seconds": 6.520771300012711,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:DeferredIncomeTaxLiabilitiesNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:DeferredIncomeTaxLiabilitiesNet\"}",
+          "seconds": 6.576684600033332,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OperatingLeaseLiabilityCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OperatingLeaseLiabilityCurrent\"}",
+          "seconds": 6.4364292999962345,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccruedLiabilitiesCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccruedLiabilitiesCurrent\"}",
+          "seconds": 6.6090129999793135,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:PropertyPlantAndEquipmentNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:PropertyPlantAndEquipmentNet\"}",
+          "seconds": 6.7237683000275865,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "fin",
+            "tag": "us-gaap:CashAndCashEquivalentsAtCarryingValue"
+          },
+          "output": "{\"cls\":\"fin\",\"tag\":\"us-gaap:CashAndCashEquivalentsAtCarryingValue\"}",
+          "seconds": 7.675165199965704,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OperatingLeaseLiabilityNoncurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OperatingLeaseLiabilityNoncurrent\"}",
+          "seconds": 6.532644600025378,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccruedLiabilitiesCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccruedLiabilitiesCurrent\"}",
+          "seconds": 6.372136900026817,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:Goodwill"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:Goodwill\"}",
+          "seconds": 5.148199099989142,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OtherAssetsCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OtherAssetsCurrent\"}",
+          "seconds": 5.395673400023952,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:IntangibleAssetsNetExcludingGoodwill"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:IntangibleAssetsNetExcludingGoodwill\"}",
+          "seconds": 6.546240399999078,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:OperatingLeaseRightOfUseAsset"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:OperatingLeaseRightOfUseAsset\"}",
+          "seconds": 6.750157099973876,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:Goodwill"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:Goodwill\"}",
+          "seconds": 5.043355299974792,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:PrepaidExpenseAndOtherAssetsCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:PrepaidExpenseAndOtherAssetsCurrent\"}",
+          "seconds": 6.482307399972342,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-896264",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:AccruedIncomeTaxesCurrent"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:AccruedIncomeTaxesCurrent\"}",
+          "seconds": 6.574223099974915,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:DeferredIncomeTaxAssetsNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:DeferredIncomeTaxAssetsNet\"}",
+          "seconds": 5.883023999980651,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1652535",
+          "expected": {
+            "cls": "fin",
+            "tag": "us-gaap:LongTermDebtCurrent"
+          },
+          "output": "{\"cls\":\"fin\",\"tag\":\"us-gaap:LongTermDebtCurrent\"}",
+          "seconds": 5.845591899997089,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "bs_line_classification",
+          "company_id": "cik-1289945",
+          "expected": {
+            "cls": "op",
+            "tag": "us-gaap:PropertyPlantAndEquipmentNet"
+          },
+          "output": "{\"cls\":\"op\",\"tag\":\"us-gaap:PropertyPlantAndEquipmentNet\"}",
+          "seconds": 5.85306120000314,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": null,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-61000000",
+          "expected": {
+            "value": -0.835,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-0.835,\"source_id\":\"S1\"}",
+          "seconds": 4.765707499987911,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "accrual_ratio",
+          "company_id": "hypothetical-v3-dev-61000001",
+          "expected": {
+            "value": -0.04,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-0.04,\"source_id\":\"S1\"}",
+          "seconds": 4.75550219998695,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-61000001",
+          "expected": {
+            "value": 610,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":610,\"source_id\":\"S1\"}",
+          "seconds": 4.353095799975563,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "balance_equation",
+          "company_id": "hypothetical-v3-dev-61000000",
+          "expected": {
+            "value": 541,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":541,\"source_id\":\"S1\"}",
+          "seconds": 4.394373400020413,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-61000002",
+          "expected": {
+            "value": 1.245,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":1.245,\"source_id\":\"S1\"}",
+          "seconds": 4.952655000030063,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "cash_conversion",
+          "company_id": "hypothetical-v3-dev-61000001",
+          "expected": {
+            "value": 1.7,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":1.7,\"source_id\":\"S1\"}",
+          "seconds": 4.432255200052168,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "1927958",
+          "expected": {
+            "value": 41012000.0,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":41012000.0,\"source_id\":\"S1\"}",
+          "seconds": 6.615704099996947,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "chart_data",
+          "company_id": "1927958",
+          "expected": {
+            "value": 45482758.0,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":45482758.0,\"source_id\":\"S1\"}",
+          "seconds": 6.586478899989743,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1927958",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 3.7417337999795564,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "evidence_abstention",
+          "company_id": "1927958",
+          "expected": {
+            "supported": false,
+            "source_id": "S1"
+          },
+          "output": "{\"supported\":false,\"source_id\":\"S1\"}",
+          "seconds": 3.7760886999894865,
+          "gpu": {
+            "temperature_c": 42.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1927958",
+          "expected": {
+            "value": -1994000,
+            "period_end": "2026-06-30",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-1994000,\"period_end\":\"2026-06-30\",\"source_id\":\"S1\"}",
+          "seconds": 9.849861000024248,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "field_extraction",
+          "company_id": "1927958",
+          "expected": {
+            "value": 1654000,
+            "period_end": "2026-06-30",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":1654000,\"period_end\":\"2026-06-30\",\"source_id\":\"S1\"}",
+          "seconds": 10.083032500057016,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1927958",
+          "expected": {
+            "form": "10-Q",
+            "period_end": "2026-06-30",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-Q\",\"period_end\":\"2026-06-30\",\"source_id\":\"S1\"}",
+          "seconds": 8.741883900016546,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "filing_route",
+          "company_id": "1927958",
+          "expected": {
+            "form": "10-K",
+            "period_end": "2025-12-31",
+            "source_id": "S1"
+          },
+          "output": "{\"form\":\"10-K\",\"period_end\":\"2025-12-31\",\"source_id\":\"S1\"}",
+          "seconds": 8.673199100012425,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-61000000",
+          "expected": {
+            "value": -57,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-57,\"source_id\":\"S1\"}",
+          "seconds": 3.990053399989847,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "free_cash_flow",
+          "company_id": "hypothetical-v3-dev-61000002",
+          "expected": {
+            "value": 117,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":117,\"source_id\":\"S1\"}",
+          "seconds": 4.1867864999803714,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1927958",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.7316446999902837,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "missing_field",
+          "company_id": "1927958",
+          "expected": {
+            "value": null,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"source_id\":\"S1\"}",
+          "seconds": 3.738287699990906,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-61000000",
+          "expected": {
+            "value": -425,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-425,\"source_id\":\"S1\"}",
+          "seconds": 4.240562200022396,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "negative_number",
+          "company_id": "hypothetical-v3-dev-61000001",
+          "expected": {
+            "value": -171,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-171,\"source_id\":\"S1\"}",
+          "seconds": 4.219359099981375,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "1927958",
+          "expected": {
+            "heading": "Revenue",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"Revenue\",\"source_id\":\"S1\"}",
+          "seconds": 3.7270214000018314,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "note_heading",
+          "company_id": "1927958",
+          "expected": {
+            "heading": "Revenue",
+            "source_id": "S1"
+          },
+          "output": "{\"heading\":\"Revenue\",\"source_id\":\"S1\"}",
+          "seconds": 3.6870022999937646,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-61000000",
+          "expected": {
+            "value": -0.394,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-0.394,\"source_id\":\"S1\"}",
+          "seconds": 4.844437399995513,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "operating_margin",
+          "company_id": "hypothetical-v3-dev-61000002",
+          "expected": {
+            "value": -1.1,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-1.1,\"source_id\":\"S1\"}",
+          "seconds": 4.487610999960452,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-61000001",
+          "expected": {
+            "value": 518,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":518,\"source_id\":\"S1\"}",
+          "seconds": 4.2563866000273265,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "percent_change",
+          "company_id": "hypothetical-v3-dev-61000002",
+          "expected": {
+            "value": 384,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":384,\"source_id\":\"S1\"}",
+          "seconds": 4.355557200033218,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-61000002",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.65694459999213,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "period_alignment",
+          "company_id": "hypothetical-v3-dev-61000000",
+          "expected": {
+            "value": null,
+            "reason": "period_mismatch",
+            "source_id": "S1"
+          },
+          "output": "{\"value\":null,\"reason\":\"period_mismatch\",\"source_id\":\"S1\"}",
+          "seconds": 5.759121100010816,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": null,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-61000001",
+          "expected": {
+            "value": -185,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-185,\"source_id\":\"S1\"}",
+          "seconds": 4.553486800054088,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "quarter_from_ytd",
+          "company_id": "hypothetical-v3-dev-61000002",
+          "expected": {
+            "value": -534,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-534,\"source_id\":\"S1\"}",
+          "seconds": 4.327383900003042,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-61000000",
+          "expected": {
+            "value": 778,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":778,\"source_id\":\"S1\"}",
+          "seconds": 4.38933580002049,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "reserve_calculation",
+          "company_id": "hypothetical-v3-dev-61000001",
+          "expected": {
+            "value": 780,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":770,\"source_id\":\"S1\"}",
+          "seconds": 4.321499899961054,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": false,
+          "source_id_correct": true,
+          "numeric_correct": false,
+          "correct": false
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-61000001",
+          "expected": {
+            "value": -39,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-39,\"source_id\":\"S1\"}",
+          "seconds": 4.143373400031123,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "total_accruals",
+          "company_id": "hypothetical-v3-dev-61000000",
+          "expected": {
+            "value": -351,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":-351,\"source_id\":\"S1\"}",
+          "seconds": 4.282874699973036,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-61000001",
+          "expected": {
+            "value": 614000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":614000,\"source_id\":\"S1\"}",
+          "seconds": 5.138808099960443,
+          "gpu": {
+            "temperature_c": 41.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        },
+        {
+          "task": "unit_conversion",
+          "company_id": "hypothetical-v3-dev-61000002",
+          "expected": {
+            "value": 706000,
+            "source_id": "S1"
+          },
+          "output": "{\"value\":706000,\"source_id\":\"S1\"}",
+          "seconds": 5.224470000015572,
+          "gpu": {
+            "temperature_c": 40.0,
+            "used_mib": 2903.0,
+            "total_mib": 6144.0
+          },
+          "valid_json": true,
+          "content_correct": true,
+          "source_id_correct": true,
+          "numeric_correct": true,
+          "correct": true
+        }
+      ],
+      "tasks": {
+        "revision_reason": {
+          "correct": 2,
+          "total": 2
+        },
+        "bs_line_classification": {
+          "correct": 40,
+          "total": 40
+        },
+        "accrual_ratio": {
+          "correct": 2,
+          "total": 2
+        },
+        "balance_equation": {
+          "correct": 2,
+          "total": 2
+        },
+        "cash_conversion": {
+          "correct": 2,
+          "total": 2
+        },
+        "chart_data": {
+          "correct": 2,
+          "total": 2
+        },
+        "evidence_abstention": {
+          "correct": 2,
+          "total": 2
+        },
+        "field_extraction": {
+          "correct": 2,
+          "total": 2
+        },
+        "filing_route": {
+          "correct": 2,
+          "total": 2
+        },
+        "free_cash_flow": {
+          "correct": 2,
+          "total": 2
+        },
+        "missing_field": {
+          "correct": 2,
+          "total": 2
+        },
+        "negative_number": {
+          "correct": 2,
+          "total": 2
+        },
+        "note_heading": {
+          "correct": 2,
+          "total": 2
+        },
+        "operating_margin": {
+          "correct": 2,
+          "total": 2
+        },
+        "percent_change": {
+          "correct": 2,
+          "total": 2
+        },
+        "period_alignment": {
+          "correct": 2,
+          "total": 2
+        },
+        "quarter_from_ytd": {
+          "correct": 2,
+          "total": 2
+        },
+        "reserve_calculation": {
+          "correct": 1,
+          "total": 2
+        },
+        "total_accruals": {
+          "correct": 2,
+          "total": 2
+        },
+        "unit_conversion": {
+          "correct": 2,
+          "total": 2
+        }
+      },
+      "macro_accuracy": 0.975,
+      "joint_correct": 77,
+      "questions": 78,
+      "valid_json": 78,
+      "content_correct": 77,
+      "source_correct": 38,
+      "source_eligible": 38,
+      "numeric_correct": 25,
+      "numeric_eligible": 26,
+      "regression_correct": 0,
+      "regression_total": 0,
+      "latency_p50_s": 5.761813250021078,
+      "max_temperature_c": 42.0
+    }
+  },
+  "status": "completed",
+  "ended_utc": "2026-10-19T07:43:42.460235+00:00",
+  "memory": {
+    "cuda_available": true,
+    "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+    "allocated_mib": 2561.03271484375,
+    "reserved_mib": 2792.0,
+    "peak_allocated_mib": 2707.07177734375,
+    "peak_reserved_mib": 2792.0,
+    "free_mib": 2332.0,
+    "total_mib": 6143.5
+  }
+}

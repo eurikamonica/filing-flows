@@ -1,0 +1,111 @@
+{
+  "author": "Created by ChatGPT (OpenAI)",
+  "status": "paused",
+  "config": {
+    "data": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data\\open\\trainer-input.jsonl",
+    "out": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\outputs\\smoke",
+    "model": "Qwen/Qwen3-4B",
+    "epochs": 1,
+    "max_length": 512,
+    "max_steps": 20,
+    "gradient_accumulation_steps": 4,
+    "gradient_checkpointing": true,
+    "qlora": true,
+    "batch_size": 1,
+    "learning_rate": 2e-05,
+    "lora_rank": 8,
+    "target_modules": "qv",
+    "eval_steps": 100,
+    "save_steps": 0,
+    "logging_steps": 5,
+    "validation_limit": 6,
+    "resume_from_checkpoint": null,
+    "init_adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\qwen4",
+    "deadline_utc": "2026-10-16T18:19:02.794997+00:00",
+    "stop_file": null,
+    "temperature_limit": 86.0,
+    "min_free_gib": 16.0,
+    "compute_dtype": "bfloat16",
+    "pause_at_step": 10
+  },
+  "dataset_sha256": "30cabd3fc025affb3af5c2b47fbf88c39f76b0f609ec7d0fee91654a6f16d2b6",
+  "environment": {
+    "torch": "2.11.0+cu128",
+    "cuda_runtime": "12.8"
+  },
+  "initial_adapter_sha256": "bb4a35f8f8b570a025a7795a7b51d51129ee90069ce15e1ec75eb2d84ee9ffb6",
+  "initial_best_checkpoint": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-qwen4-cycle-001\\checkpoint-300",
+  "continuation": "Adapter warm-start; fresh optimizer and learning-rate schedule",
+  "base_revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+  "trainable_parameters": 2949120,
+  "total_parameters": 4025417216,
+  "split_rows": {
+    "train": 623,
+    "validation": 6
+  },
+  "useful_tokens_per_training_epoch": 163016,
+  "supervised_tokens_per_training_epoch": 52539,
+  "resumed_global_step": 0,
+  "consumed_nonpadding_tokens": 10074,
+  "consumed_supervised_tokens": 3354,
+  "active_optimizer_seconds": 69.01553659999627,
+  "process_rss_mib": 1772.0078125,
+  "useful_nonpadding_tokens_per_second": 145.96713285571332,
+  "stop_reason": "resume_verification",
+  "log_history": [
+    {
+      "loss": 0.1715,
+      "grad_norm": 5.831732749938965,
+      "learning_rate": 1.6842105263157896e-05,
+      "epoch": 0.03210272873194221,
+      "step": 5
+    },
+    {
+      "loss": 0.1535,
+      "grad_norm": 1.8033456802368164,
+      "learning_rate": 1.1578947368421053e-05,
+      "epoch": 0.06420545746388442,
+      "step": 10
+    },
+    {
+      "eval_loss": 0.19703322649002075,
+      "eval_runtime": 2.7617,
+      "eval_samples_per_second": 2.173,
+      "eval_steps_per_second": 2.173,
+      "epoch": 0.06420545746388442,
+      "step": 10
+    },
+    {
+      "train_runtime": 73.2905,
+      "train_samples_per_second": 1.092,
+      "train_steps_per_second": 0.273,
+      "total_flos": 219802252068864.0,
+      "train_loss": 0.16249170303344726,
+      "epoch": 0.06420545746388442,
+      "step": 10
+    }
+  ],
+  "best_checkpoint": null,
+  "best_validation_loss": 0.19703322649002075,
+  "global_step": 10,
+  "metrics": {
+    "train_runtime": 73.2905,
+    "train_samples_per_second": 1.092,
+    "train_steps_per_second": 0.273,
+    "total_flos": 219802252068864.0,
+    "train_loss": 0.16249170303344726,
+    "epoch": 0.06420545746388442
+  },
+  "training": "QLoRA SFT",
+  "warning": "Synthetic pipeline smoke test only; no claim of financial accuracy or improvement.",
+  "memory": {
+    "cuda_available": true,
+    "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+    "allocated_mib": 3334.13623046875,
+    "reserved_mib": 5064.0,
+    "peak_allocated_mib": 4798.10888671875,
+    "peak_reserved_mib": 5064.0,
+    "free_mib": 52.0,
+    "total_mib": 6143.5
+  }
+}

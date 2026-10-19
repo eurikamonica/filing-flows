@@ -1,0 +1,657 @@
+{
+  "smol17": {
+    "original": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-smol17-cycle-002",
+    "archive": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\smol17",
+    "revision": "31b70e2e869a7173562077fd711b654946d38674",
+    "adapter_only_archive": true,
+    "archive_full_resume": false,
+    "original_resume_inventory": [
+      {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-smol17-cycle-002\\checkpoint-200",
+        "state_files": {
+          "optimizer.pt": true,
+          "scheduler.pt": true,
+          "rng_state.pth": true,
+          "trainer_state.json": true
+        }
+      },
+      {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-smol17-cycle-002\\checkpoint-300",
+        "state_files": {
+          "optimizer.pt": true,
+          "scheduler.pt": true,
+          "rng_state.pth": true,
+          "trainer_state.json": true
+        }
+      }
+    ],
+    "hashes": {
+      "adapter_config.json": "b087fc065ee45e7dde89102bd1a4d6948885603271125bcbe5816b4cdc1596d2",
+      "adapter_model.safetensors": "5f076c4f3275e7b3c62b718a3858eb3ffe56f0660da9e079624f9f1050785afd",
+      "chat_template.jinja": "d1c0ce73f56a3eb57c157fec6019c9a9812d60f6d67078a0f375e0d90a7dddaf",
+      "fsa_manifest.json": "6dac8425a076305b63971650b02410c2da751f265fa4d3a00e74876f370b1f6f",
+      "memory.jsonl": "6861acb9040529590cf9db878ec84f2e18381013509870a0f35996af093654ef",
+      "merges.txt": "0b54e8aa4e53d5383e2e4bc635a56b43f9647f7b13832d5d9ecd8f82dac4f510",
+      "progress.json": "28344199892f3fc1d775c0c0236787e33ae1f4d42d5b1e731fdaf800de527e75",
+      "README.md": "a5b8ff3129ed4e6c111ed9768a6499b4eef11116fecdb97aac7e981377390a42",
+      "special_tokens_map.json": "68d920624c05998fa87a133555aff625768fc69f1b41baf0592f8d09b60896b3",
+      "tokenizer.json": "7d27c493c729a66ecefc837280b05d948b1ed50d130eebdbf911b1b36cf38ed7",
+      "tokenizer_config.json": "2cc400b5016d790d4123eb95d6cf5af17a9c1fa874564414f2eb034b0b4c6969",
+      "vocab.json": "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79",
+      "smol17-baseline-validation.json": "85264f2d79c0674735ca59542449317ec7769e1307ccde7c7c43f00a1c67c590",
+      "smol17-champion-test.json": "16e166bb69dbbf878b3b59e2c6473f6315980aae8d24d6cc1d46a4ef22fb467e",
+      "smol17-cycle-000-validation.json": "0986e2258e9114a873aaaa0c92d9a61b190db4d665eb1ea08eea5cf095e5c689",
+      "smol17-cycle-001-validation.json": "c53c73f09a165e97b93b96310ddedf6fdd8cf3e3149ebf28e039dd09e17cc3aa",
+      "smol17-cycle-002-validation.json": "73a64905bcd39eb7467fd0456fe0b537a9f84b956895aec0ac5b639bf9908ecf",
+      "smol17-cycle-003-validation.json": "20f46000a64c7e90dac32ef50ecddad209c2fe77166e8b1cea4e9913551198d6"
+    },
+    "model_state": {
+      "id": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "status": "cycle_completed",
+      "cycles": 4,
+      "failures": 0,
+      "ready": true,
+      "preflight_memory": {
+        "cuda_available": true,
+        "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+        "allocated_mib": 1400.33740234375,
+        "reserved_mib": 2074.0,
+        "peak_allocated_mib": 1935.228515625,
+        "peak_reserved_mib": 2074.0,
+        "free_mib": 3042.0,
+        "total_mib": 6143.5
+      },
+      "baseline_score": 0.013888888888888888,
+      "best_score": 0.5694444444444444,
+      "best_adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-smol17-cycle-002",
+      "best_tasks": {
+        "Compute free cash flow.": {
+          "rows": 8,
+          "correct": 7,
+          "accuracy": 0.875
+        },
+        "Compute the annual accrual ratio.": {
+          "rows": 8,
+          "correct": 1,
+          "accuracy": 0.125
+        },
+        "Compute the closing reserve; no other movements.": {
+          "rows": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "Compute total accruals.": {
+          "rows": 8,
+          "correct": 6,
+          "accuracy": 0.75
+        },
+        "chart_data": {
+          "rows": 8,
+          "correct": 7,
+          "accuracy": 0.875
+        },
+        "field_extraction": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "filing_type": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "missing_data": {
+          "rows": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "note_provenance": {
+          "rows": 8,
+          "correct": 4,
+          "accuracy": 0.5
+        }
+      },
+      "test_score": 0.6018518518518519,
+      "test_tasks": {
+        "Compute free cash flow.": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        },
+        "Compute the annual accrual ratio.": {
+          "rows": 12,
+          "correct": 3,
+          "accuracy": 0.25
+        },
+        "Compute the closing reserve; no other movements.": {
+          "rows": 12,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "Compute total accruals.": {
+          "rows": 12,
+          "correct": 10,
+          "accuracy": 0.8333333333333334
+        },
+        "chart_data": {
+          "rows": 12,
+          "correct": 9,
+          "accuracy": 0.75
+        },
+        "field_extraction": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        },
+        "filing_type": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        },
+        "missing_data": {
+          "rows": 12,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "note_provenance": {
+          "rows": 12,
+          "correct": 7,
+          "accuracy": 0.5833333333333334
+        }
+      }
+    }
+  },
+  "math15": {
+    "original": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-math15-cycle-000",
+    "archive": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\math15",
+    "revision": "aafeb0fc6f22cbf0eaeed126eff8be45b0360a35",
+    "adapter_only_archive": true,
+    "archive_full_resume": false,
+    "original_resume_inventory": [
+      {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-math15-cycle-000\\checkpoint-200",
+        "state_files": {
+          "optimizer.pt": true,
+          "scheduler.pt": true,
+          "rng_state.pth": true,
+          "trainer_state.json": true
+        }
+      },
+      {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-math15-cycle-000\\checkpoint-300",
+        "state_files": {
+          "optimizer.pt": true,
+          "scheduler.pt": true,
+          "rng_state.pth": true,
+          "trainer_state.json": true
+        }
+      }
+    ],
+    "hashes": {
+      "adapter_config.json": "5252c59d9bf90c2a68994a9ab36d00b80d2ef5240ff223f804aa8b6b9dc4ae8d",
+      "adapter_model.safetensors": "b58437ee9e63a455ff08ada40c30cc22d581034f78ed1a4ca1ec1cd173386d8a",
+      "added_tokens.json": "f0acedf99e19ec0a5b797ffbd0b94328172ccd90f7f385bbc521cda2701b03ab",
+      "chat_template.jinja": "7935aff82beeafc8bbc090e8d5a970b3a234838500cb7bd5f8c1ba98f6ee4e0a",
+      "fsa_manifest.json": "e1c8f8621aaf0fdaa4a9e99ad34bb3aace98afad0d17749b0ed309f101ae78c9",
+      "memory.jsonl": "4007b824b185eec5ac51d69252a5cf3abf6d7f5bbb8313b034ef3c6f6f416c48",
+      "merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "progress.json": "48ed93d00c3715a655794bfd998b6951fb6fb4e87cb1ef4e8a9e30944ac0f2b8",
+      "README.md": "7069d44598b287b827b737a39ebff896477ea1e9656f441dfdabc3854fb5529d",
+      "special_tokens_map.json": "57255613bbe23c9497211ca68561ff429a51e871dbaf5a59998fa4c8f7fe168a",
+      "tokenizer.json": "9c5ae00e602b8860cbd784ba82a8aa14e8feecec692e7076590d014d7b7fdafa",
+      "tokenizer_config.json": "5fd4cea2574beb6b70ba31582179880d331b723f5b5119ee67c29d45b983f7be",
+      "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "math15-baseline-validation.json": "87122e413514716a5bd5282ab636a436b20eb2202f62b0144f0b8619c2943625",
+      "math15-champion-test.json": "3829334cc84d97a6df7f4957a42876cb01737701672b81eeea980e4375083629",
+      "math15-cycle-000-validation.json": "91973948cd280b6cfbbe4cacdabc94b0ffc8ca02b0a59fa3cdf12b3e7acf0ece"
+    },
+    "model_state": {
+      "id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+      "status": "training_incomplete",
+      "cycles": 1,
+      "failures": 2,
+      "ready": true,
+      "preflight_memory": {
+        "cuda_available": true,
+        "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+        "allocated_mib": 1776.47021484375,
+        "reserved_mib": 2766.0,
+        "peak_allocated_mib": 2589.962890625,
+        "peak_reserved_mib": 2766.0,
+        "free_mib": 2350.0,
+        "total_mib": 6143.5
+      },
+      "baseline_score": 0.0,
+      "best_score": 0.875,
+      "best_adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-math15-cycle-000",
+      "best_tasks": {
+        "Compute free cash flow.": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "Compute the annual accrual ratio.": {
+          "rows": 8,
+          "correct": 4,
+          "accuracy": 0.5
+        },
+        "Compute the closing reserve; no other movements.": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "Compute total accruals.": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        }
+      },
+      "test_score": 0.8125,
+      "test_tasks": {
+        "Compute free cash flow.": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        },
+        "Compute the annual accrual ratio.": {
+          "rows": 12,
+          "correct": 6,
+          "accuracy": 0.5
+        },
+        "Compute the closing reserve; no other movements.": {
+          "rows": 12,
+          "correct": 9,
+          "accuracy": 0.75
+        },
+        "Compute total accruals.": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        }
+      }
+    }
+  },
+  "qwen4": {
+    "original": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-qwen4-cycle-001",
+    "archive": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\qwen4",
+    "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+    "adapter_only_archive": true,
+    "archive_full_resume": false,
+    "original_resume_inventory": [
+      {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-qwen4-cycle-001\\checkpoint-200",
+        "state_files": {
+          "optimizer.pt": true,
+          "scheduler.pt": true,
+          "rng_state.pth": true,
+          "trainer_state.json": true
+        }
+      },
+      {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-qwen4-cycle-001\\checkpoint-300",
+        "state_files": {
+          "optimizer.pt": true,
+          "scheduler.pt": true,
+          "rng_state.pth": true,
+          "trainer_state.json": true
+        }
+      }
+    ],
+    "hashes": {
+      "adapter_config.json": "69c30d390a254c60ae15cc9ee666c5580302586f12249025fb73b36532a330d8",
+      "adapter_model.safetensors": "bb4a35f8f8b570a025a7795a7b51d51129ee90069ce15e1ec75eb2d84ee9ffb6",
+      "added_tokens.json": "79f6ec6fcc423d3a82bfac8b9033b1daac7b7bce06a5f5f441637b480cc605de",
+      "chat_template.jinja": "51fa65c79bb57f058dc7ef8734884bd325fe9d45bb03a61bfef59785d3bc2da9",
+      "fsa_manifest.json": "9aedde009959ad9db7f4abcd7753993d6d6e94744a703cfffe51dc9cdd0eeab8",
+      "memory.jsonl": "b39962886d038fd08fed1e704467b7d40c9f76f8c13f61ffce71e3a693d5751d",
+      "merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "progress.json": "6f091b9b9a783490156a5ebe9488b56f0b59da4b69038e43b4359a3a5a192205",
+      "README.md": "78c5b12e237a5ecd90ace7b4be1ae0f0a5eb93af0cbf15619e27abef9cfc8ce2",
+      "special_tokens_map.json": "57255613bbe23c9497211ca68561ff429a51e871dbaf5a59998fa4c8f7fe168a",
+      "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "tokenizer_config.json": "b2a0d89cf5c89d5d844c56d82e9c3731f862d720a6ce221c31955b628960cde7",
+      "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "qwen4-baseline-validation.json": "22ed1bb1d8c9e4195059ab3ddb1b2059ac917b6bc9e4fec5b6dfa1a91a635bca",
+      "qwen4-champion-test.json": "2fd51d08d6c3c5840e4de3a12b701af72cbfe7352e006d353eb43799e1801d06",
+      "qwen4-cycle-000-validation.json": "e21821614a2348c85669b8de127b3898f3ea1835f52ab4f07223917650caf212",
+      "qwen4-cycle-001-validation.json": "ab210f5460c56d08aaab068c1d4c6c6fe59d66bf1ce531eb0fa4337ac6c9e414"
+    },
+    "model_state": {
+      "id": "Qwen/Qwen3-4B",
+      "status": "training_incomplete",
+      "cycles": 2,
+      "failures": 1,
+      "ready": true,
+      "preflight_memory": {
+        "cuda_available": true,
+        "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+        "allocated_mib": 3334.13623046875,
+        "reserved_mib": 4538.0,
+        "peak_allocated_mib": 4347.45654296875,
+        "peak_reserved_mib": 4538.0,
+        "free_mib": 578.0,
+        "total_mib": 6143.5
+      },
+      "baseline_score": 0.0,
+      "best_score": 0.9722222222222222,
+      "best_adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-qwen4-cycle-001",
+      "best_tasks": {
+        "Compute free cash flow.": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "Compute the annual accrual ratio.": {
+          "rows": 8,
+          "correct": 6,
+          "accuracy": 0.75
+        },
+        "Compute the closing reserve; no other movements.": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "Compute total accruals.": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "chart_data": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "field_extraction": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "filing_type": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "missing_data": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "note_provenance": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        }
+      },
+      "test_score": 0.925925925925926,
+      "test_tasks": {
+        "Compute free cash flow.": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        },
+        "Compute the annual accrual ratio.": {
+          "rows": 12,
+          "correct": 8,
+          "accuracy": 0.6666666666666666
+        },
+        "Compute the closing reserve; no other movements.": {
+          "rows": 12,
+          "correct": 10,
+          "accuracy": 0.8333333333333334
+        },
+        "Compute total accruals.": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        },
+        "chart_data": {
+          "rows": 12,
+          "correct": 10,
+          "accuracy": 0.8333333333333334
+        },
+        "field_extraction": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        },
+        "filing_type": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        },
+        "missing_data": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        },
+        "note_provenance": {
+          "rows": 12,
+          "correct": 12,
+          "accuracy": 1.0
+        }
+      }
+    }
+  },
+  "qwen17": {
+    "original": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-qwen17-cycle-000",
+    "archive": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\qwen17",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "adapter_only_archive": true,
+    "archive_full_resume": false,
+    "original_resume_inventory": [
+      {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-qwen17-cycle-000\\checkpoint-200",
+        "state_files": {
+          "optimizer.pt": true,
+          "scheduler.pt": true,
+          "rng_state.pth": true,
+          "trainer_state.json": true
+        }
+      },
+      {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-qwen17-cycle-000\\checkpoint-300",
+        "state_files": {
+          "optimizer.pt": true,
+          "scheduler.pt": true,
+          "rng_state.pth": true,
+          "trainer_state.json": true
+        }
+      }
+    ],
+    "hashes": {
+      "adapter_config.json": "2a5ae0432ca43f718a80258ca96e83657d9f3df98ce8038dc1d38db99d9b891a",
+      "adapter_model.safetensors": "401e6a387703367f547a226f2112ebee4d6a76835433cb8049680aec528bfa16",
+      "added_tokens.json": "79f6ec6fcc423d3a82bfac8b9033b1daac7b7bce06a5f5f441637b480cc605de",
+      "chat_template.jinja": "51fa65c79bb57f058dc7ef8734884bd325fe9d45bb03a61bfef59785d3bc2da9",
+      "fsa_manifest.json": "48f83968ba095803fcf995bad2d2e4acdab9fb0625f6225cbd101da8c015232e",
+      "memory.jsonl": "ca9c21933eb12903b6632980fb745baf919d8555e7ebbc7770a472ac00d2a900",
+      "merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "progress.json": "f208c6f7095344355e38f8c037e21e2a4a734ceacda38a469a5085bdc301cd96",
+      "README.md": "f0ecd5c3f90892696f21a28130c6404f4b31ff547fb34846cde578f73f959f4e",
+      "special_tokens_map.json": "57255613bbe23c9497211ca68561ff429a51e871dbaf5a59998fa4c8f7fe168a",
+      "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "tokenizer_config.json": "b2a0d89cf5c89d5d844c56d82e9c3731f862d720a6ce221c31955b628960cde7",
+      "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "qwen17-baseline-validation.json": "cae1f089fa6b74556804aec0e3801a8a5919833f2f5180fdf4cd7cced72e293e",
+      "qwen17-champion-test.json": "f323a662f529906cd0f5a501202ee3715a01ef9732e8b1facd3c0fbfcd8e7062",
+      "qwen17-cycle-000-validation.json": "2815c072363f1b4d85b5c10f7eb79c08c669a8e18602cc76d59518f0e6efafe7"
+    },
+    "model_state": {
+      "id": "Qwen/Qwen3-1.7B",
+      "status": "training_incomplete",
+      "cycles": 1,
+      "failures": 2,
+      "ready": true,
+      "preflight_memory": {
+        "cuda_available": true,
+        "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+        "allocated_mib": 2097.93505859375,
+        "reserved_mib": 3588.0,
+        "peak_allocated_mib": 3374.00732421875,
+        "peak_reserved_mib": 3588.0,
+        "free_mib": 1528.0,
+        "total_mib": 6143.5
+      },
+      "baseline_score": 0.3055555555555556,
+      "best_score": 0.8194444444444444,
+      "best_adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-qwen17-cycle-000",
+      "best_tasks": {
+        "Compute free cash flow.": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "Compute the annual accrual ratio.": {
+          "rows": 8,
+          "correct": 2,
+          "accuracy": 0.25
+        },
+        "Compute the closing reserve; no other movements.": {
+          "rows": 8,
+          "correct": 6,
+          "accuracy": 0.75
+        },
+        "Compute total accruals.": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "chart_data": {
+          "rows": 8,
+          "correct": 7,
+          "accuracy": 0.875
+        },
+        "field_extraction": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "filing_type": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "missing_data": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "note_provenance": {
+          "rows": 8,
+          "correct": 4,
+          "accuracy": 0.5
+        }
+      }
+    }
+  },
+  "qwen06": {
+    "original": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\qwen06-extended-600-b4",
+    "archive": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\qwen06",
+    "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "adapter_only_archive": true,
+    "archive_full_resume": false,
+    "original_resume_inventory": [
+      {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\qwen06-extended-600-b4\\checkpoint-500",
+        "state_files": {
+          "optimizer.pt": true,
+          "scheduler.pt": true,
+          "rng_state.pth": true,
+          "trainer_state.json": true
+        }
+      },
+      {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\qwen06-extended-600-b4\\checkpoint-600",
+        "state_files": {
+          "optimizer.pt": true,
+          "scheduler.pt": true,
+          "rng_state.pth": true,
+          "trainer_state.json": true
+        }
+      }
+    ],
+    "hashes": {
+      "adapter_config.json": "e5a36bbd2e61258569b1166cf8402b0fdab6e4a2a8cef7c8b42acf03d9d6fd06",
+      "adapter_model.safetensors": "e7ac34a0f41391e1dbc03e95960b81cbd05a3404cc33a28516b488b19160b874",
+      "added_tokens.json": "79f6ec6fcc423d3a82bfac8b9033b1daac7b7bce06a5f5f441637b480cc605de",
+      "chat_template.jinja": "51fa65c79bb57f058dc7ef8734884bd325fe9d45bb03a61bfef59785d3bc2da9",
+      "fsa_manifest.json": "1c72c34e16a76a9c763949828896adf2b9e44a77c52c1194a9ba803fd2f21a07",
+      "memory.jsonl": "020b3a828204e43ae5d9c231aee583425c4cec497882499de03e2ddceaf50592",
+      "merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+      "progress.json": "237281d85ce9004cd75eab95c160c015f3a5cab3d997113c393b0718751e0e82",
+      "README.md": "2a917ade413b84233f7dd87b3be2d9aff5141ea681a70536148313f9efb09381",
+      "special_tokens_map.json": "57255613bbe23c9497211ca68561ff429a51e871dbaf5a59998fa4c8f7fe168a",
+      "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "tokenizer_config.json": "b2a0d89cf5c89d5d844c56d82e9c3731f862d720a6ce221c31955b628960cde7",
+      "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+      "qwen06-baseline-validation.json": "191acc41c3cf305257a1d5bf340353eead31699ac7f20c3a75b0186c4929a02a"
+    },
+    "model_state": {
+      "id": "Qwen/Qwen3-0.6B",
+      "status": "training_incomplete",
+      "cycles": 0,
+      "failures": 2,
+      "ready": true,
+      "preflight_memory": {
+        "cuda_available": true,
+        "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+        "allocated_mib": 943.08349609375,
+        "reserved_mib": 2866.0,
+        "peak_allocated_mib": 1860.12548828125,
+        "peak_reserved_mib": 2866.0,
+        "free_mib": 2250.0,
+        "total_mib": 6143.5
+      },
+      "baseline_score": 0.20833333333333334,
+      "best_score": 0.20833333333333334,
+      "best_adapter": "adapters/qwen06-extended-600-b4",
+      "best_tasks": {
+        "Compute free cash flow.": {
+          "rows": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "Compute the annual accrual ratio.": {
+          "rows": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "Compute the closing reserve; no other movements.": {
+          "rows": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "Compute total accruals.": {
+          "rows": 8,
+          "correct": 7,
+          "accuracy": 0.875
+        },
+        "chart_data": {
+          "rows": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "field_extraction": {
+          "rows": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "filing_type": {
+          "rows": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "missing_data": {
+          "rows": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        },
+        "note_provenance": {
+          "rows": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      }
+    }
+  }
+}

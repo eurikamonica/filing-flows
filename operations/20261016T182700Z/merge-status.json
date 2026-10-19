@@ -1,0 +1,20 @@
+{
+  "author": "Created by ChatGPT (OpenAI)",
+  "status": "failed",
+  "base_revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+  "adapter_sha256": "bb4a35f8f8b570a025a7795a7b51d51129ee90069ce15e1ec75eb2d84ee9ffb6",
+  "tokenizer_checks": {
+    "vocabulary_equal": true,
+    "special_ids_equal": true,
+    "rendered_template_equal": true,
+    "max_id_within_embedding": true
+  },
+  "ram_required_gib": 13.206033371388912,
+  "precision": "CPU BF16; no quantization/offload",
+  "thresholds": {
+    "max_logit_abs_error": 0.125,
+    "exact_greedy_outputs": true
+  },
+  "scope": "Same-base 4B export packaging; no parameter growth; not full production acceptance",
+  "error": "NotImplementedError('Cannot copy out of meta tensor; no data!')"
+}

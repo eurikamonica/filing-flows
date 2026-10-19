@@ -1,0 +1,205 @@
+{
+  "author": "Created by ChatGPT (OpenAI)",
+  "version": "basic-finance-v3",
+  "splits": {
+    "train": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\corpus-v3-20261016T230644Z\\train.jsonl",
+      "sha256": "8a20df77d27af41cc830783c2fda1ce660d49d1a7bb054d5fa93a69d1d517851",
+      "rows": 3600,
+      "companies": [
+        "1693577",
+        "1016504",
+        "1755101",
+        "1550913",
+        "1171155",
+        "912093",
+        "1024305",
+        "1039065",
+        "1956744",
+        "1940243",
+        "1754301",
+        "911216",
+        "1327567",
+        "2079546",
+        "912767",
+        "96271",
+        "1621434",
+        "1830033",
+        "1490281",
+        "1847367",
+        "1716947",
+        "1130464",
+        "1805833",
+        "1636422",
+        "1835830",
+        "354950",
+        "1095565",
+        "1757073",
+        "1297989",
+        "1144215",
+        "1040971",
+        "1730430",
+        "1500217",
+        "1722482",
+        "1121788",
+        "889331",
+        "917273",
+        "1442145",
+        "1047127",
+        "945841",
+        "879169",
+        "1287865"
+      ],
+      "tasks": {
+        "operating_margin": 180,
+        "percent_change": 180,
+        "negative_number": 180,
+        "unit_conversion": 180,
+        "note_heading": 180,
+        "period_alignment": 180,
+        "accrual_ratio": 180,
+        "free_cash_flow": 180,
+        "evidence_abstention": 180,
+        "quarter_from_ytd": 180,
+        "reserve_movement": 180,
+        "basic_instruction": 180,
+        "reserve_calculation": 180,
+        "filing_route": 180,
+        "balance_equation": 180,
+        "cash_conversion": 180,
+        "chart_data": 180,
+        "field_extraction": 180,
+        "missing_field": 180,
+        "total_accruals": 180
+      },
+      "label_kinds": {
+        "hypothetical": 2520,
+        "observed_website_literal": 720,
+        "derived_rule": 360
+      },
+      "documents": 2720,
+      "forms": {
+        "10-K": 451,
+        "10-Q": 398,
+        "string": 180,
+        "8-K": 51
+      }
+    },
+    "dev": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\corpus-v3-20261016T230644Z\\dev.jsonl",
+      "sha256": "4d44f51d8ed032bb8b6e7fdbe7dad2a7a896e39f7fc9e918d546ac71f4fdc7df",
+      "rows": 160,
+      "companies": [
+        "1800637",
+        "2074652",
+        "1158780",
+        "759944",
+        "1999261",
+        "1579298",
+        "931015",
+        "1289848",
+        "1413447"
+      ],
+      "tasks": {
+        "cash_conversion": 8,
+        "field_extraction": 8,
+        "missing_field": 8,
+        "accrual_ratio": 8,
+        "note_heading": 8,
+        "total_accruals": 8,
+        "period_alignment": 8,
+        "operating_margin": 8,
+        "balance_equation": 8,
+        "quarter_from_ytd": 8,
+        "filing_route": 8,
+        "percent_change": 8,
+        "reserve_movement": 8,
+        "chart_data": 8,
+        "evidence_abstention": 8,
+        "basic_instruction": 8,
+        "unit_conversion": 8,
+        "free_cash_flow": 8,
+        "negative_number": 8,
+        "reserve_calculation": 8
+      },
+      "label_kinds": {
+        "hypothetical": 112,
+        "observed_website_literal": 32,
+        "derived_rule": 16
+      },
+      "documents": 145,
+      "forms": {
+        "string": 8
+      }
+    },
+    "sealed_test": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\corpus-v3-20261016T230644Z\\sealed\\test.jsonl",
+      "sha256": "c7228b06d868ec4c62bf69b174acaac6972a1150fd52b5469dd698a380719206",
+      "rows": 160,
+      "companies": [
+        "1894562",
+        "849146",
+        "56701",
+        "879407",
+        "785956",
+        "1559432",
+        "1834622",
+        "1604778",
+        "1616862"
+      ],
+      "tasks": {
+        "cash_conversion": 8,
+        "field_extraction": 8,
+        "missing_field": 8,
+        "accrual_ratio": 8,
+        "note_heading": 8,
+        "total_accruals": 8,
+        "period_alignment": 8,
+        "operating_margin": 8,
+        "balance_equation": 8,
+        "quarter_from_ytd": 8,
+        "filing_route": 8,
+        "percent_change": 8,
+        "reserve_movement": 8,
+        "chart_data": 8,
+        "evidence_abstention": 8,
+        "basic_instruction": 8,
+        "unit_conversion": 8,
+        "free_cash_flow": 8,
+        "negative_number": 8,
+        "reserve_calculation": 8
+      },
+      "label_kinds": {
+        "hypothetical": 112,
+        "observed_website_literal": 32,
+        "derived_rule": 16
+      },
+      "documents": 142,
+      "forms": {
+        "string": 8
+      }
+    }
+  },
+  "contamination_checks": {
+    "train:dev": {
+      "company_id": 0,
+      "document_id": 0,
+      "input": 0
+    },
+    "train:sealed_test": {
+      "company_id": 0,
+      "document_id": 0,
+      "input": 0
+    },
+    "dev:sealed_test": {
+      "company_id": 0,
+      "document_id": 0,
+      "input": 0
+    }
+  },
+  "sealed_test_evaluated": false,
+  "prior_v2_sealed_test_untouched": true,
+  "template_limit": "Shared financial task/formula semantics; rendering families and entities differ by split. Not a held-out formula-family claim.",
+  "source_download_bytes": 13389058,
+  "source_files": 60
+}

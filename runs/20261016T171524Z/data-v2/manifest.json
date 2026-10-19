@@ -1,0 +1,130 @@
+{
+  "author": "Created by ChatGPT (OpenAI)",
+  "purpose": "Prospective corrected data; NOT used in the completed v1 GPU experiment",
+  "v1_preserved": true,
+  "sealed_test_opened_for_evaluation": false,
+  "added_8k_sources": [
+    {
+      "cik": "1381197",
+      "split": "train",
+      "url": "https://filing-flows.com/data/c/1381197.json",
+      "sha256": "269ee3dfdcd48d1a23626cf600595c52c6f4974eeeaa06b7f22aac49b3e08219",
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\sources\\1381197.json"
+    },
+    {
+      "cik": "2012383",
+      "split": "dev",
+      "url": "https://filing-flows.com/data/c/2012383.json",
+      "sha256": "b9139c1813e79c7c667a3e2633b92cf5e111e8d503dfec97cb239b115ddc1d8a",
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\sources\\2012383.json"
+    },
+    {
+      "cik": "1616533",
+      "split": "sealed_test",
+      "url": "https://filing-flows.com/data/c/1616533.json",
+      "sha256": "de6b70a390c702b9158a6412229d194a7b61255c8b3aaed14f7bec32397baf2c",
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\sources\\1616533.json"
+    }
+  ],
+  "splits": {
+    "train": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\open\\train.jsonl",
+      "sha256": "23d7d55566f114c9195872531329658278f3e05adb3792186587ff29dc22c6f2",
+      "rows": 632,
+      "companies": [
+        "1172358",
+        "1181412",
+        "1381197",
+        "1447362",
+        "1661779",
+        "1692415",
+        "1749723",
+        "1758699",
+        "1813603",
+        "1814287",
+        "1835022",
+        "1960355",
+        "2022626",
+        "2058707",
+        "2078856",
+        "56679",
+        "709337",
+        "751978",
+        "824416"
+      ],
+      "tasks": {
+        "field_extraction": 33,
+        "filing_route": 33,
+        "evidence_abstention": 33,
+        "missing_field": 33,
+        "excerpt_heading": 20,
+        "reserve_calculation": 96,
+        "accrual_ratio": 96,
+        "amended_ytd": 96,
+        "table_location": 96,
+        "basic_instruction": 96
+      },
+      "rendering_families": [
+        "json_context"
+      ]
+    },
+    "dev": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\open\\dev.jsonl",
+      "sha256": "a64a87e00dcf5b09357c389d1b0c3a8b0f80db3d6a31f81edd8aefed66b2effc",
+      "rows": 222,
+      "companies": [
+        "1093691",
+        "1376793",
+        "1620393",
+        "1652561",
+        "1701108",
+        "1953520",
+        "2012383"
+      ],
+      "tasks": {
+        "field_extraction": 12,
+        "filing_route": 12,
+        "evidence_abstention": 12,
+        "missing_field": 12,
+        "excerpt_heading": 9,
+        "reserve_calculation": 33,
+        "accrual_ratio": 33,
+        "amended_ytd": 33,
+        "table_location": 33,
+        "basic_instruction": 33
+      },
+      "rendering_families": [
+        "flat_fact_lines"
+      ]
+    },
+    "sealed_test": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\sealed\\sealed_test.jsonl",
+      "sha256": "a9f5338a01113bc1a6aacf996b72d4119c58a9d1ca9521af4f92e687efa65456",
+      "rows": 241,
+      "companies": [
+        "1275187",
+        "1616533",
+        "1801661",
+        "1812364",
+        "785557",
+        "862651",
+        "910638"
+      ],
+      "tasks": {
+        "field_extraction": 13,
+        "filing_route": 13,
+        "evidence_abstention": 13,
+        "missing_field": 13,
+        "excerpt_heading": 9,
+        "reserve_calculation": 36,
+        "accrual_ratio": 36,
+        "amended_ytd": 36,
+        "table_location": 36,
+        "basic_instruction": 36
+      },
+      "rendering_families": [
+        "markdown_evidence_table"
+      ]
+    }
+  }
+}

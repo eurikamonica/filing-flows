@@ -1,0 +1,426 @@
+{
+  "author": "Created by ChatGPT (OpenAI)",
+  "run": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z",
+  "gate0": "completed_with_documented_limits",
+  "gate1": "completed_rule_checked_not_human_reviewed",
+  "gate2": {
+    "author": "Created by ChatGPT (OpenAI)",
+    "status": "completed",
+    "stage": "selection",
+    "sealed_test_opened": false
+  },
+  "plan_sha256": "95d765f48a5e7ad201308f3e3b40a095722173c365d12c0e7239c10c09afc448",
+  "splits": {
+    "train": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data\\open\\train.jsonl",
+      "sha256": "2b6d8f537bf88160e44453e3f170a7c0e7d35460b7e0dbfdfd17cca895b01bc2",
+      "rows": 628,
+      "tasks": {
+        "field_extraction": 32,
+        "filing_route": 32,
+        "evidence_abstention": 32,
+        "missing_field": 32,
+        "excerpt_heading": 20,
+        "reserve_calculation": 96,
+        "accrual_ratio": 96,
+        "amended_ytd": 96,
+        "table_location": 96,
+        "basic_instruction": 96
+      },
+      "companies": [
+        "1172358",
+        "1181412",
+        "1447362",
+        "1661779",
+        "1692415",
+        "1749723",
+        "1758699",
+        "1813603",
+        "1814287",
+        "1835022",
+        "1960355",
+        "2022626",
+        "2058707",
+        "2078856",
+        "56679",
+        "709337",
+        "751978",
+        "824416"
+      ]
+    },
+    "dev": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data\\open\\dev.jsonl",
+      "sha256": "23a2d3c5c74bb9984492a217b811bf31c08273643219d8ee6e74a57070a760e0",
+      "rows": 218,
+      "tasks": {
+        "field_extraction": 11,
+        "filing_route": 11,
+        "evidence_abstention": 11,
+        "missing_field": 11,
+        "excerpt_heading": 9,
+        "reserve_calculation": 33,
+        "accrual_ratio": 33,
+        "amended_ytd": 33,
+        "table_location": 33,
+        "basic_instruction": 33
+      },
+      "companies": [
+        "1093691",
+        "1376793",
+        "1620393",
+        "1652561",
+        "1701108",
+        "1953520"
+      ]
+    },
+    "sealed_test": {
+      "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data\\sealed\\sealed_test.jsonl",
+      "sha256": "17f8c758f455d292c7b45d07c042263c6628207546538ba27aa29cca09da33ef",
+      "rows": 237,
+      "tasks": {
+        "field_extraction": 12,
+        "filing_route": 12,
+        "evidence_abstention": 12,
+        "missing_field": 12,
+        "excerpt_heading": 9,
+        "reserve_calculation": 36,
+        "accrual_ratio": 36,
+        "amended_ytd": 36,
+        "table_location": 36,
+        "basic_instruction": 36
+      },
+      "companies": [
+        "1275187",
+        "1801661",
+        "1812364",
+        "785557",
+        "862651",
+        "910638"
+      ]
+    }
+  },
+  "archive_inventory": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\inventory.json",
+  "selection": {
+    "author": "Created by ChatGPT (OpenAI)",
+    "checks": {
+      "new_dev_improvement": true,
+      "historical_retention": true,
+      "format_retention": true,
+      "abstention_retention": true,
+      "latency": true,
+      "per_task_retention": true
+    },
+    "candidate_accepted": true,
+    "selected_adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\outputs\\first-epoch",
+    "sealed_test_opened": false
+  },
+  "reports": {
+    "AUDIT.md": "5d85d386bad4e0c4d544247c31c9815588da93f3a95620fb50eb718fa87459d5",
+    "BASELINE_AND_ERROR_REPORT.md": "d5e89932ac5ad6f5ead0002446999717af8c8bed2e4c40922b38f1950f412703",
+    "DATASET_CARD.md": "2bcf38049d58a69d9e18ffdd8d01e223c720f310818273b95f9720eea8da9405",
+    "DATA_QUALITY_REVIEW.md": "2435986d49663df811cc745abf0b9a89bc4814603cfd8fdf3b96a5754e1c749f",
+    "EVALUATION_REPORT.md": "ab18b4dc1e409cab9bb6ab3786f9a4396d2bf6b76c5409ecd80e320e45c8cc9a",
+    "MERGE_COMPATIBILITY.md": "1a3303800f8e5aec0ac62488bd18752d606651b273fc8310385f183a049c4184",
+    "MODEL_CARD.md": "a18a650f05e1402dda166ac5f1968f358c0c87fa859bd65ff5baaa4499ebf55b",
+    "PARAMETER_SCALING_REPORT.md": "0b72bcb2d4af3ecaa016d16105f7c58511ceede85e40a8353863469b23645479",
+    "TRAINING_PLAN.md": "0ad698d306580b065984f7f6e096b715899c0c6560d1619076c81f50d459090f",
+    "VALIDATION_REPORT.md": "c907574991d4ec52b12a81240f670d947821bc0793333ee34fc199a131557dbc"
+  },
+  "code_sha256": {
+    "audit_v2.py": "7c1b47d073149782366153e43a1f62c1fe765d453ebc9a842153af8ea37cc333",
+    "evaluate_lab.py": "8bf259818d5fac3868e8e5566f41a50bd933073d3de348dac467352ee3a675f9",
+    "finalize_reports.py": "39db538a049be0dab0641fd3d617d10b557daa50189a1df6d9e62d8315ef1d7c",
+    "inspect_parameters.py": "fba671080681704dcda927a0fcae5892423ccc9f4cb4fd932d860431eb841714",
+    "lab.py": "4c10a1af1b61e91ae2199c17c07a18d7996336ab8aae76f50d1505b0fc007adf",
+    "merge_export.py": "16126eefd64094dd66c504318184ecbf3e1a7df26f0d99c552846dc9ce59a70a",
+    "plot_results.py": "2ab841472996a0c91e069b93279977e23e1dc37b551f58a6243910e804cc9d24",
+    "protocol.py": "21798172b5c400eb22663d0a664a3055a3dc9047e02c308ef505f5ea07ba0cb4",
+    "revise_data.py": "f644b8094c906587e01c6eaa02c65a99f733d698f93856a72ff30b918cb2f368",
+    "status.py": "9c5e6c8c14e318239d37b65f47a6941d3dfa83b7f3bd01997af04141935a0713",
+    "test_integrity.py": "3674e77958a2b4d64ac277efcea7f5c1516ed091f3c4dae2ebebbf9bbb2794cb",
+    "train_continuation.py": "07528c83c0d4a96b7d785250675d2d382e21da9973a671ae666afcc89d6a8e06"
+  },
+  "executed_training": [
+    {
+      "run": "first-epoch",
+      "status": "completed",
+      "global_step": 60,
+      "resumed_global_step": 0,
+      "stop_reason": null,
+      "error": null,
+      "memory": {
+        "cuda_available": true,
+        "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+        "allocated_mib": 3334.13623046875,
+        "reserved_mib": 5326.0,
+        "peak_allocated_mib": 5032.9140625,
+        "peak_reserved_mib": 5326.0,
+        "free_mib": 0.0,
+        "total_mib": 6143.5
+      },
+      "active_optimizer_seconds": 427.2263643001206,
+      "process_rss_mib": 1784.50390625,
+      "useful_tokens_per_training_epoch": 163016,
+      "supervised_tokens_per_training_epoch": 52539,
+      "consumed_nonpadding_tokens": 62383,
+      "consumed_supervised_tokens": 20264,
+      "useful_nonpadding_tokens_per_second": 146.01861030321808
+    },
+    {
+      "run": "smoke",
+      "status": "completed",
+      "global_step": 20,
+      "resumed_global_step": 10,
+      "stop_reason": null,
+      "error": null,
+      "memory": {
+        "cuda_available": true,
+        "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+        "allocated_mib": 3334.13623046875,
+        "reserved_mib": 5340.0,
+        "peak_allocated_mib": 5030.80859375,
+        "peak_reserved_mib": 5340.0,
+        "free_mib": 0.0,
+        "total_mib": 6143.5
+      },
+      "active_optimizer_seconds": 75.80791489998228,
+      "process_rss_mib": 1762.90625,
+      "useful_tokens_per_training_epoch": 163016,
+      "supervised_tokens_per_training_epoch": 52539,
+      "consumed_nonpadding_tokens": 10361,
+      "consumed_supervised_tokens": 3433,
+      "useful_nonpadding_tokens_per_second": 136.6743830597354
+    }
+  ],
+  "sealed_test_sha256_verified": true,
+  "hash_scope": "Artifact bytes at this finalization; current source hashes include documented metadata/budget guard corrections",
+  "output_artifacts": {
+    "outputs\\first-epoch\\adapter_config.json": "69c30d390a254c60ae15cc9ee666c5580302586f12249025fb73b36532a330d8",
+    "outputs\\first-epoch\\adapter_model.safetensors": "e2904306b7cc7e5397705afe4f5613d9c1d48051abcbf27899743b146c3c8374",
+    "outputs\\first-epoch\\added_tokens.json": "79f6ec6fcc423d3a82bfac8b9033b1daac7b7bce06a5f5f441637b480cc605de",
+    "outputs\\first-epoch\\chat_template.jinja": "51fa65c79bb57f058dc7ef8734884bd325fe9d45bb03a61bfef59785d3bc2da9",
+    "outputs\\first-epoch\\fsa_manifest.json": "e5e823052de3459124772bdc64bc692b35928759b0af03525567d575550a2514",
+    "outputs\\first-epoch\\memory.jsonl": "48ac3076d971f79e8f84f4c42e557cf26243e480efb5e66ed0db8e35b8a30a74",
+    "outputs\\first-epoch\\merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+    "outputs\\first-epoch\\progress.json": "f2421dead35198a504e75cc62777c176c01080cb6ba8a3a7dc5e4ae29aba0193",
+    "outputs\\first-epoch\\README.md": "b8c6699a66cdfbaceba656fecf3312dac5fe5e4cb67da143dddf66e5423dabf4",
+    "outputs\\first-epoch\\special_tokens_map.json": "57255613bbe23c9497211ca68561ff429a51e871dbaf5a59998fa4c8f7fe168a",
+    "outputs\\first-epoch\\tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+    "outputs\\first-epoch\\tokenizer_config.json": "b2a0d89cf5c89d5d844c56d82e9c3731f862d720a6ce221c31955b628960cde7",
+    "outputs\\first-epoch\\vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+    "outputs\\smoke\\adapter_config.json": "69c30d390a254c60ae15cc9ee666c5580302586f12249025fb73b36532a330d8",
+    "outputs\\smoke\\adapter_model.safetensors": "41c8ccf71d0d13daedc9a5eead5e375571ffac876523f6116028994ad0c00cb9",
+    "outputs\\smoke\\added_tokens.json": "79f6ec6fcc423d3a82bfac8b9033b1daac7b7bce06a5f5f441637b480cc605de",
+    "outputs\\smoke\\chat_template.jinja": "51fa65c79bb57f058dc7ef8734884bd325fe9d45bb03a61bfef59785d3bc2da9",
+    "outputs\\smoke\\fsa_manifest.json": "a3f9ba2d601cc141a24b90a7033726b78ddc12b204831f460b02580248d44a6a",
+    "outputs\\smoke\\memory.jsonl": "3ba0970a46e3e23ad2b98830237f148a456ad04f178d02135af9110c371ffb1b",
+    "outputs\\smoke\\merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+    "outputs\\smoke\\progress.json": "f29481e534d04b5a60e3033d827a0409014209a78200c3aac019c1aa0f9e75fa",
+    "outputs\\smoke\\README.md": "97fd3ef884267c414bfbd7d2d974c90d535b60c9fcc8a7ea1bcb9e1cfe285ab5",
+    "outputs\\smoke\\special_tokens_map.json": "57255613bbe23c9497211ca68561ff429a51e871dbaf5a59998fa4c8f7fe168a",
+    "outputs\\smoke\\tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+    "outputs\\smoke\\tokenizer_config.json": "b2a0d89cf5c89d5d844c56d82e9c3731f862d720a6ce221c31955b628960cde7",
+    "outputs\\smoke\\vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+    "outputs\\smoke\\checkpoint-10\\adapter_config.json": "69c30d390a254c60ae15cc9ee666c5580302586f12249025fb73b36532a330d8",
+    "outputs\\smoke\\checkpoint-10\\adapter_model.safetensors": "3bd45cf512260446ba971c5c1076842a208ef1e04d4c2134dee05f2b56ccd69f",
+    "outputs\\smoke\\checkpoint-10\\added_tokens.json": "79f6ec6fcc423d3a82bfac8b9033b1daac7b7bce06a5f5f441637b480cc605de",
+    "outputs\\smoke\\checkpoint-10\\chat_template.jinja": "51fa65c79bb57f058dc7ef8734884bd325fe9d45bb03a61bfef59785d3bc2da9",
+    "outputs\\smoke\\checkpoint-10\\merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+    "outputs\\smoke\\checkpoint-10\\optimizer.pt": "c79804f955d47b2b8a213c9b67454167cb79c4625903dd552af411fdbe4502c1",
+    "outputs\\smoke\\checkpoint-10\\README.md": "b8c6699a66cdfbaceba656fecf3312dac5fe5e4cb67da143dddf66e5423dabf4",
+    "outputs\\smoke\\checkpoint-10\\rng_state.pth": "4b2d5061b4daae142b94017125d9a0bd28aff08a8522ce70750e3c099b1fb974",
+    "outputs\\smoke\\checkpoint-10\\scheduler.pt": "96550b610546de26e6bedd53b62b8695e195e78dc4cce19595416dc1ed145229",
+    "outputs\\smoke\\checkpoint-10\\special_tokens_map.json": "57255613bbe23c9497211ca68561ff429a51e871dbaf5a59998fa4c8f7fe168a",
+    "outputs\\smoke\\checkpoint-10\\tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+    "outputs\\smoke\\checkpoint-10\\tokenizer_config.json": "b2a0d89cf5c89d5d844c56d82e9c3731f862d720a6ce221c31955b628960cde7",
+    "outputs\\smoke\\checkpoint-10\\trainer_state.json": "23269f603a7d578171638032f23959dd8338a1ec9049f55c427a248d46977a72",
+    "outputs\\smoke\\checkpoint-10\\training_args.bin": "4e5df20fb982f232c107fbd4e876b37b66ce1ea8c960c2c3131b4fe04878b6b1",
+    "outputs\\smoke\\checkpoint-10\\vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+    "outputs\\first-epoch\\checkpoint-40\\adapter_config.json": "69c30d390a254c60ae15cc9ee666c5580302586f12249025fb73b36532a330d8",
+    "outputs\\first-epoch\\checkpoint-40\\adapter_model.safetensors": "12800cf1043ced64c48159f9ed9164720557fef44093b8bbfb0639b4315b2fe5",
+    "outputs\\first-epoch\\checkpoint-40\\added_tokens.json": "79f6ec6fcc423d3a82bfac8b9033b1daac7b7bce06a5f5f441637b480cc605de",
+    "outputs\\first-epoch\\checkpoint-40\\chat_template.jinja": "51fa65c79bb57f058dc7ef8734884bd325fe9d45bb03a61bfef59785d3bc2da9",
+    "outputs\\first-epoch\\checkpoint-40\\merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+    "outputs\\first-epoch\\checkpoint-40\\optimizer.pt": "3fd1434c6736fff9e61b14f41f23f3530dde3dcb0653524692d91023a73d2c9e",
+    "outputs\\first-epoch\\checkpoint-40\\README.md": "b8c6699a66cdfbaceba656fecf3312dac5fe5e4cb67da143dddf66e5423dabf4",
+    "outputs\\first-epoch\\checkpoint-40\\rng_state.pth": "b903aa6d18ad32a201a588a3978d40695c5930a37b3821d0cfc840eb6b42a5c4",
+    "outputs\\first-epoch\\checkpoint-40\\scheduler.pt": "fbd872f53970974fb0ad1e73e2fdb8251febbb6df3e9125b9464758da2f1f9d9",
+    "outputs\\first-epoch\\checkpoint-40\\special_tokens_map.json": "57255613bbe23c9497211ca68561ff429a51e871dbaf5a59998fa4c8f7fe168a",
+    "outputs\\first-epoch\\checkpoint-40\\tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+    "outputs\\first-epoch\\checkpoint-40\\tokenizer_config.json": "b2a0d89cf5c89d5d844c56d82e9c3731f862d720a6ce221c31955b628960cde7",
+    "outputs\\first-epoch\\checkpoint-40\\trainer_state.json": "d0acf0c282aa1d6f735443dc8567d16bf73c998de25bebccf9c64afffe28d4a5",
+    "outputs\\first-epoch\\checkpoint-40\\training_args.bin": "1f7ed791ed98cf1b75c016222bd0965a3fe74d7c2f61eb5180a7f741c0d4dc62",
+    "outputs\\first-epoch\\checkpoint-40\\vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+    "outputs\\first-epoch\\checkpoint-60\\adapter_config.json": "69c30d390a254c60ae15cc9ee666c5580302586f12249025fb73b36532a330d8",
+    "outputs\\first-epoch\\checkpoint-60\\adapter_model.safetensors": "e2904306b7cc7e5397705afe4f5613d9c1d48051abcbf27899743b146c3c8374",
+    "outputs\\first-epoch\\checkpoint-60\\added_tokens.json": "79f6ec6fcc423d3a82bfac8b9033b1daac7b7bce06a5f5f441637b480cc605de",
+    "outputs\\first-epoch\\checkpoint-60\\chat_template.jinja": "51fa65c79bb57f058dc7ef8734884bd325fe9d45bb03a61bfef59785d3bc2da9",
+    "outputs\\first-epoch\\checkpoint-60\\merges.txt": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5",
+    "outputs\\first-epoch\\checkpoint-60\\optimizer.pt": "ebcce9cf0ff421e7537c23fd0aa1567f2ba8c863b2d089ec327170a0d83f304f",
+    "outputs\\first-epoch\\checkpoint-60\\README.md": "b8c6699a66cdfbaceba656fecf3312dac5fe5e4cb67da143dddf66e5423dabf4",
+    "outputs\\first-epoch\\checkpoint-60\\rng_state.pth": "79a464fd71b9875e77e44e02ff37d9543f828a39dbfb138b6c0bb51d1711acc5",
+    "outputs\\first-epoch\\checkpoint-60\\scheduler.pt": "ddfff2c0ef3412c24ba71360fb58585a34a90d59f675c47b36d2dad0b5fc7e34",
+    "outputs\\first-epoch\\checkpoint-60\\special_tokens_map.json": "57255613bbe23c9497211ca68561ff429a51e871dbaf5a59998fa4c8f7fe168a",
+    "outputs\\first-epoch\\checkpoint-60\\tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+    "outputs\\first-epoch\\checkpoint-60\\tokenizer_config.json": "b2a0d89cf5c89d5d844c56d82e9c3731f862d720a6ce221c31955b628960cde7",
+    "outputs\\first-epoch\\checkpoint-60\\trainer_state.json": "ed8d7bfa883f1f21349c05b1cb355ea15d171547e4b1347db807f6bbaa1c5dfe",
+    "outputs\\first-epoch\\checkpoint-60\\training_args.bin": "1f7ed791ed98cf1b75c016222bd0965a3fe74d7c2f61eb5180a7f741c0d4dc62",
+    "outputs\\first-epoch\\checkpoint-60\\vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+  },
+  "raw_result_artifacts": {
+    "baseline.json": "6e01173e13e096d57dd4de30d0001999c22f0d8b87f9d920942859e9f5c5abea",
+    "candidate.json": "dd2ccf415ced05dfbb802755d955178d54ac99cb416d7c480b5053e093646692",
+    "selection.json": "b812ed1bbfaf9b779679740aac2d8f315c0b0f496cb70a1ffd0080bd4e097c42",
+    "execution.json": "0070b38f251d5b191c332d1534663f992a01f1abb28119aa0022c66ae2bcb2a6",
+    "plan.json": "95d765f48a5e7ad201308f3e3b40a095722173c365d12c0e7239c10c09afc448",
+    "parameter-counts.json": "a45fe7808da376ffaae634a773b1e40c9206c9b89f9bb376bb3738beff2cc980"
+  },
+  "lineage": {
+    "base_revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+    "starting_adapter_sha256": "bb4a35f8f8b570a025a7795a7b51d51129ee90069ce15e1ec75eb2d84ee9ffb6",
+    "continued_adapter_sha256": "e2904306b7cc7e5397705afe4f5613d9c1d48051abcbf27899743b146c3c8374",
+    "main_optimizer": "fresh; smoke is not the parent of the main run"
+  },
+  "quality_decision": {
+    "author": "Created by ChatGPT (OpenAI)",
+    "v1_candidate_approved_for_use": false,
+    "reason": "Underspecified v1 instruction/output contracts and limited real-note coverage; preserve raw metric decision separately",
+    "retained_adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\qwen4",
+    "prospective_dataset_manifest": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\manifest.json",
+    "additional_gpu_jobs": 0
+  },
+  "prospective_dataset": {
+    "author": "Created by ChatGPT (OpenAI)",
+    "purpose": "Prospective corrected data; NOT used in the completed v1 GPU experiment",
+    "v1_preserved": true,
+    "sealed_test_opened_for_evaluation": false,
+    "added_8k_sources": [
+      {
+        "cik": "1381197",
+        "split": "train",
+        "url": "https://filing-flows.com/data/c/1381197.json",
+        "sha256": "269ee3dfdcd48d1a23626cf600595c52c6f4974eeeaa06b7f22aac49b3e08219",
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\sources\\1381197.json"
+      },
+      {
+        "cik": "2012383",
+        "split": "dev",
+        "url": "https://filing-flows.com/data/c/2012383.json",
+        "sha256": "b9139c1813e79c7c667a3e2633b92cf5e111e8d503dfec97cb239b115ddc1d8a",
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\sources\\2012383.json"
+      },
+      {
+        "cik": "1616533",
+        "split": "sealed_test",
+        "url": "https://filing-flows.com/data/c/1616533.json",
+        "sha256": "de6b70a390c702b9158a6412229d194a7b61255c8b3aaed14f7bec32397baf2c",
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\sources\\1616533.json"
+      }
+    ],
+    "splits": {
+      "train": {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\open\\train.jsonl",
+        "sha256": "23d7d55566f114c9195872531329658278f3e05adb3792186587ff29dc22c6f2",
+        "rows": 632,
+        "companies": [
+          "1172358",
+          "1181412",
+          "1381197",
+          "1447362",
+          "1661779",
+          "1692415",
+          "1749723",
+          "1758699",
+          "1813603",
+          "1814287",
+          "1835022",
+          "1960355",
+          "2022626",
+          "2058707",
+          "2078856",
+          "56679",
+          "709337",
+          "751978",
+          "824416"
+        ],
+        "tasks": {
+          "field_extraction": 33,
+          "filing_route": 33,
+          "evidence_abstention": 33,
+          "missing_field": 33,
+          "excerpt_heading": 20,
+          "reserve_calculation": 96,
+          "accrual_ratio": 96,
+          "amended_ytd": 96,
+          "table_location": 96,
+          "basic_instruction": 96
+        },
+        "rendering_families": [
+          "json_context"
+        ]
+      },
+      "dev": {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\open\\dev.jsonl",
+        "sha256": "a64a87e00dcf5b09357c389d1b0c3a8b0f80db3d6a31f81edd8aefed66b2effc",
+        "rows": 222,
+        "companies": [
+          "1093691",
+          "1376793",
+          "1620393",
+          "1652561",
+          "1701108",
+          "1953520",
+          "2012383"
+        ],
+        "tasks": {
+          "field_extraction": 12,
+          "filing_route": 12,
+          "evidence_abstention": 12,
+          "missing_field": 12,
+          "excerpt_heading": 9,
+          "reserve_calculation": 33,
+          "accrual_ratio": 33,
+          "amended_ytd": 33,
+          "table_location": 33,
+          "basic_instruction": 33
+        },
+        "rendering_families": [
+          "flat_fact_lines"
+        ]
+      },
+      "sealed_test": {
+        "path": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data-v2\\sealed\\sealed_test.jsonl",
+        "sha256": "a9f5338a01113bc1a6aacf996b72d4119c58a9d1ca9521af4f92e687efa65456",
+        "rows": 241,
+        "companies": [
+          "1275187",
+          "1616533",
+          "1801661",
+          "1812364",
+          "785557",
+          "862651",
+          "910638"
+        ],
+        "tasks": {
+          "field_extraction": 13,
+          "filing_route": 13,
+          "evidence_abstention": 13,
+          "missing_field": 13,
+          "excerpt_heading": 9,
+          "reserve_calculation": 36,
+          "accrual_ratio": 36,
+          "amended_ytd": 36,
+          "table_location": 36,
+          "basic_instruction": 36
+        },
+        "rendering_families": [
+          "markdown_evidence_table"
+        ]
+      }
+    }
+  },
+  "charts": {
+    "DEV_COMPARISON.png": "33beabd317eb768ef25bd5fdfe85ebfb52bc980583c89ea22c93e06525d1091c",
+    "DEV_COMPARISON.svg": "80ae62544d5be6d2e9251fe70e02a9b84005e02eb114c15b6c79a2c63dcaaba0"
+  }
+}

@@ -1,0 +1,74 @@
+{
+ "utc": "2026-10-18T05:40:43Z",
+ "all_ok": true,
+ "failed": [],
+ "checks": {
+  "no_company_id_overlap_across_splits": {
+   "ok": true,
+   "detail": {
+    "train&dev": 0,
+    "train&sealed_test": 0,
+    "dev&sealed_test": 0
+   }
+  },
+  "no_document_id_overlap_across_splits": {
+   "ok": true,
+   "detail": {
+    "train&dev": 0,
+    "train&sealed_test": 0,
+    "dev&sealed_test": 0
+   }
+  },
+  "no_input_overlap_across_splits": {
+   "ok": true,
+   "detail": {
+    "train&dev": 0,
+    "train&sealed_test": 0,
+    "dev&sealed_test": 0
+   }
+  },
+  "heldout_tags_absent_from_train": {
+   "ok": true,
+   "detail": {
+    "expected_tag": [],
+    "input_mentions": []
+   }
+  },
+  "gold_quotes_verbatim_substring_of_evidence": {
+   "ok": true,
+   "detail": []
+  },
+  "pattern_group_consistency": {
+   "ok": true,
+   "detail": []
+  },
+  "outputs_valid_json_matching_expected_and_contract": {
+   "ok": true,
+   "detail": []
+  },
+  "rows_in_assigned_company_split": {
+   "ok": true,
+   "detail": []
+  },
+  "length_within_token_limit": {
+   "ok": true,
+   "detail": []
+  },
+  "no_row_marked_human_reviewed": {
+   "ok": true,
+   "detail": []
+  },
+  "no_oth_or_extension_tags": {
+   "ok": true,
+   "detail": null
+  },
+  "unique_ids": {
+   "ok": true,
+   "detail": null
+  },
+  "request_budget_respected": {
+   "ok": true,
+   "detail": 484
+  }
+ }
+}

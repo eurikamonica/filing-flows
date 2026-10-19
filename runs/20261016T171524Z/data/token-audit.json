@@ -1,0 +1,69 @@
+{
+  "train": {
+    "kept": 623,
+    "excluded": [
+      {
+        "company_id": "1814287",
+        "document_id": "120a2bbe9373883fdd77443ac0c9fd36b47b37d24623d08926c5b5c31ee78e23:1",
+        "task": "excerpt_heading",
+        "tokens": 516
+      },
+      {
+        "company_id": "1749723",
+        "document_id": "118fa8cfd7418b6d7546ac85ecfb104126b4eeb1a84d4ba340613856aa3505bc:0",
+        "task": "excerpt_heading",
+        "tokens": 522
+      },
+      {
+        "company_id": "1749723",
+        "document_id": "118fa8cfd7418b6d7546ac85ecfb104126b4eeb1a84d4ba340613856aa3505bc:1",
+        "task": "excerpt_heading",
+        "tokens": 524
+      },
+      {
+        "company_id": "56679",
+        "document_id": "5172925be8cf938b9a07f8bd31edf0ba9548686a6c8efd3921288be08e16c688:0",
+        "task": "excerpt_heading",
+        "tokens": 576
+      },
+      {
+        "company_id": "56679",
+        "document_id": "5172925be8cf938b9a07f8bd31edf0ba9548686a6c8efd3921288be08e16c688:1",
+        "task": "excerpt_heading",
+        "tokens": 571
+      }
+    ],
+    "max_retained_tokens": 487,
+    "mean_tokens": 261.6629213483146,
+    "tasks": {
+      "field_extraction": 32,
+      "filing_route": 32,
+      "evidence_abstention": 32,
+      "missing_field": 32,
+      "excerpt_heading": 15,
+      "reserve_calculation": 96,
+      "accrual_ratio": 96,
+      "amended_ytd": 96,
+      "table_location": 96,
+      "basic_instruction": 96
+    }
+  },
+  "dev": {
+    "kept": 218,
+    "excluded": [],
+    "max_retained_tokens": 351,
+    "mean_tokens": 262.1743119266055,
+    "tasks": {
+      "field_extraction": 11,
+      "filing_route": 11,
+      "evidence_abstention": 11,
+      "missing_field": 11,
+      "excerpt_heading": 9,
+      "reserve_calculation": 33,
+      "accrual_ratio": 33,
+      "amended_ytd": 33,
+      "table_location": 33,
+      "basic_instruction": 33
+    }
+  }
+}

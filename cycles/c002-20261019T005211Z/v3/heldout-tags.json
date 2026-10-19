@@ -1,0 +1,96 @@
+{
+ "seed": 20261018,
+ "method": "random.Random(seed).sample over sorted op tags (7) then sorted fin tags (6)",
+ "written_utc": "2026-10-18T05:25:00Z",
+ "tag_counts": {
+  "total": 66,
+  "op": 36,
+  "fin": 30
+ },
+ "heldout_tags": [
+  "AccountsReceivableNetCurrent",
+  "AvailableForSaleSecuritiesDebtSecuritiesNoncurrent",
+  "ContractWithCustomerLiabilityCurrent",
+  "DeferredRevenueNoncurrent",
+  "FinanceLeaseLiabilityCurrent",
+  "InventoryNet",
+  "MarketableSecuritiesCurrent",
+  "MarketableSecuritiesNoncurrent",
+  "OtherAssetsNoncurrent",
+  "PensionAndOtherPostretirementDefinedBenefitPlansLiabilitiesNoncurrent",
+  "PrepaidExpenseCurrent",
+  "SeniorNotes",
+  "ShortTermInvestments"
+ ],
+ "heldout_detail": [
+  {
+   "tag": "AccountsReceivableNetCurrent",
+   "cls": "op",
+   "line": "ar"
+  },
+  {
+   "tag": "AvailableForSaleSecuritiesDebtSecuritiesNoncurrent",
+   "cls": "fin",
+   "line": "lti"
+  },
+  {
+   "tag": "ContractWithCustomerLiabilityCurrent",
+   "cls": "op",
+   "line": "defrev"
+  },
+  {
+   "tag": "DeferredRevenueNoncurrent",
+   "cls": "op",
+   "line": "defrevn"
+  },
+  {
+   "tag": "FinanceLeaseLiabilityCurrent",
+   "cls": "fin",
+   "line": "flease"
+  },
+  {
+   "tag": "InventoryNet",
+   "cls": "op",
+   "line": "inv"
+  },
+  {
+   "tag": "MarketableSecuritiesCurrent",
+   "cls": "fin",
+   "line": "sti"
+  },
+  {
+   "tag": "MarketableSecuritiesNoncurrent",
+   "cls": "fin",
+   "line": "lti"
+  },
+  {
+   "tag": "OtherAssetsNoncurrent",
+   "cls": "op",
+   "line": "onca"
+  },
+  {
+   "tag": "PensionAndOtherPostretirementDefinedBenefitPlansLiabilitiesNoncurrent",
+   "cls": "op",
+   "line": "pension"
+  },
+  {
+   "tag": "PrepaidExpenseCurrent",
+   "cls": "op",
+   "line": "oca"
+  },
+  {
+   "tag": "SeniorNotes",
+   "cls": "fin",
+   "line": "ltd"
+  },
+  {
+   "tag": "ShortTermInvestments",
+   "cls": "fin",
+   "line": "sti"
+  }
+ ],
+ "lines_fully_heldout": [
+  "inv",
+  "onca"
+ ]
+}

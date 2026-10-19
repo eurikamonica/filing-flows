@@ -1,0 +1,34 @@
+# Created by ChatGPT (OpenAI).
+# Weights, checkpoints, optimizer state, datasets and downloaded models stay local.
+# Only reports (.md) and manifests/status JSON under runs/ and operations/ are tracked.
+runs/**
+operations/**
+!runs/**/
+!operations/**/
+!runs/*/*.md
+!runs/*/manifest.json
+!runs/*/data/manifest.json
+!runs/*/data-v2/manifest.json
+!runs/*/sources/manifest.json
+!runs/*/phase-manifests/*.json
+!runs/*/archive/inventory.json
+!runs/*/archive/*/fsa_manifest.json
+!runs/*/outputs/*/fsa_manifest.json
+!operations/*/*-status.json
+!operations/*/8b-integrity.json
+# run plans, stage logs, evaluation results and dataset audit files (no training/eval data rows)
+!runs/*/plan.json
+!runs/*/stages.jsonl
+!runs/*/eval-*.json
+!runs/*/split-membership.json
+!runs/*/checks.json
+!runs/*/heldout-tags.json
+!runs/*/dev-protocol-manifest.json
+# merged/quantized exports stay local; only their status, evaluation and checksums are tracked
+exports/**
+!exports/**/
+!exports/*/merge-status.json
+!exports/eval-*.json
+!exports/gguf/SHA256SUMS
+__pycache__/
+*.pyc

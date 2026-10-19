@@ -1,0 +1,196 @@
+{
+  "author": "Created by ChatGPT (OpenAI)",
+  "status": "completed",
+  "config": {
+    "data": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\data\\open\\trainer-input.jsonl",
+    "out": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\outputs\\first-epoch",
+    "model": "Qwen/Qwen3-4B",
+    "epochs": 1,
+    "max_length": 512,
+    "max_steps": 60,
+    "gradient_accumulation_steps": 4,
+    "gradient_checkpointing": true,
+    "qlora": true,
+    "batch_size": 1,
+    "learning_rate": 2e-05,
+    "lora_rank": 8,
+    "target_modules": "qv",
+    "eval_steps": 20,
+    "save_steps": 20,
+    "logging_steps": 5,
+    "validation_limit": 6,
+    "resume_from_checkpoint": null,
+    "init_adapter": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\archive\\qwen4",
+    "deadline_utc": "2026-10-16T18:19:02.794997+00:00",
+    "stop_file": null,
+    "temperature_limit": 86.0,
+    "min_free_gib": 16.0,
+    "compute_dtype": "bfloat16",
+    "pause_at_step": 0
+  },
+  "dataset_sha256": "30cabd3fc025affb3af5c2b47fbf88c39f76b0f609ec7d0fee91654a6f16d2b6",
+  "environment": {
+    "torch": "2.11.0+cu128",
+    "cuda_runtime": "12.8"
+  },
+  "initial_adapter_sha256": "bb4a35f8f8b570a025a7795a7b51d51129ee90069ce15e1ec75eb2d84ee9ffb6",
+  "initial_best_checkpoint": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\adapters\\overnight-qwen4-cycle-001\\checkpoint-300",
+  "continuation": "Adapter warm-start; fresh optimizer and learning-rate schedule",
+  "base_revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+  "trainable_parameters": 2949120,
+  "total_parameters": 4025417216,
+  "split_rows": {
+    "train": 623,
+    "validation": 6
+  },
+  "useful_tokens_per_training_epoch": 163016,
+  "supervised_tokens_per_training_epoch": 52539,
+  "resumed_global_step": 0,
+  "consumed_nonpadding_tokens": 62383,
+  "consumed_supervised_tokens": 20264,
+  "active_optimizer_seconds": 427.2263643001206,
+  "process_rss_mib": 1784.50390625,
+  "useful_nonpadding_tokens_per_second": 146.01861030321808,
+  "log_history": [
+    {
+      "loss": 0.1745,
+      "grad_norm": 6.612237930297852,
+      "learning_rate": 1.931034482758621e-05,
+      "epoch": 0.03210272873194221,
+      "step": 5
+    },
+    {
+      "loss": 0.1519,
+      "grad_norm": 1.7390882968902588,
+      "learning_rate": 1.7586206896551724e-05,
+      "epoch": 0.06420545746388442,
+      "step": 10
+    },
+    {
+      "loss": 0.1033,
+      "grad_norm": 1.0065722465515137,
+      "learning_rate": 1.586206896551724e-05,
+      "epoch": 0.09630818619582665,
+      "step": 15
+    },
+    {
+      "loss": 0.1082,
+      "grad_norm": 1.5585812330245972,
+      "learning_rate": 1.4137931034482759e-05,
+      "epoch": 0.12841091492776885,
+      "step": 20
+    },
+    {
+      "eval_loss": 0.18657784163951874,
+      "eval_runtime": 2.7822,
+      "eval_samples_per_second": 2.157,
+      "eval_steps_per_second": 2.157,
+      "epoch": 0.12841091492776885,
+      "step": 20
+    },
+    {
+      "loss": 0.1049,
+      "grad_norm": 1.719576358795166,
+      "learning_rate": 1.2413793103448277e-05,
+      "epoch": 0.16051364365971107,
+      "step": 25
+    },
+    {
+      "loss": 0.0932,
+      "grad_norm": 0.6453050374984741,
+      "learning_rate": 1.0689655172413792e-05,
+      "epoch": 0.1926163723916533,
+      "step": 30
+    },
+    {
+      "loss": 0.0992,
+      "grad_norm": 1.5236042737960815,
+      "learning_rate": 8.965517241379312e-06,
+      "epoch": 0.2247191011235955,
+      "step": 35
+    },
+    {
+      "loss": 0.1489,
+      "grad_norm": 0.8525802493095398,
+      "learning_rate": 7.241379310344828e-06,
+      "epoch": 0.2568218298555377,
+      "step": 40
+    },
+    {
+      "eval_loss": 0.1696743220090866,
+      "eval_runtime": 2.7341,
+      "eval_samples_per_second": 2.195,
+      "eval_steps_per_second": 2.195,
+      "epoch": 0.2568218298555377,
+      "step": 40
+    },
+    {
+      "loss": 0.0505,
+      "grad_norm": 1.254533290863037,
+      "learning_rate": 5.517241379310345e-06,
+      "epoch": 0.28892455858747995,
+      "step": 45
+    },
+    {
+      "loss": 0.0668,
+      "grad_norm": 0.3600538372993469,
+      "learning_rate": 3.793103448275862e-06,
+      "epoch": 0.32102728731942215,
+      "step": 50
+    },
+    {
+      "loss": 0.0832,
+      "grad_norm": 1.251115322113037,
+      "learning_rate": 2.0689655172413796e-06,
+      "epoch": 0.35313001605136435,
+      "step": 55
+    },
+    {
+      "loss": 0.0869,
+      "grad_norm": 1.0735152959823608,
+      "learning_rate": 3.4482758620689656e-07,
+      "epoch": 0.3852327447833066,
+      "step": 60
+    },
+    {
+      "eval_loss": 0.16537797451019287,
+      "eval_runtime": 2.7056,
+      "eval_samples_per_second": 2.218,
+      "eval_steps_per_second": 2.218,
+      "epoch": 0.3852327447833066,
+      "step": 60
+    },
+    {
+      "train_runtime": 441.0116,
+      "train_samples_per_second": 0.544,
+      "train_steps_per_second": 0.136,
+      "total_flos": 1361120100338688.0,
+      "train_loss": 0.10595997422933578,
+      "epoch": 0.3852327447833066,
+      "step": 60
+    }
+  ],
+  "best_checkpoint": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\runs\\20261016T171524Z\\outputs\\first-epoch\\checkpoint-60",
+  "best_validation_loss": 0.16537797451019287,
+  "global_step": 60,
+  "metrics": {
+    "train_runtime": 441.0116,
+    "train_samples_per_second": 0.544,
+    "train_steps_per_second": 0.136,
+    "total_flos": 1361120100338688.0,
+    "train_loss": 0.10595997422933578,
+    "epoch": 0.3852327447833066
+  },
+  "training": "QLoRA SFT",
+  "warning": "Synthetic pipeline smoke test only; no claim of financial accuracy or improvement.",
+  "memory": {
+    "cuda_available": true,
+    "device": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+    "allocated_mib": 3334.13623046875,
+    "reserved_mib": 5326.0,
+    "peak_allocated_mib": 5032.9140625,
+    "peak_reserved_mib": 5326.0,
+    "free_mib": 0.0,
+    "total_mib": 6143.5
+  }
+}

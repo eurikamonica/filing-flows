@@ -1,0 +1,501 @@
+{
+ "created_utc": "2026-10-19T10:12:46Z",
+ "run_dir": "C:\\Users\\Oliver Hu\\Downloads\\filing-flows-beta-fsa-chatgpt\\filing-flows-beta-fsa-chatgpt\\fsa-beta\\model-expansion-lab\\cycles\\c007-20261019T101213Z\\v3",
+ "seed": 20261025,
+ "upstream": {
+  "history.py": {
+   "source": "C:\\Users\\Oliver Hu\\AppData\\Local\\Temp\\ff_history.py",
+   "pin": "eurikamonica/filing-flows main @ 04226e2",
+   "sha256": "44cac4bf989fa5bfc4c2dd18cd05cfe927d3da824eead5b4caf92d08cbc4b389",
+   "bytes": 5661
+  },
+  "reform.py": {
+   "source": "C:\\Users\\Oliver Hu\\AppData\\Local\\Temp\\ff_reform.py",
+   "pin": "eurikamonica/filing-flows main @ 04226e2",
+   "sha256": "c9c2534c29fa09c1391d809279f34693a735c5c323ed2808c798db0043d9b32c",
+   "bytes": 12869
+  }
+ },
+ "builder": "build_v3_owner.py",
+ "tasks_built": [
+  "revision_reason (A)",
+  "bs_line_classification (C)"
+ ],
+ "tasks_deferred": [
+  "mdna_driver_amount (B)"
+ ],
+ "companies": {
+  "cik-914122": {
+   "name": "Perma-Pipe International Holdings, Inc.",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Perma-Pipe International Holdings, Inc."
+  },
+  "cik-1070524": {
+   "name": "GREENE COUNTY BANCORP INC",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "GREENE COUNTY BANCORP, INC."
+  },
+  "cik-1898601": {
+   "name": "IPERIONX Ltd",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "IPERIONX Ltd"
+  },
+  "cik-1724542": {
+   "name": "CLPS Inc",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "CLPS Incorporation"
+  },
+  "cik-1737806": {
+   "name": "PDD Holdings Inc.",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "PDD Holdings\u00a0Inc."
+  },
+  "cik-1687542": {
+   "name": "Freight Technologies, Inc.",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Freight Technologies, Inc."
+  },
+  "cik-1681622": {
+   "name": "Varex Imaging Corp",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Varex Imaging Corp"
+  },
+  "cik-1945565": {
+   "name": "BGIN BLOCKCHAIN Ltd",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "BGIN BLOCKCHAIN LIMITED"
+  },
+  "cik-1602842": {
+   "name": "Orion Digital Corp.",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "MOGO INC."
+  },
+  "cik-94344": {
+   "name": "STEWART INFORMATION SERVICES CORP",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "STEWART INFORMATION SERVICES CORP"
+  },
+  "cik-1825349": {
+   "name": "Chanson International Holding",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Chanson International Holding"
+  },
+  "cik-1653087": {
+   "name": "Alector, Inc.",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Alector, Inc."
+  },
+  "cik-1674910": {
+   "name": "VALVOLINE INC",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "VALVOLINE INC."
+  },
+  "cik-742278": {
+   "name": "RPC INC",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "RPC,\u00a0INC."
+  },
+  "cik-1616543": {
+   "name": "Senseonics Holdings, Inc.",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Senseonics Holdings, Inc."
+  },
+  "cik-1377936": {
+   "name": "SARATOGA INVESTMENT CORP.",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "SARATOGA INVESTMENT CORP."
+  },
+  "cik-1717161": {
+   "name": "CENTRAL PUERTO S.A.",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Central Puerto S.A."
+  },
+  "cik-1001290": {
+   "name": "CREDICORP LTD",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "CREDICORP LTD"
+  },
+  "cik-90498": {
+   "name": "SIMMONS FIRST NATIONAL CORP",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "SIMMONS FIRST NATIONAL CORP"
+  },
+  "cik-1710155": {
+   "name": "National Vision Holdings, Inc.",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "National Vision Holdings, Inc."
+  },
+  "cik-1787306": {
+   "name": "Arcutis Biotherapeutics, Inc.",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "ARCUTIS BIOTHERAPEUTICS, INC."
+  },
+  "cik-1860543": {
+   "name": "Cadre Holdings, Inc.",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Cadre Holdings, Inc."
+  },
+  "cik-1938109": {
+   "name": "Pineapple Financial Inc.",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "PINEAPPLE FINANCIAL INC."
+  },
+  "cik-885601": {
+   "name": "Invesco Value Municipal Income Trust",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": ""
+  },
+  "cik-1108205": {
+   "name": "CURIS INC",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "CURIS, INC."
+  },
+  "cik-1484769": {
+   "name": "FuboTV Inc.",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "FuboTV Inc."
+  },
+  "cik-1702744": {
+   "name": "Simply Good Foods Co",
+   "split": "dev",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "The Simply Good Foods Company"
+  },
+  "cik-1227476": {
+   "name": "Nuveen Credit Strategies Income Fund",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Nuveen Credit Strategies Income Fund"
+  },
+  "cik-1822492": {
+   "name": "Hillman Solutions Corp.",
+   "split": "sealed_test",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Hillman Solutions Corp."
+  },
+  "cik-1472072": {
+   "name": "Concord Medical Services Holdings Ltd",
+   "split": "train",
+   "companyfacts": true,
+   "submissions": true,
+   "entity_name": "Concord Medical Services Holdings Ltd"
+  }
+ },
+ "history_reimplementation": {
+  "concepts": {
+   "revenue": [
+    "Revenues",
+    "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "SalesRevenueNet"
+   ],
+   "oi": [
+    "OperatingIncomeLoss"
+   ],
+   "ni": [
+    "NetIncomeLoss",
+    "ProfitLoss"
+   ],
+   "ocf": [
+    "NetCashProvidedByUsedInOperatingActivities"
+   ]
+  },
+  "total_first": {
+   "revenue": "Revenues"
+  },
+  "max_keys": [
+   "revenue"
+  ],
+  "years": 10,
+  "move": 0.0005,
+  "abs_floor_usd": 500000.0,
+  "events_per_company_cap": 10,
+  "event_priority": "amended, results, cash flow, presentation; newest first"
+ },
+ "events_detected": {
+  "total": 44,
+  "by_pattern": {
+   "amended": 9,
+   "presentation": 17,
+   "results": 14,
+   "cash flow": 4
+  },
+  "by_form": {
+   "10-Q/A": 5,
+   "10-K": 10,
+   "20-F": 2,
+   "10-K/A": 4,
+   "10-Q": 21,
+   "DEF 14A": 1,
+   "PRE 14A": 1
+  }
+ },
+ "counts": {
+  "rows_by_split_task": {
+   "dev/bs_line_classification": 47,
+   "dev/revision_reason": 4,
+   "sealed_test/bs_line_classification": 43,
+   "sealed_test/revision_reason": 2,
+   "train/bs_line_classification": 137,
+   "train/revision_reason": 19
+  },
+  "A_label_by_split": {
+   "dev/amendment_restatement": 3,
+   "dev/insufficient_evidence": 1,
+   "sealed_test/amendment_restatement": 1,
+   "sealed_test/insufficient_evidence": 1,
+   "train/amendment_restatement": 4,
+   "train/amendment_tagging_or_clerical": 1,
+   "train/discontinued_operations": 4,
+   "train/error_correction_revision": 2,
+   "train/income_statement_reclassification": 4,
+   "train/insufficient_evidence": 2,
+   "train/restatement_non_reliance": 2
+  },
+  "A_label": {
+   "amendment_restatement": 8,
+   "amendment_tagging_or_clerical": 1,
+   "discontinued_operations": 4,
+   "error_correction_revision": 2,
+   "income_statement_reclassification": 4,
+   "insufficient_evidence": 4,
+   "restatement_non_reliance": 2
+  },
+  "A_pattern": {
+   "amended": 9,
+   "presentation": 11,
+   "results": 5
+  },
+  "A_source_form": {
+   "10-K": 6,
+   "10-K/A": 4,
+   "10-Q": 7,
+   "10-Q/A": 5,
+   "20-F": 1,
+   "8-K": 2
+  },
+  "C_cls_by_split": {
+   "dev/fin": 10,
+   "dev/op": 37,
+   "sealed_test/fin": 9,
+   "sealed_test/op": 34,
+   "train/fin": 31,
+   "train/op": 106
+  },
+  "C_tag_by_split": {
+   "us-gaap:AccountsPayableAndAccruedLiabilitiesCurrent|train": 1,
+   "us-gaap:AccountsPayableCurrent|dev": 3,
+   "us-gaap:AccountsPayableCurrent|sealed_test": 3,
+   "us-gaap:AccountsPayableCurrent|train": 8,
+   "us-gaap:AccountsReceivableNet|train": 1,
+   "us-gaap:AccountsReceivableNetCurrent|dev": 2,
+   "us-gaap:AccountsReceivableNetCurrent|sealed_test": 1,
+   "us-gaap:AccruedIncomeTaxesCurrent|dev": 1,
+   "us-gaap:AccruedIncomeTaxesCurrent|train": 5,
+   "us-gaap:AccruedLiabilitiesCurrent|dev": 3,
+   "us-gaap:AccruedLiabilitiesCurrent|sealed_test": 1,
+   "us-gaap:AccruedLiabilitiesCurrent|train": 7,
+   "us-gaap:AvailableForSaleSecuritiesDebtSecuritiesCurrent|dev": 1,
+   "us-gaap:Cash|train": 1,
+   "us-gaap:CashAndCashEquivalentsAtCarryingValue|dev": 3,
+   "us-gaap:CashAndCashEquivalentsAtCarryingValue|sealed_test": 3,
+   "us-gaap:CashAndCashEquivalentsAtCarryingValue|train": 9,
+   "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents|sealed_test": 1,
+   "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents|train": 1,
+   "us-gaap:ContractWithCustomerLiabilityCurrent|dev": 1,
+   "us-gaap:ContractWithCustomerLiabilityNoncurrent|dev": 1,
+   "us-gaap:ContractWithCustomerLiabilityNoncurrent|train": 1,
+   "us-gaap:DebtCurrent|train": 1,
+   "us-gaap:DeferredIncomeTaxAssetsNet|train": 4,
+   "us-gaap:DeferredIncomeTaxLiabilitiesNet|dev": 1,
+   "us-gaap:DeferredIncomeTaxLiabilitiesNet|sealed_test": 1,
+   "us-gaap:DeferredIncomeTaxLiabilitiesNet|train": 5,
+   "us-gaap:DeferredRevenueCurrent|train": 1,
+   "us-gaap:DefinedBenefitPensionPlanLiabilitiesNoncurrent|train": 1,
+   "us-gaap:EmployeeRelatedLiabilitiesCurrent|sealed_test": 2,
+   "us-gaap:EquityMethodInvestments|train": 1,
+   "us-gaap:FinanceLeaseLiabilityCurrent|sealed_test": 1,
+   "us-gaap:FinanceLeaseLiabilityNoncurrent|sealed_test": 1,
+   "us-gaap:FinanceLeaseLiabilityNoncurrent|train": 6,
+   "us-gaap:FiniteLivedIntangibleAssetsNet|sealed_test": 1,
+   "us-gaap:FiniteLivedIntangibleAssetsNet|train": 3,
+   "us-gaap:Goodwill|dev": 1,
+   "us-gaap:Goodwill|sealed_test": 2,
+   "us-gaap:Goodwill|train": 9,
+   "us-gaap:IntangibleAssetsNetExcludingGoodwill|dev": 2,
+   "us-gaap:IntangibleAssetsNetExcludingGoodwill|sealed_test": 1,
+   "us-gaap:IntangibleAssetsNetExcludingGoodwill|train": 7,
+   "us-gaap:InventoryNet|dev": 2,
+   "us-gaap:InventoryNet|sealed_test": 2,
+   "us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent|sealed_test": 1,
+   "us-gaap:LongTermDebtCurrent|dev": 1,
+   "us-gaap:LongTermDebtCurrent|train": 3,
+   "us-gaap:LongTermDebtNoncurrent|dev": 3,
+   "us-gaap:LongTermDebtNoncurrent|sealed_test": 1,
+   "us-gaap:LongTermDebtNoncurrent|train": 6,
+   "us-gaap:LongTermNotesPayable|train": 1,
+   "us-gaap:MarketableSecuritiesCurrent|dev": 1,
+   "us-gaap:NotesPayableCurrent|train": 2,
+   "us-gaap:OperatingLeaseLiabilityCurrent|dev": 3,
+   "us-gaap:OperatingLeaseLiabilityCurrent|sealed_test": 3,
+   "us-gaap:OperatingLeaseLiabilityCurrent|train": 8,
+   "us-gaap:OperatingLeaseLiabilityNoncurrent|dev": 2,
+   "us-gaap:OperatingLeaseLiabilityNoncurrent|sealed_test": 3,
+   "us-gaap:OperatingLeaseLiabilityNoncurrent|train": 8,
+   "us-gaap:OperatingLeaseRightOfUseAsset|dev": 2,
+   "us-gaap:OperatingLeaseRightOfUseAsset|sealed_test": 4,
+   "us-gaap:OperatingLeaseRightOfUseAsset|train": 10,
+   "us-gaap:OtherAssetsCurrent|dev": 1,
+   "us-gaap:OtherAssetsCurrent|sealed_test": 1,
+   "us-gaap:OtherAssetsCurrent|train": 2,
+   "us-gaap:OtherAssetsNoncurrent|dev": 3,
+   "us-gaap:OtherAssetsNoncurrent|sealed_test": 2,
+   "us-gaap:OtherLiabilitiesCurrent|dev": 1,
+   "us-gaap:OtherLiabilitiesNoncurrent|dev": 3,
+   "us-gaap:OtherLiabilitiesNoncurrent|sealed_test": 1,
+   "us-gaap:OtherLiabilitiesNoncurrent|train": 7,
+   "us-gaap:PrepaidExpenseAndOtherAssetsCurrent|dev": 2,
+   "us-gaap:PrepaidExpenseAndOtherAssetsCurrent|sealed_test": 2,
+   "us-gaap:PrepaidExpenseAndOtherAssetsCurrent|train": 5,
+   "us-gaap:PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization|train": 5,
+   "us-gaap:PropertyPlantAndEquipmentNet|dev": 3,
+   "us-gaap:PropertyPlantAndEquipmentNet|sealed_test": 3,
+   "us-gaap:PropertyPlantAndEquipmentNet|train": 5,
+   "us-gaap:ShortTermBorrowings|dev": 1,
+   "us-gaap:ShortTermBorrowings|train": 1,
+   "us-gaap:ShortTermInvestments|sealed_test": 1,
+   "us-gaap:TaxesPayableCurrent|sealed_test": 1,
+   "us-gaap:TaxesPayableCurrent|train": 2
+  },
+  "C_eval_group_by_split": {
+   "dev/heldout_tag_seen_line": 3,
+   "dev/heldout_tag_unseen_line": 8,
+   "dev/seen_tag": 36,
+   "sealed_test/heldout_tag_seen_line": 5,
+   "sealed_test/heldout_tag_unseen_line": 5,
+   "sealed_test/seen_tag": 33,
+   "train/seen_tag": 137
+  },
+  "dev_protocol": {
+   "revision_reason": 4,
+   "bs_line_classification": 40
+  },
+  "A_exclusions": {
+   "no_usable_passage": 12
+  },
+  "C_exclusions": {
+   "no_10k_assets": 11,
+   "ltd_only_total_LongTermDebt_not_in_66": 2,
+   "fewer_than_3_neighbours": 1,
+   "heldout_tag_in_train_company_dropped": 36
+  }
+ },
+ "C_tags_never_observed": [
+  "AccountsPayableTradeCurrent",
+  "AvailableForSaleSecuritiesDebtSecuritiesNoncurrent",
+  "CommercialPaper",
+  "ConvertibleNotesPayable",
+  "DeferredRevenueNoncurrent",
+  "DeferredTaxAssetsNetNoncurrent",
+  "DeferredTaxLiabilitiesNoncurrent",
+  "LongTermDebtAndCapitalLeaseObligations",
+  "LongTermInvestments",
+  "LongTermLineOfCredit",
+  "LongTermNotesAndLoans",
+  "MarketableSecuritiesNoncurrent",
+  "NotesPayable",
+  "OtherLongTermDebtNoncurrent",
+  "OtherShortTermBorrowings",
+  "PensionAndOtherPostretirementDefinedBenefitPlansLiabilitiesNoncurrent",
+  "PrepaidExpenseCurrent",
+  "ReceivablesNetCurrent",
+  "SecuredDebt",
+  "SeniorLongTermNotes",
+  "SeniorNotes",
+  "UnsecuredDebt"
+ ],
+ "length": {
+  "chars_per_token_estimate": 4,
+  "limit_A": 900,
+  "limit_C": 900,
+  "A_max_est_tokens": 893,
+  "A_passage_chars_max": 1940,
+  "C_max_est_tokens": 304
+ },
+ "sha256": {
+  "train.jsonl": "ba542223a1543a7a01202a5928292d0073a57cffff218ebbd115f4b86570853d",
+  "dev.jsonl": "6b858d8b37c76cc4e14b148a78f2091db582c8b5728d374216f706deb17aedfb",
+  "sealed/test.jsonl": "002f2af314d961bc13d603ac1a0dd11dfc177c25cebe388bc6885f3221ca2eba",
+  "dev-protocol.jsonl": "b44e25102708d058e25fd93cd46b195f811fe43a9dbe3775484dbe302dea5284",
+  "heldout-tags.json": "766fe29a6dcef412b6a3989b1bc445791c9e41021759e7d0e00cf33e6e91b4f4",
+  "split-membership.json": "4fced0afe9460692e674ab2226d4372b620754f7ef2ff1d41af260259b73ea49",
+  "build_v3_owner.py": "94bd7e6ecf5ea6d762c75db359a9f1dd93b568869b6d48c98aaafc1616c878a7"
+ },
+ "sec": {
+  "user_agent": "Filing Flows filingflows@gmail.com",
+  "min_gap_seconds": 0.125,
+  "max_requests": 1500,
+  "request_attempts_total": 97,
+  "stopped": null,
+  "failures_this_invocation": [],
+  "failures_logged_total": 0,
+  "status_counts": {
+   "200": 97
+  }
+ },
+ "checks_all_ok": true
+}
