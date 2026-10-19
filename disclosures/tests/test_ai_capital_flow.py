@@ -1,5 +1,14 @@
+import sys
 import unittest
-from disclosures.app.ai_capital_flow import build, projection, validate, CATEGORY, VENDOR
+from pathlib import Path
+
+# The module is run from the repository root (python -m disclosures.app.ai_capital_flow: it uses pipeline/); the Hub's
+# own checks run "unittest discover" inside disclosures/, so the root goes on the path here.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+try:
+    from disclosures.app.ai_capital_flow import build, projection, validate, CATEGORY, VENDOR
+except ImportError as exc:                       # a checkout without pipeline/: ai-capital-flow.yml runs these tests
+    raise unittest.SkipTest(f"ai_capital_flow not importable here ({exc})")
 
 class TestAICapex(unittest.TestCase):
     def test_weights(self):
