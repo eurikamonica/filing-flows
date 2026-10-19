@@ -1,0 +1,946 @@
+{
+  "hour_utc": "2026-10-19T05:00:00+00:00",
+  "new_questions": 33,
+  "task_counts": {
+    "journal_entry": 3,
+    "accounting_equation": 3,
+    "three_statements": 3,
+    "accrual_ratio": 3,
+    "numeric_sign_units": 3,
+    "evidence_abstention": 3,
+    "sec_revenue_growth": 5,
+    "sec_quarter_growth": 5,
+    "sec_fcf": 5
+  },
+  "training_eligible": 18,
+  "requires_review": 15,
+  "warnings": [],
+  "questions": [
+    {
+      "id": "f4583a062639d198c9e2483c",
+      "task": "journal_entry",
+      "input": "Pay USD 151 cash for PPE. Give balanced debit/credit journal entries JSON.",
+      "output": "{\"entries\":[{\"account\":\"PPE\",\"debit\":151,\"credit\":0},{\"account\":\"Cash\",\"debit\":0,\"credit\":151}]}",
+      "expected": {
+        "entries": [
+          {
+            "account": "PPE",
+            "debit": 151,
+            "credit": 0
+          },
+          {
+            "account": "Cash",
+            "debit": 0,
+            "credit": 151
+          }
+        ]
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 0
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "DR PPE; CR Cash",
+        "DR=CR"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "1ef9d0ae869b776e596ec086",
+      "task": "accounting_equation",
+      "input": "Begin cash=204, inventory=176, PPE=148, debt=115, equity=413. Borrow 35, buy PPE for cash 39. Return final assets, debt, equity and balance equality JSON.",
+      "output": "{\"assets\":563,\"debt\":150,\"equity\":413,\"balanced\":true}",
+      "expected": {
+        "assets": 563,
+        "debt": 150,
+        "equity": 413,
+        "balanced": true
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 1
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Equipment is asset swap",
+        "A=L+E"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "d20f654dc2bb5f6b56aedf9a",
+      "task": "three_statements",
+      "input": "Begin USD: Cash=100, Inventory=80, PPE=100, Debt=80, Equity=200. Cash revenue 119, inventory COGS 54, cash CapEx 31, cash debt proceeds 27. No other activity. Derive IS, BS, SCF.",
+      "output": "{\"IS\":{\"revenue\":119,\"COGS\":54,\"NI\":65},\"BS\":{\"cash\":215,\"inventory\":26,\"ppe\":131,\"debt\":107,\"equity\":265},\"SCF\":{\"CFO\":119,\"CFI\":-31,\"CFF\":27,\"cash_change\":115}}",
+      "expected": {
+        "IS": {
+          "revenue": 119,
+          "COGS": 54,
+          "NI": 65
+        },
+        "BS": {
+          "cash": 215,
+          "inventory": 26,
+          "ppe": 131,
+          "debt": 107,
+          "equity": 265
+        },
+        "SCF": {
+          "CFO": 119,
+          "CFI": -31,
+          "CFF": 27,
+          "cash_change": 115
+        }
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 2
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "NI = Sales - COGS",
+        "CFO=NI+inventory decrease",
+        "Assets=Liabilities+Equity",
+        "Cash roll-forward"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "7623a55404d89515619da4ee",
+      "task": "accrual_ratio",
+      "input": "Evidence S1: NI=-3, OCF=194, average assets=1000 USD millions. Compute accrual ratio (NI-OCF)/average assets as a fraction. Return JSON value/source_id S1.",
+      "output": "{\"value\":-0.197,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": -0.197,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 3
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Correct negative sign",
+        "Fraction not percent"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "1c18ba8287fba3edd21077cd",
+      "task": "numeric_sign_units",
+      "input": "Evidence S1: sales previous=498 current=417 (both USD millions). Compute period change as fraction JSON value/source_id S1.",
+      "output": "{\"value\":-0.1626506,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": -0.1626506,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 4
+      },
+      "priority": "P1",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "YoY denominator previous",
+        "No unit or scale mistake"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "d83d9017c014032bf552236c",
+      "task": "evidence_abstention",
+      "input": "Evidence S1 contains cash of 819 USD millions but no long-term debt figure. Return JSON long_term_debt=null and reason=insufficient_evidence.",
+      "output": "{\"long_term_debt\":null,\"reason\":\"insufficient_evidence\"}",
+      "expected": {
+        "long_term_debt": null,
+        "reason": "insufficient_evidence"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 5
+      },
+      "priority": "P2",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "No unsupported inference"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "ca26f4315e276f2a9ad0ef1c",
+      "task": "journal_entry",
+      "input": "Pay USD 6573 cash for PPE. Give balanced debit/credit journal entries JSON.",
+      "output": "{\"entries\":[{\"account\":\"PPE\",\"debit\":6573,\"credit\":0},{\"account\":\"Cash\",\"debit\":0,\"credit\":6573}]}",
+      "expected": {
+        "entries": [
+          {
+            "account": "PPE",
+            "debit": 6573,
+            "credit": 0
+          },
+          {
+            "account": "Cash",
+            "debit": 0,
+            "credit": 6573
+          }
+        ]
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 6
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "DR PPE; CR Cash",
+        "DR=CR"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "06557609e3736958eb715c11",
+      "task": "accounting_equation",
+      "input": "Begin cash=168, inventory=130, PPE=201, debt=135, equity=364. Borrow 30, buy PPE for cash 21. Return final assets, debt, equity and balance equality JSON.",
+      "output": "{\"assets\":529,\"debt\":165,\"equity\":364,\"balanced\":true}",
+      "expected": {
+        "assets": 529,
+        "debt": 165,
+        "equity": 364,
+        "balanced": true
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 7
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Equipment is asset swap",
+        "A=L+E"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "9bbfe71e2eb583d501066a9b",
+      "task": "three_statements",
+      "input": "Begin USD: Cash=100, Inventory=80, PPE=100, Debt=80, Equity=200. Cash revenue 180, inventory COGS 34, cash CapEx 24, cash debt proceeds 26. No other activity. Derive IS, BS, SCF.",
+      "output": "{\"IS\":{\"revenue\":180,\"COGS\":34,\"NI\":146},\"BS\":{\"cash\":282,\"inventory\":46,\"ppe\":124,\"debt\":106,\"equity\":346},\"SCF\":{\"CFO\":180,\"CFI\":-24,\"CFF\":26,\"cash_change\":182}}",
+      "expected": {
+        "IS": {
+          "revenue": 180,
+          "COGS": 34,
+          "NI": 146
+        },
+        "BS": {
+          "cash": 282,
+          "inventory": 46,
+          "ppe": 124,
+          "debt": 106,
+          "equity": 346
+        },
+        "SCF": {
+          "CFO": 180,
+          "CFI": -24,
+          "CFF": 26,
+          "cash_change": 182
+        }
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 8
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "NI = Sales - COGS",
+        "CFO=NI+inventory decrease",
+        "Assets=Liabilities+Equity",
+        "Cash roll-forward"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "728909a89b63339bb4701778",
+      "task": "accrual_ratio",
+      "input": "Evidence S1: NI=106, OCF=78, average assets=800 USD millions. Compute accrual ratio (NI-OCF)/average assets as a fraction. Return JSON value/source_id S1.",
+      "output": "{\"value\":0.035,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": 0.035,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 9
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Correct negative sign",
+        "Fraction not percent"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "e5ca4b3593fb9963a0e2dc84",
+      "task": "numeric_sign_units",
+      "input": "Evidence S1: sales previous=699 current=650 (both USD millions). Compute period change as fraction JSON value/source_id S1.",
+      "output": "{\"value\":-0.07010014,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": -0.07010014,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 10
+      },
+      "priority": "P1",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "YoY denominator previous",
+        "No unit or scale mistake"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "1f74f7e4fdc7b7f14fda6d50",
+      "task": "evidence_abstention",
+      "input": "Evidence S1 contains cash of 1663 USD millions but no long-term debt figure. Return JSON long_term_debt=null and reason=insufficient_evidence.",
+      "output": "{\"long_term_debt\":null,\"reason\":\"insufficient_evidence\"}",
+      "expected": {
+        "long_term_debt": null,
+        "reason": "insufficient_evidence"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 11
+      },
+      "priority": "P2",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "No unsupported inference"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "74d42dff1d006b3ea80e31b7",
+      "task": "journal_entry",
+      "input": "Pay USD 12630 cash for PPE. Give balanced debit/credit journal entries JSON.",
+      "output": "{\"entries\":[{\"account\":\"PPE\",\"debit\":12630,\"credit\":0},{\"account\":\"Cash\",\"debit\":0,\"credit\":12630}]}",
+      "expected": {
+        "entries": [
+          {
+            "account": "PPE",
+            "debit": 12630,
+            "credit": 0
+          },
+          {
+            "account": "Cash",
+            "debit": 0,
+            "credit": 12630
+          }
+        ]
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 12
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "DR PPE; CR Cash",
+        "DR=CR"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "52dd81f18da9370594543f1e",
+      "task": "accounting_equation",
+      "input": "Begin cash=179, inventory=95, PPE=141, debt=111, equity=304. Borrow 66, buy PPE for cash 37. Return final assets, debt, equity and balance equality JSON.",
+      "output": "{\"assets\":481,\"debt\":177,\"equity\":304,\"balanced\":true}",
+      "expected": {
+        "assets": 481,
+        "debt": 177,
+        "equity": 304,
+        "balanced": true
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 13
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Equipment is asset swap",
+        "A=L+E"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "c84609c1a43ce25c1572c401",
+      "task": "three_statements",
+      "input": "Begin USD: Cash=100, Inventory=80, PPE=100, Debt=80, Equity=200. Cash revenue 104, inventory COGS 62, cash CapEx 29, cash debt proceeds 14. No other activity. Derive IS, BS, SCF.",
+      "output": "{\"IS\":{\"revenue\":104,\"COGS\":62,\"NI\":42},\"BS\":{\"cash\":189,\"inventory\":18,\"ppe\":129,\"debt\":94,\"equity\":242},\"SCF\":{\"CFO\":104,\"CFI\":-29,\"CFF\":14,\"cash_change\":89}}",
+      "expected": {
+        "IS": {
+          "revenue": 104,
+          "COGS": 62,
+          "NI": 42
+        },
+        "BS": {
+          "cash": 189,
+          "inventory": 18,
+          "ppe": 129,
+          "debt": 94,
+          "equity": 242
+        },
+        "SCF": {
+          "CFO": 104,
+          "CFI": -29,
+          "CFF": 14,
+          "cash_change": 89
+        }
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 14
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "NI = Sales - COGS",
+        "CFO=NI+inventory decrease",
+        "Assets=Liabilities+Equity",
+        "Cash roll-forward"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "648b96d824e6e58a8e5e7240",
+      "task": "accrual_ratio",
+      "input": "Evidence S1: NI=-86, OCF=199, average assets=400 USD millions. Compute accrual ratio (NI-OCF)/average assets as a fraction. Return JSON value/source_id S1.",
+      "output": "{\"value\":-0.7125,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": -0.7125,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 15
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Correct negative sign",
+        "Fraction not percent"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "812cb15d5b75e9bbc0cb664f",
+      "task": "numeric_sign_units",
+      "input": "Evidence S1: sales previous=310 current=316 (both USD millions). Compute period change as fraction JSON value/source_id S1.",
+      "output": "{\"value\":0.01935484,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": 0.01935484,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 16
+      },
+      "priority": "P1",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "YoY denominator previous",
+        "No unit or scale mistake"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "82402d82fbff7e537b753bc1",
+      "task": "evidence_abstention",
+      "input": "Evidence S1 contains cash of 2585 USD millions but no long-term debt figure. Return JSON long_term_debt=null and reason=insufficient_evidence.",
+      "output": "{\"long_term_debt\":null,\"reason\":\"insufficient_evidence\"}",
+      "expected": {
+        "long_term_debt": null,
+        "reason": "insufficient_evidence"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497885,
+        "example": 17
+      },
+      "priority": "P2",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "No unsupported inference"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "7a7ecad8437ddb30424b684d",
+      "task": "sec_revenue_growth",
+      "input": "Official SEC companyfacts AAPL RevenueFromContractWithCustomerExcludingAssessedTax: FY ending 2024-09-28 revenue USD 391035000000; FY ending 2025-09-27 revenue USD 416161000000. Compute YoY revenue growth FRACTION and source_id SEC.",
+      "output": "{\"value\":0.06425512,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 0.06425512,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "ticker": "AAPL",
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "accessions": [
+          "0000320193-25-000079",
+          "0000320193-25-000079"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "Same tag, annual period, USD",
+        "Cross-check original filing"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "9a58d8c76637860263c7eb03",
+      "task": "sec_quarter_growth",
+      "input": "Official SEC 10-Q AAPL RevenueFromContractWithCustomerExcludingAssessedTax, same fiscal quarter Q3: prior FY quarter ended 2025-06-28 revenue USD 94036000000; current FY quarter ended 2026-06-27 revenue USD 109417000000. Compute quarter YoY revenue change as FRACTION, JSON value/source_id SEC.",
+      "output": "{\"value\":0.16356502,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 0.16356502,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "ticker": "AAPL",
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "quarter": "Q3",
+        "accessions": [
+          "0000320193-26-000020",
+          "0000320193-26-000020"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "10-Q facts must represent 3-month quarters, not YTD",
+        "Match fiscal quarter and tag"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "d60210470c2c5ef5b0ea10ba",
+      "task": "sec_fcf",
+      "input": "SEC AAPL FY 2025-09-27: CFO USD 111482000000, PPE purchases USD 12715000000. Compute simple FCF=CFO-PPE purchases. JSON value/source_id SEC.",
+      "output": "{\"value\":98767000000,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 98767000000,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+        "ticker": "AAPL",
+        "accession": "0000320193-25-000079",
+        "tags": [
+          "NetCashProvidedByUsedInOperatingActivities",
+          "PaymentsToAcquirePropertyPlantAndEquipment"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "Verify exact same period/accession",
+        "FCF definition CFO less capex"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "35a38881260ea7041d8f1159",
+      "task": "sec_revenue_growth",
+      "input": "Official SEC companyfacts MSFT RevenueFromContractWithCustomerExcludingAssessedTax: FY ending 2025-06-30 revenue USD 281724000000; FY ending 2026-06-30 revenue USD 331839000000. Compute YoY revenue growth FRACTION and source_id SEC.",
+      "output": "{\"value\":0.17788687,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 0.17788687,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+        "ticker": "MSFT",
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "accessions": [
+          "0001193125-26-323660",
+          "0001193125-26-323660"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "Same tag, annual period, USD",
+        "Cross-check original filing"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "0f1058fba63f45eb972198f4",
+      "task": "sec_quarter_growth",
+      "input": "Official SEC 10-Q MSFT RevenueFromContractWithCustomerExcludingAssessedTax, same fiscal quarter Q3: prior FY quarter ended 2025-03-31 revenue USD 70066000000; current FY quarter ended 2026-03-31 revenue USD 82886000000. Compute quarter YoY revenue change as FRACTION, JSON value/source_id SEC.",
+      "output": "{\"value\":0.18297034,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 0.18297034,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+        "ticker": "MSFT",
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "quarter": "Q3",
+        "accessions": [
+          "0001193125-26-191507",
+          "0001193125-26-191507"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "10-Q facts must represent 3-month quarters, not YTD",
+        "Match fiscal quarter and tag"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "d3dbcb2dba68ed9b3a1116d4",
+      "task": "sec_fcf",
+      "input": "SEC MSFT FY 2026-06-30: CFO USD 182935000000, PPE purchases USD 115948000000. Compute simple FCF=CFO-PPE purchases. JSON value/source_id SEC.",
+      "output": "{\"value\":66987000000,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 66987000000,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000789019.json",
+        "ticker": "MSFT",
+        "accession": "0001193125-26-323660",
+        "tags": [
+          "NetCashProvidedByUsedInOperatingActivities",
+          "PaymentsToAcquirePropertyPlantAndEquipment"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "Verify exact same period/accession",
+        "FCF definition CFO less capex"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "4d1683d1904f6aac377bd8ec",
+      "task": "sec_revenue_growth",
+      "input": "Official SEC companyfacts NVDA RevenueFromContractWithCustomerExcludingAssessedTax: FY ending 2021-01-31 revenue USD 16675000000; FY ending 2022-01-30 revenue USD 26914000000. Compute YoY revenue growth FRACTION and source_id SEC.",
+      "output": "{\"value\":0.61403298,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 0.61403298,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001045810.json",
+        "ticker": "NVDA",
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "accessions": [
+          "0001045810-22-000036",
+          "0001045810-22-000036"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "Same tag, annual period, USD",
+        "Cross-check original filing"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "487d8efd7e71a34102b1afcd",
+      "task": "sec_quarter_growth",
+      "input": "Official SEC 10-Q NVDA Revenues, same fiscal quarter Q2: prior FY quarter ended 2025-07-27 revenue USD 46743000000; current FY quarter ended 2026-07-26 revenue USD 96221000000. Compute quarter YoY revenue change as FRACTION, JSON value/source_id SEC.",
+      "output": "{\"value\":1.05851143,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 1.05851143,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001045810.json",
+        "ticker": "NVDA",
+        "tag": "Revenues",
+        "quarter": "Q2",
+        "accessions": [
+          "0001045810-26-000075",
+          "0001045810-26-000075"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "10-Q facts must represent 3-month quarters, not YTD",
+        "Match fiscal quarter and tag"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "a20933442efd301ab72891ca",
+      "task": "sec_fcf",
+      "input": "SEC NVDA FY 2010-01-31: CFO USD 487807000, PPE purchases USD 77601000. Compute simple FCF=CFO-PPE purchases. JSON value/source_id SEC.",
+      "output": "{\"value\":410206000,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 410206000,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001045810.json",
+        "ticker": "NVDA",
+        "accession": "0001045810-12-000013",
+        "tags": [
+          "NetCashProvidedByUsedInOperatingActivities",
+          "PaymentsToAcquirePropertyPlantAndEquipment"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "Verify exact same period/accession",
+        "FCF definition CFO less capex"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "a9d3af353c5c38613c9fdaa1",
+      "task": "sec_revenue_growth",
+      "input": "Official SEC companyfacts AMZN RevenueFromContractWithCustomerExcludingAssessedTax: FY ending 2024-12-31 revenue USD 637959000000; FY ending 2025-12-31 revenue USD 716924000000. Compute YoY revenue growth FRACTION and source_id SEC.",
+      "output": "{\"value\":0.12377755,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 0.12377755,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001018724.json",
+        "ticker": "AMZN",
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "accessions": [
+          "0001018724-26-000004",
+          "0001018724-26-000004"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "Same tag, annual period, USD",
+        "Cross-check original filing"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "d2f304cc807b710f90e902aa",
+      "task": "sec_quarter_growth",
+      "input": "Official SEC 10-Q AMZN RevenueFromContractWithCustomerExcludingAssessedTax, same fiscal quarter Q2: prior FY quarter ended 2025-06-30 revenue USD 167702000000; current FY quarter ended 2026-06-30 revenue USD 200606000000. Compute quarter YoY revenue change as FRACTION, JSON value/source_id SEC.",
+      "output": "{\"value\":0.19620517,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 0.19620517,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001018724.json",
+        "ticker": "AMZN",
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "quarter": "Q2",
+        "accessions": [
+          "0001018724-26-000026",
+          "0001018724-26-000026"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "10-Q facts must represent 3-month quarters, not YTD",
+        "Match fiscal quarter and tag"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "ded98b6537dbff2b8cf5fffe",
+      "task": "sec_fcf",
+      "input": "SEC AMZN FY 2014-12-31: CFO USD 6842000000, PPE purchases USD 4893000000. Compute simple FCF=CFO-PPE purchases. JSON value/source_id SEC.",
+      "output": "{\"value\":1949000000,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 1949000000,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001018724.json",
+        "ticker": "AMZN",
+        "accession": "0001018724-17-000011",
+        "tags": [
+          "NetCashProvidedByUsedInOperatingActivities",
+          "PaymentsToAcquirePropertyPlantAndEquipment"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "Verify exact same period/accession",
+        "FCF definition CFO less capex"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "3ceb340ad1fc4dc046ad582e",
+      "task": "sec_revenue_growth",
+      "input": "Official SEC companyfacts TSLA RevenueFromContractWithCustomerExcludingAssessedTax: FY ending 2024-12-31 revenue USD 97690000000; FY ending 2025-12-31 revenue USD 94827000000. Compute YoY revenue growth FRACTION and source_id SEC.",
+      "output": "{\"value\":-0.02930699,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": -0.02930699,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001318605.json",
+        "ticker": "TSLA",
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "accessions": [
+          "0001628280-26-003952",
+          "0001628280-26-003952"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "Same tag, annual period, USD",
+        "Cross-check original filing"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "7ab3fa7053ad8474c7eb2597",
+      "task": "sec_quarter_growth",
+      "input": "Official SEC 10-Q TSLA RevenueFromContractWithCustomerExcludingAssessedTax, same fiscal quarter Q2: prior FY quarter ended 2025-06-30 revenue USD 22496000000; current FY quarter ended 2026-06-30 revenue USD 28236000000. Compute quarter YoY revenue change as FRACTION, JSON value/source_id SEC.",
+      "output": "{\"value\":0.25515647,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 0.25515647,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001318605.json",
+        "ticker": "TSLA",
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "quarter": "Q2",
+        "accessions": [
+          "0001628280-26-049270",
+          "0001628280-26-049270"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "10-Q facts must represent 3-month quarters, not YTD",
+        "Match fiscal quarter and tag"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    },
+    {
+      "id": "5b24ea16fe9450c1ca81b618",
+      "task": "sec_fcf",
+      "input": "SEC TSLA FY 2025-12-31: CFO USD 14747000000, PPE purchases USD 8527000000. Compute simple FCF=CFO-PPE purchases. JSON value/source_id SEC.",
+      "output": "{\"value\":6220000000,\"source_id\":\"SEC\"}",
+      "expected": {
+        "value": 6220000000,
+        "source_id": "SEC"
+      },
+      "source": {
+        "kind": "sec",
+        "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001318605.json",
+        "ticker": "TSLA",
+        "accession": "0001628280-26-003952",
+        "tags": [
+          "NetCashProvidedByUsedInOperatingActivities",
+          "PaymentsToAcquirePropertyPlantAndEquipment"
+        ]
+      },
+      "priority": "P1",
+      "review_status": "needs_review",
+      "training_eligible": false,
+      "checks": [
+        "Verify exact same period/accession",
+        "FCF definition CFO less capex"
+      ],
+      "generated_utc": "2026-10-19T05:00:00+00:00"
+    }
+  ]
+}
