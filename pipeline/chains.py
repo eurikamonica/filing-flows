@@ -249,7 +249,16 @@ class Co:
         if not rows:
             return {}
         end = max(e for _, e in rows.values())
-        return {l: v for l, (v, e) in rows.items() if e == end and v > 0}
+        rows = {l: v for l, (v, e) in rows.items() if e == end and v > 0}
+        # countries and the regions that contain them can both be tagged: keep the set that adds up to total revenue
+        tot = xfacts.ttm(*[p.get("total") or [] for p in reversed(self.parses())])
+        if tot and tot.get("v") and tot.get("end") == end:
+            from .dims import best_partition
+            part = best_partition({l: (l, v) for l, v in rows.items()}, tot["v"] * self.conv)
+            if part:
+                return {x["id"]: rows[x["id"]] for x in part["leaves"]}
+        agg = re.compile(r"(?i)foreign|international|non-?u\.?s|outside|^total|all other countries combined")
+        return {l: v for l, v in rows.items() if not agg.search(l)} or rows
 
     def customers(self):
         """Named (and anonymous) major customers: [{"label", "pct", "v", "period", "how"}], newest filing first."""
