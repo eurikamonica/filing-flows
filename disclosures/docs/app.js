@@ -164,7 +164,9 @@ const TABS=[...document.querySelectorAll('nav button[data-tab]')].map(b=>b.datas
 function syncPills(){document.querySelectorAll('nav button[data-tab]').forEach(x=>{const on=x.dataset.tab===state.tab;x.classList.toggle('active',on);x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))})}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.page=0;state.date='';syncPills();try{history.replaceState(null,'','#'+state.tab)}catch(e){}render()});
 /* deep links: disclosures/#signals, #flows, #trades, #holdings … */
-function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
+function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);if(arg)deepLink(h,decodeURIComponent(arg));if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
+/* deep links from the site's search: #holdings/<manager CIK>, #trades/<official's name>, #etf/<ticker> */
+function deepLink(h,v){if(!v)return;if(h==='holdings')state.manager=v.replace(/\D/g,'');else if(h==='trades'){state.tperson=v;state.page=0}else if(h==='etf'){state.eview='one';state.esym=v.toUpperCase()}}
 addEventListener('hashchange',()=>{if(fromHash())render()});
 fromHash();syncPills();
 render();

@@ -618,8 +618,10 @@
       </div>
       ${own !== 'USD' ? ccyBar(own, inUsd, !!c.usd, q) : ''}
       <section class="section cmp-panel" id="cmp-panel" hidden></section>
+      <div id="ff-overview"></div>
       <div id="body"></div>`;
     const body = $('#body');
+    if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
     app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
     initCompare(c, cik);
     if (cmpId) {
@@ -653,6 +655,7 @@
       trend: (id) => trendSeries(fy ? ys : qs, q, id, fy), cik: p.cik,
     });
     body.appendChild(ui);
+    if (window.FFEditor && !fy && (own === 'USD' || inUsd)) window.FFEditor.mount(body, { q, c, ticker, slug: `${(ticker || p.cik)}-${q.label}`.replace(/\s+/g, '-') });   // web/editor.js: edit / what-if
     const acc = accession(q.index_url);
     const text = document.createElement('div');
     text.className = 'cols';
@@ -3797,9 +3800,9 @@
       const draw = (list) => {
         items = list.slice(0, 8);
         hi = 0;
-        box.innerHTML = items.map((c, i) => `<a href="#c-${c.cik}" class="${i === hi ? 'hi' : ''}${c.off ? ' off' : ''}"><span class="mono">${t(c.ticker)}</span><span>${t(c.name)}</span>${
-          c.off ? '<span class="tag">no chart yet</span>' : ''}</a>`).join('') ||
-          '<div class="muted" style="padding:8px 10px">No company found</div>';
+        const more = window.FFSearch ? window.FFSearch.moreHTML(q) : '';      // web/search.js: 13F managers, officials, ETFs
+        box.innerHTML = (items.map((c, i) => `<a href="#c-${c.cik}" class="${i === hi ? 'hi' : ''}${c.off ? ' off' : ''}"><span class="mono">${t(c.ticker)}</span><span>${t(c.name)}</span>${
+          c.off ? '<span class="tag">no chart yet</span>' : ''}</a>`).join('') || (more ? '' : '<div class="muted" style="padding:8px 10px">No company found</div>')) + more;
         box.hidden = false;
       };
       draw(here);
@@ -4865,6 +4868,8 @@
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
       else if ((m = /^([si])-([a-z0-9-]+?)(?:-(CY\d{4}Q\d))?$/.exec(h))) await group(m[1], m[2], m[3]);
       else if (h === 'sectors') await sectorsPage();
+      else if (h === 'feed' && window.FFFeed) await window.FFFeed.render(app, Object.assign({}, window.FFApp, { here }));
+      else if ((m = /^chart(?:\/(.*))?$/.exec(h)) && window.FFCharts) await window.FFCharts.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if (h === 'method') await methodPage();
       else if (h === 'account') await accountPage();
       else if (h === 'owner') await ownerPage();
@@ -4884,6 +4889,16 @@
     const page = location.hash.split('-').slice(0, 2).join('-');
     route().then(() => { if (page !== lastPage) window.scrollTo(0, 0); lastPage = page; });
   });
+  // what the discovery & UX modules (web/feed.js, charts.js) need from the app
+  window.FFApp = {
+    getJSON, setNav, here: () => true,
+    async loadFollows() {
+      const user = await currentUser().catch(() => null);
+      if (!user) return { signedIn: false, tickers: [] };
+      const p = acct.prefs || await loadPrefs().catch(() => null);
+      return { signedIn: true, tickers: (p && p.tickers) || [] };
+    },
+  };
   setupSearch();
   setupTheme();
   route();
