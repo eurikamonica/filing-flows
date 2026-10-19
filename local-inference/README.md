@@ -16,6 +16,8 @@ The owner already has the complete pinned weights and a verified independent vir
 
 Do not start this command while the existing companion or a training/evaluation GPU job is running. The server checks GPU usage and refuses startup above 700 MiB. It listens only on `127.0.0.1:8768`; do not expose it on a LAN or public interface. Stop this foreground command with Ctrl+C when done; it is not installed as a system service or scheduled job.
 
+The panel appears only in owner mode (sign in on `#owner` and switch the owner tools on); other visitors never see it. If the site is served from another address than `https://filing-flows.com` (for example GitHub Pages), add it with `--origin https://<that address>`.
+
 Open a company earnings page, expand **Ask local Qwen3-8B**, and paste the contents of the runtime's `client-token.txt` into **Local access token**. Select **Connect** and allow browser local network access if prompted. The token is generated on startup, stays in browser page memory, and is cleared on disconnect/reload. Do not place it in a URL, GitHub secret for public JavaScript, or source control. Other computers require their own local companion and model installation.
 
 For a fresh installation, use a separate virtual environment and the versions in `requirements-windows.txt`. CUDA PyTorch uses the official `https://download.pytorch.org/whl/cu128` index. Provision the pinned Hugging Face snapshot separately after checking disk space (raw model shards total 16,381,516,776 bytes). This server never downloads weights automatically. The provided versions were measured on Python 3.14.7, driver 581.83 and an RTX 3050 Laptop 6GB; other platforms and browsers have not been validated.

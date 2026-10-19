@@ -687,7 +687,8 @@
       </div>`;
     body.appendChild(text);
     // Created by ChatGPT (OpenAI): user-initiated loopback assistant, separate from rule-based analysis.
-    if (window.LocalFilingModel) window.LocalFilingModel.mount(body, p, q);
+    // owner tool only (see #owner): it needs the Windows companion running on this computer
+    if (window.LocalFilingModel && prefs.get('owner', false)) window.LocalFilingModel.mount(body, p, q);
     holdersSection(body, ticker, here);                     // who holds it: 13F managers and public officials (Disclosures)
     if (prefs.get('owner', false)) {                      // owner tool: re-read this company's stored figures
       ownerVerified().then(async (ok) => {

@@ -44,6 +44,13 @@ class Tests(unittest.TestCase):
         self.assertEqual(self.request(headers={**auth, 'Host': 'evil.example'})[0], 403)
         self.assertNotIn(b'test-secret', self.request(headers=auth)[2])
 
+    def test_extra_origin(self):
+        server = Companion(('127.0.0.1', 0), FakeModel(), 'k', Path(self.directory.name), origins={'https://x.github.io'})
+        try:
+            self.assertEqual(server.origins, {'https://x.github.io'})
+        finally:
+            server.server_close()
+
     def test_preflight(self):
         response = self.request('OPTIONS', '/ask', {'Origin': 'https://filing-flows.com',
                                 'Access-Control-Request-Method': 'POST',

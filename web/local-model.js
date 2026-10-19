@@ -55,7 +55,7 @@
       <p>Uses the model running on this computer. The site does not host an 8B model. Answers are drafts: verify the linked evidence.</p>
       <div class="local-connect"><label>Local access token <input type="password" autocomplete="off" spellcheck="false" aria-label="Local access token"></label>
       <button class="btn" type="button" data-connect>Connect</button><button class="btn" type="button" data-disconnect>Disconnect</button></div>
-      <p class="muted">Start the Windows companion on port 8768, then paste its local token. Allow local network access if your browser asks. The token stays in page memory. <a href="https://github.com/eurikamonica/filing-flows/tree/beta/windows-qwen3-8b-20261016/local-inference" target="_blank" rel="noopener">Companion setup</a></p>
+      <p class="muted">Start the Windows companion on port 8768, then paste its local token. Allow local network access if your browser asks. The token stays in page memory. <a href="https://github.com/eurikamonica/filing-flows/tree/main/local-inference" target="_blank" rel="noopener">Companion setup</a></p>
       <form><label>Question about this period <textarea required maxlength="1000" rows="2" placeholder="What does the supplied evidence say about revenue?"></textarea></label>
       <button class="btn" type="submit">Ask using this period</button></form>
       <p role="status" aria-live="polite"></p><div class="local-answer"></div>

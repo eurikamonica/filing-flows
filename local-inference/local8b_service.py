@@ -207,11 +207,16 @@ def main():
     parser.add_argument('--runtime', type=Path, required=True)
     parser.add_argument('--port', type=int, default=8768)
     parser.add_argument('--model-source', type=Path, default=SOURCE)
+    parser.add_argument('--origin', action='append', default=[],
+                        help='another https origin allowed to call the companion (e.g. the GitHub Pages address); repeatable')
     args = parser.parse_args()
+    extra = [o.rstrip('/') for o in args.origin]
+    if any(not re.fullmatch(r'https://[a-z0-9.-]+(:[0-9]+)?', o) for o in extra):
+        parser.error('--origin must be an https origin such as https://example.github.io')
     args.runtime.mkdir(parents=True, exist_ok=True)
     # Bind the loopback port before loading to prevent a second service on the same port.
     token = secrets.token_urlsafe(32)
-    server = Companion(('127.0.0.1', args.port), None, token, args.runtime)
+    server = Companion(('127.0.0.1', args.port), None, token, args.runtime, origins=ORIGINS | set(extra))
     token_file = args.runtime / 'client-token.txt'
     token_file.write_text(token, encoding='utf-8')
     write(args.runtime / 'status.json', {'status': 'loading', 'utc': utc()})
