@@ -13,6 +13,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="ux.css">
+<link rel="alternate" type="application/atom+xml" href="feeds/filings.xml" title="Filing Flows — latest earnings filings">
+<link rel="alternate" type="application/atom+xml" href="feeds/8k.xml" title="Filing Flows — material 8-K events">
+<link rel="alternate" type="application/atom+xml" href="feeds/insiders.xml" title="Filing Flows — insider trades">
+<link rel="alternate" type="application/atom+xml" href="feeds/officials.xml" title="Filing Flows — officials' trades">
 </head>
 <body>
 <!--SHELL-->
@@ -31,6 +36,8 @@
     <nav class="nav" aria-label="Sections">
       <a href="#home" data-nav="home">Latest</a>
       <a href="#sectors" data-nav="sectors">Sectors</a>
+      <a href="#feed" data-nav="feed">Feed</a>
+      <a href="#chart" data-nav="chart">Charts</a>
       <a href="#method" data-nav="method">Method</a>
       <a href="#account" data-nav="account">Alerts</a>
       <a href="disclosures/">Disclosures</a>
@@ -39,6 +46,7 @@
       <input id="q" type="search" placeholder="Search ticker or company" autocomplete="off" aria-label="Search companies">
       <div class="suggest" id="suggest" hidden></div>
     </div>
+    <button class="kbd-btn" id="palette-btn" type="button" title="Search everything: companies, 13F managers, officials, ETFs (Ctrl+K or ⌘K)" aria-label="Search everything">⌘K</button>
     <button class="theme-btn" id="theme" type="button" aria-label="Toggle colour theme" title="Toggle colour theme">
       <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1.5v11a5.5 5.5 0 0 1 0-11z" fill="currentColor"/></svg>
     </button>
@@ -55,6 +63,12 @@
 <!--/SHELL-->
 <script src="sankey.js"></script>
 <script src="fsa.js"></script>
+<script src="ux.js"></script>
+<script src="search.js"></script>
+<script src="overview.js"></script>
+<script src="feed.js"></script>
+<script src="charts.js"></script>
+<script src="editor.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

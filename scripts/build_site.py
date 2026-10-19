@@ -63,6 +63,10 @@ def engage_more():
         return []
 
 
+# the page's scripts, in load order (web/index.html): the chart, the valuation maths, the discovery & UX modules, the app
+SCRIPTS = ("sankey.js", "fsa.js", "ux.js", "search.js", "overview.js", "feed.js", "charts.js", "editor.js", "app.js")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="_site/data", help="directory written by `pipeline.build render`")
@@ -74,9 +78,10 @@ def main():
     os.makedirs(args.out, exist_ok=True)
     html = open(os.path.join(WEB, "index.html"), encoding="utf-8").read()
     if args.inline:
-        css = open(os.path.join(WEB, "styles.css"), encoding="utf-8").read()
-        html = html.replace('<link rel="stylesheet" href="styles.css">', f"<style>\n{css}</style>")
-        for name in ("sankey.js", "fsa.js", "app.js"):
+        for name in ("styles.css", "ux.css"):
+            css = open(os.path.join(WEB, name), encoding="utf-8").read()
+            html = html.replace(f'<link rel="stylesheet" href="{name}">', f"<style>\n{css}</style>")
+        for name in SCRIPTS:
             js = open(os.path.join(WEB, name), encoding="utf-8").read()
             html = html.replace(f'<script src="{name}"></script>', f"<script>\n{js}</script>")
         if args.fragment:
@@ -86,7 +91,7 @@ def main():
             scripts = re.findall(r"<script>.*?</script>", html, re.S)
             html = "\n".join(keep) + "\n" + shell + "\n".join(scripts) + "\n"
     else:
-        for name in ("styles.css", "sankey.js", "fsa.js", "app.js", "favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"):
+        for name in ("styles.css", "ux.css") + SCRIPTS + ("favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"):
             shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
     open(os.path.join(args.out, "index.html"), "w", encoding="utf-8").write(html)
     data_out = os.path.join(args.out, "data")
@@ -124,6 +129,12 @@ def main():
             base = f"https://{owner.lower()}.github.io/{repo}"
         if base:
             print(f"search pages: {seo.write_pages(data_out, args.out, base)} companies, sitemap at {base}/sitemap.xml")
+        try:                                     # the global search index and Atom feeds (redone after the hub is staged)
+            import hub_extras
+            r = hub_extras.build(args.out, base or "https://filing-flows.com/")
+            print(f"search index: {r['managers']} managers, {r['officials']} officials, {r['etfs']} ETFs; {r['company_feeds']} company feeds")
+        except Exception as err:                 # noqa: BLE001 — never fails the site
+            print(f"::warning::search index / feeds not written ({str(err)[:160]})")
     # a custom domain (repository variable SITE_URL, e.g. https://filing-flows.com/): GitHub Pages reads the CNAME file
     host = re.sub(r"^https?://", "", setting("SITE_URL", url=True)).split("/")[0]
     if host and not host.endswith("github.io"):

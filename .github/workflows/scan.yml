@@ -208,6 +208,12 @@ jobs:
       - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
         run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public --debt _debt/public --consensus _cons/public --etf _etf/public --smart _smart/public --ladders _lad/public --research _research
 
+      - name: Global search index and Atom feeds (data/search.json, feeds/; after the hub is staged)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/hub_extras.py --site _site
+
       # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
       # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.
       - name: Publish the site to the "site" branch (for your own server)
