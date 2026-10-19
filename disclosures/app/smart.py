@@ -971,7 +971,7 @@ def metrics(scores, fwd, dates_idx, rel=None, threshold=10):
     the excess over SPY by score bucket, the rank correlation (IC) and the long-short spread per month."""
     rel = fwd if rel is None else rel
     ok = ~np.isnan(scores) & ~np.isnan(fwd) & (np.abs(scores) >= threshold)
-    s, f, di, fr = scores[ok], fwd[ok], dates_idx[ok], rel[ok]
+    s, f, di, fr = scores[ok], np.clip(fwd[ok], -1, 1), dates_idx[ok], rel[ok]   # a few +1,000% stocks would swamp the averages
     if len(s) < 20:
         return {'n': int(len(s))}
     hit = (np.sign(s) == np.sign(fr))
@@ -1195,7 +1195,7 @@ def publish(root, hub, E, O, sk, V, summary, hist, calib, universe, st, today):
                 vs.append([E.actors[i]['id'], E.actors[i]['name'], E.actors[i]['g'], E.actors[i]['sub'], int(dv[k]), r4(cv[k], 2), r4(Lv[k], 3),
                            r4(sp['p'][i, side_i]), int(sp['n'][i, side_i]), iso(vlast[k])])
             vs.sort(key=lambda v: -abs((v[4] or 0) * (v[5] or 0) * (v[6] or 0)))
-        evs = sorted(tk_events.get(ti, []), key=lambda i: -E.day[i])[:150]
+        evs = sorted(tk_events.get(ti, []), key=lambda i: -E.day[i])[:100]
         now_row = None
         if V and V['all']['n'][ti] > 0:
             S = r4(V['all']['S'][ti], 1)
@@ -1204,7 +1204,7 @@ def publish(root, hub, E, O, sk, V, summary, hist, calib, universe, st, today):
                        'groups': {g: {'S': r4(V[g]['S'][ti], 1), 'raw': r4(V[g]['raw'][ti], 1), 'n': int(V[g]['n'][ti])} for g in GROUPS if V[g]['n'][ti] > 0},
                        'history_bucket': bucket_of(calib.get('all'), S)}
         wj(pub / 't' / (re.sub(r'[^A-Za-z0-9-]', '_', t) + '.json'), {
-            'ticker': t, 'name': universe.name(t), 'generated_at': idx['generated_at'], 'now': now_row, 'votes': vs[:150], 'more_votes': max(0, len(vs) - 150),
+            'ticker': t, 'name': universe.name(t), 'generated_at': idx['generated_at'], 'now': now_row, 'votes': vs[:100], 'more_votes': max(0, len(vs) - 100),
             'history': hist.get(ti, []),
             'trade_fields': ['date', 'actor', 'name', 'group', 'd', 'size', 'ex', 'ex2', 'follow', 'known'],
             'trades': [[iso(E.day[i]), E.actors[E.a[i]]['id'], E.actors[E.a[i]]['name'], E.actors[E.a[i]]['g'], int(E.d[i]), r4(E.size[i], 5),
@@ -1218,7 +1218,7 @@ def publish(root, hub, E, O, sk, V, summary, hist, calib, universe, st, today):
     for ai, evs in by_actor.items():
         x = E.actors[ai]
         evs.sort(key=lambda i: -E.day[i])
-        cap = 100 if x['g'] in ('f13', 'etf') else 250          # funds trade often: their newest 100 (the stats cover all)
+        cap = 80 if x['g'] in ('f13', 'etf') else 150           # funds trade often: their newest 80 (the stats cover all)
         rows = []
         for i in evs[:cap]:
             ex = O['ex'][i]
