@@ -14,7 +14,7 @@ when it would be published: it passes the same checks as a real post (tweet.clea
 hashtags, finished sentences, no advice) and every number in it is in the facts. work/ replaces adapter/ only when it
 scores higher (the first adapter needs half of the held-out posts right).
 
-    python -m pipeline.train_local --model-dir model --new new.jsonl --minutes 40 --eval 40
+    python -m pipeline.train_local --model-dir model --new new.jsonl --minutes 40 --eval 80
 """
 import argparse
 import datetime as dt
@@ -36,7 +36,8 @@ TARGETS = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down
 
 
 def held_out(ex):
-    return int(hashlib.sha1(str(ex.get("cik")).encode()).hexdigest(), 16) % 10 == 0
+    """One company in ten never trained on (the market posts: one lead stock in ten, "hold")."""
+    return int(hashlib.sha1(str(ex.get("hold") or ex.get("cik")).encode()).hexdigest(), 16) % 10 == 0
 
 
 def read_jsonl(path):
@@ -51,7 +52,8 @@ def grade(ex, post):
     """(published?, why not) for one generated post."""
     try:
         if ex["check"] == "engage":
-            post = engage.clean(post, ex["cashtags"], ex["tags"])
+            post = engage.clean(post, ex["cashtags"], ex["tags"], allowed=ex.get("allowed"), lines=ex.get("lines", False),
+                                forbid=ex.get("forbid"), must=ex.get("must"))
         else:
             post = tweet.clean(post, (ex["cashtags"] or [""])[0], ex["tags"], social.xlen)
     except ValueError as why:
@@ -111,7 +113,7 @@ def main():
     ap.add_argument("--model-dir", default="model")
     ap.add_argument("--new", default="new.jsonl")
     ap.add_argument("--minutes", type=float, default=40)
-    ap.add_argument("--eval", type=int, default=40)
+    ap.add_argument("--eval", type=int, default=80)        # 20 per kind: one post is 1.25 points, not 2.5
     args = ap.parse_args()
     md = args.model_dir
     os.makedirs(md, exist_ok=True)

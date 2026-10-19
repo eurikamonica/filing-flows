@@ -8,6 +8,11 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
 - **Earnings releases (8-K, Item 2.02)** are read too, so a quarter appears days or weeks before its 10-Q/10-K.
   The press release tables are read by fixed rules, checked against the previous quarter's XBRL and required to
   reconcile; the chart is marked *preliminary* and is replaced automatically when the 10-Q/10-K is filed.
+- **Foreign private issuers** (20-F + 6-K, no 10-Q: Nebius, Check Point …): each quarter is read from the results
+  release the company furnishes on Form 6-K (the same table reader as 8-K releases, which also handles the newest year
+  printed last, "income / (loss)" labels, D&A as its own cost line and discontinued operations), the full year from
+  the 20-F's XBRL. Comparisons come from the release's year-ago column and the previous release on file. US-dollar
+  reporters only for now; a company that reports in another currency is told so when someone asks for it.
 - **Starred companies** (`config/starred.txt`) keep eight quarters and are back-filled from their filing history.
 - **Sector and industry charts** add up every company whose fiscal quarter ends in the same calendar quarter
   (SIC-code groups; the ten largest companies appear by name).
@@ -42,7 +47,7 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
   chart showing total revenue and a note why; readers can show them with the difference as its own line (Alerts,
   `subscriptions.lines_unmatched`).
 - **Re-read stored figures** (Owner tools, or ↻ *Re-read figures* on a company page; table `reread_requests`, owner
-  only): the next scan reads those companies' stored quarters and years again from SEC at once, instead of waiting
+  only): a short scan (the owner lane, below) reads those companies' stored quarters and years again from SEC at once, instead of waiting
   for the few dozen re-read per run. *Re-read every company* queues them all for the regular runs. The *Run workflow*
   form has the same as the `reread` field (tickers, CIKs or ALL).
 - **Data checks** (`pipeline/checks.py`): periods of unusual length, revenue jumps, odd margins, cash flow out of
@@ -165,6 +170,15 @@ workflow (`post-to-x.yml`: every 5 minutes, or at once with the Supabase wake-up
 the Disclosures holders data, publishes the images on the repository's `media` branch and queues the post in Buffer.
 Besides `BUFFER_API_KEY`, the post-writing model needs one secret: `GEMINI_API_KEY` (free tier, aistudio.google.com), `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`. GitHub Models was retired on 30 Jul 2026; without a key the rule-based post is used.
 
+**Post one row of the Disclosures hub (owner only)**: signed in as the owner on the site (same browser), the hub's
+*Insider trades* and *Officials' trades* tables get a first column **✦ X**, each 13F manager in *Explore directory* gets
+**✦ X** next to *View →* (its latest processed 13F), and a manager's *13F holdings* page gets **✦ Post this 13F to X**
+(the period shown). Each click queues one request (`send_requests` kinds `post_insider` / `post_official` /
+`post_13f`; the row's key goes in `ref`, and `pipeline/engage.py` finds the row again in the published hub data, so
+every figure comes from the data). Purchases and sales are both written; a company with charts on the site gets its
+chart, any other goes out as text. *Save as a Buffer draft* is shared with the company pages' Post to X. Run
+`supabase/schema.sql` again once to allow the new kinds; readers never load any of this (`disclosures/docs/xpost.js`).
+
 **Your own domain**: set the repository variable `SITE_URL` to it (e.g. `https://filing-flows.com/`). The build
 writes the `CNAME` file GitHub Pages needs, e-mails and posts link to it, and the chart logo shows it. Then, under
 Settings → Pages, enter the same domain and tick *Enforce HTTPS*; at the DNS side point the apex at GitHub Pages
@@ -209,8 +223,21 @@ addresses on the owner list can use them: run `insert into public.site_owners (e
 in the Supabase SQL Editor (after `supabase/schema.sql`) and sign in with that address. The list cannot be read through
 the site.
 
+- **Owner lane**: whatever the owner asks for goes first and is picked up within seconds, without the Supabase
+  wake-up. The X-post watch relay (`post-to-x.yml`, always running, a check every 20 seconds) also runs
+  `pipeline/owner_lane.py`: the owner's new companies and re-reads start a short scan (`scan.yml` with `fast`, 9-minute
+  budget, relayed until the companies are built); the owner's report e-mails, threads and comparisons start *Send
+  requested reports*, where they are served before readers' and never held back by the daily e-mail limit. A regular
+  scan that is running when the owner asks wraps up early (`pipeline/build.py` `time_up`) so the short scan follows
+  within minutes. Nothing is started while a run of that workflow is already waiting, or started after the request.
 - **X thread on company pages** (per browser): under each quarter, the filing, what each image shows with **Save PNG**,
   every post with its role and **Copy**, and **Email me this thread**.
+- **✦ X Article** (company pages, and the daily report under *Send a daily report now*): the report as an X Article,
+  pasted by hand into x.com/compose/articles (X Premium): **Copy title**, **Copy article text** (headings, bold, lists
+  and links, with an `[Image n]` line where each chart goes), then **Copy image n** for each chart in turn (a browser
+  holds one image at a time), or **Copy text with images** for one paste when X's editor keeps pasted images. The daily
+  article has the six largest companies in full (chart, figures, analysis) and lists the rest. Nothing is posted from
+  the site.
 - **Settings** (saved in Supabase, table `owner_settings`, readable and changeable by the owner only):
   - *Email me this thread*: **straight to my inbox** (default; a queued request that `requests.yml` sends within a
     couple of minutes, both chart PNGs attached) or **open a GitHub issue** (the older way: press Create, and
@@ -220,6 +247,12 @@ the site.
   - *Reader version* (on the owner's **Alerts** page): off by default, so the owner gets only the owner report. On: the
     owner also gets the reader e-mails their own alert settings ask for, and "Send a daily report now" sends both.
   - *Also e-mail new X threads right after each scan* (off by default; the behaviour before the daily report).
+  - *X posts* (column `owner_settings.x_post`, read by `pipeline/xprefs.py` in every run that writes or queues a post):
+    **links** none (text, cashtags, hashtags and chart images only) or allowed; **animated GIF charts** on/off (off:
+    still PNG/JPG only); **hashtags per post** (0–6) and which kinds of tag (post kind, event topic, industry, a general
+    tag that takes turns); the **earnings headline tag**; and the **general pool** to pick from (ticked tags take turns,
+    any other tag can be added). Until the owner saves them, `config/x.json` decides (`links`, `media`, `hashtags_max`,
+    `hashtags`, `headline_tag`); the owner page's values win over the file. Cashtags are never touched.
 - **Send a daily report now**: pick a filing date, today or one of the five days before, and that day's report arrives
   within a few minutes.
 

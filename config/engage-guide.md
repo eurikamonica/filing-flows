@@ -11,13 +11,16 @@ Formats are named in the task; follow the one you are given.
 - **list** — the companies that filed in the last day, as cashtags, with the one that stands out named in half a
   sentence, then a question. `6 filings hit EDGAR today: $A $B $C $D $E $F. Only $C grew revenue AND margin. Which
   one surprised you?`
-- **reddit_question** — one company Reddit is arguing about, a fact from its filing as the anchor, then the question.
-  `Reddit can't agree on $TICK today. Latest 10-Q: revenue $4.1B, +22% Y/Y. Is this 1) a re-rating 2) priced in
-  3) a squeeze story? Reply with your number`
-- **reddit_list** — the three to five companies trending on investing subreddits right now, as cashtags, with their
-  latest filing one-liner for the standout, then `Which one actually deserves the attention?`
+- **reddit_question** — a stock many investors are watching right now, written as a normal stock post: its setup in
+  bullets (like **setup**) or one fact from its filing and a 2–3 option question. Never mention Reddit, a subreddit or
+  any forum, and never "people are arguing": just the cashtag and the facts.
+  `$TICK into Monday: revenue $4.1B, +22% Y/Y in the latest 10-Q. 1) re-rating 2) priced in 3) squeeze story?`
+- **reddit_list** — a cashtag poll of three or four stocks investors are watching this week, one short line each with one
+  number, then `Which one are you watching?`. No forum talk. Line breaks.
 
-- **mover** — "what's happening": the company moving most today. Open with the move and the price, then one or two
+- **mover** — "what's happening": the company moving most today. The inputs may list what is known today (8-Ks,
+  releases, Form 4 / 144, 13D, short interest, options, the market, headlines): cite one or two, attributed and dated,
+  never as the cause — no "because", "due to", "on news of", "driven by". Open with the move and the price, then one or two
   facts from its latest filing as context, then ask what is driving it. Never state or hint at a cause.
   `$TICK −14% today at $52.30. Last quarter: revenue $4.1B, +22% Y/Y, operating margin down to 8%. What's behind the
   drop — 1) guidance 2) sector rotation 3) something else? 👇`
@@ -38,6 +41,40 @@ Formats are named in the task; follow the one you are given.
   `$TICK CFO Jane Doe bought $1.8M of stock at $180.50 on Oct 13 (Form 4). Revenue last quarter $96.2B, +106% Y/Y.
   Conviction or optics? 1) conviction 2) optics 3) too small to matter`
   When a cluster is given, lead with it: `Three $TICK insiders bought in two weeks …`.
+  A sale is written the same way with "sold" (never "sell"), with the 10b5-1 plan when the inputs give one, and implies
+  nothing: `$TICK CEO John Roe sold 40,000 shares ($7.2M) at $180.10 on Oct 13 under a 10b5-1 plan (Form 4). Routine or
+  telling? 1) routine 2) telling 3) too early to say`
+
+- **official** — a public official's reported trade (a US House or US Senate periodic transaction report, or another
+  jurisdiction's disclosure). Who (and whose account: spouse, joint, dependent child), bought or sold what, the dollar range exactly as
+  filed, the trade date and the filing date; then a question. Never say or imply the trade was improper or informed.
+  `House disclosure: Jane Roe's spouse sold $TICK ($1,001–$15,000) on Oct 12, reported Oct 15. How do you read
+  officials' trades — 1) noise 2) worth tracking 3) depends who`
+  When the inputs say no chart is attached, never mention a chart.
+
+- **stake** — a Schedule 13D or 13G: someone reports more than 5% of a company (or, on an amendment, a new level or a
+  drop below 5%). Who, how much (percent and shares), the change from their previous filing when given, the filing
+  date; for a 13D, the purpose in a few of the filer's own words when given. A 13D holder may seek to influence the
+  company, a 13G holder is passive: say which, never call anyone an activist unless the purpose says they seek changes.
+  `New 13D: Gerald J. Ford reports 27.3% of $TICK (15.7M shares), filed Oct 16 — his letter to the board raises concerns
+  about the strategy. What happens next? 1) talks 2) a fight 3) nothing`
+
+- **form144** — a Form 144: an officer, director or other affiliate gave notice of a planned sale. Who, the
+  relationship, shares and market value as given, the approximate sale date, how the shares were acquired, the 10b5-1
+  plan date when given. It is a notice, not a trade: "gave notice of a planned sale", never "sold" and never "sell".
+  `Form 144: $TICK director Jane Doe gave notice of a planned sale of 40,000 shares (~$7.2M) around Oct 16, from
+  vested RSUs, under a 10b5-1 plan adopted Mar 3. Routine or telling? 1) routine 2) telling 3) too early to say`
+
+- **short** — FINRA short interest: shares sold short in one stock as of a settlement date, against the date before,
+  with days to cover. A snapshot of open positions, not trades; never predict a squeeze or say what it means for the
+  price; "shares sold short" or "short interest", never "sell".
+  `Short interest in $TICK: 311.4M shares as of Sep 30, +5.8% vs Sep 15 — 2.8 days to cover (FINRA). Rising bets or
+  hedging? 1) bets 2) hedges 3) noise`
+
+- **news** — a headline from a press-release wire, the FDA or the SEC about one company. Say what was announced,
+  attributed to its source, in the headline's own terms — it is the source's claim, not a verified fact; an SEC action
+  states allegations unless it says the case was settled. No numbers beyond the headline.
+  `JUST IN: $TFC — Truist reports third quarter 2026 results (PR Newswire). What are you watching in the numbers?`
 
 - **calendar** — tomorrow's earnings: who reports and when (before the open / after the close), one fact from the
   biggest one's last quarter, then a which-one question.
@@ -64,8 +101,37 @@ Formats are named in the task; follow the one you are given.
   ask what is being priced in.
 - **opt13f** — 13F filings show a big change in the puts or calls managers hold on one company. Give the totals and the
   change, note in a few words that many holders are hedging market makers, ask what the audience reads into it.
-- **rsleaders** — the companies whose relative-strength rating jumped into the 90s, as cashtags with `old→new`, the
-  biggest climber named, then which one holds up.
+- **rsleaders** — the companies whose relative-strength rating jumped into the 90s. The first words say what the numbers
+  are, or nobody can read `6→97`: `RS rating, 3 months: $AAA 6→97, $BBB 31→94, $CCC 30→92. $AAA went from the bottom
+  of the market to the top. Which one holds up?` — cashtags with `old→new`, the biggest climber named, then the question.
+- **reddit_hot** / **setup** — one stock going into the next session, in bullets. First line `$TICK going into Monday`,
+  then 3–5 lines starting with `• ` (where it trades against its 52-week range, the year so far, short interest, the
+  latest 8-K or release, analysts' target, Polymarket's earnings odds, the smart-money score), then one closing line that
+  frames the tension. Never mention Reddit or any forum.
+  `$ONDS going into Monday\n\n• Trading near its 52-week low, around $6\n• Down roughly 35% YTD\n• Short interest 6.2 days to cover\n\nThe order book is growing. The price isn't following yet.`
+- **pt_upside** — `Wall Street rates both $AAA and $BBB a Hold.\n\nBut one has 3.6x the upside.\n\n$AAA → PT $31.15 (+11%)\n$BBB → PT $20.36 (+40%)\n\nIs the market sleeping on $BBB, or is $AAA the safer bet?`
+  Write the rating only as “Hold”; never say which to own.
+- **versus** — `$AAA or $BBB what stock would you rather have?` — short; one fact each at most.
+- **drawdown** — popular names far below their 52-week highs, one `$TICK $high → $now` line each, a hook line before and
+  a closing line after. `Remember the highs?\n\n$RKLB $150 → $50\n$ASTS $130 → $40\n...\n\nWhich one gets back there first?`
+- **lows52** / **highs52** — `All these stocks hit new 52-week lows on Oct 17\n\nMcDonald's $MCD\nPepsiCo $PEP\n...` — the
+  name and the cashtag per line, as given, then one short question.
+- **near_lows** — `Quality stocks trading near their 52-week lows:\n\nBank of America $BAC: −20%\nPepsiCo $PEP: −22%\n...` (how far
+  each is below its 52-week high), then one question.
+- **records** — new all-time highs (or lows) in the last session, name, cashtag and price per line, then one question.
+- **polymarket** — Polymarket's odds that this week's reporters beat the EPS line: `Polymarket odds of an earnings beat this
+  week:\n\n$AAA Oct 21: 81%\n$BBB Oct 22: 64%\n\nWhich one surprises the crowd?` — or one company: the odds, the line,
+  the analysts' estimate, one question.
+- **smart_buys** — the stocks the traders with the best track records are net buying. Say in the first sentence that the
+  numbers are a score weighted by track records (−100 to +100), list the cashtags with their scores, ask which one to dig into.
+  `Smart-money score (disclosed trades weighted by each trader's record, −100 to +100): $AAA +92, $BBB +88, $CCC +81. Which one would you dig into?`
+- **smart_record** — one official, insider or 13F manager with a tested record who just traded. Open with the name and the
+  hit rate (vs SPY, three months later), then the latest trade with its date. Past accuracy is no promise: ask skill or luck.
+  `Rep. Jane Roe's disclosed trades beat SPY 3 months later 74% of the time (31 trades). Latest: bought $AAA on Oct 2. Skill or luck?`
+- **all_agree** — a stock every group that traded it net-bought this quarter (13F managers, active ETFs, insiders,
+  officials). Name the groups with their counts, note that 13F positions are reported weeks late, ask if it means anything.
+- **qtd_flows** — the calendar quarter so far across the groups: insiders' biggest net purchase, officials' most-bought, the
+  early 13F filers' top add, each with its cashtag and number, then one question.
 
 ## Rules
 1. Output only the post text. No quotes around it, no preamble.

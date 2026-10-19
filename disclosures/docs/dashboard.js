@@ -1,16 +1,24 @@
 /* v3 directory, demand-loaded records and explicit coverage metrics. */
 const inflight=new Map();
+/* The largest record folders (13F quarters, N-PX votes: gigabytes) are not copied to GitHub Pages, which stops at 10 GB:
+   data/remote.json (stage-public.py) names them and where they are read from instead (the repository's raw files at the
+   published commit). Without that file — a local server, your own host — everything is read from data/. */
+let remoteCfg=null;
+function shardFetch(path){
+ if(!remoteCfg)remoteCfg=fetch('data/remote.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
+ return remoteCfg.then(c=>{const base=c&&typeof c.base==='string'&&/^https:\/\//.test(c.base)&&(c.prefixes||[]).some(x=>path.startsWith(x))?c.base:'data/';return fetch(base+path)});
+}
 function ensureShard(row){
  if(!row?.shard||row._loaded)return true;
  if(!inflight.has(row.shard)&&!row._loadError){
   const path=row.shard;
   if(!/^shards\/(holdings|congress|cot|banks|npx)\/[A-Za-z0-9_+-]+\.json$/.test(path)){row._loadError='Invalid data path';return false}
-  inflight.set(path,fetch('data/'+path).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(async payload=>{await Promise.all((payload.snapshots||[]).map(async s=>{if(!s.positions_shard)return;if(!/^shards\/holdings\/[A-Za-z0-9_+-]+\.json$/.test(s.positions_shard))throw Error('Invalid quarter path');const r=await fetch('data/'+s.positions_shard);if(!r.ok)throw Error('Quarter HTTP '+r.status);s.positions=await r.json()}));if(payload.vote_chunks){payload.votes=[];payload._loaded_chunks=0;if(payload.vote_chunks.length){payload.votes=await fetchVoteChunk(payload.vote_chunks[0]);payload._loaded_chunks=1}}Object.assign(row,payload,{_loaded:true});render()}).catch(e=>{row._loadError='Could not load this data file: '+e.message;render()}).finally(()=>inflight.delete(path)));
+  inflight.set(path,shardFetch(path).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(async payload=>{await Promise.all((payload.snapshots||[]).map(async s=>{if(!s.positions_shard)return;if(!/^shards\/holdings\/[A-Za-z0-9_+-]+\.json$/.test(s.positions_shard))throw Error('Invalid quarter path');const r=await shardFetch(s.positions_shard);if(!r.ok)throw Error('Quarter HTTP '+r.status);s.positions=await r.json()}));if(payload.vote_chunks){payload.votes=[];payload._loaded_chunks=0;if(payload.vote_chunks.length){payload.votes=await fetchVoteChunk(payload.vote_chunks[0]);payload._loaded_chunks=1}}Object.assign(row,payload,{_loaded:true});render()}).catch(e=>{row._loadError='Could not load this data file: '+e.message;render()}).finally(()=>inflight.delete(path)));
  }
  return false;
 }
 function loading(row){return `<div class="empty">${esc(row._loadError||'Loading the selected disclosure…')}${row._loadError?'<br>Refresh this page to retry. Use a local HTTP server rather than opening index.html directly.':''}</div>`}
-async function fetchVoteChunk(path){if(!/^shards\/npx\/[A-Za-z0-9_+-]+\.json$/.test(path))throw Error('Invalid vote-chunk path');const r=await fetch('data/'+path);if(!r.ok)throw Error('Vote chunk HTTP '+r.status);const rows=await r.json();if(!Array.isArray(rows))throw Error('Invalid vote records');return rows}
+async function fetchVoteChunk(path){if(!/^shards\/npx\/[A-Za-z0-9_+-]+\.json$/.test(path))throw Error('Invalid vote-chunk path');const r=await shardFetch(path);if(!r.ok)throw Error('Vote chunk HTTP '+r.status);const rows=await r.json();if(!Array.isArray(rows))throw Error('Invalid vote records');return rows}
 async function loadMoreVotes(f){
  if(f._loadingMore||!f.vote_chunks||f._loaded_chunks>=f.vote_chunks.length)return;
  f._loadingMore=true;f._chunkError='';render();
@@ -47,7 +55,8 @@ function directory(){
  out+=`<div class="explain">${esc(help[state.dtype])} Website clicks do not start authenticated GitHub jobs.</div>`;
  exported=rows.map(({key,label,detail,status,date})=>({identifier:key,name:label,detail,status,latest_report_or_filing:date}));
  out+=`<div class="section-head"><h3>${fmt(rows.length)} results</h3><button id="csv" class="action">Export directory ↓</button></div>`;
- return out+table(['Entity / filer','Identifier / disclosure','Latest report / filing','Status','Explore'],rows.map(r=>[esc(r.label),esc(r.detail),esc(r.date),`<span class="badge ${r.status}">${esc(r.status==='pending'?'Queued':r.status)}</span>`,r.status==='ready'?`<button class="text-button" data-open-kind="${r.kind}" data-open-id="${esc(r.key)}">View →</button>`:r.source_url?link(r.source_url,'Source ↗'):'Actions → Run workflow']));
+ if(state.dtype==='holdings')out+=xBar('a manager’s latest processed 13F');
+ return out+table(['Entity / filer','Identifier / disclosure','Latest report / filing','Status','Explore'],rows.map(r=>[esc(r.label),esc(r.detail),esc(r.date),`<span class="badge ${r.status}">${esc(r.status==='pending'?'Queued':r.status)}</span>`,r.status==='ready'?`<button class="text-button" data-open-kind="${r.kind}" data-open-id="${esc(r.key)}">View →</button>${r.kind==='holdings'?' '+xBtn('post_13f',r.key,null,`${r.label}'s latest 13F`):''}`:r.source_url?link(r.source_url,'Source ↗'):'Actions → Run workflow']));
 }
 function health(){
  const d=data();let out=head('Coverage & collection','Operational health and data completeness are separate measures. A successful run can still have a processing backlog.','SOURCE MONITOR');

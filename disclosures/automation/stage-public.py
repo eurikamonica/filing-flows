@@ -9,16 +9,21 @@ update-and-deploy workflow does.
 holders/{TICKER}.json joins the hub's data by ticker so a company page on the Sankey site can show who holds it:
 - institutional: the latest 13F snapshot of every processed manager that lists the ticker's CUSIP
   (CUSIP → ticker from the price module's OpenFIGI cache)
-- officials: reviewed records (assets / transactions) whose verified ticker matches
+- officials: reviewed records (assets / transactions) whose verified ticker matches, US House PTRs read by machine and
+  US Senate electronic PTRs
+- insiders (Form 4), stakes (Schedules 13D / 13G), form144 (notices of proposed sales), short (FINRA short interest,
+  a year of settlement dates), events8k (the latest 8-Ks, classified) and news (press releases, FDA, SEC actions)
 """
 import argparse
 import gzip
 import json
 import re
 import shutil
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'app'))
 DOCS = ROOT / 'docs'
 DATA = DOCS / 'data'
 
@@ -68,6 +73,15 @@ def holders_index():
                 'issuer': p.get('issuer'), 'cusip': p.get('cusip'), 'shares': p.get('shares'), 'value_usd': p.get('value_usd'),
                 'weight': p.get('weight'), 'status': ch.get('status', 'BASE'), 'delta_shares': ch.get('delta_shares'),
                 'price_avg_q': p.get('price_avg_q'), 'source_url': (s.get('sources') or [{}])[-1].get('url')})
+        for c in s.get('changes', []):                       # sold out this quarter: gone from the positions, kept for the pie
+            if c.get('status') != 'EXIT' or c.get('put_call') != 'NONE' or c.get('share_type') != 'SH':
+                continue
+            ticker = clean_ticker(c.get('ticker')) or by_cusip.get(c.get('cusip', ''))
+            if ticker:
+                out.setdefault(ticker, {'ticker': ticker, 'generated_at': generated, 'institutional': [], 'officials': []}).setdefault('exits', []).append({
+                    'manager': m.get('label') or m.get('name'), 'cik': m.get('cik'), 'period': s.get('period'), 'filed': s.get('filed'),
+                    'prior_shares': c.get('prior_shares'), 'prior_value_usd': c.get('prior_value_usd'),
+                    'source_url': (s.get('sources') or [{}])[-1].get('url')})
     # officials: reviewed, source-checked rows only
     for r in (live.get('modules', {}).get('congress', {}) or {}).get('records', []):
         ticker = clean_ticker(r.get('ticker'))
@@ -84,14 +98,14 @@ def holders_index():
     per = {}
     for tr in trades:
         ticker = clean_ticker(tr.get('ticker_canon') or tr.get('ticker'))
-        if not ticker or tr.get('read') != 'machine' or tr.get('ticker_status') != 'listed' or per.get(ticker, 0) >= 40:
+        if not ticker or tr.get('read') not in ('machine', 'electronic') or tr.get('ticker_status') != 'listed' or per.get(ticker, 0) >= 40:
             continue
         per[ticker] = per.get(ticker, 0) + 1
         out.setdefault(ticker, {'ticker': ticker, 'generated_at': generated, 'institutional': [], 'officials': []})['officials'].append({
             'person': tr.get('person'), 'jurisdiction': tr.get('jurisdiction'), 'kind': 'transaction', 'asset': tr.get('asset_raw'),
             'owner': tr.get('owner'), 'amount_min': tr.get('amount_min'), 'amount_max': tr.get('amount_max'), 'date': tr.get('date'),
             'transaction_type': tr.get('type'), 'report_type': 'PTR', 'filed_date': tr.get('filed_date'), 'source_url': tr.get('source_url'),
-            'page': tr.get('page'), 'read': 'machine', 'name_check': tr.get('name_check')})
+            'page': tr.get('page'), 'read': tr.get('read'), 'name_check': tr.get('name_check')})
     # insiders: Form 4 purchases and larger sales of the last 120 days
     ipath = DATA / 'cache' / 'insiders' / 'trades.json.gz'
     if ipath.exists():
@@ -108,19 +122,77 @@ def holders_index():
             count[ticker] = count.get(ticker, 0) + 1
             out.setdefault(ticker, {'ticker': ticker, 'generated_at': generated, 'institutional': [], 'officials': []}).setdefault('insiders', []).append(
                 {k: tr.get(k) for k in ('insider', 'role', 'title', 'code', 'date', 'shares', 'price', 'value', 'after', 'plan_10b5_1', 'url')})
+    base = lambda t: out.setdefault(t, {'ticker': t, 'generated_at': generated, 'institutional': [], 'officials': []})
+    # Schedules 13D / 13G (largest holders, activists) and Form 144 notices, from the ownership cache (app/ownership.py)
+    try:
+        import ownership as OWN
+        tick = OWN.cik_tickers(DATA)
+        count = {}
+        for r in OWN.with_changes(OWN._load(DATA / 'cache' / 'ownership', 'stakes'), tick):
+            t = clean_ticker(r.get('ticker'))
+            if not t or count.get(t, 0) >= 25:
+                continue
+            count[t] = count.get(t, 0) + 1
+            r['label'] = OWN.stake_label(r)
+            base(t).setdefault('stakes', []).append({k: (OWN._clip(r[k], 280) if k == 'purpose' else r.get(k)) for k in (
+                'form', 'filed', 'event_date', 'filer', 'holder', 'person', 'persons', 'percent', 'shares', 'change', 'prev_percent', 'label',
+                'rule', 'purpose', 'url') if r.get(k) not in (None, '')})
+        count = {}
+        for r in OWN._load(DATA / 'cache' / 'ownership', 'form144'):
+            t = clean_ticker(tick.get(r.get('issuer_cik') or '', ''))
+            if not t or count.get(t, 0) >= 25 or (r.get('value') or 0) < 25_000:
+                continue
+            count[t] = count.get(t, 0) + 1
+            base(t).setdefault('form144', []).append({k: r.get(k) for k in (
+                'filed', 'seller', 'seller_name', 'relationship', 'shares', 'value', 'sale_date', 'acquired', 'plan_date', 'url') if r.get(k) not in (None, '')})
+    except Exception as exc:
+        print(f'::warning::holders index: 13D / 13G / Form 144 left out ({exc})')
+    # 8-K events (the latest 15 per company, 120 days) and news (press releases, FDA, SEC actions naming it)
+    try:
+        import events8k as EV
+        for t, rows in EV.by_ticker(DATA).items():
+            t = clean_ticker(t)
+            if t:
+                base(t)['events8k'] = rows
+    except Exception as exc:
+        print(f'::warning::holders index: 8-K events left out ({exc})')
+    try:
+        import news as NW
+        for t, rows in NW.by_ticker(DATA).items():
+            t = clean_ticker(t)
+            if t:
+                base(t)['news'] = rows
+    except Exception as exc:
+        print(f'::warning::holders index: news left out ({exc})')
+    # FINRA short interest: each ticker's settlement dates (a year), for stocks already indexed or with a real position
+    try:
+        import shorts as SH
+        for t, h in SH.history_by_ticker(DATA, 24).items():
+            t = clean_ticker(t)
+            if t and (t in out or (h[-1][1] or 0) >= 250_000):
+                base(t)['short'] = h
+    except Exception as exc:
+        print(f'::warning::holders index: short interest left out ({exc})')
     # this quarter's 13F flow and the signal flags, for the company page's summary line
     flows = load_json(DATA / 'market' / 'by-ticker.json', {})
     sig = {r['ticker']: r for r in load_json(DATA / 'market' / 'signals.json', {}).get('rows', [])}
+    # quarter by quarter (the 13F history on file): buyers, sellers, est. net dollars, holders, new, exits per quarter
+    qh = load_json(DATA / 'market' / 'by-ticker-quarters.json', {})
     for ticker, v in out.items():
         f = (flows.get('rows') or {}).get(ticker)
         if f:
             v['flows'] = dict(zip(flows.get('fields', []), f), label=flows.get('label'))
+        q = (qh.get('rows') or {}).get(ticker)
+        if q and sum(1 for x in q if x) >= 2:
+            v['q13f'] = {'periods': qh.get('periods'), 'coverage': qh.get('coverage'), 'fields': qh.get('fields'), 'rows': q}
         if ticker in sig:
             v['signal'] = {k: sig[ticker].get(k) for k in ('tags', 'heat', 'pressure')}
     for v in out.values():
         v['institutional'].sort(key=lambda x: -(x.get('value_usd') or 0))
         v['officials'].sort(key=lambda x: (x.get('date') or ''), reverse=True)
-        v['counts'] = {'institutional': len(v['institutional']), 'officials': len(v['officials']), 'insiders': len(v.get('insiders', []))}
+        v['counts'] = {'institutional': len(v['institutional']), 'officials': len(v['officials']), 'insiders': len(v.get('insiders', [])),
+                       'stakes': len(v.get('stakes', [])), 'form144': len(v.get('form144', [])), 'short': len(v.get('short', [])),
+                       'events8k': len(v.get('events8k', [])), 'news': len(v.get('news', []))}
     return out
 
 
@@ -153,14 +225,98 @@ def join_earnings(out, site_data):
     return n
 
 
+# GitHub Pages refuses a site of 10 GB or more. The 13F quarter files and the N-PX vote records are most of the hub's
+# data (gigabytes, growing with the 13F back-fill), so they stay out of the Pages build: data/remote.json tells the hub's
+# page (dashboard.js shardFetch) to read them from the repository's raw files at the commit being published.
+REMOTE_SHARDS = ('holdings', 'npx')
+
+
+def write_remote(out):
+    import os
+    repo, sha = os.environ.get('GITHUB_REPOSITORY'), os.environ.get('GITHUB_SHA')
+    if not repo or not sha:                                  # a local build: everything stays in data/
+        for name in REMOTE_SHARDS:
+            src = DOCS / 'data' / 'shards' / name
+            if src.exists():
+                shutil.copytree(src, out / 'data' / 'shards' / name, dirs_exist_ok=True)
+        return None
+    cfg = {'base': f'https://raw.githubusercontent.com/{repo}/{sha}/disclosures/docs/data/',
+           'prefixes': [f'shards/{n}/' for n in REMOTE_SHARDS],
+           # closing-price ladders change every hour (ladders.yml): read from their branch, not from the last site build
+           'ladders': f'https://raw.githubusercontent.com/{repo}/ladder-history/public/'}
+    (out / 'data').mkdir(parents=True, exist_ok=True)
+    (out / 'data' / 'remote.json').write_text(json.dumps(cfg), encoding='utf-8')
+    print(f"::notice::hub records read from the repository instead of Pages: {', '.join(cfg['prefixes'])}")
+    return cfg
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default='_site/disclosures')
     ap.add_argument('--site-data', default=None, help="the Sankey site's data folder (index.json), to join earnings into signals")
+    ap.add_argument('--history', default=None, help="public/ of the branch rotation-history (the RRG and the long rotation)")
+    ap.add_argument('--debt', default=None, help="public/ of the branch debt-history (Debt & rates: app/debt.py)")
+    ap.add_argument('--consensus', default=None, help="public/ of the branch consensus-history (Consensus: app/consensus.py)")
+    ap.add_argument('--etf', default=None, help="public/ of the branch etf-history (ETFs: app/etf.py)")
+    ap.add_argument('--smart', default=None, help="public/ of the branch smart-history (Smart money: app/smart.py)")
+    ap.add_argument('--ladders', default=None, help="public/ of the branch ladder-history (hourly price ladders: app/ladders.py)")
     args = ap.parse_args()
     out = Path(args.out)
     shutil.rmtree(out, ignore_errors=True)
-    shutil.copytree(DOCS, out, ignore=shutil.ignore_patterns('cache', 'discovery-state.json', 'npx-queue-state.json', 'meta.json'))
+    base_ignore = shutil.ignore_patterns('cache', 'discovery-state.json', 'npx-queue-state.json', 'meta.json')
+
+    def ignore(folder, names):
+        skip = set(base_ignore(folder, names))
+        if Path(folder).name == 'shards' and Path(folder).parent.name == 'data':
+            skip |= {n for n in names if n in REMOTE_SHARDS}
+        return skip
+    shutil.copytree(DOCS, out, ignore=ignore)
+    write_remote(out)
+    if args.history and (Path(args.history) / 'rrg.json').exists():
+        shutil.copytree(args.history, out / 'data' / 'market' / 'history', dirs_exist_ok=True)
+        st = {}
+        try:
+            st = json.loads((Path(args.history) / 'status.json').read_text(encoding='utf-8'))
+        except Exception:
+            pass
+        print(f"::notice::rotation history: {st.get('tickers_published')} tickers, built {st.get('built_at')}, "
+              f"long momentum clock {st.get('long_quarters')}")
+    if args.debt and (Path(args.debt) / 'index.json').exists():
+        shutil.copytree(args.debt, out / 'data' / 'debt', dirs_exist_ok=True)
+        try:
+            st = json.loads((Path(args.debt) / 'status.json').read_text(encoding='utf-8'))
+            print(f"::notice::debt & rates: {st.get('companies')} companies, {st.get('banks')} banks, built {st.get('built_at')}")
+        except Exception:
+            pass
+    if args.consensus and (Path(args.consensus) / 'index.json').exists():
+        shutil.copytree(args.consensus, out / 'data' / 'consensus', dirs_exist_ok=True)
+        try:
+            st = json.loads((Path(args.consensus) / 'status.json').read_text(encoding='utf-8'))
+            print(f"::notice::consensus: {st.get('companies')} companies, {st.get('markets')} prediction markets, built {st.get('built_at')}")
+        except Exception:
+            pass
+    if args.ladders and (Path(args.ladders) / 'index.json').exists():
+        shutil.copytree(args.ladders, out / 'data' / 'ladders', dirs_exist_ok=True)
+        try:
+            st = json.loads((Path(args.ladders) / 'index.json').read_text(encoding='utf-8'))
+            print(f"::notice::price ladders: {len(st.get('rows') or [])} tickers, {st.get('resolved')} resolved, built {st.get('generated_at')}")
+        except Exception:
+            pass
+    if args.etf and (Path(args.etf) / 'index.json').exists():
+        shutil.copytree(args.etf, out / 'data' / 'etf', dirs_exist_ok=True)
+        try:
+            st = json.loads((Path(args.etf) / 'status.json').read_text(encoding='utf-8'))
+            print(f"::notice::etfs: {st.get('etfs')} ETFs, {st.get('holdings')} portfolios, {st.get('ncen')} N-CEN, built {st.get('built_at')}")
+        except Exception:
+            pass
+    if args.smart and (Path(args.smart) / 'index.json').exists():
+        shutil.copytree(args.smart, out / 'data' / 'smart', dirs_exist_ok=True)
+        try:
+            st = json.loads((Path(args.smart) / 'status.json').read_text(encoding='utf-8'))
+            pub = st.get('public') or {}
+            print(f"::notice::smart money: {pub.get('actors')} actors, {pub.get('stocks')} stocks scored, events {st.get('events')}, built {st.get('finished')}")
+        except Exception:
+            pass
     if args.site_data:
         print(f'signals joined with earnings for {join_earnings(out, args.site_data)} tickers')
         try:
@@ -194,6 +350,11 @@ def main():
     for ticker, payload in holders.items():
         (hdir / f'{ticker}.json').write_text(json.dumps(payload, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
     (hdir / 'index.json').write_text(json.dumps({'tickers': sorted(holders), 'generated_at': next(iter(holders.values()), {}).get('generated_at')}), encoding='utf-8')
+    try:                                                     # pictures next to managers' and officials' names
+        import avatars
+        avatars.stage(out)
+    except Exception as exc:
+        print(f'::warning::avatars not built: {exc}')
     n = sum(1 for p in out.rglob('*') if p.is_file())
     print(f'disclosure hub staged to {out} ({n} files, holders for {len(holders)} tickers)')
 

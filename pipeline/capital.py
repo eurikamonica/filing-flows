@@ -12,13 +12,15 @@ against the reported change in cash is shown as unreconciled (usually cash flows
 spread over the other lines. Debt is shown net (issued − repaid): companies that roll commercial paper report gross
 figures many times their actual borrowing; the gross figures are kept for the evidence drawer.
 
-Periods: the last five fiscal years, and the trailing twelve months when a 10-Q came after the last 10-K
-(last fiscal year + this year to date − the same period a year earlier).
+Periods: the last five fiscal years, the last eight quarters (a three-month figure, or year to date minus the year to
+date a quarter earlier; the fourth quarter = the fiscal year − nine months), and the trailing twelve months when a 10-Q
+came after the last 10-K (last fiscal year + this year to date − the same period a year earlier).
 """
 from . import facts as F
 from . import fsa as W
 
 KEEP_FY = 5
+KEEP_Q = 8
 
 OCF = F.CONCEPTS["ocf"]
 INV_TOTAL = ["NetCashProvidedByUsedInInvestingActivities", "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations"]
@@ -115,6 +117,8 @@ def read(per, P):
         return None, [], None
     if P["kind"] == "fy":
         return W._dur(per, P["end"], True)
+    if P["kind"] == "q":
+        return W._dur(per, P["end"], False)
     q, fy = P["end"], P["fy"]
     v_fy, used, _ = W._dur(per, fy, True)
     # this fiscal year to date: the figure ending at q that starts the day after the last fiscal year (some filers
@@ -363,18 +367,23 @@ def maturities(fx, ev, ye, fye):
 
 # ------------------------------------------------------------------ the tab's data
 def compute(fx, ev, qe, ye, fye="1231"):
-    """{"fy": [periods], "ttm": period or None, "shares": [...], "maturities": {...}} or None."""
+    """{"fy": [periods], "q": [periods], "ttm": period or None, "shares": [...], "maturities": {...}} or None."""
     fy = []
     for e in ye[-KEEP_FY:]:
         p = period(fx, ev, {"kind": "fy", "end": e}, F.fiscal_year_label(e, fye)[0])
         if p:
             fy.append(p)
+    qs = []
+    for e in (qe or [])[-KEEP_Q:]:
+        p = period(fx, ev, {"kind": "q", "end": e}, F.fiscal_label(e, fye)[0])
+        if p:
+            qs.append(p)
     ttm = None
     if qe and ye and qe[-1] > ye[-1] and (F.d(qe[-1]) - F.d(ye[-1])).days < 330:
         q = qe[-1]
         ttm = period(fx, ev, {"kind": "ttm", "end": q, "fy": ye[-1]}, "TTM to " + F.fiscal_label(q, fye)[0])
     sh = shares(fx, ev, ye, fye)
     mat = maturities(fx, ev, ye, fye)
-    if not (fy or ttm or sh or mat):
+    if not (fy or qs or ttm or sh or mat):
         return None
-    return {"fy": fy, "ttm": ttm, "shares": sh, "maturities": mat}
+    return {"fy": fy, "q": qs, "ttm": ttm, "shares": sh, "maturities": mat}

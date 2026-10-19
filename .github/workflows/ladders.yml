@@ -1,0 +1,58 @@
+# Closing-price ladders, every hour (the "Where the close is expected, by date" panel of each company's and index's
+# Consensus tab): every open Polymarket / Kalshi ladder on where a stock or an index closes on a day, a week or a month,
+# its expected value, the options' max pain and walls for that date, the combined range, and the backtest of every
+# resolved ladder (app/ladders.py). Kept on the branch "ladder-history" (one commit, force-pushed); the site reads
+# public/ straight from the branch, and scan.yml also publishes a copy with the hub.
+name: Price ladders (hourly)
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for the run'
+        default: '8'
+  schedule:
+    - cron: '17 * * * *'
+permissions:
+  contents: write
+concurrency:
+  group: ladder-history
+  cancel-in-progress: false
+jobs:
+  ladders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            disclosures/app
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The data branch and the site's companies
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" ladder-history >/dev/null; then
+            git clone --quiet --depth 1 --branch ladder-history "$url" lad
+          else
+            mkdir lad && git -C lad init --quiet -b ladder-history && git -C lad remote add origin "$url"
+          fi
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          mkdir -p site && curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
+          du -sh lad
+      - name: Read the ladders, prices and option chains; resolve and backtest; publish
+        timeout-minutes: 15
+        run: python disclosures/app/ladders.py collect --root lad --site-index site/index.json --minutes "${{ inputs.minutes || '8' }}"
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd lad
+          printf '%s\n' '# ladder-history (data only)' '' 'Hourly readings of every closing-price ladder (cache/m/), prices and option chains (cache/), and the' \
+            'files the site reads (public/), kept by .github/workflows/ladders.yml on main. Force-pushed as a single commit every hour.' > README.md
+          git add -A
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "ladders $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:ladder-history && break; sleep $((i * 10)); done
+          python -c "import json; d=json.load(open('state.json'))['last']; print(json.dumps(d)); print('::notice::ladders: ' + ', '.join(f'{k} {v}' for k, v in d.items()))"

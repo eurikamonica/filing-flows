@@ -14,7 +14,7 @@ for(const key of ['cot','banks'])for(let i=0;i<(live.modules[key]?.series||[]).l
 for(let i=0;i<(live.modules.npx?.filings||[]).length;i++){let f=live.modules.npx.filings[i];if(f.shard){f=JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.shard),'utf8'));f.votes=f.vote_chunks?.length?JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.vote_chunks[0]),'utf8')):[];f._loaded_chunks=f.vote_chunks?.length?1:0;live.modules.npx.filings[i]=f}}
 for(const m of Object.values(live.modules))if(m.directory_shard)m.directory=JSON.parse(fs.readFileSync(path.join(root,'docs/data',m.directory_shard),'utf8'));
 context.window.DISCLOSURE_LIVE=live;
-for(const f of ['data/demo.js','dashboard.js','extensions.js','market.js','rotation.js','options.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
+for(const f of ['data/demo.js','dashboard.js','extensions.js','market.js','rotation.js','rrg.js','chaos.js','galaxy.js','ledger.js','macro.js','debt-view.js','debt.js','consensus-view.js','consensus.js','etf.js','smart.js','allflows.js','options.js','ownership.js','news.js','xpost.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
 let checks=0;
 for(const mode of ['official','demo'])for(const tab of ['holdings','congress','review','cot','banks','npx','status','directory']){
  vm.runInContext(`state.mode='${mode}';state.tab='${tab}';state.date='';state.page=0;render();`,context);
@@ -61,7 +61,9 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   vm.runInContext(`for(const k of Object.keys(marketStore))delete marketStore[k]`,context);
   context.fetch=async url=>{const f=path.join(root,'docs',url);return fs.existsSync(f)?{ok:true,json:async()=>JSON.parse(fs.readFileSync(f,'utf8'))}:{ok:false,status:404}};
   let n=0;
-  for(const [tab,name,expect] of [['signals','signals','Hype map'],['flows','flows','Net buying and selling'],['trades','officials-trades','Most bought by officials'],['insiders','insiders','Most insider buying']]){
+  const views=[['signals','signals','Hype map'],['flows','flows','Net buying and selling'],['trades','officials-trades','Most bought by officials'],['insiders','insiders','Most insider buying'],
+   ['events','events8k','What companies reported'],['news','news','Matched to a ticker'],['stakes','stakes','Most 13D activity'],['form144','form144','Most planned selling'],['shorts','short-interest','Biggest changes in short interest']].filter(v=>fs.existsSync(path.join(mdir,v[1]+'.json')));
+  for(const [tab,name,expect] of views){
    vm.runInContext(`state.mode='official';state.tab='${tab}';state.page=0;state.sort=null;render()`,context);
    await vm.runInContext(`marketStore['${name}'].loading`,context);
    vm.runInContext(`render()`,context);
@@ -98,4 +100,37 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
  assert.equal(vm.runInContext(`JSON.stringify(sortKey('—'))`,context),'[2,0]');
  vm.runInContext(`state.tab='t';state.sort={sig:'t|A',col:0,dir:'desc'}`,context);
  assert.deepEqual(JSON.parse(vm.runInContext(`JSON.stringify(sortRows('t|A',[['$1M'],['—'],['$3B'],['$20K']]).map(r=>r[0]))`,context)),['$3B','$1M','$20K','—']);
+ // 4.14 smart money: every view from trimmed fixtures (tests/fixtures/smart, cut from a real build)
+ {
+  const fx=path.join(__dirname,'fixtures','smart'),map={'data/smart/index.json':'index.json','data/smart/actors.json':'actors.json','data/smart/t/KTOS.json':'t-KTOS.json','data/smart/a/gov/55.json':'a-gov.json'};
+  context.fetch=async url=>map[url]?{ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(fx,map[url]),'utf8'))}:{ok:false,status:404};
+  assert.equal(vm.runInContext(`smBucket('g:NANCY PELOSI')`,context),'55');                 // = smart.py bucket()
+  let n=0;
+  for(const [setup,key,expect] of [[`state.mview='stocks'`,'index','Skilled net buying'],[`state.mview='stocks';state.msort='sell';state.mgrp='f13'`,'index','Skilled net selling'],
+    [`state.mview='leaders';state.mlg='gov'`,'index','The best records'],[`state.mview='leaders';state.mlg='f13';state.mlw='worst'`,'index','The worst records'],
+    [`state.mview='method'`,'index','How the score has done'],[`state.mview='stock';state.mst='KTOS'`,'t/KTOS','Who is voting now'],
+    [`state.mview='actor';state.maid='g:NANCY PELOSI'`,'a/gov/55','Every trade'],[`state.mview='actor';state.maid='';state.maq='pelosi'`,'actors','Every trade']]){
+   vm.runInContext(`state.tab='smart';state.mode='official';state.page=0;${setup};render()`,context);
+   await vm.runInContext(`smStore['${key}'].loading`,context);
+   vm.runInContext(`render()`,context);
+   const html=elements.get('workspace').innerHTML;
+   assert.ok(html.includes(expect),`smart money ${setup} did not render "${expect}"`);
+   assert.ok(!/NaN|undefined|Infinity/.test(html),`smart money ${setup} shows NaN/undefined`);n++;
+  }
+  // All flows: every group side by side, the agreement and split lists, the names, Reddit's hottest on top
+  Object.assign(map,{'data/smart/combined/index.json':'combined-index.json','data/smart/combined/prev.json':'combined-prev.json','data/smart/combined/both.json':'combined-both.json','data/market/reddit.json':'reddit.json'});
+  for(const [setup,key,expect] of [[`state.afv='stocks';state.afp='prev'`,'smart/combined/prev','stocks —'],[`state.afv='agree';state.afp='both'`,'smart/combined/both','Net bought by two groups or more'],
+    [`state.afv='split'`,'smart/combined/both','Where the groups take opposite sides'],[`state.afv='names'`,'smart/combined/both','The most active names'],[`state.afv='stocks';state.afs='gbuy';state.afg='2'`,'smart/combined/both','stocks —']]){
+   vm.runInContext(`state.tab='allflows';state.page=0;${setup};render()`,context);
+   await vm.runInContext(`afStore['smart/combined/index'].loading`,context);vm.runInContext(`render()`,context);
+   await vm.runInContext(`(afStore['${key}']||{}).loading`,context);await vm.runInContext(`(afStore['market/reddit']||{}).loading`,context);vm.runInContext(`render()`,context);
+   const html=elements.get('workspace').innerHTML;
+   assert.ok(html.includes(expect),`all flows ${setup} did not render "${expect}"`);
+   assert.ok(html.includes('Reddit right now')&&html.includes('$KTOS'),`all flows ${setup}: no Reddit banner`);
+   assert.ok(!/NaN|undefined|Infinity/.test(html),`all flows ${setup} shows NaN/undefined`);n++;
+  }
+  vm.runInContext(`state.tab='signals';smartDeepLink('g%3ANANCY%20PELOSI')`,context);
+  assert.equal(vm.runInContext(`state.mview+'|'+state.maid`,context),'actor|g:NANCY PELOSI');
+  console.log(`${n} smart-money and all-flows checks passed.`);
+ }
 })().catch(e=>{console.error(e);process.exitCode=1});

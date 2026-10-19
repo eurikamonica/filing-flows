@@ -136,7 +136,8 @@ def _dur(per, end, annual):
             return f["val"], [f], "3m"
     if not at_end:
         return None, [], None
-    s0, f0 = min(at_end, key=lambda x: x[0])
+    ytd = [x for x in at_end if (F.d(end) - F.d(x[0])).days < 300] or at_end   # not a trailing twelve months (Amazon)
+    s0, f0 = min(ytd, key=lambda x: x[0])
     for (s, e), f in per.items():
         if s == s0 and e != end and 75 <= (F.d(end) - F.d(e)).days <= 105:
             return f0["val"] - f["val"], [f0, f], "ytd"

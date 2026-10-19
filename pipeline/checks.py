@@ -26,14 +26,17 @@ def _days(a, b):
 
 
 def money(v):
-    a, s = abs(v), "−" if v < 0 else ""
+    from . import fx
+    a, s, y = abs(v), "−" if v < 0 else "", fx.sym()
+    if a >= 0.95e12:
+        return f"{s}{y}{a / 1e12:.2f}T"
     if a >= 0.95e9:
-        return f"{s}${a / 1e9:.1f}B"
+        return f"{s}{y}{a / 1e9:.1f}B"
     if a >= 1e8:
-        return f"{s}${a / 1e9:.2f}B"
+        return f"{s}{y}{a / 1e9:.2f}B"
     if a >= 0.95e6:
-        return f"{s}${a / 1e6:.1f}M"
-    return f"{s}${a / 1e3:.0f}K"
+        return f"{s}{y}{a / 1e6:.1f}M"
+    return f"{s}{y}{a / 1e3:.0f}K"
 
 
 def _ratio_words(x):

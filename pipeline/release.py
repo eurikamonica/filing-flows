@@ -34,13 +34,14 @@ P = {
     "opex_total": r"^total operating expenses$",
     "oi": r"^(total )?operating (income|profit|loss|earnings|income \(loss\)|\(loss\) income|loss \(income\))$"
           r"|^(income|loss|earnings|income \(loss\)|\(loss\) income) from operations$",
-    "pretax": r"^(income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\))( from continuing operations)?"
+    "pretax": r"^(net )?(income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\))( from continuing operations)?"
               r"( before (provision for |benefit from )?(income )?taxes| before income tax (expense|provision|benefit)s?)$",
     "tax": r"^((\(provision\) benefit|provision \(benefit\)|\(provision for\) benefit from|provision for \(benefit from\)|"
            r"benefit from \(provision for\)|provision for|benefit from|\(benefit\) provision) (for )?income taxes"
            r"|income tax (expense|provision|benefit|\(provision\) benefit|\(expense\) benefit|expense \(benefit\)|"
            r"benefit \(expense\)|provision \(benefit\))|income taxes|income tax)$",
     "pl": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\))$",
+    "pl_cont": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\)) from continuing operations$",
     "ni": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|earnings \(loss\)) (attributable|applicable|available) to "
           r"(?!non-?controlling|minority|redeemable non)",
     "nci": r"^(less: )?net (income|loss|income \(loss\)|\(income\) loss|\(loss\) income|earnings) attributable to "
@@ -50,12 +51,14 @@ P = {
     "da": r"^(depreciation|depreciation, depletion)( expense)?( and amortization( expense)?( of [a-z ,]+)?)?$"
           r"|^amortization and depreciation$|^depreciation, amortization and accretion$",
     "sbc": r"^(stock|share|equity)[- ]based compensation( expense)?$",
+    "da_op": r"^depreciation and amortization( expenses?)?$|^depreciation, amortization and impairment$",
     "capex": r"^(purchases?|acquisitions?|additions?|expenditures) (of|to|for) (property|plant|premises)|^capital expenditures$"
              r"|^payments? for (the )?(acquisition of |purchases? of )?property",
 }
 PATTERNS = {k: re.compile(v) for k, v in P.items()}
-COST_KEYS = ("cor", "rd", "sm", "ga", "sga", "costs_total", "opex_total", "da", "sbc", "capex")
-IS_KEYS = ("revenue", "cor", "gp", "rd", "sm", "ga", "sga", "costs_total", "opex_total", "oi", "pretax", "tax", "pl", "ni", "nci")
+COST_KEYS = ("cor", "rd", "sm", "ga", "sga", "da_op", "costs_total", "opex_total", "da", "sbc", "capex")
+IS_KEYS = ("revenue", "cor", "gp", "rd", "sm", "ga", "sga", "da_op", "costs_total", "opex_total", "oi", "pretax", "tax", "pl", "pl_cont",
+           "ni", "nci")
 CF_KEYS = ("ocf", "da", "sbc", "capex")
 QTR_RE = re.compile(r"three months|quarter ended|quarters ended|thirteen weeks|fourteen weeks|1[34] weeks|"
                     r"(first|second|third|fourth) (fiscal )?quarter|\bq[1-4]\b|\d(st|nd|rd|th) qtr")
@@ -70,13 +73,20 @@ def _date(m):
 def norm_label(s):
     s = s.lower().replace(" ", " ").replace("&", " and ").replace("’", "'")
     s = re.sub(r"\((\d{1,2}|[a-z]|[ivx]+)\)|\*+|†|‡", " ", s)            # footnote marks
-    s = re.sub(r"[:$]", " ", s)
+    s = re.sub(r"[:$€£¥₩₹]", " ", s)
+    s = re.sub(r"\s+/\s+", " ", s)                        # "net income / (loss)" (Nebius) = "net income (loss)"
     s = re.sub(r"\s+", " ", s).strip(" ,.;-")
     return s
 
 
+# currency marks a foreign filer's tables print beside the numbers ("€", "NT$", "RMB", "US$")
+CUR_MARK = re.compile(r"US\$|NT\$|HK\$|R\$|C\$|A\$|S\$|NZ\$|RMB|EUR|USD|CHF|[$€£¥₩₹₪]")
+CUR_CELL = re.compile(r"(?:US\$|NT\$|HK\$|R\$|C\$|A\$|S\$|NZ\$|RMB|EUR|USD|CHF|GBP|JPY|CNY|TWD|KRW|INR|[$€£¥₩₹₪])")
+USD_CELL = re.compile(r"US\$|USD|U\.S\.\s?\$")
+
+
 def _number(cell):
-    s = cell.replace("$", "").replace(" ", "").replace(" ", "")
+    s = CUR_MARK.sub("", cell).replace(" ", "").replace(" ", "")
     if not s:
         return None
     neg = s.startswith("(") or s.startswith("−") or (s.startswith("-") and len(s) > 1)
@@ -100,7 +110,7 @@ def read_tables(html):
             cells = [re.sub(r"\s+", " ", td.get_text(" ", strip=True)).strip() for td in tr.find_all(["td", "th"])]
             label, vals, pct = None, [], False
             for c in cells:
-                if not c or c in ("$", ")", "(", "%"):
+                if not c or c in (")", "(", "%") or CUR_CELL.fullmatch(c):
                     pct = pct or c == "%"
                     continue
                 if c in DASHES:
@@ -117,8 +127,85 @@ def read_tables(html):
                     vals.append(v)                        # header numbers (years) or unlabeled rows
             rows.append({"cells": cells, "label": label, "key": norm_label(label) if label else "", "vals": vals, "pct": pct})
         before = " ".join(s.strip() for s in t.find_all_previous(string=True, limit=30))[:1500]
-        out.append({"rows": rows, "before": before, "text": t.get_text(" ", strip=True)})
+        out.append(_newest_first(_usd_columns({"rows": rows, "before": before, "text": t.get_text(" ", strip=True)})))
     return out
+
+
+def _usd_columns(table):
+    """A table in the company's currency with a US$ "convenience" column next to the current period (RMB | RMB | US$):
+    the US$ columns are set aside (the figures are read in the company's currency) and the rate they imply is kept."""
+    for r in table["rows"]:
+        marks = [c for c in r["cells"] if CUR_CELL.fullmatch(c or "")]
+        others = [c for c in r["cells"] if c and not CUR_CELL.fullmatch(c)]
+        if len(marks) < 2 or len(others) > 1:
+            continue
+        usd = [i for i, c in enumerate(marks) if USD_CELL.fullmatch(c)]
+        if not usd or len(usd) == len(marks):
+            continue
+        n = len(marks)
+        table["usd_cols"] = {"n": n, "usd": usd, "pairs": [(i - 1, i) for i in usd if i > 0 and i - 1 not in usd]}
+        for row in table["rows"]:
+            if len(row["vals"]) == n and row is not r:
+                row["vals_all"] = row["vals"]
+                row["vals"] = [v for i, v in enumerate(row["vals"]) if i not in usd]
+        return table
+    return table
+
+
+def convenience_rate(tables, key_row):
+    """US dollars per unit of the company's currency from a US$ column beside its own (the revenue row), or None."""
+    for t in tables:
+        u = t.get("usd_cols")
+        if not u or not u["pairs"]:
+            continue
+        for r in t["rows"]:
+            if r.get("vals_all") and r["key"] and PATTERNS[key_row].search(r["key"]):
+                i, j = u["pairs"][0]
+                a, b = r["vals_all"][i], r["vals_all"][j]
+                if a and b and a > 0 and b > 0:
+                    return b / a
+    return None
+
+
+YEAR_CELL = re.compile(r"((?:19|20)\d\d)\s*[*†‡]*(?:\(\w\))?")
+
+
+def _newest_first(table):
+    """Put the current period in the first column. US releases print the newest period first; many foreign filers'
+    (Nebius: "2025  2026 | 2025  2026") print it last. The year row above the numbers tells: when its years rise within
+    a block, every row of the same width is reversed block by block."""
+    for r in table["rows"]:
+        v = r["vals"]
+        ys = [int(m.group(1)) for c in r["cells"] for m in [YEAR_CELL.fullmatch(c)] if m]   # "2025*": derived from audited
+        u = table.get("usd_cols")
+        if u and len(ys) == u["n"]:                         # the US$ convenience column was set aside (_usd_columns)
+            ys = [y for i, y in enumerate(ys) if i not in u["usd"]]
+        if len(ys) >= 2:
+            years = ys
+            break
+        if r["label"] and v and not all(1990 <= x <= 2100 and x == int(x) for x in v):
+            return table                                   # numbers before any year row: leave the table as printed
+    else:
+        return table
+    if years[1] <= years[0]:
+        return table                                       # newest first (US style), or one year per period type
+    blocks, cur = [], [0]
+    for i in range(1, len(years)):
+        if years[i] > years[i - 1]:
+            cur.append(i)
+        else:
+            blocks.append(cur)
+            cur = [i]
+    blocks.append(cur)
+    if all(len(b) == 1 for b in blocks):
+        return table                                       # years fall (newest first) or one column per block
+    order = [i for b in blocks for i in reversed(b)]
+    n = len(years)
+    for r in table["rows"]:
+        if len(r["vals"]) == n:
+            r["vals"] = [r["vals"][i] for i in order]
+    table["newest_last"] = True
+    return table
 
 
 def _header(table):
@@ -170,12 +257,17 @@ def _map_rows(table, keys, full=False):
 
 
 def _units(table):
-    m = re.search(r"in (thousands|millions|billions)", (table["before"] + " " + table["text"][:600]).lower())
+    t = (table["before"] + " " + table["text"][:600]).lower()
+    m = re.search(r"in (?:(?:u\.?s\.? ?|usd |us\$ ?|\$ ?|€ ?|eur |£ ?|gbp |¥ ?|jpy |rmb ?|cny |nt\$ ?|twd |₩ ?|krw |₹ ?|inr |r\$ ?|"
+                  r"brl |c\$ ?|cad |chf |sek |dkk |nok |hk\$ ?|hkd |s\$ ?|a\$ ?)(?:dollars? |euros? )?)?(thousands|millions|billions)", t) \
+        or re.search(r"\(\s*(?:us\$|\$|€|eur|£|¥|rmb|nt\$|₩|₹|chf|sek|dkk|nok)\s*(?:in\s)?(thousands|millions|billions)", t)   # "(€ millions)"
     return {"thousands": 1e3, "millions": 1e6, "billions": 1e9}[m.group(1)] if m else None
 
 
 def _is_nongaap(table):
-    return bool(re.search(r"non-gaap|adjusted|reconciliation", (table["before"][-400:] + " " + table["text"][:300]).lower()))
+    # "adjusted EBITDA", "adjusted net loss" — not "adjusted for the presentation of discontinued operations" (Nebius)
+    return bool(re.search(r"non-gaap|non-ifrs|adjusted (ebitda|ebit|net|operating|earnings|eps|income|gross|free cash|diluted)|reconciliation",
+                          (table["before"][:250] + " " + table["text"][:300]).lower()))   # before: the nearest text first
 
 
 def pick_tables(tables):
@@ -266,6 +358,9 @@ def parse(html, filed, last_end=None, prior_revenue=None):
         cf_rows = _map_rows(t_cf, CF_KEYS, full=True)
         out["cf_cols"] = {k: [v * s_cf for v in x[2]] for k, x in cf_rows.items()}
         out["cf_labels"] = {k: x[1] for k, x in cf_rows.items()}
+    rate = convenience_rate([t_is], "revenue")
+    if rate:
+        out["fx_official"] = {"usd": rate, "text": "the release's own US$ column beside its figures (revenue)"}
     return out
 
 
@@ -323,18 +418,27 @@ def reconcile(raw, labels=None, tax_checked=False):
             r[k] = abs(r[k])
     if r.get("revenue") is None or r["revenue"] <= 0:
         raise ValueError("no positive revenue")
+    cont = r.pop("pl_cont", None)                             # net income from continuing operations, when printed
     pl, ni, nci = r.get("pl"), r.get("ni"), r.get("nci")
+    if pl is None and ni is None and cont is not None:
+        pl = cont
     if pl is not None and ni is None:
         ni = pl                                               # no minority interests line
     if ni is None:
         raise ValueError("no net income line")
     if r.get("pretax") is not None and r.get("tax") is not None:
         nets = [pl] if pl is not None else [ni] + ([ni + abs(nci), ni - abs(nci)] if nci else [])
+        if cont is not None and cont not in nets:
+            nets.append(cont)                                  # discontinued operations below the line (Nebius: Toloka)
         tol = max(abs(r["pretax"]), abs(ni)) * 0.01 + 1e5
         for net in nets:
             hit = next((sg for sg in (1, -1) if abs(r["pretax"] - sg * r["tax"] - net) <= tol), None)
             if hit:
-                r["tax"], pl = hit * r["tax"], net             # tax printed as a negative "(provision)" flips sign
+                r["tax"] = hit * r["tax"]                      # tax printed as a negative "(provision)" flips sign
+                if net is cont and pl is not None and net != pl:
+                    r["disc"] = pl - cont                      # the chart ends at net income from continuing operations
+                    ni = cont if ni == pl else ni - (pl - cont)
+                pl = net
                 break
         else:
             raise ValueError("pre-tax earnings, tax and net income do not reconcile")

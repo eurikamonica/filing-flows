@@ -151,14 +151,18 @@ alter table public.send_requests add column if not exists draft boolean not null
 -- engage_reddit_question / engage_reddit_list / engage_mover / engage_explain / engage_peers (owner only; cik 0,
 -- period_end today): write that engagement post now
 -- (pipeline/engage.py) instead of waiting for its schedule; post_8k (cik = the company, ref = accession or blank for its most
--- material recent 8-K) / post_13f (cik = the manager, ref = accession or blank for the latest 13F): a post about that filing
+-- material recent 8-K) / post_13f (cik = the manager, ref = accession or blank for the latest 13F): a post about that filing;
+-- post_insider / post_official / post_stake / post_f144 / post_short / post_news (cik = the issuer or 0; ref = the row's key
+-- as a JSON list): a post about one row of the Disclosures hub's Insider trades / Officials' trades / 13D / 13G / Form 144 /
+-- Short interest / News tables (8-K events rows use post_8k: cik = the company, ref = the accession)
 alter table public.send_requests drop constraint if exists send_requests_kind_check;
 alter table public.send_requests add constraint send_requests_kind_check check (kind in ('q', 'fy', 'thread', 'day', 'post', 'post_holders', 'post_gif',
-  'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'post_8k', 'post_13f'));
+  'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'engage_reddit_hot', 'engage_smart_buys', 'engage_smart_record', 'engage_all_agree', 'engage_qtd_flows', 'engage_pt_upside', 'engage_versus', 'engage_drawdown', 'engage_setup', 'engage_lows52', 'engage_highs52', 'engage_near_lows', 'engage_records', 'engage_polymarket', 'post_8k', 'post_13f', 'post_insider', 'post_official', 'post_stake', 'post_f144', 'post_short', 'post_news'));
 alter table public.send_requests drop constraint if exists send_requests_cik_check;
-alter table public.send_requests add constraint send_requests_cik_check check (cik > 0 or (kind in ('day', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'post_8k', 'post_13f') and cik = 0));
+alter table public.send_requests add constraint send_requests_cik_check check (cik > 0 or (kind in ('day', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'engage_reddit_hot', 'engage_smart_buys', 'engage_smart_record', 'engage_all_agree', 'engage_qtd_flows', 'engage_pt_upside', 'engage_versus', 'engage_drawdown', 'engage_setup', 'engage_lows52', 'engage_highs52', 'engage_near_lows', 'engage_records', 'engage_polymarket', 'post_8k', 'post_13f', 'post_insider', 'post_official', 'post_stake', 'post_f144', 'post_short', 'post_news') and cik = 0));
 drop index if exists public.send_requests_one_pending;       -- a quarter and a fiscal year can end on the same day
-create unique index if not exists send_requests_one_pending_kind on public.send_requests (user_id, cik, period_end, kind)
+drop index if exists public.send_requests_one_pending_kind;  -- one per ref: several hub rows of one company can wait at once
+create unique index if not exists send_requests_one_pending_ref on public.send_requests (user_id, cik, period_end, kind, coalesce(ref, ''))
   where status in ('pending', 'sending');
 create index if not exists send_requests_status on public.send_requests (status, created_at);
 
@@ -175,7 +179,7 @@ language plpgsql security definer set search_path = public, auth as $$
 begin
   new.status := 'pending'; new.attempts := 0; new.error := null; new.claimed_at := null; new.sent_at := null;
   new.created_at := now();
-  if new.kind in ('post', 'post_holders', 'post_gif', 'post_8k', 'post_13f') or new.kind like 'engage\_%' then
+  if new.kind in ('post', 'post_holders', 'post_gif', 'post_8k', 'post_13f', 'post_insider', 'post_official', 'post_stake', 'post_f144', 'post_short', 'post_news') or new.kind like 'engage\_%' then
     return new;
   end if;
   if exists (select 1 from public.site_owners o join auth.users u on lower(u.email) = lower(o.email) where u.id = new.user_id) then
@@ -219,7 +223,7 @@ create trigger send_requests_wake after insert on public.send_requests
 -- the owner's "Post to X" requests wake their own workflow (post-to-x.yml) so they never queue behind e-mails
 drop trigger if exists post_requests_wake on public.send_requests;
 create trigger post_requests_wake after insert on public.send_requests
-  for each row when (new.kind in ('post', 'post_holders', 'post_gif', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'post_8k', 'post_13f'))
+  for each row when (new.kind in ('post', 'post_holders', 'post_gif', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'engage_reddit_hot', 'engage_smart_buys', 'engage_smart_record', 'engage_all_agree', 'engage_qtd_flows', 'engage_pt_upside', 'engage_versus', 'engage_drawdown', 'engage_setup', 'engage_lows52', 'engage_highs52', 'engage_near_lows', 'engage_records', 'engage_polymarket', 'post_8k', 'post_13f', 'post_insider', 'post_official', 'post_stake', 'post_f144', 'post_short', 'post_news'))
   execute function public.send_requests_wake('post-request');
 
 -- The site owner: only accounts listed here see the owner tools (#owner: the X thread panel on company pages).
@@ -242,7 +246,7 @@ end $$;
 -- "Email me this thread" goes straight to the owner's inbox: only the site owner may ask for a thread
 drop policy if exists "ask for reports" on public.send_requests;
 create policy "ask for reports" on public.send_requests for insert
-  with check (auth.uid() = user_id and (kind not in ('thread', 'post', 'post_holders', 'post_gif', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'post_8k', 'post_13f') or public.am_i_owner()));
+  with check (auth.uid() = user_id and (kind not in ('thread', 'post', 'post_holders', 'post_gif', 'engage_question', 'engage_list', 'engage_reddit_question', 'engage_reddit_list', 'engage_mover', 'engage_explain', 'engage_peers', 'engage_insider', 'engage_event8k', 'engage_ivmove', 'engage_opt13f', 'engage_rsleaders', 'engage_reddit_hot', 'engage_smart_buys', 'engage_smart_record', 'engage_all_agree', 'engage_qtd_flows', 'engage_pt_upside', 'engage_versus', 'engage_drawdown', 'engage_setup', 'engage_lows52', 'engage_highs52', 'engage_near_lows', 'engage_records', 'engage_polymarket', 'post_8k', 'post_13f', 'post_insider', 'post_official', 'post_stake', 'post_f144', 'post_short', 'post_news') or public.am_i_owner()));
 
 -- The owner's preferences (#owner page): read and changed by the site owner only; read by the workflows with the secret key.
 create table if not exists public.owner_settings (
@@ -256,10 +260,18 @@ create table if not exists public.owner_settings (
   daily_scope     text not null default 'min_revenue' check (daily_scope in ('min_revenue', 'all')),   -- 'all': every
                                                      -- company that filed (the full report), not only those over min_revenue
   reader_copy     boolean not null default false,    -- the owner also gets the reader e-mails their own alert settings ask for
+  x_post          jsonb not null default '{}'::jsonb, -- the X post options (#owner page "X posts"; pipeline/xprefs.py):
+                                                     -- links, gif, hashtags_max, hashtags, headline_tag, tags
   updated_at      timestamptz not null default now()
 );
 alter table public.owner_settings add column if not exists daily_scope text not null default 'min_revenue';
 alter table public.owner_settings add column if not exists reader_copy boolean not null default false;
+alter table public.owner_settings add column if not exists x_post jsonb not null default '{}'::jsonb;
+do $$ begin
+  alter table public.owner_settings add constraint owner_settings_x_post_check
+    check (jsonb_typeof(x_post) = 'object' and length(x_post::text) <= 4000);
+exception when duplicate_object then null;
+end $$;
 do $$ begin
   alter table public.owner_settings add constraint owner_settings_daily_scope_check check (daily_scope in ('min_revenue', 'all'));
 exception when duplicate_object then null;
@@ -365,11 +377,17 @@ drop policy if exists "ask for companies" on public.company_requests;
 create policy "read own companies" on public.company_requests for select using (auth.uid() = user_id);
 create policy "ask for companies" on public.company_requests for insert with check (auth.uid() = user_id);
 
+-- The site owner's requests take the fast lane (owner = true): no daily limit, and the scan the wake below starts is a
+-- short one that relays until the owner's companies are built (scan.yml, pipeline/custom.py claim_owner_companies).
+alter table public.company_requests add column if not exists owner boolean not null default false;
 create or replace function public.company_requests_guard() returns trigger
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, auth as $$
+declare is_owner boolean;
 begin
+  is_owner := exists (select 1 from public.site_owners o join auth.users u on lower(u.email) = lower(o.email) where u.id = new.user_id);
   new.status := 'pending'; new.error := null; new.claimed_at := null; new.done_at := null; new.created_at := now();
-  if (select count(*) from public.company_requests r
+  new.owner := is_owner;
+  if not is_owner and (select count(*) from public.company_requests r
       where r.user_id = new.user_id and r.created_at > now() - interval '24 hours') >= 10 then
     raise exception 'limit: 10 companies a day' using errcode = 'P0001';
   end if;

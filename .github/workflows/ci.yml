@@ -14,6 +14,7 @@ on:
       - 'tests/**'
       - 'config/**'
       - 'requirements.txt'
+      - 'supabase/**'
       - 'local-inference/**'   # Created by ChatGPT (OpenAI): CPU-only local companion checks.
       - 'disclosures/app/**'
       - 'disclosures/automation/**'
@@ -41,6 +42,7 @@ jobs:
             scripts
             tests
             config
+            supabase
             requirements.txt
             local-inference
             disclosures/app
@@ -53,6 +55,21 @@ jobs:
             disclosures/docs/market.js
             disclosures/docs/rotation.js
             disclosures/docs/options.js
+            disclosures/docs/xpost.js
+            disclosures/docs/rrg.js
+            disclosures/docs/chaos.js
+            disclosures/docs/galaxy.js
+            disclosures/docs/ledger.js
+            disclosures/docs/macro.js
+            disclosures/docs/debt-view.js
+            disclosures/docs/debt.js
+            disclosures/docs/consensus-view.js
+            disclosures/docs/consensus.js
+            disclosures/docs/etf.js
+            disclosures/docs/smart.js
+            disclosures/docs/allflows.js
+            disclosures/docs/ownership.js
+            disclosures/docs/news.js
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
         with:
@@ -76,5 +93,6 @@ jobs:
       - name: Hub unit and template tests
         working-directory: disclosures
         run: |
+          python -m pip install --quiet numpy pandas scikit-learn    # chaos_forecast.py (its tests skip without them)
           python -m unittest discover -s tests
-          for f in docs/app.js docs/extensions.js docs/dashboard.js docs/market.js docs/rotation.js docs/options.js; do node --check "$f"; done
+          for f in docs/app.js docs/extensions.js docs/dashboard.js docs/market.js docs/rotation.js docs/options.js docs/xpost.js docs/rrg.js docs/chaos.js docs/galaxy.js docs/ledger.js docs/macro.js docs/debt-view.js docs/debt.js docs/consensus-view.js docs/consensus.js docs/etf.js docs/smart.js docs/allflows.js docs/ownership.js docs/news.js; do node --check "$f"; done

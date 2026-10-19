@@ -10,6 +10,8 @@ options13f.json       the put and call positions managers disclose in 13F (long 
                       per underlying, call and put notional, how many managers hold each, changes since the prior quarter,
                       the largest holders; per manager, the largest option books; the biggest position changes
 by-ticker-history.json net 13F managers (buyers − sellers) per ticker and quarter, for the rotation charts
+by-ticker-quarters.json the same quarters per ticker with buyers, sellers, estimated net dollars, holders, new and exits
+                      (the company pages' quarter-by-quarter chart, through stage-public.py)
 signals.json          one row per ticker joining the three: institutional crowding, officials' trades, price momentum
                       (daily closes), with transparent tags and a heat score. The Filing Flows publish step adds the
                       latest earnings figures (stage-public.py --site-data).
@@ -28,6 +30,7 @@ from pathlib import Path
 
 from core import now, read_json, write_json
 import insiders as INS
+import senate as SEN
 
 TOP = 40
 FUND_TYPES = {'ETP', 'Open-End Fund', 'Closed-End Fund', 'Fund of Funds', 'Unit', 'Equity WRT', 'Right'}
@@ -385,9 +388,13 @@ def build_flows(root, universe, scan=None, opts=None):
     if not quarter:
         return None, None
     summ = summarise(raw, prices, coverage)
-    windows = {'quarter': [quarter], 'ytd': ytd or [quarter]}
-    if early:
+    windows = {'quarter': [quarter]}
+    if early:                                            # the quarter being filed now, alone and added to the last full one
         windows['early'] = [early]
+        windows['recent'] = [quarter, early]
+    windows['ytd'] = ytd or [quarter]
+    if early and early[:4] == windows['ytd'][0][:4]:
+        windows['ytd_now'] = windows['ytd'] + [early]
     hist_periods = [p for p in sorted(coverage) if coverage[p] >= 10][-6:]
     out = {'generated_at': now(), 'managers_on_file': len(managers), 'coverage': {p: coverage[p] for p in sorted(coverage)},
            'windows': {}, 'note': ('Changes between consecutive quarter-end 13F disclosures of the managers processed so far — not '
@@ -406,8 +413,13 @@ def build_flows(root, universe, scan=None, opts=None):
             for lst in univ.values():
                 listed.update(r['cusip'] for r in lst)
         n = len(periods)
-        label = {'quarter': f'Quarter ended {quarter}', 'ytd': f'{periods[0][:4]} year to date ({n} quarter{"s" if n != 1 else ""} on file)',
-                 'early': f'Early filers for the quarter ended {early} ({coverage.get(early, 0)} managers so far)'}[key]
+        qn = lambda p: f'Q{(int(p[5:7]) - 1) // 3 + 1} {p[:4]}'
+        due = lambda p: (dt.date.fromisoformat(p) + dt.timedelta(days=45)).strftime('%b %d').replace(' 0', ' ')
+        label = {'quarter': f'{qn(quarter)} — quarter ended {quarter} ({coverage.get(quarter, 0)} managers)',
+                 'early': f'{qn(early)} — this quarter, being filed: {coverage.get(early, 0)} managers so far (due {due(early)})' if early else '',
+                 'recent': f'{qn(quarter)} + {qn(early)} so far' if early else '',
+                 'ytd': f'{periods[0][:4]} full quarters to date ({n} quarter{"s" if n != 1 else ""})',
+                 'ytd_now': f'{periods[0][:4]} to date, including {qn(early)} so far' if early else ''}[key]
         core = [r for r in stocks if not r['first'] and not r['gone']]
         out['windows'][key] = {'label': label, 'periods': periods, 'managers': coverage.get(periods[-1], 0),
                                'securities': len(rows), 'splits': sum(1 for r in rows if r['split']),
@@ -415,24 +427,31 @@ def build_flows(root, universe, scan=None, opts=None):
                                'lists': lists}
     out['history_periods'] = hist_periods
     out['history'] = history(summ, prices, hist_periods, listed)
-    out['_by_quarter'] = ticker_history(summ, universe, [p for p in sorted(coverage) if coverage[p] >= 10], coverage)
+    out['_by_quarter'] = ticker_history(summ, universe, [p for p in sorted(coverage) if coverage[p] >= 10], coverage, prices)
     out['_ctx'] = {'prices': prices, 'coverage': coverage, 'managers': managers, 'quarter': quarter}
     return out, every
 
 
-def ticker_history(summ, universe, periods, coverage):
-    """Net 13F managers (distinct buyers − sellers) per listed stock and quarter: {'periods', 'coverage', 'rows': {T: [n…]}}."""
-    rows = {}
+def ticker_history(summ, universe, periods, coverage, prices=None):
+    """Net 13F managers (distinct buyers − sellers) per listed stock and quarter: {'periods', 'coverage', 'rows': {T: [n…]}},
+    plus 'detail': {T: [[buyers, sellers, est. net dollars, holders, new, exits] or None …]} for the company pages'
+    quarter-by-quarter chart (stage-public.py → holders/<T>.json q13f; dollars at each quarter's median implied price)."""
+    rows, detail = {}, {}
     for i, period in enumerate(periods):
-        per = defaultdict(lambda: [set(), set()])
+        per = defaultdict(lambda: [set(), set(), 0.0, 0, 0, 0])
+        px = (prices or {}).get(period, {})
         for c, st in summ.get(period, {}).items():
             t = universe.cusip_ticker.get(c)
             if not t or universe.cusip_type.get(c) in FUND_TYPES:
                 continue
-            per[t][0] |= st['b']; per[t][1] |= st['s']
-        for t, (b, s_) in per.items():
+            a = per[t]
+            a[0] |= st['b']; a[1] |= st['s']
+            a[2] += (st['add'] - st['sold']) * (px.get(c) or 0)
+            a[3] += st['holders']; a[4] += st['new']; a[5] += st['exits']
+        for t, (b, s_, usd, holders, new, exits) in per.items():
             rows.setdefault(t, [None] * len(periods))[i] = len(b) - len(s_)
-    return {'periods': periods, 'coverage': [coverage.get(p, 0) for p in periods], 'rows': rows}
+            detail.setdefault(t, [None] * len(periods))[i] = [len(b), len(s_), round(usd), holders, new, exits]
+    return {'periods': periods, 'coverage': [coverage.get(p, 0) for p in periods], 'rows': rows, 'detail': detail}
 
 
 # ------------------------------------------------------------------ 13F option positions (puts and calls managers disclose)
@@ -601,6 +620,20 @@ def officials_trades(root, universe, live=None):
             trades.append(_checked({**t, 'person': rep.get('person'), 'jurisdiction': 'US House', 'report_id': rep.get('report_id'),
                                     'filed_date': rep.get('filed_date'), 'source_url': rep.get('source_url'), 'page': c.get('page'),
                                     'read': 'machine'}, universe))
+    senate, _ = SEN.load(root)                              # US Senate electronic PTRs (app/senate.py), read from eFD's tables
+    first_report = {}
+    for t in senate:
+        if not t.get('ticker'):
+            stats['no ticker (bonds, funds, private)'] += 1
+            continue
+        if not ('2012-01-01' <= (t.get('date') or '') <= today):
+            stats['date out of range'] += 1
+            continue
+        key = (t.get('person'), t['ticker'], t['date'], t['type'], t.get('amount_min'), t.get('owner'))
+        if first_report.setdefault(key, t['report_id']) != t['report_id']:     # the same row in an amended report
+            stats['duplicate (amendment / repeated row)'] += 1
+            continue
+        trades.append(_checked({k: v for k, v in t.items() if k != 'row'}, universe))
     for r in cong.get('records', []):                       # reviewed transaction rows (any jurisdiction)
         if r.get('kind') != 'transaction':
             continue
@@ -634,9 +667,22 @@ def latest_reports(root, live=None, trades=None, n=40):
         if t.get('report_id'):
             per[t['report_id']].append(t)
     ptr = [r for r in directory if r.get('jurisdiction', 'US House') == 'US House' and r.get('report_type') == 'PTR']
+    _, senate = SEN.load(root)
+    for r in senate:                                        # US Senate PTRs: electronic ones read, paper ones listed
+        st = {'read': 'read', 'empty': 'read', 'error': 'error', 'listed': 'paper'}.get(r.get('status'), 'waiting')
+        ptr.append({**r, 'jurisdiction': 'US Senate', 'office': 'US Senate' + ('' if r.get('office') in (None, 'Senator') else f" · {r['office']}"),
+                    '_status': st})
     ptr.sort(key=lambda r: (r.get('filed_date') or '', r['report_id']), reverse=True)
     out = []
     for r in ptr[:n]:
+        if r.get('_status'):
+            ts = per.get(r['report_id'], [])
+            out.append({'report_id': r['report_id'], 'person': r.get('person'), 'office': r.get('office'), 'filed_date': r.get('filed_date'),
+                        'status': r['_status'], 'jurisdiction': 'US Senate', 'pages': None, 'trades': len(ts),
+                        'buys': sum(t.get('type') == 'purchase' for t in ts), 'sells': sum('sale' in (t.get('type') or '') for t in ts),
+                        'tickers': list(dict.fromkeys(t['ticker_canon'] for t in ts if t.get('ticker_canon')))[:6],
+                        'source_url': r.get('source_url')})
+            continue
         got = read.get(r['report_id']) or {}
         ts = per.get(r['report_id'], [])
         out.append({'report_id': r['report_id'], 'person': r.get('person'), 'office': r.get('office'), 'filed_date': r.get('filed_date'),
@@ -645,7 +691,13 @@ def latest_reports(root, live=None, trades=None, n=40):
                     'sells': sum('sale' in (t.get('type') or '') for t in ts),
                     'tickers': list(dict.fromkeys(t['ticker_canon'] for t in ts if t.get('ticker_canon')))[:6],
                     'source_url': r.get('source_url')})
-    return out, (cong.get('counts') or {}).get('house_ptr') or {}
+    monitor = dict((cong.get('counts') or {}).get('house_ptr') or {})
+    if senate:
+        monitor['senate'] = {'reports': len(senate), 'electronic_read': sum(r.get('status') in ('read', 'empty') for r in senate),
+                             'electronic_waiting': sum(r.get('format') == 'electronic' and r.get('status') not in ('read', 'empty') for r in senate),
+                             'paper': sum(r.get('format') == 'paper' for r in senate),
+                             'newest_filed': max((r.get('filed_date') or '' for r in senate), default=None)}
+    return out, monitor
 
 
 def _checked(t, universe):
@@ -895,7 +947,13 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
         _write(out_dir / 'by-ticker.json', {'generated_at': stamp, 'label': flows['windows']['quarter']['label'],
                                              'fields': ['buyers', 'sellers', 'new', 'exits', 'usd_net', 'holders'], 'rows': by})
         if by_quarter:
+            detail = by_quarter.pop('detail', None)
             _write(out_dir / 'by-ticker-history.json', {'generated_at': stamp, **by_quarter})
+            if detail:                            # the company pages' quarter-by-quarter 13F chart (stage-public.py)
+                _write(out_dir / 'by-ticker-quarters.json', {'generated_at': stamp, 'periods': by_quarter['periods'],
+                                                             'coverage': by_quarter['coverage'],
+                                                             'fields': ['buyers', 'sellers', 'usd_net', 'holders', 'new', 'exits'],
+                                                             'rows': detail})
         # CUSIP → ticker for the securities in 13F, so other tools (Owner tools' 13F posts) can name holdings
         _write(out_dir / 'cusip-tickers.json', {c: t for c, t in universe.cusip_ticker.items() if t})
         try:
@@ -906,9 +964,10 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
             errors.append(f'13F options: {exc}')
     today = dt.date.today()
     off = {'generated_at': stamp, 'stats': tstats,
-           'note': ('US House periodic transaction reports read by machine: the ticker is the one the filer wrote next to the '
-                    'asset, checked against SEC listed-company tickers and the CUSIP map; amounts are the disclosed ranges. '
-                    'Reviewed rows come from the review desk. Dates are transaction dates; reports can arrive up to 45 days later.'),
+           'note': ('US House periodic transaction reports read by machine and US Senate electronic periodic transaction '
+                    'reports (eFD): the ticker is the one the filer wrote next to the asset, checked against SEC listed-company '
+                    'tickers and the CUSIP map; amounts are the disclosed ranges. Reviewed rows come from the review desk. Dates '
+                    'are transaction dates; reports can arrive up to 45 days later. Senate paper reports are listed, not read.'),
            'summary': {'d90': sorted(officials_summary(trades, (today - dt.timedelta(days=90)).isoformat()),
                                      key=lambda r: (-len(r['people_buy']), -r['buys'], -r['buy_min']))[:TOP],
                        'ytd': sorted(officials_summary(trades, f'{today.year}-01-01'),

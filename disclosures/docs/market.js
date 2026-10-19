@@ -1,6 +1,6 @@
 /* 4.3 market views: Signals (where money, officials and price line up), Market flows (13F money flows across every
    processed manager) and Officials' trades (machine-read House transaction reports with ticker checks).
-   Data: data/market/{signals,flows,officials-trades}.json, built by app/market.py; loaded on first use. No dependencies. */
+   Data: data/market/{signals,flows,officials-trades}.json (House and Senate PTRs), built by app/market.py; loaded on first use. No dependencies. */
 const marketStore={};
 function marketData(name){
  const m=marketStore[name]||(marketStore[name]={});
@@ -175,51 +175,69 @@ function flowsView(){
  const top=[...lists.net_buy.slice(0,10),...lists.net_sell.slice(0,10).reverse()];
  out+=`<div class="charts even"><div class="panel"><h3>Net buying and selling</h3><p class="sub">Top 10 each way · estimated dollars · ${esc(w.label)}</p>${divergingChart(top.map(r=>({label:nm(r),value:r.usd_net,tip:ftip(r)})))}</div>`;
  out+=`<div class="panel"><h3>Who is crowding in</h3><p class="sub">Managers that added vs cut · the 12 with the widest margin of adders</p>${butterfly(lists.most_buyers.slice(0,12).map(r=>({label:nm(r),buyers:r.buyers,sellers:r.sellers,tip:ftip(r)})))}</div></div>`;
- out+=`<div class="explain">${esc(d.note||'')} ${state.fwin==='early'?'<b>Early filers only:</b> most managers file in the last two weeks before the 45-day deadline, so this window shows the first movers, not the consensus.':''}</div>`;
+ out+=`<div class="explain">${esc(d.note||'')} ${state.fwin==='early'?'<b>Early filers only:</b> most managers file in the last two weeks before the 45-day deadline, so this window shows the first movers, not the consensus.':['recent','ytd_now'].includes(state.fwin)?'<b>Includes the quarter being filed:</b> its part covers only the early filers so far; a manager in both quarters counts once, with both changes added.':''}</div>`;
  const rows=lists[state.flist]||[],hp=d.history_periods||[];
  exported=rows.map(r=>({ticker:r.ticker,issuer:r.issuer,name:r.name,cusip:r.cusip,type:r.type,usd_net:r.usd_net,usd_add:r.usd_add,usd_sold:r.usd_sold,shares_net:r.sh_net,buyers:r.buyers,sellers:r.sellers,new_positions:r.new,exits:r.exits,holders:r.holders,price:r.price,split_adjusted:r.split,converted:r.converted?JSON.stringify(r.converted):'',top_buyer:r.top_buy[0]?.manager,top_seller:r.top_sell[0]?.manager}));
  out+=`<div class="section-head"><div><h3>${esc(FLOW_LISTS.find(x=>x[0]===state.flist)[1])}</h3><p class="sub">Top ${rows.length} · trend column: net managers per quarter, ${esc(hp[0]||'')} → ${esc(hp[hp.length-1]||'')}</p></div><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=table(['Security','Est. net $','Added $','Sold $','Managers added','Managers cut','New','Exits','Holders','Trend','Largest buyer','Notes'],rows.map(r=>[
   `${tick(r)} <span class="muted">${esc(r.name||r.issuer)}</span>`,`<span class="${r.usd_net>=0?'positive':'negative'}">${smoney(r.usd_net)}</span>`,money(r.usd_add),money(r.usd_sold),
   fmt(r.buyers),fmt(r.sellers),fmt(r.new),fmt(r.exits),fmt(r.holders),columns(d.history?.[r.cusip]),
-  r.top_buy[0]?`${esc(r.top_buy[0].manager)}<br><span class="muted">${money(r.top_buy[0].usd)}</span>`:'—',
+  r.top_buy[0]?`${hubAvatar(r.top_buy[0].manager)}${esc(r.top_buy[0].manager)}<br><span class="muted">${money(r.top_buy[0].usd)}</span>`:'—',
   [r.split?`split ${r.split>=1?fmt(r.split,2)+'-for-1':'1-for-'+fmt(1/r.split,0)} adjusted`:'',r.converted?.from?'converted from another CUSIP':r.converted?.to?'converted to a new CUSIP':'',r.fund?esc(r.type||'fund'):''].filter(Boolean).join('<br>')||'—']));
  return out;
 }
+
+/* ---------- avatars next to officials and managers: Congress portraits and the owner's pictures (data/avatars.json, built by
+   automation/avatars.py with the site), else initials; name keys match avatars.py person_key / org_key ---------- */
+const AVS={d:null,l:null};
+function avReady(){if(AVS.d||AVS.l||typeof fetch!=='function'||state.mode==='demo')return;AVS.l=fetch('data/avatars.json').then(r=>r.ok?r.json():{}).then(d=>{AVS.d=d||{};if(Object.keys(AVS.d.people||{}).length||Object.keys(AVS.d.managers||{}).length)render()}).catch(()=>{AVS.d={}})}
+const AV_SKIP=new Set(['hon','honorable','dr','mr','mrs','ms','rep','sen','senator','representative','the','jr','sr','ii','iii','iv','md','phd','esq','cpa']);
+const avAscii=x=>String(x||'').normalize('NFKD').replace(/[̀-ͯ]/g,'').toLowerCase();
+function avKey(name){let s=avAscii(name);if((s.match(/,/g)||[]).length===1&&!/,\s*(jr|sr|ii|iii|iv)\b/.test(s)){const [l,f]=s.split(',');s=f+' '+l}const w=s.split(/[^a-z]+/).filter(x=>x&&x.length>1&&!AV_SKIP.has(x));return !w.length?'':w.length===1?w[0]:w[0]+' '+w[w.length-1]}
+const avOrg=name=>avAscii(name).split(/[^a-z0-9]+/).filter(Boolean).join(' ');
+function avCss(){if(document.getElementById('av-css'))return;const s=document.createElement('style');s.id='av-css';s.textContent=`.av{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;border-radius:50%;overflow:hidden;font:600 10px/1 inherit;color:hsl(var(--av-h,200) 35% 28%);background:hsl(var(--av-h,200) 40% 88%);vertical-align:middle;margin-right:7px}.av::before{content:attr(data-i)}.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:var(--surface,#fff)}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .av{color:hsl(var(--av-h,200) 45% 82%);background:hsl(var(--av-h,200) 25% 28%)}}:root[data-theme="dark"] .av{color:hsl(var(--av-h,200) 45% 82%);background:hsl(var(--av-h,200) 25% 28%)}`;document.head.appendChild(s);document.addEventListener('error',e=>{if(e.target&&e.target.classList&&e.target.classList.contains('av-img'))e.target.remove()},true)}
+function hubAvatar(name,cik){
+ avReady();avCss();const av=AVS.d||{},M=av.managers||{},byName=(av.manager_names||{})[avOrg(name)];
+ const img=((cik!=null&&M[String(+cik)])||(byName&&M[byName])||(av.people||{})[avKey(name)]||{}).image;
+ const w=String(name||'?').replace(/[^A-Za-z0-9 ]+/g,' ').trim().split(/\s+/).filter(x=>!/^(inc|llc|lp|ltd|co|corp|the|of|and|mr|mrs|ms|hon|dr)$/i.test(x));
+ const ini=((w[0]||'?')[0]+(w.length>1?w[w.length-1][0]:'')).toUpperCase();let h=0;for(const ch of String(name||''))h=(h*31+ch.charCodeAt(0))%360;
+ return `<span class="av" style="--av-h:${h}" data-i="${esc(ini)}" aria-hidden="true">${img?`<img class="av-img" src="${esc(img)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}</span>`}
 
 /* ---------- Officials' trades ---------- */
 function latestReports(d){                            // the newest House PTRs and whether the collector is keeping up
  const L=d.latest_reports||[],m=d.monitor||{};if(!L.length)return '';
  const behind=(m.lag_days||0)>3||(m.ptr_pending||0)>40;
- let out=`<div class="${behind?'warn-box':'explain'}">${behind?'<b>Catching up.</b> ':''}Newest House transaction report filed ${esc(m.newest_ptr_filed||'—')}; newest one read ${esc(m.newest_ptr_read||'—')}${m.ptr_pending!=null?` · ${fmt(m.ptr_pending)} waiting to be read (newest first)`:''}${m.ptr_last_30_days!=null?` · last 30 days: ${fmt(m.ptr_last_30_days_read)} of ${fmt(m.ptr_last_30_days)} read`:''}. Reports arrive up to 45 days after a trade.</div>`;
+ let out=`<div class="${behind?'warn-box':'explain'}">${behind?'<b>Catching up.</b> ':''}Newest House transaction report filed ${esc(m.newest_ptr_filed||'—')}; newest one read ${esc(m.newest_ptr_read||'—')}${m.ptr_pending!=null?` · ${fmt(m.ptr_pending)} waiting to be read (newest first)`:''}${m.ptr_last_30_days!=null?` · last 30 days: ${fmt(m.ptr_last_30_days_read)} of ${fmt(m.ptr_last_30_days)} read`:''}. ${m.senate?` · US Senate: ${fmt(m.senate.electronic_read)} electronic reports read${m.senate.electronic_waiting?`, ${fmt(m.senate.electronic_waiting)} waiting`:''}, ${fmt(m.senate.paper)} paper (listed, not read), newest filed ${esc(m.senate.newest_filed||'—')}`:''}. Reports arrive up to 45 days after a trade.</div>`;
  out+=`<details class="panel" ${state.tlatest?'open':''} id="tlatest"><summary><b>Latest reports filed</b> <span class="muted">— the ${fmt(L.length)} newest periodic transaction reports, read or waiting</span></summary>`;
- out+=`<div class="tablebox"><table><thead><tr><th>Filed</th><th>Official</th><th>Status</th><th class="num">Trades read</th><th>Tickers</th><th>Source</th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.filed_date||'')}</td><td>${esc(r.person||'')} <span class="muted">${esc(r.office||'')}</span></td><td><span class="badge ${r.status==='read'?'ready':r.status==='error'?'error':''}">${r.status==='read'?'Read':r.status==='error'?'Failed — retrying':'Waiting'}</span></td><td class="num">${r.status==='read'?`${fmt(r.trades)} <span class="muted">(${fmt(r.buys)} buys · ${fmt(r.sells)} sales)</span>`:'—'}</td><td>${r.tickers.map(t=>tkLink(t)).join(' ')||'—'}</td><td>${link(r.source_url,'PDF ↗')}</td></tr>`).join('')}</tbody></table></div></details>`;
+ out+=`<div class="tablebox"><table><thead><tr><th>Filed</th><th>Official</th><th>Status</th><th class="num">Trades read</th><th>Tickers</th><th>Source</th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.filed_date||'')}</td><td>${esc(r.person||'')} <span class="muted">${esc(r.office||'')}</span></td><td><span class="badge ${r.status==='read'?'ready':r.status==='error'?'error':''}">${r.status==='read'?'Read':r.status==='error'?'Failed — retrying':r.status==='paper'?'Paper — not read':'Waiting'}</span></td><td class="num">${r.status==='read'?`${fmt(r.trades)} <span class="muted">(${fmt(r.buys)} buys · ${fmt(r.sells)} sales)</span>`:'—'}</td><td>${r.tickers.map(t=>tkLink(t)).join(' ')||'—'}</td><td>${link(r.source_url,r.jurisdiction==='US Senate'?(r.status==='paper'?'Scan ↗':'eFD ↗'):'PDF ↗')}</td></tr>`).join('')}</tbody></table></div></details>`;
  return out;
 }
 function tradesView(){
- let out=head("Officials' trades",'Transactions in US House periodic transaction reports, read by machine with the ticker the filer wrote, plus reviewed rows from any jurisdiction. Each ticker is checked against SEC listings.','HOUSE PTR · AUTO-READ');
+ let out=head("Officials' trades",'Transactions in US House periodic transaction reports (read by machine) and US Senate electronic reports (eFD), with the ticker the filer wrote, plus reviewed rows from any jurisdiction. Each ticker is checked against SEC listings.','HOUSE + SENATE PTR');
  const g=marketGate('officials-trades',"Officials' trades");if(!g.data)return out+g.html;
  const d=g.data,all=d.trades||[];
  out+=latestReports(d);
  const people=Object.entries(all.reduce((a,t)=>{a[t.person]=(a[t.person]||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]);
  state.tperson=people.some(p=>p[0]===state.tperson)?state.tperson:'';state.twin=state.twin==='ytd'?'ytd':'d90';
- out+=`<div class="toolbar">${field('tperson','Official',[['','Everyone'],...people.map(([p,n])=>[p,`${p} (${n})`])],state.tperson,true)}${field('ttype','Transaction',[['','All'],['purchase','Purchases'],['sale','Sales (full or partial)'],['exchange','Exchanges']],state.ttype||'')}${field('tcheck','Ticker check',[['','All rows'],['listed','Listed ticker'],['unlisted','Not in listings'],['name','Name differs — check'],['suggested','Has a suggested ticker']],state.tcheck||'')}<div class="field"><label for="tq">Ticker or asset</label><input id="tq" value="${esc(state.tq||'')}" placeholder="e.g. NVDA · Enter"></div></div>`;
+ out+=`<div class="toolbar">${field('tchamber','Chamber',[['','House, Senate and others'],['US House','US House'],['US Senate','US Senate'],['other','Other jurisdictions (reviewed)']],state.tchamber||'')}${field('tperson','Official',[['','Everyone'],...people.map(([p,n])=>[p,`${p} (${n})`])],state.tperson,true)}${field('ttype','Transaction',[['','All'],['purchase','Purchases'],['sale','Sales (full or partial)'],['exchange','Exchanges']],state.ttype||'')}${field('tcheck','Ticker check',[['','All rows'],['listed','Listed ticker'],['unlisted','Not in listings'],['name','Name differs — check'],['suggested','Has a suggested ticker']],state.tcheck||'')}<div class="field"><label for="tq">Ticker or asset</label><input id="tq" value="${esc(state.tq||'')}" placeholder="e.g. NVDA · Enter"></div></div>`;
  const st=d.stats||{};
  out+=`<div class="metrics">${kpi('Transactions read',fmt(st.trades),`${fmt(st.tickers)} tickers · bonds and private funds left out (${fmt(st['no ticker (bonds, funds, private)'])})`)}${kpi('Ticker listed',st.trades?pct(st.listed/st.trades,1):'—','Found in SEC listings / CUSIP map / price feeds')}${kpi('Name check flagged',fmt(st['name check']),'Listed name and filer’s description differ')}${kpi('Duplicates removed',fmt(st['duplicate (amendment / repeated row)']),'Amendments and repeated rows')}</div>`;
  const sum=(d.summary||{})[state.twin]||[];
  out+=`<div class="panel"><div class="section-head" style="margin:0"><div><h3>Most bought by officials</h3><p class="sub">Officials reporting a purchase, ${state.twin==='ytd'?'this year':'last 90 days'} · options excluded</p></div>${field('twin','Window',[['d90','Last 90 days'],['ytd','Year to date']],state.twin)}</div>${sum.length?divergingChart(sum.slice(0,14).map(r=>({label:r.ticker,value:r.people_buy.length,tip:[[r.ticker,r.name||''],[`${r.buys} purchases`,`by ${r.people_buy.length} official${r.people_buy.length===1?'':'s'}`],[r.people_buy.slice(0,4).join(', '),''],[`${r.sells} sales`,r.people_sell.length?'by '+r.people_sell.slice(0,3).join(', '):'']]})),{unit:'count',label:'Officials reporting purchases by ticker'}):empty('No purchases in this window yet — House reports are read in batches; see Health.')}</div>`;
  const q=(state.tq||'').trim().toLowerCase();
- const rows=all.filter(t=>(!state.tperson||t.person===state.tperson)&&(!state.ttype||(state.ttype==='sale'?/sale/.test(t.type):t.type===state.ttype))
+ const rows=all.filter(t=>(!state.tchamber||(state.tchamber==='other'?!['US House','US Senate'].includes(t.jurisdiction):t.jurisdiction===state.tchamber))&&(!state.tperson||t.person===state.tperson)&&(!state.ttype||(state.ttype==='sale'?/sale/.test(t.type):t.type===state.ttype))
   &&(!state.tcheck||(state.tcheck==='listed'?t.ticker_status==='listed':state.tcheck==='unlisted'?t.ticker_status!=='listed':state.tcheck==='name'?t.name_check==='check':!!t.suggested))
   &&(!q||((t.ticker||'')+' '+(t.asset_raw||'')+' '+(t.listed_name||'')).toLowerCase().includes(q)));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')} Machine-read rows are not reviewed: open the page to confirm. A “name differs” flag means the listed company name does not appear in the filer’s description — often a share class or a renamed company, sometimes a wrong ticker.</div>`;
  out+=`<div class="section-head"><h3>${fmt(rows.length)} transactions</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- out+=table(['Transaction date','Official','Ticker','Ticker check','Asset as filed','Type','Amount (disclosed range)','Owner','Report filed','Source'],rows.map(t=>[
-  esc(t.date),esc(t.person),t.ticker?`${tkLink(t.ticker)}${t.asset_type==='OP'?' <span class="muted">options</span>':''}`:'—',
+ out+=xBar('one transaction');
+ out+=table([...(XPOST.on?['X']:[]),'Transaction date','Official','Chamber','Ticker','Ticker check','Asset as filed','Type','Amount (disclosed range)','Owner','Report filed','Source'],rows.map(t=>[
+  ...(XPOST.on?[xBtn('post_official',0,[t.report_id,t.date,t.ticker||'',t.type,t.amount_min??null,t.amount_max??null,t.owner||''],`${t.person}'s ${t.type} of ${t.ticker||'this asset'}`)]:[]),
+  esc(t.date),`${hubAvatar(t.person)}${esc(t.person)}`,esc((t.jurisdiction||'').replace(/^US /,'')),t.ticker?`${tkLink(t.ticker)}${t.asset_type==='OP'?' <span class="muted">options</span>':''}`:'—',
   `<span class="badge ${t.ticker_status==='listed'?(t.name_check==='check'?'pending':'ready'):'error'}">${esc(t.ticker_status==='listed'?(t.name_check==='check'?'listed · name differs':'listed'):(t.ticker_status||'no ticker'))}</span>${t.listed_name?`<br><span class="muted">${esc(t.listed_name)}</span>`:''}${t.suggested?`<br>Suggested: <b>${esc(t.suggested)}</b> <span class="muted">(${esc(t.confidence)})</span>`:''}`,
   `<span class="mk-asset">${esc(t.asset_raw)}</span>`,`<span class="${t.type==='purchase'?'positive':/sale/.test(t.type)?'negative':''}">${esc(t.type)}</span>`,
-  esc(amountLabel(t)),esc(t.owner),esc(t.filed_date||''),link(t.source_url+(t.page?'#page='+t.page:''),(t.read==='reviewed'?'Reviewed · ':'')+'Page '+(t.page||1)+' ↗')]));
+  esc(amountLabel(t)),esc(t.owner),esc(t.filed_date||''),t.read==='electronic'?link(t.source_url,'Senate eFD ↗'):link(t.source_url+(t.page?'#page='+t.page:''),(t.read==='reviewed'?'Reviewed · ':'')+'Page '+(t.page||1)+' ↗')]));
  return out;
 }
 
@@ -238,13 +256,15 @@ function insidersView(){
  const rows=all.filter(t=>(!state.itype||t.code===state.itype)&&(!state.irole||(state.irole==='ceo'?CEO.has(t.role):state.irole==='officer'?OFF.has(t.role):t.role===state.irole))&&(!q||[t.ticker,t.issuer,t.insider].join(' ').toLowerCase().includes(q)));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} recent trades</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- out+=table(['Trade date','Ticker','Company','Insider','Role','Trade','Shares','Price','Value','Held after','Source'],rows.map(t=>[esc(t.date),t.ticker?tkLink(t.ticker,t.issuer_cik):'—',t.issuer_cik?`<a class="tk" href="${esc(coHref(t.ticker,t.issuer_cik))}">${esc(t.issuer)}</a>`:esc(t.issuer),esc(t.insider),esc(t.title||t.role),
+ out+=xBar('one trade');
+ out+=table([...(XPOST.on?['X']:[]),'Trade date','Ticker','Company','Insider','Role','Trade','Shares','Price','Value','Held after','Source'],rows.map(t=>[
+  ...(XPOST.on?[xBtn('post_insider',t.issuer_cik,[t.accession,t.date,t.code,t.shares??null,t.price??null],`${t.insider}'s ${t.code==='P'?'purchase':'sale'} of ${t.ticker||t.issuer}`)]:[]),esc(t.date),t.ticker?tkLink(t.ticker,t.issuer_cik):'—',t.issuer_cik?`<a class="tk" href="${esc(coHref(t.ticker,t.issuer_cik))}">${esc(t.issuer)}</a>`:esc(t.issuer),esc(t.insider),esc(t.title||t.role),
   `<span class="${t.code==='P'?'positive':'negative'}">${t.code==='P'?'Purchase':'Sale'}</span>${t.plan_10b5_1?' <span class="muted">10b5-1</span>':''}`,fmt(t.shares),t.price!=null?'$'+fmt(t.price,2):'—',money(t.value),fmt(t.after),link(t.url,'Form 4 ↗')]));
  return out;
 }
 
 function bindMarket(){
- for(const k of ['stag','ssort','fwin','funiv','flist','tperson','ttype','tcheck','twin','itype','irole'])bind(k,k);
+ for(const k of ['stag','ssort','fwin','funiv','flist','tchamber','tperson','ttype','tcheck','twin','itype','irole'])bind(k,k);
  for(const k of ['sq','tq','iq'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  bindTips();
 }

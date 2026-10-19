@@ -5,7 +5,7 @@ on:
     - cron: "4,19,34,49 * * * *"   # every 15 minutes, away from :00 and :30 (GitHub delays busy minutes most)
   repository_dispatch:
     types:
-      - company-request            # a reader asked for a company the site does not have (Supabase wake, optional)
+      - company-request            # a reader asked for a company the site does not have (Supabase wake, optional; the owner's: fast lane)
       - scan                       # an outside clock (Supabase pg_cron, see README): on time, unlike GitHub's schedule
       - reread                     # the owner asked to re-read stored figures (Owner tools; Supabase wake, optional)
   workflow_dispatch:
@@ -26,12 +26,21 @@ on:
         description: "Owner: re-read these companies' stored figures from SEC now (tickers or CIKs; ALL = every company, a few dozen per run)"
         required: false
         default: ""
+      fast:
+        description: "Owner fast lane: a short scan for requested companies (set by the relay; leave blank by hand)"
+        required: false
+        default: ""
+      hop:
+        description: "Fast-lane relay hop (stops after 6)"
+        required: false
+        default: "0"
 
 permissions:
   contents: write      # push the data branch
   pages: write
   id-token: write
   models: read         # GitHub Models writes the Buffer post (pipeline/tweet.py); free with the Actions token
+  actions: write       # the owner's fast lane starts the next short scan itself
 
 concurrency:
   group: scan
@@ -70,6 +79,7 @@ jobs:
           fi
 
       - name: Companies readers asked for (site search)
+        id: claim
         continue-on-error: true                 # without Supabase, or before schema.sql is run again: none
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
@@ -77,15 +87,27 @@ jobs:
           OWNER_COMPANIES: ${{ github.event.inputs.companies }}
           OWNER_REREAD: ${{ github.event.inputs.reread }}
         run: |
-          python -m pipeline.custom claim-companies --out build-ciks.txt || true
+          # requests the owner makes from now on are not this scan's: a regular scan wraps up early for them (owner lane)
+          echo "OWNER_CLAIMED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+          python -m pipeline.custom claim-companies --out build-ciks.txt --owner-out owner-ciks.txt || true
           printf '%s\n' "$OWNER_COMPANIES" >> build-ciks.txt     # the owner's own list (Run workflow), no sign-in needed
           python -m pipeline.custom claim-rereads --out reread-ciks.txt || true    # Owner tools: "Re-read stored figures"
           printf '%s\n' "$OWNER_REREAD" >> reread-ciks.txt
+          # the owner's fast lane: the owner's own companies (site request or Run workflow) or re-reads (owner only) make
+          # this a short scan; the watch relay (post-to-x.yml → pipeline/owner_lane.py) starts one within seconds
+          if [ -s owner-ciks.txt ] || [ -n "$(echo "$OWNER_COMPANIES" | tr -d ' ,')" ] || grep -q '[0-9]' reread-ciks.txt \
+             || [ "${{ github.event.inputs.fast }}" = "true" ]; then
+            echo "fast=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::owner fast lane: a short scan for $(tr '\n' ' ' < owner-ciks.txt 2>/dev/null)$OWNER_COMPANIES$(grep -q '[0-9]' reread-ciks.txt && echo " re-read $(tr '\n' ' ' < reread-ciks.txt)")"
+          fi
 
       - name: Scan new 10-Q / 10-K filings and build charts
         timeout-minutes: 42          # never the whole job: the data store is still saved below, so no work is lost
         env:
-          RUN_BUDGET_MINUTES: "32"   # the pipeline stops taking on new work after this (pipeline/build.py time_up)
+          RUN_BUDGET_MINUTES: ${{ steps.claim.outputs.fast == 'true' && '9' || '32' }}   # the pipeline stops taking on new work after this (pipeline/build.py time_up); the owner's fast lane: 9
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}               # the owner's X post options for the threads on company pages
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OWNER_FAST: ${{ steps.claim.outputs.fast }}          # a fast scan never makes way; a regular one does (owner lane)
         run: |
           touch reread-ciks.txt
           python -m pipeline.build run --store store --out _site/data --build-ciks-file build-ciks.txt \
@@ -110,8 +132,68 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}                 # optional: your own domain → CNAME file for GitHub Pages
         run: python scripts/build_site.py --data _site/data --out _site
 
+      - name: The long rotation history (public/ of the branch rotation-history, when it exists)
+        continue-on-error: true
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" rotation-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch rotation-history "$url" _hist
+            git -C _hist sparse-checkout set public
+            du -sh _hist/public
+          fi
+
+      - name: Debt & rates (public/ of the branch debt-history, when it exists)
+        continue-on-error: true
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" debt-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch debt-history "$url" _debt
+            git -C _debt sparse-checkout set public
+            du -sh _debt/public
+          fi
+
+      - name: Consensus (public/ of the branch consensus-history, when it exists)
+        continue-on-error: true
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" consensus-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch consensus-history "$url" _cons
+            git -C _cons sparse-checkout set public
+            du -sh _cons/public
+          fi
+
+      - name: Price ladders (public/ of the branch ladder-history, when it exists)
+        continue-on-error: true
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" ladder-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch ladder-history "$url" _lad
+            git -C _lad sparse-checkout set public
+            du -sh _lad/public
+          fi
+
+      - name: ETFs (public/ of the branch etf-history, when it exists)
+        continue-on-error: true
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" etf-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch etf-history "$url" _etf
+            git -C _etf sparse-checkout set public
+            du -sh _etf/public
+          fi
+
+      - name: Smart money (public/ of the branch smart-history, when it exists)
+        continue-on-error: true
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" smart-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch smart-history "$url" _smart
+            git -C _smart sparse-checkout set public
+            du -sh _smart/public
+          fi
+
       - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
-        run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data
+        run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public --debt _debt/public --consensus _cons/public --etf _etf/public --smart _smart/public --ladders _lad/public
 
       # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
       # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.
@@ -126,6 +208,7 @@ jobs:
           git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:site
 
       - name: The owner's daily report (8:00 owner time) and X threads (e-mail, or the X API)
+        if: steps.claim.outputs.fast != 'true'  # the owner's fast lane skips it: the next regular scan sends
         continue-on-error: true                 # sending trouble never blocks the site
         timeout-minutes: 8                      # leaves time to save the data store within the job's 55 minutes
         env:
@@ -175,6 +258,25 @@ jobs:
             commit --quiet -m "data $(date -u +%Y-%m-%dT%H:%MZ)" || true
           git rev-parse --verify --quiet HEAD >/dev/null || exit 0   # nothing was stored yet
           git push --quiet --force origin HEAD:data
+
+      - name: Owner fast lane — the next short scan while the owner's companies are not all in
+        if: steps.claim.outputs.fast == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          HOP: ${{ github.event.inputs.hop || '0' }}
+        run: |
+          # a relay like post-to-x.yml: this run's site deploys first (same concurrency group), then the next short scan,
+          # while an owner request from the last 2 hours is not built (pipeline/custom.py FAST_LANE_MINUTES), 6 hops at most
+          if [ "$HOP" -ge 6 ]; then echo "fast-lane relay cap (6 short scans) reached; the regular scans carry on"; exit 0; fi
+          if python -m pipeline.custom has-owner-companies; then
+            n=$(gh run list -R "$GITHUB_REPOSITORY" --workflow scan.yml --status queued --json databaseId --jq length)
+            if [ "${n:-0}" -gt 0 ]; then echo "a scan is already queued: it claims the owner's companies"; exit 0; fi
+            gh workflow run scan.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f fast=true -f hop=$((HOP + 1))
+            echo "fast lane: short scan $((HOP + 1)) started"
+          fi
 
 
       - uses: actions/upload-pages-artifact@v3
@@ -245,12 +347,14 @@ jobs:
       BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
       BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
       SITE_URL: ${{ vars.SITE_URL || needs.deploy.outputs.page_url }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}                 # the owner's X post options (#owner page)
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install requests
+      - run: pip install -r requirements.txt     # pipeline/buffer.py loads pipeline/social.py (BeautifulSoup)
       - name: The site that was just published
         uses: actions/download-artifact@v4
         with:

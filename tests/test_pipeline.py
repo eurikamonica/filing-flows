@@ -1,6 +1,7 @@
 """Offline tests: run with `python -m pytest tests` (fixtures stand in for SEC endpoints)."""
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -216,7 +217,9 @@ def test_social_threads_fit_and_cite(tmp_path):
         assert roles[0] == "headline" and roles[-1] == "source" and "analysis" in roles
         assert posts[-1].startswith(f"Source: {social.display_name(c['profile']['name'])} ") and "http" not in posts[-1]
         assert " #earnings" in posts[0].split("\n")[0] and " results" not in posts[0].split("\n")[0]   # the headline tag
-        tagged = [i for i, p in enumerate(posts) if f"\n\n#stocks #investing\n\n{i + 1}/{n}" in p]          # the general tags
+        # the end tags: the industry and one general tag from the pool (pipeline/hashtags.py), on one post only
+        tagged = [i for i, p in enumerate(posts) if re.search(r"\n\n(#\w+ ?){1,3}\n\n" + f"{i + 1}/{n}$", p)
+                  and re.search(r"#(stocks|investing)\b", p)]
         assert len(tagged) == 1 and tagged[0] > 0 and (tagged[0] == n - 1 or social.xlen(posts[-1]) > 250), tagged
         assert sum(p.count("#earnings") for p in posts) == 1
         if social.revenue_mix(q):
@@ -224,10 +227,11 @@ def test_social_threads_fit_and_cite(tmp_path):
             assert biz.startswith("What ") and "Industry: " in biz and "revenue came from:" in biz
     brk = next(e for e in todo if e["cik"] == 1067983)
     assert social.compose(*social.quarter_of(str(site), brk), cfg)[0].startswith("$BRK.B ")
-    # hashtags come from config/x.json: cleaned, no repeats, none at all when switched off
+    # hashtags come from config/x.json: cleaned, no repeats, none at all with hashtags_max 0 (an empty general pool only
+    # drops the general tag)
     assert social.hashtags(["stocks", "#Stocks", "#S&P 500!", "#2026", ""]) == ["#stocks", "#SP500"]
     assert social.hashtags("#a, b") == ["#a", "#b"]
-    plain = social.compose(*social.quarter_of(str(site), brk), dict(cfg, headline_tag="", hashtags=[]))
+    plain = social.compose(*social.quarter_of(str(site), brk), dict(cfg, headline_tag="", hashtags=[], hashtags_max=0))
     assert " results" in plain[0].split("\n")[0] and not any("#" in p.replace("#c-", "") for p in plain)
 
 
@@ -359,9 +363,12 @@ class _FakeSupa:
                 continue
             op, _, val = v.partition(".")
             cur = row.get(k)
-            if op == "eq" and str(cur) != val:
+            txt = str(cur).lower() if isinstance(cur, bool) else str(cur)   # PostgREST writes booleans as true / false
+            if op == "ilike" and txt.lower() != val.lower():
                 return False
-            if op == "in" and str(cur) not in val.strip("()").split(","):
+            if op == "eq" and txt != val:
+                return False
+            if op == "in" and txt not in val.strip("()").split(","):
                 return False
             if op == "is" and cur is not (val == "true"):
                 return False
@@ -925,6 +932,214 @@ def test_request_queues(tmp_path):
     custom.finish_companies(f, str(site))
     st = {r["id"]: r["status"] for r in f.rows["company_requests"]}
     assert st == {7: "done", 8: "failed", 10: "done"}
+
+
+def test_owner_fast_lane():
+    """The owner's company requests: claimed whatever the per-scan limit, and only recent ones keep the fast lane going."""
+    import datetime as dt
+    from pipeline import custom
+    now = dt.datetime(2026, 10, 3, 4, 0, tzinfo=dt.timezone.utc)
+
+    class Fake:
+        def __init__(self, rows):
+            self.rows, self.updates = rows, []
+
+        def _match(self, row, params):
+            for k, v in params.items():
+                op, _, val = v.partition(".")
+                got = str(row.get(k)).lower() if isinstance(row.get(k), bool) else str(row.get(k))
+                if (op == "eq" and got != val) or (op == "in" and got not in val.strip("()").split(",")):
+                    return False
+            return True
+
+        def select(self, table, params):
+            return [dict(r) for r in self.rows if self._match(r, {k: v for k, v in params.items() if k != "select"})]
+
+        def update(self, table, params, fields):
+            got = [r for r in self.rows if self._match(r, params)]
+            for r in got:
+                r.update(fields)
+            self.updates.append(params)
+            return got
+
+    f = Fake([{"id": 1, "cik": 320193, "status": "pending", "owner": True, "created_at": "2026-10-03T03:50:00Z"},
+              {"id": 2, "cik": 789019, "status": "queued", "owner": True, "created_at": "2026-10-02T20:00:00Z"},
+              {"id": 3, "cik": 1652044, "status": "pending", "owner": False, "created_at": "2026-10-03T03:55:00Z"},
+              {"id": 4, "cik": 1018724, "status": "done", "owner": True, "created_at": "2026-10-03T03:00:00Z"}])
+    assert custom.claim_owner_companies(f, now) == ([320193, 789019], [320193])   # an old one rides along, not fast
+    assert [r["status"] for r in f.rows] == ["queued", "queued", "pending", "done"]   # readers' requests: claim_companies
+    assert [r["id"] for r in custom.owner_open(f, now, recent=True)] == [1]
+    assert custom.owner_open(f, now + dt.timedelta(hours=3), recent=True) == []      # the relay stops after the window
+
+    class NoColumn:
+        def select(self, table, params):
+            raise RuntimeError("Supabase 400: column company_requests.owner does not exist")
+    assert custom.claim_owner_companies(NoColumn(), now) == ([], [])
+
+
+def test_owner_lane_starts_what_the_owner_waits_for(monkeypatch):
+    """The watch relay's owner lane: the owner's companies / re-reads start a short scan, the owner's e-mails and
+    comparisons start the request workflow — unless a run is already on its way; a running regular scan makes way."""
+    import datetime as dt
+    from pipeline import owner_lane as OL
+    now = dt.datetime(2026, 10, 18, 23, 30, tzinfo=dt.timezone.utc)
+    f = _FakeSupa([_sub("own", email="Owner@Example.com"), _sub("ann")],
+                  requests=[{"id": 1, "user_id": "own", "kind": "q", "status": "pending", "created_at": "2026-10-18T23:29:00+00:00"},
+                            {"id": 2, "user_id": "own", "kind": "post_8k", "status": "pending", "created_at": "2026-10-18T23:29:10+00:00"},
+                            {"id": 3, "user_id": "ann", "kind": "q", "status": "pending", "created_at": "2026-10-18T23:28:00+00:00"}],
+                  site_owners=[{"email": "owner@example.com"}],
+                  company_requests=[{"id": 7, "cik": 320193, "status": "pending", "owner": True, "created_at": "2026-10-18T23:29:30+00:00"},
+                                    {"id": 8, "cik": 789019, "status": "pending", "owner": False, "created_at": "2026-10-18T23:29:00+00:00"},
+                                    {"id": 9, "cik": 1018724, "status": "pending", "owner": True, "created_at": "2026-10-18T10:00:00+00:00"}],
+                  reread_requests=[{"id": 4, "cik": 0, "status": "pending", "created_at": "2026-10-18T23:29:40+00:00"}],
+                  chart_requests=[{"id": 5, "cik": 320193, "user_id": "own", "status": "pending", "created_at": "2026-10-18T23:29:50+00:00"},
+                                  {"id": 6, "cik": 320193, "user_id": "ann", "status": "pending", "created_at": "2026-10-18T23:29:50+00:00"}])
+    assert OL.owner_ids(f) == {"own"}
+    w = OL.waiting(f, now)
+    assert [x["what"] for x in w["scan"]] == ["build CIK 320193", "re-read every company"]      # readers' and old ones: no
+    assert [x["what"] for x in w["requests"]] == ["e-mail (q)", "comparison CIK 320193"]       # X posts: post-to-x itself
+
+    class GH:
+        def __init__(self, runs):
+            self.r, self.started = runs, []
+
+        def runs(self, wf, n=20):
+            return self.r.get(wf, [])
+
+        def start(self, wf, inputs):
+            self.started.append((wf, inputs))
+
+    old = {"id": 1, "status": "completed", "created_at": "2026-10-18T23:00:00Z"}
+    gh, st = GH({"scan.yml": [old], "requests.yml": [old]}), {}
+    assert OL.wake(f, gh, now, state=st, log=lambda *a: None) == ["scan", "requests"]
+    assert gh.started == [("scan.yml", {"fast": "true", "hop": "0"}), ("requests.yml", {})]
+    assert OL.wake(f, gh, now + dt.timedelta(seconds=30), state=st, log=lambda *a: None) == []       # once per 90 s
+    later = now + dt.timedelta(minutes=5)
+    assert OL.wake(f, GH({"scan.yml": [{"id": 2, "status": "pending", "created_at": "2026-10-18T23:20:00Z"}],
+                          "requests.yml": [{"id": 3, "status": "in_progress", "created_at": "2026-10-18T23:29:55Z"}]}),
+                   later, state={}, log=lambda *a: None) == []        # one waits to start; one started after the asks
+    assert OL.covered([old], w["scan"][0]) is None
+
+    # a regular scan that is running makes way once (asks Supabase at most once a minute); a fast scan never does
+    monkeypatch.setattr(OL, "_supa", lambda: f)
+    monkeypatch.setattr(OL, "_now", lambda: now)
+    monkeypatch.setenv("OWNER_CLAIMED_AT", "2026-10-18T23:29:35Z")
+    monkeypatch.delenv("OWNER_FAST", raising=False)
+    OL._yield.update(at=None, answer=False)
+    assert OL.should_yield(now_mono=100.0)                                 # the re-read asked after this scan claimed
+    monkeypatch.setenv("OWNER_CLAIMED_AT", "2026-10-18T23:29:45Z")
+    OL._yield.update(at=None, answer=False)
+    assert not OL.should_yield(now_mono=100.0) and not OL.should_yield(now_mono=130.0)   # nothing new; no second query yet
+    f.t["company_requests"].append({"id": 10, "cik": 1045810, "status": "pending", "owner": True, "created_at": "2026-10-18T23:31:00+00:00"})
+    assert not OL.should_yield(now_mono=150.0) and OL.should_yield(now_mono=161.0)
+    monkeypatch.setenv("OWNER_FAST", "true")
+    OL._yield.update(at=None, answer=False)
+    assert not OL.should_yield(now_mono=500.0)
+    OL._yield.update(at=None, answer=False)
+
+
+def test_owner_reports_go_first_and_are_never_held_back(tmp_path):
+    """At the daily e-mail limit the owner's report still goes out, ahead of a reader who asked earlier."""
+    import datetime as dt
+    from pipeline import notify
+    site = _site(tmp_path)
+    reqs = [{"id": 1, "user_id": "ann", "cik": 320193, "period_end": "2026-06-27", "status": "pending", "attempts": 0, "created_at": "2026-10-02T10:00:00+00:00"},
+            {"id": 2, "user_id": "cat", "cik": 9999901, "period_end": "2026-08-30", "status": "pending", "attempts": 0, "created_at": "2026-10-02T10:00:04+00:00"}]
+    now = dt.datetime(2026, 10, 2, 10, 5, tzinfo=dt.timezone.utc)
+    for limit, sent in ((1, ["cat@example.com"]), (0, ["cat@example.com"])):
+        supa, mail = _FakeSupa([_sub("ann"), _sub("cat")], (), reqs, site_owners=[{"email": "cat@example.com"}]), _FakeMailer()
+        assert notify.run(notify.Site(site), supa, mail, "x", "", now=now, images=False, hour=22, daily_limit=limit,
+                          requests_only=True) == 1
+        assert [m["To"] for m in mail.sent] == sent
+        assert {r["id"]: r["status"] for r in supa.t["send_requests"]} == {1: "pending", 2: "sent"}
+
+
+def test_a_company_that_cannot_be_drawn_is_answered_at_once(tmp_path):
+    """A company the charts cannot be drawn for (no 10-Q / 10-K / 20-F at all): its request fails in the same scan, with
+    why. A foreign filer is drawn from its 20-F and 6-Ks, whatever currency it reports in."""
+    from pipeline import build, custom
+
+    def sub(name, forms):
+        return {"name": name, "filings": {"recent": {"form": forms, "accessionNumber": [f"a{i}" for i in range(len(forms))],
+                                                    "reportDate": ["2026-06-30"] * len(forms), "filingDate": ["2026-08-01"] * len(forms)}}}
+    assert build.cannot_draw(sub("Apple Inc.", ["8-K", "10-Q", "4"])) is None
+    assert build.cannot_draw(sub("Nebius Group N.V.", ["6-K", "4", "20-F", "SCHEDULE 13G/A"]), "USD") is None
+    assert build.cannot_draw(sub("Euro Audio S.A.", ["6-K", "20-F"]), "EUR") is None
+    why = build.cannot_draw(sub("Some Trust", ["N-CSR"]))
+    assert why == "Some Trust has no 10-Q or 10-K on file at SEC"
+    site = tmp_path / "_site"
+    (site / "data" / "c").mkdir(parents=True)
+    (site / "data" / "c" / "320193.json").write_text("{}")
+    f = _FakeSupa([], company_requests=[{"id": 1, "cik": 320193, "status": "queued", "created_at": "2026-10-19T00:30:00+00:00"},
+                                        {"id": 2, "cik": 9999912, "status": "queued", "created_at": "2026-10-19T00:30:00+00:00"},
+                                        {"id": 3, "cik": 1652044, "status": "queued", "created_at": "2099-10-19T00:30:00+00:00"}])
+    custom.finish_companies(f, str(site), {"9999912": why})
+    st = {r["id"]: (r["status"], r.get("error")) for r in f.t["company_requests"]}
+    assert st[1][0] == "done" and st[2] == ("failed", why) and st[3][0] == "queued"
+
+
+def test_a_foreign_filer_is_drawn_from_its_20f_and_6k_releases(tmp_path):
+    """A foreign private issuer (20-F + 6-K, no 10-Q): quarters from its results releases — newest year printed last,
+    slashes in labels, D&A as a cost line, discontinued operations — and the year from the 20-F's XBRL. A filer that
+    reports in euros is drawn in euros (labelled), with the same charts in US dollars at each period's average rate."""
+    import json, os, subprocess, sys
+    env = dict(os.environ, SEC_FIXTURES=os.path.join(ROOT, "tests", "fixtures"), SEC_USER_AGENT="test test@example.com")
+    ciks = tmp_path / "ciks.txt"
+    ciks.write_text("9999911\n9999912\n")
+    out, unb = tmp_path / "site" / "data", tmp_path / "unbuildable.json"
+    r = subprocess.run([sys.executable, "-m", "pipeline.build", "run", "--store", str(tmp_path / "store"), "--out", str(out),
+                        "--build-ciks-file", str(ciks), "--unbuildable-out", str(unb)], cwd=ROOT, env=env, check=True,
+                       capture_output=True, text=True)
+    assert "skip 6-K      9999911 0009999911-26-000038 not a results release" in r.stdout, r.stdout[-3000:]
+    assert json.loads(unb.read_text()) == {}
+    c = json.loads((out / "c" / "9999911.json").read_text())
+    qs = {q["label"]: q for q in c["quarters"]}
+    assert list(qs) == ["Q2 2026", "Q1 2026"] and {q["form"] for q in qs.values()} == {"6-K"}
+    q2, q1 = qs["Q2 2026"], qs["Q1 2026"]
+    assert q2["headline"]["revenue"] == 580e6 and q2["headline"]["ni"] == -180e6 and q1["headline"]["revenue"] == 400e6
+    assert q2["compare"]["vs"] == "Q1 2026" and q2["compare_y"]["vs"] == "Q2 2025"          # newest-last columns read right
+    names = {n["id"]: n for n in q2["nodes"]}
+    assert names["I:da_op"]["v"] == 260e6 and names["ocf"]["v"] == 2200e6 and names["capex"]["v"] == 5600e6
+    assert "6-K" in q2["footer"][0] and "from the 6-K results release" in q2["subtitle"]
+    assert c["years"][0]["label"] == "FY2025" and c["years"][0]["form"] == "20-F" and c["years"][0]["headline"]["revenue"] == 530e6
+    assert c["profile"]["fye"] == "1231" and c["intro"]["source"] == "6-K"
+    store = json.loads((tmp_path / "store" / "state.json").read_text())
+    assert store["fpi"] == [9999911, 9999912]
+    # the euro filer: its own currency, labelled; the same charts in dollars, each period at its own average rate
+    e = json.loads((out / "c" / "9999912.json").read_text())
+    assert e["currency"] == "EUR"
+    eq = e["quarters"][0]
+    assert eq["label"] == "Q2 2026" and eq["headline"]["revenue"] == 4600e6 and eq["headline"]["rev_fmt"] == "€4.6B"
+    assert "in euros (EUR)" in eq["subtitle"] and any("Amounts in euros (EUR)" in x for x in eq["footer"])
+    assert any(ln[1].startswith("€") for n in eq["nodes"] for ln in n["lines"] if ln[0] == "val")
+    assert eq["compare_y"]["vs"] == "Q2 2025"
+    ey = e["years"][0]
+    assert ey["label"] == "FY2025" and ey["headline"]["revenue"] == 17000e6 and ey["headline"]["rev_fmt"] == "€17.0B"
+    u = e["usd"]["quarters"][0]
+    assert u["currency"] == "USD" and abs(u["headline"]["revenue"] - 4600e6 * 1.12) < 1e3 and u["headline"]["rev_fmt"] == "$5.2B"
+    assert u["fx"]["src"] == "market" and "€1 = US$1.1200" in u["fx"]["note"] and "average" in u["fx"]["note"]
+    assert "converted from EUR" in u["subtitle"] and any("Converted from euros" in x for x in u["footer"])
+    names = {n["id"]: n for n in u["nodes"]}
+    assert abs(names["revenue"]["y"] - 4200e6 * 1.08) < 1e3              # the year-ago quarter at its own rate
+    uy = e["usd"]["years"][0]
+    assert abs(uy["headline"]["revenue"] - 17000e6 * 1.08) < 1e3
+    ix = json.loads((out / "index.json").read_text())
+    row = next(r for r in ix["companies"] if r["cik"] == 9999912)
+    assert row["currency"] == "EUR" and row["rev"] == "€4.6B" and abs(row["revenue"] - 4600e6 * 1.12) < 1e3
+
+
+def test_owner_comparisons_go_first(monkeypatch):
+    """Over the per-run limit, the owner's comparison is drawn first and the reader's goes back to the queue."""
+    from pipeline import custom
+    f = _FakeSupa([_sub("own", email="owner@example.com"), _sub("ann")], site_owners=[{"email": "owner@example.com"}],
+                  chart_requests=[{"id": 1, "cik": 1, "user_id": "ann", "kind": "q", "a_end": "2026-03-31", "b_end": "2025-03-31",
+                                   "status": "pending", "created_at": "2026-10-18T10:00:00+00:00"},
+                                  {"id": 2, "cik": 2, "user_id": "own", "kind": "q", "a_end": "2026-03-31", "b_end": "2025-03-31",
+                                   "status": "pending", "created_at": "2026-10-18T11:00:00+00:00"}])
+    drawn = []
+    monkeypatch.setattr(custom, "comparison", lambda cik, kind, a, b: drawn.append(cik) or {"cik": cik})
+    assert custom.process_charts(f, limit=1) == 1 and drawn == [2]
+    assert {r["id"]: r["status"] for r in f.t["chart_requests"]} == {1: "pending", 2: "done"}
 
 
 def test_email_me_a_fiscal_year(tmp_path):
@@ -1981,7 +2196,8 @@ def test_capital_trailing_twelve_months_shares_and_maturities():
     cf = _cf({
         "NetIncomeLoss": [("2024-01-01", "2024-12-31", 50), ("2025-01-01", "2025-12-31", 80), ("2026-04-01", "2026-06-30", 20)],
         "NetCashProvidedByUsedInOperatingActivities": [("2025-01-01", "2025-12-31", 100), ("2026-01-01", "2026-06-30", 60),
-                                                       ("2025-01-01", "2025-06-30", 40), ("2025-07-01", "2026-06-30", 999)],
+                                                       ("2025-01-01", "2025-06-30", 40), ("2025-07-01", "2026-06-30", 999),
+                                                       ("2026-01-01", "2026-03-31", 25)],
         "LongTermDebtMaturitiesRepaymentsOfPrincipalInNextTwelveMonths": [(None, "2025-12-31", 5), (None, "2021-12-31", 9)],
         "LongTermDebtMaturitiesRepaymentsOfPrincipalInYearTwo": [(None, "2025-12-31", 6), (None, "2021-12-31", 9)],
         "LongTermDebtMaturitiesRepaymentsOfPrincipalAfterYearFive": [(None, "2025-12-31", 30), (None, "2021-12-31", 9)],
@@ -1994,6 +2210,9 @@ def test_capital_trailing_twelve_months_shares_and_maturities():
     ttm = out["cap"]["ttm"]
     assert ttm["label"] == "TTM to Q2 2026" and ttm["items"]["ocf"] == 120
     assert ttm["ev"]["ocf"][0][1][1] == "ttm"
+    q = {p["label"]: p for p in out["cap"]["q"]}                      # quarters: the second = six months − the first
+    assert q["Q2 2026"]["kind"] == "q" and q["Q2 2026"]["items"]["ocf"] == 35        # not the trailing twelve months
+    assert q["Q2 2026"]["ev"]["ocf"][0][1][1] == "ytd"
     sh = out["cap"]["shares"]
     assert [r["diluted"] for r in sh] == [100e6, 1000e6] and sh[1]["split"] == ["diluted"]
     m = out["cap"]["maturities"]
@@ -2072,6 +2291,296 @@ def test_reformulated_balance_sheet_balances_and_names_what_is_untagged():
     assert r["flows"][0]["int_exp"] == 2 and r["suggest"] is None
 
 
+def test_links_off_leaves_text_and_images_only():
+    """config/x.json "links": false: no web address in any post; a label that only introduced one goes with it, the
+    sentences around it stay, and a reply left empty is dropped. The images are untouched (Buffer gets the same
+    chart URLs as before: those are attachments, not links in the text)."""
+    from pipeline import social as S
+    assert S.no_links("Source: 13F-HR filings with the SEC. Not investment advice. Every holder: https://x.io/#c-1") == \
+        "Source: 13F-HR filings with the SEC. Not investment advice."
+    assert S.no_links("Charts: $AAPL Q3 FY26. Not investment advice. https://x.io/#c-320193\n\n#stocks") == \
+        "Charts: $AAPL Q3 FY26. Not investment advice.\n\n#stocks"
+    assert S.no_links("Revenue $94.0B (see https://x.io) and more.") == "Revenue $94.0B and more."
+    assert S.strip_links(["$AAPL post https://a.b/c", "The 13F: https://www.sec.gov/x", "#stocks https://x.io", "Reply."]) == \
+        ["$AAPL post", "Reply."]
+    assert S.links_off({"links": False}) and not S.links_off({}) and not S.links_off(S.DEFAULTS)
+    assert S.load_cfg("config/x.json")["links"] is False                  # the site's setting: text and images only
+
+
+def test_hashtags_from_pools_and_posts_without_links():
+    """Each post: its kind's tag, the event's topic, the industry from the SIC code, one general tag that takes turns —
+    at most hashtags_max. With "links": false no web address survives; a reply that was only a link is dropped; a
+    company name such as Amazon.com stays. Without "gif" in "media", animated charts are not posted."""
+    from pipeline import hashtags as H, social
+    assert H.pick("earnings", {"sic": "3674"}, key="a", n=3)[:2] == ["#earnings", "#semiconductors"]
+    assert H.pick("8k", {"sic": "2834"}, topic="#MergersAndAcquisitions", key="a", n=3) == ["#8K", "#MergersAndAcquisitions", "#pharma"]
+    assert H.pick("13f", {"sector": "energy"}, key="a", n=2) == ["#13F", "#energy"]
+    pool = ["#stocks", "#investing", "#StockMarket", "#markets"]
+    turns = {H.pick("earnings", None, key=k, n=2, general=pool)[1] for k in "abcdefghij"}
+    assert len(turns) > 1 and turns <= set(pool)                          # the general tag changes from post to post
+    assert H.pick("insider", None, key="a", n=0) == [] and "#None" not in H.pick("insider", {}, key="a", n=5)
+    posts = social.strip_links(["$AMZN Amazon.com Q3: revenue $180B. Full breakdown ↓ #earnings #retail #stocks",
+                                "Every holder: https://example.github.io/ff/#c-1018724",
+                                "Read from the filings; not investment advice. sec.gov/cgi-bin/browse-edgar?CIK=1018724"])
+    assert posts == ["$AMZN Amazon.com Q3: revenue $180B. Full breakdown ↓ #earnings #retail #stocks",
+                     "Read from the filings; not investment advice."]
+    assert not social.media_ok({"media": ["png", "jpg"]}, "gif") and social.media_ok({}, "gif")
+
+
+def test_owner_x_post_options():
+    """The owner page's "X posts" options (owner_settings.x_post) become config/x.json keys, each checked, and win over
+    the file; each kind of hashtag can be switched off."""
+    from pipeline import hashtags as H, social, xprefs
+    v = xprefs.valid({"links": True, "gif": False, "hashtags_max": 9, "hashtags": ["fintwit", "#FinTwit", "#Wall Street!", 3, ""],
+                      "headline_tag": "earnings", "tags": {"industry": False, "general": "no", "other": True}, "evil": 1})
+    assert v == {"links": True, "media": ["png", "jpg"], "hashtags_max": 6, "hashtags": ["#fintwit", "#WallStreet"],
+                 "headline_tag": "#earnings", "hashtag_parts": {"industry": False}}
+    assert xprefs.valid("x") == {} and xprefs.valid({"hashtags_max": True, "links": "no"}) == {}
+    assert xprefs.valid({"gif": True})["media"] == ["png", "jpg", "gif"] and xprefs.valid({"hashtags": []}) == {"hashtags": []}
+    old = xprefs._cache
+    xprefs._cache = v
+    try:
+        cfg = social.load_cfg("config/x.json")
+        assert cfg["links"] is True and not social.media_ok(cfg, "gif") and social.media_ok(cfg, "jpeg") and cfg["hashtags_max"] == 6
+    finally:
+        xprefs._cache = old
+    assert H.pick("8k", {"sic": "2834"}, topic="#deal", key="a", n=3, parts={"industry": False, "general": False}) == ["#8K", "#deal", "#SEC"]
+    assert H.pick("earnings", {"sic": "3674"}, key="a", n=3, parts={"kind": False}, general=[]) == ["#semiconductors"]
+    assert H.pick("earnings", None, key="a", n=3, general=[]) == ["#earnings", "#EarningsSeason"]
+    assert H.pick("earnings", None, key="a", n=2, parts={"kind": False, "general": False}) == []
+
+
+def test_rs_leader_posts_say_what_the_numbers_are():
+    """Oct 17 2026: "$TEAM surged 6→97 past $ANF 31→94 …" went out with nothing saying the numbers are RS ratings.
+    Such a post is now rewritten; the rule-based one names the rating and the three months; its tags are about it."""
+    from pipeline import engage, hashtags as H
+    must = (r"\bRS\b|relative[ -]strength", "say that the numbers are the RS rating")
+    cash = ["TEAM", "ANF", "SMCI"]
+    try:
+        engage.clean("$TEAM surged 6→97 past $ANF 31→94 and $SMCI 30→92. Which one holds up?", cash, ["#RelativeStrength"], must=must)
+        assert False
+    except ValueError as why:
+        assert "RS rating" in str(why)
+    assert engage.clean("RS rating, 3 months: $TEAM 6→97, $ANF 31→94, $SMCI 30→92. Which one holds up?", cash, ["#RelativeStrength"], must=must)
+    assert H.pick("rs", None, key="a", n=3)[0] == "#RelativeStrength"
+
+
+def test_hub_rows_post_one_at_a_time(tmp_path):
+    """Owner: ✦ X on one row of the hub's Insider trades or Officials' trades table. The row is found again in the
+    published data by its key (the browser sends no figures); a sale says "sold" and never "sell"; a company with charts
+    on the site gets its chart, any other goes out as text; an official's range is given exactly as filed."""
+    import datetime as dt
+    from pipeline import engage, notify, social
+    site = _site(tmp_path)
+    mk = site / "disclosures" / "data" / "market"
+    mk.mkdir(parents=True)
+    (mk / "insiders.json").write_text(json.dumps({"summary": [], "latest": [
+        {"accession": "0002119764-26-000032", "url": "https://www.sec.gov/Archives/edgar/data/2119764/000211976426000032/",
+         "issuer_cik": "1034957", "issuer": "CRESUD INC", "ticker": "CRESY", "insider": "Elsztain Alejandro Gustavo", "role": "Director",
+         "title": "", "code": "P", "date": "2026-10-15", "shares": 8295.0, "price": 11.18, "value": 92738, "after": 1251393.0,
+         "plan_10b5_1": False},
+        {"accession": "0000320193-26-000101", "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000101/",
+         "issuer_cik": "320193", "issuer": "Apple Inc.", "ticker": "AAPL", "insider": "Doe Jane", "role": "CFO",
+         "title": "Chief Financial Officer", "code": "S", "date": "2026-10-14", "shares": 40000.0, "price": 250.5, "value": 10020000,
+         "after": 100000.0, "plan_10b5_1": True}]}))
+    (mk / "officials-trades.json").write_text(json.dumps({"trades": [
+        {"ticker": "AAPL", "asset_type": "ST", "type": "sale", "date": "2026-10-12", "owner": "SP", "asset_raw": "Apple Inc. (AAPL) [ST]",
+         "amount_min": 1001, "amount_max": 15000, "person": "Jane Roe", "jurisdiction": "US House", "report_id": "house-20035660",
+         "filed_date": "2026-10-15", "source_url": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035660.pdf",
+         "page": 1, "read": "machine", "ticker_canon": "AAPL", "ticker_status": "listed", "listed_name": "Apple Inc.",
+         "name_check": "matches"}]}))
+    s = notify.Site(str(site))
+    rows = s.json("index.json")["companies"]
+    by = {r["ticker"].upper(): r for r in rows if r.get("ticker")}
+    today = dt.date(2026, 10, 16)
+    ask = lambda plan, key: plan(s, rows, by, {"ref": json.dumps(key)}, today)
+    buy = ask(engage.plan_insider_for, ["0002119764-26-000032", "2026-10-15", "P", 8295, 11.18])
+    assert buy["cashtags"] == ["CRESY"] and buy["items"] == [] and "No chart is attached" in buy["task"]
+    assert "bought 8,295 shares of $CRESY at $11.18 on 2026-10-15" in buy["task"] and buy["tags"][0] == "#InsiderBuying"
+    engage.clean(buy["fallback"], buy["cashtags"], buy["tags"])
+    sale = ask(engage.plan_insider_for, ["0000320193-26-000101", "2026-10-14", "S", 40000, 250.5])
+    assert sale["items"] and sale["items"][0][0]["cik"] == 320193 and "Latest filing figures" in sale["task"]
+    assert "sold 40,000 shares of $AAPL" in sale["task"] and "10b5-1 trading plan" in sale["task"] and sale["tags"][0] == "#InsiderSelling"
+    post = engage.clean(sale["fallback"], sale["cashtags"], sale["tags"])
+    assert " sold 40,000 shares" in post and "#InsiderBuying" not in post
+    assert ask(engage.plan_insider_for, ["0000320193-26-000101", "2026-10-14", "S", 1, 250.5]) is None      # not that row
+    assert ask(engage.plan_insider_for, "not a list") is None
+    o = ask(engage.plan_official_for, ["house-20035660", "2026-10-12", "AAPL", "sale", 1001, 15000, "SP"])
+    assert o["cashtags"] == ["AAPL"] and o["items"] and o["tags"][0] == "#CongressTrades"
+    assert "Jane Roe's spouse sold $AAPL worth $1,001–$15,000 on 2026-10-12 — disclosed 3 days after the trade" in o["task"]
+    assert engage.clean(o["fallback"], o["cashtags"], o["tags"]).startswith("House disclosure: Jane Roe's spouse sold $AAPL ($1,001–$15,000)")
+    assert social.strip_links([o["source_reply"]]) == [
+        "Source: US House periodic transaction report house-20035660, filed 2026-10-15, page 1; read automatically from the PDF. "
+        "Not investment advice."]
+    assert engage.amount_range(50000001, None) == "over $50,000,000"          # the open top range, as filed
+    from pipeline import notify as N
+    assert set(N.FILING_PLANS) == set(N.FILING_KINDS) and {"post_insider", "post_official"} <= set(N.POST_KINDS)
+    sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
+    assert sql.count("'post_insider', 'post_official'") == 5                # kind check, cik check, guard, wake, owner-only policy
+
+
+def test_new_hub_tables_post_one_row_at_a_time(tmp_path):
+    """Owner: ✦ X on a row of the hub's 13D / 13G, Form 144 and Short interest tables, and on a US Senate trade in
+    Officials' trades. The row is found again in the published data; a Form 144 is a notice ("planned sale"), never a
+    sale; short interest is a snapshot; the Senate is its own chamber (tags, source line, no PDF page)."""
+    import datetime as dt
+    from pipeline import engage, notify, social, corpus
+    site = _site(tmp_path)
+    mk = site / "disclosures" / "data" / "market"
+    mk.mkdir(parents=True)
+    stake = {"accession": "0001193125-26-424467", "url": "https://www.sec.gov/Archives/edgar/data/1265131/000119312526424467/",
+             "form": "13D/A", "filed": "2026-10-16", "amendment": 23, "event_date": "2026-10-16", "issuer_cik": "1265131",
+             "issuer": "HILLTOP HOLDINGS INC.", "filer": "FORD GERALD J", "filer_cik": "1021572", "person": "Gerald J. Ford",
+             "person_type": "IN", "persons": 5, "shares": 15651329.97, "percent": 27.3, "ticker": "HTH", "prev_percent": 25.1,
+             "prev_filed": "2026-05-01", "change": 2.2, "new": False, "label": "raised",
+             "purpose": "On October 16, 2026, counsel to Gerald J. Ford delivered a letter to the Board raising governance concerns."}
+    passive = {"accession": "0000950123-26-000777", "url": "https://www.sec.gov/Archives/edgar/data/320193/000095012326000777/",
+               "form": "13G", "filed": "2026-10-15", "event_date": "2026-09-30", "issuer_cik": "320193", "issuer": "Apple Inc.",
+               "filer": "BIG FUND LP", "person": "Big Fund LP", "persons": 1, "shares": 800_000_000, "percent": 5.4, "ticker": "AAPL",
+               "rule": "institution", "exit": False, "new": True, "label": "new 13G"}
+    (mk / "stakes.json").write_text(json.dumps({"latest": [stake, passive], "summary": []}))
+    notice = {"accession": "0002060619-26-000002", "url": "https://www.sec.gov/Archives/edgar/data/2060619/000206061926000002/",
+              "form": "144", "filed": "2026-10-16", "issuer_cik": "320193", "issuer": "Apple Inc.", "seller": "Doe Jane",
+              "relationship": "Officer, Director", "shares": 40000.0, "value": 7_200_000, "sale_date": "2026-10-16", "broker": "Morgan Stanley",
+              "acquired": "Vesting of restricted stock unit", "plan_date": "2026-03-03", "sold_3m": 1_050_000, "ticker": "AAPL"}
+    (mk / "form144.json").write_text(json.dumps({"latest": [notice], "summary": []}))
+    short = {"ticker": "NVDA", "name": "NVIDIA Corporation", "market": "NNM", "short": 311389688, "prev": 294225803, "change_pct": 5.83,
+             "adv": 110290688, "dtc": 2.82, "split": None, "revised": None, "change": 17163885,
+             "hist": [["2026-08-29", 280000000], ["2026-09-15", 294225803], ["2026-09-30", 311389688]]}
+    (mk / "short-interest.json").write_text(json.dumps({"settlement_date": "2026-09-30", "previous_date": "2026-09-15", "rows": [short]}))
+    sen = {"ticker": "AAPL", "asset_type": "ST", "type": "partial sale", "date": "2026-09-04", "notified": "", "owner": "SP",
+           "asset_raw": "Apple Inc. Common Stock", "amount_min": 15001, "amount_max": 50000, "person": "John Roe", "jurisdiction": "US Senate",
+           "report_id": "senate-6bf3b6f7-9e1b-499a-bd5a-990292ce2e72", "filed_date": "2026-10-01",
+           "source_url": "https://efdsearch.senate.gov/search/view/ptr/6bf3b6f7-9e1b-499a-bd5a-990292ce2e72/", "read": "electronic",
+           "ticker_canon": "AAPL", "ticker_status": "listed", "listed_name": "Apple Inc.", "name_check": "matches"}
+    (mk / "officials-trades.json").write_text(json.dumps({"trades": [sen]}))
+    s = notify.Site(str(site))
+    rows = s.json("index.json")["companies"]
+    by = {r["ticker"].upper(): r for r in rows if r.get("ticker")}
+    today = dt.date(2026, 10, 17)
+    ask = lambda plan, key: plan(s, rows, by, {"ref": json.dumps(key)}, today)
+
+    p = ask(engage.plan_stake_for, ["0001193125-26-424467"])
+    assert p["kind"] == "stake" and p["cashtags"] == ["HTH"] and p["items"] == [] and p["tags"][0] == "#13D"
+    assert "Gerald J. Ford (one of 5 reporting persons" in p["task"] and "27.3% of $HTH (15.7M shares)" in p["task"]
+    assert "up from 25.1% in its previous filing (2026-05-01)" in p["task"] and "Item 4 (purpose)" in p["task"]
+    post = engage.clean(p["fallback"], p["cashtags"], p["tags"])
+    assert post.startswith("JUST FILED: 13D/A: Gerald J. Ford reports 27.3% of $HTH (15.7M shares), up from 25.1% (May 1), filed Oct 16.")
+    assert social.strip_links([p["source_reply"]]) == ["The filing: Schedule 13D/A on Hilltop Holdings Inc., filed 2026-10-16. Not investment advice."]
+    g = ask(engage.plan_stake_for, ["0000950123-26-000777"])
+    assert g["items"] and g["tags"][0] == "#13G" and "a passive holder (institution)" in g["task"]
+    engage.clean(g["fallback"], g["cashtags"], g["tags"])
+    assert ask(engage.plan_stake_for, ["0000000000-26-000000"]) is None
+
+    f = ask(engage.plan_f144_for, ["0002060619-26-000002"])
+    assert f["kind"] == "form144" and f["items"] and f["tags"][0] == "#Form144"
+    assert "gave notice of a planned sale of 40,000 shares of $AAPL (market value about $7.2M" in f["task"] and "never “sold”" in f["task"]
+    post = engage.clean(f["fallback"], f["cashtags"], f["tags"])
+    assert "planned sale of 40,000 shares (~$7.2M) around Oct 16, under a 10b5-1 plan adopted Mar 3" in post and " sold " not in post
+    assert engage.relation("Officer, Director, 10% Stockholder") == "officer, director and 10% stockholder"
+
+    sh = ask(engage.plan_short_for, ["NVDA", "2026-09-30"])
+    assert sh["kind"] == "short" and sh["cashtags"] == ["NVDA"] and sh["tags"][0] == "#ShortInterest"
+    assert "311.4M shares of $NVDA were sold short, +5.8% from 294.2M on 2026-09-15; 2.82 days to cover" in sh["task"]
+    assert engage.clean(sh["fallback"], sh["cashtags"], sh["tags"]).startswith(
+        "Short interest in $NVDA: 311.4M shares as of Sep 30, +5.8% vs Sep 15 — 2.82 days to cover (FINRA).")
+    assert ask(engage.plan_short_for, ["NVDA", "2026-09-15"]) is None           # the table has moved on to another date
+
+    o = ask(engage.plan_official_for, ["senate-6bf3b6f7-9e1b-499a-bd5a-990292ce2e72", "2026-09-04", "AAPL", "partial sale", 15001, 50000, "SP"])
+    assert o["tags"][0] == "#SenateTrades" and "from a US Senate periodic transaction report filed 2026-10-01" in o["task"]
+    assert engage.clean(o["fallback"], o["cashtags"], o["tags"]).startswith("Senate disclosure: John Roe's spouse sold part of a holding in $AAPL")
+    assert social.strip_links([o["source_reply"]]) == ["Source: US Senate periodic transaction report (Senate eFD), filed 2026-10-01. Not investment advice."]
+
+    from pipeline import notify as N
+    assert {"post_stake", "post_f144", "post_short"} <= set(N.FILING_KINDS) and set(N.FILING_PLANS) == set(N.FILING_KINDS)
+    sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
+    assert sql.count("'post_official', 'post_stake', 'post_f144', 'post_short'") == 5
+
+    ex = corpus.hub_examples(s, rows, by, set(), str(mk))
+    assert {k: len(v) > 0 for k, v in ex.items()} == {"stake": True, "form144": True, "short": True, "official": True,
+                                                       "event8k": False, "news": False}       # no 8-K events / news file here
+    for kind, xs in ex.items():
+        for e in xs:
+            assert e["kind"] == kind and e["check"] == "engage" and not engage.tweet.ADVICE.search(e["target"].split("#")[0])
+    assert all("sold" not in e["target"] for e in ex["form144"])
+    again = corpus.hub_examples(s, rows, by, {e["src"] for xs in ex.values() for e in xs}, str(mk))
+    assert sum(len(v) for v in again.values()) == 0                               # rows already in the corpus are skipped
+
+
+def test_8k_news_and_mover_context(tmp_path, monkeypatch):
+    """Owner: ✦ X on a row of the hub's 8-K events (post_8k — a company without charts is written from the row alone) and
+    News tables; movers get "what is known today" (8-Ks, releases, Form 4 / 144, 13D, short interest, options, the market)
+    and may never give a cause."""
+    import datetime as dt
+    from pipeline import engage, notify, social, context, corpus
+    site = _site(tmp_path)
+    mk = site / "disclosures" / "data" / "market"
+    mk.mkdir(parents=True)
+    ev = {"accession": "0000000000-26-000001", "url": "https://www.sec.gov/Archives/edgar/data/999999/000000000026000001/", "form": "8-K",
+          "filed": "2026-10-16", "accepted": "2026-10-16T16:15", "cik": "999999", "company": "EXAMPLE DEVICES INC", "items": ["2.02", "1.01", "9.01"],
+          "code": "1.01", "topics": ["guidance", "deal", "earnings"], "guidance": "raised", "ticker": "EXDV", "label": "guidance raised",
+          "guidance_quote": "The Company raises its full-year 2026 revenue guidance to $3.10 billion to $3.15 billion.",
+          "headline": "Example Devices Reports Record Third Quarter Results and Raises Full-Year Outlook",
+          "quote": "On October 15, 2026, Example Devices Inc. entered into an Agreement and Plan of Merger with Widget Corp. for $41.00 per share in cash.",
+          "quote_src": "Item 1.01", "score": 8}
+    aapl = {**ev, "accession": "0000320193-26-000200", "cik": "320193", "company": "Apple Inc.", "ticker": "AAPL", "topics": ["ceo"], "guidance": None,
+            "guidance_quote": "", "headline": "", "label": "a CEO change", "code": "5.02", "items": ["5.02"], "score": 7,
+            "quote": "On October 15, 2026, the Board appointed Jane Roe as Chief Executive Officer, effective November 1, 2026."}
+    (mk / "events8k.json").write_text(json.dumps({"rows": [ev, aapl]}))
+    item = {"id": "abc123", "source": "PR Newswire", "kind": "release", "title": "Apple announces a new $110 billion share repurchase program",
+            "url": "https://www.prnewswire.com/news-releases/x.html", "published": "2026-10-16T20:05", "company": "Apple Inc.", "tickers": ["AAPL"], "match": "exchange tag"}
+    (mk / "news.json").write_text(json.dumps({"rows": [item]}))
+    (mk / "insiders.json").write_text(json.dumps({"latest": [{"ticker": "AAPL", "insider": "DOE JANE", "role": "CFO", "title": "Chief Financial Officer",
+                                                               "code": "S", "date": "2026-10-14", "shares": 40000, "value": 10020000}], "summary": []}))
+    (mk / "short-interest.json").write_text(json.dumps({"settlement_date": "2026-09-30", "previous_date": "2026-09-15",
+                                                        "rows": [{"ticker": "AAPL", "short": 120763539, "change_pct": -6.21, "dtc": 3.03}]}))
+    (mk / "options.json").write_text(json.dumps({"rows": [{"ticker": "AAPL", "iv30": 28.4, "iv30_chg": 3.1, "iv30_pct": 0.91}]}))
+    s = notify.Site(str(site))
+    rows = s.json("index.json")["companies"]
+    by = {r["ticker"].upper(): r for r in rows if r.get("ticker")}
+    today = dt.date(2026, 10, 17)
+
+    p = engage.plan_filing8k(s, rows, {"cik": 999999, "ref": "0000000000-26-000001"}, today)       # not on the site: from the hub row
+    assert p["kind"] == "event8k" and p["cashtags"] == ["EXDV"] and p["items"] == [] and "No chart is attached" in p["task"]
+    assert "Items 2.02, 1.01 — guidance raised" in p["task"] and "raises its full-year 2026 revenue guidance" in p["task"]
+    assert p["tags"][:2] == ["#8K", "#guidance"]
+    post = engage.clean(p["fallback"], p["cashtags"], p["tags"])
+    assert post.startswith("BREAKING: $EXDV 8-K filed Oct 16 — guidance raised: “The Company raises its full-year 2026 revenue guidance")
+    assert engage.plan_filing8k(s, rows, {"cik": 999999, "ref": "0000000000-26-000009"}, today) is None
+
+    n = engage.plan_news_for(s, rows, by, {"ref": json.dumps(["abc123"])}, today)
+    assert n["kind"] == "news" and n["cashtags"] == ["AAPL"] and n["items"] and n["tags"][0] == "#PressRelease"
+    assert "the headline is the source's claim" in n["task"]
+    assert engage.clean(n["fallback"], n["cashtags"], n["tags"]).startswith("JUST IN: Press release: $AAPL — “Apple announces a new $110 billion")
+    assert social.strip_links([n["source_reply"]]) == ["Source: PR Newswire, 2026-10-16 20:05 UTC. A headline, not investment advice."]
+
+    monkeypatch.setattr(context.Q, "yahoo_one", lambda t: {"chg_pct": 0.4 if t == "SPY" else 1.2, "asof": "2026-10-16"})
+    text, facts = context.known(lambda name: json.loads((mk / name).read_text()) if (mk / name).exists() else {},
+                                {**by["AAPL"], "sector": "technology"}, day=dt.date(2026, 10, 16), quote={"asof": "2026-10-16"}, with_headlines=False)
+    assert "WHAT IS KNOWN ABOUT $AAPL" in text and "(a CEO change)" in text and "PR Newswire" in text
+    assert "Form 4: Doe Jane (Chief Financial Officer) sold 40,000 shares ($10.0M) on 2026-10-14" in text
+    assert "Short interest 2026-09-30: 120.8M shares, -6.2% vs 2026-09-15, 3.03 days to cover" in text
+    assert "30-day implied volatility 28.4%, +3.1 pts on the day, 91st percentile" in text
+    assert "SPY +0.4%, XLK +1.2%" in text and "Never say or imply that any of them caused the move" in text
+    assert "a CEO change" not in context.known(lambda name: json.loads((mk / name).read_text()) if (mk / name).exists() else {},
+                                               by["AAPL"], day=dt.date(2026, 10, 16), with_headlines=False, skip_8k=True)[0]
+    forbid = (context.CAUSAL.pattern, "no cause")
+    for bad in ("$AAPL +3.1% today because of the buyback", "$AAPL rallies on news of a new CEO", "$AAPL up, driven by the buyback"):
+        try:
+            engage.clean(bad + ". How do you read it?", ["AAPL"], [], forbid=forbid)
+            assert False, bad
+        except ValueError as why:
+            assert "no cause" in str(why)
+    assert engage.clean("$AAPL +3.1% today after an 8-K naming a new CEO. How do you read it?", ["AAPL"], [], forbid=forbid)
+
+    from pipeline import notify as N
+    assert "post_news" in N.FILING_KINDS and N.FILING_PLANS["post_news"] == "news_for"
+    sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
+    assert sql.count("'post_short', 'post_news'") == 5
+    ex = corpus.hub_examples(s, rows, by, set(), str(mk))
+    assert len(ex["event8k"]) >= 2 and len(ex["news"]) >= 1
+
+
 def test_posts_are_never_cut_off_and_say_something():
     """Oct 16 2026: drafts went to Buffer as '$FNGR 8-K filed Sept 29: entered a definitive #earnings #stocks' and
     'JUST FILED · $FNGR Q2 FY2 #13F' — model answers cut at max_tokens, hashtags glued on. Such posts are rejected."""
@@ -2085,7 +2594,9 @@ def test_posts_are_never_cut_off_and_say_something():
             assert False, bad
         except ValueError as why:
             assert "mid-sentence" in str(why)
-    assert engage.event_tags("1.01", "a material agreement")[:3] == ["#8K", "#SEC", "#deal"]
+    tags = engage.event_tags("1.01", "a material agreement")
+    assert tags[:2] == ["#8K", "#deal"] and len(tags) == 3                 # kind, topic, a general tag (no industry known)
+    assert engage.event_tags("1.01", "a material agreement", {"sic": "2834"}, "k")[:3] == ["#8K", "#deal", "#pharma"]
     assert "#MergersAndAcquisitions" in engage.event_tags("8.01", "a merger or acquisition")
     long = "On September 26, 2026, FingerMotion, Inc. entered into a definitive Share Purchase Agreement with Example Holdings Ltd. " * 3
     q = "On October 13, 2026, FingerMotion, Inc. (the “Company”) entered into an agreement with Example Ltd. to sell shares. Closing follows."
@@ -2120,6 +2631,35 @@ def test_holders_post_names_who_how_much_and_when():
     assert "https://filing-flows.com/#c-1602409" in th["replies"][-1]
 
 
+def test_holder_posts_keep_to_one_quarter_and_give_three_examples(tmp_path):
+    """Oct 17 2026: 13F posts were the weakest held-out kind — "quarter ended Jun 30 … Vanguard cut 1.0M sh (filed Jan
+    29)" mixed a manager's older 13F in. Posts, prompts and training examples now keep to the quarter most managers
+    report; each company gives three phrasings; the holders file is read once per run."""
+    import datetime as dt
+    from pipeline import corpus, notify, train_local, tweet
+    site = _site(tmp_path)
+    url = "https://example.test"
+    q = lambda **k: {"period": "2026-06-30", "filed": "2026-08-13", "value_usd": 5e6, "weight": .001, **k}
+    tweet._HOLDERS[("AAPL", url)] = {"institutional": [
+        q(manager="Alpha Capital LLC", status="INCREASE", delta_shares=787254, shares=2000000),
+        q(manager="Beta Partners LP", status="NEW", delta_shares=250000, shares=250000, filed="2026-08-14"),
+        q(manager="Gamma Advisors", status="DECREASE", delta_shares=-410000, shares=90000, filed="2026-08-12"),
+        q(manager="Delta Fund", status="EXIT", delta_shares=-120000, shares=0, filed="2026-08-10"),
+        {"manager": "Vanguard Group Inc", "status": "DECREASE", "delta_shares": -1034000, "shares": 5000000, "value_usd": 1e8,
+         "period": "2025-12-31", "filed": "2026-01-29"}]}
+    try:
+        th = tweet.holders_thread("AAPL", url, 320193, today=dt.date(2026, 10, 1))
+        assert "Vanguard" not in th["post"] + " ".join(th["replies"]) + tweet.holders_lines("AAPL", url)
+        assert "4 funds" not in th["post"] and "2 funds added, 2 cut" in th["post"]
+        c = notify.Site(str(site)).json("c/320193.json")
+        ex = corpus.holders_examples(None, url, set(), [c])
+        assert len(ex) == 3 and len({e["target"] for e in ex}) == 3
+        assert all(train_local.grade(e, e["target"]) == (True, "") and "Vanguard" not in e["target"] for e in ex)
+        assert corpus.holders_examples(None, url, {e["src"] for e in ex}, [c]) == []
+    finally:
+        tweet._HOLDERS.pop(("AAPL", url), None)
+
+
 def test_local_fallback_prompt_corpus_and_grading():
     """The free fallback model (pipeline/local_model.py): same prompt in training and use, targets that would be
     published, held-out grading. The model itself (PyTorch) runs only in its own workflow."""
@@ -2150,6 +2690,46 @@ def test_local_fallback_prompt_corpus_and_grading():
         assert tweet.providers()[-1][0] == "local"
     finally:
         os.environ.pop("LOCAL_MODEL") if old is None else os.environ.__setitem__("LOCAL_MODEL", old)
+
+
+def test_long_posts_lose_their_closing_hashtags_first():
+    """Oct 17 2026: most held-out posts the local model got wrong were a few characters too long (256–294) because of the
+    hashtags at the end. Those now go, the last first; a post too long without them is still refused."""
+    from pipeline import engage, social, tweet
+    body = "$ABC CFO Jane Doe bought 10,000 shares ($125K) at $12.50 on 2026-10-13. " + "Word " * 28 + "How do you read it?"
+    tags = ["#InsiderBuying", "#semiconductors", "#stocks"]
+    assert social.xlen(body) < 255 < social.xlen(body + " " + " ".join(tags))
+    out = engage.clean(body + " " + " ".join(tags), ["ABC"], tags)
+    assert social.xlen(out) <= 255 and out.startswith(body) and out.endswith("#InsiderBuying")
+    assert tweet.clean(body + " #earnings #stocks", "ABC", ["#earnings", "#stocks"], social.xlen, limit=len(body) + 2) == body
+    assert tweet.fit_tags("short #a #b", social.xlen, 255) == "short #a #b"
+    try:
+        engage.clean(body + " More words here. " * 4 + " ".join(tags), ["ABC"], tags)
+        assert False
+    except ValueError as why:
+        assert "too long" in str(why)
+
+
+def test_insider_examples_cover_sales_and_companies_without_charts():
+    """Form 4 training examples: purchases and sales from the collector's trade file, a sale says "sold" and its plan,
+    a company that has no charts on the site still gives a (text-only) example, and every target passes the grade."""
+    from pipeline import corpus, train_local
+    trades = [{"accession": "0000000001-26-000001", "issuer_cik": "999001", "issuer": "NOCHART INC", "ticker": "NOCH", "insider": "Roe Jane",
+               "role": "CEO", "title": "", "code": "S", "date": "2026-10-14", "shares": 40000.0, "price": 25.5, "value": 1020000,
+               "after": 100000.0, "plan_10b5_1": True},
+              {"accession": "0000000001-26-000002", "issuer_cik": "999002", "issuer": "BUYER CORP", "ticker": "BUYR", "insider": "Doe John",
+               "role": "Director", "title": "", "code": "P", "date": "2026-10-13", "shares": 5000.0, "price": 12.0, "value": 60000,
+               "after": 9000.0, "plan_10b5_1": False},
+              {"accession": "x", "ticker": "BADX", "code": "A", "date": "2026-10-13", "shares": 1, "price": 1}]      # a grant: no example
+    ex = corpus.insider_examples(None, [], {}, {"latest": trades[:1], "summary": []}, set(), trades)
+    sales = [e for e in ex if " sold " in e["target"]]
+    buys = [e for e in ex if " bought " in e["target"] or " put " in e["target"]]
+    assert len(sales) == 2 and len(buys) == 3                         # the sale once although it is in both files
+    assert all("10b5-1" in e["target"] and "#InsiderSelling" in e["target"] for e in sales)
+    assert all("No chart is attached" in e["prompt"] for e in ex)
+    assert {e["cik"] for e in ex} == {999001, 999002}
+    assert all(train_local.grade(e, e["target"]) == (True, "") for e in ex)
+    assert corpus.insider_examples(None, [], {}, {"latest": [], "summary": []}, {e["src"] for e in ex}, trades) == []
 
 
 def test_train_local_runs_to_its_report(tmp_path):
@@ -2192,3 +2772,210 @@ def test_train_local_runs_to_its_report(tmp_path):
     rep = json.loads((md / "reports.jsonl").read_text().splitlines()[-1])
     assert rep["promoted"] and rep["work_score"] == 0.9 and rep["by_kind"]["event8k"] == 100
     assert "promoted" in (md / "README.md").read_text() and (md / "corpus-ids.txt").read_text().startswith(f"#v{corpus.VERSION}")
+
+
+def test_smart_money_flows_and_reddit_posts(tmp_path):
+    """The X posts from the hub's smart-money data: Reddit's hottest vs the filings, skilled net buying, a tested track
+    record, all groups agreeing, the quarter so far — each plan names its cashtags and its rule-based fallback passes the
+    checks (no "buy"/"sell", no exclamation marks, the cashtags present)."""
+    import datetime as dt
+    from pipeline import engage, notify
+    site = _site(tmp_path)
+    hub = site / "disclosures" / "data"
+    W = lambda rel, obj: (hub / rel).parent.mkdir(parents=True, exist_ok=True) or (hub / rel).write_text(json.dumps(obj))
+    today = dt.date(2026, 10, 16)
+    SF = ["ticker", "name", "S", "raw", "S_f13", "S_etf", "S_ins", "S_gov", "votes", "skilled_buyers", "skilled_sellers", "Z", "last"]
+    LF = ["id", "name", "sub", "n", "scored", "hit", "acc", "p", "L", "buy_n", "buy_p", "sell_n", "sell_p", "alpha", "follow", "last", "decisions"]
+    W("smart/index.json", {"stock_fields": SF, "leader_fields": LF,
+                           "stocks": [["NVDA", "NVIDIA", 95.0, 20.0, 90.0, None, None, None, 9, 5, 1, 3.1, "2026-10-10"],
+                                      ["AAPL", "Apple", 85.0, 40.0, 80.0, None, 70.0, None, 6, 4, 0, 2.2, "2026-10-10"],
+                                      ["META", "Meta", 70.0, 10.0, 70.0, None, None, None, 5, 3, 1, 1.5, "2026-09-30"],
+                                      ["CRWV", "CoreWeave", 60.0, -5.0, None, None, 60.0, None, 4, 2, 0, 1.0, "2026-10-01"]],
+                           "leaders": {"gov": [["g:JANE ROE", "Jane Roe", "US House", 40, 31, 0.74, 0.8, 0.72, 0.9, 20, 0.7, 11, 0.6, 0.05, 0.03, "2026-10-08", 25]]},
+                           "backtest": {"all": {"smart": {"buckets": [["+50 to +100", 26491, 0.0128, 0.45, 0.53]]}}}})
+    rec = {"name": "Jane Roe", "g": "gov", "sub": "US House", "more": 0,
+           "stats": {"n": 40, "scored": 31, "decisions": 25, "hit": 0.74, "acc": 0.8, "p": 0.72, "L": 0.9, "alpha": 0.05, "follow": 0.03,
+                     "buy": {"n": 20, "hit": 0.75, "p": 0.7}, "sell": {"n": 11, "hit": 0.72, "p": 0.6}, "last": "2026-10-08"},
+           "trades": [["2026-10-08", "AAPL", 1, 50000.0, 1.0, None, None, None, None, "2026-10-14", "SP"]]}
+    assert engage.fnv_bucket("g:NANCY PELOSI") == "55"                        # = disclosures/app/smart.py bucket()
+    W(f"smart/a/gov/{engage.fnv_bucket('g:JANE ROE')}.json", {"fields": [], "actors": {"g:JANE ROE": rec}})
+    W("smart/t/AAPL.json", {"now": {"S": 85.0, "raw": 40.0, "n": 6}, "votes": [["f:1", "Fund", "f13", "", 1, 1.0, 0.5, 0.7, 30, "2026-09-30"],
+                                                                             ["i:X", "X", "ins", "CEO", -1, 1.0, 0.2, 0.6, 9, "2026-10-01"]]})
+    CF = ["ticker", "name", "S", "raw"] + [f"{g}_{k}" for g in ("f13", "etf", "ins", "gov") for k in ("b", "s", "usd")] + ["actors", "groups_buy", "groups_sell", "S_now"]
+    W("smart/combined/index.json", {"fields": CF, "periods": [{"key": "prev", "label": "Q3 2026 — this quarter's filings (Jul–Sep)"},
+                                                              {"key": "qtd", "label": "Q4 2026 to date (Oct 1 – Oct 16)"}]})
+    W("smart/combined/prev.json", {"fields": CF, "rows": [["META", "Meta", 60, 80, 12, 2, 4.2e8, 0, 0, 0, 2, 0, 1.5e6, 3, 0, 31000, 19, 3, 0, 70.0],
+                                                          ["AAPL", "Apple", 10, 20, 30, 25, 1e8, 0, 0, 0, 0, 1, -2e6, 1, 1, 0, 58, 1, 1, 85.0]]})
+    W("smart/combined/qtd.json", {"fields": CF, "rows": [["CRWV", "CoreWeave", 50, 60, 0, 0, 0, 0, 0, 0, 3, 0, 4.1e6, 0, 0, 0, 3, 1, 0, 60.0],
+                                                         ["AAPL", "Apple", 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2.5e5, 0, 1, -8000, 2, 1, 1, 85.0],
+                                                         ["SMCL", "Small", 40, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 45000, 3, 1, 0, None]]})
+    W("market/reddit.json", {"rows": [{"ticker": "AAPL", "name": "Apple", "heat": 120, "mentions": 40, "mentions_prev": 10,
+                                       "threads": [{"sub": "stocks", "title": "AAPL after the event", "score": 900, "comments": 300,
+                                                    "url": "https://www.reddit.com/r/stocks/comments/x/"}]}]})
+    s = notify.Site(str(site))
+    rows = s.json("index.json")["companies"]
+    for e in rows:
+        e["ticker"] = (e.get("ticker") or "").upper().replace("-", ".")
+    by = {r["ticker"]: r for r in rows if r.get("ticker")}
+    ok = lambda *a, **k: True
+    c = engage.cfg()
+    plans = {k: f(s, rows, c, by, ok, today) for k, f in (("reddit_hot", engage.plan_reddit_hot), ("smart_buys", engage.plan_smart_buys),
+                                                        ("smart_record", engage.plan_smart_record), ("all_agree", engage.plan_all_agree),
+                                                        ("qtd_flows", engage.plan_qtd_flows))}
+    assert plans["reddit_hot"]["cashtags"] == ["AAPL"] and "Smart-money score +85" in plans["reddit_hot"]["task"]
+    assert "reddit" not in (plans["reddit_hot"]["task"] + plans["reddit_hot"]["fallback"]).lower() and not plans["reddit_hot"].get("source_reply")
+    assert plans["smart_buys"]["cashtags"][:3] == ["AAPL", "META", "CRWV"]          # site companies (with charts) first
+    assert "53% of the time" in plans["smart_buys"]["task"]
+    assert plans["smart_record"]["cashtags"] == ["AAPL"] and "Jane Roe" in plans["smart_record"]["task"]
+    assert plans["all_agree"]["cashtags"] == ["META"]                               # three groups net buying, none selling
+    assert plans["qtd_flows"]["cashtags"][0] == "CRWV"
+    for k, p in plans.items():
+        post = engage.clean(p["fallback"], p["cashtags"], p.get("tags") or ["#stocks"], allowed=p.get("allowed"), must=p.get("must"), forbid=p.get("forbid"))
+        assert all(f"${t}" in post for t in p["cashtags"]), (k, post)
+        assert engage.KIND_TAGS[k] in ("reddit", "smart", "flows")
+    sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
+    assert sql.count("'engage_qtd_flows'") == 4 and "engage_smart_buys" in notify.ENGAGE_KINDS
+
+
+def test_the_companys_own_dollar_rate_comes_first():
+    """A filing's convenience-translation rate (said in words, or a US$ column beside its own) wins over market rates;
+    tables printed with currency marks are read in the company's currency."""
+    from pipeline import fx, release
+    r = fx.official_rate("Solely for the convenience of the reader, the translation of NT$ into US$ was made at the rate of "
+                         "NT$30.66 to US$1.00, the noon buying rate on June 30, 2026.", "TWD")
+    assert abs(r["usd"] - 1 / 30.66) < 1e-9 and "NT$30.66" in r["text"]
+    r = fx.official_rate("Translations of amounts from RMB into US$ are solely for the convenience of the reader and were made "
+                         "at a rate of RMB7.1636 to US$1.00, the exchange rate on June 30, 2026.", "CNY")
+    assert abs(1 / r["usd"] - 7.1636) < 1e-9
+    r = fx.official_rate("For convenience, euro amounts have been translated at an exchange rate of €1.00 = US$1.1712.", "EUR")
+    assert abs(r["usd"] - 1.1712) < 1e-9
+    r = fx.official_rate("U.S. dollar amounts are included solely for convenience, translated at ¥146.84 = US$1, the rate on "
+                         "the Tokyo foreign exchange market.", "JPY")
+    assert abs(1 / r["usd"] - 146.84) < 1e-9
+    assert fx.official_rate("Revenue rose to €4.6 billion; the euro rose against the dollar.", "EUR") is None
+    html = ("<p>(in millions)</p><table><tr><td></td><td>Three months ended June 30,</td></tr>"
+            "<tr><td></td><td>2025</td><td>2026</td><td>2026</td></tr><tr><td></td><td>RMB</td><td>RMB</td><td>US$</td></tr>"
+            "<tr><td>Total revenues</td><td>1,000</td><td>1,200</td><td>168</td></tr>"
+            "<tr><td>Net income</td><td>100</td><td>150</td><td>21</td></tr></table>")
+    t = release.read_tables(html)[0]
+    rows = {r["label"]: r["vals"] for r in t["rows"] if r["label"]}
+    assert rows["Total revenues"] == [1200.0, 1000.0]                 # the US$ column set aside, the newest period first
+    assert abs(release.convenience_rate([t], "revenue") - 0.14) < 1e-9
+    assert release._number("€1,234") == 1234 and release._number("(NT$ 950.5)") == -950.5
+    with fx.use("JPY"):
+        assert fx.money(12.3e12) == "¥12.30T" and fx.money(-3.4e9) == "−¥3.4B"
+    assert fx.money(1.5e9) == "$1.5B"
+
+
+def _market_hub(tmp_path):
+    """A built site plus the hub's market files the market posts read: highs / lows, consensus (analysts + Polymarket),
+    Reddit's trending tickers, short interest, 8-Ks."""
+    import datetime as dt
+    from pipeline import notify
+    site = _site(tmp_path)
+    hub = site / "disclosures" / "data"
+    W = lambda rel, obj: (hub / rel).parent.mkdir(parents=True, exist_ok=True) or (hub / rel).write_text(json.dumps(obj))
+    today = dt.date(2026, 10, 19)
+    XF = ["ticker", "name", "close", "chg1d", "hi52", "lo52", "from_hi", "from_lo", "ytd", "m1", "day_hi", "day_lo", "dollar_vol", "new_hi", "new_lo",
+          "ath", "atl", "ath_prev", "atl_prev", "since", "peak_date", "trough_date"]
+    def X(t, name, close, hi, lo, ytd, dv, new_hi=0, new_lo=0, ath=None):
+        return [t, name, close, -0.01, hi, lo, round(close / hi - 1, 4), round(close / lo - 1, 4), ytd, -0.05, close * 1.01, close * 0.99, dv,
+                new_hi, new_lo, ath, None, None, None, "2001-01-01", "2026-01-15", "2026-10-16"]
+    ext = [X("AAPL", "APPLE INC", 230.0, 260.0, 200.0, 0.05, 9e9), X("META", "META PLATFORMS INC", 700.0, 720.0, 480.0, 0.25, 8e9, new_hi=1, ath=1),
+           X("CRWV", "COREWEAVE INC", 61.0, 140.0, 40.0, -0.4, 3e9), X("RKLB", "ROCKET LAB CORP", 50.0, 150.0, 20.0, 0.1, 2e9),
+           X("ASTS", "AST SPACEMOBILE INC", 40.0, 130.0, 15.0, 0.05, 1.5e9), X("IREN", "IREN LTD", 27.0, 75.0, 8.0, 0.2, 1e9),
+           X("NBIS", "NEBIUS GROUP N.V.", 165.0, 286.0, 40.0, 0.9, 1e9), X("MCD", "MCDONALDS CORP", 250.0, 330.0, 249.0, -0.2, 2e9, new_lo=1),
+           X("PEP", "PEPSICO INC", 130.0, 170.0, 129.0, -0.15, 1.8e9, new_lo=1), X("LOW", "LOWES COMPANIES INC", 210.0, 290.0, 209.0, -0.1, 1.5e9, new_lo=1),
+           X("LULU", "LULULEMON ATHLETICA INC.", 160.0, 400.0, 159.0, -0.5, 1.2e9, new_lo=1), X("SMCL", "SMALL CO", 9.0, 20.0, 8.8, -0.3, 2e7)]
+    W("market/extremes.json", {"asof": "2026-10-16", "fields": XF, "rows": ext, "new_lows": ["MCD", "PEP", "LOW", "LULU"], "new_highs": ["META"],
+                               "ath": ["META"], "atl": []})
+    CF = ["cik", "ticker", "name", "sector", "price", "next_earnings", "eps_q", "eps_q_n", "rev_q", "eps_rev_30d", "target_mean", "rating_mean",
+          "pm_beat_prob", "pm_eps_strike", "pm_report_date", "pm_implied_price", "pm_price_date", "our_price", "our_date", "beat_rate", "poly_markets", "kalshi_events"]
+    def C(t, name, price, target, rating, pm=None, rep=None):
+        return [1, t, name, "Tech", price, rep, 1.2, 20, 1e9, 0.01, target, rating, pm, 1.15 if pm else None, rep, None, None, None, None, 0.75, 3 if pm else 0, 0]
+    W("consensus/index.json", {"fields": CF, "rows": [C("AAPL", "Apple Inc.", 230.0, 255.3, 2.9, 0.81, "2026-10-22"),
+                                                      C("META", "Meta Platforms, Inc.", 700.0, 980.0, 3.0, 0.64, "2026-10-21"),
+                                                      C("CRWV", "CoreWeave, Inc.", 61.0, 70.0, 2.7, 0.52, "2026-10-23"),
+                                                      C("MCD", "McDonald's Corporation", 250.0, 300.0, 2.2), C("PEP", "PepsiCo, Inc.", 130.0, 150.0, 2.5),
+                                                      C("LOW", "Lowe's Companies, Inc.", 210.0, 260.0, 2.3), C("LULU", "lululemon athletica inc.", 160.0, 190.0, 2.8)]})
+    W("market/reddit.json", {"rows": [{"ticker": t, "heat": 100 - i} for i, t in enumerate(["CRWV", "RKLB", "ASTS", "IREN", "NBIS", "AAPL", "META"])]})
+    W("market/short-interest.json", {"rows": [{"ticker": "CRWV", "short": 9e7, "dtc": 3.4, "change_pct": 12.0}]})
+    W("market/events8k.json", {"rows": [{"ticker": "CRWV", "filed": "2026-10-10", "code": "1.01", "quote": "entered into a supply agreement"}]})
+    s = notify.Site(str(site))
+    rows = s.json("index.json")["companies"]
+    for e in rows:
+        e["ticker"] = (e.get("ticker") or "").upper().replace("-", ".")
+        e.setdefault("om", 25.0)
+        e.setdefault("revenue", 5e9)
+    by = {r["ticker"]: r for r in rows if r.get("ticker")}
+    return s, rows, by, today
+
+
+def test_market_posts_analysts_polymarket_highs_lows(tmp_path):
+    """The formats that travel on X, from the hub's consensus (analysts + Polymarket), highs / lows and short interest:
+    each plan names its cashtags, keeps its lines, and every rule-written phrasing passes the post checks; the posts that
+    start from Reddit's trending tickers never mention Reddit."""
+    from pipeline import engage, notify
+    s, rows, by, today = _market_hub(tmp_path)
+    ok = lambda *a, **k: True
+    c = engage.cfg()
+    got = {}
+    for kind in ("pt_upside", "versus", "drawdown", "setup", "lows52", "highs52", "near_lows", "records", "polymarket", "reddit_hot"):
+        got[kind] = getattr(engage, "plan_" + kind)(s, rows, c, by, ok, today)
+    assert got["pt_upside"]["cashtags"] == ["AAPL", "META"] and "3.6x the upside" in got["pt_upside"]["fallback"]   # +11% vs +40%, both Hold
+    assert got["drawdown"]["allowed"][:4] == ["CRWV", "RKLB", "ASTS", "IREN"] and "$RKLB $150 → $50" in got["drawdown"]["fallback"]
+    assert got["setup"]["cashtags"] == ["CRWV"] and "• Short interest 3.4 days to cover" in got["setup"]["fallback"]
+    assert "Polymarket: 52% odds it beats EPS on Oct 23" in got["setup"]["task"]
+    assert got["lows52"]["fallback"].startswith("All these stocks hit new 52-week lows on Oct 16\n\nMcDonald's $MCD\nPepsiCo $PEP")
+    assert got["highs52"] is None and got["records"] is None                     # one name each: not a list
+    assert got["polymarket"]["allowed"] == ["META", "AAPL", "CRWV"] and "$META Oct 21: 64%" in got["polymarket"]["fallback"]
+    assert got["versus"]["cashtags"][0] == "CRWV"
+    assert got["reddit_hot"]["kind"] == "reddit_hot" and got["reddit_hot"]["forbid"] == engage.NO_FORUM
+    for kind, p in got.items():
+        if not p:
+            continue
+        for fb in p.get("fallbacks") or [p["fallback"]]:
+            post = engage.clean(fb, p["cashtags"], p.get("tags") or ["#stocks"], allowed=p.get("allowed"), must=p.get("must"), forbid=p.get("forbid"),
+                                lines=p.get("lines", False))
+            assert ("\n" in post) == bool(p.get("lines")) or kind in ("versus",), (kind, post)
+            assert "reddit" not in post.lower(), (kind, post)
+    try:
+        engage.clean("Reddit can't agree on $CRWV today. Thoughts?", ["CRWV"], ["#stocks"], forbid=engage.NO_FORUM)
+        raise AssertionError("a post about Reddit passed")
+    except ValueError:
+        pass
+    sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
+    assert sql.count("'engage_polymarket'") == 4 and "engage_records" in notify.ENGAGE_KINDS
+
+
+def test_corpus_market_posts_for_the_local_models(tmp_path):
+    """The market formats become training examples: several plans a day per kind (each without the names already used),
+    every phrasing a target that passes the plan's own checks (cashtags a list may name, line breaks, no forum talk), the
+    evaluation grading a generated post the same way, one lead stock in ten held out, nothing rebuilt once known."""
+    from pipeline import corpus, local_model as L, train_local
+    s, rows, by, today = _market_hub(tmp_path)
+    out = corpus.market_examples(s, rows, by, set(), today)
+    n = {k: len(v) for k, v in out.items() if v}
+    for kind in ("pt_upside", "versus", "drawdown", "setup", "lows52", "polymarket", "reddit_hot", "reddit_question", "reddit_list"):
+        assert n.get(kind), (kind, n)
+    xs = [ex for v in out.values() for ex in v]
+    for ex in xs:
+        assert train_local.grade(ex, ex["target"]) == (True, ""), (ex["kind"], ex["target"])
+        assert "reddit" not in ex["target"].lower() and "reddit" not in re.sub(r"FORMAT: \w+", "", ex["prompt"]).lower(), ex["kind"]
+        assert ex["hold"] == ex["cashtags"][0] and ex["src"]
+        assert ("\n" in ex["target"]) == bool(ex.get("lines")), (ex["kind"], ex["target"])
+    setups = {ex["cashtags"][0] for ex in out["setup"]}
+    assert {"CRWV", "AAPL", "META", "MCD"} <= setups and "RKLB" not in setups          # RKLB: too few facts for a setup
+    pairs = {tuple(ex["cashtags"]) for ex in out["versus"]}
+    assert len(pairs) >= 3 and len({t for p in pairs for t in p}) == 2 * len(pairs)   # each next pair: new names
+    dd = out["drawdown"][0]
+    assert dd["allowed"] and "Other cashtags allowed: $" in dd["prompt"] and "$RKLB $150 → $50" in dd["target"]
+    pm = [ex for ex in out["polymarket"] if "Polymarket odds of an earnings beat" in ex["target"]]
+    assert pm and "$META Oct 21: 64%" in pm[0]["target"]
+    bad = dict(dd, target=dd["target"].replace("$RKLB", "$TSLA"))
+    assert train_local.grade(bad, bad["target"])[0] is False                         # a name outside the list fails the evaluation
+    assert L.compact([{"role": "user", "content": "FORMAT: x\n\nFormat with line breaks: one line each.\n\n- $A up 5%"}]).index("- $A") \
+        < L.compact([{"role": "user", "content": "FORMAT: x\n\nFormat with line breaks: one line each.\n\n- $A up 5%"}]).index("Format with")
+    known = {ex["src"] for ex in xs}
+    again = corpus.market_examples(s, rows, by, known, today)
+    assert not any(again.values())                                                    # the same day's plans are not rebuilt

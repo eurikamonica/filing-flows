@@ -10,6 +10,10 @@ name: Post to X
 # next watch run itself (workflow_dispatch with chained=true) — a continuous relay, one run at a time, with a button
 # press picked up within about 20 seconds. The cron only restarts the relay if it ever breaks; the repository variable
 # POST_WATCH=off stops it (runs then happen only on the cron / a Supabase wake / Run workflow).
+#
+# The owner lane rides on the same relay: every check also starts the workflow for the owner's other requests — a short
+# scan (scan.yml, fast) for the owner's companies and re-reads, "Send requested reports" for the owner's e-mails and
+# comparisons — so they are picked up within seconds too (pipeline/owner_lane.py; actions: write below).
 
 on:
   schedule:
@@ -26,7 +30,7 @@ on:
 permissions:
   contents: write      # the "media" branch holds the chart images Buffer loads
   models: read         # GitHub Models writes the post text (pipeline/tweet.py)
-  actions: write       # starts the next watch run
+  actions: write       # starts the next watch run, and the owner lane's scan / requests runs
 
 concurrency:
   group: post-to-x
@@ -86,6 +90,9 @@ jobs:
           echo "site=$site" >> "$GITHUB_OUTPUT"
           start=$(date +%s)
           while :; do
+            # the owner's other requests (companies, re-reads, e-mails, comparisons): start their workflow now
+            # instead of waiting for its late schedule (pipeline/owner_lane.py)
+            python -m pipeline.owner_lane wake || true
             rc=0; python -m pipeline.notify --site "$site" --requests --posts --due || rc=$?
             if [ $rc = 0 ]; then echo "go=yes" >> "$GITHUB_OUTPUT"; exit 0; fi
             if [ $rc != 1 ]; then exit $rc; fi

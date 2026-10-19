@@ -65,12 +65,23 @@
   const pct = (x, d) => (x == null || isNaN(x) ? '—' : sign(+x.toFixed(d || 0)) + Math.abs(x).toFixed(d || 0) + '%');
   const margin = (x) => (x == null || isNaN(x) ? '—' : (x < 0 ? '\u2212' : '') + Math.abs(x).toFixed(1) + '%');
   const tone = (x) => (x == null ? '' : x > 0.05 ? 'pos' : x < -0.05 ? 'neg' : '');
+  // A company that reports in another currency is shown in it (pipeline/fx.py), with the same charts in US dollars a
+  // click away: CUR is the symbol of the currency on the page now.
+  const CCY = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: 'RMB ', TWD: 'NT$', KRW: '₩', INR: '₹', CAD: 'C$', AUD: 'A$', NZD: 'NZ$', CHF: 'CHF ',
+    HKD: 'HK$', SGD: 'S$', BRL: 'R$', MXN: 'MX$', SEK: 'SEK ', DKK: 'DKK ', NOK: 'NOK ', ZAR: 'ZAR ', ILS: '₪', THB: '฿', PHP: '₱', IDR: 'Rp ',
+    TRY: '₺', PLN: 'zł ', MYR: 'RM ' };
+  const CCY_NAME = { EUR: 'euros', GBP: 'pounds sterling', JPY: 'Japanese yen', CNY: 'Chinese yuan (renminbi)', TWD: 'New Taiwan dollars',
+    KRW: 'Korean won', INR: 'Indian rupees', CAD: 'Canadian dollars', AUD: 'Australian dollars', CHF: 'Swiss francs', HKD: 'Hong Kong dollars',
+    BRL: 'Brazilian reais', MXN: 'Mexican pesos', SEK: 'Swedish kronor', DKK: 'Danish kroner', NOK: 'Norwegian kroner', ILS: 'Israeli shekels' };
+  const symOf = (code) => CCY[code] || (code ? code + ' ' : '$');
+  let CUR = '$';
   function money(v) {
     if (v == null) return '—';
     const a = Math.abs(v), s = v < 0 ? '−' : '';
-    if (a >= 0.95e9) return `${s}$${(a / 1e9).toFixed(1)}B`;
-    if (a >= 0.95e6) return `${s}$${(a / 1e6).toFixed(1)}M`;
-    return `${s}$${(a / 1e3).toFixed(0)}K`;
+    if (a >= 0.95e12) return `${s}${CUR}${(a / 1e12).toFixed(2)}T`;
+    if (a >= 0.95e9) return `${s}${CUR}${(a / 1e9).toFixed(1)}B`;
+    if (a >= 0.95e6) return `${s}${CUR}${(a / 1e6).toFixed(1)}M`;
+    return `${s}${CUR}${(a / 1e3).toFixed(0)}K`;
   }
   function date(s) {
     if (!s) return '—';
@@ -81,7 +92,7 @@
   const accession = (url) => { const m = /(\d{10}-\d{2}-\d{6})-index/.exec(url || ''); return m ? m[1] : null; };
   const mdnaItem = (form) => (form === '10-K' ? 'Item 7' : 'Item 2');
   // where node notes come from: the MD&A of a 10-Q/10-K, or the press release of an 8-K
-  const noteSource = (form) => (form === '8-K' ? 'the earnings release (8-K, Exhibit 99.1)'
+  const noteSource = (form) => (form === '8-K' ? 'the earnings release (8-K, Exhibit 99.1)' : form === '6-K' ? 'the results release (6-K exhibit)'
     : `the ${form} (${mdnaItem(form)}, Management’s Discussion and Analysis)`);
   const prelimTag = '<span class="tag prelim" title="Read from the 8-K earnings release; replaced by the 10-Q/10-K when filed">Preliminary · 8-K</span>';
   const finalTag = (rc) => `<span class="tag final" title="${t(releaseCheckText(rc))}">Final · ${rc.ok ? 'confirms' : 'revises'} the 8-K</span>`;
@@ -302,7 +313,7 @@
       }
       const withNotes = spec.nodes.filter((n) => n.notes).length;
       return `<div class="eyebrow">Notes from the filing</div>
-        <p class="hint"><span class="dot"></span><span>Click any node to read what ${t(ctx.company)} wrote about it in this ${ctx.form === '8-K' ? 'earnings release' : t(ctx.form)}. A green dot marks the ${withNotes} line${withNotes === 1 ? '' : 's'} with their own passage in ${ctx.form === '8-K' ? 'the release' : 'the MD&amp;A'}.</span></p>
+        <p class="hint"><span class="dot"></span><span>Click any node to read what ${t(ctx.company)} wrote about it in this ${ctx.form === '8-K' ? 'earnings release' : ctx.form === '6-K' ? 'results release (6-K)' : t(ctx.form)}. A green dot marks the ${withNotes} line${withNotes === 1 ? '' : 's'} with their own passage in ${ctx.form === '8-K' || ctx.form === '6-K' ? 'the release' : 'the MD&amp;A'}.</span></p>
         <p class="empty">Notes stay on the page: exported PNG, JPG and PDF files show the chart only.</p>`;
     }
     function nodeNotes(n) {
@@ -321,7 +332,7 @@
           `<div class="src">Quoted verbatim from ${t(noteSource(ctx.form))}${
             ctx.docUrl ? ` · <a href="${t(ctx.docUrl)}" target="_blank" rel="noopener">open filing ↗</a>` : ''}</div>`;
       } else {
-        body = `<p class="empty">${ctx.form === '8-K' ? 'The earnings release has no passage about this line.' : `The ${t(ctx.form)} has no separate MD&amp;A passage about this line.`}</p>`;
+        body = `<p class="empty">${ctx.form === '8-K' || ctx.form === '6-K' ? 'The release has no passage about this line.' : `The ${t(ctx.form)} has no separate MD&amp;A passage about this line.`}</p>`;
       }
       const trend = ctx.trend ? trendBlock(ctx.trend(n.id), n) : '';
       const source = sourceBlock(n, spec.cite, ctx.cik);                    // where the figure was taken from
@@ -461,6 +472,7 @@
     const here = live();
     setNav('home');
     const forms = new Set(prefs.get('forms', ['10-Q', '10-K', '8-K']));
+    const formGroup = (f) => (f === '6-K' ? '10-Q' : /^(20|40)-F/.test(f || '') ? '10-K' : f);   // foreign filers' forms
     const ix = await getJSON('index.json');
     const site = await getJSON('site.json').catch(() => ({}));
     const sectors = ix.sector_names || {};
@@ -497,7 +509,7 @@
           <select id="f-sector" aria-label="Sector"><option value="">All sectors</option>${
             Object.entries(sectors).map(([k, v]) => `<option value="${k}">${t(v)}</option>`).join('')}</select>
           <fieldset class="checks" id="f-forms"><legend>Form</legend>${['10-Q', '10-K', '8-K'].map((f) =>
-            `<label><input type="checkbox" value="${f}" ${forms.has(f) ? 'checked' : ''}> ${f}${f === '8-K' ? ' <span class="muted">earnings release</span>' : ''}</label>`).join('')}</fieldset>
+            `<label><input type="checkbox" value="${f}" ${forms.has(f) ? 'checked' : ''}> ${f}${f === '8-K' ? ' <span class="muted">earnings release</span>' : f === '10-Q' ? ' <span class="muted">· 6-K</span>' : f === '10-K' ? ' <span class="muted">· 20-F</span>' : ''}</label>`).join('')}</fieldset>
         </div>
         <div class="tbl-wrap"><table>
           <thead><tr><th>Filed</th><th>Company</th><th>Period</th><th>Form</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Op. margin</th><th>Sector</th></tr></thead>
@@ -530,7 +542,7 @@
     const draw = () => {
       const q = $('#f-text').value.trim().toLowerCase(), sec = $('#f-sector').value;
       const list = ix.companies.filter((c) => (!q || c.name.toLowerCase().includes(q) || (c.ticker || '').toLowerCase().startsWith(q)) &&
-        (!sec || c.sector === sec) && forms.has(c.form));
+        (!sec || c.sector === sec) && forms.has(formGroup(c.form)));
       $('#rows').innerHTML = list.slice(0, limit).map((c) => row(`c-${c.cik}`, [
         `<td>${date(c.filed)}</td>`, companyCell(c), `<td>${t(c.label)}</td>`, `<td class="mono">${t(c.form)}${c.prelim ? ' <span class="tag prelim">prelim</span>' : ''}</td>`,
         `<td class="num">${t(c.rev)}</td>`, `<td class="num ${tone(c.yoy)}">${pct(c.yoy)}</td>`, `<td class="num">${margin(c.om)}</td>`,
@@ -566,6 +578,10 @@
       throw err;
     }
     if (!here()) return;
+    const own = c.currency || 'USD';
+    const inUsd = own !== 'USD' && !!c.usd && prefs.get('ccy', 'own') === 'usd';
+    if (inUsd) c = Object.assign({}, c, { quarters: c.usd.quarters, years: c.usd.years });
+    CUR = inUsd ? '$' : symOf(own);
     const p = c.profile, qs = c.quarters.map(fcfView), ys = (c.years || []).map(fcfView);
     const fy = !!opt.fy && ys.length > 0;                           // a full fiscal year (10-K)
     const cmpId = opt.cmp || null;                                  // a comparison this reader asked for
@@ -600,9 +616,11 @@
         ${qs.length > 1 ? `<a class="pill ${all ? 'on' : ''}" href="#c-${cik}-all">All ${qs.length} quarters</a>` : ''}
         <button class="pill cmp ${cmpId ? 'on' : ''}" type="button" id="cmp-open" hidden aria-expanded="false" aria-controls="cmp-panel">⇄ Compare any two</button>
       </div>
+      ${own !== 'USD' ? ccyBar(own, inUsd, !!c.usd, q) : ''}
       <section class="section cmp-panel" id="cmp-panel" hidden></section>
       <div id="body"></div>`;
     const body = $('#body');
+    app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
     initCompare(c, cik);
     if (cmpId) {
       showComparison(body, c, cmpId, ticker);
@@ -648,14 +666,15 @@
       <div class="prose">
         <h2>Filing</h2>
         <dl class="facts">
-          <dt>Form</dt><dd><span class="mono">${t(q.form)}</span>${q.form === '8-K' ? ' · Item 2.02 earnings release, preliminary until the 10-Q/10-K is filed' : ''}</dd>
+          <dt>Form</dt><dd><span class="mono">${t(q.form)}</span>${q.form === '8-K' ? ' · Item 2.02 earnings release, preliminary until the 10-Q/10-K is filed' : q.form === '6-K' ? ' · quarterly results release of a foreign private issuer (it files no 10-Q)' : /^(20|40)-F/.test(q.form) ? ' · annual report of a foreign private issuer' : ''}</dd>
           <dt>Period</dt><dd>${fy ? `${t(q.label)} · fiscal year ended ${date(q.end)}` : `${t(q.label)} · quarter ended ${date(q.end)} (calendar ${calLabel(q.cal)})`}</dd>
           <dt>Filed</dt><dd>${date(q.filed)}</dd>
           ${q.release_check ? `<dt>Earnings release</dt><dd>${t(releaseCheckText(q.release_check))}</dd>` : ''}
           ${acc ? `<dt>Accession</dt><dd class="mono">${acc}</dd>` : ''}
-          <dt>Documents</dt><dd>${q.doc_url ? `<a href="${t(q.doc_url)}" target="_blank" rel="noopener">${q.form === '8-K' ? 'Press release' : 'Report'} ↗</a> · ` : ''}${
+          <dt>Documents</dt><dd>${q.doc_url ? `<a href="${t(q.doc_url)}" target="_blank" rel="noopener">${q.form === '8-K' || q.form === '6-K' ? 'Press release' : 'Report'} ↗</a> · ` : ''}${
             q.index_url ? `<a href="${t(q.index_url)}" target="_blank" rel="noopener">Filing index ↗</a>` : `<a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${p.cik}&type=10-&dateb=&owner=include&count=40" target="_blank" rel="noopener">EDGAR filings ↗</a>`}</dd>
           <dt>Data</dt><dd>${q.form === '8-K' ? 'This quarter read from the tables in the press release (Exhibit 99.1); earlier quarters from XBRL company facts'
+            : q.form === '6-K' ? 'This quarter read from the tables in the results release (6-K exhibit); full years from the 20-F (XBRL company facts)'
             : fy ? 'Full-year values as reported in the 10-K (XBRL company facts); revenue lines from the filing’s own XBRL instance'
             : 'XBRL company facts; revenue lines from the filing’s own XBRL instance'}</dd>
           ${(q.checks || []).length ? `<dt>Data checks</dt><dd><ul class="checks">${q.checks.map((x) => `<li class="${x.level === 'warn' ? 'warn' : ''}">${
@@ -679,19 +698,19 @@
         b.className = 'btn';
         b.type = 'button';
         b.dataset.reread = p.cik;
-        b.title = 'Owner: the next scan reads this company’s stored figures again from SEC';
+        b.title = 'Owner: a short scan (owner fast lane) reads this company’s stored figures again from SEC';
         b.textContent = '↻ Re-read figures';
         meta.insertBefore(b, meta.querySelector('.tag.star, span:not(.tag)'));
         b.addEventListener('click', (ev) => withProgress(ev.currentTarget, toast, async () => {
           const r = await askReread([+p.cik]);
-          return r.ok ? 'Re-read asked: the next scan reads this company again' : r.msg;
+          return r.ok ? 'Re-read asked (owner fast lane): a short scan starts within a minute, usually done in 5–15 minutes' : r.msg;
         }));
       });
     }
     if (prefs.get('owner', false) && !fy) {               // owner tool (see #owner): only for the verified owner
       ownerVerified().then(async (ok) => {
         const osets = ok ? await ownerSettings() : null;
-        const thread = ok && text.isConnected ? threadSection(q, p, site.repo, osets) : null;
+        const thread = ok && text.isConnected ? threadSection(q, p, site.repo, osets, c) : null;
         if (thread) text.after(thread);
       });
     }
@@ -714,8 +733,17 @@
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
   const whole = (v) => (v == null ? '—' : Math.round(v).toLocaleString('en-US'));
   // ---------- company tabs: Earnings · Cash & quality · Valuation ----------
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions']]
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates'], ['consensus', 'Consensus']]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
+
+  function ccyBar(own, inUsd, hasUsd, q) {
+    const nm = CCY_NAME[own] || own, fxq = q && q.fx;
+    const btn = (k, label, on) => `<button type="button" class="pill${on ? ' on' : ''}" data-ccy="${k}" aria-pressed="${on}">${label}</button>`;
+    const say = inUsd
+      ? `In US dollars, converted from ${t(nm)} (${own})${fxq ? `: ${t(fxq.note)}${fxq.src === 'official' && fxq.text ? ` <span class="muted">— “${t(String(fxq.text).slice(0, 220))}”</span>` : ''}` : ''}. Each comparison period at its own rate, so changes include the currency’s move.`
+      : `Amounts in ${t(nm)} (${own}), as the company reports them.${hasUsd ? ' The same charts in US dollars: at the company’s own convenience rate when its filing gives one, else the period’s average exchange rate.' : ' No exchange rate is available for a dollar version yet.'}`;
+    return `<div class="ccy-bar" role="group" aria-label="Currency">${btn('own', `${symOf(own).trim()} ${own}`, !inUsd)}${hasUsd ? btn('usd', 'US$', inUsd) : ''}<span class="muted">${say}</span></div>`;
+  }
 
   async function analysisPage(cik, which) {
     const here = live();
@@ -729,6 +757,7 @@
     }
     if (!here()) return;
     const p = c.profile, ticker = (p.tickers || [])[0] || '';
+    CUR = symOf(c.currency || 'USD');                       // these views are read from XBRL in the reported currency
     evReset(c);
     app.innerHTML = `<div class="page-head">
         <div class="crumbs"><a href="#home">Latest</a><span>/</span><a href="#c-${cik}">${t(p.name)}</a></div>
@@ -738,10 +767,25 @@
         ${companyTabs(cik, which)}
       </div><div id="body"></div>`;
     const body = $('#body');
+    if (which === 'debt') return debtSection(body, cik, here);
+    if (which === 'consensus') return consensusSection(body, cik, here);
     const D = c.quality;
     if (!D || !((D.q || []).length || (D.fy || []).length)) {
       body.innerHTML = `<p class="muted">The figures for this view have not been read for ${t(p.name)} yet: the scan reads a few dozen companies a run, largest first.</p>`;
       return;
+    }
+    if (c.currency && c.currency !== 'USD') {
+      const note = document.createElement('p');
+      note.className = 'muted ccy-bar';
+      note.textContent = `Amounts in ${CCY_NAME[c.currency] || c.currency} (${c.currency}), as the company reports them.`;
+      body.appendChild(note);
+      if (which === 'value') {
+        const v = document.createElement('p');
+        v.className = 'muted';
+        v.textContent = 'Valuation compares the share price in US dollars with the figures, so it is not drawn for a company that reports in another currency yet. The Earnings tab has the same charts in US dollars.';
+        body.appendChild(v);
+        return;
+      }
     }
     if (which === 'cash') {
       driversSection(body, c);
@@ -751,6 +795,78 @@
     else if (which === 'revisions') revisionsSection(body, c);
     else if (which === 'bs') reformSection(body, c);
     else valuationSection(body, c, ticker, here);
+  }
+
+  // ---------- debt & rates: drawn by the Disclosure Hub's shared view (disclosures/debt-view.js, data from app/debt.py) ----------
+  let debtViewLoad = null;
+  const loadDebtView = () => debtViewLoad || (debtViewLoad = new Promise((ok, bad) => {
+    if (window.DebtView) return ok();
+    const sc = document.createElement('script');
+    sc.src = 'disclosures/debt-view.js';
+    sc.onload = () => ok();
+    sc.onerror = () => { debtViewLoad = null; bad(new Error('debt view did not load')); };
+    document.head.appendChild(sc);
+  }));
+  async function debtSection(body, cik, here) {
+    body.innerHTML = `<div class="section"><p class="muted">Loading debt, rates and credit risk…</p></div>`;
+    let d = null, err = null;
+    try {
+      const [r] = await Promise.all([fetch(`disclosures/data/debt/c/${cik}.json`), loadDebtView()]);
+      if (r.ok) d = await r.json();
+      else if (r.status !== 404) err = 'HTTP ' + r.status;
+    } catch (e) { err = e.message; }
+    if (!here()) return;
+    if (!d) {
+      body.innerHTML = `<div class="section"><p class="muted">${err ? 'The debt data could not load (' + t(err) + ').'
+        : 'The debt figures for this company have not been read yet: the collector reads a few hundred companies every two hours, largest first.'}</p>
+        <p class="muted">Market rates, banks’ deposits and the screener of every company are in the <a href="disclosures/#debt">Disclosure Hub → Debt &amp; rates</a>.</p></div>`;
+      return;
+    }
+    const box = document.createElement('div');
+    box.className = 'section debt-section';
+    body.innerHTML = '';
+    body.appendChild(box);
+    window.DebtView.render(box, d);
+    const more = document.createElement('p');
+    more.className = 'muted';
+    more.innerHTML = `Compare with every company, market rates and banks’ CDs in the <a href="disclosures/#debt">Disclosure Hub → Debt &amp; rates</a>.`;
+    body.appendChild(more);
+  }
+
+  // ---------- consensus: analysts, prediction markets and our model, drawn by the Hub's shared view (disclosures/consensus-view.js, app/consensus.py) ----------
+  let consViewLoad = null;
+  const loadConsView = () => consViewLoad || (consViewLoad = new Promise((ok, bad) => {
+    if (window.ConsensusView) return ok();
+    const sc = document.createElement('script');
+    sc.src = 'disclosures/consensus-view.js';
+    sc.onload = () => ok();
+    sc.onerror = () => { consViewLoad = null; bad(new Error('consensus view did not load')); };
+    document.head.appendChild(sc);
+  }));
+  async function consensusSection(body, cik, here) {
+    body.innerHTML = `<div class="section"><p class="muted">Loading analysts' estimates and prediction markets…</p></div>`;
+    let d = null, err = null;
+    try {
+      const [r] = await Promise.all([fetch(`disclosures/data/consensus/c/${cik}.json`), loadConsView()]);
+      if (r.ok) d = await r.json();
+      else if (r.status !== 404) err = 'HTTP ' + r.status;
+    } catch (e) { err = e.message; }
+    if (!here()) return;
+    if (!d) {
+      body.innerHTML = `<div class="section"><p class="muted">${err ? 'The consensus data could not load (' + t(err) + ').'
+        : 'Analysts\u2019 estimates for this company have not been read yet: the collector reads every company over its first runs, largest first, then refreshes each daily.'}</p>
+        <p class="muted">The earnings calendar, every open prediction market and the track record are in the <a href="disclosures/#consensus">Disclosure Hub → Consensus</a>.</p></div>`;
+      return;
+    }
+    const box = document.createElement('div');
+    box.className = 'section consensus-section';
+    body.innerHTML = '';
+    body.appendChild(box);
+    window.ConsensusView.render(box, d);
+    const more = document.createElement('p');
+    more.className = 'muted';
+    more.innerHTML = `The earnings calendar, every open prediction market and how they did are in the <a href="disclosures/#consensus">Disclosure Hub → Consensus</a>.`;
+    body.appendChild(more);
   }
 
   // ---------- evidence drawer: where a figure comes from ----------
@@ -976,17 +1092,22 @@
     box.className = 'section capital';
     box.setAttribute('aria-labelledby', 'ca-title');
     const name = S.dec(P.name || '');
-    if (!K || !((K.fy || []).length || K.ttm || (K.shares || []).length || K.maturities)) {
+    if (!K || !((K.fy || []).length || (K.q || []).length || K.ttm || (K.shares || []).length || K.maturities)) {
       box.innerHTML = `<div class="section-head"><h2 id="ca-title">Capital allocation</h2></div><p class="muted">Capital allocation is read on the next scans for this company: a few dozen companies a run, largest first.</p>`;
       body.appendChild(box);
       return;
     }
     const financial = P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''));
-    const periods = (K.fy || []).concat(K.ttm ? [K.ttm] : []);
+    const yearly = (K.fy || []).concat(K.ttm ? [K.ttm] : []), quarterly = K.q || [];
+    const periods = yearly.concat(quarterly);
     const st = { end: ((K.fy || []).length ? K.fy[K.fy.length - 1] : K.ttm || {}).end, scene: null };
+    const table = { rows: yearly };                    // the table shows the kind of period picked: years or quarters
     const S0 = D.src || { concepts: [] };
-    const per = (p) => `${p.label}${p.kind === 'ttm' ? ' (trailing twelve months)' : ' (fiscal year)'}`;
-    const prevOf = (p) => (p.kind === 'fy' ? (K.fy || [])[(K.fy || []).indexOf(p) - 1] : null);
+    const per = (p) => `${p.label}${p.kind === 'ttm' ? ' (trailing twelve months)' : p.kind === 'q' ? ' (quarter)' : ' (fiscal year)'}`;
+    const yearAgo = (p) => quarterly.find((x) => Math.abs((new Date(p.end) - new Date(x.end)) / 864e5 - 365) <= 12);
+    const prevOf = (p) => (p.kind === 'fy' ? (K.fy || [])[(K.fy || []).indexOf(p) - 1]     // a quarter: the same quarter a
+      : p.kind === 'q' ? yearAgo(p) || quarterly[quarterly.indexOf(p) - 1] : null);       // year earlier, else the one before
+    const chgTag = (p, prev) => (p.kind === 'q' && prev && !yearAgo(p) ? 'Q/Q' : 'Y/Y');
     const label = (ref) => { const x = S0.concepts[ref[0]]; return x ? S.dec(x[1] || x[0]) : 'XBRL fact'; };
 
     // ---- the evidence for one line
@@ -1049,8 +1170,9 @@
         if (!prev) return null;
         const pv = (prev.items || {})[k];
         if (pv == null) return `none in ${prev.label}`;
-        if (Math.sign(pv) !== Math.sign(v)) return `Y/Y n/m · ${prev.label}: ${capName(k, pv).toLowerCase()} ${money(Math.abs(pv))}`;
-        return `Y/Y ${pct((Math.abs(v) / Math.abs(pv) - 1) * 100)}`;
+        const tag = chgTag(p, prev);
+        if (Math.sign(pv) !== Math.sign(v)) return `${tag} n/m · ${prev.label}: ${capName(k, pv).toLowerCase()} ${money(Math.abs(pv))}`;
+        return `${tag} ${pct((Math.abs(v) / Math.abs(pv) - 1) * 100)}`;
       };
       const node = (id, col, color, nm, v, posn, k, payload) => {
         const lines = [['name', nm], ['val', `${money(Math.abs(v))} · ${capShare(v, total)} of the total`]];
@@ -1141,6 +1263,7 @@
 
     // ---- every period, line by line
     function tableHTML() {
+      const periods = table.rows;
       const rows = CAP_ROWS.filter((k) => periods.some((p) => p.items[k] != null));
       const fcf = (p) => (p.items.capex != null ? p.items.ocf + p.items.capex : null);
       const cell = (p, k) => { const v = p.items[k]; return v == null ? '<span class="muted">—</span>' : evBtn(money(k === 'cash' ? -v : v), capPayload(p, k)); };
@@ -1228,11 +1351,15 @@
     }
 
     function render() {
-      const p = periods.find((x) => x.end === st.end && (x.kind === st.kind || !st.kind)) || periods[periods.length - 1];
+      const p = periods.find((x) => x.end === st.end && (x.kind === st.kind || !st.kind)) || yearly[yearly.length - 1] || periods[periods.length - 1];
+      table.rows = p && p.kind === 'q' ? quarterly : yearly.length ? yearly : quarterly;
       const flags = (p && p.flags) || [];
+      const opt = (x) => `<option value="${t(x.kind + '|' + x.end)}" ${x === p ? 'selected' : ''}>${t(x.label)}</option>`;
       box.innerHTML = `<div class="section-head"><h2 id="ca-title">Capital allocation</h2>
           <span class="muted">Where the cash came from and where it went, the share count, and when the debt falls due · the cash-flow statement, XBRL</span></div>
-        ${periods.length ? `<div class="q-bar"><label class="q-pick">Period <select id="ca-period">${periods.map((x) => `<option value="${t(x.kind + '|' + x.end)}" ${x === p ? 'selected' : ''}>${t(x.label)}</option>`).join('')}</select></label>
+        ${periods.length ? `<div class="q-bar"><label class="q-pick">Period <select id="ca-period">${
+          yearly.length && quarterly.length ? `<optgroup label="Fiscal years">${yearly.map(opt).join('')}</optgroup><optgroup label="Quarters">${quarterly.slice().reverse().map(opt).join('')}</optgroup>`
+            : periods.map(opt).join('')}</select></label>
           <div class="export" role="group" aria-label="Export chart"><span>Export</span><button class="btn" type="button" data-cx="png">PNG</button><button class="btn" type="button" data-cx="jpg">JPG</button><button class="btn" type="button" data-cx="pdf">PDF</button></div></div>
         ${financial ? '<p class="q-warn">For banks, insurers and brokers, the cash-flow statement is dominated by lending, deposits and trading: “Other investing” and “Other financing” carry most of it, and the chart says little about capital allocation.</p>' : ''}
         ${flags.includes('unrec') ? `<p class="q-warn">${money(Math.abs(p.items.unrec || 0))} of the change in cash is not explained by the three section totals: usually discontinued operations, sometimes a tagging error. It is drawn as “Not reconciled”.</p>` : ''}
@@ -1508,7 +1635,7 @@
   // two amounts that would print the same are shown with one more digit ($1.41B → $1.43B, not $1.4B → $1.4B)
   function twoMoney(a, b) {
     if (money(a) !== money(b)) return [money(a), money(b)];
-    const f = (v) => { const x = Math.abs(v), s = v < 0 ? '−' : ''; return x >= 0.95e9 ? `${s}$${(x / 1e9).toFixed(3)}B` : `${s}$${(x / 1e6).toFixed(2)}M`; };
+    const f = (v) => { const x = Math.abs(v), s = v < 0 ? '−' : ''; return x >= 0.95e9 ? `${s}${CUR}${(x / 1e9).toFixed(3)}B` : `${s}${CUR}${(x / 1e6).toFixed(2)}M`; };
     return [f(a), f(b)];
   }
   const filingUrl = (cik, accn) => `https://www.sec.gov/Archives/edgar/data/${cik}/${String(accn).replace(/-/g, '')}/${accn}-index.htm`;
@@ -1648,12 +1775,19 @@
       solveFor: 'growth', lo: -20, hi: 40,
     };
     let A = { ...defaults };
+    let CS = null;                         // consensus (disclosures/data/consensus/c/<cik>.json): loaded after the first draw
     const periodTxt = V.basis === 'ttm' ? `trailing four quarters to ${date(V.end)}` : `fiscal year to ${date(V.end)}`;
     const refsOf = (k) => (R[k] || []).filter(Boolean);
     const rep = (title, val, k, note) => ({ title, value: money(val), period: periodTxt, ref: refsOf(k).length === 1 ? refsOf(k)[0] : null,
       inputs: refsOf(k).length > 1 ? refsOf(k).map((r, i) => ({ title: `${title}, quarter ${i + 1} of 4`, value: '', ref: r })) : undefined,
       kind: refsOf(k).length > 1 ? 'Derived (sum of four quarters)' : 'Reported', note });
-    const model = () => ({ rev0: rev, years: A.years, growth: A.growth / 100, margin: A.margin / 100, tax: A.tax / 100, da: A.da / 100,
+    const consPath = (g, m) => {                // the years analysts cover at their rates, then the reader's
+      const F = consFigures(), n = F.growth != null ? Math.min(A.years, Math.max(1, Math.round(F.span))) : 0;
+      const arr = (c, own) => (c == null || !n ? own : Array.from({ length: A.years }, (_, i) => (i < n ? c : own)));
+      return { growth: arr(F.growth, g), margin: arr(F.margin, m), n, F };
+    };
+    const model = () => ({ rev0: rev, years: A.years, ...(A.cons && CS ? (({ growth, margin }) => ({ growth, margin }))(consPath(A.growth / 100, A.margin / 100))
+      : { growth: A.growth / 100, margin: A.margin / 100 }), tax: A.tax / 100, da: A.da / 100,
       capex: A.capex / 100, wc: A.wc / 100, wacc: A.wacc / 100, g: A.g / 100, terminal: A.terminal, roic: A.roic / 100, lossTax: A.lossTax,
       debt: A.debt, cash: A.cash, claims: A.claims, nonop: A.nonop, shares: A.shares });
     const pct = (v, d) => `${v < 0 ? '−' : ''}${Math.abs(v).toFixed(d == null ? 1 : d)}%`;
@@ -1727,6 +1861,7 @@
             <div class="q-legend"><span><i class="h-up2"></i>≥ 20% above the price</span><span><i class="h-up1"></i>0–20% above</span><span><i class="h-dn1"></i>0–20% below</span><span><i class="h-dn2"></i>more than 20% below</span></div>
           </article>`;
       }
+      const consCard = r.ok ? consensusCard(x, price) : '';
       let sens = '';
       if (r.ok) {
         const ws = [-2, -1, 0, 1, 2].map((d) => +(A.wacc / 100 + d / 100).toFixed(4)), gsn = [-1, -0.5, 0, 0.5, 1].map((d) => +(A.g / 100 + d / 100).toFixed(4));
@@ -1755,7 +1890,8 @@
             <h3>Assumptions <span class="muted">· yours to change</span></h3>
             <div class="v-fields">
               ${field('price', 'Share price', '$', { step: 0.01, tag: px ? 'market' : 'enter' })}${field('shares', 'Diluted shares', 'M', { step: 1, scale: 1e6 })}
-              ${field('growth', 'Revenue growth', '%/yr', { tag: 'assumption' })}${field('margin', 'EBIT margin', '%', { tag: 'assumption' })}
+              ${A.cons && CS ? (() => { const cp = consPath(0, 0); return `<p class="v-consline">Year${cp.n > 1 ? 's 1–' + cp.n : ' 1'}: analysts’ consensus — revenue ${pct(cp.F.growth * 100)} a year${cp.F.margin != null ? `, EBIT margin ${pct(cp.F.margin * 100)}` : ''}. The fields below apply after that.</p>`; })() : ''}
+              ${field('growth', A.cons && CS ? 'Revenue growth, later years' : 'Revenue growth', '%/yr', { tag: 'assumption' })}${field('margin', 'EBIT margin', '%', { tag: 'assumption' })}
               ${field('tax', 'Tax rate', '%', { tag: 'assumption' })}${field('da', 'D&A', '% rev')}${field('capex', 'Capex', '% rev')}
               ${field('wc', 'Working capital', '% of Δrev', { tag: 'assumption' })}${field('wacc', 'WACC', '%', { tag: 'assumption' })}${field('g', 'Terminal growth', '%', { tag: 'assumption' })}
               <label class="v-f"><span>Terminal method</span><span class="v-in"><select data-k="terminal"><option value="roic" ${A.terminal === 'roic' ? 'selected' : ''}>Reinvestment = g ÷ ROIC</option><option value="simple" ${A.terminal === 'simple' ? 'selected' : ''}>Last FCFF × (1 + g)</option></select></span></label>
@@ -1766,11 +1902,88 @@
             <div class="v-actions"><button type="button" class="btn small" id="v-reset">Reset to the reported starting point</button><button type="button" class="btn small" id="v-export">Download scenario (JSON)</button></div>
             <p class="muted q-small">Defaults: growth from the last four quarters against the four before (capped at −20%…40%); margin, D&amp;A and capex as a share of trailing revenue; tax from trailing tax ÷ pretax income (capped at 35%). WACC 9%, terminal growth 2.5%, ROIC 15% and working capital 10% of each revenue increase are placeholders, not estimates.</p>
           </article>
-          <div class="v-out"><article class="q-card"><h3>Model result</h3>${out}</article>${revCard}${sens}</div>
+          <div class="v-out"><article class="q-card"><h3>Model result</h3>${out}</article>${revCard}${consCard}${sens}</div>
         </div>`;
       bind();
     }
+    // ---------- consensus, backed out: what each consensus price needs, and what the analysts' own estimates give ----------
+    function consFigures() {
+      const a = (CS && CS.analysts) || {}, per = (k) => (a.periods || []).find((p) => p.period === k) || {};
+      const y0 = per('0y'), y1 = per('+1y'), sh = A.shares;
+      const pick = [y1, y0].find((p) => p.rev && p.rev.avg > 0 && p.end && p.end > V.end);
+      let growth = null, margin = null, span = null;
+      if (pick) {
+        span = (Date.parse(pick.end) - Date.parse(V.end)) / (365.25 * 864e5);
+        if (span > 0.25) growth = Math.pow(pick.rev.avg / rev, 1 / span) - 1;
+        if (pick.eps && pick.eps.avg != null && sh > 0 && A.tax < 100) margin = pick.eps.avg * sh / (1 - A.tax / 100) / pick.rev.avg;
+      }
+      return { a, pick, growth, margin, span };
+    }
+    function consPrices(price) {
+      const out = [], a = (CS && CS.analysts) || {}, T = a.targets || {}, w = A.wacc / 100;
+      const back = (v, d) => (v > 0 ? v / Math.pow(1 + w, Math.max(0, (Date.parse(d) - Date.now()) / (365.25 * 864e5))) : null);
+      const in12 = new Date(Date.now() + 365.25 * 864e5).toISOString().slice(0, 10);
+      if (price > 0) out.push({ label: 'Today’s price', note: px ? t(px.source) : 'entered', p: price, today: price });
+      if (T.mean > 0) out.push({ label: 'Analysts’ mean target', note: `${T.n || '—'} analysts, 12 months`, p: T.mean, today: back(T.mean, in12), cls: 'an' });
+      if (T.high > 0) out.push({ label: 'Analysts’ highest target', note: '12 months', p: T.high, today: back(T.high, in12), cls: 'an' });
+      if (T.low > 0) out.push({ label: 'Analysts’ lowest target', note: '12 months', p: T.low, today: back(T.low, in12), cls: 'an' });
+      const soon = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+      const pm = (CS.markets || []).filter((m) => !m.closed && m.implied_price && m.implied_price.median > 0 && m.end >= soon).sort((x2, y2) => String(x2.end).localeCompare(String(y2.end)));
+      const m = pm.find((q) => q.kind === 'above') || pm[0];
+      if (m) out.push({ label: 'Prediction market', note: `${m.source === 'kalshi' ? 'Kalshi' : 'Polymarket'} median for ${date(m.end)}`, p: m.implied_price.median, today: back(m.implied_price.median, m.end), cls: 'pm' });
+      const o = (CS.ours || []).find((q) => q.horizon === 'next quarter') || (CS.ours || [])[0];
+      if (o && o.price > 0) out.push({ label: 'Our model', note: `${t(o.horizon)} (${date(o.date)})`, p: o.price, today: back(o.price, o.date), cls: 'ours' });
+      return out;
+    }
+    function consensusCard(x, price) {
+      if (!CS) return CS === false ? '' : `<article class="q-card"><h3>Consensus, backed out</h3><p class="muted">Loading analysts’ estimates and prediction markets…</p></article>`;
+      const F = consFigures(), rows = consPrices(price);
+      if (!rows.length) return '';
+      const BOUNDS = { growth: [-0.3, 0.8], margin: [-0.3, 0.95], wacc: [Math.max(A.g / 100 + 0.005, 0.02), 0.4] };
+      const need = (param, target) => {
+        const [lo, hi] = BOUNDS[param], s = FSA.solve(x, param, target, lo, hi);
+        if (s.status === 'ok') return { v: s.value };
+        if (s.status === 'none' && s.range) {
+          const above = target > s.range[1] + target;       // range is model − target
+          return { txt: param === 'wacc' ? (above ? `below ${pct(lo * 100, 0)}` : `above ${pct(hi * 100, 0)}`) : (above ? `above ${pct(hi * 100, 0)}` : `below ${pct(lo * 100, 0)}`) };
+        }
+        return { txt: s.status === 'multiple' ? 'two answers' : '—' };
+      };
+      const cell = (n, ref, higherIsMore) => {
+        if (n.v == null) return `<td class="num muted">${n.txt}</td>`;
+        const tone = ref == null ? '' : (higherIsMore ? n.v > ref + 0.005 : n.v < ref - 0.005) ? 'neg' : 'pos';
+        return `<td class="num ${tone}">${pct(n.v * 100)}</td>`;
+      };
+      const body = rows.map((rw) => {
+        const g = need('growth', rw.today), m = need('margin', rw.today), w = need('wacc', rw.today);
+        return `<tr><td><span class="v-dot ${rw.cls || ''}"></span>${t(rw.label)}<br><span class="muted q-small">${rw.note}</span></td><td class="num">${usd(rw.p)}${rw.today !== rw.p ? `<br><span class="muted q-small">${usd(rw.today)} today</span>` : ''}</td>
+          ${cell(g, F.growth, true)}${cell(m, F.margin, true)}${cell(w, null)}</tr>`;
+      }).join('');
+      let fwd = '';
+      if (F.growth != null || F.margin != null) {
+        const cp = consPath(A.growth / 100, F.margin != null ? F.margin : A.margin / 100);
+        const xc = { ...x, growth: cp.growth, margin: F.margin != null ? Array(A.years).fill(F.margin) : cp.margin };
+        const rc = FSA.dcf(xc), T = (F.a.targets || {});
+        fwd = `<div class="v-cons"><div><small>Analysts’ revenue growth</small><strong>${F.growth != null ? pct(F.growth * 100) : '—'}</strong><span class="muted">a year, from ${money(rev)} to ${money(F.pick.rev.avg)} by ${date(F.pick.end)} (${F.pick.rev.numberOfAnalysts || '—'} analysts)</span></div>
+            <div><small>EBIT margin in their EPS</small><strong>${F.margin != null ? pct(F.margin * 100) : '—'}</strong><span class="muted">EPS ${usd(F.pick.eps && F.pick.eps.avg)} × ${(A.shares / 1e6).toFixed(0)}M shares ÷ (1 − tax) ÷ revenue; net interest ignored</span></div>
+            <div><small>Model value on their estimates</small><strong>${rc.ok ? usd(rc.perShare) : '—'}</strong><span class="muted">${T.mean > 0 && rc.ok ? `${rc.perShare >= T.mean ? 'above' : 'below'} their mean target ${usd(T.mean)} · ` : ''}year${cp.n > 1 ? 's 1–' + cp.n : ' 1'} at their growth, then yours (${pct(A.growth)}); their margin throughout; your WACC and terminal</span></div></div>
+          <div class="v-actions">${A.cons ? '<button type="button" class="btn small" id="v-nocons">Back to one growth rate for every year</button>' : '<button type="button" class="btn small" id="v-usecons">Use the analysts’ estimates in the model</button>'}</div>`;
+      }
+      return `<article class="q-card"><h3>Consensus, backed out</h3>
+          <p class="muted">What each consensus price needs from the model — one assumption at a time, the others as set: revenue growth or EBIT margin for every one of the ${A.years} forecast years, or the WACC that discounts your cash flows to that price. Prices in the future are discounted back to today at the WACC. Green: needs no more than the analysts’ own estimates; red: needs more.</p>
+          <div class="tbl-wrap"><table class="v-table v-backout"><thead><tr><th>Consensus</th><th class="num">Price</th><th class="num">Growth needed</th><th class="num">Margin needed</th><th class="num">WACC</th></tr></thead><tbody>${body}</tbody></table></div>
+          ${fwd}<p class="muted q-small">Analysts: Yahoo Finance consensus. Prediction markets: Polymarket / Kalshi. Our model: the Rotation forecast. All in the Consensus tab.</p></article>`;
+    }
     function bind() {
+      const uc = $('#v-usecons', box);
+      if (uc) uc.addEventListener('click', () => {
+        const F = consFigures();
+        A.cons = F.growth != null;
+        if (F.margin != null) A.margin = +(F.margin * 100).toFixed(1);
+        render();
+      });
+      const nc = $('#v-nocons', box);
+      if (nc) nc.addEventListener('click', () => { A.cons = false; render(); });
       $$('[data-k]', box).forEach((el) => el.addEventListener('change', () => {
         const k = el.dataset.k;
         A[k] = el.tagName === 'SELECT' ? el.value : (el.value === '' ? null : Number(el.value) * Number(el.dataset.scale || 1));
@@ -1797,6 +2010,8 @@
       });
     }
     render();
+    fetch(`disclosures/data/consensus/c/${P.cik || c.cik}.json`).then((r) => (r.ok ? r.json() : false)).catch(() => false)
+      .then((d) => { if (!here()) return; CS = d || false; if (box.isConnected) render(); });
   }
 
   // ---------- profit and cash: net income vs operating cash flow, accruals, reserve rollforwards ----------
@@ -2056,38 +2271,365 @@
     body.appendChild(box);
   }
 
+  // ---------- avatars: Congress portraits and the owner's pictures (disclosures/data/avatars.json, disclosures/automation/avatars.py);
+  // anyone without one gets initials. Name keys match avatars.py person_key / org_key.
+  let avLoad = null;
+  const avData = () => avLoad || (avLoad = fetch('disclosures/data/avatars.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
+  const AV_SKIP = new Set(['hon', 'honorable', 'dr', 'mr', 'mrs', 'ms', 'rep', 'sen', 'senator', 'representative', 'the', 'jr', 'sr', 'ii', 'iii', 'iv', 'md', 'phd', 'esq', 'cpa']);
+  const avAscii = (x) => String(x || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  function avKey(name) {
+    let s = avAscii(name);
+    if ((s.match(/,/g) || []).length === 1 && !/,\s*(jr|sr|ii|iii|iv)\b/.test(s)) { const [l, f] = s.split(','); s = f + ' ' + l; }
+    const w = s.split(/[^a-z]+/).filter((x) => x && x.length > 1 && !AV_SKIP.has(x));
+    return !w.length ? '' : w.length === 1 ? w[0] : w[0] + ' ' + w[w.length - 1];
+  }
+  const avOrg = (name) => avAscii(name).split(/[^a-z0-9]+/).filter(Boolean).join(' ');
+  function avatar(av, name, cik) {
+    av = av || {};
+    const M = av.managers || {}, byName = (av.manager_names || {})[avOrg(name)];
+    const img = ((cik != null && M[String(+cik)]) || (byName && M[byName]) || (av.people || {})[avKey(name)] || {}).image;
+    const w = String(name || '?').replace(/[^A-Za-z0-9 ]+/g, ' ').trim().split(/\s+/).filter((x) => !/^(inc|llc|lp|ltd|co|corp|the|of|and|mr|mrs|ms|hon|dr)$/i.test(x));
+    const ini = ((w[0] || '?')[0] + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase();
+    let hsh = 0;
+    for (const ch of String(name || '')) hsh = (hsh * 31 + ch.charCodeAt(0)) % 360;
+    const src = img ? (/^https:\/\//.test(img) ? img : 'disclosures/' + img) : '';
+    return `<span class="av" style="--av-h:${hsh}" data-i="${t(ini)}" aria-hidden="true">${src ? `<img class="av-img" src="${t(src)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}</span>`;
+  }
+  document.addEventListener('error', (e) => { if (e.target && e.target.classList && e.target.classList.contains('av-img')) e.target.remove(); }, true);
+
+  // ---------- who bought it: a donut of the 13F managers who bought in the latest quarter on file (by dollars bought), and
+  // how every filer moved (new · added · unchanged · cut · sold out). From holders/<TICKER>.json (stage-public.py).
+  function buyersPie(inst, exits, sym, av) {
+    const per = {};
+    inst.filter((x) => x.status !== 'BASE').forEach((x) => { per[x.period] = (per[x.period] || 0) + 1; });
+    const top = Math.max(0, ...Object.values(per));
+    const P = Object.keys(per).sort().reverse().find((k) => per[k] >= top * 0.5);
+    if (!P) return '';
+    const rows = inst.filter((x) => x.period === P), gone = (exits || []).filter((x) => x.period === P);
+    const px = (x) => (x.shares ? (x.value_usd || 0) / x.shares : 0);
+    const buys = rows.filter((x) => x.status === 'NEW' || x.status === 'INCREASE').map((x) => ({ ...x, usd: Math.max(0, x.delta_shares || 0) * px(x) }))
+      .filter((x) => x.usd > 0).sort((a, b) => b.usd - a.usd);
+    const n = { NEW: 0, INCREASE: 0, UNCHANGED: 0, DECREASE: 0, EXIT: gone.length };
+    rows.forEach((x) => { if (n[x.status] != null) n[x.status]++; });
+    const filers = n.NEW + n.INCREASE + n.UNCHANGED + n.DECREASE + n.EXIT;
+    if (!buys.length || filers < 2) return '';
+    const total = buys.reduce((a, x) => a + x.usd, 0), SL = 6;
+    const slices = buys.slice(0, SL).map((x, i) => ({ label: x.manager, cik: x.cik, usd: x.usd, cls: `s${i + 1}`, isNew: x.status === 'NEW' }));
+    if (buys.length > SL) slices.push({ label: `${buys.length - SL} other buyer${buys.length - SL === 1 ? '' : 's'}`, usd: buys.slice(SL).reduce((a, x) => a + x.usd, 0), cls: 'so', other: true });
+    const R = 70, r0 = 44, C = 80;
+    let a0 = -Math.PI / 2, arcs = '';
+    const pt = (rad, a) => `${(C + rad * Math.cos(a)).toFixed(2)},${(C + rad * Math.sin(a)).toFixed(2)}`;
+    for (const sl of slices) {
+      const f = sl.usd / total, a1 = a0 + f * 2 * Math.PI, big = a1 - a0 > Math.PI ? 1 : 0;
+      const d = f >= 0.9999 ? `M${pt(R, -Math.PI / 2)}A${R},${R} 0 1 1 ${pt(R, Math.PI * 1.4999)}A${R},${R} 0 1 1 ${pt(R, -Math.PI / 2)}M${pt(r0, -Math.PI / 2)}A${r0},${r0} 0 1 0 ${pt(r0, Math.PI * 1.4999)}A${r0},${r0} 0 1 0 ${pt(r0, -Math.PI / 2)}Z`
+        : `M${pt(R, a0)}A${R},${R} 0 ${big} 1 ${pt(R, a1)}L${pt(r0, a1)}A${r0},${r0} 0 ${big} 0 ${pt(r0, a0)}Z`;
+      arcs += `<path class="${sl.cls}" d="${d}" fill-rule="evenodd"><title>${t(sl.label)}: bought ≈ ${money(sl.usd)} (${(f * 100).toFixed(1)}% of all 13F buying)${sl.isNew ? ' · new position' : ''}</title></path>`;
+      a0 = a1;
+    }
+    const svg = `<svg class="pie13-svg" viewBox="0 0 160 160" role="img" aria-label="Share of 13F buying in ${t(sym)}, ${t(P)}">${arcs}
+      <text x="80" y="76" text-anchor="middle" class="pie13-big">${money(total).replace(/\.\d+/, '')}</text><text x="80" y="94" text-anchor="middle" class="pie13-small">bought by ${buys.length}</text></svg>`;
+    const legend = slices.map((sl) => `<li><i class="${sl.cls}"></i>${sl.other ? '<span class="av av-none"></span>' : avatar(av, sl.label, sl.cik)}<span class="pie13-name">${t(sl.label)}${sl.isNew ? ' <span class="badge">new</span>' : ''}</span>
+      <span class="num">${money(sl.usd)}</span><span class="num muted">${(sl.usd / total * 100).toFixed(1)}%</span></li>`).join('');
+    const seg = [['NEW', 'new position', 'bn'], ['INCREASE', 'added', 'ba'], ['UNCHANGED', 'unchanged', 'bu'], ['DECREASE', 'cut', 'bc'], ['EXIT', 'sold out', 'bx']];
+    const bar = seg.filter(([k]) => n[k]).map(([k, l, c]) => `<i class="${c}" style="flex:${n[k]}" title="${n[k]} ${l} (${(n[k] / filers * 100).toFixed(0)}% of ${filers} filers)"></i>`).join('');
+    const bought = n.NEW + n.INCREASE;
+    return `<div class="pie13"><h3>Who bought it (13F, quarter ended ${date(P)})</h3>
+      <p class="muted">Of the ${filers} processed 13F filers with ${t(sym)} in this quarter's report or the one before, ${bought} bought (${(bought / filers * 100).toFixed(0)}%; ${n.NEW} new positions), ${n.DECREASE} cut, ${n.EXIT} sold out and ${n.UNCHANGED} held still. Dollars bought ≈ shares added × the quarter-end price each filer reported; the slices are the largest buyers.</p>
+      <div class="pie13-row">${svg}<ol class="pie13-legend">${legend}</ol></div>
+      <div class="pie13-bar" role="img" aria-label="${seg.filter(([k]) => n[k]).map(([k, l]) => `${n[k]} ${l}`).join(', ')}">${bar}</div>
+      <div class="pie13-key">${seg.map(([k, l, c]) => `<span><i class="${c}"></i>${l} <b>${n[k]}</b></span>`).join('')}</div></div>`;
+  }
+
+  // ---------- 13F buying and selling beyond the donut: the same quarter as "Who bought it", seen four more ways ----------
+  // flows13: per filer what it bought or sold in the latest well-filed quarter (dollars ≈ shares × each filer's own
+  // quarter-end price), and the share bridge prior holdings → new / added / cut / sold out → holdings now.
+  function flows13(inst, exits) {
+    const per = {};
+    inst.filter((x) => x.status !== 'BASE').forEach((x) => { per[x.period] = (per[x.period] || 0) + 1; });
+    const top = Math.max(0, ...Object.values(per));
+    const P = Object.keys(per).sort().reverse().find((k) => per[k] >= top * 0.5);
+    if (!P) return null;
+    const rows = inst.filter((x) => x.period === P && x.status !== 'BASE'), gone = (exits || []).filter((x) => x.period === P);
+    const px = (x) => (x.shares ? (x.value_usd || 0) / x.shares : 0);
+    const buys = rows.filter((x) => (x.status === 'NEW' || x.status === 'INCREASE') && (x.delta_shares || 0) > 0)
+      .map((x) => ({ manager: x.manager, cik: x.cik, status: x.status, sh: x.delta_shares, usd: x.delta_shares * px(x) })).sort((a, b) => b.usd - a.usd);
+    const sells = rows.filter((x) => x.status === 'DECREASE' && (x.delta_shares || 0) < 0)
+      .map((x) => ({ manager: x.manager, cik: x.cik, status: 'DECREASE', sh: -x.delta_shares, usd: -x.delta_shares * px(x) }))
+      .concat(gone.filter((x) => x.prior_shares > 0).map((x) => ({ manager: x.manager, cik: x.cik, status: 'EXIT', sh: x.prior_shares, usd: x.prior_value_usd || 0 })))
+      .sort((a, b) => b.usd - a.usd);
+    const sum = (a, f) => a.reduce((s, x) => s + (f(x) || 0), 0);
+    const nowSh = sum(rows, (x) => x.shares), newSh = sum(buys.filter((x) => x.status === 'NEW'), (x) => x.sh), addSh = sum(buys.filter((x) => x.status === 'INCREASE'), (x) => x.sh);
+    const cutSh = sum(sells.filter((x) => x.status === 'DECREASE'), (x) => x.sh), exitSh = sum(sells.filter((x) => x.status === 'EXIT'), (x) => x.sh);
+    const priceAll = nowSh ? sum(rows, (x) => x.value_usd) / nowSh : 0;
+    return { P, rows, buys, sells, filers: rows.length + gone.length, priceAll,
+      bridge: { prior: nowSh - newSh - addSh + cutSh + exitSh, newSh, addSh, cutSh, exitSh, now: nowSh },
+      bought: sum(buys, (x) => x.usd), sold: sum(sells, (x) => x.usd) };
+  }
+  const SHORT_NAME = (s, n) => { const x = String(s || ''); return x.length > n ? x.slice(0, n - 1) + '…' : x; };
+  const STATUS13 = { NEW: ['bn', 'new position'], INCREASE: ['ba', 'added'], DECREASE: ['bc', 'cut'], EXIT: ['bx', 'sold out'] };
+  const megaSh = (v) => { const a = Math.abs(v); return (a >= 1e9 ? (a / 1e9).toFixed(2) + 'B' : a >= 1e6 ? (a / 1e6).toFixed(1) + 'M' : a >= 1e3 ? (a / 1e3).toFixed(0) + 'K' : Math.round(a).toString()); };
+
+  // 1 · buyers and sellers side by side, on one scale
+  function butterfly13(f, sym, av) {
+    if (!f.buys.length && !f.sells.length) return '';
+    const N = 8, max = Math.max(f.buys[0] ? f.buys[0].usd : 0, f.sells[0] ? f.sells[0].usd : 0) || 1;
+    const side = (list, total, word) => {
+      const rows = list.slice(0, N).map((x) => {
+        const [c, l] = STATUS13[x.status];
+        return `<li title="${t(x.manager)}: ${t(l)}, ${megaSh(x.sh)} shares ≈ ${money(x.usd)}"><span class="bf13-name">${avatar(av, x.manager, x.cik)}<span>${t(SHORT_NAME(x.manager, 34))}</span>${x.status === 'NEW' ? ' <span class="badge">new</span>' : x.status === 'EXIT' ? ' <span class="badge">sold out</span>' : ''}</span>
+          <span class="num">${money(x.usd)}</span><i class="bf13-bar ${c}" style="width:${Math.max(1.5, x.usd / max * 100).toFixed(1)}%"></i></li>`;
+      }).join('');
+      const rest = list.slice(N), more = rest.length ? `<li class="bf13-more muted">+ ${rest.length} more ${word === 'Bought' ? 'buyer' : 'seller'}${rest.length === 1 ? '' : 's'} · ${money(rest.reduce((a, x) => a + x.usd, 0))}</li>` : '';
+      return `<div class="bf13-side"><div class="bf13-h">${word} <b>${money(total)}</b> <span class="muted">· ${list.length} manager${list.length === 1 ? '' : 's'}</span></div><ol>${rows || '<li class="muted">None</li>'}${more}</ol></div>`;
+    };
+    return `<h3>Buyers and sellers (13F, quarter ended ${date(f.P)})</h3>
+      <p class="muted">The largest sellers on the left, the largest buyers on the right, on one scale: dollars ≈ shares added or sold × the quarter-end price each filer reported (sold out: the value it reported a quarter earlier). Net: <b class="${f.bought >= f.sold ? 'pos' : 'neg'}">${f.bought >= f.sold ? '+' : '−'}${money(Math.abs(f.bought - f.sold))}</b>.</p>
+      <div class="bf13">${side(f.sells, f.sold, 'Sold')}${side(f.buys, f.bought, 'Bought')}</div>`;
+  }
+
+  // 2 · the share bridge: holdings a quarter earlier → new / added / cut / sold out → holdings now
+  function bridge13(f, sym) {
+    const b = f.bridge;
+    if (!(b.prior > 0 || b.now > 0)) return '';
+    const steps = [['prior', 'A quarter earlier', b.prior, 'bu'], ['new', 'New positions', b.newSh, 'bn'], ['add', 'Added', b.addSh, 'ba'],
+      ['cut', 'Cut', -b.cutSh, 'bc'], ['exit', 'Sold out', -b.exitSh, 'bx'], ['now', `Quarter ended ${date(f.P).replace(/,? \d{4}$/, '')}`, b.now, 'bu']];
+    let run = 0;
+    const bars = steps.map(([k, l, v, c]) => {
+      if (k === 'prior' || k === 'now') { run = v; return { k, l, v, c, y0: 0, y1: v, total: true }; }
+      const y0 = run; run += v; return { k, l, v, c, y0, y1: run };
+    });
+    const hi = Math.max(...bars.map((x) => Math.max(x.y0, x.y1))), loMove = Math.min(...bars.filter((x) => !x.total).map((x) => Math.min(x.y0, x.y1)), b.prior, b.now);
+    const span = hi - loMove || hi || 1, base = Math.max(0, loMove - span * 1.2);   // a broken axis when the moves are small next to the totals
+    const W = 640, H = 230, top = 26, bot = 40, bw = 64, gap = (W - bars.length * bw) / (bars.length + 1);
+    const Y = (v) => top + (H - top - bot) * (1 - (v - base) / (hi - base || 1));
+    const out = bars.map((x, i) => {
+      const xl = gap + i * (bw + gap), ya = Y(Math.max(x.y0, x.y1)), yb = x.total ? H - bot : Y(Math.min(x.y0, x.y1));
+      const lab = x.total ? megaSh(x.v) : (x.v >= 0 ? '+' : '−') + megaSh(x.v);
+      const tip = `${x.l}: ${x.total ? '' : x.v >= 0 ? '+' : '−'}${whole(Math.abs(x.v))} shares${f.priceAll ? ` (≈ ${money(Math.abs(x.v) * f.priceAll)})` : ''}`;
+      const brk = x.total && base > 0 ? `<path class="br13-break" d="M${xl - 3},${H - bot - 14} l${bw / 4 + 3},-6 l${bw / 4},6 l${bw / 4},-6 l${bw / 4 + 3},6"/>` : '';
+      return `<g><rect class="${x.c}" x="${xl.toFixed(1)}" y="${ya.toFixed(1)}" width="${bw}" height="${Math.max(1.5, yb - ya).toFixed(1)}" rx="3"><title>${t(tip)}</title></rect>${brk}
+        <text class="br13-v" x="${(xl + bw / 2).toFixed(1)}" y="${(ya - 7).toFixed(1)}" text-anchor="middle">${lab}</text>
+        <text class="br13-l" x="${(xl + bw / 2).toFixed(1)}" y="${H - bot + 16}" text-anchor="middle">${t(x.l.split(' ').slice(0, 2).join(' '))}</text>
+        <text class="br13-l" x="${(xl + bw / 2).toFixed(1)}" y="${H - bot + 30}" text-anchor="middle">${t(x.l.split(' ').slice(2).join(' '))}</text></g>`;
+    }).join('');
+    const net = b.now - b.prior;
+    return `<h3>Where the shares went (13F, quarter ended ${date(f.P)})</h3>
+      <p class="muted">Shares of ${t(sym)} held by the ${f.filers} processed filers that reported it this quarter or the one before: a quarter earlier, then what new positions and additions brought and what cuts and exits took away. Net <b class="${net >= 0 ? 'pos' : 'neg'}">${net >= 0 ? '+' : '−'}${megaSh(net)} shares</b>${b.prior ? ` (${pct(net / b.prior * 100, 1)})` : ''}.${base > 0 ? ` The axis starts at ${megaSh(base)} shares (zigzag) so the changes show next to the totals.` : ''}</p>
+      <svg class="br13" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(`Share bridge for ${sym}: ${steps.map((x) => `${x[1]} ${megaSh(x[2])}`).join(', ')}`)}"><line class="br13-axis" x1="0" x2="${W}" y1="${H - bot}" y2="${H - bot}"/>${out}</svg>`;
+  }
+
+  // 3 · a flow (Sankey): sellers → the stock → buyers, band width = dollars
+  function sankey13(f, sym) {
+    if (!f.buys.length && !f.sells.length) return '';
+    const K6 = 6, group = (list, word) => {
+      const g = list.slice(0, K6).map((x) => ({ ...x }));
+      if (list.length > K6) g.push({ manager: `${list.length - K6} other ${word}${list.length - K6 === 1 ? '' : 's'}`, usd: list.slice(K6).reduce((a, x) => a + x.usd, 0), status: 'OTHER' });
+      return g.filter((x) => x.usd > 0);
+    };
+    const L = group(f.sells, 'seller'), R = group(f.buys, 'buyer');
+    const W = 680, gapN = 6, slot = 30, xl = 178, xr = 494, cx0 = 318, cx1 = 354, nw = 9, cy = 12;
+    const K = 260 / Math.max(f.sold, f.bought, 1), cH = Math.max(f.sold, f.bought) * K;   // the stock's node: 260 px for the larger side
+    const cls = (x) => (x.status === 'OTHER' ? 'bu' : STATUS13[x.status][0]);
+    let yL = cy, yR = cy, cL = cy, cR = cy, out = '';
+    const band = (x0, a0, a1, x1, b0, b1, c, tip) => `<path class="sk13-band ${c}" d="M${x0},${a0.toFixed(1)} C${(x0 + x1) / 2},${a0.toFixed(1)} ${(x0 + x1) / 2},${b0.toFixed(1)} ${x1},${b0.toFixed(1)} L${x1},${b1.toFixed(1)} C${(x0 + x1) / 2},${b1.toFixed(1)} ${(x0 + x1) / 2},${a1.toFixed(1)} ${x0},${a1.toFixed(1)} Z"><title>${t(tip)}</title></path>`;
+    // each manager's node is as tall as its dollars, but its slot is at least `slot` px so the two label lines never collide
+    const node = (x, y, h, left) => {
+      const c = cls(x), ly = y + Math.max(h, slot) / 2, tx = left ? xl - 6 : xr + nw + 6, anchor = left ? ' text-anchor="end"' : '';
+      const tail = x.status === 'EXIT' ? ' · sold out' : x.status === 'NEW' ? ' · new' : '';
+      return `<rect class="${c}" x="${left ? xl : xr}" y="${y.toFixed(1)}" width="${nw}" height="${h.toFixed(1)}" rx="2"/>
+        <text class="sk13-l" x="${tx}" y="${(ly - 2).toFixed(1)}"${anchor}>${t(SHORT_NAME(x.manager, 24))}</text>
+        <text class="sk13-v" x="${tx}" y="${(ly + 11).toFixed(1)}"${anchor}>${money(x.usd)}${tail}</text>`;
+    };
+    for (const x of L) {
+      const h = Math.max(1.5, x.usd * K);
+      out += band(xl + nw, yL, yL + h, cx0, cL, cL + h, cls(x), `${x.manager}: sold ≈ ${money(x.usd)}`) + node(x, yL, h, true);
+      yL += Math.max(h, slot) + gapN; cL += h;
+    }
+    for (const x of R) {
+      const h = Math.max(1.5, x.usd * K);
+      out += band(cx1, cR, cR + h, xr, yR, yR + h, cls(x), `${x.manager}: bought ≈ ${money(x.usd)}`) + node(x, yR, h, false);
+      yR += Math.max(h, slot) + gapN; cR += h;
+    }
+    out += `<rect class="sk13-mid" x="${cx0}" y="${cy}" width="${cx1 - cx0}" height="${Math.max(2, cH).toFixed(1)}" rx="3"/>
+      <text class="sk13-sym" x="${(cx0 + cx1) / 2}" y="${(cy + cH + 16).toFixed(1)}" text-anchor="middle">${t(sym)}</text>`;
+    const H = Math.ceil(Math.max(yL, yR, cy + cH + 26) + 6);
+    return `<h3>The quarter’s flow (13F, quarter ended ${date(f.P)})</h3>
+      <p class="muted">Sellers on the left (${money(f.sold)}), buyers on the right (${money(f.bought)}); each band’s width is the dollars. Quarter-end disclosures do not say who traded with whom — the bands only show both sides of the same quarter.</p>
+      <svg class="sk13" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(`13F flow for ${sym}: sold ${money(f.sold)}, bought ${money(f.bought)}`)}">${out}</svg>`;
+  }
+
+  // 4 · quarter by quarter: how many processed managers bought (up) and sold (down) in each quarter on file
+  function quarters13(q, sym) {
+    if (!q || !(q.rows || []).length) return '';
+    const cov = q.coverage || [], best = Math.max(...cov.map((c) => c || 0)) || 1;
+    // a quarter's changes compare each manager with its previous filing: leave out quarters whose previous quarter has few
+    // managers processed (the start of the history on file), where nearly every position would count as a first filing
+    const idx = q.rows.map((r, i) => (r && i > 0 && (cov[i - 1] || 0) >= best * 0.6 ? i : -1)).filter((i) => i >= 0).slice(-8);
+    if (idx.length < 2) return '';
+    const W = 640, H = 230, mid = 108, amp = 82, n = idx.length, bw = Math.min(36, (W - 40) / n - 14), step = (W - 40) / n;
+    const max = Math.max(1, ...idx.map((i) => Math.max(q.rows[i][0], q.rows[i][1])));
+    const ql = (p) => `Q${Math.floor((+p.slice(5, 7) - 1) / 3) + 1} ’${p.slice(2, 4)}`;
+    const out = idx.map((i, k) => {
+      const [b, s, usd, holders, nw, ex] = q.rows[i], x = 20 + k * step + (step - bw) / 2, early = k === n - 1 && (cov[i] || 0) < best * 0.6;
+      const hb = b / max * amp, hs = s / max * amp, net = b - s;
+      const tip = `Quarter ended ${date(q.periods[i])}: ${whole(b)} bought (${whole(nw)} new positions), ${whole(s)} sold (${whole(ex)} sold out) · net ${net >= 0 ? '+' : '−'}${whole(Math.abs(net))} managers · est. net ${money(usd)} · ${whole(holders)} holders among the ${whole(cov[i])} managers processed for that quarter${early ? ' (early filers only)' : ''}`;
+      return `<g class="${early ? 'q13-early' : ''}"><title>${t(tip)}</title>
+        <rect class="ba" x="${x.toFixed(1)}" y="${(mid - hb).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, hb).toFixed(1)}" rx="3"/>
+        <rect class="bc" x="${x.toFixed(1)}" y="${mid}" width="${bw.toFixed(1)}" height="${Math.max(1, hs).toFixed(1)}" rx="3"/>
+        <text class="q13-n ${net >= 0 ? 'pos' : 'neg'}" x="${(x + bw / 2).toFixed(1)}" y="${(mid - hb - 6).toFixed(1)}" text-anchor="middle">${net >= 0 ? '+' : '−'}${whole(Math.abs(net))}</text>
+        <text class="q13-l" x="${(x + bw / 2).toFixed(1)}" y="${H - 22}" text-anchor="middle">${ql(q.periods[i])}</text>
+        <text class="q13-l muted" x="${(x + bw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle">${early ? 'early' : !usd ? '$0' : money(usd).replace(/\.\d([BMK])/, '$1')}</text></g>`;
+    }).join('');
+    return `<h3>Quarter by quarter (13F)</h3>
+      <p class="muted">Each quarter on file: processed managers that bought ${t(sym)} (up) and sold it (down), the net count above, and the estimated net dollars below. Pale: the newest quarter, which only early filers have reported so far. Older quarters fill in as the 13F history is processed, so compare the balance of each quarter rather than the heights.</p>
+      <div class="pie13-key"><span><i class="ba"></i>bought</span><span><i class="bc"></i>sold</span></div>
+      <svg class="q13" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(`Managers buying and selling ${sym} by quarter`)}"><line class="br13-axis" x1="10" x2="${W - 10}" y1="${mid}" y2="${mid}"/>${out}</svg>`;
+  }
+
+  // the five 13F views, one at a time (the choice is remembered)
+  function own13(inst, exits, sym, av, q) {
+    const f = flows13(inst, exits);
+    const views = [['donut', 'Who bought', buyersPie(inst, exits, sym, av)], ['bf', 'Buyers vs sellers', f ? butterfly13(f, sym, av) : ''],
+      ['bridge', 'Share bridge', f ? bridge13(f, sym) : ''], ['flow', 'Flow', f ? sankey13(f, sym) : ''], ['quarters', 'Quarter by quarter', quarters13(q, sym)]].filter((v) => v[2]);
+    if (!views.length) return '';
+    let on = prefs.get('own13', 'donut');
+    if (!views.some((v) => v[0] === on)) on = views[0][0];
+    return `<div class="own13 pie13">${views.length > 1 ? `<div class="seg own13-seg" role="group" aria-label="13F view">${views.map(([k, l]) => `<button type="button" data-own13="${k}" class="${k === on ? 'on' : ''}" aria-pressed="${k === on}">${l}</button>`).join('')}</div>` : ''}
+      ${views.map(([k, , html]) => `<div class="own13-view" data-view13="${k}"${k === on ? '' : ' hidden'}>${html}</div>`).join('')}</div>`;
+  }
+  function bindOwn13(box) {
+    box.querySelectorAll('[data-own13]').forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.own13;
+      prefs.set('own13', k);
+      box.querySelectorAll('[data-own13]').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
+      box.querySelectorAll('[data-view13]').forEach((v) => { v.hidden = v.dataset.view13 !== k; });
+    }));
+  }
+
+  // ---------- smart money (data/smart/t/<TICKER>.json, app/smart.py): today's 13F, ETF, insider and officials' votes in
+  // the stock, each weighted by how often that actor's past buys / sales were right (excess return over SPY, 63 trading days)
+  async function smartBy(sym) {
+    try {
+      const r = await fetch(`disclosures/data/smart/t/${encodeURIComponent(sym.replace(/[^A-Za-z0-9-]/g, '_'))}.json`);
+      if (r.ok) return await r.json();
+    } catch (e) { /* not published yet */ }
+    return null;
+  }
+  function smartBlock(d, sym, av) {
+    if (!d || !d.now || d.now.S == null) return '';
+    const n = d.now, S = n.S, w = Math.min(50, Math.abs(S) / 2), b = n.history_bucket;
+    const G = { f13: '13F manager', etf: 'active ETF', ins: 'insider', gov: 'official' };
+    const sg = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(Math.round(v))}`;
+    const votes = (d.votes || []).slice(0, 6).map((v) => `<li>${avatar(av, v[1], /^f:\d+$/.test(v[0]) ? v[0].slice(2) : null)}<span><b>${t(v[1])}</b> <span class="muted">${G[v[2]] || ''}</span><br>
+        <span class="${v[4] > 0 ? 'pos' : 'neg'}">${v[4] > 0 ? 'bought' : 'sold'}</span> · right ${v[7] != null ? Math.round(v[7] * 100) + '%' : '—'} on ${v[4] > 0 ? 'buys' : 'sales'} (${v[8]} scored) · weight ${v[6] > 0 ? '+' : ''}${Number(v[6]).toFixed(2)}</span></li>`).join('');
+    return `<div class="smart13"><h3>Smart money: ${sg(S)} <span class="muted">of ±100</span></h3>
+      <div class="sm13-line"><span class="sm13-gauge" role="img" aria-label="${t(`Smart score ${sg(S)} of plus or minus 100`)}"><b class="${S >= 0 ? 'up' : 'down'}" style="${S >= 0 ? 'left' : 'right'}:50%;width:${w.toFixed(1)}%"></b></span>
+        <span>${n.n} vote${n.n === 1 ? '' : 's'} · everyone alike ${sg(n.raw)}${Object.entries(n.groups || {}).map(([g, x]) => ` · ${G[g] || g}s ${sg(x.S)}`).join('')}</span></div>
+      ${votes ? `<ul class="sm13-votes">${votes}</ul>` : ''}
+      <p class="muted">Every disclosed trade by 13F managers, active ETFs, insiders and officials is scored by the stock's return less SPY's over the next 63 trading days (a sale is right when the stock lagged); each vote now counts by that actor's record, so a buyer who is usually wrong counts against buying.${b && b[1] ? ` In the backtest, stocks scoring ${t(b[0])} averaged ${b[2] > 0 ? '+' : ''}${(b[2] * 100).toFixed(1)}% against SPY over the next 63 trading days (${b[1].toLocaleString('en-US')} stock-months).` : ''} <a href="disclosures/#smart/${encodeURIComponent(sym)}">Who is voting, and their records →</a></p></div>`;
+  }
+
+  // ---------- ETFs that hold it (data/etf/by/<TICKER>.json, app/etf.py): the largest by dollars, and the creations and
+  // redemptions that passed through to the stock month by month (each ETF's N-PORT flows × the stock's weight in it)
+  async function etfBy(sym) {
+    for (const k of [...new Set([sym, sym.replace(/-/g, '.')])]) {
+      try {
+        const r = await fetch(`disclosures/data/etf/by/${encodeURIComponent(k)}.json`);
+        if (r.ok) return await r.json();
+      } catch (e) { /* not published yet */ }
+    }
+    return null;
+  }
+  function etfBlock(d, sym) {
+    if (!d || !(d.rows || []).length) return '';
+    // value held as reported; for the few portfolios without dollar values (sponsor files), weight × the ETF's assets
+    const val = (r) => (r[3] != null ? r[3] : r[2] && r[4] ? r[2] * r[4] : null);
+    const rows = d.rows.slice(0, 10), max = Math.max(...rows.map((r) => val(r) || 0)) || 1;
+    const list = rows.map((r) => `<li title="${t(`${r[0]} ${r[1] || ''}: ${r[3] == null && val(r) ? '≈ ' : ''}${money(val(r))} of ${sym}, ${((r[2] || 0) * 100).toFixed(2)}% of the ETF${r[4] ? `, ETF assets ${money(r[4])}` : ''}`)}">
+        <span class="etf13-name"><b>${t(r[0])}</b> <span class="muted">${t(SHORT_NAME(r[1] || '', 40))}</span></span>
+        <span class="num">${r[3] == null && val(r) ? '≈ ' : ''}${money(val(r))}</span><span class="num muted">${((r[2] || 0) * 100).toFixed(r[2] >= 0.1 ? 1 : 2)}%</span>
+        <i class="etf13-bar" style="width:${Math.max(1.5, (val(r) || 0) / max * 100).toFixed(1)}%"></i></li>`).join('');
+    let flows = '';
+    const fl = d.flows;
+    if (fl && (fl.months || []).length >= 3) {
+      const net = fl.months.map((m, i) => (fl.in[i] || 0) - (fl.out[i] || 0)), best = Math.max(...(fl.cov || []).map((x) => x || 0)) || 1;
+      // the zero line sits where the months need it: low when money only came in, high when it only went out
+      const up = Math.max(0, ...net), down = Math.max(0, ...net.map((v) => -v)), span = 150, top = 22;
+      const W = 640, H = top + span + 48, mid = top + span * (up / ((up + down) || 1)), n = fl.months.length, step = (W - 40) / n, bw = Math.min(30, step - 10);
+      const mx = (up + down) || 1, amp = span;
+      const mon = (m) => new Date(m + '-15T00:00:00Z').toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+      const bars = fl.months.map((m, i) => {
+        const v = net[i], h = Math.abs(v) / mx * amp, x = 20 + i * step + (step - bw) / 2, part = (fl.cov[i] || 0) < best * 0.6;
+        const tip = `${m}: in ≈ ${money(fl.in[i])} (creations), out ≈ ${money(fl.out[i])} (redemptions), net ${money(v)} · ${fl.etfs[i]} ETFs${part ? ' — partial: not every ETF has reported this month yet' : ''}`;
+        const vl = !Math.round(v / 1e6) ? '0' : `${v >= 0 ? '+' : '−'}${money(Math.abs(v)).replace(/\.\d([BMK])/, '$1')}`;
+        return `<g class="${part ? 'q13-early' : ''}"><title>${t(tip)}</title><rect class="${v >= 0 ? 'etf13-in' : 'etf13-out'}" x="${x.toFixed(1)}" y="${(v >= 0 ? mid - h : mid).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, h).toFixed(1)}" rx="3"/>
+          <text class="q13-n ${v >= 0 ? 'pos' : 'neg'}" x="${(x + bw / 2).toFixed(1)}" y="${(v >= 0 ? mid - h - 5 : mid + h + 13).toFixed(1)}" text-anchor="middle">${vl}</text>
+          <text class="q13-l" x="${(x + bw / 2).toFixed(1)}" y="${H - 22}" text-anchor="middle">${mon(m)}</text>
+          ${i === 0 || m.endsWith('-01') ? `<text class="q13-l muted" x="${(x + bw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle">${m.slice(0, 4)}</text>` : ''}</g>`;
+      }).join('');
+      const tot = net.reduce((a, x) => a + x, 0);
+      flows = `<h3>ETF money into ${t(sym)}, month by month</h3>
+        <p class="muted">An estimate: each ETF’s creations and redemptions (N-PORT, monthly) × ${t(sym)}’s weight in its latest portfolio, summed over the ETFs that hold it (leveraged and inverse funds left out). ${fl.months.length} months: net <b class="${tot >= 0 ? 'pos' : 'neg'}">${money(tot)}</b>. Pale: months not every ETF has reported yet.</p>
+        <svg class="q13" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t(`Estimated ETF flows into ${sym} by month`)}"><line class="br13-axis" x1="10" x2="${W - 10}" y1="${mid}" y2="${mid}"/>${bars}</svg>`;
+    }
+    return `<h3>ETFs that hold it</h3>
+      <p class="muted">${whole(d.etfs)} ETFs hold ${money(d.usd)} of ${t(sym)} in their latest N-PORT portfolios; the largest by dollars, with ${t(sym)}’s weight in each. <a href="disclosures/#etf">All ETFs →</a></p>
+      <ol class="etf13">${list}</ol>${flows}`;
+  }
+
   async function holdersSection(body, ticker, here) {
     const sym = normTicker(ticker);
     if (!sym) return;
     const box = document.createElement('div');
     box.className = 'section holders';
-    box.innerHTML = `<div class="section-head"><h2>Holders</h2><span class="muted">Loading 13F positions and officials’ disclosures…</span></div>`;
+    box.innerHTML = `<div class="section-head"><h2>Holders and filings</h2><span class="muted">Loading 13F positions, filings and officials’ disclosures…</span></div>`;
     body.appendChild(box);
     let h = null;
+    const avP = avData(), etfP = etfBy(sym), smP = smartBy(sym);
     try {
       const r = await fetch(`disclosures/data/holders/${encodeURIComponent(sym)}.json`);
       if (r.ok) h = await r.json();
     } catch (e) { /* the hub has not published yet */ }
+    const av = await avP, etf = await etfP, sm = await smP;
     if (!here() || !box.isConnected) return;
     const inst = (h && h.institutional) || [], off = (h && h.officials) || [], ins = (h && h.insiders) || [];
+    const stakes = (h && h.stakes) || [], f144 = (h && h.form144) || [], shortH = (h && h.short) || [];
+    const ev8 = (h && h.events8k) || [], news = (h && h.news) || [];
     const SHOW = 12;
-    const instRows = (all) => (all ? inst : inst.slice(0, SHOW)).map((x) => `<tr><td><b>${t(x.manager)}</b><br><span class="muted mono">CIK ${t(x.cik)}</span></td>
+    const mega = (v) => (v == null ? '—' : Math.abs(v) >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : whole(v));
+    // short interest: one bar per settlement date (shares short), the latest date in words
+    const shortBlock = () => {
+      if (!shortH.length) return `<p class="muted">FINRA publishes no short position for ${t(sym)} in the dates on file.</p>`;
+      const last = shortH[shortH.length - 1], max = Math.max(...shortH.map((x) => x[1] || 0)) || 1, W = 560, H = 90, bw = W / shortH.length;
+      const bars = shortH.map((x, i) => {
+        const hh = Math.max(1, ((x[1] || 0) / max) * (H - 14));
+        return `<rect x="${(i * bw + 1).toFixed(1)}" y="${(H - hh).toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${hh.toFixed(1)}" class="${i === shortH.length - 1 ? 'si-last' : 'si-bar'}"><title>${t(x[0])}: ${mega(x[1])} shares short${x[2] != null ? ` (${x[2] > 0 ? '+' : ''}${x[2]}%)` : ''}${x[3] != null ? ` · ${x[3]} days to cover` : ''}</title></rect>`;
+      }).join('');
+      return `<p class="holders-flow"><b>${date(last[0])}:</b> ${mega(last[1])} shares short${last[2] != null ? ` (${last[2] > 0 ? '+' : ''}${last[2]}% vs the prior date)` : ''}${
+        last[3] != null ? ` · ${last[3]} days to cover` : ''}${last[4] ? ` · average daily volume ${mega(last[4])}` : ''}</p>
+        <svg class="si-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Shares short in ${t(sym)}, ${t(shortH[0][0])} to ${t(last[0])}">${bars}</svg>
+        <p class="muted">FINRA consolidated short interest, twice a month (${t(shortH[0][0])} – ${t(last[0])}): short positions brokers carry as of each settlement date, published about a week later. Days to cover = short position ÷ average daily volume.</p>`;
+    };
+    const instRows = (all) => (all ? inst : inst.slice(0, SHOW)).map((x) => `<tr><td><div class="av-row">${avatar(av, x.manager, x.cik)}<span><b>${t(x.manager)}</b><br><span class="muted mono">CIK ${t(x.cik)}</span></span></div></td>
         <td>${t(x.period)}<br><span class="muted">filed ${date(x.filed)}</span></td><td class="num">${whole(x.shares)}</td><td class="num">${money(x.value_usd)}</td>
         <td class="num">${x.weight == null ? '—' : (x.weight * 100).toFixed(1) + '%'}</td>
         <td class="num ${x.status === 'INCREASE' || x.status === 'NEW' ? 'pos' : x.status === 'DECREASE' ? 'neg' : ''}">${t(x.status === 'BASE' ? 'first filing' : x.status.toLowerCase())}${
           x.delta_shares ? `<br><span class="muted">${sign(x.delta_shares)}${whole(Math.abs(x.delta_shares))}</span>` : ''}</td>
         <td>${x.source_url ? `<a href="${t(x.source_url)}" target="_blank" rel="noopener">13F ↗</a>` : '—'}</td></tr>`).join('');
-    box.innerHTML = `<div class="section-head"><h2>Holders</h2>
-        <span class="muted">${inst.length} institutional position${inst.length === 1 ? '' : 's'} · ${ins.length} insider trade${ins.length === 1 ? '' : 's'} · ${off.length} record${off.length === 1 ? '' : 's'} by public officials
+    box.innerHTML = `<div class="section-head"><h2>Holders and filings</h2>
+        <span class="muted">${inst.length} institutional position${inst.length === 1 ? '' : 's'} · ${ins.length} insider trade${ins.length === 1 ? '' : 's'} · ${stakes.length} 13D / 13G · ${f144.length} Form 144 · ${off.length} record${off.length === 1 ? '' : 's'} by public officials
         · from <a href="disclosures/">Disclosures</a>${h && h.generated_at ? ` · snapshot ${date(h.generated_at.slice(0, 10))}` : ''}</span></div>
       ${h && (h.flows || h.signal) ? `<p class="holders-flow">${h.flows ? `<b>${t(h.flows.label || 'This quarter')}:</b> ${whole(h.flows.buyers)} managers added, ${whole(h.flows.sellers)} cut${h.flows.new ? ` (${whole(h.flows.new)} new positions)` : ''} · est. net ${h.flows.usd_net >= 0 ? '+' : '−'}${money(Math.abs(h.flows.usd_net))}` : ''}${
         h.signal && h.signal.tags && h.signal.tags.length ? ` · <a href="disclosures/#signals">Signals</a>: ${h.signal.tags.map((x) => `<span class="badge">${t(x.replace(/_/g, ' '))}</span>`).join(' ')}` : ''}</p>` : ''}
+      ${own13(inst, (h && h.exits) || [], sym, av, h && h.q13f)}
+      ${smartBlock(sm, sym, av)}
       <h3>Institutional investors (13F)</h3>
       ${inst.length ? `<div class="tbl-wrap"><table><thead><tr><th>Manager</th><th>Quarter</th><th class="num">Shares</th><th class="num">Value</th>
         <th class="num">Of its portfolio</th><th class="num">Change vs prior quarter</th><th>Source</th></tr></thead><tbody id="inst-rows">${instRows(false)}</tbody></table></div>
         ${inst.length > SHOW ? `<button class="btn" type="button" id="inst-more">Show all ${inst.length} managers</button>` : ''}
         <p class="muted">Quarter-end positions from 13F-HR filings of the managers processed so far (the hub works through SEC’s filer list in batches); not real-time holdings, and not every holder.</p>`
         : `<p class="muted">No processed 13F manager lists ${t(sym)} yet. Managers are processed in batches; prioritise one under Disclosures → Health.</p>`}
+      ${etfBlock(etf, sym)}
       <h3>Insiders (Form 4)</h3>
       ${ins.length ? `<div class="tbl-wrap"><table><thead><tr><th>Insider</th><th>Trade</th><th class="num">Shares</th><th class="num">Price</th><th class="num">Value</th><th>Date</th><th>Source</th></tr></thead><tbody>
         ${ins.slice(0, 12).map((x) => `<tr><td><b>${t(x.insider)}</b><br><span class="muted">${t(x.title || x.role || '')}</span></td>
@@ -2097,16 +2639,51 @@
         </tbody></table></div>
         <p class="muted">Open-market purchases and sales (of $100K or more) by officers, directors and 10% owners, filed with the SEC within two business days of the trade. Grants, option exercises and tax withholding are left out.</p>`
         : `<p class="muted">No open-market insider purchase or larger sale on file for ${t(sym)} in the last four months.</p>`}
+      <h3>Recent 8-Ks</h3>
+      ${ev8.length ? `<div class="tbl-wrap"><table><thead><tr><th>Filed</th><th>What</th><th>Key sentence</th><th>Source</th></tr></thead><tbody>
+        ${ev8.slice(0, 8).map((x) => `<tr><td>${date(x.filed)}${x.accepted && x.accepted.length >= 16 ? `<br><span class="muted">${t(x.accepted.slice(11, 16))} ET</span>` : ''}</td>
+          <td>${t(x.label || '')}<br><span class="muted">Item${(x.items || []).length > 1 ? 's' : ''} ${t((x.items || []).join(', '))}${x.form === '8-K/A' ? ' · amended' : ''}</span></td>
+          <td class="wrap">${x.headline ? `<b>${t(x.headline.slice(0, 140))}</b><br>` : ''}<span class="muted">${t((x.quote || '').slice(0, 200))}${(x.quote || '').length > 200 ? '…' : ''}</span></td>
+          <td>${x.url ? `<a href="${t(x.url)}" target="_blank" rel="noopener">${t(x.form || '8-K')} ↗</a>` : '—'}</td></tr>`).join('')}
+        </tbody></table></div>
+        <p class="muted">Current reports filed with the SEC within four business days of a material event; what each one is about comes from its items and its own words.</p>`
+        : `<p class="muted">No 8-K from ${t(sym)} on file in the last four months.</p>`}
+      ${news.length ? `<h3>News</h3><div class="tbl-wrap"><table><thead><tr><th>Published</th><th>Source</th><th>Headline</th></tr></thead><tbody>
+        ${news.slice(0, 8).map((x) => `<tr><td>${date((x.published || '').slice(0, 10))}</td><td>${t(x.source || '')}</td>
+          <td class="wrap">${x.url ? `<a href="${t(x.url)}" target="_blank" rel="noopener">${t(x.title || '')}</a>` : t(x.title || '')}</td></tr>`).join('')}
+        </tbody></table></div><p class="muted">Headlines as the source published them (press-release wires, FDA, SEC) — open the link for the text.</p>` : ''}
+      <h3>Holders above 5% (Schedules 13D / 13G)</h3>
+      ${stakes.length ? `<div class="tbl-wrap"><table><thead><tr><th>Holder</th><th>Filing</th><th class="num">Stake</th><th class="num">Change</th><th>Filed</th><th>Source</th></tr></thead><tbody>
+        ${stakes.slice(0, 12).map((x) => { const h = x.holder || x.filer || ''; return `<tr><td><b>${t(h)}</b>${
+          x.persons > 1 ? `<br><span class="muted">${x.persons} reporting persons${h.toUpperCase() !== String(x.filer || '').toUpperCase() ? ` · filed by ${t(x.filer)}` : x.person && x.person.toUpperCase() !== h.toUpperCase() ? ` · largest: ${t(x.person)}` : ''}</span>` : ''}</td>
+          <td class="wrap">${t(x.form)} <span class="muted">· ${t(x.label || '')}</span>${x.rule ? `<br><span class="muted">${t(x.rule)}</span>` : ''}${x.purpose ? `<br><span class="muted" title="${t(x.purpose)}">Purpose: ${t(x.purpose.slice(0, 140))}${x.purpose.length > 140 ? '…' : ''}</span>` : ''}</td>
+          <td class="num">${x.percent != null ? x.percent + '%' : '—'}<br><span class="muted">${mega(x.shares)} sh</span></td>
+          <td class="num ${x.change > 0 ? 'pos' : x.change < 0 ? 'neg' : ''}">${x.change != null ? `${x.change > 0 ? '+' : ''}${x.change.toFixed(2)} pts` : '—'}${x.prev_percent != null ? `<br><span class="muted">from ${x.prev_percent}%</span>` : ''}</td>
+          <td>${date(x.filed)}${x.event_date ? `<br><span class="muted">event ${date(x.event_date)}</span>` : ''}</td><td>${x.url ? `<a href="${t(x.url)}" target="_blank" rel="noopener">${t(x.form)} ↗</a>` : '—'}</td></tr>`; }).join('')}
+        </tbody></table></div>
+        <p class="muted">Anyone above 5% of a class of shares files a Schedule 13D (with its purpose, Item 4) — or, if passive, the short-form 13G. The stake is the largest single reporting person’s; the change compares with the same filer’s previous filing on file.</p>`
+        : `<p class="muted">No Schedule 13D or 13G on ${t(sym)} on file yet (filings since the collector started, back about four months).</p>`}
+      <h3>Planned insider sales (Form 144)</h3>
+      ${f144.length ? `<div class="tbl-wrap"><table><thead><tr><th>Seller</th><th class="num">Shares</th><th class="num">Market value</th><th>Approx. sale date</th><th>Acquired by</th><th>Source</th></tr></thead><tbody>
+        ${f144.slice(0, 10).map((x) => `<tr><td><b>${t(x.seller_name || x.seller)}</b><br><span class="muted">${t(x.relationship || '')}</span></td><td class="num">${whole(x.shares)}</td>
+          <td class="num">${x.value != null ? money(x.value) : '—'}</td><td>${date(x.sale_date)}<br><span class="muted">notice filed ${date(x.filed)}</span></td>
+          <td>${t(x.acquired || '—')}${x.plan_date ? `<br><span class="muted">10b5-1 plan adopted ${date(x.plan_date)}</span>` : ''}</td><td>${x.url ? `<a href="${t(x.url)}" target="_blank" rel="noopener">Form 144 ↗</a>` : '—'}</td></tr>`).join('')}
+        </tbody></table></div>
+        <p class="muted">A Form 144 is a notice of an intended sale of restricted or control shares by an officer, director or other affiliate — not a trade. The sale, if made, follows on Form 4.</p>`
+        : `<p class="muted">No Form 144 notice of $25K or more on ${t(sym)} on file.</p>`}
+      <h3>Short interest (FINRA)</h3>
+      ${shortBlock()}
       <h3>Public officials</h3>
       ${off.length ? `<div class="tbl-wrap"><table><thead><tr><th>Person</th><th>Jurisdiction</th><th>Record</th><th>Disclosed amount</th><th>Date</th><th>Source</th></tr></thead><tbody>
-        ${off.map((r, i) => `<tr${i >= 10 ? ' class="off-more" hidden' : ''}><td><b>${t(r.person)}</b>${r.owner ? `<br><span class="muted">${t(r.owner)}</span>` : ''}</td><td>${t(r.jurisdiction)}</td>
-          <td>${t(r.kind === 'transaction' ? (r.transaction_type || 'transaction') : 'asset')}${r.read === 'machine' ? ' <span class="muted" title="Read by machine from the official report; the ticker is the one the filer wrote. Open the page to confirm.">· auto-read</span>' : ''}<br><span class="muted">${t(r.asset)}</span></td>
+        ${off.map((r, i) => `<tr${i >= 10 ? ' class="off-more" hidden' : ''}><td><div class="av-row">${avatar(av, r.person)}<span><b>${t(r.person)}</b>${r.owner ? `<br><span class="muted">${t(r.owner)}</span>` : ''}</span></div></td><td>${t(r.jurisdiction)}</td>
+          <td>${t(r.kind === 'transaction' ? (r.transaction_type || 'transaction') : 'asset')}${r.read === 'machine' ? ' <span class="muted" title="Read by machine from the official report; the ticker is the one the filer wrote. Open the page to confirm.">· auto-read</span>' : r.read === 'electronic' ? ' <span class="muted" title="From the Senate’s electronic report (eFD); the ticker is the one the filer entered.">· eFD</span>' : ''}<br><span class="muted">${t(r.asset)}</span></td>
           <td class="num">${t(amountRange(r))}${r.price_on_date ? `<br><span class="muted">≈ ${whole(r.est_shares_min)}${r.est_shares_max != null ? '–' + whole(r.est_shares_max) : '+'} sh at $${r.price_on_date.toFixed(2)} · est.</span>` : ''}</td>
-          <td>${date(r.date)}</td><td>${r.source_url ? `<a href="${t(r.source_url)}${r.page ? '#page=' + r.page : ''}" target="_blank" rel="noopener">${r.page ? 'Page ' + r.page : 'Document'} ↗</a>` : '—'}</td></tr>`).join('')}
+          <td>${date(r.date)}</td><td>${r.source_url ? `<a href="${t(r.source_url)}${r.page ? '#page=' + r.page : ''}" target="_blank" rel="noopener">${r.page ? 'Page ' + r.page : r.read === 'electronic' ? 'Report' : 'Document'} ↗</a>` : '—'}</td></tr>`).join('')}
         </tbody></table></div>
         ${off.length > 10 ? `<button class="btn" type="button" id="off-more">Show all ${off.length} records</button>` : ''}
-        <p class="muted">Disclosed value ranges from annual statements and transaction reports (US House, New York, California, Canada, imports). Reviewed rows were checked against their source page; “auto-read” rows come straight from US House transaction reports with the ticker the filer wrote. Ranges are not share counts.</p>`
-        : `<p class="muted">No official’s disclosure names ${t(sym)} yet. US House transaction reports are read in batches; other jurisdictions appear once a disclosure is reviewed in Disclosures → PDF / OCR.</p>`}`;
+        <p class="muted">Disclosed value ranges from annual statements and transaction reports (US House, US Senate, New York, California, Canada, imports). Reviewed rows were checked against their source page; “auto-read” rows come straight from US House transaction reports and “eFD” rows from US Senate electronic reports, with the ticker the filer wrote. Ranges are not share counts.</p>`
+        : `<p class="muted">No official’s disclosure names ${t(sym)} yet. US House and Senate transaction reports are read in batches; other jurisdictions appear once a disclosure is reviewed in Disclosures → PDF / OCR.</p>`}`;
+    bindOwn13(box);
     const more = $('#inst-more', box);
     if (more) more.addEventListener('click', () => { $('#inst-rows', box).innerHTML = instRows(true); more.remove(); });
     const offMore = $('#off-more', box);
@@ -2117,7 +2694,7 @@
   // Save buttons), every post with its role and a Copy button, and "Email me this thread"
   const ROLES = { headline: 'Headline and charts', business: 'What the company does', about: 'The company in its own words',
     analysis: 'Analysis', quote: 'From the filing', source: 'Source' };
-  function threadSection(q, p, repo, osets) {
+  function threadSection(q, p, repo, osets, c) {
     const posts = q.x_thread || [];
     if (!posts.length) return null;
     const ticker = (p.tickers || [])[0] || String(p.cik);
@@ -2133,7 +2710,7 @@
         encodeURIComponent(title)}&body=${encodeURIComponent(bodyTxt)}">Email me this thread</a>`;
     }
     const acc = accession(q.index_url);
-    const form = q.form === '8-K' ? 'Earnings release (8-K)' : q.form;
+    const form = q.form === '8-K' ? 'Earnings release (8-K)' : q.form === '6-K' ? 'Results release (6-K)' : q.form;
     const vs = q.compare_y && q.compare_y.vs;
     const charts = [['std', 'Chart 1', `${S.dec(q.label)}: where the revenue went, from costs to profit and operating cash flow`]]
       .concat(vs ? [['y', 'Chart 2', `the same flows compared with ${S.dec(vs)}; a dark strip inside a band is growth`]] : []);
@@ -2148,7 +2725,8 @@
           <button class="btn small" type="button" data-img="${m}">Save PNG</button></div>`).join('')}</dd>
       </dl>
       <div class="thread-actions">${mail}<a class="btn" target="_blank" rel="noopener" href="${t(intent)}">Open post 1 in X</a>
-        <button class="btn" type="button" data-copy-all>Copy all</button></div>
+        <button class="btn" type="button" data-copy-all>Copy all</button>
+        ${c ? '<button class="btn" type="button" id="thread-article" title="This report as an X Article: copy the text, then each chart, and paste them into X’s editor">✦ X Article</button>' : ''}</div>
       ${mail ? `<p class="note-rule" id="thread-mail-note">${direct ? 'Sends the thread with both chart PNGs attached to the address you signed in with, usually within two minutes.'
         : '“Email me” opens GitHub with the request filled in: press Create and the thread arrives with both charts attached. Change this in Owner tools.'}</p>` : ''}
       <ol class="thread">${posts.map((x, i) => `<li>
@@ -2189,6 +2767,8 @@
         b.disabled = false;
       }
     }));
+    const art = $('#thread-article', sec);
+    if (art) art.addEventListener('click', () => articlePanel(articleCompany(c, q), `${S.dec(p.name)} ${S.dec(q.label)}`));
     const btn = $('#thread-mail', sec);
     if (btn) btn.addEventListener('click', () => {
       if (btn.disabled) return;
@@ -2217,6 +2797,204 @@
     return sec;
   }
 
+  // ---------- X Article (owner): a company's report or a day's report as an X Article, copied and pasted by hand ----------
+  // X's article editor (x.com/compose/articles) takes rich text from the clipboard, but a browser can hold only one image
+  // at a time. So: one click copies the title, one the formatted text (headings, bold, lists, links), with an
+  // "[Image n]" line wherever a chart goes; then each chart is copied in turn and pasted over its marker. Nothing is
+  // posted from here: the article is written and published in X's own editor.
+  const artSite = () => `${location.origin}${location.pathname}`;
+  const artLine = (e, q) => {                       // "revenue $94.9B (+6% Y/Y), operating margin 31.2%, net earnings $23.4B"
+    const h = (q && q.headline) || {};
+    return [h.revenue != null ? `revenue ${money(h.revenue)}${h.yoy != null ? ` (${pct(h.yoy)} Y/Y)` : ''}` : '',
+      h.om != null ? `operating margin ${margin(h.om)}` : '', h.ni != null ? `net earnings ${money(h.ni)}` : ''].filter(Boolean).join(', ');
+  };
+  const artForm = (q) => (q.form === '8-K' ? 'earnings release (8-K)' : q.form === '6-K' ? 'results release (6-K)' : q.form);
+  const chartImage = (q, mode) => async () => {
+    await fontsReady();
+    return S.exportScene(S.layout(q, { compare: mode || null, decreases: state.decreases }), 'png');
+  };
+  // one company's quarter: the report the company page shows, in article form
+  function articleCompany(c, q) {
+    const p = c.profile, name = S.dec(p.name), tk = (p.tickers || [])[0] || '', who = tk ? `${name} ($${tk})` : name;
+    const B = [], images = [], url = `${artSite()}#c-${p.cik}-${q.end}`;
+    const img = (cap, make, file) => { images.push({ n: images.length + 1, cap, make, file }); B.push({ k: 'img', n: images.length, cap }); };
+    const h = q.headline || {};
+    B.push({ k: 'p', text: `${who} filed its ${artForm(q)} for ${S.dec(q.label)} (quarter ended ${date(q.end)}) on ${date(q.filed)}: ${artLine(null, q)}.`,
+      bold: `${who} filed its ${artForm(q)}` });
+    if (q.form === '8-K') B.push({ k: 'p', text: 'Preliminary: read from the earnings release; the 10-Q or 10-K replaces it when filed.', em: true });
+    img(`${S.dec(q.label)}: where the revenue went — costs, profit and operating cash flow`, chartImage(q),
+      `${tk || p.cik}-${S.dec(q.label)}-sankey.png`);
+    const intro = c.intro && (typeof c.intro === 'string' ? c.intro : c.intro.text);
+    if (intro) {
+      B.push({ k: 'h2', text: 'What the company does' });
+      const src = c.intro.source === '8-K' || c.intro.source === '6-K' ? 'earnings release' : c.intro.source === '10-Q' ? '10-Q' : '10-K, Item 1';
+      B.push({ k: 'quote', text: S.dec(intro).slice(0, 600) + (S.dec(intro).length > 600 ? '…' : ''), src: `In its own words (${src})` });
+    }
+    if ((q.analysis || []).length) {
+      B.push({ k: 'h2', text: `The quarter` });
+      q.analysis.forEach((x) => B.push({ k: 'p', text: S.dec(x) }));
+    }
+    const cy = q.compare_y, cq = q.compare;
+    if (cy && (cy.bullets || []).length) {
+      B.push({ k: 'h2', text: `What changed vs ${S.dec(cy.vs)}` });
+      B.push({ k: 'ul', items: cy.bullets.map((x) => S.dec(x)) });
+      img(`${S.dec(q.label)} vs ${S.dec(cy.vs)}: the same flows; a dark strip inside a band is growth`, chartImage(q, 'y'),
+        `${tk || p.cik}-${S.dec(q.label)}-vs-${S.dec(cy.vs)}.png`);
+    } else if (cq && (cq.bullets || []).length) {
+      B.push({ k: 'h2', text: `What changed vs ${S.dec(cq.vs)}` });
+      B.push({ k: 'ul', items: cq.bullets.map((x) => S.dec(x)) });
+    }
+    B.push({ k: 'h2', text: 'Sources' });
+    B.push({ k: 'ul', links: [[url, 'Interactive chart on Filing Flows'], [q.index_url, 'The filing on SEC EDGAR'],
+      [q.doc_url, q.form === '8-K' || q.form === '6-K' ? 'The earnings release' : `The ${q.form}`]].filter((x) => x[0]) });
+    B.push({ k: 'p', em: true, text: 'Figures are read automatically from SEC filings by fixed rules and can contain errors: check the filing before relying on them. Not investment advice.' });
+    const title = `${name} ${S.dec(q.label)}: ${h.revenue != null ? money(h.revenue) + ' revenue' : 'the quarter'}${h.yoy != null ? `, ${pct(h.yoy)} Y/Y` : ''} — where it went`;
+    return { title: title.slice(0, 100), blocks: B, images };
+  }
+  // a day's filings: the owner's daily report as one article (the largest companies in full, the rest listed)
+  function articleDay(day, items, full) {
+    const B = [], images = [], long = new Date(day + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const shown = items.slice(0, full), rest = items.slice(full);
+    const tag = (e, c) => { const tk = e.ticker || ((c.profile.tickers || [])[0]) || ''; return tk ? `$${tk}` : S.dec(c.profile.name); };
+    B.push({ k: 'p', text: `${items.length} compan${items.length === 1 ? 'y' : 'ies'} filed quarterly results with the SEC on ${long}. Each chart shows where the revenue went: costs, profit and operating cash flow.` });
+    B.push({ k: 'h2', text: 'In this report' });
+    B.push({ k: 'ul', items: items.slice(0, 30).map(({ e, c, q }) => `${tag(e, c)} ${S.dec(c.profile.name)} · ${S.dec(q.label)}: ${artLine(e, q)}`)
+      .concat(items.length > 30 ? [`and ${items.length - 30} more on Filing Flows`] : []) });
+    shown.forEach(({ e, c, q }) => {
+      const name = S.dec(c.profile.name), url = `${artSite()}#c-${c.profile.cik}-${q.end}`;
+      B.push({ k: 'h2', text: `${name} (${tag(e, c).replace(/^\$/, '')}) · ${S.dec(q.label)}` });
+      B.push({ k: 'p', text: `${artForm(q)} filed ${date(q.filed)}: ${artLine(e, q)}.`, bold: `${artForm(q)} filed ${date(q.filed)}` });
+      images.push({ n: images.length + 1, cap: `${name} ${S.dec(q.label)}: where the revenue went`, make: chartImage(q),
+        file: `${e.ticker || c.profile.cik}-${S.dec(q.label)}-sankey.png` });
+      B.push({ k: 'img', n: images.length, cap: images[images.length - 1].cap });
+      (q.analysis || []).slice(0, 2).forEach((x) => B.push({ k: 'p', text: S.dec(x) }));
+      B.push({ k: 'ul', links: [[url, `${name} on Filing Flows: interactive chart and notes`]] });
+    });
+    if (rest.length) {
+      B.push({ k: 'h2', text: 'Also filed' });
+      B.push({ k: 'ul', items: rest.slice(0, 40).map(({ e, c, q }) => `${tag(e, c)} ${S.dec(c.profile.name)} · ${S.dec(q.label)}: ${artLine(e, q)}`) });
+    }
+    B.push({ k: 'p', em: true, text: `All charts: ${artSite()} — figures read automatically from SEC filings by fixed rules; check the filing before relying on them. Not investment advice.` });
+    const ticks = items.map(({ e, c }) => tag(e, c).replace(/^\$/, '')).slice(0, 4);
+    const title = `Earnings filed ${new Date(day + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: ${ticks.join(', ')}${items.length > 4 ? ` and ${items.length - 4} more` : ''}`;
+    return { title: title.slice(0, 100), blocks: B, images };
+  }
+  // the article as HTML (what the editor keeps) and as plain text (what it gets when it keeps nothing)
+  function articleHTML(a) {
+    const lk = ([u, l]) => `<a href="${t(u)}">${t(l)}</a>`;
+    return a.blocks.map((b) => {
+      if (b.k === 'h2') return `<h2>${t(b.text)}</h2>`;
+      if (b.k === 'img') return `<p><b>[Image ${b.n}]</b> <i>${t(b.cap)}</i></p>`;
+      if (b.k === 'quote') return `<blockquote>${t(b.text)}<br><i>${t(b.src)}</i></blockquote>`;
+      if (b.k === 'ul') return `<ul>${(b.links ? b.links.map((x) => `<li>${lk(x)}</li>`) : b.items.map((x) => `<li>${t(x)}</li>`)).join('')}</ul>`;
+      const body = b.bold && b.text.startsWith(b.bold) ? `<b>${t(b.bold)}</b>${t(b.text.slice(b.bold.length))}` : t(b.text);
+      return `<p>${b.em ? `<i>${body}</i>` : body}</p>`;
+    }).join('\n');
+  }
+  function articleText(a) {
+    return a.blocks.map((b) => {
+      if (b.k === 'h2') return b.text.toUpperCase();
+      if (b.k === 'img') return `[Image ${b.n}] ${b.cap}`;
+      if (b.k === 'quote') return `“${b.text}” — ${b.src}`;
+      if (b.k === 'ul') return (b.links ? b.links.map(([u, l]) => `• ${l}: ${u}`) : b.items.map((x) => `• ${x}`)).join('\n');
+      return b.text;
+    }).join('\n\n');
+  }
+  async function copyRich(html, text) {
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([text], { type: 'text/plain' }) })]);
+        return 'rich';
+      } catch (e) { /* plain text below */ }
+    }
+    const native = window.FilingFlowsApp;
+    if (native && typeof native.copyText === 'function') native.copyText(text);
+    else await navigator.clipboard.writeText(text);
+    return 'plain';
+  }
+  function articlePanel(a, what) {
+    let m = $('#art-modal');
+    if (m) m.remove();
+    m = document.createElement('div');
+    m.id = 'art-modal';
+    m.className = 'art-modal';
+    m.setAttribute('role', 'dialog');
+    m.setAttribute('aria-modal', 'true');
+    m.setAttribute('aria-labelledby', 'art-title');
+    const canImg = !!(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write);
+    m.innerHTML = `<div class="art-box">
+      <div class="art-head"><div><span class="eyebrow">X Article · ${t(what)}</span><h2 id="art-title">${t(a.title)}</h2></div>
+        <button type="button" class="btn small" data-art-close aria-label="Close">✕</button></div>
+      <ol class="art-steps">
+        <li><a class="btn small" href="https://x.com/compose/articles" target="_blank" rel="noopener">Open X Articles ↗</a> and press <b>Write</b> (X Premium).</li>
+        <li><button class="btn small primary" type="button" data-art="title">Copy title</button> paste it into the title field.</li>
+        <li><button class="btn small primary" type="button" data-art="text">Copy article text</button> click into the body and paste: headings, bold, lists and links come along, and
+          <b>[Image 1]</b>${a.images.length > 1 ? ` … <b>[Image ${a.images.length}]</b>` : ''} mark where the charts go.${a.images.length && canImg
+            ? ` <span class="muted">Or try <button class="btn small" type="button" data-art="all">Copy text with images</button>: one paste, if X’s editor keeps pasted images.</span>` : ''}</li>
+        <li>${a.images.length ? `For each image: select its <b>[Image n]</b> line in the editor, press <b>Copy image n</b> below, then paste (Ctrl/⌘ V).${canImg ? '' : ' This browser cannot copy images: use Save and drag the file in.'}` : 'No charts in this article.'}</li>
+      </ol>
+      <div class="art-imgs">${a.images.map((x) => `<figure class="art-img"><div class="art-thumb" data-thumb="${x.n}"><span class="muted">Drawing…</span></div>
+        <figcaption><b>Image ${x.n}</b> · ${t(x.cap)}</figcaption>
+        <div class="row"><button class="btn small primary" type="button" data-art-img="${x.n}" ${canImg ? '' : 'disabled'}>Copy image ${x.n}</button>
+          <button class="btn small" type="button" data-art-save="${x.n}">Save</button></div></figure>`).join('')}</div>
+      <details class="art-prev"><summary>Preview the text</summary><div class="prose">${articleHTML(a)}</div></details>
+      <p class="muted small" id="art-msg" role="status">Nothing is posted from here: you publish in X’s editor. Image 1 also works as the article’s cover.</p>
+    </div>`;
+    document.body.appendChild(m);
+    const say = (x) => { const e = $('#art-msg', m); if (e) e.textContent = x; };
+    const close = () => { m.remove(); document.removeEventListener('keydown', esc); };
+    const esc = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', esc);
+    m.addEventListener('click', (e) => { if (e.target === m) close(); });
+    $('[data-art-close]', m).addEventListener('click', close);
+    const blobs = {};
+    const blobOf = (x) => (blobs[x.n] = blobs[x.n] || x.make());
+    a.images.forEach((x) => blobOf(x).then((b) => {          // thumbnails (the same PNG the copy button puts on the clipboard)
+      const box = $(`[data-thumb="${x.n}"]`, m);
+      if (box) box.innerHTML = `<img alt="Image ${x.n}: ${t(x.cap)}" src="${URL.createObjectURL(b)}">`;
+    }).catch((err) => { const box = $(`[data-thumb="${x.n}"]`, m); if (box) box.textContent = `Could not draw: ${err.message}`; }));
+    $('[data-art="title"]', m).addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget;
+      try { await copyRich(t(a.title), a.title); btn.textContent = 'Title copied'; say('Title copied: paste it into the title field.'); }
+      catch (e) { say(`Could not copy: ${e.message}`); }
+    });
+    const all = $('[data-art="all"]', m);                // the text with the charts inside, in one paste (if X keeps them)
+    if (all) all.addEventListener('click', async () => {
+      const dataUrl = (b) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+      const html = Promise.all(a.images.map((x) => blobOf(x).then(dataUrl))).then((urls) => new Blob([articleHTML(a).replace(
+        /<p><b>\[Image (\d+)\]<\/b> <i>(.*?)<\/i><\/p>/g, (_, n, cap) => `<p><img src="${urls[+n - 1]}" alt="${cap}"></p><p><i>${cap}</i></p>`)], { type: 'text/html' }));
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': html, 'text/plain': new Blob([articleText(a)], { type: 'text/plain' }) })]);
+        all.textContent = 'Copied with images';
+        say('Copied with the charts inside: paste into the body. If X drops the images, paste them one by one below.');
+      } catch (e) { say(`Could not copy with images (${e.message}): use Copy article text and the image buttons.`); }
+    });
+    $('[data-art="text"]', m).addEventListener('click', async (ev) => {
+      const btn = ev.currentTarget;
+      try {
+        const how = await copyRich(articleHTML(a), articleText(a));
+        btn.textContent = 'Text copied';
+        say(how === 'rich' ? 'Text copied with its formatting: paste it into the body, then add the images.'
+          : 'Copied as plain text (this browser does not copy formatting): headings are the lines in capitals.');
+      } catch (e) { say(`Could not copy: ${e.message}`); }
+    });
+    $$('[data-art-img]', m).forEach((b) => b.addEventListener('click', async () => {
+      const x = a.images[+b.dataset.artImg - 1];
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobOf(x) })]);   // the promise keeps Safari's gesture
+        b.textContent = `Image ${x.n} copied`;
+        say(`Image ${x.n} copied: select the [Image ${x.n}] line in the editor and paste.`);
+      } catch (e) { say(`Could not copy the image (${e.message}): use Save and drag the file in.`); }
+    }));
+    $$('[data-art-save]', m).forEach((b) => b.addEventListener('click', async () => {
+      const x = a.images[+b.dataset.artSave - 1];
+      try { const res = await saveBlob(await blobOf(x), x.file.replace(/[^A-Za-z0-9.-]+/g, '-')); say(res === 'saved' ? `Saved ${x.file}` : 'Download unavailable here'); }
+      catch (e) { say(`Could not save: ${e.message}`); }
+    }));
+    $('[data-art="title"]', m).focus();
+  }
+
   // "what changed" bullets vs the previous quarter and vs the year-ago quarter
   function changesHTML(q) {
     return [q.compare, q.compare_y].filter((c) => c && c.bullets && c.bullets.length)
@@ -2229,6 +3007,7 @@
     if (!text) return '';
     const url = intro.url, filed = intro.filed, when = filed ? ` filed ${date(filed)}` : '';
     const where = intro.source === '8-K' ? `earnings release (8-K)${when}, “About” section`
+      : intro.source === '6-K' ? `results release (6-K)${when}, “About” section`
       : intro.source === '10-Q' ? `10-Q${when}, Note 1 to the financial statements (no 10-K on file yet)`
       : `10-K${when}, Item 1. Business`;
     return `<p class="intro">${t(text)}<span class="src">Quoted verbatim from the company’s ${where}${
@@ -2581,6 +3360,8 @@
     if (r.error && tableMissing(r.error)) return { ok: false, msg: OWNER_UPDATE };
     if (r.error && /limit/i.test(r.error.message)) return { ok: false, msg: 'Limit reached: 10 companies a day' };
     if (r.error) return { ok: false, msg: `Could not ask: ${r.error.message}` };
+    if (await ownerVerified().catch(() => false))   // the database marks the owner's requests: a short scan starts now (scan.yml)
+      return { ok: true, msg: 'Asked (owner fast lane): a short scan starts within a minute and repeats until it is built, usually 10–20 minutes' };
     return { ok: true, msg: 'Asked: the next scan reads its filings from SEC' };
   }
   async function missingCompany(cik) {
@@ -3142,7 +3923,7 @@
       <div class="days" role="radiogroup" aria-label="Filing date">${days.map((d) => `<button type="button" class="day${d.iso === pick ? ' on' : ''}"
           role="radio" aria-checked="${d.iso === pick}" data-day="${d.iso}" ${d.all ? '' : 'disabled'}>
           <b>${d.name}</b><span>${d.short}</span><span class="n">${d.all ? `${d.all} filing${d.all === 1 ? '' : 's'}${user ? ` · ${countWords(d)}` : ''}` : 'no filings'}</span></button>`).join('')}</div>
-      <div class="row"><button class="btn primary" type="button" id="day-send"></button><span class="muted small" id="day-msg" role="status"></span></div>
+      <div class="row"><button class="btn primary" type="button" id="day-send"></button>${owner ? '<button class="btn" type="button" id="day-article" title="This day’s report as an X Article: copy the text, then each chart, and paste them into X’s editor">✦ X Article</button>' : ''}<span class="muted small" id="day-msg" role="status"></span></div>
       <p class="muted small">Covers ${what}. Dates are filing dates on SEC EDGAR. ${auto}</p>`;
     const label = () => { const d = days.find((x) => x.iso === pick); $('#day-send', box).textContent = `✉ Email me the report for ${d.i < 2 ? d.name.toLowerCase() : d.long}`; };
     label();
@@ -3151,6 +3932,29 @@
       $$('[data-day]', box).forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); });
       label();
     }));
+    const artBtn = $('#day-article', box);
+    const msgBox = () => $('#day-msg', box);
+    if (artBtn) artBtn.addEventListener('click', async () => {
+      if (artBtn.disabled) return;
+      artBtn.disabled = true;
+      const say = (x) => { if (msgBox()) msgBox().textContent = x; };
+      say(await (async () => {
+      const day = pick, entries = dayEntries(ix, day).filter(scope).sort((x, y) => (y.revenue || 0) - (x.revenue || 0));
+      if (!entries.length) return 'No filing in your report on that day';
+      say(`Reading ${Math.min(60, entries.length)} compan${entries.length === 1 ? 'y' : 'ies'}…`);
+      const items = (await Promise.all(entries.slice(0, 60).map(async (e) => {
+        try {
+          const c = await getJSON(`c/${e.cik}.json`), qs = c.quarters.map(fcfView);
+          const q = qs.find((x) => x.end === e.end && x.form === e.form) || qs.find((x) => x.end === e.end);
+          return q ? { e, c, q } : null;
+        } catch (err) { return null; }
+      }))).filter(Boolean);
+      if (!items.length) return 'The companies of that day could not be read';
+      articlePanel(articleDay(day, items, osets && osets.article_full ? +osets.article_full : 6), `daily report ${day}`);
+      return '';
+      })().catch((e) => `Could not build the article: ${e && e.message}`));
+      artBtn.disabled = false;
+    });
     $('#day-send', box).addEventListener('click', (ev) => {
       const btn = ev.currentTarget, day = pick, msg = $('#day-msg', box);
       if (btn.disabled) return;
@@ -3524,6 +4328,9 @@
     const o = Object.assign({ thread_direct: true, daily_on: true, daily_hour: 8, tz: browserTZ() || 'Asia/Shanghai',
       min_revenue: 1e9, instant_threads: false, daily_scope: 'min_revenue', reader_copy: false }, osets || {});
     const newCols = !!osets && 'daily_scope' in osets;              // supabase/schema.sql run again since these arrived
+    const hasX = !!osets && 'x_post' in osets;                      // the X post options' column (schema.sql run again)
+    const xsite = c ? ((await getJSON('site.json').catch(() => ({}))).x || {}) : {};
+    const xo = xOptions(xsite, hasX ? osets.x_post : null);
     const settingsHTML = !c ? `<p class="muted" style="max-width:68ch">Accounts are not switched on, so these settings come from
         <span class="mono">config/x.json</span> (keys daily_on, daily_hour, tz, min_revenue, instant_threads).</p>`
       : !osets ? `<p class="muted" style="max-width:68ch">${OWNER_UPDATE}: the owner settings table is new.</p>`
@@ -3550,6 +4357,7 @@
           <p class="muted small" id="reader-copy-state">Reader version: ${o.reader_copy ? 'on. You also get the reader e-mails your'
             : 'off. You get only this report, not the reader e-mails your'} <a href="#account">alert settings</a> describe; change it there.</p>
         </fieldset>
+        ${xFieldset(xo, xsite, hasX)}
         <div class="row"><button class="btn primary" type="submit">Save</button><span class="muted" id="owner-msg" role="status"></span></div>
       </form>`;
     if (!here()) return;
@@ -3564,7 +4372,7 @@
       <section class="section"><div class="section-head"><h2>Settings</h2></div>${settingsHTML}</section>
       ${c ? `<section class="section" id="reread"><div class="section-head"><h2>Re-read stored figures</h2>
           <span class="muted">After a fix to how figures are read; otherwise the scan re-reads ${'a few dozen'} companies per run</span></div>
-        <p class="muted" style="max-width:72ch">The next scan (usually within minutes) reads these companies’ stored quarters and years again
+        <p class="muted" style="max-width:72ch">A short scan starts within a minute (owner fast lane; a regular scan that is running wraps up first) and reads these companies’ stored quarters and years again
           from SEC: D&amp;A, share-based compensation, revenue and its lines, and the latest quarter’s company-reported free cash flow.
           Then their charts and e-mails use the new figures.</p>
         <form class="row" id="reread-form"><input id="reread-list" placeholder="Tickers or CIKs, e.g. VST, ORCL, 1692819" style="min-width:min(28em,100%)"
@@ -3590,6 +4398,20 @@
           <button class="btn" type="button" data-engage="engage_ivmove" title="The biggest one-day jump in 30-day implied volatility among companies on the site (CBOE delayed quotes)">✦ Options IV move</button>
           <button class="btn" type="button" data-engage="engage_opt13f" title="The biggest change in disclosed 13F puts or calls on a company on the site">✦ 13F puts & calls</button>
           <button class="btn" type="button" data-engage="engage_rsleaders" title="Companies whose relative-strength rating jumped into the 90s over three months">✦ RS leaders</button>
+          <button class="btn" type="button" data-engage="engage_reddit_hot" title="Reddit's hottest stock right now as a cashtag, against what insiders, 13F managers and officials are doing in it">✦ Reddit's hottest vs the filings</button>
+          <button class="btn" type="button" data-engage="engage_smart_buys" title="The stocks the traders with the best records are net buying now (smart-money score)">✦ Smart-money buying</button>
+          <button class="btn" type="button" data-engage="engage_smart_record" title="An official, insider or 13F manager with a strong, tested record who just traded">✦ Track record</button>
+          <button class="btn" type="button" data-engage="engage_all_agree" title="A stock that every group trading it (13F, ETFs, insiders, officials) net-bought this quarter">✦ All groups agree</button>
+          <button class="btn" type="button" data-engage="engage_qtd_flows" title="The quarter so far: insiders' and officials' biggest net purchases, the early 13F filers' top add">✦ Quarter so far</button>
+          <button class="btn" type="button" data-engage="engage_pt_upside" title="Two Hold-rated stocks, one with several times the analysts' price-target upside">✦ Same rating, different upside</button>
+          <button class="btn" type="button" data-engage="engage_versus" title="“$A or $B — which would you rather have?” for two names people are watching">✦ $A or $B?</button>
+          <button class="btn" type="button" data-engage="engage_drawdown" title="Popular names far below their 52-week highs, “$RKLB $150 → $50”">✦ Off the highs</button>
+          <button class="btn" type="button" data-engage="engage_setup" title="The most-watched stock going into the next session, in bullets">✦ Stock setup</button>
+          <button class="btn" type="button" data-engage="engage_lows52" title="The best-known names at new 52-week lows in the last session">✦ New 52-week lows</button>
+          <button class="btn" type="button" data-engage="engage_highs52" title="The best-known names at new 52-week highs in the last session">✦ New 52-week highs</button>
+          <button class="btn" type="button" data-engage="engage_near_lows" title="Profitable large companies near their 52-week lows">✦ Quality near lows</button>
+          <button class="btn" type="button" data-engage="engage_records" title="New all-time highs (or lows) in the last session">✦ All-time highs / lows</button>
+          <button class="btn" type="button" data-engage="engage_polymarket" title="Polymarket's odds that this week's reporters beat the EPS line">✦ Polymarket earnings odds</button>
         </div>
         <p class="muted small" id="engage-msg" role="status"></p>
         <h3>A fund's 13F</h3>
@@ -3628,6 +4450,7 @@
         daily_hour: +$('#daily-hour').value, tz: browserTZ() || o.tz, min_revenue: Math.round(Math.max(0, +$('#daily-min').value || 0) * 1e9),
         instant_threads: $('#instant-threads').checked, updated_at: new Date().toISOString() };
       if (newCols) patch.daily_scope = $('input[name="owner-scope"]:checked').value === 'all' ? 'all' : 'min_revenue';
+      if (hasX) patch.x_post = xRead();
       const r = await c.from('owner_settings').update(patch).eq('id', true).select().single();
       if (r.error) { $('#owner-msg').textContent = `Could not save: ${r.error.message}`; return; }
       acct.osets = r.data;
@@ -3635,12 +4458,13 @@
       getJSON('index.json').then((ix) => dailyPanel($('#daily'), ix, { title: 'Send a daily report now' })).catch(() => {});
     });
     if (c) getJSON('index.json').then((ix) => dailyPanel($('#daily'), ix, { title: 'Send a daily report now' })).catch(() => {});
+    if ($('#x-post')) xBind(xsite);
     if (c && $('#reread-form')) {
       const msg = (x) => { $('#reread-msg').textContent = x; };
       const ask = async (ciks, words, btn) => withProgress(btn, msg, async () => {
         const r = await askReread(ciks);
         showRereads(c);
-        return r.ok ? `${words}: the next scan reads them again.` : r.msg;
+        return r.ok ? `${words}: a short scan starts within a minute (owner fast lane) and reads them again.` : r.msg;
       });
       $('#reread-form').addEventListener('submit', async (ev) => {
         ev.preventDefault();
@@ -3654,6 +4478,86 @@
       showRereads(c);
     }
   }
+  // ---------- owner tools: the X post options (owner_settings.x_post, read by pipeline/xprefs.py) ----------
+  // Every post that goes to Buffer: the scan's threads, "Post to X", the engagement and movers posts. Until the owner
+  // saves them, config/x.json decides (its values arrive in site.json "x"). Cashtags ($NVDA) are never touched.
+  const X_PARTS = [['kind', 'Post kind', '#earnings, #13F, #8K, #InsiderBuying …'], ['topic', 'Event topic', '8-K events: #MergersAndAcquisitions, #deal …'],
+    ['industry', 'Industry', 'from the SEC industry code: #semiconductors, #banks, #pharma …'], ['general', 'General', 'one from the pool below, taking turns']];
+  const xTag = (w) => { const v = String(w || '').replace(/#/g, '').replace(/[^A-Za-z0-9_]/g, '').slice(0, 40); return v && !/^\d+$/.test(v) ? '#' + v : ''; };
+  const xUniq = (tags) => tags.filter((x, i, a) => x && a.findIndex((y) => y.toLowerCase() === x.toLowerCase()) === i);
+  function xOptions(site, saved) {
+    const d = { links: false, gif: false, hashtags_max: 3, hashtags: ['#stocks', '#investing', '#StockMarket', '#markets', '#investors', '#finance'],
+      headline_tag: '#earnings', tags: { kind: true, topic: true, industry: true, general: true } };
+    const base = Object.assign({}, d, site || {});
+    const x = Object.assign({}, base, saved || {});
+    x.tags = Object.assign({}, d.tags, base.tags || {}, (saved && saved.tags) || {});
+    return x;
+  }
+  function xFieldset(x, site, ok) {
+    const pool = xUniq([...(site.candidates || []), ...(x.hashtags || [])].map(xTag));
+    const on = new Set((x.hashtags || []).map((t) => xTag(t).toLowerCase()));
+    const dis = ok ? '' : 'disabled';
+    const kinds = site.kinds || {};
+    return `<fieldset id="x-post"><legend>X posts</legend>
+      <p class="muted small">Every post that goes to Buffer: the scan’s threads, the Post to X buttons, the engagement and movers posts.
+        Cashtags ($NVDA) always stay.${ok ? '' : ` <b>Run <span class="mono">supabase/schema.sql</span> again</b> (Supabase → SQL Editor) to set
+        these here; until then <span class="mono">config/x.json</span> decides
+        (now: ${x.links ? 'links allowed' : 'no links'}, ${x.gif ? 'GIF allowed' : 'still images only'}, ${+x.hashtags_max} hashtags).`}</p>
+      <div role="radiogroup" aria-label="Links in posts" style="display:grid;gap:6px"><span>Links</span>
+        <label class="long"><input type="radio" name="x-links" value="off" ${x.links ? '' : 'checked'} ${dis}><span>None: text, cashtags, hashtags and the chart images only</span></label>
+        <label class="long"><input type="radio" name="x-links" value="on" ${x.links ? 'checked' : ''} ${dis}><span>Allowed (the filing, the company page)</span></label></div>
+      <p class="muted small">No links takes every web address out of every post, also <span class="mono">sec.gov/…</span> written without https; a reply that
+        was only a link is left out. Readers find the site from your profile link, the pinned post and the name on each chart.</p>
+      <label class="long"><input type="checkbox" id="x-gif" ${x.gif ? 'checked' : ''} ${dis}><span>Animated GIF charts too (the two-year trend posts).
+        Off: still PNG / JPG charts only; a GIF request goes out with the still charts.</span></label>
+      <div class="inline-radios"><span>Hashtags per post</span>
+        <select id="x-max" aria-label="Hashtags per post" ${dis}>${[0, 1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${+x.hashtags_max === n ? 'selected' : ''}>${n === 0 ? 'none' : n}</option>`).join('')}</select>
+        <span class="muted small">in this order:</span></div>
+      <div class="sub-choice" aria-label="Which kinds of tag">${X_PARTS.map(([k, name, ex]) => `<label><input type="checkbox" data-xpart="${k}"
+          ${x.tags[k] !== false ? 'checked' : ''} ${dis}> ${name} <span class="muted small">${t(ex)}</span></label>`).join('')}</div>
+      <label>Earnings headline tag <input id="x-head" class="mono" value="${t(x.headline_tag || '')}" placeholder="none" style="width:10em" ${dis}
+        aria-label="Earnings headline tag"><span class="muted small">first line of earnings posts: “$NVDA NVIDIA Q2 FY27 #earnings”</span></label>
+      <div><span class="muted small">General pool: the ticked tags take turns, one per post</span>
+        <div class="chips x-pool" id="x-pool">${pool.map((tg) => `<label class="x-chip"><input type="checkbox" value="${t(tg)}" ${on.has(tg.toLowerCase()) ? 'checked' : ''} ${dis}> ${t(tg)}</label>`).join('')}</div>
+        <div class="row" style="margin-top:6px"><input id="x-add" class="input mono" placeholder="#another" aria-label="Add a general tag" style="width:12em" ${dis}>
+          <button class="btn" type="button" id="x-add-btn" ${dis}>Add</button></div></div>
+      <p class="small" id="x-example" aria-live="polite"></p>
+      <details class="small"><summary>The other pools</summary>
+        <p class="muted">Post kinds: ${Object.entries(kinds).map(([k, v]) => `<b>${t(k)}</b> ${t(v.join(' '))}`).join(' · ') || '—'}</p>
+        <p class="muted">Industries: ${t((site.industry || []).join(' ')) || '—'}</p></details>
+    </fieldset>`;
+  }
+  function xRead() {
+    const tags = {};
+    $$('[data-xpart]').forEach((b) => { tags[b.dataset.xpart] = b.checked; });
+    return { links: ($('input[name="x-links"]:checked') || {}).value === 'on', gif: $('#x-gif').checked, hashtags_max: +$('#x-max').value,
+      hashtags: $$('#x-pool input:checked').map((b) => b.value), headline_tag: xTag($('#x-head').value), tags };
+  }
+  function xExample(x) {                                   // as pipeline/hashtags.py pick(): kind, topic, industry, one general
+    const one = (own, topic, industry) => xUniq([...(x.tags.kind ? own.slice(0, 1) : []), ...(x.tags.topic && topic ? [topic] : []),
+      ...(x.tags.industry ? [industry] : []), ...(x.tags.general ? x.hashtags.slice(0, 1) : []), ...(x.tags.kind ? own.slice(1) : []),
+      ...(x.tags.general ? x.hashtags.slice(1) : [])]).slice(0, x.hashtags_max).join(' ') || 'no hashtags';
+    return `Example — NVIDIA earnings: <span class="mono">$NVDA … ${t(one(xUniq([x.headline_tag, '#earnings', '#EarningsSeason'].map(xTag)), null, '#semiconductors'))}</span>;
+      a drug maker’s merger 8-K: <span class="mono">$XYZ … ${t(one(['#8K', '#SEC'], '#MergersAndAcquisitions', '#pharma'))}</span>. The general tag changes from post to post.`;
+  }
+  function xBind(site) {
+    const show = () => { const el = $('#x-example'); if (el) el.innerHTML = xExample(xRead()); };
+    $('#x-post').addEventListener('change', show);
+    $('#x-post').addEventListener('input', show);
+    const add = () => {
+      const tg = xTag($('#x-add').value);
+      if (!tg) return;
+      const have = $$('#x-pool input').find((b) => b.value.toLowerCase() === tg.toLowerCase());
+      if (have) have.checked = true;
+      else $('#x-pool').insertAdjacentHTML('beforeend', `<label class="x-chip"><input type="checkbox" value="${t(tg)}" checked> ${t(tg)}</label>`);
+      $('#x-add').value = '';
+      show();
+    };
+    $('#x-add-btn').addEventListener('click', add);
+    $('#x-add').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); add(); } });
+    show();
+  }
+
   // the owner's re-read requests (table reread_requests): tickers or CIKs -> CIKs; cik 0 = every stored company
   async function rereadCiks(text) {
     const words = String(text || '').split(/[\s,;]+/).map((w) => w.trim()).filter(Boolean);
@@ -3682,7 +4586,7 @@
     if (!box || !box.isConnected || r.error || !(r.data || []).length) return;
     const ix = await getJSON('index.json').catch(() => ({ companies: [] }));
     const name = (cik) => (+cik === 0 ? 'Every stored company' : ((ix.companies.find((x) => +x.cik === +cik) || {}).ticker || `CIK ${cik}`));
-    const st = (x) => (x.status === 'done' ? `done ${date(x.done_at)}` : x.status === 'queued' ? 'reading in this scan' : x.status === 'failed' ? `failed: ${t(x.error || '')}` : 'waiting for the next scan');
+    const st = (x) => (x.status === 'done' ? `done ${date(x.done_at)}` : x.status === 'queued' ? 'reading in this scan' : x.status === 'failed' ? `failed: ${t(x.error || '')}` : 'waiting: a short scan starts within a minute');
     box.innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>Company</th><th>Asked</th><th>State</th></tr></thead><tbody>${
       r.data.map((x) => `<tr><td>${+x.cik ? `<a href="#c-${+x.cik}">${t(name(x.cik))}</a>` : t(name(x.cik))}</td><td>${date(x.created_at)}</td><td class="muted">${st(x)}</td></tr>`).join('')}</tbody></table></div>`;
   }
@@ -3698,6 +4602,7 @@
   // ---------- router ----------
   async function route() {
     const here = (view++, live());
+    CUR = '$';
     state.charts = [];
     if (toastEl) { toastEl.remove(); toastEl = null; }
     let h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
@@ -3718,7 +4623,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

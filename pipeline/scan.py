@@ -47,6 +47,30 @@ def latest_filings(max_pages=10):
     return found
 
 
+FOREIGN = ("6-K", "20-F", "40-F")
+
+
+def latest_foreign(ciks, max_pages=3):
+    """New 6-K / 20-F / 40-F filings of the foreign filers already on the site (the feed has every foreign filer's)."""
+    found, seen = [], set()
+    for form in FOREIGN:
+        for page in range(max_pages if form == "6-K" else 1):
+            try:
+                entries = _parse_atom(sec.get(sec.current_feed_url(form, start=page * 100)))
+            except sec.NotFound:
+                break
+            except Exception as e:
+                print(f"  feed {form} page {page} failed: {e}")
+                break
+            for e in entries:
+                if e["form"] == form and e["cik"] in ciks and e["accn"] not in seen:
+                    seen.add(e["accn"])
+                    found.append(e)
+            if len(entries) < 100:
+                break
+    return found
+
+
 def daily_index(day):
     """All 10-Q/10-K filings listed in one day's form index (used for backfill)."""
     try:

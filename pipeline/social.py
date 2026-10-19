@@ -38,14 +38,69 @@ BUFFER_SECRETS = ("BUFFER_API_KEY",)            # mode "buffer": threads go to B
 MAIL_MAX_BYTES = 18_000_000            # Gmail accepts 25 MB; attachments grow by a third when encoded
 DEFAULTS = {"enabled": True, "mode": "email", "scope": "all", "min_revenue": 1e9, "max_per_run": 4, "max_age_days": 3,
             "preliminary": True, "include_link": False, "images": ["standard", "year_ago"], "site_url": "",
-            # general X hashtags: one in the headline in place of the word "results", the others on the last post
-            "headline_tag": "#earnings", "hashtags": ["#stocks", "#investing"]}
+            # "links": false = no web address in any post or reply (Buffer, X, the hand-posting e-mail): text and the
+            # chart images only (no_links below). The charts still carry the site's name, drawn into the image.
+            "links": True,
+            # "media": the image types posts may carry; without "gif" the animated charts go out as still PNGs
+            "media": ["png", "jpg", "gif"],
+            # hashtags: "headline_tag" in the headline in place of the word "results"; "hashtags" is the pool of general
+            # tags that take turns; each post gets at most "hashtags_max", with its industry's tag (pipeline/hashtags.py)
+            "headline_tag": "#earnings", "hashtags": ["#stocks", "#investing"], "hashtags_max": 3}
 LIMIT = 280
 KEEP_UPPER = {"PLC", "LLC", "LP", "AG", "SA", "NV", "SE", "ETF", "REIT", "II", "III", "IV", "USA", "US", "UK", "AI",
               "NA", "SPA", "AB", "ASA", "BV", "HK", "IBM", "AMD", "CSX", "PG&E", "AT&T", "3M"}
 
 
 # ------------------------------------------------------------------ text helpers
+# web addresses: with a scheme or www., or a bare domain with a path ("sec.gov/cgi-bin/..."); a name such as
+# "Amazon.com" alone is a company's name and stays
+URL = re.compile(r"(?:https?://|www\.)[^\s)\]>]+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|io|org|net|gov|app|dev|co|ai)/[^\s)\]>]*", re.I)
+
+
+def no_links(text):
+    """The text without web addresses. A short label that only introduced an address goes with it ("Every holder:
+    <url>", "The 13F: <url>"); the rest of a sentence stays ("... not investment advice. <url>" keeps the sentence)."""
+    out = []
+    for line in text.split("\n"):
+        while True:
+            m = URL.search(line)
+            if not m:
+                break
+            head, tail = line[:m.start()], line[m.end():]
+            cut = max(head.rfind(". "), head.rfind("! "), head.rfind("? "), head.rfind("” "))
+            lead = head[cut + 2:] if cut >= 0 else head
+            if re.fullmatch(r"[^:]{1,48}:\s*", lead):              # the label of the address alone
+                head = head[:len(head) - len(lead)]
+            line = head.rstrip() + ((" " if head.strip() and tail.strip() and not re.match(r"[.,;:!?)]", tail.strip()) else "")
+                                    + tail.lstrip() if tail.strip() else "")
+        line = re.sub(r"\s*\((?:see|via|at|here|link)?\s*\)", "", line, flags=re.I)   # "(see <url>)" leaves nothing
+        line = re.sub(r"[ \t]+([.,;!?])", r"\1", line)
+        line = re.sub(r"[ \t]{2,}", " ", line).rstrip(" \t·|—–-:(")
+        out.append(line)
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
+
+
+def strip_links(posts):
+    """A thread without web addresses (no_links); a reply left with nothing but tags or punctuation is dropped."""
+    out = []
+    for i, p in enumerate(posts):
+        t = no_links(p)
+        if i and not re.sub(r"[#$][\w.]+|[\W_]", "", t):
+            continue
+        out.append(t)
+    return out
+
+
+def links_off(cfg):
+    return cfg.get("links", True) is False
+
+
+def media_ok(cfg, kind):
+    """config/x.json "media": the image types posts may carry (["png", "jpg"] = still charts only, no GIF)."""
+    kind = "jpg" if str(kind).lower() == "jpeg" else str(kind).lower()
+    return kind in [str(m).lower() for m in (cfg.get("media") or ["png", "jpg", "gif"])]
+
+
 def xlen(text):
     """Length as X counts it: URLs are 23, most Latin and punctuation 1, other characters 2."""
     text = re.sub(r"https?://\S+", "x" * 23, text)
@@ -107,12 +162,15 @@ def display_name(name):
 
 
 def money(v, big):
-    a, s = abs(v), "−" if v < 0 else ""
+    from . import fx
+    a, s, y = abs(v), "−" if v < 0 else "", fx.sym()      # the company's currency while its posts are written (fx.use)
+    if a >= 0.95e12:
+        return f"{s}{y}{a / 1e12:.2f}T"
     if big and a >= 5e6:                                # below $0.01B a billions figure would read "$0.00B"
         b = a / 1e9
-        return f"{s}${b:.1f}B" if b >= 0.95 else f"{s}${b:.2f}B"
+        return f"{s}{y}{b:.1f}B" if b >= 0.95 else f"{s}{y}{b:.2f}B"
     m = a / 1e6
-    return f"{s}${m:,.1f}M" if m >= 0.95 else f"{s}${a / 1e3:,.0f}K"
+    return f"{s}{y}{m:,.1f}M" if m >= 0.95 else f"{s}{y}{a / 1e3:,.0f}K"
 
 
 def chg(a, b):
@@ -143,7 +201,7 @@ def filing_quote(q):
     (paragraph, where it is from, the line it is about)."""
     nodes = {n["id"]: n for n in q["nodes"]}
     order = [nodes.get("revenue")] + sorted([n for n in q["nodes"] if n["id"].startswith("L:")], key=lambda n: -n["v"])
-    where = ("earnings release" if q.get("form") == "8-K"
+    where = ("earnings release" if q.get("form") in ("8-K", "6-K")
              else f"{q.get('form')} ({'Item 7' if q.get('form') == '10-K' else 'Item 2'}, MD&A)")
     for n in order:
         for note in (n or {}).get("notes") or []:
@@ -154,8 +212,8 @@ def filing_quote(q):
 
 
 def form_words(q):
-    """'10-Q', '10-K' or 'earnings release (8-K)'."""
-    return "earnings release (8-K)" if q.get("form") == "8-K" else q.get("form", "")
+    """'10-Q', '10-K', 'earnings release (8-K)' or 'results release (6-K)'."""
+    return {"8-K": "earnings release (8-K)", "6-K": "results release (6-K)"}.get(q.get("form"), q.get("form", ""))
 
 
 def filing_line(q, short=False):
@@ -338,13 +396,17 @@ def compose_parts(c, q, cfg):
            + ("Preliminary: read from the earnings release until the 10-Q/10-K." if prelim else "GAAP figures as reported."))
     tail = " " + SOURCE_DISCLAIMER                 # always kept: the source sentence is shortened first
     link = cfg.get("site_url", "").rstrip("/")
-    if cfg.get("include_link") and link:
+    if cfg.get("include_link") and link and not links_off(cfg):
         tail += f" {link}/#c-{p['cik']}"
     parts.append(("source", src + tail if xlen(src + tail) <= room else fit("", src, tail, limit=room)))
 
     # the general hashtags: on the last post, or (when it is full) on the reply with the most room; never in the headline
-    tags = [t for t in hashtags(cfg.get("hashtags", DEFAULTS["hashtags"]))
-            if t.lower() != hashtag(cfg.get("headline_tag", DEFAULTS["headline_tag"])).lower()]
+    # the industry and a general tag from the configured pool (pipeline/hashtags.py); none with hashtags_max 0
+    from . import hashtags as H
+    lead, pool = hashtag(cfg.get("headline_tag", DEFAULTS["headline_tag"])), hashtags(cfg.get("hashtags", DEFAULTS["hashtags"]))
+    tags = [t for t in H.pick("earnings", p, key=f"{tick}:{q.get('end')}:post", lead=lead or None, general=pool,
+                              n=cfg.get("hashtags_max"), parts=cfg.get("hashtag_parts"))
+            if not lead or t.lower() != lead.lower()]
     while tags:
         line = "\n\n" + " ".join(tags)
         fits = [i for i in range(1, len(parts)) if xlen(parts[i][1] + line) <= room]
@@ -369,6 +431,8 @@ def load_cfg(path):
         cfg.update(json.load(open(path)))
     except FileNotFoundError:
         pass
+    from . import xprefs
+    cfg = xprefs.overlay(cfg)                     # the owner's "X posts" options (#owner page) win over the file
     cfg["site_url"] = cfg.get("site_url") or os.environ.get("X_SITE_URL", "")
     return cfg
 
@@ -593,6 +657,9 @@ def build_email(items, cfg, sender, to):
     small = "font:14px/1.5 Helvetica,Arial,sans-serif;color:#555;margin:0 0 6px"
     for e, c, q, posts, images in items:
         posts = [p if isinstance(p, dict) else {"role": "", "text": p} for p in posts]
+        if links_off(cfg):
+            posts = [dict(p, text=no_links(p["text"])) for p in posts]
+            posts = [p for i, p in enumerate(posts) if i == 0 or re.sub(r"[#$][\w.]+|[\W_]", "", p["text"])]
         title = f"{display_name(c['profile']['name'])} ({e.get('ticker') or c['profile'].get('cik')}) · {q.get('label')}"
         page = f"{site}/#c-{e['cik']}-{q['end']}" if site else ""
         caps = chart_captions(q, len(images) > 1)
@@ -783,6 +850,9 @@ def main():
     x = X(keys)
     for e, c, q, posts, images in items:
         key = f"{e['cik']}:{e['end']}"
+        posts = [p["text"] if isinstance(p, dict) else p for p in posts]
+        if links_off(cfg):
+            posts = strip_links(posts)
         try:
             ids = post_thread(x, posts, [png for _, png in images])
             st["posted"][key] = {"t": now(), "ids": ids}

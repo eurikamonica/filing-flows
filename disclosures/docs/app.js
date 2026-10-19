@@ -10,7 +10,7 @@ const uniq=a=>[...new Set(a)];
 const state={tab:'signals',mode:'official',page:0,market:'',group:'',cert:'',filing:'',metric:'assets',date:'',base:'',from:'',to:'',query:'',direction:''};
 let exported=[];
 const data=()=>state.mode==='demo'?(window.DISCLOSURE_DEMO||{modules:{}}):(window.DISCLOSURE_LIVE||{modules:{}});
-const moduleData=()=>data().modules[state.tab==='review'||state.tab==='trades'?'congress':state.tab==='directory'||state.tab==='flows'||state.tab==='signals'||state.tab==='insiders'||state.tab==='rotation'||state.tab==='options'?'holdings':state.tab]||{};
+const moduleData=()=>data().modules[state.tab==='review'||state.tab==='trades'?'congress':state.tab==='directory'||state.tab==='flows'||state.tab==='signals'||state.tab==='insiders'||state.tab==='events'||state.tab==='news'||state.tab==='stakes'||state.tab==='form144'||state.tab==='shorts'||state.tab==='rotation'||state.tab==='options'?'holdings':state.tab]||{};
 function options(items,value){return items.map(x=>{const [v,l]=Array.isArray(x)?x:[x,x];return `<option value="${esc(v)}" ${String(v)===String(value)?'selected':''}>${esc(l)}</option>`}).join('')}
 function choose(current,values){return values.includes(String(current))?String(current):values[0]||''}
 function field(id,label,items,value,wide=false){return `<div class="field ${wide?'wide':''}"><label for="${id}">${label}</label><select id="${id}">${options(items,value)}</select></div>`}
@@ -143,15 +143,18 @@ function status(){return health()}
 function render(){
  baseRender();exported=[];
  tipData.length=0;
- $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,rotation:rotationView,options:optionsView}[state.tab])();
+ $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView}[state.tab])();
  bind('market','market');bind('group','group');bind('from','from');bind('to','to');bind('asof','date');bind('cert','cert');bind('metric','metric');bind('base','base');bind('filing','filing');bind('direction','direction');
  if($('query')){$('query').onchange=e=>{state.query=e.target.value;state.page=0;render()};$('query').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  actions();
  bindExtensions();
  bindDashboard();
  bindMarket();
+ bindOwnership();
+ bindNews();
  bindRotation();
  bindOptions();
+ bindDebt();bindConsensus();bindEtf();bindSmart();bindAllflows();
 }
 function csvCell(v){let s=typeof v==='object'&&v!==null?JSON.stringify(v):String(v??'');if(/^[=+@\t\r]/.test(s)||(/^[-]/.test(s)&&!/^[-]\d+(\.\d+)?$/.test(s)))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
 function downloadCSV(){if(!exported.length)return;const keys=uniq(exported.flatMap(Object.keys));const csv='\ufeff'+[keys.map(csvCell).join(','),...exported.map(r=>keys.map(k=>csvCell(r[k])).join(','))].join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`disclosure-${state.tab}-${state.mode}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
@@ -160,7 +163,7 @@ const TABS=[...document.querySelectorAll('nav button[data-tab]')].map(b=>b.datas
 function syncPills(){document.querySelectorAll('nav button[data-tab]').forEach(x=>{const on=x.dataset.tab===state.tab;x.classList.toggle('active',on);x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))})}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.page=0;state.date='';syncPills();try{history.replaceState(null,'','#'+state.tab)}catch(e){}render()});
 /* deep links: disclosures/#signals, #flows, #trades, #holdings … */
-function fromHash(){const h=location.hash.slice(1);if(TABS.includes(h)&&h!==state.tab){state.tab=h;state.page=0;syncPills();return true}return false}
+function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
 addEventListener('hashchange',()=>{if(fromHash())render()});
 fromHash();syncPills();
 render();

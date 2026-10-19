@@ -51,7 +51,7 @@ FAKE_SUPABASE = """
   const GOOD_UNSUB = '11111111-2222-4333-8444-555555555555';
   const db = { subscriptions: [], send_requests: [], chart_requests: [], company_requests: [], reread_requests: [],
     owner_settings: [{ id: true, thread_direct: true, daily_on: true, daily_hour: 8, tz: 'Asia/Shanghai', min_revenue: 1e9, instant_threads: false,
-      daily_scope: 'min_revenue', reader_copy: false }] }, log = [];
+      daily_scope: 'min_revenue', reader_copy: false, x_post: {} }] }, log = [];
   let session = null;
   try { session = JSON.parse(sessionStorage.getItem('fake-session') || 'null'); } catch (e) {}
   window.__ff = { db, log, native: [], owners: [] };
@@ -236,9 +236,64 @@ def _comparison_result(site):
     return q
 
 
+HOLDERS_AAPL = {
+    "ticker": "AAPL", "generated_at": "2026-10-18T20:00:00Z", "officials": [],
+    "institutional": [{"manager": m, "cik": 1000 + i, "period": "2026-06-30", "filed": "2026-08-14", "shares": sh, "value_usd": sh * 205.0,
+                       "weight": 0.02, "status": st, "delta_shares": d}
+                      for i, (m, sh, st, d) in enumerate([("Vanguard Group Inc", 1_300_000_000, "INCREASE", 20_000_000),
+                                                          ("BlackRock Inc.", 1_000_000_000, "DECREASE", -15_000_000),
+                                                          ("Renaissance Technologies LLC", 8_000_000, "NEW", 8_000_000),
+                                                          ("State Street Corp", 600_000_000, "UNCHANGED", 0),
+                                                          ("A Very Long Investment Management Company Name LLC", 40_000_000, "INCREASE", 2_000_000)])],
+    "exits": [{"manager": "Tiger Global Management", "cik": 2000, "period": "2026-06-30", "prior_shares": 6_000_000, "prior_value_usd": 1.0e9}],
+    "q13f": {"periods": ["2025-09-30", "2025-12-31", "2026-03-31", "2026-06-30", "2026-09-30"], "coverage": [1400, 1550, 1700, 1800, 200],
+             "fields": ["buyers", "sellers", "usd_net", "holders", "new", "exits"],
+             "rows": [[500, 420, 2e9, 2000, 40, 20], None, [380, 510, -3e9, 2100, 22, 41], [460, 400, 0, 2150, 30, 25], [50, 30, 4e8, 260, 5, 2]]}}
+ETF_BY_AAPL = {"ticker": "AAPL", "etfs": 412, "usd": 4.2e11, "rows": [["VTI", "Vanguard Total Stock Market ETF", 0.061, 1.2e11, 1.9e12],
+                                                                      ["QQQ", "Invesco QQQ Trust, Series 1", 0.087, 3.0e10, 3.4e11]],
+               "flows": {"months": ["2026-04", "2026-05", "2026-06", "2026-07"], "in": [5e9, 2e9, 0, 3e9], "out": [1e9, 4e9, 0, 1e9],
+                         "cov": [1.0, 1.0, 1.0, 0.3], "etfs": [180, 180, 180, 50]}}
+
+
+def check_holders(b, base, fails, shot):
+    """Company page → Holders: the five 13F views and the ETF block render from the hub's files, labels stay inside their
+    charts, and the page has no horizontal scroll at phone width."""
+    import json
+    for width in (1280, 390):
+        ctx = b.new_context(viewport={"width": width, "height": 1000})
+        ctx.route("**/disclosures/data/holders/AAPL.json", lambda r: r.fulfill(json=HOLDERS_AAPL))
+        ctx.route("**/disclosures/data/etf/by/AAPL.json", lambda r: r.fulfill(json=ETF_BY_AAPL))
+        ctx.route("**/disclosures/data/avatars.json", lambda r: r.fulfill(json={}))
+        pg = ctx.new_page()
+        errs = []
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        pg.goto(base + "#c-320193")
+        pg.wait_for_selector(".own13 [data-own13]", timeout=15000)
+        views = pg.eval_on_selector_all("[data-own13]", "els => els.map((e) => e.dataset.own13)")
+        if views != ["donut", "bf", "bridge", "flow", "quarters"]:
+            fails.append(f"holders ({width}px): 13F views {views}")
+        for v in views:
+            pg.click(f'[data-own13="{v}"]')
+            out = pg.evaluate("""(v) => {
+              const box = document.querySelector(`[data-view13="${v}"]`), bad = [];
+              if (!box || box.hidden) return ['view not shown'];
+              box.querySelectorAll('svg').forEach((svg) => { const W = svg.viewBox.baseVal.width, H = svg.viewBox.baseVal.height;
+                svg.querySelectorAll('text').forEach((t) => { const r = t.getBBox(); if (r.x < -1 || r.y < -1 || r.x + r.width > W + 1 || r.y + r.height > H + 1) bad.push('text leaves the chart: ' + t.textContent); }); });
+              return bad; }""", v)
+            fails.extend(f"holders {v} ({width}px): {x}" for x in out)
+            shot(pg, f"holders_{v}_{width}.png", full_page=False)
+        if pg.locator("ol.etf13 li").count() != 2 or pg.locator("svg.q13 .etf13-in").count() < 2:
+            fails.append(f"holders ({width}px): the ETF block is missing")
+        if pg.evaluate("document.documentElement.scrollWidth") > width + 1:
+            fails.append(f"holders ({width}px): the page scrolls sideways")
+        if json.dumps(errs) != "[]":
+            fails.extend(f"holders console ({width}px): {e}" for e in errs)
+        ctx.close()
+
+
 def check_accounts(b, base, fails, shot, site):
     """Sign in with a code, save alert settings, Follow on a company page, unsubscribe link."""
-    ctx = b.new_context(viewport={"width": 1280, "height": 900})
+    ctx = b.new_context(viewport={"width": 1280, "height": 900}, permissions=["clipboard-read", "clipboard-write"])
     ctx.add_init_script(FAKE_SUPABASE)
     ctx.route("**/data/c/9999901.json", _final_quarter)
     ctx.route("**/data/c/320193.json", _with_years)
@@ -730,6 +785,31 @@ def check_accounts(b, base, fails, shot, site):
     pg.click("#thread-mail")                       # straight to the inbox: a queued request, no GitHub page
     pg.wait_for_function("window.__ff.db.send_requests.some((r) => r.kind === 'thread' && r.cik === 320193)")
     shot(pg, "owner_thread.png", full_page=True)
+    # X Article: the report as formatted text with [Image n] markers, then each chart copied in turn (owner, by hand)
+    clip_html = "async () => { const it = (await navigator.clipboard.read())[0]; return it.types.includes('text/html') ? await (await it.getType('text/html')).text() : ''; }"
+    pg.click("#thread-article")
+    pg.wait_for_selector("#art-modal .art-thumb img")
+    prev = pg.text_content("#art-modal .art-prev .prose") or ""
+    if pg.locator("#art-modal [data-art-img]").count() != 2 or "[Image 1]" not in prev or "[Image 2]" not in prev or "Sources" not in prev:
+        fails.append(f"X article: two images and their markers expected; preview starts {prev[:160]!r}")
+    pg.click('#art-modal [data-art="title"]')
+    pg.click('#art-modal [data-art="text"]')
+    pg.wait_for_function("document.querySelector('#art-msg').textContent.startsWith('Text copied')")
+    html = pg.evaluate(clip_html)
+    if "<h2>The quarter</h2>" not in html or "<b>[Image 1]</b>" not in html or "<a href=" not in html:
+        fails.append(f"X article: the copied text should keep headings, image markers and links: {html[:200]!r}")
+    pg.click('#art-modal [data-art="all"]')
+    pg.wait_for_function("document.querySelector('#art-msg').textContent.includes('Copied with the charts inside')")
+    if pg.evaluate(clip_html).count('<img src="data:image/png;base64,') != 2:
+        fails.append("X article: 'Copy text with images' should carry both charts inside the text")
+    pg.click('#art-modal [data-art-img="2"]')
+    pg.wait_for_function("document.querySelector('#art-msg').textContent.includes('Image 2 copied')")
+    if "image/png" not in pg.evaluate("async () => (await navigator.clipboard.read())[0].types"):
+        fails.append("X article: Copy image did not put a PNG on the clipboard")
+    shot(pg, "owner_article.png")
+    pg.click("#art-modal [data-art-close]")
+    if pg.locator("#art-modal").count():
+        fails.append("X article: the panel did not close")
     pg.goto(base + "#owner")
     pg.wait_for_selector("#owner-form")
     pg.check('input[name="thread-mail"][value="github"]')
@@ -750,7 +830,35 @@ def check_accounts(b, base, fails, shot, site):
     pg.wait_for_function("document.querySelector('#daily') && document.querySelector('#daily').textContent.includes('your full report')")
     if "all in your report" not in pg.inner_text("#daily .day.on"):
         fails.append(f"owner tools: the day picker should count every filing: {pg.inner_text('#daily .day.on')!r}")
+    pg.click("#day-article")                                      # the day's report as an X Article
+    pg.wait_for_selector("#art-modal .art-thumb img")
+    day_prev = pg.text_content("#art-modal .art-prev .prose") or ""
+    if pg.locator("#art-modal [data-art-img]").count() < 2 or "In this report" not in day_prev or "[Image 2]" not in day_prev:
+        fails.append(f"X article (daily): every company in full needs its chart; preview starts {day_prev[:160]!r}")
+    if not pg.inner_text("#art-title").startswith("Earnings filed "):
+        fails.append(f"X article (daily): title {pg.inner_text('#art-title')!r}")
+    shot(pg, "owner_article_day.png")
+    pg.click("#art-modal [data-art-close]")
     shot(pg, "owner_settings.png", full_page=True)
+    # the X post options: config/x.json's values first (site.json "x"), then the owner's own, kept in owner_settings.x_post
+    if not pg.locator('input[name="x-links"][value="off"]').is_checked() or "#earnings #semiconductors" not in pg.inner_text("#x-example"):
+        fails.append(f"owner tools: X posts should start from config/x.json: {pg.inner_text('#x-example')!r}")
+    pg.check('input[name="x-links"][value="on"]')
+    pg.uncheck('[data-xpart="industry"]')
+    pg.select_option("#x-max", "2")
+    pg.uncheck('#x-pool input[value="#stocks"]')
+    pg.fill("#x-add", "Earnings Day!")
+    pg.press("#x-add", "Enter")
+    if "#semiconductors" in pg.inner_text("#x-example"):
+        fails.append(f"owner tools: the example should follow the form: {pg.inner_text('#x-example')!r}")
+    pg.click("#owner-form button[type=submit]")
+    pg.wait_for_function("document.querySelector('#owner-msg').textContent === 'Saved.'")
+    x = ff("window.__ff.db.owner_settings[0].x_post")
+    print("owner tools: X post options saved:", x)
+    if not (x.get("links") is True and x.get("gif") is False and x.get("hashtags_max") == 2 and x.get("tags", {}).get("industry") is False
+            and "#stocks" not in x.get("hashtags", []) and x.get("hashtags", [])[-1:] == ["#EarningsDay"] and x.get("headline_tag") == "#earnings"):
+        fails.append(f"owner tools: X post options saved as {x}")
+    shot(pg, "owner_x_posts.png", full_page=True)
     # re-read stored figures: the owner asks for companies (tickers or CIKs) or for every one; the scan claims them
     pg.fill("#reread-list", "AAPL, 1067983, NOPE")
     pg.click("#reread-form button[type=submit]")
@@ -1113,6 +1221,7 @@ def main():
             fails.append("account page without configuration should say alerts are not switched on")
 
         check_accounts(b, base, fails, shot, os.path.abspath(args.site))
+        check_holders(b, base, fails, shot)
 
         if errors:
             fails.extend(f"console: {e}" for e in errors)

@@ -1,0 +1,35 @@
+name: hft-quant tests
+
+# Offline unit tests and a synthetic backtest for the hft-quant trading framework. No network, no keys.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'hft-quant/**'
+      - '.github/workflows/hft-quant.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'hft-quant/**'
+      - '.github/workflows/hft-quant.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: hft-quant
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: hft-quant
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+      - run: python -m hft.cli backtest --steps 2000

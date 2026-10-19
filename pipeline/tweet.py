@@ -237,6 +237,20 @@ def cut_off(text):
     return bool(body) and not re.search(r"[.!?…:;)\]”\"'↓→⬇👇]$|\d%?$|[\U0001F300-\U0001FAFF]$", body)
 
 
+def fit_tags(post, xlen, limit):
+    """A post over the limit with hashtags at its end loses them, the last first, until it fits (none at all if need be);
+    a post still too long without them is left as it is, for the length check to refuse."""
+    if xlen(post) <= limit:
+        return post
+    m = re.search(r"(\s*#\w+)+\s*$", post)
+    if not m:
+        return post
+    body, trail = post[:m.start()].rstrip(), re.findall(r"#\w+", m.group(0))
+    while trail and xlen(body + " " + " ".join(trail)) > limit:
+        trail.pop()
+    return body + (" " + " ".join(trail) if trail else "")
+
+
 def clean(post, ticker, tags, xlen, limit=270):
     post = post.strip().strip('"“”').strip()
     post = re.sub(r"\s*\n+\s*", " ", post)
@@ -250,22 +264,41 @@ def clean(post, ticker, tags, xlen, limit=270):
         post = post + " " + " ".join(tags)
     if ADVICE.search(re.sub(r"#\w+", "", post)):
         raise ValueError("advice / hype wording")
+    post = fit_tags(post, xlen, limit)                 # too long only because of the hashtags: fewer hashtags
     if xlen(post) > limit:
         raise ValueError(f"too long ({xlen(post)})")
     return post
 
 
-HOLDER_TAGS = ["#13F", "#hedgefunds", "#smartmoney", "#stocks", "#investing"]
+HOLDER_TAGS = ["#13F", "#hedgefunds", "#smartmoney", "#stocks", "#investing"]      # the pool's order (pipeline/hashtags.py)
+
+
+def post_tags(c, q, cfg, ticker, kind="post"):
+    """The hashtags of a company post (pipeline/hashtags.py): #earnings (config "headline_tag") or #13F first, then the
+    industry and one general tag that takes turns; at most config/x.json "hashtags_max"."""
+    from . import hashtags as H
+    key = f"{ticker}:{q.get('end')}:{kind}"
+    if kind in ("post", "post_trend", "post_gif"):
+        return H.pick("earnings", c.get("profile"), key=key, lead=cfg.get("headline_tag", "#earnings"))
+    return H.pick("13f", c.get("profile"), key=key)
+
+
+_HOLDERS = {}
 
 
 def holders_json(ticker, site_url):
+    """One company's 13F holders file from the published site, read once per run (the post, its prompt and the
+    training examples all ask for it)."""
     if not (ticker and site_url):
         return None
-    try:
-        r = requests.get(f"{site_url.rstrip('/')}/disclosures/data/holders/{ticker}.json", timeout=30)
-        return r.json() if r.status_code == 200 else None
-    except Exception:
-        return None
+    key = (ticker, site_url.rstrip("/"))
+    if key not in _HOLDERS:
+        try:
+            r = requests.get(f"{key[1]}/disclosures/data/holders/{ticker}.json", timeout=30)
+            _HOLDERS[key] = r.json() if r.status_code == 200 else None
+        except Exception:
+            return None                                  # a network error is not cached: the next caller tries again
+    return _HOLDERS[key]
 
 
 def _shares(n):
@@ -286,7 +319,7 @@ def holders_thread(ticker, site_url, cik, today=None):
     quarter and the filing dates; replies listing them; a source line. None when the site has no 13F data yet."""
     from . import social
     h = holders_json(ticker, site_url)
-    inst = (h or {}).get("institutional") or []
+    inst = latest_quarter((h or {}).get("institutional") or [])
     if not inst:
         return None
     today = today or dt.date.today()
@@ -324,11 +357,21 @@ def holders_thread(ticker, site_url, cik, today=None):
                            listing("Sold or cut:", sells[:6])) if r]
     link = f"{site_url.rstrip('/')}/#c-{cik}" if site_url else ""
     replies.append("Source: 13F-HR filings with the SEC — quarter-end positions, not trades, filed up to 45 days after the quarter. "
-                   + (f"Every holder: {link}" if link else "Not investment advice."))
+                   "Not investment advice." + (f" Every holder: {link}" if link else ""))
     return {"post": post, "replies": replies, "lead": lead, "period": period, "filed": filed,
             "pieces": {"buys": [(who(x), move(x), _day(x.get("filed"))) for x in buys[:3]],
                        "sells": [(who(x), move(x), _day(x.get("filed"))) for x in sells[:3]],
                        "n_add": len(buys), "n_cut": len(sells), "period": _day(period), "tk": tk}}
+
+
+def latest_quarter(inst):
+    """The 13F rows of the quarter most managers on file report (a manager whose latest 13F is for an older quarter
+    would mix two quarters in one post: "quarter ended Jun 30 … Vanguard cut 1.0M sh (filed Jan 29)")."""
+    periods = [x.get("period") for x in inst if x.get("period")]
+    if not periods:
+        return list(inst)
+    period = max(set(periods), key=lambda p: (periods.count(p), p))
+    return [x for x in inst if x.get("period") == period]
 
 
 def holders_lines(ticker, site_url):
@@ -336,7 +379,7 @@ def holders_lines(ticker, site_url):
     h = holders_json(ticker, site_url)
     if not h:
         return ""
-    inst = h.get("institutional") or []
+    inst = latest_quarter(h.get("institutional") or [])
     buys = [x for x in inst if x.get("status") in ("NEW", "INCREASE")]
     sells = [x for x in inst if x.get("status") in ("DECREASE", "EXIT", "NOT DISCLOSED")]
     m = lambda v: ("" if v is None else f"${v / 1e9:.1f}B" if abs(v) >= 0.95e9 else f"${v / 1e6:.0f}M")
@@ -404,8 +447,7 @@ def compose_one(c, q, cfg, ticker, hashtags, xlen, kind="post", site_url="", thr
 
 def post_for(c, q, cfg, ticker, fallback, xlen, kind="post", site_url="", thread=False):
     """The model's post, or the rule-based headline post when the model is unavailable or its draft fails the checks."""
-    tags = ([t for t in [cfg.get("headline_tag", "#earnings")] + list(cfg.get("hashtags") or []) if t] if kind in ("post", "post_trend")
-            else list(HOLDER_TAGS))
+    tags = post_tags(c, q, cfg, ticker, kind)
     try:
         post = compose_one(c, q, cfg, ticker, tags, xlen, kind=kind, site_url=site_url, thread=thread)
         return post, "model"

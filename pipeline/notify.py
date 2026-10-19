@@ -372,7 +372,7 @@ def headline(e, q):
 
 
 def eyebrow(e, q):
-    form = "8-K earnings release" if q.get("form") == "8-K" else q.get("form", "")
+    form = {"8-K": "8-K earnings release", "6-K": "6-K results release"}.get(q.get("form"), q.get("form", ""))
     return " · ".join(x for x in (e.get("ticker"), q.get("label") + (" full year" if is_year(q) else ""),
                                   f"{form} filed {social.fdate(q.get('filed'))}",
                                   "final" if q.get("release_check") else "") if x)
@@ -1168,8 +1168,16 @@ def _now_iso():
 
 
 ENGAGE_KINDS = ("engage_question", "engage_list", "engage_reddit_question", "engage_reddit_list", "engage_mover", "engage_explain",
-                "engage_peers", "engage_insider", "engage_event8k", "engage_ivmove", "engage_opt13f", "engage_rsleaders")   # Owner tools: write that post now
-FILING_KINDS = ("post_8k", "post_13f")      # owner: a post about one chosen 8-K (cik = company) or 13F (cik = the manager)
+                "engage_peers", "engage_insider", "engage_event8k", "engage_ivmove", "engage_opt13f", "engage_rsleaders",
+                "engage_reddit_hot", "engage_smart_buys", "engage_smart_record", "engage_all_agree", "engage_qtd_flows",
+                "engage_pt_upside", "engage_versus", "engage_drawdown", "engage_setup", "engage_lows52", "engage_highs52", "engage_near_lows",
+                "engage_records", "engage_polymarket")   # Owner tools: write that post now
+FILING_KINDS = ("post_8k", "post_13f",       # owner: a post about one chosen 8-K (cik = company) or 13F (cik = the manager)
+                "post_insider", "post_official",   # ... or one row of the hub's Insider trades / Officials' trades (ref = its key)
+                "post_stake", "post_f144", "post_short",   # ... 13D / 13G, Form 144 and Short interest tables
+                "post_news")                               # ... the News table (press releases, FDA, SEC actions)
+FILING_PLANS = {"post_8k": "filing8k", "post_13f": "fund13f_for", "post_insider": "insider_for", "post_official": "official_for",
+                "post_stake": "stake_for", "post_f144": "f144_for", "post_short": "short_for", "post_news": "news_for"}
 POST_KINDS = ("post", "post_holders", "post_gif") + ENGAGE_KINDS + FILING_KINDS   # the owner's X requests: their own workflow (post-to-x.yml)
 
 
@@ -1302,13 +1310,13 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
                     continue
                 try:
                     from . import engage
-                    made = engage.make(["filing8k" if kind == "post_8k" else "fund13f_for"], site, site_url, os.environ.get("MEDIA_DIR", "media"),
+                    made = engage.make([FILING_PLANS[kind]], site, site_url, os.environ.get("MEDIA_DIR", "media"),
                                        assets, force=True, target={"cik": r["cik"], "ref": r.get("ref")}, draft=bool(r.get("draft")))
                     if made:
                         print(f"{'Buffer draft' if r.get('draft') else 'queued for Buffer'} ({kind}): " + " | ".join(made))
                         finish([r], status="sent", sent_at=_now_iso(), error=None)
                     else:
-                        finish([r], status="failed", error="that filing could not be found or read (see the Post to X run)")
+                        finish([r], status="failed", error="that filing or row could not be found or read (see the Post to X run)")
                 except Exception as err:
                     print(f"::warning::{kind} not made ({err.__class__.__name__}: {err})")
                     finish([r], status="failed", error=f"post not made: {str(err)[:150]}")
@@ -1375,11 +1383,16 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
             jobs.append((sub, plain, make))
     if not jobs:
         return 0
-    if len(jobs) > budget:
-        print(f"::warning::daily e-mail limit reached; {len(jobs) - max(budget, 0)} requests wait for the next run")
-        for _, ok_rows, _ in jobs[max(budget, 0):]:
+    from . import owner as _owner                  # the owner lane: the site owner's requests first, never held back
+    owners = _owner.owner_emails(supa)
+    mine = lambda j: str(j[0].get("email") or "").strip().lower() in owners
+    jobs.sort(key=lambda j: not mine(j))            # stable: otherwise in the order asked
+    cap = max(budget, sum(1 for j in jobs if mine(j)))
+    if len(jobs) > cap:
+        print(f"::warning::daily e-mail limit reached; {len(jobs) - max(cap, 0)} requests wait for the next run")
+        for _, ok_rows, _ in jobs[max(cap, 0):]:
             finish(ok_rows, status="pending", claimed_at=None)
-        jobs = jobs[:max(budget, 0)]
+        jobs = jobs[:max(cap, 0)]
     for sub, ok_rows, make in jobs:
         try:
             msg = make()

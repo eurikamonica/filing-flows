@@ -11,6 +11,56 @@ system (same header, type, colours, dark mode and theme preference), with links 
   (`automation/stage-public.py`; caches and queue state left out) on its normal hourly publish. No second Pages deploy.
 - **Secrets**: the repository's `SEC_USER_AGENT`; `FDIC_API_KEY` and `CFTC_APP_TOKEN` optional.
 - **Local preview**: `python disclosures/app/serve.py` → http://127.0.0.1:8080
+- **Long rotation history** (branch `rotation-history`, data only): `.github/workflows/rotation-history.yml` runs every
+  three hours (or by hand, with tickers to fetch first) and keeps weekly closes since 2000 for SPY, the SPDR sector ETFs,
+  style / size / asset ETFs and every company of the Sankey site (largest first, a batch per run; failures retried
+  later, progress in `state.json`), plus the SEC XBRL frames back to 2009 (`app/rotation_history.py`). It rebuilds
+  `public/` — `rrg.json`, `t/<TICKER>.json` and the momentum clock since 2010 (`rotation-long*.json`) — and force-pushes the
+  branch as one commit; the scan workflow copies `public/` to `/disclosures/data/market/history/`. Rotation then offers
+  the **RRG** (JdK-style RS-Ratio / RS-Momentum against SPY, weekly or monthly, in 2-D, 3-D with time as depth, and 4-D
+  with a third measure as depth and time played) and **History: Long** for the momentum clock and its 3-D / 4-D view.
+- **Next step and the solar system in 3-D / 4-D** (`app/chaos_forecast.py`, `docs/chaos.js`): after the history build the same
+  workflow writes `chaos-forecast.json` (quarters), `chaos-forecast-monthly.json` and `chaos-rrg.json` (weekly RRG) to `public/`.
+  Rotation → *Next step* draws, for every dot on the momentum clock, the solar system (2-D and the new 3-D / 4-D view, where a
+  sector's companies all keep their trails), the 3-D box and the RRG, an arrow to where it lands next on average among the
+  most similar past states (method of analogues, calibrated walk-forward), an 80% cone, the price read from it, and — for
+  past periods — what actually happened. The page shows the out-of-sample scorecard; the full backtest and the chaos tests
+  (S-map, horizon, embedding grid) are in `notes/chaos-forecast/README.md` (`app/chaos_experiments.py` reruns them).
+  The price coordinate and the price come from the gravity + tidal model (`app/gravity_pendulum.py`: company vs its sector and
+  sector vs SPY, short pendulum restoring, long pendulum momentum, the sector's motion carried to its companies), which
+  beats the analogues and is significant on the broad weekly test (`notes/gravity-pendulum/`); on the site's ~220 companies
+  its edge is not yet distinguishable from zero, so prices are shown as calibrated ranges.
+
+## 4.7 — every 8-K, news, and what is known when a stock moves
+
+| Tab | Source | How it is collected |
+|---|---|---|
+| **8-K events** | SEC EDGAR 8-K and 8-K/A | `app/events8k.py`: the current-filings feed every half hour, then the daily form indexes back `events8k.backfill_days` (30); each submission read once (8-K and exhibits in one file). Items from the header, topics from the items and the filing's words (deal, CEO / CFO change, restatement, cyber incident, delisting, bankruptcy, buyback, dividend, offering, debt, restructuring, impairment, auditor, FDA, contract, earnings), guidance raised / lowered / withdrawn / reaffirmed from the press release, the release's title and the key sentences. One file per filing day (`cache/events8k/`) |
+| **News** | PR Newswire RSS (7 feeds), openFDA (new NDA / BLA approvals), FDA press releases, SEC press releases, litigation releases, administrative proceedings, trading suspensions | `app/news.py`: headline, time and link only (no body text); tickers from the release's exchange tag when its issuer matches the listed company, else an exact company-name match; law-firm class-action notices and non-English releases left out. War.gov contract pages and GlobeNewswire refuse GitHub's runners (403), so they are not collected |
+
+Rows have the owner's ✦ X (8-K: `post_8k` with the accession — a company without charts is written from the row alone;
+News: `post_news` — re-run `supabase/schema.sql`), feed the local model's training (`pipeline/corpus.py`) and the company
+pages (`events8k`, `news`). The movers' posts (`pipeline/context.py`) now get a block of what is known about the company
+that day — its 8-Ks and releases, 13D / 13G, Form 4 / 144, officials' trades, short interest, options IV, SPY and its
+sector ETF, and headlines (GDELT, best effort: it rate-limits shared runners; Yahoo Finance's headline feed) — with the
+rule that none of it may be given as the cause (the post is rejected if it says "because", "due to", "on news of" …).
+Gzipped caches are written byte-identical when unchanged and split by day or month (`core.Shards`), so the data commits
+carry only what changed.
+
+## 4.6 — 13D / 13G, Form 144, short interest and the US Senate
+
+| Tab | Source | How it is collected |
+|---|---|---|
+| **13D / 13G** | SEC EDGAR Schedules 13D and 13G (structured XML since Dec 2024) | `app/ownership.py`: the "current filings" feed every half hour, then the daily form indexes back `ownership.backfill_days` (120); each accession read once. The stake is the largest single reporting person's; the change compares with the same filer's previous filing; 13D Item 4 (purpose) kept |
+| **Form 144** | SEC EDGAR Form 144 (XML since Apr 2023) | the same collector: seller, relationship, shares, market value, approximate sale date, how acquired, 10b5-1 plan date. A notice, not a trade |
+| **Short interest** | FINRA consolidated short interest (Query API, no key) | `app/shorts.py`: the settlement dates FINRA lists (twice a month), newest first, a year on file (`shorts.keep_dates`); the newest date re-read a few times for late revisions |
+| **Officials' trades** (Senate) | US Senate eFD electronic periodic transaction reports | `app/senate.py`: accepts eFD's terms each run (CSRF form), searches PTRs (the last 60 days every 90 minutes, one older month per run back to `senate.since`), reads the HTML tables; paper reports are listed, not read. Merged into `officials-trades.json` with jurisdiction `US Senate` |
+
+All three run with the light half-hourly schedule (module `insiders`; or `ownership`, `shorts`, `senate` by hand) and
+publish `market/stakes.json`, `market/form144.json`, `market/short-interest.json`. Every row has the owner's ✦ X
+(send_requests kinds `post_stake`, `post_f144`, `post_short`; Senate rows use `post_official` — re-run
+`supabase/schema.sql` once), the rows become training examples for the local fallback model (`pipeline/corpus.py`), and
+the company pages show them (holders index: `stakes`, `form144`, `short`).
 
 ## 4.1 — state and Canadian officials, optional cost estimates
 
