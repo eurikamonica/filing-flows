@@ -213,6 +213,8 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/hub_extras.py --site _site
+      - name: Pages for search engines about 13F managers and officials (m/<slug>/, o/<slug>/)
+        run: python scripts/seo_people.py --people _site/disclosures/data/research/people --out _site
 
       # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
       # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.

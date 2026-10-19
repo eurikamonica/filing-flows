@@ -158,6 +158,8 @@ function render(){
  Object.values(window.HUB_BINDS||{}).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // tabs that register themselves (quality.js …)
 
  Object.values(window.HUB_BINDS||{}).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // views that register themselves (window.HUB_VIEWS)
+
+ (window.HUB_BINDS||[]).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // tabs added by their own scripts
  if(window.FFPosts)window.FFPosts.fill($("workspace"));
 }
 function csvCell(v){let s=typeof v==='object'&&v!==null?JSON.stringify(v):String(v??'');if(/^[=+@\t\r]/.test(s)||(/^[-]/.test(s)&&!/^[-]\d+(\.\d+)?$/.test(s)))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
@@ -170,6 +172,8 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.da
 function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);if(arg)deepLink(h,decodeURIComponent(arg));if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
 /* deep links from the site's search: #holdings/<manager CIK>, #trades/<official's name>, #etf/<ticker> */
 function deepLink(h,v){if(!v)return;if(h==='holdings')state.manager=v.replace(/\D/g,'');else if(h==='trades'){state.tperson=v;state.page=0}else if(h==='etf'){state.eview='one';state.esym=v.toUpperCase()}}
+
+function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);else if(arg&&typeof window[h+'DeepLink']==='function')window[h+'DeepLink'](arg);if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
 addEventListener('hashchange',()=>{if(fromHash())render()});
 fromHash();syncPills();
 render();
