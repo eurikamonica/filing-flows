@@ -337,7 +337,9 @@ def ladder_mean(ks, ps):
     lo_mass, hi_mass = 1 - ps[0], ps[-1]
     step = (ks[-1] - ks[0]) / (len(ks) - 1)
     fit = _lognormal_fit(ks, ps)
-    below, above = ks[0] - step / 2, ks[-1] + step / 2
+    if fit and not (0 < fit[1] <= 2.5 and fit[0] + fit[1] ** 2 / 2 < 700):
+        fit = None                                         # a flat or odd ladder: no believable log-normal tail
+    below, above = ks[0] - step / 2, max(ks[-1] + step / 2, ks[-1])
     if fit:
         mu, sg = fit
         m = math.exp(mu + sg * sg / 2)
