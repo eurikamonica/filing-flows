@@ -687,6 +687,20 @@ def plan_calendar(site, rows, c, by_ticker, today):
 _HUB = {}
 
 
+def hub_bytes(site, rel):
+    """A binary file the Disclosures hub publishes (rel under disclosures/data/), or None when it is not there."""
+    try:
+        if site.remote:
+            import requests
+            r = requests.get(site.src.rstrip("/") + "/disclosures/data/" + rel, timeout=60)
+            return r.content if r.status_code == 200 and r.content else None
+        with open(os.path.join(site.src, "disclosures", "data", rel), "rb") as f:
+            return f.read()
+    except Exception as err:                    # noqa: BLE001 — the post goes out without the picture
+        print(f"hub image {rel} not read ({str(err)[:100]})")
+        return None
+
+
 def hub_json(site, name):
     """A file of the Disclosures hub's market data, from the published site or the built folder (read once per run; a
     file that is not there is not asked for again)."""
@@ -2296,6 +2310,12 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
             if png:
                 name = social.image_names(e, q, 1)[0].replace("-1-chart", f"-{p['kind']}")
                 open(os.path.join(xdir, name), "wb").write(png)
+                images.append(name)
+        for rel in (p.get("hub_images") or [])[:max(0, 4 - len(images))]:   # a picture the hub publishes (a map, a GIF)
+            data = hub_bytes(site, rel)
+            if data:
+                name = f"{p['kind']}-{today.isoformat()}-{os.path.basename(rel)}"
+                open(os.path.join(xdir, name), "wb").write(data)
                 images.append(name)
         pend_path = os.path.join(xdir, "pending.json")
         pending = json.load(open(pend_path, encoding="utf-8")) if os.path.exists(pend_path) else []

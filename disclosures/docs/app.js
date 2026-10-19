@@ -143,7 +143,7 @@ function status(){return health()}
 function render(){
  baseRender();exported=[];
  tipData.length=0;
- $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView}[state.tab])();
+ $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView,maps:mapsView}[state.tab])();
  bind('market','market');bind('group','group');bind('from','from');bind('to','to');bind('asof','date');bind('cert','cert');bind('metric','metric');bind('base','base');bind('filing','filing');bind('direction','direction');
  if($('query')){$('query').onchange=e=>{state.query=e.target.value;state.page=0;render()};$('query').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  actions();
@@ -154,7 +154,7 @@ function render(){
  bindNews();
  bindRotation();
  bindOptions();
- bindDebt();bindConsensus();bindEtf();bindSmart();bindAllflows();
+ bindDebt();bindConsensus();bindEtf();bindSmart();bindAllflows();bindMaps();
  if(window.FFPosts)window.FFPosts.fill($("workspace"));
 }
 function csvCell(v){let s=typeof v==='object'&&v!==null?JSON.stringify(v):String(v??'');if(/^[=+@\t\r]/.test(s)||(/^[-]/.test(s)&&!/^[-]\d+(\.\d+)?$/.test(s)))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
