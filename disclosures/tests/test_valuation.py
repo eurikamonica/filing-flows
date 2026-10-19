@@ -1,0 +1,150 @@
+"""app/valuation.py: the DCF and its reverse, Monte Carlo, beta and WACC, residual income, the regressions, valuation
+bands, sum of the parts, the distress blend, the frames panel and the full build with its ledger."""
+import datetime as dt
+import json
+import math
+import random
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'app'))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import valuation as V  # noqa: E402
+import valuation_fixture as FX  # noqa: E402
+
+BASE = {'rev0': 1000.0, 'years': 5, 'growth': 0.08, 'margin': 0.2, 'tax': 0.21, 'da': 0.03, 'capex': 0.04, 'wc': 0.1, 'wacc': 0.09, 'g': 0.025,
+        'terminal': 'roic', 'roic': 0.15, 'debt': 200.0, 'cash': 100.0, 'claims': 0.0, 'nonop': 0.0, 'shares': 100.0}
+
+
+class Model(unittest.TestCase):
+    def test_dcf_and_reverse(self):
+        r = V.dcf(BASE)
+        self.assertTrue(r['ok'])
+        self.assertAlmostEqual(r['equity'], r['ev'] - 200 + 100)
+        self.assertAlmostEqual(r['perShare'], r['equity'] / 100)
+        self.assertGreater(V.value({**BASE, 'growth': 0.12}), r['perShare'])          # more growth, more value
+        self.assertGreater(r['perShare'], V.value({**BASE, 'wacc': 0.11}))            # a higher cost of capital, less
+        s = V.solve(BASE, 'growth', r['perShare'], -0.3, 0.6)
+        self.assertEqual(s['status'], 'ok')
+        self.assertAlmostEqual(s['value'], 0.08, places=5)
+        self.assertEqual(V.solve(BASE, 'growth', 1e9, -0.3, 0.6)['status'], 'none')
+        self.assertFalse(V.dcf({**BASE, 'wacc': 0.02})['ok'])                         # WACC below terminal growth
+        path = V.dcf({**BASE, 'growth': V.fade(0.2, 0.025), 'capex': [0.1, 0.09, 0.08, 0.07, 0.065]})
+        self.assertTrue(path['ok'])
+        self.assertEqual([round(x, 4) for x in V.fade(0.2, 0.025)], [0.2, 0.165, 0.13, 0.095, 0.06])
+
+    def test_monte_carlo(self):
+        price = V.value(BASE)
+        mc = V.monte_carlo(BASE, price, 0.05, 0.02, n=600, seed=3)
+        self.assertLess(mc['p10'], mc['p50'])
+        self.assertLess(mc['p50'], mc['p90'])
+        self.assertTrue(0.25 < mc['p_above'] < 0.75)                                  # the base value sits near the middle
+        self.assertEqual(sum(mc['hist']['counts']) <= 600, True)
+        self.assertEqual(V.monte_carlo(BASE, price, 0.05, 0.02, n=600, seed=3)['p50'], mc['p50'])   # seeded
+
+    def test_beta_and_wacc(self):
+        rng = random.Random(1)
+        days = FX.business_days(dt.date(2024, 1, 1), dt.date(2026, 10, 16))
+        m, s, cm, cs = [], [], 100.0, 100.0
+        for d in days:
+            r = rng.gauss(0.0003, 0.01)
+            cm *= math.exp(r)
+            cs *= math.exp(1.5 * r + rng.gauss(0, 0.004))
+            m.append((d, cm))
+            s.append((d, cs))
+        b = V.beta(s, m)
+        self.assertAlmostEqual(b[0], 1.5, delta=0.15)
+        self.assertAlmostEqual(b[1], 0.67 * b[0] + 0.33)
+        self.assertIsNone(V.beta(s[:100], m[:100]))                                   # fewer than 52 weeks
+        F = {'mcap': 900.0, 'debt': 100.0, 'tax_rate': 0.2, 'interest': 6.0}
+        W = V.wacc_of(F, {'treasury_10y': 4.0, 'treasury_5y': 3.8}, None, b)
+        self.assertAlmostEqual(W['ke'], 0.04 + b[1] * V.ERP)
+        self.assertAlmostEqual(W['kd'], 0.06)                                         # interest ÷ debt
+        self.assertAlmostEqual(W['raw'], 0.9 * W['ke'] + 0.1 * 0.06 * 0.8)
+        rec = {'analysis': {'implied': {'calibrated_5y_bps': 150}}}
+        self.assertAlmostEqual(V.cost_of_debt(rec, {'treasury_5y': 3.8}, 6, 100)[0], 0.053)
+        self.assertEqual(V.as_pct(0.0425), 4.25)
+        self.assertEqual(V.as_pct(4.25), 4.25)
+
+    def test_residual_income_regression_distress(self):
+        self.assertAlmostEqual(V.residual_income(100, 0.1, 0.1), 100)                  # earning exactly the cost of equity: book value
+        self.assertGreater(V.residual_income(100, 0.2, 0.1), 100)
+        f = V.ols([0.05, 0.1, 0.15, 0.2], [0.8, 1.2, 1.6, 2.0])
+        self.assertAlmostEqual(f['b'], 8.0)
+        self.assertAlmostEqual(f['r2'], 1.0)
+        lo = V.distress(1e-4, 50, 5.0, 90)
+        hi = V.distress(0.08, 900, 0.8, 10)
+        self.assertLess(lo['pd'], 0.005)
+        self.assertGreater(hi['pd'], 0.05)
+        self.assertFalse(hi['calibrated'])
+        self.assertIsNone(V.distress(0.01))                                             # one part is not a blend
+        self.assertAlmostEqual(V.sigmoid(0.622 - 2.143 * 1.1), 0.15, places=2)        # the Altman mapping's anchor
+
+    def test_bands_and_sotp(self):
+        periods = V.calendar_quarters(18, FX.TODAY)
+        days = FX.business_days(dt.date(2022, 6, 1), dt.date(2026, 10, 16))
+        daily = [(d, 50 + 30 * (i / len(days))) for i, d in enumerate(days)]
+        eps = [1.0] * len(periods)
+        rev = [1e9] * len(periods)
+        b = V.bands(daily, periods, eps, rev, 1e8, 0)
+        self.assertAlmostEqual(b['pe']['current'], daily[-1][1] / 4, places=1)        # P/E on four quarters of $1
+        self.assertGreater(b['pe']['pct'], 0.95)                                        # a rising price: today is at the top
+        self.assertAlmostEqual(b['evs']['current'], daily[-1][1] * 1e8 / 4e9, places=2)
+        slim = {'nodes': [{'id': 'L:a', 'name': 'Cloud services'}, {'id': 'L:b', 'name': 'Devices'}],
+                'links': [{'s': 'L:a', 't': 'revenue', 'v': 300.0}, {'s': 'L:b', 't': 'revenue', 'v': 700.0}]}
+        segs = V.segments_of(slim)
+        self.assertEqual(segs, [('Cloud services', 300.0), ('Devices', 700.0)])
+        buckets = {'sic737': [(i, 6.0) for i in range(8)], 'sic357': [(i + 10, 1.5) for i in range(8)]}
+        so = V.sotp(segs, buckets, {'cik': 'x', 'sic': '3571'}, 100.0, 0.0)
+        self.assertAlmostEqual(so['point'], (1200 * 6 + 2800 * 1.5) / 100)
+        self.assertIsNone(V.sotp(segs[:1], buckets, {'cik': 'x', 'sic': '3571'}, 100.0, 0.0))
+
+
+class Build(unittest.TestCase):
+    def test_build_end_to_end(self):
+        with tempfile.TemporaryDirectory() as d:
+            fx = FX.make(d)
+            st = V.build(fx['root'], fx['prices'], fx['debt'], fx['cons'], today=FX.TODAY, verbose=False)
+            self.assertEqual(st['companies'], len(fx['companies']))
+            self.assertGreaterEqual(st['with_dcf'], 25)
+            self.assertGreaterEqual(st['banks_fit'], 12)
+            pub = Path(fx['root']) / 'public'
+            ix = json.loads((pub / 'index.json').read_text())
+            rows = [dict(zip(ix['fields'], r)) for r in ix['rows']]
+            bank = json.loads((pub / 'banks.json').read_text())['fit']
+            self.assertGreater(bank['b'], 4)                                            # P/TBV rises with ROTCE (8 in the fixture)
+            ind = next(r for r in rows if r['kind'] == 'industrial' and r['cik'] == 100000)
+            self.assertTrue(0.05 <= ind['wacc'] <= 0.16 and ind['dcf_value'] > 0 and 0 <= ind['mc_p_above'] <= 1)
+            doc = json.loads((pub / 'c' / '100000.json').read_text())
+            methods = {b['method'] for b in doc['football']}
+            self.assertTrue({'DCF — Monte Carlo 10th–90th percentile', 'P/E vs peers', "Analysts' price targets", 'Polymarket implied price',
+                             'Our model (Rotation forecast)', '52-week trading range'} <= methods, methods)
+            self.assertEqual(doc['wacc']['kd_how'][:16], '5-year Treasury ')                # the bond-calibrated spread from the debt module
+            self.assertTrue(doc['credit']['distress'] and len(doc['credit']['distress']['parts']) == 4)
+            self.assertEqual(doc['reverse']['status'], 'ok')
+            self.assertIn('pe', doc['bands'])
+            b0 = next(r for r in rows if r['kind'] == 'bank')
+            bdoc = json.loads((pub / 'c' / f"{b0['cik']}.json").read_text())
+            self.assertEqual(bdoc['sector_model']['model'], 'P/TBV vs ROTCE (banks)')
+            self.assertNotIn('dcf', bdoc)                                                  # no FCFF model for a bank
+            ins = next(r for r in rows if r['kind'] == 'insurer')
+            self.assertAlmostEqual(ins['combined_ratio'], 0.93, places=2)
+            reit = next(r for r in rows if r['kind'] == 'reit')
+            self.assertTrue(reit['p_ffo'] and reit['p_ffo'] > 5)
+            led = json.loads((pub / 'ledger.json').read_text())
+            self.assertEqual(led['snapshots'], ['2026-10'])
+            # a second build in the same month keeps the frozen snapshot; three months on it is scored
+            frozen = (Path(fx['root']) / 'cache' / 'ledger' / '2026-10.json').read_text()
+            V.build(fx['root'], fx['prices'], fx['debt'], fx['cons'], today=FX.TODAY, verbose=False)
+            self.assertEqual((Path(fx['root']) / 'cache' / 'ledger' / '2026-10.json').read_text(), frozen)
+            L = json.loads(frozen)
+            L['frozen_at'] = '2026-01-05T00:00:00+00:00'
+            (Path(fx['root']) / 'cache' / 'ledger' / '2026-01.json').write_text(json.dumps({**L, 'month': '2026-01'}))
+            led = V.ledger_update(fx['root'], rows, fx['prices'], FX.TODAY)
+            self.assertTrue(any(s['month'] == '2026-01' and s['horizon_months'] == 6 and s['n'] >= 10 for s in led['scores']))
+
+
+if __name__ == '__main__':
+    unittest.main()
