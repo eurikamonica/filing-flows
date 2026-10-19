@@ -1,0 +1,42 @@
+# TEMPORARY (removed before merge): can GitHub's runners read Reddit, or does the scan fall back to ApeWisdom?
+name: Reddit probe (temporary)
+on:
+  push:
+    branches: [feature/all-flows]
+    paths: ['.github/workflows/reddit-probe.yml', 'disclosures/app/reddit_hot.py']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+      REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/docs/data/cache/prices/sec-tickers.json
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Read Reddit
+        working-directory: disclosures/app
+        run: |
+          python - <<'PY'
+          import json, shutil, os
+          from pathlib import Path
+          import reddit_hot as R
+          root = Path('/tmp/r'); (root / 'cache' / 'prices').mkdir(parents=True)
+          shutil.copy('../docs/data/cache/prices/sec-tickers.json', root / 'cache' / 'prices')
+          print('oauth secrets:', bool(os.environ.get('REDDIT_CLIENT_ID')))
+          r = R.collect(None, root)
+          out = R.publish(root, root / 'market')
+          d = json.load(open(root / 'market' / 'reddit.json'))
+          top = ', '.join(f"{x['ticker']}:{x['heat']}" for x in d['rows'][:8])
+          print(f"::notice title=reddit probe::source={r['source']} threads={r['threads']} hottest={out['hottest']} top={top} errors={'; '.join(r['errors'])[:300]}")
+          PY

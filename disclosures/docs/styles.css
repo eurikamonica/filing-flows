@@ -452,3 +452,11 @@ th.mac-now, td.mac-now { background: var(--accent-soft); }
 .sm-now { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin: 6px 0 10px; line-height: 1.6; }
 .sm-who { display: inline-flex; align-items: center; min-width: 0; } .sm-who > span { min-width: 0; }
 .sm-sides { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+/* All flows tab: Reddit's hottest cashtag on top */
+.af-reddit { border-left: 3px solid var(--mk-cost); }
+.af-rh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.af-tag { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.af-cash { font-size: 30px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.af-thread { margin: 6px 0; line-height: 1.5; }
+.af-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px; } .af-chips .pill { padding: 4px 10px; font-size: 13px; }

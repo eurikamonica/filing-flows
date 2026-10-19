@@ -23,6 +23,12 @@ Kinds (config/engage-guide.md describes each format):
                    largest insider purchases, the hottest names on the Signals board, the week's movers
   insider          the largest recent Form 4 open-market purchase by an officer or director of a site company
                    (Disclosures → Insider trades), with the company's latest figures
+  reddit_hot       Reddit's hottest stock right now (the hub's half-hourly scan) as a cashtag, against what insiders, 13F
+                   managers and officials are doing in it (its smart-money score)
+  smart_buys       the stocks the traders with the best records are net buying now (smart-money score −100 … +100)
+  smart_record     one official, insider or 13F manager with a strong, tested record and a trade in the last month
+  all_agree        a stock every group trading it (13F managers, active ETFs, insiders, officials) net-bought this quarter
+  qtd_flows        the calendar quarter so far: insiders' and officials' biggest net purchases, the early 13F filers' top add
 Each post is drafted from the guide, then polished (sharper opening, same facts), then checked (length, cashtags,
 hashtags, no advice words). Written to media/x/pending.json for pipeline/buffer.py; media/x/engage-state.json keeps
 what was posted so a company or a format is not repeated within the cooldown. Settings: config/engage.json.
@@ -1109,7 +1115,8 @@ def event_tags(code, label, profile=None, key=""):
 
 
 KIND_TAGS = {"event8k": "8k", "fund13f": "13f", "fund13f_for": "13f", "insider": "insider", "movers": "movers", "official": "congress",
-             "stake": "stake", "form144": "form144", "short": "short", "news": "news"}
+             "stake": "stake", "form144": "form144", "short": "short", "news": "news", "reddit_hot": "reddit", "smart_buys": "smart",
+             "smart_record": "smart", "all_agree": "flows", "qtd_flows": "flows"}
 
 
 ABBR = re.compile(r"\b(?:Inc|Ltd|Corp|Co|LLC|L\.P|LP|No|Nos|U\.S|Mr|Ms|Dr|St|Jr|S\.A|N\.V|plc)\.$")
@@ -1436,6 +1443,262 @@ def plan_rsleaders(site, rows, c, by_ticker, state_ok, today):
             "tags": H.pick("rs", (items[0][0] if items else None), key="rsleaders:" + ",".join(t for *_, t in picks))}
 
 
+# ------------------------------------------------------------------ smart money, all flows, Reddit's hottest (hub data)
+# Every disclosed trade by 13F managers, active ETFs, insiders and officials scored by what the stock did next
+# (disclosures/app/smart.py → data/smart/), the groups side by side per period (data/smart/combined/), and Reddit's
+# hottest ticker right now (disclosures/app/reddit_hot.py → data/market/reddit.json).
+SMART = {"min_votes": 3, "min_skilled": 2, "min_decisions": 8, "min_p": 0.65, "record_days": 30}
+GNAME = {"f13": "13F managers", "etf": "active ETFs", "ins": "insiders", "gov": "officials"}
+GONE = {"f13": "13F manager", "etf": "active ETF", "ins": "insider", "gov": "official"}
+
+
+def _tk(t):
+    return (t or "").upper().replace("-", ".")
+
+
+def signed(v, d=0):
+    return ("+" if v > 0 else "−" if v < 0 else "") + f"{abs(v):,.{d}f}"
+
+
+def smart_file(site, rel):
+    """A file of the hub's smart-money data (data/smart/…), or None when it is not published yet."""
+    try:
+        return hub_file(site, "smart/" + rel)
+    except Exception as err:
+        print(f"smart money: {rel} not available ({str(err)[:100]})")
+        return None
+
+
+def fnv_bucket(actor_id):
+    """The actor's bucket file name — the same FNV-1a hash as disclosures/app/smart.py bucket()."""
+    h = 0x811c9dc5
+    for b in actor_id.encode("utf-8"):
+        h = ((h ^ b) * 0x01000193) & 0xffffffff
+    return f"{h % 128:02x}"
+
+
+def smart_context(site, tk):
+    """One stock's smart score now and how each group is voting (or None)."""
+    d = smart_file(site, "t/" + re.sub(r"[^A-Za-z0-9-]", "_", tk.replace(".", "-")) + ".json")
+    if not d or not d.get("now"):
+        return None, ""
+    n, votes = d["now"], d.get("votes") or []
+    by = {}
+    for v in votes:
+        b = by.setdefault(v[2], [0, 0])
+        b[0 if v[4] > 0 else 1] += 1
+    parts = [f"{GNAME.get(g, g)} {b[0]} net buyers / {b[1]} net sellers" for g, b in by.items()]
+    line = (f"Smart-money score {signed(n['S'])} on a scale of −100 to +100 (each trader's vote weighted by how often their past "
+            f"trades beat SPY over the next 3 months; {n['n']} votes; everyone counted alike: {signed(n['raw'])}). " + "; ".join(parts) + ".")
+    return n, line
+
+
+def plan_reddit_hot(site, rows, c, by_ticker, state_ok, today):
+    """Reddit's hottest stock right now as a cashtag, against what insiders, 13F managers and officials are doing in it."""
+    try:
+        d = hub_file(site, "market/reddit.json")
+    except Exception as err:
+        print(f"reddit_hot: no Reddit scan published ({str(err)[:100]})")
+        return None
+    pick = next((r for r in (d.get("rows") or [])[:5] if state_ok("reddit_hot", _tk(r["ticker"]), hours=72)), None)
+    if not pick:
+        print("reddit_hot: the top names were all posted within three days")
+        return None
+    tk = _tk(pick["ticker"])
+    n, ctx = smart_context(site, tk)
+    e = by_ticker.get(tk)
+    cj, fq = figures(site, e) if e else (None, None)
+    th = (pick.get("threads") or [])[:3]
+    talk = ("\n".join(f"- r/{t['sub']}: \"{t['title'][:110]}\" ({t['score']} upvotes, {t['comments']} comments)" for t in th) if th
+            else f"- named in {pick.get('mentions')} threads in 24 hours (counts from ApeWisdom; no thread titles)")
+    m, m0 = pick.get("mentions"), pick.get("mentions_prev")
+    task = (f"REDDIT'S HOTTEST STOCK RIGHT NOW (hot and new threads on r/wallstreetbets, r/stocks, r/investing, r/options …, "
+            f"weighted by upvotes, comments and freshness): ${tk}" + (f" — {m} threads in the last 24 hours (the day before: {m0})" if m is not None else "")
+            + f".\n{talk}\n\nWHAT THE DISCLOSED MONEY IS DOING IN ${tk} (SEC and congressional filings):\n" + (ctx or "No 13F manager, ETF, insider or official has traded it in the current windows.")
+            + (f"\n\nLatest filing figures:\n{tweet.headline_lines(cj, fq, tk)}" if fq else "\n\nNo chart is attached; do not mention one.")
+            + "\n\nOpen with Reddit's hottest stock and the cashtag, then contrast the crowd with the filings in one sentence. Say "
+              "“score” with its −100 to +100 scale if you give it. Never say what the stock will do; ask whether the hype and the filings agree.")
+    fb = (f"Reddit's hottest stock right now: ${tk}" + (f" ({m} threads in 24h, {m0} the day before)" if m is not None else "") + ". "
+          + (f"The filings: smart-money score {signed(n['S'])} of ±100 from {n['n']} disclosed trades, weighted by each trader's record. "
+             if n else "No insider, 13F manager or official has traded it lately. ")
+          + "Do the crowd and the filings agree?")
+    return {"kind": "reddit_hot", "task": task, "cashtags": [tk], "items": [(e, cj, fq)] if fq else [], "fallback": fb,
+            "must": (r"reddit", "say it is Reddit's hottest / most-discussed stock right now"),
+            "source_reply": (f"The threads: {th[0]['url']}" if th else ""), "tags": H.pick("reddit", e, key=f"reddit_hot:{tk}:{today}")}
+
+
+def plan_smart_buys(site, rows, c, by_ticker, state_ok, today):
+    """The stocks the traders with the best records are net buying now (smart-money score, −100 … +100)."""
+    cfg = {**SMART, **(c.get("smart") or {})}
+    d = smart_file(site, "index.json")
+    if not d or not d.get("stocks"):
+        return None
+    F = d["stock_fields"]
+    rows_ = [dict(zip(F, r)) for r in d["stocks"]]
+    cands = [r for r in rows_ if (r.get("S") or 0) >= 50 and r["votes"] >= cfg["min_votes"] and r["skilled_buyers"] >= cfg["min_skilled"]
+             and r["skilled_buyers"] > r["skilled_sellers"] and state_ok("smart_buys", _tk(r["ticker"]), hours=24 * 10)]
+    cands.sort(key=lambda r: (_tk(r["ticker"]) in by_ticker, r["S"], r["skilled_buyers"]), reverse=True)
+    picks = cands[:5]
+    if len(picks) < 3:
+        print("smart_buys: fewer than three stocks with skilled net buying")
+        return None
+    bt = ((d.get("backtest") or {}).get("all") or {}).get("smart") or {}
+    top = next((b for b in bt.get("buckets") or [] if b[0].startswith("+50")), None)
+    lines = []
+    for r in picks:
+        groups = ", ".join(f"{GNAME[g]} {signed(r['S_' + g])}" for g in ("f13", "etf", "ins", "gov") if r.get("S_" + g) is not None)
+        lines.append(f"- ${_tk(r['ticker'])} ({r['name']}): score {signed(r['S'])}, {r['skilled_buyers']} net buyers with a winning record vs "
+                     f"{r['skilled_sellers']} such sellers, {r['votes']} votes; by group: {groups}")
+    items = []
+    for r in picks:
+        e = by_ticker.get(_tk(r["ticker"]))
+        if e and len(items) < 4:
+            cj, fq = figures(site, e)
+            if fq:
+                items.append((e, cj, fq))
+    task = ("SMART-MONEY SCORE (−100 … +100): every disclosed trade by 13F managers, active ETFs, insiders and officials is scored by "
+            "what the stock did next (its return against SPY over 63 trading days); today's net buyers and sellers of each stock are "
+            "weighted by those records. Highest scores now:\n" + "\n".join(lines)
+            + (f"\n\nHonesty line you may use: in the walk-forward backtest, stocks scoring +50 to +100 beat the typical stock "
+               f"{top[4] * 100:.0f}% of the time over the next 3 months ({top[1]:,} stock-months)." if top and top[4] is not None else "")
+            + "\n\nSay in the first sentence that the numbers are a score weighted by traders' track records. List the cashtags with their "
+              "scores, name what stands out in a few words, ask which one the audience would dig into. Never say they will rise.")
+    fb = ("Smart-money score (disclosed trades weighted by each trader's track record, −100 to +100): "
+          + ", ".join(f"${_tk(r['ticker'])} {signed(r['S'])}" for r in picks) + ". Which one would you dig into?")
+    return {"kind": "smart_buys", "task": task, "cashtags": [_tk(r["ticker"]) for r in picks], "items": items, "fallback": fb,
+            "must": (r"score|record", "say the numbers are a score weighted by traders' track records (−100 to +100)"),
+            "tags": H.pick("smart", items[0][0] if items else None, key="smart_buys:" + ",".join(r["ticker"] for r in picks))}
+
+
+def plan_smart_record(site, rows, c, by_ticker, state_ok, today):
+    """One trader with a strong, tested record (an official first, then insiders and 13F managers) who just traded."""
+    cfg = {**SMART, **(c.get("smart") or {})}
+    d = smart_file(site, "index.json")
+    if not d:
+        return None
+    F = d["leader_fields"]
+    since = (today - dt.timedelta(days=cfg["record_days"])).isoformat()
+    for g in ("gov", "ins", "f13"):
+        for raw in (d.get("leaders") or {}).get(g) or []:
+            a = dict(zip(F, raw))
+            if (a.get("decisions") or a["scored"]) < cfg["min_decisions"] or (a["p"] or 0) < cfg["min_p"] or (a["last"] or "") < since:
+                continue
+            if not state_ok("smart_record", a["id"], hours=24 * 30):
+                continue
+            b = smart_file(site, f"a/{g}/{fnv_bucket(a['id'])}.json")
+            rec = ((b or {}).get("actors") or {}).get(a["id"])
+            if not rec or not rec.get("trades"):
+                continue
+            t = rec["trades"][0]                        # [date, ticker, d, size, conviction, ex, ex2, follow, right, known, ref]
+            tk = _tk(t[1])
+            s = rec["stats"]
+            e = by_ticker.get(tk)
+            cj, fq = figures(site, e) if e else (None, None)
+            verb = "bought" if t[2] > 0 else "sold"
+            size = (f" (about {t[3] * 100:.1f}% of the portfolio)" if g in ("f13", "etf") else f" (${t[3]:,.0f}{' midpoint of the disclosed range' if g == 'gov' else ''})") if t[3] else ""
+            who = f"{a['name']}" + (f", {a['sub']}" if a.get("sub") else "")
+            task = (f"TRACK RECORD from public filings ({GONE[g]}; every disclosed trade scored by the stock's return against SPY over the "
+                    f"next 63 trading days — a sale counts as right when the stock lagged): {who}. {s['scored']} trades scored in "
+                    f"{s.get('decisions') or s['scored']} separate decisions; right on {s['hit'] * 100:.0f}% of them, {s['acc'] * 100:.0f}% weighted by "
+                    f"size and move; buys right {(s['buy']['hit'] or 0) * 100:.0f}% ({s['buy']['n']}), sales {(s['sell']['hit'] or 0) * 100:.0f}% ({s['sell']['n']}); "
+                    f"average excess return per trade {s['alpha'] * 100:+.1f}%.\nLATEST DISCLOSED TRADE: {verb} ${tk}{size} on {t[0]}, disclosed {t[9]}."
+                    + (f"\n\nLatest filing figures of ${tk}:\n{tweet.headline_lines(cj, fq, tk)}" if fq else "\n\nNo chart is attached; do not mention one.")
+                    + "\n\nOpen with the record (name and hit rate), then the latest trade. Past accuracy is no promise — never imply the "
+                      "new trade will work; ask whether the audience thinks it is skill or luck.")
+            fb = (f"Track record: {a['name']} — right on {s['hit'] * 100:.0f}% of {s['scored']} disclosed trades (stock vs SPY 3 months later). "
+                  f"Latest: {verb} ${tk} on {t[0]}. Skill or luck?")
+            return {"kind": "smart_record", "task": task, "cashtags": [tk], "items": [(e, cj, fq)] if fq else [], "fallback": fb,
+                    "event_key": f"smart_record:{a['id']}", "must": (r"\d+%", "give the hit rate as a percentage"),
+                    "tags": H.pick("congress" if g == "gov" else "insider" if g == "ins" else "13f", e, key=f"smart_record:{a['id']}")}
+    print("smart_record: no strong, tested record with a trade in the last month")
+    return None
+
+
+def _combined_rows(site, key):
+    d = smart_file(site, f"combined/{key}.json")
+    ix = smart_file(site, "combined/index.json")
+    if not d or not ix:
+        return None, None
+    per = next((p for p in ix.get("periods") or [] if p["key"] == key), {"label": key})
+    F = d["fields"]
+    return [dict(zip(F, r)) for r in d.get("rows") or []], per
+
+
+def group_line(r, g):
+    b, s_, u = r.get(g + "_b") or 0, r.get(g + "_s") or 0, r.get(g + "_usd") or 0
+    if not b and not s_:
+        return None
+    return f"{GNAME[g]} {b} net buyers / {s_} net sellers ({'+' if u >= 0 else '−'}{money(abs(u))} net)"
+
+
+def plan_all_agree(site, rows, c, by_ticker, state_ok, today):
+    """A stock that every group trading it was net buying in this quarter's filings: 13F managers, insiders, officials …"""
+    for key in ("prev", "qtd"):
+        rs, per = _combined_rows(site, key)
+        if not rs:
+            continue
+        cands = [r for r in rs if r["groups_buy"] >= 2 and not r["groups_sell"] and state_ok("all_agree", _tk(r["ticker"]), hours=24 * 14)]
+        cands.sort(key=lambda r: (r["groups_buy"], _tk(r["ticker"]) in by_ticker, sum(r[g + "_usd"] for g in GNAME)), reverse=True)
+        if not cands:
+            continue
+        r = cands[0]
+        tk = _tk(r["ticker"])
+        e = by_ticker.get(tk)
+        cj, fq = figures(site, e) if e else (None, None)
+        lines = [x for x in (group_line(r, g) for g in GNAME) if x]
+        task = (f"ALL FLOWS, {per['label']} (SEC 13F and N-PORT reports, Form 4, House and Senate disclosures; each name counted once, "
+                f"its trades netted): every group that traded ${tk} was a net buyer — " + "; ".join(lines) + "."
+                + (f" Smart-money score now {signed(r['S_now'])} of ±100." if r.get("S_now") is not None else "")
+                + (f"\n\nLatest filing figures:\n{tweet.headline_lines(cj, fq, tk)}" if fq else "\n\nNo chart is attached; do not mention one.")
+                + "\n\nOpen with the agreement (how many groups, which), give each group's count, ask whether it means anything. "
+                  "13F holdings are quarter-end positions reported weeks later; say nothing about where the stock goes.")
+        fb = (f"${tk}, {per['label'].split(' (')[0]}: every group that traded it was a net buyer — " + "; ".join(lines) + ". Signal or coincidence?")
+        if social.xlen(fb) > 250:
+            fb = f"${tk}: {r['groups_buy']} groups of disclosed traders (13F managers, insiders, officials, ETFs) were all net buyers, none net sellers. Signal or coincidence?"
+        return {"kind": "all_agree", "task": task, "cashtags": [tk], "items": [(e, cj, fq)] if fq else [], "fallback": fb,
+                "tags": H.pick("flows", e, key=f"all_agree:{tk}:{key}")}
+    print("all_agree: no stock net-bought by two groups or more and sold by none")
+    return None
+
+
+def plan_qtd_flows(site, rows, c, by_ticker, state_ok, today):
+    """The quarter so far: insiders' and officials' biggest net purchases, and what the early 13F filers added."""
+    q, per = _combined_rows(site, "qtd")
+    p, per_p = _combined_rows(site, "prev")
+    if not q:
+        return None
+    ins = sorted([r for r in q if (r.get("ins_usd") or 0) > 0], key=lambda r: -r["ins_usd"])[:2]
+    gov = sorted([r for r in q if (r.get("gov_b") or 0) > (r.get("gov_s") or 0)], key=lambda r: (-r["gov_b"], -r["gov_usd"]))[:2]
+    f13 = sorted([r for r in (p or []) if (r.get("f13_usd") or 0) > 0], key=lambda r: -r["f13_usd"])[:1]
+    picks, seen = [], set()
+    for r in ins + gov + f13:
+        if _tk(r["ticker"]) not in seen:
+            seen.add(_tk(r["ticker"]))
+            picks.append(r)
+    if len(picks) < 3:
+        print("qtd_flows: too little in the quarter so far")
+        return None
+    lines = [f"- insiders: ${_tk(r['ticker'])} {money(r['ins_usd'])} net purchases ({r['ins_b']} insiders)" for r in ins]
+    lines += [f"- officials: ${_tk(r['ticker'])} {r['gov_b']} members net buyers ({r['gov_s']} net sellers)" for r in gov]
+    lines += [f"- early 13F filers for {per_p['label'].split(' —')[0]}: ${_tk(r['ticker'])} {money(r['f13_usd'])} net added ({r['f13_b']} managers)" for r in f13]
+    items = []
+    for r in picks:
+        e = by_ticker.get(_tk(r["ticker"]))
+        if e and len(items) < 4:
+            cj, fq = figures(site, e)
+            if fq:
+                items.append((e, cj, fq))
+    label = per["label"]
+    task = (f"{label.upper()} — what the disclosed money did (Form 4 open-market trades, House and Senate reports, and the 13F "
+            f"reports arriving for the last quarter):\n" + "\n".join(lines)
+            + "\n\nOpen with the quarter so far, then the standout of each group with its cashtag and number, then a question.")
+    fb = (f"{label.split(' (')[0]}: " + "; ".join(l[2:] for l in lines[:3]) + ". Which one would you look into?")
+    if social.xlen(fb) > 250:
+        fb = f"{label.split(' (')[0]}, the disclosed money: " + ", ".join(f"${_tk(r['ticker'])}" for r in picks) + " lead. Which one would you look into?"
+    return {"kind": "qtd_flows", "task": task, "cashtags": [_tk(r["ticker"]) for r in picks[:3]], "allowed": [_tk(r["ticker"]) for r in picks],
+            "items": items, "fallback": fb, "tags": H.pick("flows", items[0][0] if items else None, key=f"qtd_flows:{today}")}
+
+
 # ------------------------------------------------------------------ main
 def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_only=False, target=None, draft=False):
     """Plan, write, polish and check the posts of these kinds; draw the charts into media/x/ and append to
@@ -1509,6 +1772,11 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
              "ivmove": lambda: plan_ivmove(site, rows, c, by_ticker, state_ok, today),
              "opt13f": lambda: plan_opt13f(site, rows, c, by_ticker, state_ok, today),
              "rsleaders": lambda: plan_rsleaders(site, rows, c, by_ticker, state_ok, today),
+             "reddit_hot": lambda: plan_reddit_hot(site, rows, c, by_ticker, state_ok, today),
+             "smart_buys": lambda: plan_smart_buys(site, rows, c, by_ticker, state_ok, today),
+             "smart_record": lambda: plan_smart_record(site, rows, c, by_ticker, state_ok, today),
+             "all_agree": lambda: plan_all_agree(site, rows, c, by_ticker, state_ok, today),
+             "qtd_flows": lambda: plan_qtd_flows(site, rows, c, by_ticker, state_ok, today),
              "filing8k": lambda: plan_filing8k(site, rows, target or {}, today),
              "fund13f_for": lambda: plan_fund13f_for(site, rows, by_ticker, target or {}),
              "insider_for": lambda: plan_insider_for(site, rows, by_ticker, target or {}, today),

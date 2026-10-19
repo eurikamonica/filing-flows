@@ -103,6 +103,20 @@ Formats are named in the task; follow the one you are given.
 - **rsleaders** — the companies whose relative-strength rating jumped into the 90s. The first words say what the numbers
   are, or nobody can read `6→97`: `RS rating, 3 months: $AAA 6→97, $BBB 31→94, $CCC 30→92. $AAA went from the bottom
   of the market to the top. Which one holds up?` — cashtags with `old→new`, the biggest climber named, then the question.
+- **reddit_hot** — Reddit's hottest stock right now. Open with that and the cashtag, give the thread count or the hottest
+  thread in a few words, then contrast the crowd with what the filings show (insiders, 13F managers, officials, the
+  smart-money score with its −100 to +100 scale). Never predict the stock; ask whether the hype and the filings agree.
+  `Reddit's hottest stock right now: $AAA (48 threads in 24h, 9 the day before). The filings: 3 insiders net sellers, smart-money score −40 of ±100. Who's right, the crowd or the insiders?`
+- **smart_buys** — the stocks the traders with the best track records are net buying. Say in the first sentence that the
+  numbers are a score weighted by track records (−100 to +100), list the cashtags with their scores, ask which one to dig into.
+  `Smart-money score (disclosed trades weighted by each trader's record, −100 to +100): $AAA +92, $BBB +88, $CCC +81. Which one would you dig into?`
+- **smart_record** — one official, insider or 13F manager with a tested record who just traded. Open with the name and the
+  hit rate (vs SPY, three months later), then the latest trade with its date. Past accuracy is no promise: ask skill or luck.
+  `Rep. Jane Roe's disclosed trades beat SPY 3 months later 74% of the time (31 trades). Latest: bought $AAA on Oct 2. Skill or luck?`
+- **all_agree** — a stock every group that traded it net-bought this quarter (13F managers, active ETFs, insiders,
+  officials). Name the groups with their counts, note that 13F positions are reported weeks late, ask if it means anything.
+- **qtd_flows** — the calendar quarter so far across the groups: insiders' biggest net purchase, officials' most-bought, the
+  early 13F filers' top add, each with its cashtag and number, then one question.
 
 ## Rules
 1. Output only the post text. No quotes around it, no preamble.

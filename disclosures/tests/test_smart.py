@@ -97,7 +97,7 @@ class Parsing(unittest.TestCase):
             {'period': '2026-03-31', 'filed': '2026-05-15', 'complete': True, 'baseline_period': '2025-09-30', 'total_usd': 1e6,
              'changes': [ch('ZZZ', 100, 0, 50_000, 0, 'NEW')]}]}       # a two-quarter gap: not one decision
         ev = S.f13_events_of(m)
-        self.assertEqual(ev, [['AAA', '2026-06-30', '2026-08-14', 0.01, ''], ['BBB', '2026-06-30', '2026-08-14', -0.005, 'x']])
+        self.assertEqual(ev, [['AAA', '2026-06-30', '2026-08-14', 0.01, '', 100, 10000], ['BBB', '2026-06-30', '2026-08-14', -0.005, 'x', -50, -5000]])
         self.assertEqual(S.f13_events_of(m, skip_cusips=frozenset({'AAA'}))[0][0], 'BBB')
 
 
@@ -213,6 +213,18 @@ class Scoring(unittest.TestCase):
         self.assertLess(sk['side']['p'][a * 2 + 1], 0.75)  # one right decision, shrunk toward the group
 
 
+    def test_combined_periods(self):
+        P = {p['key']: p for p in S.combined_periods(S.ordinal('2026-10-19'))}
+        self.assertTrue(P['prev']['label'].startswith("Q3 2026 — this quarter's filings (Jul–Sep)"))
+        self.assertEqual((P['prev']['start'], P['prev']['end']), ('2026-07-01', '2026-09-30'))
+        self.assertIn('Nov 14', P['prev']['note'])                # the 45-day 13F deadline
+        self.assertEqual((P['prev2']['label'], P['both']['start'], P['both']['end']), ('Q2 2026 (Apr–Jun)', '2026-04-01', '2026-09-30'))
+        self.assertEqual((P['qtd']['label'], P['qtd']['start']), ('Q4 2026 to date (Oct 1 – Oct 19)', '2026-10-01'))
+        P = {p['key']: p for p in S.combined_periods(S.ordinal('2027-02-03'))}
+        self.assertTrue(P['prev']['label'].startswith('Q4 2026'))  # across the year end
+        self.assertEqual(P['prev2']['start'], '2026-07-01')
+
+
 @unittest.skipIf(S is None, 'numpy not installed')
 class Build(unittest.TestCase):
     def test_offline_build_publishes(self):
@@ -254,6 +266,19 @@ class Build(unittest.TestCase):
             t = json.loads((pub / 't' / 'AAA.json').read_text())
             self.assertTrue(t['votes'] and t['votes'][0][0] == 'i:DOE JANE')                # the CEO's purchase this week
             json.dumps(idx, allow_nan=False)
+            # All flows: the quarter whose 13F reports are arriving (Q1 2026 here) has the manager's buy, Q2 to date the CEO's
+            cix = json.loads((pub / 'combined' / 'index.json').read_text())
+            self.assertEqual([p['key'] for p in cix['periods']], ['prev', 'prev2', 'both', 'qtd', 'd90'])
+            F = cix['fields']
+            prev = json.loads((pub / 'combined' / 'prev.json').read_text())
+            row = dict(zip(F, prev['rows'][0]))
+            self.assertEqual((row['f13_b'], row['f13_s'], row['groups_buy']), (1, 0, 1))
+            self.assertEqual(row['ticker'], 'BBB')
+            self.assertTrue(11000 < row['f13_usd'] < 11200)            # 200 shares × BBB's close at the quarter end, not the filing's $100
+            self.assertEqual(prev['actors']['f13'][0][0], 'f:123')
+            qtd = json.loads((pub / 'combined' / 'qtd.json').read_text())
+            r2 = dict(zip(F, next(r for r in qtd['rows'] if r[0] == 'AAA')))
+            self.assertEqual((r2['ins_b'], r2['ins_usd'], r2['f13_b']), (1, 50000, 0))
 
 
 if __name__ == '__main__':

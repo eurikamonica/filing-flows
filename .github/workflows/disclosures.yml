@@ -9,7 +9,7 @@ on:
       module:
         description: Data module to update
         type: choice
-        options: [all, holdings, congress, cot, banks, npx, markets, prices, market, insiders, options, ownership, shorts, senate, events8k, news]
+        options: [all, holdings, congress, cot, banks, npx, markets, prices, market, insiders, options, ownership, shorts, senate, events8k, news, reddit]
         default: all
       batch_size:
         description: Optional entity/filer/PDF batch size (blank uses config)
@@ -56,7 +56,7 @@ permissions:
   contents: write
 concurrency:
   # light runs (insiders + 8-K + 13D / 13G / Form 144 + short interest + Senate PTRs + news, options + frames, market views) queue separately so the long 13F / officials runs never cancel them
-  group: disclosures-${{ (github.event.schedule == '28,58 * * * *' || github.event.schedule == '20 21 * * 1-5' || inputs.module == 'insiders' || inputs.module == 'options' || inputs.module == 'market' || inputs.module == 'ownership' || inputs.module == 'shorts' || inputs.module == 'senate' || inputs.module == 'events8k' || inputs.module == 'news') && 'light' || 'main' }}
+  group: disclosures-${{ (github.event.schedule == '28,58 * * * *' || github.event.schedule == '20 21 * * 1-5' || inputs.module == 'insiders' || inputs.module == 'options' || inputs.module == 'market' || inputs.module == 'ownership' || inputs.module == 'shorts' || inputs.module == 'senate' || inputs.module == 'events8k' || inputs.module == 'news' || inputs.module == 'reddit') && 'light' || 'main' }}
   cancel-in-progress: false
 defaults:
   run:
@@ -95,6 +95,8 @@ jobs:
           FDIC_API_KEY: ${{ secrets.FDIC_API_KEY }}
           CFTC_APP_TOKEN: ${{ secrets.CFTC_APP_TOKEN }}
           OPENFIGI_API_KEY: ${{ secrets.OPENFIGI_API_KEY }}
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}           # optional: Reddit's OAuth API (else the public listing / ApeWisdom)
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           REQUESTED_MODULE: ${{ inputs.module }}
           REVALIDATE: ${{ inputs.revalidate }}
           BATCH_SIZE: ${{ inputs.batch_size }}

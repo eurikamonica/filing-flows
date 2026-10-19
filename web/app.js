@@ -4356,6 +4356,11 @@
           <button class="btn" type="button" data-engage="engage_ivmove" title="The biggest one-day jump in 30-day implied volatility among companies on the site (CBOE delayed quotes)">✦ Options IV move</button>
           <button class="btn" type="button" data-engage="engage_opt13f" title="The biggest change in disclosed 13F puts or calls on a company on the site">✦ 13F puts & calls</button>
           <button class="btn" type="button" data-engage="engage_rsleaders" title="Companies whose relative-strength rating jumped into the 90s over three months">✦ RS leaders</button>
+          <button class="btn" type="button" data-engage="engage_reddit_hot" title="Reddit's hottest stock right now as a cashtag, against what insiders, 13F managers and officials are doing in it">✦ Reddit's hottest vs the filings</button>
+          <button class="btn" type="button" data-engage="engage_smart_buys" title="The stocks the traders with the best records are net buying now (smart-money score)">✦ Smart-money buying</button>
+          <button class="btn" type="button" data-engage="engage_smart_record" title="An official, insider or 13F manager with a strong, tested record who just traded">✦ Track record</button>
+          <button class="btn" type="button" data-engage="engage_all_agree" title="A stock that every group trading it (13F, ETFs, insiders, officials) net-bought this quarter">✦ All groups agree</button>
+          <button class="btn" type="button" data-engage="engage_qtd_flows" title="The quarter so far: insiders' and officials' biggest net purchases, the early 13F filers' top add">✦ Quarter so far</button>
         </div>
         <p class="muted small" id="engage-msg" role="status"></p>
         <h3>A fund's 13F</h3>

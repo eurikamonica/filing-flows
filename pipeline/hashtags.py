@@ -38,6 +38,9 @@ KINDS = {
     "movers": ["#StockMovers", "#trading"],
     "rs": ["#RelativeStrength", "#momentum"],                              # RS rating leaders (pipeline/engage.py)
     "capital": ["#buybacks", "#dividends"],
+    "smart": ["#SmartMoney", "#13F", "#InsiderBuying"],                     # smart-money scores and track records
+    "flows": ["#SmartMoney", "#Form4", "#CongressTrades"],                   # every group side by side (All flows)
+    "reddit": ["#wallstreetbets", "#Reddit", "#StocksToWatch"],              # Reddit's hottest stock
 }
 GENERAL = ["#stocks", "#investing", "#StockMarket", "#markets", "#investors", "#finance"]
 # more general tags the owner page offers to pick from ("X posts"); any other tag can be typed in

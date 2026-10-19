@@ -1168,7 +1168,8 @@ def _now_iso():
 
 
 ENGAGE_KINDS = ("engage_question", "engage_list", "engage_reddit_question", "engage_reddit_list", "engage_mover", "engage_explain",
-                "engage_peers", "engage_insider", "engage_event8k", "engage_ivmove", "engage_opt13f", "engage_rsleaders")   # Owner tools: write that post now
+                "engage_peers", "engage_insider", "engage_event8k", "engage_ivmove", "engage_opt13f", "engage_rsleaders",
+                "engage_reddit_hot", "engage_smart_buys", "engage_smart_record", "engage_all_agree", "engage_qtd_flows")   # Owner tools: write that post now
 FILING_KINDS = ("post_8k", "post_13f",       # owner: a post about one chosen 8-K (cik = company) or 13F (cik = the manager)
                 "post_insider", "post_official",   # ... or one row of the hub's Insider trades / Officials' trades (ref = its key)
                 "post_stake", "post_f144", "post_short",   # ... 13D / 13G, Form 144 and Short interest tables

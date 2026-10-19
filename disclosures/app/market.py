@@ -388,9 +388,13 @@ def build_flows(root, universe, scan=None, opts=None):
     if not quarter:
         return None, None
     summ = summarise(raw, prices, coverage)
-    windows = {'quarter': [quarter], 'ytd': ytd or [quarter]}
-    if early:
+    windows = {'quarter': [quarter]}
+    if early:                                            # the quarter being filed now, alone and added to the last full one
         windows['early'] = [early]
+        windows['recent'] = [quarter, early]
+    windows['ytd'] = ytd or [quarter]
+    if early and early[:4] == windows['ytd'][0][:4]:
+        windows['ytd_now'] = windows['ytd'] + [early]
     hist_periods = [p for p in sorted(coverage) if coverage[p] >= 10][-6:]
     out = {'generated_at': now(), 'managers_on_file': len(managers), 'coverage': {p: coverage[p] for p in sorted(coverage)},
            'windows': {}, 'note': ('Changes between consecutive quarter-end 13F disclosures of the managers processed so far — not '
@@ -409,8 +413,13 @@ def build_flows(root, universe, scan=None, opts=None):
             for lst in univ.values():
                 listed.update(r['cusip'] for r in lst)
         n = len(periods)
-        label = {'quarter': f'Quarter ended {quarter}', 'ytd': f'{periods[0][:4]} year to date ({n} quarter{"s" if n != 1 else ""} on file)',
-                 'early': f'Early filers for the quarter ended {early} ({coverage.get(early, 0)} managers so far)'}[key]
+        qn = lambda p: f'Q{(int(p[5:7]) - 1) // 3 + 1} {p[:4]}'
+        due = lambda p: (dt.date.fromisoformat(p) + dt.timedelta(days=45)).strftime('%b %d').replace(' 0', ' ')
+        label = {'quarter': f'{qn(quarter)} — quarter ended {quarter} ({coverage.get(quarter, 0)} managers)',
+                 'early': f'{qn(early)} — this quarter, being filed: {coverage.get(early, 0)} managers so far (due {due(early)})' if early else '',
+                 'recent': f'{qn(quarter)} + {qn(early)} so far' if early else '',
+                 'ytd': f'{periods[0][:4]} full quarters to date ({n} quarter{"s" if n != 1 else ""})',
+                 'ytd_now': f'{periods[0][:4]} to date, including {qn(early)} so far' if early else ''}[key]
         core = [r for r in stocks if not r['first'] and not r['gone']]
         out['windows'][key] = {'label': label, 'periods': periods, 'managers': coverage.get(periods[-1], 0),
                                'securities': len(rows), 'splits': sum(1 for r in rows if r['split']),

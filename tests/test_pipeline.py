@@ -2752,3 +2752,66 @@ def test_train_local_runs_to_its_report(tmp_path):
     rep = json.loads((md / "reports.jsonl").read_text().splitlines()[-1])
     assert rep["promoted"] and rep["work_score"] == 0.9 and rep["by_kind"]["event8k"] == 100
     assert "promoted" in (md / "README.md").read_text() and (md / "corpus-ids.txt").read_text().startswith(f"#v{corpus.VERSION}")
+
+
+def test_smart_money_flows_and_reddit_posts(tmp_path):
+    """The X posts from the hub's smart-money data: Reddit's hottest vs the filings, skilled net buying, a tested track
+    record, all groups agreeing, the quarter so far — each plan names its cashtags and its rule-based fallback passes the
+    checks (no "buy"/"sell", no exclamation marks, the cashtags present)."""
+    import datetime as dt
+    from pipeline import engage, notify
+    site = _site(tmp_path)
+    hub = site / "disclosures" / "data"
+    W = lambda rel, obj: (hub / rel).parent.mkdir(parents=True, exist_ok=True) or (hub / rel).write_text(json.dumps(obj))
+    today = dt.date(2026, 10, 16)
+    SF = ["ticker", "name", "S", "raw", "S_f13", "S_etf", "S_ins", "S_gov", "votes", "skilled_buyers", "skilled_sellers", "Z", "last"]
+    LF = ["id", "name", "sub", "n", "scored", "hit", "acc", "p", "L", "buy_n", "buy_p", "sell_n", "sell_p", "alpha", "follow", "last", "decisions"]
+    W("smart/index.json", {"stock_fields": SF, "leader_fields": LF,
+                           "stocks": [["NVDA", "NVIDIA", 95.0, 20.0, 90.0, None, None, None, 9, 5, 1, 3.1, "2026-10-10"],
+                                      ["AAPL", "Apple", 85.0, 40.0, 80.0, None, 70.0, None, 6, 4, 0, 2.2, "2026-10-10"],
+                                      ["META", "Meta", 70.0, 10.0, 70.0, None, None, None, 5, 3, 1, 1.5, "2026-09-30"],
+                                      ["CRWV", "CoreWeave", 60.0, -5.0, None, None, 60.0, None, 4, 2, 0, 1.0, "2026-10-01"]],
+                           "leaders": {"gov": [["g:JANE ROE", "Jane Roe", "US House", 40, 31, 0.74, 0.8, 0.72, 0.9, 20, 0.7, 11, 0.6, 0.05, 0.03, "2026-10-08", 25]]},
+                           "backtest": {"all": {"smart": {"buckets": [["+50 to +100", 26491, 0.0128, 0.45, 0.53]]}}}})
+    rec = {"name": "Jane Roe", "g": "gov", "sub": "US House", "more": 0,
+           "stats": {"n": 40, "scored": 31, "decisions": 25, "hit": 0.74, "acc": 0.8, "p": 0.72, "L": 0.9, "alpha": 0.05, "follow": 0.03,
+                     "buy": {"n": 20, "hit": 0.75, "p": 0.7}, "sell": {"n": 11, "hit": 0.72, "p": 0.6}, "last": "2026-10-08"},
+           "trades": [["2026-10-08", "AAPL", 1, 50000.0, 1.0, None, None, None, None, "2026-10-14", "SP"]]}
+    assert engage.fnv_bucket("g:NANCY PELOSI") == "55"                        # = disclosures/app/smart.py bucket()
+    W(f"smart/a/gov/{engage.fnv_bucket('g:JANE ROE')}.json", {"fields": [], "actors": {"g:JANE ROE": rec}})
+    W("smart/t/AAPL.json", {"now": {"S": 85.0, "raw": 40.0, "n": 6}, "votes": [["f:1", "Fund", "f13", "", 1, 1.0, 0.5, 0.7, 30, "2026-09-30"],
+                                                                             ["i:X", "X", "ins", "CEO", -1, 1.0, 0.2, 0.6, 9, "2026-10-01"]]})
+    CF = ["ticker", "name", "S", "raw"] + [f"{g}_{k}" for g in ("f13", "etf", "ins", "gov") for k in ("b", "s", "usd")] + ["actors", "groups_buy", "groups_sell", "S_now"]
+    W("smart/combined/index.json", {"fields": CF, "periods": [{"key": "prev", "label": "Q3 2026 — this quarter's filings (Jul–Sep)"},
+                                                              {"key": "qtd", "label": "Q4 2026 to date (Oct 1 – Oct 16)"}]})
+    W("smart/combined/prev.json", {"fields": CF, "rows": [["META", "Meta", 60, 80, 12, 2, 4.2e8, 0, 0, 0, 2, 0, 1.5e6, 3, 0, 31000, 19, 3, 0, 70.0],
+                                                          ["AAPL", "Apple", 10, 20, 30, 25, 1e8, 0, 0, 0, 0, 1, -2e6, 1, 1, 0, 58, 1, 1, 85.0]]})
+    W("smart/combined/qtd.json", {"fields": CF, "rows": [["CRWV", "CoreWeave", 50, 60, 0, 0, 0, 0, 0, 0, 3, 0, 4.1e6, 0, 0, 0, 3, 1, 0, 60.0],
+                                                         ["AAPL", "Apple", 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2.5e5, 0, 1, -8000, 2, 1, 1, 85.0],
+                                                         ["SMCL", "Small", 40, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 45000, 3, 1, 0, None]]})
+    W("market/reddit.json", {"rows": [{"ticker": "AAPL", "name": "Apple", "heat": 120, "mentions": 40, "mentions_prev": 10,
+                                       "threads": [{"sub": "stocks", "title": "AAPL after the event", "score": 900, "comments": 300,
+                                                    "url": "https://www.reddit.com/r/stocks/comments/x/"}]}]})
+    s = notify.Site(str(site))
+    rows = s.json("index.json")["companies"]
+    for e in rows:
+        e["ticker"] = (e.get("ticker") or "").upper().replace("-", ".")
+    by = {r["ticker"]: r for r in rows if r.get("ticker")}
+    ok = lambda *a, **k: True
+    c = engage.cfg()
+    plans = {k: f(s, rows, c, by, ok, today) for k, f in (("reddit_hot", engage.plan_reddit_hot), ("smart_buys", engage.plan_smart_buys),
+                                                        ("smart_record", engage.plan_smart_record), ("all_agree", engage.plan_all_agree),
+                                                        ("qtd_flows", engage.plan_qtd_flows))}
+    assert plans["reddit_hot"]["cashtags"] == ["AAPL"] and "Smart-money score +85" in plans["reddit_hot"]["task"]
+    assert plans["reddit_hot"]["source_reply"].startswith("The threads: https://www.reddit.com/")
+    assert plans["smart_buys"]["cashtags"][:3] == ["AAPL", "META", "CRWV"]          # site companies (with charts) first
+    assert "53% of the time" in plans["smart_buys"]["task"]
+    assert plans["smart_record"]["cashtags"] == ["AAPL"] and "Jane Roe" in plans["smart_record"]["task"]
+    assert plans["all_agree"]["cashtags"] == ["META"]                               # three groups net buying, none selling
+    assert plans["qtd_flows"]["cashtags"][0] == "CRWV"
+    for k, p in plans.items():
+        post = engage.clean(p["fallback"], p["cashtags"], p.get("tags") or ["#stocks"], allowed=p.get("allowed"), must=p.get("must"))
+        assert all(f"${t}" in post for t in p["cashtags"]), (k, post)
+        assert engage.KIND_TAGS[k] in ("reddit", "smart", "flows")
+    sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
+    assert sql.count("'engage_qtd_flows'") == 4 and "engage_smart_buys" in notify.ENGAGE_KINDS
