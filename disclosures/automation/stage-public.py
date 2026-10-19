@@ -225,6 +225,29 @@ def join_earnings(out, site_data):
     return n
 
 
+# GitHub Pages refuses a site of 10 GB or more. The 13F quarter files and the N-PX vote records are most of the hub's
+# data (gigabytes, growing with the 13F back-fill), so they stay out of the Pages build: data/remote.json tells the hub's
+# page (dashboard.js shardFetch) to read them from the repository's raw files at the commit being published.
+REMOTE_SHARDS = ('holdings', 'npx')
+
+
+def write_remote(out):
+    import os
+    repo, sha = os.environ.get('GITHUB_REPOSITORY'), os.environ.get('GITHUB_SHA')
+    if not repo or not sha:                                  # a local build: everything stays in data/
+        for name in REMOTE_SHARDS:
+            src = DOCS / 'data' / 'shards' / name
+            if src.exists():
+                shutil.copytree(src, out / 'data' / 'shards' / name, dirs_exist_ok=True)
+        return None
+    cfg = {'base': f'https://raw.githubusercontent.com/{repo}/{sha}/disclosures/docs/data/',
+           'prefixes': [f'shards/{n}/' for n in REMOTE_SHARDS]}
+    (out / 'data').mkdir(parents=True, exist_ok=True)
+    (out / 'data' / 'remote.json').write_text(json.dumps(cfg), encoding='utf-8')
+    print(f"::notice::hub records read from the repository instead of Pages: {', '.join(cfg['prefixes'])}")
+    return cfg
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default='_site/disclosures')
@@ -236,7 +259,15 @@ def main():
     args = ap.parse_args()
     out = Path(args.out)
     shutil.rmtree(out, ignore_errors=True)
-    shutil.copytree(DOCS, out, ignore=shutil.ignore_patterns('cache', 'discovery-state.json', 'npx-queue-state.json', 'meta.json'))
+    base_ignore = shutil.ignore_patterns('cache', 'discovery-state.json', 'npx-queue-state.json', 'meta.json')
+
+    def ignore(folder, names):
+        skip = set(base_ignore(folder, names))
+        if Path(folder).name == 'shards' and Path(folder).parent.name == 'data':
+            skip |= {n for n in names if n in REMOTE_SHARDS}
+        return skip
+    shutil.copytree(DOCS, out, ignore=ignore)
+    write_remote(out)
     if args.history and (Path(args.history) / 'rrg.json').exists():
         shutil.copytree(args.history, out / 'data' / 'market' / 'history', dirs_exist_ok=True)
         st = {}
