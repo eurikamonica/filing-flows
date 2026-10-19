@@ -67,6 +67,7 @@ jobs:
         run: |
           for f in web/*.js; do node --check "$f"; done
           node tests/test_fsa.cjs
+          node tests/test_posts_compose.cjs
       - name: Hub unit and template tests
         working-directory: disclosures
         run: |

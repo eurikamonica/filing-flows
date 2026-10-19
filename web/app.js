@@ -855,16 +855,18 @@
     body.innerHTML = `<div class="section"><div class="section-head"><h2>Posts for X</h2><span class="muted">Every chart family of ${t(name)}, written as a post</span></div>
       <p class="muted" style="max-width:72ch">Each post comes with a paragraph of analysis and a short narrative, written by fixed rules from the data on this site (no language model; every number is in the charts):
         the earnings Sankey, Polymarket and Kalshi against the options, the flows of 13F managers, ETFs, insiders (with their 10b5-1 plan trades) and officials,
-        capital allocation, debt, and the company's place in every rotation chart (RRG 2-D / 3-D / 4-D, the momentum clock, the solar system, the galaxy). Edit, then copy or open in X.</p>
+        capital allocation, debt, and the company's place in every rotation chart (RRG 2-D / 3-D / 4-D, the momentum clock, the solar system, the galaxy). Edit, then copy or open in X.
+        On top, <b>Compose</b>: today's quote first, then tick the angles you want — what the numbers lean to, the latest 8-K, insiders, the next report, analysts, smart money, the range, debt, the quarter — and one post is written from them.</p>
       <div id="posts-box"><p class="muted">Reading the data…</p></div></div>`;
     await loadPosts();
     if (!here() || !window.FFPosts) { if (here()) $('#posts-box').innerHTML = '<p class="muted">The posts could not load.</p>'; return; }
-    const B = await window.FFPosts.load(ticker, c.profile.cik);
+    const B = await window.FFPosts.load(ticker, c.profile.cik, ['compose']);   // every source: the composer ticks any angle
     B.site = c;
     if (!here()) return;
     const items = window.FFPosts.all(B), box = $('#posts-box');
     window.FFPosts.render(box, items);
     if (!items.length) box.innerHTML = '<p class="muted">No data for a post yet.</p>';
+    if (window.FFPosts.composer) window.FFPosts.composer(box, B);                // on top: tick the angles, one post
   }
 
   // ---------- debt & rates: drawn by the Disclosure Hub's shared view (disclosures/debt-view.js, data from app/debt.py) ----------
