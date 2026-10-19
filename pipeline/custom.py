@@ -303,6 +303,7 @@ def finish_companies(supa, site, unbuildable=None):
     for r in no:
         supa.update("company_requests", {"id": f"eq.{r['id']}"},
                     {"status": "failed", "error": why[str(int(r["cik"]))][:300], "done_at": _now().isoformat()})
+        print(f"::notice::company request CIK {int(r['cik'])} answered: {why[str(int(r['cik']))]}")
     ok += [r["id"] for r in no]
     old = [r["id"] for r in rows if r["id"] not in ok and r.get("created_at")
            and dt.datetime.fromisoformat(str(r["created_at"]).replace("Z", "+00:00")) < _now() - dt.timedelta(hours=6)]
