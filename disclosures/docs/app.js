@@ -143,7 +143,7 @@ function status(){return health()}
 function render(){
  baseRender();exported=[];
  tipData.length=0;
- $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView,valuation:valView,filings:filingsView,...(window.HUB_VIEWS||{})}[state.tab])();
+ $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView,valuation:valView,filings:filingsView,maps:mapsView,...(window.HUB_VIEWS||{})}[state.tab])();
  bind('market','market');bind('group','group');bind('from','from');bind('to','to');bind('asof','date');bind('cert','cert');bind('metric','metric');bind('base','base');bind('filing','filing');bind('direction','direction');
  if($('query')){$('query').onchange=e=>{state.query=e.target.value;state.page=0;render()};$('query').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  actions();
@@ -154,7 +154,7 @@ function render(){
  bindNews();
  bindRotation();
  bindOptions();
- bindDebt();bindConsensus();bindEtf();bindSmart();bindAllflows();bindValuation();bindFilings();
+ bindDebt();bindConsensus();bindEtf();bindSmart();bindAllflows();bindValuation();bindFilings();bindMaps();
  Object.values(window.HUB_BINDS||{}).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // tabs that register themselves (quality.js …)
 
  Object.values(window.HUB_BINDS||{}).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // views that register themselves (window.HUB_VIEWS)
