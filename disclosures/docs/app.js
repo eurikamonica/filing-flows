@@ -143,7 +143,7 @@ function status(){return health()}
 function render(){
  baseRender();exported=[];
  tipData.length=0;
- $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView}[state.tab])();
+ $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView}[state.tab]||window[state.tab+'View']||status)();   // a tab without an entry here: its script's <tab>View()
  bind('market','market');bind('group','group');bind('from','from');bind('to','to');bind('asof','date');bind('cert','cert');bind('metric','metric');bind('base','base');bind('filing','filing');bind('direction','direction');
  if($('query')){$('query').onchange=e=>{state.query=e.target.value;state.page=0;render()};$('query').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  actions();
@@ -155,6 +155,7 @@ function render(){
  bindRotation();
  bindOptions();
  bindDebt();bindConsensus();bindEtf();bindSmart();bindAllflows();
+ (window.HUB_BINDS||[]).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // tabs added by their own scripts
  if(window.FFPosts)window.FFPosts.fill($("workspace"));
 }
 function csvCell(v){let s=typeof v==='object'&&v!==null?JSON.stringify(v):String(v??'');if(/^[=+@\t\r]/.test(s)||(/^[-]/.test(s)&&!/^[-]\d+(\.\d+)?$/.test(s)))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
@@ -164,7 +165,7 @@ const TABS=[...document.querySelectorAll('nav button[data-tab]')].map(b=>b.datas
 function syncPills(){document.querySelectorAll('nav button[data-tab]').forEach(x=>{const on=x.dataset.tab===state.tab;x.classList.toggle('active',on);x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))})}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.page=0;state.date='';syncPills();try{history.replaceState(null,'','#'+state.tab)}catch(e){}render()});
 /* deep links: disclosures/#signals, #flows, #trades, #holdings … */
-function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
+function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);else if(arg&&typeof window[h+'DeepLink']==='function')window[h+'DeepLink'](arg);if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
 addEventListener('hashchange',()=>{if(fromHash())render()});
 fromHash();syncPills();
 render();

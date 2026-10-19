@@ -1,0 +1,89 @@
+# People & index (Disclosures → People & index; app/people.py): the largest 13F managers with a copy-the-13F backtest,
+# officials' trades against SPY with their committees and potential overlaps, an event study behind every new insider
+# trade, a preview of the next 13F from early filings, the S&P 500 rule screen, and analysts' price-target hit rates.
+# Daily. Reads the hub's 13F manager files straight from git (never checked out), smart-history's scored trades and prices,
+# consensus-history's snapshots and index members, and the congress-legislators project's committee lists.
+# Kept on the branch "research-people" (one commit, force-pushed); scan.yml publishes public/ at data/research/people/.
+name: Research — people & index
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for reading changed 13F manager files'
+        default: '30'
+  schedule:
+    - cron: '17 9 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: research-people
+  cancel-in-progress: false
+jobs:
+  people:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /pipeline/
+            /config/
+            /requirements.txt
+            /disclosures/app/
+            /disclosures/config/
+            /disclosures/docs/data/live.json
+            /disclosures/docs/data/cache/prices/
+            /disclosures/docs/data/cache/insiders/
+            /disclosures/docs/data/cache/frames/
+            /disclosures/docs/data/market/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: numpy, pyyaml, the data branches, the committee lists
+        run: |
+          python -m pip install --quiet numpy pyyaml
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" research-people >/dev/null; then
+            git clone --quiet --depth 1 --branch research-people "$url" people
+          else
+            mkdir people && git -C people init --quiet -b research-people && git -C people remote add origin "$url"
+          fi
+          if git ls-remote --exit-code --heads "$url" smart-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch smart-history "$url" smart
+            git -C smart sparse-checkout set --no-cone /public/a/ /public/index.json /cache/prices/
+          fi
+          if git ls-remote --exit-code --heads "$url" consensus-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch consensus-history "$url" cons
+            git -C cons sparse-checkout set --no-cone /companies/ /cache/constituents.json
+          fi
+          if git ls-remote --exit-code --heads "$url" data >/dev/null; then
+            git clone --quiet --depth 1 --branch data "$url" sitedata || true
+          fi
+          git clone --quiet --depth 1 --filter=blob:none --sparse https://github.com/unitedstates/congress-legislators cl && \
+            git -C cl sparse-checkout set --no-cone /committee-membership-current.yaml /committees-current.yaml /legislators-current.yaml || echo "committee lists not read"
+          du -sh people smart cons cl 2>/dev/null || true
+      - name: Build the site index (sectors and SIC codes)
+        continue-on-error: true
+        run: |
+          pip install --quiet -r requirements.txt 2>/dev/null || true
+          [ -d sitedata ] && python -m pipeline.build render --store sitedata --out _site/data || echo "no site index"
+      - name: Managers, officials, insiders, the 13F preview, S&P 500 candidates, price targets
+        timeout-minutes: 75
+        run: |
+          python disclosures/app/people.py run --root people --hub disclosures/docs/data --smart smart --consensus cons --legislators cl \
+            --site-index _site/data/index.json --minutes "${{ inputs.minutes || '30' }}"
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd people
+          printf '%s\n' '# research-people (data only)' '' 'The 13F histories of the largest managers (cache/managers.json.gz), the 13F preview ledger, the S&P 500 calls, XBRL frames,' \
+            'and the files the site publishes (public/), kept by .github/workflows/research-people.yml on main. Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "people $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "people $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:research-people && break; sleep $((i * 10)); done
+          cat public/status.json
