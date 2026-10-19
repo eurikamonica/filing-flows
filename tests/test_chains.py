@@ -1,5 +1,6 @@
 """Supply chains (pipeline/chains.py, pipeline/xfacts.py): run with `python -m pytest tests/test_chains.py`."""
 import json
+import math
 import os
 import sys
 import tempfile
@@ -136,3 +137,33 @@ def test_spend_chain_named_customer_is_fixed_and_rest_balances():
     w = {x["t"]: x["cents"] for x in doc["wallet"]}
     assert abs(w["CHIP"] - 20.0) < 0.01                        # $20B of $100B
     assert "profit" in doc["views"] and "cash" in doc["views"]
+
+
+def test_forecast_model_learns_the_share_and_beats_naive():
+    import random
+    from pipeline import chainmodel as CM
+    rnd = random.Random(7)
+    X, y = {}, {}
+    k0 = 2019 * 4
+    for i in range(30):                                   # capex grows with a wobble; the supplier books half a
+        X[k0 + i] = 40 * (1.07 ** i) * (1 + 0.04 * math.sin(i))      # quarter ahead of it
+    for i in range(1, 28):
+        k = k0 + i
+        y[k] = 5 + 0.1 * i + 0.12 * X[k + 1] + 0.08 * X[k] + rnd.gauss(0, 0.3)
+    m = CM.supplier_model(y, X, beta0=0.1, profile="lead")
+    assert m and abs(m["share"] - 0.20) < 0.04             # the data move the prior (0.10) to the truth (0.20)
+    assert m["dataw"] > 0.5 and m["lag"] < 0.5             # mostly data; the supplier leads or moves with capex
+    bt = m["bt"]
+    assert bt["mape"] < bt["mape_rw"] and bt["mape"] < 0.05
+    fc = CM.forecast(m, y, {**X, **{k0 + 30 + j: X[k0 + 29] * 1.05 ** (j + 1) for j in range(6)}}, [k0 + 28, k0 + 29])
+    assert len(fc) == 2 and fc[0][2] < fc[0][1] < fc[0][3]
+
+
+def test_buyer_path_spreads_the_guided_year():
+    from pipeline import chainmodel as CM
+    k = CM.cq("2026-06-30")                                # 2026 Q2
+    hist = {k - 1: 30.0, k: 34.0}
+    path, gy = CM.buyer_path(hist, {"year": "2026", "mid": 140.0}, "1231", k, k + 4)
+    assert gy == 2026 and abs(path[k + 1] - 38.0) < 1e-9 and abs(path[k + 2] - 38.0) < 1e-9   # (140 − 64) / 2
+    path2, gy2 = CM.buyer_path(hist, None, "1231", k, k + 2)
+    assert gy2 is None and path2[k + 1] > 34.0             # no guidance: the damped trend

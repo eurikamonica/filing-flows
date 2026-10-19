@@ -36,6 +36,8 @@ CFG_PATH = "config/chains.json"
 VERSION = 1
 CHECK_HOURS = 20                 # a chain company's filings are looked up again after this long
 REFRESH_PER_RUN = 45             # companies read per scan run (each: one to seven SEC requests)
+QH = 32                         # quarters of capital expenditures kept for spend-chain buyers (the forecast model)
+SEG_DEPTH = 10                  # older 10-Q / 10-K instances read for a supplier's segment history, a few per visit
 MIN_UNTRACED = 0.08              # at least this share of buyers' spending is taken as land, buildings and work no
                                  # listed supplier books (when suppliers' estimates already exceed what buyers spent)
 CAP_PALETTE = ["#2f6db3", "#c4572e", "#1f8a5b", "#8a4fbf", "#b8860b", "#c23b74", "#2c9aa8", "#6b7d1f", "#a0522d",
@@ -67,11 +69,40 @@ def tickers(cfg, roles=None):
     return list(dict.fromkeys(t.upper() for t in out))
 
 
+def seg_tickers(cfg):
+    """Suppliers of spend chains whose chain line is a segment: their segment history feeds the forecast model."""
+    out = set()
+    for ch in cfg.get("chains", []):
+        if ch.get("kind") != "spend":
+            continue
+        for L in ch.get("layers", []):
+            for m in L.get("members", []):
+                if m.get("seg") or m.get("parts"):
+                    out.add(m["t"].upper())
+    return out
+
+
 def buyer_tickers(cfg):
     return {b["t"].upper() for ch in cfg.get("chains", []) if ch.get("kind") == "spend" for b in ch.get("buyers", [])}
 
 
 # ------------------------------------------------------------------------------------------------ one company's figures
+
+def _quarters_of(per):
+    """{(start, end): v} durations -> {end: quarter value}: three-month facts, else a year to date minus the year to date
+    one quarter shorter with the same start."""
+    span = lambda s, e: (_d(e) - _d(s)).days
+    q = {e: v for (s, e), v in per.items() if 80 <= span(s, e) <= 100}
+    by_start = {}
+    for (s, e), v in per.items():
+        by_start.setdefault(s, []).append((span(s, e), e, v))
+    for s, rows in by_start.items():
+        rows.sort()
+        for (sp1, e1, v1), (sp2, e2, v2) in zip(rows, rows[1:]):
+            if e2 not in q and 80 <= sp2 - sp1 <= 100:
+                q[e2] = v2 - v1
+    return dict(sorted(q.items()))
+
 
 class Co:
     """A stored company (build.Store record) seen through what the chains need, in US dollars."""
@@ -127,6 +158,39 @@ class Co:
                 out[e] = abs(v) if key == "capex" else v
         self._q[key] = dict(sorted(out.items()))
         return self._q[key]
+
+    def history(self, key):
+        """Quarterly figures {end: v} over as many years as are on file: the long companyfacts reading (spend-chain
+        buyers), the company's revenue history, and its stored quarters on top (dollars)."""
+        out = {e: v * self.conv for e, v in ((self.xf.get("qh") or {}).get(key) or [])}
+        out.update(self.quarterly(key))
+        return dict(sorted(out.items()))
+
+    def segment_history(self, pattern):
+        """Quarterly revenue {end: v} of the line(s) whose label matches, from every instance read (the latest
+        10-K and 10-Q, and the older ones collected for the forecast model): three-month facts, and the quarters
+        a filing gives only as a year to date (Q4 = year − nine months, Q2 = six months − Q1 …)."""
+        rx = re.compile(pattern, re.I)
+        merged = {}
+        for p in [self.xf.get("q"), self.xf.get("k"), {"axes": self.xf.get("mh") or {}}]:
+            for a, mm in ((p or {}).get("axes") or {}).items():
+                for m, d in mm.items():
+                    cur = merged.setdefault(a, {}).setdefault(m, {"l": d.get("l") or m, "f": {}})
+                    for x in d.get("f") or []:
+                        cur["f"].setdefault((x[0], x[1]), x[2])
+        pref = ["StatementBusinessSegmentsAxis", "ProductOrServiceAxis"]
+        for a in sorted(merged, key=lambda a: pref.index(a) if a in pref else 2):
+            hits = [d for d in merged[a].values() if rx.search(d["l"] or "")]
+            if not hits:
+                continue
+            series = [_quarters_of(d["f"]) for d in hits]
+            ends = set(series[0])
+            for q in series[1:]:
+                ends &= set(q)
+            out = {e: sum(q[e] for q in series) * self.conv for e in sorted(ends)}
+            if out:
+                return out
+        return {}
 
     def ttm(self, key):
         """{"v", "end", "py" (the twelve months a year earlier, when on file), "q" (latest quarter), "basis"} or None."""
@@ -928,6 +992,14 @@ def build(store, out, index=None, usd=None, cfg=None, now=None):
             print(f"  chain {ch['id']}: nothing on file yet (missing {', '.join(missing[:8])})")
             continue
         rows = res["companies"]
+        if kind == "spend":
+            try:                                                       # the forecast model (chainmodel.py)
+                from . import chainmodel
+                res["model"] = chainmodel.run(ch, res, cos)
+            except Exception as e:
+                print(f"::warning::chain {ch['id']}: forecast model not run: {e}")
+                import traceback
+                traceback.print_exc()
         res["views"]["profit"] = profit_view(ch, rows)
         lix = {L["id"]: i for i, L in enumerate(ch.get("layers", []))}
         if ch.get("kind") == "spend":
@@ -1049,6 +1121,7 @@ def refresh(store, sec, dims, text, time_up, queue_history=None, limit=REFRESH_P
             if not cm.get("m"):
                 return
     buyers = buyer_tickers(cfg)
+    segs = seg_tickers(cfg)
     investors = {t.upper() for t in cfg.get("investors", [])}
     now = dt.datetime.utcnow()
     todo = []
@@ -1060,8 +1133,9 @@ def refresh(store, sec, dims, text, time_up, queue_history=None, limit=REFRESH_P
         have = {(xf.get("k") or {}).get("accn"), (xf.get("q") or {}).get("accn")}
         checked = xf.get("checked")
         age = (now - dt.datetime.fromisoformat(checked)).total_seconds() / 3600 if checked else 1e9
-        if xf.get("v") != VERSION * 1000 + xfacts.VERSION or (newest and newest not in have) or age >= CHECK_HOURS:
-            todo.append((0 if not xf else 1 if newest and newest not in have else 2, -age, t, cik))
+        shallow = t in segs and len(xf.get("mh_accns") or []) < SEG_DEPTH and age >= 1
+        if xf.get("v") != VERSION * 1000 + xfacts.VERSION or (newest and newest not in have) or age >= CHECK_HOURS or shallow:
+            todo.append((0 if not xf else 1 if newest and newest not in have else 2 if not shallow else 3, -age, t, cik))
     todo.sort()
     done = 0
     for _, _, t, cik in todo:
@@ -1069,7 +1143,7 @@ def refresh(store, sec, dims, text, time_up, queue_history=None, limit=REFRESH_P
             break
         done += 1
         try:
-            _refresh_one(store, sec, dims, text, t, cik, t in buyers, t in investors, queue_history)
+            _refresh_one(store, sec, dims, text, t, cik, t in buyers, t in investors, queue_history, t in segs)
         except Exception as e:
             print(f"  chain facts skipped for {t}: {e}", file=sys.stderr)
     if done:
@@ -1082,7 +1156,18 @@ def _rows(sub):
     return [{k: r[k][i] for k in keys} for i in range(len(r.get("accessionNumber", [])))]
 
 
-def _refresh_one(store, sec, dims, text, t, cik, is_buyer, is_investor, queue_history):
+def _merge_axes(into, axes, keep=("ProductOrServiceAxis", "StatementBusinessSegmentsAxis")):
+    """Add an instance's revenue lines to the merged history; figures already there (from a newer filing) win."""
+    for a, mm in (axes or {}).items():
+        if a not in keep:
+            continue
+        for m, d in mm.items():
+            cur = into.setdefault(a, {}).setdefault(m, {"l": d.get("l") or m, "f": []})
+            have = {(x[0], x[1]) for x in cur["f"]}
+            cur["f"] += [x for x in d.get("f") or [] if (x[0], x[1]) not in have]
+
+
+def _refresh_one(store, sec, dims, text, t, cik, is_buyer, is_investor, queue_history, seg_hist=False):
     rec = store.company(cik)
     xf = dict(rec.get("xf") or {})
     if xf.get("v") != VERSION * 1000 + xfacts.VERSION:
@@ -1106,6 +1191,41 @@ def _refresh_one(store, sec, dims, text, t, cik, is_buyer, is_investor, queue_hi
         labels = dims.parse_labels(sec.get(lab)) if lab else {}
         p = xfacts.parse(sec.get(inst), labels)
         xf[key] = {"accn": r["accessionNumber"], "form": r["form"], "filed": r["filingDate"], **p}
+    newest = (xf.get("q") or xf.get("k") or {}).get("accn")
+    if is_buyer and newest and (xf.get("qh") or {}).get("accn") != newest:
+        try:                                                 # seven-plus years of quarterly capex (companyfacts)
+            from . import facts as F
+            from .build import primary_currency
+            raw = sec.get_json(sec.companyfacts_url(cik))
+            fx = F.index_facts(raw, primary_currency(raw) or "USD")
+            ends = F.quarter_ends(fx)[-QH:]
+            qh = {"accn": newest}
+            for key in ("capex", "revenue", "ocf"):
+                qh[key] = [[e, v] for e in ends for v in [F.value(fx, key, e)] if v is not None]
+            xf["qh"] = qh
+        except Exception as e:
+            print(f"  capex history not read for {t}: {e}", file=sys.stderr)
+    if seg_hist:                                             # older instances: the segment lines' history
+        done = list(xf.get("mh_accns") or [])
+        mh = xf.get("mh") or {}
+        for key in ("q", "k"):                               # the latest two are already read
+            p = xf.get(key) or {}
+            if p.get("accn") and p["accn"] not in done:
+                _merge_axes(mh, p.get("axes"))
+                done.append(p["accn"])
+        older = [r for r in rows if r["form"] in ("10-Q", "10-K") and r["accessionNumber"] not in done]
+        for r in older[:3]:
+            if len(done) >= SEG_DEPTH:
+                break
+            try:
+                inst, lab = dims.find_files(cik, r["accessionNumber"])
+                if inst:
+                    labels = dims.parse_labels(sec.get(lab)) if lab else {}
+                    _merge_axes(mh, xfacts.parse(sec.get(inst), labels).get("axes"))
+            except Exception as e:
+                print(f"  older filing not read for {t} {r['accessionNumber']}: {e}", file=sys.stderr)
+            done.append(r["accessionNumber"])
+        xf["mh"], xf["mh_accns"] = mh, done
     if is_buyer:
         rel = next((r for r in rows if r["form"] == "8-K" and "2.02" in (r.get("items") or "")), None)
         if rel and (xf.get("guide") or {}).get("accn") != rel["accessionNumber"]:

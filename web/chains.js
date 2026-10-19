@@ -14,7 +14,10 @@
   const FONT = "'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif";
   const BG = '#fcfcfb', INK = '#1d1d1b', INK2 = '#3d3c39', INK3 = '#6b6a66', GREY = '#9a9893';
   const KIND = { spend: 'Spending flow', customers: 'Who pays', geo: 'By country', basket: 'Theme' };
-  const VIEWS = [['flow', 'Money flow'], ['profit', 'Profit pool'], ['cash', 'Cash in & out']];
+  const VIEWS = [['flow', 'Money flow'], ['forecast', 'Next 4 quarters (forecast)'], ['profit', 'Profit pool'], ['cash', 'Cash in & out']];
+  const hasModel = (d) => !!(d.model && d.model.suppliers && d.model.suppliers.length);
+  const viewsFor = (d) => VIEWS.filter(([k]) => k !== 'forecast' || hasModel(d));
+  const SCEN_L = { base: 'Base case', down: 'Buyers spend 20% less', up: 'Buyers spend 20% more' };
   const HUB = 'disclosures/data/';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const hubCache = new Map();
@@ -186,7 +189,7 @@
   }
 
   // ---------------------------------------------------------------- the page
-  const ST = { view: 'flow', fund: false, tier2: true, ovl: '', sort: 'attr', outlook: false, back: false };
+  const ST = { view: 'flow', fund: false, tier2: true, ovl: '', sort: 'attr', outlook: false, back: false, scen: 'base', shock: -20, fsup: null };
 
   function prefsLoad(ctx) {
     const p = ctx.prefs.get('chains', {}) || {};
@@ -237,31 +240,60 @@
     });
     return out;
   }
+  /* Scale a money-flow view: each buyer's links by fb(buyer), each supplier's by fs(supplier); layers and the rest
+     follow from the sums. */
+  function scaleView(d, v, fb, fs, sub) {
+    const buyers = new Set((d.buyers || []).map((b) => b.t));
+    const sups = new Set((d.companies || []).filter((c) => c.role !== 'tier2').map((c) => c.id));
+    const links = v.links.map((l) => {
+      let f = 1;
+      if (buyers.has(l.s)) f = fb(l.s);
+      else if (buyers.has(l.t) && String(l.s).startsWith('F:')) f = fb(l.t);
+      else if (String(l.s).startsWith('L:') && sups.has(l.t)) f = fs(l.t);
+      else if (sups.has(l.s)) f = fs(l.s);
+      return Object.assign({}, l, { v: l.v * f });
+    });
+    const inflow = {}, outflow = {};
+    links.forEach((l) => { outflow[l.s] = (outflow[l.s] || 0) + l.v; inflow[l.t] = (inflow[l.t] || 0) + l.v; });
+    // "not traced" keeps what the buyers spend beyond what the suppliers book; a layer is the sum of its suppliers
+    const nodes = v.nodes.map((n) => Object.assign({}, n, { v: Math.max(inflow[n.id] || 0, outflow[n.id] || 0) || n.v * (buyers.has(n.id) ? fb(n.id) : 1),
+      sub: sub ? sub(n) || n.sub : n.sub }));
+    const lay = {};
+    links.filter((l) => String(l.s).startsWith('L:')).forEach((l) => (lay[l.s] = (lay[l.s] || 0) + l.v));
+    const into = {};
+    links.filter((l) => String(l.t).startsWith('L:')).forEach((l) => (into[l.t] = (into[l.t] || 0) + l.v));
+    links.filter((l) => String(l.t).startsWith('L:')).forEach((l) => { if (into[l.t] > 0 && lay[l.t] != null) l.v *= lay[l.t] / into[l.t]; });
+    const spent = {};
+    links.filter((l) => buyers.has(l.s) && l.t !== '_untraced').forEach((l) => (spent[l.s] = (spent[l.s] || 0) + l.v));
+    links.filter((l) => buyers.has(l.s) && l.t === '_untraced').forEach((l) => {
+      const n = v.nodes.find((x) => x.id === l.s);
+      const total = (n ? n.v : 0) * fb(l.s);
+      l.v = Math.max(total - (spent[l.s] || 0), 0);
+    });
+    const io = {}, oo = {};
+    links.forEach((l) => { oo[l.s] = (oo[l.s] || 0) + l.v; io[l.t] = (io[l.t] || 0) + l.v; });
+    nodes.forEach((n) => { if (io[n.id] || oo[n.id]) n.v = Math.max(io[n.id] || 0, oo[n.id] || 0); });
+    return { cols: v.cols, nodes, links: links.filter((l) => l.v > 0) };
+  }
   function scaleByOutlook(d, v) {
     const g = guided(d);
     if (!Object.keys(g).length) return v;
     const fb = (b) => (g[b] ? g[b].f : 1);
     const sup = {}, tot = {};
     (d.matrix || []).forEach((m) => { sup[m.s] = (sup[m.s] || 0) + m.v * fb(m.b); tot[m.s] = (tot[m.s] || 0) + m.v; });
-    const fs = (s) => (tot[s] ? sup[s] / tot[s] : 1);
-    const buyers = new Set((d.buyers || []).map((b) => b.t));
-    const links = v.links.map((l) => {
-      let f = 1;
-      if (buyers.has(l.s)) f = fb(l.s);
-      else if (buyers.has(l.t) && String(l.s).startsWith('F:')) f = fb(l.t);
-      else if (String(l.s).startsWith('L:')) f = fs(l.t);
-      else if (tot[l.s] != null) f = fs(l.s);
-      return Object.assign({}, l, { v: l.v * f });
-    });
-    const inflow = {}, outflow = {};
-    links.forEach((l) => { outflow[l.s] = (outflow[l.s] || 0) + l.v; inflow[l.t] = (inflow[l.t] || 0) + l.v; });
-    const nodes = v.nodes.map((n) => Object.assign({}, n, { v: Math.max(inflow[n.id] || 0, outflow[n.id] || 0) || n.v * (buyers.has(n.id) ? fb(n.id) : 1),
-      label: g[n.id] ? n.label : n.label, sub: g[n.id] ? `outlook ${g[n.id].year}` : n.sub }));
-    return { cols: v.cols, nodes, links };
+    return scaleView(d, v, fb, (s) => (tot[s] ? sup[s] / tot[s] : 1), (n) => (g[n.id] ? `outlook ${g[n.id].year}` : null));
+  }
+  function scaleByForecast(d, v) {
+    const F = ((d.model || {}).factors || {})[ST.scen] || { b: {}, s: {} };
+    const out = scaleView(d, v, (b) => (F.b[b] != null ? F.b[b] : 1), (s) => (F.s[s] != null ? F.s[s] : 1),
+      (n) => (F.b[n.id] != null ? `next 4 quarters ${F.b[n.id] >= 1 ? '+' : '−'}${Math.abs(100 * (F.b[n.id] - 1)).toFixed(0)}%` : null));
+    out.links.forEach((l) => { l.k = 0; l.why = `forecast (${SCEN_L[ST.scen].toLowerCase()})${l.why ? ' · ' + l.why : ''}`; });   // nothing here is reported yet
+    return out;
   }
   function viewOf(d) {
-    const v = d.views[ST.view] || d.views.flow;
-    if (ST.view !== 'flow' || d.kind !== 'spend') return v;
+    const fc = ST.view === 'forecast' && hasModel(d);
+    const v = fc ? d.views.flow : (d.views[ST.view] || d.views.flow);
+    if ((ST.view !== 'flow' && !fc) || d.kind !== 'spend') return v;
     let nodes = v.nodes.slice(), links = v.links.slice(), cols = v.cols.slice();
     if (!ST.tier2) {
       const t2 = new Set(nodes.filter((n) => n.col === 3).map((n) => n.id));
@@ -281,6 +313,7 @@
       });
       nodes = Object.values(src).concat(nodes);
     }
+    if (fc) return scaleByForecast(d, { cols, nodes, links });
     return ST.outlook ? scaleByOutlook(d, { cols, nodes, links }) : { cols, nodes, links };
   }
 
@@ -289,6 +322,10 @@
     const per = `Trailing twelve months to ${fdate(d.asof)}${d.oldest && d.oldest !== d.asof ? ` (latest filings; some end ${fdate(d.oldest)})` : ''}`;
     if (ST.view === 'profit') return `${per} · gross profit on the revenue attributed to this chain`;
     if (ST.view === 'cash') return `${per} · where the companies’ cash came from and went (cash-flow statements)`;
+    if (ST.view === 'forecast' && hasModel(d)) {
+      const M = d.model, gd = Object.keys(M.guided || {});
+      return `Forecast, next four quarters after ${M.last_x} · ${SCEN_L[ST.scen]} · buyers’ capex ${gd.length ? `as guided by ${gd.join(', ')}, ` : ''}else their damped trend · suppliers by the fitted model`;
+    }
     if (d.kind === 'spend' && c && ST.outlook && ST.view === 'flow') {
       const g = guided(d), names = Object.keys(g);
       if (names.length) return `Outlook: ${names.map((t) => `${t} ${usd(g[t].mid)} (${g[t].year})`).join(', ')} as guided in their latest earnings releases; other buyers at their last twelve months; suppliers scaled in proportion`;
@@ -311,7 +348,8 @@
         <a href="disclosures/#rotation/rrg~chain:${esc(d.id)}">Layers in the rotation graph ↗</a>
         ${d.missing && d.missing.length ? `<span title="not on the site yet, or no filing read yet">Not on file yet: ${d.missing.map(esc).join(', ')}</span>` : ''}</div></div>
       <div class="toolbar chain-tools">
-        <div class="seg" role="group" aria-label="View">${VIEWS.map(([k, l]) => `<button type="button" data-cv="${k}" class="${ST.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+        <div class="seg" role="group" aria-label="View">${viewsFor(d).map(([k, l]) => `<button type="button" data-cv="${k}" class="${ST.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+        ${hasModel(d) ? `<label class="dec-toggle" id="cscenw" ${ST.view === 'forecast' ? '' : 'hidden'}>Case <select id="cscen">${Object.entries(SCEN_L).map(([k, l]) => `<option value="${k}" ${ST.scen === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
         ${d.kind === 'spend' ? `<label class="dec-toggle"><input type="checkbox" id="cfund" ${ST.fund ? 'checked' : ''}> How the buyers paid</label>
           <label class="dec-toggle"><input type="checkbox" id="ctier" ${ST.tier2 ? 'checked' : ''}> Suppliers’ suppliers</label>
           ${Object.keys(guided(d)).length ? `<label class="dec-toggle" title="Capital expenditures as guided in the buyers' latest earnings releases"><input type="checkbox" id="cout" ${ST.outlook ? 'checked' : ''}> Outlook year (${Object.keys(guided(d)).length} of ${(d.buyers || []).length} buyers guided)</label>` : ''}
@@ -322,6 +360,7 @@
       <div class="chain-chart" id="cchart"></div>
       <div class="export chain-export"><span>Save</span><button class="pill" data-cx="png">PNG</button><button class="pill" data-cx="jpg">JPG</button><button class="pill" data-cx="pdf">PDF</button></div>
       <div class="chain-tip" id="ctip" hidden></div>
+      <section class="section" id="cmodel"></section>
       <section class="section" id="cpost"></section>
       <section class="section" id="ctables"></section>
       <section class="section" id="cmarket"></section>
@@ -331,14 +370,15 @@
     const draw = () => {
       const v = viewOf(d);
       scene = layout(v, {
-        title: `${d.name} — ${VIEWS.find((x) => x[0] === ST.view)[1].toLowerCase()}`, subtitle: subtitleOf(d), layerOrder: order,
+        title: `${d.name} — ${(viewsFor(d).find((x) => x[0] === ST.view) || VIEWS[0])[1].toLowerCase()}`, subtitle: subtitleOf(d), layerOrder: order,
         overlay: ST.view === 'flow' || ST.view === 'profit' ? overlay : null,
         back: ST.view === 'flow' && ST.back ? (d.stakes || []).slice(0, 8) : null,
-        footer: [`Source: SEC EDGAR filings (10-K, 10-Q, 20-F, 6-K), read by fixed rules. Light bands are estimates: ${d.kind === 'spend' ? 'assumed shares balanced across buyers' : 'assumed shares'}; dark bands are stated in the filings.`,
+        footer: [ST.view === 'forecast' ? 'Forecast, not reported figures: the buyers’ capex from their guidance where given, else a fading trend; each supplier by its model fitted on SEC filings (see the forecast model below).'
+          : `Source: SEC EDGAR filings (10-K, 10-Q, 20-F, 6-K), read by fixed rules. Light bands are estimates: ${d.kind === 'spend' ? 'assumed shares balanced across buyers' : 'assumed shares'}; dark bands are stated in the filings.`,
           'Figures are read automatically and can contain errors; check the filings before relying on them. Not investment advice.'],
       });
       const host = document.getElementById('cchart');
-      host.innerHTML = S.toSVG(scene, `${d.name}: ${VIEWS.find((x) => x[0] === ST.view)[1]}`);
+      host.innerHTML = S.toSVG(scene, `${d.name}: ${(viewsFor(d).find((x) => x[0] === ST.view) || VIEWS[0])[1]}`);
       bindChart(host, v, d);
     };
     const tip = document.getElementById('ctip');
@@ -386,11 +426,15 @@
     app.querySelectorAll('[data-cv]').forEach((b) => b.addEventListener('click', () => {
       ST.view = b.dataset.cv;
       app.querySelectorAll('[data-cv]').forEach((x) => x.classList.toggle('on', x === b));
+      const sw = document.getElementById('cscenw');
+      if (sw) sw.hidden = ST.view !== 'forecast';
       draw();
     }));
     const fund = document.getElementById('cfund'), tier = document.getElementById('ctier');
     if (fund) fund.addEventListener('change', () => { ST.fund = fund.checked; prefsSave(ctx); draw(); });
     if (tier) tier.addEventListener('change', () => { ST.tier2 = tier.checked; prefsSave(ctx); draw(); });
+    const scen = document.getElementById('cscen');
+    if (scen) scen.addEventListener('change', () => { ST.scen = scen.value; draw(); });
     const outl = document.getElementById('cout'), back = document.getElementById('cback');
     if (outl) outl.addEventListener('change', () => { ST.outlook = outl.checked; draw(); });
     if (back) back.addEventListener('change', () => { ST.back = back.checked; prefsSave(ctx); draw(); });
@@ -406,6 +450,8 @@
     await (ctx.fontsReady ? ctx.fontsReady() : Promise.resolve());
     if (!here()) return;
     draw();
+    if (hasModel(d)) { document.getElementById('cmodel').innerHTML = modelSection(d); bindModel(d); }
+    else if (d.model && d.model.error) document.getElementById('cmodel').innerHTML = `<p class="muted small">Forecast model: not yet — ${esc(d.model.error)}; the scan collects the buyers’ history over its next runs.</p>`;
     document.getElementById('ctables').innerHTML = tables(d);
     bindSort(d);
     document.getElementById('cpost').innerHTML = postsBox(d);
@@ -545,6 +591,160 @@
     });
   }
 
+  // ---------------------------------------------------------------- the forecast model (pipeline/chainmodel.py)
+  const qn = (l) => { const m = /^(\d{4})Q(\d)$/.exec(l || ''); return m ? +m[1] * 4 + +m[2] - 1 : null; };
+  const ql = (k) => `${Math.floor(k / 4)}Q${(k % 4) + 1}`;
+  const cents = (x) => (x == null ? '—' : `${(100 * x).toFixed(1)}¢`);
+
+  function lineChart(series, o) {
+    // series: [{pts: [[label, v]], color, dash, w, band: [[label, lo, hi]], name}] · values in $B
+    const W = 760, H = 250, L = 56, R = 14, T = 14, B = 34;
+    const labs = [...new Set(series.flatMap((s) => (s.pts || []).map((p) => p[0]).concat((s.band || []).map((p) => p[0]))))]
+      .sort((a, b) => qn(a) - qn(b));
+    if (labs.length < 2) return '';
+    const k0 = qn(labs[0]), k1 = qn(labs[labs.length - 1]);
+    const vals = series.flatMap((s) => (s.pts || []).map((p) => p[1]).concat((s.band || []).flatMap((p) => [p[1], p[2]]))).filter((v) => v != null && isFinite(v));
+    let lo = Math.min(0, ...vals), hi = Math.max(...vals) * 1.06 || 1;
+    const x = (l) => L + (qn(l) - k0) / Math.max(k1 - k0, 1) * (W - L - R), y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+    const step = Math.pow(10, Math.floor(Math.log10(hi / 4 || 1))), tick = [1, 2, 2.5, 5, 10].map((m) => m * step).find((t2) => hi / t2 <= 5) || step;
+    let g = '';
+    for (let v = 0; v <= hi; v += tick) g += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="#e5e3dd"/><text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="#6b6a66">${usd(v * 1e9)}</text>`;
+    labs.forEach((l, i) => { if (i % Math.ceil(labs.length / 10) === 0 || i === labs.length - 1) g += `<text x="${x(l).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="11" fill="#6b6a66">${esc(l)}</text>`; });
+    if (o && o.split) g += `<line x1="${x(o.split).toFixed(1)}" x2="${x(o.split).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="#9a9893" stroke-dasharray="3 3"/><text x="${(x(o.split) + 4).toFixed(1)}" y="${T + 10}" font-size="10.5" fill="#6b6a66">forecast →</text>`;
+    series.forEach((s) => {
+      if (s.band && s.band.length) {
+        const up = s.band.map((p) => `${x(p[0]).toFixed(1)},${y(p[2]).toFixed(1)}`), dn = s.band.slice().reverse().map((p) => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`);
+        g += `<polygon points="${up.concat(dn).join(' ')}" fill="${s.color}" fill-opacity=".14"/>`;
+      }
+      const pts = (s.pts || []).filter((p) => p[1] != null);
+      if (pts.length) g += `<polyline points="${pts.map((p) => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(' ')}" fill="none" stroke="${s.color}" stroke-width="${s.w || 2}"${s.dash ? ` stroke-dasharray="${s.dash}"` : ''}/>`;
+    });
+    const leg = series.filter((s) => s.name).map((s) => `<span><i style="background:${s.color}${s.dash ? ';opacity:.6' : ''}"></i>${esc(s.name)}</span>`).join('');
+    return `<svg class="mchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc((o && o.aria) || 'chart')}">${g}</svg><div class="mleg">${leg}</div>`;
+  }
+
+  function xMap(M) {
+    const X = {};
+    (M.x || []).forEach(([l, v]) => (X[qn(l)] = v));
+    return X;
+  }
+  function pathMap(M, sc) {
+    const X = xMap(M);
+    ((M.x_path || {})[sc] || []).forEach(([l, v]) => (X[qn(l)] = v));
+    return X;
+  }
+  function impact(M, r, shock) {
+    // ΔR over the supplier's next four quarters when the buyers' future capex moves by `shock` (a fraction)
+    const lags = M.lags || [-1, 0, 1, 2], last = qn(M.last_x);
+    const b = r.b || (M.profiles[r.profile] || [0.25, 0.25, 0.25, 0.25]).map((w) => w * r.share0);
+    const X = pathMap(M, 'base');
+    const lastY = qn((r.hist[r.hist.length - 1] || [])[0]);
+    let d0 = 0;
+    for (let k = lastY + 1; k <= lastY + 4; k++) lags.forEach((l, i) => { const kk = k - l; if (kk > last && X[kk] != null) d0 += b[i] * X[kk] * shock; });
+    return d0;
+  }
+
+  function modelSection(d) {
+    const M = d.model, bt = M.backtest;
+    const X = (M.x || []).slice(-16);
+    const cap = lineChart([
+      { pts: X, color: '#1d1d1b', name: 'Buyers’ capex, reported' },
+      { pts: [X[X.length - 1]].concat(M.x_path.base.slice(0, 6)), color: '#2f6db3', name: 'Base path' },
+      { pts: [X[X.length - 1]].concat(M.x_path.down.slice(0, 6)), color: '#b8432f', dash: '5 4', name: '−20%' },
+      { pts: [X[X.length - 1]].concat(M.x_path.up.slice(0, 6)), color: '#17734a', dash: '5 4', name: '+20%' },
+    ], { split: M.last_x, aria: 'Buyers’ combined capital expenditures by quarter, with the forecast paths' });
+    const rows = M.suppliers.slice().sort((a, b) => (b.chain_now || 0) - (a.chain_now || 0));
+    const gd = Object.entries(M.guided || {});
+    let h = `<div class="section-head"><h2>Forecast model</h2><span class="muted">How each supplier’s revenue follows the buyers’ capex — fitted on the filings, tested out of sample</span></div>
+      <p class="muted">Each supplier’s quarterly revenue line = the rest of its business (a level and a trend) + its share of the buyers’ combined capex a quarter ahead,
+      in the same quarter, and one and two quarters later. The share starts from the balanced chain above (the prior) and the reported quarters update it
+      (Bayesian regression). The buyers’ capex ahead: ${gd.length ? gd.map(([t, g]) => `${esc(t)} ${usd(g.mid * 1e9)} guided for ${g.year}`).join(', ') + '; the others their' : 'their'} damped trend.</p>`;
+    if (bt) {
+      h += `<p><b>Out of sample</b>, one quarter ahead, ${bt.suppliers} suppliers: the model missed by ${pct(bt.mape, 1)} on average given the buyers’ actual capex,
+        ${pct(bt.mape_uncond, 1)} with their capex projected as well; repeating the last quarter missed by ${pct(bt.mape_rw, 1)} and growing it at its last-year rate by
+        ${pct(bt.mape_growth, 1)}. The full model beat “last quarter” for ${bt.beats_rw} and “last-year growth” for ${bt.beats_growth} of the ${bt.suppliers} suppliers;
+        its 80% intervals held ${pct(bt.cover80)} of the time.</p>`;
+    }
+    h += `<div class="mbox">${cap}</div>`;
+    h += `<div class="section-head"><h3>What if the buyers spend more or less?</h3></div>
+      <div class="toolbar"><label class="dec-toggle">Buyers’ capex over the next four quarters vs the base path
+        <input type="range" id="mshock" min="-40" max="40" step="5" value="${ST.shock}"> <b id="mshockv">${ST.shock > 0 ? '+' : ''}${ST.shock}%</b></label></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Supplier</th><th>Line forecast</th><th class="num">Next 4 quarters, base</th><th class="num">Change</th>
+        <th class="num">% of the line</th><th class="num">80% range, base</th></tr></thead><tbody id="mimpact"></tbody></table></div>`;
+    h += `<div class="section-head"><h3>The fitted links</h3><span class="muted">Revenue per dollar of the buyers’ capex: assumed (prior) and after the filings (posterior), 80% intervals</span></div>
+      <div class="tbl-wrap"><table class="small"><thead><tr><th>Supplier</th><th>Line</th><th class="num">Quarters</th><th class="num">Prior ¢/$</th><th class="num">Fitted ¢/$</th>
+        <th class="num">Data weight</th><th class="num">Timing</th><th class="num">R²</th><th class="num">Error: model / full / last q / growth</th><th class="num">80% held</th></tr></thead><tbody>
+      ${rows.map((r) => `<tr><td class="mono">${esc(r.t)}</td><td>${esc(r.y_kind)}</td><td class="num">${r.first ? `${r.n} (${esc(r.first)}–${esc(r.last)})` : esc(r.n)}</td>
+        <td class="num">${cents(r.share0)}${r.share0_lo != null ? ` <span class="muted">${cents(Math.max(r.share0_lo, 0))}–${cents(r.share0_hi)}</span>` : ''}</td>
+        <td class="num">${r.share != null ? `<b>${cents(r.share)}</b> <span class="muted">${cents(Math.max(r.share_lo, 0))}–${cents(r.share_hi)}</span>` : `<span class="muted">${esc(r.note || '')}</span>`}</td>
+        <td class="num">${r.dataw != null ? pct(r.dataw) : '—'}</td>
+        <td class="num">${r.lag == null ? '—' : Math.abs(r.lag) < 0.25 ? 'with capex' : r.lag < 0 ? `${(-r.lag).toFixed(1)} q ahead` : `${r.lag.toFixed(1)} q after`}</td>
+        <td class="num">${r.r2 != null ? r.r2.toFixed(2) : '—'}</td>
+        <td class="num">${r.bt ? `${pct(r.bt.mape, 1)} / ${pct(r.bt.mape_uncond, 1)} / ${pct(r.bt.mape_rw, 1)} / ${pct(r.bt.mape_growth, 1)}` : '—'}</td>
+        <td class="num">${r.bt ? pct(r.bt.cover80) : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+    const withFc = rows.filter((r) => r.fc && r.fc.base && r.fc.base.length);
+    if (withFc.length) {
+      const pick = withFc.find((r) => r.id === ST.fsup) || withFc[0];
+      ST.fsup = pick.id;
+      h += `<div class="section-head"><h3>One supplier, quarter by quarter</h3></div>
+        <div class="toolbar"><label class="dec-toggle">Supplier <select id="mfsup">${withFc.map((r) => `<option value="${esc(r.id)}" ${r.id === pick.id ? 'selected' : ''}>${esc(r.t)} · ${esc(r.y_kind)}</option>`).join('')}</select></label></div>
+        <div class="mbox" id="mfchart">${supChart(pick)}</div>`;
+    }
+    h += `<details><summary>How the model works, and what it cannot know</summary>
+      <p>y<sub>t</sub> = a + c·t + Σ b<sub>ℓ</sub>·X<sub>t−ℓ</sub> + e<sub>t</sub>, ℓ = −1 (the supplier books revenue a quarter before the buyers pay — chips shipped to server makers),
+      0, 1 and 2 (billed as work is done, delivered later). X = the buyers’ combined cash capital expenditures by calendar quarter (a fiscal quarter counts in the
+      calendar quarter holding most of its days). Σ b is the supplier’s revenue per dollar of capex. The prior centres Σ b on the balanced chain above and spreads it
+      over the lags by layer (chips and gear early, power and construction later); the level and the trend are almost free. The posterior is the conjugate
+      Gaussian one with the noise variance re-estimated; “data weight” is how much the filings narrowed the share’s uncertainty (0%: the prior alone).</p>
+      <p>Tested out of sample with a rolling origin: fitted on the quarters up to one, it predicts the next, once with the buyers’ actual capex (how good the supply
+      link is) and once with their capex projected from their own trend (the whole forecast). Ahead, the buyers’ capex follows their guidance where their latest
+      earnings release gave a number for the year (spread over the quarters left after what they already spent), else a trend that fades. The cases move that path
+      by ±20%. Intervals are 80% predictive ranges from the posterior: they hold the parameters’ and the residuals’ uncertainty, not a change in the buyers’ plans —
+      that is what the cases are for.</p>
+      <p>What it cannot know: units and prices (no bill of materials is in the filings), orders not yet in revenue, customers outside the chain that move with it
+      (enterprise, sovereign and Chinese buyers end up in the level and trend), and a change in a supplier’s share that has not shown in its revenue yet. With a dozen
+      quarters per supplier, the shares are estimates with wide ranges; the error table says how much to trust each one.</p></details>`;
+    return h;
+  }
+
+  function supChart(r) {
+    const hist = r.hist.slice(-14), fit = (r.fit || []).filter((p) => qn(p[0]) >= qn(hist[0][0]));
+    const last = hist[hist.length - 1];
+    const join = (a) => [[last[0], last[1]]].concat(a.map((p) => [p[0], p[1]]));
+    return lineChart([
+      { pts: hist, color: '#1d1d1b', name: `${r.t} reported (${r.y_kind})` },
+      { pts: fit.map((p) => [p[0], p[2]]), color: '#9a9893', dash: '3 3', name: 'Model fit' },
+      { pts: join(r.fc.base), color: '#2f6db3', band: r.fc.base.map((p) => [p[0], p[2], p[3]]), name: 'Forecast, base (80% range)' },
+      { pts: join(r.fc.down), color: '#b8432f', dash: '5 4', name: 'Buyers −20%' },
+      { pts: join(r.fc.up), color: '#17734a', dash: '5 4', name: 'Buyers +20%' },
+    ], { split: last[0], aria: `${r.t}: reported, fitted and forecast quarterly revenue` });
+  }
+
+  function bindModel(d) {
+    const M = d.model;
+    const body = document.getElementById('mimpact'), sl = document.getElementById('mshock'), lab = document.getElementById('mshockv');
+    const paint = () => {
+      const sh = ST.shock / 100;
+      const rows = M.suppliers.map((r) => {
+        const base = r.fc && r.fc.base ? r.fc.base.reduce((a, p) => a + p[1], 0) : null;
+        const lo = r.fc && r.fc.base ? r.fc.base.reduce((a, p) => a + p[2], 0) : null, hi = r.fc && r.fc.base ? r.fc.base.reduce((a, p) => a + p[3], 0) : null;
+        return { r, base, lo, hi, dv: impact(M, r, sh) };
+      }).sort((a, b) => Math.abs(b.dv) - Math.abs(a.dv));
+      body.innerHTML = rows.map(({ r, base, lo, hi, dv }) => `<tr><td class="mono">${esc(r.t)}</td><td class="small">${esc(r.y_kind)}</td>
+        <td class="num">${base != null ? usd(base * 1e9) : '<span class="muted">prior only</span>'}</td>
+        <td class="num ${dv > 0 ? 'pos' : dv < 0 ? 'neg' : ''}">${dv ? (dv > 0 ? '+' : '−') + usd(Math.abs(dv) * 1e9) : '—'}</td>
+        <td class="num">${base ? sgn(dv / base, 1) : '—'}</td><td class="num muted">${lo != null ? `${usd(lo * 1e9)}–${usd(hi * 1e9)}` : '—'}</td></tr>`).join('');
+      lab.textContent = `${ST.shock > 0 ? '+' : ''}${ST.shock}%`;
+    };
+    if (sl) { sl.addEventListener('input', () => { ST.shock = +sl.value; paint(); }); paint(); }
+    const sel = document.getElementById('mfsup');
+    if (sel) sel.addEventListener('change', () => {
+      ST.fsup = sel.value;
+      const r = M.suppliers.find((x) => x.id === sel.value);
+      if (r) document.getElementById('mfchart').innerHTML = supChart(r);
+    });
+  }
+
   // ---------------------------------------------------------------- posts for X
   const URL_LEN = 23;
   const xlen = (s) => s.replace(/https?:\/\/\S+/g, 'x'.repeat(URL_LEN)).length;
@@ -582,6 +782,16 @@
       const tot = rows.reduce((a, c) => a + c.attr, 0);
       P.push(trimTo(rows.slice(0, 10).map((c) => `$${c.t} ${usd(c.attr)}${c.yoy != null ? ` (${sgn(c.yoy)} Y/Y)` : ''}`),
         `${d.name}: ${usd(tot)} of revenue (${per}):`, url, 280));
+    }
+    if (hasModel(d)) {                                    // the forecast model's stress case
+      const M = d.model;
+      const hit = M.suppliers.map((r) => { const base = r.fc && r.fc.base ? r.fc.base.reduce((a, p) => a + p[1], 0) : null; return { r, base, dv: impact(M, r, -0.2) }; })
+        .filter((x) => x.base && x.dv).sort((a, b) => a.dv / a.base - b.dv / b.base);
+      if (hit.length > 2) {
+        P.push(trimTo(hit.slice(0, 8).map((x) => `$${x.r.t} ${sgn(x.dv / x.base, 1)} (${usd(x.dv * 1e9)})`),
+          `If the ${d.name.replace(/ capex$/i, '')} buyers spent 20% less over the next four quarters, revenue would move by (model fitted on SEC filings):`,
+          `Each line: the supplier's link to their capex, estimated from its own history and tested out of sample.\n${url}`, 280));
+      }
     }
     const gp = rows.filter((c) => c.gm != null).map((c) => ({ t: c.t, v: c.attr * c.gm, gm: c.gm })).sort((a, b) => b.v - a.v);
     if (gp.length > 2) {
