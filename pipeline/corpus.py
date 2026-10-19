@@ -10,6 +10,12 @@ Breadth: every company quarter, 13F holder change, Form 4 purchase and sale, 8-K
 short interest and officials' trades (House and Senate) tables the scans add. Depth: targets carry two or
 three facts with their context (growth, margin, earnings, the driver; who, how much, when bought, when filed).
 
+Market posts (market_examples): the formats that travel on X — "$A or $B?", same Hold rating with very different
+price-target upside, "$RKLB $150 → $50", a stock's setup in bullets, the day's new 52-week and all-time highs and lows,
+quality names near their lows, Polymarket's earnings odds, the trending stock (never a post about Reddit), the smart-money
+lists — planned from the published hub files by the same engage.plan_* functions the posting workflow uses, many plans a
+day per kind (each next plan without the names already used), every rule-written phrasing of a plan a target.
+
     python -m pipeline.corpus --site _site --site-url https://filing-flows.com --known model/corpus-ids.txt --out new.jsonl
 """
 import argparse
@@ -36,20 +42,26 @@ def _pick(key, options, n=2):
     return [options[(k + i) % len(options)] for i in range(min(n, len(options)))]
 
 
-def example(kind, key, messages, target, check, cashtags, tags, cik):
-    """A checked example, or None when the target would not pass as a post."""
+def example(kind, key, messages, target, check, cashtags, tags, cik, allowed=None, lines=False, forbid=None, must=None, hold=None):
+    """A checked example, or None when the target would not pass as a post. allowed / lines / forbid / must: the plan's
+    extra checks (other cashtags a list may name, line breaks kept, wording it may not or must use), kept on the example
+    so the evaluation grades a generated post the same way; hold: the key that decides the held-out share (default: cik)."""
     prompt = L.compact(messages)
     try:
         if check == "engage":
-            target = engage.clean(target, cashtags, tags)
+            target = engage.clean(target, cashtags, tags, allowed=allowed, must=must, forbid=forbid, lines=lines)
         else:
             target = tweet.clean(target, cashtags[0] if cashtags else "", tags, social.xlen)
     except ValueError:
         return None
     if L.unsupported(target, prompt):
         return None
-    return {"id": _h(kind, key, target), "v": VERSION, "kind": kind, "cik": cik, "prompt": prompt, "target": target, "check": check,
-            "cashtags": cashtags, "tags": tags, "created": dt.date.today().isoformat()}
+    ex = {"id": _h(kind, key, target), "v": VERSION, "kind": kind, "cik": cik, "prompt": prompt, "target": target, "check": check,
+          "cashtags": cashtags, "tags": tags, "created": dt.date.today().isoformat()}
+    extra = {"allowed": [t for t in allowed or [] if t not in cashtags] or None, "lines": bool(lines) or None,
+             "forbid": list(forbid) if forbid else None, "must": list(must) if must else None, "hold": hold}
+    ex.update({k: v for k, v in extra.items() if v})
+    return ex
 
 
 # ------------------------------------------------------------------ earnings (owner "Post to X", scan threads)
@@ -393,6 +405,97 @@ def event_examples(site, rows, known, today, limit=30):
     return out
 
 
+# ------------------------------------------------------------------ market posts (analysts, Polymarket, highs / lows, trending, smart money)
+MARKET = {"pt_upside": 10, "versus": 12, "drawdown": 5, "setup": 40, "lows52": 5, "highs52": 5, "near_lows": 5, "records": 3,
+          "polymarket": 8, "reddit_hot": 8, "reddit_question": 8, "reddit_list": 4, "smart_buys": 3, "smart_record": 8, "all_agree": 6,
+          "qtd_flows": 1}                  # plans per kind and run (each next one without the names already used)
+
+
+class HubSite:
+    """The built site for the company files, the published hub (its URL, or a folder holding disclosures/data/) for the
+    market files the plans read."""
+
+    def __init__(self, site, hub):
+        self._site, self.src = site, str(hub).rstrip("/")
+        self.remote = bool(re.match(r"https?://", self.src))
+
+    def json(self, path):
+        return self._site.json(path)
+
+    def quarter(self, e):
+        return self._site.quarter(e)
+
+
+def market_examples(site, rows, by_ticker, known, today, limits=None):
+    """{kind: [examples]} for the market post formats. A kind's plans are drawn one after another, each without the names
+    the earlier ones used (as the posting cooldown would), up to MARKET[kind]; every rule-written phrasing ("fallbacks")
+    of a plan is a target, checked with the plan's own rules (cashtags allowed in a list, line breaks, no forum talk)."""
+    lim = {**MARKET, **(limits or {})}
+    c = engage.cfg()
+    ext, d = engage.extremes(site)
+    asof = (d or {}).get("asof") or today.isoformat()
+    hot = [t for t in engage.trending(site) if t in by_ticker]
+    trends = [{"ticker": t, "score": 100 - i, "mentions": 0} for i, t in enumerate(hot)]
+    setup_picks = engage.popular(site, by_ticker, ext, engage.consensus(site), 150) if ext else []
+
+    def plans(kind, n, ok, used):
+        def one(f):
+            try:
+                return f()
+            except Exception as err:
+                print(f"::warning::{kind} examples: {str(err)[:140]}")
+                return None
+        if kind == "setup":                       # one stock per plan: the popular names in turn
+            got = 0
+            for t in setup_picks:
+                if got >= n:
+                    return
+                if t in used:
+                    continue
+                p = one(lambda: engage.plan_setup(site, rows, c, by_ticker, ok, today, pick=t))
+                used.add(t)
+                if p:
+                    got += 1
+                    yield p
+            return
+        for _ in range(n):
+            if kind == "reddit_question":
+                p = one(lambda: engage.plan_reddit_question(site, rows, c, trends, by_ticker, ok))
+            elif kind == "reddit_list":
+                p = one(lambda: engage.plan_reddit_list(site, rows, c, trends, by_ticker, ok))
+            else:
+                p = one(lambda: getattr(engage, "plan_" + kind)(site, rows, c, by_ticker, ok, today))
+            if not p:
+                return
+            yield p
+
+    out = {}
+    for kind, n in lim.items():
+        used, xs = set(), out.setdefault(kind, [])
+        ok = lambda k, key, hours=None: key not in used
+        for p in plans(kind, n, ok, used):
+            names = list(p["cashtags"]) + [t for t in p.get("allowed") or [] if t not in p["cashtags"]]
+            ev = (p.get("event_key") or "").split(":", 1)[-1]
+            fresh = (set(names) | {ev}) - used - {""}
+            if kind != "setup" and not fresh:
+                break                                 # the plan does not move on (one post a day by design)
+            used |= set(names) | {ev}
+            key = f"{kind}:{asof}:{','.join(names)}" + (f":{ev}" if ev else "")
+            if _h(kind, key) in known:
+                continue
+            e0 = p["items"][0][0] if p.get("items") else None
+            tags = p.get("tags") or engage.H.pick(engage.KIND_TAGS.get(kind, "earnings"), e0, key=f"{kind}:" + ",".join(p["cashtags"]))
+            msgs = engage.messages(kind, p["task"], p["cashtags"], tags, p.get("allowed"))
+            first = by_ticker.get(p["cashtags"][0]) if p["cashtags"] else None
+            for text in p.get("fallbacks") or ([p["fallback"]] if p.get("fallback") else []):
+                ex = example(kind, key, msgs, text, "engage", p["cashtags"], tags, (first or {}).get("cik"), allowed=p.get("allowed"),
+                             lines=p.get("lines", False), forbid=p.get("forbid"), must=p.get("must"), hold=p["cashtags"][0] if p["cashtags"] else None)
+                if ex:
+                    ex["src"] = _h(kind, key)
+                    xs.append(ex)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--site", default="_site", help="the built site (with data/)")
@@ -406,6 +509,7 @@ def main():
     ap.add_argument("--out", default="new.jsonl")
     ap.add_argument("--holders", type=int, default=2000, help="companies with 13F holders read this run (one request each)")
     ap.add_argument("--events", type=int, default=80, help="8-Ks read from SEC this run")
+    ap.add_argument("--hub", default="", help="the published Disclosures hub for the market posts (default: --site-url; a URL or a folder with disclosures/data/)")
     args = ap.parse_args()
     known = set()
     if args.known and os.path.exists(args.known):
@@ -429,7 +533,7 @@ def main():
 
     def add(kind, xs):
         out.extend(xs)
-        counts[kind] = len(xs)
+        counts[kind] = counts.get(kind, 0) + len(xs)
 
     add("post", earnings_examples(site, cfg, known, today))
     try:
@@ -471,6 +575,13 @@ def main():
             print(f"::warning::hub table examples skipped ({str(err)[:160]})")
     if args.events:
         add("event8k", event_examples(site, rows, known, today, args.events))
+    hub = args.hub or args.site_url
+    if hub:
+        try:
+            for kind, xs in market_examples(HubSite(site, hub), rows, by_ticker, known, today).items():
+                add(kind, xs)
+        except Exception as err:
+            print(f"::warning::market post examples skipped ({str(err)[:160]})")
     with open(args.out, "w", encoding="utf-8") as f:
         for ex in out:
             f.write(json.dumps(ex, ensure_ascii=False) + "\n")

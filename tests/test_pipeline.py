@@ -2823,14 +2823,14 @@ def test_smart_money_flows_and_reddit_posts(tmp_path):
                                                         ("smart_record", engage.plan_smart_record), ("all_agree", engage.plan_all_agree),
                                                         ("qtd_flows", engage.plan_qtd_flows))}
     assert plans["reddit_hot"]["cashtags"] == ["AAPL"] and "Smart-money score +85" in plans["reddit_hot"]["task"]
-    assert plans["reddit_hot"]["source_reply"].startswith("The threads: https://www.reddit.com/")
+    assert "reddit" not in (plans["reddit_hot"]["task"] + plans["reddit_hot"]["fallback"]).lower() and not plans["reddit_hot"].get("source_reply")
     assert plans["smart_buys"]["cashtags"][:3] == ["AAPL", "META", "CRWV"]          # site companies (with charts) first
     assert "53% of the time" in plans["smart_buys"]["task"]
     assert plans["smart_record"]["cashtags"] == ["AAPL"] and "Jane Roe" in plans["smart_record"]["task"]
     assert plans["all_agree"]["cashtags"] == ["META"]                               # three groups net buying, none selling
     assert plans["qtd_flows"]["cashtags"][0] == "CRWV"
     for k, p in plans.items():
-        post = engage.clean(p["fallback"], p["cashtags"], p.get("tags") or ["#stocks"], allowed=p.get("allowed"), must=p.get("must"))
+        post = engage.clean(p["fallback"], p["cashtags"], p.get("tags") or ["#stocks"], allowed=p.get("allowed"), must=p.get("must"), forbid=p.get("forbid"))
         assert all(f"${t}" in post for t in p["cashtags"]), (k, post)
         assert engage.KIND_TAGS[k] in ("reddit", "smart", "flows")
     sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
@@ -2865,3 +2865,117 @@ def test_the_companys_own_dollar_rate_comes_first():
     with fx.use("JPY"):
         assert fx.money(12.3e12) == "¥12.30T" and fx.money(-3.4e9) == "−¥3.4B"
     assert fx.money(1.5e9) == "$1.5B"
+
+
+def _market_hub(tmp_path):
+    """A built site plus the hub's market files the market posts read: highs / lows, consensus (analysts + Polymarket),
+    Reddit's trending tickers, short interest, 8-Ks."""
+    import datetime as dt
+    from pipeline import notify
+    site = _site(tmp_path)
+    hub = site / "disclosures" / "data"
+    W = lambda rel, obj: (hub / rel).parent.mkdir(parents=True, exist_ok=True) or (hub / rel).write_text(json.dumps(obj))
+    today = dt.date(2026, 10, 19)
+    XF = ["ticker", "name", "close", "chg1d", "hi52", "lo52", "from_hi", "from_lo", "ytd", "m1", "day_hi", "day_lo", "dollar_vol", "new_hi", "new_lo",
+          "ath", "atl", "ath_prev", "atl_prev", "since", "peak_date", "trough_date"]
+    def X(t, name, close, hi, lo, ytd, dv, new_hi=0, new_lo=0, ath=None):
+        return [t, name, close, -0.01, hi, lo, round(close / hi - 1, 4), round(close / lo - 1, 4), ytd, -0.05, close * 1.01, close * 0.99, dv,
+                new_hi, new_lo, ath, None, None, None, "2001-01-01", "2026-01-15", "2026-10-16"]
+    ext = [X("AAPL", "APPLE INC", 230.0, 260.0, 200.0, 0.05, 9e9), X("META", "META PLATFORMS INC", 700.0, 720.0, 480.0, 0.25, 8e9, new_hi=1, ath=1),
+           X("CRWV", "COREWEAVE INC", 61.0, 140.0, 40.0, -0.4, 3e9), X("RKLB", "ROCKET LAB CORP", 50.0, 150.0, 20.0, 0.1, 2e9),
+           X("ASTS", "AST SPACEMOBILE INC", 40.0, 130.0, 15.0, 0.05, 1.5e9), X("IREN", "IREN LTD", 27.0, 75.0, 8.0, 0.2, 1e9),
+           X("NBIS", "NEBIUS GROUP N.V.", 165.0, 286.0, 40.0, 0.9, 1e9), X("MCD", "MCDONALDS CORP", 250.0, 330.0, 249.0, -0.2, 2e9, new_lo=1),
+           X("PEP", "PEPSICO INC", 130.0, 170.0, 129.0, -0.15, 1.8e9, new_lo=1), X("LOW", "LOWES COMPANIES INC", 210.0, 290.0, 209.0, -0.1, 1.5e9, new_lo=1),
+           X("LULU", "LULULEMON ATHLETICA INC.", 160.0, 400.0, 159.0, -0.5, 1.2e9, new_lo=1), X("SMCL", "SMALL CO", 9.0, 20.0, 8.8, -0.3, 2e7)]
+    W("market/extremes.json", {"asof": "2026-10-16", "fields": XF, "rows": ext, "new_lows": ["MCD", "PEP", "LOW", "LULU"], "new_highs": ["META"],
+                               "ath": ["META"], "atl": []})
+    CF = ["cik", "ticker", "name", "sector", "price", "next_earnings", "eps_q", "eps_q_n", "rev_q", "eps_rev_30d", "target_mean", "rating_mean",
+          "pm_beat_prob", "pm_eps_strike", "pm_report_date", "pm_implied_price", "pm_price_date", "our_price", "our_date", "beat_rate", "poly_markets", "kalshi_events"]
+    def C(t, name, price, target, rating, pm=None, rep=None):
+        return [1, t, name, "Tech", price, rep, 1.2, 20, 1e9, 0.01, target, rating, pm, 1.15 if pm else None, rep, None, None, None, None, 0.75, 3 if pm else 0, 0]
+    W("consensus/index.json", {"fields": CF, "rows": [C("AAPL", "Apple Inc.", 230.0, 255.3, 2.9, 0.81, "2026-10-22"),
+                                                      C("META", "Meta Platforms, Inc.", 700.0, 980.0, 3.0, 0.64, "2026-10-21"),
+                                                      C("CRWV", "CoreWeave, Inc.", 61.0, 70.0, 2.7, 0.52, "2026-10-23"),
+                                                      C("MCD", "McDonald's Corporation", 250.0, 300.0, 2.2), C("PEP", "PepsiCo, Inc.", 130.0, 150.0, 2.5),
+                                                      C("LOW", "Lowe's Companies, Inc.", 210.0, 260.0, 2.3), C("LULU", "lululemon athletica inc.", 160.0, 190.0, 2.8)]})
+    W("market/reddit.json", {"rows": [{"ticker": t, "heat": 100 - i} for i, t in enumerate(["CRWV", "RKLB", "ASTS", "IREN", "NBIS", "AAPL", "META"])]})
+    W("market/short-interest.json", {"rows": [{"ticker": "CRWV", "short": 9e7, "dtc": 3.4, "change_pct": 12.0}]})
+    W("market/events8k.json", {"rows": [{"ticker": "CRWV", "filed": "2026-10-10", "code": "1.01", "quote": "entered into a supply agreement"}]})
+    s = notify.Site(str(site))
+    rows = s.json("index.json")["companies"]
+    for e in rows:
+        e["ticker"] = (e.get("ticker") or "").upper().replace("-", ".")
+        e.setdefault("om", 25.0)
+        e.setdefault("revenue", 5e9)
+    by = {r["ticker"]: r for r in rows if r.get("ticker")}
+    return s, rows, by, today
+
+
+def test_market_posts_analysts_polymarket_highs_lows(tmp_path):
+    """The formats that travel on X, from the hub's consensus (analysts + Polymarket), highs / lows and short interest:
+    each plan names its cashtags, keeps its lines, and every rule-written phrasing passes the post checks; the posts that
+    start from Reddit's trending tickers never mention Reddit."""
+    from pipeline import engage, notify
+    s, rows, by, today = _market_hub(tmp_path)
+    ok = lambda *a, **k: True
+    c = engage.cfg()
+    got = {}
+    for kind in ("pt_upside", "versus", "drawdown", "setup", "lows52", "highs52", "near_lows", "records", "polymarket", "reddit_hot"):
+        got[kind] = getattr(engage, "plan_" + kind)(s, rows, c, by, ok, today)
+    assert got["pt_upside"]["cashtags"] == ["AAPL", "META"] and "3.6x the upside" in got["pt_upside"]["fallback"]   # +11% vs +40%, both Hold
+    assert got["drawdown"]["allowed"][:4] == ["CRWV", "RKLB", "ASTS", "IREN"] and "$RKLB $150 → $50" in got["drawdown"]["fallback"]
+    assert got["setup"]["cashtags"] == ["CRWV"] and "• Short interest 3.4 days to cover" in got["setup"]["fallback"]
+    assert "Polymarket: 52% odds it beats EPS on Oct 23" in got["setup"]["task"]
+    assert got["lows52"]["fallback"].startswith("All these stocks hit new 52-week lows on Oct 16\n\nMcDonald's $MCD\nPepsiCo $PEP")
+    assert got["highs52"] is None and got["records"] is None                     # one name each: not a list
+    assert got["polymarket"]["allowed"] == ["META", "AAPL", "CRWV"] and "$META Oct 21: 64%" in got["polymarket"]["fallback"]
+    assert got["versus"]["cashtags"][0] == "CRWV"
+    assert got["reddit_hot"]["kind"] == "reddit_hot" and got["reddit_hot"]["forbid"] == engage.NO_FORUM
+    for kind, p in got.items():
+        if not p:
+            continue
+        for fb in p.get("fallbacks") or [p["fallback"]]:
+            post = engage.clean(fb, p["cashtags"], p.get("tags") or ["#stocks"], allowed=p.get("allowed"), must=p.get("must"), forbid=p.get("forbid"),
+                                lines=p.get("lines", False))
+            assert ("\n" in post) == bool(p.get("lines")) or kind in ("versus",), (kind, post)
+            assert "reddit" not in post.lower(), (kind, post)
+    try:
+        engage.clean("Reddit can't agree on $CRWV today. Thoughts?", ["CRWV"], ["#stocks"], forbid=engage.NO_FORUM)
+        raise AssertionError("a post about Reddit passed")
+    except ValueError:
+        pass
+    sql = open(os.path.join(ROOT, "supabase", "schema.sql"), encoding="utf-8").read()
+    assert sql.count("'engage_polymarket'") == 4 and "engage_records" in notify.ENGAGE_KINDS
+
+
+def test_corpus_market_posts_for_the_local_models(tmp_path):
+    """The market formats become training examples: several plans a day per kind (each without the names already used),
+    every phrasing a target that passes the plan's own checks (cashtags a list may name, line breaks, no forum talk), the
+    evaluation grading a generated post the same way, one lead stock in ten held out, nothing rebuilt once known."""
+    from pipeline import corpus, local_model as L, train_local
+    s, rows, by, today = _market_hub(tmp_path)
+    out = corpus.market_examples(s, rows, by, set(), today)
+    n = {k: len(v) for k, v in out.items() if v}
+    for kind in ("pt_upside", "versus", "drawdown", "setup", "lows52", "polymarket", "reddit_hot", "reddit_question", "reddit_list"):
+        assert n.get(kind), (kind, n)
+    xs = [ex for v in out.values() for ex in v]
+    for ex in xs:
+        assert train_local.grade(ex, ex["target"]) == (True, ""), (ex["kind"], ex["target"])
+        assert "reddit" not in ex["target"].lower() and "reddit" not in re.sub(r"FORMAT: \w+", "", ex["prompt"]).lower(), ex["kind"]
+        assert ex["hold"] == ex["cashtags"][0] and ex["src"]
+        assert ("\n" in ex["target"]) == bool(ex.get("lines")), (ex["kind"], ex["target"])
+    setups = {ex["cashtags"][0] for ex in out["setup"]}
+    assert {"CRWV", "AAPL", "META", "MCD"} <= setups and "RKLB" not in setups          # RKLB: too few facts for a setup
+    pairs = {tuple(ex["cashtags"]) for ex in out["versus"]}
+    assert len(pairs) >= 3 and len({t for p in pairs for t in p}) == 2 * len(pairs)   # each next pair: new names
+    dd = out["drawdown"][0]
+    assert dd["allowed"] and "Other cashtags allowed: $" in dd["prompt"] and "$RKLB $150 → $50" in dd["target"]
+    pm = [ex for ex in out["polymarket"] if "Polymarket odds of an earnings beat" in ex["target"]]
+    assert pm and "$META Oct 21: 64%" in pm[0]["target"]
+    bad = dict(dd, target=dd["target"].replace("$RKLB", "$TSLA"))
+    assert train_local.grade(bad, bad["target"])[0] is False                         # a name outside the list fails the evaluation
+    assert L.compact([{"role": "user", "content": "FORMAT: x\n\nFormat with line breaks: one line each.\n\n- $A up 5%"}]).index("- $A") \
+        < L.compact([{"role": "user", "content": "FORMAT: x\n\nFormat with line breaks: one line each.\n\n- $A up 5%"}]).index("Format with")
+    known = {ex["src"] for ex in xs}
+    again = corpus.market_examples(s, rows, by, known, today)
+    assert not any(again.values())                                                    # the same day's plans are not rebuilt

@@ -1,7 +1,10 @@
 # Keeps training the free fallback writer (pipeline/local_model.py) on the site's own data, every six hours.
 # 1. builds the site data from the "data" branch and turns what is new — company quarters, 13F holder changes,
 #    Form 4 purchases and sales, 8-Ks, and rows of the hub's 13D / 13G, Form 144, short interest and officials' trades
-#    (House and Senate) tables — into training examples (pipeline/corpus.py; targets written by fixed rules, no model output)
+#    (House and Senate) tables — into training examples (pipeline/corpus.py; targets written by fixed rules, no model output);
+#    plus the market posts planned from the published hub (analysts' Hold pairs, "$A or $B?", 52-week / all-time highs and
+#    lows, drawdown lists, setups, Polymarket odds, the trending stock without forum talk, smart money). The corpus on the
+#    "model" branch also feeds the Qwen3-4B lab when its posts_count input is set (.github/workflows/fsa-qwen4-lab.yml).
 # 2. continues the LoRA adapter in training (work/) on the new examples plus a replay of older ones, on the CPU
 # 3. scores it on companies it never trains on and promotes it to adapter/ only when it beats the production adapter
 # Everything lives on the "model" branch (force-pushed: one commit, no growing history). See model/README.md there.

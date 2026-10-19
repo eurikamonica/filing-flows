@@ -4401,6 +4401,15 @@
           <button class="btn" type="button" data-engage="engage_smart_record" title="An official, insider or 13F manager with a strong, tested record who just traded">✦ Track record</button>
           <button class="btn" type="button" data-engage="engage_all_agree" title="A stock that every group trading it (13F, ETFs, insiders, officials) net-bought this quarter">✦ All groups agree</button>
           <button class="btn" type="button" data-engage="engage_qtd_flows" title="The quarter so far: insiders' and officials' biggest net purchases, the early 13F filers' top add">✦ Quarter so far</button>
+          <button class="btn" type="button" data-engage="engage_pt_upside" title="Two Hold-rated stocks, one with several times the analysts' price-target upside">✦ Same rating, different upside</button>
+          <button class="btn" type="button" data-engage="engage_versus" title="“$A or $B — which would you rather have?” for two names people are watching">✦ $A or $B?</button>
+          <button class="btn" type="button" data-engage="engage_drawdown" title="Popular names far below their 52-week highs, “$RKLB $150 → $50”">✦ Off the highs</button>
+          <button class="btn" type="button" data-engage="engage_setup" title="The most-watched stock going into the next session, in bullets">✦ Stock setup</button>
+          <button class="btn" type="button" data-engage="engage_lows52" title="The best-known names at new 52-week lows in the last session">✦ New 52-week lows</button>
+          <button class="btn" type="button" data-engage="engage_highs52" title="The best-known names at new 52-week highs in the last session">✦ New 52-week highs</button>
+          <button class="btn" type="button" data-engage="engage_near_lows" title="Profitable large companies near their 52-week lows">✦ Quality near lows</button>
+          <button class="btn" type="button" data-engage="engage_records" title="New all-time highs (or lows) in the last session">✦ All-time highs / lows</button>
+          <button class="btn" type="button" data-engage="engage_polymarket" title="Polymarket's odds that this week's reporters beat the EPS line">✦ Polymarket earnings odds</button>
         </div>
         <p class="muted small" id="engage-msg" role="status"></p>
         <h3>A fund's 13F</h3>

@@ -34,7 +34,7 @@ SHORT = [  # long production instructions → the same rule in a few words (the 
      "its number; end with “Full breakdown ↓” before the hashtags. Under 250 characters."),
 ]
 LOW = re.compile(r"^(Business, in the company's words|Filing excerpts|Context on the company)")
-RULE = re.compile(r"^(THIS POST|Today is|Start |Say |Then |Compare |List |Ask |TASK|Name |Write about)")
+RULE = re.compile(r"^(THIS POST|Today is|Start |Say |Then |Compare |List |Ask |TASK|Name |Write about|Format|Open with|One post|Write a short)")
 
 
 def compact(messages):
@@ -44,6 +44,7 @@ def compact(messages):
     users = [m["content"] for m in messages if m.get("role") == "user"]
     first = users[0] if users else ""
     cash = re.search(r"Cashtags that must appear: ([^\n]+)", first)
+    others = re.search(r"Other cashtags you may use \(no others\): ([^\n]+)", first)
     tags = re.search(r"Hashtags to end with, in this order: ([^\n]+)", first)
     body = re.sub(r"\n*(Cashtags that must appear|Other cashtags you may use \(no others\)|Hashtags to end with, in this order):[^\n]*", "", first)
     body = re.sub(r"\s*Write the post now\.?\s*$", "", body).strip()
@@ -65,7 +66,8 @@ def compact(messages):
         kept.append((i, b))
         room -= len(b) + 2
     kept = [b for _, b in sorted(kept)] + [r for _, r in rules]
-    tail = (f"\nCashtags: {cash.group(1).strip()}" if cash else "") + (f"\nHashtags: {tags.group(1).strip()}" if tags else "")
+    tail = ((f"\nCashtags: {cash.group(1).strip()}" if cash else "") + (f"\nOther cashtags allowed: {others.group(1).strip()}" if others else "")
+            + (f"\nHashtags: {tags.group(1).strip()}" if tags else ""))
     return f"{INSTRUCTION}\n\n" + "\n\n".join(kept) + "\n" + tail
 
 
