@@ -192,8 +192,21 @@ jobs:
             du -sh _smart/public
           fi
 
+      - name: Research modules (public/ of every branch named research-*, when any exist)
+        continue-on-error: true
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          mkdir -p _research
+          for b in $(git ls-remote --heads "$url" 'research-*' | sed 's#.*refs/heads/##'); do
+            if git clone --quiet --depth 1 --filter=blob:none --sparse --branch "$b" "$url" "_rs_tmp" && git -C _rs_tmp sparse-checkout set public && [ -d _rs_tmp/public ]; then
+              mv _rs_tmp/public "_research/${b#research-}"
+            fi
+            rm -rf _rs_tmp
+          done
+          du -sh _research/* 2>/dev/null || true
+
       - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
-        run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public --debt _debt/public --consensus _cons/public --etf _etf/public --smart _smart/public --ladders _lad/public
+        run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public --debt _debt/public --consensus _cons/public --etf _etf/public --smart _smart/public --ladders _lad/public --research _research
 
       # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
       # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.

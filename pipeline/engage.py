@@ -52,7 +52,7 @@ import re
 import sys
 import time
 
-from . import context as CTX, events, hashtags as H, notify, quotes as Q, reddit, sec, social, tweet
+from . import context as CTX, events, hashtags as H, notify, quotes as Q, reddit, sec, social, tweet, xkinds as X
 
 CFG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "engage.json")
 GUIDE = os.path.join(os.path.dirname(CFG), "engage-guide.md")
@@ -84,9 +84,10 @@ def cfg():
 
 def guide():
     try:
-        return open(GUIDE, encoding="utf-8").read()
+        text = open(GUIDE, encoding="utf-8").read()
     except FileNotFoundError:
-        return "Write one neutral, factual engagement post for X under 255 characters, ending with the given hashtags."
+        text = "Write one neutral, factual engagement post for X under 255 characters, ending with the given hashtags."
+    return text + X.guide_text()                      # the formats feature modules register (pipeline/posts_*.py)
 
 
 # ------------------------------------------------------------------ picking
@@ -1181,6 +1182,25 @@ KIND_TAGS = {"event8k": "8k", "fund13f": "13f", "fund13f_for": "13f", "insider":
 ABBR = re.compile(r"\b(?:Inc|Ltd|Corp|Co|LLC|L\.P|LP|No|Nos|U\.S|Mr|Ms|Dr|St|Jr|S\.A|N\.V|plc)\.$")
 
 
+def kind_tag(kind):
+    """The hashtag pool of a post kind: the built-in table, else what its feature module registered."""
+    reg = X.get(kind)
+    return KIND_TAGS.get(kind) or (reg["tag"] if reg else "earnings")
+
+
+def registered_plan(kind, site, rows, c, by_ticker, state_ok, today):
+    """A plan from a feature module (pipeline/posts_*.py, pipeline/xkinds.py); None for an unknown kind."""
+    reg = X.get(kind)
+    if not reg:
+        print(f"{kind}: unknown post kind")
+        return None
+    p = reg["plan"](site, rows, c, by_ticker, state_ok, today)
+    if p:
+        p.setdefault("kind", kind)
+        p.setdefault("items", [])
+    return p
+
+
 def first_sentence(quote, limit=170):
     """The quote's first sentence, abbreviations (Inc., Ltd., U.S.) not taken for its end, asides like (the “Company”)
     dropped, shortened at a word with … if long."""
@@ -2165,9 +2185,11 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
                 print(f"{kind}: {len(log)} mover posts already today (max_per_day)")
                 return False
             return not log or log[-1][0] < (now - dt.timedelta(minutes=c["movers"]["min_gap_minutes"])).isoformat()
-        hours = (c.get("kind_cooldown") or {}).get(kind, c["kind_cooldown_hours"])
+        reg = X.get(kind)
+        hours = (c.get("kind_cooldown") or {}).get(kind, reg["cooldown"] if reg else c["kind_cooldown_hours"])
         return force or (state.get(f"kind:{kind}") or "") < (now - dt.timedelta(hours=hours)).isoformat()
 
+    kinds = X.expand(kinds)                # "@close" → the feature modules' kinds on that schedule (pipeline/xkinds.py)
     if "movers" in kinds:                  # the workflow's rotation: mover, then peers, then explain
         kinds = [k for k in kinds if k != "movers"] + [MOVER_KINDS[[0, 2, 1][len(log) % 3]]]
     trends = None
@@ -2221,7 +2243,7 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
              "stake_for": lambda: plan_stake_for(site, rows, by_ticker, target or {}, today),
              "f144_for": lambda: plan_f144_for(site, rows, by_ticker, target or {}, today),
              "short_for": lambda: plan_short_for(site, rows, by_ticker, target or {}, today),
-             "news_for": lambda: plan_news_for(site, rows, by_ticker, target or {}, today)}.get(kind, lambda: None)()
+             "news_for": lambda: plan_news_for(site, rows, by_ticker, target or {}, today)}.get(kind, lambda: registered_plan(kind, site, rows, c, by_ticker, state_ok, today))()
         if p:
             plans.append(p)
         else:
@@ -2234,7 +2256,7 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
     made = []
     for p in plans:
         e0 = p["items"][0][0] if p.get("items") else None
-        tags = p.get("tags") or H.pick(KIND_TAGS.get(p["kind"], "earnings"), e0, key=f"{p['kind']}:" + ",".join(p["cashtags"]))
+        tags = p.get("tags") or H.pick(kind_tag(p["kind"]), e0, key=f"{p['kind']}:" + ",".join(p["cashtags"]))
         try:
             post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True), allowed=p.get("allowed"), must=p.get("must"),
                          forbid=p.get("forbid"), lines=p.get("lines", False))

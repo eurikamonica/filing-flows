@@ -45,11 +45,22 @@ def x_options():
     except (OSError, ValueError):
         c = {}
     media = [str(m).lower() for m in (c.get("media") or ["png", "jpg", "gif"])]
+    more = engage_more()                          # first: the feature modules add their hashtag pools to H.KINDS
     return {"links": c.get("links", True) is not False, "gif": "gif" in media, "hashtags_max": int(c.get("hashtags_max", H.MAX)),
             "hashtags": H.clean(c["hashtags"]) if isinstance(c.get("hashtags"), list) else H.GENERAL,
             "headline_tag": c.get("headline_tag", "#earnings"), "tags": dict(H.PARTS), "kinds": H.KINDS,
             "industry": sorted({t for _, _, t in H.INDUSTRY} | set(H.SECTOR.values()), key=str.lower),
-            "candidates": H.CANDIDATES}
+            "candidates": H.CANDIDATES, "engage_more": more}
+
+
+def engage_more():
+    """The owner's buttons for the post formats feature modules register (pipeline/posts_*.py, pipeline/xkinds.py)."""
+    try:
+        from pipeline import xkinds
+        return xkinds.buttons()
+    except Exception as err:                     # noqa: BLE001 — the site builds without them
+        print(f"::warning::feature post formats not listed ({str(err)[:160]})")
+        return []
 
 
 def main():
