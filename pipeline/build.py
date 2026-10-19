@@ -474,6 +474,7 @@ def process_filing(store, cik, accn, form, starred=False):
     q1_end, py_end = facts.comparison_ends(fx, end)
     comp = {"q1_end": q1_end, "py_end": py_end, "raw_q1": facts.extract(fx, q1_end), "raw_py": facts.extract(fx, py_end)}
     c = store.company(cik)
+    _set_currency(c, cik)
     c["profile"] = profile_of(sub)
 
     # revenue breakdown from the XBRL instance (dimensional facts)
@@ -872,6 +873,7 @@ def process_release(store, cik, accn, form, starred=False):
     last = dt.date.fromisoformat(ends[-1])
     prior_rev = facts.value(fx, "revenue", ends[-1])
     c = store.company(cik)
+    _set_currency(c, cik)
     c["profile"] = profile_of(sub)
     ex_name = _exhibit(cik, accn, row.get("primaryDocument"))
     if not ex_name:
@@ -1010,6 +1012,15 @@ def _fpi_cash(rel, prev, fq):
 
 
 _cur = {}
+
+
+def _set_currency(c, cik):
+    """A 10-Q / 10-K filer that reports in another currency than the dollar (a few do): its charts say so (fx.py)."""
+    cur = _cur.get(cik)
+    if cur and cur != "USD":
+        c["currency"] = cur
+    elif cur == "USD":
+        c.pop("currency", None)
 
 
 def _currency_of(cik):
