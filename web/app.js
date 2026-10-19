@@ -81,7 +81,7 @@
   const accession = (url) => { const m = /(\d{10}-\d{2}-\d{6})-index/.exec(url || ''); return m ? m[1] : null; };
   const mdnaItem = (form) => (form === '10-K' ? 'Item 7' : 'Item 2');
   // where node notes come from: the MD&A of a 10-Q/10-K, or the press release of an 8-K
-  const noteSource = (form) => (form === '8-K' ? 'the earnings release (8-K, Exhibit 99.1)'
+  const noteSource = (form) => (form === '8-K' ? 'the earnings release (8-K, Exhibit 99.1)' : form === '6-K' ? 'the results release (6-K exhibit)'
     : `the ${form} (${mdnaItem(form)}, Management’s Discussion and Analysis)`);
   const prelimTag = '<span class="tag prelim" title="Read from the 8-K earnings release; replaced by the 10-Q/10-K when filed">Preliminary · 8-K</span>';
   const finalTag = (rc) => `<span class="tag final" title="${t(releaseCheckText(rc))}">Final · ${rc.ok ? 'confirms' : 'revises'} the 8-K</span>`;
@@ -302,7 +302,7 @@
       }
       const withNotes = spec.nodes.filter((n) => n.notes).length;
       return `<div class="eyebrow">Notes from the filing</div>
-        <p class="hint"><span class="dot"></span><span>Click any node to read what ${t(ctx.company)} wrote about it in this ${ctx.form === '8-K' ? 'earnings release' : t(ctx.form)}. A green dot marks the ${withNotes} line${withNotes === 1 ? '' : 's'} with their own passage in ${ctx.form === '8-K' ? 'the release' : 'the MD&amp;A'}.</span></p>
+        <p class="hint"><span class="dot"></span><span>Click any node to read what ${t(ctx.company)} wrote about it in this ${ctx.form === '8-K' ? 'earnings release' : ctx.form === '6-K' ? 'results release (6-K)' : t(ctx.form)}. A green dot marks the ${withNotes} line${withNotes === 1 ? '' : 's'} with their own passage in ${ctx.form === '8-K' || ctx.form === '6-K' ? 'the release' : 'the MD&amp;A'}.</span></p>
         <p class="empty">Notes stay on the page: exported PNG, JPG and PDF files show the chart only.</p>`;
     }
     function nodeNotes(n) {
@@ -321,7 +321,7 @@
           `<div class="src">Quoted verbatim from ${t(noteSource(ctx.form))}${
             ctx.docUrl ? ` · <a href="${t(ctx.docUrl)}" target="_blank" rel="noopener">open filing ↗</a>` : ''}</div>`;
       } else {
-        body = `<p class="empty">${ctx.form === '8-K' ? 'The earnings release has no passage about this line.' : `The ${t(ctx.form)} has no separate MD&amp;A passage about this line.`}</p>`;
+        body = `<p class="empty">${ctx.form === '8-K' || ctx.form === '6-K' ? 'The release has no passage about this line.' : `The ${t(ctx.form)} has no separate MD&amp;A passage about this line.`}</p>`;
       }
       const trend = ctx.trend ? trendBlock(ctx.trend(n.id), n) : '';
       const source = sourceBlock(n, spec.cite, ctx.cik);                    // where the figure was taken from
@@ -461,6 +461,7 @@
     const here = live();
     setNav('home');
     const forms = new Set(prefs.get('forms', ['10-Q', '10-K', '8-K']));
+    const formGroup = (f) => (f === '6-K' ? '10-Q' : /^(20|40)-F/.test(f || '') ? '10-K' : f);   // foreign filers' forms
     const ix = await getJSON('index.json');
     const site = await getJSON('site.json').catch(() => ({}));
     const sectors = ix.sector_names || {};
@@ -497,7 +498,7 @@
           <select id="f-sector" aria-label="Sector"><option value="">All sectors</option>${
             Object.entries(sectors).map(([k, v]) => `<option value="${k}">${t(v)}</option>`).join('')}</select>
           <fieldset class="checks" id="f-forms"><legend>Form</legend>${['10-Q', '10-K', '8-K'].map((f) =>
-            `<label><input type="checkbox" value="${f}" ${forms.has(f) ? 'checked' : ''}> ${f}${f === '8-K' ? ' <span class="muted">earnings release</span>' : ''}</label>`).join('')}</fieldset>
+            `<label><input type="checkbox" value="${f}" ${forms.has(f) ? 'checked' : ''}> ${f}${f === '8-K' ? ' <span class="muted">earnings release</span>' : f === '10-Q' ? ' <span class="muted">· 6-K</span>' : f === '10-K' ? ' <span class="muted">· 20-F</span>' : ''}</label>`).join('')}</fieldset>
         </div>
         <div class="tbl-wrap"><table>
           <thead><tr><th>Filed</th><th>Company</th><th>Period</th><th>Form</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Op. margin</th><th>Sector</th></tr></thead>
@@ -530,7 +531,7 @@
     const draw = () => {
       const q = $('#f-text').value.trim().toLowerCase(), sec = $('#f-sector').value;
       const list = ix.companies.filter((c) => (!q || c.name.toLowerCase().includes(q) || (c.ticker || '').toLowerCase().startsWith(q)) &&
-        (!sec || c.sector === sec) && forms.has(c.form));
+        (!sec || c.sector === sec) && forms.has(formGroup(c.form)));
       $('#rows').innerHTML = list.slice(0, limit).map((c) => row(`c-${c.cik}`, [
         `<td>${date(c.filed)}</td>`, companyCell(c), `<td>${t(c.label)}</td>`, `<td class="mono">${t(c.form)}${c.prelim ? ' <span class="tag prelim">prelim</span>' : ''}</td>`,
         `<td class="num">${t(c.rev)}</td>`, `<td class="num ${tone(c.yoy)}">${pct(c.yoy)}</td>`, `<td class="num">${margin(c.om)}</td>`,
@@ -648,14 +649,15 @@
       <div class="prose">
         <h2>Filing</h2>
         <dl class="facts">
-          <dt>Form</dt><dd><span class="mono">${t(q.form)}</span>${q.form === '8-K' ? ' · Item 2.02 earnings release, preliminary until the 10-Q/10-K is filed' : ''}</dd>
+          <dt>Form</dt><dd><span class="mono">${t(q.form)}</span>${q.form === '8-K' ? ' · Item 2.02 earnings release, preliminary until the 10-Q/10-K is filed' : q.form === '6-K' ? ' · quarterly results release of a foreign private issuer (it files no 10-Q)' : /^(20|40)-F/.test(q.form) ? ' · annual report of a foreign private issuer' : ''}</dd>
           <dt>Period</dt><dd>${fy ? `${t(q.label)} · fiscal year ended ${date(q.end)}` : `${t(q.label)} · quarter ended ${date(q.end)} (calendar ${calLabel(q.cal)})`}</dd>
           <dt>Filed</dt><dd>${date(q.filed)}</dd>
           ${q.release_check ? `<dt>Earnings release</dt><dd>${t(releaseCheckText(q.release_check))}</dd>` : ''}
           ${acc ? `<dt>Accession</dt><dd class="mono">${acc}</dd>` : ''}
-          <dt>Documents</dt><dd>${q.doc_url ? `<a href="${t(q.doc_url)}" target="_blank" rel="noopener">${q.form === '8-K' ? 'Press release' : 'Report'} ↗</a> · ` : ''}${
+          <dt>Documents</dt><dd>${q.doc_url ? `<a href="${t(q.doc_url)}" target="_blank" rel="noopener">${q.form === '8-K' || q.form === '6-K' ? 'Press release' : 'Report'} ↗</a> · ` : ''}${
             q.index_url ? `<a href="${t(q.index_url)}" target="_blank" rel="noopener">Filing index ↗</a>` : `<a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${p.cik}&type=10-&dateb=&owner=include&count=40" target="_blank" rel="noopener">EDGAR filings ↗</a>`}</dd>
           <dt>Data</dt><dd>${q.form === '8-K' ? 'This quarter read from the tables in the press release (Exhibit 99.1); earlier quarters from XBRL company facts'
+            : q.form === '6-K' ? 'This quarter read from the tables in the results release (6-K exhibit); full years from the 20-F (XBRL company facts)'
             : fy ? 'Full-year values as reported in the 10-K (XBRL company facts); revenue lines from the filing’s own XBRL instance'
             : 'XBRL company facts; revenue lines from the filing’s own XBRL instance'}</dd>
           ${(q.checks || []).length ? `<dt>Data checks</dt><dd><ul class="checks">${q.checks.map((x) => `<li class="${x.level === 'warn' ? 'warn' : ''}">${
@@ -2655,7 +2657,7 @@
         encodeURIComponent(title)}&body=${encodeURIComponent(bodyTxt)}">Email me this thread</a>`;
     }
     const acc = accession(q.index_url);
-    const form = q.form === '8-K' ? 'Earnings release (8-K)' : q.form;
+    const form = q.form === '8-K' ? 'Earnings release (8-K)' : q.form === '6-K' ? 'Results release (6-K)' : q.form;
     const vs = q.compare_y && q.compare_y.vs;
     const charts = [['std', 'Chart 1', `${S.dec(q.label)}: where the revenue went, from costs to profit and operating cash flow`]]
       .concat(vs ? [['y', 'Chart 2', `the same flows compared with ${S.dec(vs)}; a dark strip inside a band is growth`]] : []);
@@ -2753,7 +2755,7 @@
     return [h.revenue != null ? `revenue ${money(h.revenue)}${h.yoy != null ? ` (${pct(h.yoy)} Y/Y)` : ''}` : '',
       h.om != null ? `operating margin ${margin(h.om)}` : '', h.ni != null ? `net earnings ${money(h.ni)}` : ''].filter(Boolean).join(', ');
   };
-  const artForm = (q) => (q.form === '8-K' ? 'earnings release (8-K)' : q.form);
+  const artForm = (q) => (q.form === '8-K' ? 'earnings release (8-K)' : q.form === '6-K' ? 'results release (6-K)' : q.form);
   const chartImage = (q, mode) => async () => {
     await fontsReady();
     return S.exportScene(S.layout(q, { compare: mode || null, decreases: state.decreases }), 'png');
@@ -2772,7 +2774,7 @@
     const intro = c.intro && (typeof c.intro === 'string' ? c.intro : c.intro.text);
     if (intro) {
       B.push({ k: 'h2', text: 'What the company does' });
-      const src = c.intro.source === '8-K' ? 'earnings release' : c.intro.source === '10-Q' ? '10-Q' : '10-K, Item 1';
+      const src = c.intro.source === '8-K' || c.intro.source === '6-K' ? 'earnings release' : c.intro.source === '10-Q' ? '10-Q' : '10-K, Item 1';
       B.push({ k: 'quote', text: S.dec(intro).slice(0, 600) + (S.dec(intro).length > 600 ? '…' : ''), src: `In its own words (${src})` });
     }
     if ((q.analysis || []).length) {
@@ -2791,7 +2793,7 @@
     }
     B.push({ k: 'h2', text: 'Sources' });
     B.push({ k: 'ul', links: [[url, 'Interactive chart on Filing Flows'], [q.index_url, 'The filing on SEC EDGAR'],
-      [q.doc_url, q.form === '8-K' ? 'The earnings release' : `The ${q.form}`]].filter((x) => x[0]) });
+      [q.doc_url, q.form === '8-K' || q.form === '6-K' ? 'The earnings release' : `The ${q.form}`]].filter((x) => x[0]) });
     B.push({ k: 'p', em: true, text: 'Figures are read automatically from SEC filings by fixed rules and can contain errors: check the filing before relying on them. Not investment advice.' });
     const title = `${name} ${S.dec(q.label)}: ${h.revenue != null ? money(h.revenue) + ' revenue' : 'the quarter'}${h.yoy != null ? `, ${pct(h.yoy)} Y/Y` : ''} — where it went`;
     return { title: title.slice(0, 100), blocks: B, images };
@@ -2952,6 +2954,7 @@
     if (!text) return '';
     const url = intro.url, filed = intro.filed, when = filed ? ` filed ${date(filed)}` : '';
     const where = intro.source === '8-K' ? `earnings release (8-K)${when}, “About” section`
+      : intro.source === '6-K' ? `results release (6-K)${when}, “About” section`
       : intro.source === '10-Q' ? `10-Q${when}, Note 1 to the financial statements (no 10-K on file yet)`
       : `10-K${when}, Item 1. Business`;
     return `<p class="intro">${t(text)}<span class="src">Quoted verbatim from the company’s ${where}${

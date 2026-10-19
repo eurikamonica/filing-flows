@@ -1054,27 +1054,58 @@ def test_owner_reports_go_first_and_are_never_held_back(tmp_path):
         assert {r["id"]: r["status"] for r in supa.t["send_requests"]} == {1: "pending", 2: "sent"}
 
 
-def test_a_foreign_filer_is_answered_at_once(tmp_path):
-    """A company that files 20-F / 6-K (no 10-Q or 10-K) cannot be charted: its request fails in the same scan, with why."""
+def test_a_company_that_cannot_be_drawn_is_answered_at_once(tmp_path):
+    """A company the charts cannot be drawn for (a foreign filer reporting in euros, no 10-Q / 10-K / 20-F at all): its
+    request fails in the same scan, with why. A foreign filer reporting in dollars is drawn from its 20-F and 6-Ks."""
     from pipeline import build, custom
 
     def sub(name, forms):
         return {"name": name, "filings": {"recent": {"form": forms, "accessionNumber": [f"a{i}" for i in range(len(forms))],
                                                     "reportDate": ["2026-06-30"] * len(forms), "filingDate": ["2026-08-01"] * len(forms)}}}
     assert build.cannot_draw(sub("Apple Inc.", ["8-K", "10-Q", "4"])) is None
-    why = build.cannot_draw(sub("Nebius Group N.V.", ["6-K", "4", "20-F", "SCHEDULE 13G/A"]))
-    assert why.startswith("Nebius Group N.V. is a foreign private issuer: it files a 20-F annual report and 6-K releases")
-    assert "40-F" in build.cannot_draw(sub("Shopify Inc.", ["40-F", "6-K"]))
+    assert build.cannot_draw(sub("Nebius Group N.V.", ["6-K", "4", "20-F", "SCHEDULE 13G/A"]), "USD") is None
+    why = build.cannot_draw(sub("Euro Audio S.A.", ["6-K", "20-F"]), "EUR")
+    assert why.startswith("Euro Audio S.A. is a foreign private issuer that reports in EUR")
     assert build.cannot_draw(sub("Some Trust", ["N-CSR"])) == "Some Trust has no 10-Q or 10-K on file at SEC"
     site = tmp_path / "_site"
     (site / "data" / "c").mkdir(parents=True)
     (site / "data" / "c" / "320193.json").write_text("{}")
     f = _FakeSupa([], company_requests=[{"id": 1, "cik": 320193, "status": "queued", "created_at": "2026-10-19T00:30:00+00:00"},
-                                        {"id": 2, "cik": 1513845, "status": "queued", "created_at": "2026-10-19T00:30:00+00:00"},
+                                        {"id": 2, "cik": 9999912, "status": "queued", "created_at": "2026-10-19T00:30:00+00:00"},
                                         {"id": 3, "cik": 1652044, "status": "queued", "created_at": "2099-10-19T00:30:00+00:00"}])
-    custom.finish_companies(f, str(site), {"1513845": why})
+    custom.finish_companies(f, str(site), {"9999912": why})
     st = {r["id"]: (r["status"], r.get("error")) for r in f.t["company_requests"]}
     assert st[1][0] == "done" and st[2] == ("failed", why) and st[3][0] == "queued"
+
+
+def test_a_foreign_filer_is_drawn_from_its_20f_and_6k_releases(tmp_path):
+    """A foreign private issuer (20-F + 6-K, no 10-Q): quarters from its results releases — newest year printed last,
+    slashes in labels, D&A as a cost line, discontinued operations — and the year from the 20-F's XBRL. A filer that
+    reports in euros is answered with why."""
+    import json, os, subprocess, sys
+    env = dict(os.environ, SEC_FIXTURES=os.path.join(ROOT, "tests", "fixtures"), SEC_USER_AGENT="test test@example.com")
+    ciks = tmp_path / "ciks.txt"
+    ciks.write_text("9999911\n9999912\n")
+    out, unb = tmp_path / "site" / "data", tmp_path / "unbuildable.json"
+    r = subprocess.run([sys.executable, "-m", "pipeline.build", "run", "--store", str(tmp_path / "store"), "--out", str(out),
+                        "--build-ciks-file", str(ciks), "--unbuildable-out", str(unb)], cwd=ROOT, env=env, check=True,
+                       capture_output=True, text=True)
+    assert "skip 6-K      9999911 0009999911-26-000038 not a results release" in r.stdout, r.stdout[-3000:]
+    why = json.loads(unb.read_text())
+    assert list(why) == ["9999912"] and "reports in EUR" in why["9999912"]
+    c = json.loads((out / "c" / "9999911.json").read_text())
+    qs = {q["label"]: q for q in c["quarters"]}
+    assert list(qs) == ["Q2 2026", "Q1 2026"] and {q["form"] for q in qs.values()} == {"6-K"}
+    q2, q1 = qs["Q2 2026"], qs["Q1 2026"]
+    assert q2["headline"]["revenue"] == 580e6 and q2["headline"]["ni"] == -180e6 and q1["headline"]["revenue"] == 400e6
+    assert q2["compare"]["vs"] == "Q1 2026" and q2["compare_y"]["vs"] == "Q2 2025"          # newest-last columns read right
+    names = {n["id"]: n for n in q2["nodes"]}
+    assert names["I:da_op"]["v"] == 260e6 and names["ocf"]["v"] == 2200e6 and names["capex"]["v"] == 5600e6
+    assert "6-K" in q2["footer"][0] and "from the 6-K results release" in q2["subtitle"]
+    assert c["years"][0]["label"] == "FY2025" and c["years"][0]["form"] == "20-F" and c["years"][0]["headline"]["revenue"] == 530e6
+    assert c["profile"]["fye"] == "1231" and c["intro"]["source"] == "6-K"
+    store = json.loads((tmp_path / "store" / "state.json").read_text())
+    assert store["fpi"] == [9999911, 9999912]
 
 
 def test_owner_comparisons_go_first(monkeypatch):

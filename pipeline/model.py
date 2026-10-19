@@ -1,7 +1,8 @@
 """Normalize raw XBRL quarter values into one consistent income-statement + cash-flow structure."""
 
 ITEM_LABELS = {"cor": "Cost of revenue", "rd": "Research &amp; development", "sm": "Sales &amp; marketing",
-               "ga": "General &amp; admin", "sga": "SG&amp;A", "other_opex": "Other operating costs"}
+               "ga": "General &amp; admin", "sga": "SG&amp;A", "da_op": "Depreciation &amp; amortization",
+               "other_opex": "Other operating costs"}
 
 
 def _close(a, b, tol=0.01):
@@ -61,6 +62,8 @@ def normalize(raw):
         items.append(("sga", sga))
     else:
         items += [(k, v) for k, v in (("sm", sm), ("ga", ga)) if v]
+    if raw.get("da_op"):                                # D&A printed as its own operating cost line (a release: Nebius)
+        items.append(("da_op", raw["da_op"]))
     items = [(k, v) for k, v in items if v and v > 0]
     used = sum(v for _, v in items)
     if pool <= 0 or used > pool * 1.005:

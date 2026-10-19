@@ -8,6 +8,11 @@ gross profit / costs → operating profit → pre-tax → tax, minority interest
 - **Earnings releases (8-K, Item 2.02)** are read too, so a quarter appears days or weeks before its 10-Q/10-K.
   The press release tables are read by fixed rules, checked against the previous quarter's XBRL and required to
   reconcile; the chart is marked *preliminary* and is replaced automatically when the 10-Q/10-K is filed.
+- **Foreign private issuers** (20-F + 6-K, no 10-Q: Nebius, Check Point …): each quarter is read from the results
+  release the company furnishes on Form 6-K (the same table reader as 8-K releases, which also handles the newest year
+  printed last, "income / (loss)" labels, D&A as its own cost line and discontinued operations), the full year from
+  the 20-F's XBRL. Comparisons come from the release's year-ago column and the previous release on file. US-dollar
+  reporters only for now; a company that reports in another currency is told so when someone asks for it.
 - **Starred companies** (`config/starred.txt`) keep eight quarters and are back-filled from their filing history.
 - **Sector and industry charts** add up every company whose fiscal quarter ends in the same calendar quarter
   (SIC-code groups; the ten largest companies appear by name).

@@ -331,8 +331,9 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
             S.link("opcosts", "I:" + k, key, "cost")
         if not parts:
             S.ids["opcosts"]["pos"] = "right"
-        if Nc["ocf"] is not None:
-            _bridge_general(S, Nc, rc + 4, f)
+        if Nc["ocf"] is not None:                      # an operating loss with net earnings (a large non-operating gain):
+            _bridge_general(S, Nc, rc + 4, f,           # the earnings are a cash source like D&A
+                            **({"net_id": "netinc", "net_key": "pl"} if "netinc" in S.ids else {}))
         kind = "loss"
     nodes, links = S.finish()
     _check(nodes, links)
@@ -502,6 +503,7 @@ NOTE_KEYS = {
     "ga": ["general and administrative"],
     "sga": ["selling, general and administrative"],
     "other_opex": ["other operating"],
+    "da_op": ["depreciation and amortization"],
     "nonop": ["other income", "interest expense", "interest and other", "other (income) expense", "nonoperating"],
     "pretax": ["income before"],
     "tax": ["provision for income taxes", "income taxes", "effective tax rate"],

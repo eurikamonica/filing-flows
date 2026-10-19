@@ -372,7 +372,7 @@ def headline(e, q):
 
 
 def eyebrow(e, q):
-    form = "8-K earnings release" if q.get("form") == "8-K" else q.get("form", "")
+    form = {"8-K": "8-K earnings release", "6-K": "6-K results release"}.get(q.get("form"), q.get("form", ""))
     return " · ".join(x for x in (e.get("ticker"), q.get("label") + (" full year" if is_year(q) else ""),
                                   f"{form} filed {social.fdate(q.get('filed'))}",
                                   "final" if q.get("release_check") else "") if x)

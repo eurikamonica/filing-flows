@@ -198,7 +198,7 @@ def filing_quote(q):
     (paragraph, where it is from, the line it is about)."""
     nodes = {n["id"]: n for n in q["nodes"]}
     order = [nodes.get("revenue")] + sorted([n for n in q["nodes"] if n["id"].startswith("L:")], key=lambda n: -n["v"])
-    where = ("earnings release" if q.get("form") == "8-K"
+    where = ("earnings release" if q.get("form") in ("8-K", "6-K")
              else f"{q.get('form')} ({'Item 7' if q.get('form') == '10-K' else 'Item 2'}, MD&A)")
     for n in order:
         for note in (n or {}).get("notes") or []:
@@ -209,8 +209,8 @@ def filing_quote(q):
 
 
 def form_words(q):
-    """'10-Q', '10-K' or 'earnings release (8-K)'."""
-    return "earnings release (8-K)" if q.get("form") == "8-K" else q.get("form", "")
+    """'10-Q', '10-K', 'earnings release (8-K)' or 'results release (6-K)'."""
+    return {"8-K": "earnings release (8-K)", "6-K": "results release (6-K)"}.get(q.get("form"), q.get("form", ""))
 
 
 def filing_line(q, short=False):

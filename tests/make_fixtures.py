@@ -368,6 +368,82 @@ put(sec.doc_url(SMCL, S_8K, "ex99-1.htm"), release_doc([
         ("Purchases of property and equipment", [-120000, -90000])])),
 ]))
 
+# ------------------------------------------------------------------ FICTIONAL foreign private issuers (20-F + 6-K)
+# Not real data. A US-dollar foreign filer whose results releases look like many foreign filers' (Nebius among them): the
+# newest year printed LAST ("2025*  2026"), labels with slashes ("Net income / (loss)"), D&A as an operating cost line,
+# discontinued operations in the year-ago column, quarterly cash flows. And a euro filer the charts cannot draw yet.
+FRGN, EURO = 9999911, 9999912
+F_Q2, F_NEWS, F_Q1, F_20F = "0009999911-26-000040", "0009999911-26-000038", "0009999911-26-000030", "0009999911-26-000020"
+f_annual = ["Revenues", "CostOfRevenue", "ResearchAndDevelopmentExpense", "SellingGeneralAndAdministrativeExpense",
+            "OperatingIncomeLoss", "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+            "IncomeTaxExpenseBenefit", "NetIncomeLoss", "NetCashProvidedByUsedInOperatingActivities",
+            "DepreciationDepletionAndAmortization", "ShareBasedCompensation", "PaymentsToAcquirePropertyPlantAndEquipment"]
+fp = [("2025-01-01", "2025-12-31", F_20F, "20-F", "2026-04-30", dict(zip(f_annual, [530, 166, 177, 378, -596, 33, 4, 29, 580, 404, 120, 4000]))),
+      ("2024-01-01", "2024-12-31", F_20F, "20-F", "2026-04-30", dict(zip(f_annual, [92, 44, 115, 256, -400, -353, -1, -352, -300, 77, 40, 900])))]
+put(sec.companyfacts_url(FRGN), facts_json(FRGN, "Fictional Foreign Cloud N.V.", fp))
+put(sec.submissions_url(FRGN), submissions(FRGN, "Fictional Foreign Cloud N.V.", ["FRGN"], "7370",
+    "Services-Computer Programming, Data Processing, Etc.", "", [
+        [F_Q2, "2026-08-12", "", "6-K", "frgn-6k_20260812.htm"],
+        [F_NEWS, "2026-07-20", "", "6-K", "frgn-6k_20260720.htm"],
+        [F_Q1, "2026-05-13", "", "6-K", "frgn-6k_20260513.htm"],
+        [F_20F, "2026-04-30", "2025-12-31", "20-F", "frgn-20251231x20f.htm"]]))
+
+
+def fpi_table(head, rows):
+    """Newest year last, years marked like "2025*", a lone header row of years."""
+    h = "<tr><td></td>" + "".join(f"<td colspan=\"3\"><b>{t}</b></td>" for t in head[0]) + "</tr>"
+    h += "<tr><td>In USD millions</td>" + "".join(f"<td></td><td>{y}</td><td></td>" for y in head[1]) + "</tr>"
+    body = "".join(f"<tr><td>{lab}</td>" + ("".join(money_cells(v) for v in vals) if vals else "") + "</tr>" for lab, vals in rows)
+    return f"<table>{h}{body}</table>"
+
+
+def fpi_release(quarter, month, rows_is, rows_cf):
+    head = [[f"Three months ended {month},"], ["2025*", "2026"]]
+    return release_doc([
+        f"Fictional Foreign Cloud reports {quarter} quarter 2026 financial results",
+        f"Amsterdam — Fictional Foreign Cloud N.V. today announced its financial results for the {quarter} quarter ended {month}, 2026.",
+        "Revenue grew more than fourfold year over year as new data centers came online for AI customers.",
+        "About Fictional Foreign Cloud",
+        "Fictional Foreign Cloud N.V. is an invented AI infrastructure company used to test this site; it builds and runs data "
+        "centers in Europe and the United States and rents GPU capacity to developers.",
+    ], [("Unaudited Condensed Consolidated Statements of Operations", "", fpi_table(head, rows_is)),
+        ("Unaudited Condensed Consolidated Statements of Cash Flows", "", fpi_table(head, rows_cf))])
+
+
+put(sec.filing_index_url(FRGN, F_Q2), {"directory": {"item": [{"name": "frgn-6k_20260812.htm"}, {"name": "frgn-ex99-1.htm"}]}})
+put(sec.doc_url(FRGN, F_Q2, "frgn-ex99-1.htm"), fpi_release("second", "June 30", [
+    ("Revenues", [105, 580]), ("Operating costs and expenses:", None), ("Cost of revenues", [30, 130]), ("Product development", [43, 190]),
+    ("Sales, general and administrative", [68, 170]), ("Depreciation and amortization", [75, 260]),
+    ("Total operating costs and expenses", [216, 750]), ("Loss from operations", [-111, -170]), ("Other income, net", [614, 5]),
+    ("Net income / (loss) before income taxes", [503, -165]), ("Income tax expense", [1, 15]),
+    ("Net income / (loss) from continuing operations", [502, -180]), ("Net income from discontinued operations", [82, 0]),
+    ("Net income / (loss)", [584, -180])], [
+    ("Net income / (loss) from continuing operations", [502, -180]), ("Share-based compensation expense", [15, 100]),
+    ("Net cash provided by / (used in) operating activities", [-170, 2200]),
+    ("Purchases of property and equipment", [-510, -5600])]))
+put(sec.filing_index_url(FRGN, F_NEWS), {"directory": {"item": [{"name": "frgn-6k_20260720.htm"}, {"name": "frgn-ex99-1.htm"}]}})
+put(sec.doc_url(FRGN, F_NEWS, "frgn-ex99-1.htm"), release_doc([
+    "Fictional Foreign Cloud announces a new data center in Finland",
+    "The company will build a 300 MW campus; construction starts in the third quarter."], []))
+put(sec.filing_index_url(FRGN, F_Q1), {"directory": {"item": [{"name": "frgn-6k_20260513.htm"}, {"name": "frgn-ex99-1.htm"}]}})
+put(sec.doc_url(FRGN, F_Q1, "frgn-ex99-1.htm"), fpi_release("first", "March 31", [
+    ("Revenues", [50, 400]), ("Operating costs and expenses:", None), ("Cost of revenues", [25, 100]), ("Product development", [35, 70]),
+    ("Sales, general and administrative", [60, 140]), ("Depreciation and amortization", [50, 210]),
+    ("Total operating costs and expenses", [170, 520]), ("Loss from operations", [-120, -120]), ("Other income, net", [15, 20]),
+    ("Net income / (loss) before income taxes", [-105, -100]), ("Income tax expense", [1, 5]),
+    ("Net income / (loss) from continuing operations", [-106, -105]), ("Net loss from discontinued operations", [-9, 0]),
+    ("Net income / (loss)", [-115, -105])], [
+    ("Share-based compensation expense", [15, 35]), ("Net cash provided by / (used in) operating activities", [-190, 300]),
+    ("Purchases of property and equipment", [-600, -2500])]))
+put(sec.companyfacts_url(EURO), {"cik": EURO, "entityName": "Fictional Euro Audio S.A.", "facts": {"ifrs-full": {
+    "Revenue": {"label": "Revenue", "units": {"EUR": [{"start": "2025-01-01", "end": "2025-12-31", "val": 17000000000, "fy": 2025,
+                                                       "form": "20-F", "filed": "2026-02-03", "accn": "0009999912-26-000004"}]}},
+    "ProfitLoss": {"label": "Profit (loss)", "units": {"EUR": [{"start": "2025-01-01", "end": "2025-12-31", "val": 1100000000, "fy": 2025,
+                                                              "form": "20-F", "filed": "2026-02-03", "accn": "0009999912-26-000004"}]}}}}})
+put(sec.submissions_url(EURO), submissions(EURO, "Fictional Euro Audio S.A.", ["EURO"], "7370", "Services", "1231", [
+    ["0009999912-26-000009", "2026-07-28", "", "6-K", "euro-6k.htm"],
+    ["0009999912-26-000004", "2026-02-03", "2025-12-31", "20-F", "euro-20f.htm"]]))
+
 put(sec.current_feed_url("8-K", 0), atom([
     ("8-K", "Example Devices Inc.", EXDV, X_8K_OTHER, "2026-09-28", " &lt;br&gt;Item 5.02: Departure of Directors"),
     ("8-K", "Example Devices Inc.", EXDV, X_8K, "2026-09-24",

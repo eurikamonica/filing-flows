@@ -139,7 +139,7 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
             out = CALC["cor_gp"]
         elif nid == "I:cor":
             out = get("cor")
-        elif nid in ("I:rd", "I:sm", "I:ga", "I:sga"):
+        elif nid in ("I:rd", "I:sm", "I:ga", "I:sga", "I:da_op"):
             out = get(nid[2:])
         elif nid == "I:other_opex":
             out = CALC["other_opex"]

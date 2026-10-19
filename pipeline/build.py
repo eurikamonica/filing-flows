@@ -126,7 +126,7 @@ def companyfacts(cik):
     return _cf[cik]
 
 
-INTRO_RANK = {"10-K": 3, "8-K": 2, "10-Q": 1}    # where the company description comes from, best first
+INTRO_RANK = {"10-K": 3, "8-K": 2, "6-K": 2, "10-Q": 1}    # where the company description comes from, best first
 
 
 def intro_rank(c):
@@ -451,6 +451,10 @@ def note_keys_for(lines_struct):
 def process_filing(store, cik, accn, form, starred=False):
     if form.startswith("8-K"):
         return process_release(store, cik, accn, form, starred)
+    if form.startswith("6-K"):
+        return process_fpi_release(store, cik, accn, form, starred)
+    if form.startswith(("20-F", "40-F")):
+        return process_fpi_annual(store, cik, accn, form, starred)
     sub = submissions(cik)
     row = next((r for r in recent_rows(sub) if r["accessionNumber"] == accn), None)
     if not row or not row.get("reportDate"):
@@ -753,6 +757,8 @@ HISTORY_ON_RELEASE = 5          # an earnings 8-K brings in the company's last f
 
 
 def _queue_history(store, cik, sub, n=HISTORY_ON_RELEASE):
+    if is_foreign(sub):
+        return _queue_foreign(store, cik, sub)
     st, c = store.state, store.company(cik)
     if c.get("keep", 0) >= n + 1 and c.get("hist", 0) >= HISTORY_VERSION:
         return
@@ -777,17 +783,18 @@ DRAWABLE_FORMS = {"10-Q", "10-K", "10-Q/A", "10-K/A", "10-KT", "10-QT"}
 FOREIGN_FORMS = {"20-F", "20-F/A", "40-F", "40-F/A", "6-K", "6-K/A"}
 
 
-def cannot_draw(sub):
-    """Why a company someone asked for cannot be charted (None when it can): the charts come from 10-Q and 10-K figures,
-    and a foreign private issuer files 20-F / 40-F annual reports and 6-K releases instead."""
+def cannot_draw(sub, currency=None):
+    """Why a company someone asked for cannot be charted (None when it can): the charts come from 10-Q / 10-K figures,
+    or, for a foreign private issuer, its 20-F / 40-F and 6-K results releases — in US dollars only for now."""
     forms = {r.get("form") for r in recent_rows(sub)}
     if forms & DRAWABLE_FORMS:
         return None
     name = sub.get("name") or "It"
     if forms & FOREIGN_FORMS:
-        kind = "40-F" if forms & {"40-F", "40-F/A"} else "20-F"
-        return (f"{name} is a foreign private issuer: it files a {kind} annual report and 6-K releases, not 10-Qs and 10-Ks, "
-                "and the charts are drawn from 10-Q / 10-K figures")
+        if currency and currency != "USD":
+            return (f"{name} is a foreign private issuer that reports in {currency}; its 20-F and 6-K results can be read, "
+                    "but the charts are in US dollars only for now")
+        return None
     return f"{name} has no 10-Q or 10-K on file at SEC"
 
 
@@ -891,6 +898,7 @@ def process_release(store, cik, accn, form, starred=False):
                              "py": facts.extract(fx, py_end) if py_end else None}, facts.extract(fx, ends[-1]))
         raw = {k: None for k in facts.CONCEPTS}
         raw.update(_release_quarter(rel["is"], True, fx, q1_end, release.IS_KEYS))
+        raw.pop("da_op", None)                          # the 10-Q's XBRL has no such line: keep the two charts alike
         raw.update(_release_cash(rel, fx, q1_end, fq, py_end))
         if raw.get("da") is not None and release.depreciation_only(rel):
             raw["dep"] = raw["da"]                     # the chart then says "Depreciation", not D&A
@@ -928,6 +936,267 @@ def process_release(store, cik, accn, form, starred=False):
     c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
     store.put(cik, c)
     return end
+
+
+# ---------------------------------------------------------------- foreign private issuers: 20-F and 6-K
+# A foreign private issuer files no 10-Q or 10-K: a 20-F (or 40-F) annual report with XBRL, and its quarterly results as
+# a press release furnished on Form 6-K. The year comes from the 20-F's XBRL, each quarter from its results release,
+# read with the same table reader as an 8-K earnings release. Charts are in US dollars, so only companies that report in
+# dollars are drawn for now.
+FPI_RELEASES = 45               # 6-Ks looked at when a foreign company is first asked for (most are not results)
+FPI_ANNUALS = 2
+
+
+def primary_currency(fx_raw):
+    """The currency most of a company's monetary XBRL facts are in (companyfacts JSON as SEC serves it)."""
+    count = {}
+    for tax in ("us-gaap", "ifrs-full"):
+        for body in (fx_raw.get("facts", {}).get(tax) or {}).values():
+            for unit, fs in (body.get("units") or {}).items():
+                if re.fullmatch(r"[A-Z]{3}", unit):
+                    count[unit] = count.get(unit, 0) + sum(1 for f in fs if (f.get("fy") or 0) >= dt.date.today().year - 3)
+    return max(count, key=count.get) if count else None
+
+
+def is_foreign(sub):
+    forms = {r.get("form") for r in recent_rows(sub)}
+    return bool(forms & FOREIGN_FORMS) and not forms & DRAWABLE_FORMS
+
+
+def _fpi_profile(c, sub):
+    c["profile"] = profile_of(sub)
+    c["fpi"] = True
+    if not sub.get("fiscalYearEnd"):                  # SEC leaves it blank for some foreign filers (Nebius): the 20-F's date
+        k = next((r for r in recent_rows(sub) if r["form"] in ("20-F", "40-F") and r.get("reportDate")), None)
+        if k:
+            c["profile"]["fye"] = k["reportDate"][5:7] + k["reportDate"][8:10]
+    return c
+
+
+def _note_fpi(store, cik):
+    lst = set(store.state.setdefault("fpi", []))
+    if cik not in lst:
+        store.state["fpi"] = sorted(lst | {cik})
+
+
+def _column(rel, j):
+    """The release's j-th column (0 = the current period) as raw values: income statement and cash flow."""
+    out = {}
+    for k, col in (rel.get("cols") or {}).items():
+        if len(col) > j:
+            out[k] = abs(col[j]) if k in release.COST_KEYS else col[j]
+    for k, col in (rel.get("cf_cols") or {}).items():
+        if len(col) > j and k not in out:
+            out[k] = abs(col[j]) if k in release.COST_KEYS else col[j]
+    return out
+
+
+def _fpi_cash(rel, prev, fq):
+    """Quarterly cash-flow figures: printed for the quarter, or the year to date minus the previous release's."""
+    cf = {k: (abs(v) if k in release.COST_KEYS else v) for k, v in (rel.get("cf") or {}).items()}
+    if not cf:
+        return {}, None
+    if rel.get("cf_quarter") is True or fq == 1:
+        return cf, cf if fq == 1 else None
+    ytd = cf
+    p = (prev or {}).get("ytd_cf")
+    if rel.get("cf_quarter") is False and p and prev.get("fy") and (prev.get("fq") or 0) == fq - 1:
+        return {k: v - p[k] for k, v in ytd.items() if p.get(k) is not None}, ytd
+    return {}, ytd
+
+
+_cur = {}
+
+
+def _currency_of(cik):
+    if cik not in _cur:
+        try:
+            _cur[cik] = primary_currency(sec.get_json(sec.companyfacts_url(cik)))
+        except sec.NotFound:
+            _cur[cik] = None
+    return _cur[cik]
+
+
+def process_fpi_release(store, cik, accn, form, starred=False):
+    """One quarter from a foreign private issuer's results release (a 6-K exhibit). It files no 10-Q, so the release is
+    the record (not preliminary). Comparisons: the release's own year-ago column, and the quarter before from the
+    company's previous release on file (filled in later when the earlier release is read after this one)."""
+    sub = submissions(cik)
+    row = next((r for r in recent_rows(sub) if r["accessionNumber"] == accn), None)
+    if not row:
+        raise Pending("filing not yet in submissions")
+    c = _fpi_profile(store.company(cik), sub)
+    if "currency" not in c:                              # releases are read before the 20-F (newest first): ask XBRL now
+        try:
+            c["currency"] = primary_currency(sec.get_json(sec.companyfacts_url(cik)))
+        except sec.NotFound:
+            c["currency"] = None
+    cur = c.get("currency")
+    if cur and cur != "USD":
+        store.put(cik, c)
+        raise NotApplicable(f"reports in {cur}; charts are in US dollars")
+    filed = dt.date.fromisoformat(row["filingDate"])
+    idx = sec.get_json(sec.filing_index_url(cik, accn))
+    names = [i["name"] for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)
+             and "index" not in i["name"].lower() and i["name"] != row.get("primaryDocument")]
+    names.sort(key=lambda n: (not re.search(EXHIBIT_PATTERNS[0], n, re.I), not re.search(r"ex[-_]?99", n, re.I), n))
+    press = [n for n in names if re.search(r"ex[-_]?99|press|release|result|earning", n, re.I)]
+    names = (press or names)[:3]                         # not the indentures and agreements some 6-Ks carry
+    if row.get("primaryDocument"):
+        names.append(row["primaryDocument"])             # some put the release in the 6-K itself (Check Point)
+    prior = sorted((q for q in c.get("quarters", {}).values() if q.get("raw")), key=lambda q: q["end"])
+    have = c.get("quarters", {})
+    rel = doc = ex_url = None
+    errors = []
+    for name in names[:4]:
+        url = sec.doc_url(cik, accn, name)
+        try:
+            html = sec.get(url)
+        except sec.NotFound:
+            continue
+        if not re.search(r"quarter|three months|results", html[:200000], re.I):
+            continue
+        try:
+            prev_rev = None
+            r = release.parse(html, filed, None, None)
+            back = [q for q in prior if 60 <= (dt.date.fromisoformat(r["end"]) - dt.date.fromisoformat(q["end"])).days <= 120]
+            if back:                                     # units checked against the quarter before, when on file
+                prev_rev = back[-1]["raw"]["revenue"]
+                r = release.parse(html, filed, None, prev_rev)
+            rel, doc, ex_url = r, html, url
+            break
+        except ValueError as e:
+            errors.append(f"{name}: {e}")
+    if not rel:
+        raise NotApplicable("not a results release" + (f" ({errors[0]})" if errors else ""))
+    end = rel["end"]
+    e0 = dt.date.fromisoformat(end)
+    if rel["is_quarter"] is False:
+        raise NotApplicable("the release's statements are not for a quarter")
+    old = have.get(end)                                 # the same quarter in two 6-Ks (press release, then the interim
+    if old and old.get("form") == "6-K" and old.get("accn") != accn and (old.get("filed") or "") <= row["filingDate"]:
+        raise NotApplicable(f"quarter already read from the results release of {old.get('filed')}")   # statements)
+    label, fq, fy = facts.fiscal_label(end, c["profile"]["fye"])
+    try:
+        raw = {k: None for k in facts.CONCEPTS}
+        raw.update({k: (abs(v) if k in release.COST_KEYS else v) for k, v in rel["is"].items()})
+        back = [q for q in prior if 60 <= (e0 - dt.date.fromisoformat(q["end"])).days <= 120]
+        prev = back[-1] if back else None
+        cash, ytd = _fpi_cash(rel, prev, fq)
+        raw.update(cash)
+        if raw.get("da") is None and raw.get("da_op"):
+            raw["da"] = raw["da_op"]                     # D&A printed as an operating cost line (Nebius) is the bridge's
+        raw = release.reconcile(raw, rel["labels"])
+    except ValueError as e:
+        raise NotApplicable(f"results release not readable: {e}")
+    disc = raw.pop("disc", None)
+    if not normalize(raw):
+        raise NotApplicable("results release lacks revenue or net income")
+    # the year-ago quarter: the release's second column when its header pairs the quarter with the year before
+    raw_py = py_end = None
+    if str(e0.year - 1) in release._header(release.pick_tables(rel["tables"])[0][1]) and len(rel["cols"].get("revenue") or []) > 1:
+        try:
+            py = {k: None for k in facts.CONCEPTS}
+            py.update(_column(rel, 1))
+            if rel.get("cf_quarter") is not True and fq != 1:
+                for k in release.CF_KEYS:
+                    py[k] = None                          # a year-to-date column, not the year-ago quarter
+            if py.get("da") is None and py.get("da_op"):
+                py["da"] = py["da_op"]
+            py = release.reconcile(py, rel["labels"])
+            py.pop("disc", None)
+            if normalize(py):
+                raw_py, py_end = py, (e0.replace(year=e0.year - 1) if not (e0.month == 2 and e0.day == 29) else e0 - dt.timedelta(days=365)).isoformat()
+        except ValueError:
+            raw_py = py_end = None
+    stored_py = next((q for q in prior if abs((dt.date.fromisoformat(q["end"]) - (e0 - dt.timedelta(days=365))).days) <= 10), None)
+    if stored_py:                                       # the year-ago release on file: its figures as reported then
+        raw_py, py_end = stored_py["raw"], stored_py["end"]
+    q1_end, raw_q1 = (prev["end"], prev["raw"]) if prev else (None, None)
+    rev_ref = {"q1": (raw_q1 or {}).get("revenue"), "py": (raw_py or {}).get("revenue")}
+    segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref)
+    ls = segs["struct"] if segs else None
+    notes = {}
+    paras = release.note_paragraphs(doc)
+    for key, words in note_keys_for(ls).items():
+        m = text.match_notes(paras, words)
+        if m:
+            notes[key] = m
+    if intro_rank(c) < INTRO_RANK["6-K"]:
+        try:
+            set_intro(c, text.about(doc, [c["profile"]["name"]], c["profile"].get("tickers")), ex_url, row.get("filingDate"), "6-K")
+        except Exception as e:
+            print(f"  about skipped for {cik}: {e}", file=sys.stderr)
+    c["quarters"][end] = {
+        "end": end, "label": label, "fq": fq, "fy": fy, "cal": facts.calendar_quarter(end), "form": "6-K",
+        "accn": accn, "filed": row.get("filingDate"), "doc_url": ex_url,
+        "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", "raw": raw,
+        "q1_end": q1_end, "py_end": py_end, "raw_q1": raw_q1, "raw_py": raw_py, "ytd_cf": ytd,
+        "lines_struct": ls, "lines": segs and segs["cur"], "lines_q1": segs and segs.get("q1"),
+        "lines_py": segs and segs.get("py"), "notes": notes, "disc": disc,
+        "capex_src": ({"label": (rel.get("cf_labels") or {}).get("capex"), "how": "release"}
+                      if raw.get("capex") is not None else None),
+        "src": sources.from_release(rel, raw),
+    }
+    for k, q in c["quarters"].items():                  # a later release read before this one: its quarter-before is this
+        if q.get("form") == "6-K" and not q.get("raw_q1") and 60 <= (dt.date.fromisoformat(k) - e0).days <= 120:
+            q["q1_end"], q["raw_q1"] = end, raw
+        if q.get("form") == "6-K" and 350 <= (dt.date.fromisoformat(k) - e0).days <= 380:
+            q["py_end"], q["raw_py"] = end, raw
+    keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
+    c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
+    store.put(cik, c)
+    _note_fpi(store, cik)
+    return end
+
+
+def process_fpi_annual(store, cik, accn, form, starred=False):
+    """The full year from a foreign private issuer's 20-F (or 40-F) XBRL: an annual chart with the year before."""
+    sub = submissions(cik)
+    row = next((r for r in recent_rows(sub) if r["accessionNumber"] == accn), None)
+    if not row or not row.get("reportDate"):
+        raise Pending("filing not yet in submissions")
+    end = row["reportDate"]
+    fx_raw = sec.get_json(sec.companyfacts_url(cik))
+    cur = primary_currency(fx_raw)
+    c = _fpi_profile(store.company(cik), sub)
+    c["currency"] = cur
+    if cur and cur != "USD":
+        store.put(cik, c)
+        raise NotApplicable(f"reports in {cur}; charts are in US dollars")
+    fx = companyfacts(cik)
+    doc_url = sec.doc_url(cik, accn, row["primaryDocument"]) if row.get("primaryDocument") else None
+    year = annual_entry(c, fx, None, cik, accn, form, row, end, doc_url, {})
+    if not year:
+        if not facts.extract(fx, end, annual=True).get("revenue"):
+            raise Pending("XBRL facts not available yet")
+        raise NotApplicable("no revenue or net income line in the annual report's XBRL")
+    c.setdefault("years", {})[end] = year
+    c["years"] = dict(sorted(c["years"].items())[-(KEEP_STARRED_YEARS if starred else KEEP_YEARS):])
+    c["periods"] = periods_of(fx)
+    set_quality(c, fx)
+    store.put(cik, c)
+    _note_fpi(store, cik)
+    return end
+
+
+def _queue_foreign(store, cik, sub):
+    """A foreign filer's history: its last two annual reports and the 6-Ks of the last two years or so (the results
+    releases among them are read; the rest are skipped)."""
+    st, c = store.state, store.company(cik)
+    rows = [r for r in recent_rows(sub)]
+    pick = [r for r in rows if r["form"] in ("20-F", "40-F") and r.get("reportDate")][:FPI_ANNUALS]
+    pick += [r for r in rows if r["form"] == "6-K"][:FPI_RELEASES]
+    for r in pick:
+        a = r["accessionNumber"]
+        if a not in st["pending"] and not (st["seen"].get(a) or {}).get("s") == "ok":
+            st["seen"].pop(a, None)
+            st["pending"][a] = {"cik": cik, "form": r["form"], "filed": r["filingDate"], "tries": 0, "items": None, "history": True}
+    c["keep"] = max(c.get("keep", 0), KEEP_QUARTERS)
+    c["hist"] = HISTORY_VERSION
+    _fpi_profile(c, sub)
+    store.put(cik, c)
+    _note_fpi(store, cik)
 
 
 def _prior_ytd(c, sub, cik, end):
@@ -1016,6 +1285,8 @@ def run(args):
     queue = scan.backfill(args.backfill_days) if args.backfill_days else scan.latest_filings()
     if args.backfill_days:
         queue += scan.latest_filings()
+    if st.get("fpi"):                                          # foreign filers on the site: their new 6-Ks and 20-Fs
+        queue += scan.latest_foreign(set(st["fpi"]))
     for f in queue:
         if f["form"] == "8-K" and f.get("items") is not None and "2.02" not in f["items"]:
             continue                                             # 8-K that is not an earnings release
@@ -1030,8 +1301,8 @@ def run(args):
             if not queue_history(store, cik):
                 print(f"  no SEC filer with CIK {cik}")
                 unbuildable[cik] = "SEC has no filer with this CIK"
-            elif cannot_draw(submissions(cik)):
-                unbuildable[cik] = cannot_draw(submissions(cik))
+            elif cannot_draw(submissions(cik), _currency_of(cik) if is_foreign(submissions(cik)) else None):
+                unbuildable[cik] = cannot_draw(submissions(cik), _currency_of(cik))
                 print(f"  {cik}: {unbuildable[cik]}")
         except Exception as e:
             print(f"  could not queue {cik} for a reader: {e}", file=sys.stderr)
@@ -1176,8 +1447,17 @@ FCF_DEF = (" Free cash flow = operating cash flow − capital expenditures (gros
            "company’s own (adjusted) free cash flow may net asset sales or incentives and differ.")
 
 
+FPI_NOTE = ("Source: the company's quarterly results release (Form 6-K exhibit, filed {filed}), read from its tables. A foreign "
+            "private issuer files no 10-Q: its quarters are published this way, and its full years in the 20-F (XBRL). "
+            "Percentages show each item’s share of the node it splits from or flows into. n/m = not meaningful (a comparison "
+            "period was ≤ 0 or changed sign).")
+
+
 def _footer(q, kind, Nc):
-    lines = [(RELEASE_NOTE if q["form"] == "8-K" else SOURCE_NOTE).format(form=q["form"], filed=q["filed"])]
+    lines = [(RELEASE_NOTE if q["form"] == "8-K" else FPI_NOTE if q["form"] == "6-K" else SOURCE_NOTE).format(form=q["form"], filed=q["filed"])]
+    if q.get("disc"):
+        lines.append(f"Net income from continuing operations; discontinued operations added {Fmt(Nc['R']).money(q['disc'])} "
+                     "below it (not drawn).")
     if "oi_derived" in Nc["flags"]:
         lines.append("Operating profit = revenue minus total costs and expenses (derived; the company does not tag operating income).")
     if kind == "loss":
@@ -1344,7 +1624,8 @@ def _quarter_payload(c, q, prev_q, draw_company=True):
         "doc_url": q.get("doc_url"), "index_url": q.get("index_url"), "kind": kind,
         "title": f"{name} {q['label']} earnings &amp; cash flow",
         "subtitle": (f"Quarter ended {_date(q['end'])} · GAAP · Y/Y vs. {_short(q.get('py_end'))} "
-                     f"· Q/Q vs. {_short(q.get('q1_end'))}" + (" · preliminary, from the earnings release" if q["form"] == "8-K" else "")),
+                     f"· Q/Q vs. {_short(q.get('q1_end'))}" + (" · preliminary, from the earnings release" if q["form"] == "8-K"
+                                                               else " · from the 6-K results release" if q["form"] == "6-K" else "")),
         "footer": _footer(q, kind, Nc), "nodes": nodes, "links": links,
         "checks": checks.checks(q, c, Nc, Nq, Ny),
         "analysis": analysis.paragraphs(f, q["label"], Nc, Nq, Ny, ls, (q.get("lines"), lines_q1, q.get("lines_py")),
