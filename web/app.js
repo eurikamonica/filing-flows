@@ -2406,9 +2406,11 @@
   // 4 · quarter by quarter: how many processed managers bought (up) and sold (down) in each quarter on file
   function quarters13(q, sym) {
     if (!q || !(q.rows || []).length) return '';
-    const idx = q.rows.map((r, i) => (r ? i : -1)).filter((i) => i >= 0).slice(-9);
+    const cov = q.coverage || [], best = Math.max(...cov.map((c) => c || 0)) || 1;
+    // a quarter's changes compare each manager with its previous filing: leave out quarters whose previous quarter has few
+    // managers processed (the start of the history on file), where nearly every position would count as a first filing
+    const idx = q.rows.map((r, i) => (r && i > 0 && (cov[i - 1] || 0) >= best * 0.6 ? i : -1)).filter((i) => i >= 0).slice(-8);
     if (idx.length < 2) return '';
-    const cov = q.coverage || [], best = Math.max(...idx.map((i) => cov[i] || 0)) || 1;
     const W = 640, H = 230, mid = 108, amp = 82, n = idx.length, bw = Math.min(36, (W - 40) / n - 14), step = (W - 40) / n;
     const max = Math.max(1, ...idx.map((i) => Math.max(q.rows[i][0], q.rows[i][1])));
     const ql = (p) => `Q${Math.floor((+p.slice(5, 7) - 1) / 3) + 1} ’${p.slice(2, 4)}`;
