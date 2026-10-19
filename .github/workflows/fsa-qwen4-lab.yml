@@ -38,9 +38,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      # only the FSA files: a full checkout would download the Disclosure Hub's ~9 GB of data (disclosures/docs/data) every run
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/fsa_*.py
+            /tests/test_fsa_hourly_*.py
+            /research_reports/
       - uses: actions/checkout@v4
         with:
           ref: lab/qwen3-4b-fsa-20261018
@@ -86,9 +93,16 @@ jobs:
     runs-on: [self-hosted, Windows, X64, fsa-gpu]
     timeout-minutes: 300
     steps:
+      # only the FSA files: a full checkout would download the Disclosure Hub's ~9 GB of data (disclosures/docs/data) every run
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/fsa_*.py
+            /tests/test_fsa_hourly_*.py
+            /research_reports/
       - uses: actions/checkout@v4
         with:
           ref: lab/qwen3-4b-fsa-20261018

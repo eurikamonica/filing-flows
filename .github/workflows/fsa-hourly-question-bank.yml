@@ -16,9 +16,16 @@ jobs:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
       GH_TOKEN: ${{ github.token }}
     steps:
+      # only the FSA files: a full checkout would download the Disclosure Hub's ~9 GB of data (disclosures/docs/data) every run
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/fsa_*.py
+            /tests/test_fsa_hourly_*.py
+            /research_reports/
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
