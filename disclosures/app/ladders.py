@@ -60,6 +60,15 @@ MIN_FIT = 20
 HORIZON_DAYS = 120
 HISTORY_DAYS = 14
 ALPHA = 0.2                                              # 80% ranges
+_warned = [0]
+
+
+def warn(msg):
+    """A problem worth seeing in the run's summary (GitHub annotations), the first dozen of each run."""
+    print(f'  {msg}', flush=True)
+    if _warned[0] < 12 and 'GITHUB_ACTIONS' in __import__('os').environ:
+        _warned[0] += 1
+        print(f'::warning title=ladders::{msg}', flush=True)
 
 
 # ------------------------------------------------------------------ time
@@ -139,7 +148,7 @@ def collect_prices(h, cache, syms, now):
             qd = rd['indicators']['quote'][0]['close']
             daily = {dt.datetime.fromtimestamp(t, ET).date().isoformat(): round(v, 4) for t, v in zip(rd.get('timestamp') or [], qd) if v is not None}
         except Exception as exc:
-            print(f'  yahoo {sym}: {str(exc)[:120]}', flush=True)
+            warn(f'yahoo {sym}: {str(exc)[:120]}')
             continue
         old = cache.get(sym) or {}
         keep_h = hkey(now - dt.timedelta(days=150))
@@ -240,7 +249,7 @@ def collect_options(h, cache, syms, now):
             cache[sym] = {'at': now.isoformat(timespec='seconds'), 'quote_time': payload.get('timestamp'), 'spot': spot,
                           'exps': expiry_book(spot, chain, now.astimezone(ET).date())}
         except Exception as exc:
-            print(f'  cboe {sym}: {str(exc)[:120]}', flush=True)
+            warn(f'cboe {sym}: {str(exc)[:120]}')
     return cache
 
 
@@ -416,7 +425,7 @@ def backfill(h, rec, prices, budget):
             used += 1
             series.append({hkey(dt.datetime.fromtimestamp(x['t'], UTC)): float(x['p']) for x in hist if x.get('p') is not None and x.get('t')})
     except Exception as exc:
-        print(f'  clob {rec["key"][-50:]}: {str(exc)[:100]}', flush=True)
+        warn(f'clob {rec["key"][-50:]}: {str(exc)[:100]}')
         rec['backfill_tries'] = rec.get('backfill_tries', 0) + 1
         if rec['backfill_tries'] >= 3:
             rec['backfill'] = 'failed'
@@ -638,7 +647,7 @@ def collect(root, site_index, minutes=8.0, verbose=True):
     try:
         found += CS.kalshi_index_scan(h, root, minutes=2, verbose=verbose)
     except Exception as exc:
-        print(f'  kalshi: {exc}', flush=True)
+        warn(f'kalshi: {exc}')
     today = now.astimezone(ET).date()
     far = (today + dt.timedelta(days=HORIZON_DAYS)).isoformat()
     back = (today - dt.timedelta(days=45)).isoformat()
@@ -792,7 +801,14 @@ def main():
     ap.add_argument('--minutes', type=float, default=8)
     a = ap.parse_args()
     if a.cmd == 'collect':
-        print(json.dumps(collect(a.root, a.site_index, a.minutes)), flush=True)
+        try:
+            print(json.dumps(collect(a.root, a.site_index, a.minutes)), flush=True)
+        except Exception:
+            import traceback
+            tb = traceback.format_exc().strip().splitlines()
+            print('\n'.join(tb), flush=True)
+            print('::error title=ladders::' + ' | '.join(x.strip() for x in tb[-6:])[:900], flush=True)
+            raise
     else:
         now = utcnow()
         print(json.dumps(publish(a.root, Store(a.root), read_json(Path(a.root) / 'cache' / 'prices.json', {}), now)), flush=True)
