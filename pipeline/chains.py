@@ -198,6 +198,7 @@ class Co:
         rx = re.compile(pattern, re.I)
         pref = ["StatementBusinessSegmentsAxis", "ProductOrServiceAxis"]
         axes = self._axes()
+        newest = max((p.get("end") or "" for p in self.parses()), default="")
         rank = lambda a: (pref.index(a) if a in pref else 3 if a in ("StatementGeographicalAxis", "MajorCustomersAxis") else 2, a)
         for a in sorted(axes, key=rank):
             rows = []
@@ -205,17 +206,18 @@ class Co:
                 if not rx.search(d["l"] or ""):
                     continue
                 t = xfacts.ttm([[s, e, v] for (s, e), v in d["f"].items()])
-                if t and t.get("v") is not None:
-                    rows.append((d["l"], t))
+                if t and t.get("v") is not None and not (newest and (_d(newest) - _d(t["end"])).days > 100):
+                    rows.append((d["l"], t))                    # (a line the company no longer reports is skipped)
             if not rows:
                 continue
             end = max(t["end"] for _, t in rows)
             rows = [(l, t) for l, t in rows if t["end"] == end]
             v = sum(t["v"] for _, t in rows)
             prev = sum(t["v"] / (1 + t["yoy"]) for _, t in rows if t.get("yoy") not in (None, -1))
-            return {"v": v * self.conv, "end": end, "basis": rows[0][1]["basis"], "labels": sorted({l for l, _ in rows}),
+            basis = rows[0][1]["basis"]
+            return {"v": v * self.conv, "end": end, "basis": basis, "labels": sorted({l for l, _ in rows}),
                     "axis": a, "yoy": (v / prev - 1) if prev > 0 and all(t.get("yoy") is not None for _, t in rows) else None,
-                    "how": "segment"}
+                    "how": "segment" if basis != "annualized" else f"segment, {rows[0][1].get('months')} months annualized"}
         return self._member_from_lines(rx)
 
     def _member_from_lines(self, rx):
@@ -365,7 +367,7 @@ def _resolve(m, co):
                     out = None
                     break
                 out.append({"label": " + ".join(mv["labels"]), "v": mv["v"], "share": p.get("share", 1), "end": mv["end"],
-                            "yoy": mv.get("yoy"), "how": "segment"})
+                            "yoy": mv.get("yoy"), "how": mv.get("how", "segment")})
             else:
                 if not total:
                     out = None

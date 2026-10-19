@@ -150,7 +150,9 @@ def parse(xml_text, labels=None):
 
     total = sorted([s, e, pick(c)] for (s, e), c in raw_total.items() if keep(e))
     axes = {}
-    for a, members in sorted(raw_axes.items(), key=lambda kv: -len(kv[1])):
+    first = ("StatementBusinessSegmentsAxis", "ProductOrServiceAxis", "StatementGeographicalAxis", "MajorCustomersAxis")
+    order = lambda kv: (first.index(kv[0]) if kv[0] in first else len(first), len(kv[1]))   # the standard axes, then the
+    for a, members in sorted(raw_axes.items(), key=order):                                   # smallest breakdowns
         if len(members) > MAX_MEMBERS or len(axes) >= MAX_AXES:
             continue
         out = {}
@@ -216,7 +218,16 @@ def ttm(*fact_lists):
             if all(_near(last4[i][0], (_d(last4[i - 1][1]) + dt.timedelta(days=1)).isoformat(), 6) for i in range(1, 4)):
                 out.update(v=sum(x[2] for x in last4), end=last4[-1][1], basis="ttm")
                 return out
-        return out or None
+        # a line that is new this year (a company that changed its breakdown): its year to date, annualized
+        last = max(e for s, e, v in facts)
+        ytd = sorted((x for x in facts if x[1] == last and 80 <= _span(x[0], x[1]) < 350), key=lambda x: -_span(x[0], x[1]))
+        if ytd:
+            ys, ye, yv = ytd[0]
+            span = _span(ys, ye) + 1
+            prior = next((v for s, e, v in facts if _near(s, _minus_year(ys)) and _near(e, _minus_year(ye))), None)
+            out.update(v=yv * 365.25 / span, end=ye, basis="annualized", months=round(span / 30.4),
+                       yoy=(yv / prior - 1) if prior and prior > 0 else None)
+        return out if out.get("v") is not None or out else None
     fs, fe, fv = annual[-1]
     out.update(fy=fv, fy_end=fe)
     fy_prev = next((v for s, e, v in annual if _near(e, _minus_year(fe))), None)
