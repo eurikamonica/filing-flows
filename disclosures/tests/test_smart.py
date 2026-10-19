@@ -195,6 +195,24 @@ class Scoring(unittest.TestCase):
         self.assertLess(sk['side']['p'][a * 2], 0.75)      # 1 trade against k = 8 at the group's rate
 
 
+    def test_daily_sales_are_one_decision(self):
+        """An insider selling a falling stock every day for a month has one decision on record, not twenty."""
+        P = S.Prices.__new__(S.Prices)
+        days = series('2024-01-01', 300, lambda i: 100)
+        ords = np.array([S.ordinal(r[0]) for r in days], dtype=np.int32)
+        P.series = {'SPY': (ords, np.full(300, 100.0), ''), 'DOWN': (ords, np.array([100 * 0.998 ** i for i in range(300)]), '')}
+        E = S.Events()
+        a = E.actor('i:X', 'X', 'ins')
+        for k in range(20):
+            E.add(a, 'DOWN', days[10 + k][0], None, -1, 50000)
+        E.freeze()
+        O = S.outcomes(E, P, P.get('SPY'), ords[-1])
+        sk = S.skills(E, O, O['end'] <= ords[-1], u=0.5)
+        self.assertEqual((int(sk['all']['n'][a]), int(sk['all']['decisions'][a])), (20, 1))
+        self.assertAlmostEqual(sk['all']['neff'][a], 1.0)
+        self.assertLess(sk['side']['p'][a * 2 + 1], 0.75)  # one right decision, shrunk toward the group
+
+
 @unittest.skipIf(S is None, 'numpy not installed')
 class Build(unittest.TestCase):
     def test_offline_build_publishes(self):

@@ -16,7 +16,8 @@ trade's alpha is direction × excess return; "follow" is the same measured from 
 what someone copying it could have had.
 
 An actor's weighted accuracy, per side (buys, sales) and overall:
-  each trade weighs w = conviction × |excess return| (excess capped at ±100%), conviction = √(size / the actor's median
+  each trade weighs w = conviction × |excess return| (excess capped at ±100%; trades in the same stock on the same side
+  within a month are one decision, weighing their average), conviction = √(size / the actor's median
   size), between 0.25 and 3 — size is the share of the portfolio for 13F and ETFs, dollars for insiders, the midpoint of
   the disclosed range for officials
   accuracy = Σ w·[right] / Σ w: the share of the absolute excess return that was on the right side
@@ -811,34 +812,51 @@ def skills(E, O, mask, u=0.5, k=K_PRIOR):
     trades in mask (outcome known). u is the reference — the weighted rate at which any stock beat SPY over the same
     kind of window (most stocks lag the index, so a random buy is right less than half the time and a random sale more):
     L(buy) = logit(p) − logit(u), L(sale) = logit(p) − logit(1 − u), so a random picker weighs zero, a group whose trades
-    beat random picks starts above zero, and an actor who has been wrong more than random counts against their side."""
+    beat random picks starts above zero, and an actor who has been wrong more than random counts against their side.
+    One decision, not twenty: an actor's trades in the same stock on the same side within a month (an insider selling
+    a little every day) are one decision for the accuracy and the evidence — their weight is the average of the trades',
+    their rightness the weighted share — while the hit rate and alpha still count every trade."""
     na = len(E.actors)
     m = mask & ~np.isnan(O['ex'])
-    a, d, g = E.a[m], E.d[m], E.g[m]
+    a, d, g, t, day = E.a[m].astype(np.int64), E.d[m], E.g[m].astype(np.int64), E.t[m].astype(np.int64), E.day[m].astype(np.int64)
     exv = np.clip(O['ex'][m], -1, 1)
     w = E.c[m] * np.abs(exv)
     right = (d * exv > 0).astype(float)
     side = (d < 0).astype(np.int64)
+    # decisions: (actor, stock, side, 30-day block)
+    ckey = ((a * max(1, len(E.tickers)) + t) * 2 + side) * 40000 + day // 30
+    uniq, inv = np.unique(ckey, return_inverse=True) if len(ckey) else (np.zeros(0, np.int64), np.zeros(0, np.int64))
+    nc = len(uniq)
+    cnt = np.bincount(inv, None, nc)
+    cw = np.bincount(inv, w, nc)
+    cwr = np.bincount(inv, w * right, nc)
+    Wc = cw / np.maximum(cnt, 1)                           # the decision's weight: the average trade's
+    Rc = np.where(cw > 0, cwr / np.where(cw > 0, cw, 1), 0.0)
+    first = np.zeros(nc, dtype=np.int64)
+    if nc:
+        first[inv[::-1]] = np.arange(len(inv))[::-1]       # any trade of the decision: actor, side and group agree
+    ca, cs, cg = a[first], side[first], g[first]
     out = {}
     gsize = len(GROUPS)
     ag = E.ag.astype(np.int64)
-    for name, key, gkey, size, gs in (('side', a.astype(np.int64) * 2 + side, g.astype(np.int64) * 2 + side, na * 2, gsize * 2),
-                                      ('all', a.astype(np.int64), g.astype(np.int64), na, gsize)):
-        W = np.bincount(key, w, size)
-        Wr = np.bincount(key, w * right, size)
-        W2 = np.bincount(key, w * w, size)
-        N = np.bincount(key, None, size)
-        Nr = np.bincount(key, right, size)
-        A = np.bincount(key, d * exv, size)
-        GW = np.bincount(gkey, w, gs)
-        GWr = np.bincount(gkey, w * right, gs)
+    for name, size, gs, key_t, key_c, gkey_c in (('side', na * 2, gsize * 2, a * 2 + side, ca * 2 + cs, cg * 2 + cs),
+                                                 ('all', na, gsize, a, ca, cg)):
+        N = np.bincount(key_t, None, size)
+        Nr = np.bincount(key_t, right, size)
+        A = np.bincount(key_t, d * exv, size)
+        W = np.bincount(key_c, Wc, size)
+        Wr = np.bincount(key_c, Wc * Rc, size)
+        W2 = np.bincount(key_c, Wc * Wc, size)
+        D = np.bincount(key_c, None, size)
+        GW = np.bincount(gkey_c, Wc, gs)
+        GWr = np.bincount(gkey_c, Wc * Rc, gs)
         ref = np.tile([u, 1 - u], gsize) if name == 'side' else np.full(gsize, 0.5)
         p0 = np.clip(np.where(GW > 0, GWr / np.where(GW > 0, GW, 1), ref), 0.3, 0.7)
         prior = p0[np.repeat(ag, 2) * 2 + np.tile([0, 1], na)] if name == 'side' else p0[ag]
         acc = np.where(W > 0, Wr / np.where(W > 0, W, 1), np.nan)
         neff = np.where(W2 > 0, W * W / np.where(W2 > 0, W2, 1), 0.0)
         p = (np.nan_to_num(acc, nan=0.5) * neff + prior * k) / (neff + k)
-        out[name] = {'n': N, 'nr': Nr, 'acc': acc, 'neff': neff, 'p': p, 'alpha': np.where(N > 0, A / np.maximum(N, 1), np.nan), 'p0': p0}
+        out[name] = {'n': N, 'nr': Nr, 'decisions': D, 'acc': acc, 'neff': neff, 'p': p, 'alpha': np.where(N > 0, A / np.maximum(N, 1), np.nan), 'p0': p0}
     sd = out['side']
     sd['L'] = np.clip(logit(sd['p']) - logit(np.tile([u, 1 - u], na)), -2.5, 2.5)
     Ls, ne = sd['L'].reshape(na, 2), sd['neff'].reshape(na, 2)
@@ -1110,23 +1128,23 @@ def publish(root, hub, E, O, sk, V, summary, hist, calib, universe, st, today):
     total_n = np.bincount(E.a, None, na)
 
     def stats(i):
-        return {'n': int(total_n[i]), 'scored': int(alls['n'][i]), 'hit': r4(alls['nr'][i] / alls['n'][i]) if alls['n'][i] else None,
+        return {'n': int(total_n[i]), 'scored': int(alls['n'][i]), 'decisions': int(alls['decisions'][i]), 'hit': r4(alls['nr'][i] / alls['n'][i]) if alls['n'][i] else None,
                 'acc': r4(alls['acc'][i]), 'p': r4(alls['p'][i]), 'L': r4(alls['L'][i], 3), 'neff': r4(alls['neff'][i], 1),
                 'alpha': r4(alls['alpha'][i], 5), 'follow': r4(fol_sum[i] / fol_n[i], 5) if fol_n[i] else None,
                 'buy': {'n': int(sp['n'][i, 0]), 'hit': r4(sp['nr'][i, 0] / sp['n'][i, 0]) if sp['n'][i, 0] else None, 'acc': r4(sp['acc'][i, 0]), 'p': r4(sp['p'][i, 0]), 'L': r4(sp['L'][i, 0], 3), 'alpha': r4(sp['alpha'][i, 0], 5)},
                 'sell': {'n': int(sp['n'][i, 1]), 'hit': r4(sp['nr'][i, 1] / sp['n'][i, 1]) if sp['n'][i, 1] else None, 'acc': r4(sp['acc'][i, 1]), 'p': r4(sp['p'][i, 1]), 'L': r4(sp['L'][i, 1], 3), 'alpha': r4(sp['alpha'][i, 1], 5)},
                 'last': iso(last[i]) if last[i] else None}
     # leaderboards
-    LF = ['id', 'name', 'sub', 'n', 'scored', 'hit', 'acc', 'p', 'L', 'buy_n', 'buy_p', 'sell_n', 'sell_p', 'alpha', 'follow', 'last']
+    LF = ['id', 'name', 'sub', 'n', 'scored', 'hit', 'acc', 'p', 'L', 'buy_n', 'buy_p', 'sell_n', 'sell_p', 'alpha', 'follow', 'last', 'decisions']
     leaders, worst, counts = {}, {}, {}
     ag = E.ag.astype(np.int64)
     for gi, g in enumerate(GROUPS):
-        ids = np.flatnonzero((ag == gi) & (alls['n'] >= 5))
+        ids = np.flatnonzero((ag == gi) & (alls['decisions'] >= 5))     # a record: five separate decisions scored
         rows = []
         for i in ids:
             s = stats(i)
             rows.append([E.actors[i]['id'], E.actors[i]['name'], E.actors[i]['sub'], s['n'], s['scored'], s['hit'], s['acc'], s['p'], s['L'],
-                         s['buy']['n'], s['buy']['p'], s['sell']['n'], s['sell']['p'], s['alpha'], s['follow'], s['last']])
+                         s['buy']['n'], s['buy']['p'], s['sell']['n'], s['sell']['p'], s['alpha'], s['follow'], s['last'], s['decisions']])
         rows.sort(key=lambda r: -(r[8] or 0))                   # by skill weight: edge over a random pick, by evidence
         leaders[g] = rows[:250]
         worst[g] = sorted(rows, key=lambda r: (r[8] or 0))[:40]
