@@ -269,7 +269,11 @@ class Build(unittest.TestCase):
                                            'prior_value_usd': 10000, 'status': 'INCREASE'}]})
             gz(hub / 'cache' / 'holdings' / '123.json.gz', {'cik': '123', 'label': 'Test Capital', 'snapshots': snaps})
             (hub / 'cache' / 'prices' / 'cusips.json').write_text(json.dumps({'c1': {'ticker': 'AAA'}, 'c2': {'ticker': 'BBB'}}))
-            gz(hub / 'cache' / 'insiders' / 'trades.json.gz', [{'insider': 'Doe Jane', 'role': 'CEO', 'ticker': 'AAA', 'code': 'P', 'date': days[-5][0], 'value': 50000, 'issuer': 'AAA Inc'}])
+            gz(hub / 'cache' / 'insiders' / 'trades.json.gz', [{'insider': 'Doe Jane', 'role': 'CEO', 'ticker': 'AAA', 'code': 'P', 'date': days[-5][0], 'value': 50000, 'issuer': 'AAA Inc'},
+                                                               {'insider': 'Exec Plan', 'role': 'CFO', 'ticker': 'AAA', 'code': 'S', 'date': days[-4][0], 'value': 120000,
+                                                                'issuer': 'AAA Inc', 'plan_10b5_1': True},
+                                                               {'insider': 'Exec Plan', 'role': 'CFO', 'ticker': 'CCC', 'code': 'S', 'date': days[-4][0], 'value': 70000,
+                                                                'issuer': 'CCC Inc', 'plan_10b5_1': True}])
             gz(root / 'cache' / 'ins' / '2024q1.json.gz', {'quarter': '2024q1', 'rows': [['1', 'Doe Jane', 'CEO', 'AAA', '5', 'AAA Inc', '2024-02-01', '2024-02-03', 1, 1000, 50000, 0],
                                                                                           ['1', 'Doe Jane', 'CEO', 'BBB', '6', 'BBB Inc', '2024-02-05', '2024-02-07', -1, 1000, 80000, 0],
                                                                                           ['2', 'Plan Joe', 'CFO', 'AAA', '5', 'AAA Inc', '2024-02-05', '2024-02-07', -1, 1000, 80000, 1],
@@ -291,7 +295,7 @@ class Build(unittest.TestCase):
             json.dumps(idx, allow_nan=False)
             # All flows: the quarter whose 13F reports are arriving (Q1 2026 here) has the manager's buy, Q2 to date the CEO's
             cix = json.loads((pub / 'combined' / 'index.json').read_text())
-            self.assertEqual([p['key'] for p in cix['periods']], ['prev', 'prev2', 'both', 'qtd', 'd90'])
+            self.assertEqual([p['key'] for p in cix['periods']], ['prev', 'prev2', 'both', 'qtd', 'd90', 'ytd', 'ytdn'])
             F = cix['fields']
             prev = json.loads((pub / 'combined' / 'prev.json').read_text())
             row = dict(zip(F, prev['rows'][0]))
@@ -302,6 +306,14 @@ class Build(unittest.TestCase):
             qtd = json.loads((pub / 'combined' / 'qtd.json').read_text())
             r2 = dict(zip(F, next(r for r in qtd['rows'] if r[0] == 'AAA')))
             self.assertEqual((r2['ins_b'], r2['ins_usd'], r2['f13_b']), (1, 50000, 0))
+            # insiders' 10b5-1 plan sales: flows of their own, never a vote (the CEO's purchase is AAA's only insider vote)
+            self.assertEqual((r2['plan_b'], r2['plan_s'], r2['plan_usd'], r2['groups_buy']), (0, 1, -120000, 1))
+            r3 = dict(zip(F, next(r for r in qtd['rows'] if r[0] == 'CCC')))  # a stock with plan sales and nothing else
+            self.assertEqual((r3['plan_usd'], r3['ins_b'], r3['actors']), (-70000, 0, 0))
+            pq = next(p for p in cix['periods'] if p['key'] == 'qtd')
+            self.assertEqual((pq['groups']['plan']['actors'], pq['groups']['plan']['usd_sell']), (1, 190000))
+            self.assertEqual(qtd['actors']['plan'][0][1], 'Exec Plan')
+            self.assertIn('plan', cix['groups'])
 
 
 if __name__ == '__main__':

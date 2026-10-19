@@ -14,7 +14,7 @@ for(const key of ['cot','banks'])for(let i=0;i<(live.modules[key]?.series||[]).l
 for(let i=0;i<(live.modules.npx?.filings||[]).length;i++){let f=live.modules.npx.filings[i];if(f.shard){f=JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.shard),'utf8'));f.votes=f.vote_chunks?.length?JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.vote_chunks[0]),'utf8')):[];f._loaded_chunks=f.vote_chunks?.length?1:0;live.modules.npx.filings[i]=f}}
 for(const m of Object.values(live.modules))if(m.directory_shard)m.directory=JSON.parse(fs.readFileSync(path.join(root,'docs/data',m.directory_shard),'utf8'));
 context.window.DISCLOSURE_LIVE=live;
-for(const f of ['data/demo.js','dashboard.js','extensions.js','market.js','rotation.js','rrg.js','chaos.js','galaxy.js','ledger.js','macro.js','debt-view.js','debt.js','consensus-view.js','consensus.js','etf.js','smart.js','allflows.js','options.js','ownership.js','news.js','xpost.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
+for(const f of ['data/demo.js','dashboard.js','extensions.js','market.js','rotation.js','rrg.js','chaos.js','galaxy.js','ledger.js','macro.js','debt-view.js','debt.js','posts.js','consensus-view.js','consensus.js','etf.js','smart.js','allflows.js','options.js','ownership.js','news.js','xpost.js','app.js'])vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
 let checks=0;
 for(const mode of ['official','demo'])for(const tab of ['holdings','congress','review','cot','banks','npx','status','directory']){
  vm.runInContext(`state.mode='${mode}';state.tab='${tab}';state.date='';state.page=0;render();`,context);
@@ -119,6 +119,7 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   }
   // All flows: every group side by side, the agreement and split lists, the names, Reddit's hottest on top
   Object.assign(map,{'data/smart/combined/index.json':'combined-index.json','data/smart/combined/prev.json':'combined-prev.json','data/smart/combined/both.json':'combined-both.json','data/market/reddit.json':'reddit.json'});
+  vm.runInContext(`for(const k of Object.keys(afStore))delete afStore[k]`,context);      // the smart-money views asked for the windows before they existed here
   for(const [setup,key,expect] of [[`state.afv='stocks';state.afp='prev'`,'smart/combined/prev','stocks —'],[`state.afv='agree';state.afp='both'`,'smart/combined/both','Net bought by two groups or more'],
     [`state.afv='split'`,'smart/combined/both','Where the groups take opposite sides'],[`state.afv='names'`,'smart/combined/both','The most active names'],[`state.afv='stocks';state.afs='gbuy';state.afg='2'`,'smart/combined/both','stocks —']]){
    vm.runInContext(`state.tab='allflows';state.page=0;${setup};render()`,context);
@@ -129,6 +130,16 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
    assert.ok(html.includes('Reddit right now')&&html.includes('$KTOS'),`all flows ${setup}: no Reddit banner`);
    assert.ok(!/NaN|undefined|Infinity/.test(html),`all flows ${setup} shows NaN/undefined`);n++;
   }
+  // the groups that make up the total, and the smart score inside a window (this quarter's filings, the quarter before …)
+  vm.runInContext(`state.tab='allflows';state.afv='stocks';state.afp='prev';state.afs='net';state.afg='1';state.afc='f13,ins';render()`,context);
+  await vm.runInContext(`(afStore['smart/combined/prev']||{}).loading`,context);vm.runInContext(`render()`,context);
+  {const html=elements.get('workspace').innerHTML;assert.ok(html.includes('Net = 13F managers + Insiders')&&html.includes('data-fg="afc"'),'all flows: the groups counted are not shown');
+   assert.ok(!/NaN|undefined|Infinity/.test(html),'all flows with chosen groups shows NaN/undefined');n++}
+  vm.runInContext(`state.tab='smart';state.mview='stocks';state.mper='prev';state.mgrp='';state.msort='buy';state.mmin='1';state.mq='';render()`,context);
+  await vm.runInContext(`(afStore['smart/combined/index']||{}).loading`,context);await vm.runInContext(`(afStore['smart/combined/prev']||{}).loading`,context);vm.runInContext(`render()`,context);
+  {const html=elements.get('workspace').innerHTML;assert.ok(html.includes('Smart score (window)')&&html.includes('id="mper"'),'smart money: the window is not drawn');
+   assert.ok(!/NaN|undefined|Infinity/.test(html),'smart money window shows NaN/undefined');n++}
+  vm.runInContext(`state.mper='now'`,context);
   vm.runInContext(`state.tab='signals';smartDeepLink('g%3ANANCY%20PELOSI')`,context);
   assert.equal(vm.runInContext(`state.mview+'|'+state.maid`,context),'actor|g:NANCY PELOSI');
   console.log(`${n} smart-money and all-flows checks passed.`);

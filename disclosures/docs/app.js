@@ -155,6 +155,7 @@ function render(){
  bindRotation();
  bindOptions();
  bindDebt();bindConsensus();bindEtf();bindSmart();bindAllflows();
+ if(window.FFPosts)window.FFPosts.fill($("workspace"));
 }
 function csvCell(v){let s=typeof v==='object'&&v!==null?JSON.stringify(v):String(v??'');if(/^[=+@\t\r]/.test(s)||(/^[-]/.test(s)&&!/^[-]\d+(\.\d+)?$/.test(s)))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
 function downloadCSV(){if(!exported.length)return;const keys=uniq(exported.flatMap(Object.keys));const csv='\ufeff'+[keys.map(csvCell).join(','),...exported.map(r=>keys.map(k=>csvCell(r[k])).join(','))].join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`disclosure-${state.tab}-${state.mode}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
@@ -163,7 +164,8 @@ const TABS=[...document.querySelectorAll('nav button[data-tab]')].map(b=>b.datas
 function syncPills(){document.querySelectorAll('nav button[data-tab]').forEach(x=>{const on=x.dataset.tab===state.tab;x.classList.toggle('active',on);x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))})}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.page=0;state.date='';syncPills();try{history.replaceState(null,'','#'+state.tab)}catch(e){}render()});
 /* deep links: disclosures/#signals, #flows, #trades, #holdings … */
-function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
+function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);
+ if(arg&&h==='rotation'){const [v,u]=decodeURIComponent(arg).split('~');if(v)state.rview=v;if(u)state.rrgu=u}   /* #rotation/rrg~chain:ai-capex */if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
 addEventListener('hashchange',()=>{if(fromHash())render()});
 fromHash();syncPills();
 render();

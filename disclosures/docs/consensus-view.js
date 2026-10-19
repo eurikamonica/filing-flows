@@ -316,6 +316,18 @@
     return null;
   }
   const PERIOD_L = { day: 'day', week: 'week', month: 'month', year: 'year', other: '' };
+  // the post (posts.js, loaded once from the same folder): Polymarket vs Kalshi vs the options, for X
+  let postsP = null;
+  const needPosts = (el, doc, draw) => {
+    if (window.FFPosts || typeof document === 'undefined') return;
+    if (!postsP) postsP = new Promise((ok) => { const sc = document.createElement('script'); sc.src = BASE + 'posts.js'; sc.onload = ok; sc.onerror = ok; document.head.appendChild(sc); });
+    postsP.then(() => { if (window.FFPosts && el.isConnected !== false && el.__cv === doc) draw(el, doc); });
+  };
+  function postBox(el, doc, lad, draw, ticker) {
+    if (!window.FFPosts) { needPosts(el, doc, draw); return ''; }
+    const it = window.FFPosts.build('markets', { ticker: ticker || doc.ticker || doc.short, cik: doc.cik, name: doc.name || doc.short || doc.ticker, cons: doc, lad: lad || null, opt: null });
+    return it ? window.FFPosts.box(it) : '';
+  }
   const fp = (v) => (fin(v) ? num(v, Math.abs(v) >= 1000 ? 0 : 2) : '—');
   const hts = (k) => Date.parse(k + ':00:00Z');
   const niceTicks = (a, b, n) => {
@@ -510,10 +522,11 @@
       card('Market-implied price', pmPick ? usd(pmPick.implied_price.median) : '—', pmPick ? `median for ${day(pmPick.end)}${up(pmPick.implied_price.median) ? ' · ' + up(pmPick.implied_price.median) : ''}` : 'no price market open', C.pm) +
       card('Our model', ourQ ? usd(ourQ.price) : '—', ourQ ? `${esc(ourQ.horizon)} (${day(ourQ.date)}) · 80% ${usd(ourQ.lo80, 0)}–${usd(ourQ.hi80, 0)}` : 'not forecast', '#2a78d6') +
       `</div>`;
-    h += fan(doc, a) + ladPanel(lad, (v) => usd(v), doc.ticker || '') + estimates(a) + trendChart(doc, a) + markets(doc, a, lad) + surprises(doc) + ratings(a) + track(doc);
+    h += fan(doc, a) + ladPanel(lad, (v) => usd(v), doc.ticker || '') + postBox(el, doc, lad, render) + estimates(a) + trendChart(doc, a) + markets(doc, a, lad) + surprises(doc) + ratings(a) + track(doc);
     h += `<p class="cv-note">Analysts: Yahoo Finance consensus (estimates, targets, ratings and actions as published there), read daily. Prediction markets: Polymarket and Kalshi public APIs, read every few hours (closing-price ladders every hour) — prices are probabilities of a crowd with money on it, thin markets can be off. Options: CBOE delayed quotes; max pain and the walls are where open interest sits, not a forecast. Our model: the gravity / analogue forecast of the Rotation tab, frozen in its ledger. Nothing here is investment advice.</p></div>`;
     el.innerHTML = h;
     bindLad(el);
+    if (window.FFPosts) window.FFPosts.bind(el);
   }
 
   // ---------- one index: the market ----------
@@ -589,10 +602,11 @@
       (ud ? card('Market: up?', pct(ud.p), `${src(ud)} · ${esc(ud.title).slice(0, 48)}`, ud.source === 'kalshi' ? C.ks : C.pm) : '') +
       card('Our model', oq ? pts(oq.price) : om ? pts(om.price) : '—', oq ? `next quarter (${day(oq.date)}) · ${spct(oq.ret)} from ${day(oq.from)}` : om ? `next month · ${spct(om.ret)}` : 'not covered', C.ours) +
       `</div>`;
-    h += fan(doc, a) + ladPanel(lad, pts, doc.name || doc.short || '') + bottomUpPanel(doc) + oursPanel(doc) + markets(doc, a, lad) + contribPanel(doc) + historyPanel(doc) + track(doc);
+    h += fan(doc, a) + ladPanel(lad, pts, doc.name || doc.short || '') + postBox(el, doc, lad, renderIndex, doc.short) + bottomUpPanel(doc) + oursPanel(doc) + markets(doc, a, lad) + contribPanel(doc) + historyPanel(doc) + track(doc);
     h += `<p class="cv-note">Index levels: Yahoo Finance (daily closes; weekly shown). Analysts: Yahoo Finance consensus of each member, added up at index weights — not a strategist's index target. Prediction markets: Polymarket and Kalshi public APIs, read every few hours. Our model: the Rotation tab's company forecasts added up. Nothing here is investment advice.</p></div>`;
     el.innerHTML = h;
     bindLad(el);
+    if (window.FFPosts) window.FFPosts.bind(el);
   }
 
   window.ConsensusView = { render, renderIndex, ladderTrack, fmt: { usd, big, pct, spct, num, day, unitFmt }, KIND };

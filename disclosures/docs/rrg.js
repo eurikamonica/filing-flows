@@ -60,7 +60,36 @@ function rrgCalc(D,ent,freq,n){
 }
 
 /* ---------- which lines: the universe ---------- */
+// the site's supply chains and themes (data/chains/index.json of the main site, pipeline/chains.py): each layer of a
+// chain, or each whole chain, as an equal-weight basket of its stocks (weekly returns averaged, chained into an index)
+const RRG_CH={m:null};
+function rrgChains(){
+ const m=RRG_CH.m||(RRG_CH.m={});
+ if(m.data||m.err||m.loading)return m;
+ if(typeof fetch!=='function'){m.err='no fetch';return m}
+ m.loading=fetch('../data/chains/index.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
+ return m;
+}
+function rrgBasket(D,id,name,tickers){
+ const ents=tickers.map(t=>rrgTicker(String(t).replace('.','-')));
+ if(ents.some(e=>e.loading))return {id,name,loading:true};
+ const ok=ents.filter(e=>e.c);
+ if(!ok.length)return {id,name,missing:true};
+ const G=rrgGrid(D),S=ok.map(e=>rrgFull(G,e,'c')),idx=new Array(G.n).fill(null);
+ for(let i=0;i<G.n;i++){
+  let s=0,k=0;for(const a of S)if(i>0&&a[i]!=null&&a[i-1]!=null&&a[i-1]>0){s+=a[i]/a[i-1];k++}
+  if(idx[i-1]!=null&&k)idx[i]=idx[i-1]*s/k;
+  else if(idx[i-1]!=null)idx[i]=idx[i-1];
+  else if(S.some(a=>a[i]!=null))idx[i]=100;
+ }
+ return {id,name,full:`equal-weight basket: ${ok.map(e=>e.id).join(', ')}${ok.length<tickers.length?` (not on file: ${tickers.filter(t=>!ok.some(e=>e.id===String(t).replace('.','-'))).join(', ')})`:''}`,start:G.days[0],c:idx};
+}
 function rrgUniverses(D){
+ const ch=rrgChains(),cl=(ch.data&&ch.data.chains)||[];
+ const extra=cl.length?[['themes','Hot themes (one basket per chain)'],...cl.map(c=>['chain:'+c.id,'Chain layers · '+c.name])]:[];
+ return rrgUniverses0(D).concat(extra);
+}
+function rrgUniverses0(D){
  const secs={},tk=D.tickers||{};for(const [t,m] of Object.entries(tk))if(m&&m.s)(secs[m.s]=secs[m.s]||[]).push(t);
  const names=Object.fromEntries((D.series||[]).filter(s=>s.group==='site-sector').map(s=>[s.sector,s.name.replace(/ · site companies$/,'')]));
  const nice=s=>names[s]||String(s).replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
@@ -73,6 +102,12 @@ function rrgTicker(t){                                 // one company's weekly f
 }
 function rrgEntities(D,uni,typed){
  const S=D.series||[],grp=g=>S.filter(s=>s.group===g).map(s=>({...s,full:s.name,name:s.id.startsWith('s:')?s.name.replace(/ · site companies$/,''):s.id}));
+ if(uni==='themes'||uni.startsWith('chain:')){
+  const cl=((rrgChains().data||{}).chains)||[];
+  if(uni==='themes')return cl.slice(0,12).map(c=>rrgBasket(D,'th:'+c.id,c.name.replace(/ \(.*\)$/,'').slice(0,28),[...new Set((c.layers||[]).flatMap(L=>L.tickers||[]))]));
+  const c=cl.find(x=>'chain:'+x.id===uni);
+  return c?(c.layers||[]).filter(L=>(L.tickers||[]).length).slice(0,12).map(L=>rrgBasket(D,'ch:'+c.id+':'+L.id,L.name.slice(0,28),L.tickers)):[];
+ }
  if(uni==='sectors')return grp('sector-etf');
  if(uni==='styles')return grp('style-etf');
  if(uni==='site')return grp('site-sector');
@@ -87,7 +122,8 @@ function rrgView(){
  if(!g.data)return `<div class="explain">The RRG uses the long weekly history (branch <span class="mono">rotation-history</span>, filled by the “Rotation history” workflow in batches). Until its first build is published there is nothing to draw.</div>`+g.html;
  const D=g.data;if(!D.bench)return empty('The benchmark (SPY) is not in the history yet; the next collection run fetches it first.');
  const unis=rrgUniverses(D);
- state.rrgu=unis.some(u=>u[0]===state.rrgu)?state.rrgu:'sectors';
+ const chLoading=/^(themes|chain:)/.test(state.rrgu||'')&&!(RRG_CH.m&&(RRG_CH.m.data||RRG_CH.m.err));   // a deep link while the chains load
+ state.rrgu=unis.some(u=>u[0]===state.rrgu)||chLoading?state.rrgu:'sectors';
  state.rrgf=state.rrgf==='m'?'m':'w';
  const W=state.rrgf==='w',wins=W?[['10','10 weeks (fast)'],['14','14 weeks'],['26','26 weeks'],['52','52 weeks (slow)']]:[['6','6 months'],['10','10 months'],['12','12 months'],['24','24 months']];
  state.rrgn=wins.some(x=>x[0]===state.rrgn)?state.rrgn:W?'14':'10';
@@ -121,6 +157,8 @@ function rrgView(){
  if(waiting.length||missing.length)out+=`<p class="sub">${waiting.length?'Loading '+esc(waiting.map(e=>e.id).join(', '))+'… ':''}${missing.length?'Not on file yet: '+esc(missing.map(e=>e.id).join(', '))+' (the collector fetches the site’s companies largest first; the workflow’s “tickers” input fetches any ticker now).':''}</p>`;
  out+='</div>'+(state.rrgm==='2d'?rrgFcNote(o):'')+rrgTable(o);
  out+=`<details><summary>How the RRG is computed</summary><p>RS = 100 × weekly close ÷ ${esc(D.benchmark||'SPY')} (both adjusted for splits and dividends), smoothed over ${W?'4 weeks':'2 months'}. RS-Ratio: how far RS stands above or below its own ${esc(n)}-${W?'week':'month'} trend (an exponential average); above 100 the line is outperforming its trend. RS-Momentum: how much that gap changed since the ${W?'week':'month'} before, smoothed the same way; above 100 the relative trend is gaining speed. Both are expressed in standard deviations of their own last ${W?'year or more':'two years or more'} around 100, so a quiet ETF and a volatile stock read on the same scale. This is an open approximation of the JdK RS-Ratio and RS-Momentum used by StockCharts (their formula is not published), so levels differ from theirs while the quadrants and the clockwise rotation read the same. Monthly lines sample the last weekly close of each month. 3-D puts time in depth, so each line becomes a spiral and the front slice is the standard chart for the date shown; 4-D puts a third measure in depth and plays time.</p><p class="sub">${esc(D.note||'')}</p></details>`;
+ if(window.FFPosts&&ok.length){const tk=ok.filter(e=>/^[A-Z][A-Z0-9-]{0,6}$/.test(String(e.id))&&!(D.series||[]).some(x=>x.id===e.id&&x.group!=='ticker')).slice(0,3);
+  if(tk.length)out+=`<h3>Posts for X</h3>`+tk.map(e=>`<div class="hub-post" data-post-t="${esc(e.id)}" data-post-k="rotation"></div>`).join('');}
  return out;
 }
 function rrgDomain(o){                                 // symmetric around 100, fixed for the whole history so play does not rescale

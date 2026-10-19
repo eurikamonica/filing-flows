@@ -230,7 +230,12 @@
     if (!d) { el.innerHTML = '<p class="dv-sub">No debt data for this company yet.</p>'; return; }
     el.classList.add('dv');
     const parts = [summary(d), cushion(d), implied(d), maturities(d), converts(d), instruments(d), facilities(d), issues(d), bank(d), historyChart(d), events(d), sources(d)];
+    if (window.FFPosts && !opt.compact) {                    // the post for X (posts.js): debt, liquidity, the implied spread
+      const it = window.FFPosts.build('debt', { ticker: d.ticker, cik: d.cik, name: d.name, debt: d });
+      if (it) parts.splice(2, 0, window.FFPosts.box(it));
+    }
     el.innerHTML = parts.join('');
+    if (window.FFPosts) window.FFPosts.bind(el);
   }
   window.DebtView = { render, big, pct, bp, x, esc };
 })();

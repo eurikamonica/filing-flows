@@ -41,7 +41,7 @@ function smEdge(L){if(L==null)return '—';return `<span class="${L>0.05?'positi
 function smartView(){
  state.mview=SM_VIEWS.some(v=>v[0]===state.mview)?state.mview:'stocks';
  let out=`<div class="toolbar">${field('mview','View',SM_VIEWS,state.mview)}`;
- if(state.mview==='stocks')out+=field('mgrp','Whose trades',SM_GO,state.mgrp||'')+field('msort','Sort',SM_SORT,state.msort||'buy')+field('mmin','Votes',[['1','Any'],['3','3 or more'],['5','5 or more'],['10','10 or more']],state.mmin||'1')+
+ if(state.mview==='stocks')out+=smPeriodField()+field('mgrp','Whose trades',SM_GO,state.mgrp||'')+field('msort','Sort',SM_SORT,state.msort||'buy')+field('mmin','Votes',[['1','Any'],['3','3 or more'],['5','5 or more'],['10','10 or more']],state.mmin||'1')+
   `<div class="field"><label for="mq">Ticker or name</label><input id="mq" value="${esc(state.mq||'')}" placeholder="e.g. NVDA"></div>`;
  if(state.mview==='leaders')out+=field('mlg','Group',SM_GO.slice(1),state.mlg||'f13')+field('mlw','Show',[['best','Best record'],['worst','Worst record']],state.mlw||'best')+
   `<div class="field"><label for="mlq">Name</label><input id="mlq" value="${esc(state.mlq||'')}" placeholder="e.g. Pelosi, Berkshire"></div>`;
@@ -55,7 +55,34 @@ function smartView(){
  if(state.mview==='method')return out+smMethod();
  return out+smStocks();
 }
+/* The period of the score: now (each actor's latest quarter / last 90 days), or one of the All flows windows — this quarter's
+   filings (13F still arriving), the quarter before, both, the calendar quarter to date, the year so far … (smart/combined/) */
+function smPeriodField(){
+ const ix=typeof afData==='function'?afData('smart/combined/index'):null,P=(ix&&ix.data&&ix.data.periods)||[];
+ return field('mper','Period',[['now','Now — the latest votes'],...P.map(p=>[p.key,p.label])],state.mper||'now',true);
+}
+function smPeriod(){
+ const ix=afData('smart/combined/index'),per=((ix.data||{}).periods||[]).find(p=>p.key===state.mper);
+ if(!per)return ix.err?empty('The windows could not load ('+ix.err+').'):empty('Loading the windows…');
+ const pd=afData('smart/combined/'+per.key);
+ if(pd.err)return empty('Could not load the window ('+pd.err+').');
+ if(!pd.data)return empty('Loading the window…');
+ const grp=state.mgrp||'',q=String(state.mq||'').trim().toLowerCase();
+ let rows=afRows(pd.data,['f13','etf','ins','gov']).filter(r=>r.S!=null&&(!grp||r[grp+'_b']||r[grp+'_s'])&&(r.actors||0)>=+(state.mmin||1));
+ if(q)rows=rows.filter(r=>r.ticker.toLowerCase()===q||(r.name||'').toLowerCase().includes(q));
+ const s=state.msort||'buy';
+ rows.sort((a,b)=>s==='sell'?a.S-b.S:s==='votes'?b.actors-a.actors:s==='split'?Math.abs(b.S-(b.raw||0))-Math.abs(a.S-(a.raw||0)):b.S-a.S);
+ exported=rows;
+ let out=`<div class="metrics">${['f13','etf','ins','gov'].map(g=>{const x=(per.groups||{})[g]||{};return kpi(SM_G[g],x.actors?fmt(x.actors)+' names':'—',x.actors?`${fmt(x.trades)} trades in ${fmt(x.stocks)} stocks`:'none in this window')}).join('')}</div>`;
+ out+=`<div class="section-head"><h3>${s==='sell'?'Skilled net selling':s==='votes'?'Most traded':'Skilled net buying'} — ${esc(per.label)}</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">The same skill weights, counting only the trades inside the window (each name's trades in a stock netted). ${esc(per.note||'')}</p>`;
+ out+=table(['Stock','Smart score (window)','Everyone alike','13F','ETFs','Insiders','Officials','Names trading','Smart score now'],rows.slice(0,800).map(r=>[
+  `${smTk(r.ticker)} <span class="muted">${esc((r.name||'').slice(0,40))}</span>`,smScore(r.S),smScore(r.raw),
+  ...['f13','etf','ins','gov'].map(g=>r[g+'_b']||r[g+'_s']?`<span class="positive">${fmt(r[g+'_b'])}</span> · <span class="negative">${fmt(r[g+'_s'])}</span>`:'<span class="muted">—</span>'),
+  fmt(r.actors),smScore(r.S_now)]));
+ return out;
+}
 function smStocks(){
+ if(state.mper&&state.mper!=='now'&&typeof afData==='function')return smPeriod();
  const g=smGate('index','The smart-money scores');if(!g.data)return g.html;
  const d=g.data,F=d.stock_fields,grp=state.mgrp||'',sk=grp?'S_'+grp:'S';
  let rows=d.stocks.map(r=>{const o={};F.forEach((k,i)=>o[k]=r[i]);return o}).filter(r=>r[sk]!=null&&(r.votes||0)>=+(state.mmin||1));
@@ -117,6 +144,7 @@ function smStock(){
  }else out+=`<p class="sub">No vote in the current window: none of the groups traded ${esc(t)} in the last 90 days (insiders, officials) or in their latest quarter (13F, ETFs).</p>`;
  if(hist.length>1)out+=`<h3>Smart score at each month end</h3>${smLine(hist,{lo:-100,hi:100,label:'Smart score history of '+t,fmtY:v=>(v>0?'+':'')+fmt(v,0)})}`;
  out+='</div>';
+ if(window.FFPosts)out+=`<div class="hub-post" data-post-t="${esc(t)}" data-post-k="flows"></div>`;
  const V=d.votes||[];
  if(V.length){
   out+=`<h3>Who is voting now — ${fmt(n&&n.buyers!=null?n.buyers:V.filter(v=>v[4]>0).length)} buyers, ${fmt(n&&n.sellers!=null?n.sellers:V.filter(v=>v[4]<0).length)} sellers${d.more_votes?` <span class="muted">(the ${fmt(V.length)} largest weights; ${fmt(d.more_votes)} smaller votes not listed)</span>`:''}</h3><p class="sub">Each actor's net trade in the window. Weight: conviction (their net size against their usual, up to 3) × skill weight on that side; a negative skill weight (worse than a random pick) counts against the side they took.</p>`;
@@ -195,7 +223,7 @@ function smMethod(){
 }
 function bindSmart(){
  if(state.tab!=='smart')return;
- for(const k of ['mview','mgrp','msort','mmin','mlg','mlw','mbk'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
+ for(const k of ['mview','mper','mgrp','msort','mmin','mlg','mlw','mbk'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
  for(const k of ['mq','mlq','mst','maq'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;if(k==='maq')state.maid='';state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-smt]').forEach(b=>b.onclick=()=>{state.mview='stock';state.mst=b.dataset.smt;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-sma]').forEach(b=>b.onclick=()=>{state.mview='actor';state.maid=b.dataset.sma;state.maq=b.textContent.trim();render();scrollTo({top:0,behavior:'smooth'})});

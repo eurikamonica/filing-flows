@@ -1,0 +1,435 @@
+{
+  "about": "Supply chains and trading themes drawn as money flows (pipeline/chains.py, page #chains). Every company figure is read from SEC filings; a 'share' is an assumption: the part of that revenue line taken to come from this chain's buyers. Named customers in a filing replace the assumption for their part. Edit freely: the next scan redraws the chains.",
+  "investors": ["NVDA", "AMD", "GOOGL", "AMZN", "MSFT", "ARM"],
+  "chains": [
+    {
+      "id": "ai-capex",
+      "name": "AI data-center capex",
+      "zh": "AI 数据中心资本开支",
+      "theme": "AI infrastructure",
+      "kind": "spend",
+      "about": "What the hyperscalers and neoclouds spend on property and equipment, and which listed suppliers that spending reaches: chips, servers, networking, optics, memory, power and cooling, construction.",
+      "spend": {"metric": "capex", "lease": true, "label": "Capital expenditures (cash, plus assets taken on under finance leases when tagged)"},
+      "buyers": [
+        {"t": "MSFT", "names": "microsoft"},
+        {"t": "AMZN", "names": "amazon|aws"},
+        {"t": "GOOGL", "names": "google|alphabet"},
+        {"t": "META", "names": "meta platforms|facebook"},
+        {"t": "ORCL", "names": "oracle"},
+        {"t": "CRWV", "names": "coreweave"},
+        {"t": "NBIS", "names": "nebius"}
+      ],
+      "untraced": "Not traced to listed suppliers: buildings and land, foreign and private suppliers (Samsung, SK hynix, Foxconn, Quanta, Wistron …), in-house work, and suppliers not on this map",
+      "layers": [
+        {"id": "accel", "name": "AI accelerators & custom chips", "zh": "AI 芯片", "members": [
+          {"t": "NVDA", "parts": [{"seg": "^Hyperscale$", "share": 0.92}, {"seg": "^AI Clouds", "share": 0.2}],
+           "alt": [{"seg": "^Data Center$", "share": 0.62}], "note": "Hyperscale revenue is NVIDIA's own line for the largest clouds; neoclouds sit in AI Clouds, Industrial & Enterprise"},
+          {"t": "AVGO", "seg": "Semiconductor Solutions", "share": 0.5, "note": "custom accelerators (TPU, MTIA) and AI networking chips; AI is about two thirds of semiconductor revenue"},
+          {"t": "AMD", "seg": "^Data Center$", "share": 0.5},
+          {"t": "MRVL", "seg": "^Data center$", "share": 0.7, "note": "custom silicon (Trainium, Maia) and optical DSPs"}
+        ]},
+        {"id": "servers", "name": "Servers & ODMs (gross profit only)", "zh": "服务器与代工（只计毛利）", "basis": "gp", "members": [
+          {"t": "DELL", "seg": "Infrastructure Solutions|^ISG$", "share": 0.4, "alt": [{"share": 0.22}]},
+          {"t": "SMCI", "share": 0.45},
+          {"t": "HPE", "seg": "^Server", "share": 0.2},
+          {"t": "CLS", "seg": "^CCS$|Connectivity", "share": 0.6},
+          {"t": "JBL", "seg": "Intelligent Infrastructure", "share": 0.45}
+        ]},
+        {"id": "network", "name": "Networking", "zh": "网络", "members": [
+          {"t": "ANET", "share": 0.7, "note": "Microsoft and Meta are each named as over 10% of revenue"},
+          {"t": "CSCO", "seg": "^Networking$", "share": 0.1},
+          {"t": "CIEN", "share": 0.35},
+          {"t": "CRDO", "share": 0.8},
+          {"t": "ALAB", "share": 0.75}
+        ]},
+        {"id": "optical", "name": "Optics & interconnect", "zh": "光模块与连接", "members": [
+          {"t": "COHR", "seg": "Datacenter|Networking", "share": 0.55},
+          {"t": "LITE", "share": 0.5},
+          {"t": "AAOI", "seg": "^Data Center$", "share": 0.9},
+          {"t": "GLW", "seg": "Optical commun", "share": 0.45},
+          {"t": "APH", "seg": "Communications Solutions", "share": 0.4}
+        ]},
+        {"id": "memory", "name": "Memory & storage (excluding HBM)", "zh": "存储（不含 HBM）", "members": [
+          {"t": "MU", "seg": "CMBU|Cloud Memory|^CNBU$", "share": 0.3, "alt": [{"share": 0.18}], "note": "server DRAM and data-center SSDs; HBM is counted inside the accelerators (and in the second tier)"},
+          {"t": "SNDK", "seg": "^Datacenter$", "share": 0.7},
+          {"t": "WDC", "seg": "^Cloud$", "share": 0.75},
+          {"t": "STX", "share": 0.7},
+          {"t": "PSTG", "share": 0.2}
+        ]},
+        {"id": "power", "name": "Power & cooling", "zh": "电力与散热", "members": [
+          {"t": "VRT", "share": 0.4},
+          {"t": "ETN", "seg": "Electrical Americas", "share": 0.22},
+          {"t": "CAT", "seg": "Power & Energy|Power and Energy", "share": 0.1},
+          {"t": "CMI", "seg": "Power Systems", "share": 0.22},
+          {"t": "HUBB", "seg": "Electrical Solutions", "share": 0.15},
+          {"t": "JCI", "share": 0.1},
+          {"t": "TT", "share": 0.08},
+          {"t": "BE", "share": 0.35},
+          {"t": "NVT", "seg": "Systems Protection", "share": 0.3},
+          {"t": "MOD", "seg": "Data Center", "share": 0.8},
+          {"t": "POWL", "seg": "Commercial and other industrial", "share": 0.4}
+        ]},
+        {"id": "build", "name": "Construction & electrical contractors", "zh": "建筑与电气承包", "members": [
+          {"t": "PWR", "seg": "^Electric$", "share": 0.1},
+          {"t": "EME", "share": 0.15},
+          {"t": "FIX", "share": 0.3},
+          {"t": "STRL", "seg": "E-Infrastructure", "share": 0.7},
+          {"t": "IESC", "seg": "Communications|Infrastructure Solutions", "share": 0.5}
+        ]}
+      ],
+      "affinity": {
+        "GOOGL": {"AVGO": 3, "CLS": 2.5, "AMD": 0.5},
+        "META": {"AVGO": 1.6, "ANET": 1.5, "CLS": 1.5, "AMD": 1.4},
+        "MSFT": {"ANET": 1.6, "MRVL": 1.3, "AMD": 1.3, "CRDO": 1.2},
+        "AMZN": {"MRVL": 3, "CRDO": 2.2, "ALAB": 2.2, "NVDA": 0.7, "AVGO": 0.6},
+        "ORCL": {"AMD": 2, "NVDA": 1.2, "AVGO": 0.4, "BE": 2},
+        "CRWV": {"NVDA": 1.6, "DELL": 3, "SMCI": 1.5, "AVGO": 0.1, "MRVL": 0.1, "AMD": 0.2},
+        "NBIS": {"NVDA": 1.6, "SMCI": 1.5, "AVGO": 0.1, "MRVL": 0.1, "AMD": 0.2}
+      },
+      "tier2": [
+        {"t": "TSM", "id": "TSM", "label": "TSMC (wafers, CoWoS)", "share": 0.4, "cogs_cap": 0.55,
+         "from": {"NVDA": 0.62, "AVGO": 0.18, "AMD": 0.1, "MRVL": 0.06, "ALAB": 0.02, "CRDO": 0.02},
+         "note": "the part of TSMC's revenue made on chips for these accelerators, split by the chip designers' size"},
+        {"t": "MU", "id": "MU-HBM", "label": "Micron HBM", "share": 0.18, "cogs_cap": 0.35,
+         "from": {"NVDA": 0.7, "AMD": 0.15, "AVGO": 0.15}, "note": "high-bandwidth memory sold into accelerators"},
+        {"t": "FN", "id": "FN", "label": "Fabrinet (optics assembly)", "share": 0.6, "cogs_cap": 0.3,
+         "from": {"NVDA": 0.75, "COHR": 0.1, "LITE": 0.15}}
+      ]
+    },
+    {
+      "id": "ai-hosting",
+      "name": "AI hosting: neoclouds, miners turned data centers, power",
+      "zh": "AI 托管：新云、矿企转型、电力",
+      "theme": "AI infrastructure",
+      "kind": "customers",
+      "about": "Who rents AI capacity from whom: the neoclouds and bitcoin miners that now host GPUs, the data-center REITs, and the power producers signing contracts with the clouds. Named customers come straight from the filings.",
+      "customers": [
+        {"id": "MSFT", "name": "Microsoft", "match": "microsoft"},
+        {"id": "GOOGL", "name": "Google", "match": "google|alphabet"},
+        {"id": "META", "name": "Meta", "match": "\\bmeta\\b|facebook"},
+        {"id": "AMZN", "name": "Amazon", "match": "amazon|\\baws\\b"},
+        {"id": "openai", "name": "OpenAI", "match": "openai"},
+        {"id": "CRWV", "name": "CoreWeave", "match": "coreweave"},
+        {"id": "fluidstack", "name": "Fluidstack", "match": "fluidstack"},
+        {"id": "nvidia", "name": "NVIDIA", "match": "nvidia"}
+      ],
+      "rest": "Other and unnamed customers",
+      "layers": [
+        {"id": "neocloud", "name": "Neoclouds", "zh": "新云", "members": [
+          {"t": "CRWV", "split": {"MSFT": 0.4, "openai": 0.3, "META": 0.1}},
+          {"t": "NBIS", "split": {"MSFT": 0.35, "META": 0.15}}
+        ]},
+        {"id": "miners", "name": "Miners turned AI hosts", "zh": "矿企转 AI 托管", "members": [
+          {"t": "IREN", "seg": "AI Cloud", "split": {"MSFT": 0.5}},
+          {"t": "CIFR", "split": {"fluidstack": 0.3, "AMZN": 0.2}},
+          {"t": "WULF", "split": {"fluidstack": 0.4}},
+          {"t": "CORZ", "seg": "Colocation", "split": {"CRWV": 0.9}},
+          {"t": "APLD", "seg": "HPC Hosting|Data Center Hosting|Cloud", "split": {"CRWV": 0.5}},
+          {"t": "HUT", "seg": "High Performance Computing", "split": {}},
+          {"t": "GLXY", "seg": "Data Centers", "split": {"CRWV": 0.9}}
+        ]},
+        {"id": "reits", "name": "Data-center REITs", "zh": "数据中心 REIT", "members": [
+          {"t": "EQIX", "split": {}},
+          {"t": "DLR", "split": {"MSFT": 0.08, "META": 0.05, "GOOGL": 0.05, "AMZN": 0.05}},
+          {"t": "IRM", "seg": "^Data Center$", "split": {}}
+        ]},
+        {"id": "power", "name": "Power producers", "zh": "发电商", "members": [
+          {"t": "VST", "split": {}},
+          {"t": "CEG", "split": {"MSFT": 0.02, "META": 0.01}},
+          {"t": "TLN", "split": {"AMZN": 0.1}},
+          {"t": "NRG", "split": {}}
+        ]}
+      ]
+    },
+    {
+      "id": "semicap",
+      "name": "Chip equipment by country (WFE)",
+      "zh": "半导体设备：按国家/地区",
+      "theme": "Semiconductors",
+      "kind": "geo",
+      "about": "Where the chip-equipment makers' revenue comes from, country by country, as each company reports it — the China share in plain view — and which sub-suppliers they buy from.",
+      "regions": [
+        {"id": "china", "name": "China", "match": "china|prc"},
+        {"id": "taiwan", "name": "Taiwan", "match": "taiwan"},
+        {"id": "korea", "name": "Korea", "match": "korea"},
+        {"id": "japan", "name": "Japan", "match": "japan"},
+        {"id": "us", "name": "United States", "match": "united states|^u\\.?s\\.?$|north america|americas"},
+        {"id": "europe", "name": "Europe", "match": "europe|emea|netherlands|germany|ireland"},
+        {"id": "sea", "name": "Southeast Asia & other", "match": "southeast|singapore|malaysia|asia|other|rest of"}
+      ],
+      "layers": [
+        {"id": "wfe", "name": "Wafer-fab equipment", "zh": "晶圆制造设备", "members": [
+          {"t": "AMAT", "seg": "Semiconductor Systems", "share": 1, "alt": [{"share": 0.72}]},
+          {"t": "LRCX", "share": 1},
+          {"t": "KLAC", "share": 1},
+          {"t": "ASML", "share": 1},
+          {"t": "ONTO", "share": 1}
+        ]},
+        {"id": "test", "name": "Test & probe", "zh": "测试与探针", "members": [
+          {"t": "TER", "seg": "Semiconductor Test|Product Test", "share": 1, "alt": [{"share": 0.7}]},
+          {"t": "FORM", "share": 1}
+        ]},
+        {"id": "subsys", "name": "Materials & subsystems", "zh": "材料与子系统", "members": [
+          {"t": "ENTG", "share": 1},
+          {"t": "MKSI", "seg": "^Semiconductor$", "share": 1},
+          {"t": "AEIS", "seg": "Semiconductor Equipment", "share": 1},
+          {"t": "UCTT", "share": 1},
+          {"t": "ICHR", "share": 1}
+        ]}
+      ]
+    },
+    {
+      "id": "power-grid",
+      "name": "Power grid & electrification",
+      "zh": "电网与电气化",
+      "theme": "Power",
+      "kind": "spend",
+      "about": "The utilities' record capital spending on generation, transmission and distribution, and the listed equipment makers and contractors it reaches.",
+      "spend": {"metric": "capex", "label": "Utility capital expenditures"},
+      "buyers": [
+        {"t": "NEE", "names": "nextera|florida power"}, {"t": "DUK", "names": "duke energy"}, {"t": "SO", "names": "southern company|georgia power"},
+        {"t": "AEP", "names": "american electric power"}, {"t": "D", "names": "dominion"}, {"t": "EXC", "names": "exelon"},
+        {"t": "XEL", "names": "xcel"}, {"t": "ETR", "names": "entergy"}, {"t": "PCG", "names": "pacific gas|pg&e"},
+        {"t": "SRE", "names": "sempra|oncor"}, {"t": "EIX", "names": "edison"}, {"t": "WEC", "names": "wec energy"},
+        {"t": "PPL", "names": "ppl"}, {"t": "CNP", "names": "centerpoint"}, {"t": "AEE", "names": "ameren"}, {"t": "FE", "names": "firstenergy"}
+      ],
+      "untraced": "Not traced to listed suppliers: wages of utility crews, land and rights of way, poles, wire and transformers from private or foreign makers, nuclear and plant work",
+      "layers": [
+        {"id": "gridgear", "name": "Grid equipment", "zh": "电网设备", "members": [
+          {"t": "GEV", "seg": "Electrification", "share": 0.35, "alt": [{"share": 0.1}]},
+          {"t": "HUBB", "seg": "Utility Solutions", "share": 0.45},
+          {"t": "ETN", "seg": "Electrical Americas", "share": 0.08},
+          {"t": "POWL", "seg": "Electric utility", "share": 0.5},
+          {"t": "WCC", "seg": "^UBS$|Utility", "share": 0.4}
+        ]},
+        {"id": "genear", "name": "Generation equipment", "zh": "发电设备", "members": [
+          {"t": "GEV", "id": "GEV-P", "label": "GE Vernova Power", "seg": "^Power$", "share": 0.25, "alt": [{"share": 0.12}]},
+          {"t": "BE", "share": 0.15}
+        ]},
+        {"id": "contractors", "name": "Grid contractors", "zh": "电网施工", "members": [
+          {"t": "PWR", "seg": "^Electric$", "share": 0.45},
+          {"t": "MYRG", "seg": "T&D", "share": 0.6},
+          {"t": "MTZ", "share": 0.2},
+          {"t": "PRIM", "share": 0.25}
+        ]}
+      ]
+    },
+    {
+      "id": "nuclear",
+      "name": "Nuclear & uranium",
+      "zh": "核电与铀",
+      "theme": "Power",
+      "kind": "basket",
+      "about": "Reactor operators, the fuel chain from uranium to enrichment, and the reactor and small-modular-reactor builders — with how the pre-revenue names pay their way (share sales against cash burned).",
+      "layers": [
+        {"id": "operators", "name": "Reactor fleets", "zh": "核电运营商", "members": [{"t": "CEG"}, {"t": "VST"}, {"t": "TLN"}]},
+        {"id": "fuel", "name": "Uranium & enrichment", "zh": "铀与浓缩", "members": [{"t": "CCJ"}, {"t": "LEU"}, {"t": "UEC"}, {"t": "UUUU"}]},
+        {"id": "builders", "name": "Reactors & SMRs", "zh": "反应堆与小型堆", "members": [{"t": "BWXT"}, {"t": "SMR"}, {"t": "OKLO"}, {"t": "NNE"}]}
+      ]
+    },
+    {
+      "id": "defense",
+      "name": "Defense, drones & government tech",
+      "zh": "国防、无人机与政府科技",
+      "theme": "Defense",
+      "kind": "customers",
+      "about": "How much of each defense company's revenue comes from the U.S. government and how much from foreign militaries and commercial buyers, as the companies tag it.",
+      "customers": [
+        {"id": "usgov", "name": "U.S. government", "match": "u\\.?\\s?s\\.? government|united states government|federal|department of defense|\\bdod\\b|u\\.s\\. (army|navy|air force)|nasa|government"},
+        {"id": "foreign", "name": "Foreign militaries & governments", "match": "foreign military|international|foreign"}
+      ],
+      "rest": "Commercial & other customers",
+      "layers": [
+        {"id": "primes", "name": "Primes", "zh": "军工巨头", "members": [
+          {"t": "LMT", "split": {"usgov": 0.73, "foreign": 0.26}},
+          {"t": "RTX", "seg": "Raytheon", "split": {"usgov": 0.6, "foreign": 0.35}},
+          {"t": "NOC", "split": {"usgov": 0.85, "foreign": 0.13}},
+          {"t": "GD", "split": {"usgov": 0.65, "foreign": 0.1}},
+          {"t": "LHX", "split": {"usgov": 0.75, "foreign": 0.15}},
+          {"t": "HII", "split": {"usgov": 0.98}}
+        ]},
+        {"id": "services", "name": "Government IT & services", "zh": "政府 IT 服务", "members": [
+          {"t": "LDOS", "split": {"usgov": 0.85}}, {"t": "BAH", "split": {"usgov": 0.97}},
+          {"t": "CACI", "split": {"usgov": 0.94}}, {"t": "SAIC", "split": {"usgov": 0.98}},
+          {"t": "PLTR", "split": {"usgov": 0.45, "foreign": 0.1}}
+        ]},
+        {"id": "newdef", "name": "Drones & new defense", "zh": "无人机与新型国防", "members": [
+          {"t": "AVAV", "split": {"usgov": 0.7, "foreign": 0.25}}, {"t": "KTOS", "split": {"usgov": 0.7, "foreign": 0.1}},
+          {"t": "KRMN", "split": {"usgov": 0.8}}, {"t": "RCAT", "split": {"usgov": 0.7}}, {"t": "ONDS", "split": {"usgov": 0.3}}
+        ]}
+      ]
+    },
+    {
+      "id": "space",
+      "name": "Space economy",
+      "zh": "太空经济",
+      "theme": "Space",
+      "kind": "customers",
+      "about": "Launch, spacecraft, satellite communications and Earth observation — and how much of it government agencies pay for.",
+      "customers": [
+        {"id": "usgov", "name": "U.S. government (NASA, DoD, NRO)", "match": "u\\.?\\s?s\\.? government|nasa|department of defense|\\bdod\\b|national reconnaissance|space force|government|federal"}
+      ],
+      "rest": "Commercial & international customers",
+      "layers": [
+        {"id": "launch", "name": "Launch & spacecraft", "zh": "发射与航天器", "members": [
+          {"t": "RKLB", "split": {"usgov": 0.5}}, {"t": "FLY", "split": {"usgov": 0.6}}, {"t": "LUNR", "split": {"usgov": 0.8}},
+          {"t": "RDW", "seg": "Space", "split": {"usgov": 0.3}}
+        ]},
+        {"id": "satcom", "name": "Satellite communications", "zh": "卫星通信", "members": [
+          {"t": "ASTS", "split": {"usgov": 0.2}}, {"t": "IRDM", "split": {"usgov": 0.15}}, {"t": "VSAT", "split": {"usgov": 0.35}},
+          {"t": "GSAT", "split": {"usgov": 0.05}}
+        ]},
+        {"id": "eo", "name": "Earth observation", "zh": "对地观测", "members": [
+          {"t": "PL", "split": {"usgov": 0.5}}, {"t": "BKSY", "split": {"usgov": 0.6}}
+        ]}
+      ]
+    },
+    {
+      "id": "quantum",
+      "name": "Quantum computing",
+      "zh": "量子计算",
+      "theme": "Frontier tech",
+      "kind": "basket",
+      "about": "The listed quantum-computing companies: revenue, who pays for it, and how share sales fund the cash they burn.",
+      "layers": [
+        {"id": "qc", "name": "Quantum hardware & cloud", "zh": "量子硬件与云", "members": [{"t": "IONQ"}, {"t": "RGTI"}, {"t": "QBTS"}, {"t": "QUBT"}]}
+      ]
+    },
+    {
+      "id": "glp1",
+      "name": "GLP-1 & obesity drugs",
+      "zh": "GLP-1 与减肥药",
+      "theme": "Health care",
+      "kind": "basket",
+      "about": "Revenue of the incretin drugs as reported product by product, and the suppliers of the pens, vials, ingredients and tools behind the factory build-out.",
+      "layers": [
+        {"id": "drugs", "name": "Incretin drugs", "zh": "GLP-1 药物", "members": [
+          {"t": "LLY", "seg": "^Mounjaro$|^Zepbound$|^Trulicity$", "split_members": true, "alt": [{"share": 0.55}]},
+          {"t": "NVO", "share": 0.65}
+        ]},
+        {"id": "devices", "name": "Pens, vials & delivery", "zh": "注射笔与包材", "members": [
+          {"t": "WST", "share": 0.3}, {"t": "BDX", "share": 0.04}
+        ]},
+        {"id": "tools", "name": "Bioprocess & lab tools", "zh": "生物工艺与工具", "members": [
+          {"t": "TMO", "share": 0.04}, {"t": "DHR", "share": 0.05}, {"t": "A", "share": 0.04}, {"t": "RGEN", "share": 0.1}
+        ]},
+        {"id": "access", "name": "Telehealth & compounding", "zh": "远程医疗", "members": [{"t": "HIMS", "share": 0.4}]}
+      ]
+    },
+    {
+      "id": "crypto",
+      "name": "Crypto, stablecoins & miners",
+      "zh": "加密货币、稳定币与矿企",
+      "theme": "Crypto",
+      "kind": "basket",
+      "about": "Exchanges and brokers, the stablecoin issuer and its distributors, bitcoin-treasury companies and miners — revenue line by line and the share sales and convertible bonds that fund them.",
+      "layers": [
+        {"id": "venues", "name": "Exchanges & brokers", "zh": "交易所与券商", "members": [
+          {"t": "COIN"}, {"t": "HOOD", "seg": "^Cryptocurrencies$", "alt": [{"share": 0.25}]}
+        ]},
+        {"id": "stable", "name": "Stablecoins", "zh": "稳定币", "members": [{"t": "CRCL"}]},
+        {"id": "treasury", "name": "Bitcoin treasuries", "zh": "比特币财库", "members": [{"t": "MSTR"}]},
+        {"id": "miners", "name": "Miners", "zh": "矿企", "members": [
+          {"t": "MARA"}, {"t": "RIOT"}, {"t": "CLSK"}, {"t": "CIFR"}, {"t": "WULF"}, {"t": "HUT"}
+        ]}
+      ]
+    },
+    {
+      "id": "ev-batteries",
+      "name": "EVs, batteries & lithium",
+      "zh": "电动车、电池与锂",
+      "theme": "Energy transition",
+      "kind": "basket",
+      "about": "Electric-vehicle makers' car revenue, charging networks and lithium producers.",
+      "layers": [
+        {"id": "ev", "name": "EV makers", "zh": "电动车", "members": [
+          {"t": "TSLA", "seg": "^Automotive (sales|revenues)$|^Automotive Revenues$", "alt": [{"share": 0.75}]},
+          {"t": "RIVN", "seg": "^Automotive$|New electric vehicles"}, {"t": "LCID"}
+        ]},
+        {"id": "charging", "name": "Charging", "zh": "充电", "members": [{"t": "CHPT"}, {"t": "EVGO"}]},
+        {"id": "lithium", "name": "Lithium", "zh": "锂", "members": [{"t": "ALB", "seg": "Energy Storage", "alt": [{"share": 0.55}]}, {"t": "SQM"}, {"t": "LAC"}]}
+      ]
+    },
+    {
+      "id": "solar-storage",
+      "name": "Solar & energy storage",
+      "zh": "光伏与储能",
+      "theme": "Energy transition",
+      "kind": "basket",
+      "about": "Modules, trackers, inverters, residential solar and grid batteries.",
+      "layers": [
+        {"id": "modules", "name": "Modules & trackers", "zh": "组件与跟踪支架", "members": [{"t": "FSLR"}, {"t": "NXT"}, {"t": "ARRY"}, {"t": "SHLS"}]},
+        {"id": "inverters", "name": "Inverters & residential", "zh": "逆变器与户用", "members": [{"t": "ENPH"}, {"t": "SEDG"}, {"t": "RUN"}]},
+        {"id": "storage", "name": "Grid storage", "zh": "储能", "members": [
+          {"t": "TSLA", "id": "TSLA-E", "label": "Tesla Energy", "seg": "Energy generation and storage", "alt": [{"share": 0.12}]},
+          {"t": "FLNC"}, {"t": "EOSE"}
+        ]}
+      ]
+    },
+    {
+      "id": "robotics",
+      "name": "Robotics & automation",
+      "zh": "机器人与自动化",
+      "theme": "Frontier tech",
+      "kind": "customers",
+      "about": "Surgical robots, warehouse automation and factory automation — and the single customers some of them depend on.",
+      "customers": [
+        {"id": "walmart", "name": "Walmart", "match": "walmart"}
+      ],
+      "rest": "Other customers",
+      "layers": [
+        {"id": "surgical", "name": "Surgical robots", "zh": "手术机器人", "members": [{"t": "ISRG", "split": {}}]},
+        {"id": "warehouse", "name": "Warehouse automation", "zh": "仓储自动化", "members": [{"t": "SYM", "split": {"walmart": 0.85}}, {"t": "SERV", "split": {}}]},
+        {"id": "factory", "name": "Factory automation & vision", "zh": "工业自动化与视觉", "members": [
+          {"t": "ROK", "split": {}}, {"t": "TER", "id": "TER-R", "label": "Teradyne Robotics", "seg": "Robotics", "alt": [{"share": 0.2}], "split": {}},
+          {"t": "ZBRA", "split": {}}, {"t": "CGNX", "split": {}}
+        ]}
+      ]
+    },
+    {
+      "id": "gold-silver",
+      "name": "Gold & silver miners",
+      "zh": "黄金与白银矿企",
+      "theme": "Commodities",
+      "kind": "basket",
+      "about": "Miners and royalty companies: metal sales, margins and what they return to shareholders.",
+      "layers": [
+        {"id": "gold", "name": "Gold miners", "zh": "金矿", "members": [{"t": "NEM"}, {"t": "B"}, {"t": "AEM"}, {"t": "KGC"}]},
+        {"id": "royalty", "name": "Royalties & streams", "zh": "权益金与流", "members": [{"t": "RGLD"}, {"t": "WPM"}, {"t": "FNV"}]},
+        {"id": "silver", "name": "Silver miners", "zh": "银矿", "members": [{"t": "HL"}, {"t": "CDE"}, {"t": "PAAS"}, {"t": "AG"}]}
+      ]
+    },
+    {
+      "id": "ai-software",
+      "name": "AI revenue: clouds & software",
+      "zh": "AI 收入：云与软件",
+      "theme": "AI software",
+      "kind": "basket",
+      "about": "The other side of the capex: cloud revenue at the providers that are spending, and the software companies selling AI to businesses.",
+      "layers": [
+        {"id": "clouds", "name": "Cloud platforms", "zh": "云平台", "members": [
+          {"t": "AMZN", "id": "AWS", "label": "AWS", "seg": "^AWS$"},
+          {"t": "MSFT", "id": "MSFT-IC", "label": "Microsoft Intelligent Cloud", "seg": "^Intelligent Cloud$"},
+          {"t": "GOOGL", "id": "GCP", "label": "Google Cloud", "seg": "^Google Cloud$"},
+          {"t": "ORCL", "id": "OCI", "label": "Oracle Cloud", "seg": "^Cloud Infrastructure$|^Cloud Services$", "alt": [{"share": 0.3}]},
+          {"t": "CRWV"}, {"t": "NBIS"}
+        ]},
+        {"id": "apps", "name": "AI software & data", "zh": "AI 软件与数据", "members": [
+          {"t": "PLTR"}, {"t": "NOW"}, {"t": "CRM"}, {"t": "SNOW"}, {"t": "DDOG"}, {"t": "MDB"}, {"t": "APP"}, {"t": "ADBE"}
+        ]}
+      ]
+    },
+    {
+      "id": "cybersecurity",
+      "name": "Cybersecurity",
+      "zh": "网络安全",
+      "theme": "Software",
+      "kind": "basket",
+      "about": "Platform and point security vendors: revenue, contracted backlog and margins.",
+      "layers": [
+        {"id": "platforms", "name": "Platforms", "zh": "平台型", "members": [{"t": "PANW"}, {"t": "CRWD"}, {"t": "FTNT"}, {"t": "ZS"}, {"t": "NET"}]},
+        {"id": "identity", "name": "Identity & exposure", "zh": "身份与暴露管理", "members": [{"t": "OKTA"}, {"t": "CYBR"}, {"t": "TENB"}, {"t": "QLYS"}, {"t": "RPD"}, {"t": "S"}]}
+      ]
+    }
+  ]
+}
