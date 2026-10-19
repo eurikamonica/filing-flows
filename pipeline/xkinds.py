@@ -74,15 +74,22 @@ def get(name):
     return load().get(name)
 
 
-def expand(kinds):
-    """The workflow's kind list with its schedule tokens ("@close") replaced by the registered kinds of that slot."""
-    out = []
+def expand(kinds, cap=None, seed=0):
+    """The workflow's kind list with its schedule tokens ("@close") replaced by the registered kinds of that slot.
+    With many registered kinds a slot could post dozens at once: `cap` keeps at most that many of them per run, the
+    pick rotating with `seed` (the day) so every kind gets its turn; the weekday evening slot also draws from the
+    weekly pool (each kind's own cooldown stops repeats)."""
+    out, pool = [], []
     for k in kinds:
         if k.startswith("@"):
-            out += [n for n, v in sorted(load().items()) if k[1:] in v["schedule"] and n not in out]
+            slots = {k[1:]} | ({"weekly"} if k[1:] == "evening" else set())
+            pool += [n for n, v in sorted(load().items()) if slots & set(v["schedule"]) and n not in pool and n not in out]
         elif k not in out:
             out.append(k)
-    return out
+    if pool and cap and len(pool) > cap:
+        i = seed % len(pool)
+        pool = (pool[i:] + pool[:i])[:cap]
+    return out + [n for n in pool if n not in out]
 
 
 def guide_text():

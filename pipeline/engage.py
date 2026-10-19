@@ -2203,7 +2203,7 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
         hours = (c.get("kind_cooldown") or {}).get(kind, reg["cooldown"] if reg else c["kind_cooldown_hours"])
         return force or (state.get(f"kind:{kind}") or "") < (now - dt.timedelta(hours=hours)).isoformat()
 
-    kinds = X.expand(kinds)                # "@close" → the feature modules' kinds on that schedule (pipeline/xkinds.py)
+    kinds = X.expand(kinds, cap=int(c.get("registered_per_run", 4)), seed=today.toordinal())   # "@close" → the modules' kinds (pipeline/xkinds.py)
     if "movers" in kinds:                  # the workflow's rotation: mover, then peers, then explain
         kinds = [k for k in kinds if k != "movers"] + [MOVER_KINDS[[0, 2, 1][len(log) % 3]]]
     trends = None

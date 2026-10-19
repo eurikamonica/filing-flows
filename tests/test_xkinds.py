@@ -21,6 +21,10 @@ def test_registered_kind_reaches_engage_and_owner_tools():
         ex = X.expand(["lows52", "@close", "lows52"])
         assert ex[0] == "lows52" and "zz_test_kind" in ex and ex.count("lows52") == 1
         assert X.expand(["@morning"]) == [k for k, v in sorted(X.REG.items()) if "morning" in v["schedule"]]
+        close = [k for k, v in sorted(X.REG.items()) if "close" in v["schedule"]]
+        a, b = X.expand(["@close"], cap=2, seed=0), X.expand(["@close"], cap=2, seed=1)
+        assert len(a) == len(b) == min(2, len(close)) and (a != b or len(close) <= 2)         # a rotating pick of two
+        assert "zz_test_kind" in X.expand(["@close"], cap=1, seed=close.index("zz_test_kind"))
         p = engage.registered_plan("zz_test_kind", None, [], {}, {}, lambda *a, **k: True, dt.date(2026, 10, 19))
         assert p["kind"] == "zz_test_kind" and p["items"] == [] and p["cashtags"] == ["ZZ"]
         assert engage.registered_plan("no_such_kind", None, [], {}, {}, None, None) is None
