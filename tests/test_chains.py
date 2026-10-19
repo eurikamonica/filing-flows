@@ -180,3 +180,8 @@ def test_region_and_product_concentrations_are_not_customers():
                     fact("us-gaap:ConcentrationRiskPercentage1", "all", 1.0, "pure")])
     rows = xfacts.parse(doc, {})["cust"]
     assert [(r["l"], r["pct"]) for r in rows] == [("", 0.12)]
+
+
+def test_capex_outlook_reads_paragraph_dicts():
+    rows = chains.capex_guidance([{"text": "We expect fiscal 2027 capital expenditures to be approximately $120 billion.", "heading": False}])
+    assert rows and rows[0]["lo"] == 120e9 and rows[0]["year"] == "2027"

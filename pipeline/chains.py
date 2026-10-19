@@ -1065,6 +1065,7 @@ def capex_guidance(paras):
     """Sentences of an earnings release that give a capital-expenditure outlook: [{"text", "lo", "hi", "year"}]."""
     out = []
     for p in paras:
+        p = p.get("text", "") if isinstance(p, dict) else str(p)        # text.paragraphs gives {"text", …}
         for sent in re.split(r"(?<=[.;])\s+", p):
             if not re.search(r"(?i)expect|anticipat|outlook|guidance|plan|forecast|range", sent):
                 continue
@@ -1137,7 +1138,8 @@ def refresh(store, sec, dims, text, time_up, queue_history=None, limit=REFRESH_P
         have = {(xf.get("k") or {}).get("accn"), (xf.get("q") or {}).get("accn")}
         checked = xf.get("checked")
         age = (now - dt.datetime.fromisoformat(checked)).total_seconds() / 3600 if checked else 1e9
-        shallow = t in segs and len(xf.get("mh_accns") or []) < SEG_DEPTH and age >= 1
+        shallow = (t in segs and len(xf.get("mh_accns") or []) < SEG_DEPTH and age >= 1) or \
+            (t in buyers and "guide" not in xf and age >= 1)         # an outlook not read yet
         if xf.get("v") != VERSION * 1000 + xfacts.VERSION or (newest and newest not in have) or age >= CHECK_HOURS or shallow:
             pri = (0 if t in buyers and not xf.get("qh") else 1 if not xf else 2 if newest and newest not in have
                    else 3 if not shallow else 4)                 # the forecast model's buyers first
@@ -1234,7 +1236,9 @@ def _refresh_one(store, sec, dims, text, t, cik, is_buyer, is_investor, queue_hi
         xf["mh"], xf["mh_accns"] = mh, done
     if is_buyer:
         rel = next((r for r in rows if r["form"] == "8-K" and "2.02" in (r.get("items") or "")), None)
-        if rel and (xf.get("guide") or {}).get("accn") != rel["accessionNumber"]:
+        if not rel:
+            xf["guide"] = {"rows": [], "none": "no earnings 8-K"}
+        elif (xf.get("guide") or {}).get("accn") != rel["accessionNumber"]:
             try:
                 from .build import _exhibit
                 name = _exhibit(cik, rel["accessionNumber"], rel.get("primaryDocument"))
