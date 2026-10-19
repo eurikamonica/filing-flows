@@ -1,0 +1,81 @@
+# Quality research (Disclosures → Quality, the "Quality" view of each company page, the X posts of pipeline/posts_quality.py).
+# Daily: the SEC XBRL frames the hub does not cache yet (balance-sheet instants and the cash-flow / tax / share figures of each
+# fiscal year), then public/ is rebuilt — Piotroski F, Altman Z, Beneish M, shareholder yield, FCF after stock comp, owner
+# earnings, ROIC − WACC, operating leverage, accruals, gross profitability, asset growth, net issuance, the sector lines,
+# margin mean reversion, walk-forward factor backtests and the frozen monthly ranking (disclosures/app/quality.py).
+# Kept on the branch "research-quality" (one commit, force-pushed); scan.yml publishes public/ at disclosures/data/research/quality/.
+name: Research — quality
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for fetching frames (the first run needs ~10; later runs only refresh the recent periods)'
+        default: '25'
+  schedule:
+    - cron: '23 7 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: research-quality
+  cancel-in-progress: false
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/config/
+            /disclosures/docs/data/cache/frames/
+            /disclosures/docs/data/cache/prices/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The data branch and the inputs (site index, 10-year Treasury, company WACC)
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" research-quality >/dev/null; then
+            git clone --quiet --depth 1 --branch research-quality "$url" rq
+          else
+            mkdir rq && git -C rq init --quiet -b research-quality && git -C rq remote add origin "$url"
+          fi
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          mkdir -p site && (curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json || echo '{}' > site/index.json)
+          if git ls-remote --exit-code --heads "$url" debt-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch debt-history "$url" debt
+            git -C debt sparse-checkout set --no-cone /public/rates.json
+          fi
+          if git ls-remote --exit-code --heads "$url" research-valuation >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch research-valuation "$url" rv
+            git -C rv sparse-checkout set --no-cone /public/index.json
+          fi
+          du -sh rq; ls rq
+      - name: XBRL frames (balance sheet, cash flow, shares)
+        timeout-minutes: 35
+        run: python disclosures/app/quality.py collect --root rq --minutes "${{ inputs.minutes || '25' }}"
+      - name: Build public/
+        timeout-minutes: 15
+        run: |
+          args=""
+          [ -f debt/public/rates.json ] && args="$args --rates debt/public/rates.json"
+          [ -f rv/public/index.json ] && args="$args --valuation rv/public"
+          python disclosures/app/quality.py build --root rq --frames-root disclosures/docs/data --prices disclosures/docs/data/cache/prices \
+            --site-index site/index.json $args
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd rq
+          printf '%s\n' '# research-quality (data only)' '' 'XBRL frames the hub does not cache (cache/qframes/), the frozen monthly composite ranking' \
+            '(ledger/) and the files the site publishes (public/), kept by .github/workflows/research-quality.yml on main.' \
+            'Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "quality $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "quality $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:research-quality && break; sleep $((i * 10)); done
+          python -c "import json; s=json.load(open('public/status.json')); print(json.dumps(s)); print('::notice::quality: ' + ', '.join(f'{k} {v}' for k, v in s.items()))"
