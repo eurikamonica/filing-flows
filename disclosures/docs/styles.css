@@ -440,3 +440,15 @@ th.mac-now, td.mac-now { background: var(--accent-soft); }
 .etf-mix > div { display: grid; grid-template-columns: minmax(90px, 40%) 1fr 52px; gap: 8px; align-items: center; font-size: 12.5px; margin: 4px 0; }
 .etf-mix i { display: block; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; } .etf-mix i b { display: block; height: 100%; border-radius: 4px; background: var(--slate); }
 .etf-mix em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+
+/* Smart money tab: a score from −100 to +100 as a bar that grows from the middle */
+.sm-score { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.sm-score em { font-style: normal; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 2.6em; text-align: right; }
+.sm-bar { position: relative; display: inline-block; width: 64px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.sm-bar::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--muted); opacity: .6; }
+.sm-bar b { position: absolute; top: 0; bottom: 0; }
+.sm-bar b.up { background: var(--mk-profit); border-radius: 0 4px 4px 0; } .sm-bar b.down { background: var(--mk-cost); border-radius: 4px 0 0 4px; }
+.sm-score.big .sm-bar { width: 160px; height: 14px; border-radius: 7px; } .sm-score.big em { font-size: 26px; }
+.sm-now { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin: 6px 0 10px; line-height: 1.6; }
+.sm-who { display: inline-flex; align-items: center; min-width: 0; } .sm-who > span { min-width: 0; }
+.sm-sides { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }

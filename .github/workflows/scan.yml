@@ -172,8 +172,18 @@ jobs:
             du -sh _etf/public
           fi
 
+      - name: Smart money (public/ of the branch smart-history, when it exists)
+        continue-on-error: true
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" smart-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch smart-history "$url" _smart
+            git -C _smart sparse-checkout set public
+            du -sh _smart/public
+          fi
+
       - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
-        run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public --debt _debt/public --consensus _cons/public --etf _etf/public
+        run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public --debt _debt/public --consensus _cons/public --etf _etf/public --smart _smart/public
 
       # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
       # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.

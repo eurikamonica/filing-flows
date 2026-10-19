@@ -2451,6 +2451,29 @@
     }));
   }
 
+  // ---------- smart money (data/smart/t/<TICKER>.json, app/smart.py): today's 13F, ETF, insider and officials' votes in
+  // the stock, each weighted by how often that actor's past buys / sales were right (excess return over SPY, 63 trading days)
+  async function smartBy(sym) {
+    try {
+      const r = await fetch(`disclosures/data/smart/t/${encodeURIComponent(sym.replace(/[^A-Za-z0-9-]/g, '_'))}.json`);
+      if (r.ok) return await r.json();
+    } catch (e) { /* not published yet */ }
+    return null;
+  }
+  function smartBlock(d, sym, av) {
+    if (!d || !d.now || d.now.S == null) return '';
+    const n = d.now, S = n.S, w = Math.min(50, Math.abs(S) / 2), b = n.history_bucket;
+    const G = { f13: '13F manager', etf: 'active ETF', ins: 'insider', gov: 'official' };
+    const sg = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(Math.round(v))}`;
+    const votes = (d.votes || []).slice(0, 6).map((v) => `<li>${avatar(av, v[1], /^f:\d+$/.test(v[0]) ? v[0].slice(2) : null)}<span><b>${t(v[1])}</b> <span class="muted">${G[v[2]] || ''}</span><br>
+        <span class="${v[4] > 0 ? 'pos' : 'neg'}">${v[4] > 0 ? 'bought' : 'sold'}</span> · right ${v[7] != null ? Math.round(v[7] * 100) + '%' : '—'} on ${v[4] > 0 ? 'buys' : 'sales'} (${v[8]} scored) · weight ${v[6] > 0 ? '+' : ''}${Number(v[6]).toFixed(2)}</span></li>`).join('');
+    return `<div class="smart13"><h3>Smart money: ${sg(S)} <span class="muted">of ±100</span></h3>
+      <div class="sm13-line"><span class="sm13-gauge" role="img" aria-label="${t(`Smart score ${sg(S)} of plus or minus 100`)}"><b class="${S >= 0 ? 'up' : 'down'}" style="${S >= 0 ? 'left' : 'right'}:50%;width:${w.toFixed(1)}%"></b></span>
+        <span>${n.n} vote${n.n === 1 ? '' : 's'} · everyone alike ${sg(n.raw)}${Object.entries(n.groups || {}).map(([g, x]) => ` · ${G[g] || g}s ${sg(x.S)}`).join('')}</span></div>
+      ${votes ? `<ul class="sm13-votes">${votes}</ul>` : ''}
+      <p class="muted">Every disclosed trade by 13F managers, active ETFs, insiders and officials is scored by the stock's return less SPY's over the next 63 trading days (a sale is right when the stock lagged); each vote now counts by that actor's record, so a buyer who is usually wrong counts against buying.${b && b[1] ? ` In the backtest, stocks scoring ${t(b[0])} averaged ${b[2] > 0 ? '+' : ''}${(b[2] * 100).toFixed(1)}% against SPY over the next 63 trading days (${b[1].toLocaleString('en-US')} stock-months).` : ''} <a href="disclosures/#smart/${encodeURIComponent(sym)}">Who is voting, and their records →</a></p></div>`;
+  }
+
   // ---------- ETFs that hold it (data/etf/by/<TICKER>.json, app/etf.py): the largest by dollars, and the creations and
   // redemptions that passed through to the stock month by month (each ETF's N-PORT flows × the stock's weight in it)
   async function etfBy(sym) {
@@ -2507,12 +2530,12 @@
     box.innerHTML = `<div class="section-head"><h2>Holders and filings</h2><span class="muted">Loading 13F positions, filings and officials’ disclosures…</span></div>`;
     body.appendChild(box);
     let h = null;
-    const avP = avData(), etfP = etfBy(sym);
+    const avP = avData(), etfP = etfBy(sym), smP = smartBy(sym);
     try {
       const r = await fetch(`disclosures/data/holders/${encodeURIComponent(sym)}.json`);
       if (r.ok) h = await r.json();
     } catch (e) { /* the hub has not published yet */ }
-    const av = await avP, etf = await etfP;
+    const av = await avP, etf = await etfP, sm = await smP;
     if (!here() || !box.isConnected) return;
     const inst = (h && h.institutional) || [], off = (h && h.officials) || [], ins = (h && h.insiders) || [];
     const stakes = (h && h.stakes) || [], f144 = (h && h.form144) || [], shortH = (h && h.short) || [];
@@ -2544,6 +2567,7 @@
       ${h && (h.flows || h.signal) ? `<p class="holders-flow">${h.flows ? `<b>${t(h.flows.label || 'This quarter')}:</b> ${whole(h.flows.buyers)} managers added, ${whole(h.flows.sellers)} cut${h.flows.new ? ` (${whole(h.flows.new)} new positions)` : ''} · est. net ${h.flows.usd_net >= 0 ? '+' : '−'}${money(Math.abs(h.flows.usd_net))}` : ''}${
         h.signal && h.signal.tags && h.signal.tags.length ? ` · <a href="disclosures/#signals">Signals</a>: ${h.signal.tags.map((x) => `<span class="badge">${t(x.replace(/_/g, ' '))}</span>`).join(' ')}` : ''}</p>` : ''}
       ${own13(inst, (h && h.exits) || [], sym, av, h && h.q13f)}
+      ${smartBlock(sm, sym, av)}
       <h3>Institutional investors (13F)</h3>
       ${inst.length ? `<div class="tbl-wrap"><table><thead><tr><th>Manager</th><th>Quarter</th><th class="num">Shares</th><th class="num">Value</th>
         <th class="num">Of its portfolio</th><th class="num">Change vs prior quarter</th><th>Source</th></tr></thead><tbody id="inst-rows">${instRows(false)}</tbody></table></div>

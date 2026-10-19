@@ -128,6 +128,30 @@ class Datasets(unittest.TestCase):
             self.assertEqual((h['n'], h['top'][0][4], h['top'][0][3], h['on_loan']), (2, 'NVDA', 'US67066G1040', 5))
             self.assertEqual(h['weights'], [['NVDA', 0.08, 80]])                           # equity only
             self.assertAlmostEqual(h['mix']['EC'], 0.08)
+            self.assertNotIn('active', out)
+
+    def test_nport_active_balances(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = make_zip(Path(d) / 'p.zip', {
+                'SUBMISSION.tsv': tsv(['ACCESSION_NUMBER', 'FILING_DATE', 'REPORT_DATE'], [{'ACCESSION_NUMBER': 'a1', 'FILING_DATE': '24-JUL-2026', 'REPORT_DATE': '30-JUN-2026'}]),
+                'FUND_REPORTED_INFO.tsv': tsv(['ACCESSION_NUMBER', 'SERIES_NAME', 'SERIES_ID', 'NET_ASSETS'], [{'ACCESSION_NUMBER': 'a1', 'SERIES_NAME': 'ARK Innovation ETF', 'SERIES_ID': 'S1', 'NET_ASSETS': '1000'}]),
+                'FUND_REPORTED_HOLDING.tsv': tsv(['ACCESSION_NUMBER', 'HOLDING_ID', 'ISSUER_NAME', 'ISSUER_CUSIP', 'CURRENCY_VALUE', 'PERCENTAGE', 'PAYOFF_PROFILE', 'ASSET_CAT', 'BALANCE', 'UNIT'],
+                                                 [{'ACCESSION_NUMBER': 'a1', 'HOLDING_ID': 'h1', 'ISSUER_NAME': 'TESLA', 'ISSUER_CUSIP': '88160R101', 'CURRENCY_VALUE': '600', 'PERCENTAGE': '60', 'PAYOFF_PROFILE': 'Long', 'ASSET_CAT': 'EC', 'BALANCE': '2', 'UNIT': 'NS'},
+                                                  {'ACCESSION_NUMBER': 'a1', 'HOLDING_ID': 'h2', 'ISSUER_NAME': 'A BOND', 'ISSUER_CUSIP': '000000AA1', 'CURRENCY_VALUE': '300', 'PERCENTAGE': '30', 'PAYOFF_PROFILE': 'Long', 'ASSET_CAT': 'DBT', 'BALANCE': '300', 'UNIT': 'PA'},
+                                                  {'ACCESSION_NUMBER': 'a1', 'HOLDING_ID': 'h3', 'ISSUER_NAME': 'SHORTED', 'ISSUER_CUSIP': '111111111', 'CURRENCY_VALUE': '-50', 'PERCENTAGE': '-5', 'PAYOFF_PROFILE': 'Short', 'ASSET_CAT': 'EC', 'BALANCE': '-5', 'UNIT': 'NS'}]),
+                'IDENTIFIERS.tsv': tsv(['HOLDING_ID', 'IDENTIFIER_ISIN', 'IDENTIFIER_TICKER'], [{'HOLDING_ID': 'h1', 'IDENTIFIER_TICKER': 'TSLA'}])})
+            out = E.process_nport(p, {'S1'}, holdings=False, active={'S1'})
+            self.assertEqual(out['holdings'], {})                                          # no portfolio page without holdings=True
+            a = out['active']['S1']
+            self.assertEqual((a['date'], a['filed'], a['na']), ('2026-06-30', '2026-07-24', 1000.0))
+            self.assertEqual(a['pos'], [['TSLA', '88160R101', 2.0, 600]])                  # long equity in shares only
+
+    def test_active_series(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            E.save_gz(root / 'cache' / 'ncen' / '2026q2_ncen.json.gz', {'S1': {'index': False}, 'S2': {'index': True}, 'S3': {'index': False, 'multi_inverse': True}})
+            E.save_gz(root / 'cache' / 'ncen' / '2025q4_ncen.json.gz', {'S2': {'index': False}, 'S4': {'index': False}})
+            self.assertEqual(E.active_series(root), {'S1', 'S4'})                           # the newest census decides S2
 
 
 class Build(unittest.TestCase):
