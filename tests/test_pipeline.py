@@ -1054,6 +1054,29 @@ def test_owner_reports_go_first_and_are_never_held_back(tmp_path):
         assert {r["id"]: r["status"] for r in supa.t["send_requests"]} == {1: "pending", 2: "sent"}
 
 
+def test_a_foreign_filer_is_answered_at_once(tmp_path):
+    """A company that files 20-F / 6-K (no 10-Q or 10-K) cannot be charted: its request fails in the same scan, with why."""
+    from pipeline import build, custom
+
+    def sub(name, forms):
+        return {"name": name, "filings": {"recent": {"form": forms, "accessionNumber": [f"a{i}" for i in range(len(forms))],
+                                                    "reportDate": ["2026-06-30"] * len(forms), "filingDate": ["2026-08-01"] * len(forms)}}}
+    assert build.cannot_draw(sub("Apple Inc.", ["8-K", "10-Q", "4"])) is None
+    why = build.cannot_draw(sub("Nebius Group N.V.", ["6-K", "4", "20-F", "SCHEDULE 13G/A"]))
+    assert why.startswith("Nebius Group N.V. is a foreign private issuer: it files a 20-F annual report and 6-K releases")
+    assert "40-F" in build.cannot_draw(sub("Shopify Inc.", ["40-F", "6-K"]))
+    assert build.cannot_draw(sub("Some Trust", ["N-CSR"])) == "Some Trust has no 10-Q or 10-K on file at SEC"
+    site = tmp_path / "_site"
+    (site / "data" / "c").mkdir(parents=True)
+    (site / "data" / "c" / "320193.json").write_text("{}")
+    f = _FakeSupa([], company_requests=[{"id": 1, "cik": 320193, "status": "queued", "created_at": "2026-10-19T00:30:00+00:00"},
+                                        {"id": 2, "cik": 1513845, "status": "queued", "created_at": "2026-10-19T00:30:00+00:00"},
+                                        {"id": 3, "cik": 1652044, "status": "queued", "created_at": "2099-10-19T00:30:00+00:00"}])
+    custom.finish_companies(f, str(site), {"1513845": why})
+    st = {r["id"]: (r["status"], r.get("error")) for r in f.t["company_requests"]}
+    assert st[1][0] == "done" and st[2] == ("failed", why) and st[3][0] == "queued"
+
+
 def test_owner_comparisons_go_first(monkeypatch):
     """Over the per-run limit, the owner's comparison is drawn first and the reader's goes back to the queue."""
     from pipeline import custom

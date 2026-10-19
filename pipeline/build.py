@@ -773,6 +773,24 @@ def _queue_history(store, cik, sub, n=HISTORY_ON_RELEASE):
     store.put(cik, c)
 
 
+DRAWABLE_FORMS = {"10-Q", "10-K", "10-Q/A", "10-K/A", "10-KT", "10-QT"}
+FOREIGN_FORMS = {"20-F", "20-F/A", "40-F", "40-F/A", "6-K", "6-K/A"}
+
+
+def cannot_draw(sub):
+    """Why a company someone asked for cannot be charted (None when it can): the charts come from 10-Q and 10-K figures,
+    and a foreign private issuer files 20-F / 40-F annual reports and 6-K releases instead."""
+    forms = {r.get("form") for r in recent_rows(sub)}
+    if forms & DRAWABLE_FORMS:
+        return None
+    name = sub.get("name") or "It"
+    if forms & FOREIGN_FORMS:
+        kind = "40-F" if forms & {"40-F", "40-F/A"} else "20-F"
+        return (f"{name} is a foreign private issuer: it files a {kind} annual report and 6-K releases, not 10-Qs and 10-Ks, "
+                "and the charts are drawn from 10-Q / 10-K figures")
+    return f"{name} has no 10-Q or 10-K on file at SEC"
+
+
 def queue_history(store, cik):
     """Default history (last five 10-Qs and two 10-Ks) for one company; returns False when SEC has no such filer."""
     try:
@@ -1006,12 +1024,20 @@ def run(args):
                                         "items": f.get("items")}
     _reread_releases(store)
     asked = set(getattr(args, "build_ciks", None) or [])
+    unbuildable = {}
     for cik in sorted(asked):                                  # companies readers asked for (site search)
         try:
             if not queue_history(store, cik):
                 print(f"  no SEC filer with CIK {cik}")
+                unbuildable[cik] = "SEC has no filer with this CIK"
+            elif cannot_draw(submissions(cik)):
+                unbuildable[cik] = cannot_draw(submissions(cik))
+                print(f"  {cik}: {unbuildable[cik]}")
         except Exception as e:
             print(f"  could not queue {cik} for a reader: {e}", file=sys.stderr)
+    if getattr(args, "unbuildable_out", None):                 # the request is answered at once instead of after 6 hours
+        with open(args.unbuildable_out, "w") as fh:
+            json.dump({str(k): v for k, v in unbuildable.items()}, fh)
     backfill_history(store)
     refresh_periods(store)
     reread(store, getattr(args, "reread_ciks", None) or [])
@@ -1581,6 +1607,8 @@ def main():
     ap.add_argument("--backfill-days", type=int, default=0)
     ap.add_argument("--max-filings", type=int, default=1500)
     ap.add_argument("--build-ciks-file", default=None, help="CIKs readers asked for (one per line): fetch their history")
+    ap.add_argument("--unbuildable-out", default="unbuildable.json",
+                    help="asked-for companies SEC has nothing to draw from (20-F filers …), with why: custom.py finish-companies")
     ap.add_argument("--reread-ciks-file", default=None, help="companies the owner asked to re-read (CIKs or tickers; 0 or ALL: every one)")
     args = ap.parse_args()
     args.build_ciks = []

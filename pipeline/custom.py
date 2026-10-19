@@ -20,6 +20,7 @@ Environment: SUPABASE_URL, SUPABASE_SERVICE_KEY (secret key), SEC_USER_AGENT.
 """
 import argparse
 import datetime as dt
+import json
 import os
 import re
 import sys
@@ -288,20 +289,29 @@ def finish_rereads(supa):
     print(f"re-read requests done: {len(rows)}")
 
 
-def finish_companies(supa, site):
-    """Requests for companies that are on the site now are done; the rest stay queued for the next scan."""
+def finish_companies(supa, site, unbuildable=None):
+    """Requests for companies that are on the site now are done; ones the scan found nothing to draw from (a foreign
+    private issuer's 20-F / 6-K, no 10-Q or 10-K at all: `unbuildable`, {cik: why} from pipeline/build.py) fail at once
+    with the reason; the rest stay queued for the next scan."""
     rows = supa.select("company_requests", {"select": "id,cik,created_at", "status": "eq.queued"})
     ok = [r["id"] for r in rows if os.path.exists(os.path.join(site, "data", "c", f"{int(r['cik'])}.json"))]
     if ok:
         supa.update("company_requests", {"id": f"in.({','.join(map(str, ok))})"},
                     {"status": "done", "done_at": _now().isoformat()})
+    why = {str(k): v for k, v in (unbuildable or {}).items()}
+    no = [r for r in rows if r["id"] not in ok and str(int(r["cik"])) in why]
+    for r in no:
+        supa.update("company_requests", {"id": f"eq.{r['id']}"},
+                    {"status": "failed", "error": why[str(int(r["cik"]))][:300], "done_at": _now().isoformat()})
+    ok += [r["id"] for r in no]
     old = [r["id"] for r in rows if r["id"] not in ok and r.get("created_at")
            and dt.datetime.fromisoformat(str(r["created_at"]).replace("Z", "+00:00")) < _now() - dt.timedelta(hours=6)]
     if old:                                                     # no 10-Q/10-K with figures to draw, after several scans
         supa.update("company_requests", {"id": f"in.({','.join(map(str, old))})"},
                     {"status": "failed", "error": "no 10-Q or 10-K with revenue and net income in SEC's XBRL data",
                      "done_at": _now().isoformat()})
-    print(f"company requests: {len(ok)} done, {len(old)} given up, {len(rows) - len(ok) - len(old)} still building")
+    print(f"company requests: {len(ok) - len(no)} done, {len(no)} cannot be drawn, {len(old)} given up, "
+          f"{len(rows) - len(ok) - len(old)} still building")
 
 
 def main():
@@ -311,6 +321,7 @@ def main():
     ap.add_argument("--out", default="build-ciks.txt")
     ap.add_argument("--owner-out", default=None, help="claim-companies: also write the owner's companies (fast lane) here")
     ap.add_argument("--site", default="_site")
+    ap.add_argument("--unbuildable", default="unbuildable.json", help="finish-companies: {cik: why} the scan could not draw")
     args = ap.parse_args()
     url, key = setting("SUPABASE_URL", url=True), setting("SUPABASE_SERVICE_KEY")
     if not (url and key):
@@ -339,7 +350,11 @@ def main():
             print(f"{n} owner company requests open from the last {FAST_LANE_MINUTES} minutes")
             sys.exit(0 if n else 1)
         elif args.cmd == "finish-companies":
-            finish_companies(supa, args.site)
+            try:
+                unb = json.load(open(args.unbuildable)) if args.unbuildable and os.path.exists(args.unbuildable) else {}
+            except ValueError:
+                unb = {}
+            finish_companies(supa, args.site, unb)
         elif args.cmd == "claim-rereads":
             ciks = claim_rereads(supa)
             open(args.out, "w").write("".join(f"{c}\n" for c in ciks))
