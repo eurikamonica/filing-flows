@@ -225,6 +225,28 @@ class Scoring(unittest.TestCase):
         self.assertEqual(P['prev2']['start'], '2026-07-01')
 
 
+    def test_insider_tickers_and_prices(self):
+        ciks = ({'1045810': ['NVDA'], '1067983': ['BRK-B', 'BRK-A']}, {'NVDA': '1045810', 'BRK-B': '1067983', 'BRK-A': '1067983'})
+        self.assertEqual(S.issuer_ticker('0001067983', 'BRK-A', ciks), 'BRK-A')      # the filer's symbol, when SEC lists it for the issuer
+        self.assertEqual(S.issuer_ticker('1067983', 'BRKB', ciks), 'BRK-B')          # else SEC's first ticker for the issuer
+        self.assertEqual(S.issuer_ticker('999', 'NVDA', ciks), '')                   # a symbol that belongs to another company
+        self.assertEqual(S.issuer_ticker('999', 'ZZZ', ciks), 'ZZZ')                 # an issuer SEC does not list (OTC, delisted)
+        P = S.Prices.__new__(S.Prices)
+        days = series('2026-07-01', 30, lambda i: 100)
+        ords = np.array([S.ordinal(r[0]) for r in days], dtype=np.int32)
+        P.series = {'AAA': (ords, np.full(30, 20.0), '')}
+        E = S.Events()
+        a = E.actor('i:X', 'X', 'ins')
+        E.add(a, 'AAA', days[5][0], None, 1, 1e9, usd=1e9, shares=1000)          # $1M a share typed in: 1,000 × $20 instead
+        E.add(a, 'AAA', days[6][0], None, 1, 25000, usd=25000, shares=1000)      # $25 against a $20 close: as filed
+        E.add(a, 'ZZZ', days[6][0], None, -1, 5e9, usd=5e9, shares=100)          # no close, $50M a share: no dollar value
+        E.freeze()
+        self.assertEqual(S.fix_insider_usd(E, P), 2)
+        self.assertEqual(E.usd[0], 20000.0)
+        self.assertEqual(E.usd[1], 25000.0)
+        self.assertTrue(np.isnan(E.usd[2]))
+
+
 @unittest.skipIf(S is None, 'numpy not installed')
 class Build(unittest.TestCase):
     def test_offline_build_publishes(self):
@@ -248,13 +270,14 @@ class Build(unittest.TestCase):
             gz(hub / 'cache' / 'holdings' / '123.json.gz', {'cik': '123', 'label': 'Test Capital', 'snapshots': snaps})
             (hub / 'cache' / 'prices' / 'cusips.json').write_text(json.dumps({'c1': {'ticker': 'AAA'}, 'c2': {'ticker': 'BBB'}}))
             gz(hub / 'cache' / 'insiders' / 'trades.json.gz', [{'insider': 'Doe Jane', 'role': 'CEO', 'ticker': 'AAA', 'code': 'P', 'date': days[-5][0], 'value': 50000, 'issuer': 'AAA Inc'}])
-            gz(root / 'cache' / 'ins' / '2024q1.json.gz', {'quarter': '2024q1', 'rows': [['1', 'Doe Jane', 'CEO', 'AAA', '5', 'AAA Inc', '2024-02-01', '2024-02-03', 1, 100, 5000, 0],
-                                                                                          ['1', 'Doe Jane', 'CEO', 'BBB', '6', 'BBB Inc', '2024-02-05', '2024-02-07', -1, 100, 8000, 0],
-                                                                                          ['2', 'Plan Joe', 'CFO', 'AAA', '5', 'AAA Inc', '2024-02-05', '2024-02-07', -1, 100, 8000, 1]]})
+            gz(root / 'cache' / 'ins' / '2024q1.json.gz', {'quarter': '2024q1', 'rows': [['1', 'Doe Jane', 'CEO', 'AAA', '5', 'AAA Inc', '2024-02-01', '2024-02-03', 1, 1000, 50000, 0],
+                                                                                          ['1', 'Doe Jane', 'CEO', 'BBB', '6', 'BBB Inc', '2024-02-05', '2024-02-07', -1, 1000, 80000, 0],
+                                                                                          ['2', 'Plan Joe', 'CFO', 'AAA', '5', 'AAA Inc', '2024-02-05', '2024-02-07', -1, 1000, 80000, 1],
+                                                                                          ['3', 'Tiny Tim', 'Officer', 'AAA', '5', 'AAA Inc', '2024-02-05', '2024-02-07', 1, 10, 500, 0]]})
             st = S.build(root, hub, None, offline=True, today=S.ordinal(days[-1][0]))
             pub = root / 'public'
             idx = json.loads((pub / 'index.json').read_text())
-            self.assertEqual(st['events'], {'f13': 8, 'etf': 0, 'ins': 3, 'gov': 0})   # the 10b5-1 sale is left out
+            self.assertEqual(st['events'], {'f13': 8, 'etf': 0, 'ins': 3, 'gov': 0})   # the 10b5-1 sale and the $500 trade are left out
             self.assertEqual(idx['counts']['f13']['trades'], 8)
             self.assertTrue((pub / 't' / 'AAA.json').exists())
             self.assertTrue((pub / 'a' / 'f13' / (S.bucket('f:123') + '.json')).exists())

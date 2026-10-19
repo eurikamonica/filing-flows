@@ -72,6 +72,7 @@ MIN_TRIM = 0.02           # ... and at least 2% of the position
 F13_VERSION = 3                                            # 3: share change and dollars per change (combined flows)
 INS_PAGE = 'https://www.sec.gov/data-research/sec-markets-data/insider-transactions-data-sets'
 INS_KEEP = 13
+MIN_INS_USD = 10_000      # smaller Form 4 trades (plan purchases of a few shares) are noise for this purpose
 YAHOO = 'https://query2.finance.yahoo.com/v8/finance/chart/{symbol}?range=5y&interval=1d'
 BROWSER = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
 SEC_UA = os.environ.get('SEC_USER_AGENT') or 'Filing Flows research filingflows@gmail.com'
@@ -599,7 +600,11 @@ class Events:
         self.ag = np.array([GROUPS.index(x['g']) for x in self.actors], dtype=np.int8)
         self.g = self.ag[self.a] if len(self.a) else np.zeros(0, np.int8)
         self.n = len(self.a)
-        # conviction: √(size / the actor's median size), 0.25–3
+        del self.cols
+        return self.convictions()
+
+    def convictions(self):
+        """conviction: √(size / the actor's median size), 0.25–3."""
         med = np.ones(len(self.actors))
         if self.n:
             order = np.lexsort((self.size, self.a))
@@ -611,8 +616,64 @@ class Events:
                 m = vals[(e - s) // 2]
                 med[a_sorted[s]] = m if m > 0 else 1.0
         self.c = np.clip(np.sqrt(np.where(self.size > 0, self.size, 0) / med[self.a]), 0.25, 3.0) if self.n else np.zeros(0)
-        del self.cols
         return self
+
+
+def sec_ciks(hub):
+    """SEC's company tickers as {cik: [tickers]} and {ticker: cik} (the Hub's weekly cache)."""
+    by_cik, by_t = defaultdict(list), {}
+    for r in (read_json(Path(hub) / 'cache' / 'prices' / 'sec-tickers.json', {}).get('rows') or []):
+        t, c = tick(r.get('ticker')), str(r.get('cik') or '').lstrip('0')
+        if t and c:
+            by_cik[c].append(t)
+            by_t.setdefault(t, c)
+    return by_cik, by_t
+
+
+def issuer_ticker(icik, tk, ciks):
+    """The ticker a Form 4 is about: the filer's own symbol when SEC lists it for that issuer, SEC's first ticker for the
+    issuer otherwise; a symbol SEC gives to another company is dropped (a typo or a stale ticker)."""
+    by_cik, by_t = ciks
+    icik = (icik or '').lstrip('0')
+    if icik and by_cik.get(icik):
+        return tk if tk in by_cik[icik] else by_cik[icik][0]
+    if tk and by_t.get(tk) and icik and by_t[tk] != icik:
+        return ''
+    return tk
+
+
+def fix_insider_usd(E, P):
+    """Form 4 dollars against the market: a price more than 3× away from that day's close is a filing error (a price
+    typed in the shares box, cents for dollars …) — the shares × the close is used instead; with no close, a price over
+    $10,000 a share drops the dollar value. Returns how many trades were corrected."""
+    idx = np.flatnonzero((E.g == 2) & ~np.isnan(E.sh) & (E.sh > 0))
+    if not len(idx):
+        return 0
+    idx = idx[np.argsort(E.t[idx], kind='stable')]
+    ts = E.t[idx]
+    starts = np.r_[0, np.flatnonzero(np.diff(ts)) + 1]
+    ends = np.r_[starts[1:], len(idx)]
+    fixed = 0
+    for s0, e0 in zip(starts, ends):
+        ii = idx[s0:e0]
+        px = E.usd[ii] / E.sh[ii]
+        ser = P.get(E.tickers[ts[s0]])
+        close = np.full(len(ii), np.nan)
+        if ser is not None:
+            days, cl = ser
+            i0 = np.searchsorted(days, E.day[ii], 'right') - 1
+            ok = (i0 >= 0) & (E.day[ii] - days[np.maximum(i0, 0)] <= 7)
+            close[ok] = cl[np.maximum(i0, 0)[ok]]
+        ratio = px / close
+        bad = ~np.isnan(close) & ((ratio > 3) | (ratio < 1 / 3))
+        E.usd[ii[bad]] = E.sh[ii[bad]] * close[bad]
+        nob = np.isnan(close) & (px > 10_000)
+        E.usd[ii[nob]] = np.nan
+        fixed += int(bad.sum() + nob.sum())
+    m = E.g == 2
+    E.size[m] = np.nan_to_num(E.usd[m])
+    E.convictions()
+    return fixed
 
 
 def build_events(root, hub, etf_root, universe, log_stats):
@@ -638,13 +699,17 @@ def build_events(root, hub, etf_root, universe, log_stats):
     if etf_root:
         netf = add_etf_events(E, Path(etf_root), universe)
     # insiders: the data sets, then the Hub's Form 4 cache after the newest set's quarter
+    ciks = sec_ciks(hub)
     nins, last_q = 0, ''
     seen = set()
     for p in sorted((root / 'cache' / 'ins').glob('*.json.gz')):
         d = load_gz(p, {}) or {}
         last_q = max(last_q, d.get('quarter') or p.name[:6])
         for ocik, oname, role, tk, icik, iname, day, filed, dd, sh, val, plan in d.get('rows', []):
-            if plan:                                       # pre-arranged 10b5-1 sales and purchases are not decisions made then
+            if plan or val < MIN_INS_USD:                  # pre-arranged 10b5-1 trades are not decisions made then; tiny ones are noise
+                continue
+            tk = issuer_ticker(icik, tk, ciks)
+            if not tk:
                 continue
             key = (norm_name(oname), tk, day, dd)
             if key in seen:
@@ -657,8 +722,8 @@ def build_events(root, hub, etf_root, universe, log_stats):
     for r in load_gz(hub / 'cache' / 'insiders' / 'trades.json.gz', []) or []:
         if (r.get('date') or '') <= cut or r.get('plan_10b5_1') or r.get('code') not in ('P', 'S'):
             continue
-        tk = tick(r.get('ticker'))
-        if not tk or not r.get('insider') or (r.get('value') or 0) < 1000:
+        tk = issuer_ticker(str(r.get('issuer_cik') or ''), tick(r.get('ticker')), ciks)
+        if not tk or not r.get('insider') or (r.get('value') or 0) < MIN_INS_USD:
             continue
         key = (norm_name(r['insider']), tk, r['date'], 1 if r['code'] == 'P' else -1)
         if key in seen:
@@ -1247,6 +1312,7 @@ def build(root, hub, etf_root=None, minutes=None, offline=False, today=None):
         st['prices'] = P.top_up(want, minutes=min(budget, 25.0))
         log(f"prices: {st['prices']}")
     st['usd_from_closes'] = fill_usd(E, P)
+    st['insider_prices_fixed'] = fix_insider_usd(E, P)
     spy = P.get('SPY')
     if spy is None:
         raise RuntimeError('no SPY prices: the benchmark is missing')
