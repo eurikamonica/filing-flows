@@ -2464,17 +2464,21 @@
   }
   function etfBlock(d, sym) {
     if (!d || !(d.rows || []).length) return '';
-    const rows = d.rows.slice(0, 10), max = Math.max(...rows.map((r) => r[3] || 0)) || 1;
-    const list = rows.map((r) => `<li title="${t(`${r[0]} ${r[1] || ''}: ${money(r[3])} of ${sym}, ${((r[2] || 0) * 100).toFixed(2)}% of the ETF${r[4] ? `, ETF assets ${money(r[4])}` : ''}`)}">
+    // value held as reported; for the few portfolios without dollar values (sponsor files), weight × the ETF's assets
+    const val = (r) => (r[3] != null ? r[3] : r[2] && r[4] ? r[2] * r[4] : null);
+    const rows = d.rows.slice(0, 10), max = Math.max(...rows.map((r) => val(r) || 0)) || 1;
+    const list = rows.map((r) => `<li title="${t(`${r[0]} ${r[1] || ''}: ${r[3] == null && val(r) ? '≈ ' : ''}${money(val(r))} of ${sym}, ${((r[2] || 0) * 100).toFixed(2)}% of the ETF${r[4] ? `, ETF assets ${money(r[4])}` : ''}`)}">
         <span class="etf13-name"><b>${t(r[0])}</b> <span class="muted">${t(SHORT_NAME(r[1] || '', 40))}</span></span>
-        <span class="num">${money(r[3])}</span><span class="num muted">${((r[2] || 0) * 100).toFixed(r[2] >= 0.1 ? 1 : 2)}%</span>
-        <i class="etf13-bar" style="width:${Math.max(1.5, (r[3] || 0) / max * 100).toFixed(1)}%"></i></li>`).join('');
+        <span class="num">${r[3] == null && val(r) ? '≈ ' : ''}${money(val(r))}</span><span class="num muted">${((r[2] || 0) * 100).toFixed(r[2] >= 0.1 ? 1 : 2)}%</span>
+        <i class="etf13-bar" style="width:${Math.max(1.5, (val(r) || 0) / max * 100).toFixed(1)}%"></i></li>`).join('');
     let flows = '';
     const fl = d.flows;
     if (fl && (fl.months || []).length >= 3) {
       const net = fl.months.map((m, i) => (fl.in[i] || 0) - (fl.out[i] || 0)), best = Math.max(...(fl.cov || []).map((x) => x || 0)) || 1;
-      const W = 640, H = 226, mid = 96, amp = 74, n = fl.months.length, step = (W - 40) / n, bw = Math.min(30, step - 10);
-      const mx = Math.max(1, ...net.map(Math.abs));
+      // the zero line sits where the months need it: low when money only came in, high when it only went out
+      const up = Math.max(0, ...net), down = Math.max(0, ...net.map((v) => -v)), span = 150, top = 22;
+      const W = 640, H = top + span + 48, mid = top + span * (up / ((up + down) || 1)), n = fl.months.length, step = (W - 40) / n, bw = Math.min(30, step - 10);
+      const mx = (up + down) || 1, amp = span;
       const mon = (m) => new Date(m + '-15T00:00:00Z').toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
       const bars = fl.months.map((m, i) => {
         const v = net[i], h = Math.abs(v) / mx * amp, x = 20 + i * step + (step - bw) / 2, part = (fl.cov[i] || 0) < best * 0.6;
