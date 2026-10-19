@@ -143,7 +143,7 @@ function status(){return health()}
 function render(){
  baseRender();exported=[];
  tipData.length=0;
- $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView,valuation:valView,filings:filingsView,maps:mapsView,...(window.HUB_VIEWS||{})}[state.tab])();
+ $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView,valuation:valView,filings:filingsView,maps:mapsView,...(window.HUB_VIEWS||{})}[state.tab]||window[state.tab+'View']||status)();
  bind('market','market');bind('group','group');bind('from','from');bind('to','to');bind('asof','date');bind('cert','cert');bind('metric','metric');bind('base','base');bind('filing','filing');bind('direction','direction');
  if($('query')){$('query').onchange=e=>{state.query=e.target.value;state.page=0;render()};$('query').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  actions();
@@ -155,11 +155,7 @@ function render(){
  bindRotation();
  bindOptions();
  bindDebt();bindConsensus();bindEtf();bindSmart();bindAllflows();bindValuation();bindFilings();bindMaps();
- Object.values(window.HUB_BINDS||{}).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // tabs that register themselves (quality.js …)
-
- Object.values(window.HUB_BINDS||{}).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // views that register themselves (window.HUB_VIEWS)
-
- (window.HUB_BINDS||[]).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // tabs added by their own scripts
+ Object.values(window.HUB_BINDS||{}).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // tabs that register themselves (window.HUB_VIEWS / HUB_BINDS)
  if(window.FFPosts)window.FFPosts.fill($("workspace"));
 }
 function csvCell(v){let s=typeof v==='object'&&v!==null?JSON.stringify(v):String(v??'');if(/^[=+@\t\r]/.test(s)||(/^[-]/.test(s)&&!/^[-]\d+(\.\d+)?$/.test(s)))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
@@ -169,7 +165,6 @@ const TABS=[...document.querySelectorAll('nav button[data-tab]')].map(b=>b.datas
 function syncPills(){document.querySelectorAll('nav button[data-tab]').forEach(x=>{const on=x.dataset.tab===state.tab;x.classList.toggle('active',on);x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))})}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.page=0;state.date='';syncPills();try{history.replaceState(null,'','#'+state.tab)}catch(e){}render()});
 /* deep links: disclosures/#signals, #flows, #trades, #holdings … */
-function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);if(arg)deepLink(h,decodeURIComponent(arg));if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
 /* deep links from the site's search: #holdings/<manager CIK>, #trades/<official's name>, #etf/<ticker> */
 function deepLink(h,v){if(!v)return;if(h==='holdings')state.manager=v.replace(/\D/g,'');else if(h==='trades'){state.tperson=v;state.page=0}else if(h==='etf'){state.eview='one';state.esym=v.toUpperCase()}}
 

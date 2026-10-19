@@ -132,4 +132,5 @@ function peopleDeepLink(arg){
  else if(v.startsWith('o-')){state.pev='officials';state.peo=v.slice(2);state.pem=''}
  else if(PE_VIEWS.some(x=>x[0]===v)){state.pev=v;state.pem='';state.peo=''}
 }
-(window.HUB_BINDS=window.HUB_BINDS||[]).push(bindPeople);
+window.HUB_VIEWS = Object.assign(window.HUB_VIEWS || {}, { people: peopleView });
+window.HUB_BINDS = Object.assign(window.HUB_BINDS || {}, { people: bindPeople });
