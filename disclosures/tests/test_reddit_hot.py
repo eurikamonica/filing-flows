@@ -58,8 +58,11 @@ class Publish(unittest.TestCase):
     def test_apewisdom_fallback(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
-            R.write_json(root / 'cache' / 'prices' / 'sec-tickers.json', {'rows': [{'ticker': 'BRK.B', 'title': 'BERKSHIRE'}, {'ticker': 'PLTR', 'title': 'PALANTIR'}]})
-            page = {'results': [{'ticker': 'PLTR', 'mentions': '310', 'upvotes': '2500', 'rank_24h_ago': '4', 'mentions_24h_ago': '120'},
+            R.write_json(root / 'cache' / 'prices' / 'sec-tickers.json', {'rows': [{'ticker': 'BRK.B', 'title': 'BERKSHIRE'}, {'ticker': 'PLTR', 'title': 'PALANTIR'},
+                                                                              {'ticker': 'SPY', 'title': 'SPDR S&P 500 ETF TRUST'}, {'ticker': 'DTE', 'title': 'DTE ENERGY CO'},
+                                                                              {'ticker': 'GLD', 'title': 'SPDR GOLD TRUST'}]})
+            page = {'results': [{'ticker': 'SPY', 'mentions': '900'}, {'ticker': 'DTE', 'mentions': '700'}, {'ticker': 'GLD', 'mentions': '500'},
+                                {'ticker': 'PLTR', 'mentions': '310', 'upvotes': '2500', 'rank_24h_ago': '4', 'mentions_24h_ago': '120'},
                                 {'ticker': 'ZZZZ', 'mentions': '999'}, {'ticker': 'BRK.B', 'mentions': '40', 'upvotes': '100'}]}
             with mock.patch.object(R, 'read_reddit', return_value=([], 'reddit', ['r/stocks/hot: HTTP Error 403: Blocked'])), \
                  mock.patch.object(R, '_get', return_value=page):
@@ -67,7 +70,7 @@ class Publish(unittest.TestCase):
             self.assertEqual((r['source'], r['hottest'], r['status']), ('apewisdom', 'PLTR', 'partial'))
             pub = R.publish(root, root / 'market')
             rows = json.loads((root / 'market' / 'reddit.json').read_text())['rows']
-            self.assertEqual([x['ticker'] for x in rows], ['PLTR', 'BRK-B'])          # unlisted tickers left out
+            self.assertEqual([x['ticker'] for x in rows], ['PLTR', 'BRK-B'])          # funds, options slang (DTE) and unlisted tickers left out
             self.assertEqual((rows[0]['mentions'], rows[0]['mentions_prev']), (310, 120))
             self.assertEqual(pub['hottest'], '$PLTR')
 

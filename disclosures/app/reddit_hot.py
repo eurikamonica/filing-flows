@@ -6,8 +6,8 @@ r/pennystocks (100 threads each) — through Reddit's OAuth API with REDDIT_CLIE
 mentions across those subreddits over 24 hours is used instead (counts and ranks, no thread titles).
 
 Tickers in a thread: $CASHTAGS always (when listed); bare upper-case words only when they are a listed ticker (SEC
-company tickers) and not a common word or trading slang ("ALL", "CEO", "YOLO", "DD", "CALLS" …), in the title and the
-first lines of the text.
+company tickers) and not a common word or trading slang ("ALL", "CEO", "YOLO", "DD", "CALLS", "DTE" …), in the title and
+the first lines of the text. ETFs, ETNs and trusts (SPY, GLD, IBIT …) are left out: the page asks for a stock.
 Heat of a ticker = Σ over its threads of (√upvotes + 2·√comments + 1) × recency (half-life 12 hours) — fresh threads
 with real engagement count most. Mentions: threads naming it in the last 24 hours, against the 24 hours before.
 
@@ -50,6 +50,15 @@ FIND FIRE FORM GAME GOES HAND HARD HEAR HOME HOPE IDEA KEEP KIND LAST LATE LEFT 
 NONE ONCE PAID PART PICK PLUS RISK ROLL SAID SEEN SEND SIDE SIGN SITE SIZE SOON STAY STEP STOP SURE TAKE TALK TELL THEN
 TURN VIEW WAIT WALK WANT WEAR WIDE WILD WISH WORD YEAH ZONE
 """.split())
+
+
+FUND = re.compile(r'\bETF\b|\bETN\b|SPDR|ISHARES|PROSHARES|DIREXION|VANGUARD|INVESCO QQQ|SELECT SECTOR|\bFUND\b|GRAYSCALE|'
+                  r'(GOLD|SILVER|BITCOIN|ETHER(EUM)?|OIL|COMMODITY|INDEX)\b.*\bTRUST\b|\bTRUST\b.*\b(GOLD|SILVER|BITCOIN|ETHER(EUM)?|OIL)\b', re.I)
+
+
+def is_fund(name):
+    """ETFs, ETNs and trusts (SPY, GLD, IBIT …): a market, not a stock topic — left out of the ranking."""
+    return bool(FUND.search(name or ''))
 
 
 def _num(v, default=0):
@@ -162,7 +171,7 @@ def apewisdom(known, pages=2):
         d = _get(APEWISDOM.format(page=page), {'User-Agent': UA, 'Accept': 'application/json'})
         for x in d.get('results') or []:
             t = str(x.get('ticker') or '').upper().replace('.', '-')
-            if t not in known or t in seen:
+            if t not in known or t in seen or t in IGNORE or is_fund(known.get(t)):    # its counts include slang ("DTE") and funds
                 continue
             seen.add(t)
             m, m0 = _num(x.get('mentions')), _num(x.get('mentions_24h_ago'))
@@ -207,7 +216,7 @@ def collect(client, root, cfg=None):
     if not known:
         raise RuntimeError('no SEC ticker list in cache/prices/sec-tickers.json')
     threads, source, errors = read_reddit(cfg.get('subreddits') or SUBS)
-    rows = heat(threads, known) if threads else []
+    rows = [r for r in heat(threads, known) if not is_fund(known.get(r['ticker']))] if threads else []
     if not rows:
         try:
             rows, source = apewisdom(known), 'apewisdom'
