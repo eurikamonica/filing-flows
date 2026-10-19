@@ -1,0 +1,18 @@
+name: Probe foreign filers (temporary)
+on:
+  push:
+    branches: [probe-news]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: python probe.py
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+      - run: |
+          git config user.name "Filing Flows"; git config user.email "filingflows@gmail.com"
+          git add samples && git commit -qm "FPI samples" && git push -q origin HEAD:probe-news
