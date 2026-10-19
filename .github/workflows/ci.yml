@@ -48,37 +48,8 @@ jobs:
             disclosures/automation
             disclosures/tests
             disclosures/config
-            disclosures/docs/app.js
-            disclosures/docs/dashboard.js
-            disclosures/docs/extensions.js
-            disclosures/docs/market.js
-            disclosures/docs/rotation.js
-            disclosures/docs/options.js
-            disclosures/docs/xpost.js
-            disclosures/docs/rrg.js
-            disclosures/docs/chaos.js
-            disclosures/docs/galaxy.js
-            disclosures/docs/ledger.js
-            disclosures/docs/macro.js
-            disclosures/docs/debt-view.js
-            disclosures/docs/debt.js
-            disclosures/docs/consensus-view.js
-            disclosures/docs/posts.js
-            disclosures/docs/consensus.js
-            disclosures/docs/etf.js
-            disclosures/docs/smart.js
-            disclosures/docs/allflows.js
-            disclosures/docs/ownership.js
-            disclosures/docs/news.js
-            disclosures/docs/quality.js
-            disclosures/docs/quality-view.js
-            disclosures/docs/views.json
-            disclosures/docs/index.html
-            disclosures/docs/fairvalue-view.js
-            disclosures/docs/valuation.js
-            disclosures/docs/earnings.js
-            disclosures/docs/earnings-view.js
-            disclosures/docs/maps.js
+            disclosures/docs
+            !disclosures/docs/data
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
         with:
