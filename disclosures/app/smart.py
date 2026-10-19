@@ -1067,7 +1067,7 @@ def combined_periods(today):
         {'key': 'both', 'label': f'{qname(pp_start)} + {qname(p_start)} ({pp_start:%b}–{p_end:%b})', 'start': pp_start.isoformat(), 'end': p_end.isoformat(),
          'note': 'Each actor\'s trades over both quarters, netted.'},
         {'key': 'qtd', 'label': f'{qname(qs)} to date ({md(qs)} – {md(t)})', 'start': qs.isoformat(), 'end': t.isoformat(),
-         'note': f'Insiders and officials only: 13F and N-PORT reports for {qname(qs)} come after it ends.'},
+         'note': f'Insiders (the Form 4s read so far; SEC\'s full quarterly set comes after the quarter) and officials only: 13F and N-PORT reports for {qname(qs)} come after it ends.'},
         {'key': 'd90', 'label': f'Last 90 days ({md(t - dt.timedelta(days=90))} – {md(t)})', 'start': (t - dt.timedelta(days=90)).isoformat(), 'end': t.isoformat(),
          'note': '13F managers and ETFs count with the quarter ends inside these 90 days.'},
     ]

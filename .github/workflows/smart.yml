@@ -15,9 +15,6 @@ on:
         default: '45'
   schedule:
     - cron: '41 */6 * * *'
-  push:                      # TEMPORARY: validate on the feature branch before merging (removed before merge)
-    branches: [feature/all-flows]
-    paths: ['.github/workflows/smart.yml', 'disclosures/app/smart.py']
 permissions:
   contents: write
 concurrency:
