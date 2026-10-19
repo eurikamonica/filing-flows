@@ -1,0 +1,198 @@
+name: FSA Qwen3-4B Experimental Lab
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        required: true
+        default: audit
+        options: [audit, benchmark, train, ask]
+      objective:
+        type: choice
+        default: finance_v4
+        options: [finance_v4, mixed]
+      steps:
+        type: choice
+        default: '50'
+        options: ['50', '100', '200']
+      adapter:
+        type: choice
+        default: champion
+        options: [champion, candidate]
+      question:
+        type: string
+        default: ''
+      hourly_count:
+        description: "Optional approved hourly question samples (0=disabled; 18/72/200)"
+        type: choice
+        default: '0'
+        options: ['0', '18', '72', '200']
+      posts_count:
+        description: "Optional X post rows from the local model's corpus (model branch; market lists, setups, analysts, Polymarket, highs/lows, flows). 0=off; uses 512-token rows"
+        type: choice
+        default: '0'
+        options: ['0', '100', '300', '600']
+permissions:
+  contents: read
+concurrency:
+  group: experimental-fsa-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  audit:
+    if: inputs.mode == 'audit'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # only the FSA files: a full checkout would download the Disclosure Hub's ~9 GB of data (disclosures/docs/data) every run
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/fsa_*.py
+            /tests/test_fsa_hourly_*.py
+            /research_reports/
+      - uses: actions/checkout@v4
+        with:
+          ref: lab/qwen3-4b-fsa-20261018
+          path: lab
+          persist-credentials: false
+          lfs: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            runs/4b-bfv3mix-20261017T211441Z/train-packed.jsonl
+            runs/corpus-bf-v4-20261018T052227Z/train.jsonl
+            runs/corpus-bf-v4-20261018T052227Z/dev.jsonl
+            runs/corpus-bf-v4-20261018T052227Z/dev-protocol.jsonl
+            runs/v3-data-20261018T052500Z/train.jsonl
+            runs/v3-data-20261018T052500Z/dev-protocol.jsonl
+            runs/corpus-v3-20261016T230644Z/dev-protocol.jsonl
+            runs/20261016T171524Z/data/dev-protocol.json
+      - uses: actions/checkout@v4
+        if: inputs.hourly_count != '0'
+        with:
+          ref: fsa-question-bank
+          path: hourly-bank
+          persist-credentials: false
+          lfs: false
+          sparse-checkout: |
+            hourly
+          sparse-checkout-cone-mode: true
+      - uses: actions/checkout@v4
+        if: inputs.posts_count != '0'
+        with:
+          ref: model
+          path: xposts
+          persist-credentials: false
+          lfs: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /corpus.jsonl.gz
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Data integrity audit
+        run: python scripts/fsa_lab_action.py audit --root lab --out outputs --objective ${{ inputs.objective }} --hourly-count ${{ inputs.hourly_count }} --hourly-bank hourly-bank --posts-count ${{ inputs.posts_count }} --posts-corpus xposts/corpus.jsonl.gz
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fsa-audit-${{ github.run_id }}
+          path: |
+            outputs/audit.json
+            outputs/train.jsonl
+          if-no-files-found: warn
+          retention-days: 7
+  gpu:
+    if: inputs.mode != 'audit'
+    runs-on: [self-hosted, Windows, X64, fsa-gpu]
+    timeout-minutes: 300
+    steps:
+      # only the FSA files: a full checkout would download the Disclosure Hub's ~9 GB of data (disclosures/docs/data) every run
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/fsa_*.py
+            /tests/test_fsa_hourly_*.py
+            /research_reports/
+      - uses: actions/checkout@v4
+        with:
+          ref: lab/qwen3-4b-fsa-20261018
+          path: lab
+          persist-credentials: false
+          lfs: true
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            champions/qwen4-bfv3mix-20261017
+            runs/4b-bfv3mix-20261017T211441Z/train-packed.jsonl
+            runs/corpus-bf-v4-20261018T052227Z/train.jsonl
+            runs/corpus-bf-v4-20261018T052227Z/dev.jsonl
+            runs/corpus-bf-v4-20261018T052227Z/dev-protocol.jsonl
+            runs/v3-data-20261018T052500Z/train.jsonl
+            runs/v3-data-20261018T052500Z/dev-protocol.jsonl
+            runs/corpus-v3-20261016T230644Z/dev-protocol.jsonl
+            runs/20261016T171524Z/data/dev-protocol.json
+      - uses: actions/checkout@v4
+        if: inputs.hourly_count != '0'
+        with:
+          ref: fsa-question-bank
+          path: hourly-bank
+          persist-credentials: false
+          lfs: false
+          sparse-checkout: |
+            hourly
+          sparse-checkout-cone-mode: true
+      - uses: actions/checkout@v4
+        if: inputs.posts_count != '0'
+        with:
+          ref: model
+          path: xposts
+          persist-credentials: false
+          lfs: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /corpus.jsonl.gz
+      - name: GPU and Git LFS preflight
+        shell: pwsh
+        run: |
+          python -c "import torch; assert torch.cuda.is_available(), 'CUDA missing'; print(torch.cuda.get_device_name(0))"
+          if ((Get-Item 'lab/champions/qwen4-bfv3mix-20261017/adapter_model.safetensors').Length -lt 1000000) { throw 'Need actual LFS weights, not pointer' }
+      - name: Train, benchmark or ask
+        shell: pwsh
+        env:
+          MODE: ${{ inputs.mode }}
+          OBJECTIVE: ${{ inputs.objective }}
+          STEPS: ${{ inputs.steps }}
+          ADAPTER: ${{ inputs.adapter }}
+          QUESTION: ${{ inputs.question }}
+          HOURLY_COUNT: ${{ inputs.hourly_count }}
+          POSTS_COUNT: ${{ inputs.posts_count }}
+          TOKENIZERS_PARALLELISM: 'false'
+        run: |
+          $a = @('scripts/fsa_lab_action.py', $env:MODE, '--root', 'lab', '--out', 'outputs', '--objective', $env:OBJECTIVE, '--steps', $env:STEPS, '--adapter', $env:ADAPTER)
+          if ($env:MODE -eq 'train' -and $env:HOURLY_COUNT -ne '0') {
+            $a += @('--hourly-count', $env:HOURLY_COUNT, '--hourly-bank', 'hourly-bank')
+          }
+          if ($env:MODE -eq 'train' -and $env:POSTS_COUNT -ne '0') {
+            $a += @('--posts-count', $env:POSTS_COUNT, '--posts-corpus', 'xposts/corpus.jsonl.gz', '--max-length', '512')
+          }
+          if ($env:MODE -eq 'ask') {
+            if ([string]::IsNullOrWhiteSpace($env:QUESTION)) { throw 'Question is required' }
+            $a += @('--question', $env:QUESTION)
+          }
+          & python @a
+          if ($LASTEXITCODE -ne 0) { throw "Experiment failed: $LASTEXITCODE" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fsa-results-${{ github.run_id }}
+          path: |
+            outputs/audit.json
+            outputs/evaluation.json
+            outputs/train_report.json
+            outputs/answer.json
+          if-no-files-found: warn
+          retention-days: 7
