@@ -7,6 +7,7 @@ or automatically promotes a candidate. Requires lab snapshot checkout.
 import argparse
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+import gzip
 import hashlib
 import json
 import math
@@ -150,7 +151,53 @@ def read_approved_hourly(bank_path, max_rows):
     return selected
 
 
-def assemble(root, destination, objective, seed, new_count, replay_count, owner_count, hourly_bank=None, hourly_count=0):
+POST_INSTRUCTION = ("Write one post for X from the facts below, as JSON {\"post\": ..., \"cashtags\": [...]}. Use only numbers in "
+                    "the facts, keep the cashtags and the line breaks the format asks for, finish every sentence, give no advice, "
+                    "end with the hashtags.")
+POST_INPUT_MAX = 1100                     # characters: the row (prompt + JSON answer) stays inside 512 tokens
+
+
+def post_held_out(ex):
+    """The local fallback model's held-out rule (pipeline/train_local.py held_out): one lead stock / company in ten is
+    never trained on, by either model, so the evaluation set stays unseen."""
+    return int(hashlib.sha1(str(ex.get("hold") or ex.get("cik")).encode()).hexdigest(), 16) % 10 == 0
+
+
+def read_x_posts(corpus_path, max_rows, seed=20261018):
+    """Opt-in: X posts from the local fallback model's corpus (the "model" branch's corpus.jsonl.gz, pipeline/corpus.py) —
+    every target written by fixed rules from the site's facts and checked like a published post (cashtags, length, no
+    advice, every number in the facts). Rows: the compacted facts as input, {"post", "cashtags"} as the JSON answer,
+    "x_post:<kind>" as the task so sampling takes the formats in turn (market lists, setups, analysts, Polymarket, highs /
+    lows, flows, filings)."""
+    if max_rows <= 0:
+        return []
+    if not corpus_path:
+        raise ValueError("A corpus path is required when posts_count > 0")
+    path = Path(corpus_path)
+    if not path.is_file():
+        raise FileNotFoundError("X post corpus missing; the local model training workflow writes it to the model branch")
+    opener = gzip.open if path.suffix == ".gz" else open
+    pool, seen = [], set()
+    with opener(path, "rt", encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            ex = json.loads(line)
+            prompt, post = ex.get("prompt"), ex.get("target")
+            if not isinstance(prompt, str) or not isinstance(post, str) or not post.strip() or len(post) > 280 or post_held_out(ex):
+                continue
+            facts = prompt.split("\n\n", 1)[1] if prompt.startswith("Write one ") and "\n\n" in prompt else prompt
+            text = POST_INSTRUCTION + "\n\n" + facts.strip()
+            if len(text) > POST_INPUT_MAX or text in seen:
+                continue
+            seen.add(text)
+            pool.append({"id": ex.get("id"), "task": "x_post:" + str(ex.get("kind") or "post"), "input": text,
+                         "output": json.dumps({"post": post, "cashtags": ex.get("cashtags") or []}, ensure_ascii=False)})
+    return sample_stratified(pool, max_rows, seed)
+
+
+def assemble(root, destination, objective, seed, new_count, replay_count, owner_count, hourly_bank=None, hourly_count=0,
+             posts_corpus=None, posts_count=0):
     paths = required_sources(root)
     missing = [str(p) for p in paths.values() if not p.is_file()]
     if missing:
@@ -164,7 +211,7 @@ def assemble(root, destination, objective, seed, new_count, replay_count, owner_
     owner = [r for r in rows(paths["owner_train"])
              if r.get("split") == "train" and r.get("task") == "bs_line_classification"]
     # Require >=30% historical replay even when mixed and hourly examples are enabled.
-    non_replay_target = new_count + (owner_count if objective == "mixed" else 0) + hourly_count
+    non_replay_target = new_count + (owner_count if objective == "mixed" else 0) + hourly_count + posts_count
     effective_replay = max(replay_count, math.ceil(3 * non_replay_target / 7))
     if effective_replay > 2000:
         raise ValueError("Replay quota exceeds 2000; reduce new examples")
@@ -175,6 +222,10 @@ def assemble(root, destination, objective, seed, new_count, replay_count, owner_
         hourly = read_approved_hourly(hourly_bank, hourly_count)
         if hourly:
             spec.append(("hourly_approved", hourly, len(hourly)))
+    if posts_count:
+        posts = read_x_posts(posts_corpus, posts_count, seed)
+        if posts:
+            spec.append(("x_posts", posts, len(posts)))
     taken = set(protected)
     merged = []
     dropped = Counter()
@@ -228,7 +279,8 @@ def assemble(root, destination, objective, seed, new_count, replay_count, owner_
             "Owner task C labels are pipeline defaults, not independent accounting gold labels.",
             "Template-generated dev results do not establish out-of-distribution FSA accuracy.",
             "Existing published protocols have been reused; construct an independent future holdout."
-        ]
+        ] + (["X posts (opt-in) are rule-written targets from the site's facts; the FSA benchmarks do not measure them."]
+             if posts_count else [])
     }
     if manifest["protected_prompt_overlap"]:
         raise RuntimeError("Evaluation prompt contamination detected")
@@ -449,6 +501,8 @@ def main():
     p.add_argument("--owner-count", type=int, default=150)
     p.add_argument("--hourly-bank", type=Path, help="Optional separate fsa-question-bank branch checkout")
     p.add_argument("--hourly-count", type=int, default=0, help="0 disables integration; max 400 reviewed rows")
+    p.add_argument("--posts-corpus", type=Path, help="Optional model-branch corpus.jsonl.gz (X posts, pipeline/corpus.py)")
+    p.add_argument("--posts-count", type=int, default=0, help="0 disables; max 600 X post rows")
     p.add_argument("--steps", type=int, choices=[50, 100, 200], default=50)
     p.add_argument("--max-length", type=int, choices=[384, 512], default=384)
     p.add_argument("--lr", type=float, default=3e-5)
@@ -457,7 +511,7 @@ def main():
     p.add_argument("--interactive", action="store_true")
     args = p.parse_args()
     if not (0 < args.new_count <= 3000 and 0 <= args.replay_count <= 2000 and
-            0 <= args.owner_count <= 500 and 0 <= args.hourly_count <= 400 and 1e-6 <= args.lr <= 1e-4):
+            0 <= args.owner_count <= 500 and 0 <= args.hourly_count <= 400 and 0 <= args.posts_count <= 600 and 1e-6 <= args.lr <= 1e-4):
         p.error("Quota or learning rate out of safe bounds")
     root = args.root.resolve()
     out = args.out.resolve()
@@ -465,7 +519,8 @@ def main():
     if args.mode in ("audit", "train"):
         report = assemble(root, out, args.objective, args.seed,
                           args.new_count, args.replay_count, args.owner_count,
-                           hourly_bank=args.hourly_bank, hourly_count=args.hourly_count)
+                           hourly_bank=args.hourly_bank, hourly_count=args.hourly_count,
+                           posts_corpus=args.posts_corpus, posts_count=args.posts_count)
         print(json.dumps({"counts": report["counts"], "overlap": report["protected_prompt_overlap"],
                           "audit": str(out / "audit.json")}, indent=2), flush=True)
     if args.mode == "train":

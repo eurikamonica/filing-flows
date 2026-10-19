@@ -78,6 +78,12 @@ In the **FSA Qwen3-4B Experimental Lab** Action, after the bank branch first exi
 
 \`hourly_count\` options are 0, 18, 72, and 200. It reads up to 168 recent hourly batches, keeps only rows explicitly marked as verified for training, checks for known open-dev prompt overlap and dynamically raises replay size if needed to retain at least 30% historical training examples. This opt-in still requires the self-hosted Windows CUDA runner. No automatic promotion and no hourly GPU training.
 
+## Optional X post rows (the same posts the 0.6B local model trains on)
+
+`posts_count` (0, 100, 300, 600) adds X posts from the local fallback model's corpus — `corpus.jsonl.gz` on the `model` branch, written every six hours by `.github/workflows/train-local-model.yml` (`pipeline/corpus.py`). They cover the market formats (`$A or $B?`, Hold-rated pairs with very different price-target upside, `$RKLB $150 → $50` drawdown lists, a stock's setup in bullets, new 52-week and all-time highs / lows, quality names near their lows, Polymarket earnings odds, the trending stock without any forum talk) plus the filing, insider, 13F, 8-K and smart-money posts. Every target is rule-written from the site's facts and checked like a published post, so no model output is distilled.
+
+Each row's input is the compacted facts under a short instruction; the answer is `{"post": ..., "cashtags": [...]}` (a JSON object, like every lab row), the task `x_post:<kind>` so sampling takes the formats in turn. The posts count toward the non-replay rows, so replay still stays at 30% or more; the 0.6B model's held-out stocks (one in ten) are left out here too. With `posts_count` set, a `train` run uses 512-token rows. The FSA benchmarks do not measure post writing — judge it separately.
+
 Reviewed larger-model answers can be staged locally:
 \`\`\`powershell
 python scripts/fsa_distill_review.py --candidates "C:\FSA\teacher-candidates.jsonl" --out "C:\FSA\teacher-reviewed-train.jsonl"

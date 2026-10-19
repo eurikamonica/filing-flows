@@ -27,6 +27,11 @@ on:
         type: choice
         default: '0'
         options: ['0', '18', '72', '200']
+      posts_count:
+        description: "Optional X post rows from the local model's corpus (model branch; market lists, setups, analysts, Polymarket, highs/lows, flows). 0=off; uses 512-token rows"
+        type: choice
+        default: '0'
+        options: ['0', '100', '300', '600']
 permissions:
   contents: read
 concurrency:
@@ -74,11 +79,21 @@ jobs:
           sparse-checkout: |
             hourly
           sparse-checkout-cone-mode: true
+      - uses: actions/checkout@v4
+        if: inputs.posts_count != '0'
+        with:
+          ref: model
+          path: xposts
+          persist-credentials: false
+          lfs: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /corpus.jsonl.gz
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Data integrity audit
-        run: python scripts/fsa_lab_action.py audit --root lab --out outputs --objective ${{ inputs.objective }} --hourly-count ${{ inputs.hourly_count }} --hourly-bank hourly-bank
+        run: python scripts/fsa_lab_action.py audit --root lab --out outputs --objective ${{ inputs.objective }} --hourly-count ${{ inputs.hourly_count }} --hourly-bank hourly-bank --posts-count ${{ inputs.posts_count }} --posts-corpus xposts/corpus.jsonl.gz
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -130,6 +145,16 @@ jobs:
           sparse-checkout: |
             hourly
           sparse-checkout-cone-mode: true
+      - uses: actions/checkout@v4
+        if: inputs.posts_count != '0'
+        with:
+          ref: model
+          path: xposts
+          persist-credentials: false
+          lfs: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /corpus.jsonl.gz
       - name: GPU and Git LFS preflight
         shell: pwsh
         run: |
@@ -144,11 +169,15 @@ jobs:
           ADAPTER: ${{ inputs.adapter }}
           QUESTION: ${{ inputs.question }}
           HOURLY_COUNT: ${{ inputs.hourly_count }}
+          POSTS_COUNT: ${{ inputs.posts_count }}
           TOKENIZERS_PARALLELISM: 'false'
         run: |
           $a = @('scripts/fsa_lab_action.py', $env:MODE, '--root', 'lab', '--out', 'outputs', '--objective', $env:OBJECTIVE, '--steps', $env:STEPS, '--adapter', $env:ADAPTER)
           if ($env:MODE -eq 'train' -and $env:HOURLY_COUNT -ne '0') {
             $a += @('--hourly-count', $env:HOURLY_COUNT, '--hourly-bank', 'hourly-bank')
+          }
+          if ($env:MODE -eq 'train' -and $env:POSTS_COUNT -ne '0') {
+            $a += @('--posts-count', $env:POSTS_COUNT, '--posts-corpus', 'xposts/corpus.jsonl.gz', '--max-length', '512')
           }
           if ($env:MODE -eq 'ask') {
             if ([string]::IsNullOrWhiteSpace($env:QUESTION)) { throw 'Question is required' }
