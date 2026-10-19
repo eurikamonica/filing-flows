@@ -69,9 +69,10 @@ WINDOW = 90               # days: insiders and officials
 QWINDOW = 140             # days: the latest 13F / N-PORT quarter still counts this long after its end
 MIN_DW = 0.001            # 13F / ETF: a change must move at least 0.1% of the portfolio
 MIN_TRIM = 0.02           # ... and at least 2% of the position
-F13_VERSION = 2
+F13_VERSION = 3                                            # 3: share change and dollars per change (combined flows)
 INS_PAGE = 'https://www.sec.gov/data-research/sec-markets-data/insider-transactions-data-sets'
 INS_KEEP = 13
+MIN_INS_USD = 10_000      # smaller Form 4 trades (plan purchases of a few shares) are noise for this purpose
 YAHOO = 'https://query2.finance.yahoo.com/v8/finance/chart/{symbol}?range=5y&interval=1d'
 BROWSER = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
 SEC_UA = os.environ.get('SEC_USER_AGENT') or 'Filing Flows research filingflows@gmail.com'
@@ -187,8 +188,9 @@ def snap_split(r, value_ratio):
 
 # ------------------------------------------------------------------ 13F
 def f13_events_of(m, skip_cusips=frozenset()):
-    """One manager's cached 13F history → [[cusip, period, filed, dw, flag]] for each common-share change between two
-    consecutive quarters that moved at least MIN_DW of the portfolio (dw > 0 bought, < 0 sold; flag n = new, x = exit).
+    """One manager's cached 13F history → [[cusip, period, filed, dw, flag, shares, usd]] for each common-share change
+    between two consecutive quarters that moved at least MIN_DW of the portfolio (dw > 0 bought, < 0 sold; flag n = new,
+    x = exit; shares = the split-adjusted change; usd = shares × the price the filing implies).
     Splits: a nice quantity ratio with an unchanged value is adjusted, not a trade."""
     out = []
     for s in m.get('snapshots', []):
@@ -221,7 +223,7 @@ def f13_events_of(m, skip_cusips=frozenset()):
             dw = d * price / tot
             if abs(dw) < MIN_DW or abs(dw) > 1.5:
                 continue
-            out.append([cusip, period, filed, round(dw, 5), 'n' if not pr else 'x' if not sh else ''])
+            out.append([cusip, period, filed, round(dw, 5), 'n' if not pr else 'x' if not sh else '', round(d, 2), round(d * price)])
     return out
 
 
@@ -566,7 +568,7 @@ class Events:
             self.actors[i]['sub'] = sub
         return i
 
-    def add(self, a, ticker, day, known, d, size, ref=''):
+    def add(self, a, ticker, day, known, d, size, ref='', usd=None, shares=None):
         if not ticker or not day:
             return
         ti = self.tidx.get(ticker)
@@ -581,6 +583,8 @@ class Events:
         c['d'].append(1 if d > 0 else -1)
         c['size'].append(abs(size or 0.0))
         c['ref'].append(ref)
+        c['usd'].append(abs(usd) if usd else np.nan)       # dollars traded (13F: refined from daily closes in fill_usd)
+        c['sh'].append(abs(shares) if shares else np.nan)
 
     def freeze(self):
         c = self.cols
@@ -590,11 +594,17 @@ class Events:
         self.known = np.maximum(np.array(c['known'], dtype=np.int32), self.day)
         self.d = np.array(c['d'], dtype=np.int8)
         self.size = np.array(c['size'], dtype=np.float64)
+        self.usd = np.array(c['usd'], dtype=np.float64)
+        self.sh = np.array(c['sh'], dtype=np.float64)
         self.ref = c['ref']
         self.ag = np.array([GROUPS.index(x['g']) for x in self.actors], dtype=np.int8)
         self.g = self.ag[self.a] if len(self.a) else np.zeros(0, np.int8)
         self.n = len(self.a)
-        # conviction: √(size / the actor's median size), 0.25–3
+        del self.cols
+        return self.convictions()
+
+    def convictions(self):
+        """conviction: √(size / the actor's median size), 0.25–3."""
         med = np.ones(len(self.actors))
         if self.n:
             order = np.lexsort((self.size, self.a))
@@ -606,8 +616,64 @@ class Events:
                 m = vals[(e - s) // 2]
                 med[a_sorted[s]] = m if m > 0 else 1.0
         self.c = np.clip(np.sqrt(np.where(self.size > 0, self.size, 0) / med[self.a]), 0.25, 3.0) if self.n else np.zeros(0)
-        del self.cols
         return self
+
+
+def sec_ciks(hub):
+    """SEC's company tickers as {cik: [tickers]} and {ticker: cik} (the Hub's weekly cache)."""
+    by_cik, by_t = defaultdict(list), {}
+    for r in (read_json(Path(hub) / 'cache' / 'prices' / 'sec-tickers.json', {}).get('rows') or []):
+        t, c = tick(r.get('ticker')), str(r.get('cik') or '').lstrip('0')
+        if t and c:
+            by_cik[c].append(t)
+            by_t.setdefault(t, c)
+    return by_cik, by_t
+
+
+def issuer_ticker(icik, tk, ciks):
+    """The ticker a Form 4 is about: the filer's own symbol when SEC lists it for that issuer, SEC's first ticker for the
+    issuer otherwise; a symbol SEC gives to another company is dropped (a typo or a stale ticker)."""
+    by_cik, by_t = ciks
+    icik = (icik or '').lstrip('0')
+    if icik and by_cik.get(icik):
+        return tk if tk in by_cik[icik] else by_cik[icik][0]
+    if tk and by_t.get(tk) and icik and by_t[tk] != icik:
+        return ''
+    return tk
+
+
+def fix_insider_usd(E, P):
+    """Form 4 dollars against the market: a price more than 3× away from that day's close is a filing error (a price
+    typed in the shares box, cents for dollars …) — the shares × the close is used instead; with no close, a price over
+    $10,000 a share drops the dollar value. Returns how many trades were corrected."""
+    idx = np.flatnonzero((E.g == 2) & ~np.isnan(E.sh) & (E.sh > 0))
+    if not len(idx):
+        return 0
+    idx = idx[np.argsort(E.t[idx], kind='stable')]
+    ts = E.t[idx]
+    starts = np.r_[0, np.flatnonzero(np.diff(ts)) + 1]
+    ends = np.r_[starts[1:], len(idx)]
+    fixed = 0
+    for s0, e0 in zip(starts, ends):
+        ii = idx[s0:e0]
+        px = E.usd[ii] / E.sh[ii]
+        ser = P.get(E.tickers[ts[s0]])
+        close = np.full(len(ii), np.nan)
+        if ser is not None:
+            days, cl = ser
+            i0 = np.searchsorted(days, E.day[ii], 'right') - 1
+            ok = (i0 >= 0) & (E.day[ii] - days[np.maximum(i0, 0)] <= 7)
+            close[ok] = cl[np.maximum(i0, 0)[ok]]
+        ratio = px / close
+        bad = ~np.isnan(close) & ((ratio > 3) | (ratio < 1 / 3))
+        E.usd[ii[bad]] = E.sh[ii[bad]] * close[bad]
+        nob = np.isnan(close) & (px > 10_000)
+        E.usd[ii[nob]] = np.nan
+        fixed += int(bad.sum() + nob.sum())
+    m = E.g == 2
+    E.size[m] = np.nan_to_num(E.usd[m])
+    E.convictions()
+    return fixed
 
 
 def build_events(root, hub, etf_root, universe, log_stats):
@@ -619,40 +685,45 @@ def build_events(root, hub, etf_root, universe, log_stats):
     n13 = 0
     for cik, m in (cache.get('managers') or {}).items():
         a = None
-        for cusip, period, filed, dw, flag in m['ev']:
+        for ev in m['ev']:
+            cusip, period, filed, dw, flag = ev[:5]
             t = universe.cusip_ticker.get(cusip)
             if not t:
                 continue
             if a is None:
                 a = E.actor('f:' + cik, m['name'], 'f13')
-            E.add(a, t, period, filed or None, dw, abs(dw), flag)
+            E.add(a, t, period, filed or None, dw, abs(dw), flag, usd=ev[6] if len(ev) > 6 else None, shares=ev[5] if len(ev) > 5 else None)
             n13 += 1
     # active ETFs
     netf = 0
     if etf_root:
         netf = add_etf_events(E, Path(etf_root), universe)
     # insiders: the data sets, then the Hub's Form 4 cache after the newest set's quarter
+    ciks = sec_ciks(hub)
     nins, last_q = 0, ''
     seen = set()
     for p in sorted((root / 'cache' / 'ins').glob('*.json.gz')):
         d = load_gz(p, {}) or {}
         last_q = max(last_q, d.get('quarter') or p.name[:6])
         for ocik, oname, role, tk, icik, iname, day, filed, dd, sh, val, plan in d.get('rows', []):
-            if plan:                                       # pre-arranged 10b5-1 sales and purchases are not decisions made then
+            if plan or val < MIN_INS_USD:                  # pre-arranged 10b5-1 trades are not decisions made then; tiny ones are noise
+                continue
+            tk = issuer_ticker(icik, tk, ciks)
+            if not tk:
                 continue
             key = (norm_name(oname), tk, day, dd)
             if key in seen:
                 continue
             seen.add(key)
             a = E.actor('i:' + norm_name(oname), oname, 'ins', role)
-            E.add(a, tk, day, filed, dd, val, iname)
+            E.add(a, tk, day, filed, dd, val, iname, usd=val, shares=sh)
             nins += 1
     cut = quarter_end(last_q) if last_q else '0000'
     for r in load_gz(hub / 'cache' / 'insiders' / 'trades.json.gz', []) or []:
         if (r.get('date') or '') <= cut or r.get('plan_10b5_1') or r.get('code') not in ('P', 'S'):
             continue
-        tk = tick(r.get('ticker'))
-        if not tk or not r.get('insider') or (r.get('value') or 0) < 1000:
+        tk = issuer_ticker(str(r.get('issuer_cik') or ''), tick(r.get('ticker')), ciks)
+        if not tk or not r.get('insider') or (r.get('value') or 0) < MIN_INS_USD:
             continue
         key = (norm_name(r['insider']), tk, r['date'], 1 if r['code'] == 'P' else -1)
         if key in seen:
@@ -660,7 +731,8 @@ def build_events(root, hub, etf_root, universe, log_stats):
         seen.add(key)
         a = E.actor('i:' + norm_name(r['insider']), r['insider'], 'ins', r.get('title') or r.get('role') or '')
         day = r['date']
-        E.add(a, tk, day, (dt.date.fromisoformat(day) + dt.timedelta(days=3)).isoformat(), key[3], r.get('value') or 0, (r.get('issuer') or '')[:60])
+        E.add(a, tk, day, (dt.date.fromisoformat(day) + dt.timedelta(days=3)).isoformat(), key[3], r.get('value') or 0, (r.get('issuer') or '')[:60],
+              usd=r.get('value') or 0, shares=r.get('shares'))
         nins += 1
     # officials
     ngov = 0
@@ -679,7 +751,8 @@ def build_events(root, hub, etf_root, universe, log_stats):
         lo, hi = t.get('amount_min') or 0, t.get('amount_max') or t.get('amount_min') or 0
         a = E.actor('g:' + norm_name(t['person']), t['person'], 'gov', t.get('jurisdiction') or '')
         known = t.get('filed_date') or t.get('notified') or None
-        E.add(a, tk, t['date'], known if known and re.fullmatch(r'\d{4}-\d{2}-\d{2}', known) else None, 1 if kind == 'purchase' else -1, (lo + hi) / 2, t.get('owner') or '')
+        E.add(a, tk, t['date'], known if known and re.fullmatch(r'\d{4}-\d{2}-\d{2}', known) else None, 1 if kind == 'purchase' else -1, (lo + hi) / 2, t.get('owner') or '',
+              usd=(lo + hi) / 2)
         ngov += 1
     log_stats['events'] = {'f13': n13, 'etf': netf, 'ins': nins, 'gov': ngov}
     log(f'events: {log_stats["events"]}')
@@ -743,7 +816,7 @@ def add_etf_events(E, etf_root, universe):
                     continue
                 if a is None:
                     a = E.actor('e:' + s, (sym.get(s) + ' · ' if sym.get(s) else '') + (r1.get('name') or s)[:70], 'etf', sym.get(s) or '')
-                E.add(a, t, d1, r1.get('filed') or None, dw, abs(dw), 'n' if not x0 else 'x' if not x1 else '')
+                E.add(a, t, d1, r1.get('filed') or None, dw, abs(dw), 'n' if not x0 else 'x' if not x1 else '', usd=dlt * px, shares=dlt)
                 n += 1
     return n
 
@@ -923,6 +996,164 @@ def votes(E, T, Lside, groups=None):
     return res
 
 
+def fill_usd(E, P):
+    """13F dollars from daily closes: |share change| × the close at the quarter end. The price the filing implies stays
+    as the fallback (a few filers still report values in thousands)."""
+    idx = np.flatnonzero((E.g == 0) & ~np.isnan(E.sh))
+    if not len(idx):
+        return 0
+    idx = idx[np.argsort(E.t[idx], kind='stable')]
+    ts = E.t[idx]
+    starts = np.r_[0, np.flatnonzero(np.diff(ts)) + 1]
+    ends = np.r_[starts[1:], len(idx)]
+    n = 0
+    for s0, e0 in zip(starts, ends):
+        ser = P.get(E.tickers[ts[s0]])
+        if ser is None:
+            continue
+        days, cl = ser
+        ii = idx[s0:e0]
+        i0 = np.searchsorted(days, E.day[ii], 'right') - 1
+        ok = (i0 >= 0) & (E.day[ii] - days[np.maximum(i0, 0)] <= 7)
+        E.usd[ii[ok]] = E.sh[ii[ok]] * cl[np.maximum(i0, 0)[ok]]
+        n += int(ok.sum())
+    return n
+
+
+def net_by_actor(E, idx, Lside=None, by_dollars=True):
+    """The trades idx netted per actor and stock: (actor, ticker, side, conviction, skill weight on that side, last day,
+    group, net dollars, gross dollars, trades). The side is the sign of the net dollars where dollars are known (a buyer
+    of $300k who sold $600k is a net seller), else of the conviction-weighted net."""
+    nt = len(E.tickers)
+    key = E.a[idx].astype(np.int64) * nt + E.t[idx]
+    uniq, inv = np.unique(key, return_inverse=True)
+    m = len(uniq)
+    net = np.bincount(inv, E.d[idx] * E.c[idx], m)
+    usd = np.nan_to_num(E.usd[idx])
+    unet = np.bincount(inv, E.d[idx] * usd, m)
+    ugross = np.bincount(inv, usd, m)
+    cnt = np.bincount(inv, None, m)
+    last = np.zeros(m, dtype=np.int64)
+    np.maximum.at(last, inv, E.day[idx])
+    va, vt = (uniq // nt).astype(np.int64), (uniq % nt).astype(np.int64)
+    dv = np.where(ugross > 0, np.sign(unet), np.sign(net)) if by_dollars else np.sign(net)
+    dv = np.where(dv == 0, np.sign(net), dv)
+    nz = dv != 0
+    va, vt, dv, net, last, unet, ugross, cnt = va[nz], vt[nz], dv[nz], net[nz], last[nz], unet[nz], ugross[nz], cnt[nz]
+    cv = np.minimum(np.abs(net), 3.0)
+    Lv = Lside[va, (dv < 0).astype(int)] if Lside is not None else np.zeros(len(va))
+    return va, vt, dv, cv, Lv, last, E.ag.astype(np.int64)[va], unet, ugross, cnt
+
+
+def qname(d):
+    return f'Q{(d.month - 1) // 3 + 1} {d.year}'
+
+
+def combined_periods(today):
+    """The windows of the All flows page: the quarter whose 13F / N-PORT reports are arriving now ("this quarter's
+    filings"), the one before, both, and the calendar quarter so far (insiders and officials only — fund reports for it
+    come after it ends)."""
+    t = dt.date.fromordinal(today)
+    qs = dt.date(t.year, 3 * ((t.month - 1) // 3) + 1, 1)
+    p_end = qs - dt.timedelta(days=1)
+    p_start = dt.date(p_end.year, 3 * ((p_end.month - 1) // 3) + 1, 1)
+    pp_end = p_start - dt.timedelta(days=1)
+    pp_start = dt.date(pp_end.year, 3 * ((pp_end.month - 1) // 3) + 1, 1)
+    md = lambda d: f'{d:%b} {d.day}'
+    return [
+        {'key': 'prev', 'label': f'{qname(p_start)} — this quarter\'s filings ({p_start:%b}–{p_end:%b})', 'start': p_start.isoformat(), 'end': p_end.isoformat(),
+         'note': f'13F reports for {qname(p_start)} are due by {(p_end + dt.timedelta(days=45)):%b} {(p_end + dt.timedelta(days=45)).day}; until then only the early filers are in.'},
+        {'key': 'prev2', 'label': f'{qname(pp_start)} ({pp_start:%b}–{pp_end:%b})', 'start': pp_start.isoformat(), 'end': pp_end.isoformat(), 'note': ''},
+        {'key': 'both', 'label': f'{qname(pp_start)} + {qname(p_start)} ({pp_start:%b}–{p_end:%b})', 'start': pp_start.isoformat(), 'end': p_end.isoformat(),
+         'note': 'Each actor\'s trades over both quarters, netted.'},
+        {'key': 'qtd', 'label': f'{qname(qs)} to date ({md(qs)} – {md(t)})', 'start': qs.isoformat(), 'end': t.isoformat(),
+         'note': f'Insiders (the Form 4s read so far; SEC\'s full quarterly set comes after the quarter) and officials only: 13F and N-PORT reports for {qname(qs)} come after it ends.'},
+        {'key': 'd90', 'label': f'Last 90 days ({md(t - dt.timedelta(days=90))} – {md(t)})', 'start': (t - dt.timedelta(days=90)).isoformat(), 'end': t.isoformat(),
+         'note': '13F managers and ETFs count with the quarter ends inside these 90 days.'},
+    ]
+
+
+CF = ['ticker', 'name', 'S', 'raw'] + [f'{g}_{k}' for g in GROUPS for k in ('b', 's', 'usd')] + ['actors', 'groups_buy', 'groups_sell', 'S_now']
+
+
+def publish_combined(pub, E, sk, V, universe, today):
+    """public/combined/: for each window, every stock with each group's buyers, sellers and net dollars side by side, how
+    many groups were net buyers and net sellers, the smart score inside the window, and each group's most active names."""
+    out_dir = pub / 'combined'
+    if out_dir.exists():
+        for p in out_dir.glob('*.json'):
+            p.unlink()
+    Lside = sk['L_side']
+    nt = len(E.tickers)
+    S_now = V['all']['S'] if V else np.full(nt, np.nan)
+    index = {'generated_at': now(), 'fields': CF, 'groups': GROUPS, 'labels': LABEL, 'periods': []}
+    for per in combined_periods(today):
+        lo, hi = ordinal(per['start']), ordinal(per['end'])
+        idx = np.flatnonzero((E.day >= lo) & (E.day <= hi) & (E.known <= today))
+        stats = {g: {'actors': 0, 'trades': 0, 'usd_buy': 0.0, 'usd_sell': 0.0} for g in GROUPS}
+        if not len(idx):
+            index['periods'].append({**per, 'stocks': 0, 'groups': stats})
+            wj(out_dir / f"{per['key']}.json", {'key': per['key'], 'fields': CF, 'rows': [], 'actors': {}})
+            continue
+        va, vt, dv, cv, Lv, last, vg, unet, ugross, cnt = net_by_actor(E, idx, Lside)
+        per_t = {}
+        Z = np.bincount(vt, dv * cv * Lv, nt)
+        D = np.bincount(vt, cv * np.abs(Lv), nt)
+        R = np.bincount(vt, dv * cv, nt)
+        C = np.bincount(vt, cv, nt)
+        tot = np.bincount(vt, None, nt)
+        cols = {}
+        for gi, g in enumerate(GROUPS):
+            mk = vg == gi
+            cols[g] = (np.bincount(vt[mk], (dv[mk] > 0).astype(float), nt), np.bincount(vt[mk], (dv[mk] < 0).astype(float), nt),
+                       np.bincount(vt[mk], unet[mk], nt))
+            stats[g] = {'actors': int(len(np.unique(va[mk]))), 'trades': int(cnt[mk].sum()), 'usd_buy': round(float(unet[mk][unet[mk] > 0].sum())),
+                        'usd_sell': round(float(-unet[mk][unet[mk] < 0].sum())), 'stocks': int(len(np.unique(vt[mk])))}
+        lastd = np.zeros(nt, dtype=np.int64)
+        np.maximum.at(lastd, vt, last)
+        rows = []
+        for ti in np.flatnonzero(tot > 0):
+            t = E.tickers[ti]
+            row = [t, universe.name(t)[:48], r4(100 * Z[ti] / (D[ti] + LAMBDA), 1), r4(100 * R[ti] / C[ti], 1) if C[ti] else None]
+            gb = gs = 0
+            for g in GROUPS:
+                b, s_, u = cols[g][0][ti], cols[g][1][ti], cols[g][2][ti]
+                row += [int(b), int(s_), round(float(u))]
+                if b or s_:
+                    direction = np.sign(b - s_) or np.sign(u)
+                    gb += direction > 0
+                    gs += direction < 0
+            row += [int(tot[ti]), int(gb), int(gs), r4(S_now[ti], 1)]
+            rows.append(row)
+        rows.sort(key=lambda r: -abs(sum(r[6 + 3 * k] for k in range(len(GROUPS)))))
+        # the most active names of each group: gross dollars traded in the window
+        actors = {}
+        for gi, g in enumerate(GROUPS):
+            mk = np.flatnonzero(vg == gi)
+            if not len(mk):
+                continue
+            ua, inv = np.unique(va[mk], return_inverse=True)
+            gross = np.bincount(inv, ugross[mk], len(ua))
+            netu = np.bincount(inv, unet[mk], len(ua))
+            ntr = np.bincount(inv, cnt[mk], len(ua))
+            nst = np.bincount(inv, None, len(ua))
+            order = np.argsort(-gross)[:30]
+            lst = []
+            for j in order:
+                ai = int(ua[j])
+                mine = mk[inv == j]
+                tops = sorted(mine, key=lambda k: -abs(unet[k]))[:4]
+                lst.append([E.actors[ai]['id'], E.actors[ai]['name'], E.actors[ai]['sub'], round(float(gross[j])), round(float(netu[j])), int(ntr[j]), int(nst[j]),
+                            r4(sk['all']['p'][ai]), r4(sk['all']['L'][ai], 2), int(sk['all']['decisions'][ai]),
+                            [[E.tickers[vt[k]], int(dv[k]), round(float(unet[k]))] for k in tops]])
+            actors[g] = lst
+        wj(out_dir / f"{per['key']}.json", {'key': per['key'], 'fields': CF, 'rows': rows,
+                                             'actor_fields': ['id', 'name', 'sub', 'gross', 'net', 'trades', 'stocks', 'p', 'L', 'decisions', 'top'], 'actors': actors})
+        index['periods'].append({**per, 'stocks': len(rows), 'groups': stats})
+    wj(out_dir / 'index.json', index)
+    return len(index['periods'])
+
+
 # ------------------------------------------------------------------ backtest
 BUCKETS = [(-101, -50, '−100 to −50'), (-50, -20, '−50 to −20'), (-20, 20, '−20 to +20'), (20, 50, '+20 to +50'), (50, 101, '+50 to +100')]
 
@@ -1080,6 +1311,8 @@ def build(root, hub, etf_root=None, minutes=None, offline=False, today=None):
         budget = max(2.0, (minutes or 20) - (time.time() - t0) / 60 - 8) if minutes else 10.0
         st['prices'] = P.top_up(want, minutes=min(budget, 25.0))
         log(f"prices: {st['prices']}")
+    st['usd_from_closes'] = fill_usd(E, P)
+    st['insider_prices_fixed'] = fix_insider_usd(E, P)
     spy = P.get('SPY')
     if spy is None:
         raise RuntimeError('no SPY prices: the benchmark is missing')
@@ -1091,6 +1324,7 @@ def build(root, hub, etf_root=None, minutes=None, offline=False, today=None):
     sk = skills(E, O, O['end'] <= today, u=u)
     V = votes(E, today, sk['L_side'])
     publish(root, hub, E, O, sk, V, summary, hist, calib, universe, st, today)
+    st['combined_periods'] = publish_combined(root / 'public', E, sk, V, universe, today)
     st['seconds'] = round(time.time() - t0)
     st['finished'] = now()
     wj(root / 'public' / 'status.json', st)
