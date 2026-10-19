@@ -1055,8 +1055,8 @@ def test_owner_reports_go_first_and_are_never_held_back(tmp_path):
 
 
 def test_a_company_that_cannot_be_drawn_is_answered_at_once(tmp_path):
-    """A company the charts cannot be drawn for (a foreign filer reporting in euros, no 10-Q / 10-K / 20-F at all): its
-    request fails in the same scan, with why. A foreign filer reporting in dollars is drawn from its 20-F and 6-Ks."""
+    """A company the charts cannot be drawn for (no 10-Q / 10-K / 20-F at all): its request fails in the same scan, with
+    why. A foreign filer is drawn from its 20-F and 6-Ks, whatever currency it reports in."""
     from pipeline import build, custom
 
     def sub(name, forms):
@@ -1064,9 +1064,9 @@ def test_a_company_that_cannot_be_drawn_is_answered_at_once(tmp_path):
                                                     "reportDate": ["2026-06-30"] * len(forms), "filingDate": ["2026-08-01"] * len(forms)}}}
     assert build.cannot_draw(sub("Apple Inc.", ["8-K", "10-Q", "4"])) is None
     assert build.cannot_draw(sub("Nebius Group N.V.", ["6-K", "4", "20-F", "SCHEDULE 13G/A"]), "USD") is None
-    why = build.cannot_draw(sub("Euro Audio S.A.", ["6-K", "20-F"]), "EUR")
-    assert why.startswith("Euro Audio S.A. is a foreign private issuer that reports in EUR")
-    assert build.cannot_draw(sub("Some Trust", ["N-CSR"])) == "Some Trust has no 10-Q or 10-K on file at SEC"
+    assert build.cannot_draw(sub("Euro Audio S.A.", ["6-K", "20-F"]), "EUR") is None
+    why = build.cannot_draw(sub("Some Trust", ["N-CSR"]))
+    assert why == "Some Trust has no 10-Q or 10-K on file at SEC"
     site = tmp_path / "_site"
     (site / "data" / "c").mkdir(parents=True)
     (site / "data" / "c" / "320193.json").write_text("{}")
@@ -1081,7 +1081,7 @@ def test_a_company_that_cannot_be_drawn_is_answered_at_once(tmp_path):
 def test_a_foreign_filer_is_drawn_from_its_20f_and_6k_releases(tmp_path):
     """A foreign private issuer (20-F + 6-K, no 10-Q): quarters from its results releases — newest year printed last,
     slashes in labels, D&A as a cost line, discontinued operations — and the year from the 20-F's XBRL. A filer that
-    reports in euros is answered with why."""
+    reports in euros is drawn in euros (labelled), with the same charts in US dollars at each period's average rate."""
     import json, os, subprocess, sys
     env = dict(os.environ, SEC_FIXTURES=os.path.join(ROOT, "tests", "fixtures"), SEC_USER_AGENT="test test@example.com")
     ciks = tmp_path / "ciks.txt"
@@ -1091,8 +1091,7 @@ def test_a_foreign_filer_is_drawn_from_its_20f_and_6k_releases(tmp_path):
                         "--build-ciks-file", str(ciks), "--unbuildable-out", str(unb)], cwd=ROOT, env=env, check=True,
                        capture_output=True, text=True)
     assert "skip 6-K      9999911 0009999911-26-000038 not a results release" in r.stdout, r.stdout[-3000:]
-    why = json.loads(unb.read_text())
-    assert list(why) == ["9999912"] and "reports in EUR" in why["9999912"]
+    assert json.loads(unb.read_text()) == {}
     c = json.loads((out / "c" / "9999911.json").read_text())
     qs = {q["label"]: q for q in c["quarters"]}
     assert list(qs) == ["Q2 2026", "Q1 2026"] and {q["form"] for q in qs.values()} == {"6-K"}
@@ -1106,6 +1105,27 @@ def test_a_foreign_filer_is_drawn_from_its_20f_and_6k_releases(tmp_path):
     assert c["profile"]["fye"] == "1231" and c["intro"]["source"] == "6-K"
     store = json.loads((tmp_path / "store" / "state.json").read_text())
     assert store["fpi"] == [9999911, 9999912]
+    # the euro filer: its own currency, labelled; the same charts in dollars, each period at its own average rate
+    e = json.loads((out / "c" / "9999912.json").read_text())
+    assert e["currency"] == "EUR"
+    eq = e["quarters"][0]
+    assert eq["label"] == "Q2 2026" and eq["headline"]["revenue"] == 4600e6 and eq["headline"]["rev_fmt"] == "€4.6B"
+    assert "in euros (EUR)" in eq["subtitle"] and any("Amounts in euros (EUR)" in x for x in eq["footer"])
+    assert any(ln[1].startswith("€") for n in eq["nodes"] for ln in n["lines"] if ln[0] == "val")
+    assert eq["compare_y"]["vs"] == "Q2 2025"
+    ey = e["years"][0]
+    assert ey["label"] == "FY2025" and ey["headline"]["revenue"] == 17000e6 and ey["headline"]["rev_fmt"] == "€17.0B"
+    u = e["usd"]["quarters"][0]
+    assert u["currency"] == "USD" and abs(u["headline"]["revenue"] - 4600e6 * 1.12) < 1e3 and u["headline"]["rev_fmt"] == "$5.2B"
+    assert u["fx"]["src"] == "market" and "€1 = US$1.1200" in u["fx"]["note"] and "average" in u["fx"]["note"]
+    assert "converted from EUR" in u["subtitle"] and any("Converted from euros" in x for x in u["footer"])
+    names = {n["id"]: n for n in u["nodes"]}
+    assert abs(names["revenue"]["y"] - 4200e6 * 1.08) < 1e3              # the year-ago quarter at its own rate
+    uy = e["usd"]["years"][0]
+    assert abs(uy["headline"]["revenue"] - 17000e6 * 1.08) < 1e3
+    ix = json.loads((out / "index.json").read_text())
+    row = next(r for r in ix["companies"] if r["cik"] == 9999912)
+    assert row["currency"] == "EUR" and row["rev"] == "€4.6B" and abs(row["revenue"] - 4600e6 * 1.12) < 1e3
 
 
 def test_owner_comparisons_go_first(monkeypatch):
@@ -2752,3 +2772,33 @@ def test_train_local_runs_to_its_report(tmp_path):
     rep = json.loads((md / "reports.jsonl").read_text().splitlines()[-1])
     assert rep["promoted"] and rep["work_score"] == 0.9 and rep["by_kind"]["event8k"] == 100
     assert "promoted" in (md / "README.md").read_text() and (md / "corpus-ids.txt").read_text().startswith(f"#v{corpus.VERSION}")
+
+
+def test_the_companys_own_dollar_rate_comes_first():
+    """A filing's convenience-translation rate (said in words, or a US$ column beside its own) wins over market rates;
+    tables printed with currency marks are read in the company's currency."""
+    from pipeline import fx, release
+    r = fx.official_rate("Solely for the convenience of the reader, the translation of NT$ into US$ was made at the rate of "
+                         "NT$30.66 to US$1.00, the noon buying rate on June 30, 2026.", "TWD")
+    assert abs(r["usd"] - 1 / 30.66) < 1e-9 and "NT$30.66" in r["text"]
+    r = fx.official_rate("Translations of amounts from RMB into US$ are solely for the convenience of the reader and were made "
+                         "at a rate of RMB7.1636 to US$1.00, the exchange rate on June 30, 2026.", "CNY")
+    assert abs(1 / r["usd"] - 7.1636) < 1e-9
+    r = fx.official_rate("For convenience, euro amounts have been translated at an exchange rate of €1.00 = US$1.1712.", "EUR")
+    assert abs(r["usd"] - 1.1712) < 1e-9
+    r = fx.official_rate("U.S. dollar amounts are included solely for convenience, translated at ¥146.84 = US$1, the rate on "
+                         "the Tokyo foreign exchange market.", "JPY")
+    assert abs(1 / r["usd"] - 146.84) < 1e-9
+    assert fx.official_rate("Revenue rose to €4.6 billion; the euro rose against the dollar.", "EUR") is None
+    html = ("<p>(in millions)</p><table><tr><td></td><td>Three months ended June 30,</td></tr>"
+            "<tr><td></td><td>2025</td><td>2026</td><td>2026</td></tr><tr><td></td><td>RMB</td><td>RMB</td><td>US$</td></tr>"
+            "<tr><td>Total revenues</td><td>1,000</td><td>1,200</td><td>168</td></tr>"
+            "<tr><td>Net income</td><td>100</td><td>150</td><td>21</td></tr></table>")
+    t = release.read_tables(html)[0]
+    rows = {r["label"]: r["vals"] for r in t["rows"] if r["label"]}
+    assert rows["Total revenues"] == [1200.0, 1000.0]                 # the US$ column set aside, the newest period first
+    assert abs(release.convenience_rate([t], "revenue") - 0.14) < 1e-9
+    assert release._number("€1,234") == 1234 and release._number("(NT$ 950.5)") == -950.5
+    with fx.use("JPY"):
+        assert fx.money(12.3e12) == "¥12.30T" and fx.money(-3.4e9) == "−¥3.4B"
+    assert fx.money(1.5e9) == "$1.5B"

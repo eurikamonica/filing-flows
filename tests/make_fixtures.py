@@ -371,7 +371,8 @@ put(sec.doc_url(SMCL, S_8K, "ex99-1.htm"), release_doc([
 # ------------------------------------------------------------------ FICTIONAL foreign private issuers (20-F + 6-K)
 # Not real data. A US-dollar foreign filer whose results releases look like many foreign filers' (Nebius among them): the
 # newest year printed LAST ("2025*  2026"), labels with slashes ("Net income / (loss)"), D&A as an operating cost line,
-# discontinued operations in the year-ago column, quarterly cash flows. And a euro filer the charts cannot draw yet.
+# discontinued operations in the year-ago column, quarterly cash flows. And a euro filer (IFRS, € tables): drawn in euros,
+# with a US-dollar version at the period's average rate.
 FRGN, EURO = 9999911, 9999912
 F_Q2, F_NEWS, F_Q1, F_20F = "0009999911-26-000040", "0009999911-26-000038", "0009999911-26-000030", "0009999911-26-000020"
 f_annual = ["Revenues", "CostOfRevenue", "ResearchAndDevelopmentExpense", "SellingGeneralAndAdministrativeExpense",
@@ -435,14 +436,51 @@ put(sec.doc_url(FRGN, F_Q1, "frgn-ex99-1.htm"), fpi_release("first", "March 31",
     ("Net income / (loss)", [-115, -105])], [
     ("Share-based compensation expense", [15, 35]), ("Net cash provided by / (used in) operating activities", [-190, 300]),
     ("Purchases of property and equipment", [-600, -2500])]))
+E_6K, E_20F = "0009999912-26-000009", "0009999912-26-000004"
+e_annual = {"Revenue": (17000, 15500), "CostOfSales": (11900, 11000), "ResearchAndDevelopmentExpense": (1500, 1600),
+            "SellingExpense": (1700, 1750), "AdministrativeExpense": (700, 760), "ProfitLossFromOperatingActivities": (1200, 390),
+            "ProfitLossBeforeTax": (1400, 500), "IncomeTaxExpenseContinuingOperations": (300, 120), "ProfitLoss": (1100, 380),
+            "CashFlowsFromUsedInOperatingActivities": (2300, 1400),
+            "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities": (60, 50)}
 put(sec.companyfacts_url(EURO), {"cik": EURO, "entityName": "Fictional Euro Audio S.A.", "facts": {"ifrs-full": {
-    "Revenue": {"label": "Revenue", "units": {"EUR": [{"start": "2025-01-01", "end": "2025-12-31", "val": 17000000000, "fy": 2025,
-                                                       "form": "20-F", "filed": "2026-02-03", "accn": "0009999912-26-000004"}]}},
-    "ProfitLoss": {"label": "Profit (loss)", "units": {"EUR": [{"start": "2025-01-01", "end": "2025-12-31", "val": 1100000000, "fy": 2025,
-                                                              "form": "20-F", "filed": "2026-02-03", "accn": "0009999912-26-000004"}]}}}}})
+    k: {"label": k, "units": {"EUR": [{"start": f"{y}-01-01", "end": f"{y}-12-31", "val": v * M, "fy": 2025, "form": "20-F",
+                                       "filed": "2026-02-03", "accn": E_20F} for y, v in ((2025, a), (2024, b))]}}
+    for k, (a, b) in e_annual.items()}}})
 put(sec.submissions_url(EURO), submissions(EURO, "Fictional Euro Audio S.A.", ["EURO"], "7370", "Services", "1231", [
-    ["0009999912-26-000009", "2026-07-28", "", "6-K", "euro-6k.htm"],
-    ["0009999912-26-000004", "2026-02-03", "2025-12-31", "20-F", "euro-20f.htm"]]))
+    [E_6K, "2026-07-28", "", "6-K", "euro-6k.htm"],
+    [E_20F, "2026-02-03", "2025-12-31", "20-F", "euro-20f.htm"]]))
+
+
+def euro_cells(v):
+    return f"<td>€</td><td style=\"text-align:right\">{'(' + format(-v, ',.0f') + ')' if v < 0 else format(v, ',.0f')}</td>"
+
+
+put(sec.filing_index_url(EURO, E_6K), {"directory": {"item": [{"name": "euro-6k.htm"}, {"name": "euro-ex99-1.htm"}]}})
+put(sec.doc_url(EURO, E_6K, "euro-ex99-1.htm"), "<html><body>" + "".join(f"<p>{x}</p>" for x in [
+    "Fictional Euro Audio reports second quarter 2026 results",
+    "Luxembourg — Fictional Euro Audio S.A. today reported its results for the second quarter ended June 30, 2026.",
+    "About Fictional Euro Audio",
+    "Fictional Euro Audio S.A. is an invented audio streaming company used to test this site; it reports in euros."]) +
+    "<p><b>Interim Condensed Consolidated Statement of Operations</b></p><p>(in € millions, except per share data)</p><table>"
+    "<tr><td></td><td colspan=\"4\">Three months ended June 30,</td></tr><tr><td></td><td colspan=\"2\">2026</td><td colspan=\"2\">2025</td></tr>"
+    + "".join(f"<tr><td>{lab}</td>{euro_cells(a)}{euro_cells(b)}</tr>" for lab, a, b in [
+        ("Revenue", 4600, 4200), ("Cost of revenue", 3150, 2950), ("Gross profit", 1450, 1250), ("Research and development", 380, 400),
+        ("Sales and marketing", 450, 440), ("General and administrative", 170, 180), ("Operating income", 450, 230),
+        ("Finance income", 60, 20), ("Income before income taxes", 510, 250), ("Income tax expense", 110, 60), ("Net income", 400, 190)]) +
+    "</table><p><b>Interim Condensed Consolidated Statement of Cash Flows</b></p><p>(in € millions)</p><table>"
+    "<tr><td></td><td colspan=\"4\">Three months ended June 30,</td></tr><tr><td></td><td colspan=\"2\">2026</td><td colspan=\"2\">2025</td></tr>"
+    + "".join(f"<tr><td>{lab}</td>{euro_cells(a)}{euro_cells(b)}</tr>" for lab, a, b in [
+        ("Net income", 400, 190), ("Depreciation and amortization", 30, 28), ("Share-based compensation", 90, 85),
+        ("Net cash provided by operating activities", 700, 400), ("Purchases of property and equipment", -15, -12)]) +
+    "</table></body></html>")
+# the Federal Reserve's H.10 dollars per euro (FRED), invented flat rates: 1.08 in 2025, 1.12 in 2026
+import datetime as _dt
+_rows, _d = ["observation_date,DEXUSEU"], _dt.date(2024, 1, 1)
+while _d <= _dt.date(2026, 10, 16):
+    if _d.weekday() < 5:
+        _rows.append(f"{_d.isoformat()},{1.05 if _d.year == 2024 else 1.08 if _d.year == 2025 else 1.12}")
+    _d += _dt.timedelta(days=1)
+put("https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXUSEU&cosd=2015-01-01", "\n".join(_rows) + "\n")
 
 put(sec.current_feed_url("8-K", 0), atom([
     ("8-K", "Example Devices Inc.", EXDV, X_8K_OTHER, "2026-09-28", " &lt;br&gt;Item 5.02: Departure of Directors"),

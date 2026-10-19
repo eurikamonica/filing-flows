@@ -73,14 +73,20 @@ def _date(m):
 def norm_label(s):
     s = s.lower().replace(" ", " ").replace("&", " and ").replace("’", "'")
     s = re.sub(r"\((\d{1,2}|[a-z]|[ivx]+)\)|\*+|†|‡", " ", s)            # footnote marks
-    s = re.sub(r"[:$]", " ", s)
+    s = re.sub(r"[:$€£¥₩₹]", " ", s)
     s = re.sub(r"\s+/\s+", " ", s)                        # "net income / (loss)" (Nebius) = "net income (loss)"
     s = re.sub(r"\s+", " ", s).strip(" ,.;-")
     return s
 
 
+# currency marks a foreign filer's tables print beside the numbers ("€", "NT$", "RMB", "US$")
+CUR_MARK = re.compile(r"US\$|NT\$|HK\$|R\$|C\$|A\$|S\$|NZ\$|RMB|EUR|USD|CHF|[$€£¥₩₹₪]")
+CUR_CELL = re.compile(r"(?:US\$|NT\$|HK\$|R\$|C\$|A\$|S\$|NZ\$|RMB|EUR|USD|CHF|GBP|JPY|CNY|TWD|KRW|INR|[$€£¥₩₹₪])")
+USD_CELL = re.compile(r"US\$|USD|U\.S\.\s?\$")
+
+
 def _number(cell):
-    s = cell.replace("$", "").replace(" ", "").replace(" ", "")
+    s = CUR_MARK.sub("", cell).replace(" ", "").replace(" ", "")
     if not s:
         return None
     neg = s.startswith("(") or s.startswith("−") or (s.startswith("-") and len(s) > 1)
@@ -104,7 +110,7 @@ def read_tables(html):
             cells = [re.sub(r"\s+", " ", td.get_text(" ", strip=True)).strip() for td in tr.find_all(["td", "th"])]
             label, vals, pct = None, [], False
             for c in cells:
-                if not c or c in ("$", ")", "(", "%"):
+                if not c or c in (")", "(", "%") or CUR_CELL.fullmatch(c):
                     pct = pct or c == "%"
                     continue
                 if c in DASHES:
@@ -121,8 +127,44 @@ def read_tables(html):
                     vals.append(v)                        # header numbers (years) or unlabeled rows
             rows.append({"cells": cells, "label": label, "key": norm_label(label) if label else "", "vals": vals, "pct": pct})
         before = " ".join(s.strip() for s in t.find_all_previous(string=True, limit=30))[:1500]
-        out.append(_newest_first({"rows": rows, "before": before, "text": t.get_text(" ", strip=True)}))
+        out.append(_newest_first(_usd_columns({"rows": rows, "before": before, "text": t.get_text(" ", strip=True)})))
     return out
+
+
+def _usd_columns(table):
+    """A table in the company's currency with a US$ "convenience" column next to the current period (RMB | RMB | US$):
+    the US$ columns are set aside (the figures are read in the company's currency) and the rate they imply is kept."""
+    for r in table["rows"]:
+        marks = [c for c in r["cells"] if CUR_CELL.fullmatch(c or "")]
+        others = [c for c in r["cells"] if c and not CUR_CELL.fullmatch(c)]
+        if len(marks) < 2 or len(others) > 1:
+            continue
+        usd = [i for i, c in enumerate(marks) if USD_CELL.fullmatch(c)]
+        if not usd or len(usd) == len(marks):
+            continue
+        n = len(marks)
+        table["usd_cols"] = {"n": n, "usd": usd, "pairs": [(i - 1, i) for i in usd if i > 0 and i - 1 not in usd]}
+        for row in table["rows"]:
+            if len(row["vals"]) == n and row is not r:
+                row["vals_all"] = row["vals"]
+                row["vals"] = [v for i, v in enumerate(row["vals"]) if i not in usd]
+        return table
+    return table
+
+
+def convenience_rate(tables, key_row):
+    """US dollars per unit of the company's currency from a US$ column beside its own (the revenue row), or None."""
+    for t in tables:
+        u = t.get("usd_cols")
+        if not u or not u["pairs"]:
+            continue
+        for r in t["rows"]:
+            if r.get("vals_all") and r["key"] and PATTERNS[key_row].search(r["key"]):
+                i, j = u["pairs"][0]
+                a, b = r["vals_all"][i], r["vals_all"][j]
+                if a and b and a > 0 and b > 0:
+                    return b / a
+    return None
 
 
 YEAR_CELL = re.compile(r"((?:19|20)\d\d)\s*[*†‡]*(?:\(\w\))?")
@@ -135,6 +177,9 @@ def _newest_first(table):
     for r in table["rows"]:
         v = r["vals"]
         ys = [int(m.group(1)) for c in r["cells"] for m in [YEAR_CELL.fullmatch(c)] if m]   # "2025*": derived from audited
+        u = table.get("usd_cols")
+        if u and len(ys) == u["n"]:                         # the US$ convenience column was set aside (_usd_columns)
+            ys = [y for i, y in enumerate(ys) if i not in u["usd"]]
         if len(ys) >= 2:
             years = ys
             break
@@ -212,8 +257,10 @@ def _map_rows(table, keys, full=False):
 
 
 def _units(table):
-    m = re.search(r"in (?:(?:u\.?s\.? ?|usd |us\$ ?|\$ ?)(?:dollars? )?)?(thousands|millions|billions)",   # "in USD millions"
-                  (table["before"] + " " + table["text"][:600]).lower())
+    t = (table["before"] + " " + table["text"][:600]).lower()
+    m = re.search(r"in (?:(?:u\.?s\.? ?|usd |us\$ ?|\$ ?|€ ?|eur |£ ?|gbp |¥ ?|jpy |rmb ?|cny |nt\$ ?|twd |₩ ?|krw |₹ ?|inr |r\$ ?|"
+                  r"brl |c\$ ?|cad |chf |sek |dkk |nok |hk\$ ?|hkd |s\$ ?|a\$ ?)(?:dollars? |euros? )?)?(thousands|millions|billions)", t) \
+        or re.search(r"\(\s*(?:us\$|\$|€|eur|£|¥|rmb|nt\$|₩|₹|chf|sek|dkk|nok)\s*(?:in\s)?(thousands|millions|billions)", t)   # "(€ millions)"
     return {"thousands": 1e3, "millions": 1e6, "billions": 1e9}[m.group(1)] if m else None
 
 
@@ -311,6 +358,9 @@ def parse(html, filed, last_end=None, prior_revenue=None):
         cf_rows = _map_rows(t_cf, CF_KEYS, full=True)
         out["cf_cols"] = {k: [v * s_cf for v in x[2]] for k, x in cf_rows.items()}
         out["cf_labels"] = {k: x[1] for k, x in cf_rows.items()}
+    rate = convenience_rate([t_is], "revenue")
+    if rate:
+        out["fx_official"] = {"usd": rate, "text": "the release's own US$ column beside its figures (revenue)"}
     return out
 
 
