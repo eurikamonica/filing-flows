@@ -607,6 +607,7 @@
           <span>CIK <span class="mono">${p.cik}</span></span><span>SIC <span class="mono">${t(p.sic)}</span> ${t(p.industry)}</span>
           ${fye ? `<span>Fiscal year ends ${fye}</span>` : ''}${p.category ? `<span>${t(String(p.category).split(/\s*<br\s*\/?>\s*/i).filter(Boolean).join(' · '))}</span>` : ''}
         </div>
+        <div class="meta co-chains" id="co-chains" hidden></div>
         ${introHTML(c.intro)}
         ${companyTabs(cik, '')}
       </div>
@@ -619,6 +620,7 @@
       ${own !== 'USD' ? ccyBar(own, inUsd, !!c.usd, q) : ''}
       <section class="section cmp-panel" id="cmp-panel" hidden></section>
       <div id="body"></div>`;
+    if (ticker) coChains($('#co-chains'), ticker);
     const body = $('#body');
     app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
     initCompare(c, cik);
@@ -2891,7 +2893,16 @@
   // ---------- the owner's X report: the daily report or chosen tickers, with the chart families ticked, as one X Article ----------
   const XR_KINDS = [['earnings', 'Earnings Sankey (with the chart)'], ['moves', 'Market move'], ['optmoves', 'Options move (IV, put/call, gamma, 13F options)'],
     ['markets', 'Polymarket · Kalshi · options'], ['events', '8-Ks and news'], ['insiders', 'Insiders (Form 4, 10b5-1)'], ['officials', 'Officials\' trades'],
-    ['flows', 'Flows: 13F, ETFs, insiders, plan sales, officials'], ['capital', 'Capital allocation'], ['debt', 'Debt & rates'], ['rotation', 'Rotation: RRG 2-D / 3-D / 4-D, clock, solar system, galaxy']];
+    ['flows', 'Flows: 13F, ETFs, insiders, plan sales, officials'], ['capital', 'Capital allocation'], ['debt', 'Debt & rates'], ['rotation', 'Rotation: RRG 2-D / 3-D / 4-D, clock, solar system, galaxy'],
+    ['chains', 'Supply chains & themes: its place in each money flow']];
+  async function chainLines(tk) {                         // web/chains.js: the chains a company is part of
+    if (!window.FFChains || !tk) return [];
+    const ix = await getJSON('chains/index.json').catch(() => null);
+    const T = String(tk).toUpperCase();
+    const hits = ((ix && ix.chains) || []).filter((c) => (c.buyers || []).includes(T) || (c.layers || []).some((L) => (L.tickers || []).includes(T))).slice(0, 3);
+    const docs = await Promise.all(hits.map((c) => getJSON(`chains/${c.id}.json`).catch(() => null)));
+    return docs.filter(Boolean).flatMap((d) => window.FFChains.lines(d, T).map((text) => ({ text, link: `${artSite()}#chain-${d.id}`, name: d.name })));
+  }
   function xrCik(ix, tk) {
     const want = String(tk || '').toUpperCase().replace(/\./g, '-');
     const e = ix.companies.find((c) => String(c.ticker || '').toUpperCase().replace(/\./g, '-') === want);
@@ -2899,7 +2910,7 @@
   }
   async function xrEntries(ix, list, kinds, say) {
     await loadPosts();
-    const other = kinds.filter((k) => k !== 'earnings');
+    const other = kinds.filter((k) => k !== 'earnings' && k !== 'chains');
     let done = 0;
     return (await Promise.all(list.map(async (x) => {
       try {
@@ -2909,8 +2920,9 @@
         const B = window.FFPosts && other.length ? await window.FFPosts.load(tk, cik, other) : null;
         if (B && c) B.site = c;
         const items = B ? window.FFPosts.all(B, other) : [];
+        const chains = kinds.includes('chains') ? await chainLines(tk) : [];
         say(`Reading ${++done} of ${list.length}…`);
-        return (c || items.length) ? { x, c, q, tk, cik, items, name: c ? S.dec(c.profile.name) : (B && B.name) || tk } : null;
+        return (c || items.length || chains.length) ? { x, c, q, tk, cik, items, chains, name: c ? S.dec(c.profile.name) : (B && B.name) || tk } : null;
       } catch (e) { return null; }
     }))).filter(Boolean);
   }
@@ -2975,12 +2987,20 @@
           (e.q.analysis || []).slice(0, 2).forEach((x) => B.push({ k: 'p', text: S.dec(x) }));
           return;
         }
+        if (k === 'chains') {
+          if ((e.chains || []).length) {
+            B.push({ k: 'p', text: 'Supply chains.', bold: 'Supply chains.' });
+            e.chains.forEach((x) => B.push({ k: 'p', text: x.text }));
+          }
+          return;
+        }
         const it = e.items.find((p) => p.kind === k);
         if (!it) return;
         B.push({ k: 'p', text: `${it.label}. ${it.story || ''}`.trim(), bold: it.label + '.' });
         it.paras.forEach((x) => B.push({ k: 'p', text: x }));
       });
-      const links = [[`${artSite()}#c-${e.cik}`, `${e.name} on Filing Flows`]].concat(e.items.map((p) => [p.link, `${p.label} on Filing Flows`]));
+      const links = [[`${artSite()}#c-${e.cik}`, `${e.name} on Filing Flows`]].concat(e.items.map((p) => [p.link, `${p.label} on Filing Flows`]))
+        .concat((e.chains || []).map((x) => [x.link, `${x.name} on Filing Flows`]));
       if (e.cik) B.push({ k: 'ul', links: links.filter((l, j) => l[0] && links.findIndex((m) => m[0] === l[0]) === j).slice(0, 4) });
     });
     const rest = entries.slice(head.full);
@@ -4806,6 +4826,22 @@
     return acct.osets;
   }
 
+  // a company's place in the supply chains and themes (web/chains.js), as links under its name
+  async function coChains(box, tk) {
+    const ix = await getJSON('chains/index.json').catch(() => null);
+    if (!ix || !box || !box.isConnected) return;
+    const T = String(tk).toUpperCase();
+    const hits = (ix.chains || []).map((c) => {
+      const L = (c.layers || []).find((x) => (x.tickers || []).includes(T));
+      return (c.buyers || []).includes(T) ? [c, 'buyer'] : L ? [c, L.name] : null;
+    }).filter(Boolean);
+    if (!hits.length) return;
+    box.innerHTML = '<span>In the chains:</span>' + hits.map(([c, role]) => `<a class="tag" href="#chain-${t(c.id)}" title="${t(c.name)}">${t(c.name)} · ${t(role)}</a>`).join('');
+    box.hidden = false;
+  }
+  // the chains pages (web/chains.js) use the app's loaders and settings
+  const chainCtx = () => ({ getJSON, setNav, live, prefs, fontsReady });
+
   // ---------- router ----------
   async function route() {
     const here = (view++, live());
@@ -4836,6 +4872,8 @@
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
       else if ((m = /^([si])-([a-z0-9-]+?)(?:-(CY\d{4}Q\d))?$/.exec(h))) await group(m[1], m[2], m[3]);
       else if (h === 'sectors') await sectorsPage();
+      else if (h === 'chains' && window.FFChains) await window.FFChains.index(app, chainCtx());
+      else if ((m = /^chain-([a-z0-9-]+)$/.exec(h)) && window.FFChains) await window.FFChains.page(app, m[1], chainCtx());
       else if (h === 'method') await methodPage();
       else if (h === 'account') await accountPage();
       else if (h === 'owner') await ownerPage();

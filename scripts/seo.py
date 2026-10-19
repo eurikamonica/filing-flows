@@ -67,7 +67,7 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="icon" href="{up}favicon.svg" type="image/svg+xml"><link rel="icon" href="{up}favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="{up}apple-touch-icon.png">
 <link rel="stylesheet" href="{up}styles.css"><link rel="stylesheet" href="{up}seo.css">{ld}
-</head><body><header class="seo-top"><a class="seo-brand" href="{up}">Filing Flows</a><nav><a href="{up}#home">Latest</a><a href="{up}c/">Companies</a><a href="{up}#sectors">Sectors</a><a href="{up}disclosures/">Disclosures</a></nav></header>
+</head><body><header class="seo-top"><a class="seo-brand" href="{up}">Filing Flows</a><nav><a href="{up}#home">Latest</a><a href="{up}c/">Companies</a><a href="{up}#sectors">Sectors</a><a href="{up}chains/">Chains</a><a href="{up}disclosures/">Disclosures</a></nav></header>
 <main class="seo">{body}</main>
 <footer class="seo-foot">Figures read automatically from SEC filings (XBRL and earnings releases); errors are possible. Not investment advice. <a href="{up}">filing-flows.com</a></footer>
 </body></html>"""
@@ -151,6 +151,48 @@ def list_page(title, desc, url, intro, items, depth):
     return page(f"{title} | Filing Flows", desc, url, body, depth, url.split("/c/")[0].split("/sector/")[0] + "/og.png")
 
 
+def chain_pages(data_dir, out_dir, base):
+    """chains/<id>/: one page per supply chain or theme (pipeline/chains.py), with the app's chart a click away."""
+    try:
+        ix = json.load(open(os.path.join(data_dir, "chains", "index.json"), encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    urls, cards = [], []
+    for c in ix.get("chains") or []:
+        try:
+            d = json.load(open(os.path.join(data_dir, "chains", f"{c['id']}.json"), encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        url = f"{base}/chains/{c['id']}/"
+        rows = sorted((r for r in d.get("companies") or [] if r.get("role") != "tier2"), key=lambda r: -(r.get("attr") or 0))
+        cov = d.get("coverage") or {}
+        lead = (f"{money(cov.get('spend'))} spent in the last twelve months by {', '.join(b['t'] for b in d.get('buyers') or [])}; "
+                f"{money(cov.get('traced'))} traced to {cov.get('suppliers')} listed suppliers." if d.get("kind") == "spend"
+                else f"{len(rows)} companies, {money(sum(r.get('attr') or 0 for r in rows))} of revenue in the last twelve months.")
+        lis = "".join(f"<li><a href='../../c/{e(r['t'].lower())}/'>{e(r['t'])}</a> {e(r.get('name') or '')} "
+                      f"<span class='muted'>{money(r.get('attr'))} · {e(r.get('line') or '')}</span></li>" for r in rows[:60])
+        body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Chains</a> › {e(d['name'])}</p>"
+                f"<h1>{e(d['name'])}</h1><p class='lead'>{e(d.get('about') or '')}</p><p>{e(lead)} Trailing twelve months to "
+                f"{fdate(d.get('asof'))}, from SEC filings.</p><p><a class='seo-cta' href='../../#chain-{e(c['id'])}'>Open the interactive money-flow chart →</a></p>"
+                f"<h2>Companies</h2><ul class='seo-list'>{lis}</ul>")
+        desc = f"{d['name']}: where the money flows, from SEC filings. {lead}"[:300]
+        os.makedirs(os.path.join(out_dir, "chains", c["id"]), exist_ok=True)
+        open(os.path.join(out_dir, "chains", c["id"], "index.html"), "w", encoding="utf-8").write(
+            page(f"{d['name']} — money flows | Filing Flows", desc, url, body, 2, base + "/og.png"))
+        urls.append((url, (d.get("generated") or "")[:10] or None))
+        cards.append(f"<li><a href='{e(c['id'])}/'>{e(d['name'])}</a> <span class='muted'>{e(d.get('theme') or '')} · {e(lead)}</span></li>")
+    if cards:
+        body = ("<p class='crumbs'><a href='../'>Filing Flows</a> › Chains</p><h1>Supply chains and trading themes</h1>"
+                "<p class='lead'>Where the money flows, industry by industry: buyers' spending traced to listed suppliers, customers and "
+                "countries, and the hot themes, from SEC filings.</p><p><a class='seo-cta' href='../#chains'>Open the charts →</a></p>"
+                f"<ul class='seo-list'>{''.join(cards)}</ul>")
+        open(os.path.join(out_dir, "chains", "index.html"), "w", encoding="utf-8").write(
+            page("Supply chains and trading themes | Filing Flows", "Industry money flows from SEC filings: AI capex, power, "
+                 "semiconductors, defense, space, quantum, crypto and more.", f"{base}/chains/", body, 1, base + "/og.png"))
+        urls.append((f"{base}/chains/", None))
+    return urls
+
+
 def write_pages(data_dir, out_dir, base):
     base = (base or "").rstrip("/")
     if not base:
@@ -195,6 +237,7 @@ def write_pages(data_dir, out_dir, base):
             f"{sname} earnings", f"Latest quarterly earnings of {len(items)} {sname} companies as Sankey diagrams: revenue, growth, margins.",
             url, f"{len(items)} {sname} companies by revenue, each with its latest quarter drawn from the SEC filing.", items, 2))
         urls.append((url, None))
+    urls += chain_pages(data_dir, out_dir, base)
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u, mod in urls:
         sm.append(f"<url><loc>{xesc(u)}</loc>" + (f"<lastmod>{xesc(str(mod)[:10])}</lastmod>" if mod else "") + "</url>")

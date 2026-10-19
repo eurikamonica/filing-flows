@@ -13,7 +13,7 @@ import sys
 import time
 import traceback
 
-from . import analysis, checks, dims, facts, fx as FX, quality, release, reported, scan, sec, sectors, social, sources, text
+from . import analysis, chains, checks, dims, facts, fx as FX, quality, release, reported, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -1343,6 +1343,11 @@ def run(args):
     refresh_da(store)
     refresh_reported(store)
     refresh_quality(store)
+    try:                                                         # supply chains: segments, customers, backlog (chains.py)
+        chains.refresh(store, sec, dims, text, lambda: time_up(CATCH_UP_SHARE, "supply-chain facts"),
+                       queue_history=lambda cik: queue_history(store, cik))
+    except Exception as e:
+        print(f"::warning::supply-chain facts not refreshed: {e}")
     stars = starred_ciks()
     for cik in stars:                                            # multi-quarter history for starred companies
         if time_up(CATCH_UP_SHARE, "starred companies' history"):
@@ -1823,7 +1828,7 @@ def _label_currency(pls, cur, notes=None, cache=None):
 def render(store, out, stars=frozenset()):
     os.makedirs(os.path.join(out, "c"), exist_ok=True)
     x_cfg = social.load_cfg("config/x.json")
-    index, groups = [], {}
+    index, groups, usd_recs = [], {}, {}
     fx_cache = FX.load_cache(store.root)
     for cik in store.ciks():
         c = store.company(cik)
@@ -1842,6 +1847,7 @@ def render(store, out, stars=frozenset()):
                 rates = FX.rates_for(c, fx_cache)
                 u = FX.in_dollars(c, rates) if rates else None
                 if u and u.get("quarters"):
+                    usd_recs[cik] = u
                     FX._cur[0] = "USD"
                     uq, uy = _payloads(u, cik), _year_payloads(u, cik)
                     for pl in uq:
@@ -1943,6 +1949,10 @@ def render(store, out, stars=frozenset()):
             agg_index[level].append({"id": slug(str(gid)), "name": name, "count": quarters[0]["count"],
                                      "cal": quarters[0]["cal"],
                                      "sector": sectors.sector_of(gid) if level == "industry" else gid})
+    try:                                                         # supply chains and themes (#chains)
+        chains.build(store, out, index, usd_recs)
+    except Exception as e:
+        print(f"::warning::supply chains not built: {e}")
     recent = sorted(index, key=lambda x: (x["filed"] or "", x["cik"]), reverse=True)
     audit = store.state.get("audit", [])
     tick = {x["cik"]: x["ticker"] or x["name"] for x in index}
