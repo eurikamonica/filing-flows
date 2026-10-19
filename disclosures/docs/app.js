@@ -156,6 +156,8 @@ function render(){
  bindOptions();
  bindDebt();bindConsensus();bindEtf();bindSmart();bindAllflows();bindValuation();bindFilings();
  Object.values(window.HUB_BINDS||{}).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // tabs that register themselves (quality.js …)
+
+ Object.values(window.HUB_BINDS||{}).forEach(f=>{try{f()}catch(e){console.warn(e)}});   // views that register themselves (window.HUB_VIEWS)
  if(window.FFPosts)window.FFPosts.fill($("workspace"));
 }
 function csvCell(v){let s=typeof v==='object'&&v!==null?JSON.stringify(v):String(v??'');if(/^[=+@\t\r]/.test(s)||(/^[-]/.test(s)&&!/^[-]\d+(\.\d+)?$/.test(s)))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
