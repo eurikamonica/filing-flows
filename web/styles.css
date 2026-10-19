@@ -762,3 +762,8 @@ button.ev:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px;
 :root[data-theme="dark"] .pie13 { --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --so: #6b6a64;
   --bn: #6cc596; --ba: #3a7a58; --bu: #5a5852; --bc: #94503f; --bx: #f08a76; }
 :root[data-theme="dark"] .av { color: hsl(var(--av-h, 200) 45% 82%); background: hsl(var(--av-h, 200) 25% 28%); }
+
+/* a company that reports in another currency: its own or US dollars (app.js ccyBar) */
+.ccy-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:8px 0 4px;font-size:13px;line-height:1.45}
+.ccy-bar .pill{padding:3px 10px;font-size:13px}
+.ccy-bar .muted{flex:1 1 320px}

@@ -6,7 +6,7 @@ label side; links carry values (current and previous quarter, for the comparison
 import datetime as dt
 import math
 
-from . import reported
+from . import fx, reported
 from .model import ITEM_LABELS, quantities
 
 FOLD = 0.003            # lines smaller than 0.3% of revenue are folded into a label note
@@ -20,12 +20,14 @@ class Fmt:
         if v is None:
             return "n/a"
         a = abs(v)
-        sign = "−" if v < 0 else ""
+        sign, y = ("−" if v < 0 else ""), fx.sym()         # the company's currency while its charts are drawn (fx.use)
+        if a >= 0.95e12:
+            return f"{sign}{y}{a / 1e12:.2f}T"
         if self.unit == "B" and a >= 5e6:               # below $0.01B a billions figure would read "$0.00B"
             b = a / 1e9
-            return f"{sign}${b:.1f}B" if b >= 0.95 else f"{sign}${b:.2f}B"
+            return f"{sign}{y}{b:.1f}B" if b >= 0.95 else f"{sign}{y}{b:.2f}B"
         m = a / 1e6
-        return f"{sign}${m:,.1f}M" if m >= 0.95 else f"{sign}${a / 1e3:,.0f}K"
+        return f"{sign}{y}{m:,.1f}M" if m >= 0.95 else f"{sign}{y}{a / 1e3:,.0f}K"
 
     def num(self, v):                       # signed amount without unit, for scale/mix
         x = v / (1e9 if self.unit == "B" else 1e6)

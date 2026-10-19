@@ -162,12 +162,15 @@ def display_name(name):
 
 
 def money(v, big):
-    a, s = abs(v), "−" if v < 0 else ""
+    from . import fx
+    a, s, y = abs(v), "−" if v < 0 else "", fx.sym()      # the company's currency while its posts are written (fx.use)
+    if a >= 0.95e12:
+        return f"{s}{y}{a / 1e12:.2f}T"
     if big and a >= 5e6:                                # below $0.01B a billions figure would read "$0.00B"
         b = a / 1e9
-        return f"{s}${b:.1f}B" if b >= 0.95 else f"{s}${b:.2f}B"
+        return f"{s}{y}{b:.1f}B" if b >= 0.95 else f"{s}{y}{b:.2f}B"
     m = a / 1e6
-    return f"{s}${m:,.1f}M" if m >= 0.95 else f"{s}${a / 1e3:,.0f}K"
+    return f"{s}{y}{m:,.1f}M" if m >= 0.95 else f"{s}{y}{a / 1e3:,.0f}K"
 
 
 def chg(a, b):

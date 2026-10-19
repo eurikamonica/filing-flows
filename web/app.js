@@ -65,12 +65,23 @@
   const pct = (x, d) => (x == null || isNaN(x) ? '—' : sign(+x.toFixed(d || 0)) + Math.abs(x).toFixed(d || 0) + '%');
   const margin = (x) => (x == null || isNaN(x) ? '—' : (x < 0 ? '\u2212' : '') + Math.abs(x).toFixed(1) + '%');
   const tone = (x) => (x == null ? '' : x > 0.05 ? 'pos' : x < -0.05 ? 'neg' : '');
+  // A company that reports in another currency is shown in it (pipeline/fx.py), with the same charts in US dollars a
+  // click away: CUR is the symbol of the currency on the page now.
+  const CCY = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: 'RMB ', TWD: 'NT$', KRW: '₩', INR: '₹', CAD: 'C$', AUD: 'A$', NZD: 'NZ$', CHF: 'CHF ',
+    HKD: 'HK$', SGD: 'S$', BRL: 'R$', MXN: 'MX$', SEK: 'SEK ', DKK: 'DKK ', NOK: 'NOK ', ZAR: 'ZAR ', ILS: '₪', THB: '฿', PHP: '₱', IDR: 'Rp ',
+    TRY: '₺', PLN: 'zł ', MYR: 'RM ' };
+  const CCY_NAME = { EUR: 'euros', GBP: 'pounds sterling', JPY: 'Japanese yen', CNY: 'Chinese yuan (renminbi)', TWD: 'New Taiwan dollars',
+    KRW: 'Korean won', INR: 'Indian rupees', CAD: 'Canadian dollars', AUD: 'Australian dollars', CHF: 'Swiss francs', HKD: 'Hong Kong dollars',
+    BRL: 'Brazilian reais', MXN: 'Mexican pesos', SEK: 'Swedish kronor', DKK: 'Danish kroner', NOK: 'Norwegian kroner', ILS: 'Israeli shekels' };
+  const symOf = (code) => CCY[code] || (code ? code + ' ' : '$');
+  let CUR = '$';
   function money(v) {
     if (v == null) return '—';
     const a = Math.abs(v), s = v < 0 ? '−' : '';
-    if (a >= 0.95e9) return `${s}$${(a / 1e9).toFixed(1)}B`;
-    if (a >= 0.95e6) return `${s}$${(a / 1e6).toFixed(1)}M`;
-    return `${s}$${(a / 1e3).toFixed(0)}K`;
+    if (a >= 0.95e12) return `${s}${CUR}${(a / 1e12).toFixed(2)}T`;
+    if (a >= 0.95e9) return `${s}${CUR}${(a / 1e9).toFixed(1)}B`;
+    if (a >= 0.95e6) return `${s}${CUR}${(a / 1e6).toFixed(1)}M`;
+    return `${s}${CUR}${(a / 1e3).toFixed(0)}K`;
   }
   function date(s) {
     if (!s) return '—';
@@ -567,6 +578,10 @@
       throw err;
     }
     if (!here()) return;
+    const own = c.currency || 'USD';
+    const inUsd = own !== 'USD' && !!c.usd && prefs.get('ccy', 'own') === 'usd';
+    if (inUsd) c = Object.assign({}, c, { quarters: c.usd.quarters, years: c.usd.years });
+    CUR = inUsd ? '$' : symOf(own);
     const p = c.profile, qs = c.quarters.map(fcfView), ys = (c.years || []).map(fcfView);
     const fy = !!opt.fy && ys.length > 0;                           // a full fiscal year (10-K)
     const cmpId = opt.cmp || null;                                  // a comparison this reader asked for
@@ -601,9 +616,11 @@
         ${qs.length > 1 ? `<a class="pill ${all ? 'on' : ''}" href="#c-${cik}-all">All ${qs.length} quarters</a>` : ''}
         <button class="pill cmp ${cmpId ? 'on' : ''}" type="button" id="cmp-open" hidden aria-expanded="false" aria-controls="cmp-panel">⇄ Compare any two</button>
       </div>
+      ${own !== 'USD' ? ccyBar(own, inUsd, !!c.usd, q) : ''}
       <section class="section cmp-panel" id="cmp-panel" hidden></section>
       <div id="body"></div>`;
     const body = $('#body');
+    app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
     initCompare(c, cik);
     if (cmpId) {
       showComparison(body, c, cmpId, ticker);
@@ -717,6 +734,15 @@
   const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates'], ['consensus', 'Consensus']]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
+  function ccyBar(own, inUsd, hasUsd, q) {
+    const nm = CCY_NAME[own] || own, fxq = q && q.fx;
+    const btn = (k, label, on) => `<button type="button" class="pill${on ? ' on' : ''}" data-ccy="${k}" aria-pressed="${on}">${label}</button>`;
+    const say = inUsd
+      ? `In US dollars, converted from ${t(nm)} (${own})${fxq ? `: ${t(fxq.note)}${fxq.src === 'official' && fxq.text ? ` <span class="muted">— “${t(String(fxq.text).slice(0, 220))}”</span>` : ''}` : ''}. Each comparison period at its own rate, so changes include the currency’s move.`
+      : `Amounts in ${t(nm)} (${own}), as the company reports them.${hasUsd ? ' The same charts in US dollars: at the company’s own convenience rate when its filing gives one, else the period’s average exchange rate.' : ' No exchange rate is available for a dollar version yet.'}`;
+    return `<div class="ccy-bar" role="group" aria-label="Currency">${btn('own', `${symOf(own).trim()} ${own}`, !inUsd)}${hasUsd ? btn('usd', 'US$', inUsd) : ''}<span class="muted">${say}</span></div>`;
+  }
+
   async function analysisPage(cik, which) {
     const here = live();
     setNav('');
@@ -729,6 +755,7 @@
     }
     if (!here()) return;
     const p = c.profile, ticker = (p.tickers || [])[0] || '';
+    CUR = symOf(c.currency || 'USD');                       // these views are read from XBRL in the reported currency
     evReset(c);
     app.innerHTML = `<div class="page-head">
         <div class="crumbs"><a href="#home">Latest</a><span>/</span><a href="#c-${cik}">${t(p.name)}</a></div>
@@ -744,6 +771,19 @@
     if (!D || !((D.q || []).length || (D.fy || []).length)) {
       body.innerHTML = `<p class="muted">The figures for this view have not been read for ${t(p.name)} yet: the scan reads a few dozen companies a run, largest first.</p>`;
       return;
+    }
+    if (c.currency && c.currency !== 'USD') {
+      const note = document.createElement('p');
+      note.className = 'muted ccy-bar';
+      note.textContent = `Amounts in ${CCY_NAME[c.currency] || c.currency} (${c.currency}), as the company reports them.`;
+      body.appendChild(note);
+      if (which === 'value') {
+        const v = document.createElement('p');
+        v.className = 'muted';
+        v.textContent = 'Valuation compares the share price in US dollars with the figures, so it is not drawn for a company that reports in another currency yet. The Earnings tab has the same charts in US dollars.';
+        body.appendChild(v);
+        return;
+      }
     }
     if (which === 'cash') {
       driversSection(body, c);
@@ -1593,7 +1633,7 @@
   // two amounts that would print the same are shown with one more digit ($1.41B → $1.43B, not $1.4B → $1.4B)
   function twoMoney(a, b) {
     if (money(a) !== money(b)) return [money(a), money(b)];
-    const f = (v) => { const x = Math.abs(v), s = v < 0 ? '−' : ''; return x >= 0.95e9 ? `${s}$${(x / 1e9).toFixed(3)}B` : `${s}$${(x / 1e6).toFixed(2)}M`; };
+    const f = (v) => { const x = Math.abs(v), s = v < 0 ? '−' : ''; return x >= 0.95e9 ? `${s}${CUR}${(x / 1e9).toFixed(3)}B` : `${s}${CUR}${(x / 1e6).toFixed(2)}M`; };
     return [f(a), f(b)];
   }
   const filingUrl = (cik, accn) => `https://www.sec.gov/Archives/edgar/data/${cik}/${String(accn).replace(/-/g, '')}/${accn}-index.htm`;
@@ -4551,6 +4591,7 @@
   // ---------- router ----------
   async function route() {
     const here = (view++, live());
+    CUR = '$';
     state.charts = [];
     if (toastEl) { toastEl.remove(); toastEl = null; }
     let h = decodeURIComponent(location.hash.replace(/^#\/?/, ''));

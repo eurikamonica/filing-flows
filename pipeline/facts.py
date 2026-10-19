@@ -10,32 +10,37 @@ CONCEPTS = {
     "revenue": ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax",
                 "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet", "SalesRevenueGoodsNet",
                 "SalesRevenueServicesNet", "RevenuesNetOfInterestExpense", "RegulatedAndUnregulatedOperatingRevenue",
-                "OperatingLeasesIncomeStatementLeaseRevenue", "RevenueNet"],
+                "OperatingLeasesIncomeStatementLeaseRevenue", "RevenueNet",
+                "Revenue", "RevenueFromContractsWithCustomers"],                       # IFRS (ifrs-full)
     "cor": ["CostOfRevenue", "CostOfGoodsAndServicesSold", "CostOfGoodsSold", "CostOfServices",
-            "CostOfGoodsAndServiceExcludingDepreciationDepletionAndAmortization"],
+            "CostOfGoodsAndServiceExcludingDepreciationDepletionAndAmortization", "CostOfSales"],
     "gp": ["GrossProfit"],
     "rd": ["ResearchAndDevelopmentExpense", "ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost",
            "TechnologyAndDevelopmentExpense"],
-    "sm": ["SellingAndMarketingExpense", "MarketingAndAdvertisingExpense", "SellingExpense"],
-    "ga": ["GeneralAndAdministrativeExpense"],
+    "sm": ["SellingAndMarketingExpense", "MarketingAndAdvertisingExpense", "SellingExpense", "DistributionCosts"],
+    "ga": ["GeneralAndAdministrativeExpense", "AdministrativeExpense"],
     "sga": ["SellingGeneralAndAdministrativeExpense"],
     "costs_total": ["CostsAndExpenses", "BenefitsLossesAndExpenses"],
-    "opex_total": ["OperatingExpenses"],
-    "oi": ["OperatingIncomeLoss"],
+    "opex_total": ["OperatingExpenses", "OperatingExpense"],
+    "oi": ["OperatingIncomeLoss", "ProfitLossFromOperatingActivities"],
     "pretax": ["IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
                "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
-               "IncomeLossFromContinuingOperationsBeforeIncomeTaxesForeign"],
-    "tax": ["IncomeTaxExpenseBenefit", "IncomeTaxExpenseBenefitContinuingOperations"],
-    "ni": ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic"],
+               "IncomeLossFromContinuingOperationsBeforeIncomeTaxesForeign", "ProfitLossBeforeTax"],
+    "tax": ["IncomeTaxExpenseBenefit", "IncomeTaxExpenseBenefitContinuingOperations", "IncomeTaxExpenseContinuingOperations"],
+    "ni": ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLossAttributableToOwnersOfParent"],
     "pl": ["ProfitLoss"],
-    "nci": ["NetIncomeLossAttributableToNoncontrollingInterest", "MinorityInterestInNetIncomeLossOfConsolidatedEntities"],
-    "ocf": ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
+    "nci": ["NetIncomeLossAttributableToNoncontrollingInterest", "MinorityInterestInNetIncomeLossOfConsolidatedEntities",
+            "ProfitLossAttributableToNoncontrollingInterests"],
+    "ocf": ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations",
+            "CashFlowsFromUsedInOperatingActivities"],
     # depreciation & amortization: a combined tag, else depreciation + amortization of intangibles (see _da: Oracle,
     # for one, tags the two apart; depreciation alone is labelled "Depreciation" on the chart, never D&A)
-    "da": ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization"],
+    "da": ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet", "DepreciationAndAmortization",
+           "DepreciationAndAmortisationExpense", "AdjustmentsForDepreciationAndAmortisationExpense"],
     "dep": ["DepreciationDepletionAndAmortizationPropertyPlantAndEquipment", "Depreciation"],
-    "amort": ["AmortizationOfIntangibleAssets"],
-    "sbc": ["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"],
+    "amort": ["AmortizationOfIntangibleAssets", "AmortisationExpense"],
+    "sbc": ["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense", "AdjustmentsForSharebasedPayments",
+            "ExpenseFromSharebasedPaymentTransactionsWithEmployees"],
     # revenue from contracts with customers: the total the revenue lines usually add up to (Vistra: $4.40B of contract
     # revenue, minus $0.38B of other revenues such as hedging results, = $4.02B of total revenues)
     "rev_contract": ["RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax"],
@@ -44,7 +49,8 @@ CONCEPTS = {
               "PaymentsToAcquireOilAndGasPropertyAndEquipment", "PaymentsToAcquireOilAndGasProperty",
               "PaymentsToExploreAndDevelopOilAndGasProperties", "PaymentsForCapitalImprovements",
               "PaymentsToDevelopRealEstateAssets", "PaymentsForConstructionInProcess",
-              "PaymentsToAcquireOtherPropertyPlantAndEquipment"],
+              "PaymentsToAcquireOtherPropertyPlantAndEquipment", "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+              "PurchaseOfPropertyPlantAndEquipment"],
 }
 # several tags can coexist: the largest is the total (revenue), or the main capex line rather than a small sub-line
 MAX_KEYS = {"revenue", "capex"}
@@ -61,8 +67,9 @@ def d(s):
     return dt.date.fromisoformat(s)
 
 
-def index_facts(companyfacts):
-    """concept -> {(start, end): fact} keeping the most recently filed fact per period (USD only). Balances are
+def index_facts(companyfacts, currency="USD"):
+    """concept -> {(start, end): fact} keeping the most recently filed fact per period, in the company's reporting
+    currency (US dollars for nearly all; a foreign filer's own, fx.py). us-gaap and ifrs-full concepts. Balances are
     point-in-time facts (no start): those quality.INSTANTS needs go to "__instants__" as concept -> {day: fact}."""
     from .history import CONCEPTS as KEEP_ALL
     from .quality import INSTANTS, SHARES
@@ -90,7 +97,7 @@ def index_facts(companyfacts):
                         k = (f["start"], f["end"]) if "start" in f else f["end"]
                         if k not in per or f.get("filed", "") >= per[k].get("filed", ""):
                             per[k] = f
-                if unit != "USD":
+                if unit != currency:
                     continue
                 per = out.setdefault(concept, {})
                 for f in facts:

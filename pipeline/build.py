@@ -13,7 +13,7 @@ import sys
 import time
 import traceback
 
-from . import analysis, checks, dims, facts, quality, release, reported, scan, sec, sectors, social, sources, text
+from . import analysis, checks, dims, facts, fx as FX, quality, release, reported, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -122,7 +122,10 @@ def submissions(cik):
 
 def companyfacts(cik):
     if cik not in _cf:
-        _cf[cik] = facts.index_facts(sec.get_json(sec.companyfacts_url(cik)))
+        raw = sec.get_json(sec.companyfacts_url(cik))
+        cur = primary_currency(raw) or "USD"            # a foreign filer's figures in the currency it reports in
+        _cf[cik] = facts.index_facts(raw, cur)
+        _cur.setdefault(cik, cur)
     return _cf[cik]
 
 
@@ -350,6 +353,8 @@ def set_quality(c, fx):
     Stored with its version even when empty, so a company without the figures is not asked for again every run."""
     try:
         c["quality"] = quality.compute(fx, (c.get("profile") or {}).get("fye") or "1231") or {"v": quality.VERSION}
+        if c.get("currency") and c["currency"] != "USD" and c["quality"].get("unit"):
+            c["quality"]["unit"] = c["currency"]
     except Exception as e:
         print(f"  profit and cash figures not read: {e}", file=sys.stderr)
         c["quality"] = {"v": quality.VERSION, "error": str(e)[:200]}
@@ -469,6 +474,7 @@ def process_filing(store, cik, accn, form, starred=False):
     q1_end, py_end = facts.comparison_ends(fx, end)
     comp = {"q1_end": q1_end, "py_end": py_end, "raw_q1": facts.extract(fx, q1_end), "raw_py": facts.extract(fx, py_end)}
     c = store.company(cik)
+    _set_currency(c, cik)
     c["profile"] = profile_of(sub)
 
     # revenue breakdown from the XBRL instance (dimensional facts)
@@ -785,15 +791,13 @@ FOREIGN_FORMS = {"20-F", "20-F/A", "40-F", "40-F/A", "6-K", "6-K/A"}
 
 def cannot_draw(sub, currency=None):
     """Why a company someone asked for cannot be charted (None when it can): the charts come from 10-Q / 10-K figures,
-    or, for a foreign private issuer, its 20-F / 40-F and 6-K results releases — in US dollars only for now."""
+    or, for a foreign private issuer, its 20-F / 40-F and 6-K results releases — in the currency it reports in, with a US
+    dollar version beside (fx.py)."""
     forms = {r.get("form") for r in recent_rows(sub)}
     if forms & DRAWABLE_FORMS:
         return None
     name = sub.get("name") or "It"
     if forms & FOREIGN_FORMS:
-        if currency and currency != "USD":
-            return (f"{name} is a foreign private issuer that reports in {currency}; its 20-F and 6-K results can be read, "
-                    "but the charts are in US dollars only for now")
         return None
     return f"{name} has no 10-Q or 10-K on file at SEC"
 
@@ -869,6 +873,7 @@ def process_release(store, cik, accn, form, starred=False):
     last = dt.date.fromisoformat(ends[-1])
     prior_rev = facts.value(fx, "revenue", ends[-1])
     c = store.company(cik)
+    _set_currency(c, cik)
     c["profile"] = profile_of(sub)
     ex_name = _exhibit(cik, accn, row.get("primaryDocument"))
     if not ex_name:
@@ -941,8 +946,9 @@ def process_release(store, cik, accn, form, starred=False):
 # ---------------------------------------------------------------- foreign private issuers: 20-F and 6-K
 # A foreign private issuer files no 10-Q or 10-K: a 20-F (or 40-F) annual report with XBRL, and its quarterly results as
 # a press release furnished on Form 6-K. The year comes from the 20-F's XBRL, each quarter from its results release,
-# read with the same table reader as an 8-K earnings release. Charts are in US dollars, so only companies that report in
-# dollars are drawn for now.
+# read with the same table reader as an 8-K earnings release. A company that reports in another currency is drawn in it,
+# labelled, with the same charts in US dollars beside: at the company's own convenience-translation rate when its filing
+# gives one, else at the period's average market rate (fx.py).
 FPI_RELEASES = 45               # 6-Ks looked at when a foreign company is first asked for (most are not results)
 FPI_ANNUALS = 2
 
@@ -1008,6 +1014,15 @@ def _fpi_cash(rel, prev, fq):
 _cur = {}
 
 
+def _set_currency(c, cik):
+    """A 10-Q / 10-K filer that reports in another currency than the dollar (a few do): its charts say so (fx.py)."""
+    cur = _cur.get(cik)
+    if cur and cur != "USD":
+        c["currency"] = cur
+    elif cur == "USD":
+        c.pop("currency", None)
+
+
 def _currency_of(cik):
     if cik not in _cur:
         try:
@@ -1031,10 +1046,7 @@ def process_fpi_release(store, cik, accn, form, starred=False):
             c["currency"] = primary_currency(sec.get_json(sec.companyfacts_url(cik)))
         except sec.NotFound:
             c["currency"] = None
-    cur = c.get("currency")
-    if cur and cur != "USD":
-        store.put(cik, c)
-        raise NotApplicable(f"reports in {cur}; charts are in US dollars")
+    cur = c.get("currency") or "USD"
     filed = dt.date.fromisoformat(row["filingDate"])
     idx = sec.get_json(sec.filing_index_url(cik, accn))
     names = [i["name"] for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)
@@ -1137,6 +1149,7 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         "capex_src": ({"label": (rel.get("cf_labels") or {}).get("capex"), "how": "release"}
                       if raw.get("capex") is not None else None),
         "src": sources.from_release(rel, raw),
+        **({"fx_official": off} if cur != "USD" and (off := rel.get("fx_official") or FX.official_rate(doc, cur)) else {}),
     }
     for k, q in c["quarters"].items():                  # a later release read before this one: its quarter-before is this
         if q.get("form") == "6-K" and not q.get("raw_q1") and 60 <= (dt.date.fromisoformat(k) - e0).days <= 120:
@@ -1161,9 +1174,6 @@ def process_fpi_annual(store, cik, accn, form, starred=False):
     cur = primary_currency(fx_raw)
     c = _fpi_profile(store.company(cik), sub)
     c["currency"] = cur
-    if cur and cur != "USD":
-        store.put(cik, c)
-        raise NotApplicable(f"reports in {cur}; charts are in US dollars")
     fx = companyfacts(cik)
     doc_url = sec.doc_url(cik, accn, row["primaryDocument"]) if row.get("primaryDocument") else None
     year = annual_entry(c, fx, None, cik, accn, form, row, end, doc_url, {})
@@ -1171,6 +1181,14 @@ def process_fpi_annual(store, cik, accn, form, starred=False):
         if not facts.extract(fx, end, annual=True).get("revenue"):
             raise Pending("XBRL facts not available yet")
         raise NotApplicable("no revenue or net income line in the annual report's XBRL")
+    if cur and cur != "USD" and doc_url:                   # the 20-F's own convenience-translation rate, when it states one
+        try:
+            off = FX.official_rate(sec.get(doc_url)[:4_000_000], cur)
+        except Exception as e:
+            print(f"  20-F rate not read for {cik}: {e}", file=sys.stderr)
+            off = None
+        if off:
+            year["fx_official"] = off
     c.setdefault("years", {})[end] = year
     c["years"] = dict(sorted(c["years"].items())[-(KEEP_STARRED_YEARS if starred else KEEP_YEARS):])
     c["periods"] = periods_of(fx)
@@ -1287,6 +1305,16 @@ def run(args):
         queue += scan.latest_filings()
     if st.get("fpi"):                                          # foreign filers on the site: their new 6-Ks and 20-Fs
         queue += scan.latest_foreign(set(st["fpi"]))
+        for cik in st["fpi"]:                                    # a filer skipped while charts were dollars only: read it again
+            c = store.company(cik)
+            if c.get("currency") not in (None, "USD") and not c.get("quarters") and not c.get("years") and not c.get("fx_retry"):
+                c["fx_retry"] = True
+                store.put(cik, c)
+                try:
+                    _queue_foreign(store, cik, submissions(cik))
+                    print(f"  {cik} reports in {c['currency']}: its 20-F and 6-Ks are read again (drawn in its currency now)")
+                except Exception as e:
+                    print(f"  {cik} not re-queued: {e}", file=sys.stderr)
     for f in queue:
         if f["form"] == "8-K" and f.get("items") is not None and "2.02" not in f["items"]:
             continue                                             # 8-K that is not an earnings release
@@ -1741,68 +1769,136 @@ def slug(s):
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 
 
+def _payloads(c, cik):
+    qs = sorted(c["quarters"].values(), key=lambda q: q["end"])
+    payloads, prev = [], None
+    for q in qs:
+        try:
+            pl = quarter_payload(c, q, prev)
+        except Exception as e:
+            print(f"  render failed {cik} {q['end']}: {e}", file=sys.stderr)
+            pl = None
+        if pl:
+            payloads.append(pl)
+        prev = q
+    return payloads
+
+
+def _year_payloads(c, cik):
+    years = []
+    for y in sorted((c.get("years") or {}).values(), key=lambda y: y["end"], reverse=True):
+        try:
+            yp = year_payload(c, y)
+        except Exception as e:
+            print(f"  render failed {cik} FY {y['end']}: {e}", file=sys.stderr)
+            yp = None
+        if yp:
+            years.append(yp)
+    return years
+
+
+def _label_currency(pls, cur, notes=None, cache=None):
+    """A non-dollar company's charts say which currency they are in; the dollar versions say at what rate."""
+    for pl in pls:
+        if notes is None:                                    # the reported currency
+            pl["currency"] = cur
+            pl["subtitle"] = pl["subtitle"] + f" · in {FX.name(cur)} ({cur})"
+            line = (f"Amounts in {FX.name(cur)} ({cur}), the currency the company reports in. The page also shows the same "
+                    "charts in US dollars.")
+            for alt in [pl] + [pl[k] for k in ("fcf_alt", "lines_alt") if isinstance(pl.get(k), dict) and pl[k].get("footer")]:
+                alt["footer"] = alt["footer"] + [line]
+        else:
+            r = notes.get(pl["end"])
+            pl["currency"] = "USD"
+            pl["fx"] = {"from": cur, "usd": r["usd"], "src": r["src"], "note": FX.note(cur, r, cache), "text": r.get("text"),
+                        "url": r.get("url")}
+            pl["subtitle"] = pl["subtitle"] + f" · in US dollars, converted from {cur}"
+            line = (f"Converted from {FX.name(cur)} ({cur}) at {FX.note(cur, r, cache)}; each comparison period at its own "
+                    f"rate, so changes include the currency's move. The company reports in {cur}: switch the page to {cur} "
+                    "for its own figures.")
+            for alt in [pl] + [pl[k] for k in ("fcf_alt", "lines_alt") if isinstance(pl.get(k), dict) and pl[k].get("footer")]:
+                alt["footer"] = alt["footer"] + [line]
+
+
 def render(store, out, stars=frozenset()):
     os.makedirs(os.path.join(out, "c"), exist_ok=True)
     x_cfg = social.load_cfg("config/x.json")
     index, groups = [], {}
+    fx_cache = FX.load_cache(store.root)
     for cik in store.ciks():
         c = store.company(cik)
         if not c.get("quarters") or not c.get("profile"):
             continue
-        qs = sorted(c["quarters"].values(), key=lambda q: q["end"])
-        payloads, prev = [], None
-        for q in qs:
-            try:
-                pl = quarter_payload(c, q, prev)
-            except Exception as e:
-                print(f"  render failed {cik} {q['end']}: {e}", file=sys.stderr)
-                pl = None
-            if pl:
-                payloads.append(pl)
-            prev = q
+        cur = c.get("currency") or "USD"
+        FX._cur[0] = cur                                     # amounts written in the company's own currency
+        payloads = _payloads(c, cik)
         if not payloads:
             continue
         p = c["profile"]
         latest = payloads[-1]
-        for pl in payloads:
-            Nc, Nq, Ny = pl.pop("_N")
+        usd = None
+        if cur != "USD":                                     # the same charts in US dollars (fx.py)
+            try:
+                rates = FX.rates_for(c, fx_cache)
+                u = FX.in_dollars(c, rates) if rates else None
+                if u and u.get("quarters"):
+                    FX._cur[0] = "USD"
+                    uq, uy = _payloads(u, cik), _year_payloads(u, cik)
+                    for pl in uq:
+                        pl["x_thread"] = []
+                    _label_currency(uq + uy, cur, rates, fx_cache)
+                    usd = {"quarters": uq, "years": uy}
+            except Exception as e:
+                print(f"  dollar version failed {cik}: {e}", file=sys.stderr)
+                usd = None
+            FX._cur[0] = cur
+        group_src = payloads if cur == "USD" else (usd or {}).get("quarters") or []
+        for pl in group_src:                                 # sector and industry totals add up dollars only
+            Nc, Nq, Ny = pl["_N"]
             for key in (("sector", p["sector"]), ("industry", p["sic"] or "none")):
                 groups.setdefault(key, {}).setdefault(pl["cal"], []).append(
                     (p["tickers"][0] if p["tickers"] else p["name"][:18], Nc, Nq, Ny, cik))
+        for pl in payloads + ((usd or {}).get("quarters") or []):
+            pl.pop("_N", None)
         for pl in payloads:                      # the ready-to-post X thread (same text as the e-mails)
             try:
                 posts = social.compose_parts({"profile": p, "intro": c.get("intro")}, pl, x_cfg)
                 pl["x_thread"] = [{"text": x["text"], "len": social.xlen(x["text"]), "role": x["role"]} for x in posts]
             except Exception as e:
                 print(f"  thread failed {cik} {pl['end']}: {e}", file=sys.stderr)
-        years = []
-        for y in sorted((c.get("years") or {}).values(), key=lambda y: y["end"], reverse=True):
-            try:
-                yp = year_payload(c, y)
-            except Exception as e:
-                print(f"  render failed {cik} FY {y['end']}: {e}", file=sys.stderr)
-                yp = None
-            if yp:
-                years.append(yp)
+        years = _year_payloads(c, cik)
+        if cur != "USD":
+            _label_currency(payloads + years, cur)
+        FX._cur[0] = "USD"
         save(os.path.join(out, "c", f"{cik}.json"), {
             "profile": p, "intro": c.get("intro"), "starred": cik in stars, "quarters": payloads[::-1],
             "years": years, "periods": periods_payload(c),
+            **({"currency": cur} if cur != "USD" else {}),
+            **({"usd": {"quarters": usd["quarters"][::-1], "years": usd["years"]}} if usd else {}),
             **({"quality": c["quality"]} if (c.get("quality") or {}).get("q") or (c.get("quality") or {}).get("fy") else {})})
         # earlier filings of the last ten days (an 8-K release before its 10-Q), for the daily report of their day
         cut = (dt.date.fromisoformat(latest["filed"]) - dt.timedelta(days=10)).isoformat() if latest.get("filed") else "9999"
         also = [{"end": pl["end"], "label": pl["label"], "filed": pl["filed"], "form": pl["form"],
                  "rev": pl["headline"]["rev_fmt"], "revenue": pl["headline"]["revenue"], "yoy": pl["headline"]["yoy"]}
                 for pl in payloads[:-1] if (pl.get("filed") or "") >= cut]
+        u_latest = next((x for x in (usd or {}).get("quarters") or [] if x["end"] == latest["end"]), None)
         index.append({"cik": cik, "ticker": (p["tickers"] or [""])[0], "name": p["name"], "sector": p["sector"],
                       "industry": p["industry"], "sic": p["sic"], "label": latest["label"], "end": latest["end"],
                       "cal": latest["cal"], "filed": latest["filed"], "form": latest["form"],
-                      "rev": latest["headline"]["rev_fmt"], "revenue": latest["headline"]["revenue"],
+                      "rev": latest["headline"]["rev_fmt"],
+                      "revenue": u_latest["headline"]["revenue"] if u_latest else latest["headline"]["revenue"],   # dollars, to sort by
+                      **({"currency": cur} if cur != "USD" else {}),
                       "yoy": latest["headline"]["yoy"], "om": round(latest["headline"]["om"], 1),
                       "starred": cik in stars, "kind": latest["kind"], "prelim": latest["form"] == "8-K",
                       **({"check": "warn"} if checks.has_warning(latest.get("checks")) else {}),
                       **({"also": also} if also else {}),
                       **({"after_release": latest["release_check"]["filed"], "release_ok": latest["release_check"]["ok"]}
                          if latest.get("release_check") else {})})
+    FX._cur[0] = "USD"
+    try:
+        FX.save_cache(store.root, fx_cache)
+    except OSError as e:
+        print(f"  exchange-rate cache not saved: {e}", file=sys.stderr)
     agg_index = {"sector": [], "industry": []}
     for (level, gid), by_cal in groups.items():
         quarters = []

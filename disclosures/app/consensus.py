@@ -304,8 +304,63 @@ def isotonic_decreasing(ps):
     return out
 
 
+def _ncdf(x):
+    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+
+
+def _lognormal_fit(ks, ps):
+    """(mu, sigma) of the log-normal whose P(X > K) is closest to the ladder (probit regression on the strikes the market
+    is not sure about), else None."""
+    from statistics import NormalDist
+    pts = [(math.log(k), NormalDist().inv_cdf(p)) for k, p in zip(ks, ps) if k and k > 0 and 0.02 < p < 0.98]
+    if len(pts) >= 2:
+        n = len(pts); mx = sum(x for x, _ in pts) / n; my = sum(y for _, y in pts) / n
+        sxx = sum((x - mx) ** 2 for x, _ in pts)
+        if sxx > 0:
+            b = sum((x - mx) * (y - my) for x, y in pts) / sxx
+            if b < 0:
+                sig = -1 / b
+                return my * sig + mx, sig                          # y = (mu − ln K) / sigma
+    if len(pts) == 1 and len(ks) >= 2 and ks[0] > 0:               # one uncertain strike: the ladder's span as ±2 sigma
+        sig = max(math.log(ks[-1] / ks[0]) / 4, 0.002)
+        x, y = pts[0]
+        return x + y * sig, sig
+    return None
+
+
+def ladder_mean(ks, ps):
+    """Expected value of a fitted ladder (ps = P(X > K) falling with K): the mass between two strikes at their middle,
+    the tails below the first and above the last strike at the conditional means of the log-normal fitted to the ladder
+    (or half a strike step out when no fit). Returns (mean, the share of the mass in the two tails)."""
+    if len(ks) < 2:
+        return None, None
+    lo_mass, hi_mass = 1 - ps[0], ps[-1]
+    step = (ks[-1] - ks[0]) / (len(ks) - 1)
+    fit = _lognormal_fit(ks, ps)
+    if fit and not (0 < fit[1] <= 2.5 and fit[0] + fit[1] ** 2 / 2 < 700):
+        fit = None                                         # a flat or odd ladder: no believable log-normal tail
+    below, above = ks[0] - step / 2, max(ks[-1] + step / 2, ks[-1])
+    if fit:
+        mu, sg = fit
+        m = math.exp(mu + sg * sg / 2)
+        if ks[0] > 0:
+            z = (math.log(ks[0]) - mu) / sg
+            d = _ncdf(z)
+            if d > 1e-9:
+                below = min(ks[0], max(0.0, m * _ncdf(z - sg) / d))
+        z = (math.log(ks[-1]) - mu) / sg if ks[-1] > 0 else -1e9
+        d = 1 - _ncdf(z)
+        if d > 1e-9:
+            above = max(ks[-1], min(m * (1 - _ncdf(z - sg)) / d, ks[-1] + 6 * step if step > 0 else ks[-1] * 1.5))
+    mean = lo_mass * below + hi_mass * above
+    for i in range(len(ks) - 1):
+        mean += max(0.0, ps[i] - ps[i + 1]) * (ks[i] + ks[i + 1]) / 2
+    return mean, lo_mass + hi_mass
+
+
 def ladder_stats(points):
-    """points: [(K, P(X > K))]. Monotone fit, then the implied 10/25/50/75/90% quantiles by linear interpolation."""
+    """points: [(K, P(X > K))]. Monotone fit, then the implied 10/25/50/75/90% quantiles by linear interpolation and the
+    expected value (ladder_mean)."""
     pts = sorted((k, p) for k, p in points if k is not None and p is not None)
     if len(pts) < 2:
         return None
@@ -322,7 +377,9 @@ def ladder_stats(points):
             if ps[i] >= target >= ps[i + 1]:
                 w = (ps[i] - target) / ((ps[i] - ps[i + 1]) or 1)
                 return {'value': ks[i] + w * (ks[i + 1] - ks[i]), 'bound': None}
-    return {'strikes': ks, 'p_above': [round(p, 4) for p in ps], 'q10': q(.1), 'q25': q(.25), 'median': q(.5), 'q75': q(.75), 'q90': q(.9)}
+    mean, tails = ladder_mean(ks, ps)
+    return {'strikes': ks, 'p_above': [round(p, 4) for p in ps], 'q10': q(.1), 'q25': q(.25), 'median': q(.5), 'q75': q(.75), 'q90': q(.9),
+            'mean': {'value': mean, 'tails': round(tails, 4)} if mean is not None else None}
 
 
 def bracket_stats(buckets):
@@ -412,6 +469,17 @@ def poly_kind(title):
             'metric' if re.search(r'\bQ[1-4]\b|\bfiscal\b|\bFY\d', title) and (re.search(r'above\s*_', title) or re.search(r'growth|ratio|margin|\(MBR\)|RPO', title, re.I)) else 'other')
 
 
+def poly_ladder(kind, pts):
+    """pts: [((low, high), P(yes))] of one event's contracts → the implied distribution: "above K" contracts as a ladder,
+    brackets ('<$320', '$320-$325', '>$365') and market caps as buckets."""
+    if kind == 'above':
+        return ladder_stats([(s[0], p) for s, p in pts if s[0] is not None])
+    return bracket_stats([((s[0] if s[0] != s[1] else None, s[1]) if s[0] != s[1] else (s[0], None), p) for s, p in pts])
+
+
+NOT_A_COMPANY = re.compile(r'\b(crude oil|natural gas|gasoline|heating oil)\b|\b(gold|silver|copper|platinum) \((GC|SI|HG|PL|XAU|XAG)\)', re.I)
+
+
 def poly_rows(e, base, title, ms):
     """Rows of one Polymarket event about a company or an index (base: source, ticker, url …), by the kind of market."""
     rows = []
@@ -426,18 +494,16 @@ def poly_rows(e, base, title, ms):
                         'token': (json.loads(m.get('clobTokenIds') or '[]') or [None])[0], 'market_end': m.get('endDate'),
                         'volume': _f(m.get('volume'))})
     elif kind in ('above', 'mcap', 'bracket'):
-        pts = []
+        pts, legs = [], []
         for m in ms:
             s = strike_of(m.get('groupItemTitle') or m.get('question'))
             if s:
                 pts.append((s, poly_prob(m), poly_resolved(m)))
-        if kind == 'above':
-            st = ladder_stats([(s[0], p) for s, p, _ in pts if s[0] is not None])
-        elif kind == 'bracket':
-            st = bracket_stats([((s[0] if s[0] != s[1] else None, s[1]) if s[0] != s[1] else (s[0], None), p) for s, p, _ in pts])
-        else:
-            st = bracket_stats([((s[0] if s[0] != s[1] else None, s[1]) if s[0] != s[1] else (s[0], None), p) for s, p, _ in pts])
+                legs.append([s[0], s[1], (json.loads(m.get('clobTokenIds') or '[]') or [None])[0]])
+        st = poly_ladder(kind, [(s, p) for s, p, _ in pts])
         row = {**base, 'stats': None if e.get('closed') else st, 'n': len(pts)}
+        if kind in ('above', 'bracket'):
+            row['legs'] = legs                 # the strikes' CLOB tokens: the hourly history of a ladder (app/ladders.py)
         if e.get('closed'):
             row['actual'] = resolved_range(kind, pts)
         if st or row.get('actual'):
@@ -484,10 +550,11 @@ def poly_rows(e, base, title, ms):
     return rows
 
 
-def poly_scan(h, mapper, verbose=True):
+def poly_scan(h, mapper, verbose=True, closed_pages=None):
     events, seen = [], set()
     for tag in POLY_TAGS:
-        for closed, pages in (('false', 12 if tag == 'earnings' else 6), ('true', 6 if tag == 'earnings' else 2)):
+        for closed, pages in (('false', 12 if tag == 'earnings' else 6),
+                              ('true', closed_pages if closed_pages is not None else 6 if tag == 'earnings' else 2)):
             for pg in range(pages):          # the Gamma API returns at most 100 events a page
                 url = f'{GAMMA}/events?tag_slug={tag}&closed={closed}&limit=100&offset={100 * pg}' + ('&order=endDate&ascending=false' if closed == 'true' else '')
                 try:
@@ -513,6 +580,8 @@ def poly_scan(h, mapper, verbose=True):
                     'underlying': ix['etf'] if etf else ix['short'], 'title': title, 'url': f'https://polymarket.com/event/{e.get("slug")}',
                     'end': (e.get('endDate') or '')[:10], 'closed': bool(e.get('closed')), 'volume': _f(e.get('volume')), 'liquidity': _f(e.get('liquidity'))}
             out += poly_rows(e, base, title, ms)
+            continue
+        if NOT_A_COMPANY.search(title):        # "WTI Crude Oil (WTI) closes above …" is oil, not W&T Offshore
             continue
         co = mapper.from_text(title, tags)
         if not co:                             # "Which companies will be acquired …", "Largest company end of …": one row per company named
