@@ -1050,17 +1050,22 @@
     box.className = 'section capital';
     box.setAttribute('aria-labelledby', 'ca-title');
     const name = S.dec(P.name || '');
-    if (!K || !((K.fy || []).length || K.ttm || (K.shares || []).length || K.maturities)) {
+    if (!K || !((K.fy || []).length || (K.q || []).length || K.ttm || (K.shares || []).length || K.maturities)) {
       box.innerHTML = `<div class="section-head"><h2 id="ca-title">Capital allocation</h2></div><p class="muted">Capital allocation is read on the next scans for this company: a few dozen companies a run, largest first.</p>`;
       body.appendChild(box);
       return;
     }
     const financial = P.sector === 'financials' || /^6[0-7]/.test(String(P.sic || ''));
-    const periods = (K.fy || []).concat(K.ttm ? [K.ttm] : []);
+    const yearly = (K.fy || []).concat(K.ttm ? [K.ttm] : []), quarterly = K.q || [];
+    const periods = yearly.concat(quarterly);
     const st = { end: ((K.fy || []).length ? K.fy[K.fy.length - 1] : K.ttm || {}).end, scene: null };
+    const table = { rows: yearly };                    // the table shows the kind of period picked: years or quarters
     const S0 = D.src || { concepts: [] };
-    const per = (p) => `${p.label}${p.kind === 'ttm' ? ' (trailing twelve months)' : ' (fiscal year)'}`;
-    const prevOf = (p) => (p.kind === 'fy' ? (K.fy || [])[(K.fy || []).indexOf(p) - 1] : null);
+    const per = (p) => `${p.label}${p.kind === 'ttm' ? ' (trailing twelve months)' : p.kind === 'q' ? ' (quarter)' : ' (fiscal year)'}`;
+    const yearAgo = (p) => quarterly.find((x) => Math.abs((new Date(p.end) - new Date(x.end)) / 864e5 - 365) <= 12);
+    const prevOf = (p) => (p.kind === 'fy' ? (K.fy || [])[(K.fy || []).indexOf(p) - 1]     // a quarter: the same quarter a
+      : p.kind === 'q' ? yearAgo(p) || quarterly[quarterly.indexOf(p) - 1] : null);       // year earlier, else the one before
+    const chgTag = (p, prev) => (p.kind === 'q' && prev && !yearAgo(p) ? 'Q/Q' : 'Y/Y');
     const label = (ref) => { const x = S0.concepts[ref[0]]; return x ? S.dec(x[1] || x[0]) : 'XBRL fact'; };
 
     // ---- the evidence for one line
@@ -1123,8 +1128,9 @@
         if (!prev) return null;
         const pv = (prev.items || {})[k];
         if (pv == null) return `none in ${prev.label}`;
-        if (Math.sign(pv) !== Math.sign(v)) return `Y/Y n/m · ${prev.label}: ${capName(k, pv).toLowerCase()} ${money(Math.abs(pv))}`;
-        return `Y/Y ${pct((Math.abs(v) / Math.abs(pv) - 1) * 100)}`;
+        const tag = chgTag(p, prev);
+        if (Math.sign(pv) !== Math.sign(v)) return `${tag} n/m · ${prev.label}: ${capName(k, pv).toLowerCase()} ${money(Math.abs(pv))}`;
+        return `${tag} ${pct((Math.abs(v) / Math.abs(pv) - 1) * 100)}`;
       };
       const node = (id, col, color, nm, v, posn, k, payload) => {
         const lines = [['name', nm], ['val', `${money(Math.abs(v))} · ${capShare(v, total)} of the total`]];
@@ -1215,6 +1221,7 @@
 
     // ---- every period, line by line
     function tableHTML() {
+      const periods = table.rows;
       const rows = CAP_ROWS.filter((k) => periods.some((p) => p.items[k] != null));
       const fcf = (p) => (p.items.capex != null ? p.items.ocf + p.items.capex : null);
       const cell = (p, k) => { const v = p.items[k]; return v == null ? '<span class="muted">—</span>' : evBtn(money(k === 'cash' ? -v : v), capPayload(p, k)); };
@@ -1302,11 +1309,15 @@
     }
 
     function render() {
-      const p = periods.find((x) => x.end === st.end && (x.kind === st.kind || !st.kind)) || periods[periods.length - 1];
+      const p = periods.find((x) => x.end === st.end && (x.kind === st.kind || !st.kind)) || yearly[yearly.length - 1] || periods[periods.length - 1];
+      table.rows = p && p.kind === 'q' ? quarterly : yearly.length ? yearly : quarterly;
       const flags = (p && p.flags) || [];
+      const opt = (x) => `<option value="${t(x.kind + '|' + x.end)}" ${x === p ? 'selected' : ''}>${t(x.label)}</option>`;
       box.innerHTML = `<div class="section-head"><h2 id="ca-title">Capital allocation</h2>
           <span class="muted">Where the cash came from and where it went, the share count, and when the debt falls due · the cash-flow statement, XBRL</span></div>
-        ${periods.length ? `<div class="q-bar"><label class="q-pick">Period <select id="ca-period">${periods.map((x) => `<option value="${t(x.kind + '|' + x.end)}" ${x === p ? 'selected' : ''}>${t(x.label)}</option>`).join('')}</select></label>
+        ${periods.length ? `<div class="q-bar"><label class="q-pick">Period <select id="ca-period">${
+          yearly.length && quarterly.length ? `<optgroup label="Fiscal years">${yearly.map(opt).join('')}</optgroup><optgroup label="Quarters">${quarterly.slice().reverse().map(opt).join('')}</optgroup>`
+            : periods.map(opt).join('')}</select></label>
           <div class="export" role="group" aria-label="Export chart"><span>Export</span><button class="btn" type="button" data-cx="png">PNG</button><button class="btn" type="button" data-cx="jpg">JPG</button><button class="btn" type="button" data-cx="pdf">PDF</button></div></div>
         ${financial ? '<p class="q-warn">For banks, insurers and brokers, the cash-flow statement is dominated by lending, deposits and trading: “Other investing” and “Other financing” carry most of it, and the chart says little about capital allocation.</p>' : ''}
         ${flags.includes('unrec') ? `<p class="q-warn">${money(Math.abs(p.items.unrec || 0))} of the change in cash is not explained by the three section totals: usually discontinued operations, sometimes a tagging error. It is drawn as “Not reconciled”.</p>` : ''}

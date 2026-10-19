@@ -28,11 +28,12 @@ from . import fsa as W
 from . import history as H
 from . import reform as RF
 
-VERSION = 6               # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
+VERSION = 7               # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
                           # 3: capital allocation, share count and debt maturities (pipeline/capital.py)
                           # 4: every version of the headline figures, "As Known Then" (pipeline/history.py)
                           # 5: what moved profit, last year to this year (pipeline/drivers.py)
                           # 6: the balance sheet reformulated, RNOA (pipeline/reform.py)
+                          # 7: capital allocation by quarter as well (pipeline/capital.py)
 MAX_DIFF = 0.25            # untagged movement allowed, as a share of the larger of the opening and closing balance
 TOLERANCE = 0.005          # under this share of the balance the rollforward counts as reconciled (rounding)
 KEEP_Q, KEEP_FY = 8, 5

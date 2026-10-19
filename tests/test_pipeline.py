@@ -2176,7 +2176,8 @@ def test_capital_trailing_twelve_months_shares_and_maturities():
     cf = _cf({
         "NetIncomeLoss": [("2024-01-01", "2024-12-31", 50), ("2025-01-01", "2025-12-31", 80), ("2026-04-01", "2026-06-30", 20)],
         "NetCashProvidedByUsedInOperatingActivities": [("2025-01-01", "2025-12-31", 100), ("2026-01-01", "2026-06-30", 60),
-                                                       ("2025-01-01", "2025-06-30", 40), ("2025-07-01", "2026-06-30", 999)],
+                                                       ("2025-01-01", "2025-06-30", 40), ("2025-07-01", "2026-06-30", 999),
+                                                       ("2026-01-01", "2026-03-31", 25)],
         "LongTermDebtMaturitiesRepaymentsOfPrincipalInNextTwelveMonths": [(None, "2025-12-31", 5), (None, "2021-12-31", 9)],
         "LongTermDebtMaturitiesRepaymentsOfPrincipalInYearTwo": [(None, "2025-12-31", 6), (None, "2021-12-31", 9)],
         "LongTermDebtMaturitiesRepaymentsOfPrincipalAfterYearFive": [(None, "2025-12-31", 30), (None, "2021-12-31", 9)],
@@ -2189,6 +2190,9 @@ def test_capital_trailing_twelve_months_shares_and_maturities():
     ttm = out["cap"]["ttm"]
     assert ttm["label"] == "TTM to Q2 2026" and ttm["items"]["ocf"] == 120
     assert ttm["ev"]["ocf"][0][1][1] == "ttm"
+    q = {p["label"]: p for p in out["cap"]["q"]}                      # quarters: the second = six months − the first
+    assert q["Q2 2026"]["kind"] == "q" and q["Q2 2026"]["items"]["ocf"] == 35        # not the trailing twelve months
+    assert q["Q2 2026"]["ev"]["ocf"][0][1][1] == "ytd"
     sh = out["cap"]["shares"]
     assert [r["diluted"] for r in sh] == [100e6, 1000e6] and sh[1]["split"] == ["diluted"]
     m = out["cap"]["maturities"]
