@@ -16,6 +16,7 @@ import senate
 import events8k
 import news
 import reddit_hot
+import extremes
 import frames
 import options as option_chains
 
@@ -23,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser(description='Collect official public disclosures; demo never substitutes for real data')
-    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market','insiders','options','ownership','shorts','senate','events8k','news','reddit'],default='all')
+    parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market','insiders','options','ownership','shorts','senate','events8k','news','reddit','extremes'],default='all')
     parser.add_argument('--config',type=Path,default=ROOT/'config/settings.json')
     parser.add_argument('--output',type=Path,default=ROOT/'docs/data')
     parser.add_argument('--storage',type=Path,default=ROOT/'storage')
@@ -126,6 +127,16 @@ def main():
             print('options: '+json.dumps(option_chains.collect(client,args.output,cfg.get("options",{}))),flush=True)
         except Exception as exc:
             print('options: error — '+str(exc),flush=True)
+    # 4.17: 52-week and all-time highs and lows (Yahoo daily bars), once a day after the close with the options run
+    if args.only in ('all','options','extremes'):
+        print('Collecting 52-week and all-time highs and lows',flush=True)
+        try:
+            r=extremes.collect(client,args.output,cfg.get('extremes',{}))
+            r['published']=extremes.publish(args.output,args.output/'market')
+            print('extremes: '+json.dumps(r),flush=True)
+            write_json(args.output/'extremes-status.json',{**r,'last_attempt':now()})
+        except Exception as exc:
+            print('extremes: error — '+str(exc),flush=True)
     # 4.4: SEC XBRL frames (21 quarters and the annual frames of revenue, operating income, gross profit and net income
     # for every filer) for the rotation charts; cached quarters are never fetched again, so the daily options run keeps them fresh
     if args.only in ('all','market','options'):

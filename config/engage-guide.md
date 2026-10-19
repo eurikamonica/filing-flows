@@ -11,11 +11,12 @@ Formats are named in the task; follow the one you are given.
 - **list** — the companies that filed in the last day, as cashtags, with the one that stands out named in half a
   sentence, then a question. `6 filings hit EDGAR today: $A $B $C $D $E $F. Only $C grew revenue AND margin. Which
   one surprised you?`
-- **reddit_question** — one company Reddit is arguing about, a fact from its filing as the anchor, then the question.
-  `Reddit can't agree on $TICK today. Latest 10-Q: revenue $4.1B, +22% Y/Y. Is this 1) a re-rating 2) priced in
-  3) a squeeze story? Reply with your number`
-- **reddit_list** — the three to five companies trending on investing subreddits right now, as cashtags, with their
-  latest filing one-liner for the standout, then `Which one actually deserves the attention?`
+- **reddit_question** — a stock many investors are watching right now, written as a normal stock post: its setup in
+  bullets (like **setup**) or one fact from its filing and a 2–3 option question. Never mention Reddit, a subreddit or
+  any forum, and never "people are arguing": just the cashtag and the facts.
+  `$TICK into Monday: revenue $4.1B, +22% Y/Y in the latest 10-Q. 1) re-rating 2) priced in 3) squeeze story?`
+- **reddit_list** — a cashtag poll of three or four stocks investors are watching this week, one short line each with one
+  number, then `Which one are you watching?`. No forum talk. Line breaks.
 
 - **mover** — "what's happening": the company moving most today. The inputs may list what is known today (8-Ks,
   releases, Form 4 / 144, 13D, short interest, options, the market, headlines): cite one or two, attributed and dated,
@@ -103,10 +104,24 @@ Formats are named in the task; follow the one you are given.
 - **rsleaders** — the companies whose relative-strength rating jumped into the 90s. The first words say what the numbers
   are, or nobody can read `6→97`: `RS rating, 3 months: $AAA 6→97, $BBB 31→94, $CCC 30→92. $AAA went from the bottom
   of the market to the top. Which one holds up?` — cashtags with `old→new`, the biggest climber named, then the question.
-- **reddit_hot** — Reddit's hottest stock right now. Open with that and the cashtag, give the thread count or the hottest
-  thread in a few words, then contrast the crowd with what the filings show (insiders, 13F managers, officials, the
-  smart-money score with its −100 to +100 scale). Never predict the stock; ask whether the hype and the filings agree.
-  `Reddit's hottest stock right now: $AAA (48 threads in 24h, 9 the day before). The filings: 3 insiders net sellers, smart-money score −40 of ±100. Who's right, the crowd or the insiders?`
+- **reddit_hot** / **setup** — one stock going into the next session, in bullets. First line `$TICK going into Monday`,
+  then 3–5 lines starting with `• ` (where it trades against its 52-week range, the year so far, short interest, the
+  latest 8-K or release, analysts' target, Polymarket's earnings odds, the smart-money score), then one closing line that
+  frames the tension. Never mention Reddit or any forum.
+  `$ONDS going into Monday\n\n• Trading near its 52-week low, around $6\n• Down roughly 35% YTD\n• Short interest 6.2 days to cover\n\nThe order book is growing. The price isn't following yet.`
+- **pt_upside** — `Wall Street rates both $AAA and $BBB a Hold.\n\nBut one has 3.6x the upside.\n\n$AAA → PT $31.15 (+11%)\n$BBB → PT $20.36 (+40%)\n\nIs the market sleeping on $BBB, or is $AAA the safer bet?`
+  Write the rating only as “Hold”; never say which to own.
+- **versus** — `$AAA or $BBB what stock would you rather have?` — short; one fact each at most.
+- **drawdown** — popular names far below their 52-week highs, one `$TICK $high → $now` line each, a hook line before and
+  a closing line after. `Remember the highs?\n\n$RKLB $150 → $50\n$ASTS $130 → $40\n...\n\nWhich one gets back there first?`
+- **lows52** / **highs52** — `All these stocks hit new 52-week lows on Oct 17\n\nMcDonald's $MCD\nPepsiCo $PEP\n...` — the
+  name and the cashtag per line, as given, then one short question.
+- **near_lows** — `Quality stocks trading near their 52-week lows:\n\nBank of America $BAC: −20%\nPepsiCo $PEP: −22%\n...` (how far
+  each is below its 52-week high), then one question.
+- **records** — new all-time highs (or lows) in the last session, name, cashtag and price per line, then one question.
+- **polymarket** — Polymarket's odds that this week's reporters beat the EPS line: `Polymarket odds of an earnings beat this
+  week:\n\n$AAA Oct 21: 81%\n$BBB Oct 22: 64%\n\nWhich one surprises the crowd?` — or one company: the odds, the line,
+  the analysts' estimate, one question.
 - **smart_buys** — the stocks the traders with the best track records are net buying. Say in the first sentence that the
   numbers are a score weighted by track records (−100 to +100), list the cashtags with their scores, ask which one to dig into.
   `Smart-money score (disclosed trades weighted by each trader's record, −100 to +100): $AAA +92, $BBB +88, $CCC +81. Which one would you dig into?`

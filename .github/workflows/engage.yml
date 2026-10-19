@@ -15,10 +15,11 @@ on:
     - cron: "40 21 * * 1-5"
     - cron: "30 14 * * 6"                # Saturday 14:30 UTC: the weekly recap thread
     - cron: "20 13,17,21,23 * * 1-5"     # material 8-Ks (deals, CEO changes, bankruptcies …): most land after 16:00 ET
+    - cron: "5 23 * * 1-5"               # after the close: 52-week / all-time highs and lows, names off their highs, $A or $B
   workflow_dispatch:
     inputs:
       kinds:
-        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider, calendar, fund13f, weekly, event8k, ivmove, opt13f, rsleaders, reddit_hot, smart_buys, smart_record, all_agree, qtd_flows"
+        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider, calendar, fund13f, weekly, event8k, ivmove, opt13f, rsleaders, reddit_hot, smart_buys, smart_record, all_agree, qtd_flows, pt_upside, versus, drawdown, setup, lows52, highs52, near_lows, records, polymarket"
         type: string
         default: "question,list,reddit_question,reddit_list,insider,calendar,fund13f"
       dry_run:
@@ -85,7 +86,8 @@ jobs:
           site="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"
           kinds="${KINDS_INPUT:-question,list,reddit_question,reddit_list}"
           case "$EVENT_SCHEDULE" in
-            '40 12 * * 1-5') kinds=list,reddit_question,reddit_list,reddit_hot,insider,fund13f,opt13f,rsleaders,smart_buys ;;
+            '40 12 * * 1-5') kinds=list,reddit_question,reddit_list,reddit_hot,insider,fund13f,opt13f,rsleaders,smart_buys,pt_upside,polymarket ;;
+            '5 23 * * 1-5') kinds=lows52,highs52,records,near_lows,drawdown,versus ;;
             '40 21 * * 1-5') kinds=question,insider,calendar,fund13f,smart_record,all_agree ;;
             '30 14 * * 6') kinds=weekly,qtd_flows ;;
             '20 13,17,21,23 * * 1-5') kinds=event8k; [ "$(date -u +%H)" = "23" ] && kinds=event8k,ivmove ;;

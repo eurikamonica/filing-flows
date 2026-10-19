@@ -29,6 +29,16 @@ Kinds (config/engage-guide.md describes each format):
   smart_record     one official, insider or 13F manager with a strong, tested record and a trade in the last month
   all_agree        a stock every group trading it (13F managers, active ETFs, insiders, officials) net-bought this quarter
   qtd_flows        the calendar quarter so far: insiders' and officials' biggest net purchases, the early 13F filers' top add
+  pt_upside        "Wall Street rates both $A and $B a Hold — but one has 3.6x the upside" (analysts' price targets)
+  versus           "$A or $B — which would you rather have?" for two names people are watching
+  drawdown         popular names far below their 52-week highs, one "$RKLB $150 → $50" line each
+  setup            one trending stock going into the next session, in bullets (range, YTD, short interest, 8-K, analysts, Polymarket)
+  lows52 / highs52 the best-known names that hit new 52-week lows / highs in the last session
+  near_lows        profitable large companies trading near their 52-week lows, with how far they are off the high
+  records          new all-time highs (or lows) in the last session
+  polymarket       Polymarket's odds that this week's reporters beat the EPS line
+The Reddit kinds (reddit_question, reddit_list, reddit_hot) use the trending tickers only to pick names: the posts are
+normal stock posts with cashtags and never talk about Reddit.
 Each post is drafted from the guide, then polished (sharper opening, same facts), then checked (length, cashtags,
 hashtags, no advice words). Written to media/x/pending.json for pipeline/buffer.py; media/x/engage-state.json keeps
 what was posted so a company or a format is not repeated within the cooldown. Settings: config/engage.json.
@@ -109,10 +119,15 @@ def one_liner(e):
 
 
 # ------------------------------------------------------------------ writing
-def clean(post, cashtags, tags, limit=255, allowed=None, must=None, forbid=None):
+def clean(post, cashtags, tags, limit=255, allowed=None, must=None, forbid=None, lines=False):
     """must: (regex, what to say) — something the reader needs to understand the numbers, e.g. that 6→97 is an RS rating;
-    forbid: (regex, why) — wording the post may not use, e.g. a cause for a price move."""
-    post = re.sub(r"\s*\n+\s*", " ", post.strip().strip('"“”')).strip()
+    forbid: (regex, why) — wording the post may not use, e.g. a cause for a price move; lines: keep the line breaks of a
+    list post ("$RKLB $150 → $50" one per line), at most one blank line in a row."""
+    if lines:
+        post = "\n".join(x.strip() for x in post.strip().strip('"“”').splitlines())
+        post = re.sub(r"\n{3,}", "\n\n", post).strip()
+    else:
+        post = re.sub(r"\s*\n+\s*", " ", post.strip().strip('"“”')).strip()
     if must and not re.search(must[0], re.sub(r"#\w+", "", post), re.I):
         raise ValueError(must[1])
     if forbid and re.search(forbid[0], re.sub(r"#\w+", "", post), re.I):
@@ -130,7 +145,7 @@ def clean(post, cashtags, tags, limit=255, allowed=None, must=None, forbid=None)
         post = re.sub(r"(\s*#\w+)+\s*$", "", post).rstrip() + " " + " ".join(tags)
     if tweet.ADVICE.search(re.sub(r"#\w+", "", post)) or "!" in post:
         raise ValueError("advice / hype wording or exclamation mark")
-    post = tweet.fit_tags(post, social.xlen, limit)    # too long only because of the hashtags: fewer hashtags
+    post = tweet.fit_tags(post, social.xlen, limit).rstrip()    # too long only because of the hashtags: fewer hashtags
     if social.xlen(post) > limit:
         raise ValueError(f"too long ({social.xlen(post)})")
     return post
@@ -145,20 +160,21 @@ def messages(kind, task, cashtags, tags, allowed=None):
              + "\nHashtags to end with, in this order: " + " ".join(tags) + "\n\nWrite the post now."}]
 
 
-def write(kind, task, cashtags, tags, polish=True, allowed=None, must=None, forbid=None):
+def write(kind, task, cashtags, tags, polish=True, allowed=None, must=None, forbid=None, lines=False):
     msgs = messages(kind, task, cashtags, tags, allowed)
     draft = tweet.chat(msgs)
     if polish:
         msgs += [{"role": "assistant", "content": draft},
                  {"role": "user", "content": "Polish pass: keep every number, cashtag, option and hashtag exactly; sharper, more specific "
-                                             "opening; cut filler; under 250 characters. Output only the polished post."}]
+                                             "opening; cut filler; under 250 characters" + ("; keep the line breaks and one item per line" if lines else "")
+                                             + ". Output only the polished post."}]
         draft = tweet.chat(msgs)
     try:
-        return clean(draft, cashtags, tags, allowed=allowed, must=must, forbid=forbid)
+        return clean(draft, cashtags, tags, allowed=allowed, must=must, forbid=forbid, lines=lines)
     except ValueError as why:
         msgs += [{"role": "assistant", "content": draft},
                  {"role": "user", "content": f"Rewrite: {why}. Under 240 characters, every required cashtag present, ending with the hashtags."}]
-        return clean(tweet.chat(msgs), cashtags, tags, allowed=allowed, must=must, forbid=forbid)
+        return clean(tweet.chat(msgs), cashtags, tags, allowed=allowed, must=must, forbid=forbid, lines=lines)
 
 
 # ------------------------------------------------------------------ the kinds
@@ -235,36 +251,58 @@ def thread_lines(trend):
     return "\n".join(f"- r/{t['sub']}: \"{t['title']}\" ({t['score']} points, {t['comments']} comments)" for t in trend["threads"][:4])
 
 
+NO_FORUM = (r"\breddit\b|subreddit|wallstreetbets|\bWSB\b|r/\w+", "do not mention Reddit or any forum: just the stocks, their cashtags and the facts")
+
+
 def plan_reddit_question(site, rows, c, trends, by_ticker, state_ok):
+    """The company trending hardest on the investing subreddits — written as a normal post about the stock (its setup in
+    bullets when the hub has its prices, else one fact and a 2–3 option question). Reddit only picks the name."""
+    today = dt.datetime.now(dt.timezone.utc).date()
     for a in trends:
         if not state_ok("reddit_question", a["ticker"]):
             continue
+        p = plan_setup(site, rows, c, by_ticker, state_ok, today, pick=a["ticker"], kind="reddit_question")
+        if p:
+            p["forbid"] = NO_FORUM
+            return p
         e = by_ticker[a["ticker"]]
         cj, q = figures(site, e)
         if not q:
             continue
-        task = (f"{'Reddit threads behind the trend' if a.get('threads') else 'How much Reddit is talking about it (counts only — say nothing about what they say)'}:\n{thread_lines(a)}\n\nHeadline figures from ${a['ticker']}'s latest filing:\n"
-                + tweet.headline_lines(cj, q, a["ticker"]))
-        return {"kind": "reddit_question", "task": task, "cashtags": [a["ticker"]], "items": [(e, cj, q)]}
+        task = (f"A stock many investors are watching right now: ${a['ticker']}. Headline figures from its latest filing:\n"
+                + tweet.headline_lines(cj, q, a["ticker"]) + "\n\nOne striking fact, then a 2–3 option question. Do not mention where it is discussed.")
+        return {"kind": "reddit_question", "task": task, "cashtags": [a["ticker"]], "items": [(e, cj, q)], "forbid": NO_FORUM}
     return None
 
 
 def plan_reddit_list(site, rows, c, trends, by_ticker, state_ok):
-    picks = [a for a in trends if state_ok("reddit_list", a["ticker"])][:5]
+    """The 3–5 most-discussed companies as a cashtag poll with one fact each — no forum talk."""
+    picks = [a for a in trends if state_ok("reddit_list", a["ticker"])][:4]
     if len(picks) < 3:
         return None
-    lines = []
-    items = []
+    lines, items = [], []
     for a in picks:
         e = by_ticker[a["ticker"]]
-        lines.append(f"- {one_liner(e)} — Reddit: {a['threads'][0]['title'][:90]!r} ({a['score']} points+comments)" if a.get("threads")
-                     else f"- {one_liner(e)} — {a['mentions']} Reddit mentions in 24 hours (was {a.get('mentions_before', '?')})")
+        lines.append(f"- {one_liner(e)}")
         if len(items) < 4:
             cj, q = figures(site, e)
             if q:
                 items.append((e, cj, q))
-    task = "Trending on investing subreddits right now, most-discussed first:\n" + "\n".join(lines)
-    return {"kind": "reddit_list", "task": task, "cashtags": [a["ticker"] for a in picks], "items": items}
+    tks = [a["ticker"] for a in picks]
+    task = (f"{len(picks)} STOCKS INVESTORS ARE WATCHING THIS WEEK, with their latest filing:\n" + "\n".join(lines)
+            + "\n\nWrite a cashtag poll: one short line per stock with one number, then “which one are you watching?”. Line breaks. "
+              "Do not mention where they are discussed.")
+    def poll_line(e):
+        t, rev, yoy = e["ticker"], e.get("rev"), e.get("yoy")
+        return f"${t}: revenue {rev}, {yoy:+.0f}% Y/Y" if rev and isinstance(yoy, (int, float)) else f"${t}: revenue {rev}" if rev else f"${t}"
+    facts = "\n".join(poll_line(by_ticker[t]) for t in tks)
+    plain = "\n".join(f"${t}" for t in tks)
+    fbs = [f"Stocks investors are watching this week:\n\n{facts}\n\nWhich one are you watching?",
+           f"Pick one for the rest of the year:\n\n{plain}\n\nWhich one, and why?",
+           f"The most-watched names this week:\n\n{facts}\n\nWhich one would you own?"]
+    fbs = [f for f in fbs if social.xlen(f) <= 250] or [fbs[1]]
+    return {"kind": "reddit_list", "task": task, "cashtags": tks, "items": items, "forbid": NO_FORUM, "lines": True, "fallback": fbs[0],
+            "fallbacks": fbs}
 
 
 # ------------------------------------------------------------------ price moves
@@ -649,10 +687,29 @@ _HUB = {}
 
 
 def hub_json(site, name):
-    """A file of the Disclosures hub's market data, from the published site or the built folder (read once per run)."""
+    """A file of the Disclosures hub's market data, from the published site or the built folder (read once per run; a
+    file that is not there is not asked for again)."""
     key = (site.src, name)
     if key not in _HUB:
-        _HUB[key] = _hub_json(site, name)
+        try:
+            _HUB[key] = _hub_json(site, name)
+        except Exception as err:
+            _HUB[key] = err
+    if isinstance(_HUB[key], Exception):
+        raise _HUB[key]
+    return _HUB[key]
+
+
+def hub_cached(site, rel):
+    """hub_file, read once per run (the training corpus plans dozens of posts from the same files)."""
+    key = (site.src, "file:" + rel)
+    if key not in _HUB:
+        try:
+            _HUB[key] = hub_file(site, rel)
+        except Exception as err:
+            _HUB[key] = err
+    if isinstance(_HUB[key], Exception):
+        raise _HUB[key]
     return _HUB[key]
 
 
@@ -1116,7 +1173,9 @@ def event_tags(code, label, profile=None, key=""):
 
 KIND_TAGS = {"event8k": "8k", "fund13f": "13f", "fund13f_for": "13f", "insider": "insider", "movers": "movers", "official": "congress",
              "stake": "stake", "form144": "form144", "short": "short", "news": "news", "reddit_hot": "reddit", "smart_buys": "smart",
-             "smart_record": "smart", "all_agree": "flows", "qtd_flows": "flows"}
+             "smart_record": "smart", "all_agree": "flows", "qtd_flows": "flows", "pt_upside": "analysts", "versus": "versus",
+             "drawdown": "drawdown", "setup": "setup", "lows52": "lows", "highs52": "highs", "near_lows": "lows", "records": "highs",
+             "polymarket": "polymarket"}
 
 
 ABBR = re.compile(r"\b(?:Inc|Ltd|Corp|Co|LLC|L\.P|LP|No|Nos|U\.S|Mr|Ms|Dr|St|Jr|S\.A|N\.V|plc)\.$")
@@ -1494,37 +1553,33 @@ def smart_context(site, tk):
 
 
 def plan_reddit_hot(site, rows, c, by_ticker, state_ok, today):
-    """Reddit's hottest stock right now as a cashtag, against what insiders, 13F managers and officials are doing in it."""
-    try:
-        d = hub_file(site, "market/reddit.json")
-    except Exception as err:
-        print(f"reddit_hot: no Reddit scan published ({str(err)[:100]})")
-        return None
-    pick = next((r for r in (d.get("rows") or [])[:5] if state_ok("reddit_hot", _tk(r["ticker"]), hours=72)), None)
-    if not pick:
-        print("reddit_hot: the top names were all posted within three days")
-        return None
-    tk = _tk(pick["ticker"])
-    n, ctx = smart_context(site, tk)
-    e = by_ticker.get(tk)
-    cj, fq = figures(site, e) if e else (None, None)
-    th = (pick.get("threads") or [])[:3]
-    talk = ("\n".join(f"- r/{t['sub']}: \"{t['title'][:110]}\" ({t['score']} upvotes, {t['comments']} comments)" for t in th) if th
-            else f"- named in {pick.get('mentions')} threads in 24 hours (counts from ApeWisdom; no thread titles)")
-    m, m0 = pick.get("mentions"), pick.get("mentions_prev")
-    task = (f"REDDIT'S HOTTEST STOCK RIGHT NOW (hot and new threads on r/wallstreetbets, r/stocks, r/investing, r/options …, "
-            f"weighted by upvotes, comments and freshness): ${tk}" + (f" — {m} threads in the last 24 hours (the day before: {m0})" if m is not None else "")
-            + f".\n{talk}\n\nWHAT THE DISCLOSED MONEY IS DOING IN ${tk} (SEC and congressional filings):\n" + (ctx or "No 13F manager, ETF, insider or official has traded it in the current windows.")
-            + (f"\n\nLatest filing figures:\n{tweet.headline_lines(cj, fq, tk)}" if fq else "\n\nNo chart is attached; do not mention one.")
-            + "\n\nOpen with Reddit's hottest stock and the cashtag, then contrast the crowd with the filings in one sentence. Say "
-              "“score” with its −100 to +100 scale if you give it. Never say what the stock will do; ask whether the hype and the filings agree.")
-    fb = (f"Reddit's hottest stock right now: ${tk}" + (f" ({m} threads in 24h, {m0} the day before)" if m is not None else "") + ". "
-          + (f"The filings: smart-money score {signed(n['S'])} of ±100 from {n['n']} disclosed trades, weighted by each trader's record. "
-             if n else "No insider, 13F manager or official has traded it lately. ")
-          + "Do the crowd and the filings agree?")
-    return {"kind": "reddit_hot", "task": task, "cashtags": [tk], "items": [(e, cj, fq)] if fq else [], "fallback": fb,
-            "must": (r"reddit", "say it is Reddit's hottest / most-discussed stock right now"),
-            "source_reply": (f"The threads: {th[0]['url']}" if th else ""), "tags": H.pick("reddit", e, key=f"reddit_hot:{tk}:{today}")}
+    """The most-discussed stock right now (the hub's half-hourly Reddit scan picks it) as a setup post: where it trades,
+    the year so far, short interest, filings, analysts, Polymarket and the smart money — the post never mentions Reddit."""
+    hot = [t for t in trending(site)[:5] if state_ok("reddit_hot", t, hours=72)]
+    for t in hot:
+        p = plan_setup(site, rows, c, by_ticker, state_ok, today, pick=t, kind="reddit_hot")
+        if p:
+            p["forbid"] = NO_FORUM
+            return p
+    for tk in hot:                         # no price data for a setup: what the disclosed money is doing in it
+        n, ctx = smart_context(site, tk)
+        e = by_ticker.get(tk)
+        cj, fq = figures(site, e) if e else (None, None)
+        if not n and not fq:
+            continue
+        task = (f"A STOCK MANY INVESTORS ARE WATCHING RIGHT NOW: ${tk}.\n\nWHAT THE DISCLOSED MONEY IS DOING IN ${tk} (SEC and congressional "
+                f"filings):\n" + (ctx or "No 13F manager, ETF, insider or official has traded it in the current windows.")
+                + (f"\n\nLatest filing figures:\n{tweet.headline_lines(cj, fq, tk)}" if fq else "\n\nNo chart is attached; do not mention one.")
+                + "\n\nOpen with the cashtag, then what the filings show in one sentence. Say “score” with its −100 to +100 scale if you "
+                  "give it. Do not mention where it is discussed; never say what the stock will do; ask whether the attention and the filings agree.")
+        fb = (f"${tk} is on a lot of watchlists right now. "
+              + (f"The filings: smart-money score {signed(n['S'])} of ±100 from {n['n']} disclosed trades, weighted by each trader's record. "
+                 if n else "No insider, 13F manager or official has traded it lately. ")
+              + "Do the attention and the filings agree?")
+        return {"kind": "reddit_hot", "task": task, "cashtags": [tk], "items": [(e, cj, fq)] if fq else [], "fallback": fb, "forbid": NO_FORUM,
+                "tags": H.pick("reddit", e, key=f"reddit_hot:{tk}:{today}")}
+    print("reddit_hot: no trending name with enough data, or all posted within three days")
+    return None
 
 
 def plan_smart_buys(site, rows, c, by_ticker, state_ok, today):
@@ -1699,6 +1754,379 @@ def plan_qtd_flows(site, rows, c, by_ticker, state_ok, today):
             "items": items, "fallback": fb, "tags": H.pick("flows", items[0][0] if items else None, key=f"qtd_flows:{today}")}
 
 
+# ------------------------------------------------------------------ market posts: analysts, Polymarket, 52-week and all-time highs / lows
+# The formats that travel on X: two stocks side by side ("$A or $B?"), the same Wall Street rating with very different
+# price-target upside, how far the popular names sit below their highs, one stock's setup in bullets, the day's new
+# 52-week lows / highs, quality names near their lows, all-time highs / lows, Polymarket's earnings odds. Sources: the
+# hub's consensus (analysts + Polymarket / Kalshi, data/consensus/index.json), highs and lows (data/market/extremes.json,
+# disclosures/app/extremes.py), short interest, 8-Ks, news, Reddit's trending tickers (used for the picks only — the posts
+# never talk about Reddit), the smart-money score. Each plan carries "fallbacks": several rule-written phrasings, the first
+# used when no model answers and all of them as training targets for the local models (pipeline/corpus.py).
+SUFFIX_RE = re.compile(r"(,?\s+(Inc|Incorporated|Corp|Corporation|Co|Company|Companies|Ltd|Limited|plc|PLC|Holdings?|Group|N\.?V|S\.?A|AG|SE|"
+                       r"L\.?P|LLC|Class [A-C]|Common Stock|\(The\))\.?)+$", re.I)
+
+
+def short_name(name, tk=""):
+    """"McDONALD'S CORP" → "McDonald's"; "Bank of America Corporation" → "Bank of America"."""
+    n = social.display_name((name or tk).strip())
+    n = re.sub(r"\s*/[A-Z]{2,}/?$", "", n)
+    for _ in range(3):
+        n = SUFFIX_RE.sub("", n).strip(" ,.")
+    return n or tk
+
+
+def px_fmt(v):
+    return f"${v:,.0f}" if v >= 20 else f"${v:,.2f}"
+
+
+def pct_fmt(v, d=0):
+    return f"{'+' if v > 0 else '−' if v < 0 else ''}{abs(v) * 100:.{d}f}%"
+
+
+def eps_fmt(v):
+    """EPS as written in a post: $1.15, −$0.08."""
+    return "n/a" if v is None else f"{'−' if v < 0 else ''}${abs(v):,.2f}"
+
+
+def hub_market(site, name):
+    try:
+        return hub_json(site, name)
+    except Exception as err:
+        print(f"market posts: {name} not available ({str(err)[:90]})")
+        return None
+
+
+def extremes(site):
+    """{ticker: row} of the day's highs and lows (data/market/extremes.json) and the file itself."""
+    d = hub_market(site, "extremes.json")
+    if not d:
+        return {}, {}
+    F = d["fields"]
+    return {_tk(r[0]): dict(zip(F, r)) for r in d.get("rows") or []}, d
+
+
+def consensus(site):
+    try:
+        d = hub_cached(site, "consensus/index.json")
+    except Exception as err:
+        print(f"market posts: consensus not available ({str(err)[:90]})")
+        return {}
+    F = d["fields"]
+    return {_tk(r[F.index("ticker")]): dict(zip(F, r)) for r in d.get("rows") or [] if r[F.index("ticker")]}
+
+
+def trending(site):
+    """Reddit's trending tickers right now (the hub's half-hourly scan) — used to pick names, never mentioned."""
+    try:
+        return [_tk(r["ticker"]) for r in hub_cached(site, "market/reddit.json").get("rows") or []]
+    except Exception:
+        return []
+
+
+def rating_word(m):
+    if m is None:
+        return None
+    return "Hold" if 2.6 <= m <= 3.4 else "Underperform" if m > 3.4 else None    # "Buy" ratings cannot be quoted (no advice words)
+
+
+def popular(site, by_ticker, ext, cons, limit=60):
+    """The names people follow: Reddit's trending tickers first, then the most traded stocks the site and the hub know."""
+    seen, out = set(), []
+    for t in trending(site) + sorted(ext, key=lambda t: -(ext[t].get("dollar_vol") or 0)):
+        if t in seen or t not in ext:
+            continue
+        seen.add(t)
+        out.append(t)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _chart(site, by_ticker, tk):
+    e = by_ticker.get(tk)
+    if not e:
+        return None
+    cj, fq = figures(site, e)
+    return (e, cj, fq) if fq else None
+
+
+def _items(site, by_ticker, tks, n=4):
+    out = []
+    for t in tks:
+        x = _chart(site, by_ticker, t)
+        if x:
+            out.append(x)
+        if len(out) >= n:
+            break
+    return out
+
+
+def _name(t, ext, cons):
+    return short_name((cons.get(t) or {}).get("name") or (ext.get(t) or {}).get("name") or t, t)
+
+
+def plan_pt_upside(site, rows, c, by_ticker, state_ok, today):
+    """Wall Street rates both a Hold — but one has several times the price-target upside."""
+    cons = consensus(site)
+    ext, _ = extremes(site)
+    pop = set(popular(site, by_ticker, ext, cons, 120)) | set(by_ticker)
+    cands = []
+    for t, r in cons.items():
+        px, tg, rm = r.get("price"), r.get("target_mean"), r.get("rating_mean")
+        if t not in pop or not px or not tg or rating_word(rm) != "Hold" or (r.get("eps_q_n") or 0) < 4:
+            continue
+        up = tg / px - 1
+        if 0.03 <= up <= 1.5:
+            cands.append((up, t, r))
+    cands.sort()
+    best = None
+    for hi_up, hb, rb in reversed(cands):
+        if not state_ok("pt_upside", hb, hours=24 * 14):
+            continue
+        for lo_up, ha, ra in cands:
+            if ha == hb or hi_up / lo_up < 2.5 or not state_ok("pt_upside", ha, hours=24 * 14):
+                continue
+            best = (ha, ra, lo_up, hb, rb, hi_up)
+            break
+        if best:
+            break
+    if not best:
+        print("pt_upside: no pair of Hold-rated names with very different upside")
+        return None
+    a, ra, ua, b, rb, ub = best
+    ratio = ub / ua
+    lines = f"${a} → PT ${ra['target_mean']:,.2f} ({pct_fmt(ua)})\n${b} → PT ${rb['target_mean']:,.2f} ({pct_fmt(ub)})"
+    task = (f"ANALYSTS' CONSENSUS (Yahoo Finance): both rated Hold on average (${a} {ra['rating_mean']:.1f}, ${b} {rb['rating_mean']:.1f} on the "
+            f"1–5 scale, 1 the most positive; write only “Hold”).\n- ${a}: price ${ra['price']:,.2f}, mean price target ${ra['target_mean']:,.2f} = {pct_fmt(ua)} upside\n"
+            f"- ${b}: price ${rb['price']:,.2f}, mean price target ${rb['target_mean']:,.2f} = {pct_fmt(ub)} upside\n- {b}'s upside is {ratio:.1f}x {a}'s.\n\n"
+            "Format with line breaks: one line that both are rated Hold, one line on the gap, the two “$TICKER → PT $X (+Y%)” lines, "
+            "then a question (is the market missing one, or is the other the safer bet?). Never say which to own.")
+    f1 = f"Wall Street rates both ${a} and ${b} a Hold.\n\nBut one has {ratio:.1f}x the upside.\n\n{lines}\n\nIs the market sleeping on ${b}, or is ${a} the safer bet?"
+    f2 = f"Same rating, very different upside. Analysts call ${a} and ${b} a Hold, yet:\n\n{lines}\n\nWhich target is wrong?"
+    f3 = f"${a} and ${b}: both a consensus Hold.\n\n{lines}\n\n{ratio:.1f}x the upside for ${b}. What does Wall Street see that the market doesn't?"
+    return {"kind": "pt_upside", "task": task, "cashtags": [a, b], "items": _items(site, by_ticker, [a, b], 2), "fallback": f1,
+            "fallbacks": [f1, f2, f3], "lines": True, "tags": H.pick("analysts", (_chart(site, by_ticker, a) or [None])[0], key=f"pt:{a}:{b}")}
+
+
+def plan_versus(site, rows, c, by_ticker, state_ok, today):
+    """“$A or $B — which would you rather have?” for two names people are watching, with one fact each."""
+    cons = consensus(site)
+    ext, _ = extremes(site)
+    pop = [t for t in popular(site, by_ticker, ext, cons, 40) if state_ok("versus", t, hours=24 * 7)]
+    if len(pop) < 2:
+        return None
+    a = pop[0]
+    ya = ext[a].get("ytd")
+    b = next((t for t in pop[1:12] if ya is not None and ext[t].get("ytd") is not None and (ext[t]["ytd"] > 0) != (ya > 0)), pop[1])
+    def fact(t):
+        r, k = ext[t], cons.get(t) or {}
+        bits = [f"{pct_fmt(r['ytd'])} this year" if r.get("ytd") is not None else None,
+                f"{pct_fmt(r['from_hi'])} from its 52-week high" if r.get("from_hi") is not None and r["from_hi"] <= -0.1 else None,
+                f"analysts' target {pct_fmt(k['target_mean'] / k['price'] - 1)} away" if k.get("target_mean") and k.get("price") else None]
+        return [x for x in bits if x]
+    fa, fb = fact(a), fact(b)
+    task = (f"TWO STOCKS PEOPLE ARE WATCHING:\n- ${a} ({_name(a, ext, cons)}): price {px_fmt(ext[a]['close'])}; " + "; ".join(fa) +
+            f"\n- ${b} ({_name(b, ext, cons)}): price {px_fmt(ext[b]['close'])}; " + "; ".join(fb) +
+            "\n\nWrite a short either/or post: “$A or $B — which would you rather have?” style, optionally one fact each. Never say which to own.")
+    f1 = f"${a} or ${b} what stock would you rather have?"
+    f2 = f"${a} ({fa[0]}) or ${b} ({fb[0]}) — which one would you rather own for the next year?" if fa and fb else f"${a} or ${b}? Pick one for the next 12 months."
+    f3 = f"One stock for the next 12 months: ${a} or ${b}?"
+    return {"kind": "versus", "task": task, "cashtags": [a, b], "items": _items(site, by_ticker, [a, b], 2), "fallback": f1,
+            "fallbacks": [f1, f2, f3], "tags": H.pick("versus", (_chart(site, by_ticker, a) or [None])[0], key=f"vs:{a}:{b}")}
+
+
+def plan_drawdown(site, rows, c, by_ticker, state_ok, today):
+    """The popular names far below their 52-week highs: “$RKLB $150 → $50”."""
+    cons = consensus(site)
+    ext, _ = extremes(site)
+    pop = popular(site, by_ticker, ext, cons, 80)
+    picks = [t for t in pop if (ext[t].get("from_hi") or 0) <= -0.35 and ext[t].get("hi52") and state_ok("drawdown", t, hours=24 * 10)][:6]
+    if len(picks) < 4:
+        print("drawdown: fewer than four popular names 35%+ below their highs")
+        return None
+    lines = "\n".join(f"${t} {px_fmt(ext[t]['hi52'])} → {px_fmt(ext[t]['close'])}" for t in picks)
+    task = ("POPULAR STOCKS FAR BELOW THEIR 52-WEEK HIGHS (52-week high → last close):\n"
+            + "\n".join(f"- ${t} ({_name(t, ext, cons)}): high {px_fmt(ext[t]['hi52'])} on {ext[t].get('peak_date')}, now {px_fmt(ext[t]['close'])} "
+                        f"({pct_fmt(ext[t]['from_hi'])})" for t in picks)
+            + "\n\nFormat with line breaks: a short hook, then one “$TICKER $high → $now” line per stock, then a closing line or question. "
+              "No advice, no prediction.")
+    f1 = f"Remember the highs?\n\n{lines}\n\nWhich one gets back there first?"
+    f2 = f"From their 52-week highs:\n\n{lines}\n\nBuying the dip is easy when there's no dip, right?"
+    f3 = f"52-week high → today:\n\n{lines}\n\nWhich of these is the opportunity, and which is the trap?"
+    return {"kind": "drawdown", "task": task, "cashtags": picks[:2], "allowed": picks, "items": _items(site, by_ticker, picks),
+            "fallback": f1, "fallbacks": [f1, f2, f3], "lines": True,
+            "tags": H.pick("drawdown", None, key="drawdown:" + ",".join(picks))}
+
+
+def _list_post(kind, site, rows, by_ticker, state_ok, tks, head, ext, cons, fmt_line, closing, tag, n=8):
+    picks = [t for t in tks if state_ok(kind, t, hours=24 * 5)][:n]
+    if len(picks) < 4:
+        print(f"{kind}: fewer than four names")
+        return None
+    def body(k):
+        return "\n".join(fmt_line(t) for t in picks[:k])
+    tags = H.pick(tag, None, key=f"{kind}:" + ",".join(picks))
+    room = 250 - social.xlen(" " + " ".join(tags))          # the hashtags stay
+    k = len(picks)
+    while k > 4 and social.xlen(f"{head}\n\n{body(k)}\n\n{max(closing, key=len)}") > room:
+        k -= 1
+    picks = picks[:k]
+    task = (f"{head.upper()}:\n" + "\n".join(f"- {fmt_line(t)} · close {px_fmt(ext[t]['close'])}, {pct_fmt(ext[t]['from_hi'])} from the 52-week high, "
+                                             f"YTD {pct_fmt(ext[t]['ytd']) if ext[t].get('ytd') is not None else 'n/a'}" for t in picks)
+            + "\n\nFormat with line breaks: the headline line, one line per stock exactly as listed (name and cashtag), then one short closing question.")
+    fbs = [f"{head}\n\n{body(k)}\n\n{q}" for q in closing]
+    return {"kind": kind, "task": task, "cashtags": picks[:2], "allowed": picks, "items": _items(site, by_ticker, picks),
+            "fallback": fbs[0], "fallbacks": fbs, "lines": True, "tags": tags}
+
+
+def plan_lows52(site, rows, c, by_ticker, state_ok, today):
+    """“All these stocks hit new 52-week lows today”: the best-known names that did."""
+    ext, d = extremes(site)
+    cons = consensus(site)
+    if not d or d.get("asof", "") < (today - dt.timedelta(days=3)).isoformat():
+        return None
+    known = [t for t in (d.get("new_lows") or []) if t in by_ticker or t in cons]
+    return _list_post("lows52", site, rows, by_ticker, state_ok, known, f"All these stocks hit new 52-week lows on {_day(d['asof'])}", ext, cons,
+                      lambda t: f"{_name(t, ext, cons)} ${t}", ["Which one is a bargain, and which one is a value trap?", "Any of these on your list?"], "lows")
+
+
+def plan_highs52(site, rows, c, by_ticker, state_ok, today):
+    """The best-known names at new 52-week highs."""
+    ext, d = extremes(site)
+    cons = consensus(site)
+    if not d or d.get("asof", "") < (today - dt.timedelta(days=3)).isoformat():
+        return None
+    known = [t for t in (d.get("new_highs") or []) if t in by_ticker or t in cons]
+    return _list_post("highs52", site, rows, by_ticker, state_ok, known, f"New 52-week highs on {_day(d['asof'])}", ext, cons,
+                      lambda t: f"{_name(t, ext, cons)} ${t} {pct_fmt(ext[t]['ytd']) if ext[t].get('ytd') is not None else ''} YTD".replace("  ", " "),
+                      ["Which one still has room?", "Momentum or exhaustion?"], "highs")
+
+
+def plan_near_lows(site, rows, c, by_ticker, state_ok, today):
+    """Quality companies (profitable, large) trading near their 52-week lows, with how far they are off the high."""
+    ext, d = extremes(site)
+    cons = consensus(site)
+    qual = [t for t, e in by_ticker.items() if t in ext and isinstance(e.get("om"), (int, float)) and e["om"] >= 10
+            and (e.get("revenue") or 0) >= 1e9 and (ext[t].get("from_lo") or 9) <= 0.08 and (ext[t].get("from_hi") or 0) <= -0.15]
+    qual.sort(key=lambda t: ext[t]["from_hi"])
+    return _list_post("near_lows", site, rows, by_ticker, state_ok, qual, "Quality stocks trading near their 52-week lows", ext, cons,
+                      lambda t: f"{_name(t, ext, cons)} ${t}: {pct_fmt(ext[t]['from_hi'])}",
+                      ["Which one would you look at first?", "Opportunity or trap?"], "lows")
+
+
+def plan_records(site, rows, c, by_ticker, state_ok, today):
+    """All-time highs (or lows) set in the last session."""
+    ext, d = extremes(site)
+    cons = consensus(site)
+    if not d or d.get("asof", "") < (today - dt.timedelta(days=3)).isoformat():
+        return None
+    ath = [t for t in d.get("ath") or [] if t in by_ticker or t in cons]
+    atl = [t for t in d.get("atl") or [] if t in by_ticker or t in cons]
+    if len(ath) >= 4:
+        return _list_post("records", site, rows, by_ticker, state_ok, ath, f"New all-time highs on {_day(d['asof'])}", ext, cons,
+                          lambda t: f"{_name(t, ext, cons)} ${t} {px_fmt(ext[t]['day_hi'])}", ["Which one is next?", "Still early, or late?"], "highs")
+    if len(atl) >= 4:
+        return _list_post("records", site, rows, by_ticker, state_ok, atl, f"New all-time lows on {_day(d['asof'])}", ext, cons,
+                          lambda t: f"{_name(t, ext, cons)} ${t} {px_fmt(ext[t]['day_lo'])}", ["Is there a floor anywhere here?", "Bottom, or more to come?"], "lows")
+    print("records: fewer than four known names at an all-time high or low")
+    return None
+
+
+def plan_setup(site, rows, c, by_ticker, state_ok, today, pick=None, kind="setup"):
+    """One stock's setup going into the next session, in bullets: where it trades against its range, the year so far,
+    short interest, the latest filing or release, analysts, Polymarket, the smart money."""
+    ext, _ = extremes(site)
+    cons = consensus(site)
+    cands = ([pick] if pick else []) + [t for t in trending(site)[:10] if t in ext]
+    tk = next((t for t in cands if t and t in ext and state_ok(kind, t, hours=72)), None)
+    if not tk:
+        print(f"{kind}: no trending name with price data")
+        return None
+    r, k = ext[tk], cons.get(tk) or {}
+    facts = []
+    if r.get("from_lo") is not None and r["from_lo"] <= 0.1:
+        facts.append(("lo", f"Trading near its 52-week low, around {px_fmt(r['close'])}"))
+    elif r.get("from_hi") is not None and r["from_hi"] >= -0.05:
+        facts.append(("hi", f"Trading near its 52-week high, around {px_fmt(r['close'])}"))
+    elif r.get("from_hi") is not None:
+        facts.append(("hi", f"{pct_fmt(r['from_hi'])} from its 52-week high of {px_fmt(r['hi52'])}"))
+    if r.get("ytd") is not None:
+        facts.append(("ytd", f"{'Up' if r['ytd'] > 0 else 'Down'} roughly {abs(r['ytd']) * 100:.0f}% YTD"))
+    si = hub_market(site, "short-interest.json") or {}
+    srow = next((x for x in si.get("rows") or [] if _tk(x.get("ticker")) == tk), None)
+    if srow and srow.get("dtc"):
+        facts.append(("si", f"Short interest {srow['dtc']:.1f} days to cover" + (f" ({'+' if srow['change_pct'] > 0 else '−'}{abs(srow['change_pct']):.0f}% since mid-month)"
+                                                                                  if srow.get("change_pct") else "")))
+    if k.get("pm_beat_prob") is not None and k.get("pm_report_date"):
+        facts.append(("pm", f"Polymarket: {k['pm_beat_prob'] * 100:.0f}% odds it beats EPS on {_day(k['pm_report_date'])}"))
+    elif k.get("next_earnings"):
+        facts.append(("er", f"Reports earnings {_day(k['next_earnings'])}"))
+    if k.get("target_mean") and k.get("price"):
+        facts.append(("pt", f"Analysts' target ${k['target_mean']:,.2f} ({pct_fmt(k['target_mean'] / k['price'] - 1)})"))
+    ev = hub_market(site, "events8k.json") or {}
+    e8 = next((x for x in ev.get("rows") or [] if _tk(x.get("ticker")) == tk and (x.get("filed") or "") >= (today - dt.timedelta(days=30)).isoformat()), None)
+    if e8:
+        facts.append(("8k", f"8-K filed {_day(e8['filed'])}: {event_label(e8.get('code'), e8.get('quote'))}"))
+    n, _ = smart_context(site, tk)
+    if n and n.get("S") is not None and abs(n["S"]) >= 30:
+        facts.append(("sm", f"Smart-money score {signed(n['S'])} of ±100 (insiders, 13F, officials, weighted by record)"))
+    if len(facts) < 3:
+        print(f"{kind}: too little on {tk}")
+        return None
+    day = next_trading_day(today).strftime("%A")
+    tags = H.pick("setup", (_chart(site, by_ticker, tk) or [None])[0], key=f"{kind}:{tk}:{today}")
+    room = 250 - social.xlen(" " + " ".join(tags))          # the hashtags stay
+    task = (f"${tk} ({_name(tk, ext, cons)}) GOING INTO {day.upper()} — the facts (use only these):\n" + "\n".join(f"- {f}" for _, f in facts)
+            + "\n\nFormat: first line “$TICKER going into <day>”, then 3–5 bullet lines starting with “• ”, then one short closing line "
+              "that frames the tension (no prediction, no advice).")
+    def fb(intro, close, nb):
+        body = "\n".join("• " + f for _, f in facts[:nb])
+        txt = f"{intro}\n\n{body}\n\n{close}"
+        while social.xlen(txt) > room and nb > 2:
+            nb -= 1
+            body = "\n".join("• " + f for _, f in facts[:nb])
+            txt = f"{intro}\n\n{body}\n\n{close}"
+        return txt
+    f1 = fb(f"${tk} going into {day}", "What's your read?", 5)
+    f2 = fb(f"${tk} into {day}:", "Setup or trap?", 4)
+    f3 = fb(f"Watching ${tk} into {day}", "Where does it go from here?", 3)
+    return {"kind": kind, "task": task, "cashtags": [tk], "items": _items(site, by_ticker, [tk], 1), "fallback": f1, "fallbacks": [f1, f2, f3],
+            "lines": True, "tags": tags}
+
+
+def plan_polymarket(site, rows, c, by_ticker, state_ok, today):
+    """Polymarket's odds that the companies reporting this week beat the EPS line."""
+    cons = consensus(site)
+    soon = (today + dt.timedelta(days=7)).isoformat()
+    rows_ = [(t, r) for t, r in cons.items() if r.get("pm_beat_prob") is not None and r.get("pm_report_date")
+             and today.isoformat() <= r["pm_report_date"] <= soon and state_ok("polymarket", t, hours=24 * 5)]
+    rows_.sort(key=lambda x: (x[0] not in by_ticker, x[1]["pm_report_date"], -(x[1]["poly_markets"] or 0)))
+    if not rows_:
+        print("polymarket: no Polymarket earnings market this week")
+        return None
+    if len(rows_) >= 3:
+        picks = rows_[:5]
+        lines = "\n".join(f"${t} {_day(r['pm_report_date'])}: {r['pm_beat_prob'] * 100:.0f}%" for t, r in picks)
+        task = ("POLYMARKET — the crowd's odds that each company beats the EPS line it set, for the companies reporting this week:\n"
+                + "\n".join(f"- ${t} reports {r['pm_report_date']}: {r['pm_beat_prob'] * 100:.0f}% chance of beating EPS {eps_fmt(r['pm_eps_strike'])}; analysts expect "
+                            f"{eps_fmt(r['eps_q'])} ({r['eps_q_n']} estimates)" + (f"; beat {r['beat_rate'] * 100:.0f}% of its last 8 reports" if r.get("beat_rate") is not None else "")
+                            for t, r in picks)
+                + "\n\nFormat with line breaks: a headline line, one “$TICKER day: NN%” line each, then a question (which one surprises?).")
+        f1 = f"Polymarket odds of an earnings beat this week:\n\n{lines}\n\nWhich one surprises the crowd?"
+        f2 = f"Earnings this week. Polymarket's chance of a beat:\n\n{lines}\n\nWho's the crowd wrong about?"
+        tks = [t for t, _ in picks]
+        return {"kind": "polymarket", "task": task, "cashtags": tks[:2], "allowed": tks, "items": _items(site, by_ticker, tks), "fallback": f1,
+                "fallbacks": [f1, f2], "lines": True, "tags": H.pick("polymarket", None, key="poly:" + ",".join(tks))}
+    t, r = rows_[0]
+    br = f" It beat {r['beat_rate'] * 100:.0f}% of its last 8 reports." if r.get("beat_rate") is not None else ""
+    task = (f"POLYMARKET: {r['pm_beat_prob'] * 100:.0f}% chance ${t} beats EPS of {eps_fmt(r['pm_eps_strike'])} when it reports on {r['pm_report_date']}. "
+            + (f"Analysts expect {eps_fmt(r['eps_q'])} ({r['eps_q_n']} estimates)." if r.get("eps_q") is not None else "") + f"{br}\n\nOne post: the odds, the line, the analysts, one question.")
+    f1 = f"Polymarket gives ${t} a {r['pm_beat_prob'] * 100:.0f}% chance of beating EPS {eps_fmt(r['pm_eps_strike'])} on {_day(r['pm_report_date'])}." + (f" Analysts expect {eps_fmt(r['eps_q'])}." if r.get("eps_q") is not None else "") + f"{br} Too high or too low?"
+    f2 = f"${t} reports {_day(r['pm_report_date'])}. The crowd on Polymarket: {r['pm_beat_prob'] * 100:.0f}% it beats {eps_fmt(r['pm_eps_strike'])}. Do you take the over?"
+    return {"kind": "polymarket", "task": task, "cashtags": [t], "items": _items(site, by_ticker, [t], 1), "fallback": f1, "fallbacks": [f1, f2],
+            "tags": H.pick("polymarket", (_chart(site, by_ticker, t) or [None])[0], key=f"poly:{t}")}
+
+
 # ------------------------------------------------------------------ main
 def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_only=False, target=None, draft=False):
     """Plan, write, polish and check the posts of these kinds; draw the charts into media/x/ and append to
@@ -1777,6 +2205,15 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
              "smart_record": lambda: plan_smart_record(site, rows, c, by_ticker, state_ok, today),
              "all_agree": lambda: plan_all_agree(site, rows, c, by_ticker, state_ok, today),
              "qtd_flows": lambda: plan_qtd_flows(site, rows, c, by_ticker, state_ok, today),
+             "pt_upside": lambda: plan_pt_upside(site, rows, c, by_ticker, state_ok, today),
+             "versus": lambda: plan_versus(site, rows, c, by_ticker, state_ok, today),
+             "drawdown": lambda: plan_drawdown(site, rows, c, by_ticker, state_ok, today),
+             "setup": lambda: plan_setup(site, rows, c, by_ticker, state_ok, today),
+             "lows52": lambda: plan_lows52(site, rows, c, by_ticker, state_ok, today),
+             "highs52": lambda: plan_highs52(site, rows, c, by_ticker, state_ok, today),
+             "near_lows": lambda: plan_near_lows(site, rows, c, by_ticker, state_ok, today),
+             "records": lambda: plan_records(site, rows, c, by_ticker, state_ok, today),
+             "polymarket": lambda: plan_polymarket(site, rows, c, by_ticker, state_ok, today),
              "filing8k": lambda: plan_filing8k(site, rows, target or {}, today),
              "fund13f_for": lambda: plan_fund13f_for(site, rows, by_ticker, target or {}),
              "insider_for": lambda: plan_insider_for(site, rows, by_ticker, target or {}, today),
@@ -1800,12 +2237,13 @@ def make(kinds, site, site_url, media, assets, dry_run=False, force=False, plan_
         tags = p.get("tags") or H.pick(KIND_TAGS.get(p["kind"], "earnings"), e0, key=f"{p['kind']}:" + ",".join(p["cashtags"]))
         try:
             post = write(p["kind"], p["task"], p["cashtags"], tags, polish=c.get("polish", True), allowed=p.get("allowed"), must=p.get("must"),
-                         forbid=p.get("forbid"))
+                         forbid=p.get("forbid"), lines=p.get("lines", False))
         except Exception as err:
             post = None
             if p.get("fallback"):                  # the model is down: a plain rule-based post with the same facts
                 try:
-                    post = clean(p["fallback"], p["cashtags"], tags, allowed=p.get("allowed"), must=p.get("must"), forbid=p.get("forbid"))
+                    post = clean(p["fallback"], p["cashtags"], tags, allowed=p.get("allowed"), must=p.get("must"), forbid=p.get("forbid"),
+                                 lines=p.get("lines", False))
                     print(f"::warning::{p['kind']}: model unavailable, rule-based post used ({str(err)[:160]})")
                 except ValueError as why:
                     print(f"::warning::{p['kind']}: rule-based post not usable ({why})")

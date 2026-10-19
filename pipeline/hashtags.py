@@ -40,7 +40,14 @@ KINDS = {
     "capital": ["#buybacks", "#dividends"],
     "smart": ["#SmartMoney", "#13F", "#InsiderBuying"],                     # smart-money scores and track records
     "flows": ["#SmartMoney", "#Form4", "#CongressTrades"],                   # every group side by side (All flows)
-    "reddit": ["#wallstreetbets", "#Reddit", "#StocksToWatch"],              # Reddit's hottest stock
+    "reddit": ["#StocksToWatch", "#trading"],                                 # the most-discussed stock (picked from Reddit, never said)
+    "analysts": ["#PriceTarget", "#WallStreet", "#StocksToWatch"],          # analysts' ratings and targets
+    "versus": ["#StocksToWatch", "#investing"],                             # "$A or $B?"
+    "drawdown": ["#BuyTheDip", "#StocksToWatch"],                           # far below the highs
+    "setup": ["#StocksToWatch", "#trading"],                                # one stock's setup in bullets
+    "lows": ["#52WeekLow", "#StocksToWatch"],                               # 52-week / all-time lows
+    "highs": ["#AllTimeHigh", "#52WeekHigh", "#momentum"],                  # 52-week / all-time highs
+    "polymarket": ["#Polymarket", "#earnings", "#PredictionMarkets"],       # prediction-market odds
 }
 GENERAL = ["#stocks", "#investing", "#StockMarket", "#markets", "#investors", "#finance"]
 # more general tags the owner page offers to pick from ("X posts"); any other tag can be typed in

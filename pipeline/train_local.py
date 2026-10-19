@@ -36,7 +36,8 @@ TARGETS = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down
 
 
 def held_out(ex):
-    return int(hashlib.sha1(str(ex.get("cik")).encode()).hexdigest(), 16) % 10 == 0
+    """One company in ten never trained on (the market posts: one lead stock in ten, "hold")."""
+    return int(hashlib.sha1(str(ex.get("hold") or ex.get("cik")).encode()).hexdigest(), 16) % 10 == 0
 
 
 def read_jsonl(path):
@@ -51,7 +52,8 @@ def grade(ex, post):
     """(published?, why not) for one generated post."""
     try:
         if ex["check"] == "engage":
-            post = engage.clean(post, ex["cashtags"], ex["tags"])
+            post = engage.clean(post, ex["cashtags"], ex["tags"], allowed=ex.get("allowed"), lines=ex.get("lines", False),
+                                forbid=ex.get("forbid"), must=ex.get("must"))
         else:
             post = tweet.clean(post, (ex["cashtags"] or [""])[0], ex["tags"], social.xlen)
     except ValueError as why:
