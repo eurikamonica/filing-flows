@@ -167,8 +167,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.da
 /* deep links: disclosures/#signals, #flows, #trades, #holdings … */
 /* deep links from the site's search: #holdings/<manager CIK>, #trades/<official's name>, #etf/<ticker> */
 function deepLink(h,v){if(!v)return;if(h==='holdings')state.manager=v.replace(/\D/g,'');else if(h==='trades'){state.tperson=v;state.page=0}else if(h==='etf'){state.eview='one';state.esym=v.toUpperCase()}}
-
-function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);else if(arg&&typeof window[h+'DeepLink']==='function')window[h+'DeepLink'](arg);if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
+function fromHash(){const [h,arg]=location.hash.slice(1).split('/');if(arg&&h==='smart'&&typeof smartDeepLink==='function')smartDeepLink(arg);else if(arg&&h==='rotation'){const [v,u]=decodeURIComponent(arg).split('~');if(v)state.rview=v;if(u)state.rrgu=u}   /* #rotation/rrg~chain:ai-capex */else if(arg&&typeof window[h+'DeepLink']==='function')window[h+'DeepLink'](arg);else if(arg)deepLink(h,decodeURIComponent(arg));if(TABS.includes(h)&&(h!==state.tab||arg)){state.tab=h;state.page=0;syncPills();return true}return false}
 addEventListener('hashchange',()=>{if(fromHash())render()});
 fromHash();syncPills();
 render();
