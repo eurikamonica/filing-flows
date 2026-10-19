@@ -419,9 +419,18 @@ def backfill(h, rec, prices, budget):
     stop = min([end_c] + [hparse(r[0]) for r in rec['rows'][:1]])
     used = 0
     series = []
+    days = (stop - start).total_seconds() / 86400
+    fid = 60 if days <= 15 else 180 if days <= 45 else 720       # the CLOB refuses long spans at fine resolution
     try:
         for lo, hi, tok in legs:
-            hist = h.json(f'{CS.CLOB}/prices-history?market={tok}&startTs={int(start.timestamp())}&endTs={int(stop.timestamp())}&fidelity=60').get('history', [])
+            q = f'{CS.CLOB}/prices-history?market={tok}&startTs={int(start.timestamp())}&endTs={int(stop.timestamp())}'
+            try:
+                hist = h.json(q + f'&fidelity={fid}').get('history', [])
+            except RuntimeError as e:
+                if 'HTTP 400' not in str(e) or fid >= 1440:
+                    raise
+                hist = h.json(q + '&fidelity=1440').get('history', [])
+                used += 1
             used += 1
             series.append({hkey(dt.datetime.fromtimestamp(x['t'], UTC)): float(x['p']) for x in hist if x.get('p') is not None and x.get('t')})
     except Exception as exc:
@@ -779,9 +788,10 @@ def publish(root, store, prices, now):
             continue
         (pub / 't' / f'{t.replace(".", "-")}.json').write_text(json.dumps(CS._clean(doc), separators=(',', ':')), encoding='utf-8')
         nxt = doc['open'][0] if doc['open'] else None
+        pg = (lambda v: _r(v * nxt['to_page']) if v is not None and nxt.get('to_page') else None) if nxt else (lambda v: None)
         index.append([t, doc['cik'], doc['index'], len(doc['open']), doc['resolved_n'], _r(doc['spot']),
-                      nxt['end'] if nxt else None, nxt['ev'] if nxt else None, (nxt['combined'] or {}).get('lo') if nxt else None,
-                      (nxt['combined'] or {}).get('hi') if nxt else None])
+                      nxt['end'] if nxt else None, pg(nxt['ev']) if nxt else None, pg((nxt['combined'] or {}).get('lo')) if nxt else None,
+                      pg((nxt['combined'] or {}).get('hi')) if nxt else None])
     note = ('Hourly readings of every Polymarket / Kalshi closing-price ladder; the close from Yahoo Finance; options from CBOE '
             'delayed quotes. Errors are |forecast ÷ close − 1|, each ladder counted once (its readings at that horizon averaged). '
             'Brier: (P(close > K) − outcome)² over the ladder\'s strikes, on readings where the options had a view too.')
