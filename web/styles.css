@@ -811,3 +811,7 @@ main.wrap { position: relative; }
 .chain-card .t span:last-child { white-space: normal; }
 .co-chains { margin-top: 4px; }
 .co-chains .tag { text-decoration: none; }
+@media (max-width: 760px) {
+  .chain-chart { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .chain-chart svg { min-width: 880px; }
+}
