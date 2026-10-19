@@ -11,7 +11,8 @@
                    value each created and redeemed, adviser and sub-advisers, custodians, administrator, transfer
                    agent, pricing services, brokers and commissions, the trust's auditor, distributor, board and CCO.
                  N-PORT (monthly portfolio reports; the last four quarters): net assets, monthly sales, reinvestments
-                   and redemptions (flows), monthly returns, and the latest full portfolio of every ETF.
+                   and redemptions (flows), monthly returns, and the latest full portfolio of every ETF; for active
+                   ETFs, the share balances of every set (cache/nport_active/), which app/smart.py scores as trades.
                  Prospectus risk/return summaries (485BPOS XBRL, last five quarters): the fee table, turnover,
                    calendar-year returns, the benchmark index, the objective, the strategy and the principal risks.
     market     Yahoo Finance: ten years of weekly closes and volume, NAV, net assets, yield, category, family.
@@ -315,9 +316,11 @@ def process_rr(zpath, keep_series, class_series):
 
 
 # ------------------------------------------------------------------ N-PORT
-def process_nport(zpath, keep_series, holdings=True, top=150):
+def process_nport(zpath, keep_series, holdings=True, top=150, active=None):
     """One quarterly N-PORT set → {'funds': {series: {reports: [...]}}, 'holdings': {series: portfolio of the latest report}}.
-    Flows: sales, reinvestments and redemptions of each of the three months of every report."""
+    Flows: sales, reinvestments and redemptions of each of the three months of every report. With `active` (series ids of
+    actively managed ETFs) also {'active': {series: share balances of the latest report's long equity lines}}, which the
+    smart-money scores (app/smart.py) difference quarter over quarter into the fund's trades."""
     z = zipfile.ZipFile(zpath)
     sub = {r['ACCESSION_NUMBER']: (_d(r['REPORT_DATE']), _d(r['FILING_DATE'])) for r in tsv(z, 'SUBMISSION.tsv')}
     regs = {r['ACCESSION_NUMBER']: (int(r['CIK'] or 0), r['REGISTRANT_NAME']) for r in tsv(z, 'REGISTRANT.tsv')}
@@ -349,18 +352,20 @@ def process_nport(zpath, keep_series, holdings=True, top=150):
             rep['returns'] = rets.get(rep['acc'], {})
         fd['reports'].sort(key=lambda x: x['date'])
     out = {'funds': funds, 'holdings': {}}
-    if not holdings:
+    act_acc = {fd['reports'][-1]['acc']: s for s, fd in funds.items() if s in active} if active else {}
+    if not holdings and not act_acc:
         return out
-    latest = {fd['reports'][-1]['acc']: s for s, fd in funds.items()}
+    latest = {fd['reports'][-1]['acc']: s for s, fd in funds.items()} if holdings else {}
     hold = defaultdict(list)
     hid = {}
     for r in tsv(z, 'FUND_REPORTED_HOLDING.tsv'):
         acc = r['ACCESSION_NUMBER']
-        if acc not in latest:
+        if acc not in latest and acc not in act_acc:
             continue
         v, p = _f(r.get('CURRENCY_VALUE')), _f(r.get('PERCENTAGE'))
         row = [r.get('ISSUER_NAME') or '', r.get('ISSUER_TITLE') or '', (r.get('ISSUER_CUSIP') or '').upper(), None, None, v, p, r.get('ASSET_CAT') or '',
-               r.get('ISSUER_TYPE') or '', r.get('INVESTMENT_COUNTRY') or '', r.get('PAYOFF_PROFILE') or '', r.get('DERIVATIVE_CAT') or '', 0.0]
+               r.get('ISSUER_TYPE') or '', r.get('INVESTMENT_COUNTRY') or '', r.get('PAYOFF_PROFILE') or '', r.get('DERIVATIVE_CAT') or '', 0.0,
+               _f(r.get('BALANCE')), (r.get('UNIT') or '').upper()]
         hid[r['HOLDING_ID']] = row
         hold[acc].append(row)
     for r in tsv(z, 'IDENTIFIERS.tsv'):
@@ -375,7 +380,16 @@ def process_nport(zpath, keep_series, holdings=True, top=150):
         if row and r.get('LOAN_VALUE'):
             row[12] = _f(r['LOAN_VALUE']) or 0.0
     hid.clear()
+    if act_acc:
+        out['active'] = {}
+        for acc, s in act_acc.items():
+            rep = funds[s]['reports'][-1]
+            out['active'][s] = {'name': funds[s]['name'], 'date': rep['date'], 'filed': rep['filed'], 'na': rep['net_assets'],
+                                'pos': [[x[4] or '', x[2] or '', round(x[13], 4), round(x[5] or 0)] for x in hold.get(acc, [])
+                                        if x[7] in EQUITY and (x[10] or 'Long') == 'Long' and x[13] and x[14] in ('NS', '') and (x[4] or x[2])]}
     for acc, rows in hold.items():
+        if acc not in latest:
+            continue
         s = latest[acc]
         rep = funds[s]['reports'][-1]
         na = rep['net_assets'] or sum(abs(x[5] or 0) for x in rows) or 1
@@ -547,7 +561,9 @@ def collect_datasets(h, root, tmp='/tmp/etf-dl', max_new=None):
             name = Path(u).name
             out = root / 'cache' / kind / (name.replace('.zip', '') + '.json.gz')
             need_holdings = kind == 'nport' and u == newest
-            if out.exists() and done.get(name) and (not need_holdings or done[name].get('holdings')):
+            act = active_series(root) if kind == 'nport' else None
+            act_out = root / 'cache' / 'nport_active' / (name.replace('.zip', '') + '.json.gz')
+            if out.exists() and done.get(name) and (not need_holdings or done[name].get('holdings')) and (not act or act_out.exists()):
                 continue
             if max_new is not None and sum(1 for v in report.values() for _ in v) >= max_new:
                 break
@@ -561,7 +577,9 @@ def collect_datasets(h, root, tmp='/tmp/etf-dl', max_new=None):
                 elif kind == 'rr':
                     data = process_rr(zp, ets, class_series)
                 else:
-                    data = process_nport(zp, ets, holdings=need_holdings)
+                    data = process_nport(zp, ets, holdings=need_holdings, active=act)
+                    if 'active' in data:
+                        save_gz(act_out, {'source': name, 'funds': data.pop('active')})
                     if need_holdings:
                         save_gz(root / 'cache' / 'nport_holdings.json.gz', {'source': name, 'holdings': data.pop('holdings')})
                     else:
@@ -578,10 +596,24 @@ def collect_datasets(h, root, tmp='/tmp/etf-dl', max_new=None):
                 zp.unlink(missing_ok=True)
             write_json(root / 'state.json', st)
         keep = {Path(u).name.replace('.zip', '') + '.json.gz' for u in urls}
-        for p in (root / 'cache' / kind).glob('*.json.gz'):
+        for p in [*(root / 'cache' / kind).glob('*.json.gz'), *((root / 'cache' / 'nport_active').glob('*.json.gz') if kind == 'nport' else [])]:
             if p.name not in keep:
                 p.unlink()
     return report
+
+
+def active_series(root):
+    """Series ids of actively managed ETFs: N-CEN says not an index fund, not a leveraged / inverse index fund and not a
+    fund of funds (the newest census of each series decides)."""
+    seen, out = set(), set()
+    for p in sorted((Path(root) / 'cache' / 'ncen').glob('*.json.gz'), reverse=True):
+        for s, rec in (load_gz(p, {}) or {}).items():
+            if s in seen:
+                continue
+            seen.add(s)
+            if not rec.get('index') and not rec.get('multi_inverse') and not rec.get('fund_of_funds'):
+                out.add(s)
+    return out
 
 
 def etf_series(root):

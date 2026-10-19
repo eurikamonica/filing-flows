@@ -1,0 +1,73 @@
+# Smart money (Disclosures → Smart money): every disclosed trade by 13F managers, active ETFs, insiders and officials,
+# scored by what the stock did next (excess return over SPY, 63 trading days); each actor's weighted accuracy on buys and
+# sales, shrunk toward their group's rate; and today's net buying and selling in every stock weighted by that skill, with a
+# walk-forward backtest of the score (app/smart.py).
+# Every six hours: any new SEC insider transaction set (quarterly), the 13F manager files that changed since the last run
+# (read straight from git — never checked out), the officials' trades, the active ETFs' N-PORT share balances (from the
+# branch etf-history), daily closes for tickers the Hub has no prices for; then public/ is rebuilt.
+# Kept on the branch "smart-history" (one commit, force-pushed); scan.yml publishes public/ with the hub.
+name: Smart money
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for reading changed 13F managers and topping up prices'
+        default: '45'
+  schedule:
+    - cron: '41 */6 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: smart-history
+  cancel-in-progress: false
+jobs:
+  smart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/config/
+            /disclosures/docs/data/live.json
+            /disclosures/docs/data/cache/prices/
+            /disclosures/docs/data/cache/insiders/
+            /disclosures/docs/data/cache/senate/
+            /disclosures/docs/data/shards/congress/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: numpy, the data branch and etf-history's active-ETF portfolios
+        run: |
+          python -m pip install --quiet numpy
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" smart-history >/dev/null; then
+            git clone --quiet --depth 1 --branch smart-history "$url" smart
+          else
+            mkdir smart && git -C smart init --quiet -b smart-history && git -C smart remote add origin "$url"
+          fi
+          if git ls-remote --exit-code --heads "$url" etf-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch etf-history "$url" etf
+            git -C etf sparse-checkout set --no-cone /public/index.json /cache/nport_active/
+            ls etf/cache/nport_active 2>/dev/null || echo "no active-ETF portfolios yet (etf.yml adds them on its next run)"
+          fi
+          du -sh smart; ls smart
+      - name: Score every trade, every actor and every stock
+        timeout-minutes: 105
+        run: python disclosures/app/smart.py run --root smart --hub disclosures/docs/data --etf etf --minutes "${{ inputs.minutes || '45' }}"
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd smart
+          printf '%s\n' '# smart-history (data only)' '' 'Insider transaction sets (cache/ins), 13F changes per manager (cache/f13.json.gz), price top-ups (cache/prices),' \
+            'progress (state.json) and the files the site publishes (public/), kept by .github/workflows/smart.yml on main.' 'Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "smart $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "smart $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:smart-history && break; sleep $((i * 10)); done
+          python -c "import json; s=json.load(open('public/status.json')); s.get('public',{}).pop('counts',None); print(json.dumps(s)[:3000])"

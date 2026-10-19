@@ -233,6 +233,7 @@ def main():
     ap.add_argument('--debt', default=None, help="public/ of the branch debt-history (Debt & rates: app/debt.py)")
     ap.add_argument('--consensus', default=None, help="public/ of the branch consensus-history (Consensus: app/consensus.py)")
     ap.add_argument('--etf', default=None, help="public/ of the branch etf-history (ETFs: app/etf.py)")
+    ap.add_argument('--smart', default=None, help="public/ of the branch smart-history (Smart money: app/smart.py)")
     args = ap.parse_args()
     out = Path(args.out)
     shutil.rmtree(out, ignore_errors=True)
@@ -265,6 +266,14 @@ def main():
         try:
             st = json.loads((Path(args.etf) / 'status.json').read_text(encoding='utf-8'))
             print(f"::notice::etfs: {st.get('etfs')} ETFs, {st.get('holdings')} portfolios, {st.get('ncen')} N-CEN, built {st.get('built_at')}")
+        except Exception:
+            pass
+    if args.smart and (Path(args.smart) / 'index.json').exists():
+        shutil.copytree(args.smart, out / 'data' / 'smart', dirs_exist_ok=True)
+        try:
+            st = json.loads((Path(args.smart) / 'status.json').read_text(encoding='utf-8'))
+            pub = st.get('public') or {}
+            print(f"::notice::smart money: {pub.get('actors')} actors, {pub.get('stocks')} stocks scored, events {st.get('events')}, built {st.get('finished')}")
         except Exception:
             pass
     if args.site_data:
