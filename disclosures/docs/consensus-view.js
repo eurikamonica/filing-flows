@@ -17,7 +17,7 @@
   const day = (s) => (s ? String(s).slice(0, 10) : '—');
   const ts = (s) => Date.parse(String(s).slice(0, 10) + 'T00:00:00Z');
   const C = { good: 'var(--mk-profit, #2e8b57)', bad: 'var(--mk-cost, #c0392b)', acc: 'var(--accent, #2a78d6)', mute: 'var(--muted, #888)', ink: 'var(--ink, #222)',
-    an: '#d9822b', pm: '#8a4fd6', ours: '#2a78d6', ks: '#16a085' };
+    an: '#d9822b', pm: '#8a4fd6', ours: '#2a78d6', ks: '#16a085', mp: '#e08a1e', cmb: '#3b6fd8' };
   const KIND = { beat: 'Beat earnings?', above: 'Price ladder', bracket: 'Closing-price brackets', mcap: 'Market cap', hit: 'High / low touch', metric: 'Reported metric (revenue, segments, KPIs)', updown: 'Up or down', kpi: 'Company KPI', mention: 'Earnings-call mentions', other: 'Other events' };
   const PERIOD = { '0q': 'This quarter', '+1q': 'Next quarter', '0y': 'This fiscal year', '+1y': 'Next fiscal year' };
 
@@ -42,6 +42,7 @@
 .cv-pbar s{display:block;height:8px;border-radius:5px;background:var(--line,#e8e8e8);position:relative;text-decoration:none}.cv-pbar s i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--k,${C.pm})}
 .cv-pbar em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
 .cv-rating{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:6px 0 4px;max-width:520px}.cv-rating i{display:block;height:100%}
+.cv-tabs{margin:4px 0}.cv-show.on{background:var(--accent,#2a78d6);color:#fff;border-color:var(--accent,#2a78d6)}
 .cv-show{margin:2px 0 8px;font:inherit;font-size:13px;color:var(--accent,#2a78d6);background:none;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px 10px;cursor:pointer}`;
     document.head.appendChild(s);
   }
@@ -182,20 +183,48 @@
   }
 
   // ---------- prediction markets ----------
-  function ladderSvg(st, unit) {
+  function ladderSvg(st, unit, x) {
+    if (x && x.strikes && x.p) {                              // the hourly reading (app/ladders.py) is fresher than the 3-hourly one
+      const K2 = [], P2 = [];
+      x.strikes.forEach((k, i) => { if (fin(x.p[i])) { K2.push(k); P2.push(x.p[i]); } });
+      if (K2.length >= 2) st = { strikes: K2, p_above: P2, median: { value: x.median } };
+    }
     if (!st || !st.strikes || st.strikes.length < 2) return '';
-    const K = st.strikes, P = st.p_above, W = 360, H = 120, L = 40, R = 8, T = 8, B = 20;
-    const X = (k) => L + (k - K[0]) / ((K[K.length - 1] - K[0]) || 1) * (W - L - R), Y = (p) => T + (1 - p) * (H - T - B);
-    const f = unit === 'mcap' ? big : unit === 'pts' ? pts : (v) => usd(v, 0);
-    let s = `<svg viewBox="0 0 ${W} ${H}" style="max-width:380px" role="img" aria-label="Probability the value ends above each level">`;
+    const K = st.strikes, P = st.p_above, W = 380, H = x ? 150 : 120, L = 40, R = 8, T = 8, B = x ? 44 : 20;
+    const o = (x && x.options) || {}, cb = (x && x.combined) || {};
+    const span = K[K.length - 1] - K[0] || 1;
+    const near = (v) => fin(v) && v >= K[0] - span * 0.6 && v <= K[K.length - 1] + span * 0.6;
+    const ext = x ? [x.spot, x.ev, o.max_pain, o.put_wall, o.call_wall, cb.lo, cb.hi].filter(near) : [];
+    const k0 = Math.min(K[0], ...ext), k1 = Math.max(K[K.length - 1], ...ext);
+    const X = (k) => L + (k - k0) / ((k1 - k0) || 1) * (W - L - R), Y = (p) => T + (1 - p) * (H - T - B);
+    const f = unit === 'mcap' ? big : unit === 'pts' ? pts : (v) => usd(v, 0), f2 = unit === 'pts' ? pts : (v) => usd(v);
+    let s = `<svg viewBox="0 0 ${W} ${H}" style="max-width:400px" role="img" aria-label="Probability the value ends above each level">`;
     for (const p of [0, 0.5, 1]) s += `<line class="cv-grid" x1="${L}" x2="${W - R}" y1="${Y(p)}" y2="${Y(p)}"/><text x="${L - 4}" y="${Y(p) + 4}" text-anchor="end">${pct(p)}</text>`;
+    if (x && near(cb.lo) && near(cb.hi)) s += `<rect x="${X(cb.lo)}" y="${T}" width="${Math.max(1, X(cb.hi) - X(cb.lo))}" height="${H - T - B}" fill="${C.cmb}" fill-opacity="0.09"><title>Combined 80% range ${f2(cb.lo)} – ${f2(cb.hi)}</title></rect>`;
+    if (x && x.op) {
+      const pts2 = x.strikes.map((k, i) => [k, x.op[i]]).filter((q) => fin(q[1]));
+      if (pts2.length >= 2) s += `<path d="${pts2.map((q, i) => (i ? 'L' : 'M') + X(q[0]).toFixed(1) + ',' + Y(q[1]).toFixed(1)).join('')}" fill="none" stroke="${C.ks}" stroke-width="1.6" stroke-dasharray="4 3"><title>Options-implied P(close above K)${o.exp ? ' — ' + o.exp + ' expiry' : ''}</title></path>`;
+    }
     s += `<path d="${K.map((k, i) => (i ? 'L' : 'M') + X(k).toFixed(1) + ',' + Y(P[i]).toFixed(1)).join('')}" fill="none" stroke="${C.pm}" stroke-width="2"/>`;
-    K.forEach((k, i) => { s += `<circle cx="${X(k)}" cy="${Y(P[i])}" r="2.6" fill="${C.pm}"><title>P(above ${f(k)}) = ${pct(P[i], 1)}</title></circle>`; });
-    if (st.median && fin(st.median.value)) s += `<line x1="${X(st.median.value)}" x2="${X(st.median.value)}" y1="${T}" y2="${H - B}" stroke="${C.ink}" stroke-dasharray="3 3"/>`;
+    K.forEach((k, i) => { s += `<circle cx="${X(k)}" cy="${Y(P[i])}" r="2.6" fill="${C.pm}"><title>P(above ${f(k)}) = ${pct(P[i], 1)}${x && x.op && fin(x.op[x.strikes.indexOf(k)]) ? ' · options ' + pct(x.op[x.strikes.indexOf(k)], 1) : ''}</title></circle>`; });
+    if (st.median && fin(st.median.value)) s += `<line x1="${X(st.median.value)}" x2="${X(st.median.value)}" y1="${T}" y2="${H - B}" stroke="${C.pm}" stroke-dasharray="3 3"><title>Median ${f2(st.median.value)}</title></line>`;
+    if (x) {
+      const vline = (v, col, label, dash, w = 1.4) => (near(v) ? `<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H - B}" stroke="${col}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''}><title>${esc(label)} ${f2(v)}</title></line>` : '');
+      s += vline(x.ev, C.pm, 'Expected value', '', 2.4) + vline(x.spot, C.ink, 'Price now', '1 2') + vline(o.max_pain, C.mp, 'Max pain (' + (o.exp || '') + ')', '5 3');
+      const tick = (v, col, label, up) => (near(v) ? `<path d="M${X(v) - 5},${H - B + (up ? 12 : 4)} L${X(v) + 5},${H - B + (up ? 12 : 4)} L${X(v)},${H - B + (up ? 4 : 12)} Z" fill="${col}"><title>${esc(label)} ${f2(v)}</title></path>` : '');
+      s += tick(o.put_wall, C.good, 'Put wall', true) + tick(o.call_wall, C.bad, 'Call wall', false);
+      s += `<text x="${L}" y="${H - 5}">${f(k0)}</text><text x="${W - R}" y="${H - 5}" text-anchor="end">${f(k1)}</text></svg>`;
+      s += `<div class="cv-legend" style="margin-top:0"><span style="--k:${C.pm}">ladder · expected value (solid) · median (dashed)</span>${x.op ? `<span style="--k:${C.ks}">options-implied</span>` : ''}<span style="--k:${C.ink}">price now</span>${fin(o.max_pain) ? `<span style="--k:${C.mp}">max pain</span>` : ''}${fin(o.put_wall) ? `<span style="--k:${C.good}">put wall ▲</span><span style="--k:${C.bad}">call wall ▼</span>` : ''}${fin(cb.lo) ? `<span style="--k:${C.cmb}">combined 80% range</span>` : ''}</div>`;
+      return s;
+    }
     s += `<text x="${L}" y="${H - 5}">${f(K[0])}</text><text x="${W - R}" y="${H - 5}" text-anchor="end">${f(K[K.length - 1])}</text></svg>`;
     return s;
   }
-  function marketBox(m, a) {
+  function ladOf(lad, m) {
+    if (!lad || !lad.open) return null;
+    return lad.open.find((x) => x.url === m.url && (m.source !== 'kalshi' || (x.end === m.end && x.kind === m.kind))) || null;
+  }
+  function marketBox(m, a, lad) {
     const src = m.source === 'kalshi' ? 'Kalshi' : 'Polymarket', col = m.source === 'kalshi' ? C.ks : C.pm;
     const meta = [src, KIND[m.kind] || m.kind, m.end ? (m.closed ? 'ended ' : 'ends ') + day(m.end) : '', fin(m.volume) && m.volume > 0 ? 'volume ' + big(m.volume).replace('$', m.source === 'kalshi' ? '' : '$') : ''].filter(Boolean).join(' · ');
     let body = '';
@@ -208,7 +237,8 @@
       if (m.closed && m.actual) body = `<div class="cv-sub">Ended between ${f(m.actual[0])} and ${m.actual[1] == null ? 'above' : f(m.actual[1])}.</div>`;
       else if (st) {
         const bound = (q) => (q && q.bound === 'below' ? '≤ ' : q && q.bound === 'above' ? '≥ ' : '');
-        body = `<div class="cv-sub">Implied median <b>${bound(st.median)}${f(st.median && st.median.value)}</b> · 80% range ${bound(st.q10)}${f(st.q10 && st.q10.value)} – ${bound(st.q90)}${f(st.q90 && st.q90.value)}${m.kind === 'mcap' && ip && fin(ip.median) ? ` · per share ≈ ${usd(ip.median)}` : ''}${m.index && !m.points && ip && fin(ip.median) ? ` · in index points ≈ ${pts(ip.median)}` : ''}${st.overround && st.overround > 1.05 ? ` · prices sum to ${pct(st.overround)}, normalised` : ''}</div>` + ladderSvg(st, m.kind === 'mcap' ? 'mcap' : m.index && m.points ? 'pts' : 'usd');
+        const x = m.kind !== 'mcap' ? ladOf(lad, m) : null, ev = x ? x.ev : st.mean && st.mean.value;
+        body = `<div class="cv-sub">${fin(ev) ? `Expected value <b>${f(ev)}</b>${x && fin(x.spot) ? ` (${spct(ev / x.spot - 1)} from ${f(x.spot)})` : ''} · ` : ''}Implied median <b>${bound(st.median)}${f(st.median && st.median.value)}</b> · 80% range ${bound(st.q10)}${f(st.q10 && st.q10.value)} – ${bound(st.q90)}${f(st.q90 && st.q90.value)}${m.kind === 'mcap' && ip && fin(ip.median) ? ` · per share ≈ ${usd(ip.median)}` : ''}${m.index && !m.points && ip && fin(ip.median) ? ` · in index points ≈ ${pts(ip.median)}` : ''}${st.overround && st.overround > 1.05 ? ` · prices sum to ${pct(st.overround)}, normalised` : ''}${x && x.options && fin(x.options.max_pain) ? ` · options ${x.options.exact ? '' : '(next expiry ' + day(x.options.exp) + ') '}max pain ${f(x.options.max_pain)}, put wall ${f(x.options.put_wall)}, call wall ${f(x.options.call_wall)}` : ''}${x && x.combined && fin(x.combined.lo) ? ` · combined 80% range <b>${f(x.combined.lo)} – ${f(x.combined.hi)}</b>` : ''}${x ? ` · read ${esc(String(x.as_of).slice(5).replace('T', ' '))}:00 UTC` : ''}</div>` + ladderSvg(st, m.kind === 'mcap' ? 'mcap' : m.index && m.points ? 'pts' : 'usd', x);
       }
     } else if (m.kind === 'metric') {
       const st = m.stats, u = m.unit || '';
@@ -234,7 +264,7 @@
     }
     return `<div class="cv-mk"><h4>${link(m.url, m.title || '')}${m.subtitle ? ` <span class="cv-tag">${esc(m.subtitle)}</span>` : ''}</h4><div class="cv-meta">${esc(meta)}</div>${body}</div>`;
   }
-  function markets(doc, a) {
+  function markets(doc, a, lad) {
     const M = doc.markets || [];
     if (!M.length && doc.unit === 'pts') return `<h3>Prediction markets</h3><p class="cv-sub">No Polymarket or Kalshi market about this index is open right now.</p>`;
     if (!M.length) return `<h3>Prediction markets</h3><p class="cv-sub">No Polymarket or Kalshi market about this company is open. They list markets for the most-traded names (earnings beats for a few hundred companies each season; price ladders and market caps for the largest; KPIs such as deliveries or subscribers for some).</p>`;
@@ -244,10 +274,10 @@
     const live = M.filter(isLive).sort((x, y) => order.indexOf(x.kind) - order.indexOf(y.kind) || String(x.end).localeCompare(String(y.end)));
     const done = M.filter((m) => !isLive(m));
     const head = `<h3>Prediction markets <span class="cv-tag">${live.length} open</span></h3><p class="cv-sub">Prices on Polymarket and Kalshi are what traders pay for a contract that pays $1 if the event happens — a crowd probability. Ladders of "closes above $K" contracts give a whole distribution of the price; we fit the probabilities to fall with the strike and read the median and the 80% range from it.${doc.unit === 'pts' ? ' Kalshi lists ranges for the close of the day, the week, the month and the year; Polymarket some ladders in ETF dollars (SPY, QQQ), which we turn into index points at today\'s ratio of the two.' : ''}</p>`;
-    const first = live.slice(0, 8).map((m) => marketBox(m, a)).join('');
-    const rest = live.slice(8).map((m) => marketBox(m, a)).join('');
+    const first = live.slice(0, 8).map((m) => marketBox(m, a, lad)).join('');
+    const rest = live.slice(8).map((m) => marketBox(m, a, lad)).join('');
     return head + first + (rest ? `<details><summary>${live.length - 8} more open markets</summary>${rest}</details>` : '') +
-      (done.length ? `<details><summary>Recently resolved (${done.length})</summary>${done.slice(0, 20).map((m) => marketBox(m, a)).join('')}</details>` : '');
+      (done.length ? `<details><summary>Recently resolved (${done.length})</summary>${done.slice(0, 20).map((m) => marketBox(m, a, lad)).join('')}</details>` : '');
   }
   function track(doc) {
     const out = [];
@@ -263,9 +293,204 @@
     return `<h3>How the forecasts did</h3><p class="cv-sub">Every prediction market's last price before the result is kept, then scored when it resolves. The track record of all companies is in the Disclosure Hub → Consensus → Track record.</p>${out.join('') || '<p class="cv-sub">No market about this company has resolved since tracking began.</p>'}`;
   }
 
+  // ---------- closing-price ladders, read every hour (app/ladders.py): expected value, the options' view, the combined
+  // range by date, the hourly history and the backtest. Read from the branch ladder-history (data/remote.json → ladders)
+  // so the page is at most an hour old; data/ladders/ (the last site build) when that is not reachable. ----------
+  const BASE = ((typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '').replace(/[^/]*$/, '');
+  let remoteP = null;
+  const remoteCfg = () => remoteP || (remoteP = fetch(BASE + 'data/remote.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
+  const ladFile = (path) => remoteCfg().then((cfg) => {
+    const local = () => fetch(BASE + 'data/ladders/' + path).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    if (!cfg || !cfg.ladders) return local();
+    return fetch(cfg.ladders + path).then((r) => (r.ok ? r.json() : local())).catch(local);
+  });
+  const LAD = {};
+  function ladFor(el, doc, key, draw) {
+    if (!key) return null;
+    if (LAD[key] !== undefined) return LAD[key] || null;
+    LAD[key] = null;
+    ladFile('t/' + String(key).replace(/\./g, '-') + '.json').then((d) => {
+      LAD[key] = d || false;
+      if (d && el.isConnected !== false && el.__cv === doc) draw(el, doc);
+    });
+    return null;
+  }
+  const PERIOD_L = { day: 'day', week: 'week', month: 'month', year: 'year', other: '' };
+  const fp = (v) => (fin(v) ? num(v, Math.abs(v) >= 1000 ? 0 : 2) : '—');
+  const hts = (k) => Date.parse(k + ':00:00Z');
+  const niceTicks = (a, b, n) => {
+    const raw = (b - a) / n, mag = Math.pow(10, Math.floor(Math.log10(raw || 1))), st = [1, 2, 2.5, 5, 10].map((x) => x * mag).find((x) => x >= raw) || raw;
+    const out = []; for (let v = Math.ceil(a / st) * st; v <= b + 1e-9; v += st) out.push(+v.toFixed(10));
+    return out;
+  };
+
+  function termSvg(L, f, conv) {
+    const O = L.open.filter((m) => fin(conv(m, m.ev)));
+    const H0 = (L.hourly || []).map(([k, v]) => [hts(k), v]).filter((p) => fin(p[1]));
+    if (!O.length) return '';
+    const now = Date.now(), spot = fin(L.spot) ? L.spot : (H0.length ? H0[H0.length - 1][1] : null);
+    const past = H0.filter((p) => p[0] >= now - 5 * 864e5);
+    const ends = [...new Set(O.map((m) => m.end))].sort();
+    const tEnd = (e) => Date.parse(e + 'T20:00:00Z');
+    const tmax = Math.max(...ends.map(tEnd)) + 864e5 / 2, t0 = past.length ? past[0][0] : now - 864e5;
+    const W = 820, Hh = 320, Lm = 58, R = 16, T = 14, B = 34, WP = (W - Lm - R) * 0.26;
+    const X = (t) => (t <= now ? Lm + (t - t0) / ((now - t0) || 1) * WP : Lm + WP + Math.sqrt((t - now) / ((tmax - now) || 1)) * (W - Lm - R - WP));
+    const vals = past.map((p) => p[1]).concat([spot]);
+    for (const m of O) {
+      const o = m.options || {}, c = m.combined || {};
+      vals.push(...[m.ev, m.q10, m.q90, o.q10, o.q90, o.max_pain, o.put_wall, o.call_wall, c.lo, c.hi].map((v) => conv(m, v)));
+    }
+    const vs = vals.filter(fin);
+    const med = vs.slice().sort((a, b) => a - b)[Math.floor(vs.length / 2)];
+    const ok = vs.filter((v) => Math.abs(v / med - 1) < 0.35);    // a wall far away does not squash the chart
+    let y0 = Math.min(...ok), y1 = Math.max(...ok); const pad = (y1 - y0) * 0.08 || 1; y0 -= pad; y1 += pad;
+    const Y = (v) => T + (y1 - v) / (y1 - y0) * (Hh - T - B), inY = (v) => fin(v) && v >= y0 && v <= y1;
+    let s = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Expected close by date">`;
+    for (const v of niceTicks(y0, y1, 5)) s += `<line class="cv-grid" x1="${Lm}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${Lm - 6}" y="${Y(v) + 4}" text-anchor="end">${f(v)}</text>`;
+    s += `<line x1="${X(now)}" x2="${X(now)}" y1="${T}" y2="${Hh - B}" stroke="${C.mute}" stroke-dasharray="3 3"/><text x="${X(now) + 4}" y="${T + 10}">now</text>`;
+    if (past.length >= 2) s += `<path d="${past.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="${C.ink}" stroke-width="1.5"><title>Hourly price, last 5 days</title></path>`;
+    const byEnd = ends.map((e) => O.filter((m) => m.end === e));
+    const pick = (ms) => ms.find((m) => m.kind === 'above') || ms[0];
+    // the combined cone: from the price now through each date's combined range
+    const cone = byEnd.map((ms) => { const m = pick(ms), c = m.combined || {}; return [tEnd(m.end), conv(m, c.lo), conv(m, c.center), conv(m, c.hi)]; }).filter((q) => fin(q[1]) && fin(q[3]));
+    if (cone.length && fin(spot)) {
+      const up = [[now, spot]].concat(cone.map((q) => [q[0], q[3]])), dn = [[now, spot]].concat(cone.map((q) => [q[0], q[1]]));
+      s += `<path d="${up.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(Math.min(y1, Math.max(y0, p[1]))).toFixed(1)).join('')}${dn.slice().reverse().map((p) => 'L' + X(p[0]).toFixed(1) + ',' + Y(Math.min(y1, Math.max(y0, p[1]))).toFixed(1)).join('')}Z" fill="${C.cmb}" fill-opacity="0.10" stroke="none"><title>Combined 80% range: price, expected value, max pain and walls</title></path>`;
+      s += `<path d="${[[now, spot]].concat(cone.map((q) => [q[0], q[2]])).map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="${C.cmb}" stroke-width="1.4" stroke-dasharray="5 3"><title>Combined centre</title></path>`;
+    }
+    const line = (pts2, col, w, dash, label) => (pts2.length >= 1 ? `<path d="${pts2.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="${col}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''}><title>${esc(label)}</title></path>` : '');
+    const evp = [[now, spot]].concat(byEnd.map((ms) => { const m = pick(ms); return [tEnd(m.end), conv(m, m.ev)]; })).filter((p) => fin(p[1]));
+    const mpp = byEnd.map((ms) => { const m = pick(ms); return [tEnd(m.end), conv(m, (m.options || {}).max_pain)]; }).filter((p) => inY(p[1]));
+    const cwp = byEnd.map((ms) => { const m = pick(ms); return [tEnd(m.end), conv(m, (m.options || {}).call_wall)]; }).filter((p) => inY(p[1]));
+    const pwp = byEnd.map((ms) => { const m = pick(ms); return [tEnd(m.end), conv(m, (m.options || {}).put_wall)]; }).filter((p) => inY(p[1]));
+    s += line(cwp, C.bad, 1.2, '2 3', 'Call wall by expiry') + line(pwp, C.good, 1.2, '2 3', 'Put wall by expiry') + line(mpp, C.mp, 1.4, '5 3', 'Max pain by expiry') + line(evp, C.pm, 2.2, '', 'Expected value by date');
+    byEnd.forEach((ms) => {
+      ms.forEach((m, j) => {
+        const t = tEnd(m.end), x = X(t) + (j - (ms.length - 1) / 2) * 9, o = m.options || {}, c = m.combined || {};
+        const lo = conv(m, m.q10), hi = conv(m, m.q90), ev = conv(m, m.ev);
+        const tip = `${m.title} — expected value ${f(ev)}, median ${f(conv(m, m.median))}, ladder 80% ${f(lo)} – ${f(hi)}${fin(o.q10) ? `; options 80% ${f(conv(m, o.q10))} – ${f(conv(m, o.q90))}` : ''}${fin(o.max_pain) ? `; max pain ${f(conv(m, o.max_pain))}, put wall ${f(conv(m, o.put_wall))}, call wall ${f(conv(m, o.call_wall))} (${o.exact ? '' : 'next expiry '}${o.exp})` : ''}${fin(c.lo) ? `; combined ${f(conv(m, c.lo))} – ${f(conv(m, c.hi))}` : ''}`;
+        s += `<g><title>${esc(tip)}</title>`;
+        if (fin(lo) && fin(hi)) s += `<rect x="${x - 3}" y="${Y(Math.min(y1, hi))}" width="6" height="${Math.max(1, Y(Math.max(y0, lo)) - Y(Math.min(y1, hi)))}" rx="2" fill="${C.pm}" fill-opacity="0.2" stroke="${C.pm}" stroke-width="0.8"/>`;
+        if (fin(o.q10) && fin(o.q90)) { const a = conv(m, o.q10), b = conv(m, o.q90); s += `<rect x="${x + 4}" y="${Y(Math.min(y1, b))}" width="4" height="${Math.max(1, Y(Math.max(y0, a)) - Y(Math.min(y1, b)))}" rx="1.5" fill="${C.ks}" fill-opacity="0.25" stroke="${C.ks}" stroke-width="0.8"/>`; }
+        if (fin(ev)) s += `<circle cx="${x}" cy="${Y(ev)}" r="4" fill="${C.pm}" stroke="#fff" stroke-width="1"/>`;
+        if (inY(conv(m, o.max_pain))) s += `<path d="M${x},${Y(conv(m, o.max_pain)) - 5} L${x + 5},${Y(conv(m, o.max_pain))} L${x},${Y(conv(m, o.max_pain)) + 5} L${x - 5},${Y(conv(m, o.max_pain))} Z" fill="${C.mp}"/>`;
+        s += '</g>';
+      });
+      const m0 = pick(ms);
+      s += `<text x="${X(tEnd(m0.end))}" y="${Hh - 18}" text-anchor="middle">${esc(m0.end.slice(5))}</text><text x="${X(tEnd(m0.end))}" y="${Hh - 6}" text-anchor="middle" style="font-size:10px">${esc(PERIOD_L[m0.period] || '')}</text>`;
+    });
+    if (fin(spot)) s += `<circle cx="${X(now)}" cy="${Y(spot)}" r="3.5" fill="${C.ink}"><title>Price now ${f(spot)}</title></circle>`;
+    return s + '</svg>';
+  }
+
+  function hourSvg(m, f) {
+    const R0 = (m.history || []).filter((r) => fin(r[1]) || fin(r[2]));
+    if (R0.length < 2) return `<p class="cv-sub">One reading so far (${esc(String(m.as_of).replace('T', ' '))}:00 UTC) — a line appears after the next hours.</p>`;
+    const t = R0.map((r) => hts(r[0])), W = 820, H = 230, L = 58, Rr = 16, T = 10, B = 24;
+    const all = R0.flatMap((r) => [r[1], r[2], r[4], r[5], r[10], r[11]]).filter(fin);
+    const med = all.slice().sort((a, b) => a - b)[Math.floor(all.length / 2)];
+    const ok = all.concat(R0.flatMap((r) => [r[6], r[7], r[8]]).filter((v) => fin(v) && Math.abs(v / med - 1) < 0.12));
+    let y0 = Math.min(...ok), y1 = Math.max(...ok); const pad = (y1 - y0) * 0.08 || 1; y0 -= pad; y1 += pad;
+    const X = (v) => L + (v - t[0]) / ((t[t.length - 1] - t[0]) || 1) * (W - L - Rr), Y = (v) => T + (y1 - v) / (y1 - y0) * (H - T - B);
+    const path = (i, col, w, dash, label) => {
+      let d = '', on = false;
+      R0.forEach((r, j) => { if (fin(r[i]) && r[i] >= y0 && r[i] <= y1) { d += (on ? 'L' : 'M') + X(t[j]).toFixed(1) + ',' + Y(r[i]).toFixed(1); on = true; } else on = false; });
+      return d ? `<path d="${d}" fill="none" stroke="${col}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''}><title>${esc(label)}</title></path>` : '';
+    };
+    const band = (a, b, col, op, label) => {
+      const ix = R0.map((r, j) => j).filter((j) => fin(R0[j][a]) && fin(R0[j][b]));
+      if (ix.length < 2) return '';
+      const cl = (v) => Math.min(y1, Math.max(y0, v));
+      return `<path d="${ix.map((j, k) => (k ? 'L' : 'M') + X(t[j]).toFixed(1) + ',' + Y(cl(R0[j][b])).toFixed(1)).join('')}${ix.slice().reverse().map((j) => 'L' + X(t[j]).toFixed(1) + ',' + Y(cl(R0[j][a])).toFixed(1)).join('')}Z" fill="${col}" fill-opacity="${op}"><title>${esc(label)}</title></path>`;
+    };
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="The ladder hour by hour">`;
+    for (const v of niceTicks(y0, y1, 4)) s += `<line class="cv-grid" x1="${L}" x2="${W - Rr}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${f(v)}</text>`;
+    s += band(10, 11, C.cmb, 0.10, 'Combined 80% range') + band(4, 5, C.pm, 0.13, 'Ladder 80% range');
+    s += path(7, C.bad, 1, '2 3', 'Call wall') + path(8, C.good, 1, '2 3', 'Put wall') + path(6, C.mp, 1.3, '5 3', 'Max pain') + path(3, C.pm, 1.1, '3 3', 'Ladder median') + path(9, C.cmb, 1.2, '5 3', 'Combined centre') + path(2, C.pm, 2.2, '', 'Expected value') + path(1, C.ink, 1.5, '', 'Price');
+    const dayTicks = [...new Set(R0.map((r) => r[0].slice(0, 10)))];
+    const every = Math.max(1, Math.ceil(dayTicks.length / 8));
+    dayTicks.forEach((d, i) => { if (i % every) return; const tt = Date.parse(d + 'T00:00:00Z'); if (tt >= t[0]) s += `<text x="${X(tt)}" y="${H - 6}" text-anchor="middle">${esc(d.slice(5))}</text>`; });
+    const lastR = R0[R0.length - 1];
+    s += `<circle cx="${X(t[t.length - 1])}" cy="${Y(lastR[2] != null ? lastR[2] : lastR[1])}" r="3" fill="${C.pm}"/></svg>`;
+    return s;
+  }
+
+  function btTable(rows, f) {
+    const R = (rows || []).filter((r) => r.markets);
+    if (!R.length) return '';
+    const e = (v) => (fin(v) ? num(100 * v, 2) + '%' : '—'), c = (v) => (fin(v) ? pct(v) : '—'), b = (v) => (fin(v) ? num(v, 3) : '—');
+    const t = tbl(['Before the close', 'Ladders', 'Error: price now', 'exp. value', 'median', 'max pain', 'combined', 'Inside 80%: ladder', 'options', 'walls', 'combined', 'Brier L · O'],
+      R.map((r) => {
+        const M = r.mae || {}, I = r.inside80 || {}, Bs = r.brier || {}, oo = r.oos;
+        const best = Math.min(...['price', 'ev', 'median', 'max_pain', 'combined'].map((k) => M[k]).filter(fin));
+        const cell = (k) => `<span class="${M[k] === best ? 'cv-good' : ''}">${e(M[k])}</span>`;
+        return [esc(r.bucket), num(r.markets), cell('price'), cell('ev'), cell('median'), cell('max_pain'),
+          cell('combined') + (oo ? `<br><span class="cv-sub">out of sample ${e(oo.mae && oo.mae.combined)}</span>` : ''),
+          c(I.ladder), c(I.options), c(I.walls), c(I.combined) + (oo ? `<br><span class="cv-sub">out of sample ${c(oo.inside80)}</span>` : ''),
+          `<span title="Brier score of P(close above K): ladder · options (on the readings where both had a view; the ladder alone when the options had none)">${b(fin(Bs.ladder) ? Bs.ladder : Bs.ladder_all)} · ${b(Bs.options)}</span>`];
+      }), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    const mdl = R.map((r) => { const P = r.model || {}; return `<b>${esc(r.bucket)}</b>: centre = price + ${num(P.w_ev, 1)} × (exp. value − price) + ${num(P.w_mp, 1)} × (max pain − price), width × ${num(P.k, 2)} <span class="cv-sub">(${P.basis === 'backtest' ? 'fitted on ' + num(P.n) + ' ladders' : 'prior until ' + 20 + ' ladders resolve'})</span>`; });
+    return t + `<p class="cv-sub" style="line-height:1.7">Combined model by horizon — ${mdl.join(' · ')}</p>`;
+  }
+
+  function ladPanel(L, f, page) {
+    if (!L || (!(L.open || []).length && !(L.resolved || []).length)) return '';
+    const conv = (m, v) => (fin(v) && fin(m.to_page) ? v * m.to_page : null);
+    const O = L.open || [];
+    let h = `<h3>Where the close is expected, by date <span class="cv-tag">read hourly</span></h3><p class="cv-sub">Every open "closes above ___" ladder and closing-price bracket on Polymarket and Kalshi for ${esc(page)}, read every hour. <b>Expected value</b> is the mean of the distribution the ladder implies (strikes fitted to fall with the price; the mass between two strikes at their middle, the tails from a log-normal fitted to the ladder). Beside it the options for the same date (CBOE, about 15 minutes late; the next expiry when none falls on the date): <b>max pain</b>, the <b>put wall</b> and <b>call wall</b> (the strikes with the most put and call open interest) and the options-implied 80% range. The <b>combined range</b> blends the price, the expected value and max pain for the centre and the ladder's, the options' and the walls' ranges for the width, with the weights fitted on every ladder that has resolved at the same horizon (the backtest below).${L.generated_at ? ` Updated ${esc(String(L.generated_at).slice(0, 16).replace('T', ' '))} UTC.` : ''}</p>`;
+    if (O.length) {
+      h += termSvg(L, f, conv);
+      h += `<div class="cv-legend"><span style="--k:${C.ink}">price, last 5 days</span><span style="--k:${C.pm}">expected value (line) · ladder 80% (box)</span><span style="--k:${C.ks}">options 80%</span><span style="--k:${C.mp}">max pain ◆</span><span style="--k:${C.good}">put wall</span><span style="--k:${C.bad}">call wall</span><span style="--k:${C.cmb}">combined 80% range (cone) and centre</span></div>`;
+      h += tbl(['Close on', 'Expected value', 'Ladder: median · 80%', 'Options: 80% · expiry', 'Max pain', 'Put – call wall', 'Combined 80%'], O.map((m) => {
+        const o = m.options || {}, c = m.combined || {}, sp = L.spot;
+        const vs = (v) => (fin(v) && fin(sp) ? ` <span class="cv-sub">${spct(v / sp - 1)}</span>` : '');
+        return [`<a href="${esc(m.url)}" target="_blank" rel="noopener" title="${esc(m.title || '')}"><b>${day(m.end).slice(5)}</b></a> <span class="cv-tag">${esc(PERIOD_L[m.period] || m.kind)}${m.kind === 'bracket' ? ' · brackets' : ''}</span><br><span class="cv-sub">${m.source === 'kalshi' ? 'Kalshi' : 'Polymarket'} · ${num(m.readings)} h</span>`,
+          `<b>${f(conv(m, m.ev))}</b>${vs(conv(m, m.ev))}`, `${f(conv(m, m.median))}<br><span class="cv-sub">${f(conv(m, m.q10))} – ${f(conv(m, m.q90))}</span>`,
+          fin(o.q10) ? `${f(conv(m, o.q10))} – ${f(conv(m, o.q90))}<br><span class="cv-sub">${esc((o.exp || '').slice(5))}${o.exact ? '' : ' (next)'}${fin(o.atm_iv) ? ' · IV ' + pct(o.atm_iv) : ''}</span>` : '<span class="cv-sub">no chain</span>',
+          `${f(conv(m, o.max_pain))}${vs(conv(m, o.max_pain))}`, fin(o.put_wall) ? `${f(conv(m, o.put_wall))} – ${f(conv(m, o.call_wall))}` : '—',
+          fin(c.lo) ? `<b>${f(conv(m, c.lo))} – ${f(conv(m, c.hi))}</b><br><span class="cv-sub">centre ${f(conv(m, c.center))} · ${c.basis === 'backtest' ? 'fitted' : 'prior'}</span>` : '—'];
+      }), [1, 2, 3, 4, 5, 6]);
+      h += `<h3>Hour by hour</h3><p class="cv-sub">Each ladder since it was listed: the price, the expected value and median, the ladder's 80% range (shaded), the combined range, max pain and the walls. Hours before we began reading are rebuilt from Polymarket's price history (without the options).</p>`;
+      h += `<div class="cv-tabs">${O.map((m, i) => `<button class="cv-show${i ? '' : ' on'}" data-ladh="${i}">${esc(day(m.end).slice(5))} ${esc(PERIOD_L[m.period] || '')}${m.kind === 'bracket' ? ' (brackets)' : ''}</button>`).join(' ')}</div>`;
+      h += O.map((m, i) => `<div class="cv-ladh" data-ladh-box="${i}"${i ? ' hidden' : ''}>${hourSvg(m, m.to_page === 1 || !m.to_page ? f : (v) => (fin(v) ? fp(v) : '—'))}</div>`).join('');
+      h += `<div class="cv-legend"><span style="--k:${C.ink}">price</span><span style="--k:${C.pm}">expected value · median (dashed) · ladder 80%</span><span style="--k:${C.cmb}">combined</span><span style="--k:${C.mp}">max pain</span><span style="--k:${C.good}">put wall</span><span style="--k:${C.bad}">call wall</span></div>`;
+    }
+    const D = L.resolved || [];
+    if (D.length) {
+      h += `<h3>Resolved ladders</h3>` + tbl(['Date', 'Ladder', 'Close', 'Expected value a day before', 'Last reading', 'Inside the ladder\'s 80%?'], D.slice(0, 15).map((r) => {
+        const er = (v) => (fin(v) && fin(r.actual) ? `<span class="${Math.abs(v / r.actual - 1) < 0.01 ? 'cv-good' : ''}">${spct(v / r.actual - 1)}</span>` : '');
+        const d1 = r.day_before || {}, l = r.last || {};
+        const inside = fin(l.q10) && fin(l.q90) ? (r.actual >= l.q10 && r.actual <= l.q90) : null;
+        return [day(r.end), link(r.url, r.title || ''), `<b>${f(r.actual)}</b>`, fin(d1.ev) ? `${f(d1.ev)} ${er(d1.ev)}` : '—', fin(l.ev) ? `${f(l.ev)} ${er(l.ev)}` : '—', inside == null ? '—' : `<b class="${inside ? 'cv-good' : 'cv-bad'}">${inside ? 'yes' : 'no'}</b>`];
+      }), [2, 3, 4]);
+    }
+    if ((L.backtest_all || []).length || (L.backtest || []).length) {
+      h += `<h3>Backtest: how each forecast of the close did</h3><p class="cv-sub">Every hourly reading of every resolved ladder against the official close, grouped by how long before the close it was read. Error = |forecast ÷ close − 1|, each ladder counted once; the best in each row in green. "Inside 80%" should be near 80%. Brier = the squared miss of P(close above K) over the strikes, where the options had a view too (lower is better). The combined model's weights and width come from these rows; out of sample = fitted on the earliest 70% of ladders, scored on the latest 30%.</p>`;
+      if ((L.backtest_all || []).length) h += `<p class="cv-sub"><b>All ladders</b> (${num(L.resolved_all)} resolved)</p>` + btTable(L.backtest_all, f);
+      if ((L.backtest || []).length) h += `<p class="cv-sub"><b>${esc(page)}</b> (${num(L.resolved_n)} resolved), scored with the model fitted on all ladders</p>` + btTable(L.backtest, f);
+    } else if (O.length) h += `<p class="cv-sub">The backtest fills in as ladders resolve: each one is scored after its close.</p>`;
+    return h;
+  }
+  function bindLad(el) {
+    el.querySelectorAll && el.querySelectorAll('[data-ladh]').forEach((b) => {
+      b.onclick = () => {
+        el.querySelectorAll('[data-ladh]').forEach((x) => x.classList.toggle('on', x === b));
+        el.querySelectorAll('[data-ladh-box]').forEach((x) => { x.hidden = x.dataset.ladhBox !== b.dataset.ladh; });
+      };
+    });
+  }
+  function ladderTrack(el) {
+    ladFile('index.json').then((d) => {
+      if (!d || !(d.backtest || []).length) { el.innerHTML = `<p class="cv-sub">${d ? 'No closing-price ladder read hourly has resolved yet.' : ''}</p>`; return; }
+      el.innerHTML = `<div class="cv"><h3>Closing-price ladders, read hourly — ${num(d.resolved)} resolved</h3><p class="cv-sub">${esc(d.note || '')}</p>${btTable(d.backtest, usd)}</div>`;
+    });
+  }
+
   function render(el, doc) {
     css();
     PX = usd;
+    el.__cv = doc;
+    const lad = ladFor(el, doc, doc.ticker, render);
     const a = doc.analysts || {};
     const q0 = (a.periods || []).find((p) => p.period === '0q') || {};
     const nx = a.next_earnings || {};
@@ -285,9 +510,10 @@
       card('Market-implied price', pmPick ? usd(pmPick.implied_price.median) : '—', pmPick ? `median for ${day(pmPick.end)}${up(pmPick.implied_price.median) ? ' · ' + up(pmPick.implied_price.median) : ''}` : 'no price market open', C.pm) +
       card('Our model', ourQ ? usd(ourQ.price) : '—', ourQ ? `${esc(ourQ.horizon)} (${day(ourQ.date)}) · 80% ${usd(ourQ.lo80, 0)}–${usd(ourQ.hi80, 0)}` : 'not forecast', '#2a78d6') +
       `</div>`;
-    h += fan(doc, a) + estimates(a) + trendChart(doc, a) + markets(doc, a) + surprises(doc) + ratings(a) + track(doc);
-    h += `<p class="cv-note">Analysts: Yahoo Finance consensus (estimates, targets, ratings and actions as published there), read daily. Prediction markets: Polymarket and Kalshi public APIs, read every few hours — prices are probabilities of a crowd with money on it, thin markets can be off. Our model: the gravity / analogue forecast of the Rotation tab, frozen in its ledger. Nothing here is investment advice.</p></div>`;
+    h += fan(doc, a) + ladPanel(lad, (v) => usd(v), doc.ticker || '') + estimates(a) + trendChart(doc, a) + markets(doc, a, lad) + surprises(doc) + ratings(a) + track(doc);
+    h += `<p class="cv-note">Analysts: Yahoo Finance consensus (estimates, targets, ratings and actions as published there), read daily. Prediction markets: Polymarket and Kalshi public APIs, read every few hours (closing-price ladders every hour) — prices are probabilities of a crowd with money on it, thin markets can be off. Options: CBOE delayed quotes; max pain and the walls are where open interest sits, not a forecast. Our model: the gravity / analogue forecast of the Rotation tab, frozen in its ledger. Nothing here is investment advice.</p></div>`;
     el.innerHTML = h;
+    bindLad(el);
   }
 
   // ---------- one index: the market ----------
@@ -344,6 +570,8 @@
   function renderIndex(el, doc) {
     css();
     PX = pts;
+    el.__cv = doc;
+    const lad = ladFor(el, doc, doc.short, renderIndex);
     const a = doc.analysts || {}, T = a.targets || {}, lv = doc.level;
     const up = (v) => (fin(v) && fin(lv) && lv ? `${spct(v / lv - 1)} from today` : '');
     const yd = new Date(Date.now() - 864e5).toISOString().slice(0, 10), soon = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
@@ -361,10 +589,11 @@
       (ud ? card('Market: up?', pct(ud.p), `${src(ud)} · ${esc(ud.title).slice(0, 48)}`, ud.source === 'kalshi' ? C.ks : C.pm) : '') +
       card('Our model', oq ? pts(oq.price) : om ? pts(om.price) : '—', oq ? `next quarter (${day(oq.date)}) · ${spct(oq.ret)} from ${day(oq.from)}` : om ? `next month · ${spct(om.ret)}` : 'not covered', C.ours) +
       `</div>`;
-    h += fan(doc, a) + bottomUpPanel(doc) + oursPanel(doc) + markets(doc, a) + contribPanel(doc) + historyPanel(doc) + track(doc);
+    h += fan(doc, a) + ladPanel(lad, pts, doc.name || doc.short || '') + bottomUpPanel(doc) + oursPanel(doc) + markets(doc, a, lad) + contribPanel(doc) + historyPanel(doc) + track(doc);
     h += `<p class="cv-note">Index levels: Yahoo Finance (daily closes; weekly shown). Analysts: Yahoo Finance consensus of each member, added up at index weights — not a strategist's index target. Prediction markets: Polymarket and Kalshi public APIs, read every few hours. Our model: the Rotation tab's company forecasts added up. Nothing here is investment advice.</p></div>`;
     el.innerHTML = h;
+    bindLad(el);
   }
 
-  window.ConsensusView = { render, renderIndex, fmt: { usd, big, pct, spct, num, day, unitFmt }, KIND };
+  window.ConsensusView = { render, renderIndex, ladderTrack, fmt: { usd, big, pct, spct, num, day, unitFmt }, KIND };
 })();

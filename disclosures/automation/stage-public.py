@@ -241,7 +241,9 @@ def write_remote(out):
                 shutil.copytree(src, out / 'data' / 'shards' / name, dirs_exist_ok=True)
         return None
     cfg = {'base': f'https://raw.githubusercontent.com/{repo}/{sha}/disclosures/docs/data/',
-           'prefixes': [f'shards/{n}/' for n in REMOTE_SHARDS]}
+           'prefixes': [f'shards/{n}/' for n in REMOTE_SHARDS],
+           # closing-price ladders change every hour (ladders.yml): read from their branch, not from the last site build
+           'ladders': f'https://raw.githubusercontent.com/{repo}/ladder-history/public/'}
     (out / 'data').mkdir(parents=True, exist_ok=True)
     (out / 'data' / 'remote.json').write_text(json.dumps(cfg), encoding='utf-8')
     print(f"::notice::hub records read from the repository instead of Pages: {', '.join(cfg['prefixes'])}")
@@ -257,6 +259,7 @@ def main():
     ap.add_argument('--consensus', default=None, help="public/ of the branch consensus-history (Consensus: app/consensus.py)")
     ap.add_argument('--etf', default=None, help="public/ of the branch etf-history (ETFs: app/etf.py)")
     ap.add_argument('--smart', default=None, help="public/ of the branch smart-history (Smart money: app/smart.py)")
+    ap.add_argument('--ladders', default=None, help="public/ of the branch ladder-history (hourly price ladders: app/ladders.py)")
     args = ap.parse_args()
     out = Path(args.out)
     shutil.rmtree(out, ignore_errors=True)
@@ -290,6 +293,13 @@ def main():
         try:
             st = json.loads((Path(args.consensus) / 'status.json').read_text(encoding='utf-8'))
             print(f"::notice::consensus: {st.get('companies')} companies, {st.get('markets')} prediction markets, built {st.get('built_at')}")
+        except Exception:
+            pass
+    if args.ladders and (Path(args.ladders) / 'index.json').exists():
+        shutil.copytree(args.ladders, out / 'data' / 'ladders', dirs_exist_ok=True)
+        try:
+            st = json.loads((Path(args.ladders) / 'index.json').read_text(encoding='utf-8'))
+            print(f"::notice::price ladders: {len(st.get('rows') or [])} tickers, {st.get('resolved')} resolved, built {st.get('generated_at')}")
         except Exception:
             pass
     if args.etf and (Path(args.etf) / 'index.json').exists():

@@ -121,6 +121,7 @@ function consTrack(){
   out+=`<div class="panel"><h3>Price, market-cap and reported-metric ladders — ${fmt(P.n)} resolved</h3><p class="sub">The last implied median we saw before the date against where the price ended (the middle of the resolved bracket). Mean absolute error ${fmt(P.mean_abs_err_pct,1)}%; the end fell inside the 80% range ${V.pct(P.inside80)} of the time (80% would be right).</p>`+
    table(['Date','Company','Market','Implied median','80% range','Ended','Error'],rows.slice(0,100).map(r=>{const f=r.kind==='mcap'?V.big:r.kind==='metric'?v=>V.unitFmt(v,r.unit):v=>V.usd(v);return [esc(r.end),consTk(r.ticker),`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>`,f(r.median),`${f(r.q10)} – ${f(r.q90)}`,`${f(r.actual[0])} – ${r.actual[1]==null?'…':f(r.actual[1])}`,`<span class="${r.inside80?'positive':'negative'}">${V.spct(r.err_pct/100)}</span>`]}))+'</div>';
  }else out+=empty('No price ladder has resolved since tracking began: the last implied median before each date is kept, then scored when the market resolves.');
+ out+=`<div class="panel" id="cons-lad-track"><p class="sub">Loading the hourly closing-price ladders…</p></div>`;
  out+=`<p class="sub">Analysts' record: each company page shows the consensus against the reported EPS for every quarter on file. Our model's record is in the Rotation tab → Track record.</p>`;
  return out;
 }
@@ -141,6 +142,7 @@ function bindConsensus(){
  if($('cq')){$('cq').onchange=e=>{state.cq=e.target.value;render()};$('cq').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-cco]').forEach(b=>b.onclick=()=>{state.cview='company';state.cq=b.dataset.cco;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-cix]').forEach(b=>b.onclick=()=>{state.cview='market';state.cidx=b.dataset.cix;render();scrollTo({top:0,behavior:'smooth'})});
+ const lt=$('cons-lad-track');if(lt&&window.ConsensusView&&ConsensusView.ladderTrack)ConsensusView.ladderTrack(lt);
  const ie=$('cons-ix');
  if(ie){const c=consData('ix/'+(state.cidx||'spx'));if(c.data&&window.ConsensusView)ConsensusView.renderIndex(ie,c.data)}
  const el=$('cons-view');
