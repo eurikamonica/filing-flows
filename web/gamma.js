@@ -53,6 +53,132 @@
     return '<svg class="gamma-hist" viewBox="0 0 628 188" role="img" aria-label="Distribution of observed '+esc(metric.toUpperCase())+' revenue growth"><line x1="42" x2="586" y1="152" y2="152" stroke="currentColor" opacity=".35"/>'+out+'</svg>';
   }
 
+
+  // Relationship visualizations share Gamma's existing SIC members and Chains edges.
+  // No relationship width is inferred from revenue: only explicit value_usd is weighted.
+  function relationshipExplorer(root, edges, members) {
+    var byId={}, byName={};
+    members.forEach(function(m){
+      if(m.cik) byId[String(m.cik)]=m;
+      if(m.name) byName[m.name.toLowerCase()]=m;
+    });
+    function label(e,role) { return String(e[role]||e[role+'_cik']||'Unknown'); }
+    function key(e,role) { return String(e[role+'_cik']||label(e,role).toLowerCase()); }
+    function company(k,name) { return byId[k]||byName[String(name||'').toLowerCase()]; }
+    function nodeLink(k) { return /^\\d+$/.test(k) ? '#c-'+encodeURIComponent(k) : null; }
+    function evidence(e) {
+      var s=String(e.evidence_level|| (e.chain?'Chains mapping':'Reported relationship'));
+      return s;
+    }
+    var toolbar='<div class="gamma-toolbar" role="group" aria-label="Relationship visualization">'+
+      '<button type="button" class="gamma-view-btn" data-view="network">Network Graph</button>'+
+      '<button type="button" class="gamma-view-btn" data-view="flow">Money Flow</button>'+
+      '<button type="button" class="gamma-view-btn" data-view="industry">Industry Map</button></div>'+
+      '<p class="muted small" id="gamma-relationship-caption"></p><div id="gamma-relationship-canvas"></div>';
+    root.innerHTML=toolbar;
+    var canvas=root.querySelector('#gamma-relationship-canvas'), caption=root.querySelector('#gamma-relationship-caption');
+    var controls=Array.from(root.querySelectorAll('.gamma-view-btn'));
+    var svgEsc=esc;
+    function wrapSVG(inner,h) {
+      return '<div style="overflow-x:auto"><svg viewBox="0 0 960 '+h+'" width="100%" style="min-width:520px;max-height:740px;background:var(--card-bg,#fff);border:1px solid var(--border,#ddd);border-radius:12px" role="img" aria-label="Gamma relationship visualization">'+inner+'</svg></div>';
+    }
+    function network(){
+      if(!edges.length){
+        caption.textContent='No mapped counterparties for this SIC. Missing edges are a coverage gap, not evidence of no relationship.';
+        canvas.innerHTML='<p class="muted">No named supplier/customer links are available. Switch to Industry Map to explore SEC industry members.</p>';
+        return;
+      }
+      var nodes=new Map();
+      edges.forEach(function(e){
+        [['supplier','#2563a6'],['customer','#147d62']].forEach(function(d){
+          var k=key(e,d[0]);if(!nodes.has(k))nodes.set(k,{key:k,name:label(e,d[0]),color:d[1]});
+        });
+      });
+      var suppliers=new Set(edges.map(function(e){return key(e,'supplier');}));
+      var customers=new Set(edges.map(function(e){return key(e,'customer');}));
+      var left=[],mid=[],right=[];
+      nodes.forEach(function(n){(suppliers.has(n.key)&&customers.has(n.key)?mid:suppliers.has(n.key)?left:right).push(n);});
+      [left,mid,right].forEach(function(a){a.sort(function(x,y){return x.name.localeCompare(y.name);});});
+      var maxRows=Math.max(left.length,mid.length,right.length,1),height=Math.max(320,maxRows*62+85);
+      var positions={};
+      [left,mid,right].forEach(function(group,col){
+        group.forEach(function(n,i){positions[n.key]={x:[40,355,670][col],y:56+i*(height-110)/Math.max(1,group.length-1)};});
+      });
+      var html='<defs><marker id="gamma-rel-arrow" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="none" stroke="#8090a0" stroke-width="1.5"/></marker></defs>';
+      edges.forEach(function(e){
+        var a=positions[key(e,'supplier')],b=positions[key(e,'customer')]; if(!a||!b)return;
+        var x1=a.x+245,x2=b.x,y1=a.y+17,y2=b.y+17;
+        var same=x2<=x1;
+        var path=same?'M'+x1+' '+y1+' C'+(x1+55)+' '+(y1-45)+' '+(x2-55)+' '+(y2-45)+' '+x2+' '+y2:
+          'M'+x1+' '+y1+' C'+(x1+Math.max(20,(x2-x1)/2))+' '+y1+' '+(x2-Math.max(20,(x2-x1)/2))+' '+y2+' '+x2+' '+y2;
+        html+='<path d="'+path+'" fill="none" stroke="#8a9bac" stroke-width="1.8" opacity=".62" marker-end="url(#gamma-rel-arrow)"><title>'+svgEsc(label(e,'supplier')+' → '+label(e,'customer')+' | '+evidence(e)+(e.note?' | '+e.note:''))+'</title></path>';
+      });
+      nodes.forEach(function(n){
+        var p=positions[n.key], url=nodeLink(n.key);
+        var card='<rect width="245" height="35" rx="7" fill="'+n.color+'" fill-opacity=".12" stroke="'+n.color+'" stroke-opacity=".5"/>'+
+          '<text x="12" y="22" fill="currentColor" font-size="13" font-weight="600">'+svgEsc(n.name.length>30?n.name.slice(0,28)+'…':n.name)+'</text><title>'+svgEsc(n.name)+'</title>';
+        html+='<g transform="translate('+p.x+' '+p.y+')">'+(url?'<a href="'+url+'">'+card+'</a>':card)+'</g>';
+      });
+      caption.textContent=edges.length+' mapped relationships · '+nodes.size+' entities · Arrow indicates supplier → customer. Edge width is deliberately not monetary. Hover edges for evidence.';
+      canvas.innerHTML=wrapSVG(html,height)+references();
+    }
+    function references() {
+      return '<details class="method-note"><summary>Mapped relationships & evidence ('+edges.length+')</summary>'+
+        '<div class="gamma-network">'+edges.map(function(e){
+          var src=e.source_url && /^https:\/\//i.test(e.source_url)?' · <a target="_blank" rel="noopener noreferrer" href="'+esc(e.source_url)+'">Source ↗</a>':
+            e.chain?' · <a href="#chain-'+encodeURIComponent(e.chain)+'">Chains ↗</a>':'';
+          return '<div class="gamma-edge">'+esc(label(e,'supplier'))+' <span class="gamma-arrow">supplies →</span> '+
+          esc(label(e,'customer'))+' <span class="muted small">'+esc(evidence(e))+
+          (e.note?' · '+esc(e.note):'')+src+'</span></div>';
+        }).join('')+'</div></details>';
+    }
+    function flow() {
+      var weighted=edges.filter(function(e){return Number.isFinite(+e.value_usd)&&+e.value_usd>0 && e.value_usd!==null && e.value_usd!=='';});
+      if(!weighted.length){
+        caption.textContent='No verified or explicitly estimated relationship amounts in the current Gamma data.';
+        canvas.innerHTML='<p class="muted">Money Flow is unavailable for this SIC: existing supplier/customer links do not provide usable USD transaction amounts. No synthetic widths are drawn.</p>'+references();
+        return;
+      }
+      var rows=weighted.slice().sort(function(a,b){return (+b.value_usd)-(+a.value_usd);}).slice(0,25);
+      var max=Math.max.apply(null,rows.map(function(e){return +e.value_usd;}));
+      var height=Math.max(280,rows.length*43+65);
+      var html='<text x="20" y="28" font-size="14" fill="currentColor">Supplier</text><text x="690" y="28" font-size="14" fill="currentColor">Customer</text>';
+      rows.forEach(function(e,i){
+        var y=54+i*43,w=2+20*Math.sqrt(+e.value_usd/max);
+        var estimate=/estimat|model|assum|infer/i.test(e.evidence_level||e.value_type||'');
+        html+='<path d="M250 '+y+' C400 '+y+' 565 '+y+' 695 '+y+'" fill="none" stroke="'+(estimate?'#d18c47':'#25866c')+'" stroke-width="'+w.toFixed(2)+'" opacity=".57"><title>'+svgEsc(evidence(e)+' · '+money(+e.value_usd))+'</title></path>'+
+          '<text x="20" y="'+(y+4)+'" font-size="12" fill="currentColor">'+svgEsc(label(e,'supplier').slice(0,31))+'</text>'+
+          '<text x="710" y="'+(y+4)+'" font-size="12" fill="currentColor">'+svgEsc(label(e,'customer').slice(0,28))+'</text>';
+      });
+      caption.textContent='USD values from mapped relationships only. Green = reported/identified; amber = estimated/model-based. Width ∝ square root of supplied value (visual scaling); not a conservation-balanced Sankey.';
+      canvas.innerHTML=wrapSVG(html,height)+references();
+    }
+    function industryMap(){
+      var rows=members.slice().sort(function(a,b){return (+b.revenue_usd||0)-(+a.revenue_usd||0);}).slice(0,80);
+      if(!rows.length){canvas.innerHTML='<p class="muted">No mapped SEC companies in this SIC.</p>';return;}
+      var total=rows.reduce(function(s,m){return s+Math.max(0,+m.revenue_usd||0);},0);
+      var max=Math.max.apply(null,rows.map(function(m){return +m.revenue_usd||0;}))||1;
+      var h=rows.length*38+54,svg='<text x="18" y="25" font-size="14" fill="currentColor">Companies by reported quarterly revenue · same SIC (not supply-chain transaction size)</text>';
+      rows.forEach(function(m,i){
+        var y=44+i*38,w=+m.revenue_usd>0?Math.max(4,600*(+m.revenue_usd)/max):0;
+        var link=m.cik?'#c-'+encodeURIComponent(m.cik):null;
+        var r='<rect x="266" y="'+y+'" width="'+w+'" height="24" rx="4" fill="'+(COLORS[m.stage]||COLORS.unknown)+'" opacity=".79"/>'+
+          '<text x="14" y="'+(y+17)+'" font-size="13" fill="currentColor">'+svgEsc(String(m.ticker||m.name||'Unknown').slice(0,28))+'</text>'+
+          '<text x="'+Math.min(880,282+w)+'" y="'+(y+17)+'" font-size="12" fill="currentColor">'+svgEsc(money(m.revenue_usd))+'</text>';
+        svg+=link?'<a href="'+link+'">'+r+'</a>':r;
+      });
+      caption.textContent='SIC peer companies ordered by available quarterly revenue. Bars are scaled to the largest company; fiscal reporting dates may differ. Colors denote Gamma lifecycle heuristics.';
+      canvas.innerHTML=wrapSVG(svg,h);
+    }
+    var views={network:network,flow:flow,industry:industryMap};
+    function select(v) {
+      controls.forEach(function(b){var active=b.dataset.view===v;b.setAttribute('aria-pressed',String(active));b.style.cssText='cursor:pointer;padding:8px 12px;border:1px solid #a7b2bc;border-radius:7px;background:'+(active?'#184a68':'transparent')+';color:'+(active?'white':'inherit');});
+      views[v]();
+    }
+    controls.forEach(function(btn){btn.addEventListener('click',function(){select(btn.dataset.view);});});
+    select(edges.length?'network':'industry');
+  }
+
   async function index(app,ctx) {
     var here=ctx.live();
     ctx.setNav('gamma');
@@ -163,18 +289,7 @@
       get(id).addEventListener(id==='gexpected'?'input':'change',draw);
     });
     draw();
-    var edges=d.relationships||[];
-    get('gamma-relations').innerHTML=edges.length ?
-      '<div class="gamma-network">'+edges.map(function(e){
-        var supplier=e.supplier_cik?'<a href="#c-'+encodeURIComponent(e.supplier_cik)+'">'+esc(e.supplier)+'</a>':esc(e.supplier);
-        var customer=e.customer_cik?'<a href="#c-'+encodeURIComponent(e.customer_cik)+'">'+esc(e.customer)+'</a>':esc(e.customer);
-        var source=e.chain?' · <a href="#chain-'+esc(e.chain)+'">Chain evidence ↗</a>':
-          ' · SEC XBRL named-customer record (review supplier filings)';
-        return '<div class="gamma-edge">'+supplier+
-          '<span class="gamma-arrow">supplies →</span>'+customer+
-          '<span class="muted small">'+esc(e.note||'Named customer')+source+'</span></div>';
-      }).join('')+'</div>' :
-      '<p class="muted">No named counterparty disclosures currently available for this SIC in stored SEC records or existing Chains. This is a disclosure-coverage gap, not proof that companies have no suppliers or customers.</p>';
+    relationshipExplorer(get('gamma-relations'),d.relationships||[],members);
   }
   global.FFGamma={index:index,industry:industry};
 })(window);
