@@ -13,7 +13,7 @@ import sys
 import time
 import traceback
 
-from . import analysis, chains, checks, dims, facts, fx as FX, quality, release, reported, scan, sec, sectors, social, sources, text
+from . import analysis, chains, gamma, checks, dims, facts, fx as FX, quality, release, reported, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -1953,6 +1953,11 @@ def render(store, out, stars=frozenset()):
         chains.build(store, out, index, usd_recs)
     except Exception as e:
         print(f"::warning::supply chains not built: {e}")
+    try:  # Gamma is generated from all SIC industries, independently of thematic chains.
+        gamma.build(store, out, index)
+    except Exception as e:
+        print(f"::warning::gamma SIC industry data not built: {e}")
+        traceback.print_exc()
     recent = sorted(index, key=lambda x: (x["filed"] or "", x["cik"]), reverse=True)
     audit = store.state.get("audit", [])
     tick = {x["cik"]: x["ticker"] or x["name"] for x in index}
