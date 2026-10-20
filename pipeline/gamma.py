@@ -111,6 +111,50 @@ def _named_edges(out, root, member=None):
                                     "chain": ch["id"], "source": "chain_customer_disclosure"})
 
 
+
+def _company_name_key(label):
+    """Conservative name key for direct named-customer matches, never fuzzy tickers."""
+    s = re.sub(r"[^a-z0-9]+", " ", (label or "").lower())
+    return re.sub(r"\\b(inc|incorporated|corp|corporation|company|co|limited|ltd|plc|the)\\b", "", s).strip()
+
+
+def _direct_customer_edges(store, index):
+    """Extract named customer disclosures for any SIC, not only themed chains.
+
+    Unmatched names remain labels (not assumed to be listed companies).
+    """
+    by_name = defaultdict(list)
+    for p in index:
+        key = _company_name_key(p.get("name"))
+        if key:
+            by_name[key].append(p)
+    edges = []
+    for p in index:
+        try:
+            co = chains.Co(p["cik"], store.company(p["cik"]), ticker=p.get("ticker"))
+            named = co.customers()
+        except (ValueError, TypeError, KeyError, AttributeError) as e:
+            print(f"::warning::gamma named customers {p['cik']}: {str(e)[:80]}")
+            continue
+        for c in named:
+            label = (c.get("label") or "").strip()
+            key = _company_name_key(label)
+            if not key or len(key) < 3 or re.search(r"\\b(customer|customers|client|clients|unknown|unnamed|other)\\b", key):
+                continue
+            matches = by_name.get(key) or []
+            match = matches[0] if len(matches) == 1 else None
+            supplier = p.get("ticker") or str(p["cik"])
+            customer = (match or {}).get("ticker") or label
+            if supplier == customer:
+                continue
+            edges.append({"supplier": supplier, "customer": customer,
+                          "customer_cik": match["cik"] if match else None,
+                          "supplier_cik": p["cik"],
+                          "kind": "named_customer", "note": "Customer named in SEC XBRL filing; amount and current status require filing review",
+                          "source": "sec_xbrl_customer_disclosure",
+                          "share": c.get("pct"), "period": c.get("period")})
+    return edges
+
 def build(store, out, index):
     """Cover every SIC code represented in the rendered company universe."""
     os.makedirs(os.path.join(out, "gamma"), exist_ok=True)
@@ -130,8 +174,8 @@ def build(store, out, index):
                               "sector": p.get("sector") or sectors.sector_of(sic),
                               "revenue_usd": p.get("revenue"), "end": latest["end"],
                               "quarter": latest["quarter"], "history": rows[-24:]})
-    all_named_edges = []
-    _named_edges(all_named_edges, out)  # load themed chain disclosures once, not once per SIC
+    all_named_edges = _direct_customer_edges(store, index)
+    _named_edges(all_named_edges, out)  # add named chains links once; never include estimated ones
     listing = []
     for sic, members in sorted(industry.items()):
         members.sort(key=lambda r: -(r.get("revenue_usd") or 0))
@@ -160,7 +204,7 @@ def build(store, out, index):
         tickers = {m["ticker"] for m in members if m["ticker"]}
         edges = [e for e in all_named_edges if e["supplier"] in tickers or e["customer"] in tickers]
         # Deduplicate relationships, preserving source provenance; do not assume completeness.
-        relationships = list({(e["supplier"], e["customer"], e["chain"]): e for e in edges}.values())
+        relationships = list({(e["supplier"], e["customer"], e["source"], e.get("chain")): e for e in edges}.values())
         doc = {"sic": sic, "name": name, "sector": members[0]["sector"],
                "period": (str(comparable // 4) + "Q" + str(comparable % 4 + 1)) if comparable is not None else None,
                "generated": dt.datetime.now(dt.timezone.utc).isoformat(),
