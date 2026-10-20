@@ -83,6 +83,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y tesseract-ocr poppler-utils
       - name: Data and template checks
+        # Full test suite is valuable on push/manual and the daily all-source run;
+        # running it before every 15-minute disclosure poll delays freshness.
+        if: github.event_name != 'schedule' || github.event.schedule == '43 10 * * *'
         run: |
           python -m unittest discover -s tests -v
           node --check docs/app.js

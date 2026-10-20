@@ -51,6 +51,37 @@ def collect_holdings(client,cfg,old,revalidate=False):
                 hot.append(items[c])
         hot=hot[:max(2,int(cfg.get('batch_size',8))//2)]
         selected=hot+[x for x in selected if str(int(x['cik'])) not in {str(int(h['cik'])) for h in hot}][:max(0,int(cfg.get('batch_size',8))-len(hot))]
+    # Newly indexed filings take priority even when the usual 24-hour refresh is not due.
+    # Preserve at least half the batch for the existing fair queue; never bypass error backoff.
+    def new_filing_priority(row):
+        cik=str(int(row['cik']))
+        prior=old_managers.get(cik)
+        if not prior:
+            return False
+        failed=attempts.get(cik,{})
+        if failed.get('error') and failed.get('last_attempt'):
+            try:
+                last=_dt.datetime.fromisoformat(failed['last_attempt'])
+                if (_dt.datetime.now(_dt.timezone.utc)-last).total_seconds()<3600:
+                    return False
+            except (ValueError,TypeError):
+                pass
+        known=prior.get('discovered_filing_count')
+        if known is not None and int(row.get('filing_count') or 0)>int(known):
+            return True
+        return (row.get('latest_filing') or '')>(prior.get('last_success') or '')[:10]
+    if not target:
+        urgent=sorted((r for r in work if new_filing_priority(r)),
+                      key=lambda r:(r.get('latest_filing') or '',int(r.get('filing_count') or 0)),reverse=True)
+        budget=max(1,int(cfg.get('batch_size',8)))
+        seen=set()
+        prioritized=[]
+        for row in urgent[:max(1,budget//2)]+selected:
+            key=str(int(row['cik']))
+            if key not in seen and len(prioritized)<budget:
+                prioritized.append(row)
+                seen.add(key)
+        selected=prioritized
     for item in selected:
         cik=str(int(item['cik']))
         cached=old_managers.get(cik,{})
@@ -76,7 +107,8 @@ def collect_holdings(client,cfg,old,revalidate=False):
                 s['baseline_period']=snapshots[i-1]['period'] if i else None
             managers[cik]={'cik':cik,'name':name,'label':item.get('name',name),'since':cfg['since'],
                              'as_of':cfg.get('as_of'),'filings':filings,'snapshots':snapshots,
-                             'notices':notices,'last_success':now(),'stale':False}
+                             'notices':notices,'last_success':now(),'stale':False,
+                             'discovered_filing_count':item.get('filing_count')}
             attempts[cik]['last_success']=now()
         except Exception as exc:
             errors.append({'cik':cik,'error':str(exc)})

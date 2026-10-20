@@ -2374,11 +2374,11 @@
 
   // ---------- who bought it: a donut of the 13F managers who bought in the latest quarter on file (by dollars bought), and
   // how every filer moved (new · added · unchanged · cut · sold out). From holders/<TICKER>.json (stage-public.py).
-  function buyersPie(inst, exits, sym, av) {
+  function buyersPie(inst, exits, sym, av, selectedPeriod) {
     const per = {};
     inst.filter((x) => x.status !== 'BASE').forEach((x) => { per[x.period] = (per[x.period] || 0) + 1; });
     const top = Math.max(0, ...Object.values(per));
-    const P = Object.keys(per).sort().reverse().find((k) => per[k] >= top * 0.5);
+    const P = selectedPeriod || Object.keys(per).sort().reverse().find((k) => per[k] >= top * 0.5);
     if (!P) return '';
     const rows = inst.filter((x) => x.period === P), gone = (exits || []).filter((x) => x.period === P);
     const px = (x) => (x.shares ? (x.value_usd || 0) / x.shares : 0);
@@ -2387,7 +2387,7 @@
     const n = { NEW: 0, INCREASE: 0, UNCHANGED: 0, DECREASE: 0, EXIT: gone.length };
     rows.forEach((x) => { if (n[x.status] != null) n[x.status]++; });
     const filers = n.NEW + n.INCREASE + n.UNCHANGED + n.DECREASE + n.EXIT;
-    if (!buys.length || filers < 2) return '';
+    if (!buys.length || filers < 2) return selectedPeriod ? `<p class="muted">No comparable 13F buyers for ${t(sym)} in the selected quarter (${t(selectedPeriod)}). Other quarters may have better coverage.</p>` : '';
     const total = buys.reduce((a, x) => a + x.usd, 0), SL = 6;
     const slices = buys.slice(0, SL).map((x, i) => ({ label: x.manager, cik: x.cik, usd: x.usd, cls: `s${i + 1}`, isNew: x.status === 'NEW' }));
     if (buys.length > SL) slices.push({ label: `${buys.length - SL} other buyer${buys.length - SL === 1 ? '' : 's'}`, usd: buys.slice(SL).reduce((a, x) => a + x.usd, 0), cls: 'so', other: true });
@@ -2418,11 +2418,11 @@
   // ---------- 13F buying and selling beyond the donut: the same quarter as "Who bought it", seen four more ways ----------
   // flows13: per filer what it bought or sold in the latest well-filed quarter (dollars ≈ shares × each filer's own
   // quarter-end price), and the share bridge prior holdings → new / added / cut / sold out → holdings now.
-  function flows13(inst, exits) {
+  function flows13(inst, exits, selectedPeriod) {
     const per = {};
     inst.filter((x) => x.status !== 'BASE').forEach((x) => { per[x.period] = (per[x.period] || 0) + 1; });
     const top = Math.max(0, ...Object.values(per));
-    const P = Object.keys(per).sort().reverse().find((k) => per[k] >= top * 0.5);
+    const P = selectedPeriod || Object.keys(per).sort().reverse().find((k) => per[k] >= top * 0.5);
     if (!P) return null;
     const rows = inst.filter((x) => x.period === P && x.status !== 'BASE'), gone = (exits || []).filter((x) => x.period === P);
     const px = (x) => (x.shares ? (x.value_usd || 0) / x.shares : 0);
@@ -2534,13 +2534,13 @@
   }
 
   // 4 · quarter by quarter: how many processed managers bought (up) and sold (down) in each quarter on file
-  function quarters13(q, sym) {
+  function quarters13(q, sym, fromPeriod, toPeriod) {
     if (!q || !(q.rows || []).length) return '';
     const cov = q.coverage || [], best = Math.max(...cov.map((c) => c || 0)) || 1;
     // a quarter's changes compare each manager with its previous filing: leave out quarters whose previous quarter has few
     // managers processed (the start of the history on file), where nearly every position would count as a first filing
-    const idx = q.rows.map((r, i) => (r && i > 0 && (cov[i - 1] || 0) >= best * 0.6 ? i : -1)).filter((i) => i >= 0).slice(-8);
-    if (idx.length < 2) return '';
+    const idx = q.rows.map((r, i) => (r && i > 0 && (cov[i - 1] || 0) >= best * 0.6 ? i : -1)).filter((i) => i >= 0 && (!fromPeriod || q.periods[i] >= fromPeriod) && (!toPeriod || q.periods[i] <= toPeriod)).slice(-12);
+    if (idx.length < 2) return '<p class="muted">Fewer than two comparable quarters in the chosen historical range. Expand the range or wait for more filings.</p>';
     const W = 640, H = 230, mid = 108, amp = 82, n = idx.length, bw = Math.min(36, (W - 40) / n - 14), step = (W - 40) / n;
     const max = Math.max(1, ...idx.map((i) => Math.max(q.rows[i][0], q.rows[i][1])));
     const ql = (p) => `Q${Math.floor((+p.slice(5, 7) - 1) / 3) + 1} ’${p.slice(2, 4)}`;
@@ -2562,25 +2562,57 @@
   }
 
   // the five 13F views, one at a time (the choice is remembered)
+
+  // Scope all five charts to one selectable reported quarter; history window affects the
+  // time-series panel only. Choices persist per ticker and never fabricate missing quarters.
   function own13(inst, exits, sym, av, q) {
-    const f = flows13(inst, exits);
-    const views = [['donut', 'Who bought', buyersPie(inst, exits, sym, av)], ['bf', 'Buyers vs sellers', f ? butterfly13(f, sym, av) : ''],
-      ['bridge', 'Share bridge', f ? bridge13(f, sym) : ''], ['flow', 'Flow', f ? sankey13(f, sym) : ''], ['quarters', 'Quarter by quarter', quarters13(q, sym)]].filter((v) => v[2]);
+    const available = [...new Set(inst.filter((x) => x.status !== 'BASE').map((x) => x.period).concat((exits || []).map((x) => x.period)))].filter(Boolean).sort();
+    const history = [...new Set((q && q.periods && q.periods.length ? q.periods : available))].filter(Boolean).sort();
+    const stored = prefs.get('13f-selection:' + sym, {}) || {};
+    const period = available.includes(stored.period) ? stored.period : '';
+    const from = history.includes(stored.from) ? stored.from : (history[0] || '');
+    const to = history.includes(stored.to) ? stored.to : (history[history.length - 1] || '');
+    const options13 = (items, chosen) => items.map((p) => '<option value="' + t(p) + '"' + (p === chosen ? ' selected' : '') + '>' + t(p) + '</option>').join('');
+    const f = flows13(inst, exits, period || undefined);
+    const views = [['donut', 'Who bought', buyersPie(inst, exits, sym, av, period || undefined)],
+      ['bf', 'Buyers vs sellers', f ? butterfly13(f, sym, av) : ''],
+      ['bridge', 'Share bridge', f ? bridge13(f, sym) : ''],
+      ['flow', 'Flow', f ? sankey13(f, sym) : ''],
+      ['quarters', 'Quarter by quarter', quarters13(q, sym, from, to)]].filter((v) => v[2]);
     if (!views.length) return '';
     let on = prefs.get('own13', 'donut');
     if (!views.some((v) => v[0] === on)) on = views[0][0];
-    return `<div class="own13 pie13">${views.length > 1 ? `<div class="seg own13-seg" role="group" aria-label="13F view">${views.map(([k, l]) => `<button type="button" data-own13="${k}" class="${k === on ? 'on' : ''}" aria-pressed="${k === on}">${l}</button>`).join('')}</div>` : ''}
-      ${views.map(([k, , html]) => `<div class="own13-view" data-view13="${k}"${k === on ? '' : ' hidden'}>${html}</div>`).join('')}</div>`;
+    const controls = '<div class="own13-periods" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:12px 0">' +
+      (available.length ? '<label>13F report quarter <select data-own13-period aria-label="Choose 13F report quarter"><option value="">Latest well-covered</option>' + options13(available.slice().reverse(), period) + '</select></label>' : '') +
+      (history.length ? '<label>History from <select data-own13-from aria-label="History starting quarter">' + options13(history, from) + '</select></label>' +
+        '<label>Through <select data-own13-to aria-label="History ending quarter">' + options13(history, to) + '</select></label>' : '') +
+      '</div>';
+    return '<div class="own13 pie13">' + controls +
+      (views.length > 1 ? '<div class="seg own13-seg" role="group" aria-label="13F view">' +
+        views.map(([k, l]) => '<button type="button" data-own13="' + k + '" class="' + (k === on ? 'on' : '') + '" aria-pressed="' + (k === on) + '">' + l + '</button>').join('') + '</div>' : '') +
+      views.map(([k, , html]) => '<div class="own13-view" data-view13="' + k + '"' + (k === on ? '' : ' hidden') + '>' + html + '</div>').join('') +
+      '<p class="muted" style="font-size:12px">13F changes are quarter-end holdings comparisons, not verified trade executions. Historical results are limited to filings already processed.</p></div>';
   }
-  function bindOwn13(box) {
+  function bindOwn13(box, sym, inst, exits, av, q) {
     box.querySelectorAll('[data-own13]').forEach((b) => b.addEventListener('click', () => {
       const k = b.dataset.own13;
       prefs.set('own13', k);
       box.querySelectorAll('[data-own13]').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
       box.querySelectorAll('[data-view13]').forEach((v) => { v.hidden = v.dataset.view13 !== k; });
     }));
+    const selectors = [['[data-own13-period]', 'period'], ['[data-own13-from]', 'from'], ['[data-own13-to]', 'to']];
+    selectors.forEach(([selector, key]) => {
+      const node = box.querySelector(selector);
+      if (!node) return;
+      node.addEventListener('change', () => {
+        const next = { ...(prefs.get('13f-selection:' + sym, {}) || {}), [key]: node.value };
+        prefs.set('13f-selection:' + sym, next);
+        const section = box.querySelector('.own13');
+        if (section) section.outerHTML = own13(inst, exits, sym, av, q);
+        bindOwn13(box, sym, inst, exits, av, q);
+      });
+    });
   }
-
   // ---------- smart money (data/smart/t/<TICKER>.json, app/smart.py): today's 13F, ETF, insider and officials' votes in
   // the stock, each weighted by how often that actor's past buys / sales were right (excess return over SPY, 63 trading days)
   async function smartBy(sym) {
@@ -2758,7 +2790,7 @@
         ${off.length > 10 ? `<button class="btn" type="button" id="off-more">Show all ${off.length} records</button>` : ''}
         <p class="muted">Disclosed value ranges from annual statements and transaction reports (US House, US Senate, New York, California, Canada, imports). Reviewed rows were checked against their source page; “auto-read” rows come straight from US House transaction reports and “eFD” rows from US Senate electronic reports, with the ticker the filer wrote. Ranges are not share counts.</p>`
         : `<p class="muted">No official’s disclosure names ${t(sym)} yet. US House and Senate transaction reports are read in batches; other jurisdictions appear once a disclosure is reviewed in Disclosures → PDF / OCR.</p>`}`;
-    bindOwn13(box);
+    bindOwn13(box, sym, inst, (h && h.exits) || [], av, h && h.q13f);
     const more = $('#inst-more', box);
     if (more) more.addEventListener('click', () => { $('#inst-rows', box).innerHTML = instRows(true); more.remove(); });
     const offMore = $('#off-more', box);
