@@ -8,6 +8,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+try:
+    import numpy  # noqa: F401  (people.py needs it; the collector's check step installs only requirements.txt)
+except ImportError:
+    raise unittest.SkipTest("numpy is not installed")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'app'))
 try:                                   # app/people.py needs numpy; the Hub's quick checks run without it (research-people.yml has it)
     import numpy  # noqa: F401,E402
