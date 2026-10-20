@@ -5,10 +5,10 @@ from pathlib import Path
 import unittest
 
 try:
-    from .ledger import open_db, ingest_gamma, add_relation, coverage, reconcile
+    from .ledger import open_db, ingest_gamma, add_relation, coverage, reconcile, export_graphs
     from .sec_capex import quarterly_cash_capex, universe, save_cash_capex, save_submissions
 except ImportError:
-    from ledger import open_db, ingest_gamma, add_relation, coverage, reconcile
+    from ledger import open_db, ingest_gamma, add_relation, coverage, reconcile, export_graphs
     from sec_capex import quarterly_cash_capex, universe, save_cash_capex, save_submissions
 
 
@@ -39,6 +39,18 @@ class LedgerTests(unittest.TestCase):
         r=self.db.execute("SELECT reported_transaction_usd,evidence_level FROM relations").fetchone()
         self.assertIsNone(r["reported_transaction_usd"])
         self.assertEqual(r["evidence_level"],"inferred")
+
+    def test_gamma_and_chains_shared_export(self):
+        ingest_gamma(self.db,self.gamma.parent)
+        dest=Path(self.t.name)/"graph"
+        result=export_graphs(self.db,dest)
+        self.assertEqual(result["exported_sic_groups"],1)
+        data=json.loads((dest/"3572.json").read_text())
+        self.assertEqual(len(data["companies"]),2)
+        self.assertEqual(len(data["relationships"]),1)
+        edge=data["relationships"][0]
+        self.assertIsNone(edge["value_usd"])
+        self.assertEqual(edge["evidence_level"],"inferred")
 
     def test_value_rejected_without_sec_evidence(self):
         ingest_gamma(self.db,self.gamma.parent)
