@@ -1,0 +1,32 @@
+name: AI CapEx research checks
+on:
+  pull_request:
+    paths:
+      - 'research/ai_capex_attribution.py'
+      - 'research/ai_capex_example.json'
+      - 'research/test_ai_capex_attribution.py'
+      - '.github/workflows/ai-capex-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /research/ai_capex_attribution.py
+            /research/ai_capex_example.json
+            /research/test_ai_capex_attribution.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax and accounting invariants
+        run: |
+          python -m py_compile research/ai_capex_attribution.py research/test_ai_capex_attribution.py
+          python -m unittest discover -s research -p 'test_ai_capex_attribution.py' -v
+          python research/ai_capex_attribution.py research/ai_capex_example.json --out /tmp/ai-capex-check.json
