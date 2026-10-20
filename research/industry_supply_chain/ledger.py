@@ -255,6 +255,58 @@ def reconcile(con, scenario, period, as_of):
     return ans
 
 
+def export_graphs(con, out_dir):
+    """Stable Gamma/Chains graph feed; facts only, assumptions are in another ledger.
+
+    Not yet integrated in production pages. A category network is unweighted unless
+    a specific SEC-evidenced amount exists. Include SIC peers even without edges.
+    """
+    out_dir=Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    listing=[]
+    for industry in con.execute("SELECT * FROM industries ORDER BY sic").fetchall():
+        key=industry["sic"]
+        peers=[dict(r) for r in con.execute(
+            "SELECT cik,ticker,name,sic FROM companies WHERE sic=? ORDER BY name",(key,))]
+        ids={r["cik"] for r in peers}
+        # Queries can return cross-industry connections where exactly one side belongs
+        # to this SIC. Both sides' SIC identities are preserved in each export edge.
+        relationships=[]
+        for r in con.execute("""SELECT r.*,e.accession,e.source_url,e.filed_at,
+              s.sic supplier_sic,c.sic customer_sic
+              FROM relations r
+              JOIN companies s ON s.cik=r.supplier_cik
+              JOIN companies c ON c.cik=r.customer_cik
+              LEFT JOIN evidence e ON e.evidence_id=r.evidence_id
+              WHERE s.sic=? OR c.sic=?
+              ORDER BY r.category,r.supplier_cik,r.customer_cik""",(key,key)):
+            relationships.append({
+                "supplier_cik":r["supplier_cik"],"customer_cik":r["customer_cik"],
+                "supplier_sic":r["supplier_sic"],"customer_sic":r["customer_sic"],
+                "relationship_type":r["category"],"product":r["product"],"tier":r["tier"],
+                "evidence_level":r["evidence_level"],
+                "source_url":r["source_url"],"accession_number":r["accession"],
+                "filing_date":r["filed_at"],"valid_from":r["valid_from"],"valid_to":r["valid_to"],
+                "observed_at":r["observed_at"],
+                "value_usd":r["reported_transaction_usd"],
+                "value_type":"disclosed_transaction" if r["reported_transaction_usd"] is not None else None
+            })
+        doc={"sic":key,"name":industry["name"],"sector":industry["sector"],
+             "companies":peers,"relationships":relationships,
+             "data_scope":"verified SEC registrants in this ledger, not complete global supplier coverage",
+             "method":"No relationship or amount is added without a loaded evidence/assumption record."}
+        (out_dir/(key+".json")).write_text(json.dumps(doc,ensure_ascii=False,separators=(",",":")),
+                                               encoding="utf-8")
+        listing.append({"sic":key,"name":industry["name"],"companies":len(peers),
+                        "links":len(relationships),
+                        "amount_supported_links":sum(e["value_usd"] is not None for e in relationships)})
+    index={"industries":listing,"coverage":coverage(con),
+           "source":"Filing Flows evidence-first SQLite ledger",
+           "warnings":"Missing relation values are null; no fabricated widths; financial estimates excluded."}
+    (out_dir/"index.json").write_text(json.dumps(index,ensure_ascii=False,indent=2),encoding="utf-8")
+    return {"exported_sic_groups":len(listing),"output":str(out_dir),"coverage":index["coverage"]}
+
+
 def cli():
     p=argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--db",type=Path,required=True)
@@ -263,6 +315,7 @@ def cli():
     sub.add_parser("coverage")
     g=sub.add_parser("import-gamma");g.add_argument("--site",type=Path,required=True)
     add=sub.add_parser("add-evidence-edge");add.add_argument("--json",type=Path,required=True)
+    ex=sub.add_parser("export-graph");ex.add_argument("--out",type=Path,required=True)
     rec=sub.add_parser("reconcile");rec.add_argument("--scenario",required=True)
     rec.add_argument("--period",required=True);rec.add_argument("--as-of",required=True)
     args=p.parse_args()
@@ -272,6 +325,7 @@ def cli():
         elif args.cmd=="coverage":out=coverage(con)
         elif args.cmd=="import-gamma":out=ingest_gamma(con,args.site)
         elif args.cmd=="add-evidence-edge":out={"relation_id":add_relation(con,json.loads(args.json.read_text(encoding="utf-8")))}
+        elif args.cmd=="export-graph":out=export_graphs(con,args.out)
         else:out=reconcile(con,args.scenario,args.period,args.as_of)
     print(json.dumps(out,indent=2))
 
