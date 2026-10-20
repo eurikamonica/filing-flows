@@ -142,7 +142,8 @@ function consCompany(){
 }
 function bindConsensus(){
  if(state.tab!=='consensus')return;
- for(const k of ['cview','ckind','csrc','cflt','cidx','cabout'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
+ for(const k of ['cview','ckind','csrc','cprob','cvol','cflt','cidx','cabout'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
+ for(const k of ['cdatefrom','cdateto'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
  if($('cq')){$('cq').onchange=e=>{state.cq=e.target.value;render()};$('cq').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-cco]').forEach(b=>b.onclick=()=>{state.cview='company';state.cq=b.dataset.cco;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-cix]').forEach(b=>b.onclick=()=>{state.cview='market';state.cidx=b.dataset.cix;render();scrollTo({top:0,behavior:'smooth'})});
