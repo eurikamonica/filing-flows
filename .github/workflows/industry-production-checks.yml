@@ -21,6 +21,16 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /research/
+            /scripts/integrate_industry.py
+            /scripts/verify_production.py
+            /web/supplier-revenue.html
+            /web/integration-health.html
+            /web/gamma.js
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
