@@ -78,7 +78,7 @@ def _stage(rows, reference):
     return "transition"
 
 
-def _named_edges(out, root, member):
+def _named_edges(out, root, member=None):
     """Read prior Chains snapshots; never promote allocations to verified invoices."""
     path = os.path.join(root, "chains", "index.json")
     try:
@@ -97,7 +97,7 @@ def _named_edges(out, root, member):
             ids = {c["id"]: c["t"] for c in data.get("companies", [])}
             for m in data.get("matrix", []):
                 buyer, supplier = m.get("b"), ids.get(m.get("s"))
-                if m.get("named") and buyer and supplier and (buyer in member or supplier in member):
+                if m.get("named") and buyer and supplier and (member is None or buyer in member or supplier in member):
                     out.append({"supplier": supplier, "customer": buyer, "kind": "named_customer",
                                 "note": "Customer named in supplier filing; displayed chain allocation is modeled",
                                 "chain": ch["id"], "source": "chain_customer_disclosure"})
@@ -105,7 +105,7 @@ def _named_edges(out, root, member):
             for c in data.get("companies", []):
                 for named in c.get("named") or []:
                     supplier, customer = c.get("t"), named.get("b")
-                    if supplier and customer and (supplier in member or customer in member):
+                    if supplier and customer and (member is None or supplier in member or customer in member):
                         out.append({"supplier": supplier, "customer": customer, "kind": "named_customer",
                                     "note": "Named customer in SEC filing; identity matched in this chain",
                                     "chain": ch["id"], "source": "chain_customer_disclosure"})
@@ -130,6 +130,8 @@ def build(store, out, index):
                               "sector": p.get("sector") or sectors.sector_of(sic),
                               "revenue_usd": p.get("revenue"), "end": latest["end"],
                               "quarter": latest["quarter"], "history": rows[-24:]})
+    all_named_edges = []
+    _named_edges(all_named_edges, out)  # load themed chain disclosures once, not once per SIC
     listing = []
     for sic, members in sorted(industry.items()):
         members.sort(key=lambda r: -(r.get("revenue_usd") or 0))
@@ -156,8 +158,7 @@ def build(store, out, index):
         pooled_q = [r["qoq"] for m in members for r in m["history"] if r["qoq"] is not None]
         name = next((p.get("industry") for p in index if str(p.get("sic") or "").zfill(4) == sic and p.get("industry")), "SIC " + sic)
         tickers = {m["ticker"] for m in members if m["ticker"]}
-        edges = []
-        _named_edges(edges, out, tickers)
+        edges = [e for e in all_named_edges if e["supplier"] in tickers or e["customer"] in tickers]
         # Deduplicate relationships, preserving source provenance; do not assume completeness.
         relationships = list({(e["supplier"], e["customer"], e["chain"]): e for e in edges}.values())
         doc = {"sic": sic, "name": name, "sector": members[0]["sector"],
