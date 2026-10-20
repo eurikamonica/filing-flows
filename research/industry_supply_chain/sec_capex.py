@@ -163,14 +163,24 @@ def save_cash_capex(con, identifier, payload, as_of=None, at=None):
 
 
 def due_companies(con, cap, refresh_days=14, at=None):
+    """Fair work queue: new issuers first, but reserve up to 20% of each batch
+    for previously failed SEC requests after an 8-hour backoff (not 14 days).
+    """
     at=at or dt.datetime.now(dt.timezone.utc)
     cutoff=(at-dt.timedelta(days=refresh_days)).isoformat()
-    rows=con.execute("""SELECT c.cik,s.last_checked,s.status FROM companies c
+    retry_cutoff=(at-dt.timedelta(hours=8)).isoformat()
+    retries=con.execute("""SELECT c.cik FROM companies c
+       JOIN collector_status s ON s.cik=c.cik AND s.feed='sec-companyfacts'
+       WHERE s.status='error' AND s.last_checked<?
+       ORDER BY s.last_checked ASC,c.cik ASC LIMIT ?""",
+       (retry_cutoff,max(1,cap//5))).fetchall()
+    fresh=con.execute("""SELECT c.cik FROM companies c
        LEFT JOIN collector_status s ON s.cik=c.cik AND s.feed='sec-companyfacts'
-       WHERE s.last_checked IS NULL OR s.last_checked<?
+       WHERE s.last_checked IS NULL OR (s.status='ok' AND s.last_checked<?)
        ORDER BY CASE WHEN c.sic IS NULL THEN 0 ELSE 1 END,
-                s.last_checked ASC, c.cik ASC LIMIT ?""",(cutoff,cap)).fetchall()
-    return [r["cik"] for r in rows]
+                s.last_checked ASC,c.cik ASC LIMIT ?""",
+       (cutoff,cap-len(retries))).fetchall()
+    return [r["cik"] for r in retries]+[r["cik"] for r in fresh]
 
 
 def refresh(con, agent, max_issuers=20, refresh_days=14):

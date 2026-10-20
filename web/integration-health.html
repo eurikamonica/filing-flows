@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Integration Health | Filing Flows</title><link rel="stylesheet" href="../styles.css"><style>
+main{max-width:980px;padding:28px 18px;margin:auto}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{padding:18px;border:1px solid #cbd1d5;border-radius:12px;background:#fff}small{color:#55636b}
+.badge{display:inline-block;padding:4px 8px;border:1px solid #a1aab3;border-radius:6px;color:#2e3a42;font-size:.8rem}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+</style></head><body><main>
+<p><a href="../#gamma">← Filing Flows</a> · <a href="../supplier-revenue/">Revenue research</a></p>
+<h1>Production integration health</h1>
+<p>Collection, parsing, modeling and publication are separate stages. Successful artifact construction is not proof that GitHub Pages deployed or that the browser received the newest data.</p>
+<p id="build">Loading public snapshot…</p><div id="stages" class="cards"></div>
+<h2>Coverage and limitations</h2><pre id="details"></pre>
+<p>To verify deployment, check the GitHub Actions <a href="https://github.com/eurikamonica/filing-flows/actions/workflows/scan.yml">Scan EDGAR and publish</a> workflow and its post-deploy audit status. Static JSON is not a live pipeline monitor.</p>
+</main><script>
+const safe=x=>String(x??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('../data/industry-intelligence/integration-health.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(j=>{
+document.getElementById('build').textContent='Build '+(j.build_run_id||'not recorded')+' · source '+(j.source_commit||'not recorded')+' · generated '+j.generated_at;
+document.getElementById('stages').innerHTML=['collection','parsing','modeling','market_mapping','publication'].map(k=>'<div class="card"><h3>'+safe(k)+'</h3><span class="badge">'+safe(j[k]?.status)+'</span><p>'+safe(j[k]?.note||'')+'</p></div>').join('');
+document.getElementById('details').textContent=JSON.stringify({collection:j.collection,gamma_integration:j.gamma_integration},null,2);
+}).catch(e=>document.getElementById('build').textContent='Public data status unavailable: '+e.message);
+</script></body></html>

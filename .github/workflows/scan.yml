@@ -205,6 +205,17 @@ jobs:
           done
           du -sh _research/* 2>/dev/null || true
 
+      - name: Read the independently refreshed industry ledger snapshot
+        continue-on-error: true
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" industry-ledger-data >/dev/null; then
+            git clone -q --depth 1 --filter=blob:none --sparse --branch industry-ledger-data "$url" _industry
+            git -C _industry sparse-checkout set public
+          else
+            echo "::notice::No industry-ledger-data snapshot yet; research pages will report no collection."
+          fi
+
       - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
         run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public --debt _debt/public --consensus _cons/public --etf _etf/public --smart _smart/public --ladders _lad/public --research _research
 
@@ -215,6 +226,13 @@ jobs:
         run: python scripts/hub_extras.py --site _site
       - name: Pages for search engines about 13F managers and officials (m/<slug>/, o/<slug>/)
         run: python scripts/seo_people.py --people _site/disclosures/data/research/people --out _site
+
+      - name: Integrate SIC relationships, markets and audit-visible research pages
+        run: |
+          python scripts/integrate_industry.py --site _site --snapshot _industry/public
+          test -s _site/data/industry-intelligence/integration-health.json
+          test -s _site/supplier-revenue/index.html
+          test -s _site/integration-health/index.html
 
       # Your own server (README "Your own domain and server"): with the repository variable SELF_HOST = true the built
       # site is also pushed to the branch "site", which the server pulls every few minutes. GitHub Pages keeps running.
@@ -315,6 +333,24 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # A successful artifact upload or deploy job is not proof that the current browser
+  # receives the code. Test public URLs and the exact Actions build id after deploy.
+  verify-integration:
+    needs: deploy
+    if: needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Audit live production routes
+        run: |
+          python scripts/verify_production.py \
+            --base "${{ vars.SITE_URL || needs.deploy.outputs.page_url }}" \
+            --run-id "${{ github.run_id }}"
 
   # E-mail alerts to readers who signed up on the site (after the new charts are live, so the links work).
   # Needs the repository variable SUPABASE_URL and the secret SUPABASE_SERVICE_KEY; uses the same MAIL_* secrets.

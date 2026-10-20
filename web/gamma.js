@@ -189,6 +189,7 @@
     app.innerHTML='<div class="page-head"><div class="eyebrow">Gamma / All industries</div>'+
       '<h1>Industry growth & supply–demand intelligence</h1>'+
       '<p class="intro">Browse every SIC sub-industry represented in Filing Flows SEC records. Company lifecycle is a transparent heuristic; industry distributions are historical descriptions, not analyst forecasts.</p>'+
+      '<p class="muted"><a href="supplier-revenue/">Supplier Revenue Forecast &rarr;</a> &nbsp;&middot;&nbsp; <a href="integration-health/">Collection and publication health &rarr;</a></p>'+
       '<div class="meta"><span>'+industries.length+' SIC industries</span><span>'+d.universe+' companies with quarterly revenue</span><span>Data: '+esc((d.generated||'').slice(0,10))+'</span></div></div>'+
       '<div class="gamma-toolbar"><input id="gamma-query" type="search" placeholder="Find SIC, industry or company sector" aria-label="Filter industries">'+
       '<select id="gamma-sector" aria-label="Filter sector"><option value="">All sectors</option>'+

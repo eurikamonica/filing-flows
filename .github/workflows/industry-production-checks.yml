@@ -1,0 +1,55 @@
+name: Industry production integration checks
+on:
+  pull_request:
+    paths:
+      - 'research/industry_supply_chain/**'
+      - 'research/ai_capex_attribution.py'
+      - 'scripts/integrate_industry.py'
+      - 'scripts/verify_production.py'
+      - 'web/supplier-revenue.html'
+      - 'web/integration-health.html'
+      - 'web/gamma.js'
+      - '.github/workflows/industry-ledger.yml'
+      - '.github/workflows/scan.yml'
+      - '.github/workflows/industry-production-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /research/
+            /scripts/integrate_industry.py
+            /scripts/verify_production.py
+            /web/supplier-revenue.html
+            /web/integration-health.html
+            /web/gamma.js
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source and Python syntax
+        run: |
+          python -m py_compile research/industry_supply_chain/ledger.py research/industry_supply_chain/sec_capex.py research/industry_supply_chain/production.py scripts/integrate_industry.py scripts/verify_production.py
+          node --check web/gamma.js
+      - name: Accounting invariants and site integration fixtures
+        run: |
+          python -m unittest discover -s research/industry_supply_chain -p 'test_ledger.py' -v
+          python -m unittest discover -s research/industry_supply_chain -p 'test_production_integration.py' -v
+          python -m unittest discover -s research -p 'test_ai_capex_attribution.py' -v
+      - name: Validate absent-feed publishing and exported routes
+        run: |
+          mkdir -p /tmp/industry-test-site
+          python scripts/integrate_industry.py --site /tmp/industry-test-site --snapshot /tmp/not-yet-collected
+          test -s /tmp/industry-test-site/data/industry-intelligence/integration-health.json
+          test -s /tmp/industry-test-site/supplier-revenue/index.html
+          test -s /tmp/industry-test-site/integration-health/index.html

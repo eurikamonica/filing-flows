@@ -1,0 +1,73 @@
+# Research data branch is independent of main and GitHub Pages.
+# Never place a private SEC key in the static site; data are public SEC facts.
+name: Industry intelligence collector
+on:
+  workflow_dispatch:
+    inputs:
+      batch:
+        description: 'SEC issuers to refresh (1-100)'
+        required: false
+        default: '60'
+  schedule:
+    - cron: '11 1,3,5,7,9,11,13,15,17,19,21,23 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: industry-ledger-data
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate SEC requester identity
+        run: |
+          if [[ "$SEC_USER_AGENT" != *@* ]]; then
+            echo "::error::Set SEC_USER_AGENT secret to your accurate name and contact email."
+            exit 1
+          fi
+      - name: Restore durable industry ledger branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$url" industry-ledger-data >/dev/null; then
+            git clone -q --depth 1 --branch industry-ledger-data "$url" industry-state
+          else
+            mkdir industry-state
+            git -C industry-state init -q -b industry-ledger-data
+            git -C industry-state remote add origin "$url"
+          fi
+          mkdir -p industry-state/public
+      - name: SEC identity, SIC and cash CapEx incremental refresh
+        env:
+          COLLECT_BATCH: ${{ inputs.batch || '60' }}
+        run: |
+          python -m research.industry_supply_chain.production \
+            --db industry-state/industry.sqlite \
+            --public industry-state/public \
+            --agent "$SEC_USER_AGENT" \
+            --batch "$COLLECT_BATCH" \
+            --refresh-days 14 \
+            --scenario research/ai_capex_example.json
+      - name: Re-run accounting / identity unit checks
+        run: |
+          python -m unittest discover -s research/industry_supply_chain -p 'test_ledger.py' -v
+          python -m unittest discover -s research -p 'test_ai_capex_attribution.py' -v
+      - name: Persist research SQLite and public evidence snapshots
+        working-directory: industry-state
+        run: |
+          git add industry.sqlite public/
+          if ! git diff --cached --quiet; then
+            git -c user.name="filing-flows-research" -c user.email="actions@users.noreply.github.com" \
+              commit -m "industry evidence snapshot $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push -q origin HEAD:industry-ledger-data
+          else
+            echo "No changes in this research snapshot"
+          fi
