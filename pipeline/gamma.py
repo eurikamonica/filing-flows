@@ -176,6 +176,10 @@ def build(store, out, index):
                               "quarter": latest["quarter"], "history": rows[-24:]})
     all_named_edges = _direct_customer_edges(store, index)
     _named_edges(all_named_edges, out)  # add named chains links once; never include estimated ones
+    cik_by_ticker = {p.get("ticker"): p["cik"] for p in index if p.get("ticker")}
+    for edge in all_named_edges:
+        edge.setdefault("supplier_cik", cik_by_ticker.get(edge["supplier"]))
+        edge.setdefault("customer_cik", cik_by_ticker.get(edge["customer"]))
     listing = []
     for sic, members in sorted(industry.items()):
         members.sort(key=lambda r: -(r.get("revenue_usd") or 0))
