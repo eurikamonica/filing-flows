@@ -6,7 +6,14 @@ const inflight=new Map();
 let remoteCfg=null;
 function shardFetch(path){
  if(!remoteCfg)remoteCfg=fetch('data/remote.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
- return remoteCfg.then(c=>{const base=c&&typeof c.base==='string'&&/^https:\/\//.test(c.base)&&(c.prefixes||[]).some(x=>path.startsWith(x))?c.base:'data/';return fetch(base+path)});
+ return remoteCfg.then(async c=>{
+  const base=c&&typeof c.base==='string'&&/^https:\/\//.test(c.base)&&(c.prefixes||[]).some(x=>path.startsWith(x))?c.base:'data/';
+  const liveBase=window.HUB_FAST_13F_BASE;
+  if(liveBase&&path.startsWith('shards/holdings/')){
+   try{const response=await fetch(liveBase+path,{cache:'no-store'});if(response.ok)return response}catch(e){/* use last published shard */}
+  }
+  return fetch(base+path);
+ });
 }
 function ensureShard(row){
  if(!row?.shard||row._loaded)return true;
