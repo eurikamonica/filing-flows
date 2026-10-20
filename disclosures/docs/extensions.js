@@ -26,6 +26,7 @@ function signedBars(rows){
 function holdings(){
  const m=moduleData(),managers=m.managers||[];
  let out=head('Institutional holdings','13F public positions at quarter-end. Filing updates are not real-time trades.','SEC / 13F')+coverageStrip('holdings');
+ if(window.HUB_FAST_13F_UPDATED)out+=`<p class="sub">Latest 13F index read directly from the collector snapshot: ${esc(window.HUB_FAST_13F_UPDATED)}. Pages deployment can lag; original SEC submissions are authoritative.</p>`;
  if(!managers.length)return out+empty('No 13F data yet. Run the holdings collector or choose demo.');
  state.manager=choose(state.manager,managers.map(x=>x.cik));const manager=managers.find(x=>x.cik===state.manager);if(!ensureShard(manager))return out+loading(manager);const snaps=manager.snapshots||[];
  out+=`<div class="toolbar">${field('manager','Manager / CIK',managers.map(x=>[x.cik,(x.label||x.name)+' · '+x.cik]),state.manager,true)}</div>`;

@@ -13,6 +13,7 @@ function stakesView(){
  let out=head('Large holders · 13D / 13G','Who owns more than 5% of a company: activists and strategic holders file a Schedule 13D (with their purpose), passive holders the short-form 13G — including when they drop below 5%.','SEC / 13D · 13G');
  const g=marketGate('stakes','13D / 13G filings');if(!g.data)return out+g.html;
  const d=g.data,all=d.latest||[];
+ out+=discDateControls('SEC filing date');
  state.oform=['','13D','13G','new','exit','up','down'].includes(state.oform)?state.oform:'';
  out+=`<div class="toolbar">${field('oform','Filings',[['','All 13D and 13G'],['13D','13D and 13D/A (may seek influence)'],['13G','13G and 13G/A (passive)'],['new','New filings only'],['up','Raised stake'],['down','Cut stake'],['exit','Dropped below 5%']],state.oform)}${search('oq','Ticker, company or holder','e.g. activist name · Enter')}</div>`;
  const d30=daysAgo(30),last=all.filter(r=>(r.filed||'')>=d30);
@@ -22,7 +23,7 @@ function stakesView(){
  out+=`<div class="panel"><h3>Most 13D activity, last 90 days</h3><p class="sub">13D and 13D/A filings per company · hover for who filed</p>${top.length?divergingChart(top.map(a=>({label:a.ticker,value:a.d13,tip:[[a.ticker,a.issuer||''],[`${a.d13} 13D filing${a.d13===1?'':'s'}`,a.new13d?`${a.new13d} new`:''],[a.filers.slice(0,4).join(', '),''],[`largest stake ${fmt(a.max_percent,2)}%`,'']]})),{unit:'count',label:'13D filings by company',neutral:true}):empty('No 13D filings on file yet — the collector reads the newest filings every half hour and works back through the daily indexes.')}</div>`;
  const q=(state.oq||'').trim().toLowerCase();
  const rows=all.filter(r=>(!state.oform||(state.oform==='new'?r.new:state.oform==='exit'?r.label==='below 5%':state.oform==='up'?r.change>0:state.oform==='down'?r.change<0:r.form.startsWith(state.oform)))
-  &&(!q||[r.ticker,r.issuer,r.filer,r.person,r.holder].join(' ').toLowerCase().includes(q)));
+  &&(!q||[r.ticker,r.issuer,r.filer,r.person,r.holder].join(' ').toLowerCase().includes(q))&&discDateMatches(r,['filed']));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} filings</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=xBar('one filing');
@@ -41,6 +42,7 @@ function form144View(){
  let out=head('Planned insider sales · Form 144','Officers, directors and other affiliates give notice before selling restricted or control shares: how many, their market value, the approximate sale date and how the shares were acquired. A notice is an intention; the sale itself follows on Form 4.','SEC / FORM 144');
  const g=marketGate('form144','Form 144 notices');if(!g.data)return out+g.html;
  const d=g.data,all=d.latest||[];
+ out+=discDateControls('SEC filing date');
  state.frole=['','officer','director','other'].includes(state.frole)?state.frole:'';state.fmin=['100000','1000000','10000000'].includes(state.fmin)?state.fmin:'100000';
  out+=`<div class="toolbar">${field('frole','Who',[['','Everyone'],['officer','Officers'],['director','Directors'],['other','Other affiliates (10% owners, trusts …)']],state.frole)}${field('fmin','Market value',[['100000','$100K or more'],['1000000','$1M or more'],['10000000','$10M or more']],state.fmin)}${search('fq','Ticker, company or seller','e.g. NVDA · Enter')}</div>`;
  const d30=daysAgo(30),last=all.filter(r=>(r.filed||'')>=d30),big=last.slice().sort((a,b)=>(b.value||0)-(a.value||0))[0];
@@ -49,7 +51,7 @@ function form144View(){
  out+=`<div class="panel"><h3>Most planned selling, last 30 days</h3><p class="sub">Market value in Form 144 notices per company · hover for who gave notice</p>${top.length?divergingChart(top.map(a=>({label:a.ticker,value:-a.value,tip:[[a.ticker,a.issuer||''],[money(a.value),`in ${a.notices} notice${a.notices===1?'':'s'}`],[a.sellers.slice(0,4).join(', '),a.plan?`${a.plan} under a 10b5-1 plan`:'']]})),{label:'Planned sales by company',format:v=>money(Math.abs(v))}):empty('No Form 144 notices on file yet — the collector reads the newest filings every half hour.')}</div>`;
  const q=(state.fq||'').trim().toLowerCase(),min=+state.fmin;
  const rows=all.filter(r=>(r.value||0)>=min&&(!state.frole||(state.frole==='other'?!/officer|director/i.test(r.relationship||''):new RegExp(state.frole,'i').test(r.relationship||'')))
-  &&(!q||[r.ticker,r.issuer,r.seller,r.seller_name].join(' ').toLowerCase().includes(q)));
+  &&(!q||[r.ticker,r.issuer,r.seller,r.seller_name].join(' ').toLowerCase().includes(q))&&discDateMatches(r,['filed']));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} notices</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=xBar('one notice');

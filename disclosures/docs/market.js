@@ -250,7 +250,7 @@ function tradesView(){
  let out=head("Officials' trades",'Transactions in US House periodic transaction reports (read by machine) and US Senate electronic reports (eFD), with the ticker the filer wrote, plus reviewed rows from any jurisdiction. Each ticker is checked against SEC listings.','HOUSE + SENATE PTR');
  const g=marketGate('officials-trades',"Officials' trades");if(!g.data)return out+g.html;
  const d=g.data,all=d.trades||[];
- out+=latestReports(d);
+ out+=discDateControls('Transaction date')+latestReports(d);
  const people=Object.entries(all.reduce((a,t)=>{a[t.person]=(a[t.person]||0)+1;return a},{})).sort((a,b)=>b[1]-a[1]);
  state.tperson=people.some(p=>p[0]===state.tperson)?state.tperson:'';state.twin=state.twin==='ytd'?'ytd':'d90';
  out+=`<div class="toolbar">${field('tchamber','Chamber',[['','House, Senate and others'],['US House','US House'],['US Senate','US Senate'],['other','Other jurisdictions (reviewed)']],state.tchamber||'')}${field('tperson','Official',[['','Everyone'],...people.map(([p,n])=>[p,`${p} (${n})`])],state.tperson,true)}${field('ttype','Transaction',[['','All'],['purchase','Purchases'],['sale','Sales (full or partial)'],['exchange','Exchanges']],state.ttype||'')}${field('tcheck','Ticker check',[['','All rows'],['listed','Listed ticker'],['unlisted','Not in listings'],['name','Name differs — check'],['suggested','Has a suggested ticker']],state.tcheck||'')}<div class="field"><label for="tq">Ticker or asset</label><input id="tq" value="${esc(state.tq||'')}" placeholder="e.g. NVDA · Enter"></div></div>`;
@@ -261,7 +261,7 @@ function tradesView(){
  const q=(state.tq||'').trim().toLowerCase();
  const rows=all.filter(t=>(!state.tchamber||(state.tchamber==='other'?!['US House','US Senate'].includes(t.jurisdiction):t.jurisdiction===state.tchamber))&&(!state.tperson||t.person===state.tperson)&&(!state.ttype||(state.ttype==='sale'?/sale/.test(t.type):t.type===state.ttype))
   &&(!state.tcheck||(state.tcheck==='listed'?t.ticker_status==='listed':state.tcheck==='unlisted'?t.ticker_status!=='listed':state.tcheck==='name'?t.name_check==='check':!!t.suggested))
-  &&(!q||((t.ticker||'')+' '+(t.asset_raw||'')+' '+(t.listed_name||'')).toLowerCase().includes(q)));
+  &&(!q||((t.ticker||'')+' '+(t.asset_raw||'')+' '+(t.listed_name||'')).toLowerCase().includes(q))&&discDateMatches(t,['date']));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')} Machine-read rows are not reviewed: open the page to confirm. A “name differs” flag means the listed company name does not appear in the filer’s description — often a share class or a renamed company, sometimes a wrong ticker.</div>`;
  out+=`<div class="section-head"><h3>${fmt(rows.length)} transactions</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
@@ -280,6 +280,7 @@ function insidersView(){
  let out=head('Insider trades','Open-market purchases and sales by officers, directors and 10% owners, from Form 4 filings (due two business days after the trade) — the most current ownership data the SEC publishes.','SEC / FORM 4');
  const g=marketGate('insiders','Insider trades');if(!g.data)return out+g.html;
  const d=g.data,all=d.latest||[],sum=d.summary||[];
+ out+=discDateControls('Transaction date');
  state.itype=['','P','S'].includes(state.itype)?state.itype:'';state.irole=state.irole||'';
  out+=`<div class="toolbar">${field('itype','Trades',[['','Purchases and sales'],['P','Purchases only'],['S','Sales only']],state.itype)}${field('irole','Who',[['','Everyone'],['ceo','CEO / CFO / President / Chair'],['officer','Any officer'],['Director','Directors'],['10% owner','10% owners']],state.irole)}<div class="field wide"><label for="iq">Ticker, company or insider</label><input id="iq" value="${esc(state.iq||'')}" placeholder="e.g. NVDA · Enter"></div></div>`;
  const buys90=sum.filter(a=>a.buys),cl=sum.filter(a=>a.cluster),big=all.filter(t=>t.code==='P').sort((a,b)=>(b.value||0)-(a.value||0))[0];
@@ -287,7 +288,7 @@ function insidersView(){
  const top=buys90.slice().sort((a,b)=>b.buy_value-a.buy_value).slice(0,14);
  out+=`<div class="panel"><h3>Most insider buying, last 90 days</h3><p class="sub">Dollars bought in the open market by officers and directors · hover for who bought</p>${top.length?divergingChart(top.map(a=>({label:a.ticker,value:a.buy_value,tip:[[a.ticker,a.issuer||''],[money(a.buy_value),`bought in ${a.buys} trade${a.buys===1?'':'s'}`],[a.buyers.slice(0,4).join(', '),a.cluster?'cluster buy':'']]}))):empty('No purchases on file yet — the collector reads the newest Form 4 filings every half hour.')}</div>`;
  const q=(state.iq||'').trim().toLowerCase(),CEO=new Set(['CEO','CFO','President','Chair']),OFF=new Set(['CEO','CFO','President','COO','Chair','Officer']);
- const rows=all.filter(t=>(!state.itype||t.code===state.itype)&&(!state.irole||(state.irole==='ceo'?CEO.has(t.role):state.irole==='officer'?OFF.has(t.role):t.role===state.irole))&&(!q||[t.ticker,t.issuer,t.insider].join(' ').toLowerCase().includes(q)));
+ const rows=all.filter(t=>(!state.itype||t.code===state.itype)&&(!state.irole||(state.irole==='ceo'?CEO.has(t.role):state.irole==='officer'?OFF.has(t.role):t.role===state.irole))&&(!q||[t.ticker,t.issuer,t.insider].join(' ').toLowerCase().includes(q))&&discDateMatches(t,['date']));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} recent trades</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=xBar('one trade');
