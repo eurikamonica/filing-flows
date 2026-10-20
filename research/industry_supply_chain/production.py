@@ -36,15 +36,13 @@ def quarter_end(label):
     return idx.replace(day=monthrange(idx.year,idx.month)[1]).isoformat()
 
 def model_scenario(con, spec, as_of):
-    """Use PR #38's calculator; keep assumptions in a separate estimated ledger.
-
-    A scenario is not called 'verified', including with real tickers or XBRL CapEx.
-    No base 8B/LLM-generated financial value becomes a reported actual.
+    """#38 scenario calculator uses #40 verified CIK identity, without polluting
+    the persistent reported-data ledger with a fictional spending scenario.
     """
-    result=calculate(spec)             # calculator enforces demo_only=True
-    buyer=resolved_cik(con,spec.get("buyer_ticker"))
+    result=calculate(spec)  # enforces demo_only=True
+    buyer_symbol=spec.get("buyer_ticker") or str(spec.get("buyer","")).split(" ")[0]
+    buyer=resolved_cik(con,buyer_symbol)
     unmatched=set()
-    n=0
     out=[]
     for case in result["scenarios"]:
         estimates=[]
@@ -54,30 +52,22 @@ def model_scenario(con, spec, as_of):
                 unmatched.add(row["vendor"])
                 continue
             recognition=quarter_end(row["period"])
-            amount=float(row["value_usd"])
-            con.execute("""INSERT INTO attributed_revenue
-                (scenario,buyer_cik,supplier_cik,category,recognition_period,usd,as_of,evidence_level,method)
-                VALUES (?,?,?,?,?,?,?,?,?)
-                ON CONFLICT(scenario,buyer_cik,supplier_cik,category,recognition_period,as_of)
-                DO UPDATE SET usd=excluded.usd""",
-                ("DEMO:"+case["name"],buyer,vendor,"terminal_spend",
-                 recognition,amount,as_of,"estimated","illustrative_BOM_share_plus_lag"))
-            n+=1
             estimates.append({"supplier":row["vendor"],"supplier_cik":vendor,
-                              "period":row["period"],"end":recognition,"usd":amount,
+                              "period":row["period"],"end":recognition,
+                              "usd":float(row["value_usd"]),
                               "actual_segment_revenue_usd":None,
-                              "reconciliation":"Not verified; no matched segment actual"})
+                              "reconciliation":"Not verified; no matched and independently sourced segment actual"})
         out.append({"name":case["name"],"capex_usd":case["capex_usd"],
                     "terminal_vendor_usd":case["terminal_vendor_usd"],
                     "unallocated_by_category_usd":case["unallocated_by_category_usd"],
                     "recognized_revenue_scenarios":estimates})
-    con.commit()
     return {"status":"illustrative_only","demo_only":True,"buyer":spec["buyer"],
-            "buyer_ticker":spec.get("buyer_ticker"),"buyer_cik":buyer,
+            "buyer_ticker":buyer_symbol,"buyer_cik":buyer,
             "period":spec["period"],"as_of":as_of,"scenarios":out,
             "unresolved_supplier_tickers":sorted(unmatched),
-            "inserted_estimate_rows":n,
-            "note":"No supplier sales forecasts validated. Scenario assumptions are not SEC invoices."}
+            "persisted_as_actual_rows":0,
+            "note":"Illustrative numbers are never persisted as reported revenue or valid invoice relations."}
+
 
 def publish(con, dest, status, scenario_input=None):
     dest=Path(dest)
