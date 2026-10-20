@@ -22,6 +22,30 @@ function discDateMatches(row, keys){
  return (!state.discFrom||day>=state.discFrom)&&(!state.discTo||day<=state.discTo);
 }
 function discDateFilter(rows,keys){return rows.filter(r=>discDateMatches(r,keys))}
+/* Fast lane: data is already committed by the disclosure collector. Fetch the newest
+   immutable-shape index directly rather than wait for the separate Pages site build.
+   No GitHub token; don't expose private data or replace non-13F modules. */
+let fast13fChecked=0,fast13fPending=false;
+function fast13fRefresh(){
+ if(state.mode!=='official'||state.tab!=='holdings'||typeof fetch!=='function'||fast13fPending)return;
+ if(Date.now()-fast13fChecked<120000)return;
+ fast13fChecked=Date.now();fast13fPending=true;
+ const root='https://raw.githubusercontent.com/eurikamonica/filing-flows/main/disclosures/docs/data/';
+ fetch(root+'live.json?stamp='+Math.floor(Date.now()/120000),{cache:'no-store'})
+ .then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+ .then(fresh=>{
+  const old=window.DISCLOSURE_LIVE;
+  const incoming=fresh?.modules?.holdings;
+  if(!old||!incoming||!Array.isArray(incoming.managers)||!incoming.updated_at)return;
+  if(incoming.updated_at<=(old.modules?.holdings?.updated_at||''))return;
+  old.modules.holdings=incoming;
+  window.HUB_FAST_13F_BASE=root;
+  window.HUB_FAST_13F_UPDATED=incoming.updated_at;
+  if(typeof inflight!=='undefined')for(const k of inflight.keys())if(k.startsWith('shards/holdings/'))inflight.delete(k);
+  if(state.tab==='holdings'&&state.mode==='official')render();
+ }).catch(()=>{/* offline/blocked: retain deployed verified snapshot */})
+ .finally(()=>{fast13fPending=false});
+}
 function bindDiscDates(){
  for(const [id,k] of [['disc-from','discFrom'],['disc-to','discTo']]){
   const el=$(id);if(el)el.onchange=e=>{state[k]=e.target.value;state.page=0;render()};
@@ -165,6 +189,7 @@ function render(){
  baseRender();exported=[];
  tipData.length=0;
  $('workspace').innerHTML=({cot,banks,npx,status,holdings,congress,review,directory,signals,flows:flowsView,trades:tradesView,insiders:insidersView,events:eventsView,news:newsView,stakes:stakesView,form144:form144View,shorts:shortsView,rotation:rotationView,options:optionsView,debt:debtView,consensus:consView,etf:etfView,smart:smartView,allflows:allflowsView,valuation:valView,filings:filingsView,maps:mapsView,...(window.HUB_VIEWS||{})}[state.tab]||window[state.tab+'View']||status)();
+ fast13fRefresh();
  bind('market','market');bind('group','group');bind('from','from');bind('to','to');bind('asof','date');bind('cert','cert');bind('metric','metric');bind('base','base');bind('filing','filing');bind('direction','direction');
  if($('query')){$('query').onchange=e=>{state.query=e.target.value;state.page=0;render()};$('query').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  actions();
