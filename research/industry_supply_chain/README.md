@@ -19,6 +19,8 @@ python research/industry_supply_chain/sec_capex.py --db /tmp/filing-supply.sqlit
 # If an existing full Filing Flows site build has generated Gamma files:
 python research/industry_supply_chain/ledger.py --db /tmp/filing-supply.sqlite import-gamma --site _site/data
 python research/industry_supply_chain/ledger.py --db /tmp/filing-supply.sqlite coverage
+# Export a common industry graph feed (never overwrite existing Gamma charts):
+python research/industry_supply_chain/ledger.py --db /tmp/filing-supply.sqlite export-graph --out /tmp/industry-graph
 python -m unittest discover -s research/industry_supply_chain -p 'test_ledger.py' -v
 ```
 
