@@ -13,6 +13,10 @@ try:
 except ImportError:
     raise unittest.SkipTest("numpy is not installed")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'app'))
+try:                                   # app/people.py needs numpy; the Hub's quick checks run without it (research-people.yml has it)
+    import numpy  # noqa: F401,E402
+except ImportError:
+    raise unittest.SkipTest('numpy is not installed')
 import people as P  # noqa: E402
 
 

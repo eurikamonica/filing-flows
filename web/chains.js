@@ -361,6 +361,7 @@
       <div class="export chain-export"><span>Save</span><button class="pill" data-cx="png">PNG</button><button class="pill" data-cx="jpg">JPG</button><button class="pill" data-cx="pdf">PDF</button></div>
       <div class="chain-tip" id="ctip" hidden></div>
       <section class="section" id="cmodel"></section>
+      <section class="section" id="creturn"></section>
       <section class="section" id="cpost"></section>
       <section class="section" id="ctables"></section>
       <section class="section" id="cmarket"></section>
@@ -451,6 +452,7 @@
     if (!here()) return;
     draw();
     if (hasModel(d)) { document.getElementById('cmodel').innerHTML = modelSection(d); bindModel(d); }
+    if (d.returns && d.returns.buyers && d.returns.buyers.length) document.getElementById('creturn').innerHTML = returnsSection(d);
     else if (d.model && d.model.error) document.getElementById('cmodel').innerHTML = `<p class="muted small">Forecast model: not yet — ${esc(d.model.error)}; the scan collects the buyers’ history over its next runs.</p>`;
     document.getElementById('ctables').innerHTML = tables(d);
     bindSort(d);
@@ -609,7 +611,8 @@
     const step = Math.pow(10, Math.floor(Math.log10(hi / 4 || 1))), tick = [1, 2, 2.5, 5, 10].map((m) => m * step).find((t2) => hi / t2 <= 5) || step;
     let g = '';
     for (let v = 0; v <= hi; v += tick) g += `<line x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="#e5e3dd"/><text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="#6b6a66">${usd(v * 1e9)}</text>`;
-    labs.forEach((l, i) => { if (i % Math.ceil(labs.length / 10) === 0 || i === labs.length - 1) g += `<text x="${x(l).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="11" fill="#6b6a66">${esc(l)}</text>`; });
+    const every = Math.ceil(labs.length / 10);
+    labs.forEach((l, i) => { if ((i % every === 0 && labs.length - 1 - i >= every / 2) || i === labs.length - 1) g += `<text x="${x(l).toFixed(1)}" y="${H - 12}" text-anchor="middle" font-size="11" fill="#6b6a66">${esc(l)}</text>`; });
     if (o && o.split) g += `<line x1="${x(o.split).toFixed(1)}" x2="${x(o.split).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="#9a9893" stroke-dasharray="3 3"/><text x="${(x(o.split) + 4).toFixed(1)}" y="${T + 10}" font-size="10.5" fill="#6b6a66">forecast →</text>`;
     series.forEach((s) => {
       if (s.band && s.band.length) {
@@ -745,6 +748,50 @@
     });
   }
 
+  // ---------------------------------------------------------------- what the spending costs and earns (capexreturn.py)
+  function returnsSection(d) {
+    const R = d.returns, C = R.combined, rows = R.buyers.slice().sort((a, b) => b.capex_ttm - a.capex_ttm);
+    const B = (v) => (v == null ? '—' : usd(v * 1e9));
+    const hist = C.dep_hist, last = hist[hist.length - 1];
+    const lead = (sc) => [last].concat(C.dep_path[sc].slice(0, 8));
+    const chart = lineChart([
+      { pts: hist, color: '#1d1d1b', name: 'Depreciation, reported (combined)' },
+      { pts: lead('base'), color: '#2f6db3', name: 'Ahead: base capex path' },
+      { pts: lead('down'), color: '#b8432f', dash: '5 4', name: 'Capex −20%' },
+      { pts: lead('up'), color: '#17734a', dash: '5 4', name: 'Capex +20%' },
+    ], { split: last[0], aria: 'The buyers’ combined depreciation, reported and projected' });
+    const ratio = C.need_covered ? C.d_oi / C.need_covered : null;
+    let h = `<div class="section-head"><h2>What the spending costs, and what it has earned</h2><span class="muted">Depreciation still to come, the return so far, free cash flow — each buyer from its own filings</span></div>
+      <p>These ${rows.length} buyers charged <b>${B(C.dep_ttm)}</b> of depreciation in the last twelve months against <b>${B(C.capex_ttm)}</b> of capex.
+      Over the next four quarters the charge rises to <b>${B(C.dep_next4.base)}</b> — almost all of it set by what is already spent: spending 20% less moves it only to ${B(C.dep_next4.down)}.
+      The last two years’ capex (${B(C.capex_8q)}) needs about <b>${B(C.need)}</b> a year of extra operating profit to pay its depreciation and earn ${pct(R.hurdle)} before tax;
+      ${ratio != null ? `the buyers added <b>${B(C.d_oi)}</b> of operating profit over those two years — ${pct(ratio)} of what their part of the spending needs.` : ''}</p>
+      <div class="mbox">${chart}</div>
+      <div class="tbl-wrap"><table class="small"><thead><tr><th>Buyer</th><th class="num">Capex, 12 months</th><th class="num">Depreciation, 12 months</th>
+        <th class="num">Effective life</th><th class="num">Depreciation, next 4 q (−20% / +20%)</th><th class="num">Next years (base)</th>
+        <th class="num">Profit needed a year</th><th class="num">Operating profit added, 2 years</th><th class="num">Covered</th><th class="num">Return on PP&amp;E added</th>
+        <th class="num">Free cash flow, next 4 q (−20% / +20%)</th><th class="num">−20% capex: EPS, 2 years</th></tr></thead><tbody>
+      ${rows.map((r) => `<tr><td class="mono">${esc(r.t)}</td><td class="num">${B(r.capex_ttm)}</td><td class="num">${B(r.dep_ttm)}${r.da_used ? ' <span class="muted" title="depreciation and amortization: depreciation alone is not tagged">D&amp;A</span>' : ''}</td>
+        <td class="num" title="fitted on the reported depreciation; typical miss ${B(r.rms)} a quarter">${r.life_y} y</td>
+        <td class="num"><b>${B(r.dep_next4.base)}</b> <span class="muted">${B(r.dep_next4.down)} / ${B(r.dep_next4.up)}</span></td>
+        <td class="num">${Object.entries(r.dep_years.base || {}).slice(0, 2).map(([y, v]) => `${y}: ${B(v)}`).join(' · ') || '—'}</td>
+        <td class="num">${B(r.need)}</td><td class="num">${B(r.d_oi)}</td>
+        <td class="num ${r.cover == null ? '' : r.cover >= 1 ? 'pos' : 'neg'}">${r.cover != null ? pct(r.cover) : '—'}</td>
+        <td class="num">${r.roic_incr != null ? pct(r.roic_incr, 1) : '—'}</td>
+        <td class="num ${r.fcf_next4.base.fcf < 0 ? 'neg' : ''}"><b>${B(r.fcf_next4.base.fcf)}</b> <span class="muted">${B(r.fcf_next4.down.fcf)} / ${B(r.fcf_next4.up.fcf)}</span></td>
+        <td class="num">${r.down_eps_2y != null ? `+$${r.down_eps_2y.toFixed(2)}` : '—'}</td></tr>`).join('')}</tbody></table></div>
+      <details><summary>How these are worked out</summary>
+      <p><b>Depreciation.</b> Each quarter’s capex is depreciated in equal parts over L quarters from the next quarter; L is the life that best reproduces the depreciation each
+      company reported over the last three years (with a constant for assets older than the eight years on file). It is an effective life: servers and network gear
+      (about six years at most of these companies), buildings (decades) and construction not yet in service, together. Ahead, the same rule runs on the forecast’s capex path.</p>
+      <p><b>Profit needed.</b> The last eight quarters’ capex × (1 ÷ the effective life in years + ${pct(R.hurdle)}): a year of its depreciation plus a ${pct(R.hurdle)} pre-tax return.
+      Set against the operating profit the company added over the same two years — which also holds everything else in its business, good and bad.
+      <b>Return on PP&amp;E added</b>: that operating profit after ${pct(R.tax)} tax ÷ the net property and equipment added in the two years.</p>
+      <p><b>Free cash flow.</b> Operating cash flow of the last twelve months grown at its last-year rate (held within −20% and +40%), minus each case’s capex.
+      <b>EPS</b>: the −20% case’s lower depreciation over the next eight quarters, after tax, per diluted share — before any effect on revenue.</p></details>`;
+    return h;
+  }
+
   // ---------------------------------------------------------------- posts for X
   const URL_LEN = 23;
   const xlen = (s) => s.replace(/https?:\/\/\S+/g, 'x'.repeat(URL_LEN)).length;
@@ -792,6 +839,13 @@
           `If the ${d.name.replace(/ capex$/i, '')} buyers spent 20% less over the next four quarters, revenue would move by (model fitted on SEC filings):`,
           `Each line: the supplier's link to their capex, estimated from its own history and tested out of sample.\n${url}`, 280));
       }
+    }
+    if (d.returns && d.returns.buyers && d.returns.buyers.length > 1) {
+      const R = d.returns, C = R.combined, B = (v) => usd(v * 1e9);
+      P.push(trimTo(R.buyers.slice().sort((a, b) => b.dep_next4.base - a.dep_next4.base).map((r) =>
+        `$${r.t} ${B(r.dep_ttm)} → ${B(r.dep_next4.base)}${r.cover != null ? ` · profit added ${pct(r.cover)} of what its capex needs` : ''}`),
+        `The depreciation wave (${d.name}): ${B(C.dep_ttm)} in the last 12 months → ${B(C.dep_next4.base)} in the next 4 quarters, mostly set by capex already spent:`,
+        `From SEC filings: effective lives fitted on reported depreciation.\n${url}`, 280));
     }
     const gp = rows.filter((c) => c.gm != null).map((c) => ({ t: c.t, v: c.attr * c.gm, gm: c.gm })).sort((a, b) => b.v - a.v);
     if (gp.length > 2) {

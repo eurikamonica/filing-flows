@@ -185,3 +185,15 @@ def test_region_and_product_concentrations_are_not_customers():
 def test_capex_outlook_reads_paragraph_dicts():
     rows = chains.capex_guidance([{"text": "We expect fiscal 2027 capital expenditures to be approximately $120 billion.", "heading": False}])
     assert rows and rows[0]["lo"] == 120e9 and rows[0]["year"] == "2027"
+
+
+def test_effective_life_is_recovered_from_reported_depreciation():
+    from pipeline import capexreturn as CR
+    C = {k: 10 * 1.05 ** i for i, k in enumerate(range(8000, 8032))}
+    first = min(C)
+    D = {k: sum(C.get(v, 0) for v in range(max(k - 24, first), k)) / 24 + 2.0 for k in range(8020, 8032)}
+    L, base, rms = CR.fit_life(C, D)
+    assert L == 24 and abs(base - 2.0) < 1e-6 and rms < 1e-6
+    path = {8032 + i: C[8031] * 1.05 ** (i + 1) for i in range(8)}
+    up, down = CR.project(C, L, base, path, 1.2, 8031), CR.project(C, L, base, path, 0.8, 8031)
+    assert up[8035] > down[8035] and abs(up[8032] - down[8032]) < 1e-9   # next quarter's charge is already set

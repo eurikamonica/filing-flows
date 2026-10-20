@@ -50,6 +50,11 @@ def qlabel(k):
     return f"{k // 4}Q{k % 4 + 1}"
 
 
+def cq_from_label(label):
+    y, q = str(label).split("Q")
+    return int(y) * 4 + int(q) - 1
+
+
 def by_quarter(series):
     """{end: v} -> {calendar quarter: v} (a later end in the same quarter wins)."""
     out = {}
@@ -413,5 +418,6 @@ def run(ch, res, cos):
     return {"x": [[qlabel(k), round(v, 4)] for k, v in sorted(X.items())[-28:]],
             "x_path": {sc: [[qlabel(k), round(Xs[sc][k], 4)] for k in range(last_x + 1, horizon + 1)] for sc in SCEN},
             "last_x": qlabel(last_x), "guided": guided, "lags": list(LAGS), "profiles": PROFILES,
+            "buyer_paths": {t: [[qlabel(k), round(v, 4)] for k, v in sorted(p.items())] for t, p in paths.items()},
             "suppliers": out_s, "factors": factors, "backtest": summ,
             "scenarios": {k: v - 1 for k, v in SCEN.items()}}

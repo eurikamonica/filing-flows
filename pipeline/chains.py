@@ -37,6 +37,10 @@ VERSION = 1
 CHECK_HOURS = 20                 # a chain company's filings are looked up again after this long
 REFRESH_PER_RUN = 45             # companies read per scan run (each: one to seven SEC requests)
 QH = 32                         # quarters of capital expenditures kept for spend-chain buyers (the forecast model)
+QH_V = 2                        # bump when more is read into that history: buyers are read again
+PPE = ["PropertyPlantAndEquipmentNet",
+       "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization",
+       "PropertyPlantAndEquipmentIncludingFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization"]
 SEG_DEPTH = 10                  # older 10-Q / 10-K instances read for a supplier's segment history, a few per visit
 MIN_UNTRACED = 0.08              # at least this share of buyers' spending is taken as land, buildings and work no
                                  # listed supplier books (when suppliers' estimates already exceed what buyers spent)
@@ -1004,6 +1008,13 @@ def build(store, out, index=None, usd=None, cfg=None, now=None):
                 print(f"::warning::chain {ch['id']}: forecast model not run: {e}")
                 import traceback
                 traceback.print_exc()
+            try:                                                       # what the spending costs and earns
+                from . import capexreturn
+                res["returns"] = capexreturn.run(ch, res, cos)
+            except Exception as e:
+                print(f"::warning::chain {ch['id']}: capex return not computed: {e}")
+                import traceback
+                traceback.print_exc()
         res["views"]["profit"] = profit_view(ch, rows)
         lix = {L["id"]: i for i, L in enumerate(ch.get("layers", []))}
         if ch.get("kind") == "spend":
@@ -1139,9 +1150,9 @@ def refresh(store, sec, dims, text, time_up, queue_history=None, limit=REFRESH_P
         checked = xf.get("checked")
         age = (now - dt.datetime.fromisoformat(checked)).total_seconds() / 3600 if checked else 1e9
         shallow = (t in segs and len(xf.get("mh_accns") or []) < SEG_DEPTH and age >= 1) or \
-            (t in buyers and "guide" not in xf and age >= 1)         # an outlook not read yet
+            (t in buyers and ("guide" not in xf or (xf.get("qh") or {}).get("v") != QH_V) and age >= 1)   # not read yet
         if xf.get("v") != VERSION * 1000 + xfacts.VERSION or (newest and newest not in have) or age >= CHECK_HOURS or shallow:
-            pri = (0 if t in buyers and not xf.get("qh") else 1 if not xf else 2 if newest and newest not in have
+            pri = (0 if t in buyers and (xf.get("qh") or {}).get("v") != QH_V else 1 if not xf else 2 if newest and newest not in have
                    else 3 if not shallow else 4)                 # the forecast model's buyers first
             todo.append((pri, -age, t, cik))
     todo.sort()
@@ -1200,16 +1211,29 @@ def _refresh_one(store, sec, dims, text, t, cik, is_buyer, is_investor, queue_hi
         p = xfacts.parse(sec.get(inst), labels)
         xf[key] = {"accn": r["accessionNumber"], "form": r["form"], "filed": r["filingDate"], **p}
     newest = (xf.get("q") or xf.get("k") or {}).get("accn")
-    if is_buyer and newest and (xf.get("qh") or {}).get("accn") != newest:
-        try:                                                 # seven-plus years of quarterly capex (companyfacts)
+    qh_old = (xf.get("qh") or {}).get("accn") != newest or (xf.get("qh") or {}).get("v") != QH_V
+    if is_buyer and newest and qh_old:
+        try:                                     # eight years of quarterly capex, depreciation, profit (companyfacts)
             from . import facts as F
             from .build import primary_currency
             raw = sec.get_json(sec.companyfacts_url(cik))
-            fx = F.index_facts(raw, primary_currency(raw) or "USD")
+            cur = primary_currency(raw) or "USD"
+            fx = F.index_facts(raw, cur)
             ends = F.quarter_ends(fx)[-QH:]
-            qh = {"accn": newest}
-            for key in ("capex", "revenue", "ocf"):
+            qh = {"accn": newest, "v": QH_V}
+            for key in ("capex", "revenue", "ocf", "oi", "da", "dep"):
                 qh[key] = [[e, v] for e in ends for v in [F.value(fx, key, e)] if v is not None]
+            gaap = (raw.get("facts") or {}).get("us-gaap") or {}
+            for concept in PPE:                          # net property and equipment, at each balance-sheet date
+                rows = ((gaap.get(concept) or {}).get("units") or {}).get(cur) or []
+                pts = {}
+                for r in rows:
+                    if r.get("end") and r.get("val") is not None and r.get("form", "").startswith(("10-K", "10-Q")):
+                        pts[r["end"]] = r["val"]
+                if pts:
+                    qh["ppe"] = sorted([e, v] for e, v in pts.items())[-QH:]
+                    qh["ppe_concept"] = concept
+                    break
             xf["qh"] = qh
         except Exception as e:
             print(f"  capex history not read for {t}: {e}", file=sys.stderr)
