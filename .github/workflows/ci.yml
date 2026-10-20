@@ -15,6 +15,7 @@ on:
       - 'config/**'
       - 'requirements.txt'
       - 'supabase/**'
+      - 'local-inference/**'   # Created by ChatGPT (OpenAI): CPU-only local companion checks.
       - 'disclosures/app/**'
       - 'disclosures/automation/**'
       - 'disclosures/tests/**'
@@ -44,6 +45,7 @@ jobs:
             config
             supabase
             requirements.txt
+            local-inference
             disclosures/app
             disclosures/automation
             disclosures/tests
