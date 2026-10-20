@@ -8,6 +8,27 @@ const compact=v=>v==null?'—':Math.abs(v)>=1e9?fmt(v/1e9,2)+'B':Math.abs(v)>=1e
 const link=(url,label='Source ↗')=>/^https:\/\//.test(url||'')?`<a target="_blank" rel="noopener" href="${esc(url)}">${esc(label)}</a>`:'—';
 const uniq=a=>[...new Set(a)];
 const state={tab:'signals',mode:'official',page:0,market:'',group:'',cert:'',filing:'',metric:'assets',date:'',base:'',from:'',to:'',query:'',direction:''};
+function discDateControls(meaning='Filing / transaction date'){
+ return '<div class="toolbar" aria-label="Disclosure date range"><div class="field"><label for="disc-from">From date</label>'+
+ '<input type="date" id="disc-from" value="'+esc(state.discFrom||'')+'"></div>'+
+ '<div class="field"><label for="disc-to">Through date</label><input type="date" id="disc-to" value="'+esc(state.discTo||'')+'"></div>'+
+ '<div class="field"><label>'+esc(meaning)+'</label><button type="button" class="action" id="disc-clear">Clear range</button></div></div>';
+}
+function discDateMatches(row, keys){
+ if(!state.discFrom&&!state.discTo)return true;
+ const d=keys.map(k=>row&&row[k]).find(v=>typeof v==='string'&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(v));
+ if(!d)return false;
+ const day=d.slice(0,10);
+ return (!state.discFrom||day>=state.discFrom)&&(!state.discTo||day<=state.discTo);
+}
+function discDateFilter(rows,keys){return rows.filter(r=>discDateMatches(r,keys))}
+function bindDiscDates(){
+ for(const [id,k] of [['disc-from','discFrom'],['disc-to','discTo']]){
+  const el=$(id);if(el)el.onchange=e=>{state[k]=e.target.value;state.page=0;render()};
+ }
+ const clear=$('disc-clear');if(clear)clear.onclick=()=>{state.discFrom='';state.discTo='';state.page=0;render()};
+}
+
 let exported=[];
 const data=()=>state.mode==='demo'?(window.DISCLOSURE_DEMO||{modules:{}}):(window.DISCLOSURE_LIVE||{modules:{}});
 const moduleData=()=>data().modules[state.tab==='review'||state.tab==='trades'?'congress':state.tab==='directory'||state.tab==='flows'||state.tab==='signals'||state.tab==='insiders'||state.tab==='events'||state.tab==='news'||state.tab==='stakes'||state.tab==='form144'||state.tab==='shorts'||state.tab==='rotation'||state.tab==='options'?'holdings':state.tab]||{};
@@ -147,6 +168,7 @@ function render(){
  bind('market','market');bind('group','group');bind('from','from');bind('to','to');bind('asof','date');bind('cert','cert');bind('metric','metric');bind('base','base');bind('filing','filing');bind('direction','direction');
  if($('query')){$('query').onchange=e=>{state.query=e.target.value;state.page=0;render()};$('query').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  actions();
+ bindDiscDates();
  bindExtensions();
  bindDashboard();
  bindMarket();
