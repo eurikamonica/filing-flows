@@ -46,12 +46,14 @@ jobs:
           fi
           mkdir -p industry-state/public
       - name: SEC identity, SIC and cash CapEx incremental refresh
+        env:
+          COLLECT_BATCH: ${{ inputs.batch || '60' }}
         run: |
           python -m research.industry_supply_chain.production \
             --db industry-state/industry.sqlite \
             --public industry-state/public \
             --agent "$SEC_USER_AGENT" \
-            --batch "${{ inputs.batch || '60' }}" \
+            --batch "$COLLECT_BATCH" \
             --refresh-days 14 \
             --scenario research/ai_capex_example.json
       - name: Re-run accounting / identity unit checks
