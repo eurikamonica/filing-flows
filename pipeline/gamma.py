@@ -115,7 +115,7 @@ def _named_edges(out, root, member=None):
 def _company_name_key(label):
     """Conservative name key for direct named-customer matches, never fuzzy tickers."""
     s = re.sub(r"[^a-z0-9]+", " ", (label or "").lower())
-    return re.sub(r"\\b(inc|incorporated|corp|corporation|company|co|limited|ltd|plc|the)\\b", "", s).strip()
+    return re.sub(r"\s+", " ", re.sub(r"\b(inc|incorporated|corp|corporation|company|co|limited|ltd|plc|the)\b", "", s)).strip()
 
 
 def _direct_customer_edges(store, index):
@@ -139,7 +139,7 @@ def _direct_customer_edges(store, index):
         for c in named:
             label = (c.get("label") or "").strip()
             key = _company_name_key(label)
-            if not key or len(key) < 3 or re.search(r"\\b(customer|customers|client|clients|unknown|unnamed|other)\\b", key):
+            if not key or len(key) < 3 or re.search(r"\b(customer|customers|client|clients|unknown|unnamed|other)\b", key):
                 continue
             matches = by_name.get(key) or []
             match = matches[0] if len(matches) == 1 else None
