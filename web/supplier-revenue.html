@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Supplier Revenue Forecast | Filing Flows</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+main{max-width:1200px;margin:auto;padding:24px 18px 75px}
+.fftop{display:flex;flex-wrap:wrap;gap:15px;align-items:center;justify-content:space-between;margin-bottom:28px}
+.fftop a{color:inherit}
+.ffeyebrow{letter-spacing:.12em;text-transform:uppercase;color:#69747b;font-size:.78rem}
+.ffpanel{background:var(--panel,#fff);border:1px solid #d4d7d9;border-radius:12px;padding:20px;margin:16px 0}
+.ffgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.ffstat{font-size:1.5rem;font-weight:700}
+.ffmuted{color:#617078;line-height:1.55}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{padding:11px;text-align:left;border-bottom:1px solid #dde0e3;font-size:.92rem}
+th{background:#f1f3f5;color:#3d4b54}
+.ffscroll{overflow:auto}
+label{display:inline-flex;flex-direction:column;gap:5px;margin:6px 12px 6px 0}
+select{padding:9px;max-width:100%;border:1px solid #bbc4cc;border-radius:6px}
+.ffnotice{border-left:4px solid #b37c32;padding:12px;background:#fdf6e9;color:#523e22}
+@media(max-width:600px){main{padding:14px}.ffpanel{padding:13px}th,td{font-size:.79rem;padding:8px}}
+</style></head>
+<body><main>
+<div class="fftop"><a href="../#gamma">← Gamma / Industry intelligence</a><a href="../integration-health/">Data health ↗</a></div>
+<div class="ffeyebrow">SUPPLIER REVENUE / RESEARCH</div>
+<h1>CapEx → Supplier Revenue Attribution</h1>
+<p class="ffmuted">Company identity (CIK), industry classification (SIC), reported cash CapEx and separately labeled research scenarios. No undocumented transaction values or assumed vendor invoices.</p>
+<div class="ffpanel ffgrid" id="coverage"><p>Loading industry database…</p></div>
+<div id="status" role="status"></div>
+<div class="ffpanel">
+<h2>Forecast and reconciliation</h2>
+<p class="ffmuted">A production forecast needs validated projects, bill-of-materials units/prices, supplier allocations, recognition lags and independently matched segment revenue. The research calculator is integrated into the publishing pipeline, but this does not create evidence.</p>
+<div id="forecasts">Loading forecast status…</div>
+</div>
+<div class="ffpanel"><h2>Illustrative scenario explorer</h2>
+<p class="ffnotice">Hypothetical assumptions only. These outputs are neither issuer guidance nor confirmed revenue. Terminal spending and multi-tier supplier GAAP revenues must not be added together.</p>
+<div id="scenario">No sample scenario has been published.</div></div>
+<div class="ffpanel"><h2>Related market events</h2>
+<p class="ffmuted">Polymarket/Kalshi market titles are linked by uniquely matched ticker/CIK and SIC only. This is not evidence that the event changes a supplier's revenue or that contracts have identical settlement terms.</p>
+<div id="events">Loading…</div></div>
+</main>
+<script>
+'use strict';
+const el=id=>document.getElementById(id);
+const n=v=>v==null?'—':Number(v).toLocaleString('en-US',{maximumFractionDigits:2});
+const cash=v=>v==null?'—':'$'+(Math.abs(v)>=1e9?n(v/1e9)+'B':Math.abs(v)>=1e6?n(v/1e6)+'M':n(v));
+const safe=(s)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const load=async p=>{const r=await fetch('../data/industry-intelligence/'+p,{cache:'no-cache'});if(!r.ok)throw Error('HTTP '+r.status);return r.json()};
+function renderDemo(d){
+ const box=el('scenario'),cases=d?.examples?.scenarios||[];
+ if(!cases.length){box.textContent='No sample scenario is available. Missing assumptions are not replaced with guesses.';return}
+ box.innerHTML='<label>Illustrative scenario<select id="case"></select></label><div id="case-data"></div>';
+ const select=el('case');
+ cases.forEach((c,i)=>{const opt=document.createElement('option');opt.value=i;opt.textContent=c.name;select.appendChild(opt)});
+ const render=()=>{let c=cases[+select.value];
+ const rows=Object.entries(c.terminal_vendor_usd||{}).sort((a,b)=>b[1]-a[1]);
+ el('case-data').innerHTML='<p><b>Hypothetical end-buyer CapEx: '+cash(c.capex_usd)+'</b></p><div class="ffscroll"><table><thead><tr><th>Supplier</th><th>Attributed terminal spend</th><th>Confirmed supplier revenue</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+safe(r[0])+'</td><td>'+cash(r[1])+'</td><td>Not verified</td></tr>').join('')+'</tbody></table></div>'+
+ '<p class="ffmuted">Unallocated categories: '+cash(Object.values(c.unallocated_by_category_usd||{}).reduce((a,b)=>a+b,0))+'. Quarterly timing estimates remain scenario assumptions.</p>'};
+ select.onchange=render;render();
+}
+Promise.allSettled([load('industry/index.json'),load('forecast.json'),load('events.json')]).then(([catalog,forecast,events])=>{
+ const i=catalog.status==='fulfilled'?catalog.value:{},c=i.coverage||{};
+ el('coverage').innerHTML=[['SIC groups',i.industries?.length||0],['Companies in ledger',c.companies||0],['With SIC',c.companies_with_sic||0],['Documented supplier links',c.verified_relations||0],['Cash CapEx facts',c.capex_rows||0]].map(x=>'<div><div class="ffmuted">'+safe(x[0])+'</div><div class="ffstat">'+n(x[1])+'</div></div>').join('');
+ const f=forecast.status==='fulfilled'?forecast.value:{status:'data_unavailable',reason:'Public forecast snapshot unavailable'};
+ el('status').innerHTML='<p class="ffmuted">Research feed: <b>'+safe(f.status)+'</b> · As of '+safe(f.as_of||'unknown')+'</p>';
+ el('forecasts').innerHTML=f.real_forecasts?.length?'Forecast evidence is under review.':'<p class="ffmuted">No validated supplier-level revenue forecast has been published. '+safe(f.reason||'')+'</p>';
+ renderDemo(f);
+ const e=events.status==='fulfilled'?events.value:{},rs=(e.events||[]).slice(0,20);
+ el('events').innerHTML=rs.length?'<div class="ffscroll"><table><thead><tr><th>Company</th><th>Industry</th><th>Event</th><th>Implied probability</th></tr></thead><tbody>'+rs.map(r=>'<tr><td>'+safe(r.ticker)+'</td><td>'+safe(r.industry)+'</td><td>'+safe(r.market_title).slice(0,120)+'</td><td>'+(r.price_implied_probability==null?'—':(100*+r.price_implied_probability).toFixed(1)+'%')+'</td></tr>').join('')+'</tbody></table></div>':'<p class="ffmuted">No uniquely mapped public prediction-market events in this snapshot.</p>';
+}).catch(e=>{el('status').textContent='Unable to load the published research feed: '+e.message});
+</script></body></html>
