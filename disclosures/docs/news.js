@@ -19,6 +19,7 @@ function eventsView(){
  let out=head('8-K events','Every current report companies file with the SEC — deals, CEO and CFO changes, restatements, cyber incidents, delisting notices, offerings, buybacks, guidance raised or lowered — read once and sorted by what it says.','SEC / 8-K');
  const g=marketGate('events8k','8-K events');if(!g.data)return out+g.html;
  const d=g.data,all=d.rows||[],T=d.topics||{};
+ out+=discDateControls('SEC filing date');
  const topics=Object.keys(T);state.etopic=topics.includes(state.etopic)||['material','graised','glowered'].includes(state.etopic)?state.etopic:'';
  state.ewho=['','listed','site'].includes(state.ewho)?state.ewho:'listed';
  out+=`<div class="toolbar">${field('etopic','What',[['','Everything'],['material','Material events only'],['graised','Guidance raised'],['glowered','Guidance lowered or withdrawn'],...topics.filter(t=>t!=='guidance').map(t=>[t,T[t][0].toUpperCase()+T[t].slice(1)])],state.etopic)}${field('ewho','Companies',[['listed','With a ticker'],['','All filers']],state.ewho)}${search('eq','Ticker, company or words','e.g. acquisition · Enter')}</div>`;
@@ -28,7 +29,7 @@ function eventsView(){
  out+=`<div class="panel"><h3>What companies reported, last 7 days</h3><p class="sub">8-Ks with a ticker, by topic (one filing can have several) · earnings releases left out of the chart</p>${top.length?divergingChart(top.map(([k,v])=>({label:TOPIC_SHORT[k]||k,value:v,tip:[[T[k]||k,`${fmt(v)} filings`]]})),{unit:'count',label:'8-K filings by topic',neutral:true}):empty('No 8-K on file yet — the collector reads the newest filings every half hour and works back through the daily indexes.')}</div>`;
  const q=(state.eq||'').trim().toLowerCase();
  const rows=all.filter(r=>(state.ewho!=='listed'||r.ticker)&&(!state.etopic||(state.etopic==='material'?(r.score||0)>=6:state.etopic==='graised'?r.guidance==='raised':state.etopic==='glowered'?['lowered','withdrawn'].includes(r.guidance):(r.topics||[]).includes(state.etopic)))
-  &&(!q||[r.ticker,r.company,r.headline,r.quote,r.label].join(' ').toLowerCase().includes(q)));
+  &&(!q||[r.ticker,r.company,r.headline,r.quote,r.label].join(' ').toLowerCase().includes(q))&&discDateMatches(r,['filed']));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} filings</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=xBar('one 8-K');
@@ -46,12 +47,13 @@ function newsView(){
  let out=head('News','Press releases from the wires and government releases — FDA approvals, SEC enforcement and trading suspensions — matched to the companies they name. Headline, time and link only: open the source for the text.','PR NEWSWIRE · FDA · SEC');
  const g=marketGate('news','News');if(!g.data)return out+g.html;
  const d=g.data,all=d.rows||[];
+ out+=discDateControls('Publication date');
  state.nkind=['',...Object.keys(NEWS_KIND)].includes(state.nkind)?state.nkind:'';state.nwho=['','listed'].includes(state.nwho)?state.nwho:'listed';
  out+=`<div class="toolbar">${field('nkind','Source',[['','Everything'],...Object.entries(NEWS_KIND)],state.nkind)}${field('nwho','Companies',[['listed','Matched to a ticker'],['','Everything read']],state.nwho)}${search('nq','Ticker, company or words','e.g. LMT · Enter')}</div>`;
  const k=Object.fromEntries(Object.keys(NEWS_KIND).map(x=>[x,all.filter(r=>r.kind===x).length]));
  out+=`<div class="metrics">${kpi('Items on file',fmt(d.on_file),'Since '+(d.since||'—'))}${kpi('Matched to a ticker',fmt(all.filter(r=>(r.tickers||[]).length).length),'Issuer named in the release or the record')}${kpi('FDA',fmt(k.fda),'New drug and biologic approvals, FDA releases')}${kpi('SEC actions',fmt((k.sec_action||0)+(k.suspension||0)+(k.sec_release||0)),'Enforcement and trading suspensions')}</div>`;
  const q=(state.nq||'').trim().toLowerCase();
- const rows=all.filter(r=>(!state.nkind||r.kind===state.nkind)&&(state.nwho!=='listed'||(r.tickers||[]).length)&&(!q||[(r.tickers||[]).join(' '),r.company,r.title].join(' ').toLowerCase().includes(q)));
+ const rows=all.filter(r=>(!state.nkind||r.kind===state.nkind)&&(state.nwho!=='listed'||(r.tickers||[]).length)&&(!q||[(r.tickers||[]).join(' '),r.company,r.title].join(' ').toLowerCase().includes(q))&&discDateMatches(r,['published']));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} items</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=xBar('one news item');
