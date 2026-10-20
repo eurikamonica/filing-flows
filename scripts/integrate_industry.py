@@ -125,7 +125,15 @@ def stage(site,snapshot):
         save(out/"events.json",events)
         input_health=load(out/"health.json",{}) or {}
         underlying=input_health.get("sqlite_counts",{})
-        state="partial" if not underlying.get("companies") else "collected"
+        collection_errors=(input_health.get("collector_status") or {}).get("errors") or []
+        try:
+            sampled_at=datetime.fromisoformat(input_health["generated_at"].replace("Z","+00:00"))
+            hours_old=(datetime.now(timezone.utc)-sampled_at).total_seconds()/3600
+        except (KeyError,ValueError,TypeError):
+            hours_old=None
+        state=("not_collected" if not underlying.get("companies") else
+               "stale" if hours_old is None or hours_old>8 else
+               "partial" if collection_errors else "collected")
     else:
         out.mkdir(parents=True,exist_ok=True)
         by_cik={}
