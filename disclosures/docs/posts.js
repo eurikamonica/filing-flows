@@ -66,13 +66,21 @@
     rot: () => get(`${HUB}data/market/rotation.json`),
     options: () => get(`${HUB}data/market/options.json`),
     opt13: () => get(`${HUB}data/market/options13f.json`),
+    ext: (t) => get(`${HUB}data/market/extremes.json`).then((d) => {          // the day's 52-week / all-time row (app/extremes.py)
+      if (!d || !d.fields) return null;
+      const r = (d.rows || []).find((x) => String(x[0]).toUpperCase() === fileT(t));
+      return r ? Object.assign(Object.fromEntries(d.fields.map((f, i) => [f, r[i]])), { asof: d.asof }) : null;
+    }),
+    val: (cik) => (cik ? get(`${HUB}data/research/valuation/c/${+cik}.json`) : Promise.resolve(null)),     // Fair value & credit
+    qual: (t) => get(`${HUB}data/research/quality/c/${fileT(t)}.json`),                                   // Quality scores
   };
-  const KINDS = [['earnings', 'Earnings (Sankey)'], ['moves', 'Market move: the stock against its normal range'], ['optmoves', 'Options move: IV, put/call, gamma, 13F options'],
+  const KINDS = [['today', 'Today: the quote, the range, the year'], ['earnings', 'Earnings (Sankey)'], ['moves', 'Market move: the stock against its normal range'], ['optmoves', 'Options move: IV, put/call, gamma, 13F options'],
     ['markets', 'Prediction markets & options'], ['events', '8-Ks and news'], ['insiders', 'Insiders (Form 4, 10b5-1 plans)'], ['officials', 'Officials\' trades (House, Senate)'],
     ['flows', 'Flows: 13F, ETFs, insiders, officials'], ['capital', 'Capital allocation'], ['debt', 'Debt & rates'], ['rotation', 'Rotation: RRG 2-D / 3-D / 4-D, clock, solar system, galaxy']];
   const NEEDS = { earnings: ['site'], markets: ['cons', 'lad', 'opt'], flows: ['smart', 'comb', 'etf', 'holders'], capital: ['site'], debt: ['debt'],
     rotation: ['rrg', 'hist', 'galaxy', 'rot'], events: ['holders'], insiders: ['holders'], officials: ['holders'], moves: ['options', 'hist', 'lad', 'rrg'],
-    optmoves: ['options', 'opt', 'opt13'] };
+    optmoves: ['options', 'opt', 'opt13'], today: ['lad', 'options', 'hist', 'ext', 'cons', 'opt'],
+    compose: ['lad', 'options', 'hist', 'ext', 'cons', 'opt', 'holders', 'smart', 'debt', 'val', 'qual', 'site'] };
 
   async function load(ticker, cik, kinds) {
     const want = new Set((kinds || KINDS.map((k) => k[0])).flatMap((k) => NEEDS[k] || []));
@@ -106,6 +114,9 @@
     if (want.has('rot')) take('rot', L.rot());
     if (want.has('options')) take('options', L.options());
     if (want.has('opt13')) take('opt13', L.opt13());
+    if (want.has('ext') && t) take('ext', L.ext(t));
+    if (want.has('val')) take('val', L.val(cik));
+    if (want.has('qual') && t) take('qual', L.qual(t));
     await Promise.all(jobs);
     if (!B.cik && B.cons && B.cons.cik) B.cik = B.cons.cik;
     const name = (B.site && B.site.profile && B.site.profile.name) || (B.cons && B.cons.name) || (B.debt && B.debt.name) || (B.smart && B.smart.name) || t;
@@ -500,6 +511,131 @@
     return { kind: 'moves', label: 'Market move', title: `${B.name}: the move against its normal range`, paras, story, post, link: B.cik ? link(B, '') : `${siteURL()}disclosures/#signals` };
   }
 
+  // ---------------------------------------------------------------- today: the latest quote against the day, the year and the options
+  // quote: the hourly price-ladder reading (app/ladders.py, Yahoo delayed) during the session, else the last daily close
+  function quote(B) {
+    const Ld = B.lad || {}, R = optRow(B.options, B.ticker), Hr = (Ld.hourly || []).filter((x) => fin(x[1]));
+    const closes = (R && (R.history || []).filter((x) => fin(x[1]))) || [];
+    const out = { price: null, time: null, prev: null, prevDay: null, dayHi: null, dayLo: null, session: null, live: false };
+    if (Hr.length) {
+      const last = Hr[Hr.length - 1], d = last[0].slice(0, 10), today = Hr.filter((x) => x[0].slice(0, 10) === d);
+      out.price = fin(Ld.spot) ? Ld.spot : last[1]; out.time = Ld.spot_time || last[0].replace('T', ' ') + ':00 UTC'; out.session = d; out.live = true;
+      out.dayHi = Math.max(...today.map((x) => x[1])); out.dayLo = Math.min(...today.map((x) => x[1]));
+      const pc = closes.filter((x) => x[0] < d).slice(-1)[0];                                 // the official close before that session
+      if (pc) { out.prev = pc[1]; out.prevDay = pc[0]; } else { const pv = Hr.filter((x) => x[0].slice(0, 10) < d).slice(-1)[0]; if (pv) { out.prev = pv[1]; out.prevDay = pv[0].slice(0, 10); } }
+    } else if (closes.length >= 2) {
+      const a = closes[closes.length - 1], b = closes[closes.length - 2];
+      out.price = a[1]; out.session = a[0]; out.time = day(a[0]) + ' close'; out.prev = b[1]; out.prevDay = b[0];
+    } else if (B.cons && B.cons.analysts && fin(B.cons.analysts.price)) { out.price = B.cons.analysts.price; out.time = 'last consensus snapshot'; }
+    out.chg = fin(out.price) && fin(out.prev) && out.prev ? out.price / out.prev - 1 : null;
+    return out;
+  }
+  function today(B) {
+    const T = cash(B.ticker), q = quote(B), X = B.ext, R = optRow(B.options, B.ticker), SPYr = optRow(B.options, 'SPY'), O = B.opt || {}, H = B.hist;
+    if (!fin(q.price)) return null;
+    const paras = [], lines = [];
+    const when = q.live ? `${day(q.session)}, ${String(q.time).replace(/:00 UTC$/, ':00 UTC')}` : q.time;
+    lines.push(`${T} ${usd(q.price)}${fin(q.chg) ? ` (${spct(q.chg, 1)})` : ''} — ${q.live ? day(q.session) : when}.`);
+    paras.push(`${B.name} ${usd(q.price)} at ${when}${fin(q.chg) ? `, ${spct(q.chg, 1)} from ${usd(q.prev)} (${day(q.prevDay)} close)` : ''}${fin(q.dayHi) && q.dayHi !== q.dayLo ? `; the session so far ${usd(q.dayLo)}–${usd(q.dayHi)}` : ''}.`);
+    // the move against its own normal day and the options' expected day
+    const hh = (R && (R.history || []).filter((x) => fin(x[1]))) || [];
+    if (fin(q.chg) && hh.length >= 12) {
+      const r = hh.map((x, i) => (i ? Math.log(x[1] / hh[i - 1][1]) : null)).filter((x) => x != null).slice(-60);
+      const sd = Math.sqrt(r.reduce((a, x) => a + x * x, 0) / r.length), z = sd ? Math.log(1 + q.chg) / sd : null;
+      const impl = fin(O.iv30) ? O.iv30 / 100 / Math.sqrt(252) : null;
+      paras.push(`${fin(z) ? `That is ${num(Math.abs(z), 1)}× its typical daily move of the last ${r.length} sessions` : ''}${fin(impl) ? `${fin(z) ? '; the' : 'The'} options price a ±${pct(impl, 1)} day (30-day IV ${num(O.iv30, 0)}%)` : ''}${fin(z) || fin(impl) ? '.' : ''}`);
+      if (fin(z) && Math.abs(z) >= 2) lines.push(`${num(Math.abs(z), 1)}× its normal daily swing.`);
+      else if (fin(impl)) lines.push(`Options priced a ±${pct(impl, 1)} day.`);
+    }
+    const sh = SPYr && (SPYr.history || []).filter((x) => fin(x[1])), sm = sh && sh.length >= 2 && q.session && sh[sh.length - 1][0] === q.session ? sh[sh.length - 1][1] / sh[sh.length - 2][1] - 1 : null;
+    if (fin(sm)) { paras.push(`SPY ${spct(sm, 1)} the same session.`); lines.push(`SPY ${spct(sm, 1)}.`); }
+    // the year: 52-week range, YTD (the hub's daily highs-and-lows file), else the weekly history
+    if (X && fin(X.hi52) && fin(X.lo52)) {
+      const fromHi = fin(q.price) ? q.price / X.hi52 - 1 : X.from_hi, fromLo = fin(q.price) ? q.price / X.lo52 - 1 : X.from_lo;
+      paras.push(`52-week range ${usd(X.lo52)}–${usd(X.hi52)}: ${fromHi > -0.005 ? 'at the high' : `${spct(fromHi, 0)} from the high`}, ${fromLo < 0.005 ? 'at the low' : `${spct(fromLo, 0)} above the low`}${X.new_hi ? ' — a new 52-week high in the last session' : X.new_lo ? ' — a new 52-week low in the last session' : ''}${X.ath ? ', an all-time high' : X.atl ? ', an all-time low' : ''}${fin(X.ytd) ? `. Year to date ${spct(X.ytd, 0)}` : ''}${fin(X.dollar_vol) ? `; about ${big(X.dollar_vol)} traded a day` : ''}.`);
+      lines.push(`${fromHi > -0.005 ? 'At its 52-week high' : `${spct(fromHi, 0)} from its 52-week high`}${fin(X.ytd) ? `, ${spct(X.ytd, 0)} YTD` : ''}${X.new_hi ? ' (new high)' : X.new_lo ? ' (new low)' : ''}.`);
+    } else if (H && (H.c || []).length >= 30) {
+      const c = H.c.filter(fin), hi = Math.max(...c.slice(-52)), lo = Math.min(...c.slice(-52));
+      paras.push(`Against the last 52 weekly closes (${usd(lo)}–${usd(hi)}): ${spct(q.price / hi - 1, 0)} from the high, ${spct(q.price / lo - 1, 0)} above the low.`);
+      lines.push(`${spct(q.price / hi - 1, 0)} from its 52-week high.`);
+    }
+    const story = fin(q.chg) ? (Math.abs(q.chg) >= 0.03 ? `A big day for ${B.name}: ${spct(q.chg, 1)}.` : `A quiet day for ${B.name}: ${spct(q.chg, 1)}.`) : `${B.name} at ${usd(q.price)}.`;
+    const post = fit(lines, 'What are you watching — 1) the range 2) the volume 3) the next report? 👇', B.cik ? link(B, '') : `${siteURL()}disclosures/#signals`);
+    return { kind: 'today', label: 'Today', title: `${B.name}: today's quote against its day and its year`, paras, story, post, lines, link: B.cik ? link(B, '') : `${siteURL()}disclosures/#signals`, quote: q };
+  }
+
+  // ---------------------------------------------------------------- the composer: tick the angles, one post
+  // Each angle is one sentence written from the data; the owner ticks which go in, in this order, and edits the result.
+  const ratingWord = (m) => (!fin(m) ? '' : m <= 1.5 ? 'Strong Buy' : m <= 2.5 ? 'Buy' : m <= 3.5 ? 'Hold' : m <= 4.5 ? 'Underperform' : 'Sell');
+  function angles(B) {
+    const T = cash(B.ticker), out = [], q = quote(B);
+    const add = (id, label, text, on) => { if (text) out.push({ id, label, text, on: !!on }); };
+    const td = today(B);
+    if (td) add('today', "Today's move", td.lines.slice(0, 2).join(' '), true);                 // the quote and the move; the rest are angles below
+    // the stance: what the numbers lean to (never a recommendation — each piece is named with its number)
+    const V = B.val || {}, C = (B.cons || {}).analysts || {}, Q = ((B.qual || {}).row) || {}, S = (B.smart || {}).now || {};
+    const price = fin(q.price) ? q.price : fin(V.price) ? V.price : C.price;
+    const bits = [], votes = [];
+    if (V.mc && fin(V.mc.p_above)) { bits.push(`${pct(V.mc.p_above)} of our DCF scenarios land above ${usd(price)}`); votes.push(V.mc.p_above > 0.6 ? 1 : V.mc.p_above < 0.4 ? -1 : 0); }
+    else if (V.dcf && fin(V.dcf.value) && fin(price)) { bits.push(`DCF ${usd(V.dcf.value)} vs ${usd(price)}`); votes.push(V.dcf.value > price * 1.15 ? 1 : V.dcf.value < price * 0.85 ? -1 : 0); }
+    if (V.pvgo && fin(V.pvgo.growth_share)) bits.push(`${pct(V.pvgo.growth_share)} of the price is growth`);
+    if (V.bands && V.bands.pe && fin(V.bands.pe.pct)) { bits.push(`P/E at the ${num(V.bands.pe.pct * 100, 0)}th pct of its own range`); votes.push(V.bands.pe.pct < 0.25 ? 1 : V.bands.pe.pct > 0.75 ? -1 : 0); }
+    const tm = (C.targets || {}).mean; if (fin(tm) && fin(price) && price) { bits.push(`analysts' target ${usd(tm)} (${spct(tm / price - 1, 0)})`); votes.push(tm / price - 1 > 0.15 ? 1 : tm / price - 1 < 0 ? -1 : 0); }
+    if (fin(S.S)) { bits.push(`smart-money score ${S.S > 0 ? '+' : ''}${num(S.S, 0)} of ±100`); votes.push(S.S >= 30 ? 1 : S.S <= -30 ? -1 : 0); }
+    if (fin(Q.f_score)) { bits.push(`Piotroski ${Q.f_score}/9`); votes.push(Q.f_score >= 7 ? 1 : Q.f_score <= 3 ? -1 : 0); }
+    if (Q.z_zone) bits.push(`Altman ${Q.z_zone} zone`);
+    if (bits.length) {
+      const sum = votes.reduce((a, x) => a + x, 0), lean = votes.length < 2 ? 'mixed' : sum >= 2 ? 'cheap' : sum <= -2 ? 'rich' : 'mixed';
+      add('stance', 'The numbers: cheap, rich or mixed', `On the numbers ${T} leans ${lean}: ${bits.slice(0, 3).join(', ')}.`, false);
+    }
+    const ev = events(B); if (ev) add('8k', 'Latest 8-K / news', ev.post.split(' How do you read it')[0].replace(/\s+https?:\/\/\S+$/, ''), false);
+    const ins = insiders(B); if (ins) add('insiders', 'Insiders (Form 4)', ins.post.split(/ (Conviction or optics|Routine or telling)/)[0].replace(/\s+https?:\/\/\S+$/, ''), false);
+    const nx = ((B.cons || {}).next_earnings || (C.next_earnings) || {}), beat = ((B.cons || {}).markets || []).find((m) => m.kind === 'beat' && !m.closed);
+    const er = [nx.date ? `Reports ${day(nx.date)}${nx.estimate ? ' (estimated date)' : ''}` : '', beat ? `Polymarket ${pct(beat.p)} it beats the ${usd(beat.eps_strike)} EPS line` : '',
+      fin((B.cons || {}).beat_rate) ? `beat ${pct(B.cons.beat_rate)} of its last reports` : ''].filter(Boolean).join('; ');
+    if (er) add('earnings', 'Next report & Polymarket', er + '.', false);
+    if (fin(tm) || fin((C.rating || {}).mean)) add('analysts', "Analysts' target & rating", `Analysts: ${fin(tm) ? `mean target ${usd(tm)}` : ''}${fin(tm) && fin(C.rating && C.rating.mean) ? ', ' : ''}${fin(C.rating && C.rating.mean) ? `consensus ${ratingWord(C.rating.mean)} (${num(C.rating.mean, 1)})` : ''}.`, false);
+    if (fin(S.S)) add('smart', 'Smart-money score', `Smart money: score ${S.S > 0 ? '+' : ''}${num(S.S, 0)} of ±100 across ${plural(S.n || 0, 'disclosed trade')}, weighted by each trader's record.`, false);
+    const X = B.ext; if (X && fin(X.hi52)) add('range', '52-week range & YTD', `52-week range ${usd(X.lo52)}–${usd(X.hi52)}${fin(X.ytd) ? `, ${spct(X.ytd, 0)} YTD` : ''}${X.new_hi ? ', a new high' : X.new_lo ? ', a new low' : ''}.`, false);
+    const A = (B.debt || {}).analysis; if (A && fin(A.net_debt)) add('debt', 'Debt cushion', `Debt: net ${A.net_debt < 0 ? 'cash ' + big(-A.net_debt) : big(A.net_debt)}${fin(A.net_leverage) ? ` (${num(A.net_leverage, 1)}× EBITDA)` : ''}${fin(A.cushion_score) ? `, cushion score ${num(A.cushion_score, 0)}/100` : ''}.`, false);
+    const E = earnings(B);
+    if (E && E.q) { const h = E.q.headline || {}, dec = (x) => String(x || '').replace(/&amp;/g, '&').replace(/&#39;/g, "'");
+      add('quarter', 'Latest quarter', `${dec(E.q.label)}: revenue ${dec(h.rev_fmt) || big(h.revenue)}${fin(h.yoy) ? ` (${h.yoy > 0 ? '+' : ''}${num(h.yoy, 0)}% Y/Y)` : ''}, net ${dec(h.ni_fmt) || big(h.ni)}${fin(h.om) ? `, ${num(h.om, 1)}% operating margin` : ''}.`, false); }
+    return out;
+  }
+  const CLOSERS = ['What are you watching? 👇', 'Agree or not — 1) yes 2) no 3) too early? 👇', 'Opportunity or trap? 👇', 'How do you read it? 👇', ''];
+  function composeText(B, items, closer, withLink) {            // every ticked angle stays in: the count turns red past 280, the owner trims
+    const lines = items.filter((a) => a.on).map((a) => a.text);
+    if (!lines.length) return '';
+    return [lines.join(' '), closer, withLink && B.cik ? link(B, '') : ''].filter(Boolean).join(' ').trim();
+  }
+  function composer(el, B) {
+    css();
+    const items = angles(B);
+    if (!items.length) return;
+    const id = 'ffc' + (++uid);
+    const box = document.createElement('div');
+    box.className = 'ffp ffp-compose';
+    box.innerHTML = `<h4><span class="ffp-k">Compose</span>${esc(B.name)}: tick the angles, one post</h4>
+      <div class="ffp-angles">${items.map((a) => `<label><input type="checkbox" data-angle="${a.id}"${a.on ? ' checked' : ''}> <b>${esc(a.label)}</b> <span class="muted">${esc(a.text)}</span></label>`).join('')}</div>
+      <div class="ffp-row"><label>Closing line <select data-closer>${CLOSERS.map((c, i) => `<option value="${i}">${esc(c || '(none)')}</option>`).join('')}</select></label>
+        <label><input type="checkbox" data-link checked> link to the page</label></div>
+      <textarea id="${id}-t" aria-label="Composed post" spellcheck="true"></textarea>
+      <div class="ffp-row"><button type="button" class="primary" data-ffp-copy="${id}">Copy post</button>
+        <a href="#" data-x target="_blank" rel="noopener">Open in X ↗</a><span data-ffp-n="${id}"></span><span data-ffp-msg="${id}" role="status"></span></div>`;
+    el.prepend(box);
+    const ta = box.querySelector('textarea'), nEl = box.querySelector(`[data-ffp-n="${id}"]`), xa = box.querySelector('[data-x]');
+    const redo = () => {
+      box.querySelectorAll('[data-angle]').forEach((cb) => { const a = items.find((x) => x.id === cb.dataset.angle); if (a) a.on = cb.checked; });
+      const text = composeText(B, items, CLOSERS[+box.querySelector('[data-closer]').value], box.querySelector('[data-link]').checked);
+      ta.value = text; const n = xlen(text); nEl.textContent = n + '/280'; nEl.className = n > 280 ? 'ffp-over' : ''; xa.href = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
+    };
+    box.querySelectorAll('[data-angle],[data-closer],[data-link]').forEach((x) => { x.onchange = redo; });
+    ta.oninput = () => { const n = xlen(ta.value); nEl.textContent = n + '/280'; nEl.className = n > 280 ? 'ffp-over' : ''; xa.href = 'https://x.com/intent/post?text=' + encodeURIComponent(ta.value); };
+    box.querySelector('[data-ffp-copy]').onclick = async () => { const m = box.querySelector(`[data-ffp-msg="${id}"]`); m.textContent = (await copy(ta.value)) ? 'Copied' : 'Could not copy'; };
+    redo();
+  }
+
   // ---------------------------------------------------------------- options move: IV, put/call, gamma, disclosed 13F options
   function optmoves(B) {
     const T = cash(B.ticker), R = optRow(B.options, B.ticker), O = B.opt || R, Q = optRow(B.opt13, B.ticker);
@@ -527,7 +663,7 @@
     return { kind: 'optmoves', label: 'Options move', title: `${B.name}: what the options market did`, paras, story, post, link: B.cik ? link(B, 'consensus') : `${siteURL()}disclosures/#options` };
   }
 
-  const BUILD = { earnings, markets, flows, capital, debt, rotation, events, insiders, officials, moves, optmoves };
+  const BUILD = { today, earnings, markets, flows, capital, debt, rotation, events, insiders, officials, moves, optmoves };
   function build(kind, B) { try { return BUILD[kind] ? BUILD[kind](B) : null; } catch (e) { console.warn('post', kind, e); return null; } }
   function all(B, kinds) { return (kinds || KINDS.map((k) => k[0])).map((k) => build(k, B)).filter(Boolean); }
 
@@ -542,7 +678,9 @@
 .ffp .ffp-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px;font-size:12px;color:var(--muted,#777)}
 .ffp button{font:inherit;font-size:12.5px;padding:4px 10px;border-radius:8px;border:1px solid var(--line,#ccc);background:none;color:inherit;cursor:pointer}
 .ffp button.primary{background:var(--accent,#2a78d6);border-color:var(--accent,#2a78d6);color:#fff}.ffp .ffp-over{color:var(--mk-cost,#c0392b)}
-.ffp details{margin-top:6px}.ffp ol{margin:6px 0 0 18px;padding:0;font-size:13px}`;
+.ffp details{margin-top:6px}.ffp ol{margin:6px 0 0 18px;padding:0;font-size:13px}
+.ffp-compose .ffp-angles{display:grid;gap:4px;margin:6px 0 8px}.ffp-compose .ffp-angles label{display:block;font-size:13px;line-height:1.4;cursor:pointer}
+.ffp-compose .ffp-angles .muted{color:var(--muted,#777)}.ffp-compose select{font:inherit;font-size:12.5px;padding:3px 6px;border-radius:8px;border:1px solid var(--line,#ccc);background:none;color:inherit}`;
     document.head.appendChild(s);
   }
   let uid = 0;
@@ -608,5 +746,5 @@
     });
   }
 
-  window.FFPosts = { KINDS, load, build, all, box, render, bind, blocks, fill, rrgOf, fit, xlen, siteURL };
+  window.FFPosts = { KINDS, load, build, all, box, render, bind, blocks, fill, rrgOf, fit, xlen, siteURL, quote, angles, composeText, composer };
 })();

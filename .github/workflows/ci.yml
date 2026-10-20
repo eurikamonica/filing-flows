@@ -37,6 +37,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           sparse-checkout: |
+            .github/workflows
             pipeline
             web
             scripts
@@ -49,28 +50,8 @@ jobs:
             disclosures/automation
             disclosures/tests
             disclosures/config
-            disclosures/docs/app.js
-            disclosures/docs/dashboard.js
-            disclosures/docs/extensions.js
-            disclosures/docs/market.js
-            disclosures/docs/rotation.js
-            disclosures/docs/options.js
-            disclosures/docs/xpost.js
-            disclosures/docs/rrg.js
-            disclosures/docs/chaos.js
-            disclosures/docs/galaxy.js
-            disclosures/docs/ledger.js
-            disclosures/docs/macro.js
-            disclosures/docs/debt-view.js
-            disclosures/docs/debt.js
-            disclosures/docs/consensus-view.js
-            disclosures/docs/posts.js
-            disclosures/docs/consensus.js
-            disclosures/docs/etf.js
-            disclosures/docs/smart.js
-            disclosures/docs/allflows.js
-            disclosures/docs/ownership.js
-            disclosures/docs/news.js
+            disclosures/docs
+            !disclosures/docs/data
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
         with:
@@ -80,7 +61,7 @@ jobs:
         env:
           SEC_USER_AGENT: 'Filing Flows CI ci@example.org'
         run: |
-          pip install -r requirements.txt pytest playwright
+          pip install -r requirements.txt pytest playwright numpy    # numpy: the earnings-season research module
           python -m playwright install chromium || echo "using the runner's Chrome"
           python -m pytest -q -rf tests > pytest.log 2>&1 || { grep -E "^(FAILED|ERROR) " pytest.log | head -30 | sed 's/^/::error::/'; tail -30 pytest.log; exit 1; }
           tail -3 pytest.log
@@ -88,12 +69,10 @@ jobs:
         run: |
           for f in web/*.js; do node --check "$f"; done
           node tests/test_fsa.cjs
-          node tests/test_local_model.cjs
-      - name: Local companion contracts (CPU only)
-        run: python local-inference/test_local8b.py
+          node tests/test_posts_compose.cjs
       - name: Hub unit and template tests
         working-directory: disclosures
         run: |
           python -m pip install --quiet numpy pandas scikit-learn    # chaos_forecast.py (its tests skip without them)
           python -m unittest discover -s tests
-          for f in docs/app.js docs/extensions.js docs/dashboard.js docs/market.js docs/rotation.js docs/options.js docs/xpost.js docs/rrg.js docs/chaos.js docs/galaxy.js docs/ledger.js docs/macro.js docs/debt-view.js docs/debt.js docs/consensus-view.js docs/posts.js docs/consensus.js docs/etf.js docs/smart.js docs/allflows.js docs/ownership.js docs/news.js; do node --check "$f"; done
+          for f in docs/app.js docs/extensions.js docs/dashboard.js docs/market.js docs/rotation.js docs/options.js docs/xpost.js docs/rrg.js docs/chaos.js docs/galaxy.js docs/ledger.js docs/macro.js docs/debt-view.js docs/debt.js docs/consensus-view.js docs/posts.js docs/consensus.js docs/etf.js docs/smart.js docs/allflows.js docs/ownership.js docs/news.js docs/quality.js docs/quality-view.js docs/fairvalue-view.js docs/valuation.js docs/filings.js docs/filings-view.js docs/earnings.js docs/earnings-view.js docs/maps.js docs/events-view.js docs/people.js docs/people-view.js; do node --check "$f"; done

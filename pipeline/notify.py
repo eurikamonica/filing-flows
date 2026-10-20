@@ -1181,11 +1181,20 @@ FILING_PLANS = {"post_8k": "filing8k", "post_13f": "fund13f_for", "post_insider"
 POST_KINDS = ("post", "post_holders", "post_gif") + ENGAGE_KINDS + FILING_KINDS   # the owner's X requests: their own workflow (post-to-x.yml)
 
 
+def post_kind_filter(posts):
+    """PostgREST filter for the owner's X requests (posts=True) or everything else: the kinds above plus any engage_*
+    (feature modules register more: pipeline/xkinds.py)."""
+    names = ",".join(POST_KINDS)
+    if posts:
+        return {"or": f"(kind.in.({names}),kind.like.engage_*)"}
+    return {"and": f"(kind.not.in.({names}),kind.not.like.engage_*)"}
+
+
 def claim_requests(supa, now, posts=None):
     """Take the waiting "Email me" requests (and ones a crashed run left half-done). Each row is claimed by one run.
     posts=True claims only the X-post kinds, posts=False everything else, None (older callers) all of them."""
     stamp = now.isoformat()
-    kinds = {} if posts is None else {"kind": ("in.(" if posts else "not.in.(") + ",".join(POST_KINDS) + ")"}
+    kinds = {} if posts is None else post_kind_filter(posts)
     got = supa.update("send_requests", {"status": "eq.pending", **kinds}, {"status": "sending", "claimed_at": stamp})
     stale = (now - dt.timedelta(minutes=STALE_CLAIM_MINUTES)).isoformat()
     got += supa.update("send_requests", {"status": "eq.sending", "claimed_at": f"lt.{stale}", **kinds},
@@ -1321,7 +1330,7 @@ def process_requests(site, supa, mailer, sender, site_url, now, dry_run, assets,
                     print(f"::warning::{kind} not made ({err.__class__.__name__}: {err})")
                     finish([r], status="failed", error=f"post not made: {str(err)[:150]}")
                 continue
-            if kind in ENGAGE_KINDS:                      # owner: an engagement post now (pipeline/engage.py), no company
+            if kind in ENGAGE_KINDS or kind.startswith("engage_"):   # owner: an engagement post now (pipeline/engage.py), no company
                 owner, owners, cfg, _ = owner_info()
                 if str(sub["email"]).lower() not in owners:
                     finish([r], status="failed", error="only the site owner can post to X")
@@ -1432,7 +1441,7 @@ def run(site, supa, mailer, sender, site_url, now=None, dry_run=False, images=Tr
 
     if due_only:
         stale = (now - dt.timedelta(minutes=STALE_CLAIM_MINUTES)).isoformat()
-        kinds = {"kind": ("in.(" if posts else "not.in.(") + ",".join(POST_KINDS) + ")"} if requests_only else {}
+        kinds = post_kind_filter(posts) if requests_only else {}
         n = len(supa.select("send_requests", {"select": "id", "status": "eq.pending", **kinds})) + \
             len(supa.select("send_requests", {"select": "id", "status": "eq.sending", "claimed_at": f"lt.{stale}", **kinds}))
         if not requests_only:

@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       kinds:
-        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider, calendar, fund13f, weekly, event8k, ivmove, opt13f, rsleaders, reddit_hot, smart_buys, smart_record, all_agree, qtd_flows, pt_upside, versus, drawdown, setup, lows52, highs52, near_lows, records, polymarket"
+        description: "Which posts (comma-separated): question, list, reddit_question, reddit_list, mover, explain, peers, insider, calendar, fund13f, weekly, event8k, ivmove, opt13f, rsleaders, reddit_hot, smart_buys, smart_record, all_agree, qtd_flows, pt_upside, versus, drawdown, setup, lows52, highs52, near_lows, records, polymarket; the feature modules' formats (pipeline/posts_*.py) by name, or a whole schedule: @morning, @close, @evening, @weekly, @events"
         type: string
         default: "question,list,reddit_question,reddit_list,insider,calendar,fund13f"
       dry_run:
@@ -86,11 +86,11 @@ jobs:
           site="${SITE_URL:-https://$owner.github.io/${GITHUB_REPOSITORY#*/}/}"
           kinds="${KINDS_INPUT:-question,list,reddit_question,reddit_list}"
           case "$EVENT_SCHEDULE" in
-            '40 12 * * 1-5') kinds=list,reddit_question,reddit_list,reddit_hot,insider,fund13f,opt13f,rsleaders,smart_buys,pt_upside,polymarket ;;
-            '5 23 * * 1-5') kinds=lows52,highs52,records,near_lows,drawdown,versus ;;
-            '40 21 * * 1-5') kinds=question,insider,calendar,fund13f,smart_record,all_agree ;;
-            '30 14 * * 6') kinds=weekly,qtd_flows ;;
-            '20 13,17,21,23 * * 1-5') kinds=event8k; [ "$(date -u +%H)" = "23" ] && kinds=event8k,ivmove ;;
+            '40 12 * * 1-5') kinds=list,reddit_question,reddit_list,reddit_hot,insider,fund13f,opt13f,rsleaders,smart_buys,pt_upside,polymarket,@morning ;;
+            '5 23 * * 1-5') kinds=lows52,highs52,records,near_lows,drawdown,versus,@close ;;
+            '40 21 * * 1-5') kinds=question,insider,calendar,fund13f,smart_record,all_agree,@evening ;;
+            '30 14 * * 6') kinds=weekly,qtd_flows,@weekly ;;
+            '20 13,17,21,23 * * 1-5') kinds=event8k,@events; [ "$(date -u +%H)" = "23" ] && kinds=event8k,ivmove,@events ;;
           esac
           if [ "${kinds%%,*}" = "event8k" ] && [ "$DRY_RUN" != "true" ]; then     # skip the browser install when there is nothing new
             rc=0; python -m pipeline.engage --site "$site" --site-url "$site" --kinds "$kinds" --plan-only || rc=$?

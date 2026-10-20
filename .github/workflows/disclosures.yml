@@ -55,8 +55,10 @@ on:
 permissions:
   contents: write
 concurrency:
-  # light runs (insiders + 8-K + 13D / 13G / Form 144 + short interest + Senate PTRs + news, options + frames, market views) queue separately so the long 13F / officials runs never cancel them
-  group: disclosures-${{ (github.event.schedule == '28,58 * * * *' || github.event.schedule == '20 21 * * 1-5' || inputs.module == 'insiders' || inputs.module == 'options' || inputs.module == 'market' || inputs.module == 'ownership' || inputs.module == 'shorts' || inputs.module == 'senate' || inputs.module == 'events8k' || inputs.module == 'news' || inputs.module == 'reddit' || inputs.module == 'extremes') && 'light' || 'main' }}
+  # light runs (insiders + 8-K + 13D / 13G / Form 144 + short interest + Senate PTRs + news, market views) queue separately so the long 13F / officials runs never cancel them.
+  # The once-a-day run after the close (option chains, 52-week and all-time highs and lows) has a group of its own: in the light group a
+  # pending run is replaced by the next half-hourly one, so it was cancelled most days and the highs / lows posts had nothing to read.
+  group: disclosures-${{ (github.event.schedule == '20 21 * * 1-5' || inputs.module == 'options' || inputs.module == 'extremes') && 'close' || ((github.event.schedule == '28,58 * * * *' || inputs.module == 'insiders' || inputs.module == 'market' || inputs.module == 'ownership' || inputs.module == 'shorts' || inputs.module == 'senate' || inputs.module == 'events8k' || inputs.module == 'news' || inputs.module == 'reddit') && 'light' || 'main') }}
   cancel-in-progress: false
 defaults:
   run:

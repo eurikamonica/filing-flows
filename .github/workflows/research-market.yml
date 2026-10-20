@@ -1,0 +1,77 @@
+# Market maps (Disclosures → Market maps): the money-flow Sankey, the watched 13F managers' portfolios by sector and their
+# holdings race, the market heatmap, the ownership network with its crowding index, the debt maturity wall, the valuation
+# thermometer (Buffett indicator, Shiller CAPE, excess CAPE yield, forward P/E) and net liquidity (app/market_maps.py).
+# After each US session: FRED series, Shiller's monthly data and a Nasdaq screener snapshot, then public/ is rebuilt from
+# them and the hub's own data (smart-history, consensus-history, debt-history, the 13F shards and price cache on main).
+# Kept on the branch "research-market" (one commit, force-pushed); scan.yml publishes public/ at data/research/market/.
+name: Research — market maps
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '50 21 * * 1-5'     # after the close
+    - cron: '15 12 * * 6'       # Saturday: the weekly gauges with the week's last data
+permissions:
+  contents: write
+concurrency:
+  group: research-market
+  cancel-in-progress: false
+jobs:
+  market:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /disclosures/app/
+            /pipeline/
+            /requirements.txt
+            /disclosures/docs/data/market/watchlist.json
+            /disclosures/docs/data/market/cusip-tickers.json
+            /disclosures/docs/data/market/extremes.json
+            /disclosures/docs/data/market/short-interest.json
+            /disclosures/docs/data/cache/prices/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The watched managers' 13F shards, the data branch and the hub's other branches
+        run: |
+          python -m pip install --quiet requests pillow xlrd
+          pats=$(python -c "import json; w=json.load(open('disclosures/docs/data/market/watchlist.json')); print(' '.join(f'/disclosures/docs/data/shards/holdings/{f[\"cik\"]}.json /disclosures/docs/data/shards/holdings/{f[\"cik\"]}-*' for f in w.get('funds', [])))")
+          git sparse-checkout add $pats
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" research-market >/dev/null; then
+            git clone --quiet --depth 1 --branch research-market "$url" rm
+          else
+            mkdir rm && git -C rm init --quiet -b research-market && git -C rm remote add origin "$url"
+          fi
+          for b in smart-history:smart consensus-history:cons debt-history:debt; do
+            name=${b%%:*}; dir=${b##*:}
+            if git ls-remote --exit-code --heads "$url" "$name" >/dev/null; then
+              git clone --quiet --depth 1 --filter=blob:none --sparse --branch "$name" "$url" "$dir"
+              git -C "$dir" sparse-checkout set --no-cone /public/index.json /public/market.json /public/combined/ /public/c/
+            fi
+          done
+          du -sh rm smart cons debt disclosures/docs/data 2>/dev/null || true
+      - name: FRED, Shiller and the Nasdaq screener
+        timeout-minutes: 10
+        continue-on-error: true
+        run: python disclosures/app/market_maps.py collect --root rm
+      - name: Build public/
+        timeout-minutes: 15
+        run: python disclosures/app/market_maps.py build --root rm --smart smart/public --consensus cons/public --debt debt/public --hub disclosures/docs/data
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd rm
+          printf '%s\n' '# research-market (data only)' '' 'FRED series, Shiller data and Nasdaq snapshots (cache/) and the files the site publishes (public/: market maps),' \
+            'kept by .github/workflows/research-market.yml on main. Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "market maps $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "market maps $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:research-market && break; sleep $((i * 10)); done
+          python -c "import json; s=json.load(open('public/status.json')); s.pop('collect', None); print(json.dumps(s))"

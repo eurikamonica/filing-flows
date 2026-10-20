@@ -134,9 +134,16 @@ def main():
             r=extremes.collect(client,args.output,cfg.get('extremes',{}))
             r['published']=extremes.publish(args.output,args.output/'market')
             print('extremes: '+json.dumps(r),flush=True)
+            pub=r.get('published') or {}
+            # an annotation: the run's logs are not always readable, and the X posts depend on this file
+            print(f"::notice::extremes: {r.get('stocks',0)} stocks, session {r.get('asof')}, {pub.get('new_lows',0)} new 52-week lows, "
+                  f"{pub.get('new_highs',0)} highs, {pub.get('ath',0)} all-time highs; errors {len(r.get('errors') or [])}"
+                  if pub else f"::warning::extremes: nothing published ({r.get('stocks',0)} stocks; {'; '.join((r.get('errors') or [])[:3])})",flush=True)
             write_json(args.output/'extremes-status.json',{**r,'last_attempt':now()})
         except Exception as exc:
             print('extremes: error — '+str(exc),flush=True)
+            print('::warning::extremes: error — '+str(exc)[:200],flush=True)
+            write_json(args.output/'extremes-status.json',{'status':'error','error':str(exc)[:300],'last_attempt':now()})
     # 4.4: SEC XBRL frames (21 quarters and the annual frames of revenue, operating income, gross profit and net income
     # for every filer) for the rotation charts; cached quarters are never fetched again, so the daily options run keeps them fresh
     if args.only in ('all','market','options'):

@@ -1,0 +1,77 @@
+# Earnings season (Disclosures → Earnings season, and the "Earnings preview" view of each company page on the main site).
+# Before the open and after the close on weekdays, and on Saturday for the weekly scorecard: previews of the reports of
+# the next three weeks (consensus, Polymarket, the options-implied move against the usual move, our beat probability and
+# estimates), the scorecard of the last nine weeks (Polymarket vs our model vs analysts), post-earnings drift, peer
+# read-through, Polymarket vs options distributions, VRP / skew / put-call, short squeeze, the non-GAAP gap and the
+# season's breadth (app/earnings_season.py). Every forecast is frozen in cache/book.json before the report and scored after.
+# Inputs: public/ of the consensus-history branch, the hub's daily closes, revenue frames, options, short interest and
+# insiders (from main), GAAP diluted EPS frames from SEC (collected here).
+# Kept on the branch "research-earnings" (one commit, force-pushed); scan.yml publishes public/ at data/research/earnings/.
+name: Research — earnings season
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '25 11 * * 1-5'
+    - cron: '35 21 * * 1-5'
+    - cron: '35 15 * * 6'
+permissions:
+  contents: write
+concurrency:
+  group: research-earnings
+  cancel-in-progress: false
+jobs:
+  earnings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            disclosures/app
+            disclosures/docs/data/cache/prices
+            disclosures/docs/data/cache/frames
+            disclosures/docs/data/market/options
+            disclosures/docs/data/market/short-interest.json
+            disclosures/docs/data/market/insiders.json
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --quiet numpy
+      - name: The data branch and the consensus
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" research-earnings >/dev/null; then
+            git clone --quiet --depth 1 --branch research-earnings "$url" re
+          else
+            mkdir re && git -C re init --quiet -b research-earnings && git -C re remote add origin "$url"
+          fi
+          if git ls-remote --exit-code --heads "$url" consensus-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch consensus-history "$url" cons
+            git -C cons sparse-checkout set public
+          else
+            echo "::warning::no consensus-history branch yet: nothing to build"; mkdir -p cons/public/c
+          fi
+          du -sh re cons/public disclosures/docs/data/cache/prices 2>/dev/null || true
+      - name: GAAP diluted EPS (SEC XBRL frames)
+        continue-on-error: true
+        timeout-minutes: 8
+        run: python disclosures/app/earnings_season.py collect --root re
+      - name: Build public/ (and freeze / resolve the forecasts)
+        timeout-minutes: 15
+        run: python disclosures/app/earnings_season.py build --root re --cons cons/public --hub disclosures/docs/data
+      - name: Save to the branch (one commit, force-pushed)
+        run: |
+          cd re
+          printf '%s\n' '# research-earnings (data only)' '' 'Earnings season: the forecast book (cache/book.json — every forecast frozen before the report and' \
+            'resolved after it), GAAP EPS frames (cache/eps-frames/) and the files the site publishes (public/), kept by' \
+            '.github/workflows/research-earnings.yml on main (app/earnings_season.py). Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "earnings $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "earnings $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:research-earnings && break; sleep $((i * 10)); done
+          python -c "import json; print('::notice::' + json.dumps(json.load(open('public/status.json'))))"
