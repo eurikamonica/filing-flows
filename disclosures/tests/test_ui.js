@@ -32,6 +32,14 @@ assert.equal(vm.runInContext(`esc('<img src=x onerror="bad">')`,context),'&lt;im
 assert.equal(vm.runInContext(`csvCell('=HYPERLINK("bad")')`,context),'"\'=HYPERLINK(""bad"")"');checks++;
 assert.equal(vm.runInContext(`link('javascript:alert(1)')`,context),'—');checks++;
 assert.equal(vm.runInContext(`fmt(null)`,context),'—');checks++;
+vm.runInContext("state.discFrom='2026-01-01';state.discTo='2026-03-31'",context);
+assert.equal(vm.runInContext("discDateMatches({date:'2026-03-31'},['date'])",context),true);checks++;
+assert.equal(vm.runInContext("discDateMatches({date:'2026-04-01'},['date'])",context),false);checks++;
+assert.equal(vm.runInContext("discDateMatches({filed:'2026-01-01'},['filed'])",context),true);checks++;
+assert.equal(vm.runInContext("discDateMatches({no_date:true},['filed'])",context),false);checks++;
+vm.runInContext("state.discFrom='';state.discTo=''",context);
+assert.equal(vm.runInContext("discDateMatches({no_date:true},['filed'])",context),true);checks++;
+
 console.log(`${checks} UI template/logic checks passed; no browser rendering checked.`);
 (async()=>{
  context.fetch=async url=>({ok:true,json:async()=>url.endsWith('123.json')?{snapshots:[{period:'2025-12-31',positions_shard:'shards/holdings/123-2025-12-31.json'}]}:[{issuer:'TEST',shares:1}]});
