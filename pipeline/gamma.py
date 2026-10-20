@@ -117,7 +117,7 @@ def build(store, out, index):
     industry = defaultdict(list)
     for p in index:
         sic = str(p.get("sic") or "").strip().zfill(4)
-        if not re.fullmatch(r"\\d{4}", sic) or sic == "0000":
+        if not re.fullmatch(r"\d{4}", sic) or sic == "0000":
             continue
         co = chains.Co(p["cik"], store.company(p["cik"]), ticker=p.get("ticker"))
         rows = _growth(co.history("revenue"))
