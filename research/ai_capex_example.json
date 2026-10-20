@@ -1,0 +1,62 @@
+{
+  "demo_only": true,
+  "buyer": "GOOGL (hypothetical)",
+  "period": "2026Q4",
+  "recognition_lags": {
+    "0": 0.5,
+    "1": 0.3,
+    "-1": 0.2
+  },
+  "categories": {
+    "AI compute incl. GPU-integrated HBM": {
+      "weight": 0.45,
+      "suppliers": {
+        "NVDA": 0.55,
+        "AVGO": 0.1,
+        "AMD": 0.1
+      }
+    },
+    "networking": {
+      "weight": 0.15,
+      "suppliers": {
+        "ANET": 0.3,
+        "AVGO": 0.15,
+        "NVDA": 0.2,
+        "CSCO": 0.1
+      }
+    },
+    "standalone storage and memory excl. compute HBM": {
+      "weight": 0.15,
+      "suppliers": {
+        "MU": 0.35,
+        "STX": 0.2,
+        "SNDK": 0.1
+      }
+    },
+    "data center building": {
+      "weight": 0.15,
+      "suppliers": {}
+    },
+    "power and cooling": {
+      "weight": 0.1,
+      "suppliers": {
+        "VRT": 0.3,
+        "ETN": 0.25
+      }
+    }
+  },
+  "scenarios": [
+    {
+      "name": "Downside",
+      "capex_usd": 8000000000
+    },
+    {
+      "name": "Base",
+      "capex_usd": 10000000000
+    },
+    {
+      "name": "Upside",
+      "capex_usd": 12000000000
+    }
+  ]
+}
