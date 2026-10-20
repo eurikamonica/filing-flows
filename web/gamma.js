@@ -128,13 +128,15 @@
     function draw() {
       var metric=get('gmetric').value, pool=get('gsample').value;
       var chosen=members.filter(matching), all=chosen.flatMap(function(m){return observations(m,metric,pool);});
+      var peerCount=chosen.filter(function(m){return observations(m,metric,pool).length>0;}).length;
       var fallback='';
-      if (all.length<5 && chosen.length<members.length) {
+      if (peerCount<5 && chosen.length<members.length) {
         all=members.flatMap(function(m){return observations(m,metric,pool);});
-        fallback='Too few matching peers; showing the full SIC industry instead.';
+        peerCount=members.filter(function(m){return observations(m,metric,pool).length>0;}).length;
+        fallback='Fewer than five matching companies; showing the full SIC industry instead.';
       }
       var s=stats(all), expected=+get('gexpected').value/100;
-      var ready=all.length>=5 && safeGrowth(expected);
+      var ready=all.length>=5 && peerCount>=5 && safeGrowth(expected);
       var rank=ready?percentile(all,expected):null;
       get('gamma-stats').innerHTML='<div class="gamma-cards">'+
         [['Observations',String(s.n)],['P10',val(s.p10)],['Median',val(s.median)],
@@ -143,7 +145,7 @@
           }).join('')+'</div>';
       get('gamma-plot').innerHTML=histogram(all,Number.isFinite(expected)?expected:null,metric);
       get('gamma-method').textContent=(fallback?fallback+' ':'')+
-        (s.n<5?'Fewer than 5 observations: no percentile is reported. ':'')+
+        (s.n<5||peerCount<5?'Fewer than five contributing companies or observations: no percentile is reported. ':'')+
         (pool==='historical'?'Historical pooled observations are serially correlated, and do not constitute independent predictions. ':
           'One observation per company from the selected comparable calendar quarter. ')+
         (metric==='qoq'?'QoQ may reflect fiscal seasonality; compare similar quarter positions. ':'')+
