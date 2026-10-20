@@ -164,13 +164,15 @@
     var edges=d.relationships||[];
     get('gamma-relations').innerHTML=edges.length ?
       '<div class="gamma-network">'+edges.map(function(e){
-        return '<div class="gamma-edge"><a href="#t-'+encodeURIComponent(e.supplier)+'">'+esc(e.supplier)+'</a>'+
-          '<span class="gamma-arrow">supplies →</span>'+
-          '<a href="#t-'+encodeURIComponent(e.customer)+'">'+esc(e.customer)+'</a>'+
-          '<span class="muted small">'+esc(e.note||'Named customer')+
-          ' · <a href="#chain-'+esc(e.chain)+'">Chain evidence ↗</a></span></div>';
+        var supplier=e.supplier_cik?'<a href="#c-'+encodeURIComponent(e.supplier_cik)+'">'+esc(e.supplier)+'</a>':esc(e.supplier);
+        var customer=e.customer_cik?'<a href="#c-'+encodeURIComponent(e.customer_cik)+'">'+esc(e.customer)+'</a>':esc(e.customer);
+        var source=e.chain?' · <a href="#chain-'+esc(e.chain)+'">Chain evidence ↗</a>':
+          ' · SEC XBRL named-customer record (review supplier filings)';
+        return '<div class="gamma-edge">'+supplier+
+          '<span class="gamma-arrow">supplies →</span>'+customer+
+          '<span class="muted small">'+esc(e.note||'Named customer')+source+'</span></div>';
       }).join('')+'</div>' :
-      '<p class="muted">No named counterparty links currently mapped in the existing Chains records for this SIC. This is a disclosure-coverage gap, not proof that companies have no suppliers or customers.</p>';
+      '<p class="muted">No named counterparty disclosures currently available for this SIC in stored SEC records or existing Chains. This is a disclosure-coverage gap, not proof that companies have no suppliers or customers.</p>';
   }
   global.FFGamma={index:index,industry:industry};
 })(window);
