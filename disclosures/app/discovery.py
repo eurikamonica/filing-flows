@@ -33,7 +33,9 @@ def discover_sec(client,cfg,old):
             # Retain historical catalogs; monthly reconciliation catches corrections.
             age=(dt.datetime.now(dt.timezone.utc)-dt.datetime.fromisoformat(prior['checked_at'])).total_seconds() if prior.get('checked_at') else float('inf')
             active=(year,q)==(today.year,(today.month-1)//3+1)
-            if age<(3600 if active else 86400*30) and prior.get('since')==since:continue
+            # Keep the active quarter current independently of slow historical-index reconciliation.
+            active_ttl=max(300,int(cfg.get('active_index_refresh_minutes',20))*60)
+            if age<(active_ttl if active else 86400*30) and prior.get('since')==since:continue
             url=f'https://www.sec.gov/Archives/edgar/full-index/{key}/master.idx'
             try:indices[key]={'rows':parse_master(client.get(url,sec=True),since),'checked_at':now(),'since':since,'source_url':url}
             except Exception as exc:errors.append({'index':key,'error':str(exc)})
