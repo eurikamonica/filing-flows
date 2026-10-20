@@ -1,7 +1,7 @@
 import unittest,sys,tempfile,datetime as dt
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'app'))
-from discovery import parse_master,select_batch
+from discovery import parse_master,select_batch,discover_sec
 from shards import publish_shards,hydrate,safe_path
 from core import read_json
 HEADER=b'CIK|Company Name|Form Type|Date Filed|Filename\n'
@@ -13,6 +13,24 @@ class DiscoveryTests(unittest.TestCase):
   with self.assertRaises(ValueError):parse_master(b'<html>Access denied</html>','2025-01-01')
  def test_invalid_path(self):
   self.assertEqual(parse_master(HEADER+b'123|BAD|13F-HR|2025-01-01|../../evil.txt','2025-01-01'),[])
+ def test_active_index_refresh_budget(self):
+  from unittest.mock import Mock
+  today=dt.datetime.now(dt.timezone.utc)
+  q=(today.month-1)//3+1
+  start=f'{today.year}-{(q-1)*3+1:02d}-01'
+  key=f'{today.year}/QTR{q}'
+  cfg={'since':start,'active_index_refresh_minutes':20}
+  old={'indices':{key:{'rows':[], 'checked_at':(today-dt.timedelta(minutes=22)).isoformat(),'since':start}}}
+  client=Mock()
+  client.get.return_value=HEADER+b'123|TEST|13F-HR|2026-10-01|edgar/data/123/0000000123-26-000001.txt\n'
+  result=discover_sec(client,cfg,old)
+  self.assertTrue(client.get.called,'Active index older than 20 minutes should be refreshed')
+  self.assertEqual(result['since'],start)
+  client.reset_mock()
+  recent={'indices':{key:{'rows':[],'checked_at':today.isoformat(),'since':start}}}
+  discover_sec(client,cfg,recent)
+  client.get.assert_not_called()
+
  def test_batch_fairness_and_cap(self):
   old=(dt.datetime.now(dt.timezone.utc)-dt.timedelta(days=5)).isoformat()
   items=[{'cik':str(i)} for i in range(10)]
