@@ -32,7 +32,11 @@ function holdings(){
  if(!snaps.length)return out+empty('No supported holdings tables. A 13F-NT notice does not mean zero positions.');
  state.hperiod=choose(state.hperiod,snaps.map(s=>s.period).reverse());const current=snaps.find(s=>s.period===state.hperiod),prior=snaps.filter(s=>s.period<current.period).reverse();
  state.hbase=choose(state.hbase,prior.map(s=>s.period));const baseline=prior.find(s=>s.period===state.hbase);
- out+=`<div class="toolbar">${field('hperiod','Current report period',snaps.map(s=>s.period).reverse(),state.hperiod)}${field('hbase','Compare with earlier period',prior.map(s=>s.period),state.hbase)}${field('hasset','Security type',[['','All types'],['NONE','Equity / no Put-Call flag'],['PUT','Put'],['CALL','Call']],state.hasset||'')}<div class="field"><label>&nbsp;</label>${costToggle()}</div></div>`;
+ const historyPeriods=[...new Set(snaps.map(s=>s.period))].sort();
+ state.hfrom=choose(state.hfrom,historyPeriods);
+ state.hto=choose(state.hto,historyPeriods.slice().reverse());
+ const historySnaps=snaps.filter(s=>s.period>=state.hfrom&&s.period<=state.hto);
+ out+=`<div class="toolbar">${field('hperiod','Current report period',snaps.map(s=>s.period).reverse(),state.hperiod)}${field('hbase','Compare with earlier period',prior.map(s=>s.period),state.hbase)}${field('hasset','Security type',[['','All types'],['NONE','Equity / no Put-Call flag'],['PUT','Put'],['CALL','Call']],state.hasset||'')}</div><div class="toolbar">${field('hfrom','History from',historyPeriods,state.hfrom)}${field('hto','Through',historyPeriods.slice().reverse(),state.hto)}<div class="field"><label>&nbsp;</label>${costToggle()}</div></div>`;
  const changes=positionChanges(baseline,current),usable=current.complete&&baseline?.complete;
  const priced=costOn()?changes.filter(r=>estCost(r)!=null):[];const netInvested=priced.reduce((a,r)=>a+estCost(r),0);
  const warnings=[manager.stale?'Refresh failed: last valid snapshot retained.':'',current.confidential?'Confidential positions were omitted.':'',...(current.warnings||[])].filter(Boolean).join(' ');
@@ -45,7 +49,7 @@ function holdings(){
  const secids=[...securityMap.keys()];state.security=choose(state.security,secids);
  const security=securityMap.get(state.security);
  out+=`<div class="toolbar">${field('security','Security history',secids.map(id=>{const r=securityMap.get(id);return[id,`${r.issuer} · ${r.cusip} · ${r.put_call} / ${r.share_type}`]}),state.security,true)}</div>`;
- out+=`<div class="charts"><div class="panel"><h3>Disclosed value history</h3>${lineChart(snaps.map(s=>({date:s.period,value:s.complete?s.total_usd:null})),'value','USD')}</div><div class="panel"><h3>Selected quantity history</h3><p class="sub">${esc(security?.share_type||'')} · not disclosed = gap, not zero</p>${lineChart(snaps.map(s=>({date:s.period,value:s.positions.find(p=>p.id===state.security)?.shares??null})),'value',security?.share_type||'')}</div></div>`;
+ out+=`<div class="charts"><div class="panel"><h3>Disclosed value history</h3>${lineChart(historySnaps.map(s=>({date:s.period,value:s.complete?s.total_usd:null})),'value','USD')}</div><div class="panel"><h3>Selected quantity history</h3><p class="sub">${esc(security?.share_type||'')} · not disclosed = gap, not zero</p>${lineChart(historySnaps.map(s=>({date:s.period,value:s.positions.find(p=>p.id===state.security)?.shares??null})),'value',security?.share_type||'')}</div></div>`;
  out+=`<div class="toolbar"><div class="field wide"><label for="hq">Issuer / CUSIP search</label><input id="hq" value="${esc(state.hq||'')}" placeholder="Issuer or CUSIP; Enter to apply"></div>${field('hstatus','Change filter',[['','All changes'],...['NEW','NOT DISCLOSED','INCREASE','DECREASE','UNCHANGED','BASE']],state.hstatus||'')}${field('hsort','Sort positions',[['value','Disclosed value'],['change','Largest weight change'],['issuer','Issuer A–Z']],state.hsort||'value')}</div>`;
  const rows=changes.filter(r=>(!state.hasset||r.put_call===state.hasset)&&(!state.hstatus||r.status===state.hstatus)&&(!state.hq||(r.issuer+' '+r.cusip).toLowerCase().includes(state.hq.toLowerCase()))).sort((a,b)=>state.hsort==='change'?Math.abs(b.delta_weight_pp||0)-Math.abs(a.delta_weight_pp||0):state.hsort==='issuer'?a.issuer.localeCompare(b.issuer):b.value_usd-a.value_usd);exported=rows;
  exported=costOn()?rows.map(r=>({...r,est_cost_of_change_usd:estCost(r)})):rows;
@@ -112,7 +116,7 @@ function review(){
  return out;
 }
 function bindExtensions(){
- for(const k of ['manager','hperiod','hbase','hasset','hstatus','security','person','creport','ckind','cbase','rreport','candidate'])bind(k,k);
+ for(const k of ['manager','hperiod','hbase','hfrom','hto','hasset','hstatus','security','person','creport','ckind','cbase','rreport','candidate'])bind(k,k);
  if($('cjur'))$('cjur').onchange=e=>{state.cjur=e.target.value;state.person='';state.creport='';state.page=0;render()};
  if($('hcost'))$('hcost').onchange=e=>{state.cost=e.target.checked;costPref.set(state.cost);render()};
  if($('ckind'))$('ckind').onchange=e=>{state.ckind=e.target.value;state.creport='';state.page=0;render()};
