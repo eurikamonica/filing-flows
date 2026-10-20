@@ -85,3 +85,20 @@ def test_quantiles_and_sparse_distribution():
     assert gamma._quantile([1, 2, 3, 4], .5) == 2.5
     assert gamma._dist([])["median"] is None
     assert gamma._dist([.1, .2, .3])["n"] == 3
+
+
+def test_direct_named_customer_across_non_ai_industries(monkeypatch):
+    original = gamma.chains.Co.customers
+    def named(self):
+        if self.cik == 1:
+            return [{"label": "Acme Corporation", "pct": .2, "period": ["2025-01-01", "2025-12-31"]},
+                    {"label": "Customer A", "pct": .12}]
+        return []
+    monkeypatch.setattr(gamma.chains.Co, "customers", named)
+    idx = [profile(1, "6021", "BANK", "National Commercial Banks"),
+           dict(profile(2, "2834", "ACME", "Pharmaceutical Preparations"), name="Acme Inc")]
+    edges = gamma._direct_customer_edges(Store({1: history([1e8]*10), 2: history([1e8]*10)}), idx)
+    assert len(edges) == 1
+    assert edges[0]["supplier"] == "BANK"
+    assert edges[0]["customer"] == "ACME"
+    assert edges[0]["customer_cik"] == 2
