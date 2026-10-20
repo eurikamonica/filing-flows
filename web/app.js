@@ -4907,6 +4907,8 @@
       else if (h === 'feed' && window.FFFeed) await window.FFFeed.render(app, Object.assign({}, window.FFApp, { here }));
       else if ((m = /^chart(?:\/(.*))?$/.exec(h)) && window.FFCharts) await window.FFCharts.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if (h === 'chains' && window.FFChains) await window.FFChains.index(app, chainCtx());
+      else if (h === 'gamma' && window.FFGamma) await window.FFGamma.index(app, chainCtx());
+      else if ((m = /^gamma-(\\d{4})$/.exec(h)) && window.FFGamma) await window.FFGamma.industry(app, m[1], chainCtx());
       else if ((m = /^chain-([a-z0-9-]+)$/.exec(h)) && window.FFChains) await window.FFChains.page(app, m[1], chainCtx());
       else if (h === 'method') await methodPage();
       else if (h === 'account') await accountPage();
