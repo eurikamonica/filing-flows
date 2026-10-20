@@ -22,7 +22,7 @@ function consView(){
  let out=`<div class="toolbar">${field('cview','View',CONS_VIEWS,state.cview)}`;
  if(state.cview==='company')out+=`<div class="field wide"><label for="cq">Company (ticker)</label><input id="cq" value="${esc(state.cq||'')}" placeholder="e.g. NVDA · Enter"></div>`;
  if(state.cview==='market')out+=field('cidx','Index',CONS_IX,state.cidx||'spx');
- if(state.cview==='markets')out+=field('cabout','About',[['','Companies and indices'],['co','Companies'],['ix','Indices']],state.cabout||'')+field('ckind','Kind',CONS_KINDS,state.ckind||'')+field('csrc','Source',[['','Polymarket and Kalshi'],['polymarket','Polymarket'],['kalshi','Kalshi']],state.csrc||'');
+ if(state.cview==='markets')out+=field('cabout','About',[['','Companies and indices'],['co','Companies'],['ix','Indices']],state.cabout||'')+field('ckind','Kind',CONS_KINDS,state.ckind||'')+field('csrc','Source',[['','Polymarket and Kalshi'],['polymarket','Polymarket'],['kalshi','Kalshi']],state.csrc||'')+field('cprob','YES probability',[['','All'],['low','Under 25%'],['mid','25–75%'],['high','Above 75%']],state.cprob||'')+field('cvol','Minimum reported volume',[['','Any'],['1000','$1K+'],['10000','$10K+'],['100000','$100K+'],['1000000','$1M+']],state.cvol||'')+'<div class="field"><label for="cdatefrom">Ends from</label><input type="date" id="cdatefrom" value="'+esc(state.cdatefrom||'')+'"></div><div class="field"><label for="cdateto">Ends through</label><input type="date" id="cdateto" value="'+esc(state.cdateto||'')+'"></div>';
  if(state.cview==='screen')out+=field('cflt','Show',[['','All companies with estimates'],['pm','With prediction markets'],['up','EPS estimates rising (30 days)'],['down','EPS estimates falling (30 days)'],['soon','Reporting in the next 14 days']],state.cflt||'');
  out+='</div>';
  out+=`<div class="explain">Three kinds of consensus side by side: <b>analysts</b> (EPS and revenue estimates, price targets and ratings — Yahoo Finance consensus), <b>prediction markets</b> (Polymarket and Kalshi: the price of a contract paying $1 if the company beats, if the stock closes above a level, if deliveries pass a number… is a crowd probability) and <b>our own model</b> (the Rotation tab's forecast). Each is kept and scored when the result is known. Not investment advice.</div>`;
@@ -88,8 +88,12 @@ function consMarkets(){
  const V=ConsensusView.fmt,K=ConsensusView.KIND;const yd=new Date(Date.now()-864e5).toISOString().slice(0,10);let rows=g.data.rows.filter(m=>!m.closed&&(!m.end||m.end>=yd));
  if(state.cabout==='co')rows=rows.filter(m=>!m.index);else if(state.cabout==='ix')rows=rows.filter(m=>m.index);
  if(state.ckind)rows=rows.filter(m=>m.kind===state.ckind);if(state.csrc)rows=rows.filter(m=>m.source===state.csrc);
+ if(state.cprob)rows=rows.filter(m=>Number.isFinite(+m.p)&&m.p!==null&&(state.cprob==='low'?+m.p<.25:state.cprob==='high'?+m.p>.75:+m.p>=.25&&+m.p<=.75));
+ if(+state.cvol>0)rows=rows.filter(m=>m.volume!=null&&Number.isFinite(+m.volume)&&+m.volume>=+state.cvol);
+ if(state.cdatefrom)rows=rows.filter(m=>m.end&&m.end.slice(0,10)>=state.cdatefrom);
+ if(state.cdateto)rows=rows.filter(m=>m.end&&m.end.slice(0,10)<=state.cdateto);
  rows.sort((a,b)=>String(a.end).localeCompare(String(b.end))||(b.volume||0)-(a.volume||0));
- exported=rows.map(m=>({source:m.source,kind:m.kind,ticker:m.ticker,title:m.title,end:m.end,p:m.p,eps_line:m.eps_strike,median:m.median,url:m.url}));
+ exported=rows.map(m=>({source:m.source,kind:m.kind,ticker:m.ticker,title:m.title,end:m.end,p:m.p,volume:m.volume,eps_line:m.eps_strike,median:m.median,url:m.url}));
  const what=m=>{if(m.kind==='beat')return `<b>${V.pct(m.p)}</b> beat <span class="muted">line ${V.usd(m.eps_strike)} · report ${esc(m.report_date||'')}</span>`;
   if(m.kind==='mcap')return m.median==null?'—':`median ${V.big(m.median)}${m.implied_price&&m.implied_price.median?` <span class="muted">≈ ${V.usd(m.implied_price.median)} a share</span>`:''}`;
   const pf=v=>v==null?'—':fmt(v,Math.abs(v)>=1000?0:2);
@@ -101,7 +105,7 @@ function consMarkets(){
   if(m.kind==='kpi'&&m.median!=null)return `median ${fmt(m.median,2)}`;
   return (m.top||[]).map(o=>`${esc(String(o.q||'').slice(0,40))} <b>${V.pct(o.p)}</b>`).join(' · ')||'—'};
  return `<div class="section-head"><h3>${fmt(rows.length)} open markets about listed companies and the indices</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">Every open Polymarket and Kalshi market we could tie to a company on Filing Flows or to an index (S&P 500, Nasdaq-100, Dow, Russell 2000, VIX), soonest first.</p>`+
-  table(['Ends','About','Market','Kind','Consensus','Source'],rows.slice(0,800).map(m=>[esc(m.end||''),consTk(m.ticker,m.index),`<a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.title||'')}</a>${m.subtitle?` <span class="muted">${esc(m.subtitle)}</span>`:''}`,esc(K[m.kind]||m.kind),what(m),m.source==='kalshi'?'Kalshi':'Polymarket']));
+  table(['Ends','About','Market','Kind','Consensus','Volume','Source'],rows.slice(0,800).map(m=>[esc(m.end||''),consTk(m.ticker,m.index),`<a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.title||'')}</a>${m.subtitle?` <span class="muted">${esc(m.subtitle)}</span>`:''}`,esc(K[m.kind]||m.kind),what(m),m.volume==null?'—':V.big(m.volume),m.source==='kalshi'?'Kalshi':'Polymarket']));
 }
 function consTrack(){
  const g=consGate('calibration','The track record');if(!g.data)return g.html;
@@ -138,7 +142,8 @@ function consCompany(){
 }
 function bindConsensus(){
  if(state.tab!=='consensus')return;
- for(const k of ['cview','ckind','csrc','cflt','cidx','cabout'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
+ for(const k of ['cview','ckind','csrc','cprob','cvol','cflt','cidx','cabout'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
+ for(const k of ['cdatefrom','cdateto'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
  if($('cq')){$('cq').onchange=e=>{state.cq=e.target.value;render()};$('cq').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-cco]').forEach(b=>b.onclick=()=>{state.cview='company';state.cq=b.dataset.cco;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-cix]').forEach(b=>b.onclick=()=>{state.cview='market';state.cidx=b.dataset.cix;render();scrollTo({top:0,behavior:'smooth'})});
