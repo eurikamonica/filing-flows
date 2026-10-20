@@ -204,15 +204,20 @@ def main():
     p.add_argument("--max-issuers",type=int,default=20)
     p.add_argument("--refresh-days",type=int,default=14)
     p.add_argument("--universe",type=Path,help="Previously downloaded official SEC company_tickers.json")
+    p.add_argument("--fetch-universe",action="store_true",help="Fetch the public SEC ticker inventory with SEC_USER_AGENT")
     args=p.parse_args()
     if not 1<=args.max_issuers<=100 or args.refresh_days<1:
         raise ValueError("Bounded max-issuers (1 to 100) and positive refresh-days required")
+    if args.universe and args.fetch_universe:
+        raise ValueError("Choose --universe or --fetch-universe, not both")
+    import os
+    agent=args.agent or os.environ.get("SEC_USER_AGENT","")
     with open_db(args.db) as con:
         if args.universe:
             result={"imported":universe(con,json.loads(args.universe.read_text(encoding="utf-8")))}
+        elif args.fetch_universe:
+            result={"imported":universe(con,get_json("https://www.sec.gov/files/company_tickers.json",agent))}
         else:
-            import os
-            agent=args.agent or os.environ.get("SEC_USER_AGENT","")
             result=refresh(con,agent,args.max_issuers,args.refresh_days)
     print(json.dumps(result,indent=2))
 
