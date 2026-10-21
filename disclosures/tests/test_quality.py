@@ -65,6 +65,9 @@ class Scores(unittest.TestCase):
         self.assertEqual(b2['neutral'], ['depi', 'sgai'])
         self.assertFalse(b2['flag'])
         self.assertIsNone(Q.beneish(dict(cur, ar=None), prev))
+        no_ni = {k: v for k, v in cur.items() if k != 'ni'}             # a year without net income tagged: no score
+        self.assertIsNone(Q.beneish(no_ni, prev))
+        self.assertIsNotNone(Q.beneish(dict(cur, ni=0), prev))           # zero net income is a figure
 
     def test_yields_owner_earnings_roic_cost_structure(self):
         ys = good_years()

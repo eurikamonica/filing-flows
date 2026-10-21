@@ -364,7 +364,10 @@ def beneish(cur, prev):
     """Beneish (1999) eight-variable M-score; above −1.78 screens as a possible earnings manipulator. Indices that need
     a figure the company does not tag (SG&A, depreciation) are set to 1 (neutral) and listed."""
     need = ('ar', 'rev', 'gp', 'assets', 'ca', 'ppe', 'ni', 'ocf')
-    if any(cur.get(k) in (None, 0) and k != 'ni' for k in need) or any(prev.get(k) in (None, 0) and k not in ('ni', 'ocf') for k in need):
+    # every figure must be tagged (net income and cash flow may be zero); the divisors must not be zero
+    if any(cur.get(k) is None for k in need) or any(prev.get(k) is None for k in need[:6]):
+        return None
+    if any(not cur.get(k) for k in ('rev', 'assets')) or any(not prev.get(k) for k in ('rev', 'assets')):
         return None
     neutral = []
     dsri = _div(cur['ar'] / cur['rev'], prev['ar'] / prev['rev'])
