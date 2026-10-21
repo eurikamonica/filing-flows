@@ -189,7 +189,7 @@
   async function get(url) {
     const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json();
   }
-  function draw(root, c, f, score, signals, peers, gaap, research, fundamental) {
+  function draw(root, c, f, score, signals, peers, gaap, research, fundamental, fundamentalStats) {
     root.textContent='';
     section(root,'Fundamental EPS V4 · income statement, regime & event model');
     const fm = fundamental?.forecast;
@@ -240,6 +240,18 @@
           line(root, 'Historical GAAP YoY event Brier score', num(p.brier_gaap_yoy_direction)?p.brier_gaap_yoy_direction.toFixed(4):'N/A');
         }
       }
+      const overall=fundamentalStats||{};
+      section(root,'Fundamental model · actual SEC holdout across issuers');
+      if(overall.n){
+        line(root,'Evaluated company quarters',String(overall.n));
+        line(root,'Companies with validated fundamental inputs',String(overall.companies||0));
+        line(root,'Fundamental EPS MAE',money(overall.mae_model));
+        line(root,'Prior-year comparable EPS MAE',money(overall.mae_seasonal));
+        const c=overall.probability_validation||{};
+        line(root,'Retrospective empirical interval count',String(c.n||0));
+        if(num(c.coverage_80))line(root,'Nominal 80% interval realized coverage',percent(c.coverage_80));
+        if(num(c.brier_yoy))line(root,'GAAP EPS YoY growth Brier score',c.brier_yoy.toFixed(4));
+      } else root.append(el('p','Live fundamental holdout sample not yet staged; no quantitative accuracy claim.','muted'));
       root.append(el('p','SEC CompanyFacts: first-filed direct-quarter revenue, operating income, pretax/tax, net income, diluted shares and EPS. Past abnormal tax expense is normalized; future events are only overlaid with dated documentary evidence. Empirical percentiles are NOT independently calibrated, and market/macro/13F signals are not assigned untested EPS coefficients.','muted'));
     } else {
       root.append(el('p','N/A — historical first-filed operating fundamentals are incomplete or comparable GAAP quarters are insufficient. Older EPS-only baseline remains below.','muted'));
@@ -415,20 +427,21 @@
     const root=el('div','Loading actual EPS source data…');box.append(root);body.append(box);
     const cik=encodeURIComponent(String(ctx.cik)), ticker=String(ctx.ticker).replace(/[^A-Z0-9.-]/ig,'').toUpperCase();
     const path='disclosures/data/';
-    const [c,s,r,g,wide,fundamental]=await Promise.all([
+    const [c,s,r,g,wide,fundamental,fundamentalStats]=await Promise.all([
       get(path+'consensus/c/'+cik+'.json').catch(()=>null),
       get(path+'smart/t/'+encodeURIComponent(ticker)+'.json').catch(()=>null),
       get(path+'debt/rates.json').catch(()=>null),
       get('data/eps-gaap/'+cik+'.json').catch(()=>null),
       get('data/eps-research/backtest.json').catch(()=>null),
-      get('data/eps-fundamental/'+cik+'.json').catch(()=>null)
+      get('data/eps-fundamental/'+cik+'.json').catch(()=>null),
+      get('data/eps-fundamental/backtest.json').catch(()=>null)
     ]);
     if (!box.isConnected || (ctx.here && !ctx.here())) return;
     const asof=new Date().toISOString().slice(0,10),f=forecast(c,asof),score=trailingTest(c,asof);
     const signals=metrics(c,s,r,asof);
     const peers=await loadPeerSignals(ticker,f?.period,asof).catch(()=>null);
     if (!box.isConnected || (ctx.here && !ctx.here())) return;
-    draw(root,c,f,score,signals,peers,g,wide,fundamental);
+    draw(root,c,f,score,signals,peers,g,wide,fundamental,fundamentalStats);
   }
   window.FFEPSResearch={mount,forecast,trailingTest,publicHistory,metrics,peerSignals,bias};
 })();
