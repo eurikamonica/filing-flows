@@ -85,7 +85,7 @@ class TestFundamental(unittest.TestCase):
         # As-of mid-Q4 when last published XBRL is Q3, absent direct Q4
         # means N/A; never leap over Q4 into next year's Q1.
         rows=[r for r in self.series if r["end"][-5:]!="-12-31"]
-        self.assertIsNone(F.forecast(rows,"2026-11-15"))
+        self.assertIsNone(F.forecast(rows,"2025-11-15"))
 
     def test_historical_walk_forward_does_not_use_post_cutoff_facts(self):
         a=F.backtest(self.series,years=(2025,2026))
