@@ -18,6 +18,16 @@ context.window.DISCLOSURE_LIVE=live;
 const PAGE_SCRIPTS=[...fs.readFileSync(path.join(root,'docs','index.html'),'utf8').matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]).filter(f=>f!=='data/live.js');
 for(const f of PAGE_SCRIPTS)vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
 let checks=0;
+const derivedFresh=vm.runInContext("derivedMarketNotice('signals',{holdings:{updated_at:'2026-10-18T21:32:54Z'},congress:{updated_at:'2026-10-20T01:00:00Z'}},{signals:{data:{generated_at:'2026-10-21T04:15:47Z'}}},Date.parse('2026-10-21T04:41:00Z'))",context);
+assert.equal(derivedFresh.stale,false);
+assert.ok(derivedFresh.text.includes('Generated 2026-10-21T04:15:47Z'));
+assert.ok(derivedFresh.text.includes('13F source: 2026-10-18T21:32:54Z'));
+checks+=3;
+const derivedOld=vm.runInContext("derivedMarketNotice('signals',{holdings:{updated_at:'2026-10-20T00:00:00Z'}},{signals:{data:{generated_at:'2026-10-18T21:32:54Z'}}},Date.parse('2026-10-21T04:41:00Z'))",context);
+assert.equal(derivedOld.stale,true);
+assert.equal(vm.runInContext("derivedMarketNotice('holdings',{holdings:{updated_at:'2026-10-18'}},{},0)",context),null);
+checks+=2;
+
 for(const mode of ['official','demo'])for(const tab of ['holdings','congress','review','cot','banks','npx','status','directory']){
  vm.runInContext(`state.mode='${mode}';state.tab='${tab}';state.date='';state.page=0;render();`,context);
  const html=elements.get('workspace').innerHTML;
