@@ -35,16 +35,20 @@ class TestEPSGAAP(unittest.TestCase):
         b=E.backtest(x,2025)
         self.assertEqual(b["n"],4)
         self.assertTrue(b["model_mae"] >= 0)
-        self.assertEqual(b["status"],"FIRST_FILED_SEC_GAAP_RETROSPECTIVE_WALK_FORWARD")
+        self.assertEqual(b["status"],"FIRST_FILED_SEC_GAAP_RETROSPECTIVE_WALK_FORWARD_SPARSE_Q4")
     def test_no_insufficient_intervals_claim(self):
         x=self.synthetic()[:8]
-        f=E.model(x,"2024-01-01")
+        f=E.model(x,"2023-02-15")
         self.assertIsNotNone(f)
         self.assertIsNone(f["uncertainty"]["p10"])
-    def test_missing_quarter_refused(self):
-        x=self.synthetic()
-        del x[-3]
-        self.assertIsNone(E.model(x,"2026-12-31"))
+    def test_missing_q4_does_not_invalidate_other_quarters(self):
+        x=[r for r in self.synthetic() if E.iso(r["end"]).month!=12]
+        f=E.model(x,"2025-01-01",target_end="2025-03-31")
+        self.assertIsNotNone(f)
+        self.assertEqual(f["target_end"],"2025-03-31")
+    def test_missing_seasonal_comparator_refused(self):
+        x=[r for r in self.synthetic() if E.iso(r["end"]).month!=12]
+        self.assertIsNone(E.model(x,"2025-01-01",target_end="2024-12-31"))
 
 if __name__=="__main__":
     unittest.main()
