@@ -79,9 +79,43 @@ def metrics(rows):
     sm = sum(r["model_ae"] for r in rows) / n
     sb = sum(r["baseline_ae"] for r in rows) / n
     rm = math.sqrt(sum((r["actual"] - r["prediction"]) ** 2 for r in rows) / n)
-    return {"n": n, "mae_model": round(sm, 5), "mae_consensus": round(sb, 5),
-            "rmse_model": round(rm, 5),
-            "relative_mae_improvement": round(1 - sm / sb, 5) if sb > 0 else None}
+    a = sorted(r["model_ae"] for r in rows)
+    b = sorted(r["baseline_ae"] for r in rows)
+    ix = (n-1)//2
+    def median(x):
+        return (x[n//2] if n%2 else (x[n//2-1]+x[n//2])/2)
+    # Common outlier cutoff is applied to both models (no outcome-specific cherry-pick).
+    paired = sorted(max(r["model_ae"],r["baseline_ae"]) for r in rows)
+    cutoff = paired[max(0, math.ceil(.95*n)-1)]
+    robust = [r for r in rows if max(r["model_ae"],r["baseline_ae"])<=cutoff]
+    def ra(k):
+        return round(sum(r[k] for r in robust)/len(robust),5) if robust else None
+    # EPS-level normalization avoids a $5000 EPS drowning a $2 EPS company.
+    # Denominator and cap are fixed before looking at observed performance.
+    mape = lambda col: sum(min(5., r[col]/max(abs(r["actual"]), .5)) for r in rows)/n
+    ordinary = [r for r in rows if abs(r["actual"])<=20 and abs(r["estimate"])<=20]
+    def cohort_avg(k):
+        return round(sum(r[k] for r in ordinary)/len(ordinary),5) if ordinary else None
+    return {
+        "n":n, "mae_model":round(sm,5), "mae_consensus":round(sb,5),
+        "rmse_model":round(rm,5),
+        "relative_mae_improvement":round(1-sm/sb,5) if sb>0 else None,
+        "median_ae_model":round(median(a),5),
+        "median_ae_consensus":round(median(b),5),
+        "p95_paired_trimmed": {
+            "n":len(robust), "excluded":n-len(robust),
+            "threshold_usd_per_share":round(cutoff,4),
+            "model_mae":ra("model_ae"),"consensus_mae":ra("baseline_ae")},
+        "winsorized_scaled_abs_error": {
+            "model":round(mape("model_ae"),5),
+            "consensus":round(mape("baseline_ae"),5),
+            "denominator":"max(0.5,abs(reported_EPS))",
+            "cap":5},
+        "eps_under_20_cohort":{
+            "n":len(ordinary),"excluded":n-len(ordinary),
+            "model_mae":cohort_avg("model_ae"),
+            "consensus_mae":cohort_avg("baseline_ae")},
+    }
 
 
 def build(consensus_dir, market_file, out_path, gaap_store=None):

@@ -279,6 +279,24 @@
       line(root,'Uncorrected analyst EPS MAE',money(u.mae_consensus));
       line(root,'Relative MAE change',percent(u.relative_mae_improvement));
       line(root,'Covered companies',String(research.companies_scored||0));
+      const r95=u.p95_paired_trimmed||{};
+      section(root,'Robustness / comparability checks');
+      line(root,'Median model absolute EPS error',money(u.median_ae_model));
+      line(root,'Median Street absolute EPS error',money(u.median_ae_consensus));
+      line(root,'Largest paired-error tail excluded',r95.excluded!=null?
+        r95.excluded+' of '+u.n+' (top 5%)':'N/A');
+      line(root,'Paired-tail trimmed model / Street MAE',num(r95.model_mae)?
+        money(r95.model_mae)+' / '+money(r95.consensus_mae):'N/A');
+      const stable=u.eps_under_20_cohort||{};
+      line(root,'Comparable |EPS| <= $20 cohort',stable.n!=null?
+        stable.n+' observations':'N/A');
+      line(root,'|EPS| <= $20 model / Street MAE',num(stable.model_mae)?
+        money(stable.model_mae)+' / '+money(stable.consensus_mae):'N/A');
+      const scaled=u.winsorized_scaled_abs_error||{};
+      line(root,'Scale-normalized absolute error · model / Street',num(scaled.model)?
+        scaled.model.toFixed(3)+' / '+scaled.consensus.toFixed(3):'N/A');
+      root.append(el('p','Original untrimmed MAE is retained. Paired 95% trimming applies one shared predeclared threshold to model and Street; the under-$20 cohort is a descriptive comparability slice, not the full-universe result.','muted'));
+
       const sector=research.by_sector?.[c?.sector];
       if(sector?.n)line(root,'Same-sector evaluation',sector.n+' observations · MAE '+money(sector.mae_model));
       const by=research.by_year || {};
