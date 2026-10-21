@@ -231,7 +231,7 @@ def forecast(series,cutoff,target=None,events=(),allow_dist=False):
     if allow_dist:
         # Walk-forward residual bootstrap without future labels, with tax-spike scenarios.
         errors=[]
-        for j in range(8,len(hist)):
+        for j in range(max(8,len(hist)-36),len(hist)):
             prior=hist[:j]
             origin=(iso(prior[-1]["filed"])+dt.timedelta(days=1)).isoformat()
             estimate=forecast(series,origin,target=hist[j]["end"],allow_dist=False)
@@ -281,16 +281,26 @@ def backtest(series,years=(2024,2025,2026)):
         prior=eligible[:j]
         cutoff=(iso(prior[-1]["filed"])+dt.timedelta(days=1)).isoformat()
         if iso(target["filed"])<=iso(cutoff):continue
-        y=forecast(series,cutoff,target=target["end"],allow_dist=False)
+        y=forecast(series,cutoff,target=target["end"],allow_dist=True)
         if not y:continue
         rows.append({"end":target["end"],"cutoff":cutoff,"filed":target["filed"],
                      "actual":target["eps"],"forecast":y["point"],
                      "same_quarter_last_year":y["eps_gaap_last_year"],
-                     "stage":y["company_stage"],"tax_spike_known":bool(y["confirmed_events"])})
+                     "stage":y["company_stage"],"tax_spike_known":bool(y["confirmed_events"]),
+                     "interval":y.get("distribution",{}),"gaap_yoy_base":y["eps_gaap_last_year"]})
     n=len(rows)
     def mae(k):
         return round(sum(abs(x[k]-x["actual"]) for x in rows)/n,4) if n else None
+    p=[r for r in rows if r["interval"].get("status")=="EMPIRICAL_UNCALIBRATED"]
+    calibrated={"n":len(p),
+                "empirical_80pct_interval_coverage":round(sum(
+                  r["interval"]["p10"]<=r["actual"]<=r["interval"]["p90"] for r in p)/len(p),4) if p else None,
+                "brier_gaap_yoy_direction":round(sum(
+                  (r["interval"]["p_yoy_increase"]-float(r["actual"]>r["gaap_yoy_base"]))**2
+                   for r in p)/len(p),5) if p else None,
+                "status":"OUT_OF_TIME_DIAGNOSTIC_NOT_FORMALLY_CALIBRATED"}
     return {"n":n,"method":"STRICT_FIRST_FILED_FUNDAMENTALS_WALKFORWARD",
+            "probability_validation":calibrated,
             "mae_model":mae("forecast"),"mae_seasonal":mae("same_quarter_last_year"),
             "by_year":{str(y):{"n":len([r for r in rows if iso(r["end"]).year==y]),
                      "mae_model":round(sum(abs(r["forecast"]-r["actual"]) for r in rows if iso(r["end"]).year==y)/
@@ -318,7 +328,15 @@ def build(store,out):
             "as_of":asof,"forecast":pred,"backtest":{k:v for k,v in bt.items() if k!="rows"}})
     n=len(aggregate)
     mae=lambda key: round(sum(abs(r[key]-r["actual"]) for r in aggregate)/n,4) if n else None
+    eligible=[x for x in aggregate if x.get("interval",{}).get("status")=="EMPIRICAL_UNCALIBRATED"]
+    coverage=(sum(x["interval"]["p10"]<=x["actual"]<=x["interval"]["p90"] for x in eligible)
+              /len(eligible)) if eligible else None
+    brier=(sum((x["interval"]["p_yoy_increase"]-float(x["actual"]>x["gaap_yoy_base"]))**2
+             for x in eligible)/len(eligible)) if eligible else None
     write(dst/"backtest.json",{"n":n,"companies":len({x["cik"] for x in aggregate}),
+        "probability_validation":{"n":len(eligible),"coverage_80":round(coverage,4) if coverage is not None else None,
+                                 "brier_yoy":round(brier,5) if brier is not None else None,
+                                 "status":"INDEPENDENT_CHRONOLOGICAL_DIAGNOSTIC_NO_CALIBRATION_CLAIM"},
         "mae_model":mae("forecast"),"mae_seasonal":mae("same_quarter_last_year"),
         "label":"STRICT_FIRST_FILED_FUNDAMENTAL_GAAP_EPS","by_stage":{
             s:{"n":len([r for r in aggregate if r["stage"]==s])} for s in sorted({r["stage"] for r in aggregate})},
