@@ -1,6 +1,15 @@
 name: Scan EDGAR and publish
 
 on:
+  # A merge changing the EPS model triggers a fresh production Pages build.
+  push:
+    branches: [main]
+    paths:
+      - 'pipeline/eps_gaap.py'
+      - 'web/eps-research.js'
+      - 'web/eps-research.css'
+      - 'scripts/build_site.py'
+      - '.github/workflows/scan.yml'
   schedule:
     - cron: "4,19,34,49 * * * *"   # every 15 minutes, away from :00 and :30 (GitHub delays busy minutes most)
   repository_dispatch:
