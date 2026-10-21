@@ -1,6 +1,15 @@
 name: Scan EDGAR and publish
 
 on:
+  # A merge changing the EPS model triggers a fresh production Pages build.
+  push:
+    branches: [main]
+    paths:
+      - 'pipeline/eps_gaap.py'
+      - 'web/eps-research.js'
+      - 'web/eps-research.css'
+      - 'scripts/build_site.py'
+      - '.github/workflows/scan.yml'
   schedule:
     - cron: "4,19,34,49 * * * *"   # every 15 minutes, away from :00 and :30 (GitHub delays busy minutes most)
   repository_dispatch:
@@ -123,6 +132,13 @@ jobs:
         run: |
           python -m pipeline.custom finish-rereads || true
           python -m pipeline.custom finish-companies --site _site
+
+      # Conservative first-filed GAAP EPS: a rotating set of SEC companyfacts each scan.
+      # Files are saved with the regular data store and copied into Pages output.
+      - name: Incrementally train SEC GAAP EPS and historical walk-forward
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python -m pipeline.eps_gaap --store store --index _site/data/index.json --out _site/data/eps-gaap --max-fetch 4
 
       - name: Assemble site
         env:                                   # public values (repository variables): the sign-in box on the site
