@@ -1892,7 +1892,8 @@ def render(store, out, stars=frozenset()):
                       "industry": p["industry"], "sic": p["sic"], "label": latest["label"], "end": latest["end"],
                       "cal": latest["cal"], "filed": latest["filed"], "form": latest["form"],
                       "rev": latest["headline"]["rev_fmt"],
-                      "revenue": u_latest["headline"]["revenue"] if u_latest else latest["headline"]["revenue"],   # dollars, to sort by
+                      # dollars, to sort by: a foreign filer without its dollar version (no rate yet) has none, not its own currency's figure
+                      "revenue": u_latest["headline"]["revenue"] if u_latest else (latest["headline"]["revenue"] if cur == "USD" else None),
                       **({"currency": cur} if cur != "USD" else {}),
                       "yoy": latest["headline"]["yoy"], "om": round(latest["headline"]["om"], 1),
                       "starred": cik in stars, "kind": latest["kind"], "prelim": latest["form"] == "8-K",

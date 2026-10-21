@@ -102,3 +102,14 @@ def test_direct_named_customer_across_non_ai_industries(monkeypatch):
     assert edges[0]["supplier"] == "BANK"
     assert edges[0]["customer"] == "ACME"
     assert edges[0]["customer_cik"] == 2
+
+
+def test_comparable_quarter_waits_for_most_of_the_industry():
+    """Three early filers in the newest quarter do not stand for an industry of ten: the quarter most have reported wins."""
+    from pipeline import gamma as G
+    import inspect
+    src = inspect.getsource(G)
+    assert "0.5 * max(counts.values()" in src
+    counts = {8107: 3, 8106: 10, 8105: 10}                     # 2026Q4 (3 filers), 2026Q3 (10), 2026Q2 (10)
+    floor = max(2, 0.5 * max(counts.values()))
+    assert max(k for k, n in counts.items() if n >= floor) == 8106

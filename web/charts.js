@@ -15,15 +15,32 @@
   function seriesOf(c) {
     const S = {}, label = {};
     const put = (key, lab, end, v) => { if (!fin(v) || !end) return; (S[key] = S[key] || new Map()).set(end, +v); label[key] = lab; };
+    // a company reporting in another currency: its dollar charts (pipeline/fx.py) when the page has them, so every
+    // line on the chart is in dollars; the long history (reported currency) is converted at each quarter's own rate
+    const foreign = c.currency && c.currency !== 'USD';
+    const quarters = foreign && c.usd && c.usd.quarters ? c.usd.quarters : (c.quarters || []);
+    const rate = new Map();
+    if (foreign && c.usd && c.usd.quarters) {
+      for (const u of c.usd.quarters) {
+        const r = (c.quarters || []).find((q) => q.end === u.end);
+        if (r && r.headline && u.headline && r.headline.revenue) rate.set(u.end, u.headline.revenue / r.headline.revenue);
+      }
+    }
     const hist = (c.quality || {}).hist;
-    if (hist && hist.periods && hist.v) {
+    if (hist && hist.periods && hist.v && (!foreign || rate.size)) {
+      const last = Math.max(...rate.values(), 0) || 1;
       for (const [k, rows] of Object.entries(hist.v)) {
         const lab = (HEAD.find((h) => h[0] === k) || [])[1];
         if (!lab) continue;
-        for (const [pi, vals] of rows || []) { const p = hist.periods[pi]; if (p && p[2] === 'q' && vals && vals[0]) put('h:' + k, lab, p[1], vals[0][0]); }
+        for (const [pi, vals] of rows || []) {
+          const p = hist.periods[pi];
+          if (!(p && p[2] === 'q' && vals && vals[0])) continue;
+          const f = foreign ? (rate.get(p[1]) || (k === 'om' ? 1 : null)) : 1;   // a quarter before the dollar versions: skipped
+          if (f != null) put('h:' + k, lab, p[1], k === 'om' ? vals[0][0] : vals[0][0] * f);
+        }
       }
     }
-    for (const q of c.quarters || []) {
+    for (const q of quarters) {
       if (q.end && /^(Q|q)/.test(String(q.label || 'Q'))) {
         const h = q.headline || {};
         for (const [k, lab] of HEAD) if (fin(h[k])) put('h:' + k, lab, q.end, h[k]);

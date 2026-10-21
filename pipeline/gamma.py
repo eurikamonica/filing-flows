@@ -183,13 +183,15 @@ def build(store, out, index):
     listing = []
     for sic, members in sorted(industry.items()):
         members.sort(key=lambda r: -(r.get("revenue_usd") or 0))
-        # Latest calendar quarter represented by >= 2 companies when possible.
+        # The latest calendar quarter most of the industry has reported: at least half as many companies as the
+        # best-covered recent quarter (and two), so a quarter three early filers are in does not stand for the industry.
         counts = defaultdict(int)
         for m in members:
             for r in m["history"][-4:]:
                 if r["yoy"] is not None:
                     counts[r["quarter"]] += 1
-        comparable = max((k for k, n in counts.items() if n >= 2), default=max(counts, default=None))
+        floor = max(2, 0.5 * max(counts.values(), default=0))
+        comparable = max((k for k, n in counts.items() if n >= floor), default=max(counts, default=None))
         active = []
         for m in members:
             r = next((r for r in reversed(m["history"]) if r["quarter"] == comparable), None)
