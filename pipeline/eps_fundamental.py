@@ -322,6 +322,15 @@ def build(store,out):
         events=read(Path(store).parent/"eps-events"/file.name,{})
         pred=forecast(series,asof,events=events.get("events",[]),allow_dist=True)
         bt=backtest(series)
+        if pred is not None:
+            tested=bt["n"]>=8 and bt["mae_model"] is not None and bt["mae_seasonal"] is not None
+            beat_baseline=tested and bt["mae_model"]<bt["mae_seasonal"]
+            pred["promotion_gate"]={
+                "status":"RESEARCH_ONLY_INSUFFICIENT_BACKTEST" if not tested else (
+                    "RESEARCH_ONLY_BASELINE_BETTER" if not beat_baseline else "PASSED_SEASONAL_BACKTEST_GATE"),
+                "n":bt["n"],"baseline_mae":bt["mae_seasonal"],
+                "model_mae":bt["mae_model"],
+                "evidence_note":"Historical comparison only; even a passed gate does not establish accuracy vs Street EPS."}
         for r in bt["rows"]:aggregate.append({"cik":file.stem,**r})
         write(dst/file.name,{"cik":d.get("cik"),"ticker":d.get("ticker"),
             "source":"SEC_FIRST_FILED_COMPANYFACTS_FUNDAMENTALS",
