@@ -45,6 +45,8 @@
     const spread = errors.length >= 3 ? Math.max(.05, mean(errors.map(x => Math.abs(x))) * 1.5) : null;
     const beats = past.filter(x => x > 0).length;
     return {consensus: +c.avg, median: estimate, adjustment, past_n: past.length, analyst_n: +c.numberOfAnalysts,
+      bear: valid(c.low) ? +c.low+adjustment : null,
+      bull: valid(c.high) ? +c.high+adjustment : null,
       period: q.end, yearAgo: prior, yoy: prior !== null && Math.abs(prior) >= .02 ? (estimate - prior) / Math.abs(prior) : null,
       beat_rate: (beats + 1) / (past.length + 2), lower_sensitivity: spread === null ? null : estimate - spread,
       upper_sensitivity: spread === null ? null : estimate + spread, interval_calibrated: false,
@@ -213,6 +215,13 @@
     line(root,'Bias-adjusted EPS point estimate',money(f.median));
     line(root,'Prior surprise observations · incremental training',String(f.past_n));
     line(root,'Estimated YoY EPS change',percent(f.yoy));
+    if(num(f.bear)&&num(f.bull)) {
+      section(root,'Analyst-range scenarios · not probability quantiles');
+      line(root,'Lower analyst estimate + bias',money(f.bear));
+      line(root,'Central forecast + bias',money(f.median));
+      line(root,'Upper analyst estimate + bias',money(f.bull));
+      root.append(el('p','Scenarios use observed Street analyst low / mean / high and a historical bias correction. They are not calibrated P10/P50/P90 or simulated economic outcomes.','muted'));
+    }
     line(root,'Empirical P(beat Street EPS) · uncalibrated',percent(f.beat_rate));
     if (f.lower_sensitivity !== null)line(root,'Historical error sensitivity · NOT P10/P90',money(f.lower_sensitivity)+' to '+money(f.upper_sensitivity));
     root.append(el('p','No validated prediction interval or company-specific calibrated win rate is claimed. Each new published result updates the historical correction and next scheduled consensus refresh.','muted'));
