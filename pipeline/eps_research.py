@@ -84,7 +84,7 @@ def metrics(rows):
             "relative_mae_improvement": round(1 - sm / sb, 5) if sb > 0 else None}
 
 
-def build(consensus_dir, market_file, out_path):
+def build(consensus_dir, market_file, out_path, gaap_store=None):
     groups = collections.defaultdict(list)
     years = collections.defaultdict(list)
     stages = collections.defaultdict(list)
@@ -140,6 +140,41 @@ def build(consensus_dir, market_file, out_path):
             "note": "Independent event probability score; not evidence that the EPS model beats consensus.",
         },
     }
+    # Independently evaluate the 10-Q/10-K first-filed GAAP EPS series.
+    # Unlike Street estimates, historical filing timestamps are preserved.
+    if gaap_store:
+        from .eps_gaap import backtest
+        gaap_rows = []
+        gaap_company_count = 0
+        for p in sorted(Path(gaap_store).glob("*.json")):
+            if p.name == "progress.json":
+                continue
+            try:
+                records = json.loads(p.read_text(encoding="utf-8")).get("records", [])
+            except (ValueError, OSError):
+                continue
+            gaap_company_count += 1
+            for year in (2024, 2025, 2026):
+                for z in backtest(records, year)["rows"]:
+                    gaap_rows.append({"year": year, "cik": p.stem,
+                                      "model_ae": abs(z["actual"]-z["prediction"]),
+                                      "baseline_ae": abs(z["actual"]-z["seasonal"])})
+        def gaap_metrics(rows):
+            n = len(rows)
+            if not n:
+                return {"n": 0, "model_mae": None, "seasonal_mae": None}
+            return {"n": n, "companies": len({x["cik"] for x in rows}),
+                    "model_mae": round(sum(x["model_ae"] for x in rows)/n, 5),
+                    "seasonal_mae": round(sum(x["baseline_ae"] for x in rows)/n, 5)}
+        report["gaap_first_filed_backtest"] = {
+            "source": "data branch / eps-gaap; first-filed SEC 10-Q and 10-K",
+            "status": "FIRST_FILED_DATE_WALK_FORWARD_WITH_SPLIT_REGIME_ABSTENTION",
+            "companies_stored": gaap_company_count,
+            "overall": gaap_metrics(gaap_rows),
+            "by_year": {str(y): gaap_metrics([x for x in gaap_rows if x["year"]==y])
+                        for y in (2024, 2025, 2026)},
+            "note": "Unadjusted original GAAP dollar-per-share basis; no Q4 EPS inferred; comparator mismatch (>4x recent EPS) abstained; no adjusted Street EPS in this benchmark."
+        }
     output = Path(out_path)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -152,5 +187,6 @@ if __name__ == "__main__":
     p.add_argument("--consensus", required=True)
     p.add_argument("--market", required=True)
     p.add_argument("--out", required=True)
+    p.add_argument("--gaap", default=None, help="Stored SEC first-filed GAAP EPS company ledgers")
     args = p.parse_args()
-    build(args.consensus, args.market, args.out)
+    build(args.consensus, args.market, args.out, args.gaap)
