@@ -234,6 +234,7 @@
       '<div id="gamma-stats"></div><div id="gamma-plot"></div><p class="muted small" id="gamma-method"></p></section>'+
       '<section class="section"><div class="section-head"><h2>Company growth & lifecycle</h2><span class="muted">Stage labels are rule-based diagnostics, not HMM estimates</span></div>'+
       '<div class="tbl-wrap"><table><thead><tr><th>Company</th><th>Quarter end</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Q/Q</th><th>Stage</th></tr></thead><tbody id="gamma-companies"></tbody></table></div></section>'+
+      '<section class="section" id="gamma-model" hidden></section>'+
       '<section class="section"><div class="section-head"><h2>Reported supplier & customer relationships</h2>'+
       '<span class="muted">Only named links already recognized by Filing Flows Chains</span></div>'+
       '<div id="gamma-relations"></div></section>'+
@@ -242,6 +243,7 @@
       '<p>Lifecycle is classified from revenue growth, relative industry growth and acceleration; financial quality, macro conditions and state transition probabilities are not yet estimated.</p>'+
       '<p>Peer percentile is empirical and does not give the likelihood of meeting expected revenue. Each company contributes several correlated observations to historical pooled samples.</p>'+
       '<p>Relationships are only those supported by named customers in Chains excerpts. Chains allocations may themselves be modeled; these are not verified invoices. Missing links mean not mapped, not absence of a commercial relationship. Broader networks require additional SEC text extraction and entity-resolution evidence.</p></details>';
+    if(global.FFModel)global.FFModel.industry(document.getElementById('gamma-model'),sic);
     var get=function(id){return document.getElementById(id);};
     function matching(m) {
       var stage=get('gstage').value, size=get('gsize').value, rev=+m.revenue_usd;

@@ -1959,6 +1959,12 @@ def render(store, out, stars=frozenset()):
     except Exception as e:
         print(f"::warning::gamma SIC industry data not built: {e}")
         traceback.print_exc()
+    try:                                                         # one growth model at four levels (pipeline/hier.py)
+        from . import hier
+        hier.build(store, out, index, usd_recs)
+    except Exception as e:
+        print(f"::warning::growth model not built: {e}")
+        traceback.print_exc()
     recent = sorted(index, key=lambda x: (x["filed"] or "", x["cik"]), reverse=True)
     audit = store.state.get("audit", [])
     tick = {x["cik"]: x["ticker"] or x["name"] for x in index}

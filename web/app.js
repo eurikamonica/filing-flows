@@ -620,8 +620,10 @@
       ${own !== 'USD' ? ccyBar(own, inUsd, !!c.usd, q) : ''}
       <section class="section cmp-panel" id="cmp-panel" hidden></section>
       <div id="ff-overview"></div>
-      <div id="body"></div>`;
+      <div id="body"></div>
+      <section class="section" id="co-model" hidden></section>`;
     if (ticker) coChains($('#co-chains'), ticker);
+    if (window.FFModel) window.FFModel.company($('#co-model'), cik);
     const body = $('#body');
     if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
     app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
@@ -3770,6 +3772,13 @@
       <div class="prose">${inds.length ? `<h2>Industries</h2><div class="cards">${inds.map((x) => `<a class="card" href="#i-${x.id}"><div class="t"><span>${t(x.name)}</span></div>
         <div class="n">${x.count} companies · ${calLabel(x.cal)}</div></a>`).join('')}</div>` : ''}</div>`;
     body.appendChild(text);
+    if (window.FFModel && level === 's') {                 // the sector's growth model (web/model.js)
+      const mbox = document.createElement('section');
+      mbox.className = 'section';
+      mbox.hidden = true;
+      body.appendChild(mbox);
+      window.FFModel.sector(mbox, id);
+    }
     const tbl = document.createElement('div');
     tbl.className = 'section';
     tbl.innerHTML = `<div class="section-head"><h2>Companies</h2><span class="muted">${calLabel(q.cal)} revenue</span></div>
@@ -4950,6 +4959,7 @@
       else if (h === 'feed' && window.FFFeed) await window.FFFeed.render(app, Object.assign({}, window.FFApp, { here }));
       else if ((m = /^chart(?:\/(.*))?$/.exec(h)) && window.FFCharts) await window.FFCharts.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if (h === 'chains' && window.FFChains) await window.FFChains.index(app, chainCtx());
+      else if (h === 'model' && window.FFModel) await window.FFModel.overview(app, chainCtx());
       else if (h === 'gamma' && window.FFGamma) await window.FFGamma.index(app, chainCtx());
       else if ((m = /^gamma-(\d{4})$/.exec(h)) && window.FFGamma) await window.FFGamma.industry(app, m[1], chainCtx());
       else if ((m = /^chain-([a-z0-9-]+)$/.exec(h)) && window.FFChains) await window.FFChains.page(app, m[1], chainCtx());

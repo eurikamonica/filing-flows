@@ -1,61 +1,9 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Capital Flow Research · Filing Flows</title>
-<style>
-:root{font-family:system-ui,Arial;color:#e5ecf4;background:#0b1521}*{box-sizing:border-box}body{margin:0}
-header{padding:20px 5%;border-bottom:1px solid #293f55;display:flex;gap:30px}
-a{color:#7dc9ee}main{max-width:1450px;margin:auto;padding:30px 20px}
-h1{font-size:clamp(28px,4vw,48px);margin:10px 0}p{color:#acc0ce;line-height:1.6}
-.warn{background:#282017;color:#ffdb9e;border:1px solid #78552d;padding:13px 18px;border-radius:12px}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:22px 0}
-.stat{background:#17283a;border:1px solid #2d4862;padding:16px;border-radius:12px}
-.stat strong{display:block;font-size:27px;margin-top:7px}.sub{color:#9bb5c6;font-size:12px}
-.chart{overflow:auto;background:#101e2b;border:1px solid #2d4862;border-radius:12px;padding:14px}
-svg{width:100%;min-width:1100px;height:auto}svg text{font-family:system-ui,Arial}
-table{border-collapse:collapse;width:100%;font-size:13px}td,th{text-align:left;padding:10px;border-bottom:1px solid #304054}
-th{color:#91b3ca}.flex{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;margin:30px 0}
-@media(max-width:800px){.flex{grid-template-columns:1fr}}
-</style></head><body>
-<header><a href="../"><b>FILING FLOWS ↗</b></a><a href="./">Disclosures</a><span class="sub">Research lab / SEC XBRL</span></header>
-<main><span class="sub">EXPERIMENTAL · CAPITAL EXPENDITURE ATTRIBUTION</span><h1>AI Capital Flow Explorer</h1>
-<p>From hyperscaler cash CapEx to modeled equipment categories and supplier economic exposure. Historic values come from SEC companyfacts through Filing Flows. Forecasts and allocation ratios are disclosed hypotheses, not observed procurement.</p>
-<div class="warn">Research scenario — NOT Morgan Stanley estimates, NOT supplier GAAP revenue, and NOT verified buyer-supplier payments. Reported company CapEx may contain non-AI spending and leases may be excluded.</div>
-<p class="sub" id="status">Loading research snapshot…</p>
-<section class="stats"><div class="stat"><span class="sub">Modeled total cash CapEx</span><strong id="total">—</strong></div><div class="stat"><span class="sub">Fiscal projection</span><strong id="year">—</strong></div><div class="stat"><span class="sub">Buyers with annual XBRL</span><strong id="coverage">—</strong></div><div class="stat"><span class="sub">Attribution confidence</span><strong style="font-size:18px">ILLUSTRATIVE</strong></div></section>
-<div class="chart"><div class="sub" style="display:flex;justify-content:space-between"><span>BUYERS</span><span>CAPEX CATEGORIES</span><span>SUPPLIER EXPOSURE</span></div><div id="figure"></div></div>
-<section class="flex"><div><h2>Actual fiscal-year CapEx and 2027E</h2><table><thead><tr><th>Buyer</th><th>Last FY</th><th>Cash CapEx</th><th>2027E</th><th>Growth p.a.</th></tr></thead><tbody id="rows"></tbody></table></div><div><h2>Methodology and coverage</h2><div id="method"></div></div></section>
-<p class="sub">Download <a href="data/ai-capital-flow.json">research snapshot JSON</a>. Values are assigned once per economic-use category; do not add gross sales across semiconductor, server, and memory supply-chain layers. Actual data are revised companyfacts, not point-in-time backtest samples.</p>
-</main><script>
-'use strict';
-const $=id=>document.getElementById(id),money=v=>v==null?'—':'$'+(v/1e9).toLocaleString('en-US',{maximumFractionDigits:2})+'B';
-const ns='http://www.w3.org/2000/svg';
-function el(parent,tag,attrs={},label){const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(label!=null)e.textContent=label;parent.appendChild(e);return e;}
-function draw(d){
- const box=$('figure');box.replaceChildren();let buyers=d.companies.filter(x=>x.prediction).map(c=>({id:'buyer:'+c.ticker,label:c.ticker,value:c.prediction.value_usd})).sort((a,b)=>b.value-a.value);
- if(!buyers.length){box.textContent='No published CapEx data. Run the workflow to fetch SEC annual reports.';return;}
- const cats=Object.entries(d.category_weights).map(([label,weight])=>({id:'category:'+label,label,value:d.total_capex_usd*weight}));
- const vendors=new Map();d.links.filter(x=>x.source.startsWith('category:')).forEach(x=>vendors.set(x.target,(vendors.get(x.target)||0)+x.value_usd));
- const sellers=[...vendors].map(([id,value])=>({id,label:id.replace('vendor:',''),value})).sort((a,b)=>b.value-a.value);
- const columns=[buyers,cats,sellers],positions=new Map(),W=1400,H=850,scale=Math.min(...columns.map(col=>(H-130-(col.length-1)*19)/d.total_capex_usd)),xs=[105,660,1240];
- columns.forEach((col,i)=>{let y=55;col.forEach(n=>{positions.set(n.id,{x:xs[i],y,h:n.value*scale,in:0,out:0,label:n.label});y+=n.value*scale+19;});});
- const svg=el(box,'svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Illustrative capital expenditure alluvial flow'});
- const colors=['#4f9de1','#d8ac55','#aa80d0','#3ca9ae','#8a969e'];const color=new Map(cats.map((c,i)=>[c.id,colors[i]]));
- const aggregated=new Map();d.links.forEach(link=>{const key=link.source+'|'+link.target;aggregated.set(key,(aggregated.get(key)||0)+link.value_usd);});
- [...aggregated].sort().forEach(([key,value])=>{if(value<=0)return;const [a,b]=key.split('|'),s=positions.get(a),t=positions.get(b);if(!s||!t)return;
- const thick=value*scale,x0=s.x+16,x1=t.x,y0=s.y+s.out,y1=t.y+t.in,dx=(x1-x0)*.52;s.out+=thick;t.in+=thick;
- const path='M'+x0+' '+y0+' C'+(x0+dx)+' '+y0+' '+(x1-dx)+' '+y1+' '+x1+' '+y1+' L'+x1+' '+(y1+thick)+' C'+(x1-dx)+' '+(y1+thick)+' '+(x0+dx)+' '+(y0+thick)+' '+x0+' '+(y0+thick)+' Z';
- const e=el(svg,'path',{d:path,fill:color.get(a)||color.get(b)||'#6e99b6',opacity:'.30'});el(e,'title',{},a+' → '+b+': '+money(value)+' (scenario)');
- });
- columns.forEach((col,i)=>col.forEach(n=>{const p=positions.get(n.id);const e=el(svg,'rect',{x:p.x,y:p.y,width:16,height:Math.max(1,p.h),rx:3,fill:color.get(n.id)||(i===0?'#4a9dcf':'#83b6c8')});
- el(e,'title',{},n.label+': '+money(n.value));const x=i===2?p.x+25:p.x-12,anchor=i===2?'start':'end',yy=p.y+Math.max(17,p.h/2);
- el(svg,'text',{x,y:yy,fill:'#eaf4ff','font-size':14,'font-weight':600,'text-anchor':anchor},n.label);
- el(svg,'text',{x,y:yy+17,fill:'#99b4c7','font-size':12,'text-anchor':anchor},money(n.value));
- }));
-}
-fetch('data/ai-capital-flow.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json();}).then(d=>{
- $('total').textContent=money(d.total_capex_usd);$('year').textContent=d.year+'E';$('coverage').textContent=d.companies.filter(c=>c.prediction).length+'/'+d.companies.length;
- $('status').textContent='Saved '+d.generated_at+' · '+d.status;
- for(const c of d.companies){const row=document.createElement('tr'),last=c.history.at(-1);for(const v of [c.ticker,last?.fiscal_year||'—',money(last?.cash_capex_usd),money(c.prediction?.value_usd),c.prediction?Math.round(c.prediction.growth*100)+'%':'—']){const td=document.createElement('td');td.textContent=v;row.appendChild(td);}$('rows').appendChild(row);}
- for(const s of [...d.methodology,...d.warnings]){const p=document.createElement('p');p.className='sub';p.textContent='• '+s;$('method').appendChild(p);}draw(d);
-}).catch(e=>{$('status').textContent='Snapshot missing: '+e.message;$('figure').textContent='Run the AI Capital Flow Research GitHub Action to generate SEC-backed data.';});
-</script></body></html>
+<title>AI capital flow · Filing Flows</title>
+<meta http-equiv="refresh" content="0; url=../#chain-ai-capex">
+<link rel="canonical" href="../#chain-ai-capex">
+<style>body{font-family:system-ui,Arial;margin:40px;color:#1d1d1b}a{color:#17734a}</style></head>
+<body><p>The AI capital-flow prototype has become the <a href="../#chain-ai-capex">AI data-center capex chain</a>: the same buyers' capital
+spending traced to listed suppliers, with the shares learned from SEC filings and tested out of sample, and the forecast and
+investment-return views. Redirecting…</p></body></html>
