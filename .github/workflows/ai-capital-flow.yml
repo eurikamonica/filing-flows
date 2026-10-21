@@ -14,6 +14,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:                      # the code and the one data file it writes, not the hub's 90,000 data files
+          filter: blob:none
+          sparse-checkout: |
+            /pipeline/
+            /disclosures/app/
+            /disclosures/tests/
+            /disclosures/docs/data/ai-capital-flow.json
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -31,7 +39,12 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -f disclosures/docs/data/ai-capital-flow.json
-          if ! git diff --cached --quiet; then
-            git commit -m 'data: update AI capital-flow research scenario'
-            git push
-          fi
+          if git diff --cached --quiet; then echo "No change"; exit 0; fi
+          git commit -qm 'data: update AI capital-flow research scenario'
+          for attempt in 1 2 3 4; do           # main moves every few minutes (data commits): replay and retry
+            git fetch -q origin main
+            if git rebase -q origin/main && git push -q origin HEAD:main; then echo "Pushed on attempt $attempt"; exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((attempt * 15))
+          done
+          echo "::error::Could not push the research JSON after 4 attempts"; exit 1
