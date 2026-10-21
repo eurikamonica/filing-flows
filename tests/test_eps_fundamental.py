@@ -84,7 +84,7 @@ class TestFundamental(unittest.TestCase):
     def test_future_comparable_quarter_is_not_mislabeled_as_next(self):
         # As-of mid-Q4 when last published XBRL is Q3, absent direct Q4
         # means N/A; never leap over Q4 into next year's Q1.
-        rows=[r for r in self.series if r["end"][-5:]!="-12-31"]
+        rows=[r for r in self.series if not r["end"].endswith("-12-31")]
         self.assertIsNone(F.forecast(rows,"2025-11-15"))
 
     def test_historical_walk_forward_does_not_use_post_cutoff_facts(self):
