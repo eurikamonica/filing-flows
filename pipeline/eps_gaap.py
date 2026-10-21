@@ -141,7 +141,10 @@ def run(args):
     store=Path(args.store)/"eps-gaap"
     progress=read(store/"progress.json",{"cursor":0})
     # Prioritize AAPL and a round-robin: all collected companies remain available.
-    keys=sorted(candidates,key=lambda x:(candidates[x].get("ticker")!="AAPL",x))
+    priority=["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","JPM","WMT"]
+    keys=sorted(candidates,key=lambda x:(
+        0 if candidates[x].get("ticker") in priority else 1,
+        priority.index(candidates[x]["ticker"]) if candidates[x].get("ticker") in priority else int(x)))
     if not keys: return
     picks=[]; pos=int(progress.get("cursor",0)) % len(keys)
     for _ in range(min(int(args.max_fetch),len(keys))):
