@@ -284,6 +284,22 @@
       });
       table.append(tbody);root.append(table);
     }else root.append(el('p','Wide-universe research history awaiting publication.','muted'));
+    section(root,'Verified filing-date GAAP EPS walk-forward · 2024–2026');
+    const gb=research?.gaap_first_filed_backtest;
+    if(gb?.overall?.n){
+      line(root,'Evaluated actual SEC EPS quarters',String(gb.overall.n));
+      line(root,'Companies with stored filings',String(gb.companies_stored));
+      line(root,'Model SEC diluted EPS MAE',money(gb.overall.model_mae));
+      line(root,'Last-year same-quarter MAE',money(gb.overall.seasonal_mae));
+      const tb=el('table','', 'ff-eps-table'),the=el('thead',''),thr=el('tr','');
+      ['Fiscal period end year','N','Model MAE','Seasonal MAE'].forEach(x=>thr.append(el('th',x)));the.append(thr);tb.append(the);
+      const body=el('tbody','');
+      Object.entries(gb.by_year||{}).forEach(([y,m])=>{
+        const tr=el('tr','');[y,String(m.n),money(m.model_mae),money(m.seasonal_mae)]
+          .forEach(v=>tr.append(el('td',v)));body.append(tr);
+      });tb.append(body);root.append(tb);
+      root.append(el('p','Source: SEC first-filed quarterly XBRL. Missing standalone Q4 is excluded, not imputed; extreme historical split-regime incompatibility is abstained. This backtest is separate from the adjusted/Street EPS series.','muted'));
+    }else root.append(el('p','SEC-wide first-filed GAAP EPS backtest not published yet.','muted'));
     section(root,'Resolved Polymarket beat-event backtest · separate from EPS MAE');
     const pm=research?.resolved_prediction_markets;
     if(pm?.n){
