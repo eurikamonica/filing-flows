@@ -174,6 +174,11 @@ def forecast(series,cutoff,target=None,events=(),allow_dist=False):
         return None  # likely stock split, unverified regime
     shares=last_shares*(1+median_change)
     point=eps_pre/shares
+    base_gaap=yr["eps"]
+    # Past abnormal tax effects must be removed from last year's normalized EPS
+    # BEFORE computing apples-to-apples growth; this is not a forecast charge.
+    old_tax_extra=yr["tax_expense"]-yr["pretax_income"]*rate
+    normalized_prior=base_gaap+old_tax_extra/yr["diluted_shares"]
 
     # Event overlays are allowed ONLY for documented public company-specific evidence.
     # 'eps_delta' is a confirmed post-tax per-share EPS effect, not guessed from headlines.
@@ -191,13 +196,32 @@ def forecast(series,cutoff,target=None,events=(),allow_dist=False):
     risk=min(.25,len(anomalies)/(len(hist)+8))
     event_effect=med([x["eps_impact"] for x in anomalies],0)
     if not math.isfinite(point) or abs(point)>1e5:return None
+    vol=bound(statistics.pstdev(rel[-8:]) if len(rel)>1 else .08,.03,.35)
+    mvol=bound(statistics.pstdev(margins[-8:]) if len(margins)>1 else .02,.012,.20)
+    event_charge=min(0,event_effect) if anomalies else 0
+    def eps_scenario(dr,dm,event=0):
+        sales=max(0,rev*(1+dr))
+        before=sales*(bound(margin+dm,-1,1)+nonop)
+        return round(before*(1-rate if before>=0 else 1.)/shares+
+                     sum(float(e["eps_delta"]) for e in confirmed)+event,4)
     out={"method":"FUNDAMENTAL_STAGE_EVENT_V1","basis":"SEC_GAAP_DILUTED_EPS",
          "target_end":target,"as_of":cutoff,"point":round(point,4),
          "company_stage":st,"inputs":{"revenue":round(rev,2),
              "operating_margin":round(margin,5),"nonoperating_margin":round(nonop,5),
              "normalized_tax_rate":round(rate,5),"diluted_shares":round(shares),
              "recent_revenue_yoy_median":round(med(rel[-4:],0),5)},
-         "eps_gaap_last_year":yr["eps"],"quarters_train":len(hist),
+         "eps_gaap_last_year":base_gaap,
+         "normalized_eps_last_year":round(normalized_prior,4),
+         "predicted_eps_growth_gaap_yoy":round(point/abs(base_gaap)-1,4) if base_gaap>.05 else None,
+         "predicted_eps_growth_normalized_yoy":round(point/normalized_prior-1,4)
+                     if normalized_prior>.05 else None,
+         "scenarios":{"bear":{"eps":eps_scenario(-vol,-mvol,event_charge),
+                               "revenue_shock":-round(vol,4),"margin_shock":-round(mvol,4)},
+                      "base":{"eps":round(point,4),"revenue_shock":0,"margin_shock":0},
+                      "bull":{"eps":eps_scenario(vol,mvol),
+                              "revenue_shock":round(vol,4),"margin_shock":round(mvol,4)},
+                      "status":"HISTORICAL_DRIVER_STRESS_NOT_PROBABILITY_QUANTILES"},
+         "quarters_train":len(hist),
          "confirmed_events":[{"published_at":e["published_at"],"source_url":e["source_url"],
                               "eps_delta":float(e["eps_delta"])} for e in confirmed],
          "event_risk":{"historical_tax_anomalies":len(anomalies),
@@ -285,7 +309,8 @@ def build(store,out):
         series=d.get("quarters",[])
         if not series:continue
         asof=(dt.datetime.now(dt.timezone.utc)+dt.timedelta(days=1)).date().isoformat()
-        pred=forecast(series,asof,allow_dist=True)
+        events=read(Path(store).parent/"eps-events"/file.name,{})
+        pred=forecast(series,asof,events=events.get("events",[]),allow_dist=True)
         bt=backtest(series)
         for r in bt["rows"]:aggregate.append({"cik":file.stem,**r})
         write(dst/file.name,{"cik":d.get("cik"),"ticker":d.get("ticker"),
