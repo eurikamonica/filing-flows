@@ -1,0 +1,78 @@
+name: EPS V4 first-filed fundamental validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pipeline/eps_fundamental.py'
+      - 'pipeline/eps_gaap.py'
+      - '.github/workflows/eps-v4-validate.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '37 9 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: eps-v4-validation
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            pipeline
+            requirements.txt
+            tests/test_eps_fundamental.py
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --quiet requests pytest
+      - name: Verify deterministic PIT and event tests
+        run: python -m pytest -q tests/test_eps_fundamental.py
+      - name: Fetch real original SEC Company Facts, hold out 2024–2026 filings
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from pipeline import sec, eps_fundamental as eps
+          issuers={'META':1326801,'AAPL':320193,'MSFT':789019,'NVDA':1045810,
+                   'AMZN':1018724,'TSLA':1318605}
+          out={'method':'FIRST_FILED_REAL_SEC_GAAP_FUNDAMENTAL',
+               'warnings':['No analyst vintages, macro/13F/Polymarket coefficients or fabricated 8-K event impacts',
+                           'Does not claim outperforming the baseline until tested on real SEC outcomes'],
+               'companies':{}}
+          evaluated=[]
+          for ticker,cik in issuers.items():
+              try:
+                  facts=sec.get_json(sec.companyfacts_url(cik))
+                  series=eps.quarterly(facts)
+                  score=eps.backtest(series,years=(2024,2025,2026))
+                  forecast=eps.forecast(series,'2026-10-21',allow_dist=True)
+                  out['companies'][ticker]={'cik':cik,'quarters_extracted':len(series),
+                    'backtest':{k:v for k,v in score.items() if k!='rows'},
+                    'forecast':forecast}
+                  evaluated += [{'ticker':ticker,**row} for row in score['rows']]
+                  print(ticker,'direct periods:',len(series),'eligible:',score['n'],
+                        'model MAE:',score['mae_model'],'seasonal MAE:',score['mae_seasonal'])
+              except Exception as ex:
+                  out['companies'][ticker]={'error':str(ex)}
+                  print('::warning::',ticker,repr(ex))
+          n=len(evaluated)
+          out['aggregate']={'n':n,'issuers':len({x['ticker'] for x in evaluated}),
+              'model_mae':round(sum(abs(x['actual']-x['forecast']) for x in evaluated)/n,5) if n else None,
+              'baseline_mae':round(sum(abs(x['actual']-x['same_quarter_last_year']) for x in evaluated)/n,5) if n else None}
+          Path('eps_v4_real_sec_validation.json').write_text(json.dumps(out,indent=2))
+          print('VALIDATED REAL SEC DATA:',out['aggregate'])
+          if n < 10:
+              raise SystemExit('Fewer than 10 eligible SEC holdout quarters: do not advertise model as validated')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eps-v4-real-sec-validation
+          path: eps_v4_real_sec_validation.json
+          retention-days: 90
