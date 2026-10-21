@@ -56,6 +56,73 @@
       baseline_mae: tests.length ? mean(tests.map(x => Math.abs(x.baseline - x.actual))) : null,
       label: 'Retrospective walk-forward on archived surprise records; historical estimate vintages unaudited'};
   }
+
+  function peerSignals(targetEnd, asof, ix, ticker, peers) {
+    // Chain labels are public relationship research, not verified issuer-specific contracts.
+    const T=String(ticker||'').toUpperCase(), companies=ix?.companies || [];
+    const own=companies.find(x=>String(x.ticker||'').toUpperCase()===T);
+    const byTicker=new Map(companies.map(x=>[String(x.ticker||'').toUpperCase(),x]));
+    const groups={industry:[],subindustry:[],upstream:[],downstream:[]};
+    for(const co of companies) {
+      const tk=String(co.ticker||'').toUpperCase();
+      if(!tk||tk===T)continue;
+      if(own?.sector && co.sector===own.sector)groups.industry.push(tk);
+      if(own?.sic && co.sic===own.sic)groups.subindustry.push(tk);
+    }
+    for(const chain of ix?.chains || []) {
+      const buyers=(chain.buyers||[]).map(x=>String(x).toUpperCase());
+      const suppliers=(chain.layers||[]).flatMap(x=>x.tickers||[]).map(x=>String(x).toUpperCase());
+      if(buyers.includes(T))groups.upstream.push(...suppliers.filter(x=>x!==T));
+      if(suppliers.includes(T))groups.downstream.push(...buyers.filter(x=>x!==T));
+    }
+    const output={};
+    for(const [name,tickers] of Object.entries(groups)){
+      const available=[];
+      for(const tk of new Set(tickers)) {
+        if(!byTicker.has(tk))continue;
+        const doc=peers[tk]; if(!doc)continue;
+        const rows=publicHistory(doc,asof);
+        const hit=rows.filter(x=>x.quarter && Number.isFinite(Date.parse(x.quarter)) &&
+          Number.isFinite(Date.parse(targetEnd)) &&
+          Math.abs(Date.parse(x.quarter)-Date.parse(targetEnd))<=45*86400000 &&
+          valid(x.eps_est) && valid(x.eps_act) && Math.abs(+x.eps_est)>.02).slice(-1)[0];
+        if(hit)available.push({ticker:tk,reported:hit.reported,
+          eps:+hit.eps_act,surprise:clamp((+hit.eps_act-(+hit.eps_est))/Math.abs(+hit.eps_est),-1,1)});
+      }
+      output[name]={count:available.length,mean_surprise:available.length?mean(available.map(x=>x.surprise)):null,
+        tickers:available.map(x=>x.ticker)};
+    }
+    return output;
+  }
+  async function loadPeerSignals(ticker, end, asof) {
+    if(!end)return null;
+    const ix=await get('data/index.json').catch(()=>null);
+    if(!ix)return null;
+    const T=String(ticker).toUpperCase();
+    const own=(ix.companies||[]).find(x=>String(x.ticker||'').toUpperCase()===T);
+    if(!own)return null;
+    const pool=new Set(), buyers=new Set(), suppliers=new Set();
+    for(const x of (ix.companies||[])){
+      if(x.ticker&&x.ticker!==T&&
+        (x.sic&&x.sic===own.sic||x.sector&&x.sector===own.sector))pool.add(String(x.ticker).toUpperCase());
+    }
+    for(const ch of ix.chains||[]){
+      const b=(ch.buyers||[]).map(x=>String(x).toUpperCase());
+      const l=(ch.layers||[]).flatMap(x=>x.tickers||[]).map(x=>String(x).toUpperCase());
+      if(b.includes(T))l.forEach(x=>suppliers.add(x));
+      if(l.includes(T))b.forEach(x=>buyers.add(x));
+    }
+    const selected=[...suppliers,...buyers,...pool].filter(x=>x!==T).slice(0,36);
+    const id=new Map((ix.companies||[]).filter(x=>x.ticker&&x.cik).map(x=>[String(x.ticker).toUpperCase(),x.cik]));
+    const peers={};
+    await Promise.all([...new Set(selected)].map(async tk=>{
+      if(!id.has(tk))return;
+      const doc=await get('disclosures/data/consensus/c/'+encodeURIComponent(id.get(tk))+'.json').catch(()=>null);
+      if(doc)peers[tk]=doc;
+    }));
+    return peerSignals(end,asof,ix,T,peers);
+  }
+
   function metrics(doc, smart, rates, asof) {
     let signals = {};
     const a = doc?.analysts || {};
@@ -98,7 +165,7 @@
   async function get(url) {
     const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json();
   }
-  function draw(root, c, f, score, signals) {
+  function draw(root, c, f, score, signals, peers) {
     root.textContent='';
     section(root, 'Next reported EPS · probabilistic research');
     root.append(el('p','Live source: analyst EPS consensus + shrinkage correction from the company’s previously released EPS surprises. Adjusted/reporting EPS basis; NOT SEC GAAP diluted EPS.','muted'));
@@ -111,6 +178,13 @@
     line(root,'Empirical P(beat Street EPS) · uncalibrated',percent(f.beat_rate));
     if (f.lower_sensitivity !== null)line(root,'Historical error sensitivity · NOT P10/P90',money(f.lower_sensitivity)+' to '+money(f.upper_sensitivity));
     root.append(el('p','No validated prediction interval or company-specific calibrated win rate is claimed. Each new published result updates the historical correction and next scheduled consensus refresh.','muted'));
+    section(root,'Already released peer earnings · availability gated');
+    for(const kind of ['upstream','downstream','subindustry','industry']){
+      const z=peers?.[kind];
+      line(root,kind+' reported EPS / estimate surprise',z&&z.count?
+        percent(z.mean_surprise)+' · '+z.count+' company reports':'N/A — none reported / insufficient source');
+    }
+    root.append(el('p','Signals activate only after a peer’s earnings report is published; suppliers and customers are inferred from the public chain map and should not be treated as audited commercial counterparties. Unannounced peers do not enter the estimate.','muted'));
     section(root,'Smart Money · Market Consensus · Rating change');
     line(root,'Smart Money score (stock alpha, not EPS)',num(signals.smart?.score)?signals.smart.score.toFixed(1):'N/A');
     line(root,'13F group score (not EPS)',num(signals.smart?.f13)?signals.smart.f13.toFixed(1):'N/A');
@@ -152,7 +226,9 @@
     if (!box.isConnected || (ctx.here && !ctx.here())) return;
     const asof=new Date().toISOString().slice(0,10),f=forecast(c,asof),score=trailingTest(c,asof);
     const signals=metrics(c,s,r,asof);
-    draw(root,c,f,score,signals);
+    const peers=await loadPeerSignals(ticker,f?.period,asof).catch(()=>null);
+    if (!box.isConnected || (ctx.here && !ctx.here())) return;
+    draw(root,c,f,score,signals,peers);
   }
-  window.FFEPSResearch={mount,forecast,trailingTest,publicHistory,metrics};
+  window.FFEPSResearch={mount,forecast,trailingTest,publicHistory,metrics,peerSignals};
 })();
