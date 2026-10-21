@@ -99,7 +99,7 @@
       <div class="mgrid"><div><div class="mstat"><label>Latest Y/Y</label><b class="${d.g_now > 0 ? 'pos' : 'neg'}">${pct(d.g_now)}</b><span>${esc(d.last)} · ${d.n_now} companies, ${usd(d.rev_ttm)} a year</span></div>${spark(d.series)}</div>
         <div>${fcTable(d.fc, 'Basket revenue')}${bu.length ? `<p class="small muted">Bottom-up, the members’ own forecasts added: ${bu.map(([q, v, lo, hi, n]) => `${esc(q)} ${usd(v)} (${n})`).join(' · ')}</p>` : ''}</div></div>${modelLine(d, 'market')}
       ${layers.length ? `<div class="tbl-wrap"><table class="small"><thead><tr><th>Layer</th><th class="num">Companies</th><th class="num">Latest Y/Y</th><th class="num">Beta to market</th><th class="num">Next quarter</th><th class="num">Model vs naive</th></tr></thead><tbody>
-      ${layers.map((L) => `<tr><td>${esc(L.name.split(' · ').slice(1).join(' · ') || L.name)} <span class="muted">${esc(L.zh || '')}</span></td><td class="num">${L.n_now || ''}</td><td class="num ${L.g_now > 0 ? 'pos' : 'neg'}">${pct(L.g_now)}</td>
+      ${layers.map((L) => `<tr><td>${esc(L.name.split(' · ').slice(1).join(' · ') || L.name)}</td><td class="num">${L.n_now || ''}</td><td class="num ${L.g_now > 0 ? 'pos' : 'neg'}">${pct(L.g_now)}</td>
         <td class="num">${L.model ? L.model.gamma.toFixed(2) : '—'}</td><td class="num">${L.fc && L.fc[0] ? pct(L.fc[0][1]) : '—'}</td>
         <td class="num">${L.model && L.model.bt ? `<span class="${L.model.bt.uncond < L.model.bt.naive ? 'pos' : 'neg'}">${upct(L.model.bt.uncond)} / ${upct(L.model.bt.naive)}</span>` : '—'}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
     box.hidden = false;
@@ -141,7 +141,7 @@
         <td class="num">${s.model && s.model.bt ? `<span class="${s.model.bt.uncond < s.model.bt.naive ? 'pos' : 'neg'}">${upct(s.model.bt.uncond)} / ${upct(s.model.bt.naive)}</span>` : '—'}</td></tr>`).join('')}</tbody></table></div></section>
       <section class="section"><div class="section-head"><h2>Concepts</h2><span class="muted">Chains and their layers as baskets</span></div>
       <div class="tbl-wrap"><table class="small"><thead><tr><th>Concept</th><th class="num">Companies</th><th class="num">Latest Y/Y</th><th class="num">Beta to market</th><th class="num">Next quarter</th><th class="num">Next 4 quarters</th><th class="num">Model / naive</th></tr></thead><tbody>
-      ${(ix.concepts || []).map((c) => `<tr><td>${c.kind === 'chain' ? `<a href="#chain-${esc(c.id)}"><b>${esc(c.name)}</b></a>` : `<span class="muted">↳</span> ${esc(c.name.split(' · ').slice(1).join(' · '))}`} <span class="muted">${esc(c.zh || '')}</span></td>
+      ${(ix.concepts || []).map((c) => `<tr><td>${c.kind === 'chain' ? `<a href="#chain-${esc(c.id)}"><b>${esc(c.name)}</b></a>` : `<span class="muted">↳</span> ${esc(c.name.split(' · ').slice(1).join(' · '))}`}</td>
         <td class="num">${c.n_now || ''}</td><td class="num ${c.g_now > 0 ? 'pos' : 'neg'}">${pct(c.g_now)}</td><td class="num">${c.model ? c.model.gamma.toFixed(2) : '—'}</td>
         <td class="num">${c.fc && c.fc[0] ? pct(c.fc[0][1]) : '—'}</td><td class="num">${c.fc && c.fc.length ? c.fc.map((f) => pct(f[1], 0)).join(' · ') : '—'}</td>
         <td class="num">${c.model && c.model.bt ? `<span class="${c.model.bt.uncond < c.model.bt.naive ? 'pos' : 'neg'}">${upct(c.model.bt.uncond)} / ${upct(c.model.bt.naive)}</span>` : '—'}</td></tr>`).join('')}</tbody></table></div></section>

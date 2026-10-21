@@ -141,6 +141,10 @@ def buyer_path(hist_q, guide, fye, last_k, horizon_k):
     if last is None:
         return out, None
     fy_q = {}
+    year_ks = range(last_k - 3, last_k + 1)
+    run_rate = sum(hist_q.get(k, 0) for k in year_ks) if all(hist_q.get(k) for k in year_ks) else 0
+    if guide and guide.get("mid") and run_rate > 0 and not 0.5 <= guide["mid"] / run_rate <= 2.0:
+        guide = None                                                 # a multi-year plan or a misread figure, not one year's capex
     if guide and guide.get("year") and guide.get("mid"):
         try:
             Y, m = int(guide["year"]), int((fye or "1231")[:2])

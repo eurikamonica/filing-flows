@@ -197,3 +197,16 @@ def test_effective_life_is_recovered_from_reported_depreciation():
     path = {8032 + i: C[8031] * 1.05 ** (i + 1) for i in range(8)}
     up, down = CR.project(C, L, base, path, 1.2, 8031), CR.project(C, L, base, path, 0.8, 8031)
     assert up[8035] > down[8035] and abs(up[8032] - down[8032]) < 1e-9   # next quarter's charge is already set
+
+
+def test_capex_guidance_skips_multiyear_plans():
+    from pipeline import chainmodel as CM
+    from pipeline.chains import capex_guidance
+    g = capex_guidance(["We expect capital expenditures of $39.5 billion over 2026-2030.",
+                        "Our five-year capital plan of $60 billion includes grid hardening.",
+                        "The company expects 2026 capital expenditures of $6.8 billion to $7.2 billion."])
+    assert len(g) == 1 and g[0]["lo"] == 6.8e9 and g[0]["hi"] == 7.2e9 and g[0]["year"] == "2026"
+    k = CM.cq("2026-06-30")
+    hist = {k - 3: 1.6, k - 2: 1.6, k - 1: 1.7, k: 1.7}                 # $6.6 a year
+    _, gy = CM.buyer_path(hist, {"year": "2026", "mid": 39.5}, "1231", k, k + 4)
+    assert gy is None                                                  # six years' worth is not this year's guidance

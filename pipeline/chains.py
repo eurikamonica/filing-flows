@@ -1069,7 +1069,10 @@ def build(store, out, index=None, usd=None, cfg=None, now=None):
 # ------------------------------------------------------------------------------------------------ the network half
 
 GUIDE = re.compile(r"(?i)(capital expenditures?|capex|capital spending|capital investments?)[^.]{0,160}?"
-                   r"\$\s?(\d+(?:\.\d+)?)\s*(?:(?:-|–|to|and)\s*\$?\s?(\d+(?:\.\d+)?))?\s*(billion|million)")
+                   r"\$\s?(\d+(?:\.\d+)?)\s*(?:(?:billion|million)\s*)?(?:(?:-|–|to|and)\s*\$?\s?(\d+(?:\.\d+)?))?\s*(billion|million)")
+
+
+MULTIYEAR = re.compile(r"(?i)\b20\d\d\s*(?:-|–|—|through|to|and)\s*(?:20)?\d\d\b|\b(?:two|three|four|five|six|seven|ten|\d+)[- ]year\b|multi-?year|cumulative|over the (?:next|plan)")
 
 
 def capex_guidance(paras):
@@ -1079,6 +1082,8 @@ def capex_guidance(paras):
         p = p.get("text", "") if isinstance(p, dict) else str(p)        # text.paragraphs gives {"text", …}
         for sent in re.split(r"(?<=[.;])\s+", p):
             if not re.search(r"(?i)expect|anticipat|outlook|guidance|plan|forecast|range", sent):
+                continue
+            if MULTIYEAR.search(sent):                                   # "$39.5 billion over 2026-2030" is a plan, not a year
                 continue
             m = GUIDE.search(sent)
             if not m:

@@ -80,7 +80,10 @@
       if (a.layer && b.layer && a.layer !== b.layer && (c > 0)) return lrank(a) - lrank(b);
       return b.v - a.v;
     }));
-    const LEFT = 150, RIGHT = 200;
+    // the left column's labels sit left of their bars: make room for the longest one-line label ("Investments sold  $452M")
+    const LEFT = Math.round(Math.min(260, Math.max(150, 24 + Math.max(0, ...byCol[0].map((n) =>
+      Math.max(textW(`${n.t || n.label}  ${usd(n.v)}`, 11.5, 600), textW(n.t || n.label, 13, 600)))))));
+    const RIGHT = 200;
     const xs = byCol.map((_, c) => LEFT + c * ((W - LEFT - RIGHT - NW) / Math.max(cols - 1, 1)));
     const MINSLOT = 15, VALUE_PX = 560;
     const gapOf = (n) => (n > 24 ? 3 : n > 12 ? 5 : 9);
@@ -143,13 +146,16 @@
     });
     // node bars and labels
     const grand = tot.map((x) => x || 1);
+    const seenT = new Map();
+    view.nodes.forEach((n) => { if (n.t) { const k = `${n.col}|${n.t}`; seenT.set(k, (seenT.get(k) || 0) + 1); } });
+    const dupT = new Set([...seenT].filter(([, k]) => k > 1).map(([k]) => k));
     pos.forEach((p, id) => {
       const n = p.n, c = n.col, left = c === 0;
       const bar = { t: 'rect', x: p.x, y: p.y, w: NW, h: p.h, fill: colorOf(n), group: id };
       if (n.est) bar.hatch = GREY;
       shapes.push(bar);
       shapes.push({ t: 'rect', x: p.x - 4, y: p.y - 2, w: NW + 8, h: Math.max(p.slot, 12) + 4, fill: 'rgba(0,0,0,0)', group: id, hit: true, ui: true });
-      const name = n.t || n.label;
+      const name = n.t && dupT.has(`${n.col}|${n.t}`) && n.label && n.label !== n.t ? `${n.t} ${n.label.split(' ').slice(-1)[0]}` : (n.t || n.label);
       const share = n.v / grand[c];
       const val = `${usd(n.v)}${share < 0.995 ? ` · ${(100 * share).toFixed(share < 0.1 ? 1 : 0)}%` : ''}`;
       const ov = o.overlay && n.t ? o.overlay[n.t] : null;
@@ -207,7 +213,7 @@
     const card = (c) => `<a class="card chain-card" href="#chain-${esc(c.id)}">
       <div class="eyebrow">${esc(c.theme || '')}</div>
       <div class="t"><span>${esc(c.name)}</span></div>
-      <div class="n muted">${esc(c.zh || '')} · ${esc(KIND[c.kind] || c.kind)}</div>
+      <div class="n muted">${esc(KIND[c.kind] || c.kind)}</div>
       <div class="big">${usd(c.kind === 'spend' ? c.spend : c.total)}</div>
       <div class="n">${c.kind === 'spend' ? 'spent in the last twelve months' : 'revenue in this theme, last twelve months'} · ${c.companies} companies</div>
       <div class="chain-tops">${(c.top || []).map((x) => `<span class="mono">${esc(x.t)}</span> ${usd(x.v)}`).join(' · ')}</div></a>`;
@@ -222,7 +228,7 @@
       <section class="section"><div class="section-head"><h2>Hot concepts</h2><span class="muted">Every layer of every chain as a basket of stocks · open them in the
         <a href="disclosures/#rotation/rrg~themes">rotation graph</a> to see which theme, or which part of a chain, the market is rotating into</span></div>
         <div class="tbl-wrap"><table><thead><tr><th>Concept</th><th>Chain</th><th>Companies</th></tr></thead><tbody>
-        ${concepts.map(({ c, L }) => `<tr><td><span class="chain-dot" style="background:${esc(L.color)}"></span>${esc(L.name)} <span class="muted">${esc(L.zh || '')}</span></td>
+        ${concepts.map(({ c, L }) => `<tr><td><span class="chain-dot" style="background:${esc(L.color)}"></span>${esc(L.name)}</td>
           <td><a href="#chain-${esc(c.id)}">${esc(c.name)}</a> · <a class="small" href="disclosures/#rotation/rrg~chain:${esc(c.id)}">rotation ↗</a></td>
           <td>${L.tickers.map((x) => `<a class="mono" href="#t-${esc(x)}">${esc(x)}</a>`).join(' ')}</td></tr>`).join('')}
         </tbody></table></div></section>
@@ -342,7 +348,7 @@
     if (!here()) return;
     const order = (d.layers || []).map((L) => L.id);
     app.innerHTML = `<div class="page-head"><div class="crumbs"><a href="#chains">Chains</a><span>›</span><span>${esc(d.theme || '')}</span></div>
-      <h1>${esc(d.name)} <span class="muted chain-zh">${esc(d.zh || '')}</span></h1>
+      <h1>${esc(d.name)}</h1>
       <p class="intro">${esc(d.about || '')}</p>
       <div class="meta"><span>${esc(KIND[d.kind] || '')}</span><span>Trailing twelve months to ${fdate(d.asof)}</span><span>${(d.companies || []).length} companies</span>
         <a href="disclosures/#rotation/rrg~chain:${esc(d.id)}">Layers in the rotation graph ↗</a>
