@@ -430,4 +430,4 @@
     draw(root,c,f,score,signals,peers,g,wide,fundamental);
   }
   window.FFEPSResearch={mount,forecast,trailingTest,publicHistory,metrics,peerSignals,bias};
-})()
+})();
