@@ -1,0 +1,48 @@
+# Independent historical EPS research; stored snapshots only, no SEC network calls.
+name: EPS V3 independent backtest
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'pipeline/eps_research.py'
+      - 'pipeline/eps_gaap.py'
+      - '.github/workflows/eps-v3-backtest.yml'
+  schedule:
+    - cron: '13 8 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: eps-v3-research
+  cancel-in-progress: true
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            pipeline
+            .github/workflows/eps-v3-backtest.yml
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Retrieve published market and filing records
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git clone --quiet --depth 1 --filter=blob:none --sparse --branch consensus-history "$url" _eps_cons
+          git -C _eps_cons sparse-checkout set --no-cone /public/c/ /public/calibration.json
+          git clone --quiet --depth 1 --filter=blob:none --sparse --branch data "$url" _eps_data
+          git -C _eps_data sparse-checkout set --no-cone /eps-gaap/
+          test -s _eps_cons/public/calibration.json
+          test -d _eps_cons/public/c
+      - name: Run independent historical evaluations
+        run: |
+          python -m pipeline.eps_research --consensus _eps_cons/public/c --market _eps_cons/public/calibration.json --gaap _eps_data/eps-gaap --out backtest.json
+          python -c "import json; x=json.load(open('backtest.json')); print('GAAP',x.get('gaap_first_filed_backtest',{}).get('overall'));print('Street',x.get('overall'))"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eps-v3-historical-backtest
+          path: backtest.json
+          retention-days: 90
