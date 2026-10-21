@@ -187,6 +187,7 @@ def run(args):
     site=read(args.index,{}); allc=site.get("companies",[])
     candidates={str(x.get("cik")):x for x in allc if x.get("cik") and x.get("ticker")}
     store=Path(args.store)/"eps-gaap"
+    fundamentals=Path(args.store)/"eps-fundamental"
     progress=read(store/"progress.json",{"cursor":0})
     # Prioritize AAPL and a round-robin: all collected companies remain available.
     priority=["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSLA","JPM","WMT"]
@@ -204,6 +205,14 @@ def run(args):
             facts=sec.get_json(sec.companyfacts_url(cik))
             seq=direct_eps(facts)
             if seq:write(store/(cik+".json"),{"records":seq,"updated_at":now})
+            # Reuse the SAME SEC HTTP result; don't issue a duplicate network request.
+            # Store all original first-filed facts and timestamps before training.
+            from .eps_fundamental import quarterly
+            fundamental_rows=quarterly(facts)
+            if fundamental_rows:
+                write(fundamentals/(cik+".json"),{
+                    "cik":int(cik),"ticker":candidates[cik]["ticker"],
+                    "quarters":fundamental_rows,"updated_at":now})
         except Exception as exc:
             print(f"::warning::GAAP EPS CIK {cik}: {str(exc)[:120]}",flush=True)
     write(store/"progress.json",progress)
