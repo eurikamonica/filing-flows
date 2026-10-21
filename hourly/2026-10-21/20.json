@@ -1,0 +1,463 @@
+{
+  "hour_utc": "2026-10-21T20:00:00+00:00",
+  "new_questions": 16,
+  "task_counts": {
+    "journal_entry": 2,
+    "accounting_equation": 3,
+    "three_statements": 3,
+    "accrual_ratio": 3,
+    "numeric_sign_units": 3,
+    "evidence_abstention": 2
+  },
+  "training_eligible": 16,
+  "requires_review": 0,
+  "warnings": [],
+  "questions": [
+    {
+      "id": "6855246ee1dbeda26be89fb8",
+      "task": "journal_entry",
+      "input": "Pay USD 417 cash for PPE. Give balanced debit/credit journal entries JSON.",
+      "output": "{\"entries\":[{\"account\":\"PPE\",\"debit\":417,\"credit\":0},{\"account\":\"Cash\",\"debit\":0,\"credit\":417}]}",
+      "expected": {
+        "entries": [
+          {
+            "account": "PPE",
+            "debit": 417,
+            "credit": 0
+          },
+          {
+            "account": "Cash",
+            "debit": 0,
+            "credit": 417
+          }
+        ]
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 0
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "DR PPE; CR Cash",
+        "DR=CR"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "b5702dbb9f9ab6c12850ab6f",
+      "task": "accounting_equation",
+      "input": "Begin cash=187, inventory=104, PPE=197, debt=137, equity=351. Borrow 61, buy PPE for cash 55. Return final assets, debt, equity and balance equality JSON.",
+      "output": "{\"assets\":549,\"debt\":198,\"equity\":351,\"balanced\":true}",
+      "expected": {
+        "assets": 549,
+        "debt": 198,
+        "equity": 351,
+        "balanced": true
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 1
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Equipment is asset swap",
+        "A=L+E"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "12b366a7bbd560733d50d0db",
+      "task": "three_statements",
+      "input": "Begin USD: Cash=100, Inventory=80, PPE=100, Debt=80, Equity=200. Cash revenue 113, inventory COGS 46, cash CapEx 6, cash debt proceeds 27. No other activity. Derive IS, BS, SCF.",
+      "output": "{\"IS\":{\"revenue\":113,\"COGS\":46,\"NI\":67},\"BS\":{\"cash\":234,\"inventory\":34,\"ppe\":106,\"debt\":107,\"equity\":267},\"SCF\":{\"CFO\":113,\"CFI\":-6,\"CFF\":27,\"cash_change\":134}}",
+      "expected": {
+        "IS": {
+          "revenue": 113,
+          "COGS": 46,
+          "NI": 67
+        },
+        "BS": {
+          "cash": 234,
+          "inventory": 34,
+          "ppe": 106,
+          "debt": 107,
+          "equity": 267
+        },
+        "SCF": {
+          "CFO": 113,
+          "CFI": -6,
+          "CFF": 27,
+          "cash_change": 134
+        }
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 2
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "NI = Sales - COGS",
+        "CFO=NI+inventory decrease",
+        "Assets=Liabilities+Equity",
+        "Cash roll-forward"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "b2fe3cbe38d6e1cb273c0694",
+      "task": "accrual_ratio",
+      "input": "Evidence S1: NI=135, OCF=248, average assets=400 USD millions. Compute accrual ratio (NI-OCF)/average assets as a fraction. Return JSON value/source_id S1.",
+      "output": "{\"value\":-0.2825,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": -0.2825,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 3
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Correct negative sign",
+        "Fraction not percent"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "81623771f8638aeb517c25e9",
+      "task": "numeric_sign_units",
+      "input": "Evidence S1: sales previous=198 current=247 (both USD millions). Compute period change as fraction JSON value/source_id S1.",
+      "output": "{\"value\":0.24747475,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": 0.24747475,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 4
+      },
+      "priority": "P1",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "YoY denominator previous",
+        "No unit or scale mistake"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "daab3b22e25ecb9d7a941ced",
+      "task": "evidence_abstention",
+      "input": "Evidence S1 contains cash of 831 USD millions but no long-term debt figure. Return JSON long_term_debt=null and reason=insufficient_evidence.",
+      "output": "{\"long_term_debt\":null,\"reason\":\"insufficient_evidence\"}",
+      "expected": {
+        "long_term_debt": null,
+        "reason": "insufficient_evidence"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 5
+      },
+      "priority": "P2",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "No unsupported inference"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "55e10c5d60cb19e44e87cbc5",
+      "task": "accounting_equation",
+      "input": "Begin cash=72, inventory=158, PPE=273, debt=116, equity=387. Borrow 56, buy PPE for cash 26. Return final assets, debt, equity and balance equality JSON.",
+      "output": "{\"assets\":559,\"debt\":172,\"equity\":387,\"balanced\":true}",
+      "expected": {
+        "assets": 559,
+        "debt": 172,
+        "equity": 387,
+        "balanced": true
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 7
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Equipment is asset swap",
+        "A=L+E"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "e335a5bb5e77f07f2d669d9f",
+      "task": "three_statements",
+      "input": "Begin USD: Cash=100, Inventory=80, PPE=100, Debt=80, Equity=200. Cash revenue 200, inventory COGS 65, cash CapEx 6, cash debt proceeds 50. No other activity. Derive IS, BS, SCF.",
+      "output": "{\"IS\":{\"revenue\":200,\"COGS\":65,\"NI\":135},\"BS\":{\"cash\":344,\"inventory\":15,\"ppe\":106,\"debt\":130,\"equity\":335},\"SCF\":{\"CFO\":200,\"CFI\":-6,\"CFF\":50,\"cash_change\":244}}",
+      "expected": {
+        "IS": {
+          "revenue": 200,
+          "COGS": 65,
+          "NI": 135
+        },
+        "BS": {
+          "cash": 344,
+          "inventory": 15,
+          "ppe": 106,
+          "debt": 130,
+          "equity": 335
+        },
+        "SCF": {
+          "CFO": 200,
+          "CFI": -6,
+          "CFF": 50,
+          "cash_change": 244
+        }
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 8
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "NI = Sales - COGS",
+        "CFO=NI+inventory decrease",
+        "Assets=Liabilities+Equity",
+        "Cash roll-forward"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "9b0d21d1ae96b090ec184607",
+      "task": "accrual_ratio",
+      "input": "Evidence S1: NI=29, OCF=230, average assets=200 USD millions. Compute accrual ratio (NI-OCF)/average assets as a fraction. Return JSON value/source_id S1.",
+      "output": "{\"value\":-1.005,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": -1.005,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 9
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Correct negative sign",
+        "Fraction not percent"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "2eb0bc61ac9db40d00b59fe9",
+      "task": "numeric_sign_units",
+      "input": "Evidence S1: sales previous=363 current=282 (both USD millions). Compute period change as fraction JSON value/source_id S1.",
+      "output": "{\"value\":-0.2231405,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": -0.2231405,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 10
+      },
+      "priority": "P1",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "YoY denominator previous",
+        "No unit or scale mistake"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "a1a91c9a063b0723ac1e40c0",
+      "task": "evidence_abstention",
+      "input": "Evidence S1 contains cash of 1741 USD millions but no long-term debt figure. Return JSON long_term_debt=null and reason=insufficient_evidence.",
+      "output": "{\"long_term_debt\":null,\"reason\":\"insufficient_evidence\"}",
+      "expected": {
+        "long_term_debt": null,
+        "reason": "insufficient_evidence"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 11
+      },
+      "priority": "P2",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "No unsupported inference"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "faa61468456a39a54bde89f1",
+      "task": "journal_entry",
+      "input": "Pay USD 12572 cash for PPE. Give balanced debit/credit journal entries JSON.",
+      "output": "{\"entries\":[{\"account\":\"PPE\",\"debit\":12572,\"credit\":0},{\"account\":\"Cash\",\"debit\":0,\"credit\":12572}]}",
+      "expected": {
+        "entries": [
+          {
+            "account": "PPE",
+            "debit": 12572,
+            "credit": 0
+          },
+          {
+            "account": "Cash",
+            "debit": 0,
+            "credit": 12572
+          }
+        ]
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 12
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "DR PPE; CR Cash",
+        "DR=CR"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "865bcb23d886e712f56cd279",
+      "task": "accounting_equation",
+      "input": "Begin cash=204, inventory=100, PPE=201, debt=124, equity=381. Borrow 53, buy PPE for cash 18. Return final assets, debt, equity and balance equality JSON.",
+      "output": "{\"assets\":558,\"debt\":177,\"equity\":381,\"balanced\":true}",
+      "expected": {
+        "assets": 558,
+        "debt": 177,
+        "equity": 381,
+        "balanced": true
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 13
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Equipment is asset swap",
+        "A=L+E"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "9d470bd84f7c567f5e7f4317",
+      "task": "three_statements",
+      "input": "Begin USD: Cash=100, Inventory=80, PPE=100, Debt=80, Equity=200. Cash revenue 165, inventory COGS 49, cash CapEx 24, cash debt proceeds 36. No other activity. Derive IS, BS, SCF.",
+      "output": "{\"IS\":{\"revenue\":165,\"COGS\":49,\"NI\":116},\"BS\":{\"cash\":277,\"inventory\":31,\"ppe\":124,\"debt\":116,\"equity\":316},\"SCF\":{\"CFO\":165,\"CFI\":-24,\"CFF\":36,\"cash_change\":177}}",
+      "expected": {
+        "IS": {
+          "revenue": 165,
+          "COGS": 49,
+          "NI": 116
+        },
+        "BS": {
+          "cash": 277,
+          "inventory": 31,
+          "ppe": 124,
+          "debt": 116,
+          "equity": 316
+        },
+        "SCF": {
+          "CFO": 165,
+          "CFI": -24,
+          "CFF": 36,
+          "cash_change": 177
+        }
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 14
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "NI = Sales - COGS",
+        "CFO=NI+inventory decrease",
+        "Assets=Liabilities+Equity",
+        "Cash roll-forward"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "15fe77a53dd15dc24912d631",
+      "task": "accrual_ratio",
+      "input": "Evidence S1: NI=-31, OCF=50, average assets=100 USD millions. Compute accrual ratio (NI-OCF)/average assets as a fraction. Return JSON value/source_id S1.",
+      "output": "{\"value\":-0.81,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": -0.81,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 15
+      },
+      "priority": "P0",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "Correct negative sign",
+        "Fraction not percent"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    },
+    {
+      "id": "2fdcbaba207fed19959f6ba2",
+      "task": "numeric_sign_units",
+      "input": "Evidence S1: sales previous=846 current=787 (both USD millions). Compute period change as fraction JSON value/source_id S1.",
+      "output": "{\"value\":-0.06973995,\"source_id\":\"S1\"}",
+      "expected": {
+        "value": -0.06973995,
+        "source_id": "S1"
+      },
+      "source": {
+        "kind": "synthetic",
+        "seed": 497948,
+        "example": 16
+      },
+      "priority": "P1",
+      "review_status": "synthetic_verified",
+      "training_eligible": true,
+      "checks": [
+        "YoY denominator previous",
+        "No unit or scale mistake"
+      ],
+      "generated_utc": "2026-10-21T20:00:00+00:00"
+    }
+  ]
+}
