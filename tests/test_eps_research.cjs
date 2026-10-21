@@ -41,4 +41,19 @@ assert.equal(result.downstream.count,0);
 assert.equal(result.subindustry.count,1);
 const early=M.peerSignals('2026-09-30','2026-10-19',ix,'AAA',{BBB:peer});
 assert.equal(early.upstream.count,0,'report day is not presumed public at pre-market cutoff');
-console.log('EPS company research: 13 assertions passed');
+
+const contract={...doc,generated_at:'2026-10-20T08:00:00Z',
+  markets:[{kind:'beat',source:'polymarket',closed:false,end:'2026-10-28',
+    p:.95,history:[['2026-10-19',.64],['2026-10-20',.70],['2026-10-21',.77]],url:'https://polymarket.com/event/test',basis:'gaap'},
+    {kind:'kpi',source:'kalshi',closed:false,end:'2027-01-01',
+      title:'Demand',outcomes:[{q:'Above 10',p:.65}]}],
+  analysts:{...doc.analysts,next_earnings:{date:'2026-10-28'}}};
+const mk=M.metrics(contract,null,null,'2026-10-20');
+assert.equal(mk.polymarket.p,.70,'latest as-of market.p, not outcomes');
+assert.equal(mk.kalshi.length,1);
+assert.equal(mk.kalshi[0].outcomes[0].p,.65);
+const oldMk=M.metrics(contract,null,null,'2026-10-19');
+assert.equal(oldMk.polymarket.p,.64,'future market price must not leak');
+assert.equal(M.bias([],4),0);
+
+console.log('EPS company research: 18 assertions passed');

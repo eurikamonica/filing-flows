@@ -137,8 +137,8 @@ jobs:
       # Files are saved with the regular data store and copied into Pages output.
       - name: Incrementally train SEC GAAP EPS and historical walk-forward
         continue-on-error: true
-        timeout-minutes: 5
-        run: python -m pipeline.eps_gaap --store store --index _site/data/index.json --out _site/data/eps-gaap --max-fetch 4
+        timeout-minutes: 7
+        run: python -m pipeline.eps_gaap --store store --index _site/data/index.json --out _site/data/eps-gaap --max-fetch 16
 
       - name: Assemble site
         env:                                   # public values (repository variables): the sign-in box on the site
@@ -234,6 +234,18 @@ jobs:
 
       - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
         run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public --debt _debt/public --consensus _cons/public --etf _etf/public --smart _smart/public --ladders _lad/public --research _research
+
+      - name: Evaluate all archived company EPS surprises and resolved Polymarket contracts
+        continue-on-error: true
+        timeout-minutes: 4
+        run: |
+          if test -d _cons/public/c; then
+            python -m pipeline.eps_research --consensus _cons/public/c \
+              --market _cons/public/calibration.json \
+              --out _site/data/eps-research/backtest.json --gaap store/eps-gaap
+          else
+            echo "::notice::Consensus snapshot unavailable; EPS cross-section not recalculated"
+          fi
 
       - name: Global search index and Atom feeds (data/search.json, feeds/; after the hub is staged)
         continue-on-error: true

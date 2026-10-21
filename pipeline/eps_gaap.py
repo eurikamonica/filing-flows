@@ -49,80 +49,128 @@ def direct_eps(companyfacts):
     return sorted(out.values(), key=lambda x: x["end"])
 
 
-def model(seq, cutoff):
-    """Fit autoregressive slope on training labels available strictly before cutoff."""
-    known = [x for x in seq if iso(x["filed"]) < iso(cutoff)]
-    known.sort(key=lambda x: x["end"])
-    if len(known) < MIN_TRAIN:
+def yearago(rows, end):
+    """Last-year comparable reported quarter (direct GAAP EPS), with date tolerance."""
+    t=iso(end)
+    candidates=[r for r in rows if 320 <= (t-iso(r["end"])).days <= 410]
+    return min(candidates,key=lambda r:abs((t-iso(r["end"])).days-365)) if candidates else None
+
+
+def add_months(t, k):
+    import calendar
+    yy=t.year+(t.month-1+k)//12
+    mm=(t.month-1+k)%12+1
+    return dt.date(yy,mm,min(t.day,calendar.monthrange(yy,mm)[1]))
+
+
+def latest_growth(rows):
+    for r in reversed(rows):
+        p=yearago(rows,r["end"])
+        if p and iso(p["filed"]) < iso(r["filed"]):
+            return r["eps"]-p["eps"]
+    return None
+
+
+def fit_alpha(rows):
+    """Stage-aware shrinkage of the latest known YoY EPS delta."""
+    pairs=[]
+    for j in range(6,len(rows)):
+        hist=rows[:j]
+        prev=yearago(hist,rows[j]["end"])
+        trend=latest_growth(hist)
+        if prev is None or trend is None:continue
+        scale=max(.25,sum(abs(x["eps"]) for x in hist[-8:])/min(8,len(hist)))
+        pairs.append((max(-8,min(8,trend/scale)),
+                      max(-8,min(8,(rows[j]["eps"]-prev["eps"])/scale))))
+    ridge=max(1.,len(pairs)*.2)
+    coef=(sum(x*y for x,y in pairs)+.5*ridge)/(sum(x*x for x,y in pairs)+ridge)
+    return max(-.5,min(1.5,coef)),len(pairs)
+
+
+def estimate(rows, target_end, coef):
+    old=yearago(rows,target_end)
+    growth=latest_growth(rows)
+    if old is None or growth is None:return None
+    # First-filed SEC data can mix pre/post split EPS (e.g. 10:1).
+    # Unless matching share-count evidence exists, ABSTAIN rather than fit a
+    # spurious growth rate on per-share figures in incompatible regimes.
+    last=rows[-3:]
+    magnitudes=sorted(abs(x["eps"]) for x in last)
+    typical=magnitudes[len(magnitudes)//2]
+    if typical>.1 and abs(old["eps"])>4*typical:
         return None
-    # Require stable fiscal-quarter sequence: four quarter index positions really one year.
-    def consecutive(a,b):
-        return 65 <= (iso(b["end"])-iso(a["end"])).days <= 115
-    if not all(consecutive(a,b) for a,b in zip(known[-6:],known[-5:])):
-        return None
-    scale = max(.25, sum(abs(x["eps"]) for x in known[-8:]) / min(8,len(known)))
-    examples = []
-    for j in range(5,len(known)):
-        if not all(consecutive(known[k],known[k+1]) for k in range(j-5,j)):
-            continue
-        examples.append((max(-8,min(8,(known[j-1]["eps"]-known[j-5]["eps"])/scale)),
-                         max(-8,min(8,(known[j]["eps"]-known[j-4]["eps"])/scale))))
-    ridge = max(1.,len(examples)*.2)
-    alpha=(sum(x*y for x,y in examples)+ridge*.5)/(sum(x*x for x,y in examples)+ridge)
-    alpha=max(-.5,min(1.5,alpha))
-    baseline=known[-4]["eps"]
-    pred=baseline+alpha*(known[-1]["eps"]-known[-5]["eps"])
-    # Errors estimated using prior-only recursive predictions; no target leakage.
-    residual=[]
+    # Heavy-tailed changes require stronger regularisation, not infinite EPS.
+    cap=2.0*max(abs(old["eps"]),typical,.5)
+    projected=old["eps"]+max(-cap,min(cap,coef*growth))
+    return projected,old["eps"]
+
+
+def model(seq, cutoff, target_end=None):
+    """PIT forecast on sparse first-filed quarterly tags; missing direct Q4 is not fabricated."""
+    known=sorted((x for x in seq if iso(x["filed"]) < iso(cutoff)),
+                 key=lambda x:x["end"])
+    if len(known)<MIN_TRAIN:return None
+    if target_end is None:
+        for months in (3,6,9,12):
+            target=add_months(iso(known[-1]["end"]),months).isoformat()
+            if (iso(cutoff)-iso(target)).days<=90 and yearago(known,target):
+                target_end=target;break
+    if target_end is None:return None
+    coef,n=fit_alpha(known)
+    p=estimate(known,target_end,coef)
+    if p is None:return None
+    pred,baseline=p
+    errors=[]
     for j in range(7,len(known)):
-        origin=iso(known[j-1]["filed"])+dt.timedelta(days=1)
-        prev=model_point(known[:j],origin,alpha)
-        if prev is not None:
-            residual.append(known[j]["eps"]-prev)
-    return {"eps_point": round(pred,4),"lag4_eps":baseline,"lag1_eps":known[-1]["eps"],
-            "coefficient_trend":round(alpha,4),"train_quarters":len(known),
-            "training_examples":len(examples),"last_filed":known[-1]["filed"],
-            "uncertainty":uncertainty(pred,residual,baseline),"basis":"SEC_GAAP_DILUTED_EPS"}
+        old=known[:j]
+        pastcoef,_=fit_alpha(old)
+        test=estimate(old,known[j]["end"],pastcoef)
+        if test is not None:errors.append(known[j]["eps"]-test[0])
+    return {"eps_point":round(pred,4),"target_end":target_end,"lag4_eps":baseline,
+            "lag1_eps":known[-1]["eps"],"coefficient_trend":round(coef,4),
+            "train_quarters":len(known),"training_examples":n,
+            "last_filed":known[-1]["filed"],"uncertainty":uncertainty(pred,errors,baseline),
+            "basis":"SEC_GAAP_DILUTED_EPS","method":"SPARSE_YEAR_AGO_TREND_SHRINKAGE_WITH_SPLIT_GUARD"}
 
 
 def model_point(known,cutoff,alpha):
-    before=[x for x in known if iso(x["filed"])<iso(cutoff)]
-    if len(before)<5:return None
-    return before[-4]["eps"]+alpha*(before[-1]["eps"]-before[-5]["eps"])
+    rows=sorted((x for x in known if iso(x["filed"])<iso(cutoff)),key=lambda x:x["end"])
+    if not rows:return None
+    target=add_months(iso(rows[-1]["end"]),3).isoformat()
+    v=estimate(rows,target,alpha)
+    return v[0] if v else None
 
 
 def uncertainty(pred,residual,baseline):
-    # Conformal interval with one-sided empirical tails only if >=10 prior errors.
     if len(residual)<10:
         return {"status":"INSUFFICIENT_CALIBRATION","n":len(residual),
                 "p10":None,"p90":None,"p_yoy_growth":None}
     x=sorted(residual)
     lo=x[max(0,math.ceil((len(x)+1)*.10)-1)]
     hi=x[min(len(x)-1,math.ceil((len(x)+1)*.90)-1)]
-    return {"status":"EMPIRICAL_RESIDUAL_RANGE_NOT_PROVEN_CALIBRATED","n":len(x),
-            "p10":round(pred+lo,4),"p90":round(pred+hi,4),
+    return {"status":"EMPIRICAL_RESIDUAL_RANGE_NOT_PROVEN_CALIBRATED",
+            "n":len(x),"p10":round(pred+lo,4),"p90":round(pred+hi,4),
             "p_yoy_growth":round(sum(pred+r>baseline for r in residual)/len(residual),4)}
 
 
 def backtest(seq,year=2025):
-    """All predictions built with filings already public at prior filing + 1 day."""
     ordered=sorted(seq,key=lambda x:x["end"])
     rows=[]
     for j in range(8,len(ordered)):
         tgt=ordered[j]
-        if iso(tgt["end"]).year!=year:continue
-        cutoff=iso(ordered[j-1]["filed"])+dt.timedelta(days=1)
-        if iso(tgt["filed"])<=cutoff:continue
-        m=model(ordered[:j],cutoff)
+        if year is not None and iso(tgt["end"]).year!=year:continue
+        cutoff=(iso(ordered[j-1]["filed"])+dt.timedelta(days=1)).isoformat()
+        if iso(tgt["filed"])<=iso(cutoff):continue
+        m=model(ordered[:j],cutoff,target_end=tgt["end"])
         if not m:continue
-        rows.append({"quarter_end":tgt["end"],"as_of":cutoff.isoformat(),
+        rows.append({"quarter_end":tgt["end"],"as_of":cutoff,
                      "actual":tgt["eps"],"prediction":m["eps_point"],
-                     "seasonal":ordered[j-4]["eps"],"source_filed":tgt["filed"]})
+                     "seasonal":m["lag4_eps"],"source_filed":tgt["filed"]})
     n=len(rows)
     return {"year":year,"n":n,"rows":rows,
             "model_mae":round(sum(abs(x["actual"]-x["prediction"]) for x in rows)/n,4) if n else None,
             "seasonal_mae":round(sum(abs(x["actual"]-x["seasonal"]) for x in rows)/n,4) if n else None,
-            "status":"FIRST_FILED_SEC_GAAP_RETROSPECTIVE_WALK_FORWARD"}
+            "status":"FIRST_FILED_SEC_GAAP_RETROSPECTIVE_WALK_FORWARD_SPARSE_Q4"}
 
 
 def read(path,default):

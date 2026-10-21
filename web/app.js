@@ -766,7 +766,7 @@
       if (here()) body.innerHTML = `<p class="muted">${t(v.label)} could not load (${t(err.message)}).</p>`;
     }
   }
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates'], ['consensus', 'Consensus'], ['posts', 'Posts'], ...EXT_VIEWS.map((v) => ['x-' + v.id, v.label])]
+  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates'], ['consensus', 'Consensus'], ['eps', 'EPS Forecast'], ['posts', 'Posts'], ...EXT_VIEWS.map((v) => ['x-' + v.id, v.label])]
     .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
 
   function ccyBar(own, inUsd, hasUsd, q) {
@@ -803,6 +803,11 @@
     const body = $('#body');
     if (which === 'debt') return debtSection(body, cik, here);
     if (which === 'consensus') return consensusSection(body, cik, here);
+    if (which === 'eps') {
+      if (window.FFEPSResearch && ticker) return window.FFEPSResearch.mount(body, {ticker, cik: p.cik, here});
+      body.innerHTML = '<p class="muted">EPS forecast unavailable: no traded ticker or required EPS model script.</p>';
+      return;
+    }
     if (which === 'posts') return postsSection(body, c, ticker, here);
     if (which.startsWith('x-')) return extView(body, which.slice(2), c, ticker, here);
     const D = c.quality;
@@ -4936,7 +4941,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus|posts|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus|eps|posts|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
