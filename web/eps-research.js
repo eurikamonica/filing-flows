@@ -196,6 +196,7 @@
     if (fm) {
       const d = fm.inputs || {}, risk = fm.event_risk || {}, dist = fm.distribution || {};
       line(root, 'Fundamental GAAP EPS estimate', money(fm.point));
+      line(root, 'Historical reliability gate', String(fm.promotion_gate?.status || 'NOT_EVALUATED').replaceAll('_',' '));
       line(root, 'Company business stage', String(fm.company_stage || 'unknown').replaceAll('_',' '));
       line(root, 'Target quarter', fm.target_end || 'N/A');
       line(root, 'Forecast quarterly revenue', num(d.revenue) ? (d.revenue/1e9).toFixed(2) + ' billion USD' : 'N/A');
