@@ -374,7 +374,7 @@ jobs:
     needs: deploy
     if: needs.deploy.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 12          # the probes wait out the CDN's ten-minute cache (scripts/verify_production.py)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

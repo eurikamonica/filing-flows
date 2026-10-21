@@ -19,13 +19,16 @@ PROBES=[
     ("Research snapshot metadata","data/industry-intelligence/integration-health.json",None)
 ]
 
-def run(base, run_id=None, tries=6, sleep_s=12):
+def run(base, run_id=None, tries=12, sleep_s=20):
+    """GitHub Pages sits behind a CDN that keeps a file for up to ten minutes and ignores a request's Cache-Control, so
+    a probe right after the deploy would read the previous build: the run id goes on the URL as a query string (a
+    different cache key, fetched from the origin), and the probes are retried for a few minutes."""
     base=base.rstrip("/")+"/"
     detail=[]
     for attempt in range(tries):
         checks=[]
         for name,path,needle in PROBES:
-            url=urljoin(base,path)
+            url=urljoin(base,path)+f"?audit={run_id or 'local'}-{attempt}"
             try:
                 req=Request(url,headers={"Cache-Control":"no-cache",
                                          "User-Agent":"FilingFlows-IntegrationAudit/1.0"})

@@ -66,7 +66,8 @@ jobs:
           [ -f debt/public/rates.json ] && args="$args --rates debt/public/rates.json"
           [ -f rv/public/index.json ] && args="$args --valuation rv/public"
           python disclosures/app/quality.py build --root rq --frames-root disclosures/docs/data --prices disclosures/docs/data/cache/prices \
-            --site-index site/index.json $args
+            --site-index site/index.json $args 2>&1 | tee build.log; rc=${PIPESTATUS[0]}
+          if [ "$rc" != 0 ]; then grep -E "Error|Traceback|line [0-9]+" build.log | tail -4 | sed 's/^/::error::quality build: /'; exit "$rc"; fi
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd rq

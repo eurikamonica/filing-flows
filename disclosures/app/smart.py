@@ -819,7 +819,8 @@ def add_etf_events(E, etf_root, universe):
                     vr = (x1[3] / x0[3] / g) if x0[3] else None
                     b0 *= snap_split(b1 / b0, vr)
                 dlt = b1 - b0
-                if not dlt or abs(dlt) / max(b0, b1) < MIN_TRIM:
+                base = max(abs(b0), abs(b1))                      # a short position is a negative balance
+                if not dlt or not base or abs(dlt) / base < MIN_TRIM:
                     continue
                 px = (x1[3] / x1[2]) if x1 and x1[2] and x1[3] else ((x0[3] / x0[2]) if x0 and x0[2] and x0[3] else None)
                 if not px or px <= 0:

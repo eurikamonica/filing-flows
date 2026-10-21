@@ -119,8 +119,10 @@ class Scoring(unittest.TestCase):
     def test_etf_trades_net_of_flows(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
-            pos0 = [['AAA', 'c1', 100, 1000], ['BBB', 'c2', 100, 1000], ['CCC', 'c3', 100, 1000], ['DDD', 'c4', 100, 1000], ['EEE', 'c5', 100, 1000], ['FFF', 'c6', 100, 1000]]
-            pos1 = [['AAA', 'c1', 110, 1100], ['BBB', 'c2', 110, 1100], ['CCC', 'c3', 110, 1100], ['DDD', 'c4', 110, 1100], ['EEE', 'c5', 220, 2200], ['', 'c7', 50, 500]]
+            pos0 = [['AAA', 'c1', 100, 1000], ['BBB', 'c2', 100, 1000], ['CCC', 'c3', 100, 1000], ['DDD', 'c4', 100, 1000], ['EEE', 'c5', 100, 1000], ['FFF', 'c6', 100, 1000],
+                    ['III', 'c9', -30, -300]]
+            pos1 = [['AAA', 'c1', 110, 1100], ['BBB', 'c2', 110, 1100], ['CCC', 'c3', 110, 1100], ['DDD', 'c4', 110, 1100], ['EEE', 'c5', 220, 2200], ['', 'c7', 50, 500],
+                    ['HHH', 'c8', -30, -300]]                     # a short position (negative balance), closed next quarter
             gz(root / 'cache' / 'nport_active' / '2026q1_nport.json.gz', {'funds': {'S1': {'name': 'Fund', 'date': '2026-03-31', 'filed': '2026-05-29', 'na': 6000, 'pos': pos0}}})
             gz(root / 'cache' / 'nport_active' / '2026q2_nport.json.gz', {'funds': {'S1': {'name': 'Fund', 'date': '2026-06-30', 'filed': '2026-08-28', 'na': 7300, 'pos': pos1}}})
             (root / 'public').mkdir()
@@ -129,8 +131,9 @@ class Scoring(unittest.TestCase):
             n = S.add_etf_events(E, root, FakeUniverse({'c7': 'GGG'}, known={'AAA', 'BBB', 'CCC', 'DDD', 'EEE', 'FFF'}))
             E.freeze()
         got = {E.tickers[E.t[i]]: (int(E.d[i]), E.ref[i]) for i in range(E.n)}
-        self.assertEqual(n, 3)                             # the 10% inflow scaled every line: only real trades remain
-        self.assertEqual(got, {'EEE': (1, ''), 'FFF': (-1, 'x'), 'GGG': (1, 'n')})
+        self.assertEqual(n, 5)                             # the 10% inflow scaled every line: only real trades remain
+        self.assertEqual(got, {'EEE': (1, ''), 'FFF': (-1, 'x'), 'GGG': (1, 'n'),
+                               'HHH': (-1, 'n'), 'III': (1, 'x')})   # a short opened is a sale, one covered a purchase
         self.assertEqual(E.actors[0]['name'], 'ARKK · Fund')
 
     def _two(self, b_rounds):
