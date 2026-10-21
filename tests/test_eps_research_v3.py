@@ -30,6 +30,16 @@ class TestWideEPS(unittest.TestCase):
         doc={"ticker":"T","analysts":{"surprises":[{"eps_est":None,"eps_act":1,"reported":"2025-01-01"}]}}
         self.assertEqual(E.score_company(doc),[])
         self.assertEqual(E.metrics([])["n"],0)
+    def test_robust_scores_retains_untrimmed_and_shared_trim(self):
+        rows=[{"model_ae":.1,"baseline_ae":.2,"actual":1,"estimate":1,"prediction":1,"stage":"established"} for _ in range(19)]
+        rows.append({"model_ae":1000,"baseline_ae":1000,"actual":1000,"estimate":1000,"prediction":0,"stage":"established"})
+        m=E.metrics(rows)
+        self.assertGreater(m["mae_model"],40)
+        self.assertEqual(m["eps_under_20_cohort"]["n"],19)
+        self.assertEqual(m["p95_paired_trimmed"]["n"],19)
+        self.assertLess(m["p95_paired_trimmed"]["model_mae"],.2)
+    def test_zero_sample_robust_null(self):
+        self.assertIsNone(E.metrics([])["mae_model"])
     def test_archived_cross_company_report(self):
         with tempfile.TemporaryDirectory() as td:
             d=Path(td)
