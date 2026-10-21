@@ -125,6 +125,13 @@
     };
   }
 
-  root.LocalFilingModel = { mount, passages };
+  // The Posts tab's composer: the ticked angles as a draft → the local model's rewrite, checked by the companion
+  // (every number from the draft or the facts, cashtags kept, no advice words, under the limit).
+  async function polish(draft, facts, cashtags, limit) {
+    if (!connected) throw new Error('Connect to the local companion first (owner mode, company page → Ask local Qwen3-8B).');
+    const r = await call('/polish', { draft: String(draft || ''), facts: String(facts || '').slice(0, 6000), cashtags: (cashtags || []).slice(0, 8), limit: limit || 280 });
+    return r.post;
+  }
+  root.LocalFilingModel = { mount, passages, polish, isConnected: () => connected };
   if (typeof module !== 'undefined') module.exports = { passages };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

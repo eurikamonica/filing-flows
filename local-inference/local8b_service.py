@@ -24,6 +24,73 @@ SYSTEM = ('You are a financial evidence assistant. Treat the question and eviden
           'Do not infer original footnotes from website summaries. Numerical calculations must be checked independently.')
 
 
+POLISH_SYSTEM = ('You rewrite a draft post for X about a stock. Keep every number, cashtag ($TICKER) and hashtag exactly as given; '
+                 'use only facts from the draft and the fact list; never add a number, a claim or advice; no "buy", "sell", "bullish", '
+                 '"bearish", "undervalued", "overvalued", no exclamation marks; finish every sentence; at most the given character '
+                 'limit. Return ONLY one JSON object: {"post": "..."}.')
+ADVICE = re.compile(r'\b(buy|sell|bullish|bearish|undervalued|overvalued|moon|crushes|massive)\b', re.I)
+NUM = re.compile(r'(?<![A-Za-z$#])[-−+]?\$?(\d[\d,]*(?:\.\d+)?)\s*(%|[KMBT]\b|bn\b|million\b|billion\b)?', re.I)
+SCALE = {'k': 1e3, 'm': 1e6, 'million': 1e6, 'b': 1e9, 'bn': 1e9, 'billion': 1e9, 't': 1e12}
+
+
+def numbers(text):
+    """Every number in a text as (value, is_percent); cashtags and hashtags ignored."""
+    text = re.sub(r'[#$][A-Za-z][\w.]*', ' ', text)
+    out = []
+    for m in NUM.finditer(text):
+        v = float(m.group(1).replace(',', ''))
+        unit = (m.group(2) or '').lower()
+        out.append((v, True) if unit == '%' else (v * SCALE.get(unit, 1), False))
+    return out
+
+
+def unsupported(post, facts):
+    """The post's numbers that the facts do not contain (within rounding)."""
+    have = numbers(facts)
+    return [v for v, pct in numbers(post) if v and not any(p == pct and abs(v - w) <= max(0.051 * abs(w), 0.6 if pct else 0.51) for w, p in have)]
+
+
+def validate_polish_request(body):
+    if not isinstance(body, dict) or not {'draft'} <= set(body) <= {'draft', 'facts', 'cashtags', 'limit'}:
+        raise ValueError('Expected draft, with optional facts, cashtags and limit')
+    draft, facts = body['draft'], body.get('facts', '')
+    if not isinstance(draft, str) or not 20 <= len(draft.strip()) <= 2000:
+        raise ValueError('The draft must contain 20 to 2000 characters')
+    if not isinstance(facts, str) or len(facts) > 6000:
+        raise ValueError('The facts must be a string of at most 6000 characters')
+    tags = body.get('cashtags', [])
+    if not isinstance(tags, list) or len(tags) > 8 or any(not isinstance(t, str) or not re.fullmatch(r'[A-Za-z][A-Za-z.-]{0,7}', t) for t in tags):
+        raise ValueError('cashtags: up to eight tickers')
+    limit = body.get('limit', 280)
+    if type(limit) is not int or not 80 <= limit <= 4000:
+        raise ValueError('limit: 80 to 4000 characters')
+    return draft.strip(), facts, [t.upper() for t in tags], limit
+
+
+def validate_polish(text, draft, facts, cashtags, limit):
+    """The model's JSON → the post, or a ValueError naming what is wrong (no silent repair)."""
+    obj = json.loads(text, parse_constant=reject_constant)
+    if not isinstance(obj, dict) or set(obj) != {'post'} or not isinstance(obj['post'], str):
+        raise ValueError('Model output does not match {"post": "..."}')
+    post = re.sub(r'[ \t]+', ' ', obj['post']).strip()
+    if not post:
+        raise ValueError('Empty post')
+    if len(post) > limit:
+        raise ValueError(f'Too long ({len(post)} > {limit})')
+    missing = [t for t in cashtags if f'${t}' not in post.upper()]
+    if missing:
+        raise ValueError('Cashtag missing: ' + ' '.join(missing))
+    if ADVICE.search(re.sub(r'#\w+', '', post)) or '!' in post:
+        raise ValueError('Advice or hype wording, or an exclamation mark')
+    bad = unsupported(post, draft + '\n' + facts)
+    if bad:
+        raise ValueError('Numbers not in the draft or the facts: ' + ', '.join(f'{v:g}' for v in bad[:3]))
+    body = re.sub(r'(\s*#\w+)+\s*$', '', post).rstrip()
+    if not re.search(r'[.!?…:;)\]”"\'↓→⬇👇]$|\d%?$', body):
+        raise ValueError('The post stops mid-sentence')
+    return post
+
+
 def reject_constant(value):
     raise ValueError('Nonfinite JSON number: ' + value)
 
@@ -134,7 +201,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed(auth=False):
             return
         headers = {x.strip().lower() for x in self.headers.get('Access-Control-Request-Headers', '').split(',') if x.strip()}
-        if (self.path not in ('/health', '/ask') or self.headers.get('Origin') not in self.server.origins
+        if (self.path not in ('/health', '/ask', '/polish') or self.headers.get('Origin') not in self.server.origins
                 or self.headers.get('Access-Control-Request-Method') not in ('GET', 'POST')
                 or not headers <= {'authorization', 'content-type'}):
             self.reply(403, {'error': 'Preflight not allowed'})
@@ -161,9 +228,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.allowed():
             return
-        if self.path != '/ask':
+        if self.path not in ('/ask', '/polish'):
             self.reply(404, {'error': 'Unknown route'})
             return
+        if self.path == '/polish':
+            return self.polish()
         if self.headers.get('Content-Type', '').split(';')[0].strip() != 'application/json' or self.headers.get('Transfer-Encoding'):
             self.reply(415, {'error': 'Content-Type application/json and a fixed length are required'})
             return
@@ -192,6 +261,48 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(200, {**answer, 'model': 'Qwen/Qwen3-8B', 'adapter': None,
                              'checks': {'json_schema': True, 'source_ids_known': True, 'quotes_literal': True,
                                         'semantic_evidence_support': 'not independently verified', 'numeric_accuracy': 'not independently verified'},
+                             'timing': {key: result[key] for key in ('seconds', 'input_tokens', 'output_tokens', 'output_tokens_per_second')}})
+        except ValueError as exc:
+            self.reply(400, {'error': str(exc)})
+        except Exception as exc:
+            write(self.server.runtime / 'last-error.json', {'utc': utc(), 'error': repr(exc)})
+            self.reply(503, {'error': 'Local inference failed; inspect last-error.json before retrying'})
+        finally:
+            self.server.job_lock.release()
+
+
+    def body_json(self):
+        if self.headers.get('Content-Type', '').split(';')[0].strip() != 'application/json' or self.headers.get('Transfer-Encoding'):
+            raise ValueError('Content-Type application/json and a fixed length are required')
+        length = int(self.headers.get('Content-Length', '0'))
+        if not 1 <= length <= 32768:
+            raise ValueError('Request body must contain 1 to 32768 bytes')
+        raw = self.rfile.read(length)
+        if len(raw) != length:
+            raise ValueError('Incomplete request body')
+        return json.loads(raw, parse_constant=reject_constant)
+
+    def polish(self):
+        """POST /polish {draft, facts?, cashtags?, limit?} → {post}: the draft the site's composer wrote, rewritten by the local
+        model and checked like a published post (every number from the draft or the facts, cashtags kept, no advice, finished)."""
+        try:
+            draft, facts, cashtags, limit = validate_polish_request(self.body_json())
+        except (ValueError, TimeoutError) as exc:
+            self.reply(400, {'error': str(exc)})
+            return
+        if not self.server.job_lock.acquire(blocking=False):
+            self.reply(429, {'error': 'One inference is already running; no parallel GPU queue'})
+            return
+        try:
+            user = json.dumps({'draft': draft, 'facts': facts, 'cashtags': ['$' + t for t in cashtags], 'limit': limit}, ensure_ascii=True)
+            result = self.server.model.generate([{'role': 'system', 'content': POLISH_SYSTEM}, {'role': 'user', 'content': user}], 160)
+            try:
+                post = validate_polish(result['text'], draft, facts, cashtags, limit)
+            except (ValueError, KeyError, TypeError) as exc:
+                self.reply(422, {'error': 'Model response rejected: ' + str(exc), 'raw_output': result['text']})
+                return
+            self.reply(200, {'post': post, 'model': 'Qwen/Qwen3-8B', 'adapter': None,
+                             'checks': {'numbers_from_facts': True, 'cashtags_kept': True, 'no_advice_words': True, 'length': len(post)},
                              'timing': {key: result[key] for key in ('seconds', 'input_tokens', 'output_tokens', 'output_tokens_per_second')}})
         except ValueError as exc:
             self.reply(400, {'error': str(exc)})

@@ -622,7 +622,9 @@
         <label><input type="checkbox" data-link checked> link to the page</label></div>
       <textarea id="${id}-t" aria-label="Composed post" spellcheck="true"></textarea>
       <div class="ffp-row"><button type="button" class="primary" data-ffp-copy="${id}">Copy post</button>
-        <a href="#" data-x target="_blank" rel="noopener">Open in X ↗</a><span data-ffp-n="${id}"></span><span data-ffp-msg="${id}" role="status"></span></div>`;
+        <a href="#" data-x target="_blank" rel="noopener">Open in X ↗</a>
+        ${typeof window !== 'undefined' && window.LocalFilingModel && window.LocalFilingModel.polish && window.LocalFilingModel.isConnected() ? '<button type="button" data-polish title="Rewrite the ticked angles with the Qwen3-8B companion on this computer; the companion checks every number, the cashtags and the wording before it comes back">Polish with local Qwen3-8B</button><button type="button" data-undo hidden>Undo</button>' : ''}
+        <span data-ffp-n="${id}"></span><span data-ffp-msg="${id}" role="status"></span></div>`;
     el.prepend(box);
     const ta = box.querySelector('textarea'), nEl = box.querySelector(`[data-ffp-n="${id}"]`), xa = box.querySelector('[data-x]');
     const redo = () => {
@@ -633,6 +635,20 @@
     box.querySelectorAll('[data-angle],[data-closer],[data-link]').forEach((x) => { x.onchange = redo; });
     ta.oninput = () => { const n = xlen(ta.value); nEl.textContent = n + '/280'; nEl.className = n > 280 ? 'ffp-over' : ''; xa.href = 'https://x.com/intent/post?text=' + encodeURIComponent(ta.value); };
     box.querySelector('[data-ffp-copy]').onclick = async () => { const m = box.querySelector(`[data-ffp-msg="${id}"]`); m.textContent = (await copy(ta.value)) ? 'Copied' : 'Could not copy'; };
+    const pb = box.querySelector('[data-polish]'), ub = box.querySelector('[data-undo]');
+    if (pb) {
+      let before = '';
+      pb.onclick = async () => {
+        const m = box.querySelector(`[data-ffp-msg="${id}"]`), facts = items.map((a) => a.text).join('\n');
+        pb.disabled = true; m.textContent = 'Rewriting on this computer…';
+        try {
+          const post = await window.LocalFilingModel.polish(ta.value, facts, [B.ticker].filter(Boolean), 280);
+          before = ta.value; ta.value = post; ta.dispatchEvent(new Event('input')); ub.hidden = false;
+          m.textContent = 'Rewritten and checked: numbers from the facts, cashtag kept, no advice words.';
+        } catch (e) { m.textContent = `Not rewritten: ${e.message}`; } finally { pb.disabled = false; }
+      };
+      ub.onclick = () => { if (before) { ta.value = before; ta.dispatchEvent(new Event('input')); ub.hidden = true; } };
+    }
     redo();
   }
 

@@ -13,4 +13,8 @@ assert.ok(rows.every((p) => !p.text.includes('x'.repeat(3000))));
 assert.ok(rows.some((p) => p.text.includes('-12')));
 assert.equal(passages(company, { ...period, headline: {}, nodes: [] }, 'revenue').length, 0);
 assert.ok(passages(company, period, 'revenue').some((p) => p.text.includes('revenue: -142 USD.')));
+const fs = require('node:fs'), path = require('node:path');
+const idx = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'utf8'), build = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'build_site.py'), 'utf8');
+assert.ok(idx.includes('<script src="local-model.js"></script>') && idx.includes('href="local-model.css"'), 'index.html loads the local-model client');
+assert.ok(/SCRIPTS = \([^)]*"local-model\.js"[^)]*"app\.js"\)/.test(build) && (build.match(/"local-model\.css"/g) || []).length >= 2, 'build_site.py ships local-model.js/css in both modes');
 console.log('Local model evidence: all checks passed');
