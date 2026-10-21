@@ -12,6 +12,14 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
   const later = (a, b) => day(a) > day(b);
+  function bias(values, estimate) {
+    if (!values.length) return 0;
+    const last = values.slice(-8), w = last.map((_, i) => Math.pow(.85, last.length-1-i));
+    const residual = last.map(v => clamp(v, -3, 3));
+    return clamp(residual.reduce((v,x,i)=>v+x*w[i],0) / w.reduce((a,b)=>a+b,0) *
+      last.length / (last.length + 8), -.25*Math.max(Math.abs(estimate),.5),
+      .25*Math.max(Math.abs(estimate),.5));
+  }
   function safeTime(s) { const t = Date.parse(String(s)); return Number.isFinite(t) ? t : NaN; }
   function publicHistory(doc, asof) {
     return (doc?.analysts?.surprises || doc?.surprises || []).filter(x =>
@@ -29,7 +37,7 @@
     // Conservative empirical-Bayes correction, fitted exclusively on earlier published surprises.
     const past = history.map(x => Number(x.eps_act) - Number(x.eps_est)).filter(num).slice(-8);
     const k = past.length ? past.length / (past.length + 8) : 0;
-    const adjustment = past.length ? clamp(mean(past) * k, -0.25 * Math.max(Math.abs(+c.avg), .5), 0.25 * Math.max(Math.abs(+c.avg), .5)) : 0;
+    const adjustment = bias(past, +c.avg);
     const estimate = Number(c.avg) + adjustment;
     const prior = valid(c.yearAgoEps) ? Number(c.yearAgoEps) : null;
     const errors = past.length ? past.map(x => x - adjustment) : [];
@@ -47,8 +55,7 @@
     const tests = [];
     for (let i = 2; i < rows.length; i++) {
       const prev = rows.slice(Math.max(0, i - 8), i).map(x => +x.eps_act - +x.eps_est);
-      const delta = clamp(mean(prev) * prev.length / (prev.length + 8),
-        -.25 * Math.max(Math.abs(+rows[i].eps_est), .5), .25 * Math.max(Math.abs(+rows[i].eps_est), .5));
+      const delta = bias(prev,+rows[i].eps_est);
       const actual = +rows[i].eps_act, baseline = +rows[i].eps_est, pred = baseline + delta;
       tests.push({reported: rows[i].reported, forecast: pred, baseline, actual, error: Math.abs(pred - actual)});
     }
@@ -136,13 +143,28 @@
         f13: num(smart.now?.groups?.f13?.S) ? smart.now.groups.f13.S : null,
         observed_at: smart.generated_at, n: smart.now?.n || 0};
     }
+    // Live Yes price is market.p (not market.outcomes); historical backtests must use
+    // only timestamped prices, never future current quotes.
     const mk = (doc?.markets || []).find(x => x.kind === 'beat' && !x.closed &&
-      x.end && !later(asof, x.end) && (!a.next_earnings?.date ||
-      Math.abs(safeTime(x.end + 'T00:00:00Z') - safeTime(a.next_earnings.date + 'T00:00:00Z')) < 20 * 86400000));
-    if (mk) {
-      let p = mk.outcomes?.find(x => /^yes$/i.test(x.q || x.name || ''))?.p;
-      if (valid(p)) signals.polymarket = {p: +p, title: mk.title, url: mk.url, source: mk.source};
+      (x.source === 'polymarket' || x.source === 'kalshi') &&
+      x.end && !later(asof,x.end) && (!a.next_earnings?.date ||
+      Math.abs(safeTime(x.end+'T00:00:00Z')-safeTime(a.next_earnings.date+'T00:00:00Z'))<20*86400000));
+    if(mk){
+      const hist=(mk.history||[]).filter(x=>day(x[0])<=asof && valid(x[1]))
+        .sort((x,y)=>String(x[0]).localeCompare(String(y[0])));
+      const p=hist.length?+hist[hist.length-1][1]:
+        (doc.generated_at && day(doc.generated_at)<=asof && valid(mk.p)?+mk.p:null);
+      if(num(p)&&p>=0&&p<=1) signals.polymarket={p,title:mk.title,
+        source:mk.source,url:mk.url,volume:mk.volume,
+        observed_at:hist.length?day(hist[hist.length-1][0]):day(doc.generated_at),
+        basis:mk.basis||'unspecified',eps_strike:mk.eps_strike};
     }
+    signals.kalshi=(doc?.markets||[]).filter(x=>x.source==='kalshi' && !x.closed &&
+      x.end && !later(asof,x.end) && x.kind!=='beat' &&
+      (x.kind==='kpi'||x.kind==='metric'||x.kind==='mention')).slice(0,4)
+      .map(m=>({title:m.title,kind:m.kind,end:m.end,url:m.url,volume:m.volume,
+        outcomes:(m.outcomes||[]).slice(0,3).map(x=>({name:x.q,p:+x.p})),
+        median:m.stats?.median?.value}));
     // FRED rates are from current stored snapshot: not a retroactive ALFRED vintage.
     if (rates?.generated_at && safeTime(rates.generated_at) <= safeTime(asof + 'T23:59:59Z')) {
       signals.fred = {};
@@ -165,7 +187,7 @@
   async function get(url) {
     const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json();
   }
-  function draw(root, c, f, score, signals, peers, gaap) {
+  function draw(root, c, f, score, signals, peers, gaap, research) {
     root.textContent='';
     section(root,'SEC GAAP diluted EPS · first-filed XBRL model');
     if (gaap?.forecast) {
@@ -207,8 +229,22 @@
     line(root,'Analyst rating changes in available history',signals.ratings.upgrades+' upgrades / '+signals.ratings.downgrades+' downgrades');
     const rv=signals.ratings.revision_30d;
     line(root,'EPS estimate revisions (30d)',rv ? (rv.upLast30days||0)+' up / '+(rv.downLast30days||0)+' down':'N/A');
-    line(root,'Related Polymarket earnings beat probability',signals.polymarket?percent(signals.polymarket.p):'N/A — no matched market');
+    line(root,'Polymarket beat contract · latest timestamped Yes quote',
+      signals.polymarket ? percent(signals.polymarket.p)+' ('+signals.polymarket.observed_at+')' :
+      'N/A — no eligible earnings contract');
+    if(signals.polymarket)line(root,'Event contract basis / strike',
+      String(signals.polymarket.basis||'unknown')+
+      (num(signals.polymarket.eps_strike)?' / '+money(signals.polymarket.eps_strike):''));
     if (signals.polymarket?.url) {const link=el('a','Related prediction-market contract ↗');link.href=signals.polymarket.url;link.rel='noopener';link.target='_blank';root.append(link);}
+    section(root,'Kalshi · publicly quoted business scenarios');
+    if(signals.kalshi?.length) for(const m of signals.kalshi) {
+      const top=m.outcomes.filter(o=>num(o.p)).slice(0,2)
+        .map(o=>o.name+': '+percent(o.p)).join(' / ');
+      line(root,m.title,top || (num(m.median)?'Median '+String(m.median):'View market'));
+      if(m.url){const link=el('a','Kalshi contract ↗');link.href=m.url;link.target='_blank';link.rel='noopener';root.append(link);}
+    }
+    else root.append(el('p','No related Kalshi KPI / earnings-call contracts available.','muted'));
+    root.append(el('p','Event probabilities and KPI values are not EPS forecasts; apply only to their exact contract resolution. No extrapolation to EPS without measured predictive lift.','muted'));
     section(root,'FRED macro context · joint scenario inputs');
     for(const id of ['DGS2','DGS10','VIXCLS','UNRATE','BAMLH0A0HYM2']) {
       const x=signals.fred?.[id];line(root,id,x?x.value+' ('+x.period+')':'N/A');
@@ -226,6 +262,55 @@
       score.tests.slice(-6).forEach(x=>{const tr=el('tr','');for (const v of [day(x.reported),money(x.forecast),money(x.actual),money(x.error)])tr.append(el('td',v));tbody.append(tr)});
       table.append(tbody);root.append(table);
     } else root.append(el('p','Not enough historical EPS surprises for a chronological retrospective test.','muted'));
+    section(root,'Wide-universe EPS retrospective · model vs Street');
+    const u=research?.overall;
+    if(u?.n){
+      line(root,'Cross-company retrospective observations',String(u.n));
+      line(root,'Bias-corrected EPS MAE',money(u.mae_model));
+      line(root,'Uncorrected analyst EPS MAE',money(u.mae_consensus));
+      line(root,'Relative MAE change',percent(u.relative_mae_improvement));
+      line(root,'Covered companies',String(research.companies_scored||0));
+      const sector=research.by_sector?.[c?.sector];
+      if(sector?.n)line(root,'Same-sector evaluation',sector.n+' observations · MAE '+money(sector.mae_model));
+      const by=research.by_year || {};
+      const table=el('table','', 'ff-eps-table'),hd=el('tr','');
+      ['Report year','Observations','Model MAE','Street MAE','Change'].forEach(x=>hd.append(el('th',x)));
+      const thead=el('thead','');thead.append(hd);table.append(thead);
+      const tbody=el('tbody','');
+      Object.entries(by).forEach(([year,m])=>{
+        const tr=el('tr','');[year,String(m.n),money(m.mae_model),
+          money(m.mae_consensus),percent(m.relative_mae_improvement)].forEach(v=>tr.append(el('td',v)));
+        tbody.append(tr);
+      });
+      table.append(tbody);root.append(table);
+    }else root.append(el('p','Wide-universe research history awaiting publication.','muted'));
+    section(root,'Resolved Polymarket beat-event backtest · separate from EPS MAE');
+    const pm=research?.resolved_prediction_markets;
+    if(pm?.n){
+      line(root,'Resolved contracts',String(pm.n));
+      line(root,'Polymarket Brier (lower is better)',Number(pm.brier).toFixed(4));
+      line(root,'Constant base-rate Brier',Number(pm.base_rate_brier).toFixed(4));
+      line(root,'Relative Brier reduction',percent(1-pm.brier/pm.base_rate_brier));
+    }else root.append(el('p','Market calibration report has not been staged.','muted'));
+    section(root,'Data breadth & release-time eligibility');
+    const matrix=[
+      ['SEC first-filed diluted EPS',gaap?.forecast?.train_quarters||0,'SEC 10-Q / 10-K','GAAP'],
+      ['Analyst EPS consensus',f?.analyst_n||0,'Current archived consensus','Non-GAAP/Street'],
+      ['Prior EPS surprises',f?.past_n||0,'Reported dates','Retrospective estimates'],
+      ['Upstream reported EPS',peers?.upstream?.count||0,'Reported peers only','Scenario input'],
+      ['Downstream reported EPS',peers?.downstream?.count||0,'Reported peers only','Scenario input'],
+      ['Subindustry EPS',peers?.subindustry?.count||0,'Reported peers only','Scenario input'],
+      ['Smart-money votes',signals.smart?.n||0,'Published transactions','Stock alpha'],
+      ['Analyst rating actions',signals.ratings.upgrades+signals.ratings.downgrades,'Published actions','Sentiment'],
+      ['Polymarket EPS event',signals.polymarket?1:0,'Timestamped quotes','Binary event'],
+      ['Kalshi business events',signals.kalshi?.length||0,'Current market quotes','Company KPI'],
+      ['FRED macro series',Object.keys(signals.fred||{}).length,'Latest revised snapshot','Context only'],
+    ];
+    const mt=el('table','', 'ff-eps-table'),mh=el('tr','');
+    ['Feature family','Available observations','Time rule','Target'].forEach(x=>mh.append(el('th',x)));
+    const mhead=el('thead','');mhead.append(mh);mt.append(mhead);
+    const mb=el('tbody','');matrix.forEach(row=>{const tr=el('tr','');row.forEach(x=>tr.append(el('td',String(x))));mb.append(tr)});
+    mt.append(mb);root.append(mt);
     root.append(el('p','Methodological restriction: historical Yahoo analyst estimates and adjusted EPS have not been independently archived at their original prediction cutoffs. This is NOT a verified point-in-time out-of-sample backtest or an investment performance record.','muted'));
   }
   async function mount(body, ctx) {
@@ -234,18 +319,19 @@
     const root=el('div','Loading actual EPS source data…');box.append(root);body.append(box);
     const cik=encodeURIComponent(String(ctx.cik)), ticker=String(ctx.ticker).replace(/[^A-Z0-9.-]/ig,'').toUpperCase();
     const path='disclosures/data/';
-    const [c,s,r,g]=await Promise.all([
+    const [c,s,r,g,wide]=await Promise.all([
       get(path+'consensus/c/'+cik+'.json').catch(()=>null),
       get(path+'smart/t/'+encodeURIComponent(ticker)+'.json').catch(()=>null),
       get(path+'debt/rates.json').catch(()=>null),
-      get('data/eps-gaap/'+cik+'.json').catch(()=>null)
+      get('data/eps-gaap/'+cik+'.json').catch(()=>null),
+      get('data/eps-research/backtest.json').catch(()=>null)
     ]);
     if (!box.isConnected || (ctx.here && !ctx.here())) return;
     const asof=new Date().toISOString().slice(0,10),f=forecast(c,asof),score=trailingTest(c,asof);
     const signals=metrics(c,s,r,asof);
     const peers=await loadPeerSignals(ticker,f?.period,asof).catch(()=>null);
     if (!box.isConnected || (ctx.here && !ctx.here())) return;
-    draw(root,c,f,score,signals,peers,g);
+    draw(root,c,f,score,signals,peers,g,wide);
   }
-  window.FFEPSResearch={mount,forecast,trailingTest,publicHistory,metrics,peerSignals};
+  window.FFEPSResearch={mount,forecast,trailingTest,publicHistory,metrics,peerSignals,bias};
 })();
