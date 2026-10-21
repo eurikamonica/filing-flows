@@ -137,8 +137,8 @@ jobs:
       # Files are saved with the regular data store and copied into Pages output.
       - name: Incrementally train SEC GAAP EPS and historical walk-forward
         continue-on-error: true
-        timeout-minutes: 5
-        run: python -m pipeline.eps_gaap --store store --index _site/data/index.json --out _site/data/eps-gaap --max-fetch 4
+        timeout-minutes: 7
+        run: python -m pipeline.eps_gaap --store store --index _site/data/index.json --out _site/data/eps-gaap --max-fetch 16
 
       - name: Assemble site
         env:                                   # public values (repository variables): the sign-in box on the site
@@ -242,7 +242,7 @@ jobs:
           if test -d _cons/public/c; then
             python -m pipeline.eps_research --consensus _cons/public/c \
               --market _cons/public/calibration.json \
-              --out _site/data/eps-research/backtest.json
+              --out _site/data/eps-research/backtest.json --gaap store/eps-gaap
           else
             echo "::notice::Consensus snapshot unavailable; EPS cross-section not recalculated"
           fi
