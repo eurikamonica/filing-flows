@@ -140,8 +140,11 @@ def forecast(series,cutoff,target=None,events=(),allow_dist=False):
     if len(hist)<MIN_HISTORY:return None
     if target is None:
         latest=iso(hist[-1]["end"])
-        options=[add_months(latest,k).isoformat() for k in (3,6,9)]
-        target=next((t for t in options if (iso(cutoff)-iso(t)).days<=100 and yearago(hist,t)),None)
+        target=add_months(latest,3).isoformat()
+        # Do not silently skip an unsupported Q4 and label a more distant
+        # quarter as the 'next reported' EPS forecast.
+        if (iso(cutoff)-iso(target)).days>100 or yearago(hist,target) is None:
+            return None
     if not target:return None
     yr=yearago(hist,target)
     if yr is None:return None
