@@ -165,8 +165,24 @@
   async function get(url) {
     const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json();
   }
-  function draw(root, c, f, score, signals, peers) {
+  function draw(root, c, f, score, signals, peers, gaap) {
     root.textContent='';
+    section(root,'SEC GAAP diluted EPS · first-filed XBRL model');
+    if (gaap?.forecast) {
+      const g=gaap.forecast;
+      line(root,'GAAP EPS point estimate',money(g.eps_point));
+      line(root,'GAAP same-quarter last year',money(g.lag4_eps));
+      line(root,'GAAP quarters used for training',String(g.train_quarters));
+      const u=g.uncertainty || {};
+      line(root,'Empirical EPS residual range',u.p10!=null&&u.p90!=null?
+        money(u.p10)+' to '+money(u.p90)+' (not calibrated)':'N/A — insufficient residuals');
+      if(gaap.backtest?.n) {
+        line(root,'2025 GAAP held-out quarters (this company)',String(gaap.backtest.n));
+        line(root,'2025 GAAP model MAE',money(gaap.backtest.model_mae));
+        line(root,'2025 same-quarter baseline MAE',money(gaap.backtest.seasonal_mae));
+      }
+      root.append(el('p','Official SEC GAAP EPS, directly reported for a quarter. Prediction retrains as first-filed 10-Q/10-K EPS becomes public. A missing direct Q4 is not filled by subtracting annual EPS; this may cause N/A. Retrospective walk-forward uses only earlier SEC filing dates, not future restatements.','muted'));
+    } else root.append(el('p','N/A — SEC GAAP EPS history is not available or lacks a continuous, validated quarterly series.','muted'));
     section(root, 'Next reported EPS · probabilistic research');
     root.append(el('p','Live source: analyst EPS consensus + shrinkage correction from the company’s previously released EPS surprises. Adjusted/reporting EPS basis; NOT SEC GAAP diluted EPS.','muted'));
     if (!f) {root.append(el('p','Unavailable: no current analyst EPS observations or the source is not point-in-time eligible.','muted'));return;}
@@ -218,17 +234,18 @@
     const root=el('div','Loading actual EPS source data…');box.append(root);body.append(box);
     const cik=encodeURIComponent(String(ctx.cik)), ticker=String(ctx.ticker).replace(/[^A-Z0-9.-]/ig,'').toUpperCase();
     const path='disclosures/data/';
-    const [c,s,r]=await Promise.all([
+    const [c,s,r,g]=await Promise.all([
       get(path+'consensus/c/'+cik+'.json').catch(()=>null),
       get(path+'smart/t/'+encodeURIComponent(ticker)+'.json').catch(()=>null),
-      get(path+'debt/rates.json').catch(()=>null)
+      get(path+'debt/rates.json').catch(()=>null),
+      get('data/eps-gaap/'+cik+'.json').catch(()=>null)
     ]);
     if (!box.isConnected || (ctx.here && !ctx.here())) return;
     const asof=new Date().toISOString().slice(0,10),f=forecast(c,asof),score=trailingTest(c,asof);
     const signals=metrics(c,s,r,asof);
     const peers=await loadPeerSignals(ticker,f?.period,asof).catch(()=>null);
     if (!box.isConnected || (ctx.here && !ctx.here())) return;
-    draw(root,c,f,score,signals,peers);
+    draw(root,c,f,score,signals,peers,g);
   }
   window.FFEPSResearch={mount,forecast,trailingTest,publicHistory,metrics,peerSignals};
 })();
