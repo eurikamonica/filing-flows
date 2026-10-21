@@ -1,0 +1,114 @@
+{
+  "status": "illustrative_example_available",
+  "as_of": "2026-10-21T00:20:18+00:00",
+  "real_forecasts": [],
+  "examples": {
+    "status": "illustrative_only",
+    "demo_only": true,
+    "buyer": "GOOGL (hypothetical)",
+    "buyer_ticker": "GOOGL",
+    "buyer_cik": null,
+    "period": "2026Q4",
+    "as_of": "2026-10-21T00:20:18+00:00",
+    "scenarios": [
+      {
+        "name": "Downside",
+        "capex_usd": 8000000000.0,
+        "terminal_vendor_usd": {
+          "AMD": 360000000.0,
+          "ANET": 360000000.0,
+          "AVGO": 540000000.0,
+          "CSCO": 120000000.0,
+          "ETN": 200000000.0,
+          "MU": 420000000.0,
+          "NVDA": 2220000000.0,
+          "SNDK": 120000000.0,
+          "STX": 240000000.0,
+          "VRT": 240000000.0
+        },
+        "unallocated_by_category_usd": {
+          "AI compute incl. GPU-integrated HBM": 900000000.0,
+          "networking": 300000000.0,
+          "standalone storage and memory excl. compute HBM": 420000000.0,
+          "data center building": 1200000000.0,
+          "power and cooling": 360000000.0
+        },
+        "recognized_revenue_scenarios": []
+      },
+      {
+        "name": "Base",
+        "capex_usd": 10000000000.0,
+        "terminal_vendor_usd": {
+          "AMD": 450000000.0,
+          "ANET": 450000000.0,
+          "AVGO": 675000000.0,
+          "CSCO": 150000000.0,
+          "ETN": 250000000.0,
+          "MU": 525000000.0,
+          "NVDA": 2775000000.0,
+          "SNDK": 150000000.0,
+          "STX": 300000000.0,
+          "VRT": 300000000.0
+        },
+        "unallocated_by_category_usd": {
+          "AI compute incl. GPU-integrated HBM": 1125000000.0,
+          "networking": 375000000.0,
+          "standalone storage and memory excl. compute HBM": 525000000.0,
+          "data center building": 1500000000.0,
+          "power and cooling": 450000000.0
+        },
+        "recognized_revenue_scenarios": []
+      },
+      {
+        "name": "Upside",
+        "capex_usd": 12000000000.0,
+        "terminal_vendor_usd": {
+          "AMD": 540000000.0,
+          "ANET": 540000000.0,
+          "AVGO": 810000000.0,
+          "CSCO": 180000000.0,
+          "ETN": 300000000.0,
+          "MU": 630000000.0,
+          "NVDA": 3330000000.0,
+          "SNDK": 180000000.0,
+          "STX": 360000000.0,
+          "VRT": 360000000.0
+        },
+        "unallocated_by_category_usd": {
+          "AI compute incl. GPU-integrated HBM": 1350000000.0,
+          "networking": 450000000.0,
+          "standalone storage and memory excl. compute HBM": 630000000.0,
+          "data center building": 1800000000.0,
+          "power and cooling": 540000000.0
+        },
+        "recognized_revenue_scenarios": []
+      }
+    ],
+    "unresolved_supplier_tickers": [
+      "AMD",
+      "ANET",
+      "AVGO",
+      "CSCO",
+      "ETN",
+      "MU",
+      "NVDA",
+      "SNDK",
+      "STX",
+      "VRT"
+    ],
+    "persisted_as_actual_rows": 0,
+    "note": "Illustrative numbers are never persisted as reported revenue or valid invoice relations."
+  },
+  "coverage": {
+    "industries": 43,
+    "companies": 8029,
+    "relations": 0,
+    "financials": 2197,
+    "attributed_revenue": 0,
+    "companies_with_sic": 58,
+    "verified_relations": 0,
+    "undocumented_relations": 0,
+    "capex_rows": 2197
+  },
+  "reason": "No verified buyer procurement/BOM shares, no matched supplier segment revenue actuals. Never infer numbers from CapEx alone."
+}

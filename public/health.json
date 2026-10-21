@@ -1,0 +1,63 @@
+{
+  "generated_at": "2026-10-21T00:20:18+00:00",
+  "collector_status": {
+    "checked": 60,
+    "capex_rows": 2197,
+    "sic_updated": 58,
+    "errors": [
+      {
+        "cik": "1000377",
+        "message": "HTTP Error 404: Not Found"
+      },
+      {
+        "cik": "1001500",
+        "message": "HTTP Error 404: Not Found"
+      },
+      {
+        "cik": "1002366",
+        "message": "HTTP Error 404: Not Found"
+      },
+      {
+        "cik": "1002788",
+        "message": "HTTP Error 404: Not Found"
+      }
+    ],
+    "note": "Bounded SEC requests; SIC remains null until a valid submissions profile is fetched. Missing cash CapEx is not zero.",
+    "company_inventory": 8029
+  },
+  "sqlite_counts": {
+    "industries": 43,
+    "companies": 8029,
+    "relations": 0,
+    "financials": 2197,
+    "attributed_revenue": 0,
+    "companies_with_sic": 58,
+    "verified_relations": 0,
+    "undocumented_relations": 0,
+    "capex_rows": 2197
+  },
+  "pipeline": {
+    "collection": {
+      "status": "partial",
+      "checked": 60
+    },
+    "parsing": {
+      "status": "partial",
+      "note": "SEC XBRL cash CapEx, no contract/EX-10 extraction yet"
+    },
+    "modeling": {
+      "status": "research_only",
+      "note": "No validated financial forecasts"
+    },
+    "publication": {
+      "status": "snapshot_prepared",
+      "note": "Pages deploy must be checked separately"
+    }
+  },
+  "limitations": [
+    "CIK coverage is not full SIC supplier coverage",
+    "Missing fiscal facts are not zero",
+    "No real market share data is inferred",
+    "Market price odds are not confirmed contracts"
+  ]
+}
