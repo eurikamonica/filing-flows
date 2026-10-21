@@ -91,7 +91,18 @@ def estimate(rows, target_end, coef):
     old=yearago(rows,target_end)
     growth=latest_growth(rows)
     if old is None or growth is None:return None
-    return old["eps"]+coef*growth,old["eps"]
+    # First-filed SEC data can mix pre/post split EPS (e.g. 10:1).
+    # Unless matching share-count evidence exists, ABSTAIN rather than fit a
+    # spurious growth rate on per-share figures in incompatible regimes.
+    last=rows[-3:]
+    magnitudes=sorted(abs(x["eps"]) for x in last)
+    typical=magnitudes[len(magnitudes)//2]
+    if typical>.1 and abs(old["eps"])>4*typical:
+        return None
+    # Heavy-tailed changes require stronger regularisation, not infinite EPS.
+    cap=2.0*max(abs(old["eps"]),typical,.5)
+    projected=old["eps"]+max(-cap,min(cap,coef*growth))
+    return projected,old["eps"]
 
 
 def model(seq, cutoff, target_end=None):
@@ -119,7 +130,7 @@ def model(seq, cutoff, target_end=None):
             "lag1_eps":known[-1]["eps"],"coefficient_trend":round(coef,4),
             "train_quarters":len(known),"training_examples":n,
             "last_filed":known[-1]["filed"],"uncertainty":uncertainty(pred,errors,baseline),
-            "basis":"SEC_GAAP_DILUTED_EPS","method":"SPARSE_YEAR_AGO_TREND_SHRINKAGE"}
+            "basis":"SEC_GAAP_DILUTED_EPS","method":"SPARSE_YEAR_AGO_TREND_SHRINKAGE_WITH_SPLIT_GUARD"}
 
 
 def model_point(known,cutoff,alpha):
