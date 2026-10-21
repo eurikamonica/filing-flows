@@ -361,6 +361,7 @@
       <div class="export chain-export"><span>Save</span><button class="pill" data-cx="png">PNG</button><button class="pill" data-cx="jpg">JPG</button><button class="pill" data-cx="pdf">PDF</button></div>
       <div class="chain-tip" id="ctip" hidden></div>
       <section class="section" id="cmodel"></section>
+      <section class="section" id="cbasket" hidden></section>
       <section class="section" id="creturn"></section>
       <section class="section" id="cpost"></section>
       <section class="section" id="ctables"></section>
@@ -452,6 +453,7 @@
     if (!here()) return;
     draw();
     if (hasModel(d)) { document.getElementById('cmodel').innerHTML = modelSection(d); bindModel(d); }
+    if (window.FFModel) window.FFModel.concept(document.getElementById('cbasket'), d.id);
     if (d.returns && d.returns.buyers && d.returns.buyers.length) document.getElementById('creturn').innerHTML = returnsSection(d);
     else if (d.model && d.model.error) document.getElementById('cmodel').innerHTML = `<p class="muted small">Forecast model: not yet — ${esc(d.model.error)}; the scan collects the buyers’ history over its next runs.</p>`;
     document.getElementById('ctables').innerHTML = tables(d);
