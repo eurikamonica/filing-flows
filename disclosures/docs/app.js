@@ -63,12 +63,34 @@ function kpi(label,value,caption=''){return `<div class="metric"><label>${esc(la
 function head(title,subtitle,tag){return `<div class="section-head"><div><h2>${title}</h2><p class="sub">${subtitle}</p></div><span class="tag">${tag}</span></div>`}
 function empty(text){return `<div class="empty">${esc(text)}</div>`}
 function bind(id,key){if($(id))$(id).onchange=e=>{state[key]=e.target.value;state.page=0;render()}}
+// Derived market views have independent build timestamps. Do not label a 13F
+// holdings refresh timestamp as the last refresh of Signals/Flows/PTR market data.
+function derivedMarketNotice(tab,modules,markets,nowMs=Date.now()){
+ const name=({signals:'signals',flows:'flows',trades:'officials-trades'})[tab];
+ if(!name)return null;
+ const report=markets&&markets[name]||{};
+ const built=report.data&&report.data.generated_at;
+ const timestamp=built?Date.parse(built):NaN;
+ const age=Number.isFinite(timestamp)?(nowMs-timestamp)/3600000:NaN;
+ const stale=Number.isFinite(age)&&age>8;
+ const sources=tab==='trades'
+   ?['Officials/PTR source: '+(modules.congress?.updated_at||'—')]
+   :['13F source: '+(modules.holdings?.updated_at||'—'),...(tab==='signals'?['Officials/PTR source: '+(modules.congress?.updated_at||'—')]:[])];
+ const stateLabel=report.err?'Failed to load market JSON':!built?'Market JSON loading or not available':stale?'Market view stale':'Market view built';
+ const details=report.err?' · '+report.err:'';
+ return {stale:stale||!!report.err,text:'Official derived view · '+stateLabel+
+   ' · '+(built?'Generated '+built:'Generation time unavailable')+
+   ' · '+sources.join(' · ')+details};
+}
 function baseRender(){
  const d=data(),m=moduleData();
  $('buildtime').textContent='Snapshot built: '+(d.generated_at||'Not generated')+(window.HUB_BUILD&&window.HUB_BUILD.published_at?` · published ${window.HUB_BUILD.published_at}${window.HUB_BUILD.commit?' (build '+window.HUB_BUILD.commit+')':''}`:'');
- $('notice').className=state.mode==='demo'||['error','partial'].includes(m.status)?'warn':'';
+ const derived=state.mode==='official'&&typeof marketStore!=='undefined'
+   ?derivedMarketNotice(state.tab,d.modules||{},marketStore):null;
+ $('notice').className=state.mode==='demo'||(derived?derived.stale:['error','partial'].includes(m.status))?'warn':'';
  $('notice').textContent=state.mode==='demo'?'DEMO: All figures in this mode are fictional. Use only to explore the interface.':
    state.tab==='status'?'Sources run independently. Errors retain the previous valid data and never substitute demo figures.':
+   derived?derived.text:
    `Official snapshot · Status ${m.status||'Not collected'} · Last success/partial completion ${m.updated_at||'—'} · Last attempt ${m.last_attempt||'—'}${m.error?' · '+m.error:''}`;
 }
 function lineChart(rows,key,unit){
