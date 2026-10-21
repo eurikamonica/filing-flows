@@ -43,7 +43,7 @@ class TestEPSGAAP(unittest.TestCase):
         self.assertIsNone(f["uncertainty"]["p10"])
     def test_missing_quarter_refused(self):
         x=self.synthetic()
-        del x[16]
+        del x[-3]
         self.assertIsNone(E.model(x,"2026-12-31"))
 
 if __name__=="__main__":
