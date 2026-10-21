@@ -22,6 +22,10 @@ Open a company earnings page, expand **Ask local Qwen3-8B**, and paste the conte
 
 For a fresh installation, use a separate virtual environment and the versions in `requirements-windows.txt`. CUDA PyTorch uses the official `https://download.pytorch.org/whl/cu128` index. Provision the pinned Hugging Face snapshot separately after checking disk space (raw model shards total 16,381,516,776 bytes). This server never downloads weights automatically. The provided versions were measured on Python 3.14.7, driver 581.83 and an RTX 3050 Laptop 6GB; other platforms and browsers have not been validated.
 
+## Polishing a composed post
+
+On a company page's **Posts** tab, the **Compose** box ticks angles (today's move, what the numbers lean to, the latest 8-K, insiders …) into one draft. Once the companion is connected (owner mode, the **Ask local Qwen3-8B** panel on the Earnings tab), a **Polish with local Qwen3-8B** button rewrites that draft on this computer (`POST /polish` with the draft, the angles as facts and the cashtag). The companion accepts the rewrite only when every number appears in the draft or the facts, the cashtag is kept, there is no advice wording ("buy", "sell", "bullish" …) or exclamation mark, the last sentence is finished and it fits the limit; otherwise the draft stays and the reason is shown. **Undo** restores the draft.
+
 ## Limits and checks
 
 - NF4 double quantization, BF16 compute, 36 decoder blocks on the GPU. Embeddings and output head reside in RAM and Accelerate stages them on the GPU for execution. This is explicit offload, not full CPU-only inference.

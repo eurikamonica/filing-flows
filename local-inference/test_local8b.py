@@ -10,9 +10,12 @@ from local8b_service import Companion, validate_answer, validate_request
 
 
 class FakeModel:
+    reply = '{"answer":null,"source_ids":[],"insufficient_evidence":true,"quotations":[]}'
+
     def generate(self, messages, max_new_tokens):
-        return {'text': '{"answer":null,"source_ids":[],"insufficient_evidence":true,"quotations":[]}',
-                'seconds': 0.01, 'input_tokens': 10, 'output_tokens': 20, 'output_tokens_per_second': 2000}
+        text = self.reply if messages[0]['content'].startswith('You are a financial evidence') else self.polish_reply
+        return {'text': text, 'seconds': 0.01, 'input_tokens': 10, 'output_tokens': 20, 'output_tokens_per_second': 2000}
+    polish_reply = '{"post": "$CRWV $63.40 (+1.9%) on Oct 19, 2.3x its usual daily swing. On the numbers it leans cheap: 62% of our DCF scenarios land above the price. What are you watching?"}'
 
 
 class Tests(unittest.TestCase):
@@ -70,6 +73,33 @@ class Tests(unittest.TestCase):
             self.server.job_lock.release()
         self.assertEqual(self.request('POST', '/ask', headers, '{"question":NaN}')[0], 400)
         self.assertEqual(self.request('POST', '/ask', headers, 'x' * 32769)[0], 400)
+
+    def test_polish_keeps_numbers_cashtags_and_refuses_advice(self):
+        from local8b_service import validate_polish, validate_polish_request
+        draft = '$CRWV $63.40 (+1.9%) — Oct 19. 2.3× its normal daily swing. On the numbers $CRWV leans cheap: 62% of our DCF scenarios land above $63.40.'
+        headers = {'Authorization': 'Bearer test-secret', 'Content-Type': 'application/json'}
+        status, _, data = self.request('POST', '/polish', headers, json.dumps({'draft': draft, 'cashtags': ['CRWV'], 'facts': 'Reports Oct 23.'}))
+        self.assertEqual(status, 200)
+        self.assertTrue(json.loads(data)['post'].startswith('$CRWV $63.40 (+1.9%)'))
+        ok = validate_polish(json.dumps({'post': 'A test about $CRWV at $63.40, +1.9%, 62% of scenarios above. Thoughts?'}), draft, '', ['CRWV'], 280)
+        self.assertIn('$CRWV', ok)
+        for bad, why in [('{"post": "$CRWV at $63.40, up 1.9%, and 71% of scenarios above. Thoughts?"}', 'numbers not in the draft'),
+                         ('{"post": "At $63.40 this one leans cheap. Thoughts?"}', 'cashtag missing'),
+                         ('{"post": "$CRWV at $63.40 is a buy. Thoughts?"}', 'advice'),
+                         ('{"post": "$CRWV at $63.40 looks great!"}', 'exclamation'),
+                         ('{"post": "$CRWV at $63.40 and then"}', 'mid-sentence'),
+                         ('{"post": "' + 'x' * 300 + ' $CRWV."}', 'too long')]:
+            with self.assertRaises(ValueError, msg=why):
+                validate_polish(bad, draft, '', ['CRWV'], 280)
+        with self.assertRaises(ValueError):
+            validate_polish_request({'draft': 'short', 'cashtags': ['CRWV']})
+        with self.assertRaises(ValueError):
+            validate_polish_request({'draft': draft, 'evidence': []})
+        self.assertEqual(self.request('POST', '/polish', headers, json.dumps({'draft': 'too short'}))[0], 400)
+        self.server.model.polish_reply = '{"post": "$CRWV is a strong buy at $63.40. Thoughts?"}'
+        status, _, data = self.request('POST', '/polish', headers, json.dumps({'draft': draft, 'cashtags': ['CRWV']}))
+        self.assertEqual(status, 422)
+        self.assertIn('Advice', json.loads(data)['error'])
 
     def test_literal_quote_cannot_be_fabricated(self):
         evidence = [{'id': 'S1', 'text': 'Revenue was USD 100 million.'}]
