@@ -34,7 +34,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SITE_URL: ${{ vars.SITE_URL }}
         run: |
-          site="${SITE_URL:-https://filing-flows.com/}"
+          site=$(printf '%s' "$SITE_URL" | grep -oE 'https?://[^ "<>]+' | head -1)    # the variable may carry extra text
+          site="${site:-https://filing-flows.com}"; site="${site%/}/"
           rm -rf media-branch && mkdir media-branch && cd media-branch
           git init -q -b media
           git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
