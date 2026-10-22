@@ -58,10 +58,11 @@
     return `<div class="tbl-wrap"><table class="small net-tbl"><thead><tr><th>${side === 'c' ? 'Customer' : 'Supplier'}</th><th class="num">Share</th><th class="num">Dollars</th><th>Stated in</th></tr></thead><tbody>
       ${rows.map((r) => {
         const who = r.label || r.name ? (r.cik && !(r.t == null && r.name == null) ? `<a href="#c-${r.cik}"><b>${esc(r.t || r.name)}</b></a> <span class="muted">${esc(r.name && r.t ? r.name : '')}</span>` : `<b>${esc(r.label || r.name)}</b>`) : '<span class="muted">Unnamed customer</span>';
-        const share = r.pct != null ? `${upct(r.pct)} <span class="muted">of ${side === 'c' || r.by === 'other' ? (r.by === 'other' ? 'its' : '') + ' revenue' : 'purchases'}</span>` : r.combined ? `<span class="muted">${upct(r.combined)} together with others</span>` : '<span class="muted">not stated</span>';
+        const share = r.share_of_revenue != null ? `${upct(r.share_of_revenue)} <span class="muted">of ${esc(me)}’s revenue from its products</span>` :
+          r.min ? '<span class="muted">10% or more of revenue</span>' : r.pct != null ? `${upct(r.pct)} <span class="muted">of ${side === 'c' || r.by === 'other' ? (r.by === 'other' ? 'its' : '') + ' revenue' : 'purchases'}</span>` : r.combined ? `<span class="muted">${upct(r.combined)} together with others</span>` : '<span class="muted">not stated</span>';
         const src = r.by === 'other' ? `${esc(r.t || r.name || r.label)}’s ${esc(r.form || 'annual report')}` : `${esc(me)}’s ${esc(r.form || 'annual report')}`;
         const link = r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${src} ↗</a>` : src;
-        return `<tr><td>${who}${r.seg ? ` <span class="muted">· ${esc(r.seg)}</span>` : ''}</td><td class="num">${share}</td><td class="num">${r.usd ? usd(r.usd) : '—'}</td>
+        return `<tr><td>${who}${r.seg ? ` <span class="muted">· ${esc(r.seg)}${r.seg && !r.usd && r.pct != null ? ' (share of that unit)' : ''}</span>` : ''}</td><td class="num">${share}</td><td class="num">${r.usd ? usd(r.usd) : '—'}</td>
           <td>${link} <span class="muted">${esc((r.fy || '').slice(0, 4))}${r.how ? ' · ' + esc(r.how) : ''}</span>${r.q ? `<details class="net-q"><summary>the sentence</summary><q>${esc(r.q)}</q></details>` : ''}</td></tr>`;
       }).join('')}</tbody></table></div>`;
   }

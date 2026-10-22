@@ -21,9 +21,9 @@ import re
 import sys
 from collections import defaultdict
 
-CN_V = 2                       # the stored reading; a new version re-reads the filings
+CN_V = 3                       # the stored reading; a new version re-reads the filings
 NAMES_DAYS = 7
-MAX_SENT = 30
+MAX_SENT = 40
 REFRESH_PER_RUN = 120
 ANNUAL = ("10-K", "10-K405", "10-KT", "20-F", "40-F")
 
@@ -33,6 +33,14 @@ _ABBR = re.compile(r"(?i)(?:\b(?:inc|corp|co|ltd|no|nos|approx|u\.s|u\.k|s\.a|n\
 SELL_WORDS = re.compile(r"(?i)\b(revenues?|sales|net sales|net revenues?|billings|shipments)\b")
 SELL_VERB = re.compile(r"(?i)\b(accounted|accounts? for|represent\w*|comprised|constitut\w*|derived|attributable|"
                        r"generated|largest customers?|significant customers?|major customers?|customers?)\b")
+STRONG_BUY = re.compile(r"(?i)\b(sole|single|primary|principal|key|largest|major|main)[- ](source|sources|supplier|suppliers|vendor|"
+                        r"vendors|manufacturer|manufacturers|foundry|foundries)\b|\b(rely|relies|depend|depends)\s+(on|upon)\s+[A-Z]|"
+                        r"\bmanufactured (for us |for the company )?by\b|\bsupplied (to us )?by\b|\bpurchases from [A-Z]")
+NOT_TRADE = re.compile(r"(?i)\b(acqui(?:re|red|res|ring|sition|sitions)|merger|repurchase|accelerated share|notes due|"
+                       r"securities purchase|spectrum|purchase agreement|purchase price|initial purchasers|underwrit\w+|credit "
+                       r"agreement|lenders?|kickback|competitors?|compete|competing|such as)\b")
+THRESHOLD = re.compile(r"(?i)\b(10|ten)\s?(%|percent) or (more|greater)|more than (10|ten)\s?(%|percent)|in excess of (10|ten)\s?(%|percent)|"
+                       r"at least (10|ten)\s?(%|percent)|exceed(ed|ing)? (10|ten)\s?(%|percent)")
 BUY = re.compile(r"(?i)\b(purchases?|purchased|sole[- ]source[sd]?|single[- ]source[sd]?|sole suppliers?|single suppliers?|"
                  r"largest suppliers?|key suppliers?|primary suppliers?|principal suppliers?|contract manufactur\w*|foundry|"
                  r"foundries|manufactured (?:for us )?by|supplied by|sourced from)\b")
@@ -101,16 +109,18 @@ def sentences(doc):
         if len(line) < 30 or not re.search(r"[A-Z][a-z]", line):
             continue
         for s in _sentences(line):
-            if len(s) < 25:
+            if len(s) < 25 or len(s) > 900:
                 continue
-            if "%" in s or "percent" in s.lower():
-                if (SELL_WORDS.search(s) or re.search(r"(?i)receivable", s)) and SELL_VERB.search(s):
-                    keep(s, "buy" if BUY.search(s) and not re.search(r"(?i)\b(sales|revenues?) (to|from)\b", s) else "sell")
-                    continue
-            if BUY.search(s) and re.search(r"(?i)\b(rely|depend|purchase|sole|single|substantially all|majority|significant portion)", s):
+            kinds = {k for _, _, k in _pcts(s)}
+            if NOT_TRADE.search(s):
+                continue
+            if ("sell" in kinds or "ar" in kinds) and SELL_VERB.search(s):
+                keep(s, "sell")
+            elif THRESHOLD.search(s) and re.search(r"(?i)customers?", s):
+                keep(s, "sell")
+            elif "buy" in kinds or STRONG_BUY.search(s):
                 keep(s, "buy")
-        if len(out) >= MAX_SENT:
-            break
+    out.sort(key=lambda x: {"sell": 0, "row": 1, "buy": 2}[x["k"]])   # customers first when there are many
     return out[:MAX_SENT]
 
 
@@ -193,7 +203,8 @@ ALIASES = {
     "foxconn": None, "hon hai": None, "sk hynix": None, "xiaomi": None, "lenovo": None, "quanta computer": None,
     "wistron": None, "pegatron": None, "compal": None, "inventec": None, "byd": None, "volkswagen": None, "bmw": None,
     "mercedes benz": None, "airbus": None, "siemens": None, "bosch": None, "hyundai": None, "walgreens": None,
-    "walgreens boots alliance": None, "medline": None, "publix": None, "h e b": None, "meijer": None, "aldi": None,
+    "walgreens boots alliance": None, "boots": None, "evernorth": "CI", "evernorth health services": "CI", "7 eleven": None,
+    "seven eleven": None, "mclane": "BRK-B", "medline": None, "publix": None, "h e b": None, "meijer": None, "aldi": None,
 }
 GOV = [(re.compile(r"(?i)\b(u\.?\s?s\.?|united states|federal)\s+(federal\s+)?government\b|\bu\.?s\.? government agencies\b|"
                    r"\b(u\.?s\.?|united states)\s+department of defense\b|\bdepartment of defense\b|\b(?<!non-)dod\b|"
@@ -202,6 +213,9 @@ GOV = [(re.compile(r"(?i)\b(u\.?\s?s\.?|united states|federal)\s+(federal\s+)?go
 ANON = re.compile(r"(?i)^(one|two|three|a|an|our|its|the|single|largest|major|significant|other|another|certain|top|"
                   r"customer|customers|distributor|distributors|client|clients|partner|end)\b|\bcustomer\s*[a-z0-9]\b|"
                   r"^customer|^distributor|largest|top (five|ten|\d+)|all other|individually|^total")
+
+
+ORG = re.compile(r"(?i)\b(inc|incorporated|corp|corporation|ltd|limited|llc|l\.l\.c|plc|n\.v|s\.a|ag|gmbh|l\.p|lp|bank)\b\.?")
 
 
 def norm(s):
@@ -262,6 +276,7 @@ class Names:
     def resolve(self, label):
         """'Walmart Inc.' -> (cik or None, display label); None when it is no name at all ('Customer A')."""
         lab = re.sub(r"\s*\[member\[?\]?$|\s*member$", "", (label or "").strip(), flags=re.I).strip(" ,.;:")
+        lab = re.sub(r"(?i),?\s+and\s+(its\s+)?(affiliates|subsidiaries)$", "", lab).strip(" ,.;:")
         if not lab or ANON.search(lab) or len(lab) < 2:
             for rx, name in GOV:
                 if rx.search(lab or ""):
@@ -273,9 +288,9 @@ class Names:
         n = norm(lab)
         words = n.split()
         for cand in (n, " ".join(_strip_suffix(words))):
-            if cand in self.alias:
+            if cand in self.alias and (len(words) > 1 or cand in ALIASES):
                 return self.alias[cand], lab
-        return None, lab
+        return None, (lab if ORG.search(lab) else None)          # "Restaurants", "International": no counterparty
 
     def find(self, text, skip=()):
         """Names in a sentence, in order: [(start, cik or None, label)]. Only capitalised words can start or be a
@@ -297,6 +312,8 @@ class Names:
                     words = n_.split()
                     cands = [n_, " ".join(_strip_suffix(words))]
                     found = next((c for c in cands if c and c in self.alias), None)
+                    if found is not None and len(words) == 1 and found not in ALIASES:
+                        found = None                             # one bare word ("Trip", "Paid") is a word, not a name
                     if found is not None:
                         cik = self.alias[found]
                         if cik not in skip and found not in skip:
@@ -332,6 +349,8 @@ def _pcts(s):
         before = s[max(0, m.start() - 12):m.start()].lower()
         if re.search(r"(increase|decrease|grew|growth|declin|rose|fell|up|down|higher|lower|change)\w*\s*(of|by)?\s*$", before):
             continue                                                 # "an increase of 12%"
+        if re.match(r"\s*(or more|or greater)", after) or re.search(r"(more than|at least|in excess of|exceed\w*|over)\s*$", before):
+            continue                                                 # "10% or more": the disclosure threshold, not a share
         if re.search(r"^\s*(?:and \d+(?:\.\d+)?\s?%\s*)*(?:,\s*)?(?:of|from)?\s*(?:our|the|its|total|consolidated|net|gross|company|"
                      r"[a-z]+'s)?\s*(?:total|consolidated|net|gross|worldwide)?\s*(?:net\s+)?(?:product\s+|segment\s+)?"
                      r"(?:receivables?|accounts receivable|trade receivables?)", after):
@@ -339,6 +358,13 @@ def _pcts(s):
             continue
         k = "buy" if re.search(r"^[^.;]{0,60}\b(purchases|purchased|inventory|cost of (sales|revenue|goods))", after) else \
             "sell" if re.search(r"^[^.;]{0,70}\b(revenues?|sales|net sales|billings|shipments)\b", after) else None
+        poss = re.search(r"^[^.;]{0,50}?\b([a-z0-9.\-]+)(’|')s (total |net |consolidated |gross )*(revenues?|sales)", after)
+        if k == "sell" and poss and poss.group(1) not in ("company", "group", "firm", "corporation", "partnership", "segment", "entity"):
+            k = None                                                 # "92% of Sunoco LP's total revenues": another's revenue
+        if k == "sell" and re.search(r"^[^.;]{0,70}\bsegment('s|’s)? (net |external )?(revenues?|sales)", after):
+            k = None                                                 # a share of one segment, not of the company
+        if k == "sell" and re.search(r"^[^.;]{0,90}\b(revenues?|sales) (from|of|in|to) (the|its|our|this|that|these|such|each)\b", after):
+            k = None                                                 # "79% of revenues from the federal government": a part of a part
         out.append((m.start(), v, k))
     return out
 
@@ -349,14 +375,16 @@ def links_from(rec, names, self_cik):
     skip = {int(self_cik)} | ({norm(me)} if me else set())
     if me:
         skip.add(" ".join(_strip_suffix(norm(me).split())))
+    fy_year = int(str(rec.get("fy"))[:4]) if str(rec.get("fy") or "")[:4].isdigit() else None
+    fy_month = int(str(rec.get("fy"))[5:7]) if re.match(r"\d{4}-\d\d", str(rec.get("fy") or "")) else 12
     out = []
     for s in rec.get("s") or []:
         t, k = s["t"], s["k"]
         if k == "row":
             cells = t.split(" | ")
             cik, lab = names.resolve(cells[0])
-            if not lab or cik in skip:
-                continue
+            if not lab or cik in skip or (cik is None and norm(lab) not in ALIASES and not any(rx.search(lab) for rx, _ in GOV)):
+                continue                                         # a table row is a counterparty only by a known name
             p = next((float(m.group(1)) / 100 for c in cells[1:] for m in [PCT.search(c)] if m), None)
             if p is not None and 0.01 <= p < 0.995:
                 out.append({"cik": cik, "label": lab, "pct": p, "dir": "sell", "how": "customer table", "q": t[:300]})
@@ -364,32 +392,92 @@ def links_from(rec, names, self_cik):
         found = names.find(t, skip)
         if not found:
             continue
+        years = [int(y) for y in re.findall(r"\b(20\d\d)\b", t)]
+        if years and fy_year and max(years) < fy_year - (1 if fy_month <= 3 else 0):
+            continue                                             # about an older year only
+        low = t.lower()
+        if re.search(r"non-u\.?s\.? customers|international customers|foreign customers|non-u\.?s\.? government", low):
+            found = [f for f in found if f[2] != "U.S. government"]
+        if re.search(r"\bsegments?\b", low):                   # "our Medicaid, Commercial and Medicare segments": lines of business
+            found = [f for f in found if f[2] not in ("U.S. government", "Medicare & Medicaid")]
+            if not found:
+                continue
         pcts = _pcts(t)
-        sell = [p for p in pcts if p[2] in ("sell", None)] if k != "buy" else []
-        buy = [p for p in pcts if p[2] == "buy"] if k == "buy" else []
-        ar = [p for p in pcts if p[2] == "ar"]
-        use = sell or buy
         direction = "buy" if k == "buy" else "sell"
-        resp = re.search(r"(?i)\brespectively\b", t)
-        # names before the first percentage are the ones the percentages are about
-        first = use[0][0] if use else len(t)
-        named = [f for f in found if f[0] < first] or found
+        vendor = set()
+        for f in found:                                          # "sales of Apple Inc. products": Apple is the vendor
+            rest = t[f[0] + len(f[2]):].lower().lstrip(" .,’'s")
+            if re.match(r"^(inc|corp|corporation|ltd|co)?\.?,?\s*(and its affiliates'?|'s)?\s*(products?|brands?|branded|solutions|technologies)\b", rest) or \
+                    re.search(r"(products?|brands?) (of|from)\s*$", low[max(0, f[0] - 25):f[0]]):
+                vendor.add(f[0])
+        if vendor:                                               # a distributor's sentence: every name in it is a vendor
+            vendor = {f[0] for f in found}
+        if direction == "buy" and re.search(r"(?i)\bour [\w\- ]{0,30}\b(is|are|may be|will be|was|were) the (sole|single|only)|"
+                                            r"\bsource of (cash|income|revenue|liquidity|funds|funding|earnings)|\bwe are the (sole|single|only)", t):
+            continue                                             # the company is the source, or a source of cash
+        if direction == "buy":
+            strong = [m.start() for m in STRONG_BUY.finditer(t)]
+            found = [f for f in found if f[2] not in ("U.S. government", "Medicare & Medicaid")
+                     and (any(p[2] == "buy" for p in pcts) or any(abs(f[0] - x) <= 110 for x in strong))]
+            if not found or NOT_TRADE.search(t):
+                continue
+        use = [p for p in pcts if p[2] == direction]
+        ar = [p for p in pcts if p[2] == "ar"]
         uniq = []
-        for f in named:
+        for f in found:
             if not any((f[1] is not None and f[1] == u[1]) or f[2] == u[2] for u in uniq):
                 uniq.append(f)
         if len(uniq) > 4:                                        # a list of companies, not of customers
             continue
+        resp = re.search(r"(?i)\brespectively\b", t)
+        if resp and len(set(years)) >= len(use) >= 2 and len(uniq) > 1 and len(use) != len(uniq) * len(set(years)):
+            resp = None                                          # "16%, 16% and 19% in 2025, 2024 and 2023, respectively": years
+
+        def dist(p, f):                                          # "Walmart (17.2%)": a share follows its name ...
+            end = f[0] + len(f[2])
+            if p[0] >= end:
+                gap = t[end:p[0]]
+                return len(gap) + (200 if re.search(r"(?i)\b(including|of which|while|whereas|and)\b", gap) and len(gap) < 40 else 0)
+            gap = t[p[0]:f[0]]                                   # ... or precedes it: "83% ... derived from the government"
+            return len(gap) if re.search(r"(?i)\b(from|to)\b", gap) else len(gap) + 60
+        pick = {}
+        if use and resp and len(use) >= len(uniq):
+            pick = {i: use[i][1] for i in range(len(uniq))}
+        elif use and len(use) >= len(uniq):                      # each name takes the nearest unused share
+            free = list(use)
+            for i, f in sorted(enumerate(uniq), key=lambda x: min(dist(p, x[1]) for p in use)):
+                if not free:
+                    break
+                p = min(free, key=lambda p: dist(p, f))
+                if dist(p, f) <= 160:
+                    pick[i] = p[1]
+                    free.remove(p)
+        elif use and len(uniq) > 1:                              # fewer shares than names: only an unmistakable pairing
+            for p in use:
+                ds = sorted((dist(p, f), i) for i, f in enumerate(uniq))
+                if ds[0][0] <= 100 and ds[1][0] > 2 * ds[0][0] + 20 and ds[0][1] not in pick:
+                    pick[ds[0][1]] = p[1]
+        thr = bool(THRESHOLD.search(t))
+        um = re.match(r"^\s*(?:In \w+ \d{4}, |During \d{4}, )?([A-Z][\w&.\-]*(?: [A-Z][\w&.\-]*){0,3})(?:’|')s (?:\w+ ){0,2}(customers?|revenues?|sales)\b", t)
+        unit = um.group(1) if um and norm(um.group(1)) not in skip and um.group(1).lower() not in ("company", "the company", "our") else None
         for i, (_, cik, lab) in enumerate(uniq):
-            pct = None
-            if use:
-                if len(uniq) == 1:
-                    pct = use[0][1]
-                elif resp and len(use) >= len(uniq):
-                    pct = use[i][1]
-            how = ("sentence" if pct is not None else "named, share not stated") if not (ar and not use) else "receivables"
-            out.append({"cik": cik, "label": lab, "pct": pct, "dir": direction, "how": how, "q": t[:420],
-                        **({"combined": round(use[0][1], 4)} if use and pct is None and len(uniq) > 1 else {})})
+            pct = pick.get(i)
+            if direction == "sell" and pct is None and not (thr or ar or len(uniq) > 1 and use or
+                                                            re.search(r"(?i)\b(largest|major|significant|principal|key)( \w+)? customers?\b", t)):
+                continue                                         # named in a sentence about something else
+            how = "sentence" if pct is not None else "receivables" if ar and not use else \
+                "10% or more of revenue" if thr else "named, share not stated"
+            row = {"cik": cik, "label": lab, "pct": pct, "dir": direction, "how": how, "q": t[:420]}
+            if unit:                                             # "McLane's major customers": a share of a subsidiary's revenue
+                row["unit"] = unit
+            if uniq[i][0] in vendor and direction == "sell":       # a vendor whose products the company resells
+                row.update(dir="buy", how="share of revenue from its products" if pct is not None else "its products resold",
+                           share_of_revenue=pct, pct=None)
+            if pct is None and use and len(uniq) > 1 and not resp and len(use) == 1:
+                row["combined"] = round(use[0][1], 4)
+            if pct is None and thr:
+                row["min"] = 0.10
+            out.append(row)
     for x in rec.get("x") or []:                                 # XBRL: the share, rarely the name
         cik, lab = names.resolve(x.get("l"))
         if cik in skip:
@@ -417,6 +505,18 @@ def _merge(rows):
             cur["usd"] = r["usd"]
         if not cur.get("q") and r.get("q"):
             cur["q"] = r["q"]
+    for key, n in list(named.items()):                       # "Walgreens" and "Boots" in the text, "Walgreens and Boots UK Ltd" 25% in XBRL
+        if n["how"] == "XBRL" and n["cik"] is None and n.get("pct") is not None:
+            nl = norm(n["label"])
+            for k2, m in list(named.items()):
+                if m is not n and m["dir"] == "sell" and m.get("pct") is None and m["cik"] is None and norm(m["label"]) and \
+                        re.search(r"\b" + re.escape(norm(m["label"])) + r"\b", nl):
+                    n["q"] = n.get("q") or m.get("q")
+                    del named[k2]
+    for key, n in list(named.items()):                       # an XBRL label that repeats a stated share
+        if n["how"] == "XBRL" and n["cik"] is None and n.get("pct") is not None and any(
+                m is not n and m["dir"] == "sell" and m.get("pct") is not None and abs(m["pct"] - n["pct"]) < 0.006 for m in named.values()):
+            del named[key]
     for a in anon:
         if a.get("pct") is None:
             continue
@@ -482,13 +582,18 @@ def build(store, out, index, today=None):
         for l in ls:
             e = {"me": cik, "dir": l["dir"], "cik": l["cik"], "label": l["label"], "pct": l.get("pct"),
                  "how": l["how"], "q": l.get("q"), "url": cn.get("url"), "form": cn.get("form"), "filed": cn.get("filed"), "fy": fy}
+            for kk in ("min", "share_of_revenue"):
+                if l.get(kk) is not None:
+                    e[kk] = l[kk]
             if l.get("combined"):
                 e["combined"] = l["combined"]
             if l.get("seg"):
                 e["seg"] = l["seg"]
+            if l.get("unit"):
+                e["seg"] = l["unit"]
             if l.get("usd"):
                 e["usd"] = _usd(rec, l["usd"])
-            elif l.get("pct") is not None and rev and l["dir"] == "sell":
+            elif l.get("pct") is not None and rev and l["dir"] == "sell" and not l.get("unit"):
                 e["usd"] = round(l["pct"] * rev)
             edges.append(e)
     # supplier -> customer, both ways a filing can state it
@@ -529,12 +634,12 @@ def build(store, out, index, today=None):
                 doc["customers"].append({**node(f["c"], f["label"]), "label": f["label"], "pct": f.get("pct"), "usd": f.get("usd"),
                                          "how": f["how"], "q": f.get("q"), "url": f.get("url"), "form": f.get("form"),
                                          "filed": f.get("filed"), "fy": f.get("fy"), "by": "self" if f["me"] == cik else "other",
-                                         **{k: f[k] for k in ("combined", "seg") if f.get(k)}})
+                                         **{k: f[k] for k in ("combined", "seg", "min") if f.get(k)}})
             if f["c"] == cik:
                 doc["suppliers"].append({**node(f["s"], f["label"] if f["s"] != f["me"] else None), "label": f["label"], "pct": f.get("pct"),
                                          "usd": f.get("usd"), "how": f["how"], "q": f.get("q"), "url": f.get("url"),
                                          "form": f.get("form"), "filed": f.get("filed"), "fy": f.get("fy"),
-                                         "by": "self" if f["me"] == cik else "other", **{k: f[k] for k in ("combined",) if f.get(k)}})
+                                         "by": "self" if f["me"] == cik else "other", **{k: f[k] for k in ("combined", "seg", "share_of_revenue") if f.get(k)}})
         if f"{cik}" and (doc["customers"] or doc["suppliers"]):
             for side in ("customers", "suppliers"):
                 doc[side].sort(key=lambda x: (-(x.get("usd") or 0), -(x.get("pct") or 0)))

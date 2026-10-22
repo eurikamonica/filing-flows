@@ -69,6 +69,38 @@ def test_the_filer_itself_and_common_words_are_not_customers():
     assert nm.resolve("Google LLC")[0] == 1652044
 
 
+REAL = [   # sentences from 2025 annual reports, and what they must (not) give
+    ("Walmart Inc. accounted for approximately 18.7 % of our fiscal 2025 consolidated sales.", [(104169, 0.187, "sell")]),
+    ("Sales of Apple Inc. products and services comprised approximately 12%, 12% , and 11% of our total revenue for fiscal "
+     "years 2025, 2024, and 2023, respectively.", [(320193, None, "buy")]),
+    ("Depending on the aircraft model, airline customers may have a choice between our engines and those of other "
+     "manufacturers or, as in the case of some Apple models, our engines may be the sole source engine.", []),
+    ("For the year ended December 31, 2025, our Medicaid, Commercial, Medicare and Other segments accounted for 57%, 21%, "
+     "19% and 3%, respectively, of our total external revenues.", []),
+    ("Sales to OptumRx generated 17 percent of our consolidated revenue in fiscal 2023.", []),
+    ("Collins’ largest commercial customers are Apple and Walmart with combined sales of 16%, 16%, and 19% of total "
+     "Collins segment sales in 2025, 2024, and 2023, respectively.", [(320193, None, "sell"), (104169, None, "sell")]),
+    ("We are the fourth largest card network based on purchase volume, behind Visa, China UnionPay and Mastercard.", []),
+]
+
+
+def test_real_sentences():
+    nm = N.Names(ROWS + [[731766, "UNH", "UNITEDHEALTH GROUP INC"]])
+    for text, want in REAL:
+        k = "sell"
+        ls = [l for l in N.links_from({"s": [{"t": text, "k": k}], "x": [], "fy": "2025-12-31"}, nm, 9999) if l["label"]]
+        got = sorted((l["cik"], l["pct"], l["dir"]) for l in ls)
+        assert got == sorted(want), (text[:60], got)
+
+
+def test_subsidiary_shares_have_no_company_dollars():
+    nm = names()
+    t = "McLane’s major customers during 2025 included Walmart (approximately 17.2% of revenues); Target Corp (approximately 13.3% of revenues)."
+    ls = N.links_from({"s": [{"t": t, "k": "sell"}], "x": [], "fy": "2025-12-31"}, nm, 9999)
+    by = {l["cik"]: l for l in ls}
+    assert by[104169]["pct"] == 0.172 and by[27419]["pct"] == 0.133 and by[104169]["unit"] == "McLane"
+
+
 def test_several_names_without_respectively_share_one_combined_figure():
     rec = {"s": [{"t": "McKesson Corporation, Cencora, Inc. and Cardinal Health, Inc. together accounted for 89% of our gross product sales.", "k": "sell"}], "x": []}
     ls = N.links_from(rec, names(), 9999)
