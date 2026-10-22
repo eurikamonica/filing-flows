@@ -828,7 +828,33 @@ def filing_calendar(tally, periods):
             'note': 'Original reports first filed before day k after the quarter end, of those filed so far. Statutory deadline: 45 days.'}
 
 
-def audit(views, tally, coverage, generated_at):
+def ptr_calendar(trades, marks=(7, 15, 30, 45, 60, 90, 180)):
+    """C0 for officials: days from the transaction to the report's filing, per jurisdiction — the calendar-only baseline a
+    model of "when will an official's purchase become public" has to beat (spec v5 §7.4). Dates as reported."""
+    by = defaultdict(list)
+    for t in trades or ():
+        a, b = t.get('date'), t.get('filed_date')
+        if not a or not b:
+            continue
+        try:
+            lag = (dt.date.fromisoformat(b[:10]) - dt.date.fromisoformat(a[:10])).days
+        except ValueError:
+            continue
+        if lag < 0:
+            continue
+        by[t.get('jurisdiction') or 'unknown'].append(lag)
+        by['all'].append(lag)
+    out = {}
+    for k, v in by.items():
+        v.sort()
+        out[k] = {'reports': len(v), 'median_days': v[len(v) // 2],
+                  'share_within': {str(m): round(sum(1 for x in v if x <= m) / len(v), 4) for m in marks}}
+    return {'by_jurisdiction': out, 'days': list(marks),
+            'note': 'Transactions on file by days from trade to the report\'s filing date. US House and Senate rules: within 30 days of '
+                    'learning of the trade and no later than 45 days after it.'}
+
+
+def audit(views, tally, coverage, generated_at, trades=None):
     """market/crowd-transitions.json: the descriptive transition audit (schema crowd_transitions.v1)."""
     qa = views['qa']
     pa_all = views['pa']
@@ -860,6 +886,8 @@ def audit(views, tally, coverage, generated_at):
     out['experiment_3'] = {pop: retrospective_gap(qa, prim, pop) for pop in ('all_eligible', 'covered')}
     periods = sorted(set(o['period'] for o in qa) | set(o['period'] for seq in pa_all.values() for o in seq))
     out['filing_calendar'] = filing_calendar(tally, sorted(coverage))
+    if trades:
+        out['ptr_calendar'] = ptr_calendar(trades)
     out['managers'] = tally.as_json(periods)
     out['coverage_by_origin'] = {f'{OFFSETS[c]}d' if c != 'live' else 'live':
                                  [{'period': o['period'], 'decision_day': o['meta']['decision_day'],

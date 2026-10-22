@@ -286,6 +286,15 @@ class TruncationInvariance(unittest.TestCase):
 
 
 class Audit(unittest.TestCase):
+    def test_ptr_calendar(self):
+        t = [{'date': '2026-01-01', 'filed_date': '2026-01-21', 'jurisdiction': 'US House'},
+             {'date': '2026-01-01', 'filed_date': '2026-03-01', 'jurisdiction': 'US House'},
+             {'date': '2026-01-05', 'filed_date': '2026-01-01', 'jurisdiction': 'US House'},     # filed before the trade: dropped
+             {'date': '2026-02-01', 'filed_date': None, 'jurisdiction': 'US Senate'}]
+        r = CC.ptr_calendar(t)['by_jurisdiction']
+        self.assertEqual(r['all']['reports'], 2)
+        self.assertEqual((r['US House']['share_within']['30'], r['US House']['share_within']['90']), (0.5, 1.0))
+
     def test_wilson_and_matrix_counts(self):
         lo, hi = CC.wilson(5, 10)
         self.assertLess(lo, 0.5); self.assertGreater(hi, 0.5)

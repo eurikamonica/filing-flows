@@ -86,6 +86,8 @@
           const fc = (A.filing_calendar || {}).pooled;
           if (fc) {
             const s = fc.share_by_day;
+            const pt = ((A.ptr_calendar || {}).by_jurisdiction || {}).all;
+            if (pt) h += `<p class="sub" style="margin:8px 0 0"><b>Calendar-only baseline (officials' reports):</b> of ${num(pt.reports)} transactions on file, ${pct(pt.share_within['30'])} were filed within 30 days of the trade, ${pct(pt.share_within['45'])} within 45 (the limit), ${pct(pt.share_within['90'])} within 90; median ${num(pt.median_days)} days. A trade-dated picture of officials is history; what was public is what the filing dates allow.</p>`;
             h += `<p class="sub" style="margin:8px 0 0"><b>Calendar-only baseline (13F arrival):</b> of ${num(fc.reports)} quarterly reports, ${pct(s['15'])} were filed within 15 days of the quarter end, ${pct(s['30'])} within 30, ${pct(s['46'])} by day 45 (the deadline), ${pct(s['90'])} by day 90. Any model of “when will new 13F buying become public” has to beat this calendar first.</p>`;
           }
           h += `<details style="margin-top:6px"><summary>Definitions and limits</summary><p class="sub">${esc(A.note || '')} X: ${esc(A.definitions.x)}. Y: ${esc(A.definitions.y.quarter_aligned)} (quarter-aligned); ${esc(A.definitions.y.public_knowledge_asof)} (public as-of). On an axis: net 0 or price 0, its own row, never forced into a quadrant. Populations: ${esc(A.definitions.populations.covered)} (covered); ${esc(A.definitions.populations.all_eligible)}. ${esc(A.definitions.industry_benchmark_note)} Prices: ${esc(A.price_basis || '')}. ${esc((A.sample || {}).note || '')} Built ${esc((A.generated_at || '').slice(0, 10))}.</p></details>`;

@@ -1034,7 +1034,7 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
             views = CC.build_states(crowd['cohort'], ctx['coverage'], crowd['tally'], clock, CC.Prices(root, since), trades)
             legacy = {**crowd['legacy'], '_clock': legacy_clock}
             _write(out_dir / 'hype-history.json', CC.hype_history(views, signals, legacy, universe, stamp))
-            _write(out_dir / 'crowd-transitions.json', CC.audit(views, crowd['tally'], ctx['coverage'], stamp))
+            _write(out_dir / 'crowd-transitions.json', CC.audit(views, crowd['tally'], ctx['coverage'], stamp, trades))
         except Exception as exc:
             errors.append(f'hype history: {exc}')
     # 4.19: the President's 278-T trades (OCR'd by the officials runs) and who holds whom
