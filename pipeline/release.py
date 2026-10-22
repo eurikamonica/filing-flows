@@ -20,7 +20,7 @@ DASHES = {"—", "–", "-", "−", "--", "— —", "*"}
 # label patterns (labels are lower-cased, footnote marks and punctuation normalised first)
 P = {
     "revenue": r"^(total )?(net )?(revenues?|sales|net sales|net revenues?)(,? net)?$|^total (net )?(revenues?|sales)$"
-               r"|^(total )?(net )?operating revenues?$"
+               r"|^(total )?(net )?operating revenues?$|^(net )?sales and other (operating )?revenues?$"
                r"|^(net )?sales and (other )?operating revenues?$|^(total )?revenues? from contracts with customers$"
                r"|^total net sales and revenues?$|^revenues? and other income$",
     "cor": r"^(total )?cost of (net )?(revenues?|sales|goods sold|products sold|products and services sold|net sales)(,? net)?$"
