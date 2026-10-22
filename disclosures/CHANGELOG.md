@@ -8,7 +8,11 @@ specific of SIC4, SIC3, SIC2 or the site sector with at least five other compani
 it, weighted by the log of revenue reported by each week. The RRG gains “Companies against: their industry without
 themselves”: each company against its leave-one-out industry, and each of those industries against SPY, on one chart.
 `chaos-rrg.json` `transitions.dual` describes, by where the industry stood against SPY and the company against its
-industry, where the company was 1, 4 and 13 weeks later (descriptive only). Membership is today's companies.
+industry, where the company was 1, 4 and 13 weeks later (descriptive only). Membership is today's companies. A member
+counts in a week only while liquid (≥ $3, ≥ $10M weekly dollar volume over 13 weeks): Experiment 1 (`notes/dual-rrg/`)
+showed that against all members an industry's trend mostly measured illiquid members running further than liquid
+ones; its pre-registered "second layer adds information" result does not survive a liquid-peer benchmark (post-hoc
+check, reported as such).
 
 ## RRG: the mechanical baseline and quadrant transitions (research specification v5, P1-05)
 
