@@ -28,7 +28,11 @@ On a company page's **Posts** tab, the **Compose** box ticks angles (today's mov
 
 ## Limits and checks
 
-- NF4 double quantization, BF16 compute, 36 decoder blocks on the GPU. Embeddings and output head reside in RAM and Accelerate stages them on the GPU for execution. This is explicit offload, not full CPU-only inference.
+- NF4 double quantization, BF16 compute, 36 decoder blocks on the GPU. The layout is picked from the card's memory (`--mode auto`; the console prints it):
+  - `gpu` (10 GB and more): everything on the card.
+  - `lean` (smaller cards such as a 6 GB RTX 3050): the output head is NF4 as well and stays on the card (about 4.5 GB in all); the 1.2 GB embedding table stays in RAM and only the rows of the tokens are looked up and sent to the card. A forward pass at load checks the layout; if it fails, the companion falls back to `offload`.
+  - `offload` (the earlier layout): embeddings and output head in RAM, staged on the GPU by Accelerate at every generated token — about 2.4 GB copied per token, so answers take minutes. The console warning "input_ids is on cuda, whereas the model is on meta" belongs to this layout.
+- Each request prints its token count and speed in the console ("Done: 120 tokens in 9.8 s").
 - Greedy decoding, thinking disabled, batch one, at most 192 output tokens and a 90-second generation budget (checked between generation iterations). Full input plus output budget is limited to 2048 tokens. Overlength examples fail explicitly; gold evidence is not cut mid-passage.
 - The interface ranks complete website summaries/chart values/excerpts by literal query terms. It sends at most three passages and 3600 text characters. It does not fetch original PDFs, OCR, full notes or arbitrary URLs.
 - JSON schema, supplied source IDs and exact quote substrings are checked. These checks do not prove that the answer follows from the quote, that a website label matches the original SEC document, or that arithmetic is correct. Review the linked filing and use deterministic calculations.
