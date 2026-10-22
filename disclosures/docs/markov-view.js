@@ -135,7 +135,11 @@
     const P = window.Plotly, K = colors(box), p = mk.model;
     const cfg = { displaylogo: false, responsive: true, modeBarButtonsToRemove: ['toImage', 'lasso2d', 'select2d'] };
     const scale = [[0, K.bad], [0.5, K.steady], [1, K.good]];
-    const lay = (extra) => Object.assign({ paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { size: 11, color: K.ink },
+    // hover labels in the page's own colours (card background, ink text, a hairline border), readable in light and dark
+    // themes alike; Plotly's default is white text on the colour of the point, which vanishes on a light page
+    const solid = /^#|^rgb\(/.test(K.bg) ? K.bg : '#ffffff';
+    const hoverlabel = { bgcolor: solid, bordercolor: K.mute, font: { color: K.ink, size: 12 }, align: 'left' };
+    const lay = (extra) => Object.assign({ paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { size: 11, color: K.ink }, hoverlabel,
       margin: { l: 56, r: 16, t: 8, b: 44 }, xaxis: { gridcolor: K.line, color: K.mute }, yaxis: { gridcolor: K.line, color: K.mute } }, extra);
     const ax = (title, fmt) => ({ title: { text: title, font: { size: 11 } }, gridcolor: K.line, zerolinecolor: K.line, color: K.mute, backgroundcolor: 'rgba(0,0,0,0)', tickformat: fmt || '' });
     const scene = (xt, yt, zt, xf, yf) => ({ margin: { l: 0, r: 0, t: 0, b: 0 }, scene: { xaxis: ax(xt, xf), yaxis: ax(yt, yf), zaxis: ax(zt),
