@@ -1971,7 +1971,7 @@ def render(store, out, stars=frozenset()):
         print(f"::warning::customer network not built: {e}")
         traceback.print_exc()
     try:  # Gamma is generated from all SIC industries, independently of thematic chains.
-        gamma.build(store, out, index)
+        gamma.build(store, out, index, usd_recs)
     except Exception as e:
         print(f"::warning::gamma SIC industry data not built: {e}")
         traceback.print_exc()

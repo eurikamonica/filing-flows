@@ -118,15 +118,24 @@ def _company_name_key(label):
     return re.sub(r"\s+", " ", re.sub(r"\b(inc|incorporated|corp|corporation|company|co|limited|ltd|plc|the)\b", "", s)).strip()
 
 
-def build(store, out, index):
-    """Cover every SIC code represented in the rendered company universe."""
+def _usd(p, co):
+    """The index's revenue in dollars: a foreign filer's own currency converted at its rate, or nothing."""
+    v = p.get("revenue")
+    if v is None or (p.get("currency") or "USD") == "USD":
+        return v
+    conv = getattr(co, "conv", None)
+    return v * conv if conv and conv != 1 else None
+
+
+def build(store, out, index, usd_recs=None):
+    """Cover every SIC code represented in the rendered company universe. usd_recs: foreign filers' dollar records."""
     os.makedirs(os.path.join(out, "gamma"), exist_ok=True)
     industry = defaultdict(list)
     for p in index:
         sic = str(p.get("sic") or "").strip().zfill(4)
         if not re.fullmatch(r"\d{4}", sic) or sic == "0000":
             continue
-        co = chains.Co(p["cik"], store.company(p["cik"]), ticker=p.get("ticker"))
+        co = chains.Co(p["cik"], store.company(p["cik"]), (usd_recs or {}).get(p["cik"]), ticker=p.get("ticker"))
         rows = _growth(co.history("revenue"))
         if not rows:
             continue
@@ -135,7 +144,7 @@ def build(store, out, index):
         industry[sic].append({"cik": p["cik"], "ticker": p.get("ticker") or "",
                               "name": p.get("name") or "", "sic": sic,
                               "sector": p.get("sector") or sectors.sector_of(sic),
-                              "revenue_usd": p.get("revenue"), "end": latest["end"],
+                              "revenue_usd": _usd(p, co), "end": latest["end"],
                               "quarter": latest["quarter"], "history": rows[-24:]})
     from . import custnet
     all_named_edges = custnet.edges_for_gamma(out)            # every annual report's named customers (custnet.py)

@@ -1,0 +1,55 @@
+name: Share pictures (og:image)
+# Each company's earnings Sankey and each chain's money flow as the picture of its page's link card (pipeline/ogimg.py).
+# Drawn from the published site, kept on the "media" branch under og/; the site build reads og/index.json (scripts/seo.py).
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Pictures to draw in this run"
+        default: "300"
+permissions:
+  contents: write          # the "media" branch
+concurrency:
+  group: og-images
+  cancel-in-progress: false
+jobs:
+  draw:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            pipeline
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium || echo 'using the runner’s Google Chrome'
+      - name: Draw the pictures that changed and save them on the media branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          site="${SITE_URL:-https://filing-flows.com/}"
+          rm -rf media-branch && mkdir media-branch && cd media-branch
+          git init -q -b media
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 origin media 2>/dev/null && git checkout -q media || true
+          mkdir -p og
+          cd ..
+          python -m pipeline.ogimg --site "$site" --out media-branch/og --limit "${{ inputs.limit || 300 }}" \
+            --base "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/og"
+          cd media-branch
+          git add og
+          git -c user.name=filing-flows -c user.email=actions@users.noreply.github.com commit -qm "share pictures $(date -u +%Y-%m-%dT%H:%MZ)" || { echo "nothing new"; exit 0; }
+          for attempt in 1 2 3 4; do                 # the posting jobs write to the media branch too
+            if git push -q origin HEAD:media; then exit 0; fi
+            sleep $((attempt * 5))
+            git fetch -q --depth 20 origin media
+            git -c user.name=filing-flows -c user.email=actions@users.noreply.github.com rebase -q -X theirs FETCH_HEAD || { git rebase --abort; exit 1; }
+          done
+          echo "::error::media branch push failed"; exit 1

@@ -67,13 +67,13 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="icon" href="{up}favicon.svg" type="image/svg+xml"><link rel="icon" href="{up}favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="{up}apple-touch-icon.png">
 <link rel="stylesheet" href="{up}styles.css"><link rel="stylesheet" href="{up}seo.css">{ld}
-</head><body><header class="seo-top"><a class="seo-brand" href="{up}">Filing Flows</a><nav><a href="{up}#home">Latest</a><a href="{up}c/">Companies</a><a href="{up}#sectors">Sectors</a><a href="{up}chains/">Chains</a><a href="{up}disclosures/">Disclosures</a></nav></header>
+</head><body><header class="seo-top"><a class="seo-brand" href="{up}">Filing Flows</a><nav><a href="{up}#home">Latest</a><a href="{up}c/">Companies</a><a href="{up}gamma/">Industries</a><a href="{up}chains/">Themes</a><a href="{up}model/">Model</a><a href="{up}disclosures/">Signals</a><a href="{up}#method">Method</a></nav></header>
 <main class="seo">{body}</main>
 <footer class="seo-foot">Figures read automatically from SEC filings (XBRL and earnings releases); errors are possible. Not investment advice. <a href="{up}">filing-flows.com</a></footer>
 </body></html>"""
 
 
-def company_page(c, ix_entry, peers, sector_name, base, depth=2):
+def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None):
     p, quarters = c["profile"], c.get("quarters") or []
     q = quarters[0] if quarters else {}
     h = q.get("headline") or {}
@@ -140,7 +140,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2):
             {"@type": "ListItem", "position": 1, "name": "Filing Flows", "item": base + "/"},
             {"@type": "ListItem", "position": 2, "name": sector_name, "item": f"{base}/sector/{p.get('sector') or 'other'}/"},
             {"@type": "ListItem", "position": 3, "name": who, "item": url}]}]}
-    return url, page(title, desc, url, body, depth, base + "/og.png", ld)
+    return url, page(title, desc, url, body, depth, image or base + "/og.png", ld)
 
 
 def list_page(title, desc, url, intro, items, depth):
@@ -151,7 +151,7 @@ def list_page(title, desc, url, intro, items, depth):
     return page(f"{title} | Filing Flows", desc, url, body, depth, url.split("/c/")[0].split("/sector/")[0] + "/og.png")
 
 
-def chain_pages(data_dir, out_dir, base):
+def chain_pages(data_dir, out_dir, base, images=None):
     """chains/<id>/: one page per supply chain or theme (pipeline/chains.py), with the app's chart a click away."""
     try:
         ix = json.load(open(os.path.join(data_dir, "chains", "index.json"), encoding="utf-8"))
@@ -178,7 +178,7 @@ def chain_pages(data_dir, out_dir, base):
         desc = f"{d['name']}: where the money flows, from SEC filings. {lead}"[:300]
         os.makedirs(os.path.join(out_dir, "chains", c["id"]), exist_ok=True)
         open(os.path.join(out_dir, "chains", c["id"], "index.html"), "w", encoding="utf-8").write(
-            page(f"{d['name']} — money flows | Filing Flows", desc, url, body, 2, base + "/og.png"))
+            page(f"{d['name']} — money flows | Filing Flows", desc, url, body, 2, (images or {}).get(f"chain-{c['id']}") or base + "/og.png"))
         urls.append((url, (d.get("generated") or "")[:10] or None))
         cards.append(f"<li><a href='{e(c['id'])}/'>{e(d['name'])}</a> <span class='muted'>{e(d.get('theme') or '')} · {e(lead)}</span></li>")
     if cards:
@@ -193,10 +193,151 @@ def chain_pages(data_dir, out_dir, base):
     return urls
 
 
+def _load(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def qname(q):
+    """'2026Q3' -> 'Q3 2026'."""
+    m = re.match(r"(\d{4})Q(\d)", str(q or ""))
+    return f"Q{m.group(2)} {m.group(1)}" if m else str(q or "")
+
+
+def gamma_pages(data_dir, out_dir, base, slugs, images=None):
+    """gamma/<sic>/: one page per SEC industry (SIC) - its growth distribution, companies, the customers and suppliers
+    its companies name, and the growth model's forecast; gamma/: every industry by sector."""
+    ix = _load(os.path.join(data_dir, "gamma", "index.json"))
+    if not ix:
+        return []
+    names = ix.get("sector_names") or {}
+    urls, by_sector = [], {}
+    for r in ix.get("industries") or []:
+        d = _load(os.path.join(data_dir, "gamma", f"{r['sic']}.json"))
+        if not d or not d.get("companies"):
+            continue
+        sic, nm = d["sic"], d["name"]
+        url = f"{base}/gamma/{sic}/"
+        sm = (d.get("summary") or {}).get("yoy") or {}
+        mdl = _load(os.path.join(data_dir, "model", "i", f"{sic}.json")) or {}
+        fc = (mdl.get("fc") or [None])[0]
+        rel = d.get("relationships") or []
+        sector = names.get(d.get("sector"), d.get("sector") or "")
+        n = len(d["companies"])
+        period = qname(d.get("period"))
+        med = f"{100 * sm['median']:+.0f}%" if sm.get("median") is not None else None
+        lead = (f"{n} companies filing with the SEC under SIC {sic}." + (f" Median revenue growth {med} year on year in {period}"
+                f" (middle half {100 * sm['p25']:+.0f}% to {100 * sm['p75']:+.0f}%, {sm['n']} companies)." if med and sm.get("p25") is not None else "")
+                + (f" The growth model expects the industry's combined revenue to grow {100 * fc[1]:+.0f}% in {qname(fc[0])}." if fc else "")
+                + (f" {len(rel)} customer or supplier links named in annual reports." if rel else ""))
+        title = f"{nm} (SIC {sic}): revenue growth{', ' + med + ' Y/Y' if med else ''} — {n} companies | Filing Flows"
+        tiles = "".join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (
+            ("Companies", str(n)), ("Median growth Y/Y", med or "—"),
+            ("Middle half", f"{100 * sm['p25']:+.0f}% to {100 * sm['p75']:+.0f}%" if sm.get("p25") is not None else "—"),
+            ("Industry revenue, next quarter", f"{100 * fc[1]:+.0f}% Y/Y ({qname(fc[0])}, model)" if fc else "—")))
+        rows = []
+        for m in sorted(d["companies"], key=lambda m: -(m.get("revenue_usd") or 0))[:60]:
+            cur = m.get("current") or {}
+            s = (m.get("ticker") or "").lower().replace(".", "-")
+            who = (f"<a href='../../c/{e(s)}/'>{e(m.get('ticker'))}</a> " if s in slugs else (e(m.get("ticker") or "") + " ")) + e(display_name(m.get("name")))
+            rows.append(f"<tr><td>{who}</td><td class='num'>{e(money(m.get('revenue_usd')))}</td><td class='num'>{e(pct(100 * cur['yoy']) if cur.get('yoy') is not None else '—')}</td>"
+                        f"<td>{e(str(m.get('stage') or '').replace('unknown', '—'))}</td></tr>")
+        links = "".join(f"<li>{e(x.get('supplier'))} → {e(x.get('customer'))}"
+                        + (f" <span class='muted'>{100 * x['share']:.0f}% of the supplier's revenue" + (f", {money(x['value_usd'])}" if x.get("value_usd") else "") + "</span>" if x.get("share") else "")
+                        + "</li>" for x in sorted(rel, key=lambda x: -(x.get("value_usd") or 0))[:25])
+        fct = "".join(f"<tr><td>{e(qname(q))}</td><td class='num'>{100 * g:+.1f}%</td><td class='num'>{e(money(rv))}</td><td class='num'>{e(money(lo))} – {e(money(hi))}</td></tr>"
+                      for q, g, rv, lo, hi, *_ in (mdl.get("fc") or [])) if mdl.get("fc") else ""
+        body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Industries</a> › {e(sector)} › {e(nm)}</p>"
+                f"<h1>{e(nm)} <span class='muted'>SIC {e(sic)}</span></h1><p class='lead'>{e(lead)}</p><div class='seo-tiles'>{tiles}</div>"
+                f"<p><a class='seo-cta' href='../../#gamma-{e(sic)}'>Open the industry: growth distribution, money flow, network →</a></p>"
+                + (f"<h2>Who sells to whom</h2><p class='muted'>Customers and suppliers named in the companies' annual reports; the share is of the supplier's revenue.</p><ul class='seo-list'>{links}</ul>" if links else "")
+                + (f"<h2>Growth model</h2><p class='muted'>Industry revenue, the same companies year on year; 80% ranges. Fitted on SEC filings and tested out of sample (<a href='../../model/'>how</a>).</p>"
+                   f"<div class='tbl-wrap'><table><thead><tr><th>Quarter</th><th class='num'>Growth Y/Y</th><th class='num'>Revenue</th><th class='num'>80% range</th></tr></thead><tbody>{fct}</tbody></table></div>" if fct else "")
+                + f"<h2>Companies</h2><div class='tbl-wrap'><table><thead><tr><th>Company</th><th class='num'>Quarterly revenue</th><th class='num'>Y/Y</th><th>Stage</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>"
+                + f"<p class='muted'>Growth from positive, comparable quarterly revenue as filed; industries are SEC Standard Industrial Classification codes. Data {e(fdate((d.get('generated') or '')[:10]))}.</p>")
+        os.makedirs(os.path.join(out_dir, "gamma", sic), exist_ok=True)
+        img = (images or {}).get(f"gamma-{sic}") or base + "/og.png"
+        open(os.path.join(out_dir, "gamma", sic, "index.html"), "w", encoding="utf-8").write(page(title, lead[:300], url, body, 2, img))
+        urls.append((url, (d.get("generated") or "")[:10] or None))
+        by_sector.setdefault(sector, []).append((nm, sic, n, med))
+    if by_sector:
+        parts = []
+        for sname in sorted(by_sector):
+            lis = "".join(f"<li><a href='{e(sic)}/'>{e(nm)}</a> <span class='muted'>SIC {e(sic)} · {n} companies{' · median ' + med + ' Y/Y' if med else ''}</span></li>"
+                          for nm, sic, n, med in sorted(by_sector[sname]))
+            parts.append(f"<h2>{e(sname)}</h2><ul class='seo-list'>{lis}</ul>")
+        body = ("<p class='crumbs'><a href='../'>Filing Flows</a> › Industries</p><h1>Every industry, by SEC SIC code</h1>"
+                "<p class='lead'>Revenue growth across each industry's companies, the customers and suppliers they name, and a growth "
+                "forecast, from SEC filings.</p><p><a class='seo-cta' href='../#gamma'>Open the industries →</a></p>" + "".join(parts))
+        open(os.path.join(out_dir, "gamma", "index.html"), "w", encoding="utf-8").write(
+            page("Industries by SEC SIC code: revenue growth and who sells to whom | Filing Flows",
+                 "Every SEC industry (SIC code): median revenue growth, the companies, named customers and suppliers, and a growth forecast.",
+                 f"{base}/gamma/", body, 1, base + "/og.png"))
+        urls.append((f"{base}/gamma/", None))
+    return urls
+
+
+def model_page(data_dir, out_dir, base):
+    """model/: the growth model at four levels - what it is, how it scored out of sample, and its sector and theme forecasts."""
+    ix = _load(os.path.join(data_dir, "model", "index.json"))
+    if not ix:
+        return []
+    sc = ix.get("scores") or {}
+    score_rows = "".join(
+        f"<tr><td>{e(lvl.capitalize())}</td><td class='num'>{s.get('entities')}</td><td class='num'>{100 * s['uncond']:.1f}%</td>"
+        f"<td class='num'>{100 * s['naive']:.1f}%</td><td class='num'>{s.get('beats_naive')}</td></tr>"
+        for lvl, s in sc.items() if s.get("uncond") is not None)
+
+    def fc_rows(items, link):
+        out = []
+        for x in items:
+            fc = (x.get("fc") or [None])[0]
+            if not fc:
+                continue
+            out.append(f"<tr><td>{link(x)}</td><td class='num'>{100 * x['g_now']:+.1f}%</td><td class='num'>{100 * fc[1]:+.1f}% <span class='muted'>{e(qname(fc[0]))}</span></td></tr>"
+                       if x.get("g_now") is not None else "")
+        return "".join(out)
+    sectors = fc_rows(sorted(ix.get("sectors") or [], key=lambda x: -(x.get("rev_ttm") or 0)), lambda x: e(x["name"]))
+    themes = fc_rows([x for x in ix.get("concepts") or [] if x.get("kind") == "chain"],
+                     lambda x: f"<a href='../chains/{e(x['id'])}/'>{e(x['name'])}</a>")
+    head = "<thead><tr><th></th><th class='num'>Latest Y/Y</th><th class='num'>Next quarter</th></tr></thead>"
+    body = ("<p class='crumbs'><a href='../'>Filing Flows</a> › Growth model</p><h1>One growth model, four levels</h1>"
+            "<p class='lead'>Each company's revenue growth, each industry's, each sector's and each theme's is modelled the same way: this "
+            "quarter's year-on-year growth = a constant + ρ × last quarter's + γ × its parent's growth, fitted on SEC filings with a prior "
+            "taken from its peers, so a company with few quarters leans on its industry. Every fit is tested out of sample against "
+            "“growth stays what it was”.</p><p><a class='seo-cta' href='../#model'>Open the model →</a></p>"
+            f"<h2>How it scored, one quarter ahead</h2><div class='tbl-wrap'><table><thead><tr><th>Level</th><th class='num'>Fits</th><th class='num'>Model error</th>"
+            f"<th class='num'>Naive error</th><th class='num'>Model better</th></tr></thead><tbody>{score_rows}</tbody></table></div>"
+            f"<p class='muted'>Median error of next-quarter revenue. Data {e(fdate((ix.get('generated') or '')[:10]))}, through {e(qname(ix.get('asof')))}.</p>"
+            f"<h2>Sectors</h2><div class='tbl-wrap'><table>{head}<tbody>{sectors}</tbody></table></div>"
+            + (f"<h2>Themes and supply chains</h2><div class='tbl-wrap'><table>{head}<tbody>{themes}</tbody></table></div>" if themes else ""))
+    os.makedirs(os.path.join(out_dir, "model"), exist_ok=True)
+    open(os.path.join(out_dir, "model", "index.html"), "w", encoding="utf-8").write(page(
+        "Revenue growth forecasts for every sector, industry and theme | Filing Flows",
+        "A revenue growth model fitted on SEC filings for every company, SIC industry, sector and trading theme, with out-of-sample scores.",
+        f"{base}/model/", body, 1, base + "/og.png"))
+    return [(f"{base}/model/", (ix.get("generated") or "")[:10] or None)]
+
+
+def og_images(base):
+    """{page key: image URL} for pages with their own share picture (pipeline/ogimg.py writes og/index.json on the
+    "media" branch; the build fetches it to OG_MANIFEST). Keys: c-<cik>, chain-<id>, gamma-<sic>."""
+    path = os.environ.get("OG_MANIFEST")
+    m = _load(path) if path else None
+    if not m:
+        return {}
+    root = (m.get("base") or "").rstrip("/")
+    return {k: f"{root}/{v['file']}" + (f"?v={v['v']}" if v.get("v") else "") for k, v in (m.get("images") or {}).items() if root and v.get("file")}
+
+
 def write_pages(data_dir, out_dir, base):
     base = (base or "").rstrip("/")
     if not base:
         return 0
+    images = og_images(base)
     ix = json.load(open(os.path.join(data_dir, "index.json"), encoding="utf-8"))
     rows = ix["companies"] if isinstance(ix, dict) else ix
     names = ix.get("sector_names") or {}
@@ -214,7 +355,7 @@ def write_pages(data_dir, out_dir, base):
         except (OSError, ValueError):
             continue
         peers = sorted((x for x in by_industry.get(r.get("sic") or r.get("industry"), []) if x["cik"] != cik), key=lambda x: -(x.get("revenue") or 0))[:8]
-        url, doc = company_page(c, r, peers, names.get(r.get("sector"), r.get("sector") or "Other"), base)
+        url, doc = company_page(c, r, peers, names.get(r.get("sector"), r.get("sector") or "Other"), base, image=images.get(f"c-{cik}"))
         d = os.path.join(out_dir, "c", slug_for(r))
         os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)
@@ -237,7 +378,9 @@ def write_pages(data_dir, out_dir, base):
             f"{sname} earnings", f"Latest quarterly earnings of {len(items)} {sname} companies as Sankey diagrams: revenue, growth, margins.",
             url, f"{len(items)} {sname} companies by revenue, each with its latest quarter drawn from the SEC filing.", items, 2))
         urls.append((url, None))
-    urls += chain_pages(data_dir, out_dir, base)
+    urls += chain_pages(data_dir, out_dir, base, images)
+    urls += gamma_pages(data_dir, out_dir, base, {slug_for(r) for r in latest.values()}, images)
+    urls += model_page(data_dir, out_dir, base)
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u, mod in urls:
         sm.append(f"<url><loc>{xesc(u)}</loc>" + (f"<lastmod>{xesc(str(mod)[:10])}</lastmod>" if mod else "") + "</url>")

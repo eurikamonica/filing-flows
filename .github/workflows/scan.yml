@@ -146,8 +146,12 @@ jobs:
         timeout-minutes: 7
         run: python -m pipeline.eps_fundamental --store store/eps-fundamental --out _site/data/eps-fundamental
 
+      - name: Share pictures drawn so far (og/index.json on the media branch; pipeline/ogimg.py)
+        run: curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/og/index.json" -o _og.json || echo "no share pictures yet"
+
       - name: Assemble site
         env:                                   # public values (repository variables): the sign-in box on the site
+          OG_MANIFEST: _og.json                          # each page's own share picture, when one is drawn
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}       # optional: shown on the privacy and terms pages
