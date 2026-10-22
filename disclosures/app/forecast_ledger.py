@@ -5,7 +5,9 @@ today's code. The ledger keeps what was actually published:
 
   freeze   the first time an origin (a quarter, a month or a week) appears as the LIVE forecast, its forecasts are written
            to ledger/<freq>.json on the rotation-history branch and never changed again (source "live", with the time and
-           the code version that made them);
+           the code version that made them); a company that joins a live origin later is added with its own first
+           publication time and code (row_published, row_code) and scored apart (summary on_time / late_rows) — older
+           late rows, frozen before row times were kept, show no time rather than an invented one;
   seed     origins from before the ledger existed are filled once from the out-of-sample backtest rows, marked "backtest";
   resolve  when the target period has closed, each forecast gets the actual close and the gaps: forecast change vs actual
            change (points), whether the actual close fell inside the 80% range, whether the direction was right, and on
@@ -91,6 +93,11 @@ def freeze(ledger, entries, live_origin, sha, made_at):
                 new = {t: r for t, r in entries[o]['rows'].items() if t not in e['rows']}   # existing ones never change
                 if new:
                     e['rows'].update(new); e['late'] = sorted(set(e.get('late', [])) | set(new))
+                    # each late row keeps its OWN first publication (spec v5 §1.1, §13.1): it never inherits the batch's
+                    # made_at, and it is scored apart from the rows published with the origin
+                    rp, rc = e.setdefault('row_published', {}), e.setdefault('row_code', {})
+                    for t in new:
+                        rp.setdefault(t, made_at); rc.setdefault(t, sha)
             continue
         src = 'live' if o == live_origin else ('backtest' if not ledger.get('started') or o < ledger['started'] else None)
         if src is None:                       # an origin that appeared after the ledger began but was never live: skip
@@ -256,9 +263,15 @@ def update(root, sha=None, verbose=True):
         _write(led / f'{freq}.json', ledger)
         idx, det = [], {}
         for e in ledger['origins']:
-            rows, s = (score_rrg if freq == 'w' else score_calendar)(e)
+            scorer = score_rrg if freq == 'w' else score_calendar
+            rows, s = scorer(e)
+            late = set(e.get('late', []))
+            if late:                                   # headline stays as it was; rows published with the origin apart
+                s['on_time'] = scorer({**e, 'rows': {t: r for t, r in e['rows'].items() if t not in late}})[1]
+                s['late_rows'] = scorer({**e, 'rows': {t: r for t, r in e['rows'].items() if t in late}})[1]
             idx.append({'origin': e['origin'], 'target': e['target'], 'source': e['source'], 'made_at': e.get('made_at'),
-                        'code': (e.get('code') or '')[:12] or None, 'late': len(e.get('late', [])), 'summary': s})
+                        'code': (e.get('code') or '')[:12] or None, 'late': len(late), 'summary': s,
+                        'late_published': {t: (e.get('row_published') or {}).get(t) for t in sorted(late)} or None})
             ng, na = (6, 3) if freq == 'w' else (5, 1)
             det[e['origin']] = {t: list(r) + (rows.get(t) or [None] * ng) + (e['outcome'].get(t) or [None] * na)[:na]
                                 for t, r in e['rows'].items()}

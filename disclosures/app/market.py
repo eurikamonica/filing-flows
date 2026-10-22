@@ -14,7 +14,11 @@ by-ticker-quarters.json the same quarters per ticker with buyers, sellers, estim
                       (the company pages' quarter-by-quarter chart, through stage-public.py)
 signals.json          one row per ticker joining the three: institutional crowding, officials' trades, price momentum
                       (daily closes), with transparent tags and a heat score. The Filing Flows publish step adds the
-                      latest earnings figures (stage-public.py --site-data).
+                      latest earnings figures (stage-public.py --site-data). Its 'clock' block labels the original
+                      Hype map as the mixed-clock legacy snapshot.
+hype-history.json     the Hype map in clock-separated views (crowd_clocks.py): quarter-aligned and public as of the 13F
+                      deadline, comparable managers only, per stock and quarter
+crowd-transitions.json the descriptive quarter-to-quarter transition audit of those views (crowd_clocks.audit)
 
 Dollar flows: quantity change × the median quarter-end price that all reporting managers imply for the security
 (value ÷ shares), which is robust to the occasional filer reporting in thousands. Quarter-end disclosures are not
@@ -33,6 +37,7 @@ import insiders as INS
 import senate as SEN
 import crossholdings as XH
 import president as PRES
+import crowd_clocks as CC
 
 TOP = 40
 FUND_TYPES = {'ETP', 'Open-End Fund', 'Closed-End Fund', 'Fund of Funds', 'Unit', 'Equity WRT', 'Right'}
@@ -148,11 +153,15 @@ NICE_SPLITS = (2, 3, 4, 5, 6, 8, 10, 15, 20, 25, 30, 40, 50, 1 / 2, 1 / 3, 1 / 4
                1 / 40, 1 / 50, 3 / 2, 5 / 4)
 
 
-def scan_13f(root, keep_after, opts=None, see=None):
+def scan_13f(root, keep_after, opts=None, see=None, clock=None, tally=None):
     """One pass over every cached manager, keeping per (period, cusip) the holder count, price samples (value ÷ shares)
-    and each manager's quantity change (shares, prior shares). Only periods after keep_after are kept. Returns
-    (raw, prices, coverage, managers); summarise() turns raw into flows after split detection. When opts is a dict it
-    is filled with each manager's option positions: opts[manager index][period] = {(cusip, 'PUT'|'CALL'): [shares, usd, issuer]}."""
+    and each manager's quantity change (shares, prior shares, manager index, pair bucket). Only periods after keep_after
+    are kept. Returns (raw, prices, coverage, managers); summarise() turns raw into flows after split detection. When opts
+    is a dict it is filled with each manager's option positions: opts[manager index][period] = {(cusip, 'PUT'|'CALL'):
+    [shares, usd, issuer]}. With a crowd_clocks.Clock (and Tally), each change also carries the first checkpoint from
+    which it formed a comparable pair (−1: never), and tally.cells collects unchanged comparable holders, holders per
+    checkpoint of the next quarter and reports as they stood before later amendments — the inputs of the clock-separated
+    Hype map (crowd_clocks.py)."""
     raw = defaultdict(lambda: defaultdict(lambda: {'issuer': None, 'holders': 0, 'moves': []}))
     samples = defaultdict(lambda: defaultdict(list))
     coverage = defaultdict(int)
@@ -170,12 +179,20 @@ def scan_13f(root, keep_after, opts=None, see=None):
                 see(m)
             except Exception:
                 pass
+        if clock is not None:                   # crowd_clocks: each report as it stood at each checkpoint
+            pairs, held = CC.manager_pairs(m, clock, tally)
+            CC.record_versions(tally, pairs, held, idx, keep_after)
+        else:
+            pairs, held = {}, {}
         for s in m.get('snapshots', []):
             period = s.get('period') or ''
             if not s.get('complete') or period <= keep_after:
                 continue
             coverage[period] += 1
             per, smp = raw[period], samples[period]
+            b = next((lo for lo, hi, ch in pairs.get(period, ()) if ch is None), -1)       # final pair: from checkpoint b on
+            hb = next((lo for lo, hi, ps in held.get(period, ()) if ps is None), None)
+            cells = tally.cells[period] if clock is not None else None
             for p in s.get('positions', []):
                 if opts is not None and p.get('put_call') in ('PUT', 'CALL') and p.get('cusip'):
                     book = opts.setdefault(idx, {}).setdefault(period, {})
@@ -187,14 +204,20 @@ def scan_13f(root, keep_after, opts=None, see=None):
                 st = per[p.get('cusip')]
                 st['issuer'] = st['issuer'] or p.get('issuer')
                 st['holders'] += 1
+                if hb is not None and (tally.want is None or p.get('cusip') in tally.want):
+                    cells[p.get('cusip')]['ph'][hb] += 1
                 if p.get('shares') and p.get('value_usd') and len(smp[p['cusip']]) < 31:
                     smp[p['cusip']].append(p['value_usd'] / p['shares'])
             for ch in s.get('changes', []):
-                if not ch.get('delta_shares') or ch.get('put_call') != 'NONE' or ch.get('share_type') != 'SH':
+                if ch.get('put_call') != 'NONE' or ch.get('share_type') != 'SH':
+                    continue
+                if not ch.get('delta_shares'):
+                    if b >= 0 and ch.get('shares') and (tally.want is None or ch.get('cusip') in tally.want):
+                        cells[ch.get('cusip')]['same'][b] += 1     # an unchanged comparable holder (crowd_clocks)
                     continue
                 st = per[ch.get('cusip')]
                 st['issuer'] = st['issuer'] or ch.get('issuer')
-                st['moves'].append((ch.get('shares') or 0, ch.get('prior_shares') or 0, idx))
+                st['moves'].append((ch.get('shares') or 0, ch.get('prior_shares') or 0, idx, b))
     prices = {p: {c: statistics.median(v) for c, v in per.items() if v} for p, per in samples.items()}
     return raw, prices, dict(coverage), managers
 
@@ -208,7 +231,7 @@ def _keep(top, shares, idx, n=3):
 def split_factor(moves, p_now, p_prev):
     """k when the security split k-for-1 (or reverse-split) between the two quarter-ends, else 1: most continuing
     holders' quantities moved by the same nice ratio and the implied price moved the opposite way."""
-    ratios = sorted(s / ps for s, ps, _ in moves if s and ps)
+    ratios = sorted(s / ps for s, ps, *_ in moves if s and ps)
     if len(ratios) < 3:
         return 1
     med = ratios[len(ratios) // 2]
@@ -231,7 +254,7 @@ def conversions(per):
     (cusip, manager) moves to leave out of the flows and {cusip: the cusip it was converted from / to}."""
     exiters, newcomers = defaultdict(set), defaultdict(set)
     for c, st in per.items():
-        for shares, prior, idx in st['moves']:
+        for shares, prior, idx, *_ in st['moves']:
             if prior and not shares:
                 exiters[c].add(idx)
             elif shares and not prior:
@@ -262,21 +285,24 @@ def conversions(per):
     return skip, converted
 
 
-def summarise(raw, prices, periods_all):
+def summarise(raw, prices, periods_all, skips=None):
     """Per (period, cusip) flows with splits adjusted: add / sold shares, buyers, sellers, new, exits, holders,
-    the largest buyers and sellers, plus flags for securities that first appear (IPO, spin-off, new CUSIP) or vanish."""
+    the largest buyers and sellers, plus flags for securities that first appear (IPO, spin-off, new CUSIP) or vanish.
+    skips, when a dict, receives each period's CUSIP-conversion moves left out (crowd_clocks.cohorts leaves them out too)."""
     out = {}
     order = sorted(periods_all)
     for i, period in enumerate(order):
         prev = order[i - 1] if i else None
         per = {}
         skip, converted = conversions(raw.get(period, {}))
+        if skips is not None:
+            skips[period] = skip
         for c, st in raw.get(period, {}).items():
             k = split_factor(st['moves'], prices.get(period, {}).get(c), prices.get(prev, {}).get(c) if prev else None)
             a = {'issuer': st['issuer'], 'add': 0, 'sold': 0, 'buyers': 0, 'sellers': 0, 'new': 0, 'exits': 0, 'holders': st['holders'],
                  'split': k if k != 1 else None, 'top_buy': [], 'top_sell': [], 'b': set(), 's': set(),
                  'converted': converted.get(c)}
-            for shares, prior, idx in st['moves']:
+            for shares, prior, idx, *_ in st['moves']:
                 if (c, idx) in skip:
                     continue
                 d = shares - prior * k
@@ -387,14 +413,17 @@ def history(summ, prices, periods, cusips):
     return out
 
 
-def build_flows(root, universe, scan=None, opts=None, see=None):
+def build_flows(root, universe, scan=None, opts=None, see=None, clock=None):
     today = dt.datetime.now(dt.timezone.utc).date()
     keep_after = (_quarter_end(today) - dt.timedelta(days=2 * 366)).isoformat()
-    raw, prices, coverage, managers = scan or scan_13f(root, keep_after, opts, see)
+    tally = CC.Tally({c for c, t in universe.cusip_ticker.items() if t and universe.cusip_type.get(c) not in FUND_TYPES}) \
+        if clock is not None else None
+    raw, prices, coverage, managers = scan or scan_13f(root, keep_after, opts, see, clock, tally)
     quarter, ytd, early = pick_periods(coverage)
     if not quarter:
         return None, None
-    summ = summarise(raw, prices, coverage)
+    skips = {}
+    summ = summarise(raw, prices, coverage, skips)
     windows = {'quarter': [quarter]}
     if early:                                            # the quarter being filed now, alone and added to the last full one
         windows['early'] = [early]
@@ -436,6 +465,9 @@ def build_flows(root, universe, scan=None, opts=None, see=None):
     out['history'] = history(summ, prices, hist_periods, listed)
     out['_by_quarter'] = ticker_history(summ, universe, [p for p in sorted(coverage) if coverage[p] >= 10], coverage, prices)
     out['_ctx'] = {'prices': prices, 'coverage': coverage, 'managers': managers, 'quarter': quarter}
+    if clock is not None:                                # the clock-separated Hype map (crowd_clocks.py)
+        out['_ctx']['crowd'] = {'cohort': CC.cohorts(raw, prices, summ, skips, universe, tally), 'tally': tally, 'clock': clock,
+                                'legacy': CC.legacy_series(summ, universe, sorted(coverage))}
     return out, every
 
 
@@ -855,97 +887,6 @@ def build_signals(root, flows_every, trades, universe):
     return rows, {'crowd_net_managers': crowd_cut, 'new_positions': new_cut, 'inflow_usd': inflow_cut, 'outflow_usd': outflow_cut}
 
 
-HYPE_FLAGS = (('crowded_buy', 1), ('new_money', 2), ('big_inflow', 4), ('crowded_exit', 8), ('big_outflow', 16))
-
-
-def price_rows(root, ticker):
-    path = Path(root) / 'cache' / 'prices' / (re.sub(r'[^A-Za-z0-9-]', '_', ticker) + '.json.gz')
-    try:
-        with gzip.open(path, 'rt', encoding='utf-8') as f:
-            return [r for r in json.load(f)['rows'] if r and r[1]]
-    except Exception:
-        return None
-
-
-def close_on(rows, day):
-    """(date, close) of the last close on or before day, or None."""
-    lo, hi = 0, len(rows)
-    while lo < hi:
-        mid = (lo + hi) // 2
-        if rows[mid][0] <= day:
-            lo = mid + 1
-        else:
-            hi = mid
-    return rows[lo - 1] if lo else None
-
-
-def hype_history(root, periods, coverage, detail, signals, universe, today=None):
-    """The Hype map quarter by quarter: per stock and well-covered quarter, net 13F managers (added − cut), new positions,
-    estimated net dollars, the price move during the quarter and over the three months after it (to date for a recent
-    quarter), and which 13F flags it had — the same rules as build_signals with each quarter's own thresholds. A stock
-    is on that quarter's map when it has a flag; one on the map but not the quarter before is new to it."""
-    today = (today or dt.date.today()).isoformat()
-    full = max(coverage or [0])
-    # a quarter counts when it and the quarter before are well covered: changes are against each manager's previous
-    # 13F, so the first well-covered quarter has almost none
-    keep = [i for i, c in enumerate(coverage) if full and i and c >= 0.6 * full and coverage[i - 1] >= 0.6 * full]
-    ps = [periods[i] for i in keep]
-    cuts, flags = [], {}
-    for j, i in enumerate(keep):
-        rows = [(t, v[i]) for t, v in detail.items() if v[i]]
-        nets = sorted((v[0] - v[1] for _, v in rows), reverse=True)
-        usd = sorted((v[2] for _, v in rows), reverse=True)
-        news = sorted((v[4] for _, v in rows), reverse=True)
-        crowd = max(8, nets[min(len(nets) - 1, 60)] if nets else 8)
-        inflow = max(50e6, usd[min(len(usd) - 1, 60)] if usd else 50e6)
-        outflow = min(-50e6, usd[-min(len(usd), 61)] if usd else -50e6)
-        new_cut = max(10, news[min(len(news) - 1, 100)] if news else 10)
-        cuts.append({'crowd_net_managers': crowd, 'new_positions': new_cut, 'inflow_usd': round(inflow), 'outflow_usd': round(outflow)})
-        for t, (b, s_, net_usd, holders, new, exits) in rows:
-            net = b - s_
-            f = ((net >= crowd and b >= 2 * max(1, s_)) * 1 | (new >= new_cut) * 2 | (net_usd >= inflow) * 4
-                 | (-net >= crowd and s_ >= 2 * max(1, b)) * 8 | (net_usd <= outflow) * 16)
-            if f:
-                flags.setdefault(t, [0] * len(keep))[j] = f
-    wanted = set(flags) | {r['ticker'] for r in signals if r.get('f13')}
-    out = {}
-    for t in sorted(wanted):
-        series = detail.get(t)
-        if not series:
-            continue
-        px = price_rows(root, t)
-        q = []
-        for j, i in enumerate(keep):
-            v = series[i]
-            if not v:
-                q.append(None)
-                continue
-            end = ps[j]
-            start = periods[i - 1] if i else (dt.date.fromisoformat(end) - dt.timedelta(days=91)).isoformat()
-            after = (dt.date.fromisoformat(end) + dt.timedelta(days=91)).isoformat()
-            r_in = r_after = None
-            to_date = 0
-            if px:
-                a, b_, c = close_on(px, start), close_on(px, end), close_on(px, min(after, today))
-                if a and b_ and a[0] > (dt.date.fromisoformat(start) - dt.timedelta(days=10)).isoformat():
-                    r_in = round(b_[1] / a[1] - 1, 4)
-                if b_ and c and c[0] > end:
-                    r_after = round(c[1] / b_[1] - 1, 4)
-                    to_date = int(after > today)
-            f = (flags.get(t) or [0] * len(keep))[j]
-            heat = 2 * bool(f & 1) + bool(f & 2) + bool(f & 4)
-            q.append([v[0] - v[1], v[4], v[2], r_in, r_after, f, heat, to_date])
-        if any(x for x in q):
-            out[t] = {'name': universe.name(t) or '', 'q': q}
-    return {'generated_at': now(), 'periods': ps, 'coverage': [coverage[i] for i in keep], 'thresholds': cuts,
-            'fields': ['net_managers', 'new_positions', 'usd_net', 'r_quarter', 'r_after', 'flags', 'heat', 'after_to_date'],
-            'flags': {k: v for k, v in HYPE_FLAGS}, 'rows': out,
-            'note': ('Each quarter: net 13F managers (added − cut) and the price move during the quarter and over the three '
-                     'months after it. A stock is on a quarter\'s map when its 13F flows flag it (crowded buy or exit, new '
-                     'money, big inflow or outflow — each quarter\'s own thresholds); new on the map = not flagged the quarter '
-                     'before. Descriptive, not a forecast or advice.')}
-
-
 TAGS = {
     'crowded_buy': 'Crowded buy: far more 13F managers added than cut this quarter',
     'new_money': 'New money: among the most new positions opened this quarter',
@@ -1028,9 +969,9 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
     opts = {}
     xcfg = (read_json(Path(__file__).resolve().parents[1] / 'config' / 'settings.json', {}) or {}).get('crossholdings') or {}
     gather = XH.Gather(XH.listed_ciks(root), int(xcfg.get('institutions', 12)), universe.cusip_ticker)
-    flows, every = build_flows(root, universe, opts=opts, see=gather.see)
+    clock = CC.clock_from_prices(root)
+    flows, every = build_flows(root, universe, opts=opts, see=gather.see, clock=clock)
     by_quarter, ctx = (flows.pop('_by_quarter', None), flows.pop('_ctx', None)) if flows else (None, None)
-    hype_src = None
     trades, tstats = officials_trades(root, universe, live)
     latest, monitor = latest_reports(root, live, trades)
     signals, cuts = build_signals(root, every, trades, universe)
@@ -1049,7 +990,6 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
                                              'fields': ['buyers', 'sellers', 'new', 'exits', 'usd_net', 'holders'], 'rows': by})
         if by_quarter:
             detail = by_quarter.pop('detail', None)
-            hype_src = (by_quarter['periods'], by_quarter['coverage'], detail)
             _write(out_dir / 'by-ticker-history.json', {'generated_at': stamp, **by_quarter})
             if detail:                            # the company pages' quarter-by-quarter 13F chart (stage-public.py)
                 _write(out_dir / 'by-ticker-quarters.json', {'generated_at': stamp, 'periods': by_quarter['periods'],
@@ -1077,14 +1017,24 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
            'latest_reports': latest, 'monitor': monitor,
            'trades': trades[:4000]}
     _write(out_dir / 'officials-trades.json', off)
+    q_now = (ctx or {}).get('quarter')
+    legacy_clock = {'view_id': 'legacy_snapshot', 'mixed_clock': True, 'report_quarter_end': q_now,
+                    'managers_filed': ((ctx or {}).get('coverage') or {}).get(q_now), 'x': 'net managers, every change on file',
+                    'price_window': 'trailing 63 trading days to each stock\'s latest close', 'latest_close': clock.latest(),
+                    'signals_built_at': stamp, 'price_basis': CC.PRICE_BASIS}
     _write(out_dir / 'signals.json', {'generated_at': stamp, 'quarter': (flows or {}).get('windows', {}).get('quarter', {}).get('label'),
-                                      'thresholds': cuts, 'tags': TAGS, 'rows': signals,
+                                      'clock': legacy_clock, 'thresholds': cuts, 'tags': TAGS, 'rows': signals,
                                       'note': ('Signals are descriptive flags computed from public filings and daily closes — what '
                                                'happened, not what will happen, and never a recommendation.')})
-    # the Hype map over time: each quarter's 13F-flagged stocks with their price moves (hype-view.js)
-    if hype_src and hype_src[2]:
+    # the Hype map over time in clock-separated views (crowd_clocks.py → hype-view.js) and the descriptive transition audit
+    crowd = (ctx or {}).get('crowd')
+    if crowd:
         try:
-            _write(out_dir / 'hype-history.json', hype_history(root, *hype_src, signals, universe))
+            since = (dt.date.fromisoformat(min(ctx['coverage'])) - dt.timedelta(days=200)).isoformat()
+            views = CC.build_states(crowd['cohort'], ctx['coverage'], crowd['tally'], clock, CC.Prices(root, since), trades)
+            legacy = {**crowd['legacy'], '_clock': legacy_clock}
+            _write(out_dir / 'hype-history.json', CC.hype_history(views, signals, legacy, universe, stamp))
+            _write(out_dir / 'crowd-transitions.json', CC.audit(views, crowd['tally'], ctx['coverage'], stamp))
         except Exception as exc:
             errors.append(f'hype history: {exc}')
     # 4.19: the President's 278-T trades (OCR'd by the officials runs) and who holds whom

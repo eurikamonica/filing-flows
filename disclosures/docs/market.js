@@ -91,6 +91,7 @@ function columns(hist){                              // net managers per quarter
  const W=78,H=24,mid=H/2,max=Math.max(1,...v.map(x=>Math.abs(x||0))),bw=Math.floor((W-4)/v.length)-2;
  return `<svg class="mk-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="net managers per quarter: ${v.map(x=>x==null?'n/a':x).join(', ')}"><line x1="0" x2="${W}" y1="${mid}" y2="${mid}" class="mk-axis"/>${v.map((x,i)=>{if(!x)return '';const h=Math.max(1.5,Math.abs(x)/max*(mid-2)),X=2+i*(bw+2);return `<rect x="${X}" y="${x>0?mid-h:mid}" width="${bw}" height="${h}" rx="1.5" class="${x>0?'mk-buy':'mk-sell'}"><title>${esc(hist[i][0])}: ${x>0?'+':''}${x} managers</title></rect>`}).join('')}</svg>`;
 }
+let HYPE_ROWS=null;   // the Signals rows the legacy snapshot draws (filters applied)
 function hypeMap(rows){
  const pts=rows.filter(r=>r.f13&&r.price&&r.price.r3m!=null);
  if(pts.length<3)return empty('Not enough priced securities with 13F changes to map yet.');
@@ -143,7 +144,8 @@ function signals(){
   .sort((a,b)=>({pressure:b.pressure-a.pressure||a.heat-b.heat,flow:((b.f13||{}).usd_net||0)-((a.f13||{}).usd_net||0),r3m:((b.price||{}).r3m??-9)-((a.price||{}).r3m??-9)}[state.ssort]??(b.heat-a.heat||((b.f13||{}).usd_net||0)-((a.f13||{}).usd_net||0))));
  const n=t=>all.filter(r=>r.tags.includes(t)).length;
  out+=`<div class="metrics">${kpi('Heat 3 or more',fmt(all.filter(r=>r.heat>=3).length),'Three or more buying-side signals at once')}${kpi('Crowded buys',fmt(n('crowded_buy')),d.quarter||'')}${kpi('Insider clusters',fmt(n('insider_cluster')),'3+ insiders bought within 30 days (Form 4)')}${kpi('Officials buying',fmt(n('officials_buying')),'Purchases reported in the last 90 days')}</div>`;
- out+=`<div class="panel"><h3>Hype map</h3><p class="sub">Each dot is a stock its 13F flows flagged in the chosen quarter: how many more managers added than cut it (→), against its price move (↑) during the quarter or over the three months after. Top-right: money and price agree. Bottom-right: managers buying into a fall. Ringed: new on the map that quarter; lines: where a stock moved from quarter to quarter.</p>${window.HypeView?'<div id="hype-live"></div>':hypeMap(rows)}</div>`;   // hype-view.js; the one-quarter map if it did not load
+ HYPE_ROWS=rows;
+ out+=`<div class="panel"><h3>Hype map</h3><p class="sub">How many more 13F managers added than cut a stock (→) against its price move (↑). Top-right: money and price agree; bottom-right: managers buying into a fall. Three views, each with one clock: the <b>legacy snapshot</b> (the original map — the latest report quarter against the last three months, mixed clocks), <b>quarter-aligned</b> (the same quarter on both axes, retrospective) and <b>public as of the 13F deadline</b> (only what was filed by then, with what the stock did next). Ringed: new on the map; lines: one stock's path within a view.</p>${window.HypeView?'<div id="hype-live"></div>':hypeMap(rows)}</div>`;   // hype-view.js; the original map alone if it did not load
  out+=`<details><summary>What each signal means and how heat is scored</summary><p>${Object.entries(d.tags||{}).map(([k,v])=>`<b>${esc(tagWord(k))}</b> — ${esc(v.split(': ').slice(1).join(': ')||v)}`).join('<br>')}<br><br>Heat = 2 × crowded buy + 2 × officials buying + 2 × insider cluster + one each for new money, big inflow, officials cluster, insider buying, near 52-week high, momentum and revenue surge. Pressure = 2 × crowded exit + big outflow + officials selling + insider selling + drawdown. Thresholds this quarter: crowded = ${fmt(d.thresholds?.crowd_net_managers)} net managers; big flow = ${money(d.thresholds?.inflow_usd)}.</p><p class="sub">${esc(d.note||'')}</p></details>`;
  exported=rows.map(r=>({ticker:r.ticker,name:r.name,heat:r.heat,pressure:r.pressure,tags:r.tags.join(' '),...(r.f13||{}),insider_buy_value_90d:r.insiders?.buy_value,insider_sell_value_90d:r.insiders?.sell_value,officials_buys_12m:r.officials?.y_buys,officials_sales_12m:r.officials?.y_sells,officials_people:(r.officials?.people_buy||[]).join('; '),r1m:r.price?.r1m,r3m:r.price?.r3m,from_52w_high:r.price?.from_high,earnings_label:r.earn?.label,revenue_yoy_pct:r.earn?.yoy,operating_margin_pct:r.earn?.om}));
  out+=`<div class="section-head"><h3>${fmt(rows.length)} flagged securities</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
@@ -299,7 +301,7 @@ function insidersView(){
 }
 
 function bindMarket(){
- if($('hype-live')&&window.HypeView)window.HypeView.render($('hype-live'),{hub:''});
+ if($('hype-live')&&window.HypeView)window.HypeView.render($('hype-live'),{hub:'',legacy:()=>hypeMap(HYPE_ROWS||[]),view:state.hypeview,onview:v=>{state.hypeview=v}});
  for(const k of ['stag','ssort','fwin','funiv','flist','tchamber','tperson','ttype','tcheck','twin','itype','irole'])bind(k,k);
  for(const k of ['sq','tq','iq'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if(typeof bindFlowGroups==='function')bindFlowGroups();

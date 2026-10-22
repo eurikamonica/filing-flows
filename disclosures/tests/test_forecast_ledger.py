@@ -43,6 +43,11 @@ class Freeze(unittest.TestCase):
         self.assertEqual(live['code'], 'sha1')
         self.assertIn('CCC', live['rows']); self.assertEqual(live['late'], ['CCC'])
         self.assertEqual(L['origins'][0]['rows']['AAA'][1], 102.0)    # backtest seed unchanged too
+        # the late row has its own first publication (spec v5 §1.1): t2 and sha2, not the batch's t1 / sha1
+        self.assertEqual((live['row_published'], live['row_code']), ({'CCC': 't2'}, {'CCC': 'sha2'}))
+        self.assertEqual(live['made_at'], 't1')
+        FL.freeze(L, FL.entries_from_chaos(doc2), '2026-09', 'sha3', 't3')   # seen again: nothing moves
+        self.assertEqual(live['row_published'], {'CCC': 't2'})
 
     def test_new_origin_becomes_live_and_missed_ones_are_not_backfilled(self):
         L = {'freq': 'm', 'origins': []}

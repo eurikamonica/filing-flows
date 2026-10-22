@@ -45,6 +45,41 @@ Price changes affect disclosed values even without quantity changes. Splits, reo
 
 The history selector can compare any earlier available period. The security chart leaves an unreported security as a gap, not zero. A filing-date `as_of` cutoff is optional but does not replace a full historical publication-state archive.
 
+### Hype map clocks and comparable managers (`app/crowd_clocks.py`)
+
+The Hype map is published in three views that never share a clock (research specification v5, §6):
+
+- `legacy_snapshot` — the original Signals map, unchanged: net managers in the latest well-covered report quarter
+  (every change on file) against each stock's trailing 63 trading days to today. Mixed clocks; a snapshot of what is
+  known now, never used as a transition series.
+- `quarter_aligned` — report quarter q against the price from the end of q−1 to the end of q. Retrospective: the
+  quarter's 13Fs became public only over the following ~45 days.
+- `public_knowledge_asof` — the decision day is the first trading day after the 45-day deadline (quarter end + 45 days,
+  moved forward to a trading day). Only 13F filings filed before that day count; Y is the trailing 63 trading days to
+  it; forward returns run from its close (4 and 12 weeks, minus SPY). Checkpoints at 30 and 90 days feed the audit;
+  the quarter being filed has a "live" point as of the latest close, marked partial.
+
+Comparable pair: one manager's complete, non-confidential reports for q and for the quarter immediately before, both in
+our feed. Net managers = comparable managers that added − those that cut (split-adjusted). Not filed, late, skipped
+quarters, confidential and incomplete reports are "not matched" — unknown, never a zero. Coverage = matched holders at
+q−1 ÷ holders at q−1 known by the same time. The original all-changes count stays beside it as `net_managers_legacy`.
+
+Each checkpoint sees every manager's reports as they stood before its decision day: an amendment or a late filing is
+counted only from its own filing date on, and the earlier version keeps its place at earlier checkpoints. Rebuilding the
+data as it stood on an earlier day leaves every as-of state at earlier decision days unchanged (tested end to end on
+the 13F cache and in `tests/test_crowd_clocks.py`). Declared exceptions: split detection and CUSIP conversions use the
+finalised holder population (public corporate actions; only their detection uses later filers); dollar estimates use
+the quarter-end price the reporting managers imply. Neither enters a quadrant.
+
+`market/crowd-transitions.json` is descriptive only (`status: descriptive_only`, no probabilities): per view and
+population (every eligible stock; covered = ≥ 5 matched prior holders and ≥ 80% matched) the 4×4 quadrant transitions
+plus an "on an axis" row and column (net 0 or price 0), Wilson 95% intervals that treat stocks as independent, and the
+spread between quarter pairs (the independent periods). For the deadline view also the forward excess returns by
+quadrant beside price-only, crowd-only, coverage-only and unconditional baselines, a negative control that shuffles the
+13F side across stocks within each decision day, the retrospective-versus-public comparison, and the calendar-only
+filing-arrival baseline (share of reports first filed by day k). Returns are split-adjusted price returns (dividends
+not included) against SPY; there is no point-in-time industry benchmark in this build yet.
+
 ## Congressional disclosures
 
 Annual disclosed assets and PTR transactions are separate record types. Keep ownership labels (such as SP) and distinguish reported asset values from transaction amounts and income.

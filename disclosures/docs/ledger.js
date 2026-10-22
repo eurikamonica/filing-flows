@@ -89,6 +89,12 @@ function ledOrigin(o,f){
  const kv=[['Forecast made at the end of',ledLabel(f,o.origin)],['For',W?'the following week ('+rrgDay(o.target)+')':qlabel(o.target)+', closes '+ledEnd(f,o.target)],
   ['Kind',o.source==='live'?`live — frozen ${esc((o.made_at||'').replace('T',' ').replace('+00:00',' UTC'))}${o.code?' · code '+esc(o.code.slice(0,7)):''}${o.late?' · '+fmt(o.late)+' companies added later the same period':''}`:'backtest — walk-forward, data public at the time'],
   ['Scored',s.resolved?fmt(s.resolved)+' of '+fmt(s.n):'pending — '+fmt(s.n)+' forecasts waiting']];
+ if(o.late){
+  const lp=Object.values(o.late_published||{}),known=lp.filter(Boolean).sort();
+  kv.push(['Added later',`${fmt(o.late)} compan${o.late===1?'y':'ies'} joined after the origin was frozen — each with its own first publication time${known.length?` (${esc(known[0].slice(0,10))}${known.length>1&&known[known.length-1].slice(0,10)!==known[0].slice(0,10)?' … '+esc(known[known.length-1].slice(0,10)):''}${known.length<lp.length?'; '+fmt(lp.length-known.length)+' from before row times were kept: time not recorded':''})`:' (frozen before row times were kept: time not recorded)'}; scored apart below`]);
+  const ot=s.on_time||{},lt=s.late_rows||{},hit=x=>ledPct(x.direction_hit);
+  if(ot.resolved||lt.resolved)kv.push(['Published with the origin · added later',`direction right ${hit(ot)} of ${fmt(ot.resolved||0)} · ${hit(lt)} of ${fmt(lt.resolved||0)}`]);
+ }
  if(s.resolved){
   if(W)kv.push(['RRG step pointed the right way',ledPct(s.step_hit)],['Direction vs SPY right',ledPct(s.direction_hit)],['Right side of the median',ledPct(s.relative_hit)],['Distance forecast → actual point',fmt(s.mean_point_gap,2)],['Mean |gap| (pts of relative return)',fmt(s.mean_abs_gap,2)],['Rank IC',fmt(s.ic,3)]);
   else kv.push(['Direction right',ledPct(s.direction_hit)+` <span class="muted">(rose anyway: ${ledPct(s.share_up)})</span>`],['Right side of the median',ledPct(s.relative_hit)],['Actual inside the 80% range',ledPct(s.inside80)],['Average forecast / actual change',ledSgn(s.mean_forecast)+'% / '+ledSgn(s.mean_actual)+'%'],['Mean |gap| · median',fmt(s.mean_abs_gap,1)+' · '+fmt(s.median_abs_gap,1)+' pts'],['Rank IC',fmt(s.ic,3)]);

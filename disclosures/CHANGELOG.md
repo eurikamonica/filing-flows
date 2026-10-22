@@ -1,5 +1,18 @@
 # Changelog
 
+## Crowd Flow clocks (research specification v5, first slice: P0-03, P0-04, P1-05, part of P0-01)
+
+The Hype map keeps the original Signals map as *legacy snapshot* and adds two views with one clock each:
+*quarter-aligned* (the same quarter on both axes, retrospective) and *public as of the 13F deadline* (only filings filed
+before the first close after the deadline, the trailing three months to it, and what the stock did next against SPY).
+13F changes count only comparable managers (complete, non-confidential reports for both quarters); missing filings are
+unknown, not zero, and coverage is shown. Every checkpoint sees each report as it stood then, so later amendments and
+late filings never rewrite an earlier as-of state (truncation invariance, tested end to end). New
+`market/crowd-transitions.json` and `transition-matrix.js`: descriptive quarter-to-quarter quadrant transitions with
+sample sizes, intervals and baselines, post-deadline returns by quadrant with a shuffled control, and the calendar-only
+filing-arrival baseline. Officials' PTRs appear as separate marks. The forecast ledger keeps each late-added company's
+own first publication time and scores late rows apart.
+
 ## Rotation: next step and the 3-D / 4-D solar system
 
 Rotation gains a *Next step* control (momentum clock, solar system, 3-D box, RRG) and a new chart, *Solar system 3-D / 4-D*
