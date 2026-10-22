@@ -31,6 +31,8 @@ from pathlib import Path
 from core import now, read_json, write_json
 import insiders as INS
 import senate as SEN
+import crossholdings as XH
+import president as PRES
 
 TOP = 40
 FUND_TYPES = {'ETP', 'Open-End Fund', 'Closed-End Fund', 'Fund of Funds', 'Unit', 'Equity WRT', 'Right'}
@@ -146,7 +148,7 @@ NICE_SPLITS = (2, 3, 4, 5, 6, 8, 10, 15, 20, 25, 30, 40, 50, 1 / 2, 1 / 3, 1 / 4
                1 / 40, 1 / 50, 3 / 2, 5 / 4)
 
 
-def scan_13f(root, keep_after, opts=None):
+def scan_13f(root, keep_after, opts=None, see=None):
     """One pass over every cached manager, keeping per (period, cusip) the holder count, price samples (value ÷ shares)
     and each manager's quantity change (shares, prior shares). Only periods after keep_after are kept. Returns
     (raw, prices, coverage, managers); summarise() turns raw into flows after split detection. When opts is a dict it
@@ -163,6 +165,11 @@ def scan_13f(root, keep_after, opts=None):
             continue
         idx = len(managers)
         managers.append({'cik': m.get('cik'), 'name': m.get('label') or m.get('name')})
+        if see is not None:                  # cross-holdings (app/crossholdings.py) reads the same pass
+            try:
+                see(m)
+            except Exception:
+                pass
         for s in m.get('snapshots', []):
             period = s.get('period') or ''
             if not s.get('complete') or period <= keep_after:
@@ -380,10 +387,10 @@ def history(summ, prices, periods, cusips):
     return out
 
 
-def build_flows(root, universe, scan=None, opts=None):
+def build_flows(root, universe, scan=None, opts=None, see=None):
     today = dt.datetime.now(dt.timezone.utc).date()
     keep_after = (_quarter_end(today) - dt.timedelta(days=2 * 366)).isoformat()
-    raw, prices, coverage, managers = scan or scan_13f(root, keep_after, opts)
+    raw, prices, coverage, managers = scan or scan_13f(root, keep_after, opts, see)
     quarter, ytd, early = pick_periods(coverage)
     if not quarter:
         return None, None
@@ -928,7 +935,9 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
             errors.append(f'SEC tickers: {exc}')
     universe = Universe(root)
     opts = {}
-    flows, every = build_flows(root, universe, opts=opts)
+    xcfg = (read_json(Path(__file__).resolve().parents[1] / 'config' / 'settings.json', {}) or {}).get('crossholdings') or {}
+    gather = XH.Gather(XH.listed_ciks(root), int(xcfg.get('institutions', 12)), universe.cusip_ticker)
+    flows, every = build_flows(root, universe, opts=opts, see=gather.see)
     by_quarter, ctx = (flows.pop('_by_quarter', None), flows.pop('_ctx', None)) if flows else (None, None)
     trades, tstats = officials_trades(root, universe, live)
     latest, monitor = latest_reports(root, live, trades)
@@ -979,6 +988,15 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
                                       'thresholds': cuts, 'tags': TAGS, 'rows': signals,
                                       'note': ('Signals are descriptive flags computed from public filings and daily closes — what '
                                                'happened, not what will happen, and never a recommendation.')})
+    # 4.19: the President's 278-T trades (OCR'd by the officials runs) and who holds whom
+    try:
+        PRES.publish(root, out_dir, universe)
+    except Exception as exc:
+        errors.append(f'president: {exc}')
+    try:
+        XH.build(root, universe, gather, trades, client=client, cfg=xcfg, quarter=(ctx or {}).get('quarter'))
+    except Exception as exc:
+        errors.append(f'cross-holdings: {exc}')
     watch = (read_json(Path(__file__).resolve().parents[1] / 'config' / 'settings.json', {}).get('holdings') or {}).get('watch') or []
     if watch:
         _write(out_dir / 'watchlist.json', watchlist(root, watch, universe))

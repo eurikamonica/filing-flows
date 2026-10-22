@@ -19,6 +19,7 @@ import reddit_hot
 import extremes
 import frames
 import options as option_chains
+import president
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -86,6 +87,24 @@ def main():
             publish_shards(args.output,data)
         except Exception as exc:
             print('congress (quick): error — '+str(exc),flush=True)
+    # 4.19: the President's periodic transaction reports (OGE 278-T, scanned PDFs): their text layer read, plain scans
+    # OCR'd a page budget at a time, with the officials' runs (the ones that install Poppler and Tesseract), then parsed
+    # into market/president.json
+    if args.only in ('all','congress') and cfg.get('president',{}).get('enabled',True):
+        print('Collecting the President\'s 278-T reports',flush=True)
+        try:
+            r=president.collect(client,args.output,cfg.get('president',{}))
+            if r.get('status')=='skipped':
+                print('president: skipped — '+r.get('reason',''),flush=True)     # the last status and output stand
+            else:
+                r['published']=president.publish(args.output,args.output/'market')
+                print('president: '+json.dumps(r),flush=True)
+                data['modules']['president']={**r,'last_attempt':now()}
+                write_json(args.output/'president-status.json',data['modules']['president'])
+        except Exception as exc:
+            print('president: error — '+str(exc),flush=True)
+            print('::warning::president: error — '+str(exc)[:200],flush=True)
+            write_json(args.output/'president-status.json',{'status':'error','error':str(exc)[:300],'last_attempt':now()})
     # 4.1: optional price-based cost estimates, refreshed with 13F and officials' runs or on demand.
     if cfg.get('prices',{}).get('enabled') and args.only in ('all','prices','holdings','congress'):
         print('Collecting prices',flush=True)

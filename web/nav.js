@@ -20,6 +20,7 @@
     { id: 'signals', label: 'Market signals', items: [
       ['feed', '#feed', 'Feed', 'What changed today, across the site'],
       ['disclosures', 'disclosures/', 'Disclosures', '13F flows, insiders, officials, short interest…'],
+      ['cross', 'disclosures/#cross', 'Cross-holdings', 'Who holds whom: US government, the President, Congress, Nvidia, Alphabet…'],
       ['account', '#account', 'Alerts', 'E-mail when your companies file'],
     ] },
     { id: 'method', label: 'Method', href: '#method', nav: 'method' },
@@ -27,7 +28,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   function href(base, h, here) {
-    if (here === 'disclosures' && h === 'disclosures/') return './';
+    if (here === 'disclosures' && h.startsWith('disclosures/')) return './' + h.slice(12);
     return base + h;
   }
 

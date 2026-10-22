@@ -6,16 +6,22 @@ const vm=require('node:vm');
 const root=path.resolve(__dirname,'..');
 const elements=new Map();
 const doc={getElementById(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',className:'',value:'',setAttribute(){},classList:{toggle(){}}});return elements.get(id)},querySelectorAll(){return []}};
-const context=vm.createContext({document:doc,window:{},console,setTimeout,URL,Blob,location:{hash:''},history:{replaceState(){}},addEventListener(){},innerWidth:1200});
+const context=vm.createContext({document:doc,window:{},console,setTimeout,URL,Blob,location:{hash:''},history:{replaceState(){}},addEventListener(){},innerWidth:1200,fetch:()=>Promise.resolve({ok:false,json:async()=>({})})});
 const live=JSON.parse(fs.readFileSync(path.join(root,'docs/data/live.json'),'utf8'));
-for(const [key,field] of [['holdings','managers'],['congress','reports']])for(let i=0;i<(live.modules[key]?.[field]||[]).length;i++){const r=live.modules[key][field][i];if(r.shard)live.modules[key][field][i]=JSON.parse(fs.readFileSync(path.join(root,'docs/data',r.shard),'utf8'))}
-for(const m of live.modules.holdings?.managers||[])for(const s of m.snapshots||[])if(s.positions_shard)s.positions=JSON.parse(fs.readFileSync(path.join(root,'docs/data',s.positions_shard),'utf8'));
-for(const key of ['cot','banks'])for(let i=0;i<(live.modules[key]?.series||[]).length;i++){const r=live.modules[key].series[i];if(r.shard)live.modules[key].series[i]=JSON.parse(fs.readFileSync(path.join(root,'docs/data',r.shard),'utf8'))}
-for(let i=0;i<(live.modules.npx?.filings||[]).length;i++){let f=live.modules.npx.filings[i];if(f.shard){f=JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.shard),'utf8'));f.votes=f.vote_chunks?.length?JSON.parse(fs.readFileSync(path.join(root,'docs/data',f.vote_chunks[0]),'utf8')):[];f._loaded_chunks=f.vote_chunks?.length?1:0;live.modules.npx.filings[i]=f}}
-for(const m of Object.values(live.modules))if(m.directory_shard)m.directory=JSON.parse(fs.readFileSync(path.join(root,'docs/data',m.directory_shard),'utf8'));
+// a module's checkout leaves some shards out (the officials and light runs skip shards/holdings and shards/npx);
+// rows whose shard is absent are dropped so the views render what is on disk instead of reaching for the network
+const shard=p=>{const f=path.join(root,'docs/data',p);return fs.existsSync(f)?JSON.parse(fs.readFileSync(f,'utf8')):null};
+const inline=(rows,load)=>{const out=[];for(const r of rows||[]){const v=load(r);if(v)out.push(v)}return out};
+if(live.modules.holdings)live.modules.holdings.managers=inline(live.modules.holdings.managers,r=>{const m=r.shard?shard(r.shard):r;if(!m)return null;
+ m.snapshots=inline(m.snapshots,s=>{if(!s.positions_shard)return s;const p=shard(s.positions_shard);if(!p)return null;s.positions=p;return s});return m});
+if(live.modules.congress)live.modules.congress.reports=inline(live.modules.congress.reports,r=>r.shard?shard(r.shard):r);
+for(const key of ['cot','banks'])if(live.modules[key])live.modules[key].series=inline(live.modules[key].series,r=>r.shard?shard(r.shard):r);
+if(live.modules.npx)live.modules.npx.filings=inline(live.modules.npx.filings,r=>{if(!r.shard)return r;const f=shard(r.shard);if(!f)return null;
+ f.votes=f.vote_chunks?.length?(shard(f.vote_chunks[0])||[]):[];f._loaded_chunks=f.vote_chunks?.length?1:0;return f});
+for(const m of Object.values(live.modules))if(m.directory_shard){const d=shard(m.directory_shard);if(d)m.directory=d;else{m.directory=[];delete m.directory_shard}}
 context.window.DISCLOSURE_LIVE=live;
 // the page's own scripts, in its order (docs/index.html), so a new view is tested as soon as the page loads it
-const PAGE_SCRIPTS=[...fs.readFileSync(path.join(root,'docs','index.html'),'utf8').matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]).filter(f=>f!=='data/live.js');
+const PAGE_SCRIPTS=[...fs.readFileSync(path.join(root,'docs','index.html'),'utf8').matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]).filter(f=>f!=='data/live.js'&&!f.startsWith('../'));   // ../nav.js: the site's shared menu, not part of the hub
 for(const f of PAGE_SCRIPTS)vm.runInContext(fs.readFileSync(path.join(root,'docs',f),'utf8'),context,{filename:f});
 let checks=0;
 const derivedFresh=vm.runInContext("derivedMarketNotice('signals',{holdings:{updated_at:'2026-10-18T21:32:54Z'},congress:{updated_at:'2026-10-20T01:00:00Z'}},{signals:{data:{generated_at:'2026-10-21T04:15:47Z'}}},Date.parse('2026-10-21T04:41:00Z'))",context);
@@ -50,6 +56,23 @@ assert.equal(vm.runInContext("discDateMatches({no_date:true},['filed'])",context
 vm.runInContext("state.discFrom='';state.discTo=''",context);
 assert.equal(vm.runInContext("discDateMatches({no_date:true},['filed'])",context),true);checks++;
 
+// 4.19 cross-holdings: each view renders from a small fixture (the map, one company, the matrix, the holders)
+vm.runInContext(`xhStore.data={generated_at:'2026-10-22T00:00:00Z',quarter:'2026-06-30',note:'n',managers:3,
+ holders:[{id:'gov',kind:'gov',label:'US government',as_of:'2026-10-21',edges:[{ticker:'INTC',usd:6e10,pct:'9.9%',status:'held',agency:'Commerce',instrument:'Common stock',basis:'shares × close',announced:'2025-08-22',source:'https://www.sec.gov/x'}],private:[{name:'xLight',agency:'Commerce',instrument:'Equity',cost_usd:15e7,status:'held',announced:'2025-12-01'}]},
+  {id:'president',kind:'president',label:'President Trump',pending:false,trades:10,with_ticker:8,span:['2026-01-06','2026-07-31'],filings:[{name:'r.pdf',url:'https://extapps2.oge.gov/x.pdf',filed:'2026-09-08',kind:'278T',pages:37,pages_read:37,rows:1156}],edges:[{ticker:'NVDA',usd:-5e5,buy_mid:1e5,sell_mid:6e5,buys:1,sells:2,first:'2026-01-06',last:'2026-02-10'}]},
+  {id:'officials',kind:'officials',label:'Congress (net trades)',since:'2025-10-22',edges:[{ticker:'INTC',usd:41e5,buy_mid:415e4,sell_mid:5e4,buyers:3,sellers:1,trades:9,people:['A B']}],people:[{person:'A B',jurisdiction:'US House',buy_mid:1e5,sell_mid:0,trades:2,top:[['INTC',1e5]]}]},
+  {id:'ta',kind:'ta',label:'Trump Accounts',fund:'SPYM',holdings:503,lineup:[['SPYM','default']],edges:[{ticker:'NVDA',weight:.08,per_1000:80}]},
+  {id:'corp:1045810',kind:'corp',label:'NVIDIA CORP',ticker:'NVDA',total:6e10,positions:1,as_of:'2026-06-30',sic_desc:'Semiconductors',edges:[{ticker:'INTC',usd:3e10,shares:2e8,weight:.5,pct_out:.046}]}],
+ companies:[{ticker:'INTC',name:'Intel',price:140,shares_out:4.4e9,mcap:6.2e11,f13_holders:3000,f13_usd:2e11,f13_pct:.62,top_institutions:[{cik:1,name:'V',usd:1e10,shares:7e7,pct:.016,period:'2026-06-30'}],is_holder:null},
+  {ticker:'NVDA',name:'NVIDIA',f13_holders:4000,f13_usd:3e12,top_institutions:[],is_holder:'corp:1045810'}],
+ chains:[{from:'ta',via:'NVDA',to:'INTC',w1:80,usd2:3e10,pct2:.046}],mutual:[],institutions:[{cik:1,name:'V',total:7e12,period:'2026-06-30'}]};xhIndex(xhStore.data);`,context);
+for(const v of ['map','company','matrix','holders']){
+ vm.runInContext(`state.tab='cross';state.xhv='${v}';state.xht='INTC';render()`,context);
+ const html=elements.get('workspace').innerHTML;
+ assert.ok(html.includes('Cross-holdings')&&!html.includes('NaN')&&!html.includes('undefined'),'cross-holdings '+v+' did not render cleanly');checks++;
+}
+assert.ok(elements.get('workspace').innerHTML.includes('Commerce'));checks++;
+vm.runInContext(`crossDeepLink('NVDA')`,context);assert.equal(vm.runInContext('state.xhv+state.xht',context),'companyNVDA');checks++;
 console.log(`${checks} UI template/logic checks passed; no browser rendering checked.`);
 (async()=>{
  context.fetch=async url=>({ok:true,json:async()=>url.endsWith('123.json')?{snapshots:[{period:'2025-12-31',positions_shard:'shards/holdings/123-2025-12-31.json'}]}:[{issuer:'TEST',shares:1}]});

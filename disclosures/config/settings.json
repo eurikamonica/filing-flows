@@ -60,7 +60,9 @@
       "form700search.fppc.ca.gov": 1,
       "efdsearch.senate.gov": 1.2,
       "api.finra.org": 0.6,
-      "www.sec.gov": 0.25
+      "www.sec.gov": 0.25,
+      "extapps2.oge.gov": 2,
+      "www.ssga.com": 2
     }
   },
   "holdings": {
@@ -363,5 +365,58 @@
     "keep_days": 60,
     "fda_days": 10,
     "_note": "PR Newswire RSS, openFDA approvals, FDA and SEC releases: headline, time and link only, kept `keep_days`."
+  },
+  "president": {
+    "enabled": true,
+    "pages_per_run": 20,
+    "ocr_dpi": 300,
+    "_note": "The President's OGE Form 278-T reports (scanned PDFs): discovered from OGE's disclosure search (API.xsp, the JSON behind oge.gov's Officials' Individual Disclosures Search Collection) and these seeds; each report's text layer is read at once, and at most pages_per_run pages without a usable one are read by OCR per officials run (app/president.py).",
+    "seed_urls": [
+      "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/E590116FC9631E9885258E7A002DE209/$FILE/Donald-J-Trump-09.8.2026-278T.pdf",
+      "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/2BF91F890F718ACB85258E5B002DE16B/$FILE/Donald-J-Trump-08.12.2026-278T.pdf",
+      "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/F9CA13B970439E8F85258E27002DDF15/$FILE/Donald-J-Trump-06.25.2026-278T%20%282%29.pdf",
+      "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/AC43530823BD60D485258E27002DDEF7/$FILE/Donald-J-Trump-06.25.2026-278T.pdf",
+      "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/405E4EC4E27BE8D185258DF7002DD1C0/$FILE/Trump,%20Donald%20J.-05.08.2026-278T%282%29.pdf",
+      "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/AA799A2729B4D1BE85258D430031A320/$FILE/Donald J. Trump 10.17.2025 278-T.pdf",
+      "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/5315A095A2EE1B9185258CEB006E7E36/$FILE/Donald-J-Trump-08.12.2025-278T(3).pdf",
+      "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/E9C024E25C9E4B2085258CEB006E7E23/$FILE/Donald-J-Trump-08.12.2025-278T.pdf",
+      "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/4EC9A8E6DD078F2985258CA9002C9377/$FILE/Trump, Donald J. 2025 Annual 278.pdf"
+    ]
+  },
+  "crossholdings": {
+    "institutions": 12,
+    "officials_months": 12,
+    "president_top": 60,
+    "max_companies": 160,
+    "spym_url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spym.xlsx",
+    "trump_accounts": {
+      "lineup_source": "https://home.treasury.gov/news/press-releases/sb0551",
+      "lineup_date": "2026-07-01",
+      "default": "SPYM",
+      "funds": [
+        [
+          "SPYM",
+          "State Street SPDR Portfolio S&P 500 ETF (default)"
+        ],
+        [
+          "IVV",
+          "iShares Core S&P 500 ETF"
+        ],
+        [
+          "VTI",
+          "Vanguard Total Stock Market ETF"
+        ],
+        [
+          "SPTM",
+          "State Street SPDR Portfolio S&P 1500 Composite Stock Market ETF"
+        ],
+        [
+          "ITOT",
+          "iShares Core S&P Total U.S. Stock Market ETF"
+        ]
+      ],
+      "_note": "Contributions all go to the default fund until Treasury enables the choice; the $1,000 federal seed for children born 2025-2028 too."
+    },
+    "_note": "Who holds whom (app/crossholdings.py): companies that file 13F, the largest 13F managers, the US government's stakes (config/government-stakes.json), the President's 278-T trades, officials' trades and the Trump Accounts' default fund."
   }
 }
