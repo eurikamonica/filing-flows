@@ -12,6 +12,30 @@ from urllib.parse import urlencode, urlparse, quote
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 
+
+def _actions_excepthook(kind, exc, tb):
+    """On GitHub Actions, an uncaught error also becomes an annotation (file, line, message) on the run's page: the
+    logs of a failed run are not always readable, and a crash otherwise shows only "exit code 1"."""
+    import sys
+    import traceback
+    try:
+        frames = [f for f in traceback.extract_tb(tb) if '/disclosures/' in f.filename.replace('\\', '/')] or traceback.extract_tb(tb)
+        f = frames[-1] if frames else None
+        where = f" file={os.path.relpath(f.filename)},line={f.lineno}" if f else ''
+        msg = f"{kind.__name__}: {exc}".replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')[:900]
+        trail = ' ← '.join(f"{Path(x.filename).name}:{x.lineno} {x.name}" for x in reversed(frames[-4:]))
+        print(f"::error{where}::{msg}" + (f" ({trail})" if trail else ''), flush=True)
+    except Exception:
+        pass
+    sys.__excepthook__(kind, exc, tb)
+
+
+if os.environ.get('GITHUB_ACTIONS') == 'true':
+    import sys as _sys
+    if _sys.excepthook is _sys.__excepthook__:
+        _sys.excepthook = _actions_excepthook
+
+
 VERSION = '4.1.0'
 
 def now():

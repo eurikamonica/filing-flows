@@ -63,7 +63,16 @@ jobs:
     env:
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}   # a secret keeps the email out of public logs
     steps:
+      # The repository is ~9 GB, ~7 GB of it the hub's 13F quarter files and N-PX vote records, which the site build
+      # never reads (stage-public.py serves them from raw.githubusercontent.com): leave them out, ~7 min → ~1 min.
       - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/disclosures/docs/data/shards/holdings/
+            !/disclosures/docs/data/shards/npx/
 
       - name: Check configuration
         run: |
@@ -382,7 +391,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12          # the probes wait out the CDN's ten-minute cache (scripts/verify_production.py)
     steps:
+      # code only: this job reads the published site (artifact or URL), never the hub's data (~9 GB with it, ~7 min)
       - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/disclosures/docs/data/
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -413,7 +429,14 @@ jobs:
       DIGEST_TZ: ${{ vars.DIGEST_TZ }}                  # optional: their time zone (America/New_York)
       SITE_URL: ${{ vars.SITE_URL || needs.deploy.outputs.page_url }}   # links in the e-mails: your own domain if set
     steps:
+      # code only: this job reads the published site (artifact or URL), never the hub's data (~9 GB with it, ~7 min)
       - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/disclosures/docs/data/
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -447,7 +470,14 @@ jobs:
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}                 # the owner's X post options (#owner page)
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
     steps:
+      # code only: this job reads the published site (artifact or URL), never the hub's data (~9 GB with it, ~7 min)
       - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/disclosures/docs/data/
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
