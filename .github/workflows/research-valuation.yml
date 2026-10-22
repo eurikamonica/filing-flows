@@ -2,7 +2,10 @@
 # Weekdays after the close: SEC XBRL frames (EPS, shares, equity, goodwill, insurance and REIT lines) and each covered
 # company's figures from the published site, then public/ is rebuilt with the debt module's credit data, the consensus
 # module's targets / Polymarket / our model and the hub's daily prices: WACC, DCF + reverse DCF, Monte Carlo, PVGO, peer
-# multiples, residual income, bank / insurer / REIT models, valuation bands, distress probability (app/valuation.py).
+# multiples, residual income, bank / insurer / REIT models, valuation bands, distress probability (app/valuation.py), and the
+# outside view (app/base_rates.py): peer base rates from the frames since 2020 / CY2010, the probabilities of the
+# market-implied, Street and Polymarket views, stages, sensitivity, river charts and the walk-forward model scores (with
+# the Rotation forecast ledger from the branch rotation-history).
 # Kept on the branch "research-valuation" (one commit, force-pushed); scan.yml publishes public/ at
 # disclosures/data/research/valuation/.
 name: Research — fair value & credit
@@ -51,6 +54,10 @@ jobs:
               git -C "_$b" sparse-checkout set public
             fi
           done
+          if git ls-remote --exit-code --heads "$url" rotation-history >/dev/null; then
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch rotation-history "$url" _rotation-history
+            git -C _rotation-history sparse-checkout set --no-cone /public/forecast-ledger.json /public/forecast-ledger-q.json /public/forecast-ledger-m.json
+          fi
           du -sh val _debt-history/public _consensus-history/public disclosures/docs/data/cache/prices 2>/dev/null || true
       - name: Collect (SEC frames, the site's company figures)
         timeout-minutes: 30
@@ -58,12 +65,13 @@ jobs:
           site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
           python disclosures/app/valuation.py collect --root val --site-url "$site" --minutes "${{ inputs.minutes || '20' }}"
       - name: Build public/
-        timeout-minutes: 15
+        timeout-minutes: 25
         run: |
-          debt=""; cons=""
+          debt=""; cons=""; rot=""
           [ -d _debt-history/public ] && debt="--debt _debt-history/public"
           [ -d _consensus-history/public ] && cons="--consensus _consensus-history/public"
-          python disclosures/app/valuation.py build --root val --prices disclosures/docs/data/cache/prices $debt $cons
+          [ -f _rotation-history/public/forecast-ledger.json ] && rot="--rotation _rotation-history/public"
+          python disclosures/app/valuation.py build --root val --prices disclosures/docs/data/cache/prices $debt $cons $rot
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd val

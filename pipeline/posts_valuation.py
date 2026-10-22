@@ -6,6 +6,10 @@
   distress_watch     the highest blended one-year distress probabilities among $2B+ companies (a ranking, stated so)
   wacc_gap           a large company whose cost of debt and of capital run far above the median company's
   pe_band            large companies at the bottom (or top) of their own P/E range since mid-2022
+  base_rate_growth   "$X needs +a% a year for 5 years to justify $p — only b% of <industry> peers ever did that" (outside view)
+  street_base_rate   the Street's next-quarter EPS growth, how often peer quarters got there, and Polymarket's odds
+  stage_river        the company's stage and where its P/E sits on its own river chart since 2022
+  sensitivity_driver the input that moves a company's DCF most (tornado), against the price
 
 Every number a post uses is in its task; descriptions, never recommendations.
 """
@@ -289,3 +293,178 @@ def plan_pe_band(site, rows, c, by_ticker, state_ok, today):
     tks = [_tk(r) for r in pick]
     return {"kind": "pe_band", "task": task, "cashtags": tks[:2], "allowed": tks, "items": E._items(site, by_ticker, tks, 2), "fallback": fbs[0],
             "fallbacks": fbs, "lines": True, "tags": E.H.pick("valuation", None, key=f"pe:{today}:{where}")}
+
+
+# ------------------------------------------------------------------ the outside view (app/base_rates.py)
+STAGE_WORDS = {"pre_profit": "pre-profit", "high_growth": "high-growth", "growth": "growth", "mature": "mature", "cyclical": "cyclical",
+               "decline": "declining / turnaround", "financial": "financial", "reit": "REIT"}
+
+
+def _ordinal(v):
+    n = int(round(v * 100))
+    return f"{n}{'th' if 10 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
+
+
+def _industry(label):
+    """'SIC 357 (Electronic Computers), revenue over $50B' → 'Electronic Computers'; else 'SIC 357' / 'similar-size'."""
+    label = label or ""
+    if "(" in label and ")" in label:
+        return label[label.index("(") + 1:label.index(")")]
+    if label.startswith("SIC "):
+        return label.split(",")[0]
+    return "similar-size"
+
+
+def _sp(v, d=0):
+    return ("+" if v >= 0 else "−") + f"{abs(v) * 100:.{d}f}%"
+
+
+def _num(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+@kind("base_rate_growth", tag="valuation", hashtags=["#valuation", "#BaseRates", "#DCF", "#stocks"], cooldown=20, schedule=["morning"],
+      label="✦ Base rate of the implied growth", title="The growth a well-known stock's price needs, and how often its industry peers ever grew that fast",
+      guide="Give the yearly revenue growth the price needs for five years (reverse DCF), the price, and the share of industry peers (same "
+            "industry and size, five-year windows since 2010) that grew that fast. One question. Never say the stock is cheap or expensive.", corpus=10)
+def plan_base_rate_growth(site, rows, c, by_ticker, state_ok, today):
+    R = [r for r in _index(site) if _num(r.get("p_implied")) and _num(r.get("implied_growth")) and (r.get("mcap") or 0) >= 20e9 and r.get("price")
+         and _num(r.get("peer_n")) and r["peer_n"] >= 40]
+    R = [r for r in R if r["p_implied"] <= 0.3 or r["p_implied"] >= 0.7]
+    for r in _known(site, by_ticker, R):
+        tk = _tk(r)
+        if not state_ok("base_rate_growth", tk, hours=24 * 14):
+            continue
+        g, p, px, n = r["implied_growth"], r["p_implied"], r["price"], int(r["peer_n"])
+        ind = _industry(r.get("peer_group"))
+        task = (f"OUTSIDE VIEW, ${tk} ({E.short_name(r.get('name') or tk, tk)}): what today's price needs vs what peers achieved:\n"
+                f"- price {money(px)}\n- reverse DCF: the price needs revenue growth of {_sp(g, 1)} a year for 5 years (then 2.5%)\n"
+                f"- peers: {r.get('peer_group')} — {n} five-year windows since 2010; {pc(p)} of them grew at least that fast"
+                + (f"\n- its own last four quarters: {_sp(r['history_growth'], 1)}" if _num(r.get("history_growth")) else "")
+                + "\n\nOpen with the growth the price needs, give the base rate, end with one question. Describe, never recommend.")
+        if p <= 0.3:
+            fbs = [f"${tk} needs {_sp(g, 1)} revenue growth a year for 5 years to justify {money(px)} — only {pc(p)} of {ind} peers ever did that "
+                   f"({n} five-year windows since 2010). Exception or overreach?",
+                   f"To justify {money(px)}, ${tk} has to grow revenue about {_sp(g, 1)} a year for 5 years. Base rate: {pc(p)} of {ind} peers managed it. "
+                   f"What makes this one different?"]
+        else:
+            fbs = [f"${tk} at {money(px)} needs just {_sp(g, 1)} revenue growth a year for 5 years — {pc(p)} of {ind} peers did at least that "
+                   f"({n} five-year windows since 2010). What is the market worried about?",
+                   f"The bar in ${tk}'s price: {_sp(g, 1)} a year for 5 years. {pc(p)} of {ind} peers cleared it. Low bar, or a real risk?"]
+        fbs = _fit(fbs)
+        if not fbs:
+            continue
+        return {"kind": "base_rate_growth", "task": task, "cashtags": [tk], "items": E._items(site, by_ticker, [tk], 1), "fallback": fbs[0],
+                "fallbacks": fbs, "tags": _tags("valuation", site, by_ticker, tk, f"brg:{tk}:{today}")}
+    print("base_rate_growth: no $20B+ company whose implied growth has a base rate under 30% or over 70% not posted lately")
+    return None
+
+
+@kind("street_base_rate", tag="valuation", hashtags=["#earnings", "#BaseRates", "#Polymarket", "#stocks"], cooldown=20, schedule=["morning"],
+      label="✦ Street EPS vs base rate", title="The Street's next-quarter EPS growth for a well-known stock, how often peers got there, and Polymarket's odds",
+      guide="Give the consensus EPS growth for the next quarter (vs the year-ago quarter), the share of peer quarters since 2020 that grew at least "
+            "that much, and Polymarket's probability when there is one. One question about which number is closer.", corpus=8)
+def plan_street_base_rate(site, rows, c, by_ticker, state_ok, today):
+    R = [r for r in _index(site) if _num(r.get("req_eps_g")) and _num(r.get("p_street_eps")) and (r.get("mcap") or 0) >= 10e9]
+    for r in _known(site, by_ticker, [x for x in R if _num(x.get("pm_beat_prob"))]) + _known(site, by_ticker, [x for x in R if not _num(x.get("pm_beat_prob"))]):
+        tk = _tk(r)
+        if not state_ok("street_base_rate", tk, hours=24 * 10):
+            continue
+        g, p = r["req_eps_g"], r["p_street_eps"]
+        pm, strike = r.get("pm_beat_prob"), r.get("pm_eps_strike")
+        ind = _industry(r.get("peer_group"))
+        task = (f"NEXT QUARTER, ${tk} ({E.short_name(r.get('name') or tk, tk)}):\n- analysts' consensus EPS growth vs the year-ago quarter: {_sp(g)}\n"
+                f"- base rate: {pc(p)} of peer quarters since 2020 ({ind} peers) grew EPS at least that much"
+                + (f"\n- its own quarters since 2020 at least that high: {pc(r['p_street_eps_in'])}" if _num(r.get("p_street_eps_in")) else "")
+                + (f"\n- Polymarket: {pc(pm)} that it beats its EPS line of {money(strike)}" + (f" (a line that needs {_sp(r['pm_req_eps_g'])}; base rate {pc(r['p_pm_eps_base'])})"
+                   if _num(r.get("pm_req_eps_g")) and _num(r.get("p_pm_eps_base")) else "") if _num(pm) and _num(strike) else "")
+                + "\n\nGive the Street's growth, the base rate and (if given) Polymarket's odds. One question. Never recommend.")
+        if _num(pm) and _num(strike):
+            fbs = [f"Street expects {_sp(g)} EPS for ${tk} next quarter: {pc(p)} of {ind} peers' quarters got there since 2020. Polymarket says {pc(pm)} "
+                   f"for its {money(strike)} line. Who is closer?",
+                   f"${tk} next quarter: the Street's {_sp(g)} EPS growth has a {pc(p)} base rate among {ind} peers. Polymarket prices a beat at {pc(pm)}. "
+                   f"Too confident, or not enough?"]
+        else:
+            fbs = [f"Street expects {_sp(g)} EPS for ${tk} next quarter vs a year ago. Since 2020, {pc(p)} of {ind} peers' quarters got there. "
+                   f"Will it?",
+                   f"Base rate check, ${tk}: the consensus calls for {_sp(g)} EPS growth next quarter. {pc(p)} of {ind} peer quarters since 2020 "
+                   f"grew that much. Your read?"]
+        fbs = _fit(fbs)
+        if not fbs:
+            continue
+        return {"kind": "street_base_rate", "task": task, "cashtags": [tk], "items": E._items(site, by_ticker, [tk], 1), "fallback": fbs[0],
+                "fallbacks": fbs, "tags": _tags("valuation", site, by_ticker, tk, f"sbr:{tk}:{today}")}
+    print("street_base_rate: no $10B+ company with a consensus EPS growth and a base rate not posted lately")
+    return None
+
+
+@kind("stage_river", tag="valuation", hashtags=["#valuation", "#PE", "#stocks", "#investing"], cooldown=44, schedule=["evening"],
+      label="✦ Stage and P/E river", title="A well-known stock's stage (growth, mature, cyclical…) and where its P/E sits on its own river chart since 2022",
+      guide="Name the stage the company's own figures put it in, its P/E and percentile on its own history since 2022, and what the price would "
+            "be at a round multiple of its trailing EPS. One question. Never call it cheap or expensive.", corpus=6)
+def plan_stage_river(site, rows, c, by_ticker, state_ok, today):
+    R = [r for r in _index(site) if r.get("stage") and _num(r.get("river_pe_pct")) and (r.get("mcap") or 0) >= 20e9 and r.get("price")]
+    R = [r for r in R if r["river_pe_pct"] <= 0.1 or r["river_pe_pct"] >= 0.9]
+    for r in _known(site, by_ticker, R):
+        tk = _tk(r)
+        if not state_ok("stage_river", tk, hours=24 * 21):
+            continue
+        d = _doc(site, r["cik"]) or {}
+        rv = d.get("river") or {}
+        m = (rv.get("metrics") or {}).get("pe") or {}
+        eps = ((rv.get("steps") or {}).get("pe") or [None])[-1]
+        lv = m.get("levels") or []
+        if not (_num(eps) and eps > 0 and lv and _num(m.get("current")) and _num(m.get("median"))):
+            continue
+        level = min(lv, key=lambda x: abs(x - m["median"]))
+        at = level * eps
+        st = (d.get("stage") or {})
+        word = STAGE_WORDS.get(r["stage"], r["stage"])
+        px, cur, pct_ = r["price"], m["current"], m.get("pct") if _num(m.get("pct")) else r["river_pe_pct"]
+        lvs = f"{level:g}"
+        task = (f"STAGE AND P/E RIVER, ${tk} ({E.short_name(r.get('name') or tk, tk)}):\n- stage from its own figures: {word} ({st.get('why') or ''})\n"
+                f"- P/E {cur:.1f} on trailing EPS of {money(eps)}: the {_ordinal(pct_)} percentile of its own weekly range since 2022 (median {m['median']:.1f})\n"
+                f"- at {lvs}x trailing EPS the price would be {money(at)}; it trades at {money(px)}\n\nStage, P/E and percentile, the round-multiple price, one question.")
+        fbs = _fit([f"${tk}, a {word} company by its own numbers: P/E {cur:.1f}, the {_ordinal(pct_)} percentile of its range since 2022. At {lvs}x "
+                    f"trailing EPS of {money(eps)} it would be {money(at)}; it trades at {money(px)}. Where does it belong?",
+                    f"River chart, ${tk} ({word}): today's P/E of {cur:.1f} sits at the {_ordinal(pct_)} percentile of its own history since 2022. "
+                    f"{lvs}x EPS = {money(at)} vs a {money(px)} price. New normal?"])
+        if not fbs:
+            continue
+        return {"kind": "stage_river", "task": task, "cashtags": [tk], "items": E._items(site, by_ticker, [tk], 1), "fallback": fbs[0],
+                "fallbacks": fbs, "tags": _tags("valuation", site, by_ticker, tk, f"river:{tk}:{today}")}
+    print("stage_river: no $20B+ company at either end of its P/E river not posted lately")
+    return None
+
+
+@kind("sensitivity_driver", tag="valuation", hashtags=["#valuation", "#DCF", "#stocks", "#investing"], cooldown=24 * 3, schedule=["weekly"],
+      label="✦ What moves the DCF", title="The one input that moves a well-known stock's DCF most (tornado chart), against the price",
+      guide="Name the input, how far it was moved, and the value range per share it gives around the base case; give the price. One question "
+            "about that input. Never say the stock is worth the base case.", corpus=6)
+def plan_sensitivity_driver(site, rows, c, by_ticker, state_ok, today):
+    R = [r for r in _index(site) if r.get("sens_driver") and _num(r.get("sens_swing")) and (r.get("mcap") or 0) >= 20e9 and r.get("price")]
+    for r in _known(site, by_ticker, sorted(R, key=lambda r: -r["sens_swing"])):
+        tk = _tk(r)
+        if not state_ok("sensitivity_driver", tk, hours=24 * 30):
+            continue
+        d = _doc(site, r["cik"]) or {}
+        se = d.get("sensitivity") or {}
+        bars = se.get("tornado") or []
+        if len(bars) < 3 or not _num(se.get("base_value")):
+            continue
+        b0, b1 = bars[0], bars[1]
+        px, base = r["price"], se["base_value"]
+        task = (f"SENSITIVITY OF THE {se.get('method', 'DCF')}, ${tk} ({E.short_name(r.get('name') or tk, tk)}), one input moved at a time:\n"
+                f"- base case {money(base)} a share; price {money(px)}\n"
+                + "\n".join(f"- {b['input']} {b['how']}: {money(b['low'])} to {money(b['high'])}" for b in bars[:3])
+                + "\n\nName the input that moves it most and its range, give the price, one question about that input.")
+        fbs = _fit([f"What moves ${tk}'s DCF most? {b0['input']} ({b0['how']}): {money(b0['low'])} to {money(b0['high'])} a share around a "
+                    f"{money(base)} base case. Next: {b1['input'].split(' (')[0].lower()}. The price: {money(px)}. Which would you stress?",
+                    f"${tk} at {money(px)}. In the DCF, {b0['input'].lower()} {b0['how']} swings the value from {money(b0['low'])} to {money(b0['high'])}. "
+                    f"How confident are you in that one input?"])
+        if not fbs:
+            continue
+        return {"kind": "sensitivity_driver", "task": task, "cashtags": [tk], "items": E._items(site, by_ticker, [tk], 1), "fallback": fbs[0],
+                "fallbacks": fbs, "tags": _tags("valuation", site, by_ticker, tk, f"sens:{tk}:{today}")}
+    print("sensitivity_driver: no $20B+ company with a tornado not posted lately")
+    return None
