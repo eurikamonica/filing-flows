@@ -208,6 +208,7 @@
     app.innerHTML='<div class="page-head"><div class="eyebrow">Gamma / All industries</div>'+
       '<h1>Industry growth & supply–demand intelligence</h1>'+
       '<p class="intro">Browse every SIC sub-industry represented in Filing Flows SEC records. Company lifecycle is a transparent heuristic; industry distributions are historical descriptions, not analyst forecasts.</p>'+
+      '<p class="muted">Each industry page has an <b>estimated money flow</b> (BEA input-output): where the industry\u2019s money comes from, what it buys, from which industries and listed companies.</p>'+
       '<p class="muted"><a href="supplier-revenue/">Supplier Revenue Forecast &rarr;</a> &nbsp;&middot;&nbsp; <a href="integration-health/">Collection and publication health &rarr;</a></p>'+
       '<div class="meta"><span>'+industries.length+' SIC industries</span><span>'+d.universe+' companies with quarterly revenue</span><span>Data: '+esc((d.generated||'').slice(0,10))+'</span></div></div>'+
       '<div class="gamma-toolbar"><input id="gamma-query" type="search" placeholder="Find SIC, industry or company sector" aria-label="Filter industries">'+
@@ -255,6 +256,8 @@
       '<section class="section"><div class="section-head"><h2>Company growth & lifecycle</h2><span class="muted">Stage labels are rule-based diagnostics, not HMM estimates</span></div>'+
       '<div class="tbl-wrap"><table><thead><tr><th>Company</th><th>Quarter end</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Q/Q</th><th>Stage</th></tr></thead><tbody id="gamma-companies"></tbody></table></div></section>'+
       '<section class="section" id="gamma-model" hidden></section>'+
+      '<section class="section"><div class="section-head"><h2>Estimated money flow (BEA input-output)</h2>'+
+      '<span class="muted">Every number an estimate at industry-average precision</span></div><div id="gamma-io"></div></section>'+
       '<section class="section"><div class="section-head"><h2>Reported supplier & customer relationships</h2>'+
       '<span class="muted">Customers and suppliers named in annual reports (10-K, 20-F)</span></div>'+
       '<div id="gamma-relations"></div></section>'+
@@ -313,6 +316,62 @@
     });
     draw();
     relationshipExplorer(get('gamma-relations'),d.relationships||[],members);
+    ioFlow(get('gamma-io'),ctx,here,d.sic,d.sector);
+  }
+
+  // Estimated money flow: where the industry's money comes from, what it spends it on, which industries supply it and
+  // which listed companies are in those industries — BEA's input-output tables applied to the members' reported figures
+  // (pipeline/ioflow.py; data gamma/io/<sic | sic2-NN | sector-id>.json)
+  function ioFlow(root,ctx,here,sic,sector){
+    if(!root)return;
+    var levels=[['industry','This industry (SIC '+sic+')',sic],['major','Major group (SIC '+String(sic).slice(0,2)+')','sic2-'+String(sic).slice(0,2)]];
+    if(sector)levels.push(['sector','Sector','sector-'+sector]);
+    root.innerHTML='<div class="gamma-toolbar" role="group" aria-label="Level">'+levels.map(function(l){
+      return '<button type="button" class="gamma-view-btn" data-io="'+esc(l[2])+'">'+esc(l[1])+'</button>';}).join('')+'</div>'+
+      '<p class="muted small" id="gamma-io-cap"></p><div id="gamma-io-chart"></div><div id="gamma-io-more"></div>';
+    var btns=Array.from(root.querySelectorAll('[data-io]')), chart=root.querySelector('#gamma-io-chart'),
+      cap=root.querySelector('#gamma-io-cap'), more=root.querySelector('#gamma-io-more');
+    async function show(key){
+      btns.forEach(function(b){var on=b.dataset.io===key;b.setAttribute('aria-pressed',String(on));
+        b.style.cssText='cursor:pointer;padding:8px 12px;border:1px solid #a7b2bc;border-radius:7px;background:'+(on?'#184a68':'transparent')+';color:'+(on?'white':'inherit');});
+      chart.innerHTML='<p class="muted">Loading the estimate…</p>';more.innerHTML='';cap.textContent='';
+      var d;
+      try{d=await ctx.getJSON('gamma/io/'+key+'.json');}catch(e){d=null;}
+      if(!here())return;
+      if(!d||!(d.links||[]).length){chart.innerHTML='<p class="muted">No estimate for this level: its companies do not yet have four quarters of revenue and operating income, or their SIC code has no BEA industry.</p>';return;}
+      var inV={},outV={};
+      d.links.forEach(function(l){outV[l[0]]=(outV[l[0]]||0)+l[2];inV[l[1]]=(inV[l[1]]||0)+l[2];});
+      var nodes=d.nodes.map(function(n){return {id:n.id,col:n.col,label:n.label,t:n.label,v:Math.max(inV[n.id]||0,outV[n.id]||0),color:n.color,cik:n.cik};})
+        .filter(function(n){return n.v>0;});
+      var links=d.links.map(function(l){return {s:l[0],t:l[1],v:l[2],k:0.22};});
+      var T=d.totals||{};
+      if(global.FFChains&&global.Sankey){
+        var scene=global.FFChains.layout({cols:d.cols.map(function(c,i){return {id:'c'+i,name:c};}),nodes:nodes,links:links},{
+          title:'Estimated money flow — '+d.title,
+          subtitle:money(d.revenue)+' revenue over the last four quarters · '+d.companies+' companies · all figures estimated',
+          footer:['Estimate. Spending split by BEA input-output ('+d.source.io_year+' Use table, scaled to '+d.source.scale_year+') and capital spending by BEA fixed assets; listed suppliers by revenue share of their industry.',
+            'Industry averages, not any company\u2019s actual purchases. Figures are read automatically from SEC filings; not investment advice.']});
+        chart.innerHTML='<div class="net-chart gamma-io-est">'+global.Sankey.toSVG(scene,'Estimated money flow')+'</div>';
+      } else chart.innerHTML='<p class="muted">The chart library did not load.</p>';
+      cap.textContent='Light colours: estimated. Columns: member companies\u2019 revenue (and borrowing where they spent more) → what they spend it on → the industries that supply it (BEA) → listed companies in those industries.';
+      var sup=d.nodes.filter(function(n){return n.col===3&&n.cik;}).map(function(n){return [n,inV[n.id]||0];}).sort(function(a,b){return b[1]-a[1];});
+      var bea=(d.bea||[]).map(function(b){return esc(b[1])+' '+Math.round(100*b[2])+'%';}).join(' · ');
+      var notes=[];
+      if(d.financial&&d.financial.length)notes.push('Lenders and insurers: '+d.financial.map(esc).join('; ')+' (their revenue less income is mostly interest or claims paid, not purchases).');
+      if(d.partial_n)notes.push(d.partial_n+' of '+d.companies+' companies with a gap: '+d.partial.map(esc).join(', ')+'.');
+      more.innerHTML='<div class="gamma-cards">'+[['Purchased inputs',T.purchases],['Capital spending',T.capex],['Employees',T.employees],['Imports (of the above)',T.imports],['Operating cash left',(T.left||0)+(T.finleft||0)]]
+        .map(function(z){return '<div class="gamma-card"><span>'+z[0]+'</span><strong>'+money(z[1])+'</strong></div>';}).join('')+'</div>'+
+        (sup.length?'<div class="tbl-wrap"><table><thead><tr><th>Listed supplier (estimated)</th><th class="num">Share of this spending</th></tr></thead><tbody>'+
+          sup.map(function(r){return '<tr><td><a href="#c-'+encodeURIComponent(r[0].cik)+'"><b>'+esc(r[0].label)+'</b></a></td><td class="num">'+money(r[1])+'</td></tr>';}).join('')+'</tbody></table></div>':'')+
+        '<details class="method-note"><summary>How this is estimated</summary>'+
+        '<p><b>Industry mix:</b> '+bea+'. Each company\u2019s SIC code is matched to BEA\u2019s detail industries (1987 SIC → 2017 NAICS → BEA).</p>'+
+        '<p><b>Spending:</b> revenue − operating income − D&amp;A over the last four quarters, split into purchased inputs, employees and taxes on production as BEA\u2019s Use table splits the industry\u2019s spending; purchased inputs go to the supplying industries in the industry\u2019s input mix, the imported share of each product to Imports. Capital spending follows the industry\u2019s own asset mix ('+esc(d.source.capex||'BEA fixed assets')+').</p>'+
+        '<p><b>Listed suppliers:</b> within a supplying industry, each listed company mapped to it gets its revenue ÷ the industry\u2019s US gross output; when listed companies\u2019 revenue is larger (much of it is sold abroad) the industry\u2019s share is split among them by revenue alone; the rest is Unlisted &amp; private.</p>'+
+        (notes.length?'<p>'+notes.join(' ')+'</p>':'')+
+        '<p>Sources: <a href="https://www.bea.gov/industry/input-output-accounts-data" target="_blank" rel="noopener">BEA input-output accounts</a>, <a href="https://apps.bea.gov/national/FA2004/Details/Index.htm" target="_blank" rel="noopener">BEA fixed assets</a>, Census SIC/NAICS concordances, SEC filings.</p></details>';
+    }
+    btns.forEach(function(b){b.addEventListener('click',function(){show(b.dataset.io);});});
+    show(levels[0][2]);
   }
   global.FFGamma={index:index,industry:industry};
 })(window);

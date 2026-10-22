@@ -2081,6 +2081,12 @@ def render(store, out, stars=frozenset()):
     except Exception as e:
         print(f"::warning::gamma SIC industry data not built: {e}")
         traceback.print_exc()
+    try:                                                         # estimated money flows by industry (BEA input-output)
+        from . import ioflow
+        ioflow.build(store, out, index, usd_recs)
+    except Exception as e:
+        print(f"::warning::industry money flows (BEA) not built: {e}")
+        traceback.print_exc()
     try:                                                         # one growth model at four levels (pipeline/hier.py)
         from . import hier
         hier.build(store, out, index, usd_recs)
