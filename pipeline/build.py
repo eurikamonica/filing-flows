@@ -1359,6 +1359,17 @@ def company_ciks(tokens):
 RELEASE_READER = 4              # bump when the 8-K reader changes: stored 8-K quarters are read again once
 
 
+def _superseded(accn, filed):
+    """An 8-K filed before one of the company's 10-Q / 10-K reports (same filing agent: the accession numbers count up
+    through the year) is that quarter's release or an older one: the report is already drawn, reading it again is moot."""
+    a = accn.split("-")
+    for f in filed:
+        b = f.split("-")
+        if len(a) == len(b) == 3 and a[0] == b[0] and (a[1], a[2]) < (b[1], b[2]):
+            return True
+    return False
+
+
 def _reread_releases(store):
     st = store.state
     if st.get("release_reader", 1) >= RELEASE_READER:
@@ -1375,9 +1386,15 @@ def _reread_releases(store):
         if old:
             store.put(cik, c)
     recent = (dt.datetime.utcnow() - dt.timedelta(days=75)).isoformat()
+    filed_by = {}
     for accn, v in list(st["seen"].items()):                     # earlier rejections get another try too
         # only this season's: an older release is superseded by its 10-Q / 10-K (and is past the reader's 120-day window)
         if str(v.get("s", "")).startswith("skip: earnings release not readable") and v.get("cik") and v.get("t", "") >= recent:
+            if v["cik"] not in filed_by:
+                filed_by[v["cik"]] = [q.get("accn") for q in store.company(v["cik"]).get("quarters", {}).values()
+                                      if q.get("form") != "8-K" and q.get("accn")]
+            if not filed_by[v["cik"]] or _superseded(accn, filed_by[v["cik"]]):
+                continue                                         # no chart of the company yet (most banks), or moot
             del st["seen"][accn]
             st["pending"][accn] = {"cik": v["cik"], "form": "8-K", "filed": v.get("t", "")[:10], "tries": 0, "items": "2.02"}
             n += 1
