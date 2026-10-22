@@ -722,9 +722,24 @@ def _exhibit(cik, accn, primary):
             return hits[0]
     # no telling name (SpaceX: spaceexplorationtechnologi.htm): the largest other document, the release being longer
     # than a cover letter or an agreement's signature page
-    size = lambda i: int(i.get("size") or 0) if str(i.get("size") or "").isdigit() else 0
-    rest = sorted(items, key=size, reverse=True)
+    rest = sorted(items, key=_size, reverse=True)
     return rest[0]["name"] if rest else primary
+
+
+def _size(item):
+    v = str(item.get("size") or "")
+    return int(v) if v.isdigit() else 0
+
+
+def _other_exhibits(cik, accn, primary, first):
+    """The filing's other documents that may hold the statements when the press release itself has none (CSX prints them
+    in a separate "quarterly financial report", others in Exhibit 99.2): Exhibit 99.x first, then the largest."""
+    idx = sec.get_json(sec.filing_index_url(cik, accn))
+    items = [i for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)
+             and not NOT_EXHIBIT.search(i["name"]) and i["name"] not in (primary, first)]
+    ex99 = [i["name"] for i in items if re.search(EXHIBIT_PATTERNS[1], i["name"], re.I)]
+    rest = [i["name"] for i in sorted(items, key=_size, reverse=True) if i["name"] not in ex99]
+    return (ex99 + rest)[:3]
 
 
 def _release_quarter(vals, quarterly, fx, q1_end, keys, prior_keys=None):
@@ -916,7 +931,23 @@ def process_release(store, cik, accn, form, starred=False):
         except Exception as e:
             print(f"  about skipped for {cik}: {e}", file=sys.stderr)
     try:
-        rel = release.parse(doc, dt.date.fromisoformat(row["filingDate"]), last, prior_rev)
+        try:
+            rel = release.parse(doc, dt.date.fromisoformat(row["filingDate"]), last, prior_rev)
+        except ValueError as e:
+            if "no statement of operations" not in str(e):
+                raise
+            first_err, rel = e, None
+            for other in _other_exhibits(cik, accn, row.get("primaryDocument"), ex_name):
+                try:
+                    url = sec.doc_url(cik, accn, other)
+                    d2 = sec.get(url)
+                    rel = release.parse(d2, dt.date.fromisoformat(row["filingDate"]), last, prior_rev)
+                    doc, ex_url = d2, url
+                    break
+                except (ValueError, sec.NotFound):
+                    continue
+            if rel is None:
+                raise first_err
         end = rel["end"]
         e0 = dt.date.fromisoformat(end)
         if e0 <= last + dt.timedelta(days=10):

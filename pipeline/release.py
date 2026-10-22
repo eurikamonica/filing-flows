@@ -33,7 +33,7 @@ P = {
     "sga": r"^(selling|sales|marketing),? general,? and administrative( expenses?)?$",
     "costs_total": r"^total (costs and expenses|operating costs and expenses|costs and operating expenses|cost and expenses)$",
     "opex_total": r"^total operating expenses$",
-    "oi": r"^(total )?operating (income|profit|loss|earnings|income \(loss\)|\(loss\) income|loss \(income\))$"
+    "oi": r"^(total )?operating (income|profit|loss|earnings|income \(loss\)|\(loss\) income|loss \(income\)|\(loss\) profit|profit \(loss\))$"
           r"|^(income|loss|earnings|income \(loss\)|\(loss\) income) from operations$",
     "pretax": r"^(net )?(income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\))( from continuing operations)?"
               r"( before (provision for |benefit from )?(income )?taxes| before income tax (expense|provision|benefit)s?)$",
@@ -76,6 +76,8 @@ def norm_label(s):
     s = re.sub(r"\((\d{1,2}|[a-z]|[ivx]+)\)|\*+|†|‡", " ", s)            # footnote marks
     s = re.sub(r"[:$€£¥₩₹]", " ", s)
     s = re.sub(r"\s+/\s+", " ", s)                        # "net income / (loss)" (Nebius) = "net income (loss)"
+    s = re.sub(r"\)\s*/\s*", ") ", s)                       # "net (loss)/income" (Sonoco) = "net (loss) income"
+    s = re.sub(r"\s*/\s*\(", " (", s)                       # "income/(loss)" = "income (loss)"
     s = re.sub(r"\s+", " ", s).strip(" ,.;-")
     return s
 
@@ -279,18 +281,27 @@ GAAP_TITLE = re.compile(r"(consolidated |condensed |interim )*(statements?|resul
 def _is_nongaap(table):
     # "adjusted EBITDA", "adjusted net loss" — not "adjusted for the presentation of discontinued operations" (Nebius)
     own = table["text"][:300].lower()
-    if GAAP_TITLE.search(own) and not NONGAAP_RE.search(own):
+    if NONGAAP_RE.search(own):
+        return True
+    if GAAP_TITLE.search(own):
         # the table names itself a GAAP statement ("Condensed Consolidated Statements of Income"): the text above it is
         # often the previous page's footnote about non-GAAP measures (Meta), which must not disqualify the statement
         return False
-    return bool(NONGAAP_RE.search((table["before"][:250] + " " + own).lower()))   # before: the nearest text first
+    before = table["before"][:250].lower()                 # nearest text first
+    ng, title = NONGAAP_RE.search(before), GAAP_TITLE.search(before)
+    if ng and title and title.start() < ng.start():
+        return False                                       # the statement's title sits right above it (Las Vegas Sands, Lithia)
+    return bool(ng)
+
+
+DISC_TABLE = re.compile(r"(for|of) discontinued operations")      # Sonoco: a statement of the business it sold
 
 
 def pick_tables(tables):
     weights = {"revenue": 3, "pretax": 2, "tax": 2, "pl": 2, "ni": 2, "oi": 1, "gp": 1, "cor": 1}
     best_is = best_cf = None
     for t in tables:
-        if _is_nongaap(t):
+        if _is_nongaap(t) or DISC_TABLE.search(t["text"][:200].lower()):
             continue
         m = _map_rows(t, IS_KEYS)
         score = sum(w for k, w in weights.items() if k in m)
