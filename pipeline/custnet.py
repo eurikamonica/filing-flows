@@ -649,6 +649,10 @@ def build(store, out, index, today=None):
     for f in os.listdir(root):
         if f.endswith(".json") and f[:-5].isdigit() and int(f[:-5]) not in keep:
             os.remove(os.path.join(root, f))
+    try:
+        concepts(store, out, flows, node, names)
+    except Exception as e:
+        print(f"::warning::concept customer flows not built: {e}")
     named = [f for f in flows if f["label"]]
     linked = [f for f in named if f["s"] and f["c"]]
     top = sorted([f for f in linked if f.get("usd")], key=lambda f: -f["usd"])[:60]
@@ -660,6 +664,57 @@ def build(store, out, index, today=None):
     print(f"::notice::customer network: {read_n} annual reports read, {with_links} name a customer or supplier; "
           f"{len(named)} named links, {len(linked)} with a listed company at both ends; {len(keep)} company pages")
     return flows
+
+
+def concepts(store, out, flows, node, names, cfg=None):
+    """Each chain or theme as a basket: the listed suppliers that name its members -> the members -> the customers the
+    members name (one node per customer across members) and the rest of their revenue. data/network/x/<chain>.json"""
+    from . import chains as CH
+    cfg = cfg or CH.load_cfg()
+    root = os.path.join(out, "network", "x")
+    os.makedirs(root, exist_ok=True)
+    written = set()
+    for ch in cfg.get("chains", []):
+        ms = []
+        for L in ch.get("layers", []):
+            for m in L.get("members", []):
+                cik = names.by_t.get(m["t"].upper())
+                if cik and cik not in ms:
+                    ms.append(cik)
+        if not ms:
+            continue
+        mset = set(ms)
+        links = []
+        for f in flows:
+            if not f.get("usd") or f.get("dir") is None:
+                continue
+            if f["s"] in mset or f["c"] in mset:
+                if f["s"] in mset and f["c"] in mset:
+                    kind = "inside"                              # one member sells to another
+                elif f["s"] in mset:
+                    kind = "out"                                 # a member's customer
+                else:
+                    kind = "in"                                  # a supplier that names a member
+                links.append({"kind": kind, "s": node(f["s"], None if f["s"] else f["label"]),
+                              "c": node(f["c"], f["label"] if not f["c"] else None), "usd": f["usd"], "pct": f.get("pct"),
+                              "how": f["how"], "url": f.get("url"), "fy": f.get("fy"), "q": (f.get("q") or "")[:300]})
+        if not links:
+            continue
+        members = []
+        for cik in ms:
+            rev, fy = _year_revenue(store.company(cik))
+            rec = store.company(cik)
+            members.append({**node(cik), "revenue": _usd(rec, rev), "fy": fy,
+                            "linked": any(l["s"].get("cik") == cik or l["c"].get("cik") == cik for l in links)})
+        doc = {"id": ch["id"], "name": ch["name"], "members": members, "links": links,
+               "revenue": sum(m["revenue"] or 0 for m in members if m["linked"])}
+        with open(os.path.join(root, ch["id"] + ".json"), "w", encoding="utf-8") as fh:
+            json.dump(doc, fh, separators=(",", ":"))
+        written.add(ch["id"] + ".json")
+    for f in os.listdir(root):
+        if f.endswith(".json") and f not in written:
+            os.remove(os.path.join(root, f))
+    print(f"::notice::customer network: {len(written)} chains and themes have stated customer links")
 
 
 def edges_for_gamma(out):

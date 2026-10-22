@@ -106,3 +106,21 @@ def test_several_names_without_respectively_share_one_combined_figure():
     ls = N.links_from(rec, names(), 9999)
     assert {l["cik"] for l in ls} == {927653, 1140859, 721371}
     assert all(l["pct"] is None and l["combined"] == 0.89 for l in ls)
+
+
+def test_concept_basket_gathers_one_customer_across_members(tmp_path):
+    import json
+
+    class Store:
+        def company(self, cik):
+            return {"years": {"2025-12-31": {"raw": {"revenue": 1e9}}}}
+    nm = N.Names([[1, "AAA", "Aaa Corp"], [2, "BBB", "Bbb Corp"], [104169, "WMT", "Walmart Inc."]])
+    node = lambda cik, label=None: {"cik": cik, "t": nm.ticker.get(cik), "name": nm.title.get(cik) or label}
+    flows = [{"s": 1, "c": 104169, "label": "Walmart", "usd": 2e8, "pct": 0.2, "how": "sentence", "dir": "sell"},
+             {"s": 2, "c": 104169, "label": "Walmart", "usd": 3e8, "pct": 0.3, "how": "sentence", "dir": "sell"},
+             {"s": 9, "c": 7, "label": "x", "usd": 1e8, "dir": "sell", "how": "sentence"}]
+    cfg = {"chains": [{"id": "t", "name": "T", "layers": [{"id": "l", "members": [{"t": "AAA"}, {"t": "BBB"}]}]}]}
+    N.concepts(Store(), str(tmp_path), flows, node, nm, cfg)
+    d = json.loads((tmp_path / "network" / "x" / "t.json").read_text())
+    assert len(d["links"]) == 2 and {l["c"]["cik"] for l in d["links"]} == {104169}
+    assert d["revenue"] == 2e9 and all(m["linked"] for m in d["members"])

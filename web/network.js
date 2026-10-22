@@ -93,5 +93,63 @@
     }
   }
 
-  global.FFNetwork = { company, view };
+  // ---------------------------------------------------------------- a chain or theme as a basket
+  function conceptView(d) {
+    const key = (x) => (x.cik ? 'k' + x.cik : 'n' + String(x.name || 'unnamed').toLowerCase());
+    const mem = new Map(d.members.filter((m) => m.linked).map((m) => ['k' + m.cik, m]));
+    const nodes = new Map(), links = [];
+    const add = (id, col, x, color, extra) => { if (!nodes.has(id)) nodes.set(id, { id, col, label: x.t || x.name || 'Unnamed customer', v: 0, color, cik: x.cik, t: x.t, sub: x.name, ...extra }); return nodes.get(id); };
+    let named = new Map();
+    d.links.forEach((l) => {
+      if (l.kind === 'in') {
+        const a = add('s:' + key(l.s), 0, l.s, SUP), b = add('m:' + key(l.c), 1, l.c, ME);
+        a.v += l.usd; links.push({ s: a.id, t: b.id, v: l.usd, k: 1, why: `${l.s.t || l.s.name}: ${upct(l.pct)} of its revenue` });
+      } else {
+        const a = add('m:' + key(l.s), 1, l.s, ME), b = add('c:' + key(l.c), 2, l.c, l.kind === 'inside' ? '#7a5aa6' : CUS, l.kind === 'inside' ? { label: `${l.c.t || l.c.name} (member)` } : {});
+        b.v += l.usd; links.push({ s: a.id, t: b.id, v: l.usd, k: 1, why: `${upct(l.pct)} of ${l.s.t || l.s.name}'s revenue` });
+        named.set(a.id, (named.get(a.id) || 0) + l.usd);
+      }
+    });
+    let rest = 0;
+    nodes.forEach((n) => {
+      if (n.col !== 1) return;
+      const m = mem.get(n.id.slice(2)) || {};
+      const inV = links.filter((l) => l.t === n.id).reduce((a, l) => a + l.v, 0), outV = named.get(n.id) || 0;
+      n.v = outV ? Math.max(m.revenue || 0, outV, inV) : inV;
+      if (outV && (m.revenue || 0) > outV) { links.push({ s: n.id, t: 'rest', v: m.revenue - outV, k: 0, why: 'revenue not attributed to a named customer' }); rest += m.revenue - outV; }
+    });
+    if (rest > 0) nodes.set('rest', { id: 'rest', col: 2, label: 'Other customers', v: rest, color: REST, est: true });
+    const hasIn = d.links.some((l) => l.kind === 'in');
+    let ns = Array.from(nodes.values());
+    if (!hasIn) ns = ns.map((n) => ({ ...n, col: n.col - 1 }));
+    const cols = hasIn ? [{ id: 's', name: 'Suppliers' }, { id: 'm', name: 'Members' }, { id: 'c', name: 'Customers' }] : [{ id: 'm', name: 'Members' }, { id: 'c', name: 'Customers' }];
+    return { cols, nodes: ns, links };
+  }
+
+  async function concept(box, id) {
+    const d = await get(`network/x/${id}.json`);
+    if (!d || !box || !box.isConnected || !d.links || !d.links.length) return;
+    const out = d.links.filter((l) => l.kind !== 'in'), inn = d.links.filter((l) => l.kind === 'in');
+    const custs = new Set(out.map((l) => l.c.cik || l.c.name));
+    box.innerHTML = `<div class="section-head"><h2>Who pays the members</h2><span class="muted">Customers and suppliers the members’ annual reports name, with the stated shares</span></div>
+      <div class="net-chart" id="cnet-chart"></div>
+      <div class="tbl-wrap"><table class="small net-tbl"><thead><tr><th>From</th><th>To</th><th class="num">Share</th><th class="num">Dollars</th><th>Stated in</th></tr></thead><tbody>
+      ${d.links.slice().sort((a, b) => b.usd - a.usd).map((l) => `<tr><td>${l.s.cik ? `<a href="#c-${l.s.cik}">${esc(l.s.t || l.s.name)}</a>` : esc(l.s.name)}</td>
+        <td>${l.c.cik ? `<a href="#c-${l.c.cik}">${esc(l.c.t || l.c.name)}</a>` : esc(l.c.name || 'Unnamed customer')}</td>
+        <td class="num">${upct(l.pct)} <span class="muted">of ${esc(l.kind === 'in' ? l.s.t || l.s.name : l.s.t || l.s.name)}’s revenue</span></td><td class="num">${usd(l.usd)}</td>
+        <td>${l.url ? `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.s.t || l.s.name)} ${esc((l.fy || '').slice(0, 4))} ↗</a>` : ''}${l.q ? `<details class="net-q"><summary>the sentence</summary><q>${esc(l.q)}</q></details>` : ''}</td></tr>`).join('')}</tbody></table></div>
+      <p class="muted small">${out.length} stated customer links from ${new Set(out.map((l) => l.s.cik)).size} members to ${custs.size} customers${inn.length ? `; ${inn.length} listed suppliers name a member as a customer` : ''}. Only customers above about 10% of a member’s revenue are disclosed; the grey band is the rest of those members’ revenue.</p>`;
+    box.hidden = false;
+    if (global.FFChains && global.Sankey) {
+      const scene = global.FFChains.layout(conceptView(d), {
+        title: `${d.name} — who pays the members`,
+        subtitle: `Stated in the members’ (and their suppliers’) latest annual reports · ${usd(out.reduce((a, l) => a + l.usd, 0))} to named customers`,
+        footer: ['Source: SEC EDGAR annual reports (10-K, 20-F), read by fixed rules. Dark bands: stated shares × the seller’s revenue; grey: the rest of those members’ revenue.',
+          'Figures are read automatically and can contain errors; check the filings before relying on them. Not investment advice.'],
+      });
+      document.getElementById('cnet-chart').innerHTML = global.Sankey.toSVG(scene, `${d.name}: who pays the members`);
+    }
+  }
+
+  global.FFNetwork = { company, view, concept, conceptView };
 })(window);
