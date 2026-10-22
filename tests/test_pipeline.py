@@ -2979,3 +2979,28 @@ def test_corpus_market_posts_for_the_local_models(tmp_path):
     known = {ex["src"] for ex in xs}
     again = corpus.market_examples(s, rows, by, known, today)
     assert not any(again.values())                                                    # the same day's plans are not rebuilt
+
+
+def test_fsa_shares_unit_slips_stale_counts_and_the_newest_period():
+    """McDonald's tags its diluted share count in millions (711.1), Waters' in thousandths; KLA's 10-K restates the
+    year's count after a 10-for-1 split, newer than the last quarter's; Coca-Cola Consolidated stopped tagging in 2019."""
+    from pipeline import fsa as W
+
+    def fx(diluted, cover, cover_day="2026-07-31"):
+        f = lambda v, form="10-Q": {"val": v, "accn": "a", "form": form, "filed": "2026-08-07"}
+        return {"__shares__": {"WeightedAverageNumberOfDilutedSharesOutstanding": {k: f(v) for k, v in diluted.items()},
+                               "EntityCommonStockSharesOutstanding": {cover_day: f(cover)}}}
+    x = fx({("2026-04-01", "2026-06-30"): 711.1}, 707641531)
+    sh = W.shares(x, W.Evidence(x), "2026-06-30")
+    assert round(sh["diluted"]) == 711100000 and sh["diluted_scaled"] == 1e6 and sh["outstanding"] == 707641531
+    x = fx({("2026-04-01", "2026-06-30"): 98204000000}, 98248111)
+    assert round(W.shares(x, W.Evidence(x), "2026-06-30")["diluted"]) == 98204000
+    x = fx({("2026-01-01", "2026-03-31"): 131750000, ("2025-07-01", "2026-06-30"): 1319633000}, 1306546783, "2026-08-03")
+    sh = W.shares(x, W.Evidence(x), "2026-06-30")
+    assert sh["diluted"] == 1319633000 and sh["diluted_end"] == "2026-06-30" and "diluted_scaled" not in sh
+    x = fx({("2019-07-01", "2019-09-29"): 9413000}, 7141447, "2016-03-04")
+    assert "diluted" not in W.shares(x, W.Evidence(x), "2026-07-03")
+    # a dual-class cover page lists one class: ten times fewer is not a unit slip
+    x = fx({("2026-04-01", "2026-06-30"): 390620582}, 37602843)
+    sh = W.shares(x, W.Evidence(x), "2026-06-30")
+    assert sh["diluted"] == 390620582 and "diluted_scaled" not in sh

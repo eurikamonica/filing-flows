@@ -32,7 +32,8 @@ BAL = {
     "pref": ["PreferredStockValue"],
 }
 INSTANT_CONCEPTS = {c for v in BAL.values() for c in v}
-SHARE_CONCEPTS = {"WeightedAverageNumberOfDilutedSharesOutstanding", "EntityCommonStockSharesOutstanding"}
+SHARE_CONCEPTS = {"WeightedAverageNumberOfDilutedSharesOutstanding", "EntityCommonStockSharesOutstanding",
+                  "WeightedAverageNumberOfShareOutstandingBasicAndDiluted"}
 
 # the cash-flow statement's reconciliation of net income to operating cash flow. (key, label, cash effect of a positive
 # fact, candidate concepts: the first one tagged for the period is used, so one group never counts a figure twice)
@@ -258,25 +259,46 @@ def _ttm_ends(qe):
     return last if ok else None
 
 
+def unit_slip(v, ref):
+    """The power of 1,000 a share count was filed off by against a reference count (McDonald's tags 711.1 for 711.1
+    million diluted shares; Waters 98.2 billion for 98.2 million), or 1 when it is not off by one. A reference one share
+    class only (a dual-class cover page) is never a thousand or a million times off, so the check is safe there."""
+    if not (v and ref and v > 0 and ref > 0):
+        return 1
+    for k in (1e3, 1e6, 1e-3, 1e-6):
+        if 0.67 <= v * k / ref <= 1.5:
+            return k
+    return 1
+
+
 def shares(fx, ev, end):
-    """Diluted weighted-average shares for the latest quarter (or year), and the cover page's shares outstanding."""
+    """Diluted weighted-average shares for the latest period on or before end (a quarter when one ends then, else the
+    year: a 10-K has no three-month figure, and a split restates it), and the cover page's shares outstanding. A count
+    more than 200 days older than the period is stale and left out (a filer that stopped tagging the concept); one filed
+    in thousands or millions is put back in shares against the cover page."""
     sh = fx.get("__shares__") or {}
     out = {}
-    per = sh.get("WeightedAverageNumberOfDilutedSharesOutstanding") or {}
-    cands = [(k, f) for k, f in per.items() if isinstance(k, tuple) and k[1] <= end]
-    q = [(k, f) for k, f in cands if 75 <= (F.d(k[1]) - F.d(k[0])).days <= 100]
-    pick = max(q or cands, key=lambda kf: (kf[0][1], -(F.d(kf[0][1]) - F.d(kf[0][0])).days), default=None)
-    if pick:
-        (s, e), f = pick
-        out["diluted"] = f["val"]
-        out["diluted_end"] = e
-        out["r_diluted"] = ev.ref("WeightedAverageNumberOfDilutedSharesOutstanding", "3m" if 75 <= (F.d(e) - F.d(s)).days <= 100 else "fy", [f])
     per = sh.get("EntityCommonStockSharesOutstanding") or {}
     days = [k for k in per if not isinstance(k, tuple)]
     if days:
         k = max(days)
         out["outstanding"], out["outstanding_at"] = per[k]["val"], k
         out["r_outstanding"] = ev.ref("EntityCommonStockSharesOutstanding", "bal", [per[k]], k)
+    for concept in ("WeightedAverageNumberOfDilutedSharesOutstanding", "WeightedAverageNumberOfShareOutstandingBasicAndDiluted"):
+        per = sh.get(concept) or {}
+        cands = [(k, f) for k, f in per.items() if isinstance(k, tuple) and k[1] <= end and (F.d(end) - F.d(k[1])).days <= 200
+                 and f.get("val")]
+        pick = max(cands, key=lambda kf: (kf[0][1], -(F.d(kf[0][1]) - F.d(kf[0][0])).days), default=None)
+        if not pick:
+            continue
+        (s, e), f = pick
+        k = unit_slip(f["val"], out.get("outstanding"))
+        out["diluted"] = f["val"] * k
+        out["diluted_end"] = e
+        if k != 1:
+            out["diluted_scaled"] = k
+        out["r_diluted"] = ev.ref(concept, "3m" if 75 <= (F.d(e) - F.d(s)).days <= 100 else "fy", [f])
+        break
     return out
 
 
@@ -321,7 +343,7 @@ def valuation_inputs(fx, ev, qe, ye):
     out["cash_all"] = (v("cash") or 0) + (v("sti") or 0)
     out["claims"] = (v("nci") or 0) + (v("pref") or 0)
     sh = shares(fx, ev, end)
-    for k in ("diluted", "diluted_end", "outstanding", "outstanding_at"):
+    for k in ("diluted", "diluted_end", "diluted_scaled", "outstanding", "outstanding_at"):
         if k in sh:
             out[k] = sh[k]
     for k in ("r_diluted", "r_outstanding"):

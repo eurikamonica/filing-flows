@@ -469,11 +469,12 @@ def frame(root, concept, period):
     return read_json(frame_path(root, concept, period), {}) or {}
 
 
-def quarterly(root, concept, periods):
-    """{period: {cik: value}} with the fourth quarter filled from the annual frame when the three before are on file."""
+def quarterly(root, concept, periods, additive=True):
+    """{period: {cik: value}} with the fourth quarter filled from the annual frame when the three before are on file
+    (flows only: a weighted share count for the year minus three quarters' counts is not the fourth quarter's)."""
     span = [_shift(periods[0], -k) for k in (3, 2, 1)] + list(periods)
     q = {p: dict(frame(root, concept, p)) for p in dict.fromkeys(span)}
-    years = sorted({p[:6] for p in span}) + [f'CY{int(periods[-1][2:6]) + 1}']
+    years = (sorted({p[:6] for p in span}) + [f'CY{int(periods[-1][2:6]) + 1}']) if additive else []
     for year in years:
         for cik, row in frame(root, concept, year).items():
             if not isinstance(row, list) or not row[1]:
@@ -511,7 +512,7 @@ def panel(root, periods):
                    ('sh', 'WeightedAverageNumberOfDilutedSharesOutstanding'), ('prem', 'PremiumsEarnedNet'),
                    ('claims', 'PolicyholderBenefitsAndClaimsIncurredNet'), ('dac', 'DeferredPolicyAcquisitionCostAmortizationExpense'),
                    ('uw', 'OtherUnderwritingExpense')):
-        Q[key] = quarterly(root, c, periods)
+        Q[key] = quarterly(root, c, periods, additive=key != 'sh')
     inst, eq_q = {}, {}
     for key, c in (('equity', 'StockholdersEquity'), ('goodwill', 'Goodwill'), ('intang', 'IntangibleAssetsNetExcludingGoodwill'),
                    ('cash', 'CashAndCashEquivalentsAtCarryingValue'), ('ltd', 'LongTermDebt')):
@@ -760,6 +761,60 @@ def growth_history(revs):
     return g0, stdev(yoy[-12:]) if len(yoy) >= 4 else None
 
 
+def implied_shares(ni, eps, k=4):
+    """Net income ÷ diluted EPS over the latest quarters that have both (the median of up to k): the share count the
+    reported EPS was computed on, whatever unit the filer tagged the count itself in. None when EPS is too small to
+    divide by."""
+    xs = [n / e for n, e in zip(ni, eps) if fin(n) and fin(e) and abs(e) >= 0.05 and n / e > 0]
+    xs = xs[-k:]
+    return sorted(xs)[len(xs) // 2] if xs else None
+
+
+def plausible_shares(v, price=None, revenue=None):
+    """A share count a listed company can have: 10 thousand to 30 billion and, for a company with $100M+ of revenue, a
+    price-to-sales ratio between 0.025 and 2,000 at that count (Nutanix's 287,481 — thousands — would value a
+    $2.5B-revenue company at $19M)."""
+    if not (fin(v) and 1e4 <= v <= 3e10):
+        return False
+    if fin(price) and price > 0 and fin(revenue) and revenue >= 1e8:
+        return 0.025 <= price * v / revenue <= 2000
+    return True
+
+
+def settle_shares(cands, price=None, revenue=None, implied=None):
+    """(shares, source, note) from the sources in order of preference. A count that is implausible as filed (see
+    plausible_shares) but a thousand or a million times another source (McDonald's diluted shares tagged as 711.1,
+    Waters' as 98.2 billion) is read in shares; one implausible either way (Planet Fitness's 100 Class B shares, Erie's
+    2,542) is passed over. Net income ÷ diluted EPS only helps decide a unit: as a share count it is unreliable (frames
+    keep each quarter's EPS as first filed, before a split, and net income includes minority interests). None when no
+    source is plausible: no per-share value beats a wrong one."""
+    vals = [(n, v) for n, v in cands if fin(v) and v > 0]
+    ref_ok = fin(implied) and implied > 0 and plausible_shares(implied, price, revenue)
+    plain = [(v, n, None) for n, v in vals if plausible_shares(v, price, revenue)]
+    refs = ([implied] if ref_ok else []) + [v for v, _, _ in plain]
+    scaled = []
+    for n, v in vals:
+        if plausible_shares(v, price, revenue):
+            continue
+        for k in (1e3, 1e6, 1e-3, 1e-6):
+            w = v * k
+            if plausible_shares(w, price, revenue) and any(0.67 <= w / r <= 1.5 for r in refs):
+                unit = {1e3: 'thousands', 1e6: 'millions', 1e-3: 'thousandths', 1e-6: 'millionths'}[k]
+                scaled.append((w, n, f'Shares: {n} files {v:,.6g}, a count in {unit}; read as {w:,.0f}.'))
+                break
+    fixed = plain + scaled
+
+    def passed_over(v, n, note):
+        if note is None and vals and n != vals[0][0] and not (0.67 <= vals[0][1] / v <= 1.5):
+            note = f'Shares: {vals[0][0]} files {vals[0][1]:,.6g}, which does not fit the other figures; {n} is used.'
+        return v, n, note
+    if fixed:
+        return passed_over(*fixed[0])
+    if vals:
+        return None, None, 'Shares: no plausible count on file (' + ', '.join(f'{n} {v:,.6g}' for n, v in vals) + '); per-share values are left out.'
+    return None, None, None
+
+
 def company_inputs(cik, meta, P, slim, debt_rec, cons_c, price, periods):
     """The merged figures one company is valued with: the main site's trailing figures first, the frames second, the
     debt module's balance sheet third. Each value records where it came from."""
@@ -792,9 +847,34 @@ def company_inputs(cik, meta, P, slim, debt_rec, cons_c, price, periods):
     tax = pick('tax', ('main site (trailing)', V.get('tax')), ('frames, latest year', (ann.get('tax') or (None,))[0]))
     F['tax_rate'] = clamp(tax / pretax, 0.0, 0.35) if fin(tax) and fin(pretax) and pretax > 0 else 0.21
     sh_q = [v for v in (q.get('sh') or []) if fin(v) and v > 0]
-    F['shares'] = pick('shares', ('main site (diluted)', V.get('diluted')), ('main site (outstanding)', V.get('outstanding')),
-                       ('frames, diluted weighted average', sh_q[-1] if sh_q else None), ('debt module (cover page)', snap.get('shares')),
-                       ('analysts (Yahoo)', ((cons_c or {}).get('analysts') or {}).get('shares')))
+    implied = implied_shares(q.get('ni') or [], q.get('eps') or [])
+    def fresh(day, days):                      # a count from long before the figures it is set against is stale
+        end = V.get('end') or (slim or {}).get('end')
+        try:
+            return not end or not day or (dt.date.fromisoformat(end[:10]) - dt.date.fromisoformat(day[:10])).days <= days
+        except ValueError:
+            return True
+    stale = {}
+    if fin(V.get('diluted')) and not fresh(V.get('diluted_end'), 200):    # Coca-Cola Consolidated: a 2019 count, 2026 figures
+        stale[V['diluted']], V = V.get('diluted_end'), {**V, 'diluted': None}
+    if fin(V.get('outstanding')) and not fresh(V.get('outstanding_at'), 400):
+        stale[V['outstanding']], V = V.get('outstanding_at'), {**V, 'outstanding': None}
+    cover = snap.get('shares') if snap.get('shares') not in stale else None    # the debt module's undated copy of the same
+    cands = [('main site (diluted)', V.get('diluted')), ('main site (outstanding)', V.get('outstanding')),
+             ('frames, diluted weighted average', sh_q[-1] if sh_q else None), ('debt module (cover page)', cover),
+             ('analysts (Yahoo)', ((cons_c or {}).get('analysts') or {}).get('shares'))]
+    if fin(V.get('diluted')) and fin(V.get('outstanding')) and (V.get('outstanding_at') or '') > (V.get('diluted_end') or '9') \
+            and V['outstanding'] > 1.3 * V['diluted']:
+        # more shares on the cover page than the period's diluted count: a split or an issue since (KLA's 10-for-1) —
+        # the cover page is the count the share price now applies to (one class can only be fewer, never more)
+        cands.insert(0, ('main site (outstanding, after a split or issue)', V['outstanding']))
+    F['shares'], src['shares'], F['shares_note'] = settle_shares(cands, price, F['revenue'], implied)
+    if F['shares'] is None and stale:
+        F['shares_note'] = ('Shares: the only counts on file are years old (' + ', '.join(f'{v:,.0f} at {d}' for v, d in stale.items())
+                            + '; the filer no longer tags them); per-share values are left out.')
+    F['shares_implied'] = implied
+    if src.get('shares') is None:
+        src.pop('shares', None)
     an = (debt_rec or {}).get('analysis') or {}
     F['debt'] = pick('debt', ('main site', V.get('debt') if V.get('debt_how') != 'no debt tagged' else None), ('debt module', an.get('total_debt')),
                      ('frames, long-term debt', (inst.get('ltd') or (None,))[0])) or 0.0
@@ -841,8 +921,9 @@ def analyse(F, ctx):
     out = {'cik': F['cik'], 'ticker': F['ticker'], 'name': F['name'], 'sector': F['sector'], 'industry': F['industry'],
            'sic': F['sic'], 'kind': F['kind'], 'price': F['price'], 'price_date': ctx.get('price_date'), 'generated_at': now(),
            'inputs': {k: F.get(k) for k in ('revenue', 'oi', 'ni', 'eps', 'da', 'capex', 'interest', 'tax_rate', 'shares', 'debt', 'cash',
-                                             'claims', 'equity', 'goodwill', 'intangibles', 'mcap', 'ev', 'ebitda', 'g0', 'sg', 'sm')},
-           'sources': F.get('src'), 'football': [], 'notes': []}
+                                             'claims', 'equity', 'goodwill', 'intangibles', 'mcap', 'ev', 'ebitda', 'g0', 'sg', 'sm',
+                                             'shares_implied')},
+           'sources': F.get('src'), 'football': [], 'notes': [F['shares_note']] if F.get('shares_note') else []}
     price, sh = F['price'], F['shares']
     W = wacc_of(F, ctx['rates'], ctx.get('debt'), ctx.get('beta'))
     out['wacc'] = W

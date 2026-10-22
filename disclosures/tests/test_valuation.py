@@ -146,5 +146,46 @@ class Build(unittest.TestCase):
             self.assertTrue(any(s['month'] == '2026-01' and s['horizon_months'] == 6 and s['n'] >= 10 for s in led['scores']))
 
 
+
+class Shares(unittest.TestCase):
+    """The share count every per-share value divides by (McDonald's DCF read $519,571,000 a share on 711.1 shares)."""
+
+    def test_unit_slips_and_wrong_classes(self):
+        cases = {
+            'MCD': ([('main site (diluted)', 711.1), ('main site (outstanding)', 707641531)], 246.52, 27.7e9, 707641531),
+            'NTNX': ([('main site (diluted)', 287481), ('debt module (cover page)', 270570179)], 66.94, 2.5e9, 270570179),
+            'WAT': ([('main site (diluted)', 98204000000), ('main site (outstanding)', 98248111)], 457.47, 3.0e9, 98248111),
+            'PLNT': ([('debt module (cover page)', 100), ('analysts (Yahoo)', 84e6)], 50.92, 1.2e9, 84e6),   # Class B only
+            'FOUR': ([('main site (diluted)', 1333686), ('main site (outstanding)', 78960120)], 39.43, 3.5e9, 78960120),
+            'LEVI': ([('main site (diluted)', 390620582), ('main site (outstanding)', 37602843)], 20.44, 6.4e9, 390620582),
+            'AVTX': ([('frames, diluted weighted average', 43602044)], 13.65, 59000, 43602044),   # no revenue to judge by
+        }
+        for t, (cands, price, rev, want) in cases.items():
+            self.assertEqual(V.settle_shares(cands, price, rev)[0], want, t)
+        v, src, note = V.settle_shares([('main site (diluted)', 711.1)], 246.52, 27.7e9, implied=711.4e6)
+        self.assertEqual((round(v), src), (711100000, 'main site (diluted)'))            # a unit slip read back, with net income ÷ EPS
+        self.assertIn('millions', note)
+        v, src, note = V.settle_shares([('debt module (cover page)', 100)], 50.92, 1.2e9)
+        self.assertIsNone(v)                                                          # nothing plausible: no per-share values
+        self.assertIn('left out', note)
+
+    def test_implied_shares(self):
+        self.assertEqual(V.implied_shares([1e9, 2e9, None, 3e9], [1.0, 2.0, 1.5, 0.01]), 1e9)    # a near-zero EPS is skipped
+        self.assertIsNone(V.implied_shares([1e9], [None]))
+
+    def test_inputs_pick_a_fresh_count_and_the_cover_after_a_split(self):
+        meta = {'ticker': 'X', 'name': 'X', 'sic': 3674}
+        slim = {'val': {'end': '2026-06-30', 'revenue': 12e9, 'oi': 5e9, 'diluted': 131750000, 'diluted_end': '2026-03-31',
+                        'outstanding': 1306546783, 'outstanding_at': '2026-08-03'}}
+        F = V.company_inputs(1, meta, {}, slim, {}, {}, 161.74, [])
+        self.assertEqual((F['shares'], F['src']['shares']), (1306546783, 'main site (outstanding, after a split or issue)'))
+        slim = {'val': {'end': '2026-07-03', 'revenue': 7.7e9, 'oi': 1e9, 'diluted': 9413000, 'diluted_end': '2019-09-29',
+                        'outstanding': 7141447, 'outstanding_at': '2016-03-04'}}
+        F = V.company_inputs(1, meta, {}, slim, {'snapshot': {'shares': 7141447}}, {'analysts': {'shares': 66564294}}, 196.49, [])
+        self.assertEqual((F['shares'], F['src']['shares']), (66564294, 'analysts (Yahoo)'))
+        F = V.company_inputs(1, meta, {}, slim, {'snapshot': {'shares': 7141447}}, {}, 196.49, [])
+        self.assertIsNone(F['shares'])
+        self.assertIn('years old', F['shares_note'])
+
 if __name__ == '__main__':
     unittest.main()
