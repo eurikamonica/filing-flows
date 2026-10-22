@@ -855,6 +855,97 @@ def build_signals(root, flows_every, trades, universe):
     return rows, {'crowd_net_managers': crowd_cut, 'new_positions': new_cut, 'inflow_usd': inflow_cut, 'outflow_usd': outflow_cut}
 
 
+HYPE_FLAGS = (('crowded_buy', 1), ('new_money', 2), ('big_inflow', 4), ('crowded_exit', 8), ('big_outflow', 16))
+
+
+def price_rows(root, ticker):
+    path = Path(root) / 'cache' / 'prices' / (re.sub(r'[^A-Za-z0-9-]', '_', ticker) + '.json.gz')
+    try:
+        with gzip.open(path, 'rt', encoding='utf-8') as f:
+            return [r for r in json.load(f)['rows'] if r and r[1]]
+    except Exception:
+        return None
+
+
+def close_on(rows, day):
+    """(date, close) of the last close on or before day, or None."""
+    lo, hi = 0, len(rows)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if rows[mid][0] <= day:
+            lo = mid + 1
+        else:
+            hi = mid
+    return rows[lo - 1] if lo else None
+
+
+def hype_history(root, periods, coverage, detail, signals, universe, today=None):
+    """The Hype map quarter by quarter: per stock and well-covered quarter, net 13F managers (added − cut), new positions,
+    estimated net dollars, the price move during the quarter and over the three months after it (to date for a recent
+    quarter), and which 13F flags it had — the same rules as build_signals with each quarter's own thresholds. A stock
+    is on that quarter's map when it has a flag; one on the map but not the quarter before is new to it."""
+    today = (today or dt.date.today()).isoformat()
+    full = max(coverage or [0])
+    # a quarter counts when it and the quarter before are well covered: changes are against each manager's previous
+    # 13F, so the first well-covered quarter has almost none
+    keep = [i for i, c in enumerate(coverage) if full and i and c >= 0.6 * full and coverage[i - 1] >= 0.6 * full]
+    ps = [periods[i] for i in keep]
+    cuts, flags = [], {}
+    for j, i in enumerate(keep):
+        rows = [(t, v[i]) for t, v in detail.items() if v[i]]
+        nets = sorted((v[0] - v[1] for _, v in rows), reverse=True)
+        usd = sorted((v[2] for _, v in rows), reverse=True)
+        news = sorted((v[4] for _, v in rows), reverse=True)
+        crowd = max(8, nets[min(len(nets) - 1, 60)] if nets else 8)
+        inflow = max(50e6, usd[min(len(usd) - 1, 60)] if usd else 50e6)
+        outflow = min(-50e6, usd[-min(len(usd), 61)] if usd else -50e6)
+        new_cut = max(10, news[min(len(news) - 1, 100)] if news else 10)
+        cuts.append({'crowd_net_managers': crowd, 'new_positions': new_cut, 'inflow_usd': round(inflow), 'outflow_usd': round(outflow)})
+        for t, (b, s_, net_usd, holders, new, exits) in rows:
+            net = b - s_
+            f = ((net >= crowd and b >= 2 * max(1, s_)) * 1 | (new >= new_cut) * 2 | (net_usd >= inflow) * 4
+                 | (-net >= crowd and s_ >= 2 * max(1, b)) * 8 | (net_usd <= outflow) * 16)
+            if f:
+                flags.setdefault(t, [0] * len(keep))[j] = f
+    wanted = set(flags) | {r['ticker'] for r in signals if r.get('f13')}
+    out = {}
+    for t in sorted(wanted):
+        series = detail.get(t)
+        if not series:
+            continue
+        px = price_rows(root, t)
+        q = []
+        for j, i in enumerate(keep):
+            v = series[i]
+            if not v:
+                q.append(None)
+                continue
+            end = ps[j]
+            start = periods[i - 1] if i else (dt.date.fromisoformat(end) - dt.timedelta(days=91)).isoformat()
+            after = (dt.date.fromisoformat(end) + dt.timedelta(days=91)).isoformat()
+            r_in = r_after = None
+            to_date = 0
+            if px:
+                a, b_, c = close_on(px, start), close_on(px, end), close_on(px, min(after, today))
+                if a and b_ and a[0] > (dt.date.fromisoformat(start) - dt.timedelta(days=10)).isoformat():
+                    r_in = round(b_[1] / a[1] - 1, 4)
+                if b_ and c and c[0] > end:
+                    r_after = round(c[1] / b_[1] - 1, 4)
+                    to_date = int(after > today)
+            f = (flags.get(t) or [0] * len(keep))[j]
+            heat = 2 * bool(f & 1) + bool(f & 2) + bool(f & 4)
+            q.append([v[0] - v[1], v[4], v[2], r_in, r_after, f, heat, to_date])
+        if any(x for x in q):
+            out[t] = {'name': universe.name(t) or '', 'q': q}
+    return {'generated_at': now(), 'periods': ps, 'coverage': [coverage[i] for i in keep], 'thresholds': cuts,
+            'fields': ['net_managers', 'new_positions', 'usd_net', 'r_quarter', 'r_after', 'flags', 'heat', 'after_to_date'],
+            'flags': {k: v for k, v in HYPE_FLAGS}, 'rows': out,
+            'note': ('Each quarter: net 13F managers (added − cut) and the price move during the quarter and over the three '
+                     'months after it. A stock is on a quarter\'s map when its 13F flows flag it (crowded buy or exit, new '
+                     'money, big inflow or outflow — each quarter\'s own thresholds); new on the map = not flagged the quarter '
+                     'before. Descriptive, not a forecast or advice.')}
+
+
 TAGS = {
     'crowded_buy': 'Crowded buy: far more 13F managers added than cut this quarter',
     'new_money': 'New money: among the most new positions opened this quarter',
@@ -939,6 +1030,7 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
     gather = XH.Gather(XH.listed_ciks(root), int(xcfg.get('institutions', 12)), universe.cusip_ticker)
     flows, every = build_flows(root, universe, opts=opts, see=gather.see)
     by_quarter, ctx = (flows.pop('_by_quarter', None), flows.pop('_ctx', None)) if flows else (None, None)
+    hype_src = None
     trades, tstats = officials_trades(root, universe, live)
     latest, monitor = latest_reports(root, live, trades)
     signals, cuts = build_signals(root, every, trades, universe)
@@ -957,6 +1049,7 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
                                              'fields': ['buyers', 'sellers', 'new', 'exits', 'usd_net', 'holders'], 'rows': by})
         if by_quarter:
             detail = by_quarter.pop('detail', None)
+            hype_src = (by_quarter['periods'], by_quarter['coverage'], detail)
             _write(out_dir / 'by-ticker-history.json', {'generated_at': stamp, **by_quarter})
             if detail:                            # the company pages' quarter-by-quarter 13F chart (stage-public.py)
                 _write(out_dir / 'by-ticker-quarters.json', {'generated_at': stamp, 'periods': by_quarter['periods'],
@@ -988,6 +1081,12 @@ def publish(root, client=None, min_interval_hours=3, force=False, live=None):
                                       'thresholds': cuts, 'tags': TAGS, 'rows': signals,
                                       'note': ('Signals are descriptive flags computed from public filings and daily closes — what '
                                                'happened, not what will happen, and never a recommendation.')})
+    # the Hype map over time: each quarter's 13F-flagged stocks with their price moves (hype-view.js)
+    if hype_src and hype_src[2]:
+        try:
+            _write(out_dir / 'hype-history.json', hype_history(root, *hype_src, signals, universe))
+        except Exception as exc:
+            errors.append(f'hype history: {exc}')
     # 4.19: the President's 278-T trades (OCR'd by the officials runs) and who holds whom
     try:
         PRES.publish(root, out_dir, universe)
