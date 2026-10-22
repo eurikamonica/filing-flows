@@ -29,9 +29,16 @@
 .fv-note{font-size:12px;color:var(--muted,#777);line-height:1.5;margin-top:14px;max-width:90ch}.fv-tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:9px;border:1px solid var(--line,#ddd);margin-left:6px;color:var(--muted,#777)}
 .fv-stack{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid var(--line,#ddd);max-width:640px}.fv-stack i{display:block;height:100%}
 .fv-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted,#777);margin:4px 0 6px}.fv-legend span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--k)}
-.fv-tog{font:inherit;font-size:12px;border:1px solid var(--line,#ddd);background:none;border-radius:8px;padding:3px 9px;cursor:pointer;color:var(--muted,#666);margin-right:6px}.fv-tog.on{color:var(--ink,#222);border-color:var(--ink,#222)}`;
+.fv-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0 10px}
+.fv-tile{border:1px solid var(--line,#ddd);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-height:112px}
+.fv-tile em{font-style:normal;font-size:11px;color:var(--muted,#777);line-height:1.3;min-height:28px}.fv-tile b{font-size:19px;font-variant-numeric:tabular-nums}
+.fv-tile .fv-p{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;border-top:1px dashed var(--line,#ddd);padding-top:4px;margin-top:auto}
+.fv-tile small{font-size:11px;color:var(--muted,#777)}.fv-tile.fv-exp{border-color:var(--ink,#222)}
+.fv-bar{height:5px;border-radius:3px;background:var(--line,#e5e5e5);overflow:hidden}.fv-bar i{display:block;height:100%;background:var(--accent,#2a78d6)}
+.fv-heat td.n{min-width:64px}.fv-tog{font:inherit;font-size:12px;border:1px solid var(--line,#ddd);background:none;border-radius:8px;padding:3px 9px;cursor:pointer;color:var(--muted,#666);margin-right:6px}.fv-tog.on{color:var(--ink,#222);border-color:var(--ink,#222)}`;
     document.head.appendChild(s);
   }
+  const pp = (v) => (fin(v) ? (v > 0 && v < 0.005 ? '<1%' : v < 1 && v > 0.995 ? '>99%' : num(100 * v, 0) + '%') : '—');
   const card = (label, value, cls = '', note = '') => `<div class="fv-card"><span>${esc(label)}</span><b class="${cls}">${value}</b>${note ? `<i>${note}</i>` : ''}</div>`;
 
   // ---------- football field: one bar per method, the price as a line ----------
@@ -103,6 +110,146 @@
     return s + '</svg>';
   }
 
+  // ---------- the outside view (app/base_rates.py) ----------
+  function tilesHtml(d) {
+    const br = d.base_rates || {}, T = br.tiles || [], ex = br.expected, price = d.price;
+    if (!T.length && !ex) return '';
+    const pcol = (p) => (!fin(p) ? '' : p < 0.2 ? 'fv-bad' : p < 0.4 ? 'fv-warn' : 'fv-good');
+    const why = (t) => (t.basis === 'growth' ? (t.status === 'below' ? 'needs no growth' : t.status === 'above' ? 'needs over 100% a year' : `needs ${spct(t.required, 1)} a year for 5 years`)
+      : t.basis === 'pe' ? `needs a P/E of ${num(t.required, 1)}` : '');
+    let h = '<div class="fv-tiles">';
+    if (ex) h += `<div class="fv-tile fv-exp"><em>Expected price — outside view (peers' base rates)</em><b>${usd(ex.price)}</b><small>80% range ${usd(ex.p10)}–${usd(ex.p90)}</small><span class="fv-p ${pcol(ex.p_above)}">${pp(ex.p_above)}<small> of draws above the price</small></span><div class="fv-bar"><i style="width:${fin(ex.p_above) ? (100 * ex.p_above).toFixed(0) : 0}%"></i></div></div>`;
+    for (const t of T) {
+      const gap = fin(price) && fin(t.price) ? spct(t.price / price - 1) + ' vs price' : '';
+      h += `<div class="fv-tile" title="${esc(t.method)}${fin(t.p_mc) ? ' · ' + pp(t.p_mc) + ' of the outside-view Monte Carlo draws reach this price' : ''}"><em>${esc(t.method)}</em><b>${usd(t.price)}</b><small>${esc(gap)}</small>
+        <span class="fv-p ${pcol(t.p)}">${pp(t.p)}<small> ${t.basis === 'pe' ? 'of peer quarters traded there' : 'of peers did it'}</small></span><div class="fv-bar"><i style="width:${fin(t.p) ? (100 * t.p).toFixed(0) : 0}%"></i></div><small>${esc(why(t))}</small></div>`;
+    }
+    const byGrowth = T.some((t) => t.basis === 'growth'), g = byGrowth ? br.growth_group : br.pe_group;
+    return h + `</div><p class="fv-sub">Top: the price each method gives. Below: how often companies like this one achieved what that price requires — ${byGrowth && g ? `the share of ${num(g.n)} five-year windows of ${esc(g.label)} (${num(g.companies)} companies) whose revenue CAGR reached the growth the DCF needs for that price, with today's margins and cost of capital` : g ? `the share of ${num(g.n)} peer quarters (${esc(g.label)}) that traded at the P/E that price implies` : ''}. A base rate is a starting point, not a forecast: survivors only, and the company's own history is in its group.</p>`;
+  }
+
+  function oddsHtml(co) {
+    const rows = ['market', 'street_eps', 'street_rev', 'street_margin', 'street_target', 'pm_eps', 'pm_price'].map((k) => co && co[k]).filter(Boolean);
+    if (!rows.length) return '';
+    const req = (r) => (r.what && r.what.startsWith('net-margin') ? (fin(r.required) ? (r.required >= 0 ? '+' : '−') + num(Math.abs(100 * r.required), 1) + ' pts' : '—')
+      : r.status === 'below' ? 'no growth needed' : r.status === 'above' ? '> 100% a year' : spct(r.required, 1));
+    const what = (r) => (fin(r.estimate) ? `${r.label.includes('revenue') ? big(r.estimate) : r.what.startsWith('net-margin') ? pct(r.estimate) : usd(r.estimate)} vs ${r.label.includes('revenue') ? big(r.year_ago) : r.what.startsWith('net-margin') ? pct(r.year_ago) : usd(r.year_ago)} a year earlier`
+      : fin(r.strike) ? `line ${usd(r.strike)} vs ${usd(r.year_ago)} a year earlier` : fin(r.price) ? `${usd(r.price)} a share` : '');
+    return `<h3>Three consensus views — how often peers got there</h3><p class="fv-sub">What each view requires, and how often it happened: <b>outside</b> = the share of peer observations at or above it (${esc((rows.find((r) => r.group_label) || {}).group_label || 'peer group')}); <b>inside</b> = the company's own history (its quarters since 2020; for 5-year growth, its own Monte Carlo spread). Polymarket's own price for the EPS line is shown beside it.</p>
+      <div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>View</th><th>What it says</th><th>Requires</th><th class="n">Outside (peers)</th><th class="n">Inside (own)</th><th class="n">Market's odds</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${esc(r.label)}</td><td>${esc(what(r))}${r.note ? `<br><small>${esc(r.note)}</small>` : ''}</td><td>${esc(r.what || '')}: <b>${esc(req(r))}</b></td><td class="n">${pp(r.p_outside)}${fin(r.n) ? `<br><small>of ${num(r.n)}</small>` : ''}</td><td class="n">${pp(r.p_inside)}${fin(r.n_inside) ? `<br><small>of ${num(r.n_inside)}</small>` : ''}</td><td class="n">${fin(r.p_market) ? pp(r.p_market) : ''}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+
+  function insideOutsideHtml(ov) {
+    if (!ov || !(ov.rows || []).length) return '';
+    const f = (v, fmt) => (fmt === 'x' ? (fin(v) ? num(v, 1) + '×' : '—') : pct(v));
+    let h = `<h3>Inside view vs outside view</h3><p class="fv-sub">Left: this company's own figures. Right: what peers (${esc(ov.size_label || 'all sizes')}, narrowest SIC group with 40+ observations from 5+ companies) actually did — median and middle 80%. "Rank" is where the company's figure sits among the peers' observations.</p>
+      <div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Input</th><th class="n">Inside (own)</th><th class="n">Outside: median</th><th class="n">10th–90th</th><th class="n">Rank</th><th>Peer group</th></tr></thead><tbody>`;
+    for (const r of ov.rows) {
+      const o = r.outside;
+      h += `<tr><td>${esc(r.input)}${r.inside_note ? `<br><small>${esc(r.inside_note)}</small>` : ''}</td><td class="n">${f(r.inside, r.fmt)}</td><td class="n">${o ? f(o.p50, r.fmt) : '—'}</td><td class="n">${o ? f(o.p10, r.fmt) + ' – ' + f(o.p90, r.fmt) : '—'}</td><td class="n">${fin(r.inside_pct) ? num(100 * r.inside_pct) + 'th' : '—'}</td><td>${o ? `${esc(o.label)} <small>${num(o.n)} obs., ${num(o.companies)} cos.</small>` : '<small>too few peers</small>'}</td></tr>`;
+    }
+    h += '</tbody></table></div>';
+    const a = ov.inside_mc, b = ov.mc;
+    if (a || b) h += `<div class="fv-cards">${a ? card('Inside view: value > price', pp(a.p_above), '', `own-history Monte Carlo; median ${usd(a.p50)}`) : ''}${b ? card('Outside view: value > price', pp(b.p_above), '', `peers' base rates; median ${usd(b.p50)}, mean ${usd(b.mean)}`) : ''}${b ? card('Outside view 80% range', `${usd(b.p10)}–${usd(b.p90)}`, '', `${num(b.n)} DCFs from ${num(b.n_windows)} peer windows`) : ''}</div>`;
+    return h;
+  }
+
+  function stageHtml(st) {
+    if (!st) return '';
+    const m = st.metrics || {}, items = [];
+    if (fin(m.rule_of_40)) items.push(['Rule of 40 (growth % + FCF margin %)', num(m.rule_of_40, 0)]);
+    if (fin(m.fcf_margin)) items.push(['Free-cash-flow margin', pct(m.fcf_margin)]);
+    if (fin(m.cash_runway_years)) items.push(['Cash runway at today\'s burn', num(m.cash_runway_years, 1) + ' years']);
+    if (fin(m.cagr3)) items.push(['Revenue CAGR, 3 years', pct(m.cagr3)]);
+    if (fin(m.margin_sigma)) items.push(['σ of the quarterly operating margin', num(100 * m.margin_sigma, 1) + ' pts']);
+    if (fin(m.mid_cycle_margin)) items.push(['Mid-cycle operating margin (median since 2020)', pct(m.mid_cycle_margin)]);
+    if (fin(m.normalized_eps)) items.push(['Normalized EPS', usd(m.normalized_eps)]);
+    if (fin(m.owner_earnings)) items.push(['Owner earnings (NI + D&A − capex)', big(m.owner_earnings)]);
+    if (fin(m.shareholder_yield)) items.push(['Shareholder yield (dividends + buybacks)', pct(m.shareholder_yield)]);
+    if (fin(m.tangible_book_ps)) items.push(['Tangible book per share', usd(m.tangible_book_ps)]);
+    if (fin(m.fcf_to_debt)) items.push(['Free cash flow ÷ debt', pct(m.fcf_to_debt)]);
+    if (fin(m.target_margin)) items.push(['Target margin (peer median)', pct(m.target_margin)]);
+    let h = `<h3>Stage: ${esc(st.label)}<span class="fv-tag">${esc(st.why || '')}</span></h3><p class="fv-sub">Rule: ${esc(st.rule)}. What matters at this stage: ${esc(st.what_matters)}. The stage picks and weights the methods below; the weighted value is a row of the football field.</p><div class="fv-two"><div><table class="fv-tbl"><tbody>${items.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="n">${b}</td></tr>`).join('')}</tbody></table></div>`;
+    h += `<div><table class="fv-tbl"><thead><tr><th>Method</th><th class="n">Weight</th><th class="n">Value</th></tr></thead><tbody>${(st.used || []).map((u) => `<tr><td>${esc(u.method)}</td><td class="n">${pct(u.weight, 0)}</td><td class="n">${usd(u.point)}</td></tr>`).join('')}${fin(st.value) ? `<tr><td><b>Stage-weighted value</b></td><td></td><td class="n"><b>${usd(st.value)}</b></td></tr>` : '<tr><td colspan="3"><small>none of this stage\'s methods has enough data</small></td></tr>'}</tbody></table></div></div>`;
+    return h;
+  }
+
+  function tornado(bars, base, price) {
+    if (!(bars || []).length) return '';
+    const vals = bars.flatMap((b) => [b.low, b.high]).concat([base]).concat(fin(price) ? [price] : []);
+    const x0 = Math.min(...vals) * 0.95, x1 = Math.max(...vals) * 1.05;
+    const W = 860, L = 300, R = 70, T = 16, rh = 24, H = T + bars.length * rh + 26, P0 = L + 64;
+    const X = (v) => P0 + (v - x0) / ((x1 - x0) || 1) * (W - P0 - R);
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Tornado: value per share as each input moves">`;
+    bars.forEach((b, i) => {
+      const y = T + i * rh;
+      s += `<text class="fv-lbl" x="${L - 8}" y="${y + 15}" text-anchor="end">${esc(b.input)} <tspan fill="${C.mute}">${esc(b.how)}</tspan></text>`;
+      s += `<rect x="${X(b.low)}" y="${y + 4}" width="${Math.max(0, X(base) - X(b.low))}" height="14" fill="${C.bad}" opacity="0.55"><title>${esc(usd(b.low))}</title></rect>`;
+      s += `<rect x="${X(base)}" y="${y + 4}" width="${Math.max(0, X(b.high) - X(base))}" height="14" fill="${C.good}" opacity="0.55"><title>${esc(usd(b.high))}</title></rect>`;
+      s += `<text x="${X(b.low) - 3}" y="${y + 15}" text-anchor="end">${esc(usd(b.low))}</text><text x="${X(b.high) + 3}" y="${y + 15}">${esc(usd(b.high))}</text>`;
+    });
+    s += `<line x1="${X(base)}" x2="${X(base)}" y1="${T - 4}" y2="${H - 20}" stroke="${C.ink}"/><text x="${X(base)}" y="${H - 6}" text-anchor="middle" class="fv-lbl">base ${esc(usd(base))}</text>`;
+    if (fin(price) && price >= x0 && price <= x1) s += `<line x1="${X(price)}" x2="${X(price)}" y1="${T - 4}" y2="${H - 20}" stroke="${C.ink}" stroke-dasharray="4 3"/><text x="${X(price)}" y="${T - 4}" text-anchor="middle">price</text>`;
+    return s + '</svg>';
+  }
+
+  function gridHtml(g, price, fmtRow, fmtCol) {
+    if (!g || !(g.values || []).length) return '';
+    const cap = `<p class="fv-sub">Rows: ${esc(g.row_label)}. Columns: ${esc(g.col_label)}.</p>`;
+    const cell = (v) => { if (!fin(v) || !fin(price)) return `<td class="n">${usd(v)}</td>`; const r = v / price - 1, a = Math.min(0.5, Math.abs(r)) / 0.5 * 0.35;
+      return `<td class="n" style="background:color-mix(in srgb, ${r >= 0 ? C.good : C.bad} ${(a * 100).toFixed(0)}%, transparent)" title="${esc(spct(r))} vs price">${usd(v)}</td>`; };
+    return cap + `<div class="fv-wrap"><table class="fv-tbl fv-heat"><thead><tr><th>↓ · →</th>${g.cols.map((c) => `<th class="n">${fmtCol(c)}</th>`).join('')}</tr></thead><tbody>${g.values.map((row, i) => `<tr><th>${fmtRow(g.rows[i])}</th>${row.map(cell).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+
+  function sensHtml(se, price) {
+    if (!se) return '';
+    let h = `<h3>Sensitivity — ${esc(se.method)}</h3><p class="fv-sub">How the value per share moves when one input moves (others held): the inputs are sorted by how much they swing the value. ${se.driver ? `<b>${esc(se.driver)}</b> moves it most (${spct(se.driver_swing)} of the base value across its range).` : ''} Cells: green above today's price, red below.</p><div class="fv-wrap">${tornado(se.tornado, se.base_value, price)}</div>`;
+    const P = (v) => pct(v, 1);
+    h += `<div class="fv-two"><div>${gridHtml(se.grid_growth_wacc, price, P, P)}</div>`;
+    if (se.grid_margin_multiple) h += `<div>${gridHtml(se.grid_margin_multiple, price, P, (c) => num(c, 1) + '×')}<p class="fv-sub">Next year's revenue × operating margin × (1 − tax) × P/E, per share.</p></div>`;
+    return h + '</div>';
+  }
+
+  function riverChart(rv, key) {
+    const m = rv && rv.metrics && rv.metrics[key];
+    if (!m) return '<p class="fv-sub">Not enough history for this multiple.</p>';
+    const W = 680, H = 260, L = 50, R = 56, T = 12, B = 24, n = rv.weeks.length;
+    const S = rv.steps || {}, st = rv.step || [];
+    const line = (lv, i) => { const x = (S[key] || [])[st[i]]; if (!fin(x) || x <= 0) return null; const nd = key === 'ev_ebitda' ? (S.nd || [])[st[i]] : 0; const v = lv * x - (fin(nd) ? nd : 0); return v > 0 ? v : null; };
+    const ys = rv.price.filter(fin);
+    m.levels.forEach((lv) => { for (let i = 0; i < n; i++) { const v = line(lv, i); if (fin(v)) ys.push(v); } });
+    const y0 = 0, y1 = Math.max(...ys) * 1.05;
+    const t0 = Date.parse(rv.weeks[0]), t1 = Date.parse(rv.weeks[n - 1]);
+    const X = (i) => L + (Date.parse(rv.weeks[i]) - t0) / ((t1 - t0) || 1) * (W - L - R), Y = (v) => T + (y1 - v) / ((y1 - y0) || 1) * (H - T - B);
+    let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Price river: price against fixed ${esc(m.label)} multiples">`;
+    m.levels.forEach((lv, k) => {
+      let d = '', pen = false, last = null;
+      for (let i = 0; i < n; i++) { const v = line(lv, i); if (!fin(v)) { pen = false; continue; } d += (pen ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(Math.min(v, y1)).toFixed(1); pen = true; last = [i, v]; }
+      if (d) s += `<path d="${d}" fill="none" stroke="${C.acc}" stroke-width="1.2" opacity="${(0.35 + 0.5 * k / Math.max(1, m.levels.length - 1)).toFixed(2)}"/>`;
+      if (last && last[1] <= y1) s += `<text x="${W - R + 4}" y="${Y(last[1]) + 4}">${num(lv, lv < 10 ? 1 : 0)}×</text>`;
+    });
+    s += `<path d="${rv.price.map((v, i) => (fin(v) ? (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(v).toFixed(1) : '')).join('')}" fill="none" stroke="${C.ink}" stroke-width="1.8"/>`;
+    const yr0 = new Date(t0).getUTCFullYear(), yr1 = new Date(t1).getUTCFullYear();
+    for (let y = yr0 + 1; y <= yr1; y++) { const t = Date.parse(`${y}-01-01`); s += `<text x="${L + (t - t0) / ((t1 - t0) || 1) * (W - L - R)}" y="${H - 6}" text-anchor="middle">${y}</text>`; }
+    for (let k = 0; k <= 3; k++) { const v = y1 * k / 3; s += `<text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${esc(usd(v))}</text>`; }
+    return s + '</svg>';
+  }
+
+  function riverHtml(rv) {
+    if (!rv || !rv.metrics) return '';
+    const keys = ['pe', 'ps', 'pb', 'ev_ebitda'].filter((k) => rv.metrics[k]);
+    if (!keys.length) return '';
+    const m0 = rv.metrics[keys[0]];
+    return `<h3>River charts</h3><p class="fv-sub">The share price (black) against the price it would have had at fixed multiples (blue lines, darker = higher) of the trailing figure. ${esc(rv.note || '')}. Now: ${keys.map((k) => `${esc(rv.metrics[k].label)} ${num(rv.metrics[k].current, 1)}× (${num(100 * rv.metrics[k].pct)}th percentile of its history)`).join(' · ')}.</p>
+      <div>${keys.map((k, i) => `<button type="button" class="fv-tog${i ? '' : ' on'}" data-fvr="${k}">${esc(rv.metrics[k].label)}</button>`).join('')}</div><div class="fv-wrap" data-fvriver>${riverChart(rv, keys[0])}</div>${m0 ? '' : ''}`;
+  }
+
+  function combinedHtml(cb) {
+    if (!cb) return '';
+    const w = cb.weights || {};
+    return `<p class="fv-sub"><b>Combined forecast (3 months):</b> ${usd(cb.price)} (${spct(cb.ret)}), 80% range ${usd(cb.low)}–${usd(cb.high)}. Weights learned walk-forward on standardized signals — ${Object.entries(w).filter(([k]) => k !== 'intercept').map(([k, v]) => `${esc(k.replace('_', ' '))} ${(v >= 0 ? '+' : '−') + num(Math.abs(100 * v), 1)}%/σ`).join(', ')}; range from earlier out-of-sample errors (conformal). ${cb.replaces_rotation ? 'It beat the Rotation forecast out of sample on the same companies and quarters, so it is "Our model" here.' : 'Shown beside the Rotation forecast: it has not beaten it on the same companies and quarters (or no paired test exists yet). Scores: Valuation tab → Models.'}</p>`;
+  }
+
   function draw(el, d, fits) {
     css();
     const price = d.price, W = d.wacc || {}, mc = d.mc, pv = d.pvgo, cr = d.credit || {}, dist = cr.distress, dc = d.dcf;
@@ -115,6 +262,7 @@
       ${card('Distress (1 year, model blend)', dist ? pct(dist.pd, dist.pd < 0.01 ? 2 : 1) : '—', dist ? (dist.pd > 0.05 ? 'fv-bad' : dist.pd > 0.01 ? 'fv-warn' : 'fv-good') : '', cr.rating_band ? `spread-implied ${esc(cr.rating_band)}` : '')}</div>`;
     h += `<h3>Valuation football field</h3><p class="fv-sub">Each bar is one method's range, the black tick its central value, the dashed line today's price. Green: the whole range above the price; red: below.</p><div class="fv-wrap">${football(d.football || [], price)}</div>`;
     h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Method</th><th class="n">Low</th><th class="n">Central</th><th class="n">High</th><th>How</th></tr></thead><tbody>${(d.football || []).map((r) => `<tr><td>${esc(r.method)}</td><td class="n">${usd(r.low)}</td><td class="n">${usd(r.point)}</td><td class="n">${usd(r.high)}</td><td>${esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>`;
+    h += tilesHtml(d) + combinedHtml(d.combined);
     if (d.reverse && d.reverse.status === 'ok') h += `<p><b>Reverse DCF:</b> today's price needs revenue growth of <b>${pct(d.reverse.implied_growth)}</b> a year for five years (then ${pct((dc && dc.assumptions.g) || 0.025)}), with the margins and cost of capital below. The last four quarters grew ${pct(d.reverse.history_growth)} on the four before.</p>`;
     else if (d.reverse) h += `<p class="fv-sub">Reverse DCF: no single growth rate between −30% and 60% gives today's price with these assumptions.</p>`;
     if (pv) {
@@ -123,6 +271,7 @@
         <div class="fv-stack" role="img" aria-label="No-growth value vs growth share"><i style="width:${(ng * 100).toFixed(1)}%;background:${C.acc}"></i><i style="width:${((1 - ng) * 100).toFixed(1)}%;background:${C.warn}"></i></div>
         <div class="fv-legend"><span style="--k:${C.acc}">no-growth value ${pct(ng, 0)}</span><span style="--k:${C.warn}">growth ${pct(1 - ng, 0)}</span></div>`;
     }
+    h += oddsHtml(d.consensus_odds) + insideOutsideHtml(d.outside_view) + stageHtml(d.stage) + sensHtml(d.sensitivity, price);
     if (mc) h += `<h3>Monte Carlo DCF</h3><p class="fv-sub">${num(mc.n)} scenarios: revenue growth ~ N(${pct(mc.assumptions.growth[0])}, ${pct(mc.assumptions.growth[1])}), EBIT margin ~ N(${pct(mc.assumptions.margin[0])}, ${pct(mc.assumptions.margin[1])}), WACC ~ N(${pct(mc.assumptions.wacc[0])}, 1 pt), terminal growth 1.5–3%. The spreads come from the company's own history. Median ${esc(usd(mc.p50))}, middle 80% ${esc(usd(mc.p10))}–${esc(usd(mc.p90))}; <b>${pct(mc.p_above, 0)}</b> of scenarios are worth more than the price.</p><div class="fv-wrap">${histogram(mc, price, dc && dc.value)}</div>`;
     h += `<div class="fv-two"><div><h3>Cost of capital</h3><table class="fv-tbl"><tbody>
       <tr><td>10-year Treasury</td><td class="n">${pct(W.rf, 2)}</td></tr><tr><td>Beta (weekly vs SPY, ${num(W.beta_weeks)} weeks; Blume-adjusted)</td><td class="n">${num(W.beta_raw, 2)} → ${num(W.beta, 2)}</td></tr>
@@ -136,6 +285,7 @@
       h += `<h3>Valuation bands</h3><p class="fv-sub">Weekly since ${esc(d.bands.from || '')}, trailing figures counted 60 days after each quarter ends. Shaded: middle 50% and 80% of the history.${d.bands.pe ? ` P/E now ${num(d.bands.pe.current, 1)} — the ${num(100 * d.bands.pe.pct)}th percentile of its range.` : ''}${d.bands.evs ? ` EV/Sales ${num(d.bands.evs.current, 2)} — the ${num(100 * d.bands.evs.pct)}th percentile.` : ''}</p>
         <div><button type="button" class="fv-tog on" data-fvb="pe">P/E</button><button type="button" class="fv-tog" data-fvb="evs">EV/Sales</button></div><div class="fv-wrap" data-fvbands>${bandsChart(d.bands, d.bands.pe ? 'pe' : 'evs')}</div>`;
     }
+    h += riverHtml(d.river);
     const sm = d.sector_model;
     if (sm) {
       h += `<h3>${esc(sm.model)}</h3>`;
@@ -151,6 +301,10 @@
     el.querySelectorAll('[data-fvb]').forEach((b) => b.addEventListener('click', () => {
       el.querySelectorAll('[data-fvb]').forEach((x) => x.classList.toggle('on', x === b));
       el.querySelector('[data-fvbands]').innerHTML = bandsChart(d.bands, b.dataset.fvb);
+    }));
+    el.querySelectorAll('[data-fvr]').forEach((b) => b.addEventListener('click', () => {
+      el.querySelectorAll('[data-fvr]').forEach((x) => x.classList.toggle('on', x === b));
+      el.querySelector('[data-fvriver]').innerHTML = riverChart(d.river, b.dataset.fvr);
     }));
   }
 
@@ -174,7 +328,7 @@
     draw(el, d, fits);
   }
 
-  const api = { render, draw, football, histogram, bandsChart, usd, pct };
+  const api = { render, draw, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp };
   if (typeof window !== 'undefined') window.FairValueView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

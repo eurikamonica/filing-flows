@@ -12,6 +12,9 @@ capital, valuation bands, sector models for banks / insurers / REITs, and a blen
                              valuation bands, the sector model and the credit panel
               peers.json     peer multiples by industry group; banks.json / insurers.json: the cross-section fits
               ledger.json    the frozen monthly snapshots (DCF value, P(value > price), distress) and their scores
+              base_rates.json  the peer distributions (app/base_rates.py) by industry and size
+              models.json    out-of-sample scores: the combined forecast (walk-forward), the valuation ledger, the Rotation
+                             forecasts (forecast ledger), the hierarchical revenue model, Polymarket's implied prices
               status.json
 
 Inputs the build reads (each optional; a company is valued with what exists):
@@ -19,6 +22,7 @@ Inputs the build reads (each optional; a company is valued with what exists):
   --prices    the hub's daily closes: disclosures/docs/data/cache/prices/<T>.json.gz (rows [date, close, volume])
   --debt      public/ of the branch debt-history (app/debt.py): snapshot, Merton DD, calibrated CDS, Altman Z, cushion
   --consensus public/ of the branch consensus-history (app/consensus.py): analysts' targets, Polymarket price, our model
+  --rotation  public/ of the branch rotation-history: forecast-ledger*.json (the Rotation forecasts, frozen and resolved)
 
 Methods (every assumption is in the output, nothing is hidden):
   WACC        cost of equity = 10-year Treasury + Blume-adjusted beta (weekly log returns vs SPY, 2 years) × ERP (4.5%,
@@ -45,6 +49,9 @@ Methods (every assumption is in the output, nothing is hidden):
               the bond-calibrated CDS spread (1 − e^(−s/LGD), LGD 60%), Altman Z mapped to rating-equivalent default rates
               (logit = 0.622 − 2.143·Z: Z 1.1 → 15%, Z 3.0 → 0.3%), and the debt cushion score (logit = −0.5 − 0.07·score).
               NOT calibrated against realized defaults — no default history is available here; read it as a ranking.
+  Outside     app/base_rates.py: every input read from what peers (SIC industry × size) actually did — base rates, the
+  view        probabilities of the market-implied, Street and Polymarket views, a Monte Carlo drawn from peers, the
+              company's stage and its methods, sensitivity (tornado, grids), river charts, and the combined forecast.
 
     python app/valuation.py collect --root val --site-url https://filing-flows.com --minutes 20
     python app/valuation.py build   --root val --prices data/cache/prices --debt debt/public --consensus cons/public
@@ -67,6 +74,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import base_rates as BR  # noqa: E402
 
 ERP = 0.045                 # equity risk premium: a fixed, stated assumption (not estimated here)
 TERM_G = 0.025              # terminal growth of the base DCF
@@ -75,10 +83,13 @@ YEARS = 5
 MC_N = 2000
 LGD = 0.6
 LAG_DAYS = 60               # a quarter's figures are treated as known this many days after it ends
+QUARTERS = 26               # the frames panel: calendar quarters since 2020 (base rates, river charts)
 FRAMES = 'https://data.sec.gov/api/xbrl/frames/{tax}/{concept}/{unit}/{period}.json'
 REVENUE = ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'RevenueFromContractWithCustomerIncludingAssessedTax', 'SalesRevenueNet']
 # (taxonomy, concept, unit, kind): kind q = quarterly durations (+ annual frames to fill the fourth quarter), a = annual
-# durations only (cash-flow lines are tagged year-to-date), i = instants at quarter ends
+# durations only (cash-flow lines are tagged year-to-date), i = instants at the last six quarter ends, iq = instants at
+# every quarter end (equity: the P/B river). Revenue, operating and net income also get the annual frames back to CY2010
+# (app/base_rates.py: 3-, 5- and 10-year base rates).
 CONCEPTS = ([('us-gaap', c, 'USD', 'q') for c in REVENUE] + [
     ('us-gaap', 'OperatingIncomeLoss', 'USD', 'q'),
     ('us-gaap', 'NetIncomeLoss', 'USD', 'q'),
@@ -94,7 +105,9 @@ CONCEPTS = ([('us-gaap', c, 'USD', 'q') for c in REVENUE] + [
     ('us-gaap', 'IncomeTaxExpenseBenefit', 'USD', 'a'),
     ('us-gaap', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest', 'USD', 'a'),
     ('us-gaap', 'GainsLossesOnSalesOfInvestmentRealEstate', 'USD', 'a'),
-    ('us-gaap', 'StockholdersEquity', 'USD', 'i'),
+    ('us-gaap', 'PaymentsOfDividends', 'USD', 'a'),
+    ('us-gaap', 'PaymentsForRepurchaseOfCommonStock', 'USD', 'a'),
+    ('us-gaap', 'StockholdersEquity', 'USD', 'iq'),
     ('us-gaap', 'Goodwill', 'USD', 'i'),
     ('us-gaap', 'IntangibleAssetsNetExcludingGoodwill', 'USD', 'i'),
     ('us-gaap', 'CashAndCashEquivalentsAtCarryingValue', 'USD', 'i'),
@@ -492,20 +505,23 @@ def panel(root, periods):
                    ('claims', 'PolicyholderBenefitsAndClaimsIncurredNet'), ('dac', 'DeferredPolicyAcquisitionCostAmortizationExpense'),
                    ('uw', 'OtherUnderwritingExpense')):
         Q[key] = quarterly(root, c, periods)
-    inst = {}
+    inst, eq_q = {}, {}
     for key, c in (('equity', 'StockholdersEquity'), ('goodwill', 'Goodwill'), ('intang', 'IntangibleAssetsNetExcludingGoodwill'),
                    ('cash', 'CashAndCashEquivalentsAtCarryingValue'), ('ltd', 'LongTermDebt')):
         latest = {}
-        for p in periods:
+        for k, p in enumerate(periods):
             for cik, v in frame(root, c, p + 'I').items():
                 if fin(v):
                     latest[cik] = (v, p)
+                    if key == 'equity':
+                        eq_q.setdefault(cik, [None] * len(periods))[k] = v
         inst[key] = latest
     ann = {}
     for key, cs in (('da', ['DepreciationDepletionAndAmortization', 'DepreciationAndAmortization']),
                     ('capex', ['PaymentsToAcquirePropertyPlantAndEquipment']), ('tax', ['IncomeTaxExpenseBenefit']),
                     ('pretax', ['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']),
-                    ('re_gains', ['GainsLossesOnSalesOfInvestmentRealEstate'])):
+                    ('re_gains', ['GainsLossesOnSalesOfInvestmentRealEstate']), ('div', ['PaymentsOfDividends']),
+                    ('buyback', ['PaymentsForRepurchaseOfCommonStock'])):
         m = {}
         for c in cs:
             for cik, v in annual_latest(root, c, years).items():
@@ -520,6 +536,7 @@ def panel(root, periods):
         rec = {'q': {k: [Q[k][p].get(cik) for p in periods] for k in Q}}
         rec['inst'] = {k: inst[k][cik] for k in inst if cik in inst[k]}
         rec['ann'] = {k: ann[k][cik] for k in ann if cik in ann[k]}
+        rec['eq_q'] = eq_q.get(cik) or [None] * len(periods)
         out[cik] = rec
     return out
 
@@ -975,6 +992,9 @@ def analyse(F, ctx):
                      'altman_z': an.get('altman_z'), 'cushion_score': an.get('cushion_score'), 'effective_rate': an.get('effective_rate'),
                      'interest_coverage': an.get('interest_coverage'), 'distress': D,
                      'note': 'Distress blends up to four one-year default probabilities in log-odds. It is NOT calibrated against realized defaults; read it as a ranking.'}
+    # ---- the outside view: base rates, consensus odds, stage, sensitivity, river, combined forecast (app/base_rates.py)
+    if ctx.get('br'):
+        BR.enrich(sys.modules[__name__], out, F, base if 'dcf' in out else None, W, ctx)
     # ---- headline numbers for the index
     lows = [b['low'] for b in out['football'] if fin(b.get('low')) and b['method'] != '52-week trading range']
     highs = [b['high'] for b in out['football'] if fin(b.get('high')) and b['method'] != '52-week trading range']
@@ -998,8 +1018,10 @@ def ledger_update(root, rows, prices_dir, today=None):
     ldir = Path(root) / 'cache' / 'ledger'
     p = ldir / f'{month}.json'
     if not p.exists() and rows:
-        snap = {r['ticker']: [r['price'], r.get('dcf_value'), r.get('mc_p_above'), r.get('distress_pd')] for r in rows if r.get('ticker') and fin(r.get('price'))}
-        write_json(p, {'frozen_at': now(), 'month': month, 'rows': snap})
+        snap = {r['ticker']: [r['price'], r.get('dcf_value'), r.get('mc_p_above'), r.get('distress_pd'), r.get('target_mean'), r.get('pm_price'),
+                              r.get('ov_mean'), (r['price'] * (1 + r['comb_ret'])) if fin(r.get('comb_ret')) else None, r.get('stage_value')]
+                for r in rows if r.get('ticker') and fin(r.get('price'))}
+        write_json(p, {'frozen_at': now(), 'month': month, 'fields': LEDGER_FIELDS, 'rows': snap})
     scores = []
     cache = {}
 
@@ -1018,13 +1040,19 @@ def ledger_update(root, rows, prices_dir, today=None):
             due = (dt.date.fromisoformat(frozen) + dt.timedelta(days=round(h * 30.44))).isoformat()
             if due > today.isoformat():
                 continue
-            pa, ret_p, gap, hits = [], [], [], 0
-            n_gap = 0
-            for t, (px, val, pab, _) in (L.get('rows') or {}).items():
+            pa, gap, hits = [], [], 0
+            n_gap = n_ret = up = 0
+            extra = {k: [] for k in LEDGER_SCORED}
+            comb_err = zero_err = 0.0
+            n_comb = 0
+            for t, r in (L.get('rows') or {}).items():
+                px, val, pab = (r + [None] * 3)[:3]
                 end = px_at(t, due)
                 if not (fin(px) and fin(end) and px > 0):
                     continue
                 ret = end / px - 1
+                n_ret += 1
+                up += ret > 0
                 if fin(pab):
                     pa.append((pab, ret))
                 if fin(val) and val > 0:
@@ -1032,11 +1060,29 @@ def ledger_update(root, rows, prices_dir, today=None):
                     gap.append((g, ret))
                     n_gap += 1
                     hits += (g > 0) == (ret > 0)
-            scores.append({'month': L.get('month'), 'horizon_months': h, 'n': len(pa), 'ic_p_above': spearman(pa), 'ic_dcf_gap': spearman(gap),
-                           'direction_hit_rate': hits / n_gap if n_gap else None})
+                for k, i in LEDGER_SCORED.items():
+                    v = r[i] if len(r) > i else None
+                    if fin(v) and v > 0:
+                        extra[k].append((v / px - 1, ret))
+                cp = r[7] if len(r) > 7 else None
+                if h == 3 and fin(cp) and cp > 0:
+                    n_comb += 1
+                    comb_err += abs(ret - (cp / px - 1))
+                    zero_err += abs(ret)
+            sc = {'month': L.get('month'), 'horizon_months': h, 'n': len(pa), 'ic_p_above': spearman(pa), 'ic_dcf_gap': spearman(gap),
+                  'direction_hit_rate': hits / n_gap if n_gap else None, 'share_up': up / n_ret if n_ret else None,
+                  **{f'ic_{k}': spearman(v) for k, v in extra.items()}, **{f'n_{k}': len(v) for k, v in extra.items()}}
+            if n_comb:
+                sc.update({'n_combined': n_comb, 'mae_combined': comb_err / n_comb, 'mae_no_change': zero_err / n_comb})
+            scores.append(sc)
     snaps = sorted(f.stem for f in ldir.glob('*.json'))
     return {'generated_at': now(), 'snapshots': snaps, 'scores': scores,
-            'note': 'A snapshot is frozen on the first build of each month and never changed. Scores appear 3, 6 and 12 months later.'}
+            'note': 'A snapshot is frozen on the first build of each month and never changed. Scores appear 3, 6 and 12 months later. '
+                    'share_up is the naive baseline for the direction hit rate; mae_no_change the naive baseline for the combined forecast.'}
+
+
+LEDGER_FIELDS = ['price', 'dcf_value', 'mc_p_above', 'distress_pd', 'target_mean', 'pm_price', 'outside_mean', 'combined_price', 'stage_value']
+LEDGER_SCORED = {'target_gap': 4, 'pm_gap': 5, 'outside_gap': 6, 'combined_gap': 7, 'stage_gap': 8}
 
 
 def spearman(pairs):
@@ -1064,14 +1110,37 @@ def spearman(pairs):
 # ------------------------------------------------------------------ build
 INDEX_FIELDS = ['cik', 'ticker', 'name', 'sector', 'kind', 'price', 'mcap', 'wacc', 'beta', 'kd', 'dcf_value', 'dcf_gap', 'mc_p_above', 'mc_p10', 'mc_p90',
                 'implied_growth', 'history_growth', 'pvgo_share', 'pe', 'pe_pct', 'evs', 'evs_pct', 'peer_pe_mid', 'target_mean', 'pm_price', 'our_price',
-                'range_low', 'range_high', 'distress_pd', 'distance_to_default', 'altman_z', 'cds_bps', 'ri_value', 'sector_value', 'combined_ratio', 'p_ffo']
+                'range_low', 'range_high', 'distress_pd', 'distance_to_default', 'altman_z', 'cds_bps', 'ri_value', 'sector_value', 'combined_ratio', 'p_ffo',
+                # the outside view (app/base_rates.py)
+                'stage', 'stage_value', 'p_implied', 'p_implied_in', 'peer_group', 'peer_n', 'req_eps_g', 'p_street_eps', 'p_street_eps_in', 'p_street_rev',
+                'req_rev_g', 'target_growth', 'p_target', 'pm_eps_strike', 'pm_req_eps_g', 'p_pm_eps_base', 'pm_beat_prob', 'p_pm_price',
+                'ov_mean', 'ov_p10', 'ov_p90', 'ov_p_above', 'comb_ret', 'comb_lo', 'comb_hi', 'sens_driver', 'sens_swing', 'river_pe_pct']
+
+
+def outside_fields(A):
+    """The outside-view columns of the index row."""
+    co = A.get('consensus_odds') or {}
+    mk, se, sr, st, pe, pp = (co.get(k) or {} for k in ('market', 'street_eps', 'street_rev', 'street_target', 'pm_eps', 'pm_price'))
+    ov = (A.get('outside_view') or {}).get('mc') or {}
+    cb = A.get('combined') or {}
+    sens = A.get('sensitivity') or {}
+    stg = A.get('stage') or {}
+    rv = ((A.get('river') or {}).get('metrics') or {}).get('pe') or {}
+    return {'stage': stg.get('stage'), 'stage_value': stg.get('value'), 'p_implied': mk.get('p_outside'), 'p_implied_in': mk.get('p_inside'),
+            'peer_group': mk.get('group_label'), 'peer_n': mk.get('n'), 'req_eps_g': se.get('required'), 'p_street_eps': se.get('p_outside'),
+            'p_street_eps_in': se.get('p_inside'), 'p_street_rev': sr.get('p_outside'), 'req_rev_g': sr.get('required'),
+            'target_growth': st.get('required'), 'p_target': st.get('p_outside'), 'pm_eps_strike': pe.get('strike'), 'pm_req_eps_g': pe.get('required'),
+            'p_pm_eps_base': pe.get('p_outside'), 'pm_beat_prob': pe.get('p_market'), 'p_pm_price': pp.get('p_outside'),
+            'ov_mean': ov.get('mean'), 'ov_p10': ov.get('p10'), 'ov_p90': ov.get('p90'), 'ov_p_above': ov.get('p_above'),
+            'comb_ret': cb.get('ret'), 'comb_lo': cb.get('lo'), 'comb_hi': cb.get('hi'), 'sens_driver': sens.get('driver'),
+            'sens_swing': sens.get('driver_swing'), 'river_pe_pct': rv.get('pct')}
 
 
 def _load_dir(d, name, default=None):
     return read_json(Path(d) / name, default) if d else default
 
 
-def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True, limit=None):
+def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True, limit=None, rotation=None):
     root = Path(root)
     pub = root / 'public'
     (pub / 'c').mkdir(parents=True, exist_ok=True)
@@ -1079,8 +1148,9 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     site_ix = read_json(root / 'site' / 'index.json', {}) or {}
     companies = site_ix.get('companies') if isinstance(site_ix, dict) else site_ix
     companies = [c for c in companies or [] if c.get('ticker') and c.get('cik')]
-    periods = calendar_quarters(18, today)
+    periods = calendar_quarters(QUARTERS, today)
     P = panel(root, periods)
+    M = sys.modules[__name__]
     debt_ix = _load_dir(debt, 'index.json', {}) or {}
     rates_doc = _load_dir(debt, 'rates.json', {}) or {}
     mk = debt_ix.get('market') or {}
@@ -1110,6 +1180,45 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
             Fs[cik] = F
         if limit and len(Fs) >= limit:
             break
+    # cost of capital for every company first (the WACC base rate needs the peers' WACCs)
+    for F in Fs.values():
+        F['_beta'] = beta(F['_px'], spy) if spy else None
+        F['_W'] = wacc_of(F, rates, F['_debt'], F['_beta'])
+    # the outside view: peer distributions (frames since 2020 and CY2010, multiples at every quarter since mid-2022)
+    sic_of = {str(c['cik']): str(c.get('sic') or '') for c in companies}
+    names = BR.industry_names(companies)
+    D = BR.Dists()
+    hist_info = BR.add_history(D, root, M, P, periods, sic_of)
+    for cik, F in Fs.items():
+        size = BR.size_of(F.get('revenue'))
+        for m in ('pe', 'ev_sales', 'ev_ebitda'):
+            D.add(m, F.get(m), F.get('sic'), size, today.year, cik)
+        D.add('wacc', (F['_W'] or {}).get('wacc'), F.get('sic'), size, today.year, cik)
+    o_rows, o_live = BR.origin_rows(M, Fs, P, periods, sic_of, today)
+    for r in o_rows:
+        F = Fs[r['cik']]
+        if fin(r.get('e4')) and r['e4'] > 0 and fin(r['price']) and 0 < r['price'] / r['e4'] <= 200:
+            D.add('pe_hist', r['price'] / r['e4'], r['sic'], r['size'], int(r['date'][:4]), r['cik'])
+        if fin(r.get('shares')) and fin(r['price']) and r['r4'] > 0:
+            evs = (r['price'] * r['shares'] + (F['debt'] or 0) - (F['cash'] or 0) + (F['claims'] or 0)) / r['r4']
+            if 0 < evs <= 50:
+                D.add('evs_hist', evs, r['sic'], r['size'], int(r['date'][:4]), r['cik'])
+    D.finish({int(r['date'][:4]) for r in o_rows}, ('cagr5',))
+
+    def cons_of(cik):
+        snaps = (Fs[cik].get('_cons') or {}).get('snapshots') or []
+        return [(d, v[5]) for d, v in snaps if isinstance(v, list) and len(v) > 5 and fin(v[5])]
+    comb = BR.combined_model(M, Fs, o_rows, o_live, D, cons_of, today)
+    paired = []
+    rot = BR.score_rotation(rotation, read_json, paired, {F['ticker']: cik for cik, F in Fs.items()})
+    pc = BR.pair_with_combined(paired, comb.get('_pred') or {})
+    c3 = ((comb['horizons'].get('3m') or {}).get('scores') or {}).get('combined') or {}
+    rq = (rot or {}).get('next quarter') or {}
+    rcov = (rq.get('live') or rq.get('backtest') or {}).get('coverage80')
+    comb['paired_with_rotation'] = pc
+    comb['replace_rotation'] = bool(pc.get('n', 0) >= 200 and pc['mae_combined'] < 0.98 * pc['mae_rotation'] and fin(c3.get('coverage80'))
+                                    and abs(c3['coverage80'] - 0.8) <= (abs(rcov - 0.8) if fin(rcov) else 1.0) + 0.05)
+    br_ctx = {'D': D, 'names': names, 'periods': periods, 'combined': comb}
     rows_all = list(Fs.values())
     buckets = {m: peer_stats([r for r in rows_all if (m != 'p_ffo' or r['kind'] == 'reit')], m) for m in ('pe', 'ev_ebitda', 'ev_sales', 'p_ffo')}
     # cross-section fits for banks and insurers
@@ -1135,7 +1244,8 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     index, n_dcf = [], 0
     for cik, F in Fs.items():
         px, slim, drec, cons_c = F.pop('_px'), F.pop('_slim'), F.pop('_debt'), F.pop('_cons')
-        b = beta(px, spy) if spy else None
+        b = F.pop('_beta', None)
+        F.pop('_W', None)
         crow = cons_rows.get(cik) or {}
         pm = {}
         if fin(crow.get('pm_implied_price')):
@@ -1150,7 +1260,8 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
         bd = bands(px, periods, F['eps_q'], F['rev_q'], sh, F['debt'] - F['cash'] + F['claims']) if fin(sh) else None
         ctx = {'rates': rates, 'buckets': buckets, 'regressions': regs, 'debt': drec, 'cons': cons_c, 'pm': pm, 'beta': b,
                'vol': annual_vol(px), 'segments': segments_of(slim), 'range52': [min(last_year), max(last_year)] if last_year else None,
-               'bands': bd, 'price_date': px[-1][0]}
+               'bands': bd, 'price_date': px[-1][0], 'br': br_ctx, 'panel': P.get(cik) or {}, 'crow': crow,
+               'river': BR.river(M, px, periods, P.get(cik), F) if fin(sh) else None}
         A = analyse(F, ctx)
         write_json(pub / 'c' / f'{cik}.json', clean(A))
         n_dcf += 'dcf' in A
@@ -1172,6 +1283,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
                'ri_value': (A.get('residual_income') or {}).get('value'), 'sector_value': sec_val, 'combined_ratio': sec.get('combined_ratio'),
                'p_ffo': sec.get('p_ffo')}
         row['dcf_gap'] = row['dcf_value'] / row['price'] - 1 if fin(row['dcf_value']) and fin(row['price']) and row['price'] > 0 else None
+        row.update(outside_fields(A))
         index.append(row)
     index.sort(key=lambda r: -(r['mcap'] or 0))
     write_json(pub / 'index.json', clean({'generated_at': now(), 'fields': INDEX_FIELDS, 'rows': [[r.get(k) for k in INDEX_FIELDS] for r in index],
@@ -1184,8 +1296,15 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     write_json(pub / 'insurers.json', clean({'generated_at': now(), 'fit': regs.get('insurer'), 'x': 'ROE', 'y': 'P/B'}))
     led = ledger_update(root, index, prices, today)
     write_json(pub / 'ledger.json', clean(led))
+    write_json(pub / 'base_rates.json', clean({'generated_at': now(), 'min_obs': BR.MIN_OBS, 'min_companies': BR.MIN_COS, 'sizes': BR.SIZE_LABEL,
+                                               'history': hist_info, 'metrics': BR.METRIC_LABEL, 'groups': BR.published_groups(D, names),
+                                               'note': BR.__doc__.split('\n\n')[1]}))
+    models = BR.models_doc(comb, led, rot, read_json(root / 'site' / 'model.json', {}) or {}, _load_dir(consensus, 'calibration.json', {}) or {})
+    write_json(pub / 'models.json', clean(models))
     st = {'built_at': now(), 'companies': len(index), 'with_dcf': n_dcf, 'banks_fit': (regs.get('bank') or {}).get('n'),
-          'insurers_fit': (regs.get('insurer') or {}).get('n'), 'frames_companies': len(P), 'ledger_snapshots': len(led['snapshots'])}
+          'insurers_fit': (regs.get('insurer') or {}).get('n'), 'frames_companies': len(P), 'ledger_snapshots': len(led['snapshots']),
+          'base_rate_windows': hist_info.get('five_year_windows'), 'combined_rows': comb.get('rows'),
+          'with_stage': sum(1 for r in index if r.get('stage')), 'with_outside_mc': sum(1 for r in index if fin(r.get('ov_mean')))}
     write_json(pub / 'status.json', st)
     if verbose:
         print('valuation build: ' + json.dumps(st), flush=True)
@@ -1245,7 +1364,7 @@ class Http:
         raise err or RuntimeError('request failed')
 
 
-def collect_frames(root, http, quarters=18, refresh_days=3, deadline=None, today=None):
+def collect_frames(root, http, quarters=QUARTERS, refresh_days=3, deadline=None, today=None):
     """Fetch the frames the build needs; final periods once, the last two quarters / years every few days."""
     root = Path(root)
     state = read_json(root / 'cache' / 'frames' / 'state.json', {}) or {}
@@ -1255,13 +1374,19 @@ def collect_frames(root, http, quarters=18, refresh_days=3, deadline=None, today
     fresh_after = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=refresh_days)).isoformat()
     fetched = errors = 0
     jobs = []
+    history = [f'CY{y}' for y in range(BR.ANNUAL_FROM, int(years[0][2:6]))]      # the annual base-rate windows since CY2010
     for tax, concept, unit, kind in CONCEPTS:
         if kind == 'q':
             jobs += [(tax, concept, unit, p, False) for p in periods + years]
         elif kind == 'a':
             jobs += [(tax, concept, unit, y, True) for y in years[-4:]]
+        elif kind == 'iq':
+            jobs += [(tax, concept, unit, p + 'I', False) for p in periods]
         else:
             jobs += [(tax, concept, unit, p + 'I', False) for p in periods[-6:]]
+    for tax, concept, unit, kind in CONCEPTS:                                      # last: the long history (final, fetched once)
+        if kind == 'q' and (concept in REVENUE or concept in BR.HISTORY_CONCEPTS):
+            jobs += [(tax, concept, unit, y, True) for y in history]
     for tax, concept, unit, period, _ in jobs:
         if deadline and time.monotonic() > deadline:
             break
@@ -1333,6 +1458,10 @@ def collect_site(root, site_url, limit=1500, workers=12, deadline=None):
             elif err != 'budget':
                 errs += 1
     write_json(root / 'site' / 'state.json', state)
+    try:                                                    # the hierarchical revenue model's scores (pipeline/hier.py)
+        write_json(root / 'site' / 'model.json', http.get(base + '/data/model/index.json'))
+    except Exception:                                       # noqa: BLE001
+        pass
     return {'companies': len(cos), 'fetched': got, 'errors': errs, 'cached': len(cos) - len(todo)}
 
 
@@ -1369,11 +1498,12 @@ def main():
     b.add_argument('--prices', default='disclosures/docs/data/cache/prices')
     b.add_argument('--debt', default=None)
     b.add_argument('--consensus', default=None)
+    b.add_argument('--rotation', default=None, help='public/ of rotation-history (forecast-ledger*.json)')
     args = ap.parse_args()
     if args.cmd == 'collect':
         collect(args.root, args.site_url, args.minutes, args.limit)
     else:
-        build(args.root, args.prices, args.debt, args.consensus)
+        build(args.root, args.prices, args.debt, args.consensus, rotation=args.rotation)
     return 0
 
 
