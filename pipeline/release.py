@@ -20,6 +20,7 @@ DASHES = {"—", "–", "-", "−", "--", "— —", "*"}
 # label patterns (labels are lower-cased, footnote marks and punctuation normalised first)
 P = {
     "revenue": r"^(total )?(net )?(revenues?|sales|net sales|net revenues?)(,? net)?$|^total (net )?(revenues?|sales)$"
+               r"|^(total )?(net )?operating revenues?$"
                r"|^(net )?sales and (other )?operating revenues?$|^(total )?revenues? from contracts with customers$"
                r"|^total net sales and revenues?$|^revenues? and other income$",
     "cor": r"^(total )?cost of (net )?(revenues?|sales|goods sold|products sold|products and services sold|net sales)(,? net)?$"
@@ -108,23 +109,29 @@ def read_tables(html):
         rows = []
         for tr in t.find_all("tr"):
             cells = [re.sub(r"\s+", " ", td.get_text(" ", strip=True)).strip() for td in tr.find_all(["td", "th"])]
-            label, vals, pct = None, [], False
+            label, vals, pcts = None, [], []
             for c in cells:
                 if not c or c in (")", "(", "%") or CUR_CELL.fullmatch(c):
-                    pct = pct or c == "%"
+                    if c == "%" and pcts:
+                        pcts[-1] = True                   # "8.2" | "%": the percent sign in a cell of its own
                     continue
                 if c in DASHES:
                     if label is not None:
                         vals.append(0.0)
+                        pcts.append(False)
                     continue
                 v = _number(c)
                 if v is not None and label is not None:
                     vals.append(v)
-                    pct = pct or c.endswith("%")
+                    pcts.append(c.endswith("%"))
                 elif v is None and label is None and re.search(r"[A-Za-z]", c):
                     label = c
                 elif v is not None and label is None:
                     vals.append(v)                        # header numbers (years) or unlabeled rows
+                    pcts.append(c.endswith("%"))
+            # a percentage row is one whose current-period figure is a percentage ("Operating margin 20 %"); a "% Change"
+            # column after the dollar figures (CACI, Southwest) does not make the row a percentage
+            pct = bool(pcts) and pcts[0]
             rows.append({"cells": cells, "label": label, "key": norm_label(label) if label else "", "vals": vals, "pct": pct})
         before = " ".join(s.strip() for s in t.find_all_previous(string=True, limit=30))[:1500]
         out.append(_newest_first(_usd_columns({"rows": rows, "before": before, "text": t.get_text(" ", strip=True)})))
@@ -264,10 +271,19 @@ def _units(table):
     return {"thousands": 1e3, "millions": 1e6, "billions": 1e9}[m.group(1)] if m else None
 
 
+NONGAAP_RE = re.compile(r"non-gaap|non-ifrs|adjusted (ebitda|ebit|net|operating|earnings|eps|income|gross|free cash|diluted)|reconciliation")
+GAAP_TITLE = re.compile(r"(consolidated |condensed |interim )*(statements?|results) of (consolidated )?(operations|income|earnings|"
+                        r"comprehensive (income|loss)|income \(loss\)|operations and comprehensive|cash flows)|income statements?")
+
+
 def _is_nongaap(table):
     # "adjusted EBITDA", "adjusted net loss" — not "adjusted for the presentation of discontinued operations" (Nebius)
-    return bool(re.search(r"non-gaap|non-ifrs|adjusted (ebitda|ebit|net|operating|earnings|eps|income|gross|free cash|diluted)|reconciliation",
-                          (table["before"][:250] + " " + table["text"][:300]).lower()))   # before: the nearest text first
+    own = table["text"][:300].lower()
+    if GAAP_TITLE.search(own) and not NONGAAP_RE.search(own):
+        # the table names itself a GAAP statement ("Condensed Consolidated Statements of Income"): the text above it is
+        # often the previous page's footnote about non-GAAP measures (Meta), which must not disqualify the statement
+        return False
+    return bool(NONGAAP_RE.search((table["before"][:250] + " " + own).lower()))   # before: the nearest text first
 
 
 def pick_tables(tables):

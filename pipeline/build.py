@@ -705,19 +705,26 @@ def capex_note(src):
 
 
 
-EXHIBIT_PATTERNS = (r"ex[-_]?99[-_.]?0?1(?!\d)", r"ex[-_]?99", r"press|release|earnings")
+# Exhibit 99.1 as filers name it: ex99-1, ex991, ex99d1, xexx991 (WD-40), xexhibit991 (Meta), exhibit991102126 (EastGroup)
+EXHIBIT_PATTERNS = (r"ex(?:hibit)?[-_x.]*99[-_.d]?0?1(?!\d)", r"ex(?:hibit)?[-_x.]*99", r"press|release|earnings")
+NOT_EXHIBIT = re.compile(r"^R\d+\.htm|index", re.I)            # XBRL viewer pages (R1.htm: the cover page) and the indexes
 
 
 def _exhibit(cik, accn, primary):
     """File name of the press release (Exhibit 99.1) inside an 8-K filing."""
     idx = sec.get_json(sec.filing_index_url(cik, accn))
-    names = [i["name"] for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)]
+    items = [i for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)
+             and not NOT_EXHIBIT.search(i["name"]) and i["name"] != primary]
+    names = [i["name"] for i in items]
     for pat in EXHIBIT_PATTERNS:
         hits = [n for n in names if re.search(pat, n, re.I)]
         if hits:
             return hits[0]
-    rest = [n for n in names if n != primary and "index" not in n.lower()]
-    return rest[0] if rest else primary
+    # no telling name (SpaceX: spaceexplorationtechnologi.htm): the largest other document, the release being longer
+    # than a cover letter or an agreement's signature page
+    size = lambda i: int(i.get("size") or 0) if str(i.get("size") or "").isdigit() else 0
+    rest = sorted(items, key=size, reverse=True)
+    return rest[0]["name"] if rest else primary
 
 
 def _release_quarter(vals, quarterly, fx, q1_end, keys, prior_keys=None):
@@ -1289,7 +1296,7 @@ def company_ciks(tokens):
     return sorted(set(out))
 
 
-RELEASE_READER = 3              # bump when the 8-K reader changes: stored 8-K quarters are read again once
+RELEASE_READER = 4              # bump when the 8-K reader changes: stored 8-K quarters are read again once
 
 
 def _reread_releases(store):
@@ -1307,8 +1314,10 @@ def _reread_releases(store):
             n += 1
         if old:
             store.put(cik, c)
+    recent = (dt.datetime.utcnow() - dt.timedelta(days=75)).isoformat()
     for accn, v in list(st["seen"].items()):                     # earlier rejections get another try too
-        if str(v.get("s", "")).startswith("skip: earnings release not readable") and v.get("cik"):
+        # only this season's: an older release is superseded by its 10-Q / 10-K (and is past the reader's 120-day window)
+        if str(v.get("s", "")).startswith("skip: earnings release not readable") and v.get("cik") and v.get("t", "") >= recent:
             del st["seen"][accn]
             st["pending"][accn] = {"cik": v["cik"], "form": "8-K", "filed": v.get("t", "")[:10], "tries": 0, "items": "2.02"}
             n += 1
