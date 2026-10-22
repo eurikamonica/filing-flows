@@ -15,6 +15,7 @@ capital, valuation bands, sector models for banks / insurers / REITs, and a blen
               base_rates.json  the peer distributions (app/base_rates.py) by industry and size
               models.json    out-of-sample scores: the combined forecast (walk-forward), the valuation ledger, the Rotation
                              forecasts (forecast ledger), the hierarchical revenue model, Polymarket's implied prices
+              markov.json    the regime model's panel prior (transition counts, regime growth, margin drift) by size bucket
               status.json
 
 Inputs the build reads (each optional; a company is valued with what exists):
@@ -36,6 +37,9 @@ Methods (every assumption is in the output, nothing is hidden):
   Reverse     the constant revenue growth at which the model gives today's price (bisection inside a scanned bracket).
   Monte Carlo 2,000 scenarios seeded by ticker: growth ~ N(base, σ of the company's own YoY growth, 3–25%), margin ~
               N(base, σ of its own quarterly margins, 1–10 pts), WACC ~ N(WACC, 1 pt, ±3 pts), terminal growth ~ U(1.5%, 3%).
+  Regimes     app/markov.py: a 10-year Monte Carlo in which revenue growth switches between high / steady / decline
+              regimes by a Markov chain estimated from the company's own history and the whole panel; consensus revenue
+              growth for years 1–2, margin drift by regime, stock-based compensation deducted. Every input is estimated.
   PVGO        no-growth value = NOPAT ÷ WACC − net debt (financials: net income ÷ cost of equity); the rest of the market
               value is the price of expected growth.
   Peers       median and interquartile range of P/E, EV/EBITDA, EV/Sales in the narrowest SIC group with ≥ 6 peers.
@@ -75,6 +79,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import base_rates as BR  # noqa: E402
+import markov  # noqa: E402  (regime-switching Monte Carlo, app/markov.py)
 
 ERP = 0.045                 # equity risk premium: a fixed, stated assumption (not estimated here)
 TERM_G = 0.025              # terminal growth of the base DCF
@@ -107,6 +112,8 @@ CONCEPTS = ([('us-gaap', c, 'USD', 'q') for c in REVENUE] + [
     ('us-gaap', 'GainsLossesOnSalesOfInvestmentRealEstate', 'USD', 'a'),
     ('us-gaap', 'PaymentsOfDividends', 'USD', 'a'),
     ('us-gaap', 'PaymentsForRepurchaseOfCommonStock', 'USD', 'a'),
+    ('us-gaap', 'ShareBasedCompensation', 'USD', 'a'),
+    ('us-gaap', 'AllocatedShareBasedCompensationExpense', 'USD', 'a'),
     ('us-gaap', 'StockholdersEquity', 'USD', 'iq'),
     ('us-gaap', 'Goodwill', 'USD', 'i'),
     ('us-gaap', 'IntangibleAssetsNetExcludingGoodwill', 'USD', 'i'),
@@ -521,7 +528,8 @@ def panel(root, periods):
                     ('capex', ['PaymentsToAcquirePropertyPlantAndEquipment']), ('tax', ['IncomeTaxExpenseBenefit']),
                     ('pretax', ['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']),
                     ('re_gains', ['GainsLossesOnSalesOfInvestmentRealEstate']), ('div', ['PaymentsOfDividends']),
-                    ('buyback', ['PaymentsForRepurchaseOfCommonStock'])):
+                    ('buyback', ['PaymentsForRepurchaseOfCommonStock']),
+                    ('sbc', ['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense'])):
         m = {}
         for c in cs:
             for cik, v in annual_latest(root, c, years).items():
@@ -779,6 +787,7 @@ def company_inputs(cik, meta, P, slim, debt_rec, cons_c, price, periods):
     F['capex'] = pick('capex', ('main site (trailing)', V.get('capex')), ('debt module', abs(snap['capex']) if fin(snap.get('capex')) else None),
                       ('frames, latest year', (ann.get('capex') or (None,))[0]))
     F['interest'] = pick('interest', ('debt module', snap.get('interest_expense')))
+    F['sbc'] = pick('sbc', ('main site (trailing)', V.get('sbc')), ('frames, latest year', (ann.get('sbc') or (None,))[0]))
     pretax = pick('pretax', ('main site (trailing)', V.get('pretax')), ('debt module', snap.get('pretax_income')), ('frames, latest year', (ann.get('pretax') or (None,))[0]))
     tax = pick('tax', ('main site (trailing)', V.get('tax')), ('frames, latest year', (ann.get('tax') or (None,))[0]))
     F['tax_rate'] = clamp(tax / pretax, 0.0, 0.35) if fin(tax) and fin(pretax) and pretax > 0 else 0.21
@@ -814,6 +823,15 @@ def company_inputs(cik, meta, P, slim, debt_rec, cons_c, price, periods):
         F['ffo_parts'] = {'net_income': F['ni'], 'da': F['da'], 'gains_on_sales': gains}
     F['src'] = src
     F['eps_q'], F['rev_q'] = q.get('eps') or [], revs
+    # yearly (trailing-twelve-month) growth and EBIT margin for the regime model: frames give revenue and operating income
+    # on the same quarters; the main site's revenue history, when longer, extends the growth series (margins from frames)
+    yf = markov.yearly(revs, q.get('oi') or [])
+    ys = markov.yearly([v for v in hist_rev if fin(v)] if hist_rev and hist_rev is not revs else [])
+    if len(ys) > len(yf):
+        tail = [m for _, m in yf]
+        F['years'] = [(g, None) for g, _ in ys[:len(ys) - len(tail)]] + [(g, m) for (g, _), m in zip(ys[len(ys) - len(tail):], tail)]
+    else:
+        F['years'] = yf
     return F
 
 
@@ -847,6 +865,12 @@ def analyse(F, ctx):
             out['dcf'] = {'value': r['perShare'], 'ev': r['ev'], 'equity': r['equity'], 'tv_share': r['tv_share'],
                           'rows': [[x['t'], x['rev'], x['ebit'], x['fcff'], x['pv']] for x in r['rows']],
                           'assumptions': {k: base[k] for k in ('growth', 'margin', 'tax', 'da', 'capex', 'wc', 'wacc', 'g', 'roic')}}
+            mk = markov.run(F, base, W, F.get('years'), (ctx.get('markov_prior') or {}).get(markov.bucket_of(F.get('mcap'))),
+                            price, ctx.get('cons'), ctx.get('price_date'))
+            if mk:
+                out['markov'] = mk
+                out['football'].append({'method': 'Regime-switching Monte Carlo 10th–90th', 'low': mk['p10'], 'high': mk['p90'],
+                                        'point': mk['p50'], 'note': f"median {mk['p50']:.2f}; {mk['n']:,} paths, 10 years, Markov growth regimes"})
             if fin(price) and price > 0:
                 s = solve({**base, 'growth': g0}, 'growth', price, -0.30, 0.60)
                 out['reverse'] = {'status': s['status'], 'implied_growth': s.get('value'), 'history_growth': F['g0'],
@@ -1114,7 +1138,9 @@ INDEX_FIELDS = ['cik', 'ticker', 'name', 'sector', 'kind', 'price', 'mcap', 'wac
                 # the outside view (app/base_rates.py)
                 'stage', 'stage_value', 'p_implied', 'p_implied_in', 'peer_group', 'peer_n', 'req_eps_g', 'p_street_eps', 'p_street_eps_in', 'p_street_rev',
                 'req_rev_g', 'target_growth', 'p_target', 'pm_eps_strike', 'pm_req_eps_g', 'p_pm_eps_base', 'pm_beat_prob', 'p_pm_price',
-                'ov_mean', 'ov_p10', 'ov_p90', 'ov_p_above', 'comb_ret', 'comb_lo', 'comb_hi', 'sens_driver', 'sens_swing', 'river_pe_pct']
+                'ov_mean', 'ov_p10', 'ov_p90', 'ov_p_above', 'comb_ret', 'comb_lo', 'comb_hi', 'sens_driver', 'sens_swing', 'river_pe_pct',
+                # the regime-switching Monte Carlo (app/markov.py)
+                'mk_p50', 'mk_p_above', 'mk_state']
 
 
 def outside_fields(A):
@@ -1240,6 +1266,10 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
             regs[k] = ols([p[0] for p in xs], [p[1] for p in xs])
             if regs[k]:
                 regs[k]['points'] = [[round(p[0], 4), round(p[1], 3), p[2]] for p in xs]
+    # the regime model's prior: transitions, regime growth and margin behaviour across every covered company, by size
+    mk_prior = markov.panel_prior({'years': r.get('years'), 'mcap': r.get('mcap')} for r in rows_all)
+    write_json(pub / 'markov.json', clean({'generated_at': now(), 'thresholds': {'high': markov.THRESH_HIGH, 'decline': markov.THRESH_LOW},
+                                           'k': markov.K_PRIOR, 'buckets': mk_prior}))
     # pass 2: the full analysis
     index, n_dcf = [], 0
     for cik, F in Fs.items():
@@ -1261,7 +1291,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
         ctx = {'rates': rates, 'buckets': buckets, 'regressions': regs, 'debt': drec, 'cons': cons_c, 'pm': pm, 'beta': b,
                'vol': annual_vol(px), 'segments': segments_of(slim), 'range52': [min(last_year), max(last_year)] if last_year else None,
                'bands': bd, 'price_date': px[-1][0], 'br': br_ctx, 'panel': P.get(cik) or {}, 'crow': crow,
-               'river': BR.river(M, px, periods, P.get(cik), F) if fin(sh) else None}
+               'river': BR.river(M, px, periods, P.get(cik), F) if fin(sh) else None, 'markov_prior': mk_prior}
         A = analyse(F, ctx)
         write_json(pub / 'c' / f'{cik}.json', clean(A))
         n_dcf += 'dcf' in A
@@ -1282,6 +1312,9 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
                'distance_to_default': cr.get('distance_to_default'), 'altman_z': cr.get('altman_z'), 'cds_bps': cr.get('cds_5y_bps'),
                'ri_value': (A.get('residual_income') or {}).get('value'), 'sector_value': sec_val, 'combined_ratio': sec.get('combined_ratio'),
                'p_ffo': sec.get('p_ffo')}
+        mk = A.get('markov') or {}
+        row.update({'mk_p50': mk.get('p50'), 'mk_p_above': mk.get('p_above'),
+                    'mk_state': markov.STATES[mk['model']['start']] if mk.get('model') else None})
         row['dcf_gap'] = row['dcf_value'] / row['price'] - 1 if fin(row['dcf_value']) and fin(row['price']) and row['price'] > 0 else None
         row.update(outside_fields(A))
         index.append(row)
@@ -1304,7 +1337,9 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     st = {'built_at': now(), 'companies': len(index), 'with_dcf': n_dcf, 'banks_fit': (regs.get('bank') or {}).get('n'),
           'insurers_fit': (regs.get('insurer') or {}).get('n'), 'frames_companies': len(P), 'ledger_snapshots': len(led['snapshots']),
           'base_rate_windows': hist_info.get('five_year_windows'), 'combined_rows': comb.get('rows'),
-          'with_stage': sum(1 for r in index if r.get('stage')), 'with_outside_mc': sum(1 for r in index if fin(r.get('ov_mean')))}
+          'with_stage': sum(1 for r in index if r.get('stage')), 'with_outside_mc': sum(1 for r in index if fin(r.get('ov_mean'))),
+          'with_markov': sum(1 for r in index if fin(r.get('mk_p50'))),
+          'markov_panel': {b: {'firms': v['firms'], 'transitions': v['transitions']} for b, v in mk_prior.items()}}
     write_json(pub / 'status.json', st)
     if verbose:
         print('valuation build: ' + json.dumps(st), flush=True)

@@ -12,6 +12,16 @@
   const spct = (v, d = 0) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
   const C = { good: 'var(--mk-profit, #2e8b57)', bad: 'var(--mk-cost, #c0392b)', warn: 'var(--q-warm, #d9822b)', acc: 'var(--accent, #2a78d6)', mute: 'var(--muted, #888)', ink: 'var(--ink, #222)', line: 'var(--line, #ddd)' };
   const store = {};
+  // markov-view.js (the regime-switching section) sits next to this file; it is loaded only for a document that has one
+  const HERE = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) ? document.currentScript.src.replace(/[^/]*$/, '') : '';
+  let mvLoad = null;
+  const loadMarkov = () => mvLoad || (mvLoad = (typeof window !== 'undefined' && window.MarkovView) ? Promise.resolve(window.MarkovView) : new Promise((ok, bad) => {
+    const sc = document.createElement('script');
+    sc.src = HERE + 'markov-view.js';
+    sc.onload = () => ok(window.MarkovView);
+    sc.onerror = () => { mvLoad = null; bad(new Error('markov-view.js did not load')); };
+    document.head.appendChild(sc);
+  }));
 
   function css() {
     if (typeof document === 'undefined' || document.getElementById('fv-css')) return;
@@ -273,6 +283,7 @@
     }
     h += oddsHtml(d.consensus_odds) + insideOutsideHtml(d.outside_view) + stageHtml(d.stage) + sensHtml(d.sensitivity, price);
     if (mc) h += `<h3>Monte Carlo DCF</h3><p class="fv-sub">${num(mc.n)} scenarios: revenue growth ~ N(${pct(mc.assumptions.growth[0])}, ${pct(mc.assumptions.growth[1])}), EBIT margin ~ N(${pct(mc.assumptions.margin[0])}, ${pct(mc.assumptions.margin[1])}), WACC ~ N(${pct(mc.assumptions.wacc[0])}, 1 pt), terminal growth 1.5–3%. The spreads come from the company's own history. Median ${esc(usd(mc.p50))}, middle 80% ${esc(usd(mc.p10))}–${esc(usd(mc.p90))}; <b>${pct(mc.p_above, 0)}</b> of scenarios are worth more than the price.</p><div class="fv-wrap">${histogram(mc, price, dc && dc.value)}</div>`;
+    if (d.markov) h += '<div data-fvmk><p class="fv-sub">Loading the regime-switching model…</p></div>';
     h += `<div class="fv-two"><div><h3>Cost of capital</h3><table class="fv-tbl"><tbody>
       <tr><td>10-year Treasury</td><td class="n">${pct(W.rf, 2)}</td></tr><tr><td>Beta (weekly vs SPY, ${num(W.beta_weeks)} weeks; Blume-adjusted)</td><td class="n">${num(W.beta_raw, 2)} → ${num(W.beta, 2)}</td></tr>
       <tr><td>Equity risk premium (assumption)</td><td class="n">${pct(W.erp, 1)}</td></tr><tr><td><b>Cost of equity</b></td><td class="n"><b>${pct(W.ke, 2)}</b></td></tr>
@@ -298,6 +309,8 @@
     const src = Object.entries(d.sources || {}).map(([k, v]) => `${k}: ${v}`).join(' · ');
     h += `<p class="fv-note">Figures from: ${esc(src || '—')}. Built ${esc((d.generated_at || '').slice(0, 10))} by app/valuation.py from SEC filings (XBRL), the hub's daily prices, the Debt & rates and Consensus modules. Peer groups are SIC industries; a group needs six peers.</p></div>`;
     el.innerHTML = h;
+    const mkEl = el.querySelector('[data-fvmk]');
+    if (mkEl) loadMarkov().then((MV) => MV.mount(mkEl, d)).catch((e) => { mkEl.innerHTML = `<p class="fv-sub">The regime-switching model could not load (${esc(e.message)}).</p>`; });
     el.querySelectorAll('[data-fvb]').forEach((b) => b.addEventListener('click', () => {
       el.querySelectorAll('[data-fvb]').forEach((x) => x.classList.toggle('on', x === b));
       el.querySelector('[data-fvbands]').innerHTML = bandsChart(d.bands, b.dataset.fvb);

@@ -83,8 +83,8 @@ def _item_text(paras, code):
 def _exhibit_name(cik, accn, primary):
     idx = sec.get_json(sec.filing_index_url(cik, accn))
     names = [i["name"] for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)]
-    for pat in (r"ex[-_]?99[-_.]?0?1(?!\d)", r"ex[-_]?99", r"press|release"):
-        hits = [n for n in names if re.search(pat, n, re.I) and n != primary]
+    for pat in (r"ex(?:hibit)?[-_x.]*99[-_.d]?0?1(?!\d)", r"ex(?:hibit)?[-_x.]*99", r"press|release"):   # as pipeline/build.py
+        hits = [n for n in names if re.search(pat, n, re.I) and n != primary and not re.match(r"R\d+\.htm", n, re.I)]
         if hits:
             return hits[0]
     return None

@@ -68,7 +68,47 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
+      # Which source this run collects (the schedule, the button, or a code push), decided before the checkout so the
+      # checkout can leave out what the run never reads: the repository is ~9 GB (a full checkout ~6.5 min, every
+      # quarter hour), ~5.5 GB of it N-PX vote records and ~1.8 GB 13F quarter files.
+      - name: Pick the module
+        id: pick
+        working-directory: .
+        shell: bash
+        env:
+          REQUESTED_MODULE: ${{ inputs.module }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          module="${REQUESTED_MODULE:-all}"
+          if [ "$EVENT_NAME" = push ]; then module=congress; fi   # code pushes: a quick officials run; schedules cover the rest
+          case "$EVENT_SCHEDULE" in
+            '7,22,37,52 * * * *') module=holdings ;;
+            '17 * * * *') module=congress ;;
+            '43 0-9,11-23 * * *') module=markets ;;
+            '43 10 * * *') module=all ;;
+            '28,58 * * * *') module=insiders ;;
+            '20 21 * * 1-5') module=options ;;
+          esac
+          echo "module=$module" >> "$GITHUB_OUTPUT"
+          # light sources never read or write the 13F quarter files or the N-PX records; 13F runs never touch N-PX.
+          # N-PX, the market data (COT, FDIC, N-PX), prices and the daily all-source run keep the full checkout.
+          case "$module" in
+            insiders|ownership|shorts|senate|events8k|news|reddit|options|extremes|market|congress)
+              skip=$'!/disclosures/docs/data/shards/holdings/\n!/disclosures/docs/data/shards/npx/' ;;
+            holdings) skip='!/disclosures/docs/data/shards/npx/' ;;
+            *) skip='' ;;
+          esac
+          if [ -n "$skip" ]; then
+            { echo 'sparse<<EOF'; echo '/*'; printf '%b\n' "$skip"; echo 'EOF'; echo 'filter=blob:none'; } >> "$GITHUB_OUTPUT"
+          fi
+          shown="${skip//$'\n'/ }"
+          echo "::notice::module $module; the checkout leaves out: ${shown:-nothing}"
       - uses: actions/checkout@v6
+        with:
+          filter: ${{ steps.pick.outputs.filter }}
+          sparse-checkout: ${{ steps.pick.outputs.sparse }}
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -102,27 +142,16 @@ jobs:
           OPENFIGI_API_KEY: ${{ secrets.OPENFIGI_API_KEY }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}           # optional: Reddit's OAuth API (else the public listing / ApeWisdom)
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
-          REQUESTED_MODULE: ${{ inputs.module }}
+          MODULE: ${{ steps.pick.outputs.module }}
           REVALIDATE: ${{ inputs.revalidate }}
           BATCH_SIZE: ${{ inputs.batch_size }}
           MANAGER_CIK: ${{ inputs.manager_cik }}
           REPORT_ID: ${{ inputs.report_id }}
           BANK_CERT: ${{ inputs.bank_cert }}
           MARKET_ID: ${{ inputs.market_id }}
-          EVENT_SCHEDULE: ${{ github.event.schedule }}
-          EVENT_NAME: ${{ github.event_name }}
         shell: bash
         run: |
-          module="${REQUESTED_MODULE:-all}"
-          if [ "$EVENT_NAME" = push ]; then module=congress; fi   # code pushes: a quick officials run; schedules cover the rest
-          case "$EVENT_SCHEDULE" in
-            '7,22,37,52 * * * *') module=holdings ;;
-            '17 * * * *') module=congress ;;
-            '43 0-9,11-23 * * *') module=markets ;;
-            '43 10 * * *') module=all ;;
-            '28,58 * * * *') module=insiders ;;
-            '20 21 * * 1-5') module=options ;;
-          esac
+          module="$MODULE"
           args=(--only "$module")
           if [ -n "$BATCH_SIZE" ]; then args+=(--batch-size "$BATCH_SIZE"); fi
           if [ -n "$MANAGER_CIK" ]; then args+=(--manager-cik "$MANAGER_CIK"); fi
@@ -138,7 +167,7 @@ jobs:
         run: |
           git config user.name "Filing Flows"
           git config user.email "filingflows@gmail.com"
-          git add -A docs/data/
+          git add -A --sparse docs/data/      # --sparse: a file written where the checkout left data out is still committed
           if git diff --cached --quiet; then echo "No data changes"; exit 0; fi
           git commit -qm "Update disclosure data and source status"
           git stash --include-untracked -q || true      # anything else the run left in the tree
@@ -161,8 +190,10 @@ jobs:
           path: disclosures/storage/
           retention-days: 30
           if-no-files-found: ignore
-      - name: Flag incomplete collection
+      - name: Flag failed collection
+        # app/collect.py exits 1 only when a source could not be read at all (an error annotation names it); partial
+        # coverage — a batch cut short by a size or time limit, a few unreadable documents — is a warning annotation
         if: steps.collect.outcome == 'failure'
         run: |
-          echo 'Some sources failed or coverage is partial. Previous valid records remain and were committed with status.'
+          echo '::error::A source failed (see the annotations). Previous valid records remain and were committed with status.'
           exit 1

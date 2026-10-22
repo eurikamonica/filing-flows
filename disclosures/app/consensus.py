@@ -119,6 +119,11 @@ STOP = {'the', 'of', 'a', 'an', 'de', 'inc', 'corp', 'corporation', 'company', '
         'first', 'general', 'national', 'new', 'resources', 'services', 'industries', 'brands', 'capital', 'trust', 'communications'}
 
 
+def _num(v):
+    """A numeric revenue (the site index's 'rev' is a formatted string such as \"$2.6B\" and 'revenue' may be null)."""
+    return v if isinstance(v, (int, float)) and not isinstance(v, bool) else 0
+
+
 def universe(site_index):
     ix = read_json(site_index, {}) if site_index else {}
     rows = {}
@@ -127,7 +132,7 @@ def universe(site_index):
             c = int(r['cik'])
             if c not in rows or (r.get('filed') or '') > (rows[c].get('filed') or ''):
                 rows[c] = r
-    out = [{'cik': c, 'ticker': r['ticker'].upper(), 'name': r.get('name'), 'sector': r.get('sector'), 'revenue': r.get('revenue') or r.get('rev') or 0}
+    out = [{'cik': c, 'ticker': r['ticker'].upper(), 'name': r.get('name'), 'sector': r.get('sector'), 'revenue': _num(r.get('revenue'))}
            for c, r in rows.items()]
     out.sort(key=lambda r: -(r['revenue'] or 0))
     return out
@@ -891,7 +896,7 @@ def collect_analysts(h, root, cos, minutes=20.0, refresh_hours=20):
         if s.get('retry_after') and s['retry_after'] > now():
             return None
         if not s.get('at'):
-            return (0, -(c['revenue'] or 0))
+            return (0, -_num(c.get('revenue')))
         age = (nowdt - dt.datetime.fromisoformat(s['at'])).total_seconds() / 3600
         return (1, -age) if age >= refresh_hours else None
 

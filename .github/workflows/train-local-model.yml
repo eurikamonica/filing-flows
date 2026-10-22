@@ -43,7 +43,15 @@ jobs:
       HF_HUB_DISABLE_TELEMETRY: "1"
       TOKENIZERS_PARALLELISM: "false"
     steps:
+      # the hub's 13F quarter files and N-PX vote records (~7 GB of the ~9 GB repository) are never read here
       - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/disclosures/docs/data/shards/holdings/
+            !/disclosures/docs/data/shards/npx/
 
       - uses: actions/setup-python@v5
         with:
