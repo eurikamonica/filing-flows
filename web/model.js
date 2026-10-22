@@ -56,6 +56,7 @@
         <div class="mstat"><label>${esc(d.industry)}</label><b>${ind ? pct(ind[1]) : '—'}</b><span>industry, next quarter</span></div>
         ${spark(d.series)}</div>
         <div>${fcTable(d.fc)}</div></div>${modelLine(d, 'industry')}`;
+    if (global.FFElasticity) global.FFElasticity.company(box, d, get);
     box.hidden = false;
   }
 
