@@ -136,15 +136,10 @@ jobs:
 
       # Conservative first-filed GAAP EPS: a rotating set of SEC companyfacts each scan.
       # Files are saved with the regular data store and copied into Pages output.
-      - name: Incrementally train SEC GAAP EPS and historical walk-forward
+      - name: SEC GAAP EPS series (companies not read yet or with a newer filing, largest first) and walk-forward
         continue-on-error: true
         timeout-minutes: 7
-        run: python -m pipeline.eps_gaap --store store --index _site/data/index.json --out _site/data/eps-gaap --max-fetch 16
-
-      - name: Build stage-aware fundamental GAAP EPS probabilities and backtests
-        continue-on-error: true
-        timeout-minutes: 7
-        run: python -m pipeline.eps_fundamental --store store/eps-fundamental --out _site/data/eps-fundamental
+        run: python -m pipeline.eps_gaap --store store --index _site/data/index.json --out _site/data/eps-gaap --max-fetch 200 --budget 240
 
       - name: Share pictures drawn so far (og/index.json on the media branch; pipeline/ogimg.py)
         run: curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/media/og/index.json" -o _og.json || echo "no share pictures yet"
@@ -187,6 +182,13 @@ jobs:
             git -C _cons sparse-checkout set public
             du -sh _cons/public
           fi
+
+      - name: EPS forecast - fundamentals, consensus converted to GAAP, guidance; ranges; the frozen-forecast ledger
+        continue-on-error: true
+        timeout-minutes: 8
+        run: |
+          python -m pipeline.eps_fundamental --store store/eps-fundamental --out _site/data/eps-fundamental \
+            --consensus _cons/public/c --guide store/eps-guide --ledger store/eps-ledger.json --index _site/data/index.json
 
       - name: Price ladders (public/ of the branch ladder-history, when it exists)
         continue-on-error: true
