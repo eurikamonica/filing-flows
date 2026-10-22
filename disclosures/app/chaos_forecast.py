@@ -1033,6 +1033,69 @@ def rrg_transitions(series, groups, start='2010-01-01', horizons=(1, 4, 13)):
                      'a forecast.')}
 
 
+def dual_transitions(tdir, tickers, bench, n=14, start='2010-01-01', horizons=(1, 4, 13)):
+    """The dual RRG, described (spec v5 §4.4; descriptive_only): for every company whose weekly file carries its industry
+    benchmarks (rotation_history.industry_benchmarks: bx without the company, bi with it), the company's quadrant against
+    its industry without itself h weeks later, by where it and its industry (against SPY) stood. Rows: (industry
+    quadrant, company quadrant); Wilson intervals; non-overlapping windows."""
+    import crowd_clocks as CC
+    bd, bc = bench
+    t0 = np.datetime64(start)
+    cnt = {h: {} for h in horizons}
+    used, first, last = 0, None, None
+    for t in tickers:
+        p = Path(tdir) / f'{t}.json'
+        if not p.exists():
+            continue
+        d = json.loads(p.read_text(encoding='utf-8'))
+        if not d.get('bx') or not d.get('bi'):
+            continue
+        arr = lambda a: np.array([np.nan if x is None else x for x in a], float)
+        c, bx, bi = arr(d['c']), arr(d['bx']), arr(d['bi'])
+        days = np.datetime64(d['start']) + 7 * np.arange(len(c))
+        idx = np.searchsorted(bd, days)
+        ok = (idx < len(bd)) & (bd[np.minimum(idx, len(bd) - 1)] == days)
+        spy = np.full(len(c), np.nan); spy[ok] = bc[idx[ok]]
+        with np.errstate(divide='ignore', invalid='ignore'):
+            Sc = rrg_series(np.where(bx > 0, 100 * c / bx, np.nan), n)
+            Si = rrg_series(np.where(spy > 0, 100 * bi / spy, np.nan), n)
+        used += 1
+        for w in range(len(days)):
+            if days[w] < t0:
+                continue
+            iq, cq = rrg_quadrant(Si['x'][w], Si['y'][w]), rrg_quadrant(Sc['x'][w], Sc['y'][w])
+            if iq is None or cq is None:
+                continue
+            for h in horizons:
+                if w + h >= len(days):
+                    continue
+                nq = rrg_quadrant(Sc['x'][w + h], Sc['y'][w + h])
+                if nq is None:
+                    continue
+                row = cnt[h].setdefault((iq, cq), {q: 0 for q in RRG_QUADS})
+                row[nq] += 1
+            first = days[w] if first is None or days[w] < first else first
+            last = days[w] if last is None or days[w] > last else last
+    out = {}
+    span = int((last - first).astype('timedelta64[D]').astype(int) // 7) + 1 if first is not None else 0
+    for h in horizons:
+        rows = []
+        for iq in RRG_QUADS[:4]:
+            for cq in RRG_QUADS[:4]:
+                r = cnt[h].get((iq, cq))
+                if not r:
+                    continue
+                nn = sum(r.values())
+                rows.append({'industry': iq, 'from': cq, 'n': nn,
+                             'cells': [{'n': r[q], 'p': round(r[q] / nn, 4), 'lo': CC.wilson(r[q], nn)[0], 'hi': CC.wilson(r[q], nn)[1]} for q in RRG_QUADS]})
+        out[str(h)] = {'rows': rows, 'independent_periods': span // h}
+    return {'status': 'descriptive_only', 'companies': used, 'from': str(first)[:10] if first is not None else None,
+            'to': str(last)[:10] if last is not None else None, 'horizons_weeks': list(horizons), 'quadrants': list(RRG_QUADS), 'by_horizon': out,
+            'note': ('Each company against its industry without itself (most specific SIC level with five or more other '
+                     'companies; today\'s companies), grouped by where the company stood against that industry and where the '
+                     'industry stood against the S&P 500; the share in each quadrant h weeks later. History, not a forecast.')}
+
+
 def rrg_site_file(public, n=14, k=80, weeks_series='2010-01-01', weeks_companies=13, library_tickers=None, summary=None, gravity=None):
     """chaos-rrg.json: for the RRG lines the page offers (sector / style ETFs, site sectors, the largest companies per
     sector and the long-rotation companies), the forecast next point for each of the last weeks (out of sample: the
@@ -1117,6 +1180,10 @@ def rrg_site_file(public, n=14, k=80, weeks_series='2010-01-01', weeks_companies
     transitions = rrg_transitions(series, {
         'industry_vs_market': [t for t in series if grp.get(t) in ('sector-etf', 'site-sector')],
         'company_vs_market': [t for t in series if t not in grp]})
+    try:
+        transitions['dual'] = dual_transitions(public / 't', sorted(set(lib)), bench, n)
+    except Exception as exc:                        # an older history without industry benchmarks
+        transitions['dual'] = {'status': 'unavailable', 'note': f'{type(exc).__name__}: {exc}'}
     days = [str(grid0 + 7 * i) for i in range(int((weeks[-1] - grid0).astype('timedelta64[D]').astype(int) // 7) + 1)]
     doc = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'freq': 'w', 'n': n, 'k': k,
            'weeks': days, 'fields': ['week', 'x', 'y', 'next_x', 'next_y', 'rel_logret', 'close', 'close_next', 'model', 'half80_x', 'half80_y'],

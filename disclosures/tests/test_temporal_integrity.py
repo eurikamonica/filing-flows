@@ -126,6 +126,39 @@ class SectorIndices(unittest.TestCase):
         self.assertNotEqual(a[-1], b[-1])
 
 
+class IndustryBenchmarks(unittest.TestCase):
+    """rotation_history.industry_benchmarks: the most specific SIC level with five other members, a leave-one-out index
+    ('ex') that a company's own price never moves, and the full index ('all')."""
+
+    def world(self, bump=False):
+        weeks = [f'2021-{m:02d}-{d:02d}' for m in range(1, 13) for d in (1, 8, 15, 22)]
+        cos = [{'t': f'S{i}', 's': 'technology', 'sic': '3674', 'ind': 'Semiconductors', 'rev': 1e9} for i in range(7)]
+        cos += [{'t': f'P{i}', 's': 'health', 'sic': '2834', 'ind': 'Pharma', 'rev': 1e9} for i in range(2)]
+        cos += [{'t': f'H{i}', 's': 'health', 'sic': '8062', 'ind': 'Hospitals', 'rev': 1e9} for i in range(5)]
+        series = {}
+        for k, c in enumerate(cos):
+            series[c['t']] = (0, [100 * (1 + 0.002 * (k + 1)) ** j for j in range(len(weeks))])
+        if bump:
+            f, cl = series['S0']; series['S0'] = (f, [x * (1.5 if j > 20 else 1) for j, x in enumerate(cl)])
+        return cos, series, weeks
+
+    def test_levels_and_leave_one_out(self):
+        cos, series, weeks = self.world()
+        b = RH.industry_benchmarks(cos, series, weeks)
+        self.assertEqual((b['S0']['level'], b['S0']['code'], b['S0']['members']), ('sic4', '3674', 7))
+        self.assertEqual(b['S0']['label'], 'SIC 3674 · Semiconductors')
+        self.assertEqual(b['P0']['level'], 'sector')                    # 2834 and 28 have one other member; health has 6
+        self.assertNotIn('P0', [k for k, v in b.items() if v['level'] == 'sic4'])
+        cos2, series2, _ = self.world(bump=True)
+        b2 = RH.industry_benchmarks(cos2, series2, weeks)
+        self.assertEqual(b['S0']['ex'], b2['S0']['ex'])                  # its own jump never moves its benchmark
+        self.assertNotEqual(b['S1']['ex'], b2['S1']['ex'])               # but it moves its peers'
+        self.assertNotEqual(b['S0']['all'], b2['S0']['all'])
+        # equal weights: the leave-one-out week-1 return is the mean of the others' returns
+        others = [math.log(1 + 0.002 * (k + 1)) for k in range(1, 7)]
+        self.assertAlmostEqual(math.log(b['S0']['ex'][1] / 100), sum(others) / 6, places=4)
+
+
 @unittest.skipIf(np is None, 'numpy / scikit-learn not installed')
 class ChaosCentres(unittest.TestCase):
     def test_weighted_centre_is_causal(self):

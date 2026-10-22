@@ -1,5 +1,15 @@
 # Changelog
 
+## Dual RRG: companies against their industry without themselves (research specification v5 §4.2, §15.4)
+
+`rotation_history.industry_benchmarks` gives every company with weekly prices an industry benchmark — the most
+specific of SIC4, SIC3, SIC2 or the site sector with at least five other companies — as two weekly indices in its
+`t/<T>.json`: `bx` without the company (leave-one-out, so a dominant stock does not define its own peers) and `bi` with
+it, weighted by the log of revenue reported by each week. The RRG gains “Companies against: their industry without
+themselves”: each company against its leave-one-out industry, and each of those industries against SPY, on one chart.
+`chaos-rrg.json` `transitions.dual` describes, by where the industry stood against SPY and the company against its
+industry, where the company was 1, 4 and 13 weeks later (descriptive only). Membership is today's companies.
+
 ## RRG: the mechanical baseline and quadrant transitions (research specification v5, P1-05)
 
 The weekly RRG backtest now scores the mechanical step (G0: no relative move next week, the smoothing carried

@@ -904,7 +904,7 @@ function rotToggle(){
 }
 function bindRotSuns(){document.querySelectorAll('#workspace [data-rsec]').forEach(b=>b.onclick=()=>{rotStop();state.rsec=b.dataset.rsec;state.rview=state.rview==='scan'?'solar':state.rview;render()})}
 function bindRotation(){
- for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
+ for(const k of ['rview','rsec','rx','ry','rz','rz3','rq','rqm','rshow','rfc','gsec','gcol','gtail','gbody','gctr','lfreq','lorig','lsec','lmet','mgrp','mtrail','mzoom','rscl','rsm','rfreq','rfill','rsort','rcol','rhist','rrgu','rrgf','rrgn','rrgt','rrgm','rrgz','rrgb'])if($(k))$(k).onchange=e=>{rotStop();state[k]=e.target.value;if(k==='rx'&&state.ry===state.rx)state.ry='';if(k==='rhist')state.rfn=null;render()};
  if($('rrgtk')){$('rrgtk').onchange=e=>{state.rrgtk=e.target.value;render()};$('rrgtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rtk')){$('rtk').onchange=e=>{state.rtk=e.target.value;render()};$('rtk').onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  if($('rplay'))$('rplay').onclick=rotToggle;

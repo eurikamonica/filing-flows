@@ -306,6 +306,27 @@ class RRGBaselines(unittest.TestCase):
         self.assertEqual(tr['status'], 'descriptive_only')
         self.assertEqual(CF.rrg_quadrant(100, 101), 'boundary')
 
+    def test_dual_transitions(self):
+        import json, tempfile
+        d, closes, bench = RRGNoLookAhead().world(W=300, names=6)
+        with tempfile.TemporaryDirectory() as tmp:
+            names = sorted(closes)
+            for i, t in enumerate(names):
+                c = closes[t][1]
+                others = np.mean([closes[u][1] for u in names if u != t], axis=0)
+                every = np.mean([closes[u][1] for u in names], axis=0)
+                Path(tmp, f'{t}.json').write_text(json.dumps({'t': t, 'start': str(d[0]), 'c': list(map(float, c)),
+                                                               'bx': list(map(float, others)), 'bi': list(map(float, every))}))
+            Path(tmp, 'X.json').write_text(json.dumps({'t': 'X', 'start': str(d[0]), 'c': [1.0] * 300}))   # no benchmark: skipped
+            out = CF.dual_transitions(tmp, names + ['X'], bench, start='2006-06-01')
+        self.assertEqual(out['companies'], 6)
+        rows = out['by_horizon']['4']['rows']
+        self.assertTrue(rows)
+        for r in rows:
+            self.assertAlmostEqual(sum(c['p'] for c in r['cells']), 1, places=3)
+            self.assertIn(r['industry'], CF.RRG_QUADS[:4])
+        self.assertEqual(out['status'], 'descriptive_only')
+
 
 if __name__ == '__main__':
     unittest.main()

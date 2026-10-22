@@ -198,7 +198,7 @@ def site_companies(site_index):
             continue
         if t not in best or (r.get('filed') or '') > (best[t].get('filed') or ''):
             best[t] = {'t': t, 'n': r.get('name'), 'cik': r.get('cik'), 's': r.get('sector') or 'other', 'rev': r.get('revenue') or 0,
-                       'filed': r.get('filed') or ''}
+                       'filed': r.get('filed') or '', 'sic': str(r.get('sic') or ''), 'ind': r.get('industry') or ''}
     return sorted(best.values(), key=lambda r: -(r['rev'] or 0))
 
 
@@ -312,6 +312,87 @@ def revenue_history(root, companies, since='CY2009Q1', filed_after=46):
     return out
 
 
+SIC_LEVELS = (('sic4', 4), ('sic3', 3), ('sic2', 2))
+
+
+def industry_benchmarks(companies, series, weeks, rev_hist=None, min_members=5):
+    """{ticker: {level, code, label, members, ex, all}}: per company the most specific industry group — SIC4, else SIC3,
+    SIC2, the site sector — with at least min_members OTHER companies that have weekly prices, and two weekly indices on
+    the full grid: 'ex' leaves the company out (the leave-one-out benchmark a company is compared with, so a dominant
+    stock does not define its own peers), 'all' includes it (the industry's own line against the market). Log-revenue
+    weights as reported by each week (rev_hist), weekly log returns over 50% skipped as bad ticks, a week needs three
+    contributing members; levels start at 100. Membership is today's companies (survivorship, stated on the page)."""
+    have = [c for c in companies if c['t'] in series]
+    groups = {}
+    for c in have:
+        sic = re.sub(r'\D', '', c.get('sic') or '')
+        keys = [(lvl, sic[:k]) for lvl, k in SIC_LEVELS if len(sic) >= k and sic[:k].strip('0')]
+        if c.get('s') and c['s'] != 'other':
+            keys.append(('sector', c['s']))
+        c['_keys'] = keys
+        for k in keys:
+            groups.setdefault(k, []).append(c)
+    W = len(weeks)
+
+    def weight(c, i):
+        if rev_hist is not None:
+            h = rev_hist.get(c['t'])
+            k = bisect.bisect_right(h[0], weeks[i]) - 1 if h else -1
+            rv = h[1][k] if k >= 0 else None
+        else:
+            rv = c.get('rev')
+        return math.log10(max(rv or 1e6, 1e6))
+
+    def returns(c):
+        f, cl = series[c['t']]
+        r = [None] * W
+        for i in range(max(1, f), min(W, f + len(cl))):
+            j = i - f
+            if j >= 1 and cl[j] is not None and cl[j - 1] is not None and cl[j] > 0 and cl[j - 1] > 0:
+                x = math.log(cl[j] / cl[j - 1])
+                r[i] = x if abs(x) <= 0.5 else None
+        return r
+    rets = {c['t']: returns(c) for c in have}
+    wts = {c['t']: [weight(c, i) for i in range(W)] for c in have}
+    totals = {}
+
+    def total(key):
+        if key not in totals:
+            tot, den, n = [0.0] * W, [0.0] * W, [0] * W
+            for c in groups[key]:
+                r, wc = rets[c['t']], wts[c['t']]
+                for i in range(W):
+                    if r[i] is not None:
+                        w = wc[i]
+                        tot[i] += w * r[i]; den[i] += w; n[i] += 1
+            totals[key] = (tot, den, n)
+        return totals[key]
+
+    def level(tot, den, n, own=None):
+        lv, out = None, [None] * W
+        for i in range(1, W):
+            t_, d_, k_ = tot[i], den[i], n[i]
+            if own is not None and own[0][i] is not None:
+                t_ -= own[1][i] * own[0][i]; d_ -= own[1][i]; k_ -= 1
+            if k_ >= 3 and d_ > 0:
+                lv = (lv or 100.0) * math.exp(t_ / d_)
+                out[i] = sig(lv)
+        return out
+    out = {}
+    for c in have:
+        key = next((k for k in c.pop('_keys') if len(groups[k]) - 1 >= min_members), None)
+        if key is None:
+            continue
+        tot, den, n = total(key)
+        r = rets[c['t']]
+        own = (r, [wts[c['t']][i] if r[i] is not None else 0.0 for i in range(W)])
+        name = c.get('ind') if key[0] == 'sic4' and c.get('ind') else ''
+        label = (f'SIC {key[1]}' + (f' · {name}' if name else '') if key[0] != 'sector' else f'{key[1].replace("-", " ").title()} sector')
+        out[c['t']] = {'level': key[0], 'code': key[1], 'members': len(groups[key]), 'label': label,
+                       'ex': level(tot, den, n, own), 'all': level(tot, den, n)}
+    return out
+
+
 def sector_indices(companies, series, weeks, rev_hist=None):
     """One weekly index per site sector: the log-revenue-weighted mean of the members' weekly log returns, cumulated
     from 100 where three or more members have prices. series: ticker → (first, closes). With rev_hist (revenue_history)
@@ -383,11 +464,18 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
         c = [sig(x, 5) for x in c]                     # five significant digits and volume in thousands keep the files small
         v = [None if x is None else int(sig(x / 1000, 3)) for x in v]
         series[t] = (f, c, v)
-        m = meta.get(t) or {}
-        (pub / 't' / f'{t}.json').write_text(json.dumps({'t': t, 'n': m.get('n'), 's': m.get('s'), 'start': weeks[f], 'c': c, 'v': v},
-                                                        separators=(',', ':')), encoding='utf-8')
-        written += 1
     rev_hist = revenue_history(root, companies) if companies else None
+    # each company's industry benchmark (research spec v5 §4.2): the most specific SIC level with enough members, the
+    # index without the company itself (bx) and with it (bi), weights = revenue reported by each week
+    bench_of = industry_benchmarks(companies, {t: (f, c) for t, (f, c, _) in series.items()}, weeks, rev_hist or None)
+    for t, (f, c, v) in series.items():
+        m = meta.get(t) or {}
+        doc = {'t': t, 'n': m.get('n'), 's': m.get('s'), 'start': weeks[f], 'c': c, 'v': v}
+        b = bench_of.get(t)
+        if b:                                       # the benchmarks on the company's own weeks (same start)
+            doc.update(bl=b['label'], blevel=b['level'], bcode=b['code'], bn=b['members'], bx=b['ex'][f:f + len(c)], bi=b['all'][f:f + len(c)])
+        (pub / 't' / f'{t}.json').write_text(json.dumps(doc, separators=(',', ':')), encoding='utf-8')
+        written += 1
     idx = sector_indices(companies, {t: (f, c) for t, (f, c, _) in series.items()}, weeks, rev_hist or None)
     if rev_hist:                                   # for the gravity model's planet weights (gravity_pendulum.load)
         (pub / 'revenue-history.json').write_text(json.dumps({

@@ -34,7 +34,7 @@ function rrgFull(G,ent,key){                            // one series on the who
 }
 function rrgCalc(D,ent,freq,n){
  const key=`${ent.id}|${freq}|${n}`;if(RRG.cache.has(key))return RRG.cache.get(key);
- const G=rrgGrid(D),S=G[freq],C=rrgFull(G,ent,'c'),B=rrgFull(G,D.bench,'c'),V=ent.v?rrgFull(G,ent,'v'):null;
+ const G=rrgGrid(D),S=G[freq],C=rrgFull(G,ent,'c'),B=ent.benchC?rrgFull(G,{start:ent.start,c:ent.benchC},'c'):rrgFull(G,D.bench,'c'),V=ent.v?rrgFull(G,ent,'v'):null;
  const rs=S.idx.map(i=>C[i]!=null&&B[i]!=null&&B[i]>0?100*C[i]/B[i]:null);
  // RS smoothed (a short EMA), against its own n-period EMA trend → the relative trend; its one-period change, smoothed
  // the same way → the momentum; both in standard deviations of their own last year or so, so lines are comparable
@@ -98,7 +98,7 @@ function rrgUniverses0(D){
 }
 function rrgTicker(t){                                 // one company's weekly file, loaded when asked for
  const m=marketData('history/t/'+t);
- return m.data?{id:t,name:t,full:m.data.n||'',start:m.data.start,c:m.data.c,v:m.data.v}:m.err?{id:t,missing:true}:{id:t,loading:true};
+ return m.data?{id:t,name:t,full:m.data.n||'',start:m.data.start,c:m.data.c,v:m.data.v,bx:m.data.bx,bi:m.data.bi,bl:m.data.bl,bn:m.data.bn,blevel:m.data.blevel,bcode:m.data.bcode}:m.err?{id:t,missing:true}:{id:t,loading:true};
 }
 function rrgEntities(D,uni,typed){
  const S=D.series||[],grp=g=>S.filter(s=>s.group===g).map(s=>({...s,full:s.name,name:s.id.startsWith('s:')?s.name.replace(/ · site companies$/,''):s.id}));
@@ -116,6 +116,19 @@ function rrgEntities(D,uni,typed){
  return ids.map(t=>{const s=S.find(x=>x.id===t);return s?{...s,name:s.id,full:s.name}:rrgTicker(t)});
 }
 
+/* the dual RRG (research spec v5 §4, §15.4): each company against its industry without itself (SIC4, else SIC3 / SIC2 /
+   the site sector, chosen and built by rotation_history.industry_benchmarks), and each of those industries against SPY */
+function rrgDual(ents){
+ const out=[],seen=new Set();
+ for(const e of ents){
+  if(!e.c||!e.bx){out.push(e);continue}
+  const ik='ind:'+e.blevel+':'+e.bcode;
+  if(!seen.has(ik)&&e.bi){seen.add(ik);out.push({id:ik,name:(e.blevel==='sector'?'':'SIC ')+e.bcode+' ▸ S&P',full:(e.bl||'')+' — all '+(e.bn||'')+' companies, against SPY',start:e.start,c:e.bi})}
+  out.push({...e,id:e.id+'|ix',name:e.name+' ▸ ind.',full:(e.full||e.name)+' against '+(e.bl||'its industry')+' without itself ('+((e.bn||1)-1)+' companies)',benchC:e.bx});
+ }
+ return out;
+}
+
 /* ---------- the view ---------- */
 function rrgView(){
  const g=marketGate('history/rrg','The long price history');
@@ -131,9 +144,12 @@ function rrgView(){
  state.rrgt=tails.some(x=>x[0]===state.rrgt)?state.rrgt:W?'8':'6';
  state.rrgm=RRG_MODES.some(m=>m[0]===state.rrgm)?state.rrgm:'2d';
  state.rrgz=RRG_Z.some(z=>z[0]===state.rrgz)?state.rrgz:'r52';
+ const rrgCos=state.rrgu==='tickers'||String(state.rrgu).startsWith('top:');
+ state.rrgb=state.rrgb==='industry'?'industry':'spy';
  let out=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${field('rrgu','Lines',unis,state.rrgu)}${field('rrgf','Frequency',[['w','Weekly (the standard)'],['m','Monthly (long cycles)']],state.rrgf)}${field('rrgm','Chart type',RRG_MODES,state.rrgm)}${state.rrgm==='4d'?field('rrgz','↗ Depth (third measure)',RRG_Z,state.rrgz):''}${state.rrgm==='2d'?field('rfc','Next step',FC_MODES,FC_MODES.some(m=>m[0]===state.rfc)?state.rfc:''):''}</div>`;
- out+=`<div class="toolbar rot-display">${field('rrgn','RS window',wins,state.rrgn)}${field('rrgt','Tail',tails,state.rrgt)}${state.rrgu==='tickers'?`<div class="field wide"><label for="rrgtk">Tickers (up to 12, any company or ETF on file)</label><input id="rrgtk" value="${esc(state.rrgtk||'')}" placeholder="e.g. NVDA, AMD, SMH · Enter"></div>`:''}</div>`;
- const ents=rrgEntities(D,state.rrgu,state.rrgtk),ok=ents.filter(e=>e.c),waiting=ents.filter(e=>e.loading),missing=ents.filter(e=>e.missing);
+ out+=`<div class="toolbar rot-display">${field('rrgn','RS window',wins,state.rrgn)}${field('rrgt','Tail',tails,state.rrgt)}${state.rrgu==='tickers'?`<div class="field wide"><label for="rrgtk">Tickers (up to 12, any company or ETF on file)</label><input id="rrgtk" value="${esc(state.rrgtk||'')}" placeholder="e.g. NVDA, AMD, SMH · Enter"></div>`:''}${rrgCos?field('rrgb','Companies against',[['spy','The S&P 500 (SPY)'],['industry','Their industry without themselves (dual RRG)']],state.rrgb):''}</div>`;
+ const ents0=rrgEntities(D,state.rrgu,state.rrgtk),dual=rrgCos&&state.rrgb==='industry';
+ const ents=dual?rrgDual(ents0):ents0,ok=ents.filter(e=>e.c),waiting=ents.filter(e=>e.loading),missing=ents.filter(e=>e.missing);
  if(state.rrgu==='tickers'&&!ents.length)return out+empty('Type tickers to compare, e.g. NVDA, AMD, SMH.');
  if(!ok.length)return out+(waiting.length?empty('Loading the weekly history…'):empty('Nothing on file for these yet. The collector takes the site’s companies largest first, a batch every few hours.'));
  const freq=state.rrgf,n=+state.rrgn,G=rrgGrid(D),S=G[freq],Q=S.labels;
@@ -143,11 +159,11 @@ function rrgView(){
  if(state.rfk!==key||!(Number.isInteger(state.rf)&&state.rf>=0&&state.rf<Q.length)){state.rf=Q.length-1;state.rfk=key}
  if(state.rf<firstK)state.rf=firstK;
  state.rfn=null;                                       // the other charts reset their frame when they come back
- const o={D,lines,Q,freq,n,tail:+state.rrgt,mode:state.rrgm,zk:state.rrgm==='3d'?'time':state.rrgm==='4d'?state.rrgz:null,firstK,
+ const o={D,lines,Q,freq,n,dual,tail:+state.rrgt,mode:state.rrgm,zk:state.rrgm==='3d'?'time':state.rrgm==='4d'?state.rrgz:null,firstK,
   P:{partial:new Set(),span:Math.min(Q.length-firstK,W?260:120),unit:W?'weeks':'months',ms:W?110:300,label:rrgDay}};
  o.dom=rrgDomain(o);
  const head=state.rrgm==='2d'?'Relative Rotation Graph':state.rrgm==='3d'?'RRG in 3-D — time as depth':'RRG in 4-D — depth: '+RRG_ZINFO[o.zk].label+'; time played';
- out+=`<div class="panel"><h3>${esc(head)}</h3><p class="sub">→ JdK RS-Ratio (relative trend) · ↑ JdK RS-Momentum (its speed)${o.zk?' · ↗ '+esc(RRG_ZINFO[o.zk].label):''} · against ${esc(D.benchmark||'SPY')} · ${W?'weekly':'monthly'}, ${esc(n)}-${W?'week':'month'} window · tails ${esc(state.rrgt)} ${W?'weeks':'months'}. History since ${esc(rrgDay(D.start))}; drag the slider anywhere and press play.</p>`;
+ out+=`<div class="panel"><h3>${esc(head)}</h3><p class="sub">→ JdK RS-Ratio (relative trend) · ↑ JdK RS-Momentum (its speed)${o.zk?' · ↗ '+esc(RRG_ZINFO[o.zk].label):''} · against ${dual?'their industry without themselves (companies) · the industries against '+esc(D.benchmark||'SPY'):esc(D.benchmark||'SPY')} · ${W?'weekly':'monthly'}, ${esc(n)}-${W?'week':'month'} window · tails ${esc(state.rrgt)} ${W?'weeks':'months'}. History since ${esc(rrgDay(D.start))}; drag the slider anywhere and press play.</p>`;
  out+=rotPlayer(Q,o.P);
  if(state.rrgm==='2d'){ROT.ctx={Q,P:o.P,draw:f=>rrgFrame(o,f)};out+=`<div id="rot-plot">${rrgFrame(o,state.rf)}</div>`}
  else{ROT.ctx={Q,P:o.P,paint:f=>rrgPaint3d(o,f)};
@@ -191,7 +207,7 @@ function rrgFrame(o,f){
  s+=`<line class="mk-axis" x1="${X0}" x2="${X0}" y1="${T}" y2="${H-B}"/><line class="mk-axis" x1="${Lm}" x2="${W-R}" y1="${Y0}" y2="${Y0}"/>`;
  s+=`<text class="rrg-qt rrg-t-lead" x="${W-R-8}" y="${T+16}" text-anchor="end">Leading</text><text class="rrg-qt rrg-t-weak" x="${W-R-8}" y="${H-B-10}" text-anchor="end">Weakening</text>`;
  s+=`<text class="rrg-qt rrg-t-lag" x="${Lm+8}" y="${H-B-10}">Lagging</text><text class="rrg-qt rrg-t-imp" x="${Lm+8}" y="${T+16}">Improving</text>`;
- s+=`<text class="axis" x="${(Lm+W-R)/2}" y="${H-8}" text-anchor="middle">JdK RS-Ratio → (relative trend vs ${esc(o.D.benchmark||'SPY')})</text>`;
+ s+=`<text class="axis" x="${(Lm+W-R)/2}" y="${H-8}" text-anchor="middle">JdK RS-Ratio → (relative trend vs ${o.dual?'each line\'s benchmark':esc(o.D.benchmark||'SPY')})</text>`;
  s+=`<text class="axis" transform="translate(13 ${(T+H-B)/2}) rotate(-90)" text-anchor="middle">JdK RS-Momentum →</text>`;
  const boxes=[];let marks='',labels='';
  for(const l of o.lines){
