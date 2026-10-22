@@ -342,6 +342,14 @@ def main():
                   f"quarters {rot.get('quarters', [''])[0] if rot.get('quarters') else '-'}…{rot['quarters'][-1] if rot.get('quarters') else '-'}")
         except Exception as exc:
             print(f'::warning::rotation not built: {exc}')
+    try:                                            # the Rotation axis contracts (app/axis_registry.py, spec v5 §3.3)
+        import sys
+        sys.path.insert(0, str(ROOT / 'app'))
+        import axis_registry, rotation as _rot
+        (out / 'data' / 'market' / 'axis-registry.json').write_text(json.dumps(axis_registry.registry(_rot.VARS), ensure_ascii=False,
+                                                                               separators=(',', ':')), encoding='utf-8')
+    except Exception as exc:
+        print(f'::warning::axis registry not written: {exc}')
     # which snapshot this build publishes (U07): the commit, when it was built, when each data set was last made
     import datetime as _dt, os as _os
     def _stamp(path, key):

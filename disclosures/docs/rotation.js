@@ -174,6 +174,32 @@ function axisTicks(o,v,lo,hi,len){
  }
  return niceTicks(lo,hi,Math.max(3,Math.round(len/90))).map(t=>[t,vfmt(v,t)]);
 }
+// semantic_axis_spec_id (app/axis_registry.py, research spec v5 §3.3): SHA-256 of the canonical JSON of what this chart
+// configuration means — axis keys with their definition versions, transform, smoothing, frequency, fill. The same
+// configuration always has the same id, whatever the data; the forecast files and the ledger carry ids made the same way.
+const rotCanon=v=>v===null||typeof v!=='object'?JSON.stringify(v):Array.isArray(v)?'['+v.map(rotCanon).join(',')+']':'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+rotCanon(v[k])).join(',')+'}';
+function rotSha256(str){
+ const b=new TextEncoder().encode(str),K=[],H=[1779033703,3144134277,1013904242,2773480762,1359893119,2600822924,528734635,1541459225];
+ for(let n=2,c=0;c<64;n++){let p=true;for(let d=2;d*d<=n;d++)if(n%d===0){p=false;break}if(p)K[c++]=(Math.pow(n,1/3)%1)*4294967296|0}
+ const L=b.length,len=((L+9+63)>>6)<<6,m=new Uint8Array(len);m.set(b);m[L]=0x80;const bits=L*8;
+ for(let i=0;i<8;i++)m[len-1-i]=i<4?(bits>>>(8*i))&255:Math.floor(bits/4294967296)>>>(8*(i-4))&255;
+ const w=new Int32Array(64),r=(x,k)=>(x>>>k)|(x<<(32-k));
+ for(let o=0;o<len;o+=64){
+  for(let i=0;i<16;i++)w[i]=(m[o+4*i]<<24)|(m[o+4*i+1]<<16)|(m[o+4*i+2]<<8)|m[o+4*i+3];
+  for(let i=16;i<64;i++){const s0=r(w[i-15],7)^r(w[i-15],18)^(w[i-15]>>>3),s1=r(w[i-2],17)^r(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)|0}
+  let [a,bb,c,d,e,f,g,h]=H;
+  for(let i=0;i<64;i++){const t1=(h+(r(e,6)^r(e,11)^r(e,25))+((e&f)^(~e&g))+K[i]+w[i])|0,t2=((r(a,2)^r(a,13)^r(a,22))+((a&bb)^(a&c)^(bb&c)))|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=bb;bb=a;a=(t1+t2)|0}
+  H[0]=(H[0]+a)|0;H[1]=(H[1]+bb)|0;H[2]=(H[2]+c)|0;H[3]=(H[3]+d)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0}
+ return H.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');
+}
+function rotAxisSpec(keys,V,freq,scl,sm,fill){            // mirrors axis_registry.axis_spec
+ const axes=[];for(const k of keys){if(k==='__time'){axes.push({key:'__time'});continue}const v=V[k];if(!v||!v.definition_version)return null;
+  axes.push({key:k,definition_version:v.definition_version,cadence:v.cadence,observation_kind:v.observation_kind,lag_periods:v.lag_periods})}
+ return {axes,frequency:freq,transform:scl,smoothing:sm,fill:freq==='m'?fill:null,benchmark:'SPY',sector_definition:'site_sector_v1',
+  calendar:{q:'calendar_quarter',m:'calendar_month',w:'friday_week'}[freq],formula_version:'rotation_v1',registry_version:'axis_registry_v1'};
+}
+const rotSpecTag=o=>{try{const keys=[o.x&&o.x.key,o.y&&o.y.key].concat(o.three&&o.z?[o.z.key]:[]);const sp=rotAxisSpec(keys,o.P.V,o.P.monthly?'m':'q',o.scl,o.sm,o.fill);
+ if(!sp)return '';const id=rotSha256(rotCanon(sp));return ` · <span class="muted" title="semantic_axis_spec_id ${id}: the same axes, units, transform, smoothing and frequency always give this id (research spec v5 §3.3)">axis spec ${id.slice(0,12)}</span>`}catch(e){return ''}};
 const scaleNote=o=>({raw:'',log:' (signed log)',rank:' (rank within the period)',z:' (standard score)'}[o.scl]||'');
 function trailCals(o,ent,cal,n,ks){                   // the periods up to cal where every coordinate exists, the last n
  const out=[];for(let i=o.qi.get(cal);i>=0&&out.length<n;i--){const c=o.Q[i];if(ks.every(v=>val(o,ent,v,c)!=null))out.unshift(c)}return out;
@@ -246,7 +272,7 @@ function rotationView(){
  out+=mnote;
  const picks=String(state.rtk||'').toUpperCase().split(/[\s,]+/).filter(Boolean).slice(0,3).map(t=>P.byT.get(t)||P.byT.get(t.replace('.','-'))||P.byT.get(t.replace('-','.'))).filter(Boolean);
  const o={P,Q,qi:new Map(Q.map((c,i)=>[c,i])),x:P.V[state.rx],y:P.V[state.ry],z:three?(state.rz3==='__time'?ROT_TIME:P.V[state.rz3]):(state.rz?P.V[state.rz]:null),
-  trail:+state[tk],picks,sec:state.rsec,scl:state.rscl,sm:state.rsm,sig:[P.monthly?'m':'q',state.rscl,state.rsm].join('|')};
+  trail:+state[tk],picks,sec:state.rsec,scl:state.rscl,sm:state.rsm,sig:[P.monthly?'m':'q',state.rscl,state.rsm].join('|'),three,fill:P.monthly?state.rfill:null};
  if(fcView&&fcOn()){const F=fcLoad(P);o.fc=F.data||null;o.fcErr=F.err}
  if(state.rview==='scan')out+=scanView(Pq,state.rsec);
  else if(state.rview==='rs')out+=rsView(P,state.rsec,picks);
@@ -305,7 +331,7 @@ function clockView(o){
  const ref=rotLayers(o);
  o.dom=[axisDomain(o,o.x,o.lines,o.cloud),axisDomain(o,o.y,o.lines,o.cloud)];
  ROT.ctx={Q:o.Q,P:o.P,draw:f=>clockFrame(o,f)};
- let out=`<div class="panel"><h3>Momentum clock</h3><p class="sub">→ ${esc(o.x.label)} · ↑ ${esc(o.y.label)}${esc(scaleNote(o))}${o.sm!=='none'?' · smoothed':''} · each dot one ${o.P.monthly?'month':'quarter'}, the large dot the period shown · drag the slider or press play</p>`;
+ let out=`<div class="panel"><h3>Momentum clock</h3><p class="sub">→ ${esc(o.x.label)} · ↑ ${esc(o.y.label)}${esc(scaleNote(o))}${o.sm!=='none'?' · smoothed':''} · each dot one ${o.P.monthly?'month':'quarter'}, the large dot the period shown · drag the slider or press play${rotSpecTag(o)}</p>`;
  out+=rotPlayer(o.Q,o.P)+`<div id="rot-plot">${clockFrame(o,state.rf)}</div><div class="mk-legend">${rotLegend(o,ref)}</div></div>`;
  if(o.picks.length)out+=`<div class="rot-multiples">${o.picks.map((c,i)=>planar(o,c,ROT_SERIES[i],[o.x,o.y,...(o.z&&o.z.key!=='__time'?[o.z]:[])])).join('')}</div>`;
  return out+rotTable(o);
@@ -485,7 +511,7 @@ function view3d(o){
  o.dom=[axisDomain(o,o.x,o.lines,o.cloud),axisDomain(o,o.y,o.lines,o.cloud),axisDomain(o,o.z,o.lines,o.cloud)];
  ROT.ctx={Q:o.Q,P:o.P,paint:f=>paint3d(o,f)};
  const time=o.z.key==='__time';
- let out=`<div class="panel"><h3>${time?'3-D — time as depth':'4-D — three variables in space, time as the fourth'}</h3><p class="sub">→ ${esc(o.x.label)} · ↑ ${esc(o.y.label)} · ↗ ${esc(time?(o.P.monthly?'months':'quarters')+', oldest at the back':o.z.label)}${esc(scaleNote(o))}${o.sm!=='none'?' · smoothed':''}. ${time?'A company that keeps rotating through the same cycle draws a spiral along time; pick a variable for depth to make it 4-D. ':'Press play: every path moves through the box period by period, its tail fading with age and starting at the period written beside it. '}Drag to turn, hover a dot for its numbers.</p>`;
+ let out=`<div class="panel"><h3>${time?'3-D — time as depth':'4-D — three variables in space, time as the fourth'}</h3><p class="sub">→ ${esc(o.x.label)} · ↑ ${esc(o.y.label)} · ↗ ${esc(time?(o.P.monthly?'months':'quarters')+', oldest at the back':o.z.label)}${esc(scaleNote(o))}${o.sm!=='none'?' · smoothed':''}. ${time?'A company that keeps rotating through the same cycle draws a spiral along time; pick a variable for depth to make it 4-D. ':'Press play: every path moves through the box period by period, its tail fading with age and starting at the period written beside it. '}Drag to turn, hover a dot for its numbers.${rotSpecTag(o)}</p>`;
  out+=rotPlayer(o.Q,o.P)+`<div class="rot-3d-wrap"><canvas id="rot-3d" class="rot-3d" role="img" aria-label="3-D chart of ${esc(o.x.label)}, ${esc(o.y.label)} and ${esc(o.z.label)}; the table below lists every value"></canvas><div class="rot-3d-tools"><button class="action" id="rspin" type="button">${ROT.spin?'Stop turning':'Turn slowly'}</button><button class="action" id="rreset" type="button">Front view</button></div></div><div class="mk-legend">${rotLegend(o,ref)}<span class="muted">Thin lines drop each traced dot to the floor so its depth is readable</span></div></div>`;
  if(o.picks.length)out+=`<div class="rot-multiples">${o.picks.map((c,i)=>planar(o,c,ROT_SERIES[i],[o.x,o.y,...(time?[]:[o.z])])).join('')}</div>`;
  return out+rotTable(o);

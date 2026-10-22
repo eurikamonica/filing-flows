@@ -38,6 +38,7 @@ import math
 from pathlib import Path
 
 import numpy as np
+import axis_registry as AR
 from sklearn.neighbors import KDTree
 
 PRICE_VARS = ['rel', 'rel3', 'rel6', 'ret', 'vola', 'volz', 'rs', 'mom121', 'hi52', 'iv30', 'pcoi']
@@ -1370,6 +1371,7 @@ def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None, grav
             'price_models': ['analogues', 'gravity + tidal (short pendulum restoring, long pendulum momentum, sector carried to its companies)'],
             'companies': cos, 'suns': suns, 'market': market,
             'test_from': P.cals[R['first_test']],
+            'axis_spec': (spec := AR.axis_spec(vars_, P.freq)), 'semantic_axis_spec_id': AR.semantic_axis_spec_id(spec),
             'caveats': [
                 f'Origins before {P.cals[R["first_test"]]} are an in-sample warm-up: the coordinates\' typical spreads (the '
                 'analogue metric) were measured on data through that period. Scorecards start there.',

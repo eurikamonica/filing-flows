@@ -26,6 +26,7 @@ import math
 import re
 from pathlib import Path
 
+import axis_registry as AR
 import frames as FR
 
 # key, label, unit, centred (True: a change, 0 is neutral; False: a level), group
@@ -476,9 +477,12 @@ def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_
         lo, hi = _quantile(vals, 0.03), _quantile(vals, 0.97)
         q1, q3 = _quantile(vals, 0.25), _quantile(vals, 0.75)
         bounds[key] = (lo, hi)
+        reg = AR.entry(key)                          # the axis contract (axis_registry.py): when public, missing policy
         meta.append({'key': key, 'label': label, 'unit': unit, 'centred': centred, 'group': group, 'n': len(vals),
                      'lo': _r(lo), 'hi': _r(hi), 'median': _r(_quantile(vals, 0.5)),
-                     'scale': _r(((q3 - q1) / 1.349) if vals and q3 is not None and q3 > q1 else None, 4)})
+                     'scale': _r(((q3 - q1) / 1.349) if vals and q3 is not None and q3 > q1 else None, 4),
+                     **{k: reg[k] for k in ('cadence', 'observation_kind', 'lag_periods', 'missing_policy',
+                                            'predictability_status', 'definition_version')}})
     # the suns as known at each quarter: clip bounds up to that quarter, weights = revenue reported by then
     for co in out:
         fig = figs.get(str(co['cik']))
@@ -506,7 +510,7 @@ def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_
     ri = MONTH_FIELDS.index('rs')
     rs_ratings([[(r[i], ri) for r in month_rows.values()] for i in range(len(months))])
     return {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'benchmark': 'SPY' if spy else None,
-            'fields': FIELDS, 'sun_fields': SUN_FIELDS, 'vars': meta, 'quarters': cals,
+            'fields': FIELDS, 'sun_fields': SUN_FIELDS, 'vars': meta, 'quarters': cals, 'axis_registry_version': AR.REGISTRY_VERSION,
             'note': ('Calendar quarters (SEC frames align fiscal quarters to the nearest calendar quarter; a fourth quarter a '
                      'company did not tag on its own is the year minus its first three). Returns run from one calendar '
                      'quarter-end close to the next; "vs the S&P 500" subtracts SPY over the same dates. Margins are against '

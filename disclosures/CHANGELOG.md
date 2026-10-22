@@ -1,5 +1,17 @@
 # Changelog
 
+## Rotation axis registry (research specification v5, P0-02)
+
+`app/axis_registry.py` gives every Rotation X/Y/Z variable one contract — cadence, when an observation is public
+(price variables at the period's close, filed ones a period later), missing policy (unknown, not zero; 13F and
+officials only in covered quarters), transforms, smoothings, whether a forecast is published (`experimental`) or not
+(`descriptive_only`) — and two ids: `semantic_axis_spec_id` (what a chart configuration means; a data refresh never
+changes it) and `prediction_artifact_id` (plus the run's versions, origin and cutoff). `rotation.json` vars carry the
+contract fields; the forecast files carry the id of what they forecast; the Momentum clock and 3-D captions show the
+id of the configuration on screen, computed in the browser with the same canonical JSON and SHA-256 as Python
+(`tests/test_axis_registry.py` checks the keys, the price/filed split, the controls and the ids against rotation.py,
+chaos_forecast.py and rotation.js). `data/market/axis-registry.json` is published with the hub.
+
 ## Crowd Flow clocks (research specification v5, first slice: P0-03, P0-04, P1-05, part of P0-01)
 
 The Hype map keeps the original Signals map as *legacy snapshot* and adds two views with one clock each:
