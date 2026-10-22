@@ -22,6 +22,18 @@ import options as option_chains
 
 ROOT = Path(__file__).resolve().parents[1]
 
+
+def _flag(key,result):
+    """An annotation for a source that did not finish (the run's logs are not always readable). Partial coverage —
+    a batch cut short by a size or time limit, a few documents that would not parse — is normal and the rest of the
+    batch is kept, so it is a warning; only an error (the source could not be read at all) fails the run."""
+    st=result.get('status')
+    if st=='ok':
+        return False
+    msg=f"{key}: {st}"+(f" — {str(result.get('error'))[:200]}" if result.get('error') else '')
+    print(('::error::' if st=='error' else '::warning::')+msg,flush=True)
+    return st=='error'
+
 def main():
     parser = argparse.ArgumentParser(description='Collect official public disclosures; demo never substitutes for real data')
     parser.add_argument('--only',choices=['all','cot','banks','npx','holdings','congress','markets','prices','market','insiders','options','ownership','shorts','senate','events8k','news','reddit','extremes'],default='all')
@@ -56,7 +68,7 @@ def main():
         result = refresh_module(data['modules'].get(key,{}),func,client,options,args.revalidate)
         data['modules'][key] = result
         if key=='npx' and 'holdings' in data['modules']:data['modules']['holdings']['discovery']=read_json(args.output/'discovery-state.json',{})
-        failed |= result['status'] != 'ok'
+        failed |= _flag(key,result)
         print(key+': '+result['status']+((' — '+result['error']) if result.get('error') else ''),flush=True)
         data['generated_at'] = now()
         publish_shards(args.output,data)
@@ -81,7 +93,7 @@ def main():
             data['modules']['prices']=apply_prices(data,client,cfg['prices'],args.output)
         except Exception as exc:
             data['modules']['prices']={**data['modules'].get('prices',{}),'status':'error','error':str(exc),'last_attempt':now()}
-        failed|=data['modules']['prices']['status']!='ok'
+        failed|=_flag('prices',data['modules']['prices'])
         print('prices: '+data['modules']['prices']['status']+((' — '+data['modules']['prices']['error']) if data['modules']['prices'].get('error') else ''),flush=True)
         data['generated_at']=now()
         publish_shards(args.output,data)
@@ -96,6 +108,7 @@ def main():
             write_json(args.output/'insiders-status.json',data['modules']['insiders'])
         except Exception as exc:
             print('insiders: error — '+str(exc),flush=True)
+            print('::warning::insiders: error — '+str(exc)[:200],flush=True)
     # 4.6: Schedules 13D / 13G and Form 144 (EDGAR feeds, then the daily indexes back `backfill_days`), FINRA short
     # interest (a new settlement date twice a month) and US Senate PTRs (eFD) — all with the light half-hourly runs
     # 4.7: every 8-K (the feed, then the daily indexes) and the news wires / government releases (app/news.py)
@@ -119,6 +132,7 @@ def main():
             write_json(args.output/f'{key}-status.json',data['modules'][key])
         except Exception as exc:
             print(key+': error — '+str(exc),flush=True)
+            print(f'::warning::{key}: error — '+str(exc)[:200],flush=True)
             write_json(args.output/f'{key}-status.json',{**read_json(args.output/f'{key}-status.json',{}),'status':'error','error':str(exc)[:300],'last_attempt':now()})
     # 4.5: option chains (CBOE delayed quotes) once a day after the close
     if args.only in ('all','options'):
@@ -163,7 +177,7 @@ def main():
             print('market: error — '+str(exc),flush=True)
     write_json(args.storage/'last-run-manifest.json',client.manifest)
     if failed:
-        print('One or more sources failed/partial. Previous valid data retained; inspect source status.')
+        print('One or more sources failed. Previous valid data retained; inspect source status.')
     return 1 if failed else 0
 
 if __name__ == '__main__':

@@ -170,7 +170,7 @@ def summary(trades, today=None):
             a['buys'] += 1; a['buy_value'] += v; a['buyers'].add(t['insider'])
             if t['date'] >= d30:
                 a['buyers30'].add(t['insider'])
-            if not a['top_buy'] or v > a['top_buy']['value']:
+            if not a['top_buy'] or v > (a['top_buy']['value'] or 0):
                 a['top_buy'] = {k: t.get(k) for k in ('insider', 'role', 'title', 'date', 'shares', 'price', 'value', 'url')}
         else:
             a['sells'] += 1; a['sell_value'] += v; a['sellers'].add(t['insider'])

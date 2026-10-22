@@ -80,6 +80,11 @@ def _client():
 
 
 # ------------------------------------------------------------------ universe
+def _num(v):
+    """A numeric revenue (the site index's 'rev' is a formatted string such as \"$2.6B\" and 'revenue' may be null)."""
+    return v if isinstance(v, (int, float)) and not isinstance(v, bool) else 0
+
+
 def universe(site_index):
     ix = read_json(site_index, {}) if site_index else {}
     rows = {}
@@ -90,7 +95,7 @@ def universe(site_index):
         if c not in rows or (r.get('filed') or '') > (rows[c].get('filed') or ''):
             rows[c] = r
     out = [{'cik': c, 'ticker': r.get('ticker'), 'name': r.get('name'), 'sector': r.get('sector'), 'industry': r.get('industry'),
-            'sic': str(r.get('sic') or ''), 'revenue': r.get('revenue') or r.get('rev') or 0} for c, r in rows.items()]
+            'sic': str(r.get('sic') or ''), 'revenue': _num(r.get('revenue'))} for c, r in rows.items()]
     out.sort(key=lambda r: -(r['revenue'] or 0))
     return out
 
@@ -261,7 +266,7 @@ def collect(client, root, cos, minutes=30.0, refresh_days=21, first=()):
         if s.get('retry_after') and s['retry_after'] > now():
             return None
         if not s.get('fetched_at'):
-            return (0, -(co['revenue'] or 0))
+            return (0, -_num(co.get('revenue')))
         age = (today - dt.datetime.fromisoformat(s['fetched_at'])).days
         return (1, -age) if age >= refresh_days else None
 

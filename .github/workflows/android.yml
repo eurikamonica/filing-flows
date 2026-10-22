@@ -57,7 +57,13 @@ jobs:
           tasks="testDebugUnitTest assembleRelease"
           # Google Play takes an app bundle (.aab) signed with your own upload key
           if [ -n "${ANDROID_KEYSTORE_FILE:-}" ]; then tasks="$tasks bundleRelease"; fi
-          gradle --no-daemon -Pfilingflows.siteUrl="$site" $tasks
+          # the build's errors as annotations too (the run's logs are not always readable): compiler, lint and test failures
+          if ! gradle --no-daemon -Pfilingflows.siteUrl="$site" $tasks > gradle.log 2>&1; then
+            grep -E "^e: |error:|FAILED|What went wrong|Exception|> .*failed" gradle.log | grep -v "^\s*at " | head -25 | sed 's/^/::error::/'
+            tail -60 gradle.log
+            exit 1
+          fi
+          tail -5 gradle.log
           cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/filing-flows.apk"
           if [ -f app/build/outputs/bundle/release/app-release.aab ]; then
             cp app/build/outputs/bundle/release/app-release.aab "$GITHUB_WORKSPACE/filing-flows.aab"

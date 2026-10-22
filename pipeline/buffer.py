@@ -12,6 +12,7 @@ posting schedule); nothing is published without a slot in that schedule.
 import argparse
 import json
 import os
+import re
 import sys
 
 import requests
@@ -112,10 +113,21 @@ def main():
             post = create_thread(key, ch["id"], parts, draft=bool(it.get("draft")))
             print(f"{'saved as a Buffer draft' if it.get('draft') else 'queued'} {it['label']}: post {post['id']} ({post.get('status')}, due {post.get('dueAt')})")
         except BufferError as err:
+            if queue_full(err):
+                # the plan's scheduled-post limit (10 on the free plan): nothing more fits until Buffer posts some, so the
+                # rest waits for a later run instead of failing this one (a full queue is not a broken key or channel)
+                left = len(items) - items.index(it)
+                print(f"::warning::Buffer queue is full ({err}); {left} thread(s) not queued this run — they go out when the queue has room")
+                break
             failed += 1
             print(f"::warning::{it['label']} not queued: {err}")
     if failed:
         sys.exit(1)
+
+
+def queue_full(err):
+    """Buffer's answer when the channel's queue already holds the plan's maximum of scheduled posts."""
+    return bool(re.search(r"limit|queue is full|maximum|too many (scheduled )?posts|upgrade", str(err), re.I))
 
 
 if __name__ == "__main__":
