@@ -154,6 +154,15 @@ class IndustryBenchmarks(unittest.TestCase):
         self.assertEqual(b['S0']['ex'], b2['S0']['ex'])                  # its own jump never moves its benchmark
         self.assertNotEqual(b['S1']['ex'], b2['S1']['ex'])               # but it moves its peers'
         self.assertNotEqual(b['S0']['all'], b2['S0']['all'])
+        # liquidity: a member trading under $10M a week never moves the others' benchmark
+        vols = {c['t']: [1e6] * len(weeks) for c in cos}               # $100+ × 1M shares: liquid
+        vols['S6'] = [10.0] * len(weeks)                                 # illiquid
+        b3 = RH.industry_benchmarks(cos, series, weeks, volumes=vols)
+        cos4, series4, _ = self.world()
+        f, cl = series4['S6']; series4['S6'] = (f, [x * (3 if j > 20 else 1) for j, x in enumerate(cl)])
+        b4 = RH.industry_benchmarks(cos4, series4, weeks, volumes=vols)
+        self.assertEqual(b3['S0']['ex'], b4['S0']['ex'])
+        self.assertNotEqual(b['S0']['ex'][-1], b3['S0']['ex'][-1])
         # equal weights: the leave-one-out week-1 return is the mean of the others' returns
         others = [math.log(1 + 0.002 * (k + 1)) for k in range(1, 7)]
         self.assertAlmostEqual(math.log(b['S0']['ex'][1] / 100), sum(others) / 6, places=4)

@@ -124,7 +124,7 @@ function rrgDual(ents){
   if(!e.c||!e.bx){out.push(e);continue}
   const ik='ind:'+e.blevel+':'+e.bcode;
   if(!seen.has(ik)&&e.bi){seen.add(ik);out.push({id:ik,name:(e.blevel==='sector'?'':'SIC ')+e.bcode+' ▸ S&P',full:(e.bl||'')+' — all '+(e.bn||'')+' companies, against SPY',start:e.start,c:e.bi})}
-  out.push({...e,id:e.id+'|ix',name:e.name+' ▸ ind.',full:(e.full||e.name)+' against '+(e.bl||'its industry')+' without itself ('+((e.bn||1)-1)+' companies)',benchC:e.bx});
+  out.push({...e,id:e.id+'|ix',name:e.name+' ▸ ind.',full:(e.full||e.name)+' against '+(e.bl||'its industry')+' without itself (up to '+((e.bn||1)-1)+' companies, each counted while liquid)',benchC:e.bx});
  }
  return out;
 }

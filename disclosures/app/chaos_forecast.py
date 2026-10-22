@@ -1092,7 +1092,7 @@ def dual_transitions(tdir, tickers, bench, n=14, start='2010-01-01', horizons=(1
     return {'status': 'descriptive_only', 'companies': used, 'from': str(first)[:10] if first is not None else None,
             'to': str(last)[:10] if last is not None else None, 'horizons_weeks': list(horizons), 'quadrants': list(RRG_QUADS), 'by_horizon': out,
             'note': ('Each company against its industry without itself (most specific SIC level with five or more other '
-                     'companies; today\'s companies), grouped by where the company stood against that industry and where the '
+                     'companies, each counted while liquid; today\'s companies), grouped by where the company stood against that industry and where the '
                      'industry stood against the S&P 500; the share in each quadrant h weeks later. History, not a forecast.')}
 
 

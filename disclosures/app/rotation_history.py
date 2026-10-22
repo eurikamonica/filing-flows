@@ -315,13 +315,18 @@ def revenue_history(root, companies, since='CY2009Q1', filed_after=46):
 SIC_LEVELS = (('sic4', 4), ('sic3', 3), ('sic2', 2))
 
 
-def industry_benchmarks(companies, series, weeks, rev_hist=None, min_members=5):
+def industry_benchmarks(companies, series, weeks, rev_hist=None, min_members=5, volumes=None, min_price=3.0,
+                        min_dollar_volume=10e6):
     """{ticker: {level, code, label, members, ex, all}}: per company the most specific industry group — SIC4, else SIC3,
     SIC2, the site sector — with at least min_members OTHER companies that have weekly prices, and two weekly indices on
     the full grid: 'ex' leaves the company out (the leave-one-out benchmark a company is compared with, so a dominant
     stock does not define its own peers), 'all' includes it (the industry's own line against the market). Log-revenue
     weights as reported by each week (rev_hist), weekly log returns over 50% skipped as bad ticks, a week needs three
-    contributing members; levels start at 100. Membership is today's companies (survivorship, stated on the page)."""
+    contributing members; levels start at 100. Membership is today's companies (survivorship, stated on the page).
+    With volumes ({ticker: weekly shares on the series' weeks}), a member contributes a week only while it is liquid —
+    close ≥ min_price and mean weekly dollar volume over the last 13 weeks ≥ min_dollar_volume — so small illiquid
+    members do not bend the benchmark (notes/dual-rrg: against all members, an industry's trend mostly measured its
+    illiquid members running further than its liquid ones)."""
     have = [c for c in companies if c['t'] in series]
     groups = {}
     for c in have:
@@ -352,7 +357,26 @@ def industry_benchmarks(companies, series, weeks, rev_hist=None, min_members=5):
                 x = math.log(cl[j] / cl[j - 1])
                 r[i] = x if abs(x) <= 0.5 else None
         return r
-    rets = {c['t']: returns(c) for c in have}
+    def liquid(c):
+        if volumes is None or c['t'] not in volumes:
+            return None
+        f, cl = series[c['t']]
+        vol = volumes[c['t']]
+        ok = [False] * W
+        win = []
+        for i in range(f, min(W, f + len(cl))):
+            j = i - f
+            px, v = cl[j], (vol[j] if j < len(vol) else None)
+            win.append(px * v if px is not None and v is not None else None)
+            if len(win) > 13:
+                win.pop(0)
+            vals = [x for x in win if x is not None]
+            ok[i] = px is not None and px >= min_price and len(vals) >= 10 and sum(vals) / len(vals) >= min_dollar_volume
+        return ok
+    rets = {}
+    for c in have:
+        r, ok = returns(c), liquid(c)
+        rets[c['t']] = r if ok is None else [x if ok[i] and ok[i - 1] else None for i, x in enumerate(r)]
     wts = {c['t']: [weight(c, i) for i in range(W)] for c in have}
     totals = {}
 
@@ -467,7 +491,8 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
     rev_hist = revenue_history(root, companies) if companies else None
     # each company's industry benchmark (research spec v5 §4.2): the most specific SIC level with enough members, the
     # index without the company itself (bx) and with it (bi), weights = revenue reported by each week
-    bench_of = industry_benchmarks(companies, {t: (f, c) for t, (f, c, _) in series.items()}, weeks, rev_hist or None)
+    bench_of = industry_benchmarks(companies, {t: (f, c) for t, (f, c, _) in series.items()}, weeks, rev_hist or None,
+                                   volumes={t: [None if x is None else 1000.0 * x for x in v] for t, (f, c, v) in series.items()})
     for t, (f, c, v) in series.items():
         m = meta.get(t) or {}
         doc = {'t': t, 'n': m.get('n'), 's': m.get('s'), 'start': weeks[f], 'c': c, 'v': v}
