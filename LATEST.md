@@ -1,4 +1,4 @@
-# Hourly FSA question bank: 2026-10-22T02:00:00+00:00
+# Hourly FSA question bank: 2026-10-22T03:00:00+00:00
 New questions: 16. Ready: 16; needs review: 0.
 
 ## Backlog
@@ -9,7 +9,7 @@ New questions: 16. Ready: 16; needs review: 0.
 - P2 Reasoning and abstention: Require stepwise verification and unsupported-value nulls
 - P2 Larger model distillation: Queue teacher answers; require independent gold verification
 - P1 Research rights gate: Human-approved licensed/public-domain/owned factual excerpts only
-- P0 New hourly experiment: Statement reconciliation: Linked working capital and cash-flow exercises
+- P0 New hourly experiment: Debt and interest: Accrued interest, discount and maturity classification
 
 ## Generated question categories
 - accounting_equation: 3
