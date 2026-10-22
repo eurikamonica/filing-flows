@@ -1,0 +1,27 @@
+name: Scenario elasticity checks
+on:
+  push:
+    paths:
+      - 'web/scenario-elasticity.js'
+      - 'web/model.js'
+      - 'web/index.html'
+      - 'research/test_scenario_elasticity.js'
+      - '.github/workflows/scenario-elasticity-checks.yml'
+  pull_request:
+    paths:
+      - 'web/scenario-elasticity.js'
+      - 'web/model.js'
+      - 'web/index.html'
+      - 'research/test_scenario_elasticity.js'
+      - '.github/workflows/scenario-elasticity-checks.yml'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check web/scenario-elasticity.js
+      - run: node --check web/model.js
+      - run: node --test research/test_scenario_elasticity.js
