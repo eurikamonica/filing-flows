@@ -352,7 +352,8 @@
       <p class="intro">${esc(d.about || '')}</p>
       <div class="meta"><span>${esc(KIND[d.kind] || '')}</span><span>Trailing twelve months to ${fdate(d.asof)}</span><span>${(d.companies || []).length} companies</span>
         <a href="disclosures/#rotation/rrg~chain:${esc(d.id)}">Layers in the rotation graph ↗</a>
-        ${d.missing && d.missing.length ? `<span title="not on the site yet, or no filing read yet">Not on file yet: ${d.missing.map(esc).join(', ')}</span>` : ''}</div></div>
+        ${d.missing && d.missing.length ? `<span title="not on the site yet, or no filing read yet">Not on file yet: ${d.missing.map(esc).join(', ')}</span>` : ''}</div>
+      <div class="fresh">Figures through the members’ latest filings: <b>twelve months to ${fdate(d.asof)}</b>${d.oldest && d.oldest !== d.asof ? ` (some end ${fdate(d.oldest)})` : ''} · chain rebuilt ${fdate((d.generated || '').slice(0, 10))}${d.generated && d.generated.length > 15 ? `, ${esc(d.generated.slice(11, 16))} UTC` : ''}</div></div>
       <div class="toolbar chain-tools">
         <div class="seg" role="group" aria-label="View">${viewsFor(d).map(([k, l]) => `<button type="button" data-cv="${k}" class="${ST.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
         ${hasModel(d) ? `<label class="dec-toggle" id="cscenw" ${ST.view === 'forecast' ? '' : 'hidden'}>Case <select id="cscen">${Object.entries(SCEN_L).map(([k, l]) => `<option value="${k}" ${ST.scen === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}

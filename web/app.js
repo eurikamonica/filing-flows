@@ -83,6 +83,18 @@
     if (a >= 0.95e6) return `${s}${CUR}${(a / 1e6).toFixed(1)}M`;
     return `${s}${CUR}${(a / 1e3).toFixed(0)}K`;
   }
+  // "Latest filing: 10-Q for Q2 FY27, filed Aug 26, 2026 · site data updated Oct 21, 2026, 20:16 UTC"
+  function freshLine(q, generated) {
+    const parts = [];
+    if (q && q.filed) parts.push(`Latest filing: <b>${t(q.form || '')} for ${t(q.label || '')}</b>, filed ${date(q.filed)}`);
+    if (generated) parts.push(`site data updated ${updatedAt(generated)}`);
+    return parts.length ? `<div class="fresh">${parts.join(' · ')}</div>` : '';
+  }
+  function updatedAt(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return t(String(iso).slice(0, 10));
+    return `${date(d.toISOString().slice(0, 10))}, ${d.toISOString().slice(11, 16)} UTC`;
+  }
   function date(s) {
     if (!s) return '—';
     const d = new Date(s.length <= 10 ? s + 'T00:00:00Z' : s);
@@ -452,8 +464,17 @@
   }
 
   // ---------- pages ----------
+  document.addEventListener('click', (ev) => {                  // the company description: "More" / "Less"
+    const b = ev.target.closest && ev.target.closest('.intro-more');
+    if (!b) return;
+    const box = b.closest('.intro'), open = !box.classList.contains('open');
+    box.classList.toggle('open', open);
+    b.textContent = open ? 'Less' : 'More';
+    b.setAttribute('aria-expanded', String(open));
+  });
   function setNav(page) {
     $$('[data-nav]').forEach((a) => a.classList.toggle('on', a.dataset.nav === page));
+    if (window.FFNav) window.FFNav.mark();                     // web/nav.js: the group of the current page
   }
   function row(href, cells) {
     return `<tr data-href="${href}">${cells.join('')}</tr>`;
@@ -607,6 +628,7 @@
           <span>CIK <span class="mono">${p.cik}</span></span><span>SIC <span class="mono">${t(p.sic)}</span> ${t(p.industry)}</span>
           ${fye ? `<span>Fiscal year ends ${fye}</span>` : ''}${p.category ? `<span>${t(String(p.category).split(/\s*<br\s*\/?>\s*/i).filter(Boolean).join(' · '))}</span>` : ''}
         </div>
+        ${freshLine(qs[0], ix.generated)}
         <div class="meta co-chains" id="co-chains" hidden></div>
         ${introHTML(c.intro)}
         ${companyTabs(cik, '')}
@@ -621,11 +643,9 @@
       <section class="section cmp-panel" id="cmp-panel" hidden></section>
       <div id="ff-overview"></div>
       <div id="body"></div>
-      <section class="section" id="co-network" hidden></section>
-      <section class="section" id="co-model" hidden></section>`;
+      <p class="co-more muted" id="co-more"></p>`;
     if (ticker) coChains($('#co-chains'), ticker);
-    if (window.FFNetwork && !cmpId) window.FFNetwork.company($('#co-network'), cik);   // web/network.js
-    if (window.FFModel) window.FFModel.company($('#co-model'), cik);
+    $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-value">valuation</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a>`;
     const body = $('#body');
     if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
     app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
@@ -661,6 +681,7 @@
       trend: (id) => trendSeries(fy ? ys : qs, q, id, fy), cik: p.cik,
     });
     body.appendChild(ui);
+    if (window.matchMedia && matchMedia('(max-width: 560px)').matches && $('#ff-overview')) ui.after($('#ff-overview'));   // phones: the chart first
     if (window.FFEditor && !fy && (own === 'USD' || inUsd)) window.FFEditor.mount(body, { q, c, ticker, slug: `${(ticker || p.cik)}-${q.label}`.replace(/\s+/g, '-') });   // web/editor.js: edit / what-if
     const acc = accession(q.index_url);
     const text = document.createElement('div');
@@ -747,6 +768,7 @@
   // more company views from the Disclosure Hub: disclosures/views.json lists them ({id, label, script, global}); each script
   // is a shared view (like debt-view.js) exposing window[global].render(el, {cik, ticker, company, here, hub})
   let EXT_VIEWS = [], extViewsLoad = null;
+  const SITE_TIME = {};
   const loadExtViews = () => extViewsLoad || (extViewsLoad = fetch('disclosures/views.json', { cache: 'no-cache' })
     .then((r) => (r.ok ? r.json() : [])).catch(() => []).then((v) => { EXT_VIEWS = Array.isArray(v) ? v.filter((x) => x && /^[a-z0-9]+$/.test(x.id || '')) : []; return EXT_VIEWS; }));
   const extScripts = {};
@@ -770,8 +792,37 @@
       if (here()) body.innerHTML = `<p class="muted">${t(v.label)} could not load (${t(err.message)}).</p>`;
     }
   }
-  const companyTabs = (cik, active) => `<nav class="co-tabs" aria-label="Company views">${[['', 'Earnings'], ['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['value', 'Valuation'], ['revisions', 'Revisions'], ['debt', 'Debt & rates'], ['consensus', 'Consensus'], ['eps', 'EPS Forecast'], ['posts', 'Posts'], ...EXT_VIEWS.map((v) => ['x-' + v.id, v.label])]
-    .map(([k, l]) => `<a href="#c-${cik}${k ? '-' + k : ''}"${k === active ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
+  // four groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
+  const TAB_GROUPS = [
+    ['Earnings', [['', 'Earnings'], ['eps', 'EPS forecast'], ['x-earnings'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
+    ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['x-quality']]],
+    ['Valuation & expectations', [['value', 'Valuation'], ['x-fairvalue'], ['consensus', 'Consensus'], ['revisions', 'Revisions']]],
+    ['Relationships & model', [['links', 'Customers, suppliers & model'], ['x-insiders']]],
+  ];
+  function tabGroups() {
+    const ext = new Map(EXT_VIEWS.map((v) => ['x-' + v.id, v.label]));
+    const used = new Set();
+    const groups = TAB_GROUPS.map(([label, items]) => [label, items.map(([k, l]) => {
+      if (k.startsWith('x-')) { if (!ext.has(k)) return null; used.add(k); return [k, l || ext.get(k)]; }
+      return [k, l];
+    }).filter(Boolean)]);
+    ext.forEach((l, k) => { if (!used.has(k)) groups[3][1].push([k, l]); });   // a new Disclosure Hub view: the last group
+    return groups;
+  }
+  const companyTabs = (cik, active) => {
+    const groups = tabGroups();
+    const cur = groups.find(([, items]) => items.some(([k]) => k === active)) || groups[0];
+    setTimeout(() => $$('.co-tabs a.on, .co-subtabs a.on').forEach((a) => {   // phones: the current tab in view
+      const bar = a.parentElement;
+      if (bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, a.offsetLeft - bar.offsetLeft - 24);
+    }), 0);
+    const href = (k) => `#c-${cik}${k ? '-' + k : ''}`;
+    return `<nav class="co-tabs" aria-label="Company views">${groups.map((g) => {
+      const on = g === cur, first = on ? active : g[1][0][0];
+      return `<a href="${href(first)}"${on ? ' class="on" aria-current="page"' : ''}>${g[0]}</a>`;
+    }).join('')}</nav>${cur[1].length > 1 ? `<nav class="co-subtabs" aria-label="${t(cur[0])} views">${cur[1].map(([k, l]) =>
+      `<a href="${href(k)}"${k === active ? ' class="on" aria-current="page"' : ''}>${t(l)}</a>`).join('')}</nav>` : ''}`;
+  };
 
   function ccyBar(own, inUsd, hasUsd, q) {
     const nm = CCY_NAME[own] || own, fxq = q && q.fx;
@@ -780,6 +831,35 @@
       ? `In US dollars, converted from ${t(nm)} (${own})${fxq ? `: ${t(fxq.note)}${fxq.src === 'official' && fxq.text ? ` <span class="muted">— “${t(String(fxq.text).slice(0, 220))}”</span>` : ''}` : ''}. Each comparison period at its own rate, so changes include the currency’s move.`
       : `Amounts in ${t(nm)} (${own}), as the company reports them.${hasUsd ? ' The same charts in US dollars: at the company’s own convenience rate when its filing gives one, else the period’s average exchange rate.' : ' No exchange rate is available for a dollar version yet.'}`;
     return `<div class="ccy-bar" role="group" aria-label="Currency">${btn('own', `${symOf(own).trim()} ${own}`, !inUsd)}${hasUsd ? btn('usd', 'US$', inUsd) : ''}<span class="muted">${say}</span></div>`;
+  }
+
+  // customers & suppliers (web/network.js), the growth model (web/model.js) and the chains the company is in
+  async function linksSection(body, c, ticker, here) {
+    const cik = c.profile.cik;
+    body.innerHTML = `<div class="section" id="co-links-chains" hidden></div>
+      <section class="section" id="co-network" hidden></section>
+      <section class="section" id="co-model" hidden></section>
+      <p class="muted" id="co-links-none" hidden>No customer or supplier is named for ${t(S.dec(c.profile.name))} in the annual reports read so far, and the growth model has no fit for it yet: the scan reads a few dozen annual reports a run, largest companies first.</p>`;
+    const jobs = [];
+    if (window.FFNetwork) jobs.push(window.FFNetwork.company($('#co-network'), cik));
+    if (window.FFModel) jobs.push(window.FFModel.company($('#co-model'), cik));
+    if (ticker) {
+      const box = $('#co-links-chains');
+      jobs.push(getJSON('chains/index.json').then((ix) => {
+        if (here && !here()) return;
+        const T = String(ticker).toUpperCase();
+        const mine = (ix.chains || []).map((ch) => {
+          const L = (ch.layers || []).find((x) => (x.tickers || []).includes(T));
+          return (ch.buyers || []).includes(T) ? [ch, 'buyer'] : L ? [ch, L.name] : null;
+        }).filter(Boolean);
+        if (!mine.length) return;
+        box.innerHTML = `<div class="section-head"><h2>In the supply chains and themes</h2><span class="muted">Each chain’s page draws where its money flows</span></div><div class="pills">${mine.map(([ch, role]) => `<a class="pill" href="#chain-${t(ch.id)}">${t(ch.name)} · ${t(role)}</a>`).join('')}</div>`;
+        box.hidden = false;
+      }).catch(() => {}));
+    }
+    await Promise.all(jobs.map((j) => Promise.resolve(j).catch(() => {})));
+    if (here && !here()) return;
+    if (['#co-network', '#co-model', '#co-links-chains'].every((id) => !$(id) || $(id).hidden)) $('#co-links-none').hidden = false;
   }
 
   async function analysisPage(cik, which) {
@@ -793,6 +873,7 @@
       throw err;
     }
     await loadExtViews();
+    try { SITE_TIME.generated = (await getJSON('index.json')).generated; } catch (err) { /* the line just leaves the time out */ }
     if (!here()) return;
     const p = c.profile, ticker = (p.tickers || [])[0] || '';
     CUR = symOf(c.currency || 'USD');                       // these views are read from XBRL in the reported currency
@@ -802,6 +883,7 @@
         <h1>${t(p.name)}</h1>
         <div class="meta">${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}<span>CIK <span class="mono">${p.cik}</span></span>${
           p.industry ? `<span>${t(p.industry)}</span>` : ''}</div>
+        ${freshLine((c.quarters || [])[0], (SITE_TIME.generated || ''))}
         ${companyTabs(cik, which)}
       </div><div id="body"></div>`;
     const body = $('#body');
@@ -813,6 +895,7 @@
       return;
     }
     if (which === 'posts') return postsSection(body, c, ticker, here);
+    if (which === 'links') return linksSection(body, c, ticker, here);
     if (which.startsWith('x-')) return extView(body, which.slice(2), c, ticker, here);
     const D = c.quality;
     if (!D || !((D.q || []).length || (D.fy || []).length)) {
@@ -3313,8 +3396,9 @@
       : intro.source === '6-K' ? `results release (6-K)${when}, “About” section`
       : intro.source === '10-Q' ? `10-Q${when}, Note 1 to the financial statements (no 10-K on file yet)`
       : `10-K${when}, Item 1. Business`;
-    return `<p class="intro">${t(text)}<span class="src">Quoted verbatim from the company’s ${where}${
-      url ? ` · <a href="${t(url)}" target="_blank" rel="noopener">open ↗</a>` : ''}</span></p>`;
+    const long = text.length > 220;                           // three lines, then "More": the chart comes first
+    return `<div class="intro${long ? ' clamp' : ''}"><p class="intro-text">${t(text)}</p>${long ? '<button type="button" class="intro-more" aria-expanded="false">More</button>' : ''}<span class="src">Quoted verbatim from the company’s ${where}${
+      url ? ` · <a href="${t(url)}" target="_blank" rel="noopener">open ↗</a>` : ''}</span></div>`;
   }
 
   function historyTable(qs, cik) {
@@ -3757,6 +3841,7 @@
         <div class="meta">${level === 's' ? `<button class="btn follow" type="button" hidden data-follow="sector:${t(id)}">☆ Follow</button>` : ''}
           <span class="tag">${level === 's' ? 'Sector' : 'Industry · SIC ' + t(g.id)}</span>
           <span>${q.count} companies</span><span>Fiscal quarters ending in calendar ${calLabel(q.cal)}</span></div>
+        ${freshLine(null, ix.generated).replace('site data updated', `${q.count} companies’ filings for ${calLabel(q.cal)} · site data updated`)}
       </div>
       <div class="pills" aria-label="Calendar quarter">${g.quarters.map((x) => `<a class="pill ${x === q ? 'on' : ''}" href="#${level}-${id}-${x.cal}">${calLabel(x.cal)}</a>`).join('')}</div>
       <div id="body"></div>`;
@@ -4952,7 +5037,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus|eps|posts|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus|eps|posts|links|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

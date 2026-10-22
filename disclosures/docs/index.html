@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="styles.css?v=4.5">
+<link rel="stylesheet" href="../nav.css">
 <script>
 /* Same colour-theme preference as the Sankey site (localStorage "ff:theme"), applied before first paint. */
 try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
@@ -28,18 +29,11 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
       </svg>
       <span>Filing Flows</span>
     </a>
-    <div class="nav" aria-label="Sections">
-      <a href="../#home">Latest</a>
-      <a href="../#sectors">Sectors</a>
-      <a href="../#feed">Feed</a>
-      <a href="../#chart">Charts</a>
-      <a href="../#chains">Chains</a>
-      <a href="../#gamma">Gamma</a>
-      <a href="../#model">Model</a>
-      <a href="../#method">Method</a>
-      <a href="../#account">Alerts</a>
-      <a href="./" class="on" aria-current="page">Disclosures</a>
-    </div>
+    <nav class="nav" id="site-nav" data-ff-nav data-base="../" data-here="disclosures" aria-label="Sections">
+      <a href="../#home">Latest</a><a href="../#sectors">Sectors</a><a href="../#chains">Chains</a><a href="../#gamma">Industries</a>
+      <a href="../#feed">Feed</a><a href="./" class="on" aria-current="page">Disclosures</a><a href="../#method">Method</a>
+    </nav>
+    <script src="../nav.js"></script>
     <div class="top-right">
       <label class="mode-pick" for="mode"><span class="muted">Data</span>
         <select id="mode"><option value="official">Official snapshot</option><option value="demo">Fictional demo</option></select>

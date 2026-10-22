@@ -64,7 +64,7 @@ def engage_more():
 
 
 # the page's scripts, in load order (web/index.html): the chart, the valuation maths, the discovery & UX modules, the app
-SCRIPTS = ("sankey.js", "fsa.js", "chains.js", "gamma.js", "model.js", "network.js", "ux.js", "search.js", "overview.js", "feed.js", "charts.js", "editor.js", "eps-research.js", "local-model.js", "app.js")
+SCRIPTS = ("nav.js", "sankey.js", "fsa.js", "chains.js", "gamma.js", "model.js", "network.js", "ux.js", "search.js", "overview.js", "feed.js", "charts.js", "editor.js", "eps-research.js", "local-model.js", "app.js")
 
 
 def main():
@@ -78,7 +78,7 @@ def main():
     os.makedirs(args.out, exist_ok=True)
     html = open(os.path.join(WEB, "index.html"), encoding="utf-8").read()
     if args.inline:
-        for name in ("styles.css", "ux.css", "gamma.css", "eps-research.css", "local-model.css"):
+        for name in ("styles.css", "nav.css", "ux.css", "gamma.css", "eps-research.css", "local-model.css"):
             css = open(os.path.join(WEB, name), encoding="utf-8").read()
             html = html.replace(f'<link rel="stylesheet" href="{name}">', f"<style>\n{css}</style>")
         for name in SCRIPTS:
@@ -91,7 +91,7 @@ def main():
             scripts = re.findall(r"<script>.*?</script>", html, re.S)
             html = "\n".join(keep) + "\n" + shell + "\n".join(scripts) + "\n"
     else:
-        for name in ("styles.css", "ux.css", "gamma.css", "eps-research.css", "local-model.css") + SCRIPTS + ("favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"):
+        for name in ("styles.css", "nav.css", "ux.css", "gamma.css", "eps-research.css", "local-model.css") + SCRIPTS + ("favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"):
             shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
     open(os.path.join(args.out, "index.html"), "w", encoding="utf-8").write(html)
     data_out = os.path.join(args.out, "data")

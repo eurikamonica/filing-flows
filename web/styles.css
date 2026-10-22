@@ -91,6 +91,10 @@ main { padding-block: 28px 64px; }
 .tag.prelim { background: color-mix(in srgb, #c9a227 22%, var(--surface)); color: var(--ink); font-size: 11.5px; font-family: var(--sans); }
 .intro { max-width: 78ch; color: var(--ink-2); border-left: 3px solid var(--line); padding: 2px 0 2px 14px; }
 .intro .src { display: block; margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+.intro .intro-text { margin: 0; }
+.intro.clamp:not(.open) .intro-text { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.intro.clamp:not(.open) .src { display: none; }
+.intro-more { font: inherit; font-size: 13px; color: var(--accent-ink); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 
 /* controls */
 .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 18px 0 12px; }
@@ -104,7 +108,8 @@ main { padding-block: 28px 64px; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button.on { background: var(--surface-2); color: var(--ink); font-weight: 500; }
 .seg button:disabled { color: var(--muted); cursor: not-allowed; opacity: .6; }
-.dec-toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; color: var(--ink-2); cursor: pointer; }
+.dec-toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; color: var(--ink-2); cursor: pointer; flex-wrap: wrap; max-width: 100%; }
+.dec-toggle input[type=range] { min-width: 0; max-width: 140px; }
 .dec-toggle input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
 .export { display: flex; gap: 6px; align-items: center; margin-left: auto; }
 .export span { font-size: 13px; color: var(--muted); }
@@ -206,7 +211,8 @@ td .name { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; display: 
 .hero p { color: var(--ink-2); font-size: 16.5px; max-width: 70ch; }
 .status { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--muted); }
 .status b { color: var(--ink); font-weight: 600; }
-.section { margin-top: 36px; display: grid; gap: 14px; }
+.section { margin-top: 36px; display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.section > * { min-width: 0; }
 .section-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
 .section-head .muted { font-size: 14px; }
 .holders h3 { margin-top: 6px; }
@@ -495,6 +501,14 @@ label.check input { accent-color: var(--accent); }
 .co-tabs a { padding: 8px 14px; color: var(--muted); text-decoration: none; font-weight: 500; font-size: 14.5px; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
 .co-tabs a:hover { color: var(--ink); }
 .co-tabs a.on { color: var(--ink); border-bottom-color: var(--accent); }
+.co-subtabs { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }
+.co-subtabs::-webkit-scrollbar { display: none; }
+.co-subtabs a { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); text-decoration: none; font-size: 13.5px; white-space: nowrap; background: var(--surface); }
+.co-subtabs a:hover { color: var(--ink); border-color: var(--muted); }
+.co-subtabs a.on { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.co-more { margin-top: 28px; }
+.fresh { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.fresh b { font-weight: 500; color: var(--ink-2); }
 
 /* ---------- evidence: any figure that opens its source ---------- */
 button.ev { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
@@ -819,13 +833,14 @@ main.wrap { position: relative; }
 .mchart { display: block; width: 100%; height: auto; font-family: var(--sans); }
 .mleg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: #3d3c39; padding: 2px 4px 4px; }
 .mleg i { display: inline-block; width: 14px; height: 3px; margin-right: 5px; vertical-align: 3px; }
-.mgrid { display: grid; grid-template-columns: minmax(260px, 360px) 1fr; gap: 16px 24px; align-items: start; margin: 6px 0 10px; }
+.mgrid { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 16px 24px; align-items: start; margin: 6px 0 10px; }
 .mstat { display: grid; gap: 2px; margin-bottom: 8px; }
 .mstat label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
 .mstat b { font-size: 24px; }
 .mstat span { font-size: 12.5px; color: var(--muted); }
 .mspark { display: block; max-width: 100%; height: auto; }
-@media (max-width: 700px) { .mgrid { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .mgrid { grid-template-columns: minmax(0, 1fr); } }
+.mgrid > *, .mbox { min-width: 0; }
 
 /* customers & suppliers (web/network.js) */
 .net-chart svg { width: 100%; height: auto; }
@@ -833,3 +848,25 @@ main.wrap { position: relative; }
 .net-q { margin-top: 2px; }
 .net-q summary { cursor: pointer; color: var(--muted, #6b6a66); font-size: 12px; }
 .net-q q { display: block; font-size: 12.5px; color: var(--ink2, #3d3c39); margin: 4px 0 2px; max-width: 60ch; }
+
+/* phones: the period pills on one scrolling row, so the chart starts higher */
+@media (max-width: 560px) {
+  .pills[aria-label="Period"] { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .pills[aria-label="Period"]::-webkit-scrollbar { display: none; }
+  .pills[aria-label="Period"] .pill { flex: none; }
+  .co-tabs a { padding: 8px 11px; font-size: 14px; }
+}
+
+/* phones: the overview's first four tiles, then the chart (web/overview.js) */
+.fx-ov-more { display: none; }
+@media (max-width: 560px) {
+  .fx-ov:not(.all) .fx-tile:nth-child(n+5) { display: none; }
+  .fx-ov-more { display: inline-block; margin-top: 8px; font: inherit; font-size: 13px; color: var(--accent-ink); background: none; border: 0; padding: 2px 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  .fx-ov-head .muted { display: none; }
+}
+@media (max-width: 560px) {
+  .page-head:has(.co-tabs) .meta:not(.co-chains) > span:nth-of-type(n+3) { display: none; }   /* CIK, fiscal year, filer size: on wider screens */
+  .chart-ui .hintline { display: none; }
+}
+.toolbar select, .toolbar label { max-width: 100%; }
+.toolbar select { min-width: 0; }

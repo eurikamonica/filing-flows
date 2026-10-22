@@ -1,0 +1,41 @@
+/* The top navigation in four groups (web/nav.js), shared by the app and the Disclosure Hub. */
+.nav { display: flex; gap: 2px; align-items: center; flex-wrap: nowrap; }
+.nav .nav-top { display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: 14px; color: var(--ink-2);
+  background: none; border: 0; padding: 6px 10px; border-radius: 6px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.nav .nav-top svg { opacity: .6; transition: transform .15s; }
+.nav .nav-top:hover, .nav .nav-top.on, .nav .nav-group.on > .nav-top, .nav .nav-group.open > .nav-top { background: var(--surface-2); color: var(--ink); }
+.nav .nav-group.open > .nav-top svg { transform: rotate(180deg); }
+.nav-group { position: relative; }
+.nav-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; min-width: 290px; padding: 6px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+.nav-menu::before { content: ""; position: absolute; left: 0; right: 0; top: -8px; height: 8px; }   /* keeps hover across the gap */
+.nav-group.open > .nav-menu { display: block; }
+@media (hover: hover) and (min-width: 761px) { .nav-group:hover > .nav-menu { display: block; } }
+.nav .nav-menu a { display: block; padding: 8px 10px; border-radius: 7px; color: var(--ink); text-decoration: none; background: none; }
+.nav .nav-menu a b { display: block; font-weight: 600; font-size: 14px; }
+.nav .nav-menu a span { display: block; font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+.nav .nav-menu a:hover, .nav .nav-menu a.on, .nav .nav-menu a:focus-visible { background: var(--surface-2); }
+.menu-btn { display: none; }
+
+/* phones: brand, menu and theme buttons on one row, search below, the navigation behind the menu button */
+@media (max-width: 760px) {
+  .top .wrap { gap: 8px 10px; min-height: 52px; }
+  .top .brand { order: 1; }
+  .top .menu-btn { order: 2; margin-left: auto; display: grid; place-items: center; width: 38px; height: 36px; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .top.nav-open .menu-btn { background: var(--surface-2); color: var(--ink); }
+  .top .theme-btn { order: 3; }
+  .top .top-right { order: 3; margin-left: 0; }
+  .top .kbd-btn { display: none; }
+  .top .search { order: 4; flex: 1 1 100%; max-width: none; margin-left: 0; }
+  .top .nav { display: none; order: 5; flex: 1 1 100%; flex-direction: column; align-items: stretch; gap: 0;
+    max-height: calc(100vh - 140px); overflow-y: auto; padding: 2px 0 8px; border-top: 1px solid var(--line); }
+  .top.nav-open .nav { display: flex; }
+  .nav .nav-group .nav-top { pointer-events: none; font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted);
+    padding: 12px 10px 2px; background: none; }
+  .nav .nav-group .nav-top svg { display: none; }
+  .nav .nav-menu { display: block; position: static; min-width: 0; padding: 0; border: 0; box-shadow: none; background: none; }
+  .nav .nav-menu a { padding: 9px 10px; }
+  .nav .nav-menu a span { display: none; }
+  .nav > a.nav-top { padding: 12px 10px; font-weight: 500; color: var(--ink); }
+}

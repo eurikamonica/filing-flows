@@ -120,7 +120,14 @@
     el.className = 'fx-ov';
     el.innerHTML = `<div class="fx-ov-head"><h2>Overview</h2><span class="muted">From this site and the Disclosure Hub · each tile links to its source</span>
       <button type="button" class="btn fx-ov-csv" title="Every line item of every quarter on this page, as a spreadsheet">Figures as CSV ↓</button></div>
-      <div class="fx-ov-grid">${tiles.map((x) => `<${x.href ? `a href="${esc(x.href)}"` : 'div'} class="fx-tile${x.tone ? ' ' + x.tone : ''}"><small>${t(x.label)}</small><b>${esc(x.value)}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ''}</${x.href ? 'a' : 'div'}>`).join('')}</div>`;
+      <div class="fx-ov-grid">${tiles.map((x) => `<${x.href ? `a href="${esc(x.href)}"` : 'div'} class="fx-tile${x.tone ? ' ' + x.tone : ''}"><small>${t(x.label)}</small><b>${esc(x.value)}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ''}</${x.href ? 'a' : 'div'}>`).join('')}</div>
+      ${tiles.length > 4 ? `<button type="button" class="fx-ov-more" aria-expanded="false">All ${tiles.length} figures</button>` : ''}`;
+    const more = el.querySelector('.fx-ov-more');                      // phones show four tiles, then the chart
+    if (more) more.addEventListener('click', () => {
+      const open = el.classList.toggle('all');
+      more.textContent = open ? 'Fewer figures' : `All ${tiles.length} figures`;
+      more.setAttribute('aria-expanded', String(open));
+    });
     el.querySelector('.fx-ov-csv').addEventListener('click', () => U.csv(figuresRows(ctx.c), `${fileT(ctx.ticker) || ctx.cik}-figures`));
     const sx = ctx.ticker ? await U.site('search.json') : null;
     if (sx && (sx.feeds || []).includes(fileT(ctx.ticker)) && document.head && !document.querySelector('link[data-fx-feed]')) {   // the company's own feed

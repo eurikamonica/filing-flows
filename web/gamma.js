@@ -240,7 +240,8 @@
     app.innerHTML='<div class="page-head"><div class="crumbs"><a href="#gamma">Gamma</a><span>›</span>'+
       '<span>'+esc(d.sector)+'</span></div><div class="eyebrow">SEC SIC '+esc(d.sic)+'</div><h1>'+esc(d.name)+'</h1>'+
       '<div class="meta"><span>'+members.length+' companies</span><span>Comparable quarter: '+esc(d.period||'not available')+
-      '</span><span>Growth based on filed quarterly revenue</span></div></div>'+
+      '</span><span>Growth based on filed quarterly revenue</span></div>'+
+      '<div class="fresh">Latest comparable quarter: <b>'+esc(d.period||'not available')+'</b> · industry data rebuilt '+esc((d.generated||'').slice(0,10))+(d.generated&&d.generated.length>15?', '+esc(d.generated.slice(11,16))+' UTC':'')+'</div></div>'+
       '<section class="section"><div class="section-head"><h2>Conditional growth distribution</h2>'+
       '<span class="muted">Cross-sectional peers, not a fitted probability forecast</span></div>'+
       '<div class="gamma-toolbar"><label>Metric <select id="gmetric"><option value="yoy">Revenue YoY</option><option value="qoq">Revenue QoQ</option></select></label>'+
