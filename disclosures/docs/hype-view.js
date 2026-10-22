@@ -81,7 +81,9 @@
     const trailSet = new Set(st.trails === 'all' ? shown.map(([t]) => t) : st.trails === 'labelled' ? hot.map(([t]) => t).concat(shown.filter(([, r]) => isNew(r)).slice(0, 6).map(([t]) => t)) : []);
     (st.pinned || []).forEach((t) => trailSet.add(t));
     if (focus) trailSet.add(focus);
-    const trail = (t) => { const r = D.rows[t], pts = []; for (let k = j0; k <= j; k++) { const p = point(r, view, k); if (p) pts.push([k, p]); } return pts; };
+    // a partial (live) point has only the early filers: a trail never runs from complete quarters into it
+    const partial = (k) => metaOf(D, view, k).partial;
+    const trail = (t) => { const r = D.rows[t], pts = []; if (partial(j)) return pts; for (let k = j0; k <= j; k++) { if (partial(k)) continue; const p = point(r, view, k); if (p) pts.push([k, p]); } return pts; };
     const xs = [], ys = [];
     shown.concat(st.show === 'left' || st.ghosts ? left : []).forEach(([, r]) => { const p = point(r, view, j); xs.push(p.x); ys.push(p.y); });
     trailSet.forEach((t) => trail(t).forEach(([, p]) => { xs.push(p.x); ys.push(p.y); }));
@@ -159,7 +161,7 @@
       const views = (opt.legacy ? ['legacy_snapshot'] : []).concat(Object.keys(VIEWS).filter((v) => quarters(D, v).length));
       if (!views.length) { el.innerHTML = '<p class="muted">No quarters on file yet.</p>'; return; }
       const st = { view: views.includes(opt.view) ? opt.view : views[0], j: 0, j0: 0, show: 'all', trails: ticker ? 'none' : 'labelled', ghosts: false, off: true, pinned: [], ticker };
-      const lastOf = (v) => { const P = quarters(D, v); let k = P.length - 1; return k; };
+      const lastOf = (v) => { const P = quarters(D, v); let k = P.length - 1; while (k > 0 && metaOf(D, v, k).partial) k--; return k; };   // the last complete quarter; the live one is a choice
       const setView = (v) => { st.view = v; if (VIEWS[v]) { st.j = lastOf(v); st.j0 = Math.max(0, st.j - 3); } };
       setView(st.view);
       const sel = (id, label, opts, v) => `<label style="display:inline-flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted,#777)">${label}<select data-hvc="${id}">${opts.map(([k, l]) => `<option value="${esc(k)}"${String(k) === String(v) ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`;
@@ -185,7 +187,7 @@
           `<label style="font-size:12px;color:var(--muted,#777)"><input type="checkbox" data-hvc="ghosts"${st.ghosts ? ' checked' : ''}> show stocks that left the map</label>` +
           `<label style="font-size:12px;color:var(--muted,#777)"><input type="checkbox" data-hvc="off"${st.off ? ' checked' : ''}> officials' trades (◆ ◇)</label></div>`;
         h += `<p class="sub" style="margin:0 0 4px">${clockLine(D, st.view, j)}</p>`;
-        h += `<p class="sub" style="margin:0 0 6px">${esc(jLabel(D, st.view, j))}: <b>${num(r.map.length)}</b> stocks on the map · <b>${num(nNew)}</b> new on it (ringed, ✦) · <b>${num(r.left.length)}</b> left it since ${j ? esc(qlabel(P[j - 1])) : 'the quarter before'}. Trails run ${esc(qlabel(P[Math.min(st.j0, j)]))} → ${esc(qlabel(P[j]))} within this view; click a dot to pin or unpin its trail.</p>`;
+        h += `<p class="sub" style="margin:0 0 6px">${esc(jLabel(D, st.view, j))}: <b>${num(r.map.length)}</b> stocks on the map · <b>${num(nNew)}</b> new on it (ringed, ✦) · <b>${num(r.left.length)}</b> left it since ${j ? esc(qlabel(P[j - 1])) : 'the quarter before'}. ${metaOf(D, st.view, j).partial ? 'No trails into a partial quarter: its points move as filings arrive.' : `Trails run ${esc(qlabel(P[Math.min(st.j0, j)]))} → ${esc(qlabel(P[j]))} within this view.`} Click a dot to pin or unpin its trail.</p>`;
         h += r.svg;
         const pal = palette(el);
         h += `<div style="display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted,#777);margin-top:4px"><span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${pal.buy}"></i> buy-side 13F flags</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${pal.sell}"></i> sell-side 13F flags</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid ${pal.acc}"></i> new on the map</span><span style="color:${pal.buy}">◆</span><span>officials' purchases</span><span style="color:${pal.sell}">◇</span><span>officials' sales (PTRs; a separate source)</span><span>price shown clipped to −60% … +120% (data unclipped)</span></div>`;
