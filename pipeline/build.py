@@ -731,6 +731,31 @@ def _size(item):
     return int(v) if v.isdigit() else 0
 
 
+def _ocr_release(cik, accn, row, html, last, prior_rev):
+    """A release printed as pictures (Tesla's update): its statement pages through OCR (pipeline/ocr.py), held to the
+    same checks as a typed release plus an arithmetic check of the figures read. Returns (document, release) or
+    (None, None) when the release is not made of pictures."""
+    from . import ocr
+    low = html.lower()
+    if "<img" not in low or low.count("<table") > 3:
+        return None, None
+    intro = ""
+    if row.get("primaryDocument"):
+        try:                                              # the 8-K's own text names the quarter ("… ended September 30")
+            intro = " ".join(p["text"] for p in text.paragraphs(sec.get(sec.doc_url(cik, accn, row["primaryDocument"]))))
+        except Exception:
+            pass
+    doc = ocr.rebuild(html, lambda n: sec.get(sec.doc_url(cik, accn, n.rsplit("/", 1)[-1]), binary=True), intro)
+    if not doc:
+        return None, None
+    rel = release.parse(doc, dt.date.fromisoformat(row["filingDate"]), last, prior_rev)
+    if not ocr.adds_up(rel):
+        raise ValueError("the figures read from the release's pictures (OCR) do not add up")
+    rel["ocr"] = True
+    print(f"  {cik} {accn}: statements read from the release's pictures (OCR)", file=sys.stderr)
+    return doc, rel
+
+
 def _other_exhibits(cik, accn, primary, first):
     """The filing's other documents that may hold the statements when the press release itself has none (CSX prints them
     in a separate "quarterly financial report", others in Exhibit 99.2): Exhibit 99.x first, then the largest."""
@@ -947,6 +972,10 @@ def process_release(store, cik, accn, form, starred=False):
                 except (ValueError, sec.NotFound):
                     continue
             if rel is None:
+                d2, rel = _ocr_release(cik, accn, row, doc, last, prior_rev)
+                if rel is not None:
+                    doc = d2
+            if rel is None:
                 raise first_err
         end = rel["end"]
         e0 = dt.date.fromisoformat(end)
@@ -992,7 +1021,7 @@ def process_release(store, cik, accn, form, starred=False):
         "lines_py": segs and segs.get("py"), "notes": notes,
         "capex_src": ({"label": (rel.get("cf_labels") or {}).get("capex"), "how": "release"}
                       if raw.get("capex") is not None else None),
-        "src": sources.from_release(rel, raw),
+        "src": sources.from_release(rel, raw), "ocr": bool(rel.get("ocr")),
     }
     set_reported(c["quarters"][end], *_reported_from_tables(rel["tables"], raw.get("ocf"),
                                                             facts.value(fx, "ocf", py_end) if py_end else None))
@@ -1109,9 +1138,9 @@ def process_fpi_release(store, cik, accn, form, starred=False):
     filed = dt.date.fromisoformat(row["filingDate"])
     idx = sec.get_json(sec.filing_index_url(cik, accn))
     names = [i["name"] for i in idx.get("directory", {}).get("item", []) if re.search(r"\.html?$", i["name"], re.I)
-             and "index" not in i["name"].lower() and i["name"] != row.get("primaryDocument")]
-    names.sort(key=lambda n: (not re.search(EXHIBIT_PATTERNS[0], n, re.I), not re.search(r"ex[-_]?99", n, re.I), n))
-    press = [n for n in names if re.search(r"ex[-_]?99|press|release|result|earning", n, re.I)]
+             and not NOT_EXHIBIT.search(i["name"]) and i["name"] != row.get("primaryDocument")]
+    names.sort(key=lambda n: (not re.search(EXHIBIT_PATTERNS[0], n, re.I), not re.search(EXHIBIT_PATTERNS[1], n, re.I), n))
+    press = [n for n in names if re.search(EXHIBIT_PATTERNS[1] + r"|press|release|result|earning", n, re.I)]
     names = (press or names)[:3]                         # not the indentures and agreements some 6-Ks carry
     if row.get("primaryDocument"):
         names.append(row["primaryDocument"])             # some put the release in the 6-K itself (Check Point)
@@ -1555,6 +1584,9 @@ FPI_NOTE = ("Source: the company's quarterly results release (Form 6-K exhibit, 
 
 def _footer(q, kind, Nc):
     lines = [(RELEASE_NOTE if q["form"] == "8-K" else FPI_NOTE if q["form"] == "6-K" else SOURCE_NOTE).format(form=q["form"], filed=q["filed"])]
+    if q.get("ocr"):                                     # the release is pictures of its pages (pipeline/ocr.py)
+        lines[0] = lines[0].replace("read from its tables", "read from the pictures of its statements (OCR; the figures add "
+                                    "up and match the quarters already filed)")
     if q.get("disc"):
         lines.append(f"Net income from continuing operations; discontinued operations added {Fmt(Nc['R']).money(q['disc'])} "
                      "below it (not drawn).")
