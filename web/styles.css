@@ -826,3 +826,10 @@ main.wrap { position: relative; }
 .mstat span { font-size: 12.5px; color: var(--muted); }
 .mspark { display: block; max-width: 100%; height: auto; }
 @media (max-width: 700px) { .mgrid { grid-template-columns: 1fr; } }
+
+/* customers & suppliers (web/network.js) */
+.net-chart svg { width: 100%; height: auto; }
+.net-tbl td { vertical-align: top; }
+.net-q { margin-top: 2px; }
+.net-q summary { cursor: pointer; color: var(--muted, #6b6a66); font-size: 12px; }
+.net-q q { display: block; font-size: 12.5px; color: var(--ink2, #3d3c39); margin: 4px 0 2px; max-width: 60ch; }

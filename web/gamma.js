@@ -139,6 +139,25 @@
         canvas.innerHTML='<p class="muted">Money Flow is unavailable for this SIC: existing supplier/customer links do not provide usable USD transaction amounts. No synthetic widths are drawn.</p>'+references();
         return;
       }
+      if(global.FFChains&&global.Sankey){                  // a real money flow: suppliers -> customers, widths in dollars
+        var top=weighted.slice().sort(function(a,b){return (+b.value_usd)-(+a.value_usd);}).slice(0,40);
+        var nd=new Map(), lk=[], inSic=function(k){return !!byId[k];};
+        top.forEach(function(e){
+          var a='s:'+key(e,'supplier'), b='c:'+key(e,'customer');
+          if(!nd.has(a))nd.set(a,{id:a,col:0,label:label(e,'supplier'),v:0,color:inSic(String(e.supplier_cik||''))?'#2f6db0':'#7d93ab',cik:e.supplier_cik});
+          if(!nd.has(b))nd.set(b,{id:b,col:1,label:label(e,'customer'),v:0,color:inSic(String(e.customer_cik||''))?'#1f8a5b':'#7fae96',cik:e.customer_cik});
+          nd.get(a).v+=+e.value_usd; nd.get(b).v+=+e.value_usd;
+          lk.push({s:a,t:b,v:+e.value_usd,k:1});
+        });
+        var total=top.reduce(function(x,e){return x+(+e.value_usd);},0);
+        var scene=global.FFChains.layout({cols:[{id:'s',name:'Suppliers'},{id:'c',name:'Customers'}],nodes:Array.from(nd.values()),links:lk},{
+          title:'Who pays whom — named customers',subtitle:money(total)+' across '+top.length+' stated links'+(weighted.length>top.length?' (largest '+top.length+' of '+weighted.length+')':''),
+          footer:['Source: SEC EDGAR annual reports. Each band = the share of the supplier’s revenue its filing says came from the customer × that revenue. Darker: companies in this SIC.',
+            'Figures are read automatically and can contain errors; check the filings before relying on them. Not investment advice.']});
+        caption.textContent='Dollars stated (share × revenue) in the suppliers’ annual reports; only customers above the ~10% disclosure threshold appear.';
+        canvas.innerHTML='<div class="net-chart">'+global.Sankey.toSVG(scene,'SIC money flow')+'</div>'+references();
+        return;
+      }
       var rows=weighted.slice().sort(function(a,b){return (+b.value_usd)-(+a.value_usd);}).slice(0,25);
       var max=Math.max.apply(null,rows.map(function(e){return +e.value_usd;}));
       var height=Math.max(280,rows.length*43+65);
@@ -236,13 +255,13 @@
       '<div class="tbl-wrap"><table><thead><tr><th>Company</th><th>Quarter end</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Q/Q</th><th>Stage</th></tr></thead><tbody id="gamma-companies"></tbody></table></div></section>'+
       '<section class="section" id="gamma-model" hidden></section>'+
       '<section class="section"><div class="section-head"><h2>Reported supplier & customer relationships</h2>'+
-      '<span class="muted">Only named links already recognized by Filing Flows Chains</span></div>'+
+      '<span class="muted">Customers and suppliers named in annual reports (10-K, 20-F)</span></div>'+
       '<div id="gamma-relations"></div></section>'+
       '<details class="section method-note"><summary>Methods, coverage and limitations</summary>'+
       '<p>Primary grouping: SEC SIC, not GICS or proprietary themes. Same-calendar-quarter observations and historical pooled observations are separate. Positive revenue denominators, approximately three-month and year-apart comparable periods are required. No assumption of normality.</p>'+
       '<p>Lifecycle is classified from revenue growth, relative industry growth and acceleration; financial quality, macro conditions and state transition probabilities are not yet estimated.</p>'+
       '<p>Peer percentile is empirical and does not give the likelihood of meeting expected revenue. Each company contributes several correlated observations to historical pooled samples.</p>'+
-      '<p>Relationships are only those supported by named customers in Chains excerpts. Chains allocations may themselves be modeled; these are not verified invoices. Missing links mean not mapped, not absence of a commercial relationship. Broader networks require additional SEC text extraction and entity-resolution evidence.</p></details>';
+      '<p>Relationships are customers and suppliers a company names in its annual report (a sentence such as “Walmart accounted for 16% of net sales”, a customer table, or XBRL concentration facts), matched to SEC registrants by exact name. Money Flow widths are the stated share × the supplier’s revenue for that year. Companies disclose customers above about 10% of revenue, so coverage is partial: a missing link means not disclosed or not matched, not the absence of a relationship.</p></details>';
     if(global.FFModel)global.FFModel.industry(document.getElementById('gamma-model'),sic);
     var get=function(id){return document.getElementById(id);};
     function matching(m) {

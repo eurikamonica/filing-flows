@@ -118,43 +118,6 @@ def _company_name_key(label):
     return re.sub(r"\s+", " ", re.sub(r"\b(inc|incorporated|corp|corporation|company|co|limited|ltd|plc|the)\b", "", s)).strip()
 
 
-def _direct_customer_edges(store, index):
-    """Extract named customer disclosures for any SIC, not only themed chains.
-
-    Unmatched names remain labels (not assumed to be listed companies).
-    """
-    by_name = defaultdict(list)
-    for p in index:
-        key = _company_name_key(p.get("name"))
-        if key:
-            by_name[key].append(p)
-    edges = []
-    for p in index:
-        try:
-            co = chains.Co(p["cik"], store.company(p["cik"]), ticker=p.get("ticker"))
-            named = co.customers()
-        except (ValueError, TypeError, KeyError, AttributeError) as e:
-            print(f"::warning::gamma named customers {p['cik']}: {str(e)[:80]}")
-            continue
-        for c in named:
-            label = (c.get("label") or "").strip()
-            key = _company_name_key(label)
-            if not key or len(key) < 3 or re.search(r"\b(customer|customers|client|clients|unknown|unnamed|other)\b", key):
-                continue
-            matches = by_name.get(key) or []
-            match = matches[0] if len(matches) == 1 else None
-            supplier = p.get("ticker") or str(p["cik"])
-            customer = (match or {}).get("ticker") or label
-            if supplier == customer:
-                continue
-            edges.append({"supplier": supplier, "customer": customer,
-                          "customer_cik": match["cik"] if match else None,
-                          "supplier_cik": p["cik"],
-                          "kind": "named_customer", "note": "Customer named in SEC XBRL filing; amount and current status require filing review",
-                          "source": "sec_xbrl_customer_disclosure",
-                          "share": c.get("pct"), "period": c.get("period")})
-    return edges
-
 def build(store, out, index):
     """Cover every SIC code represented in the rendered company universe."""
     os.makedirs(os.path.join(out, "gamma"), exist_ok=True)
@@ -174,7 +137,8 @@ def build(store, out, index):
                               "sector": p.get("sector") or sectors.sector_of(sic),
                               "revenue_usd": p.get("revenue"), "end": latest["end"],
                               "quarter": latest["quarter"], "history": rows[-24:]})
-    all_named_edges = _direct_customer_edges(store, index)
+    from . import custnet
+    all_named_edges = custnet.edges_for_gamma(out)            # every annual report's named customers (custnet.py)
     _named_edges(all_named_edges, out)  # add named chains links once; never include estimated ones
     cik_by_ticker = {p.get("ticker"): p["cik"] for p in index if p.get("ticker")}
     for edge in all_named_edges:
@@ -208,7 +172,9 @@ def build(store, out, index):
         pooled_q = [r["qoq"] for m in members for r in m["history"] if r["qoq"] is not None]
         name = next((p.get("industry") for p in index if str(p.get("sic") or "").zfill(4) == sic and p.get("industry")), "SIC " + sic)
         tickers = {m["ticker"] for m in members if m["ticker"]}
-        edges = [e for e in all_named_edges if e["supplier"] in tickers or e["customer"] in tickers]
+        ciks = {int(m["cik"]) for m in members}
+        edges = [e for e in all_named_edges if e["supplier"] in tickers or e["customer"] in tickers
+                 or e.get("supplier_cik") in ciks or e.get("customer_cik") in ciks]
         # Deduplicate relationships, preserving source provenance; do not assume completeness.
         relationships = list({(e["supplier"], e["customer"], e["source"], e.get("chain")): e for e in edges}.values())
         doc = {"sic": sic, "name": name, "sector": members[0]["sector"],
@@ -217,7 +183,7 @@ def build(store, out, index):
                "summary": {"yoy": _dist(yoy), "qoq": _dist(qoq),
                            "pooled_yoy": _dist(pooled_y), "pooled_qoq": _dist(pooled_q)},
                "companies": members, "relationships": relationships,
-               "method": "SEC SIC; quarter growth from positive, comparable reported quarterly revenue. Latest calendar-quarter cross section, historical pooled comparisons; descriptive stage heuristics. Relationships only where named in existing Chains data; incomplete coverage."}
+               "method": "SEC SIC; quarter growth from positive, comparable reported quarterly revenue. Latest calendar-quarter cross section, historical pooled comparisons; descriptive stage heuristics. Relationships: customers and suppliers named in annual reports (10-K, 20-F) and Chains; dollars are the stated share of the supplier revenue; incomplete coverage."}
         with open(os.path.join(out, "gamma", sic + ".json"), "w", encoding="utf-8") as f:
             json.dump(doc, f, separators=(",", ":"))
         listing.append({"sic": sic, "name": name, "sector": members[0]["sector"],

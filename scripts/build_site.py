@@ -64,7 +64,7 @@ def engage_more():
 
 
 # the page's scripts, in load order (web/index.html): the chart, the valuation maths, the discovery & UX modules, the app
-SCRIPTS = ("sankey.js", "fsa.js", "chains.js", "gamma.js", "model.js", "ux.js", "search.js", "overview.js", "feed.js", "charts.js", "editor.js", "eps-research.js", "local-model.js", "app.js")
+SCRIPTS = ("sankey.js", "fsa.js", "chains.js", "gamma.js", "model.js", "network.js", "ux.js", "search.js", "overview.js", "feed.js", "charts.js", "editor.js", "eps-research.js", "local-model.js", "app.js")
 
 
 def main():

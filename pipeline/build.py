@@ -530,6 +530,11 @@ def process_filing(store, cik, accn, form, starred=False):
     try:
         if form.startswith("10-K") and doc:
             set_intro(c, text.intro(doc), doc_url, row.get("filingDate"), "10-K")
+            try:                                                 # its customers and suppliers (custnet.py)
+                from . import custnet
+                custnet.note_filing(c, cik, form, accn, row.get("filingDate"), doc_url, doc, inst_text, lab_text, end)
+            except Exception as e:
+                print(f"  customer network skipped for {cik} {accn}: {e}", file=sys.stderr)
         elif intro_rank(c) < INTRO_RANK["10-K"]:
             k = next((r for r in recent_rows(sub) if r["form"] == "10-K" and r.get("primaryDocument")), None)
             if k:
@@ -1348,6 +1353,11 @@ def run(args):
                        queue_history=lambda cik: queue_history(store, cik))
     except Exception as e:
         print(f"::warning::supply-chain facts not refreshed: {e}")
+    try:                                                         # every annual report's customers and suppliers (custnet.py)
+        from . import custnet
+        custnet.refresh(store, sec, dims, lambda: time_up(CATCH_UP_SHARE, "customer network"))
+    except Exception as e:
+        print(f"::warning::customer network not refreshed: {e}")
     stars = starred_ciks()
     for cik in stars:                                            # multi-quarter history for starred companies
         if time_up(CATCH_UP_SHARE, "starred companies' history"):
@@ -1954,6 +1964,12 @@ def render(store, out, stars=frozenset()):
         chains.build(store, out, index, usd_recs)
     except Exception as e:
         print(f"::warning::supply chains not built: {e}")
+    try:                                                         # who pays whom, as stated in annual reports
+        from . import custnet
+        custnet.build(store, out, index)
+    except Exception as e:
+        print(f"::warning::customer network not built: {e}")
+        traceback.print_exc()
     try:  # Gamma is generated from all SIC industries, independently of thematic chains.
         gamma.build(store, out, index)
     except Exception as e:

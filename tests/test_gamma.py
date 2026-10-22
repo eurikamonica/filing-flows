@@ -87,21 +87,18 @@ def test_quantiles_and_sparse_distribution():
     assert gamma._dist([.1, .2, .3])["n"] == 3
 
 
-def test_direct_named_customer_across_non_ai_industries(monkeypatch):
-    original = gamma.chains.Co.customers
-    def named(self):
-        if self.cik == 1:
-            return [{"label": "Acme Corporation", "pct": .2, "period": ["2025-01-01", "2025-12-31"]},
-                    {"label": "Customer A", "pct": .12}]
-        return []
-    monkeypatch.setattr(gamma.chains.Co, "customers", named)
-    idx = [profile(1, "6021", "BANK", "National Commercial Banks"),
-           dict(profile(2, "2834", "ACME", "Pharmaceutical Preparations"), name="Acme Inc")]
-    edges = gamma._direct_customer_edges(Store({1: history([1e8]*10), 2: history([1e8]*10)}), idx)
-    assert len(edges) == 1
-    assert edges[0]["supplier"] == "BANK"
-    assert edges[0]["customer"] == "ACME"
-    assert edges[0]["customer_cik"] == 2
+def test_customer_network_rows_reach_gamma(tmp_path):
+    """Named customers from annual reports (custnet.py) become Gamma relationships, with the stated dollars."""
+    import json, os
+    from pipeline import custnet
+    os.makedirs(tmp_path / "network" / "c")
+    doc = {"cik": 1, "me": {"cik": 1, "t": "BANK", "name": "Bank"}, "customers": [
+        {"cik": 2, "t": "ACME", "name": "Acme Inc", "label": "Acme", "pct": 0.12, "usd": 1.2e7, "how": "sentence",
+         "form": "10-K", "fy": "2025-12-31", "q": "Acme accounted for 12% of revenue.", "url": "https://www.sec.gov/x"}], "suppliers": []}
+    (tmp_path / "network" / "c" / "1.json").write_text(json.dumps(doc))
+    rows = custnet.edges_for_gamma(str(tmp_path))
+    assert len(rows) == 1 and rows[0]["supplier"] == "BANK" and rows[0]["customer"] == "ACME"
+    assert rows[0]["customer_cik"] == 2 and rows[0]["value_usd"] == 1.2e7
 
 
 def test_comparable_quarter_waits_for_most_of_the_industry():

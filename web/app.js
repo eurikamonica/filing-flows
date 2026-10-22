@@ -621,8 +621,10 @@
       <section class="section cmp-panel" id="cmp-panel" hidden></section>
       <div id="ff-overview"></div>
       <div id="body"></div>
+      <section class="section" id="co-network" hidden></section>
       <section class="section" id="co-model" hidden></section>`;
     if (ticker) coChains($('#co-chains'), ticker);
+    if (window.FFNetwork && !cmpId) window.FFNetwork.company($('#co-network'), cik);   // web/network.js
     if (window.FFModel) window.FFModel.company($('#co-model'), cik);
     const body = $('#body');
     if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
