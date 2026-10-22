@@ -186,6 +186,20 @@ def summarise(out):
     return s, pairs
 
 
+def coefficients(rows):
+    """Descriptive only (not used in any score): the B3 and B3+ fits on every origin, standardised, for reading the signs."""
+    X = np.array([r[3:3 + len(COLS)] for r in rows], float); y = np.array([r[-2] for r in rows])
+    lo, hi = np.percentile(y, [1, 99]); y = np.clip(y, lo, hi)
+    out = {}
+    for m in ('B2', 'B3', 'B3+'):
+        k = [COLS.index(c) for c in MODELS[m]]
+        Z = (X[:, k] - X[:, k].mean(0)) / X[:, k].std(0)
+        A = np.c_[np.ones(len(Z)), Z]
+        b = np.linalg.lstsq(A, y, rcond=None)[0]
+        out[m] = {c: round(float(v) * 1e4, 2) for c, v in zip(['intercept'] + MODELS[m], b)}   # basis points per 4 weeks per sd
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--public', required=True)
@@ -204,7 +218,8 @@ def main():
     res = {'design': 'DESIGN.md', 'data_through': weeks[-1], 'companies': len(companies), 'with_benchmark': len(bm),
            'benchmark_levels': levels, 'rows': len(rows),
            'eligible_per_origin_median': int(np.median(np.bincount([r[0] for r in rows])[np.bincount([r[0] for r in rows]) > 0])),
-           'models': s, 'paired_ic_differences': pairs, 'seed': SEED}
+           'models': s, 'paired_ic_differences': pairs, 'seed': SEED,
+           'coefficients_full_sample_bp_per_sd': coefficients(rows)}
     Path(a.out, 'results.json').write_text(json.dumps(res, indent=1), encoding='utf-8')
     print(json.dumps(res, indent=1))
 
