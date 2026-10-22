@@ -105,9 +105,12 @@ def load_quarterly(path):
     meta = {c['t']: {'n': c.get('n'), 's': c.get('s'), 'rev': c.get('rev'), 'cik': c.get('cik')} for c, _ in cos}
     sectors = sorted(suns)
     U = np.full((len(tickers), len(cals), len(vars_)), np.nan)
+    REV = np.full((len(tickers), len(cals)), np.nan)
     for e, (_, rs) in enumerate(cos):
         for r in rs:
             U[e, ci[r['cal']]] = [np.nan if r.get(v) is None else r[v] for v in vars_]
+            if r.get('rev') is not None:
+                REV[e, ci[r['cal']]] = r['rev']
     SUN = np.full((len(sectors), len(cals), len(vars_)), np.nan)
     for s, k in enumerate(sectors):
         for r in suns[k]:
@@ -116,24 +119,71 @@ def load_quarterly(path):
     for r in mkt:
         MKT[ci[r['cal']]] = [np.nan if r.get(v) is None else r[v] for v in vars_]
     names = {k: v.get('name', k) for k, v in d['sectors'].items()}
-    return Panel('q', cals, vars_, tickers, meta, sectors, names, U, SUN, MKT)
+    P = Panel('q', cals, vars_, tickers, meta, sectors, names, U, SUN, MKT)
+    P.rev = REV                                          # each quarter's own revenue (weights: known_rev_quarterly)
+    return P
 
 
 def weighted_centre(U, rev, vars_):
-    """The site's sun / market average: log-revenue weights, each variable clipped to its 3rd-97th percentile."""
-    w = np.log10(np.maximum(1e6, np.nan_to_num(np.asarray(rev, float), nan=1e6)))
+    """The site's sun / market average: log-revenue weights, each variable clipped to its 3rd-97th percentile. rev is
+    one revenue per company or, as of each period, an (E, T) array of what each company had reported by then; the clip
+    bounds are taken over the periods up to each one (expanding), so a past centre never moves with later data
+    (research spec v5 §1.1). Fewer than ten values known: no clipping yet."""
+    R = np.asarray(rev, float)
+    if R.ndim == 1:
+        R = np.repeat(R[:, None], U.shape[1], axis=1)
+    w = np.log10(np.maximum(1e6, np.nan_to_num(R, nan=1e6)))
     out = np.full(U.shape[1:], np.nan)
     for j in range(U.shape[2]):
         x = U[:, :, j]
         fin = np.isfinite(x)
         if fin.sum() < 10:
             continue
-        lo, hi = np.nanpercentile(x, 3), np.nanpercentile(x, 97)
-        xc = np.clip(x, lo, hi)
-        num = np.nansum(np.where(fin, xc * w[:, None], 0), axis=0)
-        den = np.sum(np.where(fin, w[:, None], 0), axis=0)
+        xc = x.copy()
+        seen = np.empty(0)
+        for t in range(x.shape[1]):
+            seen = np.concatenate([seen, x[fin[:, t], t]])
+            if len(seen) >= 10:
+                lo, hi = np.percentile(seen, 3), np.percentile(seen, 97)
+                xc[:, t] = np.clip(x[:, t], lo, hi)
+        num = np.nansum(np.where(fin, xc * w, 0), axis=0)
+        den = np.sum(np.where(fin, w, 0), axis=0)
         cnt = fin.sum(axis=0)
         out[:, j] = np.where(cnt >= 3, num / np.maximum(den, 1e-9), np.nan)
+    return out
+
+
+def known_rev_quarterly(P):
+    """(E, T): the revenue each company had reported by the end of each calendar quarter — the latest quarter before it
+    with revenue on file (P.rev holds each quarter's own revenue)."""
+    R = getattr(P, 'rev', None)
+    if R is None:
+        return np.array([[P.meta[t]['rev'] or np.nan] * len(P.cals) for t in P.tickers], float)
+    out = np.full(R.shape, np.nan)
+    last = np.full(R.shape[0], np.nan)
+    for t in range(R.shape[1]):
+        out[:, t] = last                                   # quarter t's own revenue is filed during the next quarter
+        last = np.where(np.isfinite(R[:, t]) & (R[:, t] > 0), R[:, t], last)
+    return out
+
+
+def known_rev_monthly(Pq, tickers, months, filed_after=46):
+    """(E, months): each company's latest quarterly revenue public by the month's end — a quarter's revenue counts from
+    46 days after the quarter (the 10-Q deadline is 40–45 days)."""
+    R = getattr(Pq, 'rev', None)
+    out = np.full((len(tickers), len(months)), np.nan)
+    if R is None:
+        out[:] = np.array([Pq.meta[t]['rev'] or np.nan for t in tickers], float)[:, None]
+        return out
+    avail = [cal_end(c) + dt.timedelta(days=filed_after) for c in Pq.cals]
+    rows = [Pq.tickers.index(t) for t in tickers]
+    for m, mo in enumerate(months):
+        end = cal_end(mo)
+        for e, r in enumerate(rows):
+            for q in range(len(avail) - 1, -1, -1):
+                if avail[q] <= end and np.isfinite(R[r, q]) and R[r, q] > 0:
+                    out[e, m] = R[r, q]
+                    break
     return out
 
 
@@ -147,13 +197,13 @@ def load_monthly(path, Pq):
             if r:
                 U[e, i] = [np.nan if x is None else x for x in r]
     meta = {t: Pq.meta[t] for t in tickers}
-    rev = [meta[t]['rev'] for t in tickers]
+    rev = known_rev_monthly(Pq, tickers, months)          # (E, months): revenue reported by each month's end
     sectors = Pq.sectors
     SUN = np.full((len(sectors), len(months), len(MF)), np.nan)
     for s, k in enumerate(sectors):
         idx = [e for e, t in enumerate(tickers) if meta[t]['s'] == k]
         if idx:
-            SUN[s] = weighted_centre(U[idx], [rev[e] for e in idx], MF)
+            SUN[s] = weighted_centre(U[idx], rev[idx], MF)
     MKT = weighted_centre(U, rev, MF)
     return Panel('m', months, MF, tickers, meta, sectors, Pq.sec_names, U, SUN, MKT)
 
@@ -191,7 +241,7 @@ def fill_latest_quarter_prices(Pq, Pm, closes=None):
                 Pq.U[e, T, Pq.vi[k]] = v
                 filled += 1
     # the suns and the market for the latest quarter, from the filled company rows (the file's are early filers only)
-    rev = [Pq.meta[t]['rev'] for t in Pq.tickers]
+    rev = list(known_rev_quarterly(Pq)[:, T])           # revenue reported by the end of the quarter
     for s, k in enumerate(Pq.sectors):
         idx = [e for e, t in enumerate(Pq.tickers) if Pq.meta[t]['s'] == k]
         if idx:
@@ -1323,9 +1373,9 @@ def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None, grav
             'caveats': [
                 f'Origins before {P.cals[R["first_test"]]} are an in-sample warm-up: the coordinates\' typical spreads (the '
                 'analogue metric) were measured on data through that period. Scorecards start there.',
-                'Retrospective sector suns and market centre: like the Rotation chart, they clip each variable to its 3rd–97th '
-                'percentile over the whole history and weight companies by their latest revenue, and the universe is today\'s '
-                'companies — past centres are not exactly what was known then (research spec v5 §1.1; not yet rebuilt as of each date).'],
+                'Sector suns and the market centre are rebuilt as of each period (clip bounds over the periods up to then, '
+                'weights = revenue reported by then), but the companies are today\'s: firms that left the market are missing '
+                'from the early years (survivorship), which flatters every model.'],
             'backtest': {'state': summary, 'price': price_sum, 'price_analog': price_analog,
                          'price_model': 'gravity' if gravity_rows else 'analog'},
             'note': ('Each arrow: where the dot\'s next period lands on average among the most similar past states (any company, '

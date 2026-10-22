@@ -15,9 +15,13 @@ own first publication time and scores late rows apart.
 
 Look-ahead audit of the Rotation forecasts (spec v5 §1.1): the weekly RRG analogues' metric and the benchmark drift
 added to their prices now use only the weeks before each origin (`causal_scale`, `expanding_log_drift`; tests change
-every close after week T and check that earlier forecasts are bit-identical). Still retrospective, now labelled on the
-page and in `caveats`: quarterly/monthly origins before the test start are an in-sample warm-up, and the sector suns /
-market centre use full-history clip bounds, latest-revenue weights and today's companies.
+every close after week T and check that earlier forecasts are bit-identical). Quarterly/monthly origins before the test start
+are labelled an in-sample warm-up. Sector suns and the market centre (Rotation chart, `rotation-long.json`, the monthly
+forecast panel), the weekly site-sector indices and the gravity model's planets are now rebuilt as of each period: clip bounds over the periods up
+to then, weights = the revenue reported by then (the quarter before; weekly: 46 days after the quarter, SEC frames).
+The latest period is all but unchanged; earlier suns move slightly. Only survivorship (today's companies) remains, and
+is stated in `caveats`. Ledger origins frozen before this change are kept as they were. Tests:
+`tests/test_temporal_integrity.py`.
 
 ## Rotation: next step and the 3-D / 4-D solar system
 

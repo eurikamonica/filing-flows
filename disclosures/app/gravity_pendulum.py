@@ -74,8 +74,31 @@ def load(public, min_weeks=200):
         tick.append(t); sec.append(m['s']); rev.append(m.get('rev') or 1e6)
         C.append(place(d['start'], d['c'])); V.append(place(d['start'], d.get('v') or [None] * len(d['c']), 1000.0))
     days = g0 + 7 * np.arange(W)
-    return {'days': days, 'tick': np.array(tick), 'sec': np.array(sec), 'rev': np.array(rev, float), 'C': np.array(C), 'V': np.array(V),
-            'spy': spy, 'bodies': bodies}
+    out = {'days': days, 'tick': np.array(tick), 'sec': np.array(sec), 'rev': np.array(rev, float), 'C': np.array(C), 'V': np.array(V),
+           'spy': spy, 'bodies': bodies}
+    # revenue as reported by each week (rotation_history.revenue_history → public/revenue-history.json): the planets'
+    # weights then never use revenue filed later (research spec v5 §1.1); without the file, today's revenue as before
+    try:
+        rh = json.loads((public / 'revenue-history.json').read_text(encoding='utf-8')).get('rows') or {}
+    except (OSError, ValueError):
+        rh = None
+    if rh is not None:
+        out['rev_t'] = revenue_by_week(days, tick, rh)
+    return out
+
+
+def revenue_by_week(days, tick, rows):
+    """(N, W): each ticker's latest revenue public on or before each week ([[date, revenue], …] per ticker), NaN before
+    the first one."""
+    R = np.full((len(tick), len(days)), np.nan)
+    for i, t in enumerate(tick):
+        h = rows.get(t) or []
+        if not h:
+            continue
+        d = np.array([np.datetime64(x[0]) for x in h]); v = np.array([x[1] for x in h], float)
+        k = np.searchsorted(d, days, side='right') - 1
+        R[i] = np.where(k >= 0, v[np.maximum(k, 0)], np.nan)
+    return R
 
 
 def logret(C):
@@ -136,16 +159,19 @@ def rolling_beta(y, x, win=104, min_obs=52):
 def build(D, liquid_usd=10e6):
     C, V = D['C'], D['V']
     r = logret(C); m = logret(D['spy'][None])[0]
-    secs = sorted(set(D['sec'])); w = np.log10(np.maximum(1e6, D['rev']))
+    secs = sorted(set(D['sec']))
+    # weights: log10 of revenue as reported by each week when the history is on file (floor $1M), else today's revenue
+    w = (np.log10(np.maximum(1e6, np.nan_to_num(D['rev_t'], nan=1e6))) if D.get('rev_t') is not None and np.size(D['rev_t'])
+         else np.repeat(np.log10(np.maximum(1e6, D['rev']))[:, None], r.shape[1], axis=1))
     # planets: log-revenue-weighted sector returns; each satellite sees its sector WITHOUT itself
     rs = np.full_like(r, np.nan); planet_r = {}
     for s in secs:
         idx = np.nonzero(D['sec'] == s)[0]
-        R = r[idx]; ok = np.isfinite(R); ww = w[idx][:, None] * ok
-        tot = np.nansum(np.where(ok, R, 0) * w[idx][:, None], axis=0); den = ww.sum(axis=0)
+        R = r[idx]; ok = np.isfinite(R); ww = w[idx] * ok
+        tot = np.nansum(np.where(ok, R, 0) * w[idx], axis=0); den = ww.sum(axis=0)
         planet_r[s] = np.where(ok.sum(0) >= 3, tot / np.maximum(den, 1e-9), np.nan)
         loo_den = den[None] - ww
-        rs[idx] = np.where(ok & (loo_den > 0) & (ok.sum(0)[None] >= 4), (tot[None] - np.where(ok, R, 0) * w[idx][:, None]) / np.maximum(loo_den, 1e-9), np.nan)
+        rs[idx] = np.where(ok & (loo_den > 0) & (ok.sum(0)[None] >= 4), (tot[None] - np.where(ok, R, 0) * w[idx]) / np.maximum(loo_den, 1e-9), np.nan)
     sat_r = r - rs                                   # satellite velocity per week (relative to its planet)
     x = cumpos(sat_r)                                # satellite position
     P = np.array([planet_r[s] for s in secs]); y = cumpos(P - m[None])   # planet position relative to the star

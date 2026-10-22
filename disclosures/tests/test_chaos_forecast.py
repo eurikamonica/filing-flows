@@ -144,6 +144,19 @@ class GravityModel(unittest.TestCase):
         return {'days': days, 'tick': np.array([f'T{i}' for i in range(N)]), 'sec': sec, 'rev': np.full(N, 1e9), 'C': C, 'V': V,
                 'spy': 100 * np.exp(mkt), 'bodies': bodies}
 
+    def test_planet_weights_use_revenue_reported_by_then(self):
+        D1 = self.synthetic(); w = 300
+        rng = np.random.default_rng(9)
+        D1['rev_t'] = np.repeat(rng.uniform(1e8, 1e11, len(D1['tick']))[:, None], len(D1['days']), axis=1)
+        D2 = {**D1, 'rev_t': D1['rev_t'].copy()}
+        D2['rev_t'][:, w + 1:] = rng.uniform(1e6, 1e13, D2['rev_t'][:, w + 1:].shape)   # later revenue figures change
+        B1, B2 = GP.build(D1), GP.build(D2)
+        np.testing.assert_array_equal(B1['sat_r'][:, :w + 1], B2['sat_r'][:, :w + 1])
+        self.assertFalse(np.allclose(np.nan_to_num(B1['sat_r'][:, w + 2:]), np.nan_to_num(B2['sat_r'][:, w + 2:])))
+        rows = {'T0': [['2010-03-05', 2e9], ['2011-01-07', 3e9]]}
+        R = GP.revenue_by_week(D1['days'][:60], np.array(['T0', 'T1']), rows)
+        self.assertTrue(np.isnan(R[0, 8]) and R[0, 9] == 2e9 and R[0, 53] == 3e9 and np.isnan(R[1]).all())
+
     def test_predictions_ignore_the_future(self):
         D1 = self.synthetic(); w = 392
         B1 = GP.build(D1)

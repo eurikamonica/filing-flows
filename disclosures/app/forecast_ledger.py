@@ -299,7 +299,9 @@ def update(root, sha=None, verbose=True):
                    'forecast (with the time and code version); "backtest" origins predate the ledger and are the out-of-sample '
                    'walk-forward forecasts made with the data public at the time. Gaps: actual change minus forecast change, in '
                    'percentage points; inside80: the actual close fell inside the 80% range; on the RRG, the distance between the '
-                   'forecast next point and the actual one.')
+                   'forecast next point and the actual one. Origins frozen before 2026-10-23 (live and backtest) were made '
+                   'with the earlier inputs — RRG scales and benchmark drift over the whole history, sector suns with '
+                   'full-history clip bounds and latest-revenue weights — and are kept exactly as they were.')
     _write(public / 'forecast-ledger.json', out)
     return out
 

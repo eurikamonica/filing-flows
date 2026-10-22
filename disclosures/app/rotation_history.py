@@ -21,6 +21,7 @@
     python app/rotation_history.py build   --root hist --site-data site --data docs/data
 """
 import argparse
+import bisect
 import datetime as dt
 import gzip
 import json
@@ -286,9 +287,36 @@ def align(rows, weeks):
     return first, c[first:last_i + 1], v[first:last_i + 1]           # nothing carried past the last real close
 
 
-def sector_indices(companies, series, weeks):
+def revenue_history(root, companies, since='CY2009Q1', filed_after=46):
+    """{ticker: (dates, revenues)}: each company's quarterly revenue from the SEC frames, dated when it was public —
+    46 days after the quarter (the 10-Q deadline is 40–45 days). Used as of each week by sector_indices."""
+    import frames as FR
+    today = dt.date.today()
+    n = (today.year - int(since[2:6])) * 4 + (today.month - 1) // 3 - (int(since[-1]) - 1)
+    periods = FR.calendar_quarters(max(1, n))
+    try:
+        rev = FR.revenues(root, periods)
+    except Exception:
+        return {}
+    out = {}
+    for c in companies:
+        per = rev.get(str(c.get('cik'))) or rev.get(c.get('cik')) or {}
+        pts = []
+        for p, v in per.items():
+            y, q = int(p[2:6]), int(p[-1])
+            end = dt.date(y + (q == 4), (3 * q) % 12 + 1, 1) - dt.timedelta(days=1)
+            pts.append(((end + dt.timedelta(days=filed_after)).isoformat(), v))
+        if pts:
+            pts.sort()
+            out[c['t']] = ([d for d, _ in pts], [v for _, v in pts])
+    return out
+
+
+def sector_indices(companies, series, weeks, rev_hist=None):
     """One weekly index per site sector: the log-revenue-weighted mean of the members' weekly log returns, cumulated
-    from 100 where three or more members have prices. series: ticker → (first, closes)."""
+    from 100 where three or more members have prices. series: ticker → (first, closes). With rev_hist (revenue_history)
+    each week weighs a company by the revenue it had reported by then (floor $1M before any is on file), so a past
+    week never uses revenue reported later; without it, today's revenue (the older behaviour)."""
     out = {}
     by = {}
     for c in companies:
@@ -307,7 +335,13 @@ def sector_indices(companies, series, weeks):
                 r = math.log(cl[j] / cl[j - 1])
                 if abs(r) > 0.5:                      # a bad tick or an unadjusted split, not a week's move
                     continue
-                w = math.log10(max(c['rev'] or 1e6, 1e6))
+                if rev_hist is not None:
+                    h = rev_hist.get(c['t'])
+                    k = bisect.bisect_right(h[0], weeks[i]) - 1 if h else -1
+                    rv = h[1][k] if k >= 0 else None
+                else:
+                    rv = c['rev']
+                w = math.log10(max(rv or 1e6, 1e6))
                 num += w * r
                 den += w
                 n += 1
@@ -353,7 +387,12 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
         (pub / 't' / f'{t}.json').write_text(json.dumps({'t': t, 'n': m.get('n'), 's': m.get('s'), 'start': weeks[f], 'c': c, 'v': v},
                                                         separators=(',', ':')), encoding='utf-8')
         written += 1
-    idx = sector_indices(companies, {t: (f, c) for t, (f, c, _) in series.items()}, weeks)
+    rev_hist = revenue_history(root, companies) if companies else None
+    idx = sector_indices(companies, {t: (f, c) for t, (f, c, _) in series.items()}, weeks, rev_hist or None)
+    if rev_hist:                                   # for the gravity model's planet weights (gravity_pendulum.load)
+        (pub / 'revenue-history.json').write_text(json.dumps({
+            'note': 'Quarterly revenue per ticker from SEC frames, dated 46 days after the quarter (when it was public).',
+            'rows': {t: [[d, sig(v, 4)] for d, v in zip(*h)] for t, h in rev_hist.items()}}, separators=(',', ':')), encoding='utf-8')
     ser = []
     for t, sec, name in SECTOR_ETFS:
         if t in series:
@@ -375,7 +414,8 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
            'units': {'c': 'weekly close, adjusted', 'v': 'weekly volume, thousands of shares'},
            'note': ('Weekly closes (Friday; adjusted for splits and dividends) from Yahoo Finance, Stooq as the fallback. Site '
                     'sector indices: the Sankey site’s companies in each sector, weekly log returns weighted by the log of '
-                    'revenue, from the first week three members have prices — today’s companies only, so the early years '
+                    'the revenue each had reported by that week (SEC frames, counted 46 days after the quarter), from the '
+                    'first week three members have prices — today’s companies only, so the early years '
                     'leave out companies that no longer trade. The RRG lines are computed in the browser from these closes.')}
     (pub / 'rrg.json').write_text(json.dumps(rrg, separators=(',', ':')), encoding='utf-8')
     out = {'tickers_published': written, 'series': len(ser), 'weeks': len(weeks)}

@@ -9,8 +9,9 @@ the charts can put on any axis —
 
 Figures from SEC XBRL frames (frames.py, fourth quarters filled from the annual frames), quarter-end closes and daily
 volume from the price cache, 13F from market/by-ticker-history.json, officials from market/officials-trades.json.
-Sector suns and the market centre average their companies, weighted by the log of revenue, with every variable clipped
-to its 3rd–97th percentile so one outlier does not drag a sun.
+Sector suns and the market centre average their companies, weighted by the log of the revenue reported by then (the
+quarter before), with every variable clipped to its 3rd–97th percentile over the quarters up to then so one outlier does
+not drag a sun — and a later outlier or a later revenue figure never moves a past sun (research spec v5 §1.1).
 
 Built at publish time (automation/stage-public.py --site-data): the Sankey site's index gives tickers and sectors.
 Output is columnar to stay small: 'fields' names the columns of every company's and sun's 'p' rows. A 'monthly' block
@@ -357,6 +358,69 @@ def _options_inputs(root):
     return hist, pc
 
 
+def _prev_cal(cal):
+    y, q = int(cal[2:6]), int(cal[-1])
+    return f'CY{y - 1}Q4' if q == 1 else f'CY{y}Q{q - 1}'
+
+
+def known_revenue(fig, cal, back=4):
+    """The latest quarterly revenue a company had reported by the end of calendar quarter `cal`: the quarter before
+    (filed during `cal`), else up to `back` quarters earlier; None when none is on file. The sun weights use it, so a
+    past quarter's sun never weighs a company by revenue reported later (research spec v5 §1.1)."""
+    c = cal
+    for _ in range(back):
+        c = _prev_cal(c)
+        r = ((fig or {}).get(c) or {}).get('rev')
+        if r and r > 0:
+            return r
+    return None
+
+
+def asof_bounds(cos, keys, lo=0.03, hi=0.97):
+    """{key: {cal: (lo, hi)}}: each variable's 3rd–97th percentile over every company-quarter up to and including that
+    quarter, so a past sun never moves because of a later outlier. The latest quarter's bounds are the pooled ones."""
+    cals = sorted({p['cal'] for c in cos for p in c['pts']})
+    out = {}
+    for k in keys:
+        by = {}
+        for c in cos:
+            for p in c['pts']:
+                if p.get(k) is not None:
+                    by.setdefault(p['cal'], []).append(p[k])
+        acc, b = [], {}
+        for cal in cals:
+            for v in by.get(cal, ()):
+                bisect.insort(acc, v)
+            b[cal] = ((acc[min(len(acc) - 1, max(0, int(lo * (len(acc) - 1))))], acc[min(len(acc) - 1, max(0, int(hi * (len(acc) - 1))))])
+                      if acc else (None, None))
+        out[k] = b
+    return out
+
+
+def centre(cos, keys, bounds, quarters):
+    """The sun / market average per calendar quarter: weights = log10 of the revenue each company had reported by then
+    (point '_w', floor $1M), each variable clipped to its bounds as of that quarter; quarters with three or more
+    companies. Rows [cal, *values, n]."""
+    per = {}
+    for co in cos:
+        for p in co['pts']:
+            w = math.log10(max(p.get('_w') or 1e6, 1e6))
+            a = per.setdefault(p['cal'], {'n': 0, **{k: [0.0, 0.0] for k in keys}})
+            a['n'] += 1
+            for k in keys:
+                v = p.get(k)
+                lo, hi = (bounds.get(k) or {}).get(p['cal'], (None, None))
+                if v is None or lo is None:
+                    continue
+                v = max(lo, min(hi, v))
+                a[k][0] += w * v; a[k][1] += w
+    rows = []
+    for cal, a in sorted(per.items()):
+        if a['n'] >= 3:
+            rows.append([cal] + [_r(a[k][0] / a[k][1]) if a[k][1] else None for k in keys] + [a['n']])
+    return rows[-quarters:]
+
+
 def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_root=None, vol_windows=(None, None)):
     """prices: ticker → rows (default: the daily price cache under root); frames_root: where the XBRL frames are cached
     (default root). The long history (app/rotation_history.py) passes weekly closes since 2000 and its own frames."""
@@ -415,24 +479,13 @@ def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_
         meta.append({'key': key, 'label': label, 'unit': unit, 'centred': centred, 'group': group, 'n': len(vals),
                      'lo': _r(lo), 'hi': _r(hi), 'median': _r(_quantile(vals, 0.5)),
                      'scale': _r(((q3 - q1) / 1.349) if vals and q3 is not None and q3 > q1 else None, 4)})
-    clip = lambda k, v: None if v is None or bounds[k][0] is None else max(bounds[k][0], min(bounds[k][1], v))
-
-    def average(cos):
-        per = {}
-        for co in cos:
-            w = math.log10(max(co['rev'] or 1e6, 1e6))
-            for p in co['pts']:
-                a = per.setdefault(p['cal'], {'n': 0, **{k: [0.0, 0.0] for k in KEYS}})
-                a['n'] += 1
-                for k in KEYS:
-                    v = clip(k, p.get(k))
-                    if v is not None:
-                        a[k][0] += w * v; a[k][1] += w
-        rows = []
-        for cal, a in sorted(per.items()):
-            if a['n'] >= 3:
-                rows.append([cal] + [_r(a[k][0] / a[k][1]) if a[k][1] else None for k in KEYS] + [a['n']])
-        return rows[-quarters:]
+    # the suns as known at each quarter: clip bounds up to that quarter, weights = revenue reported by then
+    for co in out:
+        fig = figs.get(str(co['cik']))
+        for p in co['pts']:
+            p['_w'] = known_revenue(fig, p['cal'])
+    asof = asof_bounds(out, KEYS)
+    average = lambda cos: centre(cos, KEYS, asof, quarters)
 
     by_sector = {}
     for co in out:
@@ -461,7 +514,8 @@ def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_
                      'daily log returns in the quarter, annualised. Volume: average daily volume in the quarter against the '
                      "company's own average. 13F: managers that added minus managers that cut, in quarters most managers on "
                      "file have reported. Officials: purchases minus sales in the US House reports on file. Sector suns and "
-                     'the market centre weight companies by the log of revenue, each variable clipped to its 3rd–97th '
-                     'percentile.'),
+                     'the market centre weight companies by the log of the revenue they had reported by then (the quarter '
+                     'before), each variable clipped to its 3rd–97th percentile over the quarters up to then — a past sun is '
+                     'what could be computed at the time, except that the companies are today\'s.'),
             'companies': out, 'sectors': sun, 'market': market,
             'monthly': {'months': months, 'fields': MONTH_FIELDS, 'companies': month_rows}}

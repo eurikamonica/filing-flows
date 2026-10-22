@@ -126,6 +126,18 @@ def quarterly(root, concept, periods):
     return {p: q[p] for p in periods}
 
 
+def revenues(root, periods):
+    """{cik: {period: revenue}} — the first revenue concept a company reports for each period, positive values only
+    (the revenue half of figures(), for callers that need nothing else)."""
+    out = {}
+    for concept in REVENUE:
+        for period, vals in quarterly(root, concept, periods).items():
+            for cik, v in vals.items():
+                if v and v > 0:
+                    out.setdefault(cik, {}).setdefault(period, v)
+    return out
+
+
 def margins(root, periods):
     """{cik: {period: (revenue, operating income, operating margin %)}} for the periods (kept for older callers)."""
     out = {}
