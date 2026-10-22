@@ -186,8 +186,13 @@
 
   function tornado(bars, base, price) {
     if (!(bars || []).length) return '';
-    const vals = bars.flatMap((b) => [b.low, b.high]).concat([base]).concat(fin(price) ? [price] : []);
-    const x0 = Math.min(...vals) * 0.95, x1 = Math.max(...vals) * 1.05;
+    // the axis spans the bars; a price far outside them (Waters: $457 against a $68 base) would squeeze every bar into a
+    // corner, so it is marked at the edge with its value instead of stretching the scale
+    const span = bars.flatMap((b) => [b.low, b.high]).concat([base]).filter(fin);
+    const lo = Math.min(...span), hi = Math.max(...span), wide = (hi - lo) || Math.abs(hi) || 1;
+    const near = fin(price) && price >= lo - wide && price <= hi + wide;
+    const vals = span.concat(near ? [price] : []);
+    const x0 = Math.min(...vals) - 0.05 * Math.abs(Math.min(...vals)), x1 = Math.max(...vals) + 0.05 * Math.abs(Math.max(...vals));
     const W = 860, L = 300, R = 70, T = 16, rh = 24, H = T + bars.length * rh + 26, P0 = L + 64;
     const X = (v) => P0 + (v - x0) / ((x1 - x0) || 1) * (W - P0 - R);
     let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Tornado: value per share as each input moves">`;
@@ -199,7 +204,11 @@
       s += `<text x="${X(b.low) - 3}" y="${y + 15}" text-anchor="end">${esc(usd(b.low))}</text><text x="${X(b.high) + 3}" y="${y + 15}">${esc(usd(b.high))}</text>`;
     });
     s += `<line x1="${X(base)}" x2="${X(base)}" y1="${T - 4}" y2="${H - 20}" stroke="${C.ink}"/><text x="${X(base)}" y="${H - 6}" text-anchor="middle" class="fv-lbl">base ${esc(usd(base))}</text>`;
-    if (fin(price) && price >= x0 && price <= x1) s += `<line x1="${X(price)}" x2="${X(price)}" y1="${T - 4}" y2="${H - 20}" stroke="${C.ink}" stroke-dasharray="4 3"/><text x="${X(price)}" y="${T - 4}" text-anchor="middle">price</text>`;
+    if (near) s += `<line x1="${X(price)}" x2="${X(price)}" y1="${T - 4}" y2="${H - 20}" stroke="${C.ink}" stroke-dasharray="4 3"/><text x="${X(price)}" y="${T - 4}" text-anchor="middle">price ${esc(usd(price))}</text>`;
+    else if (fin(price)) {
+      const right = price > hi, x = right ? W - 4 : P0 - 4;
+      s += `<text x="${x}" y="${T - 4}" text-anchor="${right ? 'end' : 'start'}" class="fv-lbl">${right ? '' : '← '}price ${esc(usd(price))}${right ? ' →' : ''} <tspan fill="${C.mute}">(off this scale)</tspan></text>`;
+    }
     return s + '</svg>';
   }
 

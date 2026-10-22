@@ -65,6 +65,15 @@ def engage_more():
 
 # the page's scripts, in load order (web/index.html): the chart, the valuation maths, the discovery & UX modules, the app
 SCRIPTS = ("nav.js", "sankey.js", "fsa.js", "chains.js", "gamma.js", "model.js", "network.js", "ux.js", "search.js", "overview.js", "feed.js", "charts.js", "editor.js", "eps-research.js", "local-model.js", "app.js")
+STYLES = ("styles.css", "nav.css", "ux.css", "gamma.css", "eps-research.css", "local-model.css")
+
+
+def page_assets(html):
+    """Every local script and stylesheet web/index.html references, the lists above first: a file added to the page
+    but not to a list was left out of the site (scenario-elasticity.js answered 404)."""
+    scripts = list(SCRIPTS) + [s for s in re.findall(r'<script src="([\w.-]+\.js)"></script>', html) if s not in SCRIPTS]
+    styles = list(STYLES) + [s for s in re.findall(r'<link rel="stylesheet" href="([\w.-]+\.css)">', html) if s not in STYLES]
+    return ([s for s in scripts if os.path.exists(os.path.join(WEB, s))], [s for s in styles if os.path.exists(os.path.join(WEB, s))])
 
 
 def main():
@@ -77,11 +86,12 @@ def main():
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     html = open(os.path.join(WEB, "index.html"), encoding="utf-8").read()
+    scripts, styles = page_assets(html)
     if args.inline:
-        for name in ("styles.css", "nav.css", "ux.css", "gamma.css", "eps-research.css", "local-model.css"):
+        for name in styles:
             css = open(os.path.join(WEB, name), encoding="utf-8").read()
             html = html.replace(f'<link rel="stylesheet" href="{name}">', f"<style>\n{css}</style>")
-        for name in SCRIPTS:
+        for name in scripts:
             js = open(os.path.join(WEB, name), encoding="utf-8").read()
             html = html.replace(f'<script src="{name}"></script>', f"<script>\n{js}</script>")
         if args.fragment:
@@ -91,7 +101,7 @@ def main():
             scripts = re.findall(r"<script>.*?</script>", html, re.S)
             html = "\n".join(keep) + "\n" + shell + "\n".join(scripts) + "\n"
     else:
-        for name in ("styles.css", "nav.css", "ux.css", "gamma.css", "eps-research.css", "local-model.css") + SCRIPTS + ("favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"):
+        for name in styles + scripts + ["favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"]:
             shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
     open(os.path.join(args.out, "index.html"), "w", encoding="utf-8").write(html)
     data_out = os.path.join(args.out, "data")

@@ -645,7 +645,7 @@
       <div id="body"></div>
       <p class="co-more muted" id="co-more"></p>`;
     if (ticker) coChains($('#co-chains'), ticker);
-    $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-value">valuation</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a>`;
+    $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-x-fairvalue">fair value</a> · <a href="#c-${cik}-value">DCF calculator</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a>`;
     const body = $('#body');
     if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
     app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
@@ -760,6 +760,23 @@
     renderChanges();
   }
 
+  // the share count the valuation divides by: a filer's diluted count can be in millions (McDonald's tags 711.1) or
+  // thousandths (Waters, 98.2 billion), stale, or from before a split (KLA) — checked against the cover page and the
+  // price-to-sales it would imply (the same rules as disclosures/app/valuation.py settle_shares)
+  function shareCount(V, price) {
+    const d = V.diluted, o = V.outstanding, rev = V.revenue;
+    const ok = (v) => v >= 1e4 && v <= 3e10 && (!(price > 0) || !(rev >= 1e8) || (price * v / rev >= 0.025 && price * v / rev <= 2000));
+    if (d > 0 && o > 0 && (V.outstanding_at || '') > (V.diluted_end || '9') && o > 1.3 * d && ok(o))
+      return { v: o, key: 'outstanding', note: 'cover page: more shares than the period\'s diluted count (a split or an issue since)' };
+    if (d > 0 && ok(d)) return { v: d, key: 'diluted' };
+    if (d > 0 && o > 0) for (const k of [1e3, 1e6, 1e-3, 1e-6]) {
+      const w = d * k;
+      if (ok(w) && w / o >= 0.67 && w / o <= 1.5) return { v: w, key: 'diluted', note: `filed as ${d.toLocaleString('en-US')} — a count in ${k > 1 ? (k === 1e3 ? 'thousands' : 'millions') : 'the wrong unit'}; read as ${(w / 1e6).toFixed(1)}M` };
+    }
+    if (o > 0 && ok(o)) return { v: o, key: 'outstanding', note: d > 0 ? `the filed diluted count (${d.toLocaleString('en-US')}) does not fit; cover page used` : '' };
+    return { v: d || o || null, key: d ? 'diluted' : 'outstanding', note: d || o ? 'not checked: no price or revenue to test it against' : '' };
+  }
+
   // ---------- holders: the Disclosures hub's 13F positions and officials' reviewed records for this ticker ----------
   const amountRange = (r) => (r.amount_max == null ? `over $${Math.round((r.amount_min || 1) - 1).toLocaleString('en-US')}`
     : `$${Math.round(r.amount_min).toLocaleString('en-US')}–$${Math.round(r.amount_max).toLocaleString('en-US')}`);
@@ -796,7 +813,8 @@
   const TAB_GROUPS = [
     ['Earnings', [['', 'Earnings'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
     ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['x-quality']]],
-    ['Valuation & expectations', [['value', 'Valuation'], ['x-fairvalue'], ['consensus', 'Consensus'], ['revisions', 'Revisions']]],
+    // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
+    ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions']]],
     ['Relationships & model', [['links', 'Customers, suppliers & model'], ['x-insiders']]],
   ];
   function tabGroups() {
@@ -1939,7 +1957,7 @@
     } catch (e) { /* no price list: the reader enters one */ }
     if (!here()) return;
     const R = V.refs || {};
-    const rev = V.revenue, oi = V.oi, sh = V.diluted || V.outstanding;
+    const SH = shareCount(V, px && px.price), rev = V.revenue, oi = V.oi, sh = SH.v;
     const tr = V.pretax > 0 && V.tax != null ? Math.min(0.35, Math.max(0, V.tax / V.pretax)) : 0.21;
     const qs = (D.q || []).filter((p) => p.wc && p.wc.rev != null);
     const prior = qs.length >= 8 ? qs.slice(-8, -4).reduce((s, p) => s + p.wc.rev, 0) : null;
@@ -2054,7 +2072,7 @@
             <dl class="v-rep">
               <dt>Revenue</dt><dd>${evBtn(money(rev), rep('Revenue', rev, 'revenue'))}</dd>
               <dt>Operating income</dt><dd>${oi != null ? evBtn(money(oi), rep('Operating income', oi, 'oi')) : '—'} ${oi != null ? `<span class="muted">${pct(oi / rev * 100)} margin</span>` : ''}</dd>
-              <dt>Income tax</dt><dd>${V.tax != null ? evBtn(money(V.tax), rep('Income tax', V.tax, 'tax')) : '—'} <span class="muted">${V.pretax > 0 ? `${pct(V.tax / V.pretax * 100)} of pretax ${money(V.pretax)}` : 'pretax loss'}</span></dd>
+              <dt>Income tax</dt><dd>${V.tax != null ? evBtn(money(V.tax), rep('Income tax', V.tax, 'tax')) : '—'} <span class="muted">${V.pretax > 0 ? `${pct(V.tax / V.pretax * 100)} of pretax ${money(V.pretax)}` : V.pretax != null ? 'pretax loss' : ''}</span></dd>
               <dt>D&amp;A · capex</dt><dd>${V.da != null ? evBtn(money(V.da), rep('Depreciation and amortization', V.da, 'da')) : '—'} · ${V.capex != null ? evBtn(money(V.capex), rep('Capital expenditures', V.capex, 'capex')) : '—'}</dd>
               <dt>Debt</dt><dd>${evBtn(money(V.debt), { title: 'Debt', value: money(V.debt), period: `latest balance (${(V.bal_dates || []).map(date).join(', ')})`, kind: 'Derived', formula: t(V.debt_how || ''),
                 inputs: [['b_ltd', 'Long-term debt (incl. current)'], ['b_ltd_nc', 'Long-term debt, noncurrent'], ['b_ltd_c', 'Long-term debt, current'], ['b_debt_c', 'Debt, current'], ['b_stb', 'Short-term borrowings / commercial paper']]
@@ -2062,7 +2080,7 @@
                 note: V.debt_how === 'no debt tagged' ? 'No standard debt tag was found: enter the debt from the balance sheet.' : 'Operating leases are not included.' })}${V.debt_how === 'no debt tagged' ? ' <span class="q-warmtext">not tagged: check</span>' : ''}</dd>
               <dt>Cash and short-term investments</dt><dd>${evBtn(money(V.cash_all), { title: 'Cash and short-term investments', value: money(V.cash_all), kind: 'Derived', formula: 'cash and cash equivalents + short-term investments',
                 inputs: [['b_cash', 'Cash and cash equivalents'], ['b_sti', 'Short-term investments']].filter(([k]) => V[k] != null).map(([k, l]) => ({ title: l, value: money(V[k]), ref: (R[k] || [])[0] })) })}</dd>
-              <dt>Diluted shares</dt><dd>${sh ? evBtn(`${(sh / 1e6).toFixed(1)}M`, { title: V.diluted ? 'Diluted weighted-average shares' : 'Shares outstanding (cover page)', value: `${(sh / 1e6).toFixed(1)}M`, ref: (R[V.diluted ? 'diluted' : 'outstanding'] || [])[0] }) : '—'}</dd>
+              <dt>Diluted shares</dt><dd>${sh ? evBtn(`${(sh / 1e6).toFixed(1)}M`, { title: SH.key === 'diluted' ? 'Diluted weighted-average shares' : 'Shares outstanding (cover page)', value: `${(sh / 1e6).toFixed(1)}M`, ref: (R[SH.key] || [])[0] }) : '—'}${SH.note ? ` <span class="muted">${t(SH.note)}</span>` : ''}</dd>
               <dt>Price</dt><dd>${px ? `${usd(px.price)} <span class="muted">${t(px.source)}, ${date(px.asof)}</span>` : '<span class="muted">not available: enter one</span>'}</dd>
             </dl>
             <h3>Assumptions <span class="muted">· yours to change</span></h3>

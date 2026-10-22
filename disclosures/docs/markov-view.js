@@ -10,7 +10,9 @@
   const usd = (v) => (fin(v) ? (v < 0 ? '−$' : '$') + num(Math.abs(v), Math.abs(v) >= 1000 ? 0 : 2) : '—');
   const pct = (v, d = 1) => (fin(v) ? num(100 * v, d) + '%' : '—');
   const NAMES = ['High growth', 'Steady', 'Decline'];
-  const PLOTLY = 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js';
+  // cdnjs stops at 2.35.0 in the 2.35 line (2.35.2 is a 404 there); jsDelivr's npm build is the fallback
+  const PLOTLY = ['https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.0/plotly.min.js',
+    'https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js'];
   const SEED = 20251027;
 
   // ---------- the engine (mirrors app/markov.py) ----------
@@ -95,13 +97,16 @@
 
   // ---------- 3D (Plotly, loaded on demand) ----------
   let plotlyLoad = null;
-  const loadPlotly = () => plotlyLoad || (plotlyLoad = window.Plotly ? Promise.resolve(window.Plotly) : new Promise((ok, bad) => {
+  const loadFrom = (src) => new Promise((ok, bad) => {
     const sc = document.createElement('script');
-    sc.src = PLOTLY; sc.async = true;
-    sc.onload = () => ok(window.Plotly);
-    sc.onerror = () => { plotlyLoad = null; bad(new Error('the chart library did not load')); };
+    sc.src = src; sc.async = true; sc.crossOrigin = 'anonymous';
+    sc.onload = () => (window.Plotly ? ok(window.Plotly) : bad(new Error('no Plotly')));
+    sc.onerror = () => { sc.remove(); bad(new Error('the chart library did not load')); };
     document.head.appendChild(sc);
-  }));
+  });
+  const loadPlotly = () => plotlyLoad || (plotlyLoad = window.Plotly ? Promise.resolve(window.Plotly)
+    : PLOTLY.reduce((p, src) => p.catch(() => loadFrom(src)), Promise.reject(new Error('start')))
+      .catch(() => { plotlyLoad = null; throw new Error('the chart library did not load'); }));
   function colors(el) {
     const cs = getComputedStyle(el), v = (n, f) => (cs.getPropertyValue(n) || '').trim() || f;
     return { good: v('--mk-profit', '#2e8b57'), bad: v('--mk-cost', '#c0392b'), steady: v('--mk-rev', '#8a8f98'), acc: v('--accent', '#2a78d6'),

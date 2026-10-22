@@ -45,7 +45,7 @@
       if (fin(mcap)) bits.push(`market cap ≈ ${money(mcap)}`);
       if (fin(mcap) && fin(rev4) && rev4 > 0) bits.push(`P/S ${num(mcap / rev4, 1)}`);
       if (fin(mcap) && fin(ni4) && ni4 > 0) bits.push(`P/E ${num(mcap / ni4, 1)}`);
-      tile('Price', usd(price), bits.join(' · ') || (a.as_of ? `as of ${day(a.as_of)}` : ''), `#c-${cik}-value`);
+      tile('Price', usd(price), bits.join(' · ') || (a.as_of ? `as of ${day(a.as_of)}` : ''), `#c-${cik}-x-fairvalue`);
     }
     if (r52) tile('52-week range', `${spct(r52.from_hi, 0)} from high`, `${usd(r52.lo, 2)} – ${usd(r52.hi, 2)}${r52.date ? ` · ${day(r52.date)}` : ''}`, null, r52.from_hi > -0.05 ? 'good' : r52.from_lo < 0.05 ? 'bad' : '');
     // analysts and Polymarket
