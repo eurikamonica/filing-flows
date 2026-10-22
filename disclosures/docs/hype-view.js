@@ -152,7 +152,10 @@
     const ticker = opt.ticker ? String(opt.ticker).toUpperCase().replace(/[./]/g, '-') : '';
     el.innerHTML = '<p class="muted">Loading the Hype map…</p>';
     return load(opt.hub).then((D) => {
-      if (!D || !D.views || !D.rows) { el.innerHTML = '<p class="muted">The Hype map data is being rebuilt; try again after the next market build.</p>'; return; }
+      if (!D || !D.views || !D.rows) {                      // an older file (before the clock-separated views)
+        el.innerHTML = (opt.legacy ? opt.legacy() : '') + '<p class="muted">The quarter-by-quarter views are being rebuilt; they appear after the next market build.</p>';
+        return;
+      }
       const views = (opt.legacy ? ['legacy_snapshot'] : []).concat(Object.keys(VIEWS).filter((v) => quarters(D, v).length));
       if (!views.length) { el.innerHTML = '<p class="muted">No quarters on file yet.</p>'; return; }
       const st = { view: views.includes(opt.view) ? opt.view : views[0], j: 0, j0: 0, show: 'all', trails: ticker ? 'none' : 'labelled', ghosts: false, off: true, pinned: [], ticker };
@@ -224,7 +227,7 @@
         el.querySelectorAll('[data-hvu]').forEach((b) => { b.onclick = () => { st.pinned = st.pinned.filter((t) => t !== b.dataset.hvu); paint(); }; });
       }
       paint();
-    }).catch((e) => { el.innerHTML = `<p class="muted">The Hype map could not load (${esc(e.message)}).</p>`; });
+    }).catch((e) => { el.innerHTML = (opt.legacy ? opt.legacy() : '') + `<p class="muted">The quarter-by-quarter Hype map could not load (${esc(e.message)}).</p>`; });
   }
   if (typeof window !== 'undefined') window.HypeView = { render, draw, load, point, quadOf, VIEWS };
 })();
