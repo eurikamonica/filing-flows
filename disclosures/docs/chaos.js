@@ -309,7 +309,8 @@ function fcTable(o){
    ...(track?[rp&&rp[5]!=null?'$'+fmt(rp[5],2)+` <span class="muted">${'$'+fmt(rp[6],2)+'–'+fmt(rp[7],2)}</span>`:'—',pe==null?'—':`<span class="${pin?'led-ok':'led-no'}">${(pe>=0?'+':'−')+fmt(Math.abs(pe),1)}% ${pin?'✓':'✗'}</span>`]:[])]});
  exported=ex;
  const live=cal===o.fc.origins[o.fc.origins.length-1];
- let out=`<div class="section-head"><h3>Next ${u} · ${fmt(rows.length)} companies · forecast made ${esc(qlabel(cal))}${live?' (live)':' (out-of-sample backtest)'}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+ const warm=!live&&o.fc.test_from&&cal<o.fc.test_from;
+ let out=`<div class="section-head"><h3>Next ${u} · ${fmt(rows.length)} companies · forecast made ${esc(qlabel(cal))}${live?' (live)':warm?' (in-sample warm-up)':' (out-of-sample backtest)'}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=table(['Company','Close','Forecast price','Change','80% range',vshort(o.x)+' now → next',vshort(o.y)+' now → next',...(track?[]:['Divergence']),...(check?['What happened']:[]),...(track?['Last forecast for '+qlabel(cal)+' (80%)','Error vs close']:[])],body);
  return (track?fcLastSummary(o,rows.map(a=>a.c),prev,cal):'')+fcPriceTrack(o)+out+fcScore(o);
 }
@@ -380,12 +381,12 @@ function fcScore(o){
  const verdict=edge?`The price column has shown a small but real edge here (its interval excludes zero); it is still a forecast with a wide range, not a certainty.`
   :`On this site's ${fmt(pr.n?Math.round(pr.n/Math.max(1,pr.periods)):0)} or so companies per ${u.slice(0,-1)} the price column's edge is not yet distinguishable from zero${grav?' — the same gravity model is significant on the broad test of about 1,230 companies a week (IC ≈ 0.02–0.03; disclosures/notes/gravity-pendulum)':''}; read the price as a calibrated range.`;
  return `<details class="fc-score" open><summary>How these arrows did out of sample (${esc(u)}, walk-forward)</summary>
- <p class="sub">Every arrow before the latest was made with data public at the time and checked against the next dot. “Back to the sun” is the naive rule that every dot returns to its sector average; the placebo uses the same analogues with their next steps shuffled.${grav?' The price coordinate (stock vs the S&amp;P) and the price come from the gravity + tidal model: the short pendulum pulls a company back toward its sector, the long one pushes (momentum), and the sector\'s own motion carries to its companies. The other coordinates come from the analogues.':''}</p>
+ <p class="sub">Every arrow before the latest was made walk-forward — its library held only steps public at the time (the caveats below say what is still retrospective) — and checked against the next dot. “Back to the sun” is the naive rule that every dot returns to its sector average; the placebo uses the same analogues with their next steps shuffled.${grav?' The price coordinate (stock vs the S&amp;P) and the price come from the gravity + tidal model: the short pendulum pulls a company back toward its sector, the long one pushes (momentum), and the sector\'s own motion carries to its companies. The other coordinates come from the analogues.':''}</p>
  ${table(['Arrows (direction of the move)','Points the right way','Placebo','Back to the sun'],[['Analogues, calibrated',pc(a.arrow_hit),pc(sur.arrow_hit),pc(s.arrow_hit)],['Linear phase-space map',pc(l.arrow_hit),'—','—']])}
  ${table(['Price of the next '+u.slice(0,-1),'Forecasts','Cross-sectional IC (95% CI)','Direction right','Up anyway','80% range held','95% range held'],[
   ...(grav?[['Gravity + tidal (shown)',fmt(pr.n||0),ci(pr.ic_calibrated_ci),pc(pr.price_direction_hit),pc(pr.share_of_up_moves),pc(pr.coverage80),pc(pr.coverage95)]]:[]),
   [grav?'Analogues (for comparison)':'Analogues (shown)',fmt((grav?pa:pr).n||0),ci((grav?pa:pr).ic_calibrated_ci),pc((grav?pa:pr).price_direction_hit),pc((grav?pa:pr).share_of_up_moves),pc((grav?pa:pr).coverage80),pc((grav?pa:pr).coverage95)]])}
- <p class="sub">${verdict} The arrows' direction is reliable mostly because dots fall back toward their sun. Survivorship: today's companies only, which flatters every model.</p></details>`;
+ <p class="sub">${verdict} The arrows' direction is reliable mostly because dots fall back toward their sun. Survivorship: today's companies only, which flatters every model.</p>${(o.fc.caveats||[]).map(c=>`<p class="sub">${esc(c)}</p>`).join('')}</details>`;
 }
 
 /* ---------- the RRG: arrows on the weekly 14-week chart, price mapped back from the next point ---------- */

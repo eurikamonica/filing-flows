@@ -13,6 +13,12 @@ sample sizes, intervals and baselines, post-deadline returns by quadrant with a 
 filing-arrival baseline. Officials' PTRs appear as separate marks. The forecast ledger keeps each late-added company's
 own first publication time and scores late rows apart.
 
+Look-ahead audit of the Rotation forecasts (spec v5 §1.1): the weekly RRG analogues' metric and the benchmark drift
+added to their prices now use only the weeks before each origin (`causal_scale`, `expanding_log_drift`; tests change
+every close after week T and check that earlier forecasts are bit-identical). Still retrospective, now labelled on the
+page and in `caveats`: quarterly/monthly origins before the test start are an in-sample warm-up, and the sector suns /
+market centre use full-history clip bounds, latest-revenue weights and today's companies.
+
 ## Rotation: next step and the 3-D / 4-D solar system
 
 Rotation gains a *Next step* control (momentum clock, solar system, 3-D box, RRG) and a new chart, *Solar system 3-D / 4-D*

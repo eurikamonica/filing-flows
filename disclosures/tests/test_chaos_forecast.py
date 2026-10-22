@@ -186,5 +186,77 @@ class RRGBands(unittest.TestCase):
         self.assertEqual(len(lines['A'][0]), 11)
 
 
+@unittest.skipIf(np is None, 'numpy / scikit-learn not installed')
+class RRGNoLookAhead(unittest.TestCase):
+    """Spec v5 §1.1: the weekly RRG analogues' metric and the benchmark drift added to the price use only weeks before
+    each origin, so changing every close after week T leaves all forecasts made before T bit-identical."""
+
+    def world(self, bump=False, seed=11, W=520, names=24):
+        rng = np.random.default_rng(seed)
+        d = np.datetime64('2006-01-06') + 7 * np.arange(W)
+        spy = 100 * np.exp(np.cumsum(rng.normal(.001, .02, W)))
+        closes = {}
+        for i in range(names):
+            r = rng.normal(0, .03, W) + .02 * np.sin(np.arange(W) / (6 + i % 5))
+            c = spy * np.exp(np.cumsum(r))
+            closes[f'T{i}'] = (d, c)
+        if bump:                                     # a different future: every close after week T, benchmark included
+            T = 470
+            spy = spy.copy(); spy[T:] *= np.exp(np.cumsum(rng.normal(.01, .05, W - T)))
+            for k, (dd, c) in list(closes.items()):
+                c = c.copy(); c[T:] *= np.exp(np.cumsum(rng.normal(-.01, .06, W - T))); closes[k] = (dd, c)
+        return d, closes, (d, spy)
+
+    def test_causal_scale_and_drift(self):
+        import pandas as pd
+        df = pd.DataFrame({'date': np.datetime64('2020-01-03') + 7 * np.arange(6), 'x': [1., 2, 3, 4, 50, 60],
+                           'y': [1., 1, 2, 2, 3, 3], 'dx': [0., 1, 1, 1, 1, 1], 'dy': [0., 1, 0, 1, 0, 1]})
+        sc = CF.causal_scale(df, np.datetime64('2020-01-31'))      # the first four rows only
+        self.assertAlmostEqual(sc[0], np.std([1, 2, 3, 4], ddof=1))
+        d = np.datetime64('2020-01-03') + 7 * np.arange(60)
+        c = 100 * np.exp(.01 * np.arange(60)); c[30:] *= 3             # a jump later on
+        drift = CF.expanding_log_drift(d, c, min_n=10)
+        self.assertAlmostEqual(CF.drift_at(drift, d[20]), .01, places=12)
+        self.assertEqual(CF.drift_at(drift, d[5]), 0.0)                  # too few returns yet
+
+    def test_experiment_forecasts_ignore_the_future(self):
+        d, a, ba = self.world()
+        _, b, bb = self.world(bump=True)
+        tk = sorted(a)
+        ra, ia = CF.rrg_experiment(a, ba, tk, start='2012-01-06', verbose=False)
+        rb, ib = CF.rrg_experiment(b, bb, tk, start='2012-01-06', verbose=False)
+        cut = str(d[470] - 14)[:10]                                    # origins whose library and inputs predate week T
+        fa, fb = ra[ra.date < cut].reset_index(drop=True), rb[rb.date < cut].reset_index(drop=True)
+        self.assertGreater(len(fa), 500)
+        for col in ('an_x', 'an_y', 'lin_x', 'lin_y', 'r_analog_direct', 'sx', 'sy'):
+            np.testing.assert_array_equal(fa[col].to_numpy(), fb[col].to_numpy(), err_msg=col)
+        ga, gb = ia[ia.date < cut].reset_index(drop=True), ib[ib.date < cut].reset_index(drop=True)
+        np.testing.assert_array_equal(ga['r_inverted'].to_numpy(), gb['r_inverted'].to_numpy())
+
+    def test_site_file_lines_ignore_the_future(self):
+        import json, tempfile
+        out = []
+        for bump in (False, True):
+            d, closes, bench = self.world(bump=bump)
+            with tempfile.TemporaryDirectory() as tmp:
+                ser = [{'id': t, 'name': t, 'group': 'sector-etf', 'sector': 'tech', 'start': str(d[0]),
+                        'c': [None if not np.isfinite(v) else float(v) for v in c]} for t, (_, c) in closes.items()]
+                doc = {'start': str(d[0]), 'weeks': str(d[-1]), 'series': ser,
+                       'bench': {'start': str(d[0]), 'c': [float(v) for v in bench[1]]}, 'tickers': {}}
+                Path(tmp, 'rrg.json').write_text(json.dumps(doc))
+                Path(tmp, 't').mkdir()
+                out.append(CF.rrg_site_file(tmp, weeks_series='2010-01-01', weeks_companies=13))
+        g0 = np.datetime64(out[0]['weeks'][0])
+        T = int((np.datetime64(str(self.world()[0][470])) - g0).astype(int) // 7)
+        checked = 0
+        for line, rows in out[0]['lines'].items():
+            other = {r[0]: r for r in out[1]['lines'][line]}
+            for r in rows:
+                if r[0] < T - 1:                                       # forecast made before week T
+                    self.assertEqual(r[:9], other[r[0]][:9], (line, r[0]))
+                    checked += 1
+        self.assertGreater(checked, 1000)
+
+
 if __name__ == '__main__':
     unittest.main()

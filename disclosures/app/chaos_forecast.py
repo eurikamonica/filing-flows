@@ -778,21 +778,57 @@ def rrg_rows(closes, bench, tickers, n=14):
     return series, df
 
 
+RRG_EMB = ['x', 'y', 'dx', 'dy']
+
+
+def causal_scale(df, upto):
+    """Per-axis spread of the RRG embedding [x, y, dx, dy] over the rows dated before `upto` only: the metric of a past
+    origin's analogue search never depends on later weeks (research spec v5 §1.1; it used the whole history before)."""
+    X = df.loc[(df.date < upto).to_numpy(), RRG_EMB].to_numpy(float)
+    s = np.nanstd(X, axis=0, ddof=1) if len(X) > 1 else np.full(len(RRG_EMB), np.nan)
+    return np.where(np.isfinite(s) & (s > 0), s, 1.0)
+
+
+def expanding_log_drift(dates, closes, min_n=52):
+    """(dates, mean weekly log return through each date): the benchmark's drift as known at that week, 0 before min_n
+    returns. Replaces one full-history mean added to every past week's price."""
+    c = np.asarray(closes, float)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        lc = np.log(np.where(c > 0, c, np.nan))
+    fin = np.isfinite(lc)
+    lr = np.full(len(c), np.nan)
+    last = None
+    for i in range(len(c)):                          # returns between consecutive finite closes (gaps skipped)
+        if fin[i]:
+            if last is not None:
+                lr[i] = lc[i] - lc[last]
+            last = i
+    ok = np.isfinite(lr)
+    cs, cn = np.cumsum(np.where(ok, lr, 0.0)), np.cumsum(ok)
+    return np.asarray(dates), np.where(cn >= min_n, cs / np.maximum(cn, 1), 0.0)
+
+
+def drift_at(drift, day):
+    d, m = drift
+    i = int(np.searchsorted(d, np.datetime64(day), side='right')) - 1
+    return float(m[i]) if i >= 0 else 0.0
+
+
 def rrg_experiment(closes, bench, tickers, start='2012-01-06', n=14, k=80, refit_every=13, verbose=True):
     """Weekly walk-forward on the RRG: analogue forecast of the next (RS-Ratio, RS-Momentum) step vs persistence,
     rotation continuation and a linear map; then the forecast point mapped back to next week's relative return."""
     import pandas as pd
     series, df = rrg_rows(closes, bench, tickers, n)
-    sc = np.array([df.x.std(), df.y.std(), df.dx.std(), df.dy.std()])
-    Z = df[['x', 'y', 'dx', 'dy']].to_numpy() / sc
+    X = df[RRG_EMB].to_numpy(float)
     dates = np.sort(df.date.unique())
     test_dates = dates[dates >= np.datetime64(start)]
     out = []
     tree = None; built = None
     for wi, day in enumerate(test_dates):
         if tree is None or wi % refit_every == 0:
+            sc = causal_scale(df, day)                                          # the metric as known at the refit
             lib = (df.date < day).to_numpy() & np.isfinite(df.tx).to_numpy()   # next point known by day (lib date < day)
-            Zl, Tl = Z[lib], df.loc[lib, ['tx', 'ty']].to_numpy()
+            Zl, Tl = X[lib] / sc, df.loc[lib, ['tx', 'ty']].to_numpy()
             Rl = df.loc[lib, 'r_next'].to_numpy()
             tree = KDTree(Zl); built = day
             A = np.c_[np.ones(len(Zl)), Zl]
@@ -800,7 +836,7 @@ def rrg_experiment(closes, bench, tickers, start='2012-01-06', n=14, k=80, refit
         qm = (df.date == day).to_numpy()
         if not qm.any():
             continue
-        Zq = Z[qm]
+        Zq = X[qm] / sc
         dist, idx = tree.query(Zq, k=min(k, len(Zl)))
         h = np.maximum(np.median(dist, 1, keepdims=True), 1e-9); w = np.exp(-(dist / h) ** 2)
         mu = (w[..., None] * Tl[idx]).sum(1) / w.sum(1)[:, None]
@@ -816,7 +852,7 @@ def rrg_experiment(closes, bench, tickers, start='2012-01-06', n=14, k=80, refit
             rot = (100 + rr * math.cos(a1 + dth) - row.x, 100 + rr * math.sin(a1 + dth) - row.y)
             out.append({'t': row.t, 'date': str(row.date)[:10], 'i': row.i, 'x': row.x, 'y': row.y, 'tx': row.tx, 'ty': row.ty,
                         'an_x': m_[0], 'an_y': m_[1], 'lin_x': li[0], 'lin_y': li[1], 'rot_x': rot[0], 'rot_y': rot[1],
-                        'r_next': row.r_next, 'r_analog_direct': ra})
+                        'r_next': row.r_next, 'r_analog_direct': ra, 'sx': sc[0], 'sy': sc[1]})
         if verbose and wi % 104 == 0:
             print('  RRG week', str(day)[:10], 'library', len(Zl), flush=True)
     res = pd.DataFrame(out)
@@ -825,11 +861,11 @@ def rrg_experiment(closes, bench, tickers, start='2012-01-06', n=14, k=80, refit
     for row in res.itertuples(index=False):
         d, rs, x, y, S = series[row.t]
         st = RRGStepper(S, int(row.i))
-        r_inv, pts, grid = st.invert((row.x + row.an_x, row.y + row.an_y), (sc[0], sc[1]), rs[int(row.i)])
+        r_inv, pts, grid = st.invert((row.x + row.an_x, row.y + row.an_y), (row.sx, row.sy), rs[int(row.i)])
         # identifiability: how much the next point moves per 1% of relative return (steeper = better determined)
         j0 = len(grid) // 2
         slope = float(np.hypot(*(pts[j0 + 1] - pts[j0 - 1])) / (grid[j0 + 1] - grid[j0 - 1]) / 100)
-        r_lin, _, _ = st.invert((row.x + row.lin_x, row.y + row.lin_y), (sc[0], sc[1]), rs[int(row.i)])
+        r_lin, _, _ = st.invert((row.x + row.lin_x, row.y + row.lin_y), (row.sx, row.sy), rs[int(row.i)])
         inv.append({'t': row.t, 'date': row.date, 'r_next': row.r_next, 'r_inverted': r_inv, 'r_inverted_linear': r_lin,
                     'r_analog_direct': row.r_analog_direct, 'pts_per_pct': slope})
     return res, pd.DataFrame(inv)
@@ -890,11 +926,9 @@ def rrg_site_file(public, n=14, k=80, weeks_series='2010-01-01', weeks_companies
     closes.update(weekly_closes(public / 't', sorted(lib)))
     ids = list(closes)
     series, df = rrg_rows(closes, bench, ids, n)
-    sc = np.array([df.x.std(), df.y.std(), df.dx.std(), df.dy.std()])
-    Z = df[['x', 'y', 'dx', 'dy']].to_numpy() / sc
+    X = df[RRG_EMB].to_numpy(float)
     weeks = np.sort(df.date.unique())
-    spy = bench[1]
-    spy_mu = float(np.nanmean(np.diff(np.log(spy[np.isfinite(spy)]))))       # expected weekly benchmark log return
+    drift = expanding_log_drift(*bench)           # the benchmark's average weekly log return as known at each week
     out_weeks = weeks[weeks >= np.datetime64(weeks_series)] if isinstance(weeks_series, str) else weeks[-weeks_series:]
     series_ids = {s['id'] for s in D['series']}
     sec_of = {s['id']: s.get('sector') for s in D['series'] if s.get('group') in ('sector-etf', 'site-sector')}
@@ -920,7 +954,8 @@ def rrg_site_file(public, n=14, k=80, weeks_series='2010-01-01', weeks_companies
             lib_m = (dates_np < w) & tx_ok
             if lib_m.sum() < 1000:
                 continue
-            tree, tree_w = KDTree(Z[lib_m]), w; T = df.loc[lib_m, ['tx', 'ty']].to_numpy()
+            sc = causal_scale(df, w)              # metric from the weeks before w only, fixed until the next rebuild
+            tree, tree_w = KDTree(X[lib_m] / sc), w; T = df.loc[lib_m, ['tx', 'ty']].to_numpy()
         qm = (df.date == w).to_numpy()
         if not qm.any():
             continue
@@ -929,7 +964,8 @@ def rrg_site_file(public, n=14, k=80, weeks_series='2010-01-01', weeks_companies
         keep = np.array([(t in series_ids) or recent for t in sub.t])
         if not keep.any():
             continue
-        sub = sub[keep]; Zq = Z[qm][keep]
+        sub = sub[keep]; Zq = X[qm][keep] / sc
+        spy_mu = drift_at(drift, w)
         dist, idx = tree.query(Zq, k=min(k, lib_m.sum()))
         h = np.maximum(np.median(dist, 1, keepdims=True), 1e-9); wgt = np.exp(-(dist / h) ** 2)
         mu = (wgt[..., None] * T[idx]).sum(1) / wgt.sum(1)[:, None]
@@ -957,7 +993,8 @@ def rrg_site_file(public, n=14, k=80, weeks_series='2010-01-01', weeks_companies
            'note': ('Next RS-Ratio / RS-Momentum: kernel-weighted mean of the next steps of the 80 most similar past weekly states '
                     '(position and last step) of any line. The next point is an exact function of next week\'s close (same formula '
                     'as the chart), so the close whose point is nearest the forecast is the price read back from it; plus the '
-                    'benchmark\'s average weekly return.')}
+                    'benchmark\'s average weekly return up to that week. The analogue metric (the spread of each coordinate) '
+                    'is measured on the weeks before each library rebuild only, so no past week uses later data.')}
     (public / 'chaos-rrg.json').write_text(json.dumps(jsonable(doc), separators=(',', ':')), encoding='utf-8')
     return doc
 
@@ -1282,6 +1319,13 @@ def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None, grav
             'fields': ['origin', 'next', 'half80', 'lam', 'close', 'price', 'lo80', 'hi80', 'price_model'],
             'price_models': ['analogues', 'gravity + tidal (short pendulum restoring, long pendulum momentum, sector carried to its companies)'],
             'companies': cos, 'suns': suns, 'market': market,
+            'test_from': P.cals[R['first_test']],
+            'caveats': [
+                f'Origins before {P.cals[R["first_test"]]} are an in-sample warm-up: the coordinates\' typical spreads (the '
+                'analogue metric) were measured on data through that period. Scorecards start there.',
+                'Retrospective sector suns and market centre: like the Rotation chart, they clip each variable to its 3rd–97th '
+                'percentile over the whole history and weight companies by their latest revenue, and the universe is today\'s '
+                'companies — past centres are not exactly what was known then (research spec v5 §1.1; not yet rebuilt as of each date).'],
             'backtest': {'state': summary, 'price': price_sum, 'price_analog': price_analog,
                          'price_model': 'gravity' if gravity_rows else 'analog'},
             'note': ('Each arrow: where the dot\'s next period lands on average among the most similar past states (any company, '
@@ -1290,7 +1334,8 @@ def site_file(R, closes, price_rows, summary, price_sum, keep_periods=None, grav
                      'and not proof of chaos. The price coordinate (stock vs the S&P) and the price come from the gravity + tidal '
                      'model where it covers the company (price_model 1), otherwise from the analogues: close x exp(forecast vs '
                      'the S&P + the S&P\'s past average). '
-                     'Origins before the last are out-of-sample backtest forecasts made with data public at the time.')}
+                     'Origins before the last are walk-forward backtest forecasts whose analogue library held only steps public '
+                     'at the time; see caveats for what is still retrospective.')}
 
 
 def live_price_rows(R, closes):
