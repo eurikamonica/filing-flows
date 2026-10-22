@@ -1,0 +1,42 @@
+# One-off data pull for the valuation-reversion study. Lives only on this temporary branch; results are run artifacts.
+name: Reversion research data
+on:
+  push:
+    branches: [research/reversion-data]
+permissions:
+  contents: read
+jobs:
+  sec:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python fetch.py sec out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sec
+          path: out
+          retention-days: 5
+  yahoo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python fetch.py yahoo ${{ matrix.part }} 4 out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yahoo-${{ matrix.part }}
+          path: out
+          retention-days: 5
