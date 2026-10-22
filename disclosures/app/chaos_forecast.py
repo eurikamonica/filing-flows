@@ -909,9 +909,12 @@ def rrg_experiment(closes, bench, tickers, start='2012-01-06', n=14, k=80, refit
     res = pd.DataFrame(out)
     # price inversion: the forecast point mapped back to next week's relative return through the exact one-step map
     inv = []
+    g0 = []
     for row in res.itertuples(index=False):
         d, rs, x, y, S = series[row.t]
         st = RRGStepper(S, int(row.i))
+        gx, gy = st.points([rs[int(row.i)]])[0]                 # G0: zero relative return, the smoothing carried forward
+        g0.append((gx - row.x, gy - row.y))
         r_inv, pts, grid = st.invert((row.x + row.an_x, row.y + row.an_y), (row.sx, row.sy), rs[int(row.i)])
         # identifiability: how much the next point moves per 1% of relative return (steeper = better determined)
         j0 = len(grid) // 2
@@ -919,6 +922,8 @@ def rrg_experiment(closes, bench, tickers, start='2012-01-06', n=14, k=80, refit
         r_lin, _, _ = st.invert((row.x + row.lin_x, row.y + row.lin_y), (row.sx, row.sy), rs[int(row.i)])
         inv.append({'t': row.t, 'date': row.date, 'r_next': row.r_next, 'r_inverted': r_inv, 'r_inverted_linear': r_lin,
                     'r_analog_direct': row.r_analog_direct, 'pts_per_pct': slope})
+    if len(res):
+        res['g0_x'] = [g[0] for g in g0]; res['g0_y'] = [g[1] for g in g0]
     return res, pd.DataFrame(inv)
 
 
@@ -934,12 +939,21 @@ def rrg_summary(res, inv):
     import collections
     out = {'rows': int(len(res)), 'weeks': int(res.date.nunique()), 'tickers': int(res.t.nunique()),
            'from': res.date.min(), 'to': res.date.max()}
-    for name, (px, py) in {'momentum': (res.x * 0 + (res.x - res.x), res.y * 0), 'rotation': (res.rot_x, res.rot_y),
-                           'linear': (res.lin_x, res.lin_y), 'analog': (res.an_x, res.an_y)}.items():
-        if name == 'momentum':
-            continue
+    models = {'rotation': (res.rot_x, res.rot_y), 'linear': (res.lin_x, res.lin_y), 'analog': (res.an_x, res.an_y)}
+    if 'g0_x' in res:
+        models['g0'] = (res.g0_x, res.g0_y)
+    quad = lambda x, y: np.where((x > 100) & (y > 100), 0, np.where((x > 100) & (y < 100), 1, np.where((x < 100) & (y < 100), 2,
+                                                                                                      np.where((x < 100) & (y > 100), 3, 4))))
+    actual_q = quad(res.x + res.tx, res.y + res.ty)
+    for name, (px, py) in models.items():
         h, mc = cos(px, py)
-        out[name] = {'step_skill_vs_persist': skill(px, py), 'direction_hit': h, 'mean_cosine': mc}
+        out[name] = {'step_skill_vs_persist': skill(px, py), 'direction_hit': h, 'mean_cosine': mc,
+                     'next_quadrant_hit': float((quad(res.x + px, res.y + py) == actual_q).mean())}
+        if name != 'g0' and 'g0_x' in res:          # the mechanical baseline (spec v5 §11.3 G0): skill beyond the smoothing
+            e = (res.tx - px) ** 2 + (res.ty - py) ** 2
+            e0 = (res.tx - res.g0_x) ** 2 + (res.ty - res.g0_y) ** 2
+            out[name]['step_skill_vs_g0'] = float(1 - e.mean() / e0.mean())
+    out['persistence'] = {'next_quadrant_hit': float((quad(res.x, res.y) == actual_q).mean())}
     if len(inv):
         by = collections.defaultdict(list)
         for r in inv.itertuples(index=False):
@@ -954,6 +968,69 @@ def rrg_summary(res, inv):
                                   'median_pts_per_pct': float(inv.pts_per_pct.median()),
                                   'corr_inverted_vs_direct': float(np.corrcoef(inv.r_inverted, inv.r_analog_direct)[0, 1])}
     return out
+
+
+RRG_QUADS = ('leading', 'weakening', 'lagging', 'improving', 'boundary')
+
+
+def rrg_quadrant(x, y):
+    """Leading (x > 100, y > 100), weakening (x > 100, y < 100), lagging, improving; boundary on an axis; None if unknown."""
+    if x is None or y is None or not (np.isfinite(x) and np.isfinite(y)):
+        return None
+    if x == 100 or y == 100:
+        return 'boundary'
+    return ('leading' if y > 100 else 'weakening') if x > 100 else ('improving' if y > 100 else 'lagging')
+
+
+def rrg_transitions(series, groups, start='2010-01-01', horizons=(1, 4, 13)):
+    """Descriptive RRG quadrant transitions (spec v5 §4.4, §6.7 style; status descriptive_only): per group of lines and
+    horizon h, how often a line in quadrant i at week w was in quadrant j at week w + h, pooled over weeks since start,
+    with Wilson 95% intervals (weeks treated as independent — they are not: overlapping windows), the spread of the row
+    shares across calendar years, and the count of non-overlapping h-week windows (the independent periods)."""
+    import crowd_clocks as CC
+    t0 = np.datetime64(start)
+    out = {}
+    for gname, ids in groups.items():
+        g = {}
+        for h in horizons:
+            cnt = {i: {j: 0 for j in RRG_QUADS} for i in RRG_QUADS}
+            by_year = {}
+            first = last = None
+            for t in ids:
+                if t not in series:
+                    continue
+                d, rs, x, y, _ = series[t]
+                for w in range(len(d) - h):
+                    if d[w] < t0:
+                        continue
+                    a, b = rrg_quadrant(x[w], y[w]), rrg_quadrant(x[w + h], y[w + h])
+                    if a is None or b is None:
+                        continue
+                    cnt[a][b] += 1
+                    yr = str(d[w])[:4]
+                    by_year.setdefault(yr, {i: {j: 0 for j in RRG_QUADS} for i in RRG_QUADS})[a][b] += 1
+                    first = d[w] if first is None or d[w] < first else first
+                    last = d[w] if last is None or d[w] > last else last
+            rows = []
+            for i in RRG_QUADS:
+                n = sum(cnt[i].values())
+                cells = []
+                for j in RRG_QUADS:
+                    lo, hi = CC.wilson(cnt[i][j], n)
+                    spread = [yc[i][j] / sum(yc[i].values()) for yc in by_year.values() if sum(yc[i].values()) >= 30]
+                    cells.append({'n': cnt[i][j], 'p': round(cnt[i][j] / n, 4) if n else None, 'lo': lo, 'hi': hi,
+                                  'year_min': round(min(spread), 4) if spread else None, 'year_max': round(max(spread), 4) if spread else None})
+                rows.append({'from': i, 'n': n, 'cells': cells})
+            span = int((last - first).astype('timedelta64[D]').astype(int) // 7) + 1 if first is not None else 0
+            g[str(h)] = {'rows': rows, 'line_weeks': sum(r['n'] for r in rows), 'lines': sum(1 for t in ids if t in series),
+                         'independent_periods': span // h, 'from': str(first)[:10] if first is not None else None,
+                         'to': str(last)[:10] if last is not None else None}
+        out[gname] = g
+    return {'status': 'descriptive_only', 'quadrants': list(RRG_QUADS), 'horizons_weeks': list(horizons), 'groups': out,
+            'note': ('How often a line in one RRG quadrant (around 100 / 100) was in each quadrant h weeks later, pooled over '
+                     'weeks and lines. Rotation is smooth by construction, so staying put and clockwise moves dominate at '
+                     'short horizons; weeks overlap, so the independent periods are the non-overlapping windows. History, not '
+                     'a forecast.')}
 
 
 def rrg_site_file(public, n=14, k=80, weeks_series='2010-01-01', weeks_companies=13, library_tickers=None, summary=None, gravity=None):
@@ -1036,11 +1113,15 @@ def rrg_site_file(public, n=14, k=80, weeks_series='2010-01-01', weeks_companies
             lines.setdefault(row.t, []).append([wi, r4(row.x, 3), r4(row.y, 3), r4(row.x + m_[0], 3), r4(row.y + m_[1], 3), r4(r_inv, 5),
                                                 r4(c_now, 4), r4(c_now * math.exp(r_inv + spy_mu), 4), 0])
     rrg_bands(lines, series, grid0)
+    grp = {s['id']: s.get('group') for s in D['series']}
+    transitions = rrg_transitions(series, {
+        'industry_vs_market': [t for t in series if grp.get(t) in ('sector-etf', 'site-sector')],
+        'company_vs_market': [t for t in series if t not in grp]})
     days = [str(grid0 + 7 * i) for i in range(int((weeks[-1] - grid0).astype('timedelta64[D]').astype(int) // 7) + 1)]
     doc = {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'freq': 'w', 'n': n, 'k': k,
            'weeks': days, 'fields': ['week', 'x', 'y', 'next_x', 'next_y', 'rel_logret', 'close', 'close_next', 'model', 'half80_x', 'half80_y'],
            'models': ['analogues in RRG space, price read back', 'gravity + tidal price forecast, RRG step computed from it'],
-           'lines': lines, 'backtest': summary or {},
+           'lines': lines, 'backtest': summary or {}, 'transitions': transitions,
            'note': ('Next RS-Ratio / RS-Momentum: kernel-weighted mean of the next steps of the 80 most similar past weekly states '
                     '(position and last step) of any line. The next point is an exact function of next week\'s close (same formula '
                     'as the chart), so the close whose point is nearest the forecast is the price read back from it; plus the '

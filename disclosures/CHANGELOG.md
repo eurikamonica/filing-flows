@@ -1,5 +1,13 @@
 # Changelog
 
+## RRG: the mechanical baseline and quadrant transitions (research specification v5, P1-05)
+
+The weekly RRG backtest now scores the mechanical step (G0: no relative move next week, the smoothing carried
+forward) beside the analogues, rotation continuation and the linear map, with each model's skill beyond G0 and how
+often each gets next week's quadrant right (staying put included). `chaos-rrg.json` gains `transitions`: descriptive
+quadrant-to-quadrant shares after 1, 4 and 13 weeks for sectors / sector ETFs and for companies against the S&P 500,
+with Wilson intervals, the range across years and the count of non-overlapping windows; shown under the RRG.
+
 ## Rotation axis registry (research specification v5, P0-02)
 
 `app/axis_registry.py` gives every Rotation X/Y/Z variable one contract — cadence, when an observation is public

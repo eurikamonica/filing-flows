@@ -271,5 +271,41 @@ class RRGNoLookAhead(unittest.TestCase):
         self.assertGreater(checked, 1000)
 
 
+@unittest.skipIf(np is None, 'numpy / scikit-learn not installed')
+class RRGBaselines(unittest.TestCase):
+    """Spec v5 §11.3 G0: the mechanical step (zero relative return, smoothing carried forward) is scored beside the
+    analogues; §4.4: descriptive quadrant transitions with sample sizes."""
+
+    def test_g0_and_quadrant_scores(self):
+        w = RRGNoLookAhead().world(W=420, names=12)
+        d, closes, bench = w
+        res, inv = CF.rrg_experiment(closes, bench, sorted(closes), start='2012-01-06', verbose=False)
+        row = res.iloc[100]
+        S = CF.rrg_series(100 * closes[row.t][1] / bench[1], 14)
+        gx, gy = CF.RRGStepper(S, int(row.i)).points([100 * closes[row.t][1][int(row.i)] / bench[1][int(row.i)]])[0]
+        self.assertAlmostEqual(row.g0_x, gx - row.x, places=9)
+        summ = CF.rrg_summary(res, inv)
+        for k in ('g0', 'analog', 'rotation', 'linear'):
+            self.assertTrue(0 <= summ[k]['next_quadrant_hit'] <= 1)
+        self.assertIn('step_skill_vs_g0', summ['analog'])
+        self.assertNotIn('step_skill_vs_g0', summ['g0'])
+        self.assertIn('next_quadrant_hit', summ['persistence'])
+
+    def test_transitions(self):
+        d = np.datetime64('2011-01-07') + 7 * np.arange(6)
+        x = np.array([101., 102, 99, 98, 99, 101]); y = np.array([101., 99, 99, 101, 102, 103])
+        tr = CF.rrg_transitions({'A': (d, None, x, y, None)}, {'g': ['A']}, start='2011-01-01', horizons=(1,))
+        rows = {r['from']: r for r in tr['groups']['g']['1']['rows']}
+        q = CF.RRG_QUADS
+        self.assertEqual(rows['leading']['cells'][q.index('weakening')]['n'], 1)     # 101/101 → 102/99
+        self.assertEqual(rows['weakening']['cells'][q.index('lagging')]['n'], 1)
+        self.assertEqual(rows['lagging']['cells'][q.index('improving')]['n'], 1)
+        self.assertEqual(rows['improving']['cells'][q.index('improving')]['n'], 1)
+        self.assertEqual(rows['improving']['cells'][q.index('leading')]['n'], 1)
+        self.assertEqual(tr['groups']['g']['1']['line_weeks'], 5)
+        self.assertEqual(tr['status'], 'descriptive_only')
+        self.assertEqual(CF.rrg_quadrant(100, 101), 'boundary')
+
+
 if __name__ == '__main__':
     unittest.main()
