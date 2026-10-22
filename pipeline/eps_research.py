@@ -190,24 +190,22 @@ def build(consensus_dir, market_file, out_path, gaap_store=None):
             gaap_company_count += 1
             for year in (2024, 2025, 2026):
                 for z in backtest(records, year)["rows"]:
-                    gaap_rows.append({"year": year, "cik": p.stem,
-                                      "model_ae": abs(z["actual"]-z["prediction"]),
-                                      "baseline_ae": abs(z["actual"]-z["seasonal"])})
+                    gaap_rows.append({**z, "year": year, "cik": p.stem})
+        from .eps_gaap import summary
+
         def gaap_metrics(rows):
-            n = len(rows)
-            if not n:
+            s = summary(rows)
+            if not s.get("n"):
                 return {"n": 0, "model_mae": None, "seasonal_mae": None}
-            return {"n": n, "companies": len({x["cik"] for x in rows}),
-                    "model_mae": round(sum(x["model_ae"] for x in rows)/n, 5),
-                    "seasonal_mae": round(sum(x["baseline_ae"] for x in rows)/n, 5)}
+            return {**s, "companies": len({x["cik"] for x in rows}), "model_mae": s["mae_model"], "seasonal_mae": s["mae_baseline"]}
         report["gaap_first_filed_backtest"] = {
             "source": "data branch / eps-gaap; first-filed SEC 10-Q and 10-K",
-            "status": "FIRST_FILED_DATE_WALK_FORWARD_WITH_SPLIT_REGIME_ABSTENTION",
+            "status": "FIRST_FILED_DATE_WALK_FORWARD_Q4_DERIVED_EPS_CHECKED",
             "companies_stored": gaap_company_count,
             "overall": gaap_metrics(gaap_rows),
             "by_year": {str(y): gaap_metrics([x for x in gaap_rows if x["year"]==y])
                         for y in (2024, 2025, 2026)},
-            "note": "Unadjusted original GAAP dollar-per-share basis; no Q4 EPS inferred; comparator mismatch (>4x recent EPS) abstained; no adjusted Street EPS in this benchmark."
+            "note": "GAAP diluted EPS as first filed; fourth quarters derived from the 10-K; EPS that disagrees with net income / shares or is 50x the company's usual size dropped; headline errors are medians and relative errors (a few huge figures dominate dollar means)."
         }
     output = Path(out_path)
     output.parent.mkdir(parents=True, exist_ok=True)

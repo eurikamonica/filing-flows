@@ -794,14 +794,14 @@
   }
   // four groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
-    ['Earnings', [['', 'Earnings'], ['eps', 'EPS forecast'], ['x-earnings'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
+    ['Earnings', [['', 'Earnings'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
     ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['x-quality']]],
     ['Valuation & expectations', [['value', 'Valuation'], ['x-fairvalue'], ['consensus', 'Consensus'], ['revisions', 'Revisions']]],
     ['Relationships & model', [['links', 'Customers, suppliers & model'], ['x-insiders']]],
   ];
   function tabGroups() {
     const ext = new Map(EXT_VIEWS.map((v) => ['x-' + v.id, v.label]));
-    const used = new Set();
+    const used = new Set(['x-earnings']);                   // the earnings preview lives inside the EPS forecast view
     const groups = TAB_GROUPS.map(([label, items]) => [label, items.map(([k, l]) => {
       if (k.startsWith('x-')) { if (!ext.has(k)) return null; used.add(k); return [k, l || ext.get(k)]; }
       return [k, l];
@@ -811,7 +811,7 @@
   }
   const companyTabs = (cik, active) => {
     const groups = tabGroups();
-    const cur = groups.find(([, items]) => items.some(([k]) => k === active)) || groups[0];
+    const cur = groups.find(([, items]) => items.some(([k]) => k === (active === 'x-earnings' ? 'eps' : active))) || groups[0];
     setTimeout(() => $$('.co-tabs a.on, .co-subtabs a.on').forEach((a) => {   // phones: the current tab in view
       const bar = a.parentElement;
       if (bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, a.offsetLeft - bar.offsetLeft - 24);
@@ -889,9 +889,19 @@
     const body = $('#body');
     if (which === 'debt') return debtSection(body, cik, here);
     if (which === 'consensus') return consensusSection(body, cik, here);
-    if (which === 'eps') {
-      if (window.FFEPSResearch && ticker) return window.FFEPSResearch.mount(body, {ticker, cik: p.cik, here});
-      body.innerHTML = '<p class="muted">EPS forecast unavailable: no traded ticker or required EPS model script.</p>';
+    if (which === 'eps') {                                     // web/eps-research.js, with the hub's earnings preview inside
+      const preview = async (el) => {                          // only when a report is near (the hub has a document)
+        const v = EXT_VIEWS.find((x) => x.id === 'earnings');
+        if (!v || !ticker) return false;
+        await loadExtScript(v.script);
+        const P = window[v.global];
+        const r = await fetch(`disclosures/data/research/earnings/c/${P.fname ? P.fname(ticker) : ticker}.json`, { cache: 'no-cache' }).catch(() => null);
+        if (!r || !r.ok) return false;
+        if (P.renderDoc) P.renderDoc(el, await r.json()); else await P.render(el, { cik: p.cik, ticker, company: c, here, hub: 'disclosures/' });
+        return true;
+      };
+      if (window.FFEPSResearch) return window.FFEPSResearch.mount(body, { ticker, cik: p.cik, here, preview });
+      body.innerHTML = '<p class="muted">The EPS forecast script did not load.</p>';
       return;
     }
     if (which === 'posts') return postsSection(body, c, ticker, here);

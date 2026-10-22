@@ -1,6 +1,7 @@
-/* Actual-source company EPS research, refreshed with the site's published consensus,
- * Smart Money and macro snapshots. Forecast basis: Yahoo analyst/reported EPS (not SEC GAAP).
- * Avoids claiming measured EPS skill for price-alpha, Polymarket or rating signals.
+/* The company page's EPS forecast (#c-<cik>-eps): one GAAP diluted EPS estimate for the next quarter with its 80%
+ * range and the chance it beats last year (pipeline/eps_blend.py: fundamentals + consensus converted to GAAP +
+ * guidance), the forecasts frozen before each report and their scores, the Disclosure Hub's earnings preview, and the
+ * details folded below. Wall Street's own numbers are on their adjusted basis and labelled so.
  */
 (function () {
   'use strict';
@@ -178,270 +179,135 @@
     }
     return signals;
   }
-  function el(tag, value, klass) {
-    const d = document.createElement(tag); if (klass) d.className = klass;
-    d.textContent = value; return d;
-  }
-  function line(root, a, b) {
-    const x=el('div','', 'ff-eps-row');x.append(el('span',a),el('strong',b));root.append(x);
-  }
-  function section(root, title) {root.append(el('h3',title));}
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const usd = v => num(v) ? (v < 0 ? '−$' : '$') + Math.abs(v).toFixed(2) : '—';
+  const pct0 = v => num(v) ? Math.round(100 * v) + '%' : '—';
+  const dateL = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? new Date(Date.UTC(+m[1], +m[2]-1, +m[3])).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'}) : '—'; };
+  const rows = (pairs) => pairs.filter(Boolean).map(([a, b]) => `<div class="ff-eps-row"><span>${esc(a)}</span><strong>${b}</strong></div>`).join('');
   async function get(url) {
     const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json();
   }
-  function draw(root, c, f, score, signals, peers, gaap, research, fundamental, fundamentalStats) {
-    root.textContent='';
-    section(root,'Fundamental EPS V4 · income statement, regime & event model');
-    const fm = fundamental?.forecast;
-    if (fm) {
-      const d = fm.inputs || {}, risk = fm.event_risk || {}, dist = fm.distribution || {};
-      line(root, 'Fundamental GAAP EPS estimate', money(fm.point));
-      line(root, 'Historical reliability gate', String(fm.promotion_gate?.status || 'NOT_EVALUATED').replaceAll('_',' '));
-      line(root, 'Company business stage', String(fm.company_stage || 'unknown').replaceAll('_',' '));
-      line(root, 'Target quarter', fm.target_end || 'N/A');
-      line(root, 'Forecast quarterly revenue', num(d.revenue) ? (d.revenue/1e9).toFixed(2) + ' billion USD' : 'N/A');
-      line(root, 'Operating margin', percent(d.operating_margin));
-      line(root, 'Other income / revenue', percent(d.nonoperating_margin));
-      line(root, 'Normalized effective tax rate', percent(d.normalized_tax_rate));
-      line(root, 'Projected diluted share count', num(d.diluted_shares) ? (d.diluted_shares/1e9).toFixed(3) + ' billion' : 'N/A');
-      line(root, 'Same-quarter last year GAAP EPS', money(fm.eps_gaap_last_year));
-      line(root, 'Tax-normalized year-ago GAAP EPS', money(fm.normalized_eps_last_year));
-      line(root, 'GAAP EPS YoY change', percent(fm.predicted_eps_growth_gaap_yoy));
-      line(root, 'Tax-normalized EPS YoY change', percent(fm.predicted_eps_growth_normalized_yoy));
-      section(root, 'Operating-driver stress scenarios (not statistical P10/P90)');
-      for (const kind of ['bear','base','bull']) {
-        const x = fm.scenarios?.[kind]; if(!x) continue;
-        line(root, kind.toUpperCase() + ' scenario EPS', money(x.eps) +
-          ' (revenue ' + percent(x.revenue_shock) + '; margin ' + percent(x.margin_shock) + ')');
-      }
-      section(root, 'Estimated GAAP EPS distribution (empirical, uncalibrated)');
-      line(root, 'Historical released-before-target residuals', String(dist.n || 0));
-      if(num(dist.p10) && num(dist.p90)) {
-        line(root, 'P10 / P50 / P90 indicative EPS', money(dist.p10)+' / '+money(dist.p50)+' / '+money(dist.p90));
-        line(root, 'Indicative P(EPS increases YoY)', percent(dist.p_yoy_increase));
-      } else {
-        root.append(el('p','Insufficient historical residuals for a distribution; probability withheld.','muted'));
-      }
-      line(root, 'Historical unusually large tax quarters', String(risk.historical_tax_anomalies || 0));
-      line(root, 'Indicative future tax-event scenario weight', percent(risk.indicative_probability));
-      line(root, 'Confirmed published event overlays', String((fm.confirmed_events||[]).length));
-      for (const e of fm.confirmed_events||[]) {
-        const link=el('a','Confirmed published event ('+money(e.eps_delta)+' per share) ↗');
-        link.href=e.source_url; link.target='_blank'; link.rel='noopener noreferrer'; root.append(link);
-      }
-      if(fundamental.backtest?.n) {
-        section(root, 'This issuer: first-filed fundamental GAAP holdout');
-        line(root, 'Eligible quarterly EPS outcomes', String(fundamental.backtest.n));
-        line(root, 'Fundamental model MAE', money(fundamental.backtest.mae_model));
-        line(root, 'Year-ago quarterly GAAP EPS baseline MAE', money(fundamental.backtest.mae_seasonal));
-        const p=fundamental.backtest.probability_validation;
-        if(p?.n) {
-          line(root, 'Historical empirical interval coverage (nominal 80%)', percent(p.empirical_80pct_interval_coverage));
-          line(root, 'Historical GAAP YoY event Brier score', num(p.brier_gaap_yoy_direction)?p.brier_gaap_yoy_direction.toFixed(4):'N/A');
-        }
-      }
-      const overall=fundamentalStats||{};
-      section(root,'Fundamental model · actual SEC holdout across issuers');
-      if(overall.n){
-        line(root,'Evaluated company quarters',String(overall.n));
-        line(root,'Companies with validated fundamental inputs',String(overall.companies||0));
-        line(root,'Fundamental EPS MAE',money(overall.mae_model));
-        line(root,'Prior-year comparable EPS MAE',money(overall.mae_seasonal));
-        const c=overall.probability_validation||{};
-        line(root,'Retrospective empirical interval count',String(c.n||0));
-        if(num(c.coverage_80))line(root,'Nominal 80% interval realized coverage',percent(c.coverage_80));
-        if(num(c.brier_yoy))line(root,'GAAP EPS YoY growth Brier score',c.brier_yoy.toFixed(4));
-      } else root.append(el('p','Live fundamental holdout sample not yet staged; no quantitative accuracy claim.','muted'));
-      root.append(el('p','SEC CompanyFacts: first-filed direct-quarter revenue, operating income, pretax/tax, net income, diluted shares and EPS. Past abnormal tax expense is normalized; future events are only overlaid with dated documentary evidence. Empirical percentiles are NOT independently calibrated, and market/macro/13F signals are not assigned untested EPS coefficients.','muted'));
-    } else {
-      root.append(el('p','N/A — historical first-filed operating fundamentals are incomplete or comparable GAAP quarters are insufficient. Older EPS-only baseline remains below.','muted'));
-    }
-    section(root,'SEC GAAP diluted EPS · seasonal model baseline');
-    if (gaap?.forecast) {
-      const g=gaap.forecast;
-      line(root,'GAAP EPS point estimate',money(g.eps_point));
-      line(root,'GAAP same-quarter last year',money(g.lag4_eps));
-      line(root,'GAAP quarters used for training',String(g.train_quarters));
-      const u=g.uncertainty || {};
-      line(root,'Empirical EPS residual range',u.p10!=null&&u.p90!=null?
-        money(u.p10)+' to '+money(u.p90)+' (not calibrated)':'N/A — insufficient residuals');
-      if(gaap.backtest?.n) {
-        line(root,'2025 GAAP held-out quarters (this company)',String(gaap.backtest.n));
-        line(root,'2025 GAAP model MAE',money(gaap.backtest.model_mae));
-        line(root,'2025 same-quarter baseline MAE',money(gaap.backtest.seasonal_mae));
-      }
-      root.append(el('p','Official SEC GAAP EPS, directly reported for a quarter. Prediction retrains as first-filed 10-Q/10-K EPS becomes public. A missing direct Q4 is not filled by subtracting annual EPS; this may cause N/A. Retrospective walk-forward uses only earlier SEC filing dates, not future restatements.','muted'));
-    } else root.append(el('p','N/A — SEC GAAP EPS history is not available or lacks a continuous, validated quarterly series.','muted'));
-    section(root, 'Next reported EPS · probabilistic research');
-    root.append(el('p','Live source: analyst EPS consensus + shrinkage correction from the company’s previously released EPS surprises. Adjusted/reporting EPS basis; NOT SEC GAAP diluted EPS.','muted'));
-    if (!f) {root.append(el('p','Unavailable: no current analyst EPS observations or the source is not point-in-time eligible.','muted'));return;}
-    line(root,'Report period', f.period || 'N/A');
-    line(root,'Street EPS · '+f.analyst_n+' analysts',money(f.consensus));
-    line(root,'Bias-adjusted EPS point estimate',money(f.median));
-    line(root,'Prior surprise observations · incremental training',String(f.past_n));
-    line(root,'Estimated YoY EPS change',percent(f.yoy));
-    if(num(f.bear)&&num(f.bull)) {
-      section(root,'Analyst-range scenarios · not probability quantiles');
-      line(root,'Lower analyst estimate + bias',money(f.bear));
-      line(root,'Central forecast + bias',money(f.median));
-      line(root,'Upper analyst estimate + bias',money(f.bull));
-      root.append(el('p','Scenarios use observed Street analyst low / mean / high and a historical bias correction. They are not calibrated P10/P50/P90 or simulated economic outcomes.','muted'));
-    }
-    line(root,'Empirical P(beat Street EPS) · uncalibrated',percent(f.beat_rate));
-    if (f.lower_sensitivity !== null)line(root,'Historical error sensitivity · NOT P10/P90',money(f.lower_sensitivity)+' to '+money(f.upper_sensitivity));
-    root.append(el('p','No validated prediction interval or company-specific calibrated win rate is claimed. Each new published result updates the historical correction and next scheduled consensus refresh.','muted'));
-    section(root,'Already released peer earnings · availability gated');
-    for(const kind of ['upstream','downstream','subindustry','industry']){
-      const z=peers?.[kind];
-      line(root,kind+' reported EPS / estimate surprise',z&&z.count?
-        percent(z.mean_surprise)+' · '+z.count+' company reports':'N/A — none reported / insufficient source');
-    }
-    root.append(el('p','Signals activate only after a peer’s earnings report is published; suppliers and customers are inferred from the public chain map and should not be treated as audited commercial counterparties. Unannounced peers do not enter the estimate.','muted'));
-    section(root,'Smart Money · Market Consensus · Rating change');
-    line(root,'Smart Money score (stock alpha, not EPS)',num(signals.smart?.score)?signals.smart.score.toFixed(1):'N/A');
-    line(root,'13F group score (not EPS)',num(signals.smart?.f13)?signals.smart.f13.toFixed(1):'N/A');
-    line(root,'Analyst rating changes in available history',signals.ratings.upgrades+' upgrades / '+signals.ratings.downgrades+' downgrades');
-    const rv=signals.ratings.revision_30d;
-    line(root,'EPS estimate revisions (30d)',rv ? (rv.upLast30days||0)+' up / '+(rv.downLast30days||0)+' down':'N/A');
-    line(root,'Polymarket beat contract · latest timestamped Yes quote',
-      signals.polymarket ? percent(signals.polymarket.p)+' ('+signals.polymarket.observed_at+')' :
-      'N/A — no eligible earnings contract');
-    if(signals.polymarket)line(root,'Event contract basis / strike',
-      String(signals.polymarket.basis||'unknown')+
-      (num(signals.polymarket.eps_strike)?' / '+money(signals.polymarket.eps_strike):''));
-    if (signals.polymarket?.url) {const link=el('a','Related prediction-market contract ↗');link.href=signals.polymarket.url;link.rel='noopener';link.target='_blank';root.append(link);}
-    section(root,'Kalshi · publicly quoted business scenarios');
-    if(signals.kalshi?.length) for(const m of signals.kalshi) {
-      const top=m.outcomes.filter(o=>num(o.p)).slice(0,2)
-        .map(o=>o.name+': '+percent(o.p)).join(' / ');
-      line(root,m.title,top || (num(m.median)?'Median '+String(m.median):'View market'));
-      if(m.url){const link=el('a','Kalshi contract ↗');link.href=m.url;link.target='_blank';link.rel='noopener';root.append(link);}
-    }
-    else root.append(el('p','No related Kalshi KPI / earnings-call contracts available.','muted'));
-    root.append(el('p','Event probabilities and KPI values are not EPS forecasts; apply only to their exact contract resolution. No extrapolation to EPS without measured predictive lift.','muted'));
-    section(root,'FRED macro context · joint scenario inputs');
-    for(const id of ['DGS2','DGS10','VIXCLS','UNRATE','BAMLH0A0HYM2']) {
-      const x=signals.fred?.[id];line(root,id,x?x.value+' ('+x.period+')':'N/A');
-    }
-    root.append(el('p','Market, rating and macro signals are displayed as contextual evidence only; no unvalidated EPS coefficients are assigned. Historical FRED series are not ALFRED vintages, so they are excluded from the walk-forward EPS score.','muted'));
-    section(root,'Company EPS historical record · independent of Smart Money alpha');
-    if (score.tests.length) {
-      line(root,'Retrospective test observations',String(score.tests.length));
-      line(root,'Bias-corrected model MAE',money(score.mae));
-      line(root,'Uncorrected analyst estimate MAE',money(score.baseline_mae));
-      const table=el('table','', 'ff-eps-table'), head=el('tr','');
-      for (const s of ['Reported','Pre-report proxy','Actual','Error'])head.append(el('th',s));
-      const thead=document.createElement('thead');thead.append(head);table.append(thead);
-      const tbody=document.createElement('tbody');
-      score.tests.slice(-6).forEach(x=>{const tr=el('tr','');for (const v of [day(x.reported),money(x.forecast),money(x.actual),money(x.error)])tr.append(el('td',v));tbody.append(tr)});
-      table.append(tbody);root.append(table);
-    } else root.append(el('p','Not enough historical EPS surprises for a chronological retrospective test.','muted'));
-    section(root,'Wide-universe EPS retrospective · model vs Street');
-    const u=research?.overall;
-    if(u?.n){
-      line(root,'Cross-company retrospective observations',String(u.n));
-      line(root,'Bias-corrected EPS MAE',money(u.mae_model));
-      line(root,'Uncorrected analyst EPS MAE',money(u.mae_consensus));
-      line(root,'Relative MAE change',percent(u.relative_mae_improvement));
-      line(root,'Covered companies',String(research.companies_scored||0));
-      const r95=u.p95_paired_trimmed||{};
-      section(root,'Robustness / comparability checks');
-      line(root,'Median model absolute EPS error',money(u.median_ae_model));
-      line(root,'Median Street absolute EPS error',money(u.median_ae_consensus));
-      line(root,'Largest paired-error tail excluded',r95.excluded!=null?
-        r95.excluded+' of '+u.n+' (top 5%)':'N/A');
-      line(root,'Paired-tail trimmed model / Street MAE',num(r95.model_mae)?
-        money(r95.model_mae)+' / '+money(r95.consensus_mae):'N/A');
-      const stable=u.eps_under_20_cohort||{};
-      line(root,'Comparable |EPS| <= $20 cohort',stable.n!=null?
-        stable.n+' observations':'N/A');
-      line(root,'|EPS| <= $20 model / Street MAE',num(stable.model_mae)?
-        money(stable.model_mae)+' / '+money(stable.consensus_mae):'N/A');
-      const scaled=u.winsorized_scaled_abs_error||{};
-      line(root,'Scale-normalized absolute error · model / Street',num(scaled.model)?
-        scaled.model.toFixed(3)+' / '+scaled.consensus.toFixed(3):'N/A');
-      root.append(el('p','Original untrimmed MAE is retained. Paired 95% trimming applies one shared predeclared threshold to model and Street; the under-$20 cohort is a descriptive comparability slice, not the full-universe result.','muted'));
+  const PART = {fundamental: 'Fundamentals (revenue, margins, tax, shares)', street: 'Wall Street consensus, converted to GAAP (with the usual beat)', guidance: 'Company guidance, on the GAAP basis'};
 
-      const sector=research.by_sector?.[c?.sector];
-      if(sector?.n)line(root,'Same-sector evaluation',sector.n+' observations · MAE '+money(sector.mae_model));
-      const by=research.by_year || {};
-      const table=el('table','', 'ff-eps-table'),hd=el('tr','');
-      ['Report year','Observations','Model MAE','Street MAE','Change'].forEach(x=>hd.append(el('th',x)));
-      const thead=el('thead','');thead.append(hd);table.append(thead);
-      const tbody=el('tbody','');
-      Object.entries(by).forEach(([year,m])=>{
-        const tr=el('tr','');[year,String(m.n),money(m.mae_model),
-          money(m.mae_consensus),percent(m.relative_mae_improvement)].forEach(v=>tr.append(el('td',v)));
-        tbody.append(tr);
-      });
-      table.append(tbody);root.append(table);
-    }else root.append(el('p','Wide-universe research history awaiting publication.','muted'));
-    section(root,'Verified filing-date GAAP EPS walk-forward · 2024–2026');
-    const gb=research?.gaap_first_filed_backtest;
-    if(gb?.overall?.n){
-      line(root,'Evaluated actual SEC EPS quarters',String(gb.overall.n));
-      line(root,'Companies with stored filings',String(gb.companies_stored));
-      line(root,'Model SEC diluted EPS MAE',money(gb.overall.model_mae));
-      line(root,'Last-year same-quarter MAE',money(gb.overall.seasonal_mae));
-      const tb=el('table','', 'ff-eps-table'),the=el('thead',''),thr=el('tr','');
-      ['Fiscal period end year','N','Model MAE','Seasonal MAE'].forEach(x=>thr.append(el('th',x)));the.append(thr);tb.append(the);
-      const body=el('tbody','');
-      Object.entries(gb.by_year||{}).forEach(([y,m])=>{
-        const tr=el('tr','');[y,String(m.n),money(m.model_mae),money(m.seasonal_mae)]
-          .forEach(v=>tr.append(el('td',v)));body.append(tr);
-      });tb.append(body);root.append(tb);
-      root.append(el('p','Source: SEC first-filed quarterly XBRL. Missing standalone Q4 is excluded, not imputed; extreme historical split-regime incompatibility is abstained. This backtest is separate from the adjusted/Street EPS series.','muted'));
-    }else root.append(el('p','SEC-wide first-filed GAAP EPS backtest not published yet.','muted'));
-    section(root,'Resolved Polymarket beat-event backtest · separate from EPS MAE');
-    const pm=research?.resolved_prediction_markets;
-    if(pm?.n){
-      line(root,'Resolved contracts',String(pm.n));
-      line(root,'Polymarket Brier (lower is better)',Number(pm.brier).toFixed(4));
-      line(root,'Constant base-rate Brier',Number(pm.base_rate_brier).toFixed(4));
-      line(root,'Relative Brier reduction',percent(1-pm.brier/pm.base_rate_brier));
-    }else root.append(el('p','Market calibration report has not been staged.','muted'));
-    section(root,'Data breadth & release-time eligibility');
-    const matrix=[
-      ['SEC first-filed diluted EPS',gaap?.forecast?.train_quarters||0,'SEC 10-Q / 10-K','GAAP'],
-      ['Analyst EPS consensus',f?.analyst_n||0,'Current archived consensus','Non-GAAP/Street'],
-      ['Prior EPS surprises',f?.past_n||0,'Reported dates','Retrospective estimates'],
-      ['Upstream reported EPS',peers?.upstream?.count||0,'Reported peers only','Scenario input'],
-      ['Downstream reported EPS',peers?.downstream?.count||0,'Reported peers only','Scenario input'],
-      ['Subindustry EPS',peers?.subindustry?.count||0,'Reported peers only','Scenario input'],
-      ['Smart-money votes',signals.smart?.n||0,'Published transactions','Stock alpha'],
-      ['Analyst rating actions',signals.ratings.upgrades+signals.ratings.downgrades,'Published actions','Sentiment'],
-      ['Polymarket EPS event',signals.polymarket?1:0,'Timestamped quotes','Binary event'],
-      ['Kalshi business events',signals.kalshi?.length||0,'Current market quotes','Company KPI'],
-      ['FRED macro series',Object.keys(signals.fred||{}).length,'Latest revised snapshot','Context only'],
-    ];
-    const mt=el('table','', 'ff-eps-table'),mh=el('tr','');
-    ['Feature family','Available observations','Time rule','Target'].forEach(x=>mh.append(el('th',x)));
-    const mhead=el('thead','');mhead.append(mh);mt.append(mhead);
-    const mb=el('tbody','');matrix.forEach(row=>{const tr=el('tr','');row.forEach(x=>tr.append(el('td',String(x))));mb.append(tr)});
-    mt.append(mb);root.append(mt);
-    root.append(el('p','Methodological restriction: historical Yahoo analyst estimates and adjusted EPS have not been independently archived at their original prediction cutoffs. This is NOT a verified point-in-time out-of-sample backtest or an investment performance record.','muted'));
+  // the one answer: our GAAP estimate, its range, the probability against last year, and what it is made of
+  function headline(h, track, oos, card, gaap, f) {
+    if (!h) {
+      const ref = gaap?.reference;
+      const g = gaap?.forecast;
+      return `<div class="ff-eps-head"><div class="ff-eps-kicker">GAAP diluted EPS · next quarter</div>
+        <p class="muted">${g ? `Seasonal estimate ${usd(g.eps_point)} for the quarter ending ${esc(dateL(g.target_end))} (this company's year-ago trend model beat “same quarter last year” in its own walk-forward).`
+          : 'No estimate for this company yet: its filings do not give eight comparable quarters of revenue, profit, tax and shares, and there is no analyst consensus to convert.'}
+          ${ref ? ` Same quarter last year: <b>${usd(ref.year_ago_eps)}</b>; last quarter: ${usd(ref.last_eps)}.` : ''}
+          ${f ? ` Wall Street expects ${usd(f.consensus)} on its adjusted basis (${f.analyst_n} analysts).` : ''}</p></div>`;
+    }
+    const st = h.street, g = h.guidance, w = h.weights || {};
+    const parts = Object.entries(h.components || {}).map(([k, v]) => `<li><span>${esc(PART[k] || k)}</span><b>${usd(v)}</b><i>${pct0(w[k])} of the estimate</i></li>`).join('');
+    const p = oos?.paired;
+    const trackLine = track?.n ? `On this company's own filings, walked forward quarter by quarter, the fundamental model came closer than “same quarter last year” in <b>${pct0(track.closer_share)}</b> of ${track.n} quarters.` : '';
+    const oosLine = p?.n ? ` Across ${p.n} company-quarters with a consensus (fitted on half the companies, scored on the other half), this estimate missed by ${pct0(p.blend.rel_error_model)} of a company's usual EPS, the converted consensus by ${pct0(p.street.rel_error_model)}, “same quarter last year” by ${pct0(p.blend.rel_error_baseline)}.` : '';
+    const cardLine = card?.scored ? ` Forecasts frozen before the report so far: ${card.scored} scored, closer than last year in ${pct0(card.vs_year_ago?.closer_share)}.` : (card?.frozen ? ` ${card.frozen} forecasts are frozen before their reports and will be scored as the 10-Qs are filed.` : '');
+    return `<div class="ff-eps-head">
+      <div class="ff-eps-kicker">GAAP diluted EPS · quarter ending ${esc(dateL(h.target_end))}</div>
+      <div class="ff-eps-big"><div><span>Our estimate</span><b>${usd(h.point)}</b></div>
+        <div><span>80% range</span><b class="ff-eps-mid">${usd(h.p10)} – ${usd(h.p90)}</b></div>
+        <div><span>Above last year's ${usd(h.year_ago)}</span><b class="ff-eps-mid">${pct0(h.p_up)}</b></div></div>
+      ${st ? `<p class="ff-eps-street">Wall Street: <b>${usd(st.consensus)}</b> adjusted EPS (${esc(st.analysts || '—')} analysts${st.next_report ? `, report expected ${esc(dateL(st.next_report))}` : ''})${num(st.gap) ? ` — this company's adjusted EPS has run ${usd(Math.abs(st.gap))} ${st.gap >= 0 ? 'above' : 'below'} its GAAP EPS, so about <b>${usd(st.gaap_equivalent)}</b> GAAP${num(st.beat) && Math.abs(st.beat) >= .005 ? `; companies have ${st.beat > 0 ? 'beaten' : 'missed'} their consensus by about ${usd(Math.abs(st.beat))} for a company this size, which puts it at ${usd(st.gaap_equivalent + st.beat)}` : ''}` : ''}.</p>` : ''}
+      ${g ? `<p class="ff-eps-street">Company guidance (${esc(g.kind)}, ${esc(g.basis)} basis, release of ${esc(dateL(g.filed))}): <b>${usd(g.value)}</b> GAAP. <span class="muted">“${esc(String(g.text).slice(0, 220))}”</span>${g.url ? ` <a href="${esc(g.url)}" target="_blank" rel="noopener">release ↗</a>` : ''}</p>` : ''}
+      <ul class="ff-eps-parts">${parts}</ul>
+      <p class="muted ff-eps-track">${trackLine}${oosLine}${cardLine} The range and probability come from these walk-forward misses, sized to the company's usual EPS; they held 80% of the time out of sample.</p>
+    </div>`;
   }
+
+  function ledgerTable(rows) {
+    if (!rows || !rows.length) return '';
+    return `<table class="ff-eps-table"><thead><tr><th>Quarter</th><th>Frozen</th><th>Estimate</th><th>80% range</th><th>Last year</th><th>Actual</th></tr></thead><tbody>${
+      rows.map(r => `<tr><td>${esc(dateL(r.target_end))}</td><td>${esc(dateL(r.frozen_at))}${r.locked ? '' : ' <span class="muted">(updating)</span>'}</td><td>${usd(r.point)}</td><td>${usd(r.p10)} – ${usd(r.p90)}</td><td>${usd(r.year_ago)}</td><td>${r.actual == null ? '<span class="muted">not filed yet</span>' : usd(r.actual)}</td></tr>`).join('')}</tbody></table>`;
+  }
+
+  function fold(title, body) { return body ? `<details class="ff-eps-fold"><summary>${esc(title)}</summary>${body}</details>` : ''; }
+
+  function details(c, f, score, signals, peers, gaap, research, fundamental, fstats, card) {
+    const fm = fundamental?.forecast, out = [];
+    if (fm) {
+      const d = fm.inputs || {};
+      out.push(fold('How the fundamental estimate is built', rows([
+        ['Estimate', usd(fm.point)], ['Business stage', String(fm.company_stage || '—').replace('_', ' ')],
+        ['Quarter revenue', num(d.revenue) ? '$' + (d.revenue / 1e9).toFixed(2) + 'B' : '—'], ['Operating margin', percent(d.operating_margin)],
+        ['Other income / revenue', percent(d.nonoperating_margin)], ['Normalized tax rate', percent(d.normalized_tax_rate)],
+        ['Diluted shares', num(d.diluted_shares) ? (d.diluted_shares / 1e9).toFixed(3) + 'B' : '—'],
+        ['Same quarter last year (GAAP / tax-normalized)', usd(fm.eps_gaap_last_year) + ' / ' + usd(fm.normalized_eps_last_year)],
+        ...['bear', 'base', 'bull'].map(k => fm.scenarios?.[k] && [k[0].toUpperCase() + k.slice(1) + ' case (revenue ' + percent(fm.scenarios[k].revenue_shock) + ', margin ' + percent(fm.scenarios[k].margin_shock) + ')', usd(fm.scenarios[k].eps)]),
+      ]) + '<p class="muted">From the company’s own 10-Q and 10-K figures as first filed; a fourth quarter is the 10-K year less the nine months. A one-off tax quarter is normalized; the scenarios move revenue and margin by their usual swings.</p>'));
+    }
+    if (gaap?.forecast || gaap?.reference) {
+      const g = gaap.forecast, gt = gaap.gate || {};
+      out.push(fold('Seasonal model (EPS history only)', rows([
+        g && ['Estimate', usd(g.eps_point)], gaap.reference && ['Same quarter last year', usd(gaap.reference.year_ago_eps)],
+        ['Walk-forward on this company', gt.n ? `${gt.n} quarters · relative error ${pct0(gt.rel_error_model)} vs year-ago ${pct0(gt.rel_error_year_ago)}` : '—'],
+        ['Shown', gt.status === 'PASSED' ? 'yes — it beat “same quarter last year”' : 'no — “same quarter last year” did as well or better'],
+      ])));
+    }
+    if (f) {
+      const hist = score.tests.slice(-6).map(x => `<tr><td>${esc(dateL(x.reported))}</td><td>${usd(x.baseline)}</td><td>${usd(x.actual)}</td></tr>`).join('');
+      out.push(fold('Wall Street details', rows([
+        ['Consensus (adjusted EPS)', usd(f.consensus) + ' · ' + f.analyst_n + ' analysts'],
+        num(f.bear) && ['Lowest / highest estimate', usd(c?.analysts?.periods?.find(x => x.period === '0q')?.eps?.low) + ' / ' + usd(c?.analysts?.periods?.find(x => x.period === '0q')?.eps?.high)],
+        ['Estimate revisions, 30 days', signals.ratings.revision_30d ? (signals.ratings.revision_30d.upLast30days || 0) + ' up / ' + (signals.ratings.revision_30d.downLast30days || 0) + ' down' : '—'],
+        ['Rating changes on file', signals.ratings.upgrades + ' up / ' + signals.ratings.downgrades + ' down'],
+      ]) + (hist ? `<table class="ff-eps-table"><thead><tr><th>Reported</th><th>Consensus</th><th>Actual (adjusted)</th></tr></thead><tbody>${hist}</tbody></table>` : '')));
+    }
+    const pm = signals.polymarket, ks = signals.kalshi || [];
+    if (pm || ks.length) out.push(fold('Prediction markets', rows([
+      pm && ['Polymarket “beats estimates” · latest Yes price', pct0(pm.p) + ' (' + esc(pm.observed_at) + ')' + (pm.url ? ` <a href="${esc(pm.url)}" target="_blank" rel="noopener">market ↗</a>` : '')],
+      ...ks.map(m => [m.title, m.outcomes.filter(o => num(o.p)).slice(0, 2).map(o => esc(o.name) + ': ' + pct0(o.p)).join(' / ') || '—']),
+    ]) + '<p class="muted">Market prices for the report, not EPS forecasts; they do not enter the estimate.</p>'));
+    if (peers) out.push(fold('Peers that have already reported', rows(['upstream', 'downstream', 'subindustry', 'industry'].map(k => [
+      {upstream: 'Its suppliers', downstream: 'Its customers', subindustry: 'Same SIC industry', industry: 'Same sector'}[k],
+      peers[k]?.count ? 'average surprise ' + percent(peers[k].mean_surprise) + ' · ' + peers[k].count + ' reports' : '—']))));
+    const fs = fstats || {}, ff = fs.fundamental || {}, oos = fs.out_of_sample || {}, wide = research?.overall, gb = research?.gaap_first_filed_backtest?.overall, pmk = research?.resolved_prediction_markets;
+    const checks = rows([
+      ff.n && ['Fundamental model, walk-forward', `${ff.n} company-quarters (${fs.companies} companies): relative error ${pct0(ff.rel_error_model)} vs year-ago ${pct0(ff.rel_error_baseline)}; closer in ${pct0(ff.closer_share)}; median miss ${usd(ff.median_ae_model)} vs ${usd(ff.median_ae_baseline)}`],
+      oos.paired?.n && ['With a consensus, out of sample', `${oos.paired.n} quarters: estimate ${pct0(oos.paired.blend.rel_error_model)}, converted consensus ${pct0(oos.paired.street.rel_error_model)}, fundamentals ${pct0(oos.paired.fundamental.rel_error_model)}, year-ago ${pct0(oos.paired.blend.rel_error_baseline)} (relative error)`],
+      oos.fundamental_range?.n && ['80% ranges, out of sample', `held ${pct0(oos.fundamental_range.coverage_80)} (fundamentals)${oos.blend_range ? ', ' + pct0(oos.blend_range.coverage_80) + ' (with consensus)' : ''}`],
+      oos.probability?.n && ['“Above last year” probability', `Brier ${oos.probability.brier} vs ${oos.probability.brier_base_rate} for the base rate (lower is better)`],
+      gb?.n && ['Seasonal model, walk-forward', `${gb.n} quarters: relative error ${pct0(gb.rel_error_model)} vs year-ago ${pct0(gb.rel_error_baseline)}`],
+      wide?.n && ['Consensus + past-surprise correction (adjusted EPS)', `${wide.n} reports: median miss ${usd(wide.median_ae_model)} vs consensus ${usd(wide.median_ae_consensus)}`],
+      pmk?.n && ['Polymarket beat markets', `${pmk.n} resolved: Brier ${Number(pmk.brier).toFixed(3)} vs ${Number(pmk.base_rate_brier).toFixed(3)} base rate`],
+      card?.frozen && ['Frozen forecasts', `${card.frozen} frozen, ${card.scored} scored${card.scored ? ': closer than last year in ' + pct0(card.vs_year_ago?.closer_share) + ', median miss ' + usd(card.vs_year_ago?.median_ae_model) : ''}`],
+    ]);
+    out.push(fold('How well these models have done', checks + '<p class="muted">Relative error = miss ÷ the company’s usual |EPS|, capped at 5×; medians and relative errors, because a few companies with huge per-share figures dominate dollar averages. Analyst estimates are Yahoo’s archived pre-report consensus, not audited point-in-time vintages.</p>'));
+    return out.join('');
+  }
+
   async function mount(body, ctx) {
-    if (!body || !ctx?.cik || !ctx.ticker) return;
-    const box=el('section','', 'section ff-eps-research');box.setAttribute('aria-label','EPS research');
-    const root=el('div','Loading actual EPS source data…');box.append(root);body.append(box);
-    const cik=encodeURIComponent(String(ctx.cik)), ticker=String(ctx.ticker).replace(/[^A-Z0-9.-]/ig,'').toUpperCase();
+    if (!body || !ctx?.cik) return;
+    const box=document.createElement('section'); box.className='section ff-eps-research'; box.setAttribute('aria-label','EPS forecast');
+    box.innerHTML='<p class="muted">Loading the EPS forecast…</p>'; body.append(box);
+    const cik=encodeURIComponent(String(ctx.cik)), ticker=String(ctx.ticker||'').replace(/[^A-Z0-9.-]/ig,'').toUpperCase();
     const path='disclosures/data/';
-    const [c,s,r,g,wide,fundamental,fundamentalStats]=await Promise.all([
+    const [c,g,wide,fundamental,fstats,card]=await Promise.all([
       get(path+'consensus/c/'+cik+'.json').catch(()=>null),
-      get(path+'smart/t/'+encodeURIComponent(ticker)+'.json').catch(()=>null),
-      get(path+'debt/rates.json').catch(()=>null),
       get('data/eps-gaap/'+cik+'.json').catch(()=>null),
       get('data/eps-research/backtest.json').catch(()=>null),
       get('data/eps-fundamental/'+cik+'.json').catch(()=>null),
-      get('data/eps-fundamental/backtest.json').catch(()=>null)
+      get('data/eps-fundamental/backtest.json').catch(()=>null),
+      get('data/eps-fundamental/scorecard.json').catch(()=>null)
     ]);
     if (!box.isConnected || (ctx.here && !ctx.here())) return;
     const asof=new Date().toISOString().slice(0,10),f=forecast(c,asof),score=trailingTest(c,asof);
-    const signals=metrics(c,s,r,asof);
-    const peers=await loadPeerSignals(ticker,f?.period,asof).catch(()=>null);
+    const signals=metrics(c,null,null,asof);
+    const peers=ticker?await loadPeerSignals(ticker,f?.period,asof).catch(()=>null):null;
     if (!box.isConnected || (ctx.here && !ctx.here())) return;
-    draw(root,c,f,score,signals,peers,g,wide,fundamental,fundamentalStats);
+    box.innerHTML = `<div class="section-head"><h2>EPS forecast</h2><span class="muted">GAAP diluted EPS from the filings, Wall Street and the company's guidance</span></div>
+      ${headline(fundamental?.headline, fundamental?.track, fstats?.out_of_sample, card, g, f)}
+      ${fundamental?.ledger?.length ? `<h3>This company's frozen forecasts</h3><p class="muted">Each quarter's estimate is updated until the report, then frozen and scored against the 10-Q.</p>${ledgerTable(fundamental.ledger)}` : ''}
+      <div id="ff-eps-preview"></div>
+      ${details(c, f, score, signals, peers, g, wide, fundamental, fstats, card)}`;
+    if (ctx.preview) {                      // the Disclosure Hub's earnings preview: beat odds, options-implied move, read-through
+      const el = box.querySelector('#ff-eps-preview');
+      el.innerHTML = '<h3>Earnings preview</h3><div></div>';
+      try { if (!(await ctx.preview(el.lastElementChild))) el.remove(); } catch (e) { el.remove(); }
+    }
   }
-  window.FFEPSResearch={mount,forecast,trailingTest,publicHistory,metrics,peerSignals,bias};
+  window.FFEPSResearch={mount,forecast,trailingTest,publicHistory,metrics,peerSignals,bias,headline};
 })();

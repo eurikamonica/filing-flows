@@ -15,18 +15,24 @@ from pathlib import Path
 from .eps_gaap import iso, read, write, yearago, add_months
 
 TAGS = {
-    "revenue": ("RevenueFromContractWithCustomerExcludingAssessedTax",
-                "Revenues", "SalesRevenueNet"),
+    # each quarter takes the first tag (in this order) that has it; revenue takes the largest, so a company that moved
+    # from SalesRevenueNet to the ASC 606 tag, or tags a subset under one of them, keeps its total
+    "revenue": ("RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet",
+                "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueGoodsNet", "RevenuesNetOfInterestExpense"),
     "operating_income": ("OperatingIncomeLoss",),
     "pretax_income": ("IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
                       "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments"),
     "tax_expense": ("IncomeTaxExpenseBenefit",),
-    "net_income": ("NetIncomeLoss", "ProfitLoss"),
-    "diluted_shares": ("WeightedAverageNumberOfDilutedSharesOutstanding",),
-    "eps": ("EarningsPerShareDiluted",),
+    "net_income": ("NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"),
+    # basic figures only where a quarter has no diluted one (Berkshire reports basic only)
+    "diluted_shares": ("WeightedAverageNumberOfDilutedSharesOutstanding", "WeightedAverageNumberOfShareOutstandingBasicAndDiluted",
+                       "WeightedAverageNumberOfSharesOutstandingBasic"),
+    "eps": ("EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted", "EarningsPerShareBasic"),
 }
 UNITS = {x: "shares" if x == "diluted_shares" else "USD/shares" if x == "eps" else "USD" for x in TAGS}
+FLOWS = ("revenue", "operating_income", "pretax_income", "tax_expense", "net_income")
 MIN_HISTORY = 8
+SERIES_V = 2                   # quarterly(): per-quarter tag fallback, derived fourth quarters, checked EPS
 
 
 def med(values, default=None):
@@ -38,37 +44,122 @@ def bound(x, lo, hi):
     return max(lo,min(hi,x))
 
 
-def quarterly(facts):
-    """Choose earliest-filed directly reported 70-110 day tag in its own units."""
-    raw=facts.get("facts",{}).get("us-gaap",{})
-    byfield={}
-    for field,tags in TAGS.items():
-        # Do not mix synonyms in one quarter: one consistent tagged metric per issuer.
-        tag=next((t for t in tags if raw.get(t,{}).get("units",{}).get(UNITS[field])),None)
-        if not tag:continue
-        records={}
-        for x in raw[tag]["units"][UNITS[field]]:
-            if x.get("form") not in ("10-Q","10-K") or not all(k in x for k in ("start","end","filed","val")):continue
-            try:
-                days=(iso(x["end"])-iso(x["start"])).days
-                lag=(iso(x["filed"])-iso(x["end"])).days
-                v=float(x["val"])
-            except (ValueError,TypeError,OverflowError):
+def _days(start, end):
+    return (iso(end) - iso(start)).days
+
+
+def _periods(raw, tag, unit):
+    """{(start, end): first-filed fact} of one tag from 10-Q/10-K filings, filed within 200 days of the period end."""
+    out = {}
+    for x in raw.get(tag, {}).get("units", {}).get(unit, []):
+        if x.get("form") not in ("10-Q", "10-K") or not all(k in x for k in ("start", "end", "filed", "val")):
+            continue
+        try:
+            lag = (iso(x["filed"]) - iso(x["end"])).days
+            v = float(x["val"])
+            _days(x["start"], x["end"])
+        except (ValueError, TypeError, OverflowError):
+            continue
+        if not (0 <= lag <= 200 and math.isfinite(v)):
+            continue
+        r = {"val": v, "filed": x["filed"], "accn": x.get("accn", ""), "form": x["form"], "start": x["start"]}
+        key = (x["start"], x["end"])
+        old = out.get(key)
+        if old is None or (r["filed"], r["accn"]) < (old["filed"], old["accn"]):
+            out[key] = r
+    return out
+
+
+def _quarters_of(per, field):
+    """Direct quarters {end: fact} and fourth quarters derived from the 10-K: {end: fact}. A fourth quarter is the
+    fiscal year less the nine months to the third quarter (same start), both as first filed; it is public on the
+    10-K's filing date, so a forecast made before then never sees it. Shares are weighted by days; EPS is the
+    year's less the nine months' (the convention analysts use; checked against net income / shares later)."""
+    direct, fy, nine = {}, [], {}
+    for (s, e), r in per.items():
+        d = _days(s, e)
+        if 70 <= d <= 125:                            # 16-week quarters (Costco, Kroger) included
+            old = direct.get(e)
+            if old is None or r["filed"] < old["filed"]:
+                direct[e] = r
+        elif 350 <= d <= 380 and r["form"] == "10-K":
+            fy.append((s, e, r))
+        elif 250 <= d <= 290:
+            nine[(s, e)] = r
+    derived = {}
+    for s, e, r in fy:
+        if e in direct:
+            continue
+        cand = [(k, v) for k, v in nine.items() if abs(_days(k[0], s)) <= 7 and 80 <= _days(k[1], e) <= 125 and v["filed"] <= r["filed"]]
+        if not cand:
+            continue
+        (s9, e9), r9 = min(cand, key=lambda kv: kv[1]["filed"])
+        dq = _days(e9, e)
+        if field == "diluted_shares":
+            v = (r["val"] * _days(s, e) - r9["val"] * _days(s9, e9)) / dq
+            if not (0.5 * r9["val"] <= v <= 2 * r9["val"]):
                 continue
-            if not (70<=days<=110 and 0<=lag<=200 and math.isfinite(v)):continue
-            if field=="diluted_shares" and not (1e3<v<1e13):continue
-            r={"val":v,"filed":x["filed"],"tag":tag,"accn":x.get("accn","")}
-            old=records.get(x["end"])
-            if old is None or (r["filed"],r["accn"])<(old["filed"],old["accn"]):
-                records[x["end"]]=r
-        byfield[field]=records
-    quarters=[]
-    ends=sorted(set().union(*(set(v) for v in byfield.values())))
+        else:
+            v = r["val"] - r9["val"]
+        derived[e] = {"val": v, "filed": r["filed"], "accn": r["accn"], "form": "10-K", "derived": True,
+                      "start": (iso(e9) + dt.timedelta(days=1)).isoformat()}
+    return direct, derived
+
+
+def quarterly(facts):
+    """First-filed quarterly figures per fiscal quarter: [{"end", "fields": {field: {val, filed, tag, accn, start,
+    derived?}}}]. Each quarter takes the first tag that has it (revenue the largest), a fourth quarter not tagged on its
+    own is derived from the 10-K, and an EPS figure that disagrees with net income / diluted shares, or is fifty times
+    the company's usual size, is dropped (a scale or tagging error in the filing)."""
+    raw = facts.get("facts", {}).get("us-gaap", {})
+    byfield = {}
+    for field, tags in TAGS.items():
+        best = {}
+        for tag in tags:
+            per = _periods(raw, tag, UNITS[field])
+            if not per:
+                continue
+            direct, derived = _quarters_of(per, field)
+            for kind, got in ((0, direct), (1, derived)):
+                for end, r in got.items():
+                    if field == "diluted_shares" and not (1e3 < r["val"] < 1e13):
+                        continue
+                    cand = (kind, {**r, "tag": tag})
+                    old = best.get(end)
+                    if old is None or kind < old[0] or (kind == old[0] and field == "revenue" and r["val"] > old[1]["val"]):
+                        best[end] = cand              # a direct figure over a derived one; else the first tag (revenue: largest)
+        byfield[field] = {e: r for e, (_, r) in best.items()}
+    quarters = []
+    ends = sorted(set().union(*(set(v) for v in byfield.values()))) if byfield else []
     for end in ends:
-        row={"end":end,"fields":{},"source":"SEC_COMPANYFACTS_FIRST_FILED_DIRECT"}
-        for field,records in byfield.items():
-            if end in records:row["fields"][field]=records[end]
+        f = {field: dict(rec[end]) for field, rec in byfield.items() if end in rec}
+        if "pretax_income" not in f and "net_income" in f and "tax_expense" in f:
+            f["pretax_income"] = {"val": f["net_income"]["val"] + f["tax_expense"]["val"], "computed": True, "tag": "NetIncome+Tax",
+                                  "filed": max(f["net_income"]["filed"], f["tax_expense"]["filed"]), "accn": f["net_income"]["accn"]}
+        if "diluted_shares" not in f and "net_income" in f and "eps" in f and abs(f["eps"]["val"]) >= 0.01:
+            sh = f["net_income"]["val"] / f["eps"]["val"]         # shares the EPS implies (Exxon tags no share count)
+            if 1e3 < sh < 1e13:
+                f["diluted_shares"] = {"val": sh, "computed": True, "tag": "NetIncome/EPS", "accn": f["eps"]["accn"],
+                                       "filed": max(f["net_income"]["filed"], f["eps"]["filed"]), "derived": f["eps"].get("derived")}
+        if "eps" not in f and "net_income" in f and "diluted_shares" in f and f["diluted_shares"]["val"] > 0:
+            f["eps"] = {"val": round(f["net_income"]["val"] / f["diluted_shares"]["val"], 4), "computed": True, "tag": "NetIncome/Shares",
+                        "filed": max(f["net_income"]["filed"], f["diluted_shares"]["filed"]), "accn": f["net_income"]["accn"],
+                        "derived": f["net_income"].get("derived") or f["diluted_shares"].get("derived")}
+        if "eps" in f and "net_income" in f and "diluted_shares" in f and f["diluted_shares"]["val"] > 0:
+            calc = f["net_income"]["val"] / f["diluted_shares"]["val"]
+            if abs(calc - f["eps"]["val"]) > max(0.15, 0.35 * abs(f["eps"]["val"]), 0.35 * abs(calc)):
+                f.pop("eps")                         # EPS and net income / shares disagree: a units or tagging error
+        row = {"end": end, "fields": f, "source": "SEC_COMPANYFACTS_FIRST_FILED"}
+        if any(x.get("derived") for x in f.values()):
+            row["derived"] = True
         quarters.append(row)
+    eps = [abs(q["fields"]["eps"]["val"]) for q in quarters if "eps" in q["fields"]]
+    if eps:
+        typical = max(statistics.median(eps), 0.01)
+        for q in quarters:
+            e = q["fields"].get("eps")
+            if e and (abs(e["val"]) > 50 * typical or abs(e["val"]) > 1e5):
+                q["fields"].pop("eps")
     return quarters
 
 
@@ -77,24 +168,51 @@ def observations(series,cutoff):
     result=[]
     for row in series:
         fields=row.get("fields",{})
-        need=("revenue","operating_income","tax_expense","net_income","diluted_shares","eps")
+        # operating income is optional: banks and insurers do not report it, so their path runs on pretax income
+        need=("revenue","tax_expense","net_income","diluted_shares","eps")
         if any(k not in fields for k in need):continue
-        if any(iso(fields[k]["filed"]) >= iso(cutoff) for k in need):continue
+        use=need+tuple(k for k in ("operating_income","pretax_income") if k in fields)
+        if any(iso(fields[k]["filed"]) >= iso(cutoff) for k in use):continue
         try:
-            v={k:float(x["val"]) for k,x in fields.items()}
+            v={k:float(fields[k]["val"]) for k in use}
         except (ValueError,KeyError,TypeError):continue
         if not all(math.isfinite(x) for x in v.values()):continue
         if v["revenue"]<=0 or v["diluted_shares"]<=1000:continue
         if "pretax_income" not in v:v["pretax_income"]=v["net_income"]+v["tax_expense"]
+        if "operating_income" not in v:v["operating_income"]=v["pretax_income"]   # the pretax path: no other income line
+        v["derived"]=bool(row.get("derived"))
         # Verify reported GAAP EPS and net income/share count are compatible.
         # Some filers include noncontrolling interests or have split regimes: abstain.
         calc=v["net_income"]/v["diluted_shares"]
         if abs(calc-v["eps"])>max(.25,.30*abs(v["eps"])):continue
         # Reject observations in which units or large share-regime shifts are dubious.
         result.append({**v,"end":row["end"],
-          "filed":max(fields[k]["filed"] for k in need),
-          "source_tags":{k:fields[k]["tag"] for k in need}})
-    return sorted(result,key=lambda z:z["end"])
+          "filed":max(fields[k]["filed"] for k in use),
+          "source_tags":{k:fields[k].get("tag") for k in use}})
+    return split_adjusted(sorted(result,key=lambda z:z["end"]))
+
+
+SPLITS = (2, 3, 4, 5, 8, 10, 15, 20, 25, 30, 40, 50)
+
+
+def split_adjusted(rows):
+    """Per-share history on today's share basis: where the diluted share count jumps between two quarters by a split
+    ratio (2-for-1 ... 50-for-1, or a reverse split), the earlier quarters' EPS and shares are restated by it, so a
+    year-ago comparison does not mix the two regimes. Each row as first filed otherwise."""
+    rows = [dict(r) for r in rows]
+    for i in range(len(rows) - 1, 0, -1):
+        a, b = rows[i - 1]["diluted_shares"], rows[i]["diluted_shares"]
+        if a <= 0 or b <= 0:
+            continue
+        r = b / a
+        k = next((x for x in SPLITS if abs(r / x - 1) < .04), None) or next((1 / x for x in SPLITS if abs(r * x - 1) < .04), None)
+        if not k:
+            continue
+        for row in rows[:i]:
+            row["eps"] /= k
+            row["diluted_shares"] *= k
+            row["split_adjusted"] = round(k, 4)
+    return rows
 
 
 def stage(history):
@@ -138,6 +256,7 @@ def unusual_tax(history,rate):
 def forecast(series,cutoff,target=None,events=(),allow_dist=False):
     hist=observations(series,cutoff)
     if len(hist)<MIN_HISTORY:return None
+    guessed=target is None
     if target is None:
         latest=iso(hist[-1]["end"])
         target=add_months(latest,3).isoformat()
@@ -148,6 +267,10 @@ def forecast(series,cutoff,target=None,events=(),allow_dist=False):
     if not target:return None
     yr=yearago(hist,target)
     if yr is None:return None
+    if guessed:                       # the quarter's real end: a year after its year-ago quarter (52/53-week years too)
+        prev=yearago(hist,hist[-1]["end"])
+        step=(iso(hist[-1]["end"])-iso(prev["end"])).days if prev else 365
+        target=(iso(yr["end"])+dt.timedelta(days=step if 360<=step<=372 else 365)).isoformat()
     recent=hist[-8:]
     st=stage(hist)
     rel=[r["revenue"]/yearago(hist,r["end"])["revenue"]-1 for r in recent
@@ -273,9 +396,9 @@ def probability(point,baseline,errors,event_risk=0,event_impact=0):
         "coverage_claim":False}
 
 
-def backtest(series,years=(2024,2025,2026)):
-    # Hold out target filings. Forecast origin: one day after prior reported quarter,
-    # using only the companyfacts that had then become public.
+def backtest(series,years=(2023,2024,2025,2026)):
+    """Walk-forward: each quarter forecast the day after the previous quarter was filed, from what was public then.
+    rows: end, cutoff, filed, actual, forecast, year-ago, scale (the company's usual |EPS| then), stage."""
     eligible=observations(series,"2100-01-01")
     rows=[]
     for j in range(MIN_HISTORY,len(eligible)):
@@ -284,83 +407,33 @@ def backtest(series,years=(2024,2025,2026)):
         prior=eligible[:j]
         cutoff=(iso(prior[-1]["filed"])+dt.timedelta(days=1)).isoformat()
         if iso(target["filed"])<=iso(cutoff):continue
-        y=forecast(series,cutoff,target=target["end"],allow_dist=True)
+        y=forecast(series,cutoff,target=target["end"])
         if not y:continue
+        last=[abs(x["eps"]) for x in prior[-4:]]
         rows.append({"end":target["end"],"cutoff":cutoff,"filed":target["filed"],
                      "actual":target["eps"],"forecast":y["point"],
                      "same_quarter_last_year":y["eps_gaap_last_year"],
-                     "stage":y["company_stage"],"tax_spike_known":bool(y["confirmed_events"]),
-                     "interval":y.get("distribution",{}),"gaap_yoy_base":y["eps_gaap_last_year"]})
-    n=len(rows)
-    def mae(k):
-        return round(sum(abs(x[k]-x["actual"]) for x in rows)/n,4) if n else None
-    p=[r for r in rows if r["interval"].get("status")=="EMPIRICAL_UNCALIBRATED"]
-    calibrated={"n":len(p),
-                "empirical_80pct_interval_coverage":round(sum(
-                  r["interval"]["p10"]<=r["actual"]<=r["interval"]["p90"] for r in p)/len(p),4) if p else None,
-                "brier_gaap_yoy_direction":round(sum(
-                  (r["interval"]["p_yoy_increase"]-float(r["actual"]>r["gaap_yoy_base"]))**2
-                   for r in p)/len(p),5) if p else None,
-                "status":"OUT_OF_TIME_DIAGNOSTIC_NOT_FORMALLY_CALIBRATED"}
-    return {"n":n,"method":"STRICT_FIRST_FILED_FUNDAMENTALS_WALKFORWARD",
-            "probability_validation":calibrated,
-            "mae_model":mae("forecast"),"mae_seasonal":mae("same_quarter_last_year"),
-            "by_year":{str(y):{"n":len([r for r in rows if iso(r["end"]).year==y]),
-                     "mae_model":round(sum(abs(r["forecast"]-r["actual"]) for r in rows if iso(r["end"]).year==y)/
-                                       len([r for r in rows if iso(r["end"]).year==y]),4)
-                                     if any(iso(r["end"]).year==y for r in rows) else None}
-                       for y in years},
-            "rows":rows}
+                     "scale":round(max(.10,sum(last)/len(last)),4),
+                     "stage":y["company_stage"],**({"derived":True} if target.get("derived") else {})})
+    from .eps_gaap import summary
+    s=summary(rows,"forecast","same_quarter_last_year")
+    return {**s,"method":"STRICT_FIRST_FILED_FUNDAMENTALS_WALKFORWARD",
+            "mae_model":s.get("mae_model"),"mae_seasonal":s.get("mae_baseline"),"rows":rows}
 
 
-def build(store,out):
-    root=Path(store);dst=Path(out);dst.mkdir(parents=True,exist_ok=True)
-    aggregate=[]
-    for file in sorted(root.glob("*.json")):
-        if file.name=="progress.json":continue
-        d=read(file,{})
-        series=d.get("quarters",[])
-        if not series:continue
-        asof=(dt.datetime.now(dt.timezone.utc)+dt.timedelta(days=1)).date().isoformat()
-        events=read(Path(store).parent/"eps-events"/file.name,{})
-        pred=forecast(series,asof,events=events.get("events",[]),allow_dist=True)
-        bt=backtest(series)
-        if pred is not None:
-            tested=bt["n"]>=8 and bt["mae_model"] is not None and bt["mae_seasonal"] is not None
-            beat_baseline=tested and bt["mae_model"]<bt["mae_seasonal"]
-            pred["promotion_gate"]={
-                "status":"RESEARCH_ONLY_INSUFFICIENT_BACKTEST" if not tested else (
-                    "RESEARCH_ONLY_BASELINE_BETTER" if not beat_baseline else "PASSED_SEASONAL_BACKTEST_GATE"),
-                "n":bt["n"],"baseline_mae":bt["mae_seasonal"],
-                "model_mae":bt["mae_model"],
-                "evidence_note":"Historical comparison only; even a passed gate does not establish accuracy vs Street EPS."}
-        for r in bt["rows"]:aggregate.append({"cik":file.stem,**r})
-        write(dst/file.name,{"cik":d.get("cik"),"ticker":d.get("ticker"),
-            "source":"SEC_FIRST_FILED_COMPANYFACTS_FUNDAMENTALS",
-            "as_of":asof,"forecast":pred,"backtest":{k:v for k,v in bt.items() if k!="rows"}})
-    n=len(aggregate)
-    mae=lambda key: round(sum(abs(r[key]-r["actual"]) for r in aggregate)/n,4) if n else None
-    eligible=[x for x in aggregate if x.get("interval",{}).get("status")=="EMPIRICAL_UNCALIBRATED"]
-    coverage=(sum(x["interval"]["p10"]<=x["actual"]<=x["interval"]["p90"] for x in eligible)
-              /len(eligible)) if eligible else None
-    brier=(sum((x["interval"]["p_yoy_increase"]-float(x["actual"]>x["gaap_yoy_base"]))**2
-             for x in eligible)/len(eligible)) if eligible else None
-    write(dst/"backtest.json",{"n":n,"companies":len({x["cik"] for x in aggregate}),
-        "probability_validation":{"n":len(eligible),"coverage_80":round(coverage,4) if coverage is not None else None,
-                                 "brier_yoy":round(brier,5) if brier is not None else None,
-                                 "status":"INDEPENDENT_CHRONOLOGICAL_DIAGNOSTIC_NO_CALIBRATION_CLAIM"},
-        "mae_model":mae("forecast"),"mae_seasonal":mae("same_quarter_last_year"),
-        "label":"STRICT_FIRST_FILED_FUNDAMENTAL_GAAP_EPS","by_stage":{
-            s:{"n":len([r for r in aggregate if r["stage"]==s])} for s in sorted({r["stage"] for r in aggregate})},
-        "notes":["Only directly reported quarter XBRL facts; Q4 missing when not directly tagged.",
-                 "Quarter-end source tags may differ between filers; excludes incompatible net-income-to-EPS units.",
-                 "Not calibrated: company-specific forecast percentiles are illustrative until tested."]})
-    print("Fundamental EPS",n,"PIT records from",len({x["cik"] for x in aggregate}),"issuers")
+def build(store, out, consensus=None, guide=None, ledger=None, index=None):
+    """The EPS model's outputs for every stored company (eps_blend.run)."""
+    from . import eps_blend
+    return eps_blend.run(store, out, consensus=consensus, guide=guide, ledger=ledger, index=index)
 
 
 if __name__=="__main__":
     p=argparse.ArgumentParser()
     p.add_argument("--store",required=True)
     p.add_argument("--out",required=True)
+    p.add_argument("--consensus",help="consensus-history public/c (analyst estimates and past surprises)")
+    p.add_argument("--guide",help="store/eps-guide (EPS guidance read from earnings releases)")
+    p.add_argument("--ledger",help="store/eps-ledger.json (forecasts frozen before each report)")
+    p.add_argument("--index",help="_site/data/index.json (which quarters have been reported)")
     args=p.parse_args()
-    build(args.store,args.out)
+    build(args.store,args.out,args.consensus,args.guide,args.ledger,args.index)

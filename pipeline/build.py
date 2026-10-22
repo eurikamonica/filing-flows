@@ -120,9 +120,18 @@ def submissions(cik):
     return _sub[cik]
 
 
+EPS_ROOT = [None]          # the data store: every companyfacts download also refreshes the EPS series (eps_gaap.py)
+
+
 def companyfacts(cik):
     if cik not in _cf:
         raw = sec.get_json(sec.companyfacts_url(cik))
+        if EPS_ROOT[0]:
+            try:
+                from . import eps_gaap
+                eps_gaap.save_from_facts(EPS_ROOT[0], cik, raw)
+            except Exception as e:
+                print(f"  EPS series not kept for {cik}: {e}", file=sys.stderr)
         cur = primary_currency(raw) or "USD"            # a foreign filer's figures in the currency it reports in
         _cf[cik] = facts.index_facts(raw, cur)
         _cur.setdefault(cik, cur)
@@ -885,6 +894,13 @@ def process_release(store, cik, accn, form, starred=False):
         raise NotApplicable("no press release in the filing")
     ex_url = sec.doc_url(cik, accn, ex_name)
     doc = sec.get(ex_url)
+    try:                                                  # the EPS outlook in the release, if any (eps_guide.py)
+        from . import eps_guide
+        g = eps_guide.parse(text.paragraphs(doc))
+        if g:
+            eps_guide.keep(EPS_ROOT[0], cik, g, accn, row.get("filingDate"), ex_url)
+    except Exception as e:
+        print(f"  EPS guidance skipped for {cik} {accn}: {e}", file=sys.stderr)
     if intro_rank(c) < INTRO_RANK["8-K"]:                # no 10-K description yet: the release's "About" paragraph
         try:
             if set_intro(c, text.about(doc, [c["profile"]["name"]], c["profile"].get("tickers")), ex_url,
@@ -1303,6 +1319,7 @@ def _reread_releases(store):
 def run(args):
     _t0[0] = time.monotonic()
     store = Store(args.store)
+    EPS_ROOT[0] = args.store
     st = store.state
     now = dt.datetime.utcnow().isoformat(timespec="seconds")
     queue = scan.backfill(args.backfill_days) if args.backfill_days else scan.latest_filings()

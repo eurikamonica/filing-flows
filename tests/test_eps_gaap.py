@@ -35,7 +35,9 @@ class TestEPSGAAP(unittest.TestCase):
         b=E.backtest(x,2025)
         self.assertEqual(b["n"],4)
         self.assertTrue(b["model_mae"] >= 0)
-        self.assertEqual(b["status"],"FIRST_FILED_SEC_GAAP_RETROSPECTIVE_WALK_FORWARD_SPARSE_Q4")
+        self.assertEqual(b["status"],"FIRST_FILED_SEC_GAAP_WALK_FORWARD_Q4_DERIVED_FROM_10K")
+        self.assertIn("rel_error_model",b)
+        self.assertIn(E.gate(b)["status"],("PASSED","TOO_FEW_TESTS","YEAR_AGO_BETTER"))
     def test_no_insufficient_intervals_claim(self):
         x=self.synthetic()[:8]
         f=E.model(x,"2023-02-15")
@@ -52,3 +54,21 @@ class TestEPSGAAP(unittest.TestCase):
 
 if __name__=="__main__":
     unittest.main()
+
+
+def test_fourth_quarter_derived_and_bad_eps_dropped():
+    """Q4 = the 10-K year less the nine months; an EPS figure that disagrees with net income / shares is dropped."""
+    def f(start, end, filed, val, form):
+        return {"start": start, "end": end, "filed": filed, "val": val, "form": form, "accn": filed}
+    eps = [f("2025-01-01", "2025-03-31", "2025-05-01", 1.0, "10-Q"), f("2025-04-01", "2025-06-30", "2025-08-01", 1.1, "10-Q"),
+           f("2025-07-01", "2025-09-30", "2025-11-01", 650000.0, "10-Q"),          # a scale error in the filing
+           f("2025-01-01", "2025-09-30", "2025-11-01", 3.3, "10-Q"), f("2025-01-01", "2025-12-31", "2026-02-20", 4.6, "10-K")]
+    ni = [f(x["start"], x["end"], x["filed"], v, x["form"]) for x, v in zip(eps, (1e9, 1.1e9, 1.2e9, 3.3e9, 4.6e9))]
+    sh = [f(x["start"], x["end"], x["filed"], 1e9, x["form"]) for x in eps]
+    facts = {"cik": 1, "facts": {"us-gaap": {"EarningsPerShareDiluted": {"units": {"USD/shares": eps}},
+                                             "NetIncomeLoss": {"units": {"USD": ni}},
+                                             "WeightedAverageNumberOfDilutedSharesOutstanding": {"units": {"shares": sh}}}}}
+    recs = {r["end"]: r for r in E.direct_eps(facts)}
+    assert "2025-09-30" not in recs                                  # 650,000 per share is not kept
+    q4 = recs["2025-12-31"]
+    assert q4.get("derived") and abs(q4["eps"] - 1.3) < 1e-9 and q4["filed"] == "2026-02-20"
