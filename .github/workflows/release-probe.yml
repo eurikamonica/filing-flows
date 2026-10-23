@@ -12,36 +12,39 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Find the input-output download links (rendered pages)
+      - name: FIGARO and ADB downloads
         run: |
           pip install -q playwright && python -m playwright install --with-deps chromium >/dev/null 2>&1
           mkdir -p out
+          curl -sSL --max-time 120 "https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/txt?lang=en" | grep -i "naio_10_f" > out/eurostat_toc.txt || true
+          echo "::notice::eurostat toc $(wc -l < out/eurostat_toc.txt) lines"
+          for d in $(grep -oiE 'naio_10_f[a-z0-9_]+' out/eurostat_toc.txt | sort -u | head -12); do
+            curl -sSL --max-time 60 "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/dataflow/ESTAT/$d/latest?references=descendants&detail=referencepartial" -o out/dsd_$d.xml
+            echo "$d $(wc -c < out/dsd_$d.xml)"
+          done
           python - <<'PY'
           import json, re
           from playwright.sync_api import sync_playwright
-          pages = ["https://www.oecd.org/en/data/datasets/inter-country-input-output-tables.html",
-                   "https://ec.europa.eu/eurostat/web/esa-supply-use-input-tables/database",
-                   "https://ec.europa.eu/eurostat/web/esa-supply-use-input-tables/figaro",
+          pages = ["https://circabc.europa.eu/ui/group/cec66924-a924-4f91-a0ef-600a0531e3ba/library/460a20fc-5956-44f9-8633-2821eb48dd62",
                    "https://kidb.adb.org/globalization",
+                   "https://kidb.adb.org/",
                    "https://www.adb.org/what-we-do/data/regional-input-output-tables",
-                   "https://data.adb.org/search?search_api_fulltext=multiregional%20input-output",
-                   "https://www.sec.gov/submit-filings/filer-support-resources/edgar-state-country-codes"]
+                   "https://data.adb.org/dataset/adb-multiregional-input-output-tables"]
           res = {}
           with sync_playwright() as p:
               b = p.chromium.launch()
               pg = b.new_page(user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36")
               for u in pages:
                   try:
-                      pg.goto(u, timeout=60000, wait_until="networkidle")
-                      pg.wait_for_timeout(3000)
-                      links = pg.eval_on_selector_all("a", "els => els.map(e => [e.innerText.trim().slice(0,120), e.href])")
-                      res[u] = {"links": [l for l in links if re.search(r"zip|xlsx|csv|fileview|download|figaro|mrio|icio|naio|bulk|\.7z", (l[1] + " " + l[0]), re.I)][:150],
-                                "text": pg.inner_text("body")[:4000]}
+                      pg.goto(u, timeout=90000, wait_until="domcontentloaded")
+                      pg.wait_for_timeout(9000)
+                      links = pg.eval_on_selector_all("a", "els => els.map(e => [e.innerText.trim().slice(0,140), e.href])")
+                      res[u] = {"links": links[:400], "text": pg.inner_text("body")[:6000]}
                   except Exception as e:
                       res[u] = {"error": str(e)[:300]}
-                  print("::notice::" + u + " -> " + str(len(res[u].get("links", []))) + " links " + res[u].get("error", ""))
+                  print("::notice::" + u + " -> " + str(len(res[u].get("links", []))) + " links " + res[u].get("error", "")[:100])
               b.close()
-          json.dump(res, open("out/links.json", "w"), indent=1)
+          json.dump(res, open("out/links2.json", "w"), indent=1)
           PY
       - name: Keep the files on a branch
         if: always()
