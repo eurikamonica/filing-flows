@@ -9,23 +9,40 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Find the input-output download links
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Find the input-output download links (rendered pages)
         run: |
+          pip install -q playwright && python -m playwright install --with-deps chromium >/dev/null 2>&1
           mkdir -p out
-          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36'
-          for u in \
-            "https://www.oecd.org/en/data/datasets/inter-country-input-output-tables.html" \
-            "https://ec.europa.eu/eurostat/web/esa-supply-use-input-tables/database" \
-            "https://ec.europa.eu/eurostat/web/esa-supply-use-input-tables/figaro" \
-            "https://kidb.adb.org/globalization" \
-            "https://kidb.adb.org/mrio" \
-            "https://www.adb.org/what-we-do/data/regional-input-output-tables" \
-            "https://www.sec.gov/submit-filings/filer-support-resources/edgar-state-country-codes" ; do
-            n=$(echo "$u" | sed 's#[^A-Za-z0-9]#_#g' | cut -c1-90)
-            curl -sSL -A "$UA" --max-time 60 -o "out/$n.html" "$u" -w "$u %{http_code} %{size_download}\n" || echo "$u failed"
-            grep -oiE 'href="[^"]+"' "out/$n.html" | grep -iE 'zip|xlsx|csv|fileview|download|figaro|mrio|icio|naio' | sort -u | head -80 > "out/$n.links.txt" || true
-            echo "::notice::$u -> $(wc -l < out/$n.links.txt) links"
-          done
+          python - <<'PY'
+          import json, re
+          from playwright.sync_api import sync_playwright
+          pages = ["https://www.oecd.org/en/data/datasets/inter-country-input-output-tables.html",
+                   "https://ec.europa.eu/eurostat/web/esa-supply-use-input-tables/database",
+                   "https://ec.europa.eu/eurostat/web/esa-supply-use-input-tables/figaro",
+                   "https://kidb.adb.org/globalization",
+                   "https://www.adb.org/what-we-do/data/regional-input-output-tables",
+                   "https://data.adb.org/search?search_api_fulltext=multiregional%20input-output",
+                   "https://www.sec.gov/submit-filings/filer-support-resources/edgar-state-country-codes"]
+          res = {}
+          with sync_playwright() as p:
+              b = p.chromium.launch()
+              pg = b.new_page(user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36")
+              for u in pages:
+                  try:
+                      pg.goto(u, timeout=60000, wait_until="networkidle")
+                      pg.wait_for_timeout(3000)
+                      links = pg.eval_on_selector_all("a", "els => els.map(e => [e.innerText.trim().slice(0,120), e.href])")
+                      res[u] = {"links": [l for l in links if re.search(r"zip|xlsx|csv|fileview|download|figaro|mrio|icio|naio|bulk|\.7z", (l[1] + " " + l[0]), re.I)][:150],
+                                "text": pg.inner_text("body")[:4000]}
+                  except Exception as e:
+                      res[u] = {"error": str(e)[:300]}
+                  print("::notice::" + u + " -> " + str(len(res[u].get("links", []))) + " links " + res[u].get("error", ""))
+              b.close()
+          json.dump(res, open("out/links.json", "w"), indent=1)
+          PY
       - name: Keep the files on a branch
         if: always()
         run: |
