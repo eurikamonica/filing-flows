@@ -12,17 +12,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: OECD public API; EDGAR codes with the SEC user agent
+      - uses: actions/checkout@v4
+        with:
+          path: repo
+          sparse-checkout: |
+            scripts
+          sparse-checkout-cone-mode: false
+      - name: Build mrio.json
         env:
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
         run: |
-          mkdir -p out
-          curl -sSL -A "$SEC_USER_AGENT" "https://www.sec.gov/edgar/searchedgar/edgarstatecodes.htm" -o out/edgar_codes.html -w "edgar %{http_code} %{size_download}\n" | tee out/sizes.txt
-          curl -sSL --max-time 120 "https://sdmx.oecd.org/public/rest/dataflow/all/all/latest" -o out/oecd_flows.xml -w "oecd %{http_code} %{size_download}\n" | tee -a out/sizes.txt
-          grep -oiE 'id="[^"]*(ICIO|IOTS|TIVA)[^"]*"[^>]*agencyID="[^"]*"' out/oecd_flows.xml | head -30 > out/oecd_icio_flows.txt || true
-          grep -oiE '<structure:Dataflow[^>]*(ICIO|IOTS)[^>]*>' out/oecd_flows.xml | head -30 >> out/oecd_icio_flows.txt || true
-          rm -f out/oecd_flows.xml
-          echo "::notice::$(cat out/sizes.txt | tr '\n' ' ') flows: $(wc -l < out/oecd_icio_flows.txt)"
+          pip install -q openpyxl
+          mkdir -p out dl
+          curl -sSL -A "$SEC_USER_AGENT" "https://www.sec.gov/edgar/searchedgar/edgarstatecodes.htm" -o dl/edgar.html
+          curl -sSL -o dl/adb.xlsx "https://kidb.adb.org/download/mrio-file/445" -w "adb %{http_code} %{size_download}\n"
+          time python repo/scripts/mrio_build.py --adb dl/adb.xlsx --edgar dl/edgar.html --out out/mrio.json 2>&1 | tail -80 | tee out/build.log
+          ls -la out
+          echo "::notice::$(tail -4 out/build.log | tr '\n' ' ')"
       - name: Keep the files on a branch
         if: always()
         run: |
