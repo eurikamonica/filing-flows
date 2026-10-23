@@ -125,7 +125,11 @@ def checks(q, c, Nc, Nq=None, Ny=None, annual=False):
     if "pretax_fixed" in Nc.get("flags", []):
         add("note", "pretax_fixed", "Pre-tax earnings minus tax did not equal net earnings in the filing (often discontinued "
                                     "operations or equity-method income); pre-tax is shown as net earnings plus tax.")
-    if "oi_missing" in Nc.get("flags", []):
+    if "bank" in Nc.get("flags", []):
+        add("note", "bank", "A bank: revenue is net interest income + noninterest income (how banks report total "
+                            "revenue), and the costs are the provision for credit losses and noninterest expense; "
+                            "operating profit is pre-tax earnings.")
+    elif "oi_missing" in Nc.get("flags", []):
         add("note", "oi_missing", "The filing has no operating income figure: operating profit is shown equal to pre-tax "
                                   "earnings.")
     other = dict(Nc.get("items") or []).get("other_opex")

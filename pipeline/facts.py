@@ -45,6 +45,14 @@ CONCEPTS = {
     # revenue, minus $0.38B of other revenues such as hedging results, = $4.02B of total revenues)
     "rev_contract": ["RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax"],
     # capital expenditures: the general tags, then the ones oil & gas, real-estate and utility filers use
+    # banks tag no total revenue: revenue = net interest income + noninterest income (bank_revenue below), and their
+    # costs are the provision for credit losses and noninterest expense (model.normalize)
+    "nii": ["InterestIncomeExpenseNet"],
+    "int_inc": ["InterestAndDividendIncomeOperating", "InterestIncomeOperating"],
+    "int_exp": ["InterestExpense", "InterestExpenseOperating"],
+    "nonii": ["NoninterestIncome"],
+    "prov": ["ProvisionForLoanLeaseAndOtherLosses", "ProvisionForLoanAndLeaseLosses", "ProvisionForLoanLossesExpensed"],
+    "nonint_exp": ["NoninterestExpense"],
     "capex": ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets",
               "PaymentsToAcquireOilAndGasPropertyAndEquipment", "PaymentsToAcquireOilAndGasProperty",
               "PaymentsToExploreAndDevelopOilAndGasProperties", "PaymentsForCapitalImprovements",
@@ -240,16 +248,16 @@ def ytd_value(facts, key, end):
 
 def period_ends(facts):
     ends = set()
-    for concept in CONCEPTS["revenue"] + CONCEPTS["ni"] + CONCEPTS["oi"]:
+    for concept in CONCEPTS["revenue"] + CONCEPTS["ni"] + CONCEPTS["oi"] + CONCEPTS["nii"]:
         for (s, e) in facts.get(concept, {}):
             ends.add(e)
     return sorted(ends)
 
 
 def year_ends(facts):
-    """Fiscal-year ends with a full-year revenue figure."""
+    """Fiscal-year ends with a full-year revenue figure (a bank's: net interest income)."""
     ends = set()
-    for concept in CONCEPTS["revenue"]:
+    for concept in CONCEPTS["revenue"] + CONCEPTS["nii"]:
         for (s, e) in facts.get(concept, {}):
             if 350 <= (d(e) - d(s)).days <= 380:
                 ends.add(e)
@@ -260,7 +268,7 @@ def quarter_ends(facts):
     """Quarter ends whose quarterly revenue can be read (directly or as year-to-date minus the earlier year-to-date)."""
     out = []
     per = {}
-    for concept in CONCEPTS["revenue"]:
+    for concept in CONCEPTS["revenue"] + CONCEPTS["nii"]:
         for k, f in facts.get(concept, {}).items():
             per.setdefault(k, f)
     for e in sorted({e for (s, e) in per}):
@@ -280,7 +288,33 @@ def comparison_ends(facts, end):
 
 
 def extract(facts, end, annual=False):
-    return {k: value(facts, k, end, annual) for k in CONCEPTS} if end else None
+    if not end:
+        return None
+    raw = {k: value(facts, k, end, annual) for k in CONCEPTS}
+    return bank_revenue(raw, source(facts, "revenue", end, annual))
+
+
+# a bank's own total: these tags are the whole income statement's revenue, so a bank that uses them keeps them
+TOTAL_TAGS = {"Revenues", "RevenuesNetOfInterestExpense", "Revenue"}
+
+
+def bank_revenue(raw, rev_concept=None):
+    """A bank reports no total revenue: what it calls total revenue is net interest income + noninterest income
+    (interest income − interest expense when net interest income is not tagged). When both are tagged and the revenue
+    found is not a total-revenue tag (a bank's "revenue from contracts with customers" is only the fee part of its
+    noninterest income), revenue is their sum and raw["rev_bank"] says so: the chart draws the two as revenue lines,
+    and the provision for credit losses and noninterest expense as the costs."""
+    nii = raw.get("nii")
+    if nii is None and raw.get("int_inc") is not None and raw.get("int_exp") is not None:
+        nii = raw["int_inc"] - raw["int_exp"]
+        raw["nii"] = nii
+    if rev_concept in TOTAL_TAGS or nii is None or raw.get("nonii") is None or nii + raw["nonii"] <= 0:
+        return raw
+    if raw.get("revenue") is not None:
+        raw["rev_tagged"] = raw["revenue"]
+    raw["revenue"] = nii + raw["nonii"]
+    raw["rev_bank"] = True
+    return raw
 
 
 def prior_year_end(facts, end):

@@ -2,7 +2,7 @@
 
 ITEM_LABELS = {"cor": "Cost of revenue", "rd": "Research &amp; development", "sm": "Sales &amp; marketing",
                "ga": "General &amp; admin", "sga": "SG&amp;A", "da_op": "Depreciation &amp; amortization",
-               "other_opex": "Other operating costs"}
+               "other_opex": "Other operating costs", "prov": "Credit loss provision", "nonint": "Noninterest expense"}
 
 
 def _close(a, b, tol=0.01):
@@ -64,6 +64,8 @@ def normalize(raw):
         items += [(k, v) for k, v in (("sm", sm), ("ga", ga)) if v]
     if raw.get("da_op"):                                # D&A printed as its own operating cost line (a release: Nebius)
         items.append(("da_op", raw["da_op"]))
+    if raw.get("rev_bank"):                             # a bank (facts.bank_revenue): its two cost lines instead
+        items = [("prov", raw.get("prov")), ("nonint", raw.get("nonint_exp"))]
     items = [(k, v) for k, v in items if v and v > 0]
     used = sum(v for _, v in items)
     if pool <= 0 or used > pool * 1.005:
@@ -85,8 +87,11 @@ def normalize(raw):
         "R": R, "gp": gp, "cor": cor if gp_path else (cor if cor and cor < pool else None), "gp_path": gp_path,
         "pool": pool, "items": items, "oi": oi, "nonop": nonop, "pretax": pretax, "tax": tax,
         "ni": ni, "nci": nci, "pl": pl, "ocf": ocf, "da": da or 0.0, "sbc": sbc or 0.0,
-        "capex": raw.get("capex"), "flags": flags,
+        "capex": raw.get("capex"), "flags": flags + (["bank"] if raw.get("rev_bank") else []),
         "da_label": "Depreciation" if dep_only else "Depreciation &amp; amortization",
+        # a bank's two cost lines even when the chart shows the total only (a period without a provision): the
+        # comparisons with that period still have them
+        "bank_costs": {"prov": raw.get("prov"), "nonint": raw.get("nonint_exp")} if raw.get("rev_bank") else None,
     }
 
 
@@ -100,6 +105,9 @@ def quantities(N, lines=None):
          "ocf": N["ocf"], "da": N["da"], "sbc": N["sbc"]}
     for k, v in N["items"]:
         Q["item:" + k] = v
+    for k, v in (N.get("bank_costs") or {}).items():
+        if v is not None:
+            Q.setdefault("item:" + k, v)
     if N["ocf"] is not None:
         r = N["ocf"] - N["pl"] - N["da"] - N["sbc"]
         Q["r"] = r

@@ -3004,3 +3004,69 @@ def test_fsa_shares_unit_slips_stale_counts_and_the_newest_period():
     x = fx({("2026-04-01", "2026-06-30"): 390620582}, 37602843)
     sh = W.shares(x, W.Evidence(x), "2026-06-30")
     assert sh["diluted"] == 390620582 and "diluted_scaled" not in sh
+
+
+def _facts(rows):
+    """A companyfacts index (facts.index_facts' shape) from {concept: [(start, end, value)]}."""
+    return {c: {(s, e): {"val": v, "filed": "2026-08-01"} for s, e, v in vals} for c, vals in rows.items()}
+
+
+def test_a_bank_is_drawn_from_net_interest_and_noninterest_income():
+    """Banks tag no total revenue (Flagstar, FLG): revenue = net interest income + noninterest income, the costs are the
+    credit loss provision and noninterest expense, and a bank's fee-only "contract revenue" never stands in for it."""
+    from pipeline import build, facts, sankey
+    from pipeline.model import normalize, quantities
+    Q2, Q1 = ("2026-04-01", "2026-06-30"), ("2026-01-01", "2026-03-31")
+    fx = _facts({"InterestIncomeExpenseNet": [(*Q2, 440e6), (*Q1, 443e6)], "NoninterestIncome": [(*Q2, 76e6), (*Q1, 55e6)],
+                 "RevenueFromContractWithCustomerExcludingAssessedTax": [(*Q2, 17e6)],
+                 "ProvisionForLoanLossesExpensed": [(*Q2, 18e6), (*Q1, 0)], "NoninterestExpense": [(*Q2, 450e6), (*Q1, 466e6)],
+                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": [(*Q2, 48e6), (*Q1, 32e6)],
+                 "IncomeTaxExpenseBenefit": [(*Q2, 14e6), (*Q1, 11e6)], "NetIncomeLoss": [(*Q2, 34e6), (*Q1, 21e6)]})
+    raw = facts.extract(fx, "2026-06-30")
+    assert raw["revenue"] == 516e6 and raw["rev_bank"] and raw["rev_tagged"] == 17e6
+    assert "2026-03-31" in facts.quarter_ends(fx) and facts.comparison_ends(fx, "2026-06-30")[0] == "2026-03-31"
+    N, N1 = normalize(raw), normalize(facts.extract(fx, "2026-03-31"))
+    assert N["items"] == [("prov", 18e6), ("nonint", 450e6)] and "bank" in N["flags"] and N["oi"] == N["pretax"] == 48e6
+    assert N1["items"] == [] and quantities(N1)["item:nonint"] == 466e6       # no provision that quarter: Q/Q still has it
+    lines = build.bank_lines(raw)
+    assert lines == {"nii": 440e6, "nonii": 76e6}
+    nodes, links, _ = sankey.build(N, N1, None, dict(build.BANK_LINES), (lines, build.bank_lines(facts.extract(fx, "2026-03-31")), None))
+    ids = {n["id"] for n in nodes}
+    assert {"L:nii", "L:nonii", "revenue", "I:prov", "I:nonint", "pretax", "net"} <= ids
+    into = sum(l["v"] for l in links if l["t"] == "revenue")
+    assert abs(into - 516e6) < 1
+    # a bank that tags its total revenue keeps it; a company with net interest income but no noninterest income is no bank
+    assert not facts.extract(_facts({"Revenues": [(*Q2, 600e6)], "InterestIncomeExpenseNet": [(*Q2, 440e6)],
+                                     "NoninterestIncome": [(*Q2, 76e6)], "NetIncomeLoss": [(*Q2, 34e6)]}), "2026-06-30").get("rev_bank")
+    tech = facts.extract(_facts({"RevenueFromContractWithCustomerExcludingAssessedTax": [(*Q2, 900e6)],
+                                 "InterestIncomeExpenseNet": [(*Q2, 5e6)], "NetIncomeLoss": [(*Q2, 34e6)]}), "2026-06-30")
+    assert tech["revenue"] == 900e6 and not tech.get("rev_bank")
+    # interest income − interest expense when net interest income is not tagged
+    alt = facts.extract(_facts({"InterestAndDividendIncomeOperating": [(*Q2, 976e6)], "InterestExpense": [(*Q2, 536e6)],
+                                "NoninterestIncome": [(*Q2, 76e6)], "NetIncomeLoss": [(*Q2, 34e6)]}), "2026-06-30")
+    assert alt["nii"] == 440e6 and alt["revenue"] == 516e6
+
+
+def test_asking_again_reads_a_skipped_company_again_and_says_why_it_cannot_be_drawn(tmp_path):
+    """A reader asks for a company whose filings an older reader skipped (FLG, a bank, before banks were drawn): the
+    default history is queued again; when every filing is skipped again, the request is answered with the reason."""
+    from pipeline import build
+    store = build.Store(str(tmp_path / "store"))
+    store.put(910073, {"quarters": {}, "keep": 7, "hist": build.HISTORY_VERSION, "profile": {"name": "Flagstar"}})
+    st = store.state
+    st["seen"]["a0"] = {"t": "2026-10-05T14:31:00", "s": "skip: no revenue or net income line in XBRL", "cik": 910073}
+    sub = {"cik": "910073", "name": "FLAGSTAR BANK", "tickers": ["FLG"], "filings": {"recent": {
+        "form": ["10-Q", "8-K", "10-K"], "accessionNumber": ["a0", "a1", "a2"], "reportDate": ["2026-06-30", "2026-07-24", "2025-12-31"],
+        "filingDate": ["2026-08-06", "2026-07-24", "2026-02-27"], "primaryDocument": ["q.htm", "k.htm", "y.htm"]}}}
+    build._queue_history(store, 910073, sub)                     # an ordinary call: history was queued before
+    assert "a0" not in st["pending"]
+    build._queue_history(store, 910073, sub, force=True)         # asked again with no chart: read again
+    assert set(st["pending"]) == {"a0", "a2"} and "a0" not in st["seen"]
+    assert build.undrawable(store, {910073}) == {}               # still being read
+    for a in ("a0", "a2"):
+        p = st["pending"].pop(a)
+        st["seen"][a] = {"t": "now", "s": "skip: no revenue or net income line in XBRL", "cik": 910073, "form": p["form"]}
+    st["seen"]["a1"] = {"t": "now", "s": "skip: 8-K without Item 2.02 (not an earnings release)", "cik": 910073, "form": "8-K"}
+    assert build.undrawable(store, {910073}) == {910073: "its 10-Q and 10-K filings cannot be drawn: no revenue or net income line in XBRL"}
+    store.put(910073, dict(store.company(910073), quarters={"2026-06-30": {}}))
+    assert build.undrawable(store, {910073}) == {}

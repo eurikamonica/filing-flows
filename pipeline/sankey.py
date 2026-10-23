@@ -506,6 +506,8 @@ NOTE_KEYS = {
     "sga": ["selling, general and administrative"],
     "other_opex": ["other operating"],
     "da_op": ["depreciation and amortization"],
+    "prov": ["provision for credit losses", "provision for loan losses", "credit loss"],
+    "nonint": ["noninterest expense", "non-interest expense", "operating expenses"],
     "nonop": ["other income", "interest expense", "interest and other", "other (income) expense", "nonoperating"],
     "pretax": ["income before"],
     "tax": ["provision for income taxes", "income taxes", "effective tax rate"],

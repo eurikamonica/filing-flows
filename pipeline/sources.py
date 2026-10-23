@@ -114,7 +114,10 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
         nid, out = n["id"], None
         get = lambda k: reported(src.get(k), period)
         recon = (lines_struct or {}).get("recon")
-        if nid == "revenue":
+        if nid == "revenue" and "bank" in flags:
+            out = ("Calculated: net interest income + noninterest income, as banks report total revenue (the bank tags "
+                   "no total revenues line).")
+        elif nid == "revenue":
             out = get("revenue")
             if out and rev and rev.get("how") == "xbrl":
                 out += (" Total revenues (us-gaap:Revenues) when the company tags them; otherwise, when it tags revenue "
@@ -127,6 +130,8 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
         elif nid in ("rev_less", "rev_more"):
             out = ("Calculated: total revenues − revenue from contracts with customers, both as the filing tags them "
                    "(other revenues, such as derivative and hedging results, that are not from contracts with customers).")
+        elif axis == "bank" and nid in ("L:nii", "L:nonii"):
+            out = get(nid[2:]) or ("Calculated: interest income − interest expense." if nid == "L:nii" else None)
         elif nid.startswith(("L:", "G:")):
             member = nid[2:]
             kind = "A subtotal the company reports" if nid.startswith("G:") else "A revenue line"
@@ -139,8 +144,10 @@ def attach(nodes, src, Nc, lines_struct=None, period="q", capex_src=None):
             out = CALC["cor_gp"]
         elif nid == "I:cor":
             out = get("cor")
-        elif nid in ("I:rd", "I:sm", "I:ga", "I:sga", "I:da_op"):
+        elif nid in ("I:rd", "I:sm", "I:ga", "I:sga", "I:da_op", "I:prov"):
             out = get(nid[2:])
+        elif nid == "I:nonint":
+            out = get("nonint_exp")
         elif nid == "I:other_opex":
             out = CALC["other_opex"]
         elif nid == "opex":

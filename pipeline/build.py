@@ -449,6 +449,18 @@ class Pending(Exception):
     pass
 
 
+# a bank's revenue (facts.bank_revenue) drawn as its two lines: net interest income and noninterest income
+BANK_LINES = {"axis": "bank", "leaves": [{"id": "nii", "label": "Net interest income"},
+                                         {"id": "nonii", "label": "Noninterest income"}], "groups": []}
+
+
+def bank_lines(raw):
+    """The two revenue lines of a bank's period, or None (not a bank, or a line missing)."""
+    if not (raw or {}).get("rev_bank") or raw.get("nii") is None or raw.get("nonii") is None:
+        return None
+    return {"nii": raw["nii"], "nonii": raw["nonii"]}
+
+
 class NotApplicable(Exception):
     """The filing has XBRL facts for the period but no revenue line (funds, shells, most banks)."""
 
@@ -513,6 +525,10 @@ def process_filing(store, cik, accn, form, starred=False):
             c["dims_ytd"] = dict(sorted(c["dims_ytd"].items())[-6:])
     except (sec.NotFound, Exception) as e:                       # breakdown is optional
         print(f"  dims skipped for {cik} {accn}: {e}", file=sys.stderr)
+    lines_q1 = None
+    if bank_lines(raw) and not lines_struct:                  # a bank without a breakdown: its two revenue lines
+        lines_struct, lines_cur = dict(BANK_LINES), bank_lines(raw)
+        lines_py, lines_q1 = bank_lines(comp.get("raw_py")), bank_lines(comp.get("raw_q1"))
     capex_src = src = None
     try:
         capex_src = capex_from_filing(cik, sub, fx, raw, comp, end, inst_text, lab_text)
@@ -564,7 +580,7 @@ def process_filing(store, cik, accn, form, starred=False):
         "accn": accn, "filed": row.get("filingDate"), "doc_url": doc_url,
         "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm",
         "raw": raw, **comp, "lines_struct": lines_struct, "lines": lines_cur, "lines_py": lines_py, "notes": notes,
-        "capex_src": capex_src, "src": src,
+        "capex_src": capex_src, "src": src, **({"lines_q1": lines_q1} if lines_q1 else {}),
     }
     e0 = dt.date.fromisoformat(end)                               # the 10-Q/10-K replaces a preliminary 8-K quarter
     releases = [replaced] if replaced else []
@@ -624,6 +640,8 @@ def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_tex
         except Exception as e:
             print(f"  annual breakdown skipped for {cik} {accn}: {e}", file=sys.stderr)
             ls = cur = prev = None
+    if bank_lines(raw) and not ls:                               # a bank without a breakdown: its two revenue lines
+        ls, cur, prev = dict(BANK_LINES), bank_lines(raw), bank_lines(comp["raw_py"])
     label, fy = facts.fiscal_year_label(end, c["profile"]["fye"])
     return {"end": end, "label": label, "fy": fy, "form": form, "accn": accn, "filed": row.get("filingDate"),
             "doc_url": doc_url, "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", "period": "fy",
@@ -823,11 +841,13 @@ def release_check(old, raw):
 HISTORY_ON_RELEASE = 5          # an earnings 8-K brings in the company's last five 10-Q/10-K filings
 
 
-def _queue_history(store, cik, sub, n=HISTORY_ON_RELEASE):
+def _queue_history(store, cik, sub, n=HISTORY_ON_RELEASE, force=False):
+    """force: queue the default history again even when it was queued before (a reader asks for a company that has no
+    chart: filings skipped by an older reader, such as a bank's before banks were drawn, are read again)."""
     if is_foreign(sub):
         return _queue_foreign(store, cik, sub)
     st, c = store.state, store.company(cik)
-    if c.get("keep", 0) >= n + 1 and c.get("hist", 0) >= HISTORY_VERSION:
+    if c.get("keep", 0) >= n + 1 and c.get("hist", 0) >= HISTORY_VERSION and not force:
         return
     have = c.get("quarters", {})
     years = c.get("years", {})
@@ -863,10 +883,10 @@ def cannot_draw(sub, currency=None):
     return f"{name} has no 10-Q or 10-K on file at SEC"
 
 
-def queue_history(store, cik):
+def queue_history(store, cik, force=False):
     """Default history (last five 10-Qs and two 10-Ks) for one company; returns False when SEC has no such filer."""
     try:
-        _queue_history(store, cik, submissions(cik))
+        _queue_history(store, cik, submissions(cik), force=force)
         return True
     except sec.NotFound:
         return False
@@ -1434,7 +1454,8 @@ def run(args):
     unbuildable = {}
     for cik in sorted(asked):                                  # companies readers asked for (site search)
         try:
-            if not queue_history(store, cik):
+            c0 = store.company(cik)                               # asked again with no chart yet: read it all again
+            if not queue_history(store, cik, force=not c0.get("quarters") and not c0.get("years")):
                 print(f"  no SEC filer with CIK {cik}")
                 unbuildable[cik] = "SEC has no filer with this CIK"
             elif cannot_draw(submissions(cik), _currency_of(cik) if is_foreign(submissions(cik)) else None):
@@ -1493,9 +1514,32 @@ def run(args):
                 store.commit()
     st["log"].append({"t": now, "processed": done, "pending": len(st["pending"])})
     store.commit()
+    late = undrawable(store, asked, unbuildable)
+    if late and getattr(args, "unbuildable_out", None):       # read this scan and still nothing to draw: say why now
+        unbuildable.update(late)
+        with open(args.unbuildable_out, "w") as fh:
+            json.dump({str(k): v for k, v in unbuildable.items()}, fh)
     render(store, args.out, set(stars))
     company_list(args.out)
     price_list(args.out)
+
+
+def undrawable(store, asked, known=None):
+    """{cik: why} for companies readers asked for that still have no chart after this scan, every filing of whose
+    default history was read and skipped (nothing left pending): the reason the filings were skipped."""
+    st, out = store.state, {}
+    for cik in asked:
+        c = store.company(cik)
+        if cik in (known or {}) or c.get("quarters") or c.get("years"):
+            continue
+        if any(p.get("cik") == cik for p in st["pending"].values()):
+            continue                                              # still being read (or waiting for SEC's XBRL)
+        why = [v.get("s", "") for v in st["seen"].values() if v.get("cik") == cik and v.get("form") in DRAWABLE_FORMS
+               and str(v.get("s", "")).startswith("skip:")]
+        if why:
+            reason = max(set(why), key=why.count)[len("skip: "):]
+            out[cik] = f"its 10-Q and 10-K filings cannot be drawn: {reason}"
+    return out
 
 
 def company_list(out):
@@ -1563,7 +1607,7 @@ def _process_one(store, st, accn, p, stars, now):
             del st["pending"][accn]
         print(f"wait {p['form']:5} {p['cik']:>10} {accn} {e}")
     except NotApplicable as e:
-        st["seen"][accn] = {"t": now, "s": f"skip: {e}", "cik": p["cik"]}
+        st["seen"][accn] = {"t": now, "s": f"skip: {e}", "cik": p["cik"], "form": p["form"]}
         del st["pending"][accn]
         print(f"skip {p['form']:5} {p['cik']:>10} {accn} {e}")
     except sec.NotFound as e:
