@@ -104,6 +104,9 @@ def main():
         for name in styles + scripts + ["favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"]:
             shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
     open(os.path.join(args.out, "index.html"), "w", encoding="utf-8").write(html)
+    # test versions of views (web/beta/: Money flow Beta 1.0), served next to the site and linked from nowhere in it
+    if not args.inline and os.path.isdir(os.path.join(WEB, "beta")):
+        shutil.copytree(os.path.join(WEB, "beta"), os.path.join(args.out, "beta"), dirs_exist_ok=True)
     data_out = os.path.join(args.out, "data")
     if os.path.abspath(args.data) != os.path.abspath(data_out):
         shutil.rmtree(data_out, ignore_errors=True)

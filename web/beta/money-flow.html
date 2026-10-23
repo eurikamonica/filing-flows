@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Money flow · Beta 1.1 — Filing Flows</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  :root { --a: #17734a; --b: #2f6db3; --c: #8a7a52; --d: #8a8f98; }
+  body { background: var(--bg); color: var(--ink); }
+  .mf { max-width: 1280px; margin: 0 auto; padding: 18px 16px 60px; font-family: var(--sans, 'IBM Plex Sans', sans-serif); }
+  .mf-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 6px; }
+  .mf-top h1 { font-size: 22px; margin: 0; }
+  .mf-badge { font-size: 12px; font-weight: 600; letter-spacing: .04em; padding: 2px 9px; border-radius: 999px; background: #fff3d6; color: #7a5300; border: 1px solid #e8c77a; }
+  .mf-back { margin-left: auto; font-size: 14px; }
+  .mf-sub { color: var(--muted); font-size: 14px; max-width: 90ch; line-height: 1.5; margin: 4px 0 14px; }
+  .mf-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; }
+  .mf-pick input { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; min-width: 240px; background: var(--surface); color: var(--ink); }
+  .mf-btn { font: inherit; cursor: pointer; padding: 7px 12px; border: 1px solid #a7b2bc; border-radius: 7px; background: transparent; color: inherit; }
+  .mf-btn[aria-pressed="true"] { background: #184a68; color: #fff; border-color: #184a68; }
+  .mf-btn:disabled { opacity: .45; cursor: default; }
+  .mf-h2 { font-size: 15px; margin: 18px 0 6px; display: flex; align-items: center; gap: 8px; }
+  .mf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .mf-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); }
+  .mf-card span { display: block; font-size: 12.5px; color: var(--muted); }
+  .mf-card b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .mf-card i { display: block; font-style: normal; font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+  .mf-card.est { background: transparent; border-style: dashed; }
+  .mf-card.est b { color: var(--ink-2); }
+  .g { display: inline-block; min-width: 18px; text-align: center; font-size: 11px; font-weight: 700; color: #fff; border-radius: 4px; padding: 1px 5px; }
+  .g-A { background: var(--a); } .g-B { background: var(--b); } .g-C { background: var(--c); } .g-D { background: var(--d); }
+  .mf-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); margin: 8px 0; }
+  .mf-legend .sw { display: inline-block; width: 18px; height: 9px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+  .mf-chart { position: relative; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: #fcfcfb; }
+  .mf-chart svg { display: block; width: 100%; height: auto; min-width: 980px; }
+  .mf-chart.compact svg { min-width: 0; }
+  .mf-chart .band { cursor: pointer; transition: opacity .12s; }
+  .mf-chart .node { cursor: pointer; }
+  .mf-chart.sel .band { opacity: .25; }
+  .mf-chart.sel .band.on { opacity: 1; }
+  .mf-dens { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.6; }
+  .mf-panel { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 10px; background: var(--surface); font-size: 14px; line-height: 1.5; }
+  .mf-panel h3 { font-size: 15px; margin: 0 0 6px; }
+  .mf-panel dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 6px 0 0; }
+  .mf-panel dt { color: var(--muted); }
+  .mf-panel dd { margin: 0; }
+  .mf-panel blockquote { margin: 6px 0 0; padding: 6px 10px; border-left: 3px solid var(--line); color: var(--ink-2); font-size: 13px; }
+  .mf-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .mf-tbl th, .mf-tbl td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .mf-tbl td.n, .mf-tbl th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mf-wrap { overflow-x: auto; }
+  .mf-note { font-size: 13px; color: var(--muted); line-height: 1.55; max-width: 95ch; }
+  .mf-checks li { margin: 2px 0; }
+  .mf-mob { display: none; }
+  @media (max-width: 760px) {
+    .mf-top h1 { font-size: 19px; }
+    .mf-mob { display: block; margin: 6px 0; }
+    .mf-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mf-card b { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<main class="mf" id="mf">
+  <div class="mf-top"><h1>Money flow</h1><span class="mf-badge">BETA 1.1 · test version</span><a class="mf-back" href="../">← Filing Flows</a></div>
+  <p class="mf-sub">A test version of the industry money flow. It keeps what the filings say apart from what is estimated, and every band can be clicked to see where its number comes from. The published view on the Industries page is unchanged.</p>
+  <div class="mf-pick"><input id="mf-q" list="mf-list" placeholder="SIC code or industry, e.g. 3530" aria-label="Industry"><datalist id="mf-list"></datalist><button class="mf-btn" id="mf-go" type="button">Show</button></div>
+  <div id="mf-body"><p class="muted">Loading…</p></div>
+</main>
+<script src="../sankey.js"></script>
+<script src="../chains.js"></script>
+<script src="money-flow.js"></script>
+</body>
+</html>

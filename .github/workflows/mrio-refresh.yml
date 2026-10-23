@@ -1,0 +1,128 @@
+name: Refresh multi-country input-output data
+
+# Rebuilds pipeline/data/mrio.json (scripts/mrio_build.py), used by Money flow Beta 1.1 for spending outside the US,
+# imports by country and the model error, from:
+#   - Eurostat FIGARO (latest year, the public SDMX API)
+#   - ADB MRIO (the newest table of the latest series, found on kidb.adb.org)
+#   - OECD ICIO, only when its zip has been attached by hand to the repository release "icio-data": OECD's download
+#     page sits behind a browser check, so the workflow does not fetch it. To add it: download "2016-2022" (small
+#     version) from https://www.oecd.org/en/data/datasets/inter-country-input-output-tables.html, create a release
+#     tagged icio-data and attach the zip; the next run uses it.
+# When the result differs, it goes to the branch "mrio-refresh" with a pull request; nothing changes before it is merged.
+on:
+  schedule:
+    - cron: '41 8 5 * *'
+  workflow_dispatch:
+    inputs:
+      figaro_year:
+        description: FIGARO year (blank = the latest the API has)
+        type: string
+        default: ''
+      adb_file:
+        description: ADB MRIO file id on kidb.adb.org (blank = the newest found)
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: mrio-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            scripts
+            pipeline
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Tools
+        run: pip install -q openpyxl playwright && python -m playwright install --with-deps chromium >/dev/null 2>&1
+      - name: Find the sources
+        id: src
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIG_IN: ${{ inputs.figaro_year }}
+          ADB_IN: ${{ inputs.adb_file }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        run: |
+          mkdir -p dl
+          # FIGARO: the latest year of the industry-by-industry table (the dataset's end year in Eurostat's catalogue)
+          year="$FIG_IN"
+          if [ -z "$year" ]; then
+            year=$(curl -sSL "https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/txt?lang=en" | grep -E '"naio_10_fcp_ii[0-9]+"' | awk -F'\t' '{gsub(/"/,"",$7); print $7}' | sort -n | tail -1)
+          fi
+          echo "figaro_year=$year" >> "$GITHUB_OUTPUT"
+          # ADB: the last link of the newest year on the MRIO page (the series with the most economies comes last)
+          adb="$ADB_IN"
+          if [ -z "$adb" ]; then
+            adb=$(python - <<'PY'
+          import re
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              b = p.chromium.launch(); pg = b.new_page()
+              pg.goto("https://kidb.adb.org/globalization/current", timeout=90000, wait_until="domcontentloaded"); pg.wait_for_timeout(8000)
+              links = pg.eval_on_selector_all("a", "els => els.map(e => [e.innerText.trim(), e.href])")
+              b.close()
+          rows = [(int(m.group(1)), h) for t, h in links for m in [re.match(r"ADB MRIO \((\d{4})\)$", t)] if m and "mrio-file" in h]
+          top = max(y for y, _ in rows)
+          print([h for y, h in rows if y == top][-1].rsplit("/", 1)[-1])
+          PY
+          )
+          fi
+          echo "adb_file=$adb" >> "$GITHUB_OUTPUT"
+          curl -sSL -o dl/adb.xlsx "https://kidb.adb.org/download/mrio-file/$adb"
+          curl -sSL -A "$SEC_USER_AGENT" -o dl/edgar.html "https://www.sec.gov/edgar/searchedgar/edgarstatecodes.htm"
+          gh release download icio-data --pattern '*.zip' --dir dl 2>/dev/null && echo "icio=$(ls dl/*.zip | head -1)" >> "$GITHUB_OUTPUT" || echo "::notice::no OECD ICIO zip on the release icio-data: built from FIGARO and ADB"
+          echo "::notice::FIGARO $year, ADB file $adb"
+      - name: Build
+        run: |
+          args=(--figaro-year "${{ steps.src.outputs.figaro_year }}" --adb dl/adb.xlsx --edgar dl/edgar.html --out new.json)
+          if [ -n "${{ steps.src.outputs.icio }}" ]; then
+            y=$(unzip -Z1 "${{ steps.src.outputs.icio }}" | grep -oE '20[0-9]{2}' | sort -n | tail -1)
+            args+=(--icio "${{ steps.src.outputs.icio }}" --icio-year "$y")
+          fi
+          python -u scripts/mrio_build.py "${args[@]}"
+      - name: Compare
+        id: cmp
+        run: |
+          python - <<'PY'
+          import json, os
+          new = json.load(open('new.json'))
+          try:
+              old = json.load(open('pipeline/data/mrio.json'))
+          except Exception:
+              old = {"sources": {}}
+          strip = lambda d: json.dumps(d.get("sources", {}), sort_keys=True)
+          changed = strip(old) != strip(new) and all(len(v.get("t", {})) > 500 for v in new["sources"].values())
+          note = ", ".join(f"{k} {v.get('year')} ({len(v.get('t', {}))} country-industries)" for k, v in new["sources"].items())
+          print(('::notice::changed: ' if changed else '::notice::unchanged: ') + note)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"changed={'true' if changed else 'false'}\nnote={note}\n")
+          PY
+      - name: Open a pull request
+        if: steps.cmp.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTE: ${{ steps.cmp.outputs.note }}
+        run: |
+          cp new.json pipeline/data/mrio.json
+          git config user.name "filing-flows"
+          git config user.email "actions@users.noreply.github.com"
+          git checkout -B mrio-refresh
+          git add pipeline/data/mrio.json
+          git commit -qm "Multi-country input-output data refreshed ($NOTE)"
+          git push -q --force origin mrio-refresh
+          gh pr view mrio-refresh --json number >/dev/null 2>&1 && echo "::notice::pull request already open (updated)" || \
+            gh pr create --base main --head mrio-refresh --title "Refresh multi-country input-output data" --body "Rebuilt pipeline/data/mrio.json: $NOTE. Used only by Money flow Beta (web/beta/)." || \
+            echo "::warning::could not open the pull request; the data is on the branch mrio-refresh"
