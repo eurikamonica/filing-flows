@@ -1,0 +1,36 @@
+name: Release reader probe (temporary)
+on:
+  push:
+    branches: [debug/release-probe]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Find the input-output download links
+        run: |
+          mkdir -p out
+          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36'
+          for u in \
+            "https://www.oecd.org/en/data/datasets/inter-country-input-output-tables.html" \
+            "https://ec.europa.eu/eurostat/web/esa-supply-use-input-tables/database" \
+            "https://ec.europa.eu/eurostat/web/esa-supply-use-input-tables/figaro" \
+            "https://kidb.adb.org/globalization" \
+            "https://kidb.adb.org/mrio" \
+            "https://www.adb.org/what-we-do/data/regional-input-output-tables" \
+            "https://www.sec.gov/submit-filings/filer-support-resources/edgar-state-country-codes" ; do
+            n=$(echo "$u" | sed 's#[^A-Za-z0-9]#_#g' | cut -c1-90)
+            curl -sSL -A "$UA" --max-time 60 -o "out/$n.html" "$u" -w "$u %{http_code} %{size_download}\n" || echo "$u failed"
+            grep -oiE 'href="[^"]+"' "out/$n.html" | grep -iE 'zip|xlsx|csv|fileview|download|figaro|mrio|icio|naio' | sort -u | head -80 > "out/$n.links.txt" || true
+            echo "::notice::$u -> $(wc -l < out/$n.links.txt) links"
+          done
+      - name: Keep the files on a branch
+        if: always()
+        run: |
+          cd out
+          git init -q -b probe-release-data
+          git add -A
+          git -c user.name=probe -c user.email=actions@users.noreply.github.com commit -qm probe
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:probe-release-data
