@@ -19,7 +19,7 @@
   const range = (o) => (o && fin(o.lo) && fin(o.hi) ? `range ${usd(o.lo)} – ${usd(o.hi)}` : '');
   const grade = (g) => `<span class="g g-${esc(g)}" title="${esc(GR[g] || '')}">${esc(g)}</span>`;
   const GR = { A: 'Filed figure (SEC financial statements)', B: 'Computed from filed figures, or stated in the filing’s text',
-    C: 'Industry average (BEA input-output) applied to filed figures', D: 'Modelled allocation — not verified purchases' };
+    C: 'Industry average (input-output tables: BEA, FIGARO, ADB) applied to filed figures', D: 'Modelled allocation — not verified purchases' };
   const SUBL = { A: 'filed', B: 'computed from filings', C: 'estimate', D: 'modelled allocation' };
   const cache = {};
   const getJSON = (u) => cache[u] || (cache[u] = fetch(u, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }));
@@ -80,12 +80,17 @@
       ${card('Free cash flow', usd(F.fcf), 'operating cash flow − capital spending')}</div>
       <div class="mf-h2">${grade('B')} Computed from the filings</div><div class="mf-cards">
       ${card('EBITDA − capital spending', usd(F.ebitda_capex), 'operating income + D&A − capital spending. Not cash flow: before interest, tax and working capital')}
-      ${card('Costs outside the US', usd((E.outside || {}).v), d.geo_n ? `not split: BEA describes the US economy · ${d.geo_n} of ${d.companies} companies state their US share` : 'no company states its US share: all costs are split as if in the US')}</div>
-      <div class="mf-h2">${grade('C')} Estimated from industry averages (BEA)</div><div class="mf-cards">
-      ${card('Purchased inputs', usd((E.purchases || {}).v), range(E.purchases), true)}
-      ${card('Employees (pay & benefits)', usd((E.employees || {}).v), range(E.employees), true)}
-      ${card('Taxes on production', usd((E.taxes || {}).v), range(E.taxes), true)}
-      ${card('Imports (part of the above)', usd((E.imports || {}).v), 'each product’s imported share of US supply', true)}</div>`;
+      ${(E.outside || {}).v ? card('Costs outside the US (not split)', usd(E.outside.v), 'no multi-country table covers it') : ''}
+      ${card('US share of revenue', d.geo_n ? `${d.geo_n} of ${d.companies}` : 'not stated', d.geo_n ? 'companies state it in their 10-K; the rest are treated as all-US' : 'no company states it: all costs are split as if in the US')}</div>
+      <div class="mf-h2">${grade('C')} Estimated from industry averages (BEA; FIGARO and ADB abroad)</div><div class="mf-cards">
+      ${card('Purchased inputs — US', usd((E.purchases || {}).v), [range(E.purchases), merr(d, 'purchases')].filter(Boolean).join(' · '), true)}
+      ${card('Employees — US', usd((E.employees || {}).v), [range(E.employees), merr(d, 'employees')].filter(Boolean).join(' · '), true)}
+      ${card('Taxes on production — US', usd((E.taxes || {}).v), range(E.taxes), true)}
+      ${card('Imports into the US', usd((E.imports || {}).v), 'by country of origin in the chart', true)}
+      ${(E.purchases_out || {}).v ? card('Purchased inputs — outside the US', usd(E.purchases_out.v), [range(E.purchases_out), merr(d, 'purchases_out')].filter(Boolean).join(' · '), true) : ''}
+      ${(E.employees_out || {}).v ? card('Employees — outside the US', usd(E.employees_out.v), 'FIGARO splits employee pay', true) : ''}
+      ${(E.other_out || {}).v ? card('Employees & other costs — outside the US', usd(E.other_out.v), 'not separated: this table has no employee pay', true) : ''}</div>
+      ${tablesNote(d)}`;
     h += `<div class="mf-legend"><span>Bands, darkest to lightest:</span>${['A', 'B', 'C', 'D'].map((g) =>
       `<span><i class="sw" style="background:rgba(47,109,179,${(0.15 + 0.37 * d.shade[g]).toFixed(2)})"></i>${grade(g)} ${esc(SUBL[g])}</span>`).join('')}</div>`;
     h += `<div class="mf-mob"><button type="button" class="mf-btn" id="mf-full">${full ? 'Show the first two columns' : 'Show the suppliers too (scroll sideways)'}</button></div>`;
@@ -97,6 +102,20 @@
     const fb = $('#mf-full');
     if (fb) fb.addEventListener('click', () => { full = !full; show(key, idx); });
     draw(d);
+  }
+
+  function merr(d, c) {
+    const e = (d.model_error || {})[c];
+    return e && fin(e.rel) ? `model error ±${pct(e.rel, 0)}` : '';
+  }
+  function errText(e) {
+    return `${fin(e.rel) ? `±${pct(e.rel, 1)} · ` : ''}${Object.entries(e.vals || {}).map(([k, v]) => `${esc(k)} ${pct(v, 1)}`).join(' · ')} <span class="muted">(${esc(e.what)})</span>`;
+  }
+  function tablesNote(d) {
+    const errs = Object.entries(d.model_error || {});
+    const t = Object.values(d.tables || {}).map((x) => x.label).join(', ');
+    return `<p class="mf-note" style="margin-top:6px">${t ? 'Multi-country tables: ' + esc(t) + '. ' : 'No multi-country table loaded: costs outside the US stay unsplit. '}` +
+      (errs.length ? 'Model error, where the tables disagree: ' + errs.map(([c, e]) => `<b>${esc(c.replace('_out', ' (outside the US)'))}</b> ${errText(e)}`).join('; ') + '.' : '') + '</p>';
   }
 
   function card(label, value, note, est) {
@@ -120,9 +139,9 @@
     });
     const cols = d.cols.slice(0, ncol).map((c, i) => ({ id: 'c' + i, name: `${c.name} · % of ${usd(c.den)}` }));
     const scene = window.FFChains.layout({ cols, nodes, links }, {
-      title: 'Money flow (beta) — ' + d.title,
+      title: 'Money flow (beta 1.1) — ' + d.title,
       subtitle: `${usd(d.revenue)} revenue over four quarters · ${d.companies} ${d.companies === 1 ? 'company' : 'companies'} · darker bands are filed or computed figures, lighter ones estimates`,
-      footer: ['Beta 1.0. Filed figures from SEC filings; the split of spending by BEA input-output (' + d.source.io_year + ' Use table, scaled to ' + d.source.scale_year + '); suppliers by revenue share of their industry unless a filing names them (✓).',
+      footer: ['Beta 1.1. Filed figures from SEC filings; US spending split by BEA input-output (' + d.source.io_year + ', scaled to ' + d.source.scale_year + '), spending abroad and imports by origin by ' + (Object.values(d.tables || {}).map((t) => t.label).join(', ') || 'no multi-country table') + '; suppliers by revenue share unless a filing names them (✓).',
         'Supplier amounts without ✓ are a modelled allocation, not verified purchases. Not investment advice.'] });
     host.classList.toggle('compact', compact);
     host.innerHTML = window.Sankey.toSVG(scene, 'Money flow (beta)');
@@ -169,11 +188,12 @@
     const a = byId.get(s), b = byId.get(t);
     if (!p) return;
     const rows = [['Evidence', `${grade(p.grade)} ${esc(GR[p.grade])}`], ['Amount', usd(p.v)]];
-    if (fin(p.lo) && fin(p.hi) && (p.lo !== p.v || p.hi !== p.v)) rows.push(['Range', `${usd(p.lo)} – ${usd(p.hi)} <span class="muted">(10th–90th percentile of similar BEA industries)</span>`]);
+    if (fin(p.lo) && fin(p.hi) && (p.lo !== p.v || p.hi !== p.v)) rows.push(['Range', `${usd(p.lo)} – ${usd(p.hi)} <span class="muted">(${esc(p.range_how || '10th–90th percentile of similar BEA industries')})</span>`]);
     if (fin(p.coef)) rows.push(['Coefficient', pct(p.coef, 1)]);
     if (p.formula) rows.push(['Formula', esc(p.formula)]);
     if (p.source) rows.push(['Source', esc(p.source) + (p.url ? ` · <a href="${esc(p.url)}" target="_blank" rel="noopener">filing ↗</a>` : '')]);
     if (p.note) rows.push(['Note', `<b>${esc(p.note)}</b>`]);
+    if (p.err) rows.push(['Model error', errText(p.err)]);
     $('#mf-panel').innerHTML = `<h3>${esc(a ? a.label : s)} → ${esc(b ? b.label : t)}</h3><dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>` +
       (p.quote ? `<blockquote>“${esc(p.quote)}”</blockquote>` : '');
   }
@@ -199,9 +219,10 @@
   function members(d) {
     const ms = d.members || [];
     if (!ms.length) return '';
-    return `<div class="mf-h2">Companies: what their filings say</div><div class="mf-wrap"><table class="mf-tbl"><thead><tr><th>Company</th><th class="n">Revenue</th><th class="n">Op. income</th><th class="n">D&amp;A</th><th class="n">Capex</th><th class="n">Op. cash flow</th><th class="n">Free cash flow</th><th class="n">US share</th><th>Industry mix</th></tr></thead><tbody>` +
+    return `<div class="mf-h2">Companies: what their filings say</div><div class="mf-wrap"><table class="mf-tbl"><thead><tr><th>Company</th><th class="n">Revenue</th><th class="n">Op. income</th><th class="n">D&amp;A</th><th class="n">Capex</th><th class="n">Op. cash flow</th><th class="n">Free cash flow</th><th class="n">US share</th><th>Abroad split by</th><th>Industry mix</th></tr></thead><tbody>` +
       ms.map((m) => `<tr><td><a href="../#c-${m.cik}"><b>${esc(m.ticker || m.name)}</b></a> <span class="muted">SIC ${esc(m.sic)}</span></td><td class="n">${usd(m.revenue)}</td><td class="n">${usd(m.oi)}</td><td class="n">${usd(m.da)}</td><td class="n">${usd(m.capex)}</td><td class="n">${usd(m.ocf)}</td><td class="n">${usd(m.fcf)}</td>
         <td class="n">${m.us != null ? `<span title="${esc(m.geo.text)}">${pct(m.us)}</span>` : '<span class="muted">not stated</span>'}</td>
+        <td>${m.abroad ? esc(m.abroad) + (m.home ? ` · home ${esc(m.home)}` : '') : '<span class="muted">—</span>'}</td>
         <td>${m.segments ? m.segments.map((s) => `${esc(s.segment)} ${pct(s.share)} → ${esc(s.bea_name)}`).join('<br>') : '<span class="muted">its SIC code</span>'}</td></tr>`).join('') +
       '</tbody></table></div>';
   }
@@ -219,6 +240,8 @@
     return `<div class="mf-h2">How this is built</div><div class="mf-note">
       <p><b>Grades.</b> ${['A', 'B', 'C', 'D'].map((g) => `${grade(g)} ${esc(GR[g])}`).join(' · ')}.</p>
       <p><b>Spending.</b> Revenue − operating income − D&amp;A (four quarters, filed) is the cash operating cost. The US share of it (from the 10-K’s own sentence on revenue outside the United States, where there is one) is split into purchased inputs, employees and taxes on production as BEA’s Use table splits the industry’s spending; the rest is “Costs outside the US (not split)”. A company that reports business segments has each segment matched by name to a BEA industry of the same kind.</p>
+      <p><b>Outside the US (Beta 1.1).</b> The share of costs outside the US (the 10-K’s own sentence), and all of a foreign filer’s costs (its home country from its SEC registration), are split like that country’s industry in the multi-country tables: Eurostat FIGARO first (the only one with employee pay), then ADB MRIO, then OECD ICIO when it is loaded. US imports and purchases abroad are shown by the country they are bought in. Industries are matched through ISIC divisions.</p>
+      <p><b>Model error.</b> The same industry looks different in each table (definitions, years, how imports are allocated). Where two or more tables cover it, half the spread of their figures (purchased inputs ÷ output) is shown as the model error and widens the range.</p>
       <p><b>Ranges.</b> The 10th–90th percentile of the same coefficient among similar BEA industries (same first three digits of the code): how much the estimate moves if the company looks like a neighbouring industry.</p>
       <p><b>What is left.</b> Revenue − cash operating cost − capital spending = operating income + D&amp;A − capital spending (“EBITDA − capital spending”). It is not operating cash flow, which is shown beside it as filed.</p>
       <p><b>Checks passed before publishing:</b></p><ul class="mf-checks">${(d.checks || []).map((c) => `<li>✓ ${esc(c)}</li>`).join('')}</ul>

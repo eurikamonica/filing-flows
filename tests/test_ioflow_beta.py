@@ -48,7 +48,7 @@ def _setup(tmp_path):
 
 def test_layers_geo_stated_and_checks(tmp_path):
     store, out, index = _setup(tmp_path)
-    assert ioflow_beta.build(store, out, index) >= 2
+    assert ioflow_beta.build(store, out, index, mrio_path=os.path.join(out, "none.json")) >= 2   # BEA only (Beta 1.0)
     d = json.load(open(os.path.join(out, "gamma", "io-beta", "3530.json")))
     F = d["filed"]
     assert F["revenue"] == 8_576_562_000 and F["capex"] == 219_994_000
@@ -100,3 +100,58 @@ def test_us_share_sentences():
     assert f("International sales accounted for approximately 38% of net sales in 2025.") == 0.62
     assert f("Approximately 70% of our revenue was generated in the United States.") == 0.7
     assert f("No customer accounted for more than 10% of revenue.") is None
+
+
+def _mrio(tmp_path):
+    t = lambda i, comp, org: {"o": 1000.0, "i": i, "comp": comp, "otax": 0.01, "dom": org[0][1], "org": dict(org), "ind": {"C28": 0.5}}
+    doc = {"sources": {
+        "figaro": {"year": 2024, "codes": {"C28": [28], "J62_63": [62, 63]},
+                   "t": {"USA|C28": t(0.55, 0.25, [("USA", 0.78), ("MEX", 0.1), ("CHN", 0.12)]),
+                         "DEU|C28": t(0.60, 0.22, [("DEU", 0.7), ("CHN", 0.3)]),
+                         "NLD|J62_63": t(0.56, 0.29, [("NLD", 0.74), ("IRL", 0.26)])}},
+        "adb": {"year": 2024, "codes": {"c13": [28], "c30": [62, 63]},
+                "t": {"USA|c13": {"o": 900.0, "i": 0.54, "va": 0.46, "org": {"USA": 0.8, "CHN": 0.2}},
+                      "DEU|c13": {"o": 700.0, "i": 0.66, "va": 0.34, "org": {"DEU": 0.8, "CHN": 0.2}},
+                      "NLD|c30": {"o": 400.0, "i": 0.52, "va": 0.48, "org": {"NLD": 0.8, "USA": 0.2}}}}},
+        "edgar": {"P7": "NETHERLANDS"}}
+    p = os.path.join(str(tmp_path), "mrio.json")
+    json.dump(doc, open(p, "w"))
+    return p
+
+
+def test_multi_country_split_and_model_error(tmp_path):
+    store, out, index = _setup(tmp_path)
+    store.recs[1513845] = _rec("Nebius", "NBIS", "7370", 1e9, -2e8, 2e8, 4e8, 3e8)
+    store.recs[1513845]["fpi"] = True
+    store.recs[1513845]["profile"]["state"] = "P7"
+    index.append({"cik": 1513845, "sic": "7370", "ticker": "NBIS", "name": "Nebius", "end": ENDS[-1], "currency": "USD", "industry": "Software"})
+    assert ioflow_beta.build(store, out, index, mrio_path=_mrio(tmp_path)) >= 3
+    d = json.load(open(os.path.join(out, "gamma", "io-beta", "3530.json")))
+    E = d["estimate"]
+    assert E["purchases_out"]["v"] > 0 and E["employees_out"]["v"] > 0 and E["outside"]["v"] == 0
+    assert set(d["model_error"]) >= {"purchases", "purchases_out"}
+    assert "BEA 2017" in d["model_error"]["purchases"]["vals"] and "ADB MRIO 2024" in d["model_error"]["purchases"]["vals"]
+    ids = {n["id"] for n in d["nodes"]}
+    assert "c:CHN" in ids and "c:MEX" in ids                  # US imports and purchases abroad by country
+    assert json.load(open(os.path.join(out, "gamma", "io-beta", "index.json")))["failed"] == []
+    n = json.load(open(os.path.join(out, "gamma", "io-beta", "7370.json")))
+    m = next(x for x in n["members"] if x["ticker"] == "NBIS")
+    assert m["home"] == "NLD" and m["abroad"] == "Eurostat FIGARO 2024"
+    assert n["estimate"]["purchases"]["v"] == 0                # a foreign filer: nothing split as US
+    assert any(l[1] == "c:NLD" for l in n["links"])            # its home country's own suppliers
+    assert n["model_error"]["purchases_out"]["vals"] == {"Eurostat FIGARO 2024": 0.56, "ADB MRIO 2024": 0.52}
+
+
+def test_isic_mapping():
+    from pipeline import mrio
+    assert mrio.division("333914") == 28 and mrio.division("541511") == 62 and mrio.division("3254A0") == 21
+    assert mrio.division("336411") == 30 and mrio.division("4200ID") == 46
+
+
+def test_table_codes_to_isic():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("mrio_build", os.path.join(os.path.dirname(__file__), "..", "scripts", "mrio_build.py"))
+    mb = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mb)
+    assert mb.divisions("C10-12") == [10, 11, 12] and mb.divisions("J62_63") == [62, 63] and mb.divisions("C302T309") == [30]
+    assert mb.divisions("G") == [45, 46, 47] and mb.divisions("C24A") == [24]

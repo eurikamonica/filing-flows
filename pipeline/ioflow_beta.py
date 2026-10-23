@@ -1,4 +1,4 @@
-"""Money flow Beta 1.0 — a test version of the Industries page's "Estimated money flow (BEA input-output)" that keeps
+"""Money flow Beta 1.1 — a test version of the Industries page's "Estimated money flow (BEA input-output)" that keeps
 what the filings say apart from what is estimated, and says where every band comes from.
 
 Built next to pipeline/ioflow.py, which it reuses and never changes: writes data/gamma/io-beta/<key>.json and
@@ -23,6 +23,11 @@ What changes against the published view
       B  computed from filed figures, or stated in the filing's text
       C  industry average (BEA input-output) applied to filed figures
       D  modelled allocation — not verified purchases
+  - Beta 1.1, abroad (pipeline/mrio.py, pipeline/data/mrio.json): the costs outside the US — and all of a foreign
+    filer's costs (its home country from its SEC registration) — are split like that country's industry in the
+    multi-country tables (Eurostat FIGARO first, which has employee pay; then ADB MRIO; OECD ICIO when loaded); US imports
+    and purchases abroad are shown by country; the model error is half the spread of the tables' figures for the same
+    industry (BEA against FIGARO and ADB for the US), shown on the band and widening its range
   - checks before anything is written: money is conserved column to column, imports are counted once, supplier
     allocations add up to their industry, and the filed figures match the companies' records. A level that fails is
     not published (index.json lists it)
@@ -33,23 +38,29 @@ import os
 import re
 from collections import defaultdict
 
-from . import chains, ioflow, sectors
+from . import chains, ioflow, mrio, sectors
 
-VERSION = "beta-1.0"
+VERSION = "beta-1.1"
 GRADES = {"A": "Filed figure (SEC financial statements)",
           "B": "Computed from filed figures, or stated in the filing's text",
-          "C": "Industry average (BEA input-output) applied to filed figures",
+          "C": "Industry average (input-output tables: BEA, FIGARO, ADB) applied to filed figures",
           "D": "Modelled allocation — not verified purchases"}
 SHADE = {"A": 1.0, "B": 0.75, "C": 0.3, "D": 0.06}        # band darkness on the page (web/chains.js: k)
 TOP_COMPANIES, TOP_INDUSTRIES, TOP_SUPPLIERS = 12, 18, 16
 TOL = 0.001                                                 # the checks: 0.1% of revenue
-COLORS = {"purchases": "#5d7fa3", "employees": "#9a8f7a", "taxes": "#a08a5a", "outside": "#8a8f98", "capex": "#7b6aa8",
-          "left": "#2e8b57", "finleft": "#6f9a8a"}
-CAT_LABEL = {"purchases": "Purchased inputs (estimate)", "employees": "Employees (estimate)",
-             "taxes": "Taxes on production (estimate)", "outside": "Costs outside the US (not split)",
+COLORS = {"purchases": "#5d7fa3", "employees": "#9a8f7a", "taxes": "#a08a5a", "purchases_out": "#7f97b3", "employees_out": "#b0a68f",
+          "taxes_out": "#b8a37a", "other_out": "#a7a196", "outside": "#8a8f98", "capex": "#7b6aa8", "left": "#2e8b57", "finleft": "#6f9a8a"}
+CAT_LABEL = {"purchases": "Purchased inputs — US (estimate)", "employees": "Employees — US (estimate)",
+             "taxes": "Taxes on production — US (estimate)",
+             "purchases_out": "Purchased inputs — outside the US (estimate)", "employees_out": "Employees — outside the US (estimate)",
+             "taxes_out": "Taxes on production — outside the US (estimate)",
+             "other_out": "Employees & other costs — outside the US (not separated)",
+             "outside": "Costs outside the US (not split)",
              "capex": "Capital spending (filed)", "left": "EBITDA − capital spending",
              "finleft": "Interest, claims & profit (banks, insurers; estimate)"}
-CAT_GRADE = {"purchases": "C", "employees": "C", "taxes": "C", "outside": "B", "capex": "A", "left": "B", "finleft": "C"}
+CAT_GRADE = {"purchases": "C", "employees": "C", "taxes": "C", "purchases_out": "C", "employees_out": "C", "taxes_out": "C",
+             "other_out": "C", "outside": "B", "capex": "A", "left": "B", "finleft": "C"}
+TOP_COUNTRIES = 10
 GENERIC = {"and", "the", "of", "other", "products", "product", "services", "service", "solutions", "segment", "group",
            "systems", "technologies", "technology", "manufacturing", "equipment", "industries", "industrial", "total",
            "north", "america", "americas", "international", "global", "corporate", "all", "inc", "company", "business",
@@ -219,7 +230,7 @@ class Ranges:
 
 
 # ------------------------------------------------------------------ one company
-def company(io, R, co, rec, sic, latest, out):
+def company(io, R, co, rec, sic, latest, out, mr=None, profile=None):
     f = ioflow.company_figures(co, latest)
     if not f:
         return None
@@ -236,6 +247,12 @@ def company(io, R, co, rec, sic, latest, out):
     fin = ioflow.fin_ratio(sic)
     geo = us_share(rec)
     us = geo["us"] if geo else 1.0
+    # a foreign filer (20-F / 6-K): its operations are in its home country, not split by the US table
+    home = None
+    if rec.get("fpi") and mr is not None and mr.ok:
+        home = mr.home(profile or rec.get("profile"), rec.get("currency")) or "WORLD-USA"
+        us, geo = 0.0, {"us": 0.0, "text": f"foreign filer ({rec.get('currency') or 'USD'} reports); home: {mrio.country(home) if home != 'WORLD-USA' else 'not identified'}",
+                        "url": None, "form": "20-F/6-K", "filed": None, "fpi": True}
     rev, oi, da, capex = f["revenue"], f["oi"], f["da"], f["capex"]
     cost = rev * fin if fin else max(0.0, rev - oi - da)
     cost_us, cost_out = cost * us, cost * (1 - us)
@@ -267,6 +284,11 @@ def company(io, R, co, rec, sic, latest, out):
         imports["capex"] += capex * us * x * imp
     for k, v in list(sup_rng.items()):
         sup_rng[k] = [min(v[0], sup[k]), max(v[1], sup[k])]
+    ab = abroad(mr, I, w, rev, cost, us, home, imports, spend, coef) if mr is not None and mr.ok else None
+    if ab:
+        spend.pop("outside", None)
+        spend.update(ab["spend"])
+        left = rev - sum(spend.values())
     qs = rec.get("quarters") or {}
     last = qs.get(f["end"]) or {}
     return {"revenue": rev, "oi": oi, "da": da, "capex": capex, "ocf": ocf, "fcf": (ocf - capex) if ocf is not None else None,
@@ -274,7 +296,89 @@ def company(io, R, co, rec, sic, latest, out):
             "spend": spend, "left": max(0.0, left), "gap": max(0.0, -left), "left_key": "finleft" if fin else "left",
             "sup": dict(sup), "sup_rng": dict(sup_rng), "imports": imports, "capex_out": capex * (1 - us),
             "mix": w, "segments": (seg or {}).get("segments"), "stated": stated_suppliers(out, co.cik),
-            "doc": last.get("doc_url"), "form": last.get("form"), "filed": last.get("filed")}
+            "doc": last.get("doc_url"), "form": last.get("form"), "filed": last.get("filed"), "home": home,
+            "cty": (ab or {}).get("cty") or {}, "err": (ab or {}).get("err") or {}, "ab_src": (ab or {}).get("src"),
+            "ab_iso": (ab or {}).get("iso"), "ab_rng": (ab or {}).get("rng") or {}}
+
+
+def _spread(vals):
+    v = [x for x in vals.values() if x is not None]
+    if len(v) < 2:
+        return None
+    return (max(v) - min(v)) / 2
+
+
+def abroad(mr, I, w, rev, cost, us, home, imports, spend, coef):
+    """The multi-country tables (pipeline/mrio.py): the cost outside the US split like that country's industry (or the
+    world outside the US when the filing names no country), purchases by the country they are bought in (US imports
+    and foreign operations' purchases alike), and the model error: how far the tables disagree on the same industry."""
+    divs = mrio.divisions_of(w)
+    if not divs:
+        return None
+    out = {"spend": {}, "cty": defaultdict(lambda: defaultdict(float)), "err": {}, "rng": {}}
+    # model error of the US split: purchased inputs ÷ output in BEA and in each multi-country table for the US
+    bea_io = sum(x * I[b]["inter"] * I[b].get("spend_out", 1.0) for b, x in w.items())
+    vals = {"bea": bea_io}
+    for src in ("figaro", "adb", "icio"):
+        c = mr.coef(src, "USA", divs)
+        if c and "i" in c:
+            vals[src] = c["i"]
+    if us > 0:
+        sp = _spread(vals)
+        out["err"]["purchases"] = {"rel": (sp / bea_io) if sp and bea_io else None, "vals": {mr.label(k) if k != "bea" else "BEA 2017": round(v, 4) for k, v in vals.items()},
+                                   "what": "purchased inputs ÷ output, US"}
+        cu = mr.coef("figaro", "USA", divs) or mr.coef("adb", "USA", divs) or mr.coef("icio", "USA", divs)
+        if cu and "comp" in cu and coef.get("comp"):
+            bea_c = sum(x * I[b]["comp"] * I[b].get("spend_out", 1.0) for b, x in w.items())
+            v2 = {"BEA 2017": round(bea_c, 4), mr.label(cu["src"]): round(cu["comp"], 4)}
+            out["err"]["employees"] = {"rel": abs(bea_c - cu["comp"]) / 2 / bea_c if bea_c else None, "vals": v2, "what": "employee pay ÷ output, US"}
+        # US imports by country of origin: the US industry's foreign inputs in the multi-country table
+        if cu and cu.get("org"):
+            o = {k: v for k, v in cu["org"].items() if k != "USA"}
+            tot = sum(o.values())
+            if tot:
+                for k, v in o.items():
+                    out["cty"]["purchases"][k] += imports["purchases"] * v / tot
+                    out["cty"]["capex"][k] += imports["capex"] * v / tot
+                out["imports_src"] = cu["src"]
+    # outside the US
+    share_out = 1 - us
+    if share_out <= 1e-9:
+        return out
+    iso = home or "WORLD-USA"
+    src = next((s for s in ("figaro", "adb", "icio") if (iso == "WORLD-USA" and mr.src.get(s)) or mr.has(s, iso)), None)
+    c = mr.coef(src, iso, divs) if src else None
+    if not c or "i" not in c:
+        out["spend"]["outside"] = cost * share_out
+        return out
+    out["src"], out["iso"] = src, iso
+    c_o, r_o = cost * share_out, rev * share_out
+    if "comp" in c:
+        otax = max(0.0, c.get("otax", 0.0))                   # net of subsidies; below zero it is not a cost
+        tot = c["i"] + c["comp"] + otax
+        p, e, t = c_o * c["i"] / tot, c_o * c["comp"] / tot, c_o * otax / tot
+        out["spend"].update({"purchases_out": p, "employees_out": e, "taxes_out": t})
+    else:
+        p = min(c_o, r_o * c["i"])
+        out["spend"].update({"purchases_out": p, "other_out": c_o - p})
+    org = c.get("org") or {}
+    for k, v in org.items():
+        out["cty"]["purchases_out"][k] += p * v
+    rest = 1.0 - sum(org.values())                              # the tables keep the main origins: the rest is "other"
+    if rest > 1e-9:
+        out["cty"]["purchases_out"]["_OTHER"] += p * rest
+    vals = {}
+    for s2 in ("figaro", "adb", "icio"):
+        c2 = mr.coef(s2, iso, divs)
+        if c2 and "i" in c2:
+            vals[mr.label(s2)] = round(c2["i"], 4)
+    sp = _spread({k: v for k, v in vals.items()})
+    rel = sp / c["i"] if sp and c["i"] else None
+    out["err"]["purchases_out"] = {"rel": rel, "vals": vals, "what": "purchased inputs ÷ output, " +
+                                   (mrio.country(iso) if iso != "WORLD-USA" else "outside the US")}
+    if rel:
+        out["rng"]["purchases_out"] = (p * (1 - rel), p * (1 + rel))
+    return out
 
 
 # ------------------------------------------------------------------ one level (industry, major group, sector)
@@ -329,12 +433,35 @@ def doc_for(key, title, level, members, listed, io):
                     p = {"source": src + "; US share: " + (fl["geo"] or {}).get("form", "10-K") + " text", "formula":
                          f"({cost_f}) × {1 - fl['us']:.0%} outside the US", "quote": (fl["geo"] or {}).get("text"),
                          "url": (fl["geo"] or {}).get("url")}
+                elif c.endswith("_out"):
+                    world = fl["ab_iso"] in (None, "WORLD-USA")
+                    where = "outside the US" if world else mrio.country(fl["ab_iso"])
+                    tbl = MR.label(fl["ab_src"]) if MR else fl["ab_src"]
+                    out_f = f" × {1 - fl['us']:.0%} outside the US" if not fl["home"] else f" (all of it: operations in {where})"
+                    how = ("the industry's average across the table's countries other than the US, weighted by their output: the "
+                           "filing names no countries, so a large producer (China) weighs heavily" if world else f"{where}'s industry")
+                    p = {"source": f"{src}; {tbl} input-output table, {where}", "formula": f"({cost_f}){out_f}, split like {how} "
+                         f"({'purchases, employee pay, other taxes' if c != 'other_out' else 'purchases; the rest not separated: this table has no employee pay'})"}
+                    r = fl["ab_rng"].get(c)
+                    if r:
+                        p["lo"], p["hi"] = r[0] * cover, r[1] * cover
+                        p["range_how"] = "the tables' disagreement on this industry"
+                    e = fl["err"].get(c)
+                    if e:
+                        p["err"] = e
                 else:
                     ck = {"purchases": "inter", "employees": "comp", "taxes": "tax"}[c]
                     lo, hi = fl["rng"][ck]
                     p = {"source": src + "; BEA " + str(io["year"]) + " Use table", "coef": fl["coef"][ck],
                          "formula": f"({cost_f}){us_f} × {fl['coef'][ck]:.1%} ({c} share of spending, BEA)",
                          "lo": fl["cost"] * fl["us"] * lo * cover, "hi": fl["cost"] * fl["us"] * hi * cover}
+                    e = fl["err"].get(c)
+                    if e:
+                        p["err"] = e
+                        if e.get("rel"):                    # the wider of the two: similar industries or the tables' disagreement
+                            p["lo"] = min(p["lo"], v * cover * (1 - e["rel"]))
+                            p["hi"] = max(p["hi"], v * cover * (1 + e["rel"]))
+                            p["range_how"] = "the wider of similar BEA industries and the tables' disagreement"
                 link(sid, "k:" + c, v * cover, CAT_GRADE[c], p)
                 gap_to[c] += v * (1 - cover)
             link(sid, "k:" + fl["left_key"], fl["left"], CAT_GRADE[fl["left_key"]],
@@ -347,6 +474,14 @@ def doc_for(key, title, level, members, listed, io):
     # columns 2 → 3: supplying industries
     by_ind, by_cat_ind, rng_ind = defaultdict(float), defaultdict(float), defaultdict(lambda: [0.0, 0.0])
     imports, capex_out = defaultdict(float), 0.0
+    cty = defaultdict(lambda: defaultdict(float))                # (category) → country → $
+    cty_src = set()
+    for _, fl in members:
+        for c, by in (fl.get("cty") or {}).items():
+            for k, v in by.items():
+                cty[c][k] += v
+        if fl.get("ab_src"):
+            cty_src.add(fl["ab_src"])
     for _, fl in members:
         for (c, i), v in fl["sup"].items():
             by_ind[i] += v
@@ -365,8 +500,18 @@ def doc_for(key, title, level, members, listed, io):
     for i in ranked:
         node("i:" + i, 2, I[i]["name"], "#88a3c0", "C", bea=i)
     node("i:other", 2, "Other industries", "#b7c3cf", "C")
-    node("i:imports", 2, "Imports", "#c9a77a", "C")
     node("i:capex_out", 2, "Capital spending outside the US (not split)", "#a3a6ad", "B")
+    # purchases by the country they are bought in: US imports (by the US industry's foreign inputs in a multi-country
+    # table) and the purchases of operations abroad (that country's industry inputs by origin, its own country included)
+    by_cty = defaultdict(float)
+    for c, by in cty.items():
+        for k, v in by.items():
+            by_cty[k] += v
+    top_cty = [k for k, _ in sorted(by_cty.items(), key=lambda kv: -kv[1]) if k not in ("_OTHER", "ROW")][:TOP_COUNTRIES]
+    for k in top_cty:
+        node("c:" + k, 2, mrio.country(k), "#c9a77a", "C", iso=k)
+    node("c:other", 2, "Other countries", "#d7c3a3", "C")
+    split_imp = {c: sum(cty.get(c, {}).values()) for c in ("purchases", "capex")}
     for (c, i), v in by_cat_ind.items():
         t = "i:" + i if i in ranked else "i:other"
         lo, hi = rng_ind[(c, i)]
@@ -376,8 +521,21 @@ def doc_for(key, title, level, members, listed, io):
                                                "capital spending (US share) × the industry's asset mix") +
                                    " (domestic part; the imported part goes to Imports)", "lo": lo, "hi": hi})
     for c, v in imports.items():
-        link("k:" + c, "i:imports", v, "C", {"source": f"BEA {io['year']} Use table: imports ÷ total supply, by commodity",
-                                             "formula": f"{c} × each commodity's imported share"})
+        rest = v - split_imp.get(c, 0.0)                         # imports no multi-country table could place
+        if rest > max(1.0, 1e-6 * v):
+            node("i:imports", 2, "Imports (origin not traced)", "#c9a77a", "C")
+            link("k:" + c, "i:imports", rest, "C", {"source": f"BEA {io['year']} Use table: imports ÷ total supply, by commodity",
+                                                    "formula": f"{c} × each commodity's imported share"})
+    for c, by in cty.items():
+        for k, v in by.items():
+            t = "c:" + k if k in top_cty else "c:other"
+            if c in ("purchases", "capex"):
+                p = {"source": f"BEA {io['year']} imports, by origin as in " + ", ".join(sorted(MR.label(x) for x in cty_src or {"figaro"})) +
+                     " (the US industry's inputs from abroad)", "formula": f"US imports × {mrio.country(k)}'s share of the industry's foreign inputs"}
+            else:
+                p = {"source": ", ".join(sorted(MR.label(x) for x in cty_src)) + ": inputs by country of origin",
+                     "formula": f"purchased inputs outside the US × the share bought from {mrio.country(k)}"}
+            link("k:" + c, t, v, "C", p)
     link("k:capex", "i:capex_out", capex_out, "B", {"source": "capital spending as filed × the 10-K's share of revenue outside the US",
                                                    "formula": "capital spending × (1 − US share)"})
     # columns 3 → 4: suppliers — first the ones a filing names (stated, with dollars), then the modelled allocation
@@ -464,7 +622,28 @@ def doc_for(key, title, level, members, listed, io):
         est[c] = {"v": v, "lo": sum(fl["cost"] * fl["us"] * fl["rng"][ck][0] for _, fl in members),
                   "hi": sum(fl["cost"] * fl["us"] * fl["rng"][ck][1] for _, fl in members)}
     est["imports"] = {"v": sum(imports.values())}            # no range: the commodity mix decides it, not one coefficient
-    est["outside"] = {"v": sum(fl["spend"]["outside"] for _, fl in members)}
+    est["outside"] = {"v": sum(fl["spend"].get("outside", 0.0) for _, fl in members)}
+    for c in ("purchases_out", "employees_out", "taxes_out", "other_out"):
+        v = sum(fl["spend"].get(c, 0.0) for _, fl in members)
+        if v:
+            est[c] = {"v": v}
+            rs = [fl["ab_rng"].get(c) for _, fl in members if fl["spend"].get(c)]
+            if rs and all(rs):
+                est[c]["lo"], est[c]["hi"] = sum(r[0] for r in rs), sum(r[1] for r in rs)
+    # the model error: where the tables disagree most (relative), with each table's figure for the largest member
+    errs = {}
+    for c in ("purchases", "employees", "purchases_out"):
+        es = [(fl["revenue"], fl["err"][c]) for _, fl in members if fl["err"].get(c) and fl["err"][c].get("rel") is not None]
+        if es:
+            wt = sum(r for r, _ in es)
+            errs[c] = {"rel": round(sum(r * e["rel"] for r, e in es) / wt, 4), "vals": max(es, key=lambda x: x[0])[1]["vals"],
+                       "what": max(es, key=lambda x: x[0])[1]["what"]}
+    for c, e in errs.items():
+        if c in est and e["rel"]:
+            est[c].setdefault("lo", est[c]["v"] * (1 - e["rel"]))
+            est[c].setdefault("hi", est[c]["v"] * (1 + e["rel"]))
+            est[c]["lo"] = min(est[c]["lo"], est[c]["v"] * (1 - e["rel"]))
+            est[c]["hi"] = max(est[c]["hi"], est[c]["v"] * (1 + e["rel"]))
     geo_n = sum(1 for _, fl in members if fl["geo"])
     seg_n = sum(1 for _, fl in members if fl["segments"])
     # denominators of each column's percentages (the chart prints each node's share of its column)
@@ -477,7 +656,7 @@ def doc_for(key, title, level, members, listed, io):
         col_tot[n["col"]] += max(vin[n["id"]], vout[n["id"]])
     cols = [{"name": "Where the money comes from", "den": col_tot[0], "den_what": "revenue (plus borrowing where spending exceeded it)"},
             {"name": "What it is spent on", "den": col_tot[1], "den_what": "the same total"},
-            {"name": "Supplying industries", "den": col_tot[2], "den_what": "purchased inputs + capital spending"},
+            {"name": "Industries & countries", "den": col_tot[2], "den_what": "purchased inputs + capital spending, in the US by industry and abroad (and imports) by country"},
             {"name": "Suppliers", "den": col_tot[3], "den_what": "domestic purchases from those industries (imports and spending outside the US excluded)"}]
     used = [n for n in nodes if vin[n["id"]] > 0 or vout[n["id"]] > 0]
     floor = max(1.0, 1e-4 * revenue)
@@ -490,7 +669,9 @@ def doc_for(key, title, level, members, listed, io):
            "generated": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
            "companies": len(members), "revenue": round(revenue), "filed": {k: (round(v) if isinstance(v, float) else v) for k, v in filed.items()},
            "estimate": {k: {a: (round(x) if isinstance(x, float) else x) for a, x in v.items()} for k, v in est.items()},
-           "geo_n": geo_n, "seg_n": seg_n, "cols": cols, "grades": GRADES, "shade": SHADE,
+           "geo_n": geo_n, "seg_n": seg_n, "cols": cols, "grades": GRADES, "shade": SHADE, "model_error": errs,
+           "tables": {k: {"label": MR.label(k), "year": MR.year(k)} for k in (MR.src if MR else {})},
+           "fpi_n": sum(1 for _, fl in members if fl.get("home")),
            "nodes": used, "links": [[s, t, round(v)] for s, t, v in links if v >= floor],
            "prov": {k: {a: (round(x) if isinstance(x, float) and a in ("v", "lo", "hi") else (round(x, 5) if isinstance(x, float) else x))
                         for a, x in p.items()} for k, p in prov.items()},
@@ -498,10 +679,18 @@ def doc_for(key, title, level, members, listed, io):
                         "revenue": round(fl["revenue"]), "oi": round(fl["oi"]), "da": round(fl["da"]), "capex": round(fl["capex"]),
                         "ocf": round(fl["ocf"]) if fl["ocf"] is not None else None, "fcf": round(fl["fcf"]) if fl["fcf"] is not None else None,
                         "us": fl["us"] if fl["geo"] else None, "geo": fl["geo"], "segments": fl["segments"], "doc": fl["doc"],
-                        "form": fl["form"], "how": fl["how"]} for m, fl in members[:60]],
+                        "form": fl["form"], "how": fl["how"], "home": fl.get("home"),
+                        "abroad": MR.label(fl["ab_src"]) if MR and fl.get("ab_src") else None} for m, fl in members[:60]],
            "stated": stated_rows[:40],
            "source": {"io_year": io["year"], "scale_year": io["scale_year"], **io["source"]}}
     return doc, links, nodes
+
+
+def _pairs(links):
+    out = defaultdict(float)
+    for s, t, v in links:
+        out[(s, t)] += v
+    return out
 
 
 def check(doc, links, nodes):
@@ -524,13 +713,17 @@ def check(doc, links, nodes):
         if abs(vin.get(k, 0) - vout.get(k, 0)) > TOL * rev:
             bad.append(f"{k[2:]}: {vin.get(k, 0):,.0f} in, {vout.get(k, 0):,.0f} out to the supplying industries")
     for n in nodes:
-        if n["col"] == 2 and n["id"] not in ("i:imports", "i:capex_out"):
+        if n["col"] == 2 and n["id"] not in ("i:imports", "i:capex_out") and not n["id"].startswith("c:"):
             if abs(vin[n["id"]] - vout[n["id"]]) > TOL * rev:
                 bad.append(f"{n['label']}: {vin[n['id']]:,.0f} bought, {vout[n['id']]:,.0f} allocated to suppliers")
-    if vout.get("i:imports", 0) > 0:
-        bad.append("imports passed on to suppliers (counted twice)")
-    if abs(vin.get("i:imports", 0) - doc["estimate"]["imports"]["v"]) > TOL * rev:
+    if vout.get("i:imports", 0) > 0 or any(vout.get(n["id"], 0) > 0 for n in nodes if n["id"].startswith("c:")):
+        bad.append("imports or purchases abroad passed on to US suppliers (counted twice)")
+    us_imp = vin.get("i:imports", 0) + sum(v for (s, t), v in _pairs(links).items() if t.startswith("c:") and s in ("k:purchases", "k:capex"))
+    if abs(us_imp - doc["estimate"]["imports"]["v"]) > TOL * rev:
         bad.append("imports in the chart differ from the imports total")
+    for k in ("k:purchases_out",):
+        if abs(vin.get(k, 0) - vout.get(k, 0)) > TOL * rev:
+            bad.append(f"{k[2:]}: {vin.get(k, 0):,.0f} in, {vout.get(k, 0):,.0f} out to the supplying countries")
     f = doc["filed"]
     m = doc["members"]
     if len(m) == doc["companies"] and abs(sum(x["revenue"] for x in m) - f["revenue"]) > TOL * rev:
@@ -540,12 +733,19 @@ def check(doc, links, nodes):
     return bad
 
 
-def build(store, out, index, usd_recs=None, path=ioflow.DATA):
+MR = None                                                     # pipeline/mrio.py tables, loaded by build()
+
+
+def build(store, out, index, usd_recs=None, path=ioflow.DATA, mrio_path=mrio.DATA):
     if not os.path.exists(path):
         print("::warning::money flow beta: BEA input-output data missing")
         return None
+    global MR
     io = ioflow.load(path)
     R = Ranges(io)
+    MR = mrio.MRIO(mrio_path)
+    if not MR.ok:
+        print("::notice::money flow beta: no multi-country tables (pipeline/data/mrio.json): costs outside the US stay unsplit")
     latest = max((p.get("end") or p.get("filed") or "" for p in index), default=None) or None
     latest = latest[:10] if latest else None
     rec_all, skipped = [], defaultdict(int)
@@ -561,7 +761,7 @@ def build(store, out, index, usd_recs=None, path=ioflow.DATA):
         rec = store.company(p["cik"])
         co = chains.Co(p["cik"], rec, usd, ticker=p.get("ticker"))
         try:
-            fl = company(io, R, co, rec, sic, latest, out)
+            fl = company(io, R, co, rec, sic, latest, out, MR, rec.get("profile"))
         except Exception as e:                                  # noqa: BLE001 — one company must not stop the rest
             skipped["error: " + type(e).__name__] += 1
             fl = None
