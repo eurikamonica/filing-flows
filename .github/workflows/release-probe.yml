@@ -12,63 +12,57 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Sample the source files
+      - name: Sample the source files (2)
         run: |
           pip install -q openpyxl playwright && python -m playwright install --with-deps chromium >/dev/null 2>&1
           mkdir -p out dl
-          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36'
-          curl -sSL -A "$UA" -o dl/icio.zip "https://webfs-sti.oecd.org/files/STI-PIE/ICIO/2025/2016-2022_SML.zip" -w "icio %{http_code} %{size_download}\n" | tee out/sizes.txt
-          unzip -l dl/icio.zip | tee out/icio_list.txt | tail -12
-          f=$(unzip -Z1 dl/icio.zip | grep 2022 | head -1); unzip -p dl/icio.zip "$f" | head -3 | cut -c1-1500 > out/icio_head.txt
-          unzip -p dl/icio.zip "$f" | cut -d, -f1 | tail -8 >> out/icio_head.txt
-          curl -sSL -A "$UA" -o dl/adb.xlsx "https://kidb.adb.org/download/mrio-file/445" -w "adb %{http_code} %{size_download}\n" | tee -a out/sizes.txt
-          python - <<'PY'
-          import openpyxl, json
-          wb = openpyxl.load_workbook("dl/adb.xlsx", read_only=True)
-          out = {}
-          for ws in wb.worksheets:
-              rows = []
-              for i, r in enumerate(ws.iter_rows(values_only=True)):
-                  if i < 12 or i % 400 == 0:
-                      rows.append([str(c)[:30] for c in r[:12]])
-                  if i > 3000: break
-              out[ws.title] = {"rows": rows, "dims": ws.max_row and [ws.max_row, ws.max_column]}
-          # the last rows of the first sheet: value added items
-          ws = wb.worksheets[0]
-          tail = [[str(c)[:40] for c in r[:6]] for r in ws.iter_rows(values_only=True)]
-          out["_tail"] = tail[-14:]
-          out["_labels_col"] = sorted({r[3] for r in tail if len(r) > 3})[:80]
-          json.dump(out, open("out/adb_sample.json", "w"), indent=0)
-          PY
+          curl -sSL -o dl/icio.zip "https://webfs-sti.oecd.org/files/STI-PIE/ICIO/2025/2016-2022_SML.zip" -w "icio %{http_code} %{size_download}\n" | tee out/sizes.txt
+          unzip -l dl/icio.zip > out/icio_list.txt 2>&1 || head -c 600 dl/icio.zip > out/icio_list.txt
+          f=$(unzip -Z1 dl/icio.zip 2>/dev/null | grep 2022 | head -1)
+          if [ -n "$f" ]; then unzip -p dl/icio.zip "$f" | head -2 | cut -c1-800 > out/icio_head.txt; unzip -p dl/icio.zip "$f" | cut -d, -f1-3 | tail -6 >> out/icio_head.txt; fi
           B="https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/naio_10_fcp_ii4"
-          curl -sSL --max-time 300 "$B/A.NL.MIO_EUR..?format=SDMX-CSV&startPeriod=2024&endPeriod=2024" -o dl/fig_nl.csv -w "fig %{http_code} %{size_download}\n" | tee -a out/sizes.txt || true
-          curl -sSL --max-time 300 "$B/A..NL.MIO_EUR.?format=SDMX-CSV&startPeriod=2024&endPeriod=2024" -o dl/fig_nl2.csv -w "fig2 %{http_code} %{size_download}\n" | tee -a out/sizes.txt || true
-          head -5 dl/fig_nl.csv > out/fig_head.txt; head -5 dl/fig_nl2.csv >> out/fig_head.txt
+          curl -sSL --max-time 300 "$B/A...NL..?format=SDMX-CSV&startPeriod=2024&endPeriod=2024" -o dl/fig_nl.csv -w "fig %{http_code} %{size_download}\n" | tee -a out/sizes.txt || true
+          head -4 dl/fig_nl.csv > out/fig_head.txt
           python - <<'PY'
           import csv, json, collections
           out = {}
-          for f in ("dl/fig_nl.csv", "dl/fig_nl2.csv"):
-              try:
-                  r = csv.DictReader(open(f))
-                  cols = collections.defaultdict(set)
-                  n = 0
-                  for row in r:
-                      n += 1
-                      for k in ("ind_use", "ind_ava", "c_dest", "c_orig", "unit"):
-                          if k in row: cols[k].add(row[k])
-                  out[f] = {"rows": n, **{k: sorted(v)[:200] for k, v in cols.items()}}
-              except Exception as e:
-                  out[f] = str(e)
+          try:
+              r = csv.DictReader(open("dl/fig_nl.csv"))
+              cols = collections.defaultdict(set); n = 0
+              for row in r:
+                  n += 1
+                  for k in ("ind_use", "ind_ava", "c_dest", "c_orig", "unit"):
+                      if k in row: cols[k].add(row[k])
+              out = {"rows": n, **{k: sorted(v) for k, v in cols.items()}}
+          except Exception as e:
+              out = {"error": str(e)}
           json.dump(out, open("out/fig_codes.json", "w"), indent=0)
+          import openpyxl
+          wb = openpyxl.load_workbook("dl/adb.xlsx", read_only=True) if False else None
+          PY
+          curl -sSL -o dl/adb.xlsx "https://kidb.adb.org/download/mrio-file/445"
+          python - <<'PY'
+          import openpyxl, json
+          wb = openpyxl.load_workbook("dl/adb.xlsx", read_only=True)
+          ws = wb.worksheets[0]
+          rows = [[str(c)[:60] for c in r[:5]] for r in ws.iter_rows(values_only=True) if r[3] and str(r[3]).startswith(("r", "t"))]
+          head = [list(map(lambda c: str(c)[:40], r)) for i, r in enumerate(ws.iter_rows(min_row=5, max_row=7, values_only=True))]
+          lastcols = [h[-40:] for h in head]
+          json.dump({"rrows": rows, "lastcols": lastcols, "legend": [[str(c) for c in r[:2]] for r in wb.worksheets[1].iter_rows(values_only=True)]}, open("out/adb_rows.json", "w"), indent=0)
           PY
           python - <<'PY'
-          import json, re
+          import json
           from playwright.sync_api import sync_playwright
           with sync_playwright() as p:
               b = p.chromium.launch(); pg = b.new_page(user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36")
-              pg.goto("https://www.sec.gov/submit-filings/filer-support-resources/edgar-state-country-codes", timeout=90000, wait_until="domcontentloaded"); pg.wait_for_timeout(6000)
-              rows = pg.eval_on_selector_all("table tr", "els => els.map(e => [...e.querySelectorAll('td,th')].map(c => c.innerText.trim()))")
-              json.dump(rows, open("out/edgar_codes.json", "w"))
+              out = {}
+              for u in ("https://www.sec.gov/submit-filings/filer-support-resources/edgar-state-country-codes", "https://www.sec.gov/edgar/searchedgar/edgarstatecodes.htm"):
+                  try:
+                      pg.goto(u, timeout=90000, wait_until="domcontentloaded"); pg.wait_for_timeout(6000)
+                      out[u] = pg.inner_text("body")[:30000]
+                  except Exception as e:
+                      out[u] = "ERR " + str(e)[:200]
+              json.dump(out, open("out/edgar_text.json", "w"))
               b.close()
           PY
           echo "::notice::$(cat out/sizes.txt | tr '\n' ' ')"
