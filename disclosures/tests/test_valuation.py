@@ -189,3 +189,44 @@ class Shares(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TopUpPrices(unittest.TestCase):
+    """Companies the hub does not price (CoreWeave, Nebius: no 13F manager the hub follows holds them) get daily closes
+    from Yahoo into the branch's own cache, and the build reads them after the hub's."""
+
+    def test_missing_tickers_are_fetched_and_read(self):
+        import io
+        import urllib.error
+        import urllib.request
+        today = dt.date(2026, 10, 23)
+        with tempfile.TemporaryDirectory() as tmp:
+            root, hub = Path(tmp) / 'val', Path(tmp) / 'hub'
+            V.write_json(hub / 'AAPL.json.gz', {'rows': [['2026-10-22', 250.0]]}, gz=True)
+            V.write_json(root / 'site' / 'index.json', {'companies': [
+                {'cik': 320193, 'ticker': 'AAPL', 'revenue': 9e10}, {'cik': 1769628, 'ticker': 'CRWV', 'revenue': 2.5e9},
+                {'cik': 1513845, 'ticker': 'NBIS', 'revenue': 5.8e8}, {'cik': 1, 'ticker': 'ZZZZ', 'revenue': 1e6}]})
+            asked = []
+            day = int(dt.datetime(2026, 10, 22, 20, tzinfo=dt.timezone.utc).timestamp())
+
+            def fake(req, timeout=30):
+                t = req.full_url.split('/chart/')[1].split('?')[0]
+                asked.append(t)
+                if t == 'ZZZZ':
+                    raise urllib.error.HTTPError(req.full_url, 404, 'Not Found', {}, None)
+                body = {'chart': {'result': [{'timestamp': [day - 86400, day], 'indicators': {'quote': [{'close': [100.0, 101.5], 'volume': [1, 2]}]}}]}}
+                return io.BytesIO(json.dumps(body).encode())
+            real = urllib.request.urlopen
+            urllib.request.urlopen = fake
+            try:
+                st = V.collect_prices(root, hub, today=today)
+                again = V.collect_prices(root, hub, today=today)
+            finally:
+                urllib.request.urlopen = real
+            self.assertEqual(sorted(asked), ['CRWV', 'NBIS', 'ZZZZ'])               # AAPL: the hub has it
+            self.assertEqual(st['saved'], 2)
+            self.assertEqual(again['wanted'], 0)                                    # fresh, and ZZZZ remembered as unknown
+            dirs = [hub, root / 'cache' / 'prices']
+            self.assertEqual(V.load_prices(dirs, 'CRWV')[-1], ('2026-10-22', 101.5))
+            self.assertEqual(V.load_prices(dirs, 'AAPL'), [('2026-10-22', 250.0)])
+            self.assertEqual(V.load_prices(dirs, 'ZZZZ'), [])

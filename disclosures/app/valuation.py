@@ -211,14 +211,93 @@ def stdev(xs):
 
 # ------------------------------------------------------------------ prices, returns, beta
 def load_prices(prices_dir, ticker):
-    """Daily [(date, close)] from the hub's price cache, or []."""
+    """Daily [(date, close)] from the hub's price cache, or []. prices_dir may be a list of folders (the hub's cache,
+    then this branch's top-up, collect_prices): the series reaching the latest day wins."""
     if not prices_dir or not ticker:
         return []
-    for t in (ticker.upper().replace('.', '-'), ticker.upper()):
-        d = read_json(Path(prices_dir) / f'{t}.json.gz')
-        if d and d.get('rows'):
-            return [(r[0], float(r[1])) for r in d['rows'] if len(r) > 1 and fin(r[1]) and r[1] > 0]
-    return []
+    best = []
+    for folder in (prices_dir if isinstance(prices_dir, (list, tuple)) else [prices_dir]):
+        if not folder:
+            continue
+        for t in (ticker.upper().replace('.', '-'), ticker.upper()):
+            d = read_json(Path(folder) / f'{t}.json.gz')
+            if d and d.get('rows'):
+                rows = [(r[0], float(r[1])) for r in d['rows'] if len(r) > 1 and fin(r[1]) and r[1] > 0]
+                if rows and (not best or rows[-1][0] > best[-1][0]):
+                    best = rows
+                break
+    return best
+
+
+YAHOO_CHART = 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5y&interval=1d&events=div%2Csplit'
+BROWSER_UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
+
+
+def collect_prices(root, hub_dir=None, limit=1500, minutes=6.0, workers=6, refresh_days=1, today=None):
+    """Daily closes for the site's companies the hub does not price (its cache holds the tickers 13F managers and
+    officials hold: CoreWeave and Nebius were missing, so they had no fair-value page). Fetched from Yahoo's chart API
+    (five years) into this branch's cache/prices, which build() reads after the hub's; a ticker Yahoo does not know is
+    not asked again for 30 days."""
+    import urllib.error
+    import urllib.request
+    from concurrent.futures import ThreadPoolExecutor
+    import prices as PR
+    root = Path(root)
+    own = root / 'cache' / 'prices'
+    own.mkdir(parents=True, exist_ok=True)
+    today = today or dt.date.today()
+    missing = read_json(own / '_missing.json', {}) or {}
+    ix = read_json(root / 'site' / 'index.json', {}) or {}
+    cos = ix.get('companies') if isinstance(ix, dict) else ix
+    cos = sorted([c for c in cos or [] if c.get('ticker') and c.get('cik')], key=lambda c: -(c.get('revenue') or 0))[:limit]
+    fresh = (today - dt.timedelta(days=7)).isoformat()
+    todo = []
+    for c in cos:
+        t = PR.clean_ticker(c['ticker'])
+        if not re.fullmatch(r'[A-Z0-9-]{1,10}', t):
+            continue
+        hub = load_prices(hub_dir, t) if hub_dir else []
+        if hub and hub[-1][0] >= fresh:
+            continue                                       # the hub prices it
+        mine = read_json(own / f'{t}.json.gz', {}) or {}
+        got = (mine.get('fetched_at') or '')[:10]
+        if got and (today - dt.date.fromisoformat(got)).days < refresh_days:
+            continue
+        miss = missing.get(t)
+        if miss and (today - dt.date.fromisoformat(miss)).days < 30:
+            continue
+        todo.append(t)
+    t0, blocked = time.monotonic(), [0]
+
+    def one(t):
+        if time.monotonic() - t0 > minutes * 60 or blocked[0] >= 25:
+            return t, None, 'budget'
+        try:
+            req = urllib.request.Request(YAHOO_CHART.format(symbol=t), headers={'User-Agent': BROWSER_UA, 'Accept': 'application/json'})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return t, PR.parse_yahoo(json.loads(r.read().decode('utf-8')), (today - dt.timedelta(days=5 * 366)).isoformat()), None
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                blocked[0] += 1
+                time.sleep(5)
+            return t, None, f'HTTP {e.code}'
+        except Exception as e:                              # noqa: BLE001
+            return t, None, str(e)[:80]
+    saved = errs = 0
+    with ThreadPoolExecutor(workers) as pool:
+        for t, rows, err in pool.map(one, todo):
+            if err == 'budget':
+                continue
+            if rows:
+                write_json(own / f'{t}.json.gz', {'ticker': t, 'source': 'yahoo', 'fetched_at': now(), 'rows': rows}, gz=True)
+                missing.pop(t, None)
+                saved += 1
+            elif err and (err.startswith('HTTP 404') or 'No chart result' in err or 'No daily rows' in err):
+                missing[t] = today.isoformat()
+            else:
+                errs += 1
+    write_json(own / '_missing.json', missing)
+    return {'wanted': len(todo), 'saved': saved, 'errors': errs, 'rate_limited': blocked[0]}
 
 
 def weekly(daily):
@@ -1266,6 +1345,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     cons_ix = _load_dir(consensus, 'index.json', {}) or {}
     CF = cons_ix.get('fields') or []
     cons_rows = {str(r[CF.index('cik')]): dict(zip(CF, r)) for r in cons_ix.get('rows') or [] if 'cik' in CF and r[CF.index('cik')]}
+    prices = [prices, root / 'cache' / 'prices']            # the hub's closes, then this branch's top-up (collect_prices)
     spy = load_prices(prices, 'SPY')
     # pass 1: inputs and multiples for every company
     Fs = {}
@@ -1581,7 +1661,10 @@ def collect_site(root, site_url, limit=1500, workers=12, deadline=None):
     return {'companies': len(cos), 'fetched': got, 'errors': errs, 'cached': len(cos) - len(todo)}
 
 
-def collect(root, site_url, minutes=20.0, limit=1500):
+HUB_PRICES = Path(__file__).resolve().parents[1] / 'docs' / 'data' / 'cache' / 'prices'
+
+
+def collect(root, site_url, minutes=20.0, limit=1500, hub_prices=HUB_PRICES):
     t0 = time.monotonic()
     deadline = t0 + minutes * 60
     ua = os.environ.get('SEC_USER_AGENT', '').strip()
@@ -1591,6 +1674,10 @@ def collect(root, site_url, minutes=20.0, limit=1500):
             out['site'] = collect_site(root, site_url, limit=limit, deadline=t0 + minutes * 30)
         except Exception as e:                              # noqa: BLE001
             out['site'] = {'error': str(e)[:160]}
+        try:                                                # closes for the companies the hub does not price
+            out['prices'] = collect_prices(root, hub_prices, limit=limit, minutes=min(6.0, minutes / 3))
+        except Exception as e:                              # noqa: BLE001
+            out['prices'] = {'error': str(e)[:160]}
     if '@' in ua:
         out['frames'] = collect_frames(root, Http(ua), deadline=deadline)
     else:
