@@ -101,7 +101,9 @@ class MRIO:
         for dv, w in divs.items():
             codes = self._codes[src].get(dv) or []
             entries = [(c, T.get(f"{i}|{c}")) for i in isos for c in codes]
-            entries = [(c, e) for c, e in entries if e and e.get("o", 0) > 0]
+            # an entry whose inputs exceed its output (Iceland's tiny pharmaceutical industry in ICIO 2022) is a
+            # statistical artefact of a small cell: left out
+            entries = [(c, e) for c, e in entries if e and e.get("o", 0) > 0 and 0 <= e.get("i", 0) <= 1.0]
             tot = sum(e["o"] for _, e in entries)
             if not tot:
                 continue
