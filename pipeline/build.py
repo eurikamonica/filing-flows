@@ -2131,6 +2131,12 @@ def render(store, out, stars=frozenset()):
     except Exception as e:
         print(f"::warning::industry money flows (BEA) not built: {e}")
         traceback.print_exc()
+    try:                                                         # Money flow Beta 1.0 (web/beta/): a test version beside it
+        from . import ioflow_beta
+        ioflow_beta.build(store, out, index, usd_recs)
+    except Exception as e:
+        print(f"::warning::money flow beta not built: {e}")
+        traceback.print_exc()
     try:                                                         # one growth model at four levels (pipeline/hier.py)
         from . import hier
         hier.build(store, out, index, usd_recs)

@@ -1,0 +1,85 @@
+name: Refresh BEA input-output data
+
+# Once a month, rebuild pipeline/data/bea_io.json (scripts/bea_io.py) from BEA's latest input-output tables, fixed assets
+# and the Census SIC/NAICS concordances. BEA publishes new annual tables about once a year; when anything changes (a new
+# benchmark year, a later year to scale gross output to, or revised figures), the new file goes to the branch
+# "bea-refresh" with a pull request for the owner to review. Nothing changes on the site until that pull request is merged
+# (it then feeds both the published money flow and Money flow Beta 1.0).
+on:
+  schedule:
+    - cron: '23 9 3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: bea-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            scripts
+            pipeline
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Tools (openpyxl; LibreOffice for Census's old .xls files)
+        run: |
+          pip install -q openpyxl
+          sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libreoffice-calc-nogui >/dev/null
+      - name: Download BEA and Census files
+        env:
+          UA: ${{ secrets.SEC_USER_AGENT }}
+        run: |
+          mkdir -p bea census
+          get() { curl -fsSL --retry 3 -A "${UA:-filing-flows bea refresh}" -o "$2" "$1"; }
+          get "https://apps.bea.gov/industry/iTables%20Static%20Files/AllTablesIO.zip" bea/AllTablesIO.zip
+          get "https://apps.bea.gov/national/FA2004/Details/xls/detailnonres_inv1.xlsx" bea/detailnonres_inv1.xlsx
+          for f in 1987_SIC_to_1997_NAICS.xls 1997_NAICS_to_2002_NAICS.xls 2002_to_2007_NAICS.xls 2007_to_2012_NAICS.xls 2012_to_2017_NAICS.xlsx; do
+            get "https://www.census.gov/naics/concordances/$f" "census/$f"
+          done
+          (cd census && soffice --headless --convert-to xlsx *.xls >/dev/null)
+          ls -la bea census
+      - name: Rebuild and compare
+        id: cmp
+        run: |
+          python scripts/bea_io.py --bea bea/AllTablesIO.zip --census census --fixed-assets bea/detailnonres_inv1.xlsx --out new.json
+          python - <<'PY'
+          import json, os
+          old = json.load(open('pipeline/data/bea_io.json'))
+          new = json.load(open('new.json'))
+          strip = lambda d: json.dumps({k: v for k, v in d.items() if k not in ('generated',)}, sort_keys=True)
+          changed = strip(old) != strip(new)
+          note = (f"BEA benchmark {old['year']} → {new['year']}, gross output scaled to {old['scale_year']} → {new['scale_year']}, "
+                  f"{len(old['industries'])} → {len(new['industries'])} industries")
+          print(('::notice::BEA data changed: ' if changed else '::notice::BEA data unchanged: ') + note)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"changed={'true' if changed else 'false'}\nnote={note}\n")
+          PY
+      - name: Open a pull request with the new data
+        if: steps.cmp.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTE: ${{ steps.cmp.outputs.note }}
+        run: |
+          cp new.json pipeline/data/bea_io.json
+          git config user.name "filing-flows"
+          git config user.email "actions@users.noreply.github.com"
+          git checkout -B bea-refresh
+          git add pipeline/data/bea_io.json
+          git commit -qm "BEA input-output data refreshed ($NOTE)"
+          git push -q --force origin bea-refresh
+          body="The monthly refresh rebuilt pipeline/data/bea_io.json from BEA's latest tables: $NOTE. Merging updates the published money flow and Money flow Beta 1.0 at the next scan. Review the change in industry count and the scale year before merging."
+          gh pr view bea-refresh --json number >/dev/null 2>&1 && echo "::notice::the pull request is already open (updated)" || \
+            gh pr create --base main --head bea-refresh --title "Refresh BEA input-output data ($NOTE)" --body "$body" || \
+            echo "::warning::could not open the pull request (Settings → Actions → allow GitHub Actions to create pull requests); the data is on the branch bea-refresh"
