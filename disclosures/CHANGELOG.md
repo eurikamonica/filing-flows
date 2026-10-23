@@ -1,5 +1,24 @@
 # Changelog
 
+## Company pages: Rotation (RRG) — against the S&P 500 and against the industry, with prices, ranges and transitions
+
+A company page gains *Valuation & expectations → Rotation (RRG)* (`docs/rrg-company-view.js`, listed in views.json):
+two Relative Rotation Graphs, the company against SPY (its industry in grey) and against its industry without itself.
+Each has (1) the close next week that puts it in each quadrant — the closes at which RS-Ratio and RS-Momentum cross 100,
+solved exactly from the formula with the benchmark flat; (2) replayed ranges — every 13-week run of its weekly moves
+against the benchmark in the last 156 weeks, replayed from this week through the formula: the trajectory fan, 80% boxes
+at 4 and 13 weeks, and price / RS-Ratio / RS-Momentum ranges 1, 4 and 13 weeks on; (3) the Markov matrix at 1, 4 or 13
+weeks (by the industry's quadrant for the industry chart), its row highlighted, with its out-of-sample scores and label;
+(4) the weekly chain's quadrant probabilities for weeks 1–13 and its most common paths. Probabilities show only for
+calibrated or experimental heads and liquid companies; the rest as history.
+
+`transition_rrg.band_check` checks the replayed ranges walk-forward from 2012 (origins every 13 weeks, liquid
+companies; fixed in advance: calibrated when the 80% and 50% coverages are within 3 points of nominal). Against SPY the
+80% / 50% price ranges held 80.5% / 52.2% at 1 week (calibrated), 77.4% / 48.1% at 4 weeks (calibrated), 73.6% / 45.8%
+at 13 weeks (experimental: too narrow); against the industry 82.7% / 54.3% (experimental), 78.7% / 49.5% (calibrated),
+73.9% / 46.0% (experimental). A pure random walk gives the same 13-week shortfall (73–75%): three years hold only about
+a dozen independent 13-week runs. JS and Python step the formula identically (tests on both sides).
+
 ## RRG quadrant odds and future paths, gated walk-forward (research specification v5 §4.4, §8.3, §8.4, §11)
 
 `app/transition_rrg.py` (run by `chaos_forecast.build`, file `rrg-transition-model.json` on the branch

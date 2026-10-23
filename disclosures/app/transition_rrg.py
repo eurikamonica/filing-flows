@@ -70,6 +70,13 @@ def _ema(A, span, need=None):
 
 def rrg_panel(RS, n=14):
     """(x, y) arrays (lines × weeks) — chaos_forecast.rrg_series for every row at once."""
+    S = rrg_states(RS, n)
+    return S['x'], S['y']
+
+
+def rrg_states(RS, n=14):
+    """rrg_panel with the states the formula carries from week to week (smoothed RS s, its trend t, the gap dev, its
+    smoothed change roc), so a path can be stepped forward from any week exactly as the chart would draw it."""
     sh, long = 4, max(52, 3 * n)
     s_ = _ema(RS, sh); t_ = _ema(s_, n)
     ok = np.isfinite(s_) & np.isfinite(t_) & (t_ != 0)
@@ -91,7 +98,129 @@ def rrg_panel(RS, n=14):
             return np.where(good, 100 + A / np.sqrt(s2 / np.maximum(m, 1)), np.nan)
     x = norm(dev); y = norm(roc)
     y[~np.isfinite(x)] = np.nan
-    return x, y
+    return {'x': x, 'y': y, 's': s_, 't': t_, 'dev': dev, 'roc': roc, 'sh': sh, 'n': n, 'long': long}
+
+
+# ------------------------------------------------------------------ replayed paths: price and position ranges
+WINDOW, REPLAY = 156, 13            # the last three years of weekly relative moves; paths of 13 weeks
+BAND_TOL = 0.03                     # a band is calibrated when its coverage is within 3 points of 50% / 80%
+
+
+def replay(S, rel, LR, o, lines=None, window=WINDOW, steps=REPLAY):
+    """Every 13-week run of weekly relative moves in the `window` weeks to `o`, replayed from week o's state through
+    the RRG formula (the benchmark's own path is whatever it was in that run: relative moves only). Returns
+    (cum: log relative move after j + 1 weeks, x, y), each (lines × paths × steps), NaN for paths with a gap."""
+    L = np.arange(rel.shape[0]) if lines is None else np.asarray(lines)
+    starts = np.arange(o - window + 1, o - steps + 2)
+    if len(starts) < 1 or starts[0] < 1:
+        return None
+    idx = starts[:, None] + np.arange(steps)[None, :]
+    P = LR[L][:, idx]                                            # lines × paths × steps
+    P = np.where(np.isfinite(P).all(2, keepdims=True), P, np.nan)
+    return step_paths(S, rel, o, L, P)
+
+
+def step_paths(S, rel, o, L, P):
+    """Weekly relative log moves P (lines × paths × steps) stepped forward from week o's state: (cum, x, y)."""
+    steps = P.shape[2]
+    cum = np.cumsum(P, 2)
+    a1, a2, long = 2 / (S['sh'] + 1), 2 / (S['n'] + 1), S['long']
+    s, t = S['s'][L, o][:, None], S['t'][L, o][:, None]
+    dev0, roc = S['dev'][L, o][:, None], S['roc'][L, o][:, None]
+    rs0 = rel[L, o][:, None]
+    D, R = S['dev'][L], S['roc'][L]
+
+    def tail(A, j):                                              # sum of squares and count of A[o - long + 1 + j .. o]
+        seg = A[:, max(0, o - long + 1 + j):o + 1]
+        f = np.isfinite(seg)
+        return np.where(f, seg * seg, 0).sum(1)[:, None], f.sum(1)[:, None]
+    X = np.full(P.shape, np.nan); Y = np.full(P.shape, np.nan)
+    dprev, dq, rq = dev0, np.zeros(P.shape[:2]), np.zeros(P.shape[:2])
+    for j in range(steps):
+        rs = rs0 * np.exp(cum[:, :, j])
+        s = s + a1 * (rs - s)
+        t = t + a2 * (s - t)
+        dev = 100 * (s / t - 1)
+        roc = roc + a1 * ((dev - dprev) - roc)
+        dprev = dev
+        dq, rq = dq + dev * dev, rq + roc * roc
+        bd, nd = tail(D, j + 1)
+        br, nr = tail(R, j + 1)
+        md, mr = nd + j + 1, nr + j + 1
+        with np.errstate(divide='ignore', invalid='ignore'):
+            X[:, :, j] = np.where((md >= min(long, 26)) & (bd + dq > 0), 100 + dev / np.sqrt((bd + dq) / md), np.nan)
+            Y[:, :, j] = np.where((mr >= min(long, 26)) & (br + rq > 0), 100 + roc / np.sqrt((br + rq) / mr), np.nan)
+    return cum, X, Y
+
+
+def band_label(c80, c50):
+    if c80 is None or c50 is None:
+        return 'insufficient_data'
+    return 'calibrated' if abs(c80 - .8) <= BAND_TOL and abs(c50 - .5) <= BAND_TOL else 'experimental'
+
+
+def band_check(C, B, ok, days, horizons=HORIZONS, min_paths=100, seed=SEED):
+    """Walk-forward check of the replayed ranges (fixed in advance): at origins every 13 weeks from TEST_FROM, each
+    liquid line's 10–90% and 25–75% ranges of the replayed relative move (the price range, the benchmark held where
+    it goes) and of RS-Ratio and RS-Momentum 1, 4 and 13 weeks on — how often the actual week falls inside. Labels:
+    calibrated when the 80% and 50% coverages are within 3 points of nominal, else experimental."""
+    with np.errstate(divide='ignore', invalid='ignore'):
+        rel = np.where((B > 0) & np.isfinite(C) & (C > 0), 100 * C / B, np.nan)
+        LR = np.full(rel.shape, np.nan); LR[:, 1:] = np.log(rel[:, 1:] / rel[:, :-1])
+    S = rrg_states(rel)
+    W = rel.shape[1]
+    hit = {h: {k: [] for k in ('p80', 'p50', 'x80', 'y80', 'x50', 'y50')} for h in horizons}
+    per_origin = {h: [] for h in horizons}
+    n_origins = 0
+    for o in range(int(np.searchsorted(days, TEST_FROM)), W - max(horizons), REPLAY):
+        L = np.nonzero(ok[:, o] & np.isfinite(S['x'][:, o]) & np.isfinite(S['y'][:, o]))[0]
+        if len(L) < 3:
+            continue
+        r = replay(S, rel, LR, o, L)
+        if r is None:
+            continue
+        cum, X, Y = r
+        enough = np.isfinite(cum[:, :, -1]).sum(1) >= min_paths
+        if enough.sum() < 3:
+            continue
+        n_origins += 1
+        for h in horizons:
+            j = h - 1
+            act_p = np.log(rel[L, o + h] / rel[L, o])
+            act_x, act_y = S['x'][L, o + h], S['y'][L, o + h]
+            m = enough & np.isfinite(act_p) & np.isfinite(act_x) & np.isfinite(act_y)
+            if m.sum() < 3:
+                continue
+            q = lambda A: np.nanquantile(A[m, :, j], [.1, .25, .75, .9], axis=1)
+            qp, qx, qy = q(cum), q(X), q(Y)
+            inside = lambda a, Q, lo, hi: (a[m] >= Q[lo]) & (a[m] <= Q[hi])
+            row = {'p80': inside(act_p, qp, 0, 3), 'p50': inside(act_p, qp, 1, 2), 'x80': inside(act_x, qx, 0, 3),
+                   'y80': inside(act_y, qy, 0, 3), 'x50': inside(act_x, qx, 1, 2), 'y50': inside(act_y, qy, 1, 2)}
+            for k, v in row.items():
+                hit[h][k].append(v)
+            per_origin[h].append({k: v.mean() for k, v in row.items()})
+    rng = np.random.default_rng(seed)
+    out = {}
+    for h in horizons:
+        if not hit[h]['p80']:
+            out[str(h)] = {'origins': 0, 'predictions': 0, 'label': 'insufficient_data', 'position_label': 'insufficient_data'}
+            continue
+        cov = {k: float(np.concatenate(v).mean()) for k, v in hit[h].items()}
+        po = per_origin[h]
+        idx = rng.integers(0, len(po), (2000, len(po)))
+
+        def ci(k):
+            a = np.array([x[k] for x in po])
+            b = a[idx].mean(1)
+            return [round(float(np.percentile(b, 2.5)), 4), round(float(np.percentile(b, 97.5)), 4)]
+        n = int(sum(len(v) for v in hit[h]['p80']))
+        enough = len(po) >= MIN_ORIGINS // 2 and n >= MIN_PREDICTIONS
+        out[str(h)] = {'origins': len(po), 'predictions': n, 'spacing_weeks': REPLAY,
+                       'coverage': {k: round(v, 4) for k, v in cov.items()}, 'ci': {k: ci(k) for k in ('p80', 'p50', 'x80', 'y80')},
+                       'label': band_label(cov['p80'], cov['p50']) if enough else 'insufficient_data',
+                       'position_label': ('calibrated' if max(abs(cov['x80'] - .8), abs(cov['y80'] - .8), abs(cov['x50'] - .5),
+                                                             abs(cov['y50'] - .5)) <= BAND_TOL else 'experimental') if enough else 'insufficient_data'}
+    return out
 
 
 def states(x, y):
@@ -478,11 +607,13 @@ def build(public, out_name='rrg-transition-model.json', verbose=True):
             ok = liquid(L['C'], L['V'])
             cx, cy = rrg_panel(rel(L['C'], spy[None]))
             groups['company_vs_market'] = group_model('company_vs_market', cx, cy, ok, days)
+            groups['company_vs_market']['bands'] = band_check(L['C'], np.broadcast_to(spy[None], L['C'].shape), ok, days)
             has = np.isfinite(L['BX']).any(1)
             if has.any():
                 ix, iy = rrg_panel(rel(L['BI'][has], spy[None]))
                 bx, by = rrg_panel(rel(L['C'][has], L['BX'][has]))
                 groups['company_vs_industry'] = group_model('company_vs_industry', bx, by, ok[has], days, ix, iy)
+                groups['company_vs_industry']['bands'] = band_check(L['C'][has], L['BX'][has], ok[has], days)
     doc = {'schema_version': 'rrg_transition_model.v1', 'generated_at': str(np.datetime64('now'))[:19] + 'Z',
            'rrg': {'freq': 'w', 'n': 14}, 'quadrants': list(QUADS), 'headings': list(HEADINGS), 'lambda': LAMBDA,
            'test_from': str(TEST_FROM), 'gates': {'min_origins': MIN_ORIGINS, 'min_predictions': MIN_PREDICTIONS, 'max_ece': MAX_ECE,
@@ -491,6 +622,11 @@ def build(public, out_name='rrg-transition-model.json', verbose=True):
                                                   'descriptive_only': 'no skill vs one of the baselines: history only, not a forecast',
                                                   'insufficient_data': 'fewer than 50 origins or 2,000 test predictions'},
            'primary': PRIMARY, 'groups': groups,
+           'replay': {'window_weeks': WINDOW, 'steps': REPLAY, 'band_tolerance': BAND_TOL,
+                      'method': 'every 13-week run of weekly relative moves in the last 156 weeks, replayed from the latest '
+                                'week through the RRG formula; ranges are the 10-90% and 25-75% of the replays',
+                      'labels': 'calibrated when the 80% and 50% coverages are within 3 points of nominal in the walk-forward '
+                                'check, else experimental'},
            'note': ('Weekly 14-week RRG. Probabilities come from smoothed empirical transition matrices fitted on every pair '
                     'whose outcome is known; each head was scored walk-forward from 2012 against staying put and the overall '
                     'quadrant frequencies, and only labelled heads are shown as forecasts. Paths: the weekly chain over quadrant '

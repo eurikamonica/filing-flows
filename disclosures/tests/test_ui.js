@@ -227,4 +227,36 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   vm.runInContext(`state.rrgp='';state.rrgh='';delete globalThis.__o`,context);
   console.log('RRG quadrant odds checks passed.');
  }
+ // the company page's Rotation (RRG) view (rrg-company-view.js, loaded by the main site through views.json)
+ {
+  const RV=require(path.join(root,'docs','rrg-company-view.js'))._t;
+  const N=260,rs=Array.from({length:N},(_,i)=>100*Math.exp(0.002*i+0.04*Math.sin(i/7)+0.02*Math.cos(i/3)));
+  const S=RV.states(rs);let k=N-14;
+  const P=[[...Array(13)].map((_,j)=>Math.log(rs[k+1+j]/rs[k+j]))],r=RV.stepPaths(S,rs,k,P)[0];
+  for(let j=0;j<13;j++){assert.ok(Math.abs(r.x[j]-S.x[k+1+j])<1e-9&&Math.abs(r.y[j]-S.y[k+1+j])<1e-9,'stepping the real moves does not reproduce the chart')}
+  k=N-1;const th=RV.thresholds(S,rs,k);
+  assert.ok(Math.abs(RV.stepPaths(S,rs,k,[[Math.log(th.mx)]])[0].x[0]-100)<1e-9,'RS-Ratio threshold is not where x crosses 100');
+  assert.ok(Math.abs(RV.stepPaths(S,rs,k,[[Math.log(th.my)]])[0].y[0]-100)<1e-9,'RS-Momentum threshold is not where y crosses 100');
+  assert.equal(RV.replay(S,rs,k).length,144);                                        // every 13-week run of the last 156 weeks
+  checks+=4;
+  // the whole view from small files: two sections, the ladder, the ranges, the matrix and the chain, no NaN
+  const D={start:'2021-01-01',weeks:'2025-12-26',bench:{start:'2021-01-01',c:Array.from({length:N},(_,i)=>400+i)}};
+  const tf={t:'TEST',n:'Test Co',start:'2021-01-01',c:rs.map((v,i)=>v*(400+i)/100),v:Array(N).fill(500),bl:'SIC 1234 · Things',bn:9,bx:Array.from({length:N},(_,i)=>50+0.05*i+Math.sin(i/11)),bi:Array.from({length:N},(_,i)=>50+0.06*i)};
+  const head=(n,l)=>({counts:Array.from({length:n},()=>[5,3,1,1]),P:Array.from({length:n},()=>[.4,.3,.2,.1]),label:l,eval:{brier_skill_vs_stay:[.1,.09,.11],brier_skill_vs_freq:[.12,.1,.14],ece:.01}});
+  const P1=Array.from({length:16},(_,i)=>Array.from({length:16},(_,j)=>j===i?.7:.3/15));
+  const grp=(primary,joint)=>({primary,heads:{q:{1:head(4,'calibrated'),4:head(4,'calibrated'),13:head(4,'experimental')},...(primary==='iq'?{iq:{1:head(16,'calibrated'),4:head(16,'calibrated'),13:head(16,'calibrated')}}:{})},
+   chain:{joint,P1,labels:{1:'calibrated',4:'experimental',13:'experimental'}},bands:{1:{label:'calibrated',coverage:{p80:.8,p50:.5}},4:{label:'calibrated',coverage:{p80:.78,p50:.49}},13:{label:'experimental',coverage:{p80:.74,p50:.46}}}});
+  const M={note:'n',replay:{method:'m',labels:'l'},groups:{company_vs_market:grp('q',false),company_vs_industry:grp('iq',true)}};
+  const files={'data/market/history/rrg.json':D,'data/market/history/t/TEST.json':tf,'data/market/history/rrg-transition-model.json':M};
+  const keep=global.fetch;global.fetch=async(u)=>files[u]?{ok:true,json:async()=>files[u]}:{ok:false,status:404};
+  const V=require(path.join(root,'docs','rrg-company-view.js'));
+  const el={innerHTML:'',clientWidth:700,querySelectorAll:()=>[]};
+  await V.render(el,{ticker:'TEST',hub:''});
+  for(const want of ['TEST against the S&amp;P 500','TEST against its industry','close that puts it in each quadrant','Replayed ranges','Markov matrix','Dynamic transition model','Most common paths'])
+   assert.ok(el.innerHTML.includes(want),`the RRG view lacks “${want}”`);
+  assert.ok(!/NaN|undefined|Infinity/.test(el.innerHTML),'the RRG view shows NaN/undefined');
+  await V.render(el,{ticker:'NONE',hub:''});assert.ok(el.innerHTML.includes('not in the weekly rotation history yet'));
+  global.fetch=keep;checks+=9;
+  console.log('company RRG view checks passed.');
+ }
 })().catch(e=>{console.error(e);process.exitCode=1});

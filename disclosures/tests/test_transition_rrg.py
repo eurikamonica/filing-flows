@@ -187,5 +187,47 @@ class Build(unittest.TestCase):
         self.assertEqual(doc['test_from'], '2012-01-06')
 
 
+@unittest.skipIf(np is None, 'numpy not installed')
+class Replay(unittest.TestCase):
+    """The replayed ranges (company page): stepping a path through the formula reproduces the chart, and the
+    walk-forward coverage of the ranges is measured on lines whose moves really are like their past."""
+
+    def panel(self, lines=40, weeks=900, seed=4):
+        rng = np.random.default_rng(seed)
+        vol = rng.uniform(.02, .06, lines)[:, None]
+        C = 50 * np.exp(np.cumsum(rng.normal(0, 1, (lines, weeks)) * vol, 1))
+        return C, np.full(C.shape, 100.0), np.ones(C.shape, bool)
+
+    def test_stepping_the_real_moves_reproduces_the_chart(self):
+        C, B, _ = self.panel()
+        rel = 100 * C / B
+        LR = np.full(rel.shape, np.nan); LR[:, 1:] = np.log(rel[:, 1:] / rel[:, :-1])
+        S = TR.rrg_states(rel)
+        o, L = 600, np.arange(C.shape[0])
+        cum, X, Y = TR.step_paths(S, rel, o, L, LR[:, o + 1:o + 14][:, None, :])
+        np.testing.assert_allclose(X[:, 0, :], S['x'][:, o + 1:o + 14], atol=1e-9)
+        np.testing.assert_allclose(Y[:, 0, :], S['y'][:, o + 1:o + 14], atol=1e-9)
+        cum, X, Y = TR.replay(S, rel, LR, o)
+        self.assertEqual(cum.shape, (C.shape[0], 144, 13))     # every 13-week run of the last 156 weeks
+
+    def test_ranges_of_a_random_walk_hold_their_coverage(self):
+        C, B, ok = self.panel()
+        out = TR.band_check(C, B, ok, DAYS[:C.shape[1]] if len(DAYS) >= C.shape[1] else
+                            np.datetime64('2004-01-02') + 7 * np.arange(C.shape[1]))
+        for h in ('1', '4'):
+            cv = out[h]['coverage']
+            self.assertAlmostEqual(cv['p80'], .8, delta=.05)
+            self.assertAlmostEqual(cv['p50'], .5, delta=.05)
+        # 13 weeks: three years hold only about a dozen independent 13-week runs, so the ranges come out too narrow even
+        # for a pure random walk (as on the real data: 74% for the 80% range) — the check says so instead of hiding it
+        self.assertTrue(.68 < out['13']['coverage']['p80'] < .79)
+        self.assertEqual(out['1']['coverage']['p80'], out['1']['coverage']['x80'])   # one week: x moves with the price
+
+    def test_band_labels(self):
+        self.assertEqual(TR.band_label(.79, .52), 'calibrated')
+        self.assertEqual(TR.band_label(.74, .50), 'experimental')
+        self.assertEqual(TR.band_label(None, .5), 'insufficient_data')
+
+
 if __name__ == '__main__':
     unittest.main()

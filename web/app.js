@@ -814,7 +814,7 @@
     ['Earnings', [['', 'Earnings'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
     ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['x-quality']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
-    ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-hype']]],
+    ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-hype'], ['x-rotation']]],
     ['Relationships & model', [['links', 'Customers, suppliers & model'], ['x-insiders']]],
   ];
   function tabGroups() {
