@@ -17,7 +17,6 @@ supplying industry). Run by .github/workflows/mrio-refresh.yml (the sources are 
 """
 import argparse
 import csv
-import gzip
 import io
 import json
 import os
@@ -136,12 +135,18 @@ def figaro(year, countries=None):
     base = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/naio_10_fcp_ii4"
     acc, codes = Acc(), {}
     dests = countries or sorted(k for k in ISO2 if k != "WRL_REST") + ["WRL_REST"]
-    for d in dests:
-        url = f"{base}/A...{d}..?format=SDMX-CSV&startPeriod={year}&endPeriod={year}"
+    from concurrent.futures import ThreadPoolExecutor
+
+    def fetch(d):
         try:
-            raw = get(url)
+            return d, get(f"{base}/A...{d}..?format=SDMX-CSV&startPeriod={year}&endPeriod={year}")
         except Exception as e:                                  # noqa: BLE001
             print(f"::warning::FIGARO {d}: {e}")
+            return d, None
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        got = list(pool.map(fetch, dests))
+    for d, raw in got:
+        if raw is None:
             continue
         n = 0
         for row in csv.DictReader(io.StringIO(raw.decode("utf-8"))):
