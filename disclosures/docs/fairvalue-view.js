@@ -31,7 +31,7 @@
 .fv-card{border:1px solid var(--line,#ddd);border-radius:10px;padding:10px 12px}.fv-card b{display:block;font-size:20px;font-variant-numeric:tabular-nums;margin-top:2px}
 .fv-card span{font-size:12px;color:var(--muted,#777)}.fv-card i{display:block;font-style:normal;font-size:12px;margin-top:2px;color:var(--muted,#777)}
 .fv-good{color:${C.good}}.fv-bad{color:${C.bad}}.fv-warn{color:${C.warn}}
-.fv svg{display:block;width:100%;max-width:860px;height:auto;overflow:visible}.fv svg text{font-size:11px;fill:var(--muted,#777)}
+/* the view's own charts only: Plotly's layers (the 3D charts) keep their own sizes, or a wide page shrinks its hover layer and the labels drift off */.fv svg:not(.js-plotly-plot svg){display:block;width:100%;max-width:860px;height:auto;overflow:visible}.fv svg:not(.js-plotly-plot svg) text{font-size:11px;fill:var(--muted,#777)}
 .fv svg .fv-lbl{fill:var(--ink,#222);font-size:12px}.fv .fv-grid{stroke:var(--line,#e3e3e3)}
 .fv-tbl{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 8px}.fv-tbl th,.fv-tbl td{padding:6px 8px;border-bottom:1px solid var(--line,#e5e5e5);text-align:left;vertical-align:top}
 .fv-tbl td.n,.fv-tbl th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.fv-tbl th{font-weight:600;color:var(--muted,#666);font-size:12px}
