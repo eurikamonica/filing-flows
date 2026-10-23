@@ -1654,6 +1654,13 @@ def build(public, backtest_dir=None, verbose=True, rrg_backtest=False):
         out['rrg'] = {'lines': len(doc['lines']), 'backtest': summ}
         if verbose:
             print('RRG forecasts for', len(doc['lines']), 'lines', flush=True)
+    try:                                               # quadrant odds and paths, gated walk-forward (transition_rrg)
+        import transition_rrg as TR
+        tm = TR.build(public, verbose=verbose)
+        out['rrg_transition_model'] = {g: {'lines': v['lines'], 'labels': {h: x['label'] for h, x in v['heads'][v['primary']].items()},
+                                           'chain': v['chain']['labels']} for g, v in tm['groups'].items()}
+    except Exception as exc:
+        print('RRG transition model skipped:', type(exc).__name__, exc, flush=True)
     if backtest_dir:
         write_backtest(out, Path(backtest_dir))
     return out
@@ -1663,8 +1670,8 @@ def write_backtest(out, folder):
     import pandas as pd
     folder.mkdir(parents=True, exist_ok=True)
     for f, o in out.items():
-        if f == 'rrg':
-            (folder / 'summary_rrg.json').write_text(json.dumps(jsonable(o), indent=1)); continue
+        if f in ('rrg', 'rrg_transition_model'):
+            (folder / f'summary_{f}.json').write_text(json.dumps(jsonable(o), indent=1)); continue
         pd.DataFrame(o['price_rows']).to_csv(folder / f'price_rows_{f}.csv', index=False)
         rows = [{'model': m, 'var': v, **x} for m, d in o['summary']['landing'].items() for v, x in d.items()]
         pd.DataFrame(rows).to_csv(folder / f'landing_skill_{f}.csv', index=False)

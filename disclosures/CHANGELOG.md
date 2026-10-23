@@ -1,5 +1,40 @@
 # Changelog
 
+## RRG quadrant odds and future paths, gated walk-forward (research specification v5 §4.4, §8.3, §8.4, §11)
+
+`app/transition_rrg.py` (run by `chaos_forecast.build`, file `rrg-transition-model.json` on the branch
+rotation-history) estimates where a line on the weekly 14-week RRG stands 1, 4 and 13 weeks later from smoothed
+empirical transition matrices (row → (N + 10 · prior) / (N + 10)), for three kinds of line: sectors and ETFs against
+SPY (40 lines), the site's companies against SPY, and companies against their leave-one-out industry (dual RRG);
+companies count only while liquid. The RRG is the chart's own formula, vectorised (identical to `rrg_series`).
+
+Fixed before any result was seen: which matrix each line reads (quadrant only for the two market groups, the
+industry's quadrant × the company's quadrant for the dual RRG), the weekly chain for paths ((quadrant, direction of the
+last step), or (industry quadrant, company quadrant)), the baselines (stays in its quadrant; the usual quadrant
+shares), the test (walk-forward from 2012-01-06, origins spaced by the horizon, only pairs whose outcome was known at
+the origin; Brier and log-loss skill with 95% bootstrap intervals over origins; classwise calibration error, 10 bins)
+and the labels: *calibrated* (both intervals above zero, error ≤ 2 points, ≥ 50 origins and 2,000 predictions),
+*experimental* (beats both, not all of that), *descriptive only* (loses to a baseline: history, not a forecast),
+*insufficient data*.
+
+First results (2002–2026 pairs, today's companies): every head beats both baselines at every horizon. Labels of the
+heads the chart uses — sectors / ETFs: 1 week calibrated, 4 and 13 weeks experimental (calibration error 2.3 and 3.8
+points); companies vs SPY: 1 and 4 weeks calibrated, 13 weeks experimental (2.5 points); companies vs their industry:
+calibrated at 1, 4 and 13 weeks. Brier skill over staying put: about 4% at 1 week, 10–11% at 4 weeks, 2–4% at 13
+weeks; over the usual shares: 46%, 13% and 1.6–2.4%. Conditioning on the industry's quadrant adds nothing measurable
+over the company's own quadrant (13 weeks: 2.26% vs 2.25%). The weekly chain is calibrated at 1 week and experimental
+at 4 and 13 (it spreads weight onto moves that hardly happen, calibration error 2.7–5.0 points), so the direct matrices give the
+odds at 1, 4 and 13 weeks and the chain gives the weeks between and the paths.
+
+The RRG (2-D, weekly, 14 weeks) gains *Quadrant odds and paths*: every line's odds at the chosen horizon with its
+label (grey history shares where the label is not calibrated or experimental), and for one picked line its odds at 1,
+4 and 13 weeks with the scores, each quadrant's probability for weeks 1–13, the five most common 13-week paths
+(seeded simulation), and on the chart its odds in each quadrant's corner and its three most common paths. Shown for
+the latest week only (the matrices are fitted on the whole history). Industry indices, baskets and illiquid companies
+have no model. `tests/test_transition_rrg.py`: formula parity, codes, liquidity, smoothing, predictions at an origin
+unchanged by scrambling every later week, the label rules, a known chain recovered and called calibrated, noise not
+called a forecast, the published file.
+
 ## Dual RRG: companies against their industry without themselves (research specification v5 §4.2, §15.4)
 
 `rotation_history.industry_benchmarks` gives every company with weekly prices an industry benchmark — the most

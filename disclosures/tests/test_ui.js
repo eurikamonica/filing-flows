@@ -187,4 +187,44 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   assert.equal(vm.runInContext(`state.mview+'|'+state.maid`,context),'actor|g:NANCY PELOSI');
   console.log(`${n} smart-money and all-flows checks passed.`);
  }
+ // 4.6b RRG quadrant odds and paths (rrg-odds.js) from a small model: the chain, the row each line reads, the panel, the chart layer
+ {
+  const P1=Array.from({length:16},(_,i)=>Array.from({length:16},(_,j)=>j===i?.7:.3/15));
+  const head=(n,label='calibrated')=>({counts:Array.from({length:n},()=>[5,3,1,1]),P:Array.from({length:n},(_,i)=>[.5,.3,.1+i/1000,.1-i/1000]),label,
+   eval:{origins:60,predictions:3000,brier_skill_vs_stay:[.05,.03,.07],brier_skill_vs_freq:[.04,.02,.06],ece:.01}});
+  const grp=(primary,joint)=>({primary,lines:10,from:'2002-01-04',heads:{q:{1:head(4),4:head(4),13:head(4,'experimental')},...(primary==='iq'?{iq:{1:head(16),4:head(16),13:head(16,'descriptive_only')}}:{})},
+   chain:{joint,P1,labels:{1:'calibrated',4:'experimental',13:'experimental'},eval:{1:{origins:700,predictions:9000,brier_skill_vs_stay:[.1,.09,.11],brier_skill_vs_freq:[.4,.39,.41],ece:.01,label:'calibrated'}}}});
+  const M={generated_at:'t',test_from:'2012-01-06',note:'n',groups:{etf_vs_market:grp('q',false),company_vs_market:grp('q',false),company_vs_industry:grp('iq',true)}};
+  vm.runInContext(`marketStore['history/rrg-transition-model']={data:${JSON.stringify(M)}};RRGO.paths.clear()`,context);
+  const run=c=>JSON.parse(vm.runInContext(`JSON.stringify(${c})`,context)),Md=`marketStore['history/rrg-transition-model'].data`;
+  const ch=run(`rrgoChain(${Md},'etf_vs_market',{q:2,hd:1,iq:-1})`);
+  assert.equal(ch.marg.length,13);ch.marg.forEach(q=>assert.ok(Math.abs(q.reduce((a,b)=>a+b,0)-1)<1e-9,'chain marginals are not distributions'));
+  assert.ok(ch.paths.length===5&&ch.paths.every(p=>p.q[0]===2)&&ch.paths[0].p>=ch.paths[4].p,'paths do not start from the line\'s quadrant');
+  assert.deepEqual(ch.labels.slice(0,5),['calibrated','experimental','experimental','experimental','experimental']);
+  vm.runInContext(`RRGO.paths.clear()`,context);
+  assert.deepEqual(run(`rrgoChain(${Md},'etf_vs_market',{q:2,hd:1,iq:-1}).paths`),ch.paths,'seeded paths change between runs');
+  assert.equal(run(`rrgoChain(${Md},'etf_vs_market',{q:2,hd:-1,iq:-1})`),null);          // no last step: no chain state
+  const od=run(`rrgoOdds(${Md},'company_vs_industry',{q:1,hd:0,iq:3},'13')`);
+  assert.equal(od.head,'iq');assert.equal(od.label,'descriptive_only');assert.equal(od.p[2],.1+13/1000);   // row 4 × industry + company
+  assert.equal(run(`rrgoOdds(${Md},'company_vs_industry',{q:1,hd:0,iq:-1},'4')`).head,'q');   // no industry point: the quadrant matrix
+  // a sector ETF and a company on a 120-week grid: the panel and the chart layer at the last week
+  const N=120,xs=Array.from({length:N},(_,k)=>100+Math.sin(k/9)),ys=Array.from({length:N},(_,k)=>100+Math.cos(k/9));
+  vm.runInContext(`(()=>{const D={start:'2024-01-05',weeks:'2026-04-17',series:[{id:'XLK',name:'Tech',group:'sector-etf',start:'2024-01-05',c:[]}],tickers:{NVDA:{n:'NVIDIA',s:'technology'}}};
+   const G=rrgGrid(D),calc={x:${JSON.stringify(xs)},y:${JSON.stringify(ys)},z:{}};
+   const lines=[{e:{id:'XLK',name:'XLK'},col:'#123',calc},{e:{id:'NVDA',name:'NVDA',start:'2024-01-05',c:new Array(${N}).fill(50),v:new Array(${N}).fill(1000)},col:'#456',calc},{e:{id:'th:x',name:'Basket'},col:'#789',calc}];
+   globalThis.__o={D,lines,Q:G.w.labels,freq:'w',n:14,lastK:${N-1},dom:{x:[97,103],y:[97,103]}}})()`,context);
+  vm.runInContext(`state.rf=${N-1};state.rrgp='XLK';state.rrgh='4'`,context);
+  let html=vm.runInContext(`rrgOdds(__o)`,context);
+  assert.ok(html.includes('Quadrant odds and paths')&&html.includes('Most common paths')&&html.includes('How the odds were checked'),'the odds panel is incomplete');
+  assert.ok(html.includes('Quadrant · companies')&&html.includes('no model for this kind of line'),'the company or the basket row is wrong');
+  assert.ok(!/NaN|undefined|Infinity/.test(html),'the odds panel shows NaN/undefined');
+  const layer=vm.runInContext(`rrgOddsLayer(__o,${N-1},v=>v,v=>v)`,context);
+  assert.ok(layer.includes('rrgo-path')&&layer.includes('XLK 50%'),'the selected line is not drawn on the chart');
+  assert.equal(vm.runInContext(`rrgOddsLayer(__o,${N-2},v=>v,v=>v)`,context),'');               // an earlier week: nothing drawn
+  vm.runInContext(`state.rf=${N-2}`,context);
+  assert.ok(vm.runInContext(`rrgOdds(__o)`,context).includes('latest week only'));
+  vm.runInContext(`__o.n=26`,context);assert.ok(vm.runInContext(`rrgOdds(__o)`,context).includes('14-week window'));
+  vm.runInContext(`state.rrgp='';state.rrgh='';delete globalThis.__o`,context);
+  console.log('RRG quadrant odds checks passed.');
+ }
 })().catch(e=>{console.error(e);process.exitCode=1});
