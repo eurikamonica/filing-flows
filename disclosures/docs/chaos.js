@@ -12,6 +12,9 @@
      orbit becomes a spiral along the time axis); in a sector every company keeps its trail. */
 const FC_MODES=[['','Off'],['next','Next step — analogues (arrows + price)'],['track','Last forecast (dashed range) + next forecast + error'],['check','Next step + what happened (backtest)']];
 const fcOn=()=>state.rfc==='next'||state.rfc==='check'||state.rfc==='track';
+// the existing next-step arrows are shown unless the reader turned them off (research spec v5 §15.1: start with the
+// history and the next step; probability overlays only on request)
+const fcDefault=()=>{if(state.rfc===undefined)state.rfc='next';return FC_MODES.some(m=>m[0]===state.rfc)?state.rfc:''};
 const fcTrack=()=>state.rfc==='track';
 /* "track": the forecast made one period earlier for the period shown — its 80% range as a dashed outline in the
    last-forecast colour, a hollow diamond at its centre and the error line to where the dot actually is (green: inside the
@@ -310,7 +313,9 @@ function fcTable(o){
  exported=ex;
  const live=cal===o.fc.origins[o.fc.origins.length-1];
  const warm=!live&&o.fc.test_from&&cal<o.fc.test_from;
- let out=`<div class="section-head"><h3>Next ${u} · ${fmt(rows.length)} companies · forecast made ${esc(qlabel(cal))}${live?' (live)':warm?' (in-sample warm-up)':' (out-of-sample backtest)'}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
+ const liveCal=o.fc.origins[o.fc.origins.length-1],liveK=o.qi?o.qi.get(liveCal):null;
+ const toLive=!live&&liveK!=null&&liveK>state.rf?` <button type="button" class="action" onclick="state.rf=${liveK};render()">→ the live forecast, made ${esc(qlabel(liveCal))}${o.P.partial&&o.P.partial.has(liveCal)?' (filings still coming in: fewer dots)':''}</button>`:'';
+ let out=`<div class="section-head"><h3>Next ${u} · ${fmt(rows.length)} companies · forecast made ${esc(qlabel(cal))}${live?' (live)':warm?' (in-sample warm-up)':' (out-of-sample backtest)'}${toLive}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=table(['Company','Close','Forecast price','Change','80% range',vshort(o.x)+' now → next',vshort(o.y)+' now → next',...(track?[]:['Divergence']),...(check?['What happened']:[]),...(track?['Last forecast for '+qlabel(cal)+' (80%)','Error vs close']:[])],body);
  return (track?fcLastSummary(o,rows.map(a=>a.c),prev,cal):'')+fcPriceTrack(o)+out+fcScore(o);
 }

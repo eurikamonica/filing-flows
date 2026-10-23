@@ -262,7 +262,7 @@ function rotationView(){
  const groups=[...new Set(avail.map(v=>v.group))];
  const varField=(id,label,value,extra=[])=>`<div class="field"><label for="${id}">${label}</label><select id="${id}">${extra.map(([k,l])=>`<option value="${esc(k)}" ${value===k?'selected':''}>${esc(l)}</option>`).join('')}${groups.map(gname=>`<optgroup label="${esc(gname)}">${options(avail.filter(v=>v.group===gname).map(v=>[v.key,v.label]),value)}</optgroup>`).join('')}</select></div>`;
  const three=state.rview==='3d'||state.rview==='solar3d',fcView=['clock','solar','solar3d','3d'].includes(state.rview);
- state.rfc=FC_MODES.some(m=>m[0]===state.rfc)?state.rfc:'';
+ state.rfc=fcDefault();
  const nq=Pq.quarters.length,nm=P.monthly?Q.length+' months':isLong?'since 2008':'48 months';
  out+=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${state.rview==='scan'?'':field('rhist','History',ROT_HIST,state.rhist)+field('rfreq','Frequency',[['q',`Quarterly (${nq} quarters)`],['m',`Monthly (${nm})`]],state.rfreq)}${field('rsec','Sector',[['','All sectors'],...secs.map(s=>[s.id,s.name])],state.rsec)}`;
  if(['map','heat'].includes(state.rview)){state.rcol=has(state.rcol)?state.rcol:has('rel')?'rel':avail[0].key;out+=varField('rcol','Colour by',state.rcol)}

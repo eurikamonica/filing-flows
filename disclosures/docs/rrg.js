@@ -146,7 +146,7 @@ function rrgView(){
  state.rrgz=RRG_Z.some(z=>z[0]===state.rrgz)?state.rrgz:'r52';
  const rrgCos=state.rrgu==='tickers'||String(state.rrgu).startsWith('top:');
  state.rrgb=state.rrgb==='industry'?'industry':'spy';
- let out=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${field('rrgu','Lines',unis,state.rrgu)}${field('rrgf','Frequency',[['w','Weekly (the standard)'],['m','Monthly (long cycles)']],state.rrgf)}${field('rrgm','Chart type',RRG_MODES,state.rrgm)}${state.rrgm==='4d'?field('rrgz','↗ Depth (third measure)',RRG_Z,state.rrgz):''}${state.rrgm==='2d'?field('rfc','Next step',FC_MODES,FC_MODES.some(m=>m[0]===state.rfc)?state.rfc:''):''}</div>`;
+ let out=`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}${field('rrgu','Lines',unis,state.rrgu)}${field('rrgf','Frequency',[['w','Weekly (the standard)'],['m','Monthly (long cycles)']],state.rrgf)}${field('rrgm','Chart type',RRG_MODES,state.rrgm)}${state.rrgm==='4d'?field('rrgz','↗ Depth (third measure)',RRG_Z,state.rrgz):''}${state.rrgm==='2d'?field('rfc','Next step',FC_MODES,(state.rfc=fcDefault())):''}</div>`;
  out+=`<div class="toolbar rot-display">${field('rrgn','RS window',wins,state.rrgn)}${field('rrgt','Tail',tails,state.rrgt)}${state.rrgu==='tickers'?`<div class="field wide"><label for="rrgtk">Tickers (up to 12, any company or ETF on file)</label><input id="rrgtk" value="${esc(state.rrgtk||'')}" placeholder="e.g. NVDA, AMD, SMH · Enter"></div>`:''}${rrgCos?field('rrgb','Companies against',[['spy','The S&P 500 (SPY)'],['industry','Their industry without themselves (dual RRG)']],state.rrgb):''}</div>`;
  const ents0=rrgEntities(D,state.rrgu,state.rrgtk),dual=rrgCos&&state.rrgb==='industry';
  const ents=dual?rrgDual(ents0):ents0,ok=ents.filter(e=>e.c),waiting=ents.filter(e=>e.loading),missing=ents.filter(e=>e.missing);
@@ -155,8 +155,12 @@ function rrgView(){
  const freq=state.rrgf,n=+state.rrgn,G=rrgGrid(D),S=G[freq],Q=S.labels;
  const lines=ok.map((e,i)=>({e,col:RRG_COL[i%RRG_COL.length],calc:rrgCalc(D,e,freq,n)}));
  const firstK=Math.min(...lines.map(l=>l.calc.y.findIndex(v=>v!=null)).filter(k=>k>=0));
+ // the last week any line has a close: the grid runs to this week's Friday, which has no close until it ends, and the
+ // forecast arrows start from the last close — so the chart opens there and never past it
+ const lastK=Math.max(...lines.map(l=>{for(let k=l.calc.y.length-1;k>=0;k--)if(l.calc.y[k]!=null)return k;return -1}));
  const key='rrg|'+freq+'|'+Q.length;
- if(state.rfk!==key||!(Number.isInteger(state.rf)&&state.rf>=0&&state.rf<Q.length)){state.rf=Q.length-1;state.rfk=key}
+ if(state.rfk!==key||!(Number.isInteger(state.rf)&&state.rf>=0&&state.rf<Q.length)){state.rf=lastK>=0?lastK:Q.length-1;state.rfk=key}
+ if(lastK>=0&&state.rf>lastK)state.rf=lastK;
  if(state.rf<firstK)state.rf=firstK;
  state.rfn=null;                                       // the other charts reset their frame when they come back
  const o={D,lines,Q,freq,n,dual,tail:+state.rrgt,mode:state.rrgm,zk:state.rrgm==='3d'?'time':state.rrgm==='4d'?state.rrgz:null,firstK,
@@ -164,9 +168,10 @@ function rrgView(){
  o.dom=rrgDomain(o);
  const head=state.rrgm==='2d'?'Relative Rotation Graph':state.rrgm==='3d'?'RRG in 3-D — time as depth':'RRG in 4-D — depth: '+RRG_ZINFO[o.zk].label+'; time played';
  out+=`<div class="panel"><h3>${esc(head)}</h3><p class="sub">→ JdK RS-Ratio (relative trend) · ↑ JdK RS-Momentum (its speed)${o.zk?' · ↗ '+esc(RRG_ZINFO[o.zk].label):''} · against ${dual?'their industry without themselves (companies) · the industries against '+esc(D.benchmark||'SPY'):esc(D.benchmark||'SPY')} · ${W?'weekly':'monthly'}, ${esc(n)}-${W?'week':'month'} window · tails ${esc(state.rrgt)} ${W?'weeks':'months'}. History since ${esc(rrgDay(D.start))}; drag the slider anywhere and press play.</p>`;
- out+=rotPlayer(Q,o.P);
- if(state.rrgm==='2d'){ROT.ctx={Q,P:o.P,draw:f=>rrgFrame(o,f)};out+=`<div id="rot-plot">${rrgFrame(o,state.rf)}</div>`}
- else{ROT.ctx={Q,P:o.P,paint:f=>rrgPaint3d(o,f)};
+ const Qp=lastK>=0?Q.slice(0,lastK+1):Q;               // slider and play stop at the last close
+ out+=rotPlayer(Qp,o.P);
+ if(state.rrgm==='2d'){ROT.ctx={Q:Qp,P:o.P,draw:f=>rrgFrame(o,f)};out+=`<div id="rot-plot">${rrgFrame(o,state.rf)}</div>`}
+ else{ROT.ctx={Q:Qp,P:o.P,paint:f=>rrgPaint3d(o,f)};
   out+=`<div class="rot-3d-wrap"><canvas id="rot-3d" class="rot-3d" role="img" aria-label="${esc(head)}; the table below lists every value"></canvas><div class="rot-3d-tools"><button class="action" id="rspin" type="button">${ROT.spin?'Stop turning':'Turn slowly'}</button><button class="action" id="rreset" type="button">Front view</button></div></div>`}
  out+=`<div class="mk-legend rrg-legend">${lines.map(l=>{const k0=l.calc.y.findIndex(v=>v!=null),late=k0<0||k0>state.rf;
   return `<span${late?' class="muted"':''}><i class="mk-key" style="background:${l.col}"></i>${esc(l.e.name)} <span class="muted">${esc(rrgFull_(l.e))}${late&&k0>=0?' · from '+esc(rrgDay(Q[k0])):''}</span></span>`}).join('')}${RRG_Q.map(([k,name])=>`<span><i class="mk-key rrg-k-${k}"></i>${name}</span>`).join('')}</div>`;

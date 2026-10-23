@@ -43,7 +43,7 @@ function galaxyView(){
  state.gcol=GAL_COLOR.some(c=>c[0]===state.gcol)?state.gcol:'quad';
  state.gtail=GAL_TAILS.some(c=>c[0]===state.gtail)?state.gtail:(state.gsec?'8':'4');
  state.gbody=state.gbody==='0'?'0':'1';
- state.rfc=FC_MODES.some(m=>m[0]===state.rfc)?state.rfc:'';
+ state.rfc=fcDefault();
  const key='gal|'+Q.length;
  if(state.rfk!==key||!(Number.isInteger(state.rf)&&state.rf>=0&&state.rf<Q.length)){state.rf=Q.length-1;state.rfk=key}
  state.rfn=null;
