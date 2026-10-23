@@ -196,15 +196,18 @@ def adb(path):
                 v = r[j]
                 if isinstance(v, (int, float)) and v:
                     acc.add_inter(b, o, code, float(v))
-        elif code in ("r99", "r64", "r69"):
-            key = {"r99": "ptax", "r64": "va", "r69": None}[code]
+        elif code in ("r99", "r64", "r61", "r62", "r63", "trs"):
+            # value added, taxes on products and the small adjustment rows; totals (r60, r69) are formulas in the
+            # workbook, so output is added up here: intermediate inputs + these rows
+            key = {"r99": "ptax", "r64": "va"}.get(code)
             for j, b in cols.items():
                 v = r[j]
-                if isinstance(v, (int, float)):
+                if isinstance(v, (int, float)) and v:
                     if key:
                         acc.va[b][key] += float(v)
-                    else:
-                        acc.out[b] = float(v)
+                    acc.out[b] += float(v)
+    for b, v in acc.inter.items():
+        acc.out[b] += v
     return {"year": int(year) if year else None, "currency": "USD", "title": title.strip(),
             "codes": {k: v for k, v in ADB_SECTORS.items()}, "t": acc.compact(ADB_SECTORS)}
 
