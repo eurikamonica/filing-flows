@@ -12,24 +12,29 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: FIGARO and ADB downloads
+      - name: Structures
         run: |
-          pip install -q playwright && python -m playwright install --with-deps chromium >/dev/null 2>&1
+          pip install -q playwright openpyxl && python -m playwright install --with-deps chromium >/dev/null 2>&1
           mkdir -p out
-          curl -sSL --max-time 120 "https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/txt?lang=en" | grep -i "naio_10_f" > out/eurostat_toc.txt || true
-          echo "::notice::eurostat toc $(wc -l < out/eurostat_toc.txt) lines"
-          for d in $(grep -oiE 'naio_10_f[a-z0-9_]+' out/eurostat_toc.txt | sort -u | head -12); do
-            curl -sSL --max-time 60 "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/dataflow/ESTAT/$d/latest?references=descendants&detail=referencepartial" -o out/dsd_$d.xml
-            echo "$d $(wc -c < out/dsd_$d.xml)"
-          done
+          curl -sSIL "https://webfs-sti.oecd.org/files/STI-PIE/ICIO/2025/2016-2022_SML.zip" | grep -iE "content-length|HTTP/" > out/icio_head.txt
+          curl -sSL -o readme.xlsx "https://webfs-sti.oecd.org/files/STI-PIE/ICIO/2025/ReadMe_ICIO_small.xlsx"
+          python - <<'PY'
+          import openpyxl, json
+          wb = openpyxl.load_workbook("readme.xlsx", read_only=True)
+          out = {}
+          for ws in wb.worksheets:
+              out[ws.title] = [[str(c) for c in r if c is not None][:8] for r in ws.iter_rows(values_only=True)][:120]
+          json.dump(out, open("out/icio_readme.json", "w"), indent=0)
+          PY
+          B="https://ec.europa.eu/eurostat/api/dissemination"
+          curl -sSL --max-time 120 "$B/sdmx/2.1/dataflow/ESTAT/naio_10_fcp_ii4/latest?references=descendants&detail=referencepartial" -o out/figaro_dsd.xml; echo "dsd $(wc -c < out/figaro_dsd.xml)"
+          curl -sSL --max-time 120 "$B/sdmx/2.1/data/naio_10_fcp_ii4/?format=SDMX-CSV&startPeriod=2024&endPeriod=2024&lastNObservations=1" -o out/figaro_try_all.csv -w "all %{http_code} %{size_download}\n" | tee -a out/figaro_http.txt
+          head -c 3000 out/figaro_try_all.csv > out/figaro_try_all_head.txt; rm -f out/figaro_try_all.csv
           python - <<'PY'
           import json, re
           from playwright.sync_api import sync_playwright
-          pages = ["https://circabc.europa.eu/ui/group/cec66924-a924-4f91-a0ef-600a0531e3ba/library/460a20fc-5956-44f9-8633-2821eb48dd62",
-                   "https://kidb.adb.org/globalization",
-                   "https://kidb.adb.org/",
-                   "https://www.adb.org/what-we-do/data/regional-input-output-tables",
-                   "https://data.adb.org/dataset/adb-multiregional-input-output-tables"]
+          pages = ["https://kidb.adb.org/globalization/current",
+                   "https://circabc.europa.eu/ui/group/cec66924-a924-4f91-a0ef-600a0531e3ba/library/d333f912-0259-47cc-90e9-c12a41d902a0?p=1&n=50&sort=modified_DESC"]
           res = {}
           with sync_playwright() as p:
               b = p.chromium.launch()
@@ -37,14 +42,13 @@ jobs:
               for u in pages:
                   try:
                       pg.goto(u, timeout=90000, wait_until="domcontentloaded")
-                      pg.wait_for_timeout(9000)
-                      links = pg.eval_on_selector_all("a", "els => els.map(e => [e.innerText.trim().slice(0,140), e.href])")
-                      res[u] = {"links": links[:400], "text": pg.inner_text("body")[:6000]}
+                      pg.wait_for_timeout(10000)
+                      links = pg.eval_on_selector_all("a", "els => els.map(e => [e.innerText.trim().slice(0,160), e.href])")
+                      res[u] = {"links": links[:500], "text": pg.inner_text("body")[:8000]}
                   except Exception as e:
                       res[u] = {"error": str(e)[:300]}
-                  print("::notice::" + u + " -> " + str(len(res[u].get("links", []))) + " links " + res[u].get("error", "")[:100])
               b.close()
-          json.dump(res, open("out/links2.json", "w"), indent=1)
+          json.dump(res, open("out/links3.json", "w"), indent=1)
           PY
       - name: Keep the files on a branch
         if: always()
