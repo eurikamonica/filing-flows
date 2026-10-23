@@ -233,11 +233,22 @@ YAHOO_CHART = 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=
 BROWSER_UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
 
 
-def collect_prices(root, hub_dir=None, limit=1500, minutes=6.0, workers=6, refresh_days=1, today=None):
-    """Daily closes for the site's companies the hub does not price (its cache holds the tickers 13F managers and
-    officials hold: CoreWeave and Nebius were missing, so they had no fair-value page). Fetched from Yahoo's chart API
-    (five years) into this branch's cache/prices, which build() reads after the hub's; a ticker Yahoo does not know is
-    not asked again for 30 days."""
+def site_weekly(doc):
+    """[[date, close]] from a rotation-history weekly file (t/<T>.json: start, closes a week apart, adjusted)."""
+    if not doc or not doc.get('start') or not doc.get('c'):
+        return None
+    d0 = dt.date.fromisoformat(doc['start'])
+    rows = [[(d0 + dt.timedelta(days=7 * i)).isoformat(), float(v)] for i, v in enumerate(doc['c']) if fin(v) and v > 0]
+    return rows or None
+
+
+def collect_prices(root, hub_dir=None, limit=1500, minutes=6.0, workers=6, refresh_days=1, today=None, site_url=None):
+    """Closes for the site's companies the hub does not price, or prices only with a stale file (its cache holds the
+    tickers 13F managers and officials hold: CoreWeave and Nebius were missing, so they had no fair-value page).
+    First the site's own weekly closes (the rotation history, published at disclosures/data/market/history/t/<T>.json:
+    adjusted, the latest week included); for a ticker it lacks, five years of daily closes from Yahoo's chart API, which
+    rate-limits shared runners (it is left after 25 refusals). Saved to this branch's cache/prices, which build() reads
+    after the hub's, taking the more recent series; a ticker neither source knows is not asked again for 30 days."""
     import urllib.error
     import urllib.request
     from concurrent.futures import ThreadPoolExecutor
@@ -268,36 +279,49 @@ def collect_prices(root, hub_dir=None, limit=1500, minutes=6.0, workers=6, refre
             continue
         todo.append(t)
     t0, blocked = time.monotonic(), [0]
+    site = Http(UA, interval=0.0, timeout=30, retries=2) if site_url else None
+    base = (site_url or '').rstrip('/') + '/disclosures/data/market/history/t/'
 
     def one(t):
-        if time.monotonic() - t0 > minutes * 60 or blocked[0] >= 25:
-            return t, None, 'budget'
+        if time.monotonic() - t0 > minutes * 60:
+            return t, None, None, 'budget'
+        if site:
+            try:
+                rows = site_weekly(site.get(base + t + '.json'))
+                if rows:
+                    return t, rows, 'site-weekly', None
+            except Exception:                               # noqa: BLE001  (404: not in the rotation history)
+                pass
+        if blocked[0] >= 25:
+            return t, None, None, 'blocked'
         try:
             req = urllib.request.Request(YAHOO_CHART.format(symbol=t), headers={'User-Agent': BROWSER_UA, 'Accept': 'application/json'})
             with urllib.request.urlopen(req, timeout=30) as r:
-                return t, PR.parse_yahoo(json.loads(r.read().decode('utf-8')), (today - dt.timedelta(days=5 * 366)).isoformat()), None
+                rows = PR.parse_yahoo(json.loads(r.read().decode('utf-8')), (today - dt.timedelta(days=5 * 366)).isoformat())
+                return t, [[d, c] for d, c, *_ in rows], 'yahoo', None
         except urllib.error.HTTPError as e:
             if e.code == 429:
                 blocked[0] += 1
                 time.sleep(5)
-            return t, None, f'HTTP {e.code}'
+            return t, None, None, f'HTTP {e.code}'
         except Exception as e:                              # noqa: BLE001
-            return t, None, str(e)[:80]
-    saved = errs = 0
+            return t, None, None, str(e)[:80]
+    saved, errs, by = 0, 0, {}
     with ThreadPoolExecutor(workers) as pool:
-        for t, rows, err in pool.map(one, todo):
-            if err == 'budget':
+        for t, rows, src, err in pool.map(one, todo):
+            if err in ('budget', 'blocked'):
                 continue
             if rows:
-                write_json(own / f'{t}.json.gz', {'ticker': t, 'source': 'yahoo', 'fetched_at': now(), 'rows': rows}, gz=True)
+                write_json(own / f'{t}.json.gz', {'ticker': t, 'source': src, 'fetched_at': now(), 'rows': rows}, gz=True)
                 missing.pop(t, None)
                 saved += 1
+                by[src] = by.get(src, 0) + 1
             elif err and (err.startswith('HTTP 404') or 'No chart result' in err or 'No daily rows' in err):
                 missing[t] = today.isoformat()
             else:
                 errs += 1
     write_json(own / '_missing.json', missing)
-    return {'wanted': len(todo), 'saved': saved, 'errors': errs, 'rate_limited': blocked[0]}
+    return {'wanted': len(todo), 'saved': saved, 'by_source': by, 'errors': errs, 'rate_limited': blocked[0]}
 
 
 def weekly(daily):
@@ -336,9 +360,15 @@ def beta(stock, market, weeks=104):
 
 
 def annual_vol(daily, days=252):
+    """Annualised volatility of the last year of closes: daily rows, or weekly ones (the site's weekly closes, a
+    collect_prices fallback), told apart by the median gap between dates."""
+    if len(daily) > 3:
+        gaps = sorted((dt.date.fromisoformat(b[0]) - dt.date.fromisoformat(a[0])).days for a, b in zip(daily[-27:], daily[-26:]))
+        if gaps[len(gaps) // 2] >= 5:
+            days = 52
     xs = [math.log(b[1] / a[1]) for a, b in zip(daily[-days - 1:], daily[-days:]) if a[1] > 0 and b[1] > 0]
     sd = stdev(xs)
-    return sd * math.sqrt(252) if sd else None
+    return sd * math.sqrt(days) if sd else None
 
 
 # ------------------------------------------------------------------ the DCF (same formulas as web/fsa.js)
@@ -1675,7 +1705,7 @@ def collect(root, site_url, minutes=20.0, limit=1500, hub_prices=HUB_PRICES):
         except Exception as e:                              # noqa: BLE001
             out['site'] = {'error': str(e)[:160]}
         try:                                                # closes for the companies the hub does not price
-            out['prices'] = collect_prices(root, hub_prices, limit=limit, minutes=min(6.0, minutes / 3))
+            out['prices'] = collect_prices(root, hub_prices, limit=limit, minutes=min(6.0, minutes / 3), site_url=site_url)
         except Exception as e:                              # noqa: BLE001
             out['prices'] = {'error': str(e)[:160]}
     if '@' in ua:

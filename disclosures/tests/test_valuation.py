@@ -209,24 +209,38 @@ class TopUpPrices(unittest.TestCase):
             asked = []
             day = int(dt.datetime(2026, 10, 22, 20, tzinfo=dt.timezone.utc).timestamp())
 
+            class Resp(io.BytesIO):
+                headers = {}
+
             def fake(req, timeout=30):
+                if '/history/t/' in req.full_url:                                   # the site's weekly closes: CRWV only
+                    t = req.full_url.rsplit('/', 1)[1][:-5]
+                    asked.append('site:' + t)
+                    if t != 'CRWV':
+                        raise urllib.error.HTTPError(req.full_url, 404, 'Not Found', {}, None)
+                    return Resp(json.dumps({'start': '2026-10-09', 'c': [98.0, None, 101.5]}).encode())
                 t = req.full_url.split('/chart/')[1].split('?')[0]
                 asked.append(t)
                 if t == 'ZZZZ':
                     raise urllib.error.HTTPError(req.full_url, 404, 'Not Found', {}, None)
                 body = {'chart': {'result': [{'timestamp': [day - 86400, day], 'indicators': {'quote': [{'close': [100.0, 101.5], 'volume': [1, 2]}]}}]}}
-                return io.BytesIO(json.dumps(body).encode())
+                return Resp(json.dumps(body).encode())
             real = urllib.request.urlopen
             urllib.request.urlopen = fake
             try:
-                st = V.collect_prices(root, hub, today=today)
-                again = V.collect_prices(root, hub, today=today)
+                st = V.collect_prices(root, hub, today=today, site_url='https://example.org/')
+                again = V.collect_prices(root, hub, today=today, site_url='https://example.org/')
             finally:
                 urllib.request.urlopen = real
-            self.assertEqual(sorted(asked), ['CRWV', 'NBIS', 'ZZZZ'])               # AAPL: the hub has it
+            self.assertEqual(sorted(a for a in asked if not a.startswith('site:')), ['NBIS', 'ZZZZ'])   # CRWV: the site's
+            self.assertEqual(sorted(a[5:] for a in asked if a.startswith('site:')), ['CRWV', 'NBIS', 'ZZZZ'])   # AAPL: the hub's
             self.assertEqual(st['saved'], 2)
+            self.assertEqual(st['by_source'], {'site-weekly': 1, 'yahoo': 1})
             self.assertEqual(again['wanted'], 0)                                    # fresh, and ZZZZ remembered as unknown
             dirs = [hub, root / 'cache' / 'prices']
-            self.assertEqual(V.load_prices(dirs, 'CRWV')[-1], ('2026-10-22', 101.5))
+            self.assertEqual(V.load_prices(dirs, 'CRWV'), [('2026-10-09', 98.0), ('2026-10-23', 101.5)])
+            self.assertEqual(V.load_prices(dirs, 'NBIS')[-1], ('2026-10-22', 101.5))
+            wk = [((dt.date(2025, 1, 3) + dt.timedelta(days=7 * i)).isoformat(), 100 * math.exp(0.02 * ((-1) ** i))) for i in range(60)]
+            self.assertAlmostEqual(V.annual_vol(wk), V.stdev([math.log(b[1] / a[1]) for a, b in zip(wk[-53:], wk[-52:])]) * math.sqrt(52))
             self.assertEqual(V.load_prices(dirs, 'AAPL'), [('2026-10-22', 250.0)])
             self.assertEqual(V.load_prices(dirs, 'ZZZZ'), [])
