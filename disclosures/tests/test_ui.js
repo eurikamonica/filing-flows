@@ -246,6 +246,14 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   const op=vm.runInContext(`(()=>{const a=window.FFShare.analysis('XYZ-option-paths');return a})()`,context);
   assert.ok(op&&op.post.startsWith('$XYZ $100')&&vm.runInContext(`window.FFShare.xlen(${JSON.stringify(op.post)})`,context)<=280&&op.paras.length>=3,'the options post is missing or too long');
   assert.equal(vm.runInContext(`window.FFShare.fit(['a'.repeat(200),'b'.repeat(100),'c'],'https://x.co/y')`,context),'a'.repeat(200)+' https://x.co/y','fit does not drop lines from the end');
+  // the company page view (views.json → option-paths.js): cards and the panel from the files, a note without a chain
+  {const files={'data/market/options/XYZ.json':Object.assign({},context.__c,{max_pain:96,max_pain_exp:'2026-11-20',put_wall:90,call_wall:110}),'data/market/options.json':{rows:[{ticker:'XYZ',spot:100,iv30:25,pc_oi:1.2}]}};
+   const keep=context.fetch;context.fetch=async u=>files[u]?{ok:true,json:async()=>files[u]}:{ok:false,status:404};
+   const el={innerHTML:''};await vm.runInContext('window.FFOptionPaths.render',context)(el,{ticker:'XYZ',hub:''});
+   for(const want of ['Expected move, 30 days','±$7.17','Max pain','Price paths the options imply — XYZ','95% range'])assert.ok(el.innerHTML.includes(want),`the company options view lacks “${want}”`);
+   assert.ok(!/NaN|undefined|Infinity/.test(el.innerHTML),'the company options view shows NaN/undefined');
+   await vm.runInContext('window.FFOptionPaths.render',context)(el,{ticker:'NOPE',hub:''});assert.ok(el.innerHTML.includes('not collected yet'));
+   context.fetch=keep;checks+=3}
   checks+=11;console.log('option price paths checks passed.');
  }
  // the company page's Rotation (RRG) view (rrg-company-view.js, loaded by the main site through views.json)
