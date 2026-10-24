@@ -208,9 +208,25 @@ def max_pain_of(rows):
     return min(ks, key=pay)
 
 
+def walls_of(rows, spot, band=0.3):
+    """(call wall, its open interest, put wall, its open interest) of one expiry: the call wall is the strike at or
+    above spot (up to +30%) with the most call open interest — the ceiling — and the put wall the strike at or below
+    spot (down to −30%) with the most put open interest — the floor. In-the-money contracts are left out, so the two
+    bracket the price."""
+    lo, hi = spot * (1 - band), spot * (1 + band)
+    oi = {}
+    for c in rows:
+        if c['oi'] and lo <= c['k'] <= hi:
+            a = oi.setdefault(c['k'], [0, 0])
+            a[0 if c['type'] == 'C' else 1] += c['oi']
+    cw = max((k for k in oi if oi[k][0] and k >= spot), key=lambda k: oi[k][0], default=None)
+    pw = max((k for k in oi if oi[k][1] and k <= spot), key=lambda k: oi[k][1], default=None)
+    return cw, oi[cw][0] if cw is not None else 0, pw, oi[pw][1] if pw is not None else 0
+
+
 def price_paths(live, spot, today, days=PATH_DAYS, probs=PROBS):
     """Up to nine expiries (the nearest at least two days out and those closest to 1, 2 weeks, 1, 2, 3, 6, 9, 12
-    months): per expiry the options-implied quantiles of the price and its max pain."""
+    months): per expiry the options-implied quantiles of the price, its max pain and its call and put walls."""
     exps = sorted({c['exp'] for c in live})
     dd = {e: (dt.date.fromisoformat(e) - today).days for e in exps}
     fut = [e for e in exps if 2 <= dd[e] <= 400]
@@ -225,7 +241,8 @@ def price_paths(live, spot, today, days=PATH_DAYS, probs=PROBS):
             continue
         F, atm, q, method, used = r
         sig5 = lambda v: float(f'{v:.5g}')                    # noqa: E731
-        out.append({'exp': e, 'days': dd[e], 'fwd': sig5(F), 'atm_iv': round(atm, 4), 'method': method, 'strikes': used,
+        cw, cwo, pw, pwo = walls_of(rows, spot)
+        out.append({'call_wall': cw, 'call_wall_oi': cwo, 'put_wall': pw, 'put_wall_oi': pwo,'exp': e, 'days': dd[e], 'fwd': sig5(F), 'atm_iv': round(atm, 4), 'method': method, 'strikes': used,
                     'q': [sig5(v) for v in q], 'max_pain': max_pain_of(rows), 'oi': sum(c['oi'] for c in rows)})
     return out
 

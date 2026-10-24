@@ -256,6 +256,8 @@ class Options(unittest.TestCase):
             self.assertEqual(x['q'], sorted(x['q']))
             self.assertTrue(x['q'][0] < 100 < x['q'][-1])
             self.assertTrue(80 <= x['max_pain'] <= 120)
+            self.assertEqual((x['call_wall'], x['put_wall']), (110, 90))   # each expiry's own walls
+            self.assertEqual((x['call_wall_oi'], x['put_wall_oi']), (1000, 1000))
         self.assertGreater(P[1]['q'][-1] - P[1]['q'][0], P[0]['q'][-1] - P[0]['q'][0])   # wider further out
 
     def test_implied_distribution(self):

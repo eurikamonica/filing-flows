@@ -230,7 +230,7 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
  // the price paths an option chain implies (options.js optFan / optPathsPanel): exact at every expiry, no NaN
  {
   const probs=[.025,.05,.1,.25,.5,.75,.9,.95,.975],ln=(t,iv,p)=>100*Math.exp(-0.5*iv*iv*t+iv*Math.sqrt(t)*vm.runInContext(`optInvN(${p})`,context));
-  const paths=[[9,.22],[37,.25],[100,.28],[365,.3]].map(([d,iv],i)=>({exp:`2026-1${i}-1${i}`.replace('2026-13','2027-01'),days:d,fwd:100,atm_iv:iv,method:'smile',strikes:20,q:probs.map(p=>ln(d/365,iv,p)),max_pain:95+3*i,oi:1000*(i+1)}));
+  const paths=[[9,.22],[37,.25],[100,.28],[365,.3]].map(([d,iv],i)=>({exp:`2026-1${i}-1${i}`.replace('2026-13','2027-01'),days:d,fwd:100,atm_iv:iv,method:'smile',strikes:20,q:probs.map(p=>ln(d/365,iv,p)),max_pain:95+3*i,call_wall:110+5*i,call_wall_oi:900,put_wall:90-5*i,put_wall_oi:800,oi:1000*(i+1)}));
   context.__c={ticker:'XYZ',spot:100,paths,path_probs:probs};
   for(const [i,j] of [[0,0],[1,4],[2,8],[3,2]]){const v=vm.runInContext(`(()=>{const F=optFan(__c);return Math.exp(F.at(${paths[i].days},optInvN(${probs[j]})))})()`,context);assert.ok(Math.abs(v-paths[i].q[j])<1e-6*v,`the fan is not exact at expiry ${i}, quantile ${j}`)}
   const mid=vm.runInContext(`(()=>{const F=optFan(__c);return [Math.exp(F.at(4.5,optInvN(.975))),Math.exp(F.at(4.5,optInvN(.025)))]})()`,context);
@@ -238,7 +238,7 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   const sims=vm.runInContext(`optSim(optFan(__c),400).map(p=>p[p.length-1][1])`,context).sort((a,b)=>a-b);
   assert.ok(Math.abs(sims[200]-paths[3].q[4])/paths[3].q[4]<.06,'the sample paths do not end on the implied median');
   const h=vm.runInContext(`optPathsPanel(__c,'XYZ')`,context);
-  for(const want of ['Price paths the options imply','max pain','95% range','2027-01-13'])assert.ok(h.includes(want),`the price paths panel lacks “${want}”`);
+  for(const want of ['Price paths the options imply','max pain','95% range','2027-01-13','Call wall','Put wall','call wall by expiry'])assert.ok(h.includes(want),`the price paths panel lacks “${want}”`);
   assert.ok(!/NaN|undefined|Infinity/.test(h),'the price paths panel shows NaN/undefined');
   assert.equal(vm.runInContext(`optPathsPanel({spot:100,paths:[]},'X')`,context),'');
   checks+=8;console.log('option price paths checks passed.');
