@@ -249,5 +249,31 @@ class Options(unittest.TestCase):
         self.assertTrue(d['smiles'] and all(len(x['pts']) >= 5 for x in d['smiles']))
         self.assertAlmostEqual(s['pc_oi'], 1.0)                      # symmetric open interest
         self.assertEqual(options.cboe_symbol('SPX'), '_SPX')
+        P = d['paths']                                                   # the options-implied price paths
+        self.assertEqual([x['exp'] for x in P], ['2026-11-20', '2026-12-18'])
+        for x in P:
+            self.assertEqual(len(x['q']), len(options.PROBS))
+            self.assertEqual(x['q'], sorted(x['q']))
+            self.assertTrue(x['q'][0] < 100 < x['q'][-1])
+            self.assertTrue(80 <= x['max_pain'] <= 120)
+        self.assertGreater(P[1]['q'][-1] - P[1]['q'][0], P[0]['q'][-1] - P[0]['q'][0])   # wider further out
+
+    def test_implied_distribution(self):
+        import math
+        from statistics import NormalDist
+        flat = [{'exp': 'x', 'type': t, 'k': k, 'iv': 0.3, 'oi': 10, 'bid': 1.0, 'ask': 1.1} for k in range(40, 260, 5) for t in 'CP']
+        F, atm, q, method, used = options.implied_quantiles(flat, 100.0, 0.5)
+        self.assertEqual((method, round(F, 6), round(atm, 6)), ('smile', 100.0, 0.3))
+        for p, v in zip(options.PROBS, q):                               # a flat smile is the lognormal
+            self.assertAlmostEqual(v, 100 * math.exp(-0.5 * 0.09 * 0.5 + 0.3 * math.sqrt(0.5) * NormalDist().inv_cdf(p)), delta=0.05)
+        skew = [dict(c, iv=0.3 + 0.4 * max(0.0, (100 - c['k']) / 100)) for c in flat]   # dearer puts: a fatter left tail
+        q2 = options.implied_quantiles(skew, 100.0, 0.5)[2]
+        self.assertLess(q2[0], q[0] - 2)
+        par = [dict(c, bid=6.0 if c['type'] == 'C' else 1.0, ask=6.0 if c['type'] == 'C' else 1.0) for c in flat]
+        self.assertAlmostEqual(options.forward(par, 100.0), 105.0)      # F = K + C − P at the strikes nearest spot
+        few = [{'exp': 'x', 'type': 'C', 'k': 100, 'iv': 0.25, 'oi': 5, 'bid': 1, 'ask': 1}]
+        self.assertEqual(options.implied_quantiles(few, 100.0, 0.25)[3], 'atm')
+        self.assertEqual(options.max_pain_of([{'type': 'C', 'k': 100, 'oi': 10}, {'type': 'P', 'k': 100, 'oi': 10},
+                                               {'type': 'C', 'k': 90, 'oi': 1}, {'type': 'P', 'k': 110, 'oi': 1}]), 100)
 
 

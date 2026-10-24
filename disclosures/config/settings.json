@@ -319,13 +319,27 @@
       "NDX",
       "VIX",
       "TLT",
-      "GLD"
+      "GLD",
+      "XLK",
+      "XLF",
+      "XLE",
+      "XLV",
+      "XLI",
+      "XLY",
+      "XLP",
+      "XLU",
+      "XLB",
+      "XLRE",
+      "XLC",
+      "SMH",
+      "EEM",
+      "HYG"
     ],
     "from_signals": 25,
     "from_13f": 60,
-    "max_tickers": 90,
+    "max_tickers": 104,
     "keep_days": 400,
-    "_note": "CBOE delayed option chains, summarised daily: IV30, smile, term structure, OI and GEX by strike, walls, max pain, skew."
+    "_note": "CBOE delayed option chains, summarised daily: IV30, smile, term structure, OI and GEX by strike, walls, max pain, skew, and the option-implied price paths (quantiles and max pain per expiry). The sector SPDRs and a few large ETFs are always collected, so their ETF pages draw the paths."
   },
   "ownership": {
     "batch": 300,

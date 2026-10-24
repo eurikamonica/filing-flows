@@ -169,10 +169,16 @@ class Build(unittest.TestCase):
                 (pub / 't' / f'{t}.json').write_text(json.dumps(doc))
             (pub / 'rrg.json').write_text(json.dumps({'start': str(g0), 'weeks': weeks, 'bench': {'start': str(g0), 'c': spy},
                                                       'series': series, 'tickers': tickers}))
+            (pub / 'industries.json').write_text(json.dumps({'rows': [{'id': f'sic4:{i:04d}', 'start': str(g0), 'c': walk(.03)} for i in range(20)]
+                                                             + [{'id': 'sic4:short', 'start': str(g0), 'c': walk(.03)[:100]}]}))
             doc = TR.build(pub, verbose=False)
             back = json.loads((pub / 'rrg-transition-model.json').read_text())
         self.assertEqual(back['schema_version'], 'rrg_transition_model.v1')
-        self.assertEqual(set(back['groups']), {'etf_vs_market', 'company_vs_market', 'company_vs_industry'})
+        self.assertEqual(set(back['groups']), {'etf_vs_market', 'industry_vs_market', 'company_vs_market', 'company_vs_industry'})
+        gi = back['groups']['industry_vs_market']
+        self.assertEqual((gi['lines'], gi['primary']), (20, 'q'))                  # under three years of weeks: left out
+        self.assertEqual(set(gi['bands']), {'1', '4', '13'})
+        self.assertFalse(gi['chain']['joint'])
         g = back['groups']['company_vs_industry']
         self.assertEqual(g['primary'], 'iq')
         self.assertEqual(g['lines'], 25)
