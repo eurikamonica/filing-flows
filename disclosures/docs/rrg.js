@@ -170,9 +170,11 @@ function rrgView(){
  out+=`<div class="panel"><h3>${esc(head)}</h3><p class="sub">→ JdK RS-Ratio (relative trend) · ↑ JdK RS-Momentum (its speed)${o.zk?' · ↗ '+esc(RRG_ZINFO[o.zk].label):''} · against ${dual?'their industry without themselves (companies) · the industries against '+esc(D.benchmark||'SPY'):esc(D.benchmark||'SPY')} · ${W?'weekly':'monthly'}, ${esc(n)}-${W?'week':'month'} window · tails ${esc(state.rrgt)} ${W?'weeks':'months'}. History since ${esc(rrgDay(D.start))}; drag the slider anywhere and press play.</p>`;
  const Qp=lastK>=0?Q.slice(0,lastK+1):Q;               // slider and play stop at the last close
  out+=rotPlayer(Qp,o.P);
- if(state.rrgm==='2d'){ROT.ctx={Q:Qp,P:o.P,draw:f=>rrgFrame(o,f)};out+=`<div id="rot-plot">${rrgFrame(o,state.rf)}</div>`}
+ if(window.FFShare)out+=window.FFShare.bar({key:'hub-rrg-'+state.rrgm,title:head+' — '+rrgDay(Qp[Math.min(state.rf,Qp.length-1)]),subtitle:`→ RS-Ratio · ↑ RS-Momentum · against ${dual?'their industry (companies) / '+(D.benchmark||'SPY'):(D.benchmark||'SPY')} · ${W?'weekly':'monthly'}, ${n}-${W?'week':'month'} window · ${lines.map(l=>l.e.name).slice(0,10).join(', ')}${lines.length>10?' …':''}`,
+  source:'Weekly closes (Yahoo Finance / Stooq), adjusted; RRG computed in the browser (Filing Flows).',post:()=>rrgHubPost(o,Math.min(state.rf,Qp.length-1),head)});
+ if(state.rrgm==='2d'){ROT.ctx={Q:Qp,P:o.P,draw:f=>rrgFrame(o,f)};out+=`<div id="rot-plot" data-ffs-chart="hub-rrg-2d">${rrgFrame(o,state.rf)}</div>`}
  else{ROT.ctx={Q:Qp,P:o.P,paint:f=>rrgPaint3d(o,f)};
-  out+=`<div class="rot-3d-wrap"><canvas id="rot-3d" class="rot-3d" role="img" aria-label="${esc(head)}; the table below lists every value"></canvas><div class="rot-3d-tools"><button class="action" id="rspin" type="button">${ROT.spin?'Stop turning':'Turn slowly'}</button><button class="action" id="rreset" type="button">Front view</button></div></div>`}
+  out+=`<div class="rot-3d-wrap"><canvas id="rot-3d" data-ffs-chart="hub-rrg-${state.rrgm}" class="rot-3d" role="img" aria-label="${esc(head)}; the table below lists every value"></canvas><div class="rot-3d-tools"><button class="action" id="rspin" type="button">${ROT.spin?'Stop turning':'Turn slowly'}</button><button class="action" id="rreset" type="button">Front view</button></div></div>`}
  out+=`<div class="mk-legend rrg-legend">${lines.map(l=>{const k0=l.calc.y.findIndex(v=>v!=null),late=k0<0||k0>state.rf;
   return `<span${late?' class="muted"':''}><i class="mk-key" style="background:${l.col}"></i>${esc(l.e.name)} <span class="muted">${esc(rrgFull_(l.e))}${late&&k0>=0?' · from '+esc(rrgDay(Q[k0])):''}</span></span>`}).join('')}${RRG_Q.map(([k,name])=>`<span><i class="mk-key rrg-k-${k}"></i>${name}</span>`).join('')}</div>`;
  if(waiting.length||missing.length)out+=`<p class="sub">${waiting.length?'Loading '+esc(waiting.map(e=>e.id).join(', '))+'… ':''}${missing.length?'Not on file yet: '+esc(missing.map(e=>e.id).join(', '))+' (the collector fetches the site’s companies largest first; the workflow’s “tickers” input fetches any ticker now).':''}</p>`;
@@ -182,6 +184,17 @@ function rrgView(){
   if(tk.length)out+=`<h3>Posts for X</h3>`+tk.map(e=>`<div class="hub-post" data-post-t="${esc(e.id)}" data-post-k="rotation"></div>`).join('');}
  return out;
 }
+function rrgHubPost(o,f,head){                        // every line's quadrant at the frame shown, as an analysis and a post
+ const at=o.lines.map(l=>{const x=l.calc.x[f],y=l.calc.y[f],x0=f>0?l.calc.x[f-1]:null,y0=f>0?l.calc.y[f-1]:null;
+  return x==null||y==null?null:{n:l.e.name,x,y,q:rrgQuad(x,y),dx:x0==null?null:x-x0,dy:y0==null?null:y-y0}}).filter(Boolean);
+ const by=[0,1,2,3].map(q=>at.filter(a=>a.q===q).sort((a,b)=>Math.hypot(b.x-100,b.y-100)-Math.hypot(a.x-100,a.y-100)));
+ const moved=at.filter(a=>a.dx!=null).map(a=>{const q0=rrgQuad(a.x-a.dx,a.y-a.dy);return q0!==a.q?`${a.n} ${RRG_Q[q0][1]} → ${RRG_Q[a.q][1]}`:null}).filter(Boolean);
+ const day=rrgDay(o.Q[f]),bench=o.D.benchmark||'SPY';
+ const paras=[`Relative Rotation Graph for the ${o.freq==='w'?'week':'month'} of ${day}, against ${bench}: ${at.length} lines.`,
+  ...by.map((L,q)=>L.length?`${RRG_Q[q][1]} (${RRG_Q[q][2]}): ${L.map(a=>`${a.n} (${rrgF(a.x,1)} / ${rrgF(a.y,1)})`).join(', ')}.`:''),
+  moved.length?`Changed quadrant since the ${o.freq==='w'?'week':'month'} before: ${moved.join('; ')}.`:''];
+ const lines=[`RRG vs ${bench}, ${day}:`,...by.map((L,q)=>L.length?`${RRG_Q[q][1]}: ${L.slice(0,6).map(a=>a.n).join(', ')}${L.length>6?' +'+(L.length-6):''}.`:''),moved.length?`Rotated: ${moved.slice(0,3).join('; ')}.`:''];
+ return {title:head+' — '+day,paras,lines}}
 function rrgDomain(o){                                 // symmetric around 100, fixed for the whole history so play does not rescale
  const xs=[],ys=[],zs=[];
  for(const l of o.lines)for(let k=o.firstK;k<o.Q.length;k++){const x=l.calc.x[k],y=l.calc.y[k];if(x==null||y==null)continue;xs.push(Math.abs(x-100));ys.push(Math.abs(y-100));

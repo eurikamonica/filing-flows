@@ -31,6 +31,15 @@
     insufficient_data: ['Too little data', 'too few test weeks'] };
   const shown = (l) => l === 'calibrated' || l === 'experimental';
   const H = [1, 4, 13];
+  // the PNG / JPG / post bar (chart-share.js, next to this file): already on the hub page, loaded on demand on the site
+  const SRC = ((typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '').replace(/[^/]*$/, '');
+  let shareP = null;
+  const share = () => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return Promise.resolve(null);
+    if (window.FFShare) return Promise.resolve(window.FFShare);
+    return shareP || (shareP = new Promise((res) => { const sc = document.createElement('script'); sc.src = SRC + 'chart-share.js'; sc.onload = () => res(window.FFShare || null); sc.onerror = () => res(null); document.head.appendChild(sc); setTimeout(() => res(window.FFShare || null), 8000); }));
+  };
+  const shareBar = (spec) => (typeof window !== 'undefined' && window.FFShare ? window.FFShare.bar(spec) : '');
   const store = {};
   const get = (url) => store[url] || (store[url] = fetch(url, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .catch((e) => { delete store[url]; throw e; }));
@@ -240,8 +249,9 @@
       s += `<path d="M${med.map((q) => f(q[0]) + ',' + f(q[1])).join('L')}" style="fill:none;stroke:${o.col};stroke-width:2;stroke-dasharray:6 4;opacity:.85"/>`;
       [4, 13].forEach((h) => {
         const xs1 = P.map((p) => p.x[h - 1]), ys1 = P.map((p) => p.y[h - 1]), a = [sx(qtl(xs1, 0.1)), sy(qtl(ys1, 0.9))], b = [sx(qtl(xs1, 0.9)), sy(qtl(ys1, 0.1))];
-        const lx = Math.min(b[0] - 4, W - R - 6), ly = h === 4 ? Math.max(a[1] + 14, T + 30) : Math.min(b[1] - 6, Hh - Bm - 26);
-        s += `<rect x="${f(a[0])}" y="${f(a[1])}" width="${f(b[0] - a[0])}" height="${f(b[1] - a[1])}" rx="6" style="fill:none;stroke:${o.col};stroke-width:1.2;stroke-dasharray:3 3;opacity:.8"/><text class="rc-l" x="${f(lx)}" y="${f(ly)}" text-anchor="end">${h} wk · 80%</text>`;
+        // 4 weeks: top right of its box; 13 weeks: bottom left, away from today's dot and its name
+        const lx = h === 4 ? Math.min(b[0] - 4, W - R - 6) : Math.max(a[0] + 4, Lm + 4), ly = h === 4 ? Math.max(a[1] + 14, T + 30) : Math.min(b[1] - 6, Hh - Bm - 26);
+        s += `<rect x="${f(a[0])}" y="${f(a[1])}" width="${f(b[0] - a[0])}" height="${f(b[1] - a[1])}" rx="6" style="fill:none;stroke:${o.col};stroke-width:1.2;stroke-dasharray:3 3;opacity:.8"/><text class="rc-l" x="${f(lx)}" y="${f(ly)}" text-anchor="${h === 4 ? 'end' : 'start'}">${h} wk · 80%</text>`;
       });
     }
     const MP = o.mpath && o.mpath.filter(Boolean);
@@ -293,8 +303,49 @@
     const short = W < 500, lab = [[R[1][13][1], `${short ? '' : 'median '}${F(R[1][13][1])}`, o.col]].concat(M ? [[M[1][13][1], `${short ? '' : 'chain '}${F(M[1][13][1])}`, 'var(--ink,#222)']] : []);
     if (lab.length > 1 && Math.abs(sy(lab[0][0]) - sy(lab[1][0])) < 13) { const up = sy(lab[0][0]) <= sy(lab[1][0]) ? 0 : 1; lab[up].push(-7); lab[1 - up].push(7); }
     lab.forEach(([v, t, col, d]) => { s += `<text class="rc-l" x="${f(sx(13) + 5)}" y="${f(sy(v) + 4 + (d || 0))}" style="fill:${col}">${esc(t)}</text>`; });
-    return `<h4>On the ${o.pct ? 'index' : 'price'} — the last 26 weeks and the next 13</h4><p class="rc-sub">The two dashed paths of the chart above, converted to ${o.pct ? 'the index level' : 'the share price'} with ${esc(o.bench)} flat: the replays' median (dashed) and their 10–90% band (shaded), and the weekly chain converted to a path (dotted black; thin dotted: its 10% and 90%). The short bars at next week: the close that puts it into Leading and into Lagging.</p>${s}</svg>` +
+    const key = (o.key || o.name) + '-price';
+    return `<h4>On the ${o.pct ? 'index' : 'price'} — the last 26 weeks and the next 13</h4>${shareBar({ key, title: `${o.name}: ${o.pct ? 'index' : 'price'} paths — the last 26 weeks and the next 13`, subtitle: `Against ${o.bench}, held flat ahead · replays' median (dashed) and 10–90% band · the weekly Markov chain converted to a path (dotted) · ${A.day}`, source: 'Weekly closes (Yahoo Finance / Stooq); RRG 14-week, Markov chain fitted walk-forward since 2012 (Filing Flows).', post: () => pricePost(A, o) })}<p class="rc-sub">The two dashed paths of the chart above, converted to ${o.pct ? 'the index level' : 'the share price'} with ${esc(o.bench)} flat: the replays' median (dashed) and their 10–90% band (shaded), and the weekly chain converted to a path (dotted black; thin dotted: its 10% and 90%). The short bars at next week: the close that puts it into Leading and into Lagging.</p><div data-ffs-chart="${esc(key)}">${s}</svg></div>` +
       `<div class="rc-legend"><span><b style="background:var(--ink,#222)"></b>weekly ${o.pct ? 'level' : 'close'}</span><span><b style="background:${o.col}"></b>replays: median (dashed), 10–90% (shaded)</span>${M ? '<span><b style="background:var(--ink,#222);opacity:.6"></b>the chain converted to a path (dotted), its 10 / 90%</span>' : ''}</div>`;
+  }
+  /* ---------- the analysis and the post for X, by rule from the numbers drawn ---------- */
+  function facts(A, o) {
+    const F = o.fmt || usd, c = A.close, P = A.paths, h = o.h, d = o.odds, q = A.st.q;
+    const ok = fin(A.th.mx) && fin(A.th.my), lo = ok ? Math.min(A.th.mx, A.th.my) : NaN, hi = ok ? Math.max(A.th.mx, A.th.my) : NaN, mid = A.th.mx < A.th.my ? 1 : 3;
+    const tag = o.tag || o.name, odds = d ? (shown(d.label) && A.liquid ? d.p : d.hist) : null, oddsLab = d ? (shown(d.label) && A.liquid ? (LBL[d.label] || [d.label])[0].toLowerCase() : 'history only') : '';
+    const rr = (k) => (P.length >= 30 ? [0.1, 0.5, 0.9].map((p) => Math.exp(qtl(P.map((r) => r.cum[k - 1]), p))) : null);
+    const mp = (k) => (o.mpath && o.mpath[k - 1]) || null;
+    const lvl2 = (m) => (o.pct ? `${spc(m - 1)} (${F(c * m)})` : `${F(c * m)} (${spc(m - 1)})`);
+    return { F, c, h, q, ok, lo, hi, mid, tag, odds, oddsLab, rr, mp, lvl2 };
+  }
+  function rrgPost(A, o) {
+    const X = facts(A, o), { F, c, h, ok, lo, hi, mid, tag, odds, oddsLab, rr, mp, lvl2 } = X, r = rr(h), m4 = mp(4), m13 = mp(13);
+    const oddsTxt = odds ? QN.map((n, j) => `${n} ${pc(odds[j])}`).join(', ') : '';
+    const paras = [
+      `${o.name} is ${QN[A.st.q]} against ${o.bench} in the week of ${A.day} (RS-Ratio ${num(A.S.x[A.k], 2)}, RS-Momentum ${num(A.S.y[A.k], 2)}).`,
+      ok ? `With ${o.bench} flat, ${o.pct ? 'an index move of' : 'a close at or above'} ${lvl2(hi)} next week puts it into Leading, ${o.pct ? 'one under' : 'a close below'} ${lvl2(lo)} into Lagging, and anything between leaves it ${QN[mid]} — solved exactly from the chart's formula.` : '',
+      odds ? `Where lines in its spot stood ${h} week${h > 1 ? 's' : ''} later (Markov matrix, ${oddsLab}): ${oddsTxt}.` : '',
+      r ? `Its own 13-week runs of the last three years, replayed from here: ${h} week${h > 1 ? 's' : ''} on, median ${lvl2(r[1])}, 80% between ${F(c * r[0])} and ${F(c * r[2])}.` : '',
+      m4 && m13 ? `The weekly chain converted to a path: ${F(c * m4.q50)} in 4 weeks, ${F(c * m13.q50)} in 13 (${o.bench} flat).` : ''];
+    const lines = [`${tag} vs ${o.bench} on the RRG: ${QN[A.st.q]} (${num(A.S.x[A.k], 1)} / ${num(A.S.y[A.k], 1)}).`,
+      ok ? `Into Leading next week: ${o.pct ? spc(hi - 1) : '≥ ' + F(c * hi) + ' (' + spc(hi - 1) + ')'}; Lagging ${o.pct ? 'under ' + spc(lo - 1) : 'below ' + F(c * lo)}.` : '',
+      odds ? `${h}-wk odds: ${QN.map((n, j) => `${n} ${pc(odds[j])}`).join(' · ')} (${oddsLab}).` : '',
+      r ? `${h}-wk replay range ${F(c * r[0])}–${F(c * r[2])}.` : '',
+      m4 ? `Markov path: ${F(c * m4.q50)} in 4 wk.` : ''];
+    return { title: `${o.title} — week of ${A.day}`, paras, lines };
+  }
+  function pricePost(A, o) {
+    const X = facts(A, o), { F, c, ok, lo, hi, tag, rr, mp } = X, r4 = rr(4), r13 = rr(13), m4 = mp(4), m13 = mp(13);
+    const rng = (r) => `${F(c * r[1])} (80%: ${F(c * r[0])}–${F(c * r[2])})`;
+    const paras = [
+      `${o.name}'s ${o.pct ? 'index' : 'price'} paths for the next 13 weeks against ${o.bench}, with ${o.bench} held flat; last ${o.pct ? 'level' : 'close'} ${F(c)} (${A.day}).`,
+      r4 && r13 ? `Replaying its own 13-week runs of the last three years: ${rng(r4)} in 4 weeks and ${rng(r13)} in 13.` : '',
+      m4 && m13 ? `Reweighted to the weekly chain's quadrant odds: ${F(c * m4.q50)} (80%: ${F(c * m4.q10)}–${F(c * m4.q90)}) in 4 weeks and ${F(c * m13.q50)} (${F(c * m13.q10)}–${F(c * m13.q90)}) in 13.` : '',
+      ok ? `Next week's thresholds: ${F(c * hi)} into Leading, ${F(c * lo)} into Lagging.` : ''];
+    const lines = [`${tag}: where the RRG's price paths point (${o.bench} flat).`,
+      r4 && r13 ? `Replays: 4 wk ${F(c * r4[1])} [${F(c * r4[0])}–${F(c * r4[2])}], 13 wk ${F(c * r13[1])} [${F(c * r13[0])}–${F(c * r13[2])}].` : '',
+      m4 && m13 ? `Markov chain path: 4 wk ${F(c * m4.q50)}, 13 wk ${F(c * m13.q50)}.` : '',
+      ok ? `Next week: Leading ≥ ${F(c * hi)}, Lagging < ${F(c * lo)}.` : ''];
+    return { title: `${o.name}: ${o.pct ? 'index' : 'price'} paths, the next 13 weeks — ${A.day}`, paras, lines };
   }
   function ladder(A, o) {                                    // next week's close and the quadrant it lands in
     const { mx, my } = A.th, c = A.close, F = o.fmt || usd, W0 = o.closeWord || 'close';
@@ -364,7 +415,7 @@
       (d ? `<div class="rc-card"><span>Most likely in ${o.h} week${o.h > 1 ? 's' : ''}</span>${shown(d.label) && A.liquid ? (() => { const j = d.p.indexOf(Math.max(...d.p)); return `<b style="color:${QC[j]}">${QN[j]} ${pc(d.p[j])}</b><i>${esc((LBL[d.label] || [''])[0])} (Markov matrix)</i>`; })() : `<b>—</b><i>${A.liquid ? 'history only' : 'below the liquidity floor'}</i>`}</div>` : '') +
       (() => { const m = Math.max(A.th.mx, A.th.my), ok = fin(A.th.mx) && fin(A.th.my), F = o.fmt || usd;
         return `<div class="rc-card"><span>Into Leading next week</span><b>${ok ? (o.pct ? spc(m - 1) : F(A.close * m)) : '—'}</b><i>${o.pct ? (ok ? `index ${F(A.close * m)}, ` : '') + esc(o.bench) + ' flat' : 'close needed, ' + esc(o.bench) + ' flat'}</i></div></div>`; })();
-    return `<div class="rc-sec"><h3>${esc(o.title)}</h3><p class="rc-sub">${esc(o.sub)}</p>${cards}${chart(A, o)}<div class="rc-legend"><span><b style="background:${o.col}"></b>${esc(o.name)}, last ${o.tail} weeks</span>${o.ctx ? `<span><b style="background:var(--muted,#888)"></b>${esc(o.ctxName)}</span>` : ''}<span>faint: replayed paths · dashed: median · boxes: 80% at 4 and 13 weeks${o.mpath ? ' · dotted: the Markov chain converted to a path (○ 4 and 13 weeks)' : ''}</span></div>` +
+    return `<div class="rc-sec"><h3>${esc(o.title)}</h3><p class="rc-sub">${esc(o.sub)}</p>${cards}${shareBar({ key: (o.key || o.name) + '-rrg', title: `${o.title} — RRG, week of ${A.day}`, subtitle: `RS-Ratio → · RS-Momentum ↑ · ${o.name}, last ${o.tail} weeks · faint: replayed paths, dashed: their median, dotted: the Markov chain converted to a path`, source: 'Weekly closes (Yahoo Finance / Stooq); RRG 14-week; odds from smoothed transition matrices checked walk-forward since 2012 (Filing Flows).', post: () => rrgPost(A, o) })}<div data-ffs-chart="${esc((o.key || o.name) + '-rrg')}">${chart(A, o)}</div><div class="rc-legend"><span><b style="background:${o.col}"></b>${esc(o.name)}, last ${o.tail} weeks</span>${o.ctx ? `<span><b style="background:var(--muted,#888)"></b>${esc(o.ctxName)}</span>` : ''}<span>faint: replayed paths · dashed: median · boxes: 80% at 4 and 13 weeks${o.mpath ? ' · dotted: the Markov chain converted to a path (○ 4 and 13 weeks)' : ''}</span></div>` +
       priceChart(A, o) + ladder(A, o) + ranges(A, o, o.bands) + matrix(A, o) + dynamic(A, o) + '</div>';
   }
 
@@ -375,7 +426,7 @@
     if (!T) { el.innerHTML = '<p class="muted">No ticker: the RRG needs a share price.</p>'; return; }
     el.innerHTML = '<p class="muted">Loading the rotation history…</p>';
     let D, t, M;
-    try { [D, t, M] = await Promise.all([get(base + 'rrg.json'), get(base + 't/' + T + '.json').catch(() => null), get(base + 'rrg-transition-model.json').catch(() => null)]); } catch (e) {
+    try { [D, t, M] = await Promise.all([get(base + 'rrg.json'), get(base + 't/' + T + '.json').catch(() => null), get(base + 'rrg-transition-model.json').catch(() => null), share()]); } catch (e) {
       el.innerHTML = `<p class="muted">The rotation history could not load (${esc(e.message)}).</p>`; return;
     }
     if (ctx && ctx.here && !ctx.here()) return;
@@ -389,21 +440,21 @@
     const Aind = BI ? analyse(G, BI, null, SPY, { always: true }) : null;      // the industry's own line, the industry RRG
     const draw = () => {
       const h = U.h, gm = M && M.groups || {}, cw = el.clientWidth || 760, Wc = Math.max(340, Math.min(760, cw));   // text stays legible on a phone
-      const om = { title: `${T} against the S&P 500`, name: T, bench: 'SPY', col: 'var(--accent, #17734a)', tail: U.tail, h, W: Wc, kind: 'companies vs the S&P 500',
+      const om = { key: `${T}-vs-spy`, tag: '$' + T.replace(/-/g, '.'), title: `${T} against the S&P 500`, name: T, bench: 'SPY', col: 'var(--accent, #17734a)', tail: U.tail, h, W: Wc, kind: 'companies vs the S&P 500',
         sub: `The standard RRG: ${T}'s weekly close ÷ SPY, smoothed (4 weeks) against its own 14-week trend → RS-Ratio; that gap's weekly change → RS-Momentum; both in standard deviations of their own last year, around 100. Grey: its industry${t.bl ? ' (' + t.bl + ', all ' + (t.bn || '') + ' companies)' : ''} against SPY.`,
         missing: 'Not enough weekly history for the RRG yet (about 40 weeks of closes are needed).',
         ctx: Ind, ctxName: t.bl ? t.bl.replace(/ · .*/, '') + ' vs SPY' : 'Industry',
         bands: (gm.company_vs_market || {}).bands, matrixWhat: 'Companies against the S&P 500, every liquid company-week since 2002.' };
       om.odds = Am && M ? odds(M, 'company_vs_market', Am.st, String(h)) : null;
       om.chain = Am && M ? chain(M, 'company_vs_market', Am.st) : null;
-      const oi = { title: `${T} against its industry (without itself)`, name: T, bench: 'its industry', col: 'var(--slate, #5b7fa6)', tail: U.tail, h, W: Wc, kind: 'companies vs their industry',
+      const oi = { key: `${T}-vs-industry`, tag: '$' + T.replace(/-/g, '.'), title: `${T} against its industry (without itself)`, name: T, bench: 'its industry', col: 'var(--slate, #5b7fa6)', tail: U.tail, h, W: Wc, kind: 'companies vs their industry',
         sub: `The dual RRG's second layer: ${T} against ${t.bl || 'its industry'} without ${T} (up to ${(t.bn || 1) - 1} other companies, each counted while liquid), so a large company does not define its own peers. Where the industry stands against SPY: ${Ind && Ai && Ai.st.iq >= 0 ? QN[Ai.st.iq] : '—'} — the Markov matrix below is the one for that industry quadrant.`,
         missing: t.bx ? 'Not enough weekly history against the industry yet.' : 'No industry benchmark: fewer than five other companies with prices in its SIC group or sector.',
         bands: (gm.company_vs_industry || {}).bands, matrixWhat: `Companies against their industry while the industry was ${Ai && Ai.st.iq >= 0 ? QN[Ai.st.iq] : '—'} against the S&P 500, every liquid company-week since 2002.` };
       oi.odds = Ai && M ? odds(M, 'company_vs_industry', Ai.st, String(h)) : null;
       oi.chain = Ai && M ? chain(M, 'company_vs_industry', Ai.st) : null;
       const iname = t.bl ? t.bl.replace(/ · .*/, '') : 'Its industry';
-      const ox = Object.assign(industryOpts(h, U.tail, Wc, iname, t.bl || iname, t.bn, gm), {
+      const ox = Object.assign(industryOpts(h, U.tail, Wc, iname, t.bl || iname, t.bn, gm), { key: `${T}-industry`,
         title: `${t.bl || 'Its industry'} against the S&P 500 — the industry's own RRG`,
         members: Aind ? [{ t: T, c: C[Aind.k] }] : [],
         membersWhat: `The ${T} column: ${T}'s close if it moved exactly with its industry (same % move).` });
@@ -436,7 +487,7 @@
     if (ctx && ctx.id && !U.seen) { U.id = ctx.id; U.seen = 1; }
     if (!el.innerHTML) el.innerHTML = '<p class="muted">Loading the industry indices…</p>';
     let D, I, M;
-    try { [D, I, M] = await Promise.all([get(base + 'rrg.json'), get(base + 'industries.json'), get(base + 'rrg-transition-model.json').catch(() => null)]); } catch (e) {
+    try { [D, I, M] = await Promise.all([get(base + 'rrg.json'), get(base + 'industries.json'), get(base + 'rrg-transition-model.json').catch(() => null), share()]); } catch (e) {
       el.innerHTML = `<p class="muted">The industry indices are not published yet (${esc(e.message)}): the “Rotation history” workflow writes them on its next build.</p>`; return;
     }
     const G = grid(D), SPY = place(G, D.bench.start, D.bench.c), gm = (M && M.groups) || {}, rows = I.rows || [];
@@ -453,7 +504,7 @@
       const ctl = `<div class="rc-ctl">Markov horizon ${tog('h', H, h, (v) => v + (v > 1 ? ' weeks' : ' week'))}<span style="width:12px"></span>Tail ${tog('tail', [13, 26, 52], U.tail, (v) => v + ' weeks')}</div>`;
       const r = U.id && rows.find((x) => x.id === U.id);
       if (r) {
-        const a = A(r) || null, o = industryOpts(h, U.tail, Wc, r.label.replace(/ · .*/, ''), indName(r), r.members, gm);
+        const a = A(r) || null, o = Object.assign(industryOpts(h, U.tail, Wc, r.label.replace(/ · .*/, ''), indName(r), r.members, gm), { key: 'industry-' + r.id.replace(/:/g, '-') });
         o.odds = a && M ? odds(M, 'industry_vs_market', a.st, String(h)) : null;
         o.chain = a && M ? chain(M, 'industry_vs_market', a.st) : null;
         const top = (r.tickers || []).slice(0, 6), files = await Promise.all(top.map((t) => get(base + 't/' + t + '.json').catch(() => null)));
@@ -490,7 +541,7 @@
     await draw();
   }
 
-  const api = { render, renderIndustries, _t: { states, stepPaths, replay, thresholds, odds, chain, grid, place, ratio, quad, qtl, analyse, markovPath } };
+  const api = { render, renderIndustries, _t: { states, stepPaths, replay, thresholds, odds, chain, grid, place, ratio, quad, qtl, analyse, markovPath, rrgPost, pricePost } };
   if (typeof window !== 'undefined') window.RRGCompanyView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

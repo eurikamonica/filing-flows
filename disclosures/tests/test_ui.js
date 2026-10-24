@@ -241,7 +241,12 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   for(const want of ['Price paths the options imply','max pain','95% range','2027-01-13','Call wall','Put wall','call wall by expiry'])assert.ok(h.includes(want),`the price paths panel lacks “${want}”`);
   assert.ok(!/NaN|undefined|Infinity/.test(h),'the price paths panel shows NaN/undefined');
   assert.equal(vm.runInContext(`optPathsPanel({spot:100,paths:[]},'X')`,context),'');
-  checks+=8;console.log('option price paths checks passed.');
+  // the share bar and the post for X (chart-share.js): on the panel, and a post that fits in 280 characters
+  assert.ok(h.includes('Save or post this chart')&&h.includes('data-ffs-chart="XYZ-option-paths"'),'the price paths panel has no share bar');
+  const op=vm.runInContext(`(()=>{const a=window.FFShare.analysis('XYZ-option-paths');return a})()`,context);
+  assert.ok(op&&op.post.startsWith('$XYZ $100')&&vm.runInContext(`window.FFShare.xlen(${JSON.stringify(op.post)})`,context)<=280&&op.paras.length>=3,'the options post is missing or too long');
+  assert.equal(vm.runInContext(`window.FFShare.fit(['a'.repeat(200),'b'.repeat(100),'c'],'https://x.co/y')`,context),'a'.repeat(200)+' https://x.co/y','fit does not drop lines from the end');
+  checks+=11;console.log('option price paths checks passed.');
  }
  // the company page's Rotation (RRG) view (rrg-company-view.js, loaded by the main site through views.json)
  {
@@ -263,6 +268,13 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
    assert.ok(Math.abs(mp[3].x-mx)<1e-9&&Math.abs(mp[3].cover-1)<1e-9,'equal odds do not give the plain mean');
    const q=n.indexOf(Math.max(...n)),one=RV.markovPath(A,{marg:marg.map(()=>[0,1,2,3].map(j=>j===q?1:0))});
    assert.equal(RV.quad(one[3].x,one[3].y),q,'odds on one quadrant do not put the path there');checks+=2}
+  // the RRG and price posts: every number from the section, the post's lines in order
+  {const C=rs.map((v,i)=>v*(400+i)/100),B=Array.from({length:N},(_,i)=>400+i),G={days:Array.from({length:N},(_,i)=>'d'+i)};
+   const A=RV.analyse(G,C,null,B,{always:true}),o={name:'TEST',tag:'$TEST',bench:'SPY',h:4,title:'TEST against the S&P 500',odds:{label:'calibrated',p:[.4,.3,.2,.1],hist:[.4,.3,.2,.1]}};
+   const r=RV.rrgPost(A,o),pp=RV.pricePost(A,o);
+   assert.ok(r.lines[0].startsWith('$TEST vs SPY on the RRG:')&&r.lines.join(' ').includes('Leading 40%')&&r.paras.length>=4,'the RRG post is missing its lines');
+   assert.ok(pp.lines[0].startsWith('$TEST:')&&/Replays: 4 wk \$/.test(pp.lines[1]),'the price post is missing its lines');
+   assert.ok(!/NaN|undefined/.test(JSON.stringify([r,pp])),'a post shows NaN/undefined');checks+=3}
   // the whole view from small files: two sections, the ladder, the ranges, the matrix and the chain, no NaN
   const D={start:'2021-01-01',weeks:'2025-12-26',bench:{start:'2021-01-01',c:Array.from({length:N},(_,i)=>400+i)}};
   const tf={t:'TEST',n:'Test Co',start:'2021-01-01',c:rs.map((v,i)=>v*(400+i)/100),v:Array(N).fill(500),bl:'SIC 1234 · Things',bn:9,bx:Array.from({length:N},(_,i)=>50+0.05*i+Math.sin(i/11)),bi:Array.from({length:N},(_,i)=>50+0.06*i)};

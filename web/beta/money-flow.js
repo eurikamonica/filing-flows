@@ -94,7 +94,7 @@
     h += `<div class="mf-legend"><span>Bands, darkest to lightest:</span>${['A', 'B', 'C', 'D'].map((g) =>
       `<span><i class="sw" style="background:rgba(47,109,179,${(0.15 + 0.37 * d.shade[g]).toFixed(2)})"></i>${grade(g)} ${esc(SUBL[g])}</span>`).join('')}</div>`;
     h += `<div class="mf-mob"><button type="button" class="mf-btn" id="mf-full">${full ? 'Show the first two columns' : 'Show the suppliers too (scroll sideways)'}</button></div>`;
-    h += `<div class="mf-chart" id="mf-chart"></div><p class="mf-dens" id="mf-dens"></p>
+    h += `<div id="mf-share"></div><div class="mf-chart" id="mf-chart"></div><p class="mf-dens" id="mf-dens"></p>
       <div class="mf-panel" id="mf-panel"><b>Click any band or bar</b> to see its source, formula, range and evidence grade.</div>`;
     h += members(d) + stated(d) + method(d);
     body.innerHTML = h;
@@ -122,14 +122,25 @@
     return `<div class="mf-card${est ? ' est' : ''}"><span>${esc(label)}</span><b>${value}</b>${note ? `<i>${esc(note)}</i>` : ''}</div>`;
   }
 
-  function draw(d) {
-    const host = $('#mf-chart');
-    if (!window.FFChains || !window.Sankey) { host.innerHTML = '<p class="muted" style="padding:12px">The chart library did not load.</p>'; return; }
-    const compact = narrow() && !full;
-    const ncol = compact ? 2 : 4;
-    const vin = {}, vout = {};
-    d.links.forEach((l) => { vout[l[0]] = (vout[l[0]] || 0) + l[2]; vin[l[1]] = (vin[l[1]] || 0) + l[2]; });
-    if (compact) return drawList(d, host, vin);
+  // the analysis and the post for X, by rule from the level's figures
+  function postFor(d, vin) {
+    const F = d.filed || {}, rev = F.revenue || d.revenue || 0, share = (v) => (rev ? Math.round(100 * v / rev) + '%' : '—');
+    const clean = (l) => String(l || '').replace(/\s*\((estimate|filed|computed[^)]*|not split[^)]*)\)/gi, '').trim();
+    const uses = d.nodes.filter((n) => n.col === 1 && (vin[n.id] || 0) > 0).map((n) => [clean(n.label), vin[n.id]]).sort((a, b) => b[1] - a[1]);
+    const sup = d.nodes.filter((n) => n.col === 3 && n.cik && (vin[n.id] || 0) > 0).map((n) => [n.label, vin[n.id], n.grade]).sort((a, b) => b[1] - a[1]);
+    const told = sup.filter((x) => x[2] === 'B'), cty = d.nodes.filter((n) => /^c:/.test(n.id) && n.id !== 'c:other' && (vin[n.id] || 0) > 0).map((n) => [n.label, vin[n.id]]).sort((a, b) => b[1] - a[1]);
+    const me = (d.model_error || {}).purchases;
+    return { title: 'Money flow (beta) — ' + d.title,
+      paras: [`${d.title}: ${usd(rev)} of revenue over four quarters across ${d.companies} ${d.companies === 1 ? 'company' : 'companies'} (filed). Operating cash flow ${usd(F.ocf)}, capital spending ${usd(F.capex)}, free cash flow ${usd(F.fcf)}.`,
+        uses.length ? 'Where the revenue goes: ' + uses.slice(0, 5).map(([l, v]) => `${l} ${usd(v)} (${share(v)})`).join(', ') + '.' : '',
+        cty.length ? 'Bought abroad or imported, by country (estimated): ' + cty.slice(0, 4).map(([l, v]) => `${l} ${usd(v)}`).join(', ') + '.' : '',
+        told.length ? 'Suppliers a filing names: ' + told.slice(0, 3).map(([l, v]) => `${l} ${usd(v)}`).join(', ') + '.' : '',
+        sup.some((x) => x[2] !== 'B') ? 'Largest modelled suppliers (an allocation by industry, not verified purchases): ' + sup.filter((x) => x[2] !== 'B').slice(0, 3).map(([l, v]) => `${l} ${usd(v)}`).join(', ') + '.' : '',
+        me && fin(me.rel) ? `Model error on purchased inputs: ±${pct(me.rel, 0)} across ${Object.keys(me.vals || {}).join(', ')}.` : ''],
+      lines: [`Where ${d.title}'s ${usd(rev)} goes (4Q):`, uses.length ? uses.slice(0, 3).map(([l, v]) => `${l} ${share(v)}`).join(' · ') + '.' : '', `OCF ${usd(F.ocf)} · FCF ${usd(F.fcf)} (filed).`,
+        cty.length ? 'Abroad: ' + cty.slice(0, 3).map(([l]) => l).join(', ') + '.' : '', me && fin(me.rel) ? `Model error ±${pct(me.rel, 0)}.` : '', 'Beta: IO-table estimates (BEA, FIGARO, ADB, OECD).'] };
+  }
+  function sceneFor(d, ncol, vin, vout) {
     const nodes = d.nodes.filter((n) => n.col < ncol).map((n) => ({ id: n.id, col: n.col, t: n.label, label: n.col === 0 ? n.label : SUBL[n.grade],
       v: Math.max(vin[n.id] || 0, vout[n.id] || 0), color: n.color, cik: n.cik, grade: n.grade })).filter((n) => n.v > 0);
     const ids = new Set(nodes.map((n) => n.id));
@@ -138,11 +149,23 @@
       return { s: l[0], t: l[1], v: l[2], k: d.shade[p.grade] != null ? d.shade[p.grade] : 0.2 };
     });
     const cols = d.cols.slice(0, ncol).map((c, i) => ({ id: 'c' + i, name: `${c.name} · % of ${usd(c.den)}` }));
-    const scene = window.FFChains.layout({ cols, nodes, links }, {
+    return window.FFChains.layout({ cols, nodes, links }, {
       title: 'Money flow (beta 1.1) — ' + d.title,
       subtitle: `${usd(d.revenue)} revenue over four quarters · ${d.companies} ${d.companies === 1 ? 'company' : 'companies'} · darker bands are filed or computed figures, lighter ones estimates`,
       footer: ['Beta 1.1. Filed figures from SEC filings; US spending split by BEA input-output (' + d.source.io_year + ', scaled to ' + d.source.scale_year + '), spending abroad and imports by origin by ' + (Object.values(d.tables || {}).map((t) => t.label).join(', ') || 'no multi-country table') + '; suppliers by revenue share unless a filing names them (✓).',
         'Supplier amounts without ✓ are a modelled allocation, not verified purchases. Not investment advice.'] });
+  }
+  function draw(d) {
+    const host = $('#mf-chart');
+    if (!window.FFChains || !window.Sankey) { host.innerHTML = '<p class="muted" style="padding:12px">The chart library did not load.</p>'; return; }
+    const compact = narrow() && !full;
+    const ncol = compact ? 2 : 4;
+    const vin = {}, vout = {};
+    d.links.forEach((l) => { vout[l[0]] = (vout[l[0]] || 0) + l[2]; vin[l[1]] = (vin[l[1]] || 0) + l[2]; });
+    const sh = $('#mf-share');                          // the saved picture is always the full four-column chart
+    if (sh && window.FFShare) sh.innerHTML = window.FFShare.bar({ key: 'money-flow-beta-' + d.key, title: 'Money flow (beta) — ' + d.title, scene: () => sceneFor(d, 4, vin, vout), post: () => postFor(d, vin) });
+    if (compact) return drawList(d, host, vin);
+    const scene = sceneFor(d, ncol, vin, vout);
     host.classList.toggle('compact', compact);
     host.innerHTML = window.Sankey.toSVG(scene, 'Money flow (beta)');
     $('#mf-dens').innerHTML = d.cols.slice(0, ncol).map((c, i) => `<b>Column ${i + 1}</b> percentages are of ${usd(c.den)}: ${esc(c.den_what)}.`).join(' ') +
