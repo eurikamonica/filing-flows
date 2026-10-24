@@ -43,7 +43,10 @@
 .fv-tile{border:1px solid var(--line,#ddd);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-height:112px}
 .fv-tile em{font-style:normal;font-size:11px;color:var(--muted,#777);line-height:1.3;min-height:28px}.fv-tile b{font-size:19px;font-variant-numeric:tabular-nums}
 .fv-tile .fv-p{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;border-top:1px dashed var(--line,#ddd);padding-top:4px;margin-top:auto}
-.fv-tile small{font-size:11px;color:var(--muted,#777)}.fv-tile.fv-exp{border-color:var(--ink,#222)}
+.fv-tile small{font-size:11px;color:var(--muted,#777)}.fv h4{margin:14px 0 4px;font-size:14px}
+.fv-apx{border:1px solid var(--line,#ddd);border-radius:10px;padding:6px 12px;margin:6px 0;max-width:980px}.fv-apx summary{cursor:pointer;font-size:13.5px;line-height:1.6}
+.fv-apx[open]{padding-bottom:10px}.fv-f{font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12.5px;background:color-mix(in srgb,var(--ink,#222) 5%,transparent);border-radius:8px;padding:8px 10px;margin:8px 0;line-height:1.5;white-space:pre-wrap}
+.fv-steps{margin:6px 0 8px 18px;padding:0;font-size:13px;line-height:1.6;font-variant-numeric:tabular-nums}.fv-tile.fv-exp{border-color:var(--ink,#222)}
 .fv-bar{height:5px;border-radius:3px;background:var(--line,#e5e5e5);overflow:hidden}.fv-bar i{display:block;height:100%;background:var(--accent,#2a78d6)}
 .fv-heat td.n{min-width:64px}.fv-tog{font:inherit;font-size:12px;border:1px solid var(--line,#ddd);background:none;border-radius:8px;padding:3px 9px;cursor:pointer;color:var(--muted,#666);margin-right:6px}.fv-tog.on{color:var(--ink,#222);border-color:var(--ink,#222)}`;
     document.head.appendChild(s);
@@ -269,6 +272,23 @@
     return `<p class="fv-sub"><b>Combined forecast (3 months):</b> ${usd(cb.price)} (${spct(cb.ret)}), 80% range ${usd(cb.low)}–${usd(cb.high)}. Weights learned walk-forward on standardized signals — ${Object.entries(w).filter(([k]) => k !== 'intercept').map(([k, v]) => `${esc(k.replace('_', ' '))} ${(v >= 0 ? '+' : '−') + num(Math.abs(100 * v), 1)}%/σ`).join(', ')}; range from earlier out-of-sample errors (conformal). ${cb.replaces_rotation ? 'It beat the Rotation forecast out of sample on the same companies and quarters, so it is "Our model" here.' : 'Shown beside the Rotation forecast: it has not beaten it on the same companies and quarters (or no paired test exists yet). Scores: Valuation tab → Models.'}</p>`;
   }
 
+  // ---------- the appendix: every method's algebra with this company's numbers, every input's source, every assumption ----------
+  function appendixHtml(A) {
+    if (!A || !(A.methods || []).length) return '';
+    const tbl = (head, rows) => rows.length ? `<div class="fv-wrap"><table class="fv-tbl"><thead><tr>${head.map((x) => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c, i) => `<td${i === 1 ? ' class="n"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
+    const kindTag = { model: 'model', blend: 'blend of the methods above', reference: 'reference, not a valuation' };
+    const st = A.stage || {};
+    let h = `<h3 id="fv-appendix">Appendix — every method, its algebra and where each number comes from</h3><p class="fv-sub">For each method on the football field: its formula, the same formula with this company's figures in it, the inputs it used (and where each came from) and the assumptions it makes (and why). Then the methods this company does not get, and why. <button type="button" class="fv-tog" data-fvapx="open">Open all</button><button type="button" class="fv-tog" data-fvapx="close">Close all</button></p>`;
+    if (st.label) h += `<h4>The stage and its weights</h4><p class="fv-sub"><b>${esc(st.label)}</b> — ${esc(st.why || '')}. Rule: ${esc(st.rule || '')}. Weights, fixed before any result is seen and renormalized over the methods this company has: ${(st.weights || []).map(([m, w]) => `${esc(m)} ${num(100 * w, 0)}%`).join(' · ')}.</p>`;
+    h += `<details class="fv-apx"><summary><b>Inputs and their sources</b> (${(A.inputs || []).length})</summary>${tbl(['Input', 'Value', 'Source'], A.inputs || [])}</details>`;
+    h += `<details class="fv-apx"><summary><b>Assumptions and their basis</b> (${(A.assumptions || []).length})</summary>${tbl(['Assumption', 'Value', 'Basis'], A.assumptions || [])}</details>`;
+    if (A.wacc) h += `<details class="fv-apx"><summary><b>Cost of capital, step by step</b></summary><p class="fv-f">${esc(A.wacc.formula)}</p><ol class="fv-steps">${A.wacc.steps.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></details>`;
+    h += A.methods.map((m) => `<details class="fv-apx"><summary><b>${esc(m.method)}</b> · ${fin(m.point) ? usd(m.point) : '—'}${fin(m.low) && fin(m.high) ? ` <span class="fv-tag">${usd(m.low)} – ${usd(m.high)}</span>` : ''}${fin(m.weight) ? ` <span class="fv-tag">stage weight ${num(100 * m.weight, 0)}%</span>` : ''}${m.kind && m.kind !== 'model' ? ` <span class="fv-tag">${esc(kindTag[m.kind] || m.kind)}</span>` : ''}</summary>` +
+      (m.formula ? `<p class="fv-f">${esc(m.formula)}</p>` : '') + ((m.steps || []).filter(Boolean).length ? `<ol class="fv-steps">${m.steps.filter(Boolean).map((x) => `<li>${esc(x)}</li>`).join('')}</ol>` : '') +
+      tbl(['Input', 'Value', 'Source'], m.inputs || []) + tbl(['Assumption', 'Value', 'Basis'], m.assumptions || []) + '</details>').join('');
+    if ((A.not_used || []).length) h += `<details class="fv-apx"><summary><b>Methods not used for this company</b> (${A.not_used.length})</summary>${tbl(['Method', 'Why not'], A.not_used.map((x) => [x.method, x.why]))}</details>`;
+    return h + (A.note ? `<p class="fv-note">${esc(A.note)}</p>` : '');
+  }
   function draw(el, d, fits) {
     css();
     const price = d.price, W = d.wacc || {}, mc = d.mc, pv = d.pvgo, cr = d.credit || {}, dist = cr.distress, dc = d.dcf;
@@ -315,11 +335,13 @@
     }
     if (d.sotp) h += `<h3>Sum of the parts</h3><table class="fv-tbl"><thead><tr><th>Segment</th><th class="n">Revenue (annualised)</th><th>Priced like</th><th class="n">EV/Sales</th><th class="n">Value</th></tr></thead><tbody>${d.sotp.parts.map((p) => `<tr><td>${esc(p.segment)}</td><td class="n">${big(p.revenue)}</td><td>${esc(String(p.group).replace(/^sic/, 'SIC ').replace(/^sec:/, 'sector '))}</td><td class="n">${num(p.ev_sales, 1)}×</td><td class="n">${big(p.ev)}</td></tr>`).join('')}</tbody></table><p class="fv-sub">${esc(d.sotp.note)}</p>`;
     if ((d.notes || []).length) h += `<p class="fv-note">${d.notes.map(esc).join('<br>')}</p>`;
+    h += appendixHtml(d.appendix);
     const src = Object.entries(d.sources || {}).map(([k, v]) => `${k}: ${v}`).join(' · ');
     h += `<p class="fv-note">Figures from: ${esc(src || '—')}. Built ${esc((d.generated_at || '').slice(0, 10))} by app/valuation.py from SEC filings (XBRL), the hub's daily prices, the Debt & rates and Consensus modules. Peer groups are SIC industries; a group needs six peers.</p></div>`;
     el.innerHTML = h;
     const mkEl = el.querySelector('[data-fvmk]');
     if (mkEl) loadMarkov().then((MV) => MV.mount(mkEl, d)).catch((e) => { mkEl.innerHTML = `<p class="fv-sub">The regime-switching model could not load (${esc(e.message)}).</p>`; });
+    el.querySelectorAll('[data-fvapx]').forEach((b) => b.addEventListener('click', () => { el.querySelectorAll('details.fv-apx').forEach((x) => { x.open = b.dataset.fvapx === 'open'; }); }));
     el.querySelectorAll('[data-fvb]').forEach((b) => b.addEventListener('click', () => {
       el.querySelectorAll('[data-fvb]').forEach((x) => x.classList.toggle('on', x === b));
       el.querySelector('[data-fvbands]').innerHTML = bandsChart(d.bands, b.dataset.fvb);
