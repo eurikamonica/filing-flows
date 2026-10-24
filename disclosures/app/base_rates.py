@@ -35,6 +35,8 @@ import random
 import zlib
 from array import array
 
+import valuation_methods as VMx
+
 MIN_OBS, MIN_COS = 40, 5
 ANNUAL_FROM = 2010
 HISTORY_CONCEPTS = ('OperatingIncomeLoss', 'NetIncomeLoss')        # + the revenue concepts: annual frames back to ANNUAL_FROM
@@ -371,12 +373,16 @@ def nice_levels(lo, hi, n=5):
 
 # ------------------------------------------------------------------ stage
 STAGES = {
+    'pre_revenue': {'label': 'Pre-revenue', 'rule': 'revenue under $25M over four quarters and operating income ≤ 0 (a pipeline no filing prices)',
+                    'methods': [('Net cash (floor)', 0.5), ('Tangible book (asset value)', 0.3), ('Survival-weighted value', 0.2)],
+                    'metrics': 'net cash per share, cash runway, the value the price puts on the pipeline (EV)'},
     'pre_profit': {'label': 'Pre-profit / high growth', 'rule': 'operating income ≤ 0 over four quarters and revenue growth ≥ 10%',
-                   'methods': [('Path-to-margin DCF', 0.5), ('EV/Sales vs peers', 0.5)],
-                   'metrics': 'Rule of 40 (growth + free-cash-flow margin), cash runway, the margin path a DCF needs'},
+                   'methods': [('Path-to-margin DCF, dilution-adjusted', 0.25), ('Survival-weighted value', 0.2), ('Exit-multiple (venture) method', 0.2),
+                               ('EV/Sales vs Rule of 40 (all-company fit)', 0.15), ('EV/Sales vs peers', 0.2)],
+                   'metrics': 'Rule of 40 (growth + free-cash-flow margin), cash runway, the margin path a DCF needs, the dilution before break-even'},
     'high_growth': {'label': 'High growth', 'rule': 'operating income > 0 and revenue growth ≥ 20%',
-                    'methods': [('DCF — Monte Carlo 10th–90th percentile', 0.3), ('Outside view — base-rate Monte Carlo', 0.3),
-                                ('EV/Sales vs peers', 0.2), ('P/E vs peers', 0.2)],
+                    'methods': [('DCF — Monte Carlo 10th–90th percentile', 0.25), ('Outside view — base-rate Monte Carlo', 0.25),
+                                ('EV/Sales vs Rule of 40 (all-company fit)', 0.15), ('EV/Sales vs peers', 0.15), ('P/E vs peers', 0.2)],
                     'metrics': 'Rule of 40, the growth the price requires against peers'},
     'growth': {'label': 'Growth', 'rule': 'operating income > 0 and revenue growth 8–20%',
                'methods': [('DCF — Monte Carlo 10th–90th percentile', 0.35), ('Outside view — base-rate Monte Carlo', 0.25),
@@ -391,14 +397,16 @@ STAGES = {
                  'methods': [('Normalized (mid-cycle) P/E', 0.35), ('Normalized (mid-cycle) DCF', 0.35), ('EV/EBITDA vs peers', 0.3)],
                  'metrics': 'mid-cycle margin: the median operating margin of every quarter on file since 2020'},
     'decline': {'label': 'Decline / turnaround', 'rule': 'operating income ≤ 0 with growth under 10%, or revenue falling over 1 and 3 years',
-                'methods': [('Tangible book (asset value)', 0.4), ('EV/Sales vs peers', 0.3), ('DCF — Monte Carlo 10th–90th percentile', 0.15),
-                            ('Owner earnings capitalized', 0.15)],
+                'methods': [('Tangible book (asset value)', 0.3), ('EV/Sales vs peers', 0.25), ('Survival-weighted value', 0.2),
+                            ('DCF — Monte Carlo 10th–90th percentile', 0.1), ('Owner earnings capitalized', 0.15)],
                 'metrics': 'tangible book per share (an asset-value floor; XBRL frames carry no asset-level haircuts), free cash flow to debt'},
     'financial': {'label': 'Financial (bank / insurer)', 'rule': 'SIC of a bank or insurer',
-                  'methods': [('Residual income', 0.5), ('P/TBV vs ROTCE (bank peers)', 0.5), ('P/B vs ROE (insurer peers)', 0.5)],
-                  'metrics': 'residual income on book value; P/TBV vs ROTCE or P/B vs ROE across peers'},
-    'reit': {'label': 'REIT', 'rule': 'SIC 6798', 'methods': [('P/FFO vs REIT peers', 0.7), ('Residual income', 0.3)],
-             'metrics': 'funds from operations against REIT peers'},
+                  'methods': [('Residual income', 0.3), ('P/TBV vs ROTCE (bank peers)', 0.3), ('P/B vs ROE (insurer peers)', 0.3),
+                              ('Justified P/TBV (Gordon growth)', 0.2), ('Justified P/B (Gordon growth)', 0.2), ('Dividend discount (Gordon)', 0.15),
+                              ('P/E vs peers', 0.1)],
+                  'metrics': 'residual income on book value; P/TBV vs ROTCE or P/B vs ROE across peers; the justified multiple (ROE − g) ÷ (kₑ − g); dividends'},
+    'reit': {'label': 'REIT', 'rule': 'SIC 6798', 'methods': [('P/FFO vs REIT peers', 0.55), ('Dividend discount (Gordon)', 0.2), ('Residual income', 0.25)],
+             'metrics': 'funds from operations against REIT peers; the dividend most of them pay out'},
 }
 
 
@@ -419,6 +427,9 @@ def stage_of(F, revs, margins):
     g0, oi, c3 = F.get('g0'), F.get('oi'), cagr3_of(revs)
     sd = stdev(margins[-26:]) if len(margins) >= 8 else None
     gtxt = f'revenue growth {g0 * 100:+.1f}%' if fin(g0) else 'revenue growth unknown'
+    if VMx.pre_revenue(F):
+        rv = F.get('revenue')
+        return 'pre_revenue', f'revenue {"$%.1fM" % (rv / 1e6) if fin(rv) else "not reported"} over four quarters, operating income ≤ 0'
     if not fin(oi) or oi <= 0:
         if fin(g0) and g0 >= 0.10:
             return 'pre_profit', f'operating income ≤ 0, {gtxt}'
@@ -656,11 +667,12 @@ def stage_block(M, F, base, W, out, rec, D, names):
     m = {}
     fcf = None
     fin_kind = F['kind'] in ('bank', 'insurer')               # cash-flow measures mean little for a balance-sheet business
-    if not fin_kind and fin(F.get('oi')) and fin(rev) and rev > 0:
+    if not fin_kind and fin(F.get('oi')) and (fin(rev) and rev > 0 or VMx.pre_revenue(F)):
         fcf = F['oi'] * (1 - F.get('tax_rate', 0.21) if F['oi'] > 0 else 1) + (F.get('da') or 0) - (F.get('capex') or 0)
         m['fcf'] = fcf
-        m['fcf_margin'] = fcf / rev
-        if fin(F.get('g0')):
+        if fin(rev) and rev > 0:
+            m['fcf_margin'] = fcf / rev
+        if fin(F.get('g0')) and fin(rev) and rev > 0:
             m['rule_of_40'] = (F['g0'] + fcf / rev) * 100
         if fcf < 0 and fin(F.get('cash')):
             m['cash_runway_years'] = F['cash'] / -fcf
@@ -678,7 +690,12 @@ def stage_block(M, F, base, W, out, rec, D, names):
         if oe > 0:
             v = lambda k: oe * (1 + g_t) / (k - g_t) / sh
             items.append({'method': 'Owner earnings capitalized', 'low': v(ke + 0.01), 'high': v(max(ke - 0.01, g_t + 0.005)), 'point': v(ke),
-                          'note': f'owner earnings {oe / sh:.2f}/share (net income + D&A − capex) ÷ (cost of equity {ke * 100:.1f}% − {g_t * 100:.1f}%)'})
+                          'note': f'owner earnings {oe / sh:.2f}/share (net income + D&A − capex) ÷ (cost of equity {ke * 100:.1f}% − {g_t * 100:.1f}%)',
+                          'calc': VMx.calc('Value per share = owner earnings × (1 + g) ÷ (kₑ − g) ÷ shares; owner earnings = net income + D&A − capex',
+                                           [f'owner earnings = {VMx.money(F["ni"])} + {VMx.money(F.get("da") or 0)} − {VMx.money(F.get("capex") or 0)} = {VMx.money(oe)}',
+                                            f'= {VMx.money(oe)} × (1 + {VMx.pc(g_t)}) ÷ ({VMx.pc(ke)} − {VMx.pc(g_t)}) ÷ {VMx.num(sh)} = {VMx.ps(v(ke))}; kₑ ±1 point: {VMx.ps(v(ke + 0.01))} – {VMx.ps(v(max(ke - 0.01, g_t + 0.005)))}'],
+                                           [['Net income', VMx.money(F['ni']), VMx.src_of(F, 'ni')], ['D&A', VMx.money(F.get('da')), VMx.src_of(F, 'da')], ['Capex', VMx.money(F.get('capex')), VMx.src_of(F, 'capex')]],
+                                           [['Cost of equity', VMx.pc(ke), 'CAPM build-up'], ['Growth', VMx.pc(g_t), 'the terminal growth assumption']])})
     ann = (rec or {}).get('ann') or {}
     div = (ann.get('div') or (None,))[0]
     bb = (ann.get('buyback') or (None,))[0]
@@ -689,13 +706,22 @@ def stage_block(M, F, base, W, out, rec, D, names):
         if fin(ke) and ke > g_t + 0.01 and fin(sh) and sh > 0:
             v = lambda k: payout * (1 + g_t) / (k - g_t) / sh
             items.append({'method': 'Shareholder yield (dividends + buybacks)', 'low': v(ke + 0.01), 'high': v(max(ke - 0.01, g_t + 0.005)),
-                          'point': v(ke), 'note': f'dividends + buybacks {payout / sh:.2f}/share a year, yield {payout / F["mcap"] * 100:.1f}%'})
+                          'point': v(ke), 'note': f'dividends + buybacks {payout / sh:.2f}/share a year, yield {payout / F["mcap"] * 100:.1f}%',
+                          'calc': VMx.calc('Value per share = (dividends + buybacks) × (1 + g) ÷ (kₑ − g) ÷ shares',
+                                           [f'= ({VMx.money(div or 0)} + {VMx.money(bb or 0)}) × (1 + {VMx.pc(g_t)}) ÷ ({VMx.pc(ke)} − {VMx.pc(g_t)}) ÷ {VMx.num(sh)} = {VMx.ps(v(ke))}'],
+                                           [['Dividends paid, latest year', VMx.money(div or 0), 'SEC XBRL frames (PaymentsOfDividends)'],
+                                            ['Buybacks, latest year', VMx.money(bb or 0), 'SEC XBRL frames (PaymentsForRepurchaseOfCommonStock)']],
+                                           [['Cost of equity', VMx.pc(ke), 'CAPM build-up'], ['Growth', VMx.pc(g_t), 'the terminal growth assumption']])})
     tbv = (F.get('equity') or 0) - (F.get('goodwill') or 0) - (F.get('intangibles') or 0)
     if fin(sh) and sh > 0 and fin(F.get('equity')):
         m['tangible_book_ps'] = tbv / sh
-        if stage == 'decline':
+        if stage in ('decline', 'pre_revenue'):
             items.append({'method': 'Tangible book (asset value)', 'low': max(tbv, 0) / sh * 0.8, 'high': max(tbv, 0) / sh, 'point': max(tbv, 0) / sh,
-                          'note': 'equity − goodwill − intangibles; the low end takes 20% off for a forced sale'})
+                          'note': 'equity − goodwill − intangibles; the low end takes 20% off for a forced sale',
+                          'calc': VMx.calc('Value per share = (equity − goodwill − intangibles) ÷ shares, floored at 0; low end × 0.8',
+                                           [f'= ({VMx.money(F["equity"])} − {VMx.money(F.get("goodwill") or 0)} − {VMx.money(F.get("intangibles") or 0)}) ÷ {VMx.num(sh)} = {VMx.ps(tbv / sh)}'],
+                                           [['Equity', VMx.money(F['equity']), VMx.src_of(F, 'equity')], ['Goodwill, intangibles', VMx.money((F.get('goodwill') or 0) + (F.get('intangibles') or 0)), 'SEC XBRL frames']],
+                                           [['Forced-sale haircut', '20%', 'an assumption (XBRL frames carry no asset-level haircuts)']])})
     if stage == 'cyclical' and len(mq) >= 8 and fin(rev) and rev > 0 and fin(sh) and sh > 0:
         mid = median(mq)
         m['mid_cycle_margin'] = mid
@@ -705,12 +731,20 @@ def stage_block(M, F, base, W, out, rec, D, names):
         m['normalized_eps'] = n_eps
         if pe and n_eps > 0:
             items.append({'method': 'Normalized (mid-cycle) P/E', 'low': n_eps * pe['p25'], 'high': n_eps * pe['p75'], 'point': n_eps * pe['p50'],
-                          'note': f'mid-cycle EPS {n_eps:.2f} (median net margin {median(nm) * 100:.1f}% since 2020 × revenue) × peer P/E {pe["p50"]:.1f}x'})
+                          'note': f'mid-cycle EPS {n_eps:.2f} (median net margin {median(nm) * 100:.1f}% since 2020 × revenue) × peer P/E {pe["p50"]:.1f}x',
+                          'calc': VMx.calc('Value per share = mid-cycle EPS × peer median P/E; mid-cycle EPS = median quarterly net margin since 2020 × revenue ÷ shares',
+                                           [f'mid-cycle EPS = {VMx.pc(median(nm))} × {VMx.money(rev)} ÷ {VMx.num(sh)} = {VMx.ps(n_eps)}',
+                                            f'= {VMx.ps(n_eps)} × {VMx.xm(pe["p50"], 1)} = {VMx.ps(n_eps * pe["p50"])}  (P/E {VMx.xm(pe["p25"], 1)} – {VMx.xm(pe["p75"], 1)})'],
+                                           [['Quarterly net margins', f'{len(nm)} quarters', 'SEC XBRL frames since 2020'], ['Revenue', VMx.money(rev), VMx.src_of(F, 'revenue')]],
+                                           [['Peer P/E', f'{pe.get("label")}, {pe.get("n")} observations', 'base rates (P/E at every quarter since mid-2022)']])})
         if base and mid > 0:
             vs = [M.value({**base, 'margin': x}) for x in (quantile(sorted(mq), 0.25), mid, quantile(sorted(mq), 0.75))]
             if all(fin(v) for v in vs):
                 items.append({'method': 'Normalized (mid-cycle) DCF', 'low': min(vs), 'high': max(vs), 'point': vs[1],
-                              'note': f'the DCF at the median operating margin since 2020 ({mid * 100:.1f}%); range: its 25th–75th percentile'})
+                              'note': f'the DCF at the median operating margin since 2020 ({mid * 100:.1f}%); range: its 25th–75th percentile',
+                              'calc': VMx.calc('The base DCF with its EBIT margin set to the median quarterly operating margin since 2020',
+                                               [f'margin {VMx.pc(mid)} → {VMx.ps(vs[1])}; 25th / 75th percentile margins → {VMx.ps(min(vs))} – {VMx.ps(max(vs))}'],
+                                               [['Quarterly operating margins', f'{len(mq)} quarters', 'SEC XBRL frames since 2020']], [['Everything else', 'as the base DCF', 'see the DCF']])})
     if stage == 'pre_profit' and fin(rev) and rev > 0 and fin(sh) and sh > 0 and W:
         tgt = _peer(D, 'opm_q', sic, size, names)
         tm = clamp(tgt['p50'], 0.08, 0.35) if tgt and fin(tgt['p50']) and tgt['p50'] > 0 else 0.15
@@ -724,8 +758,45 @@ def stage_block(M, F, base, W, out, rec, D, names):
         m['target_margin'] = tm
         if all(fin(v) for v in vs):
             items.append({'method': 'Path-to-margin DCF', 'low': min(vs), 'high': max(vs), 'point': vs[1],
-                          'note': f'operating margin from {m0 * 100:.1f}% to the peer median {tm * 100:.1f}% by year {M.YEARS} (±5 points)'})
+                          'note': f'operating margin from {m0 * 100:.1f}% to the peer median {tm * 100:.1f}% by year {M.YEARS} (±5 points)',
+                          'calc': VMx.calc('The DCF with the EBIT margin moving in a straight line from today\'s to the peer median by year 5 (no dilution)',
+                                           [f'margin {VMx.pc(m0)} → {VMx.pc(tm)}; growth {", ".join(VMx.pc(g, 0) for g in pb["growth"])} → {VMx.ps(vs[1])} (±5 points: {VMx.ps(min(vs))} – {VMx.ps(max(vs))})'],
+                                           [['Revenue', VMx.money(rev), VMx.src_of(F, 'revenue')], ['Operating income', VMx.money(F.get('oi')), VMx.src_of(F, 'oi')]],
+                                           [['Target margin', VMx.pc(tm), 'peer median operating margin'], ['WACC', VMx.pc(W['wacc']), 'build-up']])})
             out['_path_base'] = pb
+            di = VMx.path_dilution_item(M, pb, F, tm, m0)
+            if di:
+                items.append(di)
+            pe_p = _peer(D, 'pe_hist', sic, size, names) or _peer(D, 'pe', sic, size, names, min_obs=12)
+            dres = VMx.path_dilution(M, pb, F)
+            ex = VMx.exit_multiple(M, pb, F, W, tm, pe_p, dres[3] if dres else 0.0)
+            if ex:
+                items.append(ex)
+    # ---- pre-revenue, cash burners, high growth, financials and REITs (valuation_methods)
+    if stage == 'pre_revenue':
+        nc = VMx.net_cash_floor(F)
+        if nc:
+            items.append(nc[0])
+            m['market_implied_pipeline'] = nc[1]
+    if stage in ('high_growth', 'pre_profit'):
+        r40 = VMx.rule40_item(F, (out.get('_regs') or {}).get('rule40'))
+        if r40:
+            items.append(r40)
+    if not fin_kind and F['kind'] != 'reit' and fin(fcf) and fcf < 0:
+        allb = {b['method']: b for b in out['football'] + items if fin(b.get('point'))}
+        going = next((allb[k] for k in ('Path-to-margin DCF, dilution-adjusted', 'DCF — Monte Carlo 10th–90th percentile', 'EV/Sales vs peers') if k in allb), None)
+        pd1 = (((out.get('credit') or {}).get('distress')) or {}).get('pd')
+        sv = VMx.survival_weighted(F, going, pd1, m.get('cash_runway_years'))
+        if sv:
+            items.append(sv)
+    if fin_kind or F['kind'] == 'reit':
+        if fin_kind:
+            jb = VMx.justified_book(F, W, div, F['kind'] == 'bank')
+            if jb:
+                items.append(jb)
+        dd = VMx.ddm(F, W, div, F['kind'] == 'reit', M)
+        if dd:
+            items.append(dd)
     out['football'] += items
     pts = {b['method']: b for b in out['football'] if fin(b.get('point'))}
     used, tot = [], 0.0

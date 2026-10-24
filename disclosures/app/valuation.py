@@ -53,6 +53,13 @@ Methods (every assumption is in the output, nothing is hidden):
               the bond-calibrated CDS spread (1 − e^(−s/LGD), LGD 60%), Altman Z mapped to rating-equivalent default rates
               (logit = 0.622 − 2.143·Z: Z 1.1 → 15%, Z 3.0 → 0.3%), and the debt cushion score (logit = −0.5 − 0.07·score).
               NOT calibrated against realized defaults — no default history is available here; read it as a ranking.
+  Early stage app/valuation_methods.py: pre-revenue companies (net cash floor, the value the price puts on the
+  & cash burn pipeline), companies burning cash (the path-to-margin DCF with the dilution needed before break-even,
+              the exit-multiple / venture method, a survival-weighted value), high growth (EV/Sales against the Rule of
+              40 across every company); banks, insurers and REITs (justified P/TBV and P/B by Gordon growth, a dividend
+              discount model).
+  Appendix    for every company: each input with its source, each assumption with its basis, the WACC step by step,
+              every method's formula with the company's numbers substituted, and the methods that do not apply and why.
   Outside     app/base_rates.py: every input read from what peers (SIC industry × size) actually did — base rates, the
   view        probabilities of the market-implied, Street and Polymarket views, a Monte Carlo drawn from peers, the
               company's stage and its methods, sensitivity (tornado, grids), river charts, and the combined forecast.
@@ -78,7 +85,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import base_rates as BR  # noqa: E402
+import base_rates as BR
+import valuation_methods as VMx  # noqa: E402
 import markov  # noqa: E402  (regime-switching Monte Carlo, app/markov.py)
 
 ERP = 0.045                 # equity risk premium: a fixed, stated assumption (not estimated here)
@@ -1207,8 +1215,12 @@ def analyse(F, ctx):
                      'interest_coverage': an.get('interest_coverage'), 'distress': D,
                      'note': 'Distress blends up to four one-year default probabilities in log-odds. It is NOT calibrated against realized defaults; read it as a ranking.'}
     # ---- the outside view: base rates, consensus odds, stage, sensitivity, river, combined forecast (app/base_rates.py)
+    out['_regs'] = reg
     if ctx.get('br'):
         BR.enrich(sys.modules[__name__], out, F, base if 'dcf' in out else None, W, ctx)
+    out.pop('_regs', None)
+    # ---- the appendix: inputs and sources, assumptions, the WACC and every method's algebra (app/valuation_methods.py)
+    VMx.appendix(sys.modules[__name__], out, F, W, ctx.get('rates') or {})
     # ---- headline numbers for the index
     lows = [b['low'] for b in out['football'] if fin(b.get('low')) and b['method'] != '52-week trading range']
     highs = [b['high'] for b in out['football'] if fin(b.get('high')) and b['method'] != '52-week trading range']
@@ -1457,6 +1469,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
             regs[k] = ols([p[0] for p in xs], [p[1] for p in xs])
             if regs[k]:
                 regs[k]['points'] = [[round(p[0], 4), round(p[1], 3), p[2]] for p in xs]
+    regs['rule40'] = VMx.rule40_fit(rows_all)          # ln(EV/Sales) on growth + FCF margin, every non-financial company
     # the regime model's prior: transitions, regime growth and margin behaviour across every covered company, by size
     mk_prior = markov.panel_prior({'years': r.get('years'), 'mcap': r.get('mcap')} for r in rows_all)
     write_json(pub / 'markov.json', clean({'generated_at': now(), 'thresholds': {'high': markov.THRESH_HIGH, 'decline': markov.THRESH_LOW},
@@ -1526,6 +1539,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     models = BR.models_doc(comb, led, rot, read_json(root / 'site' / 'model.json', {}) or {}, _load_dir(consensus, 'calibration.json', {}) or {})
     write_json(pub / 'models.json', clean(models))
     st = {'built_at': now(), 'companies': len(index), 'with_dcf': n_dcf, 'banks_fit': (regs.get('bank') or {}).get('n'),
+          'rule40_fit': (regs.get('rule40') or {}).get('n'),
           'insurers_fit': (regs.get('insurer') or {}).get('n'), 'frames_companies': len(P), 'ledger_snapshots': len(led['snapshots']),
           'base_rate_windows': hist_info.get('five_year_windows'), 'combined_rows': comb.get('rows'),
           'with_stage': sum(1 for r in index if r.get('stage')), 'with_outside_mc': sum(1 for r in index if fin(r.get('ov_mean'))),

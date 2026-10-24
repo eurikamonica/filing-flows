@@ -29,7 +29,7 @@ def write_prices(folder, ticker, days, closes):
         json.dump({'ticker': ticker, 'rows': [[d, round(c, 4), 1_000_000] for d, c in zip(days, closes)]}, f)
 
 
-def make(base, n_ind=30, n_bank=14, n_ins=13, n_reit=8):
+def make(base, n_ind=30, n_bank=14, n_ins=13, n_reit=8, n_pre=4, n_prerev=1):
     base = Path(base)
     root, prices, debt, cons = base / 'val', base / 'prices', base / 'debt', base / 'cons'
     rng = random.Random(7)
@@ -50,7 +50,8 @@ def make(base, n_ind=30, n_bank=14, n_ins=13, n_reit=8):
     CF = ['cik', 'ticker', 'name', 'sector', 'price', 'next_earnings', 'eps_q', 'eps_q_n', 'rev_q', 'eps_rev_30d', 'target_mean', 'rating_mean', 'pm_beat_prob',
           'pm_eps_strike', 'pm_report_date', 'pm_implied_price', 'pm_price_date', 'our_price', 'our_date', 'beat_rate', 'poly_markets', 'kalshi_events']
     spec = ([('industrial', ['3674', '7372', '2080'][i % 3], 'technology' if i % 3 < 2 else 'consumer') for i in range(n_ind)]
-            + [('bank', '6021', 'financials')] * n_bank + [('insurer', '6331', 'financials')] * n_ins + [('reit', '6798', 'real_estate')] * n_reit)
+            + [('bank', '6021', 'financials')] * n_bank + [('insurer', '6331', 'financials')] * n_ins + [('reit', '6798', 'real_estate')] * n_reit
+            + [('preprofit', '7372', 'technology')] * n_pre + [('prerev', '2836', 'health')] * n_prerev)
     for i, (kind, sic, sector) in enumerate(spec):
         cik, tk = 100000 + i, f'T{i:03d}'
         shares = rng.uniform(2e8, 2e9)
@@ -58,6 +59,10 @@ def make(base, n_ind=30, n_bank=14, n_ins=13, n_reit=8):
         q_rev = rng.uniform(1e9, 2e10)
         g = rng.uniform(-0.01, 0.06)
         m = rng.uniform(0.08, 0.35)
+        if kind == 'preprofit':                       # growing fast, still losing money
+            q_rev, g, m = rng.uniform(1e8, 1e9), 0.06, -0.15
+        elif kind == 'prerev':                        # a drug developer: a few million of revenue, a large loss
+            q_rev, g, m = 2e6, 0.0, -20.0
         rev = [q_rev * (1 + g) ** k * (1 + rng.gauss(0, 0.02)) for k in range(len(periods))]
         oi = [r * (m + rng.gauss(0, 0.01)) for r in rev]
         ni = [o * 0.78 for o in oi]
@@ -80,6 +85,11 @@ def make(base, n_ind=30, n_bank=14, n_ins=13, n_reit=8):
                 put('OtherUnderwritingExpense', p, cik, pv * 0.08)
         elif kind == 'reit':
             target_mcap = sum(ni[-4:]) * 2.2 * rng.uniform(10, 20)
+        elif kind in ('preprofit', 'prerev'):
+            equity = sum(rev[-4:]) * 1.5 if kind == 'preprofit' else 9e8
+            goodwill = equity * 0.1
+            ni = list(oi)
+            target_mcap = sum(rev[-4:]) * rng.uniform(3, 8) if kind == 'preprofit' else 1.5e9
         else:
             target_mcap = sum(oi[-4:]) * rng.uniform(12, 30)
         eps = [v / shares for v in ni]
@@ -93,7 +103,7 @@ def make(base, n_ind=30, n_bank=14, n_ins=13, n_reit=8):
             put('StockholdersEquity', p + 'I', cik, equity)
             put('Goodwill', p + 'I', cik, goodwill)
             put('IntangibleAssetsNetExcludingGoodwill', p + 'I', cik, 0.0)
-            put('CashAndCashEquivalentsAtCarryingValue', p + 'I', cik, sum(rev[-4:]) * 0.1)
+            put('CashAndCashEquivalentsAtCarryingValue', p + 'I', cik, 8e8 if kind == 'prerev' else sum(rev[-4:]) * (0.5 if kind == 'preprofit' else 0.1))
             put('LongTermDebt', p + 'I', cik, sum(rev[-4:]) * 0.3)
         for y in years[-3:]:
             end = f'{int(y[2:6])}-12-31'
@@ -103,6 +113,8 @@ def make(base, n_ind=30, n_bank=14, n_ins=13, n_reit=8):
             put('IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest', y, cik, [sum(oi[-4:]), end])
             if kind == 'reit':
                 put('GainsLossesOnSalesOfInvestmentRealEstate', y, cik, [sum(ni[-4:]) * 0.1, end])
+            if kind in ('bank', 'insurer', 'reit'):           # dividends: the Gordon models of financials and REITs
+                put('PaymentsOfDividends', y, cik, [sum(ni[-4:]) * (0.9 if kind == 'reit' else 0.35), end])
         price_now = target_mcap / shares
         idio = [rng.gauss(0, 0.012) for _ in days]
         path, c = [], 1.0

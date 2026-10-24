@@ -98,7 +98,7 @@ class Distributions(unittest.TestCase):
         self.assertAlmostEqual(BR.norm_cdf(0), 0.5)
 
     def test_stage_rules(self):
-        F = {'kind': 'industrial', 'sic': '7372', 'oi': 10.0, 'g0': 0.25}
+        F = {'kind': 'industrial', 'sic': '7372', 'oi': 10.0, 'g0': 0.25, 'revenue': 1e9}
         flat = [0.2] * 12
         self.assertEqual(BR.stage_of(F, [], flat)[0], 'high_growth')
         self.assertEqual(BR.stage_of({**F, 'g0': 0.12}, [], flat)[0], 'growth')
@@ -110,7 +110,10 @@ class Distributions(unittest.TestCase):
         falling = [100 - k for k in range(16)]
         self.assertEqual(BR.stage_of({**F, 'g0': -0.05}, falling, flat)[0], 'decline')
         self.assertEqual(BR.stage_of({**F, 'kind': 'bank'}, [], flat)[0], 'financial')
-        self.assertEqual(set(BR.STAGES), {'pre_profit', 'high_growth', 'growth', 'mature', 'cyclical', 'decline', 'financial', 'reit'})
+        self.assertEqual(BR.stage_of({**F, 'oi': -5.0, 'revenue': 3e6}, [], flat)[0], 'pre_revenue')       # a pipeline, not a business yet
+        self.assertEqual(BR.stage_of({**F, 'oi': -5.0, 'revenue': None}, [], flat)[0], 'pre_revenue')
+        self.assertEqual(BR.stage_of({**F, 'revenue': 3e6}, [], flat)[0], 'high_growth')                   # small but profitable
+        self.assertEqual(set(BR.STAGES), {'pre_revenue', 'pre_profit', 'high_growth', 'growth', 'mature', 'cyclical', 'decline', 'financial', 'reit'})
         for s in BR.STAGES.values():
             self.assertTrue(s['rule'] and s['methods'])
 
