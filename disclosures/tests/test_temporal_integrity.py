@@ -167,6 +167,17 @@ class IndustryBenchmarks(unittest.TestCase):
         others = [math.log(1 + 0.002 * (k + 1)) for k in range(1, 7)]
         self.assertAlmostEqual(math.log(b['S0']['ex'][1] / 100), sum(others) / 6, places=4)
 
+    def test_each_industry_once_with_its_members(self):
+        cos, series, weeks = self.world()
+        inds = {}
+        b = RH.industry_benchmarks(cos, series, weeks, industries=inds)
+        self.assertEqual(set(inds), {'sic4:3674', 'sector:health'})          # the groups some company is compared with
+        s = inds['sic4:3674']
+        self.assertEqual((s['members'], s['ind'], len(s['tickers'])), (7, 'Semiconductors', 7))
+        self.assertEqual(s['all'], b['S0']['all'])                           # the industry's own line = the company page's
+        self.assertEqual(s['all'], b['S5']['all'])
+        self.assertEqual(sorted(inds['sector:health']['tickers']), sorted(['P0', 'P1', 'H0', 'H1', 'H2', 'H3', 'H4']))
+
 
 @unittest.skipIf(np is None, 'numpy / scikit-learn not installed')
 class ChaosCentres(unittest.TestCase):

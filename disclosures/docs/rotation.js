@@ -14,7 +14,7 @@ const ROT_SERIES=['var(--rot-1)','var(--rot-2)','var(--rot-3)'];
 const ROT_TRAIL=[['4','4 quarters'],['8','8 quarters'],['12','12 quarters'],['16','16 quarters'],['24','24 quarters'],['40','40 quarters']];
 const ROT_TRAIL_M=[['6','6 months'],['12','12 months'],['24','24 months'],['48','48 months'],['60','60 months'],['120','120 months']];
 const ROT_HIST=[['recent','Recent: 16 quarters · 48 months'],['long','Long: since 2010 · months since 2008']];
-const ROT_VIEWS=[['clock','Momentum clock'],['rrg','RRG — relative rotation (2-D, 3-D, 4-D)'],['3d','3-D / 4-D momentum clock (drag to turn, play for time)'],['solar','Solar system'],['solar3d','Solar system 3-D / 4-D (drag to turn)'],['galaxy','Galaxy — sectors as galaxies, companies as stars (weekly)'],['track','Forecast track record — every published forecast vs what happened'],['macro','Macro clock — growth × inflation (economic data since 2010)'],['map','Market map (treemap)'],['heat','Sector heatmap'],['rs','Relative strength ranking'],['breadth','Breadth and dispersion'],['corr','How the variables move together'],['scan','Find the best axes']];
+const ROT_VIEWS=[['clock','Momentum clock'],['rrg','RRG — relative rotation (2-D, 3-D, 4-D)'],['ind','Industry RRG — every industry: Markov odds, replayed paths, the move into each quadrant'],['3d','3-D / 4-D momentum clock (drag to turn, play for time)'],['solar','Solar system'],['solar3d','Solar system 3-D / 4-D (drag to turn)'],['galaxy','Galaxy — sectors as galaxies, companies as stars (weekly)'],['track','Forecast track record — every published forecast vs what happened'],['macro','Macro clock — growth × inflation (economic data since 2010)'],['map','Market map (treemap)'],['heat','Sector heatmap'],['rs','Relative strength ranking'],['breadth','Breadth and dispersion'],['corr','How the variables move together'],['scan','Find the best axes']];
 const ROT_SIMPLE=new Set(['rs','scan','map','heat','breadth','corr']);     // views without the x / y / z, scale and smoothing controls
 const ROT_SCALES=[['raw','As reported'],['log','Signed log (tames outliers)'],['rank','Rank within the period (0–100)'],['z','Standard score within the period']];
 const ROT_SMOOTH=[['none','None'],['ewma','Exponential (recent weighs more)'],['ma','Moving average'],['holt','Holt (level + trend)'],['kalman','Kalman (noise-filtered level)'],['median','Rolling median (ignores spikes)']];
@@ -227,6 +227,7 @@ function rotationView(){
  let out=head('Rotation','How companies move through several cycles at once — profitability, growth, the stock, trading and ownership. Pick any variables for the axes, turn the 3-D box, press play to watch the quarters or months go by (since 2010 with the long history), compare sectors on a Relative Rotation Graph, or let the scan find the pairs with the clearest cycle.','XBRL · PRICES · 13F');
  state.rview=ROT_VIEWS.some(v=>v[0]===state.rview)?state.rview:state.rview==='orbits'?'solar':'clock';
  if(state.rview==='rrg')return out+rrgView();
+ if(state.rview==='ind')return out+`<div class="toolbar">${field('rview','Chart',ROT_VIEWS,state.rview)}</div><div id="rrg-ind"></div>`;
  if(state.rview==='galaxy')return out+galaxyView();
  if(state.rview==='track')return out+ledgerView();
  if(state.rview==='macro')return out+macroView();
@@ -914,4 +915,5 @@ function bindRotation(){
  if(state.tab==='rotation')bind3d();
  if(state.tab==='rotation'&&state.rview==='galaxy'&&typeof bindGalaxy==='function')bindGalaxy();
  if(state.tab==='rotation'&&state.rview==='track'&&typeof bindLedger==='function')bindLedger();
+ if(state.tab==='rotation'&&state.rview==='ind'&&$('rrg-ind')){if(window.RRGCompanyView)RRGCompanyView.renderIndustries($('rrg-ind'),{hub:'',id:/:/.test(state.rrgu||'')?state.rrgu:''});else $('rrg-ind').innerHTML=empty('The industry RRG script did not load.')}
 }

@@ -227,6 +227,27 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   vm.runInContext(`state.rrgp='';state.rrgh='';delete globalThis.__o`,context);
   console.log('RRG quadrant odds checks passed.');
  }
+ // the price paths an option chain implies (options.js optFan / optPathsPanel): exact at every expiry, no NaN
+ {
+  const probs=[.025,.05,.1,.25,.5,.75,.9,.95,.975],ln=(t,iv,p)=>100*Math.exp(-0.5*iv*iv*t+iv*Math.sqrt(t)*vm.runInContext(`optInvN(${p})`,context));
+  const paths=[[9,.22],[37,.25],[100,.28],[365,.3]].map(([d,iv],i)=>({exp:`2026-1${i}-1${i}`.replace('2026-13','2027-01'),days:d,fwd:100,atm_iv:iv,method:'smile',strikes:20,q:probs.map(p=>ln(d/365,iv,p)),max_pain:95+3*i,call_wall:110+5*i,call_wall_oi:900,put_wall:90-5*i,put_wall_oi:800,oi:1000*(i+1)}));
+  context.__c={ticker:'XYZ',spot:100,paths,path_probs:probs};
+  for(const [i,j] of [[0,0],[1,4],[2,8],[3,2]]){const v=vm.runInContext(`(()=>{const F=optFan(__c);return Math.exp(F.at(${paths[i].days},optInvN(${probs[j]})))})()`,context);assert.ok(Math.abs(v-paths[i].q[j])<1e-6*v,`the fan is not exact at expiry ${i}, quantile ${j}`)}
+  const mid=vm.runInContext(`(()=>{const F=optFan(__c);return [Math.exp(F.at(4.5,optInvN(.975))),Math.exp(F.at(4.5,optInvN(.025)))]})()`,context);
+  assert.ok(mid[0]>100&&mid[0]<paths[0].q[8]&&mid[1]<100&&mid[1]>paths[0].q[0],'the fan does not open from spot to the first expiry');
+  const sims=vm.runInContext(`optSim(optFan(__c),400).map(p=>p[p.length-1][1])`,context).sort((a,b)=>a-b);
+  assert.ok(Math.abs(sims[200]-paths[3].q[4])/paths[3].q[4]<.06,'the sample paths do not end on the implied median');
+  const h=vm.runInContext(`optPathsPanel(__c,'XYZ')`,context);
+  for(const want of ['Price paths the options imply','max pain','95% range','2027-01-13','Call wall','Put wall','call wall by expiry'])assert.ok(h.includes(want),`the price paths panel lacks “${want}”`);
+  assert.ok(!/NaN|undefined|Infinity/.test(h),'the price paths panel shows NaN/undefined');
+  assert.equal(vm.runInContext(`optPathsPanel({spot:100,paths:[]},'X')`,context),'');
+  // the share bar and the post for X (chart-share.js): on the panel, and a post that fits in 280 characters
+  assert.ok(h.includes('Save or post this chart')&&h.includes('data-ffs-chart="XYZ-option-paths"'),'the price paths panel has no share bar');
+  const op=vm.runInContext(`(()=>{const a=window.FFShare.analysis('XYZ-option-paths');return a})()`,context);
+  assert.ok(op&&op.post.startsWith('$XYZ $100')&&vm.runInContext(`window.FFShare.xlen(${JSON.stringify(op.post)})`,context)<=280&&op.paras.length>=3,'the options post is missing or too long');
+  assert.equal(vm.runInContext(`window.FFShare.fit(['a'.repeat(200),'b'.repeat(100),'c'],'https://x.co/y')`,context),'a'.repeat(200)+' https://x.co/y','fit does not drop lines from the end');
+  checks+=11;console.log('option price paths checks passed.');
+ }
  // the company page's Rotation (RRG) view (rrg-company-view.js, loaded by the main site through views.json)
  {
   const RV=require(path.join(root,'docs','rrg-company-view.js'))._t;
@@ -239,6 +260,21 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   assert.ok(Math.abs(RV.stepPaths(S,rs,k,[[Math.log(th.my)]])[0].y[0]-100)<1e-9,'RS-Momentum threshold is not where y crosses 100');
   assert.equal(RV.replay(S,rs,k).length,144);                                        // every 13-week run of the last 156 weeks
   checks+=4;
+  // the chain converted to a path: odds equal to the replays' own shares give back their plain mean; odds on one
+  // quadrant put the path on the replays in it
+  {const A={paths:RV.replay(S,rs,k)},n=[0,0,0,0];A.paths.forEach(p=>n[RV.quad(p.x[3],p.y[3])]++);
+   const N=A.paths.length,marg=Array.from({length:13},(_,j)=>{const m=[0,0,0,0];A.paths.forEach(p=>m[RV.quad(p.x[j],p.y[j])]++);return m.map(v=>v/N)});
+   const mp=RV.markovPath(A,{marg}),mx=A.paths.reduce((a,p)=>a+p.x[3],0)/N;
+   assert.ok(Math.abs(mp[3].x-mx)<1e-9&&Math.abs(mp[3].cover-1)<1e-9,'equal odds do not give the plain mean');
+   const q=n.indexOf(Math.max(...n)),one=RV.markovPath(A,{marg:marg.map(()=>[0,1,2,3].map(j=>j===q?1:0))});
+   assert.equal(RV.quad(one[3].x,one[3].y),q,'odds on one quadrant do not put the path there');checks+=2}
+  // the RRG and price posts: every number from the section, the post's lines in order
+  {const C=rs.map((v,i)=>v*(400+i)/100),B=Array.from({length:N},(_,i)=>400+i),G={days:Array.from({length:N},(_,i)=>'d'+i)};
+   const A=RV.analyse(G,C,null,B,{always:true}),o={name:'TEST',tag:'$TEST',bench:'SPY',h:4,title:'TEST against the S&P 500',odds:{label:'calibrated',p:[.4,.3,.2,.1],hist:[.4,.3,.2,.1]}};
+   const r=RV.rrgPost(A,o),pp=RV.pricePost(A,o);
+   assert.ok(r.lines[0].startsWith('$TEST vs SPY on the RRG:')&&r.lines.join(' ').includes('Leading 40%')&&r.paras.length>=4,'the RRG post is missing its lines');
+   assert.ok(pp.lines[0].startsWith('$TEST:')&&/Replays: 4 wk \$/.test(pp.lines[1]),'the price post is missing its lines');
+   assert.ok(!/NaN|undefined/.test(JSON.stringify([r,pp])),'a post shows NaN/undefined');checks+=3}
   // the whole view from small files: two sections, the ladder, the ranges, the matrix and the chain, no NaN
   const D={start:'2021-01-01',weeks:'2025-12-26',bench:{start:'2021-01-01',c:Array.from({length:N},(_,i)=>400+i)}};
   const tf={t:'TEST',n:'Test Co',start:'2021-01-01',c:rs.map((v,i)=>v*(400+i)/100),v:Array(N).fill(500),bl:'SIC 1234 · Things',bn:9,bx:Array.from({length:N},(_,i)=>50+0.05*i+Math.sin(i/11)),bi:Array.from({length:N},(_,i)=>50+0.06*i)};
@@ -246,15 +282,32 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   const P1=Array.from({length:16},(_,i)=>Array.from({length:16},(_,j)=>j===i?.7:.3/15));
   const grp=(primary,joint)=>({primary,heads:{q:{1:head(4,'calibrated'),4:head(4,'calibrated'),13:head(4,'experimental')},...(primary==='iq'?{iq:{1:head(16,'calibrated'),4:head(16,'calibrated'),13:head(16,'calibrated')}}:{})},
    chain:{joint,P1,labels:{1:'calibrated',4:'experimental',13:'experimental'}},bands:{1:{label:'calibrated',coverage:{p80:.8,p50:.5}},4:{label:'calibrated',coverage:{p80:.78,p50:.49}},13:{label:'experimental',coverage:{p80:.74,p50:.46}}}});
-  const M={note:'n',replay:{method:'m',labels:'l'},groups:{company_vs_market:grp('q',false),company_vs_industry:grp('iq',true)}};
-  const files={'data/market/history/rrg.json':D,'data/market/history/t/TEST.json':tf,'data/market/history/rrg-transition-model.json':M};
+  const M={note:'n',replay:{method:'m',labels:'l'},groups:{company_vs_market:grp('q',false),company_vs_industry:grp('iq',true),industry_vs_market:grp('q',false)}};
+  tf.bid='sic4:1234';
+  const IND={note:'industries',rows:[{id:'sic4:1234',level:'sic4',code:'1234',label:'SIC 1234 · Things',ind:'Things',members:9,tickers:['TEST','NONE'],start:'2021-01-01',c:tf.bi},
+   {id:'sic3:567',level:'sic3',code:'567',label:'SIC 567',ind:'Widgets',members:12,tickers:['W1'],start:'2021-01-01',c:Array.from({length:N},(_,i)=>80+0.02*i+3*Math.sin(i/9))}]};
+  const files={'data/market/history/rrg.json':D,'data/market/history/t/TEST.json':tf,'data/market/history/rrg-transition-model.json':M,'data/market/history/industries.json':IND};
   const keep=global.fetch;global.fetch=async(u)=>files[u]?{ok:true,json:async()=>files[u]}:{ok:false,status:404};
   const V=require(path.join(root,'docs','rrg-company-view.js'));
   const el={innerHTML:'',clientWidth:700,querySelectorAll:()=>[]};
   await V.render(el,{ticker:'TEST',hub:''});
-  for(const want of ['TEST against the S&amp;P 500','TEST against its industry','close that puts it in each quadrant','Replayed ranges','Markov matrix','Dynamic transition model','Most common paths'])
+  for(const want of ['TEST against the S&amp;P 500','TEST against its industry','close that puts it in each quadrant','Replayed ranges','Markov matrix','Dynamic transition model','Most common paths','The chain converted to a path','dotted: the Markov chain','On the price — the last 26 weeks and the next 13'])
    assert.ok(el.innerHTML.includes(want),`the RRG view lacks “${want}”`);
   assert.ok(!/NaN|undefined|Infinity/.test(el.innerHTML),'the RRG view shows NaN/undefined');
+  for(const want of ['S&amp;P 500 — the industry','index level that puts it in each quadrant','moved exactly with its industry','#rotation/ind~sic4:1234'])
+   assert.ok(el.innerHTML.includes(want),`the industry section lacks “${want}”`);
+  // every industry (hub → Rotation → Industry RRG): the list, then one industry with its largest companies' prices
+  const ei={innerHTML:'',clientWidth:700,querySelectorAll:()=>[]};
+  await V.renderIndustries(ei,{hub:''});
+  for(const want of ['SIC 1234 · Things','SIC 567 (mostly Widgets)','Into Leading next week','Most likely in 4 wk','Replayed 4 wk'])
+   assert.ok(ei.innerHTML.includes(want),`the industry list lacks “${want}”`);
+  assert.ok(!/NaN|undefined|Infinity/.test(ei.innerHTML),'the industry list shows NaN/undefined');
+  const ej={innerHTML:'',clientWidth:700,querySelectorAll:()=>[]};
+  await V.renderIndustries(ej,{hub:'',id:'sic4:1234'});
+  for(const want of ['Every industry','SIC 1234 · Things against the S&amp;P 500','index level that puts it in each quadrant','largest members','Markov matrix','On the index — the last 26 weeks'])
+   assert.ok(ej.innerHTML.includes(want),`the industry page lacks “${want}”`);
+  assert.ok(!/NaN|undefined|Infinity/.test(ej.innerHTML),'the industry page shows NaN/undefined');
+  checks+=4;
   await V.render(el,{ticker:'NONE',hub:''});assert.ok(el.innerHTML.includes('not in the weekly rotation history yet'));
   global.fetch=keep;checks+=9;
   console.log('company RRG view checks passed.');

@@ -128,6 +128,8 @@ function etfOne(){
   <p class="sub">Returns: 1 month ${etfSpct(mk.r1m)} · 3 months ${etfSpct(mk.r3m)} · 3 years ${etfSpct(mk.r3y)} a year · 5 years ${etfSpct(mk.r5y)} a year · worst drawdown ${etfSpct(mk.max_dd)} · average daily value traded ${etfMoney(mk.dollar_vol)}${mk.y_yield!=null?` · yield ${etfPct(mk.y_yield)}`:''}${mk.y_duration!=null?` · duration ${fmt(mk.y_duration,1)} years`:''}.</p>`;
  if(fl.net&&fl.net.length)out+=`<h3>Money in and out (N-PORT)</h3><p class="sub">Each month's sales + reinvested distributions − redemptions, as the fund reports them. Creations and redemptions run through authorized participants (below).</p>${etfBars(fl.net.map(x=>[x[0].slice(2),x[1],x[0]]),{label:'Monthly net flows'})}`;
  out+=`</div>`;
+ // the price paths, ranges and max pain its options imply (options.js; only the ETFs whose chains are collected)
+ if(typeof optDetail==='function'&&typeof optPathsPanel==='function'){const om=optDetail(sym);if(om.data)out+=optPathsPanel(om.data,sym)}
  // prospectus
  if(d.prospectus){
   const yrs=Object.entries(p.annual||{}).sort();

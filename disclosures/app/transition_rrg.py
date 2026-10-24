@@ -3,6 +3,8 @@ forecast (research specification v5 §4.4, §8.3, §8.4, §10, §11; tasks T1 an
 
 Lines (weekly, 14-week RRG, the chart's formula — vectorised here, identical to chaos_forecast.rrg_series):
   etf_vs_market         sector / style ETFs and the site-sector indices against SPY;
+  industry_vs_market    each industry a company is benchmarked against (industries.json, rotation_history) against
+                        SPY: the industry RRG;
   company_vs_market     the site's companies against SPY;
   company_vs_industry   each company against its industry without itself (t/<T>.json bx), with the industry (bi)
                         against SPY as the conditioning state.
@@ -47,7 +49,7 @@ FIT_FROM = np.datetime64('2002-01-04')
 MIN_ORIGINS, MIN_PREDICTIONS, MAX_ECE = 50, 2000, 0.02
 QUADS = ('leading', 'weakening', 'lagging', 'improving')
 HEADINGS = ('up_right', 'down_right', 'down_left', 'up_left')
-PRIMARY = {'etf_vs_market': 'q', 'company_vs_market': 'q', 'company_vs_industry': 'iq'}
+PRIMARY = {'etf_vs_market': 'q', 'industry_vs_market': 'q', 'company_vs_market': 'q', 'company_vs_industry': 'iq'}
 SEED = 20261023
 
 
@@ -575,7 +577,15 @@ def load(public, n=14, min_weeks=156):
         C.append(place(d['start'], d['c'])); V.append(place(d['start'], d.get('v') or [None] * len(d['c']), 1000.0))
         BX.append(place(d['start'], d['bx']) if d.get('bx') else np.full(W, np.nan))
         BI.append(place(d['start'], d['bi']) if d.get('bi') else np.full(W, np.nan))
+    ind_ids, I = [], []
+    ip = public / 'industries.json'
+    if ip.exists():                                  # rotation_history: one index per industry a company is benchmarked against
+        for r in json.loads(ip.read_text(encoding='utf-8')).get('rows') or []:
+            a = place(r['start'], r['c'])
+            if np.isfinite(a).sum() >= min_weeks:
+                ind_ids.append(r['id']); I.append(a)
     return {'days': days, 'spy': spy, 'etf_ids': [s['id'] for s in etfs], 'E': E, 'cos': cos,
+            'ind_ids': ind_ids, 'I': np.array(I) if I else np.zeros((0, W)),
             'C': np.array(C) if C else np.zeros((0, W)), 'V': np.array(V) if V else np.zeros((0, W)),
             'BX': np.array(BX) if BX else np.zeros((0, W)), 'BI': np.array(BI) if BI else np.zeros((0, W))}
 
@@ -603,6 +613,11 @@ def build(public, out_name='rrg-transition-model.json', verbose=True):
         if len(L['E']):
             ex, ey = rrg_panel(rel(L['E'], spy[None]))
             groups['etf_vs_market'] = group_model('etf_vs_market', ex, ey, np.isfinite(ex), days)
+        if len(L['I']):                              # each industry's own line against SPY (the industry RRG)
+            ix, iy = rrg_panel(rel(L['I'], spy[None]))
+            ok_i = np.isfinite(L['I'])
+            groups['industry_vs_market'] = group_model('industry_vs_market', ix, iy, ok_i, days)
+            groups['industry_vs_market']['bands'] = band_check(L['I'], np.broadcast_to(spy[None], L['I'].shape), ok_i, days)
         if len(L['C']):
             ok = liquid(L['C'], L['V'])
             cx, cy = rrg_panel(rel(L['C'], spy[None]))

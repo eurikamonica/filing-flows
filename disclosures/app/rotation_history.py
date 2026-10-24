@@ -316,7 +316,7 @@ SIC_LEVELS = (('sic4', 4), ('sic3', 3), ('sic2', 2))
 
 
 def industry_benchmarks(companies, series, weeks, rev_hist=None, min_members=5, volumes=None, min_price=3.0,
-                        min_dollar_volume=10e6):
+                        min_dollar_volume=10e6, industries=None):
     """{ticker: {level, code, label, members, ex, all}}: per company the most specific industry group — SIC4, else SIC3,
     SIC2, the site sector — with at least min_members OTHER companies that have weekly prices, and two weekly indices on
     the full grid: 'ex' leaves the company out (the leave-one-out benchmark a company is compared with, so a dominant
@@ -326,7 +326,9 @@ def industry_benchmarks(companies, series, weeks, rev_hist=None, min_members=5, 
     With volumes ({ticker: weekly shares on the series' weeks}), a member contributes a week only while it is liquid —
     close ≥ min_price and mean weekly dollar volume over the last 13 weeks ≥ min_dollar_volume — so small illiquid
     members do not bend the benchmark (notes/dual-rrg: against all members, an industry's trend mostly measured its
-    illiquid members running further than its liquid ones)."""
+    illiquid members running further than its liquid ones).
+    With industries (a dict), each industry some company is benchmarked against is also filled in once, keyed
+    'level:code': {level, code, label, members, tickers (largest revenue first), all} — the industry's own line."""
     have = [c for c in companies if c['t'] in series]
     groups = {}
     for c in have:
@@ -412,8 +414,18 @@ def industry_benchmarks(companies, series, weeks, rev_hist=None, min_members=5, 
         own = (r, [wts[c['t']][i] if r[i] is not None else 0.0 for i in range(W)])
         name = c.get('ind') if key[0] == 'sic4' and c.get('ind') else ''
         label = (f'SIC {key[1]}' + (f' · {name}' if name else '') if key[0] != 'sector' else f'{key[1].replace("-", " ").title()} sector')
+        k = f'{key[0]}:{key[1]}'
+        if industries is not None and k in industries:
+            whole = industries[k]['all']
+        else:
+            whole = level(tot, den, n)
+            if industries is not None:
+                names = [m.get('ind') for m in groups[key] if m.get('ind')]
+                industries[k] = {'level': key[0], 'code': key[1], 'label': label, 'members': len(groups[key]),
+                                 'ind': max(set(names), key=names.count) if names else '',
+                                 'tickers': [m['t'] for m in sorted(groups[key], key=lambda m: -(m.get('rev') or 0))], 'all': whole}
         out[c['t']] = {'level': key[0], 'code': key[1], 'members': len(groups[key]), 'label': label,
-                       'ex': level(tot, den, n, own), 'all': level(tot, den, n)}
+                       'ex': level(tot, den, n, own), 'all': whole}
     return out
 
 
@@ -491,14 +503,16 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
     rev_hist = revenue_history(root, companies) if companies else None
     # each company's industry benchmark (research spec v5 §4.2): the most specific SIC level with enough members, the
     # index without the company itself (bx) and with it (bi), weights = revenue reported by each week
+    inds = {}
     bench_of = industry_benchmarks(companies, {t: (f, c) for t, (f, c, _) in series.items()}, weeks, rev_hist or None,
-                                   volumes={t: [None if x is None else 1000.0 * x for x in v] for t, (f, c, v) in series.items()})
+                                   volumes={t: [None if x is None else 1000.0 * x for x in v] for t, (f, c, v) in series.items()},
+                                   industries=inds)
     for t, (f, c, v) in series.items():
         m = meta.get(t) or {}
         doc = {'t': t, 'n': m.get('n'), 's': m.get('s'), 'start': weeks[f], 'c': c, 'v': v}
         b = bench_of.get(t)
         if b:                                       # the benchmarks on the company's own weeks (same start)
-            doc.update(bl=b['label'], blevel=b['level'], bcode=b['code'], bn=b['members'], bx=b['ex'][f:f + len(c)], bi=b['all'][f:f + len(c)])
+            doc.update(bl=b['label'], blevel=b['level'], bcode=b['code'], bid=f"{b['level']}:{b['code']}", bn=b['members'], bx=b['ex'][f:f + len(c)], bi=b['all'][f:f + len(c)])
         (pub / 't' / f'{t}.json').write_text(json.dumps(doc, separators=(',', ':')), encoding='utf-8')
         written += 1
     idx = sector_indices(companies, {t: (f, c) for t, (f, c, _) in series.items()}, weeks, rev_hist or None)
@@ -518,6 +532,24 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
     for sec, (f, lv, n, members) in sorted(idx.items()):
         ser.append({'id': 's:' + sec, 'name': (names.get(sec) or sec.replace('-', ' ').title()) + ' · site companies', 'group': 'site-sector',
                     'sector': sec, 'members': members, 'start': weeks[f], 'c': lv, 'n': n})
+    # every industry a company is benchmarked against, as its own line (industry RRG: Markov odds, replays and the
+    # move that puts it in each quadrant, per industry)
+    ind_rows = []
+    for k, v in sorted(inds.items(), key=lambda kv: (-kv[1]['members'], kv[0])):
+        lv = v['all']
+        first = next((i for i, x in enumerate(lv) if x is not None), None)
+        if first is None:
+            continue
+        last = max(i for i, x in enumerate(lv) if x is not None) + 1
+        ind_rows.append({'id': k, 'level': v['level'], 'code': v['code'], 'label': v['label'], 'ind': v['ind'], 'members': v['members'],
+                     'tickers': v['tickers'], 'start': weeks[first], 'c': lv[first:last]})
+    (pub / 'industries.json').write_text(json.dumps({
+        'generated_at': now(), 'benchmark': BENCH, 'start': weeks[0], 'weeks': weeks[-1], 'rows': ind_rows,
+        'note': ('One weekly index per industry that a company on the site is benchmarked against (the most specific SIC '
+                 'level — SIC4, else SIC3, SIC2, the site sector — with at least five other companies with prices): weekly log '
+                 'returns of its members, weighted by the log of the revenue each had reported by that week, a member counted '
+                 'only while liquid (≥ $3, ≥ $10M a week), from the first week three members have prices; level 100 at the '
+                 'start. Today\'s companies only (survivorship).')}, separators=(',', ':')), encoding='utf-8')
     bench = series.get(BENCH)
     rrg = {'generated_at': now(), 'benchmark': BENCH, 'weeks': weeks[-1], 'start': weeks[0],
            'bench': {'id': BENCH, 'start': weeks[bench[0]], 'c': bench[1], 'v': bench[2]} if bench else None,
@@ -531,7 +563,7 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
                     'first week three members have prices — today’s companies only, so the early years '
                     'leave out companies that no longer trade. The RRG lines are computed in the browser from these closes.')}
     (pub / 'rrg.json').write_text(json.dumps(rrg, separators=(',', ':')), encoding='utf-8')
-    out = {'tickers_published': written, 'series': len(ser), 'weeks': len(weeks)}
+    out = {'tickers_published': written, 'series': len(ser), 'weeks': len(weeks), 'industries': len(ind_rows)}
     if site_data and data_root:
         import rotation
         months_long = months_long or max(48, (dt.date.today().year - 2008) * 12 + dt.date.today().month - 1)

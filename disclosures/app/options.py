@@ -3,7 +3,14 @@ underlying once a day after the close:
 
   IV30 (CBOE's 30-day implied volatility) · put/call open interest · the IV smile of three expiries · the ATM IV term
   structure · open interest by strike · dealer gamma exposure (GEX) by strike, the call wall, the put wall, an approximate
-  gamma flip · max pain of the nearest monthly expiry · 25-delta skew
+  gamma flip · max pain of the nearest monthly expiry · 25-delta skew · the price distribution the options imply at up to
+  nine expiries (the price paths: quantiles and max pain per expiry)
+
+Price paths (detail 'paths'): per expiry the forward from put-call parity at the strikes nearest spot, the out-of-the-
+money IV smile turned into total variance by log-moneyness (linear between strikes, flat beyond the last quoted one),
+undiscounted Black call prices on a fine strike grid, and the risk-neutral CDF 1 + dC/dK (Breeden-Litzenberger), made
+monotone; the quantiles 2.5 … 97.5%. Too few quoted strikes: a lognormal at the ATM IV. Risk-neutral, not a forecast of
+where the price will go: it carries the market's price of risk (fatter downside) and no drift view.
 
 GEX uses the common simplification that dealers are long the calls and short the puts customers hold: per strike,
 gamma × open interest × 100 × spot² × 1% (calls +, puts −), in dollars per 1% move. It is a model, not a disclosure.
@@ -13,6 +20,7 @@ the hottest Signals names and the watched funds' largest holdings, up to options
 Cache:   cache/options/history.json (a daily row per underlying, kept for options.keep_days)
 Publish: market/options.json (the summary table) and market/options/<TICKER>.json (one underlying's charts)
 """
+import bisect
 import datetime as dt
 import json
 import math
@@ -73,6 +81,172 @@ def _monthly(exps):
     return out
 
 
+PROBS = (0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.975)
+PATH_DAYS = (7, 14, 30, 60, 90, 180, 270, 365)
+
+
+def _ncdf(x):
+    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+
+
+def _black_call(F, K, w):
+    """Undiscounted Black call with total variance w = IV² × T."""
+    if w <= 0:
+        return max(F - K, 0.0)
+    sd = math.sqrt(w)
+    d1 = (math.log(F / K) + 0.5 * w) / sd
+    return F * _ncdf(d1) - K * _ncdf(d1 - sd)
+
+
+def _mid(c):
+    return (c['bid'] + c['ask']) / 2 if c['bid'] > 0 and c['ask'] >= c['bid'] else None
+
+
+def forward(rows, spot):
+    """The forward from put-call parity (F ≈ K + C − P, undiscounted) at the three strikes nearest spot with both
+    quoted; spot when none is."""
+    by = {}
+    for c in rows:
+        m = _mid(c)
+        if m is not None:
+            by.setdefault(c['k'], {})[c['type']] = m
+    ks = sorted((k for k, v in by.items() if 'C' in v and 'P' in v), key=lambda k: abs(k - spot))[:3]
+    if not ks:
+        return spot
+    f = sorted(k + by[k]['C'] - by[k]['P'] for k in ks)[len(ks) // 2]
+    return f if 0.5 * spot < f < 1.5 * spot else spot
+
+
+def _smile_fit(xs, ws):
+    """Total variance w(x) by log-moneyness x: a quadratic fitted by least squares (weighted toward the money) over the
+    quoted strikes, continued linearly beyond them with the end slopes (|slope| ≤ 2, Lee's bound), floored at a fifth
+    of the at-the-money variance. Smooth, so the density it implies has no spikes at the quoted strikes."""
+    i0 = min(range(len(xs)), key=lambda i: abs(xs[i]))
+    sd = math.sqrt(max(ws[i0], 1e-8))
+    W = [math.exp(-0.5 * (x / (2 * sd)) ** 2) + 0.02 for x in xs]
+    S = [[sum(w * x ** (a + b) for w, x in zip(W, xs)) for b in range(3)] for a in range(3)]
+    y = [sum(w * v * x ** a for w, v, x in zip(W, ws, xs)) for a in range(3)]
+    try:                                                     # 3 × 3 normal equations (Cramer)
+        det = lambda M: (M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0])  # noqa: E731
+                         + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]))
+        D = det(S)
+        if abs(D) < 1e-30:
+            return None
+        c = [det([[y[r] if j == a else S[r][j] for j in range(3)] for r in range(3)]) / D for a in range(3)]
+    except (OverflowError, ZeroDivisionError):
+        return None
+    lo, hi = xs[0], xs[-1]
+    q = lambda x: c[0] + c[1] * x + c[2] * x * x             # noqa: E731
+    dl = max(-2.0, min(2.0, c[1] + 2 * c[2] * lo))
+    dh = max(-2.0, min(2.0, c[1] + 2 * c[2] * hi))
+    w_atm = q(0.0)
+    if not (w_atm > 0):
+        return None
+    floor = 0.2 * w_atm
+
+    def w(x):
+        v = q(lo) + dl * (x - lo) if x < lo else q(hi) + dh * (x - hi) if x > hi else q(x)
+        return max(v, floor)
+    return w
+
+
+def implied_quantiles(rows, spot, T, probs=PROBS, n=1201):
+    """(forward, ATM IV, quantiles [price per prob], method, strikes used) of the risk-neutral distribution at one
+    expiry, from its out-of-the-money smile (Breeden-Litzenberger); None without a usable IV."""
+    F = forward(rows, spot)
+    pts = {}
+    for c in rows:                                           # a live two-sided quote: an IV off an ask alone is noise
+        m = _mid(c)
+        if c['iv'] <= 0 or c['iv'] > 5 or m is None or c['ask'] - c['bid'] > max(0.15, 0.8 * m):
+            continue
+        if (c['type'] == 'P' and c['k'] < F) or (c['type'] == 'C' and c['k'] >= F):
+            pts[c['k']] = c['iv']
+    ks = sorted(pts)
+    xs = [math.log(k / F) for k in ks]
+    ws = [pts[k] ** 2 * T for k in ks]
+    fit = _smile_fit(xs, ws) if len(ks) >= 5 and xs[0] < 0 < xs[-1] else None
+    if fit:
+        method, w_at = 'smile', fit
+        atm = math.sqrt(w_at(0.0) / T)
+    else:
+        near = [c['iv'] for c in rows if 0 < c['iv'] <= 5 and abs(c['k'] - spot) <= 0.05 * spot and _mid(c) is not None]
+        near = near or [c['iv'] for c in rows if 0 < c['iv'] <= 5 and abs(c['k'] - spot) <= 0.05 * spot]
+        if not near:
+            return None
+        atm = sorted(near)[len(near) // 2]
+        method, w0 = 'atm', atm * atm * T
+        w_at = lambda x: w0                                 # noqa: E731 — a flat smile: the lognormal
+    sd = math.sqrt(atm * atm * T)
+    grid = [-9 * sd + 18 * sd * i / (n - 1) for i in range(n)]
+    K = [F * math.exp(x) for x in grid]
+    C = [_black_call(F, k, w_at(x)) for k, x in zip(K, grid)]
+    cdf = [0.0] * n
+    for i in range(n):
+        lo, hi = max(0, i - 1), min(n - 1, i + 1)
+        cdf[i] = min(1.0, max(0.0, 1 + (C[hi] - C[lo]) / (K[hi] - K[lo])))
+    for i in range(1, n):                                    # a calendar of quotes can hold small arbitrage: monotone
+        cdf[i] = max(cdf[i], cdf[i - 1])
+    q = []
+    for p in probs:
+        j = bisect.bisect_left(cdf, p)
+        if j <= 0:
+            q.append(K[0])
+        elif j >= n:
+            q.append(K[-1])
+        else:
+            a = (p - cdf[j - 1]) / ((cdf[j] - cdf[j - 1]) or 1)
+            q.append(K[j - 1] * (K[j] / K[j - 1]) ** a)
+    return F, atm, q, method, len(ks) if method == 'smile' else 0
+
+
+def max_pain_of(rows):
+    rows = [c for c in rows if c['oi']]
+    ks = sorted({c['k'] for c in rows})
+    if not ks:
+        return None
+    pay = lambda s: sum(c['oi'] * (max(0, s - c['k']) if c['type'] == 'C' else max(0, c['k'] - s)) for c in rows)  # noqa: E731
+    return min(ks, key=pay)
+
+
+def walls_of(rows, spot, band=0.3):
+    """(call wall, its open interest, put wall, its open interest) of one expiry: the call wall is the strike at or
+    above spot (up to +30%) with the most call open interest — the ceiling — and the put wall the strike at or below
+    spot (down to −30%) with the most put open interest — the floor. In-the-money contracts are left out, so the two
+    bracket the price."""
+    lo, hi = spot * (1 - band), spot * (1 + band)
+    oi = {}
+    for c in rows:
+        if c['oi'] and lo <= c['k'] <= hi:
+            a = oi.setdefault(c['k'], [0, 0])
+            a[0 if c['type'] == 'C' else 1] += c['oi']
+    cw = max((k for k in oi if oi[k][0] and k >= spot), key=lambda k: oi[k][0], default=None)
+    pw = max((k for k in oi if oi[k][1] and k <= spot), key=lambda k: oi[k][1], default=None)
+    return cw, oi[cw][0] if cw is not None else 0, pw, oi[pw][1] if pw is not None else 0
+
+
+def price_paths(live, spot, today, days=PATH_DAYS, probs=PROBS):
+    """Up to nine expiries (the nearest at least two days out and those closest to 1, 2 weeks, 1, 2, 3, 6, 9, 12
+    months): per expiry the options-implied quantiles of the price, its max pain and its call and put walls."""
+    exps = sorted({c['exp'] for c in live})
+    dd = {e: (dt.date.fromisoformat(e) - today).days for e in exps}
+    fut = [e for e in exps if 2 <= dd[e] <= 400]
+    if not fut:
+        return []
+    pick = [fut[0]] + [min(fut, key=lambda e: abs(dd[e] - d)) for d in days if d <= dd[fut[-1]] + 15]
+    out = []
+    for e in sorted(set(pick)):
+        rows = [c for c in live if c['exp'] == e]
+        r = implied_quantiles(rows, spot, max(dd[e], 0.5) / 365.0, probs)
+        if not r:
+            continue
+        F, atm, q, method, used = r
+        sig5 = lambda v: float(f'{v:.5g}')                    # noqa: E731
+        cw, cwo, pw, pwo = walls_of(rows, spot)
+        out.append({'call_wall': cw, 'call_wall_oi': cwo, 'put_wall': pw, 'put_wall_oi': pwo,'exp': e, 'days': dd[e], 'fwd': sig5(F), 'atm_iv': round(atm, 4), 'method': method, 'strikes': used,
+                    'q': [sig5(v) for v in q], 'max_pain': max_pain_of(rows), 'oi': sum(c['oi'] for c in rows)})
+    return out
+
+
 def summarise(ticker, spot, iv30, iv30_chg, chain, today=None, band=0.3):
     today = today or dt.date.today()
     if not spot or not chain:
@@ -108,11 +282,7 @@ def summarise(ticker, spot, iv30, iv30_chg, chain, today=None, band=0.3):
     mons = [e for e in _monthly(exps) if (dt.date.fromisoformat(e) - today).days >= 2]
     max_pain, mp_exp = None, mons[0] if mons else None
     if mp_exp:
-        rows = [c for c in live if c['exp'] == mp_exp and c['oi']]
-        ks = sorted({c['k'] for c in rows})
-        if ks:
-            pay = lambda s: sum(c['oi'] * (max(0, s - c['k']) if c['type'] == 'C' else max(0, c['k'] - s)) for c in rows)
-            max_pain = min(ks, key=pay)
+        max_pain = max_pain_of([c for c in live if c['exp'] == mp_exp])
     # term structure: ATM IV per expiry
     term = []
     for e in exps[:24]:
@@ -144,7 +314,8 @@ def summarise(ticker, spot, iv30, iv30_chg, chain, today=None, band=0.3):
                'put_wall': put_wall, 'max_pain': max_pain, 'max_pain_exp': mp_exp, 'skew25': skew, 'expiries': len(exps),
                'contracts': len(live)}
     detail = {**summary, 'gex': [[k, round(gex[k])] for k in strikes if gex[k]],
-              'oi': [[k, v[0], v[1]] for k, v in sorted(oi_by.items()) if v[0] or v[1]], 'term': term, 'smiles': smiles}
+              'oi': [[k, v[0], v[1]] for k, v in sorted(oi_by.items()) if v[0] or v[1]], 'term': term, 'smiles': smiles,
+              'paths': price_paths(live, spot, today), 'path_probs': list(PROBS)}
     return summary, detail
 
 

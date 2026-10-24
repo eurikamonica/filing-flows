@@ -135,6 +135,10 @@ class CollectAndBuild(unittest.TestCase):
         tech = next(s for s in rrg['series'] if s['id'] == 's:technology')
         self.assertEqual(tech['members'], 3)
         self.assertEqual((rrg['bench']['start'], len(rrg['bench']['c'])), ('2010-01-08', 860))
+        ind = json.loads((pub / 'industries.json').read_text())             # one line per benchmarked industry
+        self.assertEqual(ind['benchmark'], 'SPY')
+        self.assertIsInstance(ind['rows'], list)
+        self.assertEqual(out['industries'], len(ind['rows']))
         aaa = json.loads((pub / 't' / 'AAA.json').read_text())
         self.assertEqual((aaa['n'], aaa['s']), ('AAA Corp', 'technology'))
         self.assertTrue((pub / 't' / 'BRK-B.json').exists())

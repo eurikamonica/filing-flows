@@ -57,6 +57,7 @@ function optionsOne(r,d){
  const c=m.data;
  out+=`<div class="charts even"><div class="panel"><h3>Implied volatility smile</h3><p class="sub">Out-of-the-money IV by strike (puts below spot, calls above) · up to three expiries</p>${smileSVG(c)}</div>`;
  out+=`<div class="panel"><h3>Term structure</h3><p class="sub">At-the-money IV by expiry</p>${termSVG(c)}</div></div>`;
+ out+=optPathsPanel(c,r.ticker);
  out+=`<div class="charts even"><div class="panel"><h3>Open interest by strike</h3><p class="sub">Calls above the line, puts below · strikes within 30% of spot · all expiries</p>${strikeSVG(c.oi.map(([k,cl,pu])=>[k,cl,-pu]),c,'contracts',v=>(v>=0?'calls ':'puts ')+fmt(Math.abs(v)))}</div>`;
  out+=`<div class="panel"><h3>Dealer gamma exposure by strike</h3><p class="sub">GEX per 1% move (model: dealers long calls, short puts) · above zero dampens moves, below amplifies</p>${strikeSVG(c.gex.map(([k,v])=>[k,v]),c,'usd',v=>smoney(v))}</div></div>`;
  const o13=marketData('options13f').data,h13=o13&&(o13.rows||[]).find(x=>x.ticker===r.ticker);
@@ -80,6 +81,81 @@ function ivMap(rows){
   if(lab.has(r.ticker)){const left=x>W-R-50;s+=`<text class="mk-label mk-halo" x="${left?x-7:x+7}" y="${y-6}" text-anchor="${left?'end':'start'}">${esc(r.ticker)}</text>`}});
  return s+'</svg>';
 }
+/* ---------- the price paths the options imply (app/options.py price_paths) ----------
+   Per expiry the risk-neutral quantiles (Breeden-Litzenberger from the smile) and max pain. Between expiries the median
+   and the spread per unit √time are interpolated in time; from today to the first expiry the spread grows with √time.
+   Sample paths: one Brownian motion per path, mapped each day onto that day's quantile function (z = W(t)/√t), so at
+   every expiry the paths have the distribution the options price. Each expiry also carries its own call wall (▼, the
+   strike with the most call open interest), put wall (▲, the most put open interest) and max pain (◆). */
+function optInvN(p){const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.357751867269,-30.66479806614716,2.506628277459239],b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572],c=[-.007784894002430293,-.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],d=[.007784695709041462,.3224671290700398,2.445134137142996,3.754408661907416],pl=.02425;
+ if(p<pl){const q=Math.sqrt(-2*Math.log(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)}
+ if(p>1-pl){const q=Math.sqrt(-2*Math.log(1-p));return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)}
+ const q=p-.5,r=q*q;return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1)}
+function optFan(c){                                    // the quantile function of the price at any day up to the last expiry
+ const P=(c.paths||[]).filter(x=>x.days>0&&(x.q||[]).length>=5),probs=c.path_probs||[.025,.05,.1,.25,.5,.75,.9,.95,.975];
+ if(!P.length||!(c.spot>0))return null;
+ const Z=probs.map(optInvN),mi=probs.indexOf(.5)>=0?probs.indexOf(.5):Math.floor(probs.length/2);
+ const nodes=P.map(x=>{const L=x.q.map(Math.log),t=x.days/365,m=L[mi];return {t,days:x.days,m,D:L.map(v=>(v-m)/Math.sqrt(t)),x}});
+ const at=(days,z)=>{                                  // log price at quantile z on a day
+  const t=Math.max(days,1e-6)/365;let i=nodes.findIndex(n=>n.days>=days);
+  let m,D;if(i<0){const n=nodes[nodes.length-1];m=n.m;D=n.D}
+  else if(i===0){const n=nodes[0],w=days/n.days;m=Math.log(c.spot)+(n.m-Math.log(c.spot))*w;D=n.D}
+  else{const a=nodes[i-1],b=nodes[i],w=(days-a.days)/(b.days-a.days);m=a.m+(b.m-a.m)*w;D=a.D.map((v,j)=>v+(b.D[j]-v)*w)}
+  let j=1;while(j<Z.length-1&&z>Z[j])j++;const s=(D[j]-D[j-1])/(Z[j]-Z[j-1]);
+  return m+(D[j-1]+s*(z-Z[j-1]))*Math.sqrt(t)};
+ return {nodes,probs,Z,at,end:nodes[nodes.length-1].days}}
+function optSim(F,n=40,seed=20261023){                  // seeded Brownian paths mapped through the fan
+ let a=seed>>>0;const rnd=()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296};
+ const gauss=()=>Math.sqrt(-2*Math.log(rnd()||1e-12))*Math.cos(2*Math.PI*rnd());
+ const step=Math.max(1,Math.ceil(F.end/120)),days=[];for(let d=step;d<F.end;d+=step)days.push(d);days.push(F.end);
+ const out=[];for(let k=0;k<n;k++){let W=0,prev=0;out.push(days.map(d=>{W+=Math.sqrt((d-prev)/365)*gauss();prev=d;return [d,Math.exp(F.at(d,W/Math.sqrt(d/365)))]}))}
+ return out}
+function optPathsSVG(c){
+ const F=optFan(c);if(!F)return empty('No expiry with enough quoted strikes for the price paths');
+ const W=720,H=340,L=60,R=96,T=16,B=36,days=[];for(let d=0;d<=F.end;d+=Math.max(1,F.end/160))days.push(d);if(days[days.length-1]<F.end)days.push(F.end);
+ const sims=optSim(F),band=(p)=>days.map(d=>d?Math.exp(F.at(d,optInvN(p))):c.spot);
+ const lo=band(F.probs[0]),hi=band(F.probs[F.probs.length-1]),mp=F.nodes.flatMap(n=>[n.x.max_pain,n.x.call_wall,n.x.put_wall]).filter(v=>v>0);
+ const ymin=Math.min(...lo,...mp,c.spot)*.98,ymax=Math.max(...hi,...mp,c.spot)*1.02;
+ const sx=d=>L+d/F.end*(W-L-R),sy=v=>T+(ymax-v)/(ymax-ymin)*(H-T-B),pt=(d,v)=>sx(d).toFixed(1)+','+sy(v).toFixed(1);
+ const poly=(a,b)=>days.map((d,i)=>pt(d,a[i])).join(' ')+' '+days.map((d,i)=>pt(d,b[i])).reverse().join(' ');
+ const clip='opt-clip-'+(optPathsSVG.n=(optPathsSVG.n||0)+1);
+ let s=`<svg class="plot mk-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="Price paths the options imply, with their ranges and max pain by expiry"><defs><clipPath id="${clip}"><rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}"/></clipPath></defs>`;
+ niceTicks(ymin,ymax,6).forEach(v=>{s+=`<line class="mk-grid" x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}"/><text class="axis" x="${L-8}" y="${sy(v)+4}" text-anchor="end">${px(v)}</text>`});
+ [[.025,.975,.10],[.1,.9,.16],[.25,.75,.24]].forEach(([a,b,o])=>{if(F.probs.includes(a)&&F.probs.includes(b))s+=`<polygon points="${poly(band(a),band(b))}" style="fill:var(--rot-1);opacity:${o}"/>`});
+ s+=`<g clip-path="url(#${clip})">`;sims.forEach(p=>{s+=`<polyline points="${pt(0,c.spot)} ${p.map(([d,v])=>pt(d,v)).join(' ')}" style="fill:none;stroke:var(--muted);stroke-width:.7;opacity:.4"/>`});s+='</g>';
+ s+=`<polyline class="rot-line" style="stroke:var(--rot-1);stroke-dasharray:6 4" points="${days.map((d,i)=>pt(d,band(.5)[i])).join(' ')}"/>`;
+ s+=`<line class="mk-axis" x1="${L}" x2="${W-R}" y1="${sy(c.spot)}" y2="${sy(c.spot)}" style="stroke-dasharray:2 3"/><text class="axis mk-halo" x="${W-R+4}" y="${sy(c.spot)+4}">spot ${px(c.spot)}</text>`;
+ let lastX=-1e9;
+ const OPT_MK={call_wall:'var(--neg)',put_wall:'var(--mk-profit)',max_pain:'var(--ink)'};
+ for(const [key,col] of Object.entries(OPT_MK)){const ns=F.nodes.filter(n=>n.x[key]>0);if(ns.length>1)s+=`<polyline points="${ns.map(n=>pt(n.days,n.x[key])).join(' ')}" style="fill:none;stroke:${col};stroke-width:1.2;stroke-dasharray:3 3;opacity:.7"/>`}
+ F.nodes.forEach((n,i)=>{const x=sx(n.days),q=n.x.q,k=(p)=>q[F.probs.indexOf(p)];
+  s+=`<line class="mk-grid" x1="${x}" x2="${x}" y1="${T}" y2="${H-B}" style="opacity:.6"/>`;
+  const last=i===F.nodes.length-1;if(last?x-lastX>=30:x-lastX>=38&&sx(F.end)-x>=38){s+=`<text class="axis" x="${x}" y="${H-B+16}" text-anchor="middle">${esc(n.x.exp.slice(5))}</text>`;lastX=x}
+  s+=`<g data-tip="${tip([[esc(n.x.exp),`${fmt(n.days)} days · ATM IV ${ivp(n.x.atm_iv)}`],[`${px(k(.025))} – ${px(k(.975))}`,'95% of the implied distribution'],[`${px(k(.1))} – ${px(k(.9))}`,'80%'],[px(k(.5)),'median'],[n.x.call_wall>0?px(n.x.call_wall):'—',`call wall · ${fmt(n.x.call_wall_oi||0)} calls open`],[n.x.put_wall>0?px(n.x.put_wall):'—',`put wall · ${fmt(n.x.put_wall_oi||0)} puts open`],[n.x.max_pain>0?px(n.x.max_pain):'—','max pain (this expiry)']])}" tabindex="0" class="mk-hit"><rect x="${x-9}" y="${T}" width="18" height="${H-T-B}" fill="transparent"/>`+
+   (n.x.call_wall>0?`<path d="M${x-6},${sy(n.x.call_wall)-5}L${x+6},${sy(n.x.call_wall)-5}L${x},${sy(n.x.call_wall)+5}Z" style="fill:var(--neg);stroke:var(--surface,#fff);stroke-width:1"/>`:'')+
+   (n.x.put_wall>0?`<path d="M${x-6},${sy(n.x.put_wall)+5}L${x+6},${sy(n.x.put_wall)+5}L${x},${sy(n.x.put_wall)-5}Z" style="fill:var(--mk-profit);stroke:var(--surface,#fff);stroke-width:1"/>`:'')+
+   (n.x.max_pain>0?`<path d="M${x},${sy(n.x.max_pain)-6}L${x+6},${sy(n.x.max_pain)}L${x},${sy(n.x.max_pain)+6}L${x-6},${sy(n.x.max_pain)}Z" style="fill:var(--ink);stroke:var(--surface,#fff);stroke-width:1.2"/>`:'')+`</g>`});
+ const e=F.nodes[F.nodes.length-1].x,qe=(p)=>e.q[F.probs.indexOf(p)];
+ [[.975,'97.5%'],[.9,'90%'],[.5,'median'],[.1,'10%'],[.025,'2.5%']].forEach(([p,l])=>{if(F.probs.includes(p))s+=`<text class="axis mk-halo" x="${W-R+4}" y="${sy(qe(p))+4}">${l} ${px(qe(p))}</text>`});
+ return s+`<text class="axis" x="${(L+W-R)/2}" y="${H-4}" text-anchor="middle">Expiry (month-day) · ${fmt(F.end)} days ahead at the last</text></svg>`+
+  `<div class="mk-legend"><span><i class="mk-key" style="background:var(--rot-1);opacity:.5"></i>50 / 80 / 95% of the implied distribution</span><span><i class="mk-key" style="background:var(--muted)"></i>40 sample paths</span><span><i class="mk-key" style="background:var(--neg)"></i>call wall by expiry (▼)</span><span><i class="mk-key" style="background:var(--mk-profit)"></i>put wall by expiry (▲)</span><span><i class="mk-key" style="background:var(--ink)"></i>max pain by expiry (◆)</span></div>`}
+function optPathsTable(c){
+ const P=(c.paths||[]),pr=c.path_probs||[],k=(x,p)=>x.q[pr.indexOf(p)],rel=v=>v>0&&c.spot?` <span class="muted">${(v>=c.spot?'+':'−')+fmt(Math.abs(v/c.spot-1)*100,1)}%</span>`:'';
+ return `<div class="tablebox"><table><thead><tr><th>Expiry</th><th class="num">Days</th><th class="num">ATM IV</th><th class="num">95% range</th><th class="num">80% range</th><th class="num">Median</th><th class="num">Put wall</th><th class="num">Call wall</th><th class="num">Max pain</th><th class="num">Open interest</th></tr></thead><tbody>${P.map(x=>`<tr><td>${esc(x.exp)}${x.method==='atm'?' <span class="muted">(ATM IV only)</span>':''}</td><td class="num">${fmt(x.days)}</td><td class="num">${ivp(x.atm_iv)}</td><td class="num">${px(k(x,.025))} – ${px(k(x,.975))}</td><td class="num">${px(k(x,.1))} – ${px(k(x,.9))}</td><td class="num">${px(k(x,.5))}${rel(k(x,.5))}</td><td class="num">${x.put_wall>0?px(x.put_wall)+rel(x.put_wall):'—'}</td><td class="num">${x.call_wall>0?px(x.call_wall)+rel(x.call_wall):'—'}</td><td class="num">${x.max_pain>0?px(x.max_pain)+rel(x.max_pain):'—'}</td><td class="num">${fmt(x.oi)}</td></tr>`).join('')}</tbody></table></div>`}
+function optPathsPost(c,name){                        // the analysis and the post for X, by rule from the chain's numbers
+ const P=(c.paths||[]).filter(x=>(x.q||[]).length),pr=c.path_probs||[],k=(x,p)=>x.q[pr.indexOf(p)],tag='$'+String(name||c.ticker||'').replace(/-/g,'.');
+ const pick=[7,30,90].map(d=>P.reduce((b,x)=>!b||Math.abs(x.days-d)<Math.abs(b.days-d)?x:b,null)).filter((x,i,a)=>x&&a.indexOf(x)===i);
+ const md=e=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(e||'');return m?MONTH_NAMES[+m[2]-1]+' '+(+m[3]):e};
+ const walls=x=>[x.put_wall>0?'put wall '+px(x.put_wall):'',x.call_wall>0?'call wall '+px(x.call_wall):'',x.max_pain>0?'max pain '+px(x.max_pain):''].filter(Boolean).join(', ');
+ const paras=[`${name||c.ticker} at ${px(c.spot)}: the price distribution its options imply (CBOE delayed quotes, Breeden-Litzenberger on the IV smile).`,
+  ...pick.map(x=>`${md(x.exp)} (${x.days} days, ATM IV ${ivp(x.atm_iv)}): 80% between ${px(k(x,.1))} and ${px(k(x,.9))}, 95% between ${px(k(x,.025))} and ${px(k(x,.975))}, median ${px(k(x,.5))}${walls(x)?'; '+walls(x):''}.`),
+  'Risk-neutral: the market\'s price of protection is in it (a fatter downside), not a forecast of direction; walls and max pain describe open interest.'];
+ const lines=[`${tag} ${px(c.spot)} — what the options price in:`,...pick.map(x=>`${md(x.exp)}: 80% ${px(k(x,.1))}–${px(k(x,.9))}${x.max_pain>0?', max pain '+px(x.max_pain):''}${x.put_wall>0&&x.call_wall>0?', walls '+px(x.put_wall)+' / '+px(x.call_wall):''}.`),'Risk-neutral, not a forecast.'];
+ return {title:`${name||c.ticker}: the price paths its options imply`,paras,lines}}
+function optPathsPanel(c,name){
+ if(!c||!(c.paths||[]).length)return '';
+ const key=String(name||c.ticker||'x')+'-option-paths',bar=window.FFShare?window.FFShare.bar({key,title:`${name||c.ticker}: price paths the options imply`,subtitle:`Spot ${px(c.spot)} · 50 / 80 / 95% of the risk-neutral distribution, 40 sample paths, call wall ▼, put wall ▲ and max pain ◆ by expiry`,source:'CBOE delayed option quotes; Breeden-Litzenberger on a fitted IV smile, forward from put-call parity (Filing Flows). Risk-neutral, not a forecast.',post:()=>optPathsPost(c,name)}):'';
+ return `<div class="panel"><h3>Price paths the options imply — ${esc(name||c.ticker||'')}</h3><p class="sub">From today's option chain (CBOE, delayed): at each expiry the distribution of the price the option prices imply (Breeden-Litzenberger on the IV smile, the forward from put-call parity), the 50, 80 and 95% ranges between expiries, 40 sample paths drawn to match those distributions, and for every expiry its call wall and put wall (the strike above spot with the most call open interest and the one below spot with the most put open interest, within 30% of spot — often read as resistance and support) and its max pain — the price at which the open contracts would pay their holders least. Risk-neutral: it includes what the market pays for protection (a fatter downside) and is not a forecast of direction; walls and max pain describe where open interest sits, not prices the market has to respect.</p>${bar}<div data-ffs-chart="${esc(key)}">${optPathsSVG(c)}</div>${optPathsTable(c)}</div>`}
 function smileSVG(c){
  const sm=(c.smiles||[]).slice(0,3);if(!sm.length)return empty('No smile with enough quoted strikes');
  const W=720,H=320,L=52,R=110,T=16,B=36,all=sm.flatMap(s=>s.pts);

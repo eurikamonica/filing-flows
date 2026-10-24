@@ -19,6 +19,14 @@
     return b[i]+(b[j]-b[i])*(k-i);
   };
   var stats = function(a) { return {n:a.length,p10:quant(a,.1),p25:quant(a,.25),median:quant(a,.5),p75:quant(a,.75),p90:quant(a,.9)}; };
+  // PNG / JPG / post bar under a chart (disclosures/chart-share.js, loaded once on demand)
+  var shareP=null;
+  function withShare(fn){
+    if(global.FFShare){fn(global.FFShare);return;}
+    if(!shareP)shareP=new Promise(function(res){var sc=document.createElement('script');sc.src='disclosures/chart-share.js';sc.onload=function(){res(global.FFShare||null);};sc.onerror=function(){res(null);};document.head.appendChild(sc);});
+    shareP.then(function(S){if(S)fn(S);});
+  }
+  var pctOf = function(v,t){return t?Math.round(100*v/t)+'%':'—';};
   var safeGrowth = function(x) { return typeof x === 'number' && Number.isFinite(x); };
   var percentile = function(a,x) {
     return a.length ? 100*a.filter(function(v){return v<=x;}).length/a.length : null;
@@ -56,7 +64,7 @@
 
   // Relationship visualizations share Gamma's existing SIC members and Chains edges.
   // No relationship width is inferred from revenue: only explicit value_usd is weighted.
-  function relationshipExplorer(root, edges, members) {
+  function relationshipExplorer(root, edges, members, sicCode) {
     var byId={}, byName={};
     members.forEach(function(m){
       if(m.cik) byId[String(m.cik)]=m;
@@ -155,7 +163,15 @@
           footer:['Source: SEC EDGAR annual reports. Each band = the share of the supplier’s revenue its filing says came from the customer × that revenue. Darker: companies in this SIC.',
             'Figures are read automatically and can contain errors; check the filings before relying on them. Not investment advice.']});
         caption.textContent='Dollars stated (share × revenue) in the suppliers’ annual reports; only customers above the ~10% disclosure threshold appear.';
-        canvas.innerHTML='<div class="net-chart">'+global.Sankey.toSVG(scene,'SIC money flow')+'</div>'+references();
+        canvas.innerHTML='<div class="gamma-share"></div><div class="net-chart">'+global.Sankey.toSVG(scene,'SIC money flow')+'</div>'+references();
+        var named=top.slice(0,5);
+        withShare(function(S){var el=canvas.querySelector('.gamma-share');if(!el)return;
+          el.innerHTML=S.bar({key:'sic-'+(sicCode||'x')+'-named-flow',title:'Who pays whom — named customers',scene:function(){return scene;},post:function(){
+            var pairs=named.map(function(e){return label(e,'supplier')+' → '+label(e,'customer')+' '+money(+e.value_usd);});
+            return {title:'Who pays whom — named customers'+(sicCode?' (SIC '+sicCode+')':''),
+              paras:[money(total)+' of stated customer revenue across '+top.length+' links, read from the suppliers\u2019 annual reports (each band = the customer\u2019s share of revenue × that revenue).',
+                'Largest: '+pairs.join('; ')+'.','Only customers above the ~10% disclosure threshold appear; figures are read automatically from SEC filings.'],
+              lines:['Who pays whom'+(sicCode?' in SIC '+sicCode:'')+': '+money(total)+' of stated customer revenue.'].concat(named.slice(0,3).map(function(e){return label(e,'supplier')+' → '+label(e,'customer')+': '+money(+e.value_usd)+'.';})).concat(['From 10-K customer disclosures.'])};}});});
         return;
       }
       var rows=weighted.slice().sort(function(a,b){return (+b.value_usd)-(+a.value_usd);}).slice(0,25);
@@ -315,20 +331,34 @@
       get(id).addEventListener(id==='gexpected'?'input':'change',draw);
     });
     draw();
-    relationshipExplorer(get('gamma-relations'),d.relationships||[],members);
+    relationshipExplorer(get('gamma-relations'),d.relationships||[],members,d.sic);
     ioFlow(get('gamma-io'),ctx,here,d.sic,d.sector);
   }
 
   // Estimated money flow: where the industry's money comes from, what it spends it on, which industries supply it and
   // which listed companies are in those industries — BEA's input-output tables applied to the members' reported figures
   // (pipeline/ioflow.py; data gamma/io/<sic | sic2-NN | sector-id>.json)
+  function ioPost(d,inV){                                // the estimated flow as an analysis and a post for X
+    var T=d.totals||{},rev=d.revenue||0;
+    var sup=d.nodes.filter(function(n){return n.col===3&&n.cik;}).map(function(n){return [n.label,inV[n.id]||0];}).sort(function(a,b){return b[1]-a[1];}).slice(0,4);
+    var bea=(d.bea||[]).slice(0,3).map(function(b){return b[1]+' '+Math.round(100*b[2])+'%';});
+    var uses=[['purchased inputs',T.purchases],['employees',T.employees],['capital spending',T.capex],['imports (of these)',T.imports],['operating cash left',(T.left||0)+(T.finleft||0)]].filter(function(z){return z[1]>0;});
+    return {title:'Estimated money flow — '+d.title,
+      paras:[d.title+': '+money(rev)+' of revenue over the last four quarters across '+d.companies+' companies.',
+        'Where it goes (estimated): '+uses.map(function(z){return z[0]+' '+money(z[1])+' ('+pctOf(z[1],rev)+')';}).join(', ')+'.',
+        bea.length?'Industry mix behind the split: '+bea.join(', ')+'.':'',
+        sup.length?'Largest listed suppliers by estimated share of this spending: '+sup.map(function(z){return z[0]+' '+money(z[1]);}).join(', ')+' — industry averages, not any company\u2019s actual purchases.':'',
+        'Spending split by BEA input-output ('+d.source.io_year+' Use table, scaled to '+d.source.scale_year+'); revenue and operating figures from SEC filings.'],
+      lines:['Where '+d.title+'\u2019s '+money(rev)+' goes (4Q, est.):'].concat(uses.slice(0,3).map(function(z){return z[0]+' '+money(z[1])+' ('+pctOf(z[1],rev)+')';}).join(' · '))
+        .concat(sup.length?['Top listed suppliers (est.): '+sup.slice(0,3).map(function(z){return z[0];}).join(', ')+'.']:[]).concat(['BEA input-output estimate.'])};
+  }
   function ioFlow(root,ctx,here,sic,sector){
     if(!root)return;
     var levels=[['industry','This industry (SIC '+sic+')',sic],['major','Major group (SIC '+String(sic).slice(0,2)+')','sic2-'+String(sic).slice(0,2)]];
     if(sector)levels.push(['sector','Sector','sector-'+sector]);
     root.innerHTML='<div class="gamma-toolbar" role="group" aria-label="Level">'+levels.map(function(l){
       return '<button type="button" class="gamma-view-btn" data-io="'+esc(l[2])+'">'+esc(l[1])+'</button>';}).join('')+'</div>'+
-      '<p class="muted small" id="gamma-io-cap"></p><div id="gamma-io-chart"></div><div id="gamma-io-more"></div>';
+      '<p class="muted small" id="gamma-io-cap"></p><div id="gamma-io-share"></div><div id="gamma-io-chart"></div><div id="gamma-io-more"></div>';
     var btns=Array.from(root.querySelectorAll('[data-io]')), chart=root.querySelector('#gamma-io-chart'),
       cap=root.querySelector('#gamma-io-cap'), more=root.querySelector('#gamma-io-more');
     async function show(key){
@@ -352,6 +382,8 @@
           footer:['Estimate. Spending split by BEA input-output ('+d.source.io_year+' Use table, scaled to '+d.source.scale_year+') and capital spending by BEA fixed assets; listed suppliers by revenue share of their industry.',
             'Industry averages, not any company\u2019s actual purchases. Figures are read automatically from SEC filings; not investment advice.']});
         chart.innerHTML='<div class="net-chart gamma-io-est">'+global.Sankey.toSVG(scene,'Estimated money flow')+'</div>';
+        withShare(function(S){var el=root.querySelector('#gamma-io-share');if(!el||!here())return;
+          el.innerHTML=S.bar({key:'io-'+key,title:'Estimated money flow — '+d.title,scene:function(){return scene;},post:function(){return ioPost(d,inV);}});});
       } else chart.innerHTML='<p class="muted">The chart library did not load.</p>';
       cap.textContent='Light colours: estimated. Columns: member companies\u2019 revenue (and borrowing where they spent more) → what they spend it on → the industries that supply it (BEA) → listed companies in those industries.';
       var sup=d.nodes.filter(function(n){return n.col===3&&n.cik;}).map(function(n){return [n,inV[n.id]||0];}).sort(function(a,b){return b[1]-a[1];});
