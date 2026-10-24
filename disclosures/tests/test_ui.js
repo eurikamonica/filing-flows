@@ -255,6 +255,14 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   assert.ok(Math.abs(RV.stepPaths(S,rs,k,[[Math.log(th.my)]])[0].y[0]-100)<1e-9,'RS-Momentum threshold is not where y crosses 100');
   assert.equal(RV.replay(S,rs,k).length,144);                                        // every 13-week run of the last 156 weeks
   checks+=4;
+  // the chain converted to a path: odds equal to the replays' own shares give back their plain mean; odds on one
+  // quadrant put the path on the replays in it
+  {const A={paths:RV.replay(S,rs,k)},n=[0,0,0,0];A.paths.forEach(p=>n[RV.quad(p.x[3],p.y[3])]++);
+   const N=A.paths.length,marg=Array.from({length:13},(_,j)=>{const m=[0,0,0,0];A.paths.forEach(p=>m[RV.quad(p.x[j],p.y[j])]++);return m.map(v=>v/N)});
+   const mp=RV.markovPath(A,{marg}),mx=A.paths.reduce((a,p)=>a+p.x[3],0)/N;
+   assert.ok(Math.abs(mp[3].x-mx)<1e-9&&Math.abs(mp[3].cover-1)<1e-9,'equal odds do not give the plain mean');
+   const q=n.indexOf(Math.max(...n)),one=RV.markovPath(A,{marg:marg.map(()=>[0,1,2,3].map(j=>j===q?1:0))});
+   assert.equal(RV.quad(one[3].x,one[3].y),q,'odds on one quadrant do not put the path there');checks+=2}
   // the whole view from small files: two sections, the ladder, the ranges, the matrix and the chain, no NaN
   const D={start:'2021-01-01',weeks:'2025-12-26',bench:{start:'2021-01-01',c:Array.from({length:N},(_,i)=>400+i)}};
   const tf={t:'TEST',n:'Test Co',start:'2021-01-01',c:rs.map((v,i)=>v*(400+i)/100),v:Array(N).fill(500),bl:'SIC 1234 · Things',bn:9,bx:Array.from({length:N},(_,i)=>50+0.05*i+Math.sin(i/11)),bi:Array.from({length:N},(_,i)=>50+0.06*i)};
@@ -271,7 +279,7 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   const V=require(path.join(root,'docs','rrg-company-view.js'));
   const el={innerHTML:'',clientWidth:700,querySelectorAll:()=>[]};
   await V.render(el,{ticker:'TEST',hub:''});
-  for(const want of ['TEST against the S&amp;P 500','TEST against its industry','close that puts it in each quadrant','Replayed ranges','Markov matrix','Dynamic transition model','Most common paths'])
+  for(const want of ['TEST against the S&amp;P 500','TEST against its industry','close that puts it in each quadrant','Replayed ranges','Markov matrix','Dynamic transition model','Most common paths','The chain converted to a path','dotted: the Markov chain'])
    assert.ok(el.innerHTML.includes(want),`the RRG view lacks “${want}”`);
   assert.ok(!/NaN|undefined|Infinity/.test(el.innerHTML),'the RRG view shows NaN/undefined');
   for(const want of ['S&amp;P 500 — the industry','index level that puts it in each quadrant','moved exactly with its industry','#rotation/ind~sic4:1234'])

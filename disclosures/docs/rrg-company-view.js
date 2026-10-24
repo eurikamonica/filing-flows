@@ -166,6 +166,27 @@
       paths: [...cnt.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, c]) => ({ q: [...k].map(Number), p: c / sims })) };
   }
 
+  /* ---------- the chain's quadrant odds turned back into a path: replays reweighted week by week ----------
+     Week k: each replay's position falls in a quadrant; a replay in quadrant q weighs P_k(q) / n_k(q), so the replays
+     together carry the chain's odds. The weighted mean position is the dotted path; the weighted quantiles of the
+     replays' relative moves are the prices. A quadrant the chain gives odds to but no replay reaches drops out (cover). */
+  function markovPath(A, ch) {
+    if (!A || !ch || !A.paths.length) return null;
+    const wq = (pairs, p) => { const a = pairs.filter((v) => Number.isFinite(v[0]) && v[1] > 0).sort((u, v) => u[0] - v[0]); const t = a.reduce((m, v) => m + v[1], 0); if (!t) return NaN; let c = 0; for (const [v, w] of a) { c += w; if (c >= p * t) return v; } return a[a.length - 1][0]; };
+    const out = [];
+    for (let k = 1; k <= 13; k++) {
+      const P = ch.marg[k - 1], j = k - 1, n = [0, 0, 0, 0];
+      const qs = A.paths.map((r) => (Number.isFinite(r.x[j]) && Number.isFinite(r.y[j]) ? quad(r.x[j], r.y[j]) : -1));
+      qs.forEach((q) => { if (q >= 0) n[q]++; });
+      const w = qs.map((q) => (q >= 0 && n[q] ? P[q] / n[q] : 0)), W = w.reduce((a, b) => a + b, 0);
+      if (!W) { out.push(null); continue; }
+      let x = 0, y = 0; A.paths.forEach((r, i) => { if (w[i]) { x += w[i] * r.x[j]; y += w[i] * r.y[j]; } });
+      const cum = A.paths.map((r, i) => [r.cum[j], w[i]]);
+      out.push({ k, x: x / W, y: y / W, p: P, cover: W, q10: Math.exp(wq(cum, 0.1)), q50: Math.exp(wq(cum, 0.5)), q90: Math.exp(wq(cum, 0.9)) });
+    }
+    return out;
+  }
+
   /* ---------- one line, one benchmark: everything the section draws ---------- */
   function analyse(G, C, V, B, opt) {
     const rel = ratio(C, B), S = states(rel);
@@ -223,6 +244,11 @@
         s += `<rect x="${f(a[0])}" y="${f(a[1])}" width="${f(b[0] - a[0])}" height="${f(b[1] - a[1])}" rx="6" style="fill:none;stroke:${o.col};stroke-width:1.2;stroke-dasharray:3 3;opacity:.8"/><text class="rc-l" x="${f(lx)}" y="${f(ly)}" text-anchor="end">${h} wk · 80%</text>`;
       });
     }
+    const MP = o.mpath && o.mpath.filter(Boolean);
+    if (MP && MP.length) {
+      s += `<path d="M${[p0].concat(MP.map((m) => [sx(m.x), sy(m.y)])).map((q) => f(q[0]) + ',' + f(q[1])).join('L')}" style="fill:none;stroke:var(--ink,#222);stroke-width:1.6;stroke-dasharray:1.5 3;stroke-linecap:round"/>`;
+      MP.filter((m) => m.k === 4 || m.k === 13).forEach((m) => { s += `<circle cx="${f(sx(m.x))}" cy="${f(sy(m.y))}" r="3.5" style="fill:var(--surface,#fff);stroke:var(--ink,#222);stroke-width:1.4"><title>Markov path, week ${m.k}</title></circle>`; });
+    }
     s += '</g>';
     s += `<g clip-path="url(#${clip})">`;
     if (ctx.length > 1) s += `<path d="M${ctx.map((q) => f(sx(q[0])) + ',' + f(sy(q[1]))).join('L')}" style="fill:none;stroke:var(--muted,#888);stroke-width:1.5;opacity:.7"/><circle cx="${f(sx(ctx[ctx.length - 1][0]))}" cy="${f(sy(ctx[ctx.length - 1][1]))}" r="4" style="fill:var(--muted,#888)"/><text class="rc-l" x="${f(sx(ctx[ctx.length - 1][0]) + 7)}" y="${f(sy(ctx[ctx.length - 1][1]) + 4)}">${esc(o.ctxName)}</text>`;
@@ -266,6 +292,14 @@
       `<p class="rc-sub">${esc(o.matrixWhat)} Rows: now; columns: ${o.h} week${o.h > 1 ? 's' : ''} later; smoothed toward the overall shares (λ = 10). Out of sample since 2012 it beat “stays in its quadrant” by ${sk(ev.brier_skill_vs_stay)} and “the usual shares” by ${sk(ev.brier_skill_vs_freq)} (Brier score), calibration error ${fin(ev.ece) ? num(100 * ev.ece, 1) + ' points' : '—'}.${show ? '' : A.liquid ? ' Shown as history: the head did not pass its check.' : ' Shown as history: the model counts companies only while liquid ($3, $10M a week), and this one is not.'}</p>` +
       `<div class="rc-wrap"><table class="rc-tbl"><tr><th>Now ↓ · later →</th>${QN.map((q, j) => `<th class="n" style="color:${QC[j]}">${q}</th>`).join('')}<th class="n">Line-weeks</th></tr>${rows}</table></div>`;
   }
+  function markovTable(A, o) {
+    const MP = o.mpath, F = o.fmt || usd, c = A.close; if (!MP) return '';
+    const rows = [1, 2, 4, 8, 13].map((k) => MP[k - 1]).filter(Boolean);
+    if (!rows.length) return '';
+    return `<h4>The chain converted to a path — position and ${o.pct ? 'index level' : 'price'} week by week</h4><p class="rc-sub">Each week the replays are reweighted so that, together, they sit in each quadrant with the chain's odds (a replay in a quadrant weighs that quadrant's probability ÷ the replays in it): the weighted mean position is the dotted path on the chart, the weighted 10 / 50 / 90% of their moves the ${o.pct ? 'levels' : 'prices'} (${esc(o.bench)} flat). Where the chain gives odds to a quadrant no replay reaches, that share drops out (“cover”). Once the odds spread over all four quadrants the mean position drifts to the centre of the chart: read it with the odds beside it, not as the single place the line will be. It inherits the chain's check (week 1 ${esc((LBL[o.chain.labels[0]] || [''])[0])}, 4 ${esc((LBL[o.chain.labels[3]] || [''])[0])}, 13 ${esc((LBL[o.chain.labels[12]] || [''])[0])}).</p>` +
+      `<div class="rc-wrap"><table class="rc-tbl"><tr><th>Week</th>${QN.map((q, j) => `<th class="n" style="color:${QC[j]}">${q}</th>`).join('')}<th class="n">RS-Ratio · Momentum</th><th class="n">10%</th><th class="n">Median</th><th class="n">90%</th><th class="n">Cover</th></tr>` +
+      rows.map((m) => `<tr><td>${m.k}</td>${m.p.map((v) => `<td class="n">${pc(v)}</td>`).join('')}<td class="n" style="color:${QC[quad(m.x, m.y)]}">${num(m.x, 1)} · ${num(m.y, 1)}</td><td class="n">${F(c * m.q10)}<br><span style="font-size:11px;color:var(--muted,#888)">${spc(m.q10 - 1)}</span></td><td class="n" style="font-weight:600">${F(c * m.q50)}<br><span style="font-size:11px;color:var(--muted,#888);font-weight:400">${spc(m.q50 - 1)}</span></td><td class="n">${F(c * m.q90)}<br><span style="font-size:11px;color:var(--muted,#888)">${spc(m.q90 - 1)}</span></td><td class="n">${pc(m.cover)}</td></tr>`).join('') + '</table></div>';
+  }
   function dynamic(A, o) {
     const ch = o.chain; if (!ch) return '<p class="rc-sub">No week-by-week path this week (its last step or its industry point is missing).</p>';
     const Wd = 640, Ht = 170, L = 34, R = 8, T = 8, B = 24, bw = (Wd - L - R) / 13;
@@ -280,16 +314,18 @@
     const lb = (l) => (LBL[l] || [l])[0];
     return `<h4>Dynamic transition model — week by week, the weekly chain</h4><p class="rc-sub">The chain steps one week at a time from ${ch.joint ? 'where the company and its industry stand together' : 'its quadrant and the direction of its last weekly step'}, so the odds change with each step (checked: week 1 ${esc(lb(ch.labels[0]))}, 2–4 ${esc(lb(ch.labels[3]))}, 5–13 ${esc(lb(ch.labels[12]))}). At 1, 4 and 13 weeks the Markov matrix above was checked on its own and is the figure to use.</p>${s}</svg>` +
       `<div class="rc-legend">${QN.map((n, j) => `<span><b style="background:${QC[j]}"></b>${n}</span>`).join('')}<span>weeks ahead →</span></div>` +
+      markovTable(A, o) +
       (shown(ch.pathLabel) && A.liquid ? `<div class="rc-wrap"><table class="rc-tbl"><tr><th>Most common paths over 13 weeks (quadrants in order)</th><th class="n">Share of 20,000 simulated</th></tr>${ch.paths.map((p) => `<tr><td>${p.q.map((q) => `<span style="color:${QC[q]}">${QN[q]}</span>`).join(' → ')}${p.q.length === 1 ? ' (stays)' : ''}</td><td class="n">${pc(p.p)}</td></tr>`).join('')}</table></div>` : '<p class="rc-sub">Paths are not shown: the chain did not pass its 13-week check, or the company is below the liquidity floor.</p>');
   }
   function section(A, o) {
     if (!A) return `<div class="rc-sec"><h3>${esc(o.title)}</h3><p class="rc-sub">${esc(o.missing)}</p></div>`;
     const qn = QN[A.st.q], d = o.odds;
+    o.mpath = o.chain && A.liquid && shown(o.chain.labels[0]) && A.paths.length >= 30 ? markovPath(A, o.chain) : null;
     const cards = `<div class="rc-cards"><div class="rc-card"><span>Now (${esc(A.day)})</span><b style="color:${QC[A.st.q]}">${qn}</b><i>RS-Ratio ${num(A.S.x[A.k], 2)} · RS-Momentum ${num(A.S.y[A.k], 2)}</i></div>` +
       (d ? `<div class="rc-card"><span>Most likely in ${o.h} week${o.h > 1 ? 's' : ''}</span>${shown(d.label) && A.liquid ? (() => { const j = d.p.indexOf(Math.max(...d.p)); return `<b style="color:${QC[j]}">${QN[j]} ${pc(d.p[j])}</b><i>${esc((LBL[d.label] || [''])[0])} (Markov matrix)</i>`; })() : `<b>—</b><i>${A.liquid ? 'history only' : 'below the liquidity floor'}</i>`}</div>` : '') +
       (() => { const m = Math.max(A.th.mx, A.th.my), ok = fin(A.th.mx) && fin(A.th.my), F = o.fmt || usd;
         return `<div class="rc-card"><span>Into Leading next week</span><b>${ok ? (o.pct ? spc(m - 1) : F(A.close * m)) : '—'}</b><i>${o.pct ? (ok ? `index ${F(A.close * m)}, ` : '') + esc(o.bench) + ' flat' : 'close needed, ' + esc(o.bench) + ' flat'}</i></div></div>`; })();
-    return `<div class="rc-sec"><h3>${esc(o.title)}</h3><p class="rc-sub">${esc(o.sub)}</p>${cards}${chart(A, o)}<div class="rc-legend"><span><b style="background:${o.col}"></b>${esc(o.name)}, last ${o.tail} weeks</span>${o.ctx ? `<span><b style="background:var(--muted,#888)"></b>${esc(o.ctxName)}</span>` : ''}<span>faint: replayed paths · dashed: median · boxes: 80% at 4 and 13 weeks</span></div>` +
+    return `<div class="rc-sec"><h3>${esc(o.title)}</h3><p class="rc-sub">${esc(o.sub)}</p>${cards}${chart(A, o)}<div class="rc-legend"><span><b style="background:${o.col}"></b>${esc(o.name)}, last ${o.tail} weeks</span>${o.ctx ? `<span><b style="background:var(--muted,#888)"></b>${esc(o.ctxName)}</span>` : ''}<span>faint: replayed paths · dashed: median · boxes: 80% at 4 and 13 weeks${o.mpath ? ' · dotted: the Markov chain converted to a path (○ 4 and 13 weeks)' : ''}</span></div>` +
       ladder(A, o) + ranges(A, o, o.bands) + matrix(A, o) + dynamic(A, o) + '</div>';
   }
 
@@ -415,7 +451,7 @@
     await draw();
   }
 
-  const api = { render, renderIndustries, _t: { states, stepPaths, replay, thresholds, odds, chain, grid, place, ratio, quad, qtl, analyse } };
+  const api = { render, renderIndustries, _t: { states, stepPaths, replay, thresholds, odds, chain, grid, place, ratio, quad, qtl, analyse, markovPath } };
   if (typeof window !== 'undefined') window.RRGCompanyView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();
