@@ -1,0 +1,785 @@
+{
+  "cik": 42682,
+  "ticker": "GRC",
+  "name": "GORMAN RUPP CO",
+  "sector": "industrials",
+  "industry": "Pumps & Pumping Equipment",
+  "sic": "3561",
+  "sic_description": "Pumps & Pumping Equipment",
+  "generated_at": "2026-10-24T14:46:13+00:00",
+  "fetched_at": "2026-10-18T10:58:33+00:00",
+  "price": 70.13,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.337145,
+  "snapshot": {
+    "total_debt": 274998000,
+    "current_debt": 0,
+    "cash": 43595000,
+    "equity": 441434000,
+    "assets": 866451000,
+    "liabilities": 425017000,
+    "assets_current": 248137000,
+    "liabilities_current": 88406000,
+    "retained_earnings": 446111000,
+    "interest_expense": 20830000,
+    "operating_income": 104214000,
+    "pretax_income": 80881000,
+    "net_income": 62364000,
+    "da": 27845000,
+    "ocf": 119802000,
+    "capex": 19261000,
+    "revenue": 702053000,
+    "debt_repaid": 63000000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 23125000,
+      "y2": 32375000,
+      "y3": 37000000,
+      "y4": 188250000,
+      "y5": 0,
+      "after5": 30000000
+    },
+    "shares": 26410243,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 274998000,
+    "cash_and_investments": 43595000.0,
+    "net_debt": 231403000.0,
+    "ebitda": 132059000,
+    "ebit": 104214000,
+    "interest_expense": 20830000,
+    "leverage": 2.082387,
+    "net_leverage": 1.75227,
+    "interest_coverage": 5.003072,
+    "ebitda_coverage": 6.339846,
+    "fcf": 100541000,
+    "fcf_to_debt": 0.365606,
+    "effective_rate": 0.075746,
+    "revolver_available": null,
+    "liquidity": 43595000.0,
+    "due_12m": 23125000,
+    "due_24m": 55500000,
+    "liquidity_to_due12": 1.885189,
+    "liquidity_to_due24": 0.785495,
+    "floating_debt": 247750000.0,
+    "floating_share": 0.900916,
+    "plus100bp_interest": 2477500.0,
+    "plus100bp_share_of_ebit": 0.023773,
+    "altman_z": 4.763914,
+    "market_cap": 1852150341.59,
+    "debt_to_ev": 0.131985,
+    "convertibles": null,
+    "implied": {
+      "dd": 8.463779,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.102484,
+      "asset_vol": 0.314801,
+      "calibrated_5y_bps": 105.103992,
+      "rating_band": "BBB"
+    },
+    "market_rate_5y": 0.05961,
+    "refi_extra_interest": -895526.147602,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "min",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "agreement",
+        "dated": "2024-05-31",
+        "text": "(i) The Company agrees that if the Total Leverage Ratio exceeds 3.00 to 1.00 as of the end of any fiscal quarter (a “Triggering Quarter” ), then beginning with the fiscal quarter immediately following such Triggering Quarter and continuing until the end of the first fiscal quarter for which the Total Leverage Ratio is less than or equal to 3.00 to 1.00 (such period, the “Leverage Fee Period” ) in addition to interest"
+      },
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": 6.339846,
+        "cushion": 0.526802,
+        "agreement": "agreement",
+        "dated": "2024-05-31",
+        "text": "The Company will not permit the Interest Coverage Ratio, as of the last day of any fiscal quarter, to be less than 3.00 to 1.00. 6M."
+      }
+    ],
+    "cushion_score": 81
+  },
+  "instruments": [
+    {
+      "name": "Senior Term Loan Facility",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 247750000.0,
+      "spread_min": 0.0175,
+      "spread_max": 0.055,
+      "reference": "SOFR Overnight Index Swap Rate",
+      "floating": true
+    },
+    {
+      "name": "Note Agreement",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 30000000.0,
+      "floating": false
+    },
+    {
+      "name": "Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2024-06-03",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-05-31",
+      "facility": "loan",
+      "benchmarks": [
+        "Prime Rate"
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "(i) The Company agrees that if the Total Leverage Ratio exceeds 3.00 to 1.00 as of the end of any fiscal quarter (a “Triggering Quarter” ), then beginning with the fiscal quarter immediately following such Triggering Quarter and continuing until the end of the first fiscal quarter for which the Total Leverage Ratio is less than or equal to 3.00 to 1.00 (such period, the “Leverage Fee Period” ) in addition to interest"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Company will not permit the Interest Coverage Ratio, as of the last day of any fiscal quarter, to be less than 3.00 to 1.00. 6M."
+        },
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Payment and immediately after giving effect (including giving effect on a Pro Forma Basis) thereto (x) no Default or Event of Default shall have occurred and be continuing or would result therefrom, (y) the Company is in compliance with the financial covenants set forth in paragraph 6L and (z) the Total Leverage Ratio is not greater than 3.00 to 1.00."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/42682/000119312524153098/d799601dex102.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-06-03",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-05-31",
+      "title": "Amended And Restated Senior Secured Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower will not permit the Interest Coverage Ratio, as of the last day of any fiscal quarter, to be less than 3.00 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 3.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "ntation and warranty shall be true and correct in all material respects (or in all respects in the case of any representation or warranty qualified by materiality or Material Adverse Effect) as of such prior date), (ii) no Default or Event of Default then exists or would result therefrom, (iii) the Total Leverage Ratio is not greater than 3.25 to 1.00 and (iv) the Borrower is in compliance on a Pro Forma Basis with t"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/42682/000119312524153098/d799601dex101.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-03-03",
+      "agreement_kind": "credit_agreement",
+      "dated": "2022-05-31",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/42682/000143774925005856/ex_780603.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2024-06-03",
+      "items": "1.01,1.02,2.01,8.01,9.01",
+      "acc": "0001193125-24-153098",
+      "doc": "d799601d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-06-01",
+      "items": "1.01,2.01,2.03,8.01,9.01",
+      "acc": "0001193125-22-164599",
+      "doc": "d363720d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-27",
+      "items": "1.01,2.02,7.01,9.01",
+      "acc": "0001193125-22-121550",
+      "doc": "d574496d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-12-21",
+      "items": "2.03,9.01",
+      "acc": "0001193125-12-511897",
+      "doc": "d457973d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2010-10-07",
+      "items": "1.01,2.01,9.01",
+      "acc": "0000950123-10-091951",
+      "doc": "c06687e8vk.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2010-09-27",
+      "items": "2.03,9.01",
+      "acc": "0000950123-10-089237",
+      "doc": "c06352e8vk.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2022-06-30",
+      432384000,
+      16828000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      428580000,
+      10288000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      436075000,
+      12231000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      428905000,
+      12173000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      410180000,
+      18189000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      400729000,
+      27772000,
+      41159000,
+      null,
+      null,
+      0.10271
+    ],
+    [
+      "2024-06-30",
+      395380000,
+      34245000,
+      39721000,
+      null,
+      null,
+      0.10046
+    ],
+    [
+      "2024-09-30",
+      380989000,
+      39701000,
+      37012000,
+      null,
+      null,
+      0.09715
+    ],
+    [
+      "2025-03-31",
+      352206000,
+      21840000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      337064000,
+      26985000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      322298000,
+      42937000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      292765000,
+      29855000,
+      22160000,
+      128454000,
+      100715000,
+      0.07569
+    ],
+    [
+      "2026-06-30",
+      274998000,
+      43595000,
+      20830000,
+      132059000,
+      104214000,
+      0.07575
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2022-08",
+      2.23,
+      6.299,
+      0.2884,
+      121.3
+    ],
+    [
+      "2022-09",
+      2.89,
+      5.994,
+      0.2959,
+      123.8
+    ],
+    [
+      "2022-10",
+      2.28,
+      6.14,
+      0.3015,
+      122.6
+    ],
+    [
+      "2022-11",
+      1.02,
+      6.577,
+      0.2842,
+      119.1
+    ],
+    [
+      "2022-12",
+      0.68,
+      6.755,
+      0.2708,
+      117.7
+    ],
+    [
+      "2023-01",
+      1.0,
+      6.614,
+      0.2846,
+      118.8
+    ],
+    [
+      "2023-02",
+      0.64,
+      6.786,
+      0.2762,
+      117.5
+    ],
+    [
+      "2023-03",
+      2.05,
+      6.149,
+      0.295,
+      122.5
+    ],
+    [
+      "2023-04",
+      1.22,
+      6.408,
+      0.2821,
+      120.4
+    ],
+    [
+      "2023-05",
+      1.01,
+      6.446,
+      0.2815,
+      120.1
+    ],
+    [
+      "2023-06",
+      0.93,
+      6.561,
+      0.2886,
+      119.2
+    ],
+    [
+      "2023-07",
+      0.91,
+      6.612,
+      0.2918,
+      118.8
+    ],
+    [
+      "2023-08",
+      0.69,
+      6.764,
+      0.2869,
+      117.6
+    ],
+    [
+      "2023-09",
+      0.53,
+      6.936,
+      0.2859,
+      116.3
+    ],
+    [
+      "2023-10",
+      0.35,
+      7.127,
+      0.2735,
+      114.8
+    ],
+    [
+      "2023-11",
+      0.34,
+      7.209,
+      0.2765,
+      114.2
+    ],
+    [
+      "2023-12",
+      0.3,
+      7.393,
+      0.2784,
+      112.8
+    ],
+    [
+      "2024-01",
+      0.33,
+      7.326,
+      0.2768,
+      113.3
+    ],
+    [
+      "2024-02",
+      0.35,
+      7.307,
+      0.2841,
+      113.5
+    ],
+    [
+      "2024-03",
+      0.05,
+      8.273,
+      0.2581,
+      106.4
+    ],
+    [
+      "2024-04",
+      0.23,
+      7.438,
+      0.2725,
+      112.5
+    ],
+    [
+      "2024-05",
+      0.15,
+      7.692,
+      0.2687,
+      110.6
+    ],
+    [
+      "2024-06",
+      0.06,
+      8.18,
+      0.2576,
+      107.1
+    ],
+    [
+      "2024-07",
+      0.04,
+      8.443,
+      0.2579,
+      105.2
+    ],
+    [
+      "2024-08",
+      0.03,
+      8.596,
+      0.2506,
+      104.2
+    ],
+    [
+      "2024-09",
+      0.16,
+      7.925,
+      0.2701,
+      108.9
+    ],
+    [
+      "2024-10",
+      0.16,
+      7.829,
+      0.271,
+      109.6
+    ],
+    [
+      "2024-11",
+      0.37,
+      7.485,
+      0.2977,
+      112.1
+    ],
+    [
+      "2024-12",
+      0.49,
+      7.312,
+      0.295,
+      113.4
+    ],
+    [
+      "2025-01",
+      0.44,
+      7.366,
+      0.2932,
+      113.0
+    ],
+    [
+      "2025-02",
+      0.39,
+      7.449,
+      0.2899,
+      112.4
+    ],
+    [
+      "2025-03",
+      0.57,
+      7.216,
+      0.2923,
+      114.2
+    ],
+    [
+      "2025-04",
+      0.62,
+      7.18,
+      0.2939,
+      114.4
+    ],
+    [
+      "2025-05",
+      0.66,
+      7.175,
+      0.3043,
+      114.5
+    ],
+    [
+      "2025-06",
+      0.85,
+      7.059,
+      0.3104,
+      115.4
+    ],
+    [
+      "2025-07",
+      0.73,
+      7.177,
+      0.3146,
+      114.5
+    ],
+    [
+      "2025-08",
+      0.35,
+      7.642,
+      0.3038,
+      111.0
+    ],
+    [
+      "2025-09",
+      0.09,
+      8.374,
+      0.2837,
+      105.7
+    ],
+    [
+      "2025-10",
+      0.17,
+      8.077,
+      0.2958,
+      107.8
+    ],
+    [
+      "2025-11",
+      0.02,
+      9.112,
+      0.2659,
+      100.7
+    ],
+    [
+      "2025-12",
+      0.02,
+      9.237,
+      0.2669,
+      99.9
+    ],
+    [
+      "2026-01",
+      0.01,
+      9.447,
+      0.2686,
+      98.5
+    ],
+    [
+      "2026-02",
+      0.15,
+      8.289,
+      0.3197,
+      106.3
+    ],
+    [
+      "2026-03",
+      0.21,
+      8.078,
+      0.324,
+      107.8
+    ],
+    [
+      "2026-04",
+      0.16,
+      8.308,
+      0.3354,
+      106.2
+    ],
+    [
+      "2026-05",
+      0.08,
+      8.642,
+      0.3299,
+      103.9
+    ],
+    [
+      "2026-06",
+      0.04,
+      9.077,
+      0.3299,
+      100.9
+    ],
+    [
+      "2026-07",
+      0.04,
+      8.959,
+      0.3314,
+      101.7
+    ],
+    [
+      "2026-08",
+      0.09,
+      8.591,
+      0.3396,
+      104.2
+    ],
+    [
+      "2026-09",
+      0.09,
+      8.53,
+      0.3398,
+      104.6
+    ],
+    [
+      "2026-10",
+      0.1,
+      8.464,
+      0.3371,
+      105.1
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

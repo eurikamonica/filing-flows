@@ -1,0 +1,257 @@
+{
+  "cik": 1929017,
+  "name": "Sealy Industrial Partners IV, LP",
+  "sector": "real-estate",
+  "industry": "Real Estate",
+  "sic": "6500",
+  "docs": {
+    "xbrl:0001929017-26-000008": {
+      "instruments": [
+        {
+          "name": "Thrivent Term Loan",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "carrying": 105220000.0,
+          "coupon": 0.0539,
+          "maturity": "2030-10-01",
+          "floating": true
+        },
+        {
+          "name": "Fixed Rate Debt",
+          "kind": "notes",
+          "as_of": "2025-12-31",
+          "carrying": 105200000.0,
+          "floating": false
+        },
+        {
+          "name": "Key Bank Credit Facility",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "carrying": 79500000.0,
+          "spread": 0.0583,
+          "maturity": "2026-01-16",
+          "capacity": 100000000.0,
+          "available": 20500000.0,
+          "reference": "SOFR",
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-03-12",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001929017-26-000015": {
+      "instruments": [
+        {
+          "name": "First Amended And Restated Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2026-01-15",
+          "capacity": 150000000.0,
+          "drawn": 0.0,
+          "floating": false
+        },
+        {
+          "name": "Fixed Rate Debt",
+          "kind": "notes",
+          "as_of": "2026-06-30",
+          "carrying": 105300000.0,
+          "floating": false
+        },
+        {
+          "name": "Thrivent Term Loan",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "carrying": 105220000.0,
+          "coupon": 0.0539,
+          "maturity": "2030-10-01",
+          "floating": true
+        },
+        {
+          "name": "Key Bank Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "carrying": 52000000.0,
+          "spread": 0.0539,
+          "maturity": "2029-03-30",
+          "rate_now": 0.0539,
+          "floating": true
+        },
+        {
+          "name": "Construction Loan",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "carrying": 4310000.0,
+          "spread": 0.0613,
+          "maturity": "2028-12-05",
+          "face": 10800000.0,
+          "coupon": 0.0613,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-05",
+      "report": "2026-06-30"
+    },
+    "0001929017-26-000004:ck0001929017-ex10_1.htm": {
+      "kind": "agreement",
+      "date": "2026-01-22",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-01-15",
+      "title": "First Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 262000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower will not at any time permit Consolidated Tangible Net Worth to be less than the sum of (i) $262,000,000, plus (ii) eighty percent (80.0%) of the sum of any additional Net Offering Proceeds after the date of this Agreement. §9.5 Secured Indebtedness ."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "The Collateral Pool Availability shall be the amount which is the lesser of (a) the Total Commitment, (b) the Adjusted Collateral Pool Value, (c) the maximum principal amount of Loans which would not cause the Collateral Pool Implied Debt Service Coverage Ratio to be less than 1.30 to 1.00, and (d) the maximum principal amount of the Loans which would not cause the Collateral Pool Interest Coverage Ratio to be less t"
+        },
+        {
+          "type": "net_worth",
+          "limit": 500000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Upon any such resignation or removal, the Required Lenders, subject to the terms of §18.1, shall have the right to appoint as a successor Agent and, if applicable, Issuing Lender and Swing Loan Lender, any Lender or any bank whose senior debt obligations are rated not less than “A3” or its equivalent by Moody’s or not less than “A” or its equivalent by S&P and which has a net worth of not less than $500,000,000.00."
+        }
+      ]
+    },
+    "0001929017-25-000024:ck0001929017-ex10_1.htm": {
+      "kind": "agreement",
+      "date": "2025-09-22",
+      "agreement_kind": "amendment",
+      "dated": "2025-09-19",
+      "title": "Sixth Amendment To Credit Agreement",
+      "facility": "revolving"
+    }
+  },
+  "sic_description": "Real Estate",
+  "snapshot": {
+    "total_debt": 103736000,
+    "cash": 15166000,
+    "operating_leases": 2344000,
+    "revolver_drawn": 52000000,
+    "assets": 470256000,
+    "liabilities": 180801000,
+    "interest_expense": 8815000,
+    "interest_paid": 7621000,
+    "operating_income": 315000,
+    "net_income": -7140000,
+    "da": 20887000,
+    "ocf": 15208000,
+    "capex": 8408000,
+    "revenue": 40820000,
+    "shares": 4159573,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2025-09-30",
+      "filed": "2025-11-10",
+      "total_debt": 144010000,
+      "cash": 13096000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 3804323,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-03-31",
+      "filed": "2026-05-06",
+      "total_debt": 103660000,
+      "cash": 16368000,
+      "investments": null,
+      "interest_expense": 7973000,
+      "operating_income": 887000,
+      "da": 19860000,
+      "ocf": 15668000,
+      "revenue": 39973000,
+      "shares": 4088710,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 6604000
+    },
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-05",
+      "total_debt": 103736000,
+      "cash": 15166000,
+      "investments": null,
+      "interest_expense": 8815000,
+      "operating_income": 315000,
+      "da": 20887000,
+      "ocf": 15208000,
+      "revenue": 40820000,
+      "shares": 4159573,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 7621000
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001929017-26-000008",
+  "xbrl_10-Q": "xbrl:0001929017-26-000015",
+  "events": [
+    {
+      "date": "2026-01-22",
+      "items": "1.01,2.02,2.03,7.01,9.01",
+      "acc": "0001929017-26-000004",
+      "doc": "ck0001929017-20260115.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001929017-25-000024",
+      "doc": "ck0001929017-20250919.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001929017-25-000021",
+      "doc": "ck0001929017-20250911.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T15:07:42+00:00",
+  "signature": "0001929017-26-000015"
+}

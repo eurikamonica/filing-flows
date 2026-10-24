@@ -1,0 +1,699 @@
+{
+  "cik": 1384195,
+  "ticker": "REI",
+  "name": "RING ENERGY, INC.",
+  "sector": "energy",
+  "industry": "Crude Petroleum & Natural Gas",
+  "sic": "1311",
+  "sic_description": "Crude Petroleum & Natural Gas",
+  "generated_at": "2026-10-24T14:46:09+00:00",
+  "fetched_at": "2026-10-18T11:15:57+00:00",
+  "price": 1.415,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.523473,
+  "snapshot": {
+    "cash": 1137410,
+    "finance_leases": 1226644,
+    "operating_leases": 1061124,
+    "revolver_available": 225000000,
+    "revolver_drawn": 360000000,
+    "equity": 753423762,
+    "assets": 1281557096,
+    "liabilities": 528133334,
+    "assets_current": 60838960,
+    "liabilities_current": 112929640,
+    "retained_earnings": -126778173,
+    "interest_expense": 36153900,
+    "interest_paid": 27859191,
+    "operating_income": -171721785,
+    "pretax_income": -247776711,
+    "net_income": -220274996,
+    "da": 89749091,
+    "ocf": 155865142,
+    "revenue": 323837259,
+    "shares": 260539607,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 1137410.0,
+    "net_debt": null,
+    "ebitda": -81972694,
+    "ebit": -171721785,
+    "interest_expense": 36153900,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -4.749744,
+    "ebitda_coverage": -2.267326,
+    "cash_coverage": 6.594748,
+    "fcf": 155865142.0,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 225000000,
+    "liquidity": 226137410.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 0.042067,
+    "market_cap": 368663543.905,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Third Amended And Restated Credit Agreement",
+        "dated": "2025-06-18",
+        "text": "Beginning with the fiscal quarter ending June 30, 2025, the Borrower will not permit its Leverage Ratio to be greater than 3.0 to 1.0."
+      }
+    ],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-06-18",
+      "capacity": 1000000000.0,
+      "floating": false
+    },
+    {
+      "name": "Credit Agreement, Subject to Periodic Redeterminations, Mandatory Reductions and Adjustments",
+      "kind": "revolver",
+      "as_of": "2025-06-18",
+      "capacity": 585000000.0,
+      "floating": false
+    },
+    {
+      "name": "Promissory Notes Payable",
+      "kind": "notes",
+      "as_of": "2026-05-31",
+      "face": 1657810.0,
+      "coupon": 0.0695,
+      "floating": false
+    },
+    {
+      "name": "SOFR Loans",
+      "kind": "other",
+      "as_of": "2025-06-18",
+      "spread_min": 0.0275,
+      "spread_max": 0.0375,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "Base Rate Loans",
+      "kind": "other",
+      "as_of": "2025-06-18",
+      "spread": 0.005,
+      "coupon": 0.01,
+      "reference": "Adjusted Term SOFR",
+      "floating": true
+    },
+    {
+      "name": "Standby Letters of Credit",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "drawn": 35000.0,
+      "floating": false
+    },
+    {
+      "name": "Federal Agency",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "drawn": 10000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-06-23",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-06-18",
+      "size": 5000000.0,
+      "title": "Third Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 2.75,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Beginning with the fiscal quarter ending June 30, 2025, the Borrower will not permit its Leverage Ratio to be greater than 3.0 to 1.0."
+        },
+        {
+          "type": "leverage",
+          "limit": 1.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "rsuant to this Agreement, the Initial Reserve Report shall be deemed to be the “most recently delivered Reserve Report”)); provided, that, (a) if on any Hedge Testing Date (i) the Borrowing Base Utilization Percentage as of such Hedge Testing Date is less than twenty-five percent (25%) and (ii) the Leverage Ratio (as reflected in the Compliance Certificate delivered on such Hedge Testing Date) is not greater than 1.2"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1384195/000162828025032605/exhibit101-thirdamendeda.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-02-16",
+      "agreement_kind": "amendment",
+      "dated": "2024-02-12",
+      "title": "First Amendment To Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1384195/000162828024005338/exhibit101-firstamendmentt.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2022-09-06",
+      "agreement_kind": "credit_agreement",
+      "dated": "2022-08-31",
+      "size": 5000000.0,
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Eurodollar"
+      ],
+      "fee_pct": 3.0,
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Beginning with the fiscal quarter ending September 30, 2022, the Borrower will not permit its Leverage Ratio to be greater than 3.0 to 1.0."
+        },
+        {
+          "type": "leverage",
+          "limit": 1.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "suant to this Agreement, the Initial Reserve Report shall be deemed to be the “most recently delivered Reserve Report”)); provided , that, (a) if on any Hedge Testing Date (i) the Borrowing Base Utilization Percentage as of such Hedge Testing Date is less than twenty-five percent (25%) and (ii) the Leverage Ratio (as reflected in the Compliance Certificate delivered on such Hedge Testing Date) is not greater than 1.2"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1384195/000110465922097929/tm2225154d1_ex10-4.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-06-23",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001628280-25-032605",
+      "doc": "rei-20250618.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-04",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0001628280-25-016778",
+      "doc": "rei-20250331.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-02-28",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001628280-25-009049",
+      "doc": "rei-20250225.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-02-16",
+      "items": "1.01,9.01",
+      "acc": "0001628280-24-005338",
+      "doc": "rei-20240212.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-07-14",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001628280-23-024921",
+      "doc": "rei-20230710.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-04-12",
+      "items": "1.01,3.03,7.01",
+      "acc": "0001628280-23-011425",
+      "doc": "rei-20230411.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-09-06",
+      "items": "1.01,2.01,2.03,3.02,5.02,5.03,7.01,9.01",
+      "acc": "0001104659-22-097929",
+      "doc": "tm2225154d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-08-09",
+      "items": "1.01,2.02,7.01,9.01",
+      "acc": "0001104659-22-088031",
+      "doc": "tm2222973d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-07-08",
+      "items": "1.01,3.02,5.02,7.01,9.01",
+      "acc": "0001104659-22-078355",
+      "doc": "tm2220678d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-06-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-21-085569",
+      "doc": "tm2120727d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-06-16",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-21-081810",
+      "doc": "tm2119725d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-12-29",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-20-140184",
+      "doc": "tm2039536d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-10-29",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-20-119395",
+      "doc": "tm2034589d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-10-29",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001104659-20-119058",
+      "doc": "tm2034553d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-06-19",
+      "items": "1.01,2.02,2.03,7.01,9.01",
+      "acc": "0001104659-20-075210",
+      "doc": "tm2022966d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-12-09",
+      "items": "1.01,2.02,2.03,7.01,9.01",
+      "acc": "0001104659-19-070878",
+      "doc": "tm1924674d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-04-12",
+      "items": "1.01,2.01,2.03,3.02,7.01,9.01",
+      "acc": "0001144204-19-019427",
+      "doc": "tv518806_8-k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-02-28",
+      "items": "1.01,2.02,2.03,7.01,9.01",
+      "acc": "0001144204-19-010731",
+      "doc": "tv514889_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-06-19",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-18-034847",
+      "doc": "tv496795_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-02-27",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001144204-18-011245",
+      "doc": "tv487186_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-07-21",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001144204-17-037718",
+      "doc": "v471242_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-12-09",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001144204-16-138787",
+      "doc": "v454730_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-05-20",
+      "items": "1.01,9.01",
+      "acc": "0001144204-16-103935",
+      "doc": "v440601_8-k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-04-26",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001144204-16-096344",
+      "doc": "v437946_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-07-29",
+      "items": "1.01,9.01",
+      "acc": "0001144204-15-044908",
+      "doc": "v416579_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-06-29",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001144204-15-039806",
+      "doc": "v414387_8-k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-06-23",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001144204-15-038738",
+      "doc": "v413906_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-05-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-15-033282",
+      "doc": "v411535_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-07-03",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001078782-14-001194",
+      "doc": "f8k070214_8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2014-06-20",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001078782-14-001131",
+      "doc": "f8k061914_8k.htm",
+      "desc": "FORM 8-K CURRENT REPORT JUNE 17, 2014"
+    },
+    {
+      "date": "2014-02-10",
+      "items": "1.01,9.01",
+      "acc": "0001193125-14-041216",
+      "doc": "d673198d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-10-18",
+      "items": "1.01,9.01",
+      "acc": "0001078782-13-002063",
+      "doc": "f8k101813_8k.htm",
+      "desc": "FORM 8-K CURRENT REPORT"
+    },
+    {
+      "date": "2013-01-24",
+      "items": "2.03,3.02,5.02,5.03,5.07,8.01,9.01",
+      "acc": "0001078782-13-000184",
+      "doc": "f8k012413_8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2012-11-13",
+      "items": "1.01",
+      "acc": "0001078782-12-002800",
+      "doc": "f8k111312_8k.htm",
+      "desc": "FORM 8-K CURRENT REPORT"
+    },
+    {
+      "date": "2012-05-08",
+      "items": "1.01,8.01",
+      "acc": "0001078782-12-001232",
+      "doc": "currentreport_8k.htm",
+      "desc": "FORM 8-K CURRENT REPORT"
+    },
+    {
+      "date": "2012-04-16",
+      "items": "1.01,8.01",
+      "acc": "0001078782-12-001050",
+      "doc": "currentreport_8k.htm",
+      "desc": "FORM 8-K CURRENT REPORT APRIL 10 2012"
+    },
+    {
+      "date": "2012-03-08",
+      "items": "1.01",
+      "acc": "0001078782-12-000660",
+      "doc": "f8k030712_8k.htm",
+      "desc": "FORM 8-K CURRENT REPORT"
+    },
+    {
+      "date": "2011-02-01",
+      "items": "1.01",
+      "acc": "0001078782-11-000270",
+      "doc": "ring8k020111.htm",
+      "desc": "FORM 8K CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2015-03-31",
+      10000000,
+      2850125,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-30",
+      40900000,
+      5767566,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      40900000,
+      3118234,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-31",
+      50900000,
+      3811166,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      0,
+      8328712,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      0,
+      2249007,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2015-05",
+      5.27,
+      6.972,
+      0.5748,
+      116.0
+    ],
+    [
+      "2015-06",
+      6.48,
+      6.828,
+      0.5836,
+      117.1
+    ],
+    [
+      "2015-07",
+      14.38,
+      6.191,
+      0.595,
+      122.2
+    ],
+    [
+      "2015-08",
+      75.87,
+      4.532,
+      0.6006,
+      136.4
+    ],
+    [
+      "2015-09",
+      80.63,
+      4.489,
+      0.6114,
+      136.8
+    ],
+    [
+      "2015-10",
+      56.08,
+      4.838,
+      0.5837,
+      133.7
+    ],
+    [
+      "2015-11",
+      11.28,
+      6.077,
+      0.4642,
+      123.1
+    ],
+    [
+      "2015-12",
+      12.78,
+      5.903,
+      0.4439,
+      124.5
+    ],
+    [
+      "2016-01",
+      92.88,
+      4.177,
+      0.5634,
+      139.6
+    ],
+    [
+      "2016-02",
+      127.98,
+      3.771,
+      0.5756,
+      143.5
+    ],
+    [
+      "2016-03",
+      126.93,
+      3.842,
+      0.596,
+      142.8
+    ],
+    [
+      "2016-04",
+      136.66,
+      3.883,
+      0.6447,
+      142.4
+    ],
+    [
+      "2016-05",
+      132.16,
+      3.982,
+      0.6676,
+      141.5
+    ],
+    [
+      "2016-06",
+      114.08,
+      4.188,
+      0.6663,
+      139.5
+    ],
+    [
+      "2016-07",
+      121.1,
+      4.071,
+      0.6518,
+      140.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

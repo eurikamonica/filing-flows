@@ -1,0 +1,762 @@
+{
+  "cik": 1888447,
+  "ticker": "EE",
+  "name": "Excelerate Energy, Inc.",
+  "sector": "utilities",
+  "industry": "Natural Gas Distribution",
+  "sic": "4924",
+  "sic_description": "Natural Gas Distribution",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T09:09:19+00:00",
+  "price": 31.52,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.38017,
+  "snapshot": {
+    "total_debt": 926145000,
+    "current_debt": 23994000,
+    "cash": 342449000,
+    "finance_leases": 158182000,
+    "operating_leases": 152157000,
+    "equity": 2272049000,
+    "assets": 4163041000,
+    "liabilities": 1890992000,
+    "assets_current": 595264000,
+    "liabilities_current": 330774000,
+    "retained_earnings": 121750000,
+    "interest_paid": 106068000,
+    "operating_income": 320450000,
+    "pretax_income": 225874000,
+    "da": 127838000,
+    "ocf": 393505000,
+    "revenue": 1471321000,
+    "debt_repaid": 23836000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 24240000,
+      "y2": 25081000,
+      "y3": 25999000,
+      "y4": 26816000,
+      "y5": 812375000,
+      "after5": 37125000
+    },
+    "shares": 32668483,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 926145000,
+    "cash_and_investments": 342449000.0,
+    "net_debt": 583696000.0,
+    "ebitda": 448288000,
+    "ebit": 320450000,
+    "interest_expense": null,
+    "leverage": 2.06596,
+    "net_leverage": 1.302056,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 4.709931,
+    "fcf": 393505000.0,
+    "fcf_to_debt": 0.424885,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 342449000.0,
+    "due_12m": 24240000,
+    "due_24m": 49321000,
+    "liquidity_to_due12": 14.127434,
+    "liquidity_to_due24": 6.94327,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 1.051346,
+    "market_cap": 1029710584.16,
+    "debt_to_ev": 0.574031,
+    "convertibles": null,
+    "implied": {
+      "dd": 4.35581,
+      "pd_1y": 7e-06,
+      "spread_5y_bps": 26.423136,
+      "asset_vol": 0.263805,
+      "calibrated_5y_bps": 137.998912,
+      "rating_band": "BBB"
+    },
+    "market_rate_5y": 0.0629,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 3.5,
+        "unit": "x",
+        "actual": 2.06596,
+        "cushion": 0.409726,
+        "agreement": "Fifth Amendment To Amended And Restated Senior Secured Credit Agreement",
+        "dated": "2023-03-17",
+        "text": "As of the last day of any fiscal quarter, commencing with the fiscal quarter ending on June 30, 2023, the Borrower shall not permit the Consolidated Total Leverage Ratio for the Test Period ending on such date to be greater than 3.50:1.00;"
+      },
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 2.5,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Fifth Amendment To Amended And Restated Senior Secured Credit Agreement",
+        "dated": "2023-03-17",
+        "text": "As of the last day of any fiscal quarter, commencing with the fiscal quarter ending on June 30, 2023, the Borrower shall not permit the Consolidated Interest Coverage Ratio for the Test Period ending on such date to be less than 2.50:1.00."
+      }
+    ],
+    "cushion_score": 82
+  },
+  "instruments": [
+    {
+      "name": "Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 800000000.0,
+      "floating": false
+    },
+    {
+      "name": "Experience Financing",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 92813000.0,
+      "rate_now": 0.071,
+      "floating": false
+    },
+    {
+      "name": "Bank Loans",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 46804000.0,
+      "rate_now": 0.08,
+      "floating": false
+    },
+    {
+      "name": "Ee Revolver",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": true
+    },
+    {
+      "name": "Senior Secured Revolving Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity_max": 350000000.0,
+      "fee_min": 0.00375,
+      "fee_max": 0.005,
+      "floating": true
+    },
+    {
+      "name": "Experience Financing Agreement",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.034,
+      "reference": "Three Month London Interbank Offered Rate Sofr",
+      "floating": true
+    },
+    {
+      "name": "Two Thousand Seventeen Bank Loans",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.0285,
+      "reference": "Three Month London Interbank Offered Rate Sofr",
+      "floating": true
+    },
+    {
+      "name": "Term Loan Facility",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "rate_now": 0.073,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-02-27",
+      "agreement_kind": "amendment",
+      "dated": "2023-03-17",
+      "title": "Seventh Amendment To Amended And Restated Senior Secured Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1888447/000119312526078407/ee-ex10_36.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-11-06",
+      "agreement_kind": "amendment",
+      "dated": "2023-03-17",
+      "title": "Sixth Amendment To Amended And Restated Senior Secured Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1888447/000119312525269776/ee-ex10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-05-08",
+      "agreement_kind": "amendment",
+      "dated": "2023-03-17",
+      "size": 350000000.0,
+      "title": "Fifth Amendment To Amended And Restated Senior Secured Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "maturity": "2029-03-17",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "As of the last day of any fiscal quarter, commencing with the fiscal quarter ending on June 30, 2023, the Borrower shall not permit the Consolidated Total Leverage Ratio for the Test Period ending on such date to be greater than 3.50:1.00;"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "As of the last day of any fiscal quarter, commencing with the fiscal quarter ending on June 30, 2023, the Borrower shall not permit the Consolidated Interest Coverage Ratio for the Test Period ending on such date to be less than 2.50:1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 2.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "this Section 6.5 at the time thereof; (g) Investments so long as, (i) no Default has occurred and is continuing or would immediately result therefrom and (ii) immediately before and immediately after giving pro forma effect to such Investment, (A) Liquidity is not less than $100,000,000 and (B) the Consolidated Total Leverage Ratio does not exceed 2.75:1.00;"
+        },
+        {
+          "type": "liquidity",
+          "limit": 100000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "by the Summit ) would otherwise be permitted under this Section 6.5 at the time thereof; (g) Investments so long as, (i) no Default has occurred and is continuing or would immediately result therefrom and (ii) immediately before and immediately after giving pro forma effect to such Investment, (A) Liquidity is not less than $100,000,000 and (B) the Consolidated Total Leverage Ratio does not exceed 2.75:1.00;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1888447/000095017025067156/ee-ex10_3.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-05-05",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-25-112768",
+      "doc": "d38946d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-21",
+      "items": "1.01,2.02,2.03,8.01,9.01",
+      "acc": "0001193125-25-086439",
+      "doc": "d924399d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-02",
+      "items": "1.01,9.01",
+      "acc": "0001193125-25-070710",
+      "doc": "d945959d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-03-27",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0000950170-25-045717",
+      "doc": "ee-20250326.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-05",
+      "items": "1.01,9.01",
+      "acc": "0000950170-24-042254",
+      "doc": "ee-20240404.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-03-23",
+      "items": "1.01,9.01",
+      "acc": "0001193125-23-078041",
+      "doc": "d680842d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-03-20",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001193125-23-074904",
+      "doc": "d486751d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-10-05",
+      "items": "1.01,7.01,9.01",
+      "acc": "0000950170-22-019307",
+      "doc": "ee-20221004.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-04-18",
+      "items": "1.01,2.03,3.02,3.03,5.02,5.03,9.01",
+      "acc": "0001140361-22-014862",
+      "doc": "ny20000051x20_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2022-03-31",
+      229668000,
+      82905000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      223844000,
+      386337000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      219965000,
+      345682000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      209728000,
+      530425000,
+      17031000,
+      null,
+      null,
+      0.08121
+    ],
+    [
+      "2023-06-30",
+      449817000,
+      462001000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      440858000,
+      602870000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      366910000,
+      578882000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      356426000,
+      609082000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      345654000,
+      608447000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      322631000,
+      619469000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      946238000,
+      425998000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      942049000,
+      462618000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      932022000,
+      540143000,
+      400300000,
+      403626000,
+      282940000,
+      0.4295
+    ],
+    [
+      "2026-06-30",
+      926145000,
+      342449000,
+      null,
+      448288000,
+      320450000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2023-08",
+      25.11,
+      4.27,
+      0.3855,
+      138.8
+    ],
+    [
+      "2023-09",
+      21.81,
+      4.317,
+      0.3734,
+      138.4
+    ],
+    [
+      "2023-10",
+      16.97,
+      4.418,
+      0.3539,
+      137.4
+    ],
+    [
+      "2023-11",
+      17.4,
+      4.52,
+      0.3612,
+      136.5
+    ],
+    [
+      "2023-12",
+      17.93,
+      4.488,
+      0.3524,
+      136.8
+    ],
+    [
+      "2024-01",
+      14.16,
+      4.654,
+      0.3408,
+      135.3
+    ],
+    [
+      "2024-02",
+      16.19,
+      4.457,
+      0.3447,
+      137.1
+    ],
+    [
+      "2024-03",
+      6.54,
+      5.137,
+      0.3128,
+      131.0
+    ],
+    [
+      "2024-04",
+      5.11,
+      5.31,
+      0.309,
+      129.5
+    ],
+    [
+      "2024-05",
+      6.62,
+      5.292,
+      0.3289,
+      129.7
+    ],
+    [
+      "2024-06",
+      7.29,
+      5.262,
+      0.3337,
+      130.0
+    ],
+    [
+      "2024-07",
+      9.23,
+      5.17,
+      0.3428,
+      130.7
+    ],
+    [
+      "2024-08",
+      11.34,
+      5.072,
+      0.3468,
+      131.6
+    ],
+    [
+      "2024-09",
+      12.13,
+      5.18,
+      0.3582,
+      130.7
+    ],
+    [
+      "2024-10",
+      7.71,
+      5.464,
+      0.3455,
+      128.2
+    ],
+    [
+      "2024-11",
+      0.06,
+      8.861,
+      0.3536,
+      102.4
+    ],
+    [
+      "2024-12",
+      0.05,
+      8.967,
+      0.3471,
+      101.7
+    ],
+    [
+      "2025-01",
+      0.09,
+      8.645,
+      0.3586,
+      103.8
+    ],
+    [
+      "2025-02",
+      0.04,
+      9.127,
+      0.3427,
+      100.6
+    ],
+    [
+      "2025-03",
+      0.1,
+      8.584,
+      0.355,
+      104.3
+    ],
+    [
+      "2025-04",
+      0.29,
+      8.057,
+      0.3719,
+      108.0
+    ],
+    [
+      "2025-05",
+      7.94,
+      5.602,
+      0.3667,
+      127.1
+    ],
+    [
+      "2025-06",
+      11.2,
+      5.404,
+      0.3845,
+      128.7
+    ],
+    [
+      "2025-07",
+      19.15,
+      4.917,
+      0.3958,
+      133.0
+    ],
+    [
+      "2025-08",
+      48.39,
+      3.694,
+      0.3918,
+      144.2
+    ],
+    [
+      "2025-09",
+      40.61,
+      3.874,
+      0.3776,
+      142.5
+    ],
+    [
+      "2025-10",
+      39.53,
+      3.905,
+      0.3769,
+      142.2
+    ],
+    [
+      "2025-11",
+      25.22,
+      4.39,
+      0.3573,
+      137.7
+    ],
+    [
+      "2025-12",
+      26.0,
+      4.379,
+      0.3573,
+      137.8
+    ],
+    [
+      "2026-01",
+      21.49,
+      4.672,
+      0.3627,
+      135.1
+    ],
+    [
+      "2026-02",
+      23.81,
+      4.631,
+      0.3732,
+      135.5
+    ],
+    [
+      "2026-03",
+      34.67,
+      4.219,
+      0.3884,
+      139.3
+    ],
+    [
+      "2026-04",
+      25.52,
+      4.471,
+      0.3685,
+      136.9
+    ],
+    [
+      "2026-05",
+      22.18,
+      4.605,
+      0.3669,
+      135.7
+    ],
+    [
+      "2026-06",
+      15.84,
+      4.898,
+      0.359,
+      133.1
+    ],
+    [
+      "2026-07",
+      6.38,
+      5.517,
+      0.3243,
+      127.8
+    ],
+    [
+      "2026-08",
+      12.8,
+      5.033,
+      0.3522,
+      131.9
+    ],
+    [
+      "2026-09",
+      20.95,
+      4.564,
+      0.371,
+      136.1
+    ],
+    [
+      "2026-10",
+      25.81,
+      4.387,
+      0.3802,
+      137.7
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "cik": 2081628,
+  "ticker": null,
+  "name": "Rithm Perpetual Life Residential Trust",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-19T02:49:44+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 7998000,
+    "equity": 139150000,
+    "assets": 616028000,
+    "liabilities": 476878000,
+    "retained_earnings": 1451000,
+    "shares": 100,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 7998000.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 7998000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 934152000.0,
+    "floating_share": null,
+    "plus100bp_interest": 9341520.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "face": 467076000.0,
+      "carrying": 467076000.0,
+      "fair_value": 467076000.0,
+      "floating": false
+    },
+    {
+      "name": "TRS-W Repurchase Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "face": 282794000.0,
+      "carrying": 282794000.0,
+      "spread": 0.016,
+      "rate_now": 0.052,
+      "floating": true
+    },
+    {
+      "name": "RTL-C Repurchase Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "face": 184282000.0,
+      "carrying": 184282000.0,
+      "spread": 0.023,
+      "rate_now": 0.059,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

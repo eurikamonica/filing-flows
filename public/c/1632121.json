@@ -1,0 +1,459 @@
+{
+  "cik": 1632121,
+  "ticker": "BLNC",
+  "name": "Balance Labs, Inc.",
+  "sector": "industrials",
+  "industry": "Services-Management Consulting Services",
+  "sic": "8742",
+  "sic_description": "Services-Management Consulting Services",
+  "generated_at": "2026-10-24T14:46:10+00:00",
+  "fetched_at": "2026-10-18T19:07:58+00:00",
+  "price": 1.55,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.258404,
+  "snapshot": {
+    "total_debt": 25000,
+    "cash": 358975,
+    "investments": 38531,
+    "convertible": 500000,
+    "convertible_current": 25000,
+    "equity": -2773414,
+    "assets": 126771,
+    "liabilities": 2900185,
+    "assets_current": 126771,
+    "liabilities_current": 2900185,
+    "retained_earnings": -37710684,
+    "interest_expense": 116314,
+    "operating_income": -13936153,
+    "pretax_income": -31768325,
+    "net_income": -31674815,
+    "da": 0,
+    "ocf": -440960,
+    "revenue": 6000,
+    "debt_issued": 84800,
+    "conversion_price": 0.25,
+    "shares": 46852319,
+    "balance_date": "2025-12-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "convertible": "ConvertibleDebt",
+    "convertible_current": "ConvertibleNotesPayableCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (fiscal year)",
+    "debt_issued": "ProceedsFromConvertibleDebt (fiscal year)",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1"
+  },
+  "analysis": {
+    "total_debt": 25000,
+    "cash_and_investments": 397506,
+    "net_debt": -372506,
+    "ebitda": -13936153.0,
+    "ebit": -13936153,
+    "interest_expense": 116314,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -119.814923,
+    "ebitda_coverage": -119.814923,
+    "fcf": -440960.0,
+    "fcf_to_debt": -17.6384,
+    "effective_rate": 4.65256,
+    "revolver_available": null,
+    "liquidity": 397506.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -790.415313,
+    "market_cap": 72621094.45,
+    "debt_to_ev": 0.000346,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Convertible Debenture",
+          "face": 500000.0,
+          "carrying": 500000.0,
+          "coupon": 0.1,
+          "conv_price": 0.25,
+          "maturity": null,
+          "moneyness": 6.2,
+          "in_the_money": true,
+          "shares": 2000000.0
+        }
+      ],
+      "total_face": 500000.0,
+      "in_the_money_face": 500000.0,
+      "in_the_money_carrying": 500000.0,
+      "shares_if_converted": 2000000.0,
+      "coupon_saved": 50000.0,
+      "dilution": 0.042687
+    },
+    "implied": {
+      "dd": 33.592356,
+      "pd_1y": 0.0,
+      "spread_5y_bps": -0.0,
+      "asset_vol": 0.258361,
+      "calibrated_5y_bps": 68.149154,
+      "rating_band": "A"
+    },
+    "if_converted": {
+      "total_debt": 0.0,
+      "shares_added": 2000000.0,
+      "dilution": 0.042687,
+      "leverage": null,
+      "interest_coverage": -210.15401,
+      "implied_5y_bps": 0.0,
+      "dd": null
+    },
+    "covenants": [],
+    "cushion_score": 52
+  },
+  "instruments": [
+    {
+      "name": "Convertible Debenture",
+      "kind": "convertible",
+      "as_of": "2025-11-05",
+      "coupon": 0.1,
+      "conv_price": 0.25,
+      "face": 500000.0,
+      "floating": false
+    },
+    {
+      "name": "Chase Mortgage Inc",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 25000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2022-02-25",
+      "items": "1.01,9.01",
+      "acc": "0001493152-22-005514",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2016-04-08",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001493152-16-008736",
+      "doc": "form8-k.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-03-31",
+      494330,
+      189363,
+      224969,
+      null,
+      null,
+      0.4551
+    ],
+    [
+      "2024-06-30",
+      497165,
+      171476,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      525000,
+      87010,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      525000,
+      77232,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      525000,
+      53140,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      25000,
+      null,
+      205900,
+      -13105607,
+      -13105607,
+      8.236
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2024-05",
+      7.09,
+      6.351,
+      0.5636,
+      120.9
+    ],
+    [
+      "2024-06",
+      111.4,
+      4.127,
+      0.7405,
+      140.1
+    ],
+    [
+      "2024-07",
+      113.27,
+      4.123,
+      0.7405,
+      140.1
+    ],
+    [
+      "2024-08",
+      190.66,
+      3.534,
+      0.7791,
+      145.7
+    ],
+    [
+      "2024-09",
+      194.95,
+      3.529,
+      0.7791,
+      145.8
+    ],
+    [
+      "2024-10",
+      191.46,
+      3.533,
+      0.7791,
+      145.7
+    ],
+    [
+      "2024-11",
+      190.65,
+      3.539,
+      0.7792,
+      145.7
+    ],
+    [
+      "2024-12",
+      187.78,
+      3.611,
+      0.794,
+      145.0
+    ],
+    [
+      "2025-01",
+      185.24,
+      3.625,
+      0.7913,
+      144.8
+    ],
+    [
+      "2025-02",
+      186.01,
+      3.624,
+      0.7913,
+      144.9
+    ],
+    [
+      "2025-03",
+      181.92,
+      3.647,
+      0.7871,
+      144.6
+    ],
+    [
+      "2025-04",
+      210.32,
+      3.453,
+      0.7943,
+      146.5
+    ],
+    [
+      "2025-05",
+      33.1,
+      5.103,
+      0.5822,
+      131.3
+    ],
+    [
+      "2025-06",
+      17.78,
+      5.45,
+      0.499,
+      128.3
+    ],
+    [
+      "2025-07",
+      17.53,
+      5.452,
+      0.499,
+      128.3
+    ],
+    [
+      "2025-08",
+      1814.56,
+      0.275,
+      2.9794,
+      180.9
+    ],
+    [
+      "2025-09",
+      1813.06,
+      0.402,
+      3.0145,
+      179.3
+    ],
+    [
+      "2025-10",
+      1817.15,
+      0.216,
+      3.1752,
+      181.6
+    ],
+    [
+      "2025-11",
+      1813.44,
+      0.387,
+      3.1881,
+      179.5
+    ],
+    [
+      "2025-12",
+      1813.48,
+      0.387,
+      3.1865,
+      179.5
+    ],
+    [
+      "2026-01",
+      1813.49,
+      0.387,
+      3.1865,
+      179.5
+    ],
+    [
+      "2026-02",
+      1813.49,
+      0.387,
+      3.1865,
+      179.5
+    ],
+    [
+      "2026-03",
+      1813.37,
+      0.388,
+      3.1865,
+      179.5
+    ],
+    [
+      "2026-04",
+      1770.72,
+      1.401,
+      3.1827,
+      167.9
+    ],
+    [
+      "2026-05",
+      1770.59,
+      1.402,
+      3.1805,
+      167.8
+    ],
+    [
+      "2026-06",
+      1770.43,
+      1.402,
+      3.1548,
+      167.8
+    ],
+    [
+      "2026-07",
+      1770.27,
+      1.403,
+      3.1548,
+      167.8
+    ],
+    [
+      "2026-08",
+      13.2,
+      7.216,
+      1.1202,
+      114.2
+    ],
+    [
+      "2026-09",
+      2.2,
+      8.297,
+      0.9911,
+      106.3
+    ],
+    [
+      "2026-10",
+      -0.0,
+      33.592,
+      0.2584,
+      68.1
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

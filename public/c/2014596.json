@@ -1,0 +1,317 @@
+{
+  "cik": 2014596,
+  "ticker": "CON",
+  "name": "Concentra Group Holdings Parent, Inc.",
+  "sector": "health",
+  "industry": "Services-Specialty Outpatient Facilities, NEC",
+  "sic": "8093",
+  "sic_description": "Services-Specialty Outpatient Facilities, NEC",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T07:25:29+00:00",
+  "price": 39.97,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.254151,
+  "snapshot": {
+    "total_debt": 1573623000,
+    "current_debt": 12412000,
+    "cash": 158038000,
+    "equity": 477095000,
+    "assets": 3010275000,
+    "liabilities": 2503851000,
+    "assets_current": 506483000,
+    "liabilities_current": 367939000,
+    "retained_earnings": 244152000,
+    "interest_paid": 104738000,
+    "operating_income": 374809000,
+    "pretax_income": 267534000,
+    "net_income": 198731000,
+    "da": 79747000,
+    "ocf": 335548000,
+    "capex": 68130000,
+    "revenue": 2287465000,
+    "shares": 127517736,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtAndCapitalLeaseObligationsCurrent+LongTermDebtAndCapitalLeaseObligations",
+    "current_debt": "LongTermDebtAndCapitalLeaseObligationsCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 1573623000,
+    "cash_and_investments": 158038000.0,
+    "net_debt": 1415585000.0,
+    "ebitda": 454556000,
+    "ebit": 374809000,
+    "interest_expense": null,
+    "leverage": 3.46189,
+    "net_leverage": 3.114215,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 4.203689,
+    "fcf": 267418000,
+    "fcf_to_debt": 0.169938,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 158038000.0,
+    "due_12m": 12412000,
+    "due_24m": null,
+    "liquidity_to_due12": 12.732678,
+    "liquidity_to_due24": null,
+    "floating_debt": 957925000.0,
+    "floating_share": 0.608739,
+    "plus100bp_interest": 9579250.0,
+    "plus100bp_share_of_ebit": 0.025558,
+    "altman_z": 2.560916,
+    "market_cap": 5096883907.92,
+    "debt_to_ev": 0.241632,
+    "convertibles": null,
+    "implied": {
+      "dd": 9.12875,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.012961,
+      "asset_vol": 0.22124,
+      "calibrated_5y_bps": 100.571898,
+      "rating_band": "BBB"
+    },
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 6.5,
+        "unit": "x",
+        "actual": 3.114215,
+        "cushion": 0.52089,
+        "agreement": "agreement",
+        "dated": "2025-03-03",
+        "text": "On any Compliance Date, the Borrower will not permit the Total Net Leverage Ratio as of such Compliance Date to be greater than 6.50 to 1.00 (the “Financial Covenant”)."
+      }
+    ],
+    "cushion_score": 84
+  },
+  "instruments": [
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 938125000.0,
+      "floating": true
+    },
+    {
+      "name": "6.875% senior notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.06875,
+      "carrying": 650000000.0,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": true
+    },
+    {
+      "name": "Concentra Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "available": 430200000.0,
+      "drawn": 19800000.0,
+      "floating": true
+    },
+    {
+      "name": "Concentra Term Loan",
+      "kind": "revolver",
+      "as_of": "2025-03-31",
+      "face": 950000000.0,
+      "spread": 0.02,
+      "spread_min": 0.0175,
+      "spread_max": 0.02,
+      "reference": "Alternate Base Rate",
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-03-03",
+      "agreement_kind": "amendment",
+      "dated": "2025-03-03",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 6.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "On any Compliance Date, the Borrower will not permit the Total Net Leverage Ratio as of such Compliance Date to be greater than 6.50 to 1.00 (the “Financial Covenant”)."
+        },
+        {
+          "type": "leverage",
+          "limit": 4.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“Asset Sale Percentage” means 100%; provided that the Asset Sale Percentage with respect to any Net Proceeds shall instead be (x) 50% in the event that the Total Net Leverage Ratio, determined on a Pro Forma Basis as of the most recent Test Period, is less than or equal to 4.50 to 1.00 and greater than 4.00 to 1.00 and (y) 0% in the event that the Total Net Leverage Ratio, determined on a Pro Forma Basis as of the mo"
+        },
+        {
+          "type": "leverage",
+          "limit": 5.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Commitments in respect of Revolving Commitments in effect on the Closing Date)) under such Additional Credit Extension Amendment and (y) any Specified Transactions consummated in connection therewith, (1) if such Incremental Commitments rank pari passu in right of security with the Obligations, the First Lien Net Leverage Ratio as of the last day of the most recently ended Test Period for which financial statements a"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "ts are internally available does not exceed 6.00:1.00, or (3) if such Incremental Commitments are unsecured, either (x) the Total Net Leverage Ratio as of the last day of the most recently ended Test Period for which financial statements are internally available does not exceed 6.50:1.00 or (y) the Fixed Charge Coverage Ratio as of the last day of the most recently ended Test Period for which financial statements are"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2014596/000201459625000009/amendment1creditagreemen.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-08-01",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-07-26",
+      "size": 850000000.0,
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 6.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "On any Compliance Date, the Borrower will not permit the Total Net Leverage Ratio as of such Compliance Date to be greater than 6.50 to 1.00 (the “ Financial Covenant ”)."
+        },
+        {
+          "type": "leverage",
+          "limit": 4.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Asset Sale Percentage ” means 100%; provided that the Asset Sale Percentage with respect to any Net Proceeds shall instead be (x) 50% in the event that the Total Net Leverage Ratio, determined on a Pro Forma Basis as of the most recent Test Period, is less than or equal to 4.50 to 1.00 and greater than 4.00 to 1.00 and (y) 0% in the event that the Total Net Leverage Ratio, determined on a Pro Forma Basis as of the"
+        },
+        {
+          "type": "leverage",
+          "limit": 5.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Commitments in respect of Revolving Commitments in effect on the Closing Date)) under such Additional Credit Extension Amendment and (y) any Specified Transactions consummated in connection therewith, (1) if such Incremental Commitments rank pari passu in right of security with the Obligations, the First Lien Net Leverage Ratio as of the last day of the most recently ended Test Period for which financial statements a"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "ts are internally available does not exceed 6.00:1.00, or (3) if such Incremental Commitments are unsecured, either (x) the Total Net Leverage Ratio as of the last day of the most recently ended Test Period for which financial statements are internally available does not exceed 6.50:1.00 or (y) the Fixed Charge Coverage Ratio as of the last day of the most recently ended Test Period for which financial statements are"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2014596/000110465924084490/tm248173d18_ex10-5.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-08-27",
+      "items": "1.01,9.01",
+      "acc": "0002014596-26-000060",
+      "doc": "cghp-20260821.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-21",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-25-036598",
+      "doc": "tm2512733d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-03-03",
+      "items": "1.01,2.01,2.02,2.03,8.01,9.01",
+      "acc": "0002014596-25-000009",
+      "doc": "cghp-20250301.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-01-23",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001104659-25-005359",
+      "doc": "tm254146d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-08-01",
+      "items": "1.01,2.03,5.02,5.03,9.01",
+      "acc": "0001104659-24-084490",
+      "doc": "tm248173d18_8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

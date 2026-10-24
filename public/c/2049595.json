@@ -1,0 +1,381 @@
+{
+  "cik": 2049595,
+  "ticker": null,
+  "name": "BlackRock Monticello Debt Real Estate Investment Trust",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T14:56:54+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 638206000,
+    "cash": 5628000,
+    "debt_fair_value": 663511000,
+    "equity": 197836000,
+    "assets": 915211000,
+    "liabilities": 710767000,
+    "retained_earnings": 7686000,
+    "interest_expense": 23091000,
+    "interest_paid": 21347000,
+    "net_income": 7784000,
+    "ocf": 20112000,
+    "revenue": 51175000,
+    "debt_issued": 806341000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 0,
+      "rest_of_year": 0,
+      "y2": 219930000,
+      "y3": 365831000,
+      "y4": 52445000
+    },
+    "shares": 7481672,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "debt_fair_value": "DebtInstrumentFairValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestAndDebtExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 638206000,
+    "cash_and_investments": 5628000.0,
+    "net_debt": 632578000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": 23091000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.942146,
+    "fcf": 20112000.0,
+    "fcf_to_debt": 0.031513,
+    "effective_rate": 0.036181,
+    "revolver_available": 48803000.0,
+    "liquidity": 54431000.0,
+    "due_12m": 0,
+    "due_24m": 219930000,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": 0.247492,
+    "floating_debt": 638206000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 6382060.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": 2841251.990702,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 4.5,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "To Credit Agreement",
+        "dated": "2025-07-30",
+        "text": "(iii) Commencing with the fiscal quarter ending December 31, 2025, Guarantor shall maintain, as of the last day of any fiscal quarter following the Closing Date, a Leverage Ratio no greater than 4.50 to 1.00."
+      },
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 1.25,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "To Credit Agreement",
+        "dated": "2025-07-30",
+        "text": "(iv) Commencing with the fiscal quarter ending December 31, 2025, Guarantor shall maintain an Interest Coverage Ratio of at least 1.25 to 1.00, calculated as of the last day of any fiscal quarter following the Closing Date using the results of the twelve-month period ending on such day;"
+      }
+    ],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Natixis Repurchase Agreement Customers Bank Credit Agreement CIBC Credit Agreement Nomura Repurchase Agreement And Connect One Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "face": 1310000000.0,
+      "carrying": 638206000.0,
+      "fair_value": 638206000.0,
+      "floating": false
+    },
+    {
+      "name": "Natixis Repurchase Agreement Customers Bank Credit Agreement And CIBC Bank USA",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "face": 610000000.0,
+      "carrying": 416493000.0,
+      "fair_value": 416493000.0,
+      "floating": false
+    },
+    {
+      "name": "Customers Bank Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "coupon": 0.02,
+      "face": 360000000.0,
+      "carrying": 311197000.0,
+      "fair_value": 311197000.0,
+      "maturity": "2028-07-30",
+      "capacity": 360000000.0,
+      "floating": false
+    },
+    {
+      "name": "Natixis Repurchase Agreement",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "coupon": 0.0136,
+      "face": 500000000.0,
+      "carrying": 233596000.0,
+      "fair_value": 233596000.0,
+      "maturity": "2028-06-24",
+      "floating": false
+    },
+    {
+      "name": "CIBC Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "coupon": 0.02,
+      "face": 100000000.0,
+      "carrying": 65446000.0,
+      "fair_value": 65446000.0,
+      "maturity": "2028-10-28",
+      "floating": false
+    },
+    {
+      "name": "JPM Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "coupon": 0.0185,
+      "face": 42075000.0,
+      "carrying": 25305000.0,
+      "fair_value": 25305000.0,
+      "maturity": "2027-05-20",
+      "available": 46800000.0,
+      "spread": 0.0185,
+      "floating": true
+    },
+    {
+      "name": "Nomura Repurchase Agreement",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "coupon": 0.02,
+      "face": 250000.0,
+      "carrying": 16000.0,
+      "fair_value": 16000.0,
+      "maturity": "2029-06-04",
+      "capacity_max": 250000000.0,
+      "spread": 0.0025,
+      "floating": true
+    },
+    {
+      "name": "Connect One Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "coupon": 0.03,
+      "face": 100000.0,
+      "carrying": 11967.0,
+      "fair_value": 11967.0,
+      "maturity": "2029-06-01",
+      "capacity_max": 150000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-05-26",
+      "agreement_kind": "amendment",
+      "dated": "2026-05-21",
+      "title": "First Amendment To Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Daily Simple SOFR",
+        "SOFR"
+      ],
+      "margin_pct": [
+        1.85,
+        1.85
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2049595/000119312526239388/d875428dex101.htm",
+      "all_in_pct": [
+        1.8889,
+        1.8889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-08-07",
+      "agreement_kind": "amendment",
+      "dated": "2025-07-30",
+      "size": 150000000.0,
+      "title": "To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR"
+      ],
+      "margin_pct": [
+        2.0,
+        2.5
+      ],
+      "fee_pct": 0.25,
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "(iii) Commencing with the fiscal quarter ending December 31, 2025, Guarantor shall maintain, as of the last day of any fiscal quarter following the Closing Date, a Leverage Ratio no greater than 4.50 to 1.00."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "(iv) Commencing with the fiscal quarter ending December 31, 2025, Guarantor shall maintain an Interest Coverage Ratio of at least 1.25 to 1.00, calculated as of the last day of any fiscal quarter following the Closing Date using the results of the twelve-month period ending on such day;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2049595/000119312526339198/ck0002049595-ex10_6.htm",
+      "all_in_pct": [
+        2.0389,
+        2.5389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-30",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001193125-26-290507",
+      "doc": "d116611d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-05",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-26-259869",
+      "doc": "d82690d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-26-239388",
+      "doc": "d875428d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-11-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-25-284645",
+      "doc": "d19253d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-11-03",
+      "items": "1.01,2.03",
+      "acc": "0001193125-25-262822",
+      "doc": "d42819d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-17",
+      "items": "1.01,9.01",
+      "acc": "0001193125-25-242544",
+      "doc": "d55806d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-05",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001193125-25-173584",
+      "doc": "d18508d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-07",
+      "items": "1.01,3.02,5.03,8.01,9.01",
+      "acc": "0001193125-25-156175",
+      "doc": "d63473d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-05-29",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001193125-25-129612",
+      "doc": "d11879d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-31",
+      575078000,
+      3171000,
+      15282000,
+      null,
+      null,
+      0.02657
+    ],
+    [
+      "2026-06-30",
+      638206000,
+      5628000,
+      23091000,
+      null,
+      null,
+      0.03618
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

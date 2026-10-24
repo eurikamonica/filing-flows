@@ -1,0 +1,207 @@
+{
+  "cik": 2104052,
+  "ticker": "NVRI",
+  "name": "Enviri Corp",
+  "sector": "utilities",
+  "industry": "Refuse Systems",
+  "sic": "4953",
+  "sic_description": "Refuse Systems",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T10:58:11+00:00",
+  "price": 19.15,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.400651,
+  "snapshot": {
+    "total_debt": 392662000,
+    "current_debt": 8548000,
+    "cash": 253427000,
+    "short_term_borrowings": 79000,
+    "debt_fair_value": 391300000,
+    "equity": 639081000,
+    "assets": 1722786000,
+    "liabilities": 1040099000,
+    "assets_current": 790869000,
+    "liabilities_current": 551198000,
+    "retained_earnings": 1133668000,
+    "shares": 28190119,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "DebtLongtermAndShorttermCombinedAmount",
+    "current_debt": "LongTermDebtCurrent+ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "debt_fair_value": "LongTermDebtFairValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 392662000,
+    "cash_and_investments": 253427000.0,
+    "net_debt": 139235000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 152000000.0,
+    "liquidity": 405427000.0,
+    "due_12m": 8548000,
+    "due_24m": null,
+    "liquidity_to_due12": 47.429457,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 539840778.85,
+    "debt_to_ev": 0.57823,
+    "convertibles": null,
+    "implied": {
+      "dd": 4.381114,
+      "pd_1y": 6e-06,
+      "spread_5y_bps": 29.759359,
+      "asset_vol": 0.295622,
+      "calibrated_5y_bps": 137.767646,
+      "rating_band": "BBB"
+    },
+    "covenants": [],
+    "cushion_score": 88
+  },
+  "instruments": [
+    {
+      "name": "Term Loan Facility",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "face": 300000000.0,
+      "floating": true
+    },
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-01",
+      "capacity": 152000000.0,
+      "floating": false
+    },
+    {
+      "name": "5.75% Senior Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0575,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-06-01",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-06-01",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/2104052/000119312526251752/d258410dex102.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-01",
+      "items": "1.01,2.03,3.03,5.01,5.02,5.03,5.05,7.01,9.01",
+      "acc": "0001193125-26-251752",
+      "doc": "d258410d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-31",
+      1592425000,
+      105697000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      392662000,
+      253427000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-06",
+      75.78,
+      3.0,
+      0.4278,
+      151.0
+    ],
+    [
+      "2026-07",
+      61.09,
+      3.154,
+      0.4088,
+      149.4
+    ],
+    [
+      "2026-08",
+      22.61,
+      4.706,
+      0.3925,
+      134.8
+    ],
+    [
+      "2026-09",
+      34.28,
+      4.283,
+      0.4116,
+      138.7
+    ],
+    [
+      "2026-10",
+      29.11,
+      4.409,
+      0.4007,
+      137.5
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,638 @@
+{
+  "cik": 1526113,
+  "ticker": "GNL",
+  "name": "Global Net Lease, Inc.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-24T14:46:10+00:00",
+  "fetched_at": "2026-10-18T11:14:39+00:00",
+  "price": 7.225,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.200953,
+  "snapshot": {
+    "total_debt": 940019000,
+    "cash": 153640000,
+    "operating_leases": 40043000,
+    "revolver_drawn": 472946000,
+    "equity": 1509103000,
+    "assets": 4066088000,
+    "liabilities": 2556985000,
+    "retained_earnings": -2716682000,
+    "interest_expense": 165944000,
+    "operating_income": 182231000,
+    "pretax_income": 5876000,
+    "net_income": -13527000,
+    "da": 172343000,
+    "ocf": 218387000,
+    "revenue": 459727000,
+    "shares": 210930100,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "SeniorNotes",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 940019000,
+    "cash_and_investments": 153640000.0,
+    "net_debt": 786379000.0,
+    "ebitda": 354574000,
+    "ebit": 182231000,
+    "interest_expense": 165944000,
+    "leverage": 2.651122,
+    "net_leverage": 2.217813,
+    "interest_coverage": 1.098148,
+    "ebitda_coverage": 2.136709,
+    "fcf": 218387000.0,
+    "fcf_to_debt": 0.232322,
+    "effective_rate": 0.176533,
+    "revolver_available": 1800000000.0,
+    "liquidity": 1953640000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 797111000.0,
+    "floating_share": 0.847973,
+    "plus100bp_interest": 7971110.0,
+    "plus100bp_share_of_ebit": 0.043742,
+    "altman_z": -0.316822,
+    "market_cap": 1523969972.5,
+    "debt_to_ev": 0.406873,
+    "convertibles": null,
+    "implied": {
+      "dd": 9.45661,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.002441,
+      "asset_vol": 0.155192,
+      "calibrated_5y_bps": 98.409835,
+      "rating_band": "BBB"
+    },
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 2500000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Fourth Amendment To Second Amended And Restated Credit Agreement",
+        "dated": "2022-04-08",
+        "text": "The Borrower will not at any time permit Consolidated Tangible Net Worth to be less than the sum of (i) $2,500,000,000.00, plus (ii) eighty percent (80%) of the sum of any additional Net Offering Proceeds after the Fourth Amendment Date.” 3."
+      }
+    ],
+    "cushion_score": 58
+  },
+  "instruments": [
+    {
+      "name": "August 2025 Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-08-05",
+      "capacity": 1800000000.0,
+      "spread_min": 0.0015,
+      "spread_max": 0.0075,
+      "spread": 0.0,
+      "reference": "Floor Benchmark Rate",
+      "floating": true
+    },
+    {
+      "name": "Mortgage Notes Payable",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "carrying": 1024203000.0,
+      "effective": 0.044,
+      "floating": false
+    },
+    {
+      "name": "Mortgage Notes Payable, Net",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "carrying": 986880000.0,
+      "effective": 0.044,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 940019000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes 3.75 Percent",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0375,
+      "carrying": 500000000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes 4.50 Percent",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.045,
+      "carrying": 500000000.0,
+      "face": 500000000.0,
+      "floating": false
+    },
+    {
+      "name": "Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 472946000.0,
+      "available": 765400000.0,
+      "floating": false
+    },
+    {
+      "name": "Mortgages, Continuing Operations",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "carrying": 1320892000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Mortgages, Net",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "effective": 0.044,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Senior Unsecured Multi-Currency Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "drawn": 324165000.0,
+      "available": 781700000.0,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-05-08",
+      "agreement_kind": "amendment",
+      "dated": "2022-04-08",
+      "title": "Fourth Amendment To Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 2500000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower will not at any time permit Consolidated Tangible Net Worth to be less than the sum of (i) $2,500,000,000.00, plus (ii) eighty percent (80%) of the sum of any additional Net Offering Proceeds after the Fourth Amendment Date.” 3."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1526113/000152611325000014/ex105-keybank_gnlxfourtham.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2019-02-28",
+      "agreement_kind": "credit_agreement",
+      "dated": "2017-07-24",
+      "title": "Letter Agreeemnt Regarding Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1526113/000152611319000006/ex1039keybank_gnl-distribu.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2018-11-07",
+      "agreement_kind": "amendment",
+      "dated": "2017-07-24",
+      "title": "St Amend To Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1526113/000152611318000011/ex101-keybank_gnlxfirstame.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-05-04",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001104659-26-054379",
+      "doc": "tm2613446d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-11-07",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001104659-25-108103",
+      "doc": "tm2530167d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-08-06",
+      "items": "1.01,1.02,2.03,7.01,9.01",
+      "acc": "0001104659-25-074482",
+      "doc": "tm2522631d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-03-13",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001104659-25-023466",
+      "doc": "tm259014d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-02-26",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-25-017138",
+      "doc": "tm257525d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-04-10",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-24-045455",
+      "doc": "tm2411453d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-11-13",
+      "items": "1.01,9.01",
+      "acc": "0001104659-23-116391",
+      "doc": "tm2330318d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-09-12",
+      "items": "1.01,1.02,2.01,2.03,3.02,5.02,5.03,7.01,9.01",
+      "acc": "0001104659-23-100026",
+      "doc": "tm2325830d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-06-05",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001104659-23-067775",
+      "doc": "tm2317757d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-05-26",
+      "items": "1.01,3.03,5.02,9.01",
+      "acc": "0001104659-23-064859",
+      "doc": "tm2316977d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-11-07",
+      "items": "1.01,9.01",
+      "acc": "0001104659-22-115054",
+      "doc": "tm2229749d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-08-05",
+      "items": "1.01,9.01",
+      "acc": "0001104659-22-086755",
+      "doc": "tm2222367d3_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-07-29",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-22-084314",
+      "doc": "tm2221912d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-04-11",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-22-044409",
+      "doc": "tm2212330d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-02-25",
+      "items": "1.01,9.01",
+      "acc": "0001104659-22-027388",
+      "doc": "tm227414d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-11-08",
+      "items": "1.01,9.01",
+      "acc": "0001104659-21-135148",
+      "doc": "tm2132055d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-08-06",
+      "items": "1.01,9.01",
+      "acc": "0001104659-21-101484",
+      "doc": "tm2124260d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-06-04",
+      "items": "1.01,9.01",
+      "acc": "0001104659-21-077123",
+      "doc": "tm2118398d1_8k.htm",
+      "desc": "FORM-8K"
+    },
+    {
+      "date": "2021-03-19",
+      "items": "1.01,9.01",
+      "acc": "0001104659-21-039171",
+      "doc": "tm2110272d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-12-17",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-20-136515",
+      "doc": "tm2038643d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-04-09",
+      "items": "1.01,3.03,5.03,7.01,9.01",
+      "acc": "0001104659-20-045244",
+      "doc": "tm2015449d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-12-13",
+      "items": "1.01,3.03,5.03,9.01",
+      "acc": "0001104659-19-072599",
+      "doc": "tm1925115-1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-11-22",
+      "items": "1.01,3.03,5.03,7.01,9.01",
+      "acc": "0001104659-19-066633",
+      "doc": "tm1923706-1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-11-12",
+      "items": "1.01,9.01",
+      "acc": "0001104659-19-062620",
+      "doc": "tm1922460-1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-09-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-19-045075",
+      "doc": "tv529597_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-08-06",
+      "items": "1.01,9.01",
+      "acc": "0001144204-19-037705",
+      "doc": "tv526527_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-06-21",
+      "items": "1.01,9.01",
+      "acc": "0001144204-19-031930",
+      "doc": "tv524015_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-11-28",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001144204-18-062022",
+      "doc": "tv508044_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-10-04",
+      "items": "1.01,9.01",
+      "acc": "0001144204-18-052539",
+      "doc": "tv503736_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-08-17",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001144204-18-045209",
+      "doc": "tv501208_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-08-16",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-18-045033",
+      "doc": "tv501129_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-08-14",
+      "items": "1.01,9.01",
+      "acc": "0001144204-18-044713",
+      "doc": "tv501030_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-07-23",
+      "items": "1.01,9.01",
+      "acc": "0001144204-18-039387",
+      "doc": "tv498943_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-03-23",
+      "items": "1.01,3.03,5.03,9.01",
+      "acc": "0001144204-18-016747",
+      "doc": "tv489367_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-12-18",
+      "items": "1.01,3.03,5.03,7.01,9.01",
+      "acc": "0001144204-17-064052",
+      "doc": "tv481522_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-11-02",
+      "items": "1.01,2.03",
+      "acc": "0001144204-17-055824",
+      "doc": "tv478452_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-09-11",
+      "items": "1.01,3.03,5.03,7.01,9.01",
+      "acc": "0001144204-17-047496",
+      "doc": "v474839_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-07-25",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001144204-17-037948",
+      "doc": "v471313_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-05-19",
+      "items": "1.01,9.01",
+      "acc": "0001144204-17-028676",
+      "doc": "v467498_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-02-28",
+      "items": "1.01,5.03,7.01,9.01",
+      "acc": "0001144204-17-011836",
+      "doc": "v460731_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-01-06",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001144204-17-001163",
+      "doc": "v456473_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-01-04",
+      "items": "1.01,5.02",
+      "acc": "0001144204-17-000397",
+      "doc": "v456189_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-12-22",
+      "items": "1.01,2.01,5.02,7.01,8.01,9.01",
+      "acc": "0001144204-16-140999",
+      "doc": "v455565_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-12-13",
+      "items": "1.01,9.01",
+      "acc": "0001144204-16-139074",
+      "doc": "v454820_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-08-08",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001144204-16-117009",
+      "doc": "v446275_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-12-22",
+      "items": "1.01,5.02,8.01",
+      "acc": "0001144204-15-072267",
+      "doc": "v427647_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-06-02",
+      "items": "1.01,2.03,5.02,8.01,9.01",
+      "acc": "0001144204-15-034986",
+      "doc": "v412281_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-04-08",
+      "items": "1.01,3.03,7.01,8.01,9.01",
+      "acc": "0001144204-15-021652",
+      "doc": "v406619_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-04-02",
+      "items": "1.01",
+      "acc": "0001144204-15-020918",
+      "doc": "v406398_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2017-03-31",
+      0,
+      72354000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      0,
+      67411000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      0,
+      71301000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

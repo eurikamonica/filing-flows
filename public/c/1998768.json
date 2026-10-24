@@ -1,0 +1,464 @@
+{
+  "cik": 1998768,
+  "ticker": "PAL",
+  "name": "Proficient Auto Logistics, Inc",
+  "sector": "industrials",
+  "industry": "Transportation Services",
+  "sic": "4700",
+  "sic_description": "Transportation Services",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T11:14:31+00:00",
+  "price": 2.79,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.824079,
+  "snapshot": {
+    "total_debt": 63744532,
+    "current_debt": 19162469,
+    "cash": 8130738,
+    "operating_leases": 11954043,
+    "revolver_available": 13300000,
+    "revolver_drawn": 6700000,
+    "equity": 303185368,
+    "assets": 460503397,
+    "liabilities": 157318029,
+    "assets_current": 73052638,
+    "liabilities_current": 61679314,
+    "retained_earnings": -55453212,
+    "net_income": -41656597,
+    "da": 690041,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 18253092,
+      "rest_of_year": 9797756,
+      "y2": 16329476,
+      "y3": 13691967,
+      "after5": 6118820
+    },
+    "shares": 28052923,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 63744532,
+    "cash_and_investments": 8130738.0,
+    "net_debt": 55613794.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 13300000,
+    "liquidity": 21430738.0,
+    "due_12m": 18253092,
+    "due_24m": 34582568,
+    "liquidity_to_due12": 1.174088,
+    "liquidity_to_due24": 0.619698,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 78267655.17,
+    "debt_to_ev": 0.476127,
+    "convertibles": null,
+    "implied": {
+      "dd": 1.678292,
+      "pd_1y": 0.046645,
+      "spread_5y_bps": 464.354468,
+      "asset_vol": 0.555773,
+      "calibrated_5y_bps": 164.798632,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.06558,
+    "covenants": [
+      {
+        "type": "fixed_charge",
+        "direction": "max",
+        "limit": 1.25,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Loan Agreement",
+        "dated": "2024-11-08",
+        "text": "For so long as there are any Commitments outstanding and thereafter until Full Payment of the Obligations, each Borrower covenants that they shall (the following to be determined in accordance with GAAP, consistently applied, unless otherwise provided below, in each case for such period): (i) Maintain a Fixed Charge Coverage Ratio of greater than or equal to 1.25 to 1.00, measured as of the last day of each Fiscal Qu"
+      }
+    ],
+    "cushion_score": 42
+  },
+  "instruments": [
+    {
+      "name": "Equipment and Vehicle Notes Payable",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon_min": 0.0385,
+      "coupon_max": 0.1077,
+      "floating": false
+    },
+    {
+      "name": "Term Loan payable to Pinnacle Bank",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon_min": 0.0362,
+      "coupon_max": 0.025,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2024-11-14",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-11-08",
+      "title": "Loan Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR"
+      ],
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "For so long as there are any Commitments outstanding and thereafter until Full Payment of the Obligations, each Borrower covenants that they shall (the following to be determined in accordance with GAAP, consistently applied, unless otherwise provided below, in each case for such period): (i) Maintain a Fixed Charge Coverage Ratio of greater than or equal to 1.25 to 1.00, measured as of the last day of each Fiscal Qu"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1998768/000121390024097879/ea022077401ex10-1_proficient.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-08-14",
+      "items": "1.01,2.01,2.03,3.02,7.01,8.01,9.01",
+      "acc": "0001213900-26-089491",
+      "doc": "ea0301906-8k_proficient.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2026-08-10",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001213900-26-087259",
+      "doc": "ea0301315-8k_proficient.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-01-30",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001213900-25-008434",
+      "doc": "ea0229218-8k_proficient.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-08-20",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001213900-24-071158",
+      "doc": "ea0211944-8k_proficient.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-06-30",
+      52384201,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      64015031,
+      16848215,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      71619176,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      85521933,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      79527420,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      69076559,
+      9755547,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      63744532,
+      8130738,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2024-08",
+      0.0,
+      14.699,
+      0.2151,
+      69.5
+    ],
+    [
+      "2024-09",
+      0.02,
+      9.421,
+      0.3106,
+      98.6
+    ],
+    [
+      "2024-10",
+      187.27,
+      3.306,
+      0.6987,
+      147.9
+    ],
+    [
+      "2024-11",
+      184.01,
+      3.347,
+      0.7025,
+      147.5
+    ],
+    [
+      "2024-12",
+      216.18,
+      3.085,
+      0.7025,
+      150.1
+    ],
+    [
+      "2025-01",
+      175.91,
+      3.374,
+      0.6872,
+      147.3
+    ],
+    [
+      "2025-02",
+      281.76,
+      2.922,
+      0.7858,
+      151.8
+    ],
+    [
+      "2025-03",
+      277.03,
+      2.869,
+      0.7616,
+      152.3
+    ],
+    [
+      "2025-04",
+      292.43,
+      2.834,
+      0.7785,
+      152.6
+    ],
+    [
+      "2025-05",
+      387.3,
+      2.421,
+      0.8296,
+      156.9
+    ],
+    [
+      "2025-06",
+      410.89,
+      2.298,
+      0.8326,
+      158.2
+    ],
+    [
+      "2025-07",
+      434.7,
+      2.293,
+      0.8659,
+      158.2
+    ],
+    [
+      "2025-08",
+      555.74,
+      1.933,
+      0.9368,
+      162.0
+    ],
+    [
+      "2025-09",
+      567.54,
+      1.85,
+      0.9327,
+      162.9
+    ],
+    [
+      "2025-10",
+      447.64,
+      2.172,
+      0.8504,
+      159.5
+    ],
+    [
+      "2025-11",
+      427.04,
+      2.298,
+      0.8482,
+      158.2
+    ],
+    [
+      "2025-12",
+      385.14,
+      2.504,
+      0.8355,
+      156.0
+    ],
+    [
+      "2026-01",
+      365.59,
+      2.567,
+      0.8213,
+      155.4
+    ],
+    [
+      "2026-02",
+      410.84,
+      2.316,
+      0.8276,
+      158.0
+    ],
+    [
+      "2026-03",
+      433.13,
+      2.168,
+      0.8324,
+      159.5
+    ],
+    [
+      "2026-04",
+      378.87,
+      2.369,
+      0.7981,
+      157.4
+    ],
+    [
+      "2026-05",
+      389.1,
+      2.288,
+      0.7982,
+      158.3
+    ],
+    [
+      "2026-06",
+      435.09,
+      2.271,
+      0.8589,
+      158.4
+    ],
+    [
+      "2026-07",
+      368.62,
+      2.434,
+      0.8052,
+      156.7
+    ],
+    [
+      "2026-08",
+      392.48,
+      2.277,
+      0.8071,
+      158.4
+    ],
+    [
+      "2026-09",
+      445.45,
+      1.974,
+      0.829,
+      161.6
+    ],
+    [
+      "2026-10",
+      455.97,
+      1.822,
+      0.8241,
+      163.2
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

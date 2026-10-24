@@ -1,0 +1,153 @@
+{
+  "cik": 1603793,
+  "ticker": "NRIS",
+  "name": "Norris Industries, Inc.",
+  "sector": "energy",
+  "industry": "Crude Petroleum & Natural Gas",
+  "sic": "1311",
+  "sic_description": "Crude Petroleum & Natural Gas",
+  "generated_at": "2026-10-24T14:46:10+00:00",
+  "fetched_at": "2026-10-18T19:00:42+00:00",
+  "price": 0.1311,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.012062,
+  "snapshot": {
+    "total_debt": 4100000,
+    "cash": 134836,
+    "equity": -5252352,
+    "assets": 223714,
+    "liabilities": 5476066,
+    "assets_current": 161084,
+    "liabilities_current": 243708,
+    "retained_earnings": -13019648,
+    "interest_expense": 129521,
+    "operating_income": -616234,
+    "net_income": -745755,
+    "da": 36554,
+    "ocf": -505487,
+    "revenue": 284291,
+    "shares": 108245688,
+    "balance_date": "2026-08-31",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "Cash",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 4100000,
+    "cash_and_investments": 134836.0,
+    "net_debt": 3965164.0,
+    "ebitda": -579680,
+    "ebit": -616234,
+    "interest_expense": 129521,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -4.757792,
+    "ebitda_coverage": -4.475568,
+    "fcf": -505487.0,
+    "fcf_to_debt": -0.12329,
+    "effective_rate": 0.03159,
+    "revolver_available": null,
+    "liquidity": 134836.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -88.184421,
+    "market_cap": 14191009.6968,
+    "debt_to_ev": 0.225819,
+    "convertibles": null,
+    "implied": {
+      "dd": 1.916673,
+      "pd_1y": 0.02764,
+      "spread_5y_bps": 614.226098,
+      "asset_vol": 0.892237,
+      "calibrated_5y_bps": 162.215109,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 15
+  },
+  "instruments": [
+    {
+      "name": "JBB Partners Inc",
+      "kind": "other",
+      "as_of": "2026-08-31",
+      "available": 600000.0,
+      "floating": false
+    },
+    {
+      "name": "Loan Note",
+      "kind": "loan",
+      "as_of": "2026-08-31",
+      "coupon": 0.05,
+      "conv_price": 0.08,
+      "maturity": "2023-09-30",
+      "drawn": 600000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-08-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2017-08-07",
+      "items": "1.01,3.02,3.03,5.02,5.03,8.01,9.01",
+      "acc": "0001493152-17-008575",
+      "doc": "form8-k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2015-05-20",
+      "items": "1.01,2.01,8.01,9.01",
+      "acc": "0001493152-15-002153",
+      "doc": "form8k.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

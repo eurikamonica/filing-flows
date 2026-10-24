@@ -1,0 +1,492 @@
+{
+  "cik": 1790169,
+  "ticker": "ZSTK",
+  "name": "ZeroStack Corp.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "sic_description": "Finance Services",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T15:02:57+00:00",
+  "price": 3.23,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.625913,
+  "snapshot": {
+    "total_debt": 2413000,
+    "current_debt": 2379000,
+    "cash": 2640000,
+    "operating_leases": 344000,
+    "equity": 13818000,
+    "assets": 25187000,
+    "liabilities": 11369000,
+    "assets_current": 10548000,
+    "liabilities_current": 11107000,
+    "retained_earnings": -339063000,
+    "interest_paid": 218000,
+    "operating_income": -238405000,
+    "pretax_income": -174592000,
+    "net_income": -177837000,
+    "da": 213000,
+    "ocf": -5601000,
+    "capex": 38000,
+    "revenue": 40033000,
+    "debt_issued": 2516000,
+    "debt_repaid": 2772000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 2371000,
+      "y2": 17000,
+      "y3": 19000,
+      "y4": 6000,
+      "y5": 0,
+      "after5": 0
+    },
+    "shares": 17489828,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfDebt (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 2413000,
+    "cash_and_investments": 2640000.0,
+    "net_debt": -227000.0,
+    "ebitda": -238192000,
+    "ebit": -238405000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": -24.692661,
+    "fcf": -5639000,
+    "fcf_to_debt": -2.336925,
+    "effective_rate": null,
+    "revolver_available": 38000.0,
+    "liquidity": 2678000.0,
+    "due_12m": 2371000,
+    "due_24m": 2388000,
+    "liquidity_to_due12": 1.129481,
+    "liquidity_to_due24": 1.121441,
+    "floating_debt": 2362000.0,
+    "floating_share": 0.978864,
+    "plus100bp_interest": 23620.0,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -45.538196,
+    "market_cap": 56492144.44,
+    "debt_to_ev": 0.042886,
+    "convertibles": null,
+    "implied": {
+      "dd": 1.283214,
+      "pd_1y": 0.099709,
+      "spread_5y_bps": 1266.07396,
+      "asset_vol": 1.568646,
+      "calibrated_5y_bps": 169.171326,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.066017,
+    "covenants": [],
+    "cushion_score": 42
+  },
+  "instruments": [
+    {
+      "name": "Euro Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 2362000.0,
+      "capacity": 2400000.0,
+      "floating": false
+    },
+    {
+      "name": "Other Secured Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 51000.0,
+      "floating": false
+    },
+    {
+      "name": "Zero Gravity Convertible Note",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "conv_price": 33.34,
+      "coupon": 0.08,
+      "floating": false
+    },
+    {
+      "name": "Private Placement Offerings",
+      "kind": "other",
+      "as_of": "2025-12-30",
+      "conv_price": 33.34,
+      "coupon": 0.08,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "United Promissory Notes",
+      "kind": "notes",
+      "as_of": "2025-01-30",
+      "coupon": 0.06,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-08-19",
+      "items": "1.01,2.01,3.02,5.02,9.01",
+      "acc": "0001062993-26-004501",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-31",
+      "items": "1.01,1.02,3.02,9.01",
+      "acc": "0001062993-26-001764",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-31",
+      "items": "1.01,1.02,3.02,9.01",
+      "acc": "0001062993-25-017540",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-11-28",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001062993-25-017063",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-09-23",
+      "items": "1.01,9.01",
+      "acc": "0001062993-25-015754",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-09-23",
+      "items": "1.01,2.01,2.03,3.02,5.02,9.01",
+      "acc": "0001062993-25-015748",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-05-02",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001062993-25-008357",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-02-05",
+      "items": "1.01,2.01,3.02,9.01",
+      "acc": "0001062993-25-001745",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-12-16",
+      "items": "1.01,9.01",
+      "acc": "0001062993-24-020637",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-12-12",
+      "items": "1.01,9.01",
+      "acc": "0001062993-24-020536",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-11-01",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001062993-24-018209",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-06-05",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001062993-24-011937",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-04-29",
+      "items": "1.01,9.01",
+      "acc": "0001062993-24-008974",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-04-19",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001062993-24-008564",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-04-08",
+      "items": "1.01,9.01",
+      "acc": "0001062993-24-008121",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-04-05",
+      "items": "1.01,9.01",
+      "acc": "0001062993-24-008078",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-09-21",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001062993-23-018364",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-09-18",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001062993-23-018104",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-07-11",
+      "items": "1.01,9.01",
+      "acc": "0001477932-23-005195",
+      "doc": "flora_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-03-31",
+      2480000,
+      3676000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      3081000,
+      1471000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      2761000,
+      13100000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      3157000,
+      1978000,
+      null,
+      -215282000,
+      -215686000,
+      null
+    ],
+    [
+      "2026-06-30",
+      2413000,
+      2640000,
+      null,
+      -238192000,
+      -238405000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-05",
+      40.73,
+      5.875,
+      0.9775,
+      124.8
+    ],
+    [
+      "2025-06",
+      51.0,
+      5.683,
+      0.9916,
+      126.4
+    ],
+    [
+      "2025-07",
+      48.25,
+      5.725,
+      0.9868,
+      126.0
+    ],
+    [
+      "2025-08",
+      90.79,
+      5.124,
+      1.0228,
+      131.1
+    ],
+    [
+      "2025-09",
+      74.06,
+      5.307,
+      0.9977,
+      129.6
+    ],
+    [
+      "2025-10",
+      108.49,
+      4.77,
+      0.9566,
+      134.3
+    ],
+    [
+      "2025-11",
+      560.26,
+      1.866,
+      0.9264,
+      162.8
+    ],
+    [
+      "2025-12",
+      606.77,
+      1.717,
+      0.9513,
+      164.4
+    ],
+    [
+      "2026-01",
+      764.85,
+      1.605,
+      1.1002,
+      165.6
+    ],
+    [
+      "2026-02",
+      812.49,
+      1.379,
+      1.1116,
+      168.1
+    ],
+    [
+      "2026-03",
+      968.39,
+      1.02,
+      1.2246,
+      172.1
+    ],
+    [
+      "2026-04",
+      1001.42,
+      0.997,
+      1.2518,
+      172.4
+    ],
+    [
+      "2026-05",
+      1004.93,
+      1.265,
+      1.2937,
+      169.4
+    ],
+    [
+      "2026-06",
+      1022.55,
+      1.118,
+      1.2886,
+      171.0
+    ],
+    [
+      "2026-07",
+      916.62,
+      1.815,
+      1.3451,
+      163.3
+    ],
+    [
+      "2026-08",
+      1097.31,
+      1.928,
+      1.6334,
+      162.1
+    ],
+    [
+      "2026-09",
+      1132.71,
+      1.783,
+      1.6266,
+      163.7
+    ],
+    [
+      "2026-10",
+      1168.96,
+      1.655,
+      1.6259,
+      165.1
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,1349 @@
+{
+  "cik": 1099590,
+  "ticker": "MELI",
+  "name": "MERCADOLIBRE INC",
+  "sector": "industrials",
+  "industry": "Services-Business Services, NEC",
+  "sic": "7389",
+  "sic_description": "Services-Business Services, NEC",
+  "generated_at": "2026-10-24T14:46:08+00:00",
+  "fetched_at": "2026-10-18T04:54:39+00:00",
+  "price": 1825.0,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.366794,
+  "snapshot": {
+    "total_debt": 10626000000,
+    "current_debt": 6482000000,
+    "cash": 3649000000,
+    "investments": 2081000000,
+    "finance_leases": 115000000,
+    "operating_leases": 2550000000,
+    "revolver_drawn": 0,
+    "equity": 7834000000,
+    "assets": 51356000000,
+    "liabilities": 43522000000,
+    "assets_current": 40782000000,
+    "liabilities_current": 36372000000,
+    "retained_earnings": 6692000000,
+    "operating_income": 2907000000,
+    "pretax_income": 2605000000,
+    "net_income": 1863000000,
+    "da": 985000000,
+    "ocf": 13905000000,
+    "capex": 1496000000,
+    "revenue": 35182000000,
+    "shares": 50696802,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "current_debt": "LongTermDebtAndCapitalLeaseObligationsCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "ShortTermInvestments",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 10626000000,
+    "cash_and_investments": 5730000000,
+    "net_debt": 4896000000,
+    "ebitda": 3892000000,
+    "ebit": 2907000000,
+    "interest_expense": null,
+    "leverage": 2.730216,
+    "net_leverage": 1.257965,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 12409000000,
+    "fcf_to_debt": 1.167796,
+    "effective_rate": null,
+    "revolver_available": 1600000000.0,
+    "liquidity": 7330000000.0,
+    "due_12m": 6482000000,
+    "due_24m": null,
+    "liquidity_to_due12": 1.130824,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 2.432847,
+    "market_cap": 92521663650.0,
+    "debt_to_ev": 0.109077,
+    "convertibles": null,
+    "implied": {
+      "dd": 7.281398,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.844269,
+      "asset_vol": 0.337004,
+      "calibrated_5y_bps": 113.672788,
+      "rating_band": "BBB"
+    },
+    "covenants": [],
+    "cushion_score": 75
+  },
+  "instruments": [
+    {
+      "name": "The Amended And Restated Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-09-12",
+      "capacity": 800000000.0,
+      "floating": false
+    },
+    {
+      "name": "2031 Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.03125,
+      "rate_now": 0.03125,
+      "floating": false
+    },
+    {
+      "name": "2033 Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.049,
+      "rate_now": 0.049,
+      "floating": false
+    },
+    {
+      "name": "Loans From Banks",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "rate_now": 0.0537,
+      "floating": true,
+      "rate_now_min": 0.0025,
+      "rate_now_max": 0.0039,
+      "spread": 0.008,
+      "reference": "Tjlp",
+      "spread_min": 0.0155,
+      "spread_max": 0.026
+    },
+    {
+      "name": "Bank Overdrafts",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.009,
+      "reference": "TIB",
+      "floating": true
+    },
+    {
+      "name": "Secured Lines Of Credit",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "rate_now": 0.2392,
+      "floating": false
+    },
+    {
+      "name": "Secured Lines Of Credit III",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "rate_now": 0.0326,
+      "floating": false
+    },
+    {
+      "name": "Financial Bills",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread_min": 0.0022,
+      "spread_max": 0.0068,
+      "reference": "Certificado De Deposito Interbancrio",
+      "floating": true
+    },
+    {
+      "name": "Deposit Certificates",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread_min": 0.955,
+      "spread_max": 1.2,
+      "reference": "Certificado De Deposito Interbancrio",
+      "floating": true,
+      "rate_now_min": 0.13,
+      "rate_now_max": 0.1528
+    },
+    {
+      "name": "Commercial Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "spread": 0.0088,
+      "reference": "Di",
+      "floating": true
+    },
+    {
+      "name": "Commercial Notes III",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "spread_min": 0.025,
+      "spread_max": 0.035,
+      "reference": "TAMAR",
+      "floating": true
+    },
+    {
+      "name": "Commercial Notes V",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "rate_now": 0.0,
+      "floating": false
+    },
+    {
+      "name": "Promissory Notes, 25.20%",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "rate_now": 0.252,
+      "coupon": 0.252,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 0.0,
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito I Brasil Fundo de Investimento Em Direitos Creditórios Não Padronizados",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.0225,
+      "reference": "Certificado De Deposito Interbancrio",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito Fundo de Investimento Em Direitos Creditórios Não Padronizado",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.025,
+      "reference": "Certificado De Deposito Interbancrio",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito II Brasil Fundo De Investimento Em Direitos Creditórios Nao Padronizados",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.0175,
+      "reference": "Certificado De Deposito Interbancrio",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito Estruturado Fundo De Investimento Em Direitos Creditórios",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.045,
+      "reference": "Certificado De Deposito Interbancrio",
+      "floating": true
+    },
+    {
+      "name": "Seller Fundo De Investimento Em Direitos Creditórios",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.014,
+      "reference": "Certificado De Deposito Interbancrio",
+      "floating": true
+    },
+    {
+      "name": "Seller II Fundo De Investimento Em Direitos Creditórios Segmento Meios De Pagamento De Resp Ltda",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.0085,
+      "reference": "Certificado De Deposito Interbancrio",
+      "floating": true
+    },
+    {
+      "name": "Seller III Fundo De Investimento Em Direitos Creditórios Segmento Meios De Pagamento De Resp Ltda",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.0065,
+      "reference": "Certificado De Deposito Interbancrio",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XXXVIII",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.15,
+      "effective_max": 0.5,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XXXIX",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.25,
+      "effective_max": 0.5,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XL",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.2,
+      "effective_max": 0.75,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XLI",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.2,
+      "effective_max": 0.75,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XLII",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.2,
+      "effective_max": 0.75,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XLIII",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.2,
+      "effective_max": 0.75,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XLIV",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.17,
+      "effective_max": 0.55,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XLV",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread_max": 0.01,
+      "effective_min": 0.17,
+      "effective_max": 0.55,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XLVI",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.17,
+      "effective_max": 0.5,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XLVII",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.17,
+      "effective_max": 0.5,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XLVIII",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.17,
+      "effective_max": 0.5,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito XLIX",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.17,
+      "effective_max": 0.5,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito L",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.17,
+      "effective_max": 0.45,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Mercado Crédito LI",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.01,
+      "effective_min": 0.15,
+      "effective_max": 0.45,
+      "reference": "TAMAR Rate",
+      "floating": true
+    },
+    {
+      "name": "Fideicomiso Irrevocable de Administración y Fuente de Pago F/6203",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.022,
+      "reference": "Diario Oficial",
+      "floating": true
+    },
+    {
+      "name": "Fideicomiso Irrevocable de Administración y Fuente de Pago 6189",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.0255,
+      "reference": "Diario Oficial",
+      "floating": true
+    },
+    {
+      "name": "Fideicomiso Irrevocable de Administración y Fuente de Pago Número F/6279",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.025,
+      "reference": "Diario Oficial",
+      "floating": true
+    },
+    {
+      "name": "Fideicomiso Irrevocable de Administración y Fuente de Pago F/6191",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.022,
+      "reference": "Diario Oficial",
+      "floating": true
+    },
+    {
+      "name": "Frontal Trust Mercado Pago Créditos Fondo de Inversión",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "effective": 0.021,
+      "reference": "TAB30",
+      "floating": true
+    },
+    {
+      "name": "Restated Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-09-12",
+      "capacity": 800000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "3.125% Notes due 2031",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "coupon": 0.03125,
+      "rate_now": 0.03125,
+      "maturity_year": 2031,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "4.900% Notes due 2033",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "coupon": 0.049,
+      "rate_now": 0.049,
+      "maturity_year": 2033,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Loans from banks, 5.72%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0572,
+      "coupon": 0.0572,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Loans from banks, CDI + 0.25 - 0.39%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "spread_min": 0.0025,
+      "spread_max": 0.0039,
+      "reference": "Certificado De Deposito Interbancrio",
+      "coupon": 0.0039,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Loans from banks, 4.96%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0496,
+      "coupon": 0.0496,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Loans from banks, 3.72%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0372,
+      "coupon": 0.0372,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Loans from banks, TJLP+0.8%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "spread": 0.008,
+      "reference": "Tjlp",
+      "coupon": 0.008,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Loans from banks, TIIE +1.80-2.60%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "spread_min": 0.018,
+      "spread_max": 0.026,
+      "reference": "TIIE",
+      "coupon": 0.026,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Loans from banks, 7.73%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0773,
+      "coupon": 0.0773,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Bank overdrafts, 8.69%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0869,
+      "coupon": 0.0869,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Bank overdrafts, TIB + 0.90%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "spread": 0.009,
+      "reference": "TIB",
+      "coupon": 0.009,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Secured lines of credit, 35.53%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "rate_now": 0.3553,
+      "coupon": 0.3553,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Secured lines of credit, 11.13%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "rate_now": 0.1113,
+      "coupon": 0.1113,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Secured lines of credit, 3.26%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "rate_now": 0.0326,
+      "coupon": 0.0326,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Financial Bills and Deposit Certificates, CDI + 0.26% - 0.95%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "spread_min": 0.0026,
+      "spread_max": 0.0095,
+      "reference": "Certificado De Deposito Interbancrio",
+      "coupon": 0.0026,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Financial Bills and Deposit Certificates, 96.5% to 107% of CDI",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "spread_min": 0.965,
+      "spread_max": 1.07,
+      "reference": "Certificado De Deposito Interbancrio",
+      "coupon": 0.965,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Financial Bills and Deposit Certificates, 13.35-15.27%",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "rate_now_min": 0.1335,
+      "rate_now_max": 0.1527,
+      "coupon": 0.1527,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Commercial Notes, DI+0.88%",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "spread": 0.0088,
+      "reference": "Di",
+      "coupon": 0.0088,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Commercial Notes, IPCA+6.41%",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "spread": 0.0641,
+      "reference": "Ipca",
+      "coupon": 0.0641,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [
+    {
+      "title": "$1,000,000,000 5.850% Notes due 2036",
+      "floating": false,
+      "coupon": 5.85,
+      "principal": 1000000000.0,
+      "currency": "USD",
+      "maturity": "2036-09-14",
+      "price": 97.864,
+      "yield": 6.139,
+      "benchmark": "UST 4.625% due August 15, 2036",
+      "bench_yield": 4.839,
+      "spread_bps": 130.0,
+      "trade_date": "2026-09-09",
+      "ratings": "Baa3 / BBB- / BBB-",
+      "convertible": false,
+      "cusip": "58733R AJ1",
+      "date": "2026-09-09",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1099590/000114036126036073/ef20081816_fwp.htm"
+    },
+    {
+      "title": "$750,000,000 4.900% Notes due 2033",
+      "floating": false,
+      "coupon": 4.9,
+      "principal": 750000000.0,
+      "currency": "USD",
+      "maturity": "2033-01-15",
+      "price": 98.37,
+      "yield": 5.176,
+      "benchmark": "UST 3.750% due November 30, 2032",
+      "bench_yield": 3.876,
+      "spread_bps": 130.0,
+      "trade_date": "2025-12-04",
+      "ratings": "BBB- / BBB-",
+      "convertible": false,
+      "cusip": "58733R AG7",
+      "date": "2025-12-04",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1099590/000114036125044391/ny20058389x6-x14.htm"
+    },
+    {
+      "title": "2.375% Sustainability Notes due 2026",
+      "floating": false,
+      "coupon": 2.375,
+      "principal": 400000000.0,
+      "currency": "USD",
+      "maturity": "2026-01-14",
+      "price": 100.0,
+      "yield": 2.375,
+      "trade_date": "2021-01-07",
+      "convertible": false,
+      "cusip": "58733R AE2",
+      "date": "2021-01-07",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/1099590/000114036121000523/nt10017308x7x16_fwp.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-05-08",
+      "agreement_kind": "amendment",
+      "dated": "2026-04-28",
+      "title": "Amended And Restated Revolving Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1099590/000109959026000017/meli-20260331xexx102.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-09-16",
+      "agreement_kind": "amendment",
+      "dated": "2025-09-12",
+      "title": "Amended And Restated Revolving Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1099590/000109959025000046/melircf-amendmentno1execut.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-10-01",
+      "agreement_kind": "amendment",
+      "dated": "2022-03-31",
+      "size": 400000000.0,
+      "title": "Amended And Restated Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.9,
+        1.15
+      ],
+      "grid_by": "ratings",
+      "floor_pct": 0.0,
+      "maturity": "2028-09-27",
+      "url": "https://www.sec.gov/Archives/edgar/data/1099590/000199937124012775/ex10-01.htm",
+      "all_in_pct": [
+        0.9389,
+        1.1889
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-09-10",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001140361-26-036136",
+      "doc": "ef20081842_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-05",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001140361-25-044457",
+      "doc": "20058389x5_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-09-16",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001099590-25-000046",
+      "doc": "meli-20250916.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-10-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001999371-24-012775",
+      "doc": "meli-8k_100124.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2022-04-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001171843-22-002241",
+      "doc": "f8k_033122.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-11-18",
+      "items": "1.01,9.01",
+      "acc": "0001140361-21-038436",
+      "doc": "ny20001320x4_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-16",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001140361-21-038022",
+      "doc": "ny20001320x2_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-01-08",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001140361-21-000618",
+      "doc": "nt10017308x17_form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-03-13",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001140361-19-004884",
+      "doc": "s002725x7_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-08-31",
+      "items": "2.03,3.02,7.01,8.01,9.01",
+      "acc": "0001193125-18-265049",
+      "doc": "d613132d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-08-24",
+      "items": "1.01,2.03,3.02,8.01,9.01",
+      "acc": "0001193125-18-257768",
+      "doc": "d613732d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-10-17",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-16-739668",
+      "doc": "d273432d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-06-30",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001193125-14-255990",
+      "doc": "d750058d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-09-25",
+      "items": "1.01",
+      "acc": "0001171843-13-003803",
+      "doc": "f8k_092513.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-05-20",
+      "items": "1.01",
+      "acc": "0001171843-13-002134",
+      "doc": "f8k_051713.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-05-15",
+      "items": "1.01",
+      "acc": "0001171843-13-002055",
+      "doc": "f8k_051513.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-06-09",
+      "items": "1.01",
+      "acc": "0001171843-11-001758",
+      "doc": "f8k_060811.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2022-09-30",
+      4689000000,
+      3398000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      4832000000,
+      4622000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      4767000000,
+      4699000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      4454000000,
+      5491000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      4470000000,
+      6250000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      4642000000,
+      6891000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      5353000000,
+      6673000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      6433000000,
+      8059000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      7302000000,
+      7642000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      7840000000,
+      6297000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      9927000000,
+      5650000000,
+      null,
+      3941000000,
+      3049000000,
+      null
+    ],
+    [
+      "2026-06-30",
+      10626000000,
+      5730000000,
+      null,
+      3892000000,
+      2907000000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2022-11",
+      137.06,
+      3.926,
+      0.759,
+      142.0
+    ],
+    [
+      "2022-12",
+      124.8,
+      3.971,
+      0.7306,
+      141.6
+    ],
+    [
+      "2023-01",
+      94.51,
+      4.349,
+      0.7376,
+      138.1
+    ],
+    [
+      "2023-02",
+      74.4,
+      4.521,
+      0.7049,
+      136.5
+    ],
+    [
+      "2023-03",
+      30.06,
+      5.304,
+      0.6307,
+      129.6
+    ],
+    [
+      "2023-04",
+      27.09,
+      5.363,
+      0.62,
+      129.1
+    ],
+    [
+      "2023-05",
+      19.53,
+      5.57,
+      0.5958,
+      127.3
+    ],
+    [
+      "2023-06",
+      9.33,
+      6.044,
+      0.5427,
+      123.4
+    ],
+    [
+      "2023-07",
+      7.26,
+      6.221,
+      0.5327,
+      122.0
+    ],
+    [
+      "2023-08",
+      1.18,
+      7.321,
+      0.4601,
+      113.4
+    ],
+    [
+      "2023-09",
+      0.84,
+      7.516,
+      0.4515,
+      111.9
+    ],
+    [
+      "2023-10",
+      0.21,
+      8.232,
+      0.4085,
+      106.7
+    ],
+    [
+      "2023-11",
+      0.18,
+      8.43,
+      0.4316,
+      105.3
+    ],
+    [
+      "2023-12",
+      0.14,
+      8.578,
+      0.4264,
+      104.3
+    ],
+    [
+      "2024-01",
+      0.0,
+      10.307,
+      0.3687,
+      93.0
+    ],
+    [
+      "2024-02",
+      0.01,
+      10.088,
+      0.3682,
+      94.4
+    ],
+    [
+      "2024-03",
+      0.0,
+      10.219,
+      0.3573,
+      93.6
+    ],
+    [
+      "2024-04",
+      0.01,
+      9.98,
+      0.3594,
+      95.1
+    ],
+    [
+      "2024-05",
+      0.01,
+      9.672,
+      0.3888,
+      97.0
+    ],
+    [
+      "2024-06",
+      0.02,
+      9.494,
+      0.3912,
+      98.2
+    ],
+    [
+      "2024-07",
+      0.03,
+      9.432,
+      0.3939,
+      98.6
+    ],
+    [
+      "2024-08",
+      0.0,
+      10.739,
+      0.3623,
+      90.4
+    ],
+    [
+      "2024-09",
+      0.0,
+      10.919,
+      0.3562,
+      89.3
+    ],
+    [
+      "2024-10",
+      0.0,
+      10.78,
+      0.3603,
+      90.1
+    ],
+    [
+      "2024-11",
+      0.0,
+      11.025,
+      0.3386,
+      88.7
+    ],
+    [
+      "2024-12",
+      0.0,
+      10.372,
+      0.3474,
+      92.6
+    ],
+    [
+      "2025-01",
+      0.0,
+      10.662,
+      0.3471,
+      90.9
+    ],
+    [
+      "2025-02",
+      0.0,
+      10.71,
+      0.3536,
+      90.6
+    ],
+    [
+      "2025-03",
+      0.0,
+      10.775,
+      0.3486,
+      90.2
+    ],
+    [
+      "2025-04",
+      0.0,
+      10.347,
+      0.3695,
+      92.8
+    ],
+    [
+      "2025-05",
+      0.0,
+      10.885,
+      0.3485,
+      89.5
+    ],
+    [
+      "2025-06",
+      0.0,
+      10.887,
+      0.3482,
+      89.5
+    ],
+    [
+      "2025-07",
+      0.0,
+      10.824,
+      0.3438,
+      89.9
+    ],
+    [
+      "2025-08",
+      0.0,
+      11.077,
+      0.3296,
+      88.4
+    ],
+    [
+      "2025-09",
+      0.0,
+      11.196,
+      0.3259,
+      87.7
+    ],
+    [
+      "2025-10",
+      0.01,
+      9.813,
+      0.3589,
+      96.1
+    ],
+    [
+      "2025-11",
+      0.03,
+      9.38,
+      0.3642,
+      98.9
+    ],
+    [
+      "2025-12",
+      0.02,
+      9.6,
+      0.3532,
+      97.5
+    ],
+    [
+      "2026-01",
+      0.02,
+      9.595,
+      0.3594,
+      97.5
+    ],
+    [
+      "2026-02",
+      0.1,
+      8.749,
+      0.3737,
+      103.1
+    ],
+    [
+      "2026-03",
+      0.14,
+      8.521,
+      0.3744,
+      104.7
+    ],
+    [
+      "2026-04",
+      0.03,
+      9.388,
+      0.3531,
+      98.9
+    ],
+    [
+      "2026-05",
+      0.22,
+      8.229,
+      0.3697,
+      106.8
+    ],
+    [
+      "2026-06",
+      0.18,
+      8.305,
+      0.3655,
+      106.2
+    ],
+    [
+      "2026-07",
+      0.17,
+      8.371,
+      0.3738,
+      105.8
+    ],
+    [
+      "2026-08",
+      0.21,
+      8.245,
+      0.3772,
+      106.6
+    ],
+    [
+      "2026-09",
+      0.31,
+      7.978,
+      0.3781,
+      108.5
+    ],
+    [
+      "2026-10",
+      0.16,
+      8.327,
+      0.3668,
+      106.1
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

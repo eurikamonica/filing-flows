@@ -1,0 +1,502 @@
+{
+  "cik": 1814287,
+  "ticker": "ABX",
+  "name": "Abacus Global Management, Inc.",
+  "sector": "financials",
+  "industry": "Investment Advice",
+  "sic": "6282",
+  "sic_description": "Investment Advice",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T13:01:45+00:00",
+  "price": 8.38,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.571056,
+  "snapshot": {
+    "total_debt": 330610186,
+    "current_debt": 39793580,
+    "cash": 23388190,
+    "operating_leases": 13697319,
+    "equity": 434677426,
+    "assets": 867730420,
+    "liabilities": 428052994,
+    "assets_current": 64639903,
+    "liabilities_current": 91744423,
+    "retained_earnings": -27926714,
+    "interest_expense": 39188958,
+    "interest_paid": 38013223,
+    "operating_income": 85018150,
+    "net_income": 28195262,
+    "da": 16559016,
+    "ocf": 90754243,
+    "capex": 1280304,
+    "revenue": 267283948,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 39793580,
+      "rest_of_year": 750000,
+      "y2": 151861982,
+      "y3": 1500000,
+      "y4": 142875000
+    },
+    "shares": 97792249,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 330610186,
+    "cash_and_investments": 23388190.0,
+    "net_debt": 307221996.0,
+    "ebitda": 101577166,
+    "ebit": 85018150,
+    "interest_expense": 39188958,
+    "leverage": 3.254769,
+    "net_leverage": 3.024518,
+    "interest_coverage": 2.169441,
+    "ebitda_coverage": 2.591984,
+    "cash_coverage": 3.387439,
+    "fcf": 89473939,
+    "fcf_to_debt": 0.270633,
+    "effective_rate": 0.118535,
+    "revolver_available": 50000000.0,
+    "liquidity": 73388190.0,
+    "due_12m": 39793580,
+    "due_24m": 191655562,
+    "liquidity_to_due12": 1.844222,
+    "liquidity_to_due24": 0.382917,
+    "floating_debt": 148125000.0,
+    "floating_share": 0.448035,
+    "plus100bp_interest": 1481250.0,
+    "plus100bp_share_of_ebit": 0.017423,
+    "altman_z": 1.6975,
+    "market_cap": 819499046.62,
+    "debt_to_ev": 0.293427,
+    "convertibles": null,
+    "implied": {
+      "dd": 3.444306,
+      "pd_1y": 0.000286,
+      "spread_5y_bps": 121.573394,
+      "asset_vol": 0.469615,
+      "calibrated_5y_bps": 146.593668,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.063759,
+    "refi_extra_interest": -10498100.907531,
+    "covenants": [],
+    "cushion_score": 54
+  },
+  "instruments": [
+    {
+      "name": "Senior Secured Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 148125000.0,
+      "spread": 0.0525,
+      "floating": true
+    },
+    {
+      "name": "9.875% Fixed Rate Senior Notes due 2028",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 135379475.0,
+      "coupon": 0.09875,
+      "face": 135379475.0,
+      "maturity_year": 2028,
+      "floating": false
+    },
+    {
+      "name": "SSCF Amendment",
+      "kind": "revolver",
+      "as_of": "2026-06-29",
+      "face": 75000000.0,
+      "floating": false
+    },
+    {
+      "name": "LMA Income Series II, LP",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 38293580.0,
+      "floating": false
+    },
+    {
+      "name": "Sponsor PIK Note",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 14982507.0,
+      "coupon": 0.12,
+      "floating": false
+    },
+    {
+      "name": "DDTL Facility",
+      "kind": "revolver",
+      "as_of": "2024-12-10",
+      "capacity": 50000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "LMATT Series 2024, Inc.",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "LMA Income Series, LP",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [
+    {
+      "title": "$64,380,575 Aggregate Principal Amount of 9.875% Fixed Rate Senior Notes due 2028",
+      "principal": 64380575.0,
+      "currency": "USD",
+      "coupon": 9.875,
+      "floating": false,
+      "maturity_year": 2028,
+      "convertible": false,
+      "trade_date": "2025-12-22",
+      "source_kind": "prospectus cover",
+      "date": "2025-12-22",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1814287/000114036125046375/ny20059688x4_424b3.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-07-02",
+      "agreement_kind": "amendment",
+      "dated": "2026-06-29",
+      "title": "First Amendment To Credit Agreement",
+      "facility": "term loan",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.6,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Lenders, in form and substance reasonably acceptable to the Lenders; (e) The Administrative Agent and the Lenders shall have received a Compliance Certificate, dated as of the First Amendment Funding Date, demonstrating (i) no Default or Event of Default has occurred and is continuing and (ii) the Senior Secured Leverage Ratio for the most recently ended Test Period would not exceed 2.60:1.00;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1814287/000162828026046875/ex101abx-2026sagardupsizex.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-12-10",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-12-10",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1814287/000162828024050657/exhibit103guaranty.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-12-10",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-12-10",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1814287/000162828024050657/exhibit102securityagreement.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-07-02",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001628280-26-046875",
+      "doc": "abl-20260629.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-30",
+      "items": "1.01,3.03,5.07,8.01,9.01",
+      "acc": "0001140361-25-027932",
+      "doc": "ny20051847x7_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-12-16",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001814287-24-000074",
+      "doc": "abl-20241213.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-12-10",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001628280-24-050657",
+      "doc": "abl-20241210.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-12-02",
+      "items": "1.01,2.01,2.03,3.02,7.01,9.01",
+      "acc": "0001814287-24-000068",
+      "doc": "abl-20241202.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-11-25",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001628280-24-049186",
+      "doc": "abl-20241121.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-07-18",
+      "items": "1.01,3.02,7.01",
+      "acc": "0001814287-24-000045",
+      "doc": "abl-20240718.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-06-24",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001628280-24-029592",
+      "doc": "abl-20240620.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-02-15",
+      "items": "1.01",
+      "acc": "0001814287-24-000009",
+      "doc": "abl-20240209.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-29",
+      "items": "1.01,9.01",
+      "acc": "0001814287-23-000054",
+      "doc": "abl-20231228.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-11-06",
+      "items": "1.01,9.01",
+      "acc": "0001193125-23-271461",
+      "doc": "d579625d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-07-06",
+      "items": "1.01,2.01,2.03,3.03,5.01,5.02,5.03,5.05,5.06,8.01,9.01",
+      "acc": "0001193125-23-182812",
+      "doc": "d525613d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-04-20",
+      "items": "1.01,9.01",
+      "acc": "0001193125-23-108364",
+      "doc": "d479667d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-01-23",
+      "items": "1.01,2.03,5.03,5.07,9.01",
+      "acc": "0001564590-23-000656",
+      "doc": "eresu-8k_20230120.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-10-14",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-22-262995",
+      "doc": "d326265d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-08-30",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001564590-22-030357",
+      "doc": "eresu-8k_20220830.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-07-25",
+      "items": "1.01,2.03,5.03,5.07,9.01",
+      "acc": "0001564590-22-026345",
+      "doc": "eresu-8k_20220725.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-12-01",
+      "items": "1.01,9.01",
+      "acc": "0001564590-20-055743",
+      "doc": "eresu-8k_20201130.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-07-27",
+      "items": "1.01,3.02,5.03,8.01,9.01",
+      "acc": "0001564590-20-033609",
+      "doc": "eres-8k_20200727.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-09-30",
+      409270655,
+      86418953,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      330001099,
+      37209747,
+      39629199,
+      103839839,
+      86059185,
+      0.12009
+    ],
+    [
+      "2026-06-30",
+      330610186,
+      23388190,
+      39188958,
+      101577166,
+      85018150,
+      0.11854
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-11",
+      201.13,
+      2.848,
+      0.6104,
+      152.5
+    ],
+    [
+      "2025-12",
+      212.47,
+      2.92,
+      0.642,
+      151.8
+    ],
+    [
+      "2026-01",
+      221.92,
+      2.819,
+      0.6392,
+      152.8
+    ],
+    [
+      "2026-02",
+      218.0,
+      2.925,
+      0.6532,
+      151.7
+    ],
+    [
+      "2026-03",
+      237.56,
+      2.782,
+      0.6657,
+      153.2
+    ],
+    [
+      "2026-04",
+      229.31,
+      2.867,
+      0.6661,
+      152.3
+    ],
+    [
+      "2026-05",
+      198.68,
+      3.08,
+      0.656,
+      150.2
+    ],
+    [
+      "2026-06",
+      110.18,
+      3.679,
+      0.5779,
+      144.3
+    ],
+    [
+      "2026-07",
+      114.42,
+      3.653,
+      0.588,
+      144.6
+    ],
+    [
+      "2026-08",
+      108.74,
+      3.68,
+      0.5782,
+      144.3
+    ],
+    [
+      "2026-09",
+      116.9,
+      3.525,
+      0.5754,
+      145.8
+    ],
+    [
+      "2026-10",
+      112.29,
+      3.567,
+      0.5711,
+      145.4
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

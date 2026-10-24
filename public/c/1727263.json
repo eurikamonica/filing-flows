@@ -1,0 +1,746 @@
+{
+  "cik": 1727263,
+  "ticker": "FTDR",
+  "name": "Frontdoor, Inc.",
+  "sector": "industrials",
+  "industry": "Services-To Dwellings & Other Buildings",
+  "sic": "7340",
+  "sic_description": "Services-To Dwellings & Other Buildings",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T07:23:31+00:00",
+  "price": 86.03,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.51905,
+  "snapshot": {
+    "total_debt": 1160000000,
+    "current_debt": 29000000,
+    "cash": 627000000,
+    "operating_leases": 18000000,
+    "revolver_available": 250000000,
+    "equity": 284000000,
+    "assets": 2186000000,
+    "assets_current": 692000000,
+    "liabilities_current": 435000000,
+    "retained_earnings": 952000000,
+    "interest_expense": 78000000,
+    "interest_paid": 74000000,
+    "pretax_income": 362000000,
+    "net_income": 274000000,
+    "da": 85000000,
+    "ocf": 410000000,
+    "capex": 24000000,
+    "revenue": 2146000000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 29000000,
+      "rest_of_year": 14000000,
+      "y2": 29000000,
+      "y3": 342000000,
+      "y4": 8000000
+    },
+    "shares": 68893316,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtAndCapitalLeaseObligationsCurrent+LongTermDebtAndCapitalLeaseObligations",
+    "current_debt": "LongTermDebtAndCapitalLeaseObligationsCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 1160000000,
+    "cash_and_investments": 627000000.0,
+    "net_debt": 533000000.0,
+    "ebitda": 525000000,
+    "ebit": 440000000,
+    "interest_expense": 78000000,
+    "leverage": 2.209524,
+    "net_leverage": 1.015238,
+    "interest_coverage": 5.641026,
+    "ebitda_coverage": 6.730769,
+    "cash_coverage": 6.540541,
+    "fcf": 386000000,
+    "fcf_to_debt": 0.332759,
+    "effective_rate": 0.067241,
+    "revolver_available": 250000000,
+    "liquidity": 877000000.0,
+    "due_12m": 29000000,
+    "due_24m": 58000000,
+    "liquidity_to_due12": 30.241379,
+    "liquidity_to_due24": 15.12069,
+    "floating_debt": 1160000000.0,
+    "floating_share": 1.0,
+    "plus100bp_interest": 11600000.0,
+    "plus100bp_share_of_ebit": 0.026364,
+    "market_cap": 5926891975.48,
+    "debt_to_ev": 0.17957,
+    "convertibles": null,
+    "implied": {
+      "dd": 4.906485,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 31.66223,
+      "asset_vol": 0.473628,
+      "calibrated_5y_bps": 133.052595,
+      "rating_band": "BBB"
+    },
+    "market_rate_5y": 0.062405,
+    "refi_extra_interest": -280494.947047,
+    "covenants": [],
+    "cushion_score": 80
+  },
+  "instruments": [
+    {
+      "name": "Term Loan Maturing In2031",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 778000000.0,
+      "floating": true
+    },
+    {
+      "name": "Term Loan Maturing In2029",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 382000000.0,
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Facility Maturing In2029",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": true
+    },
+    {
+      "name": "Credit Facilities",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "spread_min": 0.015,
+      "spread_max": 0.02,
+      "reference": "Base Rate",
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Term Loan B Maturing In2028",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "spread": 0.0225,
+      "reference": "Base Rate",
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Letter Of Credit",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "drawn": 2000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Revolving Credit Facility Maturing In2026",
+      "kind": "revolver",
+      "as_of": "2024-12-19",
+      "drawn": 0.0,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2024-12-19",
+      "agreement_kind": "amendment",
+      "dated": "2024-12-19",
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        1.5,
+        2.25
+      ],
+      "grid_by": "leverage",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "the date of the delivery of the consolidated financial statements pursuant to subsection 6.1(a) or (b) as of and for the first fiscal quarter ended after the 2021 2024 Amendment Effective Date, the Applicable Commitment Fee Percentage shall be based on the rates per annum set forth in Category 2: | Consolidated First Lien Leverage Ratio: | Applicable Commitment Fee Percentage | Category 1 Greater than or equal to 3.0"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ ECF Percentage ”: 50%, provided that with respect to any fiscal year, (a) if the Consolidated First Lien Leverage Ratio is less than 3.25 to 1.00 and greater than or equal to 3.00 to 1.00, the ECF Percentage shall be reduced to 25% and (b) if the Consolidated First Lien Leverage Ratio is less than 3.00 to 1.00, the ECF Percentage shall be reduced to 0%."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1727263/000095017024138432/ftdr-ex10_1.htm",
+      "all_in_pct": [
+        1.5389,
+        2.2889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2023-05-04",
+      "agreement_kind": "amendment",
+      "dated": "2021-06-17",
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "margin_pct": [
+        1.5,
+        2.25
+      ],
+      "grid_by": "leverage",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "until the date of the delivery of the consolidated financial statements pursuant to subsection 6.1(a) or (b) as of and for the first fiscal quarter ended after the 2021 Amendment Effective Date, the Applicable Commitment Fee Percentage shall be based on the rates per annum set forth in Category 2: Consolidated First Lien Leverage Ratio: | Applicable Commitment Fee Percentage | Category 1 Greater than or equal to 3.0"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ ECF Percentage ”: 50%, provided that with respect to any fiscal year, (a) if the Consolidated First Lien Leverage Ratio is less than 3.25 to 1.00 and greater than or equal to 3.00 to 1.00, the ECF Percentage shall be reduced to 25% and (b) if the Consolidated First Lien Leverage Ratio is less than 3.00 to 1.00, the ECF Percentage shall be reduced to 0%."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1727263/000156276223000206/ftdr-20230331xex10_10.htm",
+      "all_in_pct": [
+        1.5389,
+        2.2889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-06-21",
+      "agreement_kind": "amendment",
+      "dated": "2021-06-17",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "margin_pct": [
+        1.5,
+        2.25
+      ],
+      "grid_by": "leverage",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "ntil the date of the delivery of the consolidated financial statements pursuant to subsection 6.1(a) or (b) as of and for the first fiscal quarter ended after the 2021 Amendment Effective Date, the Applicable Commitment Fee Percentage shall be based on the rates per annum set forth in Category 2: | Consolidated First Lien Leverage Ratio: | Applicable Commitment Fee Percentage | Category 1 Greater than or equal to 3.0"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ ECF Payment Date ”: as defined in subsection 3.4(c). 27 “ ECF Percentage ”: 50%, provided that with respect to any fiscal year, (a) if the Consolidated First Lien Leverage Ratio is less than 3.25 to 1.00 and greater than or equal to 3.00 to 1.00, the ECF Percentage shall be reduced to 25% and (b) if the Consolidated First Lien Leverage Ratio is less than 3.00 to 1.00, the ECF Percentage shall be reduced to 0%."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1727263/000119312521193466/d191532dex101.htm",
+      "all_in_pct": [
+        1.5389,
+        2.2889
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2024-12-19",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0000950170-24-138432",
+      "doc": "ftdr-20241218.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-06-04",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-24-153652",
+      "doc": "d843555d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-21",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001193125-21-193466",
+      "doc": "d191532d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-10-01",
+      "items": "1.01,5.01,5.03,8.01,9.01",
+      "acc": "0001104659-18-059550",
+      "doc": "a18-35090_18k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2023-03-31",
+      605000000,
+      337000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      601000000,
+      344000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      597000000,
+      320000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      590000000,
+      378000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      586000000,
+      419000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      582000000,
+      375000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      1193000000,
+      506000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      1186000000,
+      562000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      1180000000,
+      563000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1167000000,
+      603000000,
+      79000000,
+      null,
+      null,
+      0.06769
+    ],
+    [
+      "2026-06-30",
+      1160000000,
+      627000000,
+      78000000,
+      null,
+      null,
+      0.06724
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2023-05",
+      3.16,
+      6.345,
+      0.3911,
+      121.0
+    ],
+    [
+      "2023-06",
+      0.59,
+      7.295,
+      0.3445,
+      113.6
+    ],
+    [
+      "2023-07",
+      0.42,
+      7.505,
+      0.3427,
+      112.0
+    ],
+    [
+      "2023-08",
+      0.44,
+      7.443,
+      0.3385,
+      112.5
+    ],
+    [
+      "2023-09",
+      0.2,
+      7.812,
+      0.3178,
+      109.7
+    ],
+    [
+      "2023-10",
+      0.25,
+      7.688,
+      0.3157,
+      110.7
+    ],
+    [
+      "2023-11",
+      0.41,
+      7.521,
+      0.3399,
+      111.9
+    ],
+    [
+      "2023-12",
+      0.12,
+      8.197,
+      0.3149,
+      107.0
+    ],
+    [
+      "2024-01",
+      0.06,
+      8.501,
+      0.2996,
+      104.8
+    ],
+    [
+      "2024-02",
+      0.05,
+      8.54,
+      0.2973,
+      104.6
+    ],
+    [
+      "2024-03",
+      0.02,
+      8.939,
+      0.2834,
+      101.8
+    ],
+    [
+      "2024-04",
+      0.04,
+      8.652,
+      0.2887,
+      103.8
+    ],
+    [
+      "2024-05",
+      0.03,
+      8.785,
+      0.2942,
+      102.9
+    ],
+    [
+      "2024-06",
+      0.05,
+      8.58,
+      0.2971,
+      104.3
+    ],
+    [
+      "2024-07",
+      0.04,
+      8.743,
+      0.3017,
+      103.2
+    ],
+    [
+      "2024-08",
+      0.04,
+      8.879,
+      0.3157,
+      102.3
+    ],
+    [
+      "2024-09",
+      0.03,
+      9.07,
+      0.3098,
+      101.0
+    ],
+    [
+      "2024-10",
+      0.03,
+      9.123,
+      0.3107,
+      100.6
+    ],
+    [
+      "2024-11",
+      0.02,
+      9.279,
+      0.3189,
+      99.6
+    ],
+    [
+      "2024-12",
+      0.04,
+      9.025,
+      0.3231,
+      101.3
+    ],
+    [
+      "2025-01",
+      0.02,
+      9.375,
+      0.3175,
+      98.9
+    ],
+    [
+      "2025-02",
+      1.85,
+      6.902,
+      0.3954,
+      116.6
+    ],
+    [
+      "2025-03",
+      5.82,
+      6.131,
+      0.421,
+      122.7
+    ],
+    [
+      "2025-04",
+      4.81,
+      6.29,
+      0.4196,
+      121.4
+    ],
+    [
+      "2025-05",
+      26.25,
+      4.926,
+      0.4647,
+      132.9
+    ],
+    [
+      "2025-06",
+      24.21,
+      5.022,
+      0.4644,
+      132.0
+    ],
+    [
+      "2025-07",
+      23.26,
+      5.046,
+      0.4634,
+      131.8
+    ],
+    [
+      "2025-08",
+      18.42,
+      5.248,
+      0.4496,
+      130.1
+    ],
+    [
+      "2025-09",
+      16.85,
+      5.362,
+      0.4527,
+      129.1
+    ],
+    [
+      "2025-10",
+      17.33,
+      5.337,
+      0.4537,
+      129.3
+    ],
+    [
+      "2025-11",
+      47.22,
+      4.488,
+      0.5013,
+      136.8
+    ],
+    [
+      "2025-12",
+      43.82,
+      4.59,
+      0.5025,
+      135.9
+    ],
+    [
+      "2026-01",
+      45.61,
+      4.561,
+      0.5065,
+      136.1
+    ],
+    [
+      "2026-02",
+      29.8,
+      4.956,
+      0.4891,
+      132.6
+    ],
+    [
+      "2026-03",
+      38.92,
+      4.631,
+      0.4866,
+      135.5
+    ],
+    [
+      "2026-04",
+      35.53,
+      4.764,
+      0.4924,
+      134.3
+    ],
+    [
+      "2026-05",
+      20.65,
+      5.168,
+      0.4562,
+      130.8
+    ],
+    [
+      "2026-06",
+      16.26,
+      5.401,
+      0.4613,
+      128.8
+    ],
+    [
+      "2026-07",
+      18.63,
+      5.281,
+      0.4675,
+      129.8
+    ],
+    [
+      "2026-08",
+      31.22,
+      4.935,
+      0.5141,
+      132.8
+    ],
+    [
+      "2026-09",
+      36.33,
+      4.751,
+      0.5165,
+      134.4
+    ],
+    [
+      "2026-10",
+      30.58,
+      4.943,
+      0.519,
+      132.7
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

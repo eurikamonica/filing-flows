@@ -1,0 +1,665 @@
+{
+  "cik": 1581091,
+  "ticker": null,
+  "name": "RE/MAX Holdings, Inc.",
+  "sector": "real-estate",
+  "industry": "Real Estate Agents & Managers (For Others)",
+  "sic": "6531",
+  "sic_description": "Real Estate Agents & Managers (For Others)",
+  "generated_at": "2026-10-24T14:46:10+00:00",
+  "fetched_at": "2026-10-18T13:04:03+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 435048000,
+    "current_debt": 4600000,
+    "cash": 112396000,
+    "equity": 443927000,
+    "assets": 567426000,
+    "liabilities": 614314000,
+    "assets_current": 235616000,
+    "liabilities_current": 153059000,
+    "retained_earnings": -140210000,
+    "operating_income": 21323000,
+    "pretax_income": -5166000,
+    "net_income": -3330000,
+    "da": 24403000,
+    "ocf": 34993000,
+    "capex": 9149000,
+    "revenue": 283122000,
+    "debt_repaid": 4600000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 4600000,
+      "rest_of_year": 2300000,
+      "y2": 430099000
+    },
+    "shares": 17767499,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 435048000,
+    "cash_and_investments": 112396000.0,
+    "net_debt": 322652000.0,
+    "ebitda": 45726000,
+    "ebit": 21323000,
+    "interest_expense": null,
+    "leverage": 9.514237,
+    "net_leverage": 7.056204,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 25844000,
+    "fcf_to_debt": 0.059405,
+    "effective_rate": null,
+    "revolver_available": 50000000.0,
+    "liquidity": 162396000.0,
+    "due_12m": 4600000,
+    "due_24m": 434699000,
+    "liquidity_to_due12": 35.303478,
+    "liquidity_to_due24": 0.373583,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "min",
+        "limit": 2.5,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "agreement",
+        "dated": "2025-09-30",
+        "text": "“ Commitment Fee Rate ”: ½ of 1% per annum; provided that if as of the end of any fiscal quarter the Total Leverage Ratio is less than or equal to 2.5 to 1.0, the Commitment Fee Rate shall, effective during the period commencing on and including the date of delivery to the Administrative Agent of the financial statements pursuant to Section 6.1(a) or (b),"
+      }
+    ],
+    "cushion_score": 52
+  },
+  "instruments": [
+    {
+      "name": "Senior Secured Credit Facility Refinancing",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 50000000.0,
+      "effective": 0.063,
+      "fee": 0.005,
+      "drawn": 0.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-10-01",
+      "agreement_kind": "amendment",
+      "dated": "2025-09-30",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Eurodollar"
+      ],
+      "margin_pct": [
+        2.5,
+        2.5
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "“ Commitment Fee Rate ”: ½ of 1% per annum; provided that if as of the end of any fiscal quarter the Total Leverage Ratio is less than or equal to 2.5 to 1.0, the Commitment Fee Rate shall, effective during the period commencing on and including the date of delivery to the Administrative Agent of the financial statements pursuant to Section 6.1(a) or (b),"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "cable, and the related Compliance Certificate pursuant to Section 6.2(a) indicating such Total Leverage Ratio and ending on the date of delivery of financial statements pursuant to Section 6.1(a) or (b), as applicable, and the related Compliance Certificate pursuant to Section 6.2(a) indicating the Total Leverage Ratio is greater than 2.5 to 1.0, mean ¼ of 1% per annum."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1581091/000110465925095681/tm2527693d1_ex10-1.htm",
+      "all_in_pct": [
+        2.5389,
+        2.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-07-21",
+      "agreement_kind": "credit_agreement",
+      "dated": "2021-07-21",
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "margin_pct": [
+        2.5,
+        2.5
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "“ Commitment Fee Rate ”: ½ of 1% per annum; provided that if as of the end of any fiscal quarter the Total Leverage Ratio is less than or equal to 2.5 to 1.0, the Commitment Fee Rate shall, effective during the period commencing on and including the date of delivery to the Administrative Agent of the financial statements pursuant to Section 6.1(a) or (b),"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "cable, and the related Compliance Certificate pursuant to Section 6.2(a) indicating such Total Leverage Ratio and ending on the date of delivery of financial statements pursuant to Section 6.1(a) or (b), as applicable, and the related Compliance Certificate pursuant to Section 6.2(a) indicating the Total Leverage Ratio is greater than 2.5 to 1.0, mean ¼ of 1% per annum."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1581091/000110465921094418/tm2122783d1_ex10-1.htm",
+      "all_in_pct": [
+        2.5389,
+        2.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-06-03",
+      "agreement_kind": "credit_agreement",
+      "dated": "2016-12-15",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1581091/000156459021031574/rmax-ex101_15.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-04-28",
+      "items": "1.01,9.01",
+      "acc": "0001104659-26-049628",
+      "doc": "tm2612789d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-10-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-095681",
+      "doc": "tm2527693d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-07-21",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0001104659-21-094418",
+      "doc": "tm2122783d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-06-03",
+      "items": "1.01,2.03,5.02,7.01,9.01",
+      "acc": "0001564590-21-031574",
+      "doc": "rmax-8k_20210603.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-01-07",
+      "items": "1.01,2.01",
+      "acc": "0001104659-19-001143",
+      "doc": "a19-1330_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-12-26",
+      "items": "1.01,9.01",
+      "acc": "0001104659-17-074952",
+      "doc": "a17-28906_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-11-15",
+      "items": "1.01,9.01",
+      "acc": "0001104659-17-068846",
+      "doc": "a17-27197_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-11-07",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001144204-17-056728",
+      "doc": "tv478793_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-12-21",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001558370-16-010603",
+      "doc": "rmax-20161215x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-11-28",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001144204-16-136750",
+      "doc": "v453946_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-11-03",
+      "items": "1.01,2.02,7.01,9.01",
+      "acc": "0001144204-16-131397",
+      "doc": "v452135_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-11-24",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001104659-15-081136",
+      "doc": "a15-23113_48k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2014-03-31",
+      227842000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      212721000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      212197000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-31",
+      203330000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-30",
+      202847000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      202365000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-31",
+      187361000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      186983000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      186608000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-03-31",
+      230360000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      229901000,
+      70317000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      229444000,
+      83936000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      228526000,
+      30103000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      229116000,
+      39839000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      228435000,
+      51263000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      227261000,
+      64771000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      226727000,
+      72486000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      226201000,
+      87763000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      225150000,
+      80905000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      224617000,
+      84545000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      224083000,
+      89135000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      223032000,
+      102632000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      222567000,
+      107252000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      452990000,
+      119446000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      451121000,
+      118495000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      450186000,
+      118132000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      449253000,
+      117899000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      447382000,
+      96754000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      446446000,
+      96757000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      445513000,
+      89820000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      443644000,
+      82077000,
+      36752000,
+      null,
+      null,
+      0.08284
+    ],
+    [
+      "2024-06-30",
+      442709000,
+      66064000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      441776000,
+      83779000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      439905000,
+      89107000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      438969000,
+      94313000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      437887000,
+      107476000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      435962000,
+      107126000,
+      null,
+      58986000,
+      33852000,
+      null
+    ],
+    [
+      "2026-06-30",
+      435048000,
+      112396000,
+      null,
+      45726000,
+      21323000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

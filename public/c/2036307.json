@@ -1,0 +1,282 @@
+{
+  "cik": 2036307,
+  "ticker": "OFAL",
+  "name": "OFA Group",
+  "sector": "industrials",
+  "industry": "Services-Engineering Services",
+  "sic": "8711",
+  "sic_description": "Services-Engineering Services",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T19:06:41+00:00",
+  "price": 0.328,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.457415,
+  "snapshot": {
+    "total_debt": 469880,
+    "current_debt": 1505,
+    "cash": 178057,
+    "operating_leases": 640817,
+    "equity": 9402686,
+    "assets": 19812057,
+    "liabilities": 8527455,
+    "assets_current": 3013713,
+    "liabilities_current": 7591518,
+    "retained_earnings": -11060535,
+    "interest_expense": 13417,
+    "interest_paid": 819,
+    "operating_income": -8189228,
+    "pretax_income": -8196120,
+    "net_income": -8196190,
+    "da": 2531527,
+    "ocf": 7144435,
+    "capex": 593013,
+    "revenue": 712809,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 32608,
+      "rest_of_year": 1505,
+      "y2": 47714,
+      "y3": 49042,
+      "y4": 50408
+    },
+    "stated_rate": 0.03,
+    "conversion_price": 0.3622,
+    "shares": 26370521,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "Cash",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "stated_rate": "DebtInstrumentInterestRateStatedPercentage",
+    "conversion_price": "DebtInstrumentConvertibleConversionPrice1"
+  },
+  "analysis": {
+    "total_debt": 469880,
+    "cash_and_investments": 178057.0,
+    "net_debt": 291823.0,
+    "ebitda": -5657701,
+    "ebit": -8189228,
+    "interest_expense": 13417,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -610.362078,
+    "ebitda_coverage": -421.681523,
+    "cash_coverage": 8724.363858,
+    "fcf": 6551422,
+    "fcf_to_debt": 13.942756,
+    "effective_rate": 0.028554,
+    "revolver_available": null,
+    "liquidity": 178057.0,
+    "due_12m": 32608,
+    "due_24m": 80322,
+    "liquidity_to_due12": 5.460531,
+    "liquidity_to_due24": 2.21679,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -1.778329,
+    "market_cap": 8649530.888,
+    "debt_to_ev": 0.052551,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Convertible Promissory Note",
+          "face": 800000.0,
+          "carrying": 800000.0,
+          "coupon": 0.06,
+          "conv_price": null,
+          "maturity": null
+        }
+      ],
+      "total_face": 800000.0,
+      "in_the_money_face": 0,
+      "in_the_money_carrying": 0,
+      "shares_if_converted": 0,
+      "coupon_saved": 0
+    },
+    "implied": {
+      "dd": 1.873162,
+      "pd_1y": 0.030523,
+      "spread_5y_bps": 982.698624,
+      "asset_vol": 1.421512,
+      "calibrated_5y_bps": 162.683636,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.065368,
+    "refi_extra_interest": 2956.99537,
+    "covenants": [],
+    "cushion_score": 43
+  },
+  "instruments": [
+    {
+      "name": "Convertible Promissory Note",
+      "kind": "convertible",
+      "as_of": "2026-03-31",
+      "face": 800000.0,
+      "coupon": 0.06,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2026-03-31"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-05-14",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001493152-26-023062",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-22",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001493152-26-018584",
+      "doc": "form8-ka.htm",
+      "desc": "8-K/A"
+    },
+    {
+      "date": "2026-04-06",
+      "items": "1.01,9.01",
+      "acc": "0001493152-26-015328",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-06",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001493152-26-015235",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-09-30",
+      473566,
+      505786,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      469880,
+      178057,
+      13417,
+      -5657701,
+      -8189228,
+      0.02855
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-02",
+      574.24,
+      3.148,
+      1.3937,
+      149.5
+    ],
+    [
+      "2026-03",
+      530.67,
+      3.234,
+      1.3626,
+      148.7
+    ],
+    [
+      "2026-04",
+      550.58,
+      3.301,
+      1.4269,
+      148.0
+    ],
+    [
+      "2026-05",
+      897.76,
+      2.331,
+      1.5213,
+      157.8
+    ],
+    [
+      "2026-06",
+      631.95,
+      2.739,
+      1.3104,
+      153.6
+    ],
+    [
+      "2026-07",
+      655.5,
+      2.5,
+      1.2485,
+      156.1
+    ],
+    [
+      "2026-08",
+      726.93,
+      2.603,
+      1.3981,
+      155.0
+    ],
+    [
+      "2026-09",
+      829.68,
+      2.265,
+      1.4064,
+      158.5
+    ],
+    [
+      "2026-10",
+      982.14,
+      1.875,
+      1.4574,
+      162.7
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

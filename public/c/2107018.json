@@ -1,0 +1,201 @@
+{
+  "cik": 2107018,
+  "ticker": "DPC",
+  "name": "DPC Holdings PLC",
+  "sector": "materials",
+  "industry": "Nonferrous Foundries (Castings)",
+  "sic": "3360",
+  "sic_description": "Nonferrous Foundries (Castings)",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T09:18:21+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 572700000,
+    "current_debt": 483300000,
+    "cash": 844800000,
+    "equity": 772400000,
+    "assets": 1887000000,
+    "liabilities": 1114600000,
+    "assets_current": 1406300000,
+    "liabilities_current": 951700000,
+    "retained_earnings": -1114700000,
+    "shares": 149393016,
+    "balance_date": "2026-06-28",
+    "latest_period": "2026-06-28"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 572700000,
+    "cash_and_investments": 844800000.0,
+    "net_debt": -272100000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 97400000.0,
+    "liquidity": 942200000.0,
+    "due_12m": 483300000,
+    "due_24m": null,
+    "liquidity_to_due12": 1.949514,
+    "liquidity_to_due24": null,
+    "floating_debt": 537600000.0,
+    "floating_share": 0.938711,
+    "plus100bp_interest": 5376000.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Execution Version Credit Agreement",
+        "dated": "2026-09-03",
+        "text": "(b) Commencing with the Financial Covenant Testing Period ending December 31, 2026, the Company will not permit the Interest Coverage Ratio calculated as of the last day of a Financial Covenant Testing Period to be equal or less than 3.00 to 1.00. | 71 | Section 6.05."
+      }
+    ],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-28",
+      "carrying": 517000000.0,
+      "spread": 0.065,
+      "effective": 0.102,
+      "floating": true
+    },
+    {
+      "name": "Other Loans",
+      "kind": "other",
+      "as_of": "2026-06-28",
+      "carrying": 35100000.0,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-28",
+      "carrying": 20600000.0,
+      "capacity": 118000000.0,
+      "spread": 0.03,
+      "floating": true
+    },
+    {
+      "name": "Payment in Kind Loan",
+      "kind": "loan",
+      "as_of": "2026-06-26",
+      "carrying": 0.0,
+      "coupon": 0.14,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-28"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-09-08",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-09-03",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/2107018/000110465926105687/tm2624842d1_ex10-2.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-09-08",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-09-03",
+      "size": 325000000.0,
+      "title": "Execution Version Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "maturity": "2029-09-03",
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "(b) Commencing with the Financial Covenant Testing Period ending December 31, 2026, the Company will not permit the Interest Coverage Ratio calculated as of the last day of a Financial Covenant Testing Period to be equal or less than 3.00 to 1.00. | 71 | Section 6.05."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2107018/000110465926105687/tm2624842d1_ex10-1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-09-08",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-26-105687",
+      "doc": "tm2624842d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-28",
+      572700000,
+      844800000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

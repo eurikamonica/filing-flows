@@ -1,0 +1,159 @@
+{
+  "cik": 2084227,
+  "ticker": "ADBT",
+  "name": "Advasa Holdings, Inc.",
+  "sector": "technology",
+  "industry": "Services-Prepackaged Software",
+  "sic": "7372",
+  "sic_description": "Services-Prepackaged Software",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T15:15:40+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 585000,
+    "current_debt": 171000,
+    "cash": 1506000,
+    "operating_leases": 5000,
+    "equity": 21657000,
+    "assets": 25020000,
+    "liabilities": 2965000,
+    "assets_current": 24860000,
+    "liabilities_current": 2551000,
+    "retained_earnings": -8830000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 166000,
+      "rest_of_year": 128000,
+      "y2": 110000,
+      "y3": 110000,
+      "y4": 71000,
+      "y5": 0
+    },
+    "shares": 487065702,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 585000,
+    "cash_and_investments": 1506000.0,
+    "net_debt": -921000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 1506000.0,
+    "due_12m": 166000,
+    "due_24m": 276000,
+    "liquidity_to_due12": 9.072289,
+    "liquidity_to_due24": 5.456522,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Third Lender Two",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 180000.0,
+      "floating": false
+    },
+    {
+      "name": "First Lender One",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 121000.0,
+      "floating": false
+    },
+    {
+      "name": "First Lender Two",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 121000.0,
+      "floating": false
+    },
+    {
+      "name": "Second Lender One",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 103000.0,
+      "floating": false
+    },
+    {
+      "name": "Third Lender One",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 60000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      585000,
+      1506000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

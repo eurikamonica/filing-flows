@@ -1,0 +1,211 @@
+{
+  "cik": 1713445,
+  "ticker": "RDDT",
+  "name": "Reddit, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Processing & Data Preparation",
+  "sic": "7374",
+  "sic_description": "Services-Computer Processing & Data Preparation",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T07:15:26+00:00",
+  "price": 150.26,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.671606,
+  "snapshot": {
+    "cash": 1486838000,
+    "investments": 1299519000,
+    "operating_leases": 23214000,
+    "equity": 3285700000,
+    "assets": 3636605000,
+    "liabilities": 350905000,
+    "assets_current": 3541665000,
+    "liabilities_current": 337749000,
+    "retained_earnings": -214288000,
+    "operating_income": 784998000,
+    "pretax_income": 877958000,
+    "net_income": 871374000,
+    "da": 16519000,
+    "ocf": 1026095000,
+    "capex": 7446000,
+    "revenue": 2778834000,
+    "shares": 202326864,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 2786357000,
+    "net_debt": null,
+    "ebitda": 801517000,
+    "ebit": 784998000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": 1018649000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 2786357000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 54.433869,
+    "market_cap": 30401634584.64,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "liquidity",
+        "direction": "min",
+        "limit": 250000000.0,
+        "unit": "usd",
+        "actual": 2786357000.0,
+        "cushion": 0.910277,
+        "agreement": "agreement",
+        "dated": "2025-07-01",
+        "text": "The Borrower shall not permit, as of the last day of each Test Period of the Borrower, 109 (i) with respect to the Test Period ending June 30, 2025, Liquidity to be less than $250,000,000 (this clause (i) , the “ Liquidity Covenant ”) or (ii) with respect to each Test Period ending thereafter, the Total Net Leverage Ratio to exceed (x) in the case of any Test Period ending after July"
+      }
+    ],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility and Standby Letter of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "available": 94400000.0,
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Facility and Standby Letter of Credit Agreement, ABR Loans",
+      "kind": "revolver",
+      "as_of": "2025-07-01",
+      "spread": 0.005,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Facility and Standby Letter of Credit Agreement, Outstanding Term Benchmark Loans",
+      "kind": "revolver",
+      "as_of": "2025-07-01",
+      "spread": 0.0125,
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Facility And Standby Letter Of Credit Agreement, Outstanding SONIA Loans",
+      "kind": "revolver",
+      "as_of": "2025-07-01",
+      "spread": 0.0125,
+      "reference": "Adjusted Daily Simple Sterling Over Night Indexed Average Rate SONIA",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-07-02",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-07-01",
+      "size": 500000000.0,
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "fee_pct": 0.25,
+      "maturity": "2030-07-01",
+      "covenants": [
+        {
+          "type": "liquidity",
+          "limit": 250000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower shall not permit, as of the last day of each Test Period of the Borrower, 109 (i) with respect to the Test Period ending June 30, 2025, Liquidity to be less than $250,000,000 (this clause (i) , the “ Liquidity Covenant ”) or (ii) with respect to each Test Period ending thereafter, the Total Net Leverage Ratio to exceed (x) in the case of any Test Period ending after July"
+        },
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "tanding transactions to the defaulting party; 105 (e) other Indebtedness (including any Permitted Refinancing thereof) of the Borrower or any Restricted Subsidiary in an aggregate principal amount at any time outstanding not to exceed (i) $1,000,000,000 plus (ii) an additional amount so long as the Total Net Leverage Ratio does not exceed 4.00 to 1.00, determined on a pro forma basis after giving effect to the Indebt"
+        },
+        {
+          "type": "liquidity",
+          "limit": 500000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "e permitted under clause (g) of this Section 7.04 at the time such agreement is entered into and at the time such payment is made; (g) the Borrower may declare or make Restricted Payments if, after giving pro forma effect to such Restricted Payment, the Borrower and its Restricted Subsidiaries have Liquidity of at least $500,000,000;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1713445/000171344525000173/exhibit101-redditxcreditan.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-07-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001713445-25-000173",
+      "doc": "rddt-20250701.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

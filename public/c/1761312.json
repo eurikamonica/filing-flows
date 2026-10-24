@@ -1,0 +1,297 @@
+{
+  "cik": 1761312,
+  "ticker": "PLMR",
+  "name": "Palomar Holdings, Inc.",
+  "sector": "financials",
+  "industry": "Fire, Marine & Casualty Insurance",
+  "sic": "6331",
+  "sic_description": "Fire, Marine & Casualty Insurance",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T09:11:39+00:00",
+  "price": 144.53,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.348716,
+  "snapshot": {
+    "total_debt": 295773000,
+    "cash": 62689000,
+    "equity": 980942000,
+    "assets": 3964165000,
+    "liabilities": 2983223000,
+    "retained_earnings": 453436000,
+    "interest_expense": 8326000,
+    "interest_paid": 7710000,
+    "pretax_income": 263061000,
+    "net_income": 203159000,
+    "ocf": 415257000,
+    "capex": 489000,
+    "revenue": 1091383000,
+    "shares": 26317683,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 295773000,
+    "cash_and_investments": 62689000.0,
+    "net_debt": 233084000.0,
+    "ebitda": 271387000.0,
+    "ebit": 271387000,
+    "interest_expense": 8326000,
+    "leverage": 1.089857,
+    "net_leverage": 0.858862,
+    "interest_coverage": 32.595124,
+    "ebitda_coverage": 32.595124,
+    "cash_coverage": 54.859533,
+    "fcf": 414768000,
+    "fcf_to_debt": 1.402319,
+    "effective_rate": 0.02815,
+    "revolver_available": null,
+    "liquidity": 62689000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 295773000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 2957730.0,
+    "plus100bp_share_of_ebit": 0.010899,
+    "altman_z": 1.426385,
+    "market_cap": 3803694723.99,
+    "debt_to_ev": 0.07327,
+    "convertibles": null,
+    "implied": {
+      "dd": 9.732274,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.010693,
+      "asset_vol": 0.336217,
+      "calibrated_5y_bps": 96.627989,
+      "rating_band": "BBB"
+    },
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 617541400.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2026-01-27",
+        "text": "Borrower shall not permit its Consolidated Net Worth to be less than an amount equal to the sum of (a) $617,541,400 plus (b) 25% of positive Consolidated Net Income earned in all future fiscal quarters starting from the fiscal quarter ending December 31, 2025 and on or prior to the applicable measurement date plus (c) 25% of additional cash equity raised by Borrower in all future fiscal quarters starting from the fis"
+      }
+    ],
+    "cushion_score": 97
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "maturity": "2026-12-08",
+      "drawn": 0.0,
+      "floating": true
+    },
+    {
+      "name": "Unsecured Credit Facilities",
+      "kind": "revolver",
+      "as_of": "2026-01-31",
+      "drawn": 450000000.0,
+      "floating": false
+    },
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "drawn": 295800000.0,
+      "floating": true
+    },
+    {
+      "name": "Two Thousand Twenty One Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 0.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-02-02",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-01-27",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1761312/000119312526033708/plmr-ex10_2.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-02-02",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-01-27",
+      "size": 450000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.5,
+        1.75
+      ],
+      "fee_pct": 0.225,
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 617541400.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Borrower shall not permit its Consolidated Net Worth to be less than an amount equal to the sum of (a) $617,541,400 plus (b) 25% of positive Consolidated Net Income earned in all future fiscal quarters starting from the fiscal quarter ending December 31, 2025 and on or prior to the applicable measurement date plus (c) 25% of additional cash equity raised by Borrower in all future fiscal quarters starting from the fis"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1761312/000119312526033708/plmr-ex10_1.htm",
+      "all_in_pct": [
+        1.5389,
+        1.7889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-12-09",
+      "agreement_kind": "credit_agreement",
+      "dated": "2021-12-08",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1761312/000155837021016646/plmr-20211208xex10d2.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-02-02",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0001193125-26-033708",
+      "doc": "plmr-20260202.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-30",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-25-258571",
+      "doc": "plmr-20251027.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-12-09",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001558370-21-016646",
+      "doc": "plmr-20211208x8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-31",
+      297434000,
+      56538000,
+      3465000,
+      null,
+      null,
+      0.01165
+    ],
+    [
+      "2026-06-30",
+      295773000,
+      62689000,
+      8326000,
+      null,
+      null,
+      0.02815
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-05",
+      0.0,
+      10.142,
+      0.3096,
+      94.0
+    ],
+    [
+      "2026-06",
+      0.01,
+      9.62,
+      0.3403,
+      97.3
+    ],
+    [
+      "2026-07",
+      0.01,
+      9.796,
+      0.3394,
+      96.2
+    ],
+    [
+      "2026-08",
+      0.01,
+      10.039,
+      0.3303,
+      94.7
+    ],
+    [
+      "2026-09",
+      0.01,
+      9.541,
+      0.342,
+      97.9
+    ],
+    [
+      "2026-10",
+      0.01,
+      9.732,
+      0.3487,
+      96.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

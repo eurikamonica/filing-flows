@@ -1,0 +1,254 @@
+{
+  "cik": 1953984,
+  "ticker": "BCG",
+  "name": "Binah Capital Group, Inc.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "sic_description": "Finance Services",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T13:17:09+00:00",
+  "price": 1.11,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.734716,
+  "snapshot": {
+    "total_debt": 16738000,
+    "cash": 10909000,
+    "operating_leases": 3425000,
+    "equity": 20782000,
+    "assets": 71183000,
+    "liabilities": 50401000,
+    "retained_earnings": -20258000,
+    "interest_paid": 1487000,
+    "pretax_income": 4797000,
+    "net_income": 4168000,
+    "da": 597000,
+    "ocf": 5691000,
+    "capex": 79000,
+    "revenue": 191930000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 3045000,
+      "rest_of_year": 1015000,
+      "y2": 3045000,
+      "y3": 10150000
+    },
+    "shares": 17060131,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaid (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 16738000,
+    "cash_and_investments": 10909000.0,
+    "net_debt": 5829000.0,
+    "ebitda": 5394000.0,
+    "ebit": 4797000.0,
+    "interest_expense": null,
+    "leverage": 3.103077,
+    "net_leverage": 1.080645,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 4.827169,
+    "fcf": 5612000,
+    "fcf_to_debt": 0.335285,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 10909000.0,
+    "due_12m": 3045000,
+    "due_24m": 6090000,
+    "liquidity_to_due12": 3.582594,
+    "liquidity_to_due24": 1.791297,
+    "floating_debt": 16700000.0,
+    "floating_share": 0.99773,
+    "plus100bp_interest": 167000.0,
+    "plus100bp_share_of_ebit": 0.034813,
+    "altman_z": 2.745682,
+    "market_cap": 18936745.41,
+    "debt_to_ev": 0.675853,
+    "convertibles": null,
+    "implied": {
+      "dd": 2.075662,
+      "pd_1y": 0.018963,
+      "spread_5y_bps": 350.868694,
+      "asset_vol": 0.519407,
+      "calibrated_5y_bps": 160.514583,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.065151,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "min",
+        "limit": 2.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Execution Version Credit Agreement",
+        "dated": "2024-12-23",
+        "text": "Level | Senior NET Leverage Ratio | Applicable Margin | I | Less than or equal to 2.00 to 1.00 | 3.50% | II | Greater than 2.00 to 1.00 | 4.00% | For purposes of the foregoing, (a) the Applicable Margin shall be determined as of the end of each Fiscal Quarter of Borrower based upon Borrower’s"
+      }
+    ],
+    "cushion_score": 70
+  },
+  "instruments": [
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 16700000.0,
+      "coupon": 0.01,
+      "effective": 0.075,
+      "floating": true
+    },
+    {
+      "name": "Non-Revolving Loans",
+      "kind": "revolver",
+      "as_of": "2024-12-23",
+      "face": 1000000.0,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2024-12-26",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-12-23",
+      "title": "Execution Version Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR"
+      ],
+      "margin_pct": [
+        3.5,
+        4.0
+      ],
+      "grid_by": "leverage",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Level | Senior NET Leverage Ratio | Applicable Margin | I | Less than or equal to 2.00 to 1.00 | 3.50% | II | Greater than 2.00 to 1.00 | 4.00% | For purposes of the foregoing, (a) the Applicable Margin shall be determined as of the end of each Fiscal Quarter of Borrower based upon Borrower’s"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "amount of any such prepayment shall not exceed Two Million and 00/100 Dollars ($2,000,000.00) in any Fiscal Year (each such payment, an “ Excess Cash Flow Payment ”); provided however , the Borrower shall not be required to make an Excess Cash Flow Payment for any Fiscal Year to the extent that the Senior Net Leverage Ratio is less than 2.00 to 1.00 as of the last day of such Fiscal Year."
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.2,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "make such payment; (c) so long as no Default or Event of Default exists or would result therefrom, subject to the terms of the Subordinated Notes Subordination Agreement, the Borrower may (i) make regularly scheduled interest (but not principal) payments on the Subordinated Notes so long as (x) the Fixed Charge Coverage Ratio, calculated on a pro forma basis as if such Restricted Payment had been made on the first da"
+        },
+        {
+          "type": "liquidity",
+          "limit": 2500000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Lender shall have received satisfactory evidence (including delivery of financial statements) that (i) Borrower is in pro-forma compliance with all of the financial covenants set forth in Section 7.14 ; (ii) EBITDA for the twelve month period ended July 31, 2024 shall not be less than Three Million Nine Hundred Thousand and 00/100 Dollars ($3,900,000.00); and (iii) Borrower has Liquidity (after giving effect to the u"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1953984/000110465924131438/tm2431922d1_ex10-1.htm",
+      "all_in_pct": [
+        3.5389,
+        4.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-03-22",
+      "agreement_kind": "amendment",
+      "dated": "2020-04-02",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1953984/000110465924037860/tm249347d1_ex10-9.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-03-22",
+      "agreement_kind": "amendment",
+      "dated": "2020-04-02",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1953984/000110465924037860/tm249347d1_ex10-8.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2024-12-26",
+      "items": "1.01,1.02,2.03,3.03,9.01",
+      "acc": "0001104659-24-131438",
+      "doc": "tm2431922d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-03-22",
+      "items": "1.01,2.01,3.01,3.02,3.03,4.01,5.01,5.02,5.03,5.06,9.01",
+      "acc": "0001104659-24-037860",
+      "doc": "tm249347d2_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2024-03-21",
+      "items": "1.01,2.01,3.01,3.02,3.03,4.01,5.01,5.02,5.03,5.06,9.01",
+      "acc": "0001104659-24-037410",
+      "doc": "tm249347d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

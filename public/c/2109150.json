@@ -1,0 +1,143 @@
+{
+  "cik": 2109150,
+  "ticker": "INIO",
+  "name": "INNIO N.V.",
+  "sector": "industrials",
+  "industry": "Motors & Generators",
+  "sic": "3621",
+  "sic_description": "Motors & Generators",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T07:08:51+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 2618700000,
+    "current_debt": 11600000,
+    "cash": 1039900000,
+    "finance_leases": 26500000,
+    "operating_leases": 81300000,
+    "revolver_drawn": 225000000,
+    "equity": 209200000,
+    "assets": 5724000000,
+    "liabilities": 5504900000,
+    "assets_current": 2615300000,
+    "liabilities_current": 2090900000,
+    "retained_earnings": 77800000,
+    "revolver_fee": 0.3,
+    "shares": 750000000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "revolver_fee": "LineOfCreditFacilityCommitmentFeePercentage"
+  },
+  "analysis": {
+    "total_debt": 2618700000,
+    "cash_and_investments": 1039900000.0,
+    "net_debt": 1578800000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 1039900000.0,
+    "due_12m": 11600000,
+    "due_24m": null,
+    "liquidity_to_due12": 89.646552,
+    "liquidity_to_due24": null,
+    "floating_debt": 140000000.0,
+    "floating_share": 0.053462,
+    "plus100bp_interest": 1400000.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn_min": 225000000.0,
+      "drawn": 140000000.0,
+      "drawn_max": 300000000.0,
+      "floating": true
+    },
+    {
+      "name": "Ancillary Facility Landesbank",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "drawn": 45000000.0,
+      "floating": false
+    },
+    {
+      "name": "Ancillary Facility Erste Group Bank",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "drawn": 40000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      2618700000,
+      1039900000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

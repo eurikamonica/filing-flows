@@ -1,0 +1,383 @@
+{
+  "cik": 1820953,
+  "ticker": "AFRM",
+  "name": "Affirm Holdings, Inc.",
+  "sector": "financials",
+  "industry": "Personal Credit Institutions",
+  "sic": "6141",
+  "docs": {
+    "xbrl:0001628280-26-059279": {
+      "instruments": [
+        {
+          "name": "Secured Debt",
+          "kind": "notes",
+          "as_of": "2026-06-30",
+          "carrying": 8709015000.0,
+          "floating": false
+        },
+        {
+          "name": "Notes Issued By Securitization Trusts",
+          "kind": "abs",
+          "as_of": "2026-06-30",
+          "rate_now": 0.0485,
+          "face": 5350000000.0,
+          "carrying": 5350000000.0,
+          "floating": false
+        },
+        {
+          "name": "Funding Debt",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "rate_now": 0.0527,
+          "fee_min": 0.002,
+          "fee_max": 0.005,
+          "capacity": 6075000000.0,
+          "carrying": 2410629000.0,
+          "fee": 0.003,
+          "floating": false
+        },
+        {
+          "name": "Unsecured Debt",
+          "kind": "notes",
+          "as_of": "2026-06-30",
+          "capacity": 675000000.0,
+          "carrying": 1141321000.0,
+          "floating": false
+        },
+        {
+          "name": "2029 Notes",
+          "kind": "convertible",
+          "as_of": "2026-06-30",
+          "conv_ratio": 0.0098992,
+          "rate_now": 0.0075,
+          "carrying": 920000000.0,
+          "face": 920000000.0,
+          "coupon": 0.0075,
+          "conv_price": 101.02,
+          "floating": false
+        },
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "fee": 0.0015,
+          "capacity": 675000000.0,
+          "carrying": 0.0,
+          "floating": false
+        },
+        {
+          "name": "Revolving credit facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 675000000.0,
+          "spread": 0.015,
+          "fee": 0.0015,
+          "drawn": 0.0,
+          "floating": true
+        },
+        {
+          "name": "2026 Notes",
+          "kind": "convertible",
+          "as_of": "2026-06-30",
+          "conv_ratio": 0.0046371,
+          "carrying": 221321000.0,
+          "face": 221300000.0,
+          "coupon": 0.0,
+          "conv_price": 215.65,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-08-27",
+      "report": "2026-06-30"
+    },
+    "0001628280-26-045491:ex10affirm-amendmentno4.htm": {
+      "kind": "agreement",
+      "date": "2026-06-25",
+      "agreement_kind": "amendment",
+      "dated": "2026-06-18",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "floor_pct": 0.0
+    },
+    "0001628280-26-005855:afrm-123125ex104xxproposed.htm": {
+      "kind": "agreement",
+      "date": "2026-02-05",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-11-06",
+      "facility": "loan"
+    },
+    "0001820953-25-000012:exhibit105-fourthamendment.htm": {
+      "kind": "agreement",
+      "date": "2025-02-06",
+      "agreement_kind": "other"
+    }
+  },
+  "sic_description": "Personal Credit Institutions",
+  "snapshot": {
+    "total_debt": 9794058000,
+    "cash": 1630038000,
+    "operating_leases": 29187000,
+    "convertible": 1129581000,
+    "revolver_capacity": 14686895000,
+    "revolver_drawn": 3333248000,
+    "equity": 5483824000,
+    "assets": 15790148000,
+    "liabilities": 10306324000,
+    "retained_earnings": -1127025000,
+    "interest_expense": 454016000,
+    "interest_paid": 426175000,
+    "operating_income": 416977000,
+    "pretax_income": 492727000,
+    "net_income": 1929793000,
+    "da": 303333000,
+    "ocf": 1230974000,
+    "capex": 238346000,
+    "revenue": 4261082000,
+    "debt_issued": 0,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 221321000,
+      "y2": 823665000,
+      "y3": 1003629000,
+      "y4": 2052952000,
+      "y5": 179487000,
+      "after5": 5569282000
+    },
+    "shares": 348846647,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebt",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseDebt (fiscal year)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (fiscal year)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (fiscal year)",
+    "net_income": "NetIncomeLoss (fiscal year)",
+    "da": "DepreciationDepletionAndAmortization (fiscal year)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (fiscal year)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (fiscal year)",
+    "revenue": "Revenues (fiscal year)",
+    "debt_issued": "ProceedsFromIssuanceOfDebt (fiscal year)"
+  },
+  "history": [
+    {
+      "end": "2024-06-30",
+      "filed": "2024-08-28",
+      "total_debt": 1836909000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 293915268,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-12-31",
+      "filed": "2025-02-06",
+      "total_debt": 7306741000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 305705637,
+      "convertible": 1151048000,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-03-31",
+      "filed": "2025-05-09",
+      "total_debt": 7145646000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 307995889,
+      "convertible": 1152019000,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-06-30",
+      "filed": "2025-08-28",
+      "total_debt": 7609663000,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 307995889,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-09-30",
+      "filed": "2025-11-06",
+      "total_debt": 7736393000,
+      "cash": 1428848000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 348278403,
+      "convertible": 1127668000,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-12-31",
+      "filed": "2026-02-05",
+      "total_debt": 9009240000,
+      "cash": 1527880000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 348822083,
+      "convertible": 1127658000,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-03-31",
+      "filed": "2026-05-07",
+      "total_debt": 8873911000,
+      "cash": 1723413000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 348556556,
+      "convertible": 1128617000,
+      "equity": 3783410000,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-06-30",
+      "filed": "2026-08-27",
+      "total_debt": 9794058000,
+      "cash": 1630038000,
+      "investments": null,
+      "interest_expense": 454016000,
+      "operating_income": 416977000,
+      "da": 303333000,
+      "ocf": 1230974000,
+      "revenue": 4261082000,
+      "shares": 348846647,
+      "convertible": 1129581000,
+      "equity": 5483824000,
+      "interest_paid": 426175000
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001628280-26-059279",
+  "events": [
+    {
+      "date": "2026-06-25",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001628280-26-045491",
+      "doc": "afrm-20260618.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-11-06",
+      "items": "1.01,2.02,3.02,9.01",
+      "acc": "0001628280-25-050159",
+      "doc": "afrm-20251102.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-02-20",
+      "items": "1.01,1.02,7.01,9.01",
+      "acc": "0001820953-25-000017",
+      "doc": "afrm-20250214.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-12-20",
+      "items": "1.01,2.03,3.02,8.01,9.01",
+      "acc": "0001820953-24-000073",
+      "doc": "afrm-20241220.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-07-01",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001820953-24-000027",
+      "doc": "afrm-20240625.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-05-12",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001820953-22-000028",
+      "doc": "afrm-20220512.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-02-10",
+      "items": "1.01,2.02,2.03,9.01",
+      "acc": "0001820953-22-000002",
+      "doc": "afrm-20220210.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-23",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001104659-21-142914",
+      "doc": "tm2133732d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-11-10",
+      "items": "1.01,2.02,3.02,9.01",
+      "acc": "0001820953-21-000115",
+      "doc": "afrm-20211110.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-01-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-21-007250",
+      "doc": "a21-3836_18k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T07:01:06+00:00",
+  "signature": "0001628280-26-059279"
+}

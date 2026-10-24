@@ -1,0 +1,139 @@
+{
+  "cik": 2107018,
+  "ticker": "DPC",
+  "name": "DPC Holdings PLC",
+  "sector": "materials",
+  "industry": "Nonferrous Foundries (Castings)",
+  "sic": "3360",
+  "docs": {
+    "xbrl:0001104659-26-093772": {
+      "instruments": [
+        {
+          "name": "Term Loan",
+          "kind": "loan",
+          "as_of": "2026-06-28",
+          "carrying": 517000000.0,
+          "spread": 0.065,
+          "effective": 0.102,
+          "floating": true
+        },
+        {
+          "name": "Other Loans",
+          "kind": "other",
+          "as_of": "2026-06-28",
+          "carrying": 35100000.0,
+          "floating": false
+        },
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-28",
+          "carrying": 20600000.0,
+          "capacity": 118000000.0,
+          "spread": 0.03,
+          "floating": true
+        },
+        {
+          "name": "Payment in Kind Loan",
+          "kind": "loan",
+          "as_of": "2026-06-26",
+          "carrying": 0.0,
+          "coupon": 0.14,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-11",
+      "report": "2026-06-28"
+    },
+    "0001104659-26-105687:tm2624842d1_ex10-2.htm": {
+      "kind": "agreement",
+      "date": "2026-09-08",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-09-03",
+      "facility": "loan"
+    },
+    "0001104659-26-105687:tm2624842d1_ex10-1.htm": {
+      "kind": "agreement",
+      "date": "2026-09-08",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-09-03",
+      "size": 325000000.0,
+      "title": "Execution Version Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "maturity": "2029-09-03",
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "(b) Commencing with the Financial Covenant Testing Period ending December 31, 2026, the Company will not permit the Interest Coverage Ratio calculated as of the last day of a Financial Covenant Testing Period to be equal or less than 3.00 to 1.00. | 71 | Section 6.05."
+        }
+      ]
+    }
+  },
+  "sic_description": "Nonferrous Foundries (Castings)",
+  "snapshot": {
+    "total_debt": 572700000,
+    "current_debt": 483300000,
+    "cash": 844800000,
+    "equity": 772400000,
+    "assets": 1887000000,
+    "liabilities": 1114600000,
+    "assets_current": 1406300000,
+    "liabilities_current": 951700000,
+    "retained_earnings": -1114700000,
+    "shares": 149393016,
+    "balance_date": "2026-06-28",
+    "latest_period": "2026-06-28"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [
+    {
+      "end": "2026-06-28",
+      "filed": "2026-08-11",
+      "total_debt": 572700000,
+      "cash": 844800000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 149393016,
+      "convertible": null,
+      "equity": 772400000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-Q": "xbrl:0001104659-26-093772",
+  "events": [
+    {
+      "date": "2026-09-08",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-26-105687",
+      "doc": "tm2624842d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T09:18:21+00:00",
+  "signature": "0001104659-26-105687"
+}

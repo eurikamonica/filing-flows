@@ -1,0 +1,1421 @@
+{
+  "cik": 790526,
+  "ticker": "RDNT",
+  "name": "RadNet, Inc.",
+  "sector": "health",
+  "industry": "Services-Medical Laboratories",
+  "sic": "8071",
+  "sic_description": "Services-Medical Laboratories",
+  "generated_at": "2026-10-24T14:46:14+00:00",
+  "fetched_at": "2026-10-18T07:24:16+00:00",
+  "price": 70.26,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.422259,
+  "snapshot": {
+    "total_debt": 1332531000,
+    "current_debt": 30669000,
+    "cash": 726272000,
+    "debt_fair_value": 1323729000,
+    "equity": 1096092000,
+    "assets": 4226351000,
+    "liabilities": 2832300000,
+    "assets_current": 1035756000,
+    "liabilities_current": 697822000,
+    "retained_earnings": -121373000,
+    "interest_expense": 71295000,
+    "interest_paid": 72880000,
+    "operating_income": 70779000,
+    "pretax_income": 34979000,
+    "net_income": -21114000,
+    "da": 171147000,
+    "ocf": 310062000,
+    "revenue": 2268932000,
+    "debt_issued": 248937000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 27928000,
+      "y2": 129447000,
+      "y3": 12673000,
+      "y4": 10003000,
+      "y5": 9758000,
+      "after5": 912331000
+    },
+    "shares": 78697257,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "debt_fair_value": "DebtInstrumentFairValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseDebt (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 1332531000,
+    "cash_and_investments": 726272000.0,
+    "net_debt": 606259000.0,
+    "ebitda": 241926000,
+    "ebit": 70779000,
+    "interest_expense": 71295000,
+    "leverage": 5.508011,
+    "net_leverage": 2.505969,
+    "interest_coverage": 0.992762,
+    "ebitda_coverage": 3.393309,
+    "cash_coverage": 5.254418,
+    "fcf": 310062000.0,
+    "fcf_to_debt": 0.232687,
+    "effective_rate": 0.053503,
+    "revolver_available": null,
+    "liquidity": 726272000.0,
+    "due_12m": 27928000,
+    "due_24m": 157375000,
+    "liquidity_to_due12": 26.005156,
+    "liquidity_to_due24": 4.614913,
+    "floating_debt": 1205604000.0,
+    "floating_share": 0.904747,
+    "plus100bp_interest": 12056040.0,
+    "plus100bp_share_of_ebit": 0.170334,
+    "altman_z": 1.819195,
+    "market_cap": 5529269276.820001,
+    "debt_to_ev": 0.217183,
+    "convertibles": null,
+    "implied": {
+      "dd": 5.76678,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 8.500452,
+      "asset_vol": 0.377739,
+      "calibrated_5y_bps": 125.677625,
+      "rating_band": "BBB"
+    },
+    "market_rate_5y": 0.061668,
+    "refi_extra_interest": 1284859.353287,
+    "covenants": [],
+    "cushion_score": 62
+  },
+  "instruments": [
+    {
+      "name": "First Lien Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 1205604000.0,
+      "floating": true
+    },
+    {
+      "name": "Restated Agreement",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 118125000.0,
+      "floating": false
+    },
+    {
+      "name": "Equipment notes payable at 2.7% to 7.2%, due through 2029, collateralized by medical equipment",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon_min": 0.027,
+      "coupon_max": 0.072,
+      "carrying": 17603000.0,
+      "coupon": 0.027,
+      "maturity_year": 2029,
+      "floating": false
+    },
+    {
+      "name": "Promissory Note",
+      "kind": "notes",
+      "as_of": "2025-07-01",
+      "spread": 0.02,
+      "floating": true
+    },
+    {
+      "name": "Barclays Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.02,
+      "spread_min": 0.02,
+      "spread_max": 0.025,
+      "effective": 0.085,
+      "available": 273400000.0,
+      "reference": "Base Rate",
+      "floating": true
+    },
+    {
+      "name": "Barclays Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "effective": 0.057,
+      "coupon": 0.078,
+      "floating": true
+    },
+    {
+      "name": "First Lien Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 0.0,
+      "floating": false
+    },
+    {
+      "name": "First Lien Credit Agreement Eighth Amendment",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.015,
+      "drawn": 0.0,
+      "available": 50000000.0,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "Equipment Notes Payable",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "coupon_min": 0.036,
+      "coupon_max": 0.072,
+      "carrying": 17271000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Barclays",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "drawn": 0.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Truist",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "drawn": 0.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-06-12",
+      "agreement_kind": "amendment",
+      "dated": "2025-06-11",
+      "title": "To Credit And Guaranty Agreement",
+      "facility": "term loan",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "The Borrower hereby (x) designates that the entire amount of the 2025 Incremental Term Loans is being incurred in reliance on clause (c)(i) of the definition of “Incremental Cap” in the Existing Credit Agreement and (y) represents and warrants that, when calculated on a Pro Forma Basis as of the last day of the most recent Measurement Period ended prior to the date hereof for which Financial Statements are required t"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/790526/000168316825004440/radnet_ex1001.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2020-09-01",
+      "agreement_kind": "amendment",
+      "dated": "2020-08-28",
+      "title": "Incremental Joinder Agreement To Credit And Guaranty Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/790526/000168316820002941/radnet_ex1001.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2019-04-19",
+      "agreement_kind": "amendment",
+      "dated": "2019-04-18",
+      "title": "To Credit And Guaranty Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/790526/000168316819001121/radnet_8k-ex1002.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-10",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001683168-26-004716",
+      "doc": "radnet_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-06-12",
+      "items": "1.01,2.03,5.07,7.01,9.01",
+      "acc": "0001683168-25-004440",
+      "doc": "radnet_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-11-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001683168-24-008404",
+      "doc": "radnet_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-04-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001683168-24-002513",
+      "doc": "radnet_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-04-04",
+      "items": "1.01,9.01",
+      "acc": "0001683168-23-002122",
+      "doc": "radnet_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-04-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001683168-21-001536",
+      "doc": "radnet_i8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-09-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001683168-20-002941",
+      "doc": "radnet_i8k.htm",
+      "desc": ""
+    },
+    {
+      "date": "2019-04-19",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001683168-19-001121",
+      "doc": "radnet_8k-041819.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-08-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001683168-17-002201",
+      "doc": "radnet_8k-082117.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-02-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001683168-17-000224",
+      "doc": "radnet_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-07-05",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001019687-16-006834",
+      "doc": "radnet_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-10-20",
+      "items": "1.01,2.01,3.02,8.01,9.01",
+      "acc": "0001019687-15-003767",
+      "doc": "radnet_8k.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2015-05-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001019687-15-001710",
+      "doc": "radnet_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2014-03-31",
+      "items": "1.01,2.03,2.04,3.03,9.01",
+      "acc": "0001019687-14-001074",
+      "doc": "radnet_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-03-25",
+      "items": "1.01,3.03,8.01,9.01",
+      "acc": "0001019687-14-000992",
+      "doc": "radnet_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-04-04",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001019687-13-001210",
+      "doc": "radnet_8k-040313.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2012-10-12",
+      "items": "1.01,1.02,2.03,2.04,3.03,8.01,9.01",
+      "acc": "0001019687-12-003650",
+      "doc": "radnet_8k-101012.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2011-11-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001019687-11-003690",
+      "doc": "radnet_8k-112111.htm",
+      "desc": "CURRENT REPORT ON FORM 8-K"
+    },
+    {
+      "date": "2011-11-14",
+      "items": "1.01,2.01,8.01,9.01",
+      "acc": "0001019687-11-003546",
+      "doc": "radnet_8ka-111311.htm",
+      "desc": "FORM 8K/A"
+    },
+    {
+      "date": "2011-03-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001019687-11-000663",
+      "doc": "radnet_8k.htm",
+      "desc": "RADNET, INC. 8-K"
+    },
+    {
+      "date": "2011-01-11",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-11-001683",
+      "doc": "v207768_8k.htm",
+      "desc": ""
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2017-03-31",
+      608893000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      602439000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      583094000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      569641000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      561310000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      552964000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      757453000,
+      151253000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      751871000,
+      70713000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      749080000,
+      99170000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      746289000,
+      95006000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      868289000,
+      90844000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      864322000,
+      356651000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      860345000,
+      337884000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      834644000,
+      526980000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      1026607000,
+      741679000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      1019650000,
+      748916000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      1010131000,
+      717323000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      1102735000,
+      833152000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      1096340000,
+      804716000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1086483000,
+      455339000,
+      70331000,
+      223801000,
+      62190000,
+      0.06473
+    ],
+    [
+      "2026-06-30",
+      1332531000,
+      726272000,
+      71295000,
+      241926000,
+      70779000,
+      0.0535
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2017-05",
+      47.23,
+      4.055,
+      0.3443,
+      140.8
+    ],
+    [
+      "2017-06",
+      42.82,
+      4.153,
+      0.3415,
+      139.9
+    ],
+    [
+      "2017-07",
+      40.74,
+      4.2,
+      0.3378,
+      139.4
+    ],
+    [
+      "2017-08",
+      51.52,
+      4.078,
+      0.367,
+      140.6
+    ],
+    [
+      "2017-09",
+      46.45,
+      4.222,
+      0.3708,
+      139.2
+    ],
+    [
+      "2017-10",
+      30.15,
+      4.554,
+      0.3402,
+      136.2
+    ],
+    [
+      "2017-11",
+      28.39,
+      4.557,
+      0.3367,
+      136.2
+    ],
+    [
+      "2017-12",
+      24.14,
+      4.665,
+      0.3297,
+      135.2
+    ],
+    [
+      "2018-01",
+      22.18,
+      4.734,
+      0.3268,
+      134.6
+    ],
+    [
+      "2018-02",
+      19.96,
+      4.775,
+      0.3235,
+      134.2
+    ],
+    [
+      "2018-03",
+      18.49,
+      4.967,
+      0.3409,
+      132.5
+    ],
+    [
+      "2018-04",
+      22.9,
+      4.744,
+      0.3477,
+      134.5
+    ],
+    [
+      "2018-05",
+      8.98,
+      5.439,
+      0.3068,
+      128.4
+    ],
+    [
+      "2018-06",
+      8.1,
+      5.564,
+      0.3124,
+      127.4
+    ],
+    [
+      "2018-07",
+      12.65,
+      5.19,
+      0.325,
+      130.6
+    ],
+    [
+      "2018-08",
+      3.35,
+      6.102,
+      0.281,
+      122.9
+    ],
+    [
+      "2018-09",
+      3.99,
+      6.005,
+      0.292,
+      123.7
+    ],
+    [
+      "2018-10",
+      4.03,
+      5.99,
+      0.2924,
+      123.8
+    ],
+    [
+      "2018-11",
+      6.68,
+      5.591,
+      0.3022,
+      127.2
+    ],
+    [
+      "2018-12",
+      23.86,
+      4.593,
+      0.344,
+      135.8
+    ],
+    [
+      "2019-01",
+      26.12,
+      4.621,
+      0.3631,
+      135.6
+    ],
+    [
+      "2019-02",
+      28.23,
+      4.6,
+      0.3722,
+      135.8
+    ],
+    [
+      "2019-03",
+      44.02,
+      4.203,
+      0.392,
+      139.4
+    ],
+    [
+      "2019-04",
+      47.04,
+      4.147,
+      0.3972,
+      139.9
+    ],
+    [
+      "2019-05",
+      54.08,
+      4.039,
+      0.4041,
+      140.9
+    ],
+    [
+      "2019-06",
+      48.45,
+      4.221,
+      0.4012,
+      139.2
+    ],
+    [
+      "2019-07",
+      42.62,
+      4.348,
+      0.3973,
+      138.1
+    ],
+    [
+      "2019-08",
+      48.98,
+      4.233,
+      0.4008,
+      139.1
+    ],
+    [
+      "2019-09",
+      47.99,
+      4.262,
+      0.4007,
+      138.9
+    ],
+    [
+      "2019-10",
+      46.74,
+      4.32,
+      0.4009,
+      138.3
+    ],
+    [
+      "2019-11",
+      39.32,
+      4.558,
+      0.408,
+      136.2
+    ],
+    [
+      "2019-12",
+      18.91,
+      5.173,
+      0.3659,
+      130.7
+    ],
+    [
+      "2020-01",
+      10.38,
+      5.674,
+      0.3473,
+      126.5
+    ],
+    [
+      "2020-02",
+      20.37,
+      5.188,
+      0.3671,
+      130.6
+    ],
+    [
+      "2020-03",
+      429.98,
+      1.926,
+      0.7189,
+      162.1
+    ],
+    [
+      "2020-04",
+      514.92,
+      1.8,
+      0.804,
+      163.5
+    ],
+    [
+      "2020-05",
+      508.65,
+      1.941,
+      0.8169,
+      162.0
+    ],
+    [
+      "2020-06",
+      533.13,
+      1.815,
+      0.8265,
+      163.3
+    ],
+    [
+      "2020-07",
+      537.16,
+      1.844,
+      0.834,
+      163.0
+    ],
+    [
+      "2020-08",
+      555.86,
+      1.773,
+      0.8453,
+      163.8
+    ],
+    [
+      "2020-09",
+      557.06,
+      1.758,
+      0.8447,
+      163.9
+    ],
+    [
+      "2020-10",
+      569.91,
+      1.727,
+      0.8551,
+      164.3
+    ],
+    [
+      "2020-11",
+      563.6,
+      1.855,
+      0.8667,
+      162.9
+    ],
+    [
+      "2020-12",
+      569.83,
+      1.832,
+      0.8699,
+      163.1
+    ],
+    [
+      "2021-01",
+      578.6,
+      1.793,
+      0.8737,
+      163.6
+    ],
+    [
+      "2021-02",
+      569.04,
+      1.828,
+      0.868,
+      163.2
+    ],
+    [
+      "2021-03",
+      223.01,
+      3.04,
+      0.6061,
+      150.6
+    ],
+    [
+      "2021-04",
+      99.82,
+      3.901,
+      0.4893,
+      142.2
+    ],
+    [
+      "2021-05",
+      75.04,
+      4.231,
+      0.4762,
+      139.1
+    ],
+    [
+      "2021-06",
+      55.9,
+      4.581,
+      0.4772,
+      136.0
+    ],
+    [
+      "2021-07",
+      52.28,
+      4.66,
+      0.4776,
+      135.2
+    ],
+    [
+      "2021-08",
+      88.57,
+      4.12,
+      0.5101,
+      140.2
+    ],
+    [
+      "2021-09",
+      92.11,
+      4.062,
+      0.5079,
+      140.7
+    ],
+    [
+      "2021-10",
+      74.03,
+      4.285,
+      0.4924,
+      138.6
+    ],
+    [
+      "2021-11",
+      113.16,
+      3.749,
+      0.5018,
+      143.7
+    ],
+    [
+      "2021-12",
+      97.49,
+      3.92,
+      0.4975,
+      142.0
+    ],
+    [
+      "2022-01",
+      126.31,
+      3.565,
+      0.5139,
+      145.4
+    ],
+    [
+      "2022-02",
+      119.83,
+      3.584,
+      0.5102,
+      145.2
+    ],
+    [
+      "2022-03",
+      88.39,
+      3.794,
+      0.4713,
+      143.2
+    ],
+    [
+      "2022-04",
+      97.53,
+      3.619,
+      0.4779,
+      144.9
+    ],
+    [
+      "2022-05",
+      92.51,
+      3.725,
+      0.4808,
+      143.9
+    ],
+    [
+      "2022-06",
+      75.75,
+      3.779,
+      0.4582,
+      143.4
+    ],
+    [
+      "2022-07",
+      62.0,
+      3.996,
+      0.4507,
+      141.3
+    ],
+    [
+      "2022-08",
+      29.76,
+      4.581,
+      0.4022,
+      136.0
+    ],
+    [
+      "2022-09",
+      66.51,
+      3.849,
+      0.4693,
+      142.7
+    ],
+    [
+      "2022-10",
+      61.84,
+      3.84,
+      0.4633,
+      142.8
+    ],
+    [
+      "2022-11",
+      53.72,
+      3.898,
+      0.4476,
+      142.3
+    ],
+    [
+      "2022-12",
+      61.39,
+      3.825,
+      0.4637,
+      142.9
+    ],
+    [
+      "2023-01",
+      45.86,
+      4.104,
+      0.4439,
+      140.3
+    ],
+    [
+      "2023-02",
+      47.28,
+      4.061,
+      0.452,
+      140.7
+    ],
+    [
+      "2023-03",
+      54.74,
+      4.062,
+      0.4742,
+      140.7
+    ],
+    [
+      "2023-04",
+      45.49,
+      4.245,
+      0.4684,
+      139.0
+    ],
+    [
+      "2023-05",
+      42.45,
+      4.222,
+      0.4597,
+      139.2
+    ],
+    [
+      "2023-06",
+      30.55,
+      4.519,
+      0.4467,
+      136.5
+    ],
+    [
+      "2023-07",
+      40.71,
+      4.301,
+      0.467,
+      138.5
+    ],
+    [
+      "2023-08",
+      37.59,
+      4.424,
+      0.4737,
+      137.4
+    ],
+    [
+      "2023-09",
+      17.96,
+      4.904,
+      0.4151,
+      133.1
+    ],
+    [
+      "2023-10",
+      26.32,
+      4.585,
+      0.4292,
+      135.9
+    ],
+    [
+      "2023-11",
+      19.3,
+      4.937,
+      0.4295,
+      132.8
+    ],
+    [
+      "2023-12",
+      13.57,
+      5.259,
+      0.4126,
+      130.0
+    ],
+    [
+      "2024-01",
+      11.59,
+      5.398,
+      0.4106,
+      128.8
+    ],
+    [
+      "2024-02",
+      8.33,
+      5.617,
+      0.3999,
+      126.9
+    ],
+    [
+      "2024-03",
+      3.15,
+      6.327,
+      0.3815,
+      121.1
+    ],
+    [
+      "2024-04",
+      3.27,
+      6.287,
+      0.3835,
+      121.4
+    ],
+    [
+      "2024-05",
+      1.34,
+      6.94,
+      0.3804,
+      116.3
+    ],
+    [
+      "2024-06",
+      1.2,
+      7.013,
+      0.377,
+      115.7
+    ],
+    [
+      "2024-07",
+      0.35,
+      7.739,
+      0.3476,
+      110.3
+    ],
+    [
+      "2024-08",
+      1.4,
+      6.958,
+      0.3699,
+      116.1
+    ],
+    [
+      "2024-09",
+      1.04,
+      7.194,
+      0.3623,
+      114.3
+    ],
+    [
+      "2024-10",
+      0.36,
+      7.722,
+      0.3348,
+      110.4
+    ],
+    [
+      "2024-11",
+      0.07,
+      8.593,
+      0.3208,
+      104.2
+    ],
+    [
+      "2024-12",
+      0.27,
+      7.917,
+      0.3341,
+      109.0
+    ],
+    [
+      "2025-01",
+      1.6,
+      6.901,
+      0.3721,
+      116.6
+    ],
+    [
+      "2025-02",
+      1.94,
+      6.733,
+      0.3635,
+      117.9
+    ],
+    [
+      "2025-03",
+      3.84,
+      6.274,
+      0.3763,
+      121.5
+    ],
+    [
+      "2025-04",
+      5.42,
+      6.07,
+      0.3899,
+      123.2
+    ],
+    [
+      "2025-05",
+      5.04,
+      6.162,
+      0.402,
+      122.4
+    ],
+    [
+      "2025-06",
+      5.35,
+      6.134,
+      0.4029,
+      122.7
+    ],
+    [
+      "2025-07",
+      5.27,
+      6.135,
+      0.4035,
+      122.6
+    ],
+    [
+      "2025-08",
+      8.93,
+      5.867,
+      0.4396,
+      124.8
+    ],
+    [
+      "2025-09",
+      6.51,
+      6.112,
+      0.4295,
+      122.8
+    ],
+    [
+      "2025-10",
+      13.4,
+      5.617,
+      0.465,
+      126.9
+    ],
+    [
+      "2025-11",
+      10.4,
+      5.834,
+      0.4604,
+      125.1
+    ],
+    [
+      "2025-12",
+      13.99,
+      5.592,
+      0.463,
+      127.1
+    ],
+    [
+      "2026-01",
+      14.1,
+      5.572,
+      0.4591,
+      127.3
+    ],
+    [
+      "2026-02",
+      11.8,
+      5.696,
+      0.4492,
+      126.3
+    ],
+    [
+      "2026-03",
+      20.44,
+      5.198,
+      0.4609,
+      130.5
+    ],
+    [
+      "2026-04",
+      18.57,
+      5.286,
+      0.4569,
+      129.7
+    ],
+    [
+      "2026-05",
+      16.42,
+      5.363,
+      0.4498,
+      129.1
+    ],
+    [
+      "2026-06",
+      18.61,
+      5.294,
+      0.4669,
+      129.7
+    ],
+    [
+      "2026-07",
+      22.81,
+      5.153,
+      0.4855,
+      130.9
+    ],
+    [
+      "2026-08",
+      12.03,
+      5.59,
+      0.4445,
+      127.2
+    ],
+    [
+      "2026-09",
+      13.56,
+      5.459,
+      0.4483,
+      128.3
+    ],
+    [
+      "2026-10",
+      8.12,
+      5.806,
+      0.4223,
+      125.4
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

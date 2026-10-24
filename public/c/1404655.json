@@ -1,0 +1,247 @@
+{
+  "cik": 1404655,
+  "ticker": "HUBS",
+  "name": "HUBSPOT INC",
+  "sector": "technology",
+  "industry": "Services-Prepackaged Software",
+  "sic": "7372",
+  "sic_description": "Services-Prepackaged Software",
+  "generated_at": "2026-10-24T14:46:09+00:00",
+  "fetched_at": "2026-10-18T07:10:35+00:00",
+  "price": 267.19,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.695589,
+  "snapshot": {
+    "cash": 958314000,
+    "investments": 379629000,
+    "operating_leases": 262305000,
+    "equity": 1656728000,
+    "assets": 3504395000,
+    "liabilities": 1847667000,
+    "assets_current": 2127494000,
+    "liabilities_current": 1543646000,
+    "retained_earnings": -678006000,
+    "interest_expense": 645000,
+    "interest_paid": 219000,
+    "operating_income": 130738000,
+    "pretax_income": 173652000,
+    "net_income": 146854000,
+    "da": 158906000,
+    "ocf": 856365000,
+    "capex": 58869000,
+    "revenue": 3448998000,
+    "debt_repaid": 459811000,
+    "shares": 49866201,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (fiscal year)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 1337943000,
+    "net_debt": null,
+    "ebitda": 289644000,
+    "ebit": 130738000,
+    "interest_expense": 645000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": 202.694574,
+    "ebitda_coverage": 449.060465,
+    "cash_coverage": 3911.342466,
+    "fcf": 797496000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 1337943000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 5.363041,
+    "market_cap": 13323750245.19,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 3.75,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2026-02-10",
+        "text": "(x) During any Non-Investment Grade Period, permit the Consolidated Leverage Ratio as of the end of any fiscal quarter of the Borrower, commencing with the first fiscal quarter of the Borrower ending on or after the Effective Date, to be greater than 3.75:1.0;"
+      }
+    ],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Senior Secured Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.005,
+      "spread_min": 0.00125,
+      "spread_max": 0.00875,
+      "drawn": 0.0,
+      "reference": "SOFR",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-05-07",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-02-10",
+      "size": 500000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 1.125,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "(x) During any Non-Investment Grade Period, permit the Consolidated Leverage Ratio as of the end of any fiscal quarter of the Borrower, commencing with the first fiscal quarter of the Borrower ending on or after the Effective Date, to be greater than 3.75:1.0;"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "ving effect to the establishment of such Incremental Commitments, the aggregate principal amount of all Incremental Commitments effected pursuant to this Section 2.16 shall not exceed (x) during any Non-Investment Grade Period, the sum of (A) $250,000,000 plus (B) an unlimited amount so long as the Consolidated Secured Leverage Ratio (calculated on a Pro Forma Basis and assuming any such Incremental Commitments are f"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1404655/000119312526212122/hubs-ex10_2.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2017-02-16",
+      "agreement_kind": "amendment",
+      "dated": "2010-06-29",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        1.0,
+        1.0
+      ],
+      "fee_pct": 0.25,
+      "url": "https://www.sec.gov/Archives/edgar/data/1404655/000156459017001694/hubs-ex1010_14.htm",
+      "all_in_pct": [
+        1.0389,
+        1.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2016-02-24",
+      "agreement_kind": "amendment",
+      "dated": "2010-06-29",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        1.0,
+        1.0
+      ],
+      "fee_pct": 0.25,
+      "url": "https://www.sec.gov/Archives/edgar/data/1404655/000156459016013204/hubs-ex108_769.htm",
+      "all_in_pct": [
+        1.0389,
+        1.0389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2020-06-05",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001193125-20-162234",
+      "doc": "d933656d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-02-15",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-19-042578",
+      "doc": "d678156d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-11-13",
+      "items": "1.01",
+      "acc": "0001193125-18-325500",
+      "doc": "d649749d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

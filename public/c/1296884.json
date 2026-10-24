@@ -1,0 +1,363 @@
+{
+  "cik": 1296884,
+  "ticker": null,
+  "name": "Lightstone Value Plus REIT I, Inc.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-24T14:46:09+00:00",
+  "fetched_at": "2026-10-18T14:58:07+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 222188000,
+    "cash": 57189000,
+    "equity": 156795000,
+    "assets": 388332000,
+    "liabilities": 231494000,
+    "retained_earnings": 4749000,
+    "interest_expense": 18398000,
+    "interest_paid": 17344000,
+    "net_income": 5383000,
+    "da": 7196000,
+    "ocf": 2728000,
+    "revenue": 66330000,
+    "debt_issued": 16356000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 380000,
+      "y2": 811000,
+      "y3": 156137000,
+      "y4": 0,
+      "y5": 64860000,
+      "after5": 0
+    },
+    "effective_rate": 0.0365,
+    "shares": 20700000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "DebtAndCapitalLeaseObligations",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaid (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (FY + YTD − prior YTD)",
+    "effective_rate": "DebtInstrumentInterestRateEffectivePercentage"
+  },
+  "analysis": {
+    "total_debt": 222188000,
+    "cash_and_investments": 57189000.0,
+    "net_debt": 164999000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": 18398000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.157288,
+    "fcf": 2728000.0,
+    "fcf_to_debt": 0.012278,
+    "effective_rate": 0.082804,
+    "revolver_available": 17900000.0,
+    "liquidity": 75089000.0,
+    "due_12m": 380000,
+    "due_24m": 1191000,
+    "liquidity_to_due12": 197.602632,
+    "liquidity_to_due24": 63.047019,
+    "floating_debt": 187320000.0,
+    "floating_share": 0.84307,
+    "plus100bp_interest": 1873200.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": -40141.168367,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Mortgages Payable",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "carrying": 222200000.0,
+      "fair_value": 222200.0,
+      "floating": false
+    },
+    {
+      "name": "Lower East Side Moxy Hotel (Senior Loan)",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0325,
+      "spread": 0.065,
+      "carrying": 124700000.0,
+      "floating": true
+    },
+    {
+      "name": "Moxy Senior Loan",
+      "kind": "loan",
+      "as_of": "2025-08-15",
+      "face_min": 110000000.0,
+      "face": 124700000.0,
+      "floating": false
+    },
+    {
+      "name": "Gantry Park Landing",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "coupon": 0.063,
+      "carrying": 64860000.0,
+      "floating": false
+    },
+    {
+      "name": "Lower East Side Moxy Hotel (Junior Loan)",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "coupon": 0.0775,
+      "spread": 0.11,
+      "carrying": 31310000.0,
+      "floating": true
+    },
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 20000000.0,
+      "rate_now": 0.05,
+      "available": 17900000.0,
+      "floating": false
+    },
+    {
+      "name": "Margin Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "spread": 0.045,
+      "floating": true
+    },
+    {
+      "name": "Moxy Junior Loan",
+      "kind": "loan",
+      "as_of": "2025-08-15",
+      "maturity": "2028-09-15",
+      "floating": false
+    },
+    {
+      "name": "Gantry Park Mortgage Loan",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "coupon": 0.063,
+      "carrying": 64860000.0,
+      "maturity": "2030-02-07",
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Lower East Side Moxy Hotel (Senior Loan) One",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "coupon": 0.0775,
+      "spread": 0.11,
+      "carrying": 31310000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Mortgages Payable, Included In Liabilities Held for Sale",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "fair_value": 0.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Santa Monica Loan",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "spread": 0.075,
+      "coupon": 0.18,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2010-10-12",
+      "agreement_kind": "credit_agreement",
+      "dated": "2009-12-08",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1296884/000114420410053268/v198593_ex10-69.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2010-10-12",
+      "agreement_kind": "credit_agreement",
+      "dated": "2009-12-08",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1296884/000114420410053268/v198593_ex10-68.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2023-12-04",
+      "items": "1.01,2.03",
+      "acc": "0001829126-23-007827",
+      "doc": "lightstonereit1_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-10-06",
+      "items": "1.01",
+      "acc": "0001144204-16-127222",
+      "doc": "v450184_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-10-06",
+      "items": "1.01",
+      "acc": "0001144204-16-127219",
+      "doc": "v450183_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-04-27",
+      "items": "1.01",
+      "acc": "0001144204-16-096647",
+      "doc": "v438103_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-12-10",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001144204-12-067274",
+      "doc": "v330028_8-k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2013-09-30",
+      301074000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-31",
+      295014000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      292471000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      264987000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      225905000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      206569000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      222404000,
+      73228000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      222368000,
+      59217000,
+      20525000,
+      null,
+      null,
+      0.0923
+    ],
+    [
+      "2026-06-30",
+      222188000,
+      57189000,
+      18398000,
+      null,
+      null,
+      0.0828
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

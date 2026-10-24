@@ -1,0 +1,872 @@
+{
+  "cik": 1542447,
+  "ticker": null,
+  "name": "RREEF Property Trust, Inc.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-24T14:46:10+00:00",
+  "fetched_at": "2026-10-18T15:11:17+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 172195000,
+    "cash": 6019000,
+    "debt_fair_value": 166822000,
+    "equity": 58783000,
+    "assets": 333617000,
+    "liabilities": 274834000,
+    "retained_earnings": -114168000,
+    "interest_expense": 12512000,
+    "interest_paid": 11995000,
+    "operating_income": 33204000,
+    "net_income": 20692000,
+    "da": 9734000,
+    "ocf": 7657000,
+    "revenue": 37014000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 145000,
+      "rest_of_year": 70000,
+      "y2": 147319000,
+      "y3": 74840000,
+      "y4": 25500000
+    },
+    "shares": 33158,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "debt_fair_value": "LongTermDebtFairValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 172195000,
+    "cash_and_investments": 6019000.0,
+    "net_debt": 166176000.0,
+    "ebitda": 42938000,
+    "ebit": 33204000,
+    "interest_expense": 12512000,
+    "leverage": 4.010317,
+    "net_leverage": 3.870138,
+    "interest_coverage": 2.653772,
+    "ebitda_coverage": 3.431746,
+    "cash_coverage": 1.638349,
+    "fcf": 7657000.0,
+    "fcf_to_debt": 0.044467,
+    "effective_rate": 0.072662,
+    "revolver_available": 14273000.0,
+    "liquidity": 20292000.0,
+    "due_12m": 145000,
+    "due_24m": 147464000,
+    "liquidity_to_due12": 139.944828,
+    "liquidity_to_due24": 0.137606,
+    "floating_debt": 172195000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 1721950.0,
+    "plus100bp_share_of_ebit": 0.05186,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": -3474518.430454,
+    "covenants": [],
+    "cushion_score": 60
+  },
+  "instruments": [
+    {
+      "name": "Mortgage Loans Payable",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "carrying": 172624000.0,
+      "floating": false
+    },
+    {
+      "name": "Wells Fargo Line Of Credit Fifth Amendment",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread_max": 0.0225,
+      "capacity": 85499000.0,
+      "spread": 0.0225,
+      "drawn": 75250000.0,
+      "rate_now": 0.0584,
+      "floating": true
+    },
+    {
+      "name": "Wells Fargo Line Of Credit Third Amendment",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 82324000.0,
+      "fee": 0.7083,
+      "drawn": 78300000.0,
+      "rate_now": 0.0627,
+      "floating": false
+    },
+    {
+      "name": "Revised Wells Fargo Line of Credit",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "spread": 0.0225,
+      "drawn": 78300000.0,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2023-02-02",
+      "agreement_kind": "amendment",
+      "dated": "2023-01-27",
+      "size": 10000000.0,
+      "title": "Second Amended And Restated Revolving Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        2.0,
+        12.0
+      ],
+      "fee_pct": 0.25,
+      "floor_pct": 0.0,
+      "maturity": "2025-02-28",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 186461894.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Minimum Tangible Net Worth Amount ” means an amount greater than or equal to the sum of: (a) $186,461,894.00;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1542447/000154244723000008/rreefrevolver-2022recastxs.htm",
+      "all_in_pct": [
+        2.0389,
+        12.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2018-03-02",
+      "agreement_kind": "amendment",
+      "dated": "2018-02-27",
+      "size": 10000000.0,
+      "title": "Amended And Restated Revolving Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.6,
+        12.0
+      ],
+      "fee_pct": 0.25,
+      "maturity": "2021-02-27",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 63666991.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Minimum Tangible Net Worth Amount ” means an amount greater than or equal to the sum of: (a) $63,666,991;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1542447/000154244718000006/rreefrevolver-2018amendmen.htm",
+      "all_in_pct": [
+        1.6389,
+        12.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2015-03-11",
+      "agreement_kind": "credit_agreement",
+      "dated": "2015-03-06",
+      "size": 10000000.0,
+      "title": "Loan Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.7,
+        12.0
+      ],
+      "fee_pct": 0.25,
+      "maturity": "2018-03-06",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 21791804.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Minimum Tangible Net Worth Amount ” means an amount greater than or equal to the sum of: (a) $21,791,804;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1542447/000154244715000014/ex10-1loanagreement.htm",
+      "all_in_pct": [
+        1.7389,
+        12.0389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-08-29",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001542447-25-000098",
+      "doc": "rpt-20250825.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-28",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001542447-23-000140",
+      "doc": "rpt-20231227.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-10-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001542447-23-000119",
+      "doc": "rpt-20231011.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-07-24",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001542447-23-000075",
+      "doc": "rpt-20230718.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-06-30",
+      "items": "1.01,2.03,8.01",
+      "acc": "0001542447-23-000071",
+      "doc": "rpt-20230626.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-02-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001542447-23-000008",
+      "doc": "rpt-20230202.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-08-16",
+      "items": "1.01,9.01",
+      "acc": "0001542447-22-000064",
+      "doc": "rpt-20220816.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-22",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0001542447-21-000087",
+      "doc": "rpt-20211122.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-05",
+      "items": "1.01",
+      "acc": "0001542447-21-000073",
+      "doc": "rpt-20211105.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-03-03",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001542447-21-000008",
+      "doc": "a_wellsfargoletteragreement.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-04-24",
+      "items": "1.01,5.03,8.01,9.01",
+      "acc": "0001542447-20-000038",
+      "doc": "rpt8-karticlesandagree.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-03-27",
+      "items": "1.01,9.01",
+      "acc": "0001542447-20-000026",
+      "doc": "rptesa8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-12-19",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0001542447-19-000110",
+      "doc": "seattleeastindustrialacqan.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-09-17",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0001542447-19-000079",
+      "doc": "providencesqacqandfinance.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-07-16",
+      "items": "1.01,9.01",
+      "acc": "0001542447-19-000065",
+      "doc": "altusagrmtextjuly2019.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-06-14",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001542447-19-000055",
+      "doc": "elstonplazafinancing2019.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-01-02",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001542447-19-000003",
+      "doc": "elstonplazaacquisition8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-12-19",
+      "items": "1.01",
+      "acc": "0001542447-18-000081",
+      "doc": "elstonplazaassignmentofpsa.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-12-12",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001542447-18-000077",
+      "doc": "wallingfordfinancingdec2018.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-07-18",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001542447-18-000038",
+      "doc": "miamiindustrialcompletiono.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-07-02",
+      "items": "1.01",
+      "acc": "0001542447-18-000034",
+      "doc": "miamiindustrialpsaassignme.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-03-02",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001542447-18-000006",
+      "doc": "wellsfargolocmodificationf.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-02-17",
+      "items": "1.01,3.03,5.03,9.01",
+      "acc": "0001542447-17-000008",
+      "doc": "classtshares.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-12-06",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001542447-16-000198",
+      "doc": "commercefinanceclosing.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-09-29",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001542447-16-000180",
+      "doc": "allieddriveacquisition-8xk.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-09-22",
+      "items": "1.01",
+      "acc": "0001542447-16-000178",
+      "doc": "allieddrivepsaassignment8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-07-08",
+      "items": "1.01,9.01",
+      "acc": "0001542447-16-000160",
+      "doc": "cover.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-06-02",
+      "items": "1.01,9.01",
+      "acc": "0001542447-16-000156",
+      "doc": "altusagrmtextjune2016.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-04-25",
+      "items": "1.01,9.01",
+      "acc": "0001542447-16-000138",
+      "doc": "rpt-form8xkletteragreement.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-03-23",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001542447-16-000126",
+      "doc": "rptform8-kindemnificationa.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-03-03",
+      "items": "1.01,2.03",
+      "acc": "0001542447-16-000093",
+      "doc": "flatsrefinancing8k-creatio.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-01-29",
+      "items": "1.01,3.03,5.03,9.01",
+      "acc": "0001542447-16-000089",
+      "doc": "rpt-form8xkclasstandclassi.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-01-21",
+      "items": "1.01,3.03,5.03,9.01",
+      "acc": "0001542447-16-000083",
+      "doc": "rpt-form8xkforprivateoffer.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-12-22",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001542447-15-000075",
+      "doc": "loudoungatewayacquisition.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-09-30",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001542447-15-000051",
+      "doc": "a8k_thexflatsxatxcarrsxhill.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-03-11",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001542447-15-000014",
+      "doc": "rpt-form8xkxwellsloc.htm",
+      "desc": "RPT LINE OF CREDIT"
+    },
+    {
+      "date": "2015-01-07",
+      "items": "1.01",
+      "acc": "0001542447-15-000004",
+      "doc": "advisoryagreementrenewal8-.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-12-22",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001542447-14-000089",
+      "doc": "rpt-form8xklocesanatlaccts.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-10-02",
+      "items": "2.01,2.03,9.01",
+      "acc": "0001542447-14-000069",
+      "doc": "rptterranova8-k2.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-09-25",
+      "items": "1.01",
+      "acc": "0001542447-14-000067",
+      "doc": "rptterranova8-k1.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-07-02",
+      "items": "1.01,2.01,2.03,9.01",
+      "acc": "0001542447-14-000053",
+      "doc": "rptanaheimhills8-k2.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-04-11",
+      "items": "2.01,2.03,9.01",
+      "acc": "0001542447-14-000029",
+      "doc": "a8kcommercecorneracquisiti.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-03-24",
+      "items": "1.01",
+      "acc": "0001542447-14-000023",
+      "doc": "a8kpsaassignmentcommerceco.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-03-24",
+      "items": "1.01,9.01",
+      "acc": "0001542447-14-000019",
+      "doc": "rpt-wholesalingagreement8xk.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-01-09",
+      "items": "1.01",
+      "acc": "0001542447-14-000004",
+      "doc": "advisoryagreementrenewal8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-12-19",
+      "items": "2.01,2.03,9.01",
+      "acc": "0001542447-13-000051",
+      "doc": "rptwallingford8-k2.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-12-12",
+      "items": "1.01",
+      "acc": "0001542447-13-000048",
+      "doc": "rptwallingford8-kx101.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-05-31",
+      "items": "1.01,2.01,2.03,7.01,8.01,9.01",
+      "acc": "0001542447-13-000015",
+      "doc": "a8-kxgolivemay2013.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-05-06",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001542447-13-000005",
+      "doc": "regionsloc8-k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2017-03-31",
+      27227937,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      27236768,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      27245600,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      27263262,
+      2833458,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      27272093,
+      2176134,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      27280925,
+      3521462,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      34006000,
+      5790000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      51373000,
+      2065000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      80745000,
+      2141000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      125664000,
+      6285000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      125630000,
+      6233000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      125595000,
+      6190000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      125505000,
+      5005000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      125441000,
+      5178000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      125325000,
+      6164000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      190862000,
+      5765000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      190720000,
+      5351000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      190577000,
+      6698000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      190287000,
+      4739000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      200877000,
+      9727000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      189020000,
+      5414000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      188867000,
+      6016000,
+      12416000,
+      null,
+      null,
+      0.06574
+    ],
+    [
+      "2024-06-30",
+      188788000,
+      4634000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      188709000,
+      7839000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      188535000,
+      9551000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      188462000,
+      5621000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      188378000,
+      7116000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      172197000,
+      6904000,
+      13187000,
+      44029000,
+      34105000,
+      0.07658
+    ],
+    [
+      "2026-06-30",
+      172195000,
+      6019000,
+      12512000,
+      42938000,
+      33204000,
+      0.07266
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

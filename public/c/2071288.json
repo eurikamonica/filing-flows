@@ -1,0 +1,305 @@
+{
+  "cik": 2071288,
+  "ticker": "LMRI",
+  "name": "Lumexa Imaging Holdings, Inc.",
+  "sector": "health",
+  "industry": "Services-Medical Laboratories",
+  "sic": "8071",
+  "sic_description": "Services-Medical Laboratories",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T10:45:28+00:00",
+  "price": 10.89,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.90521,
+  "snapshot": {
+    "total_debt": 834083000,
+    "current_debt": 14330000,
+    "cash": 69705000,
+    "debt_fair_value": 825000000,
+    "equity": 615061000,
+    "assets": 1808772000,
+    "liabilities": 1193711000,
+    "assets_current": 256416000,
+    "liabilities_current": 178355000,
+    "retained_earnings": -626598000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 14505000,
+      "rest_of_year": 7069000,
+      "y2": 13598000,
+      "y3": 11395000,
+      "y4": 10440000,
+      "y5": 786576000
+    },
+    "shares": 96074976,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "debt_fair_value": "LongTermDebtFairValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 834083000,
+    "cash_and_investments": 69705000.0,
+    "net_debt": 764378000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 69705000.0,
+    "due_12m": 14505000,
+    "due_24m": 28103000,
+    "liquidity_to_due12": 4.805584,
+    "liquidity_to_due24": 2.48034,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 1046256488.64,
+    "debt_to_ev": 0.460658,
+    "convertibles": null,
+    "implied": {
+      "dd": 1.587541,
+      "pd_1y": 0.056195,
+      "spread_5y_bps": 558.033754,
+      "asset_vol": 0.662737,
+      "calibrated_5y_bps": 165.792958,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.065679,
+    "covenants": [],
+    "cushion_score": 62
+  },
+  "instruments": [
+    {
+      "name": "Secured Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 822938000.0,
+      "floating": false
+    },
+    {
+      "name": "Promissory Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 20645000.0,
+      "floating": false
+    },
+    {
+      "name": "AR Pledging Arrangement",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 1267000.0,
+      "floating": false
+    },
+    {
+      "name": "Fifth Amendment",
+      "kind": "other",
+      "as_of": "2025-12-17",
+      "spread": 0.03,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "Seventh Amendment",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "spread": 0.025,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "Promissory Note",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon_min": 0.0457,
+      "coupon_max": 0.1235,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-06-30",
+      "agreement_kind": "amendment",
+      "dated": "2026-06-30",
+      "facility": "term loan",
+      "benchmarks": [
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        2.5,
+        2.5
+      ],
+      "grid_by": "leverage",
+      "url": "https://www.sec.gov/Archives/edgar/data/2071288/000119312526290788/d155301dex101.htm",
+      "all_in_pct": [
+        2.5389,
+        2.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-05-12",
+      "agreement_kind": "amendment",
+      "dated": "2026-03-30",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/2071288/000119312526219480/lmri-ex10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-12-18",
+      "agreement_kind": "amendment",
+      "dated": "2025-12-17",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "ferred Stock of any Restricted Subsidiary issued in accordance with Section 7.02; provided , that after giving pro forma effect to such dividend or distribution, including the amount thereof in Consolidated Interest Expense solely for the purposes of this clause (e), the Borrowers would have had an Interest Coverage Ratio of no less than 2.00 to 1.00;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2071288/000119312525324774/d54354dex101.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-26-290788",
+      "doc": "d155301d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-25-324774",
+      "doc": "d54354d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-12",
+      "items": "1.01,5.02,5.03,8.01,9.01",
+      "acc": "0001193125-25-317521",
+      "doc": "d25072d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-31",
+      830411000,
+      51226000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-06-30",
+      834083000,
+      69705000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-05",
+      817.67,
+      0.986,
+      1.1,
+      172.5
+    ],
+    [
+      "2026-06",
+      834.74,
+      1.147,
+      1.1167,
+      170.7
+    ],
+    [
+      "2026-07",
+      726.29,
+      1.262,
+      1.031,
+      169.4
+    ],
+    [
+      "2026-08",
+      669.11,
+      1.407,
+      0.9894,
+      167.8
+    ],
+    [
+      "2026-09",
+      612.47,
+      1.454,
+      0.947,
+      167.3
+    ],
+    [
+      "2026-10",
+      557.4,
+      1.597,
+      0.9052,
+      165.7
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

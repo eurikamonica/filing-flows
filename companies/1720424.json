@@ -1,0 +1,128 @@
+{
+  "cik": 1720424,
+  "ticker": "HIVE",
+  "name": "HIVE Digital Technologies Ltd.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "docs": {
+    "xbrl:0001062993-26-002973": {
+      "instruments": [
+        {
+          "name": "Atlantic Term Loans",
+          "kind": "loan",
+          "as_of": "2026-03-31",
+          "coupon": 0.0439,
+          "carrying": 1255000.0,
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-06-02",
+      "report": "2026-03-31"
+    },
+    "xbrl:0001062993-26-004434": {
+      "instruments": [
+        {
+          "name": "Convertible Note Three",
+          "kind": "convertible",
+          "as_of": "2026-06-30",
+          "face": 130000000.0,
+          "floating": false
+        },
+        {
+          "name": "Convertible Note Two",
+          "kind": "convertible",
+          "as_of": "2026-04-21",
+          "face": 115000000.0,
+          "floating": false
+        },
+        {
+          "name": "Atlantic Term Loans",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "coupon": 0.0439,
+          "carrying": 985000.0,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-14",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Finance Services",
+  "snapshot": {
+    "current_debt": 1600000,
+    "cash": 208039000,
+    "short_term_borrowings": 1600000,
+    "finance_leases": 27722000,
+    "operating_leases": 80731000,
+    "convertible": 234872000,
+    "convertible_current": 0,
+    "equity": 422699000,
+    "assets": 924640000,
+    "liabilities": 501941000,
+    "assets_current": 280026000,
+    "liabilities_current": 143054000,
+    "retained_earnings": -565217000,
+    "interest_expense": 994000,
+    "interest_paid": 977000,
+    "net_income": -326371000,
+    "da": 202092000,
+    "ocf": 56166000,
+    "revenue": 331300000,
+    "shares": 274277338,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "convertible_current": "ConvertibleDebtCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001062993-26-002973",
+  "xbrl_10-Q": "xbrl:0001062993-26-004434",
+  "events": [
+    {
+      "date": "2026-07-01",
+      "items": "1.01,2.03,3.02,8.01,9.01",
+      "acc": "0001062993-26-003439",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-06-22",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001062993-26-003293",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-22",
+      "items": "1.01,2.03,3.02,8.01,9.01",
+      "acc": "0001062993-26-002077",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T12:59:33+00:00",
+  "signature": "0001062993-26-004996"
+}

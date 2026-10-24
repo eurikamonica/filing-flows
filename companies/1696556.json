@@ -1,0 +1,107 @@
+{
+  "cik": 1696556,
+  "ticker": "OFRM",
+  "name": "Once Upon a Farm, PBC",
+  "sector": "consumer-staples",
+  "industry": "Food and Kindred Products",
+  "sic": "2000",
+  "docs": {
+    "xbrl:0001696556-26-000004": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-16",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001696556-26-000025": {
+      "instruments": [
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 65000000.0,
+          "drawn": 0.0,
+          "rate_now": 0.07,
+          "floating": true
+        },
+        {
+          "name": "Term Loan Facility",
+          "kind": "loan",
+          "as_of": "2026-06-30",
+          "face": 30000000.0,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-06",
+      "report": "2026-06-30"
+    }
+  },
+  "sic_description": "Food and Kindred Products",
+  "snapshot": {
+    "total_debt": 17214000,
+    "cash": 10860000,
+    "convertible": 0,
+    "debt_fair_value": 51037000,
+    "revolver_drawn": 0,
+    "equity": 155282000,
+    "assets": 202629000,
+    "liabilities": 47347000,
+    "assets_current": 187114000,
+    "liabilities_current": 46680000,
+    "retained_earnings": -156498000,
+    "shares": 41990653,
+    "balance_date": "2025-12-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "debt_fair_value": "DebtInstrumentFairValue",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [
+    {
+      "end": "2025-12-31",
+      "filed": "2026-08-06",
+      "total_debt": 17214000,
+      "cash": 10860000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 41990653,
+      "convertible": 0,
+      "equity": 155282000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001696556-26-000004",
+  "xbrl_10-Q": "xbrl:0001696556-26-000025",
+  "events": [
+    {
+      "date": "2026-05-06",
+      "items": "1.01,9.01",
+      "acc": "0001696556-26-000009",
+      "doc": "ofrm-20260505.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-09",
+      "items": "1.01,3.03,5.02,5.03,9.01",
+      "acc": "0001193125-26-042994",
+      "doc": "d53704d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T12:57:08+00:00",
+  "signature": "0001696556-26-000025"
+}

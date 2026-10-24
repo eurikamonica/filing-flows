@@ -1,0 +1,279 @@
+{
+  "cik": 1448893,
+  "ticker": "ESNT",
+  "name": "Essent Group Ltd.",
+  "sector": "financials",
+  "industry": "Surety Insurance",
+  "sic": "6351",
+  "sic_description": "Surety Insurance",
+  "generated_at": "2026-10-24T14:46:09+00:00",
+  "fetched_at": "2026-10-18T09:05:53+00:00",
+  "price": 65.7,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.222632,
+  "snapshot": {
+    "total_debt": 495972000,
+    "cash": 74333000,
+    "equity": 5663401000,
+    "assets": 7591882000,
+    "liabilities": 1928481000,
+    "retained_earnings": 5553991000,
+    "interest_expense": 32696000,
+    "interest_paid": 31250000,
+    "pretax_income": 820732000,
+    "net_income": 680710000,
+    "da": 4952000,
+    "ocf": 834083000,
+    "capex": 8191000,
+    "revenue": 1322992000,
+    "shares": 89876493,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "SeniorNotes",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 495972000,
+    "cash_and_investments": 74333000.0,
+    "net_debt": 421639000.0,
+    "ebitda": 858380000,
+    "ebit": 853428000,
+    "interest_expense": 32696000,
+    "leverage": 0.5778,
+    "net_leverage": 0.491203,
+    "interest_coverage": 26.101908,
+    "ebitda_coverage": 26.253364,
+    "cash_coverage": 27.690656,
+    "fcf": 825892000,
+    "fcf_to_debt": 1.665199,
+    "effective_rate": 0.065923,
+    "revolver_available": 500000000.0,
+    "liquidity": 574333000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 3.406587,
+    "market_cap": 5904885590.1,
+    "debt_to_ev": 0.078396,
+    "convertibles": null,
+    "implied": {
+      "dd": 15.097914,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.0,
+      "asset_vol": 0.214038,
+      "calibrated_5y_bps": 68.149154,
+      "rating_band": "A"
+    },
+    "covenants": [
+      {
+        "type": "liquidity",
+        "direction": "min",
+        "limit": 25000000.0,
+        "unit": "usd",
+        "actual": 574333000.0,
+        "cushion": 0.956471,
+        "agreement": "Second Amended And Restated Credit Agreement",
+        "dated": "2020-10-14",
+        "text": "At any time, permit Liquidity to be less than $25,000,000;"
+      }
+    ],
+    "cushion_score": 98
+  },
+  "instruments": [
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 500000000.0,
+      "floating": false
+    },
+    {
+      "name": "6.250% Senior Notes due 2029",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "face": 500000000.0,
+      "coupon": 0.0625,
+      "carrying": 496000000.0,
+      "fair_value": 515400000.0,
+      "maturity_year": 2029,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "fee": 0.00175,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [
+    {
+      "title": "$500,000,000 aggregate principal amount of its 6.250% Senior Notes due 2029",
+      "principal": 500000000.0,
+      "currency": "USD",
+      "coupon": 6.25,
+      "floating": false,
+      "maturity_year": 2029,
+      "convertible": false,
+      "trade_date": "2024-06-28",
+      "source_kind": "prospectus cover",
+      "date": "2024-06-28",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1448893/000110465924076318/tm2418166-5_424b5.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2024-06-26",
+      "agreement_kind": "credit_agreement",
+      "dated": "2024-06-26",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1448893/000110465924075004/tm2418166d2_ex10-1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-12-14",
+      "agreement_kind": "credit_agreement",
+      "dated": "2021-12-10",
+      "size": 825000000.0,
+      "title": "Third Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Prime Rate"
+      ],
+      "fee_pct": 0.175,
+      "covenants": [
+        {
+          "type": "liquidity",
+          "limit": 25000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Permit Liquidity to be less than $25,000,000;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1448893/000144889321000112/ex101thirdarcreditagreement.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2020-10-20",
+      "agreement_kind": "credit_agreement",
+      "dated": "2020-10-14",
+      "size": 625000000.0,
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "fee_pct": 0.25,
+      "covenants": [
+        {
+          "type": "liquidity",
+          "limit": 25000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "At any time, permit Liquidity to be less than $25,000,000;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1448893/000144889320000107/essent-2020xsecondarcra01.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2024-06-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-24-075004",
+      "doc": "tm2418166d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-12-14",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001448893-21-000112",
+      "doc": "esnt-20211214.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-10-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001448893-20-000107",
+      "doc": "form8-kre2ndamendedcre.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-05-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001448893-18-000052",
+      "doc": "form8-kreamendedcreditagre.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-05-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-17-005684",
+      "doc": "form8-kreamendedcreditagre.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

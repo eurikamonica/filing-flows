@@ -1,0 +1,267 @@
+{
+  "cik": 2041385,
+  "ticker": "RAL",
+  "name": "Ralliant Corp",
+  "sector": "industrials",
+  "industry": "Industrial Instruments For Measurement, Display, and Control",
+  "sic": "3823",
+  "docs": {
+    "xbrl:0002041385-26-000023": {
+      "instruments": [
+        {
+          "name": "USD Term Loan due June 2028",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "effective": 0.0494,
+          "carrying": 619200000.0,
+          "maturity_year": 2028,
+          "floating": true
+        },
+        {
+          "name": "USD Term Loan due December 2026",
+          "kind": "loan",
+          "as_of": "2025-12-31",
+          "effective": 0.0481,
+          "carrying": 530800000.0,
+          "maturity_year": 2026,
+          "floating": true
+        },
+        {
+          "name": "Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-11-24",
+          "spread": 0.001,
+          "spread_min": 0.00875,
+          "spread_max": 0.01625,
+          "fee_min": 0.009,
+          "fee_max": 0.02,
+          "reference": "Adjusted Term SOFR Reference Rate",
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-26",
+      "report": "2025-12-31"
+    },
+    "xbrl:0002041385-26-000065": {
+      "instruments": [
+        {
+          "name": "USD Term Loan due June 2028",
+          "kind": "loan",
+          "as_of": "2026-07-03",
+          "effective": 0.0486,
+          "carrying": 600000000.0,
+          "maturity_year": 2028,
+          "floating": true
+        },
+        {
+          "name": "USD Term Loan due March 2029",
+          "kind": "loan",
+          "as_of": "2026-07-03",
+          "effective": 0.0498,
+          "carrying": 550000000.0,
+          "maturity_year": 2029,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-07-30",
+      "report": "2026-07-03"
+    },
+    "0001185185-26-001195:ralliantex10-1.htm": {
+      "kind": "agreement",
+      "date": "2026-03-31",
+      "agreement_kind": "amendment",
+      "dated": "2026-03-30",
+      "title": "And Limited Consent To Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "SONIA"
+      ],
+      "maturity": "2030-05-15",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Net Leverage Ratio as of the end of any fiscal quarter of the Company (commencing with the fiscal quarter ending September 26, 2025) to be greater than 3.50 to 1:00."
+        }
+      ]
+    },
+    "0002041385-25-000077:formxcreditagreementamen.htm": {
+      "kind": "agreement",
+      "date": "2025-11-25",
+      "agreement_kind": "amendment",
+      "dated": "2025-11-24",
+      "title": "To Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "SONIA"
+      ],
+      "maturity": "2030-05-15",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Net Leverage Ratio as of the end of any fiscal quarter of the Company (commencing with the fiscal quarter ending September 26, 2025) to be greater than 3.50 to 1:00."
+        }
+      ]
+    }
+  },
+  "sic_description": "Industrial Instruments For Measurement, Display, and Control",
+  "snapshot": {
+    "total_debt": 1148500000,
+    "current_debt": 0,
+    "cash": 270900000,
+    "operating_leases": 75500000,
+    "equity": 1533900000,
+    "assets": 3705700000,
+    "liabilities": 2171800000,
+    "assets_current": 972000000,
+    "liabilities_current": 637900000,
+    "retained_earnings": -1255000000,
+    "interest_expense": 60700000,
+    "operating_income": -1165400000,
+    "pretax_income": -1227100000,
+    "net_income": -1233100000,
+    "da": 119700000,
+    "ocf": 364800000,
+    "capex": 37100000,
+    "revenue": 2186000000,
+    "debt_issued": 59200000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 530800000,
+      "y2": 0,
+      "y3": 619200000
+    },
+    "shares": 110640008,
+    "balance_date": "2026-07-03",
+    "latest_period": "2026-07-03"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2025-06-27",
+      "filed": "2025-08-11",
+      "total_debt": 1148500000,
+      "cash": 198600000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 112739191,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-09-26",
+      "filed": "2025-11-06",
+      "total_debt": 1148600000,
+      "cash": 264200000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 112805827,
+      "convertible": null,
+      "equity": 2964200000,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-04-03",
+      "filed": "2026-05-12",
+      "total_debt": 1148300000,
+      "cash": 268000000,
+      "investments": null,
+      "interest_expense": 47000000,
+      "operating_income": -1188700000,
+      "da": 118300000,
+      "ocf": 344700000,
+      "revenue": 2121600000,
+      "shares": 111933148,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-07-03",
+      "filed": "2026-07-30",
+      "total_debt": 1148500000,
+      "cash": 270900000,
+      "investments": null,
+      "interest_expense": 60700000,
+      "operating_income": -1165400000,
+      "da": 119700000,
+      "ocf": 364800000,
+      "revenue": 2186000000,
+      "shares": 110640008,
+      "convertible": null,
+      "equity": 1533900000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0002041385-26-000023",
+  "xbrl_10-Q": "xbrl:0002041385-26-000065",
+  "events": [
+    {
+      "date": "2026-03-31",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001185185-26-001195",
+      "doc": "ralliant8k033026.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-11-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0002041385-25-000077",
+      "doc": "ral-20251124.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-06-30",
+      "items": "1.01,2.03,3.03,5.01,5.02,5.03,5.05,7.01,8.01,9.01",
+      "acc": "0001104659-25-064115",
+      "doc": "tm2429554d14_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T07:27:52+00:00",
+  "signature": "0002041385-26-000065"
+}

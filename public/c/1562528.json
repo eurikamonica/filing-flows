@@ -1,0 +1,629 @@
+{
+  "cik": 1562528,
+  "ticker": "FBRT",
+  "name": "Franklin BSP Realty Trust, Inc.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-24T14:46:10+00:00",
+  "fetched_at": "2026-10-18T13:05:17+00:00",
+  "price": 6.165,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.272824,
+  "snapshot": {
+    "total_debt": 24186000,
+    "cash": 136347000,
+    "operating_leases": 9498000,
+    "equity": 1372624000,
+    "assets": 6383846000,
+    "liabilities": 4834613000,
+    "retained_earnings": -426442000,
+    "interest_paid": 268325000,
+    "net_income": 64375000,
+    "da": 12235000,
+    "ocf": 158145000,
+    "revenue": 305368000,
+    "deposit_interest": 280012000,
+    "shares": 83045416,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "deposit_interest": "InterestExpenseDeposits (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 24186000,
+    "cash_and_investments": 136347000.0,
+    "net_debt": -112161000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 1.589379,
+    "fcf": 158145000.0,
+    "fcf_to_debt": 6.5387,
+    "effective_rate": null,
+    "revolver_available": 268931000.0,
+    "liquidity": 405278000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 24186000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 241860.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 511974989.64,
+    "debt_to_ev": 0.060493,
+    "convertibles": null,
+    "implied": {
+      "dd": 14.157838,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.0,
+      "asset_vol": 0.266799,
+      "calibrated_5y_bps": 72.061592,
+      "rating_band": "A"
+    },
+    "covenants": [
+      {
+        "type": "liquidity",
+        "direction": "min",
+        "limit": 10000000.0,
+        "unit": "usd",
+        "actual": 405278000.0,
+        "cushion": 0.975326,
+        "agreement": "Version Fourth Amendment To Credit Agreement",
+        "dated": "2021-12-01",
+        "text": "Permit the Guarantor’s Cash Liquidity as of the last day of any fiscal quarter of the Guarantor to be less than the greater of (i) $10,000,000 and (ii) 5% of the Guarantor’s Recourse Indebtedness."
+      }
+    ],
+    "cushion_score": 100
+  },
+  "instruments": [
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 750000000.0,
+      "carrying": 481069000.0,
+      "rate_now": 0.0584,
+      "spread": 0.015,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "Unsecured Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 189500000.0,
+      "rate_now": 0.0774,
+      "floating": false
+    },
+    {
+      "name": "Unsecured Senior Notes I",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 107000000.0,
+      "floating": false
+    },
+    {
+      "name": "Junior Note II",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 40000000.0,
+      "rate_now": 0.0723,
+      "floating": false
+    },
+    {
+      "name": "Junior Note III",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 25000000.0,
+      "rate_now": 0.0723,
+      "floating": false
+    },
+    {
+      "name": "Mortgages",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "carrying": 24186000.0,
+      "rate_now": 0.0588,
+      "floating": false
+    },
+    {
+      "name": "Junior Note I",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 17500000.0,
+      "rate_now": 0.0743,
+      "floating": false
+    },
+    {
+      "name": "Other financings",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 12865000.0,
+      "rate_now": 0.06,
+      "floating": false
+    },
+    {
+      "name": "MRAs",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "drawn": 31714000.0,
+      "rate_now": 0.0452,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2022-02-25",
+      "agreement_kind": "amendment",
+      "dated": "2021-12-01",
+      "title": "Version Fourth Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "margin_pct": [
+        2.75,
+        2.75
+      ],
+      "covenants": [
+        {
+          "type": "liquidity",
+          "limit": 10000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Guarantor’s Cash Liquidity as of the last day of any fiscal quarter of the Guarantor to be less than the greater of (i) $10,000,000 and (ii) 5% of the Guarantor’s Recourse Indebtedness."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1562528/000156252822000007/barclaysbsp-fourthamendmen.htm",
+      "all_in_pct": [
+        2.7889,
+        2.7889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-11-12",
+      "agreement_kind": "amendment",
+      "dated": "2021-09-08",
+      "title": "Copy Third Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "margin_pct": [
+        2.75,
+        2.75
+      ],
+      "covenants": [
+        {
+          "type": "liquidity",
+          "limit": 10000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Guarantor’s Cash Liquidity as of the last day of any fiscal quarter of the Guarantor to be less than the greater of (i) $10,000,000 and (ii) 5% of the Guarantor’s Recourse Indebtedness."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1562528/000156252821000027/bsp-barclaysxthirdamendmen.htm",
+      "all_in_pct": [
+        2.7889,
+        2.7889
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-04-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-26-045531",
+      "doc": "tm2612124d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-10-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-100408",
+      "doc": "tm2528860d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-03-10",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001104659-25-022187",
+      "doc": "tm258704d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-09-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-24-103739",
+      "doc": "tm2424658d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-10-03",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-23-106427",
+      "doc": "tm2327447d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-07-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001562528-22-000019",
+      "doc": "bsprt-20220629.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-06-24",
+      "items": "1.01,3.02,3.03,5.03,9.01",
+      "acc": "0001104659-22-074336",
+      "doc": "tm2219297d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-02-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-22-025193",
+      "doc": "tm226949d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-12-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-21-152647",
+      "doc": "tm2135990d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-12-09",
+      "items": "1.01,2.03",
+      "acc": "0001104659-21-148181",
+      "doc": "tm2134998d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-09-23",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-21-118429",
+      "doc": "tm2128200d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-08-18",
+      "items": "1.01,9.01",
+      "acc": "0001104659-21-107352",
+      "doc": "tm2125406d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-07-26",
+      "items": "1.01,2.02,7.01,9.01",
+      "acc": "0001104659-21-095615",
+      "doc": "tm2123213d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-03-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-21-043932",
+      "doc": "tm2111053d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-03-19",
+      "items": "1.01,3.02,3.03,5.03,9.01",
+      "acc": "0001104659-21-039120",
+      "doc": "tm2110258d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-04-01",
+      "items": "1.01,2.03",
+      "acc": "0001104659-20-041911",
+      "doc": "tm2014340d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-06-05",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-19-029883",
+      "doc": "tv523036_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-03-20",
+      "items": "1.01,2.03",
+      "acc": "0001144204-19-015124",
+      "doc": "tv516688_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-11-28",
+      "items": "1.01,2.03",
+      "acc": "0001144204-18-061999",
+      "doc": "tv508010_8-k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-06-06",
+      "items": "1.01,3.02,3.03,5.07,8.01,9.01",
+      "acc": "0001144204-18-033059",
+      "doc": "tv495894_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-04-11",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-18-020150",
+      "doc": "tv490789_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-02-16",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001144204-18-009586",
+      "doc": "tv486355_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-01-23",
+      "items": "1.01,9.01",
+      "acc": "0001144204-18-003327",
+      "doc": "tv483810_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-12-05",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-17-062434",
+      "doc": "tv480800_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-09-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-17-049501",
+      "doc": "v475684_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-09-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-17-047089",
+      "doc": "v474788_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-07-13",
+      "items": "1.01,2.03",
+      "acc": "0001144204-17-036735",
+      "doc": "v470751_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-07-06",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-17-035944",
+      "doc": "v470411_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-01-03",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-17-000176",
+      "doc": "v456057_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-10-12",
+      "items": "2.03,9.01",
+      "acc": "0001144204-16-127850",
+      "doc": "v450392_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-09-29",
+      "items": "1.01,1.02,5.02,5.03,7.01,8.01,9.01",
+      "acc": "0001144204-16-126074",
+      "doc": "v449660_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-09-09",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-16-123456",
+      "doc": "v448593_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-01-05",
+      "items": "2.03",
+      "acc": "0001144204-16-074113",
+      "doc": "v428366_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-10-23",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001144204-15-060587",
+      "doc": "v422610_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-09-30",
+      "items": "2.03",
+      "acc": "0001144204-15-057462",
+      "doc": "v421298_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-06-23",
+      "items": "1.01,2.03,5.02,5.07,9.01",
+      "acc": "0001144204-15-038732",
+      "doc": "v413822_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-05-27",
+      "items": "1.01",
+      "acc": "0001144204-15-033794",
+      "doc": "v411747_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2015-01-06",
+      "items": "1.01,3.02,5.03,8.01,9.01",
+      "acc": "0001144204-15-000877",
+      "doc": "v398160_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-09-10",
+      "items": "1.01,2.03",
+      "acc": "0001144204-14-055072",
+      "doc": "v388801_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-06-23",
+      "items": "1.01,2.03",
+      "acc": "0001144204-14-039031",
+      "doc": "v382066_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-07-22",
+      "items": "1.01,2.03",
+      "acc": "0001144204-13-040422",
+      "doc": "v350509_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2013-05-17",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001144204-13-030048",
+      "doc": "v345515_8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-03-14",
+      "items": "1.01",
+      "acc": "0001144204-13-014888",
+      "doc": "v338074_8k.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2013-06-30",
+      1950000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-09-30",
+      5840000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-31",
+      3300000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-12-31",
+      0,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "cik": 1422930,
+  "ticker": "PUBM",
+  "name": "PubMatic, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Programming, Data Processing, Etc.",
+  "sic": "7370",
+  "docs": {
+    "xbrl:0001422930-26-000010": {
+      "instruments": [
+        {
+          "name": "Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-09-30",
+          "spread": 0.0775,
+          "spread_min": 0.02,
+          "spread_max": 0.0275,
+          "fee_min": 0.0025,
+          "fee_max": 0.0035,
+          "reference": "Applicable Interest Rate",
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-26",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001422930-26-000030": {
+      "instruments": [
+        {
+          "name": "Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "spread": 0.0775,
+          "spread_min": 0.02,
+          "spread_max": 0.0275,
+          "fee_min": 0.0025,
+          "fee_max": 0.0035,
+          "reference": "Applicable Interest Rate",
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-06",
+      "report": "2026-06-30"
+    },
+    "0001422930-22-000048:ex101-svbcreditagreement.htm": {
+      "kind": "agreement",
+      "date": "2022-10-17",
+      "agreement_kind": "credit_agreement",
+      "dated": "2022-10-17",
+      "title": "Senior Secured Credit Facilities Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        0.25,
+        2.75
+      ],
+      "margin_text": " commencing on the date on which the Administrative Agent receives copies of the consolidated financial statements of the Borrower in respect of the Fiscal Quarter ending on December 31, 2022, together with a Compliance Certificate in respect thereof as contemplated by Section 6.2(b) , the rate per annum set forth under the relevant column heading below: | Level | Consolidated Leverage Ratio | SOFR Loans | ABR Loans | Commitment Fee Rate | I | > 2.00:1.00 | 2.75% | 1.75% | 0.35% | II | > 1.00:1.00 but < 2.00:1.00 | 2.375% | 1.375% | 0.30% | III | < 1.00:1.00 | 2.00% | 1.00% | 0.25% | 2 Notwith",
+      "grid_by": "leverage",
+      "maturity": "2027-10-17",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Leverage Ratio as at the last day of any Fiscal Quarter, commencing with the Fiscal Quarter ending December 31, 2022, to be greater than3.50:1.00."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Consolidated Interest Coverage Ratio as at the last day of any Fiscal Quarter, commencing with the Fiscal Quarter ending December 31, 2022, to be less than 3.00:1.00."
+        }
+      ]
+    }
+  },
+  "sic_description": "Services-Computer Programming, Data Processing, Etc.",
+  "snapshot": {
+    "cash": 119971000,
+    "investments": 17536000,
+    "finance_leases": 270000,
+    "operating_leases": 40637000,
+    "equity": 238728000,
+    "assets": 700042000,
+    "liabilities": 461314000,
+    "assets_current": 537866000,
+    "liabilities_current": 422118000,
+    "retained_earnings": 121211000,
+    "operating_income": -14589000,
+    "pretax_income": -11790000,
+    "net_income": -13018000,
+    "da": 16700000,
+    "ocf": 88038000,
+    "capex": 14530000,
+    "revenue": 289166000,
+    "shares": 46611000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001422930-26-000010",
+  "xbrl_10-Q": "xbrl:0001422930-26-000030",
+  "events": [
+    {
+      "date": "2022-10-17",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001422930-22-000048",
+      "doc": "pubm-20221017.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-09-14",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001422930-22-000045",
+      "doc": "pubm-20220914.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-10-25",
+      "items": "1.01,2.03",
+      "acc": "0001422930-21-000047",
+      "doc": "pubm-20211020.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-08",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001422930-21-000037",
+      "doc": "pubm-20210604.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-09",
+      "items": "1.01,9.01",
+      "acc": "0001422930-21-000015",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-03-25",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001422930-21-000006",
+      "doc": "form8-kxmarch25.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T12:59:48+00:00",
+  "signature": "0001422930-26-000032"
+}

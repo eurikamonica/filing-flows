@@ -1,0 +1,955 @@
+{
+  "cik": 49600,
+  "ticker": "EGP",
+  "name": "EASTGROUP PROPERTIES INC",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-24T14:46:13+00:00",
+  "fetched_at": "2026-10-18T10:57:00+00:00",
+  "price": 202.7,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.164235,
+  "snapshot": {
+    "total_debt": 1615000000,
+    "cash": 33382000,
+    "revolver_drawn": -2095000,
+    "equity": 3574995000,
+    "assets": 5522866000,
+    "liabilities": 1947468000,
+    "interest_expense": 34467000,
+    "interest_paid": 33029000,
+    "net_income": 304855000,
+    "da": 223103000,
+    "ocf": 505593000,
+    "revenue": 753188000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 175000000,
+      "rest_of_year": 140000000,
+      "y2": 160000000,
+      "y3": 155000000,
+      "y4": 300000000,
+      "after5": 685000000
+    },
+    "wavg_rate_all": 0.049,
+    "shares": 53773317,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": 1615000000,
+    "cash_and_investments": 33382000.0,
+    "net_debt": 1581618000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": 34467000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 16.307548,
+    "fcf": 505593000.0,
+    "fcf_to_debt": 0.313061,
+    "effective_rate": 0.021342,
+    "revolver_available": 31155000.0,
+    "liquidity": 64537000.0,
+    "due_12m": 175000000,
+    "due_24m": 335000000,
+    "liquidity_to_due12": 0.368783,
+    "liquidity_to_due24": 0.192648,
+    "floating_debt": 818845000.0,
+    "floating_share": 0.507025,
+    "plus100bp_interest": 8188450.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 10899851355.9,
+    "debt_to_ev": 0.129392,
+    "convertibles": null,
+    "implied": {
+      "dd": 17.631306,
+      "pd_1y": 0.0,
+      "spread_5y_bps": -0.0,
+      "asset_vol": 0.153371,
+      "calibrated_5y_bps": 68.149154,
+      "rating_band": "A"
+    },
+    "market_rate_5y": 0.055915,
+    "refi_extra_interest": 11581995.116574,
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 570000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "First Amendment To Second Amended And Restated Credit Agreement",
+        "dated": "2008-01-04",
+        "text": "Section 5.3(c) of the Agreement is hereby amended to provide in full as follows: (c) a Tangible Net Worth of at least Five Hundred Seventy Million Dollars ($570,000,000), plus eighty-five percent (85%) of the net proceeds (gross proceeds less reasonable and customary costs of sale and issuance paid to Persons not Affiliates of any Obligor) received by the Borrower at any time following September 30, 2010, from the is"
+      }
+    ],
+    "cushion_score": 52
+  },
+  "instruments": [
+    {
+      "name": "Unsecured Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 1615000000.0,
+      "floating": false
+    },
+    {
+      "name": "Line of Credit [Member}",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "rate_now": 0.04395,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "rate_now": 0.04379,
+      "floating": true
+    },
+    {
+      "name": "$150 million term loan (matures 3/14/31)",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "spread": 0.0085,
+      "effective": 0.0415,
+      "maturity": "2031-03-14",
+      "carrying": 150000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "$150 million senior unsecured notes (matures 4/20/32)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0303,
+      "maturity": "2032-04-20",
+      "carrying": 150000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$125 million senior unsecured notes (matures 6/10/31)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0274,
+      "maturity": "2031-06-10",
+      "carrying": 125000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Senior unsecured notes repaid during the period",
+      "kind": "notes",
+      "as_of": "2024-12-31",
+      "carrying": 120000000.0,
+      "effective": 0.0347,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$100 million term loan (matures 10/10/26)",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "spread": 0.0084,
+      "effective": 0.0198,
+      "maturity": "2026-10-10",
+      "carrying": 100000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "$100 million term loan (matures 3/25/27)",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "spread": 0.0085,
+      "effective": 0.017,
+      "maturity": "2027-03-25",
+      "carrying": 100000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "$100 million term loan (matures 9/29/28)",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "spread": 0.0085,
+      "effective": 0.0251,
+      "maturity": "2028-09-29",
+      "carrying": 100000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "$100 million term loan (matures 1/13/30, adjusted for extension options)",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "spread": 0.0095,
+      "effective": 0.0487,
+      "maturity": "2030-01-13",
+      "carrying": 100000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "$100 million term loan (matures 4/30/30)",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "spread": 0.0085,
+      "effective": 0.0411,
+      "maturity": "2030-04-30",
+      "carrying": 100000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "$100 million senior unsecured notes (matures 10/14/30)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0261,
+      "maturity": "2030-10-14",
+      "carrying": 100000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$80 million senior unsecured notes (matures 3/28/29)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0427,
+      "maturity": "2029-03-28",
+      "carrying": 80000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$ 75 million term loan (matures 8/31/27)",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "spread": 0.0084,
+      "effective": 0.0389,
+      "maturity": "2027-08-31",
+      "carrying": 75000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "$75 million senior unsecured notes (matures 8/19/29)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0347,
+      "maturity": "2029-08-19",
+      "carrying": 75000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$75 million senior unsecured notes (matures 10/14/32)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0271,
+      "maturity": "2032-10-14",
+      "carrying": 75000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$75 million senior unsecured notes (matures 10/12/33)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.049,
+      "maturity": "2033-10-12",
+      "carrying": 75000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$75 million senior unsecured notes (matures 10/12/34)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0495,
+      "maturity": "2034-10-12",
+      "carrying": 75000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Senior unsecured term loans repaid during the period",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "carrying": 75000000.0,
+      "effective": 0.0408,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "$60 million senior unsecured notes (matures 4/10/28)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0393,
+      "maturity": "2028-04-10",
+      "carrying": 60000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Working Cash Line of Credit",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "drawn": 18845000.0,
+      "capacity": 50000000.0,
+      "rate_now": 0.04545,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$40 million senior unsecured notes (matures 12/15/26)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0375,
+      "maturity": "2026-12-15",
+      "carrying": 40000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$35 million senior unsecured notes (matures 8/15/31)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0354,
+      "maturity": "2031-08-15",
+      "carrying": 35000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$50 million term loan (matured 3/18/25)",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "spread": 0.011,
+      "effective": 0.0158,
+      "maturity": "2025-03-18",
+      "carrying": 0.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "$20 million senior unsecured notes (matured 8/28/25)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.038,
+      "maturity": "2025-08-28",
+      "carrying": 0.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$25 million senior unsecured notes (matured 10/1/25)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0397,
+      "maturity": "2025-10-01",
+      "carrying": 0.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "$50 million senior unsecured notes (matured 10/7/25)",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "effective": 0.0399,
+      "maturity": "2025-10-07",
+      "carrying": 0.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-11-25",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-11-19",
+      "title": "Term Loan Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "The Borrower shall have and maintain, on a consolidated basis in accordance with Generally Accepted Accounting Principles: (a) a Secured Debt to Total Asset Value Ratio no greater than thirty percent (30%) at all times; (b) a Fixed Charge Coverage Ratio of not less than 1.50:1.00 at all times; (c) [Reserved]; (d) an Unencumbered Interest Coverage Ratio of not less than 1.75:1.00 at all times;"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "The Borrower shall have and maintain, on a consolidated basis in accordance with Generally Accepted Accounting Principles: (a) a Secured Debt to Total Asset Value Ratio no greater than thirty percent (30%) at all times; (b) a Fixed Charge Coverage Ratio of not less than 1.50:1.00 at all times;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/49600/000004960025000117/exhibit101-termloanagreeme.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-11-25",
+      "agreement_kind": "amendment",
+      "dated": "2024-06-13",
+      "title": "First Amendment To Sixth Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "SOFR"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/49600/000004960025000117/exhibit102-firstamendmentt.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2011-02-28",
+      "agreement_kind": "amendment",
+      "dated": "2008-01-04",
+      "title": "First Amendment To Second Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 570000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Section 5.3(c) of the Agreement is hereby amended to provide in full as follows: (c) a Tangible Net Worth of at least Five Hundred Seventy Million Dollars ($570,000,000), plus eighty-five percent (85%) of the net proceeds (gross proceeds less reasonable and customary costs of sale and issuance paid to Persons not Affiliates of any Obligor) received by the Borrower at any time following September 30, 2010, from the is"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/49600/000004960011000003/exhibit10o.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-11-25",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0000049600-25-000117",
+      "doc": "egp-20251119.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-06-13",
+      "items": "1.01,1.02,2.03,8.01,9.01",
+      "acc": "0000049600-24-000082",
+      "doc": "egp-20240613.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-01-13",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-23-001638",
+      "doc": "brhc10046420_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-08-19",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000049600-22-000100",
+      "doc": "egp-20220816.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-02-08",
+      "items": "1.01,2.02,2.03,9.01",
+      "acc": "0000049600-22-000018",
+      "doc": "egp-20220208.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-07-01",
+      "items": "1.01,1.02,2.03,8.01,9.01",
+      "acc": "0000049600-21-000086",
+      "doc": "egp-20210629.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-08-21",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000049600-20-000106",
+      "doc": "egp-20200817.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-06-14",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001299933-18-000499",
+      "doc": "htm_56224.htm",
+      "desc": "LIVE FILING"
+    },
+    {
+      "date": "2018-02-22",
+      "items": "1.01,9.01",
+      "acc": "0001299933-18-000195",
+      "doc": "htm_55909.htm",
+      "desc": "LIVE FILING"
+    },
+    {
+      "date": "2017-03-10",
+      "items": "1.01,9.01",
+      "acc": "0001299933-17-000243",
+      "doc": "htm_54680.htm",
+      "desc": "LIVE FILING"
+    },
+    {
+      "date": "2015-08-04",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0000049600-15-000029",
+      "doc": "form8-k08052015.htm",
+      "desc": "FORM 8-K 08/04/2015"
+    },
+    {
+      "date": "2014-02-25",
+      "items": "1.01,9.01",
+      "acc": "0000049600-14-000021",
+      "doc": "form8-k2252014.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-08-30",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0000049600-13-000032",
+      "doc": "form8-k08282013.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-01-08",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000049600-13-000002",
+      "doc": "form8-krestatedcreditagrmn.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-09-24",
+      "items": "1.01,9.01",
+      "acc": "0000049600-12-000026",
+      "doc": "form8-k9212012.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-09-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000049600-12-000024",
+      "doc": "from8-k9712.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-05-16",
+      "items": "1.01,9.01",
+      "acc": "0001193125-12-235302",
+      "doc": "d353697d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2011-03-25",
+      "items": "1.01,9.01",
+      "acc": "0000049600-11-000009",
+      "doc": "form8k.htm",
+      "desc": "FORM 8-K FOR PERIOD ENDED MARCH 21, 2011"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2023-09-30",
+      1674371000,
+      374000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      1675292000,
+      15625000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      1672699000,
+      39400000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      1623170000,
+      16957000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      1453938000,
+      20515000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      1460000000,
+      32921000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      1440000000,
+      2981000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1615000000,
+      31358000,
+      33167000,
+      null,
+      null,
+      0.02054
+    ],
+    [
+      "2026-06-30",
+      1615000000,
+      33382000,
+      34467000,
+      null,
+      null,
+      0.02134
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2023-10",
+      0.0,
+      10.886,
+      0.2278,
+      89.5
+    ],
+    [
+      "2023-11",
+      0.0,
+      10.795,
+      0.2357,
+      90.1
+    ],
+    [
+      "2023-12",
+      0.0,
+      10.877,
+      0.2383,
+      89.6
+    ],
+    [
+      "2024-01",
+      0.0,
+      11.278,
+      0.2283,
+      87.2
+    ],
+    [
+      "2024-02",
+      0.0,
+      11.309,
+      0.2286,
+      87.0
+    ],
+    [
+      "2024-03",
+      0.0,
+      12.14,
+      0.2132,
+      82.4
+    ],
+    [
+      "2024-04",
+      0.0,
+      11.484,
+      0.2187,
+      86.0
+    ],
+    [
+      "2024-05",
+      0.0,
+      11.669,
+      0.2188,
+      85.0
+    ],
+    [
+      "2024-06",
+      0.0,
+      12.749,
+      0.2027,
+      79.1
+    ],
+    [
+      "2024-07",
+      0.0,
+      13.684,
+      0.1948,
+      74.4
+    ],
+    [
+      "2024-08",
+      0.0,
+      13.43,
+      0.198,
+      75.6
+    ],
+    [
+      "2024-09",
+      0.0,
+      14.072,
+      0.1892,
+      72.5
+    ],
+    [
+      "2024-10",
+      0.0,
+      14.028,
+      0.1895,
+      72.7
+    ],
+    [
+      "2024-11",
+      0.0,
+      14.919,
+      0.1771,
+      68.5
+    ],
+    [
+      "2024-12",
+      0.0,
+      14.619,
+      0.1773,
+      69.9
+    ],
+    [
+      "2025-01",
+      0.0,
+      14.01,
+      0.188,
+      72.8
+    ],
+    [
+      "2025-02",
+      0.0,
+      14.076,
+      0.1912,
+      72.5
+    ],
+    [
+      "2025-03",
+      0.0,
+      13.738,
+      0.1938,
+      74.1
+    ],
+    [
+      "2025-04",
+      0.0,
+      13.562,
+      0.2017,
+      75.0
+    ],
+    [
+      "2025-05",
+      0.0,
+      13.486,
+      0.2052,
+      75.3
+    ],
+    [
+      "2025-06",
+      0.0,
+      13.427,
+      0.2053,
+      75.6
+    ],
+    [
+      "2025-07",
+      0.0,
+      14.001,
+      0.1972,
+      72.8
+    ],
+    [
+      "2025-08",
+      0.0,
+      14.143,
+      0.1968,
+      72.1
+    ],
+    [
+      "2025-09",
+      0.0,
+      14.104,
+      0.1968,
+      72.3
+    ],
+    [
+      "2025-10",
+      0.0,
+      13.579,
+      0.2077,
+      74.9
+    ],
+    [
+      "2025-11",
+      0.0,
+      13.828,
+      0.2061,
+      73.7
+    ],
+    [
+      "2025-12",
+      0.0,
+      14.621,
+      0.195,
+      69.9
+    ],
+    [
+      "2026-01",
+      0.0,
+      15.188,
+      0.1884,
+      68.1
+    ],
+    [
+      "2026-02",
+      0.0,
+      15.426,
+      0.1895,
+      68.1
+    ],
+    [
+      "2026-03",
+      0.0,
+      15.144,
+      0.1895,
+      68.1
+    ],
+    [
+      "2026-04",
+      0.0,
+      16.928,
+      0.1687,
+      68.1
+    ],
+    [
+      "2026-05",
+      -0.0,
+      17.889,
+      0.1607,
+      68.1
+    ],
+    [
+      "2026-06",
+      0.0,
+      17.19,
+      0.1684,
+      68.1
+    ],
+    [
+      "2026-07",
+      0.0,
+      15.96,
+      0.1822,
+      68.1
+    ],
+    [
+      "2026-08",
+      0.0,
+      15.723,
+      0.1827,
+      68.1
+    ],
+    [
+      "2026-09",
+      0.0,
+      15.756,
+      0.1829,
+      68.1
+    ],
+    [
+      "2026-10",
+      -0.0,
+      17.631,
+      0.1642,
+      68.1
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,892 @@
+{
+  "cik": 1823239,
+  "ticker": "MRVI",
+  "name": "MARAVAI LIFESCIENCES HOLDINGS, INC.",
+  "sector": "health",
+  "industry": "Pharmaceutical Preparations",
+  "sic": "2834",
+  "sic_description": "Pharmaceutical Preparations",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T13:13:38+00:00",
+  "price": 7.125,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.77602,
+  "snapshot": {
+    "total_debt": 147105000,
+    "current_debt": 1125000,
+    "cash": 70091000,
+    "equity": 204622000,
+    "assets": 603746000,
+    "liabilities": 248158000,
+    "assets_current": 155655000,
+    "liabilities_current": 38419000,
+    "retained_earnings": -6031000,
+    "interest_expense": 23957000,
+    "interest_paid": 26079000,
+    "operating_income": -117073000,
+    "pretax_income": -136488000,
+    "net_income": -77413000,
+    "da": 22121000,
+    "ocf": -25261000,
+    "capex": 10581000,
+    "revenue": 208775000,
+    "debt_repaid": 296960000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 1500000,
+      "rest_of_year": 375000,
+      "y2": 1500000,
+      "y3": 1500000,
+      "y4": 1500000,
+      "y5": 1500000,
+      "after5": 142125000
+    },
+    "shares": 147215000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 147105000,
+    "cash_and_investments": 70091000.0,
+    "net_debt": 77014000.0,
+    "ebitda": -94952000,
+    "ebit": -117073000,
+    "interest_expense": 23957000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -4.886797,
+    "ebitda_coverage": -3.963434,
+    "cash_coverage": 0.031366,
+    "fcf": -35842000,
+    "fcf_to_debt": -0.243649,
+    "effective_rate": 0.162856,
+    "revolver_available": null,
+    "liquidity": 70091000.0,
+    "due_12m": 1500000,
+    "due_24m": 3000000,
+    "liquidity_to_due12": 46.727333,
+    "liquidity_to_due24": 23.363667,
+    "floating_debt": 147105000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 1471050.0,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 2.460987,
+    "market_cap": 1048906875.0,
+    "debt_to_ev": 0.130653,
+    "convertibles": null,
+    "implied": {
+      "dd": 3.433563,
+      "pd_1y": 0.000298,
+      "spread_5y_bps": 201.403772,
+      "asset_vol": 0.726926,
+      "calibrated_5y_bps": 146.698092,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.06377,
+    "refi_extra_interest": -297259.96156,
+    "covenants": [],
+    "cushion_score": 60
+  },
+  "instruments": [
+    {
+      "name": "2026 Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.05,
+      "spread_min": 0.0475,
+      "spread_max": 0.05,
+      "carrying": 150000000.0,
+      "reference": "Base Rate",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-06-03",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-06-02",
+      "title": "Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "fee_pct": 0.5,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Section 6.01 other than pursuant to a ratio-based incurrence test): (A) with respect to any such Incremental Facility or Incremental Equivalent Debt being incurred that is secured by a Lien on the Collateral on a pari passu basis with the Liens on the Collateral securing the Initial Term Loans, the Senior Secured First Lien Net Leverage Ratio for the Test Period most recently ended does not exceed 4.00 to 1.00;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1823239/000182323926000049/newcreditagreement.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-09-12",
+      "agreement_kind": "amendment",
+      "dated": "2024-09-10",
+      "title": "Third Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Eurodollar"
+      ],
+      "margin_pct": [
+        3.0,
+        3.0
+      ],
+      "maturity": "2025-10-19",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "e, any acquisition consummated concurrently therewith) and without deducting any cash and Cash Equivalents borrowed under such new facility on the date of incurrence, (a) for any such increase, new Facility and/or New Incremental Notes that are secured on a pari passu basis with the Term Loans, the Consolidated First Lien Net Leverage Ratio as of the most recently ended fiscal quarter for which internal financial sta"
+        },
+        {
+          "type": "leverage",
+          "limit": 5.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "such Investments were not made in contemplation of such acquisition, merger, amalgamation or consolidation and were in existence on the date of such acquisition, merger, amalgamation or consolidation; (19) additional Investments; provided that after giving Pro Forma Effect to such Investments, the Consolidated Total Net Leverage Ratio is equal to or less than 5.25 to 1.00;"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "are available (x) does not exceed 5.25:1.00 or (y) if incurred in connection with a permitted acquisition or other permitted Investment, the Consolidated Total Net Leverage Ratio does not increase immediately after giving effect to such permitted acquisition or other permitted Investment or (2) the Cash Interest Coverage Ratio would (x) be no less than 2.00 to 1.00 or (y) if incurred in connection with a permitted ac"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1823239/000182323924000100/ex101-thirdamendmenttocr.htm",
+      "all_in_pct": [
+        3.0389,
+        3.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-02-29",
+      "agreement_kind": "amendment",
+      "dated": "2021-08-11",
+      "title": "Version First Amendment To Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/1823239/000182323924000032/aex1021xfirstamendmenttocr.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-03",
+      "items": "1.01,1.02,2.03,7.01,9.01",
+      "acc": "0001823239-26-000049",
+      "doc": "mrvi-20260602.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-09-12",
+      "items": "1.01,9.01",
+      "acc": "0001823239-24-000100",
+      "doc": "mrvi-20240910.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-01-20",
+      "items": "1.01,9.01",
+      "acc": "0001823239-22-000004",
+      "doc": "mrvi-20220119.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-09-03",
+      "items": "1.01,2.01,9.01",
+      "acc": "0001823239-21-000023",
+      "doc": "mrvi-20210902.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-08-10",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001823239-21-000018",
+      "doc": "mrvi-20210805.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-11-25",
+      "items": "1.01,3.02,3.03,5.02,5.03,8.01,9.01",
+      "acc": "0001193125-20-303088",
+      "doc": "d31788d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2021-03-31",
+      533593000,
+      247675000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      532583000,
+      374710000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      531584000,
+      547898000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      529939000,
+      431469000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      529095000,
+      550676000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      528264000,
+      617446000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      526601000,
+      628273000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      525776000,
+      580176000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      524960000,
+      579605000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      523333000,
+      561691000,
+      44923000,
+      null,
+      null,
+      0.08584
+    ],
+    [
+      "2024-09-30",
+      521723000,
+      578157000,
+      51837000,
+      null,
+      null,
+      0.09936
+    ],
+    [
+      "2025-03-31",
+      294939000,
+      285053000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      293876000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      292821000,
+      243574000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      241011000,
+      165922000,
+      25963000,
+      -145497000,
+      -168262000,
+      0.10773
+    ],
+    [
+      "2026-06-30",
+      147105000,
+      70091000,
+      23957000,
+      -94952000,
+      -117073000,
+      0.16286
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2021-05",
+      1.41,
+      7.706,
+      0.467,
+      110.5
+    ],
+    [
+      "2021-06",
+      1.1,
+      7.882,
+      0.4711,
+      109.2
+    ],
+    [
+      "2021-07",
+      1.43,
+      7.731,
+      0.483,
+      110.3
+    ],
+    [
+      "2021-08",
+      1.43,
+      7.794,
+      0.5132,
+      109.9
+    ],
+    [
+      "2021-09",
+      6.22,
+      6.82,
+      0.5577,
+      117.2
+    ],
+    [
+      "2021-10",
+      11.59,
+      6.346,
+      0.5757,
+      120.9
+    ],
+    [
+      "2021-11",
+      18.3,
+      6.005,
+      0.6032,
+      123.7
+    ],
+    [
+      "2021-12",
+      10.22,
+      6.42,
+      0.569,
+      120.4
+    ],
+    [
+      "2022-01",
+      52.25,
+      5.03,
+      0.6428,
+      132.0
+    ],
+    [
+      "2022-02",
+      45.18,
+      5.22,
+      0.6686,
+      130.3
+    ],
+    [
+      "2022-03",
+      48.99,
+      5.123,
+      0.6777,
+      131.2
+    ],
+    [
+      "2022-04",
+      63.12,
+      4.841,
+      0.6859,
+      133.6
+    ],
+    [
+      "2022-05",
+      147.49,
+      3.793,
+      0.6875,
+      143.2
+    ],
+    [
+      "2022-06",
+      168.38,
+      3.56,
+      0.6933,
+      145.5
+    ],
+    [
+      "2022-07",
+      178.12,
+      3.465,
+      0.6938,
+      146.4
+    ],
+    [
+      "2022-08",
+      64.11,
+      4.674,
+      0.6601,
+      135.1
+    ],
+    [
+      "2022-09",
+      39.03,
+      5.09,
+      0.6337,
+      131.4
+    ],
+    [
+      "2022-10",
+      88.67,
+      4.244,
+      0.6715,
+      139.0
+    ],
+    [
+      "2022-11",
+      75.84,
+      4.313,
+      0.6371,
+      138.4
+    ],
+    [
+      "2022-12",
+      82.08,
+      4.247,
+      0.6458,
+      139.0
+    ],
+    [
+      "2023-01",
+      35.7,
+      4.933,
+      0.5671,
+      132.8
+    ],
+    [
+      "2023-02",
+      19.74,
+      5.35,
+      0.526,
+      129.2
+    ],
+    [
+      "2023-03",
+      25.41,
+      5.181,
+      0.5375,
+      130.7
+    ],
+    [
+      "2023-04",
+      22.46,
+      5.256,
+      0.5285,
+      130.0
+    ],
+    [
+      "2023-05",
+      24.98,
+      5.128,
+      0.5325,
+      131.1
+    ],
+    [
+      "2023-06",
+      19.83,
+      5.268,
+      0.5131,
+      129.9
+    ],
+    [
+      "2023-07",
+      16.81,
+      5.355,
+      0.4943,
+      129.2
+    ],
+    [
+      "2023-08",
+      18.7,
+      5.238,
+      0.4918,
+      130.2
+    ],
+    [
+      "2023-09",
+      14.72,
+      5.389,
+      0.474,
+      128.9
+    ],
+    [
+      "2023-10",
+      17.58,
+      5.069,
+      0.4395,
+      131.6
+    ],
+    [
+      "2023-11",
+      73.69,
+      3.909,
+      0.5345,
+      142.1
+    ],
+    [
+      "2023-12",
+      85.07,
+      3.903,
+      0.565,
+      142.2
+    ],
+    [
+      "2024-01",
+      80.3,
+      3.948,
+      0.5574,
+      141.8
+    ],
+    [
+      "2024-02",
+      244.7,
+      3.002,
+      0.7545,
+      151.0
+    ],
+    [
+      "2024-03",
+      233.17,
+      3.065,
+      0.7488,
+      150.3
+    ],
+    [
+      "2024-04",
+      267.34,
+      2.87,
+      0.7667,
+      152.3
+    ],
+    [
+      "2024-05",
+      406.22,
+      2.189,
+      0.8267,
+      159.3
+    ],
+    [
+      "2024-06",
+      431.76,
+      2.038,
+      0.832,
+      160.9
+    ],
+    [
+      "2024-07",
+      460.11,
+      2.084,
+      0.8677,
+      160.4
+    ],
+    [
+      "2024-08",
+      482.81,
+      2.035,
+      0.8793,
+      160.9
+    ],
+    [
+      "2024-09",
+      491.73,
+      1.997,
+      0.8751,
+      161.4
+    ],
+    [
+      "2024-10",
+      484.78,
+      1.922,
+      0.8621,
+      162.2
+    ],
+    [
+      "2024-11",
+      574.95,
+      1.623,
+      0.9209,
+      165.4
+    ],
+    [
+      "2024-12",
+      567.7,
+      1.628,
+      0.9128,
+      165.3
+    ],
+    [
+      "2025-01",
+      589.52,
+      1.534,
+      0.9258,
+      166.4
+    ],
+    [
+      "2025-02",
+      483.91,
+      1.576,
+      0.8327,
+      165.9
+    ],
+    [
+      "2025-03",
+      491.54,
+      1.415,
+      0.8421,
+      167.7
+    ],
+    [
+      "2025-04",
+      508.31,
+      1.313,
+      0.8597,
+      168.8
+    ],
+    [
+      "2025-05",
+      440.1,
+      1.786,
+      0.7997,
+      163.6
+    ],
+    [
+      "2025-06",
+      473.41,
+      1.751,
+      0.8275,
+      164.0
+    ],
+    [
+      "2025-07",
+      434.9,
+      1.883,
+      0.801,
+      162.6
+    ],
+    [
+      "2025-08",
+      469.5,
+      1.764,
+      0.8222,
+      163.9
+    ],
+    [
+      "2025-09",
+      474.39,
+      1.827,
+      0.8295,
+      163.2
+    ],
+    [
+      "2025-10",
+      457.39,
+      1.917,
+      0.8215,
+      162.2
+    ],
+    [
+      "2025-11",
+      339.28,
+      2.358,
+      0.74,
+      157.5
+    ],
+    [
+      "2025-12",
+      328.03,
+      2.356,
+      0.722,
+      157.6
+    ],
+    [
+      "2026-01",
+      297.59,
+      2.475,
+      0.6986,
+      156.3
+    ],
+    [
+      "2026-02",
+      256.31,
+      2.661,
+      0.668,
+      154.4
+    ],
+    [
+      "2026-03",
+      245.33,
+      2.595,
+      0.6461,
+      155.1
+    ],
+    [
+      "2026-04",
+      180.36,
+      3.011,
+      0.6017,
+      150.9
+    ],
+    [
+      "2026-05",
+      208.11,
+      3.079,
+      0.6756,
+      150.2
+    ],
+    [
+      "2026-06",
+      160.98,
+      3.433,
+      0.6601,
+      146.7
+    ],
+    [
+      "2026-07",
+      125.73,
+      3.682,
+      0.6307,
+      144.3
+    ],
+    [
+      "2026-08",
+      166.3,
+      3.664,
+      0.7498,
+      144.5
+    ],
+    [
+      "2026-09",
+      183.01,
+      3.554,
+      0.7677,
+      145.5
+    ],
+    [
+      "2026-10",
+      200.4,
+      3.441,
+      0.776,
+      146.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

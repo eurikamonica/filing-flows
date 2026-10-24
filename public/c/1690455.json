@@ -1,0 +1,150 @@
+{
+  "cik": 1690455,
+  "ticker": null,
+  "name": "Feel The World, Inc.",
+  "sector": "materials",
+  "industry": "Rubber & Plastics Footwear",
+  "sic": "3021",
+  "sic_description": "Rubber & Plastics Footwear",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T14:58:41+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "cash": 6169920,
+    "operating_leases": 2013797,
+    "revolver_drawn": 1856294,
+    "equity": -4959498,
+    "assets": 36811483,
+    "liabilities": 15605127,
+    "assets_current": 31647433,
+    "liabilities_current": 14458723,
+    "retained_earnings": -4846803,
+    "shares": 5748187,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 6169920.0,
+    "net_debt": null,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 6169920.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 1856294.0,
+    "floating_share": null,
+    "plus100bp_interest": 18562.94,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Wells Fargo revolving commitment",
+      "kind": "revolver",
+      "as_of": "2026-02-05",
+      "available": 4000000.0,
+      "floating": true
+    },
+    {
+      "name": "Revolving commitment",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 1856294.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-09-28",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-02-05",
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        2.25,
+        2.25
+      ],
+      "maturity": "2029-02-05",
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "ing July 1, 2025 through the last day of such 11 | immediately preceding month (or, if such period would exceed twelve (12) months, for the trailing twelve (12) month period) (with any such payment treated as a Fixed Charge as of the last day of the applicable period for purposes of calculating the Fixed Charge Coverage Ratio under this clause (x) and as calculated for any subsequent proposed payment) shall be at lea"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1690455/000107997326001298/ex10x1.htm",
+      "all_in_pct": [
+        2.2889,
+        2.2889
+      ]
+    }
+  ],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

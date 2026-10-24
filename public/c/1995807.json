@@ -1,0 +1,494 @@
+{
+  "cik": 1995807,
+  "ticker": "LB",
+  "name": "LandBridge Corp",
+  "sector": "financials",
+  "industry": "Oil Royalty Traders",
+  "sic": "6792",
+  "sic_description": "Oil Royalty Traders",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T13:04:35+00:00",
+  "price": 79.5,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.528868,
+  "snapshot": {
+    "total_debt": 535723000,
+    "current_debt": 194000,
+    "cash": 39797000,
+    "equity": 355532000,
+    "assets": 1377266000,
+    "liabilities": 545459000,
+    "assets_current": 70780000,
+    "liabilities_current": 9735000,
+    "retained_earnings": 37459000,
+    "interest_paid": 30223000,
+    "operating_income": 138297000,
+    "pretax_income": 98390000,
+    "net_income": 79435000,
+    "da": 15123000,
+    "ocf": 155519000,
+    "capex": 4238000,
+    "revenue": 225454000,
+    "debt_issued": 773549000,
+    "debt_repaid": 603635000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 692000,
+      "y2": 20000,
+      "y3": 14000,
+      "y5": 570000000
+    },
+    "shares": 77034749,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfDebt (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 535723000,
+    "cash_and_investments": 39797000.0,
+    "net_debt": 495926000.0,
+    "ebitda": 153420000,
+    "ebit": 138297000,
+    "interest_expense": null,
+    "leverage": 3.491872,
+    "net_leverage": 3.232473,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 6.145717,
+    "fcf": 151281000,
+    "fcf_to_debt": 0.282387,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 39797000.0,
+    "due_12m": 692000,
+    "due_24m": 712000,
+    "liquidity_to_due12": 57.510116,
+    "liquidity_to_due24": 55.894663,
+    "floating_debt": 45000000.0,
+    "floating_share": 0.083999,
+    "plus100bp_interest": 450000.0,
+    "plus100bp_share_of_ebit": 0.003254,
+    "altman_z": 7.322963,
+    "market_cap": 6124262545.5,
+    "debt_to_ev": 0.080923,
+    "convertibles": null,
+    "implied": {
+      "dd": 6.079627,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 9.255224,
+      "asset_vol": 0.507633,
+      "calibrated_5y_bps": 123.098284,
+      "rating_band": "BBB"
+    },
+    "market_rate_5y": 0.06141,
+    "covenants": [
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 2.5,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Revolving Credit Agreement",
+        "dated": "2025-11-18",
+        "text": "s of Credit shall have been collateralized to the satisfaction of the Issuing Bank, and all LC Disbursements shall have been reimbursed, the Borrower covenants and agrees with the Lenders that, in each case, commencing with the Test Period ending March 31, 2026: (a) The Borrower will not permit the Interest Coverage Ratio to be less than 2.50:1.00 as of the last day of each Test Period."
+      }
+    ],
+    "cushion_score": 75
+  },
+  "instruments": [
+    {
+      "name": "Fixed Rate Senior Unsecured Notes Due Two Thousand And Thirty",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 500000000.0,
+      "coupon": 0.0625,
+      "fair_value": 506250000.0,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 45000000.0,
+      "floating": true
+    },
+    {
+      "name": "Other Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 219000.0,
+      "floating": false
+    },
+    {
+      "name": "Two Thousand And Twenty Five Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-08-04",
+      "maturity": "2030-06-30",
+      "spread_min": 0.0175,
+      "spread_max": 0.0275,
+      "reference": "Base Rate",
+      "floating": true
+    },
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Two Thousand Twenty Three Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "maturity": "2027-07-03",
+      "coupon": 0.001,
+      "rate_now": 0.0765,
+      "reference": "SOFR Overnight Index Swap Rate",
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-08-06",
+      "agreement_kind": "amendment",
+      "dated": "2026-08-04",
+      "size": 100000000.0,
+      "title": "First Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "GUARANTORS: CBP LAND LLC, CBP LAND PARTNERS LLC, DBR 302 LLC, DBR LAND LLC, DBR DESERT LLC, DBR OPERATING LLC, DBR REEVES LLC, DBR REIT LLC, DELAWARE BASIN RANCHES INC., PECOS RENEWABLES LLC, and PLATFORM WATER SERVICES, LLC By: /s/ Scott McNeely Print: Scott McNeely Title: Executive Vice President and Chief Financial Officer Signature Page - First Amendment to Credit Agreement (DBR Land Holdings LLC Credit Facility)"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1995807/000119312526335650/lb-ex10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-11-19",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-11-18",
+      "size": 275000000.0,
+      "title": "Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "s of Credit shall have been collateralized to the satisfaction of the Issuing Bank, and all LC Disbursements shall have been reimbursed, the Borrower covenants and agrees with the Lenders that, in each case, commencing with the Test Period ending March 31, 2026: (a) The Borrower will not permit the Interest Coverage Ratio to be less than 2.50:1.00 as of the last day of each Test Period."
+        },
+        {
+          "type": "leverage",
+          "limit": 4.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Payment; provided that (i) no Default or Event of Default shall have occurred and be continuing or would result therefrom, (ii) after giving effect thereto, the Borrower shall be in compliance, on a Pro Forma Basis (including pro forma for any use of cash in making such Restricted Payment), with a Net Total Leverage Ratio of equal to or less than 4.50:1.00 and (iii) after giving effect to such Restricted Payment, th"
+        },
+        {
+          "type": "liquidity",
+          "limit": 25000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "may make Restricted Payments in cash, so long as at the time of and immediately after giving effect to any such Restricted Payment, (i) no Default or Event of Default shall have occurred and be continuing or would result therefrom, (ii) on a pro forma basis after giving effect to any such payment, Liquidity shall be at least $25,000,000, (iii) after giving pro forma effect to such payment, the Distributable Free Cas"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1995807/000119312525287019/d873314dex101.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-11-12",
+      "agreement_kind": "amendment",
+      "dated": "2025-10-03",
+      "title": "Third Amendment To Credit Agreement",
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1995807/000119312525277992/lb-ex10_1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-10-13",
+      "items": "1.01,3.01,3.03,5.02,5.03,8.01",
+      "acc": "0001193125-26-420543",
+      "doc": "lb-20261013.htm",
+      "desc": "8-K12B"
+    },
+    {
+      "date": "2026-10-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-26-410656",
+      "doc": "d117229d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-11-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-25-297002",
+      "doc": "d39508d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-11-19",
+      "items": "1.01,2.02,2.03,7.01,8.01,9.01",
+      "acc": "0001193125-25-287019",
+      "doc": "d873314d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-07",
+      "items": "1.01,2.03,3.02,7.01,9.01",
+      "acc": "0001193125-25-232630",
+      "doc": "lb-20251003.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-12-26",
+      "items": "1.01,2.01,7.01,8.01,9.01",
+      "acc": "0001193125-24-284426",
+      "doc": "d917931d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-11-22",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0000950170-24-129975",
+      "doc": "lb-20241118.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-10-04",
+      "items": "1.01,9.01",
+      "acc": "0000950170-24-112967",
+      "doc": "lb-20240930.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-07-03",
+      "items": "1.01,3.02,3.03,5.02,5.03,7.01,9.01",
+      "acc": "0001193125-24-175094",
+      "doc": "d685929d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-06-30",
+      395993000,
+      24646000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      277977000,
+      14417000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      375766000,
+      14935000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      371043000,
+      20345000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      367005000,
+      28316000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      535539000,
+      29679000,
+      null,
+      135935000,
+      122641000,
+      null
+    ],
+    [
+      "2026-06-30",
+      535723000,
+      39797000,
+      null,
+      153420000,
+      138297000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-11",
+      46.33,
+      4.958,
+      0.6399,
+      132.6
+    ],
+    [
+      "2025-12",
+      38.77,
+      5.077,
+      0.6127,
+      131.6
+    ],
+    [
+      "2026-01",
+      34.13,
+      5.209,
+      0.6135,
+      130.4
+    ],
+    [
+      "2026-02",
+      27.8,
+      5.448,
+      0.6268,
+      128.4
+    ],
+    [
+      "2026-03",
+      24.49,
+      5.519,
+      0.6154,
+      127.8
+    ],
+    [
+      "2026-04",
+      17.53,
+      5.752,
+      0.5852,
+      125.8
+    ],
+    [
+      "2026-05",
+      19.09,
+      5.575,
+      0.554,
+      127.3
+    ],
+    [
+      "2026-06",
+      22.05,
+      5.437,
+      0.5567,
+      128.5
+    ],
+    [
+      "2026-07",
+      15.72,
+      5.73,
+      0.5544,
+      126.0
+    ],
+    [
+      "2026-08",
+      14.86,
+      5.803,
+      0.5638,
+      125.4
+    ],
+    [
+      "2026-09",
+      15.74,
+      5.721,
+      0.5625,
+      126.1
+    ],
+    [
+      "2026-10",
+      9.25,
+      6.08,
+      0.5289,
+      123.1
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

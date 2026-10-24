@@ -1,0 +1,422 @@
+{
+  "cik": 1766502,
+  "ticker": "CHWY",
+  "name": "Chewy, Inc.",
+  "sector": "consumer-disc",
+  "industry": "Retail-Catalog & Mail-Order Houses",
+  "sic": "5961",
+  "sic_description": "Retail-Catalog & Mail-Order Houses",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T05:24:20+00:00",
+  "price": 22.33,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.466787,
+  "snapshot": {
+    "total_debt": 591700000,
+    "current_debt": 3000000,
+    "cash": 611000000,
+    "investments": 1200000,
+    "operating_leases": 569500000,
+    "equity": 370500000,
+    "assets": 3740600000,
+    "liabilities": 3370100000,
+    "assets_current": 1845300000,
+    "liabilities_current": 2202400000,
+    "retained_earnings": -1184800000,
+    "interest_expense": 11400000,
+    "interest_paid": 2300000,
+    "operating_income": 328200000,
+    "pretax_income": 354600000,
+    "net_income": 273700000,
+    "da": 143900000,
+    "ocf": 717200000,
+    "capex": 149100000,
+    "revenue": 13068700000,
+    "shares": 414600000,
+    "balance_date": "2026-08-02",
+    "latest_period": "2026-08-02"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "investments": "MarketableSecuritiesCurrent",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 591700000,
+    "cash_and_investments": 612200000,
+    "net_debt": -20500000,
+    "ebitda": 472100000,
+    "ebit": 328200000,
+    "interest_expense": 11400000,
+    "leverage": 1.253336,
+    "net_leverage": -0.043423,
+    "interest_coverage": 28.789474,
+    "ebitda_coverage": 41.412281,
+    "cash_coverage": 312.826087,
+    "fcf": 568100000,
+    "fcf_to_debt": 0.960115,
+    "effective_rate": 0.019267,
+    "revolver_available": 200000000.0,
+    "liquidity": 812200000.0,
+    "due_12m": 3000000,
+    "due_24m": null,
+    "liquidity_to_due12": 270.733333,
+    "liquidity_to_due24": null,
+    "floating_debt": 591700000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 5917000.0,
+    "plus100bp_share_of_ebit": 0.018029,
+    "altman_z": 4.873553,
+    "market_cap": 9258018000.0,
+    "debt_to_ev": 0.064054,
+    "convertibles": null,
+    "implied": {
+      "dd": 7.53165,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 1.012072,
+      "asset_vol": 0.45288,
+      "calibrated_5y_bps": 111.802754,
+      "rating_band": "BBB"
+    },
+    "covenants": [],
+    "cushion_score": 98
+  },
+  "instruments": [
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-08-02",
+      "capacity": 800000000.0,
+      "spread": 0.005,
+      "effective": 0.0566,
+      "carrying": 600000000.0,
+      "drawn": 0.0,
+      "spread_min": 0.0025,
+      "spread_max": 0.0075,
+      "reference": "SOFR",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-08-02"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-06-24",
+      "agreement_kind": "amendment",
+      "dated": "2026-06-23",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.25,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "8,400 and 40% of Consolidated EBITDA for the most recently ended Test Period as of such time and (ii) at the time of such incurrence, an amount equal to the maximum principal amount of such Indebtedness that could be incurred such that after giving effect to the incurrence of such Indebtedness, the Secured Leverage Ratio of the Borrower for the most recently ended Test Period as of such time would be no greater than"
+        },
+        {
+          "type": "leverage",
+          "limit": 6.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "he assumption of such Indebtedness and such Permitted Acquisition is equal to or greater than (x) 2.0 to 1.0 or (y) the Interest Coverage Ratio immediately prior to the assumption of such Indebtedness and such Permitted Acquisition for the most recently ended Test Period as of such time or (II) the Total Leverage Ratio after giving Pro Forma Effect to the assumption of such Indebtedness and such Permitted Acquisition"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "by the Borrower or any Restricted Subsidiary in connection with an acquisition of assets by the Borrower or such Restricted Subsidiary in a Permitted Acquisition; provided that such Indebtedness is not incurred in 122 contemplation of such Permitted Acquisition; provided further that either (I) the Interest Coverage Ratio after giving Pro Forma Effect to the assumption of such Indebtedness and such Permitted Acquisit"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "bt Payment, Specified Lien or Specified Debt Incurrence, the greater of (x) 10% of the Maximum Borrowing Amount and (y) $72,000,000, or (II) in the case of a Specified Dividend, the greater of (x) 12.50% of the Maximum Borrowing Amount and (y) $90,000,000, in each case, as of such date, and (b) the Fixed Charge Coverage Ratio as of the end of the most recently ended Test Period prior to the making of such Specified C"
+        },
+        {
+          "type": "liquidity",
+          "limit": 72000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Cash Dominion Period ” means (a) the period from the date that Excess Liquidity is less than the greater of (i) 10% of the Total Maximum Borrowing Amount and (ii) $72,000,000 for five (5) consecutive Business Days until the date that Excess Liquidity has been at least the greater of (i) 10% of the Total Maximum Borrowing Amount and (ii) $72,000,000 for twenty (20) consecutive calendar days or (b) upon the occurrenc"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1766502/000119312526281042/d43042dex102.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-06-24",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-06-23",
+      "title": "Execution Version Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Eurodollar",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        1.75,
+        1.75
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "t are Ordinary Course Non-Recourse Third Party Financing Transactions; (bb) any other disposition in connection with the Transactions; (cc) any disposition of property or assets so long as on a Pro Forma Basis after giving effect to such disposition, at the election of the Initial Borrower, (i) the First Lien Leverage Ratio for the most recently ended Test Period would not exceed (A) 2.00:1.00 or (B) the First Lien L"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Disposition Percentage ” means, with respect to any prepayment with Net Proceeds required by Section 2.09(b) as a result of any Asset Sale consummated by a Loan Party pursuant to Section 6.05(a)(2)(ii), 100.0%; provided that the Disposition Percentage (i) shall be 50.0% if the First Lien Leverage Ratio as of the applicable time of determination is less than or equal to 2.50:1.00 and greater than 2.00:1.00, and (ii)"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "s after giving effect to such Investment, at the election of the Initial Borrower, (i) the First Lien Leverage Ratio for the most recently ended Test Period would not exceed (A) 2.00:1.00 or (B) the First Lien Leverage Ratio as of the last day of the then most recently ended Test Period or (ii) the Interest Coverage Ratio on a pro forma basis is at least equal to or greater than (A) 1.75:1.00 or (B) the Interest Cove"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Borrower’s sole discretion, either (i) the Senior Secured Leverage Ratio for the applicable Test Period does not exceed the greater of (A) 3.00:1.00 and (B) the Senior Secured Leverage Ratio immediately prior to the incurrence of such Indebtedness, Disqualified Stock or Preferred Stock or (ii) the Interest Coverage Ratio is greater than or equal to the lesser of (A) 1.75:1.00 and (B) the Interest Coverage Ratio imme"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1766502/000119312526281042/d43042dex101.htm",
+      "all_in_pct": [
+        1.7889,
+        1.7889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-04-02",
+      "agreement_kind": "amendment",
+      "dated": "2025-04-01",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.25,
+        1.75
+      ],
+      "fee_pct": 0.25,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": ",400 and 40 % of Consolidated EBITDA for the most recently ended Test Period as of such time and (ii) at the time of such incurrence, an amount equal to the maximum principal amount of such Indebtedness that could be incurred such that after giving effect to the incurrence of such Indebtedness, the Secured Leverage Ratio of the Borrower for the most recently ended Test Period as of such time would be no greater than"
+        },
+        {
+          "type": "leverage",
+          "limit": 6.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "he assumption of such Indebtedness and such Permitted Acquisition is equal to or greater than (x) 2.0 to 1.0 or (y) the Interest Coverage Ratio immediately prior to the assumption of such Indebtedness and such Permitted Acquisition for the most recently ended Test Period as of such time or (II) the Total Leverage Ratio after giving Pro Forma Effect to the assumption of such Indebtedness and such Permitted Acquisition"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "med by the Borrower or any Restricted Subsidiary in connection with an acquisition of assets by the Borrower or such Restricted Subsidiary in a Permitted Acquisition; provided that such Indebtedness is not incurred in contemplation of such Permitted Acquisition; provided further that either (I) the Interest Coverage Ratio after giving Pro Forma Effect to the assumption of such Indebtedness and such Permitted Acquisit"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "bt Payment, Specified Lien or Specified Debt Incurrence, the greater of (x) 10% of the Maximum Borrowing Amount and (y) $72,000,000, or (II) in the case of a Specified Dividend, the greater of (x) 12.50% of the Maximum Borrowing Amount and (y) $90,000,000, in each case, as of such date, and (b) the Fixed Charge Coverage Ratio as of the end of the most recently ended Test Period prior to the making of such Specified C"
+        },
+        {
+          "type": "liquidity",
+          "limit": 72000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Cash Dominion Period ” means (a) the period from the date that Excess Liquidity is less than the greater of (i) 10% of the Total Maximum Borrowing Amount and (ii) $72,000,000 for five (5) consecutive Business Days until the date that Excess Liquidity has been at least the greater of (i) 10% of the Total Maximum Borrowing Amount and (ii) $72,000,000 for twenty (20) consecutive calendar days or (b) upon the occurrenc"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1766502/000119312525071385/d932555dex101.htm",
+      "all_in_pct": [
+        1.2889,
+        1.7889
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-06-24",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-26-281042",
+      "doc": "d43042d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-06-25",
+      "items": "1.01,9.01",
+      "acc": "0001193125-25-146875",
+      "doc": "d74869d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-25-071385",
+      "doc": "d932555d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-12-13",
+      "items": "1.01,9.01",
+      "acc": "0001193125-24-278616",
+      "doc": "d852999d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-09-23",
+      "items": "1.01,9.01",
+      "acc": "0001193125-24-223715",
+      "doc": "d895052d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-06-27",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001766502-24-000024",
+      "doc": "chwy-20240626.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-10-30",
+      "items": "1.01,9.01",
+      "acc": "0001140361-23-050296",
+      "doc": "ny20013552x2_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-02-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001140361-23-003829",
+      "doc": "brhc10047268_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-09-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-21-263223",
+      "doc": "d158020d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-06-18",
+      "items": "1.01,2.03,3.03,5.03,8.01,9.01",
+      "acc": "0001193125-19-175690",
+      "doc": "d766795d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-08-02",
+      591700000,
+      612200000,
+      11400000,
+      472100000,
+      328200000,
+      0.01927
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-09",
+      1.13,
+      7.409,
+      0.4522,
+      112.7
+    ],
+    [
+      "2026-10",
+      1.0,
+      7.541,
+      0.4668,
+      111.7
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,320 @@
+{
+  "cik": 908315,
+  "ticker": "WINA",
+  "name": "WINMARK CORP",
+  "sector": "consumer-disc",
+  "industry": "Retail-Miscellaneous Retail",
+  "sic": "5900",
+  "docs": {
+    "xbrl:0000908315-26-000007": {
+      "instruments": [
+        {
+          "name": "Delayed Draw Term Facility",
+          "kind": "other",
+          "as_of": "2025-12-27",
+          "capacity": 30000000.0,
+          "drawn": 30000000.0,
+          "coupon_min": 0.046,
+          "coupon_max": 0.0475,
+          "carrying": 30000000.0,
+          "floating": false
+        },
+        {
+          "name": "Note Agreement",
+          "kind": "notes",
+          "as_of": "2025-12-27",
+          "carrying": 30000000.0,
+          "coupon": 0.0318,
+          "floating": false
+        },
+        {
+          "name": "Notes Payable, Other Payables",
+          "kind": "notes",
+          "as_of": "2025-12-27",
+          "carrying": 30000000.0,
+          "floating": false
+        },
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2025-12-27",
+          "capacity": 20000000.0,
+          "drawn": 0.0,
+          "available": 20000000.0,
+          "floating": true
+        },
+        {
+          "name": "Line of Credit with CIBC Bank",
+          "kind": "revolver",
+          "as_of": "2025-12-27",
+          "spread": 0.0,
+          "reference": "SOFR",
+          "floating": true
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-25",
+      "report": "2025-12-27"
+    },
+    "xbrl:0000908315-26-000040": {
+      "instruments": [
+        {
+          "name": "Note Agreement",
+          "kind": "notes",
+          "as_of": "2026-09-26",
+          "carrying": 30000000.0,
+          "coupon": 0.0318,
+          "floating": false
+        },
+        {
+          "name": "Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-09-26",
+          "drawn": 0.0,
+          "available": 20000000.0,
+          "floating": true
+        },
+        {
+          "name": "Delayed Draw Term Facility",
+          "kind": "other",
+          "as_of": "2026-09-26",
+          "drawn": 30000000.0,
+          "coupon_min": 0.046,
+          "coupon_max": 0.0475,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-10-14",
+      "report": "2026-09-26"
+    },
+    "0000908315-22-000016:c315-20220412ex106c1b494.htm": {
+      "kind": "agreement",
+      "date": "2022-04-13",
+      "agreement_kind": "credit_agreement",
+      "dated": "2015-05-15",
+      "facility": "loan",
+      "benchmarks": [
+        "Prime Rate"
+      ]
+    },
+    "0000908315-22-000016:c315-20220412ex1041152f4.htm": {
+      "kind": "agreement",
+      "date": "2022-04-13",
+      "agreement_kind": "credit_agreement",
+      "dated": "2015-05-14",
+      "facility": "loan"
+    },
+    "0000908315-22-000016:c315-20220412ex1034c82aa.htm": {
+      "kind": "agreement",
+      "date": "2022-04-13",
+      "agreement_kind": "amendment",
+      "dated": "2022-04-12",
+      "facility": "loan",
+      "benchmarks": [
+        "Prime Rate"
+      ],
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Each Issuer covenants that it will not, as of the end of each fiscal month, permit the Fixed Charge Coverage Ratio of the Company and its Subsidiaries to be less than 2.50 to 1.00. 6A(2)."
+        }
+      ]
+    }
+  },
+  "sic_description": "Retail-Miscellaneous Retail",
+  "snapshot": {
+    "cash": 27964200,
+    "operating_leases": 2594000,
+    "revolver_drawn": 30000000,
+    "equity": -37397300,
+    "assets": 45034700,
+    "assets_current": 32603900,
+    "liabilities_current": 10204400,
+    "retained_earnings": -52579000,
+    "interest_expense": 2446900,
+    "interest_paid": 2403100,
+    "operating_income": 54801600,
+    "pretax_income": 53144900,
+    "net_income": 41427600,
+    "da": 378500,
+    "ocf": 44071400,
+    "capex": 296300,
+    "revenue": 91792500,
+    "wavg_rate_all": 0.0322,
+    "shares": 3559195,
+    "balance_date": "2026-09-26",
+    "latest_period": "2026-09-26"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "wavg_rate_all": "DebtWeightedAverageInterestRate"
+  },
+  "history": [
+    {
+      "end": "2019-12-28",
+      "filed": "2020-03-10",
+      "total_debt": 25687500,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 3648753,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-12-26",
+      "filed": "2021-03-09",
+      "total_debt": 21937500,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 3713762,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-12-25",
+      "filed": "2022-03-08",
+      "total_debt": 47687500,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 3585831,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0000908315-26-000007",
+  "xbrl_10-Q": "xbrl:0000908315-26-000040",
+  "events": [
+    {
+      "date": "2022-04-13",
+      "items": "1.01,2.02,2.03,7.01,8.01,9.01",
+      "acc": "0000908315-22-000016",
+      "doc": "c315-20220412x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-09-10",
+      "items": "1.01,2.03,7.01,8.01,9.01",
+      "acc": "0000908315-21-000029",
+      "doc": "c315-20210910x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-10-14",
+      "items": "1.01,2.02,2.03,7.01,8.01,9.01",
+      "acc": "0000908315-20-000027",
+      "doc": "c315-20201014x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-09-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000908315-20-000025",
+      "doc": "c315-20200902x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-12-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000908315-19-000037",
+      "doc": "win-20191216x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-05-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000908315-18-000023",
+      "doc": "wina-20180517x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-07-19",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001558370-17-005189",
+      "doc": "f8-k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-05-18",
+      "items": "1.01,2.03,7.01,8.01,9.01",
+      "acc": "0001104659-15-039074",
+      "doc": "a15-11733_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-04-16",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-15-027962",
+      "doc": "a15-9286_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-02-21",
+      "items": "1.01,9.01",
+      "acc": "0001104659-14-012254",
+      "doc": "a14-6533_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-10-23",
+      "items": "1.01,2.02,7.01,8.01,9.01",
+      "acc": "0001104659-13-077187",
+      "doc": "a13-22701_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-03-01",
+      "items": "1.01,2.02,7.01,9.01",
+      "acc": "0001104659-12-014802",
+      "doc": "a12-6224_18k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2012-01-31",
+      "items": "1.01,9.01",
+      "acc": "0001104659-12-005290",
+      "doc": "a12-3837_18k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T14:48:57+00:00",
+  "signature": "0000908315-26-000040"
+}

@@ -1,0 +1,416 @@
+{
+  "cik": 1805526,
+  "ticker": "DFDV",
+  "name": "DeFi Development Corp.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "sic_description": "Finance Services",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T16:56:25+00:00",
+  "price": 3.705,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.089186,
+  "snapshot": {
+    "total_debt": 120564000,
+    "current_debt": 0,
+    "cash": 4335000,
+    "investments": 713000,
+    "short_term_borrowings": 0,
+    "convertible": 120564000,
+    "debt_fair_value": 117900000,
+    "equity": -12034000,
+    "assets": 203333000,
+    "liabilities": 215367000,
+    "assets_current": 114649000,
+    "liabilities_current": 94803000,
+    "retained_earnings": -202574000,
+    "interest_expense": 14552000,
+    "interest_paid": 3770000,
+    "operating_income": -130765000,
+    "pretax_income": -200310000,
+    "net_income": -199119000,
+    "da": 1407000,
+    "ocf": -30018000,
+    "capex": 0,
+    "revenue": 15091000,
+    "debt_issued": 117913000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 0,
+      "rest_of_year": 0,
+      "y2": 0,
+      "y3": 0,
+      "y4": 126052000
+    },
+    "if_converted_shares": 0,
+    "shares": 30997790,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "DebtLongtermAndShorttermCombinedAmount",
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "investments": "MarketableSecuritiesCurrent",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "convertible": "ConvertibleDebtNoncurrent",
+    "debt_fair_value": "LongTermDebtFairValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromConvertibleDebt (FY + YTD − prior YTD)",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities"
+  },
+  "analysis": {
+    "total_debt": 120564000,
+    "cash_and_investments": 5048000,
+    "net_debt": 115516000,
+    "ebitda": -129358000,
+    "ebit": -130765000,
+    "interest_expense": 14552000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -8.98605,
+    "ebitda_coverage": -8.889362,
+    "cash_coverage": -6.962334,
+    "fcf": -30018000.0,
+    "fcf_to_debt": -0.24898,
+    "effective_rate": 0.120699,
+    "revolver_available": null,
+    "liquidity": 5048000.0,
+    "due_12m": 0,
+    "due_24m": 0,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 120564000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 1205640.0,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": -3.00573,
+    "market_cap": 114846811.95,
+    "debt_to_ev": 0.523366,
+    "convertibles": null,
+    "implied": {
+      "dd": 1.034186,
+      "pd_1y": 0.150525,
+      "spread_5y_bps": 793.647111,
+      "asset_vol": 0.763642,
+      "calibrated_5y_bps": 171.986966,
+      "rating_band": "BB"
+    },
+    "covenants": [],
+    "cushion_score": 15
+  },
+  "instruments": [
+    {
+      "name": "Promissory Note Agreement",
+      "kind": "notes",
+      "as_of": "2026-05-04",
+      "face": 3000000.0,
+      "coupon": 0.15,
+      "floating": false
+    },
+    {
+      "name": "April 2030 convertible notes",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "effective": 0.131,
+      "coupon": 0.025,
+      "floating": false
+    },
+    {
+      "name": "July 2030 convertible notes",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "effective": 0.064,
+      "coupon": 0.055,
+      "floating": false
+    },
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2025-06-11",
+      "drawn": 5000000000.0,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 580000.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-09-11",
+      "items": "1.01,5.03,9.01",
+      "acc": "0001805526-26-000104",
+      "doc": "dfdv-20260911.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-09-08",
+      "items": "1.01,3.03,5.03,8.01,9.01",
+      "acc": "0001805526-26-000098",
+      "doc": "dfdv-20260903.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-01",
+      "items": "1.01,9.01",
+      "acc": "0001805526-26-000029",
+      "doc": "dfdv-20260501.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-08-26",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0000950170-25-111256",
+      "doc": "dfdv-20250824.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-07-31",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001213900-25-070067",
+      "doc": "ea0251090-8k_defi.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-07-07",
+      "items": "1.01,2.03,3.02,8.01,9.01",
+      "acc": "0001213900-25-061793",
+      "doc": "ea0248227-8k_defi.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-06-12",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001213900-25-053592",
+      "doc": "ea0245507-8k_defi.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-05-05",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0001213900-25-039680",
+      "doc": "ea0240851-8k_defi.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-05-05",
+      "items": "1.01,3.02,7.01,8.01,9.01",
+      "acc": "0001213900-25-039360",
+      "doc": "ea0240746-8k_defi.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-04-07",
+      "items": "1.01,2.03,3.02,5.01,5.02,7.01,8.01,9.01",
+      "acc": "0001213900-25-029172",
+      "doc": "ea0237322-8k_janover.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2023-11-22",
+      "items": "1.01",
+      "acc": "0001575872-23-001818",
+      "doc": "jnvr-20231116.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-07-28",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001575872-23-001247",
+      "doc": "jnvr-20230724.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-06-30",
+      21637000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      131711000,
+      10178000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      127779000,
+      4237000,
+      11627000,
+      -89389000,
+      -90735000,
+      0.09099
+    ],
+    [
+      "2026-06-30",
+      120564000,
+      5048000,
+      14552000,
+      -129358000,
+      -130765000,
+      0.1207
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-08",
+      1824.26,
+      -0.31,
+      3.0056,
+      188.0
+    ],
+    [
+      "2025-09",
+      1824.54,
+      -0.327,
+      3.0094,
+      188.2
+    ],
+    [
+      "2025-10",
+      1824.93,
+      -0.415,
+      2.9933,
+      189.3
+    ],
+    [
+      "2025-11",
+      1828.5,
+      -0.965,
+      3.0222,
+      196.4
+    ],
+    [
+      "2025-12",
+      1828.84,
+      -1.048,
+      3.0301,
+      197.4
+    ],
+    [
+      "2026-01",
+      1829.36,
+      -1.1,
+      3.0594,
+      198.1
+    ],
+    [
+      "2026-02",
+      1829.69,
+      -1.215,
+      3.0714,
+      199.6
+    ],
+    [
+      "2026-03",
+      1829.74,
+      -1.212,
+      3.0775,
+      199.6
+    ],
+    [
+      "2026-04",
+      1459.1,
+      0.123,
+      1.6841,
+      182.7
+    ],
+    [
+      "2026-05",
+      946.38,
+      0.795,
+      1.2046,
+      174.7
+    ],
+    [
+      "2026-06",
+      843.44,
+      0.794,
+      1.1337,
+      174.7
+    ],
+    [
+      "2026-07",
+      698.13,
+      1.002,
+      1.0179,
+      172.4
+    ],
+    [
+      "2026-08",
+      746.12,
+      1.253,
+      1.0484,
+      169.5
+    ],
+    [
+      "2026-09",
+      763.26,
+      1.3,
+      1.0708,
+      169.0
+    ],
+    [
+      "2026-10",
+      793.65,
+      1.034,
+      1.0892,
+      172.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

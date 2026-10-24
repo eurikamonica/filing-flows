@@ -1,0 +1,847 @@
+{
+  "cik": 910108,
+  "ticker": "LXP",
+  "name": "LXP Industrial Trust",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-24T14:46:15+00:00",
+  "fetched_at": "2026-10-18T12:55:57+00:00",
+  "price": 61.115,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.185691,
+  "snapshot": {
+    "total_debt": 1363186000,
+    "cash": 17990000,
+    "operating_leases": 7009000,
+    "revolver_drawn": 15000000,
+    "equity": 1947906000,
+    "assets": 3463934000,
+    "liabilities": 1503414000,
+    "interest_expense": 56643000,
+    "interest_paid": 54352000,
+    "pretax_income": 77394000,
+    "net_income": 64866000,
+    "da": 191782000,
+    "ocf": 191610000,
+    "revenue": 347704000,
+    "shares": 58957264,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 1363186000,
+    "cash_and_investments": 17990000.0,
+    "net_debt": 1345196000.0,
+    "ebitda": 325819000,
+    "ebit": 134037000,
+    "interest_expense": 56643000,
+    "leverage": 4.183875,
+    "net_leverage": 4.12866,
+    "interest_coverage": 2.366347,
+    "ebitda_coverage": 5.752149,
+    "cash_coverage": 4.525353,
+    "fcf": 191610000.0,
+    "fcf_to_debt": 0.14056,
+    "effective_rate": 0.041552,
+    "revolver_available": 1200585000.0,
+    "liquidity": 1218575000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": 1363186000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 13631860.0,
+    "plus100bp_share_of_ebit": 0.101702,
+    "altman_z": 1.666068,
+    "market_cap": 3603173189.36,
+    "debt_to_ev": 0.275482,
+    "convertibles": null,
+    "implied": {
+      "dd": 11.853112,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 9e-06,
+      "asset_vol": 0.157251,
+      "calibrated_5y_bps": 83.955705,
+      "rating_band": "A"
+    },
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 1600000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Term Loan Agreement",
+        "dated": "2012-01-13",
+        "text": "(g) Minimum Net Worth . Tangible Net Worth at any time to be less than (i) $1,600,000,000 plus (ii) 75.0% of the Net Proceeds of all Equity Issuances effected by the Trust or any Subsidiary after September 30, 2011 (other than (x) Equity Issuances to the Trust or any Subsidiary and (y) Eq"
+      }
+    ],
+    "cushion_score": 53
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility Expiring in 2030",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 600000000.0,
+      "available": 585000.0,
+      "floating": true
+    },
+    {
+      "name": "Senior Notes due 2030",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 400000000.0,
+      "effective": 0.027,
+      "maturity_year": 2030,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes due 2031",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 400000000.0,
+      "effective": 0.02375,
+      "maturity_year": 2031,
+      "floating": false
+    },
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 250000000.0,
+      "spread": 0.0085,
+      "spread_min": 0.008,
+      "spread_max": 0.016,
+      "floating": true
+    },
+    {
+      "name": "Senior Notes due 2028",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 160000000.0,
+      "effective": 0.0675,
+      "maturity_year": 2028,
+      "floating": false
+    },
+    {
+      "name": "Trust Preferred Securities",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 100995000.0,
+      "effective": 0.0196,
+      "spread": 0.00017,
+      "rate_now": 0.05281,
+      "floating": true
+    },
+    {
+      "name": "Term Loan Forward Swap",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "face": 82500000.0,
+      "floating": true
+    },
+    {
+      "name": "Secured Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 47085000.0,
+      "rate_now": 0.041,
+      "floating": false
+    },
+    {
+      "name": "Goodyear, AZ",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 38192000.0,
+      "effective": 0.0429,
+      "floating": false
+    },
+    {
+      "name": "Unsecured Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 15000000.0,
+      "spread": 0.00775,
+      "floating": true
+    },
+    {
+      "name": "Long Island City, NY",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 8893000.0,
+      "effective": 0.035,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility Due in 2030",
+      "kind": "revolver",
+      "as_of": "2026-01-31",
+      "spread_min": 0.00725,
+      "spread_max": 0.014,
+      "maturity_year": 2030,
+      "floating": true
+    },
+    {
+      "name": "Mortgages, Notes Payable and Term Loan",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "carrying": 1360941000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "UNSECURED DEBT:",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 1310995000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Revolving Credit Facility Expires In July 2026",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 600000000.0,
+      "spread_min": 0.00725,
+      "spread_max": 0.014,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Unsecured Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 600000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "SECURED DEBT:",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 49946000.0,
+      "rate_now": 0.041,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Unsecured Revolving Credit Facility, Expiring February 2023",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "available": 600000000.0,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [
+    {
+      "title": "$300,000,000 6.750% Senior Notes due 2028",
+      "floating": false,
+      "coupon": 6.75,
+      "principal": 300000000.0,
+      "currency": "USD",
+      "maturity": "2028-11-15",
+      "price": 99.423,
+      "yield": 6.888,
+      "benchmark": "4.875% due October 31, 2028",
+      "bench_yield": 4.638,
+      "spread_bps": 225.0,
+      "trade_date": "2023-11-02",
+      "convertible": false,
+      "cusip": "529043 AF8",
+      "date": "2023-11-02",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/910108/000153949723001830/n3521_x8-fwp.htm"
+    },
+    {
+      "title": "2.375% Senior Notes due 2031",
+      "floating": false,
+      "coupon": 2.375,
+      "principal": 400000000.0,
+      "currency": "USD",
+      "maturity": "2031-10-01",
+      "price": 99.758,
+      "yield": 2.402,
+      "benchmark": "1.250% due August 15, 2031",
+      "bench_yield": 1.252,
+      "spread_bps": 115.0,
+      "trade_date": "2021-08-16",
+      "convertible": false,
+      "cusip": "529537AA0",
+      "date": "2021-08-16",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/910108/000153949721001232/n2525_x7-fwp.htm"
+    },
+    {
+      "title": "2.700% Senior Notes due 2030",
+      "floating": false,
+      "coupon": 2.7,
+      "principal": 400000000.0,
+      "currency": "USD",
+      "maturity": "2030-09-15",
+      "price": 99.233,
+      "yield": 2.788,
+      "benchmark": "0.625% due May 15, 2030",
+      "bench_yield": 0.688,
+      "spread_bps": 210.0,
+      "trade_date": "2020-08-14",
+      "convertible": false,
+      "cusip": "529043 AE1",
+      "date": "2020-08-14",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/910108/000153949720001062/n2288_x3-fwp.htm"
+    },
+    {
+      "title": "4.400% Senior Notes due 2024",
+      "floating": false,
+      "coupon": 4.4,
+      "principal": 250000000.0,
+      "currency": "USD",
+      "maturity": "2024-06-15",
+      "price": 99.883,
+      "yield": 4.414,
+      "benchmark": "2.50% due May 15, 2024",
+      "bench_yield": 2.614,
+      "spread_bps": 180.0,
+      "trade_date": "2014-05-13",
+      "convertible": false,
+      "cusip": "529043AD3",
+      "date": "2014-05-13",
+      "source": "fwp",
+      "url": "https://www.sec.gov/Archives/edgar/data/910108/000114420414029926/v378142_fwp.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2012-01-17",
+      "agreement_kind": "credit_agreement",
+      "dated": "2012-01-13",
+      "facility": "term loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/910108/000114420412002478/v245518_ex10-3.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2012-01-17",
+      "agreement_kind": "credit_agreement",
+      "dated": "2012-01-13",
+      "title": "Term Loan Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.5,
+        2.85
+      ],
+      "grid_by": "ratings",
+      "fee_pct": 0.5,
+      "maturity": "2019-01-11",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 1600000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "(g) Minimum Net Worth . Tangible Net Worth at any time to be less than (i) $1,600,000,000 plus (ii) 75.0% of the Net Proceeds of all Equity Issuances effected by the Trust or any Subsidiary after September 30, 2011 (other than (x) Equity Issuances to the Trust or any Subsidiary and (y) Eq"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/910108/000114420412002478/v245518_ex10-2.htm",
+      "all_in_pct": [
+        1.5389,
+        2.8889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2012-01-17",
+      "agreement_kind": "credit_agreement",
+      "dated": "2012-01-13",
+      "size": 50000000.0,
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "maturity": "2015-01-13",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 1600000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "After the Release Date, the ratio of (i) Secured Indebtedness of the Trust and its Subsidiaries determined on a consolidated basis to (ii) Capitalized Value, to be greater than 0.45 to 1.00 at any time. 76 (g) Minimum Net Worth . Tangible Net Worth at any time to be less than (i) $1,600,000,000.00 plus (ii) 75.0% of the Net Proceeds of all Equity Issuances effected by the Trust or any Subsidiary after September 30, 2"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/910108/000114420412002478/v245518_ex10-1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-07-20",
+      "items": "1.01,5.03,7.01,9.01",
+      "acc": "0001104659-26-084849",
+      "doc": "tm2620850d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-01-14",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0000910108-26-000004",
+      "doc": "lxp-20260113.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-02-20",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001539497-24-000535",
+      "doc": "n3521_x17-8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-11-13",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001539497-23-001902",
+      "doc": "n3521_x13-8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-11-08",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001444838-23-000063",
+      "doc": "lxp-20231103.htm",
+      "desc": "8-K/A"
+    },
+    {
+      "date": "2023-11-03",
+      "items": "1.01,9.01",
+      "acc": "0001539497-23-001842",
+      "doc": "n3521_x10-8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-07-11",
+      "items": "1.02,2.03,8.01,9.01",
+      "acc": "0001444838-22-000010",
+      "doc": "lxp-20220705.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-06-21",
+      "items": "1.01,9.01",
+      "acc": "0001539497-22-001179",
+      "doc": "n3045-x13_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-05-12",
+      "items": "1.01,9.01",
+      "acc": "0001539497-22-000964",
+      "doc": "n3045-x11_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-01-03",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001539497-22-000011",
+      "doc": "n2288-x16_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-08-30",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001539497-21-001272",
+      "doc": "n2525-x10_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-08-17",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001539497-21-001243",
+      "doc": "n2525-x8_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-02-22",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001444838-21-000011",
+      "doc": "lxp-20210219.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-08-28",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001539497-20-001135",
+      "doc": "n2288_x7-8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-08-17",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001539497-20-001075",
+      "doc": "n2288_x5-8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-11-29",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001104659-19-068355",
+      "doc": "tm1923992d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-07-29",
+      "items": "1.01,9.01",
+      "acc": "0001444838-19-000022",
+      "doc": "lxpform8-k72619.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-03-14",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001144204-19-014026",
+      "doc": "tv516169_8-k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-02-11",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001444838-19-000006",
+      "doc": "lxpform8-k2819.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-12-28",
+      "items": "1.01,1.02,9.01",
+      "acc": "0001444838-18-000044",
+      "doc": "lxplcifform8-k122818.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-09-05",
+      "items": "1.01,2.01,7.01,9.01",
+      "acc": "0001444838-18-000035",
+      "doc": "lxplcifform8-k9518.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-01-19",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001444838-18-000002",
+      "doc": "form8-k1192018.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-10-02",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001444838-17-000029",
+      "doc": "form8-k10217.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2016-11-23",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001144204-16-136427",
+      "doc": "v453793_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2015-09-01",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001144204-15-053285",
+      "doc": "v419588_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2015-07-02",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001444838-15-000021",
+      "doc": "lxpform8-k722015.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-05-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001144204-14-032531",
+      "doc": "v379016_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-05-19",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001144204-14-032065",
+      "doc": "v378552_8-k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-05-13",
+      "items": "1.01,9.01",
+      "acc": "0001144204-14-029759",
+      "doc": "v378161_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-04-29",
+      "items": "1.01,9.01",
+      "acc": "0001444838-14-000026",
+      "doc": "lxpform8-k42914.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-03-28",
+      "items": "1.01,9.01",
+      "acc": "0001444838-14-000019",
+      "doc": "lxplcifform8-k32814.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-01-06",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001144204-14-000796",
+      "doc": "v364211_8-k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-12-24",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001144204-13-069005",
+      "doc": "v363819_8-k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-10-03",
+      "items": "1.01,9.01",
+      "acc": "0001444838-13-000057",
+      "doc": "form8-k10313.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-03-31",
+      1519809000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      1491360000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      1490765000,
+      229737000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1348931000,
+      130112000,
+      59860000,
+      null,
+      null,
+      0.04438
+    ],
+    [
+      "2026-06-30",
+      1363186000,
+      17990000,
+      56643000,
+      null,
+      null,
+      0.04155
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-05",
+      0.0,
+      12.801,
+      0.2338,
+      78.8
+    ],
+    [
+      "2025-06",
+      0.0,
+      12.763,
+      0.2334,
+      79.0
+    ],
+    [
+      "2025-07",
+      0.0,
+      12.973,
+      0.228,
+      77.9
+    ],
+    [
+      "2025-08",
+      0.0,
+      12.828,
+      0.239,
+      78.7
+    ],
+    [
+      "2025-09",
+      0.0,
+      12.855,
+      0.2383,
+      78.6
+    ],
+    [
+      "2025-10",
+      0.0,
+      12.242,
+      0.2541,
+      81.8
+    ],
+    [
+      "2025-11",
+      0.0,
+      12.541,
+      0.2496,
+      80.2
+    ],
+    [
+      "2025-12",
+      0.0,
+      13.636,
+      0.2325,
+      74.6
+    ],
+    [
+      "2026-01",
+      0.0,
+      14.047,
+      0.2252,
+      72.6
+    ],
+    [
+      "2026-02",
+      0.0,
+      13.154,
+      0.2403,
+      77.0
+    ],
+    [
+      "2026-03",
+      0.0,
+      12.878,
+      0.2409,
+      78.4
+    ],
+    [
+      "2026-04",
+      0.0,
+      13.761,
+      0.2323,
+      74.0
+    ],
+    [
+      "2026-05",
+      0.01,
+      9.053,
+      0.2297,
+      101.1
+    ],
+    [
+      "2026-06",
+      0.01,
+      9.333,
+      0.2279,
+      99.2
+    ],
+    [
+      "2026-07",
+      0.0,
+      9.741,
+      0.2243,
+      96.6
+    ],
+    [
+      "2026-08",
+      0.0,
+      10.269,
+      0.2132,
+      93.3
+    ],
+    [
+      "2026-09",
+      0.0,
+      10.34,
+      0.2122,
+      92.8
+    ],
+    [
+      "2026-10",
+      0.0,
+      11.853,
+      0.1857,
+      84.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

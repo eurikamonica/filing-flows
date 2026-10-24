@@ -1,0 +1,416 @@
+{
+  "cik": 78749,
+  "ticker": "AGYS",
+  "name": "AGILYSYS INC",
+  "sector": "technology",
+  "industry": "Services-Computer Integrated Systems Design",
+  "sic": "7373",
+  "sic_description": "Services-Computer Integrated Systems Design",
+  "generated_at": "2026-10-24T14:46:14+00:00",
+  "fetched_at": "2026-10-18T12:56:19+00:00",
+  "price": 121.5,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.494216,
+  "snapshot": {
+    "total_debt": 0,
+    "cash": 116894000,
+    "operating_leases": 19044000,
+    "equity": 338327000,
+    "assets": 472845000,
+    "assets_current": 182397000,
+    "liabilities_current": 104780000,
+    "retained_earnings": 208763000,
+    "interest_expense": 346000,
+    "interest_paid": 259000,
+    "operating_income": 48232000,
+    "pretax_income": 54370000,
+    "net_income": 42893000,
+    "da": 3722000,
+    "ocf": 82176000,
+    "capex": 1735000,
+    "revenue": 330314000,
+    "debt_repaid": 12000000,
+    "shares": 28205788,
+    "balance_date": "2026-03-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtNoncurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquireProductiveAssets (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 0.0,
+    "cash_and_investments": 116894000.0,
+    "net_debt": -116894000.0,
+    "ebitda": 51954000,
+    "ebit": 48232000,
+    "interest_expense": 346000,
+    "leverage": 0.0,
+    "net_leverage": -2.249952,
+    "interest_coverage": 139.398844,
+    "ebitda_coverage": 150.156069,
+    "cash_coverage": 318.281853,
+    "fcf": 80441000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 75000000.0,
+    "liquidity": 191894000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 3427003242.0,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.2,
+        "unit": "x",
+        "actual": 150.156069,
+        "cushion": 0.992008,
+        "agreement": "Credit Agreement",
+        "dated": "2005-10-18",
+        "text": "Agilysys shall not suffer or permit at any time the Fixed Charge Coverage Ratio to be less than 1.20 to 1.00."
+      }
+    ],
+    "cushion_score": 100
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2024-08-16",
+      "capacity": 75000000.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2005-10-21",
+      "agreement_kind": "credit_agreement",
+      "dated": "2005-10-18",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.2,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Agilysys shall not suffer or permit at any time the Fixed Charge Coverage Ratio to be less than 1.20 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "\"Applicable Facility Fee Rate\" shall mean: (a) for the period from the Closing Date through November 30, 2005, twenty-two and one-half (22.50) basis points; and (b) commencing with the Consolidated financial statements of Agilysys for the fiscal quarter ending September 30, 2005, the number of basis points set forth in the following matrix, based upon the result of the computation of the Leverage Ratio, shall be used"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "ng pro forma effect to such Acquisition, equal to or greater than 2.00 to 1.00; and (ii) Two Hundred Million Dollars ($200,000,000) if, at the time of such Acquisition, Agilysys has (A) (1) an S&P Rating of lower than BBB-, (2) a Moody's Rating of lower than Baa3, or (3) no Credit Rating; and (B) a Leverage Ratio, determined after giving pro forma effect to such Acquisition, less than 2.00 to 1.00;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/78749/000095015205008319/l16523aexv10w1.txt"
+    },
+    {
+      "kind": "agreement",
+      "date": "2003-06-19",
+      "agreement_kind": "credit_agreement",
+      "dated": "2003-04-16",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.2,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Borrower shall not suffer or permit at any time the Fixed Charge Coverage Ratio to be less than 1.20 to 1.00 on June 30, 2003 and thereafter."
+        },
+        {
+          "type": "leverage",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "llowing matrix, based upon the result of the computation of the Leverage Ratio, shall be used to establish the number of basis points that will go into effect on September 1, 2003 and thereafter: ------------------------------------------------------------------------------------------------------- LEVERAGE RATIO APPLICABLE FACILITY FEE RATE ----------------------------------------------------------------------------"
+        },
+        {
+          "type": "liquidity",
+          "limit": 50000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "nies shall be in full compliance with the Loan Documents both prior to and subsequent to the transaction; (iv) each such Acquisition is not actively opposed by the board of directors (or similar governing body) of the selling Persons or the Persons whose equity interests are to be acquired; (v) the Liquidity Amount shall be no less than Fifty Million Dollars ($50,000,000) after giving effect to each such Acquisition;"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/78749/000095015203006226/l00546aexv10wbb.txt"
+    },
+    {
+      "kind": "agreement",
+      "date": "2003-02-07",
+      "agreement_kind": "amendment",
+      "dated": "2002-12-20",
+      "size": 50000000.0,
+      "title": "Fifth Amendment To Five-Year Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/78749/000095015203001315/l98413aexv10w1.txt"
+    }
+  ],
+  "events": [
+    {
+      "date": "2024-08-20",
+      "items": "1.01,2.01,2.03,8.01,9.01",
+      "acc": "0000950170-24-099141",
+      "doc": "agys-20240816.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-07-30",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001564590-20-034843",
+      "doc": "agys-8k_20200727.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-05-26",
+      "items": "1.01,3.02,3.03,5.03,9.01",
+      "acc": "0000950142-20-001415",
+      "doc": "eh2000777_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-05-13",
+      "items": "1.01,3.02,9.01",
+      "acc": "0000950142-20-001339",
+      "doc": "eh2000743_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-01-31",
+      "items": "1.01,5.02,9.01",
+      "acc": "0000078749-18-000011",
+      "doc": "agilysys_formx8-kxnewemplo.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-07-23",
+      "items": "1.01,5.02,9.01",
+      "acc": "0000078749-14-000019",
+      "doc": "form8-k_execemplagreements.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2013-06-04",
+      "items": "1.01,8.01,9.01",
+      "acc": "0000078749-13-000015",
+      "doc": "form8-ksaleofrsgbusiness.htm",
+      "desc": "8-K SALE OF RSG"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-09-30",
+      50000000,
+      54888000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-12-31",
+      38000000,
+      60761000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      12000000,
+      55564000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      0,
+      59336000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      0,
+      81453000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      0,
+      null,
+      493000,
+      46855000,
+      43015000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2024-11",
+      0.0,
+      10.743,
+      0.4641,
+      90.4
+    ],
+    [
+      "2024-12",
+      0.0,
+      10.782,
+      0.4633,
+      90.1
+    ],
+    [
+      "2025-01",
+      0.09,
+      9.199,
+      0.5257,
+      100.1
+    ],
+    [
+      "2025-02",
+      0.09,
+      9.204,
+      0.5147,
+      100.1
+    ],
+    [
+      "2025-03",
+      0.11,
+      9.054,
+      0.5125,
+      101.1
+    ],
+    [
+      "2025-04",
+      0.13,
+      8.97,
+      0.5182,
+      101.6
+    ],
+    [
+      "2025-05",
+      0.02,
+      9.92,
+      0.5042,
+      95.4
+    ],
+    [
+      "2025-06",
+      0.01,
+      10.128,
+      0.5,
+      94.1
+    ],
+    [
+      "2025-07",
+      0.0,
+      12.497,
+      0.4987,
+      80.4
+    ],
+    [
+      "2025-08",
+      0.0,
+      12.152,
+      0.5068,
+      82.3
+    ],
+    [
+      "2025-09",
+      0.0,
+      12.274,
+      0.4986,
+      81.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

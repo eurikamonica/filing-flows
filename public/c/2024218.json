@@ -1,0 +1,538 @@
+{
+  "cik": 2024218,
+  "ticker": "SMC",
+  "name": "Summit Midstream Corp",
+  "sector": "utilities",
+  "industry": "Natural Gas Transmission",
+  "sic": "4922",
+  "sic_description": "Natural Gas Transmission",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T11:04:38+00:00",
+  "price": 30.4,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.351449,
+  "snapshot": {
+    "total_debt": 1239648000,
+    "current_debt": 1748000,
+    "cash": 20967000,
+    "equity": 598375000,
+    "assets": 2407380000,
+    "liabilities": 1488514000,
+    "assets_current": 124471000,
+    "liabilities_current": 131885000,
+    "retained_earnings": -206590000,
+    "interest_expense": 100752000,
+    "interest_paid": 87183000,
+    "pretax_income": -892000,
+    "net_income": 9180000,
+    "da": 109146000,
+    "ocf": 131154000,
+    "capex": 86316000,
+    "revenue": 583332000,
+    "debt_issued": 121000000,
+    "debt_repaid": 182000000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 21223000,
+      "y2": 17769000,
+      "y3": 78006000,
+      "y4": 938000000,
+      "y5": 0,
+      "after5": 0
+    },
+    "shares": 10648685,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfSeniorLongTermDebt (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfSeniorDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 1239648000,
+    "cash_and_investments": 20967000.0,
+    "net_debt": 1218681000.0,
+    "ebitda": 209006000,
+    "ebit": 99860000,
+    "interest_expense": 100752000,
+    "leverage": 5.93116,
+    "net_leverage": 5.830842,
+    "interest_coverage": 0.991147,
+    "ebitda_coverage": 2.07446,
+    "cash_coverage": 2.504353,
+    "fcf": 44838000,
+    "fcf_to_debt": 0.03617,
+    "effective_rate": 0.081275,
+    "revolver_available": null,
+    "liquidity": 20967000.0,
+    "due_12m": 21223000,
+    "due_24m": 38992000,
+    "liquidity_to_due12": 0.987938,
+    "liquidity_to_due24": 0.537726,
+    "floating_debt": 429000000.0,
+    "floating_share": 0.346066,
+    "plus100bp_interest": 4290000.0,
+    "plus100bp_share_of_ebit": 0.04296,
+    "altman_z": 0.385847,
+    "market_cap": 323720024.0,
+    "debt_to_ev": 0.803713,
+    "convertibles": null,
+    "implied": {
+      "dd": 3.446793,
+      "pd_1y": 0.000284,
+      "spread_5y_bps": 22.76244,
+      "asset_vol": 0.124069,
+      "calibrated_5y_bps": 146.569507,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.063757,
+    "refi_extra_interest": -683051.472633,
+    "covenants": [],
+    "cushion_score": 31
+  },
+  "instruments": [
+    {
+      "name": "ABL Facility",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 500000000.0,
+      "spread_min": 0.015,
+      "spread_max": 0.0225,
+      "spread": 0.0275,
+      "effective": 0.0649,
+      "available": 418300000.0,
+      "drawn": 2700000.0,
+      "reference": "SOFR Overnight Index Swap Rate",
+      "floating": true
+    },
+    {
+      "name": "Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-03-16",
+      "face": 440000000.0,
+      "spread": 0.04,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "New Permian Transmission Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 350000000.0,
+      "spread": 0.0025,
+      "face": 7000000.0,
+      "floating": true
+    },
+    {
+      "name": "New Permian Transmission Facility, Initial Term Loan",
+      "kind": "revolver",
+      "as_of": "2026-03-16",
+      "face": 340000000.0,
+      "floating": true
+    },
+    {
+      "name": "New Permian Transmission Facility, Delayed Draw Commitments",
+      "kind": "revolver",
+      "as_of": "2026-03-16",
+      "face": 50000000.0,
+      "fee": 0.01,
+      "floating": false
+    },
+    {
+      "name": "New Permian Transmission Facility, Uncommitted Incremental Facility",
+      "kind": "revolver",
+      "as_of": "2026-03-16",
+      "face": 50000000.0,
+      "floating": false
+    },
+    {
+      "name": "Asset Backed Lending Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 79000000.0,
+      "floating": false
+    },
+    {
+      "name": "Permian Transmission Term Loan",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": true
+    },
+    {
+      "name": "2029 Secured Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.08625,
+      "floating": false
+    },
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.04,
+      "effective": 0.077,
+      "fee": 0.01,
+      "reference": "SOFR",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-03-16",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-03-16",
+      "title": "Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "SOFR",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        4.0,
+        4.0
+      ],
+      "fee_pct": 1.0,
+      "maturity": "2031-03-17",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 500000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Permitted Transferee ” means any Person that, (i) (a) (1) when considered collectively with its Affiliates, has, or is a direct or indirect Subsidiary of a Person that has, a credit rating for senior unsecured long term indebtedness of BBB- or higher from either S&P Global Ratings or Fitch, Inc. or Baa3 or higher from Moody’s or (2) has, or is a direct or indirect Subsidiary of a Person that has, a tangible net wor"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2024218/000202421826000017/exibit1015-doubleexcredita.htm",
+      "all_in_pct": [
+        4.0389,
+        4.0389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-04-02",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0002024218-26-000062",
+      "doc": "smc-20260331.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2025-03-14",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0002024218-25-000025",
+      "doc": "smc-20250310.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-01-10",
+      "items": "2.03,9.01",
+      "acc": "0001213900-25-002670",
+      "doc": "ea0227407-8k_summit.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-12-06",
+      "items": "1.01,9.01",
+      "acc": "0002024218-24-000046",
+      "doc": "smc-20241204.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-12-03",
+      "items": "1.01,2.01,3.02,5.02,5.03,7.01,9.01",
+      "acc": "0002024218-24-000041",
+      "doc": "smc-20241202.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-10-02",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0002024218-24-000028",
+      "doc": "smc-20241001.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2024-08-01",
+      "items": "1.01,2.01,2.03,5.01,5.02,5.03,5.05,9.01",
+      "acc": "0001013762-24-003515",
+      "doc": "ea0210241-8k12b_summit.htm",
+      "desc": "CURRENT REPORT"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2024-09-30",
+      956965000,
+      17842000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      1083843000,
+      26228000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      1075429000,
+      20901000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      1081913000,
+      24632000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1265764000,
+      43390000,
+      97213000,
+      null,
+      null,
+      0.0768
+    ],
+    [
+      "2026-06-30",
+      1239648000,
+      20967000,
+      100752000,
+      null,
+      null,
+      0.08127
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2024-11",
+      142.19,
+      2.47,
+      0.5181,
+      156.4
+    ],
+    [
+      "2024-12",
+      137.3,
+      2.491,
+      0.5109,
+      156.2
+    ],
+    [
+      "2025-01",
+      139.34,
+      2.557,
+      0.5111,
+      155.5
+    ],
+    [
+      "2025-02",
+      133.82,
+      2.649,
+      0.5029,
+      154.5
+    ],
+    [
+      "2025-03",
+      27.33,
+      3.73,
+      0.3467,
+      143.8
+    ],
+    [
+      "2025-04",
+      59.02,
+      3.089,
+      0.4051,
+      150.1
+    ],
+    [
+      "2025-05",
+      40.09,
+      3.112,
+      0.3843,
+      149.9
+    ],
+    [
+      "2025-06",
+      36.16,
+      3.231,
+      0.3721,
+      148.7
+    ],
+    [
+      "2025-07",
+      37.22,
+      3.176,
+      0.3776,
+      149.2
+    ],
+    [
+      "2025-08",
+      59.18,
+      2.831,
+      0.4156,
+      152.7
+    ],
+    [
+      "2025-09",
+      60.15,
+      2.835,
+      0.4138,
+      152.6
+    ],
+    [
+      "2025-10",
+      67.96,
+      2.718,
+      0.4289,
+      153.8
+    ],
+    [
+      "2025-11",
+      80.89,
+      2.696,
+      0.4395,
+      154.0
+    ],
+    [
+      "2025-12",
+      85.16,
+      2.722,
+      0.4395,
+      153.8
+    ],
+    [
+      "2026-01",
+      80.96,
+      2.811,
+      0.431,
+      152.9
+    ],
+    [
+      "2026-02",
+      78.38,
+      2.855,
+      0.4265,
+      152.4
+    ],
+    [
+      "2026-03",
+      64.29,
+      2.998,
+      0.4111,
+      151.0
+    ],
+    [
+      "2026-04",
+      33.97,
+      3.45,
+      0.3569,
+      146.5
+    ],
+    [
+      "2026-05",
+      47.58,
+      2.981,
+      0.395,
+      151.2
+    ],
+    [
+      "2026-06",
+      53.74,
+      2.947,
+      0.405,
+      151.5
+    ],
+    [
+      "2026-07",
+      47.81,
+      3.036,
+      0.3962,
+      150.6
+    ],
+    [
+      "2026-08",
+      36.79,
+      3.301,
+      0.3727,
+      148.0
+    ],
+    [
+      "2026-09",
+      32.97,
+      3.223,
+      0.3756,
+      148.8
+    ],
+    [
+      "2026-10",
+      22.78,
+      3.448,
+      0.3514,
+      146.6
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

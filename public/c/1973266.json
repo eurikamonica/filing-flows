@@ -1,0 +1,761 @@
+{
+  "cik": 1973266,
+  "ticker": "TKO",
+  "name": "TKO Group Holdings, Inc.",
+  "sector": "communication",
+  "industry": "Services-Amusement & Recreation Services",
+  "sic": "7900",
+  "sic_description": "Services-Amusement & Recreation Services",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T05:47:27+00:00",
+  "price": 177.72,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.297861,
+  "snapshot": {
+    "total_debt": 4629225000,
+    "current_debt": 45501000,
+    "cash": 592485000,
+    "equity": 3395932000,
+    "assets": 16263718000,
+    "liabilities": 7898410000,
+    "assets_current": 3210412000,
+    "liabilities_current": 2512581000,
+    "retained_earnings": -1408872000,
+    "interest_expense": 240936000,
+    "interest_paid": 247503000,
+    "operating_income": 997631000,
+    "pretax_income": 753896000,
+    "net_income": 229556000,
+    "da": 527360000,
+    "ocf": 1795136000,
+    "revenue": 5301863000,
+    "debt_repaid": 113317000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 40862000,
+      "y2": 41756000,
+      "y3": 65596000,
+      "y4": 40098000,
+      "y5": 40062000,
+      "after5": 3554814000
+    },
+    "if_converted_shares": 116158615,
+    "shares": 193323374,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (four quarters)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (four quarters)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (four quarters)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities"
+  },
+  "analysis": {
+    "total_debt": 4629225000,
+    "cash_and_investments": 592485000.0,
+    "net_debt": 4036740000.0,
+    "ebitda": 1524991000,
+    "ebit": 997631000,
+    "interest_expense": 240936000,
+    "leverage": 3.035575,
+    "net_leverage": 2.647058,
+    "interest_coverage": 4.140647,
+    "ebitda_coverage": 6.329444,
+    "cash_coverage": 8.252987,
+    "fcf": 1795136000.0,
+    "fcf_to_debt": 0.387783,
+    "effective_rate": 0.052047,
+    "revolver_available": 350000000.0,
+    "liquidity": 942485000.0,
+    "due_12m": 40862000,
+    "due_24m": 82618000,
+    "liquidity_to_due12": 23.065073,
+    "liquidity_to_due24": 11.407744,
+    "floating_debt": 4629225000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 46292250.0,
+    "plus100bp_share_of_ebit": 0.046402,
+    "altman_z": 3.06858,
+    "market_cap": 34357430027.28,
+    "debt_to_ev": 0.120571,
+    "convertibles": null,
+    "implied": {
+      "dd": 9.856623,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 0.005272,
+      "asset_vol": 0.27967,
+      "calibrated_5y_bps": 95.83481,
+      "rating_band": "BBB"
+    },
+    "market_rate_5y": 0.058683,
+    "refi_extra_interest": 548315.520266,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "min",
+        "limit": 4.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "agreement",
+        "dated": "2026-05-28",
+        "text": "(a) The Borrower agrees to pay to the Administrative Agent in dollars for the account of each Revolving Lender a commitment fee, which shall accrue at the rate of 0.50% per annum (or at any time following delivery of the consolidated financial statements pursuant to Section 5.01(a) or Section 5.01(b) as of and for the fiscal quarter ended December 31, 2024, (i) 0.375% per annum if the First Lien Leverage Ratio is les"
+      }
+    ],
+    "cushion_score": 81
+  },
+  "instruments": [
+    {
+      "name": "Two Thousand Thirty One First Lien Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 4594452000.0,
+      "drawn": 4600000000.0,
+      "spread": 0.015,
+      "maturity": "2030-09-15",
+      "reference": "Base Rate",
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-03-10",
+      "capacity": 350000000.0,
+      "floating": true
+    },
+    {
+      "name": "Other Secured Loans",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 61311000.0,
+      "spread_min": 0.017,
+      "spread_max": 0.0225,
+      "reference": "SOFR Overnight Index Swap Rate",
+      "floating": true
+    },
+    {
+      "name": "First Lien Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 11000000.0,
+      "floating": true
+    },
+    {
+      "name": "Notes Payable",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 3286000.0,
+      "floating": false
+    },
+    {
+      "name": "New Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 0.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-08-03",
+      "agreement_kind": "amendment",
+      "dated": "2026-05-28",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.5,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "(a) The Borrower agrees to pay to the Administrative Agent in dollars for the account of each Revolving Lender a commitment fee, which shall accrue at the rate of 0.50% per annum (or at any time following delivery of the consolidated financial statements pursuant to Section 5.01(a) or Section 5.01(b) as of and for the fiscal quarter ended December 31, 2024, (i) 0.375% per annum if the First Lien Leverage Ratio is les"
+        },
+        {
+          "type": "leverage",
+          "limit": 1.55,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Disposition/Debt Percentage ” means, (a) with respect to a Prepayment Event pursuant to clause (a) of the definition thereof, the prepayment required by Section 2.11(c) if the First Lien Leverage Ratio for the Test Period then last ended is (i) greater than 1.55 to 1.00, 100%, (ii) greater than 1.30 to 1.00 but less than or equal to 1.55 to 1.00, 50% and (iii) equal to or less than 1.30 to 1.00, 0%, and (b) with re"
+        },
+        {
+          "type": "leverage",
+          "limit": 6.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "d that after giving effect to the incurrence of such Indebtedness on a Pro Forma Basis, either (1) the Interest Coverage Ratio is greater than or equal to the lesser of (x) 1.75 to 1.00 and (y) the Interest Coverage Ratio in effect immediately prior to the incurrence of such Indebtedness or (2) the Total Leverage Ratio is equal to or less than the greater of (x) 6.25 to 1.00 and (y) the Total Leverage Ratio in effect"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "giving effect to the issuance or incurrence thereof, no Event of Default shall have occurred and be continuing; (xix) (A) Indebtedness of the Borrower or any of the Restricted Subsidiaries; provided that after giving effect to the incurrence of such Indebtedness on a Pro Forma Basis, either (1) the Interest Coverage Ratio is greater than or equal to the lesser of (x) 1.75 to 1.00 and (y) the Interest Coverage Ratio i"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "rence of Incremental Equivalent Debt, either (a) the Secured Leverage Ratio does not exceed the greater of (x) 6.25 to 1.00 and (y) the Secured Leverage Ratio in effect immediately prior to the incurrence of such Incremental Equivalent Debt, in each case, calculated on a Pro Forma Basis, or (b) the Interest Coverage Ratio is no less than the lesser of (x) 1.75 to 1.00 and (y) the Interest Coverage Ratio in effect imm"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1973266/000119312526330592/tko-ex10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-03-10",
+      "agreement_kind": "amendment",
+      "dated": "2026-03-10",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.5,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "(a) The Borrower agrees to pay to the Administrative Agent in dollars for the account of each Revolving Lender a commitment fee, which shall accrue at the rate of 0.50% per annum (or at any time following delivery of the consolidated financial statements pursuant to Section 5.01(a) or Section 5.01(b) as of and for the fiscal quarter ended December 31, 2024, (i) 0.375% per annum if the First Lien Leverage Ratio is les"
+        },
+        {
+          "type": "leverage",
+          "limit": 1.55,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Disposition/Debt Percentage ” means, (a) with respect to a Prepayment Event pursuant to clause (a) of the definition thereof, the prepayment required by Section 2.11(c) if the First Lien Leverage Ratio for the Test Period then last ended is (i) greater than 1.55 to 1.00, 100%, (ii) greater than 1.30 to 1.00 but less than or equal to 1.55 to 1.00, 50% and (iii) equal to or less than 1.30 to 1.00, 0%, and (b) with re"
+        },
+        {
+          "type": "leverage",
+          "limit": 6.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "d that after giving effect to the incurrence of such Indebtedness on a Pro Forma Basis, either (1) the Interest Coverage Ratio is greater than or equal to the lesser of (x) 1.75 to 1.00 and (y) the Interest Coverage Ratio in effect immediately prior to the incurrence of such Indebtedness or (2) the Total Leverage Ratio is equal to or less than the greater of (x) 6.25 to 1.00 and (y) the Total Leverage Ratio in effect"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "giving effect to the issuance or incurrence thereof, no Event of Default shall have occurred and be continuing; (xix) (A) Indebtedness of the Borrower or any of the Restricted Subsidiaries; provided that after giving effect to the incurrence of such Indebtedness on a Pro Forma Basis, either (1) the Interest Coverage Ratio is greater than or equal to the lesser of (x) 1.75 to 1.00 and (y) the Interest Coverage Ratio i"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "rence of Incremental Equivalent Debt, either (a) the Secured Leverage Ratio does not exceed the greater of (x) 6.25 to 1.00 and (y) the Secured Leverage Ratio in effect immediately prior to the incurrence of such Incremental Equivalent Debt, in each case, calculated on a Pro Forma Basis, or (b) the Interest Coverage Ratio is no less than the lesser of (x) 1.75 to 1.00 and (y) the Interest Coverage Ratio in effect imm"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1973266/000119312526099425/d124117dex101.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-09-15",
+      "agreement_kind": "amendment",
+      "dated": "2025-09-15",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.5,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "(a) The Borrower agrees to pay to the Administrative Agent in dollars for the account of each Revolving Lender a commitment fee, which shall accrue at the rate of 0.50% per annum (or at any time following delivery of the consolidated financial statements pursuant to Section 5.01(a) or Section 5.01(b) as of and for the fiscal quarter ended December 31, 2024, (i) 0.375% per annum if the First Lien Leverage Ratio is les"
+        },
+        {
+          "type": "leverage",
+          "limit": 1.55,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Disposition/Debt Percentage ” means, (a) with respect to a Prepayment Event pursuant to clause (a) of the definition thereof, the prepayment required by Section 2.11(c) if the First Lien Leverage Ratio for the Test Period then last ended is (i) greater than 1.55 to 1.00, 100%, (ii) greater than 1.30 to 1.00 but less than or equal to 1.55 to 1.00, 50% and (iii) equal to or less than 1.30 to 1.00, 0%, and (b) with re"
+        },
+        {
+          "type": "leverage",
+          "limit": 6.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "d that after giving effect to the incurrence of such Indebtedness on a Pro Forma Basis, either (1) the Interest Coverage Ratio is greater than or equal to the lesser of (x) 1.75 to 1.00 and (y) the Interest Coverage Ratio in effect immediately prior to the incurrence of such Indebtedness or (2) the Total Leverage Ratio is equal to or less than the greater of (x) 6.25 to 1.00 and (y) the Total Leverage Ratio in effect"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "giving effect to the issuance or incurrence thereof, no Event of Default shall have occurred and be continuing; (xix) (A) Indebtedness of the Borrower or any of the Restricted Subsidiaries; provided that after giving effect to the incurrence of such Indebtedness on a Pro Forma Basis, either (1) the Interest Coverage Ratio is greater than or equal to the lesser of (x) 1.75 to 1.00 and (y) the Interest Coverage Ratio i"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "rence of Incremental Equivalent Debt, either (a) the Secured Leverage Ratio does not exceed the greater of (x) 6.25 to 1.00 and (y) the Secured Leverage Ratio in effect immediately prior to the incurrence of such Incremental Equivalent Debt, in each case, calculated on a Pro Forma Basis, or (b) the Interest Coverage Ratio is no less than the lesser of (x) 1.75 to 1.00 and (y) the Interest Coverage Ratio in effect imm"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1973266/000119312525202794/d947346dex101.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-03-10",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001193125-26-099425",
+      "doc": "d124117d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-15",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001193125-25-202794",
+      "doc": "d947346d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-02-28",
+      "items": "1.01,1.02,2.01,3.02,7.01,9.01",
+      "acc": "0001193125-25-040879",
+      "doc": "d879819d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-11-21",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-24-263492",
+      "doc": "d867484d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-10-24",
+      "items": "1.01,3.02,7.01,8.01,9.01",
+      "acc": "0001193125-24-242249",
+      "doc": "d875145d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-11-14",
+      "items": "1.01,9.01",
+      "acc": "0001193125-23-277103",
+      "doc": "d331664d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-09-12",
+      "items": "1.01,2.01,2.03,3.03,5.01,5.02,5.03,5.05,9.01",
+      "acc": "0001193125-23-233543",
+      "doc": "d488581d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2023-09-30",
+      2746113000,
+      188592000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      2730682000,
+      245812000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      2725067000,
+      277532000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      2719498000,
+      457410000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      2755526000,
+      470860000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      2749314000,
+      535061000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      3737459000,
+      861410000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      4639920000,
+      788891000,
+      218524000,
+      1464387000,
+      936130000,
+      0.0471
+    ],
+    [
+      "2026-06-30",
+      4629225000,
+      592485000,
+      240936000,
+      1524991000,
+      997631000,
+      0.05205
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2023-11",
+      6.83,
+      5.63,
+      0.3773,
+      126.8
+    ],
+    [
+      "2023-12",
+      6.5,
+      5.727,
+      0.3748,
+      126.0
+    ],
+    [
+      "2024-01",
+      1.23,
+      6.761,
+      0.3254,
+      117.7
+    ],
+    [
+      "2024-02",
+      0.93,
+      6.887,
+      0.3191,
+      116.7
+    ],
+    [
+      "2024-03",
+      0.98,
+      6.859,
+      0.321,
+      116.9
+    ],
+    [
+      "2024-04",
+      0.49,
+      7.267,
+      0.3139,
+      113.8
+    ],
+    [
+      "2024-05",
+      0.37,
+      7.471,
+      0.3169,
+      112.3
+    ],
+    [
+      "2024-06",
+      0.22,
+      7.745,
+      0.3051,
+      110.2
+    ],
+    [
+      "2024-07",
+      0.37,
+      7.518,
+      0.3134,
+      111.9
+    ],
+    [
+      "2024-08",
+      0.23,
+      7.853,
+      0.3086,
+      109.4
+    ],
+    [
+      "2024-09",
+      0.02,
+      9.193,
+      0.2687,
+      100.1
+    ],
+    [
+      "2024-10",
+      0.07,
+      8.413,
+      0.2865,
+      105.5
+    ],
+    [
+      "2024-11",
+      0.11,
+      8.261,
+      0.3007,
+      106.5
+    ],
+    [
+      "2024-12",
+      0.06,
+      8.598,
+      0.2927,
+      104.2
+    ],
+    [
+      "2025-01",
+      0.01,
+      9.29,
+      0.2773,
+      99.5
+    ],
+    [
+      "2025-02",
+      0.13,
+      8.225,
+      0.3094,
+      106.8
+    ],
+    [
+      "2025-03",
+      0.16,
+      8.136,
+      0.3123,
+      107.4
+    ],
+    [
+      "2025-04",
+      0.17,
+      8.15,
+      0.316,
+      107.3
+    ],
+    [
+      "2025-05",
+      0.26,
+      7.906,
+      0.3239,
+      109.1
+    ],
+    [
+      "2025-06",
+      0.23,
+      8.016,
+      0.3314,
+      108.3
+    ],
+    [
+      "2025-07",
+      0.21,
+      8.032,
+      0.3259,
+      108.2
+    ],
+    [
+      "2025-08",
+      0.43,
+      7.725,
+      0.3479,
+      110.4
+    ],
+    [
+      "2025-09",
+      0.33,
+      7.9,
+      0.3453,
+      109.1
+    ],
+    [
+      "2025-10",
+      0.16,
+      8.252,
+      0.3261,
+      106.6
+    ],
+    [
+      "2025-11",
+      0.01,
+      10.015,
+      0.3164,
+      94.8
+    ],
+    [
+      "2025-12",
+      0.0,
+      10.309,
+      0.3171,
+      93.0
+    ],
+    [
+      "2026-01",
+      0.0,
+      10.116,
+      0.3171,
+      94.2
+    ],
+    [
+      "2026-02",
+      0.0,
+      11.351,
+      0.2909,
+      86.8
+    ],
+    [
+      "2026-03",
+      0.0,
+      10.464,
+      0.302,
+      92.1
+    ],
+    [
+      "2026-04",
+      0.0,
+      10.387,
+      0.303,
+      92.5
+    ],
+    [
+      "2026-05",
+      0.0,
+      10.224,
+      0.2986,
+      93.5
+    ],
+    [
+      "2026-06",
+      0.0,
+      10.405,
+      0.298,
+      92.4
+    ],
+    [
+      "2026-07",
+      0.02,
+      9.235,
+      0.3198,
+      99.9
+    ],
+    [
+      "2026-08",
+      0.01,
+      9.864,
+      0.3009,
+      95.8
+    ],
+    [
+      "2026-09",
+      0.0,
+      9.897,
+      0.2997,
+      95.6
+    ],
+    [
+      "2026-10",
+      0.0,
+      9.883,
+      0.2979,
+      95.7
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

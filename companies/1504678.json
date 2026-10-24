@@ -1,0 +1,847 @@
+{
+  "cik": 1504678,
+  "ticker": "LOOP",
+  "name": "Loop Industries, Inc.",
+  "sector": "materials",
+  "industry": "Chemicals & Allied Products",
+  "sic": "2800",
+  "docs": {
+    "xbrl:0001437749-26-018576": {
+      "instruments": [
+        {
+          "name": "Investissment Quebec Loan",
+          "kind": "loan",
+          "as_of": "2026-02-28",
+          "carrying": 3027000.0,
+          "coupon": 0.0236,
+          "floating": false
+        },
+        {
+          "name": "Canadian Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-02-28",
+          "available": 2566000.0,
+          "spread": 0.01,
+          "floating": true
+        },
+        {
+          "name": "Amended Investissment Quebec Loan",
+          "kind": "loan",
+          "as_of": "2025-02-05",
+          "coupon": 0.0436,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-05-27",
+      "report": "2026-02-28"
+    },
+    "xbrl:0001437749-26-032746": {
+      "instruments": [
+        {
+          "name": "Investissment Quebec Loan",
+          "kind": "loan",
+          "as_of": "2026-08-31",
+          "carrying": 2864000.0,
+          "floating": false
+        },
+        {
+          "name": "Canadian Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-08-31",
+          "available": 1113000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-10-16",
+      "report": "2026-08-31"
+    },
+    "0001654954-25-007773:loop_424b5.htm": {
+      "kind": "424b",
+      "date": "2025-07-03",
+      "tranches": []
+    },
+    "0001654954-24-012406:loop_424b3.htm": {
+      "kind": "424b",
+      "date": "2024-09-27",
+      "tranches": []
+    },
+    "0001654954-21-009712:lp_s3.htm": {
+      "kind": "424b",
+      "date": "2021-09-02",
+      "tranches": []
+    },
+    "0001477932-20-005538:lp_424b5.htm": {
+      "kind": "424b",
+      "date": "2020-09-22",
+      "tranches": []
+    },
+    "0001477932-20-005501:lp_424b5.htm": {
+      "kind": "424b",
+      "date": "2020-09-21",
+      "tranches": []
+    },
+    "0001654954-19-011919:lp_424b5.htm": {
+      "kind": "424b",
+      "date": "2019-10-22",
+      "tranches": []
+    },
+    "0001477932-19-003221:loop_424b5.htm": {
+      "kind": "424b",
+      "date": "2019-05-29",
+      "tranches": []
+    },
+    "0001477932-19-000713:loop_424b5.htm": {
+      "kind": "424b",
+      "date": "2019-02-28",
+      "tranches": []
+    },
+    "0001477932-18-004278:loop_424b3.htm": {
+      "kind": "424b",
+      "date": "2018-08-24",
+      "tranches": []
+    },
+    "0001437749-25-031037:ex_867200.htm": {
+      "kind": "agreement",
+      "date": "2025-10-15",
+      "agreement_kind": "amendment",
+      "dated": "2025-10-15",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ]
+    },
+    "0001654954-25-007772:loop_ex101.htm": {
+      "kind": "agreement",
+      "date": "2025-07-03",
+      "agreement_kind": "other"
+    },
+    "0001477932-19-003217:llpp_ex101.htm": {
+      "kind": "agreement",
+      "date": "2019-05-29",
+      "agreement_kind": "other"
+    }
+  },
+  "sic_description": "Chemicals & Allied Products",
+  "snapshot": {
+    "total_debt": 2876000,
+    "current_debt": 890000,
+    "cash": 836000,
+    "revolver_drawn": 1411000,
+    "equity": -14134000,
+    "assets": 6373000,
+    "liabilities": 20507000,
+    "assets_current": 1571000,
+    "liabilities_current": 4781000,
+    "retained_earnings": -210698000,
+    "interest_expense": 1763000,
+    "interest_paid": 152000,
+    "net_income": -12020000,
+    "da": 354000,
+    "ocf": -6900000,
+    "revenue": 558000,
+    "debt_repaid": 271000,
+    "maturities": {
+      "as_of": "2026-08-31",
+      "next12m": 206000,
+      "y2": 916000,
+      "y3": 916000,
+      "y4": 916000
+    },
+    "shares": 48812574,
+    "balance_date": "2026-08-31",
+    "latest_period": "2026-08-31"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_drawn": "LinesOfCreditCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestAndDebtExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "history": [
+    {
+      "end": "2018-05-31",
+      "filed": "2018-07-11",
+      "total_debt": 1063227,
+      "cash": 5355015,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 33805706,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-08-31",
+      "filed": "2018-10-10",
+      "total_debt": 1041108,
+      "cash": 2917466,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 33805706,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2018-11-30",
+      "filed": "2019-01-09",
+      "total_debt": 1008697,
+      "cash": 3528258,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 33805706,
+      "convertible": 5000000,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2019-05-31",
+      "filed": "2019-07-08",
+      "total_debt": 965969,
+      "cash": 6971612,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 39012531,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2019-08-31",
+      "filed": "2019-10-08",
+      "total_debt": 969663,
+      "cash": 37931040,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 39032528,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2019-11-30",
+      "filed": "2020-01-09",
+      "total_debt": 956932,
+      "cash": 35491491,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 39232528,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-05-31",
+      "filed": "2020-07-14",
+      "total_debt": 2236221,
+      "cash": 27508755,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 39935210,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-08-31",
+      "filed": "2020-10-07",
+      "total_debt": 2370081,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 42212739,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2020-11-30",
+      "filed": "2021-01-14",
+      "total_debt": 2390366,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 42413691,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-05-31",
+      "filed": "2021-07-15",
+      "total_debt": 2586228,
+      "cash": null,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 42445351,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-08-31",
+      "filed": "2021-10-15",
+      "total_debt": 4238028,
+      "cash": 65561362,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47160164,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2021-11-30",
+      "filed": "2022-01-11",
+      "total_debt": 4204573,
+      "cash": 54860046,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47388056,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-05-31",
+      "filed": "2022-07-13",
+      "total_debt": 3431758,
+      "cash": 32400737,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47400709,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-08-31",
+      "filed": "2022-10-12",
+      "total_debt": 3349622,
+      "cash": 23000391,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47426399,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2022-11-30",
+      "filed": "2023-01-12",
+      "total_debt": 3289122,
+      "cash": 21524993,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47469224,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-05-31",
+      "filed": "2023-07-12",
+      "total_debt": 3306000,
+      "cash": 21970000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47521187,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-08-31",
+      "filed": "2023-10-16",
+      "total_debt": 3326000,
+      "cash": 13365000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47521187,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2023-11-30",
+      "filed": "2024-01-16",
+      "total_debt": 3315000,
+      "cash": 9366000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47528908,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-05-31",
+      "filed": "2024-07-15",
+      "total_debt": 5799000,
+      "cash": 5291000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47538745,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-08-31",
+      "filed": "2024-10-15",
+      "total_debt": 4892000,
+      "cash": 1395000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47620263,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2024-11-30",
+      "filed": "2025-01-14",
+      "total_debt": 3186000,
+      "cash": 323000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 47620263,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-05-31",
+      "filed": "2025-07-15",
+      "total_debt": 3195000,
+      "cash": 9748000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": 11135000,
+      "shares": 47718350,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-08-31",
+      "filed": "2025-10-15",
+      "total_debt": 3128000,
+      "cash": 7310000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 48043068,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-11-30",
+      "filed": "2026-01-14",
+      "total_debt": 3006000,
+      "cash": 5204000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 48337555,
+      "convertible": null,
+      "equity": -7323000,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-05-31",
+      "filed": "2026-07-14",
+      "total_debt": 3013000,
+      "cash": 1063000,
+      "investments": null,
+      "interest_expense": 1720000,
+      "operating_income": null,
+      "da": 368000,
+      "ocf": -8257000,
+      "revenue": 441000,
+      "shares": 48380371,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 168000
+    },
+    {
+      "end": "2026-08-31",
+      "filed": "2026-10-16",
+      "total_debt": 2876000,
+      "cash": 836000,
+      "investments": null,
+      "interest_expense": 1763000,
+      "operating_income": null,
+      "da": 354000,
+      "ocf": -6900000,
+      "revenue": 558000,
+      "shares": 48812574,
+      "convertible": null,
+      "equity": -14134000,
+      "interest_paid": 152000
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001437749-26-018576",
+  "xbrl_10-Q": "xbrl:0001437749-26-032746",
+  "events": [
+    {
+      "date": "2026-08-19",
+      "items": "1.01,8.01",
+      "acc": "0001437749-26-028542",
+      "doc": "loop20260818_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-09-29",
+      "items": "1.01",
+      "acc": "0001437749-25-030024",
+      "doc": "loop20250929c_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-07-03",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001654954-25-007772",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-12-26",
+      "items": "1.01,2.03,3.02,3.03,5.03,9.01",
+      "acc": "0001654954-24-015913",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-12-18",
+      "items": "1.01",
+      "acc": "0001654954-24-015710",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-06-04",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001654954-24-007343",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-05-07",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001654954-24-005656",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-05-02",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001654954-23-005554",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-12-22",
+      "items": "1.01,5.02,7.01,9.01",
+      "acc": "0001654954-22-016900",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-08-23",
+      "items": "1.01",
+      "acc": "0001654954-22-011710",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-07-27",
+      "items": "1.01,2.03,5.02",
+      "acc": "0001654954-22-010116",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-08-02",
+      "items": "1.01,3.03,5.02,8.01,9.01",
+      "acc": "0001654954-21-008397",
+      "doc": "lp_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2021-06-23",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001654954-21-007143",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-01-19",
+      "items": "1.01",
+      "acc": "0001654954-21-000625",
+      "doc": "lpi_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-09-21",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001477932-20-005518",
+      "doc": "lp_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-09-16",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001654954-20-010152",
+      "doc": "lp_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2020-09-08",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001654954-20-009893",
+      "doc": "lpind_8k.htm",
+      "desc": "CURRENT REPORT"
+    },
+    {
+      "date": "2019-06-14",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001477932-19-003517",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-05-29",
+      "items": "1.01,5.02,8.01,9.01",
+      "acc": "0001477932-19-003217",
+      "doc": "llpp_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-04-10",
+      "items": "1.01,9.01",
+      "acc": "0001477932-19-001585",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-02-28",
+      "items": "1.01,9.01",
+      "acc": "0001477932-19-000732",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-01-16",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001477932-19-000169",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-11-29",
+      "items": "1.01,9.01",
+      "acc": "0001477932-18-005801",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-11-13",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001477932-18-005464",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-10-15",
+      "items": "1.01,9.01",
+      "acc": "0001477932-18-004877",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-09-28",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001477932-18-004682",
+      "doc": "loop_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-01-18",
+      "items": "1.01,3.02,8.01,9.01",
+      "acc": "0001477932-18-000312",
+      "doc": "llpp_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-10-03",
+      "items": "1.01,9.01",
+      "acc": "0001477932-17-004864",
+      "doc": "llpp_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-05-05",
+      "items": "1.01,3.02,9.01",
+      "acc": "0001477932-17-002071",
+      "doc": "llpp_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-03-29",
+      "items": "1.01",
+      "acc": "0001477932-17-001359",
+      "doc": "llpp_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-01-06",
+      "items": "1.01,2.01,3.02,5.01,5.03,5.06,9.01",
+      "acc": "0001477932-16-007913",
+      "doc": "famg_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2015-12-03",
+      "items": "1.01,2.01,3.02,5.01,5.03,5.06,9.01",
+      "acc": "0001477932-15-007468",
+      "doc": "famg_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2015-10-29",
+      "items": "1.01,2.01,3.02,5.01,5.03,5.06,9.01",
+      "acc": "0001477932-15-006672",
+      "doc": "famg_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2015-09-18",
+      "items": "1.01,2.01,3.02,5.01,5.03,5.06,9.01",
+      "acc": "0001477932-15-005989",
+      "doc": "famg_8ka.htm",
+      "desc": "FORM 8-K/A"
+    },
+    {
+      "date": "2015-06-30",
+      "items": "1.01,2.01,3.02,5.01,5.03,5.06,9.01",
+      "acc": "0001477932-15-004186",
+      "doc": "famg_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T18:58:56+00:00",
+  "signature": "0001437749-26-032746"
+}

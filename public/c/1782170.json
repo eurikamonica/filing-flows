@@ -1,0 +1,447 @@
+{
+  "cik": 1782170,
+  "ticker": "RELY",
+  "name": "Remitly Global, Inc.",
+  "sector": "industrials",
+  "industry": "Services-Business Services, NEC",
+  "sic": "7389",
+  "sic_description": "Services-Business Services, NEC",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T08:51:42+00:00",
+  "price": 25.32,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.577651,
+  "snapshot": {
+    "total_debt": 0,
+    "current_debt": 3022000,
+    "cash": 676394000,
+    "short_term_borrowings": 3022000,
+    "equity": 1126848000,
+    "assets": 1567455000,
+    "liabilities": 440607000,
+    "assets_current": 1285947000,
+    "liabilities_current": 404314000,
+    "retained_earnings": -205387000,
+    "interest_expense": 10252000,
+    "interest_paid": 6579000,
+    "operating_income": 171013000,
+    "pretax_income": 165291000,
+    "net_income": 305006000,
+    "da": 25818000,
+    "ocf": 406122000,
+    "capex": 18118000,
+    "revenue": 1809629000,
+    "shares": 211684054,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtNoncurrent",
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 0.0,
+    "cash_and_investments": 676394000.0,
+    "net_debt": -676394000.0,
+    "ebitda": 196831000,
+    "ebit": 171013000,
+    "interest_expense": 10252000,
+    "leverage": 0.0,
+    "net_leverage": -3.43642,
+    "interest_coverage": 16.68094,
+    "ebitda_coverage": 19.199278,
+    "cash_coverage": 62.73005,
+    "fcf": 388004000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": null,
+    "liquidity": 676394000.0,
+    "due_12m": 3022000,
+    "due_24m": null,
+    "liquidity_to_due12": 223.823296,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 9.304852,
+    "market_cap": 5359840247.28,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": 100
+  },
+  "instruments": [
+    {
+      "name": "2025 Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.005,
+      "drawn": 0.0,
+      "available": 474700000.0,
+      "rate_now": 0.0725,
+      "reference": "Adjusted SOFR0.00 Floor",
+      "floating": true
+    },
+    {
+      "name": "Advance for Future Deposits",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "carrying": 2800000.0,
+      "effective": 0.074,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "2021 Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2024-12-31",
+      "spread": 0.005,
+      "available": 277300000.0,
+      "reference": "Adjusted SOFR0.00 Floor",
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-08-05",
+      "agreement_kind": "amendment",
+      "dated": "2026-06-15",
+      "title": "To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.5,
+        1.5
+      ],
+      "fee_pct": 0.25,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "nt Debt, Ratio Debt or Incurred Acquisition Debt, in each case then being established, assuming a full drawing thereunder), (1) if such Indebtedness is secured by a Lien on the Collateral that is pari passu (but without regard to the control of remedies) with the Liens securing the Obligations, the First Lien Net Leverage Ratio does not exceed (i) 3.00 to 1.00, or (ii) to the extent such Incremental Facility, Increme"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "contribute Permitted Receivables Assets and other assets of the type referred to in the definition of “Permitted Receivables Financing” to the capital of any Finance Subsidiary in connection with a Permitted Receivables Financing; (j) [reserved]; (k) Investments if, after giving effect thereto, the Total Net Leverage Ratio calculated on the date of incurrence thereof on a Pro Forma Basis would be less than 3.50 to 1."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "cquisition Debt, as applicable, is incurred in connection with a permitted acquisition or other permitted Investment, the greater of (A) 4.50 to 1.0 and (B) the Total Net Leverage Ratio in effect immediately prior to such incurrence and such permitted acquisition or permitted Investment or (II) the Interest Coverage Ratio is not less than (i) 2.00 to 1.00 or (ii) to the extent such Incremental Facility, Incremental E"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1782170/000162828026053424/exhibit101-2025rcfamendmen.htm",
+      "all_in_pct": [
+        1.5389,
+        1.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-06-27",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-06-24",
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        1.5,
+        1.5
+      ],
+      "fee_pct": 0.25,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "nt Debt, Ratio Debt or Incurred Acquisition Debt, in each case then being established, assuming a full drawing thereunder), (1) if such Indebtedness is secured by a Lien on the Collateral that is pari passu (but without regard to the control of remedies) with the Liens securing the Obligations, the First Lien Net Leverage Ratio does not exceed (i) 3.00 to 1.00, or (ii) to the extent such Incremental Facility, Increme"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "lus the amount of Restricted Payments permitted to be made pursuant to this paragraph (b) in any previous fiscal year but not so made as a Restricted Payment pursuant to this paragraph (b) in any previous fiscal year; (c) the Company may make Restricted Payments if, after giving effect thereto, the Total Net Leverage Ratio calculated on the date of incurrence thereof on a Pro Forma Basis would be less than 3.00 to 1."
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "cquisition Debt, as applicable, is incurred in connection with a permitted acquisition or other permitted Investment, the greater of (A) 4.50 to 1.0 and (B) the Total Net Leverage Ratio in effect immediately prior to such incurrence and such permitted acquisition or permitted Investment or (II) the Interest Coverage Ratio is not less than (i) 2.00 to 1.00 or (ii) to the extent such Incremental Facility, Incremental E"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1782170/000095010325008001/dp230566_ex1001.htm",
+      "all_in_pct": [
+        1.5389,
+        1.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2023-12-22",
+      "agreement_kind": "credit_agreement",
+      "dated": "2023-12-20",
+      "size": 75000000.0,
+      "facility": "revolving",
+      "url": "https://www.sec.gov/Archives/edgar/data/1782170/000095010323017845/dp204035_ex1001.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-06-27",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0000950103-25-008001",
+      "doc": "dp230566_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2023-12-22",
+      "items": "1.01,9.01",
+      "acc": "0000950103-23-017845",
+      "doc": "dp204035_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-08-16",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001628280-22-022987",
+      "doc": "rely-20220815.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2023-06-30",
+      34000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      150000000,
+      null,
+      2732000,
+      null,
+      null,
+      0.01821
+    ],
+    [
+      "2024-06-30",
+      15000000,
+      null,
+      2885000,
+      null,
+      null,
+      0.19233
+    ],
+    [
+      "2024-09-30",
+      0,
+      null,
+      3060000,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      0,
+      649062000,
+      8750000,
+      144812000,
+      118975000,
+      null
+    ],
+    [
+      "2026-06-30",
+      0,
+      676394000,
+      10252000,
+      196831000,
+      171013000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2023-08",
+      0.01,
+      10.164,
+      0.5424,
+      93.9
+    ],
+    [
+      "2023-09",
+      0.0,
+      10.806,
+      0.5128,
+      90.0
+    ],
+    [
+      "2023-10",
+      0.0,
+      11.447,
+      0.4871,
+      86.2
+    ],
+    [
+      "2023-11",
+      0.03,
+      9.836,
+      0.549,
+      96.0
+    ],
+    [
+      "2023-12",
+      0.03,
+      9.778,
+      0.5385,
+      96.3
+    ],
+    [
+      "2024-01",
+      0.07,
+      9.363,
+      0.5474,
+      99.0
+    ],
+    [
+      "2024-02",
+      0.01,
+      10.305,
+      0.5202,
+      93.0
+    ],
+    [
+      "2024-03",
+      0.01,
+      10.369,
+      0.5154,
+      92.6
+    ],
+    [
+      "2024-04",
+      0.01,
+      10.074,
+      0.5172,
+      94.5
+    ],
+    [
+      "2024-05",
+      3.64,
+      6.755,
+      0.5262,
+      117.7
+    ],
+    [
+      "2024-06",
+      4.76,
+      6.573,
+      0.5308,
+      119.1
+    ],
+    [
+      "2024-07",
+      3.76,
+      6.78,
+      0.5324,
+      117.5
+    ],
+    [
+      "2024-08",
+      0.0,
+      11.64,
+      0.4992,
+      85.2
+    ],
+    [
+      "2024-09",
+      0.0,
+      11.522,
+      0.5037,
+      85.8
+    ],
+    [
+      "2024-10",
+      0.0,
+      11.338,
+      0.5184,
+      86.9
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

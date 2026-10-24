@@ -1,0 +1,475 @@
+{
+  "cik": 2039497,
+  "ticker": "RHLD",
+  "name": "Resolute Holdings Management, Inc.",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "sic_description": "Finance Services",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T09:00:50+00:00",
+  "price": 118.81,
+  "price_date": "2026-10-23",
+  "equity_vol": 1.134742,
+  "snapshot": {
+    "total_debt": 2177500000,
+    "current_debt": 24000000,
+    "cash": 117000000,
+    "operating_leases": 66800000,
+    "equity": -31500000,
+    "assets": 6127300000,
+    "liabilities": 3073900000,
+    "assets_current": 818100000,
+    "liabilities_current": 605400000,
+    "retained_earnings": 40800000,
+    "interest_expense": 70398000,
+    "interest_paid": 37969000,
+    "operating_income": 106559000,
+    "pretax_income": 28303000,
+    "net_income": 47177000,
+    "da": 41602000,
+    "ocf": 105486000,
+    "capex": 24957000,
+    "revenue": 1119555000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 27000000,
+      "rest_of_year": 12000000,
+      "y2": 33000000,
+      "y3": 30000000,
+      "y4": 12000000,
+      "y5": 57000000,
+      "after5": 2034000000
+    },
+    "shares": 7819595,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 2177500000,
+    "cash_and_investments": 117000000.0,
+    "net_debt": 2060500000.0,
+    "ebitda": 148161000,
+    "ebit": 106559000,
+    "interest_expense": 70398000,
+    "leverage": 14.69685,
+    "net_leverage": 13.907169,
+    "interest_coverage": 1.513665,
+    "ebitda_coverage": 2.104619,
+    "cash_coverage": 3.778214,
+    "fcf": 80529000,
+    "fcf_to_debt": 0.036982,
+    "effective_rate": 0.03233,
+    "revolver_available": null,
+    "liquidity": 117000000.0,
+    "due_12m": 27000000,
+    "due_24m": 60000000,
+    "liquidity_to_due12": 4.333333,
+    "liquidity_to_due24": 1.95,
+    "floating_debt": 1438800000.0,
+    "floating_share": 0.660758,
+    "plus100bp_interest": 14388000.0,
+    "plus100bp_share_of_ebit": 0.135024,
+    "altman_z": 0.472426,
+    "market_cap": 929046081.95,
+    "debt_to_ev": 0.728371,
+    "convertibles": null,
+    "implied": {
+      "dd": 0.65703,
+      "pd_1y": 0.255581,
+      "spread_5y_bps": 801.419298,
+      "asset_vol": 0.615612,
+      "calibrated_5y_bps": 176.340783,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.066734,
+    "refi_extra_interest": 2064260.539088,
+    "covenants": [],
+    "cushion_score": 39
+  },
+  "instruments": [
+    {
+      "name": "GPGI Holdings Borrowings",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 2115000000.0,
+      "floating": false
+    },
+    {
+      "name": "GPGI Holdings Term Loan Facility",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "spread_min": 0.0125,
+      "spread_max": 0.0225,
+      "carrying": 1200000000.0,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "GPGI Holdings Senior Secured Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.05625,
+      "carrying": 900000000.0,
+      "floating": false
+    },
+    {
+      "name": "GPGI Holdings Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "carrying": 186300000.0,
+      "floating": false
+    },
+    {
+      "name": "Borrowings of Resolute Holdings",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 90000000.0,
+      "floating": false
+    },
+    {
+      "name": "Resolute Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 5e-05,
+      "effective": 0.0649,
+      "carrying": 30000000.0,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "GPGI Holdings Revolver Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread_min": 0.0075,
+      "spread_max": 0.0125,
+      "carrying": 15000000.0,
+      "available": 377500000.0,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "GPGI Holdings Revolver, Letters of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 7500000.0,
+      "floating": true
+    },
+    {
+      "name": "GPGI Holdings Credit Facility Two",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "effective": 0.0613,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-05-07",
+      "agreement_kind": "amendment",
+      "dated": "2026-02-20",
+      "title": "Second Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.25,
+      "url": "https://www.sec.gov/Archives/edgar/data/2039497/000110465926057120/rhld-20260331xex10d4.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-03-23",
+      "agreement_kind": "amendment",
+      "dated": "2026-02-20",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/2039497/000095014226000800/eh260753464_ex1001.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-03-12",
+      "agreement_kind": "credit_agreement",
+      "dated": "2026-02-20",
+      "title": "Execution Version Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.25,
+      "url": "https://www.sec.gov/Archives/edgar/data/2039497/000110465926027050/rhld-20251231xex10d15.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-05-07",
+      "items": "1.01,2.02,2.03,9.01",
+      "acc": "0001104659-26-056668",
+      "doc": "rhld-20260507x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950142-26-000800",
+      "doc": "eh260753464_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-23",
+      "items": "1.01,1.02,2.03",
+      "acc": "0000950142-26-000467",
+      "doc": "eh250741502_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-01-13",
+      "items": "1.01,2.01,2.03,4.01,9.01",
+      "acc": "0001104659-26-003021",
+      "doc": "tm262980d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-02-28",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950142-25-000568",
+      "doc": "eh250597442_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-02-28",
+      "items": "1.01,5.01,5.02,9.01",
+      "acc": "0000950142-25-000558",
+      "doc": "eh250596666_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-03-31",
+      193213000,
+      71017000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      190821000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      188431000,
+      147974000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      2187300000,
+      113100000,
+      39798000,
+      135261000,
+      111859000,
+      0.0182
+    ],
+    [
+      "2026-06-30",
+      2177500000,
+      117000000,
+      70398000,
+      148161000,
+      106559000,
+      0.03233
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-05",
+      382.39,
+      2.132,
+      0.7702,
+      159.9
+    ],
+    [
+      "2025-06",
+      329.86,
+      2.298,
+      0.7251,
+      158.2
+    ],
+    [
+      "2025-07",
+      278.32,
+      2.583,
+      0.701,
+      155.2
+    ],
+    [
+      "2025-08",
+      299.92,
+      2.7,
+      0.7551,
+      154.0
+    ],
+    [
+      "2025-09",
+      237.01,
+      2.969,
+      0.7042,
+      151.3
+    ],
+    [
+      "2025-10",
+      206.87,
+      3.139,
+      0.6861,
+      149.6
+    ],
+    [
+      "2025-11",
+      734.06,
+      2.026,
+      1.1772,
+      161.0
+    ],
+    [
+      "2025-12",
+      620.77,
+      2.323,
+      1.1232,
+      157.9
+    ],
+    [
+      "2026-01",
+      585.61,
+      2.374,
+      1.0911,
+      157.4
+    ],
+    [
+      "2026-02",
+      579.07,
+      2.319,
+      1.0632,
+      157.9
+    ],
+    [
+      "2026-03",
+      714.24,
+      2.003,
+      1.1467,
+      161.3
+    ],
+    [
+      "2026-04",
+      718.54,
+      1.962,
+      1.1383,
+      161.7
+    ],
+    [
+      "2026-05",
+      857.34,
+      0.618,
+      1.1658,
+      176.8
+    ],
+    [
+      "2026-06",
+      856.24,
+      0.668,
+      1.1585,
+      176.2
+    ],
+    [
+      "2026-07",
+      848.07,
+      0.642,
+      1.1595,
+      176.5
+    ],
+    [
+      "2026-08",
+      819.67,
+      0.702,
+      1.1335,
+      175.8
+    ],
+    [
+      "2026-09",
+      814.16,
+      0.666,
+      1.1404,
+      176.2
+    ],
+    [
+      "2026-10",
+      802.51,
+      0.66,
+      1.1347,
+      176.3
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

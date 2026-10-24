@@ -1,0 +1,683 @@
+{
+  "cik": 885568,
+  "ticker": null,
+  "name": "OLD DOMINION ELECTRIC COOPERATIVE",
+  "sector": "utilities",
+  "industry": "Electric Services",
+  "sic": "4911",
+  "sic_description": "Electric Services",
+  "generated_at": "2026-10-24T14:46:14+00:00",
+  "fetched_at": "2026-10-18T09:03:29+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 1123693000,
+    "current_debt": 49041000,
+    "cash": 168449000,
+    "debt_fair_value": 1038300000,
+    "revolver_drawn": 30000000,
+    "assets": 2440027000,
+    "assets_current": 447452000,
+    "liabilities_current": 206500000,
+    "interest_expense": 50277000,
+    "interest_paid": 47000000,
+    "operating_income": 98955000,
+    "net_income": 49367000,
+    "ocf": -8297000,
+    "capex": 141396000,
+    "revenue": 1506917000,
+    "debt_issued": 250000000,
+    "debt_repaid": 49041000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 49041000,
+      "y2": 49041000,
+      "y3": 49041000,
+      "y4": 36542000,
+      "y5": 36542000,
+      "after5": 908666000
+    },
+    "shares": 0,
+    "balance_date": "2025-12-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "debt_fair_value": "LongTermDebtFairValue",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "interest_expense": "InterestAndDebtExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (fiscal year)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (fiscal year)"
+  },
+  "analysis": {
+    "total_debt": 1123693000,
+    "cash_and_investments": 168449000.0,
+    "net_debt": 955244000.0,
+    "ebitda": 98955000.0,
+    "ebit": 98955000,
+    "interest_expense": 50277000,
+    "leverage": 11.355596,
+    "net_leverage": 9.653317,
+    "interest_coverage": 1.968196,
+    "ebitda_coverage": 1.968196,
+    "cash_coverage": 0.823468,
+    "fcf": -149693000,
+    "fcf_to_debt": -0.133215,
+    "effective_rate": 0.044743,
+    "revolver_available": null,
+    "liquidity": 168449000.0,
+    "due_12m": 49041000,
+    "due_24m": 98082000,
+    "liquidity_to_due12": 3.434861,
+    "liquidity_to_due24": 1.71743,
+    "floating_debt": 30000000.0,
+    "floating_share": 0.026698,
+    "plus100bp_interest": 300000.0,
+    "plus100bp_share_of_ebit": 0.003032,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": 427377.830205,
+    "covenants": [],
+    "cushion_score": 45
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 30000000.0,
+      "floating": true
+    },
+    {
+      "name": "Series A First Mortgage Bonds2015",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 260000000.0,
+      "coupon": 0.0446,
+      "carrying": 260000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series A First Mortgage Bonds2025",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 250000000.0,
+      "coupon": 0.0537,
+      "carrying": 250000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series A First Mortgage Bonds2017",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 250000000.0,
+      "coupon": 0.0333,
+      "carrying": 150000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series B First Mortgage Bonds2011",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 165000000.0,
+      "coupon": 0.0554,
+      "carrying": 123750000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series B First Mortgage Bonds2015",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 72000000.0,
+      "coupon": 0.0456,
+      "carrying": 72000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series C First Mortgage Bonds2011",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 95000000.0,
+      "coupon": 0.0554,
+      "carrying": 59375000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series A First Mortgage Bonds2013",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 50000000.0,
+      "coupon": 0.0421,
+      "carrying": 50000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series B First Mortgage Bonds2013",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 50000000.0,
+      "coupon": 0.0436,
+      "carrying": 50000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series A First Mortgage Bonds2011",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 90000000.0,
+      "coupon": 0.0483,
+      "carrying": 45000000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series B First Mortgage Bonds2002",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 300000000.0,
+      "coupon": 0.0621,
+      "carrying": 37500000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series A First Mortgage Bonds2003",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "face": 250000000.0,
+      "coupon": 0.05676,
+      "carrying": 31248000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Letter Of Credit",
+      "kind": "other",
+      "as_of": "2025-12-31",
+      "drawn": 0.0,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2023-12-13",
+      "agreement_kind": "amendment",
+      "dated": "2023-12-07",
+      "size": 400000000.0,
+      "title": "Second Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.1,
+      "floor_pct": 0.0,
+      "maturity": "2028-12-07",
+      "covenants": [
+        {
+          "type": "debt_to_cap",
+          "limit": 0.85,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "ODEC will maintain at all times a Debt-to-Capitalization Ratio of no more than 0.85 :1.00."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/885568/000095017023069906/ck0000885568-ex10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2020-03-11",
+      "agreement_kind": "amendment",
+      "dated": "2020-03-04",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/885568/000156459020009940/cik0000885568-ex1021_326.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2017-03-08",
+      "agreement_kind": "amendment",
+      "dated": "2017-03-03",
+      "size": 500000000.0,
+      "title": "First Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.05,
+      "maturity": "2022-03-03",
+      "covenants": [
+        {
+          "type": "debt_to_cap",
+          "limit": 0.85,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "ODEC will maintain at all times a Debt-to-Capitalization Ratio of no more than 0.85:1.00. 74 Section 6.06 Hedging Agreements ."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/885568/000156459017003696/cik0000885568-ex101_49.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-12-19",
+      "items": "1.01,2.03",
+      "acc": "0001193125-25-326002",
+      "doc": "ck0000885568-20251216.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-07-03",
+      "items": "1.01,9.01",
+      "acc": "0000950170-24-081116",
+      "doc": "ck0000885568-20240701.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-12-13",
+      "items": "1.01,2.03,5.02,8.01,9.01",
+      "acc": "0000950170-23-069906",
+      "doc": "ck0000885568-20231207.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-02-27",
+      "items": "1.01,5.02,9.01",
+      "acc": "0000950170-23-004624",
+      "doc": "ck0000885568-20230222.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-12-23",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001564590-19-046638",
+      "doc": "cik0000885568-8k_20191220.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-07-31",
+      "items": "1.01,5.02",
+      "acc": "0001564590-18-018058",
+      "doc": "cik0000885568-8k_20180727.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-07-03",
+      "items": "1.01,5.02",
+      "acc": "0001564590-18-016534",
+      "doc": "cik0000885568-8k_20180629.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-06-19",
+      "items": "1.01",
+      "acc": "0001564590-18-015799",
+      "doc": "cik0000885568-8k_20180614.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-02-23",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001564590-18-002980",
+      "doc": "cik0000885568-8k_20180223.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-07-27",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001564590-17-014247",
+      "doc": "cik0000885568-8k_20170724.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-07-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001564590-17-013268",
+      "doc": "cik0000885568-8k_20170706.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-03-08",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001564590-17-003696",
+      "doc": "cik0000885568-8k_20170303.htm",
+      "desc": "8-K DATED 03.03.2017"
+    },
+    {
+      "date": "2015-01-16",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-15-012821",
+      "doc": "d853115d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-07-02",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-13-280594",
+      "doc": "d562210d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-11-23",
+      "items": "1.01,2.03",
+      "acc": "0001193125-11-320649",
+      "doc": "d260749d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-04-08",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-11-092355",
+      "doc": "d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2011-01-28",
+      "items": "1.01,1.02",
+      "acc": "0001193125-11-016767",
+      "doc": "d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2011-06-30",
+      822712000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-09-30",
+      822712000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-03-31",
+      794420000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-06-30",
+      794420000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-09-30",
+      794420000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-03-31",
+      766128000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-06-30",
+      805914000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-09-30",
+      805914000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-31",
+      777622000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      834622000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      812622000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-31",
+      1081330000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-30",
+      1081330000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      1081330000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-31",
+      1046328000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      1046441000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      1046555000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-03-31",
+      1018474000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      1018549000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      1267342000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      1239320000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      1239455000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      1239591000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      1199061000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      1199190000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      1199322000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-31",
+      1123693000,
+      168449000,
+      50277000,
+      98955000,
+      98955000,
+      0.04474
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

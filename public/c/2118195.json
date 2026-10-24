@@ -1,0 +1,143 @@
+{
+  "cik": 2118195,
+  "ticker": "AADX",
+  "name": "Applied Aerospace & Defense, Inc.",
+  "sector": "industrials",
+  "industry": "Aircraft Parts & Auxiliary Equipment, NEC",
+  "sic": "3728",
+  "sic_description": "Aircraft Parts & Auxiliary Equipment, NEC",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T11:02:08+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 400491000,
+    "current_debt": 5318000,
+    "cash": 18108000,
+    "equity": 827881000,
+    "assets": 1500219000,
+    "liabilities": 672338000,
+    "assets_current": 355064000,
+    "liabilities_current": 141501000,
+    "retained_earnings": -232140000,
+    "shares": 172393518,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 400491000,
+    "cash_and_investments": 18108000.0,
+    "net_debt": 382383000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 125000000.0,
+    "liquidity": 143108000.0,
+    "due_12m": 5318000,
+    "due_24m": null,
+    "liquidity_to_due12": 26.910117,
+    "liquidity_to_due24": null,
+    "floating_debt": 400491000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 4004910.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "2022 Credit Agreement, Amendment 3",
+      "kind": "revolver",
+      "as_of": "2026-03-02",
+      "face": 973443000.0,
+      "capacity": 125000000.0,
+      "floating": false
+    },
+    {
+      "name": "Line of credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 405796000.0,
+      "floating": false
+    },
+    {
+      "name": "2022 Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.0625,
+      "available": 125000000.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2026-06-04",
+      "items": "1.01,3.03,5.02,5.03,9.01",
+      "acc": "0001193125-26-257600",
+      "doc": "d31398d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      400491000,
+      18108000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,420 @@
+{
+  "cik": 1927958,
+  "ticker": "AIRO",
+  "name": "AIRO Group Holdings, Inc.",
+  "sector": "industrials",
+  "industry": "Aircraft",
+  "sic": "3721",
+  "sic_description": "Aircraft",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T13:19:42+00:00",
+  "price": 4.69,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.842158,
+  "snapshot": {
+    "total_debt": 1245000,
+    "current_debt": 745000,
+    "cash": 54416000,
+    "short_term_borrowings": 5000,
+    "revolver_drawn": 5492000,
+    "equity": 720140000,
+    "assets": 757047000,
+    "liabilities": 36907000,
+    "assets_current": 94489000,
+    "liabilities_current": 32975000,
+    "retained_earnings": -228004000,
+    "operating_income": -21499000,
+    "pretax_income": -18333000,
+    "net_income": -25449000,
+    "da": 12218000,
+    "ocf": -50401000,
+    "capex": 6515000,
+    "revenue": 106643000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 1190000,
+      "y2": 7000,
+      "y3": 11000,
+      "y4": 11000,
+      "y5": 12000,
+      "after5": 459000
+    },
+    "converted_shares": 200000,
+    "shares": 31555917,
+    "balance_date": "2026-03-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent+ShortTermBorrowings",
+    "current_debt": "LongTermDebtCurrent+ShortTermBorrowings",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "revolver_drawn": "LinesOfCreditCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "converted_shares": "DebtConversionConvertedInstrumentSharesIssued1"
+  },
+  "analysis": {
+    "total_debt": 1245000,
+    "cash_and_investments": 54416000.0,
+    "net_debt": -53171000.0,
+    "ebitda": -9281000,
+    "ebit": -21499000,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -56916000,
+    "fcf_to_debt": -45.715663,
+    "effective_rate": null,
+    "revolver_available": 9200000.0,
+    "liquidity": 63616000.0,
+    "due_12m": 1190000,
+    "due_24m": 1197000,
+    "liquidity_to_due12": 53.458824,
+    "liquidity_to_due24": 53.146199,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 2.129016,
+    "market_cap": 147997250.73,
+    "debt_to_ev": 0.013129,
+    "convertibles": null,
+    "implied": {
+      "dd": 5.620855,
+      "pd_1y": 0.0,
+      "spread_5y_bps": 37.981878,
+      "asset_vol": 0.836779,
+      "calibrated_5y_bps": 126.899146,
+      "rating_band": "BBB"
+    },
+    "market_rate_5y": 0.06179,
+    "covenants": [],
+    "cushion_score": 95
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 9200000.0,
+      "rate_now": 0.0175,
+      "floating": true
+    },
+    {
+      "name": "Libertas",
+      "kind": "other",
+      "as_of": "2025-04-17",
+      "carrying": 1900000.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Notes One",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Notes Four",
+      "kind": "loan",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Notes Five",
+      "kind": "loan",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Notes Six",
+      "kind": "loan",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Notes Seven",
+      "kind": "loan",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Notes Eight",
+      "kind": "loan",
+      "as_of": "2024-12-31",
+      "effective": 0.15,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Notes Nine",
+      "kind": "loan",
+      "as_of": "2024-12-31",
+      "effective": 0.15,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Note A",
+      "kind": "notes",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Note B",
+      "kind": "notes",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Note C",
+      "kind": "notes",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Note D",
+      "kind": "notes",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Note E",
+      "kind": "notes",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Note F",
+      "kind": "notes",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Note G",
+      "kind": "notes",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Note H",
+      "kind": "notes",
+      "as_of": "2024-12-31",
+      "effective": 0.12,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Note I And J",
+      "kind": "notes",
+      "as_of": "2024-12-31",
+      "effective": 0.15,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [
+    {
+      "date": "2025-10-17",
+      "items": "1.01,9.01",
+      "acc": "0001493152-25-018456",
+      "doc": "form8-k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-06-30",
+      14527983,
+      40341555,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      10753187,
+      83678745,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1245000,
+      54416000,
+      null,
+      -30841000,
+      -42842000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-09",
+      48.51,
+      5.259,
+      0.7772,
+      130.0
+    ],
+    [
+      "2025-10",
+      19.72,
+      5.895,
+      0.6807,
+      124.6
+    ],
+    [
+      "2025-11",
+      120.13,
+      4.384,
+      0.8441,
+      137.7
+    ],
+    [
+      "2025-12",
+      104.19,
+      4.519,
+      0.8243,
+      136.5
+    ],
+    [
+      "2026-01",
+      154.19,
+      4.211,
+      0.9044,
+      139.3
+    ],
+    [
+      "2026-02",
+      121.39,
+      4.417,
+      0.8605,
+      137.4
+    ],
+    [
+      "2026-03",
+      102.16,
+      4.522,
+      0.8213,
+      136.5
+    ],
+    [
+      "2026-04",
+      87.43,
+      4.637,
+      0.7903,
+      135.5
+    ],
+    [
+      "2026-05",
+      8.76,
+      6.952,
+      0.8372,
+      116.2
+    ],
+    [
+      "2026-06",
+      10.94,
+      6.74,
+      0.8272,
+      117.8
+    ],
+    [
+      "2026-07",
+      5.83,
+      7.135,
+      0.7828,
+      114.8
+    ],
+    [
+      "2026-08",
+      9.31,
+      6.866,
+      0.8284,
+      116.8
+    ],
+    [
+      "2026-09",
+      9.51,
+      6.822,
+      0.8247,
+      117.2
+    ],
+    [
+      "2026-10",
+      21.59,
+      6.158,
+      0.8422,
+      122.5
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,1727 @@
+{
+  "cik": 1193311,
+  "ticker": null,
+  "name": "ONCOR ELECTRIC DELIVERY CO LLC",
+  "sector": "utilities",
+  "industry": "Electric Services",
+  "sic": "4911",
+  "sic_description": "Electric Services",
+  "generated_at": "2026-10-24T14:46:08+00:00",
+  "fetched_at": "2026-10-18T05:37:02+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 21193000000,
+    "current_debt": 5000000,
+    "cash": 24000000,
+    "debt_fair_value": 20152000000,
+    "revolver_capacity": 1620000000,
+    "revolver_available": 2000000000,
+    "assets": 52175000000,
+    "liabilities": 31845000000,
+    "assets_current": 2570000000,
+    "liabilities_current": 2242000000,
+    "interest_expense": 874000000,
+    "operating_income": 1998000000,
+    "pretax_income": 1545000000,
+    "net_income": 1270000000,
+    "da": 1492000000,
+    "ocf": 2398000000,
+    "revenue": 7362000000,
+    "debt_repaid": 412000000,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 238000000,
+      "y2": 1905000000,
+      "y3": 1575000000,
+      "y4": 1318000000,
+      "y5": 700000000,
+      "after5": 13488000000
+    },
+    "shares": 0,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "debt_fair_value": "DebtInstrumentFairValue",
+    "revolver_capacity": "LineOfCreditFacilityMaximumBorrowingCapacity",
+    "revolver_available": "LineOfCreditFacilityRemainingBorrowingCapacity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAmortizationAndAccretionNet (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 21193000000,
+    "cash_and_investments": 24000000.0,
+    "net_debt": 21169000000.0,
+    "ebitda": 3490000000,
+    "ebit": 1998000000,
+    "interest_expense": 874000000,
+    "leverage": 6.072493,
+    "net_leverage": 6.065616,
+    "interest_coverage": 2.286041,
+    "ebitda_coverage": 3.993135,
+    "fcf": 2398000000.0,
+    "fcf_to_debt": 0.113151,
+    "effective_rate": 0.04124,
+    "revolver_available": 2000000000,
+    "liquidity": 2024000000.0,
+    "due_12m": 238000000,
+    "due_24m": 2143000000,
+    "liquidity_to_due12": 8.504202,
+    "liquidity_to_due24": 0.94447,
+    "floating_debt": 625000000.0,
+    "floating_share": 0.029491,
+    "plus100bp_interest": 6250000.0,
+    "plus100bp_share_of_ebit": 0.003128,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": 16843911.23956,
+    "covenants": [],
+    "cushion_score": 50
+  },
+  "instruments": [
+    {
+      "name": "Commercial Paper",
+      "kind": "commercial_paper",
+      "as_of": "2026-06-30",
+      "capacity": 3000000000.0,
+      "floating": true
+    },
+    {
+      "name": "Two B Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 2000000000.0,
+      "spread_min": 0.0075,
+      "spread_max": 0.0125,
+      "spread": 0.005,
+      "fee_min": 0.0006,
+      "fee_max": 0.00175,
+      "reference": "Federal Funds Effective Rate Or Overnight Bank Funding Rate",
+      "floating": true
+    },
+    {
+      "name": "Accounts Receivable Securitization Facility",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "carrying": 1600000000.0,
+      "capacity": 600000000.0,
+      "drawn": 0.0,
+      "floating": false
+    },
+    {
+      "name": "One B Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 1000000000.0,
+      "capacity_max": 350000000.0,
+      "spread_min": 0.0075,
+      "spread_max": 0.0125,
+      "spread": 0.005,
+      "fee_min": 0.0004,
+      "fee_max": 0.0015,
+      "conv_ratio_min": 0.65,
+      "conv_ratio_max": 1.0,
+      "drawn": 0.0,
+      "reference": "Federal Funds Effective Rate Or Overnight Bank Funding Rate",
+      "floating": true
+    },
+    {
+      "name": "Secured Debt",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "capacity": 600000000.0,
+      "floating": false
+    },
+    {
+      "name": "Revolving Five Hundred Million Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 20000000.0,
+      "spread_min": 0.00875,
+      "spread_max": 0.015,
+      "spread": 0.005,
+      "fee_min": 0.00075,
+      "fee_max": 0.00625,
+      "conv_ratio_min": 0.65,
+      "conv_ratio_max": 1.0,
+      "available": 20000000.0,
+      "reference": "Federal Funds Effective Rate Or Overnight Bank Funding Rate",
+      "floating": true
+    },
+    {
+      "name": "Euro Notes Due May152031",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.035,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due June152034",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.03625,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due October12035",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.042,
+      "floating": false
+    },
+    {
+      "name": "Senior Secured Notes Due June242033",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.057,
+      "floating": false
+    },
+    {
+      "name": "Junior Subordinated Notes Due November262056",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0455,
+      "floating": false
+    },
+    {
+      "name": "Senior Secured Notes Due March202027",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.045,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Series B Due January142026",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "coupon": 0.0386,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Series C Due May12026",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.055,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due May152028",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.043,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due November152028",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.037,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due March152029",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0575,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Series F Due May12029",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.05,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Series H Due May12029",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0515,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due November12029",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0465,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due May152030",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0275,
+      "floating": false
+    },
+    {
+      "name": "Senior Secured Notes Due March152031",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.045,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Series D Due May12031",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0534,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due May12032",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.07,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due June12032",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0415,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due September152032",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0455,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due January152033",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0725,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due November152033",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0565,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Series I Due May12034",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0559,
+      "floating": false
+    },
+    {
+      "name": "Senior Secured Notes Due April12035",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0535,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Series E Due May12036",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0545,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due September12038",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.075,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due September302040",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0525,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due December12041",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0455,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due June12042",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.053,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due April12045",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0375,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due September302047",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.038,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due November152048",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.041,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due June12049",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.038,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due September152049",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.031,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due May152050",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.037,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due November152051",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.027,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due June12052",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.046,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due September152052",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0495,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due October12052",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0535,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Series G Due May12054",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0549,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes Due June152054",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0555,
+      "floating": false
+    },
+    {
+      "name": "Senior Secured Notes Due April12055",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.058,
+      "floating": false
+    },
+    {
+      "name": "Senior Secured Notes Due March152056",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.059,
+      "floating": false
+    },
+    {
+      "name": "Senior Secured Notes Series B Due January142026",
+      "kind": "notes",
+      "as_of": "2026-01-14",
+      "coupon": 0.0386,
+      "floating": false
+    },
+    {
+      "name": "Term Loan Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-03-31",
+      "drawn": 625000000.0,
+      "spread": 0.00875,
+      "fee": 0.0005,
+      "conv_ratio_min": 0.65,
+      "conv_ratio_max": 1.0,
+      "reference": "Federal Funds Effective Rate Or Overnight Bank Funding Rate",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [
+    {
+      "title": "$500,000,000 aggregate principal amount of its 4.50% Senior Secured Notes due 2027",
+      "principal": 500000000.0,
+      "currency": "USD",
+      "coupon": 4.5,
+      "floating": false,
+      "maturity_year": 2027,
+      "convertible": false,
+      "trade_date": "2026-01-20",
+      "source_kind": "prospectus cover",
+      "date": "2026-01-20",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312526016558/d37308d424b3.htm"
+    },
+    {
+      "title": "$100,000,000 aggregate principal amount of its 4.65% Senior Secured Notes due 2029",
+      "principal": 100000000.0,
+      "currency": "USD",
+      "coupon": 4.65,
+      "floating": false,
+      "maturity_year": 2029,
+      "convertible": false,
+      "trade_date": "2026-01-20",
+      "source_kind": "prospectus cover",
+      "date": "2026-01-20",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312526016558/d37308d424b3.htm"
+    },
+    {
+      "title": "$650,000,000 aggregate principal amount of its 5.35% Senior Secured Notes due 2035",
+      "principal": 650000000.0,
+      "currency": "USD",
+      "coupon": 5.35,
+      "floating": false,
+      "maturity_year": 2035,
+      "convertible": false,
+      "trade_date": "2026-01-20",
+      "source_kind": "prospectus cover",
+      "date": "2026-01-20",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312526016558/d37308d424b3.htm"
+    },
+    {
+      "title": "$650,000,000 aggregate principal amount of its 5.80% Senior Secured Notes due 2055",
+      "principal": 650000000.0,
+      "currency": "USD",
+      "coupon": 5.8,
+      "floating": false,
+      "maturity_year": 2055,
+      "convertible": false,
+      "trade_date": "2026-01-20",
+      "source_kind": "prospectus cover",
+      "date": "2026-01-20",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312526016558/d37308d424b3.htm"
+    },
+    {
+      "title": "$750,000,000 aggregate principal amount of its 5.55% Senior Secured Notes due 2054",
+      "principal": 750000000.0,
+      "currency": "USD",
+      "coupon": 5.55,
+      "floating": false,
+      "maturity_year": 2054,
+      "convertible": false,
+      "trade_date": "2025-01-16",
+      "source_kind": "prospectus cover",
+      "date": "2025-01-16",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312525007368/d856759d424b3.htm"
+    },
+    {
+      "title": "$600,000,000 aggregate principal amount of its 4.30% Senior Secured Notes due 2028",
+      "principal": 600000000.0,
+      "currency": "USD",
+      "coupon": 4.3,
+      "floating": false,
+      "maturity_year": 2028,
+      "convertible": false,
+      "trade_date": "2023-12-20",
+      "source_kind": "prospectus cover",
+      "date": "2023-12-20",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312523300034/d564719d424b3.htm"
+    },
+    {
+      "title": "$800,000,000 aggregate principal amount of its 5.65% Senior Secured Notes due 2033",
+      "principal": 800000000.0,
+      "currency": "USD",
+      "coupon": 5.65,
+      "floating": false,
+      "maturity_year": 2033,
+      "convertible": false,
+      "trade_date": "2023-12-20",
+      "source_kind": "prospectus cover",
+      "date": "2023-12-20",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312523300034/d564719d424b3.htm"
+    },
+    {
+      "title": "$400,000,000 aggregate principal amount of its 4.95% Senior Secured Notes due 2052",
+      "principal": 400000000.0,
+      "currency": "USD",
+      "coupon": 4.95,
+      "floating": false,
+      "maturity_year": 2052,
+      "convertible": false,
+      "trade_date": "2023-12-20",
+      "source_kind": "prospectus cover",
+      "date": "2023-12-20",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312523300034/d564719d424b3.htm"
+    },
+    {
+      "title": "$400,000,000 aggregate principal amount of its 4.15% Senior Secured Notes due 2032",
+      "principal": 400000000.0,
+      "currency": "USD",
+      "coupon": 4.15,
+      "floating": false,
+      "maturity_year": 2032,
+      "convertible": false,
+      "trade_date": "2022-12-14",
+      "source_kind": "prospectus cover",
+      "date": "2022-12-14",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312522304858/d419969d424b3.htm"
+    },
+    {
+      "title": "$700,000,000 aggregate principal amount of its 4.55% Senior Secured Notes due 2032",
+      "principal": 700000000.0,
+      "currency": "USD",
+      "coupon": 4.55,
+      "floating": false,
+      "maturity_year": 2032,
+      "convertible": false,
+      "trade_date": "2022-12-14",
+      "source_kind": "prospectus cover",
+      "date": "2022-12-14",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312522304858/d419969d424b3.htm"
+    },
+    {
+      "title": "$400,000,000 aggregate principal amount of its 4.60% Senior Secured Notes due 2052",
+      "principal": 400000000.0,
+      "currency": "USD",
+      "coupon": 4.6,
+      "floating": false,
+      "maturity_year": 2052,
+      "convertible": false,
+      "trade_date": "2022-12-14",
+      "source_kind": "prospectus cover",
+      "date": "2022-12-14",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312522304858/d419969d424b3.htm"
+    },
+    {
+      "title": "$300,000,000 aggregate principal amount of its 2.75% Senior Secured Notes due 2030",
+      "principal": 300000000.0,
+      "currency": "USD",
+      "coupon": 2.75,
+      "floating": false,
+      "maturity_year": 2030,
+      "convertible": false,
+      "trade_date": "2022-04-08",
+      "source_kind": "prospectus cover",
+      "date": "2022-04-08",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312522099759/d633363d424b3.htm"
+    },
+    {
+      "title": "$500,000,000 aggregate principal amount of its 2.70% Senior Secured Notes due 2051",
+      "principal": 500000000.0,
+      "currency": "USD",
+      "coupon": 2.7,
+      "floating": false,
+      "maturity_year": 2051,
+      "convertible": false,
+      "trade_date": "2022-04-08",
+      "source_kind": "prospectus cover",
+      "date": "2022-04-08",
+      "source": "424b",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312522099759/d633363d424b3.htm"
+    }
+  ],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-02-26",
+      "agreement_kind": "amendment",
+      "dated": "2025-02-20",
+      "title": "First Amendm Ent To Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        0.75,
+        2.0
+      ],
+      "grid_by": "ratings",
+      "fee_pct": 0.04,
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119331126000007/c311-20251231xex10_o.htm",
+      "all_in_pct": [
+        0.7889,
+        2.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-02-26",
+      "agreement_kind": "amendment",
+      "dated": "2025-02-20",
+      "title": "First Amendment To Amended And Restated Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        0.75,
+        2.0
+      ],
+      "grid_by": "ratings",
+      "fee_pct": 0.06,
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119331126000007/c311-20251231xex10_l.htm",
+      "all_in_pct": [
+        0.7889,
+        2.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2011-10-11",
+      "agreement_kind": "credit_agreement",
+      "dated": "2011-10-11",
+      "title": "Amended And Restated Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        2.0,
+        2.0
+      ],
+      "grid_by": "ratings",
+      "url": "https://www.sec.gov/Archives/edgar/data/1193311/000119312511268228/d242038dex101.htm",
+      "all_in_pct": [
+        2.0389,
+        2.0389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-09-17",
+      "items": "1.02,2.03,9.01",
+      "acc": "0001193125-26-394333",
+      "doc": "d350234d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-06-24",
+      "items": "2.03",
+      "acc": "0001193125-26-281044",
+      "doc": "d25700d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-26-241882",
+      "doc": "d146142d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-07",
+      "items": "1.01,2.02,5.02,9.01",
+      "acc": "0001193125-26-210424",
+      "doc": "d21793d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-03-20",
+      "items": "2.03,9.01",
+      "acc": "0001193125-26-117626",
+      "doc": "d127318d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-02-03",
+      "items": "2.03",
+      "acc": "0001193125-26-035500",
+      "doc": "d61475d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-29",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-25-335302",
+      "doc": "d74664d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-12-02",
+      "items": "2.03",
+      "acc": "0001193125-25-305249",
+      "doc": "d60755d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-09-29",
+      "items": "2.03,9.01",
+      "acc": "0001193125-25-223187",
+      "doc": "d941439d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-06-23",
+      "items": "2.03,7.01,9.01",
+      "acc": "0001193125-25-144167",
+      "doc": "d71598d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-06-04",
+      "items": "2.03",
+      "acc": "0001193125-25-134884",
+      "doc": "d19557d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-05-08",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001193125-25-115541",
+      "doc": "d944687d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-03-21",
+      "items": "2.03,8.01,9.01",
+      "acc": "0001193125-25-060216",
+      "doc": "d925600d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-03-12",
+      "items": "2.03",
+      "acc": "0001193125-25-052912",
+      "doc": "d914711d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-03-03",
+      "items": "2.03,7.01,9.01",
+      "acc": "0001193125-25-043495",
+      "doc": "d785707d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-02-25",
+      "items": "1.01,2.02,2.03,7.01,9.01",
+      "acc": "0001193125-25-034320",
+      "doc": "d936476d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-02-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-25-020020",
+      "doc": "d844165d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-01-16",
+      "items": "2.03,7.01,9.01",
+      "acc": "0001193125-25-007360",
+      "doc": "d938963d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-11-15",
+      "items": "2.03,8.01,9.01",
+      "acc": "0001193125-24-259342",
+      "doc": "d836194d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-08-30",
+      "items": "2.03",
+      "acc": "0001193125-24-211105",
+      "doc": "d890751d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-07-01",
+      "items": "2.03",
+      "acc": "0001193125-24-173282",
+      "doc": "d843813d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-06-21",
+      "items": "2.03,9.01",
+      "acc": "0001193125-24-165650",
+      "doc": "d846109d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-05-21",
+      "items": "2.03,9.01",
+      "acc": "0001193125-24-143702",
+      "doc": "d842077d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-24-125060",
+      "doc": "d831326d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-02",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001193125-24-084747",
+      "doc": "d819603d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-02-21",
+      "items": "1.01,2.03,5.02,9.01",
+      "acc": "0001193125-24-040770",
+      "doc": "d96231d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-01-31",
+      "items": "2.03",
+      "acc": "0001193125-24-020923",
+      "doc": "d184398d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-11-13",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-23-275479",
+      "doc": "d457929d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-08-03",
+      "items": "2.02,2.03,9.01",
+      "acc": "0001193125-23-202302",
+      "doc": "d523297d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-07-03",
+      "items": "2.03",
+      "acc": "0001193125-23-181339",
+      "doc": "d506502d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-05-31",
+      "items": "2.03",
+      "acc": "0001193125-23-157816",
+      "doc": "d498496d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-05-11",
+      "items": "2.03,9.01",
+      "acc": "0001193125-23-142005",
+      "doc": "d506240d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-04-28",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-23-125702",
+      "doc": "d482630d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-03-29",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-23-083671",
+      "doc": "d416349d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-03-23",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-23-077857",
+      "doc": "d473225d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-01-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-23-019079",
+      "doc": "d457031d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-11-10",
+      "items": "1.01,9.01",
+      "acc": "0001193125-22-282699",
+      "doc": "d414047d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-11-09",
+      "items": "1.01,9.01",
+      "acc": "0001193125-22-281287",
+      "doc": "d411797d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-09-08",
+      "items": "2.03,9.01",
+      "acc": "0001193125-22-240717",
+      "doc": "d358971d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-08-31",
+      "items": "2.03",
+      "acc": "0001193125-22-235205",
+      "doc": "d307678d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-07-08",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-22-190523",
+      "doc": "d343131d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-05-20",
+      "items": "2.03,9.01",
+      "acc": "0001193125-22-155678",
+      "doc": "d334875d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-05-02",
+      "items": "2.03",
+      "acc": "0001193125-22-136743",
+      "doc": "d230952d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-03-29",
+      "items": "2.03",
+      "acc": "0001193125-22-088086",
+      "doc": "d326404d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-02-25",
+      "items": "2.02,2.03,5.02,7.01,9.01",
+      "acc": "0001193125-22-053276",
+      "doc": "d63003d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-01-28",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001193125-22-021583",
+      "doc": "d21789d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-17",
+      "items": "2.03,9.01",
+      "acc": "0001193125-21-332539",
+      "doc": "d210724d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-11-09",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001193125-21-323875",
+      "doc": "d228219d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-08-02",
+      "items": "2.03,5.02,8.01",
+      "acc": "0001193125-21-233327",
+      "doc": "d214164d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-06-29",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001193125-21-202637",
+      "doc": "d214264d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-05-17",
+      "items": "2.03",
+      "acc": "0001193125-21-163674",
+      "doc": "d138095d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-05",
+      "items": "2.03",
+      "acc": "0001193125-21-106504",
+      "doc": "d162694d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-03-22",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-21-089567",
+      "doc": "d104973d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-02-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-21-028829",
+      "doc": "d28605d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-11-05",
+      "items": "1.01,2.02,7.01,9.01",
+      "acc": "0001193125-20-286554",
+      "doc": "d63475d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-09-28",
+      "items": "2.03,9.01",
+      "acc": "0001193125-20-256778",
+      "doc": "d61388d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-06-25",
+      "items": "1.01,9.01",
+      "acc": "0001193125-20-179080",
+      "doc": "d920889d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-03-24",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001564590-20-012502",
+      "doc": "oncor-8k_20200324.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-03-20",
+      "items": "2.03,9.01",
+      "acc": "0001193125-20-080662",
+      "doc": "d881171d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-03-17",
+      "items": "2.03",
+      "acc": "0001193125-20-075530",
+      "doc": "d898472d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-01-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-20-019616",
+      "doc": "d879367d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-09-27",
+      "items": "2.03",
+      "acc": "0001193125-19-257623",
+      "doc": "d809369d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-09-13",
+      "items": "2.03,9.01",
+      "acc": "0001193125-19-244879",
+      "doc": "d804270d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-09-09",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-19-240476",
+      "doc": "d766599d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-05-28",
+      "items": "2.03,9.01",
+      "acc": "0001193125-19-158485",
+      "doc": "d731456d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-05-16",
+      "items": "2.01,2.03,7.01,9.01",
+      "acc": "0001193125-19-149575",
+      "doc": "d749796d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2019-05-13",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-19-145502",
+      "doc": "d737286d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-05-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-19-139451",
+      "doc": "d742503d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-12-11",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-18-347003",
+      "doc": "d667495d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-12-04",
+      "items": "2.03,9.01",
+      "acc": "0001193125-18-342327",
+      "doc": "d666694d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-10-18",
+      "items": "1.01,9.01",
+      "acc": "0001193125-18-302113",
+      "doc": "d641625d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-08-14",
+      "items": "2.03,9.01",
+      "acc": "0001193125-18-248586",
+      "doc": "d608383d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2018-03-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-18-095877",
+      "doc": "d558833d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2018-03-09",
+      "items": "1.01,5.01,5.02,9.01",
+      "acc": "0001193125-18-077303",
+      "doc": "d545903d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2017-11-21",
+      "items": "1.01,1.02,2.03,8.01,9.01",
+      "acc": "0001193125-17-349280",
+      "doc": "d448651d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-09-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-17-295838",
+      "doc": "d396573d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-07-24",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001193125-17-233289",
+      "doc": "d428225d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-10-31",
+      "items": "1.01,5.02,9.01",
+      "acc": "0001193125-16-753479",
+      "doc": "d283702d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-10-07",
+      "items": "1.01,9.01",
+      "acc": "0001193125-16-733890",
+      "doc": "d255108d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-08-24",
+      "items": "2.03,9.01",
+      "acc": "0001193125-16-690033",
+      "doc": "d193400d8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2012-06-30",
+      6395000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-09-30",
+      6224000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-03-31",
+      6477000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-06-30",
+      6532000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-09-30",
+      6411000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-31",
+      6464000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      6522000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      6397000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-31",
+      6629000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-30",
+      6571000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      6475000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-31",
+      6743000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      6783000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      6717000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-03-31",
+      6721000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      6999000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      7068000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      7226000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      7303000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      7225000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      7617000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      8950000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      8976000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-31",
+      9404000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      9488000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      9797000000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      9701000000,
+      11000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      10104000000,
+      7000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      10525000000,
+      66000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      10819000000,
+      104000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      11072000000,
+      66000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      11226000000,
+      231000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      12254000000,
+      139000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      12823000000,
+      28000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      13227000000,
+      9000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      14099000000,
+      53000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      15021000000,
+      20000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      15465000000,
+      12000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      16916000000,
+      221000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      17789000000,
+      340000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      18142000000,
+      198000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      19938000000,
+      107000000,
+      830000000,
+      3211000000,
+      1812000000,
+      0.04163
+    ],
+    [
+      "2026-06-30",
+      21193000000,
+      24000000,
+      874000000,
+      3490000000,
+      1998000000,
+      0.04124
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

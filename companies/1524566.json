@@ -1,0 +1,116 @@
+{
+  "cik": 1524566,
+  "ticker": "WLTH",
+  "name": "WEALTHFRONT CORP",
+  "sector": "financials",
+  "industry": "Finance Services",
+  "sic": "6199",
+  "docs": {
+    "xbrl:0001628280-26-027232": {
+      "instruments": [
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2025-10-14",
+          "capacity": 250000000.0,
+          "spread": 0.01,
+          "reference": "SOFR",
+          "floating": true
+        },
+        {
+          "name": "Bridge Loan",
+          "kind": "loan",
+          "as_of": "2025-01-31",
+          "coupon": 0.125,
+          "rate_now": 0.12,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-04-24",
+      "report": "2026-01-31"
+    },
+    "xbrl:0001628280-26-061848": {
+      "instruments": [
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2025-10-14",
+          "capacity": 250000000.0,
+          "spread": 0.01,
+          "reference": "SOFR",
+          "floating": true
+        },
+        {
+          "name": "Warehouse Line of Credit",
+          "kind": "revolver",
+          "as_of": "2026-07-31",
+          "coupon": 0.06,
+          "carrying": 5100000.0,
+          "floating": false
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-09-14",
+      "report": "2026-07-31"
+    }
+  },
+  "sic_description": "Finance Services",
+  "snapshot": {
+    "current_debt": 5116000,
+    "cash": 453308000,
+    "short_term_borrowings": 5116000,
+    "operating_leases": 8487000,
+    "equity": 619862000,
+    "assets": 1782772000,
+    "liabilities": 1162910000,
+    "assets_current": 1651878000,
+    "liabilities_current": 1156993000,
+    "retained_earnings": -111416000,
+    "interest_expense": 1232000,
+    "interest_paid": 11570000,
+    "pretax_income": -137405000,
+    "net_income": -72169000,
+    "da": 6362000,
+    "ocf": 144776000,
+    "revenue": 371714000,
+    "if_converted_shares": 0,
+    "shares": 156176440,
+    "balance_date": "2026-07-31",
+    "latest_period": "2026-07-31"
+  },
+  "sources": {
+    "current_debt": "ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities"
+  },
+  "history": [],
+  "xbrl_10-K": "xbrl:0001628280-26-027232",
+  "xbrl_10-Q": "xbrl:0001628280-26-061848",
+  "events": [
+    {
+      "date": "2026-02-18",
+      "items": "1.01,9.01",
+      "acc": "0001628280-26-008816",
+      "doc": "wlth-20260216.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T12:55:08+00:00",
+  "signature": "0001628280-26-061848"
+}

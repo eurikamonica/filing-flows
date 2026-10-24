@@ -1,0 +1,141 @@
+{
+  "cik": 1787117,
+  "ticker": "REF",
+  "name": "Reformation Inc.",
+  "sector": "consumer-disc",
+  "industry": "Women's, Misses':  and Juniors Outerwear",
+  "sic": "2330",
+  "sic_description": "Women's, Misses':  and Juniors Outerwear",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T11:04:35+00:00",
+  "price": null,
+  "price_date": null,
+  "equity_vol": null,
+  "snapshot": {
+    "total_debt": 241529000,
+    "current_debt": 1606000,
+    "cash": 76627000,
+    "operating_leases": 193783000,
+    "equity": 376729000,
+    "assets": 1005156000,
+    "liabilities": 628427000,
+    "assets_current": 210759000,
+    "liabilities_current": 133686000,
+    "retained_earnings": 1304000,
+    "maturities": {
+      "as_of": "2026-06-27",
+      "next12m": 4819000,
+      "y2": 11244000,
+      "y3": 12850000,
+      "y4": 12850000,
+      "y5": 204924000
+    },
+    "shares": 59079320,
+    "balance_date": "2026-06-27",
+    "latest_period": "2026-06-27"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 241529000,
+    "cash_and_investments": 76627000.0,
+    "net_debt": 164902000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 26400000.0,
+    "liquidity": 103027000.0,
+    "due_12m": 4819000,
+    "due_24m": 16063000,
+    "liquidity_to_due12": 21.379332,
+    "liquidity_to_due24": 6.413933,
+    "floating_debt": 241529000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 2415290.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "covenants": [],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Credit Agreement, Amendment",
+      "kind": "revolver",
+      "as_of": "2026-06-27",
+      "carrying": 246700000.0,
+      "floating": false
+    },
+    {
+      "name": "Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-27",
+      "capacity": 10000000.0,
+      "available": 26400000.0,
+      "carrying": 246687000.0,
+      "spread": 0.0375,
+      "reference": "Secured Overnight Financing Rate SOFR One Month Term",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-27"
+  },
+  "issues": [],
+  "agreements": [],
+  "events": [],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-27",
+      241529000,
+      76627000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

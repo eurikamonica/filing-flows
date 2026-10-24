@@ -1,0 +1,760 @@
+{
+  "cik": 1625278,
+  "ticker": "NRDS",
+  "name": "NERDWALLET, INC.",
+  "sector": "technology",
+  "industry": "Services-Computer Processing & Data Preparation",
+  "sic": "7374",
+  "sic_description": "Services-Computer Processing & Data Preparation",
+  "generated_at": "2026-10-24T14:46:10+00:00",
+  "fetched_at": "2026-10-18T10:55:49+00:00",
+  "price": 11.16,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.503913,
+  "snapshot": {
+    "cash": 62000000,
+    "operating_leases": 8000000,
+    "revolver_drawn": 6900000,
+    "equity": 325800000,
+    "assets": 418000000,
+    "liabilities": 92200000,
+    "assets_current": 201300000,
+    "liabilities_current": 76900000,
+    "retained_earnings": -252600000,
+    "interest_expense": 600000,
+    "interest_paid": 400000,
+    "operating_income": 88000000,
+    "pretax_income": 90700000,
+    "net_income": 65000000,
+    "da": 40100000,
+    "ocf": 164300000,
+    "capex": 900000,
+    "revenue": 860000000,
+    "shares": 67600000,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "revolver_drawn": "LinesOfCreditCurrent",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 62000000.0,
+    "net_debt": null,
+    "ebitda": 128100000,
+    "ebit": 88000000,
+    "interest_expense": 600000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": 146.666667,
+    "ebitda_coverage": 213.5,
+    "cash_coverage": 411.75,
+    "fcf": 163400000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 139500000.0,
+    "liquidity": 201500000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 7.172685,
+    "market_cap": 754416000.0,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 3.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "And Third Amendment To Credit Agreement",
+        "dated": "2023-09-26",
+        "text": "The Borrower will not permit the Total Net Leverage Ratio, on the last day of any fiscal quarter, commencing with the fiscal quarter ending on December 31, 2023, to be greater than 3.00 to 1.00;"
+      },
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.2,
+        "unit": "x",
+        "actual": 213.5,
+        "cushion": 0.994379,
+        "agreement": "And Third Amendment To Credit Agreement",
+        "dated": "2023-09-26",
+        "text": "The Borrower will not permit the Fixed Charge Coverage Ratio, for any period of four consecutive fiscal quarters ending on the last day of any fiscal quarter, commencing with the fiscal quarter ending on December 31, 2023, to be less than 1.20 to 1.00."
+      }
+    ],
+    "cushion_score": 100
+  },
+  "instruments": [
+    {
+      "name": "Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 125000000.0,
+      "drawn": 0.0,
+      "available": 124500000.0,
+      "floating": false
+    },
+    {
+      "name": "Warehouse Line Of Credit",
+      "kind": "revolver",
+      "as_of": "2025-12-31",
+      "capacity": 15000000.0,
+      "coupon_min": 0.0525,
+      "rate_now": 0.0627,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-K",
+    "date": "2025-12-31"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-08-07",
+      "agreement_kind": "amendment",
+      "dated": "2023-09-26",
+      "title": "And Third Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 1.5,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "The Borrower will not permit the Total Net Leverage Ratio, on the last day of any fiscal quarter, commencing with the fiscal quarter ending on December 31, 2023, to be greater than 3.00 to 1.00;"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.2,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower will not permit the Fixed Charge Coverage Ratio, for any period of four consecutive fiscal quarters ending on the last day of any fiscal quarter, commencing with the fiscal quarter ending on December 31, 2023, to be less than 1.20 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "from present or former officers, directors or employees, consultants, advisors, or other service providers of any Loan Party or Restricted Subsidiary (but excluding equity investment firms) (each a “Share Repurchase”) so long as immediately after giving effect to any such Share Repurchase, (i) the Total Net Leverage Ratio is less than 2.50 to 1.00, (ii), the aggregate amount of Liquidity is equal to or greater than"
+        },
+        {
+          "type": "liquidity",
+          "limit": 50000000.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "r other service providers of any Loan Party or Restricted Subsidiary (but excluding equity investment firms) (each a “Share Repurchase”) so long as immediately after giving effect to any such Share Repurchase, (i) the Total Net Leverage Ratio is less than 2.50 to 1.00, (ii), the aggregate amount of Liquidity is equal to or greater than $50,000,000, (iii) the Borrower is (A) in pro forma compliance with the financial"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1625278/000162527825000114/exhibit101limitedconsent.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-10-29",
+      "agreement_kind": "amendment",
+      "dated": "2023-09-26",
+      "title": "And Second Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "The Borrower will not permit the Total Net Leverage Ratio, on the last day of any fiscal quarter, commencing with the fiscal quarter ending on December 31, 2023, to be greater than 3.00 to 1.00;"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.2,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower will not permit the Fixed Charge Coverage Ratio, for any period of four consecutive fiscal quarters ending on the last day of any fiscal quarter, commencing with the fiscal quarter ending on December 31, 2023, to be less than 1.20 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "present or former officers, directors or employees, consultants, advisors, or other service providers of any 84 Loan Party or Restricted Subsidiary (but excluding equity investment firms) (each a “ Share Repurchase ”) so long as immediately after giving effect to any such Share Repurchase, (i) the Total Net Leverage Ratio is less than 2.50 to 1.00, (ii), the aggregate amount of Liquidity is equal to or greater than"
+        },
+        {
+          "type": "liquidity",
+          "limit": 50000000.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "er service providers of any 84 Loan Party or Restricted Subsidiary (but excluding equity investment firms) (each a “ Share Repurchase ”) so long as immediately after giving effect to any such Share Repurchase, (i) the Total Net Leverage Ratio is less than 2.50 to 1.00, (ii), the aggregate amount of Liquidity is equal to or greater than $50,000,000, (iii) the Borrower is (A) in pro forma compliance with the financial"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1625278/000162527824000162/exhibit101-nerdwalletjpmxs.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-02-20",
+      "agreement_kind": "amendment",
+      "dated": "2023-09-26",
+      "title": "First Amendment To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "The Borrower will not permit the Total Net Leverage Ratio, on the last day of any fiscal quarter, commencing with the fiscal quarter ending on December 31, 2023, to be greater than 3.00 to 1.00;"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.2,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "The Borrower will not permit the Fixed Charge Coverage Ratio, for any period of four consecutive fiscal quarters ending on the last day of any fiscal quarter, commencing with the fiscal quarter ending on December 31, 2023, to be less than 1.20 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Interests from present or former officers, directors or employees, consultants, advisors, or other service providers of any Loan Party or Subsidiary (but excluding equity investment firms) (each a “ Share Repurchase ”) so long as immediately after giving effect to any such Share Repurchase, (i) the Total Net Leverage Ratio is less than 2.50 to 1.00, (ii), the aggregate amount of Liquidity is equal to or greater than"
+        },
+        {
+          "type": "liquidity",
+          "limit": 50000000.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "visors, or other service providers of any Loan Party or Subsidiary (but excluding equity investment firms) (each a “ Share Repurchase ”) so long as immediately after giving effect to any such Share Repurchase, (i) the Total Net Leverage Ratio is less than 2.50 to 1.00, (ii), the aggregate amount of Liquidity is equal to or greater than $50,000,000, (iii) the Borrower is (A) in pro forma compliance with the financial"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1625278/000162527824000030/exhibit108-creditagreement.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-06-18",
+      "items": "1.01",
+      "acc": "0001193125-25-142703",
+      "doc": "d884870d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-10-03",
+      "items": "1.01,8.01",
+      "acc": "0001625278-24-000156",
+      "doc": "nrds-20240927.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-09-27",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001625278-23-000109",
+      "doc": "nrds-20230926.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-07-11",
+      "items": "2.01,2.03,3.02,7.01,9.01",
+      "acc": "0001625278-22-000105",
+      "doc": "nrds-20220711.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-06-24",
+      "items": "1.01,3.02,5.02,7.01,9.01",
+      "acc": "0001625278-22-000089",
+      "doc": "nrds-20220623.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2020-12-31",
+      30200000,
+      83400000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      70000000,
+      138400000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2022-03",
+      354.16,
+      3.267,
+      1.0089,
+      148.3
+    ],
+    [
+      "2022-04",
+      273.84,
+      3.477,
+      0.9237,
+      146.3
+    ],
+    [
+      "2022-05",
+      275.62,
+      3.516,
+      0.9423,
+      145.9
+    ],
+    [
+      "2022-06",
+      226.1,
+      3.657,
+      0.8888,
+      144.5
+    ],
+    [
+      "2022-07",
+      223.45,
+      3.62,
+      0.8702,
+      144.9
+    ],
+    [
+      "2022-08",
+      181.0,
+      3.881,
+      0.8578,
+      142.4
+    ],
+    [
+      "2022-09",
+      180.4,
+      3.807,
+      0.8412,
+      143.1
+    ],
+    [
+      "2022-10",
+      136.5,
+      4.134,
+      0.8291,
+      140.0
+    ],
+    [
+      "2022-11",
+      157.98,
+      3.91,
+      0.8234,
+      142.1
+    ],
+    [
+      "2022-12",
+      115.21,
+      4.085,
+      0.7335,
+      140.5
+    ],
+    [
+      "2023-01",
+      98.15,
+      4.303,
+      0.7377,
+      138.5
+    ],
+    [
+      "2023-02",
+      67.45,
+      4.775,
+      0.7568,
+      134.2
+    ],
+    [
+      "2023-03",
+      69.39,
+      4.704,
+      0.7333,
+      134.9
+    ],
+    [
+      "2023-04",
+      80.88,
+      4.511,
+      0.7309,
+      136.6
+    ],
+    [
+      "2023-05",
+      175.29,
+      3.672,
+      0.801,
+      144.4
+    ],
+    [
+      "2023-06",
+      159.09,
+      3.756,
+      0.7848,
+      143.6
+    ],
+    [
+      "2023-07",
+      143.4,
+      3.917,
+      0.7898,
+      142.1
+    ],
+    [
+      "2023-08",
+      167.89,
+      3.678,
+      0.7854,
+      144.3
+    ],
+    [
+      "2023-09",
+      147.72,
+      3.803,
+      0.7664,
+      143.1
+    ],
+    [
+      "2023-10",
+      181.56,
+      3.628,
+      0.8062,
+      144.8
+    ],
+    [
+      "2023-11",
+      163.1,
+      3.797,
+      0.8085,
+      143.2
+    ],
+    [
+      "2023-12",
+      105.25,
+      4.31,
+      0.7742,
+      138.4
+    ],
+    [
+      "2024-01",
+      97.68,
+      4.405,
+      0.7752,
+      137.5
+    ],
+    [
+      "2024-02",
+      61.64,
+      4.796,
+      0.7259,
+      134.0
+    ],
+    [
+      "2024-03",
+      58.85,
+      4.793,
+      0.7066,
+      134.1
+    ],
+    [
+      "2024-04",
+      59.11,
+      4.738,
+      0.6927,
+      134.5
+    ],
+    [
+      "2024-05",
+      7.42,
+      6.268,
+      0.5484,
+      121.6
+    ],
+    [
+      "2024-06",
+      6.24,
+      6.4,
+      0.5437,
+      120.5
+    ],
+    [
+      "2024-07",
+      3.47,
+      6.816,
+      0.524,
+      117.2
+    ],
+    [
+      "2024-08",
+      27.85,
+      5.365,
+      0.6195,
+      129.1
+    ],
+    [
+      "2024-09",
+      27.16,
+      5.396,
+      0.61,
+      128.8
+    ],
+    [
+      "2024-10",
+      12.33,
+      5.913,
+      0.5492,
+      124.5
+    ],
+    [
+      "2024-11",
+      11.68,
+      6.017,
+      0.5687,
+      123.6
+    ],
+    [
+      "2024-12",
+      11.65,
+      6.005,
+      0.5614,
+      123.7
+    ],
+    [
+      "2025-01",
+      7.45,
+      6.333,
+      0.545,
+      121.0
+    ],
+    [
+      "2025-02",
+      36.52,
+      5.095,
+      0.6124,
+      131.4
+    ],
+    [
+      "2025-03",
+      44.28,
+      4.904,
+      0.6147,
+      133.1
+    ],
+    [
+      "2025-04",
+      47.58,
+      4.855,
+      0.622,
+      133.5
+    ],
+    [
+      "2025-05",
+      55.69,
+      4.767,
+      0.655,
+      134.3
+    ],
+    [
+      "2025-06",
+      51.65,
+      4.848,
+      0.6508,
+      133.6
+    ],
+    [
+      "2025-07",
+      49.6,
+      4.876,
+      0.6481,
+      133.3
+    ],
+    [
+      "2025-08",
+      19.63,
+      5.58,
+      0.5656,
+      127.2
+    ],
+    [
+      "2025-09",
+      17.13,
+      5.709,
+      0.5624,
+      126.2
+    ],
+    [
+      "2025-10",
+      5.13,
+      6.543,
+      0.503,
+      119.4
+    ],
+    [
+      "2025-11",
+      3.84,
+      6.809,
+      0.5149,
+      117.3
+    ],
+    [
+      "2025-12",
+      5.01,
+      6.625,
+      0.5188,
+      118.7
+    ],
+    [
+      "2026-01",
+      9.01,
+      6.197,
+      0.533,
+      122.1
+    ],
+    [
+      "2026-02",
+      4.16,
+      6.67,
+      0.485,
+      118.4
+    ],
+    [
+      "2026-03",
+      5.49,
+      6.447,
+      0.4909,
+      120.1
+    ],
+    [
+      "2026-04",
+      3.63,
+      6.743,
+      0.4806,
+      117.8
+    ],
+    [
+      "2026-05",
+      9.53,
+      6.032,
+      0.5026,
+      123.5
+    ],
+    [
+      "2026-06",
+      10.59,
+      5.968,
+      0.5149,
+      124.0
+    ],
+    [
+      "2026-07",
+      9.16,
+      6.055,
+      0.5071,
+      123.3
+    ],
+    [
+      "2026-08",
+      4.94,
+      6.485,
+      0.4874,
+      119.8
+    ],
+    [
+      "2026-09",
+      7.0,
+      6.186,
+      0.4905,
+      122.2
+    ],
+    [
+      "2026-10",
+      5.21,
+      6.467,
+      0.5039,
+      120.0
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

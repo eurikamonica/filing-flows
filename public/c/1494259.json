@@ -1,0 +1,402 @@
+{
+  "cik": 1494259,
+  "ticker": "CARG",
+  "name": "CarGurus, Inc.",
+  "sector": "technology",
+  "industry": "Services-Computer Processing & Data Preparation",
+  "sic": "7374",
+  "sic_description": "Services-Computer Processing & Data Preparation",
+  "generated_at": "2026-10-24T14:46:10+00:00",
+  "fetched_at": "2026-10-18T10:47:11+00:00",
+  "price": 32.73,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.47422,
+  "snapshot": {
+    "total_debt": 0,
+    "cash": 122136000,
+    "equity": 264356000,
+    "assets": 555127000,
+    "liabilities": 290771000,
+    "assets_current": 202593000,
+    "liabilities_current": 109521000,
+    "retained_earnings": 257376000,
+    "interest_paid": 583000,
+    "operating_income": 236303000,
+    "pretax_income": 240905000,
+    "net_income": 175936000,
+    "da": 30209000,
+    "ocf": 318722000,
+    "capex": 3513000,
+    "revenue": 967273000,
+    "shares": 93075457,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (four quarters)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (four quarters)"
+  },
+  "analysis": {
+    "total_debt": 0.0,
+    "cash_and_investments": 122136000.0,
+    "net_debt": -122136000.0,
+    "ebitda": 266512000,
+    "ebit": 236303000,
+    "interest_expense": null,
+    "leverage": 0.0,
+    "net_leverage": -0.458276,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "cash_coverage": 547.692967,
+    "fcf": 315209000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 390600000.0,
+    "liquidity": 512736000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 10.283539,
+    "market_cap": 3046359707.61,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 3.5,
+        "unit": "x",
+        "actual": -0.458276,
+        "cushion": 1.130936,
+        "agreement": "First Amendment To Credit Agreement",
+        "dated": "2026-08-06",
+        "text": "Permit the Consolidated Secured Net Leverage Ratio, as of the last day of any fiscal quarter of the Borrower, commencing with the fiscal quarter ending September 30, 2022, to be greater than 3.50:1.00;"
+      }
+    ],
+    "cushion_score": 100
+  },
+  "instruments": [
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 390600000.0,
+      "drawn": 0.0,
+      "floating": true
+    },
+    {
+      "name": "Letter Of Credit",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "drawn": 9400000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-08-06",
+      "agreement_kind": "amendment",
+      "dated": "2026-08-06",
+      "title": "First Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        1.0,
+        1.5
+      ],
+      "grid_by": "leverage",
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Secured Net Leverage Ratio, as of the last day of any fiscal quarter of the Borrower, commencing with the fiscal quarter ending September 30, 2022, to be greater than 3.50:1.00;"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "per annum, and (b) thereafter, the applicable percentage per annum set forth below, as determined by reference to the Consolidated Secured Net Leverage Ratio, as set forth in the most recent Compliance Certificate received by the Administrative Agent pursuant to Section 6.02(a) : | Pricing Level | Consolidated Secured Net Leverage Ratio | Applicable Commitment Fee | 1 | Greater than or equal to 2.00:1.00 | 0.175% |"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "of Borrower or (y) approved in respect of such activities by a majority of the Board of Directors of the Borrower or any direct or indirect parent of the Borrower in good faith; and (22) any Restricted Payment, so long as immediately after giving effect to the making of such Restricted Payment the Consolidated Secured Net Leverage Ratio is less than or equal to 3.25:1.00."
+        },
+        {
+          "type": "liquidity",
+          "limit": 100000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "defease or otherwise acquire or retire for value, in each case, prior to any scheduled repayment, sinking fund payment or maturity, any Subordinated Indebtedness of the Borrower or any Guarantor (other than the payment, redemption, repurchase, defeasance, acquisition or retirement of (A) so long as Liquidity is no less than $100,000,000 immediately after giving effect to such payment, redemption, repurchase, defeasan"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1494259/000119312526338014/carg-ex10_1.htm",
+      "all_in_pct": [
+        1.0389,
+        1.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2022-09-29",
+      "agreement_kind": "credit_agreement",
+      "dated": "2022-09-26",
+      "title": "Execution Version Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        1.0,
+        1.5
+      ],
+      "grid_by": "leverage",
+      "floor_pct": 0.0,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Secured Net Leverage Ratio, as of the last day of any fiscal quarter of the Borrower, commencing with the fiscal quarter ending September 30, 2022, to be greater than 3.50:1.00;"
+        },
+        {
+          "type": "leverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "er annum, and (b) thereafter, the applicable percentage per annum set forth below, as determined by reference to the Consolidated Secured Net Leverage Ratio, as set forth in the most recent Compliance Certificate received by the Administrative Agent pursuant to Section 6.02(a) : 4 | Pricing Level | Consolidated Secured Net Leverage Ratio | Applicable Commitment Fee | 1 | Greater than or equal to 2.00:1.00 | 0.175% |"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "of Borrower or (y) approved in respect of such activities by a majority of the Board of Directors of the Borrower or any direct or indirect parent of the Borrower in good faith; and (22) any Restricted Payment, so long as immediately after giving effect to the making of such Restricted Payment the Consolidated Secured Net Leverage Ratio is less than or equal to 3.25:1.00."
+        },
+        {
+          "type": "liquidity",
+          "limit": 100000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "defease or otherwise acquire or retire for value, in each case, prior to any scheduled repayment, sinking fund payment or maturity, any Subordinated Indebtedness of the Borrower or any Guarantor (other than the payment, redemption, repurchase, defeasance, acquisition or retirement of (A) so long as Liquidity is no less than $100,000,000 immediately after giving effect to such payment, redemption, repurchase, defeasan"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1494259/000095017022019045/carg-ex10_1.htm",
+      "all_in_pct": [
+        1.0389,
+        1.5389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-08-06",
+      "items": "1.01,2.02,9.01",
+      "acc": "0001193125-26-338014",
+      "doc": "carg-20260806.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-11-07",
+      "items": "1.01,2.02,7.01,9.01",
+      "acc": "0000950170-23-060228",
+      "doc": "carg-20231106.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2022-09-29",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0000950170-22-019045",
+      "doc": "carg-20220926.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2020-12-10",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001564590-20-056635",
+      "doc": "carg-8k_20201209.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2022-09-30",
+      0,
+      404429000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      0,
+      456696000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      0,
+      453550000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      0,
+      447154000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      0,
+      246342000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-30",
+      0,
+      216169000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      0,
+      246748000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      0,
+      172862000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      0,
+      231233000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      0,
+      178834000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      0,
+      72049000,
+      null,
+      262832000,
+      233870000,
+      null
+    ],
+    [
+      "2026-06-30",
+      0,
+      122136000,
+      null,
+      266512000,
+      236303000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,741 @@
+{
+  "cik": 50493,
+  "ticker": "IMKTA",
+  "name": "INGLES MARKETS INC",
+  "sector": "consumer-staples",
+  "industry": "Retail-Grocery Stores",
+  "sic": "5411",
+  "sic_description": "Retail-Grocery Stores",
+  "generated_at": "2026-10-24T14:46:13+00:00",
+  "fetched_at": "2026-10-18T05:50:42+00:00",
+  "price": 88.75,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.249107,
+  "snapshot": {
+    "total_debt": 500527242,
+    "current_debt": 17481301,
+    "cash": 455086566,
+    "finance_leases": 2527942,
+    "operating_leases": 23525121,
+    "equity": 1684791883,
+    "assets": 2633504869,
+    "liabilities": 948712986,
+    "assets_current": 1056764304,
+    "liabilities_current": 329207972,
+    "retained_earnings": 1678477758,
+    "interest_expense": 18570105,
+    "operating_income": 143115347,
+    "pretax_income": 136424277,
+    "net_income": 103994277,
+    "da": 121138764,
+    "ocf": 249084210,
+    "capex": 99505049,
+    "revenue": 5417588061,
+    "debt_repaid": 18280000,
+    "maturities": {
+      "as_of": "2025-09-27",
+      "next12m": 18280000,
+      "y2": 18280000,
+      "y3": 12764026,
+      "y4": 12280000,
+      "y5": 84613334,
+      "after5": 372730000
+    },
+    "balance_date": "2026-06-27",
+    "latest_period": "2026-06-27"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 500527242,
+    "cash_and_investments": 455086566.0,
+    "net_debt": 45440676.0,
+    "ebitda": 264254111,
+    "ebit": 143115347,
+    "interest_expense": 18570105,
+    "leverage": 1.894113,
+    "net_leverage": 0.171958,
+    "interest_coverage": 7.70676,
+    "ebitda_coverage": 14.230082,
+    "fcf": 149579161,
+    "fcf_to_debt": 0.298843,
+    "effective_rate": 0.037101,
+    "revolver_available": 150000000.0,
+    "liquidity": 605086566.0,
+    "due_12m": 18280000,
+    "due_24m": 36560000,
+    "liquidity_to_due12": 33.101016,
+    "liquidity_to_due24": 16.550508,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": 438680.241115,
+    "covenants": [
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 675700000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Credit Agreement",
+        "dated": "2021-06-17",
+        "text": "Permit Consolidated Net Worth at any time to be less than (i) $675,700,000, plus (ii) an amount equal to 50% of the Consolidated Net Income earned in each full fiscal quarter ending after March 27, 2021 (with no deduction for a net loss in any such fiscal quarter) plus (iii)"
+      }
+    ],
+    "cushion_score": 93
+  },
+  "instruments": [
+    {
+      "name": "Line Of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-27",
+      "maturity": "2030-06-01",
+      "capacity": 150000000.0,
+      "floating": false
+    },
+    {
+      "name": "Recovery Zone Facility Bond",
+      "kind": "notes",
+      "as_of": "2026-06-27",
+      "carrying": 40900000.0,
+      "maturity": "2036-01-01",
+      "floating": false
+    },
+    {
+      "name": "Letter Of Credit",
+      "kind": "other",
+      "as_of": "2026-06-27",
+      "capacity": 10000000.0,
+      "drawn": 900000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior Notes2",
+      "kind": "notes",
+      "as_of": "2025-09-27",
+      "coupon": 0.04,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Notes Payable To Banks",
+      "kind": "notes",
+      "as_of": "2025-09-27",
+      "rate_now": 0.0657,
+      "floating": false,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-27"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-08-07",
+      "agreement_kind": "amendment",
+      "dated": "2025-06-17",
+      "size": 150000000.0,
+      "title": "To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Applicable Rate ” means, from time to time on and after the Amendment No. 3 Effective Date , the following percentages per annum, based upon the Consolidated Leverage Ratio as set forth in the most recent Compliance Certificate received by the Administrative Agent pursuant to Section 6.02(a) : Applicable Rate ﻿ | Pricing Level | Consolidated Leverage Ratio | Term SOFR Loans --------------------- Letters of Credit |"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Create, issue, incur, assume, guaranty or otherwise in any manner become directly or indirectly liable for the payment of or otherwise incur, contingently or otherwise (collectively, “incur”), any Indebtedness (including any Acquired Indebtedness), except that the Borrower and, to the extent expressly provided below, its Restricted Subsidiaries may incur each and all of the following: (a) Indebtedness that is incurre"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/50493/000005049325000014/imkt-20250628xex10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2021-06-21",
+      "agreement_kind": "credit_agreement",
+      "dated": "2021-06-17",
+      "size": 150000000.0,
+      "title": "Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "LIBOR"
+      ],
+      "maturity": "2026-06-17",
+      "covenants": [
+        {
+          "type": "net_worth",
+          "limit": 675700000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit Consolidated Net Worth at any time to be less than (i) $675,700,000, plus (ii) an amount equal to 50% of the Consolidated Net Income earned in each full fiscal quarter ending after March 27, 2021 (with no deduction for a net loss in any such fiscal quarter) plus (iii)"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Applicable Rate ” means, from time to time on and after the Closing Date, the following percentages per annum, based upon the Consolidated Leverage Ratio as set forth in the most recent Compliance Certificate received by the Administrative Agent pursuant to Section 6.02(a) : Applicable Rate Pricing Level | Consolidated Leverage Ratio | Eurodollar Rate Loans --------------- Letters of Credit | Base Rate Loans | Unus"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Create, issue, incur, assume, guaranty or otherwise in any manner become directly or indirectly liable for the payment of or otherwise incur, contingently or otherwise (collectively, “incur”), any Indebtedness (including any Acquired Indebtedness), except that the Borrower and, to the extent expressly provided below, its Restricted Subsidiaries may incur each and all of the following: (a) Indebtedness that is incurre"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/50493/000115752321000810/a52447238ex10_1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2010-04-30",
+      "agreement_kind": "credit_agreement",
+      "dated": "2010-04-30",
+      "title": "Exhibits And Schedules To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Eurodollar"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/50493/000119312510102017/dex101.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2021-06-21",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0001157523-21-000810",
+      "doc": "a52447238.htm",
+      "desc": "INGLES MARKETS, INCORPORATED 8-K"
+    },
+    {
+      "date": "2021-06-21",
+      "items": "1.01,2.03,2.04,9.01",
+      "acc": "0001157523-21-000809",
+      "doc": "a52447067.htm",
+      "desc": "INGLES MARKETS, INCORPORATED 8-K"
+    },
+    {
+      "date": "2019-11-22",
+      "items": "2.03",
+      "acc": "0001157523-19-002301",
+      "doc": "a52134439.htm",
+      "desc": "INGLES MARKETS, INCORPORATED 8-K"
+    },
+    {
+      "date": "2014-06-24",
+      "items": "1.01,9.01",
+      "acc": "0001157523-14-002626",
+      "doc": "a50892508.htm",
+      "desc": "INGLES MARKETS, INC. 8-K"
+    },
+    {
+      "date": "2013-06-18",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-13-262341",
+      "doc": "d555668d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-05-31",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0001157523-13-002967",
+      "doc": "a50644187.htm",
+      "desc": "INGLES MARKETS, INCORPORATED 8-K"
+    },
+    {
+      "date": "2011-01-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001157523-11-000036",
+      "doc": "a6558889.htm",
+      "desc": "INGLES MARKETS, INCORPORATED 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2011-06-25",
+      857099465,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2011-12-24",
+      882496472,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-03-24",
+      833477196,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-06-23",
+      846070368,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2012-12-29",
+      876999294,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-03-30",
+      860010117,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-06-29",
+      934511505,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2013-12-28",
+      925051837,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-03-29",
+      911133043,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-28",
+      909301758,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-12-27",
+      970380134,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-28",
+      928536976,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-27",
+      918168339,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-12-26",
+      924751167,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-26",
+      907705342,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-25",
+      898240133,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-12-24",
+      900238762,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-03-25",
+      876483398,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-24",
+      870738697,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-12-30",
+      890540808,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      888883435,
+      6930976,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      887756182,
+      11642792,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-12-29",
+      879932261,
+      14099474,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-30",
+      857469585,
+      16680700,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-29",
+      854712359,
+      18553093,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-12-28",
+      850045217,
+      23026544,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-03-28",
+      842055562,
+      144972233,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-27",
+      819276609,
+      152121128,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-12-26",
+      587947486,
+      10005500,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-27",
+      647800386,
+      8857460,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-26",
+      901248589,
+      319469623,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-12-25",
+      586128737,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-26",
+      578451333,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-25",
+      575179894,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-12-24",
+      564470203,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-25",
+      556690377,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-24",
+      553440551,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-12-30",
+      546895643,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-30",
+      539117884,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-06-29",
+      535870157,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-12-28",
+      529373006,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-29",
+      521594496,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-28",
+      518011459,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-12-27",
+      511530187,
+      361682782,
+      19306490,
+      255388030,
+      133143034,
+      0.03774
+    ],
+    [
+      "2026-03-28",
+      503763715,
+      418002177,
+      18923001,
+      267694730,
+      145973783,
+      0.03756
+    ],
+    [
+      "2026-06-27",
+      500527242,
+      455086566,
+      18570105,
+      264254111,
+      143115347,
+      0.0371
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "cik": 2085187,
+  "ticker": "BOBS",
+  "name": "Bob's Discount Furniture, Inc.",
+  "sector": "consumer-disc",
+  "industry": "Retail-Furniture Stores",
+  "sic": "5712",
+  "docs": {
+    "xbrl:0001628280-26-019015": {
+      "instruments": [],
+      "form": "10-K",
+      "date": "2026-03-18",
+      "report": "2025-12-28"
+    },
+    "xbrl:0001628280-26-054345": {
+      "instruments": [
+        {
+          "name": "Asset Based Revolving Credit Facility",
+          "kind": "revolver",
+          "as_of": "2026-06-28",
+          "carrying": 0.0,
+          "capacity": 200000000.0,
+          "available": 144600000.0,
+          "floating": true
+        },
+        {
+          "name": "Term Loan",
+          "kind": "loan",
+          "as_of": "2026-06-28",
+          "carrying": 0.0,
+          "spread": 0.04,
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-08-06",
+      "report": "2026-06-28"
+    },
+    "0001628280-26-028946:exhibit101_ablamendmentno10.htm": {
+      "kind": "agreement",
+      "date": "2026-04-30",
+      "agreement_kind": "amendment",
+      "dated": "2026-04-29",
+      "title": "To Revolving Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Prime Rate"
+      ],
+      "margin_pct": [
+        1.5,
+        5.0
+      ],
+      "margin_text": " a percentage per annum equal to: (i) with respect to Tranche A Loans: (A) until the first Adjustment Date, the percentages per annum set forth in Pricing Level II in the table below; (B) on the first day of each fiscal quarter thereafter (each, an “ Adjustment Date ”), commencing with the fiscal quarter beginning on or about July 1, 2014, the Applicable Margin shall be determined from the pricing grid below based upon average daily Excess Availability for the most recently ended three month period immediately preceding such Adjustment Date, as calculated by the Administrative Agent as of the ",
+      "fee_pct": 0.375,
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "If either (a) Excess Availability at any time is less than the greater of (x) 10.0% of the Line Cap and (y) $10,000,000 or ( b) any Overadvance Loans are outstanding at any time (each of the events in clauses (a) and (b), a “ Financial Covenant Trigger Event ”), Borrowers shall not permit the Fixed Charge Coverage Ratio to be less than 1.00 to 1.00 as of the last day of any Test Period, commencing with the Test Perio"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "described in this clause (n), the aggregate amount of Indebtedness, Disqualified Stock or preferred stock incurred pursuant to this clause (n) shall not to exceed the sum of (A) $25,000,000 plus (B) unlimited additional amounts if, after giving effect thereto (calculated on a Pro Forma Basis), the Interest Coverage Ratio of the Company and the Restricted Subsidiaries is at least 2.00 to 1.00 for the most recently en"
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "“ Pro Forma Availability Condition ” means, for any date of calculation with respect to any transaction or payment, that either (i) (a) the (x) Pro Forma Availability on such date and (y) average daily Excess Availability for a period of thirty (30) consecutive days immediately preceding such transaction or payment is greater than 12.5% of the Line Cap (or, solely in connection with a Restricted Payment (other than a"
+        }
+      ]
+    }
+  },
+  "sic_description": "Retail-Furniture Stores",
+  "snapshot": {
+    "total_debt": 0,
+    "current_debt": 0,
+    "cash": 32022000,
+    "finance_leases": 86201000,
+    "operating_leases": 807498000,
+    "equity": 531172000,
+    "assets": 1923617000,
+    "liabilities": 1392445000,
+    "assets_current": 504997000,
+    "liabilities_current": 563130000,
+    "retained_earnings": 91718000,
+    "shares": 130687076,
+    "balance_date": "2026-06-28",
+    "latest_period": "2026-06-28"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "history": [
+    {
+      "end": "2026-03-29",
+      "filed": "2026-05-07",
+      "total_debt": 25000000,
+      "cash": 27738000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 130627486,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": null
+    },
+    {
+      "end": "2026-06-28",
+      "filed": "2026-08-06",
+      "total_debt": 0,
+      "cash": 32022000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 130687076,
+      "convertible": null,
+      "equity": 531172000,
+      "interest_paid": null
+    }
+  ],
+  "xbrl_10-K": "xbrl:0001628280-26-019015",
+  "xbrl_10-Q": "xbrl:0001628280-26-054345",
+  "events": [
+    {
+      "date": "2026-04-30",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001628280-26-028946",
+      "doc": "bobs-20260429.htm",
+      "desc": "8-K"
+    }
+  ],
+  "fetched_at": "2026-10-18T07:24:19+00:00",
+  "signature": "0001628280-26-054531"
+}

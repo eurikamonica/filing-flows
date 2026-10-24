@@ -1,0 +1,736 @@
+{
+  "cik": 2020795,
+  "ticker": "UNIT",
+  "name": "Uniti Group Inc.",
+  "sector": "communication",
+  "industry": "Telephone Communications (No Radiotelephone)",
+  "sic": "4813",
+  "sic_description": "Telephone Communications (No Radiotelephone)",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T07:10:40+00:00",
+  "price": 5.19,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.576695,
+  "snapshot": {
+    "total_debt": 10646600000,
+    "current_debt": 10000000,
+    "cash": 608900000,
+    "equity": 161500000,
+    "assets": 12980900000,
+    "liabilities": 12819400000,
+    "assets_current": 1485500000,
+    "liabilities_current": 1215400000,
+    "interest_expense": 728400000,
+    "interest_paid": 768600000,
+    "operating_income": 114400000,
+    "net_income": 1077000000,
+    "da": 1103000000,
+    "ocf": 506000000,
+    "revenue": 3537100000,
+    "debt_issued": 5561600000,
+    "debt_repaid": 3774000000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 886500000,
+      "rest_of_year": 10000000,
+      "y2": 1120000000,
+      "y3": 1299000000,
+      "y4": 1220100000
+    },
+    "if_converted_shares": 0,
+    "shares": 242725135,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfLongTermDebt (FY + YTD − prior YTD)",
+    "debt_repaid": "RepaymentsOfDebt (FY + YTD − prior YTD)",
+    "if_converted_shares": "IncrementalCommonSharesAttributableToConversionOfDebtSecurities"
+  },
+  "analysis": {
+    "total_debt": 10646600000,
+    "cash_and_investments": 608900000.0,
+    "net_debt": 10037700000.0,
+    "ebitda": 1217400000,
+    "ebit": 114400000,
+    "interest_expense": 728400000,
+    "leverage": 8.745359,
+    "net_leverage": 8.245195,
+    "interest_coverage": 0.157057,
+    "ebitda_coverage": 1.671334,
+    "cash_coverage": 1.65834,
+    "fcf": 506000000.0,
+    "fcf_to_debt": 0.047527,
+    "effective_rate": 0.068416,
+    "revolver_available": 838100000.0,
+    "liquidity": 1447000000.0,
+    "due_12m": 886500000,
+    "due_24m": 2006500000,
+    "liquidity_to_due12": 1.632262,
+    "liquidity_to_due24": 0.721156,
+    "floating_debt": 4439100000.0,
+    "floating_share": 0.41695,
+    "plus100bp_interest": 44391000.0,
+    "plus100bp_share_of_ebit": 0.388033,
+    "altman_z": 0.385498,
+    "market_cap": 1259743450.65,
+    "debt_to_ev": 0.94239,
+    "convertibles": {
+      "notes": [
+        {
+          "name": "Convertible Senior Notes 2027, Excluding Over-Allotment Option",
+          "face": 306500000.0,
+          "carrying": 306500000.0,
+          "coupon": 0.075,
+          "conv_price": null,
+          "maturity": null
+        },
+        {
+          "name": "Convertible senior notes - 7.50%, due December 1, 2027 (discount based on imputed interest rate of 8.29%)",
+          "face": 306500000.0,
+          "carrying": 306500000.0,
+          "coupon": 0.075,
+          "conv_price": null,
+          "maturity": null
+        }
+      ],
+      "total_face": 613000000.0,
+      "in_the_money_face": 0,
+      "in_the_money_carrying": 0,
+      "shares_if_converted": 0,
+      "coupon_saved": 0
+    },
+    "implied": {
+      "dd": 1.808407,
+      "pd_1y": 0.035272,
+      "spread_5y_bps": 101.978949,
+      "asset_vol": 0.117661,
+      "calibrated_5y_bps": 163.383423,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.065438,
+    "refi_extra_interest": -5975087.503912,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 5.0,
+        "unit": "x",
+        "actual": 8.245195,
+        "cushion": -0.649039,
+        "agreement": "agreement",
+        "dated": "2025-10-06",
+        "text": "As long as any Revolving Credit Commitment remains outstanding, Parent shall not permit the Consolidated Secured Net Leverage Ratio as of the last day of any Test Period (commencing with the Test Period ending June 30, 2015) to be greater than 5.00 to 1.00."
+      }
+    ],
+    "cushion_score": 19
+  },
+  "instruments": [
+    {
+      "name": "Senior Secured And Unsecured Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 7886500000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior secured notes - 8.25%, due October 1, 2031 (premium based on imputed interest rate of 7.29%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0825,
+      "effective": 0.0729,
+      "carrying": 2200000000.0,
+      "floating": false
+    },
+    {
+      "name": "ABS Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 1799100000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes - 8.625% due June 15, 2032 (discount based on imputed interest rate of 9.03%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.08625,
+      "carrying": 1600000000.0,
+      "floating": false,
+      "effective": 0.0903
+    },
+    {
+      "name": "Senior secured notes - 7.50%, due October 15, 2033 (discount based on imputed interest rate of 7.72%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.075,
+      "effective": 0.0772,
+      "carrying": 1400000000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes - 6.50%, due February 15, 2029 (discount based on imputed interest rate of 6.83%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "effective": 0.0683,
+      "carrying": 1110000000.0,
+      "coupon": 0.065,
+      "floating": false
+    },
+    {
+      "name": "Senior secured 2025 term loan - variable rate, due October 6, 2032 (discount based on imputed interest rate of 8.57%)",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "effective": 0.0857,
+      "carrying": 995000000.0,
+      "coupon": 0.0857,
+      "floating": true
+    },
+    {
+      "name": "Uniti Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 995000000.0,
+      "capacity": 85000000.0,
+      "rate_now": 0.0778,
+      "available": 499700000.0,
+      "floating": false
+    },
+    {
+      "name": "Kinetic ABS Series 2026-1 Notes",
+      "kind": "abs",
+      "as_of": "2026-01-30",
+      "carrying": 960100000.0,
+      "floating": false
+    },
+    {
+      "name": "ABS Notes",
+      "kind": "abs",
+      "as_of": "2026-06-30",
+      "carrying": 839000000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes - 6.00% due January 15, 2030 (discount based on imputed interest rate of 6.27%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "effective": 0.0627,
+      "carrying": 700000000.0,
+      "coupon": 0.06,
+      "floating": false
+    },
+    {
+      "name": "Series 2026-1 Notes (Class A-2) - 5.219%, due February 1, 2031 (discount based on imputed interest rate of 5.720%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.05219,
+      "effective": 0.0572,
+      "carrying": 677700000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior secured notes - 4.75%, due April 15, 2028 (discount based on imputed interest rate of 5.04%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.0475,
+      "effective": 0.0504,
+      "carrying": 570000000.0,
+      "floating": false
+    },
+    {
+      "name": "Extended Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 500000000.0,
+      "spread_min": 0.0275,
+      "spread_max": 0.035,
+      "reference": "SOFR",
+      "floating": true
+    },
+    {
+      "name": "Series 2025-1 Notes (Class A-2) - 5.877%, due April 1, 2030 (discount based on imputed interest rate of 6.36%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.05877,
+      "effective": 0.0636,
+      "carrying": 426000000.0,
+      "floating": false
+    },
+    {
+      "name": "Convertible Senior Notes 2027, Excluding Over-Allotment Option",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "coupon": 0.075,
+      "carrying": 306500000.0,
+      "floating": false
+    },
+    {
+      "name": "Convertible senior notes - 7.50%, due December 1, 2027 (discount based on imputed interest rate of 8.29%)",
+      "kind": "convertible",
+      "as_of": "2026-06-30",
+      "effective": 0.0829,
+      "carrying": 306500000.0,
+      "coupon": 0.075,
+      "floating": false
+    },
+    {
+      "name": "Series 2025-2 Notes (Class A-2) - 5.177%, due January 20, 2031 (discount based on imputed interest rate of 5.76%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.05177,
+      "effective": 0.0576,
+      "carrying": 180000000.0,
+      "floating": false
+    },
+    {
+      "name": "Series 2026-1 Notes (Class C) - 7.653%, due February 1, 2031 (discount based on imputed interest rate of 8.184%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.07653,
+      "effective": 0.08184,
+      "carrying": 169400000.0,
+      "floating": false
+    },
+    {
+      "name": "Kinetic ABS Class A-1 Variable Funding Notes",
+      "kind": "abs",
+      "as_of": "2026-01-30",
+      "carrying": 150000000.0,
+      "spread": 0.0175,
+      "floating": true
+    },
+    {
+      "name": "Series 2026-1 Notes (Class B) - 5.561%, due February 1, 2031 (discount based on imputed interest rate of 6.066%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.05561,
+      "effective": 0.06066,
+      "carrying": 113000000.0,
+      "floating": false
+    },
+    {
+      "name": "Series 2025-1 Notes (Class C) - 9.018%, due April 1, 2030 (discount based on imputed interest rate of 9.54%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.09018,
+      "effective": 0.0954,
+      "carrying": 98000000.0,
+      "floating": false
+    },
+    {
+      "name": "Series 2025-1 Notes (Class B) - 6.369%, due April 1, 2030 (discount based on imputed interest rate of 6.86%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.06369,
+      "effective": 0.0686,
+      "carrying": 65000000.0,
+      "floating": false
+    },
+    {
+      "name": "Series 2025-2 Notes (Class C) - 7.834%, due January 20, 2031 (discount based on imputed interest rate of 8.45%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.07834,
+      "effective": 0.0845,
+      "carrying": 41800000.0,
+      "floating": false
+    },
+    {
+      "name": "Series 2025-2 Notes (Class B) - 5.621%, due January 20, 2031 (discount based on imputed interest rate of 6.21%)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.05621,
+      "effective": 0.0621,
+      "carrying": 28200000.0,
+      "floating": false
+    },
+    {
+      "name": "Windstream Credit Agreement",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "available": 338400000.0,
+      "capacity": 25000000.0,
+      "effective_min": 0.0778,
+      "effective_max": 0.1,
+      "rate_now": 0.0805,
+      "floating": false
+    },
+    {
+      "name": "Kinetic ABS Class A-1 Liquidity Funding Notes",
+      "kind": "abs",
+      "as_of": "2026-01-30",
+      "carrying": 14000000.0,
+      "floating": false
+    },
+    {
+      "name": "Uniti senior secured revolving credit facility, variable rate, due December 30, 2027",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": true
+    },
+    {
+      "name": "Windstream senior secured revolving credit facility - variable rate, due December 30, 2027",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": true
+    },
+    {
+      "name": "Senior secured Windstream term loan - variable rate, due October 1, 2031 (premium based on imputed interest rate of 9.15%)",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "effective": 0.0915,
+      "carrying": 0.0,
+      "spread_min": 0.0275,
+      "spread_max": 0.035,
+      "spread": 0.0375,
+      "reference": "Base Rate",
+      "coupon": 0.0915,
+      "floating": true
+    },
+    {
+      "name": "6.50% Senior Unsecured Notes due 2029",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.065,
+      "maturity_year": 2029,
+      "floating": false
+    },
+    {
+      "name": "Six Point Zero Percentage Senior Unsecured Notes Due January Fifteen Two Thousand Thirty",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.06,
+      "floating": false
+    },
+    {
+      "name": "New Seven-Year Term Loan Facility",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "spread": 0.03,
+      "effective_min": 0.0762,
+      "effective_max": 0.0772,
+      "reference": "Base Rate",
+      "floating": true
+    },
+    {
+      "name": "Windstream Term Loan",
+      "kind": "loan",
+      "as_of": "2026-02-04",
+      "effective_min": 0.0852,
+      "effective_max": 0.0857,
+      "rate_now": 0.0856,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-10-06",
+      "agreement_kind": "amendment",
+      "dated": "2025-10-06",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.5,
+      "maturity": "2022-10-24",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "As long as any Revolving Credit Commitment remains outstanding, Parent shall not permit the Consolidated Secured Net Leverage Ratio as of the last day of any Test Period (commencing with the Test Period ending June 30, 2015) to be greater than 5.00 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "be consummated using the proceeds of such Incremental Term Loans, Revolving Credit Loans made pursuant to such Revolving Commitment Increase or Permitted Debt Offering and calculated giving effect to any Revolving Commitment Increase (assuming it were fully drawn) on the closing date thereof), the Consolidated Secured Net Leverage Ratio is equal to or less than 4.00 to 1.00 for the most recently ended Test Period fo"
+        },
+        {
+          "type": "leverage",
+          "limit": 6.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "and other Investments to the extent such Investments consist of prepaid expenses made in the ordinary course of business by Parent or any Restricted Subsidiary; (s) so long as (i) no Default or Event of Default shall have occurred and be continuing or would occur as a consequence thereof, (ii) the Consolidated Total Net Leverage Ratio, determined on a Pro Forma Basis for the most recently ended Test Period for which"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2020795/000095010325012877/dp235539_ex1002.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-10-06",
+      "agreement_kind": "amendment",
+      "dated": "2025-10-06",
+      "title": "Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.625,
+      "maturity": "2024-09-21",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Prior to the Permitted Reorganization Effective Date, except with the written consent of the Required Revolving Credit Lenders, the Borrower shall not permit the Consolidated Total Leverage Ratio as of the last day of any Test Period (commencing with the Test Period ending on September 30, 2020) to be greater than (i) 3.50:1.00 for any Test Period ending on or prior to June 30, 2024 or (ii) 3.25:1.00 for any Test Per"
+        },
+        {
+          "type": "leverage",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Applicable Asset Sale Percentage ” means 100.0%; provided that so long as no Event of Default shall have occurred and be continuing or would result therefrom, the Applicable Percentage shall be (1) 50.0% if, on a pro forma basis after giving effect to such Asset Disposition and the use of proceeds therefrom the Consolidated First Lien Secured Leverage Ratio would be less than or equal to 1.50 to 1.00 but greater th"
+        },
+        {
+          "type": "leverage",
+          "limit": 1.25,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "the replacement, substitution, restoration or repair of assets on account of a Casualty Event; and (ll) any other Investment so long as, immediately after giving pro forma effect to the Investment and the incurrence of any Indebtedness the net proceeds of which are used to make such Investment, the Consolidated First Lien Secured Leverage Ratio shall be no greater than 1.25 to 1.00."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2020795/000095010325012877/dp235539_ex1001.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-08-04",
+      "agreement_kind": "amendment",
+      "dated": "2025-08-04",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/2020795/000095010325009757/dp232546_ex1002.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-07-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950103-26-010759",
+      "doc": "dp250187_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-04",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950103-26-001636",
+      "doc": "dp241101_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-03",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950103-26-001564",
+      "doc": "dp241016_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-10-27",
+      "items": "1.01,2.03,9.01",
+      "acc": "0000950103-25-013644",
+      "doc": "dp236277_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-10-06",
+      "items": "1.01,2.03,8.01,9.01",
+      "acc": "0000950103-25-012877",
+      "doc": "dp235539_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-09-25",
+      "items": "2.04,8.01,9.01",
+      "acc": "0000950103-25-012239",
+      "doc": "dp234910_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-08-04",
+      "items": "1.01,9.01",
+      "acc": "0000950103-25-009757",
+      "doc": "dp232546_8k-debt.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-08-01",
+      "items": "1.01,2.01,3.02,3.03,5.01,5.02,5.03,5.05,8.01,9.01",
+      "acc": "0000950103-25-009718",
+      "doc": "dp232461_8k12b.htm",
+      "desc": "FORM 8-K12B"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2025-09-30",
+      9285100000,
+      158000000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      10646600000,
+      982600000,
+      661600000,
+      1103900000,
+      227200000,
+      0.06214
+    ],
+    [
+      "2026-06-30",
+      10646600000,
+      608900000,
+      728400000,
+      1217400000,
+      114400000,
+      0.06842
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2025-11",
+      119.5,
+      2.104,
+      0.5231,
+      160.2
+    ],
+    [
+      "2025-12",
+      142.98,
+      2.049,
+      0.5403,
+      160.8
+    ],
+    [
+      "2026-01",
+      158.66,
+      2.07,
+      0.5458,
+      160.6
+    ],
+    [
+      "2026-02",
+      164.62,
+      1.959,
+      0.5634,
+      161.8
+    ],
+    [
+      "2026-03",
+      164.37,
+      1.964,
+      0.567,
+      161.7
+    ],
+    [
+      "2026-04",
+      237.04,
+      1.886,
+      0.6175,
+      162.5
+    ],
+    [
+      "2026-05",
+      208.76,
+      1.89,
+      0.6014,
+      162.5
+    ],
+    [
+      "2026-06",
+      214.94,
+      1.838,
+      0.6138,
+      163.1
+    ],
+    [
+      "2026-07",
+      162.84,
+      1.985,
+      0.568,
+      161.5
+    ],
+    [
+      "2026-08",
+      115.52,
+      2.275,
+      0.5077,
+      158.4
+    ],
+    [
+      "2026-09",
+      98.09,
+      2.26,
+      0.5036,
+      158.6
+    ],
+    [
+      "2026-10",
+      102.08,
+      1.809,
+      0.5767,
+      163.4
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

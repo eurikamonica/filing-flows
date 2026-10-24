@@ -1,0 +1,191 @@
+{
+  "cik": 2067129,
+  "ticker": "NP",
+  "name": "Neptune Insurance Holdings Inc.",
+  "sector": "financials",
+  "industry": "Insurance Agents, Brokers & Service",
+  "sic": "6411",
+  "docs": {
+    "xbrl:0002067129-26-000007": {
+      "instruments": [
+        {
+          "name": "Incremental Term Loans",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "capacity": 10000000.0,
+          "floating": true
+        },
+        {
+          "name": "2024 Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "carrying": 0.0,
+          "floating": false
+        },
+        {
+          "name": "2025 Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "carrying": 0.0,
+          "spread_min": 0.0075,
+          "spread_max": 0.02,
+          "reference": "SOFR",
+          "floating": true
+        },
+        {
+          "name": "Line of Credit",
+          "kind": "revolver",
+          "as_of": "2025-12-31",
+          "carrying": 0.0,
+          "floating": false
+        }
+      ],
+      "form": "10-K",
+      "date": "2026-02-26",
+      "report": "2025-12-31"
+    },
+    "xbrl:0001628280-26-049809": {
+      "instruments": [
+        {
+          "name": "2025 Credit Agreement",
+          "kind": "revolver",
+          "as_of": "2026-06-30",
+          "capacity": 260000000.0,
+          "spread_min": 0.0075,
+          "spread_max": 0.02,
+          "rate_now": 0.059,
+          "drawn": 240000000.0,
+          "available": 20000000.0,
+          "reference": "SOFR",
+          "floating": true
+        }
+      ],
+      "form": "10-Q",
+      "date": "2026-07-27",
+      "report": "2026-06-30"
+    },
+    "0001213900-25-109336:ea026353501ex10-8_neptune.htm": {
+      "kind": "agreement",
+      "date": "2025-11-12",
+      "agreement_kind": "amendment",
+      "dated": "2025-11-10",
+      "title": "The Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 5.0,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Holdings will not permit the Total Net Leverage Ratio, on the last day of any fiscal quarter of Holdings ending on or after March 31, 2025 (any such day, a “ Testing Date ”), to be greater than (i) 5.00 to 1.00 on each Testing Date occurring on or before September 30, 2025, (ii) 4.50 to 1.00 on each Testing Date occurring on or after December 31, 2025 but prior to September 30, 2026 and (iii) 4.00 to 1.00 on each Tes"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Holdings will not permit the Interest Coverage Ratio, for any period of four consecutive fiscal quarters ending on the last day of any fiscal quarter of Holdings ending on or after March 31, 2025, to be less than 2.00 to 1.00."
+        },
+        {
+          "type": "leverage",
+          "limit": 3.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "Acquisition, it shall deliver such quality of earnings report to the Administrative Agent; (e) [reserved]; (f) both before and immediately after giving effect (including giving effect on a pro forma basis) to such Acquisition and any Indebtedness incurred or assumed in connection therewith, (i) the Total Net Leverage Ratio is not greater than 3.75 to 1.00 and (ii) Holdings is in compliance with the financial covenant"
+        }
+      ]
+    }
+  },
+  "sic_description": "Insurance Agents, Brokers & Service",
+  "snapshot": {
+    "total_debt": 0,
+    "current_debt": 0,
+    "cash": 8036000,
+    "revolver_drawn": 240000000,
+    "equity": -222241000,
+    "assets": 102214000,
+    "liabilities": 324455000,
+    "assets_current": 89015000,
+    "liabilities_current": 84455000,
+    "retained_earnings": -491206000,
+    "interest_expense": 17131000,
+    "interest_paid": 17131000,
+    "operating_income": 74030000,
+    "pretax_income": 57833000,
+    "net_income": 38999000,
+    "ocf": 72110000,
+    "revenue": 181799000,
+    "revolver_rate": 0.074,
+    "shares": 145973442,
+    "balance_date": "2025-12-31",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "revolver_drawn": "LongTermLineOfCredit",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (fiscal year)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "revolver_rate": "LineOfCreditFacilityInterestRateAtPeriodEnd"
+  },
+  "history": [
+    {
+      "end": "2025-09-30",
+      "filed": "2025-11-12",
+      "total_debt": 262639000,
+      "cash": 12184000,
+      "investments": null,
+      "interest_expense": null,
+      "operating_income": null,
+      "da": null,
+      "ocf": null,
+      "revenue": null,
+      "shares": 93350000,
+      "convertible": null,
+      "equity": -509549000,
+      "interest_paid": null
+    },
+    {
+      "end": "2025-12-31",
+      "filed": "2026-02-26",
+      "total_debt": 0,
+      "cash": null,
+      "investments": null,
+      "interest_expense": 18243000,
+      "operating_income": 70955000,
+      "da": null,
+      "ocf": 51670000,
+      "revenue": 159551000,
+      "shares": 104502838,
+      "convertible": null,
+      "equity": null,
+      "interest_paid": 17131000
+    }
+  ],
+  "xbrl_10-K": "xbrl:0002067129-26-000007",
+  "xbrl_10-Q": "xbrl:0001628280-26-049809",
+  "events": [],
+  "fetched_at": "2026-10-18T13:10:51+00:00",
+  "signature": "0001628280-26-064028"
+}

@@ -1,0 +1,331 @@
+{
+  "cik": 2094433,
+  "ticker": "RMIX",
+  "name": "Suncrete, Inc.",
+  "sector": "materials",
+  "industry": "Concrete Products, Except Block & Brick",
+  "sic": "3272",
+  "sic_description": "Concrete Products, Except Block & Brick",
+  "generated_at": "2026-10-24T14:46:12+00:00",
+  "fetched_at": "2026-10-18T12:53:42+00:00",
+  "price": 8.91,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.755215,
+  "snapshot": {
+    "total_debt": 218473000,
+    "current_debt": 17370000,
+    "cash": 28632000,
+    "operating_leases": 15641000,
+    "equity": 358004000,
+    "assets": 699431000,
+    "liabilities": 341427000,
+    "assets_current": 137752000,
+    "liabilities_current": 98523000,
+    "retained_earnings": -57892000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 9179000,
+      "y2": 19962000,
+      "y3": 21585000,
+      "y4": 166213000,
+      "y5": 3101000
+    },
+    "shares": 43440122,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit"
+  },
+  "analysis": {
+    "total_debt": 218473000,
+    "cash_and_investments": 28632000.0,
+    "net_debt": 189841000.0,
+    "ebitda": null,
+    "ebit": null,
+    "interest_expense": null,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": null,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 3000000.0,
+    "liquidity": 31632000.0,
+    "due_12m": 9179000,
+    "due_24m": 29141000,
+    "liquidity_to_due12": 3.446127,
+    "liquidity_to_due24": 1.085481,
+    "floating_debt": 213638000.0,
+    "floating_share": 0.977869,
+    "plus100bp_interest": 2136380.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 387051487.02,
+    "debt_to_ev": 0.378707,
+    "convertibles": null,
+    "implied": {
+      "dd": 2.244898,
+      "pd_1y": 0.012387,
+      "spread_5y_bps": 351.814634,
+      "asset_vol": 0.586492,
+      "calibrated_5y_bps": 158.724026,
+      "rating_band": "BB"
+    },
+    "market_rate_5y": 0.064972,
+    "covenants": [
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.25,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "And Fifth Amendment To Credit Agreement",
+        "dated": "2026-06-30",
+        "text": "Permit the Consolidated Fixed Charge Coverage Ratio as of the end of any Measurement Period ending as of the end of any Fiscal Quarter of the Borrower to be less than 1.25:1.00. 7.12 Amendments of Organization Documents ;"
+      }
+    ],
+    "cushion_score": 68
+  },
+  "instruments": [
+    {
+      "name": "Term Loans",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 189200000.0,
+      "floating": true
+    },
+    {
+      "name": "Loans",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "carrying": 189188000.0,
+      "floating": false
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 22000000.0,
+      "capacity": 25000000.0,
+      "drawn": 22000000.0,
+      "floating": true
+    },
+    {
+      "name": "Delayed Draw Term Loan Facility",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "fee_min": 0.0035,
+      "fee_max": 0.005,
+      "available": 175000000.0,
+      "capacity": 10000000.0,
+      "floating": true
+    },
+    {
+      "name": "Equipment Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 4414000.0,
+      "floating": false
+    },
+    {
+      "name": "Equipment Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 2438000.0,
+      "maturity": "2030-12-31",
+      "floating": true
+    },
+    {
+      "name": "Lafayette Acquisition Note",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 2000000.0,
+      "floating": false
+    },
+    {
+      "name": "Delayed Draw Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 0.0,
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-07-07",
+      "agreement_kind": "amendment",
+      "dated": "2026-06-30",
+      "title": "And Fifth Amendment To Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "maturity": "2029-07-29",
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Consolidated Fixed Charge Coverage Ratio as of the end of any Measurement Period ending as of the end of any Fiscal Quarter of the Borrower to be less than 1.25:1.00. 7.12 Amendments of Organization Documents ;"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.75,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": false,
+          "text": "h Amendment Commitment Increase and Fifth Amendment to Credit Agreement – Page 3 Effective Date, on a Pro Forma Basis (assuming, in the case of Incremental Revolving Commitments, that such Incremental Revolving Commitments are fully drawn), (i) the Loan Parties are in Pro Forma Compliance, (ii) the Consolidated Senior Net Leverage Ratio is not greater than 3.75:1.00, calculated using the same Measurement Period used"
+        },
+        {
+          "type": "leverage",
+          "limit": 0.25,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Certificate demonstrating to the reasonable satisfaction of the Administrative Agent that, both before and after giving effect to the Acquisition on a Pro Forma Basis and the incurrence of any related Delayed Draw 35 Term Loans , ( i A ) the Loan Parties are in Pro Forma Compliance and ( ii B ) the Consolidated Senior Net Leverage Ratio shall be is at least 0.25 to 1.0 less than the then applicable level set forth in"
+        },
+        {
+          "type": "liquidity",
+          "limit": 25000000.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "ed that (i) at the time of such payment, no Default or Event of Default shall exist or would result upon giving Pro Forma Effect thereto, (ii) after giving effect to such Restricted Payment, Borrower is in Pro Forma Compliance with Section 7.11, (iii) after giving effect to such Restricted Payment, Liquidity is equal to or greater than $25,000,000, and (iv) prior to the making of such Restricted Payment, the Borrower"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/2094433/000119312526297543/d220322dex101.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-04-14",
+      "agreement_kind": "amendment",
+      "dated": "2026-04-07",
+      "title": "And Third Amendment To Credit Agreement",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/2094433/000110465926043237/tm2611641d1_ex10-20.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2026-04-14",
+      "agreement_kind": "amendment",
+      "dated": "2024-07-29",
+      "facility": "loan",
+      "url": "https://www.sec.gov/Archives/edgar/data/2094433/000110465926043237/tm2611641d1_ex10-7.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-07-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-26-297543",
+      "doc": "d220322d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-05-07",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0001104659-26-057182",
+      "doc": "tm2613866d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-29",
+      "items": "1.01,2.01,3.02,7.01,9.01",
+      "acc": "0001104659-26-050956",
+      "doc": "tm2613031d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-14",
+      "items": "1.01,2.01,3.02,3.03,4.01,5.01,5.02,5.03,5.05,5.06,9.01",
+      "acc": "0001104659-26-043237",
+      "doc": "tm2611641d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-02",
+      "items": "1.01,3.02,7.01,9.01",
+      "acc": "0001104659-26-038770",
+      "doc": "tm2610995d1_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-06-30",
+      218473000,
+      28632000,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-08",
+      252.01,
+      2.94,
+      0.7357,
+      151.6
+    ],
+    [
+      "2026-09",
+      317.33,
+      2.559,
+      0.7639,
+      155.5
+    ],
+    [
+      "2026-10",
+      345.4,
+      2.3,
+      0.7552,
+      158.1
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

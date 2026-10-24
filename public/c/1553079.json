@@ -1,0 +1,901 @@
+{
+  "cik": 1553079,
+  "ticker": "ESBA",
+  "name": "Empire State Realty OP, L.P.",
+  "sector": "real-estate",
+  "industry": "Real Estate Investment Trusts",
+  "sic": "6798",
+  "sic_description": "Real Estate Investment Trusts",
+  "generated_at": "2026-10-24T14:46:10+00:00",
+  "fetched_at": "2026-10-18T10:55:54+00:00",
+  "price": 4.985,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.367473,
+  "snapshot": {
+    "total_debt": 443102000,
+    "cash": 85605000,
+    "operating_leases": 1063000,
+    "convertible": 1271149000,
+    "revolver_drawn": 175000000,
+    "assets": 4273098000,
+    "liabilities": 2483389000,
+    "interest_expense": 107011000,
+    "interest_paid": 92439000,
+    "operating_income": -34517000,
+    "pretax_income": 10128000,
+    "net_income": 9258000,
+    "da": 198789000,
+    "ocf": 227643000,
+    "revenue": 784178000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 159276000,
+      "rest_of_year": 2018000,
+      "y2": 149646000,
+      "y3": 428890000,
+      "y4": 333111000
+    },
+    "shares": 0,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "NotesPayable",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "operating_leases": "OperatingLeaseLiability",
+    "convertible": "ConvertibleDebt",
+    "revolver_drawn": "LineOfCredit",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "interest_expense": "InterestExpense (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "ProfitLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "revenue": "Revenues (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 443102000,
+    "cash_and_investments": 85605000.0,
+    "net_debt": 357497000.0,
+    "ebitda": 164272000,
+    "ebit": -34517000,
+    "interest_expense": 107011000,
+    "leverage": 2.697368,
+    "net_leverage": 2.17625,
+    "interest_coverage": -0.322556,
+    "ebitda_coverage": 1.535095,
+    "cash_coverage": 3.462629,
+    "fcf": 227643000.0,
+    "fcf_to_debt": 0.513749,
+    "effective_rate": 0.241504,
+    "revolver_available": 1500000000.0,
+    "liquidity": 1585605000.0,
+    "due_12m": 159276000,
+    "due_24m": 308922000,
+    "liquidity_to_due12": 9.955078,
+    "liquidity_to_due24": 5.132703,
+    "floating_debt": 443102000,
+    "floating_share": 1.0,
+    "plus100bp_interest": 4431020.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": -59437894.435682,
+    "covenants": [
+      {
+        "type": "interest_coverage",
+        "direction": "min",
+        "limit": 1.75,
+        "unit": "x",
+        "actual": 1.535095,
+        "cushion": -0.139995,
+        "agreement": "First Amendment To Amended And Restated Credit Agreement",
+        "dated": "2026-07-17",
+        "text": "Permit the Unencumbered Interest Coverage Ratio as of the last day of any fiscal quarter of the Parent to be less than 1.75 to 1.00."
+      },
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.5,
+        "unit": "x",
+        "actual": 1.535095,
+        "cushion": 0.022861,
+        "agreement": "First Amendment To Amended And Restated Credit Agreement",
+        "dated": "2026-07-17",
+        "text": "Permit the Fixed Charge Coverage Ratio as of the last day of any fiscal quarter of the Parent to be less than 1.50 to 1.00."
+      }
+    ],
+    "cushion_score": 40
+  },
+  "instruments": [
+    {
+      "name": "Mortgages, Senior Notes, and Unsecured Term Loan Facilities, not Including Unsecured Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "carrying": 2240571000.0,
+      "floating": true
+    },
+    {
+      "name": "Credit Facility",
+      "kind": "revolver",
+      "as_of": "2025-05-28",
+      "capacity": 1500000000.0,
+      "floating": false
+    },
+    {
+      "name": "Mortgage notes payable",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "carrying": 443100000.0,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2031 (Series L)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 175000000.0,
+      "coupon": 0.0547,
+      "effective": 0.057,
+      "maturity_year": 2031,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2033 (Series F)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 175000000.0,
+      "coupon": 0.0444,
+      "effective": 0.0445,
+      "maturity_year": 2033,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2030 (Series E)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 160000000.0,
+      "coupon": 0.0426,
+      "effective": 0.0427,
+      "maturity_year": 2030,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2029 (Series I)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 155000000.0,
+      "coupon": 0.072,
+      "effective": 0.0739,
+      "maturity_year": 2029,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2027 (Series B)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 125000000.0,
+      "coupon": 0.0409,
+      "effective": 0.0412,
+      "maturity_year": 2027,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2030 (Series C)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 125000000.0,
+      "coupon": 0.0418,
+      "effective": 0.0421,
+      "maturity_year": 2030,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2028 (Series D)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 115000000.0,
+      "coupon": 0.0408,
+      "effective": 0.0411,
+      "maturity_year": 2028,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2032 (Series G)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 100000000.0,
+      "coupon": 0.0361,
+      "effective": 0.0489,
+      "maturity_year": 2032,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2035 (Series H)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 75000000.0,
+      "coupon": 0.0373,
+      "effective": 0.05,
+      "maturity_year": 2035,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2031 (Series J)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 45000000.0,
+      "coupon": 0.0732,
+      "effective": 0.0746,
+      "maturity_year": 2031,
+      "floating": false
+    },
+    {
+      "name": "Senior unsecured notes due 2034 (Series K)",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "carrying": 25000000.0,
+      "coupon": 0.0741,
+      "effective": 0.0752,
+      "maturity_year": 2034,
+      "floating": false
+    },
+    {
+      "name": "1542 Third Avenue",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "coupon": 0.0429,
+      "effective": 0.0453,
+      "floating": false
+    },
+    {
+      "name": "1010 Third Avenue and 77 West 55th Street",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "coupon": 0.0401,
+      "effective": 0.0421,
+      "floating": false
+    },
+    {
+      "name": "250 West 57th Street",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "coupon": 0.0,
+      "effective": 0.0,
+      "floating": false
+    },
+    {
+      "name": "1333 Broadway",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "coupon": 0.0421,
+      "effective": 0.0429,
+      "floating": false
+    },
+    {
+      "name": "10 Union Square East",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "coupon": 0.0533,
+      "effective": 0.0559,
+      "floating": false
+    },
+    {
+      "name": "345 East 94th Street - Series A",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "spread": 0.0095,
+      "effective": 0.0356,
+      "floating": true
+    },
+    {
+      "name": "345 East 94th Street - Series B",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "spread": 0.0224,
+      "effective": 0.0356,
+      "floating": true
+    },
+    {
+      "name": "561 10th Avenue - Series A",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "spread": 0.0107,
+      "effective": 0.0385,
+      "floating": true
+    },
+    {
+      "name": "561 10th Avenue - Series B",
+      "kind": "mortgage",
+      "as_of": "2026-06-30",
+      "spread": 0.0245,
+      "effective": 0.0385,
+      "floating": true
+    },
+    {
+      "name": "Term Loan Facility",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "drawn": 245000000.0,
+      "spread": 0.016,
+      "effective": 0.0456,
+      "floating": true
+    },
+    {
+      "name": "Unsecured Term Loan Facility",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "drawn": 95000000.0,
+      "spread": 0.016,
+      "effective": 0.0526,
+      "floating": true
+    },
+    {
+      "name": "Unsecured revolving credit facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "drawn": 175000000.0,
+      "spread": 0.014,
+      "effective": 0.0507,
+      "floating": true
+    },
+    {
+      "name": "Unsecured term loan facilities",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "spread": 0.015,
+      "drawn": 245000000.0,
+      "floating": true
+    },
+    {
+      "name": "Credit Facility - Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "spread": 0.013,
+      "drawn": 175000000.0,
+      "floating": true
+    },
+    {
+      "name": "Series F",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 175000000.0,
+      "coupon": 0.0444,
+      "effective": 0.0445,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series L",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 175000000.0,
+      "coupon": 0.0547,
+      "effective": 0.057,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series E",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 160000000.0,
+      "coupon": 0.0426,
+      "effective": 0.0427,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series I",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 155000000.0,
+      "coupon": 0.072,
+      "effective": 0.0739,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series B",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 125000000.0,
+      "coupon": 0.0409,
+      "effective": 0.0412,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series C",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 125000000.0,
+      "coupon": 0.0418,
+      "effective": 0.0421,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series D",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 115000000.0,
+      "coupon": 0.0408,
+      "effective": 0.0411,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series G",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 100000000.0,
+      "coupon": 0.0361,
+      "effective": 0.0489,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series H",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 75000000.0,
+      "coupon": 0.0373,
+      "effective": 0.05,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series J",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 45000000.0,
+      "coupon": 0.0732,
+      "effective": 0.0746,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series K",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 25000000.0,
+      "coupon": 0.0741,
+      "effective": 0.0752,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "10 Union Square",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.037,
+      "effective": 0.0397,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Metro Center",
+      "kind": "mortgage",
+      "as_of": "2025-12-31",
+      "coupon": 0.0,
+      "effective": 0.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Series A",
+      "kind": "notes",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "coupon": 0.0,
+      "effective": 0.0,
+      "floating": false,
+      "from_10k": true
+    },
+    {
+      "name": "Unsecured term loan facility",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "drawn": 95000000.0,
+      "spread": 0.015,
+      "effective": 0.0516,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-07-17",
+      "agreement_kind": "amendment",
+      "dated": "2026-07-17",
+      "title": "First Amendment To Amended And Restated Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "fee_pct": 0.2,
+      "maturity": "2032-01-12",
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Unencumbered Interest Coverage Ratio as of the last day of any fiscal quarter of the Parent to be less than 1.75 to 1.00."
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Fixed Charge Coverage Ratio as of the last day of any fiscal quarter of the Parent to be less than 1.50 to 1.00."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1553079/000154140126000028/firstamendmenttoamendedand.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-11-17",
+      "agreement_kind": "credit_agreement",
+      "dated": "2025-11-14",
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "covenants": [
+        {
+          "type": "interest_coverage",
+          "limit": 1.75,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Unencumbered Interest Coverage Ratio as of the last day of any fiscal quarter of the Parent to be less than 1.75 to 1.00."
+        },
+        {
+          "type": "fixed_charge",
+          "limit": 1.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Fixed Charge Coverage Ratio as of the last day of any fiscal quarter of the Parent to be less than 1.50 to 1.00."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1553079/000154140125000040/wellstermloancreditagreeme.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-07-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001541401-26-000028",
+      "doc": "esrt-20260717.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2026-04-15",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001541401-26-000013",
+      "doc": "esrt-20260415.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-11-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001541401-25-000040",
+      "doc": "esrt-20251114.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-10-16",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001541401-25-000031",
+      "doc": "esrt-20251015.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2024-04-11",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001104659-24-046285",
+      "doc": "tm2411551d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-03-13",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001541401-24-000007",
+      "doc": "esrt-20240308.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2021-04-01",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-21-103345",
+      "doc": "d284786d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-03-23",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001193125-20-082533",
+      "doc": "d882953d8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2019-12-12",
+      "items": "1.01,3.02,3.03,9.01",
+      "acc": "0001193125-19-312135",
+      "doc": "d829242d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-12-14",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001193125-17-369528",
+      "doc": "d507107d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2017-09-05",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-17-276178",
+      "doc": "d452258d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-08-25",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001193125-15-301776",
+      "doc": "d86744d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-03-30",
+      "items": "1.01,2.03,7.01,9.01",
+      "acc": "0001193125-15-110300",
+      "doc": "d899681d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-01-23",
+      "items": "1.01,1.02,2.03",
+      "acc": "0001193125-15-018928",
+      "doc": "d858269d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-08-26",
+      "items": "1.01,3.02,3.03,8.01,9.01",
+      "acc": "0001193125-14-321627",
+      "doc": "d781667d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-08-12",
+      "items": "1.01,2.03,3.02,9.01",
+      "acc": "0001193125-14-306674",
+      "doc": "d770464d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-05-22",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001193125-14-209938",
+      "doc": "d732147d8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-10-07",
+      "items": "1.01,2.03,5.03,9.01",
+      "acc": "0001193125-13-393089",
+      "doc": "d609388d8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2014-03-31",
+      878545000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-06-30",
+      873863000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2014-09-30",
+      1005569000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-03-31",
+      855032000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-06-30",
+      759405000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2015-09-30",
+      754738000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-03-31",
+      772015000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-06-30",
+      767717000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2016-09-30",
+      763457000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-03-31",
+      754548000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-06-30",
+      724312000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2017-09-30",
+      720830000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-03-31",
+      610826000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-06-30",
+      610026000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2018-09-30",
+      609299000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-03-31",
+      607823000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-06-30",
+      607072000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2019-09-30",
+      606313000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

@@ -1,0 +1,647 @@
+{
+  "cik": 1800227,
+  "ticker": "PPLI",
+  "name": "People Inc",
+  "sector": "technology",
+  "industry": "Services-Computer Programming, Data Processing, Etc.",
+  "sic": "7370",
+  "sic_description": "Services-Computer Programming, Data Processing, Etc.",
+  "generated_at": "2026-10-24T14:46:11+00:00",
+  "fetched_at": "2026-10-18T08:59:17+00:00",
+  "price": 39.58,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.310334,
+  "snapshot": {
+    "total_debt": 1414718000,
+    "current_debt": 24500000,
+    "cash": 1113008000,
+    "equity": 5082381000,
+    "assets": 7519944000,
+    "assets_current": 1551712000,
+    "liabilities_current": 420404000,
+    "retained_earnings": -208031000,
+    "interest_expense": 106269000,
+    "operating_income": -157130000,
+    "pretax_income": 658852000,
+    "net_income": 336296000,
+    "da": 33819000,
+    "ocf": 154116000,
+    "capex": 30193000,
+    "revenue": 2381118000,
+    "debt_issued": 0,
+    "maturities": {
+      "as_of": "2025-12-31",
+      "next12m": 24500000,
+      "y2": 24500000,
+      "y3": 42000000,
+      "y4": 59500000,
+      "y5": 225750000,
+      "after5": 1065000000
+    },
+    "shares": 0,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebtCurrent+LongTermDebtNoncurrent",
+    "current_debt": "LongTermDebtCurrent",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "Depreciation (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerExcludingAssessedTax (FY + YTD − prior YTD)",
+    "debt_issued": "ProceedsFromIssuanceOfSeniorLongTermDebt (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 1414718000,
+    "cash_and_investments": 1113008000.0,
+    "net_debt": 301710000.0,
+    "ebitda": -123311000,
+    "ebit": -157130000,
+    "interest_expense": 106269000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": -1.478606,
+    "ebitda_coverage": -1.160367,
+    "fcf": 123923000,
+    "fcf_to_debt": 0.087596,
+    "effective_rate": 0.075117,
+    "revolver_available": 150000000.0,
+    "liquidity": 1263008000.0,
+    "due_12m": 24500000,
+    "due_24m": 49000000,
+    "liquidity_to_due12": 51.551347,
+    "liquidity_to_due24": 25.775673,
+    "floating_debt": 1029000000.0,
+    "floating_share": 0.727353,
+    "plus100bp_interest": 10290000.0,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": null,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "market_rate_5y": 0.0491,
+    "refi_extra_interest": -1274820.115246,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "min",
+        "limit": 4.0,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "To Credit Agreement",
+        "dated": "2025-06-16",
+        "text": "time outstanding; (d) Investments made by the Borrower or any Restricted Subsidiary in the Borrower or any Restricted Subsidiary or any Person who becomes a Restricted Subsidiary in connection with such Investment; (e) Investments made at any time if , after giving pro forma effect thereto, (i) the Consolidated Net Leverage Ratio is equal to or less than 4.00 to 1.00 and (ii) no Event of Default shall have occurred a"
+      }
+    ],
+    "cushion_score": 52
+  },
+  "instruments": [
+    {
+      "name": "Term Loan B-2 Facility",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 696500000.0,
+      "spread_min": 0.005,
+      "spread": 0.035,
+      "coupon": 0.0712,
+      "floating": true
+    },
+    {
+      "name": "2032 Notes",
+      "kind": "notes",
+      "as_of": "2026-06-30",
+      "coupon": 0.07625,
+      "carrying": 400000000.0,
+      "floating": false
+    },
+    {
+      "name": "Term Loan A-1 Facility",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "carrying": 332500000.0,
+      "spread": 0.02,
+      "coupon": 0.0565,
+      "floating": true
+    },
+    {
+      "name": "Existing Revolving Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "fee": 0.0035,
+      "floating": true
+    },
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "face": 1040000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Revolving Facility",
+      "kind": "revolver",
+      "as_of": "2025-05-14",
+      "capacity": 150000000.0,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Term Loan A Facility",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "spread": 0.0225,
+      "coupon": 0.0694,
+      "floating": true,
+      "from_10k": true
+    },
+    {
+      "name": "Term Loan B-1 Facility",
+      "kind": "loan",
+      "as_of": "2025-12-31",
+      "carrying": 0.0,
+      "coupon": 0.0805,
+      "floating": true,
+      "from_10k": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2025-06-17",
+      "agreement_kind": "amendment",
+      "dated": "2025-06-16",
+      "title": "To Credit Agreement",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        2.0,
+        3.5
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "time outstanding; (d) Investments made by the Borrower or any Restricted Subsidiary in the Borrower or any Restricted Subsidiary or any Person who becomes a Restricted Subsidiary in connection with such Investment; (e) Investments made at any time if , after giving pro forma effect thereto, (i) the Consolidated Net Leverage Ratio is equal to or less than 4.00 to 1.00 and (ii) no Event of Default shall have occurred a"
+        },
+        {
+          "type": "leverage",
+          "limit": 20000000.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "s the case may be, shall not be included in this clause (ii) and (c) the aggregate amount of all adjustments to Consolidated EBITDA pursuant to this clause (ii) and clause (A)(3) of the definitions of “Consolidated Net Leverage Ratio”, “First Lien Net Leverage Ratio” , “Interest Coverage Ratio” or “Secured Net Leverage Ratio”, as applicable, shall not exceed $20,000,000 in any Test Period. - 18 - “ Consolidated Incom"
+        },
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "t of the commitments in respect thereof, any Asset Acquisition consummated concurrently therewith, the use of proceeds thereof and all other related transactions or events, (i) in the case of an Incremental Facility secured by a Lien on the Collateral that ranks pari passu with the Obligations, the First Lien Net Leverage Ratio is equal to or less than 4.00 to 1.00 or (ii) in the case of an Incremental Facility that"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "her (A) the Consolidated Net Leverage Ratio is equal to or less than (I) 5.50 to 1.00 or (II) in the case of an Incremental Facility incurred to finance an Asset Acquisition or other Investment, the Consolidated Net Leverage Ratio immediately prior to such incurrence of such Indebtedness or (B) the Interest Coverage Ratio would not be less than (I) 2.00 to 1.00 or (II) in the case of an Incremental Facility incurred"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1800227/000110465925060270/tm2517978d1_ex10-1.htm",
+      "all_in_pct": [
+        2.0389,
+        3.5389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2025-05-19",
+      "agreement_kind": "amendment",
+      "dated": "2025-05-14",
+      "facility": "revolving",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        3.5,
+        4.0
+      ],
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.9,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "“ Required ECF Percentage ” means, with respect to any Excess Cash Flow Period, 50%; provided that, if the First Lien Net Leverage Ratio as of the end of such Excess Cash Flow Period is (x) less than or equal to 2.90 to 1.00 but greater than 2.40 to 1.00, such percentage shall be 25% or (y) less than or equal to 2.40 to 1.00, such percentage shall be 0%."
+        },
+        {
+          "type": "leverage",
+          "limit": 20000000.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "n, assembling or creation, as the case may be, shall not be included in this clause (ii) and (c) the aggregate amount of all adjustments to Consolidated EBITDA pursuant to this clause (ii) and clause (A)(3) of the definitions of “Consolidated Net Leverage Ratio”, “First Lien Net Leverage Ratio” or “Secured Net Leverage Ratio”, as applicable, shall not exceed $20,000,000 in any Test Period."
+        },
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "the “ Cash Capped Amount ”), plus (b) any amounts so long as immediately after giving pro forma effect to the establishment of the commitments in respect thereof, any Asset Acquisition consummated concurrently therewith, the use of proceeds thereof and all other related transactions or events, the First Lien Net Leverage Ratio is equal to or less than 4.00 to 1.00 on the date of the initial incurrence of (or commitm"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "tial incurrence of (or commitment in respect of) such Indebtedness or on the LCT Test Date, as applicable, and (B) if such Indebtedness is secured by the Collateral on a junior lien basis with the Obligations, (i) the Consolidated Net Leverage Ratio is equal to or less than 5.50 to 1.00 or (ii) the Interest Coverage Ratio would be not less than 2.00 to 1.00, in each case only on the date of the initial incurrence of"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1800227/000110465925050217/tm2514987d1_ex10-1.htm",
+      "all_in_pct": [
+        3.5389,
+        4.0389
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2024-11-26",
+      "agreement_kind": "amendment",
+      "dated": "2024-11-26",
+      "facility": "term loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "EURIBOR"
+      ],
+      "margin_pct": [
+        3.5,
+        4.0
+      ],
+      "fee_pct": 0.35,
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.9,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "“ Required ECF Percentage ” means, with respect to any Excess Cash Flow Period, 50%; provided that, if the First Lien Net Leverage Ratio as of the end of such Excess Cash Flow Period is (x) less than or equal to 2.90 to 1.00 but greater than 2.40 to 1.00, such percentage shall be 25% or (y) less than or equal to 2.40 to 1.00, such percentage shall be 0%."
+        },
+        {
+          "type": "leverage",
+          "limit": 20000000.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "n, assembling or creation, as the case may be, shall not be included in this clause (ii) and (c) the aggregate amount of all adjustments to Consolidated EBITDA pursuant to this clause (ii) and clause (A)(3) of the definitions of “Consolidated Net Leverage Ratio”, “First Lien Net Leverage Ratio” or “Secured Net Leverage Ratio”, as applicable, shall not exceed $20,000,000 in any Test Period."
+        },
+        {
+          "type": "leverage",
+          "limit": 4.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "(b) (a) any amounts so long as immediately after giving pro forma effect to the establishment of the commitments in respect thereof, any Asset Acquisition consummated concurrently therewith and , the use of proceeds of the loans thereunder thereof and all other related transactions or events , the First Lien Net Leverage Ratio is equal to or less than 4.00 to 1.00 on the date of the initial incurrence of (or commitm"
+        },
+        {
+          "type": "interest_coverage",
+          "limit": 2.0,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "tial incurrence of (or commitment in respect of) such Indebtedness or on the LCT Test Date, as applicable, and (B) if such Indebtedness is secured by the Collateral on a junior lien basis with the Obligations, (i) the Consolidated Net Leverage Ratio is equal to or less than 5.50 to 1.00 or (ii) the Interest Coverage Ratio would be not less than 2.00 to 1.00, in each case only on the date of the initial incurrence of"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/1800227/000110465924123092/tm2429516d1_ex10-1.htm",
+      "all_in_pct": [
+        3.5389,
+        4.0389
+      ]
+    }
+  ],
+  "events": [
+    {
+      "date": "2025-06-17",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-060270",
+      "doc": "tm2517978d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-05-19",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-25-050217",
+      "doc": "tm2514987d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-01-21",
+      "items": "1.01",
+      "acc": "0001104659-25-004944",
+      "doc": "tm254017d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-01-13",
+      "items": "1.01,1.02,5.02,8.01,9.01",
+      "acc": "0001104659-25-003096",
+      "doc": "tm253165d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-11-26",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-24-123092",
+      "doc": "tm2429516d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-12-01",
+      "items": "1.01,2.01,2.03,7.01,9.01",
+      "acc": "0001104659-21-145542",
+      "doc": "tm2134264d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-10-07",
+      "items": "1.01,7.01,8.01,9.01",
+      "acc": "0001104659-21-123899",
+      "doc": "tm2129390d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-08-24",
+      "items": "1.01",
+      "acc": "0001104659-21-108987",
+      "doc": "tm2124684d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-05-28",
+      "items": "1.01,2.01,3.03,5.03,9.01",
+      "acc": "0001104659-21-074131",
+      "doc": "tm2116546d5_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-08-20",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-20-097293",
+      "doc": "tm2029028d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-07-02",
+      "items": "1.01,2.01,3.02,3.03,5.01,5.02,5.03,8.01,9.01",
+      "acc": "0001104659-20-080610",
+      "doc": "tm2022502-7_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-06-24",
+      "items": "1.01,9.01",
+      "acc": "0001104659-20-076155",
+      "doc": "tm2022502d4_8k.htm",
+      "desc": "FORM 8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2020-03-31",
+      242393000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-06-30",
+      239086000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2020-09-30",
+      729158000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-03-31",
+      705987000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-06-30",
+      494195000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2021-09-30",
+      494373000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-03-31",
+      2069655000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-06-30",
+      2063038000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2022-09-30",
+      2056404000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-03-31",
+      2043107000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-06-30",
+      2036456000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2023-09-30",
+      2029805000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-03-31",
+      2016503000,
+      null,
+      159178000,
+      null,
+      null,
+      0.07894
+    ],
+    [
+      "2024-06-30",
+      2009857000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2024-09-30",
+      2003215000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-03-31",
+      1461875000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-06-30",
+      1433332000,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2025-09-30",
+      1429590000,
+      1005496000,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      "2026-03-31",
+      1420274000,
+      1112445000,
+      117571000,
+      -128023000,
+      -161606000,
+      0.08278
+    ],
+    [
+      "2026-06-30",
+      1414718000,
+      1113008000,
+      106269000,
+      -123311000,
+      -157130000,
+      0.07512
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

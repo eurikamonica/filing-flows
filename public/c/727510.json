@@ -1,0 +1,412 @@
+{
+  "cik": 727510,
+  "ticker": "VISK",
+  "name": "Viskase Holdings, Inc.",
+  "sector": "health",
+  "industry": "Biological Products, (No Diagnostic Substances)",
+  "sic": "2836",
+  "sic_description": "Biological Products, (No Diagnostic Substances)",
+  "generated_at": "2026-10-24T14:46:13+00:00",
+  "fetched_at": "2026-10-18T12:55:34+00:00",
+  "price": 4.2,
+  "price_date": "2026-10-23",
+  "equity_vol": 4.722555,
+  "snapshot": {
+    "total_debt": 183865000,
+    "current_debt": 108936000,
+    "cash": 7911000,
+    "short_term_borrowings": 54468000,
+    "equity": 186800000,
+    "assets": 424483000,
+    "assets_current": 227337000,
+    "liabilities_current": 123630000,
+    "retained_earnings": -23632000,
+    "operating_income": 5372000,
+    "pretax_income": 6719000,
+    "net_income": 18671000,
+    "ocf": -32903000,
+    "maturities": {
+      "as_of": "2026-06-30",
+      "next12m": 88125000,
+      "rest_of_year": 46968000
+    },
+    "shares": 14331620,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "total_debt": "LongTermDebt+ShortTermBorrowings",
+    "current_debt": "LongTermDebtCurrent+ShortTermBorrowings",
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "short_term_borrowings": "ShortTermBorrowings",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)"
+  },
+  "analysis": {
+    "total_debt": 183865000,
+    "cash_and_investments": 7911000.0,
+    "net_debt": 175954000.0,
+    "ebitda": 5372000.0,
+    "ebit": 5372000,
+    "interest_expense": null,
+    "leverage": 34.226545,
+    "net_leverage": 32.753909,
+    "interest_coverage": null,
+    "ebitda_coverage": null,
+    "fcf": -32903000.0,
+    "fcf_to_debt": -0.178952,
+    "effective_rate": null,
+    "revolver_available": 12200000.0,
+    "liquidity": 20111000.0,
+    "due_12m": 88125000,
+    "due_24m": null,
+    "liquidity_to_due12": 0.22821,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": 0.0,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "market_cap": 60192804.0,
+    "debt_to_ev": 0.778605,
+    "convertibles": null,
+    "implied": {
+      "dd": -1.714512,
+      "pd_1y": 0.956783,
+      "spread_5y_bps": 1831.653561,
+      "asset_vol": 3.0,
+      "calibrated_5y_bps": 206.358586,
+      "rating_band": "BB"
+    },
+    "covenants": [
+      {
+        "type": "fixed_charge",
+        "direction": "min",
+        "limit": 1.2,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "Seventh Amendment To Credit Agreement",
+        "dated": "2026-04-16",
+        "text": "Permit the Consolidated Fixed Charge Coverage Ratio as of the end of any Measurement Period ending as of the end of any fiscal quarter of the Borrower ending after the Closing Date to be less than 1.20 to 1.00;"
+      }
+    ],
+    "cushion_score": 5
+  },
+  "instruments": [
+    {
+      "name": "Foreign Line of Credit",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 12200000.0,
+      "rate_now": 0.0391,
+      "floating": false
+    },
+    {
+      "name": "Term Loan",
+      "kind": "loan",
+      "as_of": "2026-06-30",
+      "effective": 0.0892,
+      "floating": true
+    },
+    {
+      "name": "Senior Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-04-16",
+      "spread": 0.005,
+      "reference": "Federal Funds Rate",
+      "floating": true
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2026-04-21",
+      "agreement_kind": "amendment",
+      "dated": "2026-04-16",
+      "title": "Seventh Amendment To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Term SOFR",
+        "Daily Simple SOFR",
+        "SOFR",
+        "Base Rate"
+      ],
+      "maturity": "2026-08-13",
+      "covenants": [
+        {
+          "type": "fixed_charge",
+          "limit": 1.2,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit the Consolidated Fixed Charge Coverage Ratio as of the end of any Measurement Period ending as of the end of any fiscal quarter of the Borrower ending after the Closing Date to be less than 1.20 to 1.00;"
+        },
+        {
+          "type": "leverage",
+          "limit": 3.5,
+          "unit": "x",
+          "direction": "min",
+          "maintenance": false,
+          "text": "“ Specified Period ” means the period commencing with the Third Amendment Effective Date and ending on the first date that the Borrower delivers to the Administrative Agent a Compliance Certificate demonstrating that the Consolidated Leverage Ratio as of the last day of the most recently ended Measurement Period was less than 3.50:1.00."
+        },
+        {
+          "type": "liquidity",
+          "limit": 10000000.0,
+          "unit": "usd",
+          "direction": "max",
+          "maintenance": false,
+          "text": "isitions (without duplication)(A) in assets that are not (and do not become at the time of such acquisition) directly owned by a Loan Party, or (B) in Equity Interests of Persons that do not become Guarantors , shall not exceed $25,000,000 in the aggregate during the term of this Agreement; and (j) Liquidity shall be greater than $10,000,000 on a Pro Forma Basis after giving effect to the consummation of such Acquisi"
+        },
+        {
+          "type": "liquidity",
+          "limit": 6000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": false,
+          "text": "Permit Liquidity to be less than $6,000,000 for any period of five (5) consecutive Business Days. | 7.12. | Sanctions. | Directly or indirectly, use any Credit Extension or the proceeds of any Credit Extension, or lend, contribute or otherwise"
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/727510/000110465926046064/tm2612273d1_ex10-1.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-05-05",
+      "items": "1.01,3.03,5.03,7.01,9.01",
+      "acc": "0001104659-26-055632",
+      "doc": "tm2613382d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-04-21",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-26-046064",
+      "doc": "tm2612273d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-24",
+      "items": "1.01,3.03,5.03,7.01,9.01",
+      "acc": "0001104659-26-033624",
+      "doc": "tm267492d15_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-18",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001104659-26-029952",
+      "doc": "tm267491d4_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-03-11",
+      "items": "1.01,3.03,7.01,9.01",
+      "acc": "0001104659-26-026169",
+      "doc": "tm267492d8_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-02-27",
+      "items": "1.01,3.03,7.01,9.01",
+      "acc": "0001104659-26-021051",
+      "doc": "tm267491d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2026-01-30",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001104659-26-008322",
+      "doc": "tm2521156d11_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-12-23",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001104659-25-124254",
+      "doc": "tm2534122d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-10-24",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-25-102127",
+      "doc": "tm2529311d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-09-30",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001104659-25-095078",
+      "doc": "tm2527543d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-06-23",
+      "items": "1.01,7.01,9.01",
+      "acc": "0001104659-25-061311",
+      "doc": "tm2518511d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2025-04-01",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001104659-25-030585",
+      "doc": "tm2511075d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2024-05-22",
+      "items": "1.01,3.03,9.01",
+      "acc": "0001104659-24-064247",
+      "doc": "tm2415024d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2021-06-08",
+      "items": "1.01,3.03,5.07,9.01",
+      "acc": "0001104659-21-078218",
+      "doc": "tm2119004d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-09-01",
+      "items": "1.01,9.01",
+      "acc": "0001104659-20-101397",
+      "doc": "tm2030022d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-08-14",
+      "items": "1.01,3.03,5.03,8.01,9.01",
+      "acc": "0001104659-20-095642",
+      "doc": "tm2027628d2_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-02-09",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001144204-16-080081",
+      "doc": "v431122_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-09-15",
+      "items": "1.01",
+      "acc": "0001144204-15-055075",
+      "doc": "v420349_8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2014-05-01",
+      "items": "1.01,3.03,5.03,8.01,9.01",
+      "acc": "0001144204-14-026841",
+      "doc": "v376848_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2013-10-01",
+      "items": "1.01,5.02,8.01",
+      "acc": "0001144204-13-053370",
+      "doc": "v356416_8k.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [
+    [
+      "2026-03-31",
+      181938000,
+      28619000,
+      null,
+      4757000,
+      4757000,
+      null
+    ],
+    [
+      "2026-06-30",
+      183865000,
+      7911000,
+      null,
+      5372000,
+      5372000,
+      null
+    ]
+  ],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [
+    [
+      "2026-05",
+      1831.24,
+      -1.477,
+      4.7394,
+      203.1
+    ],
+    [
+      "2026-06",
+      1831.3,
+      -1.511,
+      4.7277,
+      203.6
+    ],
+    [
+      "2026-07",
+      1831.33,
+      -1.526,
+      4.7215,
+      203.8
+    ],
+    [
+      "2026-08",
+      1831.36,
+      -1.539,
+      4.7251,
+      204.0
+    ],
+    [
+      "2026-09",
+      1831.28,
+      -1.507,
+      4.7203,
+      203.5
+    ],
+    [
+      "2026-10",
+      1831.41,
+      -1.573,
+      4.7226,
+      204.4
+    ]
+  ],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}

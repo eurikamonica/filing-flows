@@ -1,0 +1,315 @@
+{
+  "cik": 742278,
+  "ticker": "RES",
+  "name": "RPC INC",
+  "sector": "energy",
+  "industry": "Oil & Gas Field Services, NEC",
+  "sic": "1389",
+  "sic_description": "Oil & Gas Field Services, NEC",
+  "generated_at": "2026-10-24T14:46:13+00:00",
+  "fetched_at": "2026-10-18T08:55:18+00:00",
+  "price": 6.02,
+  "price_date": "2026-10-23",
+  "equity_vol": 0.43621,
+  "snapshot": {
+    "cash": 179468000,
+    "finance_leases": 2018000,
+    "operating_leases": 25368000,
+    "equity": 1108749000,
+    "assets": 1459755000,
+    "liabilities": 351006000,
+    "assets_current": 725974000,
+    "liabilities_current": 217313000,
+    "retained_earnings": 1089403000,
+    "interest_expense": 3392000,
+    "interest_paid": 2998000,
+    "operating_income": 34201000,
+    "pretax_income": 43599000,
+    "net_income": 22832000,
+    "da": 169059000,
+    "ocf": 182995000,
+    "capex": 143921000,
+    "revenue": 1788504000,
+    "wavg_rate_long": 0.023,
+    "shares": 221657012,
+    "balance_date": "2026-06-30",
+    "latest_period": "2026-06-30"
+  },
+  "sources": {
+    "cash": "CashAndCashEquivalentsAtCarryingValue",
+    "finance_leases": "FinanceLeaseLiability",
+    "operating_leases": "OperatingLeaseLiability",
+    "equity": "StockholdersEquity",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "assets_current": "AssetsCurrent",
+    "liabilities_current": "LiabilitiesCurrent",
+    "retained_earnings": "RetainedEarningsAccumulatedDeficit",
+    "interest_expense": "InterestExpenseNonoperating (FY + YTD − prior YTD)",
+    "interest_paid": "InterestPaidNet (FY + YTD − prior YTD)",
+    "operating_income": "OperatingIncomeLoss (FY + YTD − prior YTD)",
+    "pretax_income": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest (FY + YTD − prior YTD)",
+    "net_income": "NetIncomeLoss (FY + YTD − prior YTD)",
+    "da": "DepreciationDepletionAndAmortization (FY + YTD − prior YTD)",
+    "ocf": "NetCashProvidedByUsedInOperatingActivities (FY + YTD − prior YTD)",
+    "capex": "PaymentsToAcquirePropertyPlantAndEquipment (FY + YTD − prior YTD)",
+    "revenue": "RevenueFromContractWithCustomerIncludingAssessedTax (FY + YTD − prior YTD)",
+    "wavg_rate_long": "LongtermDebtWeightedAverageInterestRate"
+  },
+  "analysis": {
+    "total_debt": null,
+    "cash_and_investments": 179468000.0,
+    "net_debt": null,
+    "ebitda": 203260000,
+    "ebit": 34201000,
+    "interest_expense": 3392000,
+    "leverage": null,
+    "net_leverage": null,
+    "interest_coverage": 10.082842,
+    "ebitda_coverage": 59.923349,
+    "cash_coverage": 62.039026,
+    "fcf": 39074000,
+    "fcf_to_debt": null,
+    "effective_rate": null,
+    "revolver_available": 81800000.0,
+    "liquidity": 261268000.0,
+    "due_12m": null,
+    "due_24m": null,
+    "liquidity_to_due12": null,
+    "liquidity_to_due24": null,
+    "floating_debt": null,
+    "floating_share": null,
+    "plus100bp_interest": null,
+    "plus100bp_share_of_ebit": null,
+    "altman_z": 5.046425,
+    "market_cap": 1334375212.24,
+    "debt_to_ev": null,
+    "convertibles": null,
+    "covenants": [
+      {
+        "type": "leverage",
+        "direction": "max",
+        "limit": 2.5,
+        "unit": "x",
+        "actual": null,
+        "cushion": null,
+        "agreement": "To Credit Agreement",
+        "dated": "2018-07-26",
+        "text": "Permit the Consolidated Leverage Ratio at any time during a Consolidated EBITDA < $50 Million Non-Test Period to be greater than 2.50:1.00."
+      },
+      {
+        "type": "net_worth",
+        "direction": "min",
+        "limit": 600000000.0,
+        "unit": "usd",
+        "actual": null,
+        "cushion": null,
+        "agreement": "To Credit Agreement",
+        "dated": "2018-07-26",
+        "text": "Permit Consolidated Tangible Net Worth at any time during a Consolidated EBITDA < $50 Million Test Period to be less than $600,000,000. 7.16 Sanctions ."
+      }
+    ],
+    "cushion_score": null
+  },
+  "instruments": [
+    {
+      "name": "Amendment",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 400000000.0,
+      "spread_min": 0.0125,
+      "spread_max": 0.0225,
+      "reference": "SOFR Overnight Index Swap Rate",
+      "floating": true
+    },
+    {
+      "name": "Revolving Credit Facility",
+      "kind": "revolver",
+      "as_of": "2026-06-30",
+      "capacity": 100000000.0,
+      "available": 81800000.0,
+      "floating": true
+    },
+    {
+      "name": "Letter of Credit",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 35000000.0,
+      "floating": false
+    },
+    {
+      "name": "Swingline",
+      "kind": "other",
+      "as_of": "2026-06-30",
+      "capacity": 35000000.0,
+      "floating": false
+    }
+  ],
+  "instruments_from": {
+    "form": "10-Q",
+    "date": "2026-06-30"
+  },
+  "issues": [],
+  "agreements": [
+    {
+      "kind": "agreement",
+      "date": "2018-07-31",
+      "agreement_kind": "amendment",
+      "dated": "2018-07-26",
+      "size": 75000000.0,
+      "title": "To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate"
+      ],
+      "maturity": "2023-07-26",
+      "covenants": [
+        {
+          "type": "leverage",
+          "limit": 2.5,
+          "unit": "x",
+          "direction": "max",
+          "maintenance": true,
+          "text": "Permit the Consolidated Leverage Ratio at any time during a Consolidated EBITDA < $50 Million Non-Test Period to be greater than 2.50:1.00."
+        },
+        {
+          "type": "net_worth",
+          "limit": 600000000.0,
+          "unit": "usd",
+          "direction": "min",
+          "maintenance": true,
+          "text": "Permit Consolidated Tangible Net Worth at any time during a Consolidated EBITDA < $50 Million Test Period to be less than $600,000,000. 7.16 Sanctions ."
+        }
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/742278/000114420418041049/tv499299_ex10-1.htm"
+    },
+    {
+      "kind": "agreement",
+      "date": "2012-02-29",
+      "agreement_kind": "amendment",
+      "dated": "2011-06-16",
+      "title": "To Credit Agreement",
+      "facility": "loan",
+      "benchmarks": [
+        "Eurodollar",
+        "Base Rate"
+      ],
+      "margin_pct": [
+        0.3,
+        2.25
+      ],
+      "grid_by": "leverage",
+      "url": "https://www.sec.gov/Archives/edgar/data/742278/000118811212000533/ex10-16.htm",
+      "all_in_pct": [
+        0.3389,
+        2.2889
+      ]
+    },
+    {
+      "kind": "agreement",
+      "date": "2006-03-13",
+      "agreement_kind": "credit_agreement",
+      "dated": "2006-03-10",
+      "size": 25000000.0,
+      "title": "Amended And Restated Credit Agreement",
+      "facility": "revolving",
+      "benchmarks": [
+        "LIBOR",
+        "Eurodollar",
+        "Base Rate"
+      ],
+      "url": "https://www.sec.gov/Archives/edgar/data/742278/000118811206000661/ex10-12.htm"
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-07-07",
+      "items": "1.01,2.03,9.01",
+      "acc": "0001104659-26-081292",
+      "doc": "res-20260630x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2025-04-07",
+      "items": "1.01,2.01,2.03,3.02,8.01,9.01",
+      "acc": "0001558370-25-004495",
+      "doc": "res-20250401x8k.htm",
+      "desc": "8-K"
+    },
+    {
+      "date": "2023-07-07",
+      "items": "1.01,8.01,9.01",
+      "acc": "0001654954-23-008918",
+      "doc": "res_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2022-06-23",
+      "items": "1.01,9.01",
+      "acc": "0001104659-22-073930",
+      "doc": "tm2219175d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2020-10-01",
+      "items": "1.01,9.01",
+      "acc": "0001104659-20-111013",
+      "doc": "tm2032240d1_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2016-07-07",
+      "items": "1.01,9.01",
+      "acc": "0001571049-16-016498",
+      "doc": "t1600431_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2015-11-06",
+      "items": "1.01,9.01",
+      "acc": "0001571049-15-008933",
+      "doc": "t83510_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2014-01-24",
+      "items": "1.01,9.01",
+      "acc": "0001188112-14-000160",
+      "doc": "t78142_8k.htm",
+      "desc": "FORM 8-K"
+    },
+    {
+      "date": "2010-09-07",
+      "items": "1.01,1.02,2.03,9.01",
+      "acc": "0000914062-10-000418",
+      "doc": "rpc8k83110.htm",
+      "desc": "8-K"
+    }
+  ],
+  "history_fields": [
+    "end",
+    "total_debt",
+    "cash_and_investments",
+    "interest_ttm",
+    "ebitda_ttm",
+    "ebit_ttm",
+    "effective_rate"
+  ],
+  "history": [],
+  "implied_fields": [
+    "month",
+    "model_5y_bps",
+    "distance_to_default",
+    "equity_vol",
+    "calibrated_5y_bps"
+  ],
+  "implied_history": [],
+  "bank": null,
+  "market": {
+    "treasury_1y": 0.0449,
+    "treasury_5y": 0.0491,
+    "sofr": 0.0389
+  }
+}
