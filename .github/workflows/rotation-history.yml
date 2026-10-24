@@ -99,8 +99,9 @@ jobs:
       - name: Next-step forecasts and the galaxy (public/chaos-forecast*.json, chaos-rrg.json, galaxy.json)
         # Rotation → "Next step": arrows, cones and the price read from them. The weekly RRG walk-forward that scores the
         # RRG arrows is re-run on Saturdays (a few minutes); the other runs keep its last scores. A failure leaves the
-        # previous forecast files in place and does not stop the history from being saved.
-        timeout-minutes: 15
+        # previous forecast files in place and does not stop the history from being saved. The transition model now
+        # also fits every industry's own line (industry_vs_market, about a minute more).
+        timeout-minutes: 20
         continue-on-error: true
         run: |
           python -m pip install --quiet numpy pandas scikit-learn
