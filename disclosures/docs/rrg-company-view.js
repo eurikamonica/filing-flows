@@ -198,7 +198,7 @@
     let liquid = !!opt.always;                           // transition_rrg.liquid: ≥ $3 and ≥ $10M a week over 13 weeks
     if (V && !opt.always) { let s = 0, m = 0; for (let j = Math.max(0, k - 12); j <= k; j++) if (Number.isFinite(C[j]) && Number.isFinite(V[j])) { s += C[j] * V[j]; m++; } liquid = C[k] >= 3 && m >= 10 && s / m >= 10e6; }
     const paths = replay(S, rel, k), th = thresholds(S, rel, k);
-    return { rel, S, k, close: C[k], st: { q: quad(S.x[k], S.y[k]), hd, iq }, liquid, paths, th, day: G.days[k] };
+    return { rel, S, k, C, days: G.days, close: C[k], st: { q: quad(S.x[k], S.y[k]), hd, iq }, liquid, paths, th, day: G.days[k] };
   }
 
   /* ---------- drawing ---------- */
@@ -256,6 +256,45 @@
     pts.forEach((q, i) => { s += `<circle cx="${f(sx(q[0]))}" cy="${f(sy(q[1]))}" r="${i === pts.length - 1 ? 6 : 2.2}" style="fill:${o.col};opacity:${i === pts.length - 1 ? 1 : (0.3 + 0.6 * i / pts.length).toFixed(2)}"><title>${esc(A.day && i === pts.length - 1 ? 'Week of ' + A.day : '')}</title></circle>`; });
     s += `<text class="rc-l" x="${f(p0[0] + 9)}" y="${f(p0[1] - 8)}">${esc(o.name)}</text></g>`;
     return s + '</svg>';
+  }
+  /* the same two paths on the price: the last 26 weekly closes, then 13 weeks on — the replays' 10–90% band and median
+     (dashed, the line's colour), the chain converted to a path (dotted black, with its 10 / 90% as thin dotted lines),
+     and next week's thresholds: the close into Leading and out of Lagging (benchmark flat throughout) */
+  function priceChart(A, o) {
+    const P = A.paths, c = A.close, k = A.k, F = o.fmt || usd;
+    if (P.length < 30 || !fin(c)) return '';
+    const back = 26, hist = [];
+    for (let i = Math.max(0, k - back); i <= k; i++) if (fin(A.C[i])) hist.push([i - k, A.C[i]]);
+    const rq = (j, p) => c * Math.exp(qtl(P.map((r) => r.cum[j]), p));
+    const R = [0.1, 0.5, 0.9].map((p) => [[0, c]].concat([...Array(13)].map((_, j) => [j + 1, rq(j, p)])));
+    const MP = (o.mpath || []).filter(Boolean);
+    const M = MP.length ? ['q10', 'q50', 'q90'].map((key) => [[0, c]].concat(MP.map((m) => [m.k, c * m[key]]))) : null;
+    const th = fin(A.th.mx) && fin(A.th.my) ? { lead: c * Math.max(A.th.mx, A.th.my), lag: c * Math.min(A.th.mx, A.th.my) } : null;
+    const ys = hist.map((h) => h[1]).concat(R[0].map((v) => v[1]), R[2].map((v) => v[1]), M ? M[0].map((v) => v[1]).concat(M[2].map((v) => v[1])) : [], th ? [th.lead, th.lag] : []).filter(fin);
+    const lo = Math.min(...ys), hi = Math.max(...ys), pad = (hi - lo) * 0.06 || c * 0.02;
+    const W = o.W || 760, Hh = Math.max(240, Math.round(W * 0.42)), Lm = W < 500 ? 46 : 60, Rm = W < 500 ? 92 : 132, T = 12, Bm = 30;
+    const x0 = hist.length ? hist[0][0] : 0, sx = (w) => Lm + (w - x0) / (13 - x0) * (W - Lm - Rm), sy = (v) => T + (hi + pad - v) / (hi - lo + 2 * pad) * (Hh - T - Bm);
+    const f = (v) => v.toFixed(1), line = (pts) => pts.map((q) => f(sx(q[0])) + ',' + f(sy(q[1]))).join(' ');
+    let s = `<svg class="rc-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${esc(o.name)}: the last 26 weeks and the next 13, replayed and from the chain">`;
+    const st = (hi + pad - (lo - pad)) / 5, mag = Math.pow(10, Math.floor(Math.log10(st))), u = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((m) => m >= st) || st;
+    for (let v = Math.ceil((lo - pad) / u) * u; v <= hi + pad; v += u) s += `<line class="rc-grid" x1="${Lm}" x2="${W - Rm}" y1="${f(sy(v))}" y2="${f(sy(v))}"/><text class="rc-t" x="${Lm - 6}" y="${f(sy(v) + 4)}" text-anchor="end">${o.pct ? lvl(v) : '$' + num(v, u >= 1 ? 0 : 2)}</text>`;
+    (W < 500 ? [x0, 0, 13] : [x0, -13, 0, 4, 13]).filter((w, i, a) => w >= x0 && a.indexOf(w) === i).forEach((w) => { s += `<text class="rc-t" x="${f(sx(w))}" y="${Hh - 10}" text-anchor="middle">${w === 0 ? (W < 500 ? 'now' : esc(A.day)) : (w > 0 ? '+' : '−') + Math.abs(w) + ' wk'}</text>`; });
+    s += `<line class="rc-ax" x1="${f(sx(0))}" x2="${f(sx(0))}" y1="${T}" y2="${Hh - Bm}" style="stroke-dasharray:2 3"/>`;
+    s += `<polygon points="${line(R[0])} ${line(R[2].slice().reverse())}" style="fill:${o.col};opacity:.13"/>`;
+    if (th) [[th.lead, 'into Leading', QC[0]], [th.lag, A.st.q === 2 ? 'stays Lagging below' : 'into Lagging below', QC[2]]].forEach(([v, l, col]) => {
+      s += `<line x1="${f(sx(0))}" x2="${f(sx(1) + 6)}" y1="${f(sy(v))}" y2="${f(sy(v))}" style="stroke:${col};stroke-width:2"/><text class="rc-l" x="${f(sx(1) + 9)}" y="${f(sy(v) + 4)}" style="fill:${col}">${esc(W < 500 ? l.replace(/^(into|stays) /, '').replace(' below', '') : l)} ${F(v)}</text>`; });
+    if (hist.length > 1) s += `<polyline points="${line(hist)}" style="fill:none;stroke:var(--ink,#222);stroke-width:1.8"/>`;
+    s += `<polyline points="${line(R[1])}" style="fill:none;stroke:${o.col};stroke-width:2;stroke-dasharray:6 4"/>`;
+    if (M) {
+      [0, 2].forEach((i) => { s += `<polyline points="${line(M[i])}" style="fill:none;stroke:var(--ink,#222);stroke-width:.9;stroke-dasharray:1.5 3;opacity:.7"/>`; });
+      s += `<polyline points="${line(M[1])}" style="fill:none;stroke:var(--ink,#222);stroke-width:1.8;stroke-dasharray:1.5 3;stroke-linecap:round"/>`;
+    }
+    s += `<circle cx="${f(sx(0))}" cy="${f(sy(c))}" r="4" style="fill:var(--ink,#222)"/>`;
+    const short = W < 500, lab = [[R[1][13][1], `${short ? '' : 'median '}${F(R[1][13][1])}`, o.col]].concat(M ? [[M[1][13][1], `${short ? '' : 'chain '}${F(M[1][13][1])}`, 'var(--ink,#222)']] : []);
+    if (lab.length > 1 && Math.abs(sy(lab[0][0]) - sy(lab[1][0])) < 13) { const up = sy(lab[0][0]) <= sy(lab[1][0]) ? 0 : 1; lab[up].push(-7); lab[1 - up].push(7); }
+    lab.forEach(([v, t, col, d]) => { s += `<text class="rc-l" x="${f(sx(13) + 5)}" y="${f(sy(v) + 4 + (d || 0))}" style="fill:${col}">${esc(t)}</text>`; });
+    return `<h4>On the ${o.pct ? 'index' : 'price'} — the last 26 weeks and the next 13</h4><p class="rc-sub">The two dashed paths of the chart above, converted to ${o.pct ? 'the index level' : 'the share price'} with ${esc(o.bench)} flat: the replays' median (dashed) and their 10–90% band (shaded), and the weekly chain converted to a path (dotted black; thin dotted: its 10% and 90%). The short bars at next week: the close that puts it into Leading and into Lagging.</p>${s}</svg>` +
+      `<div class="rc-legend"><span><b style="background:var(--ink,#222)"></b>weekly ${o.pct ? 'level' : 'close'}</span><span><b style="background:${o.col}"></b>replays: median (dashed), 10–90% (shaded)</span>${M ? '<span><b style="background:var(--ink,#222);opacity:.6"></b>the chain converted to a path (dotted), its 10 / 90%</span>' : ''}</div>`;
   }
   function ladder(A, o) {                                    // next week's close and the quadrant it lands in
     const { mx, my } = A.th, c = A.close, F = o.fmt || usd, W0 = o.closeWord || 'close';
@@ -326,7 +365,7 @@
       (() => { const m = Math.max(A.th.mx, A.th.my), ok = fin(A.th.mx) && fin(A.th.my), F = o.fmt || usd;
         return `<div class="rc-card"><span>Into Leading next week</span><b>${ok ? (o.pct ? spc(m - 1) : F(A.close * m)) : '—'}</b><i>${o.pct ? (ok ? `index ${F(A.close * m)}, ` : '') + esc(o.bench) + ' flat' : 'close needed, ' + esc(o.bench) + ' flat'}</i></div></div>`; })();
     return `<div class="rc-sec"><h3>${esc(o.title)}</h3><p class="rc-sub">${esc(o.sub)}</p>${cards}${chart(A, o)}<div class="rc-legend"><span><b style="background:${o.col}"></b>${esc(o.name)}, last ${o.tail} weeks</span>${o.ctx ? `<span><b style="background:var(--muted,#888)"></b>${esc(o.ctxName)}</span>` : ''}<span>faint: replayed paths · dashed: median · boxes: 80% at 4 and 13 weeks${o.mpath ? ' · dotted: the Markov chain converted to a path (○ 4 and 13 weeks)' : ''}</span></div>` +
-      ladder(A, o) + ranges(A, o, o.bands) + matrix(A, o) + dynamic(A, o) + '</div>';
+      priceChart(A, o) + ladder(A, o) + ranges(A, o, o.bands) + matrix(A, o) + dynamic(A, o) + '</div>';
   }
 
   async function render(el, ctx) {

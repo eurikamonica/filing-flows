@@ -279,7 +279,7 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   const V=require(path.join(root,'docs','rrg-company-view.js'));
   const el={innerHTML:'',clientWidth:700,querySelectorAll:()=>[]};
   await V.render(el,{ticker:'TEST',hub:''});
-  for(const want of ['TEST against the S&amp;P 500','TEST against its industry','close that puts it in each quadrant','Replayed ranges','Markov matrix','Dynamic transition model','Most common paths','The chain converted to a path','dotted: the Markov chain'])
+  for(const want of ['TEST against the S&amp;P 500','TEST against its industry','close that puts it in each quadrant','Replayed ranges','Markov matrix','Dynamic transition model','Most common paths','The chain converted to a path','dotted: the Markov chain','On the price — the last 26 weeks and the next 13'])
    assert.ok(el.innerHTML.includes(want),`the RRG view lacks “${want}”`);
   assert.ok(!/NaN|undefined|Infinity/.test(el.innerHTML),'the RRG view shows NaN/undefined');
   for(const want of ['S&amp;P 500 — the industry','index level that puts it in each quadrant','moved exactly with its industry','#rotation/ind~sic4:1234'])
@@ -292,7 +292,7 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
   assert.ok(!/NaN|undefined|Infinity/.test(ei.innerHTML),'the industry list shows NaN/undefined');
   const ej={innerHTML:'',clientWidth:700,querySelectorAll:()=>[]};
   await V.renderIndustries(ej,{hub:'',id:'sic4:1234'});
-  for(const want of ['Every industry','SIC 1234 · Things against the S&amp;P 500','index level that puts it in each quadrant','largest members','Markov matrix'])
+  for(const want of ['Every industry','SIC 1234 · Things against the S&amp;P 500','index level that puts it in each quadrant','largest members','Markov matrix','On the index — the last 26 weeks'])
    assert.ok(ej.innerHTML.includes(want),`the industry page lacks “${want}”`);
   assert.ok(!/NaN|undefined|Infinity/.test(ej.innerHTML),'the industry page shows NaN/undefined');
   checks+=4;
