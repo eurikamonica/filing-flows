@@ -9,7 +9,7 @@
     dji: ['Dow Jones Industrial Average', 'DIA', 'price-weighted'],
     sp500: ['S&P 500', 'SPY', 'float-adjusted market-cap-weighted'],
     ndx: ['Nasdaq-100', 'QQQ', 'modified market-cap-weighted'],
-    sp400: ['S&P MidCap 400', 'MDY', 'float-adjusted market-cap-weighted'],
+    sp400: ['S&P MidCap 400', 'IJH', 'float-adjusted market-cap-weighted'],
     sp600: ['S&P SmallCap 600', 'IJR', 'float-adjusted market-cap-weighted'],
     r1000: ['Russell 1000', 'IWB', 'float-adjusted market-cap-weighted'],
     r2000: ['Russell 2000', 'IWM', 'float-adjusted market-cap-weighted'],
