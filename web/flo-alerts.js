@@ -6,6 +6,7 @@
 'use strict';
 const doc=typeof document==='undefined'?null:document;
 const timeline=()=>root.FFFloTimeline||(typeof module!=='undefined'?require('./flo-timeline.js'):null);
+const impact=()=>root.FFFloImpact||(typeof module!=='undefined'?require('./flo-impact.js'):null);
 const script=doc&&doc.currentScript&&doc.currentScript.src||'';
 const BASE=script?script.replace(/[^/]*$/,''):'';
 const FEED=BASE+'disclosures/data/market/flo-alerts.json';
@@ -118,7 +119,7 @@ function explain(e,zh=false,related=[]){
  return out;
 }
 let seen=[],initialized=false,settings={quiet:false,minPriority:'info',watch:'',kinds:{'8k':true,'13f':true,news:true,price:true}};
-let items=[],bubble=null,inbox=null,pill=null,active=false,busy=false,timer=null,wait=INTERVAL,version='',unread=0,lastError='',latestBuild='',lastPopupAt=0,scanHealth={};
+let items=[],bubble=null,inbox=null,pill=null,active=false,busy=false,timer=null,wait=INTERVAL,version='',unread=0,lastError='',latestBuild='',lastPopupAt=0,scanHealth={},marketContext={benchmarks:{},generated_at:''};
 function storage(){
  try{root.localStorage&&root.localStorage.setItem(KEY,JSON.stringify({initialized,seen:seen.slice(-MAX_SEEN),settings,lastPopupAt}));}catch(_){}
 }
@@ -167,6 +168,15 @@ function openWatchBrief(){
  else if(url(observation.source_url))root.open(url(observation.source_url),'_blank','noopener');
  return true;
 }
+function openImpact(event){
+ const A=impact();if(!A||!event)return false;
+ const output=A.render(event,marketContext,isZH());
+ if(!output)return false;
+ closeToast();if(inbox)inbox.hidden=true;
+ if(root.FFMascot&&root.FFMascot.showSignal)root.FFMascot.showSignal(event,output.html);
+ else if(url(event.source_url))root.open(url(event.source_url),'_blank','noopener');
+ return true;
+}
 function openEvent(event){
  closeToast();if(inbox)inbox.hidden=true;
  if(root.FFMascot&&root.FFMascot.showSignal)root.FFMascot.showSignal(event,explain(event,isZH(),items));
@@ -182,11 +192,14 @@ function toast(event,count){
  const timelineTicker=event.ticker||(Array.isArray(event.symbols)?event.symbols.find(ticker):'');
  const timelineBtn=timelineTicker?el('button','',isZH()?'事件时间线':'Timeline'):null;
  if(timelineBtn)timelineBtn.addEventListener('click',()=>openTimeline(timelineTicker));
+ const researchBtn=el('button','',isZH()?'财务影响核查':'Research');
+ researchBtn.addEventListener('click',()=>openImpact(event));
  detail.addEventListener('click',()=>openEvent(event));
  all.addEventListener('click',()=>showInbox(true));
  mute.addEventListener('click',()=>{settings.quiet=true;storage();closeToast();showInbox(true);});
  buttons.append(detail,all,mute);
  if(timelineBtn)buttons.append(timelineBtn);
+ buttons.append(researchBtn);
  bubble.append(head,el('p','',event.title||'New published event'),el('small','',event.event_at.slice(0,16)+' UTC'),buttons);
  bubble.hidden=false;
 }
@@ -249,6 +262,8 @@ function renderInbox(){
    const sym=e.ticker||(Array.isArray(e.symbols)?e.symbols.find(ticker):'');
    if(sym){const tl=el('button','flo-pulse-timeline-action',isZH()?'时间线':'Timeline');
      tl.addEventListener('click',()=>openTimeline(sym));row.append(tl);}
+   const impactBtn=el('button','flo-pulse-research-action',isZH()?'研究':'Research');
+   impactBtn.addEventListener('click',()=>openImpact(e));row.append(impactBtn);
    inbox.append(row);
  }
 }
@@ -268,6 +283,8 @@ async function poll(){
    if(version!==feed.generated_at){version=feed.generated_at;root.FFMascot&&root.FFMascot.refreshSignalData&&root.FFMascot.refreshSignalData();}
    latestBuild=feed.generated_at||'';
    scanHealth=feed.scan_health&&typeof feed.scan_health==='object'?feed.scan_health:{};
+   marketContext={benchmarks:impact()?impact().benchmarks(feed):{},
+     generated_at:typeof feed.generated_at==='string'?feed.generated_at:''};
    const arrivals=diff.newEvents.filter(e=>shown(e,settings));
    if(arrivals.length){
      unread+=arrivals.length;
@@ -292,7 +309,7 @@ async function poll(){
 }
 function style(){
  const s=el('style');s.id='flo-pulse-style';
- s.textContent='.flo-pulse-toast,.flo-pulse-list{position:fixed;right:18px;bottom:112px;z-index:9005;width:min(355px,calc(100vw - 25px));background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:13px;padding:12px;box-shadow:0 11px 30px #0003;font:12px/1.5 Arial,sans-serif}.flo-pulse-toast[hidden],.flo-pulse-list[hidden]{display:none}.flo-pulse-toast{border-left:4px solid var(--accent,#17734a);animation:flo-pulse-arrive .3s ease-out}.flo-pulse-toast[data-kind="8k"]{border-left-color:#cf5a57}.flo-pulse-toast[data-kind="13f"]{border-left-color:#5680cb}.flo-pulse-toast[data-kind="price"]{border-left-color:#dca13b}.flo-pulse-head,.flo-pulse-actions{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}.flo-pulse-toast p{margin:7px 0}.flo-pulse-toast button,.flo-pulse-list button,.flo-pulse-pill{border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);padding:4px 8px;border-radius:7px;cursor:pointer;font:12px Arial,sans-serif}.flo-pulse-list{max-height:55vh;overflow:auto}.flo-pulse-list .flo-pulse-item{padding:6px 0;border-bottom:1px solid var(--line,#ccc)}.flo-pulse-list .flo-pulse-item button{text-align:left}.flo-pulse-list small{display:block;color:var(--muted,#777)}.flo-pulse-types{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.flo-pulse-types label{white-space:nowrap;font-size:11px}.flo-pulse-list input[type=text]{width:140px;max-width:100%;padding:5px;color:inherit;background:inherit;border:1px solid var(--line,#ccc);border-radius:6px}.flo-pulse-pill{position:fixed;right:110px;bottom:29px;z-index:9004;box-shadow:0 3px 10px #0002}.flo-pulse-note{font-size:11px;color:var(--muted,#777)}.flo-pulse-timeline-action{margin-left:6px}.flo-event-brief .flo-brief-ticker{padding:8px 0;border-top:1px solid var(--line,#ccc)}.flo-event-brief .flo-brief-ticker p{margin:3px 0}.flo-event-timeline h3{font-size:14px;margin:4px 0 8px}.flo-timeline-list{margin:8px 0 12px;padding:0 0 0 19px}.flo-timeline-list li{border-left:2px solid var(--line,#ccc);padding:3px 7px 10px;margin-bottom:7px}.flo-timeline-list li p{margin:4px 0}.flo-timeline-list small,.flo-timeline-note{font-size:11px;color:var(--muted,#777)}.flo-timeline-list a{overflow-wrap:anywhere}.flo-signal-facts ul{padding-left:18px;margin:4px 0 7px}.flo-signal-facts li{margin:3px 0}@keyframes flo-pulse-arrive{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.flo-pulse-toast{animation:none}}@media(max-width:560px){.flo-pulse-list,.flo-pulse-toast{right:8px;bottom:85px}.flo-pulse-pill{right:74px;bottom:14px}}';
+ s.textContent='.flo-pulse-toast,.flo-pulse-list{position:fixed;right:18px;bottom:112px;z-index:9005;width:min(355px,calc(100vw - 25px));background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:13px;padding:12px;box-shadow:0 11px 30px #0003;font:12px/1.5 Arial,sans-serif}.flo-pulse-toast[hidden],.flo-pulse-list[hidden]{display:none}.flo-pulse-toast{border-left:4px solid var(--accent,#17734a);animation:flo-pulse-arrive .3s ease-out}.flo-pulse-toast[data-kind="8k"]{border-left-color:#cf5a57}.flo-pulse-toast[data-kind="13f"]{border-left-color:#5680cb}.flo-pulse-toast[data-kind="price"]{border-left-color:#dca13b}.flo-pulse-head,.flo-pulse-actions{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}.flo-pulse-toast p{margin:7px 0}.flo-pulse-toast button,.flo-pulse-list button,.flo-pulse-pill{border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);padding:4px 8px;border-radius:7px;cursor:pointer;font:12px Arial,sans-serif}.flo-pulse-list{max-height:55vh;overflow:auto}.flo-pulse-list .flo-pulse-item{padding:6px 0;border-bottom:1px solid var(--line,#ccc)}.flo-pulse-list .flo-pulse-item button{text-align:left}.flo-pulse-list small{display:block;color:var(--muted,#777)}.flo-pulse-types{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.flo-pulse-types label{white-space:nowrap;font-size:11px}.flo-pulse-list input[type=text]{width:140px;max-width:100%;padding:5px;color:inherit;background:inherit;border:1px solid var(--line,#ccc);border-radius:6px}.flo-pulse-pill{position:fixed;right:110px;bottom:29px;z-index:9004;box-shadow:0 3px 10px #0002}.flo-pulse-note{font-size:11px;color:var(--muted,#777)}.flo-pulse-timeline-action,.flo-pulse-research-action{margin-left:6px}.flo-impact h3{font-size:14px;margin:5px 0}.flo-impact-lessons{padding-left:19px}.flo-impact-lessons li{margin:8px 0}.flo-impact-lessons p{margin:4px 0}.flo-impact-lessons ul{padding-left:17px;font-size:11px}.flo-impact-market{border:1px solid var(--line,#ccc);border-radius:8px;padding:7px;margin:8px 0}.flo-event-brief .flo-brief-ticker{padding:8px 0;border-top:1px solid var(--line,#ccc)}.flo-event-brief .flo-brief-ticker p{margin:3px 0}.flo-event-timeline h3{font-size:14px;margin:4px 0 8px}.flo-timeline-list{margin:8px 0 12px;padding:0 0 0 19px}.flo-timeline-list li{border-left:2px solid var(--line,#ccc);padding:3px 7px 10px;margin-bottom:7px}.flo-timeline-list li p{margin:4px 0}.flo-timeline-list small,.flo-timeline-note{font-size:11px;color:var(--muted,#777)}.flo-timeline-list a{overflow-wrap:anywhere}.flo-signal-facts ul{padding-left:18px;margin:4px 0 7px}.flo-signal-facts li{margin:3px 0}@keyframes flo-pulse-arrive{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.flo-pulse-toast{animation:none}}@media(max-width:560px){.flo-pulse-list,.flo-pulse-toast{right:8px;bottom:85px}.flo-pulse-pill{right:74px;bottom:14px}}';
  doc.head.append(s);
 }
 function timelineIntent(q){
@@ -301,13 +318,29 @@ function timelineIntent(q){
 function watchBriefIntent(q){
  return /(?:关注股票|自选股|关注名单).{0,10}(?:摘要|动态|新事件|新扫描|最新情况)|(?:watchlist|watched tickers).{0,9}(?:brief|updates|events|summary)|(?:brief|updates|summary).{0,9}watchlist/i.test(String(q||''));
 }
+function impactIntent(q){
+ return /(?:8.?k|13f|新闻|股价|价格|披露|公告).{0,12}(?:财务影响|影响分析|研究清单|风险分析)|(?:财务影响|影响分析|研究清单).{0,12}(?:8.?k|13f|公告|披露|股票)|(?:event|filing|sec|stock|price).{0,12}(?:impact research|impact analysis|research checklist)|(?:impact research|impact analysis|research checklist).{0,12}(?:event|filing|stock|sec)|(?:相对大盘|相对涨跌幅|同日超额涨跌)/i.test(String(q||''));
+}
 function intent(q){
+ if(impactIntent(q))return true;
  if(watchBriefIntent(q))return true;
  if(timelineIntent(q))return true;
  return /最近.{0,9}(?:扫描|提醒|新消息|事件|8.?k|13f)|有什么新(?:披露|新闻|扫描|提醒|8.?k|13f)|新扫描.{0,14}(?:什么|有哪些|结果)|(?:what(?:'s| is) new|new alerts|recent alerts|what changed since|recent scanner|latest published pulse|show notifications|alert inbox)/i.test(String(q||''));
 }
 function report(q,zh=false){
  const query=String(q||''),upper=query.toUpperCase();
+ if(impactIntent(query)&&impact()){
+   const t=timeline(),symbol=t?t.tickerFromQuery(query,items)||watchSet(settings)[0]:null;
+   const type=/13f/i.test(query)?'13f':/8.?k/i.test(query)?'8k':
+     /价格|股价|price|相对大盘|涨跌/i.test(query)?'price':/新闻|news/i.test(query)?'news':null;
+   const list=items.filter(e=>(!symbol||e.ticker===symbol||(e.symbols||[]).includes(symbol))&&(!type||e.kind===type));
+   const chosen=list[0]||null;
+   if(chosen)return impact().render(chosen,marketContext,zh);
+   return {html:'<p>'+escape(zh?
+     '本次已发布扫描中尚无匹配的事件证据，不能构造事件影响分析。可先在 Flo Pulse 中选择具体申报。':
+     'No matching published event evidence is available; impact cannot be constructed. Select a published filing in Flo Pulse first.')+
+     '</p>',links:[],facts:[],mood:'think',intents:['impact-no-data']};
+ }
  if(watchBriefIntent(query)&&timeline())return timeline().watchBrief(items,watchSet(settings),zh,{days:14});
  if(timelineIntent(query)&&timeline()){
    const t=timeline(),symbol=t.tickerFromQuery(query,items)||watchSet(settings)[0]||null;
@@ -356,8 +389,8 @@ function start(){
  root.addEventListener('online',poll);
  poll();
 }
-root.FFFloAlerts={valid,normalize,compare,react,shown,explain,intent,timelineIntent,watchBriefIntent,openTimeline,openWatchBrief,report,start,poll,
- getState:()=>({initialized,seen:seen.slice(),settings:JSON.parse(JSON.stringify(settings)),events:items.slice(),lastError,latestBuild,scanHealth}),
+root.FFFloAlerts={valid,normalize,compare,react,shown,explain,intent,timelineIntent,watchBriefIntent,impactIntent,openTimeline,openWatchBrief,openImpact,report,start,poll,
+ getState:()=>({initialized,seen:seen.slice(),settings:JSON.parse(JSON.stringify(settings)),events:items.slice(),lastError,latestBuild,scanHealth,benchmarks:JSON.parse(JSON.stringify(marketContext.benchmarks))}),
  stop(){active=false;if(timer)clearTimeout(timer);}};
 if(typeof module!=='undefined')module.exports=root.FFFloAlerts;
 if(doc){if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',start);else start();}
