@@ -1140,6 +1140,24 @@ def _currency_of(cik):
     return _cur[cik]
 
 
+def _annual_quarter_revenue(c, cik=None, sub=None):
+    """A quarter's size from the latest 20-F year: a fourth of its revenue (the year on file, else the 20-F's XBRL)."""
+    ys = sorted((c.get("years") or {}).items())
+    for _, y in reversed(ys):
+        v = ((y.get("raw") or {}).get("revenue"))
+        if v:
+            return v / 4
+    if cik and sub:
+        k = next((r for r in recent_rows(sub) if r["form"] in ("20-F", "40-F") and r.get("reportDate")), None)
+        if k:
+            try:
+                v = facts.extract(companyfacts(cik), k["reportDate"], annual=True).get("revenue")
+                return v / 4 if v else None
+            except Exception:
+                return None
+    return None
+
+
 def process_fpi_release(store, cik, accn, form, starred=False):
     """One quarter from a foreign private issuer's results release (a 6-K exhibit). It files no 10-Q, so the release is
     the record (not preliminary). Comparisons: the release's own year-ago column, and the quarter before from the
@@ -1178,7 +1196,15 @@ def process_fpi_release(store, cik, accn, form, starred=False):
             continue
         try:
             prev_rev = None
-            r = release.parse(html, filed, None, None)
+            try:
+                r = release.parse(html, filed, None, None)
+            except ValueError as e:
+                # tables without a units line (TSMC's "Amount (a)" with the units in a footnote): sized against the
+                # quarter before when on file, else a quarter of the last 20-F year
+                ref = (prior[-1]["raw"].get("revenue") if prior else None) or _annual_quarter_revenue(c, cik, sub)
+                if "units" not in str(e) or not ref:
+                    raise
+                r = release.parse(html, filed, None, ref)
             back = [q for q in prior if 60 <= (dt.date.fromisoformat(r["end"]) - dt.date.fromisoformat(q["end"])).days <= 120]
             if back:                                     # units checked against the quarter before, when on file
                 prev_rev = back[-1]["raw"]["revenue"]
@@ -1317,7 +1343,8 @@ def _queue_foreign(store, cik, sub):
     cutoff = (dt.date.today() - dt.timedelta(days=800)).isoformat()
     sixk = [r for r in rows if r["form"] == "6-K" and (r.get("filingDate") or "") >= cutoff]
     hint = re.compile(r"result|quarter|earning|interim|half|annual|\bq[1-4]|[^a-z]fy|trading update|financial", re.I)
-    keyed = [r for r in sixk if hint.search((r.get("primaryDocument") or "") + " " + (r.get("primaryDocDescription") or ""))]
+    keyed = [r for r in sixk if hint.search((r.get("primaryDocument") or "") + " " + (r.get("primaryDocDescription") or ""))
+             or int(r.get("size") or 0) >= 1_000_000]       # a full report as the 6-K itself (Novo Nordisk's "caq22026.htm")
     rest = [r for r in sixk if r not in keyed]
     pick += (keyed + rest)[:max(FPI_RELEASES, len(keyed))]
     for r in pick:
