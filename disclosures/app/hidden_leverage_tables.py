@@ -142,6 +142,38 @@ def _annual(rows, multiplier, as_of):
     return {}
 
 
+def _period_balance(rows, context, multiplier, as_of, kind):
+    """Strict balance-column extraction for supplier finance/VIE maximums.
+
+    A reporting *year* alone is not adequate; require full reporting date,
+    a dated year column and a specifically labeled outstanding/maximum row.
+    """
+    d = dt.date.fromisoformat(as_of)
+    human = re.compile(r"\b" + d.strftime("%B") + r"\s+" + str(d.day) +
+                       r",?\s+" + str(d.year) + r"\b", re.I)
+    heading = context + " " + " ".join(" ".join(r) for r in rows[:3])
+    if not (human.search(heading) or as_of in heading):
+        return None
+    label = (r"\b(?:confirmed|approved|valid|supplier).{0,50}"
+             r"(?:outstanding|obligations? at period end)\b|"
+             r"\b(?:outstanding|ending balance)\b.{0,50}\b(?:payables?|obligations?)\b"
+             if kind == "supplier_finance" else
+             r"\b(?:maximum|aggregate).{0,60}\b(?:exposure to loss|support obligations?|guarantees?)\b")
+    for i, header in enumerate(rows[:4]):
+        cols = [j for j, val in enumerate(header)
+                if YEAR.fullmatch(val.strip()) and int(YEAR.fullmatch(val.strip()).group(1)) == d.year]
+        if len(cols) != 1:
+            continue
+        col = cols[0]
+        for row in rows[i+1:i+12]:
+            if len(row) <= col or not re.search(label, row[0], re.I):
+                continue
+            value = _amount(row[col], multiplier)
+            if value is not None:
+                return value, row[0][:180]
+    return None
+
+
 def extract_tables(raw, cik, accession, document, form, filed, as_of):
     """Parse auditable *candidates* from ONE SEC primary document, never debt."""
     if not raw or not as_of or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", as_of):
@@ -177,9 +209,30 @@ def extract_tables(raw, cik, accession, document, form, filed, as_of):
             if mult is None:
                 continue
             annual = _annual(rows, mult, as_of)
-            # Outstanding supplier-finance balances are NOT payment schedules,
-            # and VIE/guarantee maxima must not be relabeled as debt.
-            if key in ("supplier_finance", "vie_support") or len(annual) < 2:
+            if key in ("supplier_finance", "vie_support"):
+                balance = _period_balance(rows, context, mult, as_of, key)
+                if not balance:
+                    continue
+                amount, row_label = balance
+                signature = (key, as_of, amount)
+                if signature in seen:
+                    continue
+                seen.add(signature)
+                evidence.append({
+                    "key": key, "label": label, "review_lane": lane,
+                    "status": "table_extracted_needs_review", "confidence": "provisional",
+                    "payments": [], "amount_usd": amount, "currency": "USD",
+                    "scale": mult, "as_of": as_of, "filed": filed, "form": form,
+                    "accession": accession, "source_url": url, "table_index": idx,
+                    "context": context_tail[-260:], "matched_row": row_label,
+                    "raw_rows": rows[:18],
+                    "amount_kind": ("reported_supplier_finance_balance" if key == "supplier_finance"
+                                    else "maximum_support_exposure_not_expected_loss"),
+                    "warning": "Review issuer-specific accounting, recourse and balance-sheet overlap. "
+                               "A supplier payable may already be reported; a VIE maximum is not expected loss."
+                })
+                continue
+            if len(annual) < 2:
                 continue
             payments = [{"year": year, "amount_usd": amount,
                          "row_or_column": str(year)}
