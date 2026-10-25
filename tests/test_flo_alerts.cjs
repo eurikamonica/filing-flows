@@ -79,6 +79,18 @@ ok(em.includes('Berkshire Hathaway')&&em.includes('2026-09-30')&&em.includes('NV
 const priceContext=Alert.explain(price,true);
 ok(priceContext.includes('IREN')&&priceContext.includes('-10.20%')&&priceContext.includes('延迟日线'),
  'price explanation shows verified date, percent and non-intraday scope');
+const indexed13f=e('13f:index:1','13f',{ticker:'',source_url:'https://www.sec.gov/edgar/browse/?CIK=1067983&owner=exclude',
+ priority:'info',manager:'SEC filing catalog',title:'13F indexed without inferred trades'});
+ok(Alert.valid(indexed13f),'SEC official 13F indexed catalog link accepted');
+ok(Alert.explain(indexed13f,false).includes('Read original SEC') &&
+ Alert.explain(indexed13f,false).includes('owner=exclude'),'13F index URL preserved as source for Flo analysis');
+const fakeCatalog=e('13f:fake','13f',{source_url:'https://www.sec.gov/edgar/browse/?CIK=bad&owner=exclude'});
+eq(Alert.valid(fakeCatalog),false,'malformed EDGAR browse CIK rejected');
+const redirectCatalog=e('13f:redirect','13f',{source_url:'https://www.sec.gov/edgar/browse/?CIK=1067983&owner=exclude&redirect=https://evil.example'});
+eq(Alert.valid(redirectCatalog),false,'EDGAR browse extra redirect query rejected');
+eq(Alert.shown(indexed13f,{minPriority:'high'}),false,'high-only filter suppresses indexed informational 13F notices');
+eq(Alert.shown(manager,{minPriority:'medium'}),true,'medium threshold retains material 13F');
+eq(Alert.shown(e('8k:high','8k',{priority:'high'}),{minPriority:'high'}),true,'high threshold preserves high severity SEC item');
 const malformedLink=e('news:phish','news',{source_url:'https://sec.gov.evil.example/path'});
 eq(Alert.valid(malformedLink),false,'SEC lookalike domain refused');
 eq(Alert.shown(k,{watch:'AAPL',kinds:{'8k':true}}),false,'issuer filter excludes other filings');
