@@ -135,9 +135,14 @@ def build(root, now=None):
                 scope="Delayed daily close; NOT live/intraday price action."))
     events.sort(key=lambda x:(x["event_at"],{"high":2,"medium":1,"info":0}[x["priority"]]),reverse=True)
     unique = {}
+    per_type = {"8k": 0, "13f": 0, "news": 0, "price": 0}
     for e in events:
-        unique.setdefault(e["id"],e)
-        if len(unique)>=120:
+        kind = e["kind"]
+        if e["id"] in unique or per_type[kind] >= 30:
+            continue
+        unique[e["id"]] = e
+        per_type[kind] += 1
+        if len(unique) >= 120:
             break
     return dict(schema=1,generated_at=stamp(now),sources=statuses,
         cadence="Only newly published static snapshots. GitHub Pages publishing may lag collecting.",
