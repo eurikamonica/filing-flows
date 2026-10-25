@@ -230,3 +230,13 @@ Offline `tests/test_flo_alert_feed.py` checks source schemas, 8-K/13F/news/price
 ### Explicit limitations
 
 Polling the published **static** manifest is not WebSockets, an always-on service worker or push-notification service. The collector may run every 15 minutes but site staging may be slower; a tab must remain open, active/online for updates. A new source item that is too old for the freshness window is displayed only as historical context or dropped, not surfaced as breaking. No browser push permission, trade execution, predicted price movement, automatic fraud conclusions or proof that a news story caused a stock move is provided.
+
+
+### Flo Pulse refinements — alert priority and indexed 13F provenance
+
+- Added persistent **Info / Medium / High** minimum-severity filtering in the Flo Pulse inbox, alongside the existing per-kind checkboxes, ticker watchlist and quiet mode. Filters affect alert presentation, not the underlying SEC scan.
+- Recognize the precise SEC EDGAR manager index URL `https://www.sec.gov/edgar/browse/?CIK=<digits>&owner=exclude` as a legitimate 13F source, without trusting malformed index query strings or look-alike hosts. This fixes the previously silent loss of *indexed, not yet fully parsed* 13F notifications. Such notices explicitly do **not** claim confirmed manager trades or position changes.
+- Added regression checks for authorized indexed 13F hyperlinks, malicious CIK/redirect parameters, and priority-suppression behavior. The current pulse suite reports 40 passing checks via direct execution of `tests/test_flo_alerts.cjs`.
+- Existing source-level scan-health panel distinguishes scan attempts, success/partial success, latest filing dates and retry queues; retained as-is instead of duplicating it. Existing 2-minute active-tab polling, first-load baseline, deduplication, quiet mode and per-event actions are preserved.
+
+This PR is not published until merged and deployed; static scan alerts remain bounded by the freshness of the site's generated data. Priority labels are rules-based screening categories, not investment recommendations.
