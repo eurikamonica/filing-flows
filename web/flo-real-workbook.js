@@ -3,6 +3,8 @@
  */
 (function(root){
 'use strict';
+const scriptSource=(typeof document!=='undefined'&&document.currentScript&&document.currentScript.src)||'';
+const BASE=scriptSource?scriptSource.replace(/[^/]*$/,''):'';
 const data=()=>root.FFFloRealData||(typeof module!=='undefined'?require('./flo-real-data.js'):null);
 const engine=()=>root.FFFloWorkbook||(typeof module!=='undefined'?require('./flo-workbook.js'):null);
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -102,6 +104,7 @@ function present(s,lang){
  '<div class="flo-wb-evidence"><a href="'+esc(s.source)+'" target="_blank" rel="noopener noreferrer">'+
  (zh?'查看 SEC 原始证据 ↗':'Open original SEC primary source')+'</a></div>'+
  '<label>'+(zh?'切换真实公司 / 案例':'Choose issuer / case')+' <select data-real-case>'+options+'</select></label>'+
+ (s.siteCik?'<button type="button" class="flo-local" data-real-live>'+(zh?'使用本网站最新已处理完整 10-K':'Use latest fully processed 10-K from this site')+'</button>':'')+
  '<div class="flo-wb-toolbar"><button type="button" data-real-next>'+(zh?'下一题':'Next missing formula')+'</button>'+
  '<button type="button" data-real-check>'+(zh?'批改':'Grade')+'</button>'+
  '<button type="button" data-real-hint>'+(zh?'提示':'Hint')+'</button>'+
@@ -131,8 +134,8 @@ function chosen(q,co){
  return t&&data().snapshots[t]?t:'NVDA';
 }
 function launch(q,co){
- const id=chosen(q,co);
- return {html:'<div class="flo-workbook flo-real" data-real-case="'+esc(id)+'"></div>',
+ const id=chosen(q,co),cik=co&&Number.isSafeInteger(+co.cik)&&+co.cik>0?String(+co.cik):'';
+ return {html:'<div class="flo-workbook flo-real" data-real-case="'+esc(id)+'" data-real-cik="'+esc(cik)+'"></div>',
     realWorkbook:true,wide:true,facts:[],links:[],mood:'talk',intents:['real-workbook']};
 }
 function mountAll(host,lang){
@@ -140,6 +143,12 @@ function mountAll(host,lang){
 }
 function mount(wrapper,lang){
  let session=make(wrapper.dataset.realCase||'NVDA');
+ const siteCik=wrapper.dataset.realCik||'';
+ const identity=()=>{
+   session.siteCik=siteCik;
+   return session;
+ };
+ identity();
  const paint=()=>wrapper.innerHTML=present(session,lang);
  const write=()=>{
   try{set(session,session.selected,wrapper.querySelector('[data-real-formula]').value);
@@ -150,6 +159,21 @@ function mount(wrapper,lang){
   const b=evt.target.closest('button');if(!b||!wrapper.contains(b))return;
   if(b.dataset.realRef){session.selected=b.dataset.realRef;paint();return;}
   if(b.hasAttribute('data-real-apply'))return write();
+  if(b.hasAttribute('data-real-live')){
+    if(!siteCik || !/^[1-9][0-9]{0,9}$/.test(siteCik)){session.message='No valid company CIK on current page';paint();return;}
+    b.disabled=true;b.textContent='Reading published annual 10-K…';
+    fetch(BASE+'data/c/'+siteCik+'.json',{credentials:'same-origin'})
+     .then(r=>{if(!r.ok)throw Error('Processed company JSON not available (HTTP '+r.status+')');return r.json();})
+     .then(payload=>{
+       const parsed=data().fromPublished(payload,+siteCik);
+       if(!parsed)throw Error('No sourced USD 10-K with verified revenue and operating profit on this site. Quarter, foreign currency and incomplete data are NOT substituted.');
+       session=make(parsed.ticker||'NVDA',parsed);session.siteCik=siteCik;
+       session.message='Loaded '+parsed.fy+' from original SEC-linked site annual JSON (not live stock market or forecast).';
+       paint();
+     })
+     .catch(err=>{session.message=err.message;paint();});
+    return;
+  }
   if(b.hasAttribute('data-real-next')){
    const ref=Object.keys(session.answers).find(k=>!session.cells[k].raw.trim());
    session.message=ref?'Next: '+ref:'All formula cells filled. Use Grade.';
@@ -163,10 +187,10 @@ function mount(wrapper,lang){
   if(b.hasAttribute('data-real-answer')){
    Object.entries(session.answers).forEach(([k,v])=>session.cells[k].raw=v);
    session.message='Instructor formulas shown; data source remains historical SEC';paint();return;}
-  if(b.hasAttribute('data-real-reset')){session=make(session.id);paint();}
+  if(b.hasAttribute('data-real-reset')){session=make(session.id);identity();paint();}
  });
  wrapper.addEventListener('change',evt=>{if(evt.target.matches('[data-real-case]')){
-  session=make(evt.target.value);paint();
+  session=make(evt.target.value);identity();paint();
  }});
  wrapper.addEventListener('keydown',evt=>{if(evt.key==='Enter'&&evt.target.matches('[data-real-formula]')){
   evt.preventDefault();write();
