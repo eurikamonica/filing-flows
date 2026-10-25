@@ -89,8 +89,8 @@
       '<p class="sub">' + esc(t.context || '') + '</p>' +
       (finite(t.amount_usd) ? '<p><strong>Reported candidate balance / maximum: ' + money(t.amount_usd) + '</strong> · ' + esc(t.amount_kind || '') + '</p>' : '') +
       ((t.payments || []).length ? '<div class="hl-scroll"><table class="hl-table">' : '') +
-      '<thead><tr><th>Payment year</th><th>Nominal USD</th><th>Original filing</th></tr></thead><tbody>' +
-      (t.payments || []).map(p => '<tr><td>' + esc(String(p.year)) + '</td><td class="hl-number">' +
+      '<thead><tr><th>Issuer payment-year label</th><th>Nominal USD</th><th>Original filing</th></tr></thead><tbody>' +
+      (t.payments || []).map(p => '<tr><td>' + esc(p.row_or_column || String(p.year)) + '</td><td class="hl-number">' +
         money(p.amount_usd) + '</td><td>' + sec(t.source_url, t.form + ' · ' + t.filed) +
         '</td></tr>').join('') + ((t.payments || []).length ? '</tbody></table></div>' : '') +
       '<small class="hl-muted">' + esc(t.warning || '') + ' · Table #' + esc(String(t.table_index)) +
