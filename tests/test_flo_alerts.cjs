@@ -48,6 +48,11 @@ const topics=e('8k:restatement','8k',{ticker:'CRWV',topics:['restatement','debt'
 const explained=Alert.explain(topics,true);
 ok(explained.includes('事项标签')&&explained.includes('重述')&&explained.includes('债务'),
   '8-K sourced topic labels and restatement analysis presented without inventing figures');
+const auditor=e('8k:auditor','8k',{topics:['auditor','buyback','impairment','guidance']});
+const analystNotes=Alert.explain(auditor,false);
+ok(analystNotes.includes('former auditor letter')&&analystNotes.includes('authorization is not execution')
+ &&analystNotes.includes('noncash')&&analystNotes.includes('old/new guidance'),
+ 'Flo event explanations distinguish audit evidence, authorization, impairment and guidance');
 const managerUpdates=e('13f:changed','13f',{
   ticker:'AAPL',manager:'Berkshire Hathaway',symbols:['AAPL','NVDA','BAC'],
   period_end:'2026-09-30',filed:'2026-10-26',
