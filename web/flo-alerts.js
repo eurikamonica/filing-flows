@@ -1,5 +1,6 @@
-/* Flo Published Pulse — in-page polls of a small first-party feed.
- * No SSE backend, no browser push permission, no live-price assertions.
+/* Flo Published Pulse — live in-page discovery of new, already-published snapshots.
+ * Polls ONLY small same-origin site JSON, not EDGAR/stock APIs. No push,
+ * notifications permission, remote tracking, forced page reload or auto-trading.
  */
 (function(root){
 'use strict';
@@ -7,30 +8,28 @@ const doc=typeof document==='undefined'?null:document;
 const script=doc&&doc.currentScript&&doc.currentScript.src||'';
 const BASE=script?script.replace(/[^/]*$/,''):'';
 const FEED=BASE+'disclosures/data/market/flo-alerts.json';
-const KEY='ff:flo-pulse:v1',MS=120000,MAX_SEEN=320;
-const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const secureUrl=v=>/^https:\/\/(?:www\.)?(?:sec\.gov|prnewswire\.com|fda\.gov)\//i.test(String(v||''))?String(v):'';
-const validTicker=v=>/^[A-Z][A-Z0-9.\-]{0,9}$/.test(String(v||''));
+const KEY='ff:flo-pulse:v2',INTERVAL=120000,MAX_SEEN=320;
 const KINDS=['8k','13f','news','price'];
-const severity={high:3,medium:2,info:1};
-const zhen=()=>/^zh/i.test(root.navigator?.language||'');
-const ms=t=>{const n=Date.parse(t);return Number.isFinite(n)?n:0;};
-function valid(e){
- return !!e&&KINDS.includes(e.kind)&&
- ['high','medium','info'].includes(e.priority)&&typeof e.id==='string'&&e.id.length<230&&
- ms(e.event_at)>0&&(!e.ticker||validTicker(e.ticker))&&
- (e.kind==='price'?(Number.isFinite(e.change_pct)&&!!e.price_asof):!!secureUrl(e.source_url));
-}
+const priority={high:3,medium:2,info:1};
+const escape=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const url=v=>/^https:\/\/(?:www\.)?(?:sec\.gov|prnewswire\.com|fda\.gov)\//i.test(String(v||''))?String(v):'';
+const ticker=v=>/^[A-Z][A-Z0-9.\-]{0,9}$/.test(String(v||''));
+const isZH=()=>/^zh/i.test(root.navigator&&root.navigator.language||'');
+const time=v=>{const x=Date.parse(v);return Number.isFinite(x)?x:0;};
+const valid=e=>!!e&&KINDS.includes(e.kind)&&['high','medium','info'].includes(e.priority)
+  &&typeof e.id==='string'&&e.id.length>0&&e.id.length<230
+  &&time(e.event_at)>0&&(!e.ticker||ticker(e.ticker))
+  &&(e.kind==='price'?(Number.isFinite(e.change_pct)&&!!e.price_asof):!!url(e.source_url));
 function normalize(feed){
  if(!feed||feed.schema!==1||!Array.isArray(feed.events)||feed.events.length>300)throw Error('Invalid Flo feed');
  return feed.events.filter(valid).slice(0,150);
 }
-function compare(old,feed,options={}){
- const current=normalize(feed),known=new Set(old.seen||[]);
- if(!old.initialized)return {initialized:true,seen:current.map(x=>x.id).slice(-MAX_SEEN),latest:current,newEvents:[]};
- const at=options.now||Date.now();
- return {initialized:true,seen:Array.from(new Set([...(old.seen||[]),...current.map(x=>x.id)])).slice(-MAX_SEEN),
-   latest:current,newEvents:current.filter(x=>!known.has(x.id)&&at-ms(x.event_at)<=72*3600e3&&ms(x.event_at)<=at+300000)};
+function compare(previous,feed,options={}){
+ const events=normalize(feed),prior=new Set(previous&&previous.seen||[]);
+ if(!previous||!previous.initialized)return {initialized:true,seen:events.map(e=>e.id).slice(-MAX_SEEN),latest:events,newEvents:[]};
+ const now=options.now||Date.now();
+ return {initialized:true,seen:Array.from(new Set([...(previous.seen||[]),...events.map(e=>e.id)])).slice(-MAX_SEEN),
+   latest:events,newEvents:events.filter(e=>!prior.has(e.id)&&now-time(e.event_at)>=-300000&&now-time(e.event_at)<=72*3600000)};
 }
 function react(e){
  if(e.kind==='8k')return e.priority==='high'?'worried':'think';
@@ -38,252 +37,190 @@ function react(e){
  if(e.kind==='price')return e.change_pct<0?'worried':'happy';
  return 'talk';
 }
-function explain(e,zh){
- const label=e.kind==='8k'?'SEC 8-K':e.kind==='13f'?'SEC 13F':e.kind==='price'?'Daily-close move':'News';
- const base={
-  '8k':zh?'8-K 是公司向 SEC 提交的公告，不等于买入或卖出信号。需逐项核对事项、实际金额、完成状态、融资和盈利影响。':'An 8-K is a filing, not a trade recommendation. Inspect the event, scope, financing, cash flow and original text.',
-  '13f':zh?'13F 显示季度末机构申报持仓。申报日并不是买卖日；分析应比较前后两期股数、权重及滞后。':'13F shows quarter-end positions, not the trade date. Compare shares and weights across quarters; disclosures are delayed.',
-  'price':zh?'本信号使用延迟日收盘数据，并非实时股价。与同期 SEC 申报和成交量对照；不能仅凭涨跌推断新闻原因。':'A delayed daily-close observation, NOT live price action. Cross-check volume and dated filings; price movement alone does not prove a cause.',
-  'news':zh?'本数据只是新闻原始标题，不保证标题内容已经证实。请查看来源与公司匹配，必要时与 SEC 文件交叉核对。':'A source headline, not independent factual verification. Read the article and cross-check issuer identification and SEC filings.'
- };
- const sections=[];
+function watchSet(config){
+ return String(config.watch||'').toUpperCase().split(/[\s,]+/).filter(ticker);
+}
+function shown(e,config={}){
+ if(config.kinds&&config.kinds[e.kind]===false)return false;
+ const watch=watchSet(config);
+ return !watch.length||watch.some(t=>t===e.ticker||Array.isArray(e.symbols)&&e.symbols.includes(t));
+}
+function explain(e,zh=false){
+ const label=e.kind==='8k'?'SEC Form 8-K':e.kind==='13f'?'SEC Form 13F':e.kind==='price'?'Daily price change':'Published news';
+ const name=e.kind==='13f'?(e.manager||'Institution'):(e.ticker||e.source_label||'');
+ const data=[],notes=[];
  if(e.kind==='8k'){
-   if(Array.isArray(e.topics)&&e.topics.length)sections.push(
-     (zh?'申报事项标签：':'Filed topic tags: ')+e.topics.filter(x=>typeof x==='string').slice(0,5).map(esc).join(', '));
-   if(e.form)sections.push((zh?'文件类型：':'Form: ')+esc(e.form));
-   if(e.filed)sections.push((zh?'向 SEC 申报日期：':'SEC filing date: ')+esc(e.filed));
- }
- if(e.kind==='13f'){
-   if(e.manager)sections.push((zh?'申报机构：':'Reporting manager: ')+esc(e.manager));
-   if(e.period_end)sections.push((zh?'持仓报告期末：':'Portfolio as of: ')+esc(e.period_end));
-   if(e.filed)sections.push((zh?'披露日期：':'Filed on: ')+esc(e.filed));
-   if(e.changes&&typeof e.changes==='object')for(const [label,symbols] of Object.entries(e.changes)){
-     if(!['New','Added','Reduced','Exited'].includes(label)||!Array.isArray(symbols))continue;
-     const names=symbols.filter(validTicker).slice(0,4);
-     if(names.length)sections.push(esc(label)+': '+names.map(esc).join(', '));
+   if(e.form)data.push((zh?'表单类型：':'Form: ')+escape(e.form));
+   if(e.filed)data.push((zh?'SEC 提交日：':'Filed: ')+escape(e.filed));
+   const tags=Array.isArray(e.topics)?e.topics.filter(x=>typeof x==='string').slice(0,6):[];
+   if(tags.length)data.push((zh?'事项标签：':'Event tags: ')+tags.map(escape).join(', '));
+   if(tags.includes('restatement'))notes.push(zh?'核对重述期间、涉及的财报科目和审计师说明；不要将重述等同于现金损失。':'Identify restated periods, affected statements and auditor language; a restatement is not automatically a cash loss.');
+   if(tags.includes('offering'))notes.push(zh?'核对新增股份、价格、募资用途和潜在稀释；仅凭发行公告无法知道最终融资额。':'Check shares, offering terms, use of proceeds and possible dilution; an announcement need not equal completed financing.');
+   if(tags.includes('debt'))notes.push(zh?'核对利率、债务到期日和融资限制条款，评估偿付现金流。':'Compare rates, debt maturities, covenants and operating cash coverage.');
+   if(tags.includes('deal'))notes.push(zh?'检查交易是否已经完成、对价结构、商誉和未来整合成本。':'Check whether the transaction closed, consideration, goodwill and integration costs.');
+   if(tags.includes('cyber'))notes.push(zh?'评估披露所述已知影响及未知事项，不能自行推断财务损失金额。':'Distinguish disclosed known impacts from unquantified risks; do not invent damages.');
+   notes.push(zh?'8-K 是披露，不是投资建议；重大性标签代表筛查优先级，不代表舞弊结论。':'8-K is a disclosure, not a recommendation. Event priority is a screening category, not a fraud verdict.');
+ }else if(e.kind==='13f'){
+   if(e.manager)data.push((zh?'管理机构：':'Manager: ')+escape(e.manager));
+   if(e.period_end)data.push((zh?'季度末持仓日期：':'Holdings as of: ')+escape(e.period_end));
+   if(e.filed)data.push((zh?'申报日期：':'Filing date: ')+escape(e.filed));
+   if(e.changes&&typeof e.changes==='object'){
+     for(const [k,v] of Object.entries(e.changes)){
+       if(!['New','Added','Reduced','Exited'].includes(k)||!Array.isArray(v))continue;
+       const symbols=v.filter(ticker).slice(0,4);
+       if(symbols.length)data.push(escape(k)+': '+symbols.map(escape).join(', '));
+     }
    }
+   notes.push(zh?'这些是季度末申报持仓，不是申报当日买卖。要判断真实变化，应比较两期股数、权重及拆股，并注意披露滞后。':'These are quarter-end reported positions, NOT trades on filing day. Compare quantities and weights across quarters, account for splits and disclosure lag.');
+ }else if(e.kind==='price'){
+   if(Number.isFinite(e.price))data.push((zh?'发布的日收盘价：':'Published close: ')+'$'+escape(Number(e.price).toFixed(2)));
+   if(Number.isFinite(e.change_pct))data.push((zh?'单日变化：':'Daily change: ')+escape((e.change_pct>=0?'+':'')+e.change_pct.toFixed(2)+'%'));
+   data.push((zh?'收盘日期：':'As of close: ')+escape(e.price_asof||''));
+   notes.push(zh?'这是延迟日线信号，并非盘中实时异动；本数据没有因果分析和成交量验证。不能声称股价因某条新闻上涨或下跌。':'Delayed daily-close data, NOT an intraday alert. This feed has no verified causal attribution or volume comparison; do not assert a headline caused the move.');
+ }else{
+   notes.push(zh?'仅呈现新闻源的标题及其来源；标题与发行人匹配不等于全文内容已核实，应结合 SEC 申报确认。':'The headline comes from a source feed, not an independent fact check. Issuer matching does not verify the article; cross-check primary SEC documents.');
  }
- if(e.kind==='price'){
-   if(Number.isFinite(e.price))sections.push((zh?'已发布收盘价：':'Published close: ')+'
- '<p><b>'+esc(e.title||'')+'</b></p><p>'+esc(e.detail||'')+'</p>'+
- (sections.length?'<div class="flo-signal-facts"><b>'+(zh?'关键证据':'Evidence from the published snapshot')+'</b><ul>'+sections.map(v=>'<li>'+v+'</li>').join('')+'</ul></div>':'')+
- '<p>'+esc(base[e.kind])+'</p>'+
- '<p class="flo-source">'+esc((e.event_at||'').slice(0,16))+' UTC · '+esc(e.source_label||'')+
- ' · '+esc(e.scope||'')+'</p>';
- const u=secureUrl(e.source_url);
- if(u)out+='<div class="flo-links"><a target="_blank" rel="noopener noreferrer" href="'+esc(u)+'">'+
- (zh?'查看 SEC / 新闻原始证据':'Open original evidence')+'</a></div>';
+ const evidence=url(e.source_url);
+ let out='<b>'+escape(label)+' · '+escape(name)+'</b><p><b>'+escape(e.title||'')+'</b></p>';
+ if(e.detail)out+='<p>'+escape(e.detail)+'</p>';
+ if(data.length)out+='<div class="flo-signal-facts"><b>'+(zh?'原始证据信息':'Published snapshot details')+'</b><ul>'+data.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>';
+ out+=notes.map(x=>'<p>'+escape(x)+'</p>').join('');
+ out+='<p class="flo-source">'+escape(e.event_at.slice(0,16))+' UTC · '+escape(e.source_label||'')+' · '+escape(e.scope||'')+'</p>';
+ if(evidence)out+='<div class="flo-links"><a target="_blank" rel="noopener noreferrer" href="'+escape(evidence)+'">'+
+  (zh?'查看原始 SEC / 新闻资料':'Read original SEC / news source')+'</a></div>';
  return out;
 }
-function watchSet(cfg){return String(cfg.watch||'').toUpperCase().split(/[\s,]+/).filter(Boolean);}
-function shown(e,cfg){
- if(cfg.kinds&&cfg.kinds[e.kind]===false)return false;
- const names=watchSet(cfg);if(!names.length)return true;
- return names.some(t=>t===e.ticker||Array.isArray(e.symbols)&&e.symbols.includes(t));
-}
-let seen=[],initialized=false,settings={quiet:false,watch:'',kinds:{'8k':true,'13f':true,news:true,price:true}},items=[],page=null,bubble=null,list=null,badge=null,active=false,busy=false,timer=null,interval=MS,count=0,version='';
-function store(){
- try{root.localStorage?.setItem(KEY,JSON.stringify({initialized,seen:seen.slice(-MAX_SEEN),settings}));}catch(_){}
+let seen=[],initialized=false,settings={quiet:false,watch:'',kinds:{'8k':true,'13f':true,news:true,price:true}};
+let items=[],bubble=null,inbox=null,pill=null,active=false,busy=false,timer=null,wait=INTERVAL,version='',unread=0,lastError='',latestBuild='';
+function storage(){
+ try{root.localStorage&&root.localStorage.setItem(KEY,JSON.stringify({initialized,seen:seen.slice(-MAX_SEEN),settings}));}catch(_){}
 }
 function restore(){
- let p;try{p=JSON.parse(root.localStorage?.getItem(KEY)||'null')}catch(_){}
- if(!p)return;
- initialized=!!p.initialized;
- seen=Array.isArray(p.seen)?p.seen.filter(x=>typeof x==='string'&&x.length<230).slice(-MAX_SEEN):[];
- if(p.settings){
-   settings.quiet=!!p.settings.quiet;
-   settings.watch=String(p.settings.watch||'').toUpperCase().replace(/[^A-Z0-9.,\s-]/g,'').slice(0,90);
-   if(p.settings.kinds&&typeof p.settings.kinds==='object')for(const kind of KINDS){
-     settings.kinds[kind]=p.settings.kinds[kind]!==false;
+ try{
+   const d=JSON.parse(root.localStorage&&root.localStorage.getItem(KEY)||'null');
+   if(!d)return;
+   initialized=!!d.initialized;
+   seen=Array.isArray(d.seen)?d.seen.filter(x=>typeof x==='string'&&x.length<230).slice(-MAX_SEEN):[];
+   if(d.settings){
+     settings.quiet=!!d.settings.quiet;
+     settings.watch=String(d.settings.watch||'').toUpperCase().replace(/[^A-Z0-9.,\s-]/g,'').slice(0,90);
+     if(d.settings.kinds)KINDS.forEach(k=>{settings.kinds[k]=d.settings.kinds[k]!==false;});
    }
- }
+ }catch(_){}
 }
-function node(tag,cls,content){const e=doc.createElement(tag);if(cls)e.className=cls;if(content!==undefined)e.textContent=content;return e;}
-function closeBubble(){if(bubble)bubble.hidden=true;}
-function ask(e){closeBubble();if(list)list.hidden=true;
- if(root.FFMascot?.showSignal)root.FFMascot.showSignal(e,explain(e,zhen()));
- else if(secureUrl(e.source_url))root.open(secureUrl(e.source_url),'_blank','noopener');
+function el(tag,cls,text){
+ const n=doc.createElement(tag);
+ if(cls)n.className=cls;
+ if(text!==undefined)n.textContent=text;
+ return n;
 }
-function renderBubble(e,n){
+function closeToast(){if(bubble)bubble.hidden=true;}
+function openEvent(event){
+ closeToast();if(inbox)inbox.hidden=true;
+ if(root.FFMascot&&root.FFMascot.showSignal)root.FFMascot.showSignal(event,explain(event,isZH()));
+ else if(url(event.source_url))root.open(url(event.source_url),'_blank','noopener');
+}
+function toast(event,count){
  if(!bubble||settings.quiet)return;
- bubble.replaceChildren();bubble.dataset.kind=e.kind;
- const head=node('div','flo-pulse-head');head.append(node('b','',e.kind.toUpperCase()+' · '+(e.ticker||'Published')));
- const x=node('button','flo-pulse-x','×');x.setAttribute('aria-label','Dismiss signal');x.addEventListener('click',closeBubble);head.append(x);
- bubble.append(head,node('p','',e.title),node('small','',String(e.event_at).slice(0,16)+' UTC'));
- const action=node('div','flo-pulse-actions'),a=node('button','','Ask Flo'),b=node('button','','Inbox · '+n),c=node('button','','Mute');
- a.addEventListener('click',()=>ask(e));b.addEventListener('click',()=>showInbox(true));
- c.addEventListener('click',()=>{settings.quiet=true;store();closeBubble();showInbox(true)});
- action.append(a,b,c);bubble.append(action);bubble.hidden=false;
+ bubble.replaceChildren();bubble.dataset.kind=event.kind;
+ const head=el('div','flo-pulse-head'),label=el('b','',event.kind.toUpperCase()+' · '+(event.ticker||event.manager||'Filing'));
+ const dismiss=el('button','','×');dismiss.type='button';dismiss.setAttribute('aria-label','Dismiss alert');
+ dismiss.addEventListener('click',closeToast);head.append(label,dismiss);
+ const buttons=el('div','flo-pulse-actions'),detail=el('button','',isZH()?'让 Flo 分析':'Ask Flo'),all=el('button','',isZH()?'所有提示 · ':'Inbox · '+count),mute=el('button','',isZH()?'静音':'Mute');
+ detail.addEventListener('click',()=>openEvent(event));
+ all.addEventListener('click',()=>showInbox(true));
+ mute.addEventListener('click',()=>{settings.quiet=true;storage();closeToast();showInbox(true);});
+ buttons.append(detail,all,mute);
+ bubble.append(head,el('p','',event.title||'New published event'),el('small','',event.event_at.slice(0,16)+' UTC'),buttons);
+ bubble.hidden=false;
 }
-function showInbox(flag){if(!list)return;list.hidden=!flag;if(flag)drawInbox();}
-function drawInbox(){
- if(!list)return;list.replaceChildren();
- const bar=node('div','flo-pulse-head'),title=node('b','',zhen()?'Flo 新扫描信号':'Flo Published Signals'),cross=node('button','','×');
- cross.setAttribute('aria-label','Close alerts');cross.addEventListener('click',()=>showInbox(false));bar.append(title,cross);list.append(bar);
- list.append(node('p','flo-pulse-note',zhen()?'首次访问不推送旧消息；仅检查新发布的数据。不代表实时交易行情。':'First visit establishes baseline; later published changes appear here. Not a live market feed.'));
- const controls=node('div','flo-pulse-actions'),label=node('label',''),quiet=node('input','');
- quiet.type='checkbox';quiet.checked=settings.quiet;quiet.addEventListener('change',()=>{settings.quiet=quiet.checked;store();if(settings.quiet)closeBubble()});
- label.append(quiet,doc.createTextNode(zhen()?' 安静模式（不弹窗、不做提醒动作）':' Quiet mode (no popups or alert animations)'));const watch=node('input','');watch.type='text';watch.value=settings.watch;
- watch.placeholder='OKLO, IREN, CRWV';watch.setAttribute('aria-label','Ticker watch filter');
- watch.addEventListener('change',()=>{settings.watch=watch.value.toUpperCase().replace(/[^A-Z0-9.,\s-]/g,'').slice(0,90);store();drawInbox()});
- controls.append(label,watch);
- const types=node('div','flo-pulse-types');
- for(const kind of KINDS){
-   const setting=node('label',''),ck=node('input','');ck.type='checkbox';ck.checked=settings.kinds[kind]!==false;
-   ck.addEventListener('change',()=>{settings.kinds[kind]=ck.checked;store();drawInbox()});
-   setting.append(ck,doc.createTextNode(' '+(kind==='8k'?'8-K':kind==='13f'?'13F':kind==='news'?'News':'Daily prices')));
-   types.append(setting);
+function showInbox(show){if(!inbox)return;inbox.hidden=!show;if(show)renderInbox();}
+function renderInbox(){
+ if(!inbox)return;
+ inbox.replaceChildren();
+ const head=el('div','flo-pulse-head'),name=el('b','',isZH()?'Flo 新扫描收件箱':'Flo Published Pulse'),dismiss=el('button','','×');
+ dismiss.setAttribute('aria-label','Close alerts');dismiss.addEventListener('click',()=>showInbox(false));
+ head.append(name,dismiss);
+ inbox.append(head,el('p','flo-pulse-note',isZH()?'首次访问不弹旧提醒；之后只检测新发布内容。静音和过滤设置保存在当前浏览器。':'First visit records a baseline. Only later newly published events trigger alerts. Settings are browser-local.'));
+ if(lastError)inbox.append(el('p','flo-pulse-note',(isZH()?'数据不可用：':'Feed unavailable: ')+lastError));
+ else if(latestBuild)inbox.append(el('p','flo-pulse-note',(isZH()?'最近网站数据构建：':'Latest site build: ')+latestBuild+' UTC'));
+ const controls=el('div','flo-pulse-actions'),muteLabel=el('label',''),quiet=el('input');
+ quiet.type='checkbox';quiet.checked=settings.quiet;quiet.addEventListener('change',()=>{settings.quiet=quiet.checked;storage();if(settings.quiet)closeToast();});
+ muteLabel.append(quiet,doc.createTextNode(isZH()?' 安静模式':' Quiet mode'));
+ const watch=el('input');watch.type='text';watch.value=settings.watch;watch.placeholder='OKLO, IREN, CRWV';watch.setAttribute('aria-label','Ticker watch filter');
+ watch.addEventListener('change',()=>{settings.watch=watch.value.toUpperCase().replace(/[^A-Z0-9.,\s-]/g,'').slice(0,90);storage();renderInbox()});
+ controls.append(muteLabel,watch);
+ const types=el('div','flo-pulse-types');
+ for(const k of KINDS){
+   const label=el('label',''),box=el('input');box.type='checkbox';box.checked=settings.kinds[k]!==false;
+   box.addEventListener('change',()=>{settings.kinds[k]=box.checked;storage();renderInbox()});
+   label.append(box,doc.createTextNode(' '+(k==='8k'?'8-K':k==='13f'?'13F':k==='news'?'News':'Daily close')));
+   types.append(label);
  }
- list.append(controls,types);
+ inbox.append(controls,types);
  const matches=items.filter(e=>shown(e,settings)).slice(0,45);
- if(!matches.length)list.append(node('p','',zhen()?'目前没有匹配信号。':'No published matching signals.'));
- matches.forEach(e=>{const r=node('div','flo-pulse-item'),a=node('button','',e.kind.toUpperCase()+' · '+e.title);
- a.addEventListener('click',()=>ask(e));r.append(a,node('small','',(e.ticker||'')+' · '+String(e.event_at).slice(0,16)+' UTC'));list.append(r)});
+ if(!matches.length)inbox.append(el('p','',isZH()?'没有匹配的新发布数据。':'No matching published events.'));
+ for(const e of matches){
+   const row=el('div','flo-pulse-item'),button=el('button','',e.kind.toUpperCase()+' · '+(e.title||'Untitled'));
+   button.addEventListener('click',()=>openEvent(e));
+   row.append(button,el('small','',(e.ticker||e.manager||'')+' · '+e.event_at.slice(0,16)+' UTC'));
+   inbox.append(row);
+ }
+}
+function schedule(){
+ if(timer)clearTimeout(timer);
+ if(active&&doc&&doc.visibilityState!=='hidden')timer=setTimeout(poll,wait);
 }
 async function poll(){
- if(!active||busy||doc?.visibilityState==='hidden'||root.navigator?.onLine===false)return;
+ if(!active||busy||(doc&&doc.visibilityState==='hidden')||(root.navigator&&root.navigator.onLine===false))return;
  busy=true;
  try{
-  const r=await root.fetch(FEED+'?t='+Date.now(),{cache:'no-store',credentials:'same-origin'});
-  if(!r.ok)throw Error('Published alert manifest HTTP '+r.status);
-  const data=await r.json(),diff=compare({seen,initialized},data);
-  initialized=diff.initialized;seen=diff.seen;items=diff.latest;
-  if(version!==data.generated_at){version=data.generated_at;root.FFMascot?.refreshSignalData?.();}
-  const incoming=diff.newEvents.filter(e=>shown(e,settings));
-  if(incoming.length){
-   count+=incoming.length;
-   incoming.sort((a,b)=>severity[b.priority]-severity[a.priority]||ms(b.event_at)-ms(a.event_at));
-   const best=incoming[0];
-   if(!settings.quiet){renderBubble(best,incoming.length);root.FFMascot?.signalReaction?.(react(best),best);}
-   badge.textContent=(zhen()?'Flo · 新扫描 ':'Flo · New ')+count;
-   if(!list.hidden)drawInbox();
-  }
-  interval=MS;store();
- }catch(_){interval=Math.min(interval*2,15*60000);}
- finally{busy=false;schedule();}
+   const response=await root.fetch(FEED+'?t='+Math.floor(Date.now()/INTERVAL),{cache:'no-store',credentials:'same-origin'});
+   if(!response.ok)throw Error('HTTP '+response.status);
+   const feed=await response.json();
+   const diff=compare({seen,initialized},feed);
+   initialized=diff.initialized;seen=diff.seen;items=diff.latest;
+   if(version!==feed.generated_at){version=feed.generated_at;root.FFMascot&&root.FFMascot.refreshSignalData&&root.FFMascot.refreshSignalData();}
+   latestBuild=feed.generated_at||'';
+   const arrivals=diff.newEvents.filter(e=>shown(e,settings));
+   if(arrivals.length){
+     unread+=arrivals.length;
+     arrivals.sort((a,b)=>priority[b.priority]-priority[a.priority]||time(b.event_at)-time(a.event_at));
+     const top=arrivals[0];
+     if(!settings.quiet){
+       toast(top,arrivals.length);
+       if(root.FFMascot&&root.FFMascot.signalReaction)root.FFMascot.signalReaction(react(top),top);
+     }
+     if(pill)pill.textContent=(isZH()?'Flo · 新事件 ':'Flo · New ')+unread;
+     if(inbox&&!inbox.hidden)renderInbox();
+   }
+   lastError='';wait=INTERVAL;storage();
+ }catch(e){
+   lastError=String(e.message||'Unavailable').slice(0,80);
+   wait=Math.min(wait*2,15*60000);
+   if(inbox&&!inbox.hidden)renderInbox();
+ }finally{busy=false;schedule();}
 }
-function schedule(){if(timer)clearTimeout(timer);if(active&&doc?.visibilityState!=='hidden')timer=setTimeout(poll,interval);}
-function css(){
- const style=node('style');style.id='flo-pulse-style';
- style.textContent='.flo-pulse-toast,.flo-pulse-list{position:fixed;right:18px;bottom:112px;z-index:9005;width:min(345px,calc(100vw - 25px));background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:13px;padding:12px;box-shadow:0 11px 30px #0003;font:12px/1.5 Arial,sans-serif}.flo-pulse-toast[hidden],.flo-pulse-list[hidden]{display:none}.flo-pulse-toast{border-left:4px solid var(--accent,#17734a);animation:flo-pulse-arrive .3s ease-out}.flo-pulse-toast[data-kind="8k"]{border-left-color:#c66}.flo-pulse-toast[data-kind="13f"]{border-left-color:#5680cb}.flo-pulse-toast[data-kind="price"]{border-left-color:#dca13b}.flo-pulse-head,.flo-pulse-actions{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}.flo-pulse-toast p{margin:7px 0}.flo-pulse-toast button,.flo-pulse-list button,.flo-pulse-pill{border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);padding:4px 8px;border-radius:7px;cursor:pointer;font:12px Arial,sans-serif}.flo-pulse-list{max-height:52vh;overflow:auto}.flo-pulse-types{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.flo-pulse-types label{white-space:nowrap;font-size:11px}.flo-signal-facts ul{padding-left:18px;margin:4px 0 7px}.flo-signal-facts li{margin:3px 0}.flo-pulse-list .flo-pulse-item{padding:6px 0;border-bottom:1px solid var(--line,#ccc)}.flo-pulse-list .flo-pulse-item button{text-align:left}.flo-pulse-list small{display:block;color:var(--muted,#777)}.flo-pulse-list input[type=text]{width:140px;max-width:100%;padding:5px;color:inherit;background:inherit;border:1px solid var(--line,#ccc);border-radius:6px}.flo-pulse-pill{position:fixed;right:110px;bottom:29px;z-index:9004;box-shadow:0 3px 10px #0002}.flo-pulse-note{font-size:11px;color:var(--muted,#777)}@keyframes flo-pulse-arrive{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.flo-pulse-toast{animation:none}}@media(max-width:560px){.flo-pulse-list,.flo-pulse-toast{right:8px;bottom:85px}.flo-pulse-pill{right:74px;bottom:14px}}';
- doc.head.append(style);
+function style(){
+ const s=el('style');s.id='flo-pulse-style';
+ s.textContent='.flo-pulse-toast,.flo-pulse-list{position:fixed;right:18px;bottom:112px;z-index:9005;width:min(355px,calc(100vw - 25px));background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:13px;padding:12px;box-shadow:0 11px 30px #0003;font:12px/1.5 Arial,sans-serif}.flo-pulse-toast[hidden],.flo-pulse-list[hidden]{display:none}.flo-pulse-toast{border-left:4px solid var(--accent,#17734a);animation:flo-pulse-arrive .3s ease-out}.flo-pulse-toast[data-kind="8k"]{border-left-color:#cf5a57}.flo-pulse-toast[data-kind="13f"]{border-left-color:#5680cb}.flo-pulse-toast[data-kind="price"]{border-left-color:#dca13b}.flo-pulse-head,.flo-pulse-actions{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}.flo-pulse-toast p{margin:7px 0}.flo-pulse-toast button,.flo-pulse-list button,.flo-pulse-pill{border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);padding:4px 8px;border-radius:7px;cursor:pointer;font:12px Arial,sans-serif}.flo-pulse-list{max-height:55vh;overflow:auto}.flo-pulse-list .flo-pulse-item{padding:6px 0;border-bottom:1px solid var(--line,#ccc)}.flo-pulse-list .flo-pulse-item button{text-align:left}.flo-pulse-list small{display:block;color:var(--muted,#777)}.flo-pulse-types{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.flo-pulse-types label{white-space:nowrap;font-size:11px}.flo-pulse-list input[type=text]{width:140px;max-width:100%;padding:5px;color:inherit;background:inherit;border:1px solid var(--line,#ccc);border-radius:6px}.flo-pulse-pill{position:fixed;right:110px;bottom:29px;z-index:9004;box-shadow:0 3px 10px #0002}.flo-pulse-note{font-size:11px;color:var(--muted,#777)}.flo-signal-facts ul{padding-left:18px;margin:4px 0 7px}.flo-signal-facts li{margin:3px 0}@keyframes flo-pulse-arrive{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.flo-pulse-toast{animation:none}}@media(max-width:560px){.flo-pulse-list,.flo-pulse-toast{right:8px;bottom:85px}.flo-pulse-pill{right:74px;bottom:14px}}';
+ doc.head.append(s);
 }
 function start(){
  if(active||!doc||!root.fetch)return;
- active=true;restore();css();
- bubble=node('div','flo-pulse-toast');bubble.hidden=true;bubble.setAttribute('role','status');
- list=node('div','flo-pulse-list');list.hidden=true;list.setAttribute('role','region');list.setAttribute('aria-label','Flo signal inbox');
- badge=node('button','flo-pulse-pill',zhen()?'Flo · 已发布扫描':'Flo · Published');badge.type='button';badge.addEventListener('click',()=>showInbox(list.hidden));
- doc.body.append(bubble,list,badge);
+ active=true;restore();style();
+ bubble=el('div','flo-pulse-toast');bubble.hidden=true;bubble.setAttribute('role','status');
+ inbox=el('div','flo-pulse-list');inbox.hidden=true;inbox.setAttribute('role','region');inbox.setAttribute('aria-label','Flo alerts');
+ pill=el('button','flo-pulse-pill',isZH()?'Flo · 已发布扫描':'Flo · Published');
+ pill.type='button';pill.addEventListener('click',()=>{unread=0;showInbox(inbox.hidden);if(inbox&&!inbox.hidden)pill.textContent=isZH()?'Flo · 已发布扫描':'Flo · Published'});
+ doc.body.append(bubble,inbox,pill);
  doc.addEventListener('visibilitychange',()=>{if(doc.visibilityState==='hidden'){if(timer)clearTimeout(timer)}else poll()});
- root.addEventListener('online',poll);poll();
+ root.addEventListener('online',poll);
+ poll();
 }
-root.FFFloAlerts={valid,normalize,compare,react,explain,shown,start,poll,getState:()=>({initialized,seen:seen.slice(),settings:{...settings},events:items.slice()}),stop(){active=false;if(timer)clearTimeout(timer)}};
-if(typeof module!=='undefined')module.exports=root.FFFloAlerts;
-if(doc){if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',start);else start();}
-})(typeof globalThis!=='undefined'?globalThis:this);
-+esc(Number(e.price).toFixed(2)));
-   if(Number.isFinite(e.change_pct))sections.push((zh?'日涨跌幅：':'Daily price change: ')+esc((e.change_pct>=0?'+':'')+Number(e.change_pct).toFixed(2)+'%'));
-   if(e.price_asof)sections.push((zh?'收盘日期：':'Close date: ')+esc(e.price_asof));
- }
- let out='<b>'+esc(label)+' · '+esc(e.kind==='13f'?(e.manager||'Manager'):(e.ticker||'Published'))+'</b>'+
- '<p><b>'+esc(e.title||'')+'</b></p><p>'+esc(e.detail||'')+'</p>'+
- '<p>'+esc(base[e.kind])+'</p>'+
- '<p class="flo-source">'+esc((e.event_at||'').slice(0,16))+' UTC · '+esc(e.source_label||'')+
- ' · '+esc(e.scope||'')+'</p>';
- const u=secureUrl(e.source_url);
- if(u)out+='<div class="flo-links"><a target="_blank" rel="noopener noreferrer" href="'+esc(u)+'">'+
- (zh?'查看 SEC / 新闻原始证据':'Open original evidence')+'</a></div>';
- return out;
-}
-function watchSet(cfg){return String(cfg.watch||'').toUpperCase().split(/[\s,]+/).filter(Boolean);}
-function shown(e,cfg){const names=watchSet(cfg);return !names.length||names.includes(e.ticker);}
-let seen=[],initialized=false,settings={quiet:false,watch:''},items=[],page=null,bubble=null,list=null,badge=null,active=false,busy=false,timer=null,interval=MS,count=0,version='';
-function store(){
- try{root.localStorage?.setItem(KEY,JSON.stringify({initialized,seen:seen.slice(-MAX_SEEN),settings}));}catch(_){}
-}
-function restore(){
- let p;try{p=JSON.parse(root.localStorage?.getItem(KEY)||'null')}catch(_){}
- if(!p)return;
- initialized=!!p.initialized;
- seen=Array.isArray(p.seen)?p.seen.filter(x=>typeof x==='string'&&x.length<230).slice(-MAX_SEEN):[];
- if(p.settings){settings.quiet=!!p.settings.quiet;settings.watch=String(p.settings.watch||'').toUpperCase().replace(/[^A-Z0-9.,\s-]/g,'').slice(0,90);}
-}
-function node(tag,cls,content){const e=doc.createElement(tag);if(cls)e.className=cls;if(content!==undefined)e.textContent=content;return e;}
-function closeBubble(){if(bubble)bubble.hidden=true;}
-function ask(e){closeBubble();if(list)list.hidden=true;
- if(root.FFMascot?.showSignal)root.FFMascot.showSignal(e,explain(e,zhen()));
- else if(secureUrl(e.source_url))root.open(secureUrl(e.source_url),'_blank','noopener');
-}
-function renderBubble(e,n){
- if(!bubble||settings.quiet)return;
- bubble.replaceChildren();bubble.dataset.kind=e.kind;
- const head=node('div','flo-pulse-head');head.append(node('b','',e.kind.toUpperCase()+' · '+(e.ticker||'Published')));
- const x=node('button','flo-pulse-x','×');x.setAttribute('aria-label','Dismiss signal');x.addEventListener('click',closeBubble);head.append(x);
- bubble.append(head,node('p','',e.title),node('small','',String(e.event_at).slice(0,16)+' UTC'));
- const action=node('div','flo-pulse-actions'),a=node('button','','Ask Flo'),b=node('button','','Inbox · '+n),c=node('button','','Mute');
- a.addEventListener('click',()=>ask(e));b.addEventListener('click',()=>showInbox(true));
- c.addEventListener('click',()=>{settings.quiet=true;store();closeBubble();showInbox(true)});
- action.append(a,b,c);bubble.append(action);bubble.hidden=false;
-}
-function showInbox(flag){if(!list)return;list.hidden=!flag;if(flag)drawInbox();}
-function drawInbox(){
- if(!list)return;list.replaceChildren();
- const bar=node('div','flo-pulse-head'),title=node('b','',zhen()?'Flo 新扫描信号':'Flo Published Signals'),cross=node('button','','×');
- cross.setAttribute('aria-label','Close alerts');cross.addEventListener('click',()=>showInbox(false));bar.append(title,cross);list.append(bar);
- list.append(node('p','flo-pulse-note',zhen()?'首次访问不推送旧消息；仅检查新发布的数据。不代表实时交易行情。':'First visit establishes baseline; later published changes appear here. Not a live market feed.'));
- const controls=node('div','flo-pulse-actions'),label=node('label',''),quiet=node('input','');
- quiet.type='checkbox';quiet.checked=settings.quiet;quiet.addEventListener('change',()=>{settings.quiet=quiet.checked;store();if(settings.quiet)closeBubble()});
- label.append(quiet,doc.createTextNode(' Quiet popups'));const watch=node('input','');watch.type='text';watch.value=settings.watch;
- watch.placeholder='OKLO, IREN, CRWV';watch.setAttribute('aria-label','Ticker watch filter');
- watch.addEventListener('change',()=>{settings.watch=watch.value.toUpperCase().replace(/[^A-Z0-9.,\s-]/g,'').slice(0,90);store();drawInbox()});
- controls.append(label,watch);list.append(controls);
- const matches=items.filter(e=>shown(e,settings)).slice(0,45);
- if(!matches.length)list.append(node('p','',zhen()?'目前没有匹配信号。':'No published matching signals.'));
- matches.forEach(e=>{const r=node('div','flo-pulse-item'),a=node('button','',e.kind.toUpperCase()+' · '+e.title);
- a.addEventListener('click',()=>ask(e));r.append(a,node('small','',(e.ticker||'')+' · '+String(e.event_at).slice(0,16)+' UTC'));list.append(r)});
-}
-async function poll(){
- if(!active||busy||doc?.visibilityState==='hidden'||root.navigator?.onLine===false)return;
- busy=true;
- try{
-  const r=await root.fetch(FEED+'?t='+Date.now(),{cache:'no-store',credentials:'same-origin'});
-  if(!r.ok)throw Error('Published alert manifest HTTP '+r.status);
-  const data=await r.json(),diff=compare({seen,initialized},data);
-  initialized=diff.initialized;seen=diff.seen;items=diff.latest;
-  if(version!==data.generated_at){version=data.generated_at;root.FFMascot?.refreshSignalData?.();}
-  const incoming=diff.newEvents.filter(e=>shown(e,settings));
-  if(incoming.length){
-   count+=incoming.length;
-   const importance={high:3,medium:2,info:1};
-   incoming.sort((a,b)=>importance[b.priority]-importance[a.priority]||ms(b.event_at)-ms(a.event_at));
-   const best=incoming[0];
-   if(!settings.quiet)renderBubble(best,incoming.length);
-   root.FFMascot?.signalReaction?.(react(best),best);
-   badge.textContent='Flo · '+count+' new';
-   if(!list.hidden)drawInbox();
-  }
-  interval=MS;store();
- }catch(_){interval=Math.min(interval*2,15*60000);}
- finally{busy=false;schedule();}
-}
-function schedule(){if(timer)clearTimeout(timer);if(active&&doc?.visibilityState!=='hidden')timer=setTimeout(poll,interval);}
-function css(){
- const style=node('style');style.id='flo-pulse-style';
- style.textContent='.flo-pulse-toast,.flo-pulse-list{position:fixed;right:18px;bottom:112px;z-index:9005;width:min(345px,calc(100vw - 25px));background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:13px;padding:12px;box-shadow:0 11px 30px #0003;font:12px/1.5 Arial,sans-serif}.flo-pulse-toast[hidden],.flo-pulse-list[hidden]{display:none}.flo-pulse-toast{border-left:4px solid var(--accent,#17734a);animation:flo-pulse-arrive .3s ease-out}.flo-pulse-toast[data-kind="8k"]{border-left-color:#c66}.flo-pulse-toast[data-kind="13f"]{border-left-color:#5680cb}.flo-pulse-toast[data-kind="price"]{border-left-color:#dca13b}.flo-pulse-head,.flo-pulse-actions{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}.flo-pulse-toast p{margin:7px 0}.flo-pulse-toast button,.flo-pulse-list button,.flo-pulse-pill{border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);padding:4px 8px;border-radius:7px;cursor:pointer;font:12px Arial,sans-serif}.flo-pulse-list{max-height:52vh;overflow:auto}.flo-pulse-list .flo-pulse-item{padding:6px 0;border-bottom:1px solid var(--line,#ccc)}.flo-pulse-list .flo-pulse-item button{text-align:left}.flo-pulse-list small{display:block;color:var(--muted,#777)}.flo-pulse-list input[type=text]{width:140px;max-width:100%;padding:5px;color:inherit;background:inherit;border:1px solid var(--line,#ccc);border-radius:6px}.flo-pulse-pill{position:fixed;right:110px;bottom:29px;z-index:9004;box-shadow:0 3px 10px #0002}.flo-pulse-note{font-size:11px;color:var(--muted,#777)}@keyframes flo-pulse-arrive{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.flo-pulse-toast{animation:none}}@media(max-width:560px){.flo-pulse-list,.flo-pulse-toast{right:8px;bottom:85px}.flo-pulse-pill{right:74px;bottom:14px}}';
- doc.head.append(style);
-}
-function start(){
- if(active||!doc||!root.fetch)return;
- active=true;restore();css();
- bubble=node('div','flo-pulse-toast');bubble.hidden=true;bubble.setAttribute('role','status');
- list=node('div','flo-pulse-list');list.hidden=true;list.setAttribute('role','region');list.setAttribute('aria-label','Flo signal inbox');
- badge=node('button','flo-pulse-pill',zhen()?'Flo · 已发布扫描':'Flo · Published');badge.type='button';badge.addEventListener('click',()=>showInbox(list.hidden));
- doc.body.append(bubble,list,badge);
- doc.addEventListener('visibilitychange',()=>{if(doc.visibilityState==='hidden'){if(timer)clearTimeout(timer)}else poll()});
- root.addEventListener('online',poll);poll();
-}
-root.FFFloAlerts={valid,normalize,compare,react,explain,start,poll,getState:()=>({initialized,seen:seen.slice(),settings:{...settings},events:items.slice()}),stop(){active=false;if(timer)clearTimeout(timer)}};
+root.FFFloAlerts={valid,normalize,compare,react,shown,explain,start,poll,
+ getState:()=>({initialized,seen:seen.slice(),settings:JSON.parse(JSON.stringify(settings)),events:items.slice(),lastError,latestBuild}),
+ stop(){active=false;if(timer)clearTimeout(timer);}};
 if(typeof module!=='undefined')module.exports=root.FFFloAlerts;
 if(doc){if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',start);else start();}
 })(typeof globalThis!=='undefined'?globalThis:this);
