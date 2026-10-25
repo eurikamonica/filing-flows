@@ -103,6 +103,10 @@ def main():
     else:
         for name in styles + scripts + ["favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"]:
             shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
+        # the home page's one address for search engines (the app's #… routes all live on it)
+        home = os.environ.get("SITE_URL") and setting("SITE_URL", url=True)
+        if home and 'rel="canonical"' not in html:
+            html = html.replace("</title>", f'</title>\n<link rel="canonical" href="{home}/">', 1)
     open(os.path.join(args.out, "index.html"), "w", encoding="utf-8").write(html)
     # test versions of views (web/beta/: Money flow Beta 1.0), served next to the site and linked from nowhere in it
     if not args.inline and os.path.isdir(os.path.join(WEB, "beta")):

@@ -274,6 +274,8 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/hub_extras.py --site _site
       - name: Pages for search engines about 13F managers and officials (m/<slug>/, o/<slug>/)
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}               # your own domain: canonical links and sitemap-people.xml use it, not github.io
         run: python scripts/seo_people.py --people _site/disclosures/data/research/people --out _site
 
       - name: Integrate SIC relationships, markets and audit-visible research pages

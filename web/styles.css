@@ -271,7 +271,7 @@ td .name { max-width: 30ch; overflow: hidden; text-overflow: ellipsis; display: 
 .prefs .sub-choice.off { opacity: .6; }             /* alerts "as soon as a chart is out": the choice applies to the daily report */
 .prefs .sub-choice.off:hover, .prefs .sub-choice.off:focus-within { opacity: 1; }
 #requests { max-width: 760px; }
-.foot-links { display: flex; gap: 16px; }
+.foot-links { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .legal { max-width: 72ch; }
 .legal h2 { font-size: 18px; margin: 26px 0 6px; }
 .legal p, .legal li { line-height: 1.6; }
