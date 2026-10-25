@@ -383,6 +383,7 @@
         const n = byId.get(id);
         window.FFMascot.explain({
           cik: ctx.cik, label: S.dec(n.name), period: ctx.label,
+          display: n.lines && n.lines[1] ? S.dec(n.lines[1][1]) : '',
           docUrl: ctx.docUrl || null
         });
       });
