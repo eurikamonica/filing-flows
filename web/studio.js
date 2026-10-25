@@ -376,16 +376,16 @@
   /* ---------- building a video: the series on the grid, labels and formats ---------- */
   const DEF = { k: 'growth', t: 'QQQ,SPY', from: '', to: '', amt: '10000', div: 'tr', style: 'line', theme: 'bull', ar: '16x9', q: '1080', fps: '30', dur: '20',
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
-    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', yb: '2000',
+    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
     goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
-    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials weights'],
+    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials history'], ['holdings', '13F / Officials latest mix'],
     ['sankey', 'Earnings flow'], ['snowball', 'Dividend snowball'], ['timing', 'Timing']];
   const STYLES = { growth: [['line', 'Line race'], ['bars', 'Bar race'], ['area', 'Areas'], ['tiles', 'Counters']], rrg: [['rrg', 'RRG']], momentum: [['bars', 'Bar race'], ['line', 'Lines']],
     fund: [['columns', 'Columns'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], formula: [['line', 'Lines'], ['area', 'Areas'], ['tiles', 'Counters'], ['bars', 'Bar race']],
     rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']],
-    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas'], ['companies', 'Company share areas'], ['changes', 'Weight changes (pp)']], sankey: [['sankey', 'Flow']], snowball: [['snow', 'Shares and income']],
+    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas'], ['companies', 'Company share areas'], ['changes', 'Weight changes (pp)']], holdings: [['bars', 'Actual holdings bars']], sankey: [['sankey', 'Flow']], snowball: [['snow', 'Shares and income']],
     timing: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']] };
   const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold'];        // redrawn, not rebuilt
   const tickers = (st) => [...new Set(String(st.t || '').split(/[\s,;]+/).map(norm).filter(Boolean))].slice(0, 10);
@@ -897,39 +897,112 @@
     return out;
   }
   // the dividend snowball: dividends buying more shares, which pay more dividends
+  // Realized historical dividend income (not a forward-yield promise).
+  // 52 observed weekly periods form the terminal annual dividend window.
+  const snowIncome = paid => paid.slice(-52).reduce((sum, x) => sum + (x || 0), 0);
   async function buildSnowball(st, out, T) {
     if (!T.length) throw new Error('Add a dividend payer, e.g. SCHD or KO');
     const P = new Map();
-    await Promise.all(T.slice(0, 3).map(async (s) => { const p = await price(s); if (p && p.px && p.px.div && p.px.div.length) P.set(s, p); }));
-    T.slice(0, 3).filter((s) => !P.has(s)).forEach((s) => out.notes.add(s + ': no dividends on file (yet) — left out'));
+    await Promise.all(T.slice(0, 3).map(async s => {
+      const p = await price(s);
+      if (p && p.px && p.px.div && p.px.div.length) P.set(s, p);
+    }));
+    T.slice(0, 3).filter(s => !P.has(s)).forEach(s =>
+      out.notes.add(s + ': no dividend history found; excluded'));
     if (!P.size) throw new Error('None of these has dividends on file');
-    const have = [...P.values()], to = Math.min(st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(), ...have.map((p) => p.px.t[p.px.t.length - 1]));
+    const have = [...P.values()];
+    const to = Math.min(st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(),
+      ...have.map(p => p.px.t[p.px.t.length - 1]));
     let from = st.from ? Date.parse(st.from + 'T00:00:00Z') : to - 15 * 365.25 * DAY;
-    from = Math.max(from, ...have.map((p) => p.px.t[0]));
-    const G = weeklyGrid(iso(from), iso(to)); if (G.length < 30) throw new Error('Less than half a year in that range');
-    const lump = Math.max(0, +st.amt || 10000), rec = Math.max(0, +st.rec || 0), buys = buySchedule(G, rec, +st.ri || 1, UNITS[st.ru] ? st.ru : 'm', from);
-    for (const [s, p] of P) {
+    from = Math.max(from, ...have.map(p => p.px.t[0]));
+    const G = weeklyGrid(iso(from), iso(to));
+    if (G.length < 30) throw new Error('Less than half a year of usable price history');
+    const initial = Number.isFinite(+st.amt) ? Math.max(0, +st.amt) : 10000;
+    const recurring = Number.isFinite(+st.rec) ? Math.max(0, +st.rec) : 0;
+    const unit = UNITS[st.ru] ? st.ru : 'm', every = Math.max(1, Math.round(+st.ri || 1));
+    // The schedule is computed once at $1 per buy. Simulation is linear
+    // in starting capital and contributions, including compounded DRIP units.
+    const unitBuys = buySchedule(G, 1, every, unit, from);
+    const target = +st.sgoal || 0, reverse = target > 0;
+    if (reverse && (!Number.isFinite(target) || target > 1e12))
+      throw Error('Enter a finite positive terminal dividend goal below $1 trillion');
+    if (reverse && G.length < 52)
+      throw Error('Backward income calculation requires at least 52 weekly observations for the terminal 12-month dividend estimate.');
+    const targetAnnual = reverse ? target * (st.sunit === 'annual' ? 1 : 12) : null;
+    const solveFor = st.ssolve === 'rec' ? 'rec' : 'lump';
+    out.snowGoal = reverse ? { requested: target, unit: st.sunit === 'annual' ? 'annual' : 'monthly',
+      annual: targetAnnual, solveFor, results: [] } : null;
+    for (const [sym, p] of P) {
       const pr = priceOn(p, G), dv = divsOn(p, G), i0 = pr.findIndex(fin);
       if (i0 < 0) continue;
-      let sh = 0, bought = 0, fromDiv = 0, last = null;
-      const v = [], shv = [], inc = [], paid = G.map(() => 0);
-      for (let i = 0; i < G.length; i++) {
-        const px = fin(pr[i]) ? pr[i] : last; last = px;
-        if (i < i0 || !px) { v.push(null); shv.push(null); inc.push(null); continue; }
-        if (i > i0 && dv[i]) { const cash = sh * dv[i]; paid[i] = cash; const add = cash / px; sh += add; fromDiv += add; }
-        const put = (i === i0 ? lump : 0) + buys[i]; if (put) { sh += put / px; bought += put / px; }
-        v.push(sh * px); shv.push(sh);
-        let s52 = 0; for (let j = Math.max(0, i - 51); j <= i; j++) s52 += paid[j];
-        inc.push(i - i0 >= 51 ? s52 : null);
+      // Dividend payment happens before new purchases in this weekly slot.
+      function simulate(lump, perBuy) {
+        let shares = 0, bought = 0, fromDiv = 0, last = null, firstShares = null;
+        const v = [], sh = [], inc = [], paid = G.map(() => 0);
+        for (let i = 0; i < G.length; i++) {
+          const px = fin(pr[i]) ? pr[i] : last;
+          if (fin(px) && px > 0) last = px;
+          if (i < i0 || !last) { v.push(null); sh.push(null); inc.push(null); continue; }
+          if (i > i0 && dv[i]) {
+            const cash = shares * dv[i];
+            paid[i] = cash;
+            const added = cash / last;
+            shares += added; fromDiv += added;
+          }
+          const contribution = (i === i0 ? lump : 0) + unitBuys[i] * perBuy;
+          if (contribution) { shares += contribution / last; bought += contribution / last; }
+          if (i === i0) firstShares = shares;
+          v.push(shares * last); sh.push(shares);
+          inc.push(i - i0 >= 51 ? snowIncome(paid.slice(0, i + 1)) : null);
+        }
+        const annualIncome = snowIncome(paid);
+        return { v, sh, inc, paid, bought, fromDiv, initialShares: firstShares,
+          finalShares: sh[sh.length - 1], annualIncome, monthlyIncome: annualIncome / 12 };
       }
-      const yearly = {};
-      G.forEach((g, i) => { const y = new Date(g).getUTCFullYear(); yearly[y] = (yearly[y] || 0) + paid[i]; });
-      out.series.push({ key: s, label: s, name: p.name, v, sh: shv, inc, paid, yearly, bought, fromDiv, sh0: lump / pr[i0] });
+      let lump = initial, perBuy = recurring;
+      if (reverse) {
+        const base = solveFor === 'lump' ? simulate(0, recurring).annualIncome :
+          simulate(initial, 0).annualIncome;
+        const perDollar = solveFor === 'lump' ? simulate(1, 0).annualIncome :
+          simulate(0, 1).annualIncome;
+        if (!(perDollar > 1e-15)) {
+          out.notes.add(sym + ': no dividend-producing purchases in the selected period; cannot solve this target.');
+          continue;
+        }
+        const needed = Math.max(0, (targetAnnual - base) / perDollar);
+        if (solveFor === 'lump') lump = needed;
+        else perBuy = needed;
+        if (base >= targetAnnual) out.notes.add(sym +
+          ': fixed contributions already meet or exceed the dividend goal; solved amount is zero.');
+      }
+      const r = simulate(lump, perBuy), yearly = {};
+      G.forEach((g, i) => { const y = new Date(g).getUTCFullYear(); yearly[y] = (yearly[y] || 0) + r.paid[i]; });
+      out.series.push({ key: sym, label: sym, name: p.name, v:r.v, sh:r.sh, inc:r.inc,
+        paid:r.paid, yearly, bought:r.bought, fromDiv:r.fromDiv, sh0:r.initialShares,
+        initialShares:r.initialShares, finalShares:r.finalShares, annualIncome:r.annualIncome,
+        monthlyIncome:r.monthlyIncome, initialCash:lump, perBuy, purchases:unitBuys.filter(Boolean).length });
+      if (reverse) out.snowGoal.results.push({ticker:sym, initialCash:lump, perBuy,
+        annualIncome:r.annualIncome, monthlyIncome:r.monthlyIncome, initialShares:r.initialShares,
+        finalShares:r.finalShares, annualGoal:targetAnnual, achieved:r.annualIncome >= targetAnnual - .01});
     }
-    let c = 0; out.contrib = G.map((_, i) => (c += (i === 0 ? lump : 0) + buys[i]));
-    out.kind = 'snowball'; out.grid = G; out.fmt = (v) => money(v); out.unit = '$';
-    out.title = out.title || `The dividend snowball: ${out.series.map((x) => x.key).join(' vs ')}`;
-    out.sub = out.sub || `${money(lump, 0)} to start${rec ? ` + ${money(rec, 0)} every ${(+st.ri || 1) > 1 ? st.ri + ' ' + UNITS[st.ru || 'm'][1] : UNITS[st.ru || 'm'][0]}` : ''} · every dividend buys more shares at that week's price · ${dayLabel(G[0])} → ${dayLabel(G[G.length - 1])}`;
+    if (!out.series.length) throw Error('No eligible dividend series could be calculated for this target and date range');
+    let contrib = 0;
+    const sample = out.series[0];
+    out.contrib = G.map((_, i) => (contrib += (i === 0 ? sample.initialCash : 0) +
+      unitBuys[i] * sample.perBuy));
+    out.kind = 'snowball'; out.scf = st.scf === 'annual' ? 'annual' : 'monthly';
+    out.grid = G; out.fmt = v => money(v); out.unit = '$';
+    const names = out.series.map(s => s.key).join(' vs ');
+    const interval = every > 1 ? every + ' ' + UNITS[unit][1] : UNITS[unit][0];
+    out.title = reverse ? 'The dividends needed: ' + names : 'The dividend snowball: ' + names;
+    out.sub = reverse ?
+      money(target, 0) + (st.sunit === 'annual' ? '/year' : '/month') +
+      ' terminal dividend target · reverse-calculated ' + (solveFor === 'lump' ? 'starting capital' : 'scheduled buy') +
+      ' · dividends reinvested · ' + dayLabel(G[0]) + ' → ' + dayLabel(G[G.length - 1]) :
+      money(initial, 0) + ' to start' + (recurring ? ' + ' + money(recurring, 0) + ' every ' + interval : '') +
+      ' · every dividend buys more shares at that week’s price · ' +
+      dayLabel(G[0]) + ' → ' + dayLabel(G[G.length - 1]);
+    if (reverse) out.notes.add('Backward calculation is an IN-SAMPLE historical scenario, NOT a future forecast. Terminal income is actual gross distributions received over the final 52 weekly observations; monthly equivalent = annual / 12, even if payments are quarterly. Dividends are reinvested.');
     return out;
   }
   // bought at the top every year, at the bottom, on the first day, or a little every month — the same money each year
@@ -980,6 +1053,7 @@
     if (k === 'treemap') return buildTreemap(st, out);
     if (k === 'sectors') return buildSectors(st, out);
     if (k === 'actual') return root.FFActual.build(st, out, { json, hub: HUB, rankMeta });
+    if (k === 'holdings') return root.FFHoldingsVideo.build(st, out, { json, hub: HUB, rankMeta });
     if (k === 'sankey') return buildSankey(st, out, T);
     if (k === 'snowball') return buildSnowball(st, out, T);
     if (k === 'timing') return buildTiming(st, out, T);
@@ -1163,6 +1237,7 @@
 
   /* ---------- themes ---------- */
   const THEMES = {
+    appearance: { name: 'Appearance settings / 外观设置' },
     bull: { name: 'Bull (dark)', bg: ['#06101f', '#0b1f3a', '#0f2b4f'], grid: 'rgba(160,190,230,0.10)', axis: 'rgba(200,215,235,0.55)', text: '#eef4fb', muted: 'rgba(214,226,240,0.70)',
       accent: '#ffd25e', glow: 18, panel: 'rgba(8,20,40,0.72)', font: '"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif',
       pal: ['#38f2a2', '#ffd25e', '#5ab0ff', '#ff6b8e', '#b993ff', '#ffa24c', '#3fe0f0', '#c8f07a', '#ff8ad8', '#9ad0ff'], q: ['#38f2a2', '#ffd25e', '#ff6b8e', '#5ab0ff'] },
@@ -1209,7 +1284,7 @@
   }
 
   function draw(ctx, W, H, V, opt, t) {
-    const th = THEMES[opt.theme] || THEMES.bull, S = Math.min(W, H) / 1080, tm = timing(V, opt), f = frameIndex(V, tm, t);
+    const th = (opt.theme === 'appearance' ? (opt.appearanceTheme || root.FFAppearance?.videoTheme()) : THEMES[opt.theme]) || THEMES.bull, S = Math.min(W, H) / 1080, tm = timing(V, opt), f = frameIndex(V, tm, t);
     const portrait = H > W * 1.2, square = !portrait && H > W * 0.8;
     const pal = (i) => th.pal[i % th.pal.length];
     const F = (w, px) => `${w} ${Math.round(px * S)}px ${th.font}`;
@@ -1840,45 +1915,123 @@
   // the dividend snowball: shares owned (and those bought with your own money, dashed) above, each year's dividends below
   function snowballChart(ctx, V, f, b, S, th, F, pal) {
     const gap = 70 * S, h1 = (b.h - gap) * 0.6, h2 = b.h - gap - h1;
-    const D = Object.assign({}, V, { series: V.series.map((s) => ({ key: s.key, label: s.label + ' shares', name: s.name, v: s.sh })), base: null, contrib: null, split: false, zero: false,
-      fmt: (v) => (fin(v) ? v.toLocaleString('en-US', { maximumFractionDigits: v >= 100 ? 0 : 1 }) : '—'), unit: '', tickFmt: (v) => v.toLocaleString('en-US', { maximumFractionDigits: Math.abs(v) >= 10 ? 0 : 1 }) });
-    lineRace(ctx, D, f, { x: b.x, y: b.y, w: b.w, h: h1 }, S, th, F, pal, false, true);
-    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.font = F(600, 22); ctx.fillStyle = th.muted;
-    ctx.fillText('Dividends received each year (all reinvested)', b.x, b.y + h1 + gap - 12 * S);
-    const G = V.grid, i0 = Math.floor(f), ys = [...new Set(G.map((g) => new Date(g).getUTCFullYear()))], yNow = new Date(G[Math.min(G.length - 1, i0)]).getUTCFullYear();
-    const yb = { x: b.x, y: b.y + h1 + gap, w: b.w, h: h2 }, m = V.series.length, slot = yb.w / ys.length, bw = slot * 0.8 / m;
-    const upto = (s, y) => { let t = 0; G.forEach((g, i) => { if (i <= f && new Date(g).getUTCFullYear() === y) t += s.paid[i] * (i === i0 + 1 ? f - i0 : 1); }); return t; };
-    const hi = Math.max(1, ...V.series.flatMap((s) => Object.values(s.yearly))) * 1.1, Y = (v) => yb.y + yb.h - v / hi * yb.h;
-    ys.forEach((y, j) => {
-      if (y > yNow) return;
-      V.series.forEach((s, k) => {
-        const v = upto(s, y); if (!(v > 0)) return;
-        const x = yb.x + j * slot + slot * 0.1 + k * bw, col = pal(k);
-        ctx.fillStyle = alpha(col, 0.85); roundRect(ctx, x, Y(v), bw * 0.9, yb.y + yb.h - Y(v), Math.min(6 * S, bw * 0.25)); ctx.fill();
-        if (y === yNow || (ys.length <= 16 && bw > 30 * S)) { ctx.font = F(700, 16); ctx.fillStyle = th.text; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(money(v), x + bw * 0.45, Y(v) - 4 * S); }
+    const D = Object.assign({}, V, { series: V.series.map(s =>
+      ({ key:s.key, label:s.label + ' shares', name:s.name, v:s.sh })),
+      base:null, contrib:null, split:false, zero:false,
+      fmt:v=>fin(v)?Number(v).toLocaleString('en-US',{maximumFractionDigits:1}):'—', unit:'',
+      tickFmt:v=>Number(v).toLocaleString('en-US',{maximumFractionDigits:Math.abs(v)>=10?0:1}) });
+    lineRace(ctx, D, f, {x:b.x,y:b.y,w:b.w,h:h1}, S, th, F, pal, false, true);
+    const monthly = V.scf !== 'annual';
+    ctx.textAlign='left';ctx.textBaseline='bottom';ctx.font=F(600,22);ctx.fillStyle=th.muted;
+    ctx.fillText(monthly?'Monthly gross dividends (reinvested) · last 24 months':
+      'Annual gross dividends (reinvested)',b.x,b.y+h1+gap-12*S,b.w);
+    const G=V.grid,uptoIndex=Math.max(0,Math.min(G.length-1,Math.floor(f)));
+    const period = ms => {
+      const d=new Date(ms);
+      return monthly ? d.toISOString().slice(0,7) : String(d.getUTCFullYear());
+    };
+    const keys=[...new Set(G.slice(0,uptoIndex+1).map(period))].sort();
+    const periods=monthly?keys.slice(-24):keys;
+    const firstIndex=G.length?period(G[0]):null;
+    const totals=V.series.map(s=>{
+      const map=new Map();
+      G.forEach((g,i)=>{
+        if(i>uptoIndex)return;
+        const key=period(g);
+        const amount=s.paid[i]||0;
+        map.set(key,(map.get(key)||0)+amount);
       });
-      if (j % Math.max(1, Math.ceil(ys.length / 12)) === 0) { ctx.font = F(500, 17); ctx.fillStyle = th.axis; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(String(y), yb.x + j * slot + slot / 2, yb.y + yb.h + 6 * S); }
+      return map;
+    });
+    const yb={x:b.x,y:b.y+h1+gap,w:b.w,h:h2};
+    const m=V.series.length,slot=yb.w/Math.max(1,periods.length),bw=slot*.8/Math.max(1,m);
+    const hi=Math.max(1,...totals.flatMap(map=>periods.flatMap(key=>[map.get(key)||0])))*1.16;
+    const Y=v=>yb.y+yb.h-Math.min(v/hi,1)*yb.h;
+    periods.forEach((key,j)=>{
+      V.series.forEach((s,k)=>{
+        const v=totals[k].get(key)||0;
+        if(v<=0)return;
+        const x=yb.x+j*slot+slot*.1+k*bw;
+        ctx.fillStyle=alpha(pal(k),.85);
+        roundRect(ctx,x,Y(v),Math.max(1*S,bw*.88),yb.y+yb.h-Y(v),Math.min(5*S,bw*.23));ctx.fill();
+        if((j===periods.length-1||!monthly&&periods.length<=10)&&bw>25*S){
+          ctx.font=F(700,14);ctx.fillStyle=th.text;ctx.textAlign='center';
+          ctx.textBaseline='bottom';ctx.fillText(money(v),x+bw*.44,Y(v)-4*S,bw*1.5);
+        }
+      });
+      const every=monthly?Math.max(1,Math.ceil(periods.length/8)):Math.max(1,Math.ceil(periods.length/12));
+      if(j%every===0||j===periods.length-1){
+        ctx.font=F(500,16);ctx.fillStyle=th.axis;ctx.textAlign='center';ctx.textBaseline='top';
+        ctx.fillText(monthly?key.slice(2):key,yb.x+j*slot+slot/2,yb.y+yb.h+5*S,slot*every);
+      }
     });
   }
 
+  // Avoid overlapping value/change columns on small canvases and long descriptions.
+  // The dedicated snowball card keeps all three requested metrics visible.
   function endCard(ctx, V, W, H, S, th, F, pal, a, portrait) {
-    const rows = V.final.slice(0, portrait ? 10 : V.kind === 'rank' ? 8 : 6);
-    ctx.fillStyle = `rgba(0,0,0,${0.45 * a})`; ctx.fillRect(0, 0, W, H);
-    const w = Math.min(W - 120 * S, (portrait ? 920 : 1100) * S), rh = 74 * S, h = 150 * S + rows.length * rh, x = (W - w) / 2, y = (H - h) / 2 + (1 - a) * 40 * S;
-    ctx.globalAlpha = a; ctx.fillStyle = th.panel; roundRect(ctx, x, y, w, h, 28 * S); ctx.fill();
+    const snow = V.kind === 'snowball' && Array.isArray(V.snowballSummary) && V.snowballSummary.length;
+    const rows = snow ? V.snowballSummary : V.final.slice(0, portrait ? 10 : V.kind === 'rank' ? 8 : 6);
+    const pad = 34 * S, capW = (portrait ? 920 : 1100) * S;
+    const w = Math.min(W - 64 * S, capW);
+    const availableH = H - 72 * S, headerH = snow ? 164 * S : 145 * S;
+    const rh = Math.max(38 * S, Math.min(snow ? 126 * S : 78 * S,
+      (availableH - headerH - 32 * S) / Math.max(1, rows.length)));
+    const h = Math.min(availableH, headerH + rows.length * rh + 24 * S);
+    const x = (W - w) / 2, y = (H - h) / 2 + (1 - a) * 36 * S;
+    ctx.fillStyle = 'rgba(0,0,0,' + (0.45 * a) + ')'; ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = th.panel; roundRect(ctx, x, y, w, h, 24 * S); ctx.fill();
     ctx.strokeStyle = alpha(th.accent, 0.6); ctx.lineWidth = 2 * S; ctx.stroke();
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = th.accent; ctx.font = F(700, 34);
-    ctx.fillText(V.endTitle, x + 40 * S, y + 70 * S);
-    ctx.font = F(500, 22); ctx.fillStyle = th.muted; ctx.fillText(V.endSub, x + 40 * S, y + 108 * S);
-    rows.forEach((r, i) => {
-      const yy = y + 150 * S + i * rh + rh / 2;
-      ctx.fillStyle = r.sec ? secCol(th, r.sec) : pal(r.k); ctx.beginPath(); ctx.arc(x + 54 * S, yy - 10 * S, 12 * S, 0, 7); ctx.fill();
-      ctx.font = F(700, 34); ctx.fillStyle = th.text; ctx.textAlign = 'left'; ctx.fillText(r.label, x + 84 * S, yy);
-      ctx.textAlign = 'right'; ctx.fillText(r.value, x + w - (r.change ? 210 : 40) * S, yy);
-      if (r.change) { ctx.fillStyle = r.up ? '#3ee39a' : '#ff6b6b'; ctx.fillText(r.change, x + w - 40 * S, yy); }
-    });
-    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = th.accent; ctx.font = F(700, 32);
+    ctx.fillText(String(V.endTitle || ''), x + pad, y + 52 * S, w - 2 * pad);
+    ctx.font = F(500, snow ? 18 : 21); ctx.fillStyle = th.muted;
+    ctx.fillText(String(V.endSub || ''), x + pad, y + 84 * S, w - 2 * pad);
+    if (snow) {
+      const cw = (w - 2 * pad) / 3, base = y + 137 * S;
+      ['INITIAL SHARES', 'MONTHLY CASH FLOW', 'FINAL SHARES'].forEach((label, j) => {
+        ctx.font = F(600, 16); ctx.fillStyle = th.muted; ctx.textAlign = 'left';
+        ctx.fillText(label, x + pad + j * cw, base, cw - 9 * S);
+      });
+      rows.forEach((r, i) => {
+        const yy = y + headerH + i * rh;
+        if (i) { ctx.strokeStyle = alpha(th.muted, .2); ctx.beginPath(); ctx.moveTo(x + pad, yy); ctx.lineTo(x + w - pad, yy); ctx.stroke(); }
+        ctx.font = F(700, 23); ctx.fillStyle = pal(r.k); ctx.textAlign = 'left';
+        ctx.fillText(r.ticker, x + pad, yy + 25 * S, cw - 9 * S);
+        ctx.font = F(500, 16); ctx.fillStyle = th.muted;
+        ctx.fillText(r.investment, x + pad + cw, yy + 25 * S, 2 * cw - 12 * S);
+        [r.initial, r.monthly, r.final].forEach((v, j) => {
+          ctx.font = F(700, 26); ctx.fillStyle = th.text;
+          ctx.fillText(v, x + pad + j * cw, yy + 69 * S, cw - 9 * S);
+        });
+        ctx.font = F(500, 16); ctx.fillStyle = th.muted;
+        ctx.fillText(r.monthlyNote, x + pad + cw, yy + 92 * S, cw - 9 * S);
+      });
+    } else {
+      const usable = w - 2 * pad;
+      rows.forEach((r, i) => {
+        const yy = y + headerH + i * rh + rh * .60;
+        const change = String(r.change || '');
+        const changeW = change ? Math.min(usable * .25, 186 * S) : 0;
+        const valueW = Math.min(usable * .30, 235 * S);
+        const labelW = Math.max(70 * S, usable - valueW - changeW - 22 * S);
+        const right = x + w - pad;
+        ctx.fillStyle = r.sec ? secCol(th, r.sec) : pal(r.k || 0);
+        ctx.beginPath(); ctx.arc(x + pad + 8 * S, yy - 8 * S, 7 * S, 0, Math.PI * 2); ctx.fill();
+        ctx.font = F(700, 27); ctx.fillStyle = th.text; ctx.textAlign = 'left';
+        ctx.fillText(String(r.label || ''), x + pad + 22 * S, yy, labelW - 18 * S);
+        ctx.textAlign = 'right';
+        ctx.fillText(String(r.value || ''), right - changeW - (changeW ? 10 * S : 0), yy, valueW);
+        if (change) {
+          ctx.font = F(650, 24); ctx.fillStyle = r.up ? '#3ee39a' : '#ff6b6b';
+          ctx.fillText(change, right, yy, changeW);
+        }
+      });
+    }
+    ctx.restore();
   }
+
   // the end card's rows and headline, from the last week
   function finish(V, st) {
     const L = V.grid.length - 1, G = V.grid, span = `${dayLabel(G[0])} → ${dayLabel(G[L])}`;
@@ -1926,13 +2079,44 @@
     }
     if (V.kind === 'snowball') {
       V.final = [];
+      V.snowballSummary = [];
       V.series.forEach((s, k) => {
-        const sh = s.sh[L], ys = Object.keys(s.yearly).map(Number).sort(), full = ys.filter((y) => y > ys[0] && y < ys[ys.length - 1]);
-        V.final.push({ k, label: `${s.label} · ${sh.toLocaleString('en-US', { maximumFractionDigits: 1 })} shares`, value: money(s.v[L]), change: `+${(100 * s.fromDiv / Math.max(1e-9, s.bought)).toFixed(0)}% shares`, up: true });
-        if (full.length >= 2) V.final.push({ k, label: `${s.label} dividends ${full[0]} → ${full[full.length - 1]}`, value: money(s.yearly[full[full.length - 1]]), change: pctf(s.yearly[full[full.length - 1]] / Math.max(1e-9, s.yearly[full[0]]) - 1, 0), up: true });
+        const initialShares = s.initialShares == null ? s.sh.find(fin) : s.initialShares;
+        const finalShares = s.finalShares == null ? s.sh[L] : s.finalShares;
+        const annual = s.annualIncome == null ? snowIncome(s.paid) : s.annualIncome;
+        const monthly = annual / 12, monthAmounts = {};
+        G.forEach((g, i) => {
+          const month = new Date(g).toISOString().slice(0, 7);
+          monthAmounts[month] = (monthAmounts[month] || 0) + (s.paid[i] || 0);
+        });
+        const shfmt = v => fin(v) ? Number(v).toLocaleString('en-US', {maximumFractionDigits:2}) : '—';
+        const reverse = Boolean(V.snowGoal);
+        const investment = (reverse ? (V.snowGoal.solveFor === 'lump' ? 'Required start ' : 'Required buy ') : 'Start ') +
+          money(V.snowGoal && V.snowGoal.solveFor === 'rec' ? s.perBuy : s.initialCash, 0) +
+          (reverse && V.snowGoal.solveFor === 'rec' ? ' each scheduled purchase' :
+            s.perBuy > 0 ? ' + ' + money(s.perBuy, 0) + ' per scheduled purchase' : '');
+        V.snowballSummary.push({
+          k, ticker:s.label, initial:shfmt(initialShares), final:shfmt(finalShares),
+          monthly:money(monthly), annual:money(annual),
+          monthlyNote:'Trailing 52-week gross / 12',
+          investment, initialCash:s.initialCash, perBuy:s.perBuy,
+          monthly_cashflow_usd:monthAmounts, initial_shares:initialShares,
+          final_shares:finalShares, annualIncome:annual, monthlyIncome:monthly
+        });
+        V.final.push({k, label:s.label + ' final shares', value:shfmt(finalShares),
+          change:'+' + (100 * s.fromDiv / Math.max(1e-9,s.bought)).toFixed(0) + '% from DRIP', up:true});
       });
-      V.endTitle = 'The snowball'; V.endSub = `${dayLabel(G[0])} → ${dayLabel(G[L])} · “+% shares”: bought with dividends, on top of the shares paid for`;
-      V.caption = `${V.title}: ` + V.series.map((s) => `${s.label} ${s.sh[L].toFixed(1)} shares (${(100 * s.fromDiv / Math.max(1e-9, s.bought)).toFixed(0)}% more from dividends), ${money(s.v[L])}`).join(' · ');
+      V.endTitle = V.snowGoal ? 'Dividend income target · backward solve' : 'The dividend snowball';
+      V.endSub = V.snowGoal ?
+        'Goal ' + money(V.snowGoal.requested) + (V.snowGoal.unit === 'annual' ? '/yr' : '/mo') +
+          ' · historical 52-week paid dividends · reinvested' :
+        dayLabel(G[0]) + ' → ' + dayLabel(G[L]) +
+          ' · monthly equivalent = gross trailing 52-week dividends / 12';
+      V.caption = V.title + ': ' + V.snowballSummary.map(r =>
+        r.ticker + ' · ' + r.investment + ' · ' + r.initial + ' initial shares → ' +
+        r.final + ' final shares · terminal dividends ' + r.monthly + '/month equivalent (' +
+        r.annual + '/year), gross and reinvested').join(' | ');
+      V.notes.add('Terminal monthly income is the gross realized dividend amount from the last 52 weekly observations divided by 12. Actual cash payments may be quarterly, seasonal or irregular; it is NOT cash withdrawn or a forward dividend forecast.');
       return;
     }
     if (V.kind === 'timing') {
@@ -2129,6 +2313,8 @@
     // the address as typed, still encoded (the router decodes it, and a formula can hold % or &)
     const raw = (/^#\/?studio\/?(.*)$/.exec(location.hash || '') || [])[1];
     const st = parseState(raw != null ? raw : arg);
+    const originalTheme = st.theme === 'appearance' ? DEF.theme : st.theme;
+    if (root.FFAppearance?.get().video !== 'default' && root.FFAppearance?.videoTheme()) st.theme = 'appearance';
     const sel = (id, items, v) => `<select id="${id}">${items.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
     app.innerHTML = `<div class="page-head"><div class="eyebrow"><a href="#chart">← Charts</a> · Videos</div><h1>Make a market video</h1>
       <p class="muted" style="max-width:76ch">Growth races of any ETFs or stocks — a lump sum or the same amount bought every few days, weeks or months, with dividends reinvested, taken as cash on their own line, or left out — leaderboards of every company by market value, revenue, profit, P/E, P/B, volume or return, drawdowns, monthly-return heatmaps, the spread of every stock's year, RRG and momentum replays, companies' own figures and any formula. Animated in four looks and three shapes, at the length and pace you set, saved as an MP4 to post. Everything is drawn from the site's own data in your browser.</p></div>
@@ -2142,7 +2328,7 @@
       </div></div>`;
     const $ = (s) => app.querySelector(s), canvas = $('#st-canvas'), ctx = canvas.getContext('2d');
     let V = null, playing = false, t0 = 0, tNow = 0, raf = 0, token = 0, exporting = false;
-    const opt = () => ({ theme: st.theme, ar: st.ar, q: st.q, fps: st.fps, dur: clamp(+st.dur || 20, 4, 300), pace: st.pace, hold: st.hold });
+    const opt = () => ({ appearanceTheme: st.theme === 'appearance' ? root.FFAppearance?.videoTheme() : null, theme: st.theme, ar: st.ar, q: st.q, fps: st.fps, dur: clamp(+st.dur || 20, 4, 300), pace: st.pace, hold: st.hold });
     function rankSide(k) {
       let h = '';
       if (k === 'rank') {
@@ -2168,6 +2354,23 @@
       if (st.style === 'changes') h += `<label for="st-ag">Group changes</label>${sel('st-ag', [['company','Company'],['sector','Sector']], st.ag)}`;
       h += `<label for="st-an">Top holdings shown</label>${sel('st-an', [['5', '5'], ['10', '10'], ['12', '12'], ['15', '15'], ['20', '20']], st.an)}`;
       return h + '<div class="st-help">ETF NAV weights; 13F reported-value weights; officials show monthly transaction lower-bound shares, NOT holdings. Source dates are retained; official transaction charts use month-end buckets. Index mode uses a TRACKING ETF PROXY, not licensed official index files. Dow 30 is price-weighted, never market-cap-weighted. Dates before the first actual snapshot cannot be animated.</div>';
+    }
+    function holdingsSide() {
+      let h = '<label for="st-hsrc">Disclosure source</label>' +
+        sel('st-hsrc', [['13f', 'Popular SEC 13F managers'], ['officials', 'Public officials / PTR transactions']], st.hsrc);
+      h += '<label for="st-hid">' + (st.hsrc === 'officials' ? 'Official (name or slug)' : '13F manager (name or CIK)') + '</label>' +
+        '<input class="input" id="st-hid" value="' + esc(st.hid) + '" list="st-hlist" placeholder="Blank = featured filer" autocomplete="off"><datalist id="st-hlist"></datalist>';
+      h += '<label for="st-hv">Weights</label>' +
+        sel('st-hv', st.hsrc === 'officials' ?
+          [['company', 'Estimated company trade-size mix'], ['sector', 'Estimated sector trade-size mix']] :
+          [['company', 'Actual company weights (13F)'], ['sector', 'Actual sector weights (13F)']], st.hv);
+      h += '<label for="st-an">Top rows shown</label>' +
+        sel('st-an', [['5','5'],['10','10'],['12','12'],['15','15'],['20','20']], st.an);
+      h += '<div class="st-help">' + (st.hsrc === '13f' ?
+        'SEC 13F: actual reported position values divided by the ENTIRE disclosed 13F total, never rescaled to top holdings. Missing holdings remain uncovered; reports lag quarter end.' :
+        'Officials: PTR trades are ranges, not a current portfolio. Finite range midpoints give an ESTIMATED transaction mix, not actual portfolio weights.') +
+        ' One reported date only: no invented price, history or share counts.</div>';
+      return h;
     }
     function moreSide(k) {
       const meas = Object.entries(RANK).filter(([kk]) => !['gp', 'oi', 'ni'].includes(kk)).map(([kk, v]) => [kk, v[0]]);
@@ -2196,6 +2399,7 @@
       if (k === 'rank' || k === 'dist') h += rankSide(k);
       else if (k === 'bubble' || k === 'treemap' || k === 'sectors') h += moreSide(k);
       else if (k === 'actual') h += actualSide();
+      else if (k === 'holdings') h += holdingsSide();
       else if (k !== 'formula') {
         const one = k === 'calendar' || k === 'sankey' || k === 'timing';
         const lbl = { fund: 'Companies (tickers)', sankey: 'Company (ticker)', calendar: 'Ticker — an ETF or a stock', timing: 'Ticker — an index fund or a stock', snowball: 'Dividend payers (up to three)' }[k] || 'Tickers — ETFs or stocks, two or more';
@@ -2203,12 +2407,42 @@
         h += `<label for="st-t">${lbl}</label><input class="input" id="st-t" value="${esc(one ? tickers(st)[0] || '' : st.t)}" placeholder="${ph}" list="st-list" autocomplete="off"><datalist id="st-list"></datalist>`;
         if (k === 'sankey') h += `<label for="st-sm">Quarters</label>${sel('st-sm', [['detail', 'The detailed flow (the latest quarters on file)'], ['long', 'Ten years: revenue → profit → earnings']], st.sm)}`;
         if (k === 'timing') h += `<label for="st-yb">Money each year ($)</label><input class="input" id="st-yb" inputmode="numeric" value="${esc(st.yb)}"><div class="st-help">Each year's money goes in at that year's highest close (bought at the top), its lowest (perfect timing), its first week, or spread over its months — with hindsight, to show what timing is worth.</div>`;
-        if (k === 'snowball') h += `<label for="st-amt">Amount to start with ($)</label><input class="input" id="st-amt" inputmode="numeric" value="${esc(st.amt)}"><label for="st-rec">Buy again on a schedule (optional)</label><div class="st-row"><div><input class="input" id="st-rec" inputmode="numeric" placeholder="$ each time" value="${+st.rec > 0 ? esc(st.rec) : ''}" aria-label="Amount each time"></div><div style="flex:.7"><input class="input" id="st-ri" type="number" min="1" max="60" value="${esc(st.ri)}" aria-label="Every how many"></div><div>${sel('st-ru', [['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru)}</div></div>`;
+        if (k === 'snowball') {
+          const solving = +st.sgoal > 0, solveLump = st.ssolve !== 'rec';
+          h += '<label for="st-amt">' + (solving && solveLump ? 'Starting amount (calculated from goal)' : 'Amount to start with ($)') +
+            '</label><input class="input" id="st-amt" inputmode="decimal" value="' +
+            (solving && solveLump ? '' : esc(st.amt)) + '" placeholder="' +
+            (solving && solveLump ? 'Calculated separately for each ticker' : '10000') + '"' + (solving && solveLump ? ' disabled' : '') + '>';
+          h += '<label for="st-rec">' + (solving && !solveLump ? 'Scheduled buy (calculated from goal)' : 'Buy again on a schedule (optional)') +
+            '</label><div class="st-row"><div><input class="input" id="st-rec" inputmode="decimal" placeholder="' +
+            (solving && !solveLump ? 'Calculated per ticker' : '$ each time') + '" value="' +
+            (solving && !solveLump ? '' : (+st.rec > 0 ? esc(st.rec) : '')) +
+            '" aria-label="Amount each time"' + (solving && !solveLump ? ' disabled' : '') +
+            '></div><div style="flex:.7"><input class="input" id="st-ri" type="number" min="1" max="60" value="' +
+            esc(st.ri) + '" aria-label="Every how many"></div><div>' +
+            sel('st-ru', [['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru) + '</div></div>';
+        }
       }
       else h += `<label for="st-expr">Formulas — one per line, “Label: expression”</label><textarea id="st-expr" spellcheck="false">${esc(st.expr)}</textarea><div class="st-help">Operators <code>+ − × ÷ ^</code> and <code>( )</code>; functions <code>log exp sqrt abs rebase(x) ma(x,n) ema(x,n) pct(x,n) chg(x,n) lag(x,n) min(a,b) max(a,b)</code>. Series: a ticker (<code>QQQ</code> = total return) or <code>QQQ.price</code>, <code>.div</code>, <code>.yield</code>, company figures <code>NVDA.revenue</code>, <code>.ni_ttm</code>, <code>.margin</code>… Example: <code>rebase(QQQ/SPY)</code>, <code>SCHD.yield*100</code>, <code>NVDA.ni_ttm/NVDA.revenue_ttm</code>.</div>`;
-      h += `<div class="st-row"><div><label for="st-from">From</label><input class="input" type="date" id="st-from" value="${esc(st.from)}"></div><div><label for="st-to">To</label><input class="input" type="date" id="st-to" value="${esc(st.to)}"></div></div>`;
+      if (k !== 'holdings') h += `<div class="st-row"><div><label for="st-from">From</label><input class="input" type="date" id="st-from" value="${esc(st.from)}"></div><div><label for="st-to">To</label><input class="input" type="date" id="st-to" value="${esc(st.to)}"></div></div>`;
       h += `<div class="st-row" style="margin-top:6px;align-items:center"><div class="st-pills" style="flex:2">${[['1y', 1], ['3y', 3], ['5y', 5], ['10y', 10], ['Max', 30]].map(([l, y]) => `<button type="button" class="pill" data-yrs="${y}">${l}</button>`).join('')}</div>`
         + `<div><input class="input" id="st-yrs" inputmode="decimal" placeholder="or N years" value="${+st.yrs > 0 ? esc(st.yrs) : ''}" aria-label="The last N years (any number, e.g. 7 or 2.5)"></div></div>`;
+      if (k === 'snowball') {
+        const reverse = +st.sgoal > 0, solveLump = st.ssolve !== 'rec';
+        h += '<label for="st-sgoal">Terminal dividend income goal ($, optional)</label>' +
+          '<input class="input" id="st-sgoal" type="number" min="0" step="1" inputmode="decimal" value="' +
+          esc(st.sgoal) + '" placeholder="e.g. 1000">';
+        h += '<label for="st-sunit">Income target frequency</label>' +
+          sel('st-sunit', [['monthly','Monthly income equivalent ($/month)'], ['annual','Annual gross dividends ($/year)']], st.sunit);
+        h += '<label for="st-ssolve">Reverse-calculate</label>' +
+          sel('st-ssolve', [['lump','Required starting investment'], ['rec','Required amount at each scheduled buy']], st.ssolve);
+        h += '<div class="st-help">' + (reverse ?
+          (solveLump ? 'The starting amount is calculated; scheduled buys remain fixed.' :
+            'The scheduled buy amount is calculated; starting capital remains fixed.') :
+          'Leave the target blank to simulate using your selected starting capital and recurring buys.') +
+          ' Uses actual historical distributions, reinvested, with final 52 weeks of dividends / 12 as monthly equivalent. Not a guaranteed forward dividend.</div>';
+      }
+      if (k === 'snowball') h += '<label for="st-scf">Dividend cash-flow chart</label>' + sel('st-scf', [['monthly', 'Monthly (trailing 24 months)'], ['annual', 'Annual (full history)']], st.scf);
       if (k === 'growth') {
         const L = growthLabels(st);
         h += `<label for="st-goal">End value to reach ($, optional)</label><input class="input" id="st-goal" inputmode="numeric" placeholder="e.g. 1000000 — works out what it took" value="${+st.goal > 0 ? esc(st.goal) : ''}">`
@@ -2250,6 +2484,15 @@
       if (canvas.width !== dim[0] || canvas.height !== dim[1]) { canvas.width = dim[0]; canvas.height = dim[1]; }
     }
     function paint() { if (V) draw(ctx, canvas.width, canvas.height, V, opt(), tNow); }
+    const appearanceChanged = () => {
+      if (!document.body.contains(canvas)) { root.removeEventListener('ff:appearancechange', appearanceChanged); return; }
+      if (exporting) return;
+      if (root.FFAppearance?.videoTheme()) st.theme = 'appearance';
+      else if (st.theme === 'appearance') st.theme = originalTheme;
+      const picker = $('#st-theme'); if(picker)picker.value=st.theme;
+      if (!exporting) paint();
+    };
+    root.addEventListener('ff:appearancechange', appearanceChanged);
     function loop(ts) {
       if (!playing) return;
       tNow = (ts - t0) / 1000;
@@ -2293,6 +2536,16 @@
       ((ix && ix.companies) || []).slice().sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 1500).forEach((c) => c.ticker && opts.push([c.ticker, c.name]));
       list.innerHTML = opts.map(([s, n]) => `<option value="${esc(s)}">${esc(n || '')}</option>`).join('');
     }
+    async function suggestHoldings() {
+      const list = $('#st-hlist');
+      if (!list) return;
+      const doc = await json(HUB + 'research/people/' + (st.hsrc === 'officials' ? 'officials' : 'managers') + '.json');
+      if (!list.isConnected || !doc || !Array.isArray(doc.rows)) return;
+      const rows = st.hsrc === 'officials' ?
+        root.FFHoldingsVideo.popularOfficials(doc) : root.FFHoldingsVideo.popularManagers(doc);
+      list.innerHTML = rows.slice(0, 150).map(r =>
+        '<option value="' + esc(st.hsrc === 'officials' ? r.slug : r.cik) + '">' + esc(r.name) + '</option>').join('');
+    }
     const box = app.querySelector('.st-wrap');
     let tmr = 0;
     const later = (f) => { clearTimeout(tmr); tmr = setTimeout(f, 450); };
@@ -2304,7 +2557,7 @@
         if (st.k === 'snowball' && st.t === DEF.t) st.t = 'SCHD';
         if (st.k === 'timing' && st.t === DEF.t) st.t = 'SPY';
         if (st.k === 'sankey') st.theme = 'clean';
-        if (st.k === 'actual') { st.style = 'bars'; st.from = ''; st.to = ''; st.yrs = ''; }
+        if (st.k === 'actual' || st.k === 'holdings') { st.style = 'bars'; st.from = ''; st.to = ''; st.yrs = ''; }
         side(); rebuild(); return;
       }
       const yb = e.target.closest('[data-yrs]');
@@ -2312,7 +2565,7 @@
       const sb = e.target.closest('[data-speed]');
       if (sb) { st.dur = String(clamp(Math.round((+st.dur || 20) / +sb.dataset.speed), 4, 300)); const d = $('#st-dur'); if (d) d.value = st.dur; if (V) { paint(); save(); status(); } }
     });
-    box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t' || e.target.id === 'st-ah') suggest(); });
+    box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t' || e.target.id === 'st-ah') suggest(); if (e.target.id === 'st-hid') suggestHoldings(); });
     box.addEventListener('input', (e) => {
       const id = e.target.id; if (!id || !id.startsWith('st-') || e.target.tagName === 'SELECT') return;
       const key = id.slice(3); if (!(key in DEF)) return;
@@ -2327,6 +2580,7 @@
       const id = e.target.id; if (!id || !id.startsWith('st-')) return;
       const key = id.slice(3); if (!(key in DEF) || e.target.tagName === 'INPUT' && e.target.type !== 'date') return;
       st[key] = e.target.value;
+      if (key === 'hsrc') { st.hid = ''; }
       if (key === 'from') { st.yrs = ''; const y = $('#st-yrs'); if (y) y.value = ''; }
       if (key === 'solve') relabel();
       // Actual weight bars and sector areas require distinct portfolios, not just a repaint.
@@ -2336,7 +2590,7 @@
         else rebuild();
         return;
       }
-      if (key === 'rm' || key === 'bx' || key === 'by' || key === 'sw' || key === 'aw') side();
+      if (key === 'rm' || key === 'bx' || key === 'by' || key === 'sw' || key === 'aw' || key === 'hsrc' || key === 'ssolve' || key === 'sgoal') side();
       rebuild();
     });
     app.querySelector('#st-tpl').addEventListener('click', (e) => {

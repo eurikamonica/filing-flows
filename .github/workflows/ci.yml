@@ -77,6 +77,10 @@ jobs:
           node tests/test_flo_workbook.cjs
           node tests/test_flo_real.cjs
           node tests/test_actual_weights.cjs
+          node tests/test_appearance.cjs
+          node tests/test_video_income.cjs
+          node tests/test_disclosed_weight_views.cjs
+          node tests/test_studio.cjs
       - name: Hub unit and template tests
         working-directory: disclosures
         run: |

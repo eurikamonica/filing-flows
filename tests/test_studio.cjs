@@ -286,7 +286,7 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     const paid = a.paid.reduce((s, x) => s + x, 0), yearly = Object.values(a.yearly).reduce((s, x) => s + x, 0);
     ok(Math.abs(paid - yearly) < 1e-6 && paid > 0 && V.contrib[La] === 10000, 'each year\'s dividends add up to all paid');
     ok(a.sh.every((v, i) => !i || v == null || a.sh[i - 1] == null || v >= a.sh[i - 1] - 1e-12), 'the share count only grows');
-    S.finish(V, V); ok(V.final.length >= 2 && /shares/.test(V.final[0].label) && /^\+\d+% shares$/.test(V.final[0].change), 'snowball end card');
+    S.finish(V, V); ok(V.final.length >= 2 && /shares/.test(V.final[0].label) && /^\+\d+% from DRIP$/.test(V.final[0].change), 'snowball end card');
     for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 5, 11.9]) { V.endCard = true; S.draw(ctx, ar[0], ar[1], V, { theme: 'bull', dur: 12 }, t); } n++;
     V = await S.build(Object.assign(S.parseState('k=snowball'), { t: 'AAA', amt: '0', rec: '100', ri: '1', ru: 'm', from: start }));
     ok(V.series[0].bought > 0 && V.contrib[V.contrib.length - 1] > 5000, 'the snowball with monthly buying');
