@@ -132,6 +132,11 @@
     const r = await call('/polish', { draft: String(draft || ''), facts: String(facts || '').slice(0, 6000), cashtags: (cashtags || []).slice(0, 8), limit: limit || 280 });
     return r.post;
   }
-  root.LocalFilingModel = { mount, passages, polish, isConnected: () => connected };
+  // Flo (mascot.js): a question and the figures it answered with — the local model may use only these.
+  async function ask(question, evidence) {
+    if (!connected) throw new Error('Connect to the local companion first (owner mode, company page → Ask local Qwen3-8B).');
+    return call('/ask', { question: String(question || '').slice(0, 600), evidence: (evidence || []).slice(0, 12).map(({ id, text }) => ({ id, text: String(text).slice(0, 1200) })) });
+  }
+  root.LocalFilingModel = { mount, passages, polish, ask, isConnected: () => connected };
   if (typeof module !== 'undefined') module.exports = { passages };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
