@@ -46,7 +46,7 @@ eq(Alert.react(upbeat),'happy','upward price mascot jumps');
 const topics=e('8k:restatement','8k',{ticker:'CRWV',topics:['restatement','debt'],
   form:'8-K/A',filed:'2026-10-26'});
 const explained=Alert.explain(topics,true);
-ok(explained.includes('事项标签')&&explained.includes('重述')&&explained.includes('债务')===false,
+ok(explained.includes('事项标签')&&explained.includes('重述')&&explained.includes('债务'),
   '8-K sourced topic labels and restatement analysis presented without inventing figures');
 const managerUpdates=e('13f:changed','13f',{
   ticker:'AAPL',manager:'Berkshire Hathaway',symbols:['AAPL','NVDA','BAC'],
