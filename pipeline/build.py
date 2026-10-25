@@ -13,7 +13,7 @@ import sys
 import time
 import traceback
 
-from . import analysis, chains, gamma, checks, dims, facts, fx as FX, quality, release, reported, scan, sec, sectors, social, sources, text
+from . import analysis, chains, gamma, checks, dims, facts, fx as FX, ixbrl, quality, release, reported, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -608,13 +608,22 @@ def process_filing(store, cik, accn, form, starred=False):
     return end
 
 
-def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_text=None, lab_text=None):
-    """The full fiscal year of a 10-K, with the year before for comparison."""
+def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_text=None, lab_text=None, fill=None):
+    """The full fiscal year of a 10-K, with the year before for comparison. fill: {"cur": {...}, "py": {...}} figures
+    read from the filing's own income statement for what its XBRL lacks (a 20-F that tags its revenue with a company
+    extension, Novartis' "net sales to third parties", which companyfacts leaves out)."""
     raw = facts.extract(fx, end, annual=True)
+    for k, v in ((fill or {}).get("cur") or {}).items():
+        if raw.get(k) is None and v is not None:
+            raw[k] = v
     if not raw.get("revenue") or (raw.get("ni") is None and raw.get("pl") is None):
         return None
     py_end = facts.prior_year_end(fx, end)
     comp = {"py_end": py_end, "raw_py": facts.extract(fx, py_end, annual=True) if py_end else None}
+    if (fill or {}).get("py") and comp["raw_py"] is not None:
+        for k, v in fill["py"].items():
+            if comp["raw_py"].get(k) is None and v is not None:
+                comp["raw_py"][k] = v
     try:
         src = sources.from_xbrl(fx, end, dims.label_roles(lab_text) if lab_text else None, annual=True)
     except Exception as e:
@@ -1140,6 +1149,85 @@ def _currency_of(cik):
     return _cur[cik]
 
 
+def _ix_resources(cik, accn, row, name, html):
+    """The contexts and units an inline-XBRL exhibit refers to, from the filing's cover document when the exhibit has
+    none of its own (TD Bank)."""
+    if re.search(r"<(xbrli:)?context\b", html, re.I) or not row.get("primaryDocument") or row["primaryDocument"] == name:
+        return ""
+    p0 = sec.get(sec.doc_url(cik, accn, row["primaryDocument"]))
+    i0, j0 = p0.lower().find("<ix:resources"), p0.lower().find("</ix:resources>")
+    return p0[i0:j0] if i0 >= 0 else ""
+
+
+def _rel_header(rel):
+    """The column header of the release's income statement table, lower case ("" for one read from inline XBRL)."""
+    try:
+        best = release.pick_tables(rel.get("tables") or [])[0]
+        return release._header(best[1]).lower() if best else ""
+    except Exception:
+        return ""
+
+
+def _derive_h2(c):
+    """Second halves from the 20-F year minus its first half, for flows; each half then compares with the half before
+    and the same half a year earlier."""
+    halves, years = c.setdefault("halves", {}), c.get("years") or {}
+    for ye, y in years.items():
+        e = dt.date.fromisoformat(ye)
+        h1 = next((h for h in halves.values() if h.get("raw") and 160 <= (e - dt.date.fromisoformat(h["end"])).days <= 200
+                   and h.get("form") == "6-K"), None)
+        if not h1 or (ye in halves and halves[ye].get("form") == "6-K"):
+            continue
+        yr, hr = y.get("raw") or {}, h1["raw"]
+        # a first half restated after the fact (Unilever's ice cream demerger) is the one the 20-F year matches: the
+        # year-ago column of a later half-year report filed after the 20-F
+        later = [h for h in halves.values() if (h.get("py_col") or {}).get("end") == h1["end"] and (h.get("filed") or "") >= (y.get("filed") or "")]
+        if later:
+            hr = sorted(later, key=lambda h: h.get("filed") or "")[-1]["py_col"]["raw"]
+        raw = {k: (yr[k] - hr[k] if isinstance(yr.get(k), (int, float)) and isinstance(hr.get(k), (int, float)) else None)
+               for k in facts.CONCEPTS}
+        if not raw.get("revenue") or raw["revenue"] <= 0 or (raw.get("ni") is None and raw.get("pl") is None):
+            continue
+        if not 0.4 <= (hr.get("revenue") or 0) / yr["revenue"] <= 0.62:
+            continue                                     # the year and the half count revenue differently (Diageo's
+                                                         # sales with excise vs. net sales): no second half
+        label, fq, fy = facts.fiscal_label(ye, c["profile"]["fye"])
+        halves[ye] = {"period": "half", "derived": True, "end": ye, "label": label.replace(f"Q{fq}", "H2", 1), "fq": 4, "fy": fy,
+                      "cal": facts.calendar_quarter(ye), "form": "20-F", "accn": y.get("accn"), "filed": y.get("filed"),
+                      "doc_url": y.get("doc_url"), "index_url": y.get("index_url"), "raw": raw,
+                      "q1_end": h1["end"], "raw_q1": hr, "py_end": None, "raw_py": None, "notes": {},
+                      "src": None, **({"fx_official": y["fx_official"]} if y.get("fx_official") else {})}
+    by = sorted(halves.items())
+    for k, h in by:                                     # the same half a year earlier, when on file
+        e = dt.date.fromisoformat(k)
+        if not h.get("raw_py"):
+            py = next((x for kk, x in by if 350 <= (e - dt.date.fromisoformat(kk)).days <= 380), None)
+            if py:
+                h["py_end"], h["raw_py"] = py["end"], py["raw"]
+        if not h.get("raw_q1"):
+            q1 = next((x for kk, x in by if 150 <= (e - dt.date.fromisoformat(kk)).days <= 215), None)
+            if q1:
+                h["q1_end"], h["raw_q1"] = q1["end"], q1["raw"]
+
+
+def _annual_quarter_revenue(c, cik=None, sub=None):
+    """A quarter's size from the latest 20-F year: a fourth of its revenue (the year on file, else the 20-F's XBRL)."""
+    ys = sorted((c.get("years") or {}).items())
+    for _, y in reversed(ys):
+        v = ((y.get("raw") or {}).get("revenue"))
+        if v:
+            return v / 4
+    if cik and sub:
+        for k in [r for r in recent_rows(sub) if r["form"] in ("20-F", "40-F") and r.get("reportDate")][:3]:
+            try:                                         # the newest 20-F whose year is in the XBRL (Toyota's latest is not)
+                v = facts.extract(companyfacts(cik), k["reportDate"], annual=True).get("revenue")
+            except Exception:
+                v = None
+            if v:
+                return v / 4
+    return None
+
+
 def process_fpi_release(store, cik, accn, form, starred=False):
     """One quarter from a foreign private issuer's results release (a 6-K exhibit). It files no 10-Q, so the release is
     the record (not preliminary). Comparisons: the release's own year-ago column, and the quarter before from the
@@ -1174,35 +1262,101 @@ def process_fpi_release(store, cik, accn, form, starred=False):
             html = sec.get(url)
         except sec.NotFound:
             continue
-        if not re.search(r"quarter|three months|results", html[:200000], re.I):
-            continue
+        if not re.search(r"quarter|three months|results", html[:200000], re.I) and \
+                not ("ix:header" in html[:200000].lower() and re.search(r"quarter|three months|half[- ]year|interim", html[:4_000_000], re.I)):
+            continue                                     # (an inline-XBRL report opens with its hidden tags: look past them)
         try:
             prev_rev = None
-            r = release.parse(html, filed, None, None)
+            try:
+                r = release.parse(html, filed, None, None)
+            except ValueError as e:
+                # tables without a units line (TSMC's "Amount (a)" with the units in a footnote): sized against the
+                # quarter before when on file, else a quarter of the last 20-F year
+                ref = (prior[-1]["raw"].get("revenue") if prior else None) or _annual_quarter_revenue(c, cik, sub)
+                if "units" not in str(e) or not ref:
+                    raise
+                r = release.parse(html, filed, None, ref)
             back = [q for q in prior if 60 <= (dt.date.fromisoformat(r["end"]) - dt.date.fromisoformat(q["end"])).days <= 120]
             if back:                                     # units checked against the quarter before, when on file
                 prev_rev = back[-1]["raw"]["revenue"]
                 r = release.parse(html, filed, None, prev_rev)
+                if r.get("is_quarter") is not False and prev_rev and r["is"].get("revenue", 0) / prev_rev >= 2.5 and \
+                        facts.fiscal_label(r["end"], c["profile"]["fye"])[1] >= 3:
+                    # two and a half times the quarter before at the third or fourth quarter: nine months or the year
+                    # to date (AB InBev's third-quarter table), not the quarter
+                    raise ValueError("revenue is a year to date, not the quarter")
+            if r.get("is_quarter") is not True and "ix:nonfraction" in html[:5_000_000].lower():
+                # the tables gave a half or the year to date; the tags may hold the quarter itself (UBS's report)
+                try:
+                    r2 = ixbrl.release(html, filed, _ix_resources(cik, accn, row, name, html))
+                    if r2.get("is_quarter"):
+                        r = r2
+                except (ValueError, sec.NotFound):
+                    pass
             rel, doc, ex_url = r, html, url
             break
         except ValueError as e:
             errors.append(f"{name}: {e}")
+            if "ix:nonfraction" in html[:5_000_000].lower():
+                # a tagged report with no tables the reader understands (TD Bank's positioned-text 6-K): its own XBRL
+                try:
+                    rel, doc, ex_url = ixbrl.release(html, filed, _ix_resources(cik, accn, row, name, html)), html, url
+                    break
+                except (ValueError, sec.NotFound) as e2:
+                    errors.append(f"{name} (inline XBRL): {e2}")
     if not rel:
-        raise NotApplicable("not a results release" + (f" ({errors[0]})" if errors else ""))
+        raise NotApplicable("not a results release" + (f" ({errors[0]})" if errors else "") + "".join(f"; {x}" for x in errors if "inline XBRL" in x)[:300])
     end = rel["end"]
     e0 = dt.date.fromisoformat(end)
+    half = False
+    fq0 = facts.fiscal_label(end, c["profile"]["fye"])[1]
+    # how long the period is, checked against a quarter of the 20-F year: a first half is about two quarters, a full
+    # year about four (Sony's year-end release, whose header reads like a quarter's)
+    ref = _annual_quarter_revenue(c, cik, sub)
+    ratio = (rel["is"].get("revenue") or 0) / ref if ref else None
+    try:                                                 # the same revenue as the 20-F year ending that day: the year
+        same = facts.extract(companyfacts(cik), end, annual=True).get("revenue") if fq0 == 4 else None
+    except Exception:
+        same = None
+    rev0 = rel["is"].get("revenue") or 0
+    near = [q for q in prior if 60 <= (e0 - dt.date.fromisoformat(q["end"])).days <= 120 and (q.get("raw") or {}).get("revenue")]
+    grows = bool(near) and rev0 / near[-1]["raw"]["revenue"] < 1.6      # the quarter before says it is a quarter
+    if (same and abs(rev0 / same - 1) < 0.03) or (ratio and ratio >= 3.4 and fq0 == 4 and not grows):
+        raise NotApplicable("the release's statements are for the full year (the 20-F has it)")
+    if ratio and ratio >= 2.6 and fq0 == 3 and not grows and rel["is_quarter"] is not False:
+        raise NotApplicable("the release's statements are nine months, not the quarter")
+    hdr0 = _rel_header(rel)
+    if ratio and fq0 == 2 and 1.6 <= ratio <= 2.6 and not grows and \
+            (rel["is_quarter"] is not True or re.search(r"six months|six-month|first half|half[- ]year", hdr0)):
+        rel["is_quarter"] = False
     if rel["is_quarter"] is False:
-        raise NotApplicable("the release's statements are not for a quarter")
+        # a half-year report (Unilever, Rio Tinto, BHP and others report twice a year): kept as a half, drawn when the
+        # company has no quarters; the second half comes from the 20-F year minus the first (_derive_h2)
+        hdr = _rel_header(rel)
+        if fq0 == 2 and (170 <= (rel.get("span") or 0) <= 190 or
+                         re.search(r"six months|six-month|6 months|half[- ]?year|first half|\bh1\b|\b1h\b|interim period", hdr + " " + doc[:30000].lower())):
+            half = True
+            prior = sorted((q for q in c.get("halves", {}).values() if q.get("raw")), key=lambda q: q["end"])
+            have = c.get("halves", {})
+        else:
+            raise NotApplicable("the release's statements are not for a quarter")
+    lo, hi = (150, 215) if half else (60, 120)
     old = have.get(end)                                 # the same quarter in two 6-Ks (press release, then the interim
     if old and old.get("form") == "6-K" and old.get("accn") != accn and (old.get("filed") or "") <= row["filingDate"]:
         raise NotApplicable(f"quarter already read from the results release of {old.get('filed')}")   # statements)
     label, fq, fy = facts.fiscal_label(end, c["profile"]["fye"])
+    if half:
+        label = label.replace("Q2", "H1", 1)
     try:
         raw = {k: None for k in facts.CONCEPTS}
         raw.update({k: (abs(v) if k in release.COST_KEYS else v) for k, v in rel["is"].items()})
-        back = [q for q in prior if 60 <= (e0 - dt.date.fromisoformat(q["end"])).days <= 120]
+        back = [q for q in prior if lo <= (e0 - dt.date.fromisoformat(q["end"])).days <= hi]
         prev = back[-1] if back else None
-        cash, ytd = _fpi_cash(rel, prev, fq)
+        if half:                                         # six months of cash flow: the half's own
+            cash = {k: (abs(v) if k in release.COST_KEYS else v) for k, v in (rel.get("cf") or {}).items()}
+            ytd = cash or None
+        else:
+            cash, ytd = _fpi_cash(rel, prev, fq)
         raw.update(cash)
         if raw.get("da") is None and raw.get("da_op"):
             raw["da"] = raw["da_op"]                     # D&A printed as an operating cost line (Nebius) is the bridge's
@@ -1214,11 +1368,21 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         raise NotApplicable("results release lacks revenue or net income")
     # the year-ago quarter: the release's second column when its header pairs the quarter with the year before
     raw_py = py_end = None
-    if str(e0.year - 1) in release._header(release.pick_tables(rel["tables"])[0][1]) and len(rel["cols"].get("revenue") or []) > 1:
+    if rel.get("ix") and rel.get("py"):                  # inline XBRL: the year-ago period's own tags
+        try:
+            py = {k: None for k in facts.CONCEPTS}
+            py.update({k: (abs(v) if k in release.COST_KEYS else v) for k, v in rel["py"].items()})
+            py = release.reconcile(py, rel["labels"])
+            py.pop("disc", None)
+            if normalize(py):
+                raw_py, py_end = py, rel["py_end"]
+        except ValueError:
+            raw_py = py_end = None
+    elif rel["tables"] and str(e0.year - 1) in _rel_header(rel) and len(rel["cols"].get("revenue") or []) > 1:
         try:
             py = {k: None for k in facts.CONCEPTS}
             py.update(_column(rel, 1))
-            if rel.get("cf_quarter") is not True and fq != 1:
+            if rel.get("cf_quarter") is not True and fq != 1 and not half:
                 for k in release.CF_KEYS:
                     py[k] = None                          # a year-to-date column, not the year-ago quarter
             if py.get("da") is None and py.get("da_op"):
@@ -1229,9 +1393,10 @@ def process_fpi_release(store, cik, accn, form, starred=False):
                 raw_py, py_end = py, (e0.replace(year=e0.year - 1) if not (e0.month == 2 and e0.day == 29) else e0 - dt.timedelta(days=365)).isoformat()
         except ValueError:
             raw_py = py_end = None
+    py_col = (raw_py, py_end) if raw_py else None         # the release's own year-ago column (restated, when it was)
     stored_py = next((q for q in prior if abs((dt.date.fromisoformat(q["end"]) - (e0 - dt.timedelta(days=365))).days) <= 10), None)
-    if stored_py:                                       # the year-ago release on file: its figures as reported then
-        raw_py, py_end = stored_py["raw"], stored_py["end"]
+    if stored_py and not (half and py_col):             # the year-ago release on file: its figures as reported then
+        raw_py, py_end = stored_py["raw"], stored_py["end"]   # (a half keeps its report's own, restated, column)
     q1_end, raw_q1 = (prev["end"], prev["raw"]) if prev else (None, None)
     rev_ref = {"q1": (raw_q1 or {}).get("revenue"), "py": (raw_py or {}).get("revenue")}
     segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref)
@@ -1247,7 +1412,9 @@ def process_fpi_release(store, cik, accn, form, starred=False):
             set_intro(c, text.about(doc, [c["profile"]["name"]], c["profile"].get("tickers")), ex_url, row.get("filingDate"), "6-K")
         except Exception as e:
             print(f"  about skipped for {cik}: {e}", file=sys.stderr)
-    c["quarters"][end] = {
+    pool = c.setdefault("halves", {}) if half else c.setdefault("quarters", {})
+    pool[end] = {
+        **({"period": "half", **({"py_col": {"end": py_col[1], "raw": py_col[0]}} if py_col else {})} if half else {}),
         "end": end, "label": label, "fq": fq, "fy": fy, "cal": facts.calendar_quarter(end), "form": "6-K",
         "accn": accn, "filed": row.get("filingDate"), "doc_url": ex_url,
         "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", "raw": raw,
@@ -1259,13 +1426,17 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         "src": sources.from_release(rel, raw),
         **({"fx_official": off} if cur != "USD" and (off := rel.get("fx_official") or FX.official_rate(doc, cur)) else {}),
     }
-    for k, q in c["quarters"].items():                  # a later release read before this one: its quarter-before is this
-        if q.get("form") == "6-K" and not q.get("raw_q1") and 60 <= (dt.date.fromisoformat(k) - e0).days <= 120:
+    for k, q in pool.items():                           # a later release read before this one: its period-before is this
+        if q.get("form") in ("6-K", "20-F") and not q.get("raw_q1") and lo <= (dt.date.fromisoformat(k) - e0).days <= hi:
             q["q1_end"], q["raw_q1"] = end, raw
-        if q.get("form") == "6-K" and 350 <= (dt.date.fromisoformat(k) - e0).days <= 380:
+        if q.get("form") in ("6-K", "20-F") and 350 <= (dt.date.fromisoformat(k) - e0).days <= 380:
             q["py_end"], q["raw_py"] = end, raw
     keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
-    c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
+    if half:
+        _derive_h2(c)
+        c["halves"] = dict(sorted(c["halves"].items())[-keep:])
+    else:
+        c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
     store.put(cik, c)
     _note_fpi(store, cik)
     return end
@@ -1285,6 +1456,10 @@ def process_fpi_annual(store, cik, accn, form, starred=False):
     fx = companyfacts(cik)
     doc_url = sec.doc_url(cik, accn, row["primaryDocument"]) if row.get("primaryDocument") else None
     year = annual_entry(c, fx, None, cik, accn, form, row, end, doc_url, {})
+    if not year and doc_url and not facts.extract(fx, end, annual=True).get("revenue"):
+        fill = _annual_from_document(cik, doc_url, row, end, fx)
+        if fill:
+            year = annual_entry(c, fx, None, cik, accn, form, row, end, doc_url, {}, fill=fill)
     if not year:
         if not facts.extract(fx, end, annual=True).get("revenue"):
             raise Pending("XBRL facts not available yet")
@@ -1299,11 +1474,139 @@ def process_fpi_annual(store, cik, accn, form, starred=False):
             year["fx_official"] = off
     c.setdefault("years", {})[end] = year
     c["years"] = dict(sorted(c["years"].items())[-(KEEP_STARRED_YEARS if starred else KEEP_YEARS):])
+    if c.get("halves"):
+        _derive_h2(c)
     c["periods"] = periods_of(fx)
     set_quality(c, fx)
     store.put(cik, c)
     _note_fpi(store, cik)
     return end
+
+
+def _quarter_ends(fye, years=3):
+    """Fiscal quarter ends of the last `years` years from a fiscal year end "MMDD" (month ends)."""
+    try:
+        m0 = int(str(fye)[:2])
+    except (TypeError, ValueError):
+        m0 = 12
+    out, today = [], dt.date.today()
+    for y in range(today.year - years, today.year + 2):
+        for k in range(4):
+            m = (m0 - 3 * k - 1) % 12 + 1
+            yy = y if m <= m0 else y - 1
+            nxt = dt.date(yy + (m == 12), m % 12 + 1, 1)
+            e = nxt - dt.timedelta(days=1)
+            if e < today:
+                out.append(e)
+    return sorted(set(out))
+
+
+def _results_window(sixk, fye, per_quarter=30, quarters=9):
+    """The 6-Ks filed 7-100 days after each of the last `quarters` fiscal quarter ends, largest first: a quarter's
+    results are among them even when the name says nothing (Alibaba's "tm2524743d1_6k.htm" among its monthly
+    returns and buyback reports)."""
+    out = []
+    for e in _quarter_ends(fye)[-quarters:]:
+        lo, hi = (e + dt.timedelta(days=7)).isoformat(), (e + dt.timedelta(days=100)).isoformat()
+        win = [r for r in sixk if lo <= (r.get("filingDate") or "") <= hi]
+        win.sort(key=lambda r: -int(r.get("size") or 0))
+        out += [r for r in win[:per_quarter] if r not in out]
+    return out
+
+
+def _annual_from_document(cik, doc_url, row, end, fx):
+    """Revenue (and what else the XBRL lacks) from the annual report's own income statement, read with the release
+    table reader; sized against the XBRL net income. None when it cannot be read."""
+    try:
+        html = sec.get(doc_url)
+    except Exception:
+        return None
+    x = facts.extract(fx, end, annual=True)
+    ni = x.get("pl") if x.get("pl") is not None else x.get("ni")
+    try:
+        tables = release.read_tables(html)
+        # the consolidated statement: of the full income statements, the one with the largest revenue (Toyota's 20-F also
+        # prints one for its non-financial businesses alone)
+        cands = []
+        for t0 in tables:
+            if release._is_nongaap(t0):
+                continue
+            m0 = release._map_rows(t0, release.IS_KEYS)
+            if "revenue" in m0 and ("pl" in m0 or "ni" in m0) and ("pretax" in m0 or "oi" in m0):
+                cands.append((m0["revenue"], t0, m0))
+        if not cands:
+            return None
+        e0 = dt.date.fromisoformat(end)
+        try:
+            pe = e0.replace(year=e0.year - 1)
+        except ValueError:
+            pe = e0 - dt.timedelta(days=365)
+        pe = facts.prior_year_end(fx, end) or pe.isoformat()
+        prev_x = facts.extract(fx, pe, annual=True).get("revenue")
+        pe2 = facts.prior_year_end(fx, pe)
+        prev2 = facts.extract(fx, pe2, annual=True).get("revenue") if pe2 else None
+        scale, ci, pi = None, 0, 1
+        if prev_x:
+            # the year before is in the XBRL: the statement with a column of that year's revenue is the consolidated one
+            # (Toyota's non-financial-businesses table is not it); the current year is the column beside it, on the side
+            # away from the year before that (columns may run oldest first)
+            pick = None
+            for _, t0, m0 in sorted(cands, key=lambda x: -x[0]):
+                col = release._map_rows(t0, release.IS_KEYS, full=True)["revenue"][2]
+                for s0 in ([release._units(t0)] if release._units(t0) else []) + [1e6, 1e3, 1e9, 1.0]:
+                    j = next((i for i, v in enumerate(col) if 0.98 <= v * s0 / prev_x <= 1.02), None)
+                    if j is None:
+                        continue
+                    near = lambda i: 0 <= i < len(col) and prev2 and 0.98 <= col[i] * s0 / prev2 <= 1.02
+                    if near(j - 1) and j + 1 < len(col):
+                        c_i = j + 1                       # oldest first
+                    elif near(j + 1) and j >= 1:
+                        c_i = j - 1                       # newest first
+                    elif j == 1 and not prev2:
+                        c_i = 0                           # newest first, nothing older to tell by
+                    else:
+                        continue
+                    pick, scale, ci, pi = (t0, m0), s0, c_i, j
+                    break
+                if pick:
+                    break
+            if not pick:
+                return None
+            t, m = pick
+        else:
+            _, t, m = max(cands, key=lambda x: x[0])
+            scale = release._units(t)
+        net = m.get("pl", m.get("ni"))
+        if ni and net:                                          # the table's units checked against the XBRL net income
+            fits = [s for s in ([scale] if scale else []) + [1e6, 1e3, 1e9, 1.0] if 0.98 <= abs(net * s / ni) <= 1.02]
+            scale = fits[0] if fits else None
+        if not scale:
+            return None
+        full = release._map_rows(t, release.IS_KEYS, full=True)
+        cur = {k: v[2][ci] * scale for k, v in full.items() if len(v[2]) > ci}
+        py = {k: v[2][pi] * scale for k, v in full.items() if len(v[2]) > pi}
+        for d in (cur, py):
+            for k in release.COST_KEYS:
+                if d.get(k) is not None:
+                    d[k] = abs(d[k])
+        if not cur.get("revenue"):
+            return None
+        big = max((cur.get(k) or 0) for k in ("oi", "gp"))
+        if big > 1.05 * cur["revenue"] or (prev_x and not 0.4 <= cur["revenue"] / prev_x <= 2.5):
+            return None                                       # a misread table: never drawn
+        keep = ("revenue", "cor", "gp", "rd", "sm", "ga", "sga", "oi") if ni else \
+            ("revenue", "cor", "gp", "rd", "sm", "ga", "sga", "oi", "pretax", "tax", "pl", "ni", "nci")   # no XBRL year at all
+        if not ni:
+            for d in (cur, py):
+                try:
+                    d.update({k: v for k, v in release.reconcile({**{k: None for k in facts.CONCEPTS}, **d}).items()
+                              if k in keep and v is not None})
+                except ValueError:
+                    pass
+        return {"cur": {k: v for k, v in cur.items() if k in keep}, "py": {k: v for k, v in py.items() if k in keep}}
+    except Exception as e:
+        print(f"  annual report statement not read for {cik}: {e}", file=sys.stderr)
+        return None
 
 
 def _queue_foreign(store, cik, sub):
@@ -1312,7 +1615,20 @@ def _queue_foreign(store, cik, sub):
     st, c = store.state, store.company(cik)
     rows = [r for r in recent_rows(sub)]
     pick = [r for r in rows if r["form"] in ("20-F", "40-F") and r.get("reportDate")][:FPI_ANNUALS]
-    pick += [r for r in rows if r["form"] == "6-K"][:FPI_RELEASES]
+    # results releases first: a company that files a 6-K every week (Ferrari's buyback reports) would otherwise push
+    # its quarterly results out of the newest FPI_RELEASES 6-Ks
+    cutoff = (dt.date.today() - dt.timedelta(days=800)).isoformat()
+    sixk = [r for r in rows if r["form"] == "6-K" and (r.get("filingDate") or "") >= cutoff]
+    hint = re.compile(r"result|quarter|earning|interim|half|annual|\bq[1-4]|[^a-z]fy|trading update|financial", re.I)
+    keyed = [r for r in sixk if hint.search((r.get("primaryDocument") or "") + " " + (r.get("primaryDocDescription") or ""))
+             or int(r.get("size") or 0) >= 1_000_000]       # a full report as the 6-K itself (Novo Nordisk's "caq22026.htm")
+    # and, for each fiscal quarter, the largest 6-Ks filed 1-17 weeks after it ends: results are usually the biggest
+    # filing of that window even when nothing in the name says so (Alibaba's "tm2622423d1_6k.htm")
+    for r in _results_window(sixk, sub.get("fiscalYearEnd") or (c.get("profile") or {}).get("fye")):
+        if r not in keyed:
+            keyed.append(r)
+    rest = [r for r in sixk if r not in keyed]
+    pick += (keyed + rest)[:max(FPI_RELEASES, len(keyed))]
     for r in pick:
         a = r["accessionNumber"]
         if a not in st["pending"] and not (st["seen"].get(a) or {}).get("s") == "ok":
@@ -1441,6 +1757,16 @@ def run(args):
                 try:
                     _queue_foreign(store, cik, submissions(cik))
                     print(f"  {cik} reports in {c['currency']}: its 20-F and 6-Ks are read again (drawn in its currency now)")
+                except Exception as e:
+                    print(f"  {cik} not re-queued: {e}", file=sys.stderr)
+            elif not c.get("quarters") and not c.get("ifrs_retry"):
+                # results releases skipped before IFRS wording ("Net profit", "Operating profit (EBIT)") was read, or pushed
+                # out by weekly buyback 6-Ks (Ferrari): read its 6-Ks once more
+                c["ifrs_retry"] = True
+                store.put(cik, c)
+                try:
+                    _queue_foreign(store, cik, submissions(cik))
+                    print(f"  {cik} has no quarter yet: its 6-Ks are read again")
                 except Exception as e:
                     print(f"  {cik} not re-queued: {e}", file=sys.stderr)
     for f in queue:
@@ -1949,6 +2275,25 @@ def _payloads(c, cik):
     return payloads
 
 
+def _as_half(pl):
+    """A half-year period's payload: "H/H" (vs. the half before) where a quarter's says "Q/Q"."""
+    def fix(x):
+        if isinstance(x, str):
+            for a, b in (("Q/Q", "H/H"), ("Quarter ended", "Six months ended"), ("quarter ended", "six months ended"),
+                         ("this quarter", "this half"), ("the quarter", "the half"), ("This quarter", "This half"),
+                         ("The quarter", "The half"), ("quarter before", "half before"), ("previous quarter", "previous half")):
+                x = x.replace(a, b)
+            return x
+        if isinstance(x, list):
+            return [fix(v) for v in x]
+        if isinstance(x, dict):
+            return {k: fix(v) for k, v in x.items()}
+        return x
+    out = fix(pl)
+    out["period"] = "half"
+    return out
+
+
 def _year_payloads(c, cik):
     years = []
     for y in sorted((c.get("years") or {}).values(), key=lambda y: y["end"], reverse=True):
@@ -1992,11 +2337,16 @@ def render(store, out, stars=frozenset()):
     fx_cache = FX.load_cache(store.root)
     for cik in store.ciks():
         c = store.company(cik)
+        halfly = not c.get("quarters") and bool(c.get("halves"))
+        if halfly:                                           # a company that reports twice a year: its halves drawn as periods
+            c = dict(c, quarters=c["halves"])
         if not c.get("quarters") or not c.get("profile"):
             continue
         cur = c.get("currency") or "USD"
         FX._cur[0] = cur                                     # amounts written in the company's own currency
         payloads = _payloads(c, cik)
+        if halfly:
+            payloads = [_as_half(pl) for pl in payloads]
         if not payloads:
             continue
         p = c["profile"]
@@ -2007,9 +2357,12 @@ def render(store, out, stars=frozenset()):
                 rates = FX.rates_for(c, fx_cache)
                 u = FX.in_dollars(c, rates) if rates else None
                 if u and u.get("quarters"):
-                    usd_recs[cik] = u
+                    if not halfly:                       # chains and the rest read quarters: halves are not quarters
+                        usd_recs[cik] = u
                     FX._cur[0] = "USD"
                     uq, uy = _payloads(u, cik), _year_payloads(u, cik)
+                    if halfly:
+                        uq = [_as_half(pl) for pl in uq]
                     for pl in uq:
                         pl["x_thread"] = []
                     _label_currency(uq + uy, cur, rates, fx_cache)

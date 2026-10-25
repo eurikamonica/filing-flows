@@ -1368,7 +1368,7 @@
     const yearAgo = (p) => quarterly.find((x) => Math.abs((new Date(p.end) - new Date(x.end)) / 864e5 - 365) <= 12);
     const prevOf = (p) => (p.kind === 'fy' ? (K.fy || [])[(K.fy || []).indexOf(p) - 1]     // a quarter: the same quarter a
       : p.kind === 'q' ? yearAgo(p) || quarterly[quarterly.indexOf(p) - 1] : null);       // year earlier, else the one before
-    const chgTag = (p, prev) => (p.kind === 'q' && prev && !yearAgo(p) ? 'Q/Q' : 'Y/Y');
+    const chgTag = (p, prev) => (p.kind === 'q' && prev && !yearAgo(p) ? (p.period === 'half' ? 'H/H' : 'Q/Q') : 'Y/Y');
     const label = (ref) => { const x = S0.concepts[ref[0]]; return x ? S.dec(x[1] || x[0]) : 'XBRL fact'; };
 
     // ---- the evidence for one line
@@ -3624,7 +3624,7 @@
         `<text class="tr-lab" x="${f(cx(li) + 9)}" y="${f(ly + 4)}" text-anchor="start">${pct(pts[li][key])}</text>`;
     };
     const line = panels.map(linePanel).join('');
-    const chgs = (p) => [p.yoy != null ? `Y/Y ${pct(p.yoy)}` : null, p.qoq != null ? `Q/Q ${pct(p.qoq)}` : null].filter(Boolean);
+    const chgs = (p) => [p.yoy != null ? `Y/Y ${pct(p.yoy)}` : null, p.qoq != null ? `${p.period === 'half' ? 'H/H' : 'Q/Q'} ${pct(p.qoq)}` : null].filter(Boolean);
     const hits = pts.map((p, i) => `<rect class="tr-hit" data-i="${i}" x="${f(PL + band * i)}" y="0" width="${f(band)}" height="${H - XL}" fill="transparent"><title>${t(p.label)}: ${[money(p.v)].concat(chgs(p)).join(' · ')}</title></rect>`).join('');
     const unit = series.years ? 'fiscal years' : 'quarters';
     const aria = `${S.dec(n.name)}, last ${pts.length} ${unit}: ` + pts.map((p) => `${S.dec(p.label)} ${money(p.v)}${chgs(p).length ? ` (${chgs(p).join(', ')})` : ''}`).join('; ');

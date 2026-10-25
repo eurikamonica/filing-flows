@@ -11,7 +11,8 @@ CONCEPTS = {
                 "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet", "SalesRevenueGoodsNet",
                 "SalesRevenueServicesNet", "RevenuesNetOfInterestExpense", "RegulatedAndUnregulatedOperatingRevenue",
                 "OperatingLeasesIncomeStatementLeaseRevenue", "RevenueNet",
-                "Revenue", "RevenueFromContractsWithCustomers"],                       # IFRS (ifrs-full)
+                "Revenue", "RevenueFromContractsWithCustomers",                       # IFRS (ifrs-full)
+                "RevenueFromSaleOfGoods", "RevenueAndOperatingIncome"],               # Sanofi; HSBC's total operating income
     "cor": ["CostOfRevenue", "CostOfGoodsAndServicesSold", "CostOfGoodsSold", "CostOfServices",
             "CostOfGoodsAndServiceExcludingDepreciationDepletionAndAmortization", "CostOfSales"],
     "gp": ["GrossProfit"],

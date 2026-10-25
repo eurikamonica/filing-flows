@@ -210,3 +210,18 @@ def test_capex_guidance_skips_multiyear_plans():
     hist = {k - 3: 1.6, k - 2: 1.6, k - 1: 1.7, k: 1.7}                 # $6.6 a year
     _, gy = CM.buyer_path(hist, {"year": "2026", "mid": 39.5}, "1231", k, k + 4)
     assert gy is None                                                  # six years' worth is not this year's guidance
+
+
+def test_foreign_member_without_dollar_quarters_is_converted():
+    """A foreign filer drawn from its 20-F only (no converted quarters) is put in dollars at the market rate, and one
+    with no rate on file is left out rather than drawn in its own currency as if it were dollars (Novo Nordisk)."""
+    from pipeline import chains
+    saved = chains.Co.market_rate
+    try:
+        chains.Co.market_rate = staticmethod(lambda cur: 0.15 if cur == "DKK" else None)
+        co = chains.Co(1, {"currency": "DKK", "years": {"2025-12-31": {}}})
+        assert abs(co.conv - 0.15) < 1e-12
+        assert chains.Co(2, {"currency": "XYZ", "years": {}}).conv is None
+        assert chains.Co(3, {"years": {}}).conv == 1.0
+    finally:
+        chains.Co.market_rate = saved

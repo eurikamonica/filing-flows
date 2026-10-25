@@ -3070,3 +3070,19 @@ def test_asking_again_reads_a_skipped_company_again_and_says_why_it_cannot_be_dr
     assert build.undrawable(store, {910073}) == {910073: "its 10-Q and 10-K filings cannot be drawn: no revenue or net income line in XBRL"}
     store.put(910073, dict(store.company(910073), quarters={"2026-06-30": {}}))
     assert build.undrawable(store, {910073}) == {}
+
+
+def test_half_year_reporter_second_half_from_the_year():
+    """A company that reports twice a year: the second half is the 20-F year minus the first half (the restated first
+    half when a later report restates it), and each half compares with the half before and the year before."""
+    from pipeline import build as B
+    c = {"profile": {"fye": "1231"}, "years": {"2025-12-31": {"raw": {"revenue": 100.0, "ni": 10.0, "oi": 20.0}, "filed": "2026-02-20"}},
+         "halves": {"2025-06-30": {"end": "2025-06-30", "form": "6-K", "raw": {"revenue": 60.0, "ni": 6.0, "oi": 12.0}, "filed": "2025-07-30"},
+                    "2026-06-30": {"end": "2026-06-30", "form": "6-K", "raw": {"revenue": 55.0, "ni": 5.0, "oi": 11.0}, "filed": "2026-07-29",
+                                   "py_col": {"end": "2025-06-30", "raw": {"revenue": 52.0, "ni": 5.5, "oi": 10.0}}}}}
+    B._derive_h2(c)
+    h2 = c["halves"]["2025-12-31"]
+    assert h2["derived"] and h2["label"] == "H2 2025" and h2["raw"]["revenue"] == 48.0 and h2["raw"]["ni"] == 4.5
+    assert c["halves"]["2026-06-30"]["q1_end"] == "2025-12-31"
+    ends = B._quarter_ends("0331", 1)
+    assert ends[-1] < __import__("datetime").date.today() and all(e.month in (3, 6, 9, 12) for e in ends)
