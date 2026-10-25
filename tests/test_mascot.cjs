@@ -25,6 +25,32 @@ ok(tk('BRK-B value') === 'BRK-B', 'a class ticker');
 ok(tk('IS IT CHEAP?') === undefined, 'stop words are not tickers');
 ok(tk('how does it work') === undefined, 'no company');
 
+// the page decides the default questions
+const ix2 = Object.assign({}, ix, { companies: ix.companies.map((c) => Object.assign({ sector: c.ticker === 'BRK-B' ? 'financials' : 'tech', sic: c.ticker === 'NVDA' ? 3674 : 1000 }, c)),
+  sector_names: { tech: 'Technology' }, industries: [{ id: '3674', name: 'Semiconductors' }] });
+const at = (hash, pathname = '/') => M.pageContext(ix2, { hash, pathname });
+let cx = at('#c-1045810');
+ok(cx.kind === 'company' && cx.co.ticker === 'NVDA' && cx.topic === 'earnings', 'company page → that company, earnings first');
+ok(M.chipsFor(cx, true)[0] === 'NVDA 最新财报' && M.chipsFor(cx, true).every((q) => q.includes('NVDA')), 'every default question is about NVDA');
+cx = at('#c-1045810-x-options');
+ok(cx.topic === 'options' && /期权/.test(M.chipsFor(cx, true)[0]) && M.classify(M.chipsFor(cx, false)[0]).includes('options'), 'options tab → options question first');
+ok(at('#c-1045810-x-rotation').topic === 'rotation' && at('#c-1045810-debt').topic === 'credit' && at('#c-1045810-2025-07-27').topic === 'earnings', 'tabs → topics');
+cx = at('#i-3674');
+ok(cx.kind === 'group' && cx.label === 'Semiconductors' && M.chipsFor(cx, false)[0] === 'What is NVDA worth?', 'industry page → its companies');
+cx = at('#s-tech');
+ok(cx.label === 'Technology' && cx.cos[0].ticker === 'AAPL', 'sector page → its largest companies');
+const inds = { rows: [{ id: 'sic4:3674', label: 'Semiconductors', tickers: ['NVDA', 'AMD'] }] };
+cx = M.pageContext(ix2, { hash: '#rotation/ind~sic4%3A3674', pathname: '/disclosures/' }, inds);
+ok(cx.kind === 'industry' && cx.co.ticker === 'NVDA' && M.classify(M.chipsFor(cx, false)[0]).includes('industry'), 'industry RRG → industry questions');
+cx = M.pageContext(ix2, { hash: '#options', pathname: '/disclosures/' });
+ok(cx.kind === 'hub' && cx.topic === 'options' && M.chipsFor(cx, false).slice(0, 3).every((q) => M.classify(q).includes('options')), 'hub options tab → options questions');
+ok(M.chipsFor(M.pageContext(ix2, { hash: '#home', pathname: '/' }), false).length === 5, 'home → general questions');
+ok(M.greetFor(at('#c-1045810-x-options'), true).includes('NVDA') && M.greetFor(at('#home'), true) === null, 'greeting names the page');
+// every default question is understood: it classifies to a topic and names its company
+for (const h of ['#c-1045810', '#c-1045810-x-fairvalue', '#c-1045810-x-rotation', '#c-1045810-x-options', '#c-1045810-debt', '#c-1045810-consensus', '#s-tech', '#home']) {
+  for (const zh of [true, false]) for (const q of M.chipsFor(at(h), zh)) ok(M.classify(q).length && M.findCompany(q, ix2), `understood: ${q}`);
+}
+
 // answers from fixture files
 const val = { price: 100, price_date: '2026-10-23', stage: { label: 'Growth' }, dcf: { value: 120 }, mc: { p_above: 0.62, n: 2000 }, pvgo: { growth_share: 0.4 },
   credit: { distress: { pd: 0.004 }, altman_z: 5.1, distance_to_default: 7.2, cds_5y_bps: 80, rating_band: 'A' },
@@ -53,6 +79,8 @@ global.fetch = async (u) => (files[u] ? { ok: true, json: async () => files[u] }
   ok(/Which company/.test(a.html), 'asks which company');
   a = await M.ask('你好', ix);
   ok(a.html.includes('Flo') && a.mood === 'wave', 'help in Chinese');
+  a = await M.ask('what is it worth?', ix, ix.companies[0]);
+  ok(a.company && a.company.ticker === 'NVDA', 'no company named: the page company is used');
   a = await M.ask('AAPL', ix);
   ok(/not published/.test(a.html), 'a company without files');
   console.log(`${checks} mascot checks passed.`);

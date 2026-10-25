@@ -79,6 +79,82 @@
   }
   const pageCik = () => { const m = /^#c-(\d+)/.exec((root.location && root.location.hash) || ''); return m ? +m[1] : null; };
 
+  /* ---------- the page it is on: default questions and the greeting follow it ---------- */
+  // company page tab → the topic it is about (#c-<cik>-x-options, #c-<cik>-debt …); the plain company page is its earnings
+  const TAB_TOPIC = { 'x-fairvalue': 'valuation', value: 'valuation', 'x-rotation': 'rotation', 'x-options': 'options', debt: 'credit', consensus: 'analysts', revisions: 'analysts' };
+  // disclosures-hub tab → topic
+  const HUB_TOPIC = { valuation: 'valuation', rotation: 'rotation', options: 'options', debt: 'credit', consensus: 'analysts', earnings: 'earnings', quality: 'earnings', filings: 'earnings' };
+  const TOPICS = ['valuation', 'rotation', 'options', 'earnings', 'industry', 'credit', 'analysts'];
+  const byRevenue = (list, f) => list.filter(f).sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 3);
+  // → {kind: company|industry|group|hub|home, co?, cos?, topic?, label?, ind?, key}; `loc` is window.location (or a stand-in in tests)
+  function pageContext(ix, loc, inds) {
+    loc = loc || root.location || {};
+    const list = (ix && ix.companies) || [], h = decodeURIComponent(String(loc.hash || '').replace(/^#\/?/, ''));
+    const hub = /\/disclosures\//.test(String(loc.pathname || ''));
+    let m;
+    if (!hub) {
+      if ((m = /^c-(\d+)(?:-([a-z0-9-]+))?$/.exec(h))) {
+        const co = list.find((c) => +c.cik === +m[1]);
+        if (co) { const tab = /^\d{4}-|^fy-|^cmp-|^all$/.test(m[2] || '') ? '' : (m[2] || ''); return { kind: 'company', co, topic: TAB_TOPIC[tab] || 'earnings', key: 'c' + co.cik + tab }; }
+      }
+      if ((m = /^s-([a-z0-9-]+?)(?:-CY\d{4}Q\d)?$/.exec(h))) return { kind: 'group', label: (ix && ix.sector_names || {})[m[1]] || m[1], cos: byRevenue(list, (c) => c.sector === m[1]), key: 's' + m[1] };
+      if ((m = /^i-([a-z0-9-]+?)(?:-CY\d{4}Q\d)?$/.exec(h))) {
+        const row = ((ix && ix.industries) || []).find((x) => x.id === m[1]);
+        return { kind: 'group', label: row ? row.name : 'SIC ' + m[1], cos: byRevenue(list, (c) => String(c.sic) === m[1]), key: 'i' + m[1] };
+      }
+      return { kind: 'home', cos: byRevenue(list, () => true), key: 'home' };
+    }
+    const [tab, arg] = h.split('/');
+    if (tab === 'rotation' && arg && /^ind~/.test(arg) && inds) {        // #rotation/ind~sic4:3674 — one industry's RRG
+      const id = arg.slice(4), row = (inds.rows || []).find((r) => r.id === id);
+      if (row) {
+        const t = new Set((row.tickers || []).map((x) => String(x).toUpperCase()));
+        const cos = list.filter((c) => t.has(String(c.ticker).toUpperCase())).sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 3);
+        return { kind: 'industry', label: row.label, ind: row, cos, co: cos[0] || null, key: 'ind' + id };
+      }
+    }
+    return { kind: 'hub', topic: HUB_TOPIC[tab] || null, tab: tab || '', cos: byRevenue(list, () => true), key: 'hub' + (tab || '') };
+  }
+  const Q = {
+    valuation: [(t) => `What is ${t} worth?`, (t) => `${t} 值多少钱？`, (t) => `${t} DCF and Monte Carlo`, (t) => `${t} 的 DCF 和蒙特卡洛估值`],
+    rotation: [(t) => `Will ${t} be Leading next week?`, (t) => `${t} 下周会进入领先象限吗？`, (t) => `Where will ${t}'s quadrant be in 4 weeks?`, (t) => `${t} 4 周后在哪个象限？`],
+    options: [(t) => `${t} options: range and max pain`, (t) => `${t} 期权的隐含区间和最大痛点`, (t) => `${t} put wall and call wall`, (t) => `${t} 期权的 put wall 和 call wall`],
+    earnings: [(t) => `${t} latest earnings`, (t) => `${t} 最新财报`, (t) => `${t} revenue growth and margin`, (t) => `${t} 营收增长和利润率`],
+    industry: [(t) => `How is ${t}'s industry rotating?`, (t) => `${t} 所在行业轮动`, (t) => `Is ${t}'s industry Leading?`, (t) => `${t} 所在行业处于哪个象限？`],
+    credit: [(t) => `${t} debt and default risk`, (t) => `${t} 的债务和违约风险`, (t) => `${t} Altman Z and credit spread`, (t) => `${t} 的信用利差和 Altman Z`],
+    analysts: [(t) => `${t} analyst price target`, (t) => `${t} 分析师目标价`, (t) => `${t} Polymarket implied price`, (t) => `${t} 预测市场隐含价格`],
+  };
+  const q1 = (topic, t, zh, second) => Q[topic][(second ? 2 : 0) + (zh ? 1 : 0)](t);
+  // the default questions for a page: up to six, the page's own topic first
+  function chipsFor(ctx, zh) {
+    ctx = ctx || { kind: 'home' };
+    const cos = ctx.cos || [], t0 = (ctx.co && ctx.co.ticker) || (cos[0] && cos[0].ticker) || 'NVDA';
+    const T = (i) => (cos[i] && cos[i].ticker) || t0;
+    if (ctx.kind === 'company') {
+      const first = ctx.topic || 'earnings';
+      return [q1(first, t0, zh), q1(first, t0, zh, true), ...TOPICS.filter((k) => k !== first && k !== 'credit' && k !== 'analysts').map((k) => q1(k, t0, zh))].slice(0, 6);
+    }
+    if (ctx.kind === 'industry') return [q1('industry', T(0), zh), q1('industry', T(0), zh, true), q1('rotation', T(0), zh), q1('rotation', T(1), zh), q1('valuation', T(0), zh), q1('earnings', T(2), zh)];
+    if (ctx.kind === 'group') return [q1('valuation', T(0), zh), q1('earnings', T(1), zh), q1('rotation', T(2), zh), q1('industry', T(0), zh), q1('options', T(0), zh)];
+    if (ctx.kind === 'hub' && ctx.topic) {
+      const k = ctx.topic;
+      return [q1(k, T(0), zh), q1(k, T(1), zh), q1(k, T(2), zh), q1(k, T(0), zh, true), ...(k === 'rotation' ? [q1('industry', T(0), zh)] : [q1('valuation', T(0), zh)])];
+    }
+    return [q1('valuation', T(0), zh), q1('rotation', T(1), zh), q1('options', T(2), zh), q1('earnings', T(0), zh), q1('industry', T(1), zh)];
+  }
+  const TOPIC_NAME = { en: { valuation: 'fair value', rotation: 'rotation (RRG)', options: 'options', earnings: 'earnings', credit: 'debt and credit', analysts: 'analysts' },
+    zh: { valuation: '估值', rotation: 'RRG 轮动', options: '期权', earnings: '财报', credit: '债务与信用', analysts: '分析师' } };
+  // one line that says Flo knows where you are; null on the home page (the full help is shown there)
+  function greetFor(ctx, zh) {
+    const lg = zh ? 'zh' : 'en', N = TOPIC_NAME[lg];
+    if (!ctx || ctx.kind === 'home') return null;
+    if (ctx.kind === 'company') { const c = ctx.co; return L(lg, `You're on <b>${esc(c.ticker)}</b>'s ${N[ctx.topic] || 'earnings'} page. Ask anything about it — “next week?”, “worth?” — I'll assume ${esc(c.ticker)}.`, `你在看 <b>${esc(c.ticker)}</b> 的${N[ctx.topic] || '财报'}页。直接问就行，比如「下周呢？」「值多少？」，我默认说的是 ${esc(c.ticker)}。`); }
+    if (ctx.kind === 'industry') return L(lg, `This is the <b>${esc(ctx.label)}</b> industry's RRG. Ask about it or its companies${ctx.co ? ` (I'll assume ${esc(ctx.co.ticker)}, its largest)` : ''}.`, `这是 <b>${esc(ctx.label)}</b> 行业的 RRG。可以问这个行业或其中的公司${ctx.co ? `（默认用行业里最大的 ${esc(ctx.co.ticker)}）` : ''}。`);
+    if (ctx.kind === 'group') return L(lg, `You're looking at <b>${esc(ctx.label)}</b>. Here are questions about its largest companies.`, `你在看 <b>${esc(ctx.label)}</b>。下面是关于其中最大几家公司的问题。`);
+    if (ctx.kind === 'hub' && ctx.topic) return L(lg, `This page is about ${N[ctx.topic]}. Name a company and I'll answer from the same model.`, `这一页是${N[ctx.topic]}。告诉我公司名或代码，我用同一个模型回答。`);
+    return null;
+  }
+
   /* ---------- the answers: each returns {html, mood, facts[], links[]} ---------- */
   const link = (href, text) => `<a href="${esc(href)}"${/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : ''}>${esc(text)}</a>`;
   async function valuation(c, lg) {
@@ -202,10 +278,11 @@
   }
   let IX = null;
   const index = () => IX || (IX = json(DATA + 'index.json'));
-  async function ask(q, ixArg) {
+  // ctxCo: the company of the page being read, used when the question names none ("下周呢？" on MU's page)
+  async function ask(q, ixArg, ctxCo) {
     q = String(q || '');
     const lg = lang(q), ix = ixArg || await index(), cls = classify(q);
-    let co = findCompany(q, ix);
+    let co = findCompany(q, ix) || ctxCo || null;
     if (!co && pageCik() && ix) co = (ix.companies || []).find((c) => +c.cik === pageCik()) || null;
     if (!co) return cls.includes('help') || !q.trim() ? helpAnswer(lg, null)
       : { html: L(lg, 'Which company? Give me a ticker or a name — for example “NVDA valuation” or “Is Apple Leading next week?”', '哪家公司？请给我代码或名称，比如「NVDA 估值」或「苹果下周会进入领先吗？」'), facts: [], mood: 'think', links: [] };
@@ -303,11 +380,7 @@
   }
   const store = { get(k) { try { return root.localStorage.getItem('ffx:flo-' + k); } catch (e) { return null; } }, set(k, v) { try { root.localStorage.setItem('ffx:flo-' + k, v); } catch (e) { /* no storage */ } } };
   const zhUI = () => !!(root.navigator && /^zh/i.test(root.navigator.language || ''));
-  function chips() {
-    const t = (ui && ui.co && ui.co.ticker) || 'NVDA';
-    return zhUI() ? [`${t} 值多少钱？`, `${t} 下周会进入领先象限吗？`, `${t} 期权的隐含区间和最大痛点`, `${t} 最新财报`, `${t} 所在行业轮动`]
-      : [`What is ${t} worth?`, `Will ${t} be Leading next week?`, `${t} options: range and max pain`, `${t} latest earnings`, `How is ${t}'s industry rotating?`];
-  }
+  const chips = () => chipsFor(ui && ui.ctx, zhUI());
   function addMsg(html, who) {
     const m = doc.createElement('div');
     m.className = 'flo-msg ' + (who === 'me' ? 'flo-me' : 'flo-bot');
@@ -324,8 +397,8 @@
     mood('think');
     const wait = addMsg('<span class="flo-typing">• • •</span>', 'bot');
     let a;
-    try { a = await ask(q); } catch (e) { a = { html: 'Something went wrong: ' + esc(e.message), mood: 'worried', facts: [], links: [] }; }
-    if (a.company) { ui.co = a.company; renderChips(); }
+    try { a = await ask(q, null, ui.co); } catch (e) { a = { html: 'Something went wrong: ' + esc(e.message), mood: 'worried', facts: [], links: [] }; }
+    if (a.company && (!ui.co || a.company.cik !== ui.co.cik) && (!ui.ctx || ui.ctx.kind !== 'company')) { ui.co = a.company; ui.ctx = { kind: 'company', co: a.company, topic: (a.intents || [])[0] || 'earnings', key: ui.ctx && ui.ctx.key }; renderChips(); }
     mood('talk');
     const lg = lang(q), LM = root.LocalFilingModel;
     const local = LM && LM.isConnected && LM.isConnected() && LM.ask && (a.facts || []).length;
@@ -352,7 +425,10 @@
   function open() {
     if (!ui) return;
     ui.panel.hidden = false; ui.launch.hidden = true;
-    if (!ui.log.childElementCount) { addMsg(helpAnswer(zhUI() ? 'zh' : 'en', ui.co).html, 'bot'); mood('wave', 2000); }
+    if (!ui.log.childElementCount) {
+      const g = greetFor(ui.ctx, zhUI());
+      addMsg(g || helpAnswer(zhUI() ? 'zh' : 'en', ui.co).html, 'bot'); ui.greeted = ui.ctx && ui.ctx.key; mood('wave', 2000);
+    }
     renderChips();
     setTimeout(() => ui.input.focus(), 50);
     store.set('seen', '1');
@@ -375,11 +451,22 @@
     r.querySelector('.flo-x').addEventListener('click', close);
     r.querySelector('.flo-form').addEventListener('submit', (e) => { e.preventDefault(); send(ui.input.value); });
     doc.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !ui.panel.hidden) close(); });
-    const sync = async () => { const id = pageCik(); if (!id) return; const ix = await index(); const c = ix && (ix.companies || []).find((x) => +x.cik === id); if (c) { ui.co = c; if (!ui.panel.hidden) renderChips(); } };
+    // follow the page: its company becomes the default, its topic leads the default questions
+    let indsP = null;
+    const sync = async () => {
+      const ix = await index();
+      const hub = /\/disclosures\//.test(String((root.location || {}).pathname || ''));
+      const inds = hub && /^#rotation\/ind~/.test(root.location.hash || '') ? await (indsP || (indsP = json(HUB + 'market/history/industries.json'))) : null;
+      const ctx = pageContext(ix, root.location, inds);
+      if (ui.ctx && ui.ctx.key === ctx.key) return;
+      ui.ctx = ctx; ui.co = ctx.co || null;
+      renderChips();
+      if (!ui.panel.hidden && ui.log.childElementCount && ui.greeted !== ctx.key) { const g = greetFor(ctx, zhUI()); if (g) { addMsg(g, 'bot'); ui.greeted = ctx.key; } }
+    };
     root.addEventListener('hashchange', sync); sync();
     setTimeout(() => mood('wave', 1800), 1200);
   }
-  root.FFMascot = { open, ask, mount, classify, findCompany, lang };
+  root.FFMascot = { open, ask, mount, classify, findCompany, lang, pageContext, chipsFor };
   if (doc && doc.body !== undefined) { if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', mount); else mount(); }
-  if (typeof module !== 'undefined') module.exports = { classify, findCompany, lang, ask, helpAnswer };
+  if (typeof module !== 'undefined') module.exports = { classify, findCompany, lang, ask, helpAnswer, pageContext, chipsFor, greetFor };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
