@@ -608,13 +608,22 @@ def process_filing(store, cik, accn, form, starred=False):
     return end
 
 
-def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_text=None, lab_text=None):
-    """The full fiscal year of a 10-K, with the year before for comparison."""
+def annual_entry(c, fx, dfx, cik, accn, form, row, end, doc_url, notes, inst_text=None, lab_text=None, fill=None):
+    """The full fiscal year of a 10-K, with the year before for comparison. fill: {"cur": {...}, "py": {...}} figures
+    read from the filing's own income statement for what its XBRL lacks (a 20-F that tags its revenue with a company
+    extension, Novartis' "net sales to third parties", which companyfacts leaves out)."""
     raw = facts.extract(fx, end, annual=True)
+    for k, v in ((fill or {}).get("cur") or {}).items():
+        if raw.get(k) is None and v is not None:
+            raw[k] = v
     if not raw.get("revenue") or (raw.get("ni") is None and raw.get("pl") is None):
         return None
     py_end = facts.prior_year_end(fx, end)
     comp = {"py_end": py_end, "raw_py": facts.extract(fx, py_end, annual=True) if py_end else None}
+    if (fill or {}).get("py") and comp["raw_py"] is not None:
+        for k, v in fill["py"].items():
+            if comp["raw_py"].get(k) is None and v is not None:
+                comp["raw_py"][k] = v
     try:
         src = sources.from_xbrl(fx, end, dims.label_roles(lab_text) if lab_text else None, annual=True)
     except Exception as e:
@@ -1311,6 +1320,10 @@ def process_fpi_annual(store, cik, accn, form, starred=False):
     fx = companyfacts(cik)
     doc_url = sec.doc_url(cik, accn, row["primaryDocument"]) if row.get("primaryDocument") else None
     year = annual_entry(c, fx, None, cik, accn, form, row, end, doc_url, {})
+    if not year and doc_url and not facts.extract(fx, end, annual=True).get("revenue"):
+        fill = _annual_from_document(cik, doc_url, row, end, fx)
+        if fill:
+            year = annual_entry(c, fx, None, cik, accn, form, row, end, doc_url, {}, fill=fill)
     if not year:
         if not facts.extract(fx, end, annual=True).get("revenue"):
             raise Pending("XBRL facts not available yet")
@@ -1332,6 +1345,83 @@ def process_fpi_annual(store, cik, accn, form, starred=False):
     return end
 
 
+def _quarter_ends(fye, years=3):
+    """Fiscal quarter ends of the last `years` years from a fiscal year end "MMDD" (month ends)."""
+    try:
+        m0 = int(str(fye)[:2])
+    except (TypeError, ValueError):
+        m0 = 12
+    out, today = [], dt.date.today()
+    for y in range(today.year - years, today.year + 2):
+        for k in range(4):
+            m = (m0 - 3 * k - 1) % 12 + 1
+            yy = y if m <= m0 else y - 1
+            nxt = dt.date(yy + (m == 12), m % 12 + 1, 1)
+            e = nxt - dt.timedelta(days=1)
+            if e < today:
+                out.append(e)
+    return sorted(set(out))
+
+
+def _results_window(sixk, fye, per_quarter=30, quarters=9):
+    """The 6-Ks filed 7-100 days after each of the last `quarters` fiscal quarter ends, largest first: a quarter's
+    results are among them even when the name says nothing (Alibaba's "tm2524743d1_6k.htm" among its monthly
+    returns and buyback reports)."""
+    out = []
+    for e in _quarter_ends(fye)[-quarters:]:
+        lo, hi = (e + dt.timedelta(days=7)).isoformat(), (e + dt.timedelta(days=100)).isoformat()
+        win = [r for r in sixk if lo <= (r.get("filingDate") or "") <= hi]
+        win.sort(key=lambda r: -int(r.get("size") or 0))
+        out += [r for r in win[:per_quarter] if r not in out]
+    return out
+
+
+def _annual_from_document(cik, doc_url, row, end, fx):
+    """Revenue (and what else the XBRL lacks) from the annual report's own income statement, read with the release
+    table reader; sized against the XBRL net income. None when it cannot be read."""
+    try:
+        html = sec.get(doc_url)
+    except Exception:
+        return None
+    x = facts.extract(fx, end, annual=True)
+    ni = x.get("pl") if x.get("pl") is not None else x.get("ni")
+    try:
+        tables = release.read_tables(html)
+        best, _ = release.pick_tables(tables)
+        if not best:
+            return None
+        _, t, m = best
+        scale = release._units(t)
+        net = m.get("pl", m.get("ni"))
+        if ni and net:                                          # the table's units checked against the XBRL net income
+            fits = [s for s in ([scale] if scale else []) + [1e6, 1e3, 1e9, 1.0] if 0.98 <= abs(net * s / ni) <= 1.02]
+            scale = fits[0] if fits else None
+        if not scale:
+            return None
+        full = release._map_rows(t, release.IS_KEYS, full=True)
+        cur = {k: v[2][0] * scale for k, v in full.items() if v[2]}
+        py = {k: v[2][1] * scale for k, v in full.items() if len(v[2]) > 1}
+        for d in (cur, py):
+            for k in release.COST_KEYS:
+                if d.get(k) is not None:
+                    d[k] = abs(d[k])
+        if not cur.get("revenue"):
+            return None
+        keep = ("revenue", "cor", "gp", "rd", "sm", "ga", "sga", "oi") if ni else \
+            ("revenue", "cor", "gp", "rd", "sm", "ga", "sga", "oi", "pretax", "tax", "pl", "ni", "nci")   # no XBRL year at all
+        if not ni:
+            for d in (cur, py):
+                try:
+                    d.update({k: v for k, v in release.reconcile({**{k: None for k in facts.CONCEPTS}, **d}).items()
+                              if k in keep and v is not None})
+                except ValueError:
+                    pass
+        return {"cur": {k: v for k, v in cur.items() if k in keep}, "py": {k: v for k, v in py.items() if k in keep}}
+    except Exception as e:
+        print(f"  annual report statement not read for {cik}: {e}", file=sys.stderr)
+        return None
+
+
 def _queue_foreign(store, cik, sub):
     """A foreign filer's history: its last two annual reports and the 6-Ks of the last two years or so (the results
     releases among them are read; the rest are skipped)."""
@@ -1345,6 +1435,11 @@ def _queue_foreign(store, cik, sub):
     hint = re.compile(r"result|quarter|earning|interim|half|annual|\bq[1-4]|[^a-z]fy|trading update|financial", re.I)
     keyed = [r for r in sixk if hint.search((r.get("primaryDocument") or "") + " " + (r.get("primaryDocDescription") or ""))
              or int(r.get("size") or 0) >= 1_000_000]       # a full report as the 6-K itself (Novo Nordisk's "caq22026.htm")
+    # and, for each fiscal quarter, the largest 6-Ks filed 1-17 weeks after it ends: results are usually the biggest
+    # filing of that window even when nothing in the name says so (Alibaba's "tm2622423d1_6k.htm")
+    for r in _results_window(sixk, sub.get("fiscalYearEnd") or (c.get("profile") or {}).get("fye")):
+        if r not in keyed:
+            keyed.append(r)
     rest = [r for r in sixk if r not in keyed]
     pick += (keyed + rest)[:max(FPI_RELEASES, len(keyed))]
     for r in pick:
