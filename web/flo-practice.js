@@ -33,7 +33,7 @@ function changeMode(s,value){
 function toughCells(s){
  const m=memory(s);
  return Object.entries(m.errors).filter(([r,x])=>s.answers&&Object.prototype.hasOwnProperty.call(s.answers,r))
-  .sort((a,b)=>b[1].count-a[1].count||a[0].localeCompare(b[0]))
+  .sort((a,b)=>b[1].count-a[1].count||Object.keys(s.answers||{}).indexOf(a[0])-Object.keys(s.answers||{}).indexOf(b[0]))
   .map(([ref,v])=>({ref,count:v.count,why:v.why}));
 }
 function review(s) {
