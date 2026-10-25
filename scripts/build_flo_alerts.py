@@ -194,7 +194,21 @@ def build(root, now=None):
         per_type[kind] += 1
         if len(unique) >= 120:
             break
-    return dict(schema=1,generated_at=stamp(now),sources=statuses,
+    # Scan execution health is distinct from publication time and event date.
+    # A partial/failed scan must never be presented as an up-to-date success.
+    health = {}
+    for kind, file in (("8k", "events8k-status.json"), ("news", "news-status.json"),
+                       ("13f", "holdings-status.json"), ("price", "extremes-status.json")):
+        stat = read(root.parent / file)
+        if stat:
+            health[kind] = {
+                "status": small(stat.get("status") or "unknown", 18),
+                "last_attempt": stamp(stat.get("last_attempt")),
+                "last_success": stamp(stat.get("last_success") or stat.get("last_partial_success")),
+                "latest_filing_date": small(stat.get("latest_filing_date"), 12),
+                "failed_queue": stat.get("failed_queue") if isinstance(stat.get("failed_queue"), int) else None,
+            }
+    return dict(schema=1,generated_at=stamp(now),sources=statuses,scan_health=health,
         cadence="Only newly published static snapshots. GitHub Pages publishing may lag collecting.",
         events=list(unique.values()))
 
