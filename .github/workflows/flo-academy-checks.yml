@@ -8,6 +8,8 @@ on:
       - 'web/flo-real-workbook.js'
       - 'web/flo-coach.js'
       - 'web/flo-practice.js'
+      - 'web/flo-alerts.js'
+      - 'scripts/build_flo_alerts.py'
       - 'web/mascot.js'
       - 'web/app.js'
       - 'tests/test_flo_academy.cjs'
@@ -15,6 +17,8 @@ on:
       - 'tests/test_flo_real.cjs'
       - 'tests/test_flo_coach.cjs'
       - 'tests/test_flo_practice.cjs'
+      - 'tests/test_flo_alerts.cjs'
+      - 'tests/test_flo_alert_feed.py'
       - 'tests/test_mascot.cjs'
       - '.github/workflows/flo-academy-checks.yml'
   workflow_dispatch:
@@ -31,6 +35,7 @@ jobs:
         with:
           sparse-checkout: |
             web
+            scripts
             tests
             disclosures/docs/rrg-company-view.js
           sparse-checkout-cone-mode: false
@@ -46,6 +51,7 @@ jobs:
           node --check web/flo-real-workbook.js
           node --check web/flo-coach.js
           node --check web/flo-practice.js
+          node --check web/flo-alerts.js
           node --check web/app.js
       - name: Run old and new Flo tests
         run: |
@@ -55,3 +61,5 @@ jobs:
           node tests/test_flo_real.cjs
           node tests/test_flo_coach.cjs
           node tests/test_flo_practice.cjs
+          node tests/test_flo_alerts.cjs
+          python3 tests/test_flo_alert_feed.py
