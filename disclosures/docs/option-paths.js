@@ -150,8 +150,21 @@
     const [c, sum] = await Promise.all([get(hub + 'data/market/options/' + encodeURIComponent(T) + '.json').catch(() => null), get(hub + 'data/market/options.json').catch(() => null), share()]);
     if (ctx && ctx.here && !ctx.here()) return;
     const rows = (sum && sum.rows) || [], r = rows.find((x) => x.ticker === T) || c;
-    if (!c || !(c.paths || []).length) {
-      el.innerHTML = `<div class="fop"><p class="fop-sub">${esc(T)}'s option chain is not collected yet. The daily options collector reads CBOE's delayed quotes for ${rows.length ? fmt(rows.length) + ' underlyings' : 'a set of underlyings'} after the close: the indexes, the sector ETFs, the stocks most held in 13F and the hottest Signals names${rows.length ? ` (today: ${rows.slice(0, 12).map((x) => esc(x.ticker)).join(', ')}…)` : ''}.</p></div>`;
+    if (!c) {
+      el.innerHTML = `<div class="fop"><p class="fop-sub">No published CBOE option-chain snapshot for ${esc(T)} yet. Popular names are prioritized for supplemental weekday scans, with a full-universe scan after the close. A missing snapshot does not imply that no options trade.</p></div>`;
+      return;
+    }
+    if (!(c.paths || []).length) {
+      // Legacy CBOE summaries can contain IV, OI, smile and GEX without the
+      // newer price-path field. Show the known facts instead of claiming that
+      // the underlying chain was never collected.
+      const last = String(c.as_of || c.generated_at || r?.as_of || 'not recorded');
+      el.innerHTML = `<div class="fop"><h3>${esc(T)} · option-chain snapshot available</h3><p class="fop-sub">CBOE delayed source: ${esc(last)}. The price-path model has not been published for this snapshot; priority supplemental scans attempt to repair missing paths. No forecast is inferred from missing path data.</p><div class="fop-cards">
+        <div class="fop-card"><span>Spot (source-date)</span><b>${px(c.spot)}</b></div>
+        <div class="fop-card"><span>IV30</span><b>${fin(c.iv30) ? fmt(c.iv30, 1) + '%' : '—'}</b></div>
+        <div class="fop-card"><span>Put / call OI</span><b>${fin(c.pc_oi) ? fmt(c.pc_oi, 2) : '—'}</b></div>
+        <div class="fop-card"><span>Contracts in snapshot</span><b>${fin(c.contracts) ? fmt(c.contracts) : '—'}</b></div>
+        </div></div>`;
       return;
     }
     const em = r && fin(r.iv30) && fin(r.spot) ? r.spot * r.iv30 / 100 * Math.sqrt(30 / 365) : null;
