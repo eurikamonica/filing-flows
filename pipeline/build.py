@@ -1169,7 +1169,7 @@ def _derive_h2(c):
                for k in facts.CONCEPTS}
         if not raw.get("revenue") or raw["revenue"] <= 0 or (raw.get("ni") is None and raw.get("pl") is None):
             continue
-        if not 0.5 <= raw["revenue"] / (hr.get("revenue") or raw["revenue"]) <= 2.0:
+        if not 0.4 <= (hr.get("revenue") or 0) / yr["revenue"] <= 0.62:
             continue                                     # the year and the half count revenue differently (Diageo's
                                                          # sales with excise vs. net sales): no second half
         label, fq, fy = facts.fiscal_label(ye, c["profile"]["fye"])
@@ -1199,13 +1199,13 @@ def _annual_quarter_revenue(c, cik=None, sub=None):
         if v:
             return v / 4
     if cik and sub:
-        k = next((r for r in recent_rows(sub) if r["form"] in ("20-F", "40-F") and r.get("reportDate")), None)
-        if k:
-            try:
+        for k in [r for r in recent_rows(sub) if r["form"] in ("20-F", "40-F") and r.get("reportDate")][:3]:
+            try:                                         # the newest 20-F whose year is in the XBRL (Toyota's latest is not)
                 v = facts.extract(companyfacts(cik), k["reportDate"], annual=True).get("revenue")
-                return v / 4 if v else None
             except Exception:
-                return None
+                v = None
+            if v:
+                return v / 4
     return None
 
 
@@ -1491,8 +1491,32 @@ def _annual_from_document(cik, doc_url, row, end, fx):
                 cands.append((m0["revenue"], t0, m0))
         if not cands:
             return None
-        _, t, m = max(cands, key=lambda x: x[0])
-        scale = release._units(t)
+        e0 = dt.date.fromisoformat(end)
+        try:
+            pe = e0.replace(year=e0.year - 1)
+        except ValueError:
+            pe = e0 - dt.timedelta(days=365)
+        pe = facts.prior_year_end(fx, end) or pe.isoformat()
+        prev_x = facts.extract(fx, pe, annual=True).get("revenue")
+        scale = None
+        if prev_x:
+            # the year before is in the XBRL: the statement whose second column is that year's revenue is the consolidated
+            # one, newest year first, and gives the units (Toyota's non-financial-businesses table is not it)
+            pick = None
+            for _, t0, m0 in sorted(cands, key=lambda x: -x[0]):
+                col = release._map_rows(t0, release.IS_KEYS, full=True)["revenue"][2]
+                for s0 in ([release._units(t0)] if release._units(t0) else []) + [1e6, 1e3, 1e9, 1.0]:
+                    if len(col) > 1 and 0.98 <= col[1] * s0 / prev_x <= 1.02:
+                        pick, scale = (t0, m0), s0
+                        break
+                if pick:
+                    break
+            if not pick:
+                return None
+            t, m = pick
+        else:
+            _, t, m = max(cands, key=lambda x: x[0])
+            scale = release._units(t)
         net = m.get("pl", m.get("ni"))
         if ni and net:                                          # the table's units checked against the XBRL net income
             fits = [s for s in ([scale] if scale else []) + [1e6, 1e3, 1e9, 1.0] if 0.98 <= abs(net * s / ni) <= 1.02]
@@ -1509,7 +1533,6 @@ def _annual_from_document(cik, doc_url, row, end, fx):
         if not cur.get("revenue"):
             return None
         big = max((cur.get(k) or 0) for k in ("oi", "gp"))
-        prev_x = facts.extract(fx, facts.prior_year_end(fx, end), annual=True).get("revenue") if facts.prior_year_end(fx, end) else None
         if big > 1.05 * cur["revenue"] or (prev_x and not 0.4 <= cur["revenue"] / prev_x <= 2.5):
             return None                                       # a misread table: never drawn
         keep = ("revenue", "cor", "gp", "rd", "sm", "ga", "sga", "oi") if ni else \
