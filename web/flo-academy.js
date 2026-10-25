@@ -67,7 +67,7 @@
     const s=String(q||'').trim();
     if (/^(next step|previous step|prev step|stop lesson|hint|下一步|上一步|结束课程|提示)$/i.test(s)) return active ? 'continue' : null;
     if (/\b(fcff|free cash flow to firm)\b|企业自由现金流|计算自由现金流/i.test(s) && /(?:^|\s)(?:ebit|tax|da|capex|nwc)=/i.test(s)) return 'fcff';
-    if (/\b(?:case study|sunbeam|dell case|accounting case)\b|\b(?:worldcom|xerox|waste management)\s+(?:case|fraud|accounting|scandal)\b|\b(?:case|fraud|accounting)\s+(?:worldcom|xerox|waste management)\b|真实案例|案例研究|森宾|太阳能.*案例|(?:世通|施乐).*(?:案例|舞弊)/i.test(s)) return 'case';
+    if (/\b(?:case study|sunbeam|dell case|accounting case)\b|\b(?:worldcom|xerox|waste management|healthsouth|bristol)\s+(?:case|fraud|accounting|scandal)\b|\b(?:case|fraud|accounting)\s+(?:worldcom|xerox|waste management|healthsouth|bristol)\b|真实案例|案例研究|森宾|太阳能.*案例|(?:世通|施乐).*(?:案例|舞弊)/i.test(s)) return 'case';
     if (/rebates?|supplier incentives|vendor allowances|返利|供应商补贴|供应商激励/i.test(s)) return 'rebate';
     if (/cookie.jar (?:simulation|example|lab)|模拟(?:准备金|cookie.?jar)|准备金模拟/i.test(s)) return 'reserve_demo';
     if (/cookie.jar|accounting detective|reserves? (?:release|rollforward)|earnings smoothing|财务侦探|准备金|利润平滑|盈余管理/i.test(s)) return 'detective';
@@ -168,8 +168,8 @@
     const zh=lang==='zh', sought=/dell/i.test(q)?'dell':/sunbeam/i.test(q)?'sunbeam':null;
     const selected=sought?cases.filter(x=>x.key===sought):cases;
     const verified=(root.FFFloRealData||(typeof module!=='undefined'?require('./flo-real-data.js'):null));
-    const extra=verified?['worldcom','xerox','waste'].map(key=>({key,...verified.cases[key]})).filter(x=>x.company):[];
-    const soughtExtra=/worldcom|世通/i.test(q)?'worldcom':/xerox|施乐/i.test(q)?'xerox':/waste management|废物管理/i.test(q)?'waste':null;
+    const extra=verified?['worldcom','xerox','waste','healthsouth','bristol'].map(key=>({key,...verified.cases[key]})).filter(x=>x.company):[];
+    const soughtExtra=/worldcom|世通/i.test(q)?'worldcom':/xerox|施乐/i.test(q)?'xerox':/waste management|废物管理/i.test(q)?'waste':/healthsouth/i.test(q)?'healthsouth':/bristol|bmy case|百时美/i.test(q)?'bristol':null;
     const more=soughtExtra?extra.filter(x=>x.key===soughtExtra):sought?[]:extra;
     let s='<b>'+(zh?'SEC 真实会计案例':'SEC Accounting Case Studies')+'</b><p class="flo-source">'+(zh?'历史执法文件；不是对当前公司风险的指控。':'Historical enforcement materials, not allegations about a company currently being viewed.')+'</p>';
     for(const c of selected) s+='<div class="flo-example"><b>'+html(c.company)+' · '+html(c.years)+'</b><p>'+html(zh?c.issueZH:c.issue)+'</p><p>'+html(zh?c.findingZH:c.finding)+'</p><small>'+html(zh?c.questionZH:c.question)+'</small></div>';
