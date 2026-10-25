@@ -463,6 +463,37 @@ def parse_uit_holdings(data):
     return out
 
 
+def uit_asof_date(data):
+    """Read *stated holdings as-of date* from sponsor workbook header if present.
+
+    Unlike the download timestamp, this is the actual disclosed portfolio
+    effective date. If the workbook has no parseable as-of header, callers
+    must label the download day as an observation date, NOT a report date.
+    """
+    from datetime import datetime, timedelta
+    rows = parse_xlsx_rows(data)
+    for row in rows[:25]:
+        line = " ".join(str(x or "").strip() for x in row)
+        if not re.search(r"\b(?:as[ -]of|holdings date|holdings as of)\b", line, re.I):
+            continue
+        pat = r"\b(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}/\d{1,2}/\d{4}|[A-Za-z]+\s+\d{1,2},?\s+\d{4})\b"
+        match = re.search(pat, line)
+        if match:
+            for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%B %d, %Y", "%B %d %Y", "%b %d, %Y", "%b %d %Y"):
+                try:
+                    return datetime.strptime(match.group(1), fmt).date().isoformat()
+                except ValueError:
+                    pass
+        for x in row[1:4]:
+            try:
+                value = float(x)
+                if 35000 < value < 65000:
+                    return (datetime(1899, 12, 30) + timedelta(days=value)).date().isoformat()
+            except (ValueError, TypeError):
+                pass
+    return None
+
+
 # ------------------------------------------------------------------ collect
 def dataset_links(h):
     out = {}
@@ -631,9 +662,11 @@ def collect_uit(root):
         try:
             req = urllib.request.Request(u, headers={'User-Agent': M.__dict__.get('BROWSER', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36')})
             with urllib.request.urlopen(req, timeout=60) as r:
-                rows = parse_uit_holdings(r.read())
+                body = r.read()
+                rows = parse_uit_holdings(body)
+                as_of = uit_asof_date(body)
             if rows:
-                out[t] = {'at': now(), 'rows': rows}
+                out[t] = {'at': now(), 'as_of': as_of, 'rows': rows}
         except Exception as exc:
             print(f'  uit {t}: {exc}', flush=True)
     if out:
@@ -927,7 +960,7 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
             e['act'] = 'uit'
         if sym in uit and not h:
             rows = uit[sym]['rows']
-            h = {'date': uit[sym]['at'][:10], 'n': len(rows), 'source': 'sponsor holdings file', 'top': [[r[0], '', r[2], None, r[1], None, r[3], 'EC', 'CORP', 'US', 'Long'] for r in rows[:150]],
+            h = {'date': (uit[sym].get('as_of') or uit[sym]['at'][:10]), 'date_basis': ('reported' if uit[sym].get('as_of') else 'observed'), 'n': len(rows), 'source': 'sponsor holdings file', 'sector_map': {r[1]: r[4] for r in rows if r[4]}, 'top': [[r[0], '', r[2], None, r[1], None, r[3], 'EC', 'CORP', 'US', 'Long'] for r in rows[:150]],
                  'weights': [[r[1], r[3], None] for r in rows], 'top10': sum(r[3] for r in sorted(rows, key=lambda x: -x[3])[:10]), 'mix': {'EC': sum(r[3] for r in rows)}}
         if h and not h.get('_mapped'):        # tickers for every position the Hub can name (iShares reports CUSIPs only)
             h = dict(h)
@@ -1046,6 +1079,15 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                                    'tag_groups': TG.GROUPS, 'tag_names': {t: list(TG.TAGS.get(t, (t, 'Structure'))) for t in used}}))
     lt_ = {k: merge_parties(raw_parties.get(k, []), k) for k in parties}
     wj(pub / 'parties.json', _clean({'generated_at': now(), 'fields': ['name', 'etfs', 'aum', 'x', 'y', 'crd'], 'tables': lt_}))
+    # A separate, source-dated history for Actual ETF / Index Tracking Weights videos.
+    # Does NOT modify the existing market-cap sector chart or index membership data.
+    actual_status = {}
+    try:
+        import actual_weights
+        actual_status = actual_weights.capture(root, pub, index_rows)
+    except Exception as exc:
+        actual_status = {'error': str(exc)[:200]}
+        print('actual weights skipped:', type(exc).__name__, exc, flush=True)
     st = read_json(root / 'state.json', {}) or {}
     try:                                                  # which indices each company belongs to, now and before
         import index_members
@@ -1054,7 +1096,7 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
         members = {'error': str(exc)[:200]}
         print('index members skipped:', type(exc).__name__, exc, flush=True)
     status = {'built_at': now(), 'members': members, 'etfs': len(index_rows), 'with_series': sum(1 for e in etfs if e.get('series')), 'ncen': len(ncen), 'prospectus': len(rr),
-              'nport_funds': len(hist), 'holdings': len(holds), 'holdings_source': hd.get('source'), 'companies_held': len(by), 'market': st.get('market_summary'),
+              'nport_funds': len(hist), 'holdings': len(holds), 'holdings_source': hd.get('source'), 'companies_held': len(by), 'actual_weights': actual_status, 'market': st.get('market_summary'),
               'datasets': {k: v for k, v in (st.get('datasets') or {}).items()}, 'periods13f': periods13}
     write_json(pub / 'status.json', status)
     if verbose:
