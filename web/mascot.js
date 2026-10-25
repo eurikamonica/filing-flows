@@ -29,6 +29,7 @@
   const pc = (v, d = 0) => (fin(v) ? num(100 * v, d) + '%' : '—');
   const spc = (v, d = 1) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
   const academy = () => root.FFFloAcademy || (typeof module !== 'undefined' ? require('./flo-academy.js') : null);
+  const workbooks = () => root.FFFloWorkbook || (typeof module !== 'undefined' ? require('./flo-workbook.js') : null);
   const memo = new Map();
   const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
   const fileT = (t) => String(t || '').toUpperCase().replace(/\./g, '-');
@@ -335,6 +336,8 @@
     q = String(q || '');
     const lg = lang(q), ix = ixArg || await index(), cls = classify(q);
     let co = findCompany(q, ix) || ctxCo || null;
+    const WB = workbooks();
+    if (WB && WB.match(q)) return { ...WB.launch(q, lg), company: co || null };
     const A = academy();
     if (A && A.match(q)) {
       const a = await A.handle(q, co, lg, c => json(DATA + 'c/' + c.cik + '.json'));
@@ -394,6 +397,32 @@
 .flo-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.flo-links a{font-size:12px;border:1px solid var(--line,#ccc);border-radius:9px;padding:2px 8px;text-decoration:none}
 .flo-modes{display:flex;gap:5px;flex-wrap:wrap;flex-basis:100%;padding:1px 0 4px}.flo-modes button{background:color-mix(in srgb,var(--accent,#17734a) 12%,var(--surface,#fff));border-color:var(--accent,#17734a);font-weight:600}
 .flo-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.flo-actions button{font:inherit;font-size:12px;border:1px solid var(--accent,#17734a);border-radius:8px;background:transparent;color:inherit;padding:4px 8px;cursor:pointer}
+.flo-panel.flo-wide{width:min(850px,calc(100vw - 120px))}.flo-wide .flo-msg.flo-bot{max-width:100%;width:100%}
+.flo-workbook{border:1px solid var(--line,#d7d7d7);border-radius:10px;padding:8px;background:var(--surface,#fff);color:var(--ink,#222)}
+.flo-wb-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:700}.flo-wb-head small{font-weight:400;color:var(--muted,#777)}
+.flo-wb-controls,.flo-wb-toolbar{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}.flo-wb-controls label{font-size:11px;display:flex;align-items:center;gap:5px}.flo-wb-controls select{max-width:240px;min-width:100px;font:inherit;padding:5px;border:1px solid var(--line,#ccc);border-radius:6px;background:var(--surface,#fff);color:inherit}
+.flo-wb-toolbar button{font:inherit;font-size:11px;padding:5px 7px;border:1px solid var(--line,#ccc);border-radius:6px;background:var(--surface,#fff);color:inherit;cursor:pointer}
+.flo-wb-toolbar button:hover{border-color:var(--accent,#17734a)}
+.flo-wb-formula{display:flex;align-items:stretch;gap:5px;margin-bottom:6px}
+.flo-wb-formula span{font-family:monospace;background:var(--surface-2,#eee);padding:6px 10px;border:1px solid var(--line,#ccc);min-width:52px;text-align:center}
+.flo-wb-formula input{font-family:monospace;min-width:0;flex:1;border:1px solid var(--line,#ccc);padding:6px;background:var(--surface,#fff);color:inherit;border-radius:6px}
+.flo-wb-formula button{border:0;border-radius:6px;color:#fff;background:var(--accent,#17734a);cursor:pointer}
+.flo-wb-scroll{overflow-x:auto;max-width:100%;border:1px solid var(--line,#ccc);border-radius:6px;max-height:360px;overflow-y:auto}
+.flo-wb-table{border-collapse:separate;border-spacing:0;font:11px 'IBM Plex Mono',monospace;min-width:570px;width:100%;table-layout:fixed}
+.flo-wb-table th,.flo-wb-table td{border-right:1px solid var(--line,#dedede);border-bottom:1px solid var(--line,#dedede);padding:0;overflow:hidden;white-space:nowrap}
+.flo-wb-table thead th,.flo-wb-table tr:first-child th{background:var(--surface-2,#eee)}
+.flo-wb-table th.flo-wb-line{position:sticky;left:0;background:var(--surface-2,#eee);width:28px;text-align:center;z-index:2}
+.flo-wb-table th.flo-wb-label{position:sticky;left:28px;background:var(--surface,#fff);min-width:190px;width:190px;padding:6px 7px;text-align:left;z-index:1}
+.flo-wb-table tr:first-child th:first-child{width:28px}
+.flo-wb-table td{min-width:85px;text-align:right}
+.flo-wb-table td button{display:block;border:0;background:none;color:inherit;padding:6px 8px;font:inherit;width:100%;text-align:right;cursor:cell;min-height:26px}
+.flo-wb-table .flo-wb-input{background:color-mix(in srgb,#397ad7 13%,var(--surface,#fff));color:var(--ink,#222)}
+.flo-wb-table .flo-wb-formula{background:color-mix(in srgb,#9871cb 12%,var(--surface,#fff));color:var(--ink,#222)}
+.flo-wb-table td.selected{outline:2px solid var(--accent,#17734a);outline-offset:-2px;position:relative}
+.flo-wb-table .flo-wb-empty{background:var(--surface,#fff)}
+.flo-wb-table th.flo-wb-heading{background:var(--surface-2,#eee);color:var(--ink,#222);padding:6px}
+.flo-wb-help,.flo-wb-feedback{font-size:11px;color:var(--muted,#777);margin:5px 0}
+@media (max-width:560px){.flo-panel.flo-wide{width:100%;max-width:100%}.flo-wb-scroll{max-height:44vh}.flo-wb-table th.flo-wb-label{width:155px;min-width:155px}}
 .flo-mini-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0}.flo-mini-form label{display:flex;flex-direction:column;font-size:11px}.flo-mini-form input{min-width:0;width:100%;border-radius:6px;border:1px solid var(--line,#ccc);color:inherit;background:var(--surface,#fff);font:inherit;padding:5px}.flo-mini-form button{border:0;border-radius:8px;background:var(--accent,#17734a);color:#fff;cursor:pointer;padding:6px;font:inherit;grid-column:1/-1}
 .flo-example{border-left:3px solid var(--accent,#17734a);padding:7px 9px;margin:7px 0;background:var(--surface,#fff);border-radius:0 8px 8px 0}.flo-source{font-size:11px;color:var(--muted,#777)}.flo-list{padding-left:18px;margin:7px 0}.flo-list li{margin-bottom:4px}.flo-ac-head{display:flex;align-items:center;justify-content:space-between;gap:7px}.flo-ac-head small{color:var(--muted,#777)}
 
@@ -455,10 +484,12 @@
     mood('talk');
     const lg = lang(q), LM = root.LocalFilingModel;
     const local = LM && LM.isConnected && LM.isConnected() && LM.ask && (a.facts || []).length;
+    ui.panel.classList.toggle('flo-wide', !!a.workbook);
     wait.innerHTML = a.html + ((a.links || []).length ? `<div class="flo-links">${a.links.map(([h, t]) => link(h, t)).join('')}</div>` : '') +
       ((a.actions || []).length ? `<div class="flo-actions">${a.actions.map(x => `<button type="button" class="flo-action" data-flo-q="${esc(x.question)}">${esc(x.label)}</button>`).join('')}</div>` : '') +
       (local ? `<button type="button" class="flo-local">${lg === 'zh' ? '用本地模型解释' : 'Explain with the local model'}</button>` : '');
     ui.log.scrollTop = ui.log.scrollHeight;
+    if (a.workbook && workbooks()) workbooks().mountAll(wait,lg);
     wait.querySelectorAll('.flo-action').forEach(b => b.addEventListener('click', () => send(b.dataset.floQ)));
     wait.querySelectorAll('form[data-flo-calc]').forEach(form => form.addEventListener('submit', (ev) => {
       ev.preventDefault();
@@ -502,6 +533,7 @@
     const T = (ui.co && ui.co.ticker) || 'NVDA';
     const zh = zhUI();
     const modes = [
+      [zh ? 'Excel 模拟练习' : 'Spreadsheet Lab', 'open Excel modeling lab'],
       [zh ? '学 DCF' : 'Learn DCF', 'teach ' + T + ' DCF step by step'],
       [zh ? 'Cookie Jar 侦探' : 'Cookie Jar', T + ' cookie jar'],
       [zh ? 'SEC 案例' : 'SEC cases', 'Sunbeam case study'],
