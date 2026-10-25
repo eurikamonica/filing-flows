@@ -52,7 +52,9 @@ class AlertBuildTests(unittest.TestCase):
             "generated_at": "2026-10-26T15:35:00Z", "asof": "2026-10-26",
             "fields": ["ticker", "name", "close", "chg1d"],
             "rows": [["IREN", "Iren", 40.0, 0.105], ["OKLO", "Oklo", 30.0, -0.071],
-                     ["CRWV", "CoreWeave", 90.0, 0.014]]})
+                     ["CRWV", "CoreWeave", 90.0, 0.014],
+                     ["SPY", "SPDR S&P 500 ETF", 684.0, 0.0082],
+                     ["QQQ", "Nasdaq-100 ETF", 619.0, -0.005]]})
 
     def test_schema_and_exact_source(self):
         self.sample()
@@ -73,15 +75,23 @@ class AlertBuildTests(unittest.TestCase):
         self.assertEqual(price["change_pct"], 10.5)
         self.assertEqual(price["priority"], "medium")
         self.assertIn("NOT live", price["scope"])
+        # Market-relative comparisons must come from the SAME published close date.
+        self.assertEqual(d["benchmarks"]["SPY"]["asof"], "2026-10-26")
+        self.assertAlmostEqual(d["benchmarks"]["SPY"]["change_pct"], 0.82)
+        self.assertAlmostEqual(d["benchmarks"]["QQQ"]["change_pct"], -0.5)
+        self.assertNotIn("IWM", d["benchmarks"])
+        self.assertEqual(counts["price"], 2)  # SPY/QQQ are context, not alerts.
 
     def test_stale_and_unknown_are_not_live(self):
         self.sample()
         d = F.build(self.path, self.NOW + timedelta(days=15))
         self.assertEqual(d["events"], [])
+        self.assertEqual(d["benchmarks"], {})
         self.assertEqual(F.iso if hasattr(F, "iso") else F.stamp("invalid"), "")
 
     def test_missing_source_returns_no_fake_data(self):
         self.assertEqual(F.build(self.path, self.NOW)["events"], [])
+        self.assertEqual(F.build(self.path, self.NOW)["benchmarks"], {})
 
     def test_price_needs_verified_field_name(self):
         self.put("extremes.json", {"asof": "2026-10-26", "fields": ["ticker", "close"],
