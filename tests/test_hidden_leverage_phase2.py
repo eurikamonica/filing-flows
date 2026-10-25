@@ -66,6 +66,23 @@ class HiddenPhase2Tests(unittest.TestCase):
         self.assertEqual(self.parse(html), [])
         self.assertEqual(self.parse("<p>Uncommenced leases</p><table><tr><td>2027</td><td>100</td></tr><tr><td>2028</td><td>200</td></tr></table>"), [])
 
+    def test_sec_split_currency_cells_and_fiscal_years(self):
+        html = """<p>Power purchase agreements with minimum payments
+          (USD in millions)</p><table>
+          <tr><td>Fiscal 2027</td><td></td><td>$</td><td>1,841</td><td></td></tr>
+          <tr><td>Fiscal 2028</td><td></td><td></td><td>1,034</td></tr>
+          <tr><td>Fiscal 2029</td><td></td><td></td><td>1,053</td></tr></table>"""
+        rows = self.parse(html)
+        self.assertEqual(rows[0]["key"], "ppa")
+        self.assertEqual(rows[0]["payments"][0]["amount_usd"], 1_841e6)
+
+    def test_do_not_sum_operating_and_finance_columns(self):
+        html = """<p>Additional uncommenced leases with USD payment schedules
+          (in millions)</p><table><tr><th>Year</th><th>Operating</th><th>Finance</th></tr>
+          <tr><td>2027</td><td>$ 200</td><td>$ 100</td></tr>
+          <tr><td>2028</td><td>180</td><td>90</td></tr></table>"""
+        self.assertEqual(self.parse(html), [])
+
     def test_reported_uncommenced_total_without_payment_schedule(self):
         microsoft = """<p>As of June 30, 2026, we had additional leases,
           primarily for datacenters, that had not yet commenced of
