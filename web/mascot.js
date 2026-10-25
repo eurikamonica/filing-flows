@@ -485,6 +485,7 @@
     const lg = lang(q), LM = root.LocalFilingModel;
     const local = LM && LM.isConnected && LM.isConnected() && LM.ask && (a.facts || []).length;
     ui.panel.classList.toggle('flo-wide', !!a.workbook);
+    layout(); // mascot positions follow the resized worksheet panel
     wait.innerHTML = a.html + ((a.links || []).length ? `<div class="flo-links">${a.links.map(([h, t]) => link(h, t)).join('')}</div>` : '') +
       ((a.actions || []).length ? `<div class="flo-actions">${a.actions.map(x => `<button type="button" class="flo-action" data-flo-q="${esc(x.question)}">${esc(x.label)}</button>`).join('')}</div>` : '') +
       (local ? `<button type="button" class="flo-local">${lg === 'zh' ? '用本地模型解释' : 'Explain with the local model'}</button>` : '');
