@@ -7,6 +7,7 @@ on:
       - "disclosures/app/revenue_quality.py"
       - "disclosures/app/debt.py"
       - "disclosures/docs/hidden-leverage.js"
+      - "disclosures/docs/quality-view.js"
       - "disclosures/docs/hidden-leverage.css"
       - "disclosures/docs/index.html"
       - "disclosures/docs/debt-view.js"
@@ -29,6 +30,7 @@ jobs:
             disclosures/docs/index.html
             disclosures/docs/debt-view.js
             disclosures/docs/hidden-leverage.js
+            disclosures/docs/quality-view.js
             tests/test_hidden_leverage.py
             tests/test_hidden_leverage_phase2.py
           sparse-checkout-cone-mode: false
@@ -46,4 +48,5 @@ jobs:
       - name: Validate Disclosure Hub scripts
         run: |
           node --check disclosures/docs/hidden-leverage.js
+          node --check disclosures/docs/quality-view.js
           node --check disclosures/docs/debt-view.js
