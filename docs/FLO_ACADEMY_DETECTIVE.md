@@ -124,3 +124,47 @@ On a current company page, the Flo lab shows Use latest fully processed 10-K fro
 Files: web/flo-real-data.js, web/flo-real-workbook.js, web/mascot.js, web/index.html; tests/test_flo_real.cjs. Both standalone Academy checks and main offline checks execute the new tests.
 
 Rollout: PR merge conflict must be resolved, CI rerun, and deployed Pages verified before labeling the feature live. Historical 10-K amounts remain frozen evidence unless the reader explicitly loads a newer processed SEC annual report.
+## Phase 3 — Guided Financial Modeling Coach and Historical SEC Forensic Simulations
+
+This phase adds `web/flo-coach.js` and `tests/test_flo_coach.cjs` to the ORIGINAL Spin Sankey Flo. It does NOT turn the mascot into a general artificial-intelligence agent and does not require a paid LLM or Microsoft Excel API.
+
+### Learning flow (implemented inside both worksheet engines)
+
+1. **Read the lesson objective and accounting rationale** (Chinese / English): the row, cell reference, formula concept, unit, sign and difference between reported and assumed values.
+2. **Locate the cell** with Go to cell; build a working spreadsheet formula using the already supported safe cell interpreter (A1 and simple functions).
+3. **Check & next** checks the learner formula against the teacher's reference calculation before advancing. An incorrect/blank formula leaves the learner on the same milestone. Previous and stepwise Hint remain available.
+4. **Track learning milestones** with a live per-session progress bar; the model also shows overall formula grading and model-side numerical output.
+5. **Answer a conceptual checkpoint** about the common accounting error (such as OCF versus FCFF, WACC versus Ke, or reserve releases versus fraud). Multiple choice gives immediate feedback with an explanation.
+6. **Practice journal entries** in the dedicated accounting treatment simulator; inputs are hypothetical and deliberately segregated from primary SEC historical figures.
+
+Guided tracks cover six original finance modeling templates (DCF, integrated 3 statements, comparable EV/EBITDA, DDM, DuPont ROE, reserve rollforward); three real historical issuer workbooks (NVDA, AAPL, MSFT); and five historical SEC enforcement workbooks (Sunbeam, Dell, WorldCom, Xerox, Waste Management). Thus 14 distinct course/case context keys are present. Each track is a multi-step explanation of selected key formulas, rather than a full teacher-written explanation of every individual spreadsheet formula.
+
+### New SEC primary-source cases
+
+| SEC case | Verified evidence | Exercises and caveats | Source |
+| --- | --- | --- | --- |
+| WorldCom | SEC complaint alleges pretax income was overstated approximately **$3,055M for FY2001** and **$797M for Q1 2002** | `=B3+B4` totals **$3,852M across two separate periods**, NOT an FY-only figure. Walk through improper capitalization of network line costs. | https://www.sec.gov/enforcement-litigation/litigation-releases/lr-17588 |
+| Xerox | SEC alleged equipment revenue accelerated **by over $3,000M** and pretax earnings increased approximately **$1,500M**, 1997–2000 | SEC revenue is a **strict lower bound**, never a precise $3B. Training teaches timing of revenue vs cash, and forbids false precision in margin ratios. | https://www.sec.gov/enforcement-litigation/litigation-releases/lr-17465 |
+| Waste Management | SEC described approximately **$1,700M** cumulative misstatement of pretax earnings for 1992–Q3 1997 | The reported amount belongs to the **entire multi-year period**. Depreciation/useful-life practice uses explicitly hypothetical PP&E cost and useful-life assumptions, NOT an invented historic depreciation schedule. | https://www.sec.gov/newsroom/press-releases/2002-44-waste-management-founder-five-other-former-top-officers-sued-massive-fraud |
+
+Original Sunbeam ($35M reserves, 1997 original/restated income) and Dell (Intel payments as 10%/38%/76% of operating profit) labs are retained. All cases are historical SEC allegations/findings; case-exercise dollars are not always complete measures of the misconduct.
+
+### Accounting mechanism simulator (entirely hypothetical)
+
+Five simulation scenarios accept user-provided amounts and relevant useful lives, and return numerically calculated comparisons, journal entry examples, and scope caveats:
+
+- **WorldCom / expense capitalization:** demonstrate capitalization of a **hypothetical** operating cost, current pretax/asset inflation, and simplified future depreciation. Immediate cash difference = zero, absent changing a real payment or its cash-flow classification.
+- **Xerox / premature revenue:** show modeled income and receivable inflation, with no immediate cash received. Example does not infer actual Xerox fraud amounts from input.
+- **Waste Management / depreciation useful life:** compare straight-line annual depreciation at original vs extended life, holding initial cash expenditure unchanged. Does not infer actual historical policy choices.
+- **Sunbeam / reserve release:** show liability reduction and income increase for a valid estimate reversal, without treating release by itself as fraud.
+- **Dell / supplier incentive dependency:** illustrative $100 operating-profit base with editable incentive share; NOT SEC-sourced incentive dollars.
+
+### Safety, functionality and rollout
+
+SEC historic observations are **read-only** and link to official primary-source URLs. Scenario assumptions are clearly separated. The calculator rejects invalid amounts, negative amounts, extreme inputs and useful lives outside 1–40 years. Every displayed case narrative and result is HTML escaped. The simulator does not claim to reconstruct a SEC-case historical journal, company tax effect, actual CFI/CFO reclassification or fraud verdict.
+
+`tests/test_flo_coach.cjs` checks 14 lesson tracks, gate-on-correct-formula progression, Chinese hints, conceptual quiz feedback, three new SEC amount reconciliations and all five hypothetical scenario engines. The standalone Flo Academy workflow and the full site's offline CI run it together with the previous mascot/Academy/spreadsheet/SEC workbook tests.
+
+UI loaded in `web/index.html`: `flo-coach.js` before `flo-real-workbook.js` and `mascot.js`. Chat shortcut **Forensic Case Lab** opens the WorldCom exercise directly; **Real SEC Lab** still supports source-labeled historical issuer cases. The text chat's **SEC Case Studies** topic also now includes WorldCom, Xerox, and Waste Management.
+
+Draft PR #72 must still be merged, the current commit CI verified, and GitHub Pages deployment smoke-tested before claiming any of this is on the live website.
