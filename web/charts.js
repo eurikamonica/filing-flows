@@ -132,7 +132,7 @@
     if (!here()) return;
     const cos = ((ix && ix.companies) || []).slice().sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
     const data = new Map();
-    app.innerHTML = `<div class="page-head"><div class="eyebrow">Custom charts</div><h1>Chart any line, any company</h1>
+    app.innerHTML = `<div class="page-head"><div class="eyebrow">Charts · <a href="#studio">Videos →</a></div><h1>Chart any line, any company</h1>
       <p class="muted" style="max-width:72ch">Every line of the companies' earnings Sankeys, quarter by quarter, side by side. The address keeps your choice, so the chart can be shared.</p></div>
       <div class="fx-cc"><div class="fx-cc-side">
         <h3>Companies</h3><div id="fx-cos"></div>

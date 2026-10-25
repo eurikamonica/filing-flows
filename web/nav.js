@@ -9,6 +9,7 @@
     { id: 'companies', label: 'Companies', items: [
       ['home', '#home', 'Latest filings', 'Every new 10-Q, 10-K and earnings release, drawn'],
       ['chart', '#chart', 'Charts', 'Any company’s figures over time, side by side'],
+      ['studio', '#studio', 'Videos', 'Animated charts to post: growth races, rankings, RRG, earnings'],
       ['az', 'c/', 'All companies A–Z', 'Every company with an earnings Sankey'],
     ] },
     { id: 'industries', label: 'Industries & themes', items: [
@@ -19,7 +20,6 @@
     ] },
     { id: 'signals', label: 'Market signals', items: [
       ['feed', '#feed', 'Feed', 'What changed today, across the site'],
-      ['studio', '#studio', 'Video studio', 'Growth races, RRG, momentum and earnings videos to post'],
       ['etfs', 'disclosures/#etf', 'ETF scanner', 'Every US-listed ETF: prices, distributions, prospectus, holdings'],
       ['disclosures', 'disclosures/', 'Disclosures', '13F flows, insiders, officials, short interest…'],
       ['cross', 'disclosures/#cross', 'Cross-holdings', 'Who holds whom: US government, the President, Congress, Nvidia, Alphabet…'],

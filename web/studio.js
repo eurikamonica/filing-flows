@@ -499,6 +499,15 @@
     else if (style === 'bars') barRace(ctx, V, f, box, S, th, F, pal);
     else if (style === 'tiles') tiles(ctx, V, f, box, S, th, F, pal, t, tm);
     else if (style === 'columns') columns(ctx, V, f, box, S, th, F, pal);
+    else if (V.split && style === 'line') {                   // distributions get their own line, on their own scale below
+      const gap = 70 * S, h1 = (box.h - gap) * 0.64, h2 = box.h - gap - h1;
+      lineRace(ctx, V, f, { x: box.x, y: box.y, w: box.w, h: h1 }, S, th, F, pal, false, true);
+      const D = Object.assign({}, V, { series: V.series.map((s) => ({ key: s.key + ' dist', label: s.label + ' distributions', name: s.name, v: s.cash })), base: null, split: false, zero: true, divPanel: true });
+      ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.font = F(600, 22); ctx.fillStyle = th.muted;
+      ctx.fillText('Distributions received — cumulative cash, not reinvested', box.x, box.y + h1 + gap - 12 * S);
+      ctx.textAlign = 'right'; ctx.fillText('solid: price + distributions · dashed: price only', box.x + box.w, box.y + h1 + gap - 12 * S);
+      lineRace(ctx, D, f, { x: box.x, y: box.y + h1 + gap, w: box.w, h: h2 }, S, th, F, pal, false, false);
+    }
     else if (V.panels && (style === 'line' || style === 'area')) {
       const n = V.series.length, gap = 54 * S, ph = (box.h - gap * (n - 1)) / n;
       V.series.forEach((s, i) => { const sub = Object.assign({}, V, { series: [s], zero: s.v.some((x) => x < 0) && s.v.some((x) => x > 0) }); lineRace(ctx, sub, f, { x: box.x, y: box.y + i * (ph + gap), w: box.w, h: ph }, S, th, F, (j) => pal(i + j), style === 'area', i < n - 1); });
@@ -613,7 +622,7 @@
     ctx.restore();
     // heads: a dot with a halo; labels to the right, pushed apart so they never overlap
     heads.forEach((h) => { ctx.fillStyle = alpha(h.col, 0.25); ctx.beginPath(); ctx.arc(h.x, h.y, 16 * S, 0, 7); ctx.fill(); ctx.fillStyle = h.col; ctx.beginPath(); ctx.arc(h.x, h.y, 8 * S, 0, 7); ctx.fill(); });
-    const lh = (V.split ? 76 : 54) * S, sorted = heads.slice().sort((a, c) => a.y - c.y);
+    const lh = (V.split && area ? 76 : 50) * S, sorted = heads.slice().sort((a, c) => a.y - c.y);
     sorted.forEach((h, i) => { h.ly = Math.max(h.y, i ? sorted[i - 1].ly + lh : b.y + lh / 2); });
     for (let i = sorted.length - 1; i >= 0; i--) { const lim = i === sorted.length - 1 ? b.y + b.h - lh / 2 : sorted[i + 1].ly - lh; if (sorted[i].ly > lim) sorted[i].ly = lim; }
     sorted.forEach((h) => {
@@ -622,7 +631,7 @@
       const w = ctx.measureText(txt).width + 24 * S, x = Math.min(h.x + 22 * S, ctx.canvas.width - 24 * S - w);
       ctx.fillStyle = alpha(h.col, 0.92); roundRect(ctx, x, h.ly - 20 * S, w, 40 * S, 12 * S); ctx.fill();
       ctx.fillStyle = luminance(h.col) > 0.55 ? '#0b1220' : '#ffffff'; ctx.fillText(txt, x + 12 * S, h.ly + 1 * S);
-      if (V.split && h.s.cash) { const c = valAt(h.s.cash, f); ctx.font = F(500, 19); ctx.fillStyle = th.muted; ctx.fillText(`${money(c)} from distributions`, x + 4 * S, h.ly + 32 * S); }
+      if (V.split && area && h.s.cash) { const c = valAt(h.s.cash, f); ctx.font = F(500, 19); ctx.fillStyle = th.muted; ctx.fillText(`${money(c)} from distributions`, x + 4 * S, h.ly + 32 * S); }
     });
   }
   function luminance(hex) { if (!/^#/.test(hex)) return 0.5; const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) / 255; }
@@ -634,7 +643,7 @@
     const vals = V.series.map((s) => valAt(s.v, f)), finite = vals.filter(fin);
     const pos = Math.max(0, ...finite), negm = Math.max(0, ...finite.map((v) => -v)), neg = negm > 0;
     // with values below zero the axis moves right in proportion, and each ticker sits on the far side of its bar's start
-    const lab = neg ? 0 : 150 * S, room = b.w - lab - (neg ? 300 : 140) * S;
+    const lab = neg ? 0 : 150 * S, room = b.w - lab - (neg ? 300 : V.split ? 270 : 140) * S;
     const share = neg ? clamp(negm / ((negm + pos) || 1), pos > 0 ? 0.18 : 0.8, pos > 0 ? 0.82 : 0.8) : 0;
     const x0 = b.x + lab + (neg ? 150 * S + room * share : 0), unit = room / Math.max(1e-9, neg ? (pos > 0 ? Math.max(negm / share, pos / (1 - share)) : negm / share) : pos), wMax = null;
     if (neg) { ctx.strokeStyle = th.axis; ctx.lineWidth = 2 * S; ctx.beginPath(); ctx.moveTo(x0, b.y); ctx.lineTo(x0, b.y + b.h); ctx.stroke(); }
@@ -645,11 +654,20 @@
       const gr = ctx.createLinearGradient(x, 0, x + w, 0); gr.addColorStop(0, alpha(col, 0.75)); gr.addColorStop(1, col);
       ctx.fillStyle = gr; if (th.glow) { ctx.shadowColor = col; ctx.shadowBlur = th.glow * 0.8 * S; }
       roundRect(ctx, x, y, Math.max(w, 6 * S), bh, Math.min(14 * S, bh / 3)); ctx.fill(); ctx.shadowBlur = 0;
+      const cash = V.split && s.cash ? valAt(s.cash, f) : null;
+      if (fin(cash) && cash > 0 && v > 0) {                   // the distributions: their own segment at the end of the bar
+        const cw = Math.min(w, cash * unit);
+        ctx.save(); roundRect(ctx, x, y, Math.max(w, 6 * S), bh, Math.min(14 * S, bh / 3)); ctx.clip();
+        ctx.fillStyle = 'rgba(255,255,255,0.34)'; ctx.fillRect(x + w - cw, y, cw, bh);
+        ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2 * S; ctx.setLineDash([6 * S, 5 * S]); ctx.beginPath(); ctx.moveTo(x + w - cw, y); ctx.lineTo(x + w - cw, y + bh); ctx.stroke(); ctx.setLineDash([]);
+        ctx.restore();
+      }
       ctx.textBaseline = 'middle'; ctx.font = F(700, 30); ctx.fillStyle = th.text;
       if (neg) { ctx.textAlign = v >= 0 ? 'right' : 'left'; ctx.fillText(s.label, v >= 0 ? x0 - 14 * S : x0 + 14 * S, y + bh / 2); }
       else { ctx.textAlign = 'right'; ctx.fillText(s.label, b.x + lab - 18 * S, y + bh / 2); }
       ctx.textAlign = v >= 0 ? 'left' : 'right'; ctx.font = F(700, 28); ctx.fillStyle = th.text;
-      ctx.fillText(V.fmt(v), v >= 0 ? x + w + 14 * S : x - 14 * S, y + bh / 2);
+      ctx.fillText(V.fmt(v), v >= 0 ? x + w + 14 * S : x - 14 * S, y + bh / 2 - (fin(cash) && cash > 0 ? 12 * S : 0));
+      if (fin(cash) && cash > 0) { ctx.font = F(500, 20); ctx.fillStyle = th.muted; ctx.fillText(`incl. ${money(cash)} distributions`, x + w + 14 * S, y + bh / 2 + 18 * S); }
       if (s.name && s.name !== s.label && bh > 54 * S && w > 260 * S) { ctx.textAlign = 'left'; ctx.font = F(500, 20); ctx.fillStyle = luminance(col) > 0.55 ? 'rgba(10,18,32,0.75)' : 'rgba(255,255,255,0.85)'; ctx.fillText(String(s.name).slice(0, 34), x + 14 * S, y + bh / 2); }
     });
   }
@@ -666,6 +684,7 @@
       ctx.font = F(700, Math.min(84, ch / S * 0.26)); ctx.fillStyle = th.text; ctx.fillText(V.fmt(v), x + 28 * S, y + ch * 0.55);
       const v0 = s.v.find(fin);
       if (fin(v) && fin(v0) && v0 !== 0 && V.unit !== '%') { ctx.font = F(700, 30); ctx.fillStyle = v >= v0 ? '#3ee39a' : '#ff6b6b'; ctx.fillText(pctf(v / v0 - 1), x + 28 * S, y + ch * 0.55 + 46 * S); }
+      if (V.split && s.cash) { const c = valAt(s.cash, f); ctx.font = F(600, 22); ctx.fillStyle = th.muted; ctx.fillText(`incl. ${money(c)} distributions`, x + 220 * S, y + ch * 0.55 + 46 * S); }
       // a sparkline, drawn up to this frame
       const sx = x + 28 * S, sw = cw - 56 * S, sy = y + ch * 0.68, sh = ch * 0.24, vs = s.v.filter(fin);
       if (vs.length > 1) {
@@ -872,7 +891,7 @@
     const raw = (/^#\/?studio\/?(.*)$/.exec(location.hash || '') || [])[1];
     const st = parseState(raw != null ? raw : arg);
     const sel = (id, items, v) => `<select id="${id}">${items.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
-    app.innerHTML = `<div class="page-head"><div class="eyebrow">Video studio</div><h1>Make a market video</h1>
+    app.innerHTML = `<div class="page-head"><div class="eyebrow"><a href="#chart">← Charts</a> · Videos</div><h1>Make a market video</h1>
       <p class="muted" style="max-width:76ch">Growth races of any ETFs or stocks (with distributions reinvested, left out, or split out as cash), RRG and momentum replays, companies' own figures and any formula — animated, in four looks and three shapes, saved as an MP4 to post. Everything is drawn from the site's own data in your browser.</p></div>
       <div class="st-tpl" id="st-tpl">${TEMPLATES.map((x, i) => `<button type="button" data-tpl="${i}"><b>${esc(x.name)}</b><span>${esc(x.note)}</span></button>`).join('')}</div>
       <div class="st-wrap"><div class="st-side" id="st-side"></div><div class="st-main">
