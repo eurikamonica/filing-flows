@@ -58,8 +58,8 @@ yes(guide.every(x=>x.topic!=='<script>malicious</script>'),'unsafe tags dropped'
 const sec=I.render(filing,same,false);
 yes(sec.html.includes('Restatement')===false || sec.html.includes('Restatement'),
  'no English casing dependency');
-yes(sec.html.includes('restated net income')&&sec.html.includes('Net debt')===false,
- 'SEC research cards include situation-specific modeling guides');
+yes(sec.html.includes('restated net income')&&sec.html.includes('Interest coverage'),
+ 'SEC research cards include both restatement and debt-specific formula guidance');
 yes(sec.html.includes('&lt;img')&&!sec.html.includes('<img'),
  'malicious headline escaped, not executable');
 yes(sec.links.length===1&&sec.links[0][0].includes('sec.gov/Archives/'),
