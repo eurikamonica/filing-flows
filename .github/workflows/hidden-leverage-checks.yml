@@ -3,12 +3,15 @@ on:
   pull_request:
     paths:
       - "disclosures/app/hidden_leverage.py"
+      - "disclosures/app/hidden_leverage_tables.py"
+      - "disclosures/app/revenue_quality.py"
       - "disclosures/app/debt.py"
       - "disclosures/docs/hidden-leverage.js"
       - "disclosures/docs/hidden-leverage.css"
       - "disclosures/docs/index.html"
       - "disclosures/docs/debt-view.js"
       - "tests/test_hidden_leverage.py"
+      - "tests/test_hidden_leverage_phase2.py"
       - ".github/workflows/hidden-leverage-checks.yml"
   workflow_dispatch:
 
@@ -27,6 +30,7 @@ jobs:
             disclosures/docs/debt-view.js
             disclosures/docs/hidden-leverage.js
             tests/test_hidden_leverage.py
+            tests/test_hidden_leverage_phase2.py
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v5
         with:
@@ -36,8 +40,9 @@ jobs:
           node-version: "22"
       - name: Validate Python syntax and all data-classification tests
         run: |
-          python -m py_compile disclosures/app/hidden_leverage.py disclosures/app/debt.py
+          python -m py_compile disclosures/app/hidden_leverage.py disclosures/app/hidden_leverage_tables.py disclosures/app/revenue_quality.py disclosures/app/debt.py
           python -m unittest discover -s tests -p test_hidden_leverage.py -v
+          python -m unittest discover -s tests -p test_hidden_leverage_phase2.py -v
       - name: Validate Disclosure Hub scripts
         run: |
           node --check disclosures/docs/hidden-leverage.js
