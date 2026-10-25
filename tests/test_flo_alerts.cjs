@@ -58,6 +58,16 @@ eq(Alert.shown(managerUpdates,{watch:'TSLA',kinds:{'13f':true}}),false,
   'unrelated ticker does not produce 13F alert');
 eq(Alert.shown(managerUpdates,{watch:'NVDA',kinds:{'13f':false}}),false,
   'disabled type suppresses 13F notifications');
+const related=Alert.explain(k,false,[price,e('news:NVDA','news',{source_url:'https://www.prnewswire.com/news-releases/example.html'})]);
+ok(related.includes('Other observed same-ticker signals')&&related.includes('NOT causality')&&related.includes('Source'),
+ 'same-ticker independent signals explained without claiming causal attribution');
+ok(Alert.intent('最近扫描有什么新消息')&&Alert.intent('What changed since the last scan?'),
+ 'explicit current scanner queries routed to Flo Pulse');
+ok(!Alert.intent('NVDA valuation')&&!Alert.intent('AAPL latest SEC filings'),
+ 'ordinary finance filings remain on original handlers');
+const brief=Alert.report('最近扫描有什么新消息',true);
+ok(brief.html.includes('尚未取得')||brief.html.includes('已发布'),
+ 'standalone alert answer works without a validated feed');
 const em=Alert.explain(managerUpdates,false);
 ok(em.includes('Berkshire Hathaway')&&em.includes('2026-09-30')&&em.includes('NVDA')
  &&em.includes('NOT trades'),'13F explanation contains manager, period, updated ticker and filing lag caution');
