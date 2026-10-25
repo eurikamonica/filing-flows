@@ -89,7 +89,7 @@ const cases={
  }
 };
 const hasNum=v=>typeof v==='number'&&Number.isFinite(v);
-const linkOK=s=>/^https:\/\/(?:www\.)?sec\.gov\/(?:Archives\/|enforcement-litigation\/|newsroom\/)/.test(String(s||''));
+const linkOK=s=>/^https:\/\/(?:www\.)?sec\.gov\/(?:Archives\/|enforcement-litigation\/|newsroom\/|litigation\/complaints\/)/.test(String(s||''));
 function verifiedCopy(ticker){
  const d=snapshots[String(ticker||'').toUpperCase()];
  return d?JSON.parse(JSON.stringify(d)):null;
