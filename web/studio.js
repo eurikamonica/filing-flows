@@ -1997,7 +1997,9 @@
         const yy = y + headerH + i * rh;
         if (i) { ctx.strokeStyle = alpha(th.muted, .2); ctx.beginPath(); ctx.moveTo(x + pad, yy); ctx.lineTo(x + w - pad, yy); ctx.stroke(); }
         ctx.font = F(700, 23); ctx.fillStyle = pal(r.k); ctx.textAlign = 'left';
-        ctx.fillText(r.ticker, x + pad, yy + 25 * S, w - 2 * pad);
+        ctx.fillText(r.ticker, x + pad, yy + 25 * S, cw - 9 * S);
+        ctx.font = F(500, 16); ctx.fillStyle = th.muted;
+        ctx.fillText(r.investment, x + pad + cw, yy + 25 * S, 2 * cw - 12 * S);
         [r.initial, r.monthly, r.final].forEach((v, j) => {
           ctx.font = F(700, 26); ctx.fillStyle = th.text;
           ctx.fillText(v, x + pad + j * cw, yy + 69 * S, cw - 9 * S);
@@ -2078,32 +2080,42 @@
       V.final = [];
       V.snowballSummary = [];
       V.series.forEach((s, k) => {
-        const initialShares = s.sh.find(fin);
-        const finalShares = s.sh[L], monthAmounts = {};
+        const initialShares = s.initialShares == null ? s.sh.find(fin) : s.initialShares;
+        const finalShares = s.finalShares == null ? s.sh[L] : s.finalShares;
+        const annual = s.annualIncome == null ? snowIncome(s.paid) : s.annualIncome;
+        const monthly = annual / 12, monthAmounts = {};
         G.forEach((g, i) => {
           const month = new Date(g).toISOString().slice(0, 7);
           monthAmounts[month] = (monthAmounts[month] || 0) + (s.paid[i] || 0);
         });
-        const recentMonths = Object.keys(monthAmounts).sort().slice(-12);
-        const avgCashPerMonth = recentMonths.reduce((sum, mon) => sum + monthAmounts[mon], 0) / Math.max(1, recentMonths.length);
-        const shfmt = (v) => fin(v) ? Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—';
+        const shfmt = v => fin(v) ? Number(v).toLocaleString('en-US', {maximumFractionDigits:2}) : '—';
+        const reverse = Boolean(V.snowGoal);
+        const investment = (reverse ? (V.snowGoal.solveFor === 'lump' ? 'Required start ' : 'Required buy ') : 'Start ') +
+          money(V.snowGoal && V.snowGoal.solveFor === 'rec' ? s.perBuy : s.initialCash, 0) +
+          (reverse && V.snowGoal.solveFor === 'rec' ? ' each scheduled purchase' :
+            s.perBuy > 0 ? ' + ' + money(s.perBuy, 0) + ' per scheduled purchase' : '');
         V.snowballSummary.push({
-          k, ticker: s.label, initial: shfmt(initialShares), final: shfmt(finalShares),
-          monthly: money(avgCashPerMonth),
-          monthlyNote: 'Avg/' + recentMonths.length + ' observed mo · reinvested',
-          monthly_cashflow_usd: monthAmounts,
-          initial_shares: initialShares, final_shares: finalShares
+          k, ticker:s.label, initial:shfmt(initialShares), final:shfmt(finalShares),
+          monthly:money(monthly), annual:money(annual),
+          monthlyNote:'Trailing 52-week gross / 12',
+          investment, initialCash:s.initialCash, perBuy:s.perBuy,
+          monthly_cashflow_usd:monthAmounts, initial_shares:initialShares,
+          final_shares:finalShares, annualIncome:annual, monthlyIncome:monthly
         });
-        V.final.push({ k, label: s.label + ' final shares', value: shfmt(finalShares),
-          change: '+' + (100 * s.fromDiv / Math.max(1e-9, s.bought)).toFixed(0) + '% from DRIP', up: true });
+        V.final.push({k, label:s.label + ' final shares', value:shfmt(finalShares),
+          change:'+' + (100 * s.fromDiv / Math.max(1e-9,s.bought)).toFixed(0) + '% from DRIP', up:true});
       });
-      V.endTitle = 'The dividend snowball';
-      V.endSub = dayLabel(G[0]) + ' → ' + dayLabel(G[L]) + ' · paid dividends reinvested; cash flow = gross dividends, not cash withdrawn';
+      V.endTitle = V.snowGoal ? 'Dividend income target · backward solve' : 'The dividend snowball';
+      V.endSub = V.snowGoal ?
+        'Goal ' + money(V.snowGoal.requested) + (V.snowGoal.unit === 'annual' ? '/yr' : '/mo') +
+          ' · historical 52-week paid dividends · reinvested' :
+        dayLabel(G[0]) + ' → ' + dayLabel(G[L]) +
+          ' · monthly equivalent = gross trailing 52-week dividends / 12';
       V.caption = V.title + ': ' + V.snowballSummary.map(r =>
-        r.ticker + ': ' + r.initial + ' initial shares → ' + r.final + ' final shares; ' +
-        r.monthly + '/month average gross dividends (' + Object.keys(r.monthly_cashflow_usd).slice(-12).length + ' observed calendar months, reinvested)'
-      ).join(' · ');
-      V.notes.add('Monthly cash flow aggregates dividends assigned to the site’s weekly price grid. Average uses up to 12 observed calendar months; it is gross cash reinvested, NOT cash taken out or a guaranteed forward yield.');
+        r.ticker + ' · ' + r.investment + ' · ' + r.initial + ' initial shares → ' +
+        r.final + ' final shares · terminal dividends ' + r.monthly + '/month equivalent (' +
+        r.annual + '/year), gross and reinvested').join(' | ');
+      V.notes.add('Terminal monthly income is the gross realized dividend amount from the last 52 weekly observations divided by 12. Actual cash payments may be quarterly, seasonal or irregular; it is NOT cash withdrawn or a forward dividend forecast.');
       return;
     }
     if (V.kind === 'timing') {
