@@ -99,6 +99,27 @@ class FloPublishedFeedTests(unittest.TestCase):
         self.assertFalse(result["sources"]["price"])
         self.assertFalse(result["sources"]["news"])
 
+    def test_indexed_13f_catalog_fallback_does_not_invent_holdings(self):
+        catalog=self.root.parent/"catalogs"
+        catalog.mkdir(exist_ok=True)
+        # The live watchlist can still reflect an older filing when a new
+        # SEC 13F has been discovered but not parsed.
+        (catalog/"holdings.json").write_text(json.dumps([
+            {"kind":"holdings","cik":"1234500","name":"Example LP",
+             "latest_filing":"2026-10-26","filing_count":4,"processed":False},
+            {"kind":"holdings","cik":"999","name":"Stale LP",
+             "latest_filing":"2025-02-14","filing_count":4,"processed":True}
+        ]),encoding="utf-8")
+        built=alerts.build(self.root,NOW)
+        f13=[e for e in built["events"] if e["kind"]=="13f"]
+        self.assertEqual(len(f13),1)
+        self.assertEqual(f13[0]["filed"],"2026-10-26")
+        self.assertEqual(f13[0]["period_end"],"")
+        self.assertIn("not fully processed",f13[0]["detail"])
+        self.assertNotIn("Added:",f13[0]["detail"])
+        self.assertEqual(f13[0]["source_url"],
+                         "https://www.sec.gov/edgar/browse/?CIK=1234500&owner=exclude")
+
     def test_invalid_links_and_missing_symbols(self):
         self.assertFalse(alerts.SEC.match("https://sec.gov.evil.invalid/Archives/"))
         self.assertEqual(alerts.symbol("NVDA"),"NVDA")
