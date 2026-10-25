@@ -34,7 +34,7 @@ import numpy as np
 FRED = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id={id}&cosd=1990-01-01'
 FRED_API = ('https://api.stlouisfed.org/fred/series/observations?series_id={id}&api_key={key}&file_type=json'
             '&observation_start=1990-01-01')
-GRID0 = dt.date(2000, 1, 7)                      # the RRG grid (rotation_history.START)
+from rotation_history import START as GRID0      # noqa: E402 — the RRG grid's first Friday
 # id: (label, unit, frequency, publication lag in days after the period ends, group)
 SERIES = {
     'DGS10': ('10-year Treasury yield', '%', 'd', 1, 'Rates'),
@@ -404,7 +404,8 @@ def build(root, today=None, verbose=True):
 
 
 def weekly_matrix(root_or_doc, keys=None):
-    """(grid_index0, {key: np.array}) from macro.json, aligned to the RRG weekly grid (index 0 = 2000-01-07)."""
+    """(grid_index0, {key: np.array}) from macro.json, aligned to the RRG weekly grid (index 0 = rotation_history.START;
+    weekly.start gives the date of grid_index0, so a reader on another grid places it by date)."""
     doc = root_or_doc if isinstance(root_or_doc, dict) else json.loads(Path(root_or_doc).read_text(encoding='utf-8'))
     w = doc['weekly']
     return w['grid_index0'], {k: np.array([np.nan if v is None else v for v in a], float) for k, a in w['data'].items()

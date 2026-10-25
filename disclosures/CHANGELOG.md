@@ -1,5 +1,24 @@
 # Changelog
 
+## Weekly history from 1990; index membership, now and before
+
+The weekly grid (`rotation_history.START`) now begins on 1990-01-05: rrg.json, every t/<SYM>.json, the industry and
+sector indices, the studio's leaderboards (months from 1990) and the forecasts read the longer history as the collector
+refetches each ticker since 1990 (format 3). `macro_history` takes its grid from `START`, and the gravity model places
+macro.json by date. The ETF collector asks Yahoo for every week since 1990 (or the launch), so `etf/px/<SYM>.json`
+carries the whole history. Before an ETF existed, the indices themselves (IDX-GSPC, IDX-NDX, IDX-DJI, IDX-RUT,
+IDX-IXIC; price only) stand in.
+
+`app/index_members.py` (run by `etf.build`, file `etf/members.json`): the indices each company belongs to now — from
+the full holdings of the ETFs that track them (S&P 500: IVV / VOO / SPY; Nasdaq-100: QQQ; Dow: DIA; S&P 400: IJH /
+MDY; S&P 600: IJR; Russell 1000: IWB; Russell 2000: IWM; Russell 3000: IWV) and Wikipedia's S&P 500 list (CIK, date
+added) — and before: the S&P 500's dated changes since 1997 (kept in `config/sp500-history.json` from the page's
+mid-2024 revision, which still carried the table; later monthly revisions when Wikipedia answers), the Dow's
+historical components (one table per change, matched by name), the other indices from now on. A reused ticker is
+kept apart by name (CCI was Countrywide Credit in 1997, Crown Castle now). The site's company pages show the tags
+(“S&P 500 · since 1982”, “Former Dow 30 · 1999–2024”); the studio's leaderboards filter by index, by members at each
+step (S&P 500, Dow) or today's. Tests: `tests/test_index_members.py`.
+
 ## The four indices around their centre (QQQ, SPY, IWM, DIA)
 
 `app/index_rrg.py` (run by `chaos_forecast.build`, file `index-rrg.json`; its own frozen ledger `ledger/index.json`,

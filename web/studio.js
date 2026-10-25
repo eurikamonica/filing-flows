@@ -363,7 +363,7 @@
   const DEF = { k: 'growth', t: 'QQQ,SPY', from: '', to: '', amt: '10000', div: 'tr', style: 'line', theme: 'bull', ar: '16x9', q: '1080', fps: '30', dur: '20',
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
     rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto',
-    rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1' };
+    rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
     ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread']];
   const STYLES = { growth: [['line', 'Line race'], ['bars', 'Bar race'], ['area', 'Areas'], ['tiles', 'Counters']], rrg: [['rrg', 'RRG']], momentum: [['bars', 'Bar race'], ['line', 'Lines']],
@@ -398,19 +398,31 @@
   }
   const mIndex = (ms, m0) => { const d = new Date(ms); return (d.getUTCFullYear() - m0.y) * 12 + d.getUTCMonth() - m0.m; };
   const mEnd = (i, m0) => Date.UTC(m0.y, m0.m + i + 1, 0);
-  // the universe filter: a sector, a market-value range ($B) by the value at each step or today's
-  function universe(st, meta, F) {
+  // index membership (disclosures/app/index_members.py): now from the tracking ETFs' holdings, before from Wikipedia's
+  // S&P 500 changes and the Dow's history; the other indices only from when the site began keeping them
+  const IDX = { sp500: 'S&P 500', ndx: 'Nasdaq-100', dji: 'Dow 30', sp400: 'S&P MidCap 400', sp600: 'S&P SmallCap 600', r1000: 'Russell 1000', r2000: 'Russell 2000' };
+  const members = () => json(HUB + 'etf/members.json');
+  function isMember(MB, ticker, key, day, now) {
+    const r = MB && MB.rows && MB.rows[ticker]; if (!r) return false;
+    const iv = (r.was || {})[key];
+    if (now || !iv || !iv.length) return (r.now || []).includes(key);
+    return iv.some(([a, b]) => (!a || a <= day) && (!b || day < b));
+  }
+  // the universe filter: a sector, an index, a market-value range ($B) by the value at each step or today's
+  function universe(st, meta, F, MB) {
     const sec = st.sec && SECTORS[st.sec] ? st.sec : '', capF = String(st.cmin).trim() !== '' || String(st.cmax).trim() !== '';
     const lo = capF && String(st.cmin).trim() !== '' && fin(+st.cmin) ? +st.cmin * 1e3 : -Infinity, hi = capF && String(st.cmax).trim() !== '' && fin(+st.cmax) ? +st.cmax * 1e3 : Infinity;
     const byNow = st.capby === 'now' || !F['m-cap'];
+    const ix = st.idx && IDX[st.idx] && MB ? st.idx : '', ixNow = st.idxw === 'now';
     const ok = (ci, mi) => {
       if (sec && meta.cos[ci][2] !== sec) return false;
+      if (ix && !isMember(MB, meta.cos[ci][0], ix, iso(mEnd(mi, meta._m0)), ixNow)) return false;
       if (!capF) return true;
       const c = byNow ? meta.cap_now[ci] : at(F['m-cap'][ci], mi);
       return fin(c) && c >= lo && c <= hi;
     };
     const capTxt = !capF ? '' : `market value ${fin(lo) ? money(lo * 1e6) : '$0'}–${fin(hi) ? money(hi * 1e6) : 'any'}${byNow ? ' (today)' : ''}`;
-    return { ok, sec, capF, capTxt, scope: [sec ? SECTORS[sec] : '', capTxt].filter(Boolean).join(' · ') };
+    return { ok, sec, capF, capTxt, ix, scope: [ix ? IDX[ix] + ' members' + (ixNow ? ' (today)' : '') : '', sec ? SECTORS[sec] : '', capTxt].filter(Boolean).join(' · ') };
   }
   async function buildRank(st, out) {
     const meta = await rankMeta(), m0 = meta._m0, Q = meta._Q;
@@ -420,10 +432,13 @@
     const F = {};
     await Promise.all([...files].map(async (f) => { F[f] = await panel(f); }));
     for (const f of files) if (!Array.isArray(F[f])) throw new Error('A leaderboard file is missing (' + f + ')');
+    const MB = st.idx ? await members() : null;
+    if (st.idx && !MB) out.notes.add('Index membership is not published yet: every company is ranked');
+    if (MB && st.idx && st.idxw !== 'now' && !['sp500', 'dji'].includes(st.idx)) out.notes.add(`${IDX[st.idx]}: membership history only from ${((MB.history || {}).others || 'now').replace(/^from /, '')} — before that, today's members`);
     const N = clamp(Math.round(+st.top || 10), 3, 25), desc = st.ord !== 'asc', fundamental = need.some((f) => f.startsWith('q-'));
     const step = st.step === 'w' && !fundamental ? 'w' : st.step === 'q' ? 'q' : 'm';
     if (st.step === 'w' && fundamental) out.notes.add('Company figures change once a quarter, so the steps are monthly');
-    const U = universe(st, meta, F), NC = meta.cos.length, lastM = meta.months.n - 1;
+    const U = universe(st, meta, F, MB), NC = meta.cos.length, lastM = meta.months.n - 1;
     const capLike = key === 'cap' || key === 'pe' || key === 'pb' || key === 'ps';
     const fromMs = st.from ? Date.parse(st.from + 'T00:00:00Z') : Date.UTC(capLike || fundamental ? 2010 : 2005, 0, 31);
     const toMs = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now();
@@ -577,7 +592,8 @@
     const F = { 'm-px': await panel('m-px') };
     if (capF && st.capby !== 'now') F['m-cap'] = await panel('m-cap');
     if (!Array.isArray(F['m-px'])) throw new Error('A leaderboard file is missing (m-px)');
-    const U = universe(st, meta, F), lastM = meta.months.n - 1;
+    const MB = st.idx ? await members() : null;
+    const U = universe(st, meta, F, MB), lastM = meta.months.n - 1;
     const y0 = Math.max(m0.y + 1, st.from ? +st.from.slice(0, 4) : 2001), now = new Date(mEnd(lastM, m0)), y1 = Math.min(now.getUTCFullYear(), st.to ? +st.to.slice(0, 4) : 9999);
     const spyP = await price('SPY'), spy = spyP && (spyP.long || (spyP.px && { t: spyP.px.t, v: spyP.px.a }));
     const yrs = [];
@@ -1407,9 +1423,10 @@
         if (['om', 'nm', 'growth'].includes(st.rm)) h += `<label for="st-minrev">Minimum revenue a year ($B)</label><input class="input" id="st-minrev" inputmode="decimal" value="${esc(st.minrev)}">`;
       }
       h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS)), st.sec)}`;
+      h += `<div class="st-row"><div><label for="st-idx">Index</label>${sel('st-idx', [['', 'Any company on the site']].concat(Object.entries(IDX)), st.idx)}</div><div><label for="st-idxw">Members</label>${sel('st-idxw', [['then', 'At each step'], ['now', 'Today\'s']], st.idxw)}</div></div>`;
       h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
       h += `<label for="st-capby">Measured</label>${sel('st-capby', [['then', 'At each step (from 2009)'], ['now', 'Today']], st.capby)}`;
-      h += `<div class="st-help">Every US-listed company the site draws, ranked again at each step. Today's companies only: those delisted, merged or bankrupt are missing from earlier years.</div>`;
+      h += `<div class="st-help">Every US-listed company the site draws, ranked again at each step. Today's companies only: those delisted, merged or bankrupt are missing from earlier years. “At each step” uses the S&P 500's and the Dow's membership history; the other indices keep theirs from when the site began.</div>`;
       return h;
     }
     function side() {

@@ -115,12 +115,12 @@ class Build(unittest.TestCase):
         self.assertEqual((st['companies'], st['with_cap'], st['splits_unknown']), (2, 1, 1))
         meta = json.loads((root / 'rank' / 'meta.json').read_text())
         self.assertEqual(meta['cos'][0], ['AAA', 'A Corp', 'technology'])
-        self.assertEqual(meta['months']['start'], '2000-01')
+        self.assertEqual(meta['months']['start'], '1990-01')
         self.assertEqual(meta['quarters'][0], '2009Q1')
         cap = json.loads((root / 'rank' / 'm-cap.json').read_text())['rows']
         i0 = cap[0][0]
         vals = cap[0][1:]
-        g = R.months('2000-01', today)
+        g = R.months('1990-01', today)
         k19, k24 = g.index('2019-12') - i0, g.index('2024-12') - i0
         close19 = [r for r in rows if r[0] <= '2019-12-31'][-1][3]
         self.assertAlmostEqual(vals[k19], close19 * 100e6 / 1e6, delta=vals[k19] * 0.002)   # 50M then = 100M today

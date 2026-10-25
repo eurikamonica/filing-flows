@@ -144,6 +144,12 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'cap', top: '3', cmin: '100', capby: 'now', from: '2010-06-30' }));
     ok(V.series.map((x) => x.key).sort().join() === 'AAA,DDD', 'a market-value range (today)');
     ok([...V.notes].some((x) => /DDD/.test(x)), 'approximate market values are named');
+    files['disclosures/data/etf/members.json'] = { history: { others: 'from 2026-10-25' }, rows: { AAA: { now: ['sp500'], was: { sp500: [['2015-01-01', null]] } }, DDD: { now: ['sp500'] }, BBB: { now: [], was: { sp500: [[null, '2013-06-01']] } } } };
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'cap', top: '3', idx: 'sp500', from: '2010-06-30', to: '2020-12-31' }));
+    const at = (key, d) => V.series.find((x) => x.key === key)?.v[V.grid.findIndex((g) => g >= Date.parse(d))];
+    ok(at('AAA', '2014-06-30') == null && at('AAA', '2016-06-30') != null && at('BBB', '2012-06-30') != null && at('BBB', '2014-06-30') == null && !V.series.some((x) => x.key === 'CCC'), 'S&P 500 members at each step');
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'cap', top: '3', idx: 'sp500', idxw: 'now', from: '2010-06-30', to: '2020-12-31' }));
+    ok(V.series.map((x) => x.key).sort().join() === 'AAA,DDD' && /S&P 500 members/.test(V.title), "today's S&P 500 members: " + V.series.map((x) => x.key));
     V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'pe', top: '3', from: '2011-06-30', to: '2019-12-31', step: 'q' }));
     ok(V.quarterly && V.series.every((x) => x.key !== 'BBB'), 'P/E leaves losses out');
     V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'growth', top: '2', minrev: '0', from: '2012-01-31', to: '2019-12-31' }));

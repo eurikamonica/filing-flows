@@ -630,6 +630,7 @@
         </div>
         ${freshLine(qs[0], ix.generated)}
         <div class="meta co-chains" id="co-chains" hidden></div>
+        <div class="meta co-index" id="co-index" hidden></div>
         ${introHTML(c.intro)}
         ${companyTabs(cik, '')}
       </div>
@@ -645,6 +646,7 @@
       <div id="body"></div>
       <p class="co-more muted" id="co-more"></p>`;
     if (ticker) coChains($('#co-chains'), ticker);
+    if (ticker) coIndex($('#co-index'), ticker);
     $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-x-fairvalue">fair value</a> · <a href="#c-${cik}-value">DCF calculator</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a>`;
     const body = $('#body');
     if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
@@ -5026,6 +5028,30 @@
   }
 
   // a company's place in the supply chains and themes (web/chains.js), as links under its name
+  // the indices a company belongs to, now and before (disclosures/app/index_members.py → data/etf/members.json)
+  const IDX_NAMES = { sp500: 'S&P 500', ndx: 'Nasdaq-100', dji: 'Dow 30', sp400: 'S&P MidCap 400', sp600: 'S&P SmallCap 600', r1000: 'Russell 1000', r2000: 'Russell 2000', r3000: 'Russell 3000' };
+  const IDX_ORDER = ['dji', 'sp500', 'ndx', 'sp400', 'sp600', 'r1000', 'r2000', 'r3000'];
+  async function coIndex(box, tk) {
+    let m = null;
+    try { m = await fetch('disclosures/data/etf/members.json').then((r) => (r.ok ? r.json() : null)); } catch (e) { m = null; }
+    if (!m || !box || !box.isConnected) return;
+    const T = String(tk).toUpperCase().replace(/\./g, '-'), r = (m.rows || {})[T];
+    if (!r) return;
+    const yr = (d) => (d ? String(d).slice(0, 4) : '');
+    const now = IDX_ORDER.filter((k) => (r.now || []).includes(k)).map((k) => {
+      const since = (r.since || {})[k] || (((r.was || {})[k] || []).find((x) => x[1] == null) || [])[0];
+      const broad = k === 'r3000';
+      return `<span class="tag${broad ? ' muted' : ''}" title="${t(broad ? 'Member of the broad US market index (Russell 3000)' : 'Member of the ' + IDX_NAMES[k] + (since ? ' since ' + since : ''))}">${t(IDX_NAMES[k])}${since ? ' · since ' + yr(since) : ''}</span>`;
+    });
+    const was = IDX_ORDER.filter((k) => ((r.was || {})[k] || []).some((x) => x[1] != null)).map((k) => {
+      const spans = r.was[k].filter((x) => x[1] != null), after = (r.left_after || {})[k];
+      const txt = spans.map((x) => (x[0] ? yr(x[0]) : 'before ' + yr(x[1])) + '–' + (after && x[1] === after ? 'after ' + after.slice(0, 7) : yr(x[1]))).join(', ');
+      return `<span class="tag muted" title="${t('Former member of the ' + IDX_NAMES[k] + ': ' + txt)}">Former ${t(IDX_NAMES[k])} · ${t(txt)}</span>`;
+    });
+    if (!now.length && !was.length) return;
+    box.innerHTML = '<span>Indices:</span>' + now.join('') + was.join('');
+    box.hidden = false;
+  }
   async function coChains(box, tk) {
     const ix = await getJSON('chains/index.json').catch(() => null);
     if (!ix || !box || !box.isConnected) return;

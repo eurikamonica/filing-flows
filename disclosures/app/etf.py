@@ -1014,7 +1014,13 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
     lt_ = {k: merge_parties(raw_parties.get(k, []), k) for k in parties}
     wj(pub / 'parties.json', _clean({'generated_at': now(), 'fields': ['name', 'etfs', 'aum', 'x', 'y', 'crd'], 'tables': lt_}))
     st = read_json(root / 'state.json', {}) or {}
-    status = {'built_at': now(), 'etfs': len(index_rows), 'with_series': sum(1 for e in etfs if e.get('series')), 'ncen': len(ncen), 'prospectus': len(rr),
+    try:                                                  # which indices each company belongs to, now and before
+        import index_members
+        members = index_members.build(root, by, pub, site_companies=[{'ticker': t, 'name': (r or {}).get('name')} for t, r in cons_rows.items()])
+    except Exception as exc:                              # never lose the ETF build to it
+        members = {'error': str(exc)[:200]}
+        print('index members skipped:', type(exc).__name__, exc, flush=True)
+    status = {'built_at': now(), 'members': members, 'etfs': len(index_rows), 'with_series': sum(1 for e in etfs if e.get('series')), 'ncen': len(ncen), 'prospectus': len(rr),
               'nport_funds': len(hist), 'holdings': len(holds), 'holdings_source': hd.get('source'), 'companies_held': len(by), 'market': st.get('market_summary'),
               'datasets': {k: v for k, v in (st.get('datasets') or {}).items()}, 'periods13f': periods13}
     write_json(pub / 'status.json', status)
@@ -1070,7 +1076,7 @@ def sig(v, n=6):
 
 
 def price_file(sym, name, weekly):
-    """Ten years of weekly closes for the video studio (web/studio.js) and the ETF page: the price as traded (split-
+    """Weekly closes since 1990 or the launch for the video studio (web/studio.js) and the ETF page: the price as traded (split-
     adjusted close) and the total-return close (distributions reinvested: Yahoo's adjusted close), dated as day offsets
     from the first week, with each distribution per share read from where the two series part (the adjusted / traded
     ratio steps up on an ex-date: the step is 1 − distribution ÷ the close before it). None without two weeks."""

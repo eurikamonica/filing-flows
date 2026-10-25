@@ -3,7 +3,7 @@ month and per quarter, so the browser can rank any of them by any measure, withi
 without loading thousands of files. Built by rotation_history.build into public/rank/ (the hub serves it at
 disclosures/data/market/history/rank/).
 
-  meta.json   companies [ticker, name, sector], the month grid (from 2000-01), the quarters (from 2009Q1), sector
+  meta.json   companies [ticker, name, sector], the month grid (from 1990-01), the quarters (from 2009Q1), sector
               names, each company's latest market value (cap_now, $M) and what each file holds
   m-px.json   month-end close, adjusted for splits and dividends (total return)                 from the weekly closes
   m-dv.json   dollar volume traded in the month, $M (weekly volume × the week's close as traded)
@@ -268,7 +268,7 @@ def build(out_dir, companies, docs, frames_root=None, today=None, names=None, na
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     today = today or dt.date.today()
-    grid = months('2000-01', today)
+    grid = months('1990-01', today)
     nq = (today.year - 2009) * 4 + (today.month - 1) // 3
     periods = FR.calendar_quarters(max(1, nq), today) if frames_root else []
     figs, dei, wavg, eq, eps_sh = {}, {}, {}, {}, {}

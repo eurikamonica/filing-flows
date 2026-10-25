@@ -9,7 +9,7 @@
   frames   the SEC XBRL frames of revenue, operating income, gross profit, net income and cost of revenue back to 2009
            (app/frames.py into the same folder; quarters on file are final and never fetched again)
   build    public/ — what the site loads:
-             rrg.json                 one Friday grid since 2000: SPY, the ETFs and one index per site sector
+             rrg.json                 one Friday grid since 1990: SPY, the ETFs and one index per site sector
                                       (the site's companies, weighted by the log of revenue), closes and volume; the
                                       charts compute the RRG (RS-Ratio, RS-Momentum) from these in the browser
              t/<TICKER>.json          one company's weekly closes and volume, loaded when a chart traces it; once fetched
@@ -52,7 +52,7 @@ STYLE_ETFS = [('QQQ', 'Nasdaq-100'), ('DIA', 'Dow Jones Industrials'), ('RSP', '
               ('MTUM', 'Momentum factor'), ('USMV', 'Minimum volatility'), ('SMH', 'Semiconductors'), ('XBI', 'Biotech'),
               ('KRE', 'Regional banks'), ('ITB', 'Home builders'), ('EFA', 'Developed markets ex-US'),
               ('EEM', 'Emerging markets'), ('TLT', 'Treasuries 20+ years'), ('GLD', 'Gold'), ('USO', 'Crude oil')]
-START = dt.date(2000, 1, 7)                       # a Friday: the first week of the grid
+START = dt.date(1990, 1, 5)                       # a Friday: the first week of the grid (2000-01-07 before October 2026)
 HISTORY_FROM = dt.datetime(1989, 12, 29, tzinfo=dt.timezone.utc)   # what a full fetch asks for (kept in the cache)
 # the market indices themselves, price only (no dividends), for the years before their ETFs: cached as IDX-<symbol>
 INDEXES = [('IDX-GSPC', '^GSPC', '^spx', 'S&P 500 index (price only)'), ('IDX-NDX', '^NDX', '^ndx', 'Nasdaq-100 index (price only)'),
