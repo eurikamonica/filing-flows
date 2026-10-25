@@ -1,0 +1,24 @@
+/* Hidden Leverage research page: Filing Flows native tokens, mobile responsive. */
+.hl-scroll { overflow-x: auto; max-width: 100%; }
+.hl-table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 12.5px; }
+.hl-table th, .hl-table td { border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: left; vertical-align: top; }
+.hl-table th { color: var(--muted); font-weight: 600; font-size: 12px; white-space: nowrap; }
+.hl-table td { font-variant-numeric: tabular-nums; }
+.hl-table small.hl-muted, .hl-muted { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; }
+.hl-flex { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 15px; }
+.hl-large { text-align: right; font: 600 23px var(--mono); }
+.hl-large small { display: block; font: 400 11px var(--sans); color: var(--muted); }
+.hl-number { font-family: var(--mono); white-space: nowrap; }
+.hl-kpis { display: grid; grid-template-columns: repeat(auto-fit,minmax(175px,1fr)); gap: 12px; }
+.hl-kpis > div { padding: 9px; background: var(--surface-2); border-radius: 8px; }
+.hl-kpis span { display: block; font-size: 11px; color: var(--muted); }
+.hl-kpis b { display: block; font-size: 19px; }
+.hl-buckets { display: grid; grid-template-columns: repeat(6,minmax(100px,1fr)); gap: 8px; margin: 14px 0; overflow-x: auto; }
+.hl-bucket { min-width: 100px; }
+.hl-bucket span { font-size: 11px; color: var(--muted); }
+.hl-bucket b { font: 600 12px var(--mono); display: block; }
+.hl-track { background: var(--surface-2); border-radius: 5px; height: 12px; overflow: hidden; }
+.hl-track i { display: block; height: 100%; border-radius: 5px; background: var(--slate); }
+.hl-excerpt { line-height: 1.5; display: block; min-width: 230px; max-width: 620px; }
+.hl-evidence summary { color: var(--accent); cursor: pointer; font-size: 13px; }
+@media(max-width:560px) { .hl-large { text-align: left; } .hl-table { font-size: 12px; } }

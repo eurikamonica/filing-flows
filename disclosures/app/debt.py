@@ -39,6 +39,7 @@ from core import Client, read_json, write_json  # noqa: E402
 import debt_docs as DD  # noqa: E402
 import debt_facts as DF  # noqa: E402
 import debt_model as DM  # noqa: E402
+import hidden_leverage as HL  # noqa: E402
 
 SEC = 'https://data.sec.gov'
 ARCH = 'https://www.sec.gov/Archives/edgar/data'
@@ -162,12 +163,37 @@ def collect_one(client, root, co, state, deep=True):
         snap, src = DF.snapshot(cf)
         rec['snapshot'], rec['sources'] = snap, src
         rec['history'] = DF.history(cf)
+        rec['hidden_leverage'] = HL.extract(cf, cik, snap.get('balance_date'),
+            {r['acc']: r['doc'] for r in rows if r.get('acc') and r.get('doc')})
     except Exception as exc:
         rec['facts_error'] = f'{type(exc).__name__}: {exc}'[:200]
     # the latest 10-K and the latest 10-Q after it: each instrument
     periodic = [r for r in rows if r['form'] in ('10-K', '10-Q', '20-F', '40-F', '10-K/A')]
     tenk = next((r for r in periodic if r['form'] in ('10-K', '20-F', '40-F')), None)
     tenq = next((r for r in periodic if r['form'] == '10-Q' and (not tenk or r['date'] > tenk['date'])), None)
+    latest_periodic = tenq or tenk
+    if latest_periodic and latest_periodic.get('doc'):
+        # One primary filing per company; cache by accession to bound SEC load.
+        # Text matches are leads, not amounts, and never modify modeled debt.
+        f = latest_periodic
+        if (rec.get('hidden_text_source') != f['acc']
+                or not isinstance(rec.get('hidden_text_signals'), list)):
+            try:
+                raw = client.get(f'{ARCH}/{int(cik)}/{f["acc"].replace("-", "")}/{f["doc"]}', sec=True)
+                rec['hidden_text_signals'] = HL.scan_filing_text(
+                    raw, cik, f['acc'], f['doc'], f['form'], f['date'])
+                rec['hidden_text_source'] = f['acc']
+                rec.pop('hidden_text_error', None)
+            except Exception as exc:
+                rec['hidden_text_error'] = str(exc)[:180]
+        if isinstance(rec.get('hidden_leverage'), dict):
+            same_filing = rec.get('hidden_text_source') == f['acc']
+            rec['hidden_leverage']['text_signals'] = (
+                rec.get('hidden_text_signals', []) if same_filing else [])
+            rec['hidden_leverage']['text_filing'] = {
+                'accession': f['acc'], 'form': f['form'],
+                'filed': f['date'], 'source_url': HL.sec_url(cik, f['acc'], f['doc']),
+                'text_status': 'collected' if same_filing else 'unavailable'}
     for kind, f in (('10-K', tenk), ('10-Q', tenq)):
         if not f:
             continue
@@ -267,8 +293,13 @@ def collect(client, root, cos, minutes=30.0, refresh_days=21, first=()):
             return None
         if not s.get('fetched_at'):
             return (0, -_num(co.get('revenue')))
+        # Backfill existing companies after this feature ships, even when the
+        # normal 21-day refresh interval has not elapsed. Stored state keeps
+        # this a one-time priority change, not a perpetual SEC re-fetch.
+        if s.get('hidden_leverage_version') != 1:
+            return (1, -_num(co.get('revenue')))
         age = (today - dt.datetime.fromisoformat(s['fetched_at'])).days
-        return (1, -age) if age >= refresh_days else None
+        return (2, -age) if age >= refresh_days else None
 
     order = [c for c in cos if (c.get('ticker') or '').upper() in first]
     rest = sorted([(d, c) for c in cos if (d := due(c)) is not None and c not in order], key=lambda x: x[0])
@@ -280,7 +311,8 @@ def collect(client, root, cos, minutes=30.0, refresh_days=21, first=()):
         s = S.setdefault(str(co['cik']), {})
         try:
             collect_one(client, root, co, s)
-            s.update(fetched_at=now(), fails=0, error=None, retry_after=None)
+            s.update(fetched_at=now(), fails=0, error=None, retry_after=None,
+                     hidden_leverage_version=1)
             done += 1
         except Exception as exc:
             errors += 1
@@ -636,7 +668,7 @@ def build(root, prices=None, verbose=True):
                                                   'fitted on USD fixed-rate bonds priced in term sheets (spread at issue) and the issuer\'s model spread that month.'})
     if verbose:
         print('calibration:', len(pairs), 'pairs', fit, flush=True)
-    index, banks = [], []
+    index, banks, hidden_index = [], [], []
     for rec in recs:
         px, mi = cache.get(rec['cik'], (None, []))
         snap = rec.get('snapshot') or {}
@@ -665,6 +697,7 @@ def build(root, prices=None, verbose=True):
                'sic': rec.get('sic'), 'sic_description': rec.get('sic_description'), 'generated_at': now(), 'fetched_at': rec.get('fetched_at'),
                'price': price, 'price_date': price_date, 'equity_vol': sig,
                'snapshot': snap, 'sources': rec.get('sources') or {}, 'analysis': A,
+               'hidden_leverage': rec.get('hidden_leverage') or {},
                'instruments': inst[:60], 'instruments_from': {'form': inst_form, 'date': inst_date},
                'issues': iss[:400], 'agreements': ags[:6], 'events': rec.get('events') or [],
                'history_fields': ['end', 'total_debt', 'cash_and_investments', 'interest_ttm', 'ebitda_ttm', 'ebit_ttm', 'effective_rate'],
@@ -679,6 +712,11 @@ def build(root, prices=None, verbose=True):
                     by.setdefault(dd_.strftime('%Y-%m'), []).append(v)
             doc['market_series'] = {'fedfunds': [[m, round(sum(v) / len(v), 3)] for m, v in sorted(by.items())]}
         write_json(pub / 'c' / f'{rec["cik"]}.json', _clean(doc))
+        hs = HL.summarize(rec.get('hidden_leverage') or {})
+        hidden_index.append({'cik': rec['cik'], 'ticker': rec.get('ticker'),
+                             'name': rec.get('name'), 'sector': rec.get('sector'),
+                             'recognized_debt': A.get('total_debt'),
+                             'net_debt': A.get('net_debt'), **hs})
         imp = A.get('implied') or {}
         conv = A.get('convertibles') or {}
         covs = [c['cushion'] for c in A.get('covenants') or [] if c.get('cushion') is not None]
@@ -702,6 +740,11 @@ def build(root, prices=None, verbose=True):
                                                                   'min_covenant_cushion', 'issues', 'last_issue_date', 'last_issue_spread_bps', 'cushion_score',
                                                                   'deposit_cost', 'cd_share', 'balance_date'],
                                     'rows': index, 'calibration': fit, 'market': {'treasury_1y': r1, 'treasury_5y': r5, 'sofr': sofr, 'oas': oas_now}})
+    write_json(pub / 'hidden' / 'index.json', {
+        'generated_at': now(), 'scope': 'SEC companyfacts + source-linked filing text',
+        'note': 'Amounts are independent classifications, not additive; missing is not zero.',
+        'taxonomy': HL.public_taxonomy(),
+        'rows': hidden_index})
     write_json(pub / 'banks.json', {'generated_at': now(), 'fields': ['cik', 'ticker', 'name', 'bank', 'date', 'deposits', 'cd_share', 'time_over_250k',
                                                                   'uninsured_share', 'brokered', 'deposit_cost', 'cost_of_funds', 'nim'], 'rows': banks})
     write_json(pub / 'rates.json', rates_doc(root, rates))

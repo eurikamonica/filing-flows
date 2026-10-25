@@ -229,7 +229,13 @@
     css();
     if (!d) { el.innerHTML = '<p class="dv-sub">No debt data for this company yet.</p>'; return; }
     el.classList.add('dv');
-    const parts = [summary(d), cushion(d), implied(d), maturities(d), converts(d), instruments(d), facilities(d), issues(d), bank(d), historyChart(d), events(d), sources(d)];
+    const hl = d.hidden_leverage || {}, hc = (hl.categories || []).length, ht = (hl.text_signals || []).length;
+    const linkToHidden = (typeof location !== 'undefined' && location.pathname.includes('/disclosures/'))
+      ? '#hidden/' + encodeURIComponent(d.cik) : 'disclosures/#hidden/' + encodeURIComponent(d.cik);
+    const hiddenLink = '<div class="dv-card"><span>Hidden leverage &amp; contractual obligations</span><b>' +
+      hc + ' numeric groups · ' + ht + ' text leads</b><i>SEC commitments, guarantees and uncommenced lease leads. Original net debt unchanged. ' +
+      '<a href="' + esc(linkToHidden) + '">Inspect filing evidence ↗</a></i></div>';
+    const parts = [summary(d), hiddenLink, cushion(d), implied(d), maturities(d), converts(d), instruments(d), facilities(d), issues(d), bank(d), historyChart(d), events(d), sources(d)];
     if (window.FFPosts && !opt.compact) {                    // the post for X (posts.js): debt, liquidity, the implied spread
       const it = window.FFPosts.build('debt', { ticker: d.ticker, cik: d.cik, name: d.name, debt: d });
       if (it) parts.splice(2, 0, window.FFPosts.box(it));
