@@ -8,6 +8,7 @@ import re
 
 SEC = re.compile(r"^https://(?:www\.)?sec\.gov/Archives/")
 NEWS = re.compile(r"^https://(?:www\.)?(?:sec\.gov|prnewswire\.com|fda\.gov)/")
+SEC_BROWSE = re.compile(r"^https://(?:www\.)?sec\.gov/edgar/browse/\?CIK=\d+&owner=exclude$")
 TK = re.compile(r"^[A-Z][A-Z0-9.-]{0,9}$")
 HIGH = {"bankruptcy", "restatement", "cyber", "delisting", "impairment", "auditor"}
 MED = {"deal", "control", "offering", "debt", "guidance", "ceo", "cfo"}
@@ -104,6 +105,42 @@ def build(root, now=None):
             changes=changes, event_at=stamp(filed), filed=filed[:10], period_end=period,
             source_url=url, source_label="SEC 13F",
             scope="Holdings as of quarter-end, not trading actions on filing date."))
+    # The tracked-manager watchlist is valuable for ticker-level change detail, but
+    # it can still display the PREVIOUS quarter after a new SEC filing arrived.
+    # Discover newer official 13F filing dates from the scan's main catalog, without
+    # falsely assigning trades or portfolio changes to the filing date.
+    try:
+        with (root.parent / "catalogs" / "holdings.json").open(encoding="utf-8") as stream:
+            catalog = json.load(stream)
+    except (OSError, ValueError, UnicodeError):
+        catalog = []
+    if isinstance(catalog, list):
+        for r in catalog:
+            if not isinstance(r, dict) or r.get("kind") != "holdings":
+                continue
+            cik = str(r.get("cik") or "")
+            filed = str(r.get("latest_filing") or "")
+            if not cik.isdecimal() or not recent(filed, now, 7):
+                continue
+            # If a full tagged watchlist record exists for this same CIK/date,
+            # prefer its specific EDGAR filing source and position details.
+            if any(e.get("kind") == "13f" and e.get("id", "").startswith("13f:" + cik + ":")
+                   and e.get("filed") == filed for e in events):
+                continue
+            link = "https://www.sec.gov/edgar/browse/?CIK=" + cik + "&owner=exclude"
+            if not SEC_BROWSE.fullmatch(link):
+                continue
+            events.append(dict(
+                id="13f:" + cik + ":indexed:" + filed, kind="13f", ticker="",
+                priority="info", title=small(r.get("name") or "Institution") + " — 13F indexed",
+                manager=small(r.get("name") or "Institution"), detail=(
+                    "New SEC filing date indexed; holding rows " +
+                    ("processed" if r.get("processed") is True else "not fully processed") +
+                    ". Individual position changes are not inferred."),
+                event_at=stamp(filed), filed=filed[:10], period_end="",
+                parsed=r.get("processed") is True, source_url=link, source_label="SEC 13F catalog",
+                scope="Indexed 13F notice, not a filing-day trade, quarter-end date, or proof of a full parsed holdings table."
+            ))
     news = read(root / "news.json")
     statuses["news"] = news.get("generated_at") or ""
     for r in (news.get("rows") or [])[:300]:
