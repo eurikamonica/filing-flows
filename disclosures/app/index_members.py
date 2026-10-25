@@ -361,14 +361,22 @@ def sp500_history(cache, cik_ticker, ticker_name=None):
     return iv
 
 
+# the Dow's past names that match no company of today by name: the company that carries on (same CIK) today
+DOW_ALIASES = {'exxon': 'XOM', 'exxon mobil': 'XOM', 'united': 'RTX', 'raytheon': 'RTX', 'dowdupont': 'DD', 'e i du pont de nemours and': 'DD',
+               'hewlett packard': 'HPQ', 'kraft foods': 'MDLZ', 'walgreens boots alliance': 'WBA', 'allied signal': 'HON', 'alliedsignal': 'HON',
+               'wal mart stores': 'WMT', 'american telephone and telegraph': 'T', 'at and t': 'T', 'sbc communications': 'T', 'travelers': 'C',
+               'j p morgan and': 'JPM', 'jpmorgan chase and': 'JPM', 'minnesota mining and manufacturing': 'MMM', 'philip morris companies': 'MO',
+               'business machines': 'IBM', 'alcoa': 'HWM', 'aluminum of america': 'HWM'}
+
+
 def dow_history(cache, name_ticker):
-    """{ticker: [[from, to or None], …]} from the Dow's compositions, matched by normalised name."""
+    """{ticker: [[from, to or None], …]} from the Dow's compositions, matched by normalised name (DOW_ALIASES first)."""
     comps = cache.get('dow') or []
     iv = {}
     for i, (d, names) in enumerate(comps):
         nxt = comps[i + 1][0] if i + 1 < len(comps) else None
         for n in names:
-            t = name_ticker.get(norm_name(n))
+            t = DOW_ALIASES.get(norm_name(n)) or name_ticker.get(norm_name(n))
             if not t:
                 continue
             lst = iv.setdefault(t, [])

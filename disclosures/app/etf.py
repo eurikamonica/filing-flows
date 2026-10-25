@@ -463,7 +463,6 @@ def parse_uit_holdings(data):
     return out
 
 
-
 def uit_asof_date(data):
     """Read *stated holdings as-of date* from sponsor workbook header if present.
 
@@ -834,6 +833,18 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
     uit = read_json(root / 'cache' / 'uit.json', {}) or {}
     hub = Path(hub) if hub else None
     cusip_t = read_json(hub / 'market' / 'cusip-tickers.json', {}) if hub else {}
+    # CUSIPs the OpenFIGI map lacks (Exxon Mobil's, for one), named by the other funds that report both: the ticker most of
+    # them give, if it is a US-listed company (iShares files CUSIPs only, so the S&P 500 lost a few dozen members)
+    votes = defaultdict(lambda: defaultdict(int))
+    for hv in holds.values():
+        for x in (hv or {}).get('top') or []:
+            if len(x) > 4 and x[2] and x[4]:
+                votes[str(x[2]).upper()][norm_t(x[4])] += 1
+    for c, cnt in votes.items():
+        if c not in cusip_t and re.fullmatch(r'[0-9A-Z]{8}[0-9]', c) and c.strip('0'):
+            t, n = max(cnt.items(), key=lambda kv: kv[1])
+            if n >= 2 and n >= 0.75 * sum(cnt.values()) and t.replace('.', '-') in stock_syms:
+                cusip_t[c] = t
     t_cusip = {}
     for c, t in cusip_t.items():
         t_cusip.setdefault(t, c)

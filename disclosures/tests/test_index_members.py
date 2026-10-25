@@ -54,6 +54,14 @@ class History(unittest.TestCase):
         self.assertEqual(iv['WHR'], [[None, '2024-03-18']])
         self.assertEqual(iv['CCI'], [['2012-03-14', None]])                            # not Countrywide's 1997 addition
 
+    def test_dow_past_names_reach_todays_tickers(self):
+        cache = {'dow': [['2013-09-23', ['Exxon Mobil Corporation  (formerly Exxon Corporation)', 'United Technologies Corporation', 'Apple Inc.']],
+                         ['2020-08-31', ['Raytheon Technologies Corporation', 'Apple Inc.']]]}
+        iv = IM.dow_history(cache, {'apple': 'AAPL'})
+        self.assertEqual(iv['XOM'], [['2013-09-23', '2020-08-31']])
+        self.assertEqual(iv['RTX'], [['2013-09-23', None]])                            # United Technologies carried on as RTX
+        self.assertEqual(iv['AAPL'], [['2013-09-23', None]])
+
     def test_build_now_and_former(self):
         root = Path(tempfile.mkdtemp())
         (root / 'cache' / 'members').mkdir(parents=True)
