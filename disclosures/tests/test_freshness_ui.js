@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+const ctx=vm.createContext({state:{},Date,fetch:undefined});
+vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../docs/freshness.js'),'utf8'),ctx);
+const run=s=>vm.runInContext(s,ctx);
+assert.equal(run("healthText('holdings',{status:'ok',updated_at:'2026-10-18'},null,Date.parse('2026-10-25')).stale"),true);
+assert.ok(run("healthText('holdings',{status:'ok',updated_at:'2026-10-18'},null,Date.parse('2026-10-25')).text").includes('STALE'));
+assert.equal(run("SOURCE_TABS.events"),'events8k');assert.equal(run("SOURCE_TABS.stakes"),'ownership');
+assert.equal(run("sourceNotice('news',{holdings:{updated_at:'2026-10-18'},news:{status:'ok',updated_at:'2026-10-25'}},null).text.includes('2026-10-18')"),false);
+assert.equal(run("healthText('news',{status:'ok',errors:3,updated_at:'2026-10-25'},null,Date.parse('2026-10-25')).stale"),true);
+assert.equal(run("healthText('news',{status:'partial',last_success:'2026-10-18',last_partial_success:'2026-10-25'},null,Date.parse('2026-10-25')).text.includes('STALE')"),false);
+assert.equal(run("rotationNotice({data:{generated_at:'2026-10-25',source_timestamps:{holdings:'2026-10-18'}}},null,Date.parse('2026-10-25')).stale"),true);
+assert.equal(run("rotationNotice({data:{generated_at:'2026-10-25'}},null,Date.parse('2026-10-25')).stale"),true);
+console.log('Freshness UI: 9 regression checks passed');

@@ -19,6 +19,7 @@ Publish: market/events8k.json — the last days' 8-Ks with tickers, newest first
          8-K events table (✦ X per row), the company pages (holders index: events8k), the X posts (pipeline/engage.py
          event8k / post_8k) and the movers' "what is known today" (pipeline/context.py).
 """
+from retry_queue import RetryQueue
 import datetime as dt
 import html
 import re
@@ -404,12 +405,16 @@ def collect(client, root, cfg=None, today=None):
     empty = set(read_json(cdir / 'seen.json', []))
     seen = empty | shards.uids()
     state = read_json(cdir / 'state.json', {})
+    retry = RetryQueue(cdir)
     errors, read, kept = 0, 0, 0
     todo = []
     try:
-        todo = [(a, f) for a, f in feed_entries(client, int(cfg.get('feed_pages', 5))) if a not in seen]
+        if retry.due('feed'):
+            todo = [(a, f) for a, f in feed_entries(client, int(cfg.get('feed_pages', 5))) if a not in seen]
+            retry.succeeded('feed')
     except Exception as exc:
         errors += 1
+        retry.failed('feed', exc)
         print(f'8-K feed: {exc}', flush=True)
     queue = [tuple(x) for x in state.get('queue', [])]
     done_days = set(state.get('index_days', []))
@@ -418,30 +423,32 @@ def collect(client, root, cfg=None, today=None):
         if left <= 0:
             break
         ymd = d.strftime('%Y%m%d')
-        if ymd in done_days:
+        if ymd in done_days or not retry.due('index:' + ymd):
             continue
         left -= 1
         try:
             text = client.get(DAILY.format(y=d.year, q=(d.month - 1) // 3 + 1, ymd=ymd), sec=True).decode('latin-1')
             queue.extend(x for x in parse_daily_index(text) if x[0] not in seen)
             done_days.add(ymd)
+            retry.succeeded('index:' + ymd)
         except RuntimeError as exc:
-            if 'HTTP 404' in str(exc) or 'HTTP 403' in str(exc):
+            if 'HTTP 404' in str(exc):
                 if (today - d).days > 3:
                     done_days.add(ymd)
             else:
+                retry.failed('index:' + ymd, exc)
                 errors += 1
                 print(f'daily index {ymd}: {exc}', flush=True)
-    new = {a for a, _ in todo}
-    queue = [x for x in dict.fromkeys(queue) if x[0] not in seen and x[0] not in new]
+    queue = [x for x in dict.fromkeys(todo + queue) if x[0] not in seen]
     # a better parser: the filings on file are read again, newest first, a share of each run's batch
     if state.get('parser') != PARSER and not state.get('reparse'):
         state['reparse'] = [[r['accession'], r['url']] for r in shards.all()]
     redo = [tuple(x) for x in state.get('reparse') or []]
     batch = int(cfg.get('batch', 300))
-    work = todo + redo[:max(0, batch - len(todo)) // 2]
-    work += queue[:max(0, batch - len(work))]
-    redone = {a for a, _ in redo[:max(0, batch - len(todo)) // 2]}
+    pending = [x for x in queue if retry.due(x[0])]
+    reparsing = [x for x in redo if retry.due(x[0])][:batch // 4]
+    work = list(dict.fromkeys(pending[:batch-len(reparsing)] + reparsing))[:batch]
+    redone = set()
     for acc, folder in work:
         try:
             txt = client.get(folder + acc + '.txt', sec=True).decode('utf-8', 'replace')
@@ -453,8 +460,11 @@ def collect(client, root, cfg=None, today=None):
                 empty.add(acc)
             seen.add(acc)
             read += 1
+            redone.add(acc)
+            retry.succeeded(acc)
         except Exception as exc:
             errors += 1
+            retry.failed(acc, exc)
             print(f'8-K {acc}: {exc}', flush=True)
             if errors > 25:
                 break
@@ -462,12 +472,13 @@ def collect(client, root, cfg=None, today=None):
     redo = [x for x in redo if x[0] not in redone]
     shards.save(keep=(today - dt.timedelta(days=int(cfg.get('keep_days', 120)))).isoformat())
     window = {d.strftime('%Y%m%d') for d in OWN.business_days(today, int(cfg.get('backfill_days', 30)) + 10)}
-    write_json(cdir / 'state.json', {'index_days': sorted(done_days & window), 'queue': [list(x) for x in queue[:30000]],
+    write_json(cdir / 'state.json', {'index_days': sorted(done_days & window), 'queue': [list(x) for x in queue],
                                      'parser': PARSER if not redo else state.get('parser'), 'reparse': [list(x) for x in redo],
                                      'updated_at': now()})
     write_json(cdir / 'seen.json', sorted(empty))
-    return {'status': 'ok' if errors <= 25 else 'partial', 'read': read, 'kept': kept, 'waiting': len(queue), 'reparse_left': len(redo),
-            'errors': errors,
+    retry.save()
+    return {'status': 'partial' if errors or retry.rows or queue or redo else 'ok', **retry.summary(), 'read': read, 'kept': kept, 'waiting': len(queue), 'reparse_left': len(redo),
+            'errors': errors, 'latest_filing_date': max((r.get('filed', '') for r in shards.all()), default=None),
             'on_file': len(shards.uids()), 'index_days': len(done_days & window), 'updated_at': now()}
 
 

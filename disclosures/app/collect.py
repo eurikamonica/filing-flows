@@ -20,6 +20,7 @@ import extremes
 import frames
 import options as option_chains
 import president
+from source_status import record as record_status
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,6 +42,7 @@ def main():
     parser.add_argument('--config',type=Path,default=ROOT/'config/settings.json')
     parser.add_argument('--output',type=Path,default=ROOT/'docs/data')
     parser.add_argument('--storage',type=Path,default=ROOT/'storage')
+    parser.add_argument('--defer-enrichment', action='store_true', help='Commit source data without optional price/frame/view work')
     parser.add_argument('--revalidate',action='store_true',help='Re-download already parsed N-PX documents')
     parser.add_argument('--batch-size',type=int,help='Override the manager/PDF batch size for this run')
     parser.add_argument('--manager-cik',help='Process this SEC CIK instead of the rotating batch')
@@ -68,6 +70,7 @@ def main():
         if args.batch_size is not None:options['batch_size']=args.batch_size
         result = refresh_module(data['modules'].get(key,{}),func,client,options,args.revalidate)
         data['modules'][key] = result
+        record_status(args.output, key, result, result.get('last_attempt'))
         if key=='npx' and 'holdings' in data['modules']:data['modules']['holdings']['discovery']=read_json(args.output/'discovery-state.json',{})
         failed |= _flag(key,result)
         print(key+': '+result['status']+((' — '+result['error']) if result.get('error') else ''),flush=True)
@@ -82,6 +85,7 @@ def main():
         try:
             result=refresh_module(data['modules'].get('congress',{}),collect_congress,client,quick,False)
             data['modules']['congress']=result
+            record_status(args.output, 'congress', result, result.get('last_attempt'))
             print('congress (quick): '+result['status']+((' — '+result['error']) if result.get('error') else ''),flush=True)
             data['generated_at']=now()
             publish_shards(args.output,data)
@@ -105,13 +109,14 @@ def main():
             print('president: error — '+str(exc),flush=True)
             print('::warning::president: error — '+str(exc)[:200],flush=True)
             write_json(args.output/'president-status.json',{'status':'error','error':str(exc)[:300],'last_attempt':now()})
-    # 4.1: optional price-based cost estimates, refreshed with 13F and officials' runs or on demand.
-    if cfg.get('prices',{}).get('enabled') and args.only in ('all','prices','holdings','congress'):
+    # Optional prices run separately; no price failure can discard a completed holdings poll.
+    if cfg.get('prices',{}).get('enabled') and args.only == 'prices':
         print('Collecting prices',flush=True)
         try:
             data['modules']['prices']=apply_prices(data,client,cfg['prices'],args.output)
         except Exception as exc:
             data['modules']['prices']={**data['modules'].get('prices',{}),'status':'error','error':str(exc),'last_attempt':now()}
+        record_status(args.output, 'prices', data['modules']['prices'])
         failed|=_flag('prices',data['modules']['prices'])
         print('prices: '+data['modules']['prices']['status']+((' — '+data['modules']['prices']['error']) if data['modules']['prices'].get('error') else ''),flush=True)
         data['generated_at']=now()
@@ -119,15 +124,18 @@ def main():
     # 4.4: Form 4 insider trades (the newest filings each run) and their published summary
     if args.only in ('all','insiders'):
         print('Collecting insiders',flush=True)
+        attempted = now()
         try:
             r=insiders.collect(client,args.output,cfg.get('insiders',{}))
             insiders.publish(args.output,args.output/'market')
             print('insiders: '+json.dumps(r),flush=True)
             data['modules']['insiders']={**r,'last_attempt':now()}
-            write_json(args.output/'insiders-status.json',data['modules']['insiders'])
+            record_status(args.output, 'insiders', data['modules']['insiders'], attempted)
         except Exception as exc:
             print('insiders: error — '+str(exc),flush=True)
             print('::warning::insiders: error — '+str(exc)[:200],flush=True)
+            record_status(args.output, 'insiders', {'status':'error','error':str(exc)[:300]}, attempted)
+            failed = True
     # 4.6: Schedules 13D / 13G and Form 144 (EDGAR feeds, then the daily indexes back `backfill_days`), FINRA short
     # interest (a new settlement date twice a month) and US Senate PTRs (eFD) — all with the light half-hourly runs
     # 4.7: every 8-K (the feed, then the daily indexes) and the news wires / government releases (app/news.py)
@@ -138,6 +146,7 @@ def main():
         if args.only not in on or not cfg.get(key,{}).get('enabled',True):
             continue
         print('Collecting '+key,flush=True)
+        attempted = now()
         try:
             r=mod.collect(client,args.output,cfg.get(key,{}))
             if key=='ownership':
@@ -148,18 +157,23 @@ def main():
                 r['published']=mod.publish(args.output,args.output/'market')
             print(key+': '+json.dumps(r),flush=True)
             data['modules'][key]={**r,'last_attempt':now()}
-            write_json(args.output/f'{key}-status.json',data['modules'][key])
+            record_status(args.output, key, data['modules'][key], attempted)
+            failed |= _flag(key, r)
         except Exception as exc:
             print(key+': error — '+str(exc),flush=True)
             print(f'::warning::{key}: error — '+str(exc)[:200],flush=True)
-            write_json(args.output/f'{key}-status.json',{**read_json(args.output/f'{key}-status.json',{}),'status':'error','error':str(exc)[:300],'last_attempt':now()})
+            record_status(args.output, key, {'status':'error','error':str(exc)[:300]}, attempted)
+            failed = True
     # 4.5: option chains (CBOE delayed quotes) once a day after the close
     if args.only in ('all','options'):
         print('Collecting option chains',flush=True)
         try:
-            print('options: '+json.dumps(option_chains.collect(client,args.output,cfg.get("options",{}))),flush=True)
+            r=option_chains.collect(client,args.output,cfg.get("options",{}))
+            print('options: '+json.dumps(r),flush=True)
+            record_status(args.output, 'options', {**r, 'status':r.get('status', 'partial' if r.get('errors') else 'ok')})
         except Exception as exc:
             print('options: error — '+str(exc),flush=True)
+            record_status(args.output, 'options', {'status':'error','error':str(exc)[:300]})
     # 4.17: 52-week and all-time highs and lows (Yahoo daily bars), once a day after the close with the options run
     if args.only in ('all','options','extremes'):
         print('Collecting 52-week and all-time highs and lows',flush=True)
@@ -179,14 +193,17 @@ def main():
             write_json(args.output/'extremes-status.json',{'status':'error','error':str(exc)[:300],'last_attempt':now()})
     # 4.4: SEC XBRL frames (21 quarters and the annual frames of revenue, operating income, gross profit and net income
     # for every filer) for the rotation charts; cached quarters are never fetched again, so the daily options run keeps them fresh
-    if args.only in ('all','market','options'):
+    if not args.defer_enrichment and args.only in ('all','market','options'):
         print('Collecting XBRL frames',flush=True)
         try:
-            print('frames: '+json.dumps(frames.collect(client,args.output,int(cfg.get('frames',{}).get('quarters',21)))),flush=True)
+            r=frames.collect(client,args.output,int(cfg.get('frames',{}).get('quarters',21)))
+            print('frames: '+json.dumps(r),flush=True)
+            record_status(args.output, 'frames', {**r, 'status':'partial' if r.get('errors') else 'ok'})
         except Exception as exc:
             print('frames: error — '+str(exc),flush=True)
+            record_status(args.output, 'frames', {'status':'error','error':str(exc)[:300]})
     # 4.3: market-wide views (13F flows, officials' trades, signals) from the caches; at most every few hours unless asked for
-    if args.only in ('all','holdings','congress','prices','market','insiders','senate'):
+    if not args.defer_enrichment and args.only in ('all','holdings','congress','prices','market','insiders','senate'):
         print('Building market views',flush=True)
         try:
             r=market.publish(args.output,client=client,min_interval_hours=float(cfg.get('market',{}).get('min_interval_hours',3)),

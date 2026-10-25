@@ -42,6 +42,8 @@ on:
     - cron: '43 10 * * *'
     - cron: '28,58 * * * *'
     - cron: '20 21 * * 1-5'
+    - cron: '11 */6 * * *'
+    - cron: '41 */3 * * *'
   push:
     branches: [main]
     paths:
@@ -58,7 +60,7 @@ concurrency:
   # light runs (insiders + 8-K + 13D / 13G / Form 144 + short interest + Senate PTRs + news, market views) queue separately so the long 13F / officials runs never cancel them.
   # The once-a-day run after the close (option chains, 52-week and all-time highs and lows) has a group of its own: in the light group a
   # pending run is replaced by the next half-hourly one, so it was cancelled most days and the highs / lows posts had nothing to read.
-  group: disclosures-${{ (github.event.schedule == '20 21 * * 1-5' || inputs.module == 'options' || inputs.module == 'extremes') && 'close' || ((github.event.schedule == '28,58 * * * *' || inputs.module == 'insiders' || inputs.module == 'market' || inputs.module == 'ownership' || inputs.module == 'shorts' || inputs.module == 'senate' || inputs.module == 'events8k' || inputs.module == 'news' || inputs.module == 'reddit') && 'light' || 'main') }}
+  group: disclosures-${{ (github.event.schedule == '11 */6 * * *' || inputs.module == 'prices') && 'prices' || (github.event.schedule == '20 21 * * 1-5' || inputs.module == 'options' || inputs.module == 'extremes') && 'close' || ((github.event.schedule == '28,58 * * * *' || github.event.schedule == '41 */3 * * *' || inputs.module == 'insiders' || inputs.module == 'market' || inputs.module == 'ownership' || inputs.module == 'shorts' || inputs.module == 'senate' || inputs.module == 'events8k' || inputs.module == 'news' || inputs.module == 'reddit') && 'light' || 'main') }}
   cancel-in-progress: false
 defaults:
   run:
@@ -89,6 +91,8 @@ jobs:
             '43 10 * * *') module=all ;;
             '28,58 * * * *') module=insiders ;;
             '20 21 * * 1-5') module=options ;;
+            '11 */6 * * *') module=prices ;;
+            '41 */3 * * *') module=market ;;
           esac
           echo "module=$module" >> "$GITHUB_OUTPUT"
           # light sources never read or write the 13F quarter files or the N-PX records; 13F runs never touch N-PX.
@@ -117,7 +121,7 @@ jobs:
       - name: Install PDF library
         run: python -m pip install -r requirements.txt
       - name: Install system OCR tools
-        if: github.event.schedule != '7,22,37,52 * * * *' && github.event.schedule != '43 0-9,11-23 * * *' && github.event.schedule != '28,58 * * * *' && github.event.schedule != '20 21 * * 1-5' && (inputs.module == '' || inputs.module == 'all' || inputs.module == 'congress')
+        if: steps.pick.outputs.module == 'all' || steps.pick.outputs.module == 'congress'
         # 'congress' covers every officials' jurisdiction (US House, New York, California, Canada + imports)
         run: |
           sudo apt-get update -qq
@@ -153,6 +157,7 @@ jobs:
         run: |
           module="$MODULE"
           args=(--only "$module")
+          case "$module" in holdings|congress|all) args+=(--defer-enrichment) ;; esac
           if [ -n "$BATCH_SIZE" ]; then args+=(--batch-size "$BATCH_SIZE"); fi
           if [ -n "$MANAGER_CIK" ]; then args+=(--manager-cik "$MANAGER_CIK"); fi
           if [ -n "$REPORT_ID" ]; then args+=(--report-id "$REPORT_ID"); fi
@@ -163,25 +168,9 @@ jobs:
           fi
           python app/collect.py "${args[@]}"
       - name: Persist official snapshot and failure status
+        if: ${{ !cancelled() && steps.collect.outcome != 'skipped' }}
         shell: bash
-        run: |
-          git config user.name "Filing Flows"
-          git config user.email "filingflows@gmail.com"
-          git add -A --sparse docs/data/      # --sparse: a file written where the checkout left data out is still committed
-          if git diff --cached --quiet; then echo "No data changes"; exit 0; fi
-          git commit -qm "Update disclosure data and source status"
-          git stash --include-untracked -q || true      # anything else the run left in the tree
-          for attempt in 1 2 3 4; do
-            git fetch -q origin main
-            # another run may have committed meanwhile; replay our data commit on top, keeping our files where both changed
-            if git rebase -q -X theirs origin/main; then
-              if git push -q origin HEAD:main; then echo "Pushed on attempt $attempt"; exit 0; fi
-            else
-              git rebase --abort || true
-            fi
-            sleep $((attempt * 15))
-          done
-          echo "::error::Could not push the data snapshot after 4 attempts"; exit 1
+        run: python app/persist_snapshot.py
       - name: Preserve downloaded files and OCR evidence
         if: always()
         uses: actions/upload-artifact@v4

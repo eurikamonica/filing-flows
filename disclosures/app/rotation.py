@@ -422,6 +422,21 @@ def centre(cos, keys, bounds, quarters):
     return rows[-quarters:]
 
 
+def source_timestamps(root):
+    # Capture the inputs used by THIS build, not the next collector's timestamps.
+    result = {}
+    paths = {'13F scan': 'holdings-status.json', 'Officials scan': 'congress-status.json',
+             'Senate scan': 'senate-status.json', '13F view': 'market/by-ticker-history.json', 'Officials view': 'market/officials-trades.json',
+             'Prices scan': 'prices-status.json', 'XBRL frames scan': 'frames-status.json'}
+    for key, path in paths.items():
+        try:
+            value = json.loads((Path(root) / path).read_text(encoding='utf-8'))
+            result[key] = max((value.get(k) or '' for k in ('last_success','last_partial_success','generated_at','updated_at')), default='') or None
+        except (OSError, ValueError):
+            result[key] = None
+    return result
+
+
 def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_root=None, vol_windows=(None, None)):
     """prices: ticker → rows (default: the daily price cache under root); frames_root: where the XBRL frames are cached
     (default root). The long history (app/rotation_history.py) passes weekly closes since 2000 and its own frames."""
@@ -509,7 +524,7 @@ def build(site_data, root, top=600, quarters=16, months=48, prices=None, frames_
                 month_rows[co['t']] = m
     ri = MONTH_FIELDS.index('rs')
     rs_ratings([[(r[i], ri) for r in month_rows.values()] for i in range(len(months))])
-    return {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'benchmark': 'SPY' if spy else None,
+    return {'generated_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'), 'benchmark': 'SPY' if spy else None, 'source_timestamps': source_timestamps(root),
             'fields': FIELDS, 'sun_fields': SUN_FIELDS, 'vars': meta, 'quarters': cals, 'axis_registry_version': AR.REGISTRY_VERSION,
             'note': ('Calendar quarters (SEC frames align fiscal quarters to the nearest calendar quarter; a fourth quarter a '
                      'company did not tag on its own is the year minus its first three). Returns run from one calendar '
