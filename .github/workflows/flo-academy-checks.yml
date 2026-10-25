@@ -7,12 +7,14 @@ on:
       - 'web/flo-real-data.js'
       - 'web/flo-real-workbook.js'
       - 'web/flo-coach.js'
+      - 'web/flo-practice.js'
       - 'web/mascot.js'
       - 'web/app.js'
       - 'tests/test_flo_academy.cjs'
       - 'tests/test_flo_workbook.cjs'
       - 'tests/test_flo_real.cjs'
       - 'tests/test_flo_coach.cjs'
+      - 'tests/test_flo_practice.cjs'
       - 'tests/test_mascot.cjs'
       - '.github/workflows/flo-academy-checks.yml'
   workflow_dispatch:
@@ -43,6 +45,7 @@ jobs:
           node --check web/flo-real-data.js
           node --check web/flo-real-workbook.js
           node --check web/flo-coach.js
+          node --check web/flo-practice.js
           node --check web/app.js
       - name: Run old and new Flo tests
         run: |
@@ -51,3 +54,4 @@ jobs:
           node tests/test_flo_workbook.cjs
           node tests/test_flo_real.cjs
           node tests/test_flo_coach.cjs
+          node tests/test_flo_practice.cjs
