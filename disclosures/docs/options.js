@@ -1,5 +1,5 @@
 /* 4.5 Options, two sources:
-   · Option chains — CBOE delayed quotes summarised daily (app/options.py): the cross-section of one underlying (IV smile,
+   · Option chains — CBOE delayed quotes with weekday priority supplements and daily full-universe scans (app/options.py): the cross-section of one underlying (IV smile,
      open interest and dealer gamma by strike, term structure) and a table of every underlying covered.
      Data: data/market/options.json and data/market/options/<TICKER>.json.
    · Disclosed in 13F — the long put and call positions managers report each quarter (app/market.py options13f):
@@ -20,12 +20,12 @@ const emove=r=>r&&r.iv30!=null&&r.spot?r.spot*r.iv30/100*Math.sqrt(30/365):null;
 
 function optionsView(){
  state.omode=state.omode==='13f'?'13f':'chains';
- let out=head('Options',state.omode==='13f'?'The put and call positions investment managers disclose in their quarterly 13F reports: who holds them, on which underlyings, and what changed since the quarter before.':'The cross-section of option chains: where open interest and dealer gamma sit by strike, the implied-volatility smile and term structure. CBOE delayed quotes, summarised daily after the close.',state.omode==='13f'?'SEC 13F · QUARTERLY':'CBOE · DAILY');
+ let out=head('Options',state.omode==='13f'?'The put and call positions investment managers disclose in their quarterly 13F reports: who holds them, on which underlyings, and what changed since the quarter before.':'The cross-section of option chains: where open interest and dealer gamma sit by strike, the implied-volatility smile and term structure. CBOE delayed quotes, summarised with prioritized weekday supplemental scans and an after-close full scan.',state.omode==='13f'?'SEC 13F · QUARTERLY':'CBOE · DELAYED');
  const src=field('omode','Source',[['chains','Option chains (CBOE, daily)'],['13f','Disclosed in 13F (managers, quarterly)']],state.omode);
  if(state.omode==='13f')return out+options13fView(src);
  const g=marketGate('options','Option chains');if(!g.data)return out+`<div class="toolbar">${src}</div>`+g.html;
  const d=g.data,rows=d.rows||[];
- if(!rows.length)return out+`<div class="toolbar">${src}</div>`+empty('No option chains collected yet — the collector runs each weekday after the close (Actions → Collect disclosures → module options).');
+ if(!rows.length)return out+`<div class="toolbar">${src}</div>`+empty('No option chains published yet. Priority tickers have weekday supplemental collection; a full-universe scan runs after the close. CBOE quotes are delayed.');
  state.oq=rows.some(r=>r.ticker===state.oq)?state.oq:'';
  out+=`<div class="toolbar">${src}${field('oq','Underlying',[['','Every underlying (table)'],...rows.map(r=>[r.ticker,`${r.ticker} · ${px(r.spot)} · IV30 ${iv30(r.iv30)}`])],state.oq,true)}</div>`;
  if(!state.oq)return out+optionsTable(d,rows);
