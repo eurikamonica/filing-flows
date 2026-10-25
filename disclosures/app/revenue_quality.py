@@ -122,7 +122,7 @@ def extract(cf, cik, as_of):
     rev, rev_prev = val("revenue"), val("revenue", 1)
     ar, ar_prev = val("receivables"), val("receivables", 1)
     # Always require positive revenue and receivables for DSRI.
-    dsri = (_ratio(_ratio(ar, rev), _ratio(ar_prev, rev_prev))
+    dsri = (round((ar / rev) / (ar_prev / rev_prev), 4)
             if all(v is not None and v > 0 for v in (rev, rev_prev, ar, ar_prev)) else None)
     ocf_to_ni = (_ratio(val("operating_cash_flow"), val("net_income"))
                  if val("net_income") is not None and val("net_income") > 0 else None)
@@ -145,11 +145,11 @@ def extract(cf, cik, as_of):
                       "value": round(g_ca - g_rev, 4),
                       "rule": "Contract asset growth - revenue growth > 30pp"})
     g_cl = metrics["contract_liabilities_growth"]
-    if g_cl is not None and g_rev is not None and g_cl < -0.20 and g_rev > 0.10:
+    if g_cl is not None and g_rev is not None and g_cl < -0.20 and g_rev >= 0.10:
         flags.append({"key": "deferred_release",
                       "label": "Contract liabilities decline while revenue increases",
                       "value": g_cl,
-                      "rule": "Contract liabilities < -20% and revenue growth > 10%"})
+                      "rule": "Contract liabilities < -20% and revenue growth >= 10%"})
     if ocf_to_ni is not None and ocf_to_ni < 0.6:
         flags.append({"key": "cash_conversion",
                       "label": "Operating cash flow below reported net income",
