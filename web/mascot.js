@@ -37,7 +37,7 @@
   /* ---------- the question ---------- */
   const lang = (q) => (/[㐀-鿿]/.test(String(q || '')) ? 'zh' : 'en');
   const INTENTS = [
-    ['filings', /\bfil(?:ing|ings|ling|lings)\b|\bedgar\b|\b(?:sec\s+)?submissions?\b|(?:latest|recent|newest|last)\s+(?:sec\s+)?(?:reports?|documents?|filings?|fillings?)\b|最新(?:SEC)?(?:申报|披露|文件)|最近(?:一次)?(?:SEC)?(?:申报|披露|提交)|SEC(?:文件|申报)|最新(?:的)?10-[KQ]/i],
+    ['filings', /\bfil(?:ing|ings|ling|lings)\b|\bedgar\b|\b(?:sec\s+)?submissions?\b|(?:latest|recent|newest|last)\s+(?:sec\s+)?(?:reports?|documents?|filings?|fillings?)\b|(?:最新|最近(?:一次)?)(?:的|\s)*(?:SEC\s*)?(?:申报|披露|文件|提交)|SEC\s*(?:文件|申报|披露)/i],
     // widen these when web/flo-questions.js gains a phrasing Flo misses (tests/test_mascot.cjs checks every one)
     ['options', /\boptions?\b|max ?pain|put wall|call wall|option walls?|implied (move|vol|range)|expected move|\d+% range|\biv\b|\bstrikes?\b|expir|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间|预期波动|行权价|到期/i],
     ['industry', /\bindustr(y|ies)\b|\bsector\b|\bpeers?\b|行业|板块|同业/i],
