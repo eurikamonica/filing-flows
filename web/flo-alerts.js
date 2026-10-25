@@ -76,7 +76,7 @@ function explain(e,zh=false){
    if(Number.isFinite(e.price))data.push((zh?'发布的日收盘价：':'Published close: ')+'$'+escape(Number(e.price).toFixed(2)));
    if(Number.isFinite(e.change_pct))data.push((zh?'单日变化：':'Daily change: ')+escape((e.change_pct>=0?'+':'')+e.change_pct.toFixed(2)+'%'));
    data.push((zh?'收盘日期：':'As of close: ')+escape(e.price_asof||''));
-   notes.push(zh?'这是延迟日线信号，并非盘中实时异动；本数据没有因果分析和成交量验证。不能声称股价因某条新闻上涨或下跌。':'Delayed daily-close data, NOT an intraday alert. This feed has no verified causal attribution or volume comparison; do not assert a headline caused the move.');
+   notes.push(zh?'这是延迟日线信号，并非盘中实时异动；本数据没有因果分析和成交量验证。不能声称股价因某条新闻上涨或下跌。':'Delayed daily-close data, NOT live or intraday. This feed has no verified causal attribution or volume comparison; do not assert a headline caused the move.');
  }else{
    notes.push(zh?'仅呈现新闻源的标题及其来源；标题与发行人匹配不等于全文内容已核实，应结合 SEC 申报确认。':'The headline comes from a source feed, not an independent fact check. Issuer matching does not verify the article; cross-check primary SEC documents.');
  }
