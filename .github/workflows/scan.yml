@@ -410,6 +410,42 @@ jobs:
             --base "${{ vars.SITE_URL || needs.deploy.outputs.page_url }}" \
             --run-id "${{ github.run_id }}"
 
+  # IndexNow (scripts/indexnow.py): new, changed or removed pages from the live sitemaps go to Bing, Yandex, Naver,
+  # Seznam and Yep in one request. The last accepted list is kept in the Actions cache; without it, every page is sent.
+  # Google does not take part: it reads sitemap.xml (Search Console). Problems are warnings, never a failed site.
+  indexnow:
+    needs: deploy
+    if: needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/indexnow.py
+            /config/indexnow.json
+      - name: The last accepted list
+        uses: actions/cache/restore@v4
+        with:
+          path: .indexnow
+          key: indexnow-state-${{ github.run_id }}
+          restore-keys: indexnow-state-
+      - name: Send new and changed pages
+        id: submit
+        env:
+          SITE_URL: ${{ vars.SITE_URL || needs.deploy.outputs.page_url }}
+          INDEXNOW_KEY: ${{ vars.INDEXNOW_KEY }}           # optional: replaces the key in config/indexnow.json
+        run: python3 scripts/indexnow.py submit --state .indexnow/state.json
+      - name: Keep the accepted list for the next scan
+        if: steps.submit.outputs.saved == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .indexnow
+          key: indexnow-state-${{ github.run_id }}-${{ github.run_attempt }}
+
   # E-mail alerts to readers who signed up on the site (after the new charts are live, so the links work).
   # Needs the repository variable SUPABASE_URL and the secret SUPABASE_SERVICE_KEY; uses the same MAIL_* secrets.
   # Sending from your own computer instead (scripts/alerts-laptop.ps1)? Leave SUPABASE_SERVICE_KEY out of GitHub.

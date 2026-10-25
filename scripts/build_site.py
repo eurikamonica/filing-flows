@@ -146,6 +146,8 @@ def main():
             base = f"https://{owner.lower()}.github.io/{repo}"
         if base:
             print(f"search pages: {seo.write_pages(data_out, args.out, base)} companies, sitemap at {base}/sitemap.xml")
+        import indexnow                          # /<key>.txt: proves to Bing & co. that the IndexNow pushes are ours
+        indexnow.write_key(args.out)
         try:                                     # the global search index and Atom feeds (redone after the hub is staged)
             import hub_extras
             r = hub_extras.build(args.out, base or "https://filing-flows.com/")
