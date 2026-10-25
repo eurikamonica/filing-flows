@@ -1861,24 +1861,69 @@
     });
   }
 
+  // Avoid overlapping value/change columns on small canvases and long descriptions.
+  // The dedicated snowball card keeps all three requested metrics visible.
   function endCard(ctx, V, W, H, S, th, F, pal, a, portrait) {
-    const rows = V.final.slice(0, portrait ? 10 : V.kind === 'rank' ? 8 : 6);
-    ctx.fillStyle = `rgba(0,0,0,${0.45 * a})`; ctx.fillRect(0, 0, W, H);
-    const w = Math.min(W - 120 * S, (portrait ? 920 : 1100) * S), rh = 74 * S, h = 150 * S + rows.length * rh, x = (W - w) / 2, y = (H - h) / 2 + (1 - a) * 40 * S;
-    ctx.globalAlpha = a; ctx.fillStyle = th.panel; roundRect(ctx, x, y, w, h, 28 * S); ctx.fill();
+    const snow = V.kind === 'snowball' && Array.isArray(V.snowballSummary) && V.snowballSummary.length;
+    const rows = snow ? V.snowballSummary : V.final.slice(0, portrait ? 10 : V.kind === 'rank' ? 8 : 6);
+    const pad = 34 * S, capW = (portrait ? 920 : 1100) * S;
+    const w = Math.min(W - 64 * S, capW);
+    const availableH = H - 72 * S, headerH = snow ? 164 * S : 145 * S;
+    const rh = Math.max(38 * S, Math.min(snow ? 126 * S : 78 * S,
+      (availableH - headerH - 32 * S) / Math.max(1, rows.length)));
+    const h = Math.min(availableH, headerH + rows.length * rh + 24 * S);
+    const x = (W - w) / 2, y = (H - h) / 2 + (1 - a) * 36 * S;
+    ctx.fillStyle = 'rgba(0,0,0,' + (0.45 * a) + ')'; ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = th.panel; roundRect(ctx, x, y, w, h, 24 * S); ctx.fill();
     ctx.strokeStyle = alpha(th.accent, 0.6); ctx.lineWidth = 2 * S; ctx.stroke();
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = th.accent; ctx.font = F(700, 34);
-    ctx.fillText(V.endTitle, x + 40 * S, y + 70 * S);
-    ctx.font = F(500, 22); ctx.fillStyle = th.muted; ctx.fillText(V.endSub, x + 40 * S, y + 108 * S);
-    rows.forEach((r, i) => {
-      const yy = y + 150 * S + i * rh + rh / 2;
-      ctx.fillStyle = r.sec ? secCol(th, r.sec) : pal(r.k); ctx.beginPath(); ctx.arc(x + 54 * S, yy - 10 * S, 12 * S, 0, 7); ctx.fill();
-      ctx.font = F(700, 34); ctx.fillStyle = th.text; ctx.textAlign = 'left'; ctx.fillText(r.label, x + 84 * S, yy);
-      ctx.textAlign = 'right'; ctx.fillText(r.value, x + w - (r.change ? 210 : 40) * S, yy);
-      if (r.change) { ctx.fillStyle = r.up ? '#3ee39a' : '#ff6b6b'; ctx.fillText(r.change, x + w - 40 * S, yy); }
-    });
-    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = th.accent; ctx.font = F(700, 32);
+    ctx.fillText(String(V.endTitle || ''), x + pad, y + 52 * S, w - 2 * pad);
+    ctx.font = F(500, snow ? 18 : 21); ctx.fillStyle = th.muted;
+    ctx.fillText(String(V.endSub || ''), x + pad, y + 84 * S, w - 2 * pad);
+    if (snow) {
+      const cw = (w - 2 * pad) / 3, base = y + 137 * S;
+      ['INITIAL SHARES', 'MONTHLY CASH FLOW', 'FINAL SHARES'].forEach((label, j) => {
+        ctx.font = F(600, 16); ctx.fillStyle = th.muted; ctx.textAlign = 'left';
+        ctx.fillText(label, x + pad + j * cw, base, cw - 9 * S);
+      });
+      rows.forEach((r, i) => {
+        const yy = y + headerH + i * rh;
+        if (i) { ctx.strokeStyle = alpha(th.muted, .2); ctx.beginPath(); ctx.moveTo(x + pad, yy); ctx.lineTo(x + w - pad, yy); ctx.stroke(); }
+        ctx.font = F(700, 23); ctx.fillStyle = pal(r.k); ctx.textAlign = 'left';
+        ctx.fillText(r.ticker, x + pad, yy + 25 * S, w - 2 * pad);
+        [r.initial, r.monthly, r.final].forEach((v, j) => {
+          ctx.font = F(700, 26); ctx.fillStyle = th.text;
+          ctx.fillText(v, x + pad + j * cw, yy + 69 * S, cw - 9 * S);
+        });
+        ctx.font = F(500, 16); ctx.fillStyle = th.muted;
+        ctx.fillText(r.monthlyNote, x + pad + cw, yy + 92 * S, cw - 9 * S);
+      });
+    } else {
+      const usable = w - 2 * pad;
+      rows.forEach((r, i) => {
+        const yy = y + headerH + i * rh + rh * .60;
+        const change = String(r.change || '');
+        const changeW = change ? Math.min(usable * .25, 186 * S) : 0;
+        const valueW = Math.min(usable * .30, 235 * S);
+        const labelW = Math.max(70 * S, usable - valueW - changeW - 22 * S);
+        const right = x + w - pad;
+        ctx.fillStyle = r.sec ? secCol(th, r.sec) : pal(r.k || 0);
+        ctx.beginPath(); ctx.arc(x + pad + 8 * S, yy - 8 * S, 7 * S, 0, Math.PI * 2); ctx.fill();
+        ctx.font = F(700, 27); ctx.fillStyle = th.text; ctx.textAlign = 'left';
+        ctx.fillText(String(r.label || ''), x + pad + 22 * S, yy, labelW - 18 * S);
+        ctx.textAlign = 'right';
+        ctx.fillText(String(r.value || ''), right - changeW - (changeW ? 10 * S : 0), yy, valueW);
+        if (change) {
+          ctx.font = F(650, 24); ctx.fillStyle = r.up ? '#3ee39a' : '#ff6b6b';
+          ctx.fillText(change, right, yy, changeW);
+        }
+      });
+    }
+    ctx.restore();
   }
+
   // the end card's rows and headline, from the last week
   function finish(V, st) {
     const L = V.grid.length - 1, G = V.grid, span = `${dayLabel(G[0])} → ${dayLabel(G[L])}`;
@@ -1926,13 +1971,34 @@
     }
     if (V.kind === 'snowball') {
       V.final = [];
+      V.snowballSummary = [];
       V.series.forEach((s, k) => {
-        const sh = s.sh[L], ys = Object.keys(s.yearly).map(Number).sort(), full = ys.filter((y) => y > ys[0] && y < ys[ys.length - 1]);
-        V.final.push({ k, label: `${s.label} · ${sh.toLocaleString('en-US', { maximumFractionDigits: 1 })} shares`, value: money(s.v[L]), change: `+${(100 * s.fromDiv / Math.max(1e-9, s.bought)).toFixed(0)}% shares`, up: true });
-        if (full.length >= 2) V.final.push({ k, label: `${s.label} dividends ${full[0]} → ${full[full.length - 1]}`, value: money(s.yearly[full[full.length - 1]]), change: pctf(s.yearly[full[full.length - 1]] / Math.max(1e-9, s.yearly[full[0]]) - 1, 0), up: true });
+        const initialShares = s.sh.find(fin);
+        const finalShares = s.sh[L], monthAmounts = {};
+        G.forEach((g, i) => {
+          const month = new Date(g).toISOString().slice(0, 7);
+          monthAmounts[month] = (monthAmounts[month] || 0) + (s.paid[i] || 0);
+        });
+        const recentMonths = Object.keys(monthAmounts).sort().slice(-12);
+        const avgCashPerMonth = recentMonths.reduce((sum, mon) => sum + monthAmounts[mon], 0) / Math.max(1, recentMonths.length);
+        const shfmt = (v) => fin(v) ? Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—';
+        V.snowballSummary.push({
+          k, ticker: s.label, initial: shfmt(initialShares), final: shfmt(finalShares),
+          monthly: money(avgCashPerMonth),
+          monthlyNote: 'Avg/' + recentMonths.length + ' observed mo · reinvested',
+          monthly_cashflow_usd: monthAmounts,
+          initial_shares: initialShares, final_shares: finalShares
+        });
+        V.final.push({ k, label: s.label + ' final shares', value: shfmt(finalShares),
+          change: '+' + (100 * s.fromDiv / Math.max(1e-9, s.bought)).toFixed(0) + '% from DRIP', up: true });
       });
-      V.endTitle = 'The snowball'; V.endSub = `${dayLabel(G[0])} → ${dayLabel(G[L])} · “+% shares”: bought with dividends, on top of the shares paid for`;
-      V.caption = `${V.title}: ` + V.series.map((s) => `${s.label} ${s.sh[L].toFixed(1)} shares (${(100 * s.fromDiv / Math.max(1e-9, s.bought)).toFixed(0)}% more from dividends), ${money(s.v[L])}`).join(' · ');
+      V.endTitle = 'The dividend snowball';
+      V.endSub = dayLabel(G[0]) + ' → ' + dayLabel(G[L]) + ' · paid dividends reinvested; cash flow = gross dividends, not cash withdrawn';
+      V.caption = V.title + ': ' + V.snowballSummary.map(r =>
+        r.ticker + ': ' + r.initial + ' initial shares → ' + r.final + ' final shares; ' +
+        r.monthly + '/month average gross dividends (' + Object.keys(r.monthly_cashflow_usd).slice(-12).length + ' observed calendar months, reinvested)'
+      ).join(' · ');
+      V.notes.add('Monthly cash flow aggregates dividends assigned to the site’s weekly price grid. Average uses up to 12 observed calendar months; it is gross cash reinvested, NOT cash taken out or a guaranteed forward yield.');
       return;
     }
     if (V.kind === 'timing') {
