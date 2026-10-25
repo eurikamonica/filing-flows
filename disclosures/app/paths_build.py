@@ -303,7 +303,7 @@ def build(root, universe_path, people=None, limit=0, workers=None):
         CTX['library'] = AN.build_library(CTX['universe_an'], 60, P.HORIZON, 5, last)
     except Exception:                                                   # noqa: BLE001
         CTX['library'] = None
-    status = {'built_at': now(), 'companies': 0, 'failed': 0, 'errors': []}
+    status = {'built_at': now(), 'companies': 0, 'short_history': 0, 'failed': 0, 'errors': []}
     # 1) the pooled price-action backtest (reused for a week)
     rules_path = pub / 'rules.json'
     rules = read_json(rules_path, {})
@@ -314,9 +314,12 @@ def build(root, universe_path, people=None, limit=0, workers=None):
     # 2) every company
     index = []
     for c, doc, err, secs in _map(_worker, [(str(root), c) for c in comps], workers):
+        if doc is None and not err:                                     # under 300 daily bars (a recent listing)
+            status['short_history'] += 1
+            continue
         if doc is None:
             status['failed'] += 1
-            if err and len(status['errors']) < 20:
+            if len(status['errors']) < 20:
                 status['errors'].append({'ticker': c['t'], **err})
             continue
         (pub / 'c' / f"{int(c['cik'])}.json").write_text(json.dumps(doc, separators=(',', ':'), allow_nan=False), encoding='utf-8')
@@ -326,7 +329,6 @@ def build(root, universe_path, people=None, limit=0, workers=None):
     # 3) the scorecards (weekly), the ledger, the portfolios
     models_path = pub / 'models.json'
     models = read_json(models_path, {})
-    status['errors'] = []
     try:
         if _stale(models.get('built_at')) or limit:
             models = scorecards(root, comps, uni)
