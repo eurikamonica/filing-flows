@@ -4,6 +4,7 @@ const Coach=require('../web/flo-coach.js');
 const WB=require('../web/flo-workbook.js');
 const Real=require('../web/flo-real-workbook.js');
 const SEC=require('../web/flo-real-data.js');
+const Academy=require('../web/flo-academy.js');
 let n=0;
 const ok=(v,msg)=>{assert.ok(v,msg);n++};
 const eq=(x,y,msg)=>{assert.equal(x,y,msg);n++};
@@ -57,6 +58,9 @@ assert.throws(()=>Real.set(waste,'B3','=100'),/read-only/);n++;
 eq(SEC.cases.waste.figures.cumulativePretaxMisstatement,1700,'registry case consistent');
 for(const key of ['worldcom','xerox','waste'])ok(SEC.linkOK(SEC.cases[key].citation),'new case SEC official link');
 
+eq(Academy.match('Xerox valuation'),null,'ordinary Xerox company query not hijacked by SEC case-study router');
+eq(Academy.match('WorldCom accounting case'),'case','explicit WorldCom historical SEC case intent routes');
+eq(Academy.match('Xerox case study'),'case','explicit Xerox case topic routes');
 const w=Coach.simulate({kind:'worldcom',amount:500,life:5});
 eq(w.pretaxOverstatement,500,'capitalization of expense creates $500 pretax profit illusion');
 eq(w.laterAnnualDepreciation,100,'straight line depreciation $500/5');
