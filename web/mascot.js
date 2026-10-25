@@ -254,7 +254,8 @@
   async function filings(c, lg) {
     const secBrowse = 'https://www.sec.gov/edgar/browse/?CIK=' + encodeURIComponent(String(c.cik));
     const links = [[secBrowse, L(lg, 'SEC EDGAR: latest filings of all forms', 'SEC EDGAR：所有表格的最新申报')]];
-    const d = await json(DATA + 'c/' + c.cik + '.json');
+    const d = await fetch(DATA + 'c/' + c.cik + '.json', { cache: 'no-cache' })
+      .then(r => r.ok ? r.json() : null).catch(() => null);
     const qs = ((d && d.quarters) || []).filter(q =>
       q && /^10-[KQ](?:\/A)?$/i.test(String(q.form || '')) &&
       /^\d{4}-\d{2}-\d{2}/.test(String(q.filed || '')));
