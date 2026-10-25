@@ -3,9 +3,11 @@ on:
   pull_request:
     paths:
       - 'web/flo-academy.js'
+      - 'web/flo-workbook.js'
       - 'web/mascot.js'
       - 'web/app.js'
       - 'tests/test_flo_academy.cjs'
+      - 'tests/test_flo_workbook.cjs'
       - 'tests/test_mascot.cjs'
       - '.github/workflows/flo-academy-checks.yml'
   workflow_dispatch:
@@ -32,8 +34,10 @@ jobs:
         run: |
           node --check web/mascot.js
           node --check web/flo-academy.js
+          node --check web/flo-workbook.js
           node --check web/app.js
       - name: Run old and new Flo tests
         run: |
           node tests/test_mascot.cjs
           node tests/test_flo_academy.cjs
+          node tests/test_flo_workbook.cjs
