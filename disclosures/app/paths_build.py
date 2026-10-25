@@ -39,6 +39,26 @@ SCORE_DAYS = 7                                # the scorecards are recomputed wh
 SCORE_TICKERS = 40
 SCORE_EVERY = 126                             # trading days between walk-forward origins
 LEDGER_KEEP = 120                             # frozen weeks kept
+DRIFT = math.log(1.07) / 252                  # the drift every asset is given: about 7% a year, the long-run stock average
+
+
+def neutral(R):
+    """Each column's average daily log return over the window replaced by DRIFT: the paths describe risk around a
+    neutral drift instead of extending the last three years' trend (a stock that doubled would otherwise be projected
+    to keep doubling). Volatility, fat tails and co-movement are untouched."""
+    R = np.asarray(R, dtype=float)
+    return R - R.mean(axis=0, keepdims=True) + DRIFT
+
+
+def crash(sims, j, a=0, q=0.10, thr=math.log(0.9)):
+    """In the paths where asset j ends in its worst 10%, the share where asset a ends 10% or more lower, with asset j's
+    move at that 10th percentile and the correlation of the two assets' final returns."""
+    fa, fb = sims[:, -1, a], sims[:, -1, j]
+    cut = float(np.quantile(fb, q))
+    sel = fb <= cut
+    return {'p_stock_down10': float(np.mean(fa[sel] < thr)) if sel.sum() >= 10 else None, 'worst10': math.expm1(cut),
+            'corr': float(np.corrcoef(fa, fb)[0, 1]) if np.std(fa) > 0 and np.std(fb) > 0 else None,
+            'p_stock_down10_all': float(np.mean(fa < thr))}
 
 
 def sig(x, n=4):
@@ -139,7 +159,7 @@ def company(root, c, ctx):
         pool = []
         for k, m in enumerate(PM.MODELS):
             try:
-                sims = PM.simulate(R, m, horizon=P.HORIZON, n=P.N_PATHS, seed=1000 + k + int(c['cik'] or 0) % 997)
+                sims = PM.simulate(neutral(R), m, horizon=P.HORIZON, n=P.N_PATHS, seed=1000 + k + int(c['cik'] or 0) % 997)
             except Exception as exc:                                    # noqa: BLE001
                 pp['models'][m] = {'error': str(exc)[:160]}
                 continue
@@ -148,7 +168,7 @@ def company(root, c, ctx):
             row = {'q': q, 'end': s['end'], **{x: s.get(x) for x in ('p_down10', 'p_up10', 'p_down20', 'p_up20', 'p_touch_down10', 'vol')},
                    'mdd': s.get('mdd'), 'joint': {}}
             for role, j in col.items():
-                row['joint'][role] = PM.joint(sims, a=0, b=j, thr=-0.10)
+                row['joint'][role] = crash(sims, j)
             pp['models'][m] = row
             pool.append(sims[: max(1, P.N_PATHS // 2)])
         if pool:
@@ -156,7 +176,7 @@ def company(root, c, ctx):
             s = PM.summarize(ens, price0, col=0, qs=QS)
             q, idx = fan(s)
             pp['ensemble'] = {'q': q, 'end': s['end'], **{x: s.get(x) for x in ('p_down10', 'p_up10', 'p_down20', 'p_up20', 'p_touch_down10', 'vol')},
-                              'mdd': s.get('mdd'), 'joint': {role: PM.joint(ens, a=0, b=j, thr=-0.10) for role, j in col.items()},
+                              'mdd': s.get('mdd'), 'joint': {role: crash(ens, j) for role, j in col.items()},
                               'sample': [[p[i] for i in idx] for p in PM.sample_paths(ens, price0, col=0, k=30, seed=7)]}
             pp['days'] = [fut[i] for i in idx]
         out['paths'] = pp
@@ -182,7 +202,16 @@ def company(root, c, ctx):
         ov['fvgs'] = [z for z in ov.get('fvgs') or [] if z.get('status') != 'filled'][-15:]
         ov['order_blocks'] = [z for z in ov.get('order_blocks') or [] if z.get('status') != 'filled'][-10:]
         stats = ctx.get('rule_stats') or {}
-        out['pa'] = {'state': st, 'overlays': ov, 'signals': [{**e, 'stats': stats.get(e.get('rule'))} for e in st.get('recent') or []]}
+        recent = st.pop('recent', None) or []
+        # the chart's markers: signals of rules with some evidence, and every signal of the last ten bars, as arrays
+        C = ov.get('candles') or []
+        last10 = C[-10][0] if len(C) >= 10 else ''
+        has_ev = lambda rid: any(v != 'none' for v in ((stats.get(rid) or {}).get('evidence') or {}).values())
+        ov['events'] = [[e['date'], e['rule'], e['dir'], e.get('price')] for e in ov.get('events') or [] if e['date'] >= last10 or has_ev(e['rule'])]
+        dn = ov.get('donchian') or {}
+        ov['donchian'] = {k: dn.get(k) for k in ('upper20', 'lower20')} if dn.get('dates') == [c[0] for c in C] else {}
+        out['pa'] = {'state': st, 'overlays': ov,
+                     'signals': [{**{k: e.get(k) for k in ('date', 'rule', 'name', 'dir', 'family')}, 'stats': stats.get(e.get('rule'))} for e in recent]}
     except Exception as exc:                                            # noqa: BLE001
         out['pa'] = {'error': str(exc)[:160]}
     return rnd(out)
@@ -340,7 +369,7 @@ def index_row(d):
     peers = (d.get('analogs') or {}).get('peers') or []
     return [d.get('cik'), d.get('ticker'), d.get('name'), d.get('sector'), d.get('price'), d.get('as_of'),
             pct(end.get('p50')), pct(end.get('p10')), pct(end.get('p90')), e.get('p_down10'), e.get('p_up10'), e.get('vol'),
-            (e.get('mdd') or {}).get('p50'), ((e.get('joint') or {}).get('market') or {}).get('p_a_given_b'),
+            (e.get('mdd') or {}).get('p50'), ((e.get('joint') or {}).get('market') or {}).get('p_stock_down10'),
             ((d.get('analogs') or {}).get('self') or {}).get('p_up'), ((d.get('analogs') or {}).get('peer') or {}).get('p_up'),
             _get(st, 'brooks', 'always_in'), _get(st, 'structure', 'trend'),
             sum(1 for s in sigs if s.get('dir') == 'bull' and strong(s)), sum(1 for s in sigs if s.get('dir') == 'bear' and strong(s)),
@@ -371,12 +400,15 @@ def pooled_rules(root, tickers, workers):
 
 
 def slim_stats(s):
-    """What a company page shows beside a signal: the evidence grades and the out-of-sample results."""
+    """What a company page shows beside a signal: the evidence grades and the out-of-sample 20-day result."""
     if not s:
         return None
     H = s.get('horizons') or {}
-    return {'evidence': s.get('evidence'), 'sign': s.get('evidence_sign'), 'n_oos': s.get('n_oos'),
-            'oos': {h: {k: (H.get(h) or {}).get('oos', {}).get(k) for k in ('n', 'mean', 'hit', 't', 'p')} for h in ('5', '20', '60')}}
+    pick = lambda d, h: d.get(h, d.get(str(h), d.get(int(h)) if str(h).isdigit() else None)) if isinstance(d, dict) else None
+    o = (pick(H, '20') or {}).get('oos') or {}
+    return {'evidence': {h: pick(s.get('evidence') or {}, h) for h in ('5', '20', '60')},
+            'sign': {h: pick(s.get('evidence_sign') or {}, h) for h in ('5', '20', '60')}, 'n_oos': s.get('n_oos'),
+            'oos20': {k: o.get(k) for k in ('n', 'mean', 'hit')}}
 
 
 # ------------------------------------------------------------------ the walk-forward scorecards (a fixed sample)
@@ -406,11 +438,8 @@ def scorecards(root, comps, uni):
         origins = list(range(P.WINDOW, T - P.HORIZON, SCORE_EVERY))
         if not origins:
             continue
-        try:
-            res = PM.evaluate_all(R, origins, horizon=P.HORIZON, window=P.WINDOW, n=300, seed=11)
-        except Exception:                                               # noqa: BLE001
-            continue
-        for m, r in (res or {}).items():
+        res = score_paths(R, origins)
+        for m, r in res.items():
             a = acc.setdefault(m, {'n': 0, 'cover80': 0.0, 'cover50': 0.0, 'pinball': 0.0, 'width80': 0.0})
             n = r.get('n') or 0
             if not n:
@@ -422,7 +451,7 @@ def scorecards(root, comps, uni):
     for m, a in acc.items():
         n = a['n'] or 1
         out['paths'][m] = {'n': a['n'], **{k: a[k] / n for k in ('cover80', 'cover50', 'pinball', 'width80')}}
-    base = (out['paths'].get('naive') or {}).get('pinball')
+    base = (out['paths'].get('naive_normal') or {}).get('pinball')
     for m, r in out['paths'].items():
         r['skill'] = 1 - r['pinball'] / base if base else None
     for meth in ('self', 'pooled', 'peer', 'leadlag', 'naive'):
@@ -435,6 +464,40 @@ def scorecards(root, comps, uni):
         except Exception as exc:                                        # noqa: BLE001
             out['analogs'][meth] = {'error': str(exc)[:160]}
     return out
+
+
+QGRID = np.arange(0.05, 0.951, 0.05)
+
+
+def score_paths(R, origins, n=300):
+    """Walk-forward check of every path model, the ensemble and a naive normal baseline on column 0, exactly as the
+    site publishes them: at each origin only the WINDOW days before it, with the neutral drift; the realized 63-day
+    log return of the stock is compared with the simulated distribution. Per method: forecasts, the share inside the
+    10–90% and 25–75% ranges, the mean width of the 80% range and the mean pinball loss over the 5%…95% quantiles."""
+    res = {}
+    for o in origins:
+        Rw = neutral(R[o - P.WINDOW:o])
+        y = float(R[o:o + P.HORIZON, 0].sum())
+        finals = {}
+        for k, m in enumerate(PM.MODELS):
+            try:
+                finals[m] = PM.simulate(Rw, m, horizon=P.HORIZON, n=n, seed=o + k)[:, -1, 0]
+            except Exception:                                           # noqa: BLE001
+                continue
+        if finals:
+            finals['ensemble'] = np.concatenate([v[: n // 2] for v in finals.values()])
+        mu, sd = Rw[:, 0].mean(), Rw[:, 0].std()
+        finals['naive_normal'] = np.random.default_rng(o).normal(mu * P.HORIZON, sd * math.sqrt(P.HORIZON), n)
+        for m, f in finals.items():
+            q = np.quantile(f, QGRID)
+            a = res.setdefault(m, {'n': 0, 'in80': 0, 'in50': 0, 'w80': 0.0, 'pin': 0.0})
+            a['n'] += 1
+            a['in80'] += int(q[1] <= y <= q[17])
+            a['in50'] += int(q[4] <= y <= q[14])
+            a['w80'] += math.expm1(q[17]) - math.expm1(q[1])
+            a['pin'] += float(np.mean(np.maximum(QGRID * (y - q), (QGRID - 1) * (y - q))))
+    return {m: {'n': a['n'], 'cover80': a['in80'] / a['n'], 'cover50': a['in50'] / a['n'], 'width80': a['w80'] / a['n'],
+                'pinball': a['pin'] / a['n']} for m, a in res.items() if a['n']}
 
 
 # ------------------------------------------------------------------ the ledger: each Friday's forecasts frozen, then scored
@@ -541,20 +604,20 @@ def portfolio_doc(name, holdings, uni, seed):
     pool = []
     for k, m in enumerate(PM.MODELS):
         try:
-            sims = PM.simulate(R, m, horizon=P.HORIZON, n=P.N_PATHS, seed=seed + k, factors=(1,))
+            sims = PM.simulate(neutral(R), m, horizon=P.HORIZON, n=P.N_PATHS, seed=seed + k, factors=(1,))
         except Exception:                                               # noqa: BLE001
             continue
         s = PM.summarize(sims, price0, col=0, qs=QS)
         q, idx = fan(s)
         out['models'][m] = {'q': q, 'end': s['end'], 'p_down10': s.get('p_down10'), 'p_up10': s.get('p_up10'), 'mdd': s.get('mdd'),
-                            'vol': s.get('vol'), 'joint': {'market': PM.joint(sims, 0, 1, -0.10)} if R.shape[1] > 1 else {}}
+                            'vol': s.get('vol'), 'joint': {'market': crash(sims, 1)} if R.shape[1] > 1 else {}}
         pool.append(sims[: P.N_PATHS // 2])
     if pool:
         ens = np.concatenate(pool)
         s = PM.summarize(ens, price0, col=0, qs=QS)
         q, idx = fan(s)
         out['ensemble'] = {'q': q, 'end': s['end'], 'p_down10': s.get('p_down10'), 'p_up10': s.get('p_up10'), 'mdd': s.get('mdd'),
-                           'vol': s.get('vol'), 'joint': {'market': PM.joint(ens, 0, 1, -0.10)} if R.shape[1] > 1 else {}}
+                           'vol': s.get('vol'), 'joint': {'market': crash(ens, 1)} if R.shape[1] > 1 else {}}
     out['as_of'] = dates[-1]
     return rnd(out)
 

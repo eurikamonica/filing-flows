@@ -29,14 +29,14 @@
   function css() {
     if (typeof document === 'undefined' || !document.head || document.getElementById('pv-css')) return;
     const s = document.createElement('style'); s.id = 'pv-css';
-    s.textContent = `.pv svg{display:block;width:100%;height:auto}.pv h3{margin:22px 0 6px;font-size:17px}.pv h4{margin:16px 0 4px;font-size:14.5px}
+    s.textContent = `.pv svg{display:block;width:100%;height:auto;max-width:860px}.pv h3{margin:22px 0 6px;font-size:17px}.pv h4{margin:16px 0 4px;font-size:14.5px}
 .pv .pv-sub{color:var(--muted,#777);font-size:13px;line-height:1.55;margin:0 0 10px;max-width:90ch}.pv .pv-g{stroke:var(--line,#e3e3e3);stroke-width:1}
 .pv .pv-t{fill:var(--muted,#777);font-size:11px}.pv .pv-l{fill:var(--ink,#222);font-size:11.5px;paint-order:stroke;stroke:var(--surface,#fff);stroke-width:3px}
 .pv-pills{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.pv-pill{font:inherit;font-size:12.5px;border:1px solid var(--line,#ddd);background:none;border-radius:999px;padding:3px 10px;cursor:pointer;color:var(--muted,#666)}
 .pv-pill.on{color:var(--ink,#222);border-color:var(--ink,#222);font-weight:600}
 .pv-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:6px 0 10px}.pv-card{border:1px solid var(--line,#ddd);border-radius:10px;padding:8px 10px;min-width:0}
 .pv-card span{display:block;font-size:12px;color:var(--muted,#777)}.pv-card b{font-size:18px;font-variant-numeric:tabular-nums}.pv-card i{display:block;font-style:normal;font-size:12px;color:var(--muted,#777)}
-.pv-wrap{overflow-x:auto;max-width:100%}.pv-tbl{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 8px}.pv-tbl th,.pv-tbl td{padding:5px 8px;border-bottom:1px solid var(--line,#e5e5e5);text-align:left;vertical-align:top}
+.pv-wrap{overflow-x:auto;max-width:100%}.pv-tbl{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 8px}.pv-tbl th,.pv-tbl td{padding:5px 8px;border-bottom:1px solid var(--line,#e5e5e5);text-align:left;vertical-align:top;white-space:normal}
 .pv-tbl .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.pv-tbl th{font-weight:600;color:var(--muted,#666);font-size:12px}.pv-tbl tr.on td{background:color-mix(in srgb,var(--ink,#222) 5%,transparent)}
 .pv-x{max-width:84ch}.pv-x p{margin:5px 0;font-size:13.5px;line-height:1.55}.pv-x b{font-weight:600}.pv-terms{font-size:12.5px;color:var(--muted,#666);line-height:1.6}
 .pv-apx{border:1px solid var(--line,#ddd);border-radius:10px;padding:6px 12px;margin:6px 0;max-width:980px}.pv-apx summary{cursor:pointer;font-size:13.5px;line-height:1.6}
@@ -114,7 +114,7 @@
     h += `<div class="pv-cards">${card('Median in 63 days', px(end.p50), chg(end.p50, p0))}${card('80% range', `${px(end.p10)} – ${px(end.p90)}`, `${chg(end.p10, p0, 0)} to ${chg(end.p90, p0, 0)}`)}`
       + `${card('Ends 10%+ lower', pct(sel.p_down10), `20%+ lower: ${pct(sel.p_down20)}`, 'pv-down')}${card('Ends 10%+ higher', pct(sel.p_up10), `20%+ higher: ${pct(sel.p_up20)}`, 'pv-up')}`
       + `${card('Touches −10% on the way', pct(sel.p_touch_down10), 'at any point')}${card('Typical worst drawdown', pct((sel.mdd || {}).p50), `1 in 10 paths: ${pct((sel.mdd || {}).p90)}`)}`
-      + `${card('If the market falls 10%', fin(jm.p_a_given_b) ? pct(jm.p_a_given_b) : '—', 'chance the stock falls 10% too')}${card('If its sector falls 10%', fin(js.p_a_given_b) ? pct(js.p_a_given_b) : '—', 'chance the stock falls 10% too')}`
+      + `${card("In the market's worst 10% of paths", fin(jm.p_stock_down10) ? pct(jm.p_stock_down10) : '—', fin(jm.worst10) ? `SPY ${spct(jm.worst10, 0)} or worse: chance the stock ends 10%+ lower` : '')}${card("In its sector's worst 10%", fin(js.p_stock_down10) ? pct(js.p_stock_down10) : '—', fin(js.worst10) ? `sector ETF ${spct(js.worst10, 0)} or worse` : '')}`
       + `${card('Volatility', pct(sel.vol), 'annualized, simulated')}</div>`;
     h += fanSvg(sel.q, p0, P.days, { sample: key === 'ensemble' ? P.ensemble.sample : null }) + fanLegend(key === 'ensemble' ? `<span><b style="background:${COL.path}"></b>30 sample paths</span>` : '');
     const x = key === 'ensemble' ? (G.models || {}).ensemble : (G.models || {})[key];
@@ -124,10 +124,10 @@
     const rows = ORDER.filter((m) => (m === 'ensemble' ? P.ensemble : (P.models || {})[m]) && !((P.models || {})[m] || {}).error).map((m) => {
       const r = m === 'ensemble' ? P.ensemble : P.models[m], e = r.end || {}, sc = S[m] || {}, j = (r.joint || {}).market || {};
       return `<tr class="${m === key ? 'on' : ''}"><td><button type="button" class="pv-pill${m === key ? ' on' : ''}" data-pvm="${m}">${esc(SHORT[m])}</button></td><td class="n">${px(e.p50)}</td><td class="n">${px(e.p10)} – ${px(e.p90)}</td>`
-        + `<td class="n">${pct(r.p_down10)}</td><td class="n">${pct(r.p_up10)}</td><td class="n">${pct((r.mdd || {}).p50)}</td><td class="n">${fin(j.p_a_given_b) ? pct(j.p_a_given_b) : '—'}</td>`
+        + `<td class="n">${pct(r.p_down10)}</td><td class="n">${pct(r.p_up10)}</td><td class="n">${pct((r.mdd || {}).p50)}</td><td class="n">${fin(j.p_stock_down10) ? pct(j.p_stock_down10) : '—'}</td>`
         + `<td class="n">${fin(sc.cover80) ? pct(sc.cover80) : '—'}</td><td class="n">${fin(sc.skill) ? spct(sc.skill, 1) : '—'}</td></tr>`;
     }).join('');
-    h += `<h4>Every model side by side</h4><div class="pv-wrap"><table class="pv-tbl"><thead><tr><th>Model</th><th class="n">Median</th><th class="n">80% range</th><th class="n">P(−10%)</th><th class="n">P(+10%)</th><th class="n">Typical drawdown</th><th class="n">Falls with the market</th><th class="n">Scorecard: 80% range held</th><th class="n">Skill vs naive</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    h += `<h4>Every model side by side</h4><div class="pv-wrap"><table class="pv-tbl"><thead><tr><th>Model</th><th class="n">Median</th><th class="n">80% range</th><th class="n">P(−10%)</th><th class="n">P(+10%)</th><th class="n">Typical drawdown</th><th class="n">P(−10%) in the market's worst 10%</th><th class="n">Scorecard: 80% range held</th><th class="n">Skill vs naive</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     h += `<p class="pv-sub">${esc(G.scorecard || '')}${M && M.tickers ? ` Sample: ${M.tickers.length} companies; built ${esc((M.built_at || '').slice(0, 10))}.` : ' The scorecard is computed weekly.'}</p>`;
     return h;
   }
@@ -171,12 +171,13 @@
   }
 
   /* ---------- 3. price action (filled in by priceSection below) ---------- */
-  function evidenceTag(ev, h = '20') {
+  function evidenceTag(ev, h = '20', sign) {
     const g = ev && typeof ev === 'object' ? (ev[h] || ev[String(h)] || 'none') : (ev || 'none');
-    return `<span class="pv-ev ${esc(g)}">${esc(g)}</span>`;
+    const opp = sign && typeof sign === 'object' && (sign[h] || sign[String(h)]) === -1 && g !== 'none';
+    return `<span class="pv-ev ${esc(g)}"${opp ? ' title="Reliably followed by the opposite of what the rule promises"' : ''}>${esc(g)}${opp ? ' · opposite' : ''}</span>`;
   }
   const LAYERS = [['levels', 'Support, resistance, supply / demand'], ['smc', 'FVG & order blocks'], ['structure', 'Swings & BOS / CHoCH'], ['elliott', 'Elliott'],
-    ['donchian', 'Donchian 20'], ['profile', 'Volume profile'], ['signals', 'Signals with evidence'], ['all', 'All signals']];
+    ['donchian', 'Donchian 20'], ['profile', 'Volume profile'], ['signals', 'Signals']];
   const evOf = (stats, h = '20') => ((stats || {}).evidence || {})[h] || 'none';
   function candleSvg(d, RU, st) {
     const ov = (d.pa || {}).overlays || {}, S = (d.pa || {}).state || {}, C = ov.candles || [];
@@ -211,7 +212,7 @@
       [['poc', 'POC', '4 3'], ['vah', 'VAH', '2 3'], ['val', 'VAL', '2 3']].forEach(([k, l, dsh]) => { if (inY(pf[k])) g += `<line x1="${Lm}" x2="${W - Rm}" y1="${sy(pf[k])}" y2="${sy(pf[k])}" style="stroke:${COL.zone};stroke-dasharray:${dsh};opacity:.8"><title>${l} (60 days) ${px(pf[k])}</title></line>`; });
     }
     if (on('donchian') && ov.donchian) {
-      const D = ov.donchian, line = (arr) => (D.dates || []).map((dt, i) => (fin(arr[i]) && at.has(dt) ? `${sx(at.get(dt)).toFixed(1)},${sy(arr[i]).toFixed(1)}` : null)).filter(Boolean).join(' ');
+      const D = ov.donchian, line = (arr) => C.map((c, i) => (fin(arr[i]) ? `${sx(i).toFixed(1)},${sy(arr[i]).toFixed(1)}` : null)).filter(Boolean).join(' ');
       g += `<polyline points="${line(D.upper20 || [])}" style="fill:none;stroke:${COL.mute};stroke-width:1;stroke-dasharray:5 3"/><polyline points="${line(D.lower20 || [])}" style="fill:none;stroke:${COL.mute};stroke-width:1;stroke-dasharray:5 3"/>`;
     }
     C.forEach((c, i) => {
@@ -231,11 +232,12 @@
       const pts = ov.elliott.filter((w) => at.has(w.date));
       if (pts.length > 1) g += `<polyline points="${pts.map((w) => `${sx(at.get(w.date)).toFixed(1)},${sy(w.price).toFixed(1)}`).join(' ')}" style="fill:none;stroke:${COL.warn};stroke-width:1.6"/>` + pts.map((w) => `<text class="pv-l" x="${sx(at.get(w.date))}" y="${sy(w.price) - 7}" text-anchor="middle" style="font-size:11px;font-weight:600">${esc(w.wave)}</text>`).join('');
     }
-    if (on('signals') || on('all')) {
-      const last10 = C.length > 10 ? C[C.length - 10][0] : C[0][0];
-      (ov.events || []).filter((e) => at.has(e.date) && (on('all') || ['strong', 'moderate'].includes(evOf(stats[e.rule])) || e.date >= last10)).forEach((e) => {
-        const i = at.get(e.date), c = C[i], x = sx(i), bull = e.dir === 'bull', y = bull ? sy(c[3]) + 9 : sy(c[2]) - 9, r = (RU && RU.rules || []).find((q) => q.id === e.rule);
-        g += `<path d="${bull ? `M${x - 4},${y + 4}L${x + 4},${y + 4}L${x},${y - 3}Z` : `M${x - 4},${y - 4}L${x + 4},${y - 4}L${x},${y + 3}Z`}" style="fill:${bull ? COL.up : COL.down};opacity:.85"><title>${esc(mdy(e.date))}: ${esc((r || {}).name || e.rule)} (${bull ? 'bullish' : 'bearish'}) · evidence ${esc(evOf(stats[e.rule]))}</title></path>`;
+    if (on('signals')) {
+      const stack = {};
+      (ov.events || []).filter((e) => at.has(e[0])).forEach(([dte, rule, dir]) => {
+        const i = at.get(dte), c = C[i], x = sx(i), bull = dir === 'bull', k = dte + dir, off = (stack[k] = (stack[k] || 0) + 1) - 1;
+        const y = bull ? sy(c[3]) + 9 + off * 7 : sy(c[2]) - 9 - off * 7, r = (RU && RU.rules || []).find((q) => q.id === rule);
+        g += `<path d="${bull ? `M${x - 4},${y + 4}L${x + 4},${y + 4}L${x},${y - 3}Z` : `M${x - 4},${y - 4}L${x + 4},${y - 4}L${x},${y + 3}Z`}" style="fill:${bull ? COL.up : COL.down};opacity:.85"><title>${esc(mdy(dte))}: ${esc((r || {}).name || rule)} (${bull ? 'bullish' : 'bearish'}) · evidence over 20 days: ${esc(evOf(stats[rule]))}</title></path>`;
       });
     }
     g += '</g>';
@@ -280,9 +282,9 @@
     const sigs = (pa.signals || []).slice().reverse();
     h += `<h4>Signals of the last ten trading days</h4>`;
     h += sigs.length ? `<div class="pv-wrap"><table class="pv-tbl"><thead><tr><th>Date</th><th>Signal</th><th>Direction</th><th>Evidence 5 · 20 · 60 days</th><th class="n">Out of sample, 20 days: excess return</th><th class="n">Hit rate</th><th class="n">Signals</th></tr></thead><tbody>${sigs.map((x) => {
-      const r = R[x.rule] || {}, s = x.stats || {}, o = ((s.oos || {})['20']) || {};
+      const r = R[x.rule] || {}, s = x.stats || {}, o = s.oos20 || {};
       return `<tr><td>${esc(md(x.date))}</td><td><details><summary><b>${esc(x.name || r.name || x.rule)}</b> <span class="pv-sub" style="display:inline">${esc(((G.families || {})[x.family] || {}).name || x.family || '')}${r.subjective ? ', subjective' : ''}</span></summary><div class="pv-x"><p>${esc(r.what || '')}</p>${r.rule ? `<p><b>Rule used.</b> ${esc(r.rule)}</p>` : ''}${r.source ? `<p class="pv-terms">Source: ${esc(r.source)}</p>` : ''}</div></details></td>`
-        + `<td class="${x.dir === 'bull' ? 'pv-up' : 'pv-down'}">${x.dir === 'bull' ? '▲ bullish' : '▼ bearish'}</td><td>${['5', '20', '60'].map((hh) => evidenceTag(s.evidence, hh)).join(' ')}</td>`
+        + `<td class="${x.dir === 'bull' ? 'pv-up' : 'pv-down'}">${x.dir === 'bull' ? '▲ bullish' : '▼ bearish'}</td><td>${['5', '20', '60'].map((hh) => evidenceTag(s.evidence, hh, s.sign)).join(' ')}</td>`
         + `<td class="n">${fin(o.mean) ? spct(o.mean, 2) : '—'}</td><td class="n">${fin(o.hit) ? pct(o.hit) : '—'}</td><td class="n">${num(o.n)}</td></tr>`;
     }).join('')}</tbody></table></div>` : '<p class="pv-sub">No rule fired in the last ten trading days.</p>';
     const E = G.evidence || {};
@@ -348,7 +350,7 @@
     let h = `<h3>Portfolio price paths — next 63 trading days</h3><p class="pv-sub">${p.approximate ? 'An approximation: officials disclose transactions in ranges, not positions, so the portfolio is their purchases minus sales over two years at the midpoint of each range. ' : 'The latest 13F, weighted by value. '}${pct(p.coverage)} of the weight has daily bars; the rest is left out and the weights renormalized. Simulated with the S&P 500 ETF by seven models; the portfolio starts at 100.</p>`;
     h += `<div class="pv-pills" role="group" aria-label="Model">${ORDER.filter((m) => m === 'ensemble' ? p.ensemble : (p.models || {})[m]).map((m) => `<button type="button" class="pv-pill${m === key ? ' on' : ''}" data-pvpm="${m}">${esc(SHORT[m])}</button>`).join('')}</div>`;
     h += `<div class="pv-cards">${card('Median in 63 days', ix(e.p50))}${card('80% range', `${ix(e.p10)} to ${ix(e.p90)}`)}${card('Ends 10%+ lower', pct(sel.p_down10), '', 'pv-down')}${card('Ends 10%+ higher', pct(sel.p_up10), '', 'pv-up')}`
-      + `${card('Typical worst drawdown', pct((sel.mdd || {}).p50), `1 in 10 paths: ${pct((sel.mdd || {}).p90)}`)}${card('If the market falls 10%', fin(j.p_a_given_b) ? pct(j.p_a_given_b) : '—', 'chance the portfolio falls 10% too')}${card('Volatility', pct(sel.vol), 'annualized')}</div>`;
+      + `${card('Typical worst drawdown', pct((sel.mdd || {}).p50), `1 in 10 paths: ${pct((sel.mdd || {}).p90)}`)}${card("In the market's worst 10% of paths", fin(j.p_stock_down10) ? pct(j.p_stock_down10) : '—', fin(j.worst10) ? `SPY ${spct(j.worst10, 0)} or worse: chance the portfolio ends 10%+ lower` : '')}${card('Volatility', pct(sel.vol), 'annualized')}</div>`;
     const days = []; let d = new Date((p.as_of || '2026-01-01') + 'T00:00:00Z');
     while (days.length < 63) { d = new Date(d.getTime() + 864e5); if (d.getUTCDay() % 6) days.push(d.toISOString().slice(0, 10)); }
     const lab = []; for (let i = 4; i < 63; i += 5) lab.push(days[i]); if (lab.length < sel.q.length) lab.push(days[62]);

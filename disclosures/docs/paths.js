@@ -47,9 +47,9 @@ function pathsView(){
  const med=a=>{a=a.filter(v=>v!=null).sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:null};
  out+=`<div class="metrics">${kpi('Companies',fmt(rows.length),'with daily bars and paths')}${kpi('Median chance of a 10% fall',pvP(med(rows.map(r=>r.p_down10))),'in 13 weeks, ensemble')}${kpi('Median chance of a 10% rise',pvP(med(rows.map(r=>r.p_up10))),'in 13 weeks, ensemble')}${kpi('Median volatility',pvP(med(rows.map(r=>r.vol))),'annualized')}</div>`;
  out+=`<div class="section-head"><h3>Every company</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- return out+table(['Company','Price','Median in 13 weeks','80% range','P(−10%)','P(+10%)','Volatility','Falls with the market','Analogs: share that rose','Always in','Structure','Signals with evidence','Moves most with'],
+ return out+table(['Company','Price','Median in 13 weeks','80% range','P(−10%)','P(+10%)','Volatility','P(−10%) in the market\'s worst 10%','Analogs: share that rose','Always in','Structure','Signals with evidence','Moves most with'],
   R.slice(0,400).map(r=>[`<button class="text-button" data-pvco="${esc(r.ticker)}"><b>${esc(r.ticker)}</b></button> <span class="muted">${esc(r.name||'')}</span>`,fmt(r.price,2),pvS(r.p50),`${pvS(r.p10)} – ${pvS(r.p90)}`,pvP(r.p_down10),pvP(r.p_up10),pvP(r.vol),pvP(r.crash_market),pvP(r.self_up),esc(r.always_in||'—'),esc(r.structure||'—'),`<span class="positive">${fmt(r.bull_signals||0)}↑</span> <span class="negative">${fmt(r.bear_signals||0)}↓</span>`,esc(r.top_peer||'—')]))
-  +`<div class="explain">Ensemble of seven path models (joint and block bootstrap, filtered historical simulation, factor model, Cholesky, t-copula, DCC-GARCH) on three years of daily returns of the stock, the S&P 500 ETF, its sector ETF and its two most correlated peers. "Falls with the market": the chance the stock ends 10% lower in the paths where the market does. Signals: price-action signals of the last ten days whose rule has moderate or strong out-of-sample evidence.</div>`;
+  +`<div class="explain">Ensemble of seven path models (joint and block bootstrap, filtered historical simulation, factor model, Cholesky, t-copula, DCC-GARCH) on three years of daily returns of the stock, the S&P 500 ETF, its sector ETF and its two most correlated peers. The market column: the chance the stock ends 10% lower in the market's worst 10% of paths. Every asset gets the same neutral drift (about 7% a year), so the ranges describe risk, not the last years' trend. Signals: price-action signals of the last ten days whose rule has moderate or strong out-of-sample evidence.</div>`;
 }
 function pvRules(){
  const g=pvData('rules');if(g.err)return empty(`The rules could not load (${g.err}).`);if(!g.data)return empty('Loading the rules…');
@@ -63,7 +63,7 @@ function pvRules(){
  exported=R.map(r=>({id:r.id,name:r.name,family:r.family,evidence_20d:evd(r,'20')}));
  return out+table(['Rule','Family','Signals (in / out of sample)','Out of sample, 5 days','20 days','60 days','Hit rate (20 days)','Evidence 5 · 20 · 60'],
   R.map(r=>{const s=r.stats||{};return [`<b>${esc(r.name)}</b>${r.subjective?' <span class="muted">(subjective)</span>':''}<br><span class="muted" style="white-space:normal;display:block;max-width:420px">${esc(r.what||'')}</span>`,esc(r.family),`${fmt(s.n_is)} / ${fmt(s.n_oos)}`,
-   ...H.map(h=>{const o=st(r,h);return o.mean==null?'—':`${pvS(o.mean)} <span class="muted">t ${fmt(o.t,1)}</span>`}),pvP((st(r,'20')||{}).hit),H.map(h=>pvEv(evd(r,h))).join(' ')]}));
+   ...H.map(h=>{const o=st(r,h);return o.mean==null?'—':`${pvS(o.mean)} <span class="muted">t ${fmt(o.t,1)}</span>`}),pvP((st(r,'20')||{}).hit),H.map(h=>pvEv(evd(r,h))+(((r.stats||{}).evidence_sign||{})[h]===-1&&evd(r,h)!=='none'?' <span class="muted">opposite</span>':'')).join(' ')]}));
 }
 function pvModels(){
  const g=pvData('models');if(g.err)return empty(`The scorecard could not load (${g.err}).`);if(!g.data)return empty('Loading the scorecard…');

@@ -120,3 +120,74 @@ class Portfolios(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class Build(unittest.TestCase):
+    """The whole build on synthetic bars: six correlated stocks, the market and the sector ETF, two portfolios."""
+
+    def test_end_to_end(self):
+        import paths_build as PB
+        root = Path(tempfile.mkdtemp())
+        days = weekdays('2021-01-04', 1150)
+        rng = np.random.default_rng(7)
+        mkt = rng.normal(0.0003, 0.011, len(days))
+        names = ['AAA', 'BBB', 'CCC', 'DDD', 'EEE', 'FFF']
+        series = {'SPY': mkt, 'XLK': 0.9 * mkt + rng.normal(0, 0.006, len(days))}
+        for k, t in enumerate(names):
+            series[t] = (0.8 + 0.1 * k) * mkt + rng.normal(0, 0.015, len(days))
+        for t, r in series.items():
+            c = 50 * np.exp(np.cumsum(r))
+            o = c * np.exp(rng.normal(0, 0.004, len(days)))
+            h = np.maximum(o, c) * (1 + np.abs(rng.normal(0, 0.006, len(days))))
+            lo = np.minimum(o, c) * (1 - np.abs(rng.normal(0, 0.006, len(days))))
+            P.save(root, t, {'ticker': t, 'source': 'test', 't': days, 'o': o.round(4).tolist(), 'h': h.round(4).tolist(), 'l': lo.round(4).tolist(),
+                             'c': c.round(4).tolist(), 'ac': c.round(4).tolist(), 'v': rng.integers(1e5, 1e6, len(days)).tolist()})
+        (root / 'index.json').write_text(json.dumps({'fields': ['cik', 'ticker', 'name', 'sector', 'kind', 'mcap'],
+                                                     'rows': [[100 + k, t, t + ' Corp', 'technology', 'industrial', 1e9 * (10 - k)] for k, t in enumerate(names)]}))
+        ppl = root / 'people'
+        (ppl / 'm').mkdir(parents=True)
+        (ppl / 'o').mkdir(parents=True)
+        (ppl / 'managers.json').write_text(json.dumps({'fields': ['cik', 'name'], 'rows': [[1, 'Fund One']]}))
+        (ppl / 'm' / '1.json').write_text(json.dumps({'cik': 1, 'name': 'Fund One', 'slug': 'fund-one', 'holdings_fields': ['ticker', 'name', 'weight', 'value', 'status', 'delta_pct'],
+                                                      'holdings': [['AAA', 'A', 0.6, 6, None, None], ['BBB', 'B', 0.4, 4, None, None]]}))
+        (ppl / 'officials.json').write_text(json.dumps({'fields': ['slug', 'name'], 'rows': [['jane-roe', 'Jane Roe']]}))
+        today = dt.date.today()
+        (ppl / 'o' / 'jane-roe.json').write_text(json.dumps({'name': 'Jane Roe', 'slug': 'jane-roe', 'scored_fields': ['date', 'ticker', 'd', 'midpoint'],
+                                                             'scored': [[(today - dt.timedelta(days=40)).isoformat(), 'CCC', 1, 50000.5]]}))
+        st = PB.build(root, root / 'index.json', ppl, workers=1)
+        self.assertEqual((st['companies'], st['failed']), (6, 0), st)
+        pub = root / 'public'
+        d = json.loads((pub / 'c' / '100.json').read_text())
+        json.dumps(d, allow_nan=False)
+        self.assertEqual(set(d['paths']['models']), set(PB.PM.MODELS))
+        e = d['paths']['ensemble']
+        self.assertTrue(e['end']['p10'] < d['price'] * 1.0001 < e['end']['p90'] * 1.5)
+        self.assertEqual(len(e['q']), len(d['paths']['days']))
+        self.assertIsNotNone(e['joint']['market']['p_stock_down10'])
+        self.assertEqual([a['role'] for a in d['assets']][:3], ['stock', 'market', 'sector'])
+        for k in ('self', 'pooled', 'peer'):
+            self.assertTrue(d['analogs'][k] and d['analogs'][k].get('q'), k)
+        self.assertTrue(d['analogs']['peers'])
+        self.assertTrue({'state', 'overlays', 'signals'} <= set(d['pa']))
+        self.assertNotIn('recent', d['pa']['state'])
+        ix = json.loads((pub / 'index.json').read_text())
+        self.assertEqual(len(ix['rows']), 6)
+        rules = json.loads((pub / 'rules.json').read_text())
+        self.assertTrue(rules['rules'] and any((r.get('stats') or {}).get('evidence') for r in rules['rules']))
+        models = json.loads((pub / 'models.json').read_text())
+        self.assertTrue({'ensemble', 'naive_normal', 'cholesky'} <= set(models['paths']))
+        self.assertTrue(models['analogs'])
+        led = json.loads((pub / 'ledger.json').read_text())
+        self.assertEqual(len(led['weeks']), 1)
+        self.assertFalse(led['weeks'][0]['resolved'])
+        port = json.loads((pub / 'portfolios' / 'index.json').read_text())
+        self.assertEqual((len(port['managers']), len(port['officials'])), (1, 1))
+        m = json.loads((pub / 'portfolios' / 'm' / '1.json').read_text())
+        self.assertAlmostEqual(m['coverage'], 1.0)
+        self.assertTrue(m['ensemble']['q'])
+        o = json.loads((pub / 'portfolios' / 'o' / 'jane-roe.json').read_text())
+        self.assertTrue(o['approximate'])
+        # a second build the same week keeps the frozen week as it was
+        before = (root / 'cache' / 'ledger').glob('*.json').__next__().read_text()
+        PB.build(root, root / 'index.json', None, workers=1)
+        self.assertEqual(before, next((root / 'cache' / 'ledger').glob('*.json')).read_text())
