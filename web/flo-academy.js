@@ -211,7 +211,7 @@
       [/cash from operating|operating cash|经营现金/i,'Operating cash flow begins with net income (indirect method) and adjusts noncash and working-capital items','经营现金流间接法从净利润出发，调整非现金项目与营运资本项目']
     ];
     const df=defs.find(x=>x[0].test(name))||[null,'Check the issuer-defined XBRL concept and reporting period.','核对公司自定义 XBRL 科目及其报告期间。'];
-    const s='<b>'+html(name)+'</b>'+(finite(c.amount)?'<p><b>'+cash(c.amount)+'</b> · '+html(c.period||'period not supplied')+'</p>':'')+
+    const s='<b>'+html(name)+'</b>'+((c.display || finite(c.amount))?'<p><b>'+html(c.display || cash(c.amount))+'</b> · '+html(c.period||'period not supplied')+'</p>':'')+
       '<p>'+html(zh?df[2]:df[1])+'</p>'+
       '<p class="flo-source">'+(zh?'本面板仅解释已选中的节点；数字来自页面当前报表，不能自动推断其差异的原因。':'This explains the selected node only; it cannot infer causality without further source evidence.')+'</p>';
     const links=[];
