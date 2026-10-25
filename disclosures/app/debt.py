@@ -186,10 +186,13 @@ def collect_one(client, root, co, state, deep=True):
             except Exception as exc:
                 rec['hidden_text_error'] = str(exc)[:180]
         if isinstance(rec.get('hidden_leverage'), dict):
-            rec['hidden_leverage']['text_signals'] = rec.get('hidden_text_signals', [])
+            same_filing = rec.get('hidden_text_source') == f['acc']
+            rec['hidden_leverage']['text_signals'] = (
+                rec.get('hidden_text_signals', []) if same_filing else [])
             rec['hidden_leverage']['text_filing'] = {
-                'accession': rec.get('hidden_text_source'), 'form': f['form'],
-                'filed': f['date'], 'source_url': HL.sec_url(cik, f['acc'], f['doc'])}
+                'accession': f['acc'], 'form': f['form'],
+                'filed': f['date'], 'source_url': HL.sec_url(cik, f['acc'], f['doc']),
+                'text_status': 'collected' if same_filing else 'unavailable'}
     for kind, f in (('10-K', tenk), ('10-Q', tenq)):
         if not f:
             continue
@@ -289,8 +292,13 @@ def collect(client, root, cos, minutes=30.0, refresh_days=21, first=()):
             return None
         if not s.get('fetched_at'):
             return (0, -_num(co.get('revenue')))
+        # Backfill existing companies after this feature ships, even when the
+        # normal 21-day refresh interval has not elapsed. Stored state keeps
+        # this a one-time priority change, not a perpetual SEC re-fetch.
+        if s.get('hidden_leverage_version') != 1:
+            return (1, -_num(co.get('revenue')))
         age = (today - dt.datetime.fromisoformat(s['fetched_at'])).days
-        return (1, -age) if age >= refresh_days else None
+        return (2, -age) if age >= refresh_days else None
 
     order = [c for c in cos if (c.get('ticker') or '').upper() in first]
     rest = sorted([(d, c) for c in cos if (d := due(c)) is not None and c not in order], key=lambda x: x[0])
@@ -302,7 +310,8 @@ def collect(client, root, cos, minutes=30.0, refresh_days=21, first=()):
         s = S.setdefault(str(co['cik']), {})
         try:
             collect_one(client, root, co, s)
-            s.update(fetched_at=now(), fails=0, error=None, retry_after=None)
+            s.update(fetched_at=now(), fails=0, error=None, retry_after=None,
+                     hidden_leverage_version=1)
             done += 1
         except Exception as exc:
             errors += 1
