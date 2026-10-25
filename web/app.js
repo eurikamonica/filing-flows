@@ -620,7 +620,7 @@
           <span>/</span>${hasInd ? `<a href="#i-${indSlug}">${t(p.industry)}</a>` : `<span>${t(p.industry || 'SIC ' + p.sic)}</span>`}</div>
         <h1>${t(p.name)}</h1>
         <div class="meta">
-          ${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}${(p.exchanges || []).filter(Boolean).slice(0, 1).map((x) => `<span>${t(x)}</span>`).join('')}
+          ${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}${(p.exchanges || []).filter(Boolean).slice(0, 1).map((x) => `<span>${t(x)}</span>`).join('')}${ticker ? `<a class="tag" href="#studio/k=fund&amp;t=${encodeURIComponent(ticker)}&amp;m=revenue&amp;ttm=0" title="Animated videos of this company's figures and its share price (web/studio.js)">▶ Make a video</a>` : ''}
           ${ticker ? `<button class="btn follow" type="button" hidden data-follow="ticker:${t(ticker)}">☆ Follow</button>` : ''}
           ${cmpId ? '' : `<button class="btn send" type="button" hidden data-send="${p.cik}|${(all ? qs : [q]).map((x) => x.end).join(',')}|${fy ? 'fy' : 'q'}"
             title="Sent to the address you signed in with: chart, analysis and what changed">✉ Email me ${all ? `all ${qs.length} quarters` : t(q.label) + (fy ? ' full year' : '')}</button>`}
@@ -899,7 +899,7 @@
     app.innerHTML = `<div class="page-head">
         <div class="crumbs"><a href="#home">Latest</a><span>/</span><a href="#c-${cik}">${t(p.name)}</a></div>
         <h1>${t(p.name)}</h1>
-        <div class="meta">${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}<span>CIK <span class="mono">${p.cik}</span></span>${
+        <div class="meta">${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}<span>CIK <span class="mono">${p.cik}</span></span>${ticker ? `<a class="tag" href="#studio/k=growth&amp;t=${encodeURIComponent(ticker)},SPY&amp;from=${new Date(Date.now() - 5 * 365.25 * 864e5).toISOString().slice(0, 10)}">▶ Make a video</a>` : ''}${
           p.industry ? `<span>${t(p.industry)}</span>` : ''}</div>
         ${freshLine((c.quarters || [])[0], (SITE_TIME.generated || ''))}
         ${companyTabs(cik, which)}
@@ -5073,6 +5073,7 @@
       else if (h === 'sectors') await sectorsPage();
       else if (h === 'feed' && window.FFFeed) await window.FFFeed.render(app, Object.assign({}, window.FFApp, { here }));
       else if ((m = /^chart(?:\/(.*))?$/.exec(h)) && window.FFCharts) await window.FFCharts.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
+      else if ((m = /^studio(?:\/([\s\S]*))?$/.exec(h)) && window.FFStudio) await window.FFStudio.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if (h === 'chains' && window.FFChains) await window.FFChains.index(app, chainCtx());
       else if (h === 'model' && window.FFModel) await window.FFModel.overview(app, chainCtx());
       else if (h === 'gamma' && window.FFGamma) await window.FFGamma.index(app, chainCtx());

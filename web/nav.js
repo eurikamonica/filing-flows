@@ -19,6 +19,8 @@
     ] },
     { id: 'signals', label: 'Market signals', items: [
       ['feed', '#feed', 'Feed', 'What changed today, across the site'],
+      ['studio', '#studio', 'Video studio', 'Growth races, RRG, momentum and earnings videos to post'],
+      ['etfs', 'disclosures/#etf', 'ETF scanner', 'Every US-listed ETF: prices, distributions, prospectus, holdings'],
       ['disclosures', 'disclosures/', 'Disclosures', '13F flows, insiders, officials, short interest…'],
       ['cross', 'disclosures/#cross', 'Cross-holdings', 'Who holds whom: US government, the President, Congress, Nvidia, Alphabet…'],
       ['account', '#account', 'Alerts', 'E-mail when your companies file'],
