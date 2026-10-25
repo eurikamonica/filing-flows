@@ -60,3 +60,29 @@ This PR does **not** implement autonomous SEC footnote retrieval or full-text se
 
 - P1: editable 5-year DCF scenario panel, model provenance and save/export, chart-node value derivation with per-fact XBRL accession, teaching-progress storage.
 - P2: per-company quality detective with peer-normalized accrual and reserves, financial restatement history and citation cards; contract-aware rebate and Hidden Leverage labs; research-notebook integration.
+
+
+## Phase 1 extension — Flo Spreadsheet Lab (Excel-style practice)
+
+**Entry:** Flo quick mode "Spreadsheet Lab / Excel 模拟练习", or type "open Excel modeling lab", "three-statement spreadsheet practice" or "模拟 Excel".
+
+**Delivered:** an interactive worksheet inside the SAME existing Spin Sankey Flo panel, using an expanded responsive desktop overlay and horizontally scrollable grid on mobile. This is a browser-based teaching simulator, NOT Microsoft Excel, and it does NOT create or import true XLSX files.
+
+| Worksheet | Training outputs |
+| --- | --- |
+| Five-year DCF / FCFF | Revenue projections, EBIT, cash tax, depreciation, capital expenditure, changes in operating NWC, FCFF, discounted cash flow, Gordon terminal value, EV-to-equity and per-share value |
+| Integrated three statements | EBIT, pretax/net income, indirect CFO, CFI, CFF, cash, PP&E, accounts receivable, inventory, payables, debt, retained equity, BS reconciliation |
+| Trading comparable valuation | Peer EV/EBITDA ratios, peer median, target implied EV, net debt, diluted shares, estimated target equity/share |
+| Dividend discount (DDM) | Five years of dividends, discounted payouts, perpetual terminal equity price, intrinsic price |
+| DuPont ROE | Net margin, asset turnover, leverage multiplier, ROE and direct ROE reconciliation |
+| Reserve rollforward | Provision, releases, utilization, other changes, reported closing, release/opening and balance-gap reconciliation |
+
+**Real practice functions:** blue assumption cells, purple formula exercise cells, choose any cell, edit the formula bar, and recalculate automatically when submitted. Learners can switch to scenarios (Base, Bull, Bear / case-specific stress), use Hint, reveal formulas, Check work, reset each workbook, and export **calculated values** to CSV. In practice mode required formula cells are blank. The grader compares learner-computed results with a distinct instructor formula graph under the currently edited assumptions and requires a formula rather than a hardcoded static number.
+
+**Formula support:** numeric values and bounded A1 cell references, absolute $B$16 references, ranges, +, -, *, /, exponentiation, parentheses, and SUM / AVERAGE / MEDIAN / MIN / MAX. Safe bounded parser, no eval, macros, arbitrary JavaScript, external functions or user-provided HTML. Cycle, invalid-reference, unsupported-function and zero-division errors are explicit. Valuation assumptions reject Gordon terminal calculation when WACC <= g or cost of equity <= g.
+
+**Accounting guardrails:** all starter values in all six workbooks are **HYPOTHETICAL DATA ONLY**, not an issuer's SEC figures. The simplified 3-statement model omits dividends, restructuring, acquisitions and nonstandard transactions. Automated grading validates model calculations, not economic realism, accounting compliance or investment suitability. Formula CSV export is deliberately not implemented; computed values only, with a hypothetical-data heading.
+
+**Implementation files:** web/flo-workbook.js, web/mascot.js, web/index.html, tests/test_flo_workbook.cjs; existing and fast Flo regression workflows include the new tests. The earlier SEC-backed company analysis and separate Academy tutorial remain unchanged.
+
+**Future extensions:** save/restore custom workbook progress, import/export actual XLSX, multi-sheet intercompany schedules, historical SEC reconciliations, lesson progression and instructor grading. None of these are claimed complete in this PR.
