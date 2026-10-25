@@ -164,6 +164,27 @@ def build(root, now=None):
     last = next((cols[k] for k in ("close", "last", "price") if k in cols), None)
     ret = next((cols[k] for k in ("chg1d", "r1d", "day_change", "change", "pct_change", "ret_1d") if k in cols), None)
     tk_col = cols.get("ticker")
+    # Optional end-of-day index context, sourced ONLY from this same as-of file.
+    # A separate SPY/QQQ/IWM quote is not available for most daily extremes
+    # files; in that case emit no benchmark rather than manufacture one.
+    benchmarks = {}
+    if None not in (last, ret, tk_col) and recent(px.get("asof"), now, 3):
+        for row in (px.get("rows") or [])[:5000]:
+            if not isinstance(row, list) or max(last, ret, tk_col) >= len(row):
+                continue
+            tk = symbol(row[tk_col])
+            if tk not in ("SPY", "QQQ", "IWM") or tk in benchmarks:
+                continue
+            try:
+                change, close = float(row[ret]), float(row[last])
+            except (ValueError, TypeError, OverflowError):
+                continue
+            if not (-1 < change <= 5 and 0 < close < 1e8):
+                continue
+            benchmarks[tk] = {"asof": str(px.get("asof"))[:10],
+                              "close": round(close, 4),
+                              "change_pct": round(change * 100, 3),
+                              "source": "same published extremes.json snapshot"}
     if None not in (last, ret, tk_col) and recent(px.get("asof"), now, 3):
         for row in (px.get("rows") or [])[:5000]:
             if not isinstance(row, list) or max(last, ret, tk_col) >= len(row):
@@ -209,6 +230,7 @@ def build(root, now=None):
                 "failed_queue": stat.get("failed_queue") if isinstance(stat.get("failed_queue"), int) else None,
             }
     return dict(schema=1,generated_at=stamp(now),sources=statuses,scan_health=health,
+        benchmarks=benchmarks,
         cadence="Only newly published static snapshots. GitHub Pages publishing may lag collecting.",
         events=list(unique.values()))
 
