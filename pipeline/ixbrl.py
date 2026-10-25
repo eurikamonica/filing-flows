@@ -97,7 +97,19 @@ def _period(vals, start, end):
     if out.get("revenue") is None and out.get("nii") is not None:   # a bank: net interest income + non-interest income
         out["revenue"] = out["nii"] + (out.get("nonii") or 0)
         labels["revenue"] = "net interest income and non-interest income"
+    if out.get("revenue") is None:
+        # an IFRS bank's total income, untotalled in the tags (ING): net interest, net fees and commissions, trading,
+        # investment and other operating income
+        parts = [n for n in IFRS_BANK_INCOME if (n, start, end) in vals]
+        if "InterestRevenueExpense" in parts or "InterestIncomeExpenseNet" in parts:
+            out["revenue"] = sum(vals[(n, start, end)] for n in parts)
+            labels["revenue"] = "total income (net interest, fees and commissions, trading and other income)"
     return out, labels
+
+
+IFRS_BANK_INCOME = ("InterestRevenueExpense", "InterestIncomeExpenseNet", "FeeAndCommissionIncomeExpense",
+                    "TradingIncomeExpense", "InvestmentIncome", "OtherOperatingIncomeExpense",
+                    "GainsLossesOnFinancialInstrumentsAtFairValueThroughProfitOrLossNet")
 
 
 def release(html, filed, resources=""):

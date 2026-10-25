@@ -1149,6 +1149,16 @@ def _currency_of(cik):
     return _cur[cik]
 
 
+def _ix_resources(cik, accn, row, name, html):
+    """The contexts and units an inline-XBRL exhibit refers to, from the filing's cover document when the exhibit has
+    none of its own (TD Bank)."""
+    if re.search(r"<(xbrli:)?context\b", html, re.I) or not row.get("primaryDocument") or row["primaryDocument"] == name:
+        return ""
+    p0 = sec.get(sec.doc_url(cik, accn, row["primaryDocument"]))
+    i0, j0 = p0.lower().find("<ix:resources"), p0.lower().find("</ix:resources>")
+    return p0[i0:j0] if i0 >= 0 else ""
+
+
 def _rel_header(rel):
     """The column header of the release's income statement table, lower case ("" for one read from inline XBRL)."""
     try:
@@ -1252,8 +1262,9 @@ def process_fpi_release(store, cik, accn, form, starred=False):
             html = sec.get(url)
         except sec.NotFound:
             continue
-        if not re.search(r"quarter|three months|results", html[:200000], re.I):
-            continue
+        if not re.search(r"quarter|three months|results", html[:200000], re.I) and \
+                not ("ix:header" in html[:200000].lower() and re.search(r"quarter|three months|half[- ]year|interim", html[:4_000_000], re.I)):
+            continue                                     # (an inline-XBRL report opens with its hidden tags: look past them)
         try:
             prev_rev = None
             try:
@@ -1274,6 +1285,14 @@ def process_fpi_release(store, cik, accn, form, starred=False):
                     # two and a half times the quarter before at the third or fourth quarter: nine months or the year
                     # to date (AB InBev's third-quarter table), not the quarter
                     raise ValueError("revenue is a year to date, not the quarter")
+            if r.get("is_quarter") is not True and "ix:nonfraction" in html[:5_000_000].lower():
+                # the tables gave a half or the year to date; the tags may hold the quarter itself (UBS's report)
+                try:
+                    r2 = ixbrl.release(html, filed, _ix_resources(cik, accn, row, name, html))
+                    if r2.get("is_quarter"):
+                        r = r2
+                except (ValueError, sec.NotFound):
+                    pass
             rel, doc, ex_url = r, html, url
             break
         except ValueError as e:
@@ -1281,17 +1300,12 @@ def process_fpi_release(store, cik, accn, form, starred=False):
             if "ix:nonfraction" in html[:5_000_000].lower():
                 # a tagged report with no tables the reader understands (TD Bank's positioned-text 6-K): its own XBRL
                 try:
-                    res = ""
-                    if "<ix:resources" not in html.lower() and row.get("primaryDocument") and row["primaryDocument"] != name:
-                        p0 = sec.get(sec.doc_url(cik, accn, row["primaryDocument"]))
-                        i0, j0 = p0.lower().find("<ix:resources"), p0.lower().find("</ix:resources>")
-                        res = p0[i0:j0] if i0 >= 0 else ""
-                    rel, doc, ex_url = ixbrl.release(html, filed, res), html, url
+                    rel, doc, ex_url = ixbrl.release(html, filed, _ix_resources(cik, accn, row, name, html)), html, url
                     break
                 except (ValueError, sec.NotFound) as e2:
                     errors.append(f"{name} (inline XBRL): {e2}")
     if not rel:
-        raise NotApplicable("not a results release" + (f" ({errors[0]})" if errors else ""))
+        raise NotApplicable("not a results release" + (f" ({errors[0]})" if errors else "") + "".join(f"; {x}" for x in errors if "inline XBRL" in x)[:300])
     end = rel["end"]
     e0 = dt.date.fromisoformat(end)
     half = False

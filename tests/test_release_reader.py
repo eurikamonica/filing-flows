@@ -124,3 +124,16 @@ def test_inline_xbrl_quarter_with_resources_elsewhere():
     assert r["end"] == "2026-07-31" and r["span"] == 91 and r["is_quarter"] and r["currency"] == "CAD"
     assert r["is"]["revenue"] == 16885e6 and r["is"]["pl"] == 4615e6 and r["is"]["tax"] == -12e6
     assert r["py_end"] == "2025-07-31" and r["py"]["revenue"] == 15297e6
+
+
+def test_inline_xbrl_ifrs_bank_total_income():
+    """An IFRS bank tags no revenue total (ING): total income = net interest + net fees + trading + other income."""
+    import datetime as dt
+    from pipeline import ixbrl
+    ctx = """<xbrli:context id="H"><xbrli:entity/><xbrli:period><xbrli:startDate>2026-01-01</xbrli:startDate><xbrli:endDate>2026-06-30</xbrli:endDate></xbrli:period></xbrli:context>
+    <xbrli:unit id="EUR"><xbrli:measure>iso4217:EUR</xbrli:measure></xbrli:unit>"""
+    tag = lambda n, v: f'<ix:nonFraction name="ifrs-full:{n}" contextRef="H" unitRef="EUR" scale="6">{v}</ix:nonFraction>'
+    doc = ctx + tag("InterestRevenueExpense", "7,500") + tag("FeeAndCommissionIncomeExpense", "2,500") + \
+        tag("TradingIncomeExpense", "1,000") + tag("OtherOperatingIncomeExpense", "668") + tag("ProfitLoss", "3,304")
+    r = ixbrl.release(doc, dt.date(2026, 7, 30))
+    assert r["is"]["revenue"] == 11668e6 and not r["is_quarter"] and r["span"] == 180
