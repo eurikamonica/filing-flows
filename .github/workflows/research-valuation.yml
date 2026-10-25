@@ -1,5 +1,6 @@
 # Fair value & credit (Disclosures → Valuation, and the "Fair value" view of each company page on the main site).
-# Weekdays after the close: SEC XBRL frames (EPS, shares, equity, goodwill, insurance and REIT lines) and each covered
+# Every day after the US close (weekends too, so new code such as the appendix reaches every company without waiting
+# for Monday): SEC XBRL frames (EPS, shares, equity, goodwill, insurance and REIT lines) and each covered
 # company's figures from the published site, then public/ is rebuilt with the debt module's credit data, the consensus
 # module's targets / Polymarket / our model and the hub's daily prices: WACC, DCF + reverse DCF, Monte Carlo, PVGO, peer
 # multiples, residual income, bank / insurer / REIT models, valuation bands, distress probability (app/valuation.py), and the
@@ -16,7 +17,7 @@ on:
         description: 'Minutes for the collection'
         default: '20'
   schedule:
-    - cron: '50 22 * * 1-5'
+    - cron: '50 22 * * *'          # every day, 22:50 UTC
 permissions:
   contents: write
 concurrency:
