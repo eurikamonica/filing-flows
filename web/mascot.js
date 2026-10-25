@@ -30,6 +30,7 @@
   const spc = (v, d = 1) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
   const academy = () => root.FFFloAcademy || (typeof module !== 'undefined' ? require('./flo-academy.js') : null);
   const workbooks = () => root.FFFloWorkbook || (typeof module !== 'undefined' ? require('./flo-workbook.js') : null);
+  const realWorkbooks = () => root.FFFloRealWorkbook || (typeof module !== 'undefined' ? require('./flo-real-workbook.js') : null);
   const memo = new Map();
   const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
   const fileT = (t) => String(t || '').toUpperCase().replace(/\./g, '-');
@@ -336,6 +337,8 @@
     q = String(q || '');
     const lg = lang(q), ix = ixArg || await index(), cls = classify(q);
     let co = findCompany(q, ix) || ctxCo || null;
+    const SECWB = realWorkbooks();
+    if (SECWB && SECWB.route(q)) return { ...SECWB.launch(q,co), company: co || null };
     const WB = workbooks();
     if (WB && WB.match(q)) return { ...WB.launch(q, lg), company: co || null };
     const A = academy();
@@ -416,6 +419,12 @@
 .flo-wb-table tr:first-child th:first-child{width:28px}
 .flo-wb-table td{min-width:85px;text-align:right}
 .flo-wb-table td button{display:block;border:0;background:none;color:inherit;padding:6px 8px;font:inherit;width:100%;text-align:right;cursor:cell;min-height:26px}
+.flo-real .flo-wb-table td{padding:6px 8px;white-space:normal;font-size:11px}.flo-real .flo-wb-table td button{font-size:11px}
+.flo-real .flo-wb-table td.flo-wb-reported{background:color-mix(in srgb,#878c8c 14%,var(--surface,#fff));font-weight:600}
+.flo-real .flo-wb-table td.flo-wb-input{background:color-mix(in srgb,#397ad7 15%,var(--surface,#fff))}
+.flo-real .flo-wb-table td.flo-wb-formula{background:color-mix(in srgb,#9871cb 17%,var(--surface,#fff))}
+.flo-wb-evidence{border:1px solid var(--line,#dedede);border-left:3px solid var(--accent,#17734a);padding:8px;margin:8px 0;border-radius:6px}
+.flo-wb-evidence a{overflow-wrap:anywhere;font-size:12px}
 .flo-wb-table .flo-wb-input{background:color-mix(in srgb,#397ad7 13%,var(--surface,#fff));color:var(--ink,#222)}
 .flo-wb-table .flo-wb-formula{background:color-mix(in srgb,#9871cb 12%,var(--surface,#fff));color:var(--ink,#222)}
 .flo-wb-table td.selected{outline:2px solid var(--accent,#17734a);outline-offset:-2px;position:relative}
@@ -484,13 +493,14 @@
     mood('talk');
     const lg = lang(q), LM = root.LocalFilingModel;
     const local = LM && LM.isConnected && LM.isConnected() && LM.ask && (a.facts || []).length;
-    ui.panel.classList.toggle('flo-wide', !!a.workbook);
+    ui.panel.classList.toggle('flo-wide', !!(a.workbook || a.realWorkbook));
     layout(); // mascot positions follow the resized worksheet panel
     wait.innerHTML = a.html + ((a.links || []).length ? `<div class="flo-links">${a.links.map(([h, t]) => link(h, t)).join('')}</div>` : '') +
       ((a.actions || []).length ? `<div class="flo-actions">${a.actions.map(x => `<button type="button" class="flo-action" data-flo-q="${esc(x.question)}">${esc(x.label)}</button>`).join('')}</div>` : '') +
       (local ? `<button type="button" class="flo-local">${lg === 'zh' ? '用本地模型解释' : 'Explain with the local model'}</button>` : '');
     ui.log.scrollTop = ui.log.scrollHeight;
     if (a.workbook && workbooks()) workbooks().mountAll(wait,lg);
+    if (a.realWorkbook && realWorkbooks()) realWorkbooks().mountAll(wait,lg);
     wait.querySelectorAll('.flo-action').forEach(b => b.addEventListener('click', () => send(b.dataset.floQ)));
     wait.querySelectorAll('form[data-flo-calc]').forEach(form => form.addEventListener('submit', (ev) => {
       ev.preventDefault();
@@ -534,6 +544,7 @@
     const T = (ui.co && ui.co.ticker) || 'NVDA';
     const zh = zhUI();
     const modes = [
+      [zh ? 'SEC 真实练习' : 'Real SEC Lab', 'NVDA real SEC Excel modeling lab'],
       [zh ? 'Excel 模拟练习' : 'Spreadsheet Lab', 'open Excel modeling lab'],
       [zh ? '学 DCF' : 'Learn DCF', 'teach ' + T + ' DCF step by step'],
       [zh ? 'Cookie Jar 侦探' : 'Cookie Jar', T + ' cookie jar'],
