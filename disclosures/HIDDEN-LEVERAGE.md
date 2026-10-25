@@ -1,7 +1,7 @@
 # Hidden Leverage & Contractual Obligations — Phase 1
 
 **Status:** PR implementation / review required. **Not a new GAAP debt measure.**
-**Location:** Filing Flows → Disclosures → **Hidden leverage**, at \`/disclosures/#hidden\`; company deep link \`/disclosures/#hidden/TICKER-or-CIK\`.
+**Location:** Filing Flows → Disclosures → **Hidden leverage**, at `/disclosures/#hidden`; company deep link `/disclosures/#hidden/TICKER-or-CIK`.
 **Principle:** show what a company owes, has committed to purchase, or may need to support, **without summing mutually overlapping exposures**.
 
 ## 1. What Phase 1 actually delivers
@@ -95,24 +95,24 @@ This is **not automatically debt**; determine cancellation rights, goods/service
 **Source hierarchy:** periodic 10-K/10-Q/20-F/40-F → accompanying notes, commitments/contingencies and MD&A → primary filing text → companyfacts US-GAAP standardized facts. Company-specific extension tags, dimensions and footnote tables require next-phase ingestion. The 2020 SEC MD&A rule changes removed the old single mandatory contractual-obligations table; a single table search is insufficient.
 
 - **Quantitative extraction:** require an exact report-date, USD, instant fact from permitted periodic forms, valid accession/filing date; choose the latest same-date amendment when applicable.
-- **Numeric metadata:** \`categories[].{key,class,amount_usd,reported_total,schedule,schedule_labels,source_url,accession,form,filed,as_of,evidence[]}\`.
-- **Qualitative screening:** \`text_signals[].{key,label,excerpt,classification,review_lane,source_url,accession,form,filed}\`. Classification is always \`unverified_text_lead\`. No dollar amount may be invented from text.
-- **Taxonomy:** \`public/hidden/index.json.taxonomy[]\`: \`key\`, \`label\`, \`review_lane\`, \`evidence_type=text_lead\`, \`status=screening_only\`.
-- **Coverage states:** \`numeric_evidence\`, \`no_standard_tag_at_period\`, \`no_valid_balance_date\`, or unavailable. None of these denotes an exhaustive audit of liabilities.
+- **Numeric metadata:** `categories[].{key,class,amount_usd,reported_total,schedule,schedule_labels,source_url,accession,form,filed,as_of,evidence[]}`.
+- **Qualitative screening:** `text_signals[].{key,label,excerpt,classification,review_lane,source_url,accession,form,filed}`. Classification is always `unverified_text_lead`. No dollar amount may be invented from text.
+- **Taxonomy:** `public/hidden/index.json.taxonomy[]`: `key`, `label`, `review_lane`, `evidence_type=text_lead`, `status=screening_only`.
+- **Coverage states:** `numeric_evidence`, `no_standard_tag_at_period`, `no_valid_balance_date`, or unavailable. None of these denotes an exhaustive audit of liabilities.
 - **Provenance:** SEC document URL must link to the specific accession and (when known) primary filing; unrecognized/non-USD/custom tags must not be silently interpreted.
 
-**No financial-model changes.** Phase 1 deliberately keeps new evidence in \`hidden_leverage\` under each pre-existing \`public/c/{cik}.json\` and \`public/hidden/index.json\`. No new "total leverage" field is permitted.
+**No financial-model changes.** Phase 1 deliberately keeps new evidence in `hidden_leverage` under each pre-existing `public/c/{cik}.json` and `public/hidden/index.json`. No new "total leverage" field is permitted.
 
 ## 6. Architecture and rollout
 
-1. \`disclosures/app/hidden_leverage.py\` — taxonomy, same-period tag extraction, source links, recent filing text leads.
-2. \`disclosures/app/debt.py\` — uses the existing SEC companyfacts fetch and periodic document; incremental company backfill is prioritized once via \`hidden_leverage_version=1\`. Produces \`debt-history/public/hidden/index.json\`.
-3. \`disclosures/docs/hidden-leverage.js\`, \`hidden-leverage.css\` — screener, maturity bars, evidence links, taxonomy, company drilldown, missing-data states.
-4. \`disclosures/docs/index.html\` and \`debt-view.js\` — navigation/deep links; the old debt module remains separate.
-5. Existing \`.github/workflows/debt.yml\` runs the collector; existing \`.github/workflows/scan.yml\` stages debt-history data to \`disclosures/data/debt/\`.
-6. \`.github/workflows/hidden-leverage-checks.yml\` and \`tests/test_hidden_leverage.py\` — offline regressions; requires test and UI review before merge.
+1. `disclosures/app/hidden_leverage.py` — taxonomy, same-period tag extraction, source links, recent filing text leads.
+2. `disclosures/app/debt.py` — uses the existing SEC companyfacts fetch and periodic document; incremental company backfill is prioritized once via `hidden_leverage_version=1`. Produces `debt-history/public/hidden/index.json`.
+3. `disclosures/docs/hidden-leverage.js`, `hidden-leverage.css` — screener, maturity bars, evidence links, taxonomy, company drilldown, missing-data states.
+4. `disclosures/docs/index.html` and `debt-view.js` — navigation/deep links; the old debt module remains separate.
+5. Existing `.github/workflows/debt.yml` runs the collector; existing `.github/workflows/scan.yml` stages debt-history data to `disclosures/data/debt/`.
+6. `.github/workflows/hidden-leverage-checks.yml` and `tests/test_hidden_leverage.py` — offline regressions; requires test and UI review before merge.
 
-**Go-live:** merge PR → run Debt & Rates collector → publish the debt-history output → run ordinary Pages scan/deploy → verify \`/disclosures/#hidden\` and \`/disclosures/data/debt/hidden/index.json\`. Pushing a branch and opening a PR do **not** deploy the feature. Existing companies are filled incrementally; early empty screens may reflect collection lag.
+**Go-live:** merge PR → run Debt & Rates collector → publish the debt-history output → run ordinary Pages scan/deploy → verify `/disclosures/#hidden` and `/disclosures/data/debt/hidden/index.json`. Pushing a branch and opening a PR do **not** deploy the feature. Existing companies are filled incrementally; early empty screens may reflect collection lag.
 
 ## 7. Validation / accounting acceptance gates
 
