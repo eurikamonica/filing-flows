@@ -376,7 +376,7 @@
   /* ---------- building a video: the series on the grid, labels and formats ---------- */
   const DEF = { k: 'growth', t: 'QQQ,SPY', from: '', to: '', amt: '10000', div: 'tr', style: 'line', theme: 'bull', ar: '16x9', q: '1080', fps: '30', dur: '20',
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
-    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', yb: '2000',
+    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
     goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
@@ -2385,12 +2385,41 @@
         h += `<label for="st-t">${lbl}</label><input class="input" id="st-t" value="${esc(one ? tickers(st)[0] || '' : st.t)}" placeholder="${ph}" list="st-list" autocomplete="off"><datalist id="st-list"></datalist>`;
         if (k === 'sankey') h += `<label for="st-sm">Quarters</label>${sel('st-sm', [['detail', 'The detailed flow (the latest quarters on file)'], ['long', 'Ten years: revenue → profit → earnings']], st.sm)}`;
         if (k === 'timing') h += `<label for="st-yb">Money each year ($)</label><input class="input" id="st-yb" inputmode="numeric" value="${esc(st.yb)}"><div class="st-help">Each year's money goes in at that year's highest close (bought at the top), its lowest (perfect timing), its first week, or spread over its months — with hindsight, to show what timing is worth.</div>`;
-        if (k === 'snowball') h += `<label for="st-amt">Amount to start with ($)</label><input class="input" id="st-amt" inputmode="numeric" value="${esc(st.amt)}"><label for="st-rec">Buy again on a schedule (optional)</label><div class="st-row"><div><input class="input" id="st-rec" inputmode="numeric" placeholder="$ each time" value="${+st.rec > 0 ? esc(st.rec) : ''}" aria-label="Amount each time"></div><div style="flex:.7"><input class="input" id="st-ri" type="number" min="1" max="60" value="${esc(st.ri)}" aria-label="Every how many"></div><div>${sel('st-ru', [['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru)}</div></div>`;
+        if (k === 'snowball') {
+          const solving = +st.sgoal > 0, solveLump = st.ssolve !== 'rec';
+          h += '<label for="st-amt">' + (solving && solveLump ? 'Starting amount (calculated from goal)' : 'Amount to start with ($)') +
+            '</label><input class="input" id="st-amt" inputmode="decimal" value="' +
+            (solving && solveLump ? '' : esc(st.amt)) + '" placeholder="' +
+            (solving && solveLump ? 'Calculated separately for each ticker' : '10000') + '"' + (solving && solveLump ? ' disabled' : '') + '>';
+          h += '<label for="st-rec">' + (solving && !solveLump ? 'Scheduled buy (calculated from goal)' : 'Buy again on a schedule (optional)') +
+            '</label><div class="st-row"><div><input class="input" id="st-rec" inputmode="decimal" placeholder="' +
+            (solving && !solveLump ? 'Calculated per ticker' : '$ each time') + '" value="' +
+            (solving && !solveLump ? '' : (+st.rec > 0 ? esc(st.rec) : '')) +
+            '" aria-label="Amount each time"' + (solving && !solveLump ? ' disabled' : '') +
+            '></div><div style="flex:.7"><input class="input" id="st-ri" type="number" min="1" max="60" value="' +
+            esc(st.ri) + '" aria-label="Every how many"></div><div>' +
+            sel('st-ru', [['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru) + '</div></div>';
+        }
       }
       else h += `<label for="st-expr">Formulas — one per line, “Label: expression”</label><textarea id="st-expr" spellcheck="false">${esc(st.expr)}</textarea><div class="st-help">Operators <code>+ − × ÷ ^</code> and <code>( )</code>; functions <code>log exp sqrt abs rebase(x) ma(x,n) ema(x,n) pct(x,n) chg(x,n) lag(x,n) min(a,b) max(a,b)</code>. Series: a ticker (<code>QQQ</code> = total return) or <code>QQQ.price</code>, <code>.div</code>, <code>.yield</code>, company figures <code>NVDA.revenue</code>, <code>.ni_ttm</code>, <code>.margin</code>… Example: <code>rebase(QQQ/SPY)</code>, <code>SCHD.yield*100</code>, <code>NVDA.ni_ttm/NVDA.revenue_ttm</code>.</div>`;
       if (k !== 'holdings') h += `<div class="st-row"><div><label for="st-from">From</label><input class="input" type="date" id="st-from" value="${esc(st.from)}"></div><div><label for="st-to">To</label><input class="input" type="date" id="st-to" value="${esc(st.to)}"></div></div>`;
       h += `<div class="st-row" style="margin-top:6px;align-items:center"><div class="st-pills" style="flex:2">${[['1y', 1], ['3y', 3], ['5y', 5], ['10y', 10], ['Max', 30]].map(([l, y]) => `<button type="button" class="pill" data-yrs="${y}">${l}</button>`).join('')}</div>`
         + `<div><input class="input" id="st-yrs" inputmode="decimal" placeholder="or N years" value="${+st.yrs > 0 ? esc(st.yrs) : ''}" aria-label="The last N years (any number, e.g. 7 or 2.5)"></div></div>`;
+      if (k === 'snowball') {
+        const reverse = +st.sgoal > 0, solveLump = st.ssolve !== 'rec';
+        h += '<label for="st-sgoal">Terminal dividend income goal ($, optional)</label>' +
+          '<input class="input" id="st-sgoal" type="number" min="0" step="1" inputmode="decimal" value="' +
+          esc(st.sgoal) + '" placeholder="e.g. 1000">';
+        h += '<label for="st-sunit">Income target frequency</label>' +
+          sel('st-sunit', [['monthly','Monthly income equivalent ($/month)'], ['annual','Annual gross dividends ($/year)']], st.sunit);
+        h += '<label for="st-ssolve">Reverse-calculate</label>' +
+          sel('st-ssolve', [['lump','Required starting investment'], ['rec','Required amount at each scheduled buy']], st.ssolve);
+        h += '<div class="st-help">' + (reverse ?
+          (solveLump ? 'The starting amount is calculated; scheduled buys remain fixed.' :
+            'The scheduled buy amount is calculated; starting capital remains fixed.') :
+          'Leave the target blank to simulate using your selected starting capital and recurring buys.') +
+          ' Uses actual historical distributions, reinvested, with final 52 weeks of dividends / 12 as monthly equivalent. Not a guaranteed forward dividend.</div>';
+      }
       if (k === 'snowball') h += '<label for="st-scf">Dividend cash-flow chart</label>' + sel('st-scf', [['monthly', 'Monthly (trailing 24 months)'], ['annual', 'Annual (full history)']], st.scf);
       if (k === 'growth') {
         const L = growthLabels(st);
@@ -2530,7 +2559,7 @@
         else rebuild();
         return;
       }
-      if (key === 'rm' || key === 'bx' || key === 'by' || key === 'sw' || key === 'aw' || key === 'hsrc') side();
+      if (key === 'rm' || key === 'bx' || key === 'by' || key === 'sw' || key === 'aw' || key === 'hsrc' || key === 'ssolve' || key === 'sgoal') side();
       rebuild();
     });
     app.querySelector('#st-tpl').addEventListener('click', (e) => {
