@@ -23,7 +23,9 @@ const choices=[
   {id:'DELL',label:'Dell · Intel incentives case'},
   {id:'WORLDCOM',label:'WorldCom · capitalization case'},
   {id:'XEROX',label:'Xerox · revenue timing case'},
-  {id:'WASTE',label:'Waste Management · depreciation case'}
+  {id:'WASTE',label:'Waste Management · depreciation case'},
+  {id:'HEALTHSOUTH',label:'HealthSouth · reported vs actual earnings'},
+  {id:'BRISTOL',label:'Bristol-Myers · channel stuffing + reserves'}
 ];
 function make(id,published){
  const actual=data();
@@ -70,6 +72,47 @@ function make(id,published){
    add('C4','target','=B4','Exercise: approximately reported pretax impact, NOT precision ratio.');
    rows=[['B3','Revenue acceleration strict lower bound ($M)'],['B4','Approximate pre-tax earnings impact ($M)'],
      ['C3','Lower-bound recognition amount ($M)'],['C4','Approximate pre-tax impact ($M)']];
+ }else if(id==='HEALTHSOUTH'){
+   mode='case';const c=actual.cases.healthsouth;
+   title=c.company;description=c.exercise;source=c.citation;period=c.dates;
+   add('B3','reported',c.figures.reported1999,'1999 SEC complaint: reported pretax income, annual.');
+   add('B4','reported',c.figures.actual1999,'1999 SEC complaint: actual pretax income, negative.');
+   add('B5','reported',c.figures.reported2000,'2000 SEC complaint: reported pretax income, annual.');
+   add('B6','reported',c.figures.actual2000,'2000 SEC complaint: actual pretax income, annual.');
+   add('B7','reported',c.figures.reported2001,'2001 SEC complaint: reported pretax income, annual.');
+   add('B8','reported',c.figures.actual2001,'2001 SEC complaint: actual pretax income, annual.');
+   add('B9','reported',c.figures.reportedH12002,'2002 H1 SEC complaint: SIX MONTHS ONLY, not full FY.');
+   add('B10','reported',c.figures.actualH12002,'2002 H1 SEC complaint: SIX MONTHS ONLY, not full FY.');
+   add('C3','target','=B3-B4','1999 SEC alleged income overstatement including the negative actual profit.');
+   add('C4','target','=B5-B6','2000 SEC alleged income overstatement.');
+   add('C5','target','=B7-B8','2001 SEC alleged income overstatement.');
+   add('C6','target','=B9-B10','2002 first HALF SEC alleged income overstatement.');
+   add('C7','target','=SUM(C3:C6)','Combine four separately labeled periods; NOT one fiscal year and not the full scope of the case.');
+   rows=[['B3','FY1999 reported pretax ($M)'],['B4','FY1999 actual pretax ($M)'],
+     ['B5','FY2000 reported pretax ($M)'],['B6','FY2000 actual pretax ($M)'],
+     ['B7','FY2001 reported pretax ($M)'],['B8','FY2001 actual pretax ($M)'],
+     ['B9','H1 2002 reported pretax ($M)'],['B10','H1 2002 actual pretax ($M)'],
+     ['C3','FY1999 overstatement ($M)'],['C4','FY2000 overstatement ($M)'],
+     ['C5','FY2001 overstatement ($M)'],['C6','H1 2002 overstatement ($M)'],
+     ['C7','Four-period total ($M; mixed FY/H1 periods)']];
+ }else if(id==='BRISTOL'){
+   mode='case';const c=actual.cases.bristol;
+   title=c.company;description=c.exercise;source=c.citation;period=c.dates;
+   add('B3','reported',c.figures.improperRevenueApprox,
+      'SEC approximate $1.5B improperly recognized CONSIGNMENT-LIKE revenue across 2000–2001.');
+   add('B4','reported',c.figures.civilSettlementPenalty,
+      'SEC $150M settlement penalty, NOT a sales correction or revenue charge.');
+   add('B5','input',2500,
+      'Illustrative revenue baseline, invented ONLY to practice revenue reversal; not BMS actual sales.');
+   add('C3','target','=B3/1000','Convert $1,500M SEC allegation to approximately $1.5B.');
+   add('C4','target','=B5-B3',
+      'Hypothetical correctly recognized revenue IF the entire disputed amount was embedded in the invented $2,500M baseline.');
+   add('C5','target','=B3/B5',
+      'Hypothetical quality ratio; no claim this is historic channel-stuffing as a percent of sales.');
+   rows=[['B3','SEC approx improper sales ($M)'],['B4','SEC settlement penalty ($M) — NOT sales'],
+     ['B5','Training-only reported sales baseline ($M)'],
+     ['C3','SEC disputed sales ($B, approximate)'],['C4','Hypothetical adjusted sales ($M)'],
+     ['C5','Disputed sales / hypothetical sales (not actual issuer ratio)']];
  }else if(id==='WASTE'){
    mode='case';const c=actual.cases.waste;title=c.company;description=c.exercise;source=c.citation;period=c.dates;
    add('B3','reported',c.figures.cumulativePretaxMisstatement,'1992–third quarter 1997 combined approximate amount, not single-year.');
@@ -159,12 +202,14 @@ function present(s,lang){
 }
 function route(q){
  const s=String(q||'').toLowerCase();
- return /real|真实|年报|sec |10-k|sunbeam|dell|worldcom|xerox|waste management|company data|actual/i.test(s)&&
+ return /real|真实|年报|sec |10-k|sunbeam|dell|worldcom|xerox|waste management|healthsouth|bristol|bmy|company data|actual/i.test(s)&&
    /excel|workbook|spreadsheet|表格|练习|建模|case|案例|lab|模型/i.test(s);
 }
 function chosen(q,co){
  const s=String(q||'').toLowerCase();
  if(/sunbeam/.test(s))return 'SUNBEAM';
+ if(/healthsouth|health.?south|康复医疗舞弊/.test(s))return 'HEALTHSOUTH';
+ if(/bristol|bmy|百时美/.test(s))return 'BRISTOL';
  if(/worldcom|世通/.test(s))return 'WORLDCOM';
  if(/xerox|施乐/.test(s))return 'XEROX';
  if(/waste management|waste accounting|废物管理/.test(s))return 'WASTE';
