@@ -337,6 +337,12 @@
     q = String(q || '');
     const lg = lang(q), ix = ixArg || await index(), cls = classify(q);
     let co = findCompany(q, ix) || ctxCo || null;
+    // Same-page alert intelligence (only on explicit ask-for-updates intent);
+    // leave ordinary 8-K and company filing lookups on the established handlers.
+    const pulse = root.FFFloAlerts;
+    if(pulse && pulse.intent && pulse.intent(q) && pulse.report)
+      return { ...pulse.report(q,lg==='zh'), company:co||null };
+
     const SECWB = realWorkbooks();
     if (SECWB && SECWB.route(q)) return { ...SECWB.launch(q,co), company: co || null };
     const WB = workbooks();
@@ -576,6 +582,7 @@
       [zh ? '学 DCF' : 'Learn DCF', 'teach ' + T + ' DCF step by step'],
       [zh ? 'Cookie Jar 侦探' : 'Cookie Jar', T + ' cookie jar'],
       [zh ? 'SEC 案例' : 'SEC cases', 'Sunbeam case study'],
+      [zh ? '最新扫描' : 'Recent scans', zh ? '最近扫描有什么新消息' : 'What changed since the last scan?'],
       [zh ? '财务造假案例训练' : 'Forensic Case Lab', 'WorldCom SEC case spreadsheet'],
       [zh ? 'HealthSouth 案例' : 'HealthSouth Case', 'HealthSouth SEC spreadsheet'],
       [zh ? 'Channel Stuffing' : 'Revenue Case', 'Bristol SEC case spreadsheet'],
