@@ -116,6 +116,12 @@ class Portfolios(unittest.TestCase):
         a = np.diff(np.log(uni['AAA'][1]))[-len(R):]
         b = np.diff(np.log(uni['BBB'][1]))[-len(R):]
         self.assertTrue(np.allclose(R[:, 0], np.log1p(0.75 * np.expm1(a) + 0.25 * np.expm1(b))))
+        # the same ticker on two rows (share classes, options) and SPY held directly: one column each, SPY still last
+        dates, R2, cover = PB.portfolio_series([('AAA', 0.5), ('BBB', 0.25), ('AAA', 0.25), ('SPY', 0.5)], uni)
+        self.assertEqual(R2.shape[1], 2)
+        s = np.diff(np.log(uni['SPY'][1]))[-len(R2):]
+        self.assertTrue(np.allclose(R2[:, 0], np.log1p(0.5 * np.expm1(a) + 0.167 * np.expm1(b) + 0.333 * np.expm1(s)), atol=1e-3))
+        self.assertTrue(np.allclose(R2[:, 1], s))
 
 
 if __name__ == '__main__':

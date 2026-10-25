@@ -21,6 +21,7 @@ import math
 import os
 import sys
 import time
+import traceback
 from pathlib import Path
 
 import numpy as np
@@ -325,12 +326,25 @@ def build(root, universe_path, people=None, limit=0, workers=None):
     # 3) the scorecards (weekly), the ledger, the portfolios
     models_path = pub / 'models.json'
     models = read_json(models_path, {})
-    if _stale(models.get('built_at')) or limit:
-        models = scorecards(root, comps, uni)
-        write_json(models_path, rnd(models))
-    write_json(pub / 'ledger.json', rnd(ledger(root, pub)))
+    status['errors'] = []
+    try:
+        if _stale(models.get('built_at')) or limit:
+            models = scorecards(root, comps, uni)
+            write_json(models_path, rnd(models))
+    except Exception as exc:                                            # noqa: BLE001
+        traceback.print_exc()
+        status['errors'].append(f'scorecards: {exc!r}'[:300])
+    try:
+        write_json(pub / 'ledger.json', rnd(ledger(root, pub)))
+    except Exception as exc:                                            # noqa: BLE001
+        traceback.print_exc()
+        status['errors'].append(f'ledger: {exc!r}'[:300])
     if people:
-        status['portfolios'] = portfolios(root, pub, Path(people), uni)
+        try:
+            status['portfolios'] = portfolios(root, pub, Path(people), uni)
+        except Exception as exc:                                        # noqa: BLE001
+            traceback.print_exc()
+            status['errors'].append(f'portfolios: {exc!r}'[:300])
     status['seconds'] = round(time.monotonic() - t0)
     write_json(pub / 'status.json', status)
     return status
@@ -577,13 +591,17 @@ def resolve(root, frozen):
 def portfolio_series(holdings, uni, days=P.WINDOW + 1):
     """[(ticker, weight)] → (dates, daily log returns of the portfolio rebalanced to the weights each day, coverage =
     the share of the weight with bars). Holdings without bars are left out and the rest renormalized."""
-    have = [(t, w) for t, w in holdings if t in uni and w and w > 0]
-    cover = sum(w for _, w in have) / (sum(w for _, w in holdings if w and w > 0) or 1)
+    agg = {}                                                            # one weight per ticker (share classes, options rows)
+    for t, w in holdings:
+        if t in uni and w and w > 0:
+            agg[t] = agg.get(t, 0.0) + w
+    have = list(agg.items())
+    cover = sum(agg.values()) / (sum(w for _, w in holdings if w and w > 0) or 1)
     if not have:
         return None, None, 0.0
     series = {t: {'t': uni[t][0], 'ac': uni[t][1]} for t, _ in have}
-    if P.RH.BENCH in uni:
-        series[P.RH.BENCH] = {'t': uni[P.RH.BENCH][0], 'ac': uni[P.RH.BENCH][1]}
+    if P.RH.BENCH in uni:                                               # its own key: the portfolio may hold SPY too
+        series['\0bench'] = {'t': uni[P.RH.BENCH][0], 'ac': uni[P.RH.BENCH][1]}
     dates, R = aligned_returns(series, days=days)
     if len(R) < 250:
         return None, None, cover
@@ -591,7 +609,7 @@ def portfolio_series(holdings, uni, days=P.WINDOW + 1):
     w /= w.sum()
     simple = np.expm1(R[:, :len(have)]) @ w
     port = np.log1p(simple)
-    cols = [port] + ([R[:, -1]] if P.RH.BENCH in series else [])
+    cols = [port] + ([R[:, -1]] if '\0bench' in series else [])
     return dates, np.column_stack(cols), cover
 
 
@@ -656,7 +674,11 @@ def portfolios(root, pub, people, uni):
         HF = m.get('holdings_fields') or []
         hold = [dict(zip(HF, h)) for h in m.get('holdings') or []]
         hold = [(str(h.get('ticker') or '').upper(), float(h.get('weight') or 0)) for h in hold if h.get('ticker')]
-        doc = portfolio_doc(m.get('name'), hold, uni, seed=int(m.get('cik') or 0) % 1000)
+        try:
+            doc = portfolio_doc(m.get('name'), hold, uni, seed=int(m.get('cik') or 0) % 1000)
+        except Exception as exc:                                        # noqa: BLE001
+            print(f"portfolio m/{m.get('cik')}: {exc!r}"[:300], file=sys.stderr)
+            doc = None
         if doc:
             (pub / 'portfolios' / 'm').mkdir(parents=True, exist_ok=True)
             write_json(pub / 'portfolios' / 'm' / f"{m.get('cik')}.json", doc)
@@ -670,7 +692,11 @@ def portfolios(root, pub, people, uni):
         if not o:
             continue
         hold = official_holdings(o)
-        doc = portfolio_doc(o.get('name'), hold, uni, seed=sum(map(ord, o.get('slug') or '')) % 1000)
+        try:
+            doc = portfolio_doc(o.get('name'), hold, uni, seed=sum(map(ord, o.get('slug') or '')) % 1000)
+        except Exception as exc:                                        # noqa: BLE001
+            print(f"portfolio o/{o.get('slug')}: {exc!r}"[:300], file=sys.stderr)
+            doc = None
         if doc:
             doc['approximate'] = True
             (pub / 'portfolios' / 'o').mkdir(parents=True, exist_ok=True)
