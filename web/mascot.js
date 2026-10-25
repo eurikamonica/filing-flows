@@ -564,6 +564,7 @@
       [zh ? '学 DCF' : 'Learn DCF', 'teach ' + T + ' DCF step by step'],
       [zh ? 'Cookie Jar 侦探' : 'Cookie Jar', T + ' cookie jar'],
       [zh ? 'SEC 案例' : 'SEC cases', 'Sunbeam case study'],
+      [zh ? '财务造假案例训练' : 'Forensic Case Lab', 'WorldCom SEC case spreadsheet'],
       [zh ? '返利练习' : 'Rebate lab', 'supplier rebate exercise']
     ];
     ui.chips.innerHTML = '<div class="flo-modes">' + modes.map(m => '<button type="button" class="flo-mode" data-flo-q="' + esc(m[1]) + '">' + esc(m[0]) + '</button>').join('') + '</div>' +
