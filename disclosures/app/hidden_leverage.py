@@ -160,7 +160,7 @@ def extract(cf, cik, as_of, filed_documents=None):
     return data
 
 
-def scan_filing_text(raw, cik, accession, document, form, filed, max_matches=18):
+def scan_filing_text(raw, cik, accession, document, form, filed, max_matches=24):
     """Text *leads*, NEVER numeric obligations or verified liabilities.
 
     Source text must be fetched from the exact recent 10-K or 10-Q. Suppress
