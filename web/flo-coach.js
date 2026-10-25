@@ -6,6 +6,7 @@
 'use strict';
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const WB=()=>root.FFFloWorkbook||(typeof module!=='undefined'?require('./flo-workbook.js'):null);
+const mastery=()=>root.FFFloPractice||(typeof module!=='undefined'?require('./flo-practice.js'):null);
 const curriculum={
  dcf:[
  ['C3','Forecast revenue','预测营业收入','Prior revenue × (1 + growth). C3 = B3 × (1 + C4).','上一年收入 ×（1 + 增长率）。C3 = B3 × (1 + C4)。'],
@@ -79,6 +80,18 @@ const curriculum={
  ['C3','Revenue timing lower bound','识别提前确认收入下界','SEC said OVER $3 billion, not exactly $3 billion. This cell is a lower-bound illustration.','SEC 表述为超过 $3B，不是恰好 $3B；公式仅显示下界。'],
  ['C4','Pretax income vs revenue','区分收入与利润','Approx $1.5B pretax impact is not a precise gross margin. Do not call their ratio exact.','约 $1.5B 税前影响与超过 $3B 收入不可组成精确利润率。']
  ],
+ HEALTHSOUTH:[
+ ['C3','1999 reported vs actual','1999 实际与原报利润','Report 230 less actual −191 = 421. NEVER subtract the absolute value of negative earnings as positive.','230 − (−191) = 421，负数不能误当正数。'],
+ ['C4','2000 correction','2000 年差额','Reported 559 minus actual 194 = 365.','原报 559 减实际 194 等于 365。'],
+ ['C5','2001 correction','2001 年差额','Reported 434 minus actual 9 = 425.','434 − 9 = 425。'],
+ ['C6','2002 six-month correction','2002 上半年差额','Reported 340 minus actual 157 = 183 for SIX months only.','340 − 157 = 183；只属于 2002 上半年。'],
+ ['C7','Reconcile separate periods','合计对账','SUM(C3:C6) = 1,394 USD M, a group of separate FY/H1 periods.','SUM(C3:C6) = 1,394 百万美元，为跨期间合计，非单一财年。']
+ ],
+ BRISTOL:[
+ ['C3','Read disputed revenue figure','理解收入错报额','Approximately 1,500 USD M = about 1.5 USD B. SEC estimated amount not exact.','约 1,500 百万美元 = 约 15 亿美元；不是精确金额。'],
+ ['C4','Simulate channel inventory return','模拟渠道收入转回','Hypothetical 2,500 revenue baseline minus SEC approximate 1,500. This is NOT actual BMS revenue.','模拟收入 2,500 减 SEC 约 1,500；结果并非 BMS 真实收入。'],
+ ['C5','Earnings quality exercise','收入质量情景','1,500 divided by HYPOTHETICAL 2,500 base; not a factual issuer share.','1,500 除以模拟 2,500；不可声称真实占比。']
+ ],
  WASTE:[
  ['C3','Cumulative misstatement','累计错报','Convert $1.7B to $1,700M; do not assign it to FY1997 alone.','$1.7B = $1,700M，为多年的累计数。'],
  ['C4','Training-only depreciation','折旧寿命假设模拟','Cash spent does not change merely because a depreciation life assumption changes.','改变折旧年限不会自动改变历史现金支付。']
@@ -101,10 +114,29 @@ const questions={
  DELL:[{en:'76% of operating income means Intel paid Dell $76 million.',zh:'占营业利润 76% 是否意味着收到 $76M？',options:['Correct','Incorrect'],correct:1,why:'A ratio does not imply an amount without denominator.'}],
  WORLDCOM:[{en:'Expensing normal network fees as capital assets typically…',zh:'把本应费用化的线路成本错误资本化，通常会使本期利润如何变化？',options:['Overstate current profit','Reduce current profit'],correct:0,why:'Costs move off the income statement into assets (temporarily), until depreciation or impairment.'}],
  XEROX:[{en:'Is accelerated revenue necessarily cash collected now?',zh:'提前确认收入是否表示当期已经收到现金？',options:['Yes','No'],correct:1,why:'Recognition timing and collections are distinct.'}],
- WASTE:[{en:'Does longer useful life by itself increase immediate cash flow?',zh:'单纯延长折旧年限会增加当期现金吗？',options:['Yes','No'],correct:1,why:'Depreciation is non-cash; timing effects depend on tax rules not modeled here.'}]
+ WASTE:[{en:'Does longer useful life by itself increase immediate cash flow?',zh:'单纯延长折旧年限会增加当期现金吗？',options:['Yes','No'],correct:1,why:'Depreciation is non-cash; timing effects depend on tax rules not modeled here.'}],
+ HEALTHSOUTH:[
+  {en:'When actual pretax income is negative, reported minus actual requires subtracting a negative number.',zh:'实际税前利润为负数时，“原报减实际”相当于减去负数。',options:['True / 是','False / 否'],correct:0,why:'230 - (-191) = 421 million in 1999.'},
+  {en:'Can FY2001 plus H1 2002 be called FY2002 income?',zh:'2001 全年与 2002 上半年能加起来叫做 2002 全年利润吗？',options:['Yes / 可以','No / 不可以'],correct:1,why:'The two distinct reporting periods cannot be relabeled as one fiscal year.'},
+  {en:'Does the SEC complaint table alone reconstruct all fraudulent accounting entries?',zh:'SEC 诉状的利润差额表能否推断所有虚假会计分录？',options:['Yes','No'],correct:1,why:'The SEC table contains summary earnings differences, not a complete journal.'}
+ ],
+ BRISTOL:[
+  {en:'Channel stuffing may make booked sales grow faster than genuine end-customer demand.',zh:'渠道压货可能让账面销售增长快于终端真实需求。',options:['True / 是','False / 否'],correct:0,why:'Distributor inventory may rise without end-user sell-through.'},
+  {en:'Is the $150M civil penalty a $150M reduction to sales?',zh:'$150M 的和解罚款能直接作为收入减少额吗？',options:['Yes','No'],correct:1,why:'Penalty and prematurely recognized distributor revenue are distinct accounting facts.'},
+  {en:'If risks/rewards/control remain with the seller, shipment alone always meets revenue recognition?',zh:'如果控制权仍留在卖方，单凭发货就一定能确认收入吗？',options:['Yes','No'],correct:1,why:'Contract substance and the applicable period-specific rules govern recognition.'}
+ ]
 };
+const extraQuestions={
+ dcf:[{en:'Which happens when operating NWC increases, all else equal?',zh:'经营性营运资本增加且其他不变，FCFF 如何变化？',options:['Increase','Decrease'],correct:1,why:'Additional operating investment consumes cash.'}],
+ three:[{en:'Depreciation added back in CFO means it is cash earned?',zh:'间接法 CFO 加回折旧，是否意味着收到额外现金？',options:['Yes','No'],correct:1,why:'It reverses a noncash charge already included in net income.'}],
+ comps:[{en:'Can you use a peer Equity P/E ratio as EV/EBITDA?',zh:'可直接用 P/E 代替 EV/EBITDA 吗？',options:['Yes','No'],correct:1,why:'Enterprise and equity valuation bases differ.'}],
+ ddm:[{en:'If cost of equity ≤ perpetuity growth, is Gordon terminal formula valid?',zh:'股权成本 ≤ 永续增长率时 Gordon 终值有效吗？',options:['Yes','No'],correct:1,why:'The Gordon perpetuity denominator must be positive.'}],
+ dupont:[{en:'Does higher ROE always mean higher asset profitability?',zh:'ROE 越高是否一定代表资产盈利能力越强？',options:['Yes','No'],correct:1,why:'Higher financial leverage can also raise ROE.'}],
+ reserves:[{en:'Can missing reserve rollforward lines be treated as zero releases?',zh:'准备金附注缺行是否意味着转回为零？',options:['Yes','No'],correct:1,why:'Missing XBRL disclosure evidence is not proof of zero activity.'}]
+};
+for(const [k,q] of Object.entries(extraQuestions))questions[k].push(...q);
 function track(s){const id=s.template?s.template.id:s.id;return curriculum[id]||Object.keys(s.answers||{}).slice(0,10).map(ref=>[ref,'Explain this formula','解释当前公式','Follow source evidence and cell references.','查看来源和单元格引用。']);}
-function state(s){if(!s.coach)s.coach={step:0,quiz:null,quizzesAnswered:0};return s.coach;}
+function state(s){if(!s.coach)s.coach={step:0,quiz:null,quizzesAnswered:0,quizIndex:0};return s.coach;}
 function current(s){const v=track(s),c=state(s);c.step=Math.min(Math.max(0,c.step),v.length-1);return v[c.step];}
 function completed(s,ref){if(!s.cells[ref]||!String(s.cells[ref].raw||'').trim())return false;
  try{const grade=WB().score(s);return grade.good.includes(ref);}catch(e){return false;}}
@@ -113,14 +145,26 @@ function next(s){const t=track(s),o=state(s);if(!t.length)return false;
  if(!completed(s,step[0])){s.message='Complete and check '+step[0]+' before advancing. Use Hint if needed.';s.selected=step[0];return false;}
  o.step=Math.min(o.step+1,t.length-1);s.selected=t[o.step][0];s.message='Milestone completed. '+s.selected+' is next.';return true;}
 function prev(s){const t=track(s),o=state(s);o.step=Math.max(0,o.step-1);s.selected=t[o.step][0];return o.step;}
-function hint(s,lang){const p=current(s);return (lang==='zh'?p[4]:p[3]);}
-function answerQuiz(s,index,lang){const id=s.template?s.template.id:s.id,quiz=questions[id]&&questions[id][0];
+function hint(s,lang){
+ if(mastery().memory(s).mode==='exam'){s.message=lang==='zh'?'考试模式不提供提示，请独立完成后再批改。':'Exam mode disables hints until you finish.';return s.message;}
+ mastery().recordHint(s);const p=current(s);return lang==='zh'?p[4]:p[3];
+}
+function answerQuiz(s,index,lang){
+ const id=s.template?s.template.id:s.id,group=questions[id]||[],st=state(s);
+ const quiz=group[Math.min(st.quizIndex||0,group.length-1)];
  if(!quiz||!Number.isInteger(index)||index<0||index>=quiz.options.length)throw Error('Invalid quiz answer');
- const pass=index===quiz.correct;state(s).quiz={index,pass};if(pass)state(s).quizzesAnswered=1;
- s.message=(pass?(lang==='zh'?'正确：':'Correct: '):(lang==='zh'?'再试一次：':'Try again: '))+quiz.why;return pass;}
+ const pass=index===quiz.correct;st.quiz={index,pass};
+ mastery().recordQuiz(s,pass);
+ if(pass){
+   st.quizzesAnswered=(st.quizzesAnswered||0)+1;
+   if(st.quizIndex<group.length-1){st.quizIndex++;st.quiz=null;}
+ }
+ s.message=(pass?(lang==='zh'?'正确：':'Correct: '):(lang==='zh'?'再试一次：':'Try again: '))+quiz.why;
+ return pass;
+}
 function panel(s,lang='en'){
  const zh=lang==='zh',t=track(s),at=current(s),p=state(s),count=t.filter(x=>completed(s,x[0])).length,id=s.template?s.template.id:s.id,
- quiz=questions[id]&&questions[id][0],ref=at&&at[0];
+ quiz=questions[id]&&questions[id][Math.min(p.quizIndex||0,questions[id].length-1)],ref=at&&at[0];
  const buttons='<div class="flo-coach-controls"><button type="button" data-coach-prev '+(p.step===0?'disabled':'')+'>'+(zh?'上一步':'Previous')+'</button>'+
  '<button type="button" data-coach-focus>'+(zh?'定位单元格':'Go to cell')+'</button>'+
  '<button type="button" data-coach-hint>'+(zh?'分步提示':'Explain')+'</button>'+
@@ -131,6 +175,7 @@ function panel(s,lang='en'){
  '<b>'+esc(zh?at[2]:at[1])+' · '+esc(ref)+'</b><p>'+esc(zh?at[4]:at[3])+'</p>'+
  '<p class="flo-source">'+(zh?'请先在工作表填写正确公式（而不是照抄数字）。错误时先检查单位、正负号、行列引用。':'Enter a spreadsheet formula, not an answer number. Check units, signs and references if wrong.')+'</p>'+
  buttons+
+ mastery().panel(s,lang)+
  (quiz?'<div class="flo-coach-quiz"><b>'+(zh?'理解测试':'Concept checkpoint')+'</b><p>'+esc(zh?quiz.zh:quiz.en)+'</p>'+
  quiz.options.map((v,i)=>'<button type="button" data-coach-quiz="'+i+'" '+
  (p.quiz&&p.quiz.index===i?'aria-pressed="true"':'')+'>'+esc(v)+'</button>').join('')+
@@ -160,6 +205,12 @@ function simulate(x){
  if(kind==='sunbeam')return {kind,reserveLiabilityChange:-amount,pretaxProfitIncrease:amount,immediateCashDifference:0,
    entries:['If valid re-estimate: Dr Reserve liability / Cr Provision expense '+amount],
    caveat:'A reserve release is not presumptively fraudulent; assess actual underlying obligations.'};
+ if(kind==='healthsouth')return {kind,illustrativeIncomeOverstatement:amount,illustrativeAssetsOverstatement:amount,
+   immediateCashDifference:0,entries:['Hypothetical correction: Dr Revenue / Cr Receivable '+amount+' where fictitious receivables were recorded'],
+   caveat:'Mechanism-only hypothetical example; NOT HealthSouth case actual journal or SEC income figure.'};
+ if(kind==='bristol')return {kind,illustrativeSalesReversal:amount,illustrativeDeferredSales:amount,
+   immediateCashDifference:0,entries:['Illustration: Dr Revenue / Cr Contract liability or receivable '+amount+' depending on shipment/control and original entries'],
+   caveat:'Channel-stuffing timing depends on contract and applicable GAAP; NOT actual Bristol-Myers transaction or full profit effect.'};
  if(kind==='dell'){
   const ratio=Math.min(1,Math.max(0,amount/100));
   return {kind,assumedOperatingIncome:100,assumedPaymentShare:ratio,
@@ -174,7 +225,7 @@ function simulatorHTML(lang='en'){
  return '<section class="flo-coach-sim"><b>'+(zh?'会计处理模拟器 · 非真实历史金额':'Accounting Treatment Simulator — HYPOTHETICAL')+'</b>'+
  '<p class="flo-source">'+(zh?'SEC 案例解释真实违规模式，本实验金额由你设定，不得当作案件实际数字。':'SEC cases inform the mechanism. All user-input amounts here are illustrative, not historical allegations.')+'</p>'+
  '<div class="flo-wb-controls"><label>'+(zh?'场景':'Scenario')+' <select data-flo-sim-kind>'+
- [['worldcom','WorldCom · CapEx vs expense'],['xerox','Xerox · revenue timing'],['waste','Waste Management · useful life'],['sunbeam','Sunbeam · reserve release'],['dell','Dell · incentive reliance']].map(([v,l])=>'<option value="'+v+'">'+esc(l)+'</option>').join('')+'</select></label>'+
+ [['worldcom','WorldCom · CapEx vs expense'],['xerox','Xerox · revenue timing'],['waste','Waste Management · useful life'],['sunbeam','Sunbeam · reserve release'],['dell','Dell · incentive reliance'],['healthsouth','HealthSouth · earnings overstatement'],['bristol','BMS · channel stuffing']].map(([v,l])=>'<option value="'+v+'">'+esc(l)+'</option>').join('')+'</select></label>'+
  '<label>'+(zh?'金额/比例':'Amount / % for Dell')+' <input data-flo-sim-amount type="number" value="100" min="0" max="1000000000" step="any"></label>'+
  '<label>'+(zh?'使用年限（年）':'Useful life (years)')+' <input data-flo-sim-life type="number" value="5" min="1" max="40" step="1"></label>'+
  '<button type="button" data-flo-sim-run>'+(zh?'运行会计模拟':'Run simulation')+'</button></div>'+
