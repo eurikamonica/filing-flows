@@ -238,6 +238,12 @@
       if(stack.has(normalized))throw Error('#CYCLE!');
       stack.add(normalized);
       try{
+        // Guard perpetual-growth models: otherwise a negative/infinite terminal
+        // value could masquerade as a legitimate modeled equity value.
+        if(normalized==='G20'&&sheet['B16']&&sheet['B19']&&sheet['G26']&&read('B16')<=read('B19'))
+          throw Error('#WACC≤g!');
+        if(normalized==='G8'&&sheet['B5']&&sheet['B7']&&sheet['G10']&&read('B5')<=read('B7'))
+          throw Error('#Ke≤g!');
         const item=sheet[normalized], raw=Object.prototype.hasOwnProperty.call(fixed,normalized)?fixed[normalized]:item.raw;
         let v;
         if(raw===''||raw==null)throw Error('#BLANK!');
@@ -372,7 +378,7 @@
         let value,err;
         try{value=evaluate(s.cells,ref);}catch(e){err=e.message;}
         const name=input?'input':'formula';
-        body+='<td class="flo-wb-'+name+(selectedCell?' selected':'')+(err==='\\#BLANK!'?' empty':'')+'">'+
+        body+='<td class="flo-wb-'+name+(selectedCell?' selected':'')+(err==='#BLANK!'?' empty':'')+'">'+
           '<button type="button" data-ref="'+ref+'" title="'+esc(ref+' = '+item.raw)+'">'+
           (err?(err==='#BLANK!'?'□':esc(err)):esc(format(value,ref,s)))+'</button></td>';
       }
