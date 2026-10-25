@@ -339,7 +339,30 @@
     "from_13f": 150,
     "max_tickers": 200,
     "keep_days": 400,
-    "_note": "CBOE delayed option chains, summarised daily: IV30, smile, term structure, OI and GEX by strike, walls, max pain, skew, and the option-implied price paths (quantiles and max pain per expiry). The sector SPDRs and a few large ETFs are always collected, so their ETF pages draw the paths; the 150 stocks most held in 13F as well, for their company pages (Options: price paths)."
+    "_note": "CBOE delayed option quotes: full scan after close plus priority supplementary scans (weekdays) of highly viewed options, including missing price-path fields. Per-ticker quote timestamps are preserved. Supplemental failures never erase a previously valid snapshot.",
+    "fast_priority": [
+      "AAPL",
+      "NVDA",
+      "MSFT",
+      "AMZN",
+      "META",
+      "GOOGL",
+      "GOOG",
+      "TSLA",
+      "AVGO",
+      "AMD",
+      "PLTR",
+      "OKLO",
+      "IREN",
+      "CRWV",
+      "NBIS",
+      "SPY",
+      "QQQ",
+      "IWM",
+      "SPX",
+      "TLT"
+    ],
+    "fast_max_tickers": 22
   },
   "ownership": {
     "batch": 300,
