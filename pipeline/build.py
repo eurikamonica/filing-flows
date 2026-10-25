@@ -13,7 +13,7 @@ import sys
 import time
 import traceback
 
-from . import analysis, chains, gamma, checks, dims, facts, fx as FX, quality, release, reported, scan, sec, sectors, social, sources, text
+from . import analysis, chains, gamma, checks, dims, facts, fx as FX, ixbrl, quality, release, reported, scan, sec, sectors, social, sources, text
 from .model import normalize
 from .sankey import NOTE_KEYS, Fmt, build as build_spec
 
@@ -1149,6 +1149,15 @@ def _currency_of(cik):
     return _cur[cik]
 
 
+def _rel_header(rel):
+    """The column header of the release's income statement table, lower case ("" for one read from inline XBRL)."""
+    try:
+        best = release.pick_tables(rel.get("tables") or [])[0]
+        return release._header(best[1]).lower() if best else ""
+    except Exception:
+        return ""
+
+
 def _derive_h2(c):
     """Second halves from the 20-F year minus its first half, for flows; each half then compares with the half before
     and the same half a year earlier."""
@@ -1269,6 +1278,18 @@ def process_fpi_release(store, cik, accn, form, starred=False):
             break
         except ValueError as e:
             errors.append(f"{name}: {e}")
+            if "ix:nonfraction" in html[:5_000_000].lower():
+                # a tagged report with no tables the reader understands (TD Bank's positioned-text 6-K): its own XBRL
+                try:
+                    res = ""
+                    if "<ix:resources" not in html.lower() and row.get("primaryDocument") and row["primaryDocument"] != name:
+                        p0 = sec.get(sec.doc_url(cik, accn, row["primaryDocument"]))
+                        i0, j0 = p0.lower().find("<ix:resources"), p0.lower().find("</ix:resources>")
+                        res = p0[i0:j0] if i0 >= 0 else ""
+                    rel, doc, ex_url = ixbrl.release(html, filed, res), html, url
+                    break
+                except (ValueError, sec.NotFound) as e2:
+                    errors.append(f"{name} (inline XBRL): {e2}")
     if not rel:
         raise NotApplicable("not a results release" + (f" ({errors[0]})" if errors else ""))
     end = rel["end"]
@@ -1290,14 +1311,14 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         raise NotApplicable("the release's statements are for the full year (the 20-F has it)")
     if ratio and ratio >= 2.6 and fq0 == 3 and not grows and rel["is_quarter"] is not False:
         raise NotApplicable("the release's statements are nine months, not the quarter")
-    hdr0 = release._header(release.pick_tables(rel["tables"])[0][1]).lower()
+    hdr0 = _rel_header(rel)
     if ratio and fq0 == 2 and 1.6 <= ratio <= 2.6 and not grows and \
             (rel["is_quarter"] is not True or re.search(r"six months|six-month|first half|half[- ]year", hdr0)):
         rel["is_quarter"] = False
     if rel["is_quarter"] is False:
         # a half-year report (Unilever, Rio Tinto, BHP and others report twice a year): kept as a half, drawn when the
         # company has no quarters; the second half comes from the 20-F year minus the first (_derive_h2)
-        hdr = release._header(release.pick_tables(rel["tables"])[0][1]).lower()
+        hdr = _rel_header(rel)
         if fq0 == 2 and (170 <= (rel.get("span") or 0) <= 190 or
                          re.search(r"six months|six-month|6 months|half[- ]?year|first half|\bh1\b|\b1h\b|interim period", hdr + " " + doc[:30000].lower())):
             half = True
@@ -1333,7 +1354,17 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         raise NotApplicable("results release lacks revenue or net income")
     # the year-ago quarter: the release's second column when its header pairs the quarter with the year before
     raw_py = py_end = None
-    if str(e0.year - 1) in release._header(release.pick_tables(rel["tables"])[0][1]) and len(rel["cols"].get("revenue") or []) > 1:
+    if rel.get("ix") and rel.get("py"):                  # inline XBRL: the year-ago period's own tags
+        try:
+            py = {k: None for k in facts.CONCEPTS}
+            py.update({k: (abs(v) if k in release.COST_KEYS else v) for k, v in rel["py"].items()})
+            py = release.reconcile(py, rel["labels"])
+            py.pop("disc", None)
+            if normalize(py):
+                raw_py, py_end = py, rel["py_end"]
+        except ValueError:
+            raw_py = py_end = None
+    elif rel["tables"] and str(e0.year - 1) in _rel_header(rel) and len(rel["cols"].get("revenue") or []) > 1:
         try:
             py = {k: None for k in facts.CONCEPTS}
             py.update(_column(rel, 1))

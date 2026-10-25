@@ -51,14 +51,15 @@ P = {
           r"|^(net )?(profit|profit \(loss\)|\(loss\) profit|profit/\(loss\)|income|earnings) after (income )?tax(es|ation)?( for the (period|year|quarter))?$"
           r"|^net (income|earnings) for the (period|year|quarter)$"
           r"|^(income|earnings|income \(loss\)|\(loss\) income|profit \(loss\)) for the (period|year|quarter)$"
-          r"|^total (net )?(profit|income|earnings)( \(loss\))?$",
+          r"|^total (net )?(profit|income|earnings)( \(loss\))?$|^consolidated net (income|profit|earnings)( \(loss\))?$",
     "pl_cont": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\)) from continuing operations$"
                r"|^(net )?(profit|profit \(loss\)|\(loss\) profit)( after (income )?tax(ation)?)? from continuing operations$",
     "ni": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|earnings \(loss\)) (attributable|applicable|available) to "
           r"(?!non-?controlling|minority|redeemable non)|^(net )?profit attributable to (the )?(owners|equity holders|shareholders)"
           r"|^attributable to (the )?(owners|equity holders|shareholders|stockholders)"
           r"|^attributable to (?!non-?controlling|minority)[a-z0-9 .&'’-]{0,40}(owners|shareholders|equity holders|stockholders)"
-          r"|^(income|profit|earnings)( \(loss\))? attributable to (?!non-?controlling|minority|redeemable non)",
+          r"|^(income|profit|earnings)( \(loss\))? attributable to (?!non-?controlling|minority|redeemable non)"
+          r"|^(group|[a-z][a-z0-9&.\- ]{1,30}) share$",                 # "TotalEnergies share" of net income
     "nci": r"^(less: )?net (income|loss|income \(loss\)|\(income\) loss|\(loss\) income|earnings) attributable to "
            r"(non-?controlling|minority)|^(non-?controlling|minority) interests?$|^(net )?profit attributable to non-?controlling|^attributable to non-?controlling|^(income|profit|earnings)( \(loss\))? attributable to (non-?controlling|minority)",
     "ocf": r"^net cash (provided by|from|used in|\(used in\) provided by|provided by \(used in\)|generated from|"
@@ -338,6 +339,8 @@ def _units(table):
     # "DKK million" as a table's caption (Novo Nordisk), "Amounts in EUR thousands", "USD m"
     m = m or re.search(r"(?:^|[\s(])(?:dkk|eur|usd|gbp|chf|sek|nok|jpy|cny|rmb|hkd|twd|krw|inr|brl|cad|aud|zar|ils|mxn|"
                        r"€|us\$|\$|£)\s*(thousand|million|billion)s?\b", t)
+    if not m and re.search(r"\(\s*m\s*[$€£]?\s*\)|\bm[$€]\b|\(\s*m\s*\)", t):   # "(M$)" (TotalEnergies)
+        return 1e6
     if not m:                                                # "USD m", "€m", "CHF bn" (Novartis, UBS)
         m2 = re.search(r"(?:^|[\s(])(?:usd|us\$|eur|chf|gbp|dkk|sek|nok|jpy|cny|rmb|cad|aud|\$|€|£)\s?(m|mn|bn)\b", t)
         return {"m": 1e6, "mn": 1e6, "bn": 1e9}[m2.group(1)] if m2 else None
@@ -490,7 +493,9 @@ def parse(html, filed, last_end=None, prior_revenue=None):
     span = None                                            # an inline-XBRL 6-K's own period length, when it says
     for m in re.finditer(r"\b(20\d\d-\d\d-\d\d) (" + end.isoformat() + r")\b", text[:20000]):
         try:
-            span = max(span or 0, (end - dt.date.fromisoformat(m.group(1))).days)
+            dd = (end - dt.date.fromisoformat(m.group(1))).days
+            if dd >= 80:                                   # the shortest period ending that day: a quarter when there is one
+                span = min(span or dd, dd)
         except ValueError:
             pass
     isq = _first_is_quarter(_header(t_is))

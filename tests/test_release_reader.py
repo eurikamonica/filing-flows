@@ -100,3 +100,27 @@ def test_revenue_heading_without_total_is_summed():
             {"key": "net income (loss)", "label": "x", "vals": [-76.0, 58.0], "pct": False, "cells": []}]
     m = R._map_rows({"rows": rows}, R.IS_KEYS, full=True)
     assert m["revenue"][2] == [563.0, 489.0] and m["gp"][0] == 370.0 and m["pl"][0] == -76.0
+
+
+def test_inline_xbrl_quarter_with_resources_elsewhere():
+    """A 6-K report with no tables (positioned text, TD Bank) is read from its inline XBRL tags; its contexts and
+    units can sit in another document of the filing; the shortest period is the quarter; the year-ago period too."""
+    import datetime as dt
+    from pipeline import ixbrl
+    res = """<ix:resources>
+    <xbrli:context id="Q"><xbrli:entity/><xbrli:period><xbrli:startDate>2026-05-01</xbrli:startDate><xbrli:endDate>2026-07-31</xbrli:endDate></xbrli:period></xbrli:context>
+    <xbrli:context id="YTD"><xbrli:entity/><xbrli:period><xbrli:startDate>2025-11-01</xbrli:startDate><xbrli:endDate>2026-07-31</xbrli:endDate></xbrli:period></xbrli:context>
+    <xbrli:context id="PY"><xbrli:entity/><xbrli:period><xbrli:startDate>2025-05-01</xbrli:startDate><xbrli:endDate>2025-07-31</xbrli:endDate></xbrli:period></xbrli:context>
+    <xbrli:context id="SEG"><xbrli:entity><xbrli:segment><xbrldi:explicitMember dimension="a">b</xbrldi:explicitMember></xbrli:segment></xbrli:entity><xbrli:period><xbrli:startDate>2026-05-01</xbrli:startDate><xbrli:endDate>2026-07-31</xbrli:endDate></xbrli:period></xbrli:context>
+    <xbrli:unit id="CAD"><xbrli:measure>iso4217:CAD</xbrli:measure></xbrli:unit></ix:resources>"""
+    doc = """<div>Third quarter <ix:nonFraction name="ifrs-full:Revenue" contextRef="Q" unitRef="CAD" scale="6">16,885</ix:nonFraction>
+    <ix:nonFraction name="ifrs-full:Revenue" contextRef="YTD" unitRef="CAD" scale="6">48,000</ix:nonFraction>
+    <ix:nonFraction name="ifrs-full:Revenue" contextRef="SEG" unitRef="CAD" scale="6">9,000</ix:nonFraction>
+    <ix:nonFraction name="ifrs-full:ProfitLoss" contextRef="Q" unitRef="CAD" scale="6">4,615</ix:nonFraction>
+    <ix:nonFraction name="ifrs-full:IncomeTaxExpenseContinuingOperations" contextRef="Q" unitRef="CAD" scale="6" sign="-">12</ix:nonFraction>
+    <ix:nonFraction name="ifrs-full:Revenue" contextRef="PY" unitRef="CAD" scale="6">15,297</ix:nonFraction>
+    <ix:nonFraction name="ifrs-full:ProfitLoss" contextRef="PY" unitRef="CAD" scale="6">3,000</ix:nonFraction></div>"""
+    r = ixbrl.release(doc, dt.date(2026, 8, 27), res)
+    assert r["end"] == "2026-07-31" and r["span"] == 91 and r["is_quarter"] and r["currency"] == "CAD"
+    assert r["is"]["revenue"] == 16885e6 and r["is"]["pl"] == 4615e6 and r["is"]["tax"] == -12e6
+    assert r["py_end"] == "2025-07-31" and r["py"]["revenue"] == 15297e6
