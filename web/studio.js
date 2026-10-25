@@ -1128,7 +1128,7 @@
     const k = clamp(Math.round(f), 0, V.grid.length - 1);
     ctx.textAlign = 'right'; ctx.fillStyle = alpha(th.text === '#1d1d1b' ? '#1d1d1b' : '#ffffff', opt.theme === 'clean' ? 0.10 : 0.12);
     ctx.font = F(700, portrait ? 120 : 110);
-    if (!V.yearly && style !== 'heat' && !['sankey', 'treemap', 'bubble'].includes(V.kind)) ctx.fillText(V.quarterly ? (V.qlabel || quarterLabel)(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (flat ? (V.kind === 'rank' ? 70 : 10) : 24) * S);
+    if (!V.yearly && style !== 'heat' && !['sankey', 'treemap', 'bubble'].includes(V.kind)) ctx.fillText(V.actual ? dayLabel(V.grid[k]) : V.quarterly ? (V.qlabel || quarterLabel)(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (flat ? (V.kind === 'rank' ? 70 : 10) : 24) * S);
     if (V.kind === 'treemap') { ctx.font = F(800, 64); ctx.fillStyle = th.text; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillText(monthYear(V.grid[k]), W - pad, top - 10 * S); }
     brand(ctx, W, H, S, th, F, portrait);
     ctx.fillStyle = alpha(th.accent, 0.9); ctx.fillRect(0, H - 6 * S, W * clamp(t / tm.D, 0, 1), 6 * S);
@@ -1741,9 +1741,9 @@
     if (V.kind === 'rank') {
       const ord = V.series.map((s, k) => ({ k, v: s.v[L] })).filter((x) => fin(x.v)).sort((a, c) => (V.order === 'asc' ? a.v - c.v : c.v - a.v)).slice(0, V.rankN);
       V.final = ord.map((x, i) => ({ k: x.k, label: `${i + 1}. ${V.series[x.k].label}`, value: V.fmt(x.v), change: '', v: x.v, sec: V.series[x.k].sec }));
-      V.endTitle = `${V.metric} · ${V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}`;
+      V.endTitle = V.actual ? `${V.metric} · ${dayLabel(G[L])}` : `${V.metric} · ${V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}`;
       V.endSub = V.title;
-      V.caption = `${V.title} (${V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}): ` + V.final.map((r) => `${r.label} ${r.value}`).join(' · ');
+      V.caption = `${V.title} (${V.actual ? dayLabel(G[L]) : V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}): ` + V.final.map((r) => `${r.label} ${r.value}`).join(' · ');
       return;
     }
     if (V.kind === 'bubble') {
@@ -1764,7 +1764,7 @@
       const share = V.stack.share;
       V.final = V.series.map((s, k) => ({ k, sec: s.sec, label: s.label, v: s.v[L], v0: s.v.find(fin) })).sort((a, c) => (c.v || 0) - (a.v || 0)).slice(0, 8)
         .map((r) => ({ k: r.k, sec: r.sec, label: r.label, value: V.fmt(r.v), change: share && fin(r.v0) ? `${r.v >= r.v0 ? '+' : '−'}${Math.abs(100 * (r.v - r.v0)).toFixed(1)} pts` : (fin(r.v0) && r.v0 > 0 ? pctf(r.v / r.v0 - 1, 0) : ''), up: r.v >= (r.v0 || 0) }));
-      V.endTitle = `${share ? 'Share of market value' : 'Market value'}, ${monthYear(G[L])}`; V.endSub = `change since ${monthYear(G[0])}`;
+      V.endTitle = V.actual ? `Actual fund NAV sector weight, ${dayLabel(G[L])}` : `${share ? 'Share of market value' : 'Market value'}, ${monthYear(G[L])}`; V.endSub = V.actual ? `reported observations since ${dayLabel(G[0])}` : `change since ${monthYear(G[0])}`;
       V.caption = `${V.title}, ${monthYear(G[0])} → ${monthYear(G[L])}: ` + V.final.map((r) => `${r.label} ${r.value} (${r.change})`).join(' · ');
       return;
     }
@@ -2066,7 +2066,7 @@
       const tm = timing(V, opt()), per = (V.grid.length - 1) / tm.run, unit = V.yearly ? 'years' : V.quarterly ? 'quarters' : V.kind === 'rank' && st.step === 'm' || ['calendar', 'bubble', 'treemap', 'sectors'].includes(V.kind) ? 'months' : 'weeks';
       const what = V.actual ? (V.kind === 'sectors' ? ' sectors' : ' holdings') : ['rank', 'bubble', 'treemap'].includes(V.kind) ? ' companies' : V.kind === 'sectors' ? ' sectors' : V.kind === 'timing' ? ' plans' : ' series';
       $('#st-status').textContent = V.actual ? `${V.series.length + what} · ${V.grid.length} actual dated snapshot${V.grid.length === 1 ? '' : 's'} · ${tm.D} s${V.grid.length === 1 ? ' (single-date card)' : ' (transitions illustrative)'}` : `${V.series.length + what} · ${V.grid.length} ${unit} · ${tm.D} s (${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second)`;
-      const pn = $('#st-pace-note'); if (pn) pn.textContent = `About ${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second.`;
+      const pn = $('#st-pace-note'); if (pn) pn.textContent = V.actual ? (V.grid.length === 1 ? 'One disclosed/observed date · no invented historical movement.' : 'Transitions between observed dates are visual only, not daily observations.') : `About ${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second.`;
     }
     function sizeCanvas() {
       const dim = { '16x9': [1280, 720], '9x16': [720, 1280], '1x1': [960, 960] }[st.ar] || [1280, 720];
