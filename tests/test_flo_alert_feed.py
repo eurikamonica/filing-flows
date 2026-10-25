@@ -79,7 +79,7 @@ class FloPublishedFeedTests(unittest.TestCase):
         self.assertEqual(f13["symbols"],["AAPL","NVDA","BAC","XYZ"])
         self.assertEqual(f13["manager"],"Berkshire Hathaway")
         self.assertEqual(f13["changes"]["Added"],["NVDA"])
-        self.assertIn("trade",f13["scope"].lower())
+        self.assertIn("not trading",f13["scope"].lower())
         self.assertEqual(len(by["news"]),1)
         self.assertEqual(by["news"][0]["ticker"],"NVDA")
         self.assertEqual({x["ticker"] for x in by["price"]},{"IREN","CRWV"})
