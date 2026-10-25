@@ -50,15 +50,15 @@ const env={
 };
 vm.runInNewContext(script,env,{filename:'flo-alerts.js'});
 const Alert=env.module.exports;
-const date='2026-10-25T22:00:00Z';
+const date=new Date(Date.now()-120000).toISOString();
 const base={schema:1,generated_at:date,events:[{
  id:'8k:original',kind:'8k',priority:'medium',ticker:'NVDA',title:'Previously published filing',
  detail:'Old item',event_at:date,form:'8-K',filed:'2026-10-25',source_label:'SEC',
  source_url:'https://www.sec.gov/Archives/edgar/data/1045810/old/'
 }]};
-const next={schema:1,generated_at:'2026-10-25T22:04:00Z',events:[...base.events,{
+const next={schema:1,generated_at:new Date(Date.now()-60000).toISOString(),events:[...base.events,{
  id:'8k:new',kind:'8k',priority:'high',ticker:'NVDA',title:'New SEC filing',detail:'Reported on SEC',
- event_at:'2026-10-25T22:03:00Z',form:'8-K',filed:'2026-10-25',
+ event_at:new Date(Date.now()-30000).toISOString(),form:'8-K',filed:'2026-10-25',
  topics:['restatement'],source_label:'SEC',
  source_url:'https://www.sec.gov/Archives/edgar/data/1045810/new/'
 }]};
@@ -86,9 +86,9 @@ const next={schema:1,generated_at:'2026-10-25T22:04:00Z',events:[...base.events,
   check(react.length===1,'same filing is never animated twice');
   pill.click();
   check(!inbox.hidden,'inbox can be opened without navigating');
-  snapshots.push({...next,generated_at:'2026-10-25T22:06:00Z',events:[...next.events,{
+  snapshots.push({...next,generated_at:new Date().toISOString(),events:[...next.events,{
     id:'13f:new',kind:'13f',priority:'medium',ticker:'NVDA',title:'New 13F from manager',
-    manager:'Test Manager',event_at:'2026-10-25T22:05:00Z',
+    manager:'Test Manager',event_at:new Date(Date.now()-10000).toISOString(),
     period_end:'2026-09-30',filed:'2026-10-25',source_label:'SEC',
     source_url:'https://www.sec.gov/Archives/edgar/data/1067983/new/'
   }]});
