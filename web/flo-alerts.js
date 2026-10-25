@@ -334,7 +334,7 @@ function report(q,zh=false){
    const type=/13f/i.test(query)?'13f':/8.?k/i.test(query)?'8k':
      /价格|股价|price|相对大盘|涨跌/i.test(query)?'price':/新闻|news/i.test(query)?'news':null;
    const list=items.filter(e=>(!symbol||e.ticker===symbol||(e.symbols||[]).includes(symbol))&&(!type||e.kind===type));
-   const chosen=list[0]||null;
+   const chosen=list.sort((a,b)=>time(b.event_at)-time(a.event_at))[0]||null;
    if(chosen)return impact().render(chosen,marketContext,zh);
    return {html:'<p>'+escape(zh?
      '本次已发布扫描中尚无匹配的事件证据，不能构造事件影响分析。可先在 Flo Pulse 中选择具体申报。':
