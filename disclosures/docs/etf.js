@@ -31,7 +31,7 @@ function etfView(){
  state.eview=ETF_VIEWS.some(v=>v[0]===state.eview)?state.eview:'screen';
  let out=`<div class="toolbar">${field('eview','View',ETF_VIEWS,state.eview)}`;
  if(state.eview==='screen')out+=field('eac','Asset class',ETF_AC,state.eac||'')+field('est','Strategy',ETF_STRAT,state.est||'')+field('esort','Sort',ETF_SORT,state.esort||'aum')+
-  `<div class="field"><label for="eq">Name, ticker or issuer</label><input id="eq" value="${esc(state.eq||'')}" placeholder="e.g. dividend, iShares, QQQ"></div>`+
+  `<div class="field"><label for="eq">Name, ticker or issuer</label><input id="eq" value="${esc(state.eq||'')}" placeholder="e.g. dividend, covered call, iShares, QQQ"></div>`+field('eobj','Objective',[['','Hidden'],['1','Shown under each ETF']],state.eobj||'')+
   field('elev','Leveraged / inverse',[['','Shown'],['no','Hidden'],['only','Only these']],state.elev||'')+field('emin','Size',[['','Any size'],['1e8','Over $100M'],['1e9','Over $1B'],['1e10','Over $10B']],state.emin||'')+
   field('emax','Expense ratio',[['','Any'],['0.001','Up to 0.10%'],['0.002','Up to 0.20%'],['0.005','Up to 0.50%'],['0.01','Up to 1.00%']],state.emax||'');
  if(state.eview==='one')out+=`<div class="field wide"><label for="esym">ETF (ticker)</label><input id="esym" value="${esc(state.esym||'')}" placeholder="e.g. SPY, QQQ, SCHD · Enter"></div>`;
@@ -51,7 +51,7 @@ function etfScreen(){
  const R=etfRows();if(!R.rows)return R.html;
  let rows=R.rows;
  const q=String(state.eq||'').trim().toLowerCase();
- if(q)rows=rows.filter(r=>r.symbol.toLowerCase()===q||(r.name||'').toLowerCase().includes(q)||(r.issuer||'').toLowerCase().includes(q)||(r.category||'').toLowerCase().includes(q));
+ if(q)rows=rows.filter(r=>r.symbol.toLowerCase()===q||(r.name||'').toLowerCase().includes(q)||(r.issuer||'').toLowerCase().includes(q)||(r.category||'').toLowerCase().includes(q)||(r.objective||'').toLowerCase().includes(q));
  if(state.eac)rows=rows.filter(r=>r.asset_class===state.eac);
  if(state.est==='options')rows=rows.filter(r=>/options/.test(r.strategy||''));else if(state.est)rows=rows.filter(r=>(r.strategy||'').startsWith(state.est));
  if(state.elev==='no')rows=rows.filter(r=>!r.leveraged);else if(state.elev==='only')rows=rows.filter(r=>r.leveraged);
@@ -64,12 +64,40 @@ function etfScreen(){
  let out=`<div class="section-head"><h3>${fmt(rows.length)} ETFs · ${etfMoney(tot)} in assets · ${etfMoney(f3)} net flows over the last 3 reported months</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  out+=`<p class="sub">Click a ticker for everything about the ETF. Flows: sales + reinvestments − redemptions from the ETF's N-PORT reports. Tracking difference: the N-CEN figure, the fund's return less its index's over its fiscal year after fees (percentage points). "Holdings' upside": the analysts' price-target return of the companies inside, at their weights.</p>`;
  out+=table(['ETF','Asset class','Expense','Assets','Flows, 3 months','1 year','Volatility','Holdings · top 10','Tracking diff.','13F holders','Officials, 1 year',"Holdings' upside"],rows.slice(0,1500).map(r=>[
-  `${etfTk(r.symbol)} <span class="muted">${esc((r.name||'').slice(0,46))}</span>${r.issuer?`<br><span class="muted">${esc(r.issuer)}${r.strategy?' · '+esc(r.strategy):''}</span>`:''}`,
+  `${etfTk(r.symbol)} <span class="muted">${esc((r.name||'').slice(0,46))}</span>${r.issuer?`<br><span class="muted">${esc(r.issuer)}${r.strategy?' · '+esc(r.strategy):''}</span>`:''}${r.objective&&(q||state.eobj)?`<br><span class="muted etf-obj" title="${esc(r.objective)}">${esc(r.objective.slice(0,120))}${r.objective.length>120?'…':''}</span>`:''}`,
   `${esc(r.asset_class||'—')}${r.category?`<br><span class="muted">${esc(r.category)}</span>`:''}`,etfPct(r.expense),etfMoney(r.aum),
   r.flows_3m==null?'—':`<span class="${r.flows_3m>0?'positive':r.flows_3m<0?'negative':''}">${etfMoney(r.flows_3m)}</span>`,etfSpct(r.r1y),r.vol==null?'—':etfPct(r.vol,1),
   r.n_holdings==null?'—':`${fmt(r.n_holdings)} · ${etfPct(r.top10,0)}`,r.track_diff==null?'—':fmt(r.track_diff,2),
   r.holders13f==null?'—':`${fmt(r.holders13f)}${r.holders13f_chg?` <span class="muted">${r.holders13f_chg>0?'+':''}${fmt(r.holders13f_chg)}</span>`:''}`,r.officials_1y?fmt(r.officials_1y):'—',etfSpct(r.lt_target)]));
  return out;
+}
+// ---------- ten years of prices: as traded vs distributions reinvested, and the distributions (data/etf/px/<SYM>.json) ----------
+function etfPxRows(px){                                          // [[date, close as traded, total-return close rebased]]
+ const d0=Date.parse(px.d0+'T00:00:00Z'),k=px.c[0]/px.a[0];
+ return px.t.map((t,i)=>[new Date(d0+t*864e5).toISOString().slice(0,10),px.c[i],px.a[i]*k]);
+}
+function etfPxPanel(sym,px){
+ const R=etfPxRows(px);if(R.length<3)return '';
+ const last=R[R.length-1],first=R[0],cut=new Date(Date.parse(last[0])-365*864e5).toISOString().slice(0,10);
+ const ttm=(px.div||[]).filter(d=>d[0]>cut).reduce((a,d)=>a+d[1],0),allDiv=(px.div||[]).reduce((a,d)=>a+d[1],0);
+ const yrs=(Date.parse(last[0])-Date.parse(first[0]))/(365.25*864e5),pr=last[1]/first[1]-1,tr=last[2]/first[2]-1;
+ const W=820,H=240,L=56,Rm=12,T=10,B=24,xs=R.map(r=>Date.parse(r[0])),ys=R.flatMap(r=>[r[1],r[2]]);
+ let y0=Math.min(...ys),y1=Math.max(...ys);const pad=(y1-y0)*.06||1;y0-=pad;y1+=pad;
+ const X=t=>L+(t-xs[0])/((xs[xs.length-1]-xs[0])||1)*(W-L-Rm),Y=v=>T+(y1-v)/(y1-y0)*(H-T-B),fy=v=>'$'+fmt(v,v>=100?0:2);
+ let s=`<svg class="plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(sym)}: price as traded and with distributions reinvested">`;
+ for(let k=0;k<=3;k++){const v=y0+(y1-y0)*k/3;s+=`<line class="mk-grid" x1="${L}" x2="${W-Rm}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L-6}" y="${Y(v)+4}" text-anchor="end">${fy(v)}</text>`}
+ for(let y=new Date(xs[0]).getUTCFullYear()+1;y<=new Date(xs[xs.length-1]).getUTCFullYear();y++){const t=Date.UTC(y,0,1);s+=`<text class="axis" x="${X(t)}" y="${H-6}" text-anchor="middle">${y}</text>`}
+ const path=j=>R.map((r,i)=>(i?'L':'M')+X(xs[i]).toFixed(1)+','+Y(r[j]).toFixed(1)).join('');
+ s+=`<path d="${path(2)}" fill="none" stroke="var(--mk-profit)" stroke-width="2.2"/><path d="${path(1)}" fill="none" stroke="var(--ink)" stroke-width="1.6"/>`;
+ const step=Math.max(1,Math.floor(R.length/120));
+ R.forEach((r,i)=>{if(i%step===0||i===R.length-1)s+=`<rect x="${X(xs[i])-3}" y="${T}" width="6" height="${H-T-B}" fill="transparent"><title>${esc(r[0])}: ${fy(r[1])} as traded · ${fy(r[2])} with distributions reinvested</title></rect>`});
+ s+='</svg>';
+ const recent=(px.div||[]).slice(-8).reverse();
+ return `<h3>Price over ${fmt(yrs,1)} years — as traded and with distributions reinvested</h3>${s}<div class="mk-legend"><span><i class="mk-key" style="background:var(--ink)"></i>Price as traded ${etfSpct(pr)}</span><span><i class="mk-key" style="background:var(--mk-profit)"></i>Distributions reinvested ${etfSpct(tr)}</span><span class="muted">weekly closes since ${esc(first[0])}</span></div>`+
+  etfCards([['Distributions, last 12 months','$'+fmt(ttm,2),last[1]?`${etfPct(ttm/last[1],2)} of the price`:''],['Distributions since '+first[0].slice(0,4),'$'+fmt(allDiv,2),`${fmt((px.div||[]).length)} payments`],
+   ['From distributions',etfSpct(tr-pr),'total return − price return'],['Make a video',`<a href="../#studio/k=growth&t=${encodeURIComponent(sym)},SPY&div=split&from=${esc(first[0])}">Growth race ↗</a>`,'$10,000 in '+esc(sym)+' vs SPY, distributions split out']])+
+  (recent.length?etfTbl(['Ex-date (week)','Distribution per share'],recent.map(d=>[esc(d[0]),'$'+fmt(d[1],4)]),[1]):'')+
+  `<p class="sub">${esc(px.source||'')}. A distribution is dated to the week of its ex-date and estimated from the two closes, so it can differ from the declared amount by a few percent.</p>`;
 }
 // ---------- charts (single series; flows and returns diverge from zero in the site's profit / cost colours) ----------
 function etfLine(pts,{h=200,label='',fmtY=v=>fmt(v,2)}={}){
@@ -124,7 +152,10 @@ function etfOne(){
   ['13F holders',o13?fmt(o13.holders):'—',o13?`${etfMoney(o13.usd)} · ${o13.prev_holders!=null?(o13.holders-o13.prev_holders>=0?'+':'')+fmt(o13.holders-o13.prev_holders)+' managers':''}`:''],
   ['1-year return',etfSpct(mk.r1y),`YTD ${etfSpct(mk.ytd)} · vol ${mk.vol1y!=null?etfPct(mk.vol1y,1):'—'}`]]);
  if(d.series_classes>1)out+=`<p class="sub"><b>One share class of a larger fund.</b> ${esc(sym)} is the ETF class of a fund with ${fmt(d.series_classes)} share classes on file: N-PORT net assets, flows and holdings and the N-CEN figures cover the whole fund (all classes); price, premium and market net assets are the ETF's.</p>`;
- if(mk.weekly&&mk.weekly.length>4)out+=`<h3>Price, weekly (adjusted for distributions)</h3>${etfLine(mk.weekly,{label:sym+' weekly price',fmtY:v=>'$'+fmt(v,v>=100?0:2)})}
+ const pxm=etfData('px/'+sym);
+ if(pxm.data)out+=etfPxPanel(sym,pxm.data);
+ else if(!pxm.err)out+='<p class="sub">Loading ten years of prices and distributions…</p>';
+ if(!pxm.data&&mk.weekly&&mk.weekly.length>4)out+=`<h3>Price, weekly (adjusted for distributions)</h3>${etfLine(mk.weekly,{label:sym+' weekly price',fmtY:v=>'$'+fmt(v,v>=100?0:2)})}
   <p class="sub">Returns: 1 month ${etfSpct(mk.r1m)} · 3 months ${etfSpct(mk.r3m)} · 3 years ${etfSpct(mk.r3y)} a year · 5 years ${etfSpct(mk.r5y)} a year · worst drawdown ${etfSpct(mk.max_dd)} · average daily value traded ${etfMoney(mk.dollar_vol)}${mk.y_yield!=null?` · yield ${etfPct(mk.y_yield)}`:''}${mk.y_duration!=null?` · duration ${fmt(mk.y_duration,1)} years`:''}.</p>`;
  if(fl.net&&fl.net.length)out+=`<h3>Money in and out (N-PORT)</h3><p class="sub">Each month's sales + reinvested distributions − redemptions, as the fund reports them. Creations and redemptions run through authorized participants (below).</p>${etfBars(fl.net.map(x=>[x[0].slice(2),x[1],x[0]]),{label:'Monthly net flows'})}`;
  out+=`</div>`;
@@ -220,7 +251,7 @@ function etfParties(){
 }
 function bindEtf(){
  if(state.tab!=='etf')return;
- for(const k of ['eview','eac','est','esort','elev','emin','emax','eparty'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
+ for(const k of ['eview','eac','est','esort','elev','emin','emax','eparty','eobj'])if($(k))$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};
  for(const k of ['eq','esym','ea','eb','ehold'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-etf]').forEach(b=>b.onclick=()=>{state.eview='one';state.esym=b.dataset.etf;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-cco]').forEach(b=>b.onclick=()=>{state.tab='consensus';state.cview='company';state.cq=b.dataset.cco;syncPills();try{history.replaceState(null,'','#consensus')}catch(e){}render();scrollTo({top:0,behavior:'smooth'})});

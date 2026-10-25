@@ -302,6 +302,11 @@ def update(root, sha=None, verbose=True):
                    'forecast next point and the actual one. Origins frozen before 2026-10-23 (live and backtest) were made '
                    'with the earlier inputs — RRG scales and benchmark drift over the whole history, sector suns with '
                    'full-history clip bounds and latest-revenue weights — and are kept exactly as they were.')
+    try:                                               # the four indices around their centre (index_rrg): its own ledger
+        import index_rrg
+        out['index'] = index_rrg.ledger_update(root, made_at, sha)
+    except Exception as exc:
+        print('index ledger skipped:', type(exc).__name__, exc, flush=True)
     _write(public / 'forecast-ledger.json', out)
     return out
 

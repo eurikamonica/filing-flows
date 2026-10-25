@@ -217,9 +217,17 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--people", default="_site/disclosures/data/research/people")
     ap.add_argument("--out", default="_site")
-    ap.add_argument("--site-url", default=os.environ.get("SITE_URL", ""))
+    ap.add_argument("--site-url", default="")
     a = ap.parse_args()
-    base = a.site_url
+    base = a.site_url.strip().rstrip("/")
+    if not base:                                 # the repository variable SITE_URL, forgiving quotes, spaces and "SITE_URL = …"
+        v = os.environ.get("SITE_URL", "").strip().strip("'\"").strip()
+        m = re.match(r"^[A-Z][A-Z0-9_]*\s*[=:]\s*(.*)$", v)
+        base = (m.group(1) if m else v).strip().strip("'\"").strip().rstrip("/")
+    cname = os.path.join(a.out, "CNAME")         # build_site.py writes the custom domain here: same address as the other pages
+    if not base and os.path.exists(cname):
+        host = open(cname, encoding="utf-8").read().strip()
+        base = f"https://{host}" if host else ""
     if not base and os.environ.get("GITHUB_REPOSITORY"):
         owner, repo = os.environ["GITHUB_REPOSITORY"].split("/", 1)
         base = f"https://{owner.lower()}.github.io/{repo}"

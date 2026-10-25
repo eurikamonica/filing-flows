@@ -1172,8 +1172,10 @@ def main():
                 fails.append("sector leaf did not offer a company link")
             shot(pg, f"s_{s['id']}.png", full_page=True)
 
-        if pg.locator(".foot-links a").count() != 2:
+        if pg.locator('.foot-links a[href="privacy.html"], .foot-links a[href="terms.html"]').count() != 2:
             fails.append("footer: privacy / terms links missing")
+        if pg.locator('.foot-links a[href="c/"]').count() != 1:
+            fails.append("footer: link to the companies A–Z page (for search engines) missing")
         root = base.rsplit("/", 1)[0]
         for page, words in (("privacy", "Delete my account"), ("terms", "Not investment advice")):
             pg.goto(f"{root}/{page}.html")

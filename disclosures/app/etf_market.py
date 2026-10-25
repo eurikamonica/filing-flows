@@ -211,8 +211,11 @@ def parse_fund_summary(body):
     return out
 
 
+HISTORY_FROM = 631152000                               # 1990-01-01 00:00 UTC
+
+
 def collect_market(h, root, etfs, crumb_fn, minutes=20.0, refresh_hours=20):
-    """Yahoo per ETF, largest first then the stalest: weekly closes (10 years) and the fund modules. Kept in
+    """Yahoo per ETF, largest first then the stalest: weekly closes (since 1990 or the launch) and the fund modules. Kept in
     cache/market/<SYM>.json; state in state.json → market."""
     root = Path(root); t0 = time.time()
     st = read_json(root / 'state.json', {}) or {}
@@ -242,7 +245,9 @@ def collect_market(h, root, etfs, crumb_fn, minutes=20.0, refresh_hours=20):
         s = S.setdefault(sym, {})
         rec = {'symbol': sym, 'at': now()}
         try:
-            ch = h.json(f'{YQ}/v8/finance/chart/{urllib.parse.quote(sym)}?range=10y&interval=1wk')
+            # every week since 1990 (or the launch): explicit dates, since range=max answers with quarterly bars
+            p2 = int(time.time()) + 86400
+            ch = h.json(f'{YQ}/v8/finance/chart/{urllib.parse.quote(sym)}?period1={HISTORY_FROM}&period2={p2}&interval=1wk&includeAdjustedClose=true')
             w, meta = parse_chart(ch)
             rec['weekly'] = w
             rec['currency'] = meta.get('currency')

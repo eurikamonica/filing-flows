@@ -8,6 +8,12 @@ fill it: fourth quarter = the year − the three quarters before it, when those 
 Cache: cache/frames/<concept>-CY2025Q3.json.gz = {"cik": value}; annual: <concept>-CY2025.json.gz = {"cik": [value, end]}.
 Quarters older than the last two (years older than the last one) are final and never fetched again; the recent ones are
 refreshed every few days while late filers report.
+
+EXTRA: share counts and equity for market value, P/E and P/B (rotation_history.rank_panel) — the cover page's shares
+outstanding (dei, as of a date shortly after the quarter, never restated), diluted weighted-average shares (all share
+classes; a company with several classes has no single cover-page figure), diluted earnings per share (net income ÷ it
+gives the shares where neither is tagged) and stockholders' equity at the quarter's end.
+Cached as <concept>-CY2025Q3I.json.gz (instants) or <concept>-CY2025Q3.json.gz, both {"cik": [value, date]}.
 """
 import datetime as dt
 import gzip
@@ -21,6 +27,14 @@ REVENUE = ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'R
            'SalesRevenueNet']
 COST = ['CostOfRevenue', 'CostOfGoodsAndServicesSold']
 CONCEPTS = REVENUE + ['OperatingIncomeLoss', 'GrossProfit', 'NetIncomeLoss'] + COST
+URL_ANY = 'https://data.sec.gov/api/xbrl/frames/{tax}/{concept}/{unit}/{period}.json'
+# (taxonomy, concept, unit, kind): 'i' an instant (frame CY2025Q3I), 'q' the quarter's duration only (a weighted average
+# cannot be differenced out of the annual figure, so no fourth quarters from the years)
+EXTRA = [('dei', 'EntityCommonStockSharesOutstanding', 'shares', 'i'),
+         ('us-gaap', 'WeightedAverageNumberOfDilutedSharesOutstanding', 'shares', 'q'),
+         ('us-gaap', 'EarningsPerShareDiluted', 'USD-per-shares', 'q'),
+         ('us-gaap', 'StockholdersEquity', 'USD', 'i'),
+         ('us-gaap', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest', 'USD', 'i')]
 
 
 def calendar_quarters(n=17, today=None):
@@ -104,8 +118,45 @@ def collect(client, root, quarters=21, refresh_days=3):
             p.with_suffix('.tmp').replace(p)
             state[key] = now()
             fetched += 1
+    for tax, concept, unit, kind in EXTRA:              # share counts and equity: {cik: [value, date]}
+        for period in periods:
+            per = period + ('I' if kind == 'i' else '')
+            key = f'{concept}-{per}'
+            p = path_for(root, concept, per)
+            when = state.get(key)
+            if p.exists() and (period not in recent or (when and when > fresh_after)):
+                continue
+            try:
+                body = client.json(URL_ANY.format(tax=tax, concept=concept, unit=unit, period=per), sec=True)
+                vals = {str(r['cik']): [r['val'], r.get('end')] for r in body.get('data', []) if r.get('val') is not None}
+            except Exception as exc:
+                if 'HTTP 404' in str(exc):
+                    vals = {}
+                else:
+                    errors += 1
+                    print(f'frames {key}: {exc}', flush=True)
+                    continue
+            p.parent.mkdir(parents=True, exist_ok=True)
+            with gzip.open(p.with_suffix('.tmp'), 'wt', encoding='utf-8') as f:
+                json.dump(vals, f, separators=(',', ':'))
+            p.with_suffix('.tmp').replace(p)
+            state[key] = now()
+            fetched += 1
     write_json(root / 'cache' / 'frames' / 'state.json', state)
     return {'status': 'ok' if not errors else 'partial', 'fetched': fetched, 'errors': errors, 'periods': [periods[0], periods[-1]]}
+
+
+def points(root, concept, periods, instant=True):
+    """{cik: [(date, value), …]} of an EXTRA concept over the periods, oldest first (one point per frame; the date is the
+    instant — for the cover page, the day the shares were counted — or the quarter's end)."""
+    out = {}
+    for period in periods:
+        for cik, row in load(root, concept, period + ('I' if instant else '')).items():
+            if isinstance(row, list) and row and row[0] is not None and row[1]:
+                out.setdefault(cik, []).append((row[1], row[0]))
+    for v in out.values():
+        v.sort()
+    return out
 
 
 def quarterly(root, concept, periods):
@@ -122,7 +173,11 @@ def quarterly(root, concept, periods):
                 continue
             three = [q.get(_shift(last, -k), {}).get(cik) for k in (1, 2, 3)]
             if all(v is not None for v in three):
-                q[last][cik] = row[0] - sum(three)
+                s3 = sum(three)
+                # a year tagged at another scale (3,511 for $3.5 billion) would leave a fourth quarter of minus the year
+                if s3 and (abs(row[0]) < 1e-3 * abs(s3) or abs(row[0]) > 1e3 * abs(s3)):
+                    continue
+                q[last][cik] = row[0] - s3
     return {p: q[p] for p in periods}
 
 

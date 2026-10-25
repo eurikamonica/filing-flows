@@ -1,20 +1,26 @@
 """Long history for the rotation charts: the branch "rotation-history" (.github/workflows/rotation-history.yml).
 
-  collect  weekly closes (dividend- and split-adjusted) and weekly volume since each listing — Yahoo's weekly chart
-           ('max'), Stooq's daily file resampled to weeks as the fallback — for SPY (the benchmark), the SPDR sector
+  collect  weekly closes (dividend- and split-adjusted, and as traded), weekly volume, dividends and splits since each
+           listing — Yahoo's weekly chart, Stooq's daily file resampled to weeks as the fallback (closes and volume
+           only) — for SPY (the benchmark), the SPDR sector
            ETFs, a set of style / size / asset-class ETFs and every company of the Sankey site, largest first. A run
            takes a batch of new tickers and refreshes the stalest ones (the last months only), within a time budget;
            failures wait longer after each try. Progress lives in state.json, so any run can stop and the next goes on.
   frames   the SEC XBRL frames of revenue, operating income, gross profit, net income and cost of revenue back to 2009
            (app/frames.py into the same folder; quarters on file are final and never fetched again)
   build    public/ — what the site loads:
-             rrg.json                 one Friday grid since 2000: SPY, the ETFs and one index per site sector
+             rrg.json                 one Friday grid since 1990: SPY, the ETFs and one index per site sector
                                       (the site's companies, weighted by the log of revenue), closes and volume; the
                                       charts compute the RRG (RS-Ratio, RS-Momentum) from these in the browser
-             t/<TICKER>.json          one company's weekly closes and volume, loaded when a chart traces it
+             t/<TICKER>.json          one company's weekly closes and volume, loaded when a chart traces it; once fetched
+                                      with events also p (the close as traded, split-adjusted), d ([[week, dividend per
+                                      share]], weeks counted from start) and sp ([[week, split ratio]])
              rotation-long.json       the momentum clock's variables (app/rotation.py) for 70 quarters (since 2009Q2, so
                                       the arrows and charts start in 2010)
              rotation-long-monthly.json  … and month by month since 2008, from the weekly closes
+             rank/                    the video studio's leaderboards (rank_panel): every company's month-end total-return
+                                      close, monthly dollar volume and market value, and quarterly revenue, gross profit,
+                                      operating income, net income and equity from the SEC frames
 
     python app/rotation_history.py collect --root hist --site-index site/index.json --batch 300 --minutes 25
     python app/rotation_history.py frames  --root hist --quarters 76
@@ -46,11 +52,19 @@ STYLE_ETFS = [('QQQ', 'Nasdaq-100'), ('DIA', 'Dow Jones Industrials'), ('RSP', '
               ('MTUM', 'Momentum factor'), ('USMV', 'Minimum volatility'), ('SMH', 'Semiconductors'), ('XBI', 'Biotech'),
               ('KRE', 'Regional banks'), ('ITB', 'Home builders'), ('EFA', 'Developed markets ex-US'),
               ('EEM', 'Emerging markets'), ('TLT', 'Treasuries 20+ years'), ('GLD', 'Gold'), ('USO', 'Crude oil')]
-START = dt.date(2000, 1, 7)                       # a Friday: the first week of the grid
+START = dt.date(1990, 1, 5)                       # a Friday: the first week of the grid (2000-01-07 before October 2026)
+HISTORY_FROM = dt.datetime(1989, 12, 29, tzinfo=dt.timezone.utc)   # what a full fetch asks for (kept in the cache)
+# the market indices themselves, price only (no dividends), for the years before their ETFs: cached as IDX-<symbol>
+INDEXES = [('IDX-GSPC', '^GSPC', '^spx', 'S&P 500 index (price only)'), ('IDX-NDX', '^NDX', '^ndx', 'Nasdaq-100 index (price only)'),
+           ('IDX-DJI', '^DJI', '^dji', 'Dow Jones Industrial Average (price only)'), ('IDX-RUT', '^RUT', None, 'Russell 2000 index (price only)'),
+           ('IDX-IXIC', '^IXIC', '^ndq', 'Nasdaq Composite (price only)')]
+IDX_YAHOO = {k: y for k, y, _, _ in INDEXES}
+IDX_STOOQ = {k: q for k, _, q, _ in INDEXES}
 # explicit dates: with range=max Yahoo quietly answers with quarterly bars, whatever the interval asked for
 YAHOO = ('https://query1.finance.yahoo.com/v8/finance/chart/{s}?period1={p1}&period2={p2}&interval=1wk&events=div%2Csplit'
          '&includeAdjustedClose=true')
-FORMAT = 2                                        # state.json format: 1 held quarterly bars from range=max; fetched again
+FORMAT = 3                                        # state.json format: 1 held quarterly bars from range=max; 2 had no
+                                                  # dividends, splits or closes as traded — each fetched again in full
 STOOQ = 'https://stooq.com/q/d/l/?s={s}&i=d'
 REFRESH_DAYS = 6
 
@@ -72,17 +86,20 @@ def sig(x, n=6):
 
 
 def weekly_rows(days, add_volume=True):
-    """[(date, close, volume or None)] in any order → [[friday, the week's last close, its volume]] by week. Daily rows
-    add up their volume; weekly bars (add_volume=False) already hold the week's, and a second bar for the same week
-    (Yahoo's latest day of an unfinished week) replaces it."""
+    """[(date, close, volume or None[, close as traded])] in any order → [[friday, the week's last close, its volume[,
+    its last close as traded]]] by week. Daily rows add up their volume; weekly bars (add_volume=False) already hold the
+    week's, and a second bar for the same week (Yahoo's latest day of an unfinished week) replaces it."""
     weeks = {}
-    for d, c, v in sorted(days, key=lambda r: r[0]):
+    for row in sorted(days, key=lambda r: r[0]):
+        d, c, v = row[:3]
+        p = row[3] if len(row) > 3 else None
         if c is None or not math.isfinite(c) or c <= 0:
             continue
         k = friday(d).isoformat()
         w = weeks.get(k)
-        weeks[k] = [k, c, ((w[2] if w else 0) + (v or 0)) if add_volume else (v or (w[2] if w else 0))]
-    return [[k, sig(c), int(v)] for k, c, v in (weeks[k] for k in sorted(weeks))]
+        weeks[k] = [k, c, ((w[2] if w else 0) + (v or 0)) if add_volume else (v or (w[2] if w else 0)),
+                    p if p is not None and math.isfinite(p) and p > 0 else None]
+    return [[k, sig(c), int(v)] + ([sig(p)] if p is not None else []) for k, c, v, p in (weeks[k] for k in sorted(weeks))]
 
 
 def parse_yahoo(payload):
@@ -95,6 +112,7 @@ def parse_yahoo(payload):
     q = (ind.get('quote') or [{}])[0]
     adj = ((ind.get('adjclose') or [{}])[0] or {}).get('adjclose')
     closes, vols = adj or q.get('close') or [], q.get('volume') or []
+    traded = (q.get('close') or []) if adj else []          # split-adjusted, not for dividends (market value, the price line)
     off = ((r.get('meta') or {}).get('gmtoffset') or 0)
     days = []
     for i, ts in enumerate(stamps):
@@ -102,12 +120,45 @@ def parse_yahoo(payload):
         if c is None:
             continue
         d = dt.datetime.fromtimestamp(ts + off, dt.timezone.utc).date()
-        days.append((d, float(c), vols[i] if i < len(vols) and vols[i] is not None else None))
+        p = traded[i] if i < len(traded) and traded[i] is not None else None
+        days.append((d, float(c), vols[i] if i < len(vols) and vols[i] is not None else None) + ((float(p),) if p is not None else ()))
     rows = weekly_rows(days, add_volume=False)
     if not rows:
         raise ValueError('no weekly rows in the chart response')
     check_weekly(rows)
     return rows
+
+
+def yahoo_events(payload):
+    """{'div': [[ex-date, amount per share]], 'split': [[date, new shares per old share]]} from a chart answer
+    (amounts adjusted for later splits, like the closes)."""
+    r = (((payload or {}).get('chart') or {}).get('result') or [{}])[0] or {}
+    ev, off = r.get('events') or {}, ((r.get('meta') or {}).get('gmtoffset') or 0)
+    day = lambda e, k: dt.datetime.fromtimestamp(int(e.get('date') or k) + off, dt.timezone.utc).date().isoformat()
+    div, split = {}, {}
+    for k, e in (ev.get('dividends') or {}).items():
+        a = e.get('amount')
+        if a is not None and math.isfinite(float(a)) and float(a) > 0:
+            div[day(e, k)] = div.get(day(e, k), 0) + float(a)
+    for k, e in (ev.get('splits') or {}).items():
+        n, m = e.get('numerator'), e.get('denominator')
+        if n and m and float(n) > 0 and float(m) > 0 and float(n) != float(m):
+            split[day(e, k)] = float(n) / float(m)
+    return {'div': [[d, sig(v)] for d, v in sorted(div.items())], 'split': [[d, sig(v)] for d, v in sorted(split.items())]}
+
+
+def merge_events(old, new):
+    """The events of a refresh (the last months) added to those on file; the newer answer wins for the same day."""
+    if not old:
+        return new
+    if not new:
+        return old
+    out = {}
+    for k in ('div', 'split'):
+        by = {d: v for d, v in old.get(k) or []}
+        by.update({d: v for d, v in new.get(k) or []})
+        out[k] = [[d, by[d]] for d in sorted(by)]
+    return out
 
 
 def check_weekly(rows):
@@ -140,8 +191,25 @@ def parse_stooq(text):
 
 
 def merge(old, new):
-    by = {r[0]: r for r in old or []}
-    by.update({r[0]: r for r in new or []})
+    """The weeks of a refresh merged into those on file. Yahoo restates every earlier close after each new dividend or
+    split (adjusted closes, closes as traded and volume), so the rows on file are first put on the new basis — scaled
+    by the ratio of the two answers in the first week they share (every dividend or split after that week moves every
+    earlier week by the same factor). Without it each new dividend would leave a step down where the refresh starts."""
+    old, new = old or [], new or []
+    if old and new:
+        at = {r[0]: r for r in old}
+        k = next((r for r in new if r[0] in at), None)
+        if k is not None:
+            o = at[k[0]]
+            ka = k[1] / o[1] if o[1] and k[1] else 1.0
+            kp = k[3] / o[3] if len(k) > 3 and len(o) > 3 and o[3] and k[3] else None
+            if not (0.001 < ka < 1000) or (kp is not None and not (0.001 < kp < 1000)):
+                ka, kp = 1.0, None
+            if abs(ka - 1) > 1e-9 or (kp is not None and abs(kp - 1) > 1e-9):
+                old = [[r[0], sig(r[1] * ka), (int(round(r[2] / kp)) if kp and r[2] is not None else r[2])]
+                       + ([sig(r[3] * kp) if kp else r[3]] if len(r) > 3 else []) if r[0] < k[0] else r for r in old]
+    by = {r[0]: r for r in old}
+    by.update({r[0]: r for r in new})
     return [by[k] for k in sorted(by)]
 
 
@@ -165,18 +233,26 @@ def save(root, ticker, doc):
     p.with_suffix('.tmp').replace(p)
 
 
-def fetch(client, ticker, full=True, sources=('yahoo', 'stooq')):
-    """(weekly rows, source) — the whole history (full) or the last six months; raises with every source's error."""
+def fetch(client, ticker, full=True, sources=('yahoo', 'stooq'), with_events=False):
+    """(weekly rows, source) — the whole history (full) or the last six months; raises with every source's error.
+    with_events: (rows, source, events or None) — Yahoo's dividends and splits; Stooq has none."""
     problems = []
     for src in sources:
         try:
             if src == 'yahoo':
                 p2 = int(time.time()) + 86400
-                p1 = int(dt.datetime(1999, 12, 27, tzinfo=dt.timezone.utc).timestamp()) if full else p2 - 200 * 86400
-                return parse_yahoo(client.json(YAHOO.format(s=symbol(ticker), p1=p1, p2=p2))), 'yahoo'
+                p1 = int(HISTORY_FROM.timestamp()) if full else p2 - 200 * 86400
+                ys = IDX_YAHOO.get(symbol(ticker), symbol(ticker)).replace('^', '%5E')
+                body = client.json(YAHOO.format(s=ys, p1=p1, p2=p2))
+                rows = parse_yahoo(body)
+                return (rows, 'yahoo', yahoo_events(body)) if with_events else (rows, 'yahoo')
             if src == 'stooq':
-                rows = parse_stooq(client.get(STOOQ.format(s=symbol(ticker).lower() + '.us')).decode('utf-8', 'replace'))
-                return (rows if full else rows[-30:]), 'stooq'
+                t = symbol(ticker)
+                if t in IDX_STOOQ and not IDX_STOOQ[t]:
+                    raise ValueError('no Stooq symbol')
+                rows = parse_stooq(client.get(STOOQ.format(s=IDX_STOOQ[t] if t in IDX_STOOQ else t.lower() + '.us')).decode('utf-8', 'replace'))
+                rows = rows if full else rows[-30:]
+                return (rows, 'stooq', None) if with_events else (rows, 'stooq')
         except Exception as exc:
             problems.append(f'{src}: {str(exc)[:160]}')
     raise RuntimeError(' | '.join(problems))
@@ -205,7 +281,7 @@ def site_companies(site_index):
 def universe(site_index, extra=()):
     """Every ticker to keep, in priority order: asked for now, the benchmark, the ETFs, then the site's companies."""
     out = [symbol(t) for t in extra if t]
-    out += [BENCH] + [t for t, _, _ in SECTOR_ETFS] + [t for t, _ in STYLE_ETFS] + [c['t'] for c in site_companies(site_index)]
+    out += [BENCH] + [t for t, _, _ in SECTOR_ETFS] + [t for t, _ in STYLE_ETFS] + [k for k, _, _, _ in INDEXES] + [c['t'] for c in site_companies(site_index)]
     return list(dict.fromkeys(out))
 
 
@@ -235,10 +311,15 @@ def collect(client, root, tickers, batch=300, refresh=400, minutes=25.0, refresh
             break
         info = tk.setdefault(t, {})
         try:
-            rows, src = fetch(client, t, full=full or not load(root, t))
+            rows, src, ev = fetch(client, t, full=full or not load(root, t), with_events=True)
             doc = load(root, t) if not full else None
-            rows = merge(doc['rows'], rows) if doc else rows
-            save(root, t, {'ticker': t, 'source': src, 'fetched_at': now(), 'rows': rows})
+            if doc:                                    # a refresh: the last months merged into what is on file
+                rows = merge(doc['rows'], rows)
+                ev = merge_events(doc.get('ev'), ev) if 'ev' in doc else None   # events only once a full answer had them
+            out = {'ticker': t, 'source': src, 'fetched_at': now(), 'rows': rows}
+            if ev is not None:
+                out['ev'] = ev
+            save(root, t, out)
             info.update(fetched_at=now(), source=src, first=rows[0][0], last=rows[-1][0], weeks=len(rows), fails=0)
             info.pop('error', None)
             info.pop('retry_after', None)
@@ -487,8 +568,10 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
         names = json.loads((Path(site_data) / 'index.json').read_text(encoding='utf-8')).get('sector_names') or {}
     except (OSError, ValueError, TypeError):
         pass
-    series, written = {}, 0
+    series, written, extra, docs = {}, 0, {}, {}
     meta = {c['t']: c for c in companies}
+    idx_meta = {k: {'t': k, 'n': name, 's': 'index'} for k, _, _, name in INDEXES}   # their t files only (not in rrg.json)
+    wk = {w: i for i, w in enumerate(weeks)}
     for p in sorted((root / 'cache' / 'weekly').glob('*.json.gz')):
         t = p.name[:-len('.json.gz')]
         doc = load(root, t)
@@ -500,6 +583,25 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
         c = [sig(x, 5) for x in c]                     # five significant digits and volume in thousands keep the files small
         v = [None if x is None else int(sig(x / 1000, 3)) for x in v]
         series[t] = (f, c, v)
+        if t in meta:
+            docs[t] = doc
+        ev = doc.get('ev')
+        if ev is not None:                             # dividends (and the close as traded) for the studio's price lines
+            n, x = len(c), {}
+            traded = [[r[0], r[3], None] for r in doc['rows'] if len(r) > 3 and r[3]]
+            f2, pc, _ = align(traded, weeks) if traded else (None, [], [])
+            if f2 is not None and f2 >= f:
+                pc = [None] * (f2 - f) + pc
+                x['p'] = [sig(y, 5) for y in pc[:n]]
+            d = {}
+            for day, amt in ev.get('div') or []:
+                i = wk.get(friday(dt.date.fromisoformat(day)).isoformat())
+                if i is not None and f <= i < f + n:
+                    d[i - f] = d.get(i - f, 0) + amt
+            x['d'] = [[i, sig(a, 5)] for i, a in sorted(d.items())]
+            x['sp'] = [[wk[friday(dt.date.fromisoformat(day)).isoformat()] - f, r] for day, r in ev.get('split') or []
+                       if friday(dt.date.fromisoformat(day)).isoformat() in wk and wk[friday(dt.date.fromisoformat(day)).isoformat()] >= f]
+            extra[t] = x
     rev_hist = revenue_history(root, companies) if companies else None
     # each company's industry benchmark (research spec v5 §4.2): the most specific SIC level with enough members, the
     # index without the company itself (bx) and with it (bi), weights = revenue reported by each week
@@ -508,8 +610,8 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
                                    volumes={t: [None if x is None else 1000.0 * x for x in v] for t, (f, c, v) in series.items()},
                                    industries=inds)
     for t, (f, c, v) in series.items():
-        m = meta.get(t) or {}
-        doc = {'t': t, 'n': m.get('n'), 's': m.get('s'), 'start': weeks[f], 'c': c, 'v': v}
+        m = meta.get(t) or idx_meta.get(t) or {}
+        doc = {'t': t, 'n': m.get('n'), 's': m.get('s'), 'start': weeks[f], 'c': c, 'v': v, **extra.get(t, {})}
         b = bench_of.get(t)
         if b:                                       # the benchmarks on the company's own weeks (same start)
             doc.update(bl=b['label'], blevel=b['level'], bcode=b['code'], bid=f"{b['level']}:{b['code']}", bn=b['members'], bx=b['ex'][f:f + len(c)], bi=b['all'][f:f + len(c)])
@@ -563,7 +665,13 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
                     'first week three members have prices — today’s companies only, so the early years '
                     'leave out companies that no longer trade. The RRG lines are computed in the browser from these closes.')}
     (pub / 'rrg.json').write_text(json.dumps(rrg, separators=(',', ':')), encoding='utf-8')
-    out = {'tickers_published': written, 'series': len(ser), 'weeks': len(weeks), 'industries': len(ind_rows)}
+    out = {'tickers_published': written, 'series': len(ser), 'weeks': len(weeks), 'industries': len(ind_rows),
+           'with_dividends': len(extra)}
+    try:                                           # the studio's leaderboards (rank_panel.py)
+        import rank_panel
+        out['rank'] = rank_panel.build(pub / 'rank', companies, docs, frames_root=root, today=today, names=names)
+    except Exception as exc:                       # never lose the rest of the build to it
+        out['rank'] = {'error': str(exc)[:300]}
     if site_data and data_root:
         import rotation
         months_long = months_long or max(48, (dt.date.today().year - 2008) * 12 + dt.date.today().month - 1)

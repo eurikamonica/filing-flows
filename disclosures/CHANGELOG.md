@@ -1,5 +1,72 @@
 # Changelog
 
+## Weekly history from 1990; index membership, now and before
+
+The weekly grid (`rotation_history.START`) now begins on 1990-01-05: rrg.json, every t/<SYM>.json, the industry and
+sector indices, the studio's leaderboards (months from 1990) and the forecasts read the longer history as the collector
+refetches each ticker since 1990 (format 3). `macro_history` takes its grid from `START`, and the gravity model places
+macro.json by date. The ETF collector asks Yahoo for every week since 1990 (or the launch), so `etf/px/<SYM>.json`
+carries the whole history. Before an ETF existed, the indices themselves (IDX-GSPC, IDX-NDX, IDX-DJI, IDX-RUT,
+IDX-IXIC; price only) stand in.
+
+`app/index_members.py` (run by `etf.build`, file `etf/members.json`): the indices each company belongs to now — from
+the full holdings of the ETFs that track them (S&P 500: IVV / VOO / SPY; Nasdaq-100: QQQ; Dow: DIA; S&P 400: IJH /
+MDY; S&P 600: IJR; Russell 1000: IWB; Russell 2000: IWM; Russell 3000: IWV) and Wikipedia's S&P 500 list (CIK, date
+added) — and before: the S&P 500's dated changes since 1997 (kept in `config/sp500-history.json` from the page's
+mid-2024 revision, which still carried the table; later monthly revisions when Wikipedia answers), the Dow's
+historical components (one table per change, matched by name), the other indices from now on. A reused ticker is
+kept apart by name (CCI was Countrywide Credit in 1997, Crown Castle now). The site's company pages show the tags
+(“S&P 500 · since 1982”, “Former Dow 30 · 1999–2024”); the studio's leaderboards filter by index, by members at each
+step (S&P 500, Dow) or today's. Tests: `tests/test_index_members.py`.
+
+## The four indices around their centre (QQQ, SPY, IWM, DIA)
+
+`app/index_rrg.py` (run by `chaos_forecast.build`, file `index-rrg.json`; its own frozen ledger `ledger/index.json`,
+`index-ledger.json`, run by `forecast_ledger.update`). SPY overlaps the other three, so against SPY the RRG only says
+"more tech or more value than the S&P" and SPY itself cannot be drawn. Each index is measured against the centre of
+the four — their volatility-weighted geometric mean (weights ∝ 1 / the 26-week volatility known when the week starts;
+the weighted relative moves add up to zero) — and the centre against cash (FRED DGS3MO). Fixed in advance: four
+centres (SPY, equal-weight, volatility-weighted, cash), chosen on weekly origins 2003–2011 by the quadrant matrix's
+Brier skill against the weaker of two baselines (ties within 0.002 by RS-Momentum's correlation with the next four
+weeks), reported from 2012 for all. Result: SPY 5.11%, equal 5.14%, volatility-weighted 5.17%, cash 3.66% on
+2003–2011 — the first three tie, the volatility-weighted centre has the highest correlation and is used; from 2012 all
+four score 5.2–5.4%, and RS-Momentum does not predict the next four weeks' relative return for any centre (Spearman
+−0.02 to −0.06). The published model (weekly origins, block bootstrap, independent origins = weeks / h): quadrant odds
+calibrated at 1 and 4 weeks, experimental at 13; conditioning on the centre's quadrant against cash adds nothing; the
+weekly chain calibrated at 1 week; "which index leads next" loses to "the leader stays" (history only). Joint replay
+price ranges: the last three years (chosen on 2003–2011 over the volatility-scaled ten-year replay) cover 75% / 45–48%
+at 4 and 13 weeks from 2012 (experimental; the scaled replay did better out of sample: 76–78%). The hub's RRG shows it
+as Lines → "The four indices around their centre" (`docs/rrg-index.js`): odds, routes, replayed prices, next week's
+close for each quadrant (the index's own weight in the centre taken out), the leader, the comparison and the ledger.
+Tests: `tests/test_index_rrg.py`.
+
+The weekly collector's full fetch reaches back to 1990, and the S&P 500, Nasdaq-100, Dow, Russell 2000 and Nasdaq
+Composite indices themselves are kept (price only, `t/IDX-*.json`) for the years before their ETFs.
+
+## Video studio data: leaderboards, stock dividends, market value, P/E and P/B
+
+`app/rank_panel.py` (run by `rotation_history.build`) publishes `public/rank/` for the studio's leaderboards: every
+company of the site's month-end total-return close, monthly dollar volume and month-end market value since 2000, and
+quarterly revenue, gross profit, operating income, net income and equity from the SEC frames (2009 on), one file per
+measure, so the browser ranks any measure within a sector and a market-value range. Market value = the month-end close
+as traded × shares outstanding then: the 10-Q / 10-K cover-page count (dei, never restated), the diluted weighted
+average where a company has several share classes, net income ÷ diluted EPS where neither is tagged; put on today's
+basis with Yahoo's split history; weighted averages restated after a later split are put back on the right basis, and a
+count tagged in thousands (or millions) is caught against its neighbours. Nasdaq's screener (one request) checks today's
+value: an ADR or class basis (off by more than 0.55–1.8×) rescales the history, a recent issue or buyback (more than
+10%) adds today's count; about 50 companies without an SEC count get today's count held back five years at most,
+flagged. Backstops drop a value above $15 trillion, worth more than 10,000 months of trading, or with twenty times
+today's share count. `frames.py` collects the cover-page shares, diluted weighted-average shares, diluted EPS and
+equity (`EXTRA`), and skips a fourth quarter derived from a year tagged at another scale (Arista's 2025 net income,
+3,511 for $3.5 billion, left a fourth quarter of minus $2.6 billion; the momentum clock's figures are fixed too).
+
+The weekly collector keeps Yahoo's dividends and splits and the close as traded (cache format 3: every ticker is fetched
+again in full once); `t/<SYM>.json` gains `p` (the close as traded), `d` (dividends by week) and `sp` (splits), so a
+stock's growth video can split dividends out or leave them out. A refresh no longer loses dividends: Yahoo restates
+every earlier adjusted close after each new dividend or split, and the rows on file were merged on the old basis (each
+dividend since the first full fetch fell out of the total return as a step down where the refresh began); they are now
+rescaled to the new basis in the first week the two answers share. Tests: `tests/test_rank_panel.py`.
+
 ## Company pages: Rotation (RRG) — against the S&P 500 and against the industry, with prices, ranges and transitions
 
 A company page gains *Valuation & expectations → Rotation (RRG)* (`docs/rrg-company-view.js`, listed in views.json):

@@ -200,3 +200,22 @@ class Build(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class PriceFile(unittest.TestCase):
+    """The video studio's and the ETF page's long price file: the close as traded, the total-return close, and the
+    distributions read from where the two part."""
+
+    def test_distributions_from_the_two_closes(self):
+        import etf as E
+        # $100 a share, a $1 distribution in week 3: Yahoo scales every earlier adjusted close by (1 − 1/100)
+        close = [100.0, 101.0, 100.0, 102.0]
+        adj = [c * 0.99 for c in close[:2]] + close[2:]
+        weekly = [[f'2026-01-{5 + 7 * i:02d}', c, a, 1000] for i, (c, a) in enumerate(zip(close, adj))]
+        px = E.price_file('TEST', 'Test ETF', weekly)
+        self.assertEqual(px['t'], [0, 7, 14, 21])
+        self.assertEqual(px['c'], close)
+        self.assertEqual(len(px['div']), 1)
+        self.assertEqual(px['div'][0][0], '2026-01-19')
+        self.assertAlmostEqual(px['div'][0][1], 1.01, places=4)       # 1% of the close before the ex-week
+        self.assertIsNone(E.price_file('X', 'X', weekly[:1]))

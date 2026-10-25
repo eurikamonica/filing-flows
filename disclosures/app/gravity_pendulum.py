@@ -575,9 +575,11 @@ if __name__ == '__main__':
 MACRO_TIDE = (('y10', 'diff'), ('curve', 'diff'), ('credit', 'diff'), ('vix', 'diff'), ('usd', 'log'), ('oil', 'log'))
 
 
-def macro_weekly(macro_doc, W):
-    """Macro levels on the gravity grid (index 0 = 2000-01-07), NaN before the series' first week."""
-    w = macro_doc['weekly']; i0 = w['grid_index0']; out = {}
+def macro_weekly(macro_doc, W, day0=None):
+    """Macro levels on the gravity grid (day0 = its first Friday; macro.json's weekly.start is placed by date), NaN
+    before the series' first week."""
+    w = macro_doc['weekly']; out = {}
+    i0 = int((np.datetime64(w['start']) - np.datetime64(day0, 'D')).astype(int) // 7) if day0 is not None else w['grid_index0']
     for k, how in MACRO_TIDE:
         a = w['data'].get(k)
         if a is None:
@@ -630,7 +632,7 @@ def planet_rows(B, D, h, T=None, start=260):
 def macro_planet_test(public, macro_path, out_path=None, test_from='2012-01-01', horizons=(1, 4, 13)):
     """Walk-forward: the planet layer with and without the macro tide, same weeks, same ridge. Kept only if it adds."""
     D = load(public); B = build(D)
-    M = macro_weekly(json.loads(Path(macro_path).read_text(encoding='utf-8')), len(D['days']))
+    M = macro_weekly(json.loads(Path(macro_path).read_text(encoding='utf-8')), len(D['days']), D['days'][0])
     T = macro_tide(B, M)
     tf = int(np.searchsorted(D['days'], np.datetime64(test_from)))
     base_cols = ['v', 'k1', 'k2', 'k3', 'k4']; tide_cols = ['tide_' + k for k in T]

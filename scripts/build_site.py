@@ -64,7 +64,7 @@ def engage_more():
 
 
 # the page's scripts, in load order (web/index.html): the chart, the valuation maths, the discovery & UX modules, the app
-SCRIPTS = ("nav.js", "sankey.js", "fsa.js", "chains.js", "gamma.js", "model.js", "network.js", "ux.js", "search.js", "overview.js", "feed.js", "charts.js", "editor.js", "eps-research.js", "local-model.js", "app.js")
+SCRIPTS = ("nav.js", "sankey.js", "fsa.js", "chains.js", "gamma.js", "model.js", "network.js", "ux.js", "search.js", "overview.js", "feed.js", "charts.js", "studio.js", "editor.js", "eps-research.js", "local-model.js", "app.js")
 STYLES = ("styles.css", "nav.css", "ux.css", "gamma.css", "eps-research.css", "local-model.css")
 
 
@@ -103,6 +103,10 @@ def main():
     else:
         for name in styles + scripts + ["favicon.svg", "favicon-32.png", "favicon.ico", "apple-touch-icon.png"]:
             shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
+        # the home page's one address for search engines (the app's #… routes all live on it)
+        home = os.environ.get("SITE_URL") and setting("SITE_URL", url=True)
+        if home and 'rel="canonical"' not in html:
+            html = html.replace("</title>", f'</title>\n<link rel="canonical" href="{home}/">', 1)
     open(os.path.join(args.out, "index.html"), "w", encoding="utf-8").write(html)
     # test versions of views (web/beta/: Money flow Beta 1.0), served next to the site and linked from nowhere in it
     if not args.inline and os.path.isdir(os.path.join(WEB, "beta")):

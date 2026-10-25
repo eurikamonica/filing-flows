@@ -957,7 +957,9 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                'holders13f': (o13 or {}).get('holders'), 'usd13f': (o13 or {}).get('usd'), 'holders13f_chg': ((o13['holders'] - o13['prev_holders']) if o13 and o13.get('prev_holders') is not None else None),
                'officials_1y': sum(1 for x in off if (x.get('date') or '') >= d365), 'short_dtc': (sh or {}).get('dtc'), 'aps': len(active_aps),
                'lending_income': (nc or {}).get('lending_income'), 'lt_target': (lt or {}).get('target_ret'), 'lt_ours': (lt or {}).get('ours_ret'),
-               'lt_13f_buy': (lt or {}).get('f13_buying'), 'index_fund': bool((nc or {}).get('index')), 'cik': e.get('cik'), 'series': s}
+               'lt_13f_buy': (lt or {}).get('f13_buying'), 'index_fund': bool((nc or {}).get('index')), 'cik': e.get('cik'), 'series': s,
+               'objective': (' '.join(str((pr or {}).get('objective') or '').split())[:180] or None),   # the screener searches it
+               'px': bool(len([w for w in (mk.get('weekly') or []) if w and w[1]]) >= 2)}
         index_rows.append(row)
         # parties
         a_ = aum or 0
@@ -995,6 +997,9 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                            'ncen': f'https://www.sec.gov/Archives/edgar/data/{(nc or {}).get("cik")}/{(nc or {}).get("acc", "").replace("-", "")}/' if nc else None,
                            'nport': f'https://www.sec.gov/Archives/edgar/data/{((hh or {}).get("reports") or [{}])[-1].get("cik")}/{(((hh or {}).get("reports") or [{}])[-1].get("acc") or "").replace("-", "")}/' if hh else None}}
         wj(pub / 'e' / f'{sym}.json', _clean(doc))
+        px = price_file(sym, e.get('name'), mk.get('weekly'))
+        if px:                                            # the video studio's and the ETF page's long price file
+            wj(pub / 'px' / f'{sym}.json', px)
     # the ETFs that hold each company
     names = {e['symbol']: e.get('name') for e in etfs}
     aum_of = {r['symbol']: r['aum'] for r in index_rows}
@@ -1009,7 +1014,13 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
     lt_ = {k: merge_parties(raw_parties.get(k, []), k) for k in parties}
     wj(pub / 'parties.json', _clean({'generated_at': now(), 'fields': ['name', 'etfs', 'aum', 'x', 'y', 'crd'], 'tables': lt_}))
     st = read_json(root / 'state.json', {}) or {}
-    status = {'built_at': now(), 'etfs': len(index_rows), 'with_series': sum(1 for e in etfs if e.get('series')), 'ncen': len(ncen), 'prospectus': len(rr),
+    try:                                                  # which indices each company belongs to, now and before
+        import index_members
+        members = index_members.build(root, by, pub, site_companies=[{'ticker': t, 'name': (r or {}).get('name')} for t, r in cons_rows.items()])
+    except Exception as exc:                              # never lose the ETF build to it
+        members = {'error': str(exc)[:200]}
+        print('index members skipped:', type(exc).__name__, exc, flush=True)
+    status = {'built_at': now(), 'members': members, 'etfs': len(index_rows), 'with_series': sum(1 for e in etfs if e.get('series')), 'ncen': len(ncen), 'prospectus': len(rr),
               'nport_funds': len(hist), 'holdings': len(holds), 'holdings_source': hd.get('source'), 'companies_held': len(by), 'market': st.get('market_summary'),
               'datasets': {k: v for k, v in (st.get('datasets') or {}).items()}, 'periods13f': periods13}
     write_json(pub / 'status.json', status)
@@ -1055,6 +1066,33 @@ def merge_parties(rows, kind):
         out.append([nm, g['etfs'], round(g['aum']), round(g['x']), round(g['y']), g['crd'] or None])
     order = (lambda r: -(r[3] + r[4])) if kind == 'aps' else (lambda r: -r[3]) if kind == 'lending' else (lambda r: -r[2])
     return sorted(out, key=lambda r: (order(r), -r[1]))[:100]
+
+
+def sig(v, n=6):
+    """A close kept to n significant digits (the price files are many)."""
+    if not v:
+        return v
+    return float(f'{v:.{n}g}')
+
+
+def price_file(sym, name, weekly):
+    """Weekly closes since 1990 or the launch for the video studio (web/studio.js) and the ETF page: the price as traded (split-
+    adjusted close) and the total-return close (distributions reinvested: Yahoo's adjusted close), dated as day offsets
+    from the first week, with each distribution per share read from where the two series part (the adjusted / traded
+    ratio steps up on an ex-date: the step is 1 − distribution ÷ the close before it). None without two weeks."""
+    rows = [w for w in weekly or [] if w and w[1] and w[2] and w[1] > 0 and w[2] > 0]
+    if len(rows) < 2:
+        return None
+    d0 = dt.date.fromisoformat(rows[0][0])
+    div = []
+    for a, b in zip(rows, rows[1:]):
+        m = (a[2] / a[1]) / (b[2] / b[1])
+        if 0.5 < m < 0.9999:
+            div.append([b[0], round(a[1] * (1 - m), 4)])
+    return {'symbol': sym, 'name': name, 'd0': rows[0][0], 't': [(dt.date.fromisoformat(w[0]) - d0).days for w in rows],
+            'c': [sig(w[1]) for w in rows], 'a': [sig(w[2]) for w in rows], 'div': div,
+            'source': 'Yahoo Finance weekly bars: close as traded (split-adjusted) and adjusted close (distributions reinvested); '
+                      'distributions estimated from where the two part'}
 
 
 def _clean(o):
