@@ -915,7 +915,7 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
             e['act'] = 'uit'
         if sym in uit and not h:
             rows = uit[sym]['rows']
-            h = {'date': uit[sym]['at'][:10], 'n': len(rows), 'source': 'sponsor holdings file', 'top': [[r[0], '', r[2], None, r[1], None, r[3], 'EC', 'CORP', 'US', 'Long'] for r in rows[:150]],
+            h = {'date': uit[sym]['at'][:10], 'n': len(rows), 'source': 'sponsor holdings file', 'sector_map': {r[1]: r[4] for r in rows if r[4]}, 'top': [[r[0], '', r[2], None, r[1], None, r[3], 'EC', 'CORP', 'US', 'Long'] for r in rows[:150]],
                  'weights': [[r[1], r[3], None] for r in rows], 'top10': sum(r[3] for r in sorted(rows, key=lambda x: -x[3])[:10]), 'mix': {'EC': sum(r[3] for r in rows)}}
         if h and not h.get('_mapped'):        # tickers for every position the Hub can name (iShares reports CUSIPs only)
             h = dict(h)
