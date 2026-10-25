@@ -1,0 +1,39 @@
+name: Spin Sankey Flo Academy checks
+on:
+  pull_request:
+    paths:
+      - 'web/flo-academy.js'
+      - 'web/mascot.js'
+      - 'web/app.js'
+      - 'tests/test_flo_academy.cjs'
+      - 'tests/test_mascot.cjs'
+      - '.github/workflows/flo-academy-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  flo-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            web
+            tests
+            disclosures/docs/rrg-company-view.js
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Flo and web JS syntax
+        run: |
+          node --check web/mascot.js
+          node --check web/flo-academy.js
+          node --check web/app.js
+      - name: Run old and new Flo tests
+        run: |
+          node tests/test_mascot.cjs
+          node tests/test_flo_academy.cjs
