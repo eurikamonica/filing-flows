@@ -743,6 +743,7 @@ def build(root, prices=None, verbose=True):
     write_json(pub / 'hidden' / 'index.json', {
         'generated_at': now(), 'scope': 'SEC companyfacts + source-linked filing text',
         'note': 'Amounts are independent classifications, not additive; missing is not zero.',
+        'taxonomy': HL.public_taxonomy(),
         'rows': hidden_index})
     write_json(pub / 'banks.json', {'generated_at': now(), 'fields': ['cik', 'ticker', 'name', 'bank', 'date', 'deposits', 'cd_share', 'time_over_250k',
                                                                   'uninsured_share', 'brokered', 'deposit_cost', 'cost_of_funds', 'nim'], 'rows': banks})
