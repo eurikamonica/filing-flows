@@ -112,7 +112,7 @@ def build(root, now=None):
     statuses["price"] = px.get("generated_at") or ""
     cols = {str(k): i for i, k in enumerate(px.get("fields") or [])}
     last = next((cols[k] for k in ("close", "last", "price") if k in cols), None)
-    ret = next((cols[k] for k in ("r1d", "day_change", "change", "pct_change", "ret_1d") if k in cols), None)
+    ret = next((cols[k] for k in ("chg1d", "r1d", "day_change", "change", "pct_change", "ret_1d") if k in cols), None)
     tk_col = cols.get("ticker")
     if None not in (last, ret, tk_col) and recent(px.get("asof"), now, 3):
         for row in (px.get("rows") or [])[:5000]:
