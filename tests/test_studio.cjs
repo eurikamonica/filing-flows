@@ -102,6 +102,20 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     V.style = 'line'; V.endCard = true; S.finish(V, V);
     ok(/put in/.test(V.endTitle) && /%\/yr/.test(V.final[0].label), 'end card names the money put in and the yearly return: ' + V.endTitle + ' / ' + V.final[0].label);
     for (const style of ['line', 'bars', 'area', 'tiles']) { V.style = style; for (const t of [0, 3, 8, 11.9]) S.draw(ctx, 1920, 1080, V, { theme: 'bull', dur: 12 }, t); n++; }
+    // an end value to reach: the amount each time (or at the start) worked back for each ticker, which then ends there
+    for (const [solve, extra] of [['rec', { amt: '0' }], ['rec', { amt: '2000' }], ['lump', { rec: '' }], ['lump', { rec: '50' }]]) {
+      const G2 = await S.build(Object.assign(S.parseState(''), { k: 'growth', t: 'AAA,BBB', from: start, goal: '100000', solve, ri: '1', ru: 'm' }, extra));
+      const L2 = G2.grid.length - 1;
+      ok(G2.goal && G2.series.every((x) => Math.abs(x.v[L2] - 100000) < 1e-6 && x.put === x.contrib[L2]), `${solve} ${JSON.stringify(extra)}: every ticker ends at the goal: ` + G2.series.map((x) => x.v[L2]));
+      const a = G2.series.find((x) => x.key === 'AAA'), b = G2.series.find((x) => x.key === 'BBB');
+      ok(solve === 'rec' ? a.each < b.each && a.each > 0 : a.lump < b.lump && a.lump > 0, 'the faster grower needs less');
+      G2.endCard = true; S.finish(G2, G2);
+      ok(G2.final[0].name === 'AAA' && /needed/.test(G2.endTitle) && /put in/.test(G2.final[0].change) && /To reach \$100,000/.test(G2.caption), 'goal end card: ' + G2.endTitle + ' | ' + G2.caption);
+      for (const style of ['line', 'bars', 'area', 'tiles']) { G2.style = style; for (const t of [0, 6, 11.9]) S.draw(ctx, 1920, 1080, G2, { theme: 'bull', dur: 12 }, t); n++; }
+    }
+    // "the last N years": the start worked out from the end
+    const Y2 = await S.build(Object.assign(S.parseState(''), { k: 'growth', t: 'AAA', to: '2024-12-31', yrs: '2.5' }));
+    ok(Math.abs((Y2.grid[0] - Date.UTC(2022, 6, 1)) / 864e5) < 10, 'the last 2.5 years: ' + new Date(Y2.grid[0]).toISOString());
     // pace and the pause at the end
     const tm = S.timing(V, { dur: 20, hold: '0', pace: 'finale' });
     ok(tm.hold === 0 && tm.run > 18 && S.frameIndex(V, tm, tm.intro + tm.run / 2) > L * 0.6, 'slow-motion finish runs ahead early');
@@ -225,6 +239,27 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     V = await S.build(Object.assign(S.parseState('k=sectors'), { sa: 'abs', from: '2011-01-31', to: '2020-12-31' }));
     ok(!V.stack.share && V.series.find((x) => x.key === 'health').v[0] === 2e5 * 1e6, 'sector market value in dollars');
     S.finish(V, V); S.draw(ctx, 1920, 1080, V, { theme: 'bull', dur: 12 }, 6); n++;
+    // the Dow weighs its members by share price as traded: AAA's 2-for-1 split in January 2016 halves its weight
+    files['disclosures/data/etf/members.json'] = { rows: { AAA: { now: ['dji'] }, BBB: { now: ['dji'] }, DDD: { now: ['dji'] } } };
+    const tw = (p, sp) => ({ start: '2010-01-01', p: Array.from({ length: 640 }, () => p), c: Array.from({ length: 640 }, () => p), sp });
+    files['disclosures/data/market/history/t/AAA.json'] = tw(100, [[313, 2]]);
+    files['disclosures/data/market/history/t/BBB.json'] = tw(50, []);
+    files['disclosures/data/market/history/t/DDD.json'] = tw(50, []);
+    V = await S.build(Object.assign(S.parseState('k=sectors'), { idx: 'dji', from: '2014-01-31', to: '2018-12-31' }));
+    const at = (key, y, m) => { const j = V.grid.findIndex((g) => new Date(g).getUTCFullYear() === y && new Date(g).getUTCMonth() === m - 1); return V.series.find((x) => x.key === key).v[j]; };
+    ok(V.weighting === 'price' && Math.abs(at('technology', 2015, 6) - 2 / 3) < 1e-9 && Math.abs(at('technology', 2017, 6) - 0.5) < 1e-9, 'Dow: price weights, split-aware: ' + at('technology', 2015, 6) + ' / ' + at('technology', 2017, 6));
+    ok(/weight in the index/.test(V.title) && [...V.notes].some((x) => /fewer than 30/.test(x)), 'Dow title and the missing members named');
+    V = await S.build(Object.assign(S.parseState('k=sectors'), { idx: 'dji', sw: 'cap', from: '2014-01-31', to: '2018-12-31' }));
+    ok(V.weighting === 'cap' && Math.abs(at('technology', 2015, 6) - 1e5 * (1 + 65 / 20) / (1e5 * (1 + 65 / 20) + (3e5 - 65e3) + 2e5)) < 1e-9, 'the same members by market value');
+    S.finish(V, V); n++;
+    // a fund's own holdings: weights at the report, moved back with each stock's price; a holding without a ticker by name
+    files['disclosures/data/etf/e/XLK.json'] = { name: 'Tech Fund', holdings: { date: '2020-06-30', n: 3, top: [['A Corp', '', 'c1', null, 'AAA', null, 0.6, 'EC'], ['B Corp.', '', 'c2', null, null, null, 0.3, 'EC'], ['Unknown Co', '', 'c3', null, 'ZZQ', null, 0.1, 'EC'], ['Cash', '', '', null, null, null, 0.05, 'STIV']] } };
+    V = await S.build(Object.assign(S.parseState('k=sectors'), { sw: 'fund', sf: 'XLK', from: '2014-01-31', to: '2020-12-31' }));
+    const px = files[R + 'm-px.json'].rows, pa = (i) => px[0][1 + i], pb = (i) => px[1][1 + i], i0 = (2015 - 2010) * 12 + 5, ih = (2020 - 2010) * 12 + 5;
+    const want = (0.6 * pa(i0) / pa(ih)) / (0.6 * pa(i0) / pa(ih) + 0.3 * pb(i0) / pb(ih));
+    ok(V.weighting === 'fund' && Math.abs(at('technology', 2020, 6) - 2 / 3) < 1e-9 && Math.abs(at('technology', 2015, 6) - want) < 1e-9, 'fund holdings held back in time: ' + at('technology', 2015, 6) + ' vs ' + want);
+    ok(/Inside XLK/.test(V.title) && [...V.notes].some((x) => /90% of their weight/.test(x)), 'fund title and coverage: ' + [...V.notes].join(' | '));
+    S.finish(V, V); for (const t of [0, 6, 11.9]) { V.endCard = true; S.draw(ctx, 1080, 1920, V, { theme: 'clean', dur: 12 }, t); } n++;
   }
   {
     // the earnings flow: the detailed quarters when there are two or more, else ten years of revenue → profit → earnings
