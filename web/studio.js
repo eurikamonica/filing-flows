@@ -376,16 +376,16 @@
   /* ---------- building a video: the series on the grid, labels and formats ---------- */
   const DEF = { k: 'growth', t: 'QQQ,SPY', from: '', to: '', amt: '10000', div: 'tr', style: 'line', theme: 'bull', ar: '16x9', q: '1080', fps: '30', dur: '20',
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
-    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', an: '12', yb: '2000',
+    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
     goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
-    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'Actual ETF / index weights'],
+    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials weights'],
     ['sankey', 'Earnings flow'], ['snowball', 'Dividend snowball'], ['timing', 'Timing']];
   const STYLES = { growth: [['line', 'Line race'], ['bars', 'Bar race'], ['area', 'Areas'], ['tiles', 'Counters']], rrg: [['rrg', 'RRG']], momentum: [['bars', 'Bar race'], ['line', 'Lines']],
     fund: [['columns', 'Columns'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], formula: [['line', 'Lines'], ['area', 'Areas'], ['tiles', 'Counters'], ['bars', 'Bar race']],
     rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']],
-    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas']], sankey: [['sankey', 'Flow']], snowball: [['snow', 'Shares and income']],
+    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas'], ['companies', 'Company share areas'], ['changes', 'Weight changes (pp)']], sankey: [['sankey', 'Flow']], snowball: [['snow', 'Shares and income']],
     timing: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']] };
   const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold'];        // redrawn, not rebuilt
   const tickers = (st) => [...new Set(String(st.t || '').split(/[\s,;]+/).map(norm).filter(Boolean))].slice(0, 10);
@@ -1530,7 +1530,7 @@
   // a leaderboard: N slots, bars sliding as ranks change, coloured by sector, entering from below and leaving downwards
   function rankRace(ctx, V, f, b, S, th, F) {
     const N = V.rankN, i0 = Math.floor(f), i1 = Math.min(V.grid.length - 1, i0 + 1), e = easeIO(f - i0);
-    const order = (i) => { const arr = V.series.map((s, k) => ({ k, v: s.v[i] })).filter((x) => fin(x.v)); arr.sort((a, c) => (V.order === 'asc' ? a.v - c.v : c.v - a.v)); return new Map(arr.map((x, r) => [x.k, r])); };
+    const order = (i) => { const arr = V.series.map((s, k) => ({ k, v: s.v[i] })).filter((x) => fin(x.v)); arr.sort((a, c) => (V.order === 'abs' ? Math.abs(c.v) - Math.abs(a.v) : V.order === 'asc' ? a.v - c.v : c.v - a.v)); return new Map(arr.map((x, r) => [x.k, r])); };
     const r0 = order(i0), r1 = order(i1);
     const top = (m, i) => { let mx = 0; for (const [k, r] of m) if (r < N) mx = Math.max(mx, Math.abs(V.series[k].v[i])); return mx || 1; };
     const vmax = lerp(top(r0, i0), top(r1, i1), e);
@@ -1735,8 +1735,8 @@
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     for (let y = new Date(G[0]).getUTCFullYear() + 1; y <= new Date(G[n - 1]).getUTCFullYear(); y += Math.max(1, Math.ceil((new Date(G[n - 1]).getUTCFullYear() - new Date(G[0]).getUTCFullYear()) / 9))) { const x = X(Date.UTC(y, 0, 1)); ctx.fillStyle = th.axis; ctx.fillText(String(y), x, b.y + b.h + 10 * S); }
     const base = G.map(() => 0), heads = [];
-    V.series.forEach((s) => {
-      const top = s.v.map((v, i) => base[i] + (fin(v) ? v : 0)), col = secCol(th, s.sec);
+    V.series.forEach((s, band) => {
+      const top = s.v.map((v, i) => base[i] + (fin(v) ? v : 0)), col = V.actual && V.group === 'companies' && s.key !== 'other' ? th.pal[band % th.pal.length] : secCol(th, s.sec);
       ctx.beginPath();
       for (let i = 0; i <= i0 && i < n; i++) (i ? ctx.lineTo(X(G[i]), Y(top[i])) : ctx.moveTo(X(G[i]), Y(top[i])));
       const tv = valAt(top, f), bv = valAt(base, f); ctx.lineTo(X(tCur), Y(tv)); ctx.lineTo(X(tCur), Y(bv));
@@ -1883,7 +1883,7 @@
   function finish(V, st) {
     const L = V.grid.length - 1, G = V.grid, span = `${dayLabel(G[0])} → ${dayLabel(G[L])}`;
     if (V.kind === 'rank') {
-      const ord = V.series.map((s, k) => ({ k, v: s.v[L] })).filter((x) => fin(x.v)).sort((a, c) => (V.order === 'asc' ? a.v - c.v : c.v - a.v)).slice(0, V.rankN);
+      const ord = V.series.map((s, k) => ({ k, v: s.v[L] })).filter((x) => fin(x.v)).sort((a, c) => (V.order === 'abs' ? Math.abs(c.v) - Math.abs(a.v) : V.order === 'asc' ? a.v - c.v : c.v - a.v)).slice(0, V.rankN);
       V.final = ord.map((x, i) => ({ k: x.k, label: `${i + 1}. ${V.series[x.k].label}`, value: V.fmt(x.v), change: '', v: x.v, sec: V.series[x.k].sec }));
       V.endTitle = V.actual ? `${V.metric} · ${dayLabel(G[L])}` : `${V.metric} · ${V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}`;
       V.endSub = V.title;
@@ -1908,7 +1908,7 @@
       const share = V.stack.share;
       V.final = V.series.map((s, k) => ({ k, sec: s.sec, label: s.label, v: s.v[L], v0: s.v.find(fin) })).sort((a, c) => (c.v || 0) - (a.v || 0)).slice(0, 8)
         .map((r) => ({ k: r.k, sec: r.sec, label: r.label, value: V.fmt(r.v), change: share && fin(r.v0) ? `${r.v >= r.v0 ? '+' : '−'}${Math.abs(100 * (r.v - r.v0)).toFixed(1)} pts` : (fin(r.v0) && r.v0 > 0 ? pctf(r.v / r.v0 - 1, 0) : ''), up: r.v >= (r.v0 || 0) }));
-      V.endTitle = V.actual ? `Actual fund NAV sector weight, ${dayLabel(G[L])}` : `${share ? V.metric || 'Share of market value' : 'Market value'}, ${monthYear(G[L])}`; V.endSub = V.actual ? `reported observations since ${dayLabel(G[0])}` : `change since ${monthYear(G[0])}`;
+      V.endTitle = V.actual ? `${V.metric}, ${dayLabel(G[L])}` : `${share ? V.metric || 'Share of market value' : 'Market value'}, ${monthYear(G[L])}`; V.endSub = V.actual ? `reported observations since ${dayLabel(G[0])}` : `change since ${monthYear(G[0])}`;
       V.caption = `${V.title}, ${monthYear(G[0])} → ${monthYear(G[L])}: ` + V.final.map((r) => `${r.label} ${r.value} (${r.change})`).join(' · ');
       return;
     }
@@ -2087,6 +2087,10 @@
     { name: 'Who owns the market', note: 'Each sector\'s share of market value', s: { k: 'sectors', sa: 'share', from: '2012-01-31', style: 'stack', theme: 'clean', dur: '30' } },
     { name: 'Actual Dow tracking basket', note: 'DIA holdings · price-weighted tracker proxy · reported snapshots only', s: { k: 'actual', aw: 'index', at: 'dji', style: 'bars', from: '', dur: '20' } },
     { name: 'ETF actual holdings by report date', note: 'SPY disclosed positions, no backfilled history', s: { k: 'actual', aw: 'etf', ah: 'SPY', style: 'bars', from: '', dur: '20' } },
+    { name: 'ETF company weight history', note: 'Actual disclosed company weights · Top N + Other', s: { k: 'actual', aw: 'etf', ah: 'SPY', style: 'companies', from: '', theme: 'clean', dur: '30' } },
+    { name: 'Berkshire: reported portfolio', note: '13F company weights by quarter · not current holdings', s: { k: 'actual', aw: '13f', ac: '1067983', style: 'companies', from: '', theme: 'clean', dur: '30' } },
+    { name: 'ETF allocation changes', note: 'Company or sector changes in percentage points', s: { k: 'actual', aw: 'etf', ah: 'SPY', style: 'changes', from: '', dur: '20' } },
+    { name: 'Official transaction composition', note: 'Disclosed lower-bound amounts · NOT actual holdings', s: { k: 'actual', aw: 'official', ap: 'Nancy Pelosi', style: 'stack', from: '', theme: 'clean', dur: '30' } },
     { name: 'What the Dow is made of', note: 'Sector weights by share price, as the index counts', s: { k: 'sectors', idx: 'dji', sw: 'index', from: '2012-01-31', style: 'stack', theme: 'clean', dur: '30' } },
     { name: 'What it took to reach $1M', note: 'QQQ vs SPY: the monthly amount, worked back', s: { k: 'growth', t: 'QQQ,SPY', goal: '1000000', solve: 'rec', amt: '0', from: '2016-10-28', style: 'line', theme: 'bull' } },
     { name: 'Nvidia: where the money goes', note: 'The earnings flow, quarter by quarter', s: { k: 'sankey', t: 'NVDA', sm: 'detail', style: 'sankey', theme: 'clean', dur: '20' } },
@@ -2156,11 +2160,14 @@
       return h;
     }
     function actualSide() {
-      let h = `<label for="st-aw">Weight source</label>${sel('st-aw', [['index', 'Index (tracking ETF proxy)'], ['etf', 'ETF disclosed holdings']], st.aw)}`;
+      let h = `<label for="st-aw">Weight source</label>${sel('st-aw', [['index', 'Index (tracking ETF proxy)'], ['etf', 'ETF disclosed holdings'], ['13f', '13F manager holdings'], ['official', 'Officials: transaction composition']], st.aw)}`;
       if (st.aw === 'etf') h += `<label for="st-ah">ETF ticker</label><input class="input" id="st-ah" list="st-list" autocomplete="off" placeholder="SPY, QQQ, DIA" value="${esc(st.ah)}"><datalist id="st-list"></datalist>`;
+      else if (st.aw === '13f') h += `<label for="st-ac">Manager CIK</label><input class="input" id="st-ac" value="${esc(st.ac)}"><div class="st-help">Berkshire: 1067983 · Bridgewater: 1350694 · Scion: 1649339</div>`;
+      else if (st.aw === 'official') h += `<label for="st-ap">Official name (as disclosed)</label><input class="input" id="st-ap" value="${esc(st.ap)}"><label for="st-ao">Transactions</label>${sel('st-ao', [['all','All gross activity'],['buy','Purchases'],['sell','Sales']], st.ao)}`;
       else h += `<label for="st-at">Index</label>${sel('st-at', Object.entries(root.FFActual.TRACKERS).map(([k, v]) => [k, v[0] + ' · ' + v[1]]), st.at)}`;
+      if (st.style === 'changes') h += `<label for="st-ag">Group changes</label>${sel('st-ag', [['company','Company'],['sector','Sector']], st.ag)}`;
       h += `<label for="st-an">Top holdings shown</label>${sel('st-an', [['5', '5'], ['10', '10'], ['12', '12'], ['15', '15'], ['20', '20']], st.an)}`;
-      return h + '<div class="st-help">Actual NAV-based ETF holdings snapshots, each labelled with its original report date. Index mode uses a TRACKING ETF PROXY, not licensed official index files. Dow 30 is price-weighted, never market-cap-weighted. Dates before the first actual snapshot cannot be animated.</div>';
+      return h + '<div class="st-help">ETF NAV weights; 13F reported-value weights; officials show monthly transaction lower-bound shares, NOT holdings. Source dates are retained; official transaction charts use month-end buckets. Index mode uses a TRACKING ETF PROXY, not licensed official index files. Dow 30 is price-weighted, never market-cap-weighted. Dates before the first actual snapshot cannot be animated.</div>';
     }
     function moreSide(k) {
       const meas = Object.entries(RANK).filter(([kk]) => !['gp', 'oi', 'ni'].includes(kk)).map(([kk, v]) => [kk, v[0]]);
@@ -2234,7 +2241,7 @@
     function status() {
       if (!V) return;
       const tm = timing(V, opt()), per = (V.grid.length - 1) / tm.run, unit = V.yearly ? 'years' : V.quarterly ? 'quarters' : V.kind === 'rank' && st.step === 'm' || ['calendar', 'bubble', 'treemap', 'sectors'].includes(V.kind) ? 'months' : 'weeks';
-      const what = V.actual ? (V.kind === 'sectors' ? ' sectors' : ' holdings') : ['rank', 'bubble', 'treemap'].includes(V.kind) ? ' companies' : V.kind === 'sectors' ? ' sectors' : V.kind === 'timing' ? ' plans' : ' series';
+      const what = V.actual ? (' ' + (V.group || 'holdings')) : ['rank', 'bubble', 'treemap'].includes(V.kind) ? ' companies' : V.kind === 'sectors' ? ' sectors' : V.kind === 'timing' ? ' plans' : ' series';
       $('#st-status').textContent = V.actual ? `${V.series.length + what} · ${V.grid.length} actual dated snapshot${V.grid.length === 1 ? '' : 's'} · ${tm.D} s${V.grid.length === 1 ? ' (single-date card)' : ' (transitions illustrative)'}` : `${V.series.length + what} · ${V.grid.length} ${unit} · ${tm.D} s (${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second)`;
       const pn = $('#st-pace-note'); if (pn) pn.textContent = V.actual ? (V.grid.length === 1 ? 'One disclosed/observed date · no invented historical movement.' : 'Transitions between observed dates are visual only, not daily observations.') : `About ${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second.`;
     }
@@ -2323,7 +2330,7 @@
       if (key === 'from') { st.yrs = ''; const y = $('#st-yrs'); if (y) y.value = ''; }
       if (key === 'solve') relabel();
       // Actual weight bars and sector areas require distinct portfolios, not just a repaint.
-      if (key === 'style' && st.k === 'actual') { rebuild(); return; }
+      if (key === 'style' && st.k === 'actual') { side(); rebuild(); return; }
       if (LOOK.includes(key)) {
         if (V) { V.style = st.style; V.scale = st.scale; V.endCard = st.end === '1'; delete V._dom; sizeCanvas(); paint(); save(); status(); }
         else rebuild();
