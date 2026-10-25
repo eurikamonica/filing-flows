@@ -5,6 +5,7 @@
 (function(root){
 'use strict';
 const doc=typeof document==='undefined'?null:document;
+const timeline=()=>root.FFFloTimeline||(typeof module!=='undefined'?require('./flo-timeline.js'):null);
 const script=doc&&doc.currentScript&&doc.currentScript.src||'';
 const BASE=script?script.replace(/[^/]*$/,''):'';
 const FEED=BASE+'disclosures/data/market/flo-alerts.json';
@@ -143,6 +144,18 @@ function el(tag,cls,text){
  return n;
 }
 function closeToast(){if(bubble)bubble.hidden=true;}
+function openTimeline(t){
+ const T=timeline();
+ if(!T||!ticker(String(t||'').toUpperCase()))return false;
+ const sym=String(t).toUpperCase(),selected=T.collect(items,sym,{limit:20,days:14});
+ const anchor=selected[0]||items.find(e=>e.ticker===sym||(e.symbols||[]).includes(sym));
+ if(!anchor){if(inbox)inbox.append(el('p','flo-pulse-note',isZH()?'当前有限摘要中未找到该股票记录。':'No matching events in the available bounded feed.'));return false;}
+ closeToast();if(inbox)inbox.hidden=true;
+ const output=T.render(items,sym,isZH(),{days:14,limit:20});
+ if(root.FFMascot&&root.FFMascot.showSignal)root.FFMascot.showSignal(anchor,output.html);
+ else if(url(anchor.source_url))root.open(url(anchor.source_url),'_blank','noopener');
+ return true;
+}
 function openEvent(event){
  closeToast();if(inbox)inbox.hidden=true;
  if(root.FFMascot&&root.FFMascot.showSignal)root.FFMascot.showSignal(event,explain(event,isZH(),items));
@@ -155,10 +168,14 @@ function toast(event,count){
  const dismiss=el('button','','×');dismiss.type='button';dismiss.setAttribute('aria-label','Dismiss alert');
  dismiss.addEventListener('click',closeToast);head.append(label,dismiss);
  const buttons=el('div','flo-pulse-actions'),detail=el('button','',isZH()?'让 Flo 分析':'Ask Flo'),all=el('button','',isZH()?'所有提示 · ':'Inbox · '+count),mute=el('button','',isZH()?'静音':'Mute');
+ const timelineTicker=event.ticker||(Array.isArray(event.symbols)?event.symbols.find(ticker):'');
+ const timelineBtn=timelineTicker?el('button','',isZH()?'事件时间线':'Timeline'):null;
+ if(timelineBtn)timelineBtn.addEventListener('click',()=>openTimeline(timelineTicker));
  detail.addEventListener('click',()=>openEvent(event));
  all.addEventListener('click',()=>showInbox(true));
  mute.addEventListener('click',()=>{settings.quiet=true;storage();closeToast();showInbox(true);});
  buttons.append(detail,all,mute);
+ if(timelineBtn)buttons.append(timelineBtn);
  bubble.append(head,el('p','',event.title||'New published event'),el('small','',event.event_at.slice(0,16)+' UTC'),buttons);
  bubble.hidden=false;
 }
@@ -205,12 +222,20 @@ function renderInbox(){
    types.append(label);
  }
  inbox.append(controls,types);
+ const timelineControls=el('div','flo-pulse-actions'),query=el('input'),timelineOpen=el('button','',isZH()?'分析股票事件线':'Analyze ticker timeline');
+ query.type='text';query.maxLength=10;query.placeholder='NVDA';query.value=watchSet(settings)[0]||'';
+ query.setAttribute('aria-label','Stock ticker for event timeline');
+ timelineOpen.addEventListener('click',()=>openTimeline(query.value.trim().toUpperCase()));
+ timelineControls.append(query,timelineOpen);inbox.append(timelineControls);
  const matches=items.filter(e=>shown(e,settings)).slice(0,45);
  if(!matches.length)inbox.append(el('p','',isZH()?'没有匹配的新发布数据。':'No matching published events.'));
  for(const e of matches){
    const row=el('div','flo-pulse-item'),button=el('button','',e.kind.toUpperCase()+' · '+(e.title||'Untitled'));
    button.addEventListener('click',()=>openEvent(e));
    row.append(button,el('small','',(e.ticker||e.manager||'')+' · '+e.event_at.slice(0,16)+' UTC'));
+   const sym=e.ticker||(Array.isArray(e.symbols)?e.symbols.find(ticker):'');
+   if(sym){const tl=el('button','flo-pulse-timeline-action',isZH()?'时间线':'Timeline');
+     tl.addEventListener('click',()=>openTimeline(sym));row.append(tl);}
    inbox.append(row);
  }
 }
@@ -254,14 +279,36 @@ async function poll(){
 }
 function style(){
  const s=el('style');s.id='flo-pulse-style';
- s.textContent='.flo-pulse-toast,.flo-pulse-list{position:fixed;right:18px;bottom:112px;z-index:9005;width:min(355px,calc(100vw - 25px));background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:13px;padding:12px;box-shadow:0 11px 30px #0003;font:12px/1.5 Arial,sans-serif}.flo-pulse-toast[hidden],.flo-pulse-list[hidden]{display:none}.flo-pulse-toast{border-left:4px solid var(--accent,#17734a);animation:flo-pulse-arrive .3s ease-out}.flo-pulse-toast[data-kind="8k"]{border-left-color:#cf5a57}.flo-pulse-toast[data-kind="13f"]{border-left-color:#5680cb}.flo-pulse-toast[data-kind="price"]{border-left-color:#dca13b}.flo-pulse-head,.flo-pulse-actions{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}.flo-pulse-toast p{margin:7px 0}.flo-pulse-toast button,.flo-pulse-list button,.flo-pulse-pill{border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);padding:4px 8px;border-radius:7px;cursor:pointer;font:12px Arial,sans-serif}.flo-pulse-list{max-height:55vh;overflow:auto}.flo-pulse-list .flo-pulse-item{padding:6px 0;border-bottom:1px solid var(--line,#ccc)}.flo-pulse-list .flo-pulse-item button{text-align:left}.flo-pulse-list small{display:block;color:var(--muted,#777)}.flo-pulse-types{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.flo-pulse-types label{white-space:nowrap;font-size:11px}.flo-pulse-list input[type=text]{width:140px;max-width:100%;padding:5px;color:inherit;background:inherit;border:1px solid var(--line,#ccc);border-radius:6px}.flo-pulse-pill{position:fixed;right:110px;bottom:29px;z-index:9004;box-shadow:0 3px 10px #0002}.flo-pulse-note{font-size:11px;color:var(--muted,#777)}.flo-signal-facts ul{padding-left:18px;margin:4px 0 7px}.flo-signal-facts li{margin:3px 0}@keyframes flo-pulse-arrive{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.flo-pulse-toast{animation:none}}@media(max-width:560px){.flo-pulse-list,.flo-pulse-toast{right:8px;bottom:85px}.flo-pulse-pill{right:74px;bottom:14px}}';
+ s.textContent='.flo-pulse-toast,.flo-pulse-list{position:fixed;right:18px;bottom:112px;z-index:9005;width:min(355px,calc(100vw - 25px));background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:13px;padding:12px;box-shadow:0 11px 30px #0003;font:12px/1.5 Arial,sans-serif}.flo-pulse-toast[hidden],.flo-pulse-list[hidden]{display:none}.flo-pulse-toast{border-left:4px solid var(--accent,#17734a);animation:flo-pulse-arrive .3s ease-out}.flo-pulse-toast[data-kind="8k"]{border-left-color:#cf5a57}.flo-pulse-toast[data-kind="13f"]{border-left-color:#5680cb}.flo-pulse-toast[data-kind="price"]{border-left-color:#dca13b}.flo-pulse-head,.flo-pulse-actions{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}.flo-pulse-toast p{margin:7px 0}.flo-pulse-toast button,.flo-pulse-list button,.flo-pulse-pill{border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);padding:4px 8px;border-radius:7px;cursor:pointer;font:12px Arial,sans-serif}.flo-pulse-list{max-height:55vh;overflow:auto}.flo-pulse-list .flo-pulse-item{padding:6px 0;border-bottom:1px solid var(--line,#ccc)}.flo-pulse-list .flo-pulse-item button{text-align:left}.flo-pulse-list small{display:block;color:var(--muted,#777)}.flo-pulse-types{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.flo-pulse-types label{white-space:nowrap;font-size:11px}.flo-pulse-list input[type=text]{width:140px;max-width:100%;padding:5px;color:inherit;background:inherit;border:1px solid var(--line,#ccc);border-radius:6px}.flo-pulse-pill{position:fixed;right:110px;bottom:29px;z-index:9004;box-shadow:0 3px 10px #0002}.flo-pulse-note{font-size:11px;color:var(--muted,#777)}.flo-pulse-timeline-action{margin-left:6px}
+.flo-event-timeline h3{font-size:14px;margin:4px 0 8px}.flo-timeline-list{margin:8px 0 12px;padding:0 0 0 19px}
+.flo-timeline-list li{border-left:2px solid var(--line,#ccc);padding:3px 7px 10px;margin-bottom:7px}
+.flo-timeline-list li p{margin:4px 0}.flo-timeline-list small,.flo-timeline-note{font-size:11px;color:var(--muted,#777)}
+.flo-timeline-list a{overflow-wrap:anywhere}
+.flo-signal-facts ul{padding-left:18px;margin:4px 0 7px}.flo-signal-facts li{margin:3px 0}@keyframes flo-pulse-arrive{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.flo-pulse-toast{animation:none}}@media(max-width:560px){.flo-pulse-list,.flo-pulse-toast{right:8px;bottom:85px}.flo-pulse-pill{right:74px;bottom:14px}}';
  doc.head.append(s);
 }
+function timelineIntent(q){
+ return /(?:事件|披露|行情|扫描|新闻).{0,10}时间线|时间线.{0,10}(?:8.?k|13f|股票|事件|披露|新闻)|(?:event|filing|stock|price|news|cross.signal).{0,8}timeline|timeline.{0,8}(?:event|filing|stock|price|news)|跨信号关联|扫描关联/i.test(String(q||''));
+}
 function intent(q){
+ if(timelineIntent(q))return true;
  return /最近.{0,9}(?:扫描|提醒|新消息|事件|8.?k|13f)|有什么新(?:披露|新闻|扫描|提醒|8.?k|13f)|新扫描.{0,14}(?:什么|有哪些|结果)|(?:what(?:'s| is) new|new alerts|recent alerts|what changed since|recent scanner|latest published pulse|show notifications|alert inbox)/i.test(String(q||''));
 }
 function report(q,zh=false){
  const query=String(q||''),upper=query.toUpperCase();
+ if(timelineIntent(query)&&timeline()){
+   const t=timeline(),symbol=t.tickerFromQuery(query,items)||watchSet(settings)[0]||null;
+   if(symbol)return t.render(items,symbol,zh,{days:14,limit:20});
+   const counts={};
+   for(const e of items)for(const v of t.symbols(e))counts[v]=(counts[v]||0)+1;
+   const ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,8);
+   return {html:'<b>'+escape(zh?'Flo 股票事件时间线':'Flo stock event timelines')+'</b><p>'+
+     escape(zh?'请在问题里提供股票代码，例如 NVDA 事件时间线。':'Provide a ticker, for example NVDA event timeline.')+
+     '</p><p>'+escape(ranked.map(([k,v])=>k+' ('+v+')').join(' · ')||'No published ticker observations')+
+     '</p><p class="flo-source">'+escape(zh?'仅涵盖本站已发布的有限事件摘要。':'Only a bounded published event manifest is available.')+'</p>',
+     links:[],facts:[],mood:'think',intents:['event-timeline-help']};
+ }
+
  const matched=upper.match(/\$([A-Z]{1,7})\b/)||upper.match(/\b(?:NVDA|AAPL|MSFT|OKLO|IREN|CRWV|TSLA|META|AMZN)\b/);
  const tickerQuery=matched?matched[1]||matched[0]:null;
  const type=/8.?k/i.test(query)?'8k':/13f/i.test(query)?'13f':/异动|价格|price|move/i.test(query)?'price':null;
@@ -278,6 +325,9 @@ function report(q,zh=false){
  }
  if(latestBuild)html+='<p class="flo-source">'+escape(zh?'摘要构建时间：':'Manifest built: ')+escape(latestBuild)+' UTC</p>';
  if(lastError)html+='<p>'+escape(zh?'最近获取失败：':'Last fetch issue: ')+escape(lastError)+'</p>';
+ const age=Date.now()-time(latestBuild);
+ if(latestBuild&&age>6*3600000)html+='<p>'+escape(zh?'注意：已发布的扫描摘要超过 6 小时未更新，不能当作实时动态。':
+  'Warning: the published scan manifest is over six hours old; do not interpret this as current availability.')+'</p>';
  return {html,links,facts:list.map(e=>e.kind+' '+(e.ticker||e.manager||'')+' '+e.title+' '+e.event_at),
   mood:list.some(e=>e.kind==='8k'&&e.priority==='high')?'think':'talk',intents:['published-pulse']};
 }
@@ -293,7 +343,7 @@ function start(){
  root.addEventListener('online',poll);
  poll();
 }
-root.FFFloAlerts={valid,normalize,compare,react,shown,explain,intent,report,start,poll,
+root.FFFloAlerts={valid,normalize,compare,react,shown,explain,intent,timelineIntent,openTimeline,report,start,poll,
  getState:()=>({initialized,seen:seen.slice(),settings:JSON.parse(JSON.stringify(settings)),events:items.slice(),lastError,latestBuild,scanHealth}),
  stop(){active=false;if(timer)clearTimeout(timer);}};
 if(typeof module!=='undefined')module.exports=root.FFFloAlerts;
