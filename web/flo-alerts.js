@@ -8,7 +8,7 @@ const doc=typeof document==='undefined'?null:document;
 const script=doc&&doc.currentScript&&doc.currentScript.src||'';
 const BASE=script?script.replace(/[^/]*$/,''):'';
 const FEED=BASE+'disclosures/data/market/flo-alerts.json';
-const KEY='ff:flo-pulse:v2',INTERVAL=120000,MAX_SEEN=320;
+const KEY='ff:flo-pulse:v2',INTERVAL=120000,MAX_SEEN=1000;
 const KINDS=['8k','13f','news','price'];
 const priority={high:3,medium:2,info:1};
 const escape=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -45,7 +45,7 @@ function shown(e,config={}){
  const watch=watchSet(config);
  return !watch.length||watch.some(t=>t===e.ticker||Array.isArray(e.symbols)&&e.symbols.includes(t));
 }
-function explain(e,zh=false){
+function explain(e,zh=false,related=[]){
  const label=e.kind==='8k'?'SEC Form 8-K':e.kind==='13f'?'SEC Form 13F':e.kind==='price'?'Daily price change':'Published news';
  const name=e.kind==='13f'?(e.manager||'Institution'):(e.ticker||e.source_label||'');
  const data=[],notes=[];
@@ -85,21 +85,36 @@ function explain(e,zh=false){
  if(e.detail)out+='<p>'+escape(e.detail)+'</p>';
  if(data.length)out+='<div class="flo-signal-facts"><b>'+(zh?'原始证据信息':'Published snapshot details')+'</b><ul>'+data.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>';
  out+=notes.map(x=>'<p>'+escape(x)+'</p>').join('');
+ // Other genuinely observed same-ticker signals, not an implied cause-effect link.
+ const associated=(Array.isArray(related)?related:[]).filter(r=>valid(r)&&r.id!==e.id&&r.ticker&&r.ticker===e.ticker)
+  .filter(r=>Math.abs(time(r.event_at)-time(e.event_at))<=3*86400000).slice(0,3);
+ if(associated.length){
+   out+='<div class="flo-signal-facts"><b>'+(zh?'同公司其他独立信号':'Other observed same-ticker signals')+'</b><ul>';
+   for(const r of associated){
+     out+='<li>'+escape(r.kind.toUpperCase())+' · '+escape(r.title||r.detail||'Event')+
+          ' · '+escape((r.event_at||'').slice(0,16))+' UTC';
+     if(url(r.source_url))out+=' · <a target="_blank" rel="noopener noreferrer" href="'+escape(url(r.source_url))+'">'+(zh?'原始来源':'Source')+'</a>';
+     out+='</li>';
+   }
+   out+='</ul><p>'+escape(zh?'事件同时出现不代表因果关系，仍需检查披露时间、盘前盘后与市场其他因素。':
+     'Co-occurrence is NOT causality. Check filing times, market hours and other drivers.')+'</p></div>';
+ }
  out+='<p class="flo-source">'+escape(e.event_at.slice(0,16))+' UTC · '+escape(e.source_label||'')+' · '+escape(e.scope||'')+'</p>';
  if(evidence)out+='<div class="flo-links"><a target="_blank" rel="noopener noreferrer" href="'+escape(evidence)+'">'+
   (zh?'查看原始 SEC / 新闻资料':'Read original SEC / news source')+'</a></div>';
  return out;
 }
 let seen=[],initialized=false,settings={quiet:false,watch:'',kinds:{'8k':true,'13f':true,news:true,price:true}};
-let items=[],bubble=null,inbox=null,pill=null,active=false,busy=false,timer=null,wait=INTERVAL,version='',unread=0,lastError='',latestBuild='';
+let items=[],bubble=null,inbox=null,pill=null,active=false,busy=false,timer=null,wait=INTERVAL,version='',unread=0,lastError='',latestBuild='',lastPopupAt=0;
 function storage(){
- try{root.localStorage&&root.localStorage.setItem(KEY,JSON.stringify({initialized,seen:seen.slice(-MAX_SEEN),settings}));}catch(_){}
+ try{root.localStorage&&root.localStorage.setItem(KEY,JSON.stringify({initialized,seen:seen.slice(-MAX_SEEN),settings,lastPopupAt}));}catch(_){}
 }
 function restore(){
  try{
    const d=JSON.parse(root.localStorage&&root.localStorage.getItem(KEY)||'null');
    if(!d)return;
    initialized=!!d.initialized;
+   lastPopupAt=Number.isFinite(d.lastPopupAt)&&d.lastPopupAt>0?d.lastPopupAt:0;
    seen=Array.isArray(d.seen)?d.seen.filter(x=>typeof x==='string'&&x.length<230).slice(-MAX_SEEN):[];
    if(d.settings){
      settings.quiet=!!d.settings.quiet;
@@ -117,7 +132,7 @@ function el(tag,cls,text){
 function closeToast(){if(bubble)bubble.hidden=true;}
 function openEvent(event){
  closeToast();if(inbox)inbox.hidden=true;
- if(root.FFMascot&&root.FFMascot.showSignal)root.FFMascot.showSignal(event,explain(event,isZH()));
+ if(root.FFMascot&&root.FFMascot.showSignal)root.FFMascot.showSignal(event,explain(event,isZH(),items));
  else if(url(event.source_url))root.open(url(event.source_url),'_blank','noopener');
 }
 function toast(event,count){
@@ -187,9 +202,12 @@ async function poll(){
      unread+=arrivals.length;
      arrivals.sort((a,b)=>priority[b.priority]-priority[a.priority]||time(b.event_at)-time(a.event_at));
      const top=arrivals[0];
-     if(!settings.quiet){
+     // Rate-limit visual interruption to once per 5 minutes across page loads.
+     // Unseen events still go to the inbox and its counter.
+     if(!settings.quiet&&Date.now()-lastPopupAt>=300000){
        toast(top,arrivals.length);
        if(root.FFMascot&&root.FFMascot.signalReaction)root.FFMascot.signalReaction(react(top),top);
+       lastPopupAt=Date.now();
      }
      if(pill)pill.textContent=(isZH()?'Flo · 新事件 ':'Flo · New ')+unread;
      if(inbox&&!inbox.hidden)renderInbox();
@@ -206,6 +224,30 @@ function style(){
  s.textContent='.flo-pulse-toast,.flo-pulse-list{position:fixed;right:18px;bottom:112px;z-index:9005;width:min(355px,calc(100vw - 25px));background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:13px;padding:12px;box-shadow:0 11px 30px #0003;font:12px/1.5 Arial,sans-serif}.flo-pulse-toast[hidden],.flo-pulse-list[hidden]{display:none}.flo-pulse-toast{border-left:4px solid var(--accent,#17734a);animation:flo-pulse-arrive .3s ease-out}.flo-pulse-toast[data-kind="8k"]{border-left-color:#cf5a57}.flo-pulse-toast[data-kind="13f"]{border-left-color:#5680cb}.flo-pulse-toast[data-kind="price"]{border-left-color:#dca13b}.flo-pulse-head,.flo-pulse-actions{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}.flo-pulse-toast p{margin:7px 0}.flo-pulse-toast button,.flo-pulse-list button,.flo-pulse-pill{border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);padding:4px 8px;border-radius:7px;cursor:pointer;font:12px Arial,sans-serif}.flo-pulse-list{max-height:55vh;overflow:auto}.flo-pulse-list .flo-pulse-item{padding:6px 0;border-bottom:1px solid var(--line,#ccc)}.flo-pulse-list .flo-pulse-item button{text-align:left}.flo-pulse-list small{display:block;color:var(--muted,#777)}.flo-pulse-types{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.flo-pulse-types label{white-space:nowrap;font-size:11px}.flo-pulse-list input[type=text]{width:140px;max-width:100%;padding:5px;color:inherit;background:inherit;border:1px solid var(--line,#ccc);border-radius:6px}.flo-pulse-pill{position:fixed;right:110px;bottom:29px;z-index:9004;box-shadow:0 3px 10px #0002}.flo-pulse-note{font-size:11px;color:var(--muted,#777)}.flo-signal-facts ul{padding-left:18px;margin:4px 0 7px}.flo-signal-facts li{margin:3px 0}@keyframes flo-pulse-arrive{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.flo-pulse-toast{animation:none}}@media(max-width:560px){.flo-pulse-list,.flo-pulse-toast{right:8px;bottom:85px}.flo-pulse-pill{right:74px;bottom:14px}}';
  doc.head.append(s);
 }
+function intent(q){
+ return /最近.{0,9}(?:扫描|提醒|新消息|事件|8.?k|13f)|有什么新(?:披露|新闻|扫描|提醒|8.?k|13f)|新扫描.{0,14}(?:什么|有哪些|结果)|(?:what(?:'s| is) new|new alerts|recent alerts|what changed since|recent scanner|latest published pulse|show notifications|alert inbox)/i.test(String(q||''));
+}
+function report(q,zh=false){
+ const query=String(q||'');
+ const matched=query.match(/\$([A-Z]{1,7})\b/)||query.match(/\b(?:NVDA|AAPL|MSFT|OKLO|IREN|CRWV|TSLA|META|AMZN)\b/);
+ const tickerQuery=matched?matched[1]||matched[0]:null;
+ const type=/8.?k/i.test(query)?'8k':/13f/i.test(query)?'13f':/异动|价格|price|move/i.test(query)?'price':null;
+ const list=items.filter(e=>(!type||e.kind===type)&&(!tickerQuery||e.ticker===tickerQuery||(e.symbols||[]).includes(tickerQuery))).slice(0,7);
+ let html='<b>'+escape(zh?'Flo 最近发布的扫描信息':'Flo latest published observations')+'</b><p>'+
+   escape(zh?'内容来自网站已经发布的扫描数据；不是实时 SEC 推送或盘中行情。':'These are already published site snapshots, not realtime SEC pushes or intraday quotes.')+'</p>';
+ if(!initialized)html+='<p>'+escape(zh?'尚未取得可靠事件摘要。':'No validated alert snapshot yet.')+'</p>';
+ else if(!list.length)html+='<p>'+escape(zh?'当前摘要没有匹配记录；不能据此断定没有新申报。':'No matching observation in this bounded feed; it does not prove no new filings.')+'</p>';
+ const links=[];
+ for(const e of list){
+   html+='<p><b>'+escape(e.kind.toUpperCase()+' · '+(e.ticker||e.manager||''))+'</b> · '+
+     escape(e.title||'')+' <small>'+escape(e.event_at.slice(0,16))+' UTC</small></p>';
+   if(url(e.source_url))links.push([url(e.source_url),e.kind.toUpperCase()+' · '+(e.ticker||e.manager||'')]);
+ }
+ if(latestBuild)html+='<p class="flo-source">'+escape(zh?'摘要构建时间：':'Manifest built: ')+escape(latestBuild)+' UTC</p>';
+ if(lastError)html+='<p>'+escape(zh?'最近获取失败：':'Last fetch issue: ')+escape(lastError)+'</p>';
+ return {html,links,facts:list.map(e=>e.kind+' '+(e.ticker||e.manager||'')+' '+e.title+' '+e.event_at),
+  mood:list.some(e=>e.kind==='8k'&&e.priority==='high')?'think':'talk',intents:['published-pulse']};
+}
 function start(){
  if(active||!doc||!root.fetch)return;
  active=true;restore();style();
@@ -218,7 +260,7 @@ function start(){
  root.addEventListener('online',poll);
  poll();
 }
-root.FFFloAlerts={valid,normalize,compare,react,shown,explain,start,poll,
+root.FFFloAlerts={valid,normalize,compare,react,shown,explain,intent,report,start,poll,
  getState:()=>({initialized,seen:seen.slice(),settings:JSON.parse(JSON.stringify(settings)),events:items.slice(),lastError,latestBuild}),
  stop(){active=false;if(timer)clearTimeout(timer);}};
 if(typeof module!=='undefined')module.exports=root.FFFloAlerts;
