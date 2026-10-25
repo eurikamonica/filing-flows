@@ -5,6 +5,7 @@
 (function(root) {
   'use strict';
   const coach = () => root.FFFloCoach || (typeof module !== 'undefined' ? require('./flo-coach.js') : null);
+  const practice = () => root.FFFloPractice || (typeof module !== 'undefined' ? require('./flo-practice.js') : null);
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g,
     ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const I = (v, note='') => ({type:'input',raw:String(v),note});
@@ -463,6 +464,9 @@
       if(button.hasAttribute('data-coach-focus')){session.selected=coach().current(session)[0];paint();return;}
       if(button.hasAttribute('data-coach-hint')){session.message=coach().hint(session,lang);paint();return;}
       if(button.hasAttribute('data-coach-quiz')){coach().answerQuiz(session,Number(button.dataset.coachQuiz),lang);paint();return;}
+      for(const [attr,action] of [['data-practice-review','review'],['data-practice-save','save'],['data-practice-restore','restore'],['data-practice-clear','clear']]){
+        if(button.hasAttribute(attr)){practice().action(session,action,null,lang);paint();return;}
+      }
       if(button.hasAttribute('data-wb-next')){
         const unsolved=Object.keys(session.answers).filter(ref=>!String(session.cells[ref].raw).trim());
         if(unsolved.length){session.selected=unsolved[0];session.message='Selected '+unsolved[0]+'. Enter a formula starting with =.';}
@@ -471,16 +475,20 @@
       }
       if(button.hasAttribute('data-wb-check')){
         const grade=score(session);session.grade=grade;
+        practice().recordGrade(session,grade);
         session.message=grade.bad.length?'First incorrect: '+grade.bad[0].ref+' — '+grade.bad[0].reason:
           'All formula outputs match the model; this is a mathematical check, not accounting audit.';
         paint();return;
       }
       if(button.hasAttribute('data-wb-hint')){
+        if(practice().memory(session).mode==='exam'){session.message='Exam mode: hints are hidden until you leave exam mode.';paint();return;}
+        practice().recordHint(session);
         const ref=session.selected,item=session.cells[ref];
         session.message=(item&&item.note)||('Select '+ref+': identify referenced cells and explain the sign of each term.');
         paint();return;
       }
       if(button.hasAttribute('data-wb-reveal')){
+        if(practice().memory(session).mode==='exam'){session.message='Exam mode disables instructor answer reveal.';paint();return;}
         for(const [ref,formula] of Object.entries(session.answers))session.cells[ref].raw=formula;
         session.mode='guided';session.grade=null;session.message='Instructor formulas revealed; start Practice to try again.';paint();return;
       }
@@ -498,6 +506,8 @@
     wrapper.addEventListener('change',event=>{
       if(event.target.matches('[data-wb-model]')){
         session=newSession(event.target.value);paint();
+      }else if(event.target.matches('[data-practice-mode]')){
+        practice().action(session,'mode',event.target.value,lang);paint();
       }else if(event.target.matches('[data-wb-scenario]')){
         try{useScenario(session,Number(event.target.value));session.message='Assumptions changed; recompute formulas.';}
         catch(e){session.message=e.message;}
