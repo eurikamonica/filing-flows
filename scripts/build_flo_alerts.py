@@ -117,7 +117,7 @@ def build(root, now=None):
         category = str(r.get("kind") or "release")
         events.append(dict(id="news:" + small(r.get("id") or url, 190),kind="news",
             ticker=symbols[0],priority="medium" if category in ("sec_action", "suspension", "fda") else "info",
-            title=small(r.get("title")),detail=small(r.get("source"), 80),
+            title=small(r.get("title")),symbols=symbols[:12],detail=small(r.get("source"), 80),
             event_at=stamp(r.get("published")),source_url=url,
             source_label=small(r.get("source") or "News", 50),
             scope="Headline from external source; its claims are not independently verified."))
