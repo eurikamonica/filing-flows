@@ -69,6 +69,7 @@
     if (/\b(fcff|free cash flow to firm)\b|企业自由现金流|计算自由现金流/i.test(s) && /(?:^|\s)(?:ebit|tax|da|capex|nwc)=/i.test(s)) return 'fcff';
     if (/\b(?:case study|sunbeam|dell case|accounting case)\b|真实案例|案例研究|森宾|太阳能.*案例/i.test(s)) return 'case';
     if (/rebates?|supplier incentives|vendor allowances|返利|供应商补贴|供应商激励/i.test(s)) return 'rebate';
+    if (/cookie.jar (?:simulation|example|lab)|模拟(?:准备金|cookie.?jar)|准备金模拟/i.test(s)) return 'reserve_demo';
     if (/cookie.jar|accounting detective|reserves? (?:release|rollforward)|earnings smoothing|财务侦探|准备金|利润平滑|盈余管理/i.test(s)) return 'detective';
     if (/teach|tutorial|walk.?through|step.by.step|how (?:do i|to) (?:build|model)|learn dcf|build (?:a )?dcf|逐步建模|教我|教程|带我建模|学习dcf/i.test(s)) return 'lesson';
     if (/explain (?:this |the )?(?:number|gross profit|revenue|ebit|net income|operating income|operating cash flow)|解释(?:这个|财务)?数字|为什么(?:毛利|营业利润)/i.test(s)) return 'explain';
@@ -87,7 +88,8 @@
   }
   async function lesson(q, co, lang, load) {
     const isStart = match(q)==='lesson' || !active;
-    if(isStart) active={step:0,cik:co&&co.cik||null,ticker:co&&co.ticker||null};
+    if(isStart) active={step:0,cik:co&&co.cik||null,ticker:co&&co.ticker||null,company:co||null};
+    co=co||(active&&active.company)||null;
     if(!isStart) {
       if(/stop lesson|结束课程/i.test(q)){active=null;return answer(lang==='zh'?'课程已结束。可以随时重新开始。':'Lesson closed. Start again any time.',[]);}
       if(/previous step|上一步/i.test(q)) active.step=Math.max(0,active.step-1);
@@ -122,6 +124,30 @@
     if(x.tax<0||x.tax>100||x.da<0||x.capex<0)throw Error('Tax 0–100%; D&A and CapEx must not be negative.');
     if(a.some(k=>Math.abs(x[k])>1e13))throw Error('Input is outside the supported exercise range.');
     return x.ebit*(1-x.tax/100)+x.da-x.capex-x.nwc;
+  }
+  function reserveScenario(inputs) {
+    const balance=Number(inputs.balance),profit=Number(inputs.profit),bank=Number(inputs.bank),
+      amount=Number(inputs.amount),action=String(inputs.action||'');
+    if(![balance,profit,bank,amount].every(Number.isFinite)||balance<0||amount<0||amount>1e9||
+      !['add','use','release'].includes(action)||(action!=='add'&&amount>balance)) {
+      throw Error('Invalid reserve scenario: choose add/use/release, nonnegative units and a sufficient reserve balance.');
+    }
+    return {reserve:balance+(action==='add'?amount:-amount),
+      profit:profit+(action==='add'?-amount:action==='release'?amount:0),
+      cash:bank-(action==='use'?amount:0)};
+  }
+  function reserveDemo(lang) {
+    const zh=lang==='zh';
+    const s='<b>'+(zh?'Cookie Jar 准备金模拟':'Cookie Jar Reserve Lab')+'</b><p>'+
+    (zh?'纯教学模拟：计提使利润减少，转回使利润增加，使用/支付准备金使现金减少。实际转回必须有合理的估计依据；不能据此推断任何公司的舞弊。':
+    'Hypothetical reserve account: provision reduces profit, release increases profit, use/settlement reduces cash. An actual release requires a supported estimate change.')+'</p>'+
+    '<form class="flo-mini-form" data-flo-calc="reserve"><label>Opening reserve <input name="balance" type="number" value="50" min="0" step="any" required></label>'+
+    '<label>Profit (before) <input name="profit" type="number" value="100" step="any" required></label>'+
+    '<label>Cash (before) <input name="bank" type="number" value="100" step="any" required></label>'+
+    '<label>Amount <input name="amount" type="number" min="0" step="any" value="20" required></label>'+
+    '<label>Action <select name="action"><option value="add">Record a provision</option><option value="use">Settle in cash</option><option value="release">Release estimate</option></select></label>'+
+    '<button type="submit">'+(zh?'查看调整后的数字':'Run scenario')+'</button></form>';
+    return answer(s,[btn(zh?'Sunbeam 真实案例':'Sunbeam case study',zh?'Sunbeam 案例':'Sunbeam case study')]);
   }
   function rebate(inputs){
     const purchased=Number(inputs.purchased),sold=Number(inputs.sold),rebate=Number(inputs.rebate);
@@ -198,6 +224,7 @@
     if(!kind)return null;
     if(kind==='lesson'||kind==='continue')return lesson(q,co,lang,load);
     if(kind==='rebate')return rebateAnswer(lang);
+    if(kind==='reserve_demo')return reserveDemo(lang);
     if(kind==='case')return caseStudy(q,lang);
     if(kind==='detective')return detective(co,lang,load);
     if(kind==='fcff'){
@@ -207,6 +234,6 @@
     }
     return explain(co,lang,{label:q});
   }
-  root.FFFloAcademy={match,handle,lesson,fcff,rebate,caseStudy,detective,explain,cases};
+  root.FFFloAcademy={match,handle,lesson,fcff,rebate,reserveScenario,reserveDemo,caseStudy,detective,explain,cases};
   if(typeof module!=='undefined')module.exports=root.FFFloAcademy;
 })(typeof globalThis!=='undefined'?globalThis:this);
