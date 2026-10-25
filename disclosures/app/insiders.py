@@ -11,6 +11,7 @@ Cache:   cache/insiders/trades.json.gz (rolling `keep_days`) and cache/insiders/
 Publish: market/insiders.json — the latest notable trades, a per-ticker 90-day summary with cluster buys, used by the
          Signals tab, the company pages (holders index) and the X posts (pipeline/engage.py kind "insider").
 """
+from retry_queue import RetryQueue
 import datetime as dt
 import gzip
 import json
@@ -120,23 +121,36 @@ def collect(client, root, cfg=None):
     seen = set(read_json(cdir / 'seen.json', []))
     store = cdir / 'trades.json.gz'
     trades = json.load(gzip.open(store, 'rt', encoding='utf-8')) if store.exists() else []
-    entries = [(a, f) for a, f in feed_entries(client, int(cfg.get('feed_pages', 4))) if a not in seen]
+    retry = RetryQueue(cdir)
+    pending = [tuple(x) for x in read_json(cdir / 'pending.json', [])]
+    feed_errors = 0
+    try:
+        if retry.due('feed'):
+            pending.extend(feed_entries(client, int(cfg.get('feed_pages', 4))))
+            retry.succeeded('feed')
+    except Exception as exc:
+        retry.failed('feed', exc)
+        feed_errors = 1
+    pending = [x for x in dict.fromkeys(pending) if x[0] not in seen]
+    entries = [x for x in pending if retry.due(x[0])]
     batch = int(cfg.get('batch', 250))
-    read = errors = 0
+    read, errors = 0, feed_errors
     for accession, folder in entries[:batch]:
         try:
             txt = client.get(folder + accession + '.txt', sec=True)
             xml = xml_from_submission(txt)
             if xml:
-                m = re.search(r'FILED AS OF DATE:\s*(\d{4})(\d{2})(\d{2})', txt[:4000])
+                m = re.search(r'FILED AS OF DATE:\s*(\d{4})(\d{2})(\d{2})', txt[:4000].decode('utf-8', 'replace'))
                 for t in parse_form4(xml, accession, folder):
                     if m:
                         t['filed'] = f'{m.group(1)}-{m.group(2)}-{m.group(3)}'
                     trades.append(t)
             seen.add(accession)
             read += 1
+            retry.succeeded(accession)
         except Exception as exc:
             errors += 1
+            retry.failed(accession, exc)
             if errors > 20:
                 break
             print(f'Form 4 {accession}: {exc}', flush=True)
@@ -150,7 +164,11 @@ def collect(client, root, cfg=None):
         json.dump(trades, f, separators=(',', ':'))
     store.with_suffix('.tmp').replace(store)
     write_json(cdir / 'seen.json', sorted(seen)[-60000:])
-    return {'status': 'ok' if errors <= 20 else 'partial', 'read': read, 'waiting': max(0, len(entries) - batch), 'errors': errors,
+    pending = [x for x in pending if x[0] not in seen]
+    write_json(cdir / 'pending.json', pending)
+    retry.save()
+    return {'status': 'partial' if errors or retry.rows or pending else 'ok', **retry.summary(),
+            'latest_filing_date': max((t.get('filed', '') for t in trades), default=None), 'read': read, 'waiting': len(pending), 'errors': errors,
             'trades': len(trades), 'updated_at': now()}
 
 

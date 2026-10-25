@@ -85,9 +85,13 @@ function derivedMarketNotice(tab,modules,markets,nowMs=Date.now()){
 function baseRender(){
  const d=data(),m=moduleData();
  $('buildtime').textContent='Snapshot built: '+(d.generated_at||'Not generated')+(window.HUB_BUILD&&window.HUB_BUILD.published_at?` · published ${window.HUB_BUILD.published_at}${window.HUB_BUILD.commit?' (build '+window.HUB_BUILD.commit+')':''}`:'');
- const derived=(state.mode==='official'&&typeof marketStore!=='undefined'
-   ?derivedMarketNotice(state.tab,d.modules||{},marketStore):null)
-   ||(state.mode==='official'&&typeof (window.HUB_NOTICES||{})[state.tab]==='function'?window.HUB_NOTICES[state.tab]():null);   /* a research tab's own build status: {stale, text} */
+ const published=window.HUB_BUILD?.published_at;
+ const derived=state.mode!=='official'?null:
+   state.tab==='rotation'?rotationNotice(typeof marketStore!=='undefined'?activeRotationReport(marketStore):{},published):
+   sourceNotice(state.tab,d.modules||{},published)
+   ||(typeof marketStore!=='undefined'?derivedMarketNotice(state.tab,d.modules||{},marketStore):null)
+   ||(typeof (window.HUB_NOTICES||{})[state.tab]==='function'?window.HUB_NOTICES[state.tab]():null)
+   ||healthText(state.tab,d.modules?.[state.tab]||{},published);
  $('notice').className=state.mode==='demo'||(derived?derived.stale:['error','partial'].includes(m.status))?'warn':'';
  $('notice').textContent=state.mode==='demo'?'DEMO: All figures in this mode are fictional. Use only to explore the interface.':
    state.tab==='status'?'Sources run independently. Errors retain the previous valid data and never substitute demo figures.':

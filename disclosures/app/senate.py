@@ -13,6 +13,7 @@ Cache:   cache/senate/reports.json (every PTR found: who, filed, link, status) a
 Used by: market.py (officials-trades.json, jurisdiction "US Senate"), so Senate trades sit with the House's in the hub's
          Officials' trades (✦ X per row), the company pages and the X posts.
 """
+from retry_queue import RetryQueue
 import datetime as dt
 import gzip
 import html
@@ -137,15 +138,26 @@ def collect(client, root, cfg=None, today=None):
     store = cdir / 'trades.json.gz'
     trades = json.load(gzip.open(store, 'rt', encoding='utf-8')) if store.exists() else []
     state = read_json(cdir / 'state.json', {})
+    retry = RetryQueue(cdir)
+    if not retry.due('session'):
+        return {'status': 'error', 'blocked': True, 'skipped': 'access cooldown',
+                'error': retry.rows['session']['error'], **retry.summary()}
     since = cfg.get('since', '2024-01-01')
     due = (state.get('searched_at') or '') < (dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=int(cfg.get('min_interval_minutes', 90)))).isoformat()
     cursor = state.get('cursor') or (today - dt.timedelta(days=int(cfg.get('recent_days', 60)))).isoformat()
     backfill = cursor > since
-    waiting = [r for r in reports.values() if r['format'] == 'electronic' and r.get('status') not in ('read', 'empty') and (r.get('fails') or 0) < 4]
+    waiting = [r for r in reports.values() if r['format'] == 'electronic' and r.get('status') not in ('read', 'empty') and retry.due(r['report_id'])]
     if not due and not waiting and not backfill:
         return {'status': 'ok', 'skipped': 'searched recently', 'reports': len(reports), 'trades': len(trades), 'updated_at': now()}
     errors, found = [], 0
-    open_session(client)
+    try:
+        open_session(client)
+        retry.succeeded('session')
+    except Exception as exc:
+        retry.failed('session', exc)
+        retry.save()
+        return {'status': 'error', 'blocked': '403' in str(exc), 'error': str(exc)[:300],
+                'reports': len(reports), 'trades': len(trades), **retry.summary()}
 
     def scan(start, end=''):
         nonlocal found
@@ -163,18 +175,21 @@ def collect(client, root, cfg=None, today=None):
                 break
 
     try:
-        if due:
+        if due and retry.due('search'):
             scan((today - dt.timedelta(days=int(cfg.get('recent_days', 60)))).isoformat())
             state['searched_at'] = now()
-        if backfill:                                  # one older month per run, back to `since`
+        if backfill and retry.due('search'):                                  # one older month per run, back to `since`
             end = dt.date.fromisoformat(cursor) - dt.timedelta(days=1)
             start = max(dt.date.fromisoformat(since), end - dt.timedelta(days=31))
             scan(start.isoformat(), end.isoformat())
             state['cursor'] = start.isoformat()
+        if retry.due('search'):
+            retry.succeeded('search')
     except Exception as exc:
+        retry.failed('search', exc)
         errors.append(f'search: {str(exc)[:200]}')
         print(f'Senate eFD search: {exc}', flush=True)
-    queue = sorted((r for r in reports.values() if r['format'] == 'electronic' and r.get('status') not in ('read', 'empty') and (r.get('fails') or 0) < 4),
+    queue = sorted((r for r in reports.values() if r['format'] == 'electronic' and r.get('status') not in ('read', 'empty') and retry.due(r['report_id'])),
                    key=lambda r: r.get('filed_date') or '', reverse=True)
     read = 0
     by_report = {}
@@ -190,9 +205,11 @@ def collect(client, root, cfg=None, today=None):
             by_report[r['report_id']] = rows
             r.update({'status': 'read' if rows else 'empty', 'trades': len(rows), 'read_at': now()})
             read += 1
+            retry.succeeded(r['report_id'])
         except Exception as exc:
             r['fails'] = (r.get('fails') or 0) + 1
             r['status'] = 'error'
+            retry.failed(r['report_id'], exc)
             errors.append(f"{r['report_id']}: {str(exc)[:120]}")
             if len(errors) > 8:
                 break
@@ -202,7 +219,9 @@ def collect(client, root, cfg=None, today=None):
     state['updated_at'] = now()
     write_json(cdir / 'state.json', state)
     left = sum(1 for r in reports.values() if r['format'] == 'electronic' and r.get('status') not in ('read', 'empty'))
-    return {'status': 'ok' if not errors else 'partial', 'found': found, 'read': read, 'waiting': left, 'reports': len(reports),
+    retry.save()
+    return {'status': 'partial' if errors or retry.rows or left else 'ok', **retry.summary(),
+            'latest_filing_date': max((r.get('filed_date', '') for r in reports.values()), default=None), 'found': found, 'read': read, 'waiting': left, 'reports': len(reports),
             'paper': sum(r['format'] == 'paper' for r in reports.values()), 'trades': len(trades), 'cursor': state.get('cursor'),
             'errors': errors[:5], 'updated_at': now()}
 
