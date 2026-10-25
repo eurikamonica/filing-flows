@@ -59,6 +59,12 @@ function explain(e,zh=false,related=[]){
    if(tags.includes('debt'))notes.push(zh?'核对利率、债务到期日和融资限制条款，评估偿付现金流。':'Compare rates, debt maturities, covenants and operating cash coverage.');
    if(tags.includes('deal'))notes.push(zh?'检查交易是否已经完成、对价结构、商誉和未来整合成本。':'Check whether the transaction closed, consideration, goodwill and integration costs.');
    if(tags.includes('cyber'))notes.push(zh?'评估披露所述已知影响及未知事项，不能自行推断财务损失金额。':'Distinguish disclosed known impacts from unquantified risks; do not invent damages.');
+   if(tags.includes('auditor'))notes.push(zh?'核对审计师变更原因、是否有会计分歧及 Item 4.01 所载函件，不应自动推断舞弊。':'Inspect Item 4.01 for reason, disagreements and the former auditor letter; do not presume fraud.');
+   if(tags.includes('ceo')||tags.includes('cfo'))notes.push(zh?'核对高管更替生效日、临时安排和激励方案，不要假定公司战略已改变。':'Check effective date, interim appointments and incentive terms; executive changes do not prove strategy changed.');
+   if(tags.includes('buyback'))notes.push(zh?'授权回购不是已执行回购，需区分授权额度、实际购买股数和融资安排。':'A buyback authorization is not execution; distinguish authorization, actual repurchases and funding.');
+   if(tags.includes('guidance'))notes.push(zh?'核对新旧指引口径、GAAP 与非 GAAP、覆盖期间及管理层前瞻性声明。':'Compare old/new guidance, GAAP vs non-GAAP, covered periods and forward-looking caveats.');
+   if(tags.includes('bankruptcy'))notes.push(zh?'检查破产程序类型、债务优先顺序、流动性与普通股剩余权益，不能仅凭 8-K 算清偿率。':'Check insolvency proceedings, claim priority, liquidity and residual equity; the 8-K alone does not compute recovery.');
+   if(tags.includes('impairment'))notes.push(zh?'确认减值科目、税前税后影响及是否为非现金费用；减值本身不等于当期现金流出。':'Identify impaired assets, pre/post-tax effect and whether it is noncash; impairment itself is not necessarily a current cash outflow.');
    notes.push(zh?'8-K 是披露，不是投资建议；重大性标签代表筛查优先级，不代表舞弊结论。':'8-K is a disclosure, not a recommendation. Event priority is a screening category, not a fraud verdict.');
  }else if(e.kind==='13f'){
    if(e.manager)data.push((zh?'管理机构：':'Manager: ')+escape(e.manager));
