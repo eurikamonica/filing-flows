@@ -43,21 +43,46 @@ FAMILIES = (
       "OperatingLeaseLiabilityPaymentsDueAfterYearFive")),
 )
 BUCKETS = ("Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Thereafter")
-TEXT_RULES = (
-    ("take_or_pay", "Take-or-pay contracts", r"\btake[- ]or[- ]pay\b"),
-    ("ppa", "Power purchase agreements", r"\bpower purchase agreements?\b"),
-    ("capacity", "Cloud / compute capacity commitments", r"\b(?:cloud|gpu|compute|data center) (?:capacity|purchase) commitments?\b"),
-    ("uncommenced_leases", "Leases not yet commenced", r"\bleases? (?:that have|which have)? ?not yet commenced\b|\bleases? (?:not|yet to be) commenced\b"),
-    ("supplier_finance", "Supplier finance / reverse factoring", r"\bsupplier finance (?:arrangements?|programs?)\b|\breverse factoring\b"),
-    ("securitization", "Receivables securitization", r"\breceivables securiti[sz]ation\b"),
-    ("vie", "Variable interest entities", r"\bvariable interest entit(?:y|ies)\b"),
-    ("special_purpose", "Special purpose entities", r"\bspecial purpose (?:entities|entity|vehicles?|structures?)\b"),
-    ("keepwell", "Keepwell / liquidity support", r"\bkeepwell agreements?\b|\bliquidity backstop\b"),
-    ("residual_guarantee", "Residual value guarantees", r"\bresidual value guarantees?\b"),
-    ("joint_venture", "Joint venture funding commitments", r"\b(?:joint venture|jv) (?:funding|capital) commitments?\b"),
-    ("sale_leaseback", "Sale-and-leaseback transactions", r"\bsale[- ]and[- ]leaseback\b"),
-    ("redeemable_nci", "Redeemable noncontrolling interests", r"\bredeemable noncontrolling interests?\b"),
+# Screening taxonomy: leads only, not automatic accounting treatment.
+# A = investigate financing/debt-like recourse; B = fixed operating/capital
+# commitments; C = contingent support. A/B/C candidates require contract review.
+# STRUCTURES includes the 15 core types and nine further structures; distinct
+# VIE/SPE and keepwell phrase patterns intentionally map to the same family.
+STRUCTURES = (
+    ("take_or_pay", "Take-or-pay contracts", "B", r"\btake[- ]or[- ]pay\b"),
+    ("ppa", "Power purchase agreements", "B", r"\bpower purchase agreements?\b"),
+    ("capacity", "Cloud / GPU capacity commitments", "B", r"\b(?:cloud|GPU|compute|data[\s-]cent(?:er|re)) (?:capacity|purchase|infrastructure) commitments?\b|\bGPU reservation agreements?\b"),
+    ("vie", "SPE / SPV / VIE financing", "A/C", r"\bvariable interest entit(?:y|ies)\b|\bspecial[- ]purpose (?:entities|entity|vehicles?|structures?)\b"),
+    ("supplier_finance", "Supplier finance / reverse factoring", "A", r"\bsupplier finance (?:arrangements?|programs?)\b|\breverse factoring\b|\bstructured payables\b"),
+    ("securitization", "Receivables securitization", "A", r"\breceivables securiti[sz]ation\b|\baccounts receivable securiti[sz]ation\b"),
+    ("guarantee_support", "Guarantees / keepwell support", "C", r"\b(?:parent|financial|debt|payment) guarantees?\b|\bkeepwell agreements?\b"),
+    ("uncommenced_leases", "Uncommenced leases", "B", r"\bleases? (?:that have|which have)? ?not yet commenced\b|\b(?:uncommenced leases?|leases? (?:not|yet to be) commenced)\b"),
+    ("sale_leaseback", "Sale-and-leaseback", "A/B", r"\bsale[- ]and[- ]leaseback\b|\bsale[- ]leaseback\b"),
+    ("synthetic_lease", "Synthetic leases", "A", r"\bsynthetic leases?\b"),
+    ("joint_venture", "Joint venture funding commitments", "B/C", r"\b(?:joint venture|JV) (?:funding|capital|contribution) commitments?\b"),
+    ("construction_capex", "Construction / CapEx commitments", "B", r"\b(?:construction|capital expenditure|capital spending|capital investment|equipment purchase) commitments?\b"),
+    ("residual_guarantee", "Residual value guarantees", "C", r"\bresidual value guarantees?\b"),
+    ("royalty_revenue_financing", "Royalty / revenue-based financing", "A", r"\b(?:royalty[- ]based|revenue[- ]based) financ(?:ing|e)\b|\broyalty financing arrangements?\b"),
+    ("redeemable_nci", "Put options / redeemable NCI", "C", r"\bredeemable noncontrolling interests?\b|\bput options? (?:held by|granted to) (?:the )?(?:noncontrolling|minority)\b"),
+    ("repo_financing", "Repo / sale-and-repurchase", "A", r"\brepurchase agreements?\b|\bsale[- ]and[- ]repurchase\b"),
+    ("customer_prepayments", "Customer prepayments", "B", r"\bcustomer (?:prepayments?|advance payments?|deposits)\b"),
+    ("streaming", "Commodity streaming agreements", "A/B", r"\b(?:metal|silver|gold|commodity) streaming agreements?\b"),
+    ("tax_equity", "Tax equity financing", "A/C", r"\btax equity (?:financing|investments?|partnerships?)\b"),
+    ("pension_deficit", "Pension funding deficit", "B/C", r"\b(?:underfunded|unfunded) pension (?:obligations?|plans?|liabilit(?:y|ies))\b|\bpension funding deficits?\b"),
+    ("asset_retirement", "Asset retirement obligations", "B/C", r"\basset retirement obligations?\b|\bdecommissioning (?:liabilit(?:y|ies)|obligations?)\b"),
+    ("deferred_acquisition", "Deferred acquisition consideration", "A/C", r"\bdeferred (?:acquisition|purchase) consideration\b"),
+    ("earnouts", "Contingent earn-outs", "C", r"\bearn[- ]outs?\b|\bcontingent (?:acquisition|purchase) consideration\b"),
+    ("liquidity_backstop", "Liquidity backstops", "C", r"\bliquidity backstops?\b|\bliquidity support (?:facility|facilities|agreement)\b"),
 )
+TEXT_RULES = tuple((key, label, pattern) for key, label, _lane, pattern in STRUCTURES)
+REVIEW_LANES = {key: lane for key, _label, lane, _pattern in STRUCTURES}
+
+
+def public_taxonomy():
+    """Machine-readable scope; a screening lane is not a verified debt decision."""
+    return [{"key": key, "label": label, "review_lane": lane, "evidence_type": "text_lead",
+             "status": "screening_only"} for key, label, lane, _pattern in STRUCTURES]
+
 FORMS = {"10-K", "10-Q", "10-K/A", "10-Q/A", "20-F", "40-F"}
 
 
@@ -156,6 +181,7 @@ def scan_filing_text(raw, cik, accession, document, form, filed, max_matches=18)
         result.append({"key": key, "label": label, "excerpt": context,
                        "source_url": url, "accession": accession,
                        "form": form, "filed": filed, "classification": "unverified_text_lead",
+                       "review_lane": REVIEW_LANES.get(key, "review"),
                        "warning": "Phrase found; may describe a negation, another party, or an immaterial exposure."})
         if len(result) >= max_matches:
             break
