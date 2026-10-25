@@ -4,10 +4,29 @@
    examples  ways people ask that Flo must understand (no ticker): tests/test_mascot.cjs checks that every default
              question and every example is classified to its topic. Add a phrasing here when Flo misses one, then widen
              the topic's pattern in mascot.js until the test passes.
-   Topics: valuation, rotation, industry, options, earnings, credit, analysts — the answers mascot.js can write. */
+   Topics: filings, valuation, rotation, industry, options, earnings, credit, analysts — the answers mascot.js can write. */
 (function (root) {
   'use strict';
   const BANK = {
+    filings: {
+      default: {
+        en: [
+          '{t} latest SEC filing', 'What is the latest filing for {t}?',
+          'Show {t} recent SEC submissions', '{t} most recent EDGAR filing',
+          'Where can I read {t} latest SEC report?', '{t} most recent SEC document'
+        ],
+        zh: [
+          '{t} 最新 SEC 申报', '{t} 最近一次披露是什么？',
+          '{t} 最近的 SEC 文件', '{t} 最新的 SEC 申报',
+          '{t} 最近一次 SEC 提交', '{t} 的最新 EDGAR 文件'
+        ]
+      },
+      examples: {
+        en: ['latest filing', 'latest filling', 'last SEC filing', 'recent SEC submissions',
+          'most recent EDGAR filing', 'newest SEC document'],
+        zh: ['最新申报', '最新 SEC 文件', '最近披露', '最近一次 SEC 提交', '最新 SEC 申报', '最新 EDGAR']
+      }
+    },
     valuation: {
       default: {
         en: ['What is {t} worth?', '{t} DCF and Monte Carlo', 'Is {t} undervalued?', 'Is {t} overvalued?', "What's {t}'s fair value?", 'How much upside does {t} have?',
