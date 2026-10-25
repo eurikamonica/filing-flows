@@ -216,7 +216,8 @@ HISTORY_FROM = 631152000                               # 1990-01-01 00:00 UTC
 
 def collect_market(h, root, etfs, crumb_fn, minutes=20.0, refresh_hours=20):
     """Yahoo per ETF, largest first then the stalest: weekly closes (since 1990 or the launch) and the fund modules. Kept in
-    cache/market/<SYM>.json; state in state.json → market."""
+    cache/market/<SYM>.json; state in state.json → market (its 'from': the first day asked for — an ETF fetched with a
+    shorter history is refetched first, largest first, like one never fetched)."""
     root = Path(root); t0 = time.time()
     st = read_json(root / 'state.json', {}) or {}
     S = st.setdefault('market', {})
@@ -231,7 +232,7 @@ def collect_market(h, root, etfs, crumb_fn, minutes=20.0, refresh_hours=20):
         s = S.get(e['symbol']) or {}
         if s.get('retry_after') and s['retry_after'] > now():
             return None
-        if not s.get('at'):
+        if not s.get('at') or s.get('from') != HISTORY_FROM:   # never fetched, or fetched before the history went back to 1990
             return (0, -(e.get('assets') or (5e10 if e.get('act') in ('33', 'uit') or e['symbol'] in ('SPY', 'DIA', 'MDY') else 0)))
         age = (nowdt - dt.datetime.fromisoformat(s['at'])).total_seconds() / 3600
         return (1, -age) if age >= refresh_hours else None
@@ -260,7 +261,7 @@ def collect_market(h, root, etfs, crumb_fn, minutes=20.0, refresh_hours=20):
             pth = root / 'cache' / 'market' / f'{sym}.json'
             pth.parent.mkdir(parents=True, exist_ok=True)
             pth.write_text(json.dumps(rec, separators=(',', ':')), encoding='utf-8')
-            s.update(at=now(), fails=0, error=None, retry_after=None)
+            s.update(at=now(), fails=0, error=None, retry_after=None, **{'from': HISTORY_FROM})
             done += 1
         except Exception as exc:
             errs += 1

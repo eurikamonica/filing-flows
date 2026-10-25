@@ -50,6 +50,23 @@ class Market(unittest.TestCase):
         self.assertEqual(st['max_dd'], 0.0)
         self.assertAlmostEqual(st['dollar_vol'], sum(x[1] * 1000 for x in w[-13:]) / 13 / 5)
 
+    def test_a_shorter_history_is_fetched_again_first(self):
+        import datetime as dt
+        root = Path(tempfile.mkdtemp())
+        fresh = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=1)).isoformat(timespec='seconds')
+        E.write_json(root / 'state.json', {'market': {'OLD': {'at': fresh}, 'NEW': {'at': fresh, 'from': M.HISTORY_FROM}}})
+        asked = []
+
+        class H:
+            def json(self, url):
+                asked.append(url.split('/chart/')[1].split('?')[0])
+                return {'chart': {'result': [{'timestamp': [631152000 + 86400 * 7 * i for i in range(3)], 'meta': {'currency': 'USD'},
+                                              'indicators': {'quote': [{'close': [1, 2, 3], 'volume': [1, 1, 1]}]}}]}}
+        out = M.collect_market(H(), root, [{'symbol': 'NEW', 'assets': 9e9}, {'symbol': 'OLD', 'assets': 1e9}], lambda h: None)
+        self.assertEqual(asked, ['OLD'])                                   # fetched an hour ago, but with ten years only
+        st = json.loads((root / 'state.json').read_text())
+        self.assertEqual((st['market']['OLD']['from'], out['this_run']), (M.HISTORY_FROM, 1))
+
     def test_fund_summary(self):
         body = {'quoteSummary': {'result': [{'price': {'regularMarketPrice': {'raw': 101}, 'longName': 'X'}, 'summaryDetail': {'navPrice': {'raw': 100}, 'totalAssets': {'raw': 5e9}},
                                              'fundProfile': {'categoryName': 'Large Blend', 'family': 'F', 'feesExpensesInvestment': {'annualReportExpenseRatio': {'raw': 0.0009}}}}]}}
