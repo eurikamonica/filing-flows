@@ -57,6 +57,7 @@ function peManager(cik){
  out+=table(['Ticker','Company','Weight','Value','Change in the quarter'],(m.holdings||[]).filter(h=>h[0]).map(h=>[`<b>${esc(h[0])}</b>`,esc(h[1]),pct(h[2]),peUsd(h[3]),esc((h[4]||'unchanged').toLowerCase())+(h[5]!=null&&['INCREASE','DECREASE'].includes(h[4])?' '+peSp(h[5]/100):'')]));
  const li=xs=>(xs||[]).map(a=>`<li><b>${esc(a[0])}</b> <span class="muted">${esc((a[1]||'').toLowerCase())}${a[2]!=null&&!['NEW','EXIT'].includes(a[1])?' '+fmt(a[2],1)+'%':''}</span></li>`).join('')||'<li class="muted">none</li>';
  out+=`<div class="charts"><div class="panel"><h3>Biggest adds</h3><ul>${li(m.adds)}</ul></div><div class="panel"><h3>Biggest cuts</h3><ul>${li(m.cuts)}</ul></div></div>`;
+ out+=`<div class="panel"><div data-pvport="m:${esc(m.cik)}"></div></div>`;
  if(m.record&&m.record.scored)out+=`<div class="explain">Record (Smart money): ${fmt(m.record.scored)} position changes scored in ${fmt(m.record.decisions)} decisions; ${pct(m.record.hit,0)} on the right side of SPY three months later.</div>`;
  return out;
 }
@@ -76,6 +77,7 @@ function peOfficial(slug){
  if((o.committees||[]).length)out+=`<div class="panel"><h3>Committees</h3><ul>${o.committees.map(c=>`<li>${esc(c[1])}${c[2]?' — '+esc(c[2]):''}</li>`).join('')}</ul></div>`;
  if((o.overlaps||[]).length)out+=`<div class="explain"><b>Potential overlap</b>: trades in a sector that one of the member's committees oversees (config/people.json lists the map). A fact pattern from public disclosures, not a finding of wrongdoing.</div>`+
   table(['Date','Ticker','Type','Amount','Committee','Area','Filed','Report'],o.overlaps.map(x=>[esc(x.date),`<b>${esc(x.ticker)}</b>`,esc(x.type),peAmt(x.amount_min,x.amount_max),esc(x.committee),esc(x.area),esc(x.filed||''),link(x.source_url,'PDF ↗')]));
+ out+=`<div class="panel"><div data-pvport="o:${esc(o.slug)}"></div></div>`;
  if((o.recent||[]).length)out+=`<h3>Recent disclosed trades</h3>`+table(['Date','Ticker','Type','Amount','Owner','Filed','Report'],o.recent.map(t=>[esc(t[0]),`<b>${esc(t[1])}</b>`,esc(t[2]),peAmt(t[3],t[4]),esc(t[5]||''),esc(t[6]||''),link(t[7],'PDF ↗')]));
  return out;
 }
@@ -123,6 +125,7 @@ function bindPeople(){
  document.querySelectorAll('#workspace [data-pem]').forEach(b=>b.onclick=()=>{state.pem=b.dataset.pem;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-peo]').forEach(b=>b.onclick=()=>{state.peo=b.dataset.peo;render();scrollTo({top:0,behavior:'smooth'})});
  document.querySelectorAll('#workspace [data-peback]').forEach(b=>b.onclick=()=>{state.pem='';state.peo='';render()});
+ document.querySelectorAll('#workspace div[data-pvport]').forEach(el=>{if(window.PathsView&&PathsView.portfolio&&!el.dataset.drawn){el.dataset.drawn='1';const [k,id]=el.dataset.pvport.split(':');PathsView.portfolio(el,{kind:k,id,hub:'',compact:true})}});
  document.querySelectorAll('#workspace [data-pesm]').forEach(b=>b.onclick=()=>{state.tab='smart';if(typeof smartDeepLink==='function')smartDeepLink(b.dataset.pesm);if(typeof syncPills==='function')syncPills();render()});
 }
 /* deep links: disclosures/#people/m-1067983 (a manager), #people/o-nancy-pelosi (an official), #people/sp500 … */
