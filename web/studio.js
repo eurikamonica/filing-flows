@@ -10,7 +10,17 @@
                margins, growth — as growing columns, lines or a ranking (data/c/<cik>.json: ten years from the filings).
      formula   any arithmetic on the series: + − × ÷ ^, log, exp, sqrt, abs, rebase, ma, ema, pct, chg, lag, min, max,
                on tickers' prices, total returns, distributions, yields and company figures (NVDA.revenue_ttm …).
-   Styles: line race, bar race, areas, counters, columns, the RRG; themes; 16:9, 9:16 and 1:1; 30 or 60 frames a second.
+     rank      a leaderboard of every company of the site, ranked again each month, quarter or week: market value,
+               revenue, gross / operating / net income, margins, revenue growth, P/E, P/B, P/S, dollar volume, total
+               return — within a sector and a market-value range (rank_panel.py's files).
+     drawdown  how far below its highest close each ticker stood, week by week.
+     calendar  one ticker's monthly returns as a heatmap that fills in month by month.
+     dist      the spread of every company's return each year, as a histogram that morphs from year to year.
+   Growth races take a lump sum and/or the same amount bought every n trading days, weeks, months or years (the money put
+   in drawn as a dashed line; the end card gives each ticker's money-weighted return a year). Stocks get dividends
+   (split out or left out) from the weekly history's dividend list (t/<SYM>.json: d, p).
+   Styles: line race, bar race, areas, counters, columns, the RRG, leaderboard, heatmap, histogram; themes; 16:9, 9:16
+   and 1:1; any length, five paces and the pause at the end; 30 or 60 frames a second.
    Export: every frame drawn on a canvas and encoded with WebCodecs (H.264, else VP9) into an MP4 (mp4-muxer); a browser
    without WebCodecs records the preview as it plays (MediaRecorder).
    Data: disclosures/data/etf/px/<SYM>.json (ten years of weekly closes as traded and with distributions reinvested,
@@ -67,6 +77,9 @@
         const d0 = Date.parse(px.d0 + 'T00:00:00Z');
         out.px = { t: px.t.map((x) => friday(d0 + x * DAY)), c: px.c, a: px.a, div: (px.div || []).map(([d, v]) => [friday(Date.parse(d + 'T00:00:00Z')), v]) };
       }
+      // a stock (or a fund with a longer history there): dividends and the close as traded from the weekly history
+      const hp = th && Array.isArray(th.d) ? historyPx(th) : null;
+      if (hp && (!out.px || hp.t[0] < out.px.t[0] - 30 * DAY)) out.px = hp;
       if (long) {
         const s0 = Date.parse(long.start + 'T00:00:00Z'), t = [], v = [];
         long.c.forEach((x, i) => { if (fin(x) && x > 0) { t.push(s0 + i * WEEK); v.push(+x); } });
@@ -75,6 +88,25 @@
       return out;
     })());
     return PRICES.get(sym);
+  }
+  // t/<SYM>.json with dividends: {t, c (as traded), a (adjusted), div [[friday, per share]]}. Without the close as traded
+  // (p) it is rebuilt from the adjusted closes going back from the latest week: P(i−1) = A(i−1) / m(i) + D(i), where m
+  // is the adjustment factor after week i and D the dividends that went ex in week i
+  function historyPx(th) {
+    const s0 = Date.parse(th.start + 'T00:00:00Z'), A = th.c || [], n = A.length, D = new Array(n).fill(0);
+    for (const [i, v] of th.d) if (i >= 0 && i < n && fin(v)) D[i] += +v;
+    let P = Array.isArray(th.p) && th.p.some(fin) ? A.map((x, i) => (fin(th.p[i]) ? +th.p[i] : null)) : null;
+    if (!P) {
+      P = new Array(n).fill(null); let m = 1;
+      for (let i = n - 1; i >= 0; i--) {
+        if (!fin(A[i])) continue;
+        if (i < n - 1 && D[i + 1]) { const p = A[i] / m + D[i + 1]; m = A[i] / p; P[i] = p; } else P[i] = A[i] / m;
+      }
+    }
+    const t = [], c = [], a = [];
+    for (let i = 0; i < n; i++) if (fin(A[i]) && A[i] > 0) { t.push(s0 + i * WEEK); a.push(+A[i]); c.push(fin(P[i]) ? P[i] : null); }
+    if (!t.length) return null;
+    return { t, c, a, div: th.d.filter(([i, v]) => fin(v) && v > 0).map(([i, v]) => [s0 + i * WEEK, +v]), history: true };
   }
   // the value at (or the last before) day g, if it is no more than `stale` days old
   function asof(t, v, g, stale = 10) {
@@ -113,6 +145,36 @@
     const last = D.slice(-n);
     if (!last.length) return 0;
     return last[last.length - 1][0] > g - 400 * DAY ? last.reduce((a, d) => a + d[1], 0) : 0;
+  }
+  /* ---------- recurring buys and the money-weighted return ---------- */
+  const UNITS = { d: ['trading day', 'trading days'], w: ['week', 'weeks'], m: ['month', 'months'], y: ['year', 'years'] };
+  // the amount bought in each grid week: `amt` every n trading days (five a week), weeks, months or years, from the start
+  // (a month: the same day of the month as the start; a buy uses the close of the week it falls in)
+  function buySchedule(G, amt, n, unit, start) {
+    const out = G.map(() => 0);
+    if (!(amt > 0) || !G.length) return out;
+    n = Math.max(1, Math.round(+n || 1));
+    if (unit === 'd') { for (let w = 0; w < G.length; w++) out[w] = (Math.floor((5 * w + 4) / n) - Math.floor((5 * w - 1) / n)) * amt; return out; }
+    if (unit === 'w') { for (let w = 0; w < G.length; w += n) out[w] = amt; return out; }
+    const step = unit === 'y' ? 12 * n : n, d0 = new Date(Math.min(start || G[0], G[0]));
+    for (let k = 0; k < 2000; k++) {
+      const y = d0.getUTCFullYear(), m = d0.getUTCMonth() + k * step, dim = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+      const w = Math.round((friday(Date.UTC(y, m, Math.min(d0.getUTCDate(), dim))) - G[0]) / WEEK);
+      if (w >= G.length) break;
+      if (w >= 0) out[w] += amt;
+    }
+    return out;
+  }
+  // the yearly rate that makes the money put in worth the end value (XIRR): flows [[ms, amount]], paid in < 0, value > 0
+  function xirr(flows) {
+    const f = flows.filter(([, a]) => fin(a) && a !== 0);
+    if (f.length < 2 || !f.some(([, a]) => a > 0) || !f.some(([, a]) => a < 0)) return null;
+    const t0 = Math.min(...f.map(([t]) => t)), Y = 365.25 * DAY;
+    const npv = (r) => f.reduce((s, [t, a]) => s + a / Math.pow(1 + r, (t - t0) / Y), 0);
+    let lo = -0.9999, hi = 20, flo = npv(lo);
+    if (flo * npv(hi) > 0) return null;
+    for (let i = 0; i < 200; i++) { const mid = (lo + hi) / 2, fm = npv(mid); if (Math.abs(fm) < 1e-7) return mid; if (fm * flo > 0) { lo = mid; flo = fm; } else hi = mid; }
+    return (lo + hi) / 2;
   }
   function weeklyGrid(from, to) {                          // every Friday from → to
     const a = Date.parse(from + 'T00:00:00Z'), b = Date.parse(to + 'T00:00:00Z');
@@ -299,16 +361,259 @@
 
   /* ---------- building a video: the series on the grid, labels and formats ---------- */
   const DEF = { k: 'growth', t: 'QQQ,SPY', from: '', to: '', amt: '10000', div: 'tr', style: 'line', theme: 'bull', ar: '16x9', q: '1080', fps: '30', dur: '20',
-    title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1' };
-  const KINDS = [['growth', 'Growth race'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios']];
+    title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
+    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto',
+    rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1' };
+  const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
+    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread']];
   const STYLES = { growth: [['line', 'Line race'], ['bars', 'Bar race'], ['area', 'Areas'], ['tiles', 'Counters']], rrg: [['rrg', 'RRG']], momentum: [['bars', 'Bar race'], ['line', 'Lines']],
-    fund: [['columns', 'Columns'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], formula: [['line', 'Lines'], ['area', 'Areas'], ['tiles', 'Counters'], ['bars', 'Bar race']] };
+    fund: [['columns', 'Columns'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], formula: [['line', 'Lines'], ['area', 'Areas'], ['tiles', 'Counters'], ['bars', 'Bar race']],
+    rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']] };
+  const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold'];        // redrawn, not rebuilt
   const tickers = (st) => [...new Set(String(st.t || '').split(/[\s,;]+/).map(norm).filter(Boolean))].slice(0, 10);
+
+  /* ---------- leaderboards: every company of the site, month by month (app/rank_panel.py) ---------- */
+  const RANKP = HUB + 'market/history/rank/';
+  // [name, unit ($ money, %m a margin, % a change, x a multiple), files]
+  const RANK = {
+    cap: ['Market value', '$', ['m-cap']], rev: ['Revenue, last 12 months', '$', ['q-rev']], gp: ['Gross profit, last 12 months', '$', ['q-gp']],
+    oi: ['Operating income, last 12 months', '$', ['q-oi']], ni: ['Net income, last 12 months', '$', ['q-ni']], om: ['Operating margin', '%m', ['q-oi', 'q-rev']],
+    nm: ['Net margin', '%m', ['q-ni', 'q-rev']], growth: ['Revenue growth, year on year', '%', ['q-rev']], pe: ['Price / earnings', 'x', ['m-cap', 'q-ni', 'q-rev']],
+    pb: ['Price / book', 'x', ['m-cap', 'q-eq']], ps: ['Price / sales', 'x', ['m-cap', 'q-rev']], dv: ['Dollar volume traded', '$', ['m-dv']], ret: ['Total return', '%', ['m-px']],
+  };
+  const SECTORS = { technology: 'Technology', communication: 'Communication', 'consumer-disc': 'Consumer discretionary', 'consumer-staples': 'Consumer staples',
+    health: 'Health care', financials: 'Financials', 'real-estate': 'Real estate', energy: 'Energy', materials: 'Materials', industrials: 'Industrials', utilities: 'Utilities', other: 'Other' };
+  const secCol = (th, sec) => { const i = Object.keys(SECTORS).indexOf(sec); return i < 0 || sec === 'other' ? (th.text === '#1d1d1b' ? '#8d8a84' : '#a9b3c1') : i === 10 ? (th.text === '#1d1d1b' ? '#8a6a3a' : '#e3c79f') : th.pal[i % th.pal.length]; };
+  const PANEL = new Map();
+  const panel = (name) => { if (!PANEL.has(name)) PANEL.set(name, json(RANKP + name + '.json').then((d) => (d && Array.isArray(d.rows) ? d.rows : d))); return PANEL.get(name); };
+  const at = (row, i) => (row && row.length > 1 && i >= row[0] && i < row[0] + row.length - 1 ? row[1 + i - row[0]] : null);
+  const fmtFor = (unit) => (unit === '$' ? (v) => money(v) : unit === 'x' ? (v) => (fin(v) ? v.toFixed(v >= 100 ? 0 : 1) + '×' : '—') : unit === '%m' ? (v) => (fin(v) ? (100 * v).toFixed(1) + '%' : '—') : (v) => pctf(v, 1));
+  async function rankMeta() {
+    const meta = await panel('meta');
+    if (!meta || !Array.isArray(meta.cos) || !meta.months) throw new Error('The leaderboard data is not published yet — it is built with the weekly price history');
+    const m0 = { y: +meta.months.start.slice(0, 4), m: +meta.months.start.slice(5, 7) - 1 };
+    meta._m0 = m0;
+    meta._Q = (meta.quarters || []).map((q) => { const y = +q.slice(0, 4), k = +q.slice(5); return { label: q, end: Date.UTC(y, 3 * k, 0), mi: (y - m0.y) * 12 + 3 * k - 1 - m0.m }; });
+    return meta;
+  }
+  const mIndex = (ms, m0) => { const d = new Date(ms); return (d.getUTCFullYear() - m0.y) * 12 + d.getUTCMonth() - m0.m; };
+  const mEnd = (i, m0) => Date.UTC(m0.y, m0.m + i + 1, 0);
+  // the universe filter: a sector, a market-value range ($B) by the value at each step or today's
+  function universe(st, meta, F) {
+    const sec = st.sec && SECTORS[st.sec] ? st.sec : '', capF = String(st.cmin).trim() !== '' || String(st.cmax).trim() !== '';
+    const lo = capF && String(st.cmin).trim() !== '' && fin(+st.cmin) ? +st.cmin * 1e3 : -Infinity, hi = capF && String(st.cmax).trim() !== '' && fin(+st.cmax) ? +st.cmax * 1e3 : Infinity;
+    const byNow = st.capby === 'now' || !F['m-cap'];
+    const ok = (ci, mi) => {
+      if (sec && meta.cos[ci][2] !== sec) return false;
+      if (!capF) return true;
+      const c = byNow ? meta.cap_now[ci] : at(F['m-cap'][ci], mi);
+      return fin(c) && c >= lo && c <= hi;
+    };
+    const capTxt = !capF ? '' : `market value ${fin(lo) ? money(lo * 1e6) : '$0'}–${fin(hi) ? money(hi * 1e6) : 'any'}${byNow ? ' (today)' : ''}`;
+    return { ok, sec, capF, capTxt, scope: [sec ? SECTORS[sec] : '', capTxt].filter(Boolean).join(' · ') };
+  }
+  async function buildRank(st, out) {
+    const meta = await rankMeta(), m0 = meta._m0, Q = meta._Q;
+    const key = RANK[st.rm] ? st.rm : 'cap', [mname, unit, need] = RANK[key];
+    const capF = String(st.cmin).trim() !== '' || String(st.cmax).trim() !== '';
+    const files = new Set(need); if (capF && st.capby !== 'now') files.add('m-cap');
+    const F = {};
+    await Promise.all([...files].map(async (f) => { F[f] = await panel(f); }));
+    for (const f of files) if (!Array.isArray(F[f])) throw new Error('A leaderboard file is missing (' + f + ')');
+    const N = clamp(Math.round(+st.top || 10), 3, 25), desc = st.ord !== 'asc', fundamental = need.some((f) => f.startsWith('q-'));
+    const step = st.step === 'w' && !fundamental ? 'w' : st.step === 'q' ? 'q' : 'm';
+    if (st.step === 'w' && fundamental) out.notes.add('Company figures change once a quarter, so the steps are monthly');
+    const U = universe(st, meta, F), NC = meta.cos.length, lastM = meta.months.n - 1;
+    const capLike = key === 'cap' || key === 'pe' || key === 'pb' || key === 'ps';
+    const fromMs = st.from ? Date.parse(st.from + 'T00:00:00Z') : Date.UTC(capLike || fundamental ? 2010 : 2005, 0, 31);
+    const toMs = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now();
+    const i0 = clamp(mIndex(fromMs, m0), 1, lastM), i1 = clamp(mIndex(toMs, m0), i0, lastM);
+    const months = [];
+    for (let i = i0; i <= i1; i++) if (step !== 'q' || (m0.m + i) % 3 === 2) months.push(i);
+    if (months.length < 2) throw new Error('Fewer than two steps in that range');
+    // the quarter whose figures count at the end of month mi: public 46 days after it ended; quarterly steps: the quarter itself
+    const qFor = (mi) => { const me = mEnd(mi, m0); let k = -1; for (let j = 0; j < Q.length; j++) if (step === 'q' ? Q[j].mi <= mi : Q[j].end + 46 * DAY <= me) k = j; return k; };
+    const ttm = (row, q) => { if (q < 3) return null; let s = 0; for (let j = q - 3; j <= q; j++) { const v = at(row, j); if (!fin(v)) return null; s += v; } return s; };
+    const minrev = Math.max(0, +st.minrev || 0) * 1e3, qks = months.map(qFor);
+    const win = st.win === 'ytd' ? 'ytd' : Math.max(1, Math.round(+st.win || 12));
+    const val = (ci, mi, qk) => {
+      if (key === 'cap') { const v = at(F['m-cap'][ci], mi); return fin(v) ? v * 1e6 : null; }
+      if (key === 'dv') {
+        let s2 = 0, any = false;
+        for (let j = step === 'q' ? mi - 2 : mi; j <= mi; j++) { const v = at(F['m-dv'][ci], j); if (fin(v)) { s2 += v; any = true; } }
+        return any ? s2 * 1e6 : null;
+      }
+      if (key === 'ret') { const w = win === 'ytd' ? ((m0.m + mi) % 12) + 1 : win, a = at(F['m-px'][ci], mi), b = at(F['m-px'][ci], mi - w); return fin(a) && fin(b) && b > 0 ? a / b - 1 : null; }
+      if (qk < 0) return null;
+      // a company that has not filed the quarter yet (a late 10-K, a fiscal year ending in January) keeps its last four
+      // quarters on file, for up to two quarters
+      const base = need.find((f) => f.startsWith('q-'));
+      for (let back = 0; back <= 2 && qk - back >= 3; back++) if (fin(base === 'q-eq' ? at(F[base][ci], qk - back) : ttm(F[base][ci], qk - back))) { qk -= back; break; }
+      const R = (f) => ttm(F[f][ci], qk);
+      if (key === 'rev' || key === 'gp' || key === 'oi' || key === 'ni') { const v = R('q-' + key); return fin(v) ? v * 1e6 : null; }
+      if (key === 'om' || key === 'nm') { const r = R('q-rev'), x = R(key === 'om' ? 'q-oi' : 'q-ni'); return fin(r) && fin(x) && r > 0 && r >= minrev ? x / r : null; }
+      if (key === 'growth') { const r = R('q-rev'), r0 = qk >= 4 ? ttm(F['q-rev'][ci], qk - 4) : null; return fin(r) && fin(r0) && r0 > 0 && r0 >= minrev ? r / r0 - 1 : null; }
+      const c = at(F['m-cap'][ci], mi); if (!fin(c) || c <= 0) return null;
+      if (key === 'pe') { const x = R('q-ni'), r = F['q-rev'] ? R('q-rev') : null; return fin(x) && x > 0 && (!fin(r) || x >= 0.02 * r) ? c / x : null; }
+      if (key === 'ps') { const x = R('q-rev'); return fin(x) && x > 0 ? c / x : null; }
+      if (key === 'pb') { const e = at(F['q-eq'][ci], qk); return fin(e) && e > 0 && c / e <= 200 ? c / e : null; }
+      return null;
+    };
+    if (step === 'q' && fundamental) {                    // the newest quarter, before most companies have filed it
+      const base = need.find((f) => f.startsWith('q-')), cnt = (q) => F[base].reduce((a, row) => a + (fin(at(row, q)) ? 1 : 0), 0);
+      while (months.length > 2) { const q = qks[months.length - 1]; if (q < 1 || cnt(q) >= 0.8 * cnt(q - 1)) break; months.pop(); qks.pop(); }
+    }
+    const sorter = (a, b) => (desc ? b[1] - a[1] : a[1] - b[1]);
+    const pick = new Set(), extra = step === 'w' ? 6 : 0;
+    months.forEach((mi, j) => {
+      const list = [];
+      for (let ci = 0; ci < NC; ci++) if (U.ok(ci, mi)) { const v = val(ci, mi, qks[j]); if (fin(v)) list.push([ci, v]); }
+      list.sort(sorter).slice(0, N + extra).forEach(([ci]) => pick.add(ci));
+    });
+    if (!pick.size) throw new Error('No company fits those settings in that range');
+    const tick = (ci) => meta.cos[ci][0];
+    if (step === 'w') {                                   // weekly: the candidates' own weekly closes and volume
+      const G = weeklyGrid(iso(mEnd(i0 - 1, m0) + DAY), iso(Math.min(toMs, mEnd(i1, m0))));
+      const TH = new Map();
+      await Promise.all([...pick].map(async (ci) => { const th = await json(HUB + 'market/history/t/' + tick(ci) + '.json'); if (th && th.c) TH.set(ci, th); }));
+      const wv = (ci, g) => {
+        const th = TH.get(ci); if (!th) return null;
+        const s0 = Date.parse(th.start + 'T00:00:00Z'), i = Math.round((g - s0) / WEEK), A = th.c, Pp = th.p && th.p.length ? th.p : th.c;
+        if (i < 0 || i >= A.length || !fin(A[i])) return null;
+        if (key === 'ret') { const w = win === 'ytd' ? Math.round((g - Date.UTC(new Date(g).getUTCFullYear() - 1, 11, 31)) / WEEK) : Math.round(win * 52 / 12); return i - w >= 0 && fin(A[i - w]) && A[i - w] > 0 ? A[i] / A[i - w] - 1 : null; }
+        if (key === 'dv') return fin(th.v && th.v[i]) && fin(Pp[i]) ? th.v[i] * 1000 * Pp[i] : null;
+        const mi = mIndex(g, m0) - 1, c = at(F['m-cap'][ci], mi), j = Math.floor((mEnd(mi, m0) - s0) / WEEK);
+        return fin(c) && j >= 0 && fin(Pp[j]) && fin(Pp[i]) ? c * 1e6 * Pp[i] / Pp[j] : null;
+      };
+      out.series = [...pick].map((ci) => ({ key: tick(ci), label: tick(ci), name: meta.cos[ci][1], sec: meta.cos[ci][2], v: G.map((g) => (U.ok(ci, mIndex(g, m0) - 1) ? wv(ci, g) : null)) }));
+      let end = G.length;                                 // the newest weeks, before most of the candidates have a close
+      while (end > 2 && out.series.filter((x) => fin(x.v[end - 1])).length < Math.min(N, out.series.length) * 0.8) end--;
+      out.grid = G.slice(0, end); out.series.forEach((x) => { x.v = x.v.slice(0, end); });
+    } else {
+      out.grid = months.map((mi) => mEnd(mi, m0));
+      out.quarterly = step === 'q';
+      out.series = [...pick].map((ci) => ({ key: tick(ci), label: tick(ci), name: meta.cos[ci][1], sec: meta.cos[ci][2], v: months.map((mi, j) => (U.ok(ci, mi) ? val(ci, mi, qks[j]) : null)) }));
+    }
+    out.kind = 'rank'; out.rankN = N; out.order = desc ? 'desc' : 'asc'; out.fmt = fmtFor(unit); out.unit = unit === '$' ? '$' : '%'; out.metric = mname;
+    const lowest = !desc, sc = U.scope ? ' · ' + U.scope : '';
+    const TT = { cap: lowest ? `The ${N} smallest companies by market value` : `The ${N} most valuable companies`, rev: `The ${N} ${lowest ? 'smallest' : 'biggest'} companies by revenue`,
+      gp: `The ${N} ${lowest ? 'lowest' : 'biggest'} gross profits`, oi: `The ${N} ${lowest ? 'lowest' : 'biggest'} operating profits`, ni: `The ${N} ${lowest ? 'biggest losses' : 'biggest earners'}`,
+      om: `The ${N} ${lowest ? 'lowest' : 'highest'} operating margins`, nm: `The ${N} ${lowest ? 'lowest' : 'highest'} net margins`, growth: `The ${N} ${lowest ? 'slowest' : 'fastest'}-growing companies`,
+      pe: `The ${N} ${lowest ? 'cheapest' : 'most expensive'} stocks by P/E`, pb: `The ${N} ${lowest ? 'lowest' : 'highest'} price-to-book ratios`, ps: `The ${N} ${lowest ? 'lowest' : 'highest'} price-to-sales ratios`,
+      dv: `The ${N} most traded stocks`, ret: `The ${N} ${lowest ? 'worst' : 'best'} stocks: ${win === 'ytd' ? 'year to date' : win + '-month total return'}` };
+    out.title = out.title || TT[key] + sc;
+    const G = out.grid, L = G.length - 1;
+    out.sub = out.sub || `${out.quarterly ? quarterLabel(G[0]) : monthYear(G[0])} → ${out.quarterly ? quarterLabel(G[L]) : monthYear(G[L])} · ${mname}` + (fundamental ? ' · SEC filings' : ' · weekly closes') + ' · US-listed companies on the site';
+    out.foot = "Today's companies only: those delisted, merged or bankrupt are missing from earlier years";
+    out.notes.add(out.foot + '.');
+    if (fundamental && step !== 'q') out.notes.add('A quarter\'s figures count from 46 days after it ended, when they were public.');
+    if (key === 'pe') out.notes.add('P/E = market value ÷ net income of the last four quarters; companies with losses, or earning under 2% of revenue (P/E in the thousands), are left out.');
+    if (key === 'pb') out.notes.add('P/B = market value ÷ stockholders\' equity at the latest quarter; negative equity and P/B above 200 are left out.');
+    if ((key === 'om' || key === 'nm' || key === 'growth') && minrev) out.notes.add(`Only companies with at least ${money(minrev * 1e6)} of revenue a year.`);
+    if (capLike || (capF && st.capby !== 'now')) {
+      const ap = new Set(meta.approx_cap || []), shown = out.series.filter((x) => ap.has(x.key)).map((x) => x.key);
+      if (shown.length) out.notes.add(`${shown.join(', ')}: no SEC share count, so market value uses today's count held back up to five years (approximate).`);
+      out.notes.add('Market value = the month-end price × the shares outstanding then (10-Q / 10-K cover pages), from 2009 on.');
+    }
+    out.series = out.series.filter((x) => x.v.some(fin));
+    return out;
+  }
+
+  /* ---------- drawdowns: how far below its highest close each ticker stood, week by week ---------- */
+  async function buildDrawdown(st, out, T) {
+    if (!T.length) throw new Error('Add tickers');
+    const P = new Map();
+    await Promise.all(T.map(async (s) => { const p = await price(s); if (p) P.set(s, p); }));
+    T.filter((s) => !P.has(s)).forEach((s) => out.notes.add(s + ': no weekly prices on file'));
+    if (!P.size) throw new Error('No prices on file for ' + T.join(', '));
+    const have = [...P.values()], to = Math.min(st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(), ...have.map(last));
+    const from = st.from ? Date.parse(st.from + 'T00:00:00Z') : to - 10 * 365.25 * DAY;
+    const GA = weeklyGrid(iso(Math.min(...have.map(first))), iso(to)), G = GA.filter((g) => g >= from - 3 * DAY), cut = GA.length - G.length;
+    if (G.length < 4) throw new Error('Fewer than four weeks in that range');
+    for (const s of T) {
+      const p = P.get(s); if (!p) continue;
+      const long = p.long && p.long.t[0] < (p.px ? p.px.t[0] : Infinity) ? { t: p.long.t, v: p.long.v } : { t: p.px.t, v: p.px.a };
+      let peak = -Infinity;
+      const dd = GA.map((g) => { const v = asof(long.t, long.v, g); if (!fin(v)) return null; peak = Math.max(peak, v); return v / peak - 1; });
+      out.series.push({ key: s, label: s, name: p.name, v: dd.slice(cut) });
+    }
+    out.grid = G; out.zero = true; out.unit = '%'; out.dd = true;
+    out.fmt = (v) => (fin(v) ? (v > -0.0005 ? 'at the high' : pctf(v, 1)) : '—');
+    out.title = out.title || `How far below the high: ${out.series.map((x) => x.key).join(' vs ')}`;
+    out.sub = out.sub || `${dayLabel(G[0])} → ${dayLabel(G[G.length - 1])} · total return · each week against the highest close before it`;
+    return out;
+  }
+
+  /* ---------- monthly returns: one ticker, a calendar heatmap that fills in month by month ---------- */
+  async function buildCalendar(st, out, T) {
+    const sym = T[0]; if (!sym) throw new Error('Add a ticker');
+    const p = await price(sym); if (!p) throw new Error('No weekly prices on file for ' + sym);
+    if (T.length > 1) out.notes.add('Monthly returns show one ticker: ' + sym);
+    const to = Math.min(st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(), last(p));
+    const from = Math.max(st.from ? Date.parse(st.from + 'T00:00:00Z') : to - 10 * 365.25 * DAY, first(p) + 35 * DAY);
+    const long = p.long && p.long.t[0] < (p.px ? p.px.t[0] : Infinity) ? { t: p.long.t, v: p.long.v } : { t: p.px.t, v: p.px.a };
+    const d0 = new Date(from), d1 = new Date(to), cells = [], G = [], vals = [];
+    let prev = asof(long.t, long.v, Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), 0), 12);
+    for (let y = d0.getUTCFullYear(), m = d0.getUTCMonth(); y < d1.getUTCFullYear() || (y === d1.getUTCFullYear() && m <= d1.getUTCMonth()); m === 11 ? (y++, m = 0) : m++) {
+      const end = Math.min(Date.UTC(y, m + 1, 0), to), v = asof(long.t, long.v, end, 12);
+      const r = fin(v) && fin(prev) && prev > 0 ? v / prev - 1 : null;
+      if (fin(v)) prev = v;
+      cells.push([y, m, r]); G.push(end); vals.push(r);
+    }
+    if (G.length < 3) throw new Error('Fewer than three months in that range');
+    const years = [...new Set(cells.map((c) => c[0]))];
+    out.grid = G; out.cal = { years, cells }; out.unit = '%'; out.fmt = (v) => pctf(v, 1); out.zero = true;
+    out.series = [{ key: sym, label: sym, name: p.name, v: vals }];
+    out.title = out.title || `${sym}: every month since ${MON[d0.getUTCMonth()]} ${d0.getUTCFullYear()}`;
+    out.sub = out.sub || `${p.name} · monthly total return (dividends reinvested) · ${monthYear(G[0])} → ${monthYear(G[G.length - 1])}`;
+    return out;
+  }
+
+  /* ---------- the spread of returns: every company's return each year, as a histogram ---------- */
+  const EDGES = (() => { const e = []; for (let x = -0.8; x <= 1.5 + 1e-9; x += 0.1) e.push(+x.toFixed(2)); return e; })();     // tails below −80% and from +150%
+  async function buildDist(st, out) {
+    const meta = await rankMeta(), m0 = meta._m0;
+    const capF = String(st.cmin).trim() !== '' || String(st.cmax).trim() !== '';
+    const F = { 'm-px': await panel('m-px') };
+    if (capF && st.capby !== 'now') F['m-cap'] = await panel('m-cap');
+    if (!Array.isArray(F['m-px'])) throw new Error('A leaderboard file is missing (m-px)');
+    const U = universe(st, meta, F), lastM = meta.months.n - 1;
+    const y0 = Math.max(m0.y + 1, st.from ? +st.from.slice(0, 4) : 2001), now = new Date(mEnd(lastM, m0)), y1 = Math.min(now.getUTCFullYear(), st.to ? +st.to.slice(0, 4) : 9999);
+    const spyP = await price('SPY'), spy = spyP && (spyP.long || (spyP.px && { t: spyP.px.t, v: spyP.px.a }));
+    const yrs = [];
+    for (let y = y0; y <= y1; y++) {
+      const a = (y - 1 - m0.y) * 12 + 11 - m0.m, b = Math.min(lastM, (y - m0.y) * 12 + 11 - m0.m);
+      const rs = [];
+      for (let ci = 0; ci < meta.cos.length; ci++) { if (!U.ok(ci, a)) continue; const p0 = at(F['m-px'][ci], a), p1 = at(F['m-px'][ci], b); if (fin(p0) && fin(p1) && p0 > 0) rs.push([ci, p1 / p0 - 1]); }
+      if (rs.length < 20) continue;                       // fewer than twenty companies: no year
+      const counts = new Array(EDGES.length + 1).fill(0);
+      for (const [, r] of rs) { let k = 0; while (k < EDGES.length && r >= EDGES[k]) k++; counts[k]++; }
+      const sorted = rs.map((x) => x[1]).sort((u, v) => u - v), med = sorted[Math.floor(sorted.length / 2)];
+      // the best and the worst named: above +1,000% is nearly always a bad close in the source, so not named
+      const sane = rs.filter((x) => x[1] <= 10), best = (sane.length ? sane : rs).reduce((m, x) => (x[1] > m[1] ? x : m)), worst = rs.reduce((m, x) => (x[1] < m[1] ? x : m));
+      const s0 = spy ? asof(spy.t, spy.v, mEnd(a, m0), 12) : null, s1 = spy ? asof(spy.t, spy.v, mEnd(b, m0), 12) : null;
+      yrs.push({ y, ytd: b < (y - m0.y) * 12 + 11 - m0.m, n: rs.length, shares: counts.map((c) => c / rs.length), median: med, up: rs.filter((x) => x[1] > 0).length / rs.length,
+        best: [meta.cos[best[0]][0], best[1]], worst: [meta.cos[worst[0]][0], worst[1]], spy: fin(s0) && fin(s1) ? s1 / s0 - 1 : null });
+    }
+    if (yrs.length < 2) throw new Error('Fewer than two years with enough companies (twenty or more)');
+    out.kind = 'dist'; out.yearly = true; out.grid = yrs.map((x) => Date.UTC(x.y, 11, 31)); out.hist = { edges: EDGES, yrs };
+    out.unit = '%'; out.fmt = (v) => pctf(v, 1);
+    out.series = [{ key: 'median', label: 'Median stock', name: 'the middle company', v: yrs.map((x) => x.median) }];
+    out.title = out.title || `Every stock's year, ${yrs[0].y}–${yrs[yrs.length - 1].y}` + (U.scope ? ' · ' + U.scope : '');
+    out.sub = out.sub || `How each year's returns spread across the companies on the site · total return, December to December` + (yrs[yrs.length - 1].ytd ? ' (this year: so far)' : '');
+    out.foot = "Today's companies only: those that went bust or were bought are missing, so the left tail is too thin";
+    out.notes.add(out.foot + '.');
+    return out;
+  }
 
   async function buildRaw(st) {
     const notes = new Set(), T = tickers(st), k = st.k;
     const today = iso(Date.now());
     const out = { kind: k, series: [], notes, fmt: (v) => money(v), title: '', sub: '', unit: '$' };
+    if (k === 'rank') return buildRank(st, out);
+    if (k === 'dist') return buildDist(st, out);
+    if (k === 'drawdown') return buildDrawdown(st, out, T);
+    if (k === 'calendar') return buildCalendar(st, out, T);
     if (k === 'fund') {
       if (!T.length) throw new Error('Add a company ticker');
       const cos = (await Promise.all(T.map(company))).filter(Boolean);
@@ -359,27 +664,45 @@
     out.grid = G;
     const cut = GW.length - G.length;
     if (k === 'growth') {
-      const amt = Math.max(1, +st.amt || 10000);
-      out.amt = amt;
+      // a lump sum on the first week, and (optionally) the same amount bought again on a schedule
+      const rec = Math.max(0, +st.rec || 0), dca = rec > 0;
+      const lump = dca ? Math.max(0, +st.amt || 0) : Math.max(1, +st.amt || 10000);
+      const nEv = Math.max(1, Math.round(+st.ri || 1)), unit = UNITS[st.ru] ? st.ru : 'm';
+      const buys = buySchedule(G, rec, nEv, unit, st.from ? Date.parse(st.from + 'T00:00:00Z') : G[0]);
+      out.amt = lump;
+      let contrib = null, flows = null;
       for (const s of T) {
         const p = P.get(s); if (!p) continue;
         const tr = trOn(p, G), pr = priceOn(p, G), dv = divsOn(p, G);
         let mode = st.div;
-        if ((mode === 'price' || mode === 'split') && !pr) { notes.add(`${s}: price as traded and distributions are on file for ETFs only — total return shown`); mode = 'tr'; }
-        const i0 = (mode === 'tr' ? tr : pr).findIndex(fin);
+        if ((mode === 'price' || mode === 'split') && (!pr || !pr.some(fin))) { notes.add(`${s}: dividends are not on file yet for this ticker — shown with dividends reinvested (total return)`); mode = 'tr'; }
+        const base = mode === 'tr' ? tr : pr, i0 = base.findIndex(fin);
         if (i0 < 0) continue;
-        if (mode === 'tr') out.series.push({ key: s, label: s, name: p.name, v: tr.map((v, i) => (i >= i0 && fin(v) ? amt * v / tr[i0] : null)) });
-        else {
-          const sh = amt / pr[i0]; let cash = 0;
-          const pv = [], cv = [];
-          for (let i = 0; i < G.length; i++) { if (i > i0) cash += sh * (dv[i] || 0); pv.push(i >= i0 && fin(pr[i]) ? sh * pr[i] : null); cv.push(i >= i0 ? cash : null); }
-          out.series.push({ key: s, label: s, name: p.name, v: mode === 'split' ? pv.map((v, i) => (fin(v) ? v + cv[i] : null)) : pv, price: pv, cash: mode === 'split' ? cv : null });
+        const inflow = G.map((_, i) => (i < i0 ? 0 : (i === i0 ? lump : 0) + buys[i]));
+        let units = 0, cash = 0, last = null;
+        const v = [], pv = [], cv = [];
+        for (let i = 0; i < G.length; i++) {
+          if (i < i0) { v.push(null); pv.push(null); cv.push(null); continue; }
+          const px = fin(base[i]) ? base[i] : last;
+          if (mode !== 'tr' && i > i0 && dv) cash += units * (dv[i] || 0);     // paid on the shares held before this week's buy
+          if (px) units += inflow[i] / px;
+          last = px;
+          const val = px ? units * px : null;
+          pv.push(val); cv.push(cash);
+          v.push(val == null ? null : mode === 'split' ? val + cash : val);
         }
+        if (!contrib) { let c = 0; contrib = inflow.map((x, i) => (i < i0 ? null : (c += x))); flows = inflow.map((x, i) => [G[i], -x]).filter(([, a]) => a); }
+        out.series.push({ key: s, label: s, name: p.name, v, price: mode === 'tr' ? null : pv, cash: mode === 'split' ? cv : null });
       }
-      const md = { tr: 'distributions reinvested', price: 'price as traded (no distributions)', split: 'price + distributions taken as cash' }[st.div];
-      out.title = out.title || `${money(amt, 0)} invested in ${out.series.map((s) => s.key).join(' vs ')}`;
-      out.sub = out.sub || `${dayLabel(G[0])} → ${dayLabel(G[G.length - 1])} · ${md} · weekly closes`;
-      out.base = amt; out.split = st.div === 'split';
+      const md = { tr: 'dividends reinvested', price: 'price only (dividends left out)', split: 'price + dividends taken as cash' }[st.div];
+      const names = out.series.map((x) => x.key).join(' vs ');
+      const L = G.length - 1, put = contrib ? contrib[L] : 0, nb = rec ? Math.round(buys.reduce((a, x) => a + x, 0) / rec) : 0;
+      const every = `${money(rec, 0)} every ${nEv > 1 ? nEv + ' ' + UNITS[unit][1] : UNITS[unit][0]}`;
+      out.title = out.title || (dca ? `${every} into ${names}` + (lump ? ` (${money(lump, 0)} to start)` : '') : `${money(lump, 0)} invested in ${names}`);
+      out.sub = out.sub || `${dayLabel(G[0])} → ${dayLabel(G[L])} · ${md} · ` + (dca ? `${money(put, 0)} put in over ${nb} buys` : 'weekly closes');
+      out.base = dca ? null : lump; out.contrib = dca ? contrib : null; out.flows = flows; out.split = st.div === 'split' && out.series.some((x) => x.cash);
+      out.dca = dca ? { every, buys: nb, put } : null;
+      if (dca && unit === 'd') notes.add('Prices are weekly closes: buys on the trading days of a week all use that week\'s close');
     } else if (k === 'momentum') {
       const B = P.get(bench); if (!B) throw new Error('No prices for the benchmark ' + bench);
       const lb = +st.lb || 26, bt = trOn(B, GW);
@@ -453,19 +776,24 @@
   function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
   const alpha = (hex, a) => { if (!/^#/.test(hex)) return hex; const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
 
-  // the timeline: a short intro, the run, the hold on the last week (with the end card)
-  function timing(V, dur) {
-    const D = Math.max(4, dur), intro = Math.min(0.8, D * 0.06), hold = V.endCard ? Math.min(3.2, D * 0.18) : Math.min(1.2, D * 0.06);
-    return { D, intro, hold, run: D - intro - hold };
+  // the timeline: a short intro, the run, the hold on the last week (with the end card). o: the options ({dur, pace,
+  // hold}) or the length in seconds
+  function timing(V, o) {
+    const op = o && typeof o === 'object' ? o : { dur: o };
+    const D = Math.max(4, +op.dur || 20), intro = Math.min(0.8, D * 0.06);
+    const auto = V.endCard ? Math.min(3.2, D * 0.18) : Math.min(1.2, D * 0.06);
+    const hold = op.hold != null && op.hold !== '' && op.hold !== 'auto' && fin(+op.hold) ? clamp(+op.hold, 0, D * 0.45) : auto;
+    return { D, intro, hold, run: Math.max(0.5, D - intro - hold), pace: op.pace || 'steady' };
   }
-  function frameIndex(V, tm, t) {                          // a gentle start and stop around a steady pace
-    const n = V.grid.length - 1, u = clamp((t - tm.intro) / tm.run, 0, 1);
-    const e = 0.82 * u + 0.18 * (u * u * (3 - 2 * u));
+  const PACES = [['steady', 'Steady'], ['linear', 'Even'], ['ease', 'Ease in and out'], ['finale', 'Slow-motion finish'], ['build', 'Speeds up']];
+  function frameIndex(V, tm, t) {                          // steady: a gentle start and stop around an even pace
+    const n = V.grid.length - 1, u = clamp((t - tm.intro) / tm.run, 0, 1), sm = u * u * (3 - 2 * u);
+    const e = tm.pace === 'linear' ? u : tm.pace === 'ease' ? sm : tm.pace === 'finale' ? 1 - Math.pow(1 - u, 1.8) : tm.pace === 'build' ? Math.pow(u, 1.7) : 0.82 * u + 0.18 * sm;
     return n * e;
   }
 
   function draw(ctx, W, H, V, opt, t) {
-    const th = THEMES[opt.theme] || THEMES.bull, S = Math.min(W, H) / 1080, tm = timing(V, opt.dur), f = frameIndex(V, tm, t);
+    const th = THEMES[opt.theme] || THEMES.bull, S = Math.min(W, H) / 1080, tm = timing(V, opt), f = frameIndex(V, tm, t);
     const portrait = H > W * 1.2, square = !portrait && H > W * 0.8;
     const pal = (i) => th.pal[i % th.pal.length];
     const F = (w, px) => `${w} ${Math.round(px * S)}px ${th.font}`;
@@ -491,11 +819,15 @@
     const bottom = H - (portrait ? 230 : 96) * S;
     // live values band (counters) for line / area styles on tall or square frames
     const style = V.style;
-    if ((portrait || square) && (style === 'line' || style === 'area') && V.kind !== 'rrg') {
+    if ((portrait || square) && (style === 'line' || style === 'area') && V.kind !== 'rrg' && V.kind !== 'calendar') {
       top = counters(ctx, V, f, top, W, S, th, F, pal, portrait ? 2 : Math.min(4, V.series.length)) + 26 * S;
     }
-    const box = { x: pad + (style === 'bars' ? 0 : 70 * S), y: top, w: W - 2 * pad - (style === 'bars' ? 0 : 70 * S) - (style === 'line' || style === 'area' ? (portrait ? 150 : 210) * S : 0), h: bottom - top };
-    if (style === 'rrg') rrgChart(ctx, V, f, box, S, th, F, pal);
+    const flat = style === 'bars' || V.kind === 'rank' || style === 'hist';
+    const box = { x: pad + (flat ? 0 : 70 * S), y: top, w: W - 2 * pad - (flat ? 0 : 70 * S) - (style === 'line' || style === 'area' ? (portrait ? 150 : 210) * S : 0), h: bottom - top };
+    if (V.kind === 'rank') rankRace(ctx, V, f, box, S, th, F);
+    else if (style === 'heat') heatmap(ctx, V, f, box, S, th, F);
+    else if (style === 'hist') histChart(ctx, V, f, { x: box.x + 60 * S, y: box.y, w: box.w - 60 * S, h: box.h }, S, th, F);
+    else if (style === 'rrg') rrgChart(ctx, V, f, box, S, th, F, pal);
     else if (style === 'bars') barRace(ctx, V, f, box, S, th, F, pal);
     else if (style === 'tiles') tiles(ctx, V, f, box, S, th, F, pal, t, tm);
     else if (style === 'columns') columns(ctx, V, f, box, S, th, F, pal);
@@ -516,7 +848,7 @@
     const k = clamp(Math.round(f), 0, V.grid.length - 1);
     ctx.textAlign = 'right'; ctx.fillStyle = alpha(th.text === '#1d1d1b' ? '#1d1d1b' : '#ffffff', opt.theme === 'clean' ? 0.10 : 0.12);
     ctx.font = F(700, portrait ? 120 : 110);
-    ctx.fillText(V.quarterly ? quarterLabel(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (style === 'bars' ? 10 : 24) * S);
+    if (!V.yearly && style !== 'heat') ctx.fillText(V.quarterly ? quarterLabel(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (flat ? (V.kind === 'rank' ? 70 : 10) : 24) * S);
     brand(ctx, W, H, S, th, F, portrait);
     ctx.fillStyle = alpha(th.accent, 0.9); ctx.fillRect(0, H - 6 * S, W * clamp(t / tm.D, 0, 1), 6 * S);
     if (V.endCard && t > tm.D - tm.hold) endCard(ctx, V, W, H, S, th, F, pal, clamp((t - (tm.D - tm.hold)) / 0.6, 0, 1), portrait);
@@ -551,7 +883,8 @@
       ctx.fillStyle = pal(i); ctx.fillRect(x, y + 14 * S, 6 * S, ch - 28 * S);
       ctx.textAlign = 'left'; ctx.font = F(700, 28); ctx.fillStyle = pal(i); ctx.fillText(s.label, x + 22 * S, y + 40 * S);
       ctx.font = F(700, 40); ctx.fillStyle = th.text; ctx.fillText(V.fmt(v), x + 22 * S, y + 86 * S);
-      if (V.base && fin(v)) { ctx.textAlign = 'right'; ctx.font = F(600, 24); ctx.fillStyle = v >= V.base ? '#3ee39a' : '#ff6b6b'; ctx.fillText(pctf(v / V.base - 1), x + cw - 18 * S, y + 40 * S); }
+      const ref = V.base || (V.contrib ? valAt(V.contrib, f) : null);
+      if (ref && fin(v)) { ctx.textAlign = 'right'; ctx.font = F(600, 24); ctx.fillStyle = v >= ref ? '#3ee39a' : '#ff6b6b'; ctx.fillText(pctf(v / ref - 1), x + cw - 18 * S, y + 40 * S); }
     });
     return top + rows * (ch + gap) - gap;
   }
@@ -564,6 +897,7 @@
       if (area && s.price) for (let i = 0; i <= n; i++) if (fin(s.price[i])) lo = Math.min(lo, s.price[i]);
     }
     if (V.base) { lo = Math.min(lo, V.base); hi = Math.max(hi, V.base); }
+    if (V.contrib && !V.divPanel) { for (let i = 0; i <= n && i < V.contrib.length; i++) if (fin(V.contrib[i])) { lo = Math.min(lo, V.contrib[i]); hi = Math.max(hi, V.contrib[i]); } }
     if (V.zero || area) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
     if (!Number.isFinite(lo)) return [0, 1];
     if (hi - lo < 1e-9) { hi += Math.abs(hi) * 0.05 || 1; lo -= Math.abs(lo) * 0.05 || 1; }
@@ -587,6 +921,13 @@
     years.forEach((yr, i) => { if (i % every) return; const x = X(Date.UTC(yr, 0, 1)); if (x < b.x + 20 * S || x > b.x + b.w) return; ctx.fillStyle = th.axis; if (!noYears) ctx.fillText(String(yr), x, b.y + b.h + 12 * S); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(x, b.y); ctx.lineTo(x, b.y + b.h); ctx.stroke(); });
     if (V.base) { const y = Y(V.base); ctx.setLineDash([8 * S, 8 * S]); ctx.strokeStyle = th.axis; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.setLineDash([]); ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.font = F(500, 20); ctx.fillStyle = th.muted; ctx.fillText(money(V.base, 0) + ' invested', b.x + b.w - 8 * S, y + 8 * S); }
     if (V.zero && !V.base && lo < 0 && hi > 0) { const y = Y(0); ctx.strokeStyle = th.axis; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); }
+    if (V.contrib && !V.divPanel) {                                       // the money put in so far: a dashed staircase
+      ctx.save(); ctx.setLineDash([9 * S, 7 * S]); ctx.strokeStyle = th.axis; ctx.lineWidth = 3 * S; ctx.beginPath(); let st0 = false;
+      for (let i = 0; i <= Math.floor(f) && i < n; i++) if (fin(V.contrib[i])) { const x = X(G[i]), y = Y(V.contrib[i]); if (!st0) { ctx.moveTo(x, y); st0 = true; } else ctx.lineTo(x, y); }
+      const cv = valAt(V.contrib, f); if (fin(cv) && st0) ctx.lineTo(X(tCur), Y(cv));
+      ctx.stroke(); ctx.restore();
+      if (fin(cv)) { ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.font = F(600, 21); ctx.fillStyle = th.muted; ctx.fillText(`${money(cv)} put in`, Math.max(b.x + 180 * S, X(tCur) - 14 * S), Y(cv) + 10 * S); }
+    }
     // the lines, drawn up to this frame; the newest point between two weeks
     const heads = [];
     ctx.save(); ctx.beginPath(); ctx.rect(b.x - 4 * S, b.y - 40 * S, b.w + 8 * S, b.h + 44 * S); ctx.clip();
@@ -647,6 +988,11 @@
     const share = neg ? clamp(negm / ((negm + pos) || 1), pos > 0 ? 0.18 : 0.8, pos > 0 ? 0.82 : 0.8) : 0;
     const x0 = b.x + lab + (neg ? 150 * S + room * share : 0), unit = room / Math.max(1e-9, neg ? (pos > 0 ? Math.max(negm / share, pos / (1 - share)) : negm / share) : pos), wMax = null;
     if (neg) { ctx.strokeStyle = th.axis; ctx.lineWidth = 2 * S; ctx.beginPath(); ctx.moveTo(x0, b.y); ctx.lineTo(x0, b.y + b.h); ctx.stroke(); }
+    const cIn = V.contrib && !neg ? valAt(V.contrib, f) : null;
+    if (fin(cIn)) {                                                       // the money put in so far, across every bar
+      const xc = x0 + cIn * unit; ctx.save(); ctx.setLineDash([8 * S, 7 * S]); ctx.strokeStyle = th.axis; ctx.lineWidth = 2.5 * S; ctx.beginPath(); ctx.moveTo(xc, b.y - 8 * S); ctx.lineTo(xc, b.y + b.h); ctx.stroke(); ctx.restore();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.font = F(600, 21); ctx.fillStyle = th.muted; ctx.fillText(`${money(cIn)} put in`, xc, b.y - 12 * S);
+    }
     V.series.forEach((s, k) => {
       const r = lerp(r0.get(k), r1.get(k), easeIO(fr)), y = b.y + r * slot + (slot - bh) / 2, v = vals[k];
       if (!fin(v)) return;
@@ -682,8 +1028,9 @@
       ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.font = F(700, 34); ctx.fillStyle = col; ctx.fillText(s.label, x + 28 * S, y + 58 * S);
       ctx.font = F(500, 20); ctx.fillStyle = th.muted; ctx.fillText(String(s.name || '').slice(0, 40), x + 28 * S, y + 88 * S);
       ctx.font = F(700, Math.min(84, ch / S * 0.26)); ctx.fillStyle = th.text; ctx.fillText(V.fmt(v), x + 28 * S, y + ch * 0.55);
-      const v0 = s.v.find(fin);
+      const v0 = V.contrib ? valAt(V.contrib, f) : s.v.find(fin);
       if (fin(v) && fin(v0) && v0 !== 0 && V.unit !== '%') { ctx.font = F(700, 30); ctx.fillStyle = v >= v0 ? '#3ee39a' : '#ff6b6b'; ctx.fillText(pctf(v / v0 - 1), x + 28 * S, y + ch * 0.55 + 46 * S); }
+      if (V.contrib && fin(v0)) { ctx.font = F(600, 22); ctx.fillStyle = th.muted; ctx.fillText(`on ${money(v0)} put in`, x + 160 * S, y + ch * 0.55 + 46 * S); }
       if (V.split && s.cash) { const c = valAt(s.cash, f); ctx.font = F(600, 22); ctx.fillStyle = th.muted; ctx.fillText(`incl. ${money(c)} distributions`, x + 220 * S, y + ch * 0.55 + 46 * S); }
       // a sparkline, drawn up to this frame
       const sx = x + 28 * S, sw = cw - 56 * S, sy = y + ch * 0.68, sh = ch * 0.24, vs = s.v.filter(fin);
@@ -754,8 +1101,101 @@
     ctx.font = F(700, 26); ctx.textBaseline = 'middle';
     labels.sort((a, c) => a.y - c.y).forEach((l, i, arr) => { if (i && Math.abs(l.y - arr[i - 1].ly) < 30 * S && Math.abs(l.x - arr[i - 1].x) < 160 * S) l.ly = arr[i - 1].ly + 30 * S; else l.ly = l.y; ctx.textAlign = 'left'; ctx.fillStyle = th.text; ctx.fillText(l.t, l.x + 20 * S, l.ly); });
   }
+  // a leaderboard: N slots, bars sliding as ranks change, coloured by sector, entering from below and leaving downwards
+  function rankRace(ctx, V, f, b, S, th, F) {
+    const N = V.rankN, i0 = Math.floor(f), i1 = Math.min(V.grid.length - 1, i0 + 1), e = easeIO(f - i0);
+    const order = (i) => { const arr = V.series.map((s, k) => ({ k, v: s.v[i] })).filter((x) => fin(x.v)); arr.sort((a, c) => (V.order === 'asc' ? a.v - c.v : c.v - a.v)); return new Map(arr.map((x, r) => [x.k, r])); };
+    const r0 = order(i0), r1 = order(i1);
+    const top = (m, i) => { let mx = 0; for (const [k, r] of m) if (r < N) mx = Math.max(mx, Math.abs(V.series[k].v[i])); return mx || 1; };
+    const vmax = lerp(top(r0, i0), top(r1, i1), e);
+    const legendH = 50 * S, footH = V.foot ? 30 * S : 0, area = b.h - legendH - footH, slot = area / N, bh = Math.min(slot * 0.76, 120 * S);
+    const lab = 230 * S, room = Math.max(100 * S, b.w - lab - 250 * S), x0 = b.x + lab;
+    const rows = [];
+    V.series.forEach((s, k) => {
+      const a = r0.has(k) ? r0.get(k) : N + 1.5, c = r1.has(k) ? r1.get(k) : N + 1.5, r = lerp(a, c, e);
+      if (r > N + 0.6) return;
+      let v = valAt(s.v, f); if (!fin(v)) v = fin(s.v[i1]) ? s.v[i1] : s.v[i0];
+      if (fin(v)) rows.push({ s, k, r, v, rank: (e < 0.5 ? a : c) + 1 });
+    });
+    ctx.save(); ctx.beginPath(); ctx.rect(b.x - 20 * S, b.y - 6 * S, b.w + 40 * S, area + 6 * S); ctx.clip();
+    rows.sort((p, q) => q.r - p.r).forEach(({ s, r, v, rank }) => {
+      const y = b.y + r * slot + (slot - bh) / 2, w = Math.max(6 * S, Math.min(1.08, Math.abs(v) / vmax) * room), col = secCol(th, s.sec);
+      ctx.globalAlpha = clamp(N - r + 0.15, 0, 1);
+      const gr = ctx.createLinearGradient(x0, 0, x0 + w, 0); gr.addColorStop(0, alpha(col, 0.72)); gr.addColorStop(1, col);
+      ctx.fillStyle = v < 0 ? alpha('#ff6b6b', 0.85) : gr; if (th.glow) { ctx.shadowColor = col; ctx.shadowBlur = th.glow * 0.7 * S; }
+      roundRect(ctx, x0, y, w, bh, Math.min(12 * S, bh / 3)); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+      ctx.font = F(600, Math.min(24, bh / S * 0.42)); ctx.fillStyle = th.muted; ctx.fillText(rank > N ? '' : String(Math.round(rank)), b.x + 40 * S, y + bh / 2);
+      ctx.font = F(700, Math.min(30, bh / S * 0.5)); ctx.fillStyle = th.text; ctx.fillText(s.label, x0 - 16 * S, y + bh / 2);
+      const nm = String(s.name || '').replace(/\s*\/[A-Z]{2,3}\/?$/, '').replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO|HOLDINGS|GROUP)\.?$/i, '').replace(/[\s,&/]+$/, '');
+      ctx.textAlign = 'left'; ctx.font = F(700, Math.min(28, bh / S * 0.46)); ctx.fillStyle = th.text;
+      const vt = V.fmt(v), vw = ctx.measureText(vt).width; ctx.fillText(vt, x0 + w + 14 * S, y + bh / 2);
+      if (bh > 30 * S) {
+        ctx.font = F(500, Math.min(20, bh / S * 0.34));
+        const tw = ctx.measureText(nm.slice(0, 30)).width;
+        if (w > tw + 30 * S) { ctx.fillStyle = luminance(col) > 0.55 && v >= 0 ? 'rgba(10,18,32,0.78)' : 'rgba(255,255,255,0.88)'; ctx.fillText(nm.slice(0, 30), x0 + 14 * S, y + bh / 2); }
+        else { ctx.fillStyle = th.muted; ctx.fillText(nm.slice(0, 26), x0 + w + 30 * S + vw, y + bh / 2); }
+      }
+    });
+    ctx.restore(); ctx.globalAlpha = 1;
+    // sectors on screen
+    const secs = [...new Set(rows.filter((x) => x.r < N - 0.5).map((x) => x.s.sec))];
+    let lx = b.x; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = F(600, 20);
+    const ly = b.y + area + legendH / 2;
+    for (const sc of secs) { const t = SECTORS[sc] || sc, w = ctx.measureText(t).width; if (lx + w + 40 * S > b.x + b.w) break; ctx.fillStyle = secCol(th, sc); ctx.beginPath(); ctx.arc(lx + 8 * S, ly, 8 * S, 0, 7); ctx.fill(); ctx.fillStyle = th.muted; ctx.fillText(t, lx + 22 * S, ly); lx += w + 46 * S; }
+    if (V.foot) { ctx.font = F(400, 17); ctx.fillStyle = alpha(th.text === '#1d1d1b' ? '#1d1d1b' : '#ffffff', 0.45); ctx.fillText(V.foot, b.x, b.y + area + legendH + footH / 2); }
+  }
+  // monthly returns: years down, months across, each month lighting up as the video reaches it; the year's total at the right
+  function heatmap(ctx, V, f, b, S, th, F) {
+    const C = V.cal, ys = C.years, ny = ys.length, x00 = b.x - 70 * S, W0 = b.w + 70 * S, labW = 86 * S, headH = 40 * S;
+    const cw = (W0 - labW) / 13, ch = Math.min((b.h - headH) / ny, cw * 0.82), y0 = b.y + headH, X = (m) => x00 + labW + m * cw;
+    const light = th.text === '#1d1d1b', G = light ? '23,115,74' : '56,242,162', R = light ? '192,57,43' : '255,107,107';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = F(600, Math.min(22, cw / S * 0.3)); ctx.fillStyle = th.muted;
+    MON.forEach((m, i) => ctx.fillText(m, X(i) + cw / 2, b.y + headH / 2)); ctx.fillText('Year', X(12) + cw / 2, b.y + headH / 2);
+    const fs = Math.min(22, ch / S * 0.42), yr = new Map();
+    C.cells.forEach(([y, m, r], k) => {
+      const a = clamp(f - k + 1, 0, 1); if (a <= 0 || !fin(r)) return;
+      const row = ys.indexOf(y), x = X(m) + 2 * S, yy = y0 + row * ch + 2 * S, w = cw - 4 * S, h = ch - 4 * S, int = clamp(Math.abs(r) / 0.1, 0.12, 1);
+      ctx.globalAlpha = a; ctx.fillStyle = `rgba(${r >= 0 ? G : R},${0.18 + 0.72 * int})`; roundRect(ctx, x, yy, w, h, Math.min(8 * S, h / 3)); ctx.fill();
+      if (k === Math.round(f)) { ctx.strokeStyle = th.accent; ctx.lineWidth = 3 * S; ctx.stroke(); }
+      if (h > 16 * S) { ctx.font = F(600, fs); ctx.fillStyle = int > 0.6 && !light ? '#06101f' : th.text; ctx.fillText((r >= 0 ? '+' : '−') + Math.abs(100 * r).toFixed(Math.abs(r) >= 0.1 ? 0 : 1), x + w / 2, yy + h / 2); }
+      ctx.globalAlpha = 1;
+      if (a >= 0.5) yr.set(y, (yr.get(y) || 1) * (1 + r));
+    });
+    ys.forEach((y, row) => {
+      const yy = y0 + row * ch + ch / 2;
+      ctx.textAlign = 'right'; ctx.font = F(700, Math.min(24, ch / S * 0.5)); ctx.fillStyle = th.text; ctx.fillText(String(y), x00 + labW - 14 * S, yy);
+      if (yr.has(y)) { const r = yr.get(y) - 1; ctx.textAlign = 'center'; ctx.font = F(800, fs); ctx.fillStyle = r >= 0 ? (light ? '#17734a' : '#3ee39a') : (light ? '#c0392b' : '#ff6b6b'); ctx.fillText(pctf(r, 0), X(12) + cw / 2, yy); }
+    });
+  }
+  // the spread of one year's returns across companies; bars morph from year to year
+  function histChart(ctx, V, f, b, S, th, F) {
+    const H = V.hist, E = H.edges, nb = E.length + 1, i0 = Math.floor(f), i1 = Math.min(H.yrs.length - 1, i0 + 1), e = easeIO(f - i0), A = H.yrs[i0], B = H.yrs[i1];
+    if (!H._max) H._max = Math.max(...H.yrs.flatMap((x) => x.shares)) * 1.12;
+    const light = th.text === '#1d1d1b', top = b.y + 70 * S, h = b.h - 70 * S - 54 * S, bw = b.w / nb, Y = (v) => top + h - v / H._max * h;
+    const xOf = (r) => { if (r < E[0]) return b.x + bw / 2; if (r >= E[E.length - 1]) return b.x + (nb - 0.5) * bw; let k = 0; while (k < E.length - 1 && r >= E[k + 1]) k++; return b.x + (k + 1 + (r - E[k]) / (E[k + 1] - E[k])) * bw; };
+    ctx.lineWidth = 1.2 * S; ctx.font = F(500, 20); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (const v of niceTicks(0, H._max, 4)) { const y = Y(v); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText((100 * v).toFixed(0) + '%', b.x - 12 * S, y); }
+    for (let k = 0; k < nb; k++) {
+      const v = lerp(A.shares[k], B.shares[k], e), mid = k === 0 ? -1 : k === nb - 1 ? 2 : (E[k - 1] + E[k]) / 2, col = mid < 0 ? (light ? '#c0392b' : '#ff6b8e') : (light ? '#17734a' : '#38f2a2');
+      const x = b.x + k * bw + bw * 0.08, y = Y(v);
+      ctx.fillStyle = alpha(col, k === 0 || k === nb - 1 ? 0.55 : 0.88); if (th.glow) { ctx.shadowColor = col; ctx.shadowBlur = th.glow * 0.5 * S; }
+      roundRect(ctx, x, y, bw * 0.84, Math.max(1, top + h - y), Math.min(6 * S, bw * 0.2)); ctx.fill(); ctx.shadowBlur = 0;
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = th.axis; ctx.font = F(500, 19);
+    [[-0.8, '≤ −80%'], [-0.4, '−40%'], [0, '0'], [0.4, '+40%'], [0.8, '+80%'], [1.2, '+120%']].forEach(([r, t]) => ctx.fillText(t, r <= -0.8 ? b.x + bw / 2 : xOf(r), top + h + 10 * S));
+    ctx.fillText('≥ +150%', b.x + (nb - 0.5) * bw, top + h + 10 * S);
+    const mark = (r, col, label, dy) => { if (!fin(r)) return; const x = xOf(r); ctx.strokeStyle = col; ctx.lineWidth = 3 * S; ctx.setLineDash([10 * S, 7 * S]); ctx.beginPath(); ctx.moveTo(x, top - 10 * S); ctx.lineTo(x, top + h); ctx.stroke(); ctx.setLineDash([]); ctx.font = F(700, 22); ctx.textAlign = x > b.x + b.w * 0.7 ? 'right' : 'left'; ctx.textBaseline = 'bottom'; ctx.fillStyle = col; ctx.fillText(label, x + (ctx.textAlign === 'left' ? 10 : -10) * S, top - 12 * S + dy); };
+    const med = lerp(A.median, B.median, e), spy = fin(A.spy) && fin(B.spy) ? lerp(A.spy, B.spy, e) : null, cur = e < 0.5 ? A : B;
+    mark(med, th.text, `Median stock ${pctf(med, 0)}`, 0);
+    if (fin(spy)) mark(spy, th.accent, `S&P 500 (SPY) ${pctf(spy, 0)}`, Math.abs(xOf(spy) - xOf(med)) < 260 * S ? 30 * S : 0);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = F(800, 46); ctx.fillStyle = th.text; ctx.fillText(String(cur.y) + (cur.ytd ? ' so far' : ''), b.x, b.y);
+    ctx.font = F(600, 24); ctx.fillStyle = th.muted;
+    ctx.fillText(`${cur.n.toLocaleString('en-US')} companies · ${Math.round(100 * cur.up)}% rose · best ${cur.best[0]} ${pctf(cur.best[1], 0)} · worst ${cur.worst[0]} ${pctf(cur.worst[1], 0)}`, b.x + 230 * S, b.y + 14 * S);
+    if (V.foot) { ctx.font = F(400, 17); ctx.fillStyle = alpha(light ? '#1d1d1b' : '#ffffff', 0.45); ctx.fillText(V.foot, b.x, top + h + 36 * S); }
+  }
   function endCard(ctx, V, W, H, S, th, F, pal, a, portrait) {
-    const rows = V.final.slice(0, portrait ? 8 : 6);
+    const rows = V.final.slice(0, portrait ? 10 : V.kind === 'rank' ? 8 : 6);
     ctx.fillStyle = `rgba(0,0,0,${0.45 * a})`; ctx.fillRect(0, 0, W, H);
     const w = Math.min(W - 120 * S, (portrait ? 920 : 1100) * S), rh = 74 * S, h = 150 * S + rows.length * rh, x = (W - w) / 2, y = (H - h) / 2 + (1 - a) * 40 * S;
     ctx.globalAlpha = a; ctx.fillStyle = th.panel; roundRect(ctx, x, y, w, h, 28 * S); ctx.fill();
@@ -765,7 +1205,7 @@
     ctx.font = F(500, 22); ctx.fillStyle = th.muted; ctx.fillText(V.endSub, x + 40 * S, y + 108 * S);
     rows.forEach((r, i) => {
       const yy = y + 150 * S + i * rh + rh / 2;
-      ctx.fillStyle = pal(r.k); ctx.beginPath(); ctx.arc(x + 54 * S, yy - 10 * S, 12 * S, 0, 7); ctx.fill();
+      ctx.fillStyle = r.sec ? secCol(th, r.sec) : pal(r.k); ctx.beginPath(); ctx.arc(x + 54 * S, yy - 10 * S, 12 * S, 0, 7); ctx.fill();
       ctx.font = F(700, 34); ctx.fillStyle = th.text; ctx.textAlign = 'left'; ctx.fillText(r.label, x + 84 * S, yy);
       ctx.textAlign = 'right'; ctx.fillText(r.value, x + w - (r.change ? 210 : 40) * S, yy);
       if (r.change) { ctx.fillStyle = r.up ? '#3ee39a' : '#ff6b6b'; ctx.fillText(r.change, x + w - 40 * S, yy); }
@@ -774,21 +1214,64 @@
   }
   // the end card's rows and headline, from the last week
   function finish(V, st) {
-    const L = V.grid.length - 1;
+    const L = V.grid.length - 1, G = V.grid, span = `${dayLabel(G[0])} → ${dayLabel(G[L])}`;
+    if (V.kind === 'rank') {
+      const ord = V.series.map((s, k) => ({ k, v: s.v[L] })).filter((x) => fin(x.v)).sort((a, c) => (V.order === 'asc' ? a.v - c.v : c.v - a.v)).slice(0, V.rankN);
+      V.final = ord.map((x, i) => ({ k: x.k, label: `${i + 1}. ${V.series[x.k].label}`, value: V.fmt(x.v), change: '', v: x.v, sec: V.series[x.k].sec }));
+      V.endTitle = `${V.metric} · ${V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}`;
+      V.endSub = V.title;
+      V.caption = `${V.title} (${V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}): ` + V.final.map((r) => `${r.label} ${r.value}`).join(' · ');
+      return;
+    }
+    if (V.kind === 'calendar') {
+      const cells = V.cal.cells.filter((c) => fin(c[2])), lab = (c) => `${MON[c[1]]} ${c[0]}`;
+      const best = cells.reduce((m, c) => (c[2] > m[2] ? c : m)), worst = cells.reduce((m, c) => (c[2] < m[2] ? c : m)), up = cells.filter((c) => c[2] > 0).length / cells.length;
+      const yrs = V.cal.years.map((y) => [y, cells.filter((c) => c[0] === y).reduce((a, c) => a * (1 + c[2]), 1) - 1, cells.filter((c) => c[0] === y).length]).filter((x) => x[2] >= 12);
+      const tot = cells.reduce((a, c) => a * (1 + c[2]), 1) - 1, yrsN = cells.length / 12;
+      V.final = [{ k: 0, label: 'Best month', value: lab(best), change: pctf(best[2], 1), up: true }, { k: 0, label: 'Worst month', value: lab(worst), change: pctf(worst[2], 1), up: false },
+        { k: 0, label: 'Months up', value: `${Math.round(100 * up)}%`, change: '' }];
+      if (yrs.length) { const by = yrs.reduce((m, x) => (x[1] > m[1] ? x : m)), wy = yrs.reduce((m, x) => (x[1] < m[1] ? x : m)); V.final.push({ k: 0, label: 'Best year', value: String(by[0]), change: pctf(by[1], 0), up: true }, { k: 0, label: 'Worst year', value: String(wy[0]), change: pctf(wy[1], 0), up: false }); }
+      if (yrsN >= 1) V.final.push({ k: 0, label: 'A year, on average', value: '', change: pctf(Math.pow(1 + tot, 1 / yrsN) - 1, 1), up: tot >= 0 });
+      V.endTitle = `${V.series[0].label}: ${pctf(tot, 0)} in all`; V.endSub = `${monthYear(G[0])} → ${monthYear(G[L])} · monthly total return`;
+      V.caption = `${V.series[0].label} month by month: best ${lab(best)} ${pctf(best[2], 1)}, worst ${lab(worst)} ${pctf(worst[2], 1)}, up in ${Math.round(100 * up)}% of months`;
+      return;
+    }
+    if (V.kind === 'dist') {
+      const Y = V.hist.yrs, full = Y.filter((x) => !x.ytd), srt = full.slice().sort((a, c) => c.median - a.median);
+      const pickY = srt.slice(0, 3).concat(srt.slice(-3).reverse()).filter((x, i, arr) => arr.indexOf(x) === i);
+      V.final = pickY.map((x) => ({ k: 0, label: `${x.y}${x === srt[0] ? ' (best)' : x === srt[srt.length - 1] ? ' (worst)' : ''}`, value: `median ${pctf(x.median, 0)}`, change: `${Math.round(100 * x.up)}% up`, up: x.median >= 0 }));
+      V.endTitle = 'The middle company, by year'; V.endSub = `${Y[0].y}–${Y[Y.length - 1].y} · total return · today's companies on the site`;
+      V.caption = `${V.title}: ` + pickY.map((x) => `${x.y} median ${pctf(x.median, 0)} (${Math.round(100 * x.up)}% rose)`).join(' · ');
+      return;
+    }
+    const yrs = (G[L] - G[0]) / (365.25 * DAY);
     const rows = V.series.map((s, k) => {
       if (V.kind === 'rrg') { const x = s.x[L], y = s.y[L]; const q = fin(x) && fin(y) ? (x >= 100 ? (y >= 100 ? 'Leading' : 'Weakening') : (y < 100 ? 'Lagging' : 'Improving')) : '—'; return { k, label: s.label, value: q, v: fin(x) ? x : -Infinity }; }
       const v = s.v[L], v0 = s.v.find(fin);
-      const change = V.base ? pctf(v / V.base - 1) : (fin(v0) && v0 !== 0 && V.unit !== '%' && V.kind !== 'formula' ? pctf(v / v0 - 1) : '');
-      return { k, label: s.label, value: V.fmt(v), change, up: V.base ? v >= V.base : v >= v0, v: fin(v) ? v : -Infinity };
+      if (V.kind === 'drawdown') { const lo = Math.min(...s.v.filter(fin)); return { k, label: s.label, value: V.fmt(v), change: pctf(lo, 1), up: false, v: fin(v) ? v : -Infinity }; }
+      const ref = V.base || (V.contrib ? V.contrib[L] : null);
+      const change = ref ? pctf(v / ref - 1) : (fin(v0) && v0 !== 0 && V.unit !== '%' && V.kind !== 'formula' ? pctf(v / v0 - 1) : '');
+      const irr = V.kind === 'growth' && V.flows && yrs >= 1 && fin(v) ? xirr(V.flows.concat([[G[L], v]])) : null;
+      return { k, label: s.label + (fin(irr) ? ` · ${(100 * irr).toFixed(1)}%/yr` : ''), name: s.label, value: V.fmt(v), change, irr, up: ref ? v >= ref : v >= v0, v: fin(v) ? v : -Infinity };
     }).sort((a, b) => b.v - a.v);
     V.final = rows;
     if (V.kind === 'formula' && V.series.length > 1) {          // lines of very different sizes get a panel each
       const mags = V.series.map((s) => Math.max(...s.v.filter(fin).map(Math.abs), 1e-12));
       V.panels = Math.max(...mags) / Math.min(...mags) > 8;
     }
-    V.endTitle = V.kind === 'rrg' ? 'Where they stand' : V.kind === 'growth' ? (rows[0] ? `${rows[0].label} ${rows[0].value} (${rows[0].change})` : '') : (V.metric || V.title);
-    V.endSub = `${dayLabel(V.grid[0])} → ${dayLabel(V.grid[L])}` + (V.kind === 'growth' ? (V.split ? ' · price + distributions as cash' : st.div === 'price' ? ' · price only' : ' · distributions reinvested') : '');
-    V.caption = V.kind === 'growth' ? rows.map((r) => `${r.label} ${r.value} (${r.change})`).join(' vs ') : V.kind === 'rrg' ? rows.map((r) => `${r.label}: ${r.value}`).join(' · ') : rows.map((r) => `${r.label} ${r.value}${r.change ? ' (' + r.change + ')' : ''}`).join(' · ');
+    const mode = V.split ? ' · price + dividends as cash' : st.div === 'price' ? ' · price only' : ' · dividends reinvested';
+    if (V.kind === 'growth' && V.dca) {
+      V.endTitle = rows[0] ? `${rows[0].name} ${rows[0].value} from ${money(V.dca.put, 0)} put in` : '';
+      V.endSub = `${V.dca.every} · ${V.dca.buys} buys · ${span}${mode}`;
+    } else {
+      V.endTitle = V.kind === 'rrg' ? 'Where they stand' : V.kind === 'drawdown' ? 'Below the high: now · worst' : V.kind === 'growth' ? (rows[0] ? `${rows[0].name} ${rows[0].value} (${rows[0].change})` : '') : (V.metric || V.title);
+      V.endSub = span + (V.kind === 'growth' ? mode + (yrs >= 1 ? ' · a year, money-weighted' : '') : '');
+    }
+    const yr = (r) => (fin(r.irr) ? `, ${(100 * r.irr).toFixed(1)}%/yr` : '');
+    V.caption = V.kind === 'growth' ? (V.dca ? `${V.dca.every}, ${span}: ` : '') + rows.map((r) => `${r.name} ${r.value} (${r.change}${yr(r)})`).join(' vs ') + (V.dca ? ` · ${money(V.dca.put, 0)} put in` : '')
+      : V.kind === 'rrg' ? rows.map((r) => `${r.label}: ${r.value}`).join(' · ')
+        : V.kind === 'drawdown' ? rows.map((r) => `${r.label} ${r.value} now, worst ${r.change}`).join(' · ')
+          : rows.map((r) => `${r.label} ${r.value}${r.change ? ' (' + r.change + ')' : ''}`).join(' · ');
   }
 
   /* ---------- export: WebCodecs + mp4-muxer, or MediaRecorder ---------- */
@@ -816,7 +1299,7 @@
     let failed = null;
     const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: (e) => { failed = e; } });
     enc.configure({ codec: pick.codec, width: w, height: h, bitrate: Math.round((fps > 30 ? 12e6 : 9e6) * k * k), framerate: fps, ...(pick.mux === 'avc' ? { avc: { format: 'avc' } } : {}) });
-    const N = Math.round(timing(V, opt.dur).D * fps);
+    const N = Math.round(timing(V, opt).D * fps);
     for (let i = 0; i < N; i++) {
       if (failed) throw failed;
       if (cancel && cancel()) { enc.close(); return 'cancelled'; }
@@ -841,7 +1324,7 @@
       const rec = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 8e6 } : undefined), parts = [];
       rec.ondataavailable = (e) => { if (e.data.size) parts.push(e.data); };
       rec.onstop = () => ok({ blob: new Blob(parts, { type: type.split(';')[0] || 'video/webm' }), codec: type || 'default', recorded: true });
-      const ctx = canvas.getContext('2d'), D = timing(V, opt.dur).D, t0 = performance.now();
+      const ctx = canvas.getContext('2d'), D = timing(V, opt).D, t0 = performance.now();
       rec.start(250);
       (function tick() { const t = (performance.now() - t0) / 1000; draw(ctx, canvas.width, canvas.height, V, opt, Math.min(t, D)); onProgress(Math.min(1, t / D)); if (t < D) requestAnimationFrame(tick); else setTimeout(() => rec.stop(), 120); })();
     });
@@ -857,6 +1340,16 @@
     { name: 'Nvidia revenue', note: 'Quarter by quarter from its filings', s: { k: 'fund', t: 'NVDA', m: 'revenue', ttm: '0', style: 'columns', theme: 'bull' } },
     { name: 'Big Tech earnings race', note: 'Net earnings, trailing four quarters', s: { k: 'fund', t: 'AAPL,MSFT,GOOGL,AMZN,META,NVDA', m: 'ni', ttm: '1', style: 'bars', theme: 'clean' } },
     { name: 'Growth vs value ratio', note: 'IWF ÷ IWD and QQQ ÷ SPY, rebased', s: { k: 'formula', expr: 'Growth ÷ value: rebase(IWF/IWD)\nNasdaq ÷ S&P: rebase(QQQ/SPY)', from: '2010-01-01', style: 'line', theme: 'clean' } },
+    { name: '$500 a month: QQQ vs SPY', note: 'Bought every month for ten years', s: { k: 'growth', t: 'QQQ,SPY', from: '2016-01-04', amt: '0', rec: '500', ri: '1', ru: 'm', div: 'tr', style: 'line', theme: 'bull' } },
+    { name: 'Dividend stocks, cash on the side', note: 'KO vs PEP vs JNJ: price + dividends', s: { k: 'growth', t: 'KO,PEP,JNJ', from: '2016-01-04', amt: '10000', div: 'split', style: 'line', theme: 'clean' } },
+    { name: 'The most valuable companies', note: 'Top 10 by market value since 2010', s: { k: 'rank', rm: 'cap', top: '10', from: '2010-01-31', step: 'm', style: 'bars', theme: 'bull', dur: '45' } },
+    { name: 'Biggest by revenue', note: 'Top 10, quarter by quarter', s: { k: 'rank', rm: 'rev', top: '10', from: '2010-06-30', step: 'q', style: 'bars', theme: 'sunset', dur: '40' } },
+    { name: 'Most traded stocks', note: 'Dollar volume, month by month', s: { k: 'rank', rm: 'dv', top: '10', from: '2015-01-31', step: 'm', style: 'bars', theme: 'terminal', dur: '40' } },
+    { name: 'Priciest giants by P/E', note: 'Market value over $200B', s: { k: 'rank', rm: 'pe', top: '10', cmin: '200', from: '2016-01-31', step: 'm', style: 'bars', theme: 'bull', dur: '40' } },
+    { name: 'Best 12-month runs', note: 'Companies over $10B, total return', s: { k: 'rank', rm: 'ret', win: '12', top: '10', cmin: '10', from: '2016-01-31', step: 'm', style: 'bars', theme: 'sunset', dur: '40' } },
+    { name: 'Drawdowns since 2007', note: 'QQQ · SPY · TLT below their highs', s: { k: 'drawdown', t: 'QQQ,SPY,TLT', from: '2007-01-05', style: 'area', theme: 'bull', dur: '30' } },
+    { name: 'Nvidia, month by month', note: 'A heatmap of every monthly return', s: { k: 'calendar', t: 'NVDA', from: '2016-01-01', style: 'heat', theme: 'bull', dur: '30' } },
+    { name: "Every stock's year", note: 'How returns spread, 2005 to now', s: { k: 'dist', from: '2005-01-01', style: 'hist', theme: 'clean', dur: '30' } },
   ];
   const dec = (v) => { try { return decodeURIComponent(v.replace(/\+/g, ' ')); } catch (e) { return v; } };
   function parseState(arg) {                               // arg: the address after #studio/, still encoded
@@ -892,7 +1385,7 @@
     const st = parseState(raw != null ? raw : arg);
     const sel = (id, items, v) => `<select id="${id}">${items.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
     app.innerHTML = `<div class="page-head"><div class="eyebrow"><a href="#chart">← Charts</a> · Videos</div><h1>Make a market video</h1>
-      <p class="muted" style="max-width:76ch">Growth races of any ETFs or stocks (with distributions reinvested, left out, or split out as cash), RRG and momentum replays, companies' own figures and any formula — animated, in four looks and three shapes, saved as an MP4 to post. Everything is drawn from the site's own data in your browser.</p></div>
+      <p class="muted" style="max-width:76ch">Growth races of any ETFs or stocks — a lump sum or the same amount bought every few days, weeks or months, with dividends reinvested, taken as cash on their own line, or left out — leaderboards of every company by market value, revenue, profit, P/E, P/B, volume or return, drawdowns, monthly-return heatmaps, the spread of every stock's year, RRG and momentum replays, companies' own figures and any formula. Animated in four looks and three shapes, at the length and pace you set, saved as an MP4 to post. Everything is drawn from the site's own data in your browser.</p></div>
       <div class="st-tpl" id="st-tpl">${TEMPLATES.map((x, i) => `<button type="button" data-tpl="${i}"><b>${esc(x.name)}</b><span>${esc(x.note)}</span></button>`).join('')}</div>
       <div class="st-wrap"><div class="st-side" id="st-side"></div><div class="st-main">
         <div class="st-stage"><canvas id="st-canvas" width="1280" height="720" aria-label="Video preview"></canvas></div>
@@ -903,26 +1396,59 @@
       </div></div>`;
     const $ = (s) => app.querySelector(s), canvas = $('#st-canvas'), ctx = canvas.getContext('2d');
     let V = null, playing = false, t0 = 0, tNow = 0, raf = 0, token = 0, exporting = false;
-    const opt = () => ({ theme: st.theme, ar: st.ar, q: st.q, fps: st.fps, dur: +st.dur || 20 });
+    const opt = () => ({ theme: st.theme, ar: st.ar, q: st.q, fps: st.fps, dur: clamp(+st.dur || 20, 4, 300), pace: st.pace, hold: st.hold });
+    function rankSide(k) {
+      let h = '';
+      if (k === 'rank') {
+        h += `<label for="st-rm">Rank by</label>${sel('st-rm', Object.entries(RANK).map(([kk, v]) => [kk, v[0]]), st.rm)}`;
+        h += `<div class="st-row"><div><label for="st-top">How many</label>${sel('st-top', [['5', 'Top 5'], ['10', 'Top 10'], ['15', 'Top 15'], ['20', 'Top 20']], st.top)}</div><div><label for="st-ord">Order</label>${sel('st-ord', [['desc', 'Highest first'], ['asc', 'Lowest first']], st.ord)}</div></div>`;
+        h += `<label for="st-step">Steps</label>${sel('st-step', [['m', 'Month by month'], ['q', 'Quarter by quarter'], ['w', 'Week by week (prices only)']], st.step)}`;
+        if (st.rm === 'ret') h += `<label for="st-win">Return over</label>${sel('st-win', [['1', '1 month'], ['3', '3 months'], ['6', '6 months'], ['12', '12 months'], ['36', '3 years'], ['ytd', 'Year to date']], st.win)}`;
+        if (['om', 'nm', 'growth'].includes(st.rm)) h += `<label for="st-minrev">Minimum revenue a year ($B)</label><input class="input" id="st-minrev" inputmode="decimal" value="${esc(st.minrev)}">`;
+      }
+      h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS)), st.sec)}`;
+      h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
+      h += `<label for="st-capby">Measured</label>${sel('st-capby', [['then', 'At each step (from 2009)'], ['now', 'Today']], st.capby)}`;
+      h += `<div class="st-help">Every US-listed company the site draws, ranked again at each step. Today's companies only: those delisted, merged or bankrupt are missing from earlier years.</div>`;
+      return h;
+    }
     function side() {
       const k = st.k, styles = STYLES[k];
       let h = `<h3>Video</h3><div class="st-pills">${KINDS.map(([v, l]) => `<button type="button" class="pill${v === k ? ' on' : ''}" data-kind="${v}">${esc(l)}</button>`).join('')}</div>`;
-      if (k !== 'formula') h += `<label for="st-t">${k === 'fund' ? 'Companies (tickers)' : 'Tickers — ETFs or stocks, two or more'}</label><input class="input" id="st-t" value="${esc(st.t)}" placeholder="${k === 'fund' ? 'NVDA, AMD' : 'QQQ, SPY, SCHD'}" list="st-list" autocomplete="off"><datalist id="st-list"></datalist>`;
+      if (k === 'rank' || k === 'dist') h += rankSide(k);
+      else if (k !== 'formula') h += `<label for="st-t">${k === 'fund' ? 'Companies (tickers)' : k === 'calendar' ? 'Ticker — an ETF or a stock' : 'Tickers — ETFs or stocks, two or more'}</label><input class="input" id="st-t" value="${esc(st.t)}" placeholder="${k === 'fund' ? 'NVDA, AMD' : k === 'calendar' ? 'NVDA' : 'QQQ, SPY, SCHD'}" list="st-list" autocomplete="off"><datalist id="st-list"></datalist>`;
       else h += `<label for="st-expr">Formulas — one per line, “Label: expression”</label><textarea id="st-expr" spellcheck="false">${esc(st.expr)}</textarea><div class="st-help">Operators <code>+ − × ÷ ^</code> and <code>( )</code>; functions <code>log exp sqrt abs rebase(x) ma(x,n) ema(x,n) pct(x,n) chg(x,n) lag(x,n) min(a,b) max(a,b)</code>. Series: a ticker (<code>QQQ</code> = total return) or <code>QQQ.price</code>, <code>.div</code>, <code>.yield</code>, company figures <code>NVDA.revenue</code>, <code>.ni_ttm</code>, <code>.margin</code>… Example: <code>rebase(QQQ/SPY)</code>, <code>SCHD.yield*100</code>, <code>NVDA.ni_ttm/NVDA.revenue_ttm</code>.</div>`;
       h += `<div class="st-row"><div><label for="st-from">From</label><input class="input" type="date" id="st-from" value="${esc(st.from)}"></div><div><label for="st-to">To</label><input class="input" type="date" id="st-to" value="${esc(st.to)}"></div></div>`;
       h += `<div class="st-pills" style="margin-top:6px">${[['1y', 1], ['3y', 3], ['5y', 5], ['10y', 10], ['Max', 30]].map(([l, y]) => `<button type="button" class="pill" data-yrs="${y}">${l}</button>`).join('')}</div>`;
-      if (k === 'growth') h += `<label for="st-amt">Amount invested ($)</label><input class="input" id="st-amt" inputmode="numeric" value="${esc(st.amt)}"><label for="st-div">Distributions</label>${sel('st-div', [['tr', 'Reinvested (total return)'], ['price', 'Left out (price as traded)'], ['split', 'Split out: price + cash']], st.div)}<label for="st-scale">Scale</label>${sel('st-scale', [['lin', 'Linear'], ['log', 'Logarithmic']], st.scale)}`;
+      if (k === 'growth') {
+        const dca = +st.rec > 0;
+        h += `<label for="st-amt">${dca ? 'Amount to start with ($, can be 0)' : 'Amount invested ($)'}</label><input class="input" id="st-amt" inputmode="numeric" value="${esc(st.amt)}">`;
+        h += `<label for="st-rec">Buy again on a schedule (optional)</label><div class="st-row"><div><input class="input" id="st-rec" inputmode="numeric" placeholder="$ each time" value="${+st.rec > 0 ? esc(st.rec) : ''}" aria-label="Amount each time"></div>`
+          + `<div style="flex:.7"><input class="input" id="st-ri" type="number" min="1" max="60" value="${esc(st.ri)}" aria-label="Every how many"></div><div>${sel('st-ru', [['d', 'trading days'], ['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru)}</div></div>`
+          + `<div class="st-help">e.g. $500 every 1 month: the same amount bought at that week's close, from the start date on.</div>`;
+        h += `<label for="st-div">Dividends</label>${sel('st-div', [['tr', 'Reinvested (total return)'], ['split', 'Taken as cash: their own line'], ['price', 'Left out (price only)']], st.div)}<label for="st-scale">Scale</label>${sel('st-scale', [['lin', 'Linear'], ['log', 'Logarithmic']], st.scale)}`;
+      }
       if (k === 'rrg') h += `<div class="st-row"><div><label for="st-bench">Benchmark</label><input class="input" id="st-bench" value="${esc(st.bench)}"></div><div><label for="st-tail">Tail (weeks)</label>${sel('st-tail', [['5', '5'], ['8', '8'], ['10', '10'], ['13', '13'], ['26', '26']], st.tail)}</div></div><label for="st-n">RS window</label>${sel('st-n', [['10', '10 weeks'], ['14', '14 weeks'], ['26', '26 weeks']], st.n)}`;
       if (k === 'momentum') h += `<div class="st-row"><div><label for="st-bench">Against</label><input class="input" id="st-bench" value="${esc(st.bench)}"></div><div><label for="st-lb">Look-back</label>${sel('st-lb', [['13', '13 weeks'], ['26', '26 weeks'], ['52', '52 weeks']], st.lb)}</div></div>`;
       if (k === 'fund') h += `<label for="st-m">Figure</label>${sel('st-m', Object.entries(FIG), st.m)}<label for="st-ttm">Periods</label>${sel('st-ttm', [['0', 'Each quarter'], ['1', 'Trailing four quarters']], st.ttm)}`;
       h += `<h3>Look</h3><label for="st-style">Style</label>${sel('st-style', styles, st.style)}<label for="st-theme">Theme</label>${sel('st-theme', Object.entries(THEMES).map(([kk, v]) => [kk, v.name]), st.theme)}`;
       h += `<div class="st-row"><div><label for="st-ar">Shape</label>${sel('st-ar', [['16x9', '16:9 landscape'], ['9x16', '9:16 phone'], ['1x1', '1:1 square']], st.ar)}</div><div><label for="st-q">Size</label>${sel('st-q', [['1080', '1080p'], ['720', '720p (faster)']], st.q)}</div></div>`;
-      h += `<div class="st-row"><div><label for="st-dur">Length</label>${sel('st-dur', [['10', '10 s'], ['15', '15 s'], ['20', '20 s'], ['30', '30 s'], ['45', '45 s'], ['60', '60 s']], st.dur)}</div><div><label for="st-fps">Smoothness</label>${sel('st-fps', [['30', '30 fps'], ['60', '60 fps']], st.fps)}</div></div>`;
+      h += `<label for="st-dur">Length and speed</label><div class="st-row"><div><input class="input" id="st-dur" type="number" min="4" max="300" step="1" value="${esc(st.dur)}" aria-label="Length in seconds"></div><div class="st-pills" style="flex:1.6;align-items:center">`
+        + [['0.5', 'Slower'], ['2', 'Faster']].map(([v, l]) => `<button type="button" class="pill" data-speed="${v}">${l}</button>`).join('') + `</div></div>`
+        + `<div class="st-help" id="st-pace-note"></div>`
+        + `<div class="st-row"><div><label for="st-pace">Pace</label>${sel('st-pace', PACES, st.pace)}</div><div><label for="st-hold">Pause at the end</label>${sel('st-hold', [['auto', 'Auto'], ['0', 'None'], ['2', '2 s'], ['4', '4 s'], ['6', '6 s']], st.hold)}</div></div>`
+        + `<label for="st-fps">Smoothness</label>${sel('st-fps', [['30', '30 fps'], ['60', '60 fps']], st.fps)}`;
       h += `<label for="st-title">Title (blank: written for you)</label><input class="input" id="st-title" value="${esc(st.title)}" placeholder="${esc((V && V.title) || '')}"><label for="st-sub">Subtitle</label><input class="input" id="st-sub" value="${esc(st.sub)}" placeholder="${esc((V && V.sub) || '')}">`;
       h += `<label for="st-end">End card</label>${sel('st-end', [['1', 'The result, ranked'], ['0', 'None']], st.end)}`;
       $('#st-side').innerHTML = h;
     }
     function save() { try { history.replaceState(null, '', '#' + serialize(st)); } catch (e) { /* file:// */ } }
+    function status() {
+      if (!V) return;
+      const tm = timing(V, opt()), per = (V.grid.length - 1) / tm.run, unit = V.yearly ? 'years' : V.quarterly ? 'quarters' : V.kind === 'rank' && st.step === 'm' || V.kind === 'calendar' ? 'months' : 'weeks';
+      $('#st-status').textContent = `${V.kind === 'rank' ? V.series.length + ' companies' : V.series.length + ' series'} · ${V.grid.length} ${unit} · ${tm.D} s (${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second)`;
+      const pn = $('#st-pace-note'); if (pn) pn.textContent = `About ${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second.`;
+    }
     function sizeCanvas() {
       const dim = { '16x9': [1280, 720], '9x16': [720, 1280], '1x1': [960, 960] }[st.ar] || [1280, 720];
       if (canvas.width !== dim[0] || canvas.height !== dim[1]) { canvas.width = dim[0]; canvas.height = dim[1]; }
@@ -931,12 +1457,12 @@
     function loop(ts) {
       if (!playing) return;
       tNow = (ts - t0) / 1000;
-      const D = timing(V, opt().dur).D;
+      const D = timing(V, opt()).D;
       if (tNow >= D) { tNow = D; playing = false; $('#st-play').textContent = '▶ Play'; }
       paint();
       if (playing) raf = requestAnimationFrame(loop);
     }
-    function play() { if (!V) return; if (tNow >= timing(V, opt().dur).D - 0.01) tNow = 0; playing = true; t0 = performance.now() - tNow * 1000; $('#st-play').textContent = '❚❚ Pause'; cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); }
+    function play() { if (!V) return; if (tNow >= timing(V, opt()).D - 0.01) tNow = 0; playing = true; t0 = performance.now() - tNow * 1000; $('#st-play').textContent = '❚❚ Pause'; cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); }
     function pause() { playing = false; cancelAnimationFrame(raf); $('#st-play').textContent = '▶ Play'; }
     async function rebuild(autoplay) {
       const my = ++token;
@@ -948,11 +1474,11 @@
         v.style = st.style; v.scale = st.scale; v.endCard = st.end === '1';
         finish(v, st);
         V = v;
-        $('#st-status').textContent = `${V.series.length} series · ${V.grid.length} ${V.quarterly ? 'quarters' : 'weeks'} · ${opt().dur} s`;
+        status();
         $('#st-notes').innerHTML = [...V.notes].map((n) => `<li>${esc(n)}</li>`).join('');
         $('#st-cap').innerHTML = V.caption ? `<div class="st-cap" title="A caption to post with the video">${esc(V.caption)}</div>` : '';
         const ti = $('#st-title'), su = $('#st-sub'); if (ti) ti.placeholder = V.title; if (su) su.placeholder = V.sub;
-        tNow = autoplay ? 0 : timing(V, opt().dur).D * 0.62;
+        tNow = autoplay ? 0 : timing(V, opt()).D * 0.62;
         paint();
         if (autoplay) play();
       } catch (e) {
@@ -976,9 +1502,11 @@
     const later = (f) => { clearTimeout(tmr); tmr = setTimeout(f, 450); };
     box.addEventListener('click', (e) => {
       const kb = e.target.closest('[data-kind]');
-      if (kb) { st.k = kb.dataset.kind; st.style = STYLES[st.k][0][0]; if (st.k === 'fund' && !/^[A-Z]/.test(st.t)) st.t = 'NVDA'; st.title = ''; st.sub = ''; side(); rebuild(); return; }
+      if (kb) { st.k = kb.dataset.kind; st.style = STYLES[st.k][0][0]; if ((st.k === 'fund' || st.k === 'calendar') && !/^[A-Z]/.test(st.t)) st.t = 'NVDA'; st.title = ''; st.sub = ''; side(); rebuild(); return; }
       const yb = e.target.closest('[data-yrs]');
       if (yb) { st.from = iso(Date.now() - (+yb.dataset.yrs) * 365.25 * DAY); st.to = ''; side(); rebuild(); }
+      const sb = e.target.closest('[data-speed]');
+      if (sb) { st.dur = String(clamp(Math.round((+st.dur || 20) / +sb.dataset.speed), 4, 300)); const d = $('#st-dur'); if (d) d.value = st.dur; if (V) { paint(); save(); status(); } }
     });
     box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t') suggest(); });
     box.addEventListener('input', (e) => {
@@ -986,17 +1514,20 @@
       const key = id.slice(3); if (!(key in DEF)) return;
       st[key] = e.target.value;
       if (key === 'title' || key === 'sub') { if (V) { V.title = st.title || V._title; V.sub = st.sub || V._sub; paint(); save(); } return; }
+      if (LOOK.includes(key)) { if (V) { paint(); save(); status(); } return; }
+      if (key === 'rec') { const l = app.querySelector('label[for="st-amt"]'); if (l) l.textContent = +st.rec > 0 ? 'Amount to start with ($, can be 0)' : 'Amount invested ($)'; }
       later(() => rebuild());
     });
     box.addEventListener('change', (e) => {
       const id = e.target.id; if (!id || !id.startsWith('st-')) return;
       const key = id.slice(3); if (!(key in DEF) || e.target.tagName === 'INPUT' && e.target.type !== 'date') return;
       st[key] = e.target.value;
-      if (['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end'].includes(key)) {
-        if (V) { V.style = st.style; V.scale = st.scale; V.endCard = st.end === '1'; delete V._dom; sizeCanvas(); paint(); save(); $('#st-status').textContent = `${V.series.length} series · ${V.grid.length} ${V.quarterly ? 'quarters' : 'weeks'} · ${opt().dur} s`; }
+      if (LOOK.includes(key)) {
+        if (V) { V.style = st.style; V.scale = st.scale; V.endCard = st.end === '1'; delete V._dom; sizeCanvas(); paint(); save(); status(); }
         else rebuild();
         return;
       }
+      if (key === 'rm') side();
       rebuild();
     });
     app.querySelector('#st-tpl').addEventListener('click', (e) => {
@@ -1017,7 +1548,10 @@
         if (r === 'cancelled') return;
         if (!r) { $('#st-status').textContent = 'Recording the preview in real time (this browser has no video encoder)…'; r = await recordPreview(canvas, V, opt(), set); }
         const ext = r.blob.type.includes('mp4') ? 'mp4' : 'webm';
-        const name = 'filing-flows-' + (V.series.map((s) => s.key).join('-').replace(/[^A-Za-z0-9-]+/g, '').slice(0, 40) || 'video') + '.' + ext;
+        const slug = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const what = V.kind === 'rank' ? `top-${V.rankN}-${slug(V.metric)}` : V.kind === 'dist' ? 'return-spread' : V.kind === 'calendar' ? V.series[0].key + '-monthly-returns'
+          : V.series.map((s) => s.key).join('-').replace(/[^A-Za-z0-9-]+/g, '').slice(0, 40) + (V.kind === 'drawdown' ? '-drawdowns' : V.dca ? '-monthly-buys' : '');
+        const name = 'filing-flows-' + (what.slice(0, 60) || 'video') + '.' + ext;
         const a = document.createElement('a'); a.href = URL.createObjectURL(r.blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(a.href), 60000);
         $('#st-status').textContent = `Saved ${name} · ${(r.blob.size / 1e6).toFixed(1)} MB${r.w ? ` · ${r.w}×${r.h}, ${r.fps} fps, ${r.codec}` : ''}`;
@@ -1033,6 +1567,6 @@
   // titles typed by the reader replace the written ones; the written ones stay to fall back on
   async function build(st) { const V = await buildRaw(st); V._title = V.title; V._sub = V.sub; if (st.title) V.title = st.title; if (st.sub) V.sub = st.sub; return V; }
 
-  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES } };
+  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, resetPanel: () => PANEL.clear() } };
   if (typeof module !== 'undefined') module.exports = root.FFStudio;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

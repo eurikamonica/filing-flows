@@ -1,5 +1,29 @@
 # Changelog
 
+## Video studio data: leaderboards, stock dividends, market value, P/E and P/B
+
+`app/rank_panel.py` (run by `rotation_history.build`) publishes `public/rank/` for the studio's leaderboards: every
+company of the site's month-end total-return close, monthly dollar volume and month-end market value since 2000, and
+quarterly revenue, gross profit, operating income, net income and equity from the SEC frames (2009 on), one file per
+measure, so the browser ranks any measure within a sector and a market-value range. Market value = the month-end close
+as traded × shares outstanding then: the 10-Q / 10-K cover-page count (dei, never restated), the diluted weighted
+average where a company has several share classes, net income ÷ diluted EPS where neither is tagged; put on today's
+basis with Yahoo's split history; weighted averages restated after a later split are put back on the right basis, and a
+count tagged in thousands (or millions) is caught against its neighbours. Nasdaq's screener (one request) checks today's
+value: an ADR or class basis (off by more than 0.55–1.8×) rescales the history, a recent issue or buyback (more than
+10%) adds today's count; about 50 companies without an SEC count get today's count held back five years at most,
+flagged. Backstops drop a value above $15 trillion, worth more than 10,000 months of trading, or with twenty times
+today's share count. `frames.py` collects the cover-page shares, diluted weighted-average shares, diluted EPS and
+equity (`EXTRA`), and skips a fourth quarter derived from a year tagged at another scale (Arista's 2025 net income,
+3,511 for $3.5 billion, left a fourth quarter of minus $2.6 billion; the momentum clock's figures are fixed too).
+
+The weekly collector keeps Yahoo's dividends and splits and the close as traded (cache format 3: every ticker is fetched
+again in full once); `t/<SYM>.json` gains `p` (the close as traded), `d` (dividends by week) and `sp` (splits), so a
+stock's growth video can split dividends out or leave them out. A refresh no longer loses dividends: Yahoo restates
+every earlier adjusted close after each new dividend or split, and the rows on file were merged on the old basis (each
+dividend since the first full fetch fell out of the total return as a step down where the refresh began); they are now
+rescaled to the new basis in the first week the two answers share. Tests: `tests/test_rank_panel.py`.
+
 ## Company pages: Rotation (RRG) — against the S&P 500 and against the industry, with prices, ranges and transitions
 
 A company page gains *Valuation & expectations → Rotation (RRG)* (`docs/rrg-company-view.js`, listed in views.json):

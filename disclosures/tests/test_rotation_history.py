@@ -124,6 +124,8 @@ class CollectAndBuild(unittest.TestCase):
                 p.parent.mkdir(parents=True, exist_ok=True)
                 with gzip.open(p, 'wt') as f:
                     json.dump({str(1000 + j): (10 - j) * 1e9 * (1 + .03 * i) * k for j in range(5)}, f)
+        import rank_panel
+        rank_panel.NASDAQ = 'http://127.0.0.1:9/none'                         # no network in the tests
         out = RH.build(root, self.site, self.dir / 'nodata', quarters_long=12, months_long=24, today=dt.date(2026, 10, 17))
         pub = root / 'public'
         rrg = json.loads((pub / 'rrg.json').read_text())
@@ -141,6 +143,11 @@ class CollectAndBuild(unittest.TestCase):
         self.assertEqual(out['industries'], len(ind['rows']))
         aaa = json.loads((pub / 't' / 'AAA.json').read_text())
         self.assertEqual((aaa['n'], aaa['s']), ('AAA Corp', 'technology'))
+        self.assertEqual(aaa['d'], [])                                        # fetched with events: no dividends paid
+        self.assertEqual(len(aaa['p']), len(aaa['c']))                        # the close as traded, week by week
+        self.assertGreater(aaa['p'][5], aaa['c'][5])                          # (the fake's adjusted close is 2% lower)
+        self.assertEqual(out['rank']['companies'], 5)                         # the studio's leaderboards
+        self.assertTrue((pub / 'rank' / 'meta.json').exists() and (pub / 'rank' / 'q-rev.json').exists())
         self.assertTrue((pub / 't' / 'BRK-B.json').exists())
         self.assertEqual(out['long_companies'], 5)
         rot = json.loads((pub / 'rotation-long.json').read_text())

@@ -86,6 +86,95 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     }
     ok(typeof V.caption === 'string' && V.caption.length > 3, name + ': no caption');
   }
+  // recurring buys: the schedule, the money put in, the money-weighted yearly return
+  {
+    const G = Array.from({ length: 60 }, (_, i) => Date.UTC(2020, 0, 3) + i * W);
+    const m = S.buySchedule(G, 100, 1, 'm', Date.UTC(2020, 0, 3)), w2 = S.buySchedule(G, 100, 2, 'w'), d1 = S.buySchedule(G, 10, 1, 'd'), d3 = S.buySchedule(G, 10, 3, 'd');
+    ok(m.filter((x) => x > 0).length === 14 && m[0] === 100, 'monthly buys: ' + m.filter((x) => x > 0).length);
+    ok(w2.filter((x) => x > 0).length === 30 && d1.every((x) => x === 50), 'weekly / daily buys');
+    ok(Math.abs(d3.reduce((a, x) => a + x, 0) - 10 * Math.ceil(300 / 3)) < 1e-9, 'every third trading day: ' + d3.reduce((a, x) => a + x, 0));
+    const r = S.xirr([[Date.UTC(2020, 0, 1), -100], [Date.UTC(2021, 0, 1), 110]]);
+    ok(Math.abs(r - 0.1) < 0.002, 'xirr of +10% in a year: ' + r);
+    ok(Math.abs(S.xirr([[0, -100], [365.25 * 864e5, -100], [2 * 365.25 * 864e5, 231]]) - 0.1) < 0.002, 'xirr of two payments');
+    const V = await S.build(Object.assign(S.parseState(''), { k: 'growth', t: 'AAA,BBB', from: start, amt: '0', rec: '100', ri: '1', ru: 'm' }));
+    const L = V.grid.length - 1, put = V.contrib[L];
+    ok(V.dca && put > 6000 && put === V.dca.put && V.base == null && V.series.every((x) => x.v[L] > 0), 'monthly buys build: ' + put);
+    V.style = 'line'; V.endCard = true; S.finish(V, V);
+    ok(/put in/.test(V.endTitle) && /%\/yr/.test(V.final[0].label), 'end card names the money put in and the yearly return: ' + V.endTitle + ' / ' + V.final[0].label);
+    for (const style of ['line', 'bars', 'area', 'tiles']) { V.style = style; for (const t of [0, 3, 8, 11.9]) S.draw(ctx, 1920, 1080, V, { theme: 'bull', dur: 12 }, t); n++; }
+    // pace and the pause at the end
+    const tm = S.timing(V, { dur: 20, hold: '0', pace: 'finale' });
+    ok(tm.hold === 0 && tm.run > 18 && S.frameIndex(V, tm, tm.intro + tm.run / 2) > L * 0.6, 'slow-motion finish runs ahead early');
+    ok(Math.abs(S.frameIndex(V, S.timing(V, { dur: 20, pace: 'linear' }), 0.8 + S.timing(V, { dur: 20, pace: 'linear' }).run / 2) - L / 2) < 1e-6, 'an even pace');
+  }
+  // a stock's dividends from its weekly history: the price as traded rebuilt from the adjusted closes
+  {
+    const th = { start: '2024-01-05', c: [9.5, 9.6, 10, 10.2], d: [[2, 0.5]] };
+    const hp = S.historyPx(th);
+    ok(Math.abs(hp.c[1] - (9.6 + 0.5)) < 1e-9 && Math.abs(hp.c[3] - 10.2) < 1e-9 && Math.abs(hp.c[0] - 9.5 * (10.1 / 9.6)) < 1e-9, 'price rebuilt: ' + hp.c);
+    ok(hp.div.length === 1 && hp.div[0][1] === 0.5, 'dividend dates');
+    ok(S.historyPx({ start: '2024-01-05', c: [9, 10], p: [9.5, 10], d: [] }).c[0] === 9.5, 'the close as traded when published');
+    files['disclosures/data/market/history/t/KO.json'] = { t: 'KO', n: 'Coca-Cola', start: '2019-12-27', c: Array.from({ length: 300 }, (_, i) => 40 * Math.exp(0.002 * i)), d: Array.from({ length: 22 }, (_, q) => [13 * q + 5, 0.4]) };
+    const V = await S.build(Object.assign(S.parseState(''), { k: 'growth', t: 'KO,AAA', from: start, div: 'split' }));
+    const ko = V.series.find((x) => x.key === 'KO'), L = ko.v.length - 1;
+    ok(ko.cash && ko.cash[L] > 0 && Math.abs(ko.v[L] - ko.price[L] - ko.cash[L]) < 1e-6, 'a stock\'s dividends on their own line');
+  }
+  // leaderboards, the spread of returns: a small panel
+  {
+    const months = 140, cos = [['AAA', 'A Corp', 'technology'], ['BBB', 'B Corp', 'energy'], ['CCC', 'C Corp', 'technology'], ['DDD', 'D Corp', 'health']];
+    const R = 'disclosures/data/market/history/rank/';
+    const quarters = []; for (let y = 2009; y <= 2020; y++) for (let q = 1; q <= 4; q++) quarters.push(y + 'Q' + q);
+    files[R + 'meta.json'] = { months: { start: '2010-01', n: months }, quarters, cos, cap_now: [500e3, 50e3, 5e3, 900e3], approx_cap: ['DDD'] };
+    const mrow = (f) => [0, ...Array.from({ length: months }, (_, i) => f(i))];
+    files[R + 'm-cap.json'] = { rows: [mrow((i) => 1e5 * (1 + i / 20)), mrow((i) => 3e5 - 1e3 * i), [60, ...Array.from({ length: 80 }, (_, i) => 5e4 + 5e3 * i)], mrow(() => 2e5)] };
+    files[R + 'm-px.json'] = { rows: [mrow((i) => 10 * Math.exp(0.02 * i)), mrow((i) => 10 * Math.exp(-0.01 * i)), mrow((i) => 10 + Math.sin(i)), mrow((i) => 10 * Math.exp(0.005 * i))] };
+    files[R + 'm-dv.json'] = { rows: [mrow((i) => 100 + i), mrow(() => 50), mrow(() => 10), mrow(() => 300)] };
+    const qrow = (f) => [0, ...quarters.map((_, i) => f(i))];
+    files[R + 'q-rev.json'] = { rows: [qrow((i) => 100 + 5 * i), qrow(() => 300), qrow((i) => 10 * (i + 1)), []] };
+    files[R + 'q-ni.json'] = { rows: [qrow(() => 20), qrow(() => -5), qrow(() => 1), []] };
+    files[R + 'q-oi.json'] = { rows: [qrow(() => 30), qrow(() => 10), qrow(() => 2), []] };
+    let V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'cap', top: '3', from: '2010-06-30', to: '2020-12-31' }));
+    ok(V.kind === 'rank' && V.rankN === 3 && V.grid.length > 100 && V.series.length >= 3, 'market value leaderboard');
+    S.finish(V, V); ok(V.final.length === 3 && /^1\. /.test(V.final[0].label), 'leaderboard end card');
+    const first = V.final[0].label;
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'cap', top: '3', ord: 'asc', from: '2010-06-30', to: '2020-12-31' }));
+    S.finish(V, V); ok(V.final[0].label !== first, 'lowest first');
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'cap', top: '3', sec: 'technology', from: '2010-06-30' }));
+    ok(V.series.every((x) => x.sec === 'technology'), 'one sector');
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'cap', top: '3', cmin: '100', capby: 'now', from: '2010-06-30' }));
+    ok(V.series.map((x) => x.key).sort().join() === 'AAA,DDD', 'a market-value range (today)');
+    ok([...V.notes].some((x) => /DDD/.test(x)), 'approximate market values are named');
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'pe', top: '3', from: '2011-06-30', to: '2019-12-31', step: 'q' }));
+    ok(V.quarterly && V.series.every((x) => x.key !== 'BBB'), 'P/E leaves losses out');
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'growth', top: '2', minrev: '0', from: '2012-01-31', to: '2019-12-31' }));
+    ok(V.series.some((x) => x.key === 'CCC'), 'revenue growth');
+    V = await S.build(Object.assign(S.parseState('k=rank'), { rm: 'ret', win: '12', top: '2', from: '2012-01-31', to: '2019-12-31' }));
+    S.finish(V, V); ok(V.final[0].label === '1. AAA', '12-month return');
+    for (const t of [0, 2, 6, 11.9]) for (const ar of [[1920, 1080], [1080, 1920]]) { V.endCard = true; S.draw(ctx, ar[0], ar[1], V, { theme: 'clean', dur: 12 }, t); n++; }
+    await assert.rejects(S.build(Object.assign(S.parseState('k=dist'), { from: '2011-01-01' })), /twenty|enough/); n++;
+    // forty companies: the spread of each year's returns
+    S.resetPanel();
+    const many = Array.from({ length: 40 }, (_, j) => ['T' + j, 'T' + j + ' Inc', j % 2 ? 'energy' : 'technology']);
+    files[R + 'meta.json'] = { months: { start: '2010-01', n: months }, quarters, cos: many, cap_now: many.map(() => 1e4) };
+    files[R + 'm-px.json'] = { rows: many.map((_, j) => mrow((i) => 10 * Math.exp((j - 20) * 0.002 * i + 0.05 * Math.sin(i + j)))) };
+    V = await S.build(Object.assign(S.parseState('k=dist'), { from: '2011-01-01' }));
+    S.finish(V, V);
+    ok(V.kind === 'dist' && V.hist.yrs.length >= 8 && V.final.length >= 2 && Math.abs(V.hist.yrs[2].shares.reduce((a, x) => a + x, 0) - 1) < 1e-9, 'the spread of returns');
+    V.style = 'hist'; V.endCard = true; for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 5, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: 'bull', dur: 12 }, t);
+    n++;
+  }
+  // drawdowns and monthly returns
+  {
+    let V = await S.build(Object.assign(S.parseState('k=drawdown'), { t: 'AAA,BBB', from: start }));
+    ok(V.series.every((x) => x.v.every((v) => v == null || v <= 1e-12)) && V.series.some((x) => x.v.some((v) => v < -0.01)), 'drawdowns are at or below zero');
+    S.finish(V, V);
+    for (const style of ['area', 'line', 'bars', 'tiles']) { V.style = style; V.endCard = true; for (const t of [0, 5, 11.9]) S.draw(ctx, 1920, 1080, V, { theme: 'bull', dur: 12 }, t); n++; }
+    V = await S.build(Object.assign(S.parseState('k=calendar'), { t: 'AAA', from: '2021-01-01' }));
+    ok(V.cal.years.length >= 3 && V.cal.cells.filter((c) => c[2] != null).length > 30, 'monthly returns');
+    S.finish(V, V); ok(V.final.length >= 4 && /in all/.test(V.endTitle), 'monthly returns end card');
+    V.style = 'heat'; V.endCard = true; for (const ar of [[1920, 1080], [1080, 1920], [1080, 1080]]) for (const t of [0, 5, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: 'clean', dur: 12 }, t);
+    n++;
+  }
   // the page loads the studio, the router and the menu know it
   const idx = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'utf8'), app = fs.readFileSync(path.join(__dirname, '..', 'web', 'app.js'), 'utf8'), nav = fs.readFileSync(path.join(__dirname, '..', 'web', 'nav.js'), 'utf8');
   ok(idx.includes('<script src="studio.js"></script>') && app.includes('window.FFStudio.render') && nav.includes("'#studio'"), 'the studio is not wired into the page');
