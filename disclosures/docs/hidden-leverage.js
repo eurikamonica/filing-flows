@@ -86,11 +86,13 @@
     if (!tables.length) s += noData('No clearly named USD annual schedule extracted from the latest filing. Not evidence that the issuer has no obligations.');
     else s += tables.map(t => '<div class="hl-evidence"><div class="hl-flex"><h3>' + esc(t.label || t.key) +
       '</h3><span class="muted">Review required · ' + esc(t.review_lane || '') + '</span></div>' +
-      '<p class="sub">' + esc(t.context || '') + '</p><div class="hl-scroll"><table class="hl-table">' +
+      '<p class="sub">' + esc(t.context || '') + '</p>' +
+      (finite(t.amount_usd) ? '<p><strong>Reported candidate balance / maximum: ' + money(t.amount_usd) + '</strong> · ' + esc(t.amount_kind || '') + '</p>' : '') +
+      ((t.payments || []).length ? '<div class="hl-scroll"><table class="hl-table">' : '') +
       '<thead><tr><th>Payment year</th><th>Nominal USD</th><th>Original filing</th></tr></thead><tbody>' +
       (t.payments || []).map(p => '<tr><td>' + esc(String(p.year)) + '</td><td class="hl-number">' +
         money(p.amount_usd) + '</td><td>' + sec(t.source_url, t.form + ' · ' + t.filed) +
-        '</td></tr>').join('') + '</tbody></table></div>' +
+        '</td></tr>').join('') + ((t.payments || []).length ? '</tbody></table></div>' : '') +
       '<small class="hl-muted">' + esc(t.warning || '') + ' · Table #' + esc(String(t.table_index)) +
       '</small></div>').join('');
     s += '</section>';
