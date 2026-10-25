@@ -21,7 +21,7 @@ SPECS = (
      r"\b(?:variable interest entit(?:y|ies)|VIEs?|special.purpose (?:entit(?:y|ies)|vehicles?))\b.{0,110}\b(?:support|funding|guarantees?|commitment)\b"),
 )
 NUMBER = re.compile(r"^\s*\$?\s*(\d{1,3}(?:,\d{3})*|\d{4,12})(?:\.(\d{1,4}))?\s*$")
-YEAR = re.compile(r"^(?:FY\s*)?(20\d{2})$")
+YEAR = re.compile(r"^(?:(?:FY|Fiscal)\s*|Remainder of fiscal\s*)?(20\d{2})$", re.I)
 TOTAL = re.compile(r"^(?:total|aggregate|total minimum payments?|total commitments?|total obligations?)\b", re.I)
 NEGATIVE = re.compile(r"\b(?:no|none|not subject to|no such|terminated|cancelled)\b", re.I)
 
@@ -108,16 +108,19 @@ def _annual(rows, multiplier, as_of):
     """Return year -> amount, with at least two explicit future years."""
     out = {}
     base_year = int(as_of[:4])
-    # Year in first column, payment in second; reject unspecified other columns.
+    # SEC HTML often splits "$", amount and spacer into distinct cells.
+    # Accept only ONE numeric amount per row to avoid silently mixing operating
+    # versus finance lease columns. Preserve the exact issuer-year label.
     for r in rows:
-        if len(r) != 2:
+        if len(r) < 2:
             continue
         match = YEAR.fullmatch(r[0].strip())
         if match:
             year = int(match.group(1))
-            v = _amount(r[1], multiplier)
-            if base_year < year <= base_year + 25 and v is not None:
-                out.setdefault(year, v)
+            amounts = [_amount(cell, multiplier) for cell in r[1:]]
+            amounts = [n for n in amounts if n is not None]
+            if base_year < year <= base_year + 25 and len(amounts) == 1:
+                out.setdefault(year, amounts[0])
     if len(out) >= 2:
         return out
     # Year columns and exactly one named amounts row.
