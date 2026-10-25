@@ -341,40 +341,139 @@ def underlyings(root, cfg):
     return out[:int(cfg.get('max_tickers', 90))]
 
 
-def collect(client, root, cfg=None):
+# Explicitly prioritize requested and commonly viewed symbols. Do not depend on
+# a ticker being inside the 13F hot list or below a broad-universe cutoff.
+DEFAULT_FAST = (
+    'AAPL', 'NVDA', 'MSFT', 'AMZN', 'META', 'GOOGL', 'GOOG', 'TSLA',
+    'AVGO', 'AMD', 'PLTR', 'OKLO', 'IREN', 'CRWV', 'NBIS',
+    'SPY', 'QQQ', 'IWM', 'SPX', 'TLT',
+)
+
+
+def _symbols(values):
+    seen = set()
+    out = []
+    for value in values or ():
+        t = str(value or '').strip().upper().replace('.', '-')
+        if re.fullmatch(r'[A-Z]{1,5}(-[A-Z])?', t) and t not in seen:
+            out.append(t)
+            seen.add(t)
+    return out
+
+
+def fast_underlyings(root, cfg, requested=()):
+    """Fast lane: explicit requests, priority missing paths, then hot names.
+
+    Reading the already-published detail is cheap and targets precisely the
+    failure mode where CBOE chain metrics exist but option-implied paths don't.
+    """
+    root = Path(root)
+    priority = _symbols(cfg.get('fast_priority') or DEFAULT_FAST)
+    wanted = _symbols(requested)
+    regular = underlyings(root, cfg)
+    def missing_paths(ticker):
+        doc = read_json(root / 'market' / 'options' / (ticker + '.json'), {})
+        return not isinstance(doc.get('paths'), list) or not doc['paths']
+    order = wanted + [t for t in priority if missing_paths(t)] + priority
+    order += [t for t in regular if missing_paths(t)]
+    cap = max(1, min(50, int(cfg.get('fast_max_tickers', 22))))
+    return _symbols(order)[:max(cap, len(wanted))]
+
+
+def collect(client, root, cfg=None, *, fast=False, requested=()):
+    """Publish a partial scan without erasing previously valid CBOE snapshots.
+
+    A failed CBOE request does not turn a previously sourced ticker into "no
+    options". Every successfully refreshed row has its own CBOE source timestamp;
+    older retained rows must never be presented as updated just because another
+    symbol was refreshed.
+    """
     cfg = cfg or {}
     root = Path(root)
-    today = dt.date.today()
+    today = dt.datetime.now(dt.timezone.utc).date()
     hist_path = root / 'cache' / 'options' / 'history.json'
     hist = read_json(hist_path, {})
     out_dir = root / 'market' / 'options'
     out_dir.mkdir(parents=True, exist_ok=True)
-    rows, errors = [], []
-    for t in underlyings(root, cfg):
+    index_path = root / 'market' / 'options.json'
+    old = read_json(index_path, {})
+    old_rows = old.get('rows') if isinstance(old.get('rows'), list) else []
+    rows_by = {row['ticker']: dict(row) for row in old_rows
+               if isinstance(row, dict) and row.get('ticker')}
+    # Backfill provenance from existing detail JSON where legacy index rows
+    # contain no per-ticker timestamp; do not invent a quote date.
+    for t, row in rows_by.items():
+        if not row.get('as_of'):
+            detail = read_json(out_dir / (t + '.json'), {})
+            if detail.get('as_of'):
+                row['as_of'] = detail['as_of']
+    targets = fast_underlyings(root, cfg, requested) if fast else underlyings(root, cfg)
+    errors, updated = [], []
+    for t in targets:
         try:
             payload = client.json(URL.format(sym=cboe_symbol(t)))
             spot, iv30, chg, chain = parse_chain(payload)
             s, d = summarise(t, spot, iv30, chg, chain, today)
+            if not s:
+                raise ValueError('no valid option chain / spot')
+            stamp = payload.get('timestamp') or (payload.get('data') or {}).get('timestamp')
+            s['as_of'] = stamp       # quote timestamp from CBOE, NOT scan time
+            s['collected_at'] = now()
+            # Write details only on successful parsing; preserve a previous
+            # sourced detail and its paths when a request fails.
+            write_json(out_dir / (t + '.json'), {
+                **d, 'as_of': stamp, 'generated_at': s['collected_at']})
+            rows_by[t] = s
+            updated.append(t)
+            h = [r for r in hist.get(t, []) if r[0] != today.isoformat()]
+            h.append([today.isoformat(), s['spot'], s['iv30'], s['pc_oi'],
+                      s['net_gex'], s['skew25']])
+            keep = (today - dt.timedelta(days=int(cfg.get('keep_days', 400)))).isoformat()
+            hist[t] = [r for r in h if r[0] >= keep]
         except Exception as exc:
             errors.append(f'{t}: {str(exc)[:120]}')
-            continue
-        if not s:
-            continue
-        rows.append(s)
-        (out_dir / f'{t}.json').write_text(json.dumps({**d, 'as_of': payload.get('timestamp'), 'generated_at': now()},
-                                                      separators=(',', ':')), encoding='utf-8')
-        h = [r for r in hist.get(t, []) if r[0] != today.isoformat()]
-        h.append([today.isoformat(), s['spot'], s['iv30'], s['pc_oi'], s['net_gex'], s['skew25']])
-        keep = (today - dt.timedelta(days=int(cfg.get('keep_days', 400)))).isoformat()
-        hist[t] = [r for r in h if r[0] >= keep]
     write_json(hist_path, hist)
-    for r in rows:                                       # IV30 percentile over the stored history
-        ivs = [x[2] for x in hist.get(r['ticker'], []) if x[2] is not None]
-        r['iv30_pct'] = round(sum(v <= r['iv30'] for v in ivs) / len(ivs), 3) if r.get('iv30') is not None and len(ivs) >= 20 else None
-        r['history'] = hist.get(r['ticker'], [])[-60:]
-    pub = {'generated_at': now(), 'rows': rows, 'errors': errors[:20],
-           'note': ('CBOE delayed quotes (about 15 minutes late), summarised once a day after the close. GEX assumes dealers are '
-                    'long calls and short puts (calls +, puts −) and is a model, not a disclosure; the gamma flip is approximated '
-                    'from cumulative GEX by strike. Max pain uses the nearest monthly expiry.')}
-    (root / 'market' / 'options.json').write_text(json.dumps(pub, separators=(',', ':')), encoding='utf-8')
-    return {'status': 'ok' if rows else 'error', 'underlyings': len(rows), 'errors': len(errors), 'updated_at': now()}
+    for ticker, row in rows_by.items():
+        ivs = [r[2] for r in hist.get(ticker, []) if len(r) > 2 and r[2] is not None]
+        row['iv30_pct'] = (round(sum(v <= row['iv30'] for v in ivs) / len(ivs), 3)
+                           if row.get('iv30') is not None and len(ivs) >= 20 else None)
+        if ticker in updated or 'history' not in row:
+            row['history'] = hist.get(ticker, [])[-60:]
+    # Keep priority/recently rescanned symbols first without discarding others.
+    order = list(dict.fromkeys(list(targets) + [r['ticker'] for r in old_rows
+                                   if isinstance(r, dict) and r.get('ticker')] + list(rows_by)))
+    rows = [rows_by[t] for t in order if t in rows_by]
+    pub = {
+        'generated_at': now(), 'rows': rows, 'errors': errors[:50],
+        'scan': {'mode': 'supplement' if fast else 'full', 'requested': len(targets),
+                 'updated': len(updated), 'retained': len(rows) - len(updated),
+                 'failed': len(errors), 'updated_tickers': updated},
+        'note': ('CBOE delayed quotes (usually about 15 minutes late); source as_of is per underlying. '
+                 'The full universe refreshes after the close and priority symbols have supplemental '
+                 'scans during weekdays. Failed requests retain older sourced snapshots; GEX is '
+                 'a model, not a disclosure. Risk-neutral price paths are not price forecasts.')
+    }
+    write_json(index_path, pub)
+    return {'status': 'ok' if updated else ('partial' if rows else 'error'),
+            'underlyings': len(rows), 'updated': len(updated), 'attempted': len(targets),
+            'errors': len(errors), 'updated_at': pub['generated_at']}
+
+
+if __name__ == '__main__':
+    import argparse
+    import tempfile
+    from core import Client
+
+    ap = argparse.ArgumentParser(description='Lightweight CBOE options collection / missing-path repair')
+    ap.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1] / 'docs' / 'data')
+    ap.add_argument('--config', type=Path, default=Path(__file__).resolve().parents[1] / 'config' / 'settings.json')
+    ap.add_argument('--fast', action='store_true', help='Prioritized supplemental scan, keeping other tickers')
+    ap.add_argument('--tickers', default='', help='Comma-separated explicit tickers (fast lane)')
+    args = ap.parse_args()
+    settings = read_json(args.config, {})
+    client = Client(tempfile.mkdtemp(prefix='ff-options-'), settings.get('http', {}))
+    result = collect(client, args.root, settings.get('options', {}),
+                     fast=args.fast, requested=args.tickers.split(',') if args.tickers else ())
+    print(json.dumps(result))
+    if result['status'] == 'error':
+        raise SystemExit(1)
