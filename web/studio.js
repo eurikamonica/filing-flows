@@ -897,39 +897,112 @@
     return out;
   }
   // the dividend snowball: dividends buying more shares, which pay more dividends
+  // Realized historical dividend income (not a forward-yield promise).
+  // 52 observed weekly periods form the terminal annual dividend window.
+  const snowIncome = paid => paid.slice(-52).reduce((sum, x) => sum + (x || 0), 0);
   async function buildSnowball(st, out, T) {
     if (!T.length) throw new Error('Add a dividend payer, e.g. SCHD or KO');
     const P = new Map();
-    await Promise.all(T.slice(0, 3).map(async (s) => { const p = await price(s); if (p && p.px && p.px.div && p.px.div.length) P.set(s, p); }));
-    T.slice(0, 3).filter((s) => !P.has(s)).forEach((s) => out.notes.add(s + ': no dividends on file (yet) — left out'));
+    await Promise.all(T.slice(0, 3).map(async s => {
+      const p = await price(s);
+      if (p && p.px && p.px.div && p.px.div.length) P.set(s, p);
+    }));
+    T.slice(0, 3).filter(s => !P.has(s)).forEach(s =>
+      out.notes.add(s + ': no dividend history found; excluded'));
     if (!P.size) throw new Error('None of these has dividends on file');
-    const have = [...P.values()], to = Math.min(st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(), ...have.map((p) => p.px.t[p.px.t.length - 1]));
+    const have = [...P.values()];
+    const to = Math.min(st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(),
+      ...have.map(p => p.px.t[p.px.t.length - 1]));
     let from = st.from ? Date.parse(st.from + 'T00:00:00Z') : to - 15 * 365.25 * DAY;
-    from = Math.max(from, ...have.map((p) => p.px.t[0]));
-    const G = weeklyGrid(iso(from), iso(to)); if (G.length < 30) throw new Error('Less than half a year in that range');
-    const lump = Math.max(0, +st.amt || 10000), rec = Math.max(0, +st.rec || 0), buys = buySchedule(G, rec, +st.ri || 1, UNITS[st.ru] ? st.ru : 'm', from);
-    for (const [s, p] of P) {
+    from = Math.max(from, ...have.map(p => p.px.t[0]));
+    const G = weeklyGrid(iso(from), iso(to));
+    if (G.length < 30) throw new Error('Less than half a year of usable price history');
+    const initial = Number.isFinite(+st.amt) ? Math.max(0, +st.amt) : 10000;
+    const recurring = Number.isFinite(+st.rec) ? Math.max(0, +st.rec) : 0;
+    const unit = UNITS[st.ru] ? st.ru : 'm', every = Math.max(1, Math.round(+st.ri || 1));
+    // The schedule is computed once at $1 per buy. Simulation is linear
+    // in starting capital and contributions, including compounded DRIP units.
+    const unitBuys = buySchedule(G, 1, every, unit, from);
+    const target = +st.sgoal || 0, reverse = target > 0;
+    if (reverse && (!Number.isFinite(target) || target > 1e12))
+      throw Error('Enter a finite positive terminal dividend goal below $1 trillion');
+    if (reverse && G.length < 52)
+      throw Error('Backward income calculation requires at least 52 weekly observations for the terminal 12-month dividend estimate.');
+    const targetAnnual = reverse ? target * (st.sunit === 'annual' ? 1 : 12) : null;
+    const solveFor = st.ssolve === 'rec' ? 'rec' : 'lump';
+    out.snowGoal = reverse ? { requested: target, unit: st.sunit === 'annual' ? 'annual' : 'monthly',
+      annual: targetAnnual, solveFor, results: [] } : null;
+    for (const [sym, p] of P) {
       const pr = priceOn(p, G), dv = divsOn(p, G), i0 = pr.findIndex(fin);
       if (i0 < 0) continue;
-      let sh = 0, bought = 0, fromDiv = 0, last = null;
-      const v = [], shv = [], inc = [], paid = G.map(() => 0);
-      for (let i = 0; i < G.length; i++) {
-        const px = fin(pr[i]) ? pr[i] : last; last = px;
-        if (i < i0 || !px) { v.push(null); shv.push(null); inc.push(null); continue; }
-        if (i > i0 && dv[i]) { const cash = sh * dv[i]; paid[i] = cash; const add = cash / px; sh += add; fromDiv += add; }
-        const put = (i === i0 ? lump : 0) + buys[i]; if (put) { sh += put / px; bought += put / px; }
-        v.push(sh * px); shv.push(sh);
-        let s52 = 0; for (let j = Math.max(0, i - 51); j <= i; j++) s52 += paid[j];
-        inc.push(i - i0 >= 51 ? s52 : null);
+      // Dividend payment happens before new purchases in this weekly slot.
+      function simulate(lump, perBuy) {
+        let shares = 0, bought = 0, fromDiv = 0, last = null, firstShares = null;
+        const v = [], sh = [], inc = [], paid = G.map(() => 0);
+        for (let i = 0; i < G.length; i++) {
+          const px = fin(pr[i]) ? pr[i] : last;
+          if (fin(px) && px > 0) last = px;
+          if (i < i0 || !last) { v.push(null); sh.push(null); inc.push(null); continue; }
+          if (i > i0 && dv[i]) {
+            const cash = shares * dv[i];
+            paid[i] = cash;
+            const added = cash / last;
+            shares += added; fromDiv += added;
+          }
+          const contribution = (i === i0 ? lump : 0) + unitBuys[i] * perBuy;
+          if (contribution) { shares += contribution / last; bought += contribution / last; }
+          if (i === i0) firstShares = shares;
+          v.push(shares * last); sh.push(shares);
+          inc.push(i - i0 >= 51 ? snowIncome(paid.slice(0, i + 1)) : null);
+        }
+        const annualIncome = snowIncome(paid);
+        return { v, sh, inc, paid, bought, fromDiv, initialShares: firstShares,
+          finalShares: sh[sh.length - 1], annualIncome, monthlyIncome: annualIncome / 12 };
       }
-      const yearly = {};
-      G.forEach((g, i) => { const y = new Date(g).getUTCFullYear(); yearly[y] = (yearly[y] || 0) + paid[i]; });
-      out.series.push({ key: s, label: s, name: p.name, v, sh: shv, inc, paid, yearly, bought, fromDiv, sh0: lump / pr[i0] });
+      let lump = initial, perBuy = recurring;
+      if (reverse) {
+        const base = solveFor === 'lump' ? simulate(0, recurring).annualIncome :
+          simulate(initial, 0).annualIncome;
+        const perDollar = solveFor === 'lump' ? simulate(1, 0).annualIncome :
+          simulate(0, 1).annualIncome;
+        if (!(perDollar > 1e-15)) {
+          out.notes.add(sym + ': no dividend-producing purchases in the selected period; cannot solve this target.');
+          continue;
+        }
+        const needed = Math.max(0, (targetAnnual - base) / perDollar);
+        if (solveFor === 'lump') lump = needed;
+        else perBuy = needed;
+        if (base >= targetAnnual) out.notes.add(sym +
+          ': fixed contributions already meet or exceed the dividend goal; solved amount is zero.');
+      }
+      const r = simulate(lump, perBuy), yearly = {};
+      G.forEach((g, i) => { const y = new Date(g).getUTCFullYear(); yearly[y] = (yearly[y] || 0) + r.paid[i]; });
+      out.series.push({ key: sym, label: sym, name: p.name, v:r.v, sh:r.sh, inc:r.inc,
+        paid:r.paid, yearly, bought:r.bought, fromDiv:r.fromDiv, sh0:r.initialShares,
+        initialShares:r.initialShares, finalShares:r.finalShares, annualIncome:r.annualIncome,
+        monthlyIncome:r.monthlyIncome, initialCash:lump, perBuy, purchases:unitBuys.filter(Boolean).length });
+      if (reverse) out.snowGoal.results.push({ticker:sym, initialCash:lump, perBuy,
+        annualIncome:r.annualIncome, monthlyIncome:r.monthlyIncome, initialShares:r.initialShares,
+        finalShares:r.finalShares, annualGoal:targetAnnual, achieved:r.annualIncome >= targetAnnual - .01});
     }
-    let c = 0; out.contrib = G.map((_, i) => (c += (i === 0 ? lump : 0) + buys[i]));
-    out.kind = 'snowball'; out.scf = st.scf === 'annual' ? 'annual' : 'monthly'; out.grid = G; out.fmt = (v) => money(v); out.unit = '
-    out.title = out.title || `The dividend snowball: ${out.series.map((x) => x.key).join(' vs ')}`;
-    out.sub = out.sub || `${money(lump, 0)} to start${rec ? ` + ${money(rec, 0)} every ${(+st.ri || 1) > 1 ? st.ri + ' ' + UNITS[st.ru || 'm'][1] : UNITS[st.ru || 'm'][0]}` : ''} · every dividend buys more shares at that week's price · ${dayLabel(G[0])} → ${dayLabel(G[G.length - 1])}`;
+    if (!out.series.length) throw Error('No eligible dividend series could be calculated for this target and date range');
+    let contrib = 0;
+    const sample = out.series[0];
+    out.contrib = G.map((_, i) => (contrib += (i === 0 ? sample.initialCash : 0) +
+      unitBuys[i] * sample.perBuy));
+    out.kind = 'snowball'; out.scf = st.scf === 'annual' ? 'annual' : 'monthly';
+    out.grid = G; out.fmt = v => money(v); out.unit = '$';
+    const names = out.series.map(s => s.key).join(' vs ');
+    const interval = every > 1 ? every + ' ' + UNITS[unit][1] : UNITS[unit][0];
+    out.title = reverse ? 'The dividends needed: ' + names : 'The dividend snowball: ' + names;
+    out.sub = reverse ?
+      money(target, 0) + (st.sunit === 'annual' ? '/year' : '/month') +
+      ' terminal dividend target · reverse-calculated ' + (solveFor === 'lump' ? 'starting capital' : 'scheduled buy') +
+      ' · dividends reinvested · ' + dayLabel(G[0]) + ' → ' + dayLabel(G[G.length - 1]) :
+      money(initial, 0) + ' to start' + (recurring ? ' + ' + money(recurring, 0) + ' every ' + interval : '') +
+      ' · every dividend buys more shares at that week’s price · ' +
+      dayLabel(G[0]) + ' → ' + dayLabel(G[G.length - 1]);
+    if (reverse) out.notes.add('Backward calculation is an IN-SAMPLE historical scenario, NOT a future forecast. Terminal income is actual gross distributions received over the final 52 weekly observations; monthly equivalent = annual / 12, even if payments are quarterly. Dividends are reinvested.');
     return out;
   }
   // bought at the top every year, at the bottom, on the first day, or a little every month — the same money each year
