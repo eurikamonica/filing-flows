@@ -156,6 +156,17 @@ function openTimeline(t){
  else if(url(anchor.source_url))root.open(url(anchor.source_url),'_blank','noopener');
  return true;
 }
+function openWatchBrief(){
+ const T=timeline(),watch=watchSet(settings);
+ if(!T||!watch.length){if(inbox)inbox.append(el('p','flo-pulse-note',isZH()?'先输入关注股票并保存，例如 OKLO、IREN、CRWV。':'Set your watchlist in the inbox first.'));return false;}
+ const observation=items.find(e=>watch.some(t=>e.ticker===t||(e.symbols||[]).includes(t)));
+ if(!observation){if(inbox)inbox.append(el('p','flo-pulse-note',isZH()?'当前摘要没有关注股票的记录。':'No matching watched ticker signals in this snapshot.'));return false;}
+ const result=T.watchBrief(items,watch,isZH(),{days:14});
+ closeToast();if(inbox)inbox.hidden=true;
+ if(root.FFMascot&&root.FFMascot.showSignal)root.FFMascot.showSignal(observation,result.html);
+ else if(url(observation.source_url))root.open(url(observation.source_url),'_blank','noopener');
+ return true;
+}
 function openEvent(event){
  closeToast();if(inbox)inbox.hidden=true;
  if(root.FFMascot&&root.FFMascot.showSignal)root.FFMascot.showSignal(event,explain(event,isZH(),items));
@@ -226,7 +237,9 @@ function renderInbox(){
  query.type='text';query.maxLength=10;query.placeholder='NVDA';query.value=watchSet(settings)[0]||'';
  query.setAttribute('aria-label','Stock ticker for event timeline');
  timelineOpen.addEventListener('click',()=>openTimeline(query.value.trim().toUpperCase()));
- timelineControls.append(query,timelineOpen);inbox.append(timelineControls);
+ const briefBtn=el('button','',isZH()?'关注名单摘要':'Watchlist brief');
+ briefBtn.addEventListener('click',openWatchBrief);
+ timelineControls.append(query,timelineOpen,briefBtn);inbox.append(timelineControls);
  const matches=items.filter(e=>shown(e,settings)).slice(0,45);
  if(!matches.length)inbox.append(el('p','',isZH()?'没有匹配的新发布数据。':'No matching published events.'));
  for(const e of matches){
@@ -279,18 +292,23 @@ async function poll(){
 }
 function style(){
  const s=el('style');s.id='flo-pulse-style';
- s.textContent='.flo-pulse-toast,.flo-pulse-list{position:fixed;right:18px;bottom:112px;z-index:9005;width:min(355px,calc(100vw - 25px));background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:13px;padding:12px;box-shadow:0 11px 30px #0003;font:12px/1.5 Arial,sans-serif}.flo-pulse-toast[hidden],.flo-pulse-list[hidden]{display:none}.flo-pulse-toast{border-left:4px solid var(--accent,#17734a);animation:flo-pulse-arrive .3s ease-out}.flo-pulse-toast[data-kind="8k"]{border-left-color:#cf5a57}.flo-pulse-toast[data-kind="13f"]{border-left-color:#5680cb}.flo-pulse-toast[data-kind="price"]{border-left-color:#dca13b}.flo-pulse-head,.flo-pulse-actions{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}.flo-pulse-toast p{margin:7px 0}.flo-pulse-toast button,.flo-pulse-list button,.flo-pulse-pill{border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);padding:4px 8px;border-radius:7px;cursor:pointer;font:12px Arial,sans-serif}.flo-pulse-list{max-height:55vh;overflow:auto}.flo-pulse-list .flo-pulse-item{padding:6px 0;border-bottom:1px solid var(--line,#ccc)}.flo-pulse-list .flo-pulse-item button{text-align:left}.flo-pulse-list small{display:block;color:var(--muted,#777)}.flo-pulse-types{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.flo-pulse-types label{white-space:nowrap;font-size:11px}.flo-pulse-list input[type=text]{width:140px;max-width:100%;padding:5px;color:inherit;background:inherit;border:1px solid var(--line,#ccc);border-radius:6px}.flo-pulse-pill{position:fixed;right:110px;bottom:29px;z-index:9004;box-shadow:0 3px 10px #0002}.flo-pulse-note{font-size:11px;color:var(--muted,#777)}.flo-pulse-timeline-action{margin-left:6px}.flo-event-timeline h3{font-size:14px;margin:4px 0 8px}.flo-timeline-list{margin:8px 0 12px;padding:0 0 0 19px}.flo-timeline-list li{border-left:2px solid var(--line,#ccc);padding:3px 7px 10px;margin-bottom:7px}.flo-timeline-list li p{margin:4px 0}.flo-timeline-list small,.flo-timeline-note{font-size:11px;color:var(--muted,#777)}.flo-timeline-list a{overflow-wrap:anywhere}.flo-signal-facts ul{padding-left:18px;margin:4px 0 7px}.flo-signal-facts li{margin:3px 0}@keyframes flo-pulse-arrive{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.flo-pulse-toast{animation:none}}@media(max-width:560px){.flo-pulse-list,.flo-pulse-toast{right:8px;bottom:85px}.flo-pulse-pill{right:74px;bottom:14px}}';
+ s.textContent='.flo-pulse-toast,.flo-pulse-list{position:fixed;right:18px;bottom:112px;z-index:9005;width:min(355px,calc(100vw - 25px));background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:13px;padding:12px;box-shadow:0 11px 30px #0003;font:12px/1.5 Arial,sans-serif}.flo-pulse-toast[hidden],.flo-pulse-list[hidden]{display:none}.flo-pulse-toast{border-left:4px solid var(--accent,#17734a);animation:flo-pulse-arrive .3s ease-out}.flo-pulse-toast[data-kind="8k"]{border-left-color:#cf5a57}.flo-pulse-toast[data-kind="13f"]{border-left-color:#5680cb}.flo-pulse-toast[data-kind="price"]{border-left-color:#dca13b}.flo-pulse-head,.flo-pulse-actions{display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}.flo-pulse-toast p{margin:7px 0}.flo-pulse-toast button,.flo-pulse-list button,.flo-pulse-pill{border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:var(--ink,#222);padding:4px 8px;border-radius:7px;cursor:pointer;font:12px Arial,sans-serif}.flo-pulse-list{max-height:55vh;overflow:auto}.flo-pulse-list .flo-pulse-item{padding:6px 0;border-bottom:1px solid var(--line,#ccc)}.flo-pulse-list .flo-pulse-item button{text-align:left}.flo-pulse-list small{display:block;color:var(--muted,#777)}.flo-pulse-types{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.flo-pulse-types label{white-space:nowrap;font-size:11px}.flo-pulse-list input[type=text]{width:140px;max-width:100%;padding:5px;color:inherit;background:inherit;border:1px solid var(--line,#ccc);border-radius:6px}.flo-pulse-pill{position:fixed;right:110px;bottom:29px;z-index:9004;box-shadow:0 3px 10px #0002}.flo-pulse-note{font-size:11px;color:var(--muted,#777)}.flo-pulse-timeline-action{margin-left:6px}.flo-event-brief .flo-brief-ticker{padding:8px 0;border-top:1px solid var(--line,#ccc)}.flo-event-brief .flo-brief-ticker p{margin:3px 0}.flo-event-timeline h3{font-size:14px;margin:4px 0 8px}.flo-timeline-list{margin:8px 0 12px;padding:0 0 0 19px}.flo-timeline-list li{border-left:2px solid var(--line,#ccc);padding:3px 7px 10px;margin-bottom:7px}.flo-timeline-list li p{margin:4px 0}.flo-timeline-list small,.flo-timeline-note{font-size:11px;color:var(--muted,#777)}.flo-timeline-list a{overflow-wrap:anywhere}.flo-signal-facts ul{padding-left:18px;margin:4px 0 7px}.flo-signal-facts li{margin:3px 0}@keyframes flo-pulse-arrive{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.flo-pulse-toast{animation:none}}@media(max-width:560px){.flo-pulse-list,.flo-pulse-toast{right:8px;bottom:85px}.flo-pulse-pill{right:74px;bottom:14px}}';
  doc.head.append(s);
 }
 function timelineIntent(q){
  return /(?:事件|披露|行情|扫描|新闻).{0,10}时间线|时间线.{0,10}(?:8.?k|13f|股票|事件|披露|新闻)|(?:event|filing|stock|price|news|cross.signal).{0,8}timeline|timeline.{0,8}(?:event|filing|stock|price|news)|跨信号关联|扫描关联/i.test(String(q||''));
 }
+function watchBriefIntent(q){
+ return /(?:关注股票|自选股|关注名单).{0,10}(?:摘要|动态|新事件|新扫描|最新情况)|(?:watchlist|watched tickers).{0,9}(?:brief|updates|events|summary)|(?:brief|updates|summary).{0,9}watchlist/i.test(String(q||''));
+}
 function intent(q){
+ if(watchBriefIntent(q))return true;
  if(timelineIntent(q))return true;
  return /最近.{0,9}(?:扫描|提醒|新消息|事件|8.?k|13f)|有什么新(?:披露|新闻|扫描|提醒|8.?k|13f)|新扫描.{0,14}(?:什么|有哪些|结果)|(?:what(?:'s| is) new|new alerts|recent alerts|what changed since|recent scanner|latest published pulse|show notifications|alert inbox)/i.test(String(q||''));
 }
 function report(q,zh=false){
  const query=String(q||''),upper=query.toUpperCase();
+ if(watchBriefIntent(query)&&timeline())return timeline().watchBrief(items,watchSet(settings),zh,{days:14});
  if(timelineIntent(query)&&timeline()){
    const t=timeline(),symbol=t.tickerFromQuery(query,items)||watchSet(settings)[0]||null;
    if(symbol)return t.render(items,symbol,zh,{days:14,limit:20});
@@ -338,7 +356,7 @@ function start(){
  root.addEventListener('online',poll);
  poll();
 }
-root.FFFloAlerts={valid,normalize,compare,react,shown,explain,intent,timelineIntent,openTimeline,report,start,poll,
+root.FFFloAlerts={valid,normalize,compare,react,shown,explain,intent,timelineIntent,watchBriefIntent,openTimeline,openWatchBrief,report,start,poll,
  getState:()=>({initialized,seen:seen.slice(),settings:JSON.parse(JSON.stringify(settings)),events:items.slice(),lastError,latestBuild,scanHealth}),
  stop(){active=false;if(timer)clearTimeout(timer);}};
 if(typeof module!=='undefined')module.exports=root.FFFloAlerts;
