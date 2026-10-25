@@ -1034,6 +1034,15 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                                    'tag_groups': TG.GROUPS, 'tag_names': {t: list(TG.TAGS.get(t, (t, 'Structure'))) for t in used}}))
     lt_ = {k: merge_parties(raw_parties.get(k, []), k) for k in parties}
     wj(pub / 'parties.json', _clean({'generated_at': now(), 'fields': ['name', 'etfs', 'aum', 'x', 'y', 'crd'], 'tables': lt_}))
+    # A separate, source-dated history for Actual ETF / Index Tracking Weights videos.
+    # Does NOT modify the existing market-cap sector chart or index membership data.
+    actual_status = {}
+    try:
+        import actual_weights
+        actual_status = actual_weights.capture(root, pub, index_rows)
+    except Exception as exc:
+        actual_status = {'error': str(exc)[:200]}
+        print('actual weights skipped:', type(exc).__name__, exc, flush=True)
     st = read_json(root / 'state.json', {}) or {}
     try:                                                  # which indices each company belongs to, now and before
         import index_members
@@ -1042,7 +1051,7 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
         members = {'error': str(exc)[:200]}
         print('index members skipped:', type(exc).__name__, exc, flush=True)
     status = {'built_at': now(), 'members': members, 'etfs': len(index_rows), 'with_series': sum(1 for e in etfs if e.get('series')), 'ncen': len(ncen), 'prospectus': len(rr),
-              'nport_funds': len(hist), 'holdings': len(holds), 'holdings_source': hd.get('source'), 'companies_held': len(by), 'market': st.get('market_summary'),
+              'nport_funds': len(hist), 'holdings': len(holds), 'holdings_source': hd.get('source'), 'companies_held': len(by), 'actual_weights': actual_status, 'market': st.get('market_summary'),
               'datasets': {k: v for k, v in (st.get('datasets') or {}).items()}, 'periods13f': periods13}
     write_json(pub / 'status.json', status)
     if verbose:
