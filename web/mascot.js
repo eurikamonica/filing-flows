@@ -471,6 +471,15 @@
 .flo-dots circle{fill:var(--muted,#9a9994);animation:flo-dot 1s infinite}.flo-dots circle:nth-child(2){animation-delay:.15s}.flo-dots circle:nth-child(3){animation-delay:.3s}
 @keyframes flo-dot{0%,100%{opacity:.25}50%{opacity:1}}
 @keyframes flo-talk{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+.flo-launch[data-flo-signal="8k"] .flo-btn{box-shadow:0 0 0 6px #cf4b4b28,0 0 20px #cf4b4b90}
+.flo-launch[data-flo-signal="13f"] .flo-btn{box-shadow:0 0 0 6px #538be92b,0 0 20px #538be98c}
+.flo-launch[data-flo-signal="price"] .flo-btn{box-shadow:0 0 0 6px #e2a52e28,0 0 20px #e2a52e8c}
+.flo-launch[data-flo-signal="news"] .flo-btn{box-shadow:0 0 0 6px #3da67828,0 0 20px #3da6788c}
+.flo-half[data-flo-signal="8k"]{filter:drop-shadow(0 0 8px #d05b5b99)}
+.flo-half[data-flo-signal="13f"]{filter:drop-shadow(0 0 8px #6e9cde99)}
+.flo-half[data-flo-signal="price"]{filter:drop-shadow(0 0 8px #e3ad3b99)}
+.flo-half[data-flo-signal="news"]{filter:drop-shadow(0 0 8px #42bd8788)}
+@media(prefers-reduced-motion:reduce){.flo-launch[data-flo-signal] .flo-btn,.flo-half[data-flo-signal]{animation:none!important;filter:none!important;transition:none!important}}
 @media (prefers-reduced-motion:reduce){.flo-half,.flo-panel,.flo-hint,.flo-half *{animation:none!important;transition:none!important}}`;
 
   let ui = null, moodTimer = null;
@@ -732,6 +741,14 @@
   function signalReaction(kind, ev) {
     if (!ui) return;
     const t=nowMs(),p=ui.halves;
+    const signalKind = ['8k','13f','price','news'].includes(ev&&ev.kind)?ev.kind:'news';
+    ui.launch.dataset.floSignal=signalKind;
+    p.forEach(h=>{h.el.dataset.floSignal=signalKind;});
+    setTimeout(()=>{
+      if(!ui||ui.launch.dataset.floSignal!==signalKind)return;
+      delete ui.launch.dataset.floSignal;
+      p.forEach(h=>{if(h.el.dataset.floSignal===signalKind)delete h.el.dataset.floSignal;});
+    },5200);
     if (kind==='worried') { mood('worried',4200);p.forEach(h=>h.shake=t+720); }
     else if (ev&&ev.kind==='13f') { mood('wave',3300);p[0].spin=t+720;p[1].hop=t+460; }
     else if (ev&&ev.kind==='price') { mood(kind,2600);p.forEach((h,i)=>h.hop=t+460+i*140); }
@@ -743,6 +760,22 @@
     open();
     const box=addMsg(html,'bot');
     box.dataset.floSignal=String(ev.kind||'');
+    const ticker=/^[A-Z][A-Z0-9.\\-]{0,9}$/.test(String(ev.ticker||''))?String(ev.ticker):'';
+    if(ticker){
+      const controls=doc.createElement('div');
+      controls.className='flo-actions';
+      const q=ev.kind==='price'?ticker+' valuation':ev.kind==='13f'?ticker+' industry rotation':ticker+' latest SEC filings';
+      const explainBtn=doc.createElement('button');
+      explainBtn.type='button';explainBtn.textContent=zhUI()?'继续分析公司基本面':'Compare company fundamentals';
+      explainBtn.className='flo-action';
+      explainBtn.addEventListener('click',()=>send(q));
+      const companyLink=doc.createElement('a');
+      companyLink.href=BASE+'#t-'+encodeURIComponent(ticker);
+      companyLink.textContent=zhUI()?'打开公司财报':'Open company financials';
+      companyLink.className='flo-action flo-signal-company';
+      controls.append(explainBtn,companyLink);
+      box.append(controls);
+    }
     ui.log.scrollTop=ui.log.scrollHeight;
     mood(ev.kind==='8k'&&ev.priority==='high'?'worried':'talk',2400);
     return box;
