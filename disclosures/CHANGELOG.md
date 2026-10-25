@@ -1,5 +1,28 @@
 # Changelog
 
+## Video studio: bubbles, the market as a map, sector weights, the earnings flow, the dividend snowball, timing
+
+Six more kinds of video in `web/studio.js`, from files the site already publishes:
+- **Bubbles** (Gapminder style): any two leaderboard measures across and up (revenue growth, 12-month return, P/E,
+  P/S, P/B, margins…), bubble area by market value, revenue, net income or dollar volume, colour by sector; the N
+  largest today followed back month by month, or typed tickers. Axes fixed for the whole video (3rd–97th percentile;
+  beyond it a bubble sits whole at the edge); the month large and faint behind.
+- **The market as a map**: a squarified treemap of the top N by market value each month, grouped by sector, coloured
+  by 12-month total return (or sector).
+- **Sector weights**: each sector's share of market value as stacked areas (or dollars), with the change in points.
+- **The earnings flow**: the company page's Sankey morphing quarter to quarter on one scale (the detailed quarters
+  on file), or ten years of revenue → operating profit → net earnings from the filings; portrait and square keep the
+  income statement (revenue to net earnings). Labels fitted to the room between columns, none on top of another.
+- **The dividend snowball**: shares owned as every dividend buys more (optionally buying on a schedule), and the
+  dividends received each year.
+- **Timing**: the same money each year at that year's highest close (bought at the top), its lowest, its first week,
+  or spread over its months — value and IRR of each.
+
+Monthly kinds read the leaderboard panel (`rank/`), which now also leaves out a month's market value when a company
+worth $20 billion or more trades under 0.1% of it in the month or not at all (`rank_panel.plausible`: a reverse
+split missing from the history blows a micro cap up to hundreds of billions, not its trading). Tests:
+`tests/test_studio.cjs` (178 checks), `tests/test_rank_panel.py`.
+
 ## Weekly history from 1990; index membership, now and before
 
 The weekly grid (`rotation_history.START`) now begins on 1990-01-05: rrg.json, every t/<SYM>.json, the industry and

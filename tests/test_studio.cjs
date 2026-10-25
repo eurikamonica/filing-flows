@@ -181,6 +181,94 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     V.style = 'heat'; V.endCard = true; for (const ar of [[1920, 1080], [1080, 1920], [1080, 1080]]) for (const t of [0, 5, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: 'clean', dur: 12 }, t);
     n++;
   }
+  // six more: bubbles, the market as a map, sector weights, the earnings flow, the dividend snowball, timing
+  {
+    S.resetPanel();
+    const months = 140, R = 'disclosures/data/market/history/rank/';
+    const quarters = []; for (let y = 2009; y <= 2020; y++) for (let q = 1; q <= 4; q++) quarters.push(y + 'Q' + q);
+    const cos = [['AAA', 'A Corp', 'technology'], ['BBB', 'B Corp', 'energy'], ['CCC', 'C Corp', 'technology'], ['DDD', 'D Corp', 'health'], ['EEE', 'E Corp', 'energy'], ['FFF', 'F Corp', 'financials']];
+    files[R + 'meta.json'] = { months: { start: '2010-01', n: months }, quarters, cos, cap_now: [5e5, 5e4, 5e3, 9e5, 2e4, 1e5] };
+    const mrow = (f) => [0, ...Array.from({ length: months }, (_, i) => f(i))], qrow = (f) => [0, ...quarters.map((_, i) => f(i))];
+    files[R + 'm-cap.json'] = { rows: [mrow((i) => 1e5 * (1 + i / 20)), mrow((i) => 3e5 - 1e3 * i), mrow((i) => 5e4 + 500 * i), mrow(() => 2e5), mrow((i) => 1e4 + 100 * i), mrow((i) => 8e4 + 200 * i)] };
+    files[R + 'm-px.json'] = { rows: cos.map((_, j) => mrow((i) => 10 * Math.exp((0.004 * (j - 2)) * i + 0.03 * Math.sin(i / 3 + j)))) };
+    files[R + 'm-dv.json'] = { rows: cos.map((_, j) => mrow(() => 100 * (j + 1))) };
+    files[R + 'q-rev.json'] = { rows: cos.map((_, j) => qrow((i) => 1e4 * (j + 1) * (1 + 0.0025 * (j + 1) * i))) };
+    files[R + 'q-ni.json'] = { rows: cos.map((_, j) => qrow(() => 500 * (j + 1))) };
+    files[R + 'q-oi.json'] = { rows: cos.map((_, j) => qrow(() => 800 * (j + 1))) };
+    // bubbles
+    let V = await S.build(Object.assign(S.parseState('k=bubble'), { bn: '5', from: '2012-01-31', to: '2020-12-31' }));
+    ok(V.kind === 'bubble' && V.series.length === 5 && !V.series.some((x) => x.key === 'EEE') && V.series.every((x) => x.x.length === V.grid.length && x.s.length === V.grid.length), 'bubbles: the five largest at the end');
+    ok(V.bub.kx === 'growth' && V.bub.ky === 'ret' && V.bub.dx[0] < V.bub.dx[1] && V.bub.smax > 0, 'bubble axes');
+    S.finish(V, V); ok(V.final.length === 5 && V.final[0].label === 'AAA' && /·/.test(V.final[0].value), 'bubble end card: ' + V.final.map((r) => r.label));
+    for (const t of [0, 4, 11.9]) for (const ar of [[1920, 1080], [1080, 1920]]) { V.endCard = true; S.draw(ctx, ar[0], ar[1], V, { theme: 'bull', dur: 12 }, t); } n++;
+    V = await S.build(Object.assign(S.parseState('k=bubble'), { bt: 'AAA, CCC', bx: 'pe', by: 'growth', bs: 'rev', from: '2012-01-31', to: '2020-12-31' }));
+    ok(V.series.map((x) => x.key).join() === 'AAA,CCC' && V.bub.logx && V.metric === 'Revenue, last 12 months', 'bubbles for typed companies, P/E on a log axis');
+    S.draw(ctx, 1920, 1080, V, { theme: 'clean', dur: 12 }, 6); n++;
+    // the market as a map
+    const sq = S.squarify([6, 6, 4, 3, 2, 2, 1], 0, 0, 600, 400), area = sq.reduce((a, r) => a + r[2] * r[3], 0);
+    ok(Math.abs(area - 240000) < 1e-6 && sq.every((r) => r[0] >= -1e-9 && r[1] >= -1e-9 && r[0] + r[2] <= 600 + 1e-6 && r[1] + r[3] <= 400 + 1e-6) && Math.abs(sq[0][2] * sq[0][3] / (sq[6][2] * sq[6][3]) - 6) < 1e-6, 'squarified rectangles fill the box in proportion');
+    V = await S.build(Object.assign(S.parseState('k=treemap'), { tn: '10', from: '2011-01-31', to: '2020-12-31' }));
+    ok(V.kind === 'treemap' && V.grid.every((_, j) => V.series.filter((x) => x.v[j] > 0).length <= 10), 'the map keeps the top N each month');
+    V = await S.build(Object.assign(S.parseState('k=treemap'), { tn: '10', sec: 'energy', from: '2011-01-31', to: '2020-12-31' }));
+    ok(V.series.every((x) => x.sec === 'energy') && V.series.length === 2, 'the map, one sector');
+    V = await S.build(Object.assign(S.parseState('k=treemap'), { tn: '10', from: '2011-01-31', to: '2020-12-31' }));
+    const aaa = V.series.find((x) => x.key === 'AAA'), L = V.grid.length - 1;
+    ok(Math.abs(aaa.r[L] - (Math.exp(0.004 * -2 * 12) * Math.exp(0.03 * Math.sin(131 / 3) - 0.03 * Math.sin(119 / 3)) - 1)) < 1e-9, 'the map colours by the 12-month return');
+    S.finish(V, V); ok(V.final.length === 6 && /^1\. AAA/.test(V.final[0].label), 'map end card');
+    for (const tc of ['ret', 'sector']) { V.tm.color = tc; for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 6, 11.9]) { V.endCard = true; S.draw(ctx, ar[0], ar[1], V, { theme: tc === 'ret' ? 'bull' : 'clean', dur: 12 }, t); } n++; }
+    // sector weights
+    V = await S.build(Object.assign(S.parseState('k=sectors'), { from: '2011-01-31', to: '2020-12-31' }));
+    ok(V.kind === 'sectors' && V.grid.every((_, j) => Math.abs(V.series.reduce((a, x) => a + (x.v[j] || 0), 0) - 1) < 1e-9), 'sector shares add to 100%');
+    ok(V.series[0].key === 'health' || V.series[0].key === 'technology', 'the largest sector first');
+    S.finish(V, V); ok(V.final.length === 4 && / pts$/.test(V.final[0].change), 'sector end card in points');
+    for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 6, 11.9]) { V.endCard = true; S.draw(ctx, ar[0], ar[1], V, { theme: 'clean', dur: 12 }, t); } n++;
+    V = await S.build(Object.assign(S.parseState('k=sectors'), { sa: 'abs', from: '2011-01-31', to: '2020-12-31' }));
+    ok(!V.stack.share && V.series.find((x) => x.key === 'health').v[0] === 2e5 * 1e6, 'sector market value in dollars');
+    S.finish(V, V); S.draw(ctx, 1920, 1080, V, { theme: 'bull', dur: 12 }, 6); n++;
+  }
+  {
+    // the earnings flow: the detailed quarters when there are two or more, else ten years of revenue → profit → earnings
+    const ix = files['data/index.json']; ix.companies.push({ ticker: 'YYY', cik: 8, name: 'Why Inc', revenue: 1 });
+    const qtr = (end, label, rev, gp, oi) => ({ end, label, headline: { revenue: rev, oi, ni: oi * 0.8, yoy: 12 },
+      nodes: [{ id: 'revenue', col: 0, color: 'rev', name: 'Revenue', v: rev, lines: [['name', 'Revenue'], ['val', '$' + rev + ' &amp; more']] }, { id: 'gp', col: 1, color: 'profit', name: 'Gross profit', v: gp }, { id: 'cogs', col: 1, color: 'cost', name: 'Cost of revenue', v: rev - gp }, { id: 'oi', col: 2, color: 'profit', name: 'Operating profit', v: oi }, { id: 'opex', col: 2, color: 'cost', name: 'Operating expenses', v: gp - oi }],
+      links: [{ s: 'revenue', t: 'gp', v: gp, color: 'profit' }, { s: 'revenue', t: 'cogs', v: rev - gp, color: 'cost' }, { s: 'gp', t: 'oi', v: oi, color: 'profit' }, { s: 'gp', t: 'opex', v: gp - oi, color: 'cost' }] });
+    const q3 = qtr('2024-09-30', 'Q3 2024', 120, 70, 30); delete q3.nodes[4]; q3.nodes = q3.nodes.filter(Boolean); q3.links = q3.links.slice(0, 3);
+    files['data/c/8.json'] = { profile: { name: 'Why Inc' }, quarters: [qtr('2024-06-30', 'Q2 2024', 100, 60, 20), qtr('2024-03-31', 'Q1 2024', 90, 50, 15), q3, { end: '2024-12-31', label: 'FY 2024', nodes: [], links: [] }] };
+    let V = await S.build(Object.assign(S.parseState('k=sankey'), { t: 'YYY' }));
+    ok(V.kind === 'sankey' && !V.sk.simple && V.sk.frames.map((f) => f.label).join() === 'Q1 2024,Q2 2024,Q3 2024' && V.sk.max === 120, 'the detailed flow, quarters in order, annual left out');
+    S.finish(V, V); ok(V.final[0].label === 'Revenue' && V.final[0].value === S.money(120) && V.final[0].change === '+33%' && V.final.some((r) => r.label === 'Operating margin'), 'flow end card');
+    for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 3.3, 6.5, 11.9]) { V.endCard = true; S.draw(ctx, ar[0], ar[1], V, { theme: 'clean', dur: 12 }, t); } n++;
+    V = await S.build(Object.assign(S.parseState('k=sankey'), { t: 'ZZZ' }));
+    ok(V.sk.simple && V.sk.frames.length === 20 && [...V.notes].some((x) => /ten years/.test(x)), 'ten years of quarters when there are no detailed ones');
+    const f0 = V.sk.frames[0], sum = (id) => f0.links.filter((l) => l.s === id).reduce((a, l) => a + l.v, 0);
+    ok(Math.abs(sum('revenue') - f0.head.revenue) < 1e-9 && Math.abs(sum('oi') - f0.head.oi) < 1e-9, 'what flows out of revenue and profit adds up');
+    S.finish(V, V); for (const t of [0, 6, 11.9]) S.draw(ctx, 1920, 1080, V, { theme: 'bull', dur: 12 }, t); n++;
+    await assert.rejects(S.build(Object.assign(S.parseState('k=sankey'), { t: 'NOPE' })), /No company/); n++;
+    // the dividend snowball
+    V = await S.build(Object.assign(S.parseState('k=snowball'), { t: 'AAA,BBB', amt: '10000', from: start }));
+    const a = V.series.find((x) => x.key === 'AAA'), La = a.v.length - 1;
+    ok(a.fromDiv > 0 && Math.abs(a.sh[La] - a.bought - a.fromDiv) < 1e-9 && Math.abs(a.bought - a.sh0) < 1e-9 && a.sh[La] > a.sh0, 'dividends buy shares on top of those paid for');
+    const paid = a.paid.reduce((s, x) => s + x, 0), yearly = Object.values(a.yearly).reduce((s, x) => s + x, 0);
+    ok(Math.abs(paid - yearly) < 1e-6 && paid > 0 && V.contrib[La] === 10000, 'each year\'s dividends add up to all paid');
+    ok(a.sh.every((v, i) => !i || v == null || a.sh[i - 1] == null || v >= a.sh[i - 1] - 1e-12), 'the share count only grows');
+    S.finish(V, V); ok(V.final.length >= 2 && /shares/.test(V.final[0].label) && /^\+\d+% shares$/.test(V.final[0].change), 'snowball end card');
+    for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 5, 11.9]) { V.endCard = true; S.draw(ctx, ar[0], ar[1], V, { theme: 'bull', dur: 12 }, t); } n++;
+    V = await S.build(Object.assign(S.parseState('k=snowball'), { t: 'AAA', amt: '0', rec: '100', ri: '1', ru: 'm', from: start }));
+    ok(V.series[0].bought > 0 && V.contrib[V.contrib.length - 1] > 5000, 'the snowball with monthly buying');
+    // timing
+    V = await S.build(Object.assign(S.parseState('k=timing'), { t: 'AAA', yb: '2000', from: '2020-01-01' }));
+    const end = (k) => V.series.find((x) => x.key === k).v[V.grid.length - 1];
+    ok(V.kind === 'timing' && V.series.length === 4 && V.timing.years === 5 && V.contrib[V.grid.length - 1] === 10000, 'four strategies, the same money each year: ' + V.timing.years);
+    ok(['first', 'monthly', 'worst'].every((k) => end('best') >= end(k) - 1e-9) && ['best', 'first', 'monthly'].every((k) => end('worst') <= end(k) + 1e-9), 'the bottom beats everything, the top loses to everything');
+    ok(V.series.every((s) => Math.abs(-s.flows.reduce((x, f) => x + f[1], 0) - 10000) < 1e-6), 'every plan puts in the same money');
+    ok(V.series.every((s) => s.v.every((v, i) => i === 0 || v != null)), 'cash waiting for the buy counts in the value');
+    S.finish(V, V); ok(V.final.length === 4 && V.final[0].name === 'Bought at the bottom' && V.final[3].name === 'Bought at the top' && /%\/yr/.test(V.final[0].label) && /^Worst timing/.test(V.endTitle), 'timing end card');
+    for (const style of ['line', 'bars', 'tiles']) { V.style = style; for (const t of [0, 5, 11.9]) { V.endCard = true; S.draw(ctx, 1920, 1080, V, { theme: 'sunset', dur: 12 }, t); } n++; }
+    // the templates all parse and each new kind has one
+    ok(['bubble', 'treemap', 'sectors', 'sankey', 'snowball', 'timing'].every((k) => S.TEMPLATES.some((t) => t.s.k === k)), 'a template for each new kind');
+    const tl = S.TEMPLATES.find((t) => t.s.k === 'timing');
+    ok(S.parseState(S.serialize(Object.assign(S.parseState(''), tl.s)).slice(7)).yb === '2000', 'the timing address keeps the yearly amount');
+  }
   // the page loads the studio, the router and the menu know it
   const idx = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'utf8'), app = fs.readFileSync(path.join(__dirname, '..', 'web', 'app.js'), 'utf8'), nav = fs.readFileSync(path.join(__dirname, '..', 'web', 'nav.js'), 'utf8');
   ok(idx.includes('<script src="studio.js"></script>') && app.includes('window.FFStudio.render') && nav.includes("'#studio'"), 'the studio is not wired into the page');

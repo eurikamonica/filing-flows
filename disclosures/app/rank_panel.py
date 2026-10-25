@@ -31,6 +31,9 @@ Today's market value from Nasdaq's screener checks every company: where the late
 share count in the last 400 days gets today's count held back at most five years (approx_cap in meta.json, flagged in
 the studio). stats.check in meta.json reports how many agreed within 10% before these corrections.
 
+A month's value is left out when it cannot be right (see plausible: a missing reverse split blows a micro cap up to
+hundreds of billions, but not its trading); stats.implausible counts them.
+
 Survivorship: today's companies only — names that were delisted, merged or went bankrupt are missing from earlier
 leaderboards; the studio says so on the video.
 """
@@ -229,6 +232,17 @@ def unit_slips(vals):
     return out
 
 
+def plausible(c, dv, shares, n_last):
+    """A backstop for a reverse split missing from the history (the share count then × a price on today's basis): no
+    value near $15 trillion, none worth 10,000 months of its trading, a count at most twenty times today's (buybacks never
+    shrink one that far) — and a company worth $20 billion or more trades at least 0.1% of itself in a month (the
+    thinnest real ones, ADRs of a foreign company, trade several times that; a reverse-split micro cap blown up to
+    hundreds of billions trades a hundredth of it)."""
+    if c > 15e12 or (dv and c > 1e4 * dv) or (n_last and shares > 20 * n_last):
+        return False
+    return c < 20e9 or bool(dv and c <= 1e3 * dv)
+
+
 def trim(vals):
     """[v, v, …] on the grid → [i0, v, …] without the leading and trailing gaps, or []."""
     idx = [i for i, v in enumerate(vals) if v is not None]
@@ -338,9 +352,7 @@ def build(out_dir, companies, docs, frames_root=None, today=None, names=None, na
                 v = asof(sh, month_end(m))
                 if v:
                     c = pt[i] * v
-                    # a backstop for a reverse split missing from the history: twenty times today's share count (buybacks
-                    # never shrink a count that far), a value near $15 trillion, or worth 10,000 months of its trading
-                    if c > 15e12 or (dv[i] and c > 1e4 * dv[i]) or (n_last and v > 20 * n_last):
+                    if not plausible(c, dv[i], v, n_last):
                         stats['implausible'] = stats.get('implausible', 0) + 1
                         continue
                     cap[i] = sig(c / 1e6, 4)

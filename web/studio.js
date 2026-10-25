@@ -362,13 +362,16 @@
   /* ---------- building a video: the series on the grid, labels and formats ---------- */
   const DEF = { k: 'growth', t: 'QQQ,SPY', from: '', to: '', amt: '10000', div: 'tr', style: 'line', theme: 'bull', ar: '16x9', q: '1080', fps: '30', dur: '20',
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
-    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto',
+    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
-    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread']];
+    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'],
+    ['sankey', 'Earnings flow'], ['snowball', 'Dividend snowball'], ['timing', 'Timing']];
   const STYLES = { growth: [['line', 'Line race'], ['bars', 'Bar race'], ['area', 'Areas'], ['tiles', 'Counters']], rrg: [['rrg', 'RRG']], momentum: [['bars', 'Bar race'], ['line', 'Lines']],
     fund: [['columns', 'Columns'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], formula: [['line', 'Lines'], ['area', 'Areas'], ['tiles', 'Counters'], ['bars', 'Bar race']],
-    rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']] };
+    rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']],
+    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], sankey: [['sankey', 'Flow']], snowball: [['snow', 'Shares and income']],
+    timing: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']] };
   const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold'];        // redrawn, not rebuilt
   const tickers = (st) => [...new Set(String(st.t || '').split(/[\s,;]+/).map(norm).filter(Boolean))].slice(0, 10);
 
@@ -424,6 +427,35 @@
     const capTxt = !capF ? '' : `market value ${fin(lo) ? money(lo * 1e6) : '$0'}–${fin(hi) ? money(hi * 1e6) : 'any'}${byNow ? ' (today)' : ''}`;
     return { ok, sec, capF, capTxt, ix, scope: [ix ? IDX[ix] + ' members' + (ixNow ? ' (today)' : '') : '', sec ? SECTORS[sec] : '', capTxt].filter(Boolean).join(' · ') };
   }
+  const ttmOf = (row, q) => { if (q < 3) return null; let s = 0; for (let j = q - 3; j <= q; j++) { const v = at(row, j); if (!fin(v)) return null; s += v; } return s; };
+  // one measure of one company at the end of month mi (qk: the quarter whose figures count then), in dollars or a ratio;
+  // o: {m0, step, minrev ($M), win (months or 'ytd')}
+  function makeMeasure(key, F, o) {
+    const need = RANK[key][2], base = need.find((f) => f.startsWith('q-'));
+    return (ci, mi, qk) => {
+      if (key === 'cap') { const v = at(F['m-cap'][ci], mi); return fin(v) ? v * 1e6 : null; }
+      if (key === 'dv') {
+        let s2 = 0, any = false;
+        for (let j = o.step === 'q' ? mi - 2 : mi; j <= mi; j++) { const v = at(F['m-dv'][ci], j); if (fin(v)) { s2 += v; any = true; } }
+        return any ? s2 * 1e6 : null;
+      }
+      if (key === 'ret') { const w = o.win === 'ytd' ? ((o.m0.m + mi) % 12) + 1 : o.win, a = at(F['m-px'][ci], mi), b = at(F['m-px'][ci], mi - w); return fin(a) && fin(b) && b > 0 ? a / b - 1 : null; }
+      if (qk < 0) return null;
+      // a company that has not filed the quarter yet (a late 10-K, a fiscal year ending in January) keeps its last four
+      // quarters on file, for up to two quarters
+      for (let back = 0; back <= 2 && qk - back >= 3; back++) if (fin(base === 'q-eq' ? at(F[base][ci], qk - back) : ttmOf(F[base][ci], qk - back))) { qk -= back; break; }
+      const R = (f) => ttmOf(F[f][ci], qk);
+      if (key === 'rev' || key === 'gp' || key === 'oi' || key === 'ni') { const v = R('q-' + key); return fin(v) ? v * 1e6 : null; }
+      if (key === 'om' || key === 'nm') { const r = R('q-rev'), x = R(key === 'om' ? 'q-oi' : 'q-ni'); return fin(r) && fin(x) && r > 0 && r >= o.minrev ? x / r : null; }
+      if (key === 'growth') { const r = R('q-rev'), r0 = qk >= 4 ? ttmOf(F['q-rev'][ci], qk - 4) : null; return fin(r) && fin(r0) && r0 > 0 && r0 >= o.minrev ? r / r0 - 1 : null; }
+      const c = at(F['m-cap'][ci], mi); if (!fin(c) || c <= 0) return null;
+      if (key === 'pe') { const x = R('q-ni'), r = F['q-rev'] ? R('q-rev') : null; return fin(x) && x > 0 && (!fin(r) || x >= 0.02 * r) ? c / x : null; }
+      if (key === 'ps') { const x = R('q-rev'); return fin(x) && x > 0 ? c / x : null; }
+      if (key === 'pb') { const e = at(F['q-eq'][ci], qk); return fin(e) && e > 0 && c / e <= 200 ? c / e : null; }
+      return null;
+    };
+  }
+  const qForOf = (Q, m0, step) => (mi) => { const me = mEnd(mi, m0); let k = -1; for (let j = 0; j < Q.length; j++) if (step === 'q' ? Q[j].mi <= mi : Q[j].end + 46 * DAY <= me) k = j; return k; };
   async function buildRank(st, out) {
     const meta = await rankMeta(), m0 = meta._m0, Q = meta._Q;
     const key = RANK[st.rm] ? st.rm : 'cap', [mname, unit, need] = RANK[key];
@@ -448,32 +480,9 @@
     if (months.length < 2) throw new Error('Fewer than two steps in that range');
     // the quarter whose figures count at the end of month mi: public 46 days after it ended; quarterly steps: the quarter itself
     const qFor = (mi) => { const me = mEnd(mi, m0); let k = -1; for (let j = 0; j < Q.length; j++) if (step === 'q' ? Q[j].mi <= mi : Q[j].end + 46 * DAY <= me) k = j; return k; };
-    const ttm = (row, q) => { if (q < 3) return null; let s = 0; for (let j = q - 3; j <= q; j++) { const v = at(row, j); if (!fin(v)) return null; s += v; } return s; };
     const minrev = Math.max(0, +st.minrev || 0) * 1e3, qks = months.map(qFor);
     const win = st.win === 'ytd' ? 'ytd' : Math.max(1, Math.round(+st.win || 12));
-    const val = (ci, mi, qk) => {
-      if (key === 'cap') { const v = at(F['m-cap'][ci], mi); return fin(v) ? v * 1e6 : null; }
-      if (key === 'dv') {
-        let s2 = 0, any = false;
-        for (let j = step === 'q' ? mi - 2 : mi; j <= mi; j++) { const v = at(F['m-dv'][ci], j); if (fin(v)) { s2 += v; any = true; } }
-        return any ? s2 * 1e6 : null;
-      }
-      if (key === 'ret') { const w = win === 'ytd' ? ((m0.m + mi) % 12) + 1 : win, a = at(F['m-px'][ci], mi), b = at(F['m-px'][ci], mi - w); return fin(a) && fin(b) && b > 0 ? a / b - 1 : null; }
-      if (qk < 0) return null;
-      // a company that has not filed the quarter yet (a late 10-K, a fiscal year ending in January) keeps its last four
-      // quarters on file, for up to two quarters
-      const base = need.find((f) => f.startsWith('q-'));
-      for (let back = 0; back <= 2 && qk - back >= 3; back++) if (fin(base === 'q-eq' ? at(F[base][ci], qk - back) : ttm(F[base][ci], qk - back))) { qk -= back; break; }
-      const R = (f) => ttm(F[f][ci], qk);
-      if (key === 'rev' || key === 'gp' || key === 'oi' || key === 'ni') { const v = R('q-' + key); return fin(v) ? v * 1e6 : null; }
-      if (key === 'om' || key === 'nm') { const r = R('q-rev'), x = R(key === 'om' ? 'q-oi' : 'q-ni'); return fin(r) && fin(x) && r > 0 && r >= minrev ? x / r : null; }
-      if (key === 'growth') { const r = R('q-rev'), r0 = qk >= 4 ? ttm(F['q-rev'][ci], qk - 4) : null; return fin(r) && fin(r0) && r0 > 0 && r0 >= minrev ? r / r0 - 1 : null; }
-      const c = at(F['m-cap'][ci], mi); if (!fin(c) || c <= 0) return null;
-      if (key === 'pe') { const x = R('q-ni'), r = F['q-rev'] ? R('q-rev') : null; return fin(x) && x > 0 && (!fin(r) || x >= 0.02 * r) ? c / x : null; }
-      if (key === 'ps') { const x = R('q-rev'); return fin(x) && x > 0 ? c / x : null; }
-      if (key === 'pb') { const e = at(F['q-eq'][ci], qk); return fin(e) && e > 0 && c / e <= 200 ? c / e : null; }
-      return null;
-    };
+    const val = makeMeasure(key, F, { m0, step, minrev, win });
     if (step === 'q' && fundamental) {                    // the newest quarter, before most companies have filed it
       const base = need.find((f) => f.startsWith('q-')), cnt = (q) => F[base].reduce((a, row) => a + (fin(at(row, q)) ? 1 : 0), 0);
       while (months.length > 2) { const q = qks[months.length - 1]; if (q < 1 || cnt(q) >= 0.8 * cnt(q - 1)) break; months.pop(); qks.pop(); }
@@ -622,6 +631,232 @@
     return out;
   }
 
+  /* ---------- six more: bubble, treemap, sector weights, the earnings flow, the dividend snowball, timing ---------- */
+  async function panelFiles(names) {
+    const F = {};
+    await Promise.all([...new Set(names)].map(async (f) => { F[f] = await panel(f); }));
+    for (const f of Object.keys(F)) if (!Array.isArray(F[f])) throw new Error('A leaderboard file is missing (' + f + ')');
+    return F;
+  }
+  function monthRange(st, meta, defFrom) {
+    const m0 = meta._m0, lastM = meta.months.n - 1;
+    const fromMs = st.from ? Date.parse(st.from + 'T00:00:00Z') : defFrom, toMs = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now();
+    const i0 = clamp(mIndex(fromMs, m0), 13, lastM), i1 = clamp(mIndex(toMs, m0), i0, lastM), out = [];
+    for (let i = i0; i <= i1; i++) out.push(i);
+    if (out.length < 2) throw new Error('Fewer than two months in that range');
+    return out;
+  }
+  // a fixed axis for the whole video: the 3rd–97th percentile of every value shown, a little room around it (beyond: at the edge)
+  function domain(vals, log) {
+    const v = vals.filter((x) => fin(x) && (!log || x > 0)).map((x) => (log ? Math.log(x) : x)).sort((a, b) => a - b);
+    if (!v.length) return [0, 1];
+    let lo = v[Math.floor(0.03 * (v.length - 1))], hi = v[Math.ceil(0.97 * (v.length - 1))];
+    if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+    const pad = (hi - lo) * 0.08;
+    return [lo - pad, hi + pad];
+  }
+  const BUB_SIZE = { cap: 'Market value', rev: 'Revenue, last 12 months', ni: 'Net income, last 12 months', dv: 'Dollar volume' };
+  async function buildBubble(st, out) {
+    const meta = await rankMeta(), m0 = meta._m0, Q = meta._Q;
+    const kx = RANK[st.bx] ? st.bx : 'growth', ky = RANK[st.by] ? st.by : 'ret', ks = BUB_SIZE[st.bs] ? st.bs : 'cap';
+    const F = await panelFiles([...RANK[kx][2], ...RANK[ky][2], ...RANK[ks][2], 'm-cap']);
+    const MB = st.idx ? await members() : null, U = universe(st, meta, F, MB);
+    const months = monthRange(st, meta, Date.UTC(2012, 0, 31)), qFor = qForOf(Q, m0, 'm'), qks = months.map(qFor);
+    const o = { m0, step: 'm', minrev: Math.max(0, +st.minrev || 0) * 1e3, win: st.win === 'ytd' ? 'ytd' : Math.max(1, Math.round(+st.win || 12)) };
+    const mx = makeMeasure(kx, F, o), my = makeMeasure(ky, F, o), ms = makeMeasure(ks, F, o), cap = makeMeasure('cap', F, o);
+    const typed = tickers({ t: st.bt }), N = clamp(Math.round(+st.bn || 25), 5, 80), L = months.length - 1;
+    let pick;
+    if (typed.length) pick = typed.map((t) => meta.cos.findIndex((c) => c[0] === t)).filter((i) => i >= 0);
+    else {                                                // the largest at the end, followed back in time
+      const list = [];
+      for (let ci = 0; ci < meta.cos.length; ci++) if (U.ok(ci, months[L])) { const v = cap(ci, months[L], qks[L]); if (fin(v)) list.push([ci, v]); }
+      pick = list.sort((a, b) => b[1] - a[1]).slice(0, N).map((x) => x[0]);
+    }
+    if (!pick.length) throw new Error('No company fits those settings');
+    out.series = pick.map((ci) => ({ key: meta.cos[ci][0], label: meta.cos[ci][0], name: meta.cos[ci][1], sec: meta.cos[ci][2],
+      x: months.map((mi, j) => mx(ci, mi, qks[j])), y: months.map((mi, j) => my(ci, mi, qks[j])), s: months.map((mi, j) => ms(ci, mi, qks[j])) }))
+      .filter((r) => r.x.some(fin) && r.y.some(fin));
+    if (!out.series.length) throw new Error('Nothing to draw for those measures');
+    out.series.forEach((r) => { r.v = r.s; });
+    const logx = ['pe', 'ps', 'pb'].includes(kx), logy = ['pe', 'ps', 'pb'].includes(ky);
+    out.kind = 'bubble'; out.grid = months.map((mi) => mEnd(mi, m0));
+    out.bub = { kx, ky, ks, fx: fmtFor(RANK[kx][1]), fy: fmtFor(RANK[ky][1]), fs: fmtFor('$'), logx, logy,
+      dx: domain(out.series.flatMap((r) => r.x), logx), dy: domain(out.series.flatMap((r) => r.y), logy), smax: Math.max(...out.series.flatMap((r) => r.s.filter(fin)), 1) };
+    out.fmt = fmtFor('$'); out.unit = '$'; out.metric = BUB_SIZE[ks];
+    const rl = (k) => (k === 'ret' ? (o.win === 'ytd' ? 'return this year' : o.win + '-month return') : RANK[k][0].toLowerCase());
+    out.bub.lx = rl(kx).replace(/^./, (c) => c.toUpperCase()); out.bub.ly = rl(ky).replace(/^./, (c) => c.toUpperCase());
+    out.title = out.title || `${RANK[ky][0] === 'Total return' ? (o.win === 'ytd' ? 'Return this year' : o.win + '-month return') : RANK[ky][0]} against ${rl(kx)}` + (typed.length ? '' : `: the ${N} largest companies`) + (U.scope ? ' · ' + U.scope : '');
+    out.sub = out.sub || `${monthYear(out.grid[0])} → ${monthYear(out.grid[L])} · bubble size: ${BUB_SIZE[ks].toLowerCase()} · colour: sector · month by month`;
+    out.foot = typed.length ? '' : "Today's largest companies, followed back in time";
+    return out;
+  }
+  async function buildTreemap(st, out) {
+    const meta = await rankMeta(), m0 = meta._m0;
+    const F = await panelFiles(['m-cap', 'm-px']), MB = st.idx ? await members() : null, U = universe(st, meta, F, MB);
+    const months = monthRange(st, meta, Date.UTC(2012, 0, 31)), N = clamp(Math.round(+st.tn || 50), 10, 150);
+    const top = months.map((mi) => {
+      const list = [];
+      for (let ci = 0; ci < meta.cos.length; ci++) if (U.ok(ci, mi)) { const v = at(F['m-cap'][ci], mi); if (fin(v) && v > 0) list.push([ci, v]); }
+      return new Map(list.sort((a, b) => b[1] - a[1]).slice(0, N));
+    });
+    const pick = [...new Set(top.flatMap((m) => [...m.keys()]))];
+    if (!pick.length) throw new Error('No market values for those settings yet');
+    out.series = pick.map((ci) => ({ key: meta.cos[ci][0], label: meta.cos[ci][0], name: meta.cos[ci][1], sec: meta.cos[ci][2],
+      v: months.map((mi, j) => (top[j].has(ci) ? top[j].get(ci) * 1e6 : 0)),
+      r: months.map((mi) => { const a = at(F['m-px'][ci], mi), b = at(F['m-px'][ci], mi - 12); return fin(a) && fin(b) && b > 0 ? a / b - 1 : null; }) }));
+    const mean = (r) => r.v.reduce((a, x) => a + x, 0) / r.v.length, secTot = {};
+    out.series.forEach((r) => { r.avg = mean(r); secTot[r.sec] = (secTot[r.sec] || 0) + r.avg; });
+    out.kind = 'treemap'; out.grid = months.map((mi) => mEnd(mi, m0)); out.fmt = fmtFor('$'); out.unit = '$'; out.metric = 'Market value';
+    out.tm = { N, color: st.tc === 'sector' ? 'sector' : 'ret', secOrder: Object.keys(secTot).sort((a, b) => secTot[b] - secTot[a]) };
+    out.title = out.title || `The ${N} most valuable companies, as a map` + (U.scope ? ' · ' + U.scope : '');
+    out.sub = out.sub || `${monthYear(out.grid[0])} → ${monthYear(out.grid[out.grid.length - 1])} · area: market value · grouped by sector · colour: ${out.tm.color === 'ret' ? '12-month total return' : 'sector'}`;
+    out.foot = "Today's companies only: those delisted, merged or bankrupt are missing from earlier years";
+    return out;
+  }
+  async function buildSectors(st, out) {
+    const meta = await rankMeta(), m0 = meta._m0;
+    const F = await panelFiles(['m-cap']), MB = st.idx ? await members() : null, U = universe(Object.assign({}, st, { sec: '' }), meta, F, MB);
+    const months = monthRange(st, meta, Date.UTC(2012, 0, 31)), share = st.sa !== 'abs';
+    const secs = [...new Set(meta.cos.map((c) => c[2]))], tot = months.map(() => ({}));
+    months.forEach((mi, j) => { for (let ci = 0; ci < meta.cos.length; ci++) if (U.ok(ci, mi)) { const v = at(F['m-cap'][ci], mi); if (fin(v) && v > 0) tot[j][meta.cos[ci][2]] = (tot[j][meta.cos[ci][2]] || 0) + v * 1e6; } });
+    const all = tot.map((t) => Object.values(t).reduce((a, x) => a + x, 0));
+    if (!all.some((x) => x > 0)) throw new Error('No market values for those settings yet');
+    const L = months.length - 1;
+    out.series = secs.map((sc) => ({ key: sc, label: SECTORS[sc] || sc, name: SECTORS[sc] || sc, sec: sc, v: months.map((_, j) => (all[j] > 0 ? (share ? (tot[j][sc] || 0) / all[j] : tot[j][sc] || 0) : null)) }))
+      .filter((r) => r.v.some((x) => x > 0)).sort((a, b) => (b.v[L] || 0) - (a.v[L] || 0));
+    out.kind = 'sectors'; out.grid = months.map((mi) => mEnd(mi, m0)); out.stack = { share, total: all };
+    out.fmt = share ? (v) => (fin(v) ? (100 * v).toFixed(1) + '%' : '—') : fmtFor('$'); out.unit = share ? '%' : '$'; out.metric = share ? 'Share of market value' : 'Market value';
+    out.title = out.title || (share ? 'Who owns the market: each sector\'s share of market value' : 'Market value by sector') + (U.ix ? ' · ' + IDX[U.ix] : '');
+    out.sub = out.sub || `${monthYear(out.grid[0])} → ${monthYear(out.grid[L])} · US-listed companies on the site${U.capTxt ? ' · ' + U.capTxt : ''} · month by month`;
+    out.foot = "Today's companies only: those delisted, merged or bankrupt are missing from earlier years";
+    return out;
+  }
+  // the earnings flow (the site's Sankey: revenue → costs and profit → cash), morphing from quarter to quarter
+  const CO_RAW = new Map();
+  async function companyRaw(sym) {
+    sym = norm(sym);
+    if (!CO_RAW.has(sym)) CO_RAW.set(sym, (async () => {
+      const ix = await json(SITE + 'index.json');
+      const row = ((ix && ix.companies) || []).find((c) => norm(c.ticker) === sym);
+      return row ? json(SITE + 'c/' + row.cik + '.json') : null;
+    })());
+    return CO_RAW.get(sym);
+  }
+  async function buildSankey(st, out, T) {
+    const sym = T[0]; if (!sym) throw new Error('Add a company ticker');
+    const c = await companyRaw(sym); if (!c) throw new Error('No company figures on file for ' + sym);
+    const name = (c.profile && c.profile.name) || sym;
+    let frames = [];
+    if (st.sm !== 'long') {
+      frames = (c.quarters || []).filter((q) => q.nodes && q.links && q.end && /^Q/i.test(q.label || '')).map((q) => ({ end: Date.parse(q.end + 'T00:00:00Z'), label: q.label, nodes: q.nodes, links: q.links, head: q.headline || {} })).sort((a, b) => a.end - b.end);
+      if (frames.length < 2) out.notes.add('Fewer than two detailed quarters on file: ten years of revenue, profit and earnings instead');
+    }
+    if (frames.length < 2) {                              // ten years from the filings: revenue → costs and operating profit → earnings
+      const C = await company(sym), get = (k) => new Map([...((C && C.q[k]) || new Map()).entries()]);
+      const R = get('revenue'), OI = get('oi'), NI = get('ni');
+      frames = [...R.keys()].filter((e) => OI.has(e) && NI.has(e)).sort().map((e) => {
+        const rev = R.get(e), oi = OI.get(e), ni = NI.get(e), nodes = [{ id: 'revenue', col: 0, color: 'rev', name: 'Revenue', v: rev }], links = [];
+        if (oi > 0) {
+          nodes.push({ id: 'oi', col: 1, color: 'profit', name: 'Operating profit', v: oi }, { id: 'opcost', col: 1, color: 'cost', name: 'Operating costs', v: rev - oi });
+          links.push({ s: 'revenue', t: 'oi', v: oi, color: 'profit' }, { s: 'revenue', t: 'opcost', v: rev - oi, color: 'cost' });
+          if (ni > 0) {
+            nodes.push({ id: 'net', col: 2, color: 'profit', name: 'Net earnings', v: ni });
+            links.push({ s: 'oi', t: 'net', v: Math.min(ni, oi), color: 'profit' });
+            if (oi > ni) { nodes.push({ id: 'tax', col: 2, color: 'cost', name: 'Tax, interest and other', v: oi - ni }); links.push({ s: 'oi', t: 'tax', v: oi - ni, color: 'cost' }); }
+            else if (ni > oi) { nodes.push({ id: 'other', col: 1, color: 'profit', name: 'Other income', v: ni - oi }); links.push({ s: 'other', t: 'net', v: ni - oi, color: 'profit' }); }
+          } else { nodes.push({ id: 'tax', col: 2, color: 'cost', name: 'Tax, interest and other', v: oi - ni }); links.push({ s: 'oi', t: 'tax', v: oi, color: 'cost' }); }
+        } else {
+          nodes.push({ id: 'opcost', col: 1, color: 'cost', name: 'Operating costs', v: rev - oi });
+          links.push({ s: 'revenue', t: 'opcost', v: rev, color: 'cost' });
+        }
+        const d = new Date(Date.parse(e + 'T00:00:00Z'));
+        return { end: Date.parse(e + 'T00:00:00Z'), label: 'Quarter to ' + monthYear(d.getTime()), nodes, links, head: { revenue: rev, oi, ni }, simple: true };
+      });
+      const from = st.from ? Date.parse(st.from + 'T00:00:00Z') : -Infinity;
+      frames = frames.filter((f) => f.end >= from);
+    }
+    if (frames.length < 2) throw new Error('Fewer than two quarters on file for ' + sym);
+    out.kind = 'sankey'; out.grid = frames.map((f) => f.end); out.quarterly = true; out.sk = { frames, simple: !!frames[0].simple };
+    out.sk.max = Math.max(...frames.flatMap((f) => f.nodes.map((n) => Math.abs(n.v || 0))));
+    out.series = [{ key: sym, label: sym, name, v: frames.map((f) => f.head.revenue ?? null) }];
+    out.fmt = (v) => money(v); out.unit = '$'; out.metric = 'Revenue';
+    out.title = out.title || `${name.replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO)\.?$/i, '')}: where the money goes, quarter by quarter`;
+    const span = out.sk.simple ? `quarters to ${monthYear(frames[0].end)} → ${monthYear(frames[frames.length - 1].end)}` : `${frames[0].label} → ${frames[frames.length - 1].label}`;
+    out.sub = out.sub || `${span} · ${out.sk.simple ? 'revenue → costs and operating profit → net earnings' : 'revenue → costs and profit → cash'} · GAAP, from SEC filings`;
+    return out;
+  }
+  // the dividend snowball: dividends buying more shares, which pay more dividends
+  async function buildSnowball(st, out, T) {
+    if (!T.length) throw new Error('Add a dividend payer, e.g. SCHD or KO');
+    const P = new Map();
+    await Promise.all(T.slice(0, 3).map(async (s) => { const p = await price(s); if (p && p.px && p.px.div && p.px.div.length) P.set(s, p); }));
+    T.slice(0, 3).filter((s) => !P.has(s)).forEach((s) => out.notes.add(s + ': no dividends on file (yet) — left out'));
+    if (!P.size) throw new Error('None of these has dividends on file');
+    const have = [...P.values()], to = Math.min(st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(), ...have.map((p) => p.px.t[p.px.t.length - 1]));
+    let from = st.from ? Date.parse(st.from + 'T00:00:00Z') : to - 15 * 365.25 * DAY;
+    from = Math.max(from, ...have.map((p) => p.px.t[0]));
+    const G = weeklyGrid(iso(from), iso(to)); if (G.length < 30) throw new Error('Less than half a year in that range');
+    const lump = Math.max(0, +st.amt || 10000), rec = Math.max(0, +st.rec || 0), buys = buySchedule(G, rec, +st.ri || 1, UNITS[st.ru] ? st.ru : 'm', from);
+    for (const [s, p] of P) {
+      const pr = priceOn(p, G), dv = divsOn(p, G), i0 = pr.findIndex(fin);
+      if (i0 < 0) continue;
+      let sh = 0, bought = 0, fromDiv = 0, last = null;
+      const v = [], shv = [], inc = [], paid = G.map(() => 0);
+      for (let i = 0; i < G.length; i++) {
+        const px = fin(pr[i]) ? pr[i] : last; last = px;
+        if (i < i0 || !px) { v.push(null); shv.push(null); inc.push(null); continue; }
+        if (i > i0 && dv[i]) { const cash = sh * dv[i]; paid[i] = cash; const add = cash / px; sh += add; fromDiv += add; }
+        const put = (i === i0 ? lump : 0) + buys[i]; if (put) { sh += put / px; bought += put / px; }
+        v.push(sh * px); shv.push(sh);
+        let s52 = 0; for (let j = Math.max(0, i - 51); j <= i; j++) s52 += paid[j];
+        inc.push(i - i0 >= 51 ? s52 : null);
+      }
+      const yearly = {};
+      G.forEach((g, i) => { const y = new Date(g).getUTCFullYear(); yearly[y] = (yearly[y] || 0) + paid[i]; });
+      out.series.push({ key: s, label: s, name: p.name, v, sh: shv, inc, paid, yearly, bought, fromDiv, sh0: lump / pr[i0] });
+    }
+    let c = 0; out.contrib = G.map((_, i) => (c += (i === 0 ? lump : 0) + buys[i]));
+    out.kind = 'snowball'; out.grid = G; out.fmt = (v) => money(v); out.unit = '$';
+    out.title = out.title || `The dividend snowball: ${out.series.map((x) => x.key).join(' vs ')}`;
+    out.sub = out.sub || `${money(lump, 0)} to start${rec ? ` + ${money(rec, 0)} every ${(+st.ri || 1) > 1 ? st.ri + ' ' + UNITS[st.ru || 'm'][1] : UNITS[st.ru || 'm'][0]}` : ''} · every dividend buys more shares at that week's price · ${dayLabel(G[0])} → ${dayLabel(G[G.length - 1])}`;
+    return out;
+  }
+  // bought at the top every year, at the bottom, on the first day, or a little every month — the same money each year
+  async function buildTiming(st, out, T) {
+    const sym = T[0] || 'SPY', p = await price(sym); if (!p) throw new Error('No weekly prices on file for ' + sym);
+    if (T.length > 1) out.notes.add('Timing compares strategies on one ticker: ' + sym);
+    const to = Math.min(st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(), last(p));
+    const y0 = Math.max(new Date(st.from ? Date.parse(st.from + 'T00:00:00Z') : to - 20 * 365.25 * DAY).getUTCFullYear(), new Date(first(p) + 7 * DAY).getUTCFullYear() + 1);
+    const G = weeklyGrid(`${y0}-01-01`, iso(to)), tr = trOn(p, G), budget = Math.max(1, +st.yb || 2000);
+    const years = [...new Set(G.map((g) => new Date(g).getUTCFullYear()))];
+    const yr = G.map((g) => new Date(g).getUTCFullYear()), idx = (y) => G.map((_, i) => i).filter((i) => yr[i] === y && fin(tr[i]));
+    const plans = { worst: {}, best: {}, first: {}, monthly: {} };
+    for (const y of years) {
+      const I = idx(y); if (!I.length) continue;
+      const hi = I.reduce((a, i) => (tr[i] > tr[a] ? i : a), I[0]), lo = I.reduce((a, i) => (tr[i] < tr[a] ? i : a), I[0]);
+      plans.worst[hi] = (plans.worst[hi] || 0) + budget; plans.best[lo] = (plans.best[lo] || 0) + budget; plans.first[I[0]] = (plans.first[I[0]] || 0) + budget;
+      const byM = {}; I.forEach((i) => { const m = new Date(G[i]).getUTCMonth(); if (byM[m] == null) byM[m] = i; });
+      const ms = Object.values(byM); ms.forEach((i) => { plans.monthly[i] = (plans.monthly[i] || 0) + budget / ms.length; });
+    }
+    const label = { worst: 'Bought at the top', best: 'Bought at the bottom', first: 'Bought on day one', monthly: 'A little every month' };
+    const yearOf = (i) => yr[i];
+    for (const k of ['best', 'first', 'monthly', 'worst']) {
+      let units = 0; const v = [], flows = [];
+      for (let i = 0; i < G.length; i++) {
+        if (plans[k][i]) { units += plans[k][i] / tr[i]; flows.push([G[i], -plans[k][i]]); }
+        // money of the year not invested yet waits as cash (the same budget arrives on the year's first week)
+        const y = yearOf(i), cashWaiting = Object.entries(plans[k]).filter(([j]) => yearOf(+j) === y && +j > i).reduce((a, [, x]) => a + x, 0);
+        v.push(fin(tr[i]) ? units * tr[i] + cashWaiting : null);
+      }
+      out.series.push({ key: k, label: label[k], name: label[k], v, flows });
+    }
+    let put = 0; out.contrib = G.map((g, i) => { if (i === 0 || yearOf(i) !== yearOf(i - 1)) put += budget; return put; });
+    out.kind = 'timing'; out.grid = G; out.fmt = (v) => money(v); out.unit = '$'; out.timing = { sym, budget, years: years.length };
+    out.title = out.title || `${money(budget, 0)} a year into ${sym}: perfect timing, worst timing, or no timing`;
+    out.sub = out.sub || `${years[0]} → ${years[years.length - 1]} · each year's money at that year's lowest close, highest close, first week, or spread over the months · dividends reinvested · hindsight, to show what timing is worth`;
+    return out;
+  }
+
   async function buildRaw(st) {
     const notes = new Set(), T = tickers(st), k = st.k;
     const today = iso(Date.now());
@@ -630,6 +865,12 @@
     if (k === 'dist') return buildDist(st, out);
     if (k === 'drawdown') return buildDrawdown(st, out, T);
     if (k === 'calendar') return buildCalendar(st, out, T);
+    if (k === 'bubble') return buildBubble(st, out);
+    if (k === 'treemap') return buildTreemap(st, out);
+    if (k === 'sectors') return buildSectors(st, out);
+    if (k === 'sankey') return buildSankey(st, out, T);
+    if (k === 'snowball') return buildSnowball(st, out, T);
+    if (k === 'timing') return buildTiming(st, out, T);
     if (k === 'fund') {
       if (!T.length) throw new Error('Add a company ticker');
       const cos = (await Promise.all(T.map(company))).filter(Boolean);
@@ -838,9 +1079,14 @@
     if ((portrait || square) && (style === 'line' || style === 'area') && V.kind !== 'rrg' && V.kind !== 'calendar') {
       top = counters(ctx, V, f, top, W, S, th, F, pal, portrait ? 2 : Math.min(4, V.series.length)) + 26 * S;
     }
-    const flat = style === 'bars' || V.kind === 'rank' || style === 'hist';
+    const flat = style === 'bars' || V.kind === 'rank' || style === 'hist' || ['treemap', 'sankey'].includes(V.kind);
     const box = { x: pad + (flat ? 0 : 70 * S), y: top, w: W - 2 * pad - (flat ? 0 : 70 * S) - (style === 'line' || style === 'area' ? (portrait ? 150 : 210) * S : 0), h: bottom - top };
     if (V.kind === 'rank') rankRace(ctx, V, f, box, S, th, F);
+    else if (V.kind === 'bubble') bubbleChart(ctx, V, f, { x: box.x, y: box.y, w: box.w + 30 * S, h: box.h - 40 * S }, S, th, F);
+    else if (V.kind === 'treemap') treemapChart(ctx, V, f, box, S, th, F);
+    else if (V.kind === 'sectors') stackChart(ctx, V, f, { x: box.x, y: box.y, w: box.w - 150 * S, h: box.h - 40 * S }, S, th, F);
+    else if (V.kind === 'sankey') sankeyChart(ctx, V, f, box, S, th, F);
+    else if (V.kind === 'snowball') snowballChart(ctx, V, f, box, S, th, F, pal);
     else if (style === 'heat') heatmap(ctx, V, f, box, S, th, F);
     else if (style === 'hist') histChart(ctx, V, f, { x: box.x + 60 * S, y: box.y, w: box.w - 60 * S, h: box.h }, S, th, F);
     else if (style === 'rrg') rrgChart(ctx, V, f, box, S, th, F, pal);
@@ -864,7 +1110,8 @@
     const k = clamp(Math.round(f), 0, V.grid.length - 1);
     ctx.textAlign = 'right'; ctx.fillStyle = alpha(th.text === '#1d1d1b' ? '#1d1d1b' : '#ffffff', opt.theme === 'clean' ? 0.10 : 0.12);
     ctx.font = F(700, portrait ? 120 : 110);
-    if (!V.yearly && style !== 'heat') ctx.fillText(V.quarterly ? quarterLabel(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (flat ? (V.kind === 'rank' ? 70 : 10) : 24) * S);
+    if (!V.yearly && style !== 'heat' && !['sankey', 'treemap', 'bubble'].includes(V.kind)) ctx.fillText(V.quarterly ? quarterLabel(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (flat ? (V.kind === 'rank' ? 70 : 10) : 24) * S);
+    if (V.kind === 'treemap') { ctx.font = F(800, 64); ctx.fillStyle = th.text; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillText(monthYear(V.grid[k]), W - pad, top - 10 * S); }
     brand(ctx, W, H, S, th, F, portrait);
     ctx.fillStyle = alpha(th.accent, 0.9); ctx.fillRect(0, H - 6 * S, W * clamp(t / tm.D, 0, 1), 6 * S);
     if (V.endCard && t > tm.D - tm.hold) endCard(ctx, V, W, H, S, th, F, pal, clamp((t - (tm.D - tm.hold)) / 0.6, 0, 1), portrait);
@@ -930,7 +1177,7 @@
     // grid and axes
     ctx.lineWidth = 1.2 * S; ctx.font = F(500, 22); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
     const ticks = log ? niceTicks(Math.exp(lo), Math.exp(hi), 5) : niceTicks(lo, hi, 5);
-    for (const v of ticks) { const y = Y(v); if (y < b.y - 2 || y > b.y + b.h + 2) continue; ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(V.unit === '$' ? money(v) : V.unit === '%' ? (V.kind === 'fund' ? (100 * v).toFixed(0) + '%' : pctf(v, 0)) : plain(v), b.x - 14 * S, y); }
+    for (const v of ticks) { const y = Y(v); if (y < b.y - 2 || y > b.y + b.h + 2) continue; ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(V.tickFmt ? V.tickFmt(v) : V.unit === '$' ? money(v) : V.unit === '%' ? (V.kind === 'fund' ? (100 * v).toFixed(0) + '%' : pctf(v, 0)) : plain(v), b.x - 14 * S, y); }
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     const years = []; for (let y = new Date(G[0]).getUTCFullYear() + 1; y <= new Date(xMax).getUTCFullYear(); y++) years.push(y);
     const every = Math.max(1, Math.ceil(years.length / (b.w / (110 * S))));
@@ -1000,7 +1247,8 @@
     const vals = V.series.map((s) => valAt(s.v, f)), finite = vals.filter(fin);
     const pos = Math.max(0, ...finite), negm = Math.max(0, ...finite.map((v) => -v)), neg = negm > 0;
     // with values below zero the axis moves right in proportion, and each ticker sits on the far side of its bar's start
-    const lab = neg ? 0 : 150 * S, room = b.w - lab - (neg ? 300 : V.split ? 270 : 140) * S;
+    ctx.font = F(700, 30);                                                // room for the longest label (up to a third)
+    const lab = neg ? 0 : clamp(Math.max(...V.series.map((s) => ctx.measureText(String(s.label)).width)) + 30 * S, 150 * S, b.w / 3), room = b.w - lab - (neg ? 300 : V.split ? 270 : 140) * S;
     const share = neg ? clamp(negm / ((negm + pos) || 1), pos > 0 ? 0.18 : 0.8, pos > 0 ? 0.82 : 0.8) : 0;
     const x0 = b.x + lab + (neg ? 150 * S + room * share : 0), unit = room / Math.max(1e-9, neg ? (pos > 0 ? Math.max(negm / share, pos / (1 - share)) : negm / share) : pos), wMax = null;
     if (neg) { ctx.strokeStyle = th.axis; ctx.lineWidth = 2 * S; ctx.beginPath(); ctx.moveTo(x0, b.y); ctx.lineTo(x0, b.y + b.h); ctx.stroke(); }
@@ -1210,6 +1458,247 @@
     ctx.fillText(`${cur.n.toLocaleString('en-US')} companies · ${Math.round(100 * cur.up)}% rose · best ${cur.best[0]} ${pctf(cur.best[1], 0)} · worst ${cur.worst[0]} ${pctf(cur.worst[1], 0)}`, b.x + 230 * S, b.y + 14 * S);
     if (V.foot) { ctx.font = F(400, 17); ctx.fillStyle = alpha(light ? '#1d1d1b' : '#ffffff', 0.45); ctx.fillText(V.foot, b.x, top + h + 36 * S); }
   }
+  // bubbles: x and y measures, area = the size measure, colour = sector; the largest labelled, a short trail behind them
+  function bubbleChart(ctx, V, f, b, S, th, F) {
+    const B = V.bub, tx = (v) => (B.logx ? Math.log(Math.max(v, 1e-9)) : v), ty = (v) => (B.logy ? Math.log(Math.max(v, 1e-9)) : v);
+    const X = (v) => b.x + (clamp(tx(v), B.dx[0], B.dx[1]) - B.dx[0]) / (B.dx[1] - B.dx[0]) * b.w;
+    const Y = (v) => b.y + b.h - (clamp(ty(v), B.dy[0], B.dy[1]) - B.dy[0]) / (B.dy[1] - B.dy[0]) * b.h;
+    const ticks = (d, log) => (log ? [0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000].filter((v) => Math.log(v) >= d[0] && Math.log(v) <= d[1]) : niceTicks(d[0], d[1], 5));
+    ctx.lineWidth = 1.2 * S; ctx.font = F(500, 21);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (const v of ticks(B.dy, B.logy)) { const y = Y(v); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(B.fy(v), b.x - 12 * S, y); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (const v of ticks(B.dx, B.logx)) { const x = X(v); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(x, b.y); ctx.lineTo(x, b.y + b.h); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(B.fx(v), x, b.y + b.h + 10 * S); }
+    ctx.strokeStyle = th.axis; ctx.lineWidth = 2 * S;
+    if (!B.logx && B.dx[0] < 0 && B.dx[1] > 0) { const x = X(0); ctx.beginPath(); ctx.moveTo(x, b.y); ctx.lineTo(x, b.y + b.h); ctx.stroke(); }
+    if (!B.logy && B.dy[0] < 0 && B.dy[1] > 0) { const y = Y(0); ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); }
+    const mk = clamp(Math.round(f), 0, V.grid.length - 1);            // the month, large and faint behind the bubbles
+    ctx.font = F(800, 100); const mw = ctx.measureText(monthYear(V.grid[mk])).width || 1;
+    ctx.font = F(800, Math.min(100 * 0.85 * b.w / mw, b.h / 2.4 / S)); ctx.fillStyle = alpha(th.text === '#1d1d1b' ? '#1d1d1b' : '#ffffff', 0.07); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(monthYear(V.grid[mk]), b.x + b.w / 2, b.y + b.h / 2);
+    ctx.font = F(600, 21); ctx.fillStyle = th.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillText((B.lx || RANK[B.kx][0]) + ' →', b.x + b.w, b.y + b.h - 8 * S);
+    ctx.save(); ctx.translate(b.x + 18 * S, b.y + 6 * S); ctx.rotate(-Math.PI / 2); ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText((B.ly || RANK[B.ky][0]) + ' →', 0, 0); ctx.restore();
+    const rMax = Math.min(b.w, b.h) * 0.085, i0 = Math.floor(f);
+    const pts = V.series.map((s) => ({ s, x: valAt(s.x, f), y: valAt(s.y, f), z: valAt(s.s, f) })).filter((p) => fin(p.x) && fin(p.y) && fin(p.z) && p.z > 0)
+      .map((p) => Object.assign(p, { r: Math.max(3 * S, rMax * Math.sqrt(p.z / B.smax)) })).sort((a, c) => c.r - a.r);
+    pts.slice(0, 5).forEach((p) => {                     // trails of the five largest
+      for (let j = Math.max(0, i0 - 8); j < i0; j++) { const x = p.s.x[j], y = p.s.y[j]; if (!fin(x) || !fin(y)) continue; ctx.fillStyle = alpha(secCol(th, p.s.sec), 0.08 + 0.04 * (j - i0 + 9)); ctx.beginPath(); ctx.arc(X(x), Y(y), 4 * S, 0, 7); ctx.fill(); }
+    });
+    pts.forEach((p) => { p.cx = clamp(X(p.x), b.x + p.r, b.x + b.w - p.r); p.cy = clamp(Y(p.y), b.y + p.r, b.y + b.h - p.r); });   // beyond the axis: whole, at its edge
+    ctx.save(); ctx.beginPath(); ctx.rect(b.x, b.y, b.w, b.h); ctx.clip();
+    pts.forEach((p) => {
+      const col = secCol(th, p.s.sec); ctx.fillStyle = alpha(col, 0.72); ctx.strokeStyle = alpha(th.text === '#1d1d1b' ? '#1d1d1b' : '#ffffff', 0.55); ctx.lineWidth = 1.5 * S;
+      if (th.glow) { ctx.shadowColor = col; ctx.shadowBlur = th.glow * 0.5 * S; }
+      ctx.beginPath(); ctx.arc(p.cx, p.cy, p.r, 0, 7); ctx.fill(); ctx.shadowBlur = 0; ctx.stroke();
+    });
+    const boxes = [];                                    // the largest labelled first; a label that would cover another is left out
+    pts.slice(0, 16).forEach((p) => {
+      const fs = clamp(p.r / S * 0.55, 15, 28); ctx.font = F(700, fs); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const inside = p.r > 22 * S && ctx.measureText(p.s.label).width < 1.9 * p.r, cx = clamp(p.cx, b.x + 30 * S, b.x + b.w - 30 * S), cy = p.cy + (inside ? 0 : p.cy - p.r - 24 * S < b.y ? p.r + 12 * S : -p.r - 12 * S), w = ctx.measureText(p.s.label).width / 2 + 3 * S, h = fs * S * 0.6;
+      if (boxes.some(([x0, y0, x1, y1]) => cx - w < x1 && cx + w > x0 && cy - h < y1 && cy + h > y0)) return;
+      boxes.push([cx - w, cy - h, cx + w, cy + h]);
+      ctx.fillStyle = inside ? (luminance(secCol(th, p.s.sec)) > 0.55 ? '#0b1220' : '#ffffff') : th.text;
+      ctx.fillText(p.s.label, cx, cy);
+    });
+    ctx.restore();
+    const secs = [...new Set(pts.map((p) => p.s.sec))];
+    let lx = b.x + 40 * S; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = F(600, 19);
+    for (const sc of secs) { const t = SECTORS[sc] || sc, w = ctx.measureText(t).width; if (lx + w + 40 * S > b.x + b.w) break; ctx.fillStyle = secCol(th, sc); ctx.beginPath(); ctx.arc(lx + 7 * S, b.y + 16 * S, 7 * S, 0, 7); ctx.fill(); ctx.fillStyle = th.muted; ctx.fillText(t, lx + 20 * S, b.y + 16 * S); lx += w + 40 * S; }
+  }
+  // squarified treemap (Bruls, Huizing, van Wijk): values in the order given → [x, y, w, h] each
+  function squarify(vals, x, y, w, h) {
+    const out = vals.map(() => [x, y, 0, 0]), idx = vals.map((v, i) => i).filter((i) => vals[i] > 0), total = idx.reduce((a, i) => a + vals[i], 0);
+    if (!(total > 0) || w <= 0 || h <= 0) return out;
+    const sc = {}; idx.forEach((i) => { sc[i] = vals[i] / total * w * h; });
+    const worst = (row, side) => { const s = row.reduce((a, i) => a + sc[i], 0), mx = Math.max(...row.map((i) => sc[i])), mn = Math.min(...row.map((i) => sc[i])); return Math.max(side * side * mx / (s * s), s * s / (side * side * mn)); };
+    let k = 0, rx = x, ry = y, rw = w, rh = h;
+    while (k < idx.length) {
+      const side = Math.min(rw, rh); let row = [idx[k]], best = worst(row, side), j = k + 1;
+      while (j < idx.length) { const cand = row.concat(idx[j]), wv = worst(cand, side); if (wv > best) break; row = cand; best = wv; j++; }
+      const sum = row.reduce((a, i) => a + sc[i], 0);
+      if (rw >= rh) { const cw = sum / rh; let yy = ry; row.forEach((i) => { const hh = sc[i] / cw; out[i] = [rx, yy, cw, hh]; yy += hh; }); rx += cw; rw -= cw; }
+      else { const ch = sum / rw; let xx = rx; row.forEach((i) => { const ww = sc[i] / ch; out[i] = [xx, ry, ww, ch]; xx += ww; }); ry += ch; rh -= ch; }
+      k = j;
+    }
+    return out;
+  }
+  function retCol(r, light) {                           // red ↔ grey ↔ green by 12-month return, ±50% at full strength
+    if (!fin(r)) return light ? '#c8c6c0' : '#3a4250';
+    const k = clamp(r / 0.5, -1, 1), a = Math.abs(k);
+    const base = light ? [200, 198, 192] : [58, 66, 80], to = k >= 0 ? (light ? [23, 140, 80] : [32, 190, 110]) : (light ? [200, 60, 50] : [225, 70, 80]);
+    return `rgb(${base.map((c, i) => Math.round(c + (to[i] - c) * (0.25 + 0.75 * a))).join(',')})`;
+  }
+  function treemapChart(ctx, V, f, b, S, th, F) {
+    const T = V.tm, light = th.text === '#1d1d1b', gap = 3 * S;
+    const W = b.w + 70 * S, x0 = b.x - 70 * S, cur = V.series.map((s) => ({ s, v: Math.max(0, valAt(s.v, f) || 0), r: valAt(s.r, f) }));
+    const bySec = T.secOrder.map((sc) => { const items = cur.filter((c) => c.s.sec === sc && c.v > 0).sort((a, c) => c.s.avg - a.s.avg); return { sc, items, tot: items.reduce((a, c) => a + c.v, 0) }; }).filter((g) => g.tot > 0);
+    const rects = squarify(bySec.map((g) => g.tot), x0, b.y, W, b.h - 30 * S);
+    bySec.forEach((g, gi) => {
+      const [sx, sy, sw, sh] = rects[gi]; if (sw < 2 || sh < 2) return;
+      const head = sh > 90 * S && sw > 120 * S ? 26 * S : 0;
+      const inner = squarify(g.items.map((c) => c.v), sx + gap, sy + head + gap, sw - 2 * gap, sh - head - 2 * gap);
+      ctx.fillStyle = alpha(secCol(th, g.sc), light ? 0.25 : 0.35); ctx.fillRect(sx, sy, sw, sh);
+      if (head) {
+        ctx.font = F(700, 18); ctx.fillStyle = th.text; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        let t = (SECTORS[g.sc] || g.sc).toUpperCase() + '  ' + money(g.tot);
+        if (ctx.measureText(t).width > sw - 16 * S) t = (SECTORS[g.sc] || g.sc).toUpperCase();
+        while (t.length > 3 && ctx.measureText(t).width > sw - 16 * S) t = t.slice(0, -2) + '…';
+        ctx.fillText(t, sx + 8 * S, sy + head / 2 + 2 * S);
+      }
+      g.items.forEach((c, ci) => {
+        const [x, y, w, h] = inner[ci]; if (w < 1.5 || h < 1.5) return;
+        ctx.fillStyle = T.color === 'ret' ? retCol(c.r, light) : secCol(th, c.s.sec);
+        ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+        const fs = clamp(Math.min(w / (c.s.label.length * 0.62), h * 0.42) / S, 0, 44);
+        if (fs >= 11) {
+          ctx.fillStyle = T.color === 'ret' || luminance(secCol(th, c.s.sec)) < 0.55 ? '#ffffff' : '#0b1220'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.font = F(800, fs); ctx.fillText(c.s.label, x + w / 2, y + h / 2 - (h > fs * S * 2.6 ? fs * S * 0.45 : 0));
+          if (h > fs * S * 2.6) { ctx.font = F(600, fs * 0.5); ctx.fillText(money(c.v) + (T.color === 'ret' && fin(c.r) ? '  ' + pctf(c.r, 0) : ''), x + w / 2, y + h / 2 + fs * S * 0.55); }
+        }
+      });
+    });
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = F(500, 18); ctx.fillStyle = th.muted;
+    const tot = cur.reduce((a, c) => a + c.v, 0);
+    ctx.fillText(`Together ${money(tot)}` + (T.color === 'ret' ? ' · colour: 12-month total return, red −50% … green +50%' : '') + (V.foot ? ' · ' + V.foot : ''), x0, b.y + b.h - 10 * S);
+  }
+  // sector weights: stacked areas drawn up to the frame, each band labelled at its right end
+  function stackChart(ctx, V, f, b, S, th, F) {
+    const G = V.grid, n = G.length, share = V.stack.share, i0 = Math.floor(f), tCur = lerp(G[i0], G[Math.min(n - 1, i0 + 1)], f - i0);
+    const X = (t) => b.x + (t - G[0]) / ((G[n - 1] - G[0]) || 1) * b.w;
+    const hiAbs = share ? 1 : Math.max(...V.stack.total.slice(0, Math.min(n, i0 + 2)).filter(fin)) * 1.08 || 1;
+    const Y = (v) => b.y + b.h - v / hiAbs * b.h;
+    ctx.lineWidth = 1.2 * S; ctx.font = F(500, 21); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (const v of share ? [0, 0.25, 0.5, 0.75, 1] : niceTicks(0, hiAbs, 5)) { const y = Y(v); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(share ? (100 * v).toFixed(0) + '%' : money(v), b.x - 12 * S, y); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let y = new Date(G[0]).getUTCFullYear() + 1; y <= new Date(G[n - 1]).getUTCFullYear(); y += Math.max(1, Math.ceil((new Date(G[n - 1]).getUTCFullYear() - new Date(G[0]).getUTCFullYear()) / 9))) { const x = X(Date.UTC(y, 0, 1)); ctx.fillStyle = th.axis; ctx.fillText(String(y), x, b.y + b.h + 10 * S); }
+    const base = G.map(() => 0), heads = [];
+    V.series.forEach((s) => {
+      const top = s.v.map((v, i) => base[i] + (fin(v) ? v : 0)), col = secCol(th, s.sec);
+      ctx.beginPath();
+      for (let i = 0; i <= i0 && i < n; i++) (i ? ctx.lineTo(X(G[i]), Y(top[i])) : ctx.moveTo(X(G[i]), Y(top[i])));
+      const tv = valAt(top, f), bv = valAt(base, f); ctx.lineTo(X(tCur), Y(tv)); ctx.lineTo(X(tCur), Y(bv));
+      for (let i = Math.min(i0, n - 1); i >= 0; i--) ctx.lineTo(X(G[i]), Y(base[i]));
+      ctx.closePath(); ctx.fillStyle = alpha(col, 0.86); ctx.fill();
+      heads.push({ s, col, y: Y((tv + bv) / 2), v: valAt(s.v, f) });
+      for (let i = 0; i < n; i++) base[i] = top[i];
+    });
+    ctx.strokeStyle = th.text; ctx.globalAlpha = 0.5; ctx.lineWidth = 2 * S; ctx.beginPath(); ctx.moveTo(X(tCur), b.y); ctx.lineTo(X(tCur), b.y + b.h); ctx.stroke(); ctx.globalAlpha = 1;
+    const lh = 30 * S, sorted = heads.filter((h) => fin(h.v) && h.v > (share ? 0.004 : 0)).sort((a, c) => a.y - c.y);
+    sorted.forEach((h, i) => { h.ly = Math.max(h.y, i ? sorted[i - 1].ly + lh : b.y + lh / 2); });
+    for (let i = sorted.length - 1; i >= 0; i--) { const lim = i === sorted.length - 1 ? b.y + b.h - lh / 2 : sorted[i + 1].ly - lh; if (sorted[i].ly > lim) sorted[i].ly = lim; }
+    const lx = Math.min(X(tCur) + 16 * S, b.x + b.w + 14 * S);
+    sorted.forEach((h) => { ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = F(700, 21); ctx.fillStyle = h.col; ctx.fillText(`${h.s.label}  ${V.fmt(h.v)}`, lx, h.ly); });
+  }
+  // the earnings flow: the site's Sankey (its colours: grey revenue, green profit, red costs, slate non-cash) laid out
+  // the same way every quarter on one scale, so it grows and shrinks; nodes and bands move from quarter to quarter
+  const SK_COL = { rev: ['#7a7974', '#d9d8d3'], profit: ['#17734a', '#a8d1b9'], cost: ['#ea6a52', '#f6c3b8'], noncash: ['#5b7fa6', '#cdd8e6'] };
+  // a narrow picture (portrait, square) keeps the income statement, revenue to net earnings: no segments, no cash
+  const SK_CASH = new Set(['da', 'sbc', 'wc_out', 'wc_in', 'ocf', 'fcf', 'fcf_neg', 'capex', 'bridge', 'loss_abs']);
+  function sankeyNarrow(SK) {
+    if (SK._nar) return SK._nar;
+    const frames = SK.frames.map((f) => {
+      const r = f.nodes.find((n) => n.id === 'revenue'), c0 = r ? r.col : 0, cc = f.nodes.filter((n) => SK_CASH.has(n.id)).map((n) => n.col), cut = cc.length ? Math.min(...cc) : Infinity;
+      const nodes = f.nodes.filter((n) => n.col >= c0 && n.col < cut).map((n) => Object.assign({}, n, { col: n.col - c0 })), ids = new Set(nodes.map((n) => n.id));
+      return Object.assign({}, f, { nodes, links: f.links.filter((l) => ids.has(l.s) && ids.has(l.t)) });
+    });
+    SK._nar = { frames, max: Math.max(...frames.flatMap((f) => f.nodes.map((n) => Math.abs(n.v || 0))), 1), _lay: {} };
+    return SK._nar;
+  }
+  function sankeyLayout(V, k, b, S, SK) {
+    SK = SK || V.sk; SK._lay = SK._lay || {};
+    const key = k + '|' + Math.round(b.w) + '|' + Math.round(b.h); if (SK._lay[key]) return SK._lay[key];
+    const fr = SK.frames[k], nodes = fr.nodes.map((n, i) => ({ ...n, i, ins: [], outs: [] })), by = new Map(nodes.map((n) => [n.id, n]));
+    const links = fr.links.filter((l) => by.has(l.s) && by.has(l.t) && l.v > 0).map((l) => ({ ...l, S: by.get(l.s), T: by.get(l.t) }));
+    links.forEach((l) => { l.S.outs.push(l); l.T.ins.push(l); });
+    const maxCol = Math.max(...SK.frames.flatMap((q) => q.nodes.map((n) => n.col)), 1), nw = 16 * S, lab = 250 * S;
+    const K = (b.h * 0.6) / SK.max, gap = 22 * S;
+    nodes.forEach((n) => { n.h = Math.max(2 * S, Math.abs(n.v || 0) * K); n.x = b.x + n.col / maxCol * (b.w - nw - lab); });
+    for (let c = 0; c <= maxCol; c++) {
+      const col = nodes.filter((n) => n.col === c); if (!col.length) continue;
+      const H = col.reduce((a, n) => a + n.h, 0) + gap * (col.length - 1); let y = b.y + (b.h - H) / 2;
+      col.forEach((n) => { n.y = y; y += n.h + gap; });
+    }
+    nodes.forEach((n) => { let o = 0; n.outs.sort((a, c) => a.T.y - c.T.y).forEach((l) => { l.y0 = n.y + o; o += l.v * K; }); let p = 0; n.ins.sort((a, c) => a.S.y - c.S.y).forEach((l) => { l.y1 = n.y + p; p += l.v * K; }); });
+    const out = { nodes: new Map(nodes.map((n) => [n.id, n])), links: new Map(links.map((l) => [l.s + '>' + l.t, l])), K, nw };
+    SK._lay[key] = out;
+    return out;
+  }
+  function sankeyChart(ctx, V, f, b, S, th, F) {
+    const SK = b.w / S < 1500 ? sankeyNarrow(V.sk) : V.sk, n = SK.frames.length, k0 = Math.floor(f), k1 = Math.min(n - 1, k0 + 1), e = easeIO(f - k0), light = th.text === '#1d1d1b';
+    const A = sankeyLayout(V, k0, b, S, SK), B = sankeyLayout(V, k1, b, S, SK), nw = A.nw;
+    const ids = new Set([...A.links.keys(), ...B.links.keys()]);
+    for (const id of ids) {                               // bands first, under the nodes
+      const a = A.links.get(id), c = B.links.get(id), any = a || c;
+      const S0 = (m, l, side) => (l ? l : null);
+      const pos = (L, l) => (l ? { x0: l.S.x + nw, x1: l.T.x, y0: l.y0, y1: l.y1, t: l.v * L.K } : null);
+      let pa = pos(A, a), pb = pos(B, c);
+      if (!pa) pa = Object.assign({}, pb, { t: 0 }); if (!pb) pb = Object.assign({}, pa, { t: 0 });
+      const x0 = lerp(pa.x0, pb.x0, e), x1 = lerp(pa.x1, pb.x1, e), y0 = lerp(pa.y0, pb.y0, e), y1 = lerp(pa.y1, pb.y1, e), t = lerp(pa.t, pb.t, e);
+      if (t < 0.5) continue;
+      const col = (SK_COL[any.color] || SK_COL.rev)[1], xm = (x0 + x1) / 2;
+      ctx.fillStyle = light ? col : alpha(col, 0.45);
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.bezierCurveTo(xm, y0, xm, y1, x1, y1); ctx.lineTo(x1, y1 + t); ctx.bezierCurveTo(xm, y1 + t, xm, y0 + t, x0, y0 + t); ctx.closePath(); ctx.fill();
+    }
+    const nid = new Set([...A.nodes.keys(), ...B.nodes.keys()]), show = e < 0.5 ? A : B, frame = SK.frames[e < 0.5 ? k0 : k1];
+    const rev = (frame.head && frame.head.revenue) || (show.nodes.get('revenue') || {}).v;
+    const maxCol = Math.max(...SK.frames.flatMap((q) => q.nodes.map((n) => n.col)), 1), colGap = (b.w - nw - 250 * S) / maxCol, cand = [];
+    for (const id of nid) {
+      const a = A.nodes.get(id), c = B.nodes.get(id), any = a || c;
+      const pa = a || Object.assign({}, c, { h: 0 }), pb = c || Object.assign({}, a, { h: 0 });
+      const x = lerp(pa.x, pb.x, e), y = lerp(pa.y, pb.y, e), h = lerp(pa.h, pb.h, e);
+      if (h < 0.5) continue;
+      ctx.fillStyle = (SK_COL[any.color] || SK_COL.rev)[0]; ctx.fillRect(x, y, nw, h);
+      const nn = show.nodes.get(id); if (nn && h >= 6 * S) cand.push({ nn, x, y, h });
+    }
+    // labels right of each node, fitted to the room before the next column, the biggest first, none on top of another
+    const fit = (text, w, size, room, min) => { let sz = size; ctx.font = F(w, sz); while (sz > min && ctx.measureText(text).width > room) { sz -= 1; ctx.font = F(w, sz); } if (ctx.measureText(text).width <= room) return text; let t = text; while (t.length > 4 && ctx.measureText(t + '…').width > room) t = t.slice(0, -1); return t + '…'; };
+    const placed = {};
+    cand.sort((p, q) => q.h - p.h).forEach(({ nn, x, y, h }) => {
+      const lines = nn.lines || [], valLine = (lines.find((l) => l[0] === 'val') || [])[1], mut = (lines.find((l) => l[0] === 'mut') || [])[1];
+      const name = unent((lines.find((l) => l[0] === 'name' || l[0] === 'big') || [])[1] || nn.name);
+      const room = (nn.col >= maxCol ? 250 * S : colGap) - nw - 18 * S, roomy = room > 190 * S;
+      let val = valLine ? unent(valLine) : money(nn.v) + (rev && nn.id !== 'revenue' ? ' · ' + (100 * Math.abs(nn.v) / rev).toFixed(0) + '% of revenue' : '');
+      if (!roomy) val = val.split(' · ')[0];
+      const big = h > 60 * S && roomy, rows = big && mut ? 3 : 2, lh = (big ? 23 : 18) * S, top = y + h / 2 - rows * lh / 2 - 4 * S, bot = top + rows * lh + 8 * S;
+      const P = placed[nn.col] || (placed[nn.col] = []);
+      if (P.some(([a, c]) => top < c && bot > a)) return;
+      P.push([top, bot]);
+      const lx = x + nw + 10 * S; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = th.text; ctx.fillText(fit(name, 700, big ? 23 : 18, room, 12), lx, top + lh / 2 + 4 * S);
+      ctx.fillStyle = th.muted; ctx.fillText(fit(val, 500, big ? 19 : 15, room, 11), lx, top + 1.5 * lh + 4 * S);
+      if (rows === 3) ctx.fillText(fit(unent(mut), 500, 17, room, 11), lx, top + 2.5 * lh + 4 * S);
+    });
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.font = F(800, 40); ctx.fillStyle = th.text; ctx.fillText(frame.label, b.x, b.y + 30 * S);
+    const hd = frame.head || {};
+    ctx.font = F(600, 22); ctx.fillStyle = th.muted;
+    ctx.fillText([hd.revenue != null ? 'Revenue ' + money(hd.revenue) + (fin(hd.yoy) ? ` (${hd.yoy >= 0 ? '+' : '−'}${Math.abs(hd.yoy).toFixed(0)}% Y/Y)` : '') : '', hd.ni != null ? 'net earnings ' + money(hd.ni) : ''].filter(Boolean).join(' · '), b.x, b.y + 62 * S);
+  }
+  const unent = (s) => String(s).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  // the dividend snowball: shares owned (and those bought with your own money, dashed) above, each year's dividends below
+  function snowballChart(ctx, V, f, b, S, th, F, pal) {
+    const gap = 70 * S, h1 = (b.h - gap) * 0.6, h2 = b.h - gap - h1;
+    const D = Object.assign({}, V, { series: V.series.map((s) => ({ key: s.key, label: s.label + ' shares', name: s.name, v: s.sh })), base: null, contrib: null, split: false, zero: false,
+      fmt: (v) => (fin(v) ? v.toLocaleString('en-US', { maximumFractionDigits: v >= 100 ? 0 : 1 }) : '—'), unit: '', tickFmt: (v) => v.toLocaleString('en-US', { maximumFractionDigits: Math.abs(v) >= 10 ? 0 : 1 }) });
+    lineRace(ctx, D, f, { x: b.x, y: b.y, w: b.w, h: h1 }, S, th, F, pal, false, true);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.font = F(600, 22); ctx.fillStyle = th.muted;
+    ctx.fillText('Dividends received each year (all reinvested)', b.x, b.y + h1 + gap - 12 * S);
+    const G = V.grid, i0 = Math.floor(f), ys = [...new Set(G.map((g) => new Date(g).getUTCFullYear()))], yNow = new Date(G[Math.min(G.length - 1, i0)]).getUTCFullYear();
+    const yb = { x: b.x, y: b.y + h1 + gap, w: b.w, h: h2 }, m = V.series.length, slot = yb.w / ys.length, bw = slot * 0.8 / m;
+    const upto = (s, y) => { let t = 0; G.forEach((g, i) => { if (i <= f && new Date(g).getUTCFullYear() === y) t += s.paid[i] * (i === i0 + 1 ? f - i0 : 1); }); return t; };
+    const hi = Math.max(1, ...V.series.flatMap((s) => Object.values(s.yearly))) * 1.1, Y = (v) => yb.y + yb.h - v / hi * yb.h;
+    ys.forEach((y, j) => {
+      if (y > yNow) return;
+      V.series.forEach((s, k) => {
+        const v = upto(s, y); if (!(v > 0)) return;
+        const x = yb.x + j * slot + slot * 0.1 + k * bw, col = pal(k);
+        ctx.fillStyle = alpha(col, 0.85); roundRect(ctx, x, Y(v), bw * 0.9, yb.y + yb.h - Y(v), Math.min(6 * S, bw * 0.25)); ctx.fill();
+        if (y === yNow || (ys.length <= 16 && bw > 30 * S)) { ctx.font = F(700, 16); ctx.fillStyle = th.text; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(money(v), x + bw * 0.45, Y(v) - 4 * S); }
+      });
+      if (j % Math.max(1, Math.ceil(ys.length / 12)) === 0) { ctx.font = F(500, 17); ctx.fillStyle = th.axis; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(String(y), yb.x + j * slot + slot / 2, yb.y + yb.h + 6 * S); }
+    });
+  }
+
   function endCard(ctx, V, W, H, S, th, F, pal, a, portrait) {
     const rows = V.final.slice(0, portrait ? 10 : V.kind === 'rank' ? 8 : 6);
     ctx.fillStyle = `rgba(0,0,0,${0.45 * a})`; ctx.fillRect(0, 0, W, H);
@@ -1237,6 +1726,59 @@
       V.endTitle = `${V.metric} · ${V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}`;
       V.endSub = V.title;
       V.caption = `${V.title} (${V.quarterly ? quarterLabel(G[L]) : monthYear(G[L])}): ` + V.final.map((r) => `${r.label} ${r.value}`).join(' · ');
+      return;
+    }
+    if (V.kind === 'bubble') {
+      const B = V.bub, rows = V.series.map((s, k) => ({ k, s, x: s.x[L], y: s.y[L], z: s.s[L] })).filter((r) => fin(r.z)).sort((a, c) => c.z - a.z).slice(0, 8);
+      V.final = rows.map((r) => ({ k: r.k, sec: r.s.sec, label: r.s.label, value: `${B.fx(r.x)} · ${B.fy(r.y)}`, change: '' }));
+      V.endTitle = `${monthYear(G[L])}: ${RANK[B.kx][0].toLowerCase()} · ${RANK[B.ky][0] === 'Total return' ? 'return' : RANK[B.ky][0].toLowerCase()}`; V.endSub = V.title;
+      V.caption = `${V.title} (${monthYear(G[L])}): ` + V.final.map((r) => `${r.label} ${r.value}`).join(' · ');
+      return;
+    }
+    if (V.kind === 'treemap') {
+      const rows = V.series.map((s, k) => ({ k, s, v: s.v[L], r: s.r[L] })).filter((r) => r.v > 0).sort((a, c) => c.v - a.v).slice(0, 8);
+      V.final = rows.map((r, i) => ({ k: r.k, sec: r.s.sec, label: `${i + 1}. ${r.s.label}`, value: money(r.v), change: fin(r.r) ? pctf(r.r, 0) : '', up: (r.r || 0) >= 0 }));
+      V.endTitle = `The largest, ${monthYear(G[L])}`; V.endSub = 'market value · 12-month total return';
+      V.caption = `${V.title} (${monthYear(G[L])}): ` + V.final.map((r) => `${r.label} ${r.value}`).join(' · ');
+      return;
+    }
+    if (V.kind === 'sectors') {
+      const share = V.stack.share;
+      V.final = V.series.map((s, k) => ({ k, sec: s.sec, label: s.label, v: s.v[L], v0: s.v.find(fin) })).sort((a, c) => (c.v || 0) - (a.v || 0)).slice(0, 8)
+        .map((r) => ({ k: r.k, sec: r.sec, label: r.label, value: V.fmt(r.v), change: share && fin(r.v0) ? `${r.v >= r.v0 ? '+' : '−'}${Math.abs(100 * (r.v - r.v0)).toFixed(1)} pts` : (fin(r.v0) && r.v0 > 0 ? pctf(r.v / r.v0 - 1, 0) : ''), up: r.v >= (r.v0 || 0) }));
+      V.endTitle = `${share ? 'Share of market value' : 'Market value'}, ${monthYear(G[L])}`; V.endSub = `change since ${monthYear(G[0])}`;
+      V.caption = `${V.title}, ${monthYear(G[0])} → ${monthYear(G[L])}: ` + V.final.map((r) => `${r.label} ${r.value} (${r.change})`).join(' · ');
+      return;
+    }
+    if (V.kind === 'sankey') {
+      const fr = V.sk.frames[L], f0 = V.sk.frames[0], h = fr.head || {}, h0 = f0.head || {};
+      const row = (label, v, v0) => ({ k: 0, label, value: money(v), change: fin(v) && fin(v0) && v0 > 0 && v > 0 ? pctf(v / v0 - 1, 0) : '', up: (v || 0) >= (v0 || 0) });
+      V.final = [row('Revenue', h.revenue, h0.revenue)];
+      if (fin(h.oi)) V.final.push(row('Operating profit', h.oi, h0.oi));
+      if (fin(h.ni)) V.final.push(row('Net earnings', h.ni, h0.ni));
+      if (fin(h.ocf)) V.final.push(row('Operating cash flow', h.ocf, h0.ocf));
+      if (fin(h.oi) && h.revenue) V.final.push({ k: 0, label: 'Operating margin', value: (h.oi < 0 ? '−' : '') + Math.abs(100 * h.oi / h.revenue).toFixed(1) + '%', change: fin(h0.oi) && h0.revenue ? `${h.oi / h.revenue >= h0.oi / h0.revenue ? '+' : '−'}${Math.abs(100 * (h.oi / h.revenue - h0.oi / h0.revenue)).toFixed(1)} pts` : '', up: true });
+      V.endTitle = `${V.series[0].label} ${fr.label}`; V.endSub = `change since ${f0.label}`;
+      V.caption = `${V.series[0].name.replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO)\.?$/i, '')}, ${f0.label} → ${fr.label}: ` + V.final.map((r) => `${r.label.toLowerCase()} ${r.value}${r.change ? ' (' + r.change + ')' : ''}`).join(', ');
+      return;
+    }
+    if (V.kind === 'snowball') {
+      V.final = [];
+      V.series.forEach((s, k) => {
+        const sh = s.sh[L], ys = Object.keys(s.yearly).map(Number).sort(), full = ys.filter((y) => y > ys[0] && y < ys[ys.length - 1]);
+        V.final.push({ k, label: `${s.label} · ${sh.toLocaleString('en-US', { maximumFractionDigits: 1 })} shares`, value: money(s.v[L]), change: `+${(100 * s.fromDiv / Math.max(1e-9, s.bought)).toFixed(0)}% shares`, up: true });
+        if (full.length >= 2) V.final.push({ k, label: `${s.label} dividends ${full[0]} → ${full[full.length - 1]}`, value: money(s.yearly[full[full.length - 1]]), change: pctf(s.yearly[full[full.length - 1]] / Math.max(1e-9, s.yearly[full[0]]) - 1, 0), up: true });
+      });
+      V.endTitle = 'The snowball'; V.endSub = `${dayLabel(G[0])} → ${dayLabel(G[L])} · “+% shares”: bought with dividends, on top of the shares paid for`;
+      V.caption = `${V.title}: ` + V.series.map((s) => `${s.label} ${s.sh[L].toFixed(1)} shares (${(100 * s.fromDiv / Math.max(1e-9, s.bought)).toFixed(0)}% more from dividends), ${money(s.v[L])}`).join(' · ');
+      return;
+    }
+    if (V.kind === 'timing') {
+      const put = V.contrib[L];
+      V.final = V.series.map((s, k) => { const v = s.v[L], r = xirr(s.flows.concat([[G[L], v]])); return { k, name: s.label, label: s.label + (fin(r) ? ` · ${(100 * r).toFixed(1)}%/yr` : ''), value: money(v), change: pctf(v / put - 1, 0), up: v >= put, v, irr: r }; }).sort((a, c) => c.v - a.v);
+      const best = V.final.find((r) => r.name === 'Bought at the bottom'), worst = V.final.find((r) => r.name === 'Bought at the top');
+      V.endTitle = worst && best ? `Worst timing: ${worst.value} · perfect: ${best.value}` : 'The result'; V.endSub = `${money(put, 0)} put in · ${V.timing.years} years · ${V.timing.sym}, dividends reinvested`;
+      V.caption = `${V.title}: ` + V.final.map((r) => `${r.name} ${r.value}${fin(r.irr) ? ' (' + (100 * r.irr).toFixed(1) + '%/yr)' : ''}`).join(' · ') + ` · ${money(put, 0)} put in`;
       return;
     }
     if (V.kind === 'calendar') {
@@ -1366,6 +1908,12 @@
     { name: 'Drawdowns since 2007', note: 'QQQ · SPY · TLT below their highs', s: { k: 'drawdown', t: 'QQQ,SPY,TLT', from: '2007-01-05', style: 'area', theme: 'bull', dur: '30' } },
     { name: 'Nvidia, month by month', note: 'A heatmap of every monthly return', s: { k: 'calendar', t: 'NVDA', from: '2016-01-01', style: 'heat', theme: 'bull', dur: '30' } },
     { name: "Every stock's year", note: 'How returns spread, 2005 to now', s: { k: 'dist', from: '2005-01-01', style: 'hist', theme: 'clean', dur: '30' } },
+    { name: 'Growth vs return, in bubbles', note: 'The 25 largest companies, month by month', s: { k: 'bubble', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', from: '2014-01-31', style: 'bubble', theme: 'bull', dur: '40' } },
+    { name: 'The market as a map', note: 'Top 50 by market value since 2012', s: { k: 'treemap', tn: '50', tc: 'ret', from: '2012-01-31', style: 'treemap', theme: 'bull', dur: '40' } },
+    { name: 'Who owns the market', note: 'Each sector\'s share of market value', s: { k: 'sectors', sa: 'share', from: '2012-01-31', style: 'stack', theme: 'clean', dur: '30' } },
+    { name: 'Nvidia: where the money goes', note: 'The earnings flow, quarter by quarter', s: { k: 'sankey', t: 'NVDA', sm: 'detail', style: 'sankey', theme: 'clean', dur: '20' } },
+    { name: 'The dividend snowball', note: 'SCHD vs KO, dividends buying shares', s: { k: 'snowball', t: 'SCHD,KO', amt: '10000', from: '2012-01-06', style: 'snow', theme: 'bull', dur: '30' } },
+    { name: 'Bought at the top every year', note: '$2,000 a year into SPY: timing vs none', s: { k: 'timing', t: 'SPY', yb: '2000', from: '2006-01-01', style: 'line', theme: 'sunset', dur: '30' } },
   ];
   const dec = (v) => { try { return decodeURIComponent(v.replace(/\+/g, ' ')); } catch (e) { return v; } };
   function parseState(arg) {                               // arg: the address after #studio/, still encoded
@@ -1429,11 +1977,36 @@
       h += `<div class="st-help">Every US-listed company the site draws, ranked again at each step. Today's companies only: those delisted, merged or bankrupt are missing from earlier years. “At each step” uses the S&P 500's and the Dow's membership history; the other indices keep theirs from when the site began.</div>`;
       return h;
     }
+    function moreSide(k) {
+      const meas = Object.entries(RANK).filter(([kk]) => !['gp', 'oi', 'ni'].includes(kk)).map(([kk, v]) => [kk, v[0]]);
+      let h = '';
+      if (k === 'bubble') {
+        h += `<div class="st-row"><div><label for="st-bx">Across (x)</label>${sel('st-bx', meas, st.bx)}</div><div><label for="st-by">Up (y)</label>${sel('st-by', meas, st.by)}</div></div>`;
+        h += `<div class="st-row"><div><label for="st-bs">Bubble size</label>${sel('st-bs', Object.entries(BUB_SIZE), st.bs)}</div><div><label for="st-bn">How many</label>${sel('st-bn', [['10', '10'], ['25', '25'], ['50', '50']], st.bn)}</div></div>`;
+        h += `<label for="st-bt">Or these companies (tickers, blank = the largest)</label><input class="input" id="st-bt" value="${esc(st.bt)}" placeholder="AAPL, MSFT, NVDA">`;
+        if (st.bx === 'ret' || st.by === 'ret') h += `<label for="st-win">Return over</label>${sel('st-win', [['3', '3 months'], ['6', '6 months'], ['12', '12 months'], ['36', '3 years'], ['ytd', 'Year to date']], st.win)}`;
+      }
+      if (k === 'treemap') h += `<div class="st-row"><div><label for="st-tn">How many</label>${sel('st-tn', [['25', '25'], ['50', '50'], ['100', '100']], st.tn)}</div><div><label for="st-tc">Colour</label>${sel('st-tc', [['ret', '12-month return'], ['sector', 'Sector']], st.tc)}</div></div>`;
+      if (k === 'sectors') h += `<label for="st-sa">Show</label>${sel('st-sa', [['share', 'Each sector\'s share (100%)'], ['abs', 'Market value in dollars']], st.sa)}`;
+      if (k !== 'sectors') h += `<label for="st-sec">Sector</label>${sel('st-sec', [['', 'Every sector']].concat(Object.entries(SECTORS)), st.sec)}`;
+      h += `<div class="st-row"><div><label for="st-idx">Index</label>${sel('st-idx', [['', 'Any company on the site']].concat(Object.entries(IDX)), st.idx)}</div><div><label for="st-idxw">Members</label>${sel('st-idxw', [['then', 'At each step'], ['now', 'Today\'s']], st.idxw)}</div></div>`;
+      h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
+      return h + `<div class="st-help">From the site's month-by-month data on every company it draws. Market values start with each company's first XBRL filing (2009–2011: every filer from mid-2011), so a market-value video is best started in 2012. Today's companies only: those delisted, merged or bankrupt are missing from earlier years.</div>`;
+    }
     function side() {
       const k = st.k, styles = STYLES[k];
       let h = `<h3>Video</h3><div class="st-pills">${KINDS.map(([v, l]) => `<button type="button" class="pill${v === k ? ' on' : ''}" data-kind="${v}">${esc(l)}</button>`).join('')}</div>`;
       if (k === 'rank' || k === 'dist') h += rankSide(k);
-      else if (k !== 'formula') h += `<label for="st-t">${k === 'fund' ? 'Companies (tickers)' : k === 'calendar' ? 'Ticker — an ETF or a stock' : 'Tickers — ETFs or stocks, two or more'}</label><input class="input" id="st-t" value="${esc(st.t)}" placeholder="${k === 'fund' ? 'NVDA, AMD' : k === 'calendar' ? 'NVDA' : 'QQQ, SPY, SCHD'}" list="st-list" autocomplete="off"><datalist id="st-list"></datalist>`;
+      else if (k === 'bubble' || k === 'treemap' || k === 'sectors') h += moreSide(k);
+      else if (k !== 'formula') {
+        const one = k === 'calendar' || k === 'sankey' || k === 'timing';
+        const lbl = { fund: 'Companies (tickers)', sankey: 'Company (ticker)', calendar: 'Ticker — an ETF or a stock', timing: 'Ticker — an index fund or a stock', snowball: 'Dividend payers (up to three)' }[k] || 'Tickers — ETFs or stocks, two or more';
+        const ph = { fund: 'NVDA, AMD', sankey: 'NVDA', calendar: 'NVDA', timing: 'SPY', snowball: 'SCHD, KO' }[k] || 'QQQ, SPY, SCHD';
+        h += `<label for="st-t">${lbl}</label><input class="input" id="st-t" value="${esc(one ? tickers(st)[0] || '' : st.t)}" placeholder="${ph}" list="st-list" autocomplete="off"><datalist id="st-list"></datalist>`;
+        if (k === 'sankey') h += `<label for="st-sm">Quarters</label>${sel('st-sm', [['detail', 'The detailed flow (the latest quarters on file)'], ['long', 'Ten years: revenue → profit → earnings']], st.sm)}`;
+        if (k === 'timing') h += `<label for="st-yb">Money each year ($)</label><input class="input" id="st-yb" inputmode="numeric" value="${esc(st.yb)}"><div class="st-help">Each year's money goes in at that year's highest close (bought at the top), its lowest (perfect timing), its first week, or spread over its months — with hindsight, to show what timing is worth.</div>`;
+        if (k === 'snowball') h += `<label for="st-amt">Amount to start with ($)</label><input class="input" id="st-amt" inputmode="numeric" value="${esc(st.amt)}"><label for="st-rec">Buy again on a schedule (optional)</label><div class="st-row"><div><input class="input" id="st-rec" inputmode="numeric" placeholder="$ each time" value="${+st.rec > 0 ? esc(st.rec) : ''}" aria-label="Amount each time"></div><div style="flex:.7"><input class="input" id="st-ri" type="number" min="1" max="60" value="${esc(st.ri)}" aria-label="Every how many"></div><div>${sel('st-ru', [['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru)}</div></div>`;
+      }
       else h += `<label for="st-expr">Formulas — one per line, “Label: expression”</label><textarea id="st-expr" spellcheck="false">${esc(st.expr)}</textarea><div class="st-help">Operators <code>+ − × ÷ ^</code> and <code>( )</code>; functions <code>log exp sqrt abs rebase(x) ma(x,n) ema(x,n) pct(x,n) chg(x,n) lag(x,n) min(a,b) max(a,b)</code>. Series: a ticker (<code>QQQ</code> = total return) or <code>QQQ.price</code>, <code>.div</code>, <code>.yield</code>, company figures <code>NVDA.revenue</code>, <code>.ni_ttm</code>, <code>.margin</code>… Example: <code>rebase(QQQ/SPY)</code>, <code>SCHD.yield*100</code>, <code>NVDA.ni_ttm/NVDA.revenue_ttm</code>.</div>`;
       h += `<div class="st-row"><div><label for="st-from">From</label><input class="input" type="date" id="st-from" value="${esc(st.from)}"></div><div><label for="st-to">To</label><input class="input" type="date" id="st-to" value="${esc(st.to)}"></div></div>`;
       h += `<div class="st-pills" style="margin-top:6px">${[['1y', 1], ['3y', 3], ['5y', 5], ['10y', 10], ['Max', 30]].map(([l, y]) => `<button type="button" class="pill" data-yrs="${y}">${l}</button>`).join('')}</div>`;
@@ -1462,8 +2035,9 @@
     function save() { try { history.replaceState(null, '', '#' + serialize(st)); } catch (e) { /* file:// */ } }
     function status() {
       if (!V) return;
-      const tm = timing(V, opt()), per = (V.grid.length - 1) / tm.run, unit = V.yearly ? 'years' : V.quarterly ? 'quarters' : V.kind === 'rank' && st.step === 'm' || V.kind === 'calendar' ? 'months' : 'weeks';
-      $('#st-status').textContent = `${V.kind === 'rank' ? V.series.length + ' companies' : V.series.length + ' series'} · ${V.grid.length} ${unit} · ${tm.D} s (${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second)`;
+      const tm = timing(V, opt()), per = (V.grid.length - 1) / tm.run, unit = V.yearly ? 'years' : V.quarterly ? 'quarters' : V.kind === 'rank' && st.step === 'm' || ['calendar', 'bubble', 'treemap', 'sectors'].includes(V.kind) ? 'months' : 'weeks';
+      const what = ['rank', 'bubble', 'treemap'].includes(V.kind) ? ' companies' : V.kind === 'sectors' ? ' sectors' : V.kind === 'timing' ? ' plans' : ' series';
+      $('#st-status').textContent = `${V.series.length + what} · ${V.grid.length} ${unit} · ${tm.D} s (${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second)`;
       const pn = $('#st-pace-note'); if (pn) pn.textContent = `About ${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second.`;
     }
     function sizeCanvas() {
@@ -1519,7 +2093,14 @@
     const later = (f) => { clearTimeout(tmr); tmr = setTimeout(f, 450); };
     box.addEventListener('click', (e) => {
       const kb = e.target.closest('[data-kind]');
-      if (kb) { st.k = kb.dataset.kind; st.style = STYLES[st.k][0][0]; if ((st.k === 'fund' || st.k === 'calendar') && !/^[A-Z]/.test(st.t)) st.t = 'NVDA'; st.title = ''; st.sub = ''; side(); rebuild(); return; }
+      if (kb) {
+        st.k = kb.dataset.kind; st.style = STYLES[st.k][0][0]; st.title = ''; st.sub = '';
+        if ((st.k === 'fund' || st.k === 'calendar' || st.k === 'sankey') && !/^[A-Z]/.test(st.t)) st.t = 'NVDA';
+        if (st.k === 'snowball' && st.t === DEF.t) st.t = 'SCHD';
+        if (st.k === 'timing' && st.t === DEF.t) st.t = 'SPY';
+        if (st.k === 'sankey') st.theme = 'clean';
+        side(); rebuild(); return;
+      }
       const yb = e.target.closest('[data-yrs]');
       if (yb) { st.from = iso(Date.now() - (+yb.dataset.yrs) * 365.25 * DAY); st.to = ''; side(); rebuild(); }
       const sb = e.target.closest('[data-speed]');
@@ -1544,7 +2125,7 @@
         else rebuild();
         return;
       }
-      if (key === 'rm') side();
+      if (key === 'rm' || key === 'bx' || key === 'by') side();
       rebuild();
     });
     app.querySelector('#st-tpl').addEventListener('click', (e) => {
@@ -1584,6 +2165,6 @@
   // titles typed by the reader replace the written ones; the written ones stay to fall back on
   async function build(st) { const V = await buildRaw(st); V._title = V.title; V._sub = V.sub; if (st.title) V.title = st.title; if (st.sub) V.sub = st.sub; return V; }
 
-  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, resetPanel: () => PANEL.clear() } };
+  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, resetPanel: () => PANEL.clear() } };
   if (typeof module !== 'undefined') module.exports = root.FFStudio;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

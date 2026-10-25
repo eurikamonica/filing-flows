@@ -78,6 +78,15 @@ class Shares(unittest.TestCase):
         q = FR.quarterly(root, 'NetIncomeLoss', ['CY2025Q1', 'CY2025Q2', 'CY2025Q3', 'CY2025Q4'])
         self.assertAlmostEqual(q['CY2025Q4']['9'], 3511e6 - (813.8e6 + 888.8e6 + 853e6))
 
+    def test_plausible_market_values(self):
+        self.assertTrue(R.plausible(2e12, 3e11, 1e10, 1e10))                          # a mega cap trading 15% a month
+        self.assertTrue(R.plausible(2e9, None, 1e8, 1e8))                             # small, no trading on file
+        self.assertFalse(R.plausible(1e11, 5e7, 5e9, 5e9))                            # $100B trading $50M a month
+        self.assertFalse(R.plausible(5e10, None, 5e9, 5e9))                           # $50B and no trading at all
+        self.assertFalse(R.plausible(2e9, 1e5, 1e8, 1e8))                             # 20,000 months of trading
+        self.assertFalse(R.plausible(1e9, 1e9, 3e9, 1e8))                             # thirty times today's count
+        self.assertFalse(R.plausible(2e13, 1e13, 1e10, 1e10))
+
     def test_months_and_asof(self):
         grid = R.months('2024-01', dt.date(2024, 3, 15))
         self.assertEqual(grid, ['2024-01', '2024-02', '2024-03'])
