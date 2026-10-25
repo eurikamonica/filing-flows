@@ -34,7 +34,7 @@ const d=WB.newSession('dcf');
 for(const [ref,v] of Object.entries(d.answers))WB.setCell(d,ref,v);
 close(WB.evaluate(d.cells,'C3'),1120,'DCF year 1 revenue 1000*(1+.12)');
 close(WB.evaluate(d.cells,'C6'),336,'DCF EBIT 1120*.30');
-close(WB.evaluate(d.cells,'C15'),327.2-134.4-9.6,'DCF FCFF 265?');
+close(WB.evaluate(d.cells,'C15'),336*(1-.21)+1120*.045-1120*.12-(1120-1000)*.08,'DCF FCFF operating inputs');
 close(WB.evaluate(d.cells,'G26'),WB.evaluate(d.cells,'G24')/100,'DCF per share equity / diluted shares');
 WB.setCell(d,'B16',.02);
 assert.throws(()=>WB.evaluate(d.cells,'G20'),/#WACC|#DIV/);n++;
