@@ -40,6 +40,33 @@ const cases={
   units:'ratio, not dollars',
   exercise:'Intel exclusivity payments increased from 10% of operating income in FY2003 to 38% in FY2006 and 76% in FY2007 Q1. These are RATIO disclosures: never turn them into dollar amounts without the matching operating income. Explain the fragility of earnings dependent on incentives.',
   exerciseZH:'Intel 排他性付款占 Dell 营业利润比例从 FY2003 的 10%，升至 FY2006 的 38%，FY2007 Q1 的 76%。这是比例，不是具体金额；没有同一期间营业利润就不能推算返利美元金额。分析对激励付款的依赖。'
+ },
+ worldcom:{
+  company:'WorldCom Inc.', dates:'FY2001 and Q1 2002',
+  citation:'https://www.sec.gov/enforcement-litigation/litigation-releases/lr-17588',
+  sourceType:'SEC Litigation Release 17588 / June 27, 2002 (complaint allegations)',
+  figures:{overstated2001:3055,overstated2002Q1:797},
+  units:'USD millions',
+  exercise:'SEC complaint alleged approximately $3,055M FY2001 and $797M Q1 2002 pretax income overstatements, totaling $3,852M across DIFFERENT periods (sum for case scope, not a single fiscal year). Line costs were improper capitalizations; distinguish recurring operating costs from qualifying capital expenditure.',
+  exerciseZH:'SEC 诉状指出 2001 全年税前利润被夸大约 $3,055M、2002 Q1 约 $797M。两期合计约 $3,852M，仅为案件涉及金额合计，不能当作单一财年。练习识别将经常性线路费用不当资本化的影响。'
+ },
+ xerox:{
+  company:'Xerox Corporation', dates:'1997–2000',
+  citation:'https://www.sec.gov/enforcement-litigation/litigation-releases/lr-17465',
+  sourceType:'SEC Litigation Release 17465 / April 11, 2002',
+  figures:{acceleratedRevenueLowerBound:3000,approxPretaxIncomeIncrease:1500},
+  units:'USD millions: revenue > $3,000M, pretax earnings approximately $1,500M',
+  exercise:'SEC alleged accelerated equipment revenue of OVER $3,000M and approximately $1,500M increase to pretax earnings over 1997–2000. $3,000M is a lower bound, NOT an exact reported amount; do not calculate an exact profit-to-revenue ratio. Model revenue timing separately from cash collection.',
+  exerciseZH:'SEC 指出 1997–2000 年设备收入被提前确认超过 $3,000M、税前利润增加约 $1,500M。$3,000M 仅是严格下界，并非精确值，不能据此声称精确利润率。练习区分收入确认时点与现金收取时点。'
+ },
+ waste:{
+  company:'Waste Management Inc.', dates:'1992–1997 Q3',
+  citation:'https://www.sec.gov/newsroom/press-releases/2002-44-waste-management-founder-five-other-former-top-officers-sued-massive-fraud',
+  sourceType:'SEC 2002-44 press release / accounting litigation',
+  figures:{cumulativePretaxMisstatement:1700},
+  units:'USD millions, cumulative estimated',
+  exercise:'SEC described approximately $1,700M cumulative pre-tax misstatement for statements from 1992 through Q3 1997. The cumulative figure has no attributable single-year allocation in this exercise. Simulate a depreciation-useful-life choice using hypothetical asset costs, not an invented historic Waste Management schedule.',
+  exerciseZH:'SEC 认定 1992 至 1997 年 Q3 之间累计税前利润错报约 $1,700M。现有案例只记录累计额，不人为分配到单季度或年份；折旧年限模拟将使用明确标注的教学假设。'
  }
 };
 const hasNum=v=>typeof v==='number'&&Number.isFinite(v);
