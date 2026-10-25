@@ -70,8 +70,8 @@ STYLES = ("styles.css", "nav.css", "ux.css", "gamma.css", "eps-research.css", "l
 
 def page_assets(html):
     """Every local script and stylesheet web/index.html references, the lists above first: a file added to the page
-    but not to a list was left out of the site (scenario-elasticity.js answered 404)."""
-    scripts = list(SCRIPTS) + [s for s in re.findall(r'<script src="([\w.-]+\.js)"></script>', html) if s not in SCRIPTS]
+    but not to a list was left out of the site (scenario-elasticity.js answered 404; mascot.js, loaded with defer, too)."""
+    scripts = list(SCRIPTS) + [s for s in re.findall(r'<script src="([\w.-]+\.js)"(?:\s+(?:defer|async))*\s*></script>', html) if s not in SCRIPTS]
     styles = list(STYLES) + [s for s in re.findall(r'<link rel="stylesheet" href="([\w.-]+\.css)">', html) if s not in STYLES]
     return ([s for s in scripts if os.path.exists(os.path.join(WEB, s))], [s for s in styles if os.path.exists(os.path.join(WEB, s))])
 
@@ -93,7 +93,7 @@ def main():
             html = html.replace(f'<link rel="stylesheet" href="{name}">', f"<style>\n{css}</style>")
         for name in scripts:
             js = open(os.path.join(WEB, name), encoding="utf-8").read()
-            html = html.replace(f'<script src="{name}"></script>', f"<script>\n{js}</script>")
+            html = re.sub(rf'<script src="{re.escape(name)}"(?:\s+(?:defer|async))*\s*></script>', lambda _m, js=js: f"<script>\n{js}</script>", html)
         if args.fragment:
             head = re.search(r"<head>(.*?)</head>", html, re.S).group(1)
             keep = [m.group(0) for m in re.finditer(r"<title>.*?</title>|<link [^>]*fonts\.(?:googleapis|gstatic)[^>]*>|<style>.*?</style>", head, re.S)]
