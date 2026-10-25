@@ -28,6 +28,7 @@
   const big = (v) => { if (!fin(v)) return '—'; const a = Math.abs(v), s = v < 0 ? '−' : ''; return s + (a >= 1e12 ? '$' + num(a / 1e12, 2) + 'T' : a >= 1e9 ? '$' + num(a / 1e9, 1) + 'B' : a >= 1e6 ? '$' + num(a / 1e6, 0) + 'M' : '$' + num(a, 0)); };
   const pc = (v, d = 0) => (fin(v) ? num(100 * v, d) + '%' : '—');
   const spc = (v, d = 1) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
+  const academy = () => root.FFFloAcademy || (typeof module !== 'undefined' ? require('./flo-academy.js') : null);
   const memo = new Map();
   const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
   const fileT = (t) => String(t || '').toUpperCase().replace(/\./g, '-');
@@ -324,8 +325,8 @@
 
   function helpAnswer(lg, company) {
     const t = company ? company.ticker : 'NVDA';
-    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me about any company on the site — I answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Try “What is ${t} worth?”`,
-      `你好，我是 <b>Flo</b>。可以问我网站上任何公司的问题，我用网站自己的模型回答：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
+    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me for a step-by-step DCF tutorial, cookie jar investigation, a number explanation, or SEC case studies. I also answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Try “What is ${t} worth?”`,
+      `你好，我是 <b>Flo</b>。我还能逐步教 DCF、调查 Cookie Jar 准备金、解释图表中的数字并讲解 SEC 真实案例。网站模型包括：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
   }
   let IX = null;
   const index = () => IX || (IX = json(DATA + 'index.json'));
@@ -334,6 +335,11 @@
     q = String(q || '');
     const lg = lang(q), ix = ixArg || await index(), cls = classify(q);
     let co = findCompany(q, ix) || ctxCo || null;
+    const A = academy();
+    if (A && A.match(q)) {
+      const a = await A.handle(q, co, lg, c => json(DATA + 'c/' + c.cik + '.json'));
+      if (a) return { ...a, company: co || null };
+    }
     if (!co && pageCik() && ix) co = (ix.companies || []).find((c) => +c.cik === pageCik()) || null;
     if (!co) return cls.includes('help') || !q.trim() ? helpAnswer(lg, null)
       : { html: L(lg, 'Which company? Give me a ticker or a name — for example “NVDA valuation” or “Is Apple Leading next week?”', '哪家公司？请给我代码或名称，比如「NVDA 估值」或「苹果下周会进入领先吗？」'), facts: [], mood: 'think', links: [] };
@@ -386,6 +392,11 @@
 .flo-me{align-self:flex-end;background:var(--accent,#17734a);color:#fff;border-bottom-right-radius:3px}
 .flo-bot{align-self:flex-start;background:var(--surface-2,#efeee9);border-bottom-left-radius:3px}.flo-bot a{color:var(--accent,#17734a)}
 .flo-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.flo-links a{font-size:12px;border:1px solid var(--line,#ccc);border-radius:9px;padding:2px 8px;text-decoration:none}
+.flo-modes{display:flex;gap:5px;flex-wrap:wrap;flex-basis:100%;padding:1px 0 4px}.flo-modes button{background:color-mix(in srgb,var(--accent,#17734a) 12%,var(--surface,#fff));border-color:var(--accent,#17734a);font-weight:600}
+.flo-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.flo-actions button{font:inherit;font-size:12px;border:1px solid var(--accent,#17734a);border-radius:8px;background:transparent;color:inherit;padding:4px 8px;cursor:pointer}
+.flo-mini-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0}.flo-mini-form label{display:flex;flex-direction:column;font-size:11px}.flo-mini-form input{min-width:0;width:100%;border-radius:6px;border:1px solid var(--line,#ccc);color:inherit;background:var(--surface,#fff);font:inherit;padding:5px}.flo-mini-form button{border:0;border-radius:8px;background:var(--accent,#17734a);color:#fff;cursor:pointer;padding:6px;font:inherit;grid-column:1/-1}
+.flo-example{border-left:3px solid var(--accent,#17734a);padding:7px 9px;margin:7px 0;background:var(--surface,#fff);border-radius:0 8px 8px 0}.flo-source{font-size:11px;color:var(--muted,#777)}.flo-list{padding-left:18px;margin:7px 0}.flo-list li{margin-bottom:4px}.flo-ac-head{display:flex;align-items:center;justify-content:space-between;gap:7px}.flo-ac-head small{color:var(--muted,#777)}
+
 .flo-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}.flo-chips button{font:inherit;font-size:12px;border:1px solid var(--line,#ccc);background:none;color:inherit;border-radius:12px;padding:3px 9px;cursor:pointer}
 .flo-chips .flo-more{border-style:dashed;color:var(--muted,#777)}.flo-chips button:hover{border-color:var(--accent,#17734a);color:var(--accent,#17734a)}
 .flo-form{display:flex;gap:6px;padding:10px 54px 12px 12px;border-top:1px solid var(--line,#e5e5e5)}.flo-form input{flex:1;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--bg,#fff);color:inherit;min-width:0}
@@ -445,8 +456,29 @@
     const lg = lang(q), LM = root.LocalFilingModel;
     const local = LM && LM.isConnected && LM.isConnected() && LM.ask && (a.facts || []).length;
     wait.innerHTML = a.html + ((a.links || []).length ? `<div class="flo-links">${a.links.map(([h, t]) => link(h, t)).join('')}</div>` : '') +
+      ((a.actions || []).length ? `<div class="flo-actions">${a.actions.map(x => `<button type="button" class="flo-action" data-flo-q="${esc(x.question)}">${esc(x.label)}</button>`).join('')}</div>` : '') +
       (local ? `<button type="button" class="flo-local">${lg === 'zh' ? '用本地模型解释' : 'Explain with the local model'}</button>` : '');
     ui.log.scrollTop = ui.log.scrollHeight;
+    wait.querySelectorAll('.flo-action').forEach(b => b.addEventListener('click', () => send(b.dataset.floQ)));
+    wait.querySelectorAll('form[data-flo-calc]').forEach(form => form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const A = academy(); if (!A) return;
+      const fields = Object.fromEntries(Array.from(form.querySelectorAll('input[name]')).map(input => [input.name, input.value]));
+      try {
+        if (form.dataset.floCalc === 'fcff') {
+          const v = A.fcff(fields);
+          addMsg('<b>FCFF = ' + esc(v.toLocaleString('en-US', {maximumFractionDigits:2})) +
+            '</b> (same units as exercise). EBIT × (1−Tax%) + D&amp;A − CapEx − ΔNWC. <small>Hypothetical inputs, NOT company data.</small>', 'bot');
+        } else if (form.dataset.floCalc === 'rebate') {
+          const v = A.rebate(fields);
+          addMsg('<b>Rebate allocation</b><p>Total ' + usd(v.total) +
+            ' · Sold units → COGS reduction ' + usd(v.cogs) +
+            ' · Unsold units → inventory cost reduction ' + usd(v.inventory) +
+            '.</p><small>Hypothetical contract; actual recognition varies.</small>', 'bot');
+        }
+        mood('happy',1600);
+      } catch(e) { addMsg(esc(e.message),'bot'); mood('worried',1800); }
+    }));
     const b = wait.querySelector('.flo-local');
     if (b) b.addEventListener('click', async () => {
       b.disabled = true; b.textContent = '…'; mood('think');
@@ -461,9 +493,19 @@
   }
   function renderChips() {
     if (!ui) return;
-    ui.chips.innerHTML = chips().map((c) => `<button type="button">${esc(c)}</button>`).join('') +
+    const T = (ui.co && ui.co.ticker) || 'NVDA';
+    const zh = zhUI();
+    const modes = [
+      [zh ? '学 DCF' : 'Learn DCF', 'teach ' + T + ' DCF step by step'],
+      [zh ? 'Cookie Jar 侦探' : 'Cookie Jar', T + ' cookie jar'],
+      [zh ? 'SEC 案例' : 'SEC cases', 'Sunbeam case study'],
+      [zh ? '返利练习' : 'Rebate lab', 'supplier rebate exercise']
+    ];
+    ui.chips.innerHTML = '<div class="flo-modes">' + modes.map(m => '<button type="button" class="flo-mode" data-flo-q="' + esc(m[1]) + '">' + esc(m[0]) + '</button>').join('') + '</div>' +
+      chips().map((c) => `<button type="button">${esc(c)}</button>`).join('') +
       `<button type="button" class="flo-more" aria-label="${zhUI() ? '换一批问题' : 'More questions'}">↻ ${zhUI() ? '换一批' : 'More'}</button>`;
-    ui.chips.querySelectorAll('button:not(.flo-more)').forEach((b) => b.addEventListener('click', () => send(b.textContent)));
+    ui.chips.querySelectorAll('.flo-mode').forEach(b => b.addEventListener('click', () => send(b.dataset.floQ)));
+    ui.chips.querySelectorAll('button:not(.flo-more):not(.flo-mode)').forEach(b => b.addEventListener('click', () => send(b.textContent)));
     ui.chips.querySelector('.flo-more').addEventListener('click', () => { ui.seed = (ui.seed || 0) + 1; renderChips(); });
   }
 
@@ -519,6 +561,24 @@
     root.requestAnimationFrame(frame);
   }
 
+  async function explainNode(context) {
+    const A = academy(); if (!A) return null;
+    const ix = await index();
+    const co = ((ix && ix.companies) || []).find(c => +c.cik === +(context && context.cik)) || null;
+    const answer = A.explain(co, zhUI() ? 'zh' : 'en', context || {});
+    if (!ui) return answer;
+    open();
+    const msg = addMsg(answer.html + (answer.links && answer.links.length ?
+      '<div class="flo-links">' + answer.links.map(([u,l]) => link(u,l)).join('') + '</div>' : ''), 'bot');
+    if (answer.actions && answer.actions.length) {
+      const actions = doc.createElement('div'); actions.className = 'flo-actions';
+      answer.actions.forEach(a => {const b = doc.createElement('button'); b.type='button'; b.className='flo-action'; b.textContent=a.label;
+        b.addEventListener('click',()=>send(a.question)); actions.appendChild(b);});
+      msg.appendChild(actions);
+    }
+    mood('talk',1800);
+    return answer;
+  }
   function open() {
     if (!ui) return;
     ui.panel.hidden = false; ui.launch.hidden = true;
@@ -597,7 +657,7 @@
     root.requestAnimationFrame(frame);
     setTimeout(() => mood('wave', 1800), 1200);
   }
-  root.FFMascot = { open, ask, mount, classify, findCompany, lang, pageContext, chipsFor };
+  root.FFMascot = { open, ask, explain: explainNode, mount, classify, findCompany, lang, pageContext, chipsFor };
   if (doc && doc.body !== undefined) { if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', mount); else mount(); }
   if (typeof module !== 'undefined') module.exports = { classify, findCompany, lang, ask, helpAnswer, pageContext, chipsFor, greetFor };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
