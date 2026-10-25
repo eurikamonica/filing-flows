@@ -37,13 +37,13 @@
   const lang = (q) => (/[㐀-鿿]/.test(String(q || '')) ? 'zh' : 'en');
   const INTENTS = [
     // widen these when web/flo-questions.js gains a phrasing Flo misses (tests/test_mascot.cjs checks every one)
-    ['options', /\boptions?\b|max ?pain|put wall|call wall|option walls?|implied (move|vol|range)|expected move|\biv\b|\bstrikes?\b|expir|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间|预期波动|行权价|到期/i],
+    ['options', /\boptions?\b|max ?pain|put wall|call wall|option walls?|implied (move|vol|range)|expected move|\d+% range|\biv\b|\bstrikes?\b|expir|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间|预期波动|行权价|到期/i],
     ['industry', /\bindustr(y|ies)\b|\bsector\b|\bpeers?\b|行业|板块|同业/i],
-    ['rotation', /\brrg\b|rotation|rotating|momentum|quadrant|leading|lagging|weakening|improving|relative strength|rs-?ratio|outperform|underperform|markov|next week|轮动|象限|动量|领先|落后|转弱|改善|相对强弱|跑赢|跑输|强于大盘|弱于大盘|马尔科夫|下周/i],
-    ['credit', /\bdebt\b|credit|default|bankrupt|distress|altman|solven|leverage|债务|违约|信用|破产|偿债|杠杆|利差/i],
-    ['analysts', /analyst|price target|target price|consensus|polymarket|kalshi|wall street|\brating\b|分析师|目标价|一致预期|预测市场|华尔街|评级/i],
-    ['earnings', /revenue|earnings|profit|margin(?! of safety)|\beps\b|quarter|sales|income|cash flow|year (on|over) year|\byoy\b|\b10-[qk]\b|收入|营收|利润|财报|毛利|季度|净利|现金流|业绩|同比|年报|季报/i],
-    ['valuation', /worth|\bvalue\b|valuation|fair|cheap|expensive|overvalued|undervalued|\bdcf\b|intrinsic|\bbuy\b|upside|downside|margin of safety|monte carlo|\bpvgo\b|for growth|估值|值多少|便宜|贵|低估|高估|合理价|内在价值|值得买|价值|上涨空间|下跌空间|安全边际|蒙特卡洛|为增长/i],
+    ['rotation', /\brrg\b|rotation|rotating|momentum|quadrant|leading|lagging|weakening|improving|relative strength|rs-?ratio|outperform|underperform|beating the market|markov|next week|轮动|象限|动量|领先|落后|转弱|改善|相对强弱|跑赢|跑输|强于大盘|弱于大盘|马尔科夫|轮出|轮入|下周/i],
+    ['credit', /\bdebt\b|credit|default|bankrupt|distress|altman|solven|leverage|balance sheet|债务|违约|信用|破产|偿债|杠杆|利差|还得起债|财务困境|负债/i],
+    ['analysts', /analyst|price target|target price|consensus|polymarket|kalshi|wall street|prediction markets?|\btargets?\b|\bstreet\b|\brating\b|分析师|目标价|一致预期|预测市场|华尔街|评级/i],
+    ['earnings', /revenue|earnings|profit|margin(?! of safety)|\beps\b|quarter|sales|income|cash flow|year (on|over) year|\byoy\b|\b10-[qk]\b|results|top line|收入|营收|利润|财报|毛利|季度|净利|现金流|业绩|同比|年报|季报|盈利|销售额/i],
+    ['valuation', /worth|\bvalue\b|valuation|fair|cheap|expensive|overvalued|undervalued|\bdcf\b|intrinsic|\bbuy\b|upside|downside|margin of safety|monte carlo|\bpvgo\b|for growth|future growth|bull case|bear case|justified|估值|值多少|便宜|贵|低估|高估|合理价|内在价值|值得买|价值|上涨空间|下跌空间|安全边际|蒙特卡洛|为增长|未来增长|价格合理/i],
     ['help', /^\s*(hi|hello|hey|help|what can you do)\b|你好|帮助|你能做什么|怎么用/i],
   ];
   function classify(q) {

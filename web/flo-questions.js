@@ -85,6 +85,90 @@
       },
     },
   };
+  // round 2 additions, merged into the lists above (keep adding here or above; both are read)
+  const MORE = {
+    valuation: {
+      default: {
+        en: ['Is {t} a buy at this price?', 'What would {t} be worth with slower growth?', "How does {t}'s DCF compare with its price?", "What's the bull case value for {t}?",
+          "What's the bear case value for {t}?", 'How much of {t}\'s price is for future growth?', 'Which valuation method fits {t}?', '{t} stage-weighted value',
+          'Is {t} fairly valued?', "What is {t}'s downside to fair value?", '{t} value per share', 'How does {t} compare with its fair value range?'],
+        zh: ['{t} 现在这个价格值得买吗？', '{t} 增长放缓的话值多少？', '{t} 的 DCF 和股价比怎么样？', '{t} 乐观情形的估值是多少？',
+          '{t} 悲观情形的估值是多少？', '{t} 的股价有多少是为未来增长付费？', '哪种估值方法适合 {t}？', '{t} 的阶段加权估值',
+          '{t} 估值合理吗？', '{t} 离合理价值还有多少下跌空间？', '{t} 每股价值是多少？', '{t} 现价在估值区间的什么位置？'],
+      },
+      examples: {
+        en: ['is it fairly valued', 'bull case', 'bear case', 'what is the stock worth', 'price vs value', 'valuation range', 'is the price justified', 'worth buying'],
+        zh: ['估值合理吗', '乐观估值', '悲观估值', '股票值多少', '现价和价值', '估值区间', '价格合理吗', '值不值得买'],
+      },
+    },
+    rotation: {
+      default: {
+        en: ['Is {t} gaining momentum?', 'Is {t} losing momentum?', 'Has {t} turned Improving?', 'How long has {t} been Leading?', '{t} rotation next month',
+          'Is {t} beating the market lately?', "What's the chance {t} is Leading in 4 weeks?", 'Will {t} fall into Lagging?', '{t} RS-Momentum this week', 'Is {t} rotating out?'],
+        zh: ['{t} 动量在增强吗？', '{t} 动量在减弱吗？', '{t} 转入改善象限了吗？', '{t} 领先多久了？', '{t} 下个月的轮动',
+          '{t} 最近跑赢大盘吗？', '{t} 4 周后领先的概率有多大？', '{t} 会掉进落后象限吗？', '{t} 本周的 RS-Momentum', '{t} 资金在轮出吗？'],
+      },
+      examples: {
+        en: ['gaining momentum', 'losing momentum', 'beating the market', 'rotating out', 'rotating in', 'quadrant next month', 'underperforming', 'rs momentum'],
+        zh: ['动量增强', '动量减弱', '跑赢市场', '轮出', '轮入', '下个月在哪个象限', '弱于大盘', '相对动量'],
+      },
+    },
+    industry: {
+      default: {
+        en: ["Is {t}'s industry gaining momentum?", "How many companies are in {t}'s industry?", "Is {t}'s industry beating the market?", "Where will {t}'s industry be in 4 weeks?", "{t} sector rotation"],
+        zh: ['{t} 所在行业动量在增强吗？', '{t} 的行业有多少家公司？', '{t} 所在行业跑赢大盘吗？', '{t} 所在行业 4 周后在哪？', '{t} 板块轮动'],
+      },
+      examples: {
+        en: ['sector rotation', 'which industry', 'peer group', 'industry momentum', 'sector strength'],
+        zh: ['板块轮动', '哪个行业', '同业公司', '行业动量', '板块强弱'],
+      },
+    },
+    options: {
+      default: {
+        en: ['Where do {t} options say the price will be next month?', '{t} options: the 80% range', 'Is {t} near its max pain?', 'What is the options market pricing for {t}?',
+          '{t} option expiry range', 'How wide is {t}\'s implied range?', '{t} options vs the current price', '{t} call wall resistance'],
+        zh: ['期权认为 {t} 下个月在哪？', '{t} 期权的 80% 区间', '{t} 离最大痛点近吗？', '期权市场对 {t} 怎么定价？',
+          '{t} 期权到期区间', '{t} 的隐含区间有多宽？', '{t} 期权和现价对比', '{t} 看涨墙的阻力位'],
+      },
+      examples: {
+        en: ['options market', 'option expiry', 'implied range', '80% range', 'max pain level', 'call wall resistance', 'put wall support'],
+        zh: ['期权市场', '期权到期', '隐含区间多少', '80% 区间期权', '最大痛点在哪', '看涨墙阻力', '看跌墙支撑'],
+      },
+    },
+    earnings: {
+      default: {
+        en: ['Did {t} grow revenue last quarter?', "What's {t}'s net margin?", "{t}'s quarterly profit", 'Is {t} profitable?', '{t} sales this quarter', "How fast is {t}'s revenue growing?",
+          "{t}'s cash flow from operations", "When did {t} last file earnings?", '{t} income statement summary', "{t}'s operating income"],
+        zh: ['{t} 上季度营收增长了吗？', '{t} 的净利率是多少？', '{t} 的季度利润', '{t} 盈利吗？', '{t} 本季度销售额', '{t} 营收增长有多快？',
+          '{t} 的经营活动现金流', '{t} 最近一次财报是什么时候？', '{t} 利润表摘要', '{t} 的营业利润'],
+      },
+      examples: {
+        en: ['is it profitable', 'quarterly results', 'net margin', 'operating income', 'income statement', 'latest results', 'top line', 'sales this quarter'],
+        zh: ['盈利吗', '季度业绩', '净利率', '营业利润', '利润表', '最新业绩', '营收增速', '销售额'],
+      },
+    },
+    credit: {
+      default: {
+        en: ["Can {t} pay its debt?", "{t}'s credit rating band", "{t}'s 5-year credit spread", 'Is {t} in financial distress?', "How much debt does {t} carry?", "{t}'s one-year default probability"],
+        zh: ['{t} 还得起债吗？', '{t} 的信用评级区间', '{t} 的 5 年期信用利差', '{t} 有财务困境吗？', '{t} 有多少债务？', '{t} 一年期违约概率'],
+      },
+      examples: {
+        en: ['can it pay its debt', 'financial distress', 'default probability', 'credit rating', 'balance sheet risk', 'how much debt'],
+        zh: ['还得起债吗', '财务困境', '违约概率', '信用评级', '负债风险', '有多少债务'],
+      },
+    },
+    analysts: {
+      default: {
+        en: ["What's the highest analyst target for {t}?", "What's the lowest analyst target for {t}?", 'Do analysts see upside in {t}?', "{t} consensus vs price", "What do prediction markets say about {t}?"],
+        zh: ['{t} 最高的分析师目标价？', '{t} 最低的分析师目标价？', '分析师认为 {t} 有上涨空间吗？', '{t} 一致预期和现价对比', '预测市场怎么看 {t}？'],
+      },
+      examples: {
+        en: ['highest target', 'lowest target', 'analyst consensus', 'street target', 'prediction markets'],
+        zh: ['最高目标价', '最低目标价', '分析师一致预期', '华尔街目标', '预测市场怎么看'],
+      },
+    },
+  };
+  for (const [k, v] of Object.entries(MORE)) for (const part of ['default', 'examples']) for (const lg of ['en', 'zh']) BANK[k][part][lg].push(...v[part][lg]);
   root.FFFloQuestions = BANK;
   if (typeof module !== 'undefined') module.exports = BANK;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
