@@ -7,6 +7,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const script=fs.readFileSync(path.join(__dirname,'../web/flo-alerts.js'),'utf8');
 const timelineScript=fs.readFileSync(path.join(__dirname,'../web/flo-timeline.js'),'utf8');
+const impactScript=fs.readFileSync(path.join(__dirname,'../web/flo-impact.js'),'utf8');
 let count=0;
 const check=(v,msg)=>{assert.ok(v,msg);count++;};
 class Element {
@@ -50,6 +51,7 @@ const env={
  module:{exports:{}}
 };
 vm.runInNewContext(timelineScript,env,{filename:'flo-timeline.js'});
+vm.runInNewContext(impactScript,env,{filename:'flo-impact.js'});
 vm.runInNewContext(script,env,{filename:'flo-alerts.js'});
 const Alert=env.module.exports;
 const date=new Date(Date.now()-120000).toISOString();
@@ -83,9 +85,17 @@ const next={schema:1,generated_at:new Date(Date.now()-60000).toISOString(),event
   actions.children[0].click();
   check(opened.length===1&&opened[0].event==='8k:new','click directly asks Flo to explain new SEC event');
   check(opened[0].html.includes('SEC')&&opened[0].html.includes('重述'),'answer includes SEC contextual risk evidence');
-  check(actions.children.length===4,'toast offers cross-signal timeline alongside analysis/inbox/mute');
+  check(actions.children.length===5,'toast offers timeline plus new event research checklist');
   actions.children[3].click();
   check(opened.length===2&&opened[1].html.includes('研究时间线'),'timeline opens in the same Flo conversation');
+  actions.children[4].click();
+  check(opened.length===3&&opened[2].html.includes('证据核对与建模研究'),
+    'research button opens evidence-based modeling checklist in Flo');
+  check(opened[2].html.includes('重述')&&opened[2].html.includes('SEC'),
+    '8-K restatement yields specific due-diligence guidance');
+  const research=Alert.report('NVDA 8-K 影响分析',true);
+  check(research.html.includes('重述')&&research.intents.includes('impact-research'),
+    'natural-language SEC event impact request routes into real loaded feed');
   check(opened[1].html.includes('NVDA')&&opened[1].html.includes('SEC Form')===false,
     'timeline uses published event evidence without fabricating a new SEC filing');
   const answer=Alert.report('NVDA 事件时间线',true);
