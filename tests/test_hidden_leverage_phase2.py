@@ -66,6 +66,22 @@ class HiddenPhase2Tests(unittest.TestCase):
         self.assertEqual(self.parse(html), [])
         self.assertEqual(self.parse("<p>Uncommenced leases</p><table><tr><td>2027</td><td>100</td></tr><tr><td>2028</td><td>200</td></tr></table>"), [])
 
+    def test_reported_uncommenced_total_without_payment_schedule(self):
+        microsoft = """<p>As of June 30, 2026, we had additional leases,
+          primarily for datacenters, that had not yet commenced of
+          $329.1 billion, with some arrangements subject to conditions.</p>"""
+        found = self.parse(microsoft)
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0]["amount_usd"], 329_100_000_000)
+        self.assertEqual(found[0]["payments"], [])
+        self.assertEqual(found[0]["status"], "narrative_amount_needs_review")
+        oracle = """<p>As of June 30, 2026, we had $260 billion of
+          additional lease commitments, substantially all related to data
+          center arrangements, that are generally expected to commence
+          between fiscal 2027 and fiscal 2029.</p>"""
+        self.assertEqual(self.parse(oracle)[0]["amount_usd"], 260_000_000_000)
+        self.assertEqual(self.parse(oracle.replace("June 30, 2026", "May 31, 2026")), [])
+
     def test_dated_supplier_finance_balances_not_nominal_payments(self):
         html = """<p>Supplier finance program, as of June 30, 2026 (USD in millions).</p>
            <table><tr><th>Balance</th><th>2026</th><th>2025</th></tr>
