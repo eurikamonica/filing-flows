@@ -175,18 +175,133 @@
     const g = ev && typeof ev === 'object' ? (ev[h] || ev[String(h)] || 'none') : (ev || 'none');
     return `<span class="pv-ev ${esc(g)}">${esc(g)}</span>`;
   }
-  let priceSection = () => '';
+  const LAYERS = [['levels', 'Support, resistance, supply / demand'], ['smc', 'FVG & order blocks'], ['structure', 'Swings & BOS / CHoCH'], ['elliott', 'Elliott'],
+    ['donchian', 'Donchian 20'], ['profile', 'Volume profile'], ['signals', 'Signals with evidence'], ['all', 'All signals']];
+  const evOf = (stats, h = '20') => ((stats || {}).evidence || {})[h] || 'none';
+  function candleSvg(d, RU, st) {
+    const ov = (d.pa || {}).overlays || {}, S = (d.pa || {}).state || {}, C = ov.candles || [];
+    if (C.length < 10) return '<p class="pv-sub">Not enough daily bars to draw.</p>';
+    const L = st.layers, on = (k) => L.has(k), stats = Object.fromEntries((RU && RU.rules || []).map((r) => [r.id, r.stats]));
+    const W = 720, H = 400, Lm = 58, Rm = on('profile') ? 110 : 64, T = 12, PB = 300, VB = 52, n = C.length, step = (W - Lm - Rm) / n;
+    const at = new Map(C.map((c, i) => [c[0], i])), idx = (dte) => (at.has(dte) ? at.get(dte) : dte < C[0][0] ? -0.5 : n - 0.5);
+    let lo = Math.min(...C.map((c) => c[3])), hi = Math.max(...C.map((c) => c[2]));
+    const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+    const sx = (i) => Lm + (i + 0.5) * step, sy = (v) => T + (hi - v) / (hi - lo) * (PB - T), inY = (v) => v >= lo && v <= hi;
+    const vmax = Math.max(...C.map((c) => c[5] || 0)) || 1, vy = (v) => PB + 18 + VB - (v / vmax) * VB;
+    const clip = 'pv-cc-' + (++CLIP);
+    let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily candlesticks of the last ${n} trading days with price-action readings"><defs><clipPath id="${clip}"><rect x="${Lm}" y="${T}" width="${W - Lm - Rm}" height="${PB - T}"/></clipPath></defs>`;
+    ticks(lo, hi).forEach((v) => { g += `<line class="pv-g" x1="${Lm}" x2="${W - Rm}" y1="${sy(v)}" y2="${sy(v)}"/><text class="pv-t" x="${Lm - 6}" y="${sy(v) + 4}" text-anchor="end">${px(v)}</text>`; });
+    for (let i = 0; i < n; i += 21) g += `<text class="pv-t" x="${sx(i)}" y="${H - 4}" text-anchor="middle">${esc(md(C[i][0]))}</text>`;
+    g += `<g clip-path="url(#${clip})">`;
+    const box = (z, col, label, o = 0.13) => {
+      const a = Math.max(-0.5, idx(z.start || z.formed)), b = z.end && at.has(z.end) ? idx(z.end) : n - 0.5;
+      if (b < 0 || !(z.top >= lo && z.bottom <= hi)) return '';
+      return `<rect x="${(Lm + (a + 0.5) * step).toFixed(1)}" y="${sy(Math.min(hi, z.top)).toFixed(1)}" width="${Math.max(2, (b - a) * step).toFixed(1)}" height="${Math.max(1.5, sy(Math.max(lo, z.bottom)) - sy(Math.min(hi, z.top))).toFixed(1)}" style="fill:${col};opacity:${o}"><title>${esc(label)} ${px(z.bottom)}–${px(z.top)}${z.status ? ' · ' + esc(z.status) : ''}</title></rect>`;
+    };
+    if (on('levels')) {
+      const lv = (S.levels || {}), Z = (lv.demand_zones || []).concat(lv.supply_zones || []);
+      Z.forEach((z) => { g += box(z, z.dir === 'bull' ? COL.up : COL.down, z.dir === 'bull' ? 'Demand zone' : 'Supply zone'); });
+    }
+    if (on('smc')) {
+      (ov.fvgs || []).forEach((z) => { g += box(z, COL.zone, (z.dir === 'bull' ? 'Bullish' : 'Bearish') + ' fair value gap (FVG)', 0.16); });
+      (ov.order_blocks || []).forEach((z) => { g += box(z, z.dir === 'bull' ? COL.up : COL.down, (z.dir === 'bull' ? 'Bullish' : 'Bearish') + ' order block (OB)', 0.22); });
+    }
+    if (on('profile')) {
+      const pf = (S.profile || {})['60'] || {};
+      [['poc', 'POC', '4 3'], ['vah', 'VAH', '2 3'], ['val', 'VAL', '2 3']].forEach(([k, l, dsh]) => { if (inY(pf[k])) g += `<line x1="${Lm}" x2="${W - Rm}" y1="${sy(pf[k])}" y2="${sy(pf[k])}" style="stroke:${COL.zone};stroke-dasharray:${dsh};opacity:.8"><title>${l} (60 days) ${px(pf[k])}</title></line>`; });
+    }
+    if (on('donchian') && ov.donchian) {
+      const D = ov.donchian, line = (arr) => (D.dates || []).map((dt, i) => (fin(arr[i]) && at.has(dt) ? `${sx(at.get(dt)).toFixed(1)},${sy(arr[i]).toFixed(1)}` : null)).filter(Boolean).join(' ');
+      g += `<polyline points="${line(D.upper20 || [])}" style="fill:none;stroke:${COL.mute};stroke-width:1;stroke-dasharray:5 3"/><polyline points="${line(D.lower20 || [])}" style="fill:none;stroke:${COL.mute};stroke-width:1;stroke-dasharray:5 3"/>`;
+    }
+    C.forEach((c, i) => {
+      const [, o, h, l, cl] = c, up = cl >= o, col = up ? COL.up : COL.down, x = sx(i), bw = Math.max(1.2, step * 0.62);
+      g += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${sy(h).toFixed(1)}" y2="${sy(l).toFixed(1)}" style="stroke:${col};stroke-width:1"/><rect x="${(x - bw / 2).toFixed(1)}" y="${sy(Math.max(o, cl)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, Math.abs(sy(o) - sy(cl))).toFixed(1)}" style="fill:${up ? COL.surface : col};stroke:${col};stroke-width:1"><title>${esc(mdy(c[0]))}: open ${px(o)}, high ${px(h)}, low ${px(l)}, close ${px(cl)}</title></rect>`;
+    });
+    if (on('levels')) ((S.levels || {}).support || []).concat((S.levels || {}).resistance || []).forEach((v) => {
+      if (!inY(v.price)) return;
+      const sup = v.price <= (S.close || 0);
+      g += `<line x1="${Lm}" x2="${W - Rm}" y1="${sy(v.price)}" y2="${sy(v.price)}" style="stroke:${sup ? COL.up : COL.down};stroke-width:1;stroke-dasharray:6 3;opacity:.75"><title>${sup ? 'Support' : 'Resistance'} ${px(v.price)} · ${v.touches} touches, last tested ${esc(v.last_test || '')}</title></line>`;
+    });
+    if (on('structure')) {
+      (ov.swings || []).forEach((w) => { if (!at.has(w.date) || !inY(w.price)) return; const x = sx(at.get(w.date)), y = sy(w.price) + (w.kind === 'high' ? -6 : 13); g += `<text class="pv-t" x="${x}" y="${y}" text-anchor="middle" style="font-size:10px;font-weight:600">${esc(w.label || '')}</text>`; });
+      (ov.breaks || []).forEach((b) => { if (!at.has(b.date) || !inY(b.level)) return; const a = Math.max(0, idx(b.from)), x2 = sx(at.get(b.date)); g += `<line x1="${sx(a).toFixed(1)}" x2="${x2.toFixed(1)}" y1="${sy(b.level)}" y2="${sy(b.level)}" style="stroke:${b.dir === 'bull' ? COL.up : COL.down};stroke-width:1.4"/><text class="pv-t" x="${x2 + 3}" y="${sy(b.level) - 3}" style="font-size:10px">${b.kind === 'bos' ? 'BOS' : 'CHoCH'}</text>`; });
+    }
+    if (on('elliott') && (ov.elliott || []).length > 1) {
+      const pts = ov.elliott.filter((w) => at.has(w.date));
+      if (pts.length > 1) g += `<polyline points="${pts.map((w) => `${sx(at.get(w.date)).toFixed(1)},${sy(w.price).toFixed(1)}`).join(' ')}" style="fill:none;stroke:${COL.warn};stroke-width:1.6"/>` + pts.map((w) => `<text class="pv-l" x="${sx(at.get(w.date))}" y="${sy(w.price) - 7}" text-anchor="middle" style="font-size:11px;font-weight:600">${esc(w.wave)}</text>`).join('');
+    }
+    if (on('signals') || on('all')) {
+      const last10 = C.length > 10 ? C[C.length - 10][0] : C[0][0];
+      (ov.events || []).filter((e) => at.has(e.date) && (on('all') || ['strong', 'moderate'].includes(evOf(stats[e.rule])) || e.date >= last10)).forEach((e) => {
+        const i = at.get(e.date), c = C[i], x = sx(i), bull = e.dir === 'bull', y = bull ? sy(c[3]) + 9 : sy(c[2]) - 9, r = (RU && RU.rules || []).find((q) => q.id === e.rule);
+        g += `<path d="${bull ? `M${x - 4},${y + 4}L${x + 4},${y + 4}L${x},${y - 3}Z` : `M${x - 4},${y - 4}L${x + 4},${y - 4}L${x},${y + 3}Z`}" style="fill:${bull ? COL.up : COL.down};opacity:.85"><title>${esc(mdy(e.date))}: ${esc((r || {}).name || e.rule)} (${bull ? 'bullish' : 'bearish'}) · evidence ${esc(evOf(stats[e.rule]))}</title></path>`;
+      });
+    }
+    g += '</g>';
+    if (on('profile')) {
+      const pf = (S.profile || {})['60'] || {}, E = pf.edges || [], V = pf.volumes || [], vm = Math.max(...V, 1);
+      V.forEach((v, j) => { const a = E[j], b = E[j + 1]; if (!(fin(a) && fin(b)) || b < lo || a > hi) return; const y1 = sy(Math.min(hi, b)), y2 = sy(Math.max(lo, a)); g += `<rect x="${W - Rm + 4}" y="${y1.toFixed(1)}" width="${(v / vm * (Rm - 50)).toFixed(1)}" height="${Math.max(0.8, y2 - y1 - 0.4).toFixed(1)}" style="fill:${Math.abs((a + b) / 2 - pf.poc) < (b - a) ? COL.zone : COL.mute};opacity:.5"><title>${px(a)}–${px(b)}: ${num(v)} shares</title></rect>`; });
+    }
+    g += `<text class="pv-l" x="${W - Rm + 4}" y="${sy(C[n - 1][4]) + 4}">${px(C[n - 1][4])}</text>`;
+    C.forEach((c, i) => { g += `<rect x="${(sx(i) - Math.max(1, step * 0.31)).toFixed(1)}" y="${vy(c[5] || 0).toFixed(1)}" width="${Math.max(1.2, step * 0.62).toFixed(1)}" height="${(PB + 18 + VB - vy(c[5] || 0)).toFixed(1)}" style="fill:${c[4] >= c[1] ? COL.up : COL.down};opacity:.35"/>`; });
+    g += `<text class="pv-t" x="${Lm - 6}" y="${PB + 26}" text-anchor="end">volume</text></svg>`;
+    return g;
+  }
+  function readings(S, G) {
+    const F = G.families || {}, b = S.brooks || {}, sr = S.structure || {}, w = S.wyckoff || {}, v = S.vsa || {}, pf = S.profile || {}, lv = S.levels || {}, ic = S.ict || {}, el = S.elliott || {}, q = S.quant || {};
+    const mv = b.measured_move;
+    const pr = (k) => { const x = pf[k] || {}; return fin(x.poc) ? `POC ${px(x.poc)}, value area ${px(x.val)}–${px(x.vah)}; the price is ${esc(x.position || '')}` : '—'; };
+    const near = (xs) => (xs || []).slice(0, 2).map((x) => `${px(x.price)} (${x.touches} touches)`).join(', ') || 'none near';
+    const rows = [
+      ['brooks', `Always in <b>${esc(b.always_in || '—')}</b>${b.since ? ` since ${esc(mdy(b.since))}` : ''}; ${esc(b.trend_or_range || '')}${fin(b.efficiency_ratio) ? ` (efficiency ratio ${num(b.efficiency_ratio, 2)})` : ''}${mv ? `; measured-move target ${px(mv.target)}${mv.reached ? ' (reached)' : ''}` : ''}`],
+      ['structure', `Trend <b>${esc(sr.trend || '—')}</b>${sr.last_bos ? `; last break of structure ${esc(mdy(sr.last_bos.date))} at ${px(sr.last_bos.level)} (${esc(sr.last_bos.dir)})` : ''}${sr.last_choch ? `; last change of character ${esc(mdy(sr.last_choch.date))} at ${px(sr.last_choch.level)} (${esc(sr.last_choch.dir)})` : ''}`],
+      ['candlestick', ((S.candlestick || {}).last_bar || []).length ? `Last bar: ${S.candlestick.last_bar.map((x) => esc(x.rule.replace(/_/g, ' '))).join(', ')}` : 'No pattern on the last bar'],
+      ['pattern', ((S.pattern || {}).armed || []).length ? `Waiting for a breakout: ${S.pattern.armed.map((x) => `${esc((x.rule || x.pattern || '').replace(/_/g, ' '))}${fin(x.trigger) ? ' at ' + px(x.trigger) : ''}`).join(', ')}` : 'No pattern waiting for its breakout'],
+      ['wyckoff', `Phase <b>${esc(w.phase || '—')}</b>${w.since ? ` since ${esc(mdy(w.since))}` : ''}${w.range ? `; range ${px(w.range.low)}–${px(w.range.high)}` : ''}`],
+      ['vsa', `Last bar: ${esc(v.label || '—')}${(v.events || []).length ? ` — ${v.events.map((x) => esc(String(x.rule || x).replace(/_/g, ' '))).join(', ')}` : ''}`],
+      ['profile', `60 days: ${pr('60')}. 250 days: ${pr('250')}`],
+      ['levels', `Support ${near(lv.support)}; resistance ${near(lv.resistance)}; ${num((lv.demand_zones || []).length)} demand and ${num((lv.supply_zones || []).length)} supply zones on file`],
+      ['ict', `${ic.premium_discount ? `In <b>${esc(ic.premium_discount.zone)}</b> (midpoint ${px(ic.premium_discount.equilibrium)})` : '—'}; ${num((ic.fvgs || []).filter((x) => x.status === 'active').length)} unfilled fair value gaps, ${num((ic.order_blocks || []).filter((x) => x.status === 'active').length)} untested order blocks${(ic.liquidity || {}).buy_side ? `; buy-side liquidity above ${px(ic.liquidity.buy_side.price)}` : ''}${(ic.liquidity || {}).sell_side ? `; sell-side below ${px(ic.liquidity.sell_side.price)}` : ''}`],
+      ['elliott', esc(el.label || 'No valid count')],
+      ['quant', `20-day channel ${px((q.donchian20 || {}).lower)}–${px((q.donchian20 || {}).upper)}; 12-month momentum (excluding the last month) ${spct(q.mom_12_1)} → ${esc(q.tsmom || '—')}; ${pct(q.hi52_ratio)} of the 52-week high; last 21 days ${spct(q.r21)} (percentile ${pct(q.r21_percentile)} of its own history)`],
+    ];
+    return `<div class="pv-wrap"><table class="pv-tbl"><tbody>${rows.map(([k, t]) => `<tr><td style="min-width:10em"><b>${esc((F[k] || {}).name || k)}</b></td><td>${t}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  let HUB = '';
+  function priceSection(d, RU, G, st) {
+    const pa = d.pa || {};
+    if (!pa.state) return `<h3>Price action</h3><p class="pv-sub">${pa.error ? 'Could not be read (' + esc(pa.error) + ').' : 'Not enough daily bars.'}</p>`;
+    const R = Object.fromEntries((RU && RU.rules || []).map((r) => [r.id, r]));
+    let h = `<h3>Price action — rule-based readings</h3><p class="pv-sub">Every school of price-action reading, written as explicit rules and run on this stock's daily bars: Al Brooks, market structure, candlesticks, chart patterns, Wyckoff, volume spread analysis, volume profile, support and resistance, ICT / smart money concepts, Elliott waves and quantitative rules. Each rule was also run on every stock since about 2016 and graded by how it did out of sample (2021 onwards) — read the grade before the signal.</p>`;
+    h += `<div class="pv-pills" role="group" aria-label="Layers">${LAYERS.map(([k, l]) => `<button type="button" class="pv-pill${st.layers.has(k) ? ' on' : ''}" data-pvl="${k}" aria-pressed="${st.layers.has(k)}">${esc(l)}</button>`).join('')}</div>`;
+    h += `<div data-pvcandles>${candleSvg(d, RU, st)}</div><div class="pv-legend"><span><b style="background:${COL.up}"></b>up day / bullish</span><span><b style="background:${COL.down}"></b>down day / bearish</span><span><b style="background:${COL.zone};opacity:.4"></b>FVG, value area</span><span>▲▼ signals (hover for the rule and its evidence)</span></div>`;
+    h += `<h4>Current reading, family by family</h4>${readings(pa.state, G)}`;
+    const sigs = (pa.signals || []).slice().reverse();
+    h += `<h4>Signals of the last ten trading days</h4>`;
+    h += sigs.length ? `<div class="pv-wrap"><table class="pv-tbl"><thead><tr><th>Date</th><th>Signal</th><th>Direction</th><th>Evidence 5 · 20 · 60 days</th><th class="n">Out of sample, 20 days: excess return</th><th class="n">Hit rate</th><th class="n">Signals</th></tr></thead><tbody>${sigs.map((x) => {
+      const r = R[x.rule] || {}, s = x.stats || {}, o = ((s.oos || {})['20']) || {};
+      return `<tr><td>${esc(md(x.date))}</td><td><details><summary><b>${esc(x.name || r.name || x.rule)}</b> <span class="pv-sub" style="display:inline">${esc(((G.families || {})[x.family] || {}).name || x.family || '')}${r.subjective ? ', subjective' : ''}</span></summary><div class="pv-x"><p>${esc(r.what || '')}</p>${r.rule ? `<p><b>Rule used.</b> ${esc(r.rule)}</p>` : ''}${r.source ? `<p class="pv-terms">Source: ${esc(r.source)}</p>` : ''}</div></details></td>`
+        + `<td class="${x.dir === 'bull' ? 'pv-up' : 'pv-down'}">${x.dir === 'bull' ? '▲ bullish' : '▼ bearish'}</td><td>${['5', '20', '60'].map((hh) => evidenceTag(s.evidence, hh)).join(' ')}</td>`
+        + `<td class="n">${fin(o.mean) ? spct(o.mean, 2) : '—'}</td><td class="n">${fin(o.hit) ? pct(o.hit) : '—'}</td><td class="n">${num(o.n)}</td></tr>`;
+    }).join('')}</tbody></table></div>` : '<p class="pv-sub">No rule fired in the last ten trading days.</p>';
+    const E = G.evidence || {};
+    h += `<details class="pv-apx"><summary><b>How the evidence is graded</b></summary><div class="pv-x"><p>${esc(E.how || '')}</p>${Object.entries(E.grades || {}).map(([k, t]) => `<p>${evidenceTag(k)} ${esc(t)}</p>`).join('')}<p>The excess return is signed by the rule's direction, so a positive number means the rule worked; the hit rate is the share of signals that did.</p></div></details>`;
+    h += `<details class="pv-apx"><summary><b>The families of rules</b> — what each school reads</summary><div class="pv-x">${Object.values(G.families || {}).map((f) => `<p><b>${esc(f.name)}.</b> ${esc(f.what)}</p>`).join('')}</div></details>`;
+    h += `<p class="pv-sub">Every rule with its evidence: <a href="${esc(HUB)}#paths/rules">Price paths → price-action rules</a>.</p>`;
+    return h;
+  }
 
   /* ---------- the page ---------- */
   function draw(el, d, M, RU, G, st) {
     css();
-    st = st || { model: 'ensemble' };
+    st = st || { model: 'ensemble', layers: new Set(['levels', 'structure', 'signals', 'profile']) };
     G = G || {};
     let h = `<div class="pv"><p class="pv-sub">${(G.intro || []).map(esc).join(' ')}</p>`;
     h += `<p class="pv-sub">${esc(d.name || d.ticker)} at ${px(d.price)} (close of ${esc(mdy(d.as_of))}). Not investment advice.</p>`;
     h += `<div data-pvpaths>${pathsSection(d, M, G, st)}</div>`;
     h += analogSection(d, M, G);
-    h += priceSection(d, RU, G);
+    h += `<div data-pvprice>${priceSection(d, RU, G, st)}</div>`;
     h += `<details class="pv-apx"><summary><b>Glossary</b> — every abbreviation on this page in full (${(G.glossary || []).length})</summary><div class="pv-wrap"><table class="pv-tbl"><thead><tr><th>Term</th><th>In full</th><th>What it means</th></tr></thead><tbody>${(G.glossary || []).map(([a, b, c]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`).join('')}</tbody></table></div></details>`;
     h += `<p class="pv-note">Daily bars from Yahoo Finance (Stooq as the fallback), adjusted for splits and dividends. Built ${esc((d.as_of || ''))} by app/paths.py. Simulations describe a range of risk, not a prediction; analogs and price-action rules describe what followed similar situations in the past, graded by how they did out of sample.</p></div>`;
     el.innerHTML = h;
@@ -196,13 +311,19 @@
       rebind();
     }));
     rebind();
-    if (typeof bindPrice === 'function') bindPrice(el, d, RU, G);
+    const bindLayers = () => el.querySelectorAll('[data-pvl]').forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.pvl;
+      if (st.layers.has(k)) st.layers.delete(k); else { st.layers.add(k); if (k === 'all') st.layers.delete('signals'); if (k === 'signals') st.layers.delete('all'); }
+      el.querySelector('[data-pvprice]').innerHTML = priceSection(d, RU, G, st);
+      bindLayers();
+    }));
+    bindLayers();
   }
-  let bindPrice = null;
 
   async function render(el, ctx) {
     css();
     const hub = ctx && ctx.hub != null ? ctx.hub : '';
+    HUB = hub;
     const base = hub + 'data/research/paths/';
     el.innerHTML = '<p class="muted">Loading the price paths…</p>';
     const gP = get(HERE + 'paths-guide.json').catch(() => ({})), mP = get(base + 'models.json').catch(() => null), rP = get(base + 'rules.json').catch(() => null);
@@ -258,7 +379,7 @@
     paint();
   }
 
-  const api = { render, draw, portfolio, fanSvg, ticks, explain, evidenceTag, _setPrice: (f, b) => { priceSection = f; bindPrice = b; } };
+  const api = { render, draw, portfolio, fanSvg, ticks, explain, evidenceTag, candleSvg };
   if (typeof window !== 'undefined') window.PathsView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

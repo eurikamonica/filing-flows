@@ -53,12 +53,12 @@ function pathsView(){
 }
 function pvRules(){
  const g=pvData('rules');if(g.err)return empty(`The rules could not load (${g.err}).`);if(!g.data)return empty('Loading the rules…');
- const R=(g.data.rules||[]).filter(r=>!state.pvf||r.family===state.pvf);
+ const R=(g.data.rules||[]).filter(r=>r.kind!=='state'&&(!state.pvf||r.family===state.pvf));
  const H=['5','20','60'];
- const st=(r,h)=>{const s=(r.stats||{});const o=(s.oos||{})[h]||(s[h]||{}).oos||{};return o};
+ const st=(r,h)=>(((r.stats||{}).horizons||{})[h]||{}).oos||{};
  const evd=(r,h)=>{const e=(r.stats||{}).evidence;return e&&typeof e==='object'?e[h]:e};
- const cnt={strong:0,moderate:0,weak:0,none:0};(g.data.rules||[]).forEach(r=>{const e=evd(r,'20')||'none';cnt[e]=(cnt[e]||0)+1});
- let out=`<div class="metrics">${kpi('Rules tested',fmt((g.data.rules||[]).length),`${fmt(g.data.tickers)} stocks, daily bars`)}${kpi('Strong evidence (20 days)',fmt(cnt.strong),'significant out of sample after correction')}${kpi('Moderate',fmt(cnt.moderate),'p < 5% out of sample')}${kpi('None',fmt(cnt.none),'no reliable effect')}</div>`;
+ const cnt={strong:0,moderate:0,weak:0,none:0};(g.data.rules||[]).filter(r=>r.kind!=='state').forEach(r=>{const e=evd(r,'20')||'none';cnt[e]=(cnt[e]||0)+1});
+ let out=`<div class="metrics">${kpi('Rules tested',fmt((g.data.rules||[]).filter(r=>r.kind!=='state').length),`${fmt(g.data.tickers)} stocks, daily bars`)}${kpi('Strong evidence (20 days)',fmt(cnt.strong),'significant out of sample after correction')}${kpi('Moderate',fmt(cnt.moderate),'p < 5% out of sample')}${kpi('None',fmt(cnt.none),'no reliable effect')}</div>`;
  out+=`<div class="explain">Each rule run on every stock with no look-ahead; the return over the next 5, 20 and 60 trading days compared with the stock's own average, signed by the rule's direction (positive = the rule worked). In sample before ${esc(g.data.split||'2021-01-01')}, out of sample after; standard errors clustered by month; out-of-sample p-values corrected with the Benjamini–Hochberg procedure (false discovery rate 10%). Subjective schools (ICT, Elliott, Wyckoff, Al Brooks) are rule-based approximations.</div>`;
  exported=R.map(r=>({id:r.id,name:r.name,family:r.family,evidence_20d:evd(r,'20')}));
  return out+table(['Rule','Family','Signals (in / out of sample)','Out of sample, 5 days','20 days','60 days','Hit rate (20 days)','Evidence 5 · 20 · 60'],

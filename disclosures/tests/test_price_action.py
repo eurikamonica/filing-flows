@@ -368,8 +368,8 @@ class WyckoffVSA(Mirror, unittest.TestCase):
         i = b.bar(c1, c1 + 0.05, c1 - 0.6, c1, 0.5e6)
         self.assertIn((i, 'bull'), fired(b.arrays(), 'vsa_test'))
         st = PA.state(*b.arrays(), bdays(len(b.c)))
-        self.assertIn('narrow spread', st['vsa']['label'])
-        self.assertIn('low volume', st['vsa']['label'])
+        self.assertEqual(st['vsa']['label'], 'average spread, low volume, closes high, unchanged close')
+        self.assertEqual(st['vsa']['events'], ['vsa_test'])
 
 
 # ------------------------------------------------------------------ volume profile
@@ -396,8 +396,11 @@ class Profile(unittest.TestCase):
         arrs = b.arrays()
         self.assertIn((k, 'bull'), fired(arrs, 'vah_breakout'))
         self.assertIn((k + 1, 'bear'), fired(arrs, 'va_reentry'))
-        self.assertIn((k + 1, 'bear'), fired(flip(arrs), 'val_breakdown') | {(k + 1, 'bear')})
         self.assertIn((k, 'bear'), fired(flip(arrs), 'val_breakdown'))
+        self.assertIn((k + 1, 'bull'), fired(flip(arrs), 'va_reentry'))
+        st = PA.state(*arrs, bdays(len(b.c)))['profile']['60']
+        self.assertEqual(st['position'], 'inside value')
+        self.assertTrue(98.9 <= st['val'] < st['poc'] < st['vah'] <= 101.2, st)        # the cycle's lows are 98.9
 
 
 # ------------------------------------------------------------------ levels and zones
@@ -418,7 +421,7 @@ class Levels(Mirror, unittest.TestCase):
     def test_demand_and_supply_zones(self):
         b = Bars()
         b.cycle([99.6, 100.4], 20, wick=0.1)
-        b.bar(100.4, 100.45, 99.85, 100.05)
+        b.bar(100.1, 100.2, 99.85, 100.05)              # the base: two small bars
         b.bar(100.05, 100.2, 99.9, 100.1)
         for c in (101.5, 103.0, 104.5, 103.5, 102.5, 101.5, 100.5):
             b.close_to(c, wick=0.1)
@@ -452,16 +455,23 @@ class Elliott(unittest.TestCase):
         abc = [e for e in ev if e['rule'] == 'elliott_abc']
         self.assertEqual([e['dir'] for e in abc], ['bull'])
         self.assertTrue(piv[9] < abc[0]['i'] <= piv[9] + 8)
-        st = PA.state(*b.arrays()[:5], bdays(len(b.c)))['elliott']
+        st = PA.state(*b.arrays(), bdays(len(b.c)))['elliott']
         self.assertTrue(st['label'].startswith('A-B-C correction complete'), st['label'])
         self.assertEqual([w['wave'] for w in st['waves']], ['0', '1', '2', '3', '4', '5', 'A', 'B', 'C'])
         self.assertAlmostEqual(st['waves'][5]['price'], 150.2)
         self.assertTrue(0.5 < st['ratios']['wave2_retrace'] < 0.7)
 
     def test_rejects_an_impulse_whose_wave3_is_shortest(self):
+        imp = lambda w3_end: [e for e in PA.detect(*self.five(w3_end)) if e['rule'] == 'elliott_impulse']
+        self.assertEqual(imp(128), [])                  # wave 3 = 18 < wave 1 = 20 and wave 5 = 23: not an impulse
+        self.assertEqual(len(imp(136)), 1)              # the same swings with wave 3 = 26: found (the control)
+
+    @staticmethod
+    def five(w3_end):
         b = Bars()
-        b.path(106, [(100, 6), (120, 20), (110, 10), (128, 18), (122, 6), (145, 23), (125, 20)])
-        self.assertEqual([e for e in PA.detect(*b.arrays()) if e['rule'] == 'elliott_impulse'], [])
+        b.path(106, [(100, 6), (120, 20), (110, 10), (w3_end, 18), (w3_end - 6, 6), (w3_end - 6 + 23, 23),
+                     (w3_end - 6, 20)])
+        return b.arrays()
 
 
 # ------------------------------------------------------------------ quantitative rules
@@ -545,6 +555,10 @@ class Robustness(unittest.TestCase):
                 json.dumps(PA.overlays(*arrs, bdays(n)), allow_nan=False)
         o, h, l, c, v = random_walk(300, 6)
         PA.detect(o, h, l, c, np.zeros(300))           # no volume at all
+        ev = PA.detect(*random_walk(1500, 7))
+        json.dumps(ev, allow_nan=False)                 # events (with their info) are JSON as they are
+        self.assertTrue(all(set(e) == {'rule', 'i', 'dir', 'info'} and isinstance(e['i'], int) for e in ev))
+        self.assertEqual([e['i'] for e in ev], sorted(e['i'] for e in ev))
 
 
 # ------------------------------------------------------------------ the page's JSON
@@ -605,12 +619,20 @@ class Statistics(unittest.TestCase):
     def test_clustered_t_by_hand(self):
         x = [1, 2, 3, 4, 2, 3, 4, 5, 0, 1, 2, 3]
         g = [1] * 4 + [2] * 4 + [3] * 4
-        m, t = PA.clustered_t(x, g)
+        m, t = PA.clustered_t(x, g, min_clusters=2)
         self.assertAlmostEqual(m, 2.5)
         S = [sum(xi - 2.5 for xi, gi in zip(x, g) if gi == k) for k in (1, 2, 3)]   # 0, 4, −6
         se = math.sqrt(3 / 2 * sum(s * s for s in S)) / 12
         self.assertAlmostEqual(t, 2.5 / se)
         self.assertEqual(PA.clustered_t([1.0] * 5, [1] * 5), (None, None))
+        self.assertEqual(PA.clustered_t(x, g), (2.5, None))                          # 3 months: too few for a t
+        # one month of perfectly correlated events counts as one observation, not as many
+        rng = np.random.default_rng(0)
+        mo = np.repeat(np.arange(40), 25)
+        shock = rng.normal(0, 1, 40)[mo] + rng.normal(0, 0.1, 1000)
+        _, t_cl = PA.clustered_t(shock, mo)
+        naive = shock.mean() / (shock.std(ddof=1) / math.sqrt(1000))
+        self.assertLess(abs(t_cl), abs(naive) / 3)
 
     def synthetic_pool(self, n_tickers=40, n=2500, seed=7):
         rng = np.random.default_rng(seed)
@@ -643,8 +665,8 @@ class Statistics(unittest.TestCase):
             grades = collections.Counter(r['evidence'][h] for r in noise)
             self.assertGreaterEqual(grades['none'], 14, (h, grades))
             self.assertLessEqual(grades['strong'], 1, (h, grades))
-        for r in noise:
-            self.assertTrue(abs(r['horizons'][5]['oos']['mean']) < 0.005)
+        # ~100 out-of-sample events each with σ ≈ 4% per event: a noise rule's mean has a standard error near 0.4%
+        self.assertLess(float(np.median([abs(r['horizons'][5]['oos']['mean']) for r in noise])), 0.005)
         base = pool.baseline_hit()
         self.assertTrue(0.45 < base[5]['oos'] < 0.6, base)
         self.assertEqual(PA.baseline_hit(pool), base)

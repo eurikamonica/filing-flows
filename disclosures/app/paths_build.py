@@ -179,15 +179,10 @@ def company(root, c, ctx):
     try:
         st = PA.state(b['o'], b['h'], b['l'], b['c'], b['v'], b['t'])
         ov = PA.overlays(b['o'], b['h'], b['l'], b['c'], b['v'], b['t'], last=BARS_SHOWN)
+        ov['fvgs'] = [z for z in ov.get('fvgs') or [] if z.get('status') != 'filled'][-15:]
+        ov['order_blocks'] = [z for z in ov.get('order_blocks') or [] if z.get('status') != 'filled'][-10:]
         stats = ctx.get('rule_stats') or {}
-        sigs = []
-        for e in (st.get('recent') or []):
-            rid = e.get('rule')
-            sigs.append({**e, 'stats': stats.get(rid)})
-        n = BARS_SHOWN
-        out['pa'] = {'bars': {'t': b['t'][-n:], **{k: [sig(float(x), 6) for x in b[k][-n:]] for k in ('o', 'h', 'l', 'c')},
-                              'v': [int(x) for x in b['v'][-n:]]},
-                     'state': st, 'overlays': ov, 'signals': sigs}
+        out['pa'] = {'state': st, 'overlays': ov, 'signals': [{**e, 'stats': stats.get(e.get('rule'))} for e in st.get('recent') or []]}
     except Exception as exc:                                            # noqa: BLE001
         out['pa'] = {'error': str(exc)[:160]}
     return rnd(out)
@@ -285,7 +280,7 @@ def build(root, universe_path, people=None, limit=0, workers=None):
     if _stale(rules.get('built_at')) or limit:
         rules = pooled_rules(root, list(uni), workers)
         write_json(rules_path, rnd(rules))
-    CTX['rule_stats'] = {r['id']: r.get('stats') for r in rules.get('rules') or []}
+    CTX['rule_stats'] = {r['id']: slim_stats(r.get('stats')) for r in rules.get('rules') or []}
     # 2) every company
     index = []
     for c, doc, err, secs in _map(_worker, [(str(root), c) for c in comps], workers):
@@ -341,15 +336,14 @@ def index_row(d):
     pct = lambda v: sig(v / p0 - 1, 3) if v and p0 else None
     st = ((d.get('pa') or {}).get('state')) or {}
     sigs = (d.get('pa') or {}).get('signals') or []
-    good = lambda s: ((s.get('stats') or {}).get('evidence') or {})
-    strong = lambda s: any(v in ('strong', 'moderate') for v in (good(s).values() if isinstance(good(s), dict) else [good(s)]))
+    strong = lambda s: ((s.get('stats') or {}).get('evidence') or {}).get('20') in ('strong', 'moderate')
     peers = (d.get('analogs') or {}).get('peers') or []
     return [d.get('cik'), d.get('ticker'), d.get('name'), d.get('sector'), d.get('price'), d.get('as_of'),
             pct(end.get('p50')), pct(end.get('p10')), pct(end.get('p90')), e.get('p_down10'), e.get('p_up10'), e.get('vol'),
             (e.get('mdd') or {}).get('p50'), ((e.get('joint') or {}).get('market') or {}).get('p_a_given_b'),
             ((d.get('analogs') or {}).get('self') or {}).get('p_up'), ((d.get('analogs') or {}).get('peer') or {}).get('p_up'),
-            _get(st, 'brooks', 'always_in') or st.get('always_in'), _get(st, 'structure', 'trend'),
-            sum(1 for s in sigs if s.get('dir') in (1, 'bull') and strong(s)), sum(1 for s in sigs if s.get('dir') in (-1, 'bear') and strong(s)),
+            _get(st, 'brooks', 'always_in'), _get(st, 'structure', 'trend'),
+            sum(1 for s in sigs if s.get('dir') == 'bull' and strong(s)), sum(1 for s in sigs if s.get('dir') == 'bear' and strong(s)),
             peers[0]['ticker'] if peers else None]
 
 
@@ -361,6 +355,8 @@ def _get(d, *ks):
 
 # ------------------------------------------------------------------ the pooled price-action backtest
 def pooled_rules(root, tickers, workers):
+    """Every event rule run on every stock (price_action.detect), pooled: in- and out-of-sample signed excess returns
+    after 5, 20 and 60 trading days with month-clustered t-stats and Benjamini–Hochberg evidence grades."""
     pool = PA.Pool()
     n = 0
     for t, got in _map(_detect, [(str(root), t) for t in tickers if t not in P.ETFS], workers):
@@ -369,10 +365,18 @@ def pooled_rules(root, tickers, workers):
             pool.add(t, dates, ac, events)
             n += 1
     res = pool.result(split='2021-01-01', horizons=(5, 20, 60))
-    rules = []
-    for r in PA.RULES:
-        rules.append({**{k: r.get(k) for k in ('id', 'name', 'family', 'dir', 'subjective', 'what', 'rule', 'source')}, 'stats': res.get(r['id'])})
+    rules = [{**{k: r.get(k) for k in ('id', 'name', 'family', 'dir', 'subjective', 'kind', 'what', 'rule', 'source')}, 'stats': res.get(r['id'])}
+             for r in PA.RULES]
     return {'built_at': now(), 'tickers': n, 'split': '2021-01-01', 'horizons': [5, 20, 60], 'rules': rules}
+
+
+def slim_stats(s):
+    """What a company page shows beside a signal: the evidence grades and the out-of-sample results."""
+    if not s:
+        return None
+    H = s.get('horizons') or {}
+    return {'evidence': s.get('evidence'), 'sign': s.get('evidence_sign'), 'n_oos': s.get('n_oos'),
+            'oos': {h: {k: (H.get(h) or {}).get('oos', {}).get(k) for k in ('n', 'mean', 'hit', 't', 'p')} for h in ('5', '20', '60')}}
 
 
 # ------------------------------------------------------------------ the walk-forward scorecards (a fixed sample)

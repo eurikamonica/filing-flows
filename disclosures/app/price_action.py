@@ -43,13 +43,19 @@ Pooled backtest (Pool)
   mean, hit rate  average signed excess (log units) and the share of events whose signed excess is > 0. Context for the
                   hit rate: baseline_hit(pool) gives the share of ALL bars (every ticker, every day) whose raw h-day
                   forward return is > 0; returns are skewed, so even a coin-flip rule does not score exactly 50%.
-  storage         per event: rule, ticker, month, sign (int8) and the raw forward returns (float32); per ticker and month:
-                  the count, sum and positives of all bars' forward returns. The excess is formed in result(), so any
-                  split date works (it is applied at the start of its calendar month).
+  storage         per event 17 bytes, in one block per ticker: rule (int16), month (int16), sign (int8) and the raw
+                  forward returns (3 × float32); per ticker and month the count, sum and positives of all its bars'
+                  forward returns. The excess is formed in result(), because "the same sample" depends on the split date
+                  passed there (it is applied at the start of its calendar month).
+  caveats         windows of in-sample events in the last 60 days before the split end after it; survivorship comes with
+                  the universe (today's listed stocks); costs and slippage are not deducted.
   clustered t     events in the same calendar month share the same market moves, so they are not independent. With N
-                  events in G months, e = x − mean and S_g = sum of e within month g: SE² = G / (G − 1) × Σ S_g² / N²;
-                  t = mean / SE (needs at least 2 months and 10 events). p = 2 × (1 − Φ(|t|)), Φ = the normal CDF
-                  written with math.erf.
+                  events in G clusters, e = x − mean and S_g = sum of e within cluster g: SE² = G / (G − 1) × Σ S_g² / N²;
+                  t = mean / SE (needs at least 12 clusters and 10 events: with only a few clusters the clustered SE is
+                  itself noise, and the rule gets no t, no p and grade 'none'). p = 2 × (1 − Φ(|t|)), Φ = the normal CDF
+                  written with math.erf. A cluster is one calendar month for h = 5 and 20; for h = 60 it is a block of 3
+                  consecutive calendar months (ceil(h / 21)), because 60-day windows starting in neighbouring months
+                  overlap by up to two-thirds and would otherwise be counted as independent.
   split           events before 2021-01-01 are in-sample, from it on out-of-sample. No parameter was fitted on either
                   part; the split separates "the decade the rules were popular in" from "what happened afterwards".
   Benjamini–Hochberg  per horizon, the m rules' out-of-sample p-values are sorted p(1) ≤ … ≤ p(m); with k the largest
@@ -60,7 +66,6 @@ Pooled backtest (Pool)
                   followed by the OPPOSITE of what it promises.
 """
 import bisect
-import datetime as dt
 import math
 
 import numpy as np
@@ -82,7 +87,8 @@ YEAR = 252
 HORIZONS = (5, 20, 60)
 SPLIT = '2021-01-01'
 BH_Q = 0.10
-MIN_EVENTS = 10        # fewer events (or fewer than 2 months) → no t-stat
+MIN_EVENTS = 10        # fewer events …
+MIN_CLUSTERS = 12      # … or fewer clusters (months) → no t-stat: a clustered SE from a handful of clusters is noise
 
 
 # ------------------------------------------------------------------ small helpers
@@ -271,7 +277,8 @@ RULES = [
     _R('bear_engulfing', 'Bearish engulfing', 'candlestick', 'bear', False, 'event',
        'An up day followed by a down day whose body covers the whole body of the up day. After a rise it is read as '
        'sellers taking over.',
-       'Mirror of the bullish engulfing, with close(i−1) above its 10-day mean.', NISON),
+       'Bar i−1 closes above its open, bar i closes below its open, open(i) ≥ close(i−1), close(i) ≤ open(i−1), body(i) > '
+       'body(i−1), and close(i−1) is above its 10-day mean.', NISON),
     _R('inside_bar', 'Inside bar', 'candlestick', 'both', False, 'event',
        'A bar whose high and low both stay inside the previous bar\'s range: a pause, a contraction of the range. '
        'Traders treat it as a continuation set-up in the direction of the trend.',
@@ -289,7 +296,9 @@ RULES = [
        'its body below bar i−2\'s midpoint; bar i: up, close above the midpoint of bar i−2\'s body.', NISON),
     _R('evening_star', 'Evening star', 'candlestick', 'bear', False, 'event',
        'The mirror of the morning star at the end of a rise: a long up bar, a small star, then a down bar closing well '
-       'into the first bar\'s body.', 'Mirror of the morning star.', NISON),
+       'into the first bar\'s body.',
+       'Bar i−2: up, body ≥ 0.6 × ATR(14), close above its 10-day mean; bar i−1: body ≤ 30% of bar i−2\'s and bottom of '
+       'its body above bar i−2\'s midpoint; bar i: down, close below the midpoint of bar i−2\'s body.', NISON),
     _R('three_white_soldiers', 'Three white soldiers', 'candlestick', 'bull', False, 'event',
        'Three up bars in a row, each opening inside the previous body and closing near its high at a new close. Read as '
        'steady buying.',
@@ -297,7 +306,9 @@ RULES = [
        'open and close, upper wick ≤ 30% of the range.', NISON),
     _R('three_black_crows', 'Three black crows', 'candlestick', 'bear', False, 'event',
        'Three down bars in a row, each opening inside the previous body and closing near its low. Read as steady '
-       'selling.', 'Mirror of three white soldiers.', NISON),
+       'selling.',
+       'Bars i−2..i: each close < open with body ≥ 0.4 × ATR(14), close < previous close, open between the previous '
+       'open and close, lower wick ≤ 30% of the range.', NISON),
     # brooks -----------------------------------------------------------------------------------------------------
     _R('always_in', 'Always-in direction', 'brooks', 'both', True, 'state',
        'Al Brooks asks of every chart: if you had to be in the market right now, long or short, which would it be? '
@@ -321,7 +332,9 @@ RULES = [
        'fires; a new trend high ends the pullback.', BROOKS),
     _R('l2_sell', 'L2 sell (second-leg rally)', 'brooks', 'bear', True, 'event',
        'The mirror of the H2 in a bear trend: the second time a rally bar\'s low goes below the previous bar\'s low.',
-       'Mirror of the H2 while always-in short.', BROOKS),
+       'While always-in short: a rally starts with a bar whose low is above the previous low; the second time in that '
+       'rally a bar\'s low falls below the previous bar\'s low (after at least one higher-low bar in between) fires; a '
+       'new trend low ends the rally.', BROOKS),
     _R('wedge_top', 'Wedge top (three pushes up)', 'brooks', 'bear', True, 'event',
        'Three pushes up, each making a higher high with higher lows between, often with fading momentum. Brooks reads a '
        'third push that cannot follow through as exhaustion and expects at least two legs down.',
@@ -329,7 +342,10 @@ RULES = [
        'when a close falls below the low between pushes 2 and 3 within 15 bars, unless the high of push 3 is exceeded '
        'first.', BROOKS),
     _R('wedge_bottom', 'Wedge bottom (three pushes down)', 'brooks', 'bull', True, 'event',
-       'The mirror: three pushes down to lower lows, then a reversal up.', 'Mirror of the wedge top.', BROOKS),
+       'The mirror: three pushes down to lower lows, then a reversal up.',
+       'Three consecutive swing lows (3-bar fractals) falling within 60 bars with the highs between them falling; fires '
+       'when a close rises above the high between pushes 2 and 3 within 15 bars, unless the low of push 3 is broken '
+       'first.', BROOKS),
     _R('brooks_breakout', 'Strong breakout bar', 'brooks', 'both', True, 'event',
        'A breakout of the recent trading range made by a big trend bar that closes near its extreme: Brooks\' sign of '
        'urgency, which tends to be followed by a measured move.',
@@ -369,7 +385,9 @@ RULES = [
        'above E3 comes first or half the pattern width passes.', LMW),
     _R('inv_head_shoulders', 'Inverse head and shoulders', 'pattern', 'bull', False, 'event',
        'The mirror at a bottom: three troughs with the middle one lowest; a close above the neckline completes it.',
-       'Mirror of the head and shoulders.', LMW),
+       'Five alternating close extrema: E1, E3, E5 troughs with E3 below both, E1 and E5 within 1.5% of their mean, E2 '
+       'and E4 within 1.5%; fires at the first close above the line through E2 and E4, unless a close below E3 comes '
+       'first or half the pattern width passes.', LMW),
     _R('double_top', 'Double top', 'pattern', 'bear', False, 'event',
        'Two peaks at about the same price with a trough between them; a close below that trough completes the top.',
        'Two consecutive close maxima within 1.5% of each other, at least 20 bars apart, the minimum between them at '
@@ -377,7 +395,9 @@ RULES = [
        'above the peaks comes first.', LMW),
     _R('double_bottom', 'Double bottom', 'pattern', 'bull', False, 'event',
        'Two troughs at about the same price; a close above the peak between them completes the bottom.',
-       'Mirror of the double top.', LMW),
+       'Two consecutive close minima within 1.5% of each other, at least 20 bars apart, the maximum between them at '
+       'least 3% above; fires at the first close above that maximum within the pattern\'s width, unless a close 1.5% '
+       'below the troughs comes first.', LMW),
     _R('triangle', 'Triangle breakout', 'pattern', 'both', False, 'event',
        'Peaks getting lower while troughs get higher: the range contracts into a triangle. The direction of the '
        'breakout is taken as the signal.',
@@ -392,7 +412,10 @@ RULES = [
        'not above the pole close; fires when a close exceeds the flag\'s high (at most once per 5 bars).',
        'Edwards & Magee, Technical Analysis of Stock Trends (1948); Thomas Bulkowski, Encyclopedia of Chart Patterns (2000)'),
     _R('bear_flag', 'Bear flag', 'pattern', 'bear', False, 'event',
-       'A sharp fall followed by a tight drift up or sideways, then a break below the flag.', 'Mirror of the bull flag.',
+       'A sharp fall followed by a tight drift up or sideways, then a break below the flag.',
+       'Pole: the close falls ≥ 4 × ATR(14) below the highest high of the 10 bars ending at the pole bar; flag: 5–15 '
+       'bars with a range ≤ half the pole, lows no more than 0.25 ATR below the pole bar\'s low and a last close not '
+       'below the pole close; fires when a close falls below the flag\'s low (at most once per 5 bars).',
        'Edwards & Magee, Technical Analysis of Stock Trends (1948); Thomas Bulkowski, Encyclopedia of Chart Patterns (2000)'),
     _R('cup_handle', 'Cup with handle', 'pattern', 'bull', False, 'event',
        'A rounded U-shaped base between two peaks at about the same price (the cup), then a small pullback (the handle) '
@@ -406,8 +429,9 @@ RULES = [
        'Wyckoff saw markets cycle through accumulation (large operators buying in a trading range after a fall), markup '
        '(the rise), distribution (selling in a range after a rise) and markdown (the fall).',
        'A trading range is 30 bars whose high–low span is ≤ 6 × ATR(14), after a move of ≥ 4 × ATR over the 60 bars '
-       'before it (a decline → accumulation, a rise → distribution); the range then lasts at most 30 more bars (30–60 '
-       'in all). A sign of strength / weakness, or 3 closes outside the range, ends it (→ markup / markdown); a close '
+       'before it (a decline → accumulation, a rise → distribution); its bounds are the climax (the window\'s lowest low, '
+       'or highest high) and the extreme of the rally (reaction) after it, the climax at least 5 bars old; the range '
+       'then lasts at most 30 more bars (30–60 in all). A sign of strength / weakness, or 3 closes outside the range, ends it (→ markup / markdown); a close '
        'back through the far side of that range ends the markup / markdown (phase: none).', WYCKOFF),
     _R('spring', 'Spring', 'wyckoff', 'bull', True, 'event',
        'Inside an accumulation-type range, the price dips below the range low and closes back inside the same day: '
@@ -424,7 +448,8 @@ RULES = [
        WYCKOFF),
     _R('sow', 'Sign of weakness', 'wyckoff', 'bear', True, 'event',
        'A wide down bar on rising volume that closes below the trading range: the start of markdown.',
-       'Mirror of the sign of strength.', WYCKOFF),
+       'Close < range low − 0.25 × ATR(14), spread ≥ its 20-bar average and volume ≥ its 20-bar average; ends the range.',
+       WYCKOFF),
     # vsa --------------------------------------------------------------------------------------------------------
     _R('vsa_bar', 'VSA bar reading', 'vsa', 'both', True, 'state',
        'VSA (volume spread analysis) reads each bar from three things: its spread (high − low), its volume and where it '
@@ -472,7 +497,8 @@ RULES = [
        'A close that moves from inside the value area to above its high: acceptance of higher prices.',
        'close(i−1) ≤ VAH < close(i), 60-bar profile of the bars before.', 'Peter Steidlmayer (Market Profile)'),
     _R('val_breakdown', 'Breakdown below value', 'profile', 'bear', False, 'event',
-       'A close that moves from inside the value area to below its low.', 'close(i−1) ≥ VAL > close(i).',
+       'A close that moves from inside the value area to below its low (VAL, value area low): acceptance of lower '
+       'prices.', 'close(i−1) ≥ VAL > close(i), 60-bar profile of the bars before (refreshed every 5 bars).',
        'Peter Steidlmayer (Market Profile)'),
     # levels -----------------------------------------------------------------------------------------------------
     _R('sr_levels', 'Support and resistance levels', 'levels', 'both', False, 'state',
@@ -490,9 +516,11 @@ RULES = [
     _R('support_bounce', 'Bounce from support', 'levels', 'bull', False, 'event',
        'The price comes down to a support level and closes back above it.',
        'Level with ≥ 2 touches; close(i−1) ≥ level, low(i) within [level − 0.5 ATR, level + 0.25 ATR], close(i) ≥ level '
-       '+ 0.25 ATR.', 'Edwards & Magee, Technical Analysis of Stock Trends (1948)'),
+       '+ 0.25 ATR; one event per level and kind per 10 bars.', 'Edwards & Magee, Technical Analysis of Stock Trends (1948)'),
     _R('resistance_reject', 'Rejection at resistance', 'levels', 'bear', False, 'event',
-       'The price rises to a resistance level and closes back below it.', 'Mirror of the support bounce.',
+       'The price rises to a resistance level and closes back below it.',
+       'Level with ≥ 2 touches; close(i−1) ≤ level, high(i) within [level − 0.25 ATR, level + 0.5 ATR], close(i) ≤ level '
+       '− 0.25 ATR; one event per level and kind per 10 bars.',
        'Edwards & Magee, Technical Analysis of Stock Trends (1948)'),
     _R('level_break', 'Break of a level', 'levels', 'both', False, 'event',
        'A close through a support or resistance level: old resistance broken upward (bull) or support broken downward '
@@ -506,7 +534,8 @@ RULES = [
        'Sam Seiden (Online Trading Academy), supply-and-demand trading'),
     _R('supply_zone_test', 'Return to a supply zone', 'levels', 'bear', True, 'event',
        'The first time the price comes back up into an untested supply zone and closes below its top.',
-       'Mirror of the demand-zone test.', 'Sam Seiden (Online Trading Academy), supply-and-demand trading'),
+       'First bar after the zone formed with high ≥ zone bottom and close ≤ zone top (zones expire after 500 bars).',
+       'Sam Seiden (Online Trading Academy), supply-and-demand trading'),
     # ict --------------------------------------------------------------------------------------------------------
     _R('fvg_return', 'Return into a fair value gap', 'ict', 'both', True, 'event',
        'An FVG (fair value gap) is a three-bar gap: bar i−2\'s high is below bar i\'s low (bullish), so the middle bar '
@@ -556,7 +585,10 @@ RULES = [
        'close(i) > max(high, previous 20 bars) → bull, < min(low) → bear; only the first bar of a run of breakouts.',
        'Richard Donchian / the Turtles (Richard Dennis and William Eckhardt, 1983); Curtis Faith, Way of the Turtle (2007)'),
     _R('donchian55', 'Donchian 55-day breakout', 'quant', 'both', False, 'event',
-       'The same with 55 days: the Turtles\' slower System 2.', 'As donchian20 with 55 bars.',
+       'The same breakout with 55 days instead of 20: the Turtles\' slower System 2, which trades less often and only '
+       'catches the bigger trends.',
+       'close(i) > max(high, previous 55 bars) → bull, < min(low, previous 55 bars) → bear; only the first bar of a run '
+       'of breakouts.',
        'Richard Donchian / the Turtles; Curtis Faith, Way of the Turtle (2007)'),
     _R('tsmom', 'Time-series momentum (12-1)', 'quant', 'both', False, 'event',
        'A stock\'s own return over the past 12 months, leaving out the latest month, predicts the sign of its next '
@@ -1054,10 +1086,19 @@ def _wyckoff(X):
             if s - WY_PRIOR >= 0 and rh[i] - rl[i] <= WY_SPAN * AL[i]:
                 move = C[s] - C[s - WY_PRIOR]
                 if abs(move) >= WY_MOVE * AL[i]:
-                    kind = 'accumulation' if move < 0 else 'distribution'
-                    rng = {'lo': rl[i], 'hi': rh[i], 'start': s, 'found': i, 'kind': kind}
-                    phase, since, outside = kind, i, 0
-                    ranges.append(rng)
+                    # the climax (lowest low after a fall, highest high after a rise) and the rally / reaction after it
+                    # set the bounds, as Wyckoff draws them; the climax must be at least 5 bars old
+                    if move < 0:
+                        m = s + int(np.argmin(l[s:i + 1]))
+                        lo_, hi_ = L[m], float(h[m:i + 1].max())
+                    else:
+                        m = s + int(np.argmax(h[s:i + 1]))
+                        lo_, hi_ = float(l[m:i + 1].min()), H[m]
+                    if i - m >= 5:
+                        kind = 'accumulation' if move < 0 else 'distribution'
+                        rng = {'lo': lo_, 'hi': hi_, 'start': m, 'found': i, 'kind': kind}
+                        phase, since, outside = kind, i, 0
+                        ranges.append(rng)
             continue
         lo, hi, a = rng['lo'], rng['hi'], AL[i]
         end = None
@@ -1108,8 +1149,9 @@ def _vsa(X):
     return out, {}
 
 
-def vsa_label(sp, vr, cp, up):
-    """Plain words for one bar: spread, volume, where it closed, up or down."""
+def vsa_label(sp, vr, cp, chg):
+    """Plain words for one bar: spread, volume, where it closed, and whether it closed up, down or unchanged (chg = close
+    − previous close)."""
     def size(x, words):
         if not _fin(x):
             return None
@@ -1117,7 +1159,7 @@ def vsa_label(sp, vr, cp, up):
     parts = [size(sp, ('narrow spread', 'average spread', 'wide spread', 'ultra-wide spread')),
              size(vr, ('low volume', 'average volume', 'high volume', 'ultra-high volume')),
              'closes low' if cp < 1 / 3 else ('closes high' if cp > 2 / 3 else 'closes mid-bar'),
-             'up bar' if up else 'down bar']
+             'up bar' if chg > 0 else ('down bar' if chg < 0 else 'unchanged close')]
     return ', '.join(p for p in parts if p)
 
 
@@ -1138,7 +1180,8 @@ def _profiles(Hw, Lw, Vw, bins=PROFILE_BINS, va=VALUE_AREA):
         width = np.where(hi > lo, hi - lo, 1.0)
         k = np.clip(((Hw[zr, zc] - lo[zr]) / width[zr] * bins).astype(int), 0, bins - 1)
         w[zr, zc, k] = 1.0
-    vol = np.einsum('wmb,wm->wb', w, Vw)
+    w *= Vw[:, :, None]
+    vol = w.sum(axis=1)                           # each window summed on its own: the same numbers in any batch
     tot = vol.sum(axis=1)
     valid = (tot > 0) & (hi > lo)
     poc = np.argmax(vol, axis=1)
@@ -1564,7 +1607,7 @@ def state(o, h, l, c, v, dates):
                                                        'result': lastr.get('result')}}
     # VSA
     sp, vr, cp = X['sp'][-1], X['vr'][-1], X['cp'][-1]
-    out['vsa'] = {'label': vsa_label(sp, vr, cp, X['c'][-1] >= X['c'][-2]), 'spread_ratio': _r(sp, 2),
+    out['vsa'] = {'label': vsa_label(sp, vr, cp, float(X['c'][-1] - X['c'][-2])), 'spread_ratio': _r(sp, 2),
                   'volume_ratio': _r(vr, 2), 'close_position': _r(cp, 2),
                   'events': [e['rule'] for e in events if e['i'] == i and RULE.get(e['rule'], {}).get('family') == 'vsa']}
     # volume profile
@@ -1689,9 +1732,12 @@ def month_id(date):
     return int(date[:4]) * 12 + int(date[5:7]) - 1
 
 
-def clustered_t(x, groups):
-    """Mean of x, its standard error clustered by group, t = mean / SE (see the module docstring). None when there are
-    fewer than MIN_EVENTS values or 2 groups."""
+MONTH0 = month_id('1900-01-01')                   # events store month − MONTH0 as int16 (to the year 4630)
+
+
+def clustered_t(x, groups, min_clusters=MIN_CLUSTERS):
+    """(mean of x, t = mean / SE) with the standard error clustered by group (see the module docstring). The mean is
+    None below MIN_EVENTS values; t is None below min_clusters groups."""
     x = np.asarray(x, float)
     N = len(x)
     if N < MIN_EVENTS:
@@ -1699,7 +1745,7 @@ def clustered_t(x, groups):
     m = float(x.mean())
     _, inv = np.unique(groups, return_inverse=True)
     G = int(inv.max()) + 1
-    if G < 2:
+    if G < max(2, min_clusters):
         return m, None
     Sg = np.bincount(inv, weights=x - m, minlength=G)
     se = math.sqrt(G / (G - 1) * float((Sg ** 2).sum())) / N
@@ -1724,18 +1770,23 @@ def benjamini_hochberg(pvals, q=BH_Q):
     return sig
 
 
+def cluster_months(h):
+    """Calendar months per cluster for horizon h: 1 up to a month's horizon, ceil(h / 21) beyond."""
+    return max(1, math.ceil(h / MONTH))
+
+
 class Pool:
-    """Events of many tickers with their forward returns, for the pooled test. Per event it keeps the month, the rule,
-    the ticker, the sign of its direction and the h-day forward log return; per ticker and month it keeps the count, sum
-    and number of positive forward returns of all bars, so each ticker's mean over any period (and the excess of each
-    event over it) is exact for a split at a calendar-month boundary."""
+    """Events of many tickers with their forward returns, for the pooled test. Per event (one block per ticker) it keeps
+    the rule, the month, the sign of its direction and the h-day forward log returns; per ticker and month it keeps the
+    count, sum and number of positive forward returns of all bars, so each ticker's mean over any period (and the excess
+    of each event over it) is exact for a split at a calendar-month boundary."""
 
     def __init__(self, horizons=HORIZONS):
         self.horizons = tuple(horizons)
         self.tickers = []
         self.rules = []
         self._rule_ix = {}
-        self._ev = {'rule': [], 'tk': [], 'month': [], 'sign': [], 'fwd': []}
+        self._ev = []                         # per ticker: (rule int16, month int16, sign int8, fwd float32 (k, H))
         self._tm = []                         # per ticker: (months, count (m, H), sum (m, H), positive (m, H))
         self.n_dropped = 0
 
@@ -1768,20 +1819,22 @@ class Pool:
                 self._rule_ix[rule] = len(self.rules)
                 self.rules.append(rule)
             rows.append((self._rule_ix[rule], i, 1 if d == 'bull' else -1))
-        if rows:
-            R_ = np.array(rows, dtype=np.int64)
-            self._ev['rule'].append(R_[:, 0].astype(np.int16))
-            self._ev['tk'].append(np.full(len(R_), t, np.int32))
-            self._ev['month'].append(mo[R_[:, 1]])
-            self._ev['sign'].append(R_[:, 2].astype(np.int8))
-            self._ev['fwd'].append(F[R_[:, 1]].astype(np.float32))
+        R_ = np.array(rows, dtype=np.int64).reshape(-1, 3)
+        self._ev.append((R_[:, 0].astype(np.int16), (mo[R_[:, 1]] - MONTH0).astype(np.int16), R_[:, 2].astype(np.int8),
+                         F[R_[:, 1]].astype(np.float32)))
+
+    @property
+    def n_events(self):
+        return sum(len(b[0]) for b in self._ev)
 
     def _cat(self):
-        e = self._ev
-        if not e['rule']:
+        if not self.n_events:
             return None
-        return (np.concatenate(e['rule']), np.concatenate(e['tk']), np.concatenate(e['month']),
-                np.concatenate(e['sign']).astype(float), np.concatenate(e['fwd']).astype(float))
+        cat = lambda k: np.concatenate([b[k] for b in self._ev])
+        tk = np.repeat(np.arange(len(self._ev), dtype=np.int32), [len(b[0]) for b in self._ev])
+        rule = cat(0)
+        order = np.argsort(rule, kind='stable')            # grouped by rule: each rule is one contiguous slice
+        return (rule[order], tk[order], cat(1)[order].astype(np.int32) + MONTH0, cat(2)[order], cat(3)[order])
 
     def _ticker_means(self, split_m):
         """(T, 2, H) mean forward return of each ticker in-sample (0) and out-of-sample (1)."""
@@ -1814,7 +1867,9 @@ class Pool:
     def result(self, split=SPLIT, horizons=None):
         """rule id → {'name', 'family', 'dir', 'n_is', 'n_oos', 'n_events_total', 'n_bull', 'n_bear', 'horizons': {h: {'is':
         {...}, 'oos': {...}}}, 'evidence': {h: grade}, 'evidence_sign': {h: +1 / −1 / 0}}. Each period block holds
-        'n', 'months', 'mean' (signed excess log return), 'hit' (share > 0), 't' (month-clustered), 'p'."""
+        'n', 'months', 'mean' (signed excess log return), 'hit' (share > 0), 't' (clustered by calendar month, by
+        3-month blocks for h = 60: see cluster_months), 'p'. 'evidence_sign' is the sign of the mean behind the grade:
+        −1 means the rule was reliably followed by the OPPOSITE of what it promises."""
         H = tuple(horizons or self.horizons)
         hk = [self.horizons.index(h) for h in H]
         split_m = month_id(split)
@@ -1824,23 +1879,25 @@ class Pool:
             return out
         rule, tk, mo, sign, fwd = E
         M = self._ticker_means(split_m)
-        per = (mo >= split_m).astype(int)
+        bounds = np.searchsorted(rule, np.arange(len(self.rules) + 1))
         res = {}
         for ri, rid in enumerate(self.rules):
-            sel = rule == ri
+            a, b = int(bounds[ri]), int(bounds[ri + 1])
+            tk_, mo_r, sg, fw = tk[a:b], mo[a:b], sign[a:b].astype(float), fwd[a:b].astype(float)
+            per = (mo_r >= split_m).astype(np.int64)
             info = RULE.get(rid, {})
             r = {'name': info.get('name', rid), 'family': info.get('family'), 'dir': info.get('dir'),
-                 'n_events_total': int(sel.sum()), 'n_bull': int((sel & (sign > 0)).sum()), 'n_bear': int((sel & (sign < 0)).sum()),
-                 'n_is': int((sel & (per == 0)).sum()), 'n_oos': int((sel & (per == 1)).sum()), 'horizons': {}}
+                 'n_events_total': b - a, 'n_bull': int((sg > 0).sum()), 'n_bear': int((sg < 0).sum()),
+                 'n_is': int((per == 0).sum()), 'n_oos': int((per == 1).sum()), 'horizons': {}}
             for h, k in zip(H, hk):
                 blk = {}
                 for p_, name in ((0, 'is'), (1, 'oos')):
-                    m_ = sel & (per == p_)
-                    x = (fwd[m_, k] - M[tk[m_], p_, k]) * sign[m_]
-                    g = mo[m_]
+                    m_ = per == p_
+                    x = (fw[m_, k] - M[tk_[m_], p_, k]) * sg[m_]
+                    g = mo_r[m_]
                     ok = np.isfinite(x)
                     x, g = x[ok], g[ok]
-                    mean, t = clustered_t(x, g)
+                    mean, t = clustered_t(x, g // cluster_months(h))
                     blk[name] = {'n': int(len(x)), 'months': int(len(np.unique(g))), 'mean': _r(mean, 5),
                                  'hit': _r(float((x > 0).mean()), 4) if len(x) else None, 't': _r(t, 3),
                                  'p': _r(p_two_sided(t), 6)}
