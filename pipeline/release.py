@@ -22,7 +22,8 @@ P = {
     "revenue": r"^(total )?(net )?(revenues?|sales|net sales|net revenues?)(,? net)?$|^total (net )?(revenues?|sales)$"
                r"|^(total )?(net )?operating revenues?$|^(net )?sales and other (operating )?revenues?$"
                r"|^(net )?sales and (other )?operating revenues?$|^(total )?revenues? from contracts with customers$"
-               r"|^total net sales and revenues?$|^revenues? and other income$|^(net )?sales to third parties$|^(total )?sales revenues?$|^(group |total )?turnover$",
+               r"|^total net sales and revenues?$|^revenues? and other income$|^(net )?sales to third parties$|^(total )?sales revenues?$|^(group |total )?turnover$"
+               r"|^(consolidated|group) (sales )?revenues?$",
     "cor": r"^(total )?cost of (net )?(revenues?|sales|goods sold|products sold|products and services sold|net sales)(,? net)?$"
            r"|^cost of revenues?,? total$|^total cost of (revenues?|sales)$|^cost of goods and services sold$",
     "gp": r"^(total )?gross (profit|margin)$",
@@ -46,7 +47,7 @@ P = {
            r"|^taxation( charge| expense| \(charge\) credit| charge \(credit\)| credit \(charge\))?$|^tax (charge|expense)( \(credit\))?$",
     "pl": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\))$"
           r"|^net profit( \(loss\))?$|^(net )?profit( \(loss\))? for the (period|year|quarter)$"
-          r"|^(net )?(profit|profit \(loss\)|\(loss\) profit|profit/\(loss\)|income|earnings) after (income )?tax(es|ation)?$"
+          r"|^(net )?(profit|profit \(loss\)|\(loss\) profit|profit/\(loss\)|income|earnings) after (income )?tax(es|ation)?( for the (period|year|quarter))?$"
           r"|^net (income|earnings) for the (period|year|quarter)$"
           r"|^(income|earnings|income \(loss\)|\(loss\) income|profit \(loss\)) for the (period|year|quarter)$"
           r"|^total (net )?(profit|income|earnings)( \(loss\))?$",
@@ -93,7 +94,7 @@ def norm_label(s):
     s = re.sub(r"\s+/\s+", " ", s)                        # "net income / (loss)" (Nebius) = "net income (loss)"
     s = re.sub(r"\)\s*/\s*", ") ", s)                       # "net (loss)/income" (Sonoco) = "net (loss) income"
     s = re.sub(r"\s*/\s*\(", " (", s)                       # "income/(loss)" = "income (loss)"
-    s = re.sub(r"\s+", " ", s).strip(" ,.;-")
+    s = re.sub(r"\s+", " ", s).strip(" ,.;-–—")
     s = re.sub(r"(?<=[a-z)])\s+\d{1,2}(?:\s*,\s*\d{1,2})*$", "", s)   # a trailing footnote number, "Revenue 1" (Shell)
     return s
 

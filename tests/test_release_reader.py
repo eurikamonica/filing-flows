@@ -87,3 +87,16 @@ def test_foreign_release_conventions():
     assert R.period_end("for the period 1 January to 30 June 2026", t, dt.date(2026, 8, 4)) == dt.date(2026, 6, 30)
     assert R.period_end("Financial highlights Q2 2026", t, dt.date(2026, 8, 4)) == dt.date(2026, 6, 30)
     assert R.period_end("Financial highlights Q2 2026", t, dt.date(2025, 11, 4)) is None   # a fiscal Q2 that is not June
+
+
+def test_revenue_heading_without_total_is_summed():
+    """Wix prints "Revenues" as a heading over its two lines, with no total: the lines are summed."""
+    from pipeline import release as R
+    rows = [{"key": "revenues", "label": "Revenues", "vals": [], "pct": False, "cells": []},
+            {"key": "creative subscriptions", "label": "x", "vals": [398.0, 345.0], "pct": False, "cells": []},
+            {"key": "business solutions", "label": "x", "vals": [165.0, 144.0], "pct": False, "cells": []},
+            {"key": "cost of revenues", "label": "x", "vals": [], "pct": False, "cells": []},
+            {"key": "gross profit", "label": "x", "vals": [370.0, 336.0], "pct": False, "cells": []},
+            {"key": "net income (loss)", "label": "x", "vals": [-76.0, 58.0], "pct": False, "cells": []}]
+    m = R._map_rows({"rows": rows}, R.IS_KEYS, full=True)
+    assert m["revenue"][2] == [563.0, 489.0] and m["gp"][0] == 370.0 and m["pl"][0] == -76.0

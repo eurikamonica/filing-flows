@@ -1257,6 +1257,11 @@ def process_fpi_release(store, cik, accn, form, starred=False):
             if back:                                     # units checked against the quarter before, when on file
                 prev_rev = back[-1]["raw"]["revenue"]
                 r = release.parse(html, filed, None, prev_rev)
+                if r.get("is_quarter") is not False and prev_rev and r["is"].get("revenue", 0) / prev_rev >= 2.5 and \
+                        facts.fiscal_label(r["end"], c["profile"]["fye"])[1] >= 3:
+                    # two and a half times the quarter before at the third or fourth quarter: nine months or the year
+                    # to date (AB InBev's third-quarter table), not the quarter
+                    raise ValueError("revenue is a year to date, not the quarter")
             rel, doc, ex_url = r, html, url
             break
         except ValueError as e:
