@@ -113,5 +113,15 @@ function pathsDeepLink(arg){
  else if(PV_VIEWS.some(x=>x[0]===v)){state.pvv=v}
  else{state.pvv='company';state.pvq=v.toUpperCase()}
 }
+window.HUB_NOTICES = Object.assign(window.HUB_NOTICES || {}, { paths: pathsNotice });
+function pathsNotice(){
+ const s=pvData('status'),d=s.data;
+ if(s.err)return {stale:true,text:'Official derived view · Price paths status unavailable · '+s.err};
+ if(!d)return {stale:false,text:'Official derived view · Price paths loading…'};
+ const age=(Date.now()-Date.parse(d.built_at))/3600000;
+ return {stale:!(age<=36),text:`Official derived view · Price paths built ${d.built_at} · ${fmt(d.companies)} companies`
+  +(d.short_history?` (${fmt(d.short_history)} recent listings with under 300 trading days left out)`:'')
+  +(d.failed?` · ${fmt(d.failed)} failed`:'')+' · rebuilt every day from daily bars'+(age>36?' · stale':'')};
+}
 window.HUB_VIEWS = Object.assign(window.HUB_VIEWS || {}, { paths: pathsView });
 window.HUB_BINDS = Object.assign(window.HUB_BINDS || {}, { paths: bindPaths });
