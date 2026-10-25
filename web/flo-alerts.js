@@ -105,7 +105,7 @@ function explain(e,zh=false,related=[]){
  return out;
 }
 let seen=[],initialized=false,settings={quiet:false,watch:'',kinds:{'8k':true,'13f':true,news:true,price:true}};
-let items=[],bubble=null,inbox=null,pill=null,active=false,busy=false,timer=null,wait=INTERVAL,version='',unread=0,lastError='',latestBuild='',lastPopupAt=0;
+let items=[],bubble=null,inbox=null,pill=null,active=false,busy=false,timer=null,wait=INTERVAL,version='',unread=0,lastError='',latestBuild='',lastPopupAt=0,scanHealth={};
 function storage(){
  try{root.localStorage&&root.localStorage.setItem(KEY,JSON.stringify({initialized,seen:seen.slice(-MAX_SEEN),settings,lastPopupAt}));}catch(_){}
 }
@@ -159,6 +159,17 @@ function renderInbox(){
  inbox.append(head,el('p','flo-pulse-note',isZH()?'首次访问不弹旧提醒；之后只检测新发布内容。静音和过滤设置保存在当前浏览器。':'First visit records a baseline. Only later newly published events trigger alerts. Settings are browser-local.'));
  if(lastError)inbox.append(el('p','flo-pulse-note',(isZH()?'数据不可用：':'Feed unavailable: ')+lastError));
  else if(latestBuild)inbox.append(el('p','flo-pulse-note',(isZH()?'最近网站数据构建：':'Latest site build: ')+latestBuild+' UTC'));
+ for(const kind of KINDS){
+   const h=scanHealth[kind];
+   if(!h||typeof h!=='object')continue;
+   const status=String(h.status||'unknown').slice(0,20),date=String(h.latest_filing_date||'').slice(0,12);
+   const attempt=String(h.last_attempt||'').slice(0,16),success=String(h.last_success||'').slice(0,16);
+   inbox.append(el('p','flo-pulse-note',kind.toUpperCase()+' · '+status+
+     (date?(isZH()?' · 最新申报 ':' · latest filed ')+date:'')+
+     (attempt?(isZH()?' · 尝试 ':' · attempt ')+attempt:'')+
+     (success?(isZH()?' · 成功/部分成功 ':' · success/partial ')+success:'')+
+     (h.failed_queue?(isZH()?' · 待重试 ':' · retry queue ')+h.failed_queue:'')));
+ }
  const controls=el('div','flo-pulse-actions'),muteLabel=el('label',''),quiet=el('input');
  quiet.type='checkbox';quiet.checked=settings.quiet;quiet.addEventListener('change',()=>{settings.quiet=quiet.checked;storage();if(settings.quiet)closeToast();});
  muteLabel.append(quiet,doc.createTextNode(isZH()?' 安静模式':' Quiet mode'));
@@ -197,6 +208,7 @@ async function poll(){
    initialized=diff.initialized;seen=diff.seen;items=diff.latest;
    if(version!==feed.generated_at){version=feed.generated_at;root.FFMascot&&root.FFMascot.refreshSignalData&&root.FFMascot.refreshSignalData();}
    latestBuild=feed.generated_at||'';
+   scanHealth=feed.scan_health&&typeof feed.scan_health==='object'?feed.scan_health:{};
    const arrivals=diff.newEvents.filter(e=>shown(e,settings));
    if(arrivals.length){
      unread+=arrivals.length;
@@ -228,8 +240,8 @@ function intent(q){
  return /最近.{0,9}(?:扫描|提醒|新消息|事件|8.?k|13f)|有什么新(?:披露|新闻|扫描|提醒|8.?k|13f)|新扫描.{0,14}(?:什么|有哪些|结果)|(?:what(?:'s| is) new|new alerts|recent alerts|what changed since|recent scanner|latest published pulse|show notifications|alert inbox)/i.test(String(q||''));
 }
 function report(q,zh=false){
- const query=String(q||'');
- const matched=query.match(/\$([A-Z]{1,7})\b/)||query.match(/\b(?:NVDA|AAPL|MSFT|OKLO|IREN|CRWV|TSLA|META|AMZN)\b/);
+ const query=String(q||''),upper=query.toUpperCase();
+ const matched=upper.match(/\$([A-Z]{1,7})\b/)||upper.match(/\b(?:NVDA|AAPL|MSFT|OKLO|IREN|CRWV|TSLA|META|AMZN)\b/);
  const tickerQuery=matched?matched[1]||matched[0]:null;
  const type=/8.?k/i.test(query)?'8k':/13f/i.test(query)?'13f':/异动|价格|price|move/i.test(query)?'price':null;
  const list=items.filter(e=>(!type||e.kind===type)&&(!tickerQuery||e.ticker===tickerQuery||(e.symbols||[]).includes(tickerQuery))).slice(0,7);
@@ -261,7 +273,7 @@ function start(){
  poll();
 }
 root.FFFloAlerts={valid,normalize,compare,react,shown,explain,intent,report,start,poll,
- getState:()=>({initialized,seen:seen.slice(),settings:JSON.parse(JSON.stringify(settings)),events:items.slice(),lastError,latestBuild}),
+ getState:()=>({initialized,seen:seen.slice(),settings:JSON.parse(JSON.stringify(settings)),events:items.slice(),lastError,latestBuild,scanHealth}),
  stop(){active=false;if(timer)clearTimeout(timer);}};
 if(typeof module!=='undefined')module.exports=root.FFFloAlerts;
 if(doc){if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',start);else start();}
