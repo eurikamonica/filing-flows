@@ -10,6 +10,7 @@ on:
       - 'web/flo-practice.js'
       - 'web/flo-alerts.js'
       - 'web/flo-timeline.js'
+      - 'web/flo-impact.js'
       - 'scripts/build_flo_alerts.py'
       - 'web/mascot.js'
       - 'web/app.js'
@@ -20,6 +21,7 @@ on:
       - 'tests/test_flo_practice.cjs'
       - 'tests/test_flo_alerts.cjs'
       - 'tests/test_flo_timeline.cjs'
+      - 'tests/test_flo_impact.cjs'
       - 'tests/test_flo_alert_browser.cjs'
       - 'tests/test_flo_alert_feed.py'
       - 'tests/test_mascot.cjs'
@@ -56,6 +58,7 @@ jobs:
           node --check web/flo-practice.js
           node --check web/flo-alerts.js
           node --check web/flo-timeline.js
+          node --check web/flo-impact.js
           node --check web/app.js
       - name: Run old and new Flo tests
         run: |
@@ -67,5 +70,6 @@ jobs:
           node tests/test_flo_practice.cjs
           node tests/test_flo_alerts.cjs
           node tests/test_flo_timeline.cjs
+          node tests/test_flo_impact.cjs
           node tests/test_flo_alert_browser.cjs
           python3 tests/test_flo_alert_feed.py
