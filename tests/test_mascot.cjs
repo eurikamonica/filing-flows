@@ -73,7 +73,9 @@ const val = { price: 100, price_date: '2026-10-23', stage: { label: 'Growth' }, 
   football: [{ method: 'Stage-weighted value (growth)', low: 95, high: 150, point: 125 }, { method: "Analysts' price targets", low: 90, high: 160, point: 130 }, { method: 'Polymarket implied price', point: 104 }] };
 const opt = { spot: 100, max_pain: 98, max_pain_exp: '2026-11-20', path_probs: [0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.975],
   paths: [{ exp: '2026-11-20', days: 28, q: [80, 84, 88, 94, 100, 106, 112, 116, 120], max_pain: 98, put_wall: 90, call_wall: 110 }] };
-const co = { quarters: [1, 2, 3, 4, 5].map((k) => ({ label: `Q${k}`, form: '10-Q', filed: `2026-0${k}-01`, end: `2026-0${k}-01`, doc_url: 'https://www.sec.gov/x', headline: { revenue: 100 * (1 + 0.05 * k), oi: 20, ni: 15 } })) };
+// newest first, as the company pages list them
+const ends = ['2025-03-31', '2025-06-30', '2025-09-30', '2025-12-31', '2026-03-31'];
+const co = { quarters: [5, 4, 3, 2, 1].map((k) => ({ label: `Q${k}`, form: '10-Q', filed: ends[k - 1].replace(/-\d\d$/, '-28'), end: ends[k - 1], doc_url: 'https://www.sec.gov/x', headline: { revenue: 100 * (1 + 0.05 * k), oi: 20, ni: 15 } })) };
 const files = { 'data/index.json': ix, 'disclosures/data/research/valuation/c/1045810.json': val, 'disclosures/data/market/options/NVDA.json': opt, 'data/c/1045810.json': co };
 global.fetch = async (u) => (files[u] ? { ok: true, json: async () => files[u] } : { ok: false, status: 404, json: async () => null });
 

@@ -251,7 +251,9 @@
     const d = await json(DATA + 'c/' + c.cik + '.json');
     const qs = (d && d.quarters) || [];
     if (!qs.length) return null;
-    const q = qs[qs.length - 1], h = q.headline || {}, ya = qs.length >= 5 ? (qs[qs.length - 5].headline || {}) : {};
+    // the newest quarter by its end date (the page lists newest first), and the one about a year before it
+    const T = (x) => Date.parse((x.end || x.filed || '') + 'T00:00:00Z') || 0, srt = qs.slice().sort((a, b) => T(b) - T(a));
+    const q = srt[0], h = q.headline || {}, yq = srt.find((x) => Math.abs((T(q) - T(x)) / 864e5 - 364) <= 45), ya = (yq && yq.headline) || {};
     const yoy = (a, b) => (fin(a) && fin(b) && b > 0 ? a / b - 1 : null), g = yoy(h.revenue, ya.revenue);
     const om = fin(h.oi) && fin(h.revenue) && h.revenue > 0 ? h.oi / h.revenue : null;
     const facts = [`${q.label} (${q.form}, filed ${q.filed}): revenue ${big(h.revenue)}${fin(g) ? ` (${spc(g)} y/y)` : ''}, operating income ${big(h.oi)}, net income ${big(h.ni)}${fin(h.ocf) ? `, operating cash flow ${big(h.ocf)}` : ''}`];
