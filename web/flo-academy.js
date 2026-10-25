@@ -67,7 +67,7 @@
     const s=String(q||'').trim();
     if (/^(next step|previous step|prev step|stop lesson|hint|下一步|上一步|结束课程|提示)$/i.test(s)) return active ? 'continue' : null;
     if (/\b(fcff|free cash flow to firm)\b|企业自由现金流|计算自由现金流/i.test(s) && /(?:^|\s)(?:ebit|tax|da|capex|nwc)=/i.test(s)) return 'fcff';
-    if (/\b(?:case study|sunbeam|dell case|worldcom|xerox|waste management|accounting case)\b|真实案例|案例研究|森宾|太阳能.*案例|世通|施乐/i.test(s)) return 'case';
+    if (/\b(?:case study|sunbeam|dell case|accounting case)\b|\b(?:worldcom|xerox|waste management)\s+(?:case|fraud|accounting|scandal)\b|\b(?:case|fraud|accounting)\s+(?:worldcom|xerox|waste management)\b|真实案例|案例研究|森宾|太阳能.*案例|(?:世通|施乐).*(?:案例|舞弊)/i.test(s)) return 'case';
     if (/rebates?|supplier incentives|vendor allowances|返利|供应商补贴|供应商激励/i.test(s)) return 'rebate';
     if (/cookie.jar (?:simulation|example|lab)|模拟(?:准备金|cookie.?jar)|准备金模拟/i.test(s)) return 'reserve_demo';
     if (/cookie.jar|accounting detective|reserves? (?:release|rollforward)|earnings smoothing|财务侦探|准备金|利润平滑|盈余管理/i.test(s)) return 'detective';
