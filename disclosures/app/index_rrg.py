@@ -483,7 +483,8 @@ def thresholds(S, rel, o, i, own, price):
 
 # ------------------------------------------------------------------ the chain's paths
 def chain_paths(P1, s0, steps=STEPS, n=20000, top=5, seed=SEED):
-    """The most common 13-week sequences of the index's quadrant from joint state s0 (seeded simulation)."""
+    """The most common routes of the index's quadrant over 13 weeks from joint state s0 — each simulated path read as
+    the quadrants it visits in order (a stay is one step), as rrg-odds.js does — with their shares (seeded)."""
     rng = np.random.default_rng(seed)
     cum = np.cumsum(P1, 1)
     s = np.full(n, s0)
@@ -492,9 +493,15 @@ def chain_paths(P1, s0, steps=STEPS, n=20000, top=5, seed=SEED):
         u = rng.random(n)
         s = np.minimum((u[:, None] > cum[s]).sum(1), 15)
         seq[:, j] = s % 4
-    keys, counts = np.unique(seq, axis=0, return_counts=True)
-    order = np.argsort(-counts)[:top]
-    return [[[int(v) for v in keys[j]], round(float(counts[j] / n), 4)] for j in order]
+    routes = {}
+    for row in seq:
+        r = [s0 % 4]
+        for q in row:
+            if q != r[-1]:
+                r.append(int(q))
+        routes[tuple(r)] = routes.get(tuple(r), 0) + 1
+    best = sorted(routes.items(), key=lambda kv: -kv[1])[:top]
+    return [[list(k), round(v / n, 4)] for k, v in best]
 
 
 # ------------------------------------------------------------------ the build
@@ -522,6 +529,8 @@ def build(public, macro_dir=None, out_name='index-rrg.json', verbose=True):
         if not np.isfinite(levels[c]).any():
             continue
         RS = relative(P, levels[c])
+        if c == 'spy':                               # SPY against itself is constant (up to rounding): no line
+            RS[TICKERS.index('SPY')] = np.nan
         S = TR.rrg_states(RS, N_RRG)
         Q, _ = TR.states(S['x'], S['y'])
         ok = (Q >= 0) & fit_ok
@@ -543,9 +552,9 @@ def build(public, macro_dir=None, out_name='index-rrg.json', verbose=True):
     ranked = sorted((c for c in compare if compare[c]['select']['score'] is not None),
                     key=lambda c: (-compare[c]['select']['score'], -((compare[c]['select']['ic4'] or [0])[0])))
     chosen = ranked[0] if ranked else 'vol'
-    if len(ranked) > 1 and compare[ranked[0]]['select']['score'] - compare[ranked[1]]['select']['score'] <= 0.002:
-        a, b = ranked[0], ranked[1]
-        chosen = a if (compare[a]['select']['ic4'] or [0])[0] >= (compare[b]['select']['ic4'] or [0])[0] else b
+    if ranked:                                       # every centre within 0.002 of the best: the higher correlation
+        near = [c for c in ranked if compare[ranked[0]]['select']['score'] - compare[c]['select']['score'] <= 0.002]
+        chosen = max(near, key=lambda c: ((compare[c]['select']['ic4'] or [-9])[0], -ranked.index(c)))
     # the replay method
     cov = {m: {per: coverage(R, cash, sd, days, m, lo, hi) for per, (lo, hi) in periods.items()} for m in ('plain', 'vol')}
     method = 'vol' if gap(cov['vol']['select']) < gap(cov['plain']['select']) else 'plain'
@@ -719,7 +728,10 @@ def ledger_update(root, made_at=None, sha=None):
     R = log_returns(P)
     cash = cash_returns(days, bill_rates(root / 'cache' / 'macro'))
     levels = {c: level(r) for c, r in centre_returns(R, cash)[0].items()}
-    S = TR.rrg_states(relative(P, levels.get(centre, levels['vol'])), N_RRG)
+    RSl = relative(P, levels.get(centre, levels['vol']))
+    if centre == 'spy':
+        RSl[TICKERS.index('SPY')] = np.nan
+    S = TR.rrg_states(RSl, N_RRG)
     Q, _ = TR.states(S['x'], S['y'])
     for e in L['origins']:
         o = pos.get(e['origin'])

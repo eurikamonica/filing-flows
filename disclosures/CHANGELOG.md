@@ -1,5 +1,29 @@
 # Changelog
 
+## The four indices around their centre (QQQ, SPY, IWM, DIA)
+
+`app/index_rrg.py` (run by `chaos_forecast.build`, file `index-rrg.json`; its own frozen ledger `ledger/index.json`,
+`index-ledger.json`, run by `forecast_ledger.update`). SPY overlaps the other three, so against SPY the RRG only says
+"more tech or more value than the S&P" and SPY itself cannot be drawn. Each index is measured against the centre of
+the four — their volatility-weighted geometric mean (weights ∝ 1 / the 26-week volatility known when the week starts;
+the weighted relative moves add up to zero) — and the centre against cash (FRED DGS3MO). Fixed in advance: four
+centres (SPY, equal-weight, volatility-weighted, cash), chosen on weekly origins 2003–2011 by the quadrant matrix's
+Brier skill against the weaker of two baselines (ties within 0.002 by RS-Momentum's correlation with the next four
+weeks), reported from 2012 for all. Result: SPY 5.11%, equal 5.14%, volatility-weighted 5.17%, cash 3.66% on
+2003–2011 — the first three tie, the volatility-weighted centre has the highest correlation and is used; from 2012 all
+four score 5.2–5.4%, and RS-Momentum does not predict the next four weeks' relative return for any centre (Spearman
+−0.02 to −0.06). The published model (weekly origins, block bootstrap, independent origins = weeks / h): quadrant odds
+calibrated at 1 and 4 weeks, experimental at 13; conditioning on the centre's quadrant against cash adds nothing; the
+weekly chain calibrated at 1 week; "which index leads next" loses to "the leader stays" (history only). Joint replay
+price ranges: the last three years (chosen on 2003–2011 over the volatility-scaled ten-year replay) cover 75% / 45–48%
+at 4 and 13 weeks from 2012 (experimental; the scaled replay did better out of sample: 76–78%). The hub's RRG shows it
+as Lines → "The four indices around their centre" (`docs/rrg-index.js`): odds, routes, replayed prices, next week's
+close for each quadrant (the index's own weight in the centre taken out), the leader, the comparison and the ledger.
+Tests: `tests/test_index_rrg.py`.
+
+The weekly collector's full fetch reaches back to 1990, and the S&P 500, Nasdaq-100, Dow, Russell 2000 and Nasdaq
+Composite indices themselves are kept (price only, `t/IDX-*.json`) for the years before their ETFs.
+
 ## Video studio data: leaderboards, stock dividends, market value, P/E and P/B
 
 `app/rank_panel.py` (run by `rotation_history.build`) publishes `public/rank/` for the studio's leaderboards: every
