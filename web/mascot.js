@@ -463,9 +463,15 @@
     wait.querySelectorAll('form[data-flo-calc]').forEach(form => form.addEventListener('submit', (ev) => {
       ev.preventDefault();
       const A = academy(); if (!A) return;
-      const fields = Object.fromEntries(Array.from(form.querySelectorAll('input[name]')).map(input => [input.name, input.value]));
+      const fields = Object.fromEntries(Array.from(form.querySelectorAll('input[name], select[name]')).map(input => [input.name, input.value]));
       try {
-        if (form.dataset.floCalc === 'fcff') {
+        if (form.dataset.floCalc === 'reserve') {
+          const v = A.reserveScenario(fields);
+          addMsg('<b>Reserve rollforward simulation</b><p>Closing reserve ' + usd(v.reserve) +
+            ' · Pretax profit ' + usd(v.profit) +
+            ' · Cash ' + usd(v.cash) +
+            '.</p><small>Illustration only. Releases are not proof of earnings manipulation.</small>', 'bot');
+        } else if (form.dataset.floCalc === 'fcff') {
           const v = A.fcff(fields);
           addMsg('<b>FCFF = ' + esc(v.toLocaleString('en-US', {maximumFractionDigits:2})) +
             '</b> (same units as exercise). EBIT × (1−Tax%) + D&amp;A − CapEx − ΔNWC. <small>Hypothetical inputs, NOT company data.</small>', 'bot');
