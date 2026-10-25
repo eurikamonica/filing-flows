@@ -1149,6 +1149,45 @@ def _currency_of(cik):
     return _cur[cik]
 
 
+def _derive_h2(c):
+    """Second halves from the 20-F year minus its first half, for flows; each half then compares with the half before
+    and the same half a year earlier."""
+    halves, years = c.setdefault("halves", {}), c.get("years") or {}
+    for ye, y in years.items():
+        e = dt.date.fromisoformat(ye)
+        h1 = next((h for h in halves.values() if h.get("raw") and 160 <= (e - dt.date.fromisoformat(h["end"])).days <= 200
+                   and h.get("form") == "6-K"), None)
+        if not h1 or (ye in halves and halves[ye].get("form") == "6-K"):
+            continue
+        yr, hr = y.get("raw") or {}, h1["raw"]
+        # a first half restated after the fact (Unilever's ice cream demerger) is the one the 20-F year matches: the
+        # year-ago column of a later half-year report filed after the 20-F
+        later = [h for h in halves.values() if (h.get("py_col") or {}).get("end") == h1["end"] and (h.get("filed") or "") >= (y.get("filed") or "")]
+        if later:
+            hr = sorted(later, key=lambda h: h.get("filed") or "")[-1]["py_col"]["raw"]
+        raw = {k: (yr[k] - hr[k] if isinstance(yr.get(k), (int, float)) and isinstance(hr.get(k), (int, float)) else None)
+               for k in facts.CONCEPTS}
+        if not raw.get("revenue") or raw["revenue"] <= 0 or (raw.get("ni") is None and raw.get("pl") is None):
+            continue
+        label, fq, fy = facts.fiscal_label(ye, c["profile"]["fye"])
+        halves[ye] = {"period": "half", "derived": True, "end": ye, "label": label.replace(f"Q{fq}", "H2", 1), "fq": 4, "fy": fy,
+                      "cal": facts.calendar_quarter(ye), "form": "20-F", "accn": y.get("accn"), "filed": y.get("filed"),
+                      "doc_url": y.get("doc_url"), "index_url": y.get("index_url"), "raw": raw,
+                      "q1_end": h1["end"], "raw_q1": hr, "py_end": None, "raw_py": None, "notes": {},
+                      "src": None, **({"fx_official": y["fx_official"]} if y.get("fx_official") else {})}
+    by = sorted(halves.items())
+    for k, h in by:                                     # the same half a year earlier, when on file
+        e = dt.date.fromisoformat(k)
+        if not h.get("raw_py"):
+            py = next((x for kk, x in by if 350 <= (e - dt.date.fromisoformat(kk)).days <= 380), None)
+            if py:
+                h["py_end"], h["raw_py"] = py["end"], py["raw"]
+        if not h.get("raw_q1"):
+            q1 = next((x for kk, x in by if 150 <= (e - dt.date.fromisoformat(kk)).days <= 215), None)
+            if q1:
+                h["q1_end"], h["raw_q1"] = q1["end"], q1["raw"]
+
+
 def _annual_quarter_revenue(c, cik=None, sub=None):
     """A quarter's size from the latest 20-F year: a fourth of its revenue (the year on file, else the 20-F's XBRL)."""
     ys = sorted((c.get("years") or {}).items())
@@ -1226,18 +1265,49 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         raise NotApplicable("not a results release" + (f" ({errors[0]})" if errors else ""))
     end = rel["end"]
     e0 = dt.date.fromisoformat(end)
+    half = False
+    fq0 = facts.fiscal_label(end, c["profile"]["fye"])[1]
+    # how long the period is, checked against a quarter of the 20-F year: a first half is about two quarters, a full
+    # year about four (Sony's year-end release, whose header reads like a quarter's)
+    ref = _annual_quarter_revenue(c, cik, sub)
+    ratio = (rel["is"].get("revenue") or 0) / ref if ref else None
+    try:                                                 # the same revenue as the 20-F year ending that day: the year
+        same = facts.extract(companyfacts(cik), end, annual=True).get("revenue") if fq0 == 4 else None
+    except Exception:
+        same = None
+    if (same and abs((rel["is"].get("revenue") or 0) / same - 1) < 0.03) or \
+            (ratio and ratio >= 3.4 and fq0 == 4 and rel["is_quarter"] is None):
+        raise NotApplicable("the release's statements are for the full year (the 20-F has it)")
+    if ratio and fq0 == 2 and 1.6 <= ratio <= 2.6 and rel["is_quarter"] is not True:
+        rel["is_quarter"] = False
     if rel["is_quarter"] is False:
-        raise NotApplicable("the release's statements are not for a quarter")
+        # a half-year report (Unilever, Rio Tinto, BHP and others report twice a year): kept as a half, drawn when the
+        # company has no quarters; the second half comes from the 20-F year minus the first (_derive_h2)
+        hdr = release._header(release.pick_tables(rel["tables"])[0][1]).lower()
+        if fq0 == 2 and (170 <= (rel.get("span") or 0) <= 190 or
+                         re.search(r"six months|six-month|6 months|half[- ]?year|first half|\bh1\b|\b1h\b|interim period", hdr + " " + doc[:30000].lower())):
+            half = True
+            prior = sorted((q for q in c.get("halves", {}).values() if q.get("raw")), key=lambda q: q["end"])
+            have = c.get("halves", {})
+        else:
+            raise NotApplicable("the release's statements are not for a quarter")
+    lo, hi = (150, 215) if half else (60, 120)
     old = have.get(end)                                 # the same quarter in two 6-Ks (press release, then the interim
     if old and old.get("form") == "6-K" and old.get("accn") != accn and (old.get("filed") or "") <= row["filingDate"]:
         raise NotApplicable(f"quarter already read from the results release of {old.get('filed')}")   # statements)
     label, fq, fy = facts.fiscal_label(end, c["profile"]["fye"])
+    if half:
+        label = label.replace("Q2", "H1", 1)
     try:
         raw = {k: None for k in facts.CONCEPTS}
         raw.update({k: (abs(v) if k in release.COST_KEYS else v) for k, v in rel["is"].items()})
-        back = [q for q in prior if 60 <= (e0 - dt.date.fromisoformat(q["end"])).days <= 120]
+        back = [q for q in prior if lo <= (e0 - dt.date.fromisoformat(q["end"])).days <= hi]
         prev = back[-1] if back else None
-        cash, ytd = _fpi_cash(rel, prev, fq)
+        if half:                                         # six months of cash flow: the half's own
+            cash = {k: (abs(v) if k in release.COST_KEYS else v) for k, v in (rel.get("cf") or {}).items()}
+            ytd = cash or None
+        else:
+            cash, ytd = _fpi_cash(rel, prev, fq)
         raw.update(cash)
         if raw.get("da") is None and raw.get("da_op"):
             raw["da"] = raw["da_op"]                     # D&A printed as an operating cost line (Nebius) is the bridge's
@@ -1253,7 +1323,7 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         try:
             py = {k: None for k in facts.CONCEPTS}
             py.update(_column(rel, 1))
-            if rel.get("cf_quarter") is not True and fq != 1:
+            if rel.get("cf_quarter") is not True and fq != 1 and not half:
                 for k in release.CF_KEYS:
                     py[k] = None                          # a year-to-date column, not the year-ago quarter
             if py.get("da") is None and py.get("da_op"):
@@ -1264,9 +1334,10 @@ def process_fpi_release(store, cik, accn, form, starred=False):
                 raw_py, py_end = py, (e0.replace(year=e0.year - 1) if not (e0.month == 2 and e0.day == 29) else e0 - dt.timedelta(days=365)).isoformat()
         except ValueError:
             raw_py = py_end = None
+    py_col = (raw_py, py_end) if raw_py else None         # the release's own year-ago column (restated, when it was)
     stored_py = next((q for q in prior if abs((dt.date.fromisoformat(q["end"]) - (e0 - dt.timedelta(days=365))).days) <= 10), None)
-    if stored_py:                                       # the year-ago release on file: its figures as reported then
-        raw_py, py_end = stored_py["raw"], stored_py["end"]
+    if stored_py and not (half and py_col):             # the year-ago release on file: its figures as reported then
+        raw_py, py_end = stored_py["raw"], stored_py["end"]   # (a half keeps its report's own, restated, column)
     q1_end, raw_q1 = (prev["end"], prev["raw"]) if prev else (None, None)
     rev_ref = {"q1": (raw_q1 or {}).get("revenue"), "py": (raw_py or {}).get("revenue")}
     segs = release.revenue_lines(rel["tables"], raw["revenue"], rel["scale"], rev_ref)
@@ -1282,7 +1353,9 @@ def process_fpi_release(store, cik, accn, form, starred=False):
             set_intro(c, text.about(doc, [c["profile"]["name"]], c["profile"].get("tickers")), ex_url, row.get("filingDate"), "6-K")
         except Exception as e:
             print(f"  about skipped for {cik}: {e}", file=sys.stderr)
-    c["quarters"][end] = {
+    pool = c.setdefault("halves", {}) if half else c.setdefault("quarters", {})
+    pool[end] = {
+        **({"period": "half", **({"py_col": {"end": py_col[1], "raw": py_col[0]}} if py_col else {})} if half else {}),
         "end": end, "label": label, "fq": fq, "fy": fy, "cal": facts.calendar_quarter(end), "form": "6-K",
         "accn": accn, "filed": row.get("filingDate"), "doc_url": ex_url,
         "index_url": sec.filing_base(cik, accn) + f"/{accn}-index.htm", "raw": raw,
@@ -1294,13 +1367,17 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         "src": sources.from_release(rel, raw),
         **({"fx_official": off} if cur != "USD" and (off := rel.get("fx_official") or FX.official_rate(doc, cur)) else {}),
     }
-    for k, q in c["quarters"].items():                  # a later release read before this one: its quarter-before is this
-        if q.get("form") == "6-K" and not q.get("raw_q1") and 60 <= (dt.date.fromisoformat(k) - e0).days <= 120:
+    for k, q in pool.items():                           # a later release read before this one: its period-before is this
+        if q.get("form") in ("6-K", "20-F") and not q.get("raw_q1") and lo <= (dt.date.fromisoformat(k) - e0).days <= hi:
             q["q1_end"], q["raw_q1"] = end, raw
-        if q.get("form") == "6-K" and 350 <= (dt.date.fromisoformat(k) - e0).days <= 380:
+        if q.get("form") in ("6-K", "20-F") and 350 <= (dt.date.fromisoformat(k) - e0).days <= 380:
             q["py_end"], q["raw_py"] = end, raw
     keep = max(KEEP_STARRED if starred else KEEP_QUARTERS, c.get("keep", 0))
-    c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
+    if half:
+        _derive_h2(c)
+        c["halves"] = dict(sorted(c["halves"].items())[-keep:])
+    else:
+        c["quarters"] = dict(sorted(c["quarters"].items())[-keep:])
     store.put(cik, c)
     _note_fpi(store, cik)
     return end
@@ -1338,6 +1415,8 @@ def process_fpi_annual(store, cik, accn, form, starred=False):
             year["fx_official"] = off
     c.setdefault("years", {})[end] = year
     c["years"] = dict(sorted(c["years"].items())[-(KEEP_STARRED_YEARS if starred else KEEP_YEARS):])
+    if c.get("halves"):
+        _derive_h2(c)
     c["periods"] = periods_of(fx)
     set_quality(c, fx)
     store.put(cik, c)
@@ -1407,6 +1486,10 @@ def _annual_from_document(cik, doc_url, row, end, fx):
                     d[k] = abs(d[k])
         if not cur.get("revenue"):
             return None
+        big = max((cur.get(k) or 0) for k in ("oi", "gp"))
+        prev_x = facts.extract(fx, facts.prior_year_end(fx, end), annual=True).get("revenue") if facts.prior_year_end(fx, end) else None
+        if big > 1.05 * cur["revenue"] or (prev_x and not 0.4 <= cur["revenue"] / prev_x <= 2.5):
+            return None                                       # a misread table: never drawn
         keep = ("revenue", "cor", "gp", "rd", "sm", "ga", "sga", "oi") if ni else \
             ("revenue", "cor", "gp", "rd", "sm", "ga", "sga", "oi", "pretax", "tax", "pl", "ni", "nci")   # no XBRL year at all
         if not ni:
@@ -2088,6 +2171,25 @@ def _payloads(c, cik):
     return payloads
 
 
+def _as_half(pl):
+    """A half-year period's payload: "H/H" (vs. the half before) where a quarter's says "Q/Q"."""
+    def fix(x):
+        if isinstance(x, str):
+            for a, b in (("Q/Q", "H/H"), ("Quarter ended", "Six months ended"), ("quarter ended", "six months ended"),
+                         ("this quarter", "this half"), ("the quarter", "the half"), ("This quarter", "This half"),
+                         ("The quarter", "The half"), ("quarter before", "half before"), ("previous quarter", "previous half")):
+                x = x.replace(a, b)
+            return x
+        if isinstance(x, list):
+            return [fix(v) for v in x]
+        if isinstance(x, dict):
+            return {k: fix(v) for k, v in x.items()}
+        return x
+    out = fix(pl)
+    out["period"] = "half"
+    return out
+
+
 def _year_payloads(c, cik):
     years = []
     for y in sorted((c.get("years") or {}).values(), key=lambda y: y["end"], reverse=True):
@@ -2131,11 +2233,16 @@ def render(store, out, stars=frozenset()):
     fx_cache = FX.load_cache(store.root)
     for cik in store.ciks():
         c = store.company(cik)
+        halfly = not c.get("quarters") and bool(c.get("halves"))
+        if halfly:                                           # a company that reports twice a year: its halves drawn as periods
+            c = dict(c, quarters=c["halves"])
         if not c.get("quarters") or not c.get("profile"):
             continue
         cur = c.get("currency") or "USD"
         FX._cur[0] = cur                                     # amounts written in the company's own currency
         payloads = _payloads(c, cik)
+        if halfly:
+            payloads = [_as_half(pl) for pl in payloads]
         if not payloads:
             continue
         p = c["profile"]
@@ -2146,9 +2253,12 @@ def render(store, out, stars=frozenset()):
                 rates = FX.rates_for(c, fx_cache)
                 u = FX.in_dollars(c, rates) if rates else None
                 if u and u.get("quarters"):
-                    usd_recs[cik] = u
+                    if not halfly:                       # chains and the rest read quarters: halves are not quarters
+                        usd_recs[cik] = u
                     FX._cur[0] = "USD"
                     uq, uy = _payloads(u, cik), _year_payloads(u, cik)
+                    if halfly:
+                        uq = [_as_half(pl) for pl in uq]
                     for pl in uq:
                         pl["x_thread"] = []
                     _label_currency(uq + uy, cur, rates, fx_cache)

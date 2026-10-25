@@ -22,7 +22,7 @@ P = {
     "revenue": r"^(total )?(net )?(revenues?|sales|net sales|net revenues?)(,? net)?$|^total (net )?(revenues?|sales)$"
                r"|^(total )?(net )?operating revenues?$|^(net )?sales and other (operating )?revenues?$"
                r"|^(net )?sales and (other )?operating revenues?$|^(total )?revenues? from contracts with customers$"
-               r"|^total net sales and revenues?$|^revenues? and other income$|^(net )?sales to third parties$|^(total )?sales revenues?$",
+               r"|^total net sales and revenues?$|^revenues? and other income$|^(net )?sales to third parties$|^(total )?sales revenues?$|^(group |total )?turnover$",
     "cor": r"^(total )?cost of (net )?(revenues?|sales|goods sold|products sold|products and services sold|net sales)(,? net)?$"
            r"|^cost of revenues?,? total$|^total cost of (revenues?|sales)$|^cost of goods and services sold$",
     "gp": r"^(total )?gross (profit|margin)$",
@@ -36,20 +36,22 @@ P = {
     "oi": r"^(total )?operating (income|profit|loss|earnings|income \(loss\)|\(loss\) income|loss \(income\)|\(loss\) profit|profit \(loss\))$"
           r"|^(income|loss|earnings|income \(loss\)|\(loss\) income) from operations$|^operating profit \((ebit|loss)\)$",
     "pretax": r"^(net )?(income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\))( from continuing operations)?"
-              r"( before (provision for |benefit from )?(income )?taxes| before income tax (expense|provision|benefit)s?)$"
+              r"( before (provision for |benefit from )?(income )?taxes| before income tax (expense|provision|benefit)s?| before taxes on income)$"
               r"|^(profit|loss|profit \(loss\)|\(loss\) profit|profit/\(loss\)|\(loss\)/profit) before (income )?tax(es|ation)?$"
               r"|^(net )?(income|earnings|income \(loss\)|\(loss\) income) before (income )?taxation$",
     "tax": r"^((\(provision\) benefit|provision \(benefit\)|\(provision for\) benefit from|provision for \(benefit from\)|"
            r"benefit from \(provision for\)|provision for|benefit from|\(benefit\) provision) (for )?income taxes"
            r"|income tax (expense|provision|benefit|\(provision\) benefit|\(expense\) benefit|expense \(benefit\)|"
-           r"benefit \(expense\)|provision \(benefit\))|income taxes|income tax|income tax(es)? expenses|tax expenses?)$"
+           r"benefit \(expense\)|provision \(benefit\))|income taxes|income tax|income tax(es)? expenses|tax expenses?|income tax(es)? benefit \(expenses\)|taxes on income|tax benefit \(expenses?\))$"
            r"|^taxation( charge| expense| \(charge\) credit| charge \(credit\)| credit \(charge\))?$|^tax (charge|expense)( \(credit\))?$",
     "pl": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\))$"
           r"|^net profit( \(loss\))?$|^(net )?profit( \(loss\))? for the (period|year|quarter)$"
           r"|^(net )?(profit|profit \(loss\)|\(loss\) profit|profit/\(loss\)|income|earnings) after (income )?tax(es|ation)?$"
           r"|^net (income|earnings) for the (period|year|quarter)$"
-          r"|^(income|earnings|income \(loss\)|\(loss\) income|profit \(loss\)) for the (period|year|quarter)$",
-    "pl_cont": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\)) from continuing operations$",
+          r"|^(income|earnings|income \(loss\)|\(loss\) income|profit \(loss\)) for the (period|year|quarter)$"
+          r"|^total (net )?(profit|income|earnings)( \(loss\))?$",
+    "pl_cont": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\)) from continuing operations$"
+               r"|^(net )?(profit|profit \(loss\)|\(loss\) profit)( after (income )?tax(ation)?)? from continuing operations$",
     "ni": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|earnings \(loss\)) (attributable|applicable|available) to "
           r"(?!non-?controlling|minority|redeemable non)|^(net )?profit attributable to (the )?(owners|equity holders|shareholders)"
           r"|^attributable to (the )?(owners|equity holders|shareholders|stockholders)"
@@ -212,6 +214,12 @@ def _newest_first(table):
         if len(ys) >= 2:
             years = ys
             break
+        if not v:                                          # dates as column titles, "For the first quarter ended June
+            dated = [re.findall(r"\b(20\d\d)\b", c) for c in r["cells"] if c]       # 30, 2025 | ... 2026" (Toyota)
+            dated = [int(m[0]) for m in dated if len(m) == 1]
+            if len(dated) >= 2 and len(dated) == len([c for c in r["cells"] if c]):
+                years = dated
+                break
         if r["label"] and v and not all(1990 <= x <= 2100 and x == int(x) for x in v):
             return table                                   # numbers before any year row: leave the table as printed
     else:
@@ -258,13 +266,21 @@ def _first_is_quarter(header_text):
 
 def _map_rows(table, keys, full=False):
     found, section = {}, ""
+    parts = None                                          # the lines under a "Revenues" heading with no total (Wix)
     for r in table["rows"]:
         lab = r["key"]
         if lab and not r["vals"]:
             section = lab
+            parts = [] if ("revenue" in keys and PATTERNS["revenue"].search(lab) and "revenue" not in found) else \
+                (parts if parts is None else _close_parts(found, parts, section))
             continue
         if not lab or not r["vals"] or r["pct"]:
             continue
+        if parts is not None and not any(PATTERNS[k].search(lab) for k in keys):
+            parts.append((lab, r["vals"]))
+            continue
+        if parts is not None:
+            parts = _close_parts(found, parts, "revenues")
         if lab in ("total", "total, net", "net") and section:
             lab = norm_label("total " + section)
         if re.search(r"per (diluted |basic )?share|per common share|margin %|% of|percent|weighted|shares used|non-gaap|adjusted",
@@ -280,9 +296,19 @@ def _map_rows(table, keys, full=False):
                 elif k not in found:
                     found[k] = (v, lab, r["vals"])
                 break
+    if parts is not None:
+        _close_parts(found, parts, "revenues")
     if full:
         return found
     return {k: x[0] for k, x in found.items()}
+
+
+def _close_parts(found, parts, section):
+    """A revenue heading's lines summed when the statement prints no total (two or more lines of the same width)."""
+    if parts and len(parts) >= 2 and "revenue" not in found and len({len(v) for _, v in parts}) == 1:
+        vals = [sum(v[i] for _, v in parts) for i in range(len(parts[0][1]))]
+        found["revenue"] = (vals[0], "revenues (sum of " + ", ".join(l for l, _ in parts) + ")", vals)
+    return None
 
 
 def _units(table):
@@ -398,6 +424,22 @@ def period_end(html_text, t_is, filed):
         d = dt.date(y, 3 * n, 30 if n in (2, 3) else 31)
         if _plausible(d, filed):
             return d
+    # an inline-XBRL 6-K (Unilever): its hidden contexts carry the period, "2026-01-01 2026-06-30"
+    ends = {}
+    for m in re.finditer(r"\b(20\d\d-\d\d-\d\d) (20\d\d-\d\d-\d\d)\b", html_text[:20000]):
+        try:
+            d = dt.date.fromisoformat(m.group(2))
+        except ValueError:
+            continue
+        if _plausible(d, filed):
+            ends[d] = ends.get(d, 0) + 1
+    if ends:
+        return max(ends, key=lambda d: (ends[d], d))
+    h = re.search(r"\b(?:H1|1H|first half(?: of)?|half[- ]year(?: results)?)\s*(20\d\d)\b", html_text[:3000], re.I)
+    if h:                                                  # "H1 2026", "first half 2026": a calendar first half
+        d = dt.date(int(h.group(1)), 6, 30)
+        if _plausible(d, filed):
+            return d
     return None
 
 
@@ -424,11 +466,20 @@ def parse(html, filed, last_end=None, prior_revenue=None):
         raise ValueError(f"revenue is {m_is['revenue'] * scale / prior_revenue:.1f}x the previous quarter; "
                          "the table is probably a full year or a different period")
     text = BeautifulSoup(html, "lxml").get_text(" ", strip=True)
-    end = period_end(text[:8000], t_is, filed)
+    end = period_end(text[:8000], t_is, filed) or period_end(text[:80000], t_is, filed)
     if not end:
         raise ValueError("cannot find the quarter end date in the release")
     full = _map_rows(t_is, IS_KEYS, full=True)
-    out = {"end": end.isoformat(), "scale": scale, "is_quarter": _first_is_quarter(_header(t_is)),
+    span = None                                            # an inline-XBRL 6-K's own period length, when it says
+    for m in re.finditer(r"\b(20\d\d-\d\d-\d\d) (" + end.isoformat() + r")\b", text[:20000]):
+        try:
+            span = max(span or 0, (end - dt.date.fromisoformat(m.group(1))).days)
+        except ValueError:
+            pass
+    isq = _first_is_quarter(_header(t_is))
+    if isq is None and span:
+        isq = span <= 100
+    out = {"end": end.isoformat(), "scale": scale, "is_quarter": isq, "span": span,
            "is": {k: v * scale for k, v in m_is.items()}, "cf": {}, "cf_quarter": None,
            "labels": {k: x[1] for k, x in full.items()},
            "cols": {k: [v * scale for v in x[2]] for k, x in full.items()},       # every column, for sign checks
@@ -502,6 +553,11 @@ def reconcile(raw, labels=None, tax_checked=False):
             r[k] = abs(r[k])
     if r.get("revenue") is None or r["revenue"] <= 0:
         raise ValueError("no positive revenue")
+    big = max((r.get(k) or 0) for k in ("oi", "gp"))   # operating profits, not losses or one-off gains below the line
+    if big > 1.05 * r["revenue"] and big > 1e6:
+        # operating profit or pre-tax earnings larger than revenue: a misread column (a note or a percentage taken
+        # for revenue, Sony), not a statement
+        raise ValueError("revenue is smaller than operating or pre-tax earnings")
     cont = r.pop("pl_cont", None)                             # net income from continuing operations, when printed
     pl, ni, nci = r.get("pl"), r.get("ni"), r.get("nci")
     if pl is None and ni is None and cont is not None:
