@@ -55,3 +55,18 @@ def test_exhibit_names():
     for name in ("meta-09302026xexhibit991.htm", "wdfc-20261021xexx991.htm", "osbc-ex99d1.htm", "ex-99_1.htm", "exhibit991102126.htm"):
         assert any(re.search(p, name, re.I) for p in pats), name
     assert build.NOT_EXHIBIT.search("R1.htm") and not build.NOT_EXHIBIT.search("spaceexplorationtechnologi.htm")
+
+
+def test_ifrs_income_statement_wording():
+    """IFRS releases (Ferrari): "Operating profit (EBIT)", "Profit before taxes", "Income tax expenses", "Net profit",
+    "(Euro million)"; a full statement under a non-GAAP section title still beats a highlights table."""
+    from pipeline import release as R
+    for key, lab in [("oi", "operating profit (ebit)"), ("pretax", "profit before taxes"), ("tax", "income tax expenses"),
+                     ("pl", "net profit"), ("pl", "profit for the period"), ("ni", "net profit attributable to owners of the parent"),
+                     ("nci", "net profit attributable to non-controlling interests"), ("sga", "selling, general and administrative costs"),
+                     ("rd", "research and development costs")]:
+        assert R.PATTERNS[key].search(lab), (key, lab)
+    assert not R.PATTERNS["pl"].search("gross profit")
+    assert R._units({"before": "", "text": "For the three months ended (Euro million) June 30"}) == 1e6
+    assert R._units({"before": "", "text": "(€ million, except per share data)"}) == 1e6
+    assert R._units({"before": "", "text": "(in euro thousands)"}) == 1e3

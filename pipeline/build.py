@@ -1312,7 +1312,14 @@ def _queue_foreign(store, cik, sub):
     st, c = store.state, store.company(cik)
     rows = [r for r in recent_rows(sub)]
     pick = [r for r in rows if r["form"] in ("20-F", "40-F") and r.get("reportDate")][:FPI_ANNUALS]
-    pick += [r for r in rows if r["form"] == "6-K"][:FPI_RELEASES]
+    # results releases first: a company that files a 6-K every week (Ferrari's buyback reports) would otherwise push
+    # its quarterly results out of the newest FPI_RELEASES 6-Ks
+    cutoff = (dt.date.today() - dt.timedelta(days=800)).isoformat()
+    sixk = [r for r in rows if r["form"] == "6-K" and (r.get("filingDate") or "") >= cutoff]
+    hint = re.compile(r"result|quarter|earning|interim|half|annual|\bq[1-4]|[^a-z]fy|trading update|financial", re.I)
+    keyed = [r for r in sixk if hint.search((r.get("primaryDocument") or "") + " " + (r.get("primaryDocDescription") or ""))]
+    rest = [r for r in sixk if r not in keyed]
+    pick += (keyed + rest)[:max(FPI_RELEASES, len(keyed))]
     for r in pick:
         a = r["accessionNumber"]
         if a not in st["pending"] and not (st["seen"].get(a) or {}).get("s") == "ok":
@@ -1441,6 +1448,16 @@ def run(args):
                 try:
                     _queue_foreign(store, cik, submissions(cik))
                     print(f"  {cik} reports in {c['currency']}: its 20-F and 6-Ks are read again (drawn in its currency now)")
+                except Exception as e:
+                    print(f"  {cik} not re-queued: {e}", file=sys.stderr)
+            elif not c.get("quarters") and not c.get("ifrs_retry"):
+                # results releases skipped before IFRS wording ("Net profit", "Operating profit (EBIT)") was read, or pushed
+                # out by weekly buyback 6-Ks (Ferrari): read its 6-Ks once more
+                c["ifrs_retry"] = True
+                store.put(cik, c)
+                try:
+                    _queue_foreign(store, cik, submissions(cik))
+                    print(f"  {cik} has no quarter yet: its 6-Ks are read again")
                 except Exception as e:
                     print(f"  {cik} not re-queued: {e}", file=sys.stderr)
     for f in queue:

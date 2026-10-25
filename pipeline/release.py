@@ -27,26 +27,28 @@ P = {
            r"|^cost of revenues?,? total$|^total cost of (revenues?|sales)$|^cost of goods and services sold$",
     "gp": r"^(total )?gross (profit|margin)$",
     "rd": r"^(research(,)? and development|research, development and engineering|technology and development|"
-          r"product development|engineering, research and development|research and development expenses?)$",
+          r"product development|engineering, research and development|research and development (expenses?|costs))$",
     "sm": r"^(sales and marketing|selling and marketing|marketing and sales|marketing|selling)( expenses?)?$",
     "ga": r"^general and administrative( expenses?)?$",
-    "sga": r"^(selling|sales|marketing),? general,? and administrative( expenses?)?$",
+    "sga": r"^(selling|sales|marketing),? general,? and administrative( expenses?| costs)?$",
     "costs_total": r"^total (costs and expenses|operating costs and expenses|costs and operating expenses|cost and expenses)$",
     "opex_total": r"^total operating expenses$",
     "oi": r"^(total )?operating (income|profit|loss|earnings|income \(loss\)|\(loss\) income|loss \(income\)|\(loss\) profit|profit \(loss\))$"
-          r"|^(income|loss|earnings|income \(loss\)|\(loss\) income) from operations$",
+          r"|^(income|loss|earnings|income \(loss\)|\(loss\) income) from operations$|^operating profit \((ebit|loss)\)$",
     "pretax": r"^(net )?(income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\))( from continuing operations)?"
-              r"( before (provision for |benefit from )?(income )?taxes| before income tax (expense|provision|benefit)s?)$",
+              r"( before (provision for |benefit from )?(income )?taxes| before income tax (expense|provision|benefit)s?)$"
+              r"|^(profit|loss|profit \(loss\)|\(loss\) profit|profit/\(loss\)|\(loss\)/profit) before (income )?tax(es|ation)?$",
     "tax": r"^((\(provision\) benefit|provision \(benefit\)|\(provision for\) benefit from|provision for \(benefit from\)|"
            r"benefit from \(provision for\)|provision for|benefit from|\(benefit\) provision) (for )?income taxes"
            r"|income tax (expense|provision|benefit|\(provision\) benefit|\(expense\) benefit|expense \(benefit\)|"
-           r"benefit \(expense\)|provision \(benefit\))|income taxes|income tax)$",
-    "pl": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\))$",
+           r"benefit \(expense\)|provision \(benefit\))|income taxes|income tax|income tax(es)? expenses|tax expenses?)$",
+    "pl": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\))$"
+          r"|^net profit( \(loss\))?$|^(net )?profit( \(loss\))? for the (period|year|quarter)$",
     "pl_cont": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\)) from continuing operations$",
     "ni": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|earnings \(loss\)) (attributable|applicable|available) to "
-          r"(?!non-?controlling|minority|redeemable non)",
+          r"(?!non-?controlling|minority|redeemable non)|^(net )?profit attributable to (the )?(owners|equity holders|shareholders)",
     "nci": r"^(less: )?net (income|loss|income \(loss\)|\(income\) loss|\(loss\) income|earnings) attributable to "
-           r"(non-?controlling|minority)|^(non-?controlling|minority) interests?$",
+           r"(non-?controlling|minority)|^(non-?controlling|minority) interests?$|^(net )?profit attributable to non-?controlling",
     "ocf": r"^net cash (provided by|from|used in|\(used in\) provided by|provided by \(used in\)|generated from|"
            r"provided by \(used for\)|\(used for\) provided by|provided by operating|used for) operating activities$",
     "da": r"^(depreciation|depreciation, depletion)( expense)?( and amortization( expense)?( of [a-z ,]+)?)?$"
@@ -270,7 +272,12 @@ def _units(table):
     m = re.search(r"in (?:(?:u\.?s\.? ?|usd |us\$ ?|\$ ?|€ ?|eur |£ ?|gbp |¥ ?|jpy |rmb ?|cny |nt\$ ?|twd |₩ ?|krw |₹ ?|inr |r\$ ?|"
                   r"brl |c\$ ?|cad |chf |sek |dkk |nok |hk\$ ?|hkd |s\$ ?|a\$ ?)(?:dollars? |euros? )?)?(thousands|millions|billions)", t) \
         or re.search(r"\(\s*(?:us\$|\$|€|eur|£|¥|rmb|nt\$|₩|₹|chf|sek|dkk|nok)\s*(?:in\s)?(thousands|millions|billions)", t)   # "(€ millions)"
-    return {"thousands": 1e3, "millions": 1e6, "billions": 1e9}[m.group(1)] if m else None
+    m = m or re.search(r"\(\s*(?:in\s)?(?:€|us\$|\$|£|¥|euros?|eur|us dollars?|dollars?|usd|sterling|gbp|yen|jpy|swiss francs?|chf|"
+                       r"danish kroner|dkk|swedish kronor|sek|norwegian kroner|nok|rmb|renminbi|cny)\s*(thousand|million|billion)s?\b", t)
+    if not m:
+        return None
+    u = m.group(1)
+    return {"thousand": 1e3, "million": 1e6, "billion": 1e9}[u[:-1] if u.endswith("s") else u]
 
 
 NONGAAP_RE = re.compile(r"non-gaap|non-ifrs|adjusted (ebitda|ebit|net|operating|earnings|eps|income|gross|free cash|diluted)|reconciliation")
@@ -299,9 +306,15 @@ DISC_TABLE = re.compile(r"(for|of) discontinued operations")      # Sonoco: a st
 
 def pick_tables(tables):
     weights = {"revenue": 3, "pretax": 2, "tax": 2, "pl": 2, "ni": 2, "oi": 1, "gp": 1, "cor": 1}
-    best_is = best_cf = None
+    best_is = best_cf = fallback = None
     for t in tables:
-        if _is_nongaap(t) or DISC_TABLE.search(t["text"][:200].lower()):
+        if DISC_TABLE.search(t["text"][:200].lower()):
+            continue
+        if _is_nongaap(t):
+            if not NONGAAP_RE.search(t["text"][:300].lower()) and not NONGAAP_RE.search(t["text"].lower()):
+                m = _map_rows(t, IS_KEYS)
+                if "revenue" in m and "pretax" in m and "tax" in m and ("pl" in m or "ni" in m) and fallback is None:
+                    fallback = (sum(w for k, w in weights.items() if k in m), t, m)
             continue
         m = _map_rows(t, IS_KEYS)
         score = sum(w for k, w in weights.items() if k in m)
@@ -310,6 +323,8 @@ def pick_tables(tables):
         c = _map_rows(t, CF_KEYS)
         if "ocf" in c and (best_cf is None or len(c) > len(best_cf[2])):
             best_cf = (len(c), t, c)
+    if fallback and (not best_is or fallback[0] > best_is[0]):      # the full statement beats a highlights table
+        best_is = fallback
     return best_is, best_cf
 
 

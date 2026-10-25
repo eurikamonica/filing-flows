@@ -110,6 +110,7 @@ def _quarters_of(per):
 
 class Co:
     """A stored company (build.Store record) seen through what the chains need, in US dollars."""
+    market_rate = None          # cur -> US dollars per unit over the last twelve months (set by build), or None
 
     def __init__(self, cik, rec, usd=None, ticker=None):
         self.cik = int(cik)
@@ -245,6 +246,11 @@ class Co:
                 den = sum((a[e].get("raw") or {}).get("revenue") or 0 for e in b if e in a)
                 if num > 0 and den > 0:
                     self._conv = num / den
+            if self._conv == 1.0 and self.cur != "USD":
+                # no converted quarters (a foreign filer drawn from its 20-F only, Novo Nordisk): the twelve months'
+                # average market rate; with no rate at all the company is left out (build), never drawn in its own
+                # currency as if it were dollars
+                self._conv = Co.market_rate(self.cur) if Co.market_rate else None
         return self._conv
 
     # ---- extra XBRL facts (xfacts.py)
@@ -969,6 +975,16 @@ def build(store, out, index=None, usd=None, cfg=None, now=None):
     company's record converted to dollars (render's foreign filers)."""
     cfg = cfg or load_cfg()
     now = now or dt.datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    if Co.market_rate is None:
+        from . import fx as FX
+        cache, memo = FX.load_cache(store.root), {}
+
+        def market_rate(cur):
+            if cur not in memo:
+                today = dt.date.today()
+                memo[cur] = FX.average(FX.daily(cur, cache), (today - dt.timedelta(days=365)).isoformat(), today.isoformat())
+            return memo[cur]
+        Co.market_rate = staticmethod(market_rate)
     tick = {}
     for t, cik in ((store.state.get("chain_ciks") or {}).get("m") or {}).items():
         tick[t.upper()] = int(cik)
@@ -983,7 +999,11 @@ def build(store, out, index=None, usd=None, cfg=None, now=None):
         rec = store.company(cik)
         if not rec.get("quarters") and not rec.get("years") and not rec.get("xf"):
             continue
-        cos[t] = Co(cik, rec, (usd or {}).get(cik), ticker=t)
+        co = Co(cik, rec, (usd or {}).get(cik), ticker=t)
+        if not co.conv:
+            print(f"::warning::{t} reports in {co.cur} and no dollar rate is on file: left out of the chains")
+            continue
+        cos[t] = co
     os.makedirs(os.path.join(out, "chains"), exist_ok=True)
     listing = []
     for ch in cfg.get("chains", []):
