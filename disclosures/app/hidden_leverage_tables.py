@@ -174,6 +174,74 @@ def _period_balance(rows, context, multiplier, as_of, kind):
     return None
 
 
+def _narrative_uncommenced(raw, cik, accession, document, form, filed, as_of):
+    """Recognize disclosed gross lease totals even when NO annual ladder exists.
+
+    Example: 'As of June 30, 2026, we had additional leases ... not yet
+    commenced of $329.1 billion.' Also supports 'we had $260 billion of
+    additional lease commitments ... expected to commence'. No implied
+    yearly allocation is derived.
+    """
+    from hidden_leverage import sec_url
+    from debt_docs import to_text
+    if not raw:
+        return []
+    d = dt.date.fromisoformat(as_of)
+    date_re = re.compile(r"\bAs of\s+" + d.strftime("%B") + r"\s+" +
+                         str(d.day) + r",?\s+" + str(d.year) + r"\b", re.I)
+    text = " ".join(to_text(raw[:4_000_000]).split())
+    amount_re = re.compile(r"\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d{1,4})?)\s*"
+                           r"(billion|million)\b", re.I)
+    vals = []
+    for date_hit in date_re.finditer(text):
+        # Only the first qualifying amount in the same local disclosure sentence.
+        frag = text[date_hit.end():date_hit.end() + 310]
+        boundary = re.search(r"[.;](?:\s|$)", frag)
+        if boundary:
+            frag = frag[:boundary.start()]
+        for m in amount_re.finditer(frag):
+            context = frag[:m.start()] + " " + frag[m.end():]
+            # A precise uncommenced lease description is required; do not
+            # interpret a nearby regular lease liability or a guarantee.
+            if not re.search(r"\b(?:additional (?:lease|leasing) (?:commitments?|obligations?)|"
+                             r"additional leases?|uncommenced leases?)\b", context, re.I):
+                continue
+            if not re.search(r"\b(?:not yet commenced|not commenced|"
+                             r"(?:expected|scheduled|will) to commence|not reflected)\b",
+                             context, re.I):
+                continue
+            if re.search(r"\b(?:guarantee(?:d|s)?|borrowings?|lessor.s debt)\b",
+                         frag[max(0, m.start()-35):m.end()+15], re.I):
+                continue
+            amount = float(m.group(1).replace(",", ""))
+            amount *= 1e9 if m.group(2).lower() == "billion" else 1e6
+            if amount < 0:
+                continue
+            vals.append({
+                "key": "uncommenced_leases",
+                "label": "Additional uncommenced lease commitments (narrative total)",
+                "review_lane": "B", "amount_kind": "disclosed_nominal_lease_commitment",
+                "amount_usd": amount, "payments": [],
+                "status": "narrative_amount_needs_review", "confidence": "provisional",
+                "currency": "USD", "as_of": as_of, "filed": filed, "form": form,
+                "accession": accession,
+                "source_url": sec_url(cik, accession, document),
+                "context": ("As of " + d.strftime("%B") + " " + str(d.day) + ", " +
+                            str(d.year) + " " + frag)[:410],
+                "warning": "Narrative gross lease commitment, not commenced/recognized; "
+                           "no annual amounts reported here. Conditions and overlaps require review."
+            })
+            break
+    seen = set()
+    out = []
+    for v in vals:
+        token = (v["key"], v["as_of"], v["amount_usd"])
+        if token not in seen:
+            out.append(v)
+            seen.add(token)
+    return out[:6]
+
+
 def extract_tables(raw, cik, accession, document, form, filed, as_of):
     """Parse auditable *candidates* from ONE SEC primary document, never debt."""
     if not raw or not as_of or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", as_of):
@@ -254,4 +322,7 @@ def extract_tables(raw, cik, accession, document, form, filed, as_of):
                 "warning": "Candidate annual nominal payments; verify table scope, cancellation, "
                            "overlap, units and fiscal-year labels against SEC note. Not incremental debt."
             })
-    return evidence[:24]
+    # Narrative disclosures may report a valid gross total without any annual
+    # maturity table. Keep those disclosures distinct from payment schedules.
+    narrative = _narrative_uncommenced(raw, cik, accession, document, form, filed, as_of)
+    return (evidence + narrative)[:30]
