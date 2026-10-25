@@ -93,7 +93,10 @@ function restore(s,provider){
   if(m&&answerRefs.has(m.ref)&&Number.isInteger(m.count)&&m.count>=0&&m.count<=999)
    t.errors[m.ref]={count:m.count,why:String(m.why||'').slice(0,120)};
  }
- if(s.coach&&Number.isInteger(obj.coachStep)&&obj.coachStep>=0&&obj.coachStep<40)s.coach.step=obj.coachStep;
+ if(Number.isInteger(obj.coachStep)&&obj.coachStep>=0&&obj.coachStep<40){
+   if(!s.coach)s.coach={step:0,quiz:null,quizzesAnswered:0,quizIndex:0};
+   s.coach.step=obj.coachStep;
+ }
  s.grade=null;return {restored:count,reason:'Saved local formula practice restored'};
 }
 function erase(s,provider){
