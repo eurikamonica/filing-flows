@@ -7,6 +7,7 @@ const scriptSource=(typeof document!=='undefined'&&document.currentScript&&docum
 const BASE=scriptSource?scriptSource.replace(/[^/]*$/,''):'';
 const data=()=>root.FFFloRealData||(typeof module!=='undefined'?require('./flo-real-data.js'):null);
 const engine=()=>root.FFFloWorkbook||(typeof module!=='undefined'?require('./flo-workbook.js'):null);
+const coach=()=>root.FFFloCoach||(typeof module!=='undefined'?require('./flo-coach.js'):null);
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ready=v=>typeof v==='number'&&Number.isFinite(v);
 const item=(type,value,note='')=>({type,raw:value===null||value===undefined?'':String(value),note});
@@ -19,7 +20,10 @@ const choices=[
   {id:'AAPL',label:'Apple FY2025 · 10-K'},
   {id:'MSFT',label:'Microsoft FY2026 · 10-K'},
   {id:'SUNBEAM',label:'Sunbeam · SEC fraud case'},
-  {id:'DELL',label:'Dell · Intel incentives case'}
+  {id:'DELL',label:'Dell · Intel incentives case'},
+  {id:'WORLDCOM',label:'WorldCom · capitalization case'},
+  {id:'XEROX',label:'Xerox · revenue timing case'},
+  {id:'WASTE',label:'Waste Management · depreciation case'}
 ];
 function make(id,published){
  const actual=data();
@@ -50,6 +54,40 @@ function make(id,published){
    rows=[['B3','FY2003 Intel / operating income'],['B4','FY2006 Intel / operating income'],
      ['B5','FY2007 Q1 Intel / operating income'],['C3','Change FY2003 → FY2007 Q1 (pp)'],
      ['C4','Change FY2006 → FY2007 Q1 (pp)']];
+ }else if(id==='WORLDCOM'){
+   mode='case';const c=actual.cases.worldcom;title=c.company;description=c.exercise;source=c.citation;period=c.dates;
+   add('B3','reported',c.figures.overstated2001,'SEC alleged pretax income overstatement for FY2001, not amount capitalized.');
+   add('B4','reported',c.figures.overstated2002Q1,'SEC alleged pretax overstatement for Q1 2002, different period.');
+   add('C3','target','=B3+B4','Total SEC-ALLEGED overstatement ACROSS these two different periods, not a single FY.');
+   add('C4','target','=B3/C3','Share of these two period allegations attributed to 2001; not fraud probability.');
+   rows=[['B3','2001 alleged pre-tax overstatement ($M)'],['B4','Q1 2002 alleged pre-tax overstatement ($M)'],
+     ['C3','Two-period alleged total ($M)'],['C4','2001 / two-period combined (ratio)']];
+ }else if(id==='XEROX'){
+   mode='case';const c=actual.cases.xerox;title=c.company;description=c.exercise;source=c.citation;period=c.dates;
+   add('B3','reported',c.figures.acceleratedRevenueLowerBound,'SEC alleged MORE THAN this revenue amount, not exactly this number.');
+   add('B4','reported',c.figures.approxPretaxIncomeIncrease,'Approximate pre-tax earnings impact across 1997–2000.');
+   add('C3','target','=B3','Exercise: transfer strict revenue LOWER BOUND. The true amount is greater.');
+   add('C4','target','=B4','Exercise: approximately reported pretax impact, NOT precision ratio.');
+   rows=[['B3','Revenue acceleration strict lower bound ($M)'],['B4','Approximate pre-tax earnings impact ($M)'],
+     ['C3','Lower-bound recognition amount ($M)'],['C4','Approximate pre-tax impact ($M)']];
+ }else if(id==='WASTE'){
+   mode='case';const c=actual.cases.waste;title=c.company;description=c.exercise;source=c.citation;period=c.dates;
+   add('B3','reported',c.figures.cumulativePretaxMisstatement,'1992–third quarter 1997 combined approximate amount, not single-year.');
+   add('B4','input',1000,'HYPOTHETICAL asset purchase cost ($M), NOT from SEC Waste Management.');
+   add('B5','input',5,'HYPOTHETICAL original straight-line useful life in years.');
+   add('B6','input',10,'HYPOTHETICAL revised longer straight-line useful life in years.');
+   add('C3','target','=B3','Read SEC multi-year allegation figure with correct time scope.');
+   add('C4','target','=B4/B5','Annual depreciation assuming no salvage value at first useful life.');
+   add('C5','target','=B4/B6','Annual depreciation with longer useful life.');
+   add('C6','target','=C4-C5','Illustrative annual PRETAX profit lift from extending life; not SEC actual misstatement.');
+   rows=[['B3','1992–Q3 1997 cumulative pretax misstatement ($M)'],
+     ['B4','Illustrative asset value ($M) — ASSUMPTION'],
+     ['B5','Illustrative original years — ASSUMPTION'],
+     ['B6','Illustrative extended years — ASSUMPTION'],
+     ['C3','SEC multi-year case total ($M)'],
+     ['C4','Hypothetical yearly depreciation at old life ($M)'],
+     ['C5','Hypothetical yearly depreciation at new life ($M)'],
+     ['C6','Hypothetical annual pretax profit uplift ($M)']];
  }else{
    d=published?actual.verify(published):actual.verifiedCopy(id);
    if(!d)throw Error('No verified company data for '+id);
@@ -115,17 +153,21 @@ function present(s,lang){
  '<p class="flo-wb-help">'+esc(ci?.note||'Select a purple formula or a blue user assumption.')+'</p>'+
  '<div class="flo-wb-scroll" role="region" tabindex="0"><table class="flo-wb-table"><tbody>'+table+'</tbody></table></div>'+
  '<p class="flo-wb-feedback" aria-live="polite">'+esc(s.message||'')+'</p>'+
+ (coach()?coach().panel(s,lang)+(s.mode==='case'?coach().simulatorHTML(lang):''):'')+
  '<p class="flo-source">'+(zh?'灰色 SEC 事实不可修改。蓝色表示预测或计算假设。紫色为练习公式；不可将 OCF−CapEx 当作 FCFF。':
  'SEC facts are locked; assumption cells are editable; formula tasks are graded. OCF−CapEx must not be called FCFF.')+'</p>';
 }
 function route(q){
  const s=String(q||'').toLowerCase();
- return /real|真实|年报|sec |10-k|sunbeam|dell|company data|actual/i.test(s)&&
+ return /real|真实|年报|sec |10-k|sunbeam|dell|worldcom|xerox|waste management|company data|actual/i.test(s)&&
    /excel|workbook|spreadsheet|表格|练习|建模|case|案例|lab|模型/i.test(s);
 }
 function chosen(q,co){
  const s=String(q||'').toLowerCase();
  if(/sunbeam/.test(s))return 'SUNBEAM';
+ if(/worldcom|世通/.test(s))return 'WORLDCOM';
+ if(/xerox|施乐/.test(s))return 'XEROX';
+ if(/waste management|waste accounting|废物管理/.test(s))return 'WASTE';
  if(/dell/.test(s))return 'DELL';
  if(/\bmsft\b|microsoft|微软/i.test(s))return 'MSFT';
  if(/\baapl\b|apple|苹果/i.test(s))return 'AAPL';
@@ -159,6 +201,24 @@ function mount(wrapper,lang){
   const b=evt.target.closest('button');if(!b||!wrapper.contains(b))return;
   if(b.dataset.realRef){session.selected=b.dataset.realRef;paint();return;}
   if(b.hasAttribute('data-real-apply'))return write();
+  if(b.hasAttribute('data-coach-prev')){coach().prev(session);paint();return;}
+  if(b.hasAttribute('data-coach-next')){coach().next(session);paint();return;}
+  if(b.hasAttribute('data-coach-focus')){
+    const item=coach().current(session);if(item)session.selected=item[0];paint();return;
+  }
+  if(b.hasAttribute('data-coach-hint')){session.message=coach().hint(session,lang);paint();return;}
+  if(b.hasAttribute('data-coach-quiz')){
+    coach().answerQuiz(session,Number(b.dataset.coachQuiz),lang);paint();return;
+  }
+  if(b.hasAttribute('data-flo-sim-run')){
+    const kind=wrapper.querySelector('[data-flo-sim-kind]').value;
+    const amount=wrapper.querySelector('[data-flo-sim-amount]').value;
+    const life=wrapper.querySelector('[data-flo-sim-life]').value;
+    try{const report=coach().simulate({kind,amount,life});
+      wrapper.querySelector('.flo-sim-results').innerHTML=coach().renderSimResult(report);
+    }catch(e){wrapper.querySelector('.flo-sim-results').textContent=e.message;}
+    return;
+  }
   if(b.hasAttribute('data-real-live')){
     if(!siteCik || !/^[1-9][0-9]{0,9}$/.test(siteCik)){session.message='No valid company CIK on current page';paint();return;}
     b.disabled=true;b.textContent='Reading published annual 10-K…';
