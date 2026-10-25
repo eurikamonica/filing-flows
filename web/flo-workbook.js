@@ -327,6 +327,7 @@
       try{expected=evaluate(session.cells,ref,{answers:session.answers});}catch(e){bad.push({ref,reason:'template: '+e.message});continue;}
       const raw=session.cells[ref].raw;
       if(!String(raw).trim().startsWith('=')){bad.push({ref,reason:'Enter an Excel-style =formula'});continue;}
+      if(!/\$?[A-H]\$?[1-9][0-9]?/i.test(String(raw))) {bad.push({ref,reason:'Reference cells instead of hardcoding the result'});continue;}
       try{result=evaluate(session.cells,ref);if(Math.abs(result-expected)<=1e-7*Math.max(1,Math.abs(expected)))good.push(ref);
         else reason='Expected math differs: review references and signs';}
       catch(e){reason=e.message;}
@@ -390,6 +391,7 @@
       '<div class="flo-wb-controls"><label>'+(zh?'模型':'Model')+' <select data-wb-model>'+options+'</select></label>'+
       '<label>'+(zh?'情景':'Scenario')+' <select data-wb-scenario>'+scenarios+'</select></label></div>'+
       '<div class="flo-wb-toolbar"><button type="button" data-wb-mode="practice">'+(zh?'练习：清空公式':'Practice: blank formulas')+'</button>'+
+      '<button type="button" data-wb-next>'+(zh?'下一空格':'Next blank')+'</button>'+
       '<button type="button" data-wb-check>'+(zh?'检查答案':'Check work')+'</button>'+
       '<button type="button" data-wb-hint>'+(zh?'提示':'Hint')+'</button>'+
       '<button type="button" data-wb-reveal>'+(zh?'显示答案':'Show formulas')+'</button>'+
@@ -454,6 +456,12 @@
       const button=event.target.closest('button');if(!button||!wrapper.contains(button))return;
       if(button.dataset.ref){session.selected=button.dataset.ref;paint();return;}
       if(button.hasAttribute('data-wb-apply')){apply(wrapper.querySelector('[data-wb-editor]').value);return;}
+      if(button.hasAttribute('data-wb-next')){
+        const unsolved=Object.keys(session.answers).filter(ref=>!String(session.cells[ref].raw).trim());
+        if(unsolved.length){session.selected=unsolved[0];session.message='Selected '+unsolved[0]+'. Enter a formula starting with =.';}
+        else session.message='No blank targets: use Check work to validate your formulas.';
+        paint();return;
+      }
       if(button.hasAttribute('data-wb-check')){
         const grade=score(session);session.grade=grade;
         session.message=grade.bad.length?'First incorrect: '+grade.bad[0].ref+' — '+grade.bad[0].reason:
