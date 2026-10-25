@@ -268,3 +268,51 @@ Users set a symbol watchlist in the original Flo Pulse inbox, then click **Watch
 - tests/test_flo_alert_browser.cjs updated to cover browser-tab no-refresh popup → timeline click → Flo reply; GitHub Actions dedicated pulse, Academy and full offline CI now run the new test.
 
 **Not yet deployed:** PR #72 must be reviewed, merged and the static Pages build verified. It is not an always-on server agent, real-time exchange ticker feed or SEC push-notification system.
+## Phase 7 — Flo Evidence-to-Model Research and Market-relative Daily Context
+
+**Implementation branch only; PR #72 is not production until reviewed, merged and Pages-deployed.** This phase extends the existing on-page, no-reload Flo Pulse event research. It does not introduce a paid model, new brokerage/market connection, or EDGAR push service.
+
+### From a published 8-K to a specific financial research checklist
+
+New `web/flo-impact.js` builds bilingual SEC research cards with primary evidence links, accepted timestamps, published manifest freshness and formula checklists. The cards are conditional on the site's scanner-assigned event topics; these are **hypotheses to verify from the SEC document**, NOT assertions that the tagged transaction closed or that an alleged breach occurred. Key categories:
+
+| Scanner topic | Research steps / mathematical prompt |
+| --- | --- |
+| Restatement | Reconcile original and corrected earnings, equity and EPS; inspect auditor and debt-covenant implications. A restatement is not necessarily a cash payment. |
+| Offering | Distinguish authorization, announced deal and actual shares issued; pro forma diluted shares, net proceeds and dilution. |
+| Debt | Confirm contractual principal, interest rate, maturity, covenants and EBIT-to-interest coverage; do not substitute borrowed cash for profit. |
+| Acquisition | Confirm whether transaction closed, consideration allocation, goodwill assumptions, synergies and integration costs. |
+| Guidance | Compare fiscal periods and GAAP/non-GAAP definitions before computing new-minus-old midpoint. |
+| Impairment | Identify asset class, noncash charge, effective dates, taxes and covenants. |
+| Repurchase | Separate authorized program from actual cash-spent repurchases; no fabricated share-count change. |
+| Cybersecurity / auditor changes | Source materiality and effects only from disclosure; review Item 4.01 and letters when relevant. |
+
+SEC 13F research cards show separately labeled **filing date vs quarter-end holdings period**, advise comparison of split-adjusted positions and warn that 13F changes are not trades made on filing date. Published news remains unverified without reading original documents.
+
+### Optional daily-close market-relative comparison (not an event study)
+
+`scripts/build_flo_alerts.py` now passes through `benchmarks` for SPY, QQQ and IWM ONLY WHEN the site's existing staged `extremes.json` contains named, valid same-day closing rows for those indices. The baseline remains absent if those rows are missing. Index context does NOT generate an alert (e.g. SPY +0.82% is not labeled extreme). Actual returned percentages are taken from the same prices file as the observed stock and never guessed.
+
+On a **price event only**, the card computes:
+
+`Same-date market-relative daily change (percentage points) = stock daily change % − published index daily change %`.
+
+The computation requires the exact SAME `price_asof` string and validated positive published closing price. A missing SPY/QQQ/IWM benchmark, mismatched date, invalid percentage or old snapshot yields an explicit unavailable state. Even where populated, **this is not cumulative abnormal return (CAR), a historical event-study estimate, an intraday impact, causal attribution, or a real-time trading signal**.
+
+### Flo assistant and UI integration
+
+- New `web/flo-impact.js` loaded between `web/flo-timeline.js` and `web/flo-alerts.js` on the root site.
+- Existing no-refresh event popups now have a **Research / 财务影响核查** button; the inbox also provides a per-event Research action. Both open the study card within the original Flo bot without forcing a reload.
+- Bilingual chat intents include `NVDA 8-K impact analysis`, `NVDA 披露财务影响`, and `NVDA 相对大盘涨跌幅`. The router chooses the newest matching published event, not simply the JSON list's first position, and refuses to invent missing events.
+- If the upstream scanner publishes an event without same-date benchmarks, the research card still contains the source evidence and appropriate accounting checklist, but explicitly refuses a numeric index comparison.
+
+### QA
+
+- `tests/test_flo_impact.cjs`: checks conditional SEC accounting topics and related formulas, original-source controls and escaped titles, same-day SPY/QQQ comparisons, stale IWM omission, no numeric results for mismatched days, nonexistent market baselines and invalid changes. 32 assertions passed in direct execution.
+- `tests/test_build_flo_alerts.py`: new cases for benchmark metadata sourced from the same generated-date price file, baseline omission on stale/missing data and no automatic alert from a small SPY/QQQ daily change.
+- `tests/test_flo_alert_browser.cjs`: verifies the new popup Research action and SEC restatement explanation in the same open browser tab.
+- The Flo Pulse, Flo Academy and full-site offline GitHub Actions now load and execute the new module/test.
+
+### Still not completed
+
+A research-grade historical **event study** would require timestamp-aware event alignment, trading-calendar data, validated pre-event estimation windows, split-adjusted stock and benchmark histories, bid-ask/liquidity context, event overlap controls, and out-of-sample reporting. The site does not yet guarantee that data for every ticker. Do NOT advertise computed abnormal returns, statistical p-values or historical causal outcomes until those sources and validation are implemented.
