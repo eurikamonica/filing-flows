@@ -32,7 +32,7 @@ FAMILIES = (
      ("GuaranteeObligationsMaximumPotentialAmountOfFuturePayments",
       "GuaranteesMaximumPotentialAmountOfFuturePayments"), ()),
     ("operating_lease", "Recognized operating lease liability (reference)", "recognized",
-     ("OperatingLeaseLiability", "OperatingLeaseLiabilityNoncurrent"), ()),
+     ("OperatingLeaseLiability",), ()),
     ("lease_payments", "Undiscounted operating lease payments (reference)", "lease_payments",
      ("OperatingLeaseLiabilityPaymentsDue",),
      ("OperatingLeaseLiabilityPaymentsDueNextTwelveMonths",
