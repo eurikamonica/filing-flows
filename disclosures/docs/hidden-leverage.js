@@ -79,6 +79,57 @@
         '</span><small class="hl-muted">UNVERIFIED TEXT LEAD</small></td><td>' + sec(x.source_url,x.form + ' · ' + x.filed) +
         '</td></tr>').join('') + '</tbody></table></div>';
     s += '</section>';
+    // Phase 2: source-anchored candidate schedules, kept OUTSIDE standardized debt amounts.
+    const tables = h.footnote_tables || [];
+    s += '<section class="panel"><h3>SEC footnote payment schedules · Phase 2</h3>' +
+      '<p class="sub">Only explicitly dated USD annual tables are included. Every row requires review: the table may cover purchases or services, not borrowing. Amounts never add to net debt or each other.</p>';
+    if (!tables.length) s += noData('No clearly named USD annual schedule extracted from the latest filing. Not evidence that the issuer has no obligations.');
+    else s += tables.map(t => '<div class="hl-evidence"><div class="hl-flex"><h3>' + esc(t.label || t.key) +
+      '</h3><span class="muted">Review required · ' + esc(t.review_lane || '') + '</span></div>' +
+      '<p class="sub">' + esc(t.context || '') + '</p>' +
+      (finite(t.amount_usd) ? '<p><strong>Reported candidate balance / maximum: ' + money(t.amount_usd) + '</strong> · ' + esc(t.amount_kind || '') + '</p>' : '') +
+      ((t.payments || []).length ? '<div class="hl-scroll"><table class="hl-table">' : '') +
+      '<thead><tr><th>Issuer payment-year label</th><th>Nominal USD</th><th>Original filing</th></tr></thead><tbody>' +
+      (t.payments || []).map(p => '<tr><td>' + esc(p.row_or_column || String(p.year)) + '</td><td class="hl-number">' +
+        money(p.amount_usd) + '</td><td>' + sec(t.source_url, t.form + ' · ' + t.filed) +
+        '</td></tr>').join('') + ((t.payments || []).length ? '</tbody></table></div>' : '') +
+      '<small class="hl-muted">' + esc(t.warning || '') + ' · Table #' + esc(String(t.table_index)) +
+      '</small></div>').join('');
+    s += '</section>';
+    const rq = d.revenue_quality || {}, m = rq.metrics || {};
+    const pct = v => finite(v) ? (100 * Number(v)).toFixed(1) + '%' : 'Unknown';
+    const ratio = v => finite(v) ? Number(v).toFixed(2) + 'x' : 'Unknown';
+    s += '<section class="panel"><h3>Cookie Jar Revenue · beyond reserve accounts</h3>' +
+      '<p class="sub">Checks annual SEC receivables, contract assets, contract liabilities and cash conversion. A signal does not establish revenue manipulation; growth, acquisitions, billing cycles and receivable sales can explain differences.</p>';
+    if (!rq.status || rq.status === 'missing_annual_comparison' || rq.status === 'incomplete') {
+      s += noData('Two comparable annual filing periods are not available. Unknown, not a clean audit result.');
+    } else {
+      s += '<p class="sub">Annual periods: ' + esc((rq.periods || []).join(' versus ')) + '</p>' +
+        '<div class="hl-scroll"><table class="hl-table"><thead><tr><th>Screen</th><th>Value</th></tr></thead><tbody>' +
+        [['Revenue growth', pct(m.revenue_growth)], ['Receivables growth', pct(m.receivables_growth)],
+         ['Contract assets growth', pct(m.contract_assets_growth)],
+         ['Contract liabilities growth', pct(m.contract_liabilities_growth)],
+         ['Receivables / sales index (DSRI)', ratio(m.dsri)],
+         ['Operating cash / net income', ratio(m.ocf_to_net_income)]]
+          .map(a => '<tr><td>' + esc(a[0]) + '</td><td class="hl-number">' + esc(a[1]) + '</td></tr>').join('') +
+        '</tbody></table></div>' +
+        '<p class="sub">' + (rq.risk_flags || []).length + ' quantitative review prompts. ' +
+        ((rq.risk_flags || []).length ? (rq.risk_flags || []).map(f => esc(f.label + ': ' + f.rule)).join(' · ') :
+         'No selected thresholds triggered; this is NOT proof of correctly stated revenue.') + '</p>' +
+        '<details><summary>SEC numeric evidence by period</summary><div class="hl-scroll"><table class="hl-table"><thead><tr>' +
+        '<th>Item</th><th>Period</th><th>Reported USD</th><th>Source</th></tr></thead><tbody>' +
+        Object.entries(rq.evidence || {}).map(([key, a]) => (a || []).filter(Boolean).map(f =>
+          '<tr><td>' + esc(key + ' / ' + (f.tag || '')) + '</td><td>' + esc(f.end || '') +
+          '</td><td class="hl-number">' + money(f.value_usd) + '</td><td>' +
+          sec(f.source_url, f.form + ' · ' + f.filed) + '</td></tr>').join('')).join('') +
+        '</tbody></table></div></details>';
+    }
+    const leads = rq.text_leads || [];
+    s += '<details><summary>Revenue recognition filing text leads (' + leads.length + ')</summary>' +
+      '<p class="sub">Unverified keywords from the issuer filing; ordinary accounting policies frequently match.</p>' +
+      '<div class="hl-scroll"><table class="hl-table"><thead><tr><th>Mechanism</th><th>Excerpt</th><th>Source</th></tr></thead><tbody>' +
+      leads.map(t => '<tr><td>' + esc(t.label) + '</td><td>' + esc(t.excerpt) + '</td><td>' +
+        sec(t.source_url, t.form + ' · ' + t.filed) + '</td></tr>').join('') + '</tbody></table></div></details></section>';
     if (h.warnings) s += '<div class="explain">' + h.warnings.map(esc).join(' · ') + '</div>';
     return s;
   }
@@ -106,13 +157,14 @@
       '<p class="sub">Independent SEC filing extraction, updated with the Debt &amp; Rates collector. Figures shown only when the tag and reporting date match. Text leads are unverified. Use the original SEC filing for confirmation.</p></div>' +
       '<div class="section-head"><h3>Commitments screener</h3><button class="action" id="csv">Export CSV ↓</button></div>' +
       '<div class="hl-scroll"><table class="hl-table"><thead><tr><th>Company</th><th>As of</th><th>Debt</th><th>Purchase obligations</th>' +
-      '<th>Gross purchase</th><th>Max guarantee</th><th>Operating lease liability</th><th>Evidence</th></tr></thead><tbody>' +
+      '<th>Gross purchase</th><th>Max guarantee</th><th>Operating lease liability</th><th>Footnote tables</th><th>Revenue prompts</th><th>Evidence</th></tr></thead><tbody>' +
       rows.slice(0,250).map(r =>
         '<tr><td><button type="button" class="text-button" data-hc="' + esc(r.cik) + '"><strong>' +
         esc(r.ticker || r.cik) + '</strong></button><small class="hl-muted">' + esc(r.name || '') + '</small></td>' +
         '<td>' + esc(r.as_of || '—') + '</td><td>' + money(r.recognized_debt) +
         '</td><td>' + money(r.purchase) + '</td><td>' + money(r.purchase_broad) +
         '</td><td>' + money(r.guarantees) + '</td><td>' + money(r.operating_lease) +
+        '</td><td>' + (r.footnote_tables || 0) + '</td><td>' + (r.cookie_risk_flags || 0) +
         '</td><td>' + (r.categories || 0) + ' tags · ' + (r.signals || 0) + ' leads</td></tr>').join('') +
       '</tbody></table></div>' +
       (rows.length > 250 ? '<p class="sub">Showing 250 of ' + fmt(rows.length) + ' companies. Narrow by company or export the full data.</p>' : '') + taxonomyPanel(data.taxonomy);

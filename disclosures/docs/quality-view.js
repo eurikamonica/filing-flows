@@ -149,6 +149,9 @@
       <div class="qv-grid">${piotroski(c.metrics)}${altman(c.metrics)}${beneish(c.metrics)}</div>
       <div class="qv-grid">${yields(c)}${roic(c)}${leverage(c)}</div>
       <div class="qv-grid">${margins(c)}${line(c)}</div>${records(c)}
+      <div class="qv-card"><h3>Revenue Quality / Cookie Jar screening</h3>
+      <p class="muted">Receivable-versus-sales growth, contract assets, deferred revenue changes, cash conversion and recognition-policy filing leads. Independent SEC evidence, not a fraud allegation. No missing value is treated as zero.</p>
+      <a href="${hub}#hidden/${encodeURIComponent(t)}">View original SEC evidence and review flags →</a></div>
       <p class="muted">Companies' own XBRL tags via the SEC frames API; prices: daily closes. Research, not investment advice.${hub ? ` <a href="${hub}#quality">All companies →</a>` : ''}</p></div>`;
   }
   window.QualityView = { render };
