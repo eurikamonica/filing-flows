@@ -163,7 +163,8 @@ def collect_one(client, root, co, state, deep=True):
         snap, src = DF.snapshot(cf)
         rec['snapshot'], rec['sources'] = snap, src
         rec['history'] = DF.history(cf)
-        rec['hidden_leverage'] = HL.extract(cf, cik, snap.get('balance_date'))
+        rec['hidden_leverage'] = HL.extract(cf, cik, snap.get('balance_date'),
+            {r['acc']: r['doc'] for r in rows if r.get('acc') and r.get('doc')})
     except Exception as exc:
         rec['facts_error'] = f'{type(exc).__name__}: {exc}'[:200]
     # the latest 10-K and the latest 10-Q after it: each instrument
