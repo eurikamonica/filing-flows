@@ -1,0 +1,81 @@
+# Lightweight independent repair lane for missing / stale popular CBOE option paths.
+# Nothing in this workflow reads or writes 13F quarter shards or N-PX vote data.
+name: Supplement popular option chains
+on:
+  schedule:
+    # Twice per hour on weekdays near the US regular/extended session.
+    # GitHub schedules can be delayed; this is not an exchange-real-time feed.
+    - cron: '12,42 13-23 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Optional explicit tickers, comma separated, e.g. AAPL,NVDA,MSFT'
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: disclosure-options-supplement
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: disclosures
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/config/settings.json
+            /disclosures/docs/data/market/options.json
+            /disclosures/docs/data/market/options/
+            /disclosures/docs/data/market/signals.json
+            /disclosures/docs/data/market/by-ticker.json
+            /disclosures/docs/data/cache/options/history.json
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Collect CBOE priority and missing-path snapshots
+        env:
+          REQUESTED_TICKERS: ${{ inputs.tickers }}
+        run: |
+          python app/options.py --fast --root docs/data --config config/settings.json --tickers "$REQUESTED_TICKERS"
+
+      - name: Commit refreshed options only (preserve other disclosure data)
+        shell: bash
+        run: |
+          git config user.name "Filing Flows"
+          git config user.email "filingflows@gmail.com"
+          git add -A --sparse -- docs/data/market/options.json docs/data/market/options/ docs/data/cache/options/history.json
+          if git diff --cached --quiet; then
+            echo "No new option snapshots"
+            exit 0
+          fi
+          git commit -qm "Refresh priority CBOE options and missing price paths"
+          git stash --include-untracked -q || true
+          for attempt in 1 2 3 4; do
+            git fetch -q origin main
+            if git rebase -q -X theirs origin/main; then
+              if git push -q origin HEAD:main; then
+                echo "Published option supplement on attempt $attempt"
+                exit 0
+              fi
+            else
+              git rebase --abort || true
+            fi
+            sleep $((attempt * 12))
+          done
+          echo "::error::Could not push option snapshots after concurrent updates"
+          exit 1
