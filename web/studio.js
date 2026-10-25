@@ -2149,6 +2149,9 @@
       const id = e.target.id; if (!id || !id.startsWith('st-')) return;
       const key = id.slice(3); if (!(key in DEF) || e.target.tagName === 'INPUT' && e.target.type !== 'date') return;
       st[key] = e.target.value;
+      // Actual holdings: bars and sector areas use different source-derived datasets.
+      // Rebuild them; simply redrawing the old series would mislabel weights.
+      if (key === 'style' && st.k === 'actual') { rebuild(); return; }
       if (LOOK.includes(key)) {
         if (V) { V.style = st.style; V.scale = st.scale; V.endCard = st.end === '1'; delete V._dom; sizeCanvas(); paint(); save(); status(); }
         else rebuild();
