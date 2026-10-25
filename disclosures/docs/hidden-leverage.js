@@ -74,13 +74,22 @@
     s += '<section class="panel"><h3>Contractual-structure leads from latest available filing</h3>' +
       '<p class="sub">Keyword detections only. They do not establish an actual payable, amount, recourse, consolidation conclusion, or financing classification.</p>';
     if (!signals.length) s += noData('No matching keywords have been collected. Check SEC footnotes manually for nonstandard disclosures.');
-    else s += '<div class="hl-scroll"><table class="hl-table"><thead><tr><th>Possible structure</th><th>Original excerpt</th><th>Evidence</th></tr></thead><tbody>' +
-      signals.map(x => '<tr><td>' + esc(x.label) + '</td><td><span class="hl-excerpt">' + esc(x.excerpt) +
+    else s += '<div class="hl-scroll"><table class="hl-table"><thead><tr><th>Possible structure</th><th>Review lane</th><th>Original excerpt</th><th>Evidence</th></tr></thead><tbody>' +
+      signals.map(x => '<tr><td>' + esc(x.label) + '</td><td>' + esc(x.review_lane || 'Review') + '</td><td><span class="hl-excerpt">' + esc(x.excerpt) +
         '</span><small class="hl-muted">UNVERIFIED TEXT LEAD</small></td><td>' + sec(x.source_url,x.form + ' · ' + x.filed) +
         '</td></tr>').join('') + '</tbody></table></div>';
     s += '</section>';
     if (h.warnings) s += '<div class="explain">' + h.warnings.map(esc).join(' · ') + '</div>';
     return s;
+  }
+  function taxonomyPanel(items) {
+    if (!Array.isArray(items) || !items.length) return '';
+    return '<details class="panel"><summary>Research taxonomy · 15 primary + 9 additional structures</summary>' +
+      '<p class="sub">A = financing review, B = fixed commitment review, C = contingent exposure review. Mixed lanes require contract-specific classification. A text match is not verified debt; no match is not proof of absence.</p>' +
+      '<div class="hl-scroll"><table class="hl-table"><thead><tr><th>Structure</th><th>Review lane</th><th>Evidence status</th></tr></thead><tbody>' +
+      items.map(x => '<tr><td>' + esc(x.label) + '</td><td>' + esc(x.review_lane) +
+        '</td><td>Keyword screening only</td></tr>').join('') +
+      '</tbody></table></div></details>';
   }
   function screen(data) {
     const a = data.rows || [], query = (state.hsearch || '').trim().toUpperCase();
@@ -106,7 +115,7 @@
         '</td><td>' + money(r.guarantees) + '</td><td>' + money(r.operating_lease) +
         '</td><td>' + (r.categories || 0) + ' tags · ' + (r.signals || 0) + ' leads</td></tr>').join('') +
       '</tbody></table></div>' +
-      (rows.length > 250 ? '<p class="sub">Showing 250 of ' + fmt(rows.length) + ' companies. Narrow by company or export the full data.</p>' : '');
+      (rows.length > 250 ? '<p class="sub">Showing 250 of ' + fmt(rows.length) + ' companies. Narrow by company or export the full data.</p>' : '') + taxonomyPanel(data.taxonomy);
   }
   function view() {
     if (state.mode === 'demo') return head('Hidden leverage & contractual obligations', 'This module uses official filings only.', 'SEC') +
