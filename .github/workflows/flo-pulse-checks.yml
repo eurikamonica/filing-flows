@@ -5,12 +5,14 @@ on:
     paths:
       - 'web/flo-alerts.js'
       - 'web/flo-timeline.js'
+      - 'web/flo-impact.js'
       - 'web/mascot.js'
       - 'web/index.html'
       - 'disclosures/docs/index.html'
       - 'scripts/build_flo_alerts.py'
       - 'tests/test_flo_alerts.cjs'
       - 'tests/test_flo_timeline.cjs'
+      - 'tests/test_flo_impact.cjs'
       - 'tests/test_flo_alert_browser.cjs'
       - 'tests/test_build_flo_alerts.py'
       - '.github/workflows/scan.yml'
@@ -32,9 +34,11 @@ jobs:
             tests/test_build_flo_alerts.py
             tests/test_flo_alerts.cjs
             tests/test_flo_timeline.cjs
+            tests/test_flo_impact.cjs
             tests/test_flo_alert_browser.cjs
             web/flo-alerts.js
             web/flo-timeline.js
+            web/flo-impact.js
             web/mascot.js
             web/index.html
             disclosures/docs/index.html
@@ -49,12 +53,14 @@ jobs:
         run: |
           node --check web/flo-alerts.js
           node --check web/flo-timeline.js
+          node --check web/flo-impact.js
           node --check web/mascot.js
           python -m py_compile scripts/build_flo_alerts.py tests/test_build_flo_alerts.py
       - name: No false first-view alert, duplicate popup, or unsourced news
         run: |
           node tests/test_flo_alerts.cjs
           node tests/test_flo_timeline.cjs
+          node tests/test_flo_impact.cjs
           node tests/test_flo_alert_browser.cjs
       - name: Feed builder and SEC source contract
         run: python -m unittest discover -s tests -p 'test_build_flo_alerts.py' -v
