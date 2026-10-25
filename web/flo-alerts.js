@@ -12,7 +12,11 @@ const KEY='ff:flo-pulse:v2',INTERVAL=120000,MAX_SEEN=1000;
 const KINDS=['8k','13f','news','price'];
 const priority={high:3,medium:2,info:1};
 const escape=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const url=v=>/^https:\/\/(?:www\.)?(?:sec\.gov|prnewswire\.com|fda\.gov)\//i.test(String(v||''))?String(v):'';
+const url=v=>{
+ const u=String(v||'');
+ if(/^https:\/\/(?:www\.)?sec\.gov\/edgar\/browse\/\?CIK=\d+&owner=exclude$/i.test(u))return u;
+ return /^https:\/\/(?:www\.)?(?:sec\.gov|prnewswire\.com|fda\.gov)\//i.test(u)?u:'';
+};
 const ticker=v=>/^[A-Z][A-Z0-9.\-]{0,9}$/.test(String(v||''));
 const isZH=()=>/^zh/i.test(root.navigator&&root.navigator.language||'');
 const time=v=>{const x=Date.parse(v);return Number.isFinite(x)?x:0;};
@@ -42,6 +46,7 @@ function watchSet(config){
 }
 function shown(e,config={}){
  if(config.kinds&&config.kinds[e.kind]===false)return false;
+ if(config.minPriority&&priority[e.priority]<priority[config.minPriority])return false;
  const watch=watchSet(config);
  return !watch.length||watch.some(t=>t===e.ticker||Array.isArray(e.symbols)&&e.symbols.includes(t));
 }
@@ -110,7 +115,7 @@ function explain(e,zh=false,related=[]){
   (zh?'查看原始 SEC / 新闻资料':'Read original SEC / news source')+'</a></div>';
  return out;
 }
-let seen=[],initialized=false,settings={quiet:false,watch:'',kinds:{'8k':true,'13f':true,news:true,price:true}};
+let seen=[],initialized=false,settings={quiet:false,minPriority:'info',watch:'',kinds:{'8k':true,'13f':true,news:true,price:true}};
 let items=[],bubble=null,inbox=null,pill=null,active=false,busy=false,timer=null,wait=INTERVAL,version='',unread=0,lastError='',latestBuild='',lastPopupAt=0,scanHealth={};
 function storage(){
  try{root.localStorage&&root.localStorage.setItem(KEY,JSON.stringify({initialized,seen:seen.slice(-MAX_SEEN),settings,lastPopupAt}));}catch(_){}
@@ -124,6 +129,7 @@ function restore(){
    seen=Array.isArray(d.seen)?d.seen.filter(x=>typeof x==='string'&&x.length<230).slice(-MAX_SEEN):[];
    if(d.settings){
      settings.quiet=!!d.settings.quiet;
+     settings.minPriority=['info','medium','high'].includes(d.settings.minPriority)?d.settings.minPriority:'info';
      settings.watch=String(d.settings.watch||'').toUpperCase().replace(/[^A-Z0-9.,\s-]/g,'').slice(0,90);
      if(d.settings.kinds)KINDS.forEach(k=>{settings.kinds[k]=d.settings.kinds[k]!==false;});
    }
@@ -181,7 +187,15 @@ function renderInbox(){
  muteLabel.append(quiet,doc.createTextNode(isZH()?' 安静模式':' Quiet mode'));
  const watch=el('input');watch.type='text';watch.value=settings.watch;watch.placeholder='OKLO, IREN, CRWV';watch.setAttribute('aria-label','Ticker watch filter');
  watch.addEventListener('change',()=>{settings.watch=watch.value.toUpperCase().replace(/[^A-Z0-9.,\s-]/g,'').slice(0,90);storage();renderInbox()});
- controls.append(muteLabel,watch);
+ const priorityLabel=el('label',''),select=el('select');
+ select.setAttribute('aria-label','Minimum alert priority');
+ for(const x of ['info','medium','high']){
+   const opt=el('option','',x);opt.value=x;opt.selected=settings.minPriority===x;select.append(opt);
+ }
+ select.value=settings.minPriority;
+ select.addEventListener('change',()=>{settings.minPriority=priority[select.value]?select.value:'info';storage();renderInbox();});
+ priorityLabel.append(doc.createTextNode(isZH()?' 最低优先级 ':' Minimum priority '),select);
+ controls.append(muteLabel,watch,priorityLabel);
  const types=el('div','flo-pulse-types');
  for(const k of KINDS){
    const label=el('label',''),box=el('input');box.type='checkbox';box.checked=settings.kinds[k]!==false;
