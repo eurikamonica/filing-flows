@@ -1,0 +1,38 @@
+name: Priority options regression checks
+on:
+  pull_request:
+    paths:
+      - "disclosures/app/options.py"
+      - "disclosures/docs/options.js"
+      - "disclosures/docs/option-paths.js"
+      - "disclosures/tests/test_options_supplement.py"
+      - ".github/workflows/options-supplement.yml"
+      - ".github/workflows/options-supplement-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  priority-options:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            disclosures/app
+            disclosures/tests/test_options_supplement.py
+            disclosures/docs/options.js
+            disclosures/docs/option-paths.js
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Check Python and priority scan regression
+        run: |
+          python -m py_compile disclosures/app/options.py
+          python -m unittest discover -s disclosures/tests -p test_options_supplement.py -v
+      - name: Check modified browser scripts
+        run: |
+          node --check disclosures/docs/options.js
+          node --check disclosures/docs/option-paths.js

@@ -16,6 +16,7 @@ ok(has('Will META be Leading next week?', 'rotation') && has('META 下周会进�
 ok(has('AAPL options max pain', 'options') && has('苹果期权的最大痛点', 'options'), 'options');
 ok(has("How is NVDA's industry rotating?", 'industry') && !has("How is NVDA's industry rotating?", 'rotation'), 'industry wins over rotation');
 ok(has('latest earnings', 'earnings') && has('最新财报', 'earnings') && has('debt and default risk', 'credit') && has('分析师目标价', 'analysts'), 'earnings, credit, analysts');
+ok(has('AAPL latest filing', 'filings') && has('aapl latest filling', 'filings') && has('苹果最近一次 SEC 申报', 'filings'), 'SEC filing intent and typo');
 ok(M.lang('苹果值多少') === 'zh' && M.lang('apple') === 'en', 'language');
 // the company: cashtag, ticker, Chinese name, company name, never a stop word
 const tk = (q) => (M.findCompany(q, ix) || {}).ticker;
@@ -73,7 +74,9 @@ const val = { price: 100, price_date: '2026-10-23', stage: { label: 'Growth' }, 
   football: [{ method: 'Stage-weighted value (growth)', low: 95, high: 150, point: 125 }, { method: "Analysts' price targets", low: 90, high: 160, point: 130 }, { method: 'Polymarket implied price', point: 104 }] };
 const opt = { spot: 100, max_pain: 98, max_pain_exp: '2026-11-20', path_probs: [0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.975],
   paths: [{ exp: '2026-11-20', days: 28, q: [80, 84, 88, 94, 100, 106, 112, 116, 120], max_pain: 98, put_wall: 90, call_wall: 110 }] };
-const co = { quarters: [1, 2, 3, 4, 5].map((k) => ({ label: `Q${k}`, form: '10-Q', filed: `2026-0${k}-01`, end: `2026-0${k}-01`, doc_url: 'https://www.sec.gov/x', headline: { revenue: 100 * (1 + 0.05 * k), oi: 20, ni: 15 } })) };
+// newest first, as the company pages list them
+const ends = ['2025-03-31', '2025-06-30', '2025-09-30', '2025-12-31', '2026-03-31'];
+const co = { quarters: [5, 4, 3, 2, 1].map((k) => ({ label: `Q${k}`, form: '10-Q', filed: ends[k - 1].replace(/-\d\d$/, '-28'), end: ends[k - 1], doc_url: 'https://www.sec.gov/x', headline: { revenue: 100 * (1 + 0.05 * k), oi: 20, ni: 15 } })) };
 const files = { 'data/index.json': ix, 'disclosures/data/research/valuation/c/1045810.json': val, 'disclosures/data/market/options/NVDA.json': opt, 'data/c/1045810.json': co };
 global.fetch = async (u) => (files[u] ? { ok: true, json: async () => files[u] } : { ok: false, status: 404, json: async () => null });
 
@@ -99,5 +102,17 @@ global.fetch = async (u) => (files[u] ? { ok: true, json: async () => files[u] }
   ok(a.company && a.company.ticker === 'NVDA', 'no company named: the page company is used');
   a = await M.ask('AAPL', ix);
   ok(/not published/.test(a.html), 'a company without files');
+  // Explicit filing requests must not silently turn into valuation or RRG.
+  files['data/c/320193.json'] = {quarters:[
+    {label:'FY2025 Q4',form:'10-K',filed:'2025-10-31',doc_url:'https://www.sec.gov/Archives/edgar/data/320193/example-10k'},
+    {label:'FY2026 Q3',form:'10-Q',filed:'2026-08-11',doc_url:'https://www.sec.gov/Archives/edgar/data/320193/example-10q'}
+  ]};
+  a = await M.ask('aapl latest filling', ix);
+  ok(a.intents.length === 1 && a.intents[0] === 'filings','typo routes ONLY to SEC filings');
+  ok(a.html.includes('10-Q') && a.html.includes('2026-08-11') && a.html.includes('not necessarily the newest SEC filing overall'), 'filing scoped to cached 10-Q and explicitly not all filings');
+  ok(a.links.some(([url])=>url.includes('CIK=320193')) && a.links.some(([url])=>url.includes('example-10q')),'links to all-form SEC browse and source 10-Q');
+  a = await M.ask('AAPL 最新 SEC 申报', ix);
+  ok(a.intents[0] === 'filings' && a.html.includes('财务定期报告'), 'Chinese filing response');
+
   console.log(`${checks} mascot checks passed.`);
 })().catch((e) => { console.error(e); process.exitCode = 1; });

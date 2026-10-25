@@ -5,6 +5,7 @@ const files = {};
 globalThis.FFUx = { json: async u => files[u] || null };
 const Studio = require('../web/studio.js')._t;
 const Holdings = require('../web/holdings-video.js');
+require('../web/actual-weights.js');
 const DAY = 864e5, WEEK = 7*DAY;
 const date = x => new Date(x).toISOString().slice(0,10);
 const t0 = Date.UTC(2023,0,6), n=175;
@@ -53,5 +54,20 @@ const common={ k:'snowball', t:'TST', from:'2023-01-06',to:'2025-12-31',
   assert.equal(transactions.ignored,1);
   assert.ok(Math.abs(transactions.positions.reduce((a,x)=>a+x.weight,0)-1)<1e-10);
   assert.match(transactions.denom,/NOT a portfolio/);
+  // Merge regression: both independent modes and all saved controls survive.
+  const combined=Studio.parseState('k=actual&style=companies&aw=13f&ac=1067983&ap=Nancy+Pelosi&ao=buy&ag=sector&hsrc=official&hid=person&hv=sector&scf=annual&sgoal=100&sunit=annual&ssolve=rec');
+  const roundtrip=Studio.parseState(Studio.serialize(combined).slice(7));
+  for(const key of ['style','aw','ac','ap','ao','ag','hsrc','hid','hv','scf','sgoal','sunit','ssolve']) assert.equal(roundtrip[key],combined[key]);
+  assert.equal(Studio.parseState('k=holdings').style,'bars');
+  files['disclosures/data/etf/weights/TST.json']={snapshots:[
+    {date:'2026-03-31',positions:[['AAA',.4],['BBB',.3]]},
+    {date:'2026-06-30',positions:[['AAA',.3],['CCC',.5]]}
+  ]};
+  for (const style of ['companies','stack','changes']) {
+    const video=await Studio.build(Studio.parseState('k=actual&aw=etf&ah=TST&style='+style));
+    Studio.finish(video,video);
+    assert.equal(video.kind,style==='changes'?'rank':'sectors');
+    assert.ok(video.final.length>0);
+  }
   console.log('Video income and actual/disclosed holdings: 15 fixture assertions passed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -20,6 +20,7 @@ Publish: market/stakes.json and market/form144.json — the latest filings with 
          previous filing on the company, per-ticker summaries; used by the hub tables (✦ X per row), the company pages
          (holders index) and the X posts (pipeline/engage.py kinds "stake" and "form144").
 """
+from retry_queue import RetryQueue
 import datetime as dt
 import gzip
 import json
@@ -276,17 +277,22 @@ def collect(client, root, cfg=None, today=None):
     empty = set(read_json(cdir / 'seen.json', []))           # read, but nothing to keep (not XML, not a 13D / 13G / 144)
     seen = empty | shards['stakes'].uids() | shards['form144'].uids()
     state = read_json(cdir / 'state.json', {})
+    retry = RetryQueue(cdir)
     errors, read, found = 0, defaultdict(int), defaultdict(int)
     # 1. the newest filings of each form, from the current-filings feed
     todo = []
     for kind, forms in FEEDS.items():
         for form in forms:
+            if not retry.due('feed:' + form):
+                continue
             try:
                 for acc, folder in feed_entries(client, form, int(cfg.get('feed_pages', 3))):
                     if acc not in seen:
                         todo.append((kind, acc, folder))
+                retry.succeeded('feed:' + form)
             except Exception as exc:
                 errors += 1
+                retry.failed('feed:' + form, exc)
                 print(f'{form} feed: {exc}', flush=True)
     # 2. back through the daily form indexes (newest day first), a few days per run, into a queue
     queue = [tuple(x) for x in state.get('queue', [])]
@@ -296,24 +302,25 @@ def collect(client, root, cfg=None, today=None):
         if left <= 0:
             break
         ymd = d.strftime('%Y%m%d')
-        if ymd in done_days:
+        if ymd in done_days or not retry.due('index:' + ymd):
             continue
         left -= 1
         try:
             text = client.get(DAILY.format(y=d.year, q=(d.month - 1) // 3 + 1, ymd=ymd), sec=True).decode('latin-1')
             queue.extend(x for x in parse_daily_index(text) if x[1] not in seen)
             done_days.add(ymd)
+            retry.succeeded('index:' + ymd)
         except RuntimeError as exc:
-            if 'HTTP 404' in str(exc) or 'HTTP 403' in str(exc):     # a holiday (no index), or not published yet
+            if 'HTTP 404' in str(exc):     # a holiday (no index), or not published yet
                 if (today - d).days > 3:
                     done_days.add(ymd)
             else:
+                retry.failed('index:' + ymd, exc)
                 errors += 1
                 print(f'daily index {ymd}: {exc}', flush=True)
-    keyset = {a for _, a, _ in todo}
-    queue = [x for x in dict.fromkeys(queue) if x[1] not in seen and x[1] not in keyset]
+    queue = [x for x in dict.fromkeys(todo + queue) if x[1] not in seen]
     batch = int(cfg.get('batch', 300))
-    work = (todo + queue)[:batch]
+    work = [x for x in queue if retry.due(x[1])][:batch]
     for kind, acc, folder in work:
         try:
             txt = client.get(folder + acc + '.txt', sec=True).decode('utf-8', 'replace')
@@ -329,8 +336,10 @@ def collect(client, root, cfg=None, today=None):
                 empty.add(acc)
             seen.add(acc)
             read[kind] += 1
+            retry.succeeded(acc)
         except Exception as exc:
             errors += 1
+            retry.failed(acc, exc)
             print(f'{kind} {acc}: {exc}', flush=True)
             if errors > 25:
                 break
@@ -340,10 +349,11 @@ def collect(client, root, cfg=None, today=None):
     for kind, st in shards.items():
         st.save(keep=(today - dt.timedelta(days=int(keep_days[kind]))).isoformat())
     window = {d.strftime('%Y%m%d') for d in business_days(today, int(cfg.get('backfill_days', 120)) + 10)}
-    write_json(cdir / 'state.json', {'index_days': sorted(done_days & window), 'queue': [list(x) for x in queue[:40000]], 'updated_at': now()})
+    write_json(cdir / 'state.json', {'index_days': sorted(done_days & window), 'queue': [list(x) for x in queue], 'updated_at': now()})
     write_json(cdir / 'seen.json', sorted(empty))
-    return {'status': 'ok' if errors <= 25 else 'partial', 'read': dict(read), 'found': dict(found), 'waiting': len(queue),
-            'errors': errors, 'stakes': len(shards['stakes'].uids()), 'form144': len(shards['form144'].uids()),
+    retry.save()
+    return {'status': 'partial' if errors or retry.rows or queue else 'ok', **retry.summary(), 'read': dict(read), 'found': dict(found), 'waiting': len(queue),
+            'latest_filing_date': max((r.get('filed', '') for st in shards.values() for r in st.all()), default=None), 'errors': errors, 'stakes': len(shards['stakes'].uids()), 'form144': len(shards['form144'].uids()),
             'index_days': len(done_days & window), 'updated_at': now()}
 
 

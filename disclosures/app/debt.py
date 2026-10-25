@@ -40,6 +40,8 @@ import debt_docs as DD  # noqa: E402
 import debt_facts as DF  # noqa: E402
 import debt_model as DM  # noqa: E402
 import hidden_leverage as HL  # noqa: E402
+import hidden_leverage_tables as HLT  # noqa: E402
+import revenue_quality as RQ  # noqa: E402
 
 SEC = 'https://data.sec.gov'
 ARCH = 'https://www.sec.gov/Archives/edgar/data'
@@ -165,6 +167,7 @@ def collect_one(client, root, co, state, deep=True):
         rec['history'] = DF.history(cf)
         rec['hidden_leverage'] = HL.extract(cf, cik, snap.get('balance_date'),
             {r['acc']: r['doc'] for r in rows if r.get('acc') and r.get('doc')})
+        rec['revenue_quality'] = RQ.extract(cf, cik, snap.get('balance_date'))
     except Exception as exc:
         rec['facts_error'] = f'{type(exc).__name__}: {exc}'[:200]
     # the latest 10-K and the latest 10-Q after it: each instrument
@@ -177,12 +180,21 @@ def collect_one(client, root, co, state, deep=True):
         # Text matches are leads, not amounts, and never modify modeled debt.
         f = latest_periodic
         if (rec.get('hidden_text_source') != f['acc']
-                or not isinstance(rec.get('hidden_text_signals'), list)):
+                or not isinstance(rec.get('hidden_text_signals'), list)
+                or rec.get('hidden_leverage_phase2_source') != f['acc']
+                or rec.get('revenue_quality_text_source') != f['acc']):
             try:
                 raw = client.get(f'{ARCH}/{int(cik)}/{f["acc"].replace("-", "")}/{f["doc"]}', sec=True)
                 rec['hidden_text_signals'] = HL.scan_filing_text(
                     raw, cik, f['acc'], f['doc'], f['form'], f['date'])
                 rec['hidden_text_source'] = f['acc']
+                rec['hidden_footnote_tables'] = HLT.extract_tables(
+                    raw, cik, f['acc'], f['doc'], f['form'], f['date'],
+                    (rec.get('snapshot') or {}).get('balance_date'))
+                rec['hidden_leverage_phase2_source'] = f['acc']
+                rec['revenue_quality_text_leads'] = RQ.scan_text(
+                    raw, cik, f['acc'], f['doc'], f['form'], f['date'])
+                rec['revenue_quality_text_source'] = f['acc']
                 rec.pop('hidden_text_error', None)
             except Exception as exc:
                 rec['hidden_text_error'] = str(exc)[:180]
@@ -190,10 +202,20 @@ def collect_one(client, root, co, state, deep=True):
             same_filing = rec.get('hidden_text_source') == f['acc']
             rec['hidden_leverage']['text_signals'] = (
                 rec.get('hidden_text_signals', []) if same_filing else [])
+            rec['hidden_leverage']['footnote_tables'] = (
+                rec.get('hidden_footnote_tables') or []
+                if rec.get('hidden_leverage_phase2_source') == f['acc'] else [])
+            rec['hidden_leverage']['footnote_status'] = (
+                'candidate_tables_review_required' if rec['hidden_leverage']['footnote_tables']
+                else 'no_high_confidence_usd_schedule_detected')
             rec['hidden_leverage']['text_filing'] = {
                 'accession': f['acc'], 'form': f['form'],
                 'filed': f['date'], 'source_url': HL.sec_url(cik, f['acc'], f['doc']),
                 'text_status': 'collected' if same_filing else 'unavailable'}
+        if isinstance(rec.get('revenue_quality'), dict):
+            rec['revenue_quality']['text_leads'] = (
+                rec.get('revenue_quality_text_leads') or []
+                if rec.get('revenue_quality_text_source') == f['acc'] else [])
     for kind, f in (('10-K', tenk), ('10-Q', tenq)):
         if not f:
             continue
@@ -296,7 +318,7 @@ def collect(client, root, cos, minutes=30.0, refresh_days=21, first=()):
         # Backfill existing companies after this feature ships, even when the
         # normal 21-day refresh interval has not elapsed. Stored state keeps
         # this a one-time priority change, not a perpetual SEC re-fetch.
-        if s.get('hidden_leverage_version') != 1:
+        if s.get('hidden_leverage_version') != 2:
             return (1, -_num(co.get('revenue')))
         age = (today - dt.datetime.fromisoformat(s['fetched_at'])).days
         return (2, -age) if age >= refresh_days else None
@@ -312,7 +334,7 @@ def collect(client, root, cos, minutes=30.0, refresh_days=21, first=()):
         try:
             collect_one(client, root, co, s)
             s.update(fetched_at=now(), fails=0, error=None, retry_after=None,
-                     hidden_leverage_version=1)
+                     hidden_leverage_version=2)
             done += 1
         except Exception as exc:
             errors += 1
@@ -698,6 +720,7 @@ def build(root, prices=None, verbose=True):
                'price': price, 'price_date': price_date, 'equity_vol': sig,
                'snapshot': snap, 'sources': rec.get('sources') or {}, 'analysis': A,
                'hidden_leverage': rec.get('hidden_leverage') or {},
+               'revenue_quality': rec.get('revenue_quality') or {},
                'instruments': inst[:60], 'instruments_from': {'form': inst_form, 'date': inst_date},
                'issues': iss[:400], 'agreements': ags[:6], 'events': rec.get('events') or [],
                'history_fields': ['end', 'total_debt', 'cash_and_investments', 'interest_ttm', 'ebitda_ttm', 'ebit_ttm', 'effective_rate'],
@@ -716,7 +739,10 @@ def build(root, prices=None, verbose=True):
         hidden_index.append({'cik': rec['cik'], 'ticker': rec.get('ticker'),
                              'name': rec.get('name'), 'sector': rec.get('sector'),
                              'recognized_debt': A.get('total_debt'),
-                             'net_debt': A.get('net_debt'), **hs})
+                             'net_debt': A.get('net_debt'),
+                             'footnote_tables': len((rec.get('hidden_leverage') or {}).get('footnote_tables') or []),
+                             'cookie_risk_flags': len((rec.get('revenue_quality') or {}).get('risk_flags') or []),
+                             **hs})
         imp = A.get('implied') or {}
         conv = A.get('convertibles') or {}
         covs = [c['cushion'] for c in A.get('covenants') or [] if c.get('cushion') is not None]

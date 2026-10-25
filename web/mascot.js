@@ -37,6 +37,7 @@
   /* ---------- the question ---------- */
   const lang = (q) => (/[㐀-鿿]/.test(String(q || '')) ? 'zh' : 'en');
   const INTENTS = [
+    ['filings', /\bfil(?:ing|ings|ling|lings)\b|\bedgar\b|\b(?:sec\s+)?submissions?\b|(?:latest|recent|newest|last)\s+(?:sec\s+)?(?:reports?|documents?|filings?|fillings?)\b|(?:最新|最近(?:一次)?)(?:的|\s)*(?:SEC\s*)?(?:申报|披露|文件|提交)|SEC\s*(?:文件|申报|披露)/i],
     // widen these when web/flo-questions.js gains a phrasing Flo misses (tests/test_mascot.cjs checks every one)
     ['options', /\boptions?\b|max ?pain|put wall|call wall|option walls?|implied (move|vol|range)|expected move|\d+% range|\biv\b|\bstrikes?\b|expir|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间|预期波动|行权价|到期/i],
     ['industry', /\bindustr(y|ies)\b|\bsector\b|\bpeers?\b|行业|板块|同业/i],
@@ -85,8 +86,8 @@
   // company page tab → the topic it is about (#c-<cik>-x-options, #c-<cik>-debt …); the plain company page is its earnings
   const TAB_TOPIC = { 'x-fairvalue': 'valuation', value: 'valuation', 'x-rotation': 'rotation', 'x-options': 'options', debt: 'credit', consensus: 'analysts', revisions: 'analysts' };
   // disclosures-hub tab → topic
-  const HUB_TOPIC = { valuation: 'valuation', rotation: 'rotation', options: 'options', debt: 'credit', consensus: 'analysts', earnings: 'earnings', quality: 'earnings', filings: 'earnings' };
-  const TOPICS = ['valuation', 'rotation', 'options', 'earnings', 'industry', 'credit', 'analysts'];
+  const HUB_TOPIC = { filings: 'filings', valuation: 'valuation', rotation: 'rotation', options: 'options', debt: 'credit', consensus: 'analysts', earnings: 'earnings', quality: 'earnings', filings: 'earnings' };
+  const TOPICS = ['filings', 'valuation', 'rotation', 'options', 'earnings', 'industry', 'credit', 'analysts'];
   const byRevenue = (list, f) => list.filter(f).sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 3);
   // → {kind: company|industry|group|hub|home, co?, cos?, topic?, label?, ind?, key}; `loc` is window.location (or a stand-in in tests)
   function pageContext(ix, loc, inds) {
@@ -118,6 +119,7 @@
     return { kind: 'hub', topic: HUB_TOPIC[tab] || null, tab: tab || '', cos: byRevenue(list, () => true), key: 'hub' + (tab || '') };
   }
   const Q = {
+    filings: [(t) => `${t} latest SEC filing`, (t) => `${t} 最新 SEC 申报`, (t) => `${t} most recent 10-K or 10-Q`, (t) => `${t} 最近的 10-K 或 10-Q`],
     valuation: [(t) => `What is ${t} worth?`, (t) => `${t} 值多少钱？`, (t) => `${t} DCF and Monte Carlo`, (t) => `${t} 的 DCF 和蒙特卡洛估值`],
     rotation: [(t) => `Will ${t} be Leading next week?`, (t) => `${t} 下周会进入领先象限吗？`, (t) => `Where will ${t}'s quadrant be in 4 weeks?`, (t) => `${t} 4 周后在哪个象限？`],
     options: [(t) => `${t} options: range and max pain`, (t) => `${t} 期权的隐含区间和最大痛点`, (t) => `${t} put wall and call wall`, (t) => `${t} 期权的 put wall 和 call wall`],
@@ -153,8 +155,8 @@
     }
     return [q1('valuation', T(0), zh), q1('rotation', T(1), zh), q1('options', T(2), zh), q1('earnings', T(0), zh), q1('industry', T(1), zh)];
   }
-  const TOPIC_NAME = { en: { valuation: 'fair value', rotation: 'rotation (RRG)', options: 'options', earnings: 'earnings', credit: 'debt and credit', analysts: 'analysts' },
-    zh: { valuation: '估值', rotation: 'RRG 轮动', options: '期权', earnings: '财报', credit: '债务与信用', analysts: '分析师' } };
+  const TOPIC_NAME = { en: { filings: 'SEC filings', valuation: 'fair value', rotation: 'rotation (RRG)', options: 'options', earnings: 'earnings', credit: 'debt and credit', analysts: 'analysts' },
+    zh: { filings: 'SEC 申报', valuation: '估值', rotation: 'RRG 轮动', options: '期权', earnings: '财报', credit: '债务与信用', analysts: '分析师' } };
   // one line that says Flo knows where you are; null on the home page (the full help is shown there)
   function greetFor(ctx, zh) {
     const lg = zh ? 'zh' : 'en', N = TOPIC_NAME[lg];
@@ -247,11 +249,49 @@
       : L(lg, `Max pain for ${esc(o.max_pain_exp || 'the nearest monthly')}: ${usd(o.max_pain)}.`, `最近月度到期（${esc(o.max_pain_exp || '')}）最大痛点：${usd(o.max_pain)}。`);
     return { html, facts, mood: 'talk', links: [[`${BASE}#c-${c.cik}-x-options`, L(lg, 'Options: price paths', '期权价格路径页')]] };
   }
+  // A filing is not automatically an earnings release. Current per-company cache
+  // provides processed 10-K / 10-Q records, not a complete/live SEC submissions list.
+  async function filings(c, lg) {
+    const secBrowse = 'https://www.sec.gov/edgar/browse/?CIK=' + encodeURIComponent(String(c.cik));
+    const links = [[secBrowse, L(lg, 'SEC EDGAR: latest filings of all forms', 'SEC EDGAR：所有表格的最新申报')]];
+    const d = await fetch(DATA + 'c/' + c.cik + '.json', { cache: 'no-cache' })
+      .then(r => r.ok ? r.json() : null).catch(() => null);
+    const qs = ((d && d.quarters) || []).filter(q =>
+      q && /^10-[KQ](?:\/A)?$/i.test(String(q.form || '')) &&
+      /^\d{4}-\d{2}-\d{2}/.test(String(q.filed || '')));
+    if (!qs.length) {
+      const html = L(lg,
+        'I cannot verify ' + esc(c.ticker) + "'s latest SEC filing from this site's published reports. Check the live EDGAR link. A 10-K/10-Q is not necessarily the newest SEC submission.",
+        '目前网站发布的数据无法核实 ' + esc(c.ticker) + ' 最新的 SEC 申报。请通过 EDGAR 实时页面查看；最新 10-K/10-Q 不一定是最新 SEC 文件。');
+      return {html, facts:[], mood:'think', links};
+    }
+    qs.sort((a,b)=> String(b.filed).localeCompare(String(a.filed)) ||
+      String(b.label || '').localeCompare(String(a.label || '')));
+    const q = qs[0];
+    if (/^https:\/\/www\.sec\.gov\//i.test(String(q.doc_url || '')))
+      links.unshift([q.doc_url, L(lg, 'Original 10-K / 10-Q document', '原始 10-K / 10-Q 文件')]);
+    links.push([BASE + '#c-' + c.cik, L(lg, 'Filing Flows: financial statements', 'Filing Flows 财报页面')]);
+    const facts = [c.ticker + ' latest processed financial filing: ' + q.form +
+      ', quarter ' + (q.label || 'unknown') + ', filed ' + q.filed +
+      '. All-form latest SEC submission NOT verified from this cache.'];
+    const html = L(lg,
+      'The most recent <b>10-K/10-Q in Filing Flows</b> for <b>' + esc(c.ticker) +
+      '</b> is <b>' + esc(q.form) + '</b> (' + esc(q.label || 'period unavailable') +
+      '), filed <b>' + esc(q.filed) +
+      '</b>. This is the latest <em>processed financial report</em>, not necessarily the newest SEC filing overall. For newer 8-K, Form 4, 144 or other submissions, check the live SEC EDGAR link.',
+      '<b>' + esc(c.ticker) + '</b> 在 Filing Flows 已处理的最新 <b>10-K/10-Q</b> 是 <b>' +
+      esc(q.form) + '</b>（' + esc(q.label || '报告期间未知') + '），于 <b>' + esc(q.filed) +
+      '</b> 提交。这只是网站处理过的最新<b>财务定期报告</b>，不代表 SEC 所有表格中最新的一份。要查看更新的 8-K、Form 4、144 等，请打开 SEC EDGAR 实时页面。');
+    return {html, facts, mood:'talk', links};
+  }
+
   async function earnings(c, lg) {
     const d = await json(DATA + 'c/' + c.cik + '.json');
     const qs = (d && d.quarters) || [];
     if (!qs.length) return null;
-    const q = qs[qs.length - 1], h = q.headline || {}, ya = qs.length >= 5 ? (qs[qs.length - 5].headline || {}) : {};
+    // the newest quarter by its end date (the page lists newest first), and the one about a year before it
+    const T = (x) => Date.parse((x.end || x.filed || '') + 'T00:00:00Z') || 0, srt = qs.slice().sort((a, b) => T(b) - T(a));
+    const q = srt[0], h = q.headline || {}, yq = srt.find((x) => Math.abs((T(q) - T(x)) / 864e5 - 364) <= 45), ya = (yq && yq.headline) || {};
     const yoy = (a, b) => (fin(a) && fin(b) && b > 0 ? a / b - 1 : null), g = yoy(h.revenue, ya.revenue);
     const om = fin(h.oi) && fin(h.revenue) && h.revenue > 0 ? h.oi / h.revenue : null;
     const facts = [`${q.label} (${q.form}, filed ${q.filed}): revenue ${big(h.revenue)}${fin(g) ? ` (${spc(g)} y/y)` : ''}, operating income ${big(h.oi)}, net income ${big(h.ni)}${fin(h.ocf) ? `, operating cash flow ${big(h.ocf)}` : ''}`];
@@ -280,12 +320,12 @@
       `${esc(c.ticker)} 现价 ${usd(d.price)}：${an ? `分析师目标价 ${usd(an.low)}–${usd(an.high)}，平均 ${usd(an.point)}` : ''}${an && pm ? '；' : ''}${pm ? `Polymarket 隐含价格 ${usd(pm.point)}` : ''}。`);
     return { html, facts, mood: an && fin(d.price) && an.point > d.price * 1.15 ? 'happy' : 'talk', links: [[`${BASE}#c-${c.cik}-consensus`, L(lg, 'Consensus', '一致预期页')]] };
   }
-  const HANDLERS = { valuation, rotation, industry, options, earnings, credit, analysts };
+  const HANDLERS = { filings, valuation, rotation, industry, options, earnings, credit, analysts };
 
   function helpAnswer(lg, company) {
     const t = company ? company.ticker : 'NVDA';
-    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me about any company on the site — I answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>credit</b> and <b>analysts</b>. Try “What is ${t} worth?”`,
-      `你好，我是 <b>Flo</b>。可以问我网站上任何公司的问题，我用网站自己的模型回答：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>信用</b>和<b>分析师</b>。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
+    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me about any company on the site — I answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Try “What is ${t} worth?”`,
+      `你好，我是 <b>Flo</b>。可以问我网站上任何公司的问题，我用网站自己的模型回答：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
   }
   let IX = null;
   const index = () => IX || (IX = json(DATA + 'index.json'));
