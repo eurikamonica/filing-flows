@@ -23,7 +23,9 @@ jobs:
         with:
           sparse-checkout: |
             disclosures/app
-            disclosures/docs
+            disclosures/docs/index.html
+            disclosures/docs/debt-view.js
+            disclosures/docs/hidden-leverage.js
             tests/test_hidden_leverage.py
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v5
