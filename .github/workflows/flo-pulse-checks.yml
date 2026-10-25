@@ -1,0 +1,50 @@
+name: Flo Pulse live-data alerts regression
+
+on:
+  pull_request:
+    paths:
+      - 'web/flo-alerts.js'
+      - 'web/mascot.js'
+      - 'web/index.html'
+      - 'disclosures/docs/index.html'
+      - 'scripts/build_flo_alerts.py'
+      - 'tests/test_flo_alerts.cjs'
+      - 'tests/test_build_flo_alerts.py'
+      - '.github/workflows/scan.yml'
+      - '.github/workflows/flo-pulse-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  alert-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            scripts/build_flo_alerts.py
+            tests/test_build_flo_alerts.py
+            tests/test_flo_alerts.cjs
+            web/flo-alerts.js
+            web/mascot.js
+            web/index.html
+            disclosures/docs/index.html
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Validate source syntax
+        run: |
+          node --check web/flo-alerts.js
+          node --check web/mascot.js
+          python -m py_compile scripts/build_flo_alerts.py tests/test_build_flo_alerts.py
+      - name: No false first-view alert, duplicate popup, or unsourced news
+        run: node tests/test_flo_alerts.cjs
+      - name: Feed builder and SEC source contract
+        run: python -m unittest tests.test_build_flo_alerts -v
