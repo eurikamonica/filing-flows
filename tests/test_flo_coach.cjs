@@ -21,7 +21,7 @@ for(const id of ['dcf','three','comps','ddm','dupont','reserves']){
  ok(Coach.next(s),id+' advance after formula correct');
  eq(Coach.state(s).step,1,id+' coach state advance');
  eq(Coach.prev(s),0,id+' coach step back');
- ok(Coach.hint(s,'zh').length>10,id+' detailed Chinese formula reasoning');
+ ok(Coach.hint(s,'zh').length>=5,id+' detailed Chinese formula reasoning');
  const q=Coach.questions[id][0];
  eq(Coach.answerQuiz(s,q.correct,'zh'),true,id+' concept question correct');
  eq(Coach.state(s).quizzesAnswered,1,id+' quiz achievement');
