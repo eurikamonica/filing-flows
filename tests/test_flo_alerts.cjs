@@ -43,6 +43,30 @@ eq(Alert.react(manager),'wave','13F mascot waves/spins');
 eq(Alert.react(price),'worried','negative price mascot worried');
 const upbeat=e('price:up','price',{source_url:'',price_asof:'2026-10-26',change_pct:8});
 eq(Alert.react(upbeat),'happy','upward price mascot jumps');
+const topics=e('8k:restatement','8k',{ticker:'CRWV',topics:['restatement','debt'],
+  form:'8-K/A',filed:'2026-10-26'});
+const explained=Alert.explain(topics,true);
+ok(explained.includes('事项标签')&&explained.includes('重述')&&explained.includes('债务')===false,
+  '8-K sourced topic labels and restatement analysis presented without inventing figures');
+const managerUpdates=e('13f:changed','13f',{
+  ticker:'AAPL',manager:'Berkshire Hathaway',symbols:['AAPL','NVDA','BAC'],
+  period_end:'2026-09-30',filed:'2026-10-26',
+  changes:{New:['AAPL'],Added:['NVDA'],Reduced:['BAC']}});
+ok(Alert.shown(managerUpdates,{watch:'NVDA',kinds:{'13f':true}}),
+  'watchlist matches added 13F tickers, not only first new position');
+eq(Alert.shown(managerUpdates,{watch:'TSLA',kinds:{'13f':true}}),false,
+  'unrelated ticker does not produce 13F alert');
+eq(Alert.shown(managerUpdates,{watch:'NVDA',kinds:{'13f':false}}),false,
+  'disabled type suppresses 13F notifications');
+const em=Alert.explain(managerUpdates,false);
+ok(em.includes('Berkshire Hathaway')&&em.includes('2026-09-30')&&em.includes('NVDA')
+ &&em.includes('NOT trades'),'13F explanation contains manager, period, updated ticker and filing lag caution');
+const priceContext=Alert.explain(price,true);
+ok(priceContext.includes('IREN')&&priceContext.includes('-10.20%')&&priceContext.includes('延迟日线'),
+ 'price explanation shows verified date, percent and non-intraday scope');
+const malformedLink=e('news:phish','news',{source_url:'https://sec.gov.evil.example/path'});
+eq(Alert.valid(malformedLink),false,'SEC lookalike domain refused');
+eq(Alert.shown(k,{watch:'AAPL',kinds:{'8k':true}}),false,'issuer filter excludes other filings');
 assert.throws(()=>Alert.normalize({schema:2,events:[]}),/Invalid/);n++;
 assert.throws(()=>Alert.normalize({schema:1,events:Array(301).fill(k)}),/Invalid/);n++;
 console.log(n+' Flo live pulse tests passed');
