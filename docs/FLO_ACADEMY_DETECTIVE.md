@@ -168,3 +168,33 @@ SEC historic observations are **read-only** and link to official primary-source 
 UI loaded in `web/index.html`: `flo-coach.js` before `flo-real-workbook.js` and `mascot.js`. Chat shortcut **Forensic Case Lab** opens the WorldCom exercise directly; **Real SEC Lab** still supports source-labeled historical issuer cases. The text chat's **SEC Case Studies** topic also now includes WorldCom, Xerox, and Waste Management.
 
 Draft PR #72 must still be merged, the current commit CI verified, and GitHub Pages deployment smoke-tested before claiming any of this is on the live website.
+## Phase 4 — Adaptive case training, health-sector accounting and opt-in progress
+
+### Newly grounded US SEC cases (historical allegations / enforcement, not current issuer diagnosis)
+
+| Company | SEC evidence and explicitly scoped period | Workbook assignments | Source |
+| --- | --- | --- | --- |
+| HealthSouth | SEC 2003 complaint lists reported versus actual pretax earnings in USD millions: **FY1999 230 vs -191; FY2000 559 vs 194; FY2001 434 vs 9; H1 2002 340 vs 157**. Specific resulting differences: 421, 365, 425, 183. These four period differences sum to **1,394 USD M**, a mixed three-FY + six-month subset, NOT a single-year figure, not a complete reconstruction of journal entries or the full alleged fraud. | Learner computes each reporting-period difference, correctly handles NEGATIVE actual income, checks SUM(C3:C6), distinguishes H1 from full FY. | https://www.sec.gov/litigation/complaints/comphealths.htm |
+| Bristol-Myers Squibb | SEC litigation describes approximately **$1,500M improperly recognized revenue** on consignment-like sales in 2000–2001; an independent **$150M civil settlement penalty** must not be mislabeled a revenue adjustment. Associated risks: channel stuffing, distributor carrying incentives, divestiture cookie-jar reserves. | Student converts the approximate revenue amount to $B units; uses an explicitly **HYPOTHETICAL $2,500M sales base** to practice adjusted revenue and how an unsupported hypothetical ratio is different from a published company ratio. | https://www.sec.gov/enforcement-litigation/litigation-releases/lr-18820 |
+
+New sources do not overwrite existing NVDA/AAPL/MSFT annual 10-K lab, Sunbeam/Dell/WorldCom/Xerox/Waste Management original SEC primary evidence, and historical/future assumption segregation. Two new worksheet IDs: HEALTHSOUTH and BRISTOL. Case registry and linked chat search were expanded accordingly.
+
+### Learning features actually implemented
+
+- **16 learning pathways:** six spreadsheet model types, three SEC issuer report worksheets and seven SEC historical enforcement cases (Sunbeam, Dell, WorldCom, Xerox, Waste Management, HealthSouth, Bristol-Myers). Every path includes bilingual incremental prompts, specific formulas, source flags and concept questions.
+- **Adaptive quizzes:** additional multi-question drills for DCF/3-statements/comparables/DDM/DuPont/reserves and for both new enforcement cases. Correct answers advance to the next quiz, wrong choices give an explanation; per-session counts are maintained. Quizzes measure conceptual awareness, not a model's economic validity.
+- **Private error notebook:** spreadsheet Check/Grade buttons log incorrect formula cells and counts. Review mistakes focuses the most frequently missed cell (earliest model dependency where counts tie), instead of merely displaying total score. This is an error review guide, not a general automated root-cause theorem prover.
+- **Mode toggle:** guided (hints), practice, and exam. Exam hides formula and lesson hints and reference-formula reveal buttons; concept quizzes still provide feedback. All three use the same bounded arithmetic interpreter, not an AI grader.
+- **Opt-in local persistence:** explicit Save/Restore/Clear course controls use **this browser's localStorage**, not a server API. Saved data include only learner input cells, formula progress, anonymous per-course error counts, selected mode and current milestone. Lock-protected SEC reported cells are never stored as input and **cannot** be overwritten on restoration. Original SEC source URI is checked so user work from a different annual filing cannot be imported into a new source. No cloud sync or background monitoring.
+- **Two more hypothetical accounting simulations:** HealthSouth-style unsupported accrual/asset inflation and Bristol-Myers-like deferred distributor revenue, with simplified journal effects. These are mechanics only, NOT reconstruction of historic SEC journal entries. Total simulation scenarios now seven.
+- **One-click navigation:** updated Flo quick-chip entries for HealthSouth and channel-stuffing case exercises.
+
+### QA and deployment
+
+New modules: `web/flo-practice.js` (local-only saving, review and mode), `tests/test_flo_practice.cjs`; modified `web/flo-coach.js`, `web/flo-real-data.js`, `web/flo-real-workbook.js`, `web/flo-workbook.js`, `web/index.html`, `web/mascot.js`, `web/flo-academy.js`, CI workflows.
+
+Standalone tests directly executed: `tests/test_flo_practice.cjs` **216 assertions passed**, and existing `tests/test_flo_coach.cjs` **153 passed**, after resolving nested downstream-error priority and official historical complaint source URL allowlisting. CI results on latest HEAD must be checked separately. Do not mark this as live until the draft PR is reviewed, merged and the GitHub Pages build publishes the assets.
+
+### Deferred
+
+True XLSX import/export, richer multicurrency and annual segment SEC normalizer, complete historical accounting journal recreation, multi-step free-text semantic grading, teacher dashboards, and server-synced exercise progress are NOT claimed implemented. They require added source validation and/or explicit privacy/data-storage decisions.
