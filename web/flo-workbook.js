@@ -4,6 +4,7 @@
 */
 (function(root) {
   'use strict';
+  const coach = () => root.FFFloCoach || (typeof module !== 'undefined' ? require('./flo-coach.js') : null);
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g,
     ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const I = (v, note='') => ({type:'input',raw:String(v),note});
@@ -407,6 +408,7 @@
       ))+'</div>'+
       '<div class="flo-wb-scroll" role="region" tabindex="0" aria-label="Spreadsheet cells"><table class="flo-wb-table"><tbody>'+body+'</tbody></table></div>'+
       '<p class="flo-wb-feedback" aria-live="polite">'+(s.grade?(zh?'正确 ':'Correct ')+s.grade.correct+' / '+s.grade.total+' · '+esc(s.message||''):esc(s.message||''))+'</p>'+
+      (coach()?coach().panel(s,lang):'')+
       '<p class="flo-source">'+(zh?'公式支持 A1、$B$1、SUM、AVERAGE、MEDIAN、MIN、MAX、+ − × ÷ ^；禁止宏、外部链接和脚本。CSV 导出的是计算后的数值。':
         'Supports A1, $B$1, SUM, AVERAGE, MEDIAN, MIN, MAX, + − × ÷ ^. No macros or external links. CSV exports computed values only.')+'</p>';
   }
@@ -456,6 +458,11 @@
       const button=event.target.closest('button');if(!button||!wrapper.contains(button))return;
       if(button.dataset.ref){session.selected=button.dataset.ref;paint();return;}
       if(button.hasAttribute('data-wb-apply')){apply(wrapper.querySelector('[data-wb-editor]').value);return;}
+      if(button.hasAttribute('data-coach-prev')){coach().prev(session);paint();return;}
+      if(button.hasAttribute('data-coach-next')){coach().next(session);paint();return;}
+      if(button.hasAttribute('data-coach-focus')){session.selected=coach().current(session)[0];paint();return;}
+      if(button.hasAttribute('data-coach-hint')){session.message=coach().hint(session,lang);paint();return;}
+      if(button.hasAttribute('data-coach-quiz')){coach().answerQuiz(session,Number(button.dataset.coachQuiz),lang);paint();return;}
       if(button.hasAttribute('data-wb-next')){
         const unsolved=Object.keys(session.answers).filter(ref=>!String(session.cells[ref].raw).trim());
         if(unsolved.length){session.selected=unsolved[0];session.message='Selected '+unsolved[0]+'. Enter a formula starting with =.';}
