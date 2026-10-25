@@ -412,6 +412,7 @@
   function mood(m, ms) {
     if (!ui) return;
     m = m || 'idle';
+    if (m === 'idle' && root.FFAppearance) m = root.FFAppearance.idleMood();
     ui.mood = m;
     ui.halves.forEach((h) => { h.el.dataset.mood = m; });
     const t = nowMs();
@@ -595,9 +596,12 @@
     root.addEventListener('hashchange', sync); sync();
     layout();
     root.requestAnimationFrame(frame);
+    root.dispatchEvent(new CustomEvent('ff:mascotready'));
     setTimeout(() => mood('wave', 1800), 1200);
   }
-  root.FFMascot = { open, ask, mount, classify, findCompany, lang, pageContext, chipsFor };
+  root.FFMascot = { open, ask, mount, classify, findCompany, lang, pageContext, chipsFor,
+    refreshAppearance() { if (ui && ui.panel.hidden) mood('idle'); }
+  };
   if (doc && doc.body !== undefined) { if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', mount); else mount(); }
   if (typeof module !== 'undefined') module.exports = { classify, findCompany, lang, ask, helpAnswer, pageContext, chipsFor, greetFor };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

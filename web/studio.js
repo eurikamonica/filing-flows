@@ -1237,6 +1237,7 @@
 
   /* ---------- themes ---------- */
   const THEMES = {
+    appearance: { name: 'Appearance settings / 外观设置' },
     bull: { name: 'Bull (dark)', bg: ['#06101f', '#0b1f3a', '#0f2b4f'], grid: 'rgba(160,190,230,0.10)', axis: 'rgba(200,215,235,0.55)', text: '#eef4fb', muted: 'rgba(214,226,240,0.70)',
       accent: '#ffd25e', glow: 18, panel: 'rgba(8,20,40,0.72)', font: '"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif',
       pal: ['#38f2a2', '#ffd25e', '#5ab0ff', '#ff6b8e', '#b993ff', '#ffa24c', '#3fe0f0', '#c8f07a', '#ff8ad8', '#9ad0ff'], q: ['#38f2a2', '#ffd25e', '#ff6b8e', '#5ab0ff'] },
@@ -1283,7 +1284,7 @@
   }
 
   function draw(ctx, W, H, V, opt, t) {
-    const th = THEMES[opt.theme] || THEMES.bull, S = Math.min(W, H) / 1080, tm = timing(V, opt), f = frameIndex(V, tm, t);
+    const th = (opt.theme === 'appearance' ? (opt.appearanceTheme || root.FFAppearance?.videoTheme()) : THEMES[opt.theme]) || THEMES.bull, S = Math.min(W, H) / 1080, tm = timing(V, opt), f = frameIndex(V, tm, t);
     const portrait = H > W * 1.2, square = !portrait && H > W * 0.8;
     const pal = (i) => th.pal[i % th.pal.length];
     const F = (w, px) => `${w} ${Math.round(px * S)}px ${th.font}`;
@@ -2312,6 +2313,8 @@
     // the address as typed, still encoded (the router decodes it, and a formula can hold % or &)
     const raw = (/^#\/?studio\/?(.*)$/.exec(location.hash || '') || [])[1];
     const st = parseState(raw != null ? raw : arg);
+    const originalTheme = st.theme === 'appearance' ? DEF.theme : st.theme;
+    if (root.FFAppearance?.get().video !== 'default' && root.FFAppearance?.videoTheme()) st.theme = 'appearance';
     const sel = (id, items, v) => `<select id="${id}">${items.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
     app.innerHTML = `<div class="page-head"><div class="eyebrow"><a href="#chart">← Charts</a> · Videos</div><h1>Make a market video</h1>
       <p class="muted" style="max-width:76ch">Growth races of any ETFs or stocks — a lump sum or the same amount bought every few days, weeks or months, with dividends reinvested, taken as cash on their own line, or left out — leaderboards of every company by market value, revenue, profit, P/E, P/B, volume or return, drawdowns, monthly-return heatmaps, the spread of every stock's year, RRG and momentum replays, companies' own figures and any formula. Animated in four looks and three shapes, at the length and pace you set, saved as an MP4 to post. Everything is drawn from the site's own data in your browser.</p></div>
@@ -2325,7 +2328,7 @@
       </div></div>`;
     const $ = (s) => app.querySelector(s), canvas = $('#st-canvas'), ctx = canvas.getContext('2d');
     let V = null, playing = false, t0 = 0, tNow = 0, raf = 0, token = 0, exporting = false;
-    const opt = () => ({ theme: st.theme, ar: st.ar, q: st.q, fps: st.fps, dur: clamp(+st.dur || 20, 4, 300), pace: st.pace, hold: st.hold });
+    const opt = () => ({ appearanceTheme: st.theme === 'appearance' ? root.FFAppearance?.videoTheme() : null, theme: st.theme, ar: st.ar, q: st.q, fps: st.fps, dur: clamp(+st.dur || 20, 4, 300), pace: st.pace, hold: st.hold });
     function rankSide(k) {
       let h = '';
       if (k === 'rank') {
@@ -2481,6 +2484,15 @@
       if (canvas.width !== dim[0] || canvas.height !== dim[1]) { canvas.width = dim[0]; canvas.height = dim[1]; }
     }
     function paint() { if (V) draw(ctx, canvas.width, canvas.height, V, opt(), tNow); }
+    const appearanceChanged = () => {
+      if (!document.body.contains(canvas)) { root.removeEventListener('ff:appearancechange', appearanceChanged); return; }
+      if (exporting) return;
+      if (root.FFAppearance?.videoTheme()) st.theme = 'appearance';
+      else if (st.theme === 'appearance') st.theme = originalTheme;
+      const picker = $('#st-theme'); if(picker)picker.value=st.theme;
+      if (!exporting) paint();
+    };
+    root.addEventListener('ff:appearancechange', appearanceChanged);
     function loop(ts) {
       if (!playing) return;
       tNow = (ts - t0) / 1000;
