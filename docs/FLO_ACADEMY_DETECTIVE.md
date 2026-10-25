@@ -240,3 +240,31 @@ Polling the published **static** manifest is not WebSockets, an always-on servic
 - Existing source-level scan-health panel distinguishes scan attempts, success/partial success, latest filing dates and retry queues; retained as-is instead of duplicating it. Existing 2-minute active-tab polling, first-load baseline, deduplication, quiet mode and per-event actions are preserved.
 
 This PR is not published until merged and deployed; static scan alerts remain bounded by the freshness of the site's generated data. Priority labels are rules-based screening categories, not investment recommendations.
+
+## Phase 6 — Cross-Signal Timelines and Watchlist Research Brief
+
+Delivered to feature PR #72; NOT live until main merge and Pages verification. No paid news or market API, no extra EDGAR polling, no forced reload or automatic trading. This module reads only the static, already-published site Flo Pulse JSON and reuses its foreground two-minute refresh, deduplication, rate limiting, quiet mode and mascot animations.
+
+### Research timeline for an individual ticker
+
+Entry points: type **NVDA 事件时间线**, **$NVDA filing timeline** or **NVDA event timeline**; click **Timeline** from the new-event toast or in an inbox row; or use the inbox ticker selector.
+
+New web/flo-timeline.js consolidates separately sourced 8-K SEC filings, 13F disclosures (including stock symbols carried in the 13F change list), approved-source news headlines and published daily-close price observations. Default output is limited to the last 14 days and at most 20 individual observations, further capped by the small already-published feed. It is not exhaustive.
+
+Time semantics: 8-K/news show event timestamps when available; 13F shows actual FILING DATE and separate QUARTER-END HOLDINGS PERIOD; delayed price data show their PRICE-AS-OF-CLOSE DATE rather than implying any intraday move or midnight trading time. Sources are URL-allowlisted and titles escaped to resist injected HTML.
+
+Signals of two or more distinct types within 72 hours are identified as temporally co-observed ONLY. They are NOT causal evidence of 8-K/press release/13F explaining the stock-price change. Manager holdings as of quarter end are NOT trades on the filing date. Event-study returns, causal attributions, share-price predictions and unverified trading volumes are not calculated.
+
+### Watchlist brief
+
+Users set a symbol watchlist in the original Flo Pulse inbox, then click **Watchlist brief** or ask **我的关注股票最新动态** / **watchlist brief**. Flo shows counts of published SEC 8-Ks, 13Fs, news and end-of-day price snapshots for each watched ticker, last observed timestamp and how many overlapping source-type windows appear. Zero matches explicitly mean limited feed coverage, NOT proof no filings occurred.
+
+### Technical files and safeguards
+
+- New web/flo-timeline.js: safely grouped, deduplicated and time-scoped evidence; original SEC links and non-causal teaching notes.
+- web/index.html loads timeline helper before web/flo-alerts.js.
+- web/flo-alerts.js now includes popup and inbox Timeline actions, language-route support, a watched-ticker brief and six-hour stale-feed warning.
+- tests/test_flo_timeline.cjs covers multiple event types, two-ticker isolation, old/future items, malicious URLs and HTML escaping, timestamp precision and watched-symbol rollups (50 passing direct checks); tests/test_flo_alerts.cjs existing alert contract (40 direct checks).
+- tests/test_flo_alert_browser.cjs updated to cover browser-tab no-refresh popup → timeline click → Flo reply; GitHub Actions dedicated pulse, Academy and full offline CI now run the new test.
+
+**Not yet deployed:** PR #72 must be reviewed, merged and the static Pages build verified. It is not an always-on server agent, real-time exchange ticker feed or SEC push-notification system.
