@@ -195,18 +195,32 @@
       if (!row) return null;
       const c = await json(SITE + 'c/' + row.cik + '.json');
       if (!c) return null;
-      const out = { sym, cik: row.cik, name: (c.profile && c.profile.name) || row.name || sym, q: {} };
-      const H = (c.quality || {}).hist;
+      const out = { sym, cik: row.cik, name: (c.profile && c.profile.name) || row.name || sym, q: {}, lab: new Map() };
+      const H = (c.quality || {}).hist, derived = new Set();
       if (H && H.periods && H.v) {
         for (const [k, rows] of Object.entries(H.v)) {
-          const m = new Map();
-          for (const [pi, vals] of rows || []) { const p = H.periods[pi]; if (p && p[2] === 'q' && vals && vals[0] && fin(vals[0][0])) m.set(p[1], +vals[0][0]); }
+          const m = new Map(), fy = [];
+          for (const [pi, vals] of rows || []) {
+            const p = H.periods[pi]; if (!p || !vals || !vals[0] || !fin(vals[0][0])) continue;
+            if (p[3]) out.lab.set(p[1], p[2] === 'fy' ? String(p[3]).replace(/^FY/, 'Q4 FY') : p[3]);      // the company's own quarter names
+            if (p[2] === 'q') m.set(p[1], +vals[0][0]); else if (p[2] === 'fy') fy.push([p[1], +vals[0][0]]);
+          }
+          // a 10-K reports the year, not its fourth quarter: the year less its first three quarters
+          for (const [end, v] of fy) {
+            if (m.has(end)) continue;
+            const e = Date.parse(end + 'T00:00:00Z'), three = [...m.entries()].filter(([q]) => { const d = (e - Date.parse(q + 'T00:00:00Z')) / DAY; return d > 45 && d < 300; });
+            if (three.length !== 3) continue;
+            const q4 = v - three.reduce((a, x) => a + x[1], 0);
+            if (k === 'revenue' && !(q4 > 0)) continue;
+            m.set(end, q4); derived.add(k + '|' + end);
+          }
           out.q[k] = m;
         }
       }
       for (const q of c.quarters || []) {                     // the latest quarters on the page fill the newest ends
         const h = q.headline || {};
-        if (q.end && /^Q/i.test(String(q.label || 'Q'))) for (const k of ['revenue', 'oi', 'ni', 'ocf']) if (fin(h[k])) { out.q[k] = out.q[k] || new Map(); if (!out.q[k].has(q.end)) out.q[k].set(q.end, +h[k]); }
+        if (q.end && q.label && /^Q/i.test(q.label)) out.lab.set(q.end, q.label);
+        if (q.end && /^Q/i.test(String(q.label || 'Q'))) for (const k of ['revenue', 'oi', 'ni', 'ocf']) if (fin(h[k])) { out.q[k] = out.q[k] || new Map(); if (!out.q[k].has(q.end) || derived.has(k + '|' + q.end)) out.q[k].set(q.end, +h[k]); }
       }
       return out;
     })());
@@ -883,6 +897,9 @@
       // quarters of different fiscal calendars: put each company's figure on the nearest common end (within 45 days)
       const G = []; for (const e of ends) if (!G.length || e - G[G.length - 1] > 45 * DAY) G.push(e); else G[G.length - 1] = e;
       if (G.length < 2) throw new Error('Fewer than two quarters on file for that range');
+      // one company: its own fiscal quarter names (Q2 FY27); several: the month each quarter ended
+      const lab = cos.length === 1 ? cos[0].lab : null;
+      out.qlabel = (g) => (lab ? lab.get(iso(g)) || quarterLabel(g) : monthYear(g));
       out.grid = G; out.quarterly = true; out.fmt = figFmt(key); out.unit = key === 'om' || key === 'nm' || key === 'growth' ? '%' : '$';
       out.metric = FIG[key] + (ttm && key !== 'om' && key !== 'nm' && key !== 'growth' ? ', trailing four quarters' : key === 'om' || key === 'nm' ? ' (trailing four quarters)' : '');
       out.series = rows.map(({ C, r }) => ({ key: C.sym, label: C.sym, name: C.name, v: G.map((g) => { const p = r.find(([e]) => Math.abs(e - g) <= 45 * DAY); return p ? p[1] : null; }) }));
@@ -1110,7 +1127,7 @@
     const k = clamp(Math.round(f), 0, V.grid.length - 1);
     ctx.textAlign = 'right'; ctx.fillStyle = alpha(th.text === '#1d1d1b' ? '#1d1d1b' : '#ffffff', opt.theme === 'clean' ? 0.10 : 0.12);
     ctx.font = F(700, portrait ? 120 : 110);
-    if (!V.yearly && style !== 'heat' && !['sankey', 'treemap', 'bubble'].includes(V.kind)) ctx.fillText(V.quarterly ? quarterLabel(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (flat ? (V.kind === 'rank' ? 70 : 10) : 24) * S);
+    if (!V.yearly && style !== 'heat' && !['sankey', 'treemap', 'bubble'].includes(V.kind)) ctx.fillText(V.quarterly ? (V.qlabel || quarterLabel)(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (flat ? (V.kind === 'rank' ? 70 : 10) : 24) * S);
     if (V.kind === 'treemap') { ctx.font = F(800, 64); ctx.fillStyle = th.text; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillText(monthYear(V.grid[k]), W - pad, top - 10 * S); }
     brand(ctx, W, H, S, th, F, portrait);
     ctx.fillStyle = alpha(th.accent, 0.9); ctx.fillRect(0, H - 6 * S, W * clamp(t / tm.D, 0, 1), 6 * S);
@@ -1317,7 +1334,7 @@
     for (const v of niceTicks(lo, hi, 5)) { const y = Y(v); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(V.fmt(v), b.x - 14 * S, y); }
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     const every = Math.max(1, Math.ceil(n / (b.w / (120 * S))));
-    G.forEach((g, i) => { if (i % every === 0 || i === n - 1) { ctx.fillStyle = th.axis; ctx.font = F(500, 20); ctx.fillText(quarterLabel(g), b.x + (i + 0.5) * slot, b.y + b.h + 12 * S); } });
+    G.forEach((g, i) => { if (i % every === 0 && n - 1 - i >= Math.ceil(every * 0.6) || i === n - 1) { ctx.fillStyle = th.axis; ctx.font = F(500, 20); ctx.fillText((V.qlabel || quarterLabel)(g), b.x + (i + 0.5) * slot, b.y + b.h + 12 * S); } });
     for (let i = 0; i < n; i++) {
       const grow = clamp(f - i + 1, 0, 1); if (grow <= 0) continue;
       const e = 1 - Math.pow(1 - grow, 3);

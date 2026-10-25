@@ -269,6 +269,20 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     const tl = S.TEMPLATES.find((t) => t.s.k === 'timing');
     ok(S.parseState(S.serialize(Object.assign(S.parseState(''), tl.s)).slice(7)).yb === '2000', 'the timing address keeps the yearly amount');
   }
+  // a fiscal fourth quarter that only the year reports: the year less its first three quarters, so trailing sums run on
+  {
+    const P = [], V = { revenue: [] };
+    for (let y = 2021; y <= 2024; y++) {
+      const ends = [`${y}-04-30`, `${y}-07-31`, `${y}-10-31`];
+      ends.forEach((e, j) => { V.revenue.push([P.length, [[100 + 10 * (y - 2021) + j, [0, '3m', []]]]]); P.push(['', e, 'q', 'Q' + (j + 1)]); });
+      V.revenue.push([P.length, [[4 * (100 + 10 * (y - 2021)) + 3 + 20, [0, 'fy', []]]]]); P.push(['', `${y + 1}-01-31`, 'fy', 'FY']);
+    }
+    files['data/index.json'].companies.push({ ticker: 'QQF', cik: 7, name: 'Q Four Inc', revenue: 1 });
+    files['data/c/7.json'] = { profile: { name: 'Q Four Inc' }, quality: { hist: { periods: P, v: V } }, quarters: [] };
+    const V2 = await S.build(Object.assign(S.parseState('k=fund'), { t: 'QQF', m: 'revenue', ttm: '1' }));
+    const q4 = 4 * 100 + 3 + 20 - (100 + 101 + 102);
+    ok(V2.grid.length === 13 && Math.abs(V2.series[0].v[0] - (100 + 101 + 102 + q4)) < 1e-9, 'fourth quarters from the year: ' + V2.grid.length + ' trailing sums');
+  }
   // the page loads the studio, the router and the menu know it
   const idx = fs.readFileSync(path.join(__dirname, '..', 'web', 'index.html'), 'utf8'), app = fs.readFileSync(path.join(__dirname, '..', 'web', 'app.js'), 'utf8'), nav = fs.readFileSync(path.join(__dirname, '..', 'web', 'nav.js'), 'utf8');
   ok(idx.includes('<script src="studio.js"></script>') && app.includes('window.FFStudio.render') && nav.includes("'#studio'"), 'the studio is not wired into the page');
