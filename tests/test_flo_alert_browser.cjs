@@ -6,6 +6,7 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const path=require('node:path');
 const script=fs.readFileSync(path.join(__dirname,'../web/flo-alerts.js'),'utf8');
+const timelineScript=fs.readFileSync(path.join(__dirname,'../web/flo-timeline.js'),'utf8');
 let count=0;
 const check=(v,msg)=>{assert.ok(v,msg);count++;};
 class Element {
@@ -48,6 +49,7 @@ const env={
  console,
  module:{exports:{}}
 };
+vm.runInNewContext(timelineScript,env,{filename:'flo-timeline.js'});
 vm.runInNewContext(script,env,{filename:'flo-alerts.js'});
 const Alert=env.module.exports;
 const date=new Date(Date.now()-120000).toISOString();
@@ -81,6 +83,13 @@ const next={schema:1,generated_at:new Date(Date.now()-60000).toISOString(),event
   actions.children[0].click();
   check(opened.length===1&&opened[0].event==='8k:new','click directly asks Flo to explain new SEC event');
   check(opened[0].html.includes('SEC')&&opened[0].html.includes('重述'),'answer includes SEC contextual risk evidence');
+  check(actions.children.length===4,'toast offers cross-signal timeline alongside analysis/inbox/mute');
+  actions.children[3].click();
+  check(opened.length===2&&opened[1].html.includes('研究时间线'),'timeline opens in the same Flo conversation');
+  check(opened[1].html.includes('NVDA')&&opened[1].html.includes('SEC Form')===false,
+    'timeline uses published event evidence without fabricating a new SEC filing');
+  const answer=Alert.report('NVDA 事件时间线',true);
+  check(answer.summary.ticker==='NVDA'&&answer.summary.total>=2,'chat request routes into live timeline context');
   snapshots.push(next);
   await Alert.poll();
   check(react.length===1,'same filing is never animated twice');
