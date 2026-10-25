@@ -348,8 +348,11 @@
       }
       const trend = ctx.trend ? trendBlock(ctx.trend(n.id), n) : '';
       const source = sourceBlock(n, spec.cite, ctx.cik);                    // where the figure was taken from
+      // Ask the existing Spin Sankey Flo to explain the exact selected node,
+      // with the current report period and source, without fabricating value.
+      const flo = !ctx.group ? '<button class="btn" type="button" data-flo-node>Ask Flo · explain this number</button>' : '';
       return `<div class="eyebrow">${ctx.group ? t(ctx.groupName) : t(ctx.company)} · ${t(ctx.label)}</div>
-        <div class="k">${t(n.name)}</div><div class="v">${lines}</div>${source}${trend}${body}
+        <div class="k">${t(n.name)}</div><div class="v">${lines}</div>${source}${trend}${body}${flo}
         <button class="btn" type="button" data-clear>Close note</button>`;
     }
     function select(id) {
@@ -374,6 +377,15 @@
       notes.scrollTop = 0;
       const clear = $('[data-clear]', notes);
       if (clear) clear.addEventListener('click', () => select(null));
+      const floButton = $('[data-flo-node]', notes);
+      if (floButton) floButton.addEventListener('click', () => {
+        if (!window.FFMascot || !window.FFMascot.explain) return;
+        const n = byId.get(id);
+        window.FFMascot.explain({
+          cik: ctx.cik, label: S.dec(n.name), period: ctx.label,
+          docUrl: ctx.docUrl || null
+        });
+      });
     }
     async function draw() {
       await fontsReady();
