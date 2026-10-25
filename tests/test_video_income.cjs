@@ -38,7 +38,7 @@ const common={ k:'snowball', t:'TST', from:'2023-01-06',to:'2025-12-31',
   const overshoot=await Studio.build({...Studio.parseState(''),...common,
     rec:'200',sgoal:'1',sunit:'monthly',ssolve:'lump'});
   assert.equal(overshoot.series[0].initialCash,0,'nonnegative solution when fixed buys exceed goal');
-  const short=Studio.parseState('k=snowball&t=TST&from=2025-04-01&to=2025-10-01&sgoal=100');
+  const short=Studio.parseState('k=snowball&t=TST&from=2025-01-01&to=2025-10-01&sgoal=100');
   await assert.rejects(()=>Studio.build(short),/52 weekly observations/,'cannot infer full-year dividends from short interval');
   assert.equal(Studio.parseState(Studio.serialize({...Studio.parseState(''),...common,sgoal:'1000',sunit:'monthly',ssolve:'rec'}).slice(7)).sgoal,'1000');
   const mg={
