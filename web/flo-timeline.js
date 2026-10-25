@@ -129,6 +129,25 @@ function render(events,t,zh=false,options={}){
    mood:selected.some(e=>e.kind==='8k'&&e.priority==='high')?'think':'talk',
    intents:['event-timeline'],summary:stats};
 }
-root.FFFloTimeline={safeURL,symbols,matches,tickerFromQuery,precision,eventNote,collect,clusters,summarize,render};
+function watchBrief(events,watch=[],zh=false,opts={}){
+ const unique=[...new Set((Array.isArray(watch)?watch:[]).map(x=>String(x||'').toUpperCase()).filter(tickerOK))].slice(0,20);
+ const summary=unique.map(t=>summarize(events,t,opts));
+ let html='<section class="flo-event-brief"><b>'+escape(zh?'Flo · 自选股事件研究摘要':'Flo · Watched tickers research brief')+'</b>'+
+ '<p class="flo-source">'+escape(zh?'仅基于网站最近已发布的有限扫描快照，非完整新闻监控。':'Bounded site-published observations, not an exhaustive live market monitor.')+'</p>';
+ if(!summary.length)html+='<p>'+escape(zh?'请先在提醒收件箱设置关注股票，例如 OKLO、IREN、CRWV。':'Set your ticker watchlist in the alert inbox first, e.g. OKLO, IREN, CRWV.')+'</p>';
+ for(const x of summary){
+   html+='<div class="flo-brief-ticker"><b>'+escape(x.ticker)+'</b> · '+
+    escape(x.total+' '+(zh?'条观察记录':'observations'))+
+    '<p>'+kinds.filter(k=>x.counts[k]).map(k=>escape(k.toUpperCase()+': '+x.counts[k])).join(' · ')+
+    (x.relatedWindows?' · '+escape(zh?'跨信号时间接近':'Cross-signal proximity')+': '+x.relatedWindows:'')+'</p>';
+   if(x.latest)html+='<small>'+escape(zh?'最新观察时间：':'Latest observation: ')+escape(x.latest.slice(0,16))+' UTC</small>';
+   else html+='<small>'+escape(zh?'没有匹配数据，不代表没有申报。':'No match; not proof of no filings.')+'</small>';
+   html+='</div>';
+ }
+ html+='<p class="flo-timeline-note">'+escape(zh?'时间接近不是因果关系；13F 披露存在滞后，股价只包含已发布的日线价格。':
+   'Time proximity is not causality. 13F is delayed; prices in this feed are published daily closes only.')+'</p></section>';
+ return {html,links:[],facts:summary.map(x=>x.ticker+' '+x.total+' events'),mood:'think',intents:['watchlist-brief'],summary};
+}
+root.FFFloTimeline={safeURL,symbols,matches,tickerFromQuery,precision,eventNote,collect,clusters,summarize,render,watchBrief};
 if(typeof module!=='undefined')module.exports=root.FFFloTimeline;
 })(typeof globalThis!=='undefined'?globalThis:this);
