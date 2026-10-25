@@ -114,11 +114,8 @@ def company(root, c, ctx):
     price0, as_of = float(b['c'][-1]), b['t'][-1]
     out = {'cik': c['cik'], 'ticker': c['t'], 'name': c.get('name'), 'sector': c.get('sector'), 'as_of': as_of, 'price': sig(price0, 6)}
     # the assets simulated together: the stock, the market, its sector ETF, its two most correlated peers
-    peers = []
     try:
-        peers = AN.correlated_peers(b['t'], b['ac'], ctx['universe_ac'], window=504, top=8, max_lag=4, matrix=ctx.get('wmatrix'))
-    except TypeError:
-        peers = AN.correlated_peers(b['t'], b['ac'], ctx['universe_ac'], window=504, top=8, max_lag=4)
+        peers = AN.correlated_peers(b['t'], b['ac'], ctx['universe_an'], window=504, top=8, max_lag=4, wm=ctx.get('wmatrix'), target_ticker=c['t'])
     except Exception:                                                   # noqa: BLE001
         peers = []
     peers = [p for p in peers or [] if p.get('ticker') not in P.ETFS]
@@ -165,13 +162,14 @@ def company(root, c, ctx):
         out['paths'] = pp
     # analogs and correlated-asset historical simulation
     an = {'peers': peers}
+    U = ctx['universe_an']
+    leaders = [p for p in peers if p.get('lead_p') is not None and p['lead_p'] < 0.05]
     for key, fn in (('self', lambda: AN.self_analogs(b['t'], b['ac'], horizon=P.HORIZON)),
-                    ('pooled', lambda: AN.pooled_analogs((b['t'], b['ac']), ctx['universe_ac'], horizon=P.HORIZON, lib=ctx.get('library'))
+                    ('pooled', lambda: AN.pooled_analogs((b['t'], b['ac']), U, horizon=P.HORIZON, lib=ctx.get('library'))
                      if ctx.get('library') is not None else None),
-                    ('peer', lambda: AN.peer_conditional((b['t'], b['ac']), [p['ticker'] for p in peers[:5]], ctx['universe_ac'], horizon=P.HORIZON)
+                    ('peer', lambda: AN.peer_conditional((b['t'], b['ac']), [p['ticker'] for p in peers[:5]], U, horizon=P.HORIZON, target_ticker=c['t'])
                      if peers else None),
-                    ('leadlag', lambda: AN.lead_lag_forecast((b['t'], b['ac']), [p for p in peers if (p.get('lead_p') or 1) < 0.05],
-                                                             ctx['universe_ac'], horizon=21) if peers else None)):
+                    ('leadlag', lambda: AN.lead_lag_forecast((b['t'], b['ac']), leaders, U, horizon=21, target_ticker=c['t']) if leaders else None)):
         try:
             an[key] = slim_analog(fn(), price0)
         except Exception as exc:                                        # noqa: BLE001
@@ -196,21 +194,25 @@ def company(root, c, ctx):
 
 
 def slim_analog(r, price0):
-    """An analogs.py result trimmed for publication: the fan every STEP days as prices, the end quantiles as prices,
-    the eight closest neighbors with their paths every STEP days."""
+    """An analogs.py result trimmed for publication: the fan every STEP days and the end quantiles as prices
+    (analogs.py works in cumulative log returns: q05 … q95), and the eight closest neighbors with their paths every
+    STEP days (still log returns)."""
     if not r:
         return None
-    out = {k: r[k] for k in ('p_up', 'similarity', 'beta', 'r2_in', 'n_leaders', 'horizon') if k in r}
-    if r.get('q'):
-        q = r['q']
-        idx = list(range(STEP - 1, len(q), STEP))
-        if idx and idx[-1] != len(q) - 1:
-            idx.append(len(q) - 1)
-        out['q'] = [[price0 * math.exp(x) for x in q[i]] for i in idx]
-    for k in ('end', 'q_end'):
-        if r.get(k):
-            e = r[k]
-            out['end'] = {kk: price0 * math.exp(v) for kk, v in e.items()} if isinstance(e, dict) else [price0 * math.exp(v) for v in e]
+    keys = ('q05', 'q10', 'q25', 'q50', 'q75', 'q90', 'q95')
+    out = {k: r[k] for k in ('p_up', 'similarity', 'mean', 'k', 'r2_in', 'n_leaders', 'point', 'n_train', 'as_of') if k in r}
+    q = r.get('q')
+    if isinstance(q, dict) and q.get('q50'):
+        n = len(q['q50'])
+        idx = list(range(STEP - 1, n, STEP))
+        if idx and idx[-1] != n - 1:
+            idx.append(n - 1)
+        out['q'] = [[price0 * math.exp(q[k][i]) for k in keys] for i in idx]
+    e = r.get('end') or r.get('q_end')
+    if isinstance(e, dict):
+        out['end'] = {'p' + k[1:]: price0 * math.exp(v) for k, v in e.items() if v is not None}
+    if r.get('beta') is not None:
+        out['leaders'] = r['beta'] if isinstance(r['beta'], (dict, list)) else None
     nb = []
     for x in (r.get('neighbors') or [])[:8]:
         path = x.get('path') or []
@@ -266,14 +268,14 @@ def build(root, universe_path, people=None, limit=0, workers=None):
     for t, b in CTX['bars'].items():
         uni[t] = (b['t'], b['ac'])
     CTX['universe_ac'] = uni
+    CTX['universe_an'] = AN.prepare_universe(uni)
     last = max((v[0][-1] for v in uni.values()), default=None)
     try:
-        CTX['wmatrix'] = AN.weekly_matrix(uni, last, 110)
+        CTX['wmatrix'] = AN.weekly_matrix(CTX['universe_an'], last, 110)
     except Exception:                                                   # noqa: BLE001
         CTX['wmatrix'] = None
-    try:
-        end = (dt.date.fromisoformat(last) - dt.timedelta(days=100)).isoformat() if last else None
-        CTX['library'] = AN.build_library(uni, 60, P.HORIZON, 5, end)
+    try:                                     # every window whose 63 days ahead are known by the last bar
+        CTX['library'] = AN.build_library(CTX['universe_an'], 60, P.HORIZON, 5, last)
     except Exception:                                                   # noqa: BLE001
         CTX['library'] = None
     status = {'built_at': now(), 'companies': 0, 'failed': 0, 'errors': []}
@@ -423,7 +425,9 @@ def scorecards(root, comps, uni):
         try:
             last = max(v[0][-1] for v in uni.values())
             ods = [(dt.date.fromisoformat(last) - dt.timedelta(days=int(d))).isoformat() for d in range(182, 365 * 5, 182)]
-            out['analogs'][meth] = AN.evaluate_universe(meth, uni, [c['t'] for c in sample], sorted(ods), horizon=P.HORIZON)
+            r = AN.evaluate_universe(meth, CTX.get('universe_an') or uni, [c['t'] for c in sample], sorted(ods), horizon=P.HORIZON,
+                                     max_tickers=SCORE_TICKERS, max_origins=10)
+            out['analogs'][meth] = {k: v for k, v in (r or {}).items() if k not in ('rows', 'pit')}
         except Exception as exc:                                        # noqa: BLE001
             out['analogs'][meth] = {'error': str(exc)[:160]}
     return out
