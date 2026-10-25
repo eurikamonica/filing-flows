@@ -1,0 +1,1028 @@
+{
+ "_about": "The Fair value appendix's plain-language guide (fairvalue-view.js loads it): valuation from zero, start-up valuation, every abbreviation in full with a plain explanation, and for each method what it is, why it works, which companies it fits and what to watch; what each stage means and why it weights the methods as it does. Static text: the per-company reasons come from app/valuation_methods.py (appendix 'fit').",
+ "version": 1,
+ "primer": {
+  "title": "Valuation from zero",
+  "paras": [
+   "A share is a small slice of ownership in a company. Its price is what buyers and sellers agree on today; its value is an estimate of what that slice is really worth. Valuation means estimating the value from the company's own numbers and comparing it with the price. When the estimate is well above the price the share looks cheap, when it is below it looks expensive — always within a wide margin of error.",
+   "The core idea: a business is worth the cash it will hand to its owners over its whole life. Cash later is worth less than cash now, because money in hand can be invested, prices rise, and the future may never arrive. So future cash is shrunk, or “discounted”, at a rate that grows with the risk. That rate is the cost of capital: the yearly return investors demand for putting money into this company instead of somewhere safer.",
+   "The methods fall into four families. Cash-flow (intrinsic) methods forecast the cash and discount it: DCF, owner earnings, residual income, dividend models. Relative methods price the company like similar companies through multiples such as P/E or EV/Sales. Asset methods ask what would be left if the business stopped: net cash, tangible book, liquidation value. Probability methods run thousands of scenarios or weigh success against failure: Monte Carlo, regime switching, survival weighting. Reference figures — analysts' price targets, prediction markets, the trading range — are shown for comparison and are not valuations.",
+   "No single method is right. Each rests on assumptions and has blind spots, so the page shows them side by side (the football field), and the spread between them is information in itself. Which methods count most depends on the company's stage: a cash-burning start-up, a mature dividend payer and a bank need different tools. The weights are fixed in the code before any result is seen, so no method is chosen because it gives a pleasing answer.",
+   "From the whole company to one share: methods that value the entire business give the enterprise value (EV), the value of the operations to everyone who funded them. Subtract debt and other claims, add cash, and what is left is the equity value — the owners' part — which is divided by the diluted share count to give a value per share.",
+   "How to read each method below: “What it is” explains it from the start; “Why it works” gives the reasoning behind it; “Fits” says which companies it suits; “Watch out” lists its blind spots; “Why it applies here” uses this company's own figures. Then come the formula, the same formula with this company's numbers in it, the inputs with their sources (usually the company's own SEC filings) and the assumptions with their basis. Every abbreviation is written out in full under “Terms”, and all of them are in the glossary."
+  ]
+ },
+ "startups": {
+  "title": "Valuing start-ups and pre-profit companies",
+  "paras": [
+   "Young companies break the usual tools. With no profit, a P/E ratio has nothing to divide by. A DCF of a loss-making business mostly restates the forecaster's hopes, because almost all of its value lies in a distant future its short history cannot vouch for. Many start-ups fail outright, and those that succeed usually raise more money first, which splits the ownership into more pieces (dilution). A start-up valuation has to handle all three: the path to profit, the chance of failure and the dilution along the way.",
+   "Private investors use a handful of standard approaches. The venture capital (VC) method estimates what the company could be worth in about five years and discounts that back at a very high target return; commonly cited ranges run from about 50–70% a year at the start-up stage to 25–35% just before a public listing, because the rate also has to pay for the many investments that fail. The First Chicago method weighs a success, a middling and a failure scenario by their probabilities. The Berkus and scorecard methods, used for pre-revenue seed rounds, score the idea, the team, the prototype and the market by judgment. Option-pricing methods divide the value among share classes when the funding structure is complex.",
+   "What this site uses, and why. It works only from public filings and prices, so it uses the methods those can feed: net cash (floor) and the market-implied value of the pipeline for pre-revenue companies; the path-to-margin DCF with dilution; the exit-multiple method, which is the VC method with public-market inputs; the survival-weighted value, a two-scenario First Chicago method with the failure probability taken from distress models or the cash runway; and EV/Sales against the Rule of 40, which prices growth plus cash generation across all listed companies. Berkus and scorecard are not used: they need judgments about the team and the product that no filing contains.",
+   "The numbers to watch at this stage: the burn rate (cash used per year), the cash runway (how many years the cash lasts at that rate), the dilution needed to reach break-even, the Rule of 40 score, and how much of the market value is a bet on the future rather than on the business as it is today."
+  ],
+  "classic": [
+   [
+    "Venture capital (VC) method",
+    "Exit value in about five years ÷ (1 + target return)^years. The target return is very high because it also pays for the investments that fail.",
+    "Used as the exit-multiple (venture) method, with peer margins and P/E from public markets and failure handled separately by survival weighting."
+   ],
+   [
+    "First Chicago method",
+    "Probability-weighted scenarios: success, middling, failure.",
+    "Used in reduced form as the survival-weighted value: going concern vs liquidation, with a stated failure probability."
+   ],
+   [
+    "Berkus method",
+    "Adds a fixed amount for each risk an early company has reduced: a sound idea, a prototype, a quality team, strategic relationships, a product rollout or sales.",
+    "Not used: it needs judgments about the team and the product that filings do not contain."
+   ],
+   [
+    "Scorecard method",
+    "Starts from the average pre-money value of similar funded start-ups and adjusts it by weighted scores for team, market size, product, competition and so on.",
+    "Not used: needs private-round data and qualitative scores."
+   ],
+   [
+    "Option pricing (OPM)",
+    "Treats each share class as an option on the company's value to split value among preferred and common shares.",
+    "Not used: listed companies here have one common class whose price is observed."
+   ],
+   [
+    "Discounted cash flow (DCF) with a path to profit",
+    "Forecasts the losses, the turn to profit and the cash after it, and adds the dilution from funding the losses.",
+    "Used: path-to-margin DCF, dilution-adjusted."
+   ],
+   [
+    "Revenue multiples",
+    "Prices the company on its sales like similar companies, since there are no profits to price.",
+    "Used: EV/Sales vs peers and EV/Sales vs Rule of 40."
+   ]
+  ]
+ },
+ "stages": {
+  "pre_revenue": {
+   "label": "Pre-revenue",
+   "means": "Almost no revenue yet (under $25 million over four quarters) and an operating loss: a drug in trials, a product not yet launched. The value is a pipeline that no filing can price.",
+   "why": "With nothing to forecast from, the weight goes to what can be measured: the cash on hand (net cash, 50%) and the assets (tangible book, 30%), plus the survival-weighted value (20%), which accounts for the chance the company runs out of money. The price above these floors is what the market pays for the pipeline."
+  },
+  "pre_profit": {
+   "label": "Pre-profit / high growth",
+   "means": "An operating loss, but revenue growing 10% a year or more: a young company scaling up.",
+   "why": "The value depends on whether and when margins turn positive and how much the owners are diluted before then, so the path-to-margin DCF with dilution (25%), the survival-weighted value (20%) and the venture exit-multiple method (20%) lead, checked by how the market prices growth across all companies (Rule of 40, 15%) and by peers' sales multiples (20%)."
+  },
+  "high_growth": {
+   "label": "High growth",
+   "means": "Profitable, with revenue growing 20% a year or more.",
+   "why": "Profits make a DCF possible, but its long-range growth is fragile, so the company's own DCF (25%) is paired with an outside view of what similar companies actually achieved (25%), the Rule of 40 fit (15%) and peers' multiples of sales (15%) and earnings (20%)."
+  },
+  "growth": {
+   "label": "Growth",
+   "means": "Profitable, with revenue growing 8–20% a year.",
+   "why": "Growth is steady enough for a cash-flow forecast to carry the most weight (DCF 35%), tempered by base rates (25%) and by what peers trade at on earnings (P/E 25%) and on EBITDA (15%)."
+  },
+  "mature": {
+   "label": "Mature",
+   "means": "Profitable, with revenue growing 0–8% a year: an established business.",
+   "why": "Its value is mostly cash generated now, so cash-flow methods (DCF 25%, owner earnings 20%), the cash actually returned to shareholders (15%) and peer multiples (P/E 25%, EV/EBITDA 15%) share the weight."
+  },
+  "cyclical": {
+   "label": "Cyclical",
+   "means": "Profits that swing with the economy or commodity prices — mining, energy, chemicals, metals, autos, semiconductors, airlines, homebuilders, shipping — or a quarterly operating margin that varies by more than 8 points.",
+   "why": "This year's profit may be a peak or a trough, so the methods use a mid-cycle margin — the median since 2020 — instead: normalized P/E (35%), normalized DCF (35%) and EV/EBITDA against peers (30%)."
+  },
+  "decline": {
+   "label": "Decline / turnaround",
+   "means": "An operating loss with little growth, or revenue falling over one year and over three years.",
+   "why": "The question becomes what is left: tangible book (30%) as an asset floor, sales against peers (25%) and survival (20%), with smaller weights on the DCF (10%) and owner earnings (15%) in case a turnaround works."
+  },
+  "financial": {
+   "label": "Financial (bank / insurer)",
+   "means": "A bank or an insurer. Its raw material is money: deposits, loans, premiums and investments.",
+   "why": "A bank's cash flows cannot be separated from its financing, so its tools are built on book value and the return on it: residual income, price-to-book against return on equity across peers, the justified multiple from the Gordon growth model, and dividends."
+  },
+  "reit": {
+   "label": "REIT",
+   "means": "A real estate investment trust, which must pay out at least 90% of its taxable income as dividends.",
+   "why": "Depreciation on buildings understates a REIT's earnings, so funds from operations (FFO) is the standard measure: P/FFO against other REITs (55%), the dividend model (20%) and residual income on book value (25%)."
+  }
+ },
+ "glossary": [
+  {
+   "term": "Price",
+   "full": "Share price",
+   "plain": "What one share last traded for on the stock exchange."
+  },
+  {
+   "term": "Market value",
+   "full": "Market capitalization",
+   "plain": "Share price × the number of shares: what the market says the whole company's equity is worth today."
+  },
+  {
+   "term": "EV",
+   "full": "Enterprise value",
+   "plain": "The value of the business itself, to everyone who funded it: market value + debt + other claims − cash. Two companies with the same operations but different debt have different market values but similar EVs.",
+   "abbr": [
+    "EV"
+   ]
+  },
+  {
+   "term": "Equity value",
+   "full": "Equity value",
+   "plain": "The owners' share of the business: EV − debt − other claims + cash. Divided by shares, it is the value per share."
+  },
+  {
+   "term": "Net debt",
+   "full": "Net debt",
+   "plain": "Debt minus cash (plus other claims here). Negative net debt means the company holds more cash than it owes: net cash."
+  },
+  {
+   "term": "Net cash",
+   "full": "Net cash",
+   "plain": "Cash and investments minus debt and other claims: money the company could hand back if it stopped tomorrow."
+  },
+  {
+   "term": "Other claims",
+   "full": "Noncontrolling (minority) interests and preferred stock",
+   "plain": "Parts of the company owned by someone other than its common shareholders — outside owners of subsidiaries, holders of preferred shares — which must be subtracted before the common shares' value."
+  },
+  {
+   "term": "Diluted shares",
+   "full": "Diluted share count",
+   "plain": "Shares outstanding plus those that options, restricted stock and convertible securities would add. Using it avoids overstating the value per share."
+  },
+  {
+   "term": "Dilution",
+   "full": "Dilution",
+   "plain": "When a company issues new shares, each existing share owns a smaller slice. Loss-making companies often fund themselves this way."
+  },
+  {
+   "term": "Revenue",
+   "full": "Revenue (sales)",
+   "plain": "Money customers paid for the company's products and services in the period, before any costs."
+  },
+  {
+   "term": "Operating income",
+   "full": "Operating income (EBIT)",
+   "plain": "Revenue minus the costs of running the business (production, staff, research, marketing, depreciation), before interest and taxes. It shows whether the core business makes money."
+  },
+  {
+   "term": "EBIT",
+   "full": "Earnings before interest and taxes",
+   "plain": "Close to operating income: profit from the business before the cost of its debt and before tax.",
+   "abbr": [
+    "EBIT"
+   ]
+  },
+  {
+   "term": "EBITDA",
+   "full": "Earnings before interest, taxes, depreciation and amortization",
+   "plain": "Operating profit with the non-cash charges for wear and tear (depreciation) and for intangible assets (amortization) added back: a rough measure of cash profit before financing and reinvestment.",
+   "abbr": [
+    "EBITDA"
+   ]
+  },
+  {
+   "term": "D&A",
+   "full": "Depreciation and amortization",
+   "plain": "The accounting charge that spreads the cost of equipment, buildings (depreciation) and intangible assets such as software or patents (amortization) over the years they are used. It is an expense, but no cash leaves in that year.",
+   "abbr": [
+    "D&A"
+   ]
+  },
+  {
+   "term": "Net income",
+   "full": "Net income (net profit, earnings)",
+   "plain": "What is left of revenue after every cost, interest and tax: the profit that belongs to shareholders."
+  },
+  {
+   "term": "EPS",
+   "full": "Earnings per share",
+   "plain": "Net income ÷ diluted shares: the profit belonging to one share.",
+   "abbr": [
+    "EPS"
+   ]
+  },
+  {
+   "term": "Margin",
+   "full": "Profit margin",
+   "plain": "A profit as a share of revenue. An operating margin of 20% means 20 cents of operating profit on each dollar of sales."
+  },
+  {
+   "term": "t",
+   "full": "Tax rate",
+   "plain": "Income tax as a share of pretax income. Here, the company's own rate when it is between 0 and 35%, else the US federal rate of 21%.",
+   "abbr": [
+    "(1 − t)"
+   ]
+  },
+  {
+   "term": "SBC",
+   "full": "Stock-based compensation",
+   "plain": "Pay given to employees in shares or options instead of cash. It costs shareholders through dilution even though no cash is paid.",
+   "abbr": [
+    "SBC"
+   ]
+  },
+  {
+   "term": "OCF",
+   "full": "Operating cash flow",
+   "plain": "Cash the business actually brought in from its operations in the period, from the cash-flow statement.",
+   "abbr": [
+    "OCF"
+   ]
+  },
+  {
+   "term": "Capex",
+   "full": "Capital expenditures",
+   "plain": "Cash spent on long-lived assets: factories, equipment, data centers, software. It keeps the business running and growing.",
+   "abbr": [
+    "capex",
+    "Capex"
+   ]
+  },
+  {
+   "term": "ΔWC",
+   "full": "Change in working capital",
+   "plain": "Cash tied up in, or released from, the day-to-day cycle of inventory, money owed by customers (receivables) and bills owed to suppliers (payables). A growing company usually ties up more.",
+   "abbr": [
+    "ΔWC"
+   ]
+  },
+  {
+   "term": "FCF",
+   "full": "Free cash flow",
+   "plain": "Cash left after running the business and paying for the investment it needs (operating cash minus capex). It is what could go to owners and lenders.",
+   "abbr": [
+    "FCF"
+   ]
+  },
+  {
+   "term": "FCFF",
+   "full": "Free cash flow to the firm",
+   "plain": "Free cash flow before any payments to lenders: EBIT × (1 − tax rate) + D&A − capex − ΔWC. It belongs to everyone who funded the company, so it is discounted at the WACC to give EV.",
+   "abbr": [
+    "FCFF"
+   ]
+  },
+  {
+   "term": "NOPAT",
+   "full": "Net operating profit after tax",
+   "plain": "Operating profit after tax, as if the company had no debt: EBIT × (1 − tax rate).",
+   "abbr": [
+    "NOPAT",
+    "NOPAT₆"
+   ]
+  },
+  {
+   "term": "Owner earnings",
+   "full": "Owner earnings",
+   "plain": "Net income + D&A − capex: roughly the cash an owner could take out each year without shrinking the business. A measure described by Warren Buffett."
+  },
+  {
+   "term": "Burn rate",
+   "full": "Cash burn rate",
+   "plain": "How much cash a loss-making company uses per year (negative free cash flow)."
+  },
+  {
+   "term": "Runway",
+   "full": "Cash runway",
+   "plain": "How many years the cash would last at the current burn rate: cash ÷ yearly cash burn."
+  },
+  {
+   "term": "Book value",
+   "full": "Book value (shareholders' equity)",
+   "plain": "Assets minus liabilities on the balance sheet: the money shareholders put in plus the profits the company kept. Recorded mostly at historical cost, not market prices."
+  },
+  {
+   "term": "TBV",
+   "full": "Tangible book value",
+   "plain": "Book value minus goodwill and other intangible assets: the part of the shareholders' money that sits in physical and financial assets that could be sold.",
+   "abbr": [
+    "TBV"
+   ]
+  },
+  {
+   "term": "Goodwill",
+   "full": "Goodwill",
+   "plain": "The premium a company paid over the book value of businesses it bought. It cannot be sold on its own."
+  },
+  {
+   "term": "Intangibles",
+   "full": "Intangible assets",
+   "plain": "Non-physical assets such as patents, brands, customer lists and software that a company bought or recorded on its balance sheet."
+  },
+  {
+   "term": "Liquidation value",
+   "full": "Liquidation value",
+   "plain": "What the assets would fetch in a forced sale if the company closed. Here, tangible book × 0.8."
+  },
+  {
+   "term": "Going concern",
+   "full": "Going-concern value",
+   "plain": "The value of the company assuming it keeps operating, as opposed to being wound up."
+  },
+  {
+   "term": "ROE",
+   "full": "Return on equity",
+   "plain": "Net income ÷ shareholders' equity: how much profit the company earns on each dollar of the owners' money.",
+   "abbr": [
+    "ROE",
+    "ROEₜ"
+   ]
+  },
+  {
+   "term": "ROTCE",
+   "full": "Return on tangible common equity",
+   "plain": "Net income ÷ tangible book value: ROE without goodwill and intangibles. The standard profitability measure for banks.",
+   "abbr": [
+    "ROTCE"
+   ]
+  },
+  {
+   "term": "ROIC",
+   "full": "Return on invested capital",
+   "plain": "NOPAT ÷ the capital invested in the business (debt + equity − cash). It shows how much each dollar put into the business earns; growth only adds value when ROIC is above the WACC.",
+   "abbr": [
+    "ROIC"
+   ]
+  },
+  {
+   "term": "Discounting",
+   "full": "Discounting (present value)",
+   "plain": "Converting future cash into today's money: cash in n years ÷ (1 + rate)^n. At 10% a year, $110 next year is worth $100 today."
+  },
+  {
+   "term": "WACC",
+   "full": "Weighted average cost of capital",
+   "plain": "The return the company must earn to satisfy all its funders: the cost of equity and the after-tax cost of debt, weighted by how much of each it uses (at market values). It is the discount rate for cash flows that belong to the whole firm.",
+   "abbr": [
+    "WACC"
+   ]
+  },
+  {
+   "term": "kₑ",
+   "full": "Cost of equity",
+   "plain": "The yearly return shareholders demand for owning this stock, given its risk. Estimated here with CAPM.",
+   "abbr": [
+    "kₑ"
+   ]
+  },
+  {
+   "term": "k_d",
+   "full": "Cost of debt",
+   "plain": "The interest rate the company pays on its borrowing. Interest is tax-deductible, so its after-tax cost is k_d × (1 − tax rate).",
+   "abbr": [
+    "k_d"
+   ]
+  },
+  {
+   "term": "wₑ, w_d",
+   "full": "Weights of equity and debt",
+   "plain": "The shares of equity and debt in the company's funding, at market values; they weight the two costs in the WACC.",
+   "abbr": [
+    "wₑ",
+    "w_d"
+   ]
+  },
+  {
+   "term": "CAPM",
+   "full": "Capital asset pricing model",
+   "plain": "The standard formula for the cost of equity: risk-free rate + beta × equity risk premium. Investors are paid only for the risk they cannot diversify away, which beta measures.",
+   "abbr": [
+    "CAPM"
+   ]
+  },
+  {
+   "term": "r_f",
+   "full": "Risk-free rate",
+   "plain": "The return on an investment with (almost) no risk of loss; here the 10-year US Treasury yield.",
+   "abbr": [
+    "r_f"
+   ]
+  },
+  {
+   "term": "ERP",
+   "full": "Equity risk premium",
+   "plain": "The extra yearly return investors demand for owning stocks instead of Treasuries. A fixed long-run assumption here.",
+   "abbr": [
+    "ERP"
+   ]
+  },
+  {
+   "term": "β",
+   "full": "Beta",
+   "plain": "How much a stock tends to move when the market moves. A beta of 1.5 means it has typically moved 1.5% for each 1% of the market (here the S&P 500 ETF, SPY), measured on weekly returns.",
+   "abbr": [
+    "β"
+   ]
+  },
+  {
+   "term": "Blume adjustment",
+   "full": "Blume-adjusted beta",
+   "plain": "Measured betas drift toward 1 over time, so the estimate is pulled two-thirds of the way to it: 0.67 × measured beta + 0.33. Named after Marshall Blume, who documented the drift."
+  },
+  {
+   "term": "R²",
+   "full": "Coefficient of determination (R-squared)",
+   "plain": "How much of one thing's variation a fitted line explains, from 0 (nothing) to 1 (everything). A beta with a low R² is a noisy estimate.",
+   "abbr": [
+    "R²",
+    "r²"
+   ]
+  },
+  {
+   "term": "DCF",
+   "full": "Discounted cash flow",
+   "plain": "Forecast the cash a business will produce and discount it back to today. The basic method of intrinsic valuation.",
+   "abbr": [
+    "DCF"
+   ]
+  },
+  {
+   "term": "TV",
+   "full": "Terminal value",
+   "plain": "In a DCF, the value of all the years after the explicit forecast (here year 5), summarized in one figure that assumes steady growth forever. It is often most of the total value.",
+   "abbr": [
+    "TV"
+   ]
+  },
+  {
+   "term": "g",
+   "full": "Growth rate (terminal or sustainable growth)",
+   "plain": "The yearly rate at which cash flows are assumed to grow forever after the forecast. It must stay below the economy's long-run growth and below the discount rate.",
+   "abbr": [
+    "(kₑ − g)",
+    "(WACC − g)",
+    "(1 + g)",
+    "(ROE − g)",
+    "(ROTCE − g)"
+   ]
+  },
+  {
+   "term": "Gordon growth model",
+   "full": "Gordon growth model",
+   "plain": "The value of a cash flow that grows forever at rate g, discounted at rate k: next year's cash ÷ (k − g). Named after the economist Myron Gordon; it underlies terminal values, the dividend discount model and justified multiples."
+  },
+  {
+   "term": "CAGR",
+   "full": "Compound annual growth rate",
+   "plain": "The steady yearly growth rate that would take a figure from its starting value to its ending value over a period.",
+   "abbr": [
+    "CAGR"
+   ]
+  },
+  {
+   "term": "Multiple",
+   "full": "Valuation multiple",
+   "plain": "A price divided by a measure of the business — earnings, sales, book. Comparing multiples across similar companies is relative valuation."
+  },
+  {
+   "term": "P/E",
+   "full": "Price-to-earnings ratio",
+   "plain": "Share price ÷ earnings per share: how many years of today's profit the price pays for.",
+   "abbr": [
+    "P/E"
+   ]
+  },
+  {
+   "term": "EV/EBITDA",
+   "full": "Enterprise value to EBITDA",
+   "plain": "Enterprise value ÷ EBITDA. Compares companies regardless of how much debt they carry or how they depreciate assets.",
+   "abbr": [
+    "EV/EBITDA"
+   ]
+  },
+  {
+   "term": "EV/Sales",
+   "full": "Enterprise value to sales",
+   "plain": "Enterprise value ÷ revenue. Usable even when there is no profit.",
+   "abbr": [
+    "EV/Sales"
+   ]
+  },
+  {
+   "term": "P/B",
+   "full": "Price-to-book ratio",
+   "plain": "Market value ÷ book value. Above 1, investors expect the company to earn more than investors demand on its equity.",
+   "abbr": [
+    "P/B"
+   ]
+  },
+  {
+   "term": "P/TBV",
+   "full": "Price to tangible book value",
+   "plain": "Market value ÷ tangible book value. The standard multiple for banks.",
+   "abbr": [
+    "P/TBV"
+   ]
+  },
+  {
+   "term": "FFO",
+   "full": "Funds from operations",
+   "plain": "A REIT's net income plus real-estate depreciation minus gains on property sales, as defined by Nareit: closer to its recurring cash earnings than net income.",
+   "abbr": [
+    "FFO"
+   ]
+  },
+  {
+   "term": "P/FFO",
+   "full": "Price to funds from operations",
+   "plain": "Market value ÷ FFO: the REIT equivalent of a P/E.",
+   "abbr": [
+    "P/FFO"
+   ]
+  },
+  {
+   "term": "DPS",
+   "full": "Dividends per share",
+   "plain": "The cash dividend paid on one share over a year.",
+   "abbr": [
+    "DPS"
+   ]
+  },
+  {
+   "term": "Payout ratio",
+   "full": "Dividend payout ratio",
+   "plain": "Dividends ÷ net income: the share of profit paid out. What is kept (1 − payout) funds growth."
+  },
+  {
+   "term": "DDM",
+   "full": "Dividend discount model",
+   "plain": "Values a share as the discounted stream of its future dividends; with steady growth it is DPS × (1 + g) ÷ (kₑ − g).",
+   "abbr": [
+    "DDM"
+   ]
+  },
+  {
+   "term": "Buybacks",
+   "full": "Share repurchases",
+   "plain": "Cash a company spends buying back its own shares, which raises each remaining share's slice of the company."
+  },
+  {
+   "term": "Shareholder yield",
+   "full": "Shareholder yield",
+   "plain": "Dividends plus buybacks over a year, as a share of market value: the cash returned to owners."
+  },
+  {
+   "term": "Residual income",
+   "full": "Residual income (economic profit)",
+   "plain": "Profit above the return shareholders require on their capital: net income − cost of equity × book value. Value is created only when it is positive."
+  },
+  {
+   "term": "PVGO",
+   "full": "Present value of growth opportunities",
+   "plain": "The part of the price paid for future growth: market value minus what today's earnings would be worth if they never grew (earnings ÷ cost of equity).",
+   "abbr": [
+    "PVGO"
+   ]
+  },
+  {
+   "term": "SOTP",
+   "full": "Sum of the parts",
+   "plain": "Valuing each business segment separately and adding them up, for companies whose divisions deserve different multiples.",
+   "abbr": [
+    "SOTP"
+   ]
+  },
+  {
+   "term": "Rule of 40",
+   "full": "Rule of 40",
+   "plain": "A rule of thumb from growth investing: revenue growth % + free-cash-flow margin % should be at least 40. It lets fast growth make up for losses and vice versa."
+  },
+  {
+   "term": "Peer group",
+   "full": "Peer group (SIC industry)",
+   "plain": "The similar companies a multiple is taken from: the narrowest SIC industry group with at least six covered companies."
+  },
+  {
+   "term": "SIC",
+   "full": "Standard Industrial Classification",
+   "plain": "The US government's four-digit industry codes; the SEC assigns one to every filer (for example 7372, prepackaged software).",
+   "abbr": [
+    "SIC"
+   ]
+  },
+  {
+   "term": "Median",
+   "full": "Median",
+   "plain": "The middle value when numbers are sorted: half are above it, half below. Less swayed by extremes than an average."
+  },
+  {
+   "term": "Quartiles",
+   "full": "Quartiles (middle half)",
+   "plain": "The 25th and 75th percentiles; between them lies the middle half of the peers."
+  },
+  {
+   "term": "Monte Carlo",
+   "full": "Monte Carlo simulation",
+   "plain": "Run the same calculation thousands of times with inputs drawn at random from realistic ranges, and look at the spread of the results instead of one number. Named after the casino."
+  },
+  {
+   "term": "Percentile",
+   "full": "Percentile (10th–90th)",
+   "plain": "The 10th percentile is the value 10% of scenarios fall below; the 90th, the value 90% fall below. Between them lies the middle 80% of outcomes."
+  },
+  {
+   "term": "σ",
+   "full": "Standard deviation (sigma)",
+   "plain": "A measure of how spread out numbers are around their average. A margin with a σ of 8 points typically swings about 8 points up or down.",
+   "abbr": [
+    "σ"
+   ]
+  },
+  {
+   "term": "Regression",
+   "full": "Regression (a fit)",
+   "plain": "A line fitted through many companies' data to describe how one measure relates to another, such as EV/Sales and the Rule of 40 score."
+  },
+  {
+   "term": "Standard error",
+   "full": "Standard error",
+   "plain": "How far a fitted estimate typically misses; ±1 standard error gives a range around the fitted value."
+  },
+  {
+   "term": "ln",
+   "full": "Natural logarithm",
+   "plain": "A scale that turns multiplication into addition, so that a doubling counts the same at any size; used because multiples are skewed.",
+   "abbr": [
+    "ln("
+   ]
+  },
+  {
+   "term": "Markov chain",
+   "full": "Markov chain",
+   "plain": "A model in which the next state (here a growth regime) depends only on the current one, through a table of switching probabilities."
+  },
+  {
+   "term": "Regime",
+   "full": "Growth regime",
+   "plain": "A spell of similar behaviour — high growth, steady, decline — that a company can switch between."
+  },
+  {
+   "term": "Outside view",
+   "full": "Outside view (base rates)",
+   "plain": "Forecasting from what usually happens to similar cases (the base rate) rather than from the details of this one; it corrects the optimism of inside-view forecasts."
+  },
+  {
+   "term": "Mid-cycle",
+   "full": "Mid-cycle (normalized) earnings",
+   "plain": "Profit at a typical point of the business cycle rather than at a peak or trough; here, the median margin since 2020."
+  },
+  {
+   "term": "Cyclical",
+   "full": "Cyclical company",
+   "plain": "A business whose profits rise and fall with the economy or commodity prices."
+  },
+  {
+   "term": "Pipeline",
+   "full": "Product pipeline",
+   "plain": "Products still in development — drugs in trials, technology not yet sold — that may produce revenue later."
+  },
+  {
+   "term": "Distress probability",
+   "full": "Probability of financial distress (default)",
+   "plain": "The estimated chance the company fails to pay its debts or goes bankrupt within a period, from credit models on the Credit section."
+  },
+  {
+   "term": "Stage premium",
+   "full": "Stage premium (hurdle rate)",
+   "plain": "Extra yearly return growth investors demand from young, unproven companies on top of the CAPM cost of equity. Here 5 points, an assumption."
+  },
+  {
+   "term": "Stage weight",
+   "full": "Stage weight",
+   "plain": "How much a method counts in the stage-weighted value, fixed by the company's stage before any result is seen."
+  },
+  {
+   "term": "Football field",
+   "full": "Football-field chart",
+   "plain": "The chart of horizontal bars, one per method, showing each value range against the share price; named for its look."
+  },
+  {
+   "term": "Combined ratio",
+   "full": "Combined ratio (insurance)",
+   "plain": "Claims plus underwriting costs ÷ premiums earned. Below 100% the insurer profits from underwriting itself, before investment income."
+  },
+  {
+   "term": "REIT",
+   "full": "Real estate investment trust",
+   "plain": "A company that owns income-producing property and must pay out at least 90% of its taxable income as dividends.",
+   "abbr": [
+    "REIT",
+    "REITs"
+   ]
+  },
+  {
+   "term": "XBRL",
+   "full": "eXtensible Business Reporting Language",
+   "plain": "The machine-readable tags companies attach to the numbers in their SEC filings; the site reads its figures from them.",
+   "abbr": [
+    "XBRL"
+   ]
+  },
+  {
+   "term": "10-K, 10-Q",
+   "full": "Annual report (10-K) and quarterly report (10-Q)",
+   "plain": "The financial reports US-listed companies file with the Securities and Exchange Commission (SEC).",
+   "abbr": [
+    "10-K",
+    "10-Q"
+   ]
+  },
+  {
+   "term": "SEC",
+   "full": "US Securities and Exchange Commission",
+   "plain": "The US regulator that receives company filings; its EDGAR system publishes them.",
+   "abbr": [
+    "SEC"
+   ]
+  },
+  {
+   "term": "Price target",
+   "full": "Analyst price target",
+   "plain": "Where a Wall Street analyst expects the share price to be in about 12 months. Targets tend to follow the price and lean optimistic."
+  },
+  {
+   "term": "Polymarket",
+   "full": "Polymarket prediction market",
+   "plain": "A market where people bet on outcomes, including ranges for a stock's price; contract prices read as the crowd's probabilities."
+  },
+  {
+   "term": "52-week range",
+   "full": "52-week trading range",
+   "plain": "The lowest and highest closing prices over the past year."
+  },
+  {
+   "term": "VC",
+   "full": "Venture capital",
+   "plain": "Money invested in young private companies in exchange for shares, by funds that expect most bets to fail and a few to pay for all of them.",
+   "abbr": [
+    "VC",
+    "VCs"
+   ]
+  },
+  {
+   "term": "OPM",
+   "full": "Option pricing method",
+   "plain": "A way to split a start-up's value among share classes by treating each as an option on the company's value.",
+   "abbr": [
+    "OPM"
+   ]
+  },
+  {
+   "term": "SPY",
+   "full": "SPDR S&P 500 ETF Trust",
+   "plain": "An exchange-traded fund that tracks the S&P 500 index of large US companies; used as “the market” when measuring beta.",
+   "abbr": [
+    "SPY"
+   ]
+  },
+  {
+   "term": "ETF",
+   "full": "Exchange-traded fund",
+   "plain": "A fund that holds a basket of securities and trades on an exchange like a single stock.",
+   "abbr": [
+    "ETF"
+   ]
+  },
+  {
+   "term": "FRED",
+   "full": "Federal Reserve Economic Data",
+   "plain": "The St. Louis Fed's public database of economic series; DGS10 is its series for the 10-year Treasury yield.",
+   "abbr": [
+    "FRED",
+    "DGS10"
+   ]
+  },
+  {
+   "term": "EDGAR",
+   "full": "Electronic Data Gathering, Analysis, and Retrieval",
+   "plain": "The SEC's system where companies file their reports and anyone can read them.",
+   "abbr": [
+    "EDGAR"
+   ]
+  }
+ ],
+ "methods": {
+  "DCF — Monte Carlo 10th–90th percentile": {
+   "family": "Cash flow (intrinsic)",
+   "what": "Discounted cash flow (DCF) forecasts the free cash flow the business will produce — the cash left after running it and reinvesting in it — for five years, adds a terminal value for all the years after, and shrinks each year's cash back to today at the weighted average cost of capital (WACC). The sum is the enterprise value; minus debt and other claims, plus cash, divided by diluted shares, it is a value per share. The Monte Carlo part reruns the DCF thousands of times with growth, margins, the WACC and terminal growth drawn from realistic ranges, and shows the 10th to 90th percentile of the results.",
+   "why": "It values the business the way an owner would: by the cash it produces, adjusted for when that cash arrives and how risky it is. It is the reference method of intrinsic valuation; most multiples are shortcuts for it.",
+   "fits": "Companies with positive operating income, so that there are margins to project. Weighted most for growth (35%) and mature companies; for high-growth companies it is checked by the outside view and peers.",
+   "watch": "Small changes in the WACC or in terminal growth move the value a lot, and the terminal value is often most of the total. On a loss-making company it only restates its assumptions, so it is not used there."
+  },
+  "Regime-switching Monte Carlo 10th–90th": {
+   "family": "Probability",
+   "what": "A ten-year Monte Carlo in which revenue growth switches between regimes — high growth, steady, decline — following a Markov chain: a table of the chances of moving from one regime to another each year, estimated from this company's history and a panel of other companies. Margins drift with the regime, and each path's cash is discounted as in a DCF, net of stock-based compensation.",
+   "why": "Companies do not grow at one smooth rate; they have good runs and bad spells. Letting each path switch regimes gives a more honest spread of outcomes than one straight-line forecast.",
+   "fits": "Companies with a DCF and enough revenue history to estimate the switching.",
+   "watch": "The switching table comes from the past; a company that changes its business can behave unlike its history. Read the range, not just the median."
+  },
+  "Outside view — base-rate Monte Carlo": {
+   "family": "Probability",
+   "what": "The same DCF, but with growth, margins, the WACC and terminal growth drawn from what companies in the same industry and size class actually achieved since 2010, instead of from this company's own trend.",
+   "why": "Forecasts built from one company's recent record tend to be too optimistic. Research on forecasting, notably by Daniel Kahneman, shows that starting from the base rates of similar cases — the outside view — corrects much of that bias.",
+   "fits": "Every company with a DCF; weighted heavily for high-growth and growth companies, where optimism costs most.",
+   "watch": "A company can genuinely differ from its peers — a new category leader, say — and the outside view will then undervalue it."
+  },
+  "P/E vs peers": {
+   "family": "Relative (multiples)",
+   "what": "Price-to-earnings (P/E) is the share price divided by earnings per share (EPS): how many dollars investors pay for one dollar of yearly profit. This method takes the median P/E of similar companies (the narrowest SIC industry group with at least six of them) and multiplies it by this company's EPS; the peers' middle half gives the range.",
+   "why": "If similar businesses trade at about 20 times earnings, a company with similar prospects should too. It captures what the market is willing to pay today, which a DCF does not.",
+   "fits": "Profitable companies with enough peers; part of most stages.",
+   "watch": "It inherits any mispricing of the whole peer group, and EPS can be bent by one-off items, buybacks and tax. Peers may differ in growth and risk."
+  },
+  "EV/EBITDA vs peers": {
+   "family": "Relative (multiples)",
+   "what": "EBITDA is earnings before interest, taxes, depreciation and amortization: operating profit with the non-cash charges added back. EV/EBITDA divides enterprise value by it. The method applies the peers' median multiple to this company's EBITDA to get an enterprise value, subtracts net debt and divides by diluted shares.",
+   "why": "Built on enterprise value, it compares companies whatever their debt, and it is not affected by different depreciation policies.",
+   "fits": "Profitable companies, especially capital-heavy and cyclical ones.",
+   "watch": "It ignores the capital spending needed to keep the business running, so a company that must reinvest heavily looks cheaper than it is."
+  },
+  "EV/Sales vs peers": {
+   "family": "Relative (multiples)",
+   "what": "EV/Sales divides enterprise value by revenue. Applying the peers' median to this company's revenue, then subtracting net debt, gives a value per share from sales alone.",
+   "why": "Revenue exists even when profit does not, so this is the main relative method for young and loss-making companies, and a cross-check for the rest.",
+   "fits": "Every company with revenue and six peers; weighted at the pre-profit, high-growth and decline stages.",
+   "watch": "A dollar of sales at a 5% margin is worth far less than one at 40%; the method assumes this company turns sales into profit like its peers."
+  },
+  "Residual income": {
+   "family": "Cash flow (intrinsic)",
+   "what": "Book value is what shareholders have put into the company plus the profits it kept. Residual income is the profit above the return shareholders require on that book: net income − cost of equity × book. The value is today's book plus the discounted residual income of the next ten years, with the return on equity (ROE) fading to the cost of equity and half of earnings retained.",
+   "why": "A company creates value only when it earns more on its capital than investors demand. Anchoring on book value keeps most of the value in today's balance sheet rather than in distant forecasts.",
+   "fits": "Companies with positive equity and profit; a core method for banks, insurers and REITs, whose balance sheet is their business.",
+   "watch": "Book value can be distorted by buybacks, write-offs and acquisitions; it does not work with negative or tiny equity."
+  },
+  "Owner earnings capitalized": {
+   "family": "Cash flow (intrinsic)",
+   "what": "Owner earnings, a measure described by Warren Buffett, are net income + depreciation and amortization − capital spending: roughly the cash an owner could take out each year without shrinking the business. Capitalizing them means dividing next year's figure by (cost of equity − growth): the value of a cash stream that grows forever at a steady rate.",
+   "why": "For a business that no longer needs heavy reinvestment, today's cash earnings are a sound base, and a steady perpetuity is a fair description of its future.",
+   "fits": "Mature and declining companies with positive owner earnings.",
+   "watch": "It treats all capital spending as upkeep; for a growing company part of it is investment for growth, so owner earnings come out too low. Sensitive to the gap between the cost of equity and growth."
+  },
+  "Shareholder yield (dividends + buybacks)": {
+   "family": "Cash flow (intrinsic)",
+   "what": "The cash a company actually returned over the last year — dividends plus share buybacks — valued as a stream growing at the terminal rate and discounted at the cost of equity.",
+   "why": "Cash paid out is the most concrete return an owner receives; a company that returns cash steadily can be valued on that flow.",
+   "fits": "Mature companies that pay dividends or buy back shares.",
+   "watch": "Buybacks are irregular and can be funded with debt; a company paying out more than it earns cannot keep it up."
+  },
+  "Normalized (mid-cycle) P/E": {
+   "family": "Relative (multiples)",
+   "what": "Replaces this year's earnings with mid-cycle earnings — the median quarterly net margin since 2020 applied to current revenue, per share — and values them at the peer median P/E.",
+   "why": "A cyclical company's profit is high at the top of its cycle and low at the bottom; a P/E on peak profit overvalues it and one on trough profit undervalues it. A mid-cycle margin evens that out.",
+   "fits": "Cyclical companies (35% of their stage weight).",
+   "watch": "History since 2020 may not hold a full cycle, and a lasting change in margins is treated as noise."
+  },
+  "Normalized (mid-cycle) DCF": {
+   "family": "Cash flow (intrinsic)",
+   "what": "The DCF with its operating margin set to the median quarterly operating margin since 2020 instead of the latest one.",
+   "why": "Projecting a peak or trough margin for five years and beyond compounds the error of the cycle; the mid-cycle margin is the better estimate of what the business earns over time.",
+   "fits": "Cyclical companies (35% of their stage weight).",
+   "watch": "The same limits as the normalized P/E, plus all of the DCF's sensitivity to the WACC and terminal growth."
+  },
+  "Path-to-margin DCF": {
+   "family": "Cash flow (intrinsic)",
+   "what": "For a loss-making company, a DCF in which the operating margin moves in a straight line from today's to the peer median by year five, so the forecast describes a path to profit instead of assuming losses forever.",
+   "why": "A growing company often loses money because it is building scale. If it reaches its peers' margins, the cash after that is what it is worth; the path makes that explicit and testable.",
+   "fits": "Companies with an operating loss and revenue growth of 10% or more.",
+   "watch": "It assumes the company does reach peer margins, which many do not, and it ignores the money needed to survive the losses — the dilution-adjusted version adds that."
+  },
+  "Path-to-margin DCF, dilution-adjusted": {
+   "family": "Cash flow (intrinsic)",
+   "startup": true,
+   "what": "The path-to-margin DCF, with the cash the company burns before break-even assumed to be raised by selling new shares at today's price. Value per share = equity value ÷ (today's shares + the new shares).",
+   "why": "Losses must be paid for. If they are funded by issuing shares, today's owners end up with a smaller slice of the eventual business; ignoring that overstates what their shares are worth.",
+   "fits": "The lead method for pre-profit companies (25% of the stage weight).",
+   "watch": "The money could come instead from debt, or from shares sold at a higher or lower price; a rising share price means less dilution."
+  },
+  "Exit-multiple (venture) method": {
+   "family": "Probability",
+   "startup": true,
+   "what": "The venture capital method with public-market inputs: take revenue in year five on the growth path, apply the peer median operating margin and tax to get a profit, value that profit at the peer median P/E, discount it back five years at the cost of equity plus a 5-point stage premium, and divide by the diluted share count.",
+   "why": "It is how growth investors think: what will this be worth once it matures, and what return do I need for carrying the risk until then? The stage premium stands for the extra return investors demand from young, unproven companies.",
+   "fits": "Pre-profit companies with a peer P/E (20% of their stage weight).",
+   "watch": "Everything hangs on year-five revenue and on reaching peer margins. The 5-point premium is an assumption; private VCs use far higher target returns because theirs also cover failure, which here is handled separately by the survival-weighted value."
+  },
+  "Survival-weighted value": {
+   "family": "Probability",
+   "startup": true,
+   "what": "A company that may fail is worth a blend of two outcomes: it survives and is worth its going-concern value, or it fails and its owners get what the assets fetch. Value = (1 − p) × the going-concern value + p × the liquidation value, where p is the probability of failing within five years: 1 − (1 − the one-year distress probability)^5 from the credit models, or, without them, a stated rule from the cash runway. The liquidation value is tangible book × 0.8, never below zero.",
+   "why": "A business that may not survive is worth the probability-weighted average of the two outcomes, not its success case. This is the First Chicago method reduced to two scenarios.",
+   "fits": "Companies burning cash (negative free cash flow) at the pre-revenue (20%), pre-profit (20%) and decline (20%) stages.",
+   "watch": "Failure probabilities are hard to estimate, and the runway rule is a rule of thumb. A forced sale can fetch less than the liquidation value assumed."
+  },
+  "EV/Sales vs Rule of 40 (all-company fit)": {
+   "family": "Relative (multiples)",
+   "startup": true,
+   "what": "The Rule of 40 says a growth company is healthy when revenue growth % plus free-cash-flow margin % reaches 40. Across every listed non-financial company with at least $50 million of revenue, the site fits a line between the logarithm of EV/Sales and that score. This company's score gives its fitted EV/Sales (± one standard error); × revenue, minus net debt, ÷ shares, that is the value per share.",
+   "why": "Markets pay more per dollar of sales for companies that grow fast and for companies that generate cash, and they trade the two off roughly one for one. Fitting that across the whole market prices growth without needing profits.",
+   "fits": "High-growth (15%) and pre-profit (15%) companies.",
+   "watch": "One line across all industries is coarse; sectors with structurally low margins sit below it for good reasons."
+  },
+  "Tangible book (asset value)": {
+   "family": "Asset",
+   "what": "Tangible book value is equity minus goodwill and intangible assets — what remains of the shareholders' money in physical and financial assets. Per share, it is an asset-value floor; the low end applies a 20% haircut for a forced sale.",
+   "why": "When a company's future earnings are in doubt, the question becomes what its assets would fetch. Leaving out goodwill and intangibles avoids counting what cannot be sold separately.",
+   "fits": "Pre-revenue (30%) and declining (30%) companies.",
+   "watch": "Book values are historical costs, not market prices; specialized assets can sell for far less, while valuable brands or patents are left out entirely."
+  },
+  "Net cash (floor)": {
+   "family": "Asset",
+   "startup": true,
+   "what": "Cash and investments minus debt and other claims, per diluted share, never below zero: what shareholders would own if the pipeline — the drug, technology or product still in development — turned out to be worth nothing. The market value above it is the market-implied value of the pipeline.",
+   "why": "For a company with almost no revenue, the cash is the one solid number. Separating it shows how much of the price is a bet on the pipeline.",
+   "fits": "Pre-revenue companies (half of their stage weight).",
+   "watch": "The cash is being spent: next year's floor will be lower unless the company raises more, which dilutes."
+  },
+  "Sum of the parts (segments × peer EV/Sales)": {
+   "family": "Relative (multiples)",
+   "what": "Values each reported business segment separately — its revenue (latest quarter × 4) times the median EV/Sales of the industry its name maps to — adds them up, subtracts net debt and divides by diluted shares.",
+   "why": "The segments of a diversified company can deserve very different multiples; a single company-wide multiple averages them away.",
+   "fits": "Companies reporting two or more segments.",
+   "watch": "Segment names are matched to industries automatically, and sales multiples ignore segment margins: a rough guide."
+  },
+  "P/TBV vs ROTCE (bank peers)": {
+   "family": "Relative (multiples)",
+   "what": "Price to tangible book (P/TBV) set against return on tangible common equity (ROTCE) across all covered banks: banks that earn more on their equity trade at higher multiples of it. The fitted line gives the P/TBV this bank's ROTCE deserves, × its tangible book per share.",
+   "why": "For a bank, the balance sheet is the business: its value is its equity times how profitably it uses that equity, and the market's price for that profitability can be read off its peers.",
+   "fits": "Banks with positive tangible book.",
+   "watch": "Credit quality, interest-rate risk and capital levels also move bank multiples and are not in the line."
+  },
+  "P/B vs ROE (insurer peers)": {
+   "family": "Relative (multiples)",
+   "what": "Price-to-book (P/B) set against return on equity (ROE) across all covered insurers; the fitted line gives the P/B this insurer's ROE deserves, × its book per share.",
+   "why": "An insurer's equity backs the policies it writes; its value is that equity times how profitably it underwrites and invests, which peers price.",
+   "fits": "Insurers with positive book value.",
+   "watch": "Reserve adequacy, catastrophe exposure and investment risk are not in the line."
+  },
+  "Justified P/TBV (Gordon growth)": {
+   "family": "Cash flow (intrinsic)",
+   "what": "The P/TBV a bank deserves in theory: (ROTCE − g) ÷ (kₑ − g), where g, the sustainable growth, is ROTCE × the share of profit retained, capped at 0–4%. It is the Gordon growth model applied to book value.",
+   "why": "A bank that earns exactly its cost of equity is worth its book; one that earns more is worth more, in proportion to how much more and how long it can grow.",
+   "fits": "Banks with positive tangible book and ROTCE above their growth.",
+   "watch": "Very sensitive when ROTCE or growth is close to the cost of equity."
+  },
+  "Justified P/B (Gordon growth)": {
+   "family": "Cash flow (intrinsic)",
+   "what": "The P/B an insurer deserves in theory: (ROE − g) ÷ (kₑ − g), with g = ROE × the share of profit retained, capped at 0–4%: the Gordon growth model applied to book value.",
+   "why": "Earning exactly the cost of equity is worth book; earning more is worth more, the more so the longer it can grow.",
+   "fits": "Insurers with positive book and ROE above their growth.",
+   "watch": "Very sensitive when ROE or growth is close to the cost of equity."
+  },
+  "Dividend discount (Gordon)": {
+   "family": "Cash flow (intrinsic)",
+   "what": "The dividend discount model (DDM) values a share as next year's dividend per share (DPS) ÷ (cost of equity − growth): the Gordon growth formula for a dividend that grows forever at a constant rate.",
+   "why": "For an owner who never sells, dividends are the only cash received; for steady payers they measure value directly.",
+   "fits": "Banks, insurers and REITs that pay dividends.",
+   "watch": "It ignores retained earnings and buybacks and breaks down when growth approaches the cost of equity."
+  },
+  "P/FFO vs REIT peers": {
+   "family": "Relative (multiples)",
+   "what": "Funds from operations (FFO) is a REIT's net income plus real-estate depreciation minus gains on property sales — closer to its recurring cash earnings. The REIT is valued at the median price-to-FFO of the other covered REITs.",
+   "why": "Buildings are depreciated in the accounts even when they hold or gain value, so net income understates a REIT's earnings; FFO, as defined by Nareit, is the industry's standard measure.",
+   "fits": "REITs with positive FFO (55% of their stage weight).",
+   "watch": "Property types (offices, data centers, apartments) trade at very different multiples; one REIT median blends them."
+  },
+  "Stage-weighted value": {
+   "family": "Blend",
+   "what": "The combination: each method the company's stage uses, × its weight (renormalized over the methods this company has), summed into one value.",
+   "why": "Averaging methods with different blind spots reduces the error of any single one. Fixing the weights in advance, by stage, prevents choosing whichever method flatters the stock.",
+   "fits": "Every company with a stage and at least one of its methods.",
+   "watch": "The weights are judgments; the football field shows every method so you can weigh them yourself."
+  },
+  "Analysts' price targets": {
+   "family": "Reference",
+   "what": "The 12-month price targets of the Wall Street analysts who cover the stock (mean and range), from Yahoo Finance's consensus.",
+   "why": "Shown as an outside opinion to compare against, not as a valuation: targets come without their assumptions.",
+   "fits": "Companies with analyst coverage.",
+   "watch": "Targets tend to follow the share price and lean optimistic on average."
+  },
+  "Polymarket implied price": {
+   "family": "Reference",
+   "what": "Polymarket is a prediction market where people bet on outcomes, including ranges for where a stock will close by a date. The price of each range contract reads as the crowd's probability; combined, they give the price the crowd expects.",
+   "why": "Shown as the crowd's forecast, a check on the models, not as a valuation.",
+   "fits": "Stocks with active Polymarket price markets.",
+   "watch": "Thin markets can be moved by a few traders, and they forecast a price, not a value."
+  },
+  "Our model": {
+   "family": "Reference",
+   "what": "The site's own price forecasts from its rotation and combined models, recorded in the forecast ledger before the outcome is known and scored walk-forward against what happened.",
+   "why": "Shown so the models' forecasts can be compared with the valuations and held to account.",
+   "fits": "Companies the rotation models cover.",
+   "watch": "A forecast of the price over months, not an estimate of value; check its track record in the ledger."
+  },
+  "52-week trading range": {
+   "family": "Reference",
+   "what": "The lowest and highest closing prices of the past 52 weeks: where the market itself has priced the company recently.",
+   "why": "A reminder of how much the price alone has moved, against which the methods' spread can be judged.",
+   "fits": "Every listed company.",
+   "watch": "Not a valuation: a range of past prices."
+  }
+ },
+ "aliases": {
+  "Rotation forecast": "Our model",
+  "Combined forecast": "Our model",
+  "Stage-weighted value (": "Stage-weighted value",
+  "Our model (": "Our model"
+ }
+}

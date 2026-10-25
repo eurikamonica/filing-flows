@@ -22,6 +22,13 @@
     sc.onerror = () => { mvLoad = null; bad(new Error('markov-view.js did not load')); };
     document.head.appendChild(sc);
   }));
+  // valuation-guide.json (next to this file): the appendix's plain-language guide — valuation from zero, start-ups, the
+  // glossary, each method's what / why / fits / watch and each stage's meaning. The appendix draws without it, then again.
+  let guide = null, gLoad = null;
+  const loadGuide = () => gLoad || (gLoad = (typeof fetch === 'function' ? fetch(HERE + 'valuation-guide.json', { cache: 'no-cache' })
+    .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }) : Promise.reject(new Error('no fetch')))
+    .then((g) => (guide = g)).catch((e) => { gLoad = null; throw e; }));
+  const setGuide = (g) => { guide = g; };
 
   function css() {
     if (typeof document === 'undefined' || document.getElementById('fv-css')) return;
@@ -48,7 +55,9 @@
 .fv-apx[open]{padding-bottom:10px}.fv-f{font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12.5px;background:color-mix(in srgb,var(--ink,#222) 5%,transparent);border-radius:8px;padding:8px 10px;margin:8px 0;line-height:1.5;white-space:pre-wrap}
 .fv-steps{margin:6px 0 8px 18px;padding:0;font-size:13px;line-height:1.6;font-variant-numeric:tabular-nums}.fv-tile.fv-exp{border-color:var(--ink,#222)}
 .fv-bar{height:5px;border-radius:3px;background:var(--line,#e5e5e5);overflow:hidden}.fv-bar i{display:block;height:100%;background:var(--accent,#2a78d6)}
-.fv-heat td.n{min-width:64px}.fv-tog{font:inherit;font-size:12px;border:1px solid var(--line,#ddd);background:none;border-radius:8px;padding:3px 9px;cursor:pointer;color:var(--muted,#666);margin-right:6px}.fv-tog.on{color:var(--ink,#222);border-color:var(--ink,#222)}`;
+.fv-heat td.n{min-width:64px}.fv-tog{font:inherit;font-size:12px;border:1px solid var(--line,#ddd);background:none;border-radius:8px;padding:3px 9px;cursor:pointer;color:var(--muted,#666);margin-right:6px}.fv-tog.on{color:var(--ink,#222);border-color:var(--ink,#222)}
+.fv-x{margin:6px 0 4px;max-width:82ch}.fv-x p{margin:5px 0;font-size:13.5px;line-height:1.55}.fv-x p b{font-weight:600}.fv-x .fv-here{border-left:3px solid var(--accent,#2a78d6);padding-left:8px}.fv-terms{font-size:12.5px;color:var(--muted,#666);line-height:1.6}.fv-terms b{color:var(--ink,#222)}.fv-prose p{font-size:13.5px;line-height:1.6;margin:6px 0;max-width:82ch}.fv-gl td:first-child{font-weight:600;white-space:nowrap}.fv-gl .fv-tbl td,.fv-gl .fv-tbl th{white-space:normal;vertical-align:top;line-height:1.45}.fv-gl .fv-tbl td:first-child{white-space:nowrap}.fv-gl .fv-tbl td:not(:first-child){min-width:14em}.fv-apx.fv-guide>summary b{color:var(--accent,#2a78d6)}
+@media (max-width:640px){.fv table.fv-tbl{display:block;overflow-x:auto;max-width:100%}}`;
     document.head.appendChild(s);
   }
   const pp = (v) => (fin(v) ? (v > 0 && v < 0.005 ? '<1%' : v < 1 && v > 0.995 ? '>99%' : num(100 * v, 0) + '%') : '—');
@@ -273,20 +282,80 @@
   }
 
   // ---------- the appendix: every method's algebra with this company's numbers, every input's source, every assumption ----------
+  // the guide's entry for a football row: exact name, an alias prefix ("Rotation forecast" → "Our model"), then a key prefix
+  function explainer(name) {
+    const M = (guide && guide.methods) || {};
+    if (M[name]) return M[name];
+    for (const [pre, key] of Object.entries((guide && guide.aliases) || {})) if (name.startsWith(pre) && M[key]) return M[key];
+    for (const key of Object.keys(M)) if (name.startsWith(key)) return M[key];
+    return null;
+  }
+  // abbreviations used in a text, written out in full: "WACC = weighted average cost of capital"
+  const reEsc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  function termsIn(text) {
+    const out = [];
+    for (const g of (guide && guide.glossary) || []) {
+      const hit = (g.abbr || []).some((tok) => {
+        const pre = /^[A-Za-z0-9]/.test(tok) ? '(^|[^A-Za-z0-9_])' : '', post = /[A-Za-z0-9²ₑₜ₆]$/.test(tok) ? '(?![A-Za-z0-9_])' : '';
+        return new RegExp(pre + reEsc(tok) + post).test(text);
+      });
+      if (hit) out.push(g);
+    }
+    return out;
+  }
+  const lower1 = (x) => (/^[A-Z][a-z]/.test(x) ? x[0].toLowerCase() + x.slice(1) : x);
+  function guideHtml(A, tbl) {
+    if (!guide) return '';
+    const st = A.stage || {};
+    const P = guide.primer, S = guide.startups;
+    const young = ['pre_revenue', 'pre_profit'].includes(st.key);
+    let h = `<details class="fv-apx fv-guide"><summary><b>${esc(P.title)}</b> — start here if valuation is new to you</summary><div class="fv-prose">${P.paras.map((x) => `<p>${esc(x)}</p>`).join('')}</div></details>`;
+    h += `<details class="fv-apx fv-guide"${young ? ' open' : ''}><summary><b>${esc(S.title)}</b>${young ? ' <span class="fv-tag">this company\'s stage</span>' : ''}</summary><div class="fv-prose">${S.paras.map((x) => `<p>${esc(x)}</p>`).join('')}</div>`
+      + `<div class="fv-gl">${tbl(['Approach', 'How it works', 'On this site'], S.classic || [])}</div></details>`;
+    const G = guide.glossary || [];
+    h += `<details class="fv-apx fv-guide"><summary><b>Glossary</b> — every term and abbreviation in full (${G.length})</summary>`
+      + `<div class="fv-gl">${tbl(['Term', 'In full', 'What it means'], G.map((g) => [g.term, g.full, g.plain]))}</div></details>`;
+    return h;
+  }
+  function stageHtml(st) {
+    if (!st.label) return '';
+    const g = guide && guide.stages ? (guide.stages[st.key] || Object.values(guide.stages).find((x) => x.label === st.label)) : null;
+    return `<h4>The stage and its weights</h4><p class="fv-sub"><b>${esc(st.label)}</b> — ${esc(st.why || '')}. Rule: ${esc(st.rule || '')}.</p>`
+      + (g ? `<div class="fv-x"><p><b>What this stage means.</b> ${esc(g.means)}</p><p><b>Why these methods and weights.</b> ${esc(g.why)}</p></div>` : '')
+      + `<p class="fv-sub">Weights, fixed before any result is seen and renormalized over the methods this company has: ${(st.weights || []).map(([m, w]) => `${esc(m)} ${num(100 * w, 0)}%`).join(' · ')}.</p>`;
+  }
+  function methodGuide(m) {
+    const x = explainer(m.method);
+    if (!x && !m.fit) return '';
+    const text = [x && x.what, m.formula, ...(m.steps || []), m.fit, ...(m.assumptions || []).map((a) => a[0])].filter(Boolean).join(' ');
+    const T = termsIn(text);
+    return `<div class="fv-x">${x ? `<p><b>What it is.</b> ${esc(x.what)}</p><p><b>Why it works.</b> ${esc(x.why)}</p><p><b>Fits.</b> ${esc(x.fits)}</p>` : ''}`
+      + (m.fit ? `<p class="fv-here"><b>Why it applies here.</b> ${esc(m.fit)}</p>` : '')
+      + (x ? `<p><b>Watch out.</b> ${esc(x.watch)}</p>` : '')
+      + (T.length ? `<p class="fv-terms"><b>Terms.</b> ${T.map((g) => `${esc(g.term)} = ${esc(lower1(g.full))}`).join(' · ')}</p>` : '') + '</div>';
+  }
   function appendixHtml(A) {
     if (!A || !(A.methods || []).length) return '';
-    const tbl = (head, rows) => rows.length ? `<div class="fv-wrap"><table class="fv-tbl"><thead><tr>${head.map((x) => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c, i) => `<td${i === 1 ? ' class="n"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
+    const tbl = (head, rows) => rows.length ? `<div class="fv-wrap"><table class="fv-tbl"><thead><tr>${head.map((x) => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c, i) => `<td${i === 1 && head.length === 3 && head[1] === 'Value' ? ' class="n"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
     const kindTag = { model: 'model', blend: 'blend of the methods above', reference: 'reference, not a valuation' };
     const st = A.stage || {};
-    let h = `<h3 id="fv-appendix">Appendix — every method, its algebra and where each number comes from</h3><p class="fv-sub">For each method on the football field: its formula, the same formula with this company's figures in it, the inputs it used (and where each came from) and the assumptions it makes (and why). Then the methods this company does not get, and why. <button type="button" class="fv-tog" data-fvapx="open">Open all</button><button type="button" class="fv-tog" data-fvapx="close">Close all</button></p>`;
-    if (st.label) h += `<h4>The stage and its weights</h4><p class="fv-sub"><b>${esc(st.label)}</b> — ${esc(st.why || '')}. Rule: ${esc(st.rule || '')}. Weights, fixed before any result is seen and renormalized over the methods this company has: ${(st.weights || []).map(([m, w]) => `${esc(m)} ${num(100 * w, 0)}%`).join(' · ')}.</p>`;
+    let h = `<h3 id="fv-appendix">Appendix — every method, its algebra and where each number comes from</h3><p class="fv-sub">For each method on the football field: what it is and why it applies to this company, its formula, the same formula with this company's figures in it, the inputs it used (and where each came from) and the assumptions it makes (and why). Then the methods this company does not get, and why. New to valuation? Open “${esc((guide && guide.primer && guide.primer.title) || 'Valuation from zero')}” first; every abbreviation is in the glossary. <button type="button" class="fv-tog" data-fvapx="open">Open all</button><button type="button" class="fv-tog" data-fvapx="close">Close all</button></p>`;
+    h += guideHtml(A, tbl);
+    h += stageHtml(st);
     h += `<details class="fv-apx"><summary><b>Inputs and their sources</b> (${(A.inputs || []).length})</summary>${tbl(['Input', 'Value', 'Source'], A.inputs || [])}</details>`;
     h += `<details class="fv-apx"><summary><b>Assumptions and their basis</b> (${(A.assumptions || []).length})</summary>${tbl(['Assumption', 'Value', 'Basis'], A.assumptions || [])}</details>`;
-    if (A.wacc) h += `<details class="fv-apx"><summary><b>Cost of capital, step by step</b></summary><p class="fv-f">${esc(A.wacc.formula)}</p><ol class="fv-steps">${A.wacc.steps.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></details>`;
-    h += A.methods.map((m) => `<details class="fv-apx"><summary><b>${esc(m.method)}</b> · ${fin(m.point) ? usd(m.point) : '—'}${fin(m.low) && fin(m.high) ? ` <span class="fv-tag">${usd(m.low)} – ${usd(m.high)}</span>` : ''}${fin(m.weight) ? ` <span class="fv-tag">stage weight ${num(100 * m.weight, 0)}%</span>` : ''}${m.kind && m.kind !== 'model' ? ` <span class="fv-tag">${esc(kindTag[m.kind] || m.kind)}</span>` : ''}</summary>` +
-      (m.formula ? `<p class="fv-f">${esc(m.formula)}</p>` : '') + ((m.steps || []).filter(Boolean).length ? `<ol class="fv-steps">${m.steps.filter(Boolean).map((x) => `<li>${esc(x)}</li>`).join('')}</ol>` : '') +
-      tbl(['Input', 'Value', 'Source'], m.inputs || []) + tbl(['Assumption', 'Value', 'Basis'], m.assumptions || []) + '</details>').join('');
-    if ((A.not_used || []).length) h += `<details class="fv-apx"><summary><b>Methods not used for this company</b> (${A.not_used.length})</summary>${tbl(['Method', 'Why not'], A.not_used.map((x) => [x.method, x.why]))}</details>`;
+    if (A.wacc) {
+      const T = termsIn([A.wacc.formula, ...(A.wacc.steps || [])].join(' '));
+      h += `<details class="fv-apx"><summary><b>Cost of capital, step by step</b></summary>${guide ? `<div class="fv-x"><p><b>What it is.</b> The weighted average cost of capital (WACC) is the yearly return the company must earn to satisfy everyone who funds it: shareholders, through the cost of equity from the capital asset pricing model (CAPM), and lenders, through the interest rate after tax, each weighted by its share of the funding at market values. Cash flows that belong to the whole company are discounted at this rate.</p>${T.length ? `<p class="fv-terms"><b>Terms.</b> ${T.map((g) => `${esc(g.term)} = ${esc(lower1(g.full))}`).join(' · ')}</p>` : ''}</div>` : ''}<p class="fv-f">${esc(A.wacc.formula)}</p><ol class="fv-steps">${A.wacc.steps.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></details>`;
+    }
+    h += A.methods.map((m) => {
+      const x = explainer(m.method);
+      return `<details class="fv-apx"><summary><b>${esc(m.method)}</b> · ${fin(m.point) ? usd(m.point) : '—'}${fin(m.low) && fin(m.high) ? ` <span class="fv-tag">${usd(m.low)} – ${usd(m.high)}</span>` : ''}${fin(m.weight) ? ` <span class="fv-tag">stage weight ${num(100 * m.weight, 0)}%</span>` : ''}${m.kind && m.kind !== 'model' ? ` <span class="fv-tag">${esc(kindTag[m.kind] || m.kind)}</span>` : x && x.family ? ` <span class="fv-tag">${esc(x.family.toLowerCase())}</span>` : ''}</summary>`
+        + methodGuide(m)
+        + (m.formula ? `<p class="fv-f">${esc(m.formula)}</p>` : '') + ((m.steps || []).filter(Boolean).length ? `<ol class="fv-steps">${m.steps.filter(Boolean).map((y) => `<li>${esc(y)}</li>`).join('')}</ol>` : '')
+        + tbl(['Input', 'Value', 'Source'], m.inputs || []) + tbl(['Assumption', 'Value', 'Basis'], m.assumptions || []) + '</details>';
+    }).join('');
+    if ((A.not_used || []).length) h += `<details class="fv-apx"><summary><b>Methods not used for this company</b> (${A.not_used.length})</summary>${tbl(['Method', 'Why not', 'What it is'], A.not_used.map((x) => { const e = explainer(x.method); return [x.method, x.why, e ? e.what.split(/(?<=\.)\s/)[0] : '']; }))}</details>`;
     return h + (A.note ? `<p class="fv-note">${esc(A.note)}</p>` : '');
   }
   function draw(el, d, fits) {
@@ -335,13 +404,18 @@
     }
     if (d.sotp) h += `<h3>Sum of the parts</h3><table class="fv-tbl"><thead><tr><th>Segment</th><th class="n">Revenue (annualised)</th><th>Priced like</th><th class="n">EV/Sales</th><th class="n">Value</th></tr></thead><tbody>${d.sotp.parts.map((p) => `<tr><td>${esc(p.segment)}</td><td class="n">${big(p.revenue)}</td><td>${esc(String(p.group).replace(/^sic/, 'SIC ').replace(/^sec:/, 'sector '))}</td><td class="n">${num(p.ev_sales, 1)}×</td><td class="n">${big(p.ev)}</td></tr>`).join('')}</tbody></table><p class="fv-sub">${esc(d.sotp.note)}</p>`;
     if ((d.notes || []).length) h += `<p class="fv-note">${d.notes.map(esc).join('<br>')}</p>`;
-    h += appendixHtml(d.appendix);
+    h += `<div data-fvapxwrap>${appendixHtml(d.appendix)}</div>`;
     const src = Object.entries(d.sources || {}).map(([k, v]) => `${k}: ${v}`).join(' · ');
     h += `<p class="fv-note">Figures from: ${esc(src || '—')}. Built ${esc((d.generated_at || '').slice(0, 10))} by app/valuation.py from SEC filings (XBRL), the hub's daily prices, the Debt & rates and Consensus modules. Peer groups are SIC industries; a group needs six peers.</p></div>`;
     el.innerHTML = h;
     const mkEl = el.querySelector('[data-fvmk]');
     if (mkEl) loadMarkov().then((MV) => MV.mount(mkEl, d)).catch((e) => { mkEl.innerHTML = `<p class="fv-sub">The regime-switching model could not load (${esc(e.message)}).</p>`; });
-    el.querySelectorAll('[data-fvapx]').forEach((b) => b.addEventListener('click', () => { el.querySelectorAll('details.fv-apx').forEach((x) => { x.open = b.dataset.fvapx === 'open'; }); }));
+    const bindApx = () => el.querySelectorAll('[data-fvapx]').forEach((b) => b.addEventListener('click', () => { el.querySelectorAll('details.fv-apx').forEach((x) => { x.open = b.dataset.fvapx === 'open'; }); }));
+    bindApx();
+    if (!guide && d.appendix && typeof window !== 'undefined') loadGuide().then(() => {      // the guide arrived after the page: redraw the appendix
+      const w = el.querySelector('[data-fvapxwrap]');
+      if (w && el.isConnected !== false) { w.innerHTML = appendixHtml(d.appendix); bindApx(); }
+    }).catch(() => {});
     el.querySelectorAll('[data-fvb]').forEach((b) => b.addEventListener('click', () => {
       el.querySelectorAll('[data-fvb]').forEach((x) => x.classList.toggle('on', x === b));
       el.querySelector('[data-fvbands]').innerHTML = bandsChart(d.bands, b.dataset.fvb);
@@ -361,18 +435,21 @@
     const base = (ctx && ctx.hub != null ? ctx.hub : '') + 'data/research/valuation/';
     el.innerHTML = '<p class="muted">Loading the valuation…</p>';
     let d;
+    const gReady = loadGuide().catch(() => null);                       // in parallel with the company's data
     try { d = await get(base + `c/${Number(ctx.cik)}.json`); } catch (e) {
-      el.innerHTML = `<p class="muted">No fair-value page for this company yet (${esc(e.message)}). It is built every weekday after the close for companies with a share price and filed figures.</p>`;
+      el.innerHTML = `<p class="muted">No fair-value page for this company yet (${esc(e.message)}). It is built every day after the US close for companies with a share price and filed figures.</p>`;
       return;
     }
     if (ctx.here && !ctx.here()) return;
     const fits = {};
     if (d.kind === 'bank') fits.bank = (await get(base + 'banks.json').catch(() => ({}))).fit;
     if (d.kind === 'insurer') fits.insurer = (await get(base + 'insurers.json').catch(() => ({}))).fit;
+    await gReady;
+    if (ctx.here && !ctx.here()) return;
     draw(el, d, fits);
   }
 
-  const api = { render, draw, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp };
+  const api = { render, draw, appendixHtml, explainer, termsIn, setGuide, football, histogram, bandsChart, riverChart, tornado, tilesHtml, oddsHtml, usd, pct, pp };
   if (typeof window !== 'undefined') window.FairValueView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

@@ -487,6 +487,89 @@ WHY_NOT = {
 }
 
 
+def fit_reason(name, F, out):
+    """Why this method applies to this company, in one or two sentences from its own figures (the appendix's
+    "Why it applies here"; what each method is and why it works in general is in docs/valuation-guide.json)."""
+    st = out.get('stage') or {}
+    m = st.get('metrics') or {}
+    rev, oi, ni, eps, g0 = F.get('revenue'), F.get('oi'), F.get('ni'), F.get('eps'), F.get('g0')
+    peers = out.get('peers') or {}
+    stage = f'the {st["label"].lower()} stage' if st.get('label') else 'its stage'
+    grow = f', revenue growth {pc(g0, 0)}' if fin(g0) else ''
+    fcf = m.get('fcf') if fin(m.get('fcf')) else fcf_of(F)
+
+    def peer(key, what):
+        p = peers.get(key) or {}
+        grp = str(p.get('group') or '').replace('sic', 'SIC ').replace('sec:', 'sector ')
+        return f'{what}, and {p["n"]} peers ({grp}) have the multiple.' if p.get('n') else f'{what}.'
+    if name.startswith('DCF — Monte Carlo'):
+        return (f'Operating income is positive ({money(oi)} over four quarters{grow}), so its margins can be projected and '
+                'its cash flows discounted.')
+    if name.startswith('Regime-switching'):
+        return 'It has a DCF and enough quarters of revenue history to estimate how often its growth switches regime.'
+    if name.startswith('Outside view'):
+        return ((f'Its recent revenue growth is {pc(g0, 0)}. ' if fin(g0) else '') + 'This checks its own DCF against what companies of '
+                'its industry and size actually achieved, so that optimism in its forecast is caught.')
+    if name == 'P/E vs peers':
+        return peer('pe', f'EPS is positive ({ps(eps)} over four quarters)')
+    if name == 'EV/EBITDA vs peers':
+        return peer('ev_ebitda', f'EBITDA is positive ({money(F.get("ebitda"))})')
+    if name == 'EV/Sales vs peers':
+        why = ' — the measure that still works without profit' if fin(oi) and oi <= 0 else ''
+        return peer('ev_sales', f'It has revenue ({money(rev)} over four quarters){why}')
+    if name == 'Residual income':
+        return (f'Equity is positive ({money(F.get("equity"))}) and so is net income ({money(ni)}), so the return it earns on '
+                'book value can be compared with what shareholders require.')
+    if name == 'Owner earnings capitalized':
+        return (f'Owner earnings are positive ({money(m.get("owner_earnings"))} = net income + D&A − capex), and at {stage} '
+                'today\'s cash earnings are a sound base.')
+    if name.startswith('Shareholder yield'):
+        sy = m.get('shareholder_yield')
+        return 'It returns cash to shareholders through dividends or buybacks' + (f' ({pc(sy)} of market value a year).' if fin(sy) else '.')
+    if name.startswith('Normalized'):
+        sig = m.get('margin_sigma')
+        return (f'It is at the cyclical stage ({st.get("why") or "a cyclical industry"})'
+                + (f'; its quarterly operating margin has a σ of {sig * 100:.0f} points' if fin(sig) else '')
+                + (f', so the mid-cycle margin ({pc(m.get("mid_cycle_margin"))}) replaces the latest one.' if fin(m.get('mid_cycle_margin')) else
+                   ', so a mid-cycle margin replaces the latest one.'))
+    if name.startswith('Path-to-margin DCF'):
+        tm = m.get('target_margin')
+        s = (f'It has an operating loss ({money(oi)})' + (f' with revenue growth of {pc(g0, 0)}' if fin(g0) else '')
+             + ', so a DCF needs a path to profit' + (f' — here to the peer median margin of {pc(tm)} by year five.' if fin(tm) else '.'))
+        return s + (' Its losses must be funded, and the new shares that would take are counted.' if 'dilution' in name else '')
+    if name.startswith('Exit-multiple'):
+        return f'It is not yet profitable ({money(oi)} operating income{grow}), so its value lies in what it can earn once it matures.'
+    if name.startswith('Survival-weighted'):
+        rw = m.get('cash_runway_years')
+        return (f'It is burning cash (free cash flow {money(fcf)} a year' + (f', a runway of {num(rw, 1)} years' if fin(rw) else '')
+                + '), so its value must allow for the chance it does not survive.')
+    if name.startswith('EV/Sales vs Rule of 40'):
+        r40 = m.get('rule_of_40')
+        return (f'At {stage}, growth and cash generation drive the price: its Rule of 40 score is ' + (f'{num(r40, 0)}' if fin(r40) else 'not available')
+                + (f' (growth {pc(g0, 0)} + free-cash-flow margin {pc(m.get("fcf_margin"), 0)}).' if fin(g0) and fin(m.get('fcf_margin')) else '.'))
+    if name.startswith('Tangible book'):
+        tb = m.get('tangible_book_ps')
+        return f'At {stage} what its assets would fetch matters' + (f'; tangible book is {ps(tb)} a share.' if fin(tb) else '.')
+    if name.startswith('Net cash'):
+        return (f'It is pre-revenue ({money(rev)} of revenue over four quarters, with an operating loss): its cash is the one solid number, '
+                'and the rest of the price is a bet on its pipeline.')
+    if name.startswith('Sum of the parts'):
+        n = len((out.get('sotp') or {}).get('parts') or [])
+        return f'It reports {n} revenue segments, which can deserve different multiples.'
+    if name.startswith(('P/TBV vs ROTCE', 'Justified P/TBV')):
+        return 'It is a bank: its balance sheet is its business, so value follows its tangible book and the return it earns on it.'
+    if name.startswith(('P/B vs ROE', 'Justified P/B')):
+        return 'It is an insurer: its equity backs the policies it writes, so value follows its book and the return it earns on it.'
+    if name.startswith('Dividend discount'):
+        return 'It pays a steady dividend, which for its owners is the cash the business hands over.'
+    if name.startswith('P/FFO'):
+        return 'It is a REIT, so funds from operations (FFO), not net income, measures its recurring earnings.'
+    if name.startswith('Stage-weighted'):
+        return (f'Its stage is “{st.get("label", "—")}”' + (f' — {st["why"]} —' if st.get('why') else '')
+                + ' which fixes these methods and their weights in advance.')
+    return 'Shown for comparison; not part of the stage-weighted value.'
+
+
 def appendix(M, out, F, W, rates):
     """Every input with its source, every assumption with its basis, the cost of capital step by step, and every
     method's formula with this company's numbers — then the methods that do not apply."""
@@ -517,11 +600,12 @@ def appendix(M, out, F, W, rates):
     for b in out.get('football') or []:
         c = b.pop('calc', None) or _derived(b, out, F, W, M)
         seen.add(b['method'])
-        methods.append({'method': b['method'], 'low': b.get('low'), 'point': b.get('point'), 'high': b.get('high'), 'weight': wts.get(b['method']), **c})
+        methods.append({'method': b['method'], 'low': b.get('low'), 'point': b.get('point'), 'high': b.get('high'), 'weight': wts.get(b['method']), **c,
+                        'fit': fit_reason(b['method'], F, out)})
     kind = F.get('kind') if F.get('kind') in CANDIDATES else 'industrial'
     not_used = [{'method': m, 'why': WHY_NOT.get(m, 'not enough data')} for m in CANDIDATES[kind] if m not in seen]
     out['appendix'] = {'inputs': inputs, 'assumptions': glob, 'wacc': _wacc_steps(W), 'methods': methods, 'not_used': not_used,
-                       'stage': {'label': st.get('label'), 'why': st.get('why'), 'rule': st.get('rule'),
+                       'stage': {'key': st.get('stage'), 'label': st.get('label'), 'why': st.get('why'), 'rule': st.get('rule'),
                                  'weights': [[m['method'], m['weight']] for m in st.get('methods') or []
                                              if kind == 'industrial' or m['method'] in CANDIDATES[kind]]},   # a bank is not shown the insurer fit
                        'note': 'Every figure above is from the company\'s SEC filings (XBRL frames, or the main site\'s reading of its 10-K/10-Q), '
