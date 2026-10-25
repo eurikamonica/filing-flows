@@ -67,6 +67,25 @@ const cases={
   units:'USD millions, cumulative estimated',
   exercise:'SEC described approximately $1,700M cumulative pre-tax misstatement for statements from 1992 through Q3 1997. The cumulative figure has no attributable single-year allocation in this exercise. Simulate a depreciation-useful-life choice using hypothetical asset costs, not an invented historic Waste Management schedule.',
   exerciseZH:'SEC 认定 1992 至 1997 年 Q3 之间累计税前利润错报约 $1,700M。现有案例只记录累计额，不人为分配到单季度或年份；折旧年限模拟将使用明确标注的教学假设。'
+ },
+ healthsouth:{
+  company:'HealthSouth Corporation',dates:'FY1999–H1 2002',
+  citation:'https://www.sec.gov/litigation/complaints/comphealths.htm',
+  sourceType:'SEC 2003 complaint: table of reported versus actual pretax income (allegations)',
+  figures:{reported1999:230,actual1999:-191,reported2000:559,actual2000:194,
+    reported2001:434,actual2001:9,reportedH12002:340,actualH12002:157},
+  units:'USD millions; FY1999/FY2000/FY2001/H1 2002 are DISTINCT periods',
+  exercise:'The SEC complaint lists reported vs actual pretax earnings (USD M): 1999 $230 vs −$191, 2000 $559 vs $194, 2001 $434 vs $9, and H1 2002 $340 vs $157. Reconcile each overstatement ($421M/$365M/$425M/$183M) and SUM $1,394M across these four separate periods. SEC also alleged at least $1.4B cumulative overstatement; figures and case scope need not equal a single exact-period total.',
+  exerciseZH:'SEC 诉状分别列出税前利润（百万美元）：1999 原报 $230、实际 −$191；2000 原报 $559、实际 $194；2001 原报 $434、实际 $9；2002 上半年原报 $340、实际 $157。逐期计算差额 $421M/$365M/$425M/$183M，合计 $1,394M；注意 H1 不是完整财年，也不能把该四期合计当作整个案件的精确累计额。'
+ },
+ bristol:{
+  company:'Bristol-Myers Squibb Company',dates:'Q1 2000–Q4 2001',
+  citation:'https://www.sec.gov/enforcement-litigation/litigation-releases/lr-18820',
+  sourceType:'SEC Litigation Release 18820 / Aug 4 2004; SEC described a settled civil fraud case',
+  figures:{improperRevenueApprox:1500,civilSettlementPenalty:150},
+  units:'USD millions, revenue and penalty are DISTINCT types of amounts',
+  exercise:'SEC described approximately $1,500M of improperly recognized consignment-like distributor revenue in 2000–2001, together with channel stuffing and cookie jar reserves. A separate $150M penalty was part of settlement; NEVER subtract the penalty from revenue to derive adjusted sales. Use an explicitly HYPOTHETICAL revenue baseline to practice deferred-revenue and revenue-quality adjustments.',
+  exerciseZH:'SEC 指出 BMS 在 2000–2001 年间从类似寄售安排中不当确认约 $1,500M 收入，并涉及渠道压货及 Cookie Jar 准备金。和解罚款 $150M 是独立事实，不应从收入中扣罚款来计算调整后销售；练习调整收入须使用明确标注的模拟收入基数。'
  }
 };
 const hasNum=v=>typeof v==='number'&&Number.isFinite(v);
