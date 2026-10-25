@@ -1,5 +1,5 @@
 """etf.py: the ETF list, the SEC data sets (N-CEN, N-PORT, prospectus risk/return), market statistics and the build."""
-import gzip, io, json, sys, tempfile, unittest, zipfile
+import datetime as dt, gzip, io, json, sys, tempfile, unittest, zipfile
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'app'))
 import etf as E
@@ -171,7 +171,11 @@ class Build(unittest.TestCase):
             cons = Path(d) / 'cons'
             E.write_json(cons / 'index.json', {'fields': ['ticker', 'name', 'sector', 'price', 'target_mean', 'rating_mean', 'our_price', 'eps_rev_30d', 'next_earnings'],
                                                 'rows': [['NVDA', 'NVIDIA', 'technology', 100, 150, 1.5, 110, 0.02, None], ['AAPL', 'Apple', 'technology', 100, 90, 2.0, None, -0.01, None]]})
+            wk = [[(dt.date(2010, 2, 12) + dt.timedelta(days=7 * i)).isoformat(), 10 + i, 10 + i, 1e6] for i in range(60)]
+            E.write_json(root / 'cache' / 'market' / 'TQQQ.json', {'symbol': 'TQQQ', 'weekly': wk})      # a leveraged ETF
             E.build(root, hub, cons, None, verbose=False)
+            px = json.loads((root / 'public' / 'px' / 'TQQQ.json').read_text())            # the video studio's price file
+            self.assertEqual((px['d0'], len(px['t']), px['t'][-1], px['c'][-1]), ('2010-02-12', 60, 413, 69))
             idx = json.loads((root / 'public' / 'index.json').read_text())
             rows = {r[0]: dict(zip(idx['fields'], r)) for r in idx['rows']}
             ivv = rows['IVV']
