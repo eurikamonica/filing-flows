@@ -1,6 +1,7 @@
 """Build compact Flo events from staged public data. No direct SEC network calls."""
 import argparse
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import json
 from pathlib import Path
 import re
@@ -21,21 +22,21 @@ def read(p):
         return {}
 
 
-def date(value):
+def date(value, eastern=False):
     try:
         s = str(value or "").strip()
         if len(s) == 10:
             s += "T00:00:00+00:00"
         parsed = datetime.fromisoformat(s.replace("Z", "+00:00"))
         if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=timezone.utc)
+            parsed = parsed.replace(tzinfo=ZoneInfo('America/New_York') if eastern else timezone.utc)
         return parsed.astimezone(timezone.utc)
     except (TypeError, ValueError):
         return None
 
 
-def stamp(value):
-    d = date(value)
+def stamp(value, eastern=False):
+    d = date(value,eastern=eastern)
     return d.isoformat().replace("+00:00", "Z") if d else ""
 
 
@@ -73,8 +74,8 @@ def build(root, now=None):
         events.append(dict(id="8k:" + acc, kind="8k", ticker=tk, priority=pr,
             title=small(r.get("headline") or r.get("label") or "New 8-K"),
             detail=small(r.get("guidance_quote") or r.get("quote"), 180),
-            event_at=stamp(r.get("accepted") or filed), filed=filed[:10],
-            form=r.get("form") or "8-K", topics=topics[:5], source_url=url, source_label="SEC 8-K",
+            event_at=stamp(r.get("accepted"),eastern=True) if r.get("accepted") else stamp(filed), filed=filed[:10],
+            form=r.get("form") or "8-K", topics=topics[:5], accession=acc, source_url=url, source_label="SEC 8-K",
             scope="An SEC filing, not a price forecast."))
     f13 = read(root / "watchlist.json")
     statuses["13f"] = f13.get("generated_at") or ""
@@ -84,14 +85,23 @@ def build(root, now=None):
         cik, filed, period, url = str(r.get("cik") or ""), str(r.get("filed") or ""), str(r.get("period") or ""), str(r.get("source") or "")
         if not cik.isdecimal() or not SEC.match(url) or not recent(filed, now, 7):
             continue
-        added = next((v for v in (r.get("new") or []) if isinstance(v, dict) and symbol(v.get("ticker"))), {})
-        tk = symbol(added.get("ticker"))
+        changes = {}
+        symbols = []
+        for label,field in (("New","new"),("Added","added"),("Reduced","cut"),("Exited","exited")):
+            vals=[symbol(x.get("ticker")) for x in (r.get(field) or [])[:25] if isinstance(x,dict)]
+            vals=[x for x in vals if x]
+            changes[label] = vals[:3]
+            symbols.extend(vals[:10])
+        symbols=list(dict.fromkeys(symbols))[:40]
+        tk = symbols[0] if symbols else ""
         name = small(r.get("name") or r.get("filer") or "Institution")
+        summary = "; ".join(label + ": " + ", ".join(vals) for label, vals in changes.items() if vals)
         events.append(dict(id="13f:" + cik + ":" + period + ":" + filed,
-            kind="13f", ticker=tk, priority="medium" if tk else "info",
+            kind="13f", ticker=tk, symbols=symbols, manager=name,
+            priority="medium" if symbols else "info",
             title=name + " filed 13F",
-            detail="Quarter ended " + period + (". New position: " + tk if tk else ". Positions disclosed."),
-            event_at=stamp(filed), filed=filed[:10], period_end=period,
+            detail=small("Quarter ended " + period + (". " + summary if summary else ". Positions disclosed."),210),
+            changes=changes, event_at=stamp(filed), filed=filed[:10], period_end=period,
             source_url=url, source_label="SEC 13F",
             scope="Holdings as of quarter-end, not trading actions on filing date."))
     news = read(root / "news.json")
