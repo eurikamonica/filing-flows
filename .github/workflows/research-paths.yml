@@ -1,0 +1,83 @@
+# Price paths & patterns (Disclosures → Price paths, and the "Price paths & patterns" view of each company page).
+# Every day after the US close: daily open / high / low / close, adjusted close and volume for every valued company and
+# the ETFs (Yahoo's daily chart, Stooq as the fallback; ten years on the first fetch, so the first few runs fill the
+# cache), then public/ is rebuilt by app/paths.py: seven correlated path models (joint and block bootstrap, filtered
+# historical simulation, factor model, Cholesky, t-copula, DCC-GARCH), analogs and correlated-asset historical simulation,
+# rule-based price action with its pooled out-of-sample evidence, portfolios of 13F managers and officials, and the
+# weekly ledger of frozen forecasts.
+# Kept on the branch "research-paths" (one commit, force-pushed); scan.yml publishes public/ at
+# disclosures/data/research/paths/.
+name: Research — price paths & patterns
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for the price collection'
+        default: '30'
+      build:
+        description: 'Also rebuild public/ (true / false)'
+        default: 'true'
+  schedule:
+    - cron: '20 23 * * *'          # every day, 23:20 UTC (after the close and after research-valuation's 22:50)
+permissions:
+  contents: write
+concurrency:
+  group: research-paths
+  cancel-in-progress: false
+jobs:
+  paths:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/config/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install --quiet numpy
+      - name: The data branch and the inputs (the valued companies, 13F managers and officials)
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" research-paths >/dev/null; then
+            git clone --quiet --depth 1 --branch research-paths "$url" pth
+          else
+            mkdir pth && git -C pth init --quiet -b research-paths && git -C pth remote add origin "$url"
+          fi
+          for b in research-valuation research-people; do
+            if git ls-remote --exit-code --heads "$url" "$b" >/dev/null; then
+              git clone --quiet --depth 1 --filter=blob:none --sparse --branch "$b" "$url" "_$b"
+              git -C "_$b" sparse-checkout set public
+            fi
+          done
+          ls _research-people/public 2>/dev/null | head || true
+          du -sh pth 2>/dev/null || true
+      - name: Collect daily bars
+        timeout-minutes: 60
+        run: |
+          python disclosures/app/paths.py collect --root pth --universe _research-valuation/public/index.json --minutes "${{ inputs.minutes || '30' }}"
+      - name: Build public/
+        if: ${{ inputs.build != 'false' }}
+        timeout-minutes: 150
+        run: |
+          ppl=""
+          [ -d _research-people/public ] && ppl="--people _research-people/public"
+          python disclosures/app/paths.py build --root pth --universe _research-valuation/public/index.json $ppl
+      - name: Save to the branch (one commit, force-pushed)
+        if: always()
+        run: |
+          cd pth
+          [ -d cache ] || exit 0
+          printf '%s\n' '# research-paths (data only)' '' 'Daily bars (cache/ohlc/: a .base file per ticker that changes only when a dividend or split restates' \
+            'history, and the recent months), the frozen weekly forecasts (cache/ledger/) and the files the site publishes (public/),' \
+            'kept by .github/workflows/research-paths.yml on main. Force-pushed as a single commit.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "paths $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "paths $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:research-paths && break; sleep $((i * 10)); done
+          [ -f public/status.json ] && python -c "import json; print('::notice::' + json.dumps(json.load(open('public/status.json')))[:900])" || python -c "import json; print('::notice::' + json.dumps(json.load(open('state.json')).get('summary')))"
