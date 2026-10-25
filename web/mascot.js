@@ -32,7 +32,7 @@
   const workbooks = () => root.FFFloWorkbook || (typeof module !== 'undefined' ? require('./flo-workbook.js') : null);
   const realWorkbooks = () => root.FFFloRealWorkbook || (typeof module !== 'undefined' ? require('./flo-real-workbook.js') : null);
   const memo = new Map();
-  const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
+  const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
   const fileT = (t) => String(t || '').toUpperCase().replace(/\./g, '-');
   const QN = { en: ['Leading', 'Weakening', 'Lagging', 'Improving'], zh: ['领先', '转弱', '落后', '改善'] };
   const L = (lg, en, zh) => (lg === 'zh' ? zh : en);
@@ -729,7 +729,31 @@
     root.dispatchEvent(new CustomEvent('ff:mascotready'));
     setTimeout(() => mood('wave', 1800), 1200);
   }
+  function signalReaction(kind, ev) {
+    if (!ui) return;
+    const t=nowMs(),p=ui.halves;
+    if (kind==='worried') { mood('worried',4200);p.forEach(h=>h.shake=t+720); }
+    else if (ev&&ev.kind==='13f') { mood('wave',3300);p[0].spin=t+720;p[1].hop=t+460; }
+    else if (ev&&ev.kind==='price') { mood(kind,2600);p.forEach((h,i)=>h.hop=t+460+i*140); }
+    else mood(kind||'wave',1800);
+    // No automatic chat opening, audio or forced navigation.
+  }
+  function showSignal(ev,html) {
+    if (!ui || !ev || typeof html!=='string') return null;
+    open();
+    const box=addMsg(html,'bot');
+    box.dataset.floSignal=String(ev.kind||'');
+    ui.log.scrollTop=ui.log.scrollHeight;
+    mood(ev.kind==='8k'&&ev.priority==='high'?'worried':'talk',2400);
+    return box;
+  }
+  function refreshSignalData() {
+    // Company index, earnings and model snapshots are cached by the current page;
+    // the next Flo question must revalidate with the newly published site build.
+    memo.clear();
+  }
   root.FFMascot = { open, ask, explain: explainNode, mount, classify, findCompany, lang, pageContext, chipsFor,
+    signalReaction, showSignal, refreshSignalData,
     refreshAppearance() { if (ui && ui.panel.hidden) mood('idle'); }
   };
   if (doc && doc.body !== undefined) { if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', mount); else mount(); }
