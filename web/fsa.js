@@ -1,5 +1,6 @@
 /* Filing Flows: valuation math for the company page's Valuation tab — a forward FCFF DCF, a one-parameter reverse
-   solver and the sensitivity grids. Pure functions, no DOM: tested in Node (tests/test_fsa.cjs).
+   solver and the sensitivity grids — and the Cash & quality tab's screening math: cash collected from customers
+   against revenue, and reserve signals across fiscal years. Pure functions, no DOM: tested in Node (tests/test_fsa.cjs).
    Specification and acceptance cases from fsa-beta/planning/03_VALUATION.md (beta/fsa-chatgpt, ChatGPT (OpenAI)). */
 (function (root) {
   'use strict';
@@ -103,7 +104,57 @@
     return rvals.map((r) => cvals.map((c) => value({ ...x, [rp]: r, [cp]: c })));
   }
 
-  const api = { validate, dcf, value, solve, root1, grid };
+  // ---- Cash collected from customers against revenue (a period of quality.q / quality.fy, pipeline/quality.py) ----
+  // collected ≈ revenue + the cash effects the cash-flow statement reports for the change in receivables, contract
+  // assets and deferred revenue (contract liabilities): receivables up → less collected; deferred revenue up → cash
+  // received ahead of revenue. Bad-debt write-offs, factoring and acquired balances are not separated: an estimate.
+  const COLLECT = ['d_ar', 'd_casset', 'd_contract'];
+  const BROAD_AR = /OtherOperatingAssets|AccountsAndOtherReceivables/;      // receivables tagged with other assets
+  function collections(p, conceptOf) {
+    const rev = p && p.wc ? p.wc.rev : null, items = (p && p.bridge && p.bridge.items) || [];
+    if (!fin(rev) || rev <= 0) return null;
+    const parts = items.filter((x) => COLLECT.includes(x[0]) && fin(x[1]));
+    if (!parts.some((x) => x[0] === 'd_ar')) return null;                     // the change in receivables is the core
+    const cash = rev + parts.reduce((s, x) => s + x[1], 0);
+    const broad = parts.some((x) => x[0] === 'd_ar' && conceptOf && BROAD_AR.test(conceptOf(x[2]) || ''));
+    return { rev, cash, rate: cash / rev, gap: cash - rev, parts, broad };
+  }
+  // the same over several periods (the last four quarters): null unless every one has an estimate
+  function collectionsSum(periods, conceptOf) {
+    const xs = (periods || []).map((p) => collections(p, conceptOf));
+    if (!xs.length || xs.some((x) => !x)) return null;
+    const rev = xs.reduce((s, x) => s + x.rev, 0), cash = xs.reduce((s, x) => s + x.cash, 0);
+    return { rev, cash, rate: cash / rev, gap: cash - rev, broad: xs.some((x) => x.broad) };
+  }
+
+  // ---- Reserve signals across fiscal years ("cookie jar" screening; rows: quality.reserves of one family) ----
+  // Screens, not verdicts: each flag says where to read the note. Thresholds:
+  const RESERVE_FLAGS = { release: 0.05,   // estimates released back to profit ≥ 5% of net income
+    drop: 0.25,                            // balance as a share of revenue down ≥ 25% from the year before
+    under: 0.8 };                          // charged ÷ used below 0.8 while the balance fell: drawn down, not refilled
+  function reserveTrend(rows, years) {
+    const byEnd = new Map((years || []).map((p) => [p.end, p]));
+    let prev = null;
+    return (rows || []).slice().sort((a, b) => (a.end < b.end ? -1 : 1)).map((r) => {
+      const y = byEnd.get(r.end) || {}, rev = y.wc ? y.wc.rev : null, ni = y.ni;
+      const ratio = r.id !== 'loans' && fin(r.closing) && fin(rev) && rev > 0 ? r.closing / rev : null;   // loans: not sales-driven
+      const relNi = fin(r.releases) && r.releases > 0 && fin(ni) && ni > 0 ? r.releases / ni : null;
+      const cover = fin(r.additions) && fin(r.utilization) && r.utilization > 0 ? r.additions / r.utilization : null;
+      const flags = [];
+      if (relNi != null && relNi >= RESERVE_FLAGS.release) flags.push({ kind: 'release', value: relNi });
+      const lastYear = prev && Math.abs((Date.parse(r.end) - Date.parse(prev.end)) / 864e5 - 365) <= 35;   // not across a gap
+      if (ratio != null && lastYear && prev.ratio != null && prev.ratio > 0 && ratio <= prev.ratio * (1 - RESERVE_FLAGS.drop))
+        flags.push({ kind: 'drop', value: ratio, from: prev.ratio });
+      if (cover != null && cover < RESERVE_FLAGS.under && fin(r.opening) && fin(r.closing) && r.closing < r.opening)
+        flags.push({ kind: 'under', value: cover });
+      const out = { label: r.label, end: r.end, opening: r.opening, closing: r.closing, additions: r.additions,
+        releases: r.releases, utilization: r.utilization, rev, ni, ratio, relNi, cover, flags };
+      prev = out;
+      return out;
+    });
+  }
+
+  const api = { validate, dcf, value, solve, root1, grid, collections, collectionsSum, reserveTrend, RESERVE_FLAGS };
   root.FSA = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

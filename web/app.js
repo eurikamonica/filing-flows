@@ -1228,6 +1228,65 @@
         }).join('')}</tbody></table></div>
         <p class="muted q-small">Balances at period end; days use the average of the opening and closing balance and need both. ${L.some((p) => (p.wc || {}).ap_proxy) ? '* Payables tagged together with accrued liabilities. ' : ''}Select any figure to see the XBRL fact and filing it comes from.</p>`;
     }
+    // ---- cash collected from customers against revenue (web/fsa.js FSA.collections): an estimate from the same tags
+    const conceptOf = (r) => { const x = r && D.src && D.src.concepts[r[0]]; return x ? x[0] : ''; };
+    const CL_PART = { d_ar: ['receivables rose', 'receivables fell'], d_casset: ['contract assets rose', 'contract assets fell'],
+      d_contract: ['deferred revenue fell', 'deferred revenue rose'] };     // [cash effect < 0, cash effect > 0]
+    const rate = (r) => `${Math.round(r * 100)}%`;
+    function clPayload(p, x) {
+      return { title: 'Cash collected from customers (estimate)', value: money(x.cash), period: per(p), kind: 'Derived',
+        formula: `revenue ${money(x.rev)}${x.parts.map(([k, v]) => ` ${v < 0 ? '−' : '+'} ${money(Math.abs(v))} (${CL_PART[k][v < 0 ? 0 : 1]})`).join('')}`,
+        note: 'The cash-flow statement’s changes in receivables, contract assets and deferred revenue, applied to revenue. Bad-debt write-offs, '
+          + 'sold receivables and balances from acquisitions are not separated, so this is an estimate.'
+          + (x.broad ? ' The company tags receivables together with other operating assets, which widens the estimate.' : ''),
+        inputs: [{ title: 'Revenue', value: money(x.rev), period: per(p), ref: ref(p, 'rev') }]
+          .concat(x.parts.map(([k, v, r]) => ({ title: `${BRIDGE[k]} (cash effect)`, value: money(v), period: per(p), ref: r }))) };
+    }
+    function collectChart(L, sel) {
+      const xs = L.map((p) => FSA.collections(p, conceptOf));
+      const W = 560, H = 230, left = 58, top = 22, bottom = 30;
+      const ax = qAxis(xs.flatMap((x) => (x ? [x.rev, x.cash] : [])), H, top, bottom);
+      const step = (W - left - 8) / L.length, bw = Math.min(22, step * 0.32);
+      let g = qGrid(ax, W, left);
+      L.forEach((p, i) => {
+        const x = left + i * step, mid = x + step / 2, c = xs[i];
+        if (p === sel) g += `<rect class="q-selcol" x="${(x + 2).toFixed(1)}" y="${top - 14}" width="${(step - 4).toFixed(1)}" height="${H - top - bottom + 18}" rx="6"/>`;
+        if (c) {
+          g += qRect(mid - bw - 1, ax.y(0), ax.y(c.rev), bw, 'cq-rev', `${p.label} revenue ${money(c.rev)}`);
+          g += qRect(mid + 1, ax.y(0), ax.y(c.cash), bw, 'cq-col', `${p.label} cash collected (estimate) ${money(c.cash)}, ${rate(c.rate)} of revenue`);
+          g += `<text class="q-val${c.rate < 0.9 ? ' cq-low' : ''}" x="${mid.toFixed(1)}" y="${(Math.min(ax.y(c.rev), ax.y(c.cash)) - 5).toFixed(1)}" text-anchor="middle">${rate(c.rate)}</text>`;
+        } else g += `<text class="q-na" x="${mid.toFixed(1)}" y="${(ax.y(0) - 6).toFixed(1)}" text-anchor="middle">n/a</text>`;
+        g += `<text class="q-x${p === sel ? ' on' : ''}" x="${mid.toFixed(1)}" y="${H - 10}" text-anchor="middle">${t(p.label)}</text>
+          <rect class="q-hit" data-end="${t(p.end)}" x="${x.toFixed(1)}" y="0" width="${step.toFixed(1)}" height="${H}"><title>${t(p.label)}: select</title></rect>`;
+      });
+      return `<svg class="q-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Revenue and estimated cash collected from customers by period">${g}</svg>`;
+    }
+    function collectHTML(L, sel) {
+      if (financial || !L.some((p) => FSA.collections(p, conceptOf))) return '';
+      const x = FSA.collections(sel, conceptOf);
+      const last4 = st.mode === 'q' ? (D.q || []).filter((p) => p.end <= sel.end).slice(-4) : [];
+      const y = last4.length === 4 ? FSA.collectionsSum(last4, conceptOf) : null;
+      const kp = (label, val, note, cls) => `<div class="q-kpi"><small>${label}</small><strong class="${cls || ''}">${val}</strong>${note ? `<span>${note}</span>` : ''}</div>`;
+      const said = !x ? `${t(sel.label)}: the change in receivables is not tagged for this period, so collections cannot be estimated.`
+        : `${t(sel.label)}: revenue ${money(x.rev)}; an estimated ${money(x.cash)} came in from customers, ${rate(x.rate)} of revenue`
+          + (x.parts.length ? ` (${x.parts.map(([k, v]) => `${CL_PART[k][v < 0 ? 0 : 1]} ${money(Math.abs(v))}`).join(', ')})` : '') + '. '
+          + (x.rate < 0.9 ? '<span class="q-warmtext">More revenue was booked than collected: worth reading the receivables note and the customer concentration.</span>'
+            : x.rate > 1.05 ? 'Customers paid more than the revenue booked: receivables shrank or payments came in ahead of revenue.'
+              : 'Collections kept pace with revenue.');
+      return `<article class="q-card cq-collect"><h3>Cash collected vs revenue, ${t(sel.label)}</h3>
+          <p class="muted">Revenue is booked when it is earned; cash arrives when customers pay. Collected ≈ revenue − the rise in receivables and contract assets + the rise in deferred revenue.</p>
+          <div class="q-kpis cq-kpis">
+            ${kp('Revenue', x ? evBtn(money(x.rev), { title: 'Revenue', value: money(x.rev), period: per(sel), ref: ref(sel, 'rev') }) : '—', '')}
+            ${kp('Cash collected', x ? evBtn(money(x.cash), clPayload(sel, x)) : '—', 'estimate')}
+            ${kp('Collected ÷ revenue', x ? rate(x.rate) : '—', x ? (x.gap < 0 ? `${money(-x.gap)} not yet collected` : `${money(x.gap)} more than revenue`) : '', x && x.rate < 0.9 ? 'q-warm' : '')}
+            ${st.mode === 'q' ? kp('Last four quarters', y ? rate(y.rate) : '—', y ? `${money(y.cash)} of ${money(y.rev)}` : 'needs four tagged quarters', y && y.rate < 0.9 ? 'q-warm' : '') : ''}
+          </div>
+          <div class="q-scroll">${collectChart(L, sel)}</div>
+          <div class="q-legend"><span><i class="cq-rev"></i>Revenue</span><span><i class="cq-col"></i>Cash collected (estimate)</span><span>% = collected ÷ revenue</span></div>
+          <p class="q-sum">${said}</p>
+          <p class="muted q-small">Seasonal businesses swing quarter to quarter; the last four quarters smooth that out.${x && x.broad ? ' Receivables are tagged together with other operating assets here, so the estimate is broader.' : ''} Select a figure to see the facts behind it.</p>
+        </article>`;
+    }
     function render() {
       const L = list().slice(st.mode === 'fy' ? -5 : -8);
       const sel = L.find((p) => p.end === st.end) || L[L.length - 1];
@@ -1243,6 +1302,7 @@
           <p class="muted">The adjustments the cash-flow statement discloses, in its order. A dashed bar is what the standard tags do not explain.</p>
           ${bridgeHTML(sel)}
           <div class="q-legend"><span><i class="cq-bar plus nc"></i>Non-cash charges and gains</span><span><i class="cq-bar plus wc"></i>Working capital</span><span><i class="cq-gap-key"></i>Not explained</span></div></article>
+        ${collectHTML(L, sel)}
         <h3 class="cq-h3">Cash conversion cycle</h3>
         <div class="cq-grid">
           ${daysChart(L, 'dso', 'Receivables (DSO)', sel, 'Days of revenue not yet collected. Total revenue is a proxy for credit sales.')}
@@ -1254,9 +1314,12 @@
       $$('[data-cm]', box).forEach((b) => b.addEventListener('click', () => { st.mode = b.dataset.cm; st.end = null; render(); }));
       const ps = $('#cq-period', box);
       if (ps) ps.addEventListener('change', () => { st.end = ps.value; render(); });
+      $$('.cq-collect .q-hit', box).forEach((h) => h.addEventListener('click', () => { st.end = h.dataset.end; render(); }));
+      $$('.cq-collect .q-scroll', box).forEach((el) => { el.scrollLeft = el.scrollWidth; });   // phones: the latest period
     }
     render();
     body.appendChild(box);
+    $$('.cq-collect .q-scroll', box).forEach((el) => { el.scrollLeft = el.scrollWidth; });     // now that it has a width
   }
 
   // ---------- Capital allocation: where the cash came from and went, the share count, debt maturities ----------
@@ -2384,6 +2447,7 @@
             ${rr.reconciled ? '<span class="pos">Reconciles.</span>' : `<span class="q-warmtext">${money(rr.diff)} the filing’s tags do not explain</span> (movements tagged elsewhere or not at all, such as acquisitions).`}
             ${rr.releases ? ` Released to profit: ${money(rr.releases)}${rr.opening > 0 ? `, ${(rr.releases / rr.opening * 100).toFixed(0)}% of the opening balance` : ''}.` : ''}</p>
           <p class="muted q-small">Tags: ${Object.entries(rr.tags).map(([k, v]) => `${k} <span class="mono">${t([].concat(v).join(' + '))}</span>`).join(' · ')}</p>
+          ${signalsHTML(famRows, rr)}
         </article>` : ''}
         <details class="q-card q-crumb"><summary><b>What is a “cookie jar” reserve?</b> <span class="muted">Try it with Crumb, a reserve jar (made-up numbers)</span></summary>
           <div class="crumb">
@@ -2442,6 +2506,28 @@
         const el = $('#crumb-pet', box);
         if (!paused) { el.classList.remove('react'); void el.getBoundingClientRect(); el.classList.add('react'); }
       } catch (e) { $('#crumb-say', box).textContent = e.message; }
+    }
+    // the reserve across fiscal years, with the cookie-jar screens of web/fsa.js FSA.reserveTrend
+    function signalsHTML(rows, cur) {
+      const T = FSA.reserveTrend(rows, D.fy), F0 = FSA.RESERVE_FLAGS;
+      if (T.length < 2) return '';
+      const p1 = (v) => (v == null ? '—' : `${(v * 100).toFixed(v < 0.1 ? 1 : 0)}%`);
+      const x2 = (v) => (v == null ? '—' : `${v.toFixed(2)}×`);
+      const flagText = (f) => (f.kind === 'release' ? `Released ${p1(f.value)} of net income`
+        : f.kind === 'drop' ? `${p1(f.from)} → ${p1(f.value)} of revenue`
+          : `Charged ${x2(f.value)} of what was used`);
+      const n = T.filter((x) => x.flags.length).length, isLoans = rows[0] && rows[0].id === 'loans';
+      return `<h4 class="rs-h">Across the years</h4>
+        <div class="tbl-wrap"><table class="cq-table rs-table"><thead><tr><th>Year</th><th class="num">Balance</th><th class="num">% of revenue</th><th class="num">Charged</th>
+          <th class="num">Released</th><th class="num">Released ÷ net income</th><th class="num">Used</th><th class="num">Charged ÷ used</th><th>Screens</th></tr></thead>
+        <tbody>${T.slice().reverse().map((x) => `<tr class="${x.flags.length ? 'flagged' : ''}${x.end === cur.end ? ' on' : ''}"><td>${t(x.label)}</td>
+          <td class="num">${qm(x.closing)}</td><td class="num">${p1(x.ratio)}</td><td class="num">${x.additions == null ? '—' : qm(x.additions)}</td>
+          <td class="num">${x.releases == null ? '—' : qm(x.releases)}</td><td class="num">${p1(x.relNi)}</td><td class="num">${x.utilization == null ? '—' : qm(x.utilization)}</td>
+          <td class="num">${x2(x.cover)}</td><td class="flagcell">${x.flags.length ? x.flags.map((f) => `<span class="rs-flag">${flagText(f)}</span>`).join('') : '<span class="muted">—</span>'}</td></tr>`).join('')}</tbody></table></div>
+        <p class="q-sum">${n ? `<span class="q-warmtext">Screens flag ${n} of ${T.length} years</span>: read the note for what changed in the estimates.` : `No screens flag the ${T.length} years shown.`}</p>
+        <p class="muted q-small">Screens, not verdicts. Flagged when estimates released back to profit reach ${Math.round(F0.release * 100)}% of net income, when the balance
+          falls by ${Math.round(F0.drop * 100)}% or more as a share of revenue in a year, or when less is charged than used (under ${F0.under}×) while the balance shrinks.
+          ${isLoans ? 'Loan allowances follow the loan book, not sales, so no share of revenue is shown. ' : ''}Lower claims, a smaller business or a sale can explain each one.</p>`;
     }
     function bind() {
       $$('.q-scroll', box).forEach((el) => { el.scrollLeft = el.scrollWidth; });   // phones: start at the latest period

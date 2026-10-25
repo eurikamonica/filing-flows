@@ -438,6 +438,18 @@ label.check input { accent-color: var(--accent); }
 .w-use { fill: var(--slate); opacity: .6; background: var(--slate); }
 .w-oth { fill: var(--q-warm); background: var(--q-warm); }
 .w-gap { fill: transparent; stroke: var(--muted); stroke-dasharray: 3 3; }
+/* cash collected vs revenue (Where the cash went) and the reserve signals table (Where did the reserve go?) */
+.cq-rev { fill: var(--mk-rev); background: var(--mk-rev); }
+.cq-col { fill: var(--mk-profit); background: var(--mk-profit); }
+.q-chart .q-val.cq-low { fill: var(--q-warm); font-weight: 600; }
+.cq-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cq-collect .q-scroll { max-width: 720px; }
+.q-chart .q-hit:focus { outline: none; }
+.rs-table td.flagcell { min-width: 14em; white-space: normal; }
+.rs-flag { display: inline-block; font-size: 12px; line-height: 1.35; color: var(--q-warm); border: 1px solid currentColor; border-radius: 999px; padding: 1px 8px; margin: 1px 4px 1px 0; }
+.rs-table tr.flagged td:first-child { box-shadow: inset 3px 0 0 var(--q-warm); }
+.rs-table tr.on td { background: var(--surface-2); }
+.rs-h { margin: 8px 0 0; font-size: 15px; }
 .q-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); }
 .q-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 .q-legend i.w-gap { border: 1px dashed var(--muted); background: transparent; }
