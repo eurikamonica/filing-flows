@@ -137,7 +137,7 @@ function panel(s,lang='en'){
  (p.quiz?'<p class="flo-source">'+(p.quiz.pass?'✓ ':'↻ ')+esc(s.message||quiz.why)+'</p>':'')+'</div>':'')+'</section>';
 }
 function simulate(x){
- const kind=String(x.kind||'worldcom').toLowerCase(),amount=Number(x.amount),life=Number(x.life||5);
+ const kind=String(x.kind||'worldcom').toLowerCase(),amount=Number(x.amount),life=Number(x.life===undefined?5:x.life);
  if(!Number.isFinite(amount)||amount<0||amount>1e9||!Number.isInteger(life)||life<1||life>40)throw Error('Simulation amount must be ≥0 and life must be 1–40 years.');
  if(kind==='worldcom')return {kind,pretaxOverstatement:amount,assetsOverstatement:amount,
   laterAnnualDepreciation:amount/life,immediateCashDifference:0,
