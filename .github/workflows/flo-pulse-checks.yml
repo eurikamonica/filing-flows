@@ -47,4 +47,4 @@ jobs:
       - name: No false first-view alert, duplicate popup, or unsourced news
         run: node tests/test_flo_alerts.cjs
       - name: Feed builder and SEC source contract
-        run: python -m unittest tests.test_build_flo_alerts -v
+        run: python -m unittest discover -s tests -p 'test_build_flo_alerts.py' -v
