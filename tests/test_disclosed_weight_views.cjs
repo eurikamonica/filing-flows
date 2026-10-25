@@ -1,0 +1,28 @@
+'use strict';
+const assert=require('node:assert/strict'), A=require('../web/actual-weights.js');
+const out=()=>({notes:new Set(),series:[]});
+const h={snapshots:[{date:'2026-06-30',positions:[['AAPL',.2],['MSFT',.3]]},{date:'2026-09-30',positions:[['AAPL',.1],['NVDA',.4]]}]};
+const api={hub:'/',rankMeta:async()=>({cos:[['AAPL','Apple','technology']]}),json:async u=>u.includes('/weights/')?h:null};
+(async()=>{
+ const area=out();await A.build({aw:'etf',style:'companies'},area,api);
+ assert.equal(area.kind,'sectors');assert.equal(area.group,'companies');
+ for(let i=0;i<2;i++)assert(Math.abs(area.series.reduce((v,s)=>v+s.v[i],0)-1)<1e-9);
+ assert.deepEqual(area.series.find(s=>s.key==='MSFT').v,[.3,0]);
+ const changes=out();await A.build({aw:'etf',style:'changes'},changes,api);
+ assert.equal(changes.grid.length,1);assert.equal(changes.order,'abs');
+ assert.equal(changes.series.find(s=>s.key==='MSFT').v[0],-.3);
+ assert.equal(changes.fmt(-.3),'-30.00 pp');
+ const mapi={...api,json:async u=>u.endsWith('/1067983.json')?{name:'Manager',snapshots:[{period:'2026-06-30',filed:'2026-08-14',complete:true,total_usd:100,positions_shard:'positions.json'}]}:[{ticker:'AAPL',value_usd:20,put_call:'NONE'},{ticker:'AAPL',value_usd:50,put_call:'CALL'},{value_usd:30}]};
+ const mgr=out();await A.build({aw:'13f',style:'stack'},mgr,mapi);
+ assert.equal(mgr.series.find(s=>s.key==='other').v[0],.8);
+ assert.equal(mgr.evidence[0].filed,'2026-08-14');
+ assert.match(mgr.metric,/13F/);assert(!mgr.sub.includes('fund NAV'));
+ const offapi={...api,json:async()=>({trades:[{person:'Official',date:'2026-06-12',ticker:'AAPL',amount_min:1001,amount_max:15000,type:'buy'},{person:'Official',date:'2026-06-13',ticker:'MSFT',amount_min:1001,amount_max:50000,type:'sell'}]})};
+ const off=out();await A.build({aw:'official',ap:'Official',style:'companies'},off,offapi);
+ assert.equal(off.series.find(s=>s.key==='AAPL').v[0],.5);
+ assert.match(off.foot,/not actual holdings/);assert.equal(off.kind,'rank');
+ const onlyBuy=await A.disclosedSource({aw:'official',ap:'Official',ao:'buy'},offapi);
+ assert.deepEqual(onlyBuy.snapshots[0].positions,[['AAPL',1]]);
+ await assert.rejects(A.build({aw:'etf',style:'changes',from:'2026-09-01'},out(),api),/at least two/);
+ console.log('Disclosed weight views: company residuals, exits, changes, 13F options, official bounds passed');
+})().catch(e=>{console.error(e);process.exitCode=1});
