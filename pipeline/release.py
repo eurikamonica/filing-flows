@@ -44,7 +44,8 @@ P = {
            r"benefit from \(provision for\)|provision for|benefit from|\(benefit\) provision) (for )?income taxes"
            r"|income tax (expense|provision|benefit|\(provision\) benefit|\(expense\) benefit|expense \(benefit\)|"
            r"benefit \(expense\)|provision \(benefit\))|income taxes|income tax|income tax(es)? expenses|tax expenses?|income tax(es)? benefit \(expenses\)|taxes on income|tax benefit \(expenses?\))$"
-           r"|^taxation( charge| expense| \(charge\) credit| charge \(credit\)| credit \(charge\))?$|^tax (charge|expense)( \(credit\))?$",
+           r"|^taxation( charge| expense| \(charge\) credit| charge \(credit\)| credit \(charge\))?$|^tax (charge|expense)( \(credit\))?$"
+           r"|^total (income )?tax(ation|es)? (expense|charge|\(expense\) benefit|benefit \(expense\))$",
     "pl": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|loss \(income\)|earnings \(loss\))$"
           r"|^net profit( \(loss\))?$|^(net )?profit( \(loss\))? for the (period|year|quarter)$"
           r"|^(net )?(profit|profit \(loss\)|\(loss\) profit|profit/\(loss\)|income|earnings) after (income )?tax(es|ation)?( for the (period|year|quarter))?$"
@@ -56,6 +57,7 @@ P = {
     "ni": r"^net (income|earnings|loss|income \(loss\)|\(loss\) income|earnings \(loss\)) (attributable|applicable|available) to "
           r"(?!non-?controlling|minority|redeemable non)|^(net )?profit attributable to (the )?(owners|equity holders|shareholders)"
           r"|^attributable to (the )?(owners|equity holders|shareholders|stockholders)"
+          r"|^attributable to (?!non-?controlling|minority)[a-z0-9 .&'’-]{0,40}(owners|shareholders|equity holders|stockholders)"
           r"|^(income|profit|earnings)( \(loss\))? attributable to (?!non-?controlling|minority|redeemable non)",
     "nci": r"^(less: )?net (income|loss|income \(loss\)|\(income\) loss|\(loss\) income|earnings) attributable to "
            r"(non-?controlling|minority)|^(non-?controlling|minority) interests?$|^(net )?profit attributable to non-?controlling|^attributable to non-?controlling|^(income|profit|earnings)( \(loss\))? attributable to (non-?controlling|minority)",
@@ -158,6 +160,20 @@ def read_tables(html):
             # column after the dollar figures (CACI, Southwest) does not make the row a percentage
             pct = bool(pcts) and pcts[0]
             rows.append({"cells": cells, "label": label, "key": norm_label(label) if label else "", "vals": vals, "pct": pct})
+        # note references in a column of their own that the header does not name where the figures line up (BHP's
+        # "Total taxation expense | 5 | (4,431)"): a row one value longer than the table's rows, led by a small whole
+        # number, loses that number
+        widths = {}
+        for r in rows:
+            if r["label"] and r["vals"]:
+                widths[len(r["vals"])] = widths.get(len(r["vals"]), 0) + 1
+        if widths:
+            w = max(widths, key=widths.get)
+            for r in rows:
+                v = r["vals"]
+                if r["label"] and len(v) == w + 1 and 1 <= v[0] <= 60 and v[0] == int(v[0]) and \
+                        any(re.fullmatch(r"\d{1,2}(\.\d)?", c or "") for c in r["cells"]):
+                    r["vals"] = v[1:]
         before = " ".join(s.strip() for s in t.find_all_previous(string=True, limit=30))[:1500]
         out.append(_newest_first(_usd_columns({"rows": rows, "before": before, "text": t.get_text(" ", strip=True)})))
     return out
@@ -294,8 +310,8 @@ def _map_rows(table, keys, full=False):
                     prev = found.get(k)
                     if prev is None or lab.startswith("total") or (not prev[1].startswith("total") and v > prev[0]):
                         found[k] = (v, lab, r["vals"])
-                elif k not in found:
-                    found[k] = (v, lab, r["vals"])
+                elif k not in found or (k == "tax" and lab.startswith("total") and not found[k][1].startswith("total")):
+                    found[k] = (v, lab, r["vals"])          # a total tax line beats its parts (BHP: income tax + royalties)
                 break
     if parts is not None:
         _close_parts(found, parts, "revenues")

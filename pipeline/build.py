@@ -1169,6 +1169,9 @@ def _derive_h2(c):
                for k in facts.CONCEPTS}
         if not raw.get("revenue") or raw["revenue"] <= 0 or (raw.get("ni") is None and raw.get("pl") is None):
             continue
+        if not 0.5 <= raw["revenue"] / (hr.get("revenue") or raw["revenue"]) <= 2.0:
+            continue                                     # the year and the half count revenue differently (Diageo's
+                                                         # sales with excise vs. net sales): no second half
         label, fq, fy = facts.fiscal_label(ye, c["profile"]["fye"])
         halves[ye] = {"period": "half", "derived": True, "end": ye, "label": label.replace(f"Q{fq}", "H2", 1), "fq": 4, "fy": fy,
                       "cal": facts.calendar_quarter(ye), "form": "20-F", "accn": y.get("accn"), "filed": y.get("filed"),
@@ -1280,10 +1283,16 @@ def process_fpi_release(store, cik, accn, form, starred=False):
         same = facts.extract(companyfacts(cik), end, annual=True).get("revenue") if fq0 == 4 else None
     except Exception:
         same = None
-    if (same and abs((rel["is"].get("revenue") or 0) / same - 1) < 0.03) or \
-            (ratio and ratio >= 3.4 and fq0 == 4 and rel["is_quarter"] is None):
+    rev0 = rel["is"].get("revenue") or 0
+    near = [q for q in prior if 60 <= (e0 - dt.date.fromisoformat(q["end"])).days <= 120 and (q.get("raw") or {}).get("revenue")]
+    grows = bool(near) and rev0 / near[-1]["raw"]["revenue"] < 1.6      # the quarter before says it is a quarter
+    if (same and abs(rev0 / same - 1) < 0.03) or (ratio and ratio >= 3.4 and fq0 == 4 and not grows):
         raise NotApplicable("the release's statements are for the full year (the 20-F has it)")
-    if ratio and fq0 == 2 and 1.6 <= ratio <= 2.6 and rel["is_quarter"] is not True:
+    if ratio and ratio >= 2.6 and fq0 == 3 and not grows and rel["is_quarter"] is not False:
+        raise NotApplicable("the release's statements are nine months, not the quarter")
+    hdr0 = release._header(release.pick_tables(rel["tables"])[0][1]).lower()
+    if ratio and fq0 == 2 and 1.6 <= ratio <= 2.6 and not grows and \
+            (rel["is_quarter"] is not True or re.search(r"six months|six-month|first half|half[- ]year", hdr0)):
         rel["is_quarter"] = False
     if rel["is_quarter"] is False:
         # a half-year report (Unilever, Rio Tinto, BHP and others report twice a year): kept as a half, drawn when the
@@ -1471,10 +1480,18 @@ def _annual_from_document(cik, doc_url, row, end, fx):
     ni = x.get("pl") if x.get("pl") is not None else x.get("ni")
     try:
         tables = release.read_tables(html)
-        best, _ = release.pick_tables(tables)
-        if not best:
+        # the consolidated statement: of the full income statements, the one with the largest revenue (Toyota's 20-F also
+        # prints one for its non-financial businesses alone)
+        cands = []
+        for t0 in tables:
+            if release._is_nongaap(t0):
+                continue
+            m0 = release._map_rows(t0, release.IS_KEYS)
+            if "revenue" in m0 and ("pl" in m0 or "ni" in m0) and ("pretax" in m0 or "oi" in m0):
+                cands.append((m0["revenue"], t0, m0))
+        if not cands:
             return None
-        _, t, m = best
+        _, t, m = max(cands, key=lambda x: x[0])
         scale = release._units(t)
         net = m.get("pl", m.get("ni"))
         if ni and net:                                          # the table's units checked against the XBRL net income
