@@ -47,7 +47,7 @@ const common={ k:'snowball', t:'TST', from:'2023-01-06',to:'2025-12-31',
   const p=Holdings.managerPositions(mg,{cos:[['AAA','AAA Inc','technology'],['BBB','BBB Inc','health']]});
   assert.ok(Math.abs(p.covered-.6)<1e-9 && Math.abs(p.unshown-.4)<1e-9,'missing 13F remainder not reweighted');
   const sectors=Holdings.groupSectors(p.positions,p.unshown);
-  assert.equal(sectors.find(x=>x.ticker==='unshown').weight,.4);
+  assert.ok(Math.abs(sectors.find(x=>x.ticker==='unshown').weight-.4)<1e-10);
   const off={recent:[['2026-08-08','AAA','Purchase',1001,15000],['2026-08-09','BBB','Sale',15001,50000],['2026-08-10','AAA','Purchase',50001,null]]};
   const transactions=Holdings.officialTransactions(off,{cos:[['AAA','AAA Inc','technology'],['BBB','BBB Inc','health']]});
   assert.equal(transactions.ignored,1);
