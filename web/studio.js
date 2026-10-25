@@ -376,16 +376,16 @@
   /* ---------- building a video: the series on the grid, labels and formats ---------- */
   const DEF = { k: 'growth', t: 'QQQ,SPY', from: '', to: '', amt: '10000', div: 'tr', style: 'line', theme: 'bull', ar: '16x9', q: '1080', fps: '30', dur: '20',
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
-    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', an: '12', yb: '2000',
+    rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', an: '12', hsrc: '13f', hid: '', hv: 'company', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
     goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
-    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'Actual ETF / index weights'],
+    ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'Actual ETF / index weights'], ['holdings', '13F / Officials weights'],
     ['sankey', 'Earnings flow'], ['snowball', 'Dividend snowball'], ['timing', 'Timing']];
   const STYLES = { growth: [['line', 'Line race'], ['bars', 'Bar race'], ['area', 'Areas'], ['tiles', 'Counters']], rrg: [['rrg', 'RRG']], momentum: [['bars', 'Bar race'], ['line', 'Lines']],
     fund: [['columns', 'Columns'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], formula: [['line', 'Lines'], ['area', 'Areas'], ['tiles', 'Counters'], ['bars', 'Bar race']],
     rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']],
-    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas']], sankey: [['sankey', 'Flow']], snowball: [['snow', 'Shares and income']],
+    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas']], holdings: [['bars', 'Actual holdings bars']], sankey: [['sankey', 'Flow']], snowball: [['snow', 'Shares and income']],
     timing: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']] };
   const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold'];        // redrawn, not rebuilt
   const tickers = (st) => [...new Set(String(st.t || '').split(/[\s,;]+/).map(norm).filter(Boolean))].slice(0, 10);
@@ -980,6 +980,7 @@
     if (k === 'treemap') return buildTreemap(st, out);
     if (k === 'sectors') return buildSectors(st, out);
     if (k === 'actual') return root.FFActual.build(st, out, { json, hub: HUB, rankMeta });
+    if (k === 'holdings') return root.FFHoldingsVideo.build(st, out, { json, hub: HUB, rankMeta });
     if (k === 'sankey') return buildSankey(st, out, T);
     if (k === 'snowball') return buildSnowball(st, out, T);
     if (k === 'timing') return buildTiming(st, out, T);
@@ -2228,6 +2229,23 @@
       h += `<label for="st-an">Top holdings shown</label>${sel('st-an', [['5', '5'], ['10', '10'], ['12', '12'], ['15', '15'], ['20', '20']], st.an)}`;
       return h + '<div class="st-help">Actual NAV-based ETF holdings snapshots, each labelled with its original report date. Index mode uses a TRACKING ETF PROXY, not licensed official index files. Dow 30 is price-weighted, never market-cap-weighted. Dates before the first actual snapshot cannot be animated.</div>';
     }
+    function holdingsSide() {
+      let h = '<label for="st-hsrc">Disclosure source</label>' +
+        sel('st-hsrc', [['13f', 'Popular SEC 13F managers'], ['officials', 'Public officials / PTR transactions']], st.hsrc);
+      h += '<label for="st-hid">' + (st.hsrc === 'officials' ? 'Official (name or slug)' : '13F manager (name or CIK)') + '</label>' +
+        '<input class="input" id="st-hid" value="' + esc(st.hid) + '" list="st-hlist" placeholder="Blank = featured filer" autocomplete="off"><datalist id="st-hlist"></datalist>';
+      h += '<label for="st-hv">Weights</label>' +
+        sel('st-hv', st.hsrc === 'officials' ?
+          [['company', 'Estimated company trade-size mix'], ['sector', 'Estimated sector trade-size mix']] :
+          [['company', 'Actual company weights (13F)'], ['sector', 'Actual sector weights (13F)']], st.hv);
+      h += '<label for="st-an">Top rows shown</label>' +
+        sel('st-an', [['5','5'],['10','10'],['12','12'],['15','15'],['20','20']], st.an);
+      h += '<div class="st-help">' + (st.hsrc === '13f' ?
+        'SEC 13F: actual reported position values divided by the ENTIRE disclosed 13F total, never rescaled to top holdings. Missing holdings remain uncovered; reports lag quarter end.' :
+        'Officials: PTR trades are ranges, not a current portfolio. Finite range midpoints give an ESTIMATED transaction mix, not actual portfolio weights.') +
+        ' One reported date only: no invented price, history or share counts.</div>';
+      return h;
+    }
     function moreSide(k) {
       const meas = Object.entries(RANK).filter(([kk]) => !['gp', 'oi', 'ni'].includes(kk)).map(([kk, v]) => [kk, v[0]]);
       let h = '';
@@ -2255,6 +2273,7 @@
       if (k === 'rank' || k === 'dist') h += rankSide(k);
       else if (k === 'bubble' || k === 'treemap' || k === 'sectors') h += moreSide(k);
       else if (k === 'actual') h += actualSide();
+      else if (k === 'holdings') h += holdingsSide();
       else if (k !== 'formula') {
         const one = k === 'calendar' || k === 'sankey' || k === 'timing';
         const lbl = { fund: 'Companies (tickers)', sankey: 'Company (ticker)', calendar: 'Ticker — an ETF or a stock', timing: 'Ticker — an index fund or a stock', snowball: 'Dividend payers (up to three)' }[k] || 'Tickers — ETFs or stocks, two or more';
@@ -2265,7 +2284,7 @@
         if (k === 'snowball') h += `<label for="st-amt">Amount to start with ($)</label><input class="input" id="st-amt" inputmode="numeric" value="${esc(st.amt)}"><label for="st-rec">Buy again on a schedule (optional)</label><div class="st-row"><div><input class="input" id="st-rec" inputmode="numeric" placeholder="$ each time" value="${+st.rec > 0 ? esc(st.rec) : ''}" aria-label="Amount each time"></div><div style="flex:.7"><input class="input" id="st-ri" type="number" min="1" max="60" value="${esc(st.ri)}" aria-label="Every how many"></div><div>${sel('st-ru', [['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru)}</div></div>`;
       }
       else h += `<label for="st-expr">Formulas — one per line, “Label: expression”</label><textarea id="st-expr" spellcheck="false">${esc(st.expr)}</textarea><div class="st-help">Operators <code>+ − × ÷ ^</code> and <code>( )</code>; functions <code>log exp sqrt abs rebase(x) ma(x,n) ema(x,n) pct(x,n) chg(x,n) lag(x,n) min(a,b) max(a,b)</code>. Series: a ticker (<code>QQQ</code> = total return) or <code>QQQ.price</code>, <code>.div</code>, <code>.yield</code>, company figures <code>NVDA.revenue</code>, <code>.ni_ttm</code>, <code>.margin</code>… Example: <code>rebase(QQQ/SPY)</code>, <code>SCHD.yield*100</code>, <code>NVDA.ni_ttm/NVDA.revenue_ttm</code>.</div>`;
-      h += `<div class="st-row"><div><label for="st-from">From</label><input class="input" type="date" id="st-from" value="${esc(st.from)}"></div><div><label for="st-to">To</label><input class="input" type="date" id="st-to" value="${esc(st.to)}"></div></div>`;
+      if (k !== 'holdings') h += `<div class="st-row"><div><label for="st-from">From</label><input class="input" type="date" id="st-from" value="${esc(st.from)}"></div><div><label for="st-to">To</label><input class="input" type="date" id="st-to" value="${esc(st.to)}"></div></div>`;
       h += `<div class="st-row" style="margin-top:6px;align-items:center"><div class="st-pills" style="flex:2">${[['1y', 1], ['3y', 3], ['5y', 5], ['10y', 10], ['Max', 30]].map(([l, y]) => `<button type="button" class="pill" data-yrs="${y}">${l}</button>`).join('')}</div>`
         + `<div><input class="input" id="st-yrs" inputmode="decimal" placeholder="or N years" value="${+st.yrs > 0 ? esc(st.yrs) : ''}" aria-label="The last N years (any number, e.g. 7 or 2.5)"></div></div>`;
       if (k === 'growth') {
@@ -2352,6 +2371,16 @@
       ((ix && ix.companies) || []).slice().sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 1500).forEach((c) => c.ticker && opts.push([c.ticker, c.name]));
       list.innerHTML = opts.map(([s, n]) => `<option value="${esc(s)}">${esc(n || '')}</option>`).join('');
     }
+    async function suggestHoldings() {
+      const list = $('#st-hlist');
+      if (!list) return;
+      const doc = await json(HUB + 'research/people/' + (st.hsrc === 'officials' ? 'officials' : 'managers') + '.json');
+      if (!list.isConnected || !doc || !Array.isArray(doc.rows)) return;
+      const rows = st.hsrc === 'officials' ?
+        root.FFHoldingsVideo.popularOfficials(doc) : root.FFHoldingsVideo.popularManagers(doc);
+      list.innerHTML = rows.slice(0, 150).map(r =>
+        '<option value="' + esc(st.hsrc === 'officials' ? r.slug : r.cik) + '">' + esc(r.name) + '</option>').join('');
+    }
     const box = app.querySelector('.st-wrap');
     let tmr = 0;
     const later = (f) => { clearTimeout(tmr); tmr = setTimeout(f, 450); };
@@ -2363,7 +2392,7 @@
         if (st.k === 'snowball' && st.t === DEF.t) st.t = 'SCHD';
         if (st.k === 'timing' && st.t === DEF.t) st.t = 'SPY';
         if (st.k === 'sankey') st.theme = 'clean';
-        if (st.k === 'actual') { st.style = 'bars'; st.from = ''; st.to = ''; st.yrs = ''; }
+        if (st.k === 'actual' || st.k === 'holdings') { st.style = 'bars'; st.from = ''; st.to = ''; st.yrs = ''; }
         side(); rebuild(); return;
       }
       const yb = e.target.closest('[data-yrs]');
@@ -2371,7 +2400,7 @@
       const sb = e.target.closest('[data-speed]');
       if (sb) { st.dur = String(clamp(Math.round((+st.dur || 20) / +sb.dataset.speed), 4, 300)); const d = $('#st-dur'); if (d) d.value = st.dur; if (V) { paint(); save(); status(); } }
     });
-    box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t' || e.target.id === 'st-ah') suggest(); });
+    box.addEventListener('focusin', (e) => { if (e.target.id === 'st-t' || e.target.id === 'st-ah') suggest(); if (e.target.id === 'st-hid') suggestHoldings(); });
     box.addEventListener('input', (e) => {
       const id = e.target.id; if (!id || !id.startsWith('st-') || e.target.tagName === 'SELECT') return;
       const key = id.slice(3); if (!(key in DEF)) return;
@@ -2395,7 +2424,7 @@
         else rebuild();
         return;
       }
-      if (key === 'rm' || key === 'bx' || key === 'by' || key === 'sw' || key === 'aw') side();
+      if (key === 'rm' || key === 'bx' || key === 'by' || key === 'sw' || key === 'aw' || key === 'hsrc') side();
       rebuild();
     });
     app.querySelector('#st-tpl').addEventListener('click', (e) => {
