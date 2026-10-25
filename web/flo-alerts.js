@@ -14,7 +14,8 @@ const priority={high:3,medium:2,info:1};
 const escape=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const url=v=>{
  const u=String(v||'');
- if(/^https:\/\/(?:www\.)?sec\.gov\/edgar\/browse\/\?CIK=\d+&owner=exclude$/i.test(u))return u;
+ if(/^https:\/\/(?:www\.)?sec\.gov\/edgar\/browse\//i.test(u))
+   return /^https:\/\/(?:www\.)?sec\.gov\/edgar\/browse\/\?CIK=\d+&owner=exclude$/i.test(u)?u:'';
  return /^https:\/\/(?:www\.)?(?:sec\.gov|prnewswire\.com|fda\.gov)\//i.test(u)?u:'';
 };
 const ticker=v=>/^[A-Z][A-Z0-9.\-]{0,9}$/.test(String(v||''));
