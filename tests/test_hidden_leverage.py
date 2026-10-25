@@ -90,6 +90,37 @@ class HiddenLeverageTests(unittest.TestCase):
         self.assertTrue(all(x["classification"] == "unverified_text_lead" for x in signals))
         self.assertFalse(any("amount_usd" in x for x in signals))
 
+    def test_taxonomy_covers_all_requested_primary_and_extra_structures(self):
+        taxonomy = HL.public_taxonomy()
+        self.assertEqual(len(taxonomy), 24)
+        keys = {row["key"] for row in taxonomy}
+        required = {
+            "take_or_pay", "ppa", "capacity", "vie", "supplier_finance",
+            "securitization", "guarantee_support", "uncommenced_leases",
+            "sale_leaseback", "synthetic_lease", "joint_venture",
+            "construction_capex", "residual_guarantee",
+            "royalty_revenue_financing", "redeemable_nci",
+            "repo_financing", "customer_prepayments", "streaming",
+            "tax_equity", "pension_deficit", "asset_retirement",
+            "deferred_acquisition", "earnouts", "liquidity_backstop"
+        }
+        self.assertEqual(keys, required)
+        self.assertTrue(all(t["status"] == "screening_only" for t in taxonomy))
+
+    def test_new_structures_are_only_unverified_leads(self):
+        raw = (b"<html><body>Synthetic lease and construction commitments, "
+               b"plus tax equity financing, royalty-based financing and "
+               b"deferred acquisition consideration.</body></html>")
+        signals = HL.scan_filing_text(raw, 123, "0001000000-26-000005",
+                                      "2026-10k.htm", "10-K", "2026-08-15")
+        keys = {row["key"] for row in signals}
+        self.assertEqual(keys, {"synthetic_lease", "construction_capex",
+                                "tax_equity", "royalty_revenue_financing",
+                                "deferred_acquisition"})
+        self.assertTrue(all(row["review_lane"] for row in signals))
+        self.assertTrue(all(row["classification"] == "unverified_text_lead" for row in signals))
+        self.assertTrue(all("amount_usd" not in row for row in signals))
+
     def test_bogus_accession_cannot_create_fake_url(self):
         self.assertIsNone(HL.sec_url(123, "fake-accession"))
 
