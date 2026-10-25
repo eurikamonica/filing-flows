@@ -127,6 +127,11 @@
           const k = sectorBars ? secFor(s, ticker) : ticker;
           m.set(k, (m.get(k) || 0) + weight);
         });
+        if (sectorBars) {
+          const known = [...m.values()].reduce((sum, w) => sum + w, 0);
+          if (known > 1.025) throw new Error(ticker + ': sector exposures exceed NAV; use holdings bars for leveraged funds');
+          m.set('other', (m.get('other') || 0) + Math.max(0, 1 - known));
+        }
         return m;
       });
       const choice = new Set();
