@@ -27,6 +27,7 @@ for(const id of bookIds){
   ok(Number.isFinite(WB.evaluate(s.cells,s.template.final)),id+' scenario recalculates');
   const first=targets[0];
   WB.setCell(s,first,'=1+2');
+  ok(WB.score(s).bad.some(x=>x.ref===first&&x.reason.includes('hardcoding')),id+' rejects hardcoded pseudo-formula');
   ok(WB.score(s).correct<targets.length,id+' incorrect formula graded');
   WB.setCell(s,first,s.answers[first]);
 }
