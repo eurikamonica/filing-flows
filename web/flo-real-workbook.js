@@ -8,6 +8,7 @@ const BASE=scriptSource?scriptSource.replace(/[^/]*$/,''):'';
 const data=()=>root.FFFloRealData||(typeof module!=='undefined'?require('./flo-real-data.js'):null);
 const engine=()=>root.FFFloWorkbook||(typeof module!=='undefined'?require('./flo-workbook.js'):null);
 const coach=()=>root.FFFloCoach||(typeof module!=='undefined'?require('./flo-coach.js'):null);
+const practice=()=>root.FFFloPractice||(typeof module!=='undefined'?require('./flo-practice.js'):null);
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ready=v=>typeof v==='number'&&Number.isFinite(v);
 const item=(type,value,note='')=>({type,raw:value===null||value===undefined?'':String(value),note});
@@ -255,6 +256,9 @@ function mount(wrapper,lang){
   if(b.hasAttribute('data-coach-quiz')){
     coach().answerQuiz(session,Number(b.dataset.coachQuiz),lang);paint();return;
   }
+  for(const [attr,action] of [['data-practice-review','review'],['data-practice-save','save'],['data-practice-restore','restore'],['data-practice-clear','clear']]){
+    if(b.hasAttribute(attr)){practice().action(session,action,null,lang);paint();return;}
+  }
   if(b.hasAttribute('data-flo-sim-run')){
     const kind=wrapper.querySelector('[data-flo-sim-kind]').value;
     const amount=wrapper.querySelector('[data-flo-sim-amount]').value;
@@ -285,16 +289,23 @@ function mount(wrapper,lang){
    if(ref)session.selected=ref;paint();return;
   }
   if(b.hasAttribute('data-real-check')){const score=check(session);session.grade=score;
+   practice().recordGrade(session,score);
    session.message='SEC evidence exercise '+score.correct+'/'+score.total+
      (score.bad.length?' — '+score.bad[0].ref+' '+score.bad[0].reason:' — all formulas reconcile');
    paint();return;}
-  if(b.hasAttribute('data-real-hint')){session.message=session.cells[session.selected]?.note||'Click a formula cell';paint();return;}
+  if(b.hasAttribute('data-real-hint')){
+    if(practice().memory(session).mode==='exam'){session.message='Exam mode: no hints until after submission.';paint();return;}
+    practice().recordHint(session);session.message=session.cells[session.selected]?.note||'Click a formula cell';paint();return;
+  }
   if(b.hasAttribute('data-real-answer')){
+   if(practice().memory(session).mode==='exam'){session.message='Instructor formulas are locked during exam mode.';paint();return;}
    Object.entries(session.answers).forEach(([k,v])=>session.cells[k].raw=v);
    session.message='Instructor formulas shown; data source remains historical SEC';paint();return;}
   if(b.hasAttribute('data-real-reset')){session=make(session.id);identity();paint();}
  });
- wrapper.addEventListener('change',evt=>{if(evt.target.matches('[data-real-case]')){
+ wrapper.addEventListener('change',evt=>{if(evt.target.matches('[data-practice-mode]')){
+  practice().action(session,'mode',evt.target.value,lang);paint();
+ }else if(evt.target.matches('[data-real-case]')){
   session=make(evt.target.value);identity();paint();
  }});
  wrapper.addEventListener('keydown',evt=>{if(evt.key==='Enter'&&evt.target.matches('[data-real-formula]')){
