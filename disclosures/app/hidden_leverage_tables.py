@@ -192,7 +192,7 @@ def _narrative_uncommenced(raw, cik, accession, document, form, filed, as_of):
     d = dt.date.fromisoformat(as_of)
     date_re = re.compile(r"\bAs of\s+" + d.strftime("%B") + r"\s+" +
                          str(d.day) + r",?\s+" + str(d.year) + r"\b", re.I)
-    text = " ".join(to_text(raw[:4_000_000]).split())
+    text = " ".join(to_text(raw[:16_000_000]).split())
     amount_re = re.compile(r"\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d{1,4})?)\s*"
                            r"(billion|million)\b", re.I)
     vals = []
@@ -257,7 +257,7 @@ def extract_tables(raw, cik, accession, document, form, filed, as_of):
         return []
     parser = _Tables()
     try:
-        source = raw[:4_000_000] if isinstance(raw, (bytes, str)) else ""
+        source = raw[:16_000_000] if isinstance(raw, (bytes, str)) else ""
         parser.feed(source.decode("utf-8", "replace") if isinstance(source, bytes) else source)
         parser.close()
     except (ValueError, TypeError):
@@ -305,8 +305,14 @@ def extract_tables(raw, cik, accession, document, form, filed, as_of):
                 continue
             if len(annual) < 2:
                 continue
+            source_labels = {}
+            for rr in rows:
+                for cell in rr:
+                    ym = YEAR.fullmatch(cell.strip())
+                    if ym:
+                        source_labels.setdefault(int(ym.group(1)), cell.strip())
             payments = [{"year": year, "amount_usd": amount,
-                         "row_or_column": str(year)}
+                         "row_or_column": source_labels.get(year, str(year))}
                         for year, amount in sorted(annual.items())]
             signature = (key, tuple((x["year"], x["amount_usd"]) for x in payments))
             if signature in seen:
