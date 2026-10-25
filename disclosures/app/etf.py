@@ -475,9 +475,9 @@ def uit_asof_date(data):
     rows = parse_xlsx_rows(data)
     for row in rows[:25]:
         line = " ".join(str(x or "").strip() for x in row)
-        if not re.search(r"\\b(?:as[ -]of|holdings date|holdings as of)\\b", line, re.I):
+        if not re.search(r"\b(?:as[ -]of|holdings date|holdings as of)\b", line, re.I):
             continue
-        pat = r"\\b(\\d{4}-\\d{1,2}-\\d{1,2}|\\d{1,2}/\\d{1,2}/\\d{4}|[A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})\\b"
+        pat = r"\b(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}/\d{1,2}/\d{4}|[A-Za-z]+\s+\d{1,2},?\s+\d{4})\b"
         match = re.search(pat, line)
         if match:
             for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%B %d, %Y", "%B %d %Y", "%b %d, %Y", "%b %d %Y"):
