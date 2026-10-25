@@ -17,11 +17,10 @@ import urllib.parse
 from pathlib import Path
 
 from core import read_json, write_json  # noqa: F401
+import etf_tags as TG
 
 YQ = 'https://query2.finance.yahoo.com'
 NASDAQ_DIR = 'https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqtraded.txt'
-LEVERAGE = re.compile(r'\b(?:[2-5](?:\.\d)?x|ultra(?:pro|short)?|-[1-3]x|daily (?:bull|bear|inverse|target)|leveraged|inverse|short\b|bear\b|bull\b)', re.I)
-INVERSE = re.compile(r'\b(?:inverse|short\b|bear\b|-[1-3]x|ultrashort)', re.I)
 
 
 def _f(v):
@@ -97,8 +96,8 @@ def build_universe(nasdaq_rows, mf, cos):
             e.update(cik=int(c['cik']), act='etn' if e['kind'] == 'etn' else '33', registrant=c.get('name'))
         else:
             e.update(cik=None, act='etn' if e['kind'] == 'etn' else None)
-        e['leveraged'] = bool(LEVERAGE.search(r['name'])) and bool(re.search(r'\d(?:\.\d)?x|ultra|daily|leveraged|inverse|bear|bull|short', r['name'], re.I))
-        e['inverse'] = bool(INVERSE.search(r['name'])) and e['leveraged'] or bool(re.search(r'\binverse\b', r['name'], re.I))
+        L = TG.leverage(r['name'], sym=s)                # the name only here; etf.build reads the prospectus as well
+        e['leveraged'], e['inverse'] = bool(L['dir']), L['dir'] < 0
         out.append(e)
     return out
 

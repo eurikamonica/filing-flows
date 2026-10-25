@@ -17,7 +17,7 @@
                    calendar-year returns, the benchmark index, the objective, the strategy and the principal risks.
     market     Yahoo Finance: ten years of weekly closes and volume, NAV, net assets, yield, category, family.
     uit        the few unit-investment-trust ETFs that file no N-PORT (SPY, DIA, MDY): the sponsor's daily holdings file.
-  build      public/: index.json (the screener), e/<SYMBOL>.json (one ETF), by/<TICKER>.json (the ETFs that hold a
+  build      public/: index.json (the screener; each ETF's tags — etf_tags.py — and the leverage multiple), e/<SYMBOL>.json (one ETF), by/<TICKER>.json (the ETFs that hold a
              company), parties.json (authorized participants, custodians, lending agents, advisers, auditors across
              all ETFs), status.json — joined with the Hub's 13F holders, officials' trades, short interest, N-PX filers,
              and the companies inside seen through the consensus, 13F flows, officials, insiders and debt data.
@@ -48,6 +48,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from core import read_json, write_json  # noqa: E402
 from consensus import Http, yahoo_crumb  # noqa: E402
 import etf_market as M  # noqa: E402
+import etf_tags as TG  # noqa: E402
 
 csv.field_size_limit(1 << 30)
 SEC_UA = os.environ.get('SEC_USER_AGENT') or 'Filing Flows research filingflows@gmail.com'
@@ -683,7 +684,7 @@ def classify(e, h, nc):
         ac = 'ETN'
     elif mix and e.get('act') in ('33', 'uit') and eq >= 0.6:
         ac = 'Equity'
-    elif e.get('leveraged') or (nc or {}).get('multi_inverse'):
+    elif e.get('leveraged'):
         ac = 'Leveraged / inverse'
     elif CRYPTO.search(name):
         ac = 'Crypto'
@@ -787,6 +788,10 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
     for d in ('e', 'by'):
         (pub / d).mkdir(parents=True, exist_ok=True)
     etfs = universe(root)
+    _src = read_json(root / 'cache' / 'universe_src.json', {}) or {}
+    _G = (_src.get('cos') or {}).get('fields') or ['cik', 'name', 'ticker', 'exchange']
+    etf_syms = {e['symbol'] for e in etfs}
+    stock_syms = {str(dict(zip(_G, r)).get('ticker') or '').upper().replace('.', '-') for r in (_src.get('cos') or {}).get('data') or []} - etf_syms
     ncen = merge_latest('ncen', root)
     rr = merge_latest('rr', root)
     hist = nport_history(root)
@@ -917,7 +922,12 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
             h['top'] = [x[:4] + [x[4] or key_ticker(x[2] or x[3] or '') if (x[7] in EQUITY) else x[4]] + x[5:] for x in h.get('top') or []]
             h['weights'] = [[key_ticker(k) or k, w, v] for k, w, v in h.get('weights') or []]
             h['_mapped'] = True
+        # the multiple (prospectus objective, strategy, name), set before the asset class reads it
+        L = TG.leverage(e.get('name'), (pr or {}).get('objective'), (pr or {}).get('strategy'), fund.get('y_category'), (nc or {}).get('multi_inverse'), sym)
+        e['leveraged'], e['inverse'] = bool(L['dir']), L['dir'] < 0
         ac, strat = classify(e, h, nc)
+        ac = TG.fix_class(ac, fund.get('y_category'), e.get('name'), e['leveraged'])
+        px = price_file(sym, e.get('name'), mk.get('weekly'))
         fees = dict((pr or {}).get('fees') or {})
         cf = ((pr or {}).get('class_fees') or {}).get(e.get('cls') or '') or {}
         fees.update({k: v for k, v in cf.items() if v is not None})
@@ -945,11 +955,11 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                     by[t].append([sym, round(w, 6), v])
         issuer = M.issuer_of(e.get('name')) or ((nc or {}).get('registrant') or {}).get('family')
         sh = shorts.get(sym)
-        lev = bool(e.get('leveraged') or (nc or {}).get('multi_inverse'))
+        lev = bool(e.get('leveraged'))
         fl_of[sym] = (lev or bool(e.get('inverse')), {m: ((v[0] or 0) + (v[1] or 0), v[2] or 0)
                                                       for m, v in sorted(((hh or {}).get('months') or {}).items())[-15:]})
         row = {'symbol': sym, 'name': e.get('name'), 'issuer': issuer, 'exchange': e.get('exchange'), 'act': e.get('act'), 'asset_class': ac, 'strategy': strat,
-               'leveraged': bool(e.get('leveraged') or (nc or {}).get('multi_inverse')), 'inverse': bool(e.get('inverse')), 'category': fund.get('y_category'),
+               'leveraged': bool(e.get('leveraged')), 'inverse': bool(e.get('inverse')), 'category': fund.get('y_category'),
                'expense': expense, 'aum': aum, 'flows_3m': f3, 'flows_12m': f12, 'n_holdings': (h or {}).get('n'), 'top10': (h or {}).get('top10'),
                'track_diff': None if lev else (nc or {}).get('track_diff'), 'track_err': None if lev else (nc or {}).get('track_err'), 'r1m': st.get('r1m'), 'r3m': st.get('r3m'), 'ytd': st.get('ytd'),
                'r1y': st.get('r1y'), 'r3y': st.get('r3y'), 'r5y': st.get('r5y'), 'vol': st.get('vol1y'), 'max_dd': st.get('max_dd'), 'dollar_vol': st.get('dollar_vol'),
@@ -960,6 +970,15 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                'lt_13f_buy': (lt or {}).get('f13_buying'), 'index_fund': bool((nc or {}).get('index')), 'cik': e.get('cik'), 'series': s,
                'objective': (' '.join(str((pr or {}).get('objective') or '').split())[:180] or None),   # the screener searches it
                'px': bool(len([w for w in (mk.get('weekly') or []) if w and w[1]]) >= 2)}
+        # tags: management, leverage, income, alternatives, bonds, region, size and style, sector, factor and theme, structure
+        nm, cat_ = e.get('name') or '', fund.get('y_category') or ''
+        under = TG.underlying(nm, (pr or {}).get('objective'), (pr or {}).get('strategy'), stock_syms, etf_syms) \
+            if e['leveraged'] or cat_ == 'Derivative Income' or TG.OPTIONS.search(nm) else None
+        trust = e.get('act') == '33' and ac in ('Crypto', 'Commodity: precious metals') and not e['leveraged'] and not re.search(r'futures|strategy', nm, re.I)
+        row['tags'] = TG.tags_of(row, L, under, TG.pays((px or {}).get('div'), today), ac == 'Multi-asset (fund of funds)' or bool((nc or {}).get('fund_of_funds')),
+                                 trust, ((pr or {}).get('objective') or '') + ' ' + ((pr or {}).get('strategy') or ''), (h or {}).get('countries'))
+        row['lev'] = L['x'] if L['dir'] else None
+        row['under'] = under
         index_rows.append(row)
         # parties
         a_ = aum or 0
@@ -976,7 +995,8 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
         for x in {d[0] for d in (nc or {}).get('distributor') or []}:
             raw_parties['distributors'].append((x, '', a_, 0, 0))
         # the page
-        doc = {'symbol': sym, 'generated_at': now(), **{k: row[k] for k in ('name', 'issuer', 'exchange', 'act', 'asset_class', 'strategy', 'leveraged', 'inverse', 'category', 'cik', 'series')},
+        doc = {'symbol': sym, 'generated_at': now(), **{k: row[k] for k in ('name', 'issuer', 'exchange', 'act', 'asset_class', 'strategy', 'leveraged', 'inverse', 'category', 'cik', 'series', 'tags', 'lev', 'under')},
+               'tag_names': {t: list(TG.TAGS.get(t, (t, ''))) for t in row['tags']},
                'cls': e.get('cls'), 'series_classes': e.get('series_classes'), 'registrant': e.get('registrant') or ((nc or {}).get('registrant') or {}).get('name') or (h or {}).get('registrant'),
                'market': {**st, **{k: fund.get(k) for k in ('y_nav', 'premium', 'y_assets', 'y_yield', 'y_beta3y', 'y_family', 'y_expense', 'y_turnover', 'y_inception', 'y_avg_vol', 'y_duration', 'y_maturity', 'y_sectors', 'y_mix')},
                           'weekly': [[w[0], w[2]] for w in (mk.get('weekly') or [])][-261:], 'at': mk.get('at')},
@@ -997,7 +1017,6 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                            'ncen': f'https://www.sec.gov/Archives/edgar/data/{(nc or {}).get("cik")}/{(nc or {}).get("acc", "").replace("-", "")}/' if nc else None,
                            'nport': f'https://www.sec.gov/Archives/edgar/data/{((hh or {}).get("reports") or [{}])[-1].get("cik")}/{(((hh or {}).get("reports") or [{}])[-1].get("acc") or "").replace("-", "")}/' if hh else None}}
         wj(pub / 'e' / f'{sym}.json', _clean(doc))
-        px = price_file(sym, e.get('name'), mk.get('weekly'))
         if px:                                            # the video studio's and the ETF page's long price file
             wj(pub / 'px' / f'{sym}.json', px)
     # the ETFs that hold each company
@@ -1010,7 +1029,9 @@ def build(root, hub=None, cons=None, debt=None, verbose=True):
                                                                      'rows': [[x[0], names.get(x[0]), x[1], x[2], aum_of.get(x[0])] for x in lst[:400]],
                                                                      'flows': implied_flows(lst, fl_of)}))
     fields = list(index_rows[0].keys()) if index_rows else []
-    wj(pub / 'index.json', _clean({'generated_at': now(), 'fields': fields, 'rows': [[r[k] for k in fields] for r in index_rows]}))
+    used = sorted({t for r in index_rows for t in r.get('tags') or []}, key=lambda t: (TG.GROUPS.index(TG.TAGS[t][1]) if t in TG.TAGS and TG.TAGS[t][1] in TG.GROUPS else 99, t))
+    wj(pub / 'index.json', _clean({'generated_at': now(), 'fields': fields, 'rows': [[r[k] for k in fields] for r in index_rows],
+                                   'tag_groups': TG.GROUPS, 'tag_names': {t: list(TG.TAGS.get(t, (t, 'Structure'))) for t in used}}))
     lt_ = {k: merge_parties(raw_parties.get(k, []), k) for k in parties}
     wj(pub / 'parties.json', _clean({'generated_at': now(), 'fields': ['name', 'etfs', 'aum', 'x', 'y', 'crd'], 'tables': lt_}))
     st = read_json(root / 'state.json', {}) or {}

@@ -1,5 +1,26 @@
 # Changelog
 
+## ETF tags: passive or active, leverage multiple, high dividend, alternatives and more
+
+`app/etf_tags.py` (run by `etf.build`): every ETF gets tags, in `index.json` (`tags`, `lev`, `under`; `tag_names`,
+`tag_groups`) and on its page — management (passive: N-CEN's index-fund answer, a trust holding the asset, an ETN; else
+the prospectus: "track … index" or "actively managed"), leverage (the signed daily multiple from the prospectus
+objective — "three times the inverse (-3x)" — else the strategy text — "approximately 1.2 times (120%)", "between 105%
+and 150% notional exposure" — else the name — "Bull 3X", "UltraPro Short"; the single stock a fund follows),
+income (high dividend: a stock ETF yielding 3%+, or named for it at 2%+; dividend growth; option income; buffer /
+defined outcome; yield 8%+; pays monthly or weekly; preferred stock), alternatives (commodities, precious metals,
+crypto, volatility, managed futures, hedge strategies, currency, private markets), bonds (Treasuries, T-bills / cash,
+high yield, municipal, inflation-protected, corporate, emerging markets, securitized, loans / CLOs, target maturity,
+long-term, convertibles), region (from the portfolio's countries; single countries), size and style, sector, factor
+and theme, structure. The screener filters by management, leverage (2×, 3×, −1×, −2×, −3×, single stock) and tag, and
+shows the main tags under each ETF.
+
+Fixed with it: the old name test took "Short-Term" and "Ultra-Short" bond funds, "Long/Short" funds and VIX futures
+funds for leveraged or inverse (about 300 funds, all filed under "Leveraged / inverse"), and N-CEN's leveraged / inverse
+answer, sometimes the whole trust's, now needs a second sign. The asset class is set right by the category where the
+holdings mislead (T-bill funds read as multi-asset, option-income funds holding T-bills read as fixed income, merger
+arbitrage and multistrategy funds read as equity, dollar funds read as commodities). Tests: `tests/test_etf_tags.py`.
+
 ## Video studio: bubbles, the market as a map, sector weights, the earnings flow, the dividend snowball, timing
 
 Six more kinds of video in `web/studio.js`, from files the site already publishes:
