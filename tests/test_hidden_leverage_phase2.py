@@ -66,6 +66,27 @@ class HiddenPhase2Tests(unittest.TestCase):
         self.assertEqual(self.parse(html), [])
         self.assertEqual(self.parse("<p>Uncommenced leases</p><table><tr><td>2027</td><td>100</td></tr><tr><td>2028</td><td>200</td></tr></table>"), [])
 
+    def test_dated_supplier_finance_balances_not_nominal_payments(self):
+        html = """<p>Supplier finance program, as of June 30, 2026 (USD in millions).</p>
+           <table><tr><th>Balance</th><th>2026</th><th>2025</th></tr>
+           <tr><td>Confirmed supplier obligations outstanding</td><td>350</td><td>290</td></tr></table>"""
+        row = self.parse(html)[0]
+        self.assertEqual(row["key"], "supplier_finance")
+        self.assertEqual(row["amount_usd"], 350e6)
+        self.assertEqual(row["payments"], [])
+        self.assertEqual(row["amount_kind"], "reported_supplier_finance_balance")
+        self.assertEqual(self.parse(html.replace("June 30, 2026", "December 31, 2025")), [])
+
+    def test_vie_maximum_not_modeled_as_expected_loss(self):
+        html = """<p>Variable interest entities support commitment as of June 30, 2026,
+           expressed in millions of U.S. dollars.</p>
+           <table><tr><th>Exposure</th><th>2026</th><th>2025</th></tr>
+           <tr><td>Maximum exposure to loss</td><td>175</td><td>145</td></tr></table>"""
+        row = self.parse(html)[0]
+        self.assertEqual(row["key"], "vie_support")
+        self.assertEqual(row["amount_usd"], 175e6)
+        self.assertEqual(row["amount_kind"], "maximum_support_exposure_not_expected_loss")
+
     def test_no_incorrect_past_year_or_manufactured_single_amount(self):
         html = """<p>Uncommenced leases USD millions</p><table>
          <tr><td>2025</td><td>$ 100</td></tr>
