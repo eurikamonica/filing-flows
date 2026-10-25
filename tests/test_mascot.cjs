@@ -25,6 +25,22 @@ ok(tk('BRK-B value') === 'BRK-B', 'a class ticker');
 ok(tk('IS IT CHEAP?') === undefined, 'stop words are not tickers');
 ok(tk('how does it work') === undefined, 'no company');
 
+// the question bank: every default question and every example phrasing is understood as its topic
+const BANK = require(path.join(__dirname, '..', 'web', 'flo-questions.js'));
+for (const [topic, b] of Object.entries(BANK)) {
+  for (const lg of ['en', 'zh']) {
+    ok(b.default[lg].length >= 6 && b.examples[lg].length >= 5, `${topic} ${lg}: enough questions`);
+    for (const q of b.default[lg]) ok(q.includes('{t}') && M.classify(q.replace(/\{t\}/g, 'NVDA')).includes(topic), `${topic} default understood: ${q}`);
+    for (const q of b.examples[lg]) ok(M.classify(q).includes(topic), `${topic} example understood: ${q}`);
+  }
+}
+// More questions: a new set each time, the page's topic still first
+{
+  const c = M.pageContext(Object.assign({}, ix), { hash: '#c-1045810-x-options', pathname: '/' });
+  const a0 = M.chipsFor(c, true, 0), a1 = M.chipsFor(c, true, 1);
+  ok(a0[0] !== a1[0] && M.classify(a1[0]).includes('options') && a1.every((q) => q.includes('NVDA')), 'More questions rotates the bank');
+}
+
 // the page decides the default questions
 const ix2 = Object.assign({}, ix, { companies: ix.companies.map((c) => Object.assign({ sector: c.ticker === 'BRK-B' ? 'financials' : 'tech', sic: c.ticker === 'NVDA' ? 3674 : 1000 }, c)),
   sector_names: { tech: 'Technology' }, industries: [{ id: '3674', name: 'Semiconductors' }] });

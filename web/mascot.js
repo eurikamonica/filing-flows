@@ -36,13 +36,14 @@
   /* ---------- the question ---------- */
   const lang = (q) => (/[㐀-鿿]/.test(String(q || '')) ? 'zh' : 'en');
   const INTENTS = [
-    ['options', /\boptions?\b|max ?pain|put wall|call wall|implied (move|vol|range)|\biv\b|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间/i],
+    // widen these when web/flo-questions.js gains a phrasing Flo misses (tests/test_mascot.cjs checks every one)
+    ['options', /\boptions?\b|max ?pain|put wall|call wall|option walls?|implied (move|vol|range)|expected move|\biv\b|\bstrikes?\b|expir|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间|预期波动|行权价|到期/i],
     ['industry', /\bindustr(y|ies)\b|\bsector\b|\bpeers?\b|行业|板块|同业/i],
-    ['rotation', /\brrg\b|rotation|rotating|momentum|quadrant|leading|lagging|weakening|improving|relative strength|next week|轮动|象限|动量|领先|落后|转弱|改善|相对强弱|下周/i],
-    ['credit', /\bdebt\b|credit|default|bankrupt|distress|altman|solven|债务|违约|信用|破产|偿债/i],
-    ['analysts', /analyst|price target|target price|consensus|polymarket|分析师|目标价|一致预期|预测市场/i],
-    ['earnings', /revenue|earnings|profit|margin|\beps\b|quarter|sales|income|cash flow|收入|营收|利润|财报|毛利|季度|净利|现金流|业绩/i],
-    ['valuation', /worth|\bvalue\b|valuation|fair|cheap|expensive|overvalued|undervalued|\bdcf\b|intrinsic|\bbuy\b|估值|值多少|便宜|贵|低估|高估|合理价|内在价值|值得买|价值/i],
+    ['rotation', /\brrg\b|rotation|rotating|momentum|quadrant|leading|lagging|weakening|improving|relative strength|rs-?ratio|outperform|underperform|markov|next week|轮动|象限|动量|领先|落后|转弱|改善|相对强弱|跑赢|跑输|强于大盘|弱于大盘|马尔科夫|下周/i],
+    ['credit', /\bdebt\b|credit|default|bankrupt|distress|altman|solven|leverage|债务|违约|信用|破产|偿债|杠杆|利差/i],
+    ['analysts', /analyst|price target|target price|consensus|polymarket|kalshi|wall street|\brating\b|分析师|目标价|一致预期|预测市场|华尔街|评级/i],
+    ['earnings', /revenue|earnings|profit|margin(?! of safety)|\beps\b|quarter|sales|income|cash flow|year (on|over) year|\byoy\b|\b10-[qk]\b|收入|营收|利润|财报|毛利|季度|净利|现金流|业绩|同比|年报|季报/i],
+    ['valuation', /worth|\bvalue\b|valuation|fair|cheap|expensive|overvalued|undervalued|\bdcf\b|intrinsic|\bbuy\b|upside|downside|margin of safety|monte carlo|\bpvgo\b|for growth|估值|值多少|便宜|贵|低估|高估|合理价|内在价值|值得买|价值|上涨空间|下跌空间|安全边际|蒙特卡洛|为增长/i],
     ['help', /^\s*(hi|hello|hey|help|what can you do)\b|你好|帮助|你能做什么|怎么用/i],
   ];
   function classify(q) {
@@ -124,10 +125,19 @@
     credit: [(t) => `${t} debt and default risk`, (t) => `${t} 的债务和违约风险`, (t) => `${t} Altman Z and credit spread`, (t) => `${t} 的信用利差和 Altman Z`],
     analysts: [(t) => `${t} analyst price target`, (t) => `${t} 分析师目标价`, (t) => `${t} Polymarket implied price`, (t) => `${t} 预测市场隐含价格`],
   };
-  const q1 = (topic, t, zh, second) => Q[topic][(second ? 2 : 0) + (zh ? 1 : 0)](t);
-  // the default questions for a page: up to six, the page's own topic first
-  function chipsFor(ctx, zh) {
+  // the bank (web/flo-questions.js) when it is loaded; the two built-in questions per topic otherwise
+  function pool(topic, zh) {
+    const b = root.FFFloQuestions, l = b && b[topic] && b[topic].default && b[topic].default[zh ? 'zh' : 'en'];
+    if (l && l.length) return l;
+    const f = Q[topic];
+    return zh ? [f[1]('{t}'), f[3]('{t}')] : [f[0]('{t}'), f[2]('{t}')];
+  }
+  const pick = (topic, t, zh, n) => { const l = pool(topic, zh); return l[((n % l.length) + l.length) % l.length].replace(/\{t\}/g, t); };
+  // the default questions for a page: up to six, the page's own topic first; `seed` (More questions) moves through the bank
+  function chipsFor(ctx, zh, seed) {
     ctx = ctx || { kind: 'home' };
+    const s = +seed || 0;
+    const q1 = (topic, t, zh2, second) => pick(topic, t, zh2, (second ? 2 * s + 1 : 2 * s));
     const cos = ctx.cos || [], t0 = (ctx.co && ctx.co.ticker) || (cos[0] && cos[0].ticker) || 'NVDA';
     const T = (i) => (cos[i] && cos[i].ticker) || t0;
     if (ctx.kind === 'company') {
@@ -337,7 +347,7 @@
 .flo-bot{align-self:flex-start;background:var(--surface-2,#efeee9);border-bottom-left-radius:3px}.flo-bot a{color:var(--accent,#17734a)}
 .flo-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.flo-links a{font-size:12px;border:1px solid var(--line,#ccc);border-radius:9px;padding:2px 8px;text-decoration:none}
 .flo-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}.flo-chips button{font:inherit;font-size:12px;border:1px solid var(--line,#ccc);background:none;color:inherit;border-radius:12px;padding:3px 9px;cursor:pointer}
-.flo-chips button:hover{border-color:var(--accent,#17734a);color:var(--accent,#17734a)}
+.flo-chips .flo-more{border-style:dashed;color:var(--muted,#777)}.flo-chips button:hover{border-color:var(--accent,#17734a);color:var(--accent,#17734a)}
 .flo-form{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--line,#e5e5e5)}.flo-form input{flex:1;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--bg,#fff);color:inherit;min-width:0}
 .flo-form button{font:inherit;font-size:13px;border:0;border-radius:10px;padding:0 14px;background:var(--accent,#17734a);color:#fff;cursor:pointer}
 .flo-local{font:inherit;font-size:12px;margin-top:6px;border:1px dashed var(--line,#bbb);background:none;color:inherit;border-radius:9px;padding:2px 8px;cursor:pointer}
@@ -380,7 +390,7 @@
   }
   const store = { get(k) { try { return root.localStorage.getItem('ffx:flo-' + k); } catch (e) { return null; } }, set(k, v) { try { root.localStorage.setItem('ffx:flo-' + k, v); } catch (e) { /* no storage */ } } };
   const zhUI = () => !!(root.navigator && /^zh/i.test(root.navigator.language || ''));
-  const chips = () => chipsFor(ui && ui.ctx, zhUI());
+  const chips = () => chipsFor(ui && ui.ctx, zhUI(), ui ? ui.seed : 0);
   function addMsg(html, who) {
     const m = doc.createElement('div');
     m.className = 'flo-msg ' + (who === 'me' ? 'flo-me' : 'flo-bot');
@@ -419,8 +429,10 @@
   }
   function renderChips() {
     if (!ui) return;
-    ui.chips.innerHTML = chips().map((c) => `<button type="button">${esc(c)}</button>`).join('');
-    ui.chips.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => send(b.textContent)));
+    ui.chips.innerHTML = chips().map((c) => `<button type="button">${esc(c)}</button>`).join('') +
+      `<button type="button" class="flo-more" aria-label="${zhUI() ? '换一批问题' : 'More questions'}">↻ ${zhUI() ? '换一批' : 'More'}</button>`;
+    ui.chips.querySelectorAll('button:not(.flo-more)').forEach((b) => b.addEventListener('click', () => send(b.textContent)));
+    ui.chips.querySelector('.flo-more').addEventListener('click', () => { ui.seed = (ui.seed || 0) + 1; renderChips(); });
   }
   function open() {
     if (!ui) return;
@@ -459,7 +471,7 @@
       const inds = hub && /^#rotation\/ind~/.test(root.location.hash || '') ? await (indsP || (indsP = json(HUB + 'market/history/industries.json'))) : null;
       const ctx = pageContext(ix, root.location, inds);
       if (ui.ctx && ui.ctx.key === ctx.key) return;
-      ui.ctx = ctx; ui.co = ctx.co || null;
+      ui.ctx = ctx; ui.co = ctx.co || null; ui.seed = 0;
       renderChips();
       if (!ui.panel.hidden && ui.log.childElementCount && ui.greeted !== ctx.key) { const g = greetFor(ctx, zhUI()); if (g) { addMsg(g, 'bot'); ui.greeted = ctx.key; } }
     };
