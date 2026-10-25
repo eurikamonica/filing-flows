@@ -319,7 +319,7 @@ function watchBriefIntent(q){
  return /(?:关注股票|自选股|关注名单).{0,10}(?:摘要|动态|新事件|新扫描|最新情况)|(?:watchlist|watched tickers).{0,9}(?:brief|updates|events|summary)|(?:brief|updates|summary).{0,9}watchlist/i.test(String(q||''));
 }
 function impactIntent(q){
- return /(?:8.?k|13f|新闻|股价|价格|披露|公告).{0,12}(?:财务影响|影响分析|研究清单|风险分析)|(?:财务影响|影响分析|研究清单).{0,12}(?:8.?k|13f|公告|披露|股票)|(?:event|filing|sec|stock|price).{0,12}(?:impact research|impact analysis|research checklist)|(?:impact research|impact analysis|research checklist).{0,12}(?:event|filing|stock|sec)|(?:相对大盘|相对涨跌幅|同日超额涨跌)/i.test(String(q||''));
+ return /(?:8.?k|13f|新闻|股价|价格|披露|公告).{0,12}(?:财务影响|影响分析|研究清单|风险分析)|(?:财务影响|影响分析|研究清单).{0,12}(?:8.?k|13f|公告|披露|股票)|(?:8.?k|13f|event|filing|sec|stock|price).{0,12}(?:impact research|impact analysis|research checklist)|(?:impact research|impact analysis|research checklist).{0,12}(?:event|filing|stock|sec)|(?:相对大盘|相对涨跌幅|同日超额涨跌)/i.test(String(q||''));
 }
 function intent(q){
  if(impactIntent(q))return true;
