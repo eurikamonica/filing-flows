@@ -2,6 +2,10 @@
 # Nothing in this workflow reads or writes 13F quarter shards or N-PX vote data.
 name: Supplement popular option chains
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/options-supplement.yml'   # initial repair after merge
   schedule:
     # Twice per hour on weekdays near the US regular/extended session.
     # GitHub schedules can be delayed; this is not an exchange-real-time feed.
