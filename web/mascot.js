@@ -425,6 +425,9 @@
 .flo-real .flo-wb-table td.flo-wb-formula{background:color-mix(in srgb,#9871cb 17%,var(--surface,#fff))}
 .flo-wb-evidence{border:1px solid var(--line,#dedede);border-left:3px solid var(--accent,#17734a);padding:8px;margin:8px 0;border-radius:6px}
 .flo-wb-evidence a{overflow-wrap:anywhere;font-size:12px}
+.flo-practice{padding:8px;margin:9px 0;border:1px solid var(--line,#ccc);border-radius:9px;background:var(--surface,#fff)}
+.flo-practice .flo-coach-controls button{padding:4px 7px}.flo-practice code{font:11px 'IBM Plex Mono',monospace;color:var(--accent,#17734a)}
+.flo-practice label{font-size:11px}.flo-practice select{background:var(--surface,#fff);color:inherit;border:1px solid var(--line,#ccc);border-radius:6px;padding:4px}
 .flo-coach{border:1px solid var(--line,#ccc);border-radius:11px;padding:10px;margin:12px 0;background:var(--surface,#fff);font-size:12px}
 .flo-coach header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}
 .flo-coach header small{color:var(--muted,#777)}.flo-coach p{margin:5px 0 8px}
@@ -565,6 +568,8 @@
       [zh ? 'Cookie Jar 侦探' : 'Cookie Jar', T + ' cookie jar'],
       [zh ? 'SEC 案例' : 'SEC cases', 'Sunbeam case study'],
       [zh ? '财务造假案例训练' : 'Forensic Case Lab', 'WorldCom SEC case spreadsheet'],
+      [zh ? 'HealthSouth 案例' : 'HealthSouth Case', 'HealthSouth SEC spreadsheet'],
+      [zh ? 'Channel Stuffing' : 'Revenue Case', 'Bristol SEC case spreadsheet'],
       [zh ? '返利练习' : 'Rebate lab', 'supplier rebate exercise']
     ];
     ui.chips.innerHTML = '<div class="flo-modes">' + modes.map(m => '<button type="button" class="flo-mode" data-flo-q="' + esc(m[1]) + '">' + esc(m[0]) + '</button>').join('') + '</div>' +
