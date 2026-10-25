@@ -26,7 +26,10 @@ def date(value):
         s = str(value or "").strip()
         if len(s) == 10:
             s += "T00:00:00+00:00"
-        return datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(timezone.utc)
+        parsed = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
     except (TypeError, ValueError):
         return None
 
