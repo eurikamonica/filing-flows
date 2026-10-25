@@ -90,6 +90,7 @@ class CollectAndBuild(unittest.TestCase):
         root = self.dir / 'hist'
         tickers = RH.universe(self.site / 'index.json')
         self.assertEqual(tickers[:3], ['SPY', 'XLK', 'XLC'])
+        self.assertIn('IDX-GSPC', tickers)                                    # the indices themselves (before their ETFs)
         self.assertIn('BRK-B', tickers)                                       # class shares as Yahoo writes them
         c = FakeClient(fail={'XLC'})
         r = RH.collect(c, root, tickers, batch=5, refresh=0)

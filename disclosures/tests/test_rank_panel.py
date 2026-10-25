@@ -81,7 +81,7 @@ class Shares(unittest.TestCase):
     def test_months_and_asof(self):
         grid = R.months('2024-01', dt.date(2024, 3, 15))
         self.assertEqual(grid, ['2024-01', '2024-02', '2024-03'])
-        rows = [['2024-01-05', 10, 100, 11], ['2024-01-26', 12, 100, 13], ['2024-02-23', 14, 200, 15], ['2024-03-08', 16, 0, 17]]
+        rows = [['2023-12-29', 9, 5000, 9], ['2024-01-05', 10, 100, 11], ['2024-01-26', 12, 100, 13], ['2024-02-23', 14, 200, 15], ['2024-03-08', 16, 0, 17]]
         px, pt, dv = R.monthly(rows, grid)
         self.assertEqual(px, [12, 14, 16])
         self.assertEqual(pt, [13, 15, 17])

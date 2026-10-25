@@ -53,6 +53,13 @@ STYLE_ETFS = [('QQQ', 'Nasdaq-100'), ('DIA', 'Dow Jones Industrials'), ('RSP', '
               ('KRE', 'Regional banks'), ('ITB', 'Home builders'), ('EFA', 'Developed markets ex-US'),
               ('EEM', 'Emerging markets'), ('TLT', 'Treasuries 20+ years'), ('GLD', 'Gold'), ('USO', 'Crude oil')]
 START = dt.date(2000, 1, 7)                       # a Friday: the first week of the grid
+HISTORY_FROM = dt.datetime(1989, 12, 29, tzinfo=dt.timezone.utc)   # what a full fetch asks for (kept in the cache)
+# the market indices themselves, price only (no dividends), for the years before their ETFs: cached as IDX-<symbol>
+INDEXES = [('IDX-GSPC', '^GSPC', '^spx', 'S&P 500 index (price only)'), ('IDX-NDX', '^NDX', '^ndx', 'Nasdaq-100 index (price only)'),
+           ('IDX-DJI', '^DJI', '^dji', 'Dow Jones Industrial Average (price only)'), ('IDX-RUT', '^RUT', None, 'Russell 2000 index (price only)'),
+           ('IDX-IXIC', '^IXIC', '^ndq', 'Nasdaq Composite (price only)')]
+IDX_YAHOO = {k: y for k, y, _, _ in INDEXES}
+IDX_STOOQ = {k: q for k, _, q, _ in INDEXES}
 # explicit dates: with range=max Yahoo quietly answers with quarterly bars, whatever the interval asked for
 YAHOO = ('https://query1.finance.yahoo.com/v8/finance/chart/{s}?period1={p1}&period2={p2}&interval=1wk&events=div%2Csplit'
          '&includeAdjustedClose=true')
@@ -234,12 +241,16 @@ def fetch(client, ticker, full=True, sources=('yahoo', 'stooq'), with_events=Fal
         try:
             if src == 'yahoo':
                 p2 = int(time.time()) + 86400
-                p1 = int(dt.datetime(1999, 12, 27, tzinfo=dt.timezone.utc).timestamp()) if full else p2 - 200 * 86400
-                body = client.json(YAHOO.format(s=symbol(ticker), p1=p1, p2=p2))
+                p1 = int(HISTORY_FROM.timestamp()) if full else p2 - 200 * 86400
+                ys = IDX_YAHOO.get(symbol(ticker), symbol(ticker)).replace('^', '%5E')
+                body = client.json(YAHOO.format(s=ys, p1=p1, p2=p2))
                 rows = parse_yahoo(body)
                 return (rows, 'yahoo', yahoo_events(body)) if with_events else (rows, 'yahoo')
             if src == 'stooq':
-                rows = parse_stooq(client.get(STOOQ.format(s=symbol(ticker).lower() + '.us')).decode('utf-8', 'replace'))
+                t = symbol(ticker)
+                if t in IDX_STOOQ and not IDX_STOOQ[t]:
+                    raise ValueError('no Stooq symbol')
+                rows = parse_stooq(client.get(STOOQ.format(s=IDX_STOOQ[t] if t in IDX_STOOQ else t.lower() + '.us')).decode('utf-8', 'replace'))
                 rows = rows if full else rows[-30:]
                 return (rows, 'stooq', None) if with_events else (rows, 'stooq')
         except Exception as exc:
@@ -270,7 +281,7 @@ def site_companies(site_index):
 def universe(site_index, extra=()):
     """Every ticker to keep, in priority order: asked for now, the benchmark, the ETFs, then the site's companies."""
     out = [symbol(t) for t in extra if t]
-    out += [BENCH] + [t for t, _, _ in SECTOR_ETFS] + [t for t, _ in STYLE_ETFS] + [c['t'] for c in site_companies(site_index)]
+    out += [BENCH] + [t for t, _, _ in SECTOR_ETFS] + [t for t, _ in STYLE_ETFS] + [k for k, _, _, _ in INDEXES] + [c['t'] for c in site_companies(site_index)]
     return list(dict.fromkeys(out))
 
 
@@ -559,6 +570,7 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
         pass
     series, written, extra, docs = {}, 0, {}, {}
     meta = {c['t']: c for c in companies}
+    idx_meta = {k: {'t': k, 'n': name, 's': 'index'} for k, _, _, name in INDEXES}   # their t files only (not in rrg.json)
     wk = {w: i for i, w in enumerate(weeks)}
     for p in sorted((root / 'cache' / 'weekly').glob('*.json.gz')):
         t = p.name[:-len('.json.gz')]
@@ -598,7 +610,7 @@ def build(root, site_data=None, data_root=None, top_long=250, quarters_long=70, 
                                    volumes={t: [None if x is None else 1000.0 * x for x in v] for t, (f, c, v) in series.items()},
                                    industries=inds)
     for t, (f, c, v) in series.items():
-        m = meta.get(t) or {}
+        m = meta.get(t) or idx_meta.get(t) or {}
         doc = {'t': t, 'n': m.get('n'), 's': m.get('s'), 'start': weeks[f], 'c': c, 'v': v, **extra.get(t, {})}
         b = bench_of.get(t)
         if b:                                       # the benchmarks on the company's own weeks (same start)

@@ -1661,6 +1661,13 @@ def build(public, backtest_dir=None, verbose=True, rrg_backtest=False):
                                            'chain': v['chain']['labels']} for g, v in tm['groups'].items()}
     except Exception as exc:
         print('RRG transition model skipped:', type(exc).__name__, exc, flush=True)
+    try:                                               # the four index ETFs around their own centre (index_rrg)
+        import index_rrg as IR
+        ix = IR.build(public, verbose=verbose)
+        out['index_rrg'] = {'centre': ix['centre'], 'replay': ix['replay'], 'week': ix['week'],
+                            'labels': {h: x['label'] for h, x in ix['model']['heads'][ix['model']['primary']].items()}}
+    except Exception as exc:
+        print('Index centre model skipped:', type(exc).__name__, exc, flush=True)
     if backtest_dir:
         write_backtest(out, Path(backtest_dir))
     return out
@@ -1670,7 +1677,7 @@ def write_backtest(out, folder):
     import pandas as pd
     folder.mkdir(parents=True, exist_ok=True)
     for f, o in out.items():
-        if f in ('rrg', 'rrg_transition_model'):
+        if f in ('rrg', 'rrg_transition_model', 'index_rrg'):
             (folder / f'summary_{f}.json').write_text(json.dumps(jsonable(o), indent=1)); continue
         pd.DataFrame(o['price_rows']).to_csv(folder / f'price_rows_{f}.csv', index=False)
         rows = [{'model': m, 'var': v, **x} for m, d in o['summary']['landing'].items() for v, x in d.items()]

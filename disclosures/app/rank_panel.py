@@ -245,7 +245,7 @@ def monthly(rows, grid):
     px, pt, dv = [None] * len(grid), [None] * len(grid), [None] * len(grid)
     j = 0
     for i, e in enumerate(ends):
-        start = ends[i - 1] if i else '0000'
+        start = ends[i - 1] if i else (dt.date.fromisoformat(e).replace(day=1) - dt.timedelta(days=1)).isoformat()
         tot, n = 0.0, 0
         while j < len(rows) and rows[j][0] <= e:
             r = rows[j]
