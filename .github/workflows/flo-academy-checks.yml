@@ -18,6 +18,7 @@ on:
       - 'tests/test_flo_coach.cjs'
       - 'tests/test_flo_practice.cjs'
       - 'tests/test_flo_alerts.cjs'
+      - 'tests/test_flo_alert_browser.cjs'
       - 'tests/test_flo_alert_feed.py'
       - 'tests/test_mascot.cjs'
       - '.github/workflows/flo-academy-checks.yml'
@@ -62,4 +63,5 @@ jobs:
           node tests/test_flo_coach.cjs
           node tests/test_flo_practice.cjs
           node tests/test_flo_alerts.cjs
+          node tests/test_flo_alert_browser.cjs
           python3 tests/test_flo_alert_feed.py
