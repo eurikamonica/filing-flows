@@ -425,6 +425,20 @@
 .flo-real .flo-wb-table td.flo-wb-formula{background:color-mix(in srgb,#9871cb 17%,var(--surface,#fff))}
 .flo-wb-evidence{border:1px solid var(--line,#dedede);border-left:3px solid var(--accent,#17734a);padding:8px;margin:8px 0;border-radius:6px}
 .flo-wb-evidence a{overflow-wrap:anywhere;font-size:12px}
+.flo-coach{border:1px solid var(--line,#ccc);border-radius:11px;padding:10px;margin:12px 0;background:var(--surface,#fff);font-size:12px}
+.flo-coach header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}
+.flo-coach header small{color:var(--muted,#777)}.flo-coach p{margin:5px 0 8px}
+.flo-coach-progress{height:5px;border-radius:8px;overflow:hidden;background:var(--surface-2,#eee);margin-bottom:9px}
+.flo-coach-progress span{height:100%;display:block;background:var(--accent,#17734a);transition:width .16s}
+.flo-coach-controls{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.flo-coach-controls button,.flo-coach-quiz button,.flo-coach-sim button{border:1px solid var(--line,#ccc);border-radius:6px;font:inherit;font-size:11px;background:var(--surface,#fff);color:inherit;padding:6px 8px;cursor:pointer}
+.flo-coach-controls button:disabled{opacity:.4;cursor:not-allowed}
+.flo-coach-quiz{padding:8px;border-top:1px solid var(--line,#ccc)}
+.flo-coach-quiz button{margin:2px}.flo-coach-quiz button[aria-pressed=true]{border-color:var(--accent,#17734a);font-weight:bold}
+.flo-coach-sim{margin:12px 0;padding:10px;border:1px dashed var(--line,#ccc);border-radius:11px;font-size:12px}
+.flo-coach-sim label{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:11px}
+.flo-coach-sim input,.flo-coach-sim select{max-width:190px;padding:5px;border-radius:5px;border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:inherit}
+.flo-sim-results{font-size:12px;padding:4px 0}.flo-sim-results li{margin:4px 0}
 .flo-wb-table .flo-wb-input{background:color-mix(in srgb,#397ad7 13%,var(--surface,#fff));color:var(--ink,#222)}
 .flo-wb-table .flo-wb-formula{background:color-mix(in srgb,#9871cb 12%,var(--surface,#fff));color:var(--ink,#222)}
 .flo-wb-table td.selected{outline:2px solid var(--accent,#17734a);outline-offset:-2px;position:relative}
