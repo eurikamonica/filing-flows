@@ -1498,17 +1498,31 @@ def _annual_from_document(cik, doc_url, row, end, fx):
             pe = e0 - dt.timedelta(days=365)
         pe = facts.prior_year_end(fx, end) or pe.isoformat()
         prev_x = facts.extract(fx, pe, annual=True).get("revenue")
-        scale = None
+        pe2 = facts.prior_year_end(fx, pe)
+        prev2 = facts.extract(fx, pe2, annual=True).get("revenue") if pe2 else None
+        scale, ci, pi = None, 0, 1
         if prev_x:
-            # the year before is in the XBRL: the statement whose second column is that year's revenue is the consolidated
-            # one, newest year first, and gives the units (Toyota's non-financial-businesses table is not it)
+            # the year before is in the XBRL: the statement with a column of that year's revenue is the consolidated one
+            # (Toyota's non-financial-businesses table is not it); the current year is the column beside it, on the side
+            # away from the year before that (columns may run oldest first)
             pick = None
             for _, t0, m0 in sorted(cands, key=lambda x: -x[0]):
                 col = release._map_rows(t0, release.IS_KEYS, full=True)["revenue"][2]
                 for s0 in ([release._units(t0)] if release._units(t0) else []) + [1e6, 1e3, 1e9, 1.0]:
-                    if len(col) > 1 and 0.98 <= col[1] * s0 / prev_x <= 1.02:
-                        pick, scale = (t0, m0), s0
-                        break
+                    j = next((i for i, v in enumerate(col) if 0.98 <= v * s0 / prev_x <= 1.02), None)
+                    if j is None:
+                        continue
+                    near = lambda i: 0 <= i < len(col) and prev2 and 0.98 <= col[i] * s0 / prev2 <= 1.02
+                    if near(j - 1) and j + 1 < len(col):
+                        c_i = j + 1                       # oldest first
+                    elif near(j + 1) and j >= 1:
+                        c_i = j - 1                       # newest first
+                    elif j == 1 and not prev2:
+                        c_i = 0                           # newest first, nothing older to tell by
+                    else:
+                        continue
+                    pick, scale, ci, pi = (t0, m0), s0, c_i, j
+                    break
                 if pick:
                     break
             if not pick:
@@ -1524,8 +1538,8 @@ def _annual_from_document(cik, doc_url, row, end, fx):
         if not scale:
             return None
         full = release._map_rows(t, release.IS_KEYS, full=True)
-        cur = {k: v[2][0] * scale for k, v in full.items() if v[2]}
-        py = {k: v[2][1] * scale for k, v in full.items() if len(v[2]) > 1}
+        cur = {k: v[2][ci] * scale for k, v in full.items() if len(v[2]) > ci}
+        py = {k: v[2][pi] * scale for k, v in full.items() if len(v[2]) > pi}
         for d in (cur, py):
             for k in release.COST_KEYS:
                 if d.get(k) is not None:
