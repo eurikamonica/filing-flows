@@ -1,5 +1,6 @@
-/* Flo — the site's mascot and question box. A little flow-droplet with a Sankey ribbon for a tail that sits in the
-   corner of every page, waves, thinks, talks and reacts to what it finds. Ask it about any company on the site, in
+/* Flo — the site's mascot and question box: Spin Sankey Flo, two Fs (one upright, one turned 180°) locked together in
+   the corner of every page. Its eyes follow the pointer; it waves, thinks, talks and reacts to what it finds, and when
+   the chat opens the two Fs split onto the panel's corners. Ask it about any company on the site, in
    English or Chinese ("What is NVDA worth?", "META 下周会进入领先象限吗?", "AAPL 期权的最大痛点"), and it answers from the
    site's own models — written by fixed rules from the published numbers, no language model:
      valuation   the Fair value page (disclosures/data/research/valuation/c/<cik>.json): the stage-weighted value and its
@@ -305,41 +306,40 @@
     return { html: parts.map((p) => `<p>${p.html}</p>`).join(''), facts: parts.flatMap((p) => p.facts), mood, links: parts.flatMap((p) => p.links), company: co, intents };
   }
 
-  /* ---------- the mascot ---------- */
-  // each copy gets its own gradient ids: a gradient inside a hidden copy (the launcher while the panel is open) does not paint
-  const SVG = (n) => `<svg class="flo-svg" viewBox="0 0 120 124" aria-hidden="true">
-    <defs><linearGradient id="flo-body${n}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4cc3b2"/><stop offset="1" stop-color="#1f8f80"/></linearGradient>
-    <linearGradient id="flo-rib${n}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a78d6"/><stop offset=".55" stop-color="#4cc3b2"/><stop offset="1" stop-color="#f0b429"/></linearGradient></defs>
-    <path class="flo-rib" d="M40 96 C 26 104, 18 116, 4 112 C 16 122, 30 118, 48 104 Z" fill="url(#flo-rib${n})"/>
-    <g class="flo-body-g">
-      <path d="M60 16 C 58 7, 66 3, 72 8" fill="none" stroke="#1f8f80" stroke-width="3.2" stroke-linecap="round"/><circle cx="72.5" cy="8.5" r="3" fill="#f0b429"/>
-      <path d="M60 15 C 85 15, 99 41, 99 65 C 99 89, 83 104, 60 104 C 37 104, 21 89, 21 65 C 21 41, 35 15, 60 15 Z" fill="url(#flo-body${n})"/>
-      <ellipse cx="60" cy="86" rx="23" ry="13" fill="#ffffff" opacity=".18"/>
-      <g class="flo-arm-l"><path d="M24 70 C 14 72, 10 80, 13 85" fill="none" stroke="#1f8f80" stroke-width="6" stroke-linecap="round"/></g>
-      <g class="flo-arm-r"><path d="M96 70 C 106 66, 110 58, 108 52" fill="none" stroke="#1f8f80" stroke-width="6" stroke-linecap="round"/>
-        <rect x="100" y="34" width="18" height="15" rx="3" fill="#fff" stroke="#1f8f80" stroke-width="1.5"/><path d="M103 45 L107 41 L110 43 L115 37" fill="none" stroke="#17734a" stroke-width="1.8" stroke-linecap="round"/></g>
-      <g class="flo-brows"><path d="M41 43 L52 46" stroke="#123" stroke-width="2.4" stroke-linecap="round"/><path d="M79 43 L68 46" stroke="#123" stroke-width="2.4" stroke-linecap="round"/></g>
-      <g class="flo-eyes"><ellipse cx="48" cy="57" rx="9" ry="10" fill="#fff"/><ellipse cx="72" cy="57" rx="9" ry="10" fill="#fff"/>
-        <g class="flo-pupils"><circle cx="49" cy="59" r="4.6" fill="#1d1d1b"/><circle cx="73" cy="59" r="4.6" fill="#1d1d1b"/><circle cx="50.6" cy="57" r="1.5" fill="#fff"/><circle cx="74.6" cy="57" r="1.5" fill="#fff"/></g>
-        <g class="flo-lids"><rect x="38" y="46" width="20" height="22" rx="9" fill="#3cb4a3"/><rect x="62" y="46" width="20" height="22" rx="9" fill="#3cb4a3"/></g></g>
-      <g class="flo-happy-eyes"><path d="M41 59 Q48 51 55 59" fill="none" stroke="#1d1d1b" stroke-width="3" stroke-linecap="round"/><path d="M65 59 Q72 51 79 59" fill="none" stroke="#1d1d1b" stroke-width="3" stroke-linecap="round"/></g>
-      <ellipse cx="39" cy="72" rx="5" ry="3" fill="#ff8f8f" opacity=".55"/><ellipse cx="81" cy="72" rx="5" ry="3" fill="#ff8f8f" opacity=".55"/>
-      <path class="flo-m-smile" d="M52 74 Q60 82 68 74" fill="none" stroke="#1d1d1b" stroke-width="2.6" stroke-linecap="round"/>
-      <ellipse class="flo-m-open" cx="60" cy="77" rx="5.5" ry="4.5" fill="#1d1d1b"/>
-      <path class="flo-m-worry" d="M52 79 Q60 72 68 79" fill="none" stroke="#1d1d1b" stroke-width="2.6" stroke-linecap="round"/>
-      <path class="flo-sweat" d="M92 40 C 89 46, 89 50, 92 51 C 95 50, 95 46, 92 40 Z" fill="#7fc8ff"/>
-    </g>
-    <g class="flo-dots"><circle cx="92" cy="18" r="3"/><circle cx="102" cy="12" r="3.5"/><circle cx="113" cy="6" r="4"/></g>
-    <g class="flo-spark"><path d="M14 30 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/><path d="M104 88 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6z"/></g>
-  </svg>`;
+  /* ---------- the mascot: Spin Sankey Flo ---------- */
+  // Two Fs, one upright and one turned 180°, locked together: Filing (grey stem) and Flows (mint stem), each with a
+  // Sankey band for its middle bar and the logo's green and red tips. Both halves follow the pointer with their eyes and
+  // lean toward it; when the chat opens they split and sit on the panel's top-left and bottom-right corners.
+  const C = { rev: '#7a7974', mint: '#a8d1b9', green: '#17734a', salmon: '#f6c3b8', red: '#ea6a52' };
+  const F = (stem, top) => `<rect x="38" y="14" width="50" height="16" rx="6" fill="${top}"/><rect x="88" y="14" width="6" height="16" rx="1.5" fill="${C.green}"/>` +
+    `<path d="M38 38 C 54 38, 56 44, 72 44 L 72 56 C 56 56, 54 50, 38 50 Z" fill="${C.salmon}"/><rect x="72" y="44" width="5" height="12" rx="1.5" fill="${C.red}"/>` +
+    `<rect x="14" y="14" width="26" height="70" rx="9" fill="${stem}"/>`;
+  const FACE = (tf) => `<g transform="${tf}">
+    <g class="flo-eyes"><ellipse cx="48" cy="57" rx="8.5" ry="9.5" fill="#fff"/><ellipse cx="72" cy="57" rx="8.5" ry="9.5" fill="#fff"/>
+      <g class="flo-pupils"><circle cx="49" cy="59" r="4.4" fill="#1d1d1b"/><circle cx="73" cy="59" r="4.4" fill="#1d1d1b"/><circle cx="50.5" cy="57" r="1.4" fill="#fff"/><circle cx="74.5" cy="57" r="1.4" fill="#fff"/></g></g>
+    <g class="flo-h-eyes"><path d="M41 60 Q48 51 55 60" fill="none" stroke="#1d1d1b" stroke-width="3.2" stroke-linecap="round"/><path d="M65 60 Q72 51 79 60" fill="none" stroke="#1d1d1b" stroke-width="3.2" stroke-linecap="round"/></g>
+    <g class="flo-brows"><path d="M38 43 L52 47" stroke="#1d1d1b" stroke-width="2.8" stroke-linecap="round"/><path d="M82 43 L68 47" stroke="#1d1d1b" stroke-width="2.8" stroke-linecap="round"/></g>
+    <path class="flo-m-idle" d="M52 74 Q60 81 68 74" fill="none" stroke="#1d1d1b" stroke-width="2.6" stroke-linecap="round"/>
+    <path class="flo-m-happy" d="M51 70 Q60 85 69 70 Z" fill="#1d1d1b"/>
+    <ellipse class="flo-m-talk" cx="60" cy="76" rx="5.5" ry="4.5" fill="#1d1d1b"/>
+    <path class="flo-m-think" d="M55 76 L66 74" fill="none" stroke="#1d1d1b" stroke-width="2.6" stroke-linecap="round"/>
+    <path class="flo-m-worried" d="M53 78 Q60 72 67 78" fill="none" stroke="#1d1d1b" stroke-width="2.6" stroke-linecap="round"/>
+    <path class="flo-sweat" d="M92 30 C 88 38, 88 42, 92 43 C 96 42, 96 38, 92 30 Z" fill="#5b7fa6"/></g>`;
+  const EXTRA = (x, y) => `<g class="flo-dots"><circle cx="${x}" cy="${y}" r="3"/><circle cx="${x + 8}" cy="${y - 5}" r="3.4"/><circle cx="${x + 17}" cy="${y - 10}" r="3.8"/></g>` +
+    `<path class="flo-spark" d="M${x + 10} ${y - 14} l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="${C.green}"/>`;
+  const FX1 = 'translate(27 34) scale(0.46) translate(-60 -60)', FX2 = 'translate(93 86) scale(0.46) translate(-60 -60)';
+  const HALF1 = `<svg class="flo-svg" viewBox="0 0 120 120" aria-hidden="true">${F(C.rev, C.mint)}${FACE(FX1)}${EXTRA(46, 14)}</svg>`;
+  const HALF2 = `<svg class="flo-svg" viewBox="0 0 120 120" aria-hidden="true"><g transform="rotate(180 60 60)">${F(C.mint, C.rev)}</g>${FACE(FX2)}${EXTRA(100, 64)}</svg>`;
   const CSS = `.flo-launch{position:fixed;right:18px;bottom:18px;z-index:9000;display:flex;align-items:flex-end;gap:8px;pointer-events:none}.flo-launch[hidden],.flo-panel[hidden]{display:none}
-.flo-launch>*{pointer-events:auto}.flo-btn{width:68px;height:70px;border:0;background:none;padding:0;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(0,0,0,.18))}
-.flo-btn .flo-svg{width:100%;height:100%}.flo-btn:focus-visible{outline:2px solid var(--accent,#17734a);outline-offset:4px;border-radius:50%}
-.flo-hint{background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ddd);border-radius:12px 12px 2px 12px;padding:7px 10px;font-size:12.5px;max-width:200px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:34px;animation:flo-pop .4s ease-out}
+.flo-launch>*{pointer-events:auto}.flo-btn{width:84px;height:84px;border:0;background:none;padding:0;cursor:pointer;opacity:0}
+.flo-btn:focus-visible{opacity:1;outline:2px solid var(--accent,#17734a);outline-offset:4px;border-radius:18px}
+.flo-hint{background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ddd);border-radius:12px 12px 2px 12px;padding:7px 10px;font-size:12.5px;max-width:200px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:40px;animation:flo-pop .4s ease-out}
 .flo-hint button{border:0;background:none;color:var(--muted,#888);cursor:pointer;font-size:14px;margin-left:4px;padding:0}
-.flo-panel{position:fixed;right:18px;bottom:18px;z-index:9001;width:380px;max-width:calc(100vw - 24px);height:560px;max-height:calc(100vh - 36px);display:flex;flex-direction:column;background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ddd);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.22);overflow:hidden;animation:flo-pop .25s ease-out;font-family:inherit}
-.flo-head{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line,#e5e5e5);background:color-mix(in srgb,#4cc3b2 12%,var(--surface,#fff))}
-.flo-head .flo-svg{width:56px;height:58px;flex:none}.flo-head b{font-size:15px}.flo-head small{display:block;color:var(--muted,#777);font-size:11.5px;line-height:1.35}
+.flo-half{position:fixed;left:0;top:0;width:84px;height:84px;z-index:9002;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:left .62s cubic-bezier(.34,1.4,.5,1),top .62s cubic-bezier(.34,1.4,.5,1),width .5s,height .5s;filter:drop-shadow(0 3px 6px rgba(0,0,0,.14))}
+.flo-half .flo-svg{width:100%;height:100%;overflow:visible;display:block}
+.flo-panel{position:fixed;right:58px;bottom:58px;z-index:9001;width:380px;max-width:calc(100vw - 120px);height:540px;max-height:calc(100vh - 150px);display:flex;flex-direction:column;background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ddd);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.22);overflow:hidden;animation:flo-pop .3s cubic-bezier(.3,1.3,.5,1);font-family:inherit}
+.flo-head{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 58px;border-bottom:1px solid var(--line,#e5e5e5);background:color-mix(in srgb,#a8d1b9 22%,var(--surface,#fff))}
+.flo-head b{font-size:15px}.flo-head small{display:block;color:var(--muted,#777);font-size:11.5px;line-height:1.35}
 .flo-x{margin-left:auto;border:0;background:none;font-size:22px;line-height:1;color:var(--muted,#777);cursor:pointer;padding:4px 6px;align-self:flex-start}
 .flo-log{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;font-size:13.5px;line-height:1.5}
 .flo-msg{max-width:92%;padding:8px 11px;border-radius:12px}.flo-msg p{margin:0 0 6px}.flo-msg p:last-child{margin:0}
@@ -348,43 +348,35 @@
 .flo-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.flo-links a{font-size:12px;border:1px solid var(--line,#ccc);border-radius:9px;padding:2px 8px;text-decoration:none}
 .flo-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}.flo-chips button{font:inherit;font-size:12px;border:1px solid var(--line,#ccc);background:none;color:inherit;border-radius:12px;padding:3px 9px;cursor:pointer}
 .flo-chips .flo-more{border-style:dashed;color:var(--muted,#777)}.flo-chips button:hover{border-color:var(--accent,#17734a);color:var(--accent,#17734a)}
-.flo-form{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--line,#e5e5e5)}.flo-form input{flex:1;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--bg,#fff);color:inherit;min-width:0}
+.flo-form{display:flex;gap:6px;padding:10px 54px 12px 12px;border-top:1px solid var(--line,#e5e5e5)}.flo-form input{flex:1;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--bg,#fff);color:inherit;min-width:0}
 .flo-form button{font:inherit;font-size:13px;border:0;border-radius:10px;padding:0 14px;background:var(--accent,#17734a);color:#fff;cursor:pointer}
 .flo-local{font:inherit;font-size:12px;margin-top:6px;border:1px dashed var(--line,#bbb);background:none;color:inherit;border-radius:9px;padding:2px 8px;cursor:pointer}
 .flo-typing{letter-spacing:2px;animation:flo-dot 1s infinite}
-@media (max-width:560px){.flo-panel{right:0;left:0;bottom:0;width:100%;max-width:100%;height:80vh;border-radius:16px 16px 0 0}.flo-launch{right:10px;bottom:10px}.flo-btn{width:54px;height:56px}.flo-hint{display:none}}
+@media (max-width:560px){.flo-panel{right:0;left:0;bottom:0;width:100%;max-width:100%;height:74vh;max-height:74vh;border-radius:16px 16px 0 0}.flo-head{padding-left:12px}.flo-launch{right:10px;bottom:10px}.flo-btn{width:66px;height:66px}.flo-hint{display:none}.flo-form{padding-right:12px}}
 @keyframes flo-pop{from{transform:translateY(12px) scale(.96);opacity:0}to{transform:none;opacity:1}}
-.flo-svg{overflow:visible}.flo-svg *{transform-box:fill-box}.flo-body-g{transform-origin:50% 100%;animation:flo-bob 3.2s ease-in-out infinite}
-.flo-rib{transform-origin:100% 0%;animation:flo-sway 2.6s ease-in-out infinite}
-.flo-lids rect{transform-origin:50% 0%;transform:scaleY(0);animation:flo-blink 4.6s infinite}
-.flo-arm-r{transform-origin:0% 100%}.flo-arm-l{transform-origin:100% 0%}
-.flo-m-open,.flo-m-worry,.flo-brows,.flo-sweat,.flo-dots,.flo-spark,.flo-happy-eyes{opacity:0;transition:opacity .2s}
-.flo-dots circle{fill:var(--muted,#9aa)}.flo-spark path{fill:#f0b429}
-@keyframes flo-bob{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-3px) scaleY(1.015)}}
-@keyframes flo-sway{0%,100%{transform:rotate(0)}50%{transform:rotate(-7deg)}}
-@keyframes flo-blink{0%,93%,100%{transform:scaleY(0)}95%,97%{transform:scaleY(1)}}
-.flo-wave .flo-arm-r{animation:flo-wave .45s ease-in-out 4}
-@keyframes flo-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-28deg)}}
-.flo-think .flo-dots{opacity:1}.flo-think .flo-dots circle{animation:flo-dot 1.2s infinite}.flo-think .flo-dots circle:nth-child(2){animation-delay:.2s}.flo-think .flo-dots circle:nth-child(3){animation-delay:.4s}
-.flo-think .flo-pupils{transform:translate(2px,-3px);transition:transform .3s}.flo-think .flo-arm-l{transform:rotate(-55deg);transition:transform .3s}
+.flo-eyes{transform-box:fill-box;transform-origin:center;transition:transform .09s}.flo-blink .flo-eyes{transform:scaleY(.08)}
+.flo-half .flo-h-eyes,.flo-half .flo-brows,.flo-half .flo-m-happy,.flo-half .flo-m-talk,.flo-half .flo-m-think,.flo-half .flo-m-worried,.flo-half .flo-sweat,.flo-half .flo-dots,.flo-half .flo-spark{display:none}
+.flo-half[data-mood="happy"] .flo-eyes,.flo-half[data-mood="wave"] .flo-eyes{display:none}
+.flo-half[data-mood="happy"] .flo-h-eyes,.flo-half[data-mood="happy"] .flo-m-happy,.flo-half[data-mood="happy"] .flo-spark,.flo-half[data-mood="wave"] .flo-h-eyes,.flo-half[data-mood="wave"] .flo-m-happy{display:inline}
+.flo-half[data-mood]:not([data-mood="idle"]) .flo-m-idle{display:none}
+.flo-half[data-mood="talk"] .flo-m-talk{display:inline;transform-box:fill-box;transform-origin:center;animation:flo-talk .22s ease-in-out infinite alternate}
+.flo-half[data-mood="think"] .flo-m-think,.flo-half[data-mood="think"] .flo-dots{display:inline}
+.flo-half[data-mood="worried"] .flo-brows,.flo-half[data-mood="worried"] .flo-m-worried,.flo-half[data-mood="worried"] .flo-sweat{display:inline}
+.flo-dots circle{fill:var(--muted,#9a9994);animation:flo-dot 1s infinite}.flo-dots circle:nth-child(2){animation-delay:.15s}.flo-dots circle:nth-child(3){animation-delay:.3s}
 @keyframes flo-dot{0%,100%{opacity:.25}50%{opacity:1}}
-.flo-talk .flo-m-smile{opacity:0}.flo-talk .flo-m-open{opacity:1;transform-origin:50% 50%;animation:flo-talk .22s ease-in-out infinite alternate}
-@keyframes flo-talk{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
-.flo-happy .flo-body-g{animation:flo-jump .55s ease-out 2}.flo-happy .flo-spark{opacity:1;animation:flo-twinkle .8s ease-in-out infinite alternate}.flo-happy .flo-happy-eyes{opacity:1}.flo-happy .flo-eyes{opacity:0}
-.flo-happy .flo-arm-r{animation:flo-wave .3s ease-in-out 3}
-@keyframes flo-jump{0%{transform:translateY(0) scale(1,1)}30%{transform:translateY(-12px) scale(.96,1.06)}60%{transform:translateY(0) scale(1.06,.94)}100%{transform:translateY(0) scale(1)}}
-@keyframes flo-twinkle{from{opacity:.4}to{opacity:1}}
-.flo-worried .flo-brows,.flo-worried .flo-m-worry{opacity:1}.flo-worried .flo-m-smile{opacity:0}.flo-worried .flo-body-g{animation:flo-shiver .12s linear 6}
-.flo-worried .flo-sweat{opacity:1;animation:flo-drip 1.6s ease-in infinite}
-@keyframes flo-shiver{0%,100%{transform:translateX(0)}50%{transform:translateX(1.5px)}}
-@keyframes flo-drip{0%{transform:translateY(-2px);opacity:0}30%{opacity:1}100%{transform:translateY(8px);opacity:0}}
-@media (prefers-reduced-motion:reduce){.flo-svg *,.flo-panel,.flo-hint{animation:none!important;transition:none!important}}`;
+@keyframes flo-talk{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+@media (prefers-reduced-motion:reduce){.flo-half,.flo-panel,.flo-hint,.flo-half *{animation:none!important;transition:none!important}}`;
 
   let ui = null, moodTimer = null;
+  const nowMs = () => (root.performance && root.performance.now ? root.performance.now() : Date.now());
   function mood(m, ms) {
     if (!ui) return;
-    const all = ['flo-wave', 'flo-think', 'flo-talk', 'flo-happy', 'flo-worried'];
-    [ui.btn, ui.panel].forEach((el) => { el.classList.remove(...all); if (m && m !== 'idle') el.classList.add('flo-' + m); });
+    m = m || 'idle';
+    ui.mood = m;
+    ui.halves.forEach((h) => { h.el.dataset.mood = m; });
+    const t = nowMs();
+    if (m === 'happy' || m === 'wave') ui.halves.forEach((h, i) => { h.hop = t + 460 + i * 140; });
+    if (m === 'worried') ui.halves.forEach((h) => { h.shake = t + 560; });
     clearTimeout(moodTimer);
     if (ms) moodTimer = setTimeout(() => mood('idle'), ms);
   }
@@ -434,31 +426,116 @@
     ui.chips.querySelectorAll('button:not(.flo-more)').forEach((b) => b.addEventListener('click', () => send(b.textContent)));
     ui.chips.querySelector('.flo-more').addEventListener('click', () => { ui.seed = (ui.seed || 0) + 1; renderChips(); });
   }
+
+  /* where the halves stand: locked together in the corner, or split onto the open panel's corners */
+  function place(h, x, y, s) { h.x = x; h.y = y; h.s = s; h.el.style.left = x + 'px'; h.el.style.top = y + 'px'; h.el.style.width = h.el.style.height = s + 'px'; }
+  function layout() {
+    if (!ui) return;
+    const W = root.innerWidth, H = root.innerHeight, small = W <= 560;
+    if (ui.panel.hidden) {
+      const S = small ? 66 : 84, a = ui.hover ? 6 : 0, pad = small ? 10 : 18;
+      const L0 = W - pad - S, T0 = H - pad - S;
+      place(ui.halves[0], L0 - a, T0 - a, S); place(ui.halves[1], L0 + a, T0 + a, S);
+    } else {
+      const r = ui.panel.getBoundingClientRect(), S = small ? 72 : 96;
+      if (small) {                                     // a phone's bottom sheet: both stand on its top edge, clear of the ×
+        place(ui.halves[0], r.left + 4, r.top - 0.86 * S, S);
+        place(ui.halves[1], r.right - 0.9 * S - 52, r.top - 0.9 * S, S);
+      } else {                                         // each F's own box centred on a corner, half of it outside
+        place(ui.halves[0], r.left - 0.45 * S, r.top - 0.41 * S, S);
+        place(ui.halves[1], r.right - 0.55 * S, r.bottom - 0.59 * S, S);
+      }
+    }
+  }
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  function target(h, i, t) {
+    if (h.look && t < h.look.until) return h.look;
+    if (ui.mood === 'think') { const r = h.el.getBoundingClientRect(); return { x: r.left + r.width, y: r.top - 80 }; }
+    if (!ui.panel.hidden && t < ui.typingUntil) { const r = ui.input.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+    if (t - ui.ptr.t > 4000) {                         // nobody moving the pointer: look around
+      const k = Math.floor((t - ui.ptr.t) / 1600), ang = k * 2.4 + i;
+      return { x: root.innerWidth / 2 + Math.cos(ang) * root.innerWidth * 0.4, y: root.innerHeight / 2 + Math.sin(ang) * root.innerHeight * 0.35 };
+    }
+    return ui.ptr;
+  }
+  function frame() {
+    if (!ui) return;
+    const t = nowMs();
+    ui.halves.forEach((h, i) => {
+      const r = h.el.getBoundingClientRect();
+      const cx = r.left + h.fx / 120 * r.width, cy = r.top + h.fy / 120 * r.height;
+      const g = target(h, i, t), dx = g.x - cx, dy = g.y - cy, d = Math.hypot(dx, dy) || 1, k = Math.min(d / 180, 1);
+      h.pupils.setAttribute('transform', `translate(${(dx / d * k * 4.2).toFixed(2)} ${(dy / d * k * 3.6).toFixed(2)})`);
+      let lean = clamp(dx / 260, -1, 1) * 8, extra = 0, hop = 0;
+      const nx = clamp(dx / 300, -1, 1) * 3, ny = clamp(dy / 300, -1, 1) * 2;
+      const bob = ui.reduce ? 0 : Math.sin(t / 700 + i * 1.3) * 1.6;
+      if (h.hop > t) hop = -Math.sin((1 - (h.hop - t) / 460) * Math.PI) * 16;
+      if (h.shake > t) extra += Math.sin(t / 22) * 5;
+      if (h.spin > t) { const p = 1 - (h.spin - t) / 720; extra += (1 - Math.pow(1 - p, 3)) * 360 - 360; }
+      h.el.style.transformOrigin = (!ui.panel.hidden || h.spin > t) ? `${h.fx / 1.2}% ${h.fy / 1.2}%` : '50% 50%';
+      if (ui.reduce) { lean *= 0.3; hop = 0; extra = 0; }
+      h.el.style.transform = `translate(${nx.toFixed(1)}px, ${(ny + bob + hop).toFixed(1)}px) rotate(${(lean + extra).toFixed(1)}deg)`;
+    });
+    root.requestAnimationFrame(frame);
+  }
+
   function open() {
     if (!ui) return;
     ui.panel.hidden = false; ui.launch.hidden = true;
     if (!ui.log.childElementCount) {
       const g = greetFor(ui.ctx, zhUI());
-      addMsg(g || helpAnswer(zhUI() ? 'zh' : 'en', ui.co).html, 'bot'); ui.greeted = ui.ctx && ui.ctx.key; mood('wave', 2000);
+      addMsg(g || helpAnswer(zhUI() ? 'zh' : 'en', ui.co).html, 'bot'); ui.greeted = ui.ctx && ui.ctx.key;
     }
     renderChips();
-    setTimeout(() => ui.input.focus(), 50);
+    layout();
+    mood('wave', 1600);
+    setTimeout(() => ui.input.focus({ preventScroll: true }), 350);
     store.set('seen', '1');
   }
-  function close() { if (!ui) return; ui.panel.hidden = true; ui.launch.hidden = false; mood('idle'); }
+  function close() {
+    if (!ui) return;
+    ui.panel.hidden = true; ui.launch.hidden = false;
+    layout();
+    const t = nowMs();
+    ui.halves[1].spin = t + 720; ui.halves[0].hop = t + 460;        // they fly home and lock with a half-turn
+    mood('idle');
+  }
   function mount() {
     if (!doc || !doc.body || doc.getElementById('flo-root')) return;
     const st = doc.createElement('style'); st.id = 'flo-css'; st.textContent = CSS; doc.head.appendChild(st);
     const r = doc.createElement('div'); r.id = 'flo-root';
-    r.innerHTML = `<div class="flo-launch"><div class="flo-hint"${store.get('seen') ? ' hidden' : ''}>${zhUI() ? '你好！问我任何公司的问题' : 'Hi! Ask me about any company'} <button type="button" aria-label="Dismiss">×</button></div><button type="button" class="flo-btn" aria-label="Ask Flo, the site's assistant">${SVG('a')}</button></div>
-      <section class="flo-panel" role="dialog" aria-label="Ask Flo" hidden><div class="flo-head">${SVG('b')}<div><b>Flo</b><small>${zhUI() ? '用网站自己的模型回答：估值、RRG、期权、财报、信用。按固定规则生成，不是投资建议。' : "Answers from the site's models: valuation, RRG, options, earnings, credit. Written by fixed rules; not investment advice."}</small></div><button type="button" class="flo-x" aria-label="Close">×</button></div>
+    r.innerHTML = `<div class="flo-launch"><div class="flo-hint"${store.get('seen') ? ' hidden' : ''}>${zhUI() ? '你好！问我任何公司的问题' : 'Hi! Ask me about any company'} <button type="button" aria-label="Dismiss">×</button></div><button type="button" class="flo-btn" aria-label="Ask Flo, the site's assistant"></button></div>
+      <section class="flo-panel" role="dialog" aria-label="Ask Flo" hidden><div class="flo-head"><div><b>Flo</b><small>${zhUI() ? '用网站自己的模型回答：估值、RRG、期权、财报、信用。按固定规则生成，不是投资建议。' : "Answers from the site's models: valuation, RRG, options, earnings, credit. Written by fixed rules; not investment advice."}</small></div><button type="button" class="flo-x" aria-label="Close">×</button></div>
       <div class="flo-log" aria-live="polite"></div><div class="flo-chips"></div>
-      <form class="flo-form"><input type="text" placeholder="${zhUI() ? '问一家公司…' : 'Ask about a company…'}" aria-label="Your question" maxlength="300"><button type="submit">${zhUI() ? '问' : 'Ask'}</button></form></section>`;
+      <form class="flo-form"><input type="text" placeholder="${zhUI() ? '问一家公司…' : 'Ask about a company…'}" aria-label="Your question" maxlength="300"><button type="submit">${zhUI() ? '问' : 'Ask'}</button></form></section>
+      <div class="flo-half flo-h1" aria-hidden="true">${HALF1}</div><div class="flo-half flo-h2" aria-hidden="true">${HALF2}</div>`;
     doc.body.appendChild(r);
+    const mk = (sel, fx, fy) => { const el = r.querySelector(sel); return { el, fx, fy, pupils: el.querySelector('.flo-pupils'), hop: 0, shake: 0, spin: 0, look: null }; };
     ui = { launch: r.querySelector('.flo-launch'), btn: r.querySelector('.flo-btn'), panel: r.querySelector('.flo-panel'), log: r.querySelector('.flo-log'), chips: r.querySelector('.flo-chips'),
-      input: r.querySelector('.flo-form input'), co: null };
+      input: r.querySelector('.flo-form input'), co: null, halves: [mk('.flo-h1', 27, 34), mk('.flo-h2', 93, 86)], mood: 'idle', hover: false,
+      ptr: { x: root.innerWidth / 2, y: root.innerHeight / 2, t: nowMs() }, typingUntil: 0,
+      reduce: !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) };
+    mood('idle');
     ui.btn.addEventListener('click', open);
-    ui.btn.addEventListener('mouseenter', () => mood('wave', 1800));
+    ui.halves.forEach((h, i) => {
+      h.el.addEventListener('pointerenter', () => { if (ui.panel.hidden) { ui.hover = true; layout(); } });
+      h.el.addEventListener('pointerleave', () => { ui.hover = false; if (ui.panel.hidden) layout(); });
+      h.el.addEventListener('click', () => {
+        if (ui.panel.hidden) return open();
+        const t = nowMs(), other = ui.halves[1 - i], b = h.el.getBoundingClientRect();
+        h.hop = t + 460; h.spin = t + 720;                // the clicked half hops and spins, the other one looks at it
+        other.look = { x: b.left + b.width / 2, y: b.top + b.height / 2, until: t + 1400 };
+        h.el.dataset.mood = 'happy'; setTimeout(() => { h.el.dataset.mood = ui.mood; }, 900);
+      });
+    });
+    // blinking, each half on its own clock
+    ui.halves.forEach((h) => {
+      const blink = () => { h.el.classList.add('flo-blink'); setTimeout(() => h.el.classList.remove('flo-blink'), 120); setTimeout(blink, 2200 + Math.random() * 3200); };
+      setTimeout(blink, 800 + Math.random() * 2000);
+    });
+    root.addEventListener('pointermove', (e) => { ui.ptr = { x: e.clientX, y: e.clientY, t: nowMs() }; }, { passive: true });
+    root.addEventListener('resize', layout);
+    ui.input.addEventListener('input', () => { const t = nowMs(); ui.typingUntil = t + 1500; ui.halves[1].hop = t + 260; });
     r.querySelector('.flo-hint button').addEventListener('click', (e) => { e.stopPropagation(); e.currentTarget.parentElement.hidden = true; store.set('seen', '1'); });
     r.querySelector('.flo-x').addEventListener('click', close);
     r.querySelector('.flo-form').addEventListener('submit', (e) => { e.preventDefault(); send(ui.input.value); });
@@ -476,6 +553,8 @@
       if (!ui.panel.hidden && ui.log.childElementCount && ui.greeted !== ctx.key) { const g = greetFor(ctx, zhUI()); if (g) { addMsg(g, 'bot'); ui.greeted = ctx.key; } }
     };
     root.addEventListener('hashchange', sync); sync();
+    layout();
+    root.requestAnimationFrame(frame);
     setTimeout(() => mood('wave', 1800), 1200);
   }
   root.FFMascot = { open, ask, mount, classify, findCompany, lang, pageContext, chipsFor };
