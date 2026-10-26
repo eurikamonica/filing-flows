@@ -57,7 +57,7 @@ eq(F.scanForNotification(feed,NOW),null,'first open establishes baseline, no sta
 eq(F.scanForNotification(feed,NOW+500),null,'same top mover never repeats');
 const moved={...feed,generated_at:new Date(NOW+5*60000).toISOString(),
  universes:{...feed.universes,sp500:{...member,leaders:[
-  {...member.leaders[1],rank:1,five_min_pct:5.4,asof:new Date(NOW+4*60000).toISOString(),
+  {...member.leaders[1],rank:1,five_min_pct:8.4,asof:new Date(NOW+4*60000).toISOString(),
      prev_asof:new Date(NOW-60000).toISOString()},
   {...member.leaders[0],rank:2}]}}};
 eq(F.scanForNotification(moved,NOW+5*60000)?.ticker,'TSLA','new leader gets one alert');
