@@ -31,7 +31,8 @@ SCHEMA = 1
 def request(url, headers=None, payload=None):
     req = Request(url, data=payload, headers=headers or {}, method="POST" if payload else "GET")
     with urlopen(req, timeout=25) as r:
-        return json.loads(r.read(3_000_000).decode("utf-8"))
+        body = r.read(3_000_000).decode("utf-8")
+        return json.loads(body) if body.strip() else {}
 
 def iso(v):
     if not isinstance(v, str):
