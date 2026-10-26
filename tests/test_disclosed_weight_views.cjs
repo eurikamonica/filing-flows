@@ -47,7 +47,8 @@ const api={hub:'/',rankMeta:async()=>({cos:[['AAPL','Apple','technology']]}),jso
  await A.build({aw:'13f',style:'changes'},s13,mapi);
  assert.equal(s13.actual.fallback,'single-disclosure','one 13F quarter never implies a trade');
  assert.match(s13.foot,/NOT AUM/);
- await assert.rejects(A.build({aw:'etf',ah:'MISSING',style:'changes'},out(),api),/no source-dated/);
+ await assert.rejects(A.build({aw:'etf',ah:'MISSING',style:'changes'},out(),
+   {...api,json:async()=>null}),/no source-dated/);
 
  console.log('Disclosed weight views: company residuals, exits, changes, 13F options, official bounds passed');
 })().catch(e=>{console.error(e);process.exitCode=1});
