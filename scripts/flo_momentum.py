@@ -271,6 +271,36 @@ def rank_universes(universes, movers, previous, now, feed, top=60):
         }
     return result
 
+def check_storage(url, service, fetch=request):
+    """Fail before buying/reading market data if the private Supabase store is absent.
+
+    Service-role key stays server-side. Never echo the key or Supabase URL in errors.
+    A PostgREST 404 is usually a missing/unexposed relation (often PGRST205).
+    """
+    if not url or not service:
+        raise RuntimeError("Flo 5m setup: missing Supabase URL or server credentials")
+    endpoint = url.rstrip("/") + "/rest/v1/flo_momentum_scan?select=name&limit=0"
+    headers = {"apikey": service, "Authorization": "Bearer " + service}
+    try:
+        fetch(endpoint, headers)
+    except HTTPError as exc:
+        if exc.code == 404:
+            raise RuntimeError(
+                "Flo 5m Supabase table is missing or unexposed (HTTP 404). "
+                "Run db/flo-momentum.sql in the matching Supabase SQL editor; "
+                "then refresh the PostgREST schema cache."
+            ) from None
+        if exc.code in (401, 403):
+            raise RuntimeError(
+                "Flo 5m Supabase server authentication/permissions failed "
+                "(HTTP 401/403); verify the service credential and project."
+            ) from None
+        raise RuntimeError("Flo 5m Supabase store unavailable (HTTP error)") from None
+    except (OSError, URLError, ValueError):
+        raise RuntimeError("Flo 5m Supabase store cannot be reached") from None
+    return True
+
+
 def read_previous(url, service, fetch=request):
     if not url or not service:
         return {}
@@ -301,10 +331,11 @@ def run(now=None, provider_fetch=request, universe_fetch=None, directory=None):
     symbols=sorted(set().union(*(set(x.get("symbols") or []) for x in scopes.values())))
     if not symbols:
         raise RuntimeError("No fresh valid index memberships; refusing fabricated ranking")
-    bars=alpaca_bars(symbols,now,feed,key,secret,provider_fetch)
-    moves=calculate(bars,now,feed)
     url=os.environ.get("SUPABASE_URL","")
     service=os.environ.get("SUPABASE_SERVICE_KEY","")
+    check_storage(url, service)
+    bars=alpaca_bars(symbols,now,feed,key,secret,provider_fetch)
+    moves=calculate(bars,now,feed)
     previous=read_previous(url,service)
     result={"schema":SCHEMA,"generated_at":stamp(now),"provider":PROVIDER,
             "feed":feed,"coverage_warning":"IEX is ONE EXCHANGE, not consolidated US volume/pricing."
@@ -321,10 +352,16 @@ def run(now=None, provider_fetch=request, universe_fetch=None, directory=None):
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--once",action="store_true",help="Run a single protected producer iteration")
+    p.add_argument("--check-store",action="store_true",help="Validate Supabase table before using Alpaca")
     a=p.parse_args()
-    if not a.once:
-        p.error("Pass --once")
+    if not (a.once or a.check_store):
+        p.error("Pass --once or --check-store")
     try:
+        if a.check_store:
+            check_storage(os.environ.get("SUPABASE_URL",""),
+                          os.environ.get("SUPABASE_SERVICE_KEY",""))
+            print("Flo 5m Supabase relation reachable with server credentials")
+            return
         obj=run()
         print(json.dumps({"generated_at":obj["generated_at"],"feed":obj["feed"],
                           "universe_status":{k:{"status":v["ranking_status"],"coverage":v["coverage_pct"],
