@@ -316,3 +316,17 @@ The computation requires the exact SAME `price_asof` string and validated positi
 ### Still not completed
 
 A research-grade historical **event study** would require timestamp-aware event alignment, trading-calendar data, validated pre-event estimation windows, split-adjusted stock and benchmark histories, bid-ask/liquidity context, event overlap controls, and out-of-sample reporting. The site does not yet guarantee that data for every ticker. Do NOT advertise computed abnormal returns, statistical p-values or historical causal outcomes until those sources and validation are implemented.
+
+## Phase 8 — Five-minute index-constrained intraday gain scanner (activation gated)
+
+New standalone implementation: [FLO_5M_MOMENTUM.md](FLO_5M_MOMENTUM.md).
+
+- Server minute bar collector: scripts/flo_momentum.py (Alpaca 1Min bars, precise bar endpoints 5 minutes apart, strict timestamps, US regular trading hours, multiple stock pagination and publisher-only secrets).
+- Source-traceable membership: current unofficial S&P 500 constituent fetch, and Russel 1000/2000 ONLY when complete, recent, properly sourced/licensed snapshots have been installed. Stale/missing index data explicitly block that scope. The existing June 2024 S&P historical file is not presented as today's components.
+- Durable relay: last completed public/private Supabase scan, top-60 rank, prior rank and consecutive scans in top, coverage ratio per index. Partial coverage is always disclosed.
+- New root-site Flo 5m panel: universe selector, minimum 5m gain, minimum 5m dollar turnover, minimum top-list streak, quiet setting, minute-data source and validity state. Live-page polling of the authorized published snapshot once a minute; first load never raises a historical new-leader popup, with five-minute notification cooldown. Flo quick-question and English/Chinese natural-language routing are included in the existing mascot.
+- Security: db/flo-momentum.sql uses Supabase RLS (anon has SELECT only after is_public=true), server-only Alpaca and service keys. Site operator must explicitly set FLO_MINUTE_PUBLIC_LICENSED=true AFTER confirming supplier/exchange market data redistribution rights. Without this, no public minute data; never pretend daily-close extremes.json is five-minute movement.
+- Producer schedule .github/workflows/flo-momentum.yml approximately each 5 minutes on business weekdays; Actions cron lateness is possible, so stale output older than twelve minutes is denied. An always-on licensed SIP streaming collector is NOT implemented.
+- Tests: tests/test_flo_momentum.py and tests/test_flo_momentum.cjs; dedicated Flo momentum validation workflow and established Flo Pulse/CI checks, source-anchored formula and alert gates.
+
+The feature is committed to a proposal branch. Real-world activation requires migration, API/secrets setup, accurate index memberships, data rights, CI and final Pages build. Do not report Russell rankings while lists are unavailable or claim guaranteed realtime market-wide performance from an IEX-only feed.
