@@ -680,6 +680,7 @@
     } else {
       // Both halves rest near the TOP EDGE; neither overlaps the lesson,
       // text input, or the floating Close/Expand actions.
+      const r = ui.panel.getBoundingClientRect();
       const enlarged = ui.panel.classList.contains('flo-expanded');
       const S = small ? (enlarged ? 45 : 58) : (enlarged ? 58 : 72);
       const y = r.top - 0.86 * S;
