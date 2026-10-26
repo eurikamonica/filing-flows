@@ -6,6 +6,8 @@
 (function(root){
 'use strict';
 const doc=typeof document==='undefined'?null:document;
+const SITEBASE=doc&&doc.currentScript&&doc.currentScript.src?
+  String(doc.currentScript.src).replace(/[^/]*$/,''):'';
 const SCOPES=['sp500','russell1000','russell2000'];
 const LABELS={sp500:'S&P 500',russell1000:'Russell 1000',russell2000:'Russell 2000'};
 const TIMER=60000,STALE=12*60000,NOTIFY=5*60000;
@@ -182,7 +184,7 @@ function notifyLeader(top){
 }
 async function loadServer(){
  if(server)return server;
- const res=await root.fetch('data/site.json',{cache:'no-store'});
+ const res=await root.fetch(SITEBASE+'data/site.json',{cache:'no-store'});
  if(!res.ok)throw Error('Site config missing');
  const data=await res.json();
  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(data.supabase_url||'')||!data.supabase_key)
