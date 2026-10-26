@@ -962,6 +962,7 @@
       }
     }
     if (which === 'cash') {
+      if (window.FFQualityIPO) window.FFQualityIPO.quality(body, {...c, cik});
       driversSection(body, c);
       qualitySection(body, c, (c.quarters || [])[0], false);
       cashSection(body, c);
@@ -5198,6 +5199,7 @@
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
       else if ((m = /^([si])-([a-z0-9-]+?)(?:-(CY\d{4}Q\d))?$/.exec(h))) await group(m[1], m[2], m[3]);
+      else if ((m = /^ipo(?:-(\d+)(?:\/(\d{10}-\d{2}-\d{6}))?)?$/.exec(h)) && window.FFQualityIPO) await window.FFQualityIPO.ipo(app, here, m[1], m[2]);
       else if (h === 'sectors') await sectorsPage();
       else if (h === 'feed' && window.FFFeed) await window.FFFeed.render(app, Object.assign({}, window.FFApp, { here }));
       else if ((m = /^chart(?:\/(.*))?$/.exec(h)) && window.FFCharts) await window.FFCharts.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');

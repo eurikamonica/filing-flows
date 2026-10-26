@@ -15,6 +15,14 @@ on:
       - 'web/app.js'
       - 'web/company-disclosures.js'
       - 'web/company-disclosures.css'
+      - 'web/quality-ipo.js'
+      - 'web/ipo-market.js'
+      - 'pipeline/ipo_market.py'
+      - 'web/quality-ipo.css'
+      - 'pipeline/company_quality.py'
+      - 'pipeline/quality.py'
+      - 'pipeline/ipo.py'
+      - 'pipeline/data/ipo/**'
       - 'web/mascot.js'
       - 'web/flo-alerts.js'
       - 'web/flo-momentum.js'
@@ -173,6 +181,21 @@ jobs:
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}       # optional: shown on the privacy and terms pages
           SITE_URL: ${{ vars.SITE_URL }}                 # optional: your own domain → CNAME file for GitHub Pages
         run: python scripts/build_site.py --data _site/data --out _site
+
+      - name: Stage independent IPO market snapshot (live UI also reads ipo-data)
+        timeout-minutes: 3
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$remote" ipo-data >/dev/null; then
+            git clone -q --depth 1 --filter=blob:none --sparse --branch ipo-data "$remote" _ipo
+            git -C _ipo sparse-checkout set public
+            python -c "import shutil; shutil.copytree('_ipo/public', '_site/data/ipo', dirs_exist_ok=True)"
+          else
+            echo "::notice::IPO collector has not published its first snapshot; the reviewed seed remains available."
+          fi
 
       - name: The long rotation history (public/ of the branch rotation-history, when it exists)
         continue-on-error: true

@@ -8,6 +8,7 @@
   const GROUPS = [
     { id: 'companies', label: 'Companies', items: [
       ['home', '#home', 'Latest filings', 'Every new 10-Q, 10-K and earnings release, drawn'],
+      ['ipo', '#ipo', 'IPO & prospectuses', 'S-1 / F-1 filings, quality measures and cash-flow Sankeys'],
       ['chart', '#chart', 'Charts', 'Any company’s figures over time, side by side'],
       ['studio', '#studio', 'Videos', 'Animated charts to post: growth races, rankings, RRG, earnings'],
       ['az', 'c/', 'All companies A–Z', 'Every company with an earnings Sankey'],

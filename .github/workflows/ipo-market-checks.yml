@@ -1,0 +1,36 @@
+name: IPO market and browser checks
+on:
+  pull_request:
+    paths: ['pipeline/ipo*.py', 'pipeline/company_quality.py', 'web/*ipo*', 'web/ipo-market.js', 'tests/*ipo*', '.github/workflows/ipo*.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            pipeline
+            web
+            tests
+            requirements.txt
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Python discovery, queue, accounting and source tests
+        run: |
+          pip install -r requirements.txt pytest
+          python -m pytest -q tests/test_ipo_market.py tests/test_company_quality_ipo.py
+          node tests/test_quality_ipo.cjs
+      - name: Desktop and mobile browser regression
+        run: |
+          npm install --no-save playwright@1.51.1
+          npx playwright install --with-deps chromium
+          node tests/test_ipo_market_browser.cjs
