@@ -33,11 +33,12 @@ class MomentumTests(unittest.TestCase):
 
     def test_missing_start_or_stale_rejected(self):
         rows=quotes()
-        self.assertNotIn("NVDA",M.calculate({"NVDA":rows[:-1]},NOW) if False else M.calculate({"NVDA":[b for b in rows if b["t"] != M.stamp(NOW-timedelta(minutes=6))]},NOW))
+        self.assertNotIn("NVDA", M.calculate({"NVDA": [b for b in rows if b["t"] != M.stamp(NOW-timedelta(minutes=6))]}, NOW))
         self.assertNotIn("NVDA",M.calculate({"NVDA":rows},NOW+timedelta(minutes=30)))
         self.assertNotIn("NVDA",M.calculate({"NVDA":[{**r,"c":-1} for r in rows]},NOW))
         self.assertNotIn("NVDA",M.calculate({"NVDA":[{**r,"t":"bogus"} for r in rows]},NOW))
-        self.assertNotIn("NVDA",M.calculate({"NVDA":rows},NOW,feed="nonsense"))
+        with self.assertRaises(ValueError):
+            M.calculate({"NVDA":rows},NOW,feed="nonsense")
 
     def test_incomplete_volume_not_claimed_complete(self):
         rows=[r for r in quotes() if r["t"] != M.stamp(NOW-timedelta(minutes=4))]
