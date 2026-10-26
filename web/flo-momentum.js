@@ -84,7 +84,7 @@ function report(q,lang='zh',now=Date.now()){
  if(!v.state.ok){html+='<p>'+esc(explainState(v.state,lang))+'</p>';return {html:html+'</section>',facts:[],links:[],mood:'think',intents:['minute-movers-unavailable']};}
  html+='<p class="flo-five-disclaimer">'+esc((zh?'来源：':'Source: ')+(feed.provider||'')+
    ' '+(feed.feed||'')+' · '+feed.generated_at+' UTC · '+
-   (zh?'有效成分匹配率 ':'Eligible-bar coverage ')+v.state.coverage+'%')+'</p>';
+   (zh?'有效成分匹配率 ':'Eligible-bar coverage ')+v.state.coverage+'% · '+String(feed.coverage_warning||''))+'</p>';
  if(v.state.partial)html+='<p>'+esc(zh?'该指数仅有部分公司具备有效分钟 K 线，此榜单是已覆盖股票中的排名，不是完整指数的最高涨幅。':
    'Incomplete minute-bar coverage: this is NOT a full-index top-gainers ranking.')+'</p>';
  html+='<table class="flo-five-table"><thead><tr><th>#</th><th>'+ (zh?'股票':'Ticker')+
@@ -133,7 +133,8 @@ function updateView(){
  if(!screened.state.ok)meta.textContent=explainState(screened.state,lang);
  else meta.textContent=(screened.state.partial?'PARTIAL COVERAGE · ':'')+
    String(feed.feed||'').toUpperCase()+' · '+feed.generated_at+' · '+screened.state.coverage+
-   '% coverage · membership '+(screened.scope.membership_asof||'unknown');
+   '% coverage · membership '+(screened.scope.membership_asof||'unknown')+
+   ' · last bar '+(screened.rows[0]?.asof||'not available')+' · '+String(feed.coverage_warning||'');
  panel.append(meta);
  const body=node('div','','flo-five-results');
  if(screened.state.ok){
