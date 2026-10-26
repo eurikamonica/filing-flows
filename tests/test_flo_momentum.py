@@ -15,7 +15,7 @@ def candle(m,close,volume=10000):
     return {"t":M.stamp(t),"c":close,"v":volume,"h":close,"l":close,"o":close}
 def quotes(price=105, volume=10000):
     # Last closed minute at 14:49Z; previous at 14:44Z = exact 5min.
-    rows=[candle(i,100+(5-i)*1) for i in range(1,8)]
+    rows=[candle(i,100+(6-i)) for i in range(1,8)]
     rows[0]["c"]=price
     return rows
 
