@@ -172,18 +172,33 @@
       out.kind='rank'; out.rankN=n; out.order='desc';
       if (area) out.notes.add('Only one real portfolio snapshot is available: showing a dated static card, not an invented history.');
     }
+    const missingChangeHistory = st.style === 'changes' && all.length < 2;
     if (st.style === 'changes') {
-      if (all.length < 2) throw new Error('Weight changes require at least two disclosed snapshots');
-      out.series.forEach(s=>{s.v=s.v.slice(1).map((v,i)=>v-s.v[i]);});
-      out.order='abs'; out.grid=out.grid.slice(1); out.fmt=v=>(v>=0?'+':'')+(100*v).toFixed(2)+' pp';
-      out.metric='Weight change vs previous disclosed snapshot';
-      out.notes.add('Changes are percentage points, not trade size or proof of rebalancing. Use the date range to select the comparison periods.');
+      if (missingChangeHistory) {
+        // A single official ETF disclosure is useful in its own right,
+        // but subtracting from a nonexistent prior period would be fabricated.
+        out.kind = 'rank'; out.order = 'desc'; out.rankN = n;
+        out.actual = { ...out.actual, fallback: 'single-disclosure', available_dates: [from] };
+        out.metric = external ? external.basis : 'Reported NAV ' + (sector ? 'sector' : 'company') + ' weight';
+        out.notes.add('Requested: weight CHANGES. Only one dated disclosure is available (' + from +
+          '). Showing its actual reported weights as a SINGLE-DATE CARD, NOT a change. Select a wider date range or wait for a second real disclosure.');
+        out.notes.add('No previous holdings were inferred, no weights were backfilled, and no percentage-point deltas were calculated.');
+      } else {
+        out.series.forEach(s=>{s.v=s.v.slice(1).map((v,i)=>v-s.v[i]);});
+        out.order='abs'; out.grid=out.grid.slice(1); out.fmt=v=>(v>=0?'+':'')+(100*v).toFixed(2)+' pp';
+        out.metric='Weight change vs previous disclosed snapshot';
+        out.notes.add('Changes are percentage points, not trade size or proof of rebalancing. Use the date range to select the comparison periods.');
+      }
     }
     const range = from === to ? from : from + ' → ' + to;
     const tag = external ? external.basis : indexed && st.at === 'dji' ? 'DIA tracking basket · price-weighted index proxy' : label + ' · ' + ticker;
-    out.title = (external ? external.name : indexed ? ref[0] : ticker) + ': ' + (st.style === 'changes' ? 'weight changes' : (sector ? 'sector' : 'company') + ' weights') + (st.aw === 'official' ? ' · transaction lower bounds' : '');
+    out.title = (external ? external.name : indexed ? ref[0] : ticker) + ': ' + (missingChangeHistory ? 'single dated ' + (sector ? 'sector' : 'company') + ' weight snapshot (no changes)' : st.style === 'changes' ? 'weight changes' : (sector ? 'sector' : 'company') + ' weights') + (st.aw === 'official' ? ' · transaction lower bounds' : '');
     out.sub = range + ' · ' + tag + ' · ' + all.length + ' dated snapshot' + (all.length === 1 ? '' : 's') + (all.some(s => s.date_basis === 'observed') ? ' · observed date(s) included' : '');
-    out.foot = st.aw === 'official' ? 'Transaction LOWER-BOUND composition · not actual holdings · limited recent feed' : st.aw === '13f' ? 'Quarter-end 13F reported value · not current holdings or total AUM' : from === to ? 'Single reported holdings snapshot — not a history' : 'Reported holdings dates only; transitions illustrative';
+    out.foot = missingChangeHistory ? ('Only ' + from + ' is on file · single disclosed snapshot, not a weight-change history' +
+      (st.aw === 'official' ? ' · transactions only, NOT holdings' : st.aw === '13f' ? ' · reported 13F values, NOT AUM' : ' · reported NAV weights'))
+      : st.aw === 'official' ? 'Transaction LOWER-BOUND composition · not actual holdings · limited recent feed'
+      : st.aw === '13f' ? 'Quarter-end 13F reported value · not current holdings or total AUM'
+      : from === to ? 'Single reported holdings snapshot — not a history' : 'Reported holdings dates only; transitions illustrative';
     return out;
   }
   root.FFActual = { TRACKERS, build, snapshots, normalizeSnapshot, snapshotFromDetail, sortedPositions, toSector, disclosedSource };
