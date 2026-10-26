@@ -136,6 +136,15 @@ eq(expand.getAttribute('aria-label'),'Restore Flo window size','maximize button 
 expand.click();
 eq(panel.classList.contains('flo-expanded'),false,'restore previous mode');
 eq(expand.getAttribute('aria-label'),'Expand Flo window','restore button label');
+const half1=rootEl.querySelector('.flo-h1'),half2=rootEl.querySelector('.flo-h2');
+const rect=panel.getBoundingClientRect();
+ok(parseFloat(half1.style.left)<rect.left,'first mascot stays outside lesson text on desktop');
+ok(parseFloat(half2.style.left)<rect.left,'second mascot stays outside lesson text on desktop');
+ok(parseFloat(half1.style.top)>=0,'top mascot never disappears above a short viewport');
+ok(parseFloat(half2.style.top)+parseFloat(half2.style.height)<rect.bottom,
+  'bottom mascot stays above form and panel edge');
+ok(css.includes('.flo-panel.flo-expanded~.flo-half{opacity:.35;pointer-events:none}'),
+  'expanded Flo keeps animations faint and non-intercepting');
 const controls=rootEl.querySelector('.flo-head-controls');
 ok(!!controls,'titlebar grouped expand and close');
 rootEl.querySelector('.flo-x').click();
