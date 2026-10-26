@@ -656,12 +656,14 @@
       ${own !== 'USD' ? ccyBar(own, inUsd, !!c.usd, q) : ''}
       <section class="section cmp-panel" id="cmp-panel" hidden></section>
       <div id="ff-overview"></div>
+      <div id="ff-company-disclosures"></div>
       <div id="body"></div>
       <p class="co-more muted" id="co-more"></p>`;
     if (ticker) coChains($('#co-chains'), ticker);
     if (ticker) coIndex($('#co-index'), ticker);
     $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-x-fairvalue">fair value</a> · <a href="#c-${cik}-value">DCF calculator</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a>`;
     const body = $('#body');
+    if (window.FFCompanyDisclosures && !cmpId && !all) window.FFCompanyDisclosures.mount($('#ff-company-disclosures'), { cik: p.cik, here, compact: true });
     if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
     app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
     initCompare(c, cik);
