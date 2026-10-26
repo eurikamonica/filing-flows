@@ -23,7 +23,11 @@ jobs:
           node --check web/shock-panel.js
           node --check web/app.js
           node --test tests/test_shock_panel.cjs
-      - run: |
+      - name: Install headless Chromium (runner already supplies system libraries)
+        timeout-minutes: 3
+        run: |
           npm install --no-save playwright@1.51.1
-          npx playwright install --with-deps chromium
-          node tests/test_shock_panel_browser.cjs
+          npx playwright install chromium --only-shell
+      - name: Desktop and mobile browser regression
+        timeout-minutes: 2
+        run: node tests/test_shock_panel_browser.cjs
