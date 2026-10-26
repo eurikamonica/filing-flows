@@ -12,7 +12,7 @@ The existing revenue elasticity calculator is preserved. This is a separate desc
 | Employment | unemployment percentage points | 13-week UNRATE change; positive means weaker employment |
 | Peer results | revenue growth percentage points | median of up to five selected same-SIC peers' latest quarterly revenue YoY growth |
 
-Outcomes are revenue YoY growth, operating/net/operating-cash/free-cash margins, and quarterly stock total return. Cash metrics with too little historical data are unavailable, not imputed. Returns use adjusted series including dividends, explicitly not raw price changes. Each output has its own coefficient set; do not add operating and stock contributions.
+Outcomes are revenue YoY growth, operating/net/operating-cash/free-cash margins, quarterly stock total return, and split-adjusted stock price return excluding dividends. Cash metrics with too little historical data are unavailable, not imputed. Total returns use adjusted series including dividends; the separate price-return outcome requires `p` (split-adjusted closes excluding dividends). It never substitutes total returns when price data are unavailable. Each output has its own coefficient set; do not add operating and stock contributions.
 
 ## Data and timing
 
