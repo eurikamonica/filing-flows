@@ -23,6 +23,31 @@ const api={hub:'/',rankMeta:async()=>({cos:[['AAPL','Apple','technology']]}),jso
  assert.match(off.foot,/not actual holdings/);assert.equal(off.kind,'rank');
  const onlyBuy=await A.disclosedSource({aw:'official',ap:'Official',ao:'buy'},offapi);
  assert.deepEqual(onlyBuy.snapshots[0].positions,[['AAPL',1]]);
- await assert.rejects(A.build({aw:'etf',style:'changes',from:'2026-09-01'},out(),api),/at least two/);
+
+ const single=out();
+ await A.build({aw:'etf',style:'changes',from:'2026-09-01'},single,api);
+ assert.equal(single.kind,'rank','one disclosed date becomes a dated ranking card');
+ assert.equal(single.grid.length,1,'single source date never interpolated');
+ assert.equal(single.actual.fallback,'single-disclosure','explicit fallback metadata for UI');
+ assert.equal(single.fmt(.1),'10.00%','no false percentage-point change');
+ assert.match(single.title,/single dated company weight snapshot \(no changes\)/);
+ assert.match(single.foot,/not a weight-change history/);
+ assert.ok([...single.notes].some(x=>/No previous holdings were inferred/.test(x)));
+ assert.equal(single.series.find(x=>x.key==='AAPL').v[0],.1,'uses real latest weight');
+ const onlyCurrent={...api,json:async u=>u.includes('/weights/')?null:u.includes('/etf/e/')?
+  {holdings:{date:'2026-10-25',date_basis:'observed',source:'sponsor holdings file'},
+   weights:[['NVDA',.078],['AAPL',.077]]}:null};
+ const sponsor=out();
+ await A.build({aw:'etf',ah:'SPY',style:'changes'},sponsor,onlyCurrent);
+ assert.equal(sponsor.actual.reports,1,'SPY detail-only published file works without new history feed');
+ assert.equal(sponsor.actual.fallback,'single-disclosure');
+ assert.equal(sponsor.series.find(x=>x.key==='NVDA').v[0],.078,'uses issuer sponsor disclosure');
+ assert.ok([...sponsor.notes].some(x=>/retrieval OBSERVATIONS/.test(x)));
+ const s13=out();
+ await A.build({aw:'13f',style:'changes'},s13,mapi);
+ assert.equal(s13.actual.fallback,'single-disclosure','one 13F quarter never implies a trade');
+ assert.match(s13.foot,/NOT AUM/);
+ await assert.rejects(A.build({aw:'etf',ah:'MISSING',style:'changes'},out(),api),/no source-dated/);
+
  console.log('Disclosed weight views: company residuals, exits, changes, 13F options, official bounds passed');
 })().catch(e=>{console.error(e);process.exitCode=1});
