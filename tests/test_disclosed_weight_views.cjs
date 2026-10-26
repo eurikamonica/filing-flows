@@ -43,6 +43,14 @@ const api={hub:'/',rankMeta:async()=>({cos:[['AAPL','Apple','technology']]}),jso
  assert.equal(sponsor.actual.fallback,'single-disclosure');
  assert.equal(sponsor.series.find(x=>x.key==='NVDA').v[0],.078,'uses issuer sponsor disclosure');
  assert.ok([...sponsor.notes].some(x=>/retrieval OBSERVATIONS/.test(x)));
+ const ambiguous=out();
+ await A.build({aw:'etf',ah:'SPY',style:'changes'},ambiguous,
+   {...onlyCurrent,json:async u=>u.includes('/weights/')?null:u.includes('/etf/e/')?
+     {holdings:{date:'2026-10-25',source:'sponsor holdings file'},weights:[['NVDA',.078],['AAPL',.077]]}:null});
+ assert.ok([...ambiguous.notes].some(x=>/date provenance/.test(x)));
+ assert.match(ambiguous.sub,/date basis unverified/);
+ assert.equal(ambiguous.actual.fallback,'single-disclosure');
+ 
  const s13=out();
  await A.build({aw:'13f',style:'changes'},s13,mapi);
  assert.equal(s13.actual.fallback,'single-disclosure','one 13F quarter never implies a trade');
