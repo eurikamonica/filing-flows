@@ -27,8 +27,8 @@ the conversation or resetting the active lesson. `aria-pressed`,
 `aria-label` and the title update with the state; the × and Escape actions
 still close Flo normally.
 
-The tool strip now defaults to four frequently used actions in a single
-horizontally scrollable row: **Real SEC Lab**, **Spreadsheet Lab**,
+The tool strip now defaults to four frequently used actions in one compact horizontal row, with the **More tools** button always visible
+beside the separately scrollable main actions: **Real SEC Lab**, **Spreadsheet Lab**,
 **Learn DCF**, and **5m Market Movers**. All other existing course modes and
 the question bank remain under **More tools**; changing a lesson restores the
 compact strip to maximize reading space. The rotating **More questions**
@@ -50,7 +50,7 @@ subtle and non-interactive to keep controls accessible.
 `tests/test_flo_layout.cjs` validates stylesheet sizing rules, mobile
 breakpoints, scrolling and screen-safe spacing, script compilation,
 dynamic page mount, toolbar expansion/collapse, preservation of all eleven
-primary/secondary course actions, expand/restore accessibility, side mascot
+primary/secondary course actions and the always-visible secondary-tools toggle, expand/restore accessibility, side mascot
 positioning and close action.
 
 Run:
