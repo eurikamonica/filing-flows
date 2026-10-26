@@ -26,6 +26,7 @@ function watch(app,here,generation){
   if(!here()||!app.isConnected)return;
   if(document.visibilityState!=='hidden')try{
     const s=await load('status.json');if(!here())return;
+    app.querySelector('[data-ipo-network]')?.remove();
     if(!activeGeneration)activeGeneration=s.generation;
     const healthBox=app.querySelector('[data-ipo-health]');if(healthBox)healthBox.innerHTML=health(s,s._transport);
     if(activeGeneration&&s.generation!==activeGeneration){
@@ -33,7 +34,9 @@ function watch(app,here,generation){
       banner.innerHTML='New filings or analysis results are available. <button type="button">Load updates</button>';
       banner.querySelector('button').onclick=()=>root.dispatchEvent(new Event('hashchange'));
     }
-  }catch(_){}
+  }catch(_){
+    if(here()&&!app.querySelector('[data-ipo-network]')){const notice=document.createElement('p');notice.dataset.ipoNetwork='1';notice.className='qi-notice';notice.textContent='Live update check unavailable. The displayed snapshot is retained; monitor freshness is unverified.';app.prepend(notice);}
+  }
   if(here())timer=setTimeout(cycle,60000);
  };timer=setTimeout(cycle,60000);
 }

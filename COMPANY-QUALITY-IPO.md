@@ -151,3 +151,8 @@ variable supplies the real project identity; no contact is invented and no
 secret is sent to browsers. After merge, inspect IPO market discovery and
 analysis → latest run, then `data/ipo/status.json` / live `ipo-data/public/status.json`
 before declaring monitoring active or historical backfill complete.
+
+Dedicated IPO market/browser checks passed in GitHub Actions run 40377974153.
+The expanded Python regression run passed 96 tests (six local browser-dependent
+tests excluded). The monitor also explicitly flags a failed live-update check
+while preserving the visible snapshot.
