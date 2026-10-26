@@ -41,6 +41,16 @@ def test_resolve_primary_not_exhibit_and_file_number():
         with pytest.raises(ValueError):M.resolve_document(row())
 
 
+def test_daily_index_header_and_compact_dates(tmp_path):
+    daily=MASTER.replace('Filename','File Name').replace('2026-10-01','20261001').replace('2026-10-02','20261002')
+    rows=M.master(daily)
+    assert rows==M.master(MASTER)
+    db=M.connect(tmp_path)
+    assert M.remember(db,rows,'daily',M.utcnow())==2
+    assert M.remember(db,M.master(MASTER),'quarter',M.utcnow())==0
+    assert M.master(daily.replace('20261001','20260230'))==rows[1:]
+
+
 def test_download_failure_persists_discovery_and_retry(tmp_path):
     db=M.connect(tmp_path);M.remember(db,[row()],'feed',M.utcnow())
     with patch.object(M,'get',side_effect=RuntimeError('SEC unavailable')):M.process(db,tmp_path,1)
