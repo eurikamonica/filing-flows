@@ -107,19 +107,19 @@ def request_text(url):
     with urlopen(req, timeout=20) as resp:
         return resp.read(2_500_000).decode("utf-8")
 
-def curated_universe(path, now, max_age_days=110):
+def curated_universe(path, now, max_age_days=110, minimum=600, maximum=3000):
     try:
         obj = json.loads(Path(path).read_text(encoding="utf-8"))
         asof = datetime.fromisoformat(obj["as_of"]).date()
         src = str(obj.get("source", "")).strip()
         rows = obj["symbols"]
-        if not src or not isinstance(rows, list) or not (600 <= len(rows) <= 3000):
+        if not src or not isinstance(rows, list) or not (minimum <= len(rows) <= maximum):
             return None
         if not (0 <= (now.date()-asof).days <= max_age_days):
             return None
         names = sorted({ticker(x) for x in rows})
         names = [x for x in names if x]
-        if len(names) < 600 or len(names) / len(rows) < .95:
+        if not minimum <= len(names) <= maximum or len(names) / len(rows) < .95:
             return None
         return {"source": src, "as_of": obj["as_of"], "symbols": names,
                 "status": "licensed_or_curated_user_supplied"}
@@ -135,7 +135,9 @@ def memberships(now, fetch_sp500=None, base=None):
         scopes["sp500"] = {"status": "unavailable", "reason": "Current constituent data unavailable; not using 2024 history",
                            "symbols": [], "source": "Wikipedia (request failed)", "as_of": None}
     for name in ("russell1000", "russell2000"):
-        obj = curated_universe(base / (name+".json"), now)
+        expected = (900, 1100) if name == "russell1000" else (1800, 2200)
+        obj = curated_universe(base / (name+".json"), now,
+                               minimum=expected[0], maximum=expected[1])
         scopes[name] = obj or {"status": "unavailable", "reason": "Provide an accurate, dated and licensed index membership file",
                                "symbols": [], "source": "", "as_of": None}
     return scopes
