@@ -508,6 +508,8 @@
 .flo-chips{display:flex;flex-direction:column;flex:0 0 auto;min-width:0;gap:0;padding:5px 12px 6px}
 .flo-chips .flo-modes-main{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;max-width:100%;width:100%;min-width:0;white-space:nowrap;padding:2px 0 5px;scrollbar-width:thin}
 .flo-chips .flo-modes-main button{flex:0 0 auto}
+.flo-chips .flo-modes-main{overflow:visible;align-items:center}
+.flo-chips .flo-main-scroll{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
 .flo-chips .flo-chip-extra{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;max-height:124px;overflow-y:auto;overscroll-behavior:contain;padding:7px 1px 2px;border-top:1px solid var(--line,#ddd)}
 .flo-chips .flo-chip-extra[hidden]{display:none}
 .flo-chips .flo-chip-extra button{flex:0 0 auto}
@@ -640,7 +642,7 @@
     const expanded = !!ui.toolsExpanded;
     ui.chips.innerHTML =
       '<div class="flo-modes flo-modes-main" aria-label="' + (zh ? '常用功能' : 'Primary tools') + '">' +
-        modes.filter((m, i) => primary.has(i)).map(showMode).join('') +
+        '<div class="flo-main-scroll">' + modes.filter((m, i) => primary.has(i)).map(showMode).join('') + '</div>' +
         '<button type="button" class="flo-tools-toggle" aria-controls="flo-extra-tools" aria-expanded="' + expanded + '">' +
           (zh ? (expanded ? '收起工具 ▲' : '更多工具 ▼') : (expanded ? 'Hide tools ▲' : 'More tools ▼')) +
         '</button></div>' +
