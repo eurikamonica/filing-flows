@@ -77,6 +77,11 @@ class EarningsIntelTests(unittest.TestCase):
         self.assertEqual(task["answer"]["midpoint"], 110)
         self.assertEqual(task["answer"]["width"], 20)
         self.assertIn("unreconciled", task["verification"])
+        ratio = next(x for x in result["quantitative_exercises"] if x["type"] == "mechanical_ratio_bounds")
+        self.assertEqual(ratio["answer"]["minimum_pct"], 16.67)
+        self.assertEqual(ratio["answer"]["maximum_pct"], 30.0)
+        relative = next(x for x in result["quantitative_exercises"] if x["type"] == "relative_guidance_width")
+        self.assertGreater(relative["answer"]["relative_width_pct"], 0)
         self.assertNotIn("text", result["guidance"][0])  # no transcript redistribution
 
     def test_no_hallucinated_guidance_from_historical_numbers(self):
@@ -99,7 +104,7 @@ class EarningsIntelTests(unittest.TestCase):
         out = P2.phase2_scan(self.cfg, FixtureClient(), today=self.day)
         self.assertEqual(out["counts"]["official_ir_candidates"], 2)
         self.assertEqual(out["counts"]["official_transcripts"], 1)
-        self.assertEqual(out["counts"]["quantitative_exercises"], 2)
+        self.assertEqual(out["counts"]["quantitative_exercises"], 5)
         rows = out["rows"]
         for r in rows:
             if r["kind"] == "official_ir_candidate":

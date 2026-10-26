@@ -103,10 +103,13 @@
           out += '<h4>Quantitative practice · Show calculations</h4>';
           for (const task of ex) {
             out += '<details class="explain" style="margin:6px 0"><summary>' + esc(task.prompt) +
-              '</summary><p>Formula: ' + esc(task.formula) + '<br>Midpoint: ' +
-              esc(task.answer?.midpoint) + ' ' + esc(task.unit) + ' · Range width: ' +
-              esc(task.answer?.width) + ' ' + esc(task.unit) +
-              '<br>Arithmetic checked; management inputs not independently reconciled.</p></details>';
+              '</summary><p>Formula: ' + esc(task.formula) + '<br>' +
+              (task.type === 'relative_guidance_width' ? 'Relative width: ' + esc(task.answer?.relative_width_pct) + '%' :
+                task.type === 'mechanical_ratio_bounds' ? 'Mechanical ratio bounds: ' +
+                  esc(task.answer?.minimum_pct) + '%–' + esc(task.answer?.maximum_pct) + '%' :
+                  'Midpoint: ' + esc(task.answer?.midpoint) + ' ' + esc(task.unit) +
+                  ' · Range width: ' + esc(task.answer?.width) + ' ' + esc(task.unit)) +
+              '<br>Arithmetic checked; management inputs not independently reconciled. For ratio bounds, endpoints may not occur together.</p></details>';
           }
         }
         out += '</div>';

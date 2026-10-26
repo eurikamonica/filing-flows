@@ -221,10 +221,59 @@ def guidance_and_questions(turns, ticker, management=()):
             })
             if len(guidance) >= 18:
                 break
+    # Additional algebraic drills; never assume opposite endpoints co-occur.
+    for g in guidance[:8]:
+        lo, hi = Decimal(str(g["low"])), Decimal(str(g["high"]))
+        middle = (lo + hi) / 2
+        if middle <= 0:
+            continue
+        relative = ((hi - lo) / middle * 100).quantize(Decimal("0.01"))
+        exercises.append({
+            "id": hashlib.sha256((ticker + repr(g) + "relative-width").encode()).hexdigest()[:16],
+            "type": "relative_guidance_width", "ticker": ticker,
+            "metric": g["metric"], "horizon": g["horizon"],
+            "prompt": f"Using {ticker}'s {g['horizon']} {g['metric'].replace('_',' ')} "
+                      f"range ({g['low']}–{g['high']} {g['unit']}), compute "
+                      "the range width as a percentage of its midpoint.",
+            "answer": {"relative_width_pct": float(relative)},
+            "unit": "percent",
+            "formula": "100 * (high - low) / ((high + low) / 2)",
+            "evidence_sha256": g["source_sha256"], "source_turn": g["turn"],
+            "verification": "arithmetic_verified; inputs_management_unreconciled",
+        })
+    for numer_metric, denom_metric, label in [
+        ("capex", "revenue", "CapEx intensity"),
+        ("operating_income", "revenue", "operating margin"),
+    ]:
+        for num in (g for g in guidance if g["metric"] == numer_metric and g["horizon"] != "unspecified"):
+            denom = next((g for g in guidance if g["metric"] == denom_metric and
+                          g["horizon"] == num["horizon"] and
+                          g["unit"] == num["unit"]), None)
+            if (not denom or Decimal(str(denom["low"])) <= 0 or
+                    Decimal(str(num["low"])) < 0):
+                continue
+            lower = (Decimal(str(num["low"])) / Decimal(str(denom["high"])) * 100)
+            upper = (Decimal(str(num["high"])) / Decimal(str(denom["low"])) * 100)
+            exercises.append({
+                "id": hashlib.sha256((ticker + num["horizon"] + numer_metric + denom_metric).encode()).hexdigest()[:16],
+                "type": "mechanical_ratio_bounds", "ticker": ticker,
+                "metric": label, "horizon": num["horizon"],
+                "unit": "percent",
+                "prompt": f"Using {ticker}'s {num['horizon']} management-stated {numer_metric.replace('_',' ')} "
+                          f"range ({num['low']}–{num['high']} {num['unit']}) and "
+                          f"revenue range ({denom['low']}–{denom['high']} {denom['unit']}), "
+                          f"derive mathematical bounds for {label}. Do not assume both endpoints occur together.",
+                "answer": {"minimum_pct": round(float(lower), 2), "maximum_pct": round(float(upper), 2)},
+                "formula": "lower = 100 * numerator_low / denominator_high; "
+                           "upper = 100 * numerator_high / denominator_low",
+                "evidence_sha256": [num["source_sha256"], denom["source_sha256"]],
+                "source_turn": [num["turn"], denom["turn"]],
+                "verification": "mathematical_bounds_only; ranges_not_joint_scenarios; management_unreconciled",
+            })
     counts = dict(analyst_topics)
     return {"guidance": guidance, "qa_topic_counts": counts,
             "analyst_questions": observed_analysts[:12],
-            "quantitative_exercises": exercises[:12], "qa_count_detected": sum(counts.values()),
+            "quantitative_exercises": exercises[:18], "qa_count_detected": sum(counts.values()),
             "extraction": "rules_v1_no_llm", "source_text_public": False}
 
 
