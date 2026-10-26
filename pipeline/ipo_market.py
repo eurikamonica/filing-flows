@@ -102,15 +102,19 @@ def atom(text):
 
 
 def master(text):
-    if 'CIK|Company Name|Form Type|Date Filed|Filename' not in text:
+    if not re.search(r'^CIK\|Company Name\|Form Type\|Date Filed\|File ?[Nn]ame\s*$',text,re.M):
         raise ValueError('Not a SEC master index')
     out=[]
     for line in text.splitlines():
         p=line.split('|')
         if len(p)!=5 or p[2] not in FORMS or not p[0].strip().isdigit(): continue
         acc=ACC.search(p[4])
-        if not acc or not re.fullmatch(r'\d{4}-\d{2}-\d{2}',p[3]):continue
-        out.append(dict(cik=int(p[0]),name=p[1],form=p[2],filed=p[3],accession=acc[0],index_url=index_url(int(p[0]),acc[0])))
+        filed=p[3].strip()
+        if re.fullmatch(r'\d{8}',filed):filed=f'{filed[:4]}-{filed[4:6]}-{filed[6:]}'
+        if not acc or not re.fullmatch(r'\d{4}-\d{2}-\d{2}',filed):continue
+        try:dt.date.fromisoformat(filed)
+        except ValueError:continue
+        out.append(dict(cik=int(p[0]),name=p[1],form=p[2],filed=filed,accession=acc[0],index_url=index_url(int(p[0]),acc[0])))
     return out
 
 
