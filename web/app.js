@@ -643,12 +643,14 @@
       ${own !== 'USD' ? ccyBar(own, inUsd, !!c.usd, q) : ''}
       <section class="section cmp-panel" id="cmp-panel" hidden></section>
       <div id="ff-overview"></div>
+      <div id="ff-company-disclosures"></div>
       <div id="body"></div>
       <p class="co-more muted" id="co-more"></p>`;
     if (ticker) coChains($('#co-chains'), ticker);
     if (ticker) coIndex($('#co-index'), ticker);
     $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-x-fairvalue">fair value</a> · <a href="#c-${cik}-value">DCF calculator</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a>`;
     const body = $('#body');
+    if (window.FFCompanyDisclosures && !cmpId && !all) window.FFCompanyDisclosures.mount($('#ff-company-disclosures'), { cik: p.cik, here, compact: true });
     if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
     app.querySelectorAll('[data-ccy]').forEach((b) => { b.onclick = () => { prefs.set('ccy', b.dataset.ccy); route(); }; });
     initCompare(c, cik);
@@ -814,7 +816,7 @@
   // four groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
     ['Earnings', [['', 'Earnings'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
-    ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['x-quality']]],
+    ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-quality']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths']]],
     ['Relationships & model', [['links', 'Customers, suppliers & model'], ['x-insiders']]],
@@ -907,6 +909,7 @@
         ${companyTabs(cik, which)}
       </div><div id="body"></div>`;
     const body = $('#body');
+    if (which === 'risk') return window.FFCompanyDisclosures.mount(body, { cik: p.cik, here });
     if (which === 'debt') return debtSection(body, cik, here);
     if (which === 'consensus') return consensusSection(body, cik, here);
     if (which === 'eps') {                                     // web/eps-research.js, with the hub's earnings preview inside
@@ -5177,7 +5180,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus|eps|posts|links|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|risk|consensus|eps|posts|links|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
