@@ -206,7 +206,13 @@ def calculate(bars, now, feed="sip", window=5):
                 continue
             if t is None or not regular_minute(t) or not (0<c<1e8) or not (0<=v<1e12) or not math.isfinite(c*v):
                 continue
-            clean[t]=dict(c=c,v=v)
+            try:
+                vw = float(bar.get("vw"))
+            except (TypeError, ValueError, OverflowError):
+                vw = None
+            known_vwap = vw is not None and math.isfinite(vw) and 0 < vw < 1e8
+            clean[t] = dict(c=c, v=v, dollar_price=vw if known_vwap else c,
+                            has_vwap=known_vwap)
         if not clean:
             continue
         end=max(clean)
@@ -225,7 +231,8 @@ def calculate(bars, now, feed="sip", window=5):
             continue
         result={"ticker":sym,"asof":stamp(end),"prev_asof":stamp(prior),
                 "price":round(clean[end]["c"],4),"five_min_pct":round(move,4),
-                "turnover_5m_usd":round(sum(x["c"]*x["v"] for x in valid_bars),2),
+                "turnover_5m_usd":round(sum(x["dollar_price"]*x["v"] for x in valid_bars),2),
+                "turnover_estimated":len(valid_bars)!=window or any(not x["has_vwap"] for x in valid_bars),
                 "volume_5m":int(sum(x["v"] for x in valid_bars)),
                 "volume_complete":len(valid_bars)==window}
         output[sym]=result
