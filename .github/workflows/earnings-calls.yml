@@ -31,6 +31,7 @@ jobs:
             disclosures/app
             disclosures/config
             disclosures/tests
+            web
             disclosures/docs/data/earnings-calls
           sparse-checkout-cone-mode: true
           persist-credentials: true
@@ -41,6 +42,12 @@ jobs:
         run: PYTHONPATH=disclosures/app python -m unittest discover -s disclosures/tests -p 'test_earnings_calls.py' -v
       - name: Check Phase 2 parser fixtures
         run: PYTHONPATH=disclosures/app python -m unittest discover -s disclosures/tests -p 'test_earnings_call_intel.py' -v
+      - name: Check call UI, Flo and notification JavaScript
+        run: |
+          node --check disclosures/docs/earnings-calls.js
+          node --check web/mascot.js
+          node --check web/flo-earnings-alerts.js
+          node web/test-flo-earnings-alerts.cjs
       - name: Collect official evidence
         if: github.event_name != 'pull_request'
         env:

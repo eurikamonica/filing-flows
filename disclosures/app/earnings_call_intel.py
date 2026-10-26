@@ -17,7 +17,7 @@ RANGE = re.compile(
     r"(?:between|range\s+of|ranging\s+from)\s+\$?"
     r"(?P<low>\d+(?:\.\d+)?)\s*(?P<unit1>billion|million|%)?"
     r"\s*(?:and|to|[-–])\s*\$?(?P<high>\d+(?:\.\d+)?)"
-    r"\s*(?P<unit2>billion|million|%)\b", re.I)
+    r"\s*(?P<unit2>billion|million|%)(?=\s|[.,;)]|$)", re.I)
 MONEY_UNITS = {"billion": "USD billions", "million": "USD millions", "%": "percent"}
 TOPICS = {
     "revenue": r"\b(revenue|sales|top.line|cloud revenue)\b",
