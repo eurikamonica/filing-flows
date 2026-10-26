@@ -516,6 +516,7 @@
 .flo-form input{min-width:0;min-height:42px}
 .flo-wb-scroll{width:100%;max-width:100%;overflow-x:auto}
 .flo-panel.flo-expanded .flo-chip-extra{max-height:180px}
+.flo-panel.flo-expanded~.flo-half{opacity:.35;pointer-events:none}
 @media(max-width:560px){
  .flo-panel,.flo-panel.flo-wide{right:0;left:0;bottom:0;width:100%;max-width:100%;height:82dvh;max-height:82dvh;min-height:0;border-radius:16px 16px 0 0}
  .flo-panel.flo-expanded,.flo-panel.flo-expanded.flo-wide{right:0;left:0;bottom:0;width:100%;max-width:100%;height:100dvh;max-height:100dvh;min-height:0;border-radius:0}
@@ -678,14 +679,20 @@
       const L0 = W - pad - S, T0 = H - pad - S;
       place(ui.halves[0], L0 - a, T0 - a, S); place(ui.halves[1], L0 + a, T0 + a, S);
     } else {
-      // Both halves rest near the TOP EDGE; neither overlaps the lesson,
-      // text input, or the floating Close/Expand actions.
+      // Keep both animated halves visible without covering the main answer,
+      // titlebar actions or composer. Desktop: left outside edge. Phone: top.
       const r = ui.panel.getBoundingClientRect();
       const enlarged = ui.panel.classList.contains('flo-expanded');
-      const S = small ? (enlarged ? 45 : 58) : (enlarged ? 58 : 72);
-      const y = r.top - 0.86 * S;
-      place(ui.halves[0], r.left - (small ? -2 : 0.4 * S), y, S);
-      place(ui.halves[1], r.right - (small ? S + 54 : 0.68 * S), y, S);
+      const S = small ? (enlarged ? 44 : 58) : (enlarged ? 58 : 72);
+      if (small) {
+        const y = Math.max(4, r.top - 0.82 * S);
+        place(ui.halves[0], r.left + 4, y, S);
+        place(ui.halves[1], r.right - S - 78, y, S);
+      } else {
+        const x = r.left - 0.72 * S;
+        place(ui.halves[0], x, Math.max(4, r.top + 4), S);
+        place(ui.halves[1], x, Math.max(6, r.bottom - S - 26), S);
+      }
     }
   }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
