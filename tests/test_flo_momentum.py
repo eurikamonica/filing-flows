@@ -5,6 +5,7 @@ import json
 import os
 import tempfile
 import unittest
+from urllib.error import HTTPError
 from unittest.mock import patch
 from scripts import flo_momentum as M
 
@@ -108,6 +109,29 @@ class MomentumTests(unittest.TestCase):
         self.assertEqual(count[0],2)
         with self.assertRaises(ValueError):
             M.alpaca_bars(["NVDA"],NOW,"sip","","",fake_fetch)
+
+    def test_store_preflight_reports_missing_relation_without_leaking_secrets(self):
+        calls=[]
+        def good(url,headers):
+            calls.append((url,headers))
+            return []
+        self.assertTrue(M.check_storage("https://example.supabase.co","PRIVATE_KEY",good))
+        self.assertIn("select=name&limit=0",calls[0][0])
+        self.assertEqual(calls[0][1]["apikey"],"PRIVATE_KEY")
+
+        def missing(url,headers):
+            raise HTTPError(url,404,"PGRST205",None,None)
+        with self.assertRaisesRegex(RuntimeError,"db/flo-momentum.sql") as cm:
+            M.check_storage("https://example.supabase.co","PRIVATE_KEY",missing)
+        self.assertNotIn("PRIVATE_KEY",str(cm.exception))
+
+        def forbidden(url,headers):
+            raise HTTPError(url,403,"permission denied",None,None)
+        with self.assertRaisesRegex(RuntimeError,"authentication/permissions") as cm2:
+            M.check_storage("https://example.supabase.co","PRIVATE_KEY",forbidden)
+        self.assertNotIn("PRIVATE_KEY",str(cm2.exception))
+        with self.assertRaisesRegex(RuntimeError,"missing Supabase"):
+            M.check_storage("","",good)
 
     def test_supabase_guarded_publication(self):
         calls=[]
