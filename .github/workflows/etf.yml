@@ -67,6 +67,34 @@ jobs:
       - name: Build public/
         timeout-minutes: 15
         run: python disclosures/app/etf.py build --root etf --hub disclosures/docs/data --consensus _consensus-history/public --debt _debt-history/public
+      - name: Source-dated ETF weight history diagnostics
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for symbol in ("SPY", "DIA", "QQQ", "IWM"):
+              base = Path("etf/public")
+              detail = base / "e" / f"{symbol}.json"
+              series = base / "weights" / f"{symbol}.json"
+              try:
+                  info = json.loads(detail.read_text()) if detail.is_file() else {}
+                  current = info.get("holdings") or {}
+                  data = json.loads(series.read_text()) if series.is_file() else {}
+                  snapshots = data.get("snapshots") or []
+                  dates = [s.get("date") for s in snapshots if isinstance(s, dict)]
+                  label = ", ".join(str(d) for d in dates[-3:]) or "none"
+                  print(f"{symbol}: {len(snapshots)} actual source-dated snapshots, latest={label}; "
+                        f"current sponsor={current.get('date') or 'missing'}, "
+                        f"date_basis={current.get('date_basis') or 'unknown'}")
+                  if not series.is_file():
+                      print(f"::warning::{symbol} ETF weights history JSON missing. "
+                            "Single latest holdings card works, but weight-change video cannot be shown.")
+                  elif len(snapshots) < 2:
+                      print(f"::notice::{symbol} only {len(snapshots)} actual disclosure(s); "
+                            "video must not fabricate a weight-change history.")
+              except (OSError, ValueError, TypeError) as exc:
+                  print(f"::warning::{symbol} ETF history diagnostics: {type(exc).__name__}: {exc}")
+          PY
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd etf
