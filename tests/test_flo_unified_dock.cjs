@@ -2,6 +2,10 @@
 const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 const file=n=>fs.readFileSync(path.join(__dirname,'../web/',n),'utf8');
 const mascot=file('mascot.js'),momentum=file('flo-momentum.js'),alerts=file('flo-alerts.js');
+const disclosures=fs.readFileSync(path.join(__dirname,'../disclosures/docs/index.html'),'utf8');
+for(const script of ['flo-academy.js','flo-workbook.js','flo-real-workbook.js','flo-coach.js','flo-timeline.js','flo-impact.js','flo-alerts.js','flo-momentum.js'])
+  assert.ok(disclosures.includes('../'+script), 'Disclosures loads '+script);
+assert.ok(momentum.includes("SITEBASE+'data/site.json'"),'5m config is relative to its own JS asset, not the route');
 let checks=0;const ok=(v,m)=>{assert.ok(v,m);checks++};
 ok(mascot.includes('data-flo-tab="chat"')&&mascot.includes('data-flo-tab="pulse"')&&mascot.includes('data-flo-tab="momentum"'),'one Flo panel exposes Academy, SEC inbox and 5m tabs');
 ok(mascot.includes('function openTool(')&&mascot.includes('function notify('),'one host owns tool switching and notifications');
@@ -19,7 +23,7 @@ class Element{
  click(){this.listeners.click?.({target:this,currentTarget:this})}
 }
 const body=new Element('body'),head=new Element('head'),host=new Element('section'),notice=[],reaction=[],open=[];
-const doc={readyState:'loading',visibilityState:'visible',body,head,events:{},createElement:x=>new Element(x),addEventListener(k,f){this.events[k]=f}};
+const doc={readyState:'loading',visibilityState:'visible',currentScript:{src:'https://filing-flows.com/flo-momentum.js'},body,head,events:{},createElement:x=>new Element(x),addEventListener(k,f){this.events[k]=f}};
 const today=new Date().toISOString().slice(0,10);
 const now=Date.now(),a=new Date(now-6*60000).toISOString(),b=new Date(now-1*60000).toISOString();
 const payload=(ticker,price)=>({schema:1,generated_at:new Date().toISOString(),provider:'Alpaca',feed:'IEX',universes:{
