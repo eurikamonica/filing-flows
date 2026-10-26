@@ -2476,7 +2476,10 @@
       if (!V) return;
       const tm = timing(V, opt()), per = (V.grid.length - 1) / tm.run, unit = V.yearly ? 'years' : V.quarterly ? 'quarters' : V.kind === 'rank' && st.step === 'm' || ['calendar', 'bubble', 'treemap', 'sectors'].includes(V.kind) ? 'months' : 'weeks';
       const what = V.actual ? (' ' + (V.group || 'holdings')) : ['rank', 'bubble', 'treemap'].includes(V.kind) ? ' companies' : V.kind === 'sectors' ? ' sectors' : V.kind === 'timing' ? ' plans' : ' series';
-      $('#st-status').textContent = V.actual ? `${V.series.length + what} · ${V.grid.length} actual dated snapshot${V.grid.length === 1 ? '' : 's'} · ${tm.D} s${V.grid.length === 1 ? ' (single-date card)' : ' (transitions illustrative)'}` : `${V.series.length + what} · ${V.grid.length} ${unit} · ${tm.D} s (${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second)`;
+      $('#st-status').textContent = V.actual && V.actual.fallback === 'single-disclosure'
+        ? 'Only one real disclosure available · showing dated holdings, NOT weight changes · ' + V.series.length + what + ' · ' + tm.D + ' s'
+        : V.actual ? `${V.series.length + what} · ${V.grid.length} actual dated snapshot${V.grid.length === 1 ? '' : 's'} · ${tm.D} s${V.grid.length === 1 ? ' (single-date card)' : ' (transitions illustrative)'}`
+        : `${V.series.length + what} · ${V.grid.length} ${unit} · ${tm.D} s (${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second)`;
       const pn = $('#st-pace-note'); if (pn) pn.textContent = V.actual ? (V.grid.length === 1 ? 'One disclosed/observed date · no invented historical movement.' : 'Transitions between observed dates are visual only, not daily observations.') : `About ${per >= 10 ? Math.round(per) : per.toFixed(1)} ${unit} a second.`;
     }
     function sizeCanvas() {
