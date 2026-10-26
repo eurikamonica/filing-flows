@@ -49,14 +49,14 @@
     if (!isDate(date)) return null;
     const positions = sortedPositions(doc.weights || []);
     if (positions.length < 1) return null;
-    return { date, positions, date_basis: hold.date_basis || 'reported', source: hold.source || (hold.acc ? 'SEC N-PORT' : 'fund holdings disclosure'),
+    return { date, positions, date_basis: ['reported','observed'].includes(hold.date_basis) ? hold.date_basis : 'unknown', source: hold.source || (hold.acc ? 'SEC N-PORT' : 'fund holdings disclosure'),
       accession: hold.acc || null, sectors: hold.sector_map || {}, equity_weight_covered: positions.reduce((s, p) => s + p[1], 0) };
   }
   function normalizeSnapshot(s) {
     if (!s || !isDate(s.date)) return null;
     const positions = sortedPositions(s.positions || []);
     if (positions.length < 1) return null;
-    return { date: s.date, positions, date_basis: s.date_basis || 'reported', source: String(s.source || 'fund holdings disclosure'),
+    return { date: s.date, positions, date_basis: ['reported','observed'].includes(s.date_basis) ? s.date_basis : 'unknown', source: String(s.source || 'fund holdings disclosure'),
       accession: s.accession || null, sectors: s.sectors || {},
       equity_weight_covered: positions.reduce((n, p) => n + p[1], 0) };
   }
@@ -131,6 +131,7 @@
     out.fmt = percent; out.unit = '%'; out.actual = { fund: external ? external.id : ticker, source:st.aw, index: indexed ? st.at : null, reports: all.length };
     out.notes.add('Observed or reported source dates: ' + from + (from === to ? '' : ' to ' + to) + '. No synthetic 2016–2026 history.');
     if (all.some(s => s.date_basis === 'observed')) out.notes.add('Some sponsor workbook dates are retrieval OBSERVATIONS because the source did not expose a parseable holdings as-of date; they are NOT claimed to be report effective dates.');
+    if (all.some(s => s.date_basis === 'unknown')) out.notes.add('At least one older holdings record lacks date provenance. Its displayed date must NOT be claimed as a verified portfolio effective/report date.');
     out.notes.add(label + '. Sources: ' + sources + (external ? '.' : '. Report weights use fund NAV, not constituent market capitalization.'));
     if (indexed) {
       out.notes.add('Index weights are proxied by ' + ticker + ' portfolio holdings, not licensed official index weight files; tracking differences and cash may exist.');
@@ -193,7 +194,7 @@
     const range = from === to ? from : from + ' → ' + to;
     const tag = external ? external.basis : indexed && st.at === 'dji' ? 'DIA tracking basket · price-weighted index proxy' : label + ' · ' + ticker;
     out.title = (external ? external.name : indexed ? ref[0] : ticker) + ': ' + (missingChangeHistory ? 'single dated ' + (sector ? 'sector' : 'company') + ' weight snapshot (no changes)' : st.style === 'changes' ? 'weight changes' : (sector ? 'sector' : 'company') + ' weights') + (st.aw === 'official' ? ' · transaction lower bounds' : '');
-    out.sub = range + ' · ' + tag + ' · ' + all.length + ' dated snapshot' + (all.length === 1 ? '' : 's') + (all.some(s => s.date_basis === 'observed') ? ' · observed date(s) included' : '');
+    out.sub = range + ' · ' + tag + ' · ' + all.length + ' dated snapshot' + (all.length === 1 ? '' : 's') + (all.some(s => s.date_basis === 'observed') ? ' · observed date(s) included' : '') + (all.some(s => s.date_basis === 'unknown') ? ' · date basis unverified' : '');
     out.foot = missingChangeHistory ? ('Only ' + from + ' is on file · single disclosed snapshot, not a weight-change history' +
       (st.aw === 'official' ? ' · transactions only, NOT holdings' : st.aw === '13f' ? ' · reported 13F values, NOT AUM' : ' · reported NAV weights'))
       : st.aw === 'official' ? 'Transaction LOWER-BOUND composition · not actual holdings · limited recent feed'
