@@ -25,6 +25,7 @@ on:
       - 'tests/test_flo_alert_browser.cjs'
       - 'tests/test_flo_alert_feed.py'
       - 'tests/test_mascot.cjs'
+      - 'tests/test_flo_layout.cjs'
       - '.github/workflows/flo-academy-checks.yml'
   workflow_dispatch:
 
@@ -63,6 +64,7 @@ jobs:
       - name: Run old and new Flo tests
         run: |
           node tests/test_mascot.cjs
+          node tests/test_flo_layout.cjs
           node tests/test_flo_academy.cjs
           node tests/test_flo_workbook.cjs
           node tests/test_flo_real.cjs
