@@ -52,7 +52,7 @@ ok(!gainers.rows.some(x=>x.ticker==='BAD'),'fake eight-minute comparison exclude
 eq(F.select(feed,{universe:'russell2000'},NOW).rows.length,0,'no fake Russell leaders');
 const analysis=F.report('S&P 500 五分钟涨幅榜','zh',NOW);
 // report() reads only live feed state; without polling it must refuse invented data.
-ok(analysis.html.includes('行情服务')||analysis.html.includes('未配置'),'unconfigured source refuses fake report');
+ok(analysis.html.includes('当前没有可核实')&&analysis.facts.length===0,'unconfigured source explicitly refuses fake report');
 eq(F.scanForNotification(feed,NOW),null,'first open establishes baseline, no stale alerts');
 eq(F.scanForNotification(feed,NOW+500),null,'same top mover never repeats');
 const moved={...feed,generated_at:new Date(NOW+5*60000).toISOString(),
