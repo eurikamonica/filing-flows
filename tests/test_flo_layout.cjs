@@ -18,6 +18,7 @@ for(const [re,label] of [
  [/\.flo-panel\.flo-wide\{width:min\(880px,/,'Excel workbook extra width'],
  [/\.flo-panel\.flo-expanded,.flo-panel\.flo-expanded\.flo-wide\{/,'expand and workbook coexist'],
  [/\.flo-modes-main\{display:flex;flex-wrap:nowrap/,'short primary toolbar'],
+ [/\.flo-main-scroll\{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto;overflow-x:auto/,'primary shortcuts scroll without hiding the toggle'],
  [/\.flo-chip-extra\[hidden\]\{display:none\}/,'more tools initially hidden'],
  [/\.flo-log\{flex:1 1 auto;min-height:0;overflow-y:auto/,'answer scrolls independently'],
  [/\.flo-form\{flex:0 0 auto;min-height:59px/,'composer never squeezed'],
@@ -119,6 +120,10 @@ eq(panel.hidden,true,'panel starts closed');
 launch.click();
 eq(panel.hidden,false,'mascot launches workspace');
 ok(chips.innerHTML.includes('More tools ▼'),'tools folded by default');
+ok(chips.innerHTML.includes('<div class="flo-main-scroll">'),
+ 'primary actions can scroll independently');
+ok(chips.innerHTML.includes('</div><button type="button" class="flo-tools-toggle"'),
+ 'More Tools button remains outside the horizontal overflow region');
 ok(chips.innerHTML.includes('id="flo-extra-tools" hidden'),'extra mode group collapsed');
 eq(chips.querySelectorAll('.flo-mode').length,11,'all 11 existing Flo tools still in DOM');
 eq((chips.innerHTML.match(/flo-mode" data-flo-q=/g)||[]).length,11,
