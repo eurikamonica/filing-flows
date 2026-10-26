@@ -70,7 +70,7 @@ class FakeNode{
    return [];}
  querySelector(selector){
   if(this.name==='chips')return (this.querySelectorAll(selector)||[])[0]||null;
-  if(!this._query[selector])this._query[selector]=new FakeNode(selector);
+  if(!this._query[selector])this._query[selector]=new FakeNode(selector==='.flo-chips'?'chips':selector);
   const node=this._query[selector];
   if(selector==='.flo-panel')node.hidden=true;
   return node;
