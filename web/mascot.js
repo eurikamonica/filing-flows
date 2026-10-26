@@ -28,8 +28,11 @@
   const big = (v) => { if (!fin(v)) return '—'; const a = Math.abs(v), s = v < 0 ? '−' : ''; return s + (a >= 1e12 ? '$' + num(a / 1e12, 2) + 'T' : a >= 1e9 ? '$' + num(a / 1e9, 1) + 'B' : a >= 1e6 ? '$' + num(a / 1e6, 0) + 'M' : '$' + num(a, 0)); };
   const pc = (v, d = 0) => (fin(v) ? num(100 * v, d) + '%' : '—');
   const spc = (v, d = 1) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
+  const academy = () => root.FFFloAcademy || (typeof module !== 'undefined' ? require('./flo-academy.js') : null);
+  const workbooks = () => root.FFFloWorkbook || (typeof module !== 'undefined' ? require('./flo-workbook.js') : null);
+  const realWorkbooks = () => root.FFFloRealWorkbook || (typeof module !== 'undefined' ? require('./flo-real-workbook.js') : null);
   const memo = new Map();
-  const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
+  const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
   const fileT = (t) => String(t || '').toUpperCase().replace(/\./g, '-');
   const QN = { en: ['Leading', 'Weakening', 'Lagging', 'Improving'], zh: ['领先', '转弱', '落后', '改善'] };
   const L = (lg, en, zh) => (lg === 'zh' ? zh : en);
@@ -38,8 +41,8 @@
   const lang = (q) => (/[㐀-鿿]/.test(String(q || '')) ? 'zh' : 'en');
   const INTENTS = [
     ['filings', /\bfil(?:ing|ings|ling|lings)\b|\bedgar\b|\b(?:sec\s+)?submissions?\b|(?:latest|recent|newest|last)\s+(?:sec\s+)?(?:reports?|documents?|filings?|fillings?)\b|(?:最新|最近(?:一次)?)(?:的|\s)*(?:SEC\s*)?(?:申报|披露|文件|提交)|SEC\s*(?:文件|申报|披露)/i],
-    // widen these when web/flo-questions.js gains a phrasing Flo misses (tests/test_mascot.cjs checks every one)
     ['calls', /earnings? calls?|conference calls?|transcripts?|(?:analyst\s+)?q\s*&\s*a|guidance|call questions?|业绩指引|电话会议|逐字稿|分析师问答|财报问答|量化问题|会议纪要/i],
+    // widen these when web/flo-questions.js gains a phrasing Flo misses (tests/test_mascot.cjs checks every one)
     ['options', /\boptions?\b|max ?pain|put wall|call wall|option walls?|implied (move|vol|range)|expected move|\d+% range|\biv\b|\bstrikes?\b|expir|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间|预期波动|行权价|到期/i],
     ['industry', /\bindustr(y|ies)\b|\bsector\b|\bpeers?\b|行业|板块|同业/i],
     ['rotation', /\brrg\b|rotation|rotating|momentum|quadrant|leading|lagging|weakening|improving|relative strength|rs-?ratio|outperform|underperform|beating the market|markov|next week|轮动|象限|动量|领先|落后|转弱|改善|相对强弱|跑赢|跑输|强于大盘|弱于大盘|马尔科夫|轮出|轮入|下周/i],
@@ -321,7 +324,6 @@
       `${esc(c.ticker)} 现价 ${usd(d.price)}：${an ? `分析师目标价 ${usd(an.low)}–${usd(an.high)}，平均 ${usd(an.point)}` : ''}${an && pm ? '；' : ''}${pm ? `Polymarket 隐含价格 ${usd(pm.point)}` : ''}。`);
     return { html, facts, mood: an && fin(d.price) && an.point > d.price * 1.15 ? 'happy' : 'talk', links: [[`${BASE}#c-${c.cik}-consensus`, L(lg, 'Consensus', '一致预期页')]] };
   }
-
   async function calls(c, lg) {
     const d = await json(HUB + 'earnings-calls/index.json');
     const rows = (d && d.rows || []).filter(x => x.ticker === c.ticker && x.kind === 'official_ir_transcript')
@@ -360,8 +362,8 @@
 
   function helpAnswer(lg, company) {
     const t = company ? company.ticker : 'NVDA';
-    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me about any company on the site — I answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Try “What is ${t} worth?”`,
-      `你好，我是 <b>Flo</b>。可以问我网站上任何公司的问题，我用网站自己的模型回答：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
+    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me for a step-by-step DCF tutorial, cookie jar investigation, a number explanation, or SEC case studies. I also answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Try “What is ${t} worth?”`,
+      `你好，我是 <b>Flo</b>。我还能逐步教 DCF、调查 Cookie Jar 准备金、解释图表中的数字并讲解 SEC 真实案例。网站模型包括：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
   }
   let IX = null;
   const index = () => IX || (IX = json(DATA + 'index.json'));
@@ -370,6 +372,26 @@
     q = String(q || '');
     const lg = lang(q), ix = ixArg || await index(), cls = classify(q);
     let co = findCompany(q, ix) || ctxCo || null;
+    // Same-page alert intelligence (only on explicit ask-for-updates intent);
+    // leave ordinary 8-K and company filing lookups on the established handlers.
+    // Exact-interval intraday scans are sourced from a separate authenticated
+    // minute-bar collector, never from delayed daily-close extremes.
+    const momentum = root.FFFloMomentum;
+    if(momentum && momentum.intent && momentum.intent(q) && momentum.report)
+      return { ...momentum.report(q,lg), company:co||null };
+    const pulse = root.FFFloAlerts;
+    if(pulse && pulse.intent && pulse.intent(q) && pulse.report)
+      return { ...pulse.report(q,lg==='zh'), company:co||null };
+
+    const SECWB = realWorkbooks();
+    if (SECWB && SECWB.route(q)) return { ...SECWB.launch(q,co), company: co || null };
+    const WB = workbooks();
+    if (WB && WB.match(q)) return { ...WB.launch(q, lg), company: co || null };
+    const A = academy();
+    if (A && A.match(q)) {
+      const a = await A.handle(q, co, lg, c => json(DATA + 'c/' + c.cik + '.json'));
+      if (a) return { ...a, company: co || null };
+    }
     if (!co && pageCik() && ix) co = (ix.companies || []).find((c) => +c.cik === pageCik()) || null;
     if (!co) return cls.includes('help') || !q.trim() ? helpAnswer(lg, null)
       : { html: L(lg, 'Which company? Give me a ticker or a name — for example “NVDA valuation” or “Is Apple Leading next week?”', '哪家公司？请给我代码或名称，比如「NVDA 估值」或「苹果下周会进入领先吗？」'), facts: [], mood: 'think', links: [] };
@@ -407,7 +429,9 @@
   const HALF1 = `<svg class="flo-svg" viewBox="0 0 120 120" aria-hidden="true">${F(C.rev, C.mint)}${FACE(FX1)}${EXTRA(46, 14)}</svg>`;
   const HALF2 = `<svg class="flo-svg" viewBox="0 0 120 120" aria-hidden="true"><g transform="rotate(180 60 60)">${F(C.mint, C.rev)}</g>${FACE(FX2)}${EXTRA(100, 64)}</svg>`;
   const CSS = `.flo-launch{position:fixed;right:18px;bottom:18px;z-index:9000;display:flex;align-items:flex-end;gap:8px;pointer-events:none}.flo-launch[hidden],.flo-panel[hidden]{display:none}
-.flo-launch>*{pointer-events:auto}.flo-btn{width:84px;height:84px;border:0;background:none;padding:0;cursor:pointer;opacity:0}
+.flo-launch>*{pointer-events:auto}
+.flo-unread{position:absolute;right:4px;top:-8px;min-width:18px;height:18px;display:grid;place-items:center;border-radius:20px;background:#bf483f;color:#fff;font:700 11px system-ui;pointer-events:none}.flo-unread[hidden]{display:none!important}
+.flo-btn{width:84px;height:84px;border:0;background:none;padding:0;cursor:pointer;opacity:0}
 .flo-btn:focus-visible{opacity:1;outline:2px solid var(--accent,#17734a);outline-offset:4px;border-radius:18px}
 .flo-hint{background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ddd);border-radius:12px 12px 2px 12px;padding:7px 10px;font-size:12.5px;max-width:200px;box-shadow:0 4px 14px rgba(0,0,0,.08);margin-bottom:40px;animation:flo-pop .4s ease-out}
 .flo-hint button{border:0;background:none;color:var(--muted,#888);cursor:pointer;font-size:14px;margin-left:4px;padding:0}
@@ -415,6 +439,14 @@
 .flo-half .flo-svg{width:100%;height:100%;overflow:visible;display:block}
 .flo-panel{position:fixed;right:58px;bottom:58px;z-index:9001;width:380px;max-width:calc(100vw - 120px);height:540px;max-height:calc(100vh - 150px);display:flex;flex-direction:column;background:var(--surface,#fff);color:var(--ink,#222);border:1px solid var(--line,#ddd);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.22);overflow:hidden;animation:flo-pop .3s cubic-bezier(.3,1.3,.5,1);font-family:inherit}
 .flo-head{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 58px;border-bottom:1px solid var(--line,#e5e5e5);background:color-mix(in srgb,#a8d1b9 22%,var(--surface,#fff))}
+.flo-tabs{display:flex;gap:5px;flex:0 0 auto;padding:7px 10px;border-bottom:1px solid var(--line,#ddd);background:var(--surface,#fff)}
+.flo-tab{flex:1;min-width:0;position:relative;padding:8px 5px;border:1px solid var(--line,#ccc);border-radius:9px;font:600 12px system-ui;color:var(--ink,#222);background:transparent;cursor:pointer}
+.flo-tab[aria-selected="true"]{border-color:var(--accent,#17734a);background:color-mix(in srgb,var(--accent,#17734a) 12%,var(--surface,#fff))}
+.flo-tab-badge{display:inline-block;margin-left:4px;border-radius:20px;background:#c44b43;color:#fff;padding:0 5px;font-size:10px}.flo-tab-badge[hidden]{display:none!important}
+.flo-tool-host{flex:1 1 auto;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain}
+.flo-panel [hidden]{display:none!important}
+.flo-tool-host .flo-pulse-list,.flo-tool-host .flo-five-panel{position:static!important;right:auto!important;bottom:auto!important;width:100%!important;max-width:none!important;min-height:0!important;max-height:none!important;overflow:visible!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:10px!important;background:transparent!important}
+.flo-tool-host input,.flo-tool-host select{max-width:100%}
 .flo-head b{font-size:15px}.flo-head small{display:block;color:var(--muted,#777);font-size:11.5px;line-height:1.35}
 .flo-x{margin-left:auto;border:0;background:none;font-size:22px;line-height:1;color:var(--muted,#777);cursor:pointer;padding:4px 6px;align-self:flex-start}
 .flo-log{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;font-size:13.5px;line-height:1.5}
@@ -422,6 +454,60 @@
 .flo-me{align-self:flex-end;background:var(--accent,#17734a);color:#fff;border-bottom-right-radius:3px}
 .flo-bot{align-self:flex-start;background:var(--surface-2,#efeee9);border-bottom-left-radius:3px}.flo-bot a{color:var(--accent,#17734a)}
 .flo-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.flo-links a{font-size:12px;border:1px solid var(--line,#ccc);border-radius:9px;padding:2px 8px;text-decoration:none}
+.flo-modes{display:flex;gap:5px;flex-wrap:wrap;flex-basis:100%;padding:1px 0 4px}.flo-modes button{background:color-mix(in srgb,var(--accent,#17734a) 12%,var(--surface,#fff));border-color:var(--accent,#17734a);font-weight:600}
+.flo-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.flo-actions button{font:inherit;font-size:12px;border:1px solid var(--accent,#17734a);border-radius:8px;background:transparent;color:inherit;padding:4px 8px;cursor:pointer}
+.flo-panel.flo-wide{width:min(850px,calc(100vw - 120px))}.flo-wide .flo-msg.flo-bot{max-width:100%;width:100%}
+.flo-workbook{border:1px solid var(--line,#d7d7d7);border-radius:10px;padding:8px;background:var(--surface,#fff);color:var(--ink,#222)}
+.flo-wb-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:700}.flo-wb-head small{font-weight:400;color:var(--muted,#777)}
+.flo-wb-controls,.flo-wb-toolbar{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}.flo-wb-controls label{font-size:11px;display:flex;align-items:center;gap:5px}.flo-wb-controls select{max-width:240px;min-width:100px;font:inherit;padding:5px;border:1px solid var(--line,#ccc);border-radius:6px;background:var(--surface,#fff);color:inherit}
+.flo-wb-toolbar button{font:inherit;font-size:11px;padding:5px 7px;border:1px solid var(--line,#ccc);border-radius:6px;background:var(--surface,#fff);color:inherit;cursor:pointer}
+.flo-wb-toolbar button:hover{border-color:var(--accent,#17734a)}
+.flo-wb-formula{display:flex;align-items:stretch;gap:5px;margin-bottom:6px}
+.flo-wb-formula span{font-family:monospace;background:var(--surface-2,#eee);padding:6px 10px;border:1px solid var(--line,#ccc);min-width:52px;text-align:center}
+.flo-wb-formula input{font-family:monospace;min-width:0;flex:1;border:1px solid var(--line,#ccc);padding:6px;background:var(--surface,#fff);color:inherit;border-radius:6px}
+.flo-wb-formula button{border:0;border-radius:6px;color:#fff;background:var(--accent,#17734a);cursor:pointer}
+.flo-wb-scroll{overflow-x:auto;max-width:100%;border:1px solid var(--line,#ccc);border-radius:6px;max-height:360px;overflow-y:auto}
+.flo-wb-table{border-collapse:separate;border-spacing:0;font:11px 'IBM Plex Mono',monospace;min-width:570px;width:100%;table-layout:fixed}
+.flo-wb-table th,.flo-wb-table td{border-right:1px solid var(--line,#dedede);border-bottom:1px solid var(--line,#dedede);padding:0;overflow:hidden;white-space:nowrap}
+.flo-wb-table thead th,.flo-wb-table tr:first-child th{background:var(--surface-2,#eee)}
+.flo-wb-table th.flo-wb-line{position:sticky;left:0;background:var(--surface-2,#eee);width:28px;text-align:center;z-index:2}
+.flo-wb-table th.flo-wb-label{position:sticky;left:28px;background:var(--surface,#fff);min-width:190px;width:190px;padding:6px 7px;text-align:left;z-index:1}
+.flo-wb-table tr:first-child th:first-child{width:28px}
+.flo-wb-table td{min-width:85px;text-align:right}
+.flo-wb-table td button{display:block;border:0;background:none;color:inherit;padding:6px 8px;font:inherit;width:100%;text-align:right;cursor:cell;min-height:26px}
+.flo-real .flo-wb-table td{padding:6px 8px;white-space:normal;font-size:11px}.flo-real .flo-wb-table td button{font-size:11px}
+.flo-real .flo-wb-table td.flo-wb-reported{background:color-mix(in srgb,#878c8c 14%,var(--surface,#fff));font-weight:600}
+.flo-real .flo-wb-table td.flo-wb-input{background:color-mix(in srgb,#397ad7 15%,var(--surface,#fff))}
+.flo-real .flo-wb-table td.flo-wb-formula{background:color-mix(in srgb,#9871cb 17%,var(--surface,#fff))}
+.flo-wb-evidence{border:1px solid var(--line,#dedede);border-left:3px solid var(--accent,#17734a);padding:8px;margin:8px 0;border-radius:6px}
+.flo-wb-evidence a{overflow-wrap:anywhere;font-size:12px}
+.flo-practice{padding:8px;margin:9px 0;border:1px solid var(--line,#ccc);border-radius:9px;background:var(--surface,#fff)}
+.flo-practice .flo-coach-controls button{padding:4px 7px}.flo-practice code{font:11px 'IBM Plex Mono',monospace;color:var(--accent,#17734a)}
+.flo-practice label{font-size:11px}.flo-practice select{background:var(--surface,#fff);color:inherit;border:1px solid var(--line,#ccc);border-radius:6px;padding:4px}
+.flo-coach{border:1px solid var(--line,#ccc);border-radius:11px;padding:10px;margin:12px 0;background:var(--surface,#fff);font-size:12px}
+.flo-coach header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}
+.flo-coach header small{color:var(--muted,#777)}.flo-coach p{margin:5px 0 8px}
+.flo-coach-progress{height:5px;border-radius:8px;overflow:hidden;background:var(--surface-2,#eee);margin-bottom:9px}
+.flo-coach-progress span{height:100%;display:block;background:var(--accent,#17734a);transition:width .16s}
+.flo-coach-controls{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.flo-coach-controls button,.flo-coach-quiz button,.flo-coach-sim button{border:1px solid var(--line,#ccc);border-radius:6px;font:inherit;font-size:11px;background:var(--surface,#fff);color:inherit;padding:6px 8px;cursor:pointer}
+.flo-coach-controls button:disabled{opacity:.4;cursor:not-allowed}
+.flo-coach-quiz{padding:8px;border-top:1px solid var(--line,#ccc)}
+.flo-coach-quiz button{margin:2px}.flo-coach-quiz button[aria-pressed=true]{border-color:var(--accent,#17734a);font-weight:bold}
+.flo-coach-sim{margin:12px 0;padding:10px;border:1px dashed var(--line,#ccc);border-radius:11px;font-size:12px}
+.flo-coach-sim label{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:11px}
+.flo-coach-sim input,.flo-coach-sim select{max-width:190px;padding:5px;border-radius:5px;border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:inherit}
+.flo-sim-results{font-size:12px;padding:4px 0}.flo-sim-results li{margin:4px 0}
+.flo-wb-table .flo-wb-input{background:color-mix(in srgb,#397ad7 13%,var(--surface,#fff));color:var(--ink,#222)}
+.flo-wb-table .flo-wb-formula{background:color-mix(in srgb,#9871cb 12%,var(--surface,#fff));color:var(--ink,#222)}
+.flo-wb-table td.selected{outline:2px solid var(--accent,#17734a);outline-offset:-2px;position:relative}
+.flo-wb-table .flo-wb-empty{background:var(--surface,#fff)}
+.flo-wb-table th.flo-wb-heading{background:var(--surface-2,#eee);color:var(--ink,#222);padding:6px}
+.flo-wb-help,.flo-wb-feedback{font-size:11px;color:var(--muted,#777);margin:5px 0}
+@media (max-width:560px){.flo-panel.flo-wide{width:100%;max-width:100%}.flo-wb-scroll{max-height:44vh}.flo-wb-table th.flo-wb-label{width:155px;min-width:155px}}
+.flo-mini-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0}.flo-mini-form label{display:flex;flex-direction:column;font-size:11px}.flo-mini-form input{min-width:0;width:100%;border-radius:6px;border:1px solid var(--line,#ccc);color:inherit;background:var(--surface,#fff);font:inherit;padding:5px}.flo-mini-form button{border:0;border-radius:8px;background:var(--accent,#17734a);color:#fff;cursor:pointer;padding:6px;font:inherit;grid-column:1/-1}
+.flo-example{border-left:3px solid var(--accent,#17734a);padding:7px 9px;margin:7px 0;background:var(--surface,#fff);border-radius:0 8px 8px 0}.flo-source{font-size:11px;color:var(--muted,#777)}.flo-list{padding-left:18px;margin:7px 0}.flo-list li{margin-bottom:4px}.flo-ac-head{display:flex;align-items:center;justify-content:space-between;gap:7px}.flo-ac-head small{color:var(--muted,#777)}
+
 .flo-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}.flo-chips button{font:inherit;font-size:12px;border:1px solid var(--line,#ccc);background:none;color:inherit;border-radius:12px;padding:3px 9px;cursor:pointer}
 .flo-chips .flo-more{border-style:dashed;color:var(--muted,#777)}.flo-chips button:hover{border-color:var(--accent,#17734a);color:var(--accent,#17734a)}
 .flo-form{display:flex;gap:6px;padding:10px 54px 12px 12px;border-top:1px solid var(--line,#e5e5e5)}.flo-form input{flex:1;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--bg,#fff);color:inherit;min-width:0}
@@ -441,9 +527,59 @@
 .flo-dots circle{fill:var(--muted,#9a9994);animation:flo-dot 1s infinite}.flo-dots circle:nth-child(2){animation-delay:.15s}.flo-dots circle:nth-child(3){animation-delay:.3s}
 @keyframes flo-dot{0%,100%{opacity:.25}50%{opacity:1}}
 @keyframes flo-talk{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
-@media (prefers-reduced-motion:reduce){.flo-half,.flo-panel,.flo-hint,.flo-half *{animation:none!important;transition:none!important}}`;
+.flo-launch[data-flo-signal="8k"] .flo-btn{box-shadow:0 0 0 6px #cf4b4b28,0 0 20px #cf4b4b90}
+.flo-launch[data-flo-signal="13f"] .flo-btn{box-shadow:0 0 0 6px #538be92b,0 0 20px #538be98c}
+.flo-launch[data-flo-signal="price"] .flo-btn{box-shadow:0 0 0 6px #e2a52e28,0 0 20px #e2a52e8c}
+.flo-launch[data-flo-signal="news"] .flo-btn{box-shadow:0 0 0 6px #3da67828,0 0 20px #3da6788c}
+.flo-half[data-flo-signal="8k"]{filter:drop-shadow(0 0 8px #d05b5b99)}
+.flo-half[data-flo-signal="13f"]{filter:drop-shadow(0 0 8px #6e9cde99)}
+.flo-half[data-flo-signal="price"]{filter:drop-shadow(0 0 8px #e3ad3b99)}
+.flo-half[data-flo-signal="news"]{filter:drop-shadow(0 0 8px #42bd8788)}
+@media(prefers-reduced-motion:reduce){.flo-launch[data-flo-signal] .flo-btn,.flo-half[data-flo-signal]{animation:none!important;filter:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){.flo-half,.flo-panel,.flo-hint,.flo-half *{animation:none!important;transition:none!important}}
+/* Flo workspace layout: answer-first, responsive, user-expandable. */
+.flo-panel{right:20px;bottom:18px;width:min(490px,calc(100vw - 44px));max-width:calc(100vw - 44px);height:min(730px,calc(100dvh - 36px));max-height:calc(100dvh - 36px);min-height:min(300px,calc(100dvh - 36px))}
+.flo-panel.flo-wide{width:min(880px,calc(100vw - 44px))}
+.flo-panel.flo-expanded,.flo-panel.flo-expanded.flo-wide{right:18px;bottom:18px;width:min(1080px,calc(100vw - 36px));max-width:calc(100vw - 36px);height:calc(100dvh - 36px);max-height:calc(100dvh - 36px)}
+.flo-head{padding:10px 12px 10px 36px;gap:9px;min-height:57px;flex-shrink:0}
+.flo-head>div:first-child{flex:1;min-width:0}.flo-head b{font-size:15px}.flo-head small{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flo-head-controls{display:flex;align-items:center;align-self:flex-start;flex-shrink:0;gap:3px}
+.flo-resize{background:transparent;border:1px solid transparent;border-radius:7px;color:var(--muted,#777);font:inherit;font-size:20px;line-height:1;cursor:pointer;padding:4px 7px}
+.flo-resize:hover,.flo-resize:focus-visible{color:var(--accent,#17734a);border-color:var(--accent,#17734a)}
+.flo-x{margin-left:0;align-self:center}
+.flo-log{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px;overflow-wrap:anywhere}
+.flo-msg{min-width:0;overflow-wrap:anywhere}
+.flo-msg.flo-bot:has(.flo-ac-head),.flo-msg.flo-bot:has(.flo-workbook),.flo-msg.flo-bot:has(.flo-coach),.flo-msg.flo-bot:has(.flo-example){max-width:100%;width:100%}
+.flo-chips{display:flex;flex-direction:column;flex:0 0 auto;min-width:0;gap:0;padding:5px 12px 6px}
+.flo-chips .flo-modes-main{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;max-width:100%;width:100%;min-width:0;white-space:nowrap;padding:2px 0 5px;scrollbar-width:thin}
+.flo-chips .flo-modes-main button{flex:0 0 auto}
+.flo-chips .flo-modes-main{overflow:visible;align-items:center}
+.flo-chips .flo-main-scroll{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
+.flo-chips .flo-chip-extra{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;max-height:124px;overflow-y:auto;overscroll-behavior:contain;padding:7px 1px 2px;border-top:1px solid var(--line,#ddd)}
+.flo-chips .flo-chip-extra[hidden]{display:none}
+.flo-chips .flo-chip-extra button{flex:0 0 auto}
+.flo-chips .flo-tools-toggle{background:var(--surface-2,#eee);border:1px dashed var(--line,#bbb);font-weight:600}
+.flo-form{flex:0 0 auto;min-height:59px;padding:9px 12px 11px}
+.flo-form input{min-width:0;min-height:42px}
+.flo-wb-scroll{width:100%;max-width:100%;overflow-x:auto}
+.flo-panel.flo-expanded .flo-chip-extra{max-height:180px}
+.flo-panel.flo-expanded~.flo-half{opacity:.35;pointer-events:none}
+@media(max-width:560px){
+ .flo-panel,.flo-panel.flo-wide{right:0;left:0;bottom:0;width:100%;max-width:100%;height:82dvh;max-height:82dvh;min-height:0;border-radius:16px 16px 0 0}
+ .flo-panel.flo-expanded,.flo-panel.flo-expanded.flo-wide{right:0;left:0;bottom:0;width:100%;max-width:100%;height:100dvh;max-height:100dvh;min-height:0;border-radius:0}
+ .flo-head{padding:10px 12px;min-height:52px}.flo-head small{max-width:65vw}
+ .flo-log{padding:9px}.flo-msg{max-width:100%}
+ .flo-chips{padding:5px 9px}.flo-chips .flo-chip-extra{max-height:110px}
+ .flo-form{padding:8px 10px max(9px,env(safe-area-inset-bottom))}
+ .flo-wb-scroll{max-height:45dvh}
+}
+@media(min-width:561px) and (max-height:600px){
+ .flo-panel,.flo-panel.flo-wide{height:calc(100dvh - 16px);max-height:calc(100dvh - 16px);bottom:8px}
+ .flo-panel.flo-expanded,.flo-panel.flo-expanded.flo-wide{height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);bottom:6px}
+}
+`;
 
-  let ui = null, moodTimer = null;
+  let ui = null, moodTimer = null, activityTimer = null;
   const nowMs = () => (root.performance && root.performance.now ? root.performance.now() : Date.now());
   function mood(m, ms) {
     if (!ui) return;
@@ -469,6 +605,7 @@
     return m;
   }
   async function send(q) {
+    if(ui&&ui.activeTool!=='chat')openTool('chat');
     q = String(q || '').trim();
     if (!q) return;
     addMsg(esc(q), 'me');
@@ -481,9 +618,40 @@
     mood('talk');
     const lg = lang(q), LM = root.LocalFilingModel;
     const local = LM && LM.isConnected && LM.isConnected() && LM.ask && (a.facts || []).length;
+    ui.panel.classList.toggle('flo-wide', !!(a.workbook || a.realWorkbook));
+    layout(); // mascot positions follow the resized worksheet panel
     wait.innerHTML = a.html + ((a.links || []).length ? `<div class="flo-links">${a.links.map(([h, t]) => link(h, t)).join('')}</div>` : '') +
+      ((a.actions || []).length ? `<div class="flo-actions">${a.actions.map(x => `<button type="button" class="flo-action" data-flo-q="${esc(x.question)}">${esc(x.label)}</button>`).join('')}</div>` : '') +
       (local ? `<button type="button" class="flo-local">${lg === 'zh' ? '用本地模型解释' : 'Explain with the local model'}</button>` : '');
     ui.log.scrollTop = ui.log.scrollHeight;
+    if (a.workbook && workbooks()) workbooks().mountAll(wait,lg);
+    if (a.realWorkbook && realWorkbooks()) realWorkbooks().mountAll(wait,lg);
+    wait.querySelectorAll('.flo-action').forEach(b => b.addEventListener('click', () => send(b.dataset.floQ)));
+    wait.querySelectorAll('form[data-flo-calc]').forEach(form => form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const A = academy(); if (!A) return;
+      const fields = Object.fromEntries(Array.from(form.querySelectorAll('input[name], select[name]')).map(input => [input.name, input.value]));
+      try {
+        if (form.dataset.floCalc === 'reserve') {
+          const v = A.reserveScenario(fields);
+          addMsg('<b>Reserve rollforward simulation</b><p>Closing reserve ' + usd(v.reserve) +
+            ' · Pretax profit ' + usd(v.profit) +
+            ' · Cash ' + usd(v.cash) +
+            '.</p><small>Illustration only. Releases are not proof of earnings manipulation.</small>', 'bot');
+        } else if (form.dataset.floCalc === 'fcff') {
+          const v = A.fcff(fields);
+          addMsg('<b>FCFF = ' + esc(v.toLocaleString('en-US', {maximumFractionDigits:2})) +
+            '</b> (same units as exercise). EBIT × (1−Tax%) + D&amp;A − CapEx − ΔNWC. <small>Hypothetical inputs, NOT company data.</small>', 'bot');
+        } else if (form.dataset.floCalc === 'rebate') {
+          const v = A.rebate(fields);
+          addMsg('<b>Rebate allocation</b><p>Total ' + usd(v.total) +
+            ' · Sold units → COGS reduction ' + usd(v.cogs) +
+            ' · Unsold units → inventory cost reduction ' + usd(v.inventory) +
+            '.</p><small>Hypothetical contract; actual recognition varies.</small>', 'bot');
+        }
+        mood('happy',1600);
+      } catch(e) { addMsg(esc(e.message),'bot'); mood('worried',1800); }
+    }));
     const b = wait.querySelector('.flo-local');
     if (b) b.addEventListener('click', async () => {
       b.disabled = true; b.textContent = '…'; mood('think');
@@ -498,10 +666,55 @@
   }
   function renderChips() {
     if (!ui) return;
-    ui.chips.innerHTML = chips().map((c) => `<button type="button">${esc(c)}</button>`).join('') +
-      `<button type="button" class="flo-more" aria-label="${zhUI() ? '换一批问题' : 'More questions'}">↻ ${zhUI() ? '换一批' : 'More'}</button>`;
-    ui.chips.querySelectorAll('button:not(.flo-more)').forEach((b) => b.addEventListener('click', () => send(b.textContent)));
-    ui.chips.querySelector('.flo-more').addEventListener('click', () => { ui.seed = (ui.seed || 0) + 1; renderChips(); });
+    const T = (ui.co && ui.co.ticker) || 'NVDA';
+    const zh = zhUI();
+    const modes = [
+      [zh ? 'SEC 真实练习' : 'Real SEC Lab', 'NVDA real SEC Excel modeling lab'],
+      [zh ? 'Excel 模拟练习' : 'Spreadsheet Lab', 'open Excel modeling lab'],
+      [zh ? '学 DCF' : 'Learn DCF', 'teach ' + T + ' DCF step by step'],
+      [zh ? 'Cookie Jar 侦探' : 'Cookie Jar', T + ' cookie jar'],
+      [zh ? 'SEC 案例' : 'SEC cases', 'Sunbeam case study'],
+      [zh ? '最新扫描' : 'Recent scans', zh ? '最近扫描有什么新消息' : 'What changed since the last scan?'],
+      [zh ? '5分钟涨幅榜' : '5m Market Movers', 'S&P 500 五分钟涨幅榜'],
+      [zh ? '财务造假案例训练' : 'Forensic Case Lab', 'WorldCom SEC case spreadsheet'],
+      [zh ? 'HealthSouth 案例' : 'HealthSouth Case', 'HealthSouth SEC spreadsheet'],
+      [zh ? 'Channel Stuffing' : 'Revenue Case', 'Bristol SEC case spreadsheet'],
+      [zh ? '返利练习' : 'Rebate lab', 'supplier rebate exercise']
+    ];
+    // Keep the lesson readable by default: four primary actions in one
+    // horizontally scrollable row, secondary tools only on explicit expansion.
+    const primary = new Set([0, 1, 2, 6]);
+    const showMode = m => '<button type="button" class="flo-mode" data-flo-q="' + esc(m[1]) + '">' + esc(m[0]) + '</button>';
+    const expanded = !!ui.toolsExpanded;
+    ui.chips.innerHTML =
+      '<div class="flo-modes flo-modes-main" aria-label="' + (zh ? '常用功能' : 'Primary tools') + '">' +
+        '<div class="flo-main-scroll">' + modes.filter((m, i) => primary.has(i)).map(showMode).join('') + '</div>' +
+        '<button type="button" class="flo-tools-toggle" aria-controls="flo-extra-tools" aria-expanded="' + expanded + '">' +
+          (zh ? (expanded ? '收起工具 ▲' : '更多工具 ▼') : (expanded ? 'Hide tools ▲' : 'More tools ▼')) +
+        '</button></div>' +
+      '<div class="flo-chip-extra" id="flo-extra-tools"' + (expanded ? '' : ' hidden') + '>' +
+        modes.filter((m, i) => !primary.has(i)).map(showMode).join('') +
+        chips().map(c => '<button type="button" class="flo-question">' + esc(c) + '</button>').join('') +
+        '<button type="button" class="flo-more" aria-label="' + (zh ? '换一批问题' : 'More questions') + '">↻ ' +
+          (zh ? '换一批' : 'More') + '</button></div>';
+    ui.chips.querySelectorAll('.flo-mode').forEach(b => b.addEventListener('click', () => {
+      if (ui.toolsExpanded) { ui.toolsExpanded = false; renderChips(); }
+      send(b.dataset.floQ);
+    }));
+    ui.chips.querySelectorAll('.flo-question').forEach(b => b.addEventListener('click', () => {
+      ui.toolsExpanded = false;
+      renderChips();
+      send(b.textContent);
+    }));
+    ui.chips.querySelector('.flo-more').addEventListener('click', () => {
+      ui.seed = (ui.seed || 0) + 1; renderChips();
+    });
+    const toggle = ui.chips.querySelector('.flo-tools-toggle');
+    toggle.addEventListener('click', () => {
+      ui.toolsExpanded = !ui.toolsExpanded;
+      renderChips();
+      layout();
+    });
   }
 
   /* where the halves stand: locked together in the corner, or split onto the open panel's corners */
@@ -514,13 +727,19 @@
       const L0 = W - pad - S, T0 = H - pad - S;
       place(ui.halves[0], L0 - a, T0 - a, S); place(ui.halves[1], L0 + a, T0 + a, S);
     } else {
-      const r = ui.panel.getBoundingClientRect(), S = small ? 72 : 96;
-      if (small) {                                     // a phone's bottom sheet: both stand on its top edge, clear of the ×
-        place(ui.halves[0], r.left + 4, r.top - 0.86 * S, S);
-        place(ui.halves[1], r.right - 0.9 * S - 52, r.top - 0.9 * S, S);
-      } else {                                         // each F's own box centred on a corner, half of it outside
-        place(ui.halves[0], r.left - 0.45 * S, r.top - 0.41 * S, S);
-        place(ui.halves[1], r.right - 0.55 * S, r.bottom - 0.59 * S, S);
+      // Keep both animated halves visible without covering the main answer,
+      // titlebar actions or composer. Desktop: left outside edge. Phone: top.
+      const r = ui.panel.getBoundingClientRect();
+      const enlarged = ui.panel.classList.contains('flo-expanded');
+      const S = small ? (enlarged ? 44 : 58) : (enlarged ? 58 : 72);
+      if (small) {
+        const y = Math.max(4, r.top - 0.82 * S);
+        place(ui.halves[0], r.left + 4, y, S);
+        place(ui.halves[1], r.right - S - 78, y, S);
+      } else {
+        const x = r.left - 0.72 * S;
+        place(ui.halves[0], x, Math.max(4, r.top + 4), S);
+        place(ui.halves[1], x, Math.max(6, r.bottom - S - 26), S);
       }
     }
   }
@@ -556,6 +775,72 @@
     root.requestAnimationFrame(frame);
   }
 
+  async function explainNode(context) {
+    const A = academy(); if (!A) return null;
+    const ix = await index();
+    const co = ((ix && ix.companies) || []).find(c => +c.cik === +(context && context.cik)) || null;
+    const answer = A.explain(co, zhUI() ? 'zh' : 'en', context || {});
+    if (!ui) return answer;
+    open();
+    const msg = addMsg(answer.html + (answer.links && answer.links.length ?
+      '<div class="flo-links">' + answer.links.map(([u,l]) => link(u,l)).join('') + '</div>' : ''), 'bot');
+    if (answer.actions && answer.actions.length) {
+      const actions = doc.createElement('div'); actions.className = 'flo-actions';
+      answer.actions.forEach(a => {const b = doc.createElement('button'); b.type='button'; b.className='flo-action'; b.textContent=a.label;
+        b.addEventListener('click',()=>send(a.question)); actions.appendChild(b);});
+      msg.appendChild(actions);
+    }
+    mood('talk',1800);
+    return answer;
+  }
+  function toolHost(){return ui&&ui.toolHost||null;}
+  function updateUnread(){
+    if(!ui)return;
+    const total=Math.min(99,ui.unread.pulse+ui.unread.momentum+ui.unread.earnings);
+    const badge=ui.launch.querySelector('.flo-unread');
+    if(badge){badge.hidden=!total;badge.textContent=String(total);}
+    for(const kind of ['pulse','momentum']){
+      const element=ui.panel.querySelector('[data-flo-badge="'+kind+'"]');
+      if(element){element.hidden=!ui.unread[kind];element.textContent=String(Math.min(ui.unread[kind],99));}
+    }
+  }
+  function notify(kind,title){
+    if(!ui||!['pulse','momentum','earnings'].includes(kind))return false;
+    ui.unread[kind]=Math.min(99,ui.unread[kind]+1);
+    ui.pendingTool=kind==='earnings'?'chat':kind;updateUnread();
+    if(ui.panel.hidden){
+      const hint=ui.launch.querySelector('.flo-hint');
+      if(hint){
+        const close=hint.querySelector('button');
+        hint.replaceChildren(doc.createTextNode(String(title||'').slice(0,110)+' · '+(zhUI()?'点 Flo 查看':'Open Flo')),close);
+        hint.hidden=false;
+        clearTimeout(activityTimer);
+        activityTimer=setTimeout(()=>{if(ui&&ui.panel.hidden)hint.hidden=true;},7500);
+      }
+    }
+    return true;
+  }
+  function openTool(name='chat'){
+    if(!ui||!['chat','pulse','momentum'].includes(name))return false;
+    if(ui.panel.hidden)open();
+    const controller=name==='pulse'?root.FFFloAlerts:name==='momentum'?root.FFFloMomentum:null;
+    if(name!=='chat'&&(!controller||typeof controller.openPanel!=='function'))name='chat';
+    const isChat=name==='chat';
+    if(isChat&&ui.unread.earnings){ui.unread.earnings=0;updateUnread();}
+    ui.activeTool=name;
+    if(ui.pendingTool===name)ui.pendingTool=null;
+    ui.log.hidden=!isChat;ui.chips.hidden=!isChat;
+    const composer=ui.panel.querySelector('.flo-form');if(composer)composer.hidden=!isChat;
+    ui.toolHost.hidden=isChat;
+    ui.toolHost.querySelectorAll('[data-flo-embedded]').forEach(n=>{n.hidden=true;});
+    ui.panel.querySelectorAll('[data-flo-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.floTab===name)));
+    if(!isChat){
+      ui.unread[name]=0;updateUnread();
+      const tool=controller.openPanel(ui.toolHost);
+      if(tool){tool.dataset.floEmbedded=name;tool.hidden=false;}
+    }
+    layout();return true;
+  }
   function open() {
     if (!ui) return;
     ui.panel.hidden = false; ui.launch.hidden = true;
@@ -568,6 +853,7 @@
     mood('wave', 1600);
     setTimeout(() => ui.input.focus({ preventScroll: true }), 350);
     store.set('seen', '1');
+    if(ui.pendingTool){const next=ui.pendingTool;ui.pendingTool=null;openTool(next);}
   }
   function close() {
     if (!ui) return;
@@ -581,19 +867,22 @@
     if (!doc || !doc.body || doc.getElementById('flo-root')) return;
     const st = doc.createElement('style'); st.id = 'flo-css'; st.textContent = CSS; doc.head.appendChild(st);
     const r = doc.createElement('div'); r.id = 'flo-root';
-    r.innerHTML = `<div class="flo-launch"><div class="flo-hint"${store.get('seen') ? ' hidden' : ''}>${zhUI() ? '你好！问我任何公司的问题' : 'Hi! Ask me about any company'} <button type="button" aria-label="Dismiss">×</button></div><button type="button" class="flo-btn" aria-label="Ask Flo, the site's assistant"></button></div>
-      <section class="flo-panel" role="dialog" aria-label="Ask Flo" hidden><div class="flo-head"><div><b>Flo</b><small>${zhUI() ? '用网站自己的模型回答：估值、RRG、期权、财报、信用。按固定规则生成，不是投资建议。' : "Answers from the site's models: valuation, RRG, options, earnings, credit. Written by fixed rules; not investment advice."}</small></div><button type="button" class="flo-x" aria-label="Close">×</button></div>
+    r.innerHTML = `<div class="flo-launch"><span class="flo-unread" aria-label="Unread Flo alerts" hidden></span><div class="flo-hint"${store.get('seen') ? ' hidden' : ''}>${zhUI() ? '你好！问我任何公司的问题' : 'Hi! Ask me about any company'} <button type="button" aria-label="Dismiss">×</button></div><button type="button" class="flo-btn" aria-label="Ask Flo, the site's assistant"></button></div>
+      <section class="flo-panel" role="dialog" aria-label="Ask Flo" hidden><div class="flo-head"><div><b>Flo · Academy</b><small>${zhUI() ? 'SEC 研习 · 财务模型 · 非投资建议' : 'SEC research · Financial models · Not investment advice'}</small></div><div class="flo-head-controls"><button type="button" class="flo-resize" aria-pressed="false" aria-label="Expand Flo window" title="Expand Flo window">⤢</button><button type="button" class="flo-x" aria-label="Close Flo">×</button></div></div>
+      <nav class="flo-tabs" role="tablist" aria-label="Flo tools"><button type="button" class="flo-tab" data-flo-tab="chat" role="tab" aria-selected="true">✦ 学院 / Chat</button><button type="button" class="flo-tab" data-flo-tab="pulse" role="tab" aria-selected="false">◉ 扫描 <span class="flo-tab-badge" data-flo-badge="pulse" hidden></span></button><button type="button" class="flo-tab" data-flo-tab="momentum" role="tab" aria-selected="false">↗ 5m <span class="flo-tab-badge" data-flo-badge="momentum" hidden></span></button></nav>
+      <div class="flo-tool-host" role="tabpanel" hidden></div>
       <div class="flo-log" aria-live="polite"></div><div class="flo-chips"></div>
       <form class="flo-form"><input type="text" placeholder="${zhUI() ? '问一家公司…' : 'Ask about a company…'}" aria-label="Your question" maxlength="300"><button type="submit">${zhUI() ? '问' : 'Ask'}</button></form></section>
       <div class="flo-half flo-h1" aria-hidden="true">${HALF1}</div><div class="flo-half flo-h2" aria-hidden="true">${HALF2}</div>`;
     doc.body.appendChild(r);
     const mk = (sel, fx, fy) => { const el = r.querySelector(sel); return { el, fx, fy, pupils: el.querySelector('.flo-pupils'), hop: 0, shake: 0, spin: 0, look: null }; };
-    ui = { launch: r.querySelector('.flo-launch'), btn: r.querySelector('.flo-btn'), panel: r.querySelector('.flo-panel'), log: r.querySelector('.flo-log'), chips: r.querySelector('.flo-chips'),
-      input: r.querySelector('.flo-form input'), co: null, halves: [mk('.flo-h1', 27, 34), mk('.flo-h2', 93, 86)], mood: 'idle', hover: false,
+    ui = { launch: r.querySelector('.flo-launch'), btn: r.querySelector('.flo-btn'), panel: r.querySelector('.flo-panel'), log: r.querySelector('.flo-log'), chips: r.querySelector('.flo-chips'), toolHost:r.querySelector('.flo-tool-host'), activeTool:'chat', pendingTool:null, unread:{pulse:0,momentum:0,earnings:0},
+      input: r.querySelector('.flo-form input'), co: null, toolsExpanded: false, expanded: false, halves: [mk('.flo-h1', 27, 34), mk('.flo-h2', 93, 86)], mood: 'idle', hover: false,
       ptr: { x: root.innerWidth / 2, y: root.innerHeight / 2, t: nowMs() }, typingUntil: 0,
       reduce: !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) };
     mood('idle');
     ui.btn.addEventListener('click', open);
+    r.querySelectorAll('[data-flo-tab]').forEach(b=>b.addEventListener('click',()=>openTool(b.dataset.floTab)));
     ui.halves.forEach((h, i) => {
       h.el.addEventListener('pointerenter', () => { if (ui.panel.hidden) { ui.hover = true; layout(); } });
       h.el.addEventListener('pointerleave', () => { ui.hover = false; if (ui.panel.hidden) layout(); });
@@ -615,6 +904,16 @@
     ui.input.addEventListener('input', () => { const t = nowMs(); ui.typingUntil = t + 1500; ui.halves[1].hop = t + 260; });
     r.querySelector('.flo-hint button').addEventListener('click', (e) => { e.stopPropagation(); e.currentTarget.parentElement.hidden = true; store.set('seen', '1'); });
     r.querySelector('.flo-x').addEventListener('click', close);
+    r.querySelector('.flo-resize').addEventListener('click', () => {
+      ui.expanded = !ui.expanded;
+      ui.panel.classList.toggle('flo-expanded', ui.expanded);
+      const b = r.querySelector('.flo-resize');
+      b.setAttribute('aria-pressed', String(ui.expanded));
+      b.setAttribute('aria-label', ui.expanded ? 'Restore Flo window size' : 'Expand Flo window');
+      b.title = ui.expanded ? 'Restore Flo window size' : 'Expand Flo window';
+      b.textContent = ui.expanded ? '⤡' : '⤢';
+      layout();
+    });
     r.querySelector('.flo-form').addEventListener('submit', (e) => { e.preventDefault(); send(ui.input.value); });
     doc.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !ui.panel.hidden) close(); });
     // follow the page: its company becomes the default, its topic leads the default questions
@@ -635,19 +934,67 @@
     root.dispatchEvent(new CustomEvent('ff:mascotready'));
     setTimeout(() => mood('wave', 1800), 1200);
   }
-  function notifyEarnings(event) {
-    if (!ui || !event || !/^[A-Z][A-Z0-9.-]{0,7}$/.test(event.ticker || '')) return false;
-    const t = nowMs();
-    ui.halves[0].hop = t + 460;
-    ui.halves[1].spin = t + 720;
-    mood('happy', 1900);
-    const title = esc(event.ticker) + ' · ' + esc(event.date || '');
-    addMsg('<b>' + title + '</b> — official earnings-call transcript verified. ' +
-      '<a href="' + BASE + 'disclosures/#calls">Explore questions and guidance</a>. ' +
-      'Guidance-derived numbers are not SEC-reconciled.', 'bot');
+  function signalReaction(kind, ev) {
+    if (!ui) return;
+    const t=nowMs(),p=ui.halves;
+    const signalKind = ['8k','13f','price','news'].includes(ev&&ev.kind)?ev.kind:'news';
+    ui.launch.dataset.floSignal=signalKind;
+    p.forEach(h=>{h.el.dataset.floSignal=signalKind;});
+    setTimeout(()=>{
+      if(!ui||ui.launch.dataset.floSignal!==signalKind)return;
+      delete ui.launch.dataset.floSignal;
+      p.forEach(h=>{if(h.el.dataset.floSignal===signalKind)delete h.el.dataset.floSignal;});
+    },5200);
+    if (kind==='worried') { mood('worried',4200);p.forEach(h=>h.shake=t+720); }
+    else if (ev&&ev.kind==='13f') { mood('wave',3300);p[0].spin=t+720;p[1].hop=t+460; }
+    else if (ev&&ev.kind==='price') { mood(kind,2600);p.forEach((h,i)=>h.hop=t+460+i*140); }
+    else mood(kind||'wave',1800);
+    // No automatic chat opening, audio or forced navigation.
+  }
+  function showSignal(ev,html) {
+    if (!ui || !ev || typeof html!=='string') return null;
+    openTool('chat');
+    const box=addMsg(html,'bot');
+    box.dataset.floSignal=String(ev.kind||'');
+    const ticker=/^[A-Z][A-Z0-9.\\-]{0,9}$/.test(String(ev.ticker||''))?String(ev.ticker):'';
+    if(ticker){
+      const controls=doc.createElement('div');
+      controls.className='flo-actions';
+      const q=ev.kind==='price'?ticker+' valuation':ev.kind==='13f'?ticker+' industry rotation':ticker+' latest SEC filings';
+      const explainBtn=doc.createElement('button');
+      explainBtn.type='button';explainBtn.textContent=zhUI()?'继续分析公司基本面':'Compare company fundamentals';
+      explainBtn.className='flo-action';
+      explainBtn.addEventListener('click',()=>send(q));
+      const companyLink=doc.createElement('a');
+      companyLink.href=BASE+'#t-'+encodeURIComponent(ticker);
+      companyLink.textContent=zhUI()?'打开公司财报':'Open company financials';
+      companyLink.className='flo-action flo-signal-company';
+      controls.append(explainBtn,companyLink);
+      box.append(controls);
+    }
+    ui.log.scrollTop=ui.log.scrollHeight;
+    mood(ev.kind==='8k'&&ev.priority==='high'?'worried':'talk',2400);
+    return box;
+  }
+  function refreshSignalData() {
+    // Company index, earnings and model snapshots are cached by the current page;
+    // the next Flo question must revalidate with the newly published site build.
+    memo.clear();
+  }
+
+  function notifyEarnings(event){
+    if(!ui||!event||!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(String(event.ticker||'')))return false;
+    signalReaction('happy',{kind:'news',ticker:event.ticker});
+    const title=esc(event.ticker)+' · '+esc(event.date||'date not provided');
+    addMsg('<b>'+title+'</b> — '+(zhUI()?'公司 IR 电话会议逐字稿链接已验证；管理层指引需独立核对。':
+      'Issuer IR transcript link verified; guidance remains unverified.')+
+      ' <a href="'+BASE+'disclosures/#calls">'+(zhUI()?'查看来源与练习':'Official sources and practice')+'</a>','bot');
+    if(ui.panel.hidden||ui.activeTool!=='chat')notify('earnings',
+      event.ticker+' · '+(zhUI()?'电话会议资料已更新':'Verified earnings call'));
     return true;
   }
-  root.FFMascot = { open, ask, mount, classify, findCompany, lang, pageContext, chipsFor, notifyEarnings,
+  root.FFMascot = { open, ask, explain: explainNode, mount, classify, findCompany, lang, pageContext, chipsFor,
+    signalReaction, showSignal, refreshSignalData, openTool, toolHost, notify, notifyEarnings,
     refreshAppearance() { if (ui && ui.panel.hidden) mood('idle'); }
   };
   if (doc && doc.body !== undefined) { if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', mount); else mount(); }

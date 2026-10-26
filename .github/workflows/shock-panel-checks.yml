@@ -1,0 +1,33 @@
+name: Company shock panel checks
+on:
+  pull_request:
+    paths: ['web/shock-panel.*', 'web/app.js', 'web/index.html', 'tests/test_shock_panel*', '.github/workflows/shock-panel-checks.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            web
+            tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check web/shock-panel.js
+          node --check web/app.js
+          node --test tests/test_shock_panel.cjs
+      - name: Install headless Chromium (runner already supplies system libraries)
+        timeout-minutes: 3
+        run: |
+          npm install --no-save playwright@1.51.1
+          npx playwright install chromium --only-shell
+      - name: Desktop and mobile browser regression
+        timeout-minutes: 2
+        run: node tests/test_shock_panel_browser.cjs

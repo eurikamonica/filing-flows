@@ -1,0 +1,45 @@
+name: Flo 5m momentum data and UI checks
+on:
+  pull_request:
+    paths:
+      - 'scripts/flo_momentum.py'
+      - 'web/flo-momentum.js'
+      - 'config/flo-market-universes/**'
+      - 'tests/test_flo_momentum.py'
+      - 'tests/test_flo_momentum.cjs'
+      - 'db/flo-momentum.sql'
+      - '.github/workflows/flo-momentum.yml'
+      - '.github/workflows/flo-momentum-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            scripts/flo_momentum.py
+            tests/test_flo_momentum.py
+            tests/test_flo_momentum.cjs
+            web/flo-momentum.js
+            web/mascot.js
+            web/index.html
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check code syntax
+        run: |
+          python -m py_compile scripts/flo_momentum.py tests/test_flo_momentum.py
+          node --check web/flo-momentum.js
+          node --check tests/test_flo_momentum.cjs
+      - name: Strict minute bars, universe selection and no-fake-data tests
+        run: |
+          python -m unittest discover -s tests -p 'test_flo_momentum.py' -v
+          node tests/test_flo_momentum.cjs

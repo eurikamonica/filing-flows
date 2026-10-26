@@ -29,9 +29,9 @@
   function load(hub, t) {
     const key = hub + t;
     if (!cache[key]) cache[key] = fetch(`${hub}data/research/quality/c/${encodeURIComponent(t)}.json`, { cache: 'no-cache' }).then((r) => {
-      if (!r.ok) throw new Error(r.status === 404 ? 'not in the Quality research yet (market cap under $300M or figures missing)' : 'HTTP ' + r.status);
+      if (!r.ok) { const e = new Error(r.status === 404 ? 'No published Quality research file for this company. The reason is not reported; this does not establish a market-cap exclusion' : 'Quality research is temporarily unavailable (HTTP ' + r.status + ')'); e.status = r.status; throw e; }
       return r.json();
-    });
+    }).catch((e) => { delete cache[key]; throw e; });
     return cache[key];
   }
   const mark = (p) => (p === true ? '<span class="ok">✓</span>' : p === false ? '<span class="bad">✗</span>' : '<span class="na">—</span>');
@@ -141,7 +141,22 @@
     if (!t) { el.innerHTML = '<p class="muted">No ticker for this company.</p>'; return; }
     el.innerHTML = '<p class="muted">Reading the Quality research…</p>';
     let c;
-    try { c = await load(hub, t); } catch (e) { el.innerHTML = `<p class="muted">${esc(t)}: ${esc(e.message)}.</p>`; return; }
+    try { c = await load(hub, t); } catch (e) {
+      if ((opt && opt.here && !opt.here()) || !el.isConnected) return;
+      el.innerHTML = `<div class="qv-card"><h3>Quality research · ${esc(t)}</h3><p class="muted">${esc(e.message)}.</p><p>Piotroski, Altman and Beneish scores are unavailable in this view. The independent disclosure screen below does not replace these scores.</p><button type="button" data-quality-retry>Retry Quality research</button></div>`;
+      el.querySelector('[data-quality-retry]').onclick = () => render(el, opt);
+      if (opt && /^\d{1,10}$/.test(String(opt.cik)) && window.FFCompanyDisclosures) {
+        const panel = document.createElement('div');
+        el.appendChild(panel);
+        await window.FFCompanyDisclosures.mount(panel, { cik: opt.cik, here: opt.here });
+      } else {
+        const link = document.createElement('a');
+        link.href = `${hub}#hidden/${encodeURIComponent(t)}`;
+        link.textContent = 'View independent Hidden Leverage & revenue-quality evidence →';
+        el.appendChild(link);
+      }
+      return;
+    }
     if (opt && opt.here && !opt.here()) return;
     const r = c.row || {};
     el.innerHTML = `<div class="qv"><div class="qv-card"><h3>${esc(r.name || t)} <span class="muted">${esc(t)} · ${esc(c.sector_name || r.sector || '')}</span></h3>

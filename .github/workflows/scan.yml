@@ -12,7 +12,24 @@ on:
       - 'web/appearance.js'
       - 'web/appearance.css'
       - 'web/index.html'
+      - 'web/app.js'
+      - 'web/company-disclosures.js'
+      - 'web/company-disclosures.css'
+      - 'web/shock-panel.js'
+      - 'web/shock-panel.css'
+      - 'web/quality-ipo.js'
+      - 'web/ipo-market.js'
+      - 'pipeline/ipo_market.py'
+      - 'web/quality-ipo.css'
+      - 'pipeline/company_quality.py'
+      - 'pipeline/quality.py'
+      - 'pipeline/ipo.py'
+      - 'pipeline/data/ipo/**'
       - 'web/mascot.js'
+      - 'web/flo-alerts.js'
+      - 'web/flo-momentum.js'
+      - 'scripts/flo_momentum.py'
+      - 'scripts/build_flo_alerts.py'
       - 'web/studio.js'
       - 'scripts/build_site.py'
       - '.github/workflows/scan.yml'
@@ -167,6 +184,21 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}                 # optional: your own domain → CNAME file for GitHub Pages
         run: python scripts/build_site.py --data _site/data --out _site
 
+      - name: Stage independent IPO market snapshot (live UI also reads ipo-data)
+        timeout-minutes: 3
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$remote" ipo-data >/dev/null; then
+            git clone -q --depth 1 --filter=blob:none --sparse --branch ipo-data "$remote" _ipo
+            git -C _ipo sparse-checkout set public
+            python -c "import shutil; shutil.copytree('_ipo/public', '_site/data/ipo', dirs_exist_ok=True)"
+          else
+            echo "::notice::IPO collector has not published its first snapshot; the reviewed seed remains available."
+          fi
+
       - name: The long rotation history (public/ of the branch rotation-history, when it exists)
         continue-on-error: true
         run: |
@@ -260,6 +292,11 @@ jobs:
 
       - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
         run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public --debt _debt/public --consensus _cons/public --etf _etf/public --smart _smart/public --ladders _lad/public --research _research
+
+      - name: Build compact Flo alerts from already published 8-K, 13F, news and daily close snapshots
+        run: |
+          python scripts/build_flo_alerts.py --root _site/disclosures/data/market
+          test -s _site/disclosures/data/market/flo-alerts.json
 
       - name: Evaluate all archived company EPS surprises and resolved Polymarket contracts
         continue-on-error: true

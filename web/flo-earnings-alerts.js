@@ -30,35 +30,6 @@
     memorySeen = ids;
     try { root.localStorage.setItem(KEY, JSON.stringify(ids)); } catch (e) {/* private mode */}
   }
-  function toast(record) {
-    if (document.getElementById('ff-earnings-toast')) return;
-    const style = document.createElement('style');
-    style.textContent = '#ff-earnings-toast{position:fixed;bottom:112px;right:18px;z-index:9030;' +
-      'max-width:min(300px,calc(100vw - 36px));padding:12px 14px;background:var(--surface,#fff);' +
-      'color:var(--ink,#222);border:2px solid var(--accent,#17734a);border-radius:14px;' +
-      'box-shadow:0 8px 26px #0002;font:13px/1.45 inherit}' +
-      '#ff-earnings-toast button,#ff-earnings-toast a{font:inherit;cursor:pointer;margin:5px 7px 0 0}' +
-      '#ff-earnings-toast a{color:var(--accent,#17734a)}';
-    document.head.appendChild(style);
-    const n = document.createElement('aside');
-    n.id = 'ff-earnings-toast'; n.setAttribute('role', 'status');
-    const title = document.createElement('strong');
-    title.textContent = 'Flo found a verified earnings call: ' + record.ticker;
-    const detail = document.createElement('p');
-    detail.textContent = record.date + ' · Management guidance and Q&A research available. Company-stated numbers may need SEC reconciliation.';
-    const open = document.createElement('button');
-    open.type = 'button'; open.textContent = 'Ask Flo';
-    open.addEventListener('click', () => {root.FFMascot?.open(); n.remove();});
-    const view = document.createElement('a');
-    view.href = new URL('disclosures/#calls', root.location.origin + '/').href;
-    view.textContent = 'Review source';
-    const close = document.createElement('button');
-    close.type = 'button'; close.textContent = 'Dismiss';
-    close.setAttribute('aria-label','Dismiss earnings call alert');
-    close.addEventListener('click', () => n.remove());
-    n.append(title, detail, open, view, close);
-    document.body.appendChild(n);
-  }
   async function getIndex() {
     for (const url of [MAIN, LOCAL]) {
       try {
@@ -84,7 +55,6 @@
       if (fresh.length) {
         const first = fresh[0];
         root.FFMascot?.notifyEarnings(first);
-        toast(first);
       }
     } finally { busy = false; }
   }

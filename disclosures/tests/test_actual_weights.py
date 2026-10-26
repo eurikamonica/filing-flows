@@ -42,6 +42,16 @@ class ActualWeightsTests(unittest.TestCase):
         self.assertEqual([s["date"] for s in actual], ["2026-10-23", "2026-11-01"])
         self.assertAlmostEqual(actual[0]["positions"][1][1], 0.12)
 
+    def test_unknown_date_basis_is_not_treated_as_reported(self):
+        doc = dict(self.doc)
+        doc["holdings"] = {"date": "2026-10-23", "source": "sponsor holdings file"}
+        snap = A.take_snapshot(doc)
+        self.assertEqual(snap["date_basis"], "unknown")
+        doc["holdings"]["date_basis"] = "reported"
+        self.assertEqual(A.take_snapshot(doc)["date_basis"], "reported")
+        doc["holdings"]["date_basis"] = "observed"
+        self.assertEqual(A.take_snapshot(doc)["date_basis"], "observed")
+
     def test_bad_date_is_rejected(self):
         self.doc["holdings"]["date"] = "2026-02-30"
         self.assertIsNone(A.take_snapshot(self.doc))

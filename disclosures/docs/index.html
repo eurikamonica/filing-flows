@@ -59,6 +59,7 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
     <button class="pill" data-tab="insiders" aria-pressed="false">Insider trades</button>
     <button class="pill" data-tab="events" aria-pressed="false">8-K events</button>
     <button class="pill" data-tab="news" aria-pressed="false">News</button>
+    <button class="pill" data-tab="calls" aria-pressed="false">Earnings calls</button>
     <button class="pill" data-tab="stakes" aria-pressed="false">13D / 13G</button>
     <button class="pill" data-tab="form144" aria-pressed="false">Form 144</button>
     <button class="pill" data-tab="shorts" aria-pressed="false">Short interest</button>
@@ -70,7 +71,6 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
     <button class="pill" data-tab="consensus" aria-pressed="false">Consensus</button>
     <button class="pill" data-tab="valuation" aria-pressed="false">Valuation</button>
     <button class="pill" data-tab="earnings" aria-pressed="false">Earnings season</button>
-    <button class="pill" data-tab="calls" aria-pressed="false">Earnings calls</button>
     <button class="pill" data-tab="etf" aria-pressed="false">ETFs</button>
     <button class="pill" data-tab="allflows" aria-pressed="false">All flows</button>
     <button class="pill" data-tab="smart" aria-pressed="false">Smart money</button>
@@ -99,7 +99,7 @@ try { var t = JSON.parse(localStorage.getItem('ff:theme')); if (t) document.docu
   </div>
 </footer>
 <script src="data/live.js"></script><script src="data/demo.js"></script><script src="dashboard.js"></script><script src="extensions.js"></script><script src="market.js"></script><script src="hype-view.js"></script><script src="transition-matrix.js"></script><script src="rotation.js"></script><script src="rrg.js"></script><script src="chaos.js"></script><script src="rrg-odds.js"></script><script src="rrg-index.js"></script><script src="chart-share.js"></script><script src="rrg-company-view.js"></script><script src="galaxy.js"></script><script src="ledger.js"></script><script src="macro.js"></script><script src="posts.js"></script><script src="debt-view.js"></script><script src="debt.js"></script><script src="hidden-leverage.js"></script><script src="consensus-view.js"></script><script src="consensus.js"></script><script src="etf.js"></script><script src="smart.js"></script><script src="allflows.js"></script><script src="option-paths.js"></script><script src="options.js"></script><script src="ownership.js"></script><script src="news.js"></script><script src="quality-view.js"></script><script src="quality.js"></script><script src="fairvalue-view.js"></script><script src="valuation.js"></script><script src="paths-view.js"></script><script src="paths.js"></script><script src="filings-view.js"></script><script src="filings.js"></script><script src="earnings-view.js"></script><script src="earnings.js"></script><script src="earnings-calls.js"></script><script src="maps.js"></script><script src="people.js"></script><script src="crossholdings.js"></script>
-<script src="xpost.js"></script><script src="freshness.js"></script><script src="app.js"></script><script src="../flo-questions.js" defer></script><script src="../mascot.js" defer></script><script src="../flo-earnings-alerts.js" defer></script>
+<script src="xpost.js"></script><script src="freshness.js"></script><script src="app.js"></script><script src="../flo-questions.js" defer></script><script src="../flo-academy.js" defer></script><script src="../flo-workbook.js" defer></script><script src="../flo-real-data.js" defer></script><script src="../flo-practice.js" defer></script><script src="../flo-coach.js" defer></script><script src="../flo-real-workbook.js" defer></script><script src="../mascot.js" defer></script><script src="../flo-timeline.js" defer></script><script src="../flo-impact.js" defer></script><script src="../flo-alerts.js" defer></script><script src="../flo-momentum.js" defer></script><script src="../flo-earnings-alerts.js" defer></script>
 <script>
 /* Module pills: keep the Sankey site's "on" look in step with the app's own "active" state. */
 document.querySelectorAll('nav button[data-tab]').forEach(function (b) {

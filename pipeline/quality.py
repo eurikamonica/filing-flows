@@ -21,6 +21,7 @@ whose untagged difference is over 25% of the balance is left out rather than dra
 import itertools
 import sys
 
+from . import company_quality as CQ
 from . import capital as K
 from . import drivers as DR
 from . import facts as F
@@ -28,7 +29,8 @@ from . import fsa as W
 from . import history as H
 from . import reform as RF
 
-VERSION = 7               # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
+VERSION = 8               # 8: evidence-backed company quality measures (company_quality.py)
+                          # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
                           # 3: capital allocation, share count and debt maturities (pipeline/capital.py)
                           # 4: every version of the headline figures, "As Known Then" (pipeline/history.py)
                           # 5: what moved profit, last year to this year (pipeline/drivers.py)
@@ -90,7 +92,7 @@ FAMILIES = [
      "other": [["RestructuringReserveTranslationAndOtherAdjustment", "RestructuringReserveTranslationAdjustment"]]},
 ]
 # balances the facts index keeps as point-in-time values (see facts.index_facts)
-INSTANTS = {"Assets"} | {t for f in FAMILIES for t in f["balance"]} | W.INSTANT_CONCEPTS | K.INSTANT_CONCEPTS | RF.INSTANT_CONCEPTS
+INSTANTS = CQ.INSTANTS | {"Assets"} | {t for f in FAMILIES for t in f["balance"]} | W.INSTANT_CONCEPTS | K.INSTANT_CONCEPTS | RF.INSTANT_CONCEPTS
 SHARES = W.SHARE_CONCEPTS | K.SHARE_CONCEPTS
 
 
@@ -275,6 +277,10 @@ def compute(fx, fye="1231"):
                     reserves.append(r)
     if not (q or y):
         return None
+    for p in q:
+        p["health"] = CQ.period(fx, ev, p, False)
+    for p in y:
+        p["health"] = CQ.period(fx, ev, p, True)
     val = W.valuation_inputs(fx, ev, qe, ye)
     cap = K.compute(fx, ev, qe, ye, fye)
     hist = H.compute(fx, ev, fye)

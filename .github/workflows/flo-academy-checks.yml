@@ -1,0 +1,80 @@
+name: Spin Sankey Flo Academy checks
+on:
+  pull_request:
+    paths:
+      - 'web/flo-academy.js'
+      - 'web/flo-workbook.js'
+      - 'web/flo-real-data.js'
+      - 'web/flo-real-workbook.js'
+      - 'web/flo-coach.js'
+      - 'web/flo-practice.js'
+      - 'web/flo-alerts.js'
+      - 'web/flo-timeline.js'
+      - 'web/flo-impact.js'
+      - 'scripts/build_flo_alerts.py'
+      - 'web/mascot.js'
+      - 'web/app.js'
+      - 'tests/test_flo_academy.cjs'
+      - 'tests/test_flo_workbook.cjs'
+      - 'tests/test_flo_real.cjs'
+      - 'tests/test_flo_coach.cjs'
+      - 'tests/test_flo_practice.cjs'
+      - 'tests/test_flo_alerts.cjs'
+      - 'tests/test_flo_timeline.cjs'
+      - 'tests/test_flo_impact.cjs'
+      - 'tests/test_flo_alert_browser.cjs'
+      - 'tests/test_flo_unified_dock.cjs'
+      - 'tests/test_flo_alert_feed.py'
+      - 'tests/test_mascot.cjs'
+      - 'tests/test_flo_layout.cjs'
+      - '.github/workflows/flo-academy-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  flo-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            web
+            scripts
+            tests
+            disclosures/docs/rrg-company-view.js
+            disclosures/docs/index.html
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Flo and web JS syntax
+        run: |
+          node --check web/mascot.js
+          node --check web/flo-academy.js
+          node --check web/flo-workbook.js
+          node --check web/flo-real-data.js
+          node --check web/flo-real-workbook.js
+          node --check web/flo-coach.js
+          node --check web/flo-practice.js
+          node --check web/flo-alerts.js
+          node --check web/flo-timeline.js
+          node --check web/flo-impact.js
+          node --check web/app.js
+      - name: Run old and new Flo tests
+        run: |
+          node tests/test_mascot.cjs
+          node tests/test_flo_layout.cjs
+          node tests/test_flo_academy.cjs
+          node tests/test_flo_workbook.cjs
+          node tests/test_flo_real.cjs
+          node tests/test_flo_coach.cjs
+          node tests/test_flo_practice.cjs
+          node tests/test_flo_alerts.cjs
+          node tests/test_flo_timeline.cjs
+          node tests/test_flo_impact.cjs
+          node tests/test_flo_alert_browser.cjs
+          node tests/test_flo_unified_dock.cjs
+          python3 tests/test_flo_alert_feed.py
