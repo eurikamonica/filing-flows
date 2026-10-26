@@ -52,7 +52,7 @@ def take_snapshot(doc):
     if len(positions) < 2:
         return None
     source = hold.get("source") or ("SEC N-PORT" if hold.get("acc") else "fund holdings disclosure")
-    return {"date": date, "date_basis": hold.get("date_basis") or "reported", "source": source, "accession": hold.get("acc"),
+    return {"date": date, "date_basis": (hold.get("date_basis") if hold.get("date_basis") in ("reported", "observed") else "unknown"), "source": source, "accession": hold.get("acc"),
             "positions": positions, "sectors": hold.get("sector_map") or {},
             "equity_weight_covered": round(sum(w for _, w in positions), 6)}
 
