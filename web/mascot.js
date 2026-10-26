@@ -491,7 +491,45 @@
 .flo-half[data-flo-signal="price"]{filter:drop-shadow(0 0 8px #e3ad3b99)}
 .flo-half[data-flo-signal="news"]{filter:drop-shadow(0 0 8px #42bd8788)}
 @media(prefers-reduced-motion:reduce){.flo-launch[data-flo-signal] .flo-btn,.flo-half[data-flo-signal]{animation:none!important;filter:none!important;transition:none!important}}
-@media (prefers-reduced-motion:reduce){.flo-half,.flo-panel,.flo-hint,.flo-half *{animation:none!important;transition:none!important}}`;
+@media (prefers-reduced-motion:reduce){.flo-half,.flo-panel,.flo-hint,.flo-half *{animation:none!important;transition:none!important}}
+/* Flo workspace layout: answer-first, responsive, user-expandable. */
+.flo-panel{right:20px;bottom:18px;width:min(490px,calc(100vw - 44px));max-width:calc(100vw - 44px);height:min(730px,calc(100dvh - 36px));max-height:calc(100dvh - 36px);min-height:min(300px,calc(100dvh - 36px))}
+.flo-panel.flo-wide{width:min(880px,calc(100vw - 44px))}
+.flo-panel.flo-expanded,.flo-panel.flo-expanded.flo-wide{right:18px;bottom:18px;width:min(1080px,calc(100vw - 36px));max-width:calc(100vw - 36px);height:calc(100dvh - 36px);max-height:calc(100dvh - 36px)}
+.flo-head{padding:10px 12px 10px 36px;gap:9px;min-height:57px;flex-shrink:0}
+.flo-head>div:first-child{flex:1;min-width:0}.flo-head b{font-size:15px}.flo-head small{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flo-head-controls{display:flex;align-items:center;align-self:flex-start;flex-shrink:0;gap:3px}
+.flo-resize{background:transparent;border:1px solid transparent;border-radius:7px;color:var(--muted,#777);font:inherit;font-size:20px;line-height:1;cursor:pointer;padding:4px 7px}
+.flo-resize:hover,.flo-resize:focus-visible{color:var(--accent,#17734a);border-color:var(--accent,#17734a)}
+.flo-x{margin-left:0;align-self:center}
+.flo-log{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px;overflow-wrap:anywhere}
+.flo-msg{min-width:0;overflow-wrap:anywhere}
+.flo-msg.flo-bot:has(.flo-ac-head),.flo-msg.flo-bot:has(.flo-workbook),.flo-msg.flo-bot:has(.flo-coach),.flo-msg.flo-bot:has(.flo-example){max-width:100%;width:100%}
+.flo-chips{display:flex;flex-direction:column;flex:0 0 auto;min-width:0;gap:0;padding:5px 12px 6px}
+.flo-chips .flo-modes-main{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;max-width:100%;width:100%;min-width:0;white-space:nowrap;padding:2px 0 5px;scrollbar-width:thin}
+.flo-chips .flo-modes-main button{flex:0 0 auto}
+.flo-chips .flo-chip-extra{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;max-height:124px;overflow-y:auto;overscroll-behavior:contain;padding:7px 1px 2px;border-top:1px solid var(--line,#ddd)}
+.flo-chips .flo-chip-extra[hidden]{display:none}
+.flo-chips .flo-chip-extra button{flex:0 0 auto}
+.flo-chips .flo-tools-toggle{background:var(--surface-2,#eee);border:1px dashed var(--line,#bbb);font-weight:600}
+.flo-form{flex:0 0 auto;min-height:59px;padding:9px 12px 11px}
+.flo-form input{min-width:0;min-height:42px}
+.flo-wb-scroll{width:100%;max-width:100%;overflow-x:auto}
+.flo-panel.flo-expanded .flo-chip-extra{max-height:180px}
+@media(max-width:560px){
+ .flo-panel,.flo-panel.flo-wide{right:0;left:0;bottom:0;width:100%;max-width:100%;height:82dvh;max-height:82dvh;min-height:0;border-radius:16px 16px 0 0}
+ .flo-panel.flo-expanded,.flo-panel.flo-expanded.flo-wide{right:0;left:0;bottom:0;width:100%;max-width:100%;height:100dvh;max-height:100dvh;min-height:0;border-radius:0}
+ .flo-head{padding:10px 12px;min-height:52px}.flo-head small{max-width:65vw}
+ .flo-log{padding:9px}.flo-msg{max-width:100%}
+ .flo-chips{padding:5px 9px}.flo-chips .flo-chip-extra{max-height:110px}
+ .flo-form{padding:8px 10px max(9px,env(safe-area-inset-bottom))}
+ .flo-wb-scroll{max-height:45dvh}
+}
+@media(min-width:561px) and (max-height:600px){
+ .flo-panel,.flo-panel.flo-wide{height:calc(100dvh - 16px);max-height:calc(100dvh - 16px);bottom:8px}
+ .flo-panel.flo-expanded,.flo-panel.flo-expanded.flo-wide{height:calc(100dvh - 12px);max-height:calc(100dvh - 12px);bottom:6px}
+}
+`;
 
   let ui = null, moodTimer = null;
   const nowMs = () => (root.performance && root.performance.now ? root.performance.now() : Date.now());
@@ -594,12 +632,40 @@
       [zh ? 'Channel Stuffing' : 'Revenue Case', 'Bristol SEC case spreadsheet'],
       [zh ? '返利练习' : 'Rebate lab', 'supplier rebate exercise']
     ];
-    ui.chips.innerHTML = '<div class="flo-modes">' + modes.map(m => '<button type="button" class="flo-mode" data-flo-q="' + esc(m[1]) + '">' + esc(m[0]) + '</button>').join('') + '</div>' +
-      chips().map((c) => `<button type="button">${esc(c)}</button>`).join('') +
-      `<button type="button" class="flo-more" aria-label="${zhUI() ? '换一批问题' : 'More questions'}">↻ ${zhUI() ? '换一批' : 'More'}</button>`;
-    ui.chips.querySelectorAll('.flo-mode').forEach(b => b.addEventListener('click', () => send(b.dataset.floQ)));
-    ui.chips.querySelectorAll('button:not(.flo-more):not(.flo-mode)').forEach(b => b.addEventListener('click', () => send(b.textContent)));
-    ui.chips.querySelector('.flo-more').addEventListener('click', () => { ui.seed = (ui.seed || 0) + 1; renderChips(); });
+    // Keep the lesson readable by default: four primary actions in one
+    // horizontally scrollable row, secondary tools only on explicit expansion.
+    const primary = new Set([0, 1, 2, 6]);
+    const showMode = m => '<button type="button" class="flo-mode" data-flo-q="' + esc(m[1]) + '">' + esc(m[0]) + '</button>';
+    const expanded = !!ui.toolsExpanded;
+    ui.chips.innerHTML =
+      '<div class="flo-modes flo-modes-main" aria-label="' + (zh ? '常用功能' : 'Primary tools') + '">' +
+        modes.filter((m, i) => primary.has(i)).map(showMode).join('') +
+        '<button type="button" class="flo-tools-toggle" aria-controls="flo-extra-tools" aria-expanded="' + expanded + '">' +
+          (zh ? (expanded ? '收起工具 ▲' : '更多工具 ▼') : (expanded ? 'Hide tools ▲' : 'More tools ▼')) +
+        '</button></div>' +
+      '<div class="flo-chip-extra" id="flo-extra-tools"' + (expanded ? '' : ' hidden') + '>' +
+        modes.filter((m, i) => !primary.has(i)).map(showMode).join('') +
+        chips().map(c => '<button type="button" class="flo-question">' + esc(c) + '</button>').join('') +
+        '<button type="button" class="flo-more" aria-label="' + (zh ? '换一批问题' : 'More questions') + '">↻ ' +
+          (zh ? '换一批' : 'More') + '</button></div>';
+    ui.chips.querySelectorAll('.flo-mode').forEach(b => b.addEventListener('click', () => {
+      if (ui.toolsExpanded) { ui.toolsExpanded = false; renderChips(); }
+      send(b.dataset.floQ);
+    }));
+    ui.chips.querySelectorAll('.flo-question').forEach(b => b.addEventListener('click', () => {
+      ui.toolsExpanded = false;
+      renderChips();
+      send(b.textContent);
+    }));
+    ui.chips.querySelector('.flo-more').addEventListener('click', () => {
+      ui.seed = (ui.seed || 0) + 1; renderChips();
+    });
+    const toggle = ui.chips.querySelector('.flo-tools-toggle');
+    toggle.addEventListener('click', () => {
+      ui.toolsExpanded = !ui.toolsExpanded;
+      renderChips();
+      layout();
+    });
   }
 
   /* where the halves stand: locked together in the corner, or split onto the open panel's corners */
@@ -612,14 +678,13 @@
       const L0 = W - pad - S, T0 = H - pad - S;
       place(ui.halves[0], L0 - a, T0 - a, S); place(ui.halves[1], L0 + a, T0 + a, S);
     } else {
-      const r = ui.panel.getBoundingClientRect(), S = small ? 72 : 96;
-      if (small) {                                     // a phone's bottom sheet: both stand on its top edge, clear of the ×
-        place(ui.halves[0], r.left + 4, r.top - 0.86 * S, S);
-        place(ui.halves[1], r.right - 0.9 * S - 52, r.top - 0.9 * S, S);
-      } else {                                         // each F's own box centred on a corner, half of it outside
-        place(ui.halves[0], r.left - 0.45 * S, r.top - 0.41 * S, S);
-        place(ui.halves[1], r.right - 0.55 * S, r.bottom - 0.59 * S, S);
-      }
+      // Both halves rest near the TOP EDGE; neither overlaps the lesson,
+      // text input, or the floating Close/Expand actions.
+      const enlarged = ui.panel.classList.contains('flo-expanded');
+      const S = small ? (enlarged ? 45 : 58) : (enlarged ? 58 : 72);
+      const y = r.top - 0.86 * S;
+      place(ui.halves[0], r.left - (small ? -2 : 0.4 * S), y, S);
+      place(ui.halves[1], r.right - (small ? S + 54 : 0.68 * S), y, S);
     }
   }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -698,14 +763,14 @@
     const st = doc.createElement('style'); st.id = 'flo-css'; st.textContent = CSS; doc.head.appendChild(st);
     const r = doc.createElement('div'); r.id = 'flo-root';
     r.innerHTML = `<div class="flo-launch"><div class="flo-hint"${store.get('seen') ? ' hidden' : ''}>${zhUI() ? '你好！问我任何公司的问题' : 'Hi! Ask me about any company'} <button type="button" aria-label="Dismiss">×</button></div><button type="button" class="flo-btn" aria-label="Ask Flo, the site's assistant"></button></div>
-      <section class="flo-panel" role="dialog" aria-label="Ask Flo" hidden><div class="flo-head"><div><b>Flo</b><small>${zhUI() ? '用网站自己的模型回答：估值、RRG、期权、财报、信用。按固定规则生成，不是投资建议。' : "Answers from the site's models: valuation, RRG, options, earnings, credit. Written by fixed rules; not investment advice."}</small></div><button type="button" class="flo-x" aria-label="Close">×</button></div>
+      <section class="flo-panel" role="dialog" aria-label="Ask Flo" hidden><div class="flo-head"><div><b>Flo · Academy</b><small>${zhUI() ? 'SEC 研习 · 财务模型 · 非投资建议' : 'SEC research · Financial models · Not investment advice'}</small></div><div class="flo-head-controls"><button type="button" class="flo-resize" aria-pressed="false" aria-label="Expand Flo window" title="Expand Flo window">⤢</button><button type="button" class="flo-x" aria-label="Close Flo">×</button></div></div>
       <div class="flo-log" aria-live="polite"></div><div class="flo-chips"></div>
       <form class="flo-form"><input type="text" placeholder="${zhUI() ? '问一家公司…' : 'Ask about a company…'}" aria-label="Your question" maxlength="300"><button type="submit">${zhUI() ? '问' : 'Ask'}</button></form></section>
       <div class="flo-half flo-h1" aria-hidden="true">${HALF1}</div><div class="flo-half flo-h2" aria-hidden="true">${HALF2}</div>`;
     doc.body.appendChild(r);
     const mk = (sel, fx, fy) => { const el = r.querySelector(sel); return { el, fx, fy, pupils: el.querySelector('.flo-pupils'), hop: 0, shake: 0, spin: 0, look: null }; };
     ui = { launch: r.querySelector('.flo-launch'), btn: r.querySelector('.flo-btn'), panel: r.querySelector('.flo-panel'), log: r.querySelector('.flo-log'), chips: r.querySelector('.flo-chips'),
-      input: r.querySelector('.flo-form input'), co: null, halves: [mk('.flo-h1', 27, 34), mk('.flo-h2', 93, 86)], mood: 'idle', hover: false,
+      input: r.querySelector('.flo-form input'), co: null, toolsExpanded: false, expanded: false, halves: [mk('.flo-h1', 27, 34), mk('.flo-h2', 93, 86)], mood: 'idle', hover: false,
       ptr: { x: root.innerWidth / 2, y: root.innerHeight / 2, t: nowMs() }, typingUntil: 0,
       reduce: !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) };
     mood('idle');
@@ -731,6 +796,16 @@
     ui.input.addEventListener('input', () => { const t = nowMs(); ui.typingUntil = t + 1500; ui.halves[1].hop = t + 260; });
     r.querySelector('.flo-hint button').addEventListener('click', (e) => { e.stopPropagation(); e.currentTarget.parentElement.hidden = true; store.set('seen', '1'); });
     r.querySelector('.flo-x').addEventListener('click', close);
+    r.querySelector('.flo-resize').addEventListener('click', () => {
+      ui.expanded = !ui.expanded;
+      ui.panel.classList.toggle('flo-expanded', ui.expanded);
+      const b = r.querySelector('.flo-resize');
+      b.setAttribute('aria-pressed', String(ui.expanded));
+      b.setAttribute('aria-label', ui.expanded ? 'Restore Flo window size' : 'Expand Flo window');
+      b.title = ui.expanded ? 'Restore Flo window size' : 'Expand Flo window';
+      b.textContent = ui.expanded ? '⤡' : '⤢';
+      layout();
+    });
     r.querySelector('.flo-form').addEventListener('submit', (e) => { e.preventDefault(); send(ui.input.value); });
     doc.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !ui.panel.hidden) close(); });
     // follow the page: its company becomes the default, its topic leads the default questions
