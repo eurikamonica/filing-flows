@@ -92,7 +92,7 @@ function report(q,lang='zh',now=Date.now()){
  for(let i=0;i<v.rows.length;i++){
    const x=v.rows[i];html+='<tr><td>'+(i+1)+'</td><td>'+esc(x.ticker)+'</td><td>+'+
     esc(x.five_min_pct.toFixed(2))+'%</td><td>'+esc(x.streak)+'</td><td>'+
-    esc(x.volume_complete?Math.round(x.turnover_5m_usd).toLocaleString('en-US'):'incomplete')+'</td></tr>';
+    esc(x.volume_complete?(x.turnover_estimated?'≈ ':'')+Math.round(x.turnover_5m_usd).toLocaleString('en-US'):'incomplete')+'</td></tr>';
  }
  html+='</tbody></table>';
  if(!v.rows.length)html+='<p>'+esc(zh?'没有满足筛选条件的有效五分钟信号。':'No eligible exact five-minute change matched your filters.')+'</p>';
@@ -149,6 +149,7 @@ function updateView(){
      row.append(b);list.append(row);
    }
    body.append(list);
+   body.append(node('small','5m USD turnover uses bar VWAP when present; otherwise estimated close × volume. IEX is a single exchange.','flo-five-meta'));
    if(screened.state.partial)body.append(node('p','Minute-bar coverage is incomplete: only observed eligible symbols ranked.'));
  }
  panel.append(body);
