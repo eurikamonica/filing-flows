@@ -60,18 +60,25 @@
       const spec=flow('Revenue and total operating costs', [['Revenue',v.revenue,'rev'],['Total operating costs · revenue less operating result',-(v.revenue-v.oi)]],v.oi,'Operating result',p);
       if(spec) result.push(spec);
     }
+    if (!finite(v.compute) && finite(v.ocf) && finite(v.capex) && v.capex>=0) {
+      const cf=flow('Operating cash to free cash flow',[['Operating cash flow',v.ocf],['Cash capital expenditure',-v.capex]],v.ocf-v.capex,'Free cash flow',p);if(cf)result.push(cf);
+    }
     return result;
   }
-  async function ipo(app,here=()=>true,cik) {
+  async function ipo(app,here=()=>true,cik,accession) {
     app.innerHTML='<p role="status">Loading IPO filings…</p>';
     try {
-      const path=cik?`${cik}.json`:'index.json';if(cik&&!/^\d+$/.test(String(cik)))throw Error('Invalid CIK');
-      const response=await fetch('data/ipo/'+path,{cache:'no-cache'});if(!response.ok)throw Error('No IPO snapshot published');const d=await response.json();if(!here())return;
+      const path=accession?`filings/${accession}.json`:cik?`${cik}.json`:'index.json';if(cik&&!/^\d+$/.test(String(cik)))throw Error('Invalid CIK');
+      let d;if(root.FFIPOMarket)d=await root.FFIPOMarket.load(path);else{const response=await fetch('data/ipo/'+path,{cache:'no-cache'});if(!response.ok)throw Error('No IPO snapshot published');d=await response.json();}if(!here())return;
+      if(!cik&&root.FFIPOMarket)return root.FFIPOMarket.index(app,d,here);
       if(!cik){app.innerHTML=`<section class="section qi-section"><h1>IPO & prospectus analysis</h1><p>S-1, F-1, amendments and final prospectuses. Reviewed watchlist; coverage is not the full IPO market.</p>${(d.companies||[]).map(c=>`<article class="qi-card"><h2><a href="#ipo-${Number(c.cik)}">${esc(c.name)}</a></h2><p>${esc(c.form)} · Filed ${esc(c.filed)}</p><p>Operating costs · net income reconciliation · cash flow · quality measures</p></article>`).join('')||'<p>No reviewed filings available.</p>'}</section>`;return;}
       if(String(d.cik)!==String(cik))throw Error('Company mismatch');
       const u=source(d.source_url);
-      app.innerHTML=`<section class="section qi-section"><a href="#ipo">← IPO watchlist</a><h1>${esc(d.name)} · IPO analysis</h1><p>${esc(d.form)} · Filed ${esc(d.filed)} · ${u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">SEC prospectus</a>`:''}</p><p class="muted">${esc(d.accession)} · ${esc(d.method)}<br>Latest attempt: ${esc(d.scan?.last_attempt||'Not run')} · Latest success: ${esc(d.scan?.last_success||'Not run')} · Status: ${esc(d.scan?.state||'bundled_snapshot')}</p>${d.scan?.state==='failed'?'<p class="qi-notice">The latest refresh failed. Showing the last successfully parsed filing; this may not be the latest amendment.</p>':''}<label>Period <select id="ipo-period" aria-label="IPO reporting period"></select></label><div id="ipo-body"></div><h2>Coverage limits</h2><ul>${(d.limitations||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
-      const select=app.querySelector('#ipo-period');d.periods.forEach((p,i)=>select.add(new Option(`${p.label} · ${p.start} to ${p.end}`,i)));select.value=String(d.periods.length-1);
+      app.innerHTML=`<section class="section qi-section"><a href="#ipo">← IPO market monitor</a><h1>${esc(d.name)} · IPO analysis</h1><p>${esc(d.form)} · Filed ${esc(d.filed)} · ${u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">SEC prospectus</a>`:''}</p><p class="muted">${esc(d.accession)} · ${esc(d.method)}<br>Latest attempt: ${esc(d.scan?.last_attempt||'Not run')} · Latest success: ${esc(d.scan?.last_success||'Not run')} · Status: ${esc(d.scan?.state||'bundled_snapshot')}</p>${d.scan?.state==='failed'?'<p class="qi-notice">The latest refresh failed. Showing the last successfully parsed filing; this may not be the latest amendment.</p>':''}${root.FFIPOMarket?root.FFIPOMarket.detail(d):''}<label>Period <select id="ipo-period" aria-label="IPO reporting period"></select></label><div id="ipo-body"></div><h2>Coverage limits</h2><ul>${(d.limitations||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
+      const select=app.querySelector('#ipo-period');
+      if(root.FFIPOMarket){app.querySelector('.qi-section').insertAdjacentHTML('beforeend',root.FFIPOMarket.sourceAnalysis(d));root.FFIPOMarket.watch(app,here);}
+      if(!(d.periods||[]).length){select.closest('label').hidden=true;return;}
+      d.periods.forEach((p,i)=>select.add(new Option(`${p.label} · ${p.start} to ${p.end}`,i)));select.value=String(d.periods.length-1);
       const draw=()=>{
         const p=d.periods[Number(select.value)],v=p.values, panel=app.querySelector('#ipo-body'), specs=charts({...p,company:d.name,source_url:u,accession:d.accession});
         panel.innerHTML=`<div class="qi-cards">${[['Revenue',v.revenue],['Operating income / loss',v.oi],['Net income / loss',v.ni],['Operating cash flow',v.ocf],['FCF · OCF less cash CapEx',finite(v.ocf)&&finite(v.capex)?v.ocf-v.capex:null]].map(([label,value])=>`<div class="qi-card"><span>${esc(label)}</span><strong>${esc(amount(value,p.unit))}</strong></div>`).join('')}</div><p class="qi-notice">Net loss is not cash burn. Fair-value changes and stock compensation can be noncash. Interim periods are not annualized; cash balances and multiyear commitments are not mixed into income flows.</p><h2>Statement Sankeys</h2>${specs.length?'':'<p>Supported data is incomplete; no reconciled chart is drawn.</p>'}<div class="qi-charts"></div><h2>Quality measures</h2>${metricTable(p.metrics||[])}<details><summary>Reported inputs, units & evidence</summary><div class="qi-table"><table><thead><tr><th>Line</th><th>Amount</th><th>Evidence</th></tr></thead><tbody>${Object.entries(p.evidence||{}).map(([k,e])=>`<tr><td>${esc(e.label)}</td><td>${esc(amount(v[k],p.unit))}</td><td>${esc(e.statement||'XBRL')} ${e.table_index!=null?'· table '+(e.table_index+1):''} · ${esc(e.cell||'')} ${e.scale?'× '+e.scale:''}</td></tr>`).join('')}</tbody></table></div></details>`;

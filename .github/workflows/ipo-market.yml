@@ -1,0 +1,89 @@
+name: IPO market discovery and analysis
+on:
+  schedule:
+    - cron: '2-57/5 * * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'pipeline/ipo*.py'
+      - 'pipeline/data/ipo/**'
+      - '.github/workflows/ipo-market.yml'
+  repository_dispatch:
+    types: [ipo-scan]
+  workflow_dispatch:
+    inputs:
+      backfill_from:
+        description: 'Historical market coverage start (1994 onward)'
+        default: '2024-01-01'
+      batch:
+        description: 'Maximum primary documents to analyze'
+        default: '30'
+      retry_review:
+        description: 'Retry documents requiring manual mapping after parser updates'
+        type: boolean
+        default: false
+permissions:
+  contents: write
+concurrency:
+  group: ipo-market-data
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            pipeline
+            requirements.txt
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install collector dependencies and check SEC identity
+        run: |
+          pip install -r requirements.txt
+          if [[ "$SEC_USER_AGENT" != *@* ]]; then
+            echo "::error::Configure SEC_USER_AGENT with the project's accurate contact email."
+            exit 1
+          fi
+      - name: Restore durable IPO data branch
+        id: restore
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$remote" ipo-data >/dev/null; then
+            git clone -q --depth 1 --branch ipo-data "$remote" ipo-state
+          else
+            mkdir ipo-state
+            git -C ipo-state init -q -b ipo-data
+            git -C ipo-state remote add origin "$remote"
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Discover every issuer, repair history and process independent queue
+        timeout-minutes: 7
+        env:
+          BACKFILL_FROM: ${{ inputs.backfill_from || '2024-01-01' }}
+          DOC_BATCH: ${{ inputs.batch || '30' }}
+          RETRY_REVIEW: ${{ inputs.retry_review || 'false' }}
+        run: |
+          flags=()
+          if [[ "$RETRY_REVIEW" == 'true' ]]; then flags+=(--retry-review); fi
+          python -m pipeline.ipo_market --root ipo-state --discover --minutes 3 \
+            --backfill-from "$BACKFILL_FROM" --quarter-batch 2 --batch "$DOC_BATCH" "${flags[@]}"
+      - name: Publish and persist discoveries even after processing failure
+        if: always() && steps.restore.outputs.ready == 'true'
+        run: |
+          python -m pipeline.ipo_market --root ipo-state
+          cd ipo-state
+          git add ipo.sqlite analyses public
+          if ! git diff --cached --quiet; then
+            git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" \
+              commit -q -m "IPO discovery and analysis $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push -q origin HEAD:ipo-data
+          fi

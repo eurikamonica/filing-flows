@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from . import facts, ixbrl, sec
 from .company_quality import measures
 
-FORMS = {'S-1','S-1/A','F-1','F-1/A','424B4'}
+FORMS = {'S-1','S-1/A','F-1','F-1/A','S-11','S-11/A','DRS','DRS/A','424B1','424B3','424B4','424B5'}
 SEEDS = Path(__file__).parent / 'data' / 'ipo'
 OPERATING = {'compute':'Compute and infrastructure','personnel':'Personnel','settlement':'Bartz settlement',
              'selling':'Sales, marketing, and partnerships','other_operating':'Other operating and administrative'}

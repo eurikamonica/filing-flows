@@ -60,25 +60,10 @@ invented when the filing lacks a quantified allocation.
 
 ## Collection and deployment
 
-`python -m pipeline.ipo --out _site/data/ipo --store store/ipo --refresh`
-checks recent SEC submissions for S-1, S-1/A, F-1, F-1/A and 424B4 on the reviewed
-watchlist. It uses the existing SEC client/User-Agent/rate limiting. Only a
-successful parse replaces the current snapshot; accession snapshots are retained
-under the persisted store. Separate last-attempt/last-success/error state is
-published. Failed refreshes keep the previous filing and show a warning.
-
-`pipeline/data/ipo/*.json` defines the initial reviewed watchlist (Anthropic only
-in this release). Additional issuers require a verified seed. A conservative
-standard-concept inline-XBRL reader supports duration statements, excludes
-segments and pro forma scenarios, and rejects conflicting duplicate facts or
-mixed currencies. Only fully supported reconciliations get charts. This is not
-an all-market IPO discovery service. The HTML adapter deliberately rejects
-changed column layouts until reviewed; unknown custom tags are not guessed.
-
-The regular scan workflow refreshes the watchlist after site assembly and
-persists it with the existing store. `build_site.py` includes an offline seed so
-the route works on first deployment. New JS/CSS are included through the site's
-asset discovery. CI runs the Python tests and signed-flow JavaScript checks.
+The verified Anthropic snapshot remains available offline on first deployment.
+The market-wide collector described below replaces the initial seed-only watchlist
+collector for production. Company quality version 8 still uses the existing
+incremental earnings rebuild queue.
 
 ## Validation
 
@@ -93,3 +78,76 @@ asset discovery. CI runs the Python tests and signed-flow JavaScript checks.
 
 Merge the PR and let the existing scan/Pages workflow finish before treating the
 feature as live. A code branch or PR alone does not update production.
+
+## Market discovery, analysis and monitoring
+
+The production producer is now `pipeline.ipo_market`, backed by a SQLite accession
+catalog and persistent retry queue on the independent `ipo-data` branch. The
+reviewed seed remains a fallback, not an issuer allowlist. Every issuer appearing
+in the configured SEC sources is eligible, including companies without a ticker.
+
+Discovery reads the current Atom feeds, recent daily master indexes and quarterly
+master indexes. It handles S-1/F-1/S-11 and amendments, public DRS/DRS/A,
+424B1/424B3/424B4/424B5, EFFECT and RW/RW/A. Registration filings are not all IPOs:
+source-language labels distinguish IPO language, resale language and unclassified
+registrations. EFFECT/RW annotations require the same SEC file number and never
+prove exchange listing. Confidential, unpublished drafts are not accessible.
+
+Historical catch-up defaults to **2024-01-01 onward**, at two quarters per run,
+newest first. `workflow_dispatch.backfill_from` can extend it back to 1994. The
+UI reports completed/total quarters and remaining gaps. This is all-issuer
+coverage of the scanned periods, not a claim that every historical SEC filing
+has already been fetched or every financial statement has been parsed.
+
+### Scheduling and publication
+
+`.github/workflows/ipo-market.yml` targets a run every five minutes, with bounded
+request timeouts and at most two requests/second. It also accepts an `ipo-scan`
+repository dispatch for an external clock. GitHub/SEC latency is not guaranteed.
+The queue saves discovery before document extraction, prioritizes both new and
+old jobs, applies exponential retry delays, and retains unsupported tables for
+review. A failed download does not erase issuer metadata or older parsed data.
+
+A separate public data branch lets the UI check for updates every minute without
+waiting for the full earnings/Pages build. Only a fixed public raw-GitHub path is
+accepted. The site snapshot is a fallback and is labeled as such. A new snapshot
+produces a Load updates banner; it does not reset a reader's selected period
+silently. Hidden/inactive pages do not continue active network polling. The UI
+marks stale monitor state after twenty minutes without a complete feed pass.
+The regular site build stages the same branch as a local fallback.
+
+### Analysis pages and evidence
+
+`#ipo` provides name/CIK search, form, offering-language and analysis-state
+filters, counts, history completeness and failures. `#ipo-CIK` shows a company;
+`#ipo-CIK/ACCESSION` opens a specific version. Every discovered issuer gets a
+page, including queued and failed downloads. Financial source tables preserve
+original headers, rows and units instead of guessed numbers. Sections include
+Use of Proceeds, Risk Factors, Dilution and ownership headings where found;
+these are source excerpts, not model-generated investment conclusions.
+
+Where standard XBRL facts support them, operating-cost and FCF reconciliations
+are available. The Anthropic reviewed adapter retains all four original charts.
+Unsupported untagged tables require a reviewed mapping before they can feed a
+numerical model. Pages clearly separate latest discovered filing from selected
+or last successfully parsed financials. Missing coverage is shown explicitly.
+
+### Expanded validation
+
+Fourteen focused Python tests cover market discovery without an issuer list,
+accession deduplication, metadata-before-download persistence, bounded retry,
+source failures, resumable history, SEC primary-document selection, file-number
+lifecycle matching, missing-tag analysis, conservative resale classification and
+standard XBRL prospectus support, alongside the original accounting tests.
+A dedicated GitHub Actions check exercises desktop/mobile filters, unparsed
+pages, source escaping, four Sankeys, period changes, PNG downloads, historical
+routes and the live update banner. Local Chromium launch is blocked by the
+execution environment's socket policy, so browser execution is delegated to CI
+(the installed browser itself now downloads successfully).
+
+Operational activation requires this PR's merge to main: GitHub schedules only
+run from the default branch. The existing repository SEC_USER_AGENT secret or
+variable supplies the real project identity; no contact is invented and no
+secret is sent to browsers. After merge, inspect IPO market discovery and
+analysis → latest run, then `data/ipo/status.json` / live `ipo-data/public/status.json`
+before declaring monitoring active or historical backfill complete.

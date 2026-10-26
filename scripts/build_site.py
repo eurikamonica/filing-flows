@@ -125,9 +125,22 @@ def main():
         if not os.path.exists(target):
             shutil.copy(seed, target)
         doc = json.load(open(target, encoding="utf-8"))
-        ipo_index.append({k: doc[k] for k in ("cik", "name", "filed", "form", "accession")})
-    with open(os.path.join(ipo_out, "index.json"), "w", encoding="utf-8") as f:
-        json.dump({"companies": ipo_index, "scope": "Reviewed IPO watchlist"}, f)
+        ipo_index.append({**{k: doc[k] for k in ("cik", "name", "filed", "form", "accession")}, "state": doc.get("analysis_state", "parsed"), "classification": doc.get("classification", "ipo_language_identified"), "source_url": doc["source_url"], "filing_count": len(doc.get("filings", [])) or 1, "analysis_accession": doc["accession"]})
+    ipo_index_path = os.path.join(ipo_out, "index.json")
+    try:
+        market_index = json.load(open(ipo_index_path, encoding="utf-8"))
+        if not isinstance(market_index.get("companies"), list):
+            raise ValueError("Invalid IPO catalog")
+    except (OSError, ValueError):
+        market_index = {"companies": [], "scope": "Bundled verified examples; market collector not yet staged"}
+    known_ipo_ciks = {str(c["cik"]) for c in market_index["companies"]}
+    market_index["companies"].extend(c for c in ipo_index if str(c["cik"]) not in known_ipo_ciks)
+    with open(ipo_index_path, "w", encoding="utf-8") as f:
+        json.dump(market_index, f)
+    repo = os.environ.get("GITHUB_REPOSITORY", "eurikamonica/filing-flows")
+    if re.fullmatch(r"[\w.-]+/[\w.-]+", repo):
+        with open(os.path.join(ipo_out, "source.json"), "w", encoding="utf-8") as f:
+            json.dump({"live_base": f"https://raw.githubusercontent.com/{repo}/ipo-data/public/"}, f)
     site = {"repo": os.environ.get("GITHUB_REPOSITORY", ""),
             # accounts: the project URL and the public (publishable / anon) key; row-level security protects the data
             "supabase_url": setting("SUPABASE_URL", url=True), "supabase_key": setting("SUPABASE_ANON_KEY"),
