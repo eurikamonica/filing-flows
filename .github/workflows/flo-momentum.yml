@@ -36,6 +36,10 @@ jobs:
             echo "::notice::Flo minute producer not configured; no market prices published."
             exit 0
           fi
+      - name: Validate Supabase 5m relation (fail with setup action)
+        if: env.ALPACA_API_KEY_ID != '' && env.ALPACA_API_SECRET_KEY != '' && env.SUPABASE_URL != '' && env.SUPABASE_SERVICE_KEY != ''
+        run: python scripts/flo_momentum.py --check-store
+
       - name: Update 5-minute market momentum
         if: env.ALPACA_API_KEY_ID != '' && env.ALPACA_API_SECRET_KEY != '' && env.SUPABASE_URL != '' && env.SUPABASE_SERVICE_KEY != ''
         run: python scripts/flo_momentum.py --once

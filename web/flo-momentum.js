@@ -72,12 +72,44 @@ function parseQuestion(q){
  return universe;
 }
 function intent(q){return /(?:5|五)\s*分钟.{0,16}(?:涨幅|涨最多|上涨|异动|扫描|榜|排行)|(?:涨幅|异动).{0,16}(?:5|五)\s*分钟|(?:five.minute|5.minute|5m).{0,18}(?:mover|gainer|momentum|scan|stock|ranking)|(?:russell|rus\s*2000|罗素|s&p\s*500|标普).{0,16}(?:涨幅榜|涨最多|分钟扫描)|(?:接力扫描|接力榜单)/i.test(String(q||''));}
+function describeServiceIssue(code,lang='zh'){
+ const zh=lang==='zh';
+ switch(String(code||'')){
+ case 'schema_missing':return zh?
+   '五分钟扫描数据库表尚未准备好。站点管理员需在正确的 Supabase 项目执行 db/flo-momentum.sql，并确认 PostgREST API 已识别该表。':
+   'The 5m data table is not ready. An administrator must apply db/flo-momentum.sql to the correct Supabase project and confirm PostgREST sees it.';
+ case 'endpoint_not_found':return zh?
+   'Supabase 5m 数据接口返回 404：请核对站点连接的项目地址，以及 flo_momentum_scan 表是否已部署。':
+   '5m endpoint returned 404. Verify the configured Supabase project and that flo_momentum_scan exists.';
+ case 'unauthorized':return zh?
+   '行情数据接口鉴权失败（401/403）。检查 Supabase 公共连接配置与表的 SELECT/RLS 策略；不要公开服务端密钥。':
+   'Minute-feed authorization failed (401/403). Check the public client configuration and SELECT/RLS policies; never expose service credentials.';
+ case 'no_public_row':return zh?
+   '数据表已可访问，但目前没有获准公开的数据快照。检查五分钟生产任务、数据来源授权与 RLS is_public 状态。':
+   'Feed is accessible but no publicly authorized snapshot exists. Check the producer, market-data license and is_public gate.';
+ case 'site_config_missing':return zh?
+   '网站尚未提供可用的 Supabase 公共连接配置；请检查站点构建时的 SUPABASE_URL 和 SUPABASE_ANON_KEY。':
+   'Public Supabase configuration is missing from the site build.';
+ case 'network_error':return zh?
+   '分钟行情暂时无法连接；可能是网络、浏览器扩展或服务故障。':
+   'Minute-feed connection failed. Check the network, browser extensions or provider status.';
+ default:return zh?
+   '当前没有可核实的五分钟行情数据，不会使用日线价格代替。':
+   'No verified intraday data is available; daily prices will not be substituted.';
+ }
+}
+function classifyHttpError(http,body){
+ const code=body&&typeof body==='object'?String(body.code||''):'';
+ if(http===404)return code==='PGRST205'||code==='42P01'?'schema_missing':'endpoint_not_found';
+ if(http===401||http===403)return 'unauthorized';
+ return 'network_error';
+}
 function explainState(state,lang){
  const zh=lang==='zh',r=state.reason;
  return r==='stale'?zh?'已发布的分钟级数据超过 12 分钟没有更新；为了防止误导，暂停显示当前涨幅榜。':'Minute bars are more than 12 minutes old; current ranking is unavailable.':
  r==='membership_unavailable'?zh?'该指数没有可靠的有效成分股名单。Russell 指数需要提供授权的当前名单。':'No validated current constituents for this index. Licensed Russell membership is required.':
  r==='membership_stale'?zh?'该指数成分股名单过期，不能声称当前成分股排名。':'The universe membership is stale; cannot call this a current index screen.':
- zh?'行情服务尚未配置或尚未获准公开展示；不能用日线代替五分钟行情。':'Minute feed is not configured or public display is not authorized; no daily-price substitution.';
+ describeServiceIssue(status==='available'?'unavailable':status,lang);
 }
 function report(q,lang='zh',now=Date.now()){
  const universe=parseQuestion(q),v=select(feed,{universe},now),zh=lang==='zh',s=v.scope;
@@ -185,10 +217,10 @@ function notifyLeader(top){
 async function loadServer(){
  if(server)return server;
  const res=await root.fetch(SITEBASE+'data/site.json',{cache:'no-store'});
- if(!res.ok)throw Error('Site config missing');
+ if(!res.ok){const e=Error('Site config missing');e.floIssue='site_config_missing';throw e;}
  const data=await res.json();
  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(data.supabase_url||'')||!data.supabase_key)
-   throw Error('Public Supabase connection is not configured');
+   {const e=Error('Public Supabase connection is not configured');e.floIssue='site_config_missing';throw e;}
  server={url:data.supabase_url,key:data.supabase_key};return server;
 }
 async function poll(){
@@ -198,14 +230,20 @@ async function poll(){
    const cfg=await loadServer();
    const res=await root.fetch(cfg.url+'/rest/v1/flo_momentum_scan?name=eq.latest&select=payload',
     {cache:'no-store',headers:{apikey:cfg.key,Authorization:'Bearer '+cfg.key}});
-   if(!res.ok)throw Error('Minute scanner feed HTTP '+res.status);
+   if(!res.ok){
+     let body=null;
+     try{body=await res.json();}catch(_){}
+     const e=Error('Minute scanner feed HTTP '+res.status);
+     e.floIssue=classifyHttpError(res.status,body);
+     throw e;
+   }
    const rows=await res.json();
    feed=Array.isArray(rows)&&rows.length&&rows[0].payload||null;
-   status=feed?'available':'not_authorized_or_empty';
+   status=feed?'available':'no_public_row';
    const top=scanForNotification(feed);
    if(top)notifyLeader(top);
    error='';
- }catch(e){status='unavailable';error=String(e.message||'Unavailable').slice(0,150);}
+ }catch(e){status=e&&e.floIssue||'network_error';error=String(e.message||'Unavailable').slice(0,150);feed=null;}
  finally{busy=false;updateView();if(timer)clearTimeout(timer);if(started&&doc?.visibilityState!=='hidden')timer=setTimeout(poll,TIMER);}
 }
 function style(){
@@ -230,7 +268,7 @@ function start(){
  root.addEventListener?.('online',poll);
  poll();
 }
-root.FFFloMomentum={intent,parseQuestion,select,classify,report,scanForNotification,getState:()=>({status,feed,settings:{...settings},error}),poll,start,openPanel,
+root.FFFloMomentum={intent,parseQuestion,select,classify,report,describeServiceIssue,classifyHttpError,scanForNotification,getState:()=>({status,feed,settings:{...settings},error}),poll,start,openPanel,
  stop:()=>{started=false;if(timer)clearTimeout(timer);}};
 if(typeof module!=='undefined')module.exports=root.FFFloMomentum;
 if(doc){if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',start);else start();}

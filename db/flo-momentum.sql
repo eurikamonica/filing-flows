@@ -11,3 +11,7 @@ DROP POLICY IF EXISTS flo_momentum_public_read ON public.flo_momentum_scan;
 CREATE POLICY flo_momentum_public_read ON public.flo_momentum_scan
 FOR SELECT TO anon, authenticated USING (is_public = true);
 -- Never enable public read without market-data vendor redistribution rights.
+
+-- Tell PostgREST to reload table metadata after this file is applied in Supabase SQL Editor.
+-- Without this, a newly created relation may briefly produce 404 / PGRST205.
+NOTIFY pgrst, 'reload schema';

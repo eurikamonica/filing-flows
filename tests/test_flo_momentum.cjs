@@ -52,7 +52,7 @@ ok(!gainers.rows.some(x=>x.ticker==='BAD'),'fake eight-minute comparison exclude
 eq(F.select(feed,{universe:'russell2000'},NOW).rows.length,0,'no fake Russell leaders');
 const analysis=F.report('S&P 500 五分钟涨幅榜','zh',NOW);
 // report() reads only live feed state; without polling it must refuse invented data.
-ok(analysis.html.includes('行情服务')||analysis.html.includes('未配置'),'unconfigured source refuses fake report');
+ok(analysis.html.includes('当前没有可核实')&&analysis.facts.length===0,'unconfigured source explicitly refuses fake report');
 eq(F.scanForNotification(feed,NOW),null,'first open establishes baseline, no stale alerts');
 eq(F.scanForNotification(feed,NOW+500),null,'same top mover never repeats');
 const moved={...feed,generated_at:new Date(NOW+5*60000).toISOString(),
@@ -62,4 +62,11 @@ const moved={...feed,generated_at:new Date(NOW+5*60000).toISOString(),
   {...member.leaders[0],rank:2}]}}};
 eq(F.scanForNotification(moved,NOW+5*60000)?.ticker,'TSLA','new leader gets one alert');
 eq(F.scanForNotification(moved,NOW+5*60000+250)?.ticker,undefined,'new leader not animated twice');
+eq(F.classifyHttpError(404,{code:'PGRST205'}),'schema_missing','PGRST205 means missing/unexposed table');
+eq(F.classifyHttpError(404,{}),'endpoint_not_found','unknown 404 reports missing endpoint');
+eq(F.classifyHttpError(403,{}),'unauthorized','403 distinguishes denied access');
+eq(F.classifyHttpError(401,{}),'unauthorized','401 distinguishes denied access');
+ok(F.describeServiceIssue('schema_missing','zh').includes('db/flo-momentum.sql'),'Chinese setup instructions link actual SQL');
+ok(F.describeServiceIssue('no_public_row','zh').includes('公开'),'no authorized row separate from 404');
+ok(F.describeServiceIssue('unauthorized','zh').includes('密钥'),'access failure does not give false prices');
 console.log(n+' Flo five-minute universe / gainers / relay guardrail tests passed');
