@@ -348,8 +348,11 @@
       }
       const trend = ctx.trend ? trendBlock(ctx.trend(n.id), n) : '';
       const source = sourceBlock(n, spec.cite, ctx.cik);                    // where the figure was taken from
+      // Ask the existing Spin Sankey Flo to explain the exact selected node,
+      // with the current report period and source, without fabricating value.
+      const flo = !ctx.group ? '<button class="btn" type="button" data-flo-node>Ask Flo · explain this number</button>' : '';
       return `<div class="eyebrow">${ctx.group ? t(ctx.groupName) : t(ctx.company)} · ${t(ctx.label)}</div>
-        <div class="k">${t(n.name)}</div><div class="v">${lines}</div>${source}${trend}${body}
+        <div class="k">${t(n.name)}</div><div class="v">${lines}</div>${source}${trend}${body}${flo}
         <button class="btn" type="button" data-clear>Close note</button>`;
     }
     function select(id) {
@@ -374,6 +377,16 @@
       notes.scrollTop = 0;
       const clear = $('[data-clear]', notes);
       if (clear) clear.addEventListener('click', () => select(null));
+      const floButton = $('[data-flo-node]', notes);
+      if (floButton) floButton.addEventListener('click', () => {
+        if (!window.FFMascot || !window.FFMascot.explain) return;
+        const n = byId.get(id);
+        window.FFMascot.explain({
+          cik: ctx.cik, label: S.dec(n.name), period: ctx.label,
+          display: n.lines && n.lines[1] ? S.dec(n.lines[1][1]) : '',
+          docUrl: ctx.docUrl || null
+        });
+      });
     }
     async function draw() {
       await fontsReady();
@@ -816,7 +829,7 @@
   // four groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
     ['Earnings', [['', 'Earnings'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
-    ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-quality']]],
+    ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['x-quality']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths']]],
     ['Relationships & model', [['links', 'Customers, suppliers & model'], ['x-insiders']]],
@@ -909,7 +922,6 @@
         ${companyTabs(cik, which)}
       </div><div id="body"></div>`;
     const body = $('#body');
-    if (which === 'risk') return window.FFCompanyDisclosures.mount(body, { cik: p.cik, here });
     if (which === 'debt') return debtSection(body, cik, here);
     if (which === 'consensus') return consensusSection(body, cik, here);
     if (which === 'eps') {                                     // web/eps-research.js, with the hub's earnings preview inside
@@ -5180,7 +5192,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|risk|consensus|eps|posts|links|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|consensus|eps|posts|links|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

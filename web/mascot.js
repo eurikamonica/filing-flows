@@ -28,8 +28,11 @@
   const big = (v) => { if (!fin(v)) return '—'; const a = Math.abs(v), s = v < 0 ? '−' : ''; return s + (a >= 1e12 ? '$' + num(a / 1e12, 2) + 'T' : a >= 1e9 ? '$' + num(a / 1e9, 1) + 'B' : a >= 1e6 ? '$' + num(a / 1e6, 0) + 'M' : '$' + num(a, 0)); };
   const pc = (v, d = 0) => (fin(v) ? num(100 * v, d) + '%' : '—');
   const spc = (v, d = 1) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(100 * v), d) + '%' : '—');
+  const academy = () => root.FFFloAcademy || (typeof module !== 'undefined' ? require('./flo-academy.js') : null);
+  const workbooks = () => root.FFFloWorkbook || (typeof module !== 'undefined' ? require('./flo-workbook.js') : null);
+  const realWorkbooks = () => root.FFFloRealWorkbook || (typeof module !== 'undefined' ? require('./flo-real-workbook.js') : null);
   const memo = new Map();
-  const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
+  const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
   const fileT = (t) => String(t || '').toUpperCase().replace(/\./g, '-');
   const QN = { en: ['Leading', 'Weakening', 'Lagging', 'Improving'], zh: ['领先', '转弱', '落后', '改善'] };
   const L = (lg, en, zh) => (lg === 'zh' ? zh : en);
@@ -324,8 +327,8 @@
 
   function helpAnswer(lg, company) {
     const t = company ? company.ticker : 'NVDA';
-    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me about any company on the site — I answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Try “What is ${t} worth?”`,
-      `你好，我是 <b>Flo</b>。可以问我网站上任何公司的问题，我用网站自己的模型回答：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
+    return { html: L(lg, `Hi, I'm <b>Flo</b>. Ask me for a step-by-step DCF tutorial, cookie jar investigation, a number explanation, or SEC case studies. I also answer from the site's own models: <b>valuation</b> (fair value, DCF, every method), <b>rotation</b> (RRG quadrant, the price that moves it next week, Markov odds), its <b>industry</b>, <b>options</b> (implied range, max pain, walls), the latest <b>earnings</b>, <b>SEC filings</b>, <b>credit</b> and <b>analysts</b>. Try “What is ${t} worth?”`,
+      `你好，我是 <b>Flo</b>。我还能逐步教 DCF、调查 Cookie Jar 准备金、解释图表中的数字并讲解 SEC 真实案例。网站模型包括：<b>估值</b>（合理价值、DCF、各方法）、<b>轮动</b>（RRG 象限、下周进入各象限的价格、马尔科夫概率）、所属<b>行业</b>、<b>期权</b>（隐含区间、最大痛点、call/put wall）、最新<b>财报</b>、<b>SEC 申报</b>、<b>信用</b>和<b>分析师</b>。试试「${t} 值多少钱？」`), facts: [], mood: 'wave', links: [] };
   }
   let IX = null;
   const index = () => IX || (IX = json(DATA + 'index.json'));
@@ -334,6 +337,26 @@
     q = String(q || '');
     const lg = lang(q), ix = ixArg || await index(), cls = classify(q);
     let co = findCompany(q, ix) || ctxCo || null;
+    // Same-page alert intelligence (only on explicit ask-for-updates intent);
+    // leave ordinary 8-K and company filing lookups on the established handlers.
+    // Exact-interval intraday scans are sourced from a separate authenticated
+    // minute-bar collector, never from delayed daily-close extremes.
+    const momentum = root.FFFloMomentum;
+    if(momentum && momentum.intent && momentum.intent(q) && momentum.report)
+      return { ...momentum.report(q,lg), company:co||null };
+    const pulse = root.FFFloAlerts;
+    if(pulse && pulse.intent && pulse.intent(q) && pulse.report)
+      return { ...pulse.report(q,lg==='zh'), company:co||null };
+
+    const SECWB = realWorkbooks();
+    if (SECWB && SECWB.route(q)) return { ...SECWB.launch(q,co), company: co || null };
+    const WB = workbooks();
+    if (WB && WB.match(q)) return { ...WB.launch(q, lg), company: co || null };
+    const A = academy();
+    if (A && A.match(q)) {
+      const a = await A.handle(q, co, lg, c => json(DATA + 'c/' + c.cik + '.json'));
+      if (a) return { ...a, company: co || null };
+    }
     if (!co && pageCik() && ix) co = (ix.companies || []).find((c) => +c.cik === pageCik()) || null;
     if (!co) return cls.includes('help') || !q.trim() ? helpAnswer(lg, null)
       : { html: L(lg, 'Which company? Give me a ticker or a name — for example “NVDA valuation” or “Is Apple Leading next week?”', '哪家公司？请给我代码或名称，比如「NVDA 估值」或「苹果下周会进入领先吗？」'), facts: [], mood: 'think', links: [] };
@@ -386,6 +409,60 @@
 .flo-me{align-self:flex-end;background:var(--accent,#17734a);color:#fff;border-bottom-right-radius:3px}
 .flo-bot{align-self:flex-start;background:var(--surface-2,#efeee9);border-bottom-left-radius:3px}.flo-bot a{color:var(--accent,#17734a)}
 .flo-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.flo-links a{font-size:12px;border:1px solid var(--line,#ccc);border-radius:9px;padding:2px 8px;text-decoration:none}
+.flo-modes{display:flex;gap:5px;flex-wrap:wrap;flex-basis:100%;padding:1px 0 4px}.flo-modes button{background:color-mix(in srgb,var(--accent,#17734a) 12%,var(--surface,#fff));border-color:var(--accent,#17734a);font-weight:600}
+.flo-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.flo-actions button{font:inherit;font-size:12px;border:1px solid var(--accent,#17734a);border-radius:8px;background:transparent;color:inherit;padding:4px 8px;cursor:pointer}
+.flo-panel.flo-wide{width:min(850px,calc(100vw - 120px))}.flo-wide .flo-msg.flo-bot{max-width:100%;width:100%}
+.flo-workbook{border:1px solid var(--line,#d7d7d7);border-radius:10px;padding:8px;background:var(--surface,#fff);color:var(--ink,#222)}
+.flo-wb-head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:700}.flo-wb-head small{font-weight:400;color:var(--muted,#777)}
+.flo-wb-controls,.flo-wb-toolbar{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}.flo-wb-controls label{font-size:11px;display:flex;align-items:center;gap:5px}.flo-wb-controls select{max-width:240px;min-width:100px;font:inherit;padding:5px;border:1px solid var(--line,#ccc);border-radius:6px;background:var(--surface,#fff);color:inherit}
+.flo-wb-toolbar button{font:inherit;font-size:11px;padding:5px 7px;border:1px solid var(--line,#ccc);border-radius:6px;background:var(--surface,#fff);color:inherit;cursor:pointer}
+.flo-wb-toolbar button:hover{border-color:var(--accent,#17734a)}
+.flo-wb-formula{display:flex;align-items:stretch;gap:5px;margin-bottom:6px}
+.flo-wb-formula span{font-family:monospace;background:var(--surface-2,#eee);padding:6px 10px;border:1px solid var(--line,#ccc);min-width:52px;text-align:center}
+.flo-wb-formula input{font-family:monospace;min-width:0;flex:1;border:1px solid var(--line,#ccc);padding:6px;background:var(--surface,#fff);color:inherit;border-radius:6px}
+.flo-wb-formula button{border:0;border-radius:6px;color:#fff;background:var(--accent,#17734a);cursor:pointer}
+.flo-wb-scroll{overflow-x:auto;max-width:100%;border:1px solid var(--line,#ccc);border-radius:6px;max-height:360px;overflow-y:auto}
+.flo-wb-table{border-collapse:separate;border-spacing:0;font:11px 'IBM Plex Mono',monospace;min-width:570px;width:100%;table-layout:fixed}
+.flo-wb-table th,.flo-wb-table td{border-right:1px solid var(--line,#dedede);border-bottom:1px solid var(--line,#dedede);padding:0;overflow:hidden;white-space:nowrap}
+.flo-wb-table thead th,.flo-wb-table tr:first-child th{background:var(--surface-2,#eee)}
+.flo-wb-table th.flo-wb-line{position:sticky;left:0;background:var(--surface-2,#eee);width:28px;text-align:center;z-index:2}
+.flo-wb-table th.flo-wb-label{position:sticky;left:28px;background:var(--surface,#fff);min-width:190px;width:190px;padding:6px 7px;text-align:left;z-index:1}
+.flo-wb-table tr:first-child th:first-child{width:28px}
+.flo-wb-table td{min-width:85px;text-align:right}
+.flo-wb-table td button{display:block;border:0;background:none;color:inherit;padding:6px 8px;font:inherit;width:100%;text-align:right;cursor:cell;min-height:26px}
+.flo-real .flo-wb-table td{padding:6px 8px;white-space:normal;font-size:11px}.flo-real .flo-wb-table td button{font-size:11px}
+.flo-real .flo-wb-table td.flo-wb-reported{background:color-mix(in srgb,#878c8c 14%,var(--surface,#fff));font-weight:600}
+.flo-real .flo-wb-table td.flo-wb-input{background:color-mix(in srgb,#397ad7 15%,var(--surface,#fff))}
+.flo-real .flo-wb-table td.flo-wb-formula{background:color-mix(in srgb,#9871cb 17%,var(--surface,#fff))}
+.flo-wb-evidence{border:1px solid var(--line,#dedede);border-left:3px solid var(--accent,#17734a);padding:8px;margin:8px 0;border-radius:6px}
+.flo-wb-evidence a{overflow-wrap:anywhere;font-size:12px}
+.flo-practice{padding:8px;margin:9px 0;border:1px solid var(--line,#ccc);border-radius:9px;background:var(--surface,#fff)}
+.flo-practice .flo-coach-controls button{padding:4px 7px}.flo-practice code{font:11px 'IBM Plex Mono',monospace;color:var(--accent,#17734a)}
+.flo-practice label{font-size:11px}.flo-practice select{background:var(--surface,#fff);color:inherit;border:1px solid var(--line,#ccc);border-radius:6px;padding:4px}
+.flo-coach{border:1px solid var(--line,#ccc);border-radius:11px;padding:10px;margin:12px 0;background:var(--surface,#fff);font-size:12px}
+.flo-coach header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}
+.flo-coach header small{color:var(--muted,#777)}.flo-coach p{margin:5px 0 8px}
+.flo-coach-progress{height:5px;border-radius:8px;overflow:hidden;background:var(--surface-2,#eee);margin-bottom:9px}
+.flo-coach-progress span{height:100%;display:block;background:var(--accent,#17734a);transition:width .16s}
+.flo-coach-controls{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.flo-coach-controls button,.flo-coach-quiz button,.flo-coach-sim button{border:1px solid var(--line,#ccc);border-radius:6px;font:inherit;font-size:11px;background:var(--surface,#fff);color:inherit;padding:6px 8px;cursor:pointer}
+.flo-coach-controls button:disabled{opacity:.4;cursor:not-allowed}
+.flo-coach-quiz{padding:8px;border-top:1px solid var(--line,#ccc)}
+.flo-coach-quiz button{margin:2px}.flo-coach-quiz button[aria-pressed=true]{border-color:var(--accent,#17734a);font-weight:bold}
+.flo-coach-sim{margin:12px 0;padding:10px;border:1px dashed var(--line,#ccc);border-radius:11px;font-size:12px}
+.flo-coach-sim label{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:11px}
+.flo-coach-sim input,.flo-coach-sim select{max-width:190px;padding:5px;border-radius:5px;border:1px solid var(--line,#ccc);background:var(--surface,#fff);color:inherit}
+.flo-sim-results{font-size:12px;padding:4px 0}.flo-sim-results li{margin:4px 0}
+.flo-wb-table .flo-wb-input{background:color-mix(in srgb,#397ad7 13%,var(--surface,#fff));color:var(--ink,#222)}
+.flo-wb-table .flo-wb-formula{background:color-mix(in srgb,#9871cb 12%,var(--surface,#fff));color:var(--ink,#222)}
+.flo-wb-table td.selected{outline:2px solid var(--accent,#17734a);outline-offset:-2px;position:relative}
+.flo-wb-table .flo-wb-empty{background:var(--surface,#fff)}
+.flo-wb-table th.flo-wb-heading{background:var(--surface-2,#eee);color:var(--ink,#222);padding:6px}
+.flo-wb-help,.flo-wb-feedback{font-size:11px;color:var(--muted,#777);margin:5px 0}
+@media (max-width:560px){.flo-panel.flo-wide{width:100%;max-width:100%}.flo-wb-scroll{max-height:44vh}.flo-wb-table th.flo-wb-label{width:155px;min-width:155px}}
+.flo-mini-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0}.flo-mini-form label{display:flex;flex-direction:column;font-size:11px}.flo-mini-form input{min-width:0;width:100%;border-radius:6px;border:1px solid var(--line,#ccc);color:inherit;background:var(--surface,#fff);font:inherit;padding:5px}.flo-mini-form button{border:0;border-radius:8px;background:var(--accent,#17734a);color:#fff;cursor:pointer;padding:6px;font:inherit;grid-column:1/-1}
+.flo-example{border-left:3px solid var(--accent,#17734a);padding:7px 9px;margin:7px 0;background:var(--surface,#fff);border-radius:0 8px 8px 0}.flo-source{font-size:11px;color:var(--muted,#777)}.flo-list{padding-left:18px;margin:7px 0}.flo-list li{margin-bottom:4px}.flo-ac-head{display:flex;align-items:center;justify-content:space-between;gap:7px}.flo-ac-head small{color:var(--muted,#777)}
+
 .flo-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}.flo-chips button{font:inherit;font-size:12px;border:1px solid var(--line,#ccc);background:none;color:inherit;border-radius:12px;padding:3px 9px;cursor:pointer}
 .flo-chips .flo-more{border-style:dashed;color:var(--muted,#777)}.flo-chips button:hover{border-color:var(--accent,#17734a);color:var(--accent,#17734a)}
 .flo-form{display:flex;gap:6px;padding:10px 54px 12px 12px;border-top:1px solid var(--line,#e5e5e5)}.flo-form input{flex:1;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--bg,#fff);color:inherit;min-width:0}
@@ -405,6 +482,15 @@
 .flo-dots circle{fill:var(--muted,#9a9994);animation:flo-dot 1s infinite}.flo-dots circle:nth-child(2){animation-delay:.15s}.flo-dots circle:nth-child(3){animation-delay:.3s}
 @keyframes flo-dot{0%,100%{opacity:.25}50%{opacity:1}}
 @keyframes flo-talk{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+.flo-launch[data-flo-signal="8k"] .flo-btn{box-shadow:0 0 0 6px #cf4b4b28,0 0 20px #cf4b4b90}
+.flo-launch[data-flo-signal="13f"] .flo-btn{box-shadow:0 0 0 6px #538be92b,0 0 20px #538be98c}
+.flo-launch[data-flo-signal="price"] .flo-btn{box-shadow:0 0 0 6px #e2a52e28,0 0 20px #e2a52e8c}
+.flo-launch[data-flo-signal="news"] .flo-btn{box-shadow:0 0 0 6px #3da67828,0 0 20px #3da6788c}
+.flo-half[data-flo-signal="8k"]{filter:drop-shadow(0 0 8px #d05b5b99)}
+.flo-half[data-flo-signal="13f"]{filter:drop-shadow(0 0 8px #6e9cde99)}
+.flo-half[data-flo-signal="price"]{filter:drop-shadow(0 0 8px #e3ad3b99)}
+.flo-half[data-flo-signal="news"]{filter:drop-shadow(0 0 8px #42bd8788)}
+@media(prefers-reduced-motion:reduce){.flo-launch[data-flo-signal] .flo-btn,.flo-half[data-flo-signal]{animation:none!important;filter:none!important;transition:none!important}}
 @media (prefers-reduced-motion:reduce){.flo-half,.flo-panel,.flo-hint,.flo-half *{animation:none!important;transition:none!important}}`;
 
   let ui = null, moodTimer = null;
@@ -445,9 +531,40 @@
     mood('talk');
     const lg = lang(q), LM = root.LocalFilingModel;
     const local = LM && LM.isConnected && LM.isConnected() && LM.ask && (a.facts || []).length;
+    ui.panel.classList.toggle('flo-wide', !!(a.workbook || a.realWorkbook));
+    layout(); // mascot positions follow the resized worksheet panel
     wait.innerHTML = a.html + ((a.links || []).length ? `<div class="flo-links">${a.links.map(([h, t]) => link(h, t)).join('')}</div>` : '') +
+      ((a.actions || []).length ? `<div class="flo-actions">${a.actions.map(x => `<button type="button" class="flo-action" data-flo-q="${esc(x.question)}">${esc(x.label)}</button>`).join('')}</div>` : '') +
       (local ? `<button type="button" class="flo-local">${lg === 'zh' ? '用本地模型解释' : 'Explain with the local model'}</button>` : '');
     ui.log.scrollTop = ui.log.scrollHeight;
+    if (a.workbook && workbooks()) workbooks().mountAll(wait,lg);
+    if (a.realWorkbook && realWorkbooks()) realWorkbooks().mountAll(wait,lg);
+    wait.querySelectorAll('.flo-action').forEach(b => b.addEventListener('click', () => send(b.dataset.floQ)));
+    wait.querySelectorAll('form[data-flo-calc]').forEach(form => form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const A = academy(); if (!A) return;
+      const fields = Object.fromEntries(Array.from(form.querySelectorAll('input[name], select[name]')).map(input => [input.name, input.value]));
+      try {
+        if (form.dataset.floCalc === 'reserve') {
+          const v = A.reserveScenario(fields);
+          addMsg('<b>Reserve rollforward simulation</b><p>Closing reserve ' + usd(v.reserve) +
+            ' · Pretax profit ' + usd(v.profit) +
+            ' · Cash ' + usd(v.cash) +
+            '.</p><small>Illustration only. Releases are not proof of earnings manipulation.</small>', 'bot');
+        } else if (form.dataset.floCalc === 'fcff') {
+          const v = A.fcff(fields);
+          addMsg('<b>FCFF = ' + esc(v.toLocaleString('en-US', {maximumFractionDigits:2})) +
+            '</b> (same units as exercise). EBIT × (1−Tax%) + D&amp;A − CapEx − ΔNWC. <small>Hypothetical inputs, NOT company data.</small>', 'bot');
+        } else if (form.dataset.floCalc === 'rebate') {
+          const v = A.rebate(fields);
+          addMsg('<b>Rebate allocation</b><p>Total ' + usd(v.total) +
+            ' · Sold units → COGS reduction ' + usd(v.cogs) +
+            ' · Unsold units → inventory cost reduction ' + usd(v.inventory) +
+            '.</p><small>Hypothetical contract; actual recognition varies.</small>', 'bot');
+        }
+        mood('happy',1600);
+      } catch(e) { addMsg(esc(e.message),'bot'); mood('worried',1800); }
+    }));
     const b = wait.querySelector('.flo-local');
     if (b) b.addEventListener('click', async () => {
       b.disabled = true; b.textContent = '…'; mood('think');
@@ -462,9 +579,26 @@
   }
   function renderChips() {
     if (!ui) return;
-    ui.chips.innerHTML = chips().map((c) => `<button type="button">${esc(c)}</button>`).join('') +
+    const T = (ui.co && ui.co.ticker) || 'NVDA';
+    const zh = zhUI();
+    const modes = [
+      [zh ? 'SEC 真实练习' : 'Real SEC Lab', 'NVDA real SEC Excel modeling lab'],
+      [zh ? 'Excel 模拟练习' : 'Spreadsheet Lab', 'open Excel modeling lab'],
+      [zh ? '学 DCF' : 'Learn DCF', 'teach ' + T + ' DCF step by step'],
+      [zh ? 'Cookie Jar 侦探' : 'Cookie Jar', T + ' cookie jar'],
+      [zh ? 'SEC 案例' : 'SEC cases', 'Sunbeam case study'],
+      [zh ? '最新扫描' : 'Recent scans', zh ? '最近扫描有什么新消息' : 'What changed since the last scan?'],
+      [zh ? '5分钟涨幅榜' : '5m Market Movers', 'S&P 500 五分钟涨幅榜'],
+      [zh ? '财务造假案例训练' : 'Forensic Case Lab', 'WorldCom SEC case spreadsheet'],
+      [zh ? 'HealthSouth 案例' : 'HealthSouth Case', 'HealthSouth SEC spreadsheet'],
+      [zh ? 'Channel Stuffing' : 'Revenue Case', 'Bristol SEC case spreadsheet'],
+      [zh ? '返利练习' : 'Rebate lab', 'supplier rebate exercise']
+    ];
+    ui.chips.innerHTML = '<div class="flo-modes">' + modes.map(m => '<button type="button" class="flo-mode" data-flo-q="' + esc(m[1]) + '">' + esc(m[0]) + '</button>').join('') + '</div>' +
+      chips().map((c) => `<button type="button">${esc(c)}</button>`).join('') +
       `<button type="button" class="flo-more" aria-label="${zhUI() ? '换一批问题' : 'More questions'}">↻ ${zhUI() ? '换一批' : 'More'}</button>`;
-    ui.chips.querySelectorAll('button:not(.flo-more)').forEach((b) => b.addEventListener('click', () => send(b.textContent)));
+    ui.chips.querySelectorAll('.flo-mode').forEach(b => b.addEventListener('click', () => send(b.dataset.floQ)));
+    ui.chips.querySelectorAll('button:not(.flo-more):not(.flo-mode)').forEach(b => b.addEventListener('click', () => send(b.textContent)));
     ui.chips.querySelector('.flo-more').addEventListener('click', () => { ui.seed = (ui.seed || 0) + 1; renderChips(); });
   }
 
@@ -520,6 +654,24 @@
     root.requestAnimationFrame(frame);
   }
 
+  async function explainNode(context) {
+    const A = academy(); if (!A) return null;
+    const ix = await index();
+    const co = ((ix && ix.companies) || []).find(c => +c.cik === +(context && context.cik)) || null;
+    const answer = A.explain(co, zhUI() ? 'zh' : 'en', context || {});
+    if (!ui) return answer;
+    open();
+    const msg = addMsg(answer.html + (answer.links && answer.links.length ?
+      '<div class="flo-links">' + answer.links.map(([u,l]) => link(u,l)).join('') + '</div>' : ''), 'bot');
+    if (answer.actions && answer.actions.length) {
+      const actions = doc.createElement('div'); actions.className = 'flo-actions';
+      answer.actions.forEach(a => {const b = doc.createElement('button'); b.type='button'; b.className='flo-action'; b.textContent=a.label;
+        b.addEventListener('click',()=>send(a.question)); actions.appendChild(b);});
+      msg.appendChild(actions);
+    }
+    mood('talk',1800);
+    return answer;
+  }
   function open() {
     if (!ui) return;
     ui.panel.hidden = false; ui.launch.hidden = true;
@@ -599,7 +751,55 @@
     root.dispatchEvent(new CustomEvent('ff:mascotready'));
     setTimeout(() => mood('wave', 1800), 1200);
   }
-  root.FFMascot = { open, ask, mount, classify, findCompany, lang, pageContext, chipsFor,
+  function signalReaction(kind, ev) {
+    if (!ui) return;
+    const t=nowMs(),p=ui.halves;
+    const signalKind = ['8k','13f','price','news'].includes(ev&&ev.kind)?ev.kind:'news';
+    ui.launch.dataset.floSignal=signalKind;
+    p.forEach(h=>{h.el.dataset.floSignal=signalKind;});
+    setTimeout(()=>{
+      if(!ui||ui.launch.dataset.floSignal!==signalKind)return;
+      delete ui.launch.dataset.floSignal;
+      p.forEach(h=>{if(h.el.dataset.floSignal===signalKind)delete h.el.dataset.floSignal;});
+    },5200);
+    if (kind==='worried') { mood('worried',4200);p.forEach(h=>h.shake=t+720); }
+    else if (ev&&ev.kind==='13f') { mood('wave',3300);p[0].spin=t+720;p[1].hop=t+460; }
+    else if (ev&&ev.kind==='price') { mood(kind,2600);p.forEach((h,i)=>h.hop=t+460+i*140); }
+    else mood(kind||'wave',1800);
+    // No automatic chat opening, audio or forced navigation.
+  }
+  function showSignal(ev,html) {
+    if (!ui || !ev || typeof html!=='string') return null;
+    open();
+    const box=addMsg(html,'bot');
+    box.dataset.floSignal=String(ev.kind||'');
+    const ticker=/^[A-Z][A-Z0-9.\\-]{0,9}$/.test(String(ev.ticker||''))?String(ev.ticker):'';
+    if(ticker){
+      const controls=doc.createElement('div');
+      controls.className='flo-actions';
+      const q=ev.kind==='price'?ticker+' valuation':ev.kind==='13f'?ticker+' industry rotation':ticker+' latest SEC filings';
+      const explainBtn=doc.createElement('button');
+      explainBtn.type='button';explainBtn.textContent=zhUI()?'继续分析公司基本面':'Compare company fundamentals';
+      explainBtn.className='flo-action';
+      explainBtn.addEventListener('click',()=>send(q));
+      const companyLink=doc.createElement('a');
+      companyLink.href=BASE+'#t-'+encodeURIComponent(ticker);
+      companyLink.textContent=zhUI()?'打开公司财报':'Open company financials';
+      companyLink.className='flo-action flo-signal-company';
+      controls.append(explainBtn,companyLink);
+      box.append(controls);
+    }
+    ui.log.scrollTop=ui.log.scrollHeight;
+    mood(ev.kind==='8k'&&ev.priority==='high'?'worried':'talk',2400);
+    return box;
+  }
+  function refreshSignalData() {
+    // Company index, earnings and model snapshots are cached by the current page;
+    // the next Flo question must revalidate with the newly published site build.
+    memo.clear();
+  }
+  root.FFMascot = { open, ask, explain: explainNode, mount, classify, findCompany, lang, pageContext, chipsFor,
+    signalReaction, showSignal, refreshSignalData,
     refreshAppearance() { if (ui && ui.panel.hidden) mood('idle'); }
   };
   if (doc && doc.body !== undefined) { if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', mount); else mount(); }
