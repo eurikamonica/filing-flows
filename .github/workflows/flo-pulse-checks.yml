@@ -6,6 +6,11 @@ on:
       - 'web/flo-alerts.js'
       - 'web/flo-timeline.js'
       - 'web/flo-impact.js'
+      - 'web/flo-momentum.js'
+      - 'scripts/flo_momentum.py'
+      - 'config/flo-market-universes/**'
+      - 'tests/test_flo_momentum.py'
+      - 'tests/test_flo_momentum.cjs'
       - 'web/mascot.js'
       - 'web/index.html'
       - 'disclosures/docs/index.html'
@@ -35,10 +40,14 @@ jobs:
             tests/test_flo_alerts.cjs
             tests/test_flo_timeline.cjs
             tests/test_flo_impact.cjs
+            tests/test_flo_momentum.cjs
+            tests/test_flo_momentum.py
             tests/test_flo_alert_browser.cjs
             web/flo-alerts.js
             web/flo-timeline.js
             web/flo-impact.js
+            web/flo-momentum.js
+            scripts/flo_momentum.py
             web/mascot.js
             web/index.html
             disclosures/docs/index.html
@@ -54,6 +63,8 @@ jobs:
           node --check web/flo-alerts.js
           node --check web/flo-timeline.js
           node --check web/flo-impact.js
+          node --check web/flo-momentum.js
+          python -m py_compile scripts/flo_momentum.py tests/test_flo_momentum.py
           node --check web/mascot.js
           python -m py_compile scripts/build_flo_alerts.py tests/test_build_flo_alerts.py
       - name: No false first-view alert, duplicate popup, or unsourced news
@@ -61,6 +72,9 @@ jobs:
           node tests/test_flo_alerts.cjs
           node tests/test_flo_timeline.cjs
           node tests/test_flo_impact.cjs
+          node tests/test_flo_momentum.cjs
           node tests/test_flo_alert_browser.cjs
       - name: Feed builder and SEC source contract
-        run: python -m unittest discover -s tests -p 'test_build_flo_alerts.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_build_flo_alerts.py' -v
+          python -m unittest discover -s tests -p 'test_flo_momentum.py' -v
