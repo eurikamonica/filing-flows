@@ -50,20 +50,69 @@
     out += '<div class="metrics">' +
       kpi('Official transcript links', d.counts?.official_transcripts || 0, 'Validated company IR pages') +
       kpi('SEC earnings disclosures', d.counts?.sec_earnings_evidence || 0, '8-K Item 2.02; not transcript') +
+      kpi('IR links to review', d.counts?.official_ir_candidates || 0, 'Discovered, not transcript-verified') +
+      kpi('Quantitative practice', d.counts?.quantitative_exercises || 0, 'Unreconciled management inputs') +
       kpi('Shown in filter', filtered.length, 'Sorted by source date') + '</div>';
     if (!filtered.length) return out + empty('No matching official evidence collected yet. This does not mean no earnings call occurred.');
     out += '<div class="section-head"><h3>Official-source timeline</h3></div><div class="tablebox"><table><thead><tr>' +
       '<th>Company / source date</th><th>Record classification</th><th>Original public sources</th><th>Evidence</th></tr></thead><tbody>';
     for (const r of filtered.slice(0, 100)) {
       const ir = r.kind === 'official_ir_transcript';
+      const candidate = r.kind === 'official_ir_candidate';
       out += '<tr><td><b>' + esc(r.ticker) + '</b><br>' + esc(r.date || '—') + '</td><td>' +
-        (ir ? 'Official transcript verified' : 'SEC earnings release (8-K)') +
-        '</td><td>' + (ir ? link(r.ir_url, 'Read official IR transcript') + '<br>' : '') +
+        (ir ? 'Official transcript verified' : candidate ? 'IR link found — not verified' : 'SEC earnings release (8-K)') +
+        '</td><td>' + (ir ? link(r.ir_url, 'Read official IR transcript') + '<br>' : candidate ? link(r.ir_url, 'Official IR candidate') + '<br>' : '') +
         (r.sec_url ? link(r.sec_url, 'Open SEC filing') : '—') +
         '</td><td>' + (ir ? esc(String(r.speaker_count || 0)) + ' detected speakers · Official source link' :
-          'Item ' + esc(r.items || '2.02') + ' · Not a transcript') + '</td></tr>';
+          candidate ? 'Unverified ' + esc(r.candidate_type || 'link') : 'Item ' + esc(r.items || '2.02') + ' · Not a transcript') + '</td></tr>';
     }
-    return out + '</tbody></table></div><p class="sub">Source links are retained; complete transcript text is not republished on this page.</p>';
+    out += '</tbody></table></div>';
+    const intel = filtered.filter(r => r.kind === 'official_ir_transcript' &&
+      (r.guidance?.length || r.analyst_questions?.length || r.quantitative_exercises?.length)).slice(0, 8);
+    if (intel.length) {
+      out += '<div class="section-head"><h3>Management guidance · Analyst Q&A · Quant practice</h3></div>';
+      for (const r of intel) {
+        const label = esc(r.ticker) + ' · ' + esc(r.date);
+        out += '<div class="panel" style="margin:12px 0"><h3>' + label + '</h3>' +
+          '<p class="sub">Rules-based extraction from official IR. Not reconciled to SEC XBRL. ' +
+          link(r.ir_url, 'Original transcript') + '</p>';
+        const guide = (r.guidance || []).slice(0, 7);
+        if (guide.length) {
+          out += '<h4>Stated guidance ranges (unreconciled)</h4><div class="tablebox"><table><thead>' +
+            '<tr><th>Metric</th><th>Forecast horizon</th><th>Management range</th><th>Speaker</th></tr></thead><tbody>';
+          for (const g of guide) out += '<tr><td>' + esc(g.metric) + '</td><td>' + esc(g.horizon) + '</td><td>' +
+            esc(g.low) + '–' + esc(g.high) + ' ' + esc(g.unit) + '</td><td>' + esc(g.speaker) + '</td></tr>';
+          out += '</tbody></table></div>';
+        }
+        const diff = (r.guidance_changes || []).slice(0, 6);
+        if (diff.length) {
+          out += '<h4>Same-period guidance revisions</h4><p class="sub">' +
+            diff.map(g => esc(g.metric + ' ' + g.horizon) + ': ' +
+              esc(g.prior_midpoint) + ' → ' + esc(g.current_midpoint) + ' ' + esc(g.unit) +
+              ' (Δ ' + (g.delta > 0 ? '+' : '') + esc(g.delta) + ')').join(' · ') +
+            '. Both endpoints are company statements; not SEC-reconciled.</p>';
+        }
+        if (r.qa_count_detected) out += '<h4>Analyst question themes</h4><p class="sub">' +
+          Object.entries(r.qa_topic_counts || {}).map(([topic, n]) => esc(topic) + ': ' + esc(n)).join(' · ') +
+          '. Topic tagging is heuristic; counts are not sentiment scores.</p>';
+        const qs = (r.analyst_questions || []).slice(0, 4);
+        if (qs.length) out += '<div class="explain">' + qs.map(q => esc(q.speaker) + ' · ' +
+          esc(q.question_prompt) + ' (heuristic topic)').join('<br>') + '</div>';
+        const ex = (r.quantitative_exercises || []).slice(0, 5);
+        if (ex.length) {
+          out += '<h4>Quantitative practice · Show calculations</h4>';
+          for (const task of ex) {
+            out += '<details class="explain" style="margin:6px 0"><summary>' + esc(task.prompt) +
+              '</summary><p>Formula: ' + esc(task.formula) + '<br>Midpoint: ' +
+              esc(task.answer?.midpoint) + ' ' + esc(task.unit) + ' · Range width: ' +
+              esc(task.answer?.width) + ' ' + esc(task.unit) +
+              '<br>Arithmetic checked; management inputs not independently reconciled.</p></details>';
+          }
+        }
+        out += '</div>';
+      }
+    }
+    return out + '<p class="sub">Source links and derived metadata only; full transcript text is not republished.</p>';
   }
   function bind() {
     if (state.tab !== 'calls') return;
