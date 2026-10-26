@@ -41,6 +41,7 @@
   const lang = (q) => (/[㐀-鿿]/.test(String(q || '')) ? 'zh' : 'en');
   const INTENTS = [
     ['filings', /\bfil(?:ing|ings|ling|lings)\b|\bedgar\b|\b(?:sec\s+)?submissions?\b|(?:latest|recent|newest|last)\s+(?:sec\s+)?(?:reports?|documents?|filings?|fillings?)\b|(?:最新|最近(?:一次)?)(?:的|\s)*(?:SEC\s*)?(?:申报|披露|文件|提交)|SEC\s*(?:文件|申报|披露)/i],
+    ['calls', /earnings? calls?|conference calls?|transcripts?|(?:analyst\s+)?q\s*&\s*a|guidance|call questions?|业绩指引|电话会议|逐字稿|分析师问答|财报问答|量化问题|会议纪要/i],
     // widen these when web/flo-questions.js gains a phrasing Flo misses (tests/test_mascot.cjs checks every one)
     ['options', /\boptions?\b|max ?pain|put wall|call wall|option walls?|implied (move|vol|range)|expected move|\d+% range|\biv\b|\bstrikes?\b|expir|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间|预期波动|行权价|到期/i],
     ['industry', /\bindustr(y|ies)\b|\bsector\b|\bpeers?\b|行业|板块|同业/i],
@@ -323,7 +324,41 @@
       `${esc(c.ticker)} 现价 ${usd(d.price)}：${an ? `分析师目标价 ${usd(an.low)}–${usd(an.high)}，平均 ${usd(an.point)}` : ''}${an && pm ? '；' : ''}${pm ? `Polymarket 隐含价格 ${usd(pm.point)}` : ''}。`);
     return { html, facts, mood: an && fin(d.price) && an.point > d.price * 1.15 ? 'happy' : 'talk', links: [[`${BASE}#c-${c.cik}-consensus`, L(lg, 'Consensus', '一致预期页')]] };
   }
-  const HANDLERS = { filings, valuation, rotation, industry, options, earnings, credit, analysts };
+  async function calls(c, lg) {
+    const d = await json(HUB + 'earnings-calls/index.json');
+    const rows = (d && d.rows || []).filter(x => x.ticker === c.ticker && x.kind === 'official_ir_transcript')
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    const r = rows[0];
+    if (!r) return {html: L(lg,
+        'No issuer-verified earnings-call transcript is published for ' + esc(c.ticker) +
+        '. An 8-K earnings release or webcast listing is not a transcript.',
+        esc(c.ticker) + ' 尚无已验证的官方财报电话会议逐字稿。8-K 业绩公告或 Webcast 入口不等于逐字稿。'),
+      facts: [], mood: 'think', links: [[BASE + 'disclosures/#calls', 'Earnings calls']]};
+    const g = (r.guidance || [])[0], qa = (r.analyst_questions || [])[0],
+      ex = (r.quantitative_exercises || [])[0];
+    const desc = g ? L(lg,
+      'Management-stated (not SEC-reconciled): ' + esc(g.metric) + ' ' + esc(g.horizon) +
+      ' ' + esc(g.low) + '–' + esc(g.high) + ' ' + esc(g.unit) + '.',
+      '管理层陈述（未与 SEC 财报核对）：' + esc(g.metric) + ' ' + esc(g.horizon) +
+      ' ' + esc(g.low) + '–' + esc(g.high) + ' ' + esc(g.unit) + '。') : '';
+    const qaDescription = qa ? L(lg, ' Analyst Q&A theme: ' + esc(qa.topic) + ' (heuristic).',
+      ' 分析师问答主题：' + esc(qa.topic) + '（规则推断）。') : '';
+    const practice = ex ? L(lg, ' Example quantitative task: ' + esc(ex.prompt) +
+      ' Calculated midpoint: ' + esc(ex.answer.midpoint) + ' ' + esc(ex.unit) +
+      ', width: ' + esc(ex.answer.width) + ' ' + esc(ex.unit) + '.',
+      ' 自动量化题：' + esc(ex.prompt) + ' 中点：' + esc(ex.answer.midpoint) + ' ' + esc(ex.unit) +
+      '，区间宽度：' + esc(ex.answer.width) + ' ' + esc(ex.unit) + '。') : '';
+    const html = esc(c.ticker) + ' · ' + esc(r.date || 'date unverified') +
+      ' · ' + L(lg, 'official IR transcript link verified.', '官方 IR 逐字稿链接已验证。') + ' ' +
+      desc + qaDescription + practice + (ex ? ' <em>' + L(lg, 'Practice based on unverified management inputs.',
+        '练习题所用数据尚未独立核验。') + '</em>' : '');
+    return {html, facts: [c.ticker + ' verified issuer IR call ' + r.date,
+      ...(g ? ['Company-stated guidance '+ g.metric + ' '+g.horizon+' '+g.low+'-'+g.high+' '+g.unit+' (not SEC-reconciled)'] : [])],
+      mood: 'talk', links: [[BASE + 'disclosures/#calls', L(lg, 'Earnings calls / practice', '会议与练习题')], 
+      ...(r.ir_url ? [[r.ir_url, L(lg, 'Original issuer transcript', '公司官方逐字稿')]] : [])]};
+  }
+
+  const HANDLERS = { filings, calls, valuation, rotation, industry, options, earnings, credit, analysts };
 
   function helpAnswer(lg, company) {
     const t = company ? company.ticker : 'NVDA';
@@ -761,7 +796,7 @@
   function toolHost(){return ui&&ui.toolHost||null;}
   function updateUnread(){
     if(!ui)return;
-    const total=Math.min(99,ui.unread.pulse+ui.unread.momentum);
+    const total=Math.min(99,ui.unread.pulse+ui.unread.momentum+ui.unread.earnings);
     const badge=ui.launch.querySelector('.flo-unread');
     if(badge){badge.hidden=!total;badge.textContent=String(total);}
     for(const kind of ['pulse','momentum']){
@@ -770,9 +805,9 @@
     }
   }
   function notify(kind,title){
-    if(!ui||!['pulse','momentum'].includes(kind))return false;
+    if(!ui||!['pulse','momentum','earnings'].includes(kind))return false;
     ui.unread[kind]=Math.min(99,ui.unread[kind]+1);
-    ui.pendingTool=kind;updateUnread();
+    ui.pendingTool=kind==='earnings'?'chat':kind;updateUnread();
     if(ui.panel.hidden){
       const hint=ui.launch.querySelector('.flo-hint');
       if(hint){
@@ -791,6 +826,7 @@
     const controller=name==='pulse'?root.FFFloAlerts:name==='momentum'?root.FFFloMomentum:null;
     if(name!=='chat'&&(!controller||typeof controller.openPanel!=='function'))name='chat';
     const isChat=name==='chat';
+    if(isChat&&ui.unread.earnings){ui.unread.earnings=0;updateUnread();}
     ui.activeTool=name;
     if(ui.pendingTool===name)ui.pendingTool=null;
     ui.log.hidden=!isChat;ui.chips.hidden=!isChat;
@@ -840,7 +876,7 @@
       <div class="flo-half flo-h1" aria-hidden="true">${HALF1}</div><div class="flo-half flo-h2" aria-hidden="true">${HALF2}</div>`;
     doc.body.appendChild(r);
     const mk = (sel, fx, fy) => { const el = r.querySelector(sel); return { el, fx, fy, pupils: el.querySelector('.flo-pupils'), hop: 0, shake: 0, spin: 0, look: null }; };
-    ui = { launch: r.querySelector('.flo-launch'), btn: r.querySelector('.flo-btn'), panel: r.querySelector('.flo-panel'), log: r.querySelector('.flo-log'), chips: r.querySelector('.flo-chips'), toolHost:r.querySelector('.flo-tool-host'), activeTool:'chat', pendingTool:null, unread:{pulse:0,momentum:0},
+    ui = { launch: r.querySelector('.flo-launch'), btn: r.querySelector('.flo-btn'), panel: r.querySelector('.flo-panel'), log: r.querySelector('.flo-log'), chips: r.querySelector('.flo-chips'), toolHost:r.querySelector('.flo-tool-host'), activeTool:'chat', pendingTool:null, unread:{pulse:0,momentum:0,earnings:0},
       input: r.querySelector('.flo-form input'), co: null, toolsExpanded: false, expanded: false, halves: [mk('.flo-h1', 27, 34), mk('.flo-h2', 93, 86)], mood: 'idle', hover: false,
       ptr: { x: root.innerWidth / 2, y: root.innerHeight / 2, t: nowMs() }, typingUntil: 0,
       reduce: !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) };
@@ -945,8 +981,20 @@
     // the next Flo question must revalidate with the newly published site build.
     memo.clear();
   }
+
+  function notifyEarnings(event){
+    if(!ui||!event||!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(String(event.ticker||'')))return false;
+    signalReaction('happy',{kind:'news',ticker:event.ticker});
+    const title=esc(event.ticker)+' · '+esc(event.date||'date not provided');
+    addMsg('<b>'+title+'</b> — '+(zhUI()?'公司 IR 电话会议逐字稿链接已验证；管理层指引需独立核对。':
+      'Issuer IR transcript link verified; guidance remains unverified.')+
+      ' <a href="'+BASE+'disclosures/#calls">'+(zhUI()?'查看来源与练习':'Official sources and practice')+'</a>','bot');
+    if(ui.panel.hidden||ui.activeTool!=='chat')notify('earnings',
+      event.ticker+' · '+(zhUI()?'电话会议资料已更新':'Verified earnings call'));
+    return true;
+  }
   root.FFMascot = { open, ask, explain: explainNode, mount, classify, findCompany, lang, pageContext, chipsFor,
-    signalReaction, showSignal, refreshSignalData, openTool, toolHost, notify,
+    signalReaction, showSignal, refreshSignalData, openTool, toolHost, notify, notifyEarnings,
     refreshAppearance() { if (ui && ui.panel.hidden) mood('idle'); }
   };
   if (doc && doc.body !== undefined) { if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', mount); else mount(); }
