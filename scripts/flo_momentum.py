@@ -188,6 +188,8 @@ def regular_minute(t):
 
 def calculate(bars, now, feed="sip", window=5):
     """Only exact 5-minute bar-close-to-bar-close comparisons are reported."""
+    if feed not in ("iex", "sip", "delayed_sip"):
+        raise ValueError("Unsupported minute-bar feed")
     max_delay = 23 if feed == "delayed_sip" else 4
     output={}
     for sym, rows in bars.items():
