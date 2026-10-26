@@ -15,6 +15,12 @@ on:
       - 'web/app.js'
       - 'web/company-disclosures.js'
       - 'web/company-disclosures.css'
+      - 'web/quality-ipo.js'
+      - 'web/quality-ipo.css'
+      - 'pipeline/company_quality.py'
+      - 'pipeline/quality.py'
+      - 'pipeline/ipo.py'
+      - 'pipeline/data/ipo/**'
       - 'web/mascot.js'
       - 'web/flo-alerts.js'
       - 'web/flo-momentum.js'
@@ -173,6 +179,11 @@ jobs:
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}       # optional: shown on the privacy and terms pages
           SITE_URL: ${{ vars.SITE_URL }}                 # optional: your own domain → CNAME file for GitHub Pages
         run: python scripts/build_site.py --data _site/data --out _site
+
+      - name: Refresh reviewed IPO prospectuses (preserve last successful parse)
+        timeout-minutes: 4
+        continue-on-error: true
+        run: python -m pipeline.ipo --out _site/data/ipo --store store/ipo --refresh
 
       - name: The long rotation history (public/ of the branch rotation-history, when it exists)
         continue-on-error: true

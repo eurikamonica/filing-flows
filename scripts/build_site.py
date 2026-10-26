@@ -8,6 +8,7 @@ import json
 import os
 import re
 import shutil
+from pathlib import Path
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEB = os.path.join(ROOT, "web")
@@ -115,6 +116,18 @@ def main():
     if os.path.abspath(args.data) != os.path.abspath(data_out):
         shutil.rmtree(data_out, ignore_errors=True)
         shutil.copytree(args.data, data_out)
+    # Offline seed guarantees the IPO route has evidence on first deployment.
+    ipo_out = os.path.join(data_out, "ipo")
+    os.makedirs(ipo_out, exist_ok=True)
+    ipo_index = []
+    for seed in sorted(Path(ROOT, "pipeline", "data", "ipo").glob("*.json")):
+        target = os.path.join(ipo_out, seed.name)
+        if not os.path.exists(target):
+            shutil.copy(seed, target)
+        doc = json.load(open(target, encoding="utf-8"))
+        ipo_index.append({k: doc[k] for k in ("cik", "name", "filed", "form", "accession")})
+    with open(os.path.join(ipo_out, "index.json"), "w", encoding="utf-8") as f:
+        json.dump({"companies": ipo_index, "scope": "Reviewed IPO watchlist"}, f)
     site = {"repo": os.environ.get("GITHUB_REPOSITORY", ""),
             # accounts: the project URL and the public (publishable / anon) key; row-level security protects the data
             "supabase_url": setting("SUPABASE_URL", url=True), "supabase_key": setting("SUPABASE_ANON_KEY"),
