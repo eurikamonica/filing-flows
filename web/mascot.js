@@ -339,6 +339,11 @@
     let co = findCompany(q, ix) || ctxCo || null;
     // Same-page alert intelligence (only on explicit ask-for-updates intent);
     // leave ordinary 8-K and company filing lookups on the established handlers.
+    // Exact-interval intraday scans are sourced from a separate authenticated
+    // minute-bar collector, never from delayed daily-close extremes.
+    const momentum = root.FFFloMomentum;
+    if(momentum && momentum.intent && momentum.intent(q) && momentum.report)
+      return { ...momentum.report(q,lg), company:co||null };
     const pulse = root.FFFloAlerts;
     if(pulse && pulse.intent && pulse.intent(q) && pulse.report)
       return { ...pulse.report(q,lg==='zh'), company:co||null };
@@ -583,6 +588,7 @@
       [zh ? 'Cookie Jar 侦探' : 'Cookie Jar', T + ' cookie jar'],
       [zh ? 'SEC 案例' : 'SEC cases', 'Sunbeam case study'],
       [zh ? '最新扫描' : 'Recent scans', zh ? '最近扫描有什么新消息' : 'What changed since the last scan?'],
+      [zh ? '5分钟涨幅榜' : '5m Market Movers', 'S&P 500 五分钟涨幅榜'],
       [zh ? '财务造假案例训练' : 'Forensic Case Lab', 'WorldCom SEC case spreadsheet'],
       [zh ? 'HealthSouth 案例' : 'HealthSouth Case', 'HealthSouth SEC spreadsheet'],
       [zh ? 'Channel Stuffing' : 'Revenue Case', 'Bristol SEC case spreadsheet'],
