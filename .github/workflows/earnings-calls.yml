@@ -6,9 +6,14 @@ on:
   pull_request:
     paths:
       - 'disclosures/app/earnings_calls.py'
+      - 'disclosures/app/earnings_call_intel.py'
+      - 'disclosures/app/earnings_calls_phase2.py'
       - 'disclosures/config/earnings_calls.json'
       - 'disclosures/tests/test_earnings_calls.py'
+      - 'disclosures/tests/test_earnings_call_intel.py'
       - 'disclosures/docs/earnings-calls.js'
+      - 'web/flo-earnings-alerts.js'
+      - 'web/mascot.js'
       - '.github/workflows/earnings-calls.yml'
 permissions:
   contents: write
@@ -26,6 +31,7 @@ jobs:
             disclosures/app
             disclosures/config
             disclosures/tests
+            web
             disclosures/docs/data/earnings-calls
           sparse-checkout-cone-mode: true
           persist-credentials: true
@@ -34,11 +40,19 @@ jobs:
           python-version: '3.12'
       - name: Offline scanner fixture checks
         run: PYTHONPATH=disclosures/app python -m unittest discover -s disclosures/tests -p 'test_earnings_calls.py' -v
+      - name: Check Phase 2 parser fixtures
+        run: PYTHONPATH=disclosures/app python -m unittest discover -s disclosures/tests -p 'test_earnings_call_intel.py' -v
+      - name: Check call UI, Flo and notification JavaScript
+        run: |
+          node --check disclosures/docs/earnings-calls.js
+          node --check web/mascot.js
+          node --check web/flo-earnings-alerts.js
+          node web/test-flo-earnings-alerts.cjs
       - name: Collect official evidence
         if: github.event_name != 'pull_request'
         env:
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
-        run: python disclosures/app/earnings_calls.py
+        run: python disclosures/app/earnings_calls_phase2.py
       - name: Preserve raw official-source evidence (not public Pages)
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
