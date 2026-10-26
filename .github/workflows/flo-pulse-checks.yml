@@ -19,6 +19,7 @@ on:
       - 'tests/test_flo_timeline.cjs'
       - 'tests/test_flo_impact.cjs'
       - 'tests/test_flo_alert_browser.cjs'
+      - 'tests/test_flo_unified_dock.cjs'
       - 'tests/test_build_flo_alerts.py'
       - '.github/workflows/scan.yml'
       - '.github/workflows/flo-pulse-checks.yml'
@@ -43,6 +44,7 @@ jobs:
             tests/test_flo_momentum.cjs
             tests/test_flo_momentum.py
             tests/test_flo_alert_browser.cjs
+            tests/test_flo_unified_dock.cjs
             web/flo-alerts.js
             web/flo-timeline.js
             web/flo-impact.js
@@ -74,6 +76,7 @@ jobs:
           node tests/test_flo_impact.cjs
           node tests/test_flo_momentum.cjs
           node tests/test_flo_alert_browser.cjs
+          node tests/test_flo_unified_dock.cjs
       - name: Feed builder and SEC source contract
         run: |
           python -m unittest discover -s tests -p 'test_build_flo_alerts.py' -v

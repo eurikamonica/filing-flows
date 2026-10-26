@@ -183,7 +183,13 @@ function openEvent(event){
  else if(url(event.source_url))root.open(url(event.source_url),'_blank','noopener');
 }
 function toast(event,count){
- if(!bubble||settings.quiet)return;
+ if(settings.quiet)return;
+ // One mascot is the only floating launcher; use its speech bubble and badge.
+ if(root.FFMascot?.notify){
+   root.FFMascot.notify('pulse',event.kind.toUpperCase()+' · '+(event.ticker||event.manager||'')+' '+(event.title||'New filing'));
+   return;
+ }
+ if(!bubble)return;
  bubble.replaceChildren();bubble.dataset.kind=event.kind;
  const head=el('div','flo-pulse-head'),label=el('b','',event.kind.toUpperCase()+' · '+(event.ticker||event.manager||'Filing'));
  const dismiss=el('button','','×');dismiss.type='button';dismiss.setAttribute('aria-label','Dismiss alert');
@@ -204,11 +210,16 @@ function toast(event,count){
  bubble.hidden=false;
 }
 function showInbox(show){if(!inbox)return;inbox.hidden=!show;if(show)renderInbox();}
+function openPanel(host){
+ if(!inbox)return null;
+ if(host&&inbox.parentNode!==host)host.append(inbox);
+ unread=0;showInbox(true);return inbox;
+}
 function renderInbox(){
  if(!inbox)return;
  inbox.replaceChildren();
  const head=el('div','flo-pulse-head'),name=el('b','',isZH()?'Flo 新扫描收件箱':'Flo Published Pulse'),dismiss=el('button','','×');
- dismiss.setAttribute('aria-label','Close alerts');dismiss.addEventListener('click',()=>showInbox(false));
+ dismiss.setAttribute('aria-label','Close alerts');dismiss.addEventListener('click',()=>{showInbox(false);root.FFMascot?.openTool?.('chat');});
  head.append(name,dismiss);
  inbox.append(head,el('p','flo-pulse-note',isZH()?'首次访问不弹旧提醒；之后只检测新发布内容。静音和过滤设置保存在当前浏览器。':'First visit records a baseline. Only later newly published events trigger alerts. Settings are browser-local.'));
  if(lastError)inbox.append(el('p','flo-pulse-note',(isZH()?'数据不可用：':'Feed unavailable: ')+lastError));
@@ -380,16 +391,17 @@ function report(q,zh=false){
 function start(){
  if(active||!doc||!root.fetch)return;
  active=true;restore();style();
- bubble=el('div','flo-pulse-toast');bubble.hidden=true;bubble.setAttribute('role','status');
+ // No independent fixed-position Flo Published pill or toast. The active
+ // Flo mascot exposes this inbox as a tab and owns all alert motion/badges.
+ bubble=null;pill=null;
  inbox=el('div','flo-pulse-list');inbox.hidden=true;inbox.setAttribute('role','region');inbox.setAttribute('aria-label','Flo alerts');
- pill=el('button','flo-pulse-pill',isZH()?'Flo · 已发布扫描':'Flo · Published');
- pill.type='button';pill.addEventListener('click',()=>{unread=0;showInbox(inbox.hidden);if(inbox&&!inbox.hidden)pill.textContent=isZH()?'Flo · 已发布扫描':'Flo · Published'});
- doc.body.append(bubble,inbox,pill);
+ const host=root.FFMascot?.toolHost?.();
+ (host||doc.body).append(inbox);
  doc.addEventListener('visibilitychange',()=>{if(doc.visibilityState==='hidden'){if(timer)clearTimeout(timer)}else poll()});
  root.addEventListener('online',poll);
  poll();
 }
-root.FFFloAlerts={valid,normalize,compare,react,shown,explain,intent,timelineIntent,watchBriefIntent,impactIntent,openTimeline,openWatchBrief,openImpact,report,start,poll,
+root.FFFloAlerts={valid,normalize,compare,react,shown,explain,intent,timelineIntent,watchBriefIntent,impactIntent,openTimeline,openWatchBrief,openImpact,report,start,poll,openPanel,
  getState:()=>({initialized,seen:seen.slice(),settings:JSON.parse(JSON.stringify(settings)),events:items.slice(),lastError,latestBuild,scanHealth,benchmarks:JSON.parse(JSON.stringify(marketContext.benchmarks))}),
  stop(){active=false;if(timer)clearTimeout(timer);}};
 if(typeof module!=='undefined')module.exports=root.FFFloAlerts;

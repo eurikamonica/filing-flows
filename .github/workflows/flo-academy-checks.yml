@@ -23,6 +23,7 @@ on:
       - 'tests/test_flo_timeline.cjs'
       - 'tests/test_flo_impact.cjs'
       - 'tests/test_flo_alert_browser.cjs'
+      - 'tests/test_flo_unified_dock.cjs'
       - 'tests/test_flo_alert_feed.py'
       - 'tests/test_mascot.cjs'
       - 'tests/test_flo_layout.cjs'
@@ -44,6 +45,7 @@ jobs:
             scripts
             tests
             disclosures/docs/rrg-company-view.js
+            disclosures/docs/index.html
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
@@ -74,4 +76,5 @@ jobs:
           node tests/test_flo_timeline.cjs
           node tests/test_flo_impact.cjs
           node tests/test_flo_alert_browser.cjs
+          node tests/test_flo_unified_dock.cjs
           python3 tests/test_flo_alert_feed.py

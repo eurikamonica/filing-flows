@@ -6,6 +6,8 @@
 (function(root){
 'use strict';
 const doc=typeof document==='undefined'?null:document;
+const SITEBASE=doc&&doc.currentScript&&doc.currentScript.src?
+  String(doc.currentScript.src).replace(/[^/]*$/,''):'';
 const SCOPES=['sp500','russell1000','russell2000'];
 const LABELS={sp500:'S&P 500',russell1000:'Russell 1000',russell2000:'Russell 2000'};
 const TIMER=60000,STALE=12*60000,NOTIFY=5*60000;
@@ -108,7 +110,7 @@ function updateView(){
  panel.replaceChildren();
  const head=node('div','Flo · 5m Momentum Relay','flo-five-head');
  const close=node('button','×');close.setAttribute('aria-label','Close 5-minute scanner');
- close.addEventListener('click',()=>{panel.hidden=true;});
+ close.addEventListener('click',()=>{panel.hidden=true;root.FFMascot?.openTool?.('chat');});
  head.append(close);panel.append(head);
  const selectors=node('div','','flo-five-controls');
  const pick=node('select','');pick.setAttribute('aria-label','Index universe');
@@ -168,6 +170,11 @@ function scanForNotification(data,now=Date.now()){
  return top;
 }
 function notifyLeader(top){
+ if(root.FFMascot?.notify){
+   root.FFMascot.notify('momentum','5m · '+top.ticker+' +'+top.five_min_pct.toFixed(2)+'%');
+   root.FFMascot.signalReaction?.('happy',{kind:'price',ticker:top.ticker});
+   return;
+ }
  if(!doc||!toast)return;
  toast.replaceChildren();const x=node('b','Flo · 新 5m 涨幅领跑 '+top.ticker);
  toast.append(x,node('p','+'+top.five_min_pct.toFixed(2)+'% · IEX/SIP source in scanner'));
@@ -177,7 +184,7 @@ function notifyLeader(top){
 }
 async function loadServer(){
  if(server)return server;
- const res=await root.fetch('data/site.json',{cache:'no-store'});
+ const res=await root.fetch(SITEBASE+'data/site.json',{cache:'no-store'});
  if(!res.ok)throw Error('Site config missing');
  const data=await res.json();
  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(data.supabase_url||'')||!data.supabase_key)
@@ -205,19 +212,25 @@ function style(){
  const css='.flo-five-panel[hidden],.flo-five-toast[hidden]{display:none!important}.flo-five-launch{position:fixed;bottom:70px;right:12px;z-index:450;border:1px solid var(--line,#999);border-radius:22px;padding:8px 12px;background:var(--surface,#fff);color:inherit;font:600 12px system-ui;cursor:pointer;box-shadow:0 3px 14px #0002}.flo-five-panel{position:fixed;bottom:115px;right:12px;z-index:452;width:min(95vw,450px);max-height:65vh;overflow:auto;background:var(--surface,#fff);color:inherit;padding:12px;border:1px solid var(--line,#999);border-radius:13px;box-shadow:0 6px 25px #0003;font:12px system-ui}.flo-five-head{display:flex;justify-content:space-between;font-weight:700;font-size:15px}.flo-five-panel select,.flo-five-panel input{max-width:125px;border:1px solid var(--line,#aaa);border-radius:5px;background:transparent;color:inherit;padding:5px}.flo-five-controls{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}.flo-five-controls label{font-size:10px;display:flex;gap:4px;align-items:center}.flo-five-controls input{max-width:85px}.flo-five-results ol{padding-left:22px}.flo-five-results li{margin:5px 0}.flo-five-results button{width:100%;text-align:left;border:1px solid var(--line,#ddd);background:transparent;color:inherit;border-radius:5px;padding:7px;cursor:pointer}.flo-five-meta,.flo-five-disclaimer{font-size:11px;color:var(--muted,#777)}.flo-five-toast{position:fixed;bottom:120px;right:12px;z-index:453;padding:12px;border:1px solid var(--line,#aaa);border-radius:9px;background:var(--surface,#fff);box-shadow:0 8px 20px #0002}.flo-five-table{width:100%;font-size:12px;border-collapse:collapse}.flo-five-table th,.flo-five-table td{border-bottom:1px solid var(--line,#ccc);padding:5px;text-align:right}.flo-five-table td:nth-child(2){font-weight:bold}.flo-five-table th:nth-child(2){text-align:left}';
  const e=doc.createElement('style');e.textContent=css;doc.head.append(e);
 }
+function openPanel(host){
+ if(!panel)return null;
+ if(host&&panel.parentNode!==host)host.append(panel);
+ panel.hidden=false;updateView();return panel;
+}
 function start(){
  if(started||!doc||!root.fetch)return;
  started=true;restore();style();
- pill=node('button','Flo · 5m','flo-five-launch');
- pill.addEventListener('click',()=>{panel.hidden=!panel.hidden;if(!panel.hidden)updateView();});
+ // The 5m scanner is a tab inside the ONE Flo assistant, not an extra
+ // floating launcher/toast (which obstructs small-screen site content).
+ pill=null;toast=null;
  panel=node('section','','flo-five-panel');panel.hidden=true;panel.setAttribute('aria-label','Flo five-minute momentum scanner');
- toast=node('aside','','flo-five-toast');toast.hidden=true;toast.setAttribute('role','status');
- doc.body.append(pill,panel,toast);
+ const host=root.FFMascot?.toolHost?.();
+ (host||doc.body).append(panel);
  doc.addEventListener('visibilitychange',()=>{if(doc.visibilityState==='hidden'){if(timer)clearTimeout(timer);}else poll();});
  root.addEventListener?.('online',poll);
  poll();
 }
-root.FFFloMomentum={intent,parseQuestion,select,classify,report,scanForNotification,getState:()=>({status,feed,settings:{...settings},error}),poll,start,
+root.FFFloMomentum={intent,parseQuestion,select,classify,report,scanForNotification,getState:()=>({status,feed,settings:{...settings},error}),poll,start,openPanel,
  stop:()=>{started=false;if(timer)clearTimeout(timer);}};
 if(typeof module!=='undefined')module.exports=root.FFFloMomentum;
 if(doc){if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',start);else start();}
