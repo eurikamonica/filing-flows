@@ -35,3 +35,22 @@ test('navigation invalidation prevents rendering',async()=>{
 test('SEC evidence links retained and compact summary has detail route',async()=>{
  const d=structuredClone(doc);d.hidden_leverage.categories[0].source_url='https://www.sec.gov/Archives/example.htm';const x=setup(async()=>({ok:true,json:async()=>d}));await x.mount(x.el,{cik:123,compact:true});assert.match(x.el.innerHTML,/https:\/\/www.sec.gov\/Archives\/example.htm/);assert.match(x.el.innerHTML,/#c-123-risk/);
 });
+test('company disclosure navigation, dispatcher and deep link remain wired',()=>{
+ const app=fs.readFileSync('web/app.js','utf8');
+ assert.match(app,/\['risk', 'Disclosures & risk'\]/);
+ assert.match(app,/which === 'risk'\) return window.FFCompanyDisclosures.mount/);
+ const route=app.split('\n').find(l=>l.includes('await analysisPage(m[1], m[2])'));
+ assert.ok(route.includes('|risk|'));
+ assert.match(fs.readFileSync('web/index.html','utf8'),/src="company-disclosures.js"/);
+});
+test('Quality missing file retries and exposes independent company evidence without guessing exclusion',async()=>{
+ const code=fs.readFileSync('disclosures/docs/quality-view.js','utf8');let attempts=0,mounted=0;const button={};
+ const el={isConnected:true,innerHTML:'',querySelector:()=>button,appendChild(){}};
+ const window={FFCompanyDisclosures:{mount:async(panel,opt)=>{assert.equal(opt.cik,1769628);mounted++;}}};
+ const document={head:{appendChild(){}},createElement:()=>({})};
+ vm.runInNewContext(code,{window,document,fetch:async()=>{attempts++;return {ok:false,status:404};}});
+ await window.QualityView.render(el,{ticker:'CRWV',cik:1769628,here:()=>true});
+ assert.match(el.innerHTML,/reason is not reported/);assert.doesNotMatch(el.innerHTML,/under \$300M/);assert.equal(mounted,1);
+ await button.onclick();assert.equal(attempts,2);assert.equal(mounted,2);
+ await window.QualityView.render(el,{ticker:'CRWV',cik:1769628,here:()=>false});assert.equal(mounted,2);
+});
