@@ -33,3 +33,9 @@ The embedded panels retain their underlying polling and business logic; only the
 ## Production validation required
 
 After merge and deployment, open `https://filing-flows.com/` on Android. Verify that only the Spin Sankey Flo mascot floats at the bottom, then tap **学院 / 扫描 / 5m** to inspect each tool. The site must continue to show "not authorized / data unavailable" where minute candles or licensed index membership are not available; this PR does not add market feeds.
+
+## Disclosure-hub parity
+
+The `/disclosures/` hub previously loaded only `flo-questions.js`, `mascot.js` and `flo-alerts.js`; Academy courses, case workbooks, timelines and 5m scanner were not consistently available there. This PR adds the same 12 ordered Flo scripts on `disclosures/docs/index.html` as at the main Sankey root. All three Flo tabs therefore work from the disclosure hub as well.
+
+`web/flo-momentum.js` now reads `data/site.json` relative to its own loaded JavaScript asset URL, rather than the current browser route. For example, a script served from `https://filing-flows.com/flo-momentum.js` reads `https://filing-flows.com/data/site.json` even when the page is `/disclosures/`. This is still the same restricted public market projection; no unlicensed feed is introduced. Automated tests assert both parity and URL-relative configuration.
