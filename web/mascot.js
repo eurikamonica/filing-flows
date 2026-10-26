@@ -771,7 +771,8 @@
   }
   function notify(kind,title){
     if(!ui||!['pulse','momentum'].includes(kind))return false;
-    ui.unread[kind]=Math.min(99,ui.unread[kind]+1);updateUnread();
+    ui.unread[kind]=Math.min(99,ui.unread[kind]+1);
+    ui.pendingTool=kind;updateUnread();
     if(ui.panel.hidden){
       const hint=ui.launch.querySelector('.flo-hint');
       if(hint){
@@ -791,6 +792,7 @@
     if(name!=='chat'&&(!controller||typeof controller.openPanel!=='function'))name='chat';
     const isChat=name==='chat';
     ui.activeTool=name;
+    if(ui.pendingTool===name)ui.pendingTool=null;
     ui.log.hidden=!isChat;ui.chips.hidden=!isChat;
     const composer=ui.panel.querySelector('.flo-form');if(composer)composer.hidden=!isChat;
     ui.toolHost.hidden=isChat;
@@ -815,6 +817,7 @@
     mood('wave', 1600);
     setTimeout(() => ui.input.focus({ preventScroll: true }), 350);
     store.set('seen', '1');
+    if(ui.pendingTool){const next=ui.pendingTool;ui.pendingTool=null;openTool(next);}
   }
   function close() {
     if (!ui) return;
@@ -837,7 +840,7 @@
       <div class="flo-half flo-h1" aria-hidden="true">${HALF1}</div><div class="flo-half flo-h2" aria-hidden="true">${HALF2}</div>`;
     doc.body.appendChild(r);
     const mk = (sel, fx, fy) => { const el = r.querySelector(sel); return { el, fx, fy, pupils: el.querySelector('.flo-pupils'), hop: 0, shake: 0, spin: 0, look: null }; };
-    ui = { launch: r.querySelector('.flo-launch'), btn: r.querySelector('.flo-btn'), panel: r.querySelector('.flo-panel'), log: r.querySelector('.flo-log'), chips: r.querySelector('.flo-chips'), toolHost:r.querySelector('.flo-tool-host'), activeTool:'chat', unread:{pulse:0,momentum:0},
+    ui = { launch: r.querySelector('.flo-launch'), btn: r.querySelector('.flo-btn'), panel: r.querySelector('.flo-panel'), log: r.querySelector('.flo-log'), chips: r.querySelector('.flo-chips'), toolHost:r.querySelector('.flo-tool-host'), activeTool:'chat', pendingTool:null, unread:{pulse:0,momentum:0},
       input: r.querySelector('.flo-form input'), co: null, toolsExpanded: false, expanded: false, halves: [mk('.flo-h1', 27, 34), mk('.flo-h2', 93, 86)], mood: 'idle', hover: false,
       ptr: { x: root.innerWidth / 2, y: root.innerHeight / 2, t: nowMs() }, typingUntil: 0,
       reduce: !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) };
