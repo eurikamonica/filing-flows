@@ -45,3 +45,44 @@ Four shock inputs, illustrative combined presets, factor selection, peer selecto
 `node tests/test_shock_panel_browser.cjs` (Playwright) covers desktop/mobile mount, peer exclusion, source-text escaping, unknown vs explicit manual coefficients, outcome reset, export, fitted model rendering and failed macro requests. Dedicated GitHub Actions workflow runs both suites.
 
 Sources: https://fred.stlouisfed.org/series/DGS10 ; https://fred.stlouisfed.org/series/DTWEXBGS ; https://fred.stlouisfed.org/series/UNRATE ; SEC filing versions linked by the existing company revisions and quality pages. OLS/HAC methodological reference: https://www.statsmodels.org/stable/regression.html .
+
+## Expanded inputs, outputs and estimators (v2)
+
+The panel now offers **16 shock inputs and 20 response variables**. The original four shocks remain visible; twelve additional inputs expand on demand. Additional factors are opt-in for fitting so missing new data do not invalidate the existing four-factor model. SPY is always an explicit contemporaneous control for stock outcomes and can now be shocked. In operating models it is included only if selected and follows the chosen factor lag.
+
+| Added factor | History feature / transformation | Shock unit |
+|---|---|---|
+| 2Y Treasury | y2, 13-week change | bp (divide by 100) |
+| 10Y real yield | real10, 13-week change | bp |
+| 10Y–2Y curve | curve2, 13-week change | bp |
+| Baa credit spread | credit, 13-week change | bp |
+| CPI YoY inflation | cpi, 13-week change in YoY rate | pp |
+| WTI | oil, 13-week percent change | % |
+| VIX | vix, 13-week point change | index points |
+| Payroll / retail / industrial production | payrolls / retail / ip, YoY growth levels | pp |
+| Peer operating margin | selected-peer median quarterly margin | pp |
+| SPY | quarterly adjusted total return | % |
+
+Outputs additionally include gross margin, revenue QoQ growth (not seasonally adjusted), YoY changes in operating profit/net income/OCF divided by prior-year revenue, CapEx/R&D/SBC intensity, accruals/average assets, quarterly ROA, current ratio, DSO and CCC. Normalizing profit changes by positive prior-year revenue preserves interpretable results when profits are negative or cross zero. Days remain days, current ratios remain multiples, and percent-based outputs have percentage-point shocks. Latest health/working-capital data can provide only eight quarters for some outputs; fitted estimates remain unavailable until minimum history exists. Explicit manual assumptions can still be tested. No new fundamentals are fabricated or backfilled from today's ratios.
+
+### Models
+
+- **OLS + HAC**: existing joint regression and Newey–West intervals.
+- **Ridge**: SSE + alpha × sum of squared standardized slopes. Intercept is unpenalized. Default alpha 10; the user can set a positive value up to 10,000. Training means/scales are estimated solely from training rows. Collinear factors are regularized; constant factors still fail. No Ridge coefficient interval is supplied.
+- **Huber IRLS**: weighted least squares with weights min(1, 1.35 × robust scale / absolute residual), scale = 1.4826 × MAD of residuals, maximum 100 iterations. This is an IRLS implementation, not scikit-learn's joint scale/L2 solver. Singular, degenerate-scale and nonconvergent fits are withheld. No unimplemented robust coefficient interval is shown.
+- **ARX(1) + HAC**: adds the previous observed response only when dates are 75–110 days apart. The conditional response to a one-quarter pulse is delta, phi×delta, phi²×delta, phi³×delta. Paths are withheld when |phi| >= 1. These are point sensitivities, not a causal impulse response or a cumulative cash-flow forecast; no path confidence bands are implemented.
+
+Minimum complete-case sample remains max(24, 5 × parameter count), including the AR lag and market controls. Selecting many factors may therefore make a fit unavailable. Sample windows include all observations or the latest 32/40/60 observed quarters. Timing includes 0/1/2/4 quarters (13-week increments). Yield-curve inputs overlap with 2Y/10Y yields, so a compact specification is preferable; OLS rejects singular designs while Ridge does not imply that individual causal effects have been identified.
+
+The model-comparison table restricts every estimator to the **same complete consecutive-quarter rows and same 75%/25% chronological split**. It reports train/test counts, RMSE, MAE and the training-mean baseline. No model is automatically selected or tuned on the holdout. ARX holdout evaluation is conditional one-step evaluation using the observed preceding outcome. A selected model's individual fit may use more eligible observations than the common comparison sample; these are separate diagnostics. Current revised macro/fundamental vintages and period-end peer alignment still prevent claims of point-in-time predictive performance.
+
+### Independent valuation assumptions
+
+A separate, explicitly user-entered calculator provides:
+
+- EPS × P/E: reference price = annual EPS × multiple; scenario price multiplies both (1 + EPS change) and (1 + multiple change), including their cross term. Requires positive EPS and P/E.
+- One-stage FCFF perpetuity: EV = **next-year** FCFF / (WACC − g). Rate inputs are percentages; changes are basis points. Both scenarios require positive cash flow, positive WACC and WACC > g. This is enterprise value, before net debt and other claims, not equity value or a complete multi-stage DCF.
+
+The lab does not infer EPS, duration, debt, WACC, or peer valuation multiples, and does not add its assumptions to the statistical stock effect. JSON exports include model, regularization setting, history window, output units, comparison diagnostics and valuation assumptions/results. Missing inputs remain unknown; a blank shock no longer silently coerces to zero.
+
+Validation adds Ridge collinearity/shrinkage, Huber outlier resistance, AR lag alignment and stable pulse paths, identical comparison samples, macro transformation units, loss-safe operating changes, working-capital units and valuation denominator guards. Browser tests exercise all four models, expanded controls, days-based scenarios, blank-input errors and the valuation lab.
