@@ -223,9 +223,10 @@ async function mount(box,{company:c,cik,ticker,here=()=>true,restore=null}){
  const site=root.FF_DATA||'data/',hub='disclosures/data/market/history/',history=root.FF_SHOCK_HISTORY||'https://raw.githubusercontent.com/eurikamonica/filing-flows/shock-history/public/';
  box.innerHTML='<p role="status">Loading shock panel: company statements, macro history and market returns…</p>';
  const urls={macro:hub+'macro.json',stock:hub+'t/'+encodeURIComponent(ticker)+'.json',market:hub+'t/SPY.json',index:site+'index.json'};
- urls.history=history+'c/'+encodeURIComponent(cik)+'.json';urls.backfill=history+'status.json';
+ urls.history=history+'c/'+encodeURIComponent(cik)+'.json';urls.backfill=history+'status.json';if(restore)urls.company=site+'c/'+encodeURIComponent(cik)+'.json';
  const loaded=await Promise.allSettled(Object.entries(urls).map(([k,url])=>['history','backfill'].includes(k)?supplemental(history,site+'shock-history/',k==='history'?'c/'+encodeURIComponent(cik)+'.json':'status.json'):json(url)));if(!here())return;
  const data={},status=[];Object.keys(urls).forEach((k,i)=>{if(loaded[i].status==='fulfilled')data[k]=loaded[i].value;else if(!['history','backfill'].includes(k))status.push(k+': '+loaded[i].reason.message);});
+ if(data.company&&String(data.company.profile?.cik)===String(cik))c=data.company;
  c={...c,profile:{...c.profile,cik:c.profile?.cik??cik},shock_history:data.history};
  const choices=(data.index?.companies||[]).filter(p=>/^\d+$/.test(String(p.cik))&&String(p.cik)!==String(cik)&&String(p.sic)===String(c.profile?.sic)&&p.ticker).sort((a,b)=>(b.revenue||0)-(a.revenue||0)).slice(0,30);
  const selected=new Set(choices.slice(0,5).map(p=>String(p.cik)));
@@ -297,7 +298,7 @@ async function mount(box,{company:c,cik,ticker,here=()=>true,restore=null}){
  get('[data-defaults]').onclick=useDefaults;
  get('[data-recommend]').onclick=()=>{const key=get('[data-target]').value;recommendation=recommend(modelRows[key]||[],keysFor(key));if(recommendation.qualified){get('[data-estimator]').value=recommendation.chosen.model;get('[data-alpha]').value=recommendation.chosen.alpha||10;get('[data-mode]').value='fit';}refit();};
  get('[data-refresh]').onclick=()=>{const saved=all('input,select').filter(e=>Object.keys(e.dataset).length).map(e=>({attr:Object.keys(e.dataset)[0],key:Object.values(e.dataset)[0],value:e.value,checked:e.checked}));return mount(box,{company:c,cik,ticker,here,restore:saved});};
- all('[data-preset]').forEach(b=>b.onclick=()=>{const presets={tight:[100,5,0.5,-5],weak:[-100,-3,1,-10],zero:[0,0,0,0]},v=presets[b.dataset.preset];FACTORS.forEach(([k],i)=>get(`[data-shock="${k}"]`).value=v[i]??0);draw();});
+ all('[data-preset]').forEach(b=>b.onclick=()=>{const presets={tight:[100,5,0.5,-5],weak:[-100,-3,1,-10],zero:[0,0,0,0]},v=presets[b.dataset.preset];const allowed=get('[data-mode]').value==='fit'?new Set(keysFor(get('[data-target]').value)):null;FACTORS.forEach(([k],i)=>get(`[data-shock="${k}"]`).value=allowed&&!allowed.has(k)?0:v[i]??0);get('[data-default-note]').textContent=allowed?'Illustrative preset applied only to selected model factors; omitted factors stay at zero.':'Illustrative preset applied to explicit assumptions.';draw();});
  get('[data-export]').onclick=()=>{drawVal();download(`shock-${cik}.json`,JSON.stringify(last,null,2),'application/json');};
  get('[data-csv]').onclick=()=>{const m=fits[get('[data-target]').value];if(!m?.rows){get('[data-load]').textContent='No complete fitted sample to export.';return;}download(`shock-${cik}-sample.csv`,csv([['period_end','observed','fitted',...m.keys],...m.rows.map((r,i)=>[iso(r.t),r.y,m.pred[i],...m.keys.map(k=>r[k])])]),'text/csv');};
  const vbox=get('[data-valuation]');
