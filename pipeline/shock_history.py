@@ -14,13 +14,21 @@ import urllib.request
 from . import facts as F, fsa as W
 
 VERSION = 1
-READER = 2
+READER = 3
 KEYS = ('revenue', 'oi', 'ni', 'ocf', 'capex', 'gp', 'rd', 'sbc')
 PRIORITY = ('AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'META', 'TSLA', 'PLTR', 'AMD', 'CRM', 'ORCL')
 
 
 def finite(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
+def cik_number(value):
+    """SEC returns both integer CIKs and zero-padded decimal strings."""
+    if type(value) not in (int, str):
+        return None
+    text = str(value)
+    return int(text) if text.isascii() and text.isdigit() and len(text) <= 10 and int(text) > 0 else None
 
 
 def compute(companyfacts, now=None):
@@ -67,7 +75,7 @@ def compute(companyfacts, now=None):
         if all(finite(wc.get(k)) for k in ('dso','dio','dpo')) and not wc.get('ap_proxy'):
             values['ccc'], refs['ccc'] = wc['dso']+wc['dio']-wc['dpo'], {'derived':'DSO + DIO - DPO', 'inputs':wc_refs}
         rows.append({'end':end, 'values':values, 'sources':refs})
-    return {'v':VERSION, 'cik':companyfacts.get('cik'), 'unit':'USD', 'generated_at':now or dt.datetime.now(dt.timezone.utc).isoformat(),
+    return {'v':VERSION, 'cik':cik_number(companyfacts.get('cik')), 'source_cik':companyfacts.get('cik'), 'unit':'USD', 'generated_at':now or dt.datetime.now(dt.timezone.utc).isoformat(),
             'rows':rows, 'src':ev.out(), 'source':'SEC companyfacts',
             'coverage':{k:sum(finite(r['values'].get(k)) for r in rows) for k in (*KEYS,'assets_open','assets_close','current_assets','current_liabilities','dso','ccc')},
             'basis':'Latest reported versions; quarter values may be same-start YTD differences. Not a point-in-time dataset.'}
@@ -98,17 +106,17 @@ def queue(companies, ledger, now):
             priority.update(p['ticker'] for p in peers)
     pending = []
     for c in companies:
-        if not str(c.get('cik','')).isdigit():
+        if cik_number(c.get('cik')) is None:
             continue
-        old = ledger.get(str(c['cik']), {})
+        old = ledger.get(str(cik_number(c['cik'])), {})
         age = now-old.get('attempted_at',0)
         if age < (6*3600 if old.get('error') and old.get('reader',1) >= READER else 0):
             continue
         if not old.get('error') and old.get('v') == VERSION and old.get('filed','') >= c.get('filed','') and age < 7*86400:
             continue
         pending.append(c)
-    return sorted(pending, key=lambda c:(0 if ledger.get(str(c['cik']),{}).get('v') == VERSION and c.get('filed','') > ledger[str(c['cik'])].get('filed','') else 1 if ledger.get(str(c['cik']),{}).get('v') != VERSION else 2,
-                                         c.get('ticker') not in priority, -(c.get('revenue') or 0), str(c['cik'])))
+    return sorted(pending, key=lambda c:(0 if ledger.get(str(cik_number(c['cik'])),{}).get('v') == VERSION and c.get('filed','') > ledger[str(cik_number(c['cik']))].get('filed','') else 1 if ledger.get(str(cik_number(c['cik'])),{}).get('v') != VERSION else 2,
+                                         c.get('ticker') not in priority, -(c.get('revenue') or 0), str(cik_number(c['cik']))))
 
 
 def collect(root, index, limit=900, minutes=8, fetch=None):
@@ -125,7 +133,7 @@ def collect(root, index, limit=900, minutes=8, fetch=None):
     for c in todo[:limit]:
         if time.monotonic()-start >= minutes*60:
             break
-        cik = str(c['cik'])
+        cik = str(cik_number(c['cik']))
         attempted += 1
         old = ledger.get(cik,{})
         try:
@@ -145,7 +153,7 @@ def collect(root, index, limit=900, minutes=8, fetch=None):
             ledger[cik] = {**old, 'reader':READER, 'attempted_at':time.time(), 'error':type(exc).__name__, 'detail':detail}
             print(f"shock-history CIK {cik}: {type(exc).__name__}: {detail}")
         write(root/'ledger.json', ledger)
-    universe = {str(c['cik']) for c in companies if str(c.get('cik','')).isdigit()}
+    universe = {str(cik_number(c['cik'])) for c in companies if cik_number(c.get('cik')) is not None}
     have = [v for k,v in ledger.items() if k in universe and v.get('v') == VERSION]
     status = {'v':VERSION, 'generated_at':dt.datetime.now(dt.timezone.utc).isoformat(), 'total':len(universe),
               'processed':len(have), 'with_history':sum(v.get('quarters',0)>0 for v in have),
