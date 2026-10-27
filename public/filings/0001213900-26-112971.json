@@ -1,0 +1,3483 @@
+{
+  "cik": 1842556,
+  "name": "EON Resources Inc.",
+  "form": "S-1/A",
+  "filed": "2026-10-27",
+  "accession": "0001213900-26-112971",
+  "source_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390026112971/ea0290025-s1a1_eonres.htm",
+  "file_number": "333-289191",
+  "accepted": "2026-10-27T21:18:09+00:00",
+  "method": "inline_xbrl",
+  "document_sha256": "63f228c52b62005211ead87dd02ad518610b3828b94942039b701b2c0012e756",
+  "periods": [
+    {
+      "start": "2024-01-01",
+      "end": "2024-12-31",
+      "label": "2024-01-01 \u2192 2024-12-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 19418919.0,
+        "ga": 10381095.0,
+        "opex_total": 23263053.0,
+        "oi": -3844134.0,
+        "pretax": -13296690.0,
+        "tax": -3470407.0,
+        "ni": -8128679.0,
+        "pl": -9826283.0,
+        "nci": 1697604.0,
+        "ocf": 3700686.0,
+        "da": 2407098.0,
+        "sbc": 2778991.0,
+        "capex": 3555062.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "nci": {
+          "label": "NetIncomeLossAttributableToNoncontrollingInterest"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "capex": {
+          "label": "PaymentsToAcquireOilAndGasPropertyAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.19795818706489274,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.4185958548979992,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": 0.19057116413122688,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": 0.007499078604735928,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.14310739954165316,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.18307208552649096,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2025-01-01",
+      "end": "2025-06-30",
+      "label": "2025-01-01 \u2192 2025-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 9137148.0,
+        "ga": 3617235.0,
+        "opex_total": 9450371.0,
+        "oi": -313223.0,
+        "pretax": -6251496.0,
+        "tax": -1239128.0,
+        "ni": -4983833.0,
+        "pl": -5012368.0,
+        "nci": 28535.0,
+        "ocf": -2296949.0,
+        "da": 555265.0,
+        "sbc": 605778.0,
+        "capex": 2138532.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "nci": {
+          "label": "NetIncomeLossAttributableToNoncontrollingInterest"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "capex": {
+          "label": "PaymentsToAcquireOilAndGasPropertyAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.034280171449559534,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.5454473321434653,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.25138577157773956,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -0.4854338574793798,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.06629836793712875,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.2340480859016402,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "label": "2025-01-01 \u2192 2025-12-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 16936564.0,
+        "ga": 12080450.0,
+        "opex_total": 27198109.0,
+        "oi": -10261545.0,
+        "pretax": -4673063.0,
+        "tax": 2821554.0,
+        "ni": -7466082.0,
+        "pl": -7494617.0,
+        "nci": 28535.0,
+        "ocf": -7645418.0,
+        "da": 3170092.0,
+        "sbc": 1067140.0,
+        "capex": 6563949.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "nci": {
+          "label": "NetIncomeLossAttributableToNoncontrollingInterest"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "capex": {
+          "label": "PaymentsToAcquireOilAndGasPropertyAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.6058811574768058,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.4408262502358802,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.4514149387089377,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -0.8389757804475572,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.06300805759657035,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.3875608417386195,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2025-04-01",
+      "end": "2025-06-30",
+      "label": "2025-04-01 \u2192 2025-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 4632050.0,
+        "ga": 1808345.0,
+        "opex_total": 4949431.0,
+        "oi": -317381.0,
+        "pretax": -3490108.0,
+        "tax": -534259.0,
+        "ni": -2955849.0,
+        "pl": -2955849.0,
+        "da": 458190.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.0685184745415097,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.6381297697563714,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": null,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2026-01-01",
+      "end": "2026-06-30",
+      "label": "2026-01-01 \u2192 2026-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 7453909.0,
+        "ga": 4781920.0,
+        "opex_total": 14930033.0,
+        "oi": -7476124.0,
+        "pretax": -8584563.0,
+        "tax": -2119384.0,
+        "ni": -6465179.0,
+        "pl": -6465179.0,
+        "ocf": 211023.0,
+        "da": 3927185.0,
+        "sbc": 683411.0,
+        "capex": 2493246.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "capex": {
+          "label": "PaymentsToAcquireOilAndGasPropertyAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -1.002980315429126,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.8673541627621159,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": 0.02831038049968144,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -0.306178006734453,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.0916849132448491,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.3344883872341345,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "label": "2026-04-01 \u2192 2026-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 6485716.0,
+        "ga": 2375349.0,
+        "opex_total": 7758494.0,
+        "oi": -1272778.0,
+        "pretax": -1268854.0,
+        "tax": -576270.0,
+        "ni": -692584.0,
+        "pl": -692584.0,
+        "da": 2136209.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.1962432520942946,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.10678605106976624,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": null,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    }
+  ],
+  "limitations": [
+    "IPO price, proceeds and dilution are not inferred from funding announcements.",
+    "Commitments, recognized lease liabilities and cash expenses may overlap and must not be added.",
+    "Company-specific cost presentation does not establish cost of revenue or gross margin."
+  ],
+  "classification": "ipo_language_identified",
+  "sections": [
+    {
+      "title": "Prospectus Summary",
+      "excerpt": "Prospectus Summary 1 Summary Risk Factors 3 About this Offering 5 Summary Historical Financial Information\n    of EON Resources Inc. 6 Risk Factors 8 Special Note Regarding Forward-Looking\n    Statements 35 White Lion Committed Equity Financing 36 Use of Proceeds 39 Business of EON 40 Management\u2019s Discussion and\n    Analysis of Financial Condition and Results of Operations 65 Management 77 Compensation of Executive Officers\n    and Directors 83 Beneficial Ownership of Securities 98 Market Prices and Dividends 99 Certain Relationships and Related\n    Transactions 100 Selling Securityholders 101 Description of Securities 107 Material United States Federal\n    Income Tax Considerations 113 Securities Act Restrictions on\n    Resale of Our Securities 117 Plan of Distribution 118 Legal Matters 121 Experts 121 Where You Can Find More Information 121 Index to Financial Statements F-1 Field: Page",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Use of Proceeds",
+      "excerpt": "USE OF PROCEEDS All of the Resale Securities\noffered by the Selling Securityholders pursuant to this prospectus will be sold by the Selling Securityholders for their respective accounts.\nWe will not receive any of the proceeds from these sales, except we may receive proceeds of up to $138.9 million in remaining available\nproceeds from the sale of the shares to White Lion under the Common Stock Purchase Agreement (assuming 17,000,000 shares have been previously\nissued and sold by the Company to White Lion as of the date of this prospectus), from time to time in our discretion after the date the\nregistration statement that includes this prospectus is declared effective and after satisfaction of other conditions in the Common Stock\nPurchase Agreement. See \u201c Plan of Distribution \u201d elsewhere in this prospectus for more information. We expect to use the net\nproceeds from the sales pursuant to ",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Risk Factors",
+      "excerpt": "Risk Factors 8 Special Note Regarding Forward-Looking\n    Statements 35 White Lion Committed Equity Financing 36 Use of Proceeds 39 Business of EON 40 Management\u2019s Discussion and\n    Analysis of Financial Condition and Results of Operations 65 Management 77 Compensation of Executive Officers\n    and Directors 83 Beneficial Ownership of Securities 98 Market Prices and Dividends 99 Certain Relationships and Related\n    Transactions 100 Selling Securityholders 101 Description of Securities 107 Material United States Federal\n    Income Tax Considerations 113 Securities Act Restrictions on\n    Resale of Our Securities 117 Plan of Distribution 118 Legal Matters 121 Experts 121 Where You Can Find More Information 121 Index to Financial Statements F-1 Field: Page; Sequence: 4; Options: NewSection; Value: 1 Field: Sequence; Type: LowerRoman; Name: PageNo i Field: /Sequence Field: /Page ABOUT THIS",
+      "status": "source_excerpt_not_model_conclusion"
+    }
+  ],
+  "source_tables": [
+    {
+      "table_index": 46,
+      "rows": [
+        [
+          "Shares\n    of Class A Common Stock Offered by the Selling Securityholders",
+          "",
+          "Up to an aggregate\n                                            of 30,906,300 shares of our Class A Common Stock (the \u201cResale Securities\u201d), consisting\n                                            of: (i"
+        ],
+        [
+          "Terms\n    of the Offering",
+          "",
+          "The Selling Securityholders\n    will determine when and how they will dispose of the shares of Class A Common Stock registered under this prospectus for resale."
+        ],
+        [
+          "Shares\n    of Common Stock Outstanding",
+          "",
+          "55,424,861 shares of Class\n                                    A Common Stock issued and outstanding and no shares of Class B Common Stock issued and outstanding,\n                                    e"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 48,
+      "rows": [
+        [
+          "",
+          "",
+          "Six\n    Months Ended June\u00a030, 2026",
+          "",
+          "",
+          "Six\n                                            Months Ended June\n                                            30, 2025 (As Restated)",
+          "",
+          "",
+          "Year\n    Ended December\u00a031, 2025 (As Restated)",
+          "",
+          "",
+          "Year\n    Ended December\u00a031, 2024 (As Restated)",
+          ""
+        ],
+        [
+          "Revenues",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Crude\n    oil",
+          "",
+          "$",
+          "9,733,506",
+          "",
+          "",
+          "$",
+          "7,987,747",
+          "",
+          "",
+          "$",
+          "15,621,918",
+          "",
+          "",
+          "$",
+          "19,298,698",
+          ""
+        ],
+        [
+          "Natural\n    gas and natural gas liquids",
+          "",
+          "",
+          "170,158",
+          "",
+          "",
+          "",
+          "122,372",
+          "",
+          "",
+          "",
+          "268,440",
+          "",
+          "",
+          "",
+          "483,486",
+          ""
+        ],
+        [
+          "Gain\n    (loss) on derivative instruments, net",
+          "",
+          "",
+          "(2,631,474",
+          ")",
+          "",
+          "",
+          "804,408",
+          "",
+          "",
+          "",
+          "663,010",
+          "",
+          "",
+          "",
+          "(850,374",
+          ")"
+        ],
+        [
+          "Other\n    revenue",
+          "",
+          "",
+          "181,719",
+          "",
+          "",
+          "",
+          "222,621",
+          "",
+          "",
+          "",
+          "383,196",
+          "",
+          "",
+          "",
+          "487,109",
+          ""
+        ],
+        [
+          "Total\n    revenues",
+          "",
+          "",
+          "7,453,909",
+          "",
+          "",
+          "",
+          "9,137,148",
+          "",
+          "",
+          "",
+          "16,936,564",
+          "",
+          "",
+          "",
+          "19,418,919",
+          ""
+        ],
+        [
+          "Expenses",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Production\n    taxes, transportation and processing",
+          "",
+          "",
+          "1,116,779",
+          "",
+          "",
+          "",
+          "712,557",
+          "",
+          "",
+          "",
+          "1,626,360",
+          "",
+          "",
+          "",
+          "1,715,792",
+          ""
+        ],
+        [
+          "Lease\n    operating",
+          "",
+          "",
+          "5,039,610",
+          "",
+          "",
+          "",
+          "4,549,809",
+          "",
+          "",
+          "",
+          "10,274,781",
+          "",
+          "",
+          "",
+          "8,614,080",
+          ""
+        ],
+        [
+          "Depletion,\n    depreciation and amortization",
+          "",
+          "",
+          "3,927,185",
+          "",
+          "",
+          "",
+          "555,265",
+          "",
+          "",
+          "",
+          "3,170,092",
+          "",
+          "",
+          "",
+          "2,407,098",
+          ""
+        ],
+        [
+          "Accretion\n    of asset retirement obligations",
+          "",
+          "",
+          "64,539",
+          "",
+          "",
+          "",
+          "15,505",
+          "",
+          "",
+          "",
+          "46,426",
+          "",
+          "",
+          "",
+          "144,988",
+          ""
+        ],
+        [
+          "General\n    and administrative",
+          "",
+          "",
+          "4,781,920",
+          "",
+          "",
+          "",
+          "3,617,235",
+          "",
+          "",
+          "",
+          "12,080,450",
+          "",
+          "",
+          "",
+          "10,381,095",
+          ""
+        ],
+        [
+          "Total\n    expenses",
+          "",
+          "",
+          "14,930,033",
+          "",
+          "",
+          "",
+          "9,450,371",
+          "",
+          "",
+          "",
+          "27,198,109",
+          "",
+          "",
+          "",
+          "23,263,053",
+          ""
+        ],
+        [
+          "Operating\n    income (loss)",
+          "",
+          "",
+          "( 7,476,124",
+          ")",
+          "",
+          "",
+          "( 313,223",
+          ")",
+          "",
+          "",
+          "(10,261,545)",
+          "",
+          "",
+          "",
+          "(3,844,134",
+          ")"
+        ],
+        [
+          "Other\n    Income (expenses)",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Change\n    in fair value of warrant liability",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "(152,490",
+          ")",
+          "",
+          "",
+          "(152,490",
+          ")",
+          "",
+          "",
+          "(804,004",
+          ")"
+        ],
+        [
+          "Change\n    in fair value of convertible note liability",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "(131,677",
+          ")",
+          "",
+          "",
+          "(131,677",
+          ")",
+          "",
+          "",
+          "(192,744",
+          ")"
+        ],
+        [
+          "Change\n    in fair value of FPA liability",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "561,099",
+          ""
+        ],
+        [
+          "Change\n    in fair value of derivative liability",
+          "",
+          "",
+          "(89,816",
+          ")",
+          "",
+          "",
+          "(885,279",
+          ")",
+          "",
+          "",
+          "(2,070,278",
+          ")",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Change\n    in fair value of derivative liability, related party",
+          "",
+          "",
+          "506,000",
+          "",
+          "",
+          "",
+          "562,000",
+          "",
+          "",
+          "",
+          "341,000",
+          "",
+          "",
+          "",
+          "(746,000",
+          ")"
+        ],
+        [
+          "Amortization\n    of debt discount",
+          "",
+          "",
+          "(1,093,830",
+          ")",
+          "",
+          "",
+          "(669,817",
+          ")",
+          "",
+          "",
+          "(1,475,191",
+          ")",
+          "",
+          "",
+          "(2,361,627",
+          ")"
+        ],
+        [
+          "Interest\n    expense",
+          "",
+          "",
+          "(435,999",
+          ")",
+          "",
+          "",
+          "(3,393,902",
+          ")",
+          "",
+          "",
+          "(4,892,170",
+          ")",
+          "",
+          "",
+          "(7,643,200",
+          ")"
+        ],
+        [
+          "Interest\n    income",
+          "",
+          "",
+          "5,206",
+          "\u200b",
+          "",
+          "",
+          "39,028",
+          "",
+          "",
+          "",
+          "49,700",
+          "",
+          "",
+          "",
+          "58,793",
+          ""
+        ],
+        [
+          "Gain\n    (loss) on extinguishment of liabilities",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "(1,306,337",
+          ")",
+          "",
+          "",
+          "540,347",
+          "",
+          "",
+          "",
+          "1,638,138",
+          ""
+        ],
+        [
+          "Gain\n    on sale of assets",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "13,379,040",
+          "",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Other\n    Income (expense)",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "201",
+          "",
+          "",
+          "",
+          "201",
+          "",
+          "",
+          "",
+          "36,989",
+          ""
+        ],
+        [
+          "Total\n    other income (expenses)",
+          "",
+          "",
+          "(1, 108,439",
+          ")",
+          "",
+          "",
+          "(5,938,273",
+          ")",
+          "",
+          "",
+          "5,588,482",
+          "",
+          "",
+          "",
+          "(9,452,556",
+          ")"
+        ],
+        [
+          "Loss\n    before income taxes",
+          "",
+          "",
+          "(8,584,563",
+          ")",
+          "",
+          "",
+          "(6,251,496",
+          ")",
+          "",
+          "",
+          "(4,673,063",
+          ")",
+          "",
+          "",
+          "(13,296,690",
+          ")"
+        ],
+        [
+          "Income\n    tax (provision) benefit",
+          "",
+          "",
+          "2,119,384",
+          "\u200b",
+          "",
+          "",
+          "1,239,128",
+          "",
+          "",
+          "",
+          "(2,821,554",
+          ")",
+          "",
+          "",
+          "3,470,407",
+          ""
+        ],
+        [
+          "Net\n    income (loss)",
+          "",
+          "",
+          "(6,465,179",
+          ")",
+          "",
+          "",
+          "(5, 012,368",
+          ")",
+          "",
+          "",
+          "(7,494,617)",
+          "",
+          "",
+          "",
+          "(9,826,283",
+          ")"
+        ],
+        [
+          "Net\n    income (loss) attributable to noncontrolling interests",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "28,535",
+          "",
+          "",
+          "",
+          "28,535",
+          "",
+          "",
+          "",
+          "1,697,604",
+          ""
+        ],
+        [
+          "Net\n    income (loss) attributable to EON Resources, Inc.",
+          "",
+          "$",
+          "( 6,465,179",
+          ")",
+          "",
+          "$",
+          "( 4,983,833",
+          ")",
+          "",
+          "$",
+          "(7,466,082)",
+          "",
+          "",
+          "$",
+          "(8,128,679",
+          ")"
+        ],
+        [
+          "Weighted\n    average share outstanding, common stock - basic and diluted",
+          "",
+          "",
+          "54,766,929",
+          "",
+          "",
+          "",
+          "18,809,177",
+          "",
+          "",
+          "",
+          "31,191,907",
+          "",
+          "",
+          "",
+          "6,477,052",
+          ""
+        ],
+        [
+          "Net\n    income (loss) per share of common stock - basic and diluted",
+          "",
+          "$",
+          "(0.12",
+          ")",
+          "",
+          "$",
+          "(0.26",
+          ")",
+          "",
+          "$",
+          "(0.24)",
+          "",
+          "",
+          "$",
+          "(1.25",
+          ")"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 187,
+      "rows": [
+        [
+          "",
+          "",
+          "Three Months Ended June 30",
+          "",
+          "",
+          "Six Months Ended June 30",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          ""
+        ],
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "(As restated) (1)",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "(As restated) (1)",
+          ""
+        ],
+        [
+          "Revenues",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Crude oil",
+          "",
+          "$",
+          "5,349,239",
+          "",
+          "",
+          "$",
+          "3,595,142",
+          "",
+          "",
+          "$",
+          "9,733,506",
+          "",
+          "",
+          "$",
+          "7,987,747",
+          ""
+        ],
+        [
+          "Natural gas and natural gas liquids",
+          "",
+          "",
+          "89,867",
+          "",
+          "",
+          "",
+          "42,340",
+          "",
+          "",
+          "",
+          "170,158",
+          "",
+          "",
+          "",
+          "122,372",
+          ""
+        ],
+        [
+          "Gain (loss) on derivative instruments, net",
+          "",
+          "",
+          "948,001",
+          "",
+          "",
+          "",
+          "889,479",
+          "",
+          "",
+          "",
+          "(2,631,474",
+          ")",
+          "",
+          "",
+          "804,408",
+          ""
+        ],
+        [
+          "Other revenue",
+          "",
+          "",
+          "98,609",
+          "",
+          "",
+          "",
+          "105,089",
+          "",
+          "",
+          "",
+          "181,719",
+          "",
+          "",
+          "",
+          "222,621",
+          ""
+        ],
+        [
+          "Total revenues",
+          "",
+          "",
+          "6,485,716",
+          "",
+          "",
+          "",
+          "4,632,050",
+          "",
+          "",
+          "",
+          "7,453,909",
+          "",
+          "",
+          "",
+          "9,137,148",
+          ""
+        ],
+        [
+          "Average sales prices:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Oil (per Bbl)",
+          "",
+          "$",
+          "95.79",
+          "",
+          "",
+          "$",
+          "65.37",
+          "",
+          "",
+          "",
+          "82.36",
+          "",
+          "",
+          "$",
+          "67.69",
+          ""
+        ],
+        [
+          "Effect on gain (loss) of settled oil derivatives on average price (per Bbl)",
+          "",
+          "",
+          "(21.68",
+          ")",
+          "",
+          "",
+          "6.90",
+          "",
+          "",
+          "",
+          "(12.84",
+          ")",
+          "",
+          "",
+          "2.00",
+          ""
+        ],
+        [
+          "Oil net of settled oil derivatives (per Bbl)",
+          "",
+          "",
+          "74.10",
+          "",
+          "",
+          "",
+          "72.26",
+          "",
+          "",
+          "",
+          "69.52",
+          "",
+          "",
+          "",
+          "69.70",
+          ""
+        ],
+        [
+          "Natural gas (per Mcf)",
+          "",
+          "",
+          "2.62",
+          "",
+          "",
+          "$",
+          "1.46",
+          "",
+          "",
+          "",
+          "2.43",
+          "",
+          "",
+          "$",
+          "2.15",
+          ""
+        ],
+        [
+          "Realized price on a BOE basis excluding settled commodity derivatives",
+          "",
+          "",
+          "88.36",
+          "",
+          "",
+          "$",
+          "60.79",
+          "",
+          "",
+          "",
+          "76.27",
+          "",
+          "",
+          "$",
+          "63.61",
+          ""
+        ],
+        [
+          "Effect of gain (loss) on settled commodity derivatives on average price (per BOE)",
+          "",
+          "",
+          "(19.67",
+          ")",
+          "",
+          "",
+          "6.34",
+          "",
+          "",
+          "",
+          "(11.68",
+          ")",
+          "",
+          "",
+          "1.85",
+          ""
+        ],
+        [
+          "Realized price on a BOE basis including settled commodity derivatives",
+          "",
+          "",
+          "68.69",
+          "",
+          "",
+          "",
+          "67.13",
+          "",
+          "",
+          "",
+          "64.59",
+          "",
+          "",
+          "",
+          "65.46",
+          ""
+        ],
+        [
+          "Expenses",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Production taxes, transportation and processing",
+          "",
+          "",
+          "702,775",
+          "",
+          "",
+          "",
+          "315,341",
+          "",
+          "",
+          "",
+          "1,116,779",
+          "",
+          "",
+          "",
+          "712,557",
+          ""
+        ],
+        [
+          "Lease operating",
+          "",
+          "",
+          "2,511,297",
+          "",
+          "",
+          "",
+          "2,359,042",
+          "",
+          "",
+          "",
+          "5,039,610",
+          "",
+          "",
+          "",
+          "4,549,809",
+          ""
+        ],
+        [
+          "Depletion, depreciation and amortization",
+          "",
+          "",
+          "2,136,209",
+          "",
+          "",
+          "",
+          "458,190",
+          "",
+          "",
+          "",
+          "3,927,185",
+          "",
+          "",
+          "",
+          "555,265",
+          ""
+        ],
+        [
+          "Accretion of asset retirement obligations",
+          "",
+          "",
+          "32,864",
+          "",
+          "",
+          "",
+          "8,513",
+          "",
+          "",
+          "",
+          "64,539",
+          "",
+          "",
+          "",
+          "15,505",
+          ""
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "2,375,349",
+          "",
+          "",
+          "",
+          "1,808,345",
+          "",
+          "",
+          "",
+          "4,781,920",
+          "",
+          "",
+          "",
+          "3,617,235",
+          ""
+        ],
+        [
+          "Total expenses",
+          "",
+          "",
+          "7,758,494",
+          "",
+          "",
+          "",
+          "4,949,431",
+          "",
+          "",
+          "",
+          "14,930,033",
+          "",
+          "",
+          "",
+          "9,450,371",
+          ""
+        ],
+        [
+          "Costs and expenses (per BOE):",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Production taxes, transportation, and processing",
+          "",
+          "",
+          "11.42",
+          "",
+          "",
+          "$",
+          "5.27",
+          "",
+          "",
+          "",
+          "8.60",
+          "",
+          "",
+          "$",
+          "5.59",
+          ""
+        ],
+        [
+          "Lease operating expenses",
+          "",
+          "",
+          "40.79",
+          "",
+          "",
+          "",
+          "39.43",
+          "",
+          "",
+          "",
+          "38.81",
+          "",
+          "",
+          "",
+          "35.68",
+          ""
+        ],
+        [
+          "Depreciation, depletion, and amortization expense",
+          "",
+          "",
+          "34.70",
+          "",
+          "",
+          "",
+          "7.66",
+          "",
+          "",
+          "",
+          "30.24",
+          "",
+          "",
+          "",
+          "4.36",
+          ""
+        ],
+        [
+          "Accretion of asset retirement obligations",
+          "",
+          "",
+          "0.53",
+          "",
+          "",
+          "",
+          "0.14",
+          "",
+          "",
+          "",
+          "0.50",
+          "",
+          "",
+          "",
+          "0.12",
+          ""
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "38.59",
+          "",
+          "",
+          "",
+          "30.22",
+          "",
+          "",
+          "",
+          "36.82",
+          "",
+          "",
+          "",
+          "28.37",
+          ""
+        ],
+        [
+          "Net producing wells at period-end",
+          "",
+          "",
+          "438",
+          "",
+          "",
+          "",
+          "472",
+          "",
+          "",
+          "",
+          "438",
+          "",
+          "",
+          "",
+          "472",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 191,
+      "rows": [
+        [
+          "",
+          "",
+          "For the year ended December\n    31, 2025",
+          "",
+          "",
+          "For the year ended December\n    31, 2024",
+          ""
+        ],
+        [
+          "Revenues",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Crude oil",
+          "",
+          "$",
+          "15,621,918",
+          "",
+          "",
+          "$",
+          "19,298,698",
+          ""
+        ],
+        [
+          "Natural gas and natural gas liquids",
+          "",
+          "",
+          "268,440",
+          "",
+          "",
+          "",
+          "483,486",
+          ""
+        ],
+        [
+          "Gain (loss) on derivative instruments, net",
+          "",
+          "",
+          "663,010",
+          "",
+          "",
+          "",
+          "(850,374",
+          ")"
+        ],
+        [
+          "Other revenue",
+          "",
+          "",
+          "383,196",
+          "",
+          "",
+          "",
+          "487,109",
+          ""
+        ],
+        [
+          "Total revenues",
+          "",
+          "",
+          "16,936,564",
+          "",
+          "",
+          "",
+          "19,418,919",
+          ""
+        ],
+        [
+          "Average sales prices:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Oil (per Bbl)",
+          "",
+          "$",
+          "63.93",
+          "",
+          "",
+          "$",
+          "75.52",
+          ""
+        ],
+        [
+          "Effect on gain (loss) of settled oil derivatives on\n    average price (per Bbl)",
+          "",
+          "",
+          "2.89",
+          "",
+          "",
+          "",
+          "(1.91",
+          ")"
+        ],
+        [
+          "Oil net of settled oil derivatives (per Bbl)",
+          "",
+          "",
+          "66.82",
+          "",
+          "",
+          "",
+          "73.61",
+          ""
+        ],
+        [
+          "Natural gas (per Mcf)",
+          "",
+          "",
+          "1.89",
+          "",
+          "",
+          "",
+          "2.27",
+          ""
+        ],
+        [
+          "Realized price on a BOE basis excluding settled commodity derivatives",
+          "",
+          "",
+          "59.29",
+          "",
+          "",
+          "",
+          "67.96",
+          ""
+        ],
+        [
+          "Effect of gain (loss) on settled commodity derivatives\n    on average price (per BOE)",
+          "",
+          "",
+          "2.63",
+          "",
+          "",
+          "",
+          "(1.68",
+          ")"
+        ],
+        [
+          "Realized price on a BOE basis including settled commodity derivatives",
+          "",
+          "$",
+          "61.92",
+          "",
+          "",
+          "$",
+          "66.28",
+          ""
+        ],
+        [
+          "Expenses",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Production taxes, transportation and processing",
+          "",
+          "",
+          "1,626,360",
+          "",
+          "",
+          "",
+          "1,715,792",
+          ""
+        ],
+        [
+          "Lease operating",
+          "",
+          "",
+          "10,274,781",
+          "",
+          "",
+          "",
+          "8,614,080",
+          ""
+        ],
+        [
+          "Depletion, depreciation and amortization",
+          "",
+          "",
+          "3,170,092",
+          "",
+          "",
+          "",
+          "2,407,098",
+          ""
+        ],
+        [
+          "Accretion of asset retirement obligations",
+          "",
+          "",
+          "46,426",
+          "",
+          "",
+          "",
+          "144,988",
+          ""
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "12,080,450",
+          "",
+          "",
+          "",
+          "10,381,095",
+          ""
+        ],
+        [
+          "Total expenses",
+          "",
+          "",
+          "27,198,109",
+          "",
+          "",
+          "",
+          "23,263,053",
+          ""
+        ],
+        [
+          "Costs and expenses (per BOE):",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Production taxes, transportation, and processing",
+          "",
+          "$",
+          "6.07",
+          "",
+          "",
+          "$",
+          "5.89",
+          ""
+        ],
+        [
+          "Lease operating expenses",
+          "",
+          "",
+          "38.33",
+          "",
+          "",
+          "",
+          "29.59",
+          ""
+        ],
+        [
+          "Depreciation, depletion, and amortization expense",
+          "",
+          "",
+          "11.83",
+          "",
+          "",
+          "",
+          "8.27",
+          ""
+        ],
+        [
+          "Accretion of asset retirement obligations",
+          "",
+          "",
+          "0.17",
+          "",
+          "",
+          "",
+          "0.50",
+          ""
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "45.07",
+          "",
+          "",
+          "",
+          "35.66",
+          ""
+        ],
+        [
+          "Net producing wells at period-end",
+          "",
+          "",
+          "472",
+          "",
+          "",
+          "",
+          "342",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 194,
+      "rows": [
+        [
+          "",
+          "",
+          "Six\u00a0Months Ended June 30, 2026",
+          "",
+          "",
+          "Six Months Ended June\n    30, 2025 (As\u00a0restated)",
+          ""
+        ],
+        [
+          "Net cash (used in) provided by operating activities",
+          "",
+          "$",
+          "211,023",
+          "",
+          "",
+          "$",
+          "(2,296,949",
+          ")"
+        ],
+        [
+          "Net cash used in investing activities",
+          "",
+          "",
+          "(2,493,246",
+          ")",
+          "",
+          "",
+          "(2,138,532",
+          ")"
+        ],
+        [
+          "Net cash (used in) provided by financing activities",
+          "",
+          "",
+          "2,598,859",
+          "",
+          "",
+          "",
+          "4,524,894",
+          ""
+        ],
+        [
+          "Net change in cash and cash equivalents",
+          "",
+          "$",
+          "316,636",
+          "",
+          "",
+          "$",
+          "89,413",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 195,
+      "rows": [
+        [
+          "",
+          "",
+          "Year Ended December\u00a031, 2025",
+          "",
+          "",
+          "Year Ended December\u00a031, 2024",
+          ""
+        ],
+        [
+          "Net cash (used in) provided by operating activities",
+          "",
+          "$",
+          "(7,645,418",
+          ")",
+          "",
+          "$",
+          "3,700,686",
+          ""
+        ],
+        [
+          "Net cash (used in) provided by investing activities",
+          "",
+          "",
+          "25,261,051",
+          "",
+          "",
+          "",
+          "(3,575,062",
+          ")"
+        ],
+        [
+          "Net cash used in financing activities",
+          "",
+          "",
+          "(20,212,155",
+          ")",
+          "",
+          "",
+          "(659,520",
+          ")"
+        ],
+        [
+          "Net change in cash and cash equivalents",
+          "",
+          "$",
+          "(2,596,522",
+          ")",
+          "",
+          "$",
+          "(533,896",
+          ")"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 363,
+      "rows": [
+        [
+          "Unaudited Condensed Consolidated Financial Statements:",
+          ""
+        ],
+        [
+          "Unaudited Condensed Consolidated Balance Sheets as of June 30, 2026 (unaudited)\n    and December 31, 2025",
+          "F-2"
+        ],
+        [
+          "Unaudited Condensed Consolidated Statements of Operations for the three and six\n    months ended June 30, 2026 and 2025",
+          "F-3"
+        ],
+        [
+          "Unaudited Condensed Consolidated Statements of Changes in Stockholders\u2019\n    Equity for the three and six months ended June 30, 2026 and 2025",
+          "F-4"
+        ],
+        [
+          "Unaudited Condensed Consolidated Statements of Cash Flows for the six months\n    ended June 30, 2026 and 2025",
+          "F-5"
+        ],
+        [
+          "Notes to Unaudited Condensed Consolidated Financial Statements",
+          "F-6"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 364,
+      "rows": [
+        [
+          "Report\n    of Independent Registered Public Accounting Firm (PCAOB ID#199)",
+          "F-31"
+        ],
+        [
+          "Report of Independent Registered Public Accounting Firm (PCAOB ID#688)",
+          "F-32"
+        ],
+        [
+          "Consolidated Financial\n    Statements:",
+          ""
+        ],
+        [
+          "Consolidated\n    Balance Sheets as of December 31, 2025 and 2024",
+          "F-33"
+        ],
+        [
+          "Consolidated\n    Statements of Operations for the years ended December 31, 2025 and 2024",
+          "F- 34"
+        ],
+        [
+          "Consolidated\n    Statements of Changes in Stockholders\u2019 Equity for the years ended December 31, 2025 and 2024",
+          "F-35"
+        ],
+        [
+          "Consolidated\n    Statements of Cash Flows for the years ended December 31, 2025 and 2024",
+          "F-36"
+        ],
+        [
+          "Notes\n    to Consolidated Financial Statements",
+          "F- 37"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    }
+  ],
+  "analysis_state": "parsed",
+  "parser_version": 1,
+  "filings": [
+    {
+      "accession": "0001213900-26-112971",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "S-1/A",
+      "filed": "2026-10-27",
+      "accepted": "2026-10-27T21:18:09+00:00",
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390026112971/0001213900-26-112971-index.html",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390026112971/ea0290025-s1a1_eonres.htm",
+      "file_number": "333-289191",
+      "discovered_at": "2026-10-27T21:37:37+00:00",
+      "state": "parsed",
+      "last_attempt": "2026-10-27T21:37:56+00:00",
+      "last_success": "2026-10-27T21:38:00+00:00",
+      "error": null,
+      "classification": "ipo_language_identified"
+    },
+    {
+      "accession": "0001213900-25-077409",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "424B3",
+      "filed": "2025-08-15",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390025077409/0001213900-25-077409-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-077408",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "424B3",
+      "filed": "2025-08-15",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390025077408/0001213900-25-077408-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-070636",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "S-1",
+      "filed": "2025-08-01",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390025070636/0001213900-25-070636-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-064875",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "424B3",
+      "filed": "2025-07-17",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390025064875/0001213900-25-064875-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-002262",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "EFFECT",
+      "filed": "2025-07-16",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/999999999525002262/9999999995-25-002262-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-049772",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "424B3",
+      "filed": "2025-06-02",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390025049772/0001213900-25-049772-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-001797",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "EFFECT",
+      "filed": "2025-05-30",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/999999999525001797/9999999995-25-001797-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-047348",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "S-1/A",
+      "filed": "2025-05-23",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390025047348/0001213900-25-047348-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-041616",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "S-1",
+      "filed": "2025-05-09",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390025041616/0001213900-25-041616-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-000304",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "EFFECT",
+      "filed": "2025-02-04",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/999999999525000304/9999999995-25-000304-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-010137",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "424B3",
+      "filed": "2025-02-04",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390025010137/0001213900-25-010137-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-25-006090",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "S-1",
+      "filed": "2025-01-24",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390025006090/0001213900-25-006090-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-095902",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "424B3",
+      "filed": "2024-11-08",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390024095902/0001213900-24-095902-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-003380",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "EFFECT",
+      "filed": "2024-11-05",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/999999999524003380/9999999995-24-003380-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-093198",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "S-1/A",
+      "filed": "2024-11-01",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390024093198/0001213900-24-093198-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-090081",
+      "cik": 1842556,
+      "name": "EON Resources Inc.",
+      "form": "S-1",
+      "filed": "2024-10-24",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390024090081/0001213900-24-090081-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-067340",
+      "cik": 1842556,
+      "name": "HNR Acquisition Corp.",
+      "form": "424B3",
+      "filed": "2024-08-12",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390024067340/0001213900-24-067340-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-002471",
+      "cik": 1842556,
+      "name": "HNR Acquisition Corp.",
+      "form": "EFFECT",
+      "filed": "2024-08-09",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/999999999524002471/9999999995-24-002471-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-065120",
+      "cik": 1842556,
+      "name": "HNR Acquisition Corp.",
+      "form": "S-1/A",
+      "filed": "2024-08-05",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390024065120/0001213900-24-065120-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001013762-24-001086",
+      "cik": 1842556,
+      "name": "HNR Acquisition Corp.",
+      "form": "S-1/A",
+      "filed": "2024-07-25",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000101376224001086/0001013762-24-001086-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-057751",
+      "cik": 1842556,
+      "name": "HNR Acquisition Corp.",
+      "form": "S-1/A",
+      "filed": "2024-07-01",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390024057751/0001213900-24-057751-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-042275",
+      "cik": 1842556,
+      "name": "HNR Acquisition Corp.",
+      "form": "S-1/A",
+      "filed": "2024-05-13",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390024042275/0001213900-24-042275-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001213900-24-002056",
+      "cik": 1842556,
+      "name": "HNR Acquisition Corp.",
+      "form": "S-1/A",
+      "filed": "2024-01-09",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390024002056/0001213900-24-002056-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    }
+  ],
+  "latest_discovered": {
+    "accession": "0001213900-26-112971",
+    "cik": 1842556,
+    "name": "EON Resources Inc.",
+    "form": "S-1/A",
+    "filed": "2026-10-27",
+    "accepted": "2026-10-27T21:18:09+00:00",
+    "index_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390026112971/0001213900-26-112971-index.html",
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1842556/000121390026112971/ea0290025-s1a1_eonres.htm",
+    "file_number": "333-289191",
+    "discovered_at": "2026-10-27T21:37:37+00:00",
+    "state": "parsed",
+    "last_attempt": "2026-10-27T21:37:56+00:00",
+    "last_success": "2026-10-27T21:38:00+00:00",
+    "error": null,
+    "classification": "ipo_language_identified"
+  },
+  "generated_at": "2026-10-27T21:38:22+00:00"
+}
