@@ -1,7 +1,7 @@
 name: Company shock panel checks
 on:
   pull_request:
-    paths: ['web/shock-panel.*', 'web/app.js', 'web/index.html', 'tests/test_shock_panel*', '.github/workflows/shock-panel-checks.yml']
+    paths: ['web/shock-panel.*', 'web/app.js', 'web/index.html', 'tests/test_shock_panel*', 'pipeline/shock_history.py', 'tests/test_shock_history.py', '.github/workflows/shock-history.yml', '.github/workflows/shock-panel-checks.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,6 +16,11 @@ jobs:
           sparse-checkout: |
             web
             tests
+            pipeline
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p test_shock_history.py -v
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

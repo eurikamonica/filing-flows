@@ -199,6 +199,19 @@ jobs:
             echo "::notice::IPO collector has not published its first snapshot; the reviewed seed remains available."
           fi
 
+      - name: Stage independent shock history (live panel also reads the data branch)
+        timeout-minutes: 2
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$remote" shock-history >/dev/null; then
+            git clone -q --depth 1 --filter=blob:none --sparse --branch shock-history "$remote" _shock
+            git -C _shock sparse-checkout set public
+            python -c "import shutil; shutil.copytree('_shock/public', '_site/data/shock-history', dirs_exist_ok=True)"
+          fi
+
       - name: The long rotation history (public/ of the branch rotation-history, when it exists)
         continue-on-error: true
         run: |
