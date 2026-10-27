@@ -14,6 +14,7 @@ import urllib.request
 from . import facts as F, fsa as W
 
 VERSION = 1
+READER = 2
 KEYS = ('revenue', 'oi', 'ni', 'ocf', 'capex', 'gp', 'rd', 'sbc')
 PRIORITY = ('AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'META', 'TSLA', 'PLTR', 'AMD', 'CRM', 'ORCL')
 
@@ -101,9 +102,9 @@ def queue(companies, ledger, now):
             continue
         old = ledger.get(str(c['cik']), {})
         age = now-old.get('attempted_at',0)
-        if age < (6*3600 if old.get('error') else 0):
+        if age < (6*3600 if old.get('error') and old.get('reader',1) >= READER else 0):
             continue
-        if old.get('v') == VERSION and old.get('filed','') >= c.get('filed','') and age < 7*86400:
+        if not old.get('error') and old.get('v') == VERSION and old.get('filed','') >= c.get('filed','') and age < 7*86400:
             continue
         pending.append(c)
     return sorted(pending, key=lambda c:(0 if ledger.get(str(c['cik']),{}).get('v') == VERSION and c.get('filed','') > ledger[str(c['cik'])].get('filed','') else 1 if ledger.get(str(c['cik']),{}).get('v') != VERSION else 2,
@@ -130,14 +131,19 @@ def collect(root, index, limit=300, minutes=8, fetch=None):
         try:
             doc = compute(fetch(int(cik)))
             if str(doc.get('cik')) != cik:
-                raise ValueError('SEC company identity mismatch')
+                raise ValueError(f"SEC company identity mismatch: requested {cik}, received {doc.get('cik')!r}")
             write(root/'public'/'c'/f'{cik}.json', doc)
-            ledger[cik] = {'v':VERSION, 'filed':c.get('filed',''), 'attempted_at':time.time(), 'quarters':len(doc['rows']),
+            ledger[cik] = {'v':VERSION, 'reader':READER, 'filed':c.get('filed',''), 'attempted_at':time.time(), 'quarters':len(doc['rows']),
                            'first':doc['rows'][0]['end'] if doc['rows'] else None, 'last':doc['rows'][-1]['end'] if doc['rows'] else None}
             succeeded += 1
         except Exception as exc:
             # Keep last successful data and its version; expose failures without credentials/URLs.
-            ledger[cik] = {**old, 'attempted_at':time.time(), 'error':type(exc).__name__}
+            # Failure reasons are needed to distinguish source gaps from parser bugs.
+            # Never include HTTP headers or credentials; only value/identity errors
+            # receive detail. A changed reader retries old failures once immediately.
+            detail = str(exc)[:240] if isinstance(exc, (ValueError, TypeError, KeyError)) else type(exc).__name__
+            ledger[cik] = {**old, 'reader':READER, 'attempted_at':time.time(), 'error':type(exc).__name__, 'detail':detail}
+            print(f"shock-history CIK {cik}: {type(exc).__name__}: {detail}")
         write(root/'ledger.json', ledger)
     universe = {str(c['cik']) for c in companies if str(c.get('cik','')).isdigit()}
     have = [v for k,v in ledger.items() if k in universe and v.get('v') == VERSION]
