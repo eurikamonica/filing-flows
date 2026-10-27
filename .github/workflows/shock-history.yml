@@ -1,7 +1,7 @@
 name: Shock panel history backfill
 on:
   schedule:
-    - cron: '7,27,47 * * * *'
+    - cron: '7-57/10 * * * *'
   push:
     branches: [main]
     paths: ['pipeline/shock_history.py', '.github/workflows/shock-history.yml']
@@ -49,7 +49,7 @@ jobs:
           echo 'ready=true' >> "$GITHUB_OUTPUT"
       - name: Read full SEC history with a bounded batch
         timeout-minutes: 10
-        run: python -m pipeline.shock_history --root shock-state --limit 300 --minutes 8
+        run: python -m pipeline.shock_history --root shock-state --limit 900 --minutes 8
       - name: Persist completed company histories even after interruption
         if: always() && steps.restore.outputs.ready == 'true'
         run: |

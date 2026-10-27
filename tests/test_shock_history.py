@@ -68,11 +68,15 @@ class HistoryTests(unittest.TestCase):
 
     def test_queue_backoff_and_refresh(self):
         cs = [{'cik':1,'ticker':'AAPL','filed':'2026-10-27','revenue':10}, {'cik':2,'ticker':'X','filed':'2026-10-01'}]
-        ledger = {'1':{'v':1,'filed':'2026-10-27','attempted_at':100000}, '2':{'error':'RuntimeError','attempted_at':100000}}
+        ledger = {'1':{'v':1,'filed':'2026-10-27','attempted_at':100000}, '2':{'error':'RuntimeError','reader':H.READER,'attempted_at':100000}}
         self.assertEqual(H.queue(cs,ledger,100100),[])
         cs[0]['filed']='2026-10-28'
         self.assertEqual([c['cik'] for c in H.queue(cs,ledger,100100)],[1])
         self.assertEqual(len(H.queue(cs,ledger,100000+8*86400)),2)
+        ledger['2'].update({'v':H.VERSION,'filed':'2026-10-01'})
+        self.assertEqual(len(H.queue(cs,ledger,100000+7*3600)),2)
+        ledger['2']['reader'] = H.READER-1
+        self.assertIn(2,[c['cik'] for c in H.queue(cs,ledger,100100)])
 
     def test_incremental_collect_preserves_success_and_resumes(self):
         with tempfile.TemporaryDirectory() as tmp:
