@@ -821,7 +821,15 @@
       await loadExtScript(v.script);
       if (!here()) return;
       body.innerHTML = '';
-      await window[v.global].render(body, { cik: c.profile.cik, ticker, company: c, here, hub: 'disclosures/' });
+      let target = body;
+      if (id === 'quality' && window.FFQualityVisuals) {
+        window.FFQualityVisuals.mount(body, c);
+        const links = document.createElement('p');
+        links.innerHTML = `<a href="#c-${c.profile.cik}-cash">Profit & cash: cash bridge, accruals and reserves →</a> · <a href="#c-${c.profile.cik}-debt">Debt & rates: maturities and coverage →</a>`;
+        body.appendChild(links);
+        target = document.createElement('div'); body.appendChild(target);
+      }
+      await window[v.global].render(target, { cik: c.profile.cik, ticker, company: c, here, hub: 'disclosures/' });
     } catch (err) {
       if (here()) body.innerHTML = `<p class="muted">${t(v.label)} could not load (${t(err.message)}).</p>`;
     }
@@ -963,6 +971,7 @@
       }
     }
     if (which === 'cash') {
+      if (window.FFQualityVisuals) window.FFQualityVisuals.mount(body, c);
       if (window.FFQualityIPO) window.FFQualityIPO.quality(body, {...c, cik});
       driversSection(body, c);
       qualitySection(body, c, (c.quarters || [])[0], false);
