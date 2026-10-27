@@ -86,3 +86,59 @@ A separate, explicitly user-entered calculator provides:
 The lab does not infer EPS, duration, debt, WACC, or peer valuation multiples, and does not add its assumptions to the statistical stock effect. JSON exports include model, regularization setting, history window, output units, comparison diagnostics and valuation assumptions/results. Missing inputs remain unknown; a blank shock no longer silently coerces to zero.
 
 Validation adds Ridge collinearity/shrinkage, Huber outlier resistance, AR lag alignment and stable pulse paths, identical comparison samples, macro transformation units, loss-safe operating changes, working-capital units and valuation denominator guards. Browser tests exercise all four models, expanded controls, days-based scenarios, blank-input errors and the valuation lab.
+
+
+## Faster history, usable defaults and validation recommendations (v3)
+
+The shock panel now loads a compact supplemental history from the independent
+`shock-history` branch (`public/c/<CIK>.json`, `public/status.json`), falling back
+to the Pages copy in `data/shock-history/`. The collector runs every 20 minutes,
+up to 300 companies / eight minutes per batch; scheduling can be delayed. It
+reads one SEC companyfacts response per company and retains available quarters
+since 2009. It prioritizes large followed companies and their industry peers,
+then traverses the whole company index. New filings re-enter the queue; facts
+otherwise refresh weekly. Failed issuers back off six hours; successful files
+and the incremental ledger survive partial failures. A missing SEC contact
+configuration fails explicitly, using the existing repository setting.
+
+Supplemental cells fill gaps only, with issuer/currency checks and filing
+references. Existing recent company values take precedence. Cash flow, CapEx,
+R&D and SBC use quarterly durations or same-start YTD differences, including
+FY minus nine months. Assets and current balances are historical period-end
+facts. Gross profit can be revenue minus disclosed cost of revenue. DSO needs
+opening/closing receivables; supplemental CCC requires disclosed inventory and
+payables, never inferred zero inventory or accrued-liability substitutes.
+Foreign-currency histories are not blended into USD. Genuine short listing
+history, absent tags, and missing macro/price history remain unavailable.
+
+**Use reliable defaults** selects a compact factor set by complete-case coverage
+and usable variation, preferring more factors within 90% of the maximum sample
+among the predeclared candidates. It does not rank specifications by R² or test
+performance. Same-quarter timing, all history, OLS and an explicitly labelled
+illustrative rate shock are the default. The selected output is preserved;
+output choices show observed-quarter counts. Thresholds are unchanged.
+
+**Recommend model** fixes the selected output/factors/timing/window and compares
+OLS, Ridge (alpha 1/10/100), Huber, and ARX using two expanding four-quarter
+validation blocks. The final max(6, ceil(20% × common observations)) quarters
+are excluded from selection. All candidates share eligible dates; candidates
+failing either training fit are unavailable. The lowest validation RMSE is
+applied only if it beats a training-mean baseline. The final test is then
+reported separately. Insufficient history produces no recommendation. This
+is conditional retrospective association, not a claim of a universally optimal
+model; revised vintages and one-step observed AR lags remain disclosed. After
+selection, scenario coefficients use the full selected historical sample.
+
+The UI shows source/complete sample counts, collector progress, per-factor
+coverage bars, a missing-quarter timeline, actual/fitted time series and final
+test predictions. Missing fit/holdout history is explained once rather than
+repeated across overflowing table rows. Actual observations remain visible even
+during macro outages. Peer requests are cached within the page, datasets are
+cached by timing, and refitting computes only the selected output. Refresh
+preserves input/model/valuation settings. JSON schema 3 exports coverage,
+collector/source snapshots and selection/validation/final-test diagnostics.
+
+Validation: 22 numerical/model checks, seven offline collector tests, and
+Playwright desktop/mobile regression including refresh preservation and macro
+outages. Primary data documentation:
+https://www.sec.gov/search-filings/edgar-application-programming-interfaces

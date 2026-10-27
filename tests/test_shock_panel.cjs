@@ -50,3 +50,29 @@ test('additional macro transforms keep bp, percent, levels and point changes dis
 test('valuation bridges compound EPS and multiple, enforce perpetuity denominator and missing data',()=>{
  const v={eps:5,pe:20,epsPct:10,pePct:-10,fcf:100,wacc:10,g:2,waccBP:100,gBP:0,fcfPct:0},r=S.valuation(v);assert.equal(r.pe.base,100);assert.equal(r.pe.scenario,99);assert.equal(r.dcf.base,1250);assert(Math.abs(r.dcf.scenario-100/.09)<1e-10);assert(S.valuation({...v,waccBP:-900}).dcf.error);assert(S.valuation({...v,eps:-1}).pe.error);assert(S.valuation({...v,eps:null}).pe.error);
 });
+
+test('supplemental history fills gaps without replacing current values or mixing identities/currencies',()=>{
+ const c={profile:{cik:1},quarters:[{end:'2025-03-31',headline:{revenue:100}}],shock_history:{v:1,cik:1,unit:'USD',rows:[{end:'2010-03-31',values:{revenue:50,ocf:10}},{end:'2025-03-31',values:{revenue:999,capex:3}}]}};
+ let r=S.financials(c);assert.equal(r.length,2);assert.equal(r[1].values.revenue,100);assert.equal(r[1].values.capex,3);
+ c.shock_history.cik=2;assert.equal(S.financials(c).length,1);c.shock_history.cik=1;c.currency='EUR';assert.equal(S.financials(c).length,1);
+});
+test('coverage defaults remove short peers, preserve minimum sample and avoid outcome-based tuning',()=>{
+ const rs=sample(40).map((r,i)=>({...r,peers:i<20?null:r.peers}));
+ const d=S.defaults(rs);assert(!d.error);assert.deepEqual(d.keys,['rates','fx','jobs']);assert.equal(d.n,40);
+ assert.deepEqual(S.defaults(rs.map(r=>({...r,y:r.y*500+600}))).keys,d.keys);
+ assert(S.defaults(sample(20)).error);const cv=S.coverage(rs,['rates','fx','jobs','peers']);assert.equal(cv.n,20);assert.equal(cv.need,25);assert.equal(cv.missing,5);
+});
+test('recommendation excludes final test from model and penalty selection',()=>{
+ const rs=sample(80),a=S.recommend(rs,['rates','fx','jobs']);assert(a.chosen);assert(a.qualified);
+ const b=S.recommend(rs.map(r=>({...r,y:r.t>=Date.parse(a.test.first)?r.y+100000:r.y})),['rates','fx','jobs']);
+ assert.deepEqual(a.chosen,b.chosen);assert.deepEqual(a.ranking,b.ranking);assert(b.test.rmse>a.test.rmse*100);assert(a.validation.last<a.test.first);assert.equal(a.validation.n,8);assert.equal(a.test.n,16);
+ assert(S.recommend(sample(30),['rates','fx','jobs']).error);
+});
+test('coverage and observed trends survive macro outage without manufacturing inputs',()=>{
+ const c={quarters:[{end:'2024-03-31',headline:{revenue:100,oi:20}},{end:'2025-03-31',headline:{revenue:110,oi:22}}]};
+ const d=S.dataset(c,null,[],null,null);assert.equal(d.rows.revenue.length,1);assert.equal(d.rows.om.length,2);assert.equal(d.rows.om[0].rates,undefined);assert.equal(S.coverage(d.rows.om,['rates']).n,0);assert.match(S.timePlot(d.rows.om),/Actual quarterly history/);
+});
+
+test('ARX coverage counts its lagged rows and extra parameter consistently',()=>{
+ const rs=sample(40),cv=S.coverage(rs,['rates','fx','jobs','peers'],'arx');assert.equal(cv.n,39);assert.equal(cv.need,30);assert.equal(cv.periods[0].complete,false);
+});
