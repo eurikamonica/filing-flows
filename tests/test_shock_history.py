@@ -99,6 +99,18 @@ class HistoryTests(unittest.TestCase):
             self.assertEqual(r['processed'],0)
             self.assertFalse((Path(tmp)/'public/c/2.json').exists())
 
+    def test_padded_cik_matches_without_weakening_identity_check(self):
+        f = fixture()
+        f['cik'] = '0000000001'
+        with tempfile.TemporaryDirectory() as tmp:
+            r = H.collect(tmp,{'companies':[{'cik':1}]},fetch=lambda cik:f)
+            self.assertEqual(r['processed'],1)
+            doc = json.loads((Path(tmp)/'public/c/1.json').read_text())
+            self.assertEqual(doc['cik'],1)
+            self.assertEqual(doc['source_cik'],'0000000001')
+        for value in [None, True, 1.5, '1.0', '../1', '0', '-1', '12345678901']:
+            self.assertIsNone(H.cik_number(value))
+
 
 if __name__ == '__main__':
     unittest.main()
