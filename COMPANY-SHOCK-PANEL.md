@@ -92,8 +92,8 @@ Validation adds Ridge collinearity/shrinkage, Huber outlier resistance, AR lag a
 
 The shock panel now loads a compact supplemental history from the independent
 `shock-history` branch (`public/c/<CIK>.json`, `public/status.json`), falling back
-to the Pages copy in `data/shock-history/`. The collector runs every 20 minutes,
-up to 300 companies / eight minutes per batch; scheduling can be delayed. It
+to the Pages copy in `data/shock-history/`. The collector runs every 10 minutes,
+up to 900 companies / eight minutes per batch; scheduling can be delayed. It
 reads one SEC companyfacts response per company and retains available quarters
 since 2009. It prioritizes large followed companies and their industry peers,
 then traverses the whole company index. New filings re-enter the queue; facts

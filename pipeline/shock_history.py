@@ -111,7 +111,7 @@ def queue(companies, ledger, now):
                                          c.get('ticker') not in priority, -(c.get('revenue') or 0), str(c['cik'])))
 
 
-def collect(root, index, limit=300, minutes=8, fetch=None):
+def collect(root, index, limit=900, minutes=8, fetch=None):
     if fetch is None:
         from . import sec
         # Leave ample request headroom for the site's other SEC collectors.
@@ -152,7 +152,7 @@ def collect(root, index, limit=300, minutes=8, fetch=None):
               'ready24':sum(v.get('quarters',0)>=24 for v in have), 'pending':len(universe)-len(have),
               'failed':sum(bool(v.get('error')) for k,v in ledger.items() if k in universe),
               'run':{'attempted':attempted, 'succeeded':succeeded}, 'earliest':'2009-01-01',
-              'schedule':'Every 20 minutes; GitHub scheduling may be delayed', 'batch_limit':limit,
+              'schedule':'Every 10 minutes; GitHub scheduling may be delayed', 'batch_limit':limit,
               'note':'Counts are source quarters, not guaranteed complete model rows. Missing facts are never imputed.'}
     write(root/'public'/'status.json', status)
     return status
@@ -162,7 +162,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--root', required=True)
     p.add_argument('--index', default='https://filing-flows.com/data/index.json')
-    p.add_argument('--limit', type=int, default=300)
+    p.add_argument('--limit', type=int, default=900)
     p.add_argument('--minutes', type=float, default=8)
     args = p.parse_args()
     if args.index.startswith('https://'):
