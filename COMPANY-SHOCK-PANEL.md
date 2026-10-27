@@ -138,7 +138,7 @@ cached by timing, and refitting computes only the selected output. Refresh
 preserves input/model/valuation settings. JSON schema 3 exports coverage,
 collector/source snapshots and selection/validation/final-test diagnostics.
 
-Validation: 21 numerical/model checks, seven offline collector tests, and
+Validation: 22 numerical/model checks, seven offline collector tests, and
 Playwright desktop/mobile regression including refresh preservation and macro
 outages. Primary data documentation:
 https://www.sec.gov/search-filings/edgar-application-programming-interfaces

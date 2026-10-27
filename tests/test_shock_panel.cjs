@@ -72,3 +72,7 @@ test('coverage and observed trends survive macro outage without manufacturing in
  const c={quarters:[{end:'2024-03-31',headline:{revenue:100,oi:20}},{end:'2025-03-31',headline:{revenue:110,oi:22}}]};
  const d=S.dataset(c,null,[],null,null);assert.equal(d.rows.revenue.length,1);assert.equal(d.rows.om.length,2);assert.equal(d.rows.om[0].rates,undefined);assert.equal(S.coverage(d.rows.om,['rates']).n,0);assert.match(S.timePlot(d.rows.om),/Actual quarterly history/);
 });
+
+test('ARX coverage counts its lagged rows and extra parameter consistently',()=>{
+ const rs=sample(40),cv=S.coverage(rs,['rates','fx','jobs','peers'],'arx');assert.equal(cv.n,39);assert.equal(cv.need,30);assert.equal(cv.periods[0].complete,false);
+});
