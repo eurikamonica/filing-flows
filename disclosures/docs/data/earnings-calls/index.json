@@ -1,8 +1,8 @@
 {
   "version": 2,
   "source": "SEC EDGAR + issuer official IR",
-  "generated_at": "2026-10-28T17:20:11+00:00",
-  "last_attempt": "2026-10-28T17:20:11+00:00",
+  "generated_at": "2026-10-28T21:12:26+00:00",
+  "last_attempt": "2026-10-28T21:12:26+00:00",
   "last_success": null,
   "status": "partial",
   "errors": [
@@ -12,46 +12,72 @@
     "MSFT": {
       "sec": "ok",
       "ir": "ok",
-      "last_attempt": "2026-10-28T17:20:06+00:00"
+      "last_attempt": "2026-10-28T21:12:21+00:00"
     },
     "NVDA": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-28T17:20:08+00:00",
+      "last_attempt": "2026-10-28T21:12:23+00:00",
       "ir_discovery": "ok"
     },
     "AAPL": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-28T17:20:08+00:00",
+      "last_attempt": "2026-10-28T21:12:23+00:00",
       "ir_discovery": "ok"
     },
     "AMZN": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-28T17:20:09+00:00",
+      "last_attempt": "2026-10-28T21:12:24+00:00",
       "ir_discovery": "ok"
     },
     "META": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-28T17:20:09+00:00",
+      "last_attempt": "2026-10-28T21:12:24+00:00",
       "ir_discovery": "ok"
     },
     "GOOGL": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-28T17:20:10+00:00",
+      "last_attempt": "2026-10-28T21:12:25+00:00",
       "ir_discovery": "ok"
     },
     "TSLA": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-28T17:20:10+00:00",
+      "last_attempt": "2026-10-28T21:12:25+00:00",
       "ir_discovery": "partial"
     }
   },
   "rows": [
+    {
+      "id": "sec:0001652044-26-000080",
+      "ticker": "GOOGL",
+      "kind": "sec_earnings_evidence",
+      "date": "2026-10-28",
+      "filed_date": "2026-10-28",
+      "accession": "0001652044-26-000080",
+      "form": "8-K",
+      "items": "2.02,9.01",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000080/goog-20261028.htm",
+      "transcript_status": "not_verified",
+      "note": "8-K Item 2.02 earnings disclosure, not an earnings-call transcript."
+    },
+    {
+      "id": "sec:0001193125-26-436122",
+      "ticker": "MSFT",
+      "kind": "sec_earnings_evidence",
+      "date": "2026-10-28",
+      "filed_date": "2026-10-28",
+      "accession": "0001193125-26-436122",
+      "form": "8-K",
+      "items": "2.02,9.01",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526436122/msft-20261028.htm",
+      "transcript_status": "not_verified",
+      "note": "8-K Item 2.02 earnings disclosure, not an earnings-call transcript."
+    },
     {
       "id": "sec:0001628280-26-066738",
       "ticker": "TSLA",
@@ -283,10 +309,10 @@
   "counts": {
     "official_transcripts": 1,
     "official_ir_candidates": 4,
-    "sec_earnings_evidence": 12,
+    "sec_earnings_evidence": 14,
     "guidance_ranges": 0,
     "quantitative_exercises": 0
   },
-  "latest_source_date": "2026-10-21",
+  "latest_source_date": "2026-10-28",
   "rights": "Public metadata and original-source links only; calculations based on unreconciled management speech."
 }
