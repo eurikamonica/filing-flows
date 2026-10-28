@@ -1,24 +1,1137 @@
 {
-  "accession": "0001520138-26-000404",
   "cik": 2137360,
   "name": "Youmi Inc.",
   "form": "S-1/A",
   "filed": "2026-10-02",
-  "accepted": null,
-  "index_url": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000404/0001520138-26-000404-index.html",
-  "source_url": null,
-  "file_number": null,
-  "discovered_at": "2026-10-26T18:35:52+00:00",
-  "state": "queued",
-  "last_attempt": null,
-  "last_success": null,
-  "error": null,
-  "classification": "unclassified",
-  "periods": [],
-  "method": "metadata_only",
-  "limitations": [
-    "Document analysis is queued."
+  "accession": "0001520138-26-000404",
+  "source_url": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000404/youmi-20261002_s1a5.htm",
+  "file_number": "333-296316",
+  "accepted": "2026-10-02T19:03:49+00:00",
+  "method": "inline_xbrl",
+  "document_sha256": "a69602abb9eec200279fcf36857d8a336bbcb67f69079a6013ddc33aaa150c66",
+  "periods": [
+    {
+      "start": "2026-05-01",
+      "end": "2026-07-31",
+      "label": "2026-05-01 \u2192 2026-07-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 723.0,
+        "opex_total": 193016.0,
+        "oi": -192293.0,
+        "ni": -192293.0,
+        "pl": -192293.0,
+        "ocf": -70016.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -265.96542185338865,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -265.96542185338865,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -96.84094052558783,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    }
   ],
+  "limitations": [
+    "IPO price, proceeds and dilution are not inferred from funding announcements.",
+    "Commitments, recognized lease liabilities and cash expenses may overlap and must not be added.",
+    "Company-specific cost presentation does not establish cost of revenue or gross margin."
+  ],
+  "classification": "resale_language_identified",
+  "sections": [
+    {
+      "title": "Prospectus Summary",
+      "excerpt": "PROSPECTUS SUMMARY The following summary highlights selected information contained elsewhere\nin this prospectus. This summary does not contain all of the information that you should consider before investing in our common stock.\nBefore making an investment decision, you should carefully read the entire prospectus, including the sections entitled \u201cRisk Factors,\u201d\n\u201cManagement\u2019s Discussion and Analysis of Financial Condition and Results of Operations,\u201d and our financial statements\nand related notes included elsewhere in this prospectus. Unless otherwise indicated or unless the context otherwise requires, references\nin this prospectus to the \u201cCompany,\u201d \u201cYoumi,\u201d \u201cwe,\u201d \u201cour,\u201d and \u201cus\u201d refer\nto Youmi Inc., a Nevada corporation. OUR COMPANY Youmi Inc. was incorporated in the State of Nevada on February 24, 2026. We are an early-stage company developing a community convenience store\nfranchising bu",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Use of Proceeds",
+      "excerpt": "USE OF PROCEEDS This prospectus relates to shares of our common stock that may be offered\nand sold from time to time by the selling stockholders identified in this prospectus. We will not receive any proceeds from the sale of shares by the selling\nstockholders. However, we may seek additional financing in the future to support our operations, business development and expansion plans. All expenses relating to the registration of the shares, including legal,\naccounting, audit, filing and printing expenses, will be paid by us. The selling stockholders will pay any brokerage commissions, transfer\ntaxes and similar selling expenses incurred in connection with the sale of their shares. DIVIDEND POLICY We have never declared or paid cash dividends on our common stock. We currently\nintend to retain any future earnings for use in the operation and expansion of our business and do not anticipate p",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Risk Factors",
+      "excerpt": "RISK FACTORS An investment in our common stock involves a high degree of risk. You should\ncarefully consider the risks described below, together with all other information contained in this prospectus, before making an investment\ndecision. If any of the following risks occur, our business, financial condition, results of operations, prospects and stock price could\nbe materially and adversely affected. In that event, you could lose all or part of your investment. Risks Related to Our Business and Operations WE HAVE A LIMITED OPERATING HISTORY AND HAVE GENERATED ONLY LIMITED REVENUE.\nWe were incorporated on February 24, 2026 and have a limited operating history. We generated no revenue during the period from February\n24, 2026 (inception) through April 30, 2026. During the three months ended July 31, 2026, our only customer payment was the $3,000 franchise\ncooperation fee under our initial ",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Dilution",
+      "excerpt": "DILUTION The shares of common stock being offered by the selling stockholders are\noutstanding shares that have already been issued and sold by us. Accordingly, there will be no dilution to our existing stockholders as\na result of the sale of shares by the selling stockholders under this prospectus. However, future issuances of common stock or securities convertible into\ncommon stock by us could result in dilution to existing stockholders. Field: Page; Sequence: 18; Value: 1 - Field: Sequence; Type: Arabic; Name: PageNo 14 Field: /Sequence - Field: /Page SELLING STOCKHOLDERS This prospectus relates to the resale by the selling stockholders identified\nbelow of up to 1,294,140 shares of our common stock. The selling stockholders acquired the shares directly from us in private\nplacement transactions. None of the selling stockholders is a broker-dealer or, to our knowledge, an affiliate of a ",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Dividend Policy",
+      "excerpt": "DIVIDEND POLICY We have never declared or paid cash dividends on our common stock. We currently\nintend to retain any future earnings for use in the operation and expansion of our business and do not anticipate paying cash dividends\nin the foreseeable future. Any future determination to pay dividends will be at the discretion of our Board of Directors and will depend\nupon our financial condition, results of operations, capital requirements and other factors deemed relevant by our Board of Directors. DETERMINATION OF THE OFFERING PRICE There is currently no established public trading market for our common\nstock. The selling stockholders may sell the shares offered by this prospectus\nat a fixed price of $0.10 per share until our common stock is quoted on the OTCQB Venture Market, if at all. Thereafter, the shares may\nbe sold at prevailing market prices, privately negotiated prices or other ",
+      "status": "source_excerpt_not_model_conclusion"
+    }
+  ],
+  "source_tables": [
+    {
+      "table_index": 20,
+      "rows": [
+        [
+          "",
+          "",
+          "Three Months Ended July 31, 2026 (Unaudited)",
+          "",
+          "",
+          "February 24, 2026 (Inception) through April 30, 2026 (Audited)",
+          ""
+        ],
+        [
+          "Revenue",
+          "",
+          "$",
+          "723",
+          "",
+          "",
+          "$",
+          "0",
+          ""
+        ],
+        [
+          "Net Loss",
+          "",
+          "$",
+          "(192,293",
+          ")",
+          "",
+          "$",
+          "(906",
+          ")"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 83,
+      "rows": [
+        [
+          "",
+          "",
+          "From February 24, 2026 (Inception) to April 30, 2026",
+          ""
+        ],
+        [
+          "REVENUE",
+          "",
+          "$",
+          "\u2014",
+          ""
+        ],
+        [
+          "Cost of goods sold",
+          "",
+          "",
+          "\u2014",
+          ""
+        ],
+        [
+          "Gross Profit",
+          "",
+          "",
+          "\u2014",
+          ""
+        ],
+        [
+          "Operating expenses",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "General and administrative expenses",
+          "",
+          "",
+          "906",
+          ""
+        ],
+        [
+          "Net Loss from operations",
+          "",
+          "",
+          "( 906",
+          ")"
+        ],
+        [
+          "Provision for income taxes",
+          "",
+          "",
+          "\u2014",
+          ""
+        ],
+        [
+          "Net Loss",
+          "",
+          "$",
+          "( 906",
+          ")"
+        ],
+        [
+          "Net Loss Per Share: Basic and Diluted",
+          "",
+          "$",
+          "-",
+          ""
+        ],
+        [
+          "Weighted Average Number of Shares Outstanding: Basic and Diluted",
+          "",
+          "",
+          "2,200,515",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 84,
+      "rows": [
+        [
+          "",
+          "",
+          "Common Shares",
+          "",
+          "",
+          "Common Stock Amount",
+          "",
+          "",
+          "Additional Paid-in Capital",
+          "",
+          "",
+          "Accumulated Deficit",
+          "",
+          "",
+          "Total Stockholders\u2019 Equity",
+          ""
+        ],
+        [
+          "Inception, February 24, 2026",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "$",
+          "\u2014",
+          "",
+          "",
+          "$",
+          "\u2014",
+          "",
+          "",
+          "$",
+          "\u2014",
+          "",
+          "",
+          "$",
+          "\u2014",
+          ""
+        ],
+        [
+          "Shares issued for cash",
+          "",
+          "",
+          "10,233,990",
+          "",
+          "",
+          "",
+          "10,234",
+          "",
+          "",
+          "",
+          "123,180",
+          "",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "$",
+          "133,414",
+          ""
+        ],
+        [
+          "Net loss for the period ended April 30, 2026",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "( 906",
+          ")",
+          "",
+          "",
+          "( 906",
+          ")"
+        ],
+        [
+          "Balance, April 30, 2026",
+          "",
+          "",
+          "10,233,990",
+          "",
+          "",
+          "$",
+          "10,234",
+          "",
+          "",
+          "$",
+          "123,180",
+          "",
+          "",
+          "$",
+          "( 906",
+          ")",
+          "",
+          "$",
+          "132,508",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 85,
+      "rows": [
+        [
+          "",
+          "",
+          "From February 24, 2026 (Inception) to April 30, 2026",
+          ""
+        ],
+        [
+          "CASH FLOWS FROM OPERATING ACTIVITIES:",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Net loss for the period",
+          "",
+          "$",
+          "( 906",
+          ")"
+        ],
+        [
+          "Adjustments to reconcile net loss to net change in cash from operating activities:",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Net Cash Used in Operating Activities",
+          "",
+          "",
+          "( 906",
+          ")"
+        ],
+        [
+          "CASH FLOWS FROM FINANCING ACTIVITIES:",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Proceeds from sale of common stock",
+          "",
+          "",
+          "133,414",
+          ""
+        ],
+        [
+          "Net Cash Provided by Financing Activities",
+          "",
+          "",
+          "133,414",
+          ""
+        ],
+        [
+          "NET CHANGE IN CASH",
+          "",
+          "",
+          "132,508",
+          ""
+        ],
+        [
+          "Cash, beginning of period",
+          "",
+          "",
+          "\u2014",
+          ""
+        ],
+        [
+          "Cash, end of period",
+          "",
+          "$",
+          "132,508",
+          ""
+        ],
+        [
+          "SUPPLEMENTAL CASH FLOW INFORMATION:",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Cash paid for interest",
+          "",
+          "$",
+          "\u2014",
+          ""
+        ],
+        [
+          "Cash paid for income tax",
+          "",
+          "$",
+          "\u2014",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 86,
+      "rows": [
+        [
+          "",
+          "",
+          "July 31, 2026 (Unaudited)",
+          "",
+          "",
+          "April 30, 2026 (Audited)",
+          ""
+        ],
+        [
+          "ASSETS",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Current assets",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Cash and cash equivalents",
+          "",
+          "$",
+          "68,489",
+          "",
+          "",
+          "$",
+          "132,508",
+          ""
+        ],
+        [
+          "Prepaid expense and other current assets",
+          "",
+          "$",
+          "\u2014",
+          "",
+          "",
+          "$",
+          "70,000",
+          ""
+        ],
+        [
+          "Total Current Assets",
+          "",
+          "$",
+          "68,489",
+          "",
+          "",
+          "$",
+          "202,508",
+          ""
+        ],
+        [
+          "Total Assets",
+          "",
+          "$",
+          "68,489",
+          "",
+          "",
+          "$",
+          "202,508",
+          ""
+        ],
+        [
+          "LIABILITIES AND STOCKHOLDERS\u2019 EQUITY",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Current liabilities",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Deferred franchise revenue",
+          "",
+          "$",
+          "2,277",
+          "",
+          "",
+          "$",
+          "\u2014",
+          ""
+        ],
+        [
+          "Other current liabilities",
+          "",
+          "$",
+          "120,000",
+          "",
+          "",
+          "$",
+          "70,000",
+          ""
+        ],
+        [
+          "Total Current Liabilities",
+          "",
+          "$",
+          "122,277",
+          "",
+          "",
+          "$",
+          "70,000",
+          ""
+        ],
+        [
+          "Total Liabilities",
+          "",
+          "$",
+          "122,277",
+          "",
+          "",
+          "$",
+          "70,000",
+          ""
+        ],
+        [
+          "Stockholders\u2019 Equity",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Preferred stock, $ 0.001 par value; 10,000,000 shares authorized; no shares issued and outstanding",
+          "",
+          "$",
+          "\u2014",
+          "",
+          "",
+          "$",
+          "\u2014",
+          ""
+        ],
+        [
+          "Common stock, $ 0.001 par value; 65,000,000 shares authorized; 10,294,140 and 10,233,990 shares issued and outstanding, respectively",
+          "",
+          "$",
+          "10,294",
+          "",
+          "",
+          "$",
+          "10,234",
+          ""
+        ],
+        [
+          "Additional paid-in capital",
+          "",
+          "$",
+          "129,117",
+          "",
+          "",
+          "$",
+          "123,180",
+          ""
+        ],
+        [
+          "Accumulated deficit",
+          "",
+          "$",
+          "( 193,199",
+          ")",
+          "",
+          "$",
+          "( 906",
+          ")"
+        ],
+        [
+          "Total Stockholders\u2019 Equity",
+          "",
+          "$",
+          "( 53,788",
+          ")",
+          "",
+          "$",
+          "132,508",
+          ""
+        ],
+        [
+          "Total Liabilities and Stockholders\u2019 Equity",
+          "",
+          "$",
+          "68,489",
+          "",
+          "",
+          "$",
+          "202,508",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 87,
+      "rows": [
+        [
+          "",
+          "",
+          "Three Months Ended July 31, 2026",
+          ""
+        ],
+        [
+          "Revenue \u2014 franchise cooperation services",
+          "",
+          "$",
+          "723",
+          ""
+        ],
+        [
+          "Operating expenses",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Consulting and advisory expense",
+          "",
+          "$",
+          "190,000",
+          ""
+        ],
+        [
+          "Audit and professional fees",
+          "",
+          "$",
+          "3,000",
+          ""
+        ],
+        [
+          "Bank and transaction fees",
+          "",
+          "$",
+          "16",
+          ""
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "$",
+          "193,016",
+          ""
+        ],
+        [
+          "Loss from operations",
+          "",
+          "$",
+          "( 192,293",
+          ")"
+        ],
+        [
+          "Provision for income taxes",
+          "",
+          "$",
+          "\u2014",
+          ""
+        ],
+        [
+          "Net loss",
+          "",
+          "$",
+          "( 192,293",
+          ")"
+        ],
+        [
+          "Net loss per share \u2014 basic and diluted",
+          "",
+          "$",
+          "( 0.02",
+          ")"
+        ],
+        [
+          "Weighted average common shares outstanding \u2014 basic and diluted",
+          "",
+          "",
+          "10,290,217",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 88,
+      "rows": [
+        [
+          "",
+          "",
+          "Common Shares",
+          "",
+          "",
+          "Common Stock",
+          "",
+          "",
+          "Additional Paid-in Capital",
+          "",
+          "",
+          "Accumulated Deficit",
+          "",
+          "",
+          "Total Equity",
+          ""
+        ],
+        [
+          "Balance, April 30, 2026",
+          "",
+          "",
+          "10,233,990",
+          "",
+          "",
+          "$",
+          "10,234",
+          "",
+          "",
+          "$",
+          "123,180",
+          "",
+          "",
+          "$",
+          "( 906",
+          ")",
+          "",
+          "$",
+          "132,508",
+          ""
+        ],
+        [
+          "Issuance of common stock, net of $ 18 wire/issuance cost",
+          "",
+          "",
+          "60,150",
+          "",
+          "",
+          "",
+          "60",
+          "",
+          "",
+          "",
+          "5,937",
+          "",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "5,997",
+          ""
+        ],
+        [
+          "Net loss for the three months ended July 31, 2026",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "\u2014",
+          "",
+          "",
+          "",
+          "( 192,293",
+          ")",
+          "",
+          "",
+          "( 192,293",
+          ")"
+        ],
+        [
+          "Balance, July 31, 2026",
+          "",
+          "",
+          "10,294,140",
+          "",
+          "",
+          "$",
+          "10,294",
+          "",
+          "",
+          "$",
+          "129,117",
+          "",
+          "",
+          "$",
+          "( 193,199",
+          ")",
+          "",
+          "$",
+          "( 53,788",
+          ")"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 89,
+      "rows": [
+        [
+          "",
+          "",
+          "Three Months Ended July 31, 2026",
+          ""
+        ],
+        [
+          "CASH FLOWS FROM OPERATING ACTIVITIES",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Net loss",
+          "",
+          "$",
+          "( 192,293",
+          ")"
+        ],
+        [
+          "Adjustments to reconcile net loss to net cash used in operating activities:",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Decrease in prepaid expense and other current assets",
+          "",
+          "$",
+          "70,000",
+          ""
+        ],
+        [
+          "Increase in other current liabilities",
+          "",
+          "$",
+          "50,000",
+          ""
+        ],
+        [
+          "Increase in deferred franchise revenue",
+          "",
+          "$",
+          "2,277",
+          ""
+        ],
+        [
+          "Net cash used in operating activities",
+          "",
+          "$",
+          "( 70,016",
+          ")"
+        ],
+        [
+          "CASH FLOWS FROM FINANCING ACTIVITIES",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Net proceeds from issuance of common stock",
+          "",
+          "$",
+          "5,997",
+          ""
+        ],
+        [
+          "Net cash provided by financing activities",
+          "",
+          "$",
+          "5,997",
+          ""
+        ],
+        [
+          "NET CHANGE IN CASH",
+          "",
+          "$",
+          "( 64,019",
+          ")"
+        ],
+        [
+          "Cash and cash equivalents, beginning of period",
+          "",
+          "$",
+          "132,508",
+          ""
+        ],
+        [
+          "Cash and cash equivalents, end of period",
+          "",
+          "$",
+          "68,489",
+          ""
+        ],
+        [
+          "SUPPLEMENTAL CASH FLOW INFORMATION",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Cash paid for interest",
+          "",
+          "$",
+          "\u2014",
+          ""
+        ],
+        [
+          "Cash paid for income taxes",
+          "",
+          "$",
+          "\u2014",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    }
+  ],
+  "analysis_state": "parsed",
+  "parser_version": 1,
   "filings": [
     {
       "accession": "9999999995-26-003197",
@@ -43,16 +1156,16 @@
       "name": "Youmi Inc.",
       "form": "S-1/A",
       "filed": "2026-10-02",
-      "accepted": null,
+      "accepted": "2026-10-02T19:03:49+00:00",
       "index_url": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000404/0001520138-26-000404-index.html",
-      "source_url": null,
-      "file_number": null,
+      "source_url": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000404/youmi-20261002_s1a5.htm",
+      "file_number": "333-296316",
       "discovered_at": "2026-10-26T18:35:52+00:00",
-      "state": "queued",
-      "last_attempt": null,
-      "last_success": null,
+      "state": "parsed",
+      "last_attempt": "2026-10-28T12:18:42+00:00",
+      "last_success": "2026-10-28T12:18:43+00:00",
       "error": null,
-      "classification": "unclassified"
+      "classification": "resale_language_identified"
     },
     {
       "accession": "0001520138-26-000397",
@@ -146,22 +1259,22 @@
     "name": "Youmi Inc.",
     "form": "S-1/A",
     "filed": "2026-10-02",
-    "accepted": null,
+    "accepted": "2026-10-02T19:03:49+00:00",
     "index_url": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000404/0001520138-26-000404-index.html",
-    "source_url": null,
-    "file_number": null,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000404/youmi-20261002_s1a5.htm",
+    "file_number": "333-296316",
     "discovered_at": "2026-10-26T18:35:52+00:00",
-    "state": "queued",
-    "last_attempt": null,
-    "last_success": null,
+    "state": "parsed",
+    "last_attempt": "2026-10-28T12:18:42+00:00",
+    "last_success": "2026-10-28T12:18:43+00:00",
     "error": null,
-    "classification": "unclassified"
+    "classification": "resale_language_identified"
   },
-  "lifecycle": null,
-  "generated_at": "2026-10-28T11:41:17+00:00",
+  "lifecycle": "EFFECT",
+  "generated_at": "2026-10-28T12:18:52+00:00",
   "scan": {
-    "state": "queued",
-    "last_attempt": null,
-    "last_success": null
+    "state": "parsed",
+    "last_attempt": "2026-10-28T12:18:42+00:00",
+    "last_success": "2026-10-28T12:18:43+00:00"
   }
 }
