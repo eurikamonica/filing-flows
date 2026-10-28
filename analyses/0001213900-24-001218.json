@@ -1,0 +1,3303 @@
+{
+  "cik": 1939365,
+  "name": "INSPIRE VETERINARY PARTNERS, INC.",
+  "form": "S-1",
+  "filed": "2024-01-04",
+  "accession": "0001213900-24-001218",
+  "source_url": "https://www.sec.gov/Archives/edgar/data/1939365/000121390024001218/ea190783-s1_inspire.htm",
+  "file_number": "333-276388",
+  "accepted": "2024-01-05T16:16:00+00:00",
+  "method": "inline_xbrl",
+  "document_sha256": "4285ec2fa1e6ad495ee09eafb57d2eaba9f6faa71fe4ca13b49dd8c1d53057d2",
+  "periods": [
+    {
+      "start": "2021-01-01",
+      "end": "2021-12-31",
+      "label": "2021-01-01 \u2192 2021-12-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 2549134.0,
+        "ga": 1792046.0,
+        "opex_total": 3596355.0,
+        "oi": -1047221.0,
+        "pretax": -1256732.0,
+        "tax": 74330.0,
+        "ni": -1331062.0,
+        "ocf": -1009960.0,
+        "da": 83908.0,
+        "dep": 45903.0,
+        "amort": 38005.0,
+        "capex": 1310512.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "amort": {
+          "label": "AmortizationOfIntangibleAssets"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.4108144177591292,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.5221624284953243,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.3961972968074648,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -0.9102981640039323,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.5141008671964675,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2022-01-01",
+      "end": "2022-09-30",
+      "label": "2022-01-01 \u2192 2022-09-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 6655357.0,
+        "ga": 3745867.0,
+        "opex_total": 8821203.0,
+        "oi": -2165846.0,
+        "pretax": -3007873.0,
+        "tax": -30094.0,
+        "ni": -2977779.0,
+        "ocf": -2317926.0,
+        "da": 322165.0,
+        "dep": 133963.0,
+        "amort": 188202.0,
+        "capex": 3452254.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "amort": {
+          "label": "AmortizationOfIntangibleAssets"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.3254289739829133,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.4474258856437003,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.3482797391635039,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -0.866997818449108,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.5187180792856041,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2022-01-01",
+      "end": "2022-12-31",
+      "label": "2022-01-01 \u2192 2022-12-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 9834778.0,
+        "ga": 5467642.0,
+        "opex_total": 13352916.0,
+        "oi": -3518138.0,
+        "pretax": -4942020.0,
+        "tax": -30094.0,
+        "ni": -4911926.0,
+        "ocf": -2658309.0,
+        "da": 595627.0,
+        "dep": 263387.0,
+        "amort": 332240.0,
+        "capex": 134971.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "amort": {
+          "label": "AmortizationOfIntangibleAssets"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.35772419062229976,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.49944452228611563,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.27029679775181503,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -0.28402064591595255,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.013723848164137513,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2022-07-01",
+      "end": "2022-09-30",
+      "label": "2022-07-01 \u2192 2022-09-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 2924079.0,
+        "ga": 1757511.0,
+        "opex_total": 4095270.0,
+        "oi": -1171191.0,
+        "pretax": -1407325.0,
+        "ni": -1407325.0,
+        "da": 163208.0,
+        "dep": 39402.0,
+        "amort": 120408.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "da": {
+          "label": "DepreciationAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "amort": {
+          "label": "AmortizationOfIntangibleAssets"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.4005332961250363,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.48128829624644204,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": null,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2023-01-01",
+      "end": "2023-09-30",
+      "label": "2023-01-01 \u2192 2023-09-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 12891589.0,
+        "ga": 7249250.0,
+        "opex_total": 17660894.0,
+        "oi": -4769305.0,
+        "pretax": -10650745.0,
+        "ni": -10650745.0,
+        "ocf": -3065990.0,
+        "da": 915824.0,
+        "dep": 368208.0,
+        "amort": 547616.0,
+        "capex": 360082.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "amort": {
+          "label": "AmortizationOfIntangibleAssets"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.3699547821451646,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.8261778280396621,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.23782871141796408,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -0.2657602565517719,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.027931545133807786,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2023-07-01",
+      "end": "2023-09-30",
+      "label": "2023-07-01 \u2192 2023-09-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 4119648.0,
+        "ga": 3561790.0,
+        "opex_total": 6951049.0,
+        "oi": -2831401.0,
+        "pretax": -7884002.0,
+        "ni": -7884002.0,
+        "da": 313316.0,
+        "dep": 128517.0,
+        "amort": 184799.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "da": {
+          "label": "DepreciationAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "amort": {
+          "label": "AmortizationOfIntangibleAssets"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -0.6872919725180404,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -1.9137562238327157,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": null,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    }
+  ],
+  "limitations": [
+    "IPO price, proceeds and dilution are not inferred from funding announcements.",
+    "Commitments, recognized lease liabilities and cash expenses may overlap and must not be added.",
+    "Company-specific cost presentation does not establish cost of revenue or gross margin."
+  ],
+  "classification": "ipo_language_identified",
+  "sections": [
+    {
+      "title": "Prospectus Summary",
+      "excerpt": "Prospectus Summary 1 Cautionary Statement Regarding Forward-Looking Statements 10 Risk Factors 11 Use of Proceeds 30 Market for our Common Stock 31 Management\u2019s Discussion and Analysis of Financial\n    Condition and Results of Operations 32 Our Business 52 Management and Board of Directors 63 Executive and Director Compensation 70 Security Ownership of Certain Beneficial Owners and\n    Management 75 Certain Relationships and Related Party Transactions 79 Description of Capital Stock 80 Plan of Distribution 86 Legal Matters 88 Experts 88 Where You Can Find More Information 88 Index to Financial Statement F-1 Through and including\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0,\n2024 (the 25th day after the date of this prospectus), all dealers effecting transactions in the common stock, whether or not participating\nin this offering, may be required to deliver a prospectus. We have not authorized anyone\nto provid",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Use of Proceeds",
+      "excerpt": "Use of proceeds We expect to receive up to $5.0\u00a0million in aggregate gross proceeds from sales of our Class A Common Stock pursuant to this prospectus. We expect to use the net proceeds from sales of our Class A Common Stock pursuant to this prospectus for general working capital. See \u201cUse of Proceeds.\u201d Risk factors Investing\n    in our common stock involves a high degree of risk. See \u201cRisk Factors\u201d beginning on page 11 and the other information\n    included in this prospectus for a discussion of factors you should consider carefully before deciding to invest in our Class A\n    Common Stock. Nasdaq symbol for our Class A\n    Common Stock \u201cIVP\u201d Transfer Agent VStock Transfer, LLC \u2020 The number of shares of our Class A Common Stock to be outstanding\nimmediately prior to this offering is comprised of 7,159,331 shares of our Class A Common Stock issued and outstanding as the date of\nthis pros",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Risk Factors",
+      "excerpt": "Risk factors Investing\n    in our common stock involves a high degree of risk. See \u201cRisk Factors\u201d beginning on page 11 and the other information\n    included in this prospectus for a discussion of factors you should consider carefully before deciding to invest in our Class A\n    Common Stock. Nasdaq symbol for our Class A\n    Common Stock \u201cIVP\u201d Transfer Agent VStock Transfer, LLC \u2020 The number of shares of our Class A Common Stock to be outstanding\nimmediately prior to this offering is comprised of 7,159,331 shares of our Class A Common Stock issued and outstanding as the date of\nthis prospectus and excludes shares that are potentially issuable: \u25cf upon the exercise of warrants outstanding as of the date of this prospectus (1) ; Field: Page; Sequence: 11; Value: 1 Field: Sequence; Type: Arabic; Name: PageNo 8 Field: /Sequence Field: /Page \u25cf upon the conversion of shares of Series A preferr",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Dividend Policy",
+      "excerpt": "Dividend Policy We do not anticipate declaring\nor paying, in the foreseeable future, any cash dividends on our capital stock. We intend to retain all available funds and future earnings,\nif any, to fund the development and expansion of our business, and we do not anticipate paying any cash dividends in the foreseeable future.\nAny future determination regarding the declaration and payment of dividends, if any, will be at the discretion of our board of directors\nand will depend on then-existing conditions, including our financial condition, operating results, contractual restrictions, capital requirements,\nbusiness prospects and other factors our board of directors may deem relevant. Nasdaq Deficiency Notice Our Class A Common Stock is\ncurrently traded on The Nasdaq Capital Market (\u201cNasdaq\u201d). On November\u00a027, 2023, we were notified by the Listing Qualifications\nDepartment of the Nasdaq Capi",
+      "status": "source_excerpt_not_model_conclusion"
+    }
+  ],
+  "source_tables": [
+    {
+      "table_index": 130,
+      "rows": [
+        [
+          "",
+          "",
+          "Three Months Ended September 30,",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2023",
+          "",
+          "",
+          "2022",
+          ""
+        ],
+        [
+          "Service revenue",
+          "",
+          "$",
+          "2,935,922",
+          "",
+          "",
+          "$",
+          "2,253,400",
+          ""
+        ],
+        [
+          "Product revenue",
+          "",
+          "",
+          "1,183,726",
+          "",
+          "",
+          "",
+          "670,679",
+          ""
+        ],
+        [
+          "Total revenue",
+          "",
+          "",
+          "4,119,648",
+          "",
+          "",
+          "",
+          "2,924,079",
+          ""
+        ],
+        [
+          "Operating expenses",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Cost of service revenue (exclusive of depreciation and amortization, shown separately below)",
+          "",
+          "",
+          "2,206,216",
+          "",
+          "",
+          "",
+          "1,717,483",
+          ""
+        ],
+        [
+          "Cost of product revenue (exclusive of depreciation and amortization, shown separately below)",
+          "",
+          "",
+          "853,622",
+          "",
+          "",
+          "",
+          "457,068",
+          ""
+        ],
+        [
+          "General and administrative expenses",
+          "",
+          "",
+          "3,561,790",
+          "",
+          "",
+          "",
+          "1,757,511",
+          ""
+        ],
+        [
+          "Debt extinguishment loss",
+          "",
+          "",
+          "16,105",
+          "",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Depreciation and amortization",
+          "",
+          "",
+          "313,316",
+          "",
+          "",
+          "",
+          "163,208",
+          ""
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "",
+          "6,951,049",
+          "",
+          "",
+          "",
+          "4,095,270",
+          ""
+        ],
+        [
+          "Loss from operations",
+          "",
+          "",
+          "(2,831,401",
+          ")",
+          "",
+          "",
+          "(1,171,191",
+          ")"
+        ],
+        [
+          "Other income (expense):",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Interest income",
+          "",
+          "",
+          "12",
+          "",
+          "",
+          "",
+          "981",
+          ""
+        ],
+        [
+          "Interest expense",
+          "",
+          "",
+          "(914,604",
+          ")",
+          "",
+          "",
+          "(241,531",
+          ")"
+        ],
+        [
+          "Beneficial conversion feature",
+          "",
+          "",
+          "(4,137,261",
+          ")",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Other income",
+          "",
+          "",
+          "(748",
+          ")",
+          "",
+          "",
+          "4,416",
+          ""
+        ],
+        [
+          "Total other expense",
+          "",
+          "",
+          "(5,052,601",
+          ")",
+          "",
+          "",
+          "(236,134",
+          ")"
+        ],
+        [
+          "Loss before income taxes",
+          "",
+          "",
+          "(7,884,002",
+          ")",
+          "",
+          "",
+          "(1,407,325",
+          ")"
+        ],
+        [
+          "Benefit for income taxes",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Net loss",
+          "",
+          "",
+          "(7,884,002",
+          ")",
+          "",
+          "",
+          "(1,407,325",
+          ")"
+        ],
+        [
+          "Dividend on convertible series A preferred stock",
+          "",
+          "",
+          "(133,828",
+          ")",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Net loss attributable to class A and B common stock holders",
+          "",
+          "$",
+          "(8,017,830",
+          ")",
+          "",
+          "$",
+          "(1,407,325",
+          ")"
+        ],
+        [
+          "Net loss per Class A and B common shares:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Basic and diluted",
+          "",
+          "$",
+          "(1.25",
+          ")",
+          "",
+          "$",
+          "(0.25",
+          ")"
+        ],
+        [
+          "Weighted average shares outstanding per Class A and B common shares:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Basic and diluted",
+          "",
+          "",
+          "6,434,432",
+          "",
+          "",
+          "",
+          "5,662,712",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 131,
+      "rows": [
+        [
+          "",
+          "",
+          "For the Three Months Ended",
+          "",
+          "",
+          "September 30, 2023 vs. 2022",
+          ""
+        ],
+        [
+          "",
+          "",
+          "September\u00a030, 2023",
+          "",
+          "",
+          "September\u00a030, 2022",
+          "",
+          "",
+          "$ Change",
+          "",
+          "",
+          "% Change",
+          ""
+        ],
+        [
+          "Revenue:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Service Revenue",
+          "",
+          "$",
+          "2,935,922",
+          "",
+          "",
+          "$",
+          "2,253,400",
+          "",
+          "",
+          "$",
+          "682,522",
+          "",
+          "",
+          "",
+          "30",
+          "%"
+        ],
+        [
+          "Percentage of revenue",
+          "",
+          "",
+          "71",
+          "%",
+          "",
+          "",
+          "77",
+          "%",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Product Revenue",
+          "",
+          "",
+          "1,183,726",
+          "",
+          "",
+          "",
+          "670,679",
+          "",
+          "",
+          "",
+          "513,047",
+          "",
+          "",
+          "",
+          "76",
+          "%"
+        ],
+        [
+          "Percentage of revenue",
+          "",
+          "",
+          "29",
+          "%",
+          "",
+          "",
+          "23",
+          "%",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Total",
+          "",
+          "$",
+          "4,119,648",
+          "",
+          "",
+          "$",
+          "2,924,079",
+          "",
+          "",
+          "$",
+          "1,195,569",
+          "",
+          "",
+          "",
+          "41",
+          "%"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 132,
+      "rows": [
+        [
+          "",
+          "",
+          "Average daily service revenue for the three months ended",
+          "",
+          "",
+          "September 30, 2023 vs. 2022",
+          ""
+        ],
+        [
+          "Animal\u00a0Hospital\u00a0&\u00a0Clinics",
+          "",
+          "September\u00a030, 2023",
+          "",
+          "",
+          "September\u00a030, 2022",
+          "",
+          "",
+          "$ Change",
+          "",
+          "",
+          "% Change",
+          ""
+        ],
+        [
+          "Kauai Veterinary Clinic",
+          "",
+          "$",
+          "4,001",
+          "",
+          "",
+          "$",
+          "3,976",
+          "",
+          "",
+          "$",
+          "25",
+          "",
+          "",
+          "",
+          "1",
+          "%"
+        ],
+        [
+          "Chiefland Animal Hospital",
+          "",
+          "",
+          "1,296",
+          "",
+          "",
+          "",
+          "3,779",
+          "",
+          "",
+          "",
+          "(2,483",
+          ")",
+          "",
+          "",
+          "-66",
+          "%"
+        ],
+        [
+          "Pets & Friends Animal Hospital",
+          "",
+          "",
+          "2,765",
+          "",
+          "",
+          "",
+          "2,494",
+          "",
+          "",
+          "",
+          "272",
+          "",
+          "",
+          "",
+          "11",
+          "%"
+        ],
+        [
+          "Advanced Veterinary Care of Pasco",
+          "",
+          "",
+          "1,604",
+          "",
+          "",
+          "",
+          "2,014",
+          "",
+          "",
+          "",
+          "(411",
+          ")",
+          "",
+          "",
+          "-20",
+          "%"
+        ],
+        [
+          "Lytle Veterinary Clinic",
+          "",
+          "",
+          "1,761",
+          "",
+          "",
+          "",
+          "2,250",
+          "",
+          "",
+          "",
+          "(489",
+          ")",
+          "",
+          "",
+          "-22",
+          "%"
+        ],
+        [
+          "Southern Kern Veterinary Clinic",
+          "",
+          "",
+          "2,733",
+          "",
+          "",
+          "",
+          "3,035",
+          "",
+          "",
+          "",
+          "(302",
+          ")",
+          "",
+          "",
+          "-10",
+          "%"
+        ],
+        [
+          "Bartow Animal Clinic",
+          "",
+          "",
+          "1,918",
+          "",
+          "",
+          "",
+          "2,994",
+          "",
+          "",
+          "",
+          "(1,076",
+          ")",
+          "",
+          "",
+          "-36",
+          "%"
+        ],
+        [
+          "Dietz Family Pet Hospital",
+          "",
+          "",
+          "1,844",
+          "",
+          "",
+          "",
+          "2,064",
+          "",
+          "",
+          "",
+          "(220",
+          ")",
+          "",
+          "",
+          "-11",
+          "%"
+        ],
+        [
+          "Aberdeen Veterinary Clinic",
+          "",
+          "",
+          "1,903",
+          "",
+          "",
+          "",
+          "1,696",
+          "",
+          "",
+          "",
+          "207",
+          "",
+          "",
+          "",
+          "120",
+          "%"
+        ],
+        [
+          "All Breed Pet Care Veterinary Clinic",
+          "",
+          "",
+          "2,789",
+          "",
+          "",
+          "",
+          "1,362",
+          "",
+          "",
+          "",
+          "1,426",
+          "",
+          "",
+          "",
+          "105",
+          "%"
+        ],
+        [
+          "Pony Express Veterinary Hospital",
+          "",
+          "",
+          "5,137",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "5,137",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Williamsburg Animal Clinic",
+          "",
+          "",
+          "2,181",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "2,181",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Old 41 Animal Hospital",
+          "",
+          "",
+          "1,979",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "1,979",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Total Daily Service Revenue",
+          "",
+          "$",
+          "31,912",
+          "",
+          "",
+          "$",
+          "25,665",
+          "",
+          "",
+          "$",
+          "6,248",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 133,
+      "rows": [
+        [
+          "",
+          "",
+          "Average daily product revenue for the three months ended",
+          "",
+          "",
+          "September 30, 2023 vs. 2022",
+          ""
+        ],
+        [
+          "Animal\u00a0Hospital\u00a0&\u00a0Clinics",
+          "",
+          "September\u00a030, 2023",
+          "",
+          "",
+          "September\u00a030, 2022",
+          "",
+          "",
+          "$ Change",
+          "",
+          "",
+          "% Change",
+          ""
+        ],
+        [
+          "Kauai Veterinary Clinic",
+          "",
+          "$",
+          "1,776",
+          "",
+          "",
+          "$",
+          "1,379",
+          "",
+          "",
+          "$",
+          "397",
+          "",
+          "",
+          "",
+          "29",
+          "%"
+        ],
+        [
+          "Chiefland Animal Hospital",
+          "",
+          "",
+          "1,067",
+          "",
+          "",
+          "",
+          "696",
+          "",
+          "",
+          "",
+          "371",
+          "",
+          "",
+          "",
+          "53",
+          "%"
+        ],
+        [
+          "Pets & Friends Animal Hospital",
+          "",
+          "",
+          "895",
+          "",
+          "",
+          "",
+          "910",
+          "",
+          "",
+          "",
+          "(15",
+          ")",
+          "",
+          "",
+          "-2",
+          "%"
+        ],
+        [
+          "Advanced Veterinary Care of Pasco",
+          "",
+          "",
+          "731",
+          "",
+          "",
+          "",
+          "220",
+          "",
+          "",
+          "",
+          "512",
+          "",
+          "",
+          "",
+          "233",
+          "%"
+        ],
+        [
+          "Lytle Veterinary Clinic",
+          "",
+          "",
+          "889",
+          "",
+          "",
+          "",
+          "1,390",
+          "",
+          "",
+          "",
+          "(502",
+          ")",
+          "",
+          "",
+          "-36",
+          "%"
+        ],
+        [
+          "Southern Kern Veterinary Clinic",
+          "",
+          "",
+          "481",
+          "",
+          "",
+          "",
+          "487",
+          "",
+          "",
+          "",
+          "(6",
+          ")",
+          "",
+          "",
+          "-1",
+          "%"
+        ],
+        [
+          "Bartow Animal Clinic",
+          "",
+          "",
+          "1,090",
+          "",
+          "",
+          "",
+          "330",
+          "",
+          "",
+          "",
+          "760",
+          "",
+          "",
+          "",
+          "230",
+          "%"
+        ],
+        [
+          "Dietz Family Pet Hospital",
+          "",
+          "",
+          "726",
+          "",
+          "",
+          "",
+          "1,017",
+          "",
+          "",
+          "",
+          "(291",
+          ")",
+          "",
+          "",
+          "-29",
+          "%"
+        ],
+        [
+          "Aberdeen Veterinary Clinic",
+          "",
+          "",
+          "692",
+          "",
+          "",
+          "",
+          "622",
+          "",
+          "",
+          "",
+          "69",
+          "",
+          "",
+          "",
+          "12",
+          "%"
+        ],
+        [
+          "All Breed Pet Care Veterinary Clinic",
+          "",
+          "",
+          "1,089",
+          "",
+          "",
+          "",
+          "817",
+          "",
+          "",
+          "",
+          "271",
+          "",
+          "",
+          "",
+          "33",
+          "%"
+        ],
+        [
+          "Pony Express Veterinary Hospital",
+          "",
+          "",
+          "2,002",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "2,002",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Williamsburg Animal Clinic",
+          "",
+          "",
+          "728",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "728",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Old 41 Animal Hospital",
+          "",
+          "",
+          "701",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "701",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Total Daily Product Revenue",
+          "",
+          "$",
+          "12,867",
+          "",
+          "",
+          "$",
+          "7,868",
+          "",
+          "",
+          "$",
+          "4,998",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 137,
+      "rows": [
+        [
+          "",
+          "Nine Months Ended September 30,",
+          ""
+        ],
+        [
+          "",
+          "2023",
+          "",
+          "2022",
+          ""
+        ],
+        [
+          "Service revenue",
+          "$",
+          "9,209,501",
+          "",
+          "$",
+          "4,898,599",
+          ""
+        ],
+        [
+          "Product revenue",
+          "",
+          "3,682,088",
+          "",
+          "",
+          "1,756,758",
+          ""
+        ],
+        [
+          "Total revenue",
+          "",
+          "12,891,589",
+          "",
+          "",
+          "6,655,357",
+          ""
+        ],
+        [
+          "Operating expenses",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Cost of service revenue (exclusive of depreciation and amortization, shown separately below)",
+          "",
+          "6,847,963",
+          "",
+          "",
+          "3,583,420",
+          ""
+        ],
+        [
+          "Cost of product revenue (exclusive of depreciation and amortization, shown separately below)",
+          "",
+          "2,631,752",
+          "",
+          "",
+          "1,166,353",
+          ""
+        ],
+        [
+          "General and administrative expenses",
+          "",
+          "7,249,250",
+          "",
+          "",
+          "3,745,867",
+          ""
+        ],
+        [
+          "Debt extinguishment loss",
+          "",
+          "16,105",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Depreciation and amortization",
+          "",
+          "915,824",
+          "",
+          "",
+          "325,563",
+          ""
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "17,660,894",
+          "",
+          "",
+          "8,821,203",
+          ""
+        ],
+        [
+          "Loss from operations",
+          "",
+          "(4,769,305",
+          ")",
+          "",
+          "(2,165,846",
+          ")"
+        ],
+        [
+          "Other income (expense):",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Interest income",
+          "",
+          "18",
+          "",
+          "",
+          "1,019",
+          ""
+        ],
+        [
+          "Interest expense",
+          "",
+          "(1,745,415",
+          ")",
+          "",
+          "(842,866",
+          ")"
+        ],
+        [
+          "Beneficial conversion feature",
+          "",
+          "(4,137,261",
+          ")",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Other income",
+          "",
+          "1,218",
+          "",
+          "",
+          "(180",
+          ")"
+        ],
+        [
+          "Total other expense",
+          "",
+          "(5,881,440",
+          ")",
+          "",
+          "(842,027",
+          ")"
+        ],
+        [
+          "Loss before income taxes",
+          "",
+          "(10,650,745",
+          ")",
+          "",
+          "(3,007,873",
+          ")"
+        ],
+        [
+          "Benefit for income taxes",
+          "",
+          "-",
+          "",
+          "",
+          "30,094",
+          ""
+        ],
+        [
+          "Net loss",
+          "",
+          "(10,650,745",
+          ")",
+          "",
+          "(2,977,779",
+          ")"
+        ],
+        [
+          "Dividend on convertible series A preferred stock",
+          "",
+          "(133,828",
+          ")",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Net loss attributable to class A and B common stock holders",
+          "$",
+          "(10,784,573",
+          ")",
+          "$",
+          "(2,977,779",
+          ")"
+        ],
+        [
+          "Net loss per Class A and B common shares:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Basic and diluted",
+          "$",
+          "(1.90",
+          ")",
+          "$",
+          "(0.58",
+          ")"
+        ],
+        [
+          "Weighted average shares outstanding per Class A and B common shares:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Basic and diluted",
+          "",
+          "5,662,712",
+          "",
+          "",
+          "5,145,456",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 138,
+      "rows": [
+        [
+          "",
+          "",
+          "For the Nine Months Ended",
+          "",
+          "",
+          "September 30, 2023 vs. 2022",
+          ""
+        ],
+        [
+          "",
+          "",
+          "September\u00a030, 2023",
+          "",
+          "",
+          "September\u00a030, 2022",
+          "",
+          "",
+          "$ Change",
+          "",
+          "",
+          "% Change",
+          ""
+        ],
+        [
+          "Revenue:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Service Revenue",
+          "",
+          "$",
+          "9,209,501",
+          "",
+          "",
+          "$",
+          "4,898,599",
+          "",
+          "",
+          "$",
+          "4,310,902",
+          "",
+          "",
+          "",
+          "88",
+          "%"
+        ],
+        [
+          "Percentage of revenue",
+          "",
+          "",
+          "71",
+          "%",
+          "",
+          "",
+          "74",
+          "%",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Product Revenue",
+          "",
+          "",
+          "3,682,088",
+          "",
+          "",
+          "",
+          "1,756,758",
+          "",
+          "",
+          "",
+          "1,925,330",
+          "",
+          "",
+          "",
+          "110",
+          "%"
+        ],
+        [
+          "Percentage of revenue",
+          "",
+          "",
+          "29",
+          "%",
+          "",
+          "",
+          "26",
+          "%",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Total",
+          "",
+          "$",
+          "12,891,589",
+          "",
+          "",
+          "$",
+          "6,655,357",
+          "",
+          "",
+          "$",
+          "6,236,232",
+          "",
+          "",
+          "",
+          "94",
+          "%"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 139,
+      "rows": [
+        [
+          "",
+          "",
+          "Average daily service revenue for the nine months ended",
+          "",
+          "",
+          "September 30, 2023 vs. 2022",
+          ""
+        ],
+        [
+          "Animal\u00a0Hospital\u00a0&\u00a0Clinics",
+          "",
+          "September\u00a030, 2023",
+          "",
+          "",
+          "September\u00a030, 2022",
+          "",
+          "",
+          "$ Change",
+          "",
+          "",
+          "% Change",
+          ""
+        ],
+        [
+          "Kauai Veterinary Clinic",
+          "",
+          "$",
+          "4,333",
+          "",
+          "",
+          "$",
+          "3,692",
+          "",
+          "",
+          "$",
+          "641",
+          "",
+          "",
+          "",
+          "17",
+          "%"
+        ],
+        [
+          "Chiefland Animal Hospital",
+          "",
+          "",
+          "1,729",
+          "",
+          "",
+          "",
+          "2,311",
+          "",
+          "",
+          "",
+          "(582",
+          ")",
+          "",
+          "",
+          "-25",
+          "%"
+        ],
+        [
+          "Pets & Friends Animal Hospital",
+          "",
+          "",
+          "2,604",
+          "",
+          "",
+          "",
+          "2,867",
+          "",
+          "",
+          "",
+          "(262",
+          ")",
+          "",
+          "",
+          "-9",
+          "%"
+        ],
+        [
+          "Advanced Veterinary Care of Pasco",
+          "",
+          "",
+          "2,053",
+          "",
+          "",
+          "",
+          "2,171",
+          "",
+          "",
+          "",
+          "(118",
+          ")",
+          "",
+          "",
+          "-5",
+          "%"
+        ],
+        [
+          "Lytle Veterinary Clinic",
+          "",
+          "",
+          "1,852",
+          "",
+          "",
+          "",
+          "2,556",
+          "",
+          "",
+          "",
+          "(704",
+          ")",
+          "",
+          "",
+          "-28",
+          "%"
+        ],
+        [
+          "Southern Kern Veterinary Clinic",
+          "",
+          "",
+          "2,782",
+          "",
+          "",
+          "",
+          "3,204",
+          "",
+          "",
+          "",
+          "(423",
+          ")",
+          "",
+          "",
+          "-13",
+          "%"
+        ],
+        [
+          "Bartow Animal Clinic",
+          "",
+          "",
+          "2,506",
+          "",
+          "",
+          "",
+          "2,115",
+          "",
+          "",
+          "",
+          "391",
+          "",
+          "",
+          "",
+          "18",
+          "%"
+        ],
+        [
+          "Dietz Family Pet Hospital",
+          "",
+          "",
+          "2,050",
+          "",
+          "",
+          "",
+          "1,664",
+          "",
+          "",
+          "",
+          "387",
+          "",
+          "",
+          "",
+          "23",
+          "%"
+        ],
+        [
+          "Aberdeen Veterinary Clinic",
+          "",
+          "",
+          "1,872",
+          "",
+          "",
+          "",
+          "1,696",
+          "",
+          "",
+          "",
+          "177",
+          "",
+          "",
+          "",
+          "10",
+          "%"
+        ],
+        [
+          "All Breed Pet Care Veterinary Clinic",
+          "",
+          "",
+          "2,933",
+          "",
+          "",
+          "",
+          "1,362",
+          "",
+          "",
+          "",
+          "1,571",
+          "",
+          "",
+          "",
+          "115",
+          "%"
+        ],
+        [
+          "Pony Express Veterinary Hospital",
+          "",
+          "",
+          "4,323",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "4,323",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Williamsburg Animal Clinic",
+          "",
+          "",
+          "2,329",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "2,329",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Old 41 Animal Hospital",
+          "",
+          "",
+          "2,492",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "2,492",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Total Daily Service Revenue",
+          "",
+          "$",
+          "33,858",
+          "",
+          "",
+          "$",
+          "23,637",
+          "",
+          "",
+          "$",
+          "10,222",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 140,
+      "rows": [
+        [
+          "",
+          "",
+          "Average daily product revenue\u00a0for the nine months ended",
+          "",
+          "",
+          "September 30, 2023 vs. 2022",
+          ""
+        ],
+        [
+          "Animal\u00a0Hospital\u00a0&\u00a0Clinics",
+          "",
+          "September\u00a030, 2023",
+          "",
+          "",
+          "September\u00a030, 2022",
+          "",
+          "",
+          "$ Change",
+          "",
+          "",
+          "% Change",
+          ""
+        ],
+        [
+          "Kauai Veterinary Clinic",
+          "",
+          "$",
+          "1,860",
+          "",
+          "",
+          "$",
+          "1,731",
+          "",
+          "",
+          "$",
+          "129",
+          "",
+          "",
+          "",
+          "7",
+          "%"
+        ],
+        [
+          "Chiefland Animal Hospital",
+          "",
+          "",
+          "1,081",
+          "",
+          "",
+          "",
+          "1,100",
+          "",
+          "",
+          "",
+          "(18",
+          ")",
+          "",
+          "",
+          "-2",
+          "%"
+        ],
+        [
+          "Pets & Friends Animal Hospital",
+          "",
+          "",
+          "938",
+          "",
+          "",
+          "",
+          "974",
+          "",
+          "",
+          "",
+          "(36",
+          ")",
+          "",
+          "",
+          "-4",
+          "%"
+        ],
+        [
+          "Advanced Veterinary Care of Pasco",
+          "",
+          "",
+          "906",
+          "",
+          "",
+          "",
+          "751",
+          "",
+          "",
+          "",
+          "155",
+          "",
+          "",
+          "",
+          "21",
+          "%"
+        ],
+        [
+          "Lytle Veterinary Clinic",
+          "",
+          "",
+          "972",
+          "",
+          "",
+          "",
+          "824",
+          "",
+          "",
+          "",
+          "148",
+          "",
+          "",
+          "",
+          "18",
+          "%"
+        ],
+        [
+          "Southern Kern Veterinary Clinic",
+          "",
+          "",
+          "527",
+          "",
+          "",
+          "",
+          "658",
+          "",
+          "",
+          "",
+          "(131",
+          ")",
+          "",
+          "",
+          "-20",
+          "%"
+        ],
+        [
+          "Bartow Animal Clinic",
+          "",
+          "",
+          "1,056",
+          "",
+          "",
+          "",
+          "219",
+          "",
+          "",
+          "",
+          "838",
+          "",
+          "",
+          "",
+          "383",
+          "%"
+        ],
+        [
+          "Dietz Family Pet Hospital",
+          "",
+          "",
+          "808",
+          "",
+          "",
+          "",
+          "821",
+          "",
+          "",
+          "",
+          "(13",
+          ")",
+          "",
+          "",
+          "-2",
+          "%"
+        ],
+        [
+          "Aberdeen Veterinary Clinic",
+          "",
+          "",
+          "613",
+          "",
+          "",
+          "",
+          "622",
+          "",
+          "",
+          "",
+          "(10",
+          ")",
+          "",
+          "",
+          "-2",
+          "%"
+        ],
+        [
+          "All Breed Pet Care Veterinary Clinic",
+          "",
+          "",
+          "1,455",
+          "",
+          "",
+          "",
+          "817",
+          "",
+          "",
+          "",
+          "637",
+          "",
+          "",
+          "",
+          "78",
+          "%"
+        ],
+        [
+          "Pony Express Veterinary Hospital",
+          "",
+          "",
+          "1,839",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "1,839",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Williamsburg Animal Clinic",
+          "",
+          "",
+          "772",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "772",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Old 41 Animal Hospital",
+          "",
+          "",
+          "712",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "712",
+          "",
+          "",
+          "",
+          "100",
+          "%"
+        ],
+        [
+          "Total Daily Product Revenue",
+          "",
+          "$",
+          "13,537",
+          "",
+          "",
+          "$",
+          "8,517",
+          "",
+          "",
+          "$",
+          "5,020",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    }
+  ],
+  "analysis_state": "parsed",
+  "parser_version": 1
+}
