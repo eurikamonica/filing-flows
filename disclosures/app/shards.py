@@ -4,6 +4,12 @@ from core import read_json, write_json, publish
 import re,json,gzip
 
 
+# Fields kept only in a row's shard, never in live.json: every statement's page text and per-page OCR scores
+# (~75 MB over 13,000 officials' reports) pushed live.json past GitHub's 100 MiB file limit, so no collector run
+# could push. The review desk loads the shard (ensureShard) before it shows either.
+SHARD_ONLY={'congress':('text_preview','page_methods')}
+
+
 def safe_path(root,relative):
     if not re.fullmatch(r'shards/(holdings|congress|cot|banks|npx)/[A-Za-z0-9_+-]+\.json',relative):raise ValueError('Invalid shard path')
     return Path(root)/relative
@@ -51,9 +57,9 @@ def publish_shards(root,data):
         for row in module.get(field,[]):
             # Already published rows stay lazy, so full-market runs do not hydrate every history.
             if row.get('shard') and ('snapshots' not in row if key=='holdings' else 'candidates' not in row):
-                summaries.append(row);continue
+                summaries.append({k:v for k,v in row.items() if k not in SHARD_ONLY.get(key,())});continue
             path=f"shards/{key}/{row[ident]}.json"
-            summary={k:v for k,v in row.items() if k not in ('filings','snapshots','candidates','_loaded','shard','cache')}
+            summary={k:v for k,v in row.items() if k not in ('filings','snapshots','candidates','_loaded','shard','cache',*SHARD_ONLY.get(key,()))}
             if key=='holdings':
                 cache=f"cache/holdings/{row[ident]}.json.gz";target=Path(root)/cache;target.parent.mkdir(parents=True,exist_ok=True)
                 with gzip.open(target.with_suffix('.tmp'),'wt',encoding='utf-8')as f:json.dump(row,f,separators=(',',':'),ensure_ascii=False,allow_nan=False)

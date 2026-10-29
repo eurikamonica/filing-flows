@@ -41,7 +41,8 @@ def record(root, key, result, attempted=None):
     elif not skipped and status == 'partial':
         out.update(last_partial_success=completed, updated_at=completed)
     # A skipped poll cannot clear a previous access error or pretend to be a success.
-    if skipped and previous.get('status') in ('error', 'partial'):
+    # (A cooldown that reports the source as blocked by its own access check says so instead.)
+    if skipped and previous.get('status') in ('error', 'partial') and status != 'blocked':
         out['status'] = previous['status']
         out['error'] = result.get('error') or previous.get('error')
     write_json(path, out)

@@ -129,6 +129,11 @@ def parse_ptr(page, rep):
 
 
 # ------------------------------------------------------------------ collect
+def refused(exc):
+    """eFD turned the session away (HTTP 403 / 429), as opposed to a page that changed or a network failure."""
+    return bool(re.search(r'HTTP (403|429)\b', str(exc)))
+
+
 def collect(client, root, cfg=None, today=None):
     cfg = cfg or {}
     today = today or dt.date.today()
@@ -140,8 +145,9 @@ def collect(client, root, cfg=None, today=None):
     state = read_json(cdir / 'state.json', {})
     retry = RetryQueue(cdir)
     if not retry.due('session'):
-        return {'status': 'error', 'blocked': True, 'skipped': 'access cooldown',
-                'error': retry.rows['session']['error'], **retry.summary()}
+        last = retry.rows['session']['error']
+        return {'status': 'blocked' if refused(last) else 'error', 'blocked': refused(last), 'skipped': 'access cooldown',
+                'error': last, **retry.summary()}
     since = cfg.get('since', '2024-01-01')
     due = (state.get('searched_at') or '') < (dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=int(cfg.get('min_interval_minutes', 90)))).isoformat()
     cursor = state.get('cursor') or (today - dt.timedelta(days=int(cfg.get('recent_days', 60)))).isoformat()
@@ -156,7 +162,9 @@ def collect(client, root, cfg=None, today=None):
     except Exception as exc:
         retry.failed('session', exc)
         retry.save()
-        return {'status': 'error', 'blocked': '403' in str(exc), 'error': str(exc)[:300],
+        # eFD answers GitHub's runners with HTTP 403 (its access check): a blocked source, reported as such and retried
+        # after the cooldown, not an outage that fails every half-hourly run. Other errors still fail it.
+        return {'status': 'blocked' if refused(exc) else 'error', 'blocked': refused(exc), 'error': str(exc)[:300],
                 'reports': len(reports), 'trades': len(trades), **retry.summary()}
 
     def scan(start, end=''):
