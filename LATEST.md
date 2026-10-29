@@ -1,5 +1,5 @@
-# Hourly FSA question bank: 2026-10-29T19:00:00+00:00
-New questions: 15. Ready: 15; needs review: 0.
+# Hourly FSA question bank: 2026-10-29T20:00:00+00:00
+New questions: 14. Ready: 14; needs review: 0.
 
 ## Backlog
 - P0 Historical replay: Keep >=30% reviewed earlier exercises; check regressions
@@ -9,12 +9,12 @@ New questions: 15. Ready: 15; needs review: 0.
 - P2 Reasoning and abstention: Require stepwise verification and unsupported-value nulls
 - P2 Larger model distillation: Queue teacher answers; require independent gold verification
 - P1 Research rights gate: Human-approved licensed/public-domain/owned factual excerpts only
-- P0 New hourly experiment: SEC amendments: Cross-filing revised figures with exact accession dates
+- P0 New hourly experiment: Industry segmentation: Verify segment revenue and eliminations from 10-K notes
 
 ## Generated question categories
 - accounting_equation: 3
 - accrual_ratio: 3
-- journal_entry: 3
+- journal_entry: 2
 - numeric_sign_units: 3
 - three_statements: 3
 
