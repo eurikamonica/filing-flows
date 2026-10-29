@@ -56,7 +56,7 @@ function opportunityView(){
  if(!g.data)return out+empty('Loading the odds…');
  const d=g.data,F=d.fields_h,ix=k=>F.indexOf(k),hk=state.oph||'1m',k=state.ops||'score';
  const q=String(state.opq||'').trim().toLowerCase(),cmax=opCostMax(state.opl==null?'5e6':state.opl);
- const val=r=>{const h=r.h[hk];if(!h)return null;return k==='score'?(r.score==null?null:r.score+(h[ix('edge')]||0)/10):k==='p_down'?1-h[ix('p_up')]:k==='edge'?h[ix('edge')]:h[ix(k)]};
+ const val=r=>{const h=r.h[hk];if(!h)return null;return k==='score'?(r.score==null?(h[ix('edge')]==null?null:h[ix('edge')]*100-1000):r.score+(h[ix('edge')]||0)/10):k==='p_down'?1-h[ix('p_up')]:k==='edge'?h[ix('edge')]:h[ix(k)]};
  let R=d.rows.filter(r=>r.h[hk]&&(!state.opsec||r.s===state.opsec)&&r.h[hk][ix('cost')]<=cmax
   &&(!q||String(r.t).toLowerCase().includes(q)||String(r.n||'').toLowerCase().includes(q)));
  const f=state.opf||'';
@@ -66,7 +66,7 @@ function opportunityView(){
  const c=(d.cards||{})[hk]||{};
  const on=s=>((c[s]||{}).flag_ok);
  out+=`<div class="metrics">${kpi(kind==='etfs'?'ETFs':'Stocks',fmt(d.rows.length),'week ending '+(d.asof||''))}${kpi('Buy flags',fmt(d.rows.filter(r=>r.side==='buy').length),'any horizon')}${kpi('Short flags',fmt(d.rows.filter(r=>r.side==='short').length),'any horizon')}${kpi('Median chance higher',opP(med(d.rows.map(r=>r.h[hk]&&r.h[hk][ix('p_up')]))),OP_HN[hk])}${kpi('Direction AUC',c.up&&c.up.auc!=null?fmt(c.up.auc,3):'—','walk-forward, 0.5 = coin')}</div>`;
- out+=`<div class="explain">At ${esc(OP_HN[hk])}: buy flags <b>${on('buy')?'on':'off'}</b>, short flags <b>${on('short')?'on':'off'}</b> — a side is flagged only at horizons where, out of sample, its flagged trades made money more often than not, on the median and on average after costs, and 2 points more often than those names' own no-signal odds. ${on('short')?'':'Shorts are often right more than half the time but lose on average (a few big rallies outweigh the wins), so they stay unflagged. '}See the model card.</div>`;
+ out+=`<div class="explain">At ${esc(OP_HN[hk])}: buy flags <b>${on('buy')?'on':'off'}</b>, short flags <b>${on('short')?'on':'off'}</b> — a side is flagged only at horizons where, out of sample, its flagged trades made money more often than not, on the median and on average after costs, and 2 points more often than those names' own no-signal odds. ${on('short')?'':'Shorts are often right more than half the time but lose on average (a few big rallies outweigh the wins), so they stay unflagged. '}${Object.values(d.cards||{}).some(x=>(x.buy||{}).flag_ok||(x.short||{}).flag_ok)?'':`No ${kind==='etfs'?'ETF':'stock'} flag has passed at any horizon: the signals add little to these odds out of sample, so names are listed by edge without a score. `}See the model card.</div>`;
  exported=R.map(r=>{const h=r.h[hk];return {ticker:r.t,name:r.n,sector:r.s,score:r.score,side:r.side,best_horizon:r.best_h,horizon:hk,p_up:h[ix('p_up')],p_buy:h[ix('p_buy')],p_short:h[ix('p_short')],r_p10:h[ix('r_p10')],r_p50:h[ix('r_p50')],r_p90:h[ix('r_p90')],round_trip_cost:h[ix('cost')],edge:h[ix('edge')],hard_to_borrow:!!r.htb}});
  out+=`<div class="section-head"><h3>${esc(fmt(R.length))} ${kind==='etfs'?'ETFs':'stocks'} · ${esc(OP_HN[hk])}</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
  const L=d.labels||{};
