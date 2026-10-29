@@ -42,12 +42,15 @@ class Pieces(unittest.TestCase):
         self.assertIsNone(O._wmean([]))
 
     def test_flag_gate(self):
-        good = {'hit': 0.55, 'all_hit': 0.50, 'net_median': 0.01, 'net_mean': 0.012}
+        good = {'hit': 0.55, 'base_hit': 0.52, 'all_hit': 0.50, 'net_median': 0.01, 'net_mean': 0.012}
         self.assertTrue(O.flag_ok(good))
-        self.assertFalse(O.flag_ok({**good, 'hit': 0.49, 'all_hit': 0.40}))      # better than average, still loses more often
-        self.assertFalse(O.flag_ok({**good, 'hit': 0.51}))                        # under 2 points of lift
+        self.assertFalse(O.flag_ok({**good, 'hit': 0.49, 'base_hit': 0.40}))     # better than expected, still loses more often
+        self.assertFalse(O.flag_ok({**good, 'hit': 0.53}))                        # under 2 points over its own no-signal odds
+        self.assertFalse(O.flag_ok({**good, 'base_hit': 0.54}))                   # beat the average name, not its own baseline
         self.assertFalse(O.flag_ok({**good, 'net_median': -0.001}))
         self.assertFalse(O.flag_ok(None))
+        self.assertTrue(O.flag_ok({**good, 'halves': [[500, 0.55, 0.52], [500, 0.56, 0.52]]}))
+        self.assertFalse(O.flag_ok({**good, 'halves': [[500, 0.58, 0.52], [500, 0.52, 0.52]]}))   # one lucky stretch
 
     def test_flags_rank_and_disallow(self):
         n = 100

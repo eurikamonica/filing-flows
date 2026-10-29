@@ -20,7 +20,8 @@ it) and frozen every week in a ledger that is scored once the outcomes are known
               three kept); a name is flagged buy or short at a horizon when its edge is among the strongest fifth of the week
               and at least 2 points, the trade is more likely than not to make money after costs, and only at the horizons and sides whose flags worked out of sample: the flagged
               trades made money more often than not, on the median and on the average (the extreme 1% capped) after
-              costs, and beat the average name's hit rate by 2 points (the model card's "flagged against all")
+              costs, and 2 points more often than those same names' no-signal odds said, at least 1 point more in each
+              half of the years (the model card's "flagged")
   short       not flagged for names under $5 or trading under $5M a week: they are often hard to borrow, at fees far
               above the 0.5% assumed (the probability is still shown)
   drivers     each signal's contribution b_j × x_j to the prediction, largest first
@@ -388,10 +389,25 @@ def _wmean(x, caps=None):
     return float(np.mean(np.clip(x, lo, hi)))
 
 
+def _halves(fl, y, base, yr):
+    """The flagged hit rate and its no-signal expectation in the earlier and the later half of the out-of-sample years."""
+    out = []
+    if not fl.any():
+        return out
+    mid = np.median(np.unique(yr[fl]))
+    for m in (yr <= mid, yr > mid):
+        f = fl & m
+        out.append([int(f.sum()), round(float(y[f].mean()), 4), round(float(base[f].mean()), 4)] if f.sum() >= 100 else [int(f.sum()), None, None])
+    return out
+
+
 def flag_ok(f):
     """Flags at a horizon and side only where they worked out of sample: the flagged trades made money more often than not,
-    on the median and on the (capped) average after costs, and beat the average name's hit rate by 2 points."""
-    return bool(f and f.get('hit') is not None and f['hit'] > 0.5 and f['hit'] - f['all_hit'] >= 0.02
+    on the median and on the (capped) average after costs, and 2 points more often than the same names were expected to
+    with no signal (base_hit: their own no-signal probability — the signals, not the choice of liquid names, did it), and
+    at least 1 point more in each half of the years on their own (halves) — not one lucky stretch."""
+    halves_ok = all(h[1] is not None and h[1] - h[2] >= 0.01 for h in (f or {}).get('halves') or []) if (f or {}).get('halves') is not None else True
+    return bool(f and f.get('hit') is not None and f['hit'] > 0.5 and f['hit'] - f.get('base_hit', f['all_hit']) >= 0.02 and halves_ok
                 and (f.get('net_median') or 0) > 0 and (f.get('net_mean') or 0) > 0)
 
 
@@ -493,7 +509,7 @@ def run(P, macro, today=None, verbose=False):
                 edge, side, pct, eb, es = flags(pr[1], pr[2], p0[1], p0[2], can)
                 g = np.expm1(r[m, t])                         # the simple return
                 net_b, net_s = g - cst, -g - cst - BORROW * h / 52
-                oos['ev'].append(np.column_stack([eb, es, side, net_b, net_s]))
+                oos['ev'].append(np.column_stack([eb, es, side, net_b, net_s, np.full(len(eb), Y)]))
                 ps.append(np.column_stack(pr)); ys.append(np.column_stack(_outcomes(r[m, t], cst, h)).astype(float))
                 if m.sum() >= 50:
                     zhat = D @ M['b']
@@ -538,6 +554,8 @@ def run(P, macro, today=None, verbose=False):
             fl = ev[:, 2] == (1 if key == 'buy' else -1)
             card[key]['edge_deciles'] = dec_
             card[key]['flagged'] = {'n': int(fl.sum()), 'share': float(fl.mean()), 'hit': float(y_all[fl, j].mean()) if fl.any() else None,
+                                    'base_hit': float(np.mean(p_all[fl, j] - ev[fl, col])) if fl.any() else None,
+                                    'halves': _halves(fl, y_all[:, j], p_all[:, j] - ev[:, col], ev[:, 5]),
                                     'net_mean': _wmean(net[fl], caps) if fl.any() else None, 'net_median': float(np.median(net[fl])) if fl.any() else None,
                                     'all_hit': float(y_all[:, j].mean()), 'all_net_mean': _wmean(net, caps), 'all_net_median': float(np.median(net))}
             card[key]['flag_ok'] = flag_ok(card[key]['flagged'])
@@ -628,7 +646,7 @@ def card_brief(cards):
     """What one company's card needs from the model cards: per horizon the walk-forward skill and whether flags are on."""
     return {hk: {'years': c['oos_years'], 'ic': c['ic_mean'], **{k: {'skill': c[k]['brier_skill'], 'auc': c[k]['auc'], 'rate': c[k]['rate']}
                                                                   for k in ('up', 'buy', 'short')},
-                 'flags': {k: {'on': c[k].get('flag_ok'), 'hit': c[k]['flagged']['hit'], 'all_hit': c[k]['flagged']['all_hit'],
+                 'flags': {k: {'on': c[k].get('flag_ok'), 'hit': c[k]['flagged']['hit'], 'base_hit': c[k]['flagged'].get('base_hit'), 'all_hit': c[k]['flagged']['all_hit'],
                                'net_median': c[k]['flagged']['net_median'], 'all_net_median': c[k]['flagged']['all_net_median']}
                            for k in ('buy', 'short')}}
             for hk, c in cards.items()}
@@ -661,7 +679,7 @@ def publish(out_dir, P, R, kind):
                                                  separators=(',', ':')), encoding='utf-8')
     return {'names': len(rows), 'buy': sum(r['side'] == 'buy' for r in rows), 'short': sum(r['side'] == 'short' for r in rows),
             **{hk: {'ic': round(c['ic_mean'] or 0, 4), **{f'{k}_skill': round(c[k]['brier_skill'] or 0, 4) for k in ('up', 'buy', 'short')},
-                    **{f'{k}_flags': [c[k]['flag_ok'], round(c[k]['flagged']['hit'] or 0, 3), round(c[k]['flagged']['all_hit'], 3),
+                    **{f'{k}_flags': [c[k]['flag_ok'], round(c[k]['flagged']['hit'] or 0, 3), round(c[k]['flagged'].get('base_hit') or 0, 3), round(c[k]['flagged']['all_hit'], 3),
                                       round(c[k]['flagged']['net_median'] or 0, 4), round(c[k]['flagged']['all_net_median'], 4)] for k in ('buy', 'short')}}
                for hk, c in cards.items()}}
 

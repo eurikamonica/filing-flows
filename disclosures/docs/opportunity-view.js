@@ -82,7 +82,7 @@
 <p class="opv-note">Each signal's weight × where this name stands on it against every other name this week (in units of its own volatility).</p></div>`;
     const rec = hs.map((hk) => {
       const c = cards[hk] || {}, fb = (c.flags || {}).buy || {}, fs = (c.flags || {}).short || {};
-      const one = (f, name) => (f.on ? `${name} flags on: they made money ${P(f.hit)} of the time (all names ${P(f.all_hit)}), median ${S(f.net_median)} vs ${S(f.all_net_median)}` : `${name} flags off: they did not make money often enough out of sample`);
+      const one = (f, name) => (f.on ? `${name} flags on: they made money ${P(f.hit)} of the time (${fin(f.base_hit) ? P(f.base_hit) + ' expected for the same names with no signal, ' : ''}all names ${P(f.all_hit)}), median ${S(f.net_median)} vs ${S(f.all_net_median)}` : `${name} flags off: they did not make money often enough out of sample`);
       return `<li><b>${esc(H_NAME[hk] || hk)}</b>: higher-or-not called with AUC ${fin((c.up || {}).auc) ? (c.up.auc).toFixed(3) : '—'} (0.5 = a coin), Brier skill ${S((c.up || {}).skill)} over the base rate · ${one(fb, 'buy')} · ${one(fs, 'short')}</li>`;
     }).join('');
     const yrs = ((cards[hs[0]] || {}).years || []).join('–');

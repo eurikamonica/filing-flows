@@ -12,7 +12,9 @@ ridge model per horizon on cross-sectionally ranked signals (momentum 4/13/26 we
 dollar volume) predicting the volatility-scaled return; probabilities from the model's own residuals, Platt-calibrated;
 every year predicted only from the years before it. A name is flagged buy or short only when its edge is in the
 strongest fifth of the week, the trade itself is more likely than not to make money, and flags at that horizon and side
-made money out of sample (more often than not, on the median and the capped average, 2 points above the average name):
+made money out of sample (more often than not, on the median and the capped average, and 2 points more often than the
+same names' own no-signal odds — so the signals, not a tilt toward liquid names, earned it — and in each half of the
+years on its own):
 for stocks today that is buys at 1 and 3 months; shorts are often right but lose on average, so they stay unflagged;
 names under $5, under $5M a week and leveraged or inverse ETFs are never flagged short. Each closed week's odds are
 frozen in `ledger/opportunity-<kind>.json` and scored once known. Hub tab "Opportunity" (screener with horizon, flag,
