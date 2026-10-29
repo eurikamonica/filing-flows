@@ -1,0 +1,1643 @@
+{
+  "cik": 1864055,
+  "name": "Abits Group Inc",
+  "form": "F-1",
+  "filed": "2026-10-29",
+  "accession": "0001493152-26-049133",
+  "source_url": "https://www.sec.gov/Archives/edgar/data/1864055/000149315226049133/formf-1.htm",
+  "file_number": "333-299685",
+  "accepted": "2026-10-29T00:53:54+00:00",
+  "method": "inline_xbrl",
+  "document_sha256": "d77dca6e1b5303afc814ee1d71c159cf23c1904b5a45580139432007f5298d94",
+  "periods": [
+    {
+      "start": "2025-01-01",
+      "end": "2025-06-30",
+      "label": "2025-01-01 \u2192 2025-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 3995558.0,
+        "cor": 1856866.0,
+        "ga": 1133589.0,
+        "oi": 2138692.0,
+        "pretax": -340002.0,
+        "tax": 14785.0,
+        "ni": -354787.0,
+        "ocf": -570443.0,
+        "da": 1619905.0,
+        "rev_contract": 3995558.0,
+        "int_exp": 90000.0,
+        "capex": 3028603.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "RevenueFromContractWithCustomerExcludingAssessedTax"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "rev_contract": {
+          "label": "RevenueFromContractWithCustomerExcludingAssessedTax"
+        },
+        "int_exp": {
+          "label": "InterestExpense"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": 0.535267414463762,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.0887953572442197,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.14276929530243335,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -0.9007617959744296,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.7579925006719963,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2026-01-01",
+      "end": "2026-06-30",
+      "label": "2026-01-01 \u2192 2026-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 3195414.0,
+        "cor": 2759655.0,
+        "ga": 500027.0,
+        "oi": 435759.0,
+        "pretax": -2540975.0,
+        "tax": 10114.0,
+        "ni": -2551089.0,
+        "ocf": -843130.0,
+        "da": 2014958.0,
+        "rev_contract": 3195414.0,
+        "int_exp": 184633.0,
+        "capex": 307675.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "RevenueFromContractWithCustomerExcludingAssessedTax"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "rev_contract": {
+          "label": "RevenueFromContractWithCustomerExcludingAssessedTax"
+        },
+        "int_exp": {
+          "label": "InterestExpense"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": 0.13637012293242753,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -0.7983594614031233,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -0.263856264008357,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -0.360142691995466,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.09628642798710903,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    }
+  ],
+  "limitations": [
+    "IPO price, proceeds and dilution are not inferred from funding announcements.",
+    "Commitments, recognized lease liabilities and cash expenses may overlap and must not be added.",
+    "Company-specific cost presentation does not establish cost of revenue or gross margin."
+  ],
+  "classification": "resale_language_identified",
+  "sections": [
+    {
+      "title": "Prospectus Summary",
+      "excerpt": "PROSPECTUS SUMMARY 3 ABOUT OUR COMPANY 3 RISK FACTORS 17 THE OFFERING 46 USE OF PROCEEDS 47 DIVIDEND POLICY 47 CAPITALIZATION 47 BUSINESS 48 MANAGEMENT\u2019S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS 48 BOARD OF DIRECTORS AND EXECUTIVE MANAGEMENT 48 CERTAIN RELATIONSHIPS AND RELATED PERSON TRANSACTIONS 48 BENEFICIAL OWNERSHIP OF SECURITIES 48 SELLING SHAREHOLDER 50 DESCRIPTION OF SHARE CAPITAL 51 PLAN OF DISTRIBUTION 59 TAXATION 60 EXPENSES RELATED TO THE OFFERING 64 ENFORCEABILITY OF CIVIL LIABILITIES 64 LEGAL MATTERS 66 EXPERTS 66 DISCLOSURE OF COMMISSION POSITION ON INDEMNIFICATION FOR SECURITIES ACT LIABILITIES 66 WHERE YOU CAN FIND MORE INFORMATION 66 INFORMATION INCORPORATED BY REFERENCE 66 INDEX TO FINANCIAL STATEMENTS F-1 Field: Page; Sequence: 9; Options: NewSection Field: Sequence; Type: LowerRoman; Name: PageNo i Field: /Sequence Field: /Page ABOUT\nT",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Use of Proceeds",
+      "excerpt": "USE OF PROCEEDS 47 DIVIDEND POLICY 47 CAPITALIZATION 47 BUSINESS 48 MANAGEMENT\u2019S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS 48 BOARD OF DIRECTORS AND EXECUTIVE MANAGEMENT 48 CERTAIN RELATIONSHIPS AND RELATED PERSON TRANSACTIONS 48 BENEFICIAL OWNERSHIP OF SECURITIES 48 SELLING SHAREHOLDER 50 DESCRIPTION OF SHARE CAPITAL 51 PLAN OF DISTRIBUTION 59 TAXATION 60 EXPENSES RELATED TO THE OFFERING 64 ENFORCEABILITY OF CIVIL LIABILITIES 64 LEGAL MATTERS 66 EXPERTS 66 DISCLOSURE OF COMMISSION POSITION ON INDEMNIFICATION FOR SECURITIES ACT LIABILITIES 66 WHERE YOU CAN FIND MORE INFORMATION 66 INFORMATION INCORPORATED BY REFERENCE 66 INDEX TO FINANCIAL STATEMENTS F-1 Field: Page; Sequence: 9; Options: NewSection Field: Sequence; Type: LowerRoman; Name: PageNo i Field: /Sequence Field: /Page ABOUT\nTHIS PROSPECTUS This\nprospectus is part of a registration statement on For",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Risk Factors",
+      "excerpt": "RISK FACTORS 17 THE OFFERING 46 USE OF PROCEEDS 47 DIVIDEND POLICY 47 CAPITALIZATION 47 BUSINESS 48 MANAGEMENT\u2019S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS 48 BOARD OF DIRECTORS AND EXECUTIVE MANAGEMENT 48 CERTAIN RELATIONSHIPS AND RELATED PERSON TRANSACTIONS 48 BENEFICIAL OWNERSHIP OF SECURITIES 48 SELLING SHAREHOLDER 50 DESCRIPTION OF SHARE CAPITAL 51 PLAN OF DISTRIBUTION 59 TAXATION 60 EXPENSES RELATED TO THE OFFERING 64 ENFORCEABILITY OF CIVIL LIABILITIES 64 LEGAL MATTERS 66 EXPERTS 66 DISCLOSURE OF COMMISSION POSITION ON INDEMNIFICATION FOR SECURITIES ACT LIABILITIES 66 WHERE YOU CAN FIND MORE INFORMATION 66 INFORMATION INCORPORATED BY REFERENCE 66 INDEX TO FINANCIAL STATEMENTS F-1 Field: Page; Sequence: 9; Options: NewSection Field: Sequence; Type: LowerRoman; Name: PageNo i Field: /Sequence Field: /Page ABOUT\nTHIS PROSPECTUS This\nprospectus is part of",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Dividend Policy",
+      "excerpt": "DIVIDEND POLICY 47 CAPITALIZATION 47 BUSINESS 48 MANAGEMENT\u2019S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS 48 BOARD OF DIRECTORS AND EXECUTIVE MANAGEMENT 48 CERTAIN RELATIONSHIPS AND RELATED PERSON TRANSACTIONS 48 BENEFICIAL OWNERSHIP OF SECURITIES 48 SELLING SHAREHOLDER 50 DESCRIPTION OF SHARE CAPITAL 51 PLAN OF DISTRIBUTION 59 TAXATION 60 EXPENSES RELATED TO THE OFFERING 64 ENFORCEABILITY OF CIVIL LIABILITIES 64 LEGAL MATTERS 66 EXPERTS 66 DISCLOSURE OF COMMISSION POSITION ON INDEMNIFICATION FOR SECURITIES ACT LIABILITIES 66 WHERE YOU CAN FIND MORE INFORMATION 66 INFORMATION INCORPORATED BY REFERENCE 66 INDEX TO FINANCIAL STATEMENTS F-1 Field: Page; Sequence: 9; Options: NewSection Field: Sequence; Type: LowerRoman; Name: PageNo i Field: /Sequence Field: /Page ABOUT\nTHIS PROSPECTUS This\nprospectus is part of a registration statement on Form F-1 that we filed",
+      "status": "source_excerpt_not_model_conclusion"
+    }
+  ],
+  "source_tables": [
+    {
+      "table_index": 53,
+      "rows": [
+        [
+          "",
+          "",
+          "Year ended December 31",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          "",
+          "",
+          "2023",
+          ""
+        ],
+        [
+          "Revenue",
+          "",
+          "",
+          "9,128,666",
+          "",
+          "",
+          "",
+          "6,711,225",
+          "",
+          "",
+          "",
+          "1,681,533",
+          ""
+        ],
+        [
+          "Profit /(Loss) from operations",
+          "",
+          "",
+          "3,676,498",
+          "",
+          "",
+          "",
+          "3,375,406",
+          "",
+          "",
+          "",
+          "1,226,065",
+          ")"
+        ],
+        [
+          "Loss before taxation",
+          "",
+          "",
+          "(2,766,220",
+          ")",
+          "",
+          "",
+          "(798,293",
+          ")",
+          "",
+          "",
+          "(12,585,250",
+          ")"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 89,
+      "rows": [
+        [
+          "Issuer",
+          "",
+          "Abits\n    Group Inc, a British Virgin Islands business company."
+        ],
+        [
+          "Ordinary\n    Shares offered by the Selling Shareholder",
+          "",
+          "Up\n    to 50,476,408 Ordinary Shares, consisting of (i) up to 18,148,821 Put Shares that we may, in our discretion, elect\n    to issue and sell to Shakawe from time to time pursuant to the Equity Purc"
+        ],
+        [
+          "Ordinary\n    Shares outstanding prior to this offering",
+          "",
+          "3,214,445 Ordinary Shares (as of September 29, 2026)"
+        ],
+        [
+          "Ordinary\n    Shares outstanding after giving effect to the issuance of the shares registered hereunder",
+          "",
+          "53,690,853 Ordinary Shares (assuming issuance of all Put Shares and all Commitment Shares registered hereby, without giving effect to the 4.99%\nbeneficial ownership limitation or the Exchange Cap desc"
+        ],
+        [
+          "Use\n    of proceeds",
+          "",
+          "We\n    will not receive any proceeds from resales of Ordinary Shares by the Selling Shareholder. We may receive up to US$250,000,000 in\n    aggregate gross proceeds from sales of Put Shares to Shakawe"
+        ],
+        [
+          "Purchase\n    limitations",
+          "",
+          "We\nmay not issue, and Shakawe may not purchase, Ordinary Shares under the Equity Purchase Agreement to the extent that, after giving effect\nthereto, Shakawe together with its affiliates would benefici"
+        ],
+        [
+          "Conditions\n    to each put",
+          "",
+          "Each\n    sale of Put Shares is subject to conditions, including that the registration statement of which this prospectus forms a part remains\n    effective and available, that our Ordinary Shares rema"
+        ],
+        [
+          "Market\n    for Ordinary Shares",
+          "",
+          "Our\n    Ordinary Shares are listed on The Nasdaq Capital Market under the symbol \u201cABTS.\u201d"
+        ],
+        [
+          "Risk\n    factors",
+          "",
+          "Investing\n    in our Ordinary Shares involves a high degree of risk. See \u201cRisk Factors.\u201d"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 146,
+      "rows": [
+        [
+          "",
+          "Page"
+        ],
+        [
+          "Consolidated\n    Financial Statements",
+          ""
+        ],
+        [
+          "Condensed\n    Consolidated Balance Sheets as of June 30, 2026 (unaudited) and December 31, 2025",
+          "F-2"
+        ],
+        [
+          "Condensed\n                                            Consolidated Statements of Operations and Comprehensive Loss for the six months ended\n                                            June 30, 2026 an",
+          "F-3"
+        ],
+        [
+          "Condensed\n    Consolidated Statements of Changes in Shareholders\u2019 Equity for the six months ended June 30, 2026 and 2025 (unaudited)",
+          "F-4"
+        ],
+        [
+          "Condensed\n    Consolidated Statements of Cash Flows for the six months ended June 30, 2026 and 2025 \u00a0(unaudited)",
+          "F-5"
+        ],
+        [
+          "Notes\n    to Consolidated Financial Statements",
+          "F-6"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 150,
+      "rows": [
+        [
+          "",
+          "",
+          "",
+          "",
+          "Six Months Ended",
+          "",
+          "Six Months Ended"
+        ],
+        [
+          "",
+          "",
+          "Note",
+          "",
+          "June 30, 2026",
+          "",
+          "June 30, 2025"
+        ],
+        [
+          "Revenue",
+          "",
+          "4",
+          "",
+          "$",
+          "3,195,414",
+          "",
+          "",
+          "$",
+          "3,995,558",
+          ""
+        ],
+        [
+          "Direct costs of revenue",
+          "",
+          "5",
+          "",
+          "",
+          "( 2,759,655",
+          ")",
+          "",
+          "",
+          "( 1,856,866",
+          ")"
+        ],
+        [
+          "Profit from operations",
+          "",
+          "",
+          "",
+          "",
+          "435,759",
+          "",
+          "",
+          "",
+          "2,138,692",
+          ""
+        ],
+        [
+          "General and administrative expenses",
+          "",
+          "",
+          "",
+          "",
+          "( 500,027",
+          ")",
+          "",
+          "",
+          "( 1,133,589",
+          ")"
+        ],
+        [
+          "Depreciation",
+          "",
+          "",
+          "",
+          "",
+          "( 2,014,958",
+          ")",
+          "",
+          "",
+          "( 1,619,905",
+          ")"
+        ],
+        [
+          "Gain on disposal of miners and other net income",
+          "",
+          "",
+          "",
+          "",
+          "141,893",
+          "",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Interest expense",
+          "",
+          "3",
+          "",
+          "",
+          "( 184,633",
+          ")",
+          "",
+          "",
+          "( 90,000",
+          ")"
+        ],
+        [
+          "Fair value changes of digital assets",
+          "",
+          "",
+          "",
+          "",
+          "( 419,009",
+          ")",
+          "",
+          "",
+          "364,800",
+          ""
+        ],
+        [
+          "Loss before tax",
+          "",
+          "",
+          "",
+          "",
+          "( 2,540,975",
+          ")",
+          "",
+          "",
+          "( 340,002",
+          ")"
+        ],
+        [
+          "Income taxes",
+          "",
+          "",
+          "",
+          "",
+          "( 10,114",
+          ")",
+          "",
+          "",
+          "( 14,785",
+          ")"
+        ],
+        [
+          "Loss after tax",
+          "",
+          "",
+          "",
+          "",
+          "( 2,551,089",
+          ")",
+          "",
+          "",
+          "( 354,787",
+          ")"
+        ],
+        [
+          "Foreign exchange adjustment",
+          "",
+          "",
+          "",
+          "",
+          "( 16,704",
+          ")",
+          "",
+          "",
+          "260",
+          ""
+        ],
+        [
+          "Comprehensive loss for the period",
+          "",
+          "",
+          "",
+          "$",
+          "( 2,567,793",
+          ")",
+          "",
+          "$",
+          "( 354,527",
+          ")"
+        ],
+        [
+          "Basic and diluted loss per ordinary share",
+          "",
+          "",
+          "",
+          "$",
+          "( 0.79",
+          ")",
+          "",
+          "$",
+          "( 0.15",
+          ")"
+        ],
+        [
+          "Basic and diluted average number of ordinary shares outstanding",
+          "",
+          "",
+          "",
+          "",
+          "3,214,445",
+          "",
+          "",
+          "",
+          "2,369,995",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 152,
+      "rows": [
+        [
+          "",
+          "",
+          "Number",
+          "",
+          "",
+          "Amount($)",
+          "",
+          "",
+          "Number",
+          "",
+          "",
+          "Amount($)",
+          "",
+          "",
+          "Capital($)",
+          "",
+          "",
+          "Deficit($)",
+          "",
+          "",
+          "Income($)",
+          "",
+          "",
+          "Total($)",
+          ""
+        ],
+        [
+          "",
+          "",
+          "Preferred Shares",
+          "",
+          "",
+          "Ordinary Shares",
+          "",
+          "",
+          "Additional paid-in",
+          "",
+          "",
+          "Accumulated",
+          "",
+          "",
+          "Accumulated other comprehensive",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "",
+          "",
+          "Number",
+          "",
+          "",
+          "Amount($)",
+          "",
+          "",
+          "Number",
+          "",
+          "",
+          "Amount($)",
+          "",
+          "",
+          "Capital($)",
+          "",
+          "",
+          "Deficit($)",
+          "",
+          "",
+          "Income($)",
+          "",
+          "",
+          "Total($)",
+          ""
+        ],
+        [
+          "Balance, December 31, 2024",
+          "",
+          "",
+          "333,333",
+          "",
+          "",
+          "$",
+          "5,050",
+          "",
+          "",
+          "",
+          "2,369,995",
+          "",
+          "",
+          "$",
+          "35,554",
+          "",
+          "",
+          "$",
+          "89,290,193",
+          "",
+          "",
+          "$",
+          "( 78,803,383",
+          ")",
+          "",
+          "$",
+          "( 146,463"
+        ],
+        [
+          "Net loss for the first half of year",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "( 354,787",
+          ")",
+          "",
+          "",
+          "-"
+        ],
+        [
+          "Foreign exchange adjustment",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "260"
+        ],
+        [
+          "Balance June 30,2025",
+          "",
+          "",
+          "333,333",
+          "",
+          "",
+          "$",
+          "5,050",
+          "",
+          "",
+          "",
+          "2,369,995",
+          "",
+          "",
+          "$",
+          "35,554",
+          "",
+          "",
+          "$",
+          "89,290,193",
+          "",
+          "",
+          "$",
+          "( 79,158,170",
+          ")",
+          "",
+          "$",
+          "( 146,203"
+        ],
+        [
+          "Net loss for the Second half of year",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "( 2,514,709",
+          ")",
+          "",
+          "",
+          "-"
+        ],
+        [
+          "Foreign exchange adjustment",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "2,336"
+        ],
+        [
+          "Compensation",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "266,720",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-"
+        ],
+        [
+          "Balance, December 31, 2025",
+          "",
+          "",
+          "333,333",
+          "",
+          "",
+          "$",
+          "5,050",
+          "",
+          "",
+          "",
+          "2,369,995",
+          "",
+          "",
+          "$",
+          "35,554",
+          "",
+          "",
+          "$",
+          "89,556,913",
+          "",
+          "",
+          "$",
+          "( 81,672,879",
+          ")",
+          "",
+          "$",
+          "( 143,867"
+        ],
+        [
+          "Net loss for the first half of year",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "( 2,551,089",
+          ")",
+          "",
+          "",
+          "-"
+        ],
+        [
+          "Share Issuance",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "844,450",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "1,645,786",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Foreign exchange adjustment",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "( 16,704"
+        ],
+        [
+          "Balance, June 30, 2026",
+          "",
+          "",
+          "333,333",
+          "",
+          "",
+          "$",
+          "5,050",
+          "",
+          "",
+          "",
+          "3,214,445",
+          "",
+          "",
+          "$",
+          "35,554",
+          "",
+          "",
+          "$",
+          "91,202,699",
+          "",
+          "",
+          "$",
+          "( 84,223,968",
+          ")",
+          "",
+          "$",
+          "( 160,571"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 154,
+      "rows": [
+        [
+          "",
+          "",
+          "For the Six Months Ended",
+          "",
+          "",
+          "For the Six Months Ended",
+          ""
+        ],
+        [
+          "",
+          "",
+          "June\n30, 2026",
+          "",
+          "",
+          "June\n30, 2025",
+          ""
+        ],
+        [
+          "Net loss for the period",
+          "",
+          "$",
+          "( 2,551,089",
+          ")",
+          "",
+          "$",
+          "( 354,787",
+          ")"
+        ],
+        [
+          "Adjustments to reconcile to cash used in operating activities:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Depreciation of property, and equipment",
+          "",
+          "",
+          "2,014,958",
+          "",
+          "",
+          "",
+          "1,619,905",
+          ""
+        ],
+        [
+          "Fair value changes on digital assets",
+          "",
+          "",
+          "419,009",
+          "",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Non-operating income from insurance claims and disposal of vehicles",
+          "",
+          "",
+          "( 141,893",
+          ")",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Changes in operating assets and liabilities:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Other receivables and prepayments",
+          "",
+          "",
+          "2,437",
+          "",
+          "",
+          "",
+          "15,916",
+          ""
+        ],
+        [
+          "Other payable and accruals",
+          "",
+          "",
+          "( 204,162",
+          ")",
+          "",
+          "",
+          "( 145,140",
+          ")"
+        ],
+        [
+          "Account prepaid and other deposits",
+          "",
+          "",
+          "( 1,000",
+          ")",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Digital assets",
+          "",
+          "",
+          "( 381,390",
+          ")",
+          "",
+          "",
+          "( 1,706,337",
+          ")"
+        ],
+        [
+          "Net cash (used in) operating activities",
+          "",
+          "",
+          "( 843,130",
+          ")",
+          "",
+          "",
+          "( 570,443",
+          ")"
+        ],
+        [
+          "Cash flows from investing activities",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Purchase of property and equipment",
+          "",
+          "",
+          "( 307,675",
+          ")",
+          "",
+          "",
+          "( 3,028,603",
+          ")"
+        ],
+        [
+          "Proceeds from insurance claims and disposal of vehicles",
+          "",
+          "",
+          "141,893",
+          "",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Net cash (used in) investing activities",
+          "",
+          "",
+          "( 165,782",
+          ")",
+          "",
+          "",
+          "( 3,028,603",
+          ")"
+        ],
+        [
+          "Cash flows from financing activities",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Cash from financing activities:",
+          "",
+          "",
+          "1,645,786",
+          "",
+          "",
+          "",
+          "3,000,000",
+          ""
+        ],
+        [
+          "Repayment of loans from unrelated third parties",
+          "",
+          "",
+          "( 625,000",
+          ")",
+          "",
+          "",
+          "( 375,000",
+          ")"
+        ],
+        [
+          "Net cash generated from financing activities",
+          "",
+          "",
+          "1,020,786",
+          "",
+          "",
+          "",
+          "2,625,000",
+          ""
+        ],
+        [
+          "Net cash inflow/(outflow) for the period",
+          "",
+          "",
+          "11,874",
+          "",
+          "",
+          "",
+          "( 974,046",
+          ")"
+        ],
+        [
+          "Effect of exchange rates on cash and cash equivalents",
+          "",
+          "",
+          "( 16,704",
+          ")",
+          "",
+          "",
+          "260",
+          ""
+        ],
+        [
+          "Net decrease in cash and cash equivalents",
+          "",
+          "",
+          "( 4,830",
+          ")",
+          "",
+          "",
+          "( 973,786",
+          ")"
+        ],
+        [
+          "Cash and cash equivalents, beginning of year",
+          "",
+          "",
+          "83,837",
+          "",
+          "",
+          "",
+          "1,118,929",
+          ""
+        ],
+        [
+          "Cash and cash equivalents, end of the period",
+          "",
+          "$",
+          "79,007",
+          "",
+          "",
+          "$",
+          "145,143",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    }
+  ],
+  "analysis_state": "parsed",
+  "parser_version": 1,
+  "filings": [
+    {
+      "accession": "0001493152-26-049133",
+      "cik": 1864055,
+      "name": "Abits Group Inc",
+      "form": "F-1",
+      "filed": "2026-10-29",
+      "accepted": "2026-10-29T00:53:54+00:00",
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1864055/000149315226049133/0001493152-26-049133-index.html",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1864055/000149315226049133/formf-1.htm",
+      "file_number": "333-299685",
+      "discovered_at": "2026-10-29T10:33:56+00:00",
+      "state": "parsed",
+      "last_attempt": "2026-10-29T10:34:12+00:00",
+      "last_success": "2026-10-29T10:34:13+00:00",
+      "error": null,
+      "classification": "resale_language_identified"
+    },
+    {
+      "accession": "0001493152-26-007823",
+      "cik": 1864055,
+      "name": "Abits Group Inc",
+      "form": "424B5",
+      "filed": "2026-02-24",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1864055/000149315226007823/0001493152-26-007823-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-003826",
+      "cik": 1864055,
+      "name": "Abits Group Inc",
+      "form": "EFFECT",
+      "filed": "2025-12-18",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/1864055/999999999525003826/9999999995-25-003826-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    }
+  ],
+  "latest_discovered": {
+    "accession": "0001493152-26-049133",
+    "cik": 1864055,
+    "name": "Abits Group Inc",
+    "form": "F-1",
+    "filed": "2026-10-29",
+    "accepted": "2026-10-29T00:53:54+00:00",
+    "index_url": "https://www.sec.gov/Archives/edgar/data/1864055/000149315226049133/0001493152-26-049133-index.html",
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1864055/000149315226049133/formf-1.htm",
+    "file_number": "333-299685",
+    "discovered_at": "2026-10-29T10:33:56+00:00",
+    "state": "parsed",
+    "last_attempt": "2026-10-29T10:34:12+00:00",
+    "last_success": "2026-10-29T10:34:13+00:00",
+    "error": null,
+    "classification": "resale_language_identified"
+  },
+  "generated_at": "2026-10-29T10:34:50+00:00"
+}
