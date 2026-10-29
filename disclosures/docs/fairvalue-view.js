@@ -37,6 +37,7 @@
 .fv-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:8px 0 6px}
 .fv-card{border:1px solid var(--line,#ddd);border-radius:10px;padding:10px 12px}.fv-card b{display:block;font-size:20px;font-variant-numeric:tabular-nums;margin-top:2px}
 .fv-card span{font-size:12px;color:var(--muted,#777)}.fv-card i{display:block;font-style:normal;font-size:12px;margin-top:2px;color:var(--muted,#777)}
+.fv-epv{display:grid;grid-template-columns:130px 1fr 90px;align-items:center;gap:8px;font-size:13px;margin:4px 0}.fv-epv i{display:block;height:12px;border-radius:3px}.fv-epv b{font-variant-numeric:tabular-nums;text-align:right}
 .fv-good{color:${C.good}}.fv-bad{color:${C.bad}}.fv-warn{color:${C.warn}}
 /* the view's own charts only: Plotly's layers (the 3D charts) keep their own sizes, or a wide page shrinks its hover layer and the labels drift off */.fv svg:not(.js-plotly-plot svg){display:block;width:100%;max-width:860px;height:auto;overflow:visible}.fv svg:not(.js-plotly-plot svg) text{font-size:11px;fill:var(--muted,#777)}
 .fv svg .fv-lbl{fill:var(--ink,#222);font-size:12px}.fv .fv-grid{stroke:var(--line,#e3e3e3)}
@@ -275,6 +276,19 @@
       <div>${keys.map((k, i) => `<button type="button" class="fv-tog${i ? '' : ' on'}" data-fvr="${k}">${esc(rv.metrics[k].label)}</button>`).join('')}</div><div class="fv-wrap" data-fvriver>${riverChart(rv, keys[0])}</div>${m0 ? '' : ''}`;
   }
 
+  // the return a buyer at today's price earns if each model is right (app/valuation_extra.py implied_return)
+  function impliedHtml(ir) {
+    if (!ir || !(ir.rows || []).length) return '';
+    return `<h3>The return today's price implies</h3><p class="fv-sub">${esc(ir.note || '')}</p><table class="fv-tbl"><thead><tr><th>Model</th><th class="n">Implied return a year</th><th>How</th></tr></thead><tbody>${ir.rows.map((r) => `<tr><td>${esc(r.method)}</td><td class="n">${pct(r.r, 1)}</td><td>${esc(r.how)} <span class="fv-tag">vs ${esc(r.vs)}</span></td></tr>`).join('')}<tr><td><b>Median</b></td><td class="n"><b>${pct(ir.median, 1)}</b></td><td>cost of equity ${pct(ir.ke, 1)} · WACC ${pct(ir.wacc, 1)}${fin(ir.spread) ? ` · <b class="${ir.spread > 0 ? 'fv-good' : 'fv-bad'}">${ir.spread >= 0 ? '+' : '−'}${pct(Math.abs(ir.spread), 1)}</b> ${ir.spread >= 0 ? 'above' : 'below'} the cost of equity` : ''}</td></tr></tbody></table>`;
+  }
+  // Greenwald's split: the business as it is (EPV) against the price and the assets (tangible book)
+  function epvHtml(e, price) {
+    if (!e || !fin(e.epv_ps) || !fin(price) || price <= 0) return '';
+    const hi = Math.max(price, e.epv_ps, fin(e.tangible_book_ps) ? e.tangible_book_ps : 0) * 1.08, w = (v) => `${Math.max(0, Math.min(100, v / hi * 100)).toFixed(1)}%`;
+    const row = (label, v, col) => `<div class="fv-epv"><span>${esc(label)}</span><i style="width:${w(v)};background:${col}"></i><b>${usd(v)}</b></div>`;
+    return `<h3>Earnings power: the business as it is vs growth</h3><p class="fv-sub">Earnings power value (EPV) values today's business as if it never grew (normalized margin ${pct(e.margin_used, 1)}). ${fin(e.growth_share) ? (e.growth_share > 0 ? `The other <b>${pct(e.growth_share, 0)}</b> of the price is paid for growth.` : 'The price is below EPV: it pays nothing for growth and prices in a decline.') : ''} ${e.franchise === true ? 'EPV is above tangible book: the business earns more than its assets would cost to rebuild — a sign of a moat.' : e.franchise === false ? 'EPV is below tangible book: the assets earn less than their cost.' : ''}</p>
+      ${row('Price', price, C.mute)}${row('EPV (no growth)', e.epv_ps, C.acc)}${fin(e.tangible_book_ps) && e.tangible_book_ps > 0 ? row('Tangible book', e.tangible_book_ps, C.warn) : ''}`;
+  }
   function combinedHtml(cb) {
     if (!cb) return '';
     const w = cb.weights || {};
@@ -367,9 +381,10 @@
       ${card('DCF base case', usd(dc && dc.value), dc ? tone(dc.value / price - 1) : '', dc && fin(price) ? spct(dc.value / price - 1) + ' vs price' : 'no DCF for this company')}
       ${card('Monte Carlo: value > price', mc ? pct(mc.p_above, 0) : '—', '', mc ? `${num(mc.n)} scenarios` : '')}
       ${card('Price paid for growth', pv ? pct(pv.growth_share, 0) : '—', '', pv ? 'PVGO share of market value' : '')}
-      ${card('Distress (1 year, model blend)', dist ? pct(dist.pd, dist.pd < 0.01 ? 2 : 1) : '—', dist ? (dist.pd > 0.05 ? 'fv-bad' : dist.pd > 0.01 ? 'fv-warn' : 'fv-good') : '', cr.rating_band ? `spread-implied ${esc(cr.rating_band)}` : '')}</div>`;
+      ${card('Distress (1 year, model blend)', dist ? pct(dist.pd, dist.pd < 0.01 ? 2 : 1) : '—', dist ? (dist.pd > 0.05 ? 'fv-bad' : dist.pd > 0.01 ? 'fv-warn' : 'fv-good') : '', cr.rating_band ? `spread-implied ${esc(cr.rating_band)}` : '')}
+      ${d.implied_return ? card('Return the price implies', pct(d.implied_return.median, 1), fin(d.implied_return.spread) ? (d.implied_return.spread > 0.01 ? 'fv-good' : d.implied_return.spread < -0.01 ? 'fv-bad' : '') : '', fin(d.implied_return.ke) ? `a year, vs ${pct(d.implied_return.ke, 1)} cost of equity` : 'a year') : ''}</div>`;
     h += `<h3>Valuation football field</h3><p class="fv-sub">Each bar is one method's range, the black tick its central value, the dashed line today's price. Green: the whole range above the price; red: below.</p><div class="fv-wrap">${football(d.football || [], price)}</div>`;
-    h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Method</th><th class="n">Low</th><th class="n">Central</th><th class="n">High</th><th>How</th></tr></thead><tbody>${(d.football || []).map((r) => `<tr><td>${esc(r.method)}</td><td class="n">${usd(r.low)}</td><td class="n">${usd(r.point)}</td><td class="n">${usd(r.high)}</td><td>${esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>`;
+    h += `<div class="fv-wrap"><table class="fv-tbl"><thead><tr><th>Method</th><th class="n">Low</th><th class="n">Central</th><th class="n">High</th><th>How</th></tr></thead><tbody>${(d.football || []).map((r) => `<tr><td>${esc(r.method)}${r.lens ? '<span class="fv-tag" title="Shown with its algebra in the appendix; not part of the stage-weighted value or the headline range until the ledger has scored it">lens</span>' : ''}</td><td class="n">${usd(r.low)}</td><td class="n">${usd(r.point)}</td><td class="n">${usd(r.high)}</td><td>${esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>`;
     h += tilesHtml(d) + combinedHtml(d.combined);
     if (d.reverse && d.reverse.status === 'ok') h += `<p><b>Reverse DCF:</b> today's price needs revenue growth of <b>${pct(d.reverse.implied_growth)}</b> a year for five years (then ${pct((dc && dc.assumptions.g) || 0.025)}), with the margins and cost of capital below. The last four quarters grew ${pct(d.reverse.history_growth)} on the four before.</p>`;
     else if (d.reverse) h += `<p class="fv-sub">Reverse DCF: no single growth rate between −30% and 60% gives today's price with these assumptions.</p>`;
@@ -379,6 +394,7 @@
         <div class="fv-stack" role="img" aria-label="No-growth value vs growth share"><i style="width:${(ng * 100).toFixed(1)}%;background:${C.acc}"></i><i style="width:${((1 - ng) * 100).toFixed(1)}%;background:${C.warn}"></i></div>
         <div class="fv-legend"><span style="--k:${C.acc}">no-growth value ${pct(ng, 0)}</span><span style="--k:${C.warn}">growth ${pct(1 - ng, 0)}</span></div>`;
     }
+    h += impliedHtml(d.implied_return) + epvHtml(d.epv, price);
     h += oddsHtml(d.consensus_odds) + insideOutsideHtml(d.outside_view) + stageHtml(d.stage) + sensHtml(d.sensitivity, price);
     if (mc) h += `<h3>Monte Carlo DCF</h3><p class="fv-sub">${num(mc.n)} scenarios: revenue growth ~ N(${pct(mc.assumptions.growth[0])}, ${pct(mc.assumptions.growth[1])}), EBIT margin ~ N(${pct(mc.assumptions.margin[0])}, ${pct(mc.assumptions.margin[1])}), WACC ~ N(${pct(mc.assumptions.wacc[0])}, 1 pt), terminal growth 1.5–3%. The spreads come from the company's own history. Median ${esc(usd(mc.p50))}, middle 80% ${esc(usd(mc.p10))}–${esc(usd(mc.p90))}; <b>${pct(mc.p_above, 0)}</b> of scenarios are worth more than the price.</p><div class="fv-wrap">${histogram(mc, price, dc && dc.value)}</div>`;
     if (d.markov) h += '<div data-fvmk><p class="fv-sub">Loading the regime-switching model…</p></div>';

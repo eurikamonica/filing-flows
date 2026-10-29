@@ -800,6 +800,73 @@
    "abbr": [
     "EDGAR"
    ]
+  },
+  {
+   "term": "EPV",
+   "full": "Earnings power value",
+   "plain": "Greenwald's value of a business that never grows: normalized after-tax operating profit (plus depreciation, less upkeep capital spending) divided by the cost of capital.",
+   "abbr": [
+    "EPV"
+   ]
+  },
+  {
+   "term": "NCAV",
+   "full": "Net current asset value",
+   "plain": "Current assets minus all liabilities: what is left for shareholders from working capital alone. A 'net-net' trades below two-thirds of it.",
+   "abbr": [
+    "NCAV"
+   ]
+  },
+  {
+   "term": "PEG",
+   "full": "Price/earnings-to-growth ratio",
+   "plain": "P/E divided by the expected growth rate in percent; PEGY adds the dividend yield to the growth. About 1 is \"fair\" by Peter Lynch's rule.",
+   "abbr": [
+    "PEG",
+    "PEGY"
+   ]
+  },
+  {
+   "term": "FCFE",
+   "full": "Free cash flow to equity",
+   "plain": "The cash left for shareholders after the business has reinvested and after net borrowing: what could be paid out as dividends and buybacks.",
+   "abbr": [
+    "FCFE"
+   ]
+  },
+  {
+   "term": "Implied return",
+   "full": "Implied cost of capital",
+   "plain": "The yearly return a buyer at today's price earns if a model's forecast comes true — the discount rate that makes the model's value equal the price. Compare it with the cost of equity: above it, the price leaves room.",
+   "abbr": [
+    "ICC"
+   ]
+  },
+  {
+   "term": "Black-Scholes",
+   "full": "Black-Scholes option pricing formula",
+   "plain": "The 1973 formula for the value of an option from the underlying value, the strike, the time left, the risk-free rate and the volatility. A real option applies it to a business decision instead of a traded stock."
+  },
+  {
+   "term": "AAA yield",
+   "full": "Moody's Aaa corporate bond yield",
+   "plain": "What the safest US corporate bonds pay; the Graham formula scales values by it (FRED series DAAA).",
+   "abbr": [
+    "AAA"
+   ]
+  },
+  {
+   "term": "Real option",
+   "full": "Real option",
+   "plain": "The right, but not the obligation, to make a business decision later — expand, delay, abandon — valued like a financial option."
+  },
+  {
+   "term": "PP&E",
+   "full": "Property, plant and equipment",
+   "plain": "Buildings, machines, land and other physical assets, at cost less depreciation (the balance sheet line).",
+   "abbr": [
+    "PP&E"
+   ]
   }
  ],
  "methods": {
@@ -1017,6 +1084,69 @@
    "why": "A reminder of how much the price alone has moved, against which the methods' spread can be judged.",
    "fits": "Every listed company.",
    "watch": "Not a valuation: a range of past prices."
+  },
+  "Graham number": {
+   "family": "Classic value (Graham)",
+   "what": "Benjamin Graham's ceiling for a defensive investor: the square root of 22.5 × earnings per share × book value per share. 22.5 is 15 × 1.5 — Graham would pay at most 15 times earnings and 1.5 times book, and the product lets a lower P/E make room for a higher P/B.",
+   "why": "It asks for two things at once — real earnings and real assets — and refuses to pay much for either. A price far above it is a bet on growth or on assets the books do not show.",
+   "fits": "Profitable companies with positive book value, above all steady, asset-heavy ones.",
+   "watch": "It ignores growth and intangible assets entirely, so almost every fast-growing or asset-light company looks expensive by it; buybacks that shrink book value make it fall."
+  },
+  "Graham formula (revised)": {
+   "family": "Classic value (Graham)",
+   "what": "Graham's formula from The Intelligent Investor, revised in 1974: value = EPS × (8.5 + 2g) × 4.4 ÷ Y. 8.5 is the P/E he gave a company that does not grow, g the expected yearly growth in percent, 4.4 the AAA corporate bond yield of 1962 and Y the AAA yield today — so higher interest rates lower the value.",
+   "why": "It is the simplest growth-and-rates valuation there is: it prices growth linearly and scales everything by what safe corporate bonds pay instead.",
+   "fits": "Profitable companies with a believable growth estimate.",
+   "watch": "Growth enters linearly, so it overvalues fast growers — growth is capped at 15% here. Graham himself warned it is a rough guide, not a precise value."
+  },
+  "Net current asset value (net-net)": {
+   "family": "Asset value (Graham)",
+   "what": "Current assets (cash, receivables, inventory) minus every liability, long-term debt included, divided by the shares: what shareholders would keep if the factories, brands and the business itself were worth nothing. Graham bought 'net-nets' below two-thirds of this figure.",
+   "why": "It is the hardest floor there is: a company trading below it is priced as if it were worth less dead than its working capital alone.",
+   "fits": "Industrial companies with a working-capital-heavy balance sheet; rare among large companies today.",
+   "watch": "Inventory and receivables may not fetch book value in a liquidation, and a company losing money burns the working capital that makes the floor. Negative for most companies financed with long-term debt — that is normal, not a warning."
+  },
+  "Lynch fair P/E (PEGY)": {
+   "family": "Multiples (rule of thumb)",
+   "what": "Peter Lynch's rule: a fairly priced company's P/E equals its growth rate (in percent) — the PEG ratio of 1 — and a dividend counts like growth (PEGY = P/E ÷ (growth + yield)). Value here = EPS × (growth + dividend yield, in percent), with the fair P/E kept between 5 and 40.",
+   "why": "It ties the multiple to what the earnings will do, which a plain P/E comparison does not.",
+   "fits": "Profitable companies with a growth estimate, from slow growers paying dividends to fast growers.",
+   "watch": "A rule of thumb with no cash flows behind it: it ignores the cost of capital, how long growth lasts and how much reinvestment it needs. Analysts' growth looks one or two years ahead; Lynch meant several."
+  },
+  "Earnings power value (EPV)": {
+   "family": "Cash flow (intrinsic)",
+   "what": "Bruce Greenwald's earnings power value: the value of the business as it is today if it never grew. Operating profit at its average margin over the cycle × today's revenue, after tax, plus depreciation less the capital spending needed only to stand still, divided by the cost of capital, less net debt.",
+   "why": "It strips out every forecast of growth, so the gap between the price and EPV is exactly what the market pays for growth. EPV above the cost of rebuilding the assets (tangible book) points to a competitive advantage.",
+   "fits": "Companies with an operating profit over the cycle, above all mature and cyclical ones.",
+   "watch": "Splitting capital spending into upkeep and growth is an estimate (here from PP&E ÷ revenue × last year's revenue gain). A margin average over a few years may not be a full cycle."
+  },
+  "FCFE DCF (cash to shareholders)": {
+   "family": "Cash flow (intrinsic)",
+   "what": "A discounted cash flow from the shareholders' side: free cash flow to equity = net income − the part of reinvestment (capex − depreciation + working capital) that shareholders fund, the rest being borrowed at a steady debt ratio — discounted at the cost of equity, with a terminal value of earnings less the reinvestment growth needs.",
+   "why": "It values the cash that can actually be paid out to owners and complements the enterprise DCF, which discounts cash to all funders at the WACC.",
+   "fits": "Profitable companies with positive equity and a stable debt ratio.",
+   "watch": "Sensitive to the cost of equity and to leverage: a company that borrows more shows more cash to equity today and more risk tomorrow."
+  },
+  "H-model dividend discount": {
+   "family": "Dividends",
+   "what": "A dividend discount model in which dividend growth falls in a straight line from today's rate to the long-run rate over 2H years (here 10): value = D₀ × [(1 + g_L) + H × (g_S − g_L)] ÷ (kₑ − g_L). Fuller and Hsia (1984).",
+   "why": "Dividends do not grow fast forever, nor drop to the economy's pace overnight; the H-model spreads the slowdown over a decade with one closed formula.",
+   "fits": "Companies that pay a dividend which can keep growing for a while.",
+   "watch": "Only dividends count, so a company paying out little and buying back shares looks cheap by nothing; short-term growth is capped at 10%."
+  },
+  "Real option to expand": {
+   "family": "Options (intrinsic)",
+   "what": "Values the chance to grow into a bigger business like a call option (Black-Scholes): the underlying is today's value of the expansion — the revenue it adds by year five at a mature margin — the strike is the capital it takes to build it, the volatility is the stock's own. Value = the business in place + the option − net debt.",
+   "why": "For a loss-making or fast-growing company a plain DCF of the expected path misses that management can stop if things go badly and push on if they go well; uncertainty makes such a choice more valuable, not less.",
+   "fits": "Loss-making or fast-growing (15%+) companies.",
+   "watch": "Black-Scholes assumes a traded underlying and a fixed strike; the stock's volatility stands in for the project's. Read it as a sense of how much flexibility could be worth, not as a precise value."
+  },
+  "EV/Sales fair multiple (multi-factor fit)": {
+   "family": "Multiples (statistical)",
+   "what": "A regression across every covered non-financial company of ln(EV/Sales) on revenue growth, the log of the operating margin (EV/Sales = EV/EBIT × margin), a loss flag, size and sector: the multiple the market pays, today, for a company with this one's growth, margin, size and sector.",
+   "why": "Unlike a plain peer median it adjusts for how this company differs from its peers, and unlike a DCF it uses the market's own pricing.",
+   "fits": "Non-financial companies with revenue of $50 million or more.",
+   "watch": "It inherits the market's mood: if every company is dear, the fit is dear too. The range (± one residual standard error) is wide — companies with the same figures trade at very different multiples."
   }
  },
  "aliases": {

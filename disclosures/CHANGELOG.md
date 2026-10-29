@@ -1,5 +1,27 @@
 # Changelog
 
+## Fair value: nine more lenses, the return the price implies, the market as a whole
+
+`app/valuation_extra.py` (called by `valuation.analyse` for every company): the Graham number, the Graham formula
+(revised, with Moody's Aaa yield from FRED DAAA), net current asset value (net-net), Lynch's fair P/E (PEGY), Greenwald's
+earnings power value (normalized margin, maintenance capex from PP&E), an FCFE DCF, the H-model dividend discount, a
+real option to expand (Black-Scholes; loss-making or fast-growing companies) and a multi-factor EV/Sales fit (growth,
+log margin, loss flag, size, sector; ridge). Each is a football row tagged "lens" with its algebra in the appendix and
+an entry in docs/valuation-guide.json; lenses stay out of the stage-weighted value and the headline range until the
+ledger has scored them. `implied_return`: the yearly return today's price implies — the DCF discount rate at the price,
+owner-earnings yield + growth, Easton's MPEG from analysts' EPS, residual income at the price — and its median against
+the cost of equity. `epv`: the price split between the business as it is and growth, against tangible book.
+`market.json`: the Buffett indicator (Fed Z.1 nonfinancial corporate equities ÷ GDP since 1947, FRED), the covered
+companies' earnings yield against the nominal and real 10-year yields, and the market-value-weighted implied return less
+the 10-year yield. The screener gains implied return, EPV and Graham gaps and four filters (implied return above the cost
+of equity, price below EPV, below the Graham number, net-nets); a new view shows the market as a whole.
+
+Inputs: new frames (Assets, AssetsCurrent, Liabilities, LiabilitiesCurrent, PropertyPlantAndEquipmentNet,
+PaymentsOfDividendsCommonStock). Fixed with it: net income now comes from the main site's pretax income − tax when four
+quarters of frames are not all tagged, before the debt module (whose figure was a single quarter for some, e.g.
+Medtronic's $0.43B against $5.3B over four quarters), and EPS falls back to net income ÷ diluted shares — P/E vs peers
+and residual income now cover most companies instead of about one in six. Tests: `tests/test_valuation_extra.py`.
+
 ## ETF tags: passive or active, leverage multiple, high dividend, alternatives and more
 
 `app/etf_tags.py` (run by `etf.build`): every ETF gets tags, in `index.json` (`tags`, `lev`, `under`; `tag_names`,
