@@ -215,7 +215,12 @@
           <button type="button" data-view="y" ${ctx.custom ? 'hidden' : ''} ${has(spec.compare_y) ? '' : `disabled title="No ${yearly ? 'earlier year' : 'year-ago quarter'} on file"`}>vs ${has(spec.compare_y) ? t(spec.compare_y.vs) : 'year ago'}</button>
         </div>
         <label class="dec-toggle" hidden title="Hatched areas with a dashed outline show what each line lost"><input type="checkbox" data-dec ${state.decreases ? 'checked' : ''}> Show decreases</label>
-        ${ctx.guide ? `<button class="btn small guide-btn" type="button" data-guide aria-pressed="false" title="Draw the next period as the company guided it in its latest earnings release: guided lines in violet with their range, the rest at today's shares">◇ Show guidance</button>` : ''}
+        ${ctx.guide ? `<button class="btn small guide-btn" type="button" data-guide aria-pressed="false" title="Draw the next period as the company guided it in its latest earnings release: guided lines in violet with their range, the rest at today's shares">◇ Show guidance</button>
+        <div class="seg gseg" role="group" aria-label="Compare the guided period" hidden>
+          <button type="button" data-gcmp="">As guided</button>
+          <button type="button" data-gcmp="cur">vs current</button>
+          <button type="button" data-gcmp="yago">vs year ago</button>
+        </div>` : ''}
         <div class="seg" role="group" aria-label="Zoom">
           <button type="button" data-zoom="fit">Fit</button>
           <button type="button" data-zoom="full">100%</button>
@@ -239,7 +244,7 @@
     const sheet = $('.sheet', el), notes = $('.notes', el);
     const baseById = new Map(spec.nodes.map((n) => [n.id, n]));
     // "Show guidance" (web/guidance.js): the next period as guided; its own spec, nodes and notes while it is on
-    const guide = { on: false, doc: undefined, spec: null, byId: null };
+    const guide = { on: false, doc: undefined, spec: null, byId: null, cmp: '' };
     const futureOn = () => guide.on && guide.spec && !guide.spec.error;
     const byId = { get: (id) => (futureOn() ? guide.byId : baseById).get(id), has: (id) => (futureOn() ? guide.byId : baseById).has(id) };
     let scene = null, selected = null;
@@ -321,6 +326,21 @@
       $('.dec-toggle', el).hidden = !mode() || futureOn();
       const gb = $('[data-guide]', el);
       if (gb) { gb.classList.toggle('on', guide.on); gb.setAttribute('aria-pressed', guide.on ? 'true' : 'false'); }
+      const gs = $('.gseg', el);
+      if (gs) {
+        gs.hidden = !futureOn();
+        if (futureOn()) {
+          const gc = guide.spec.gcmp || {};
+          $$('[data-gcmp]', gs).forEach((b) => {
+            const k = b.dataset.gcmp;
+            if (k) {
+              b.hidden = !gc[k];
+              if (gc[k]) b.textContent = `vs ${gc[k].vs}${k === 'yago' ? ' (year ago)' : ' (current)'}`;
+            }
+            b.classList.toggle('on', k === (guide.cmp || ''));
+          });
+        }
+      }
       sheet.classList.toggle('future', futureOn());
       $$('[data-zoom]', el).forEach((b) => b.classList.toggle('on', b.dataset.zoom === state.zoom));
       sheet.classList.toggle('fit', state.zoom === 'fit');
@@ -345,7 +365,9 @@
     function nodeNotes(n) {
       if (futureOn() && window.FFGuidance) {
         return `<div class="eyebrow">${t(ctx.company)} · ${t(guide.spec.period)} as guided</div>
-          <div class="k">${t(n.name)}</div><div class="v">${(n.lines || []).slice(1).map((l) => `<div>${t(l[1])}</div>`).join('')}</div>
+          <div class="k">${t(n.name)}</div><div class="v">${(n.lines || []).slice(1).map((l) => `<div>${t(l[1])}</div>`).join('')}${
+            ['cur', 'yago'].map((k) => guide.spec.gcmp && guide.spec.gcmp[k] && guide.spec.gcmp[k].nodes[n.id]).filter(Boolean)
+              .map((c) => `<div class="gchg ${c.line[0]}">${t(c.line[1])}</div>`).join('')}</div>
           ${window.FFGuidance.noteHTML(n, guide.doc, t)}
           <button class="btn" type="button" data-clear>Close note</button>`;
       }
@@ -411,8 +433,9 @@
     async function draw() {
       await fontsReady();
       if (futureOn()) {
-        scene = S.layout(guide.spec, {});
-        sheet.innerHTML = S.toSVG(scene, S.dec(guide.spec.title));
+        const gc = guide.cmp && guide.spec.gcmp && guide.spec.gcmp[guide.cmp];
+        scene = S.layout(guide.spec, { gcompare: gc ? guide.cmp : null });
+        sheet.innerHTML = S.toSVG(scene, S.dec(gc ? gc.title : guide.spec.title));
       } else {
         scene = S.layout(spec, { compare: mode(), decreases: state.decreases });
         sheet.innerHTML = S.toSVG(scene, S.dec(mode() ? cmpOf(mode()).title : spec.title));
@@ -460,6 +483,7 @@
       }
       draw();
     });
+    $$('[data-gcmp]', el).forEach((b) => b.addEventListener('click', () => { guide.cmp = b.dataset.gcmp; draw(); }));
     $$('[data-view]', el).forEach((b) => b.addEventListener('click', () => {
       if (guide.on) { guide.on = false; gmsg.hidden = true; selected = null; }
       const v = b.dataset.view === 'std' ? null : b.dataset.view;
@@ -493,7 +517,7 @@
       b.disabled = true;
       try {
         const blob = await S.exportScene(scene, fmt);
-        const name = `${ctx.slug}${futureOn() ? '-guidance' : ctx.custom ? (mode() ? `-vs-${ctx.vsSlug}` : '') : mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? (yearly ? '-vs-prior-year' : '-vs-year-ago') : ''}-sankey.${fmt}`;
+        const name = `${ctx.slug}${futureOn() ? `-guidance${guide.cmp ? '-vs-' + (guide.cmp === 'yago' ? 'year-ago' : 'current') : ''}` : ctx.custom ? (mode() ? `-vs-${ctx.vsSlug}` : '') : mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? (yearly ? '-vs-prior-year' : '-vs-year-ago') : ''}-sankey.${fmt}`;
         if (share) {                                               // Android share sheet (X, messages, mail …)
           nativeApp.shareFile(name, 'image/png', await blobBase64(blob));
           return;

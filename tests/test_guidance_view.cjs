@@ -88,6 +88,25 @@ assert.ok(f.title.includes('Q3 FY2027'), f.title);
 assert.ok(FG.noteHTML(N.get('revenue'), g).includes('Revenue is expected to be $110 billion.'));
 assert.ok(FG.noteHTML(N.get('I:rd'), g).includes('Not guided'));
 
+// compared with the quarter just reported and with the same quarter a year earlier
+const ago = JSON.parse(JSON.stringify(base));
+ago.label = 'Q3 FY26'; ago.end = '2025-10-26';
+ago.nodes.forEach((n) => { n.v = n.v / 2; });
+ago.links.forEach((l) => { l.v = l.v / 2; });
+ago.nodes.find((n) => n.id === 'opex').v = 30;                    // a line that was bigger a year ago
+const co3 = { periods: { q: [{ end: '2026-07-26', q: 2, fy: 2027 }, { end: '2025-10-26', q: 3, fy: 2026 }] }, quarters: [base, ago] };
+const fc = FG.future(base, g, { company: co3, name: 'Example' });
+assert.strictEqual(fc.gcmp.cur.vs, 'Q2 FY27');
+assert.strictEqual(fc.gcmp.yago.vs, 'Q3 FY26');
+assert.ok(fc.gcmp.cur.title.includes('as guided vs Q2 FY27'), fc.gcmp.cur.title);
+assert.deepStrictEqual(fc.gcmp.cur.nodes.revenue.line, ['cup', '● +10% vs Q2 FY27 ($100K)'.replace('$100K', FG.money(100))]);
+assert.strictEqual(fc.gcmp.yago.nodes.revenue.line[0], 'cup');
+assert.strictEqual(fc.gcmp.yago.nodes.opex.line[0], 'cdn', 'opex 22 vs 30 a year ago: lower, in orange');
+near(fc.gcmp.yago.nodes.revenue.pv, 50, 'the year-ago size drawn as the dotted outline');
+near(fc.gcmp.cur.links['revenue|gp'], 70, 'band sizes of the reported quarter');
+assert.ok(fc.gcmp.cur.bullets[0].startsWith('Revenue') && fc.gcmp.cur.bullets.some((b) => b.startsWith('Gross margin 75.0% vs 70.0%: +5.0 pts')), fc.gcmp.cur.bullets.join(' / '));
+assert.ok(!FG.future(base, g, { company }).gcmp.yago, 'no year-ago quarter on file: only vs current');
+
 // words for every change kind
 assert.deepStrictEqual(FG.words({ change: 'raised', range: 'narrowed' }), ['▲ raised', '→← narrowed']);
 assert.deepStrictEqual(FG.words({ change: 'lowered', range: 'widened' }), ['▼ lowered', '←→ widened']);

@@ -291,10 +291,6 @@
         lines.push([it.change === 'lowered' || it.change === 'withdrawn' ? 'gdn' : it.change === 'raised' ? 'gup' : 'gnt',
           enc(`guided ${it.unit !== 'usd' ? `${NAMES[it.metric] ? NAMES[it.metric].toLowerCase() + ' ' : ''}` : ''}${shown}${w.length ? ' · ' + w.join(' · ') : ''}`)]);
         if (it.prior) lines.push(['gas', enc(priorText(it))]);
-        if (n.v > 0 && !implied) {
-          const d = (v / n.v - 1) * 100;
-          lines.push(['gas', enc(`${d >= 0 ? '+' : '−'}${Math.abs(d).toFixed(Math.abs(d) < 10 ? 1 : 0)}% vs ${dec(base.label)} reported`)]);
-        }
         note = { guided: true, item: it };
       } else {
         lines.push(['gas', enc(n.col < (P.byId.get('revenue') || {}).col ? `assumed: same mix as ${dec(base.label)}` : (baseShare(n, P) ? `assumed: ${baseShare(n, P)} in ${dec(base.label)}` : P.ins.get(n.id).length ? 'the sum of the lines into it' : `assumed: as in ${dec(base.label)}`))]);
@@ -329,6 +325,10 @@
     if (implied) footer.splice(1, 0, `${tg.label}: the full-year guidance minus the three reported quarters of FY${tg.fy}.`);
     P.notes.forEach((x) => footer.push(x));
     const words0 = (g.tags || []).filter((x) => x !== 'updated' && x !== 'mixed').map((x) => WORD[x]).filter(Boolean);
+    // comparisons of the guided period: with the quarter just reported, and with the same quarter a year earlier
+    const yq = yearAgo(tg, base, o.company);
+    const gcmp = { cur: compareWith(nodes, links, base, `${per} as guided vs ${dec(base.label)}`, company) };
+    if (yq) gcmp.yago = compareWith(nodes, links, yq, `${per} as guided vs ${dec(yq.label)} (a year earlier)`, company);
     return {
       future: true, kind: tg.kind, period: tg.label, bg: '#fbfaff',
       title: `${company ? company + ': ' : ''}${per} as guided`,
@@ -336,8 +336,51 @@
       nodes, links, footer, checks: [],
       legend: [['f_rev', 'Guided revenue'], ['f_profit', 'Guided profit'], ['f_cost', 'Guided cost'], ['fa_rev', 'Not guided: assumed (revenue)'],
         ['fa_profit', 'Assumed (profit)'], ['fa_cost', 'Assumed (cost)']],
-      guidance: g, base: base.label,
+      guidance: g, base: base.label, gcmp,
     };
+  }
+
+  // the same quarter a year before the guided one (fiscal quarters as the site labels them)
+  function yearAgo(tg, base, company) {
+    if (!company || tg.kind === 'fy') return null;
+    const per = (company.periods && company.periods.q) || [];
+    const cur = per.find((x) => x.end === base.end);
+    if (!cur) return null;
+    const nq = cur.q === 4 ? 1 : cur.q + 1, nfy = cur.q === 4 ? cur.fy + 1 : cur.fy;
+    const ago = per.find((x) => x.q === nq && x.fy === nfy - 1);
+    return ago ? (company.quarters || []).find((q) => q.end === ago.end) || null : null;
+  }
+
+  // the guided chart against a reported period: per node the change (a coloured ● line) and the reported size (drawn as a
+  // dotted outline by web/sankey.js), per band the reported thickness, and the main changes in words
+  function compareWith(nodes, links, other, title, company) {
+    const nv = new Map(other.nodes.map((n) => [n.id, +n.v]));
+    const lv = new Map(other.links.map((l) => [`${l.s}|${l.t}`, +l.v]));
+    const label = dec(other.label);
+    const out = { vs: label, title: (company ? company + ': ' : '') + title, nodes: {}, links: {}, bullets: [] };
+    nodes.forEach((n) => {
+      const pv = nv.get(n.id);
+      if (!(pv > 0)) return;
+      const d = (n.v / pv - 1) * 100;
+      const st = Math.abs(d) < 0.5 ? 'cnt' : d > 0 ? 'cup' : 'cdn';
+      const pct = `${d > 0 ? '+' : d < 0 ? '−' : '±'}${Math.abs(d).toFixed(Math.abs(d) < 10 ? 1 : 0)}%`;
+      out.nodes[n.id] = { pv, d, line: [st, enc(`● ${pct} vs ${label} (${money(pv)})`)] };
+    });
+    links.forEach((l) => {
+      const pv = lv.get(`${l.s}|${l.t}`);
+      if (pv > 0) out.links[`${l.s}|${l.t}`] = pv;
+    });
+    [['revenue', 'Revenue'], ['gp', 'Gross profit'], ['oi', 'Operating profit'], ['net', 'Net earnings']].forEach(([id, name]) => {
+      const c = out.nodes[id], n = nodes.find((x) => x.id === id);
+      if (!c || !n) return;
+      out.bullets.push(`${name} ${money(n.v)}${n.gnote && n.gnote.guided ? ' guided' : ' (assumed)'} vs ${money(c.pv)} in ${label}: ${c.line[1].split(' ')[1]}`);
+    });
+    const gm = nodes.find((x) => x.id === 'gp'), rv = nodes.find((x) => x.id === 'revenue');
+    if (gm && rv && nv.get('gp') && nv.get('revenue')) {
+      const a = gm.v / rv.v * 100, b = nv.get('gp') / nv.get('revenue') * 100;
+      out.bullets.push(`Gross margin ${a.toFixed(1)}% vs ${b.toFixed(1)}%: ${a - b >= 0 ? '+' : '−'}${Math.abs(a - b).toFixed(1)} pts`);
+    }
+    return out;
   }
 
   // the notes panel of a node in the guidance view (HTML)
