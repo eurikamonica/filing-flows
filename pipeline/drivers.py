@@ -67,6 +67,36 @@ def bridge(a, b):
     return {"op": op, "below": below}
 
 
+DILUTED = ("WeightedAverageNumberOfDilutedSharesOutstanding", "WeightedAverageNumberOfShareOutstandingBasicAndDiluted")
+
+
+def diluted(fx, end, annual):
+    """Diluted weighted-average shares for the period ending on `end` (three months, or the year), or None. A count
+    filed in thousands or millions is put back in shares against the cover page (fsa.unit_slip)."""
+    sh = fx.get("__shares__") or {}
+    lo, hi = (350, 380) if annual else (75, 100)
+    cover = sh.get("EntityCommonStockSharesOutstanding") or {}
+    days = [k for k in cover if not isinstance(k, tuple)]
+    out_n = cover[max(days)]["val"] if days else None
+    for concept in DILUTED:
+        for k, f in (sh.get(concept) or {}).items():
+            if isinstance(k, tuple) and abs((F.d(k[1]) - F.d(end)).days) <= 3 and lo <= (F.d(k[1]) - F.d(k[0])).days <= hi and f.get("val"):
+                return f["val"] * W.unit_slip(f["val"], out_n)
+    return None
+
+
+def eps_bridge(row):
+    """Diluted EPS, last year → this year: each bar of the net income bridge divided by last year's shares, and the
+    share count's own effect, net income₁ × (1/shares₁ − 1/shares₀) (buybacks lift EPS, new shares dilute it). The bars
+    add up to the change exactly."""
+    a, b, s0, s1 = row["pri"], row["cur"], row.get("dil0"), row.get("dil1")
+    if not s0 or not s1 or not row.get("below") or "ni" not in a or "ni" not in b:
+        return None
+    bars = [[k, v / s0] for k, v in row["op"]] + [[k, v / s0] for k, v in row["below"][1:]]
+    bars.append(["shares", b["ni"] * (1 / s1 - 1 / s0)])
+    return {"eps0": a["ni"] / s0, "eps1": b["ni"] / s1, "bars": bars}
+
+
 def _prior(ends, end):
     xs = [e for e in ends if 350 <= (F.d(end) - F.d(e)).days <= 380]
     return max(xs) if xs else None
@@ -87,8 +117,14 @@ def compute(fx, ev, qe, ye, fye="1231"):
             if not br:
                 continue
             lab = (lambda x: F.fiscal_year_label(x, fye)[0]) if annual else (lambda x: F.fiscal_label(x, fye)[0])
-            rows.append({"end": e, "prev": p, "label": lab(e), "prev_label": lab(p), "cur": b, "pri": a,
-                         "ev": {"cur": rb, "pri": ra}, **br, "mdna": None})
+            row = {"end": e, "prev": p, "label": lab(e), "prev_label": lab(p), "cur": b, "pri": a,
+                   "ev": {"cur": rb, "pri": ra}, **br, "mdna": None}
+            try:
+                row["dil1"], row["dil0"] = diluted(fx, e, annual), diluted(fx, p, annual)
+                row["eps"] = eps_bridge(row)
+            except Exception:                                    # noqa: BLE001 — the EPS bars are extra, never fatal
+                row["eps"] = None
+            rows.append(row)
         if rows:
             out[kind] = rows
     return out or None

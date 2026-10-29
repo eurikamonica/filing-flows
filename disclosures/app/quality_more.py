@@ -314,7 +314,8 @@ def qmj_inputs(recs, beta=None, ivol=None, z=None):
         out['roe'] = _div(cur.get('ni'), e)
     if rev and rev > 0:
         out['gmar'] = _div(cur.get('gp'), rev)
-    k = min(len(recs) - 1, 5)                          # growth over the longest span on file, up to five years
+    # growth over the longest span on file (up to five years) whose first year has its assets and gross profit tagged
+    k = next((j for j in range(min(len(recs) - 1, 5), 1, -1) if recs[-1 - j].get('assets') and recs[-1 - j].get('gp') is not None), 0)
     if k >= 2:
         old = recs[-1 - k]
         ao, eo, ro = old.get('assets'), old.get('eq'), old.get('rev')

@@ -29,7 +29,8 @@ from . import fsa as W
 from . import history as H
 from . import reform as RF
 
-VERSION = 8               # 8: evidence-backed company quality measures (company_quality.py)
+VERSION = 9               # 9: the EPS bridge (diluted shares) in drivers.py
+                          # 8: evidence-backed company quality measures (company_quality.py)
                           # 2: working capital, the net income → OCF bridge, valuation inputs, evidence (pipeline/fsa.py)
                           # 3: capital allocation, share count and debt maturities (pipeline/capital.py)
                           # 4: every version of the headline figures, "As Known Then" (pipeline/history.py)

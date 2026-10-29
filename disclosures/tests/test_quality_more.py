@@ -106,6 +106,10 @@ class QMJ(unittest.TestCase):
         self.assertAlmostEqual(x['lev'], 0.2)
         self.assertEqual(x['growth_years'], 4)
         self.assertAlmostEqual(x['npop'], 0.5)                       # (20 + 30) / 100 a year
+        recs = [{'end': '2020-12-31', 'rev': 900 * M, 'ni': 50 * M}] + recs                    # an early year without a balance sheet
+        x = QM.qmj_inputs(recs, 1.1, 0.25, 3.2)
+        self.assertEqual(x['growth_years'], 4)
+        self.assertIsNotNone(x['d_gpoa'])
 
 
 class Other(unittest.TestCase):

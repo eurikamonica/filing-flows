@@ -836,7 +836,7 @@
   }
   // four groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
-    ['Earnings', [['', 'Earnings'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
+    ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
     ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-quality'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths']]],
@@ -1698,7 +1698,7 @@
     sga: 'Selling, general and administrative', sm: 'Selling and marketing', ga: 'General and administrative',
     other_op: 'Other operating items', rev_all: 'Revenue change', d_oi: 'Operating income change',
     nonop: 'Non-operating items', tax_rate: 'Tax rate change', tax_base: 'Tax on the change in pretax profit', tax: 'Income tax',
-    after_tax: 'Below the tax line' };
+    after_tax: 'Below the tax line', shares: 'Share count (buybacks lift EPS, new shares dilute it)' };
   const DRV_IN = { revenue: 'Revenue', cor: 'Cost of revenue', gp: 'Gross profit', rd: 'Research and development', sga: 'Selling, general and administrative',
     sm: 'Selling and marketing', ga: 'General and administrative', oi: 'Operating income', pretax: 'Pretax income', tax: 'Income tax', ni: 'Net income' };
 
@@ -1764,6 +1764,20 @@
           <span class="num" role="cell">${evBtn((kind === 'base' ? '' : v > 0 ? '+' : '') + money(v), pay)}</span></div>`;
       }).join('')}</div>`;
     }
+    // EPS: the net income bars over last year's diluted shares, and the share count's own effect (pipeline/drivers.py)
+    function epsRows(p) {
+      const E = p.eps, ps = (v) => `${v < 0 ? '−' : ''}$${Math.abs(v).toFixed(2)}`;
+      const rows = [[`Diluted EPS, ${p.prev_label}`, E.eps0, 'base', null]].concat(E.bars.filter(([, v]) => Math.abs(v) >= 0.005).map(([k, v]) => [label(p, k, v), v, k === 'other_op' || k === 'after_tax' ? 'gap' : 'step', k]), [[`Diluted EPS, ${p.label}`, E.eps1, 'base', null]]);
+      let run = 0;
+      const spans = rows.map(([, v, kind]) => { if (kind === 'base') { run = v; return [0, v]; } const sp = [run, run + v]; run += v; return sp; });
+      const lo = Math.min(0, ...spans.flat()), hi = Math.max(0, ...spans.flat()), w = (hi - lo) || 1, pos = (v) => ((v - lo) / w * 100).toFixed(2);
+      return `<div class="cq-bridge dv-bridge" role="table" aria-label="EPS bridge">${rows.map(([lab, v, kind, k], i) => {
+        const [x, z] = spans[i], left = pos(Math.min(x, z)), width = Math.max(0.4, Math.abs(pos(z) - pos(x))).toFixed(2);
+        return `<div class="cq-row ${kind === 'gap' ? 'gap' : kind === 'base' ? 'base' : ''}" role="row"><span role="rowheader">${t(lab)}</span>
+          <span class="cq-track" role="cell"><i class="cq-bar ${kind === 'base' ? 'base' : kind === 'gap' ? `dv-gap ${v < 0 ? 'minus' : 'plus'}` : `nc ${v < 0 ? 'minus' : 'plus'}`}" style="left:${left}%;width:${width}%"></i>${kind === 'base' ? '' : `<i class="cq-zero" style="left:${pos(0)}%"></i>`}</span>
+          <span class="num" role="cell">${kind === 'base' ? '' : v > 0 ? '+' : ''}${ps(v)}</span></div>`;
+      }).join('')}</div><p class="muted q-small">Diluted shares ${(p.dil0 / 1e6).toLocaleString('en-US', { maximumFractionDigits: 0 })}M → ${(p.dil1 / 1e6).toLocaleString('en-US', { maximumFractionDigits: 0 })}M (${pct((p.dil1 / p.dil0 - 1) * 100)}). Each profit bar is divided by last year's shares; the last bar is what the change in the share count alone did. EPS here is net income ÷ diluted shares and can differ by a cent from the reported figure.</p>`;
+    }
     function sentence(p) {
       const a = p.pri, b = p.cur, d = b.oi - a.oi, get = (k) => (p.op.find((x) => x[0] === k) || [k, 0])[1];
       const exp = p.op.filter(([k]) => ['rd', 'sga', 'sm', 'ga'].includes(k)).reduce((s, [, v]) => s + v, 0);
@@ -1794,6 +1808,7 @@
             ${rowsHTML(p, p.pri.oi, `Operating income, ${p.prev_label}`, p.op, p.cur.oi, `Operating income, ${p.label}`, 'Operating income bridge')}</article>
           ${p.below ? `<article class="q-card"><h3>Net income, ${t(p.prev_label)} → ${t(p.label)}</h3>
             ${rowsHTML(p, p.pri.ni, `Net income, ${p.prev_label}`, p.below, p.cur.ni, `Net income, ${p.label}`, 'Net income bridge')}</article>` : ''}
+          ${p.eps ? `<article class="q-card"><h3>Earnings per share, ${t(p.prev_label)} → ${t(p.label)}</h3>${epsRows(p)}</article>` : ''}
         </div>
         ${(p.mdna || []).length ? `<article class="q-card"><h3>Quantified by the company</h3><ul class="hv-items">${p.mdna.map((m) => `<li>${t(m.text)} <b>${money(m.amount)}</b>${m.src ? ` <span class="muted">· ${t(m.src)}</span>` : ''}</li>`).join('')}</ul></article>` : ''}
         <div class="q-legend"><span><i class="cq-bar plus nc"></i>Raised profit</span><span><i class="cq-bar minus nc"></i>Lowered profit</span><span><i class="cq-gap-key"></i>Lines without a tag of their own</span></div>

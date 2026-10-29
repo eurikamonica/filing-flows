@@ -2261,6 +2261,21 @@ def test_profit_bridge_adds_up_and_splits_the_tax_rate():
     assert DR.bridge({"revenue": 1}, b) is None                           # no operating income last year: no bridge
     noc = DR.bridge({"revenue": 100, "oi": 10}, {"revenue": 90, "oi": 5})
     assert noc["op"] == [["rev_all", -10], ["other_op", 5]] and noc["below"] is None
+    # EPS: the same bars over last year's shares, plus the share count's own effect (a buyback: 10 → 9.5 shares)
+    e = DR.eps_bridge({"pri": a, "cur": b, "dil0": 10, "dil1": 9.5, **br})
+    assert abs(e["eps0"] + sum(v for _, v in e["bars"]) - e["eps1"]) < 1e-9 and abs(e["eps1"] - 20 / 9.5) < 1e-12
+    sh = dict(e["bars"])["shares"]
+    assert abs(sh - 20 * (1 / 9.5 - 1 / 10)) < 1e-12 and sh > 0
+    assert DR.eps_bridge({"pri": a, "cur": b, "dil0": None, "dil1": 9.5, **br}) is None
+
+
+def test_diluted_shares_for_a_quarter_and_a_year():
+    from pipeline import drivers as DR, facts as F
+    fx = {"__shares__": {"WeightedAverageNumberOfDilutedSharesOutstanding": {
+        ("2025-04-01", "2025-06-30"): {"val": 1000, "end": "2025-06-30"}, ("2024-07-01", "2025-06-30"): {"val": 990, "end": "2025-06-30"}},
+        "EntityCommonStockSharesOutstanding": {"2025-07-20": {"val": 1001, "end": "2025-07-20"}}}}
+    assert DR.diluted(fx, "2025-06-30", False) == 1000 and DR.diluted(fx, "2025-06-30", True) == 990
+    assert DR.diluted(fx, "2025-03-31", False) is None
 
 
 def test_reformulated_balance_sheet_balances_and_names_what_is_untagged():
