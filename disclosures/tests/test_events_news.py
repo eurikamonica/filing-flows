@@ -88,7 +88,11 @@ class EightK(unittest.TestCase):
         self.assertEqual(r['headline'], 'Example Devices Reports Record Third Quarter Results and Raises Full-Year Outlook')
         self.assertEqual((r['code'], r['quote_src']), ('1.01', 'Item 1.01'))
         self.assertIn('$41.00 per share in cash', r['quote'])
-        self.assertEqual(E.label(r), 'guidance raised')
+        self.assertEqual(E.label(r), 'guidance raised and narrowed')     # $3.10–3.15B from $2.95–3.05B: a narrower range
+        self.assertEqual(r['guidance_tags'], ['raised', 'narrowed'])
+        rev = next(x for x in r['guidance_items'] if x['metric'] == 'revenue')
+        self.assertEqual((rev['period'], rev['unit'], rev['lo'], rev['hi'], rev['prior']['lo'], rev['prior']['hi'], rev['change'], rev['range']),
+                         ('FY2026', 'usd', 3.10e9, 3.15e9, 2.95e9, 3.05e9, 'raised', 'narrowed'))
         self.assertEqual(E.guidance(['We reaffirm our full-year outlook.']), ('reaffirmed', 'We reaffirm our full-year outlook.'))
         self.assertEqual(E.guidance(['The company is withdrawing its 2026 guidance.'])[0], 'withdrawn')
         self.assertEqual(E.guidance(['We lowered our revenue outlook for the year.'])[0], 'lowered')
@@ -164,7 +168,7 @@ class EightK(unittest.TestCase):
         d = json.loads((root / 'market' / 'events8k.json').read_text())
         self.assertEqual((out['rows'], d['rows'][0]['ticker'] in ('EXDV', 'GPRO')), (2, True))
         self.assertEqual(d['counts'].get('restatement'), 1)
-        self.assertEqual(E.by_ticker(root, today=dt.date(2026, 10, 17))['EXDV'][0]['label'], 'guidance raised')
+        self.assertEqual(E.by_ticker(root, today=dt.date(2026, 10, 17))['EXDV'][0]['label'], 'guidance raised and narrowed')
 
     def test_stable_gzip(self):
         p = Path(tempfile.mkdtemp()) / 'x.json.gz'

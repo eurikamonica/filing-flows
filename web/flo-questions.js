@@ -4,7 +4,8 @@
    examples  ways people ask that Flo must understand (no ticker): tests/test_mascot.cjs checks that every default
              question and every example is classified to its topic. Add a phrasing here when Flo misses one, then widen
              the topic's pattern in mascot.js until the test passes.
-   Topics: filings, valuation, rotation, industry, options, earnings, credit, analysts — the answers mascot.js can write. */
+   Topics: filings, valuation, rotation, industry, options, earnings, credit, analysts, opportunity — the answers mascot.js
+   can write. */
 (function (root) {
   'use strict';
   const BANK = {
@@ -101,6 +102,18 @@
       examples: {
         en: ['analysts', 'price target', 'target price', 'consensus', 'wall street', 'polymarket', 'kalshi', 'analyst rating'],
         zh: ['分析师', '目标价', '一致预期', '华尔街', '预测市场', '评级'],
+      },
+    },
+    opportunity: {
+      default: {
+        en: ['Will {t} go up or down next month?', 'Odds {t} is higher in 3 months', 'Odds a buy of {t} makes money', 'Is {t} a short opportunity?',
+          '{t} up or down next week?', "What's the chance {t} rises in a month?", '{t} win rate for a buy', '{t} opportunity score'],
+        zh: ['{t} 下个月会涨吗？', '{t} 3 个月后上涨概率', '{t} 买入盈利概率', '{t} 有做空机会吗？',
+          '{t} 下周涨还是跌？', '{t} 一个月内涨的概率', '{t} 买入的胜率', '{t} 机遇评分'],
+      },
+      examples: {
+        en: ['up or down', 'odds', 'opportunity', 'is it a short', 'win rate', 'chance it goes up', 'probability of profit', 'higher or lower'],
+        zh: ['涨还是跌', '会涨吗', '会跌吗', '机遇', '做空', '胜率', '上涨概率', '盈利概率'],
       },
     },
   };

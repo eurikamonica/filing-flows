@@ -132,7 +132,9 @@ def world(root, n=60, seed=7):
                          buyback=rev * rnd.uniform(0, 0.08), div=rev * rnd.uniform(0, 0.04), issue=rev * rnd.uniform(0, 0.02),
                          interest=rev * 0.01, tax=rev * 0.03, pretax=rev * 0.15, sga=rev * 0.2, dil=rnd.uniform(50, 200) * M,
                          assets=assets, ca=assets * 0.4, cl=assets * rnd.uniform(0.15, 0.35), eq=assets * 0.45, re=assets * 0.2,
-                         cash=assets * 0.1, ltd=assets * rnd.uniform(0.1, 0.4), ar=rev * rnd.uniform(0.08, 0.2), ppe=assets * 0.3)
+                         cash=assets * 0.1, ltd=assets * rnd.uniform(0.1, 0.4), ar=rev * rnd.uniform(0.08, 0.2), ppe=assets * 0.3,
+                         inv=rev * rnd.uniform(0.05, 0.15), oca=rev * rnd.uniform(0.01, 0.05), gw=assets * rnd.uniform(0, 0.3),
+                         intang=assets * rnd.uniform(0, 0.1), tax_paid=rev * rnd.uniform(0.01, 0.04), debt_issue=rev * rnd.uniform(0, 0.05))
                 d['ni'] = d['oi'] * 0.8
                 d['liab'] = d['assets'] - d['eq']
                 years[y] = d
@@ -232,6 +234,17 @@ class Build(unittest.TestCase):
             mg = json.loads((rq / 'public' / 'margins.json').read_text())['sectors']
             self.assertIn('_all', mg)
             self.assertTrue((rq / 'public' / 'scatter.json').exists() and (rq / 'public' / 'status.json').exists())
+            # quality_more.py: QMJ for (nearly) everyone, the screens, the cross-sections and their files
+            self.assertGreater(sum(r['qmj'] is not None for r in rows.values()), 50)
+            self.assertTrue(all(r['dechow_f'] is not None and r['c_score'] is not None for t, r in rows.items() if t.startswith('C')))
+            self.assertGreater(sum(r['da'] is not None for r in rows.values()), 20)
+            self.assertTrue(all(0 <= r['qmj_rank'] <= 1 for r in rows.values() if r['qmj_rank'] is not None))
+            c2 = json.loads((rq / 'public' / 'c' / 'C02.json').read_text())['more']
+            self.assertTrue(c2['dechow']['f'] > 0 and c2['cscore']['n'] >= 5 and c2['qmj']['profitability'] is not None)
+            self.assertTrue(c2['taxes']['cash_to_book'] is not None and c2['goodwill']['gw_assets'] is not None and c2['stability']['sd_roa'] is not None)
+            self.assertIn('jones', c2)
+            self.assertIn('technology', json.loads((rq / 'public' / 'persistence.json').read_text())['sectors'])
+            self.assertTrue(all(k in fac for k in ('qmj', 'dechow_f', 'c_score', 'da_abs')) and fac['qmj']['months'] > 12)
 
     def test_collect_reads_frames_and_keeps_final_periods(self):
         with tempfile.TemporaryDirectory() as d:
@@ -247,7 +260,7 @@ class Build(unittest.TestCase):
             r = Q.collect(Fake(), d, minutes=5, today=TODAY)
             self.assertEqual(r['errors'], 0)
             n = len(calls)
-            self.assertEqual(n, sum(len(s) for _, s in Q.INSTANT) * 13 + sum(len(s) for _, s in Q.ANNUAL) * len(Q.annual_periods(TODAY)))
+            self.assertEqual(n, sum(len(s) for _, s in Q.INSTANT) * Q.INSTANT_N + sum(len(s) for _, s in Q.ANNUAL) * len(Q.annual_periods(TODAY)))
             self.assertEqual(json.load(gzip.open(Q._qpath(d, 'us-gaap', 'Assets', 'USD', 'CY2025Q4I'))), {'320193': 7})
             calls.clear()
             Q.collect(Fake(), d, minutes=5, today=TODAY)                         # everything fresh: nothing fetched

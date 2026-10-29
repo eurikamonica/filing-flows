@@ -55,6 +55,10 @@ jobs:
             git clone --quiet --depth 1 --filter=blob:none --sparse --branch research-valuation "$url" rv
             git -C rv sparse-checkout set --no-cone /public/index.json
           fi
+          if git ls-remote --exit-code --heads "$url" consensus-history >/dev/null; then    # analysts' actual EPS: the non-GAAP gap
+            git clone --quiet --depth 1 --filter=blob:none --sparse --branch consensus-history "$url" cons
+            git -C cons sparse-checkout set --no-cone /public/c/
+          fi
           du -sh rq; ls rq
       - name: XBRL frames (balance sheet, cash flow, shares)
         timeout-minutes: 35
@@ -65,6 +69,7 @@ jobs:
           args=""
           [ -f debt/public/rates.json ] && args="$args --rates debt/public/rates.json"
           [ -f rv/public/index.json ] && args="$args --valuation rv/public"
+          [ -d cons/public/c ] && args="$args --consensus cons/public"
           python disclosures/app/quality.py build --root rq --frames-root disclosures/docs/data --prices disclosures/docs/data/cache/prices \
             --site-index site/index.json $args 2>&1 | tee build.log; rc=${PIPESTATUS[0]}
           if [ "$rc" != 0 ]; then grep -E "Error|Traceback|line [0-9]+" build.log | tail -4 | sed 's/^/::error::quality build: /'; exit "$rc"; fi

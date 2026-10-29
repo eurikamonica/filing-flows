@@ -1,5 +1,50 @@
 # Changelog
 
+## Opportunity: the odds that a stock or ETF is higher, and that a buy or a short makes money
+
+`app/opportunity.py` (run by rotation-history.yml for stocks and etf.yml for ETFs): for every name, at 1 week, 1 month
+and 3 months, the probability that the total return is positive, that a buy makes money after the round-trip trading
+cost (by weekly dollar volume: 0.1% to 2%) and that a short makes money after the cost and a 0.5% a year borrow fee,
+with the 10–90% return range, the edge (how much the timing signals raise the better trade's odds against the same name
+with its own volatility, cost and size and no signal), a 0–100 score and the four signals that move it most. One pooled
+ridge model per horizon on cross-sectionally ranked signals (momentum 4/13/26 weeks and 12-1, last week's reversal,
+52-week high and low, the 40-week average, volatility and its change, the return against the sector or category,
+dollar volume) predicting the volatility-scaled return; probabilities from the model's own residuals, Platt-calibrated;
+every year predicted only from the years before it. A name is flagged buy or short only when its edge is in the
+strongest fifth of the week, the trade itself is more likely than not to make money, and flags at that horizon and side
+made money out of sample (more often than not, on the median and the capped average, and 2 points more often than the
+same names' own no-signal odds — so the signals, not a tilt toward liquid names, earned it — and in each half of the
+years on its own):
+for stocks today that is buys at 1 and 3 months; shorts are often right but lose on average, so they stay unflagged;
+names under $5, under $5M a week and leveraged or inverse ETFs are never flagged short. Each closed week's odds are
+frozen in `ledger/opportunity-<kind>.json` and scored once known. Hub tab "Opportunity" (screener with horizon, flag,
+sector, liquidity and search filters; one name; the model card with calibration, edge deciles, flagged against all,
+weights and year by year; the track record), a card on each company page (views.json) and each ETF page, and Flo
+answers "up or down?", "odds a buy makes money", "should I short …" and adds the odds to "next week?". Tests:
+`tests/test_opportunity.py`, `tests/test_opportunity_view.cjs`.
+
+## Fair value: nine more lenses, the return the price implies, the market as a whole
+
+`app/valuation_extra.py` (called by `valuation.analyse` for every company): the Graham number, the Graham formula
+(revised, with Moody's Aaa yield from FRED DAAA), net current asset value (net-net), Lynch's fair P/E (PEGY), Greenwald's
+earnings power value (normalized margin, maintenance capex from PP&E), an FCFE DCF, the H-model dividend discount, a
+real option to expand (Black-Scholes; loss-making or fast-growing companies) and a multi-factor EV/Sales fit (growth,
+log margin, loss flag, size, sector; ridge). Each is a football row tagged "lens" with its algebra in the appendix and
+an entry in docs/valuation-guide.json; lenses stay out of the stage-weighted value and the headline range until the
+ledger has scored them. `implied_return`: the yearly return today's price implies — the DCF discount rate at the price,
+owner-earnings yield + growth, Easton's MPEG from analysts' EPS, residual income at the price — and its median against
+the cost of equity. `epv`: the price split between the business as it is and growth, against tangible book.
+`market.json`: the Buffett indicator (Fed Z.1 nonfinancial corporate equities ÷ GDP since 1947, FRED), the covered
+companies' earnings yield against the nominal and real 10-year yields, and the market-value-weighted implied return less
+the 10-year yield. The screener gains implied return, EPV and Graham gaps and four filters (implied return above the cost
+of equity, price below EPV, below the Graham number, net-nets); a new view shows the market as a whole.
+
+Inputs: new frames (Assets, AssetsCurrent, Liabilities, LiabilitiesCurrent, PropertyPlantAndEquipmentNet,
+PaymentsOfDividendsCommonStock). Fixed with it: net income now comes from the main site's pretax income − tax when four
+quarters of frames are not all tagged, before the debt module (whose figure was a single quarter for some, e.g.
+Medtronic's $0.43B against $5.3B over four quarters), and EPS falls back to net income ÷ diluted shares — P/E vs peers
+and residual income now cover most companies instead of about one in six. Tests: `tests/test_valuation_extra.py`.
+
 ## ETF tags: passive or active, leverage multiple, high dividend, alternatives and more
 
 `app/etf_tags.py` (run by `etf.build`): every ETF gets tags, in `index.json` (`tags`, `lev`, `under`; `tag_names`,

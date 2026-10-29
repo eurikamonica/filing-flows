@@ -5,6 +5,11 @@ import time
 from pathlib import Path
 from core import publish, write_json
 
+# GitHub refuses a push that adds any file over 100 MiB (and warns from 50 MiB); the push then fails on every
+# retry. Checked before pushing so the run says which file, instead of four silent retries.
+GITHUB_FILE_LIMIT = 100 << 20
+WARN_BYTES = 90 << 20
+
 
 def freshness(value):
     return max((value.get(k) or '' for k in ('last_attempt', 'updated_at', 'last_success')), default='')
@@ -21,6 +26,28 @@ def merge_live(local, remote):
 
 def git(*args, check=True):
     return subprocess.run(['git', *args], check=check, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+def too_large(names):
+    """Staged files near or over GitHub's per-file limit: (errors, warnings) as readable lines."""
+    errors, warnings = [], []
+    for name in names:
+        path = Path(name).relative_to('disclosures') if name.startswith('disclosures/') else Path(name)
+        if not path.exists():
+            continue
+        size = path.stat().st_size
+        line = f'{name}: {size / (1 << 20):.1f} MiB'
+        if size > GITHUB_FILE_LIMIT:
+            errors.append(line)
+        elif size > WARN_BYTES:
+            warnings.append(line)
+    return errors, warnings
+
+
+def tell(result):
+    """The end of git's own message, so a failed rebase or push says why in the log."""
+    text = ((result.stderr or '') + (result.stdout or '')).strip()
+    return text[-1500:] if text else f'exit {result.returncode}'
 
 
 def remote_json(path):
@@ -43,11 +70,19 @@ def main():
         relative = Path(name).relative_to('disclosures')
         if str(relative).startswith('docs/data/') and name.endswith('-status.json') and relative.exists():
             statuses[relative] = json.loads(relative.read_text())
+    errors, warnings = too_large(changed)
+    for line in warnings:
+        print(f'::warning::{line} is close to GitHub\'s 100 MiB file limit; move more of it into shards', flush=True)
+    if errors:
+        for line in errors:
+            print(f'::error::{line} is over GitHub\'s 100 MiB file limit, so the push would be refused', flush=True)
+        raise RuntimeError('A data file is over GitHub\'s 100 MiB limit: ' + '; '.join(errors))
     git('commit', '-m', 'Update disclosure data and source status')
     for attempt in range(4):
         git('fetch', '-q', 'origin', 'main')
         result = git('rebase', '-X', 'theirs', 'origin/main', check=False)
         if result.returncode:
+            print(f'::warning::rebase on the newest main failed (attempt {attempt + 1}): {tell(result)}', flush=True)
             git('rebase', '--abort', check=False)
         else:
             if local is not None:
@@ -69,9 +104,13 @@ def main():
             git('add', '-A', '--sparse', 'docs/data/')
             if git('diff', '--cached', '--quiet', check=False).returncode:
                 git('commit', '-m', 'Preserve newest source snapshots after concurrent collection')
+            merged, _ = too_large(['disclosures/docs/data/live.json', 'disclosures/docs/data/live.js'])
+            if merged:
+                raise RuntimeError('The merged snapshot is over GitHub\'s 100 MiB limit: ' + '; '.join(merged))
             result = git('push', '-q', 'origin', 'HEAD:main', check=False)
             if result.returncode == 0:
                 print('Pushed on attempt', attempt + 1); return
+            print(f'::warning::push refused (attempt {attempt + 1}): {tell(result)}', flush=True)
         time.sleep(15 * (attempt + 1))
     raise RuntimeError('Could not push the data snapshot after four attempts')
 

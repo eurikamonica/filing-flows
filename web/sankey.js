@@ -14,7 +14,19 @@
     profit: { node: '#17734a', flow: '#a8d1b9' },
     cost: { node: '#ea6a52', flow: '#f6c3b8' },
     noncash: { node: '#5b7fa6', flow: '#cdd8e6' },
+    // the guidance view (web/guidance.js): only what is new changes colour — the lines the company guided in violet /
+    // indigo / plum; every other line keeps the standard grey, green and red
+    f_rev: { node: '#5b3fc4', flow: '#cfc4f2' },
+    f_profit: { node: '#2f3f9e', flow: '#bfc6ec' },
+    f_cost: { node: '#9a2f7a', flow: '#ecc3df' },
   };
+  // the guidance view compared with a reported period: the part a line already had keeps its standard colour, the
+  // increase (what the guided period adds) is a violet strip; a decrease is hatched in the standard colour
+  const NEW = '#6a4fd1';
+  const baseRole = (c) => String(c || '').replace(/^f_/, '');
+  const RANGE = '#3a2a8c';            // the dashed box of a guided range
+  // the guidance view compared with a reported period: a ● in the Δ line, teal = higher, orange = lower
+  const CHG = { cup: '#0b7a75', cdn: '#d9480f', cnt: '#6b6a80' };
   const LEGEND = [['rev', 'Revenue'], ['profit', 'Profit & gains'], ['cost', 'Costs'], ['noncash', 'Non-cash items']];
   const BG = '#fcfcfb';
   const INK = '#1d1d1b', INK2 = '#3d3c39', INK3 = '#6b6a66', SUBINK = '#5c5b57', MARK = '#17734a';
@@ -27,6 +39,9 @@
   const STY = {
     name: [18, 600, 22, INK], big: [26, 600, 30, INK], ocf: [22, 600, 26, INK],
     val: [15, 400, 20, INK2], mut: [14, 400, 19, INK3], cmp: [14, 500, 19, INK2],
+    // guidance view: raised (indigo), lowered (plum), other changes, assumed lines
+    gup: [14, 600, 19, '#33269a'], gdn: [14, 600, 19, '#8f2163'], gnt: [14, 600, 19, '#4d4380'], gas: [13, 400, 18, '#77756f'],
+    cup: [14, 600, 19, '#0b7a75'], cdn: [14, 600, 19, '#c2410c'], cnt: [14, 600, 19, '#6b6a80'],
   };
   const NW = 14;          // node bar width
   const LGAP = 8;         // label distance from a bar (left/right)
@@ -77,7 +92,8 @@
   function labelBlock(n, mode) {
     const lines = (n.lines || [['name', n.name]]).map(([st, t]) => ({ st: STY[st] ? st : 'mut', t: dec(t) }));
     const cmp = mode === 'y' ? n.cmp_y : mode === 'q' ? n.cmp : null;
-    if (cmp) lines.push({ st: 'cmp', t: dec(cmp) });
+    if (Array.isArray(cmp)) lines.push({ st: STY[cmp[0]] ? cmp[0] : 'cmp', t: dec(cmp[1]) });   // [style, text]: the guidance view
+    else if (cmp) lines.push({ st: 'cmp', t: dec(cmp) });
     let w = 0, h = 0;
     lines.forEach((l, i) => {
       const [size, weight, lh] = STY[l.st];
@@ -458,18 +474,21 @@
 
     const shapes = [];
     // bands
+    const fut = !!spec.future && compare;          // guidance view vs a reported period: old part standard, increase violet
     links.forEach((l) => {
-      const g = bandGeom(l), pal = PALETTE[l.color] || PALETTE.rev;
+      const g = bandGeom(l), pal0 = PALETTE[l.color] || PALETTE.rev;
+      const pal = fut ? PALETTE[baseRole(l.color)] || pal0 : pal0;
+      const stripFill = fut ? NEW : pal.node;
       const cls = { ls: l.s, lt: l.t };            // link ends (not `s`/`t`: `t` is the shape type)
       if (compare && prior(l) != null) {
         if (prior(l) <= 0) {
-          shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, l.th), fill: pal.node, band: true }, cls));
+          shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, l.th), fill: stripFill, band: true }, cls));
         } else {
           const base = Math.min(prior(l), l.v) * K, strip = l.th - base;
           shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, base), fill: pal.flow, band: true }, cls));
           if (strip > 0.05) {
             shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0 + base, g.x1, g.a1 + base, Math.max(strip, 0.6)),
-              fill: pal.node, band: true }, cls));
+              fill: stripFill, band: true }, cls));
           }
         }
       } else {
@@ -487,14 +506,21 @@
       const pal = PALETTE[n.color] || PALETTE.rev;
       const side = n.outs.length ? n.outs : n.ins, off = n.outs.length ? 'so' : 'to';
       const sideSum = n.outs.length ? n.outSum : n.inSum;
+      const lost = (fut ? PALETTE[baseRole(n.color)] || pal : pal).node;     // a decrease is hatched in the line's own colour
       if (ghosts && side.length && (side.some((l) => l.ghost > 0.3) || n.h - sideSum > 0.5)) {
         side.forEach((l) => {
           shapes.push({ t: 'rect', x: n.x, y: n.top + l[off], w: NW, h: Math.max(l.th, 0.8), fill: pal.node, group: n.id });
-          if (l.ghost > 0.3) shapes.push({ t: 'rect', x: n.x, y: n.top + l[off] + l.th, w: NW, h: l.ghost, fill: 'none', hatch: pal.node, group: n.id });
+          if (l.ghost > 0.3) shapes.push({ t: 'rect', x: n.x, y: n.top + l[off] + l.th, w: NW, h: l.ghost, fill: 'none', hatch: lost, group: n.id });
         });
-        if (n.h - sideSum > 0.5) shapes.push({ t: 'rect', x: n.x, y: n.top + sideSum, w: NW, h: n.h - sideSum, fill: 'none', hatch: pal.node, group: n.id });
+        if (n.h - sideSum > 0.5) shapes.push({ t: 'rect', x: n.x, y: n.top + sideSum, w: NW, h: n.h - sideSum, fill: 'none', hatch: lost, group: n.id });
       } else {
         shapes.push({ t: 'rect', x: n.x, y: n.top, w: NW, h: n.h, fill: pal.node, group: n.id });
+      }
+      if (n.range && n.range[1] > n.range[0] && !ghosts) {     // (with hatched decreases the bar is split: the label gives the range)
+        // a guided range: dashed box = the high end of the range, centred on the bar (= the midpoint); ticks = the low end
+        const c = n.top + n.h / 2, hi = Math.max(n.range[1] * K, n.h), lo = Math.min(n.range[0] * K, n.h);
+        shapes.push({ t: 'rect', x: n.x - 5, y: c - hi / 2, w: NW + 10, h: hi, fill: 'none', stroke: RANGE, dash: [4, 3], sw: 1.4, group: n.id });
+        [c - lo / 2, c + lo / 2].forEach((y) => shapes.push({ t: 'rect', x: n.x - 8, y: y - 1, w: NW + 16, h: 2, fill: RANGE, group: n.id }));
       }
       const [lx, ly, lw, lh, anchor] = n.lr;
       let y = ly;
@@ -535,7 +561,7 @@
       let pos = cands.find(([x, y]) => free([x, y, bw, bh]));
       if (!pos) { pos = [MARGIN, bottom + 36]; bottom += 36 + bh; }
       const [cx, cy] = pos;
-      shapes.push({ t: 'text', x: cx, y: cy + 18, text: `What changed vs ${dec(cmpSpec.vs)}`, size: 18, weight: 600, fill: INK, anchor: 'start' });
+      shapes.push({ t: 'text', x: cx, y: cy + 18, text: dec(cmpSpec.heading || `What changed vs ${cmpSpec.vs}`), size: 18, weight: 600, fill: INK, anchor: 'start' });
       let yy = cy + 30;
       items.forEach((lines) => {
         shapes.push({ t: 'circle', cx: cx + 5, cy: yy + 11, r: 3, fill: INK2 });
@@ -558,21 +584,30 @@
     const legend = spec.legend ? spec.legend.filter(([k]) => used.has(k) && PALETTE[k])
       : LEGEND.filter(([k]) => used.has(k) || k === 'rev' || k === 'profit' || k === 'cost');
     const lgItems = legend.map(([k, t]) => ({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
+    if (spec.future && nodes.some((n) => n.range)) lgItems.push({ k: 'range', t: 'Dashed box = guided range (tick = low end)', w: 22 + measure('Dashed box = guided range (tick = low end)', 14, 400) });
     if (compare) {                     // increases are drawn as dark strips; a decrease leaves the band light (its Δ is negative)
-      [['strip', `Dark strip = increase vs ${dec(cmpSpec.vs)}`],
+      [['strip', spec.future ? `Violet strip = increase vs ${dec(cmpSpec.vs)}` : `Dark strip = increase vs ${dec(cmpSpec.vs)}`],
         ghosts ? ['ghost', `Hatched = decrease vs ${dec(cmpSpec.vs)}`] : ['nostrip', 'No strip = decrease (Δ below the value is negative)']]
         .forEach(([k, t]) => lgItems.push({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
+      if (spec.future) {               // the guidance view: the Δ line's dot says which way the line moved
+        [['cup', `higher than ${dec(cmpSpec.vs)}`], ['cdn', `lower than ${dec(cmpSpec.vs)}`]]
+          .forEach(([k, t]) => lgItems.push({ k, t, w: 22 + measure(t, 14, 400) }));
+      }
     }
     const lgW = lgItems.reduce((s, it) => s + it.w, 0) + 20 * (lgItems.length - 1);
     const footer = (spec.footer || []).map(dec);
     if (compare) {
-      footer.push(`Comparison view: band width = current quarter; dark strip = increase vs ${dec(cmpSpec.vs)} ` +
+      footer.push(`Comparison view: band width = ${spec.future ? `the guided period (${dec(spec.period || '')}); the light part keeps the standard grey, green and red (what the line had in ${dec(cmpSpec.vs)}); violet strip` : 'current quarter; dark strip'} = increase vs ${dec(cmpSpec.vs)} ` +
         (ghosts ? `(hatched area with a dashed outline = decrease: what the line had in ${dec(cmpSpec.vs)} beyond this quarter). `
           : '(no strip = it fell). ') +
         'Δ = scale + mix: scale = change explained by the parent node growing, mix = change in the item’s share of its parent. ' +
-        'n/m = a comparison period was negative.');
+        'n/m = a comparison period was negative.' + (spec.future ? ' ● teal = higher, ● orange = lower than ' + dec(cmpSpec.vs) +
+          '. Violet bars are the company’s guided figures; grey, green and red lines are assumptions at the shares of ' + dec(spec.base || '') + ', so their change follows the guided lines.' : ''));
     }
-    const fW = W - 2 * MARGIN - lgW - 40;
+    const LP = spec.future ? { flow: PALETTE.profit.flow, node: NEW, hatch: PALETTE.profit.node } : PALETTE.profit;   // the legend's samples
+    // a long legend (the guidance view) gets its own row above the notes, so the notes keep the full width
+    const lgRow = lgW > (W - 2 * MARGIN) * 0.5;
+    const fW = lgRow ? W - 2 * MARGIN : W - 2 * MARGIN - lgW - 40;
     // the data checks first (a probable error in amber), then how the chart was made, then the disclaimer
     const parts = checks.map((c) => ({ text: `${c.level === 'warn' ? 'Data check' : 'Note'}: ${dec(c.text)}`,
       fill: c.level === 'warn' ? WARN : INK2, weight: c.level === 'warn' ? 600 : 400 }))
@@ -580,22 +615,27 @@
     const fLines = [];
     parts.forEach((p) => wrap(p.text, 13, p.weight, fW).forEach((l) => fLines.push({ text: l, fill: p.fill, weight: p.weight })));
     const fH = fLines.length * 18;
-    const H = Math.ceil(bottom + 44 + fH + 30);
+    const H = Math.ceil(bottom + 44 + fH + 30 + (lgRow ? 34 : 0));
     let fy = H - 30 - fH;
     fLines.forEach((l) => {
       shapes.push({ t: 'text', x: MARGIN, y: fy + 13, text: l.text, size: 13, weight: l.weight, fill: l.fill, anchor: 'start' });
       fy += 18;
     });
-    let lx = W - MARGIN - lgW;
-    const ly = H - 30 - 16;
+    let lx = lgRow ? MARGIN : W - MARGIN - lgW;
+    const ly = lgRow ? H - 30 - fH - 34 : H - 30 - 16;
     lgItems.forEach((it) => {
       if (it.k === 'strip') {
-        shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE.profit.flow, r: 3 });
-        shapes.push({ t: 'rect', x: lx, y: ly + 10, w: 14, h: 5, fill: PALETTE.profit.node });
+        shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: LP.flow, r: 3 });
+        shapes.push({ t: 'rect', x: lx, y: ly + 10, w: 14, h: 5, fill: LP.node });
       } else if (it.k === 'nostrip') {
-        shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE.profit.flow, r: 3 });
+        shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: LP.flow, r: 3 });
+      } else if (it.k === 'cup' || it.k === 'cdn') {
+        shapes.push({ t: 'circle', cx: lx + 7, cy: ly + 8, r: 5, fill: CHG[it.k] });
+      } else if (it.k === 'range') {
+        shapes.push({ t: 'rect', x: lx + 3, y: ly, w: 8, h: 16, fill: PALETTE.f_profit.node });
+        shapes.push({ t: 'rect', x: lx, y: ly - 2, w: 14, h: 20, fill: 'none', stroke: RANGE, dash: [4, 3], sw: 1.4 });
       } else if (it.k === 'ghost') {
-        shapes.push({ t: 'rect', x: lx + 0.5, y: ly + 1.5, w: 13, h: 13, fill: 'none', hatch: PALETTE.profit.node });
+        shapes.push({ t: 'rect', x: lx + 0.5, y: ly + 1.5, w: 13, h: 13, fill: 'none', hatch: LP.hatch || LP.node });
       } else {
         shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE[it.k].node, r: 3 });
       }
@@ -603,7 +643,7 @@
       lx += it.w + 20;
     });
 
-    return { W, H, bg: BG, shapes, hit, issues: issues.map((i) => i.n.id), nodes: nodes.map((n) => ({ id: n.id, label: n.lr, bar: [n.x, n.top, NW, n.h] })) };
+    return { W, H, bg: spec.bg || BG, shapes, hit, issues: issues.map((i) => i.n.id), nodes: nodes.map((n) => ({ id: n.id, label: n.lr, bar: [n.x, n.top, NW, n.h] })) };
   }
 
   // ---------- history: one company quarter by quarter ----------
@@ -755,9 +795,10 @@
       } else if (s.t === 'rect') {
         const cls = s.hit ? ' class="hit"' : s.group ? ' class="bar"' : '';
         out.push(`<rect${cls} x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" width="${s.w.toFixed(2)}" height="${s.h.toFixed(2)}"` +
-          `${s.r ? ` rx="${s.r}"` : ''} fill="${s.fill}"/>`);
+          `${s.r ? ` rx="${s.r}"` : ''} fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.sw || 1}"${s.dash ? ` stroke-dasharray="${s.dash.join(' ')}"` : ''}${s.cap ? ` stroke-linecap="${s.cap}"` : ''}` : ''}/>`);
       } else if (s.t === 'path') {
-        out.push(`<path d="${s.d}" fill="${s.fill}"/>`);
+        out.push(`<path d="${s.d}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.sw || 1}"${s.dash ? ` stroke-dasharray="${s.dash.join(' ')}"` : ''}` +
+          `${s.cap ? ` stroke-linecap="${s.cap}"` : ''}${s.opacity ? ` stroke-opacity="${s.opacity}"` : ''}` : ''}/>`);
       } else if (s.t === 'circle') {
         out.push(`<circle${s.marker ? ' class="note-mark"' : ''} cx="${s.cx.toFixed(2)}" cy="${s.cy.toFixed(2)}" r="${s.r}" fill="${s.fill}"/>`);
       } else if (s.t === 'text') {
@@ -793,6 +834,16 @@
         ctx.save();
         ctx.setLineDash([5, 3.5]); ctx.lineWidth = 1.2; ctx.strokeStyle = s.hatch;
         ctx.stroke(path);
+        ctx.restore();
+        return;
+      }
+      if (s.stroke && (s.t === 'rect' || s.t === 'path')) {   // dashed / dotted outlines (the guidance view)
+        ctx.save();
+        if (s.t === 'rect' && s.fill && s.fill !== 'none') { ctx.fillStyle = s.fill; ctx.fillRect(s.x, s.y, s.w, s.h); }
+        ctx.setLineDash(s.dash || []); ctx.lineWidth = s.sw || 1; ctx.strokeStyle = s.stroke;
+        if (s.cap) ctx.lineCap = s.cap;
+        if (s.opacity) ctx.globalAlpha = s.opacity;
+        if (s.t === 'rect') ctx.strokeRect(s.x, s.y, s.w, s.h); else ctx.stroke(new Path2D(s.d));
         ctx.restore();
         return;
       }

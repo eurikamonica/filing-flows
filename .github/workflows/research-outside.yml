@@ -1,0 +1,73 @@
+# Beyond the filings (Disclosures → Beyond filings, the "Beyond the filings" view of each company page).
+# Daily: ClinicalTrials.gov studies of drug, biotech and device companies; FDA enforcement reports, CPSC and NHTSA recalls;
+# the Federal Register documents naming each company; corporate PACs from the FEC (needs DATA_GOV_API_KEY, free at
+# https://api.data.gov/signup); Wikipedia page views (articles from Wikidata's SEC CIK property); FRED input prices for
+# the cost shocks — each topped up within a time budget, then public/ is rebuilt (disclosures/app/outside.py).
+# Kept on the branch "research-outside" (one commit, force-pushed); scan.yml publishes public/ at disclosures/data/research/outside/.
+name: Research — beyond the filings
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for collecting (the first runs fill the caches; later runs top them up)'
+        default: '40'
+  schedule:
+    - cron: '41 8 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: research-outside
+  cancel-in-progress: false
+jobs:
+  outside:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      DATA_GOV_API_KEY: ${{ secrets.DATA_GOV_API_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/config/
+            /disclosures/docs/data/cache/frames/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --quiet numpy
+      - name: The data branch and the site index
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" research-outside >/dev/null; then
+            git clone --quiet --depth 1 --branch research-outside "$url" ro
+          else
+            mkdir ro && git -C ro init --quiet -b research-outside && git -C ro remote add origin "$url"
+          fi
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          mkdir -p site && curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
+          du -sh ro
+      - name: Collect
+        id: collect
+        timeout-minutes: 55
+        run: python disclosures/app/outside.py collect --root ro --site-index site/index.json --minutes "${{ inputs.minutes || '40' }}"
+      - name: Build public/
+        timeout-minutes: 10
+        run: |
+          python disclosures/app/outside.py build --root ro --site-index site/index.json --frames-root disclosures/docs/data 2>&1 | tee build.log; rc=${PIPESTATUS[0]}
+          if [ "$rc" != 0 ]; then grep -E "Error|Traceback|line [0-9]+" build.log | tail -4 | sed 's/^/::error::outside build: /'; exit "$rc"; fi
+      - name: Save to the branch (one commit, force-pushed)
+        if: always() && steps.collect.outcome != 'skipped'
+        run: |
+          cd ro
+          printf '%s\n' '# research-outside (data only)' '' 'Caches of ClinicalTrials.gov, FDA, CPSC, NHTSA, the Federal Register, the FEC, Wikipedia page views and FRED' \
+            '(cache/) and the files the site publishes (public/), kept by .github/workflows/research-outside.yml on main.' \
+            'Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "outside $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "outside $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:research-outside && break; sleep $((i * 10)); done
+          [ -f public/status.json ] && python -c "import json; s=json.load(open('public/status.json')); print('::notice::outside: ' + json.dumps({k: v for k, v in s.items() if k != 'last_collect'}) + ' · last collect: ' + json.dumps(s.get('last_collect'))[:600])"

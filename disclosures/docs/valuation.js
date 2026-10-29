@@ -1,6 +1,6 @@
 /* Valuation — fair value & credit for every company: WACC, DCF and reverse DCF, Monte Carlo, the price paid for growth
    (PVGO), peer multiples, residual income, bank / insurer / REIT models, valuation bands and a distress probability.
-   Data: data/research/valuation/{index,banks,insurers,ledger,models,base_rates,status}.json and c/<cik>.json
+   Data: data/research/valuation/{index,market,banks,insurers,ledger,models,base_rates,status}.json and c/<cik>.json
    (app/valuation.py + app/base_rates.py, branch research-valuation). One company is drawn by fairvalue-view.js (shared with
    the main site's company page). The "Outside view" lists every company's stage and the base-rate probability of what its
    price, the Street and Polymarket require; "Model scores" shows each model out of sample against a naive baseline. */
@@ -11,11 +11,11 @@ function valData(name){
  m.loading=fetch('data/research/valuation/'+name+'.json').then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
-const VAL_VIEWS=[['all','Every company'],['outside','Outside view (base rates)'],['company','One company'],['fits','Banks & insurers'],['track','Track record'],['models','Model scores']];
+const VAL_VIEWS=[['all','Every company'],['market','The market as a whole'],['outside','Outside view (base rates)'],['company','One company'],['fits','Banks & insurers'],['track','Track record'],['models','Model scores']];
 const VAL_STAGE=[['','All stages'],['pre_profit','Pre-profit'],['high_growth','High growth'],['growth','Growth'],['mature','Mature'],['cyclical','Cyclical'],['decline','Decline / turnaround'],['financial','Financials'],['reit','REITs']];
 const VAL_STAGE_LABEL=Object.fromEntries(VAL_STAGE.filter(x=>x[0]));
 const VAL_OSORT=[['p_implied','Lowest base rate of the implied growth'],['ov_gap','Outside-view expected value vs price'],['p_street_eps','Lowest base rate of the Street EPS'],['pm_edge','Polymarket vs base rate (EPS)'],['mcap','Market value']];
-const VAL_SHOW=[['','All companies'],['large','Market value ≥ $10B'],['above','DCF above the price'],['below','DCF below the price'],['growth','Price mostly growth (PVGO ≥ 70%)'],['distress','Distress ≥ 2%'],['cheap','P/E in the bottom 10% of its range'],['rich','P/E in the top 10% of its range']];
+const VAL_SHOW=[['','All companies'],['large','Market value ≥ $10B'],['above','DCF above the price'],['below','DCF below the price'],['growth','Price mostly growth (PVGO ≥ 70%)'],['distress','Distress ≥ 2%'],['cheap','P/E in the bottom 10% of its range'],['rich','P/E in the top 10% of its range'],['icc','Implied return above its cost of equity'],['epv','Price below earnings power (EPV)'],['graham','Price below the Graham number'],['netnet','Net-net: price below ⅔ of net current assets']];
 const VAL_KIND=[['','All kinds'],['industrial','Operating companies'],['bank','Banks'],['insurer','Insurers'],['reit','REITs']];
 function valRows(d){const F=d.fields;return (d.rows||[]).map(r=>{const o={};F.forEach((k,i)=>o[k]=r[i]);return o})}
 function valMoney(v){return v==null?'—':(v<0?'−$':'$')+fmt(Math.abs(v),Math.abs(v)>=1000?0:2)}
@@ -50,6 +50,7 @@ function valView(){
   return out+`<div class="section-head"><h3>Scores</h3><button class="action" id="csv">Export CSV ↓</button></div>`+table(['Snapshot','Horizon','Companies','IC: P(value > price)','IC: DCF gap','Price moved toward the DCF value','Share that rose (naive)','IC: analysts\' target','IC: Polymarket','IC: outside view','Combined error vs no change'],sc.map(s=>[esc(s.month),s.horizon_months+' months',fmt(s.n),fmt(s.ic_p_above,3),fmt(s.ic_dcf_gap,3),valPct(s.direction_hit_rate),valPct(s.share_up),fmt(s.ic_target_gap,3),fmt(s.ic_pm_gap,3),fmt(s.ic_outside_gap,3),s.mae_combined==null?'—':valPct(s.mae_combined,1)+' vs '+valPct(s.mae_no_change,1)]));
  }
  if(state.vview==='models')return out+valModels();
+ if(state.vview==='market')return out+valMarket();
  if(state.vview==='outside'){
   out+=`<div class="toolbar">${field('vstage','Stage',VAL_STAGE,state.vstage||'')}${field('vosort','Sort',VAL_OSORT,state.vosort||'p_implied')}</div>`;
   let R=rows.filter(r=>r.stage&&(!state.vstage||r.stage===state.vstage));
@@ -70,14 +71,32 @@ function valView(){
  const big=10e9;
  let R=rows.filter(r=>!state.vkind||r.kind===state.vkind);
  const show=state.vshow||'';
- R=R.filter(r=>show===''||(show==='large'&&r.mcap>=big)||(show==='above'&&r.dcf_gap>0)||(show==='below'&&r.dcf_gap<0)||(show==='growth'&&r.pvgo_share>=0.7)||(show==='distress'&&r.distress_pd>=0.02)||(show==='cheap'&&r.pe_pct!=null&&r.pe_pct<=0.1)||(show==='rich'&&r.pe_pct!=null&&r.pe_pct>=0.9));
+ R=R.filter(r=>show===''||(show==='large'&&r.mcap>=big)||(show==='above'&&r.dcf_gap>0)||(show==='below'&&r.dcf_gap<0)||(show==='growth'&&r.pvgo_share>=0.7)||(show==='distress'&&r.distress_pd>=0.02)||(show==='cheap'&&r.pe_pct!=null&&r.pe_pct<=0.1)||(show==='rich'&&r.pe_pct!=null&&r.pe_pct>=0.9)||(show==='icc'&&r.icc_spread>0)||(show==='epv'&&r.epv_gap>0)||(show==='graham'&&r.graham_gap>0)||(show==='netnet'&&r.ncav_value!=null&&r.price<r.ncav_value*2/3));
  const withDcf=rows.filter(r=>r.dcf_value!=null),med=a=>{a=a.filter(v=>v!=null).sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:null};
  out+=`<div class="metrics">${kpi('Companies valued',fmt(rows.length),fmt(withDcf.length)+' with a DCF')}${kpi('Median WACC',valPct(med(rows.map(r=>r.wacc)),1),'ERP '+valPct(A.erp,1)+' · 10-year Treasury '+(A.treasury_10y==null?'—':fmt(A.treasury_10y,2)+'%'))}${kpi('Median price paid for growth',valPct(med(rows.map(r=>r.pvgo_share))),'PVGO share of market value')}${kpi('Median P(value > price)',valPct(med(withDcf.map(r=>r.mc_p_above))),'Monte Carlo DCF, '+fmt(A.mc_scenarios)+' scenarios')}</div>`;
  exported=R;
- out+=`<div class="section-head"><h3>${fmt(R.length)} companies</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">Click a ticker for its football field. DCF gap: the base-case DCF value against the price. Implied growth: the yearly revenue growth today's price needs (reverse DCF). P/E position: where today's P/E sits in its own range since mid-2022. Distress: a blend of Merton, the bond-calibrated spread, Altman Z and the debt cushion — a ranking, not calibrated to realized defaults.</p>`;
- out+=table(['Company','Price','WACC','DCF value','DCF gap','P(value > price)','Implied growth','Growth last 4Q','Price for growth','P/E','P/E position','Distress','DD'],R.map(r=>[
+ out+=`<div class="section-head"><h3>${fmt(R.length)} companies</h3><button class="action" id="csv">Export CSV ↓</button></div><p class="sub">Click a ticker for its football field. Implied return: the yearly return today's price gives if the models are right (the median of four implied costs of capital; small figure: above (+) or below (−) its cost of equity). EPV gap: earnings power value (the business if it never grew) against the price. Graham gap: the Graham number against the price. DCF gap: the base-case DCF value against the price. Implied growth: the yearly revenue growth today's price needs (reverse DCF). P/E position: where today's P/E sits in its own range since mid-2022. Distress: a blend of Merton, the bond-calibrated spread, Altman Z and the debt cushion — a ranking, not calibrated to realized defaults.</p>`;
+ out+=table(['Company','Price','WACC','DCF value','DCF gap','P(value > price)','Implied growth','Growth last 4Q','Price for growth','Implied return','EPV gap','Graham gap','P/E','P/E position','Distress','DD'],R.map(r=>[
   `<button class="text-button" data-vco="${esc(r.ticker)}"><b>${esc(r.ticker)}</b></button> <span class="muted">${esc((r.name||'').slice(0,28))}</span>${r.kind!=='industrial'?` <span class="tag">${esc(r.kind)}</span>`:''}`,
-  valMoney(r.price),valPct(r.wacc,1),valMoney(r.dcf_value),valSpct(r.dcf_gap),valPct(r.mc_p_above),valPct(r.implied_growth,1),valPct(r.history_growth,1),valPct(r.pvgo_share),fmt(r.pe,1),r.pe_pct==null?'—':fmt(r.pe_pct*100)+'th pct',valPct(r.distress_pd,r.distress_pd!=null&&r.distress_pd<0.01?2:1),fmt(r.distance_to_default,1)]));
+  valMoney(r.price),valPct(r.wacc,1),valMoney(r.dcf_value),valSpct(r.dcf_gap),valPct(r.mc_p_above),valPct(r.implied_growth,1),valPct(r.history_growth,1),valPct(r.pvgo_share),r.icc==null?'—':valPct(r.icc,1)+(r.icc_spread==null?'':` <span class="muted">${r.icc_spread>=0?'+':'−'}${fmt(Math.abs(r.icc_spread*100),1)}</span>`),valSpct(r.epv_gap),valSpct(r.graham_gap),fmt(r.pe,1),r.pe_pct==null?'—':fmt(r.pe_pct*100)+'th pct',valPct(r.distress_pd,r.distress_pd!=null&&r.distress_pd<0.01?2:1),fmt(r.distance_to_default,1)]));
+ return out;
+}
+// the market as a whole (market.json, app/valuation_extra.py market_view): the Buffett indicator, earnings yield vs bonds, implied ERP
+function valLine(series,w=760,h=220){
+ const pts=(series||[]).filter(p=>p[1]!=null);if(pts.length<3)return '';
+ const ys=pts.map(p=>p[1]),lo=Math.min(...ys),hi=Math.max(...ys),X=i=>40+i/(pts.length-1)*(w-50),Y=v=>h-24-(v-lo)/((hi-lo)||1)*(h-40);
+ const mean=ys.reduce((a,b)=>a+b,0)/ys.length,yr=(d)=>d.slice(0,4);
+ const ticks=[lo,(lo+hi)/2,hi].map(v=>`<text x="34" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${fmt(v*100,0)}%</text><line x1="40" x2="${w-10}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/>`).join('');
+ const every=Math.ceil(pts.length/8),xl=pts.map((p,i)=>i%every===0?`<text x="${X(i)}" y="${h-6}" text-anchor="middle" font-size="11" fill="var(--muted)">${yr(p[0])}</text>`:'').join('');
+ return `<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="history">${ticks}<line x1="40" x2="${w-10}" y1="${Y(mean)}" y2="${Y(mean)}" stroke="var(--muted)" stroke-dasharray="4 4"/><text x="${w-12}" y="${Y(mean)-4}" text-anchor="end" font-size="11" fill="var(--muted)">average ${fmt(mean*100,0)}%</text><path d="${pts.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(p[1]).toFixed(1)).join('')}" fill="none" stroke="var(--accent)" stroke-width="2"/>${xl}</svg>`;
+}
+function valMarket(){
+ const g=valData('market');if(g.err)return empty('The market view is not built yet ('+g.err+').');if(!g.data)return empty('Loading…');
+ const d=g.data,b=d.buffett,e=d.earnings_yield,i=d.implied_erp;
+ let out=`<div class="metrics">${b?kpi('Buffett indicator',valPct(b.ratio),`corporate equities ÷ GDP, ${esc(b.date)}; higher than ${valPct(b.pct_rank)} of quarters since ${esc(String(b.since).slice(0,4))} (average ${valPct(b.mean)})`):''}${e?kpi('Earnings yield (P/E)',valPct(e.ey,1),`P/E ${fmt(e.pe,1)} · ${fmt(e.companies)} largest covered companies`):''}${e&&e.gap_real!=null?kpi('Earnings yield − real 10-year',(e.gap_real>=0?'+':'−')+fmt(Math.abs(e.gap_real*100),1)+' pts',`vs nominal 10-year: ${(e.gap_nominal>=0?'+':'−')+fmt(Math.abs((e.gap_nominal||0)*100),1)} pts (the Fed model)`):''}${i?kpi('Implied equity risk premium',(i.erp>=0?'+':'−')+fmt(Math.abs(i.erp*100),1)+' pts',`implied return ${valPct(i.implied_return,1)} − 10-year ${valPct(i.y10,1)}`):''}</div>`;
+ if(b)out+=`<div class="panel"><h3>Buffett indicator since ${esc(String(b.since).slice(0,4))}</h3>${valLine(b.series)}<p class="sub">${esc(b.how)}. Warren Buffett called the market's value against the economy "probably the best single measure of where valuations stand at any given moment" (Fortune, 2001). It does not time the market: it has stayed high for years. Part of the rise reflects higher profit margins and US companies earning more abroad.</p></div>`;
+ if(e)out+=`<div class="explain">${esc(e.how)}.</div>`;
+ if(i)out+=`<div class="explain">${esc(i.how)}. A premium near zero or below means the price leaves stocks little expected return over Treasuries; Damodaran's long-run implied premium for the S&P 500 has mostly sat between 3% and 6%.</div>`;
  return out;
 }
 function valModels(){

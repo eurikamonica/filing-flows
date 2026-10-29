@@ -8,9 +8,18 @@ const hm=s=>s&&s.length>=16?s.slice(11,16)+' ET':'';
 const TOPIC_SHORT={deal:'M&A',ceo:'CEO change',cfo:'CFO change',restatement:'restatement',cyber:'cyber incident',delisting:'delisting notice',
  bankruptcy:'bankruptcy',buyback:'buyback',dividend:'dividend',offering:'offering',debt:'new debt',restructuring:'restructuring',
  impairment:'impairment',auditor:'auditor change',director:'board change',fda:'FDA',contract:'contract award',guidance:'guidance',control:'change in control',vote:'vote'};
+// guidance: every change the release made (app/guidance.py): raised / lowered / narrowed / widened / initiated / reaffirmed / withdrawn
+const gtags=r=>r.guidance_tags&&r.guidance_tags.length?r.guidance_tags:r.guidance?[r.guidance]:[];
+const GWORD={raised:'▲ raised',lowered:'▼ lowered',narrowed:'→← narrowed',widened:'←→ widened',initiated:'✦ initiated',reaffirmed:'= reaffirmed',withdrawn:'✕ withdrawn',mixed:'▲▼ mixed',updated:'updated'};
+const gphrase=r=>{const t=gtags(r).filter(x=>x!=='mixed'&&!(x==='updated'&&gtags(r).length>1)&&!(x==='reaffirmed'&&gtags(r).some(y=>['raised','lowered','narrowed','widened'].includes(y))));return t.map(x=>GWORD[x]||x).join(' · ')};
+const GFILTER={graised:['Guidance raised',r=>gtags(r).includes('raised')],glowered:['Guidance lowered or withdrawn',r=>gtags(r).some(x=>x==='lowered'||x==='withdrawn')],
+ gnarrowed:['Guidance range narrowed',r=>gtags(r).includes('narrowed')],gwidened:['Guidance range widened',r=>gtags(r).includes('widened')],
+ ginitiated:['Guidance initiated',r=>gtags(r).includes('initiated')],greaffirmed:['Guidance reaffirmed',r=>gtags(r).includes('reaffirmed')],
+ gany:['Any guidance change',r=>gtags(r).some(x=>['raised','lowered','narrowed','widened','withdrawn','initiated'].includes(x))]};
 function topicBadges(r,T){
- const b=(r.topics||[]).slice(0,3).map(t=>{const g=t==='guidance'&&r.guidance?`guidance ${r.guidance}`:(T[t]||t);
-  const tone=t==='guidance'?(r.guidance==='raised'?'ready':r.guidance==='lowered'||r.guidance==='withdrawn'?'error':''):(TOPIC_TONE[t]||'');return `<span class="badge ${tone}">${esc(g)}</span>`});
+ const b=(r.topics||[]).slice(0,3).map(t=>{const g=t==='guidance'&&r.guidance?`guidance ${gphrase(r)||r.guidance}`:(T[t]||t);
+  const gt=gtags(r);
+  const tone=t==='guidance'?(gt.includes('lowered')||gt.includes('withdrawn')?'error':gt.includes('raised')?'ready':gt.includes('narrowed')||gt.includes('widened')?'pending':''):(TOPIC_TONE[t]||'');return `<span class="badge ${tone}">${esc(g)}</span>`});
  return b.join(' ')||`<span class="muted">${esc(r.label||'')}</span>`;
 }
 
@@ -20,15 +29,15 @@ function eventsView(){
  const g=marketGate('events8k','8-K events');if(!g.data)return out+g.html;
  const d=g.data,all=d.rows||[],T=d.topics||{};
  out+=discDateControls('SEC filing date');
- const topics=Object.keys(T);state.etopic=topics.includes(state.etopic)||['material','graised','glowered'].includes(state.etopic)?state.etopic:'';
+ const topics=Object.keys(T);state.etopic=topics.includes(state.etopic)||state.etopic==='material'||GFILTER[state.etopic]?state.etopic:'';
  state.ewho=['','listed','site'].includes(state.ewho)?state.ewho:'listed';
- out+=`<div class="toolbar">${field('etopic','What',[['','Everything'],['material','Material events only'],['graised','Guidance raised'],['glowered','Guidance lowered or withdrawn'],...topics.filter(t=>t!=='guidance').map(t=>[t,T[t][0].toUpperCase()+T[t].slice(1)])],state.etopic)}${field('ewho','Companies',[['listed','With a ticker'],['','All filers']],state.ewho)}${search('eq','Ticker, company or words','e.g. acquisition · Enter')}</div>`;
+ out+=`<div class="toolbar">${field('etopic','What',[['','Everything'],['material','Material events only'],...Object.entries(GFILTER).map(([k,v])=>[k,v[0]]),...topics.filter(t=>t!=='guidance').map(t=>[t,T[t][0].toUpperCase()+T[t].slice(1)])],state.etopic)}${field('ewho','Companies',[['listed','With a ticker'],['','All filers']],state.ewho)}${search('eq','Ticker, company or words','e.g. acquisition · Enter')}</div>`;
  const c=d.counts||{},day=all[0]?all[0].filed:'';
- out+=`<div class="metrics">${kpi('8-Ks on file',fmt(d.on_file),`Shown: the last ${fmt(d.days)} days`)}${kpi('Filed on '+(day||'—'),fmt(all.filter(r=>r.filed===day).length),'Newest filing day')}${kpi('Deals, 7 days',fmt(c.deal||0),'Mergers, acquisitions, tender offers')}${kpi('Guidance changes, 7 days',fmt(all.filter(r=>r.filed>=daysAgo(7)&&['raised','lowered','withdrawn'].includes(r.guidance)).length),'Raised, lowered or withdrawn')}</div>`;
+ out+=`<div class="metrics">${kpi('8-Ks on file',fmt(d.on_file),`Shown: the last ${fmt(d.days)} days`)}${kpi('Filed on '+(day||'—'),fmt(all.filter(r=>r.filed===day).length),'Newest filing day')}${kpi('Deals, 7 days',fmt(c.deal||0),'Mergers, acquisitions, tender offers')}${kpi('Guidance changes, 7 days',fmt(all.filter(r=>r.filed>=daysAgo(7)&&GFILTER.gany[1](r)).length),'Raised, lowered, narrowed, widened, initiated or withdrawn')}</div>`;
  const top=Object.entries(c).filter(([k])=>k!=='earnings'&&k!=='vote').slice(0,12);
  out+=`<div class="panel"><h3>What companies reported, last 7 days</h3><p class="sub">8-Ks with a ticker, by topic (one filing can have several) · earnings releases left out of the chart</p>${top.length?divergingChart(top.map(([k,v])=>({label:TOPIC_SHORT[k]||k,value:v,tip:[[T[k]||k,`${fmt(v)} filings`]]})),{unit:'count',label:'8-K filings by topic',neutral:true}):empty('No 8-K on file yet — the collector reads the newest filings every half hour and works back through the daily indexes.')}</div>`;
  const q=(state.eq||'').trim().toLowerCase();
- const rows=all.filter(r=>(state.ewho!=='listed'||r.ticker)&&(!state.etopic||(state.etopic==='material'?(r.score||0)>=6:state.etopic==='graised'?r.guidance==='raised':state.etopic==='glowered'?['lowered','withdrawn'].includes(r.guidance):(r.topics||[]).includes(state.etopic)))
+ const rows=all.filter(r=>(state.ewho!=='listed'||r.ticker)&&(!state.etopic||(state.etopic==='material'?(r.score||0)>=6:GFILTER[state.etopic]?GFILTER[state.etopic][1](r):(r.topics||[]).includes(state.etopic)))
   &&(!q||[r.ticker,r.company,r.headline,r.quote,r.label].join(' ').toLowerCase().includes(q))&&discDateMatches(r,['filed']));
  exported=rows;
  out+=`<div class="explain">${esc(d.note||'')}</div><div class="section-head"><h3>${fmt(rows.length)} filings</h3><button class="action" id="csv">Export CSV ↓</button></div>`;

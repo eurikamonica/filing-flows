@@ -97,6 +97,7 @@ SOURCE_NAMES = [   # valuation.company_inputs' short source names → what they 
     ('main site (outstanding)', 'SEC filing cover page: shares outstanding'),
     ('main site', "SEC 10-K / 10-Q balance sheet (the main site's reading)"),
     ('frames, 4 quarters', 'SEC XBRL frames: the sum of the last four quarters'),
+    ('main site (pretax − tax)', "SEC 10-K / 10-Q, trailing four quarters: pretax income − income tax (the main site's reading)"),
     ('frames, latest year', 'SEC XBRL frames: the latest fiscal year'),
     ('frames, diluted weighted average', 'SEC XBRL frames: diluted weighted-average shares'),
     ('frames, long-term debt', 'SEC XBRL frames: long-term debt'),
@@ -490,6 +491,10 @@ WHY_NOT = {
 def fit_reason(name, F, out):
     """Why this method applies to this company, in one or two sentences from its own figures (the appendix's
     "Why it applies here"; what each method is and why it works in general is in docs/valuation-guide.json)."""
+    import valuation_extra as VX
+    lens = VX.fit_reason(name, F, out)
+    if lens:
+        return lens
     st = out.get('stage') or {}
     m = st.get('metrics') or {}
     rev, oi, ni, eps, g0 = F.get('revenue'), F.get('oi'), F.get('ni'), F.get('eps'), F.get('g0')
@@ -584,7 +589,11 @@ def appendix(M, out, F, W, rates):
         ('Other claims (minority interest, preferred)', 'claims', money, 'main site'), ('Equity', 'equity', money, 'SEC XBRL frames'),
         ('Goodwill', 'goodwill', money, 'SEC XBRL frames'), ('Intangibles', 'intangibles', money, 'SEC XBRL frames'),
         ('Market value', 'mcap', money, 'price × diluted shares'), ('Enterprise value', 'ev', money, 'market value + debt − cash + claims'),
-        ('Revenue growth', 'g0', pc, 'last four quarters vs the four before (main site revenue history)')) if fin(F.get(k))]
+        ('Revenue growth', 'g0', pc, 'last four quarters vs the four before (main site revenue history)'),
+        ('Total assets', 'assets', money, 'SEC XBRL frames (Assets)'), ('Current assets', 'ca', money, 'SEC XBRL frames (AssetsCurrent)'),
+        ('Total liabilities', 'liab', money, 'SEC XBRL frames (Liabilities)'), ('PP&E, net', 'ppe', money, 'SEC XBRL frames (PropertyPlantAndEquipmentNet)'),
+        ('Dividends paid, latest year', 'div', money, 'SEC XBRL frames (PaymentsOfDividends)'),
+        ('Buybacks, latest year', 'buyback', money, 'SEC XBRL frames (PaymentsForRepurchaseOfCommonStock)')) if fin(F.get(k))]
     glob = [['Equity risk premium', pc(M.ERP), 'a fixed assumption (long-run US average, not estimated here)'],
             ['10-year Treasury', pc((rates.get('treasury_10y') or 0) / 100, 2) if fin(rates.get('treasury_10y')) else '—', 'FRED DGS10 (via app/debt.py)'],
             ['5-year Treasury', pc((rates.get('treasury_5y') or 0) / 100, 2) if fin(rates.get('treasury_5y')) else '—', 'US Treasury yield curve (app/debt.py)'],
@@ -593,7 +602,8 @@ def appendix(M, out, F, W, rates):
             ['Monte Carlo scenarios', num(M.MC_N), 'seeded by ticker (reproducible)'],
             ['Stage premium (exit-multiple method)', pc(STAGE_PREMIUM, 0), 'an assumption: the hurdle growth investors add to the CAPM rate'],
             ['Liquidation haircut', f'{1 - LIQ_HAIRCUT:.0%}', 'an assumption for a forced sale of tangible assets'],
-            ['Gordon growth cap', f'0–{G_CAP:.0%}', 'an assumption']]
+            ['Gordon growth cap', f'0–{G_CAP:.0%}', 'an assumption'],
+            ["Moody's Aaa corporate yield", f'{rates["aaa"]:.2f}%' if fin(rates.get('aaa')) else '—', 'FRED DAAA (via app/debt.py): the Graham formula\'s Y']]
     st = out.get('stage') or {}
     wts = {u['method']: u['weight'] for u in st.get('used') or []}
     methods, seen = [], set()
@@ -603,7 +613,10 @@ def appendix(M, out, F, W, rates):
         methods.append({'method': b['method'], 'low': b.get('low'), 'point': b.get('point'), 'high': b.get('high'), 'weight': wts.get(b['method']), **c,
                         'fit': fit_reason(b['method'], F, out)})
     kind = F.get('kind') if F.get('kind') in CANDIDATES else 'industrial'
-    not_used = [{'method': m, 'why': WHY_NOT.get(m, 'not enough data')} for m in CANDIDATES[kind] if m not in seen]
+    import valuation_extra as VX
+    lens = VX.CANDIDATES if kind == 'industrial' else [m for m in VX.CANDIDATES if m in ('Graham number', 'Graham formula (revised)', 'Lynch fair P/E (PEGY)', 'H-model dividend discount')]
+    why = {**WHY_NOT, **VX.WHY_NOT, **(out.get('lens_why') or {})}
+    not_used = [{'method': m, 'why': why.get(m, 'not enough data')} for m in CANDIDATES[kind] + lens if m not in seen]
     out['appendix'] = {'inputs': inputs, 'assumptions': glob, 'wacc': _wacc_steps(W), 'methods': methods, 'not_used': not_used,
                        'stage': {'key': st.get('stage'), 'label': st.get('label'), 'why': st.get('why'), 'rule': st.get('rule'),
                                  'weights': [[m['method'], m['weight']] for m in st.get('methods') or []

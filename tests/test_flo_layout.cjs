@@ -144,10 +144,16 @@ eq(expand.getAttribute('aria-label'),'Expand Flo window','restore button label')
 const half1=rootEl.querySelector('.flo-h1'),half2=rootEl.querySelector('.flo-h2');
 const rect=panel.getBoundingClientRect();
 ok(parseFloat(half1.style.left)<rect.left,'first mascot stays outside lesson text on desktop');
-ok(parseFloat(half2.style.left)<rect.left,'second mascot stays outside lesson text on desktop');
+ok(parseFloat(half2.style.left)>rect.left+rect.width/2,'second mascot sits on the bottom-right corner on desktop');
+ok(parseFloat(half2.style.left)+parseFloat(half2.style.width)<=1280,'bottom-right mascot stays inside the viewport');
+ok(parseFloat(half2.style.left)>=rect.right-72,'bottom-right mascot stays in the room the composer keeps free');
 ok(parseFloat(half1.style.top)>=0,'top mascot never disappears above a short viewport');
-ok(parseFloat(half2.style.top)+parseFloat(half2.style.height)<rect.bottom,
-  'bottom mascot stays above form and panel edge');
+ok(parseFloat(half2.style.top)>rect.top+rect.height/2,'second mascot at the bottom');
+ok(parseFloat(half2.style.top)+parseFloat(half2.style.height)<=800,
+  'bottom mascot stays above the viewport edge');
+ok(css.includes('@media(min-width:561px){.flo-form{padding-right:72px}}'),'composer keeps the bottom-right corner free for the mascot');
+ok(css.includes('.flo-chips{display:flex;flex-direction:column;flex-wrap:nowrap'),'more tools stack under the main row, never beside it');
+ok(css.includes('.flo-chips .flo-modes-main{flex:0 0 auto}'),'main row keeps its own height in the column');
 ok(css.includes('.flo-panel.flo-expanded~.flo-half{opacity:.35;pointer-events:none}'),
   'expanded Flo keeps animations faint and non-intercepting');
 const controls=rootEl.querySelector('.flo-head-controls');

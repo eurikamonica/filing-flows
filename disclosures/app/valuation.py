@@ -87,6 +87,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import base_rates as BR
 import valuation_methods as VMx  # noqa: E402
+import valuation_extra as VX  # noqa: E402  (more lenses and the implied return, app/valuation_extra.py)
 import markov  # noqa: E402  (regime-switching Monte Carlo, app/markov.py)
 
 ERP = 0.045                 # equity risk premium: a fixed, stated assumption (not estimated here)
@@ -119,6 +120,7 @@ CONCEPTS = ([('us-gaap', c, 'USD', 'q') for c in REVENUE] + [
     ('us-gaap', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest', 'USD', 'a'),
     ('us-gaap', 'GainsLossesOnSalesOfInvestmentRealEstate', 'USD', 'a'),
     ('us-gaap', 'PaymentsOfDividends', 'USD', 'a'),
+    ('us-gaap', 'PaymentsOfDividendsCommonStock', 'USD', 'a'),
     ('us-gaap', 'PaymentsForRepurchaseOfCommonStock', 'USD', 'a'),
     ('us-gaap', 'ShareBasedCompensation', 'USD', 'a'),
     ('us-gaap', 'AllocatedShareBasedCompensationExpense', 'USD', 'a'),
@@ -127,6 +129,11 @@ CONCEPTS = ([('us-gaap', c, 'USD', 'q') for c in REVENUE] + [
     ('us-gaap', 'IntangibleAssetsNetExcludingGoodwill', 'USD', 'i'),
     ('us-gaap', 'CashAndCashEquivalentsAtCarryingValue', 'USD', 'i'),
     ('us-gaap', 'LongTermDebt', 'USD', 'i'),
+    ('us-gaap', 'Assets', 'USD', 'i'),                       # the lenses (app/valuation_extra.py): net current assets,
+    ('us-gaap', 'AssetsCurrent', 'USD', 'i'),                # earnings power (PP&E for growth capex)
+    ('us-gaap', 'Liabilities', 'USD', 'i'),
+    ('us-gaap', 'LiabilitiesCurrent', 'USD', 'i'),
+    ('us-gaap', 'PropertyPlantAndEquipmentNet', 'USD', 'i'),
 ])
 BANK_SIC = ('602', '603', '6712', '6111', '6153')
 INSURER_SIC = ('631', '632', '633', '635', '636', '639', '6411')
@@ -632,7 +639,8 @@ def panel(root, periods):
         Q[key] = quarterly(root, c, periods, additive=key != 'sh')
     inst, eq_q = {}, {}
     for key, c in (('equity', 'StockholdersEquity'), ('goodwill', 'Goodwill'), ('intang', 'IntangibleAssetsNetExcludingGoodwill'),
-                   ('cash', 'CashAndCashEquivalentsAtCarryingValue'), ('ltd', 'LongTermDebt')):
+                   ('cash', 'CashAndCashEquivalentsAtCarryingValue'), ('ltd', 'LongTermDebt'), ('assets', 'Assets'),
+                   ('ca', 'AssetsCurrent'), ('liab', 'Liabilities'), ('cl', 'LiabilitiesCurrent'), ('ppe', 'PropertyPlantAndEquipmentNet')):
         latest = {}
         for k, p in enumerate(periods):
             for cik, v in frame(root, c, p + 'I').items():
@@ -645,7 +653,7 @@ def panel(root, periods):
     for key, cs in (('da', ['DepreciationDepletionAndAmortization', 'DepreciationAndAmortization']),
                     ('capex', ['PaymentsToAcquirePropertyPlantAndEquipment']), ('tax', ['IncomeTaxExpenseBenefit']),
                     ('pretax', ['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']),
-                    ('re_gains', ['GainsLossesOnSalesOfInvestmentRealEstate']), ('div', ['PaymentsOfDividends']),
+                    ('re_gains', ['GainsLossesOnSalesOfInvestmentRealEstate']), ('div', ['PaymentsOfDividends', 'PaymentsOfDividendsCommonStock']),
                     ('buyback', ['PaymentsForRepurchaseOfCommonStock']),
                     ('sbc', ['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense'])):
         m = {}
@@ -953,7 +961,9 @@ def company_inputs(cik, meta, P, slim, debt_rec, cons_c, price, periods):
          'industry': meta.get('industry'), 'sic': meta.get('sic'), 'price': price}
     F['revenue'] = pick('revenue', ('main site (trailing)', V.get('revenue')), ('frames, 4 quarters', ttm(revs)), ('debt module', snap.get('revenue')))
     F['oi'] = pick('oi', ('main site (trailing)', V.get('oi')), ('frames, 4 quarters', ttm(q.get('oi') or [])), ('debt module', snap.get('operating_income')))
-    F['ni'] = pick('ni', ('frames, 4 quarters', ttm(q.get('ni') or [])), ('debt module', snap.get('net_income')))
+    ni_site = V['pretax'] - V['tax'] if fin(V.get('pretax')) and fin(V.get('tax')) else None
+    F['ni'] = pick('ni', ('frames, 4 quarters', ttm(q.get('ni') or [])), ('main site (pretax − tax)', ni_site),
+                   ('debt module', snap.get('net_income')))
     F['eps'] = pick('eps', ('frames, 4 quarters', ttm(q.get('eps') or [])))
     F['da'] = pick('da', ('main site (trailing)', V.get('da')), ('debt module', snap.get('da')), ('frames, latest year', (ann.get('da') or (None,))[0]))
     F['capex'] = pick('capex', ('main site (trailing)', V.get('capex')), ('debt module', abs(snap['capex']) if fin(snap.get('capex')) else None),
@@ -990,6 +1000,9 @@ def company_inputs(cik, meta, P, slim, debt_rec, cons_c, price, periods):
         F['shares_note'] = ('Shares: the only counts on file are years old (' + ', '.join(f'{v:,.0f} at {d}' for v, d in stale.items())
                             + '; the filer no longer tags them); per-share values are left out.')
     F['shares_implied'] = implied
+    if not fin(F['eps']) and fin(F['ni']) and fin(F['shares']) and F['shares'] > 0:
+        F['eps'] = F['ni'] / F['shares']                    # four quarters of diluted EPS are not always all tagged
+        src['eps'] = 'net income ÷ diluted shares'
     if src.get('shares') is None:
         src.pop('shares', None)
     an = (debt_rec or {}).get('analysis') or {}
@@ -1001,6 +1014,13 @@ def company_inputs(cik, meta, P, slim, debt_rec, cons_c, price, periods):
     F['equity'] = pick('equity', ('debt module', snap.get('equity')), ('frames', (inst.get('equity') or (None,))[0]))
     F['goodwill'] = (inst.get('goodwill') or (0.0,))[0] or 0.0
     F['intangibles'] = (inst.get('intang') or (0.0,))[0] or 0.0
+    for key in ('assets', 'ca', 'liab', 'cl', 'ppe'):          # the lenses (app/valuation_extra.py)
+        F[key] = (inst.get(key) or (None,))[0]
+    if not fin(F['liab']) and fin(F['assets']) and fin(F['equity']):
+        F['liab'] = F['assets'] - F['equity'] - (F['claims'] or 0)
+        src['liab'] = 'frames: total assets − equity − other claims'
+    F['div'] = (ann.get('div') or (None,))[0]
+    F['buyback'] = (ann.get('buyback') or (None,))[0]
     F['mcap'] = price * F['shares'] if fin(price) and fin(F['shares']) else None
     F['ev'] = F['mcap'] + F['debt'] - F['cash'] + F['claims'] if fin(F['mcap']) else None
     F['ebitda'] = F['oi'] + F['da'] if fin(F['oi']) and fin(F['da']) else None
@@ -1219,11 +1239,16 @@ def analyse(F, ctx):
     if ctx.get('br'):
         BR.enrich(sys.modules[__name__], out, F, base if 'dcf' in out else None, W, ctx)
     out.pop('_regs', None)
+    # ---- more lenses and the return today's price implies (app/valuation_extra.py)
+    try:
+        VX.extra(VMx, sys.modules[__name__], F, W, out, ctx, base if 'dcf' in out else None)
+    except Exception as e:                                  # noqa: BLE001 — a lens never stops the page
+        out['notes'].append(f'More lenses: {str(e)[:120]}')
     # ---- the appendix: inputs and sources, assumptions, the WACC and every method's algebra (app/valuation_methods.py)
     VMx.appendix(sys.modules[__name__], out, F, W, ctx.get('rates') or {})
     # ---- headline numbers for the index
-    lows = [b['low'] for b in out['football'] if fin(b.get('low')) and b['method'] != '52-week trading range']
-    highs = [b['high'] for b in out['football'] if fin(b.get('high')) and b['method'] != '52-week trading range']
+    lows = [b['low'] for b in out['football'] if fin(b.get('low')) and b['method'] != '52-week trading range' and not b.get('lens')]
+    highs = [b['high'] for b in out['football'] if fin(b.get('high')) and b['method'] != '52-week trading range' and not b.get('lens')]
     out['range'] = [min(lows), max(highs)] if lows and highs else None
     return out
 
@@ -1342,7 +1367,9 @@ INDEX_FIELDS = ['cik', 'ticker', 'name', 'sector', 'kind', 'price', 'mcap', 'wac
                 'req_rev_g', 'target_growth', 'p_target', 'pm_eps_strike', 'pm_req_eps_g', 'p_pm_eps_base', 'pm_beat_prob', 'p_pm_price',
                 'ov_mean', 'ov_p10', 'ov_p90', 'ov_p_above', 'comb_ret', 'comb_lo', 'comb_hi', 'sens_driver', 'sens_swing', 'river_pe_pct',
                 # the regime-switching Monte Carlo (app/markov.py)
-                'mk_p50', 'mk_p_above', 'mk_state']
+                'mk_p50', 'mk_p_above', 'mk_state',
+                # more lenses and the implied return (app/valuation_extra.py)
+                'icc', 'icc_spread', 'epv_value', 'epv_gap', 'graham_value', 'graham_gap', 'ncav_value', 'lynch_value']
 
 
 def outside_fields(A):
@@ -1383,7 +1410,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
     rates_doc = _load_dir(debt, 'rates.json', {}) or {}
     mk = debt_ix.get('market') or {}
     rates = {'treasury_1y': as_pct(mk.get('treasury_1y')), 'treasury_5y': as_pct(mk.get('treasury_5y')),
-             'treasury_10y': as_pct(_rate10(rates_doc) or mk.get('treasury_10y'))}
+             'treasury_10y': as_pct(_rate10(rates_doc) or mk.get('treasury_10y')), 'aaa': _rate_of(rates_doc, 'DAAA')}
     cons_ix = _load_dir(consensus, 'index.json', {}) or {}
     CF = cons_ix.get('fields') or []
     cons_rows = {str(r[CF.index('cik')]): dict(zip(CF, r)) for r in cons_ix.get('rows') or [] if 'cik' in CF and r[CF.index('cik')]}
@@ -1470,6 +1497,7 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
             if regs[k]:
                 regs[k]['points'] = [[round(p[0], 4), round(p[1], 3), p[2]] for p in xs]
     regs['rule40'] = VMx.rule40_fit(rows_all)          # ln(EV/Sales) on growth + FCF margin, every non-financial company
+    regs['multifactor'] = VX.multifactor_fit(rows_all)  # ln(EV/Sales) on growth, margin, size and sector (app/valuation_extra.py)
     # the regime model's prior: transitions, regime growth and margin behaviour across every covered company, by size
     mk_prior = markov.panel_prior({'years': r.get('years'), 'mcap': r.get('mcap')} for r in rows_all)
     write_json(pub / 'markov.json', clean({'generated_at': now(), 'thresholds': {'high': markov.THRESH_HIGH, 'decline': markov.THRESH_LOW},
@@ -1520,12 +1548,23 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
         row.update({'mk_p50': mk.get('p50'), 'mk_p_above': mk.get('p_above'),
                     'mk_state': markov.STATES[mk['model']['start']] if mk.get('model') else None})
         row['dcf_gap'] = row['dcf_value'] / row['price'] - 1 if fin(row['dcf_value']) and fin(row['price']) and row['price'] > 0 else None
+        ir, lens = A.get('implied_return') or {}, {b['method']: b.get('point') for b in A['football'] if b.get('lens')}
+        gap = lambda v: v / row['price'] - 1 if fin(v) and fin(row['price']) and row['price'] > 0 else None
+        row.update({'icc': ir.get('median'), 'icc_spread': ir.get('spread'), 'epv_value': lens.get('Earnings power value (EPV)'),
+                    'graham_value': lens.get('Graham number'), 'ncav_value': lens.get('Net current asset value (net-net)'),
+                    'lynch_value': lens.get('Lynch fair P/E (PEGY)')})
+        row['epv_gap'], row['graham_gap'] = gap(row['epv_value']), gap(row['graham_value'])
         row.update(outside_fields(A))
         index.append(row)
     index.sort(key=lambda r: -(r['mcap'] or 0))
     write_json(pub / 'index.json', clean({'generated_at': now(), 'fields': INDEX_FIELDS, 'rows': [[r.get(k) for k in INDEX_FIELDS] for r in index],
                                           'assumptions': {'erp': ERP, 'terminal_growth': TERM_G, 'years': YEARS, 'mc_scenarios': MC_N,
                                                           'treasury_10y': rates.get('treasury_10y'), 'treasury_5y': rates.get('treasury_5y')}}))
+    try:                                                    # the market as a whole (app/valuation_extra.py)
+        mrows = [{'mcap': r.get('mcap'), 'icc': r.get('icc'), 'ni': (Fs.get(str(r['cik'])) or {}).get('ni')} for r in index]
+        write_json(pub / 'market.json', clean(VX.market_view(root, mrows, rates, now())))
+    except Exception as e:                                  # noqa: BLE001
+        print('valuation market view:', str(e)[:160], flush=True)
     write_json(pub / 'peers.json', clean({'generated_at': now(), 'metrics': {m: {g: {'n': len(xs), 'p25': pctile([v for _, v in xs], .25),
                                                                                        'p50': pctile([v for _, v in xs], .5), 'p75': pctile([v for _, v in xs], .75)}
                                                                                    for g, xs in b.items()} for m, b in buckets.items()}}))
@@ -1554,6 +1593,17 @@ def build(root, prices=None, debt=None, consensus=None, today=None, verbose=True
 def as_pct(v):
     """A rate in percent: app/debt.py keeps decimals (0.0425) in index.json and FRED's percent (4.25) in rates.json."""
     return (v * 100 if abs(v) < 0.3 else v) if fin(v) else None
+
+
+def _rate_of(rates_doc, sid):
+    """The latest value (%) of one FRED series in app/debt.py's rates.json (series → {daily | monthly: [[date, v]]})."""
+    s = ((rates_doc or {}).get('series') or {}).get(sid) if isinstance((rates_doc or {}).get('series'), dict) else None
+    if isinstance(s, dict):
+        for k in ('daily', 'monthly', 'data'):
+            rows = [r for r in s.get(k) or [] if isinstance(r, (list, tuple)) and len(r) > 1 and fin(r[1])]
+            if rows:
+                return rows[-1][1]
+    return None
 
 
 def _rate10(rates_doc):
@@ -1722,6 +1772,15 @@ def collect(root, site_url, minutes=20.0, limit=1500, hub_prices=HUB_PRICES):
             out['prices'] = collect_prices(root, hub_prices, limit=limit, minutes=min(6.0, minutes / 3), site_url=site_url)
         except Exception as e:                              # noqa: BLE001
             out['prices'] = {'error': str(e)[:160]}
+    try:                                                    # FRED: the Buffett indicator and the real 10-year yield (market.json)
+        def _get(url):
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) FilingFlows/1.0 (public data reader)',
+                                                       'Accept': 'text/csv,application/json;q=0.9,*/*;q=0.5'})
+            with urllib.request.urlopen(req, timeout=40) as r:
+                return r.read().decode('utf-8', 'replace')
+        out['fred'] = VX.fetch_fred(root, _get)
+    except Exception as e:                                  # noqa: BLE001
+        out['fred'] = {'error': str(e)[:160]}
     if '@' in ua:
         out['frames'] = collect_frames(root, Http(ua), deadline=deadline)
     else:

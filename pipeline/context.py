@@ -116,7 +116,8 @@ def known(load, e, day=None, quote=None, with_headlines=True, skip_8k=False, log
     ev = _hub(load, "events8k.json")
     mine = [r for r in ev.get("rows", []) if (str(r.get("cik") or "") == cik or _canon(r.get("ticker")) == tk) and r.get("filed", "") >= _ago(day, 2)]
     for r in ([] if skip_8k else mine[:2]):                  # skip_8k: the post already quotes today's 8-K
-        what = f"guidance {r['guidance']}" if r.get("guidance") in ("raised", "lowered", "withdrawn") else r.get("label") or "an 8-K"
+        what = (r.get("label") if str(r.get("label") or "").startswith("guidance ") else f"guidance {r['guidance']}") \
+            if r.get("guidance") in ("raised", "lowered", "withdrawn", "mixed", "narrowed", "widened", "initiated") else r.get("label") or "an 8-K"
         when = r.get("filed") + (f" {r['accepted'][11:16]} ET" if len(r.get("accepted") or "") >= 16 else "")
         q = r.get("guidance_quote") or r.get("quote") or r.get("headline") or ""
         lines.append(f"- 8-K filed {when}, items {', '.join(x for x in r.get('items') or [] if x != '9.01') or '9.01'} ({what})"

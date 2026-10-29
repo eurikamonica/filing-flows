@@ -49,6 +49,8 @@ class Market(unittest.TestCase):
         self.assertGreater(st['r1y'], 0)
         self.assertEqual(st['max_dd'], 0.0)
         self.assertAlmostEqual(st['dollar_vol'], sum(x[1] * 1000 for x in w[-13:]) / 13 / 5)
+        w[0][2] = 0.0                                                    # a zero adjusted close in an old bar (it stopped the build)
+        self.assertEqual(M.market_stats(w)['max_dd'], 0.0)
 
     def test_a_shorter_history_is_fetched_again_first(self):
         import datetime as dt
