@@ -1,0 +1,68 @@
+# Workforce (Disclosures → Workforce, and the "Workforce" view of each company page).
+# Every day: the SEC's filing list of the site's companies, largest first, and the main document of each of their last five
+# 10-Ks, read once each for the headcount the company states ("As of December 31, 2025, we had approximately 1,576,000
+# employees"); then public/ is rebuilt by app/employees.py: revenue and net income per employee against the industry, and
+# hiring or layoffs year on year. The first runs fill the cache (each run reads what fits in its minutes).
+# Kept on the branch "research-employees" (one commit, force-pushed); scan.yml publishes public/ at
+# disclosures/data/research/employees/.
+name: Research — workforce
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for reading 10-Ks'
+        default: '25'
+  schedule:
+    - cron: '41 9 * * *'           # every day, 09:41 UTC
+permissions:
+  contents: write
+concurrency:
+  group: research-employees
+  cancel-in-progress: false
+jobs:
+  employees:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/docs/data/cache/frames/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The data branch and the site's companies
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" research-employees >/dev/null; then
+            git clone --quiet --depth 1 --branch research-employees "$url" emp
+          else
+            mkdir emp && git -C emp init --quiet -b research-employees && git -C emp remote add origin "$url"
+          fi
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          mkdir -p site && curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
+      - name: Read 10-Ks
+        timeout-minutes: 60
+        run: python disclosures/app/employees.py collect --root emp --universe site/index.json --minutes "${{ inputs.minutes || '25' }}"
+      - name: Build public/
+        timeout-minutes: 15
+        run: python disclosures/app/employees.py build --root emp --universe site/index.json --frames-root disclosures/docs/data
+      - name: Save to the branch (one commit, force-pushed)
+        if: always()
+        run: |
+          cd emp
+          [ -d cache ] || exit 0
+          printf '%s\n' '# research-employees (data only)' '' 'Headcounts read from 10-Ks (cache/found.json, by accession, with the sentence), the filing lists' \
+            '(cache/subs.json) and the files the site publishes (public/), kept by .github/workflows/research-employees.yml on main.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "employees $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "employees $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:research-employees && break; sleep $((i * 10)); done
+          [ -f public/status.json ] && python -c "import json; print('::notice::' + json.dumps(json.load(open('public/status.json')))[:900])" || true
