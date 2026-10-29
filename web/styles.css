@@ -901,3 +901,57 @@ main.wrap { position: relative; }
 .notes .gchg.cup { color: #0b7a75; }
 .notes .gchg.cdn { color: #c2410c; }
 .notes .gchg.cnt { color: #6b6a80; }
+
+/* the guidance record under the guidance view (web/guidance.js recordHTML): hit rate, dots against the range, moves */
+.guide-record { margin: 14px 0 6px; padding: 14px 16px; border: 1px solid #ddd8f2; border-radius: 10px; background: #fcfbff; }
+.guide-record .gr-head { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; margin-bottom: 8px; }
+.guide-record .gr-head h3 { margin: 0; font-size: 18px; }
+.guide-record .gr-metric { padding: 10px 0 4px; border-top: 1px solid #ece8f8; }
+.guide-record .gr-metric h4 { margin: 0 0 4px; font-size: 15px; }
+.guide-record .gr-sum { margin: 2px 0; }
+.guide-record .gr-moves-sum { margin: 2px 0 6px; color: #3d3866; }
+.guide-record .gr-strip { width: 100%; max-width: 560px; height: auto; display: block; margin: 6px 0 8px; }
+.guide-record .gr-strip .gr-lab { font-size: 12px; fill: #3d3c39; }
+.guide-record .gr-strip .gr-ax { font-size: 11px; fill: #77756f; }
+.guide-record .table-wrap { overflow-x: auto; max-width: 100%; }
+.guide-record .gr-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.guide-record .gr-table th, .guide-record .gr-table td { padding: 6px 8px; border-bottom: 1px solid #efedf7; text-align: left; vertical-align: top; }
+.guide-record .gr-table .num { text-align: right; white-space: nowrap; }
+.guide-record .gr-moves { line-height: 1.6; }
+.guide-record .gr-move { white-space: nowrap; }
+.guide-record .gr-move.raised { color: #33269a; font-weight: 600; }
+.guide-record .gr-move.lowered { color: #8f2163; font-weight: 600; }
+.guide-record .gr-arrow { color: #9a96b5; margin: 0 6px; }
+.guide-record .gr-out { font-weight: 600; white-space: nowrap; }
+.guide-record .gr-out.above, .guide-record .gr-out.met { color: #0b7a75; }
+.guide-record .gr-out.within { color: #3a2a8c; }
+.guide-record .gr-out.below { color: #c2410c; }
+.guide-record .gr-note { font-size: 12.5px; margin: 8px 0 0; }
+.notes .gr-note-line { padding: 6px 8px; border-left: 3px solid #8f84c9; background: #f6f4fd; border-radius: 4px; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .guide-record { background: #1d1b2b; border-color: #3a3560; }
+  :root:not([data-theme="light"]) .guide-record .gr-metric { border-top-color: #2e2a48; }
+  :root:not([data-theme="light"]) .guide-record .gr-table th, :root:not([data-theme="light"]) .guide-record .gr-table td { border-bottom-color: #2e2a48; }
+  :root:not([data-theme="light"]) .guide-record .gr-strip .gr-lab { fill: #d8d6e8; }
+  :root:not([data-theme="light"]) .guide-record .gr-moves-sum { color: #cfc6ff; }
+  :root:not([data-theme="light"]) .notes .gr-note-line { background: #24213a; }
+}
+:root[data-theme="dark"] .guide-record { background: #1d1b2b; border-color: #3a3560; }
+:root[data-theme="dark"] .guide-record .gr-metric { border-top-color: #2e2a48; }
+:root[data-theme="dark"] .guide-record .gr-table th, :root[data-theme="dark"] .guide-record .gr-table td { border-bottom-color: #2e2a48; }
+:root[data-theme="dark"] .guide-record .gr-strip .gr-lab { fill: #d8d6e8; }
+:root[data-theme="dark"] .guide-record .gr-moves-sum { color: #cfc6ff; }
+:root[data-theme="dark"] .notes .gr-note-line { background: #24213a; }
+.guide-record .gr-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
+.guide-record .gr-chip { padding: 3px 9px; border-radius: 999px; background: #f1eefb; color: #3d3866; font-size: 13px; }
+.guide-record .gr-chip.good { background: #3a2a8c; color: #fff; }
+.guide-record .gr-chip.above { color: #0b7a75; }
+.guide-record .gr-chip.within { color: #3a2a8c; }
+.guide-record .gr-chip.below { color: #c2410c; }
+:root[data-theme="dark"] .guide-record .gr-chip:not(.good) { background: #2a2644; color: #d8d3f5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .guide-record .gr-chip:not(.good) { background: #2a2644; color: #d8d3f5; } }
+.guide-record details.gr-metric > summary { list-style: none; cursor: pointer; }
+.guide-record details.gr-metric > summary::-webkit-details-marker { display: none; }
+.guide-record details.gr-metric > summary h4::before { content: '▸ '; color: #8f84c9; }
+.guide-record details.gr-metric[open] > summary h4::before { content: '▾ '; }
+.guide-record .gr-strip .gr-out-lab { font-weight: 600; }

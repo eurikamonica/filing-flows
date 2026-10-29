@@ -159,6 +159,12 @@ def holders_index():
             t = clean_ticker(t)
             if t:
                 base(t)['guidance'] = g
+        # every release's guidance kept (app/guidance_history.py): the record of moves and the hit rate on the company page
+        import guidance_history as GH
+        for t, h in GH.publish(DATA).items():
+            t = clean_ticker(t)
+            if t:
+                base(t)['guidance_history'] = h
     except Exception as exc:
         print(f'::warning::holders index: 8-K events left out ({exc})')
     try:
@@ -197,7 +203,8 @@ def holders_index():
         v['officials'].sort(key=lambda x: (x.get('date') or ''), reverse=True)
         v['counts'] = {'institutional': len(v['institutional']), 'officials': len(v['officials']), 'insiders': len(v.get('insiders', [])),
                        'stakes': len(v.get('stakes', [])), 'form144': len(v.get('form144', [])), 'short': len(v.get('short', [])),
-                       'events8k': len(v.get('events8k', [])), 'news': len(v.get('news', [])), 'guidance': len((v.get('guidance') or {}).get('items', []))}
+                       'events8k': len(v.get('events8k', [])), 'news': len(v.get('news', [])), 'guidance': len((v.get('guidance') or {}).get('items', [])),
+                       'guidance_history': len((v.get('guidance_history') or {}).get('releases', []))}
     return out
 
 

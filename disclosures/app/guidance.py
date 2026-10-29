@@ -286,11 +286,11 @@ MONEY = {'ebitda', 'fcf', 'ocf', 'capex', 'opex', 'gross_profit', 'operating_inc
          'sbc', 'da', 'ffo', 'revenue'}
 PCT = {'gross_margin', 'ebitda_margin', 'operating_margin', 'net_interest_margin', 'tax_rate'}
 PS = {'eps', 'ffo_ps'}
-OWN_WORDS = {'total', 'net', 'consolidated', 'gaap', 'non-gaap', 'adjusted', 'full', 'year', 'full-year', 'fiscal', 'quarter', 'first', 'second',
-             'third', 'fourth', 'company', 'the', 'our', 'its', 'we', 'and', 'of', 'for', 'annual', 'expected', 'reported', 'operating',
-             'organic', 'core', 'comparable', 'non', 'guidance', 'outlook', 'is', 'are', 'expects', 'expect', 'to', 'be', 'a', 'in', 'with',
-             'revenue', 'sales', 'now', 'its', 'calendar', 'fy', 'range', 'raises', 'raising', 'increases', 'increasing', 'lowers', 'lowering',
-             'reaffirms', 'updated', 'updates', 'initial', 'provides', 'property', 'tenant', 'billings', 'diluted', 'gross', 'all', 'both', 'it'}
+# words that may stand between a business line's name and its metric without being a name themselves
+# ("Full-Year 2026 Total Revenue", "Q4 Consolidated Net Sales"); a verb or any other lower-case word ends the scan
+MOD_WORDS = {'total', 'net', 'consolidated', 'gaap', 'non-gaap', 'adjusted', 'full', 'year', 'full-year', 'fiscal', 'quarter', 'first',
+             'second', 'third', 'fourth', 'annual', 'reported', 'operating', 'core', 'comparable', 'non', 'calendar', 'fy', 'diluted',
+             'gross', 'quarterly', 'the', 'its', 'our', 'their', 'company', 'company’s', "company's", 'consolidated'}
 
 
 def mentions(text):
@@ -320,7 +320,7 @@ def basis(text):
 
 
 ORD = {'first': 1, 'second': 2, 'third': 3, 'fourth': 4, '1st': 1, '2nd': 2, '3rd': 3, '4th': 4}
-PER_Q = re.compile(r"(?i)\b(?:(?P<w>first|second|third|fourth|1st|2nd|3rd|4th)[- ]quarter|q(?P<n>[1-4])|(?P<n2>[1-4])q)(?:\s+of)?(?:\s+(?P<f>fiscal(?: year)?|fy))?\s*['’]?"
+PER_Q = re.compile(r"(?i)\b(?:(?P<w>first|second|third|fourth|1st|2nd|3rd|4th)[- ]quarter|q(?P<n>[1-4])(?!\s+(?:Holdings|Inc|Corp|Corporation|Group|Ltd|LLC|Technologies|Systems|Capital)\b)|(?P<n2>[1-4])q)(?:\s+of)?(?:\s+(?P<f>fiscal(?: year)?|fy))?\s*['’]?"
                    r"(?P<y>\d{4}|\d{2}(?!\d|%|\.\d|\s*(?:million|billion|percent)))?\b")
 PER_FY = re.compile(r"(?i)\b(?:(?P<w>full[- ]year|fiscal(?: year)?|fy|calendar(?: year)?|annual|year)(?:\s+of)?\s*['’]?(?P<y>\d{4}|\d{2}(?!\d|%|\.\d))\b|"
                     r"(?P<fy0>full[- ]year|fiscal year|for the year|annual|year[- ]end))")
@@ -382,7 +382,8 @@ def period(text, default=None):
     ps = _periods(text)
     if not ps:
         return default
-    return _merge(ps[0][1], default)
+    dated = [x for x in ps if re.search(r'\d{4}', x[1])]          # "Q2 … the fourth quarter of 2026": the one with its year
+    return _merge((dated or ps)[0][1], default)
 
 
 def period_near(clause, pre, sentence, default=None):
@@ -440,12 +441,13 @@ def _scope(s, sp):
     if re.search(r'(?i)\bsegment\b|\bdivision\b|\bbusiness\b|\bfrom the\b|\bfrom\b\s*$|\bincluding\b', pre[-30:]):
         return 'segment'
     # a name in capitals right before the metric ("Data Center revenue", "Employer Services revenue"); the scan stops at
-    # the first lower-case word or change verb ("Hayward now expects net sales" is the company's own)
+    # the first other word: a verb or a lower-case word ("AMD expects revenue", "Hayward now expects net sales" are the
+    # company's own), a possessive ("AMD's revenue") or the start of the sentence
     for w in reversed(re.findall(r"[\w&'’.-]+", pre)[-4:]):
         lw = w.lower().strip('.')
-        if lw in OWN_WORDS or re.match(r'^(?:\d{2,4}|fy\d*|q[1-4]|\(?\d\)?)$', lw):
+        if lw in MOD_WORDS or re.match(r'^(?:\d{2,4}|fy\d*|q[1-4]|\(?\d\)?)$', lw):
             continue
-        if not w[:1].isupper() or VERB_ANY.fullmatch(w):
+        if not w[:1].isupper() or VERB_ANY.fullmatch(w) or re.search(r"['’]s$", w):
             return ''
         return 'segment'
     return ''
@@ -660,6 +662,10 @@ def _reported(paras):
         if m and m.group('y'):
             n = ORD.get((m.group('w') or '').lower()) or int(m.group('n') or m.group('n2'))
             return (_yr(m.group('y')), n, bool(m.group('f')))
+        # "fourth quarter and full year 2023 results", "fourth quarter and fiscal 2026 results"
+        m = re.search(r'(?i)\b(first|second|third|fourth)[- ]quarter and (?:the )?(?:full[- ]year|fiscal(?: year)?|full fiscal year|year[- ]end)\s*(?:of\s+)?(?:fiscal\s+)?(20\d\d)\b', p)
+        if m:
+            return (int(m.group(2)), ORD[m.group(1).lower()], bool(re.search(r'(?i)fiscal', m.group(0))))
     return None
 
 
@@ -729,6 +735,15 @@ def read(paras, limit=1500):
                 carry = (sp[0][2], sp[0][3], sp[0][4])
             elif in_table and got:
                 carry = None
+    # a quarter named without its year belongs to the year of the quarter just reported: the same quarter or a later one
+    # this year, an earlier number next year ("the first quarter" in a fourth-quarter release)
+    if reported:
+        ry, rq, rfis = reported
+        for it in items:
+            m = re.match(r'^Q([1-4])( FY)?$', it.get('period') or '')
+            if m:
+                n = int(m.group(1))
+                it['period'] = f"Q{n} {'FY' if (m.group(2) or rfis) else ''}{ry + 1 if n < rq else ry}"
     years = [int(m.group(1)) for it in items for m in [re.match(r'^FY(\d{4})$', it.get('period') or '')] if m]
     if not years and reported:
         years = [reported[0] + (1 if reported[1] == 4 else 0)]
@@ -739,7 +754,8 @@ def read(paras, limit=1500):
                 it['period'] = f'FY{y}'
             elif re.match(r'^Q[1-4]( FY)?$', it.get('period') or ''):
                 it['period'] = _merge(it['period'], f'FY{y}' if ' FY' in it['period'] else str(y))
-    named = [it['period'] for it in items if it.get('period') and it.get('lo') is not None and it['period'] != 'long-term']
+    named = [it['period'] for it in items if it.get('period') and it.get('lo') is not None and it['period'] != 'long-term'
+             and not _past(it['period'], reported)]          # a figure with no period of its own: the release's main guided period
     if named:
         common = max(set(named), key=named.count)
         for it in items:
