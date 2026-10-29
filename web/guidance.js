@@ -231,23 +231,59 @@
         }
       });
     }
-    return { F, LV, guided, nodes, links, byId, ins, notes, f };
+    return { F, LV, guided, nodes, links, byId, ins, outs, notes, f };
   }
 
-  // the base line's "· 25% of revenue" wording, recomputed
-  function shareText(n, F, P) {
-    const line = (n.lines || [])[1];
-    const m = line && /·\s*[\d.,]+%\s+of\s+(.+)$/.exec(dec(line[1]));
-    const parents = P.ins.get(n.id);
-    if (!m || parents.length !== 1) return '';
-    const pv = F[parents[0].s];
-    return pv > 0 ? ` · ${(F[n.id] / pv * 100).toFixed(F[n.id] / pv >= 0.1 ? 0 : 1)}% of ${m[1]}` : '';
+  // the chart's own number formats (pipeline/sankey.py Fmt): one unit for the chart, B when revenue is in billions
+  function fmtOf(revenue) {
+    const B = revenue >= 1e9;
+    const money = (v) => {
+      if (v == null) return 'n/a';
+      const a = Math.abs(v), sg = v < 0 ? '−' : '';
+      if (a >= 0.95e12) return `${sg}$${(a / 1e12).toFixed(2)}T`;
+      if (B && a >= 5e6) { const b = a / 1e9; return `${sg}$${b >= 0.95 ? b.toFixed(1) : b.toFixed(2)}B`; }
+      const m = a / 1e6;
+      return m >= 0.95 ? `${sg}$${m.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M` : `${sg}$${Math.round(a / 1e3).toLocaleString('en-US')}K`;
+    };
+    const num = (v) => {
+      const x = v / (B ? 1e9 : 1e6), a = Math.abs(x);
+      return `${v > 0 ? '+' : v < 0 ? '−' : '±'}${a >= 0.95 ? a.toFixed(1) : a.toFixed(2)}`;
+    };
+    const delta = (v) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${money(Math.abs(v))}`;
+    return { money, num, delta };
   }
-  function baseShare(n, P) {
-    const parents = P.ins.get(n.id);
-    if (parents.length !== 1) return '';
-    const p = P.byId.get(parents[0].s);
-    return p && p.v > 0 ? `${(n.v / p.v * 100).toFixed(n.v / p.v >= 0.1 ? 0 : 1)}% of ${dec(p.name).toLowerCase()}` : '';
+  function pctChange(a, b) {
+    if (a == null || b == null) return '—';
+    if (a <= 0 || b <= 0) return 'n/m';
+    const g = Math.round((a / b - 1) * 100);
+    return `${g > 0 ? '+' : g < 0 ? '−' : ''}${Math.abs(g)}%`;
+  }
+  const shareOf = (v, p) => { if (!(p > 0) || v == null) return null; const x = v / p * 100; return x < 10 ? `${x.toFixed(1)}%` : `${x.toFixed(0)}%`; };
+
+  // the node a base line's "· 25% of revenue" refers to: the one its stated share fits (the line it flows from or into
+  // first, then any line of the chart)
+  function parentOf(n, P) {
+    const line = (n.lines || [])[1];
+    const m = line && /·\s*([\d.,]+)%\s+of\s+(.+)$/.exec(dec(line[1]));
+    if (!m || !(n.v > 0)) return null;
+    const pct = parseFloat(m[1].replace(/,/g, '')), tol = /\./.test(m[1]) ? 0.051 : 0.51;
+    const cands = [...(P.ins.get(n.id) || []).map((l) => l.s), ...(P.outs.get(n.id) || []).map((l) => l.t), ...P.nodes.map((x) => x.id)];
+    for (const id of cands) {
+      const p = P.byId.get(id);
+      if (p && p.id !== n.id && p.v > 0 && Math.abs(n.v / p.v * 100 - pct) <= tol) return { id: p.id, label: m[2] };
+    }
+    return null;
+  }
+  // the base line's "· 25% of revenue" wording, recomputed for the guided period
+  function shareText(n, F, par) {
+    const s = par && shareOf(F[n.id], F[par.id]);
+    return s ? ` · ${s} of ${par.label}` : '';
+  }
+  // "84% of operating expenses" in the base period (the assumption an unguided line keeps)
+  function baseShare(n, P, par) {
+    const p = par && P.byId.get(par.id);
+    const x = p && shareOf(n.v, p.v);
+    return x ? `${x} of ${par.label}` : '';
   }
 
   function future(base, g, opts) {
@@ -277,13 +313,41 @@
     if (!P) return { error: 'This chart has no revenue node to project.' };
     const { F, LV, guided } = P;
     const per = tg.label.replace(/^FY(\d{4})$/, 'FY$1');
+    const fm = fmtOf(F.revenue);
+    const parent = {};
+    P.nodes.forEach((n) => { const x = parentOf(n, P); if (x) parent[n.id] = x; });
+    // the periods it is compared with (the historical comparison's grammar): the period just reported and, for a
+    // quarter, the same quarter a year earlier
+    const yq = yearAgo(tg, base, o.company);
+    const valuesOf = (spec) => spec ? new Map(spec.nodes.map((n) => [n.id, +n.v])) : new Map();
+    const curV = valuesOf(base), agoV = valuesOf(yq);
+    const linkOf = (spec) => spec ? new Map(spec.links.map((l) => [`${l.s}|${l.t}`, +l.v])) : new Map();
+    const curL = linkOf(base), agoL = linkOf(yq);
+    const deltaLine = (id, v, vals, label) => {
+      const v0 = vals.get(id);
+      if (v0 == null) return ['cnt', enc(`Δ n/a (not in ${dec(label)})`)];
+      const d = v - v0;
+      const st = Math.abs(d) <= Math.abs(v0) * 0.005 ? 'cnt' : d > 0 ? 'cup' : 'cdn';
+      let txt = `● Δ ${fm.delta(d)}`;
+      const p = parent[id];
+      if (p && vals.get(p.id) != null && F[p.id] != null) {
+        const c0 = v0, c1 = v, p0 = vals.get(p.id), p1 = F[p.id];
+        if (p0 <= 0 || p1 <= 0 || c0 < 0 || c1 < 0) txt += ' · scale/mix n/m';
+        else {
+          const scale = (p1 - p0) * c0 / p0, mix = p1 * (c1 / p1 - c0 / p0);
+          txt += ` · scale ${fm.num(scale)} · mix ${fm.num(mix)}`;
+        }
+      }
+      return [st, enc(txt)];
+    };
     const nodes = [];
     P.nodes.forEach((n) => {
       const v = F[n.id];
       if (!(v > 0)) return;
       const g1 = G[n.id] && guided[n.id] ? G[n.id] : null;
       const role = ROLE(n.color);
-      const lines = [[(n.lines && n.lines[0] && n.lines[0][0]) || 'name', n.name], ['val', enc(money(v)) + enc(shareText(n, F, P))]];
+      const lines = [[(n.lines && n.lines[0] && n.lines[0][0]) || 'name', n.name], ['val', enc(fm.money(v)) + enc(shareText(n, F, parent[n.id]))],
+        ['mut', tg.kind === 'fy' ? `Y/Y ${pctChange(v, curV.get(n.id))}` : `Y/Y ${pctChange(v, yq ? agoV.get(n.id) : null)} · Q/Q ${pctChange(v, curV.get(n.id))}`]];
       let note;
       if (g1) {
         const it = g1.it, w = words(it);
@@ -293,10 +357,11 @@
         if (it.prior) lines.push(['gas', enc(priorText(it))]);
         note = { guided: true, item: it };
       } else {
-        lines.push(['gas', enc(n.col < (P.byId.get('revenue') || {}).col ? `assumed: same mix as ${dec(base.label)}` : (baseShare(n, P) ? `assumed: ${baseShare(n, P)} in ${dec(base.label)}` : P.ins.get(n.id).length ? 'the sum of the lines into it' : `assumed: as in ${dec(base.label)}`))]);
+        lines.push(['gas', enc(n.col < (P.byId.get('revenue') || {}).col ? `assumed: same mix as ${dec(base.label)}` : (baseShare(n, P, parent[n.id]) ? `assumed: ${baseShare(n, P, parent[n.id])} in ${dec(base.label)}` : P.ins.get(n.id).length ? 'the sum of the lines into it' : `assumed: as in ${dec(base.label)}`))]);
         note = { guided: false };
       }
-      const out = Object.assign({}, n, { v, color: (g1 ? 'f_' : 'fa_') + role, lines, gnote: note, notes: undefined, cmp: undefined, cmp_y: undefined });
+      const out = Object.assign({}, n, { v, color: (g1 ? 'f_' : 'fa_') + role, lines, gnote: note, notes: undefined,
+        cmp: deltaLine(n.id, v, curV, base.label), cmp_y: yq ? deltaLine(n.id, v, agoV, yq.label) : undefined });
       if (g1 && g1.lo && g1.hi) {
         const lo = g1.lo(F), hi = g1.hi(F);
         if (isFinite(lo) && isFinite(hi) && hi > lo) out.range = [lo, hi];
@@ -305,7 +370,11 @@
     });
     const keep = new Set(nodes.map((n) => n.id));
     const links = P.links.filter((l) => keep.has(l.s) && keep.has(l.t) && LV.get(l) > 0)
-      .map((l) => ({ s: l.s, t: l.t, v: LV.get(l), color: (guided[l.t] ? 'f_' : 'fa_') + ROLE(l.color) }));
+      .map((l) => {
+        const k = `${l.s}|${l.t}`;
+        return { s: l.s, t: l.t, v: LV.get(l), color: (guided[l.t] ? 'f_' : 'fa_') + ROLE(l.color),
+          q: curL.has(k) ? curL.get(k) : null, y: yq && agoL.has(k) ? agoL.get(k) : null };
+      });
     const nGuided = nodes.filter((n) => n.gnote.guided).length;
     const company = dec(o.name || '');
     // everything the release guided, drawn or not
@@ -325,10 +394,12 @@
     if (implied) footer.splice(1, 0, `${tg.label}: the full-year guidance minus the three reported quarters of FY${tg.fy}.`);
     P.notes.forEach((x) => footer.push(x));
     const words0 = (g.tags || []).filter((x) => x !== 'updated' && x !== 'mixed').map((x) => WORD[x]).filter(Boolean);
-    // comparisons of the guided period: with the quarter just reported, and with the same quarter a year earlier
-    const yq = yearAgo(tg, base, o.company);
-    const gcmp = { cur: compareWith(nodes, links, base, `${per} as guided vs ${dec(base.label)}`, company) };
-    if (yq) gcmp.yago = compareWith(nodes, links, yq, `${per} as guided vs ${dec(yq.label)} (a year earlier)`, company);
+    // the comparison views (web/sankey.js draws them as for history: dark strip = increase, hatched = decrease, Δ = scale + mix)
+    const vs = (spec, vals, ago) => ({
+      vs: dec(spec.label), heading: `As guided vs ${dec(spec.label)}${ago ? ' (a year earlier)' : ''}`,
+      title: `${company ? company + ': ' : ''}${per} as guided vs ${dec(spec.label)}${ago ? ' (a year earlier)' : ''}`,
+      bullets: bulletsVs(nodes, vals, dec(spec.label), fm),
+    });
     return {
       future: true, kind: tg.kind, period: tg.label, bg: '#fbfaff',
       title: `${company ? company + ': ' : ''}${per} as guided`,
@@ -336,7 +407,8 @@
       nodes, links, footer, checks: [],
       legend: [['f_rev', 'Guided revenue'], ['f_profit', 'Guided profit'], ['f_cost', 'Guided cost'], ['fa_rev', 'Not guided: assumed (revenue)'],
         ['fa_profit', 'Assumed (profit)'], ['fa_cost', 'Assumed (cost)']],
-      guidance: g, base: base.label, gcmp,
+      guidance: g, base: base.label,
+      compare: vs(base, curV, tg.kind === 'fy'), compare_y: yq ? vs(yq, agoV, true) : null,
     };
   }
 
@@ -351,35 +423,25 @@
     return ago ? (company.quarters || []).find((q) => q.end === ago.end) || null : null;
   }
 
-  // the guided chart against a reported period: per node the change (a coloured ● line) and the reported size (drawn as a
-  // dotted outline by web/sankey.js), per band the reported thickness, and the main changes in words
-  function compareWith(nodes, links, other, title, company) {
-    const nv = new Map(other.nodes.map((n) => [n.id, +n.v]));
-    const lv = new Map(other.links.map((l) => [`${l.s}|${l.t}`, +l.v]));
-    const label = dec(other.label);
-    const out = { vs: label, title: (company ? company + ': ' : '') + title, nodes: {}, links: {}, bullets: [] };
-    nodes.forEach((n) => {
-      const pv = nv.get(n.id);
-      if (!(pv > 0)) return;
-      const d = (n.v / pv - 1) * 100;
-      const st = Math.abs(d) < 0.5 ? 'cnt' : d > 0 ? 'cup' : 'cdn';
-      const pct = `${d > 0 ? '+' : d < 0 ? '−' : '±'}${Math.abs(d).toFixed(Math.abs(d) < 10 ? 1 : 0)}%`;
-      out.nodes[n.id] = { pv, d, line: [st, enc(`● ${pct} vs ${label} (${money(pv)})`)] };
-    });
-    links.forEach((l) => {
-      const pv = lv.get(`${l.s}|${l.t}`);
-      if (pv > 0) out.links[`${l.s}|${l.t}`] = pv;
-    });
-    [['revenue', 'Revenue'], ['gp', 'Gross profit'], ['oi', 'Operating profit'], ['net', 'Net earnings']].forEach(([id, name]) => {
-      const c = out.nodes[id], n = nodes.find((x) => x.id === id);
-      if (!c || !n) return;
-      out.bullets.push(`${name} ${money(n.v)}${n.gnote && n.gnote.guided ? ' guided' : ' (assumed)'} vs ${money(c.pv)} in ${label}: ${c.line[1].split(' ')[1]}`);
-    });
-    const gm = nodes.find((x) => x.id === 'gp'), rv = nodes.find((x) => x.id === 'revenue');
-    if (gm && rv && nv.get('gp') && nv.get('revenue')) {
-      const a = gm.v / rv.v * 100, b = nv.get('gp') / nv.get('revenue') * 100;
-      out.bullets.push(`Gross margin ${a.toFixed(1)}% vs ${b.toFixed(1)}%: ${a - b >= 0 ? '+' : '−'}${Math.abs(a - b).toFixed(1)} pts`);
+  // "As guided vs …": the main changes in words (revenue, gross margin, operating profit, the largest guided move)
+  function bulletsVs(nodes, vals, label, fm) {
+    const out = [], N = new Map(nodes.map((n) => [n.id, n]));
+    const pct = (a, b) => pctChange(a, b);
+    const r = N.get('revenue'), r0 = vals.get('revenue');
+    if (r && r0 != null) out.push(`Revenue ${fm.money(r.v)} as guided vs ${fm.money(r0)} in ${label}: ${fm.delta(r.v - r0)} (${pct(r.v, r0)}).`);
+    const gp = N.get('gp'), gp0 = vals.get('gp');
+    if (gp && r && gp0 != null && r0 > 0) {
+      const a = gp.v / r.v * 100, b = gp0 / r0 * 100, d = a - b;
+      out.push(`Gross margin ${a.toFixed(1)}% vs ${b.toFixed(1)}% in ${label} (${d >= 0 ? '+' : '−'}${Math.abs(d).toFixed(1)} pts)${gp.gnote && gp.gnote.guided ? ', from the guided margin' : ''}.`);
     }
+    const oi = N.get('oi'), oi0 = vals.get('oi');
+    if (oi && oi0 != null) {
+      const dr = r && r0 != null ? r.v - r0 : 0, share = dr > 0 ? Math.round((oi.v - oi0) / dr * 100) : null;
+      out.push(`Operating profit ${fm.money(oi.v)} vs ${fm.money(oi0)}: ${fm.delta(oi.v - oi0)} (${pct(oi.v, oi0)})${share != null && isFinite(share) ? `; ${share}% of the revenue change reaches it` : ''}${oi.gnote && oi.gnote.guided ? '' : ' (not guided itself: from the guided lines and assumed shares)'}.`);
+    }
+    const moves = nodes.filter((n) => n.gnote && n.gnote.guided && n.id !== 'revenue' && vals.get(n.id) != null)
+      .map((n) => [n, n.v - vals.get(n.id)]).sort((x, y) => Math.abs(y[1]) - Math.abs(x[1]));
+    if (moves.length) out.push(`Largest guided change after revenue: ${dec(moves[0][0].name)} ${fm.delta(moves[0][1])} (${pct(moves[0][0].v, vals.get(moves[0][0].id))}).`);
     return out;
   }
 

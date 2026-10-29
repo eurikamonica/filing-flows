@@ -63,7 +63,7 @@ f.nodes.forEach((n) => {
   if (i) near(i, n.v, `inflows of ${n.id}`);
   if (o) near(o, n.v, `outflows of ${n.id}`);
 });
-assert.ok(f.links.every((l) => l.q === undefined && l.y === undefined), 'no comparison strips in the guidance view');
+near(f.links.find((l) => l.s === 'revenue' && l.t === 'gp').q, 70, 'each band carries its size in the reported quarter (the comparison strips)');
 // colours: guided violet family, assumed pale; none of the current or comparison roles
 assert.strictEqual(N.get('revenue').color, 'f_rev');
 assert.strictEqual(N.get('gp').color, 'f_profit');
@@ -78,34 +78,53 @@ near(N.get('gp').range[0], 74 / 100 * 110, 'gross profit range from the margin r
 const rl = N.get('revenue').lines.map((l) => l[1]).join(' | ');
 assert.ok(/guided \$108K?/.test(rl) || /guided/.test(rl), rl);
 assert.ok(rl.includes('▲ raised') && rl.includes('→← narrowed') && rl.includes('from'), rl);
-assert.strictEqual(N.get('revenue').lines[2][0], 'gup');
-assert.strictEqual(N.get('opex').lines[2][0], 'gdn');
-assert.ok(N.get('gp').lines[2][1].includes('←→ widened') && N.get('gp').lines[2][1].includes('midpoint kept'), N.get('gp').lines[2][1]);
-assert.ok(N.get('I:rd').lines[2][1].startsWith('assumed'), N.get('I:rd').lines[2][1]);
+const gl = (n) => n.lines.find((l) => /^g(up|dn|nt)$/.test(l[0])), al = (n) => n.lines.find((l) => l[0] === 'gas');
+assert.strictEqual(gl(N.get('revenue'))[0], 'gup');
+assert.strictEqual(gl(N.get('opex'))[0], 'gdn');
+assert.ok(gl(N.get('gp'))[1].includes('←→ widened') && gl(N.get('gp'))[1].includes('midpoint kept'), gl(N.get('gp'))[1]);
+assert.ok(al(N.get('I:rd'))[1].startsWith('assumed: 75% of opex in Q2 FY27'), al(N.get('I:rd'))[1]);
 assert.ok(f.footer.join(' ').includes('adj. EPS (FY2027) $7.10–$7.30 ▲ raised'), 'non-GAAP figures are listed, not drawn');
 assert.ok(f.footer.join(' ').includes('Revenue, a segment (Q3 FY2027)'), 'a segment figure is listed as such, not drawn');
 assert.ok(f.title.includes('Q3 FY2027'), f.title);
 assert.ok(FG.noteHTML(N.get('revenue'), g).includes('Revenue is expected to be $110 billion.'));
 assert.ok(FG.noteHTML(N.get('I:rd'), g).includes('Not guided'));
 
-// compared with the quarter just reported and with the same quarter a year earlier
-const ago = JSON.parse(JSON.stringify(base));
+// compared with the quarter just reported and with the same quarter a year earlier — in the historical comparison's
+// grammar: links carry q (reported quarter) and y (year-ago quarter) for the dark strips and hatching, nodes a Δ line
+// (Δ = scale + mix) with a coloured ● (teal higher, orange lower), and an "As guided vs …" callout
+const K = 1e9;
+const scaled = (spec) => Object.assign(JSON.parse(JSON.stringify(spec)), {
+  nodes: spec.nodes.map((n) => Object.assign({}, n, { v: n.v * K })), links: spec.links.map((l) => Object.assign({}, l, { v: l.v * K })) });
+const bB = scaled(base);
+const ago = scaled(base);
 ago.label = 'Q3 FY26'; ago.end = '2025-10-26';
 ago.nodes.forEach((n) => { n.v = n.v / 2; });
 ago.links.forEach((l) => { l.v = l.v / 2; });
-ago.nodes.find((n) => n.id === 'opex').v = 30;                    // a line that was bigger a year ago
-const co3 = { periods: { q: [{ end: '2026-07-26', q: 2, fy: 2027 }, { end: '2025-10-26', q: 3, fy: 2026 }] }, quarters: [base, ago] };
-const fc = FG.future(base, g, { company: co3, name: 'Example' });
-assert.strictEqual(fc.gcmp.cur.vs, 'Q2 FY27');
-assert.strictEqual(fc.gcmp.yago.vs, 'Q3 FY26');
-assert.ok(fc.gcmp.cur.title.includes('as guided vs Q2 FY27'), fc.gcmp.cur.title);
-assert.deepStrictEqual(fc.gcmp.cur.nodes.revenue.line, ['cup', '● +10% vs Q2 FY27 ($100K)'.replace('$100K', FG.money(100))]);
-assert.strictEqual(fc.gcmp.yago.nodes.revenue.line[0], 'cup');
-assert.strictEqual(fc.gcmp.yago.nodes.opex.line[0], 'cdn', 'opex 22 vs 30 a year ago: lower, in orange');
-near(fc.gcmp.yago.nodes.revenue.pv, 50, 'the year-ago size drawn as the dotted outline');
-near(fc.gcmp.cur.links['revenue|gp'], 70, 'band sizes of the reported quarter');
-assert.ok(fc.gcmp.cur.bullets[0].startsWith('Revenue') && fc.gcmp.cur.bullets.some((b) => b.startsWith('Gross margin 75.0% vs 70.0%: +5.0 pts')), fc.gcmp.cur.bullets.join(' / '));
-assert.ok(!FG.future(base, g, { company }).gcmp.yago, 'no year-ago quarter on file: only vs current');
+ago.nodes.find((n) => n.id === 'opex').v = 30 * K;                // a line that was bigger a year ago
+const gB = JSON.parse(JSON.stringify(g));
+gB.items.forEach((it) => { if (it.unit === 'usd') { it.lo *= K; it.hi *= K; if (it.prior) { it.prior.lo *= K; it.prior.hi *= K; } } });
+const co3 = { periods: { q: [{ end: '2026-07-26', q: 2, fy: 2027 }, { end: '2025-10-26', q: 3, fy: 2026 }] }, quarters: [bB, ago] };
+const fc = FG.future(bB, gB, { company: co3, name: 'Example' });
+assert.ok(!fc.error, fc.error);
+const C = new Map(fc.nodes.map((n) => [n.id, n]));
+assert.strictEqual(fc.compare.vs, 'Q2 FY27');
+assert.strictEqual(fc.compare_y.vs, 'Q3 FY26');
+assert.strictEqual(fc.compare.title, 'Example: Q3 FY2027 as guided vs Q2 FY27');
+assert.strictEqual(fc.compare_y.heading, 'As guided vs Q3 FY26 (a year earlier)');
+const rg = fc.links.find((l) => l.s === 'revenue' && l.t === 'gp');
+near(rg.q, 70 * K, 'reported-quarter band');
+near(rg.y, 35 * K, 'year-ago band');
+assert.deepStrictEqual(C.get('revenue').cmp, ['cup', '● Δ +$10.0B']);
+assert.deepStrictEqual(C.get('gp').cmp, ['cup', '● Δ +$12.5B · scale +7.0 · mix +5.5'], 'Δ = scale + mix against the parent, as in history');
+assert.deepStrictEqual(C.get('opex').cmp_y, ['cdn', '● Δ −$8.0B · scale +40.7 · mix −48.7'], 'opex 22 vs 30 a year ago: lower, in orange');
+assert.ok(C.get('revenue').lines.some((l) => l[0] === 'mut' && l[1] === 'Y/Y +120% · Q/Q +10%'), 'the Y/Y · Q/Q line of the standard charts');
+assert.strictEqual(C.get('gp').lines[1][1], '$82.5B · 75% of revenue');
+assert.deepStrictEqual(fc.compare.bullets.slice(0, 2), ['Revenue $110.0B as guided vs $100.0B in Q2 FY27: +$10.0B (+10%).',
+  'Gross margin 75.0% vs 70.0% in Q2 FY27 (+5.0 pts), from the guided margin.']);
+assert.ok(fc.compare.bullets.some((b) => b.startsWith('Operating profit $60.5B vs $50.0B: +$10.5B (+21%)')), fc.compare.bullets.join(' / '));
+assert.ok(fc.compare.bullets.some((b) => b.startsWith('Largest guided change after revenue: Gross profit +$12.5B')), fc.compare.bullets.join(' / '));
+assert.ok(!FG.future(base, g, { company }).compare_y, 'no year-ago quarter on file: only vs current');
+assert.strictEqual(FG.future(base, g, { company }).links.every((l) => l.y == null), true);
 
 // words for every change kind
 assert.deepStrictEqual(FG.words({ change: 'raised', range: 'narrowed' }), ['▲ raised', '→← narrowed']);
