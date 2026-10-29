@@ -37,6 +37,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - run: python -m pip install --quiet numpy
       - name: The data branch and the site index
         run: |
           url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
@@ -49,6 +50,7 @@ jobs:
           mkdir -p site && curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
           du -sh ro
       - name: Collect
+        id: collect
         timeout-minutes: 55
         run: python disclosures/app/outside.py collect --root ro --site-index site/index.json --minutes "${{ inputs.minutes || '40' }}"
       - name: Build public/
@@ -57,6 +59,7 @@ jobs:
           python disclosures/app/outside.py build --root ro --site-index site/index.json --frames-root disclosures/docs/data 2>&1 | tee build.log; rc=${PIPESTATUS[0]}
           if [ "$rc" != 0 ]; then grep -E "Error|Traceback|line [0-9]+" build.log | tail -4 | sed 's/^/::error::outside build: /'; exit "$rc"; fi
       - name: Save to the branch (one commit, force-pushed)
+        if: always() && steps.collect.outcome != 'skipped'
         run: |
           cd ro
           printf '%s\n' '# research-outside (data only)' '' 'Caches of ClinicalTrials.gov, FDA, CPSC, NHTSA, the Federal Register, the FEC, Wikipedia page views and FRED' \
@@ -67,4 +70,4 @@ jobs:
           git checkout -q --orphan fresh
           git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "outside $(date -u +%Y-%m-%dT%H:%MZ)"
           for i in 1 2 3; do git push -q --force origin fresh:research-outside && break; sleep $((i * 10)); done
-          python -c "import json; s=json.load(open('public/status.json')); print('::notice::outside: ' + json.dumps({k: v for k, v in s.items() if k != 'last_collect'}) + ' · last collect: ' + json.dumps(s.get('last_collect'))[:600])"
+          [ -f public/status.json ] && python -c "import json; s=json.load(open('public/status.json')); print('::notice::outside: ' + json.dumps({k: v for k, v in s.items() if k != 'last_collect'}) + ' · last collect: ' + json.dumps(s.get('last_collect'))[:600])"
