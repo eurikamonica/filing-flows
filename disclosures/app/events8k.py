@@ -10,7 +10,9 @@ exhibits in one file) is read once and turned into a row:
   topics     what it is about, in plain words: a merger or acquisition, a CEO or CFO change, a restatement, a cyber
              incident, a delisting notice, bankruptcy, a buyback, a dividend change, an offering (dilution), new debt,
              layoffs or restructuring, an impairment, an auditor change, earnings, an FDA decision, a contract award …
-  guidance   raised / lowered / withdrawn / reaffirmed / mixed — when the press release says so, with the sentence
+  guidance   raised / lowered / narrowed / widened / initiated / reaffirmed / withdrawn / mixed / updated — from the press
+             release's words (app/guidance.py: "lifts", "trims", "tightens", "raising the low end" …) and its numbers;
+             guidance_tags every change found, guidance_items the guided ranges per metric (with the prior range when stated)
   headline   the press release's title; quote: the key sentences of the most material item (or of the release)
 
 Cache:   cache/events8k/<YYYY-MM-DD>.json.gz (one file per filing day: a run rewrites only the days it touched),
@@ -27,6 +29,7 @@ from collections import Counter
 from pathlib import Path
 
 from core import Shards, localname, now, parse_xml, read_json, write_json
+import guidance as G
 import ownership as OWN
 
 FEED = ('https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&company=&dateb=&owner=include'
@@ -271,38 +274,10 @@ def _says(pat, sentence):
 
 
 def guidance(paras):
-    """(raised | lowered | withdrawn | reaffirmed | mixed, the sentence) from the release's sentences about guidance; a
-    sentence with figures is preferred to one without (the title says "raises outlook", the body gives the range)."""
-    found = {'up': [], 'down': [], 'keep': [], 'withdrawn': []}
-    for p in paras[:400]:
-        for s in re.split(r'(?<=[.!?])\s+(?=[A-Z])', p):
-            if len(s) > 400 or not GUIDE.search(s) or re.search(r'(?i)forward-looking|safe harbor|no assurance|undertakes no', s):
-                continue
-            up, down = UP.search(s), DOWN.search(s)
-            if WITHDRAW.search(s):
-                found['withdrawn'].append(s)
-            elif up and down:
-                found['up'].append(s)
-                found['down'].append(s)
-            elif up:
-                found['up'].append(s)
-            elif down:
-                found['down'].append(s)
-            elif KEEP.search(s):
-                found['keep'].append(s)
-    best = lambda xs: next((x for x in xs if re.search(r'\d', x)), xs[0]) if xs else None
-    up, down, keep, withdrawn = best(found['up']), best(found['down']), best(found['keep']), best(found['withdrawn'])
-    if withdrawn:
-        return 'withdrawn', withdrawn
-    if up and down:
-        return 'mixed', up
-    if up:
-        return 'raised', up
-    if down:
-        return 'lowered', down
-    if keep:
-        return 'reaffirmed', keep
-    return None, None
+    """(raised | lowered | narrowed | widened | initiated | reaffirmed | withdrawn | mixed | updated, the sentence) of a
+    release's guidance (app/guidance.py reads the words and the ranges)."""
+    r = G.read(paras)
+    return (r['label'], r['quote'] or None) if r['label'] else (None, None)
 
 
 def parse_8k(txt, accession, folder):
@@ -314,7 +289,8 @@ def parse_8k(txt, accession, folder):
     secs = item_sections(body)
     items = h['items'] or [c for c in secs if c in ITEMS]
     release = next((d for d in docs if re.match(r'EX-99(\.0?1)?$', d[0])), None) or next((d for d in docs if d[0].startswith('EX-99')), None)
-    rel = html_text(release[2])[:600] if release else []
+    full = html_text(release[2]) if release else []
+    rel = full[:600]
     line = dateline(rel)
     is_release = line is not None                     # a press release, not a consent, a presentation or financial statements
     topics = []
@@ -331,7 +307,8 @@ def parse_8k(txt, accession, folder):
             topics.append(name)
     if 'ceo' in topics or 'cfo' in topics:
         topics = [t for t in topics if t != 'director']
-    g, gq = guidance(rel) if is_release else (None, None)
+    gr = G.read(full) if is_release else {'label': None, 'quote': '', 'tags': [], 'items': []}
+    g, gq = gr['label'], gr['quote']
     if g and 'guidance' not in topics:
         topics.insert(0 if g in ('raised', 'lowered', 'withdrawn') else len(topics), 'guidance')
     material = [c for c in items if c not in ('9.01',)] or items
@@ -344,12 +321,14 @@ def parse_8k(txt, accession, folder):
     if not quote and code and secs.get(code):
         quote, src = sentences(secs[code]), f'Item {code}'
     company = ((h['roles'].get('FILER') or h['roles'].get('SUBJECT COMPANY') or [{}])[0])
-    score = max([TOPIC_WEIGHT.get(t, 0) for t in topics] + [2 if g in ('raised', 'lowered', 'withdrawn') else 0] + [0])
-    if 'guidance' in topics and g in ('raised', 'lowered', 'withdrawn'):
+    score = max([TOPIC_WEIGHT.get(t, 0) for t in topics] + [2 if g in ('raised', 'lowered', 'withdrawn', 'mixed') else 0] + [0])
+    if 'guidance' in topics and g in ('raised', 'lowered', 'withdrawn', 'mixed', 'narrowed', 'widened'):
         score = max(score, 6)
     return {'v': PARSER, 'accession': accession, 'url': folder, 'form': h['form'] or '8-K', 'filed': h['filed'], 'accepted': h['accepted'],
             'period': h['period'], 'cik': (company.get('cik') or '').lstrip('0'), 'company': company.get('name', ''),
             'items': items, 'code': code or '', 'topics': topics, 'guidance': g, 'guidance_quote': (gq or '')[:300],
+            **({'guidance_tags': gr['tags']} if gr['tags'] else {}),
+            **({'guidance_items': [dict(it, quote=(it.get('quote') or '')[:220]) for it in gr['items'][:30]]} if gr['items'] else {}),
             'headline': headline(rel, line)[:200] if is_release else '', 'quote': quote, 'quote_src': src, 'score': score}
 
 
@@ -390,7 +369,7 @@ def parse_daily_index(text):
     return out
 
 
-PARSER = 4          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
+PARSER = 5          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
 
 
 def store(root):
@@ -442,11 +421,13 @@ def collect(client, root, cfg=None, today=None):
     queue = [x for x in dict.fromkeys(todo + queue) if x[0] not in seen]
     # a better parser: the filings on file are read again, newest first, a share of each run's batch
     if state.get('parser') != PARSER and not state.get('reparse'):
-        state['reparse'] = [[r['accession'], r['url']] for r in shards.all()]
+        # guidance is read from earnings releases: only those are read again (items 2.02 / 7.01, or guidance found before)
+        state['reparse'] = [[r['accession'], r['url']] for r in shards.all()
+                            if PARSER != 5 or set(r.get('items') or []) & {'2.02', '7.01'} or r.get('guidance')]
     redo = [tuple(x) for x in state.get('reparse') or []]
     batch = int(cfg.get('batch', 300))
     pending = [x for x in queue if retry.due(x[0])]
-    reparsing = [x for x in redo if retry.due(x[0])][:batch // 4]
+    reparsing = [x for x in redo if retry.due(x[0])][:max(batch // 4, batch - len(pending))]
     work = list(dict.fromkeys(pending[:batch-len(reparsing)] + reparsing))[:batch]
     redone = set()
     for acc, folder in work:
@@ -486,8 +467,8 @@ def collect(client, root, cfg=None, today=None):
 def label(r):
     """'a CEO change', 'guidance raised', 'earnings' … — the plainest name for what the 8-K reports."""
     t = r.get('topics') or []
-    if 'guidance' in t and r.get('guidance') in ('raised', 'lowered', 'withdrawn') and t[0] == 'guidance':
-        return f"guidance {r['guidance']}"
+    if 'guidance' in t and r.get('guidance') in G.PRIORITY and r.get('guidance') != 'updated' and t[0] == 'guidance':
+        return f"guidance {G.phrase(r.get('guidance_tags') or [r['guidance']]) or r['guidance']}"
     if t:
         return TOPIC_LABEL.get(t[0], t[0])
     return ITEMS.get(r.get('code') or '', 'a current report')
@@ -507,7 +488,7 @@ def publish(root, out_dir, today=None, days=10):
         t = tickers.get(r.get('cik') or '', '')
         if not t and (r.get('filed') or '') < (today - dt.timedelta(days=3)).isoformat():
             continue
-        rows.append({**{k: v for k, v in r.items() if k != 'guidance_quote' or v}, 'ticker': t, 'label': label(r),
+        rows.append({**{k: v for k, v in r.items() if (k != 'guidance_quote' or v) and k != 'guidance_items'}, 'ticker': t, 'label': label(r),
                      'quote': (r.get('quote') or '')[:320]})
     week = (today - dt.timedelta(days=7)).isoformat()
     counts = Counter(t for r in rows if r['filed'] >= week and r.get('ticker') for t in r.get('topics') or [])
@@ -539,4 +520,33 @@ def by_ticker(root, today=None, n=15, days=120):
         out.setdefault(t, []).append({k: r.get(k) for k in ('filed', 'accepted', 'form', 'items', 'topics', 'guidance', 'headline', 'quote',
                                                             'quote_src', 'url', 'accession') if r.get(k) not in (None, '', [])}
                                      | {'label': label(r), 'quote': (r.get('quote') or '')[:240]})
+    return out
+
+
+def guidance_by_ticker(root, today=None, days=120):
+    """ticker → the latest earnings release's guidance (company pages, the Sankey's "Show guidance"): its ranges per
+    metric, each against the release's own prior range or else the same metric in the company's earlier release on file,
+    so a range that moved without a word about it is still marked raised / lowered / narrowed / widened."""
+    today = today or dt.date.today()
+    tickers = OWN.cik_tickers(root)
+    since = (today - dt.timedelta(days=days)).isoformat()
+    per = {}
+    for r in store(root).all():                       # newest first
+        if (r.get('filed') or '') < since:
+            break
+        if r.get('guidance_items') and r.get('cik'):
+            per.setdefault(r['cik'], []).append(r)
+    out = {}
+    for cik, rows in per.items():
+        t = tickers.get(cik)
+        if not t:
+            continue
+        top = rows[0]
+        earlier = [(x.get('filed'), x['guidance_items']) for x in rows[1:] if x.get('accession') != top.get('accession')]
+        items = G.diff(top['guidance_items'], earlier)
+        tags = G.tags_of(items, top.get('guidance_tags') or [])
+        out[t] = {'filed': top.get('filed'), 'accession': top.get('accession'), 'url': top.get('url'), 'form': top.get('form'),
+                  'headline': top.get('headline'), 'label': G._primary(tags), 'tags': tags, 'phrase': G.phrase(tags),
+                  'quote': top.get('guidance_quote') or '', 'items': items,
+                  'earlier': [{'filed': x.get('filed'), 'label': x.get('guidance'), 'tags': x.get('guidance_tags') or []} for x in rows[1:4]]}
     return out

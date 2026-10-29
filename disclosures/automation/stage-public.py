@@ -154,6 +154,11 @@ def holders_index():
             t = clean_ticker(t)
             if t:
                 base(t)['events8k'] = rows
+        # the latest earnings release's guidance per metric, against its prior range (the Sankey's "Show guidance")
+        for t, g in EV.guidance_by_ticker(DATA).items():
+            t = clean_ticker(t)
+            if t:
+                base(t)['guidance'] = g
     except Exception as exc:
         print(f'::warning::holders index: 8-K events left out ({exc})')
     try:
@@ -192,7 +197,7 @@ def holders_index():
         v['officials'].sort(key=lambda x: (x.get('date') or ''), reverse=True)
         v['counts'] = {'institutional': len(v['institutional']), 'officials': len(v['officials']), 'insiders': len(v.get('insiders', [])),
                        'stakes': len(v.get('stakes', [])), 'form144': len(v.get('form144', [])), 'short': len(v.get('short', [])),
-                       'events8k': len(v.get('events8k', [])), 'news': len(v.get('news', []))}
+                       'events8k': len(v.get('events8k', [])), 'news': len(v.get('news', [])), 'guidance': len((v.get('guidance') or {}).get('items', []))}
     return out
 
 
