@@ -14,15 +14,16 @@
     profit: { node: '#17734a', flow: '#a8d1b9' },
     cost: { node: '#ea6a52', flow: '#f6c3b8' },
     noncash: { node: '#5b7fa6', flow: '#cdd8e6' },
-    // the guidance view (web/guidance.js): guided lines in violet / indigo / plum, the assumed rest in their pale tints —
-    // neither the current chart's grey-green-red nor the comparison view's dark strips and hatching
+    // the guidance view (web/guidance.js): only what is new changes colour — the lines the company guided in violet /
+    // indigo / plum; every other line keeps the standard grey, green and red
     f_rev: { node: '#5b3fc4', flow: '#cfc4f2' },
     f_profit: { node: '#2f3f9e', flow: '#bfc6ec' },
     f_cost: { node: '#9a2f7a', flow: '#ecc3df' },
-    fa_rev: { node: '#a99fd6', flow: '#e9e5f7', strip: '#8475c9' },
-    fa_profit: { node: '#9aa3d4', flow: '#e4e7f6', strip: '#7480c2' },
-    fa_cost: { node: '#cf9bc0', flow: '#f5e4ef', strip: '#b9739f' },
   };
+  // the guidance view compared with a reported period: the part a line already had keeps its standard colour, the
+  // increase (what the guided period adds) is a violet strip; a decrease is hatched in the standard colour
+  const NEW = '#6a4fd1';
+  const baseRole = (c) => String(c || '').replace(/^f_/, '');
   const RANGE = '#3a2a8c';            // the dashed box of a guided range
   // the guidance view compared with a reported period: a ● in the Δ line, teal = higher, orange = lower
   const CHG = { cup: '#0b7a75', cdn: '#d9480f', cnt: '#6b6a80' };
@@ -39,7 +40,7 @@
     name: [18, 600, 22, INK], big: [26, 600, 30, INK], ocf: [22, 600, 26, INK],
     val: [15, 400, 20, INK2], mut: [14, 400, 19, INK3], cmp: [14, 500, 19, INK2],
     // guidance view: raised (indigo), lowered (plum), other changes, assumed lines
-    gup: [14, 600, 19, '#33269a'], gdn: [14, 600, 19, '#8f2163'], gnt: [14, 600, 19, '#4d4380'], gas: [13, 400, 18, '#7a7596'],
+    gup: [14, 600, 19, '#33269a'], gdn: [14, 600, 19, '#8f2163'], gnt: [14, 600, 19, '#4d4380'], gas: [13, 400, 18, '#77756f'],
     cup: [14, 600, 19, '#0b7a75'], cdn: [14, 600, 19, '#c2410c'], cnt: [14, 600, 19, '#6b6a80'],
   };
   const NW = 14;          // node bar width
@@ -473,18 +474,21 @@
 
     const shapes = [];
     // bands
+    const fut = !!spec.future && compare;          // guidance view vs a reported period: old part standard, increase violet
     links.forEach((l) => {
-      const g = bandGeom(l), pal = PALETTE[l.color] || PALETTE.rev;
+      const g = bandGeom(l), pal0 = PALETTE[l.color] || PALETTE.rev;
+      const pal = fut ? PALETTE[baseRole(l.color)] || pal0 : pal0;
+      const stripFill = fut ? NEW : pal.node;
       const cls = { ls: l.s, lt: l.t };            // link ends (not `s`/`t`: `t` is the shape type)
       if (compare && prior(l) != null) {
         if (prior(l) <= 0) {
-          shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, l.th), fill: pal.node, band: true }, cls));
+          shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, l.th), fill: stripFill, band: true }, cls));
         } else {
           const base = Math.min(prior(l), l.v) * K, strip = l.th - base;
           shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0, g.x1, g.a1, base), fill: pal.flow, band: true }, cls));
           if (strip > 0.05) {
             shapes.push(Object.assign({ t: 'path', d: bandPath(g.x0, g.a0 + base, g.x1, g.a1 + base, Math.max(strip, 0.6)),
-              fill: pal.strip || pal.node, band: true }, cls));
+              fill: stripFill, band: true }, cls));
           }
         }
       } else {
@@ -502,12 +506,13 @@
       const pal = PALETTE[n.color] || PALETTE.rev;
       const side = n.outs.length ? n.outs : n.ins, off = n.outs.length ? 'so' : 'to';
       const sideSum = n.outs.length ? n.outSum : n.inSum;
+      const lost = (fut ? PALETTE[baseRole(n.color)] || pal : pal).node;     // a decrease is hatched in the line's own colour
       if (ghosts && side.length && (side.some((l) => l.ghost > 0.3) || n.h - sideSum > 0.5)) {
         side.forEach((l) => {
           shapes.push({ t: 'rect', x: n.x, y: n.top + l[off], w: NW, h: Math.max(l.th, 0.8), fill: pal.node, group: n.id });
-          if (l.ghost > 0.3) shapes.push({ t: 'rect', x: n.x, y: n.top + l[off] + l.th, w: NW, h: l.ghost, fill: 'none', hatch: pal.node, group: n.id });
+          if (l.ghost > 0.3) shapes.push({ t: 'rect', x: n.x, y: n.top + l[off] + l.th, w: NW, h: l.ghost, fill: 'none', hatch: lost, group: n.id });
         });
-        if (n.h - sideSum > 0.5) shapes.push({ t: 'rect', x: n.x, y: n.top + sideSum, w: NW, h: n.h - sideSum, fill: 'none', hatch: pal.node, group: n.id });
+        if (n.h - sideSum > 0.5) shapes.push({ t: 'rect', x: n.x, y: n.top + sideSum, w: NW, h: n.h - sideSum, fill: 'none', hatch: lost, group: n.id });
       } else {
         shapes.push({ t: 'rect', x: n.x, y: n.top, w: NW, h: n.h, fill: pal.node, group: n.id });
       }
@@ -581,7 +586,7 @@
     const lgItems = legend.map(([k, t]) => ({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
     if (spec.future && nodes.some((n) => n.range)) lgItems.push({ k: 'range', t: 'Dashed box = guided range (tick = low end)', w: 22 + measure('Dashed box = guided range (tick = low end)', 14, 400) });
     if (compare) {                     // increases are drawn as dark strips; a decrease leaves the band light (its Δ is negative)
-      [['strip', `Dark strip = increase vs ${dec(cmpSpec.vs)}`],
+      [['strip', spec.future ? `Violet strip = increase vs ${dec(cmpSpec.vs)}` : `Dark strip = increase vs ${dec(cmpSpec.vs)}`],
         ghosts ? ['ghost', `Hatched = decrease vs ${dec(cmpSpec.vs)}`] : ['nostrip', 'No strip = decrease (Δ below the value is negative)']]
         .forEach(([k, t]) => lgItems.push({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
       if (spec.future) {               // the guidance view: the Δ line's dot says which way the line moved
@@ -592,14 +597,14 @@
     const lgW = lgItems.reduce((s, it) => s + it.w, 0) + 20 * (lgItems.length - 1);
     const footer = (spec.footer || []).map(dec);
     if (compare) {
-      footer.push(`Comparison view: band width = ${spec.future ? `the guided period (${dec(spec.period || '')})` : 'current quarter'}; dark strip = increase vs ${dec(cmpSpec.vs)} ` +
+      footer.push(`Comparison view: band width = ${spec.future ? `the guided period (${dec(spec.period || '')}); the light part keeps the standard grey, green and red (what the line had in ${dec(cmpSpec.vs)}); violet strip` : 'current quarter; dark strip'} = increase vs ${dec(cmpSpec.vs)} ` +
         (ghosts ? `(hatched area with a dashed outline = decrease: what the line had in ${dec(cmpSpec.vs)} beyond this quarter). `
           : '(no strip = it fell). ') +
         'Δ = scale + mix: scale = change explained by the parent node growing, mix = change in the item’s share of its parent. ' +
         'n/m = a comparison period was negative.' + (spec.future ? ' ● teal = higher, ● orange = lower than ' + dec(cmpSpec.vs) +
-          '. Guided lines are the company’s figures; pale lines are assumptions at the shares of ' + dec(spec.base || '') + ', so their change follows the guided lines.' : ''));
+          '. Violet bars are the company’s guided figures; grey, green and red lines are assumptions at the shares of ' + dec(spec.base || '') + ', so their change follows the guided lines.' : ''));
     }
-    const LP = spec.future ? PALETTE.f_profit : PALETTE.profit;     // the legend's strip and hatch samples
+    const LP = spec.future ? { flow: PALETTE.profit.flow, node: NEW, hatch: PALETTE.profit.node } : PALETTE.profit;   // the legend's samples
     // a long legend (the guidance view) gets its own row above the notes, so the notes keep the full width
     const lgRow = lgW > (W - 2 * MARGIN) * 0.5;
     const fW = lgRow ? W - 2 * MARGIN : W - 2 * MARGIN - lgW - 40;
@@ -630,7 +635,7 @@
         shapes.push({ t: 'rect', x: lx + 3, y: ly, w: 8, h: 16, fill: PALETTE.f_profit.node });
         shapes.push({ t: 'rect', x: lx, y: ly - 2, w: 14, h: 20, fill: 'none', stroke: RANGE, dash: [4, 3], sw: 1.4 });
       } else if (it.k === 'ghost') {
-        shapes.push({ t: 'rect', x: lx + 0.5, y: ly + 1.5, w: 13, h: 13, fill: 'none', hatch: LP.node });
+        shapes.push({ t: 'rect', x: lx + 0.5, y: ly + 1.5, w: 13, h: 13, fill: 'none', hatch: LP.hatch || LP.node });
       } else {
         shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE[it.k].node, r: 3 });
       }

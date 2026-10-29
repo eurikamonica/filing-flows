@@ -64,13 +64,16 @@ f.nodes.forEach((n) => {
   if (o) near(o, n.v, `outflows of ${n.id}`);
 });
 near(f.links.find((l) => l.s === 'revenue' && l.t === 'gp').q, 70, 'each band carries its size in the reported quarter (the comparison strips)');
-// colours: guided violet family, assumed pale; none of the current or comparison roles
+// colours: only the guided lines change colour (violet / indigo / plum); the rest keep the standard grey, green and red
 assert.strictEqual(N.get('revenue').color, 'f_rev');
 assert.strictEqual(N.get('gp').color, 'f_profit');
 assert.strictEqual(N.get('opex').color, 'f_cost');
-assert.strictEqual(N.get('I:rd').color, 'fa_cost');
-assert.strictEqual(N.get('oi').color, 'fa_profit');
-assert.ok(f.nodes.every((n) => /^fa?_/.test(n.color)) && f.links.every((l) => /^fa?_/.test(l.color)), 'only guidance colours');
+assert.strictEqual(N.get('I:rd').color, 'cost');
+assert.strictEqual(N.get('oi').color, 'profit');
+assert.strictEqual(N.get('L:a').color, 'rev');
+assert.ok(f.nodes.every((n) => (n.gnote.guided ? /^f_/ : /^(rev|profit|cost|noncash)$/).test(n.color)), 'guided lines violet, the rest standard');
+assert.strictEqual(f.links.find((l) => l.t === 'gp').color, 'f_profit');
+assert.strictEqual(f.links.find((l) => l.t === 'oi').color, 'profit');
 assert.strictEqual(f.bg, '#fbfaff');
 // ranges and change words
 assert.deepStrictEqual(N.get('revenue').range, [108, 112]);

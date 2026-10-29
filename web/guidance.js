@@ -13,9 +13,12 @@
    - the revenue lines on the left keep their mix; the cash-flow part after net earnings is left out (not guided);
    - a quarter with only full-year guidance is drawn as the implied last quarter when the first three are on file
      (full year minus Q1–Q3 as reported).
-   Colours: violet / indigo / plum (guided) and their pale tints (assumed) — neither the current chart's grey, green
-   and red nor the comparison view's dark strips and hatching. Non-GAAP figures (adjusted EPS, EBITDA …) are listed
-   in the footer, never drawn into GAAP flows. No dependencies; works in the browser and in node (tests). */
+   Colours: only what is new changes colour. Guided lines are violet / indigo / plum; every other line keeps the
+   standard grey, green and red. Compared with the quarter just reported or the year-ago quarter (compare, compare_y;
+   drawn by web/sankey.js like the history comparison), the part a band already had stays in its standard colour, the
+   increase is a violet strip and a decrease is hatched; each line gets Y/Y · Q/Q and "● Δ · scale · mix". Non-GAAP
+   figures (adjusted EPS, EBITDA …) are listed in the footer, never drawn into GAAP flows. No dependencies; works in
+   the browser and in node (tests). */
 (function (global) {
   'use strict';
 
@@ -360,7 +363,8 @@
         lines.push(['gas', enc(n.col < (P.byId.get('revenue') || {}).col ? `assumed: same mix as ${dec(base.label)}` : (baseShare(n, P, parent[n.id]) ? `assumed: ${baseShare(n, P, parent[n.id])} in ${dec(base.label)}` : P.ins.get(n.id).length ? 'the sum of the lines into it' : `assumed: as in ${dec(base.label)}`))]);
         note = { guided: false };
       }
-      const out = Object.assign({}, n, { v, color: (g1 ? 'f_' : 'fa_') + role, lines, gnote: note, notes: undefined,
+      // only the guided lines change colour; every other line keeps its standard grey / green / red
+      const out = Object.assign({}, n, { v, color: g1 ? 'f_' + role : n.color, lines, gnote: note, notes: undefined,
         cmp: deltaLine(n.id, v, curV, base.label), cmp_y: yq ? deltaLine(n.id, v, agoV, yq.label) : undefined });
       if (g1 && g1.lo && g1.hi) {
         const lo = g1.lo(F), hi = g1.hi(F);
@@ -372,7 +376,7 @@
     const links = P.links.filter((l) => keep.has(l.s) && keep.has(l.t) && LV.get(l) > 0)
       .map((l) => {
         const k = `${l.s}|${l.t}`;
-        return { s: l.s, t: l.t, v: LV.get(l), color: (guided[l.t] ? 'f_' : 'fa_') + ROLE(l.color),
+        return { s: l.s, t: l.t, v: LV.get(l), color: guided[l.t] ? 'f_' + ROLE(l.color) : l.color,
           q: curL.has(k) ? curL.get(k) : null, y: yq && agoL.has(k) ? agoL.get(k) : null };
       });
     const nGuided = nodes.filter((n) => n.gnote.guided).length;
@@ -384,8 +388,8 @@
         `${it.lo != null ? ' ' + range(it) : ''}${w.length ? ' ' + w.join(' ') : ''}${it.prior ? ' ' + priorText(it) : ''}`;
     });
     const footer = [
-      `Guidance view (not a forecast by Filing Flows): violet bars = a figure ${company || 'the company'} guided, drawn at the midpoint; the dashed box ` +
-      'spans the guided range and its tick marks the low end. Pale violet = not guided: the line keeps its share of its parent from ' +
+      `Guidance view (not a forecast by Filing Flows): violet, indigo and plum = a figure ${company || 'the company'} guided, drawn at the midpoint; the dashed box ` +
+      'spans the guided range and its tick marks the low end. Grey, green and red = not guided, in the standard colours: the line keeps its share of its parent from ' +
       `${dec(base.label)}, so the chart adds up. Change words: ▲ raised / ▼ lowered = the midpoint moved; →← narrowed / ←→ widened = the range ` +
       'width changed; = reaffirmed; ✦ initiated; ✕ withdrawn — against the prior range the release states, else the company’s previous release on file.',
       `In the release${g.filed ? ` of ${fdate(g.filed)}` : ''}: ${listed.join('; ')}.` + (listed.length < (g.items || []).length ? ' …' : ''),
@@ -405,8 +409,8 @@
       title: `${company ? company + ': ' : ''}${per} as guided`,
       subtitle: `From the ${g.form || '8-K'} earnings release filed ${fdate(g.filed)}${words0.length ? ' · ' + words0.join(' · ') : ''} · ${nGuided} guided line${nGuided === 1 ? '' : 's'}, the rest at ${dec(base.label)} shares`,
       nodes, links, footer, checks: [],
-      legend: [['f_rev', 'Guided revenue'], ['f_profit', 'Guided profit'], ['f_cost', 'Guided cost'], ['fa_rev', 'Not guided: assumed (revenue)'],
-        ['fa_profit', 'Assumed (profit)'], ['fa_cost', 'Assumed (cost)']],
+      legend: [['f_rev', 'Guided revenue'], ['f_profit', 'Guided profit'], ['f_cost', 'Guided cost'], ['rev', 'Revenue (not guided)'],
+        ['profit', 'Profit (not guided)'], ['cost', 'Costs (not guided)']],
       guidance: g, base: base.label,
       compare: vs(base, curV, tg.kind === 'fy'), compare_y: yq ? vs(yq, agoV, true) : null,
     };

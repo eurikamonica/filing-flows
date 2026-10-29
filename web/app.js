@@ -354,7 +354,7 @@
       }
       if (futureOn()) {
         return `<div class="eyebrow">Guidance view · ${t(guide.spec.period)}</div>
-          <p class="hint"><span class="dot guide"></span><span>Violet lines are what ${t(ctx.company)} guided in its earnings release (bar = midpoint, dashed box = the range). Pale lines were not guided: they keep their ${t(guide.spec.base)} share so the chart adds up.</span></p>
+          <p class="hint"><span class="dot guide"></span><span>Violet lines are what ${t(ctx.company)} guided in its earnings release (bar = midpoint, dashed box = the range). Grey, green and red lines were not guided: they keep their standard colours and their ${t(guide.spec.base)} share, so the chart adds up. Compared with a reported quarter, the violet strip in a band is the increase; a decrease is hatched.</span></p>
           <p class="empty">▲ raised · ▼ lowered (midpoint) · →← narrowed · ←→ widened (range) · = reaffirmed · ✦ initiated — against the prior range in the release, else the company’s previous release. Click a line for the sentence it comes from.</p>`;
       }
       const withNotes = spec.nodes.filter((n) => n.notes).length;
