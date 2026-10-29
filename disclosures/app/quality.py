@@ -35,6 +35,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from core import now, read_json, write_json  # noqa: E402
 import frames as FR  # noqa: E402
+import quality_more as QM  # noqa: E402
 
 API = 'https://data.sec.gov/api/xbrl/frames/{tax}/{concept}/{unit}/{period}.json'
 # (field, [(taxonomy, concept, unit)] in order of preference)
@@ -50,10 +51,19 @@ INSTANT = [
     ('ltd', [('us-gaap', 'LongTermDebt', 'USD')]),
     ('ltd_nc', [('us-gaap', 'LongTermDebtNoncurrent', 'USD')]),
     ('ltd_c', [('us-gaap', 'LongTermDebtCurrent', 'USD')]),
-    ('ar', [('us-gaap', 'AccountsReceivableNetCurrent', 'USD')]),
-    ('ppe', [('us-gaap', 'PropertyPlantAndEquipmentNet', 'USD')]),
+    ('ar', [('us-gaap', 'AccountsReceivableNetCurrent', 'USD'), ('us-gaap', 'ReceivablesNetCurrent', 'USD'),
+            ('us-gaap', 'AccountsNotesAndOtherReceivablesNetCurrent', 'USD')]),
+    ('ppe', [('us-gaap', 'PropertyPlantAndEquipmentNet', 'USD'),
+             ('us-gaap', 'PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization', 'USD')]),
     ('so', [('dei', 'EntityCommonStockSharesOutstanding', 'shares')]),
+    # quality_more.py: manipulation screens, goodwill
+    ('inv', [('us-gaap', 'InventoryNet', 'USD')]),
+    ('oca', [('us-gaap', 'OtherAssetsCurrent', 'USD'), ('us-gaap', 'PrepaidExpenseAndOtherAssetsCurrent', 'USD')]),
+    ('std', [('us-gaap', 'ShortTermBorrowings', 'USD'), ('us-gaap', 'DebtCurrent', 'USD')]),
+    ('gw', [('us-gaap', 'Goodwill', 'USD')]),
+    ('intang', [('us-gaap', 'IntangibleAssetsNetExcludingGoodwill', 'USD')]),
 ]
+INSTANT_N = 25                                        # quarter ends kept: six years of balance sheets
 ANNUAL = [
     ('ocf', [('us-gaap', 'NetCashProvidedByUsedInOperatingActivities', 'USD')]),
     ('capex', [('us-gaap', 'PaymentsToAcquirePropertyPlantAndEquipment', 'USD')]),
@@ -68,6 +78,10 @@ ANNUAL = [
     ('sga', [('us-gaap', 'SellingGeneralAndAdministrativeExpense', 'USD')]),
     ('dil', [('us-gaap', 'WeightedAverageNumberOfDilutedSharesOutstanding', 'shares')]),
     ('eps', [('us-gaap', 'EarningsPerShareDiluted', 'USD-per-shares')]),
+    # quality_more.py: taxes paid, impairments, debt issued (the F-score's "securities issued")
+    ('tax_paid', [('us-gaap', 'IncomeTaxesPaidNet', 'USD'), ('us-gaap', 'IncomeTaxesPaid', 'USD')]),
+    ('gw_imp', [('us-gaap', 'GoodwillImpairmentLoss', 'USD')]),
+    ('debt_issue', [('us-gaap', 'ProceedsFromIssuanceOfLongTermDebt', 'USD'), ('us-gaap', 'ProceedsFromIssuanceOfDebt', 'USD')]),
 ]
 # income statement, annual and quarterly: the hub's frames cache (app/frames.py)
 HUB_ANNUAL = [('rev', FR.REVENUE), ('gp', ['GrossProfit']), ('cogs', FR.COST), ('oi', ['OperatingIncomeLoss']), ('ni', ['NetIncomeLoss'])]
@@ -90,7 +104,8 @@ def _read_gz(p):
         return {}
 
 
-def instant_periods(n=13, today=None):
+def instant_periods(n=None, today=None):
+    n = n or INSTANT_N
     return [p + 'I' for p in FR.calendar_quarters(n, today)]
 
 
@@ -105,7 +120,7 @@ def collect(client, root, minutes=20, refresh_days=3, today=None):
     t0 = time.time()
     state_p = root / 'cache' / 'qframes' / 'state.json'
     state = read_json(state_p, {})
-    inst, ann = instant_periods(13, today), annual_periods(today)
+    inst, ann = instant_periods(None, today), annual_periods(today)
     recent = set(inst[-2:]) | set(ann[-2:])
     fresh_after = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=refresh_days)).isoformat()
     jobs = [(spec, p, False) for _, specs in INSTANT for spec in specs for p in inst]
@@ -171,7 +186,7 @@ def fiscal_years(root, hub_root, today=None):
     inst = {}
     for field, specs in INSTANT:
         for tax, concept, unit in specs:
-            for p in instant_periods(13, today):
+            for p in instant_periods(None, today):
                 for cik, v in _read_gz(_qpath(root, tax, concept, unit, p)).items():
                     inst.setdefault(cik, {}).setdefault(p[:-1], {}).setdefault(field, v)
     res = {}
@@ -208,7 +223,7 @@ def fiscal_years(root, hub_root, today=None):
 def latest_instant(root, cik, field, today=None):
     """The newest balance-sheet value of a field (e.g. shares outstanding) and its quarter."""
     for tax, concept, unit in dict(INSTANT)[field]:
-        for p in reversed(instant_periods(13, today)):
+        for p in reversed(instant_periods(None, today)):
             v = _read_gz(_qpath(root, tax, concept, unit, p)).get(str(cik))
             if v is not None:
                 return v, p[:-1]
@@ -216,10 +231,10 @@ def latest_instant(root, cik, field, today=None):
 
 
 def instants(root, field, today=None):
-    """{period: {cik: value}} for one balance-sheet field over the last 13 quarter ends."""
+    """{period: {cik: value}} for one balance-sheet field over the quarter ends on file."""
     out = {}
     for tax, concept, unit in dict(INSTANT)[field]:
-        for p in instant_periods(13, today):
+        for p in instant_periods(None, today):
             for cik, v in _read_gz(_qpath(root, tax, concept, unit, p)).items():
                 out.setdefault(p[:-1], {}).setdefault(cik, v)
     return out
@@ -288,6 +303,23 @@ def beta(px, spy, end):
         return None
     raw = sum((x - ma) * (y - mb) for x, y in zip(a, b)) / var
     return round(min(3.0, max(0.3, 0.67 * raw + 0.33)), 3)          # Blume-adjusted, bounded
+
+
+def beta_ivol(px, spy, end):
+    """(Blume-adjusted beta, idiosyncratic volatility a year) from two years of weekly returns against SPY."""
+    a, b = weekly_returns(px, end), weekly_returns(spy, end)
+    n = min(len(a), len(b))
+    if n < 40:
+        return None, None
+    a, b = a[-n:], b[-n:]
+    ma, mb = sum(a) / n, sum(b) / n
+    var = sum((x - mb) ** 2 for x in b)
+    if not var:
+        return None, None
+    raw = sum((x - ma) * (y - mb) for x, y in zip(a, b)) / var
+    res = [y - ma - raw * (x - mb) for x, y in zip(b, a)]
+    ivol = math.sqrt(sum(e * e for e in res) / (n - 2) * 52)
+    return round(min(3.0, max(0.3, 0.67 * raw + 0.33)), 3), round(ivol, 4)
 
 
 # ---------------------------------------------------------------- the scores
@@ -611,6 +643,12 @@ FACTORS = [  # key, label, sign (+1: higher is better)
 ]
 
 
+EXTRA_FACTORS = [  # tested walk-forward beside the composite's eight, not part of it (the composite stays as frozen)
+    ('qmj', 'Quality Minus Junk (AFP 2019)', 1), ('dechow_f', 'Dechow F-score (low)', -1), ('c_score', 'Montier C-score (low)', -1),
+    ('da_abs', 'Discretionary accruals, absolute (low)', -1),
+]
+
+
 def pct_ranks(vals):
     """{key: percentile 0..1} for a {key: value} map (ties averaged)."""
     keys = sorted(vals, key=lambda k: vals[k])
@@ -643,7 +681,7 @@ def factor_test(monthly):
     """monthly: [(month, {ticker: {factor values…, 'ret': next-month return}})] → per factor and the composite: monthly
     rank IC, top − bottom quintile spread, their means, t-stat and hit rate, cumulative long-short."""
     out = {}
-    keys = [(k, l, s) for k, l, s in FACTORS] + [('composite', 'Composite (equal-weight percentiles)', 1)]
+    keys = [(k, l, s) for k, l, s in FACTORS] + [('composite', 'Composite (equal-weight percentiles)', 1)] + EXTRA_FACTORS
     for key, label, sign in keys:
         ics, spreads, cum, series = [], [], 1.0, []
         for month, rows in monthly:
@@ -783,7 +821,15 @@ def _valuation_wacc(folder):
     return {str(r[i]).upper(): r[j] for r in d.get('rows') or [] if r[j] is not None}
 
 
-def build(root, hub_root, prices, site_index=None, valuation=None, rates=None, today=None, out=None):
+def _street(consensus, cik):
+    """The analysts' "actual" EPS by quarter (consensus-history public/c/<cik>.json), when that folder was given."""
+    if not consensus:
+        return None
+    d = read_json(Path(consensus) / 'c' / f'{int(cik)}.json', None)
+    return (d or {}).get('surprises')
+
+
+def build(root, hub_root, prices, site_index=None, valuation=None, rates=None, today=None, out=None, consensus=None):
     root, out = Path(root), Path(out or Path(root) / 'public')
     t0 = time.time()
     today = today or dt.date.today()
@@ -816,7 +862,7 @@ def build(root, hub_root, prices, site_index=None, valuation=None, rates=None, t
         return (recs[-1].get('dil') if recs else None) or None
 
     # -------- current metrics
-    rows, comp, points = {}, {}, {}
+    rows, comp, points, qin = {}, {}, {}, {}
     last_day = max((p[0][-1] for p in px.values()), default=today.isoformat())
     for cik, t in tick.items():
         recs = fys.get(cik) or []
@@ -830,7 +876,7 @@ def build(root, hub_root, prices, site_index=None, valuation=None, rates=None, t
         sec = sector_of(cik)
         fin = sec in FIN_SECTORS
         man = 2000 <= sic_of(cik) <= 3999
-        b = beta(px[t], spy, last_day) if spy else None
+        b, ivol = beta_ivol(px[t], spy, last_day) if spy else (None, None)
         m = company_metrics(recs, mcap, man, fin, b, rf)
         if t in vw and m.get('wacc'):
             m['wacc'] = {**m['wacc'], 'wacc': vw[t], 'source': 'research/valuation'}
@@ -865,9 +911,24 @@ def build(root, hub_root, prices, site_index=None, valuation=None, rates=None, t
                'var_ratio': cs['var_ratio'] if cs and cs['reliable'] else None,
                'accruals': m.get('accruals'), 'gp_a': m.get('gp_a'), 'asset_g': m.get('asset_g'), 'net_iss': m.get('net_iss'),
                'ev_s': _r(ev_s, 3), 'growth': _r(growth), 'margin': _r(margin), 'r40': _r(r40, 2), 'fy_end': m['fy_end']}
+        # quality_more.py: manipulation screens, stability, QMJ inputs, taxes, goodwill, non-GAAP
+        prev, prev2 = (recs[-2] if len(recs) > 1 else None), (recs[-3] if len(recs) > 2 else None)
+        more = {'dechow': QM.dechow(recs[-1], prev, prev2) if prev and not fin else None,
+                'cscore': QM.cscore(recs[-1], prev) if prev and not fin else None,
+                'stability': QM.stability(recs, qs[-16:]), 'taxes': QM.taxes(recs), 'goodwill': QM.goodwill(recs, mcap),
+                'nongaap': QM.nongaap(_street(consensus, cik), [(quarter_end(p).isoformat(), f.get('ni')) for p, f in qs[-8:]],
+                                      recs[-1].get('dil') or sh)}
+        qin[t] = QM.qmj_inputs(recs, b, ivol, (m.get('altman') or {}).get('z'))
+        more['qmj_inputs'] = qin[t]
+        d = more['dechow'] or {}
+        row.update({'dechow_f': d.get('f'), 'dechow_band': d.get('band'), 'c_score': (more['cscore'] or {}).get('score'),
+                    'c_n': (more['cscore'] or {}).get('n'), 'sd_roa': (more['stability'] or {}).get('sd_roa'),
+                    'smooth': (more['stability'] or {}).get('smooth'), 'cash_tax': (more['taxes'] or {}).get('cash_to_book'),
+                    'gw_equity': (more['goodwill'] or {}).get('gw_equity'), 'gw_assets': (more['goodwill'] or {}).get('gw_assets'),
+                    'ng_gap': (more['nongaap'] or {}).get('gap'), 'beta': b, 'ivol': ivol})
         rows[t] = row
         comp[t] = {'metrics': m, 'cost': cs, 'records': recs[-5:], 'ttm': t_now, 'ttm_year_ago': t_ago, 'ev': round(ev),
-                   'debt': debt, 'cash': cash, 'shares': sh}
+                   'debt': debt, 'cash': cash, 'shares': sh, 'more': more}
         points.setdefault(sec, []).append(row)
     lines = {}
     for sec, pts in points.items():
@@ -880,6 +941,49 @@ def build(root, hub_root, prices, site_index=None, valuation=None, rates=None, t
             if 'resid' in p:
                 rows[p['t']]['resid'] = p['resid']
                 rows[p['t']]['line_ev_s'] = p['line_ev_s']
+    # -------- cross-sections: modified Jones by sector and fiscal year, Sloan persistence by sector, QMJ
+    jobs, pobs = [], {}
+    for cik, t in tick.items():
+        sec = sector_of(cik)
+        if sec in FIN_SECTORS or not fys.get(cik):
+            continue
+        for o in QM.jones_obs(fys[cik]):
+            jobs.append({**o, 'key': (t, o['end']), 'group': f"{sec}|{o['year']}"})
+        pobs.setdefault(sec, []).extend(QM.persistence_obs(fys[cik]))
+    jres = QM.jones(jobs)
+    pers = QM.persistence(pobs)
+    da_by_sec = {}
+    for t, c in comp.items():
+        mine = sorted(((k[1], v) for k, v in jres.items() if k[0] == t), key=lambda x: x[0])
+        if mine:
+            c['more']['jones'] = {'latest': mine[-1][1], 'history': [[e, v['da'], v['ta'], v['na']] for e, v in mine]}
+            rows[t]['da'] = mine[-1][1]['da']
+            rows[t]['da_abs'] = abs(mine[-1][1]['da']) if mine[-1][1]['da'] is not None else None
+            da_by_sec.setdefault(rows[t]['sector'], {})[t] = rows[t]['da_abs']
+        ps = pers.get(rows[t]['sector'])
+        recs = c['records']
+        if ps and len(recs) > 1 and recs[-1].get('ni') is not None and recs[-1].get('ocf') is not None:
+            a = QM._avg(recs[-1].get('assets'), recs[-2].get('assets'))
+            if a:
+                cash_roa, acc_roa = recs[-1]['ocf'] / a, (recs[-1]['ni'] - recs[-1]['ocf']) / a
+                c['more']['persistence'] = {**ps, 'cash_roa': _r(cash_roa), 'acc_roa': _r(acc_roa)}
+    for sec, vals in da_by_sec.items():
+        for t, p in pct_ranks({k: v for k, v in vals.items() if v is not None}).items():
+            rows[t]['da_pct'] = round(p, 3)
+            comp[t]['more']['jones']['sector_pct'] = round(p, 3)
+    qs_ = QM.qmj_scores({t: v for t, v in qin.items() if t in rows})
+    qrank = pct_ranks({t: v['qmj'] for t, v in qs_.items() if v.get('qmj') is not None})
+    by_sec_q = {}
+    for t, v in qs_.items():
+        if v.get('qmj') is not None:
+            by_sec_q.setdefault(rows[t]['sector'], {})[t] = v['qmj']
+    srank = {}
+    for vals in by_sec_q.values():
+        srank.update(pct_ranks(vals) if len(vals) >= 5 else {})
+    for t, v in qs_.items():
+        rows[t].update({'qmj': v.get('qmj'), 'qmj_rank': _r(qrank.get(t), 3), 'qmj_sec_rank': _r(srank.get(t), 3),
+                        'qmj_prof': v.get('profitability'), 'qmj_growth': v.get('growth'), 'qmj_safety': v.get('safety'), 'qmj_payout': v.get('payout')})
+        comp[t]['more']['qmj'] = {**v, 'rank': _r(qrank.get(t), 3), 'sector_rank': _r(srank.get(t), 3)}
     scores = composite(rows)
     ranks = pct_ranks(scores)
     for t, s in scores.items():
@@ -893,7 +997,7 @@ def build(root, hub_root, prices, site_index=None, valuation=None, rates=None, t
             comp[t]['margins'] = f
 
     # -------- walk-forward factor history
-    monthly = backtest(fys, qfig, so_hist, tick, px, sector_of, info)
+    monthly = backtest(fys, qfig, so_hist, tick, px, sector_of, info, spy=spy)
     ftest = factor_test(monthly)
     ledger = update_ledger(root, rows, px, last_day)
 
@@ -902,7 +1006,10 @@ def build(root, hub_root, prices, site_index=None, valuation=None, rates=None, t
     fields = ['ticker', 'cik', 'name', 'sector', 'mcap', 'price', 'f_score', 'f_n', 'z', 'z_model', 'z_zone', 'm_score', 'm_flag', 'sy',
               'div_y', 'bb_y', 'fcf_y', 'fcf_sbc_y', 'oe_y', 'roic', 'roic_inc', 'wacc', 'spread', 'dol', 'fixed_q', 'var_ratio',
               'accruals', 'gp_a', 'asset_g', 'net_iss', 'ev_s', 'growth', 'margin', 'r40', 'resid', 'line_ev_s', 'composite',
-              'comp_rank', 'margin_fc4', 'fy_end']
+              'comp_rank', 'margin_fc4', 'fy_end',
+              # quality_more.py
+              'qmj', 'qmj_rank', 'qmj_sec_rank', 'qmj_prof', 'qmj_growth', 'qmj_safety', 'qmj_payout', 'dechow_f', 'dechow_band',
+              'c_score', 'c_n', 'da', 'da_pct', 'sd_roa', 'smooth', 'cash_tax', 'gw_equity', 'gw_assets', 'ng_gap', 'beta', 'ivol']
     srt = sorted(rows.values(), key=lambda r: -r['mcap'])
     write_json(out / 'index.json', {
         'generated_at': now(), 'asof': last_day, 'rf': rf, 'erp': ERP, 'min_mcap': MIN_MCAP, 'fields': fields,
@@ -917,6 +1024,10 @@ def build(root, hub_root, prices, site_index=None, valuation=None, rates=None, t
     for t, c in comp.items():
         write_json(cdir / f'{t}.json', _clean({'ticker': t, 'row': rows[t], **c, 'line': lines.get(rows[t]['sector']),
                                               'sector_name': sector_names.get(rows[t]['sector'], rows[t]['sector'])}))
+    write_json(out / 'persistence.json', {'generated_at': now(), 'sectors': pers, 'sector_names': sector_names,
+                                          'note': ('Next fiscal year\'s ROA regressed on this year\'s cash ROA (operating cash flow / '
+                                                   'average assets) and accrual ROA (net income − operating cash flow), pooled per sector '
+                                                   'over the years on file (Sloan 1996); winsorized at 1% and 99%.')})
     write_json(out / 'scatter.json', {'generated_at': now(), 'lines': lines, 'sector_names': sector_names,
                                       'points': {sec: [[r['ticker'], r['r40'], r['ev_s'], r.get('resid'), r['mcap']]
                                                        for r in sorted(pts, key=lambda r: -r['mcap'])[:250] if r.get('resid') is not None]
@@ -929,7 +1040,8 @@ def build(root, hub_root, prices, site_index=None, valuation=None, rates=None, t
     write_json(out / 'margins.json', {'generated_at': now(), 'sectors': mstats, 'sector_names': sector_names})
     status = {'built_at': now(), 'asof': last_day, 'companies': len(rows), 'fiscal_years': sum(len(v) for v in fys.values()),
               'piotroski_9': sum(1 for r in rows.values() if r['f_score'] == 9), 'distress': sum(1 for r in rows.values() if r['z_zone'] == 'distress'),
-              'beneish_flags': sum(1 for r in rows.values() if r['m_flag']), 'factor_months': max((f.get('months', 0) for f in ftest.values()), default=0),
+              'beneish_flags': sum(1 for r in rows.values() if r['m_flag']),
+              'dechow_high': sum(1 for r in rows.values() if r.get('dechow_band') == 'high'), 'qmj': sum(1 for r in rows.values() if r.get('qmj') is not None), 'factor_months': max((f.get('months', 0) for f in ftest.values()), default=0),
               'ledger_months': len(ledger.get('months') or {}), 'seconds': round(time.time() - t0)}
     write_json(out / 'status.json', status)
     return status
@@ -945,7 +1057,7 @@ def _clean(o):
     return o
 
 
-def backtest(fys, qfig, so_hist, tick, px, sector_of, info, start='2022-07-01'):
+def backtest(fys, qfig, so_hist, tick, px, sector_of, info, start='2022-07-01', spy=None):
     """[(month, {ticker: factors + next-month return})] from the first month the prices allow."""
     if not px:
         return []
@@ -1011,7 +1123,29 @@ def backtest(fys, qfig, so_hist, tick, px, sector_of, info, start='2022-07-01'):
                         r['_ev_s'] = ev / tn['rev']
                         r['_r40'] = (tn['rev'] / ta['rev'] - 1) * 100 + tn['oi'] / tn['rev'] * 100
                         r['_sec'] = sector_of(cik)
+            if sector_of(cik) not in FIN_SECTORS:
+                prev2 = recs[idx[-3]] if len(idx) > 2 else None
+                dch = QM.dechow(cur, prev, prev2)
+                if dch:
+                    r['dechow_f'] = dch['f']
+                cs_ = QM.cscore(cur, prev)
+                if cs_:
+                    r['c_score'] = cs_['score']
+                jo = QM.jones_obs([prev, cur])
+                if jo:
+                    r['_j'] = {**jo[0], 'key': t, 'group': sector_of(cik)}
+            bb, iv = beta_ivol(p, spy, m) if spy else (None, None)
+            r['_q'] = QM.qmj_inputs([recs[i] for i in idx], bb, iv, None)
             rows[t] = r
+        jr = QM.jones([r.pop('_j') for r in rows.values() if '_j' in r])
+        for t, v in jr.items():
+            if v['da'] is not None:
+                rows[t]['da_abs'] = abs(v['da'])
+        for t, v in QM.qmj_scores({t: r.pop('_q') for t, r in rows.items() if '_q' in r}).items():
+            if v.get('qmj') is not None:
+                rows[t]['qmj'] = v['qmj']
+        for r in rows.values():
+            r.pop('_q', None)
         by_sec = {}
         for t, r in rows.items():
             if '_ev_s' in r:
@@ -1096,12 +1230,13 @@ def main():
     b.add_argument('--site-index', default=None, help="the Sankey site's index.json (sectors, SIC codes, names)")
     b.add_argument('--valuation', default=None, help='public/ of research-valuation (company WACC), when it exists')
     b.add_argument('--rates', default=None, help='rates.json of debt-history public/ (10-year Treasury), when it exists')
+    b.add_argument('--consensus', default=None, help="public/ of consensus-history (analysts' actual EPS for the non-GAAP gap), when it exists")
     a = ap.parse_args()
     if a.cmd == 'collect':
         from core import Client
         print(json.dumps(collect(Client(a.root, {}), a.root, a.minutes)), flush=True)
     else:
-        print(json.dumps(build(a.root, a.frames_root, a.prices, a.site_index, a.valuation, a.rates)), flush=True)
+        print(json.dumps(build(a.root, a.frames_root, a.prices, a.site_index, a.valuation, a.rates, consensus=a.consensus)), flush=True)
 
 
 if __name__ == '__main__':

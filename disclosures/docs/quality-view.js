@@ -3,7 +3,8 @@
      Piotroski F (nine pass / fail checks), Altman Z or Z'' with its weighted parts, Beneish M (eight indices; a statistical
      screen, not an accusation), shareholder yield, FCF yield before and after stock compensation, owner earnings,
      ROIC / incremental ROIC against a WACC, operating leverage with the fixed / variable cost regression, margin mean
-     reversion and the sector's growth-adjusted EV/Sales line.
+     reversion and the sector's growth-adjusted EV/Sales line; Quality Minus Junk, the Dechow F-score, Montier's C-score,
+     discretionary accruals, the stability and persistence of earnings, taxes, goodwill and the non-GAAP gap.
    Data: data/research/quality/c/<TICKER>.json (app/quality.py, branch research-quality).
    window.QualityView.render(el, {ticker, hub}) — hub: the path to the hub ('disclosures/' on the Sankey site, '' inside it). */
 (function () {
@@ -23,7 +24,8 @@
 .qv h3{margin:0 0 6px;font-size:1rem}.qv .qv-big{font-size:1.6rem;font-weight:600;margin-right:8px}.qv .qv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
 .qv table{border-collapse:collapse;width:100%;min-width:0!important;font-size:.86rem;table-layout:auto}.qv .qv-card{min-width:0;overflow:hidden}.qv td:first-child{min-width:0;font-weight:400}.qv th{position:static;white-space:normal}.qv td,.qv th{padding:3px 6px;border-bottom:1px solid var(--line,#e4e7ec);text-align:left;vertical-align:top}
 .qv td.n,.qv th.n{text-align:right;font-variant-numeric:tabular-nums}.qv .ok{color:#17734a}.qv .bad{color:#b42318}.qv .na{color:#98a2b3}
-.qv .zone-safe{color:#17734a}.qv .zone-grey{color:#b54708}.qv .zone-distress{color:#b42318}.qv svg{max-width:100%;height:auto}.qv .muted{opacity:.75}`;
+.qv .qv-zbar{display:inline-block;position:relative;width:100%;height:8px;background:var(--line,#e4e7ec);border-radius:4px;vertical-align:middle}.qv .qv-zbar i{position:absolute;top:0;bottom:0;border-radius:4px}
+.qv details summary{cursor:pointer;margin:6px 0}.qv td,.qv th{white-space:normal;overflow-wrap:anywhere}.qv td.n,.qv th.n{white-space:nowrap;overflow-wrap:normal;padding-left:8px}.qv .zone-safe{color:#17734a}.qv .zone-grey{color:#b54708}.qv .zone-distress{color:#b42318}.qv svg{max-width:100%;height:auto}.qv .muted{opacity:.75}`;
     document.head.appendChild(s);
   }
   function load(hub, t) {
@@ -135,6 +137,81 @@
     return `<div class="qv-card"><h3>The figures (fiscal years, from XBRL)</h3><div style="overflow-x:auto"><table><thead><tr><th></th>${R.map((r) => `<th class="n">${esc(r.end)}</th>`).join('')}</tr></thead>
       <tbody>${K.map(([k, l]) => `<tr><td>${l}</td>${R.map((r) => `<td class="n">${big(r[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
   }
+  // ---- quality_more.py: Quality Minus Junk, manipulation screens, stability and persistence, taxes, goodwill, non-GAAP
+  const pc = (v) => Math.min(99, Math.max(1, Math.round(100 * v)));
+  const ord = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+  const sgn = (v, d = 2) => (fin(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(+v).toFixed(d) : '—');
+  const zbar = (z) => {
+    if (!fin(z)) return '';
+    const w = Math.min(Math.abs(z), 3) / 3 * 50;
+    return `<span class="qv-zbar"><i style="${z >= 0 ? 'left:50%' : `left:${50 - w}%`};width:${w}%;background:${z >= 0 ? '#17734a' : '#b42318'}"></i></span>`;
+  };
+  const QMJ_L = {
+    gpoa: 'Gross profit / assets', roe: 'Return on equity', roa: 'Return on assets', cfoa: 'Operating cash flow / assets', gmar: 'Gross margin', acc: 'Accruals / assets (low is better)',
+    d_gpoa: 'Change in gross profit / assets', d_roe: 'Change in ROE', d_roa: 'Change in ROA', d_cfoa: 'Change in cash flow / assets', d_gmar: 'Change in gross margin',
+    beta: 'Beta (low is safer)', ivol: 'Idiosyncratic volatility (low is safer)', lev: 'Debt / assets (low is safer)', evol: 'Volatility of ROE (low is safer)', z: 'Altman Z (high is safer)',
+    eiss: 'Net share issuance (low is better)', diss: 'Net debt issuance / assets (low is better)', npop: 'Net payout / profits, five years',
+  };
+  const QMJ_P = { profitability: ['gpoa', 'roe', 'roa', 'cfoa', 'gmar', 'acc'], growth: ['d_gpoa', 'd_roe', 'd_roa', 'd_cfoa', 'd_gmar'], safety: ['beta', 'ivol', 'lev', 'evol', 'z'], payout: ['eiss', 'diss', 'npop'] };
+  const PILLAR = { profitability: 'Profitability', growth: 'Growth', safety: 'Safety', payout: 'Payout' };
+  function qmjCard(mo) {
+    const q = mo.qmj, x = mo.qmj_inputs || {};
+    if (!q) return '<div class="qv-card"><h3>Quality Minus Junk</h3><p class="muted">Not enough figures for three of the four pillars.</p></div>';
+    const fmtv = (k, v) => (['beta', 'z', 'npop'].includes(k) ? num(v, 2) : k === 'eiss' ? pct(v, 1) : pct(v, 1));
+    return `<div class="qv-card"><h3>Quality Minus Junk</h3><p><span class="qv-big">${fin(q.rank) ? ord(pc(q.rank)) : '—'}</span>percentile of all companies${fin(q.sector_rank) ? ` · ${ord(pc(q.sector_rank))} in its sector` : ''} <span class="muted">(z ${sgn(q.qmj)})</span></p>
+      <table><tbody>${Object.keys(PILLAR).map((p) => `<tr><td><b>${PILLAR[p]}</b></td><td class="n">${sgn(q[p])}</td><td style="width:40%">${zbar(q[p])}</td></tr>`).join('')}</tbody></table>
+      <details><summary>The ${Object.values(QMJ_P).flat().length} measures behind it</summary><table><tbody>${Object.entries(QMJ_P).map(([p, ks]) => `<tr><td colspan="2" class="muted">${PILLAR[p]}${p === 'growth' && x.growth_years ? ` (a year, over ${x.growth_years} years)` : ''}</td></tr>`
+        + ks.map((k) => `<tr><td>${QMJ_L[k]}</td><td class="n">${fin(x[k]) ? fmtv(k, x[k]) : '—'}</td></tr>`).join('')).join('')}</tbody></table></details>
+      <p class="muted">Asness, Frazzini &amp; Pedersen (2019): each measure ranked across every company over $300M and turned into a z-score; a pillar averages its measures, QMJ averages the pillars (three of four needed). Quality stocks have tended to earn more than junk ones over long periods, not every year.</p></div>`;
+  }
+  const BAND = { normal: 'ok', 'above normal': '', substantial: 'bad', high: 'bad' };
+  function manipCard(mo) {
+    const d = mo.dechow, c = mo.cscore, j = mo.jones;
+    const DL = { rsst_acc: 'RSST accruals (working capital, long-term operating and financial assets, change / assets)', ch_rec: 'Change in receivables / assets', ch_inv: 'Change in inventory / assets',
+      soft_assets: 'Soft assets (not PP&amp;E or cash) / assets', ch_cs: 'Change in cash sales', ch_roa: 'Change in return on assets', issue: 'Shares or debt issued this year (1 = yes)' };
+    const dh = d ? `<p><span class="qv-big ${BAND[d.band] || ''}">${num(d.f, 2)}</span>${esc(d.band)} risk · probability ${pct(d.prob, 2)}</p>
+      <table><thead><tr><th>Input</th><th class="n">Value</th><th class="n">Weight</th></tr></thead><tbody>${Object.keys(DL).map((k) => `<tr><td>${DL[k]}</td><td class="n">${num(d.x[k], 3)}</td><td class="n">${d.w[k]}</td></tr>`).join('')}</tbody></table>
+      ${(d.assumed || []).length ? `<p class="muted">Not tagged, assumed: ${esc(d.assumed.join('; '))}.</p>` : ''}`
+      : '<p class="muted">Not computed (financial companies, or receivables, PP&amp;E or liabilities not tagged for two years).</p>';
+    const ch = c ? `<p><span class="qv-big ${c.score >= 4 ? 'bad' : c.score <= 1 ? 'ok' : ''}">${c.score}/${c.n}</span>warning signs present</p>
+      <table><tbody>${c.signs.map((s) => `<tr><td>${s.on === true ? '<span class="bad">●</span>' : s.on === false ? '<span class="ok">○</span>' : '<span class="na">—</span>'}</td><td>${esc(s.label)}</td><td class="n">${esc(Array.isArray(s.detail) ? s.detail.map((v) => (fin(v) ? (Math.abs(v) >= 1e5 ? big(v) : num(v, 2)) : '—')).join(' → ') : fin(s.detail) ? pct(s.detail) : '—')}</td></tr>`).join('')}</tbody></table>`
+      : '<p class="muted">Fewer than four of the six signs can be read from the tags.</p>';
+    const jl = j && j.latest;
+    const jh = jl ? `<p><span class="qv-big ${fin(j.sector_pct) && j.sector_pct >= 0.9 ? 'bad' : ''}">${sgn(jl.da, 3)}</span>of last year's assets · larger in size than ${fin(j.sector_pct) ? pc(j.sector_pct) + '%' : '—'} of its sector</p>
+      <table><tbody><tr><td>Total accruals (net income − operating cash flow) / assets</td><td class="n">${num(jl.ta, 3)}</td></tr><tr><td>Expected by the model (revenue, receivables, PP&amp;E, ROA)</td><td class="n">${num(jl.na, 3)}</td></tr>
+      <tr><td><b>Discretionary (the rest)</b></td><td class="n"><b>${num(jl.da, 3)}</b></td></tr><tr><td class="muted">Fit: ${esc(String(jl.group).replace('|', ', fiscal '))} · ${jl.n} companies · R²</td><td class="n muted">${num(jl.r2, 2)}</td></tr></tbody></table>
+      ${(j.history || []).length > 1 ? `<p class="muted">By year: ${j.history.map((h) => `${esc(String(h[0]).slice(0, 4))} ${sgn(h[1], 3)}`).join(' · ')}</p>` : ''}`
+      : '<p class="muted">Not computed (financial companies, or too few peers in its sector and year).</p>';
+    return `<div class="qv-grid"><div class="qv-card"><h3>Dechow F-score</h3>${dh}<p class="muted">Dechow, Ge, Larson &amp; Sloan (2011), model 1, fitted on companies the SEC charged with misstating: the predicted chance of a misstatement over the 0.37% base rate. 1 = average; above 1.85 substantial, above 2.45 high. A screen, not an accusation.</p></div>
+      <div class="qv-card"><h3>Montier C-score</h3>${ch}<p class="muted">Montier (2008): six common signs of "cooking the books", each read on the latest fiscal year against the one before. Four or more deserve a closer look at the notes.</p></div>
+      <div class="qv-card"><h3>Discretionary accruals</h3>${jh}<p class="muted">Modified Jones model (Dechow, Sloan &amp; Sweeney 1995) with ROA added (Kothari, Leone &amp; Wasley 2005), fitted on the company's sector and fiscal year. Large values either way: profit that the business's growth and assets do not explain.</p></div></div>`;
+  }
+  function stableCard(mo) {
+    const s = mo.stability, p = mo.persistence;
+    if (!s && !p) return '';
+    return `<div class="qv-card"><h3>Stability and persistence of earnings</h3><table><tbody>
+      ${s ? `<tr><td>Volatility of ROA (${s.years} fiscal years)</td><td class="n">${pct(s.sd_roa, 2)}</td></tr><tr><td>Volatility of operating cash flow / assets</td><td class="n">${pct(s.sd_cfoa, 2)}</td></tr>
+      <tr><td>Smoothness: σ(ROA) / σ(cash flow / assets)</td><td class="n">${num(s.smooth, 2)}</td></tr><tr><td>Volatility of gross margin · operating margin</td><td class="n">${pct(s.sd_gm, 2)} · ${pct(s.sd_om, 2)}</td></tr>
+      ${fin(s.sd_ttm_om) ? `<tr><td>Volatility of the trailing-four-quarter operating margin</td><td class="n">${pct(s.sd_ttm_om, 2)}</td></tr>` : ''}<tr><td>Years with a loss · with negative operating cash flow</td><td class="n">${s.loss_years} · ${s.neg_ocf_years}</td></tr>` : ''}
+      ${p ? `<tr><td>This year's ROA: from cash · from accruals</td><td class="n">${pct(p.cash_roa)} · ${pct(p.acc_roa)}</td></tr>
+      <tr><td>In its sector, carried into next year: of cash ROA · of accrual ROA</td><td class="n">${fin(p.b_cash) ? Math.round(100 * p.b_cash) + '%' : '—'} · ${fin(p.b_acc) ? Math.round(100 * p.b_acc) + '%' : '—'}</td></tr>
+      <tr><td colspan="2" class="muted">Pooled over ${p.n} company-years of its sector: next year's ROA regressed on this year's cash and accrual parts (R² ${num(p.r2, 2)}).</td></tr>` : ''}
+      </tbody></table><p class="muted">Smoothness well below 1: reported profit moves much less than cash flow — steady by nature, or smoothed (Leuz, Nanda &amp; Wysocki 2003). Accrual profit usually persists less than cash profit (Sloan 1996): the same ROA built on accruals tends to fall back.</p></div>`;
+  }
+  function otherCard(mo, c) {
+    const t = mo.taxes, g = mo.goodwill, n = mo.nongaap;
+    if (!t && !g && !n) return '';
+    const tax = t ? `<tr><td colspan="2"><b>Taxes</b> <span class="muted">(${t.years} fiscal years summed)</span></td></tr><tr><td>Cash taxes paid / tax expense</td><td class="n">${num(t.cash_to_book, 2)}</td></tr>
+      <tr><td>Cash tax rate · book tax rate (of pre-tax profit)</td><td class="n">${pct(t.cash_etr)} · ${pct(t.book_etr)}</td></tr>` : '';
+    const gw = g ? `<tr><td colspan="2"><b>Goodwill and intangibles</b></td></tr><tr><td>Goodwill · other intangibles</td><td class="n">${big(g.gw)} · ${big(g.intang)}</td></tr>
+      <tr><td>Their share of assets · of equity</td><td class="n">${pct(g.gw_assets)} · ${fin(g.gw_equity) ? pct(g.gw_equity, 0) : '—'}</td></tr><tr><td>Tangible equity</td><td class="n">${big(g.tangible_equity)}</td></tr>
+      ${(g.impairments || []).length ? `<tr><td>Impairments</td><td class="n">${g.impairments.map((x) => `${esc(String(x[0]).slice(0, 4))} ${big(x[1])}`).join(' · ')}</td></tr>` : ''}
+      ${(g.signs || []).map((s) => `<tr><td colspan="2" class="bad">${esc(s)}</td></tr>`).join('')}` : '';
+    const ng = n ? `<tr><td colspan="2"><b>Non-GAAP earnings</b></td></tr><tr><td>Analysts' "actual" EPS, last four quarters</td><td class="n">${num(n.street_ttm, 2)}</td></tr>
+      <tr><td>GAAP EPS, same quarters (net income / diluted shares)</td><td class="n">${num(n.gaap_ttm, 2)}</td></tr><tr><td><b>Gap (adjusted above GAAP)</b></td><td class="n"><b class="${fin(n.gap) && n.gap > 0.25 ? 'bad' : ''}">${pct(n.gap, 0)}</b></td></tr>` : '';
+    return `<div class="qv-card"><h3>Taxes, goodwill and non-GAAP</h3><table><tbody>${tax}${gw}${ng}</tbody></table>
+      <p class="muted">Cash taxes well under the expense: profit taxed later (or never) — deferrals, credits, timing. Goodwill above equity or a market value under book: a write-down is more likely. A wide, lasting gap between adjusted and GAAP earnings: "one-off" costs that keep coming back.</p></div>`;
+  }
   async function render(el, opt) {
     css();
     const hub = (opt && opt.hub) || '', t = tk(opt && opt.ticker);
@@ -161,7 +238,9 @@
     const r = c.row || {};
     el.innerHTML = `<div class="qv"><div class="qv-card"><h3>${esc(r.name || t)} <span class="muted">${esc(t)} · ${esc(c.sector_name || r.sector || '')}</span></h3>
       <p class="muted">Fiscal year ended ${esc(r.fy_end || '—')} · market cap ${big(r.mcap)} · composite rank ${fin(r.comp_rank) ? Math.round(100 * r.comp_rank) + 'th percentile' : '—'}</p></div>
+      ${c.more ? `<div class="qv-grid">${qmjCard(c.more)}${stableCard(c.more)}${otherCard(c.more, c)}</div>` : ''}
       <div class="qv-grid">${piotroski(c.metrics)}${altman(c.metrics)}${beneish(c.metrics)}</div>
+      ${c.more ? manipCard(c.more) : ''}
       <div class="qv-grid">${yields(c)}${roic(c)}${leverage(c)}</div>
       <div class="qv-grid">${margins(c)}${line(c)}</div>${records(c)}
       <div class="qv-card"><h3>Revenue Quality / Cookie Jar screening</h3>
