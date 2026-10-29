@@ -1,8 +1,8 @@
 {
   "version": 2,
   "source": "SEC EDGAR + issuer official IR",
-  "generated_at": "2026-10-29T17:21:21+00:00",
-  "last_attempt": "2026-10-29T17:21:21+00:00",
+  "generated_at": "2026-10-29T21:13:46+00:00",
+  "last_attempt": "2026-10-29T21:13:46+00:00",
   "last_success": null,
   "status": "partial",
   "errors": [
@@ -12,46 +12,59 @@
     "MSFT": {
       "sec": "ok",
       "ir": "ok",
-      "last_attempt": "2026-10-29T17:21:16+00:00"
+      "last_attempt": "2026-10-29T21:13:41+00:00"
     },
     "NVDA": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T17:21:18+00:00",
+      "last_attempt": "2026-10-29T21:13:42+00:00",
       "ir_discovery": "ok"
     },
     "AAPL": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T17:21:18+00:00",
+      "last_attempt": "2026-10-29T21:13:43+00:00",
       "ir_discovery": "ok"
     },
     "AMZN": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T17:21:19+00:00",
+      "last_attempt": "2026-10-29T21:13:43+00:00",
       "ir_discovery": "ok"
     },
     "META": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T17:21:20+00:00",
+      "last_attempt": "2026-10-29T21:13:44+00:00",
       "ir_discovery": "ok"
     },
     "GOOGL": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T17:21:20+00:00",
+      "last_attempt": "2026-10-29T21:13:45+00:00",
       "ir_discovery": "ok"
     },
     "TSLA": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T17:21:21+00:00",
+      "last_attempt": "2026-10-29T21:13:45+00:00",
       "ir_discovery": "partial"
     }
   },
   "rows": [
+    {
+      "id": "sec:0001018724-26-000038",
+      "ticker": "AMZN",
+      "kind": "sec_earnings_evidence",
+      "date": "2026-10-29",
+      "filed_date": "2026-10-29",
+      "accession": "0001018724-26-000038",
+      "form": "8-K",
+      "items": "2.02,9.01",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000038/amzn-20261029.htm",
+      "transcript_status": "not_verified",
+      "note": "8-K Item 2.02 earnings disclosure, not an earnings-call transcript."
+    },
     {
       "id": "sec:0001652044-26-000080",
       "ticker": "GOOGL",
@@ -309,10 +322,10 @@
   "counts": {
     "official_transcripts": 1,
     "official_ir_candidates": 4,
-    "sec_earnings_evidence": 14,
+    "sec_earnings_evidence": 15,
     "guidance_ranges": 0,
     "quantitative_exercises": 0
   },
-  "latest_source_date": "2026-10-28",
+  "latest_source_date": "2026-10-29",
   "rights": "Public metadata and original-source links only; calculations based on unreconciled management speech."
 }
