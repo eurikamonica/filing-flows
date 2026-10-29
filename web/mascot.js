@@ -550,9 +550,9 @@
 .flo-log{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px;overflow-wrap:anywhere}
 .flo-msg{min-width:0;overflow-wrap:anywhere}
 .flo-msg.flo-bot:has(.flo-ac-head),.flo-msg.flo-bot:has(.flo-workbook),.flo-msg.flo-bot:has(.flo-coach),.flo-msg.flo-bot:has(.flo-example){max-width:100%;width:100%}
-.flo-chips{display:flex;flex-direction:column;flex:0 0 auto;min-width:0;gap:0;padding:5px 12px 6px}
+.flo-chips{display:flex;flex-direction:column;flex-wrap:nowrap;flex:0 0 auto;min-width:0;gap:0;padding:5px 12px 6px}
 .flo-chips .flo-modes-main{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;max-width:100%;width:100%;min-width:0;white-space:nowrap;padding:2px 0 5px;scrollbar-width:thin}
-.flo-chips .flo-modes-main button{flex:0 0 auto}
+.flo-chips .flo-modes-main{flex:0 0 auto}.flo-chips .flo-modes-main button{flex:0 0 auto}
 .flo-chips .flo-modes-main{overflow:visible;align-items:center}
 .flo-chips .flo-main-scroll{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto;overflow-x:auto;white-space:nowrap;scrollbar-width:thin}
 .flo-chips .flo-chip-extra{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;max-height:124px;overflow-y:auto;overscroll-behavior:contain;padding:7px 1px 2px;border-top:1px solid var(--line,#ddd)}
@@ -560,6 +560,7 @@
 .flo-chips .flo-chip-extra button{flex:0 0 auto}
 .flo-chips .flo-tools-toggle{background:var(--surface-2,#eee);border:1px dashed var(--line,#bbb);font-weight:600}
 .flo-form{flex:0 0 auto;min-height:59px;padding:9px 12px 11px}
+@media(min-width:561px){.flo-form{padding-right:72px}}
 .flo-form input{min-width:0;min-height:42px}
 .flo-wb-scroll{width:100%;max-width:100%;overflow-x:auto}
 .flo-panel.flo-expanded .flo-chip-extra{max-height:180px}
@@ -728,7 +729,7 @@
       place(ui.halves[0], L0 - a, T0 - a, S); place(ui.halves[1], L0 + a, T0 + a, S);
     } else {
       // Keep both animated halves visible without covering the main answer,
-      // titlebar actions or composer. Desktop: left outside edge. Phone: top.
+      // titlebar actions or composer. Desktop: top-left and bottom-right corners. Phone: top.
       const r = ui.panel.getBoundingClientRect();
       const enlarged = ui.panel.classList.contains('flo-expanded');
       const S = small ? (enlarged ? 44 : 58) : (enlarged ? 58 : 72);
@@ -737,9 +738,10 @@
         place(ui.halves[0], r.left + 4, y, S);
         place(ui.halves[1], r.right - S - 78, y, S);
       } else {
-        const x = r.left - 0.72 * S;
-        place(ui.halves[0], x, Math.max(4, r.top + 4), S);
-        place(ui.halves[1], x, Math.max(6, r.bottom - S - 26), S);
+        // top-left: outside the panel's left edge by the title; bottom-right: on the panel's corner beside the Ask
+        // button (the composer keeps 72px free on the right for it)
+        place(ui.halves[0], Math.max(2, r.left - 0.72 * S), Math.max(4, r.top + 4), S);
+        place(ui.halves[1], Math.min(W - S - 2, r.right - S + 12), Math.min(H - S - 2, r.bottom - S + 10), S);
       }
     }
   }
