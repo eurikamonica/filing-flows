@@ -1354,9 +1354,10 @@ def event_row_plan(r, e, cj, fq, today):
     when = filed + (f" {r['accepted'][11:16]} ET" if len(r.get("accepted") or "") >= 16 else "")
     fresh = filed >= (today - dt.timedelta(days=2)).isoformat()
     breaking = fresh and (r.get("score") or 0) >= 7
-    g = r.get("guidance") if r.get("guidance") in ("raised", "lowered", "withdrawn", "reaffirmed", "mixed") else None
-    label = f"guidance {g}" if g and (r.get("topics") or [""])[0] == "guidance" else (r.get("label") or events.ITEMS.get(r.get("code") or "", "a current report"))
-    quote = r.get("guidance_quote") if g in ("raised", "lowered", "withdrawn") and r.get("guidance_quote") else r.get("quote") or ""
+    g = r.get("guidance") if r.get("guidance") in ("raised", "lowered", "withdrawn", "reaffirmed", "mixed", "narrowed", "widened", "initiated") else None
+    glabel = r.get("label") if str(r.get("label") or "").startswith("guidance ") else f"guidance {g}"     # "guidance raised and narrowed"
+    label = glabel if g and (r.get("topics") or [""])[0] == "guidance" else (r.get("label") or events.ITEMS.get(r.get("code") or "", "a current report"))
+    quote = r.get("guidance_quote") if g in ("raised", "lowered", "withdrawn", "mixed", "narrowed", "widened") and r.get("guidance_quote") else r.get("quote") or ""
     try:
         d = dt.date.fromisoformat(filed)
         filed_txt = f"{d:%b} {d.day}"

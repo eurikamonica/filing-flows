@@ -215,6 +215,7 @@
           <button type="button" data-view="y" ${ctx.custom ? 'hidden' : ''} ${has(spec.compare_y) ? '' : `disabled title="No ${yearly ? 'earlier year' : 'year-ago quarter'} on file"`}>vs ${has(spec.compare_y) ? t(spec.compare_y.vs) : 'year ago'}</button>
         </div>
         <label class="dec-toggle" hidden title="Hatched areas with a dashed outline show what each line lost"><input type="checkbox" data-dec ${state.decreases ? 'checked' : ''}> Show decreases</label>
+        ${ctx.guide ? `<button class="btn small guide-btn" type="button" data-guide aria-pressed="false" title="Draw the next period as the company guided it in its latest earnings release: guided lines in violet with their range, the rest at today's shares">◇ Show guidance</button>` : ''}
         <div class="seg" role="group" aria-label="Zoom">
           <button type="button" data-zoom="fit">Fit</button>
           <button type="button" data-zoom="full">100%</button>
@@ -230,12 +231,17 @@
       <div class="hintline">${ctx.group ? 'Click a company bar to open its own chart.' :
         '<span class="dot"></span><span>Click any node for what the company wrote about it in the filing. Exports show the chart only.</span>'}
         <span class="pz-hint" hidden>· Hold the left button on an empty part to drag the chart, use the wheel to zoom, double-click to reset.</span></div>
+      <p class="guide-msg" hidden></p>
       <div class="stage">
         <div class="sheet"><div class="loading">Drawing…</div></div>
         <aside class="notes" aria-live="polite"></aside>
       </div>`;
     const sheet = $('.sheet', el), notes = $('.notes', el);
-    const byId = new Map(spec.nodes.map((n) => [n.id, n]));
+    const baseById = new Map(spec.nodes.map((n) => [n.id, n]));
+    // "Show guidance" (web/guidance.js): the next period as guided; its own spec, nodes and notes while it is on
+    const guide = { on: false, doc: undefined, spec: null, byId: null };
+    const futureOn = () => guide.on && guide.spec && !guide.spec.error;
+    const byId = { get: (id) => (futureOn() ? guide.byId : baseById).get(id), has: (id) => (futureOn() ? guide.byId : baseById).has(id) };
     let scene = null, selected = null;
     let own = ctx.custom ? 'q' : undefined;                     // a requested comparison opens on its comparison
     const pick = () => (own !== undefined ? own : state.compare);
@@ -311,8 +317,11 @@
       sheet.classList.toggle('panzoom', state.dragZoom);
       $('.pz-hint', el).hidden = !state.dragZoom;
       if (!state.dragZoom && vb) { vb = null; applyView(); }
-      $$('[data-view]', el).forEach((b) => b.classList.toggle('on', b.dataset.view === (mode() || 'std')));
-      $('.dec-toggle', el).hidden = !mode();
+      $$('[data-view]', el).forEach((b) => b.classList.toggle('on', !futureOn() && b.dataset.view === (mode() || 'std')));
+      $('.dec-toggle', el).hidden = !mode() || futureOn();
+      const gb = $('[data-guide]', el);
+      if (gb) { gb.classList.toggle('on', guide.on); gb.setAttribute('aria-pressed', guide.on ? 'true' : 'false'); }
+      sheet.classList.toggle('future', futureOn());
       $$('[data-zoom]', el).forEach((b) => b.classList.toggle('on', b.dataset.zoom === state.zoom));
       sheet.classList.toggle('fit', state.zoom === 'fit');
       if (scene) sheet.style.setProperty('--min-w', `${Math.round(scene.W * 0.5)}px`);   // never shrink below half size
@@ -323,12 +332,23 @@
           <p class="hint"><span>Each grey bar on the left is one company. Click it to open that company’s own chart, with notes from its filing.</span></p>
           <p class="empty">Exports (PNG, JPG, PDF) contain the chart only.</p>`;
       }
+      if (futureOn()) {
+        return `<div class="eyebrow">Guidance view · ${t(guide.spec.period)}</div>
+          <p class="hint"><span class="dot guide"></span><span>Violet lines are what ${t(ctx.company)} guided in its earnings release (bar = midpoint, dashed box = the range). Pale lines were not guided: they keep their ${t(guide.spec.base)} share so the chart adds up.</span></p>
+          <p class="empty">▲ raised · ▼ lowered (midpoint) · →← narrowed · ←→ widened (range) · = reaffirmed · ✦ initiated — against the prior range in the release, else the company’s previous release. Click a line for the sentence it comes from.</p>`;
+      }
       const withNotes = spec.nodes.filter((n) => n.notes).length;
       return `<div class="eyebrow">Notes from the filing</div>
         <p class="hint"><span class="dot"></span><span>Click any node to read what ${t(ctx.company)} wrote about it in this ${ctx.form === '8-K' ? 'earnings release' : ctx.form === '6-K' ? 'results release (6-K)' : t(ctx.form)}. A green dot marks the ${withNotes} line${withNotes === 1 ? '' : 's'} with their own passage in ${ctx.form === '8-K' || ctx.form === '6-K' ? 'the release' : 'the MD&amp;A'}.</span></p>
         <p class="empty">Notes stay on the page: exported PNG, JPG and PDF files show the chart only.</p>`;
     }
     function nodeNotes(n) {
+      if (futureOn() && window.FFGuidance) {
+        return `<div class="eyebrow">${t(ctx.company)} · ${t(guide.spec.period)} as guided</div>
+          <div class="k">${t(n.name)}</div><div class="v">${(n.lines || []).slice(1).map((l) => `<div>${t(l[1])}</div>`).join('')}</div>
+          ${window.FFGuidance.noteHTML(n, guide.doc, t)}
+          <button class="btn" type="button" data-clear>Close note</button>`;
+      }
       const lines = (n.lines || []).slice(1).map((l) => `<div>${t(l[1])}</div>`).join('') + (mode() && (mode() === 'y' ? n.cmp_y : n.cmp) ? `<div>${t(mode() === 'y' ? n.cmp_y : n.cmp)}</div>` : '');
       let body;
       const m = /^L:m(\d+)$/.exec(n.id);
@@ -390,8 +410,13 @@
     }
     async function draw() {
       await fontsReady();
-      scene = S.layout(spec, { compare: mode(), decreases: state.decreases });
-      sheet.innerHTML = S.toSVG(scene, S.dec(mode() ? cmpOf(mode()).title : spec.title));
+      if (futureOn()) {
+        scene = S.layout(guide.spec, {});
+        sheet.innerHTML = S.toSVG(scene, S.dec(guide.spec.title));
+      } else {
+        scene = S.layout(spec, { compare: mode(), decreases: state.decreases });
+        sheet.innerHTML = S.toSVG(scene, S.dec(mode() ? cmpOf(mode()).title : spec.title));
+      }
       vb = null;                                                // another layout: shown whole
       applyView();
       $$('.node', sheet).forEach((g) => {
@@ -412,7 +437,31 @@
       const g = e.target.closest && e.target.closest('[data-node]');
       if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(g.dataset.node); }
     });
+    const gmsg = $('.guide-msg', el);
+    const gbtn = $('[data-guide]', el);
+    if (gbtn) gbtn.addEventListener('click', async () => {
+      if (guide.on) { guide.on = false; gmsg.hidden = true; selected = null; draw(); return; }
+      gbtn.disabled = true;
+      try {
+        if (guide.doc === undefined) guide.doc = await ctx.guide.load();
+        guide.spec = ctx.guide.build(guide.doc);
+      } catch (err) {
+        guide.spec = { error: `Guidance could not be read (${err.message}).` };
+      } finally { gbtn.disabled = false; }
+      guide.on = true;
+      if (guide.spec && !guide.spec.error) {
+        guide.byId = new Map(guide.spec.nodes.map((n) => [n.id, n]));
+        gmsg.hidden = true;
+        selected = null;
+      } else {
+        gmsg.textContent = (guide.spec && guide.spec.error) || 'No guidance on file.';
+        gmsg.hidden = false;
+        guide.on = false;
+      }
+      draw();
+    });
     $$('[data-view]', el).forEach((b) => b.addEventListener('click', () => {
+      if (guide.on) { guide.on = false; gmsg.hidden = true; selected = null; }
       const v = b.dataset.view === 'std' ? null : b.dataset.view;
       if (ctx.custom) own = v;
       else { state.compare = v; prefs.set('compare', v); }
@@ -444,7 +493,7 @@
       b.disabled = true;
       try {
         const blob = await S.exportScene(scene, fmt);
-        const name = `${ctx.slug}${ctx.custom ? (mode() ? `-vs-${ctx.vsSlug}` : '') : mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? (yearly ? '-vs-prior-year' : '-vs-year-ago') : ''}-sankey.${fmt}`;
+        const name = `${ctx.slug}${futureOn() ? '-guidance' : ctx.custom ? (mode() ? `-vs-${ctx.vsSlug}` : '') : mode() === 'q' ? '-vs-prev-quarter' : mode() === 'y' ? (yearly ? '-vs-prior-year' : '-vs-year-ago') : ''}-sankey.${fmt}`;
         if (share) {                                               // Android share sheet (X, messages, mail …)
           nativeApp.shareFile(name, 'image/png', await blobBase64(blob));
           return;
@@ -696,6 +745,11 @@
       slug: `${(ticker || p.cik)}-${q.label}`.replace(/\s+/g, '-'),
       onView: () => renderChanges(),
       trend: (id) => trendSeries(fy ? ys : qs, q, id, fy), cik: p.cik,
+      // "Show guidance": the latest period only, reported in dollars (web/guidance.js; holders/<ticker>.json → guidance)
+      guide: window.FFGuidance && ticker && own === 'USD' && (q === qs[0] || (fy && q === ys[0])) ? {
+        load: () => fetch(`disclosures/data/holders/${encodeURIComponent(ticker)}.json`).then((r) => (r.ok ? r.json() : null)).then((h) => (h && h.guidance) || null).catch(() => null),
+        build: (g) => window.FFGuidance.future(q, g, { company: c, name: S.dec(p.name) }),
+      } : null,
     });
     body.appendChild(ui);
     if (window.matchMedia && matchMedia('(max-width: 560px)').matches && $('#ff-overview')) ui.after($('#ff-overview'));   // phones: the chart first

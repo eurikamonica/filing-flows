@@ -14,7 +14,16 @@
     profit: { node: '#17734a', flow: '#a8d1b9' },
     cost: { node: '#ea6a52', flow: '#f6c3b8' },
     noncash: { node: '#5b7fa6', flow: '#cdd8e6' },
+    // the guidance view (web/guidance.js): guided lines in violet / indigo / plum, the assumed rest in their pale tints —
+    // neither the current chart's grey-green-red nor the comparison view's dark strips and hatching
+    f_rev: { node: '#5b3fc4', flow: '#cfc4f2' },
+    f_profit: { node: '#2f3f9e', flow: '#bfc6ec' },
+    f_cost: { node: '#9a2f7a', flow: '#ecc3df' },
+    fa_rev: { node: '#a99fd6', flow: '#e9e5f7' },
+    fa_profit: { node: '#9aa3d4', flow: '#e4e7f6' },
+    fa_cost: { node: '#cf9bc0', flow: '#f5e4ef' },
   };
+  const RANGE = '#3a2a8c';            // the dashed box of a guided range
   const LEGEND = [['rev', 'Revenue'], ['profit', 'Profit & gains'], ['cost', 'Costs'], ['noncash', 'Non-cash items']];
   const BG = '#fcfcfb';
   const INK = '#1d1d1b', INK2 = '#3d3c39', INK3 = '#6b6a66', SUBINK = '#5c5b57', MARK = '#17734a';
@@ -27,6 +36,8 @@
   const STY = {
     name: [18, 600, 22, INK], big: [26, 600, 30, INK], ocf: [22, 600, 26, INK],
     val: [15, 400, 20, INK2], mut: [14, 400, 19, INK3], cmp: [14, 500, 19, INK2],
+    // guidance view: raised (indigo), lowered (plum), other changes, assumed lines
+    gup: [14, 600, 19, '#33269a'], gdn: [14, 600, 19, '#8f2163'], gnt: [14, 600, 19, '#4d4380'], gas: [13, 400, 18, '#7a7596'],
   };
   const NW = 14;          // node bar width
   const LGAP = 8;         // label distance from a bar (left/right)
@@ -496,6 +507,12 @@
       } else {
         shapes.push({ t: 'rect', x: n.x, y: n.top, w: NW, h: n.h, fill: pal.node, group: n.id });
       }
+      if (n.range && n.range[1] > n.range[0]) {
+        // a guided range: dashed box = the high end of the range, centred on the bar (= the midpoint); ticks = the low end
+        const c = n.top + n.h / 2, hi = Math.max(n.range[1] * K, n.h), lo = Math.min(n.range[0] * K, n.h);
+        shapes.push({ t: 'rect', x: n.x - 5, y: c - hi / 2, w: NW + 10, h: hi, fill: 'none', stroke: RANGE, dash: [4, 3], sw: 1.4, group: n.id });
+        [c - lo / 2, c + lo / 2].forEach((y) => shapes.push({ t: 'rect', x: n.x - 8, y: y - 1, w: NW + 16, h: 2, fill: RANGE, group: n.id }));
+      }
       const [lx, ly, lw, lh, anchor] = n.lr;
       let y = ly;
       n.lab.lines.forEach((ln, i) => {
@@ -558,6 +575,7 @@
     const legend = spec.legend ? spec.legend.filter(([k]) => used.has(k) && PALETTE[k])
       : LEGEND.filter(([k]) => used.has(k) || k === 'rev' || k === 'profit' || k === 'cost');
     const lgItems = legend.map(([k, t]) => ({ k, t, w: 14 + 8 + measure(t, 14, 400) }));
+    if (spec.future && nodes.some((n) => n.range)) lgItems.push({ k: 'range', t: 'Dashed box = guided range (tick = low end)', w: 22 + measure('Dashed box = guided range (tick = low end)', 14, 400) });
     if (compare) {                     // increases are drawn as dark strips; a decrease leaves the band light (its Δ is negative)
       [['strip', `Dark strip = increase vs ${dec(cmpSpec.vs)}`],
         ghosts ? ['ghost', `Hatched = decrease vs ${dec(cmpSpec.vs)}`] : ['nostrip', 'No strip = decrease (Δ below the value is negative)']]
@@ -594,6 +612,9 @@
         shapes.push({ t: 'rect', x: lx, y: ly + 10, w: 14, h: 5, fill: PALETTE.profit.node });
       } else if (it.k === 'nostrip') {
         shapes.push({ t: 'rect', x: lx, y: ly + 1, w: 14, h: 14, fill: PALETTE.profit.flow, r: 3 });
+      } else if (it.k === 'range') {
+        shapes.push({ t: 'rect', x: lx + 3, y: ly, w: 8, h: 16, fill: PALETTE.f_profit.node });
+        shapes.push({ t: 'rect', x: lx, y: ly - 2, w: 14, h: 20, fill: 'none', stroke: RANGE, dash: [4, 3], sw: 1.4 });
       } else if (it.k === 'ghost') {
         shapes.push({ t: 'rect', x: lx + 0.5, y: ly + 1.5, w: 13, h: 13, fill: 'none', hatch: PALETTE.profit.node });
       } else {
@@ -603,7 +624,7 @@
       lx += it.w + 20;
     });
 
-    return { W, H, bg: BG, shapes, hit, issues: issues.map((i) => i.n.id), nodes: nodes.map((n) => ({ id: n.id, label: n.lr, bar: [n.x, n.top, NW, n.h] })) };
+    return { W, H, bg: spec.bg || BG, shapes, hit, issues: issues.map((i) => i.n.id), nodes: nodes.map((n) => ({ id: n.id, label: n.lr, bar: [n.x, n.top, NW, n.h] })) };
   }
 
   // ---------- history: one company quarter by quarter ----------
@@ -755,7 +776,7 @@
       } else if (s.t === 'rect') {
         const cls = s.hit ? ' class="hit"' : s.group ? ' class="bar"' : '';
         out.push(`<rect${cls} x="${s.x.toFixed(2)}" y="${s.y.toFixed(2)}" width="${s.w.toFixed(2)}" height="${s.h.toFixed(2)}"` +
-          `${s.r ? ` rx="${s.r}"` : ''} fill="${s.fill}"/>`);
+          `${s.r ? ` rx="${s.r}"` : ''} fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.sw || 1}"${s.dash ? ` stroke-dasharray="${s.dash.join(' ')}"` : ''}` : ''}/>`);
       } else if (s.t === 'path') {
         out.push(`<path d="${s.d}" fill="${s.fill}"/>`);
       } else if (s.t === 'circle') {
@@ -793,6 +814,14 @@
         ctx.save();
         ctx.setLineDash([5, 3.5]); ctx.lineWidth = 1.2; ctx.strokeStyle = s.hatch;
         ctx.stroke(path);
+        ctx.restore();
+        return;
+      }
+      if (s.t === 'rect' && s.stroke) {                 // a dashed outline (the guidance view's range box)
+        ctx.save();
+        if (s.fill && s.fill !== 'none') { ctx.fillStyle = s.fill; ctx.fillRect(s.x, s.y, s.w, s.h); }
+        ctx.setLineDash(s.dash || []); ctx.lineWidth = s.sw || 1; ctx.strokeStyle = s.stroke;
+        ctx.strokeRect(s.x, s.y, s.w, s.h);
         ctx.restore();
         return;
       }
