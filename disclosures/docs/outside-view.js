@@ -40,8 +40,8 @@
     const due = (t.due || []).slice(0, 12);
     return `<div class="ov-card"><h3>Clinical pipeline</h3><p><span class="ov-big">${num(t.active)}</span>active studies · ${num(t.studies)} on record · ${num(t.completed_2y)} completed in the last two years</p>
       ${bars}<p class="muted">Active studies by their highest phase (bar), of all studies in that phase ever registered. Lead sponsor on ClinicalTrials.gov: ${esc(t.sponsor)}.</p>
-      ${due.length ? `<h3 style="margin-top:10px">Primary completions due (phase 2 and 3, next 18 months)</h3><table><thead><tr><th>Due</th><th>Phase</th><th>Study</th><th class="n">Patients</th></tr></thead><tbody>
-      ${due.map((s) => `<tr><td class="d">${esc(s[4] || '—')}</td><td>${esc(PH[s[2]] || '—')}</td><td><a href="https://clinicaltrials.gov/study/${esc(s[0])}" target="_blank" rel="noopener">${esc(s[1])}</a><br><span class="muted">${esc(s[6])}${s[7] ? ' · ' + esc(s[7]) : ''} · ${esc(ST[s[3]] || s[3])}</span></td><td class="n">${num(s[5])}</td></tr>`).join('')}</tbody></table>
+      ${due.length ? `<h3 style="margin-top:10px">Primary completions due (phase 2 and 3, next 18 months)</h3><table><thead><tr><th>Due</th><th>Ph.</th><th>Study</th><th class="n">Patients</th></tr></thead><tbody>
+      ${due.map((s) => `<tr><td class="d">${esc(s[4] || '—')}</td><td class="d">${esc((PH[s[2]] || '—').replace('Phase ', '').replace('Early phase ', 'E'))}</td><td><a href="https://clinicaltrials.gov/study/${esc(s[0])}" target="_blank" rel="noopener">${esc(s[1])}</a><br><span class="muted">${esc(s[6])}${s[7] ? ' · ' + esc(s[7]) : ''} · ${esc(ST[s[3]] || s[3])}</span></td><td class="n">${num(s[5])}</td></tr>`).join('')}</tbody></table>
       <p class="muted">The date the main result is expected (the sponsor's estimate, often moved). Results are usually announced after it — a catalyst for the stock.</p>` : ''}
       ${(t.conditions || []).length ? `<p class="muted">Most studied in active trials: ${t.conditions.slice(0, 8).map(([c, n]) => `${esc(c)} (${n})`).join(', ')}.</p>` : ''}</div>`;
   }

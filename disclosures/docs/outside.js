@@ -125,5 +125,13 @@ function outsideDeepLink(arg) {
   const r = ouRows((ouData('index').data) || {}).find(x => x.ticker === v.toUpperCase());
   state.ouv = 'one'; state.ouonet = v.toUpperCase(); state.ouone = r ? String(r.cik) : '';
 }
+window.HUB_NOTICES = Object.assign(window.HUB_NOTICES || {}, { outside: outsideNotice });
+function outsideNotice() {
+  const s = ouData('status'), d = s.data;
+  if (s.err) return { stale: true, text: 'Official derived view · Beyond the filings status unavailable · ' + s.err };
+  if (!d) return { stale: false, text: 'Official derived view · Beyond the filings loading…' };
+  const age = (Date.now() - Date.parse(d.built_at)) / 3600000;
+  return { stale: !(age <= 36), text: `Official derived view · Beyond the filings built ${d.built_at} · ${fmt(d.companies)} companies · trials ${fmt(d.trials)} · recalls ${fmt(d.recalls)} · Federal Register ${fmt(d.fedreg)} · Wikipedia ${fmt(d.attention)} · costs ${fmt(d.costs)}` + (d.fec ? ` · PACs ${fmt(d.fec)}` : '') + ' · refreshed daily' + (age > 36 ? ' · stale' : '') };
+}
 window.HUB_VIEWS = Object.assign(window.HUB_VIEWS || {}, { outside: outsideView });
 window.HUB_BINDS = Object.assign(window.HUB_BINDS || {}, { outside: bindOutside });
