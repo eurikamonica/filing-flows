@@ -38,6 +38,13 @@ def config():
     return key, cfg.get("endpoint") or "https://api.indexnow.org/indexnow"
 
 
+def resend_round():
+    try:
+        return str(json.load(open(CONFIG, encoding="utf-8")).get("resend_all") or "")
+    except (OSError, ValueError):
+        return ""
+
+
 def write_key(out_dir):
     """The key file the search engines fetch to check the submission is ours: /<key>.txt holding the key."""
     key, _ = config()
@@ -117,6 +124,9 @@ def submit(base, state_path, endpoint=None, fetch=get, send=post):
         before = json.load(open(state_path, encoding="utf-8"))
     except (OSError, ValueError):
         before = None
+    rnd = resend_round()                    # config "resend_all": change it to send every page once more
+    if before is not None and before.pop("_round", "") != rnd:
+        before = None
     todo = changes(now, before)
     print(f"IndexNow: {len(now)} pages in the sitemaps; "
           + ("no earlier submission, sending all" if before is None else f"{len(todo)} new, changed or gone since the last one"))
@@ -138,7 +148,7 @@ def submit(base, state_path, endpoint=None, fetch=get, send=post):
               + (", key check pending" if status == 202 else "") + ")")
     os.makedirs(os.path.dirname(os.path.abspath(state_path)), exist_ok=True)
     with open(state_path, "w", encoding="utf-8") as f:
-        json.dump(now, f, separators=(",", ":"))
+        json.dump(dict(now, _round=rnd), f, separators=(",", ":"))
     output("saved", "true")
     return len(todo)
 

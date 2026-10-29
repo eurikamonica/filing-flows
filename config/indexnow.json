@@ -1,5 +1,6 @@
 {
-  "_about": "IndexNow (scripts/indexnow.py): after each deploy, new or changed pages in sitemap.xml and sitemap-people.xml are pushed to Bing, Yandex, Naver, Seznam and Yep. The key is public by design: the site serves it at /<key>.txt to prove the site is ours. A repository variable INDEXNOW_KEY replaces it.",
+  "_about": "IndexNow (scripts/indexnow.py): after each deploy, new or changed pages in sitemap.xml and sitemap-people.xml are pushed to Bing, Yandex, Naver, Seznam and Yep. The key is public by design: the site serves it at /<key>.txt to prove the site is ours. A repository variable INDEXNOW_KEY replaces it. Change \"resend_all\" (any new value) to send every page once more on the next deploy.",
   "key": "9bc8a07ec3563a2d098ee29f779778d7",
-  "endpoint": "https://api.indexnow.org/indexnow"
+  "endpoint": "https://api.indexnow.org/indexnow",
+  "resend_all": "2026-10-29"
 }

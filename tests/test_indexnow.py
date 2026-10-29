@@ -71,3 +71,14 @@ def test_batches_of_ten_thousand(tmp_path):
     site = Site({f"{BASE}/c/x{i}/": "2026-10-01" for i in range(10001)})
     assert indexnow.submit(BASE, str(tmp_path / "state.json"), fetch=site.fetch, send=site.send) == 10001
     assert [len(b) for b in site.sent] == [10000, 1]
+
+
+def test_a_new_resend_round_sends_every_page_again(tmp_path, monkeypatch):
+    state = str(tmp_path / "state.json")
+    site = Site({f"{BASE}/": "", f"{BASE}/c/nvda/": "2026-08-26"})
+    monkeypatch.setattr(indexnow, "resend_round", lambda: "a")
+    assert indexnow.submit(BASE, state, fetch=site.fetch, send=site.send) == 2
+    assert indexnow.submit(BASE, state, fetch=site.fetch, send=site.send) == 0
+    monkeypatch.setattr(indexnow, "resend_round", lambda: "b")          # the config's "resend_all" changed
+    assert indexnow.submit(BASE, state, fetch=site.fetch, send=site.send) == 2
+    assert indexnow.submit(BASE, state, fetch=site.fetch, send=site.send) == 0
