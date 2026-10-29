@@ -482,3 +482,41 @@ th.mac-now, td.mac-now { background: var(--accent-soft); }
 .etf-page-tags { gap: 8px 14px; margin-top: 10px; }
 .etf-tg { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .etf-tg > .muted { font-size: 11.5px; margin-right: 2px; }
+
+/* ---------- sections in six groups (Oct 2026): a sidebar on wide screens, a sheet behind "Section ▾" on phones ---------- */
+.hub-sources { display: inline; font-size: 13px; color: var(--muted); }
+.hub-sources summary { display: inline; cursor: pointer; color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; }
+.hub-sources[open] { display: block; margin-top: 6px; }
+.hub-layout { display: block; }
+.hub-main { min-width: 0; }
+nav.modules { display: block; overflow: visible; margin: 14px 0 12px; padding: 0; }
+.hub-pick { display: none; }
+.hub-groups { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+.hub-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.hub-group h2 { flex-basis: 100%; margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+@media (min-width: 1100px) {
+  .hub-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; align-items: start; }
+  nav.modules { position: sticky; top: 12px; margin: 0; max-height: calc(100vh - 24px); overflow-y: auto; scrollbar-width: thin; }
+  .hub-groups { display: block; }
+  .hub-group { display: block; margin-bottom: 14px; }
+  .hub-group h2 { margin: 0 0 4px 10px; }
+  .hub-group .pill { display: block; width: 100%; text-align: left; border: 0; background: none; border-radius: 7px; padding: 7px 10px; font-size: 14px; color: var(--ink-2); }
+  .hub-group .pill:hover { background: var(--surface-2); color: var(--ink); }
+  .hub-group .pill.on, .hub-group .pill.active { background: var(--ink); color: var(--bg); }
+}
+@media (max-width: 760px) {
+  .hub-pick { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; min-height: 48px; padding: 0 14px; font: inherit;
+    font-size: 15px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+  .hub-pick b { margin-right: auto; font-weight: 600; }
+  .hub-groups { display: none; }
+  nav.modules.open .hub-groups { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 9500; max-height: 78vh; overflow-y: auto;
+    background: var(--surface); border-radius: 18px 18px 0 0; padding: 14px 16px 24px; box-shadow: 0 0 0 100vmax rgba(20, 20, 19, .4), 0 -10px 30px rgba(0, 0, 0, .25); }
+  nav.modules.open .hub-group { margin-bottom: 12px; }
+  nav.modules.open .hub-group h2 { margin-bottom: 4px; }
+  nav.modules.open .hub-group .pill { min-height: 40px; }
+  .top-right .mode-pick .muted { display: none; }
+  /* a wide table scrolls in its own box instead of widening the whole page (it zoomed phones out to ~1000 px) */
+  .fv-tbl { display: block; overflow-x: auto; max-width: 100%; min-width: 0 !important; }
+  .hub-main { overflow-x: clip; }
+}
+#notice { font-size: 13px; }

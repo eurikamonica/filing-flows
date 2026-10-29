@@ -27,13 +27,41 @@
     return Q.slice(0, 4).reduce((a, q) => a + q.headline[key], 0);
   }
 
+  // the quarters up to and including the one on the page, oldest first (at most n), for a tile's trend line
+  function upTo(c, q, n) {
+    const Q = c.quarters || [], i = q ? Q.findIndex((x) => x.end === q.end) : 0;
+    return i < 0 ? [] : Q.slice(i, i + n).reverse();
+  }
+  function series(c, q, key, n) {
+    const v = upTo(c, q, n || 7).map((x) => (x.headline || {})[key]);
+    return v.length >= 3 && v.every(fin) ? v.map(Number) : null;
+  }
+  // the same quarter's figure a quarter ago and a year ago (by end date, so a gap in the history is never mistaken for one)
+  function prior(c, q, key, days) {
+    const t0 = Date.parse(q.end), Q = c.quarters || [];
+    const p = Q.find((x) => x.end !== q.end && Math.abs((t0 - Date.parse(x.end)) / 864e5 - days) <= 20);
+    return p && fin((p.headline || {})[key]) ? +p.headline[key] : null;
+  }
+  const chg = (a, b) => (fin(a) && fin(b) && b > 0 && a > 0 ? `${a >= b ? '+' : '−'}${num(Math.abs(a / b - 1) * 100, 0)}%` : null);
+  const pts = (a, b) => (fin(a) && fin(b) ? `${a >= b ? '+' : '−'}${num(Math.abs(a - b), 1)} pts` : null);
+
   function facts(ctx, F) {
     const { c, q, ticker, cik } = ctx;
     const h = (q && q.headline) || {}, tiles = [];
-    const tile = (label, value, sub, href, tone) => tiles.push({ label, value, sub, href, tone });
-    // latest quarter
-    if (fin(h.revenue)) tile(`${U.dec(q.label)} revenue`, money(h.revenue), [fin(h.yoy) ? `${h.yoy >= 0 ? '+' : '−'}${num(Math.abs(h.yoy), 0)}% Y/Y` : '', fin(h.om) ? `op. margin ${num(h.om, 1)}%` : ''].filter(Boolean).join(' · '), null, fin(h.yoy) ? (h.yoy >= 0 ? 'good' : 'bad') : '');
-    if (fin(h.ni)) tile('Net earnings', money(h.ni), fin(h.ocf) ? `operating cash flow ${money(h.ocf)}` : '', `#c-${cik}-cash`, h.ni >= 0 ? 'good' : 'bad');
+    const tile = (label, value, sub, href, tone, spark, warn) => tiles.push({ label, value, sub, href, tone, spark, warn });
+    // latest quarter, each with its last seven quarters as a line
+    const qq = (k) => (q && q.end ? prior(c, q, k, 91) : null);
+    if (fin(h.revenue)) tile(`${U.dec(q.label)} revenue`, money(h.revenue), [fin(h.yoy) ? `${h.yoy >= 0 ? '+' : '−'}${num(Math.abs(h.yoy), 0)}% Y/Y` : '', chg(h.revenue, qq('revenue')) ? `${chg(h.revenue, qq('revenue'))} Q/Q` : ''].filter(Boolean).join(' · '), null,
+      fin(h.yoy) ? (h.yoy >= 0 ? 'good' : 'bad') : '', { v: series(c, q, 'revenue'), role: 'rev' });
+    if (fin(h.ni)) tile('Net earnings', money(h.ni), fin(h.revenue) && h.revenue > 0 ? `${num(h.ni / h.revenue * 100, 0)}% of revenue${chg(h.ni, qq('ni')) ? ` · ${chg(h.ni, qq('ni'))} Q/Q` : ''}` : '', `#c-${cik}-cash`,
+      h.ni >= 0 ? 'good' : 'bad', { v: series(c, q, 'ni'), role: 'profit' });
+    if (fin(h.ocf)) {
+      const conv = fin(h.ni) && h.ni > 0 ? h.ocf / h.ni : null;
+      tile('Operating cash flow', money(h.ocf), [chg(h.ocf, qq('ocf')) ? `${chg(h.ocf, qq('ocf'))} Q/Q` : '', conv != null ? `${num(conv * 100, 0)}% of net earnings` : ''].filter(Boolean).join(' · '), `#c-${cik}-cash`,
+        h.ocf >= 0 ? 'good' : 'bad', { v: series(c, q, 'ocf'), role: 'profit' }, conv != null && conv < 0.6);   // cash well below earnings: flagged
+    }
+    if (fin(h.om)) tile('Operating margin', `${num(h.om, 1)}%`, [pts(h.om, qq('om')) ? `${pts(h.om, qq('om'))} Q/Q` : '', q && q.end && pts(h.om, prior(c, q, 'om', 364)) ? `${pts(h.om, prior(c, q, 'om', 364))} Y/Y` : ''].filter(Boolean).join(' · '),
+      null, h.om >= 0 ? 'good' : 'bad', { v: series(c, q, 'om'), role: 'profit' });
     // price, valuation
     const cons = F.cons, a = (cons && cons.analysts) || {};
     const r52 = range52(cons && cons.prices) || F.ext;
@@ -89,6 +117,14 @@
     return tiles;
   }
 
+  // a tile's trend line: no axis, coloured by the line's role (revenue, profit, cost)
+  function sparkSVG(sp) {
+    if (!sp || !sp.v || sp.v.length < 3) return '';
+    const lo = Math.min(...sp.v), hi = Math.max(...sp.v), r = hi - lo || 1, n = sp.v.length;
+    const P = sp.v.map((v, i) => [2 + i / (n - 1) * 136, 31 - (v - lo) / r * 28]);
+    return `<svg class="fx-spark ${esc(sp.role || 'rev')}" viewBox="0 0 140 34" preserveAspectRatio="none" aria-hidden="true"><polyline points="${P.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/></svg>`;
+  }
+
   async function load(ctx) {
     const { cik, ticker } = ctx, T = fileT(ticker);
     const [cons, holders, smart, debt] = await Promise.all([
@@ -120,7 +156,7 @@
     el.className = 'fx-ov';
     el.innerHTML = `<div class="fx-ov-head"><h2>Overview</h2><span class="muted">From this site and the Disclosure Hub · each tile links to its source</span>
       <button type="button" class="btn fx-ov-csv" title="Every line item of every quarter on this page, as a spreadsheet">Figures as CSV ↓</button></div>
-      <div class="fx-ov-grid">${tiles.map((x) => `<${x.href ? `a href="${esc(x.href)}"` : 'div'} class="fx-tile${x.tone ? ' ' + x.tone : ''}"><small>${t(x.label)}</small><b>${esc(x.value)}</b>${x.sub ? `<span>${esc(x.sub)}</span>` : ''}</${x.href ? 'a' : 'div'}>`).join('')}</div>
+      <div class="fx-ov-grid">${tiles.map((x) => `<${x.href ? `a href="${esc(x.href)}"` : 'div'} class="fx-tile${x.tone ? ' ' + x.tone : ''}"><small>${t(x.label)}</small><b>${esc(x.value)}</b>${x.sub ? `<span${x.warn ? ' class="fx-warn"' : ''}>${esc(x.sub)}</span>` : ''}${sparkSVG(x.spark)}</${x.href ? 'a' : 'div'}>`).join('')}</div>
       ${tiles.length > 4 ? `<button type="button" class="fx-ov-more" aria-expanded="false">All ${tiles.length} figures</button>` : ''}`;
     const more = el.querySelector('.fx-ov-more');                      // phones show four tiles, then the chart
     if (more) more.addEventListener('click', () => {
@@ -145,6 +181,6 @@
     }
     return out;
   }
-  root.FFOverview = { mount, facts, range52, ttm, figuresRows, load };
+  root.FFOverview = { mount, facts, range52, ttm, figuresRows, load, series, sparkSVG };
   if (typeof module !== 'undefined') module.exports = root.FFOverview;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

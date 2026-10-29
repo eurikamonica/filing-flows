@@ -16,6 +16,7 @@
 .nav .nav-menu a span { display: block; font-size: 12.5px; color: var(--muted); margin-top: 1px; }
 .nav .nav-menu a:hover, .nav .nav-menu a.on, .nav .nav-menu a:focus-visible { background: var(--surface-2); }
 .menu-btn { display: none; }
+.nav .nav-settings { display: none; }
 
 /* phones: brand, menu and theme buttons on one row, search below, the navigation behind the menu button */
 @media (max-width: 760px) {
@@ -38,4 +39,6 @@
   .nav .nav-menu a { padding: 9px 10px; }
   .nav .nav-menu a span { display: none; }
   .nav > a.nav-top { padding: 12px 10px; font-weight: 500; color: var(--ink); }
+  .nav .nav-settings { display: block; text-align: left; padding: 12px 10px; font-weight: 500; color: var(--ink); border-top: 1px solid var(--line); border-radius: 0; margin-top: 6px; }
+  .top .ff-appearance-button { display: none; }   /* in the menu instead (Settings & appearance) */
 }

@@ -252,7 +252,7 @@ console.log(`${checks} UI template/logic checks passed; no browser rendering che
    const el={innerHTML:''};await vm.runInContext('window.FFOptionPaths.render',context)(el,{ticker:'XYZ',hub:''});
    for(const want of ['Expected move, 30 days','±$7.17','Max pain','Price paths the options imply — XYZ','95% range'])assert.ok(el.innerHTML.includes(want),`the company options view lacks “${want}”`);
    assert.ok(!/NaN|undefined|Infinity/.test(el.innerHTML),'the company options view shows NaN/undefined');
-   await vm.runInContext('window.FFOptionPaths.render',context)(el,{ticker:'NOPE',hub:''});assert.ok(el.innerHTML.includes('not collected yet'));
+   await vm.runInContext('window.FFOptionPaths.render',context)(el,{ticker:'NOPE',hub:''});assert.ok(el.innerHTML.includes('No published CBOE option-chain snapshot for NOPE'),'a ticker without a chain is not said to have none');
    context.fetch=keep;checks+=3}
   checks+=11;console.log('option price paths checks passed.');
  }
