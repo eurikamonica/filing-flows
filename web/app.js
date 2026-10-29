@@ -840,7 +840,7 @@
     ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-quality'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-opportunity']]],
-    ['Relationships & model', [['links', 'Customers, suppliers & model'], ['shock', 'Shock panel'], ['x-insiders']]],
+    ['Relationships & model', [['links', 'Customers, suppliers & model'], ['shock', 'Shock panel'], ['x-outside'], ['x-insiders']]],
   ];
   function tabGroups() {
     const ext = new Map(EXT_VIEWS.map((v) => ['x-' + v.id, v.label]));
