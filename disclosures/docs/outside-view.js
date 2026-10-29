@@ -24,7 +24,7 @@
 .ov table{border-collapse:collapse;width:100%;min-width:0!important;font-size:.85rem}.ov td,.ov th{padding:3px 6px;border-bottom:1px solid var(--line,#e4e7ec);text-align:left;vertical-align:top;white-space:normal;overflow-wrap:anywhere}
 .ov th{position:static}.ov td.n,.ov th.n{text-align:right;white-space:nowrap;overflow-wrap:normal;font-variant-numeric:tabular-nums}.ov .muted{opacity:.75;font-size:.82rem}.ov svg{display:block;width:100%;height:auto;max-width:820px}
 .ov .ov-bar{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:.85rem}.ov .ov-bar b{display:inline-block;height:12px;border-radius:3px;background:#3b6fb6}.ov .ov-bar span{min-width:92px}
-.ov .ov-wide{grid-column:1/-1}.ov td.d{white-space:nowrap;overflow-wrap:normal}.ov td.l{min-width:9em}.ov .bad{color:#b42318}.ov .ok{color:#17734a}.ov .ov-tag{display:inline-block;font-size:.72rem;border:1px solid currentColor;border-radius:999px;padding:0 6px;opacity:.8}`;
+.ov .ov-wide{grid-column:1/-1}.ov td.d,.ov th{white-space:nowrap;overflow-wrap:normal;word-break:normal}.ov td.l{min-width:9em}.ov .bad{color:#b42318}.ov .ok{color:#17734a}.ov .ov-tag{display:inline-block;font-size:.72rem;border:1px solid currentColor;border-radius:999px;padding:0 6px;opacity:.8}`;
     document.head.appendChild(s);
   }
   const cache = {};
