@@ -160,7 +160,7 @@ def market_stats(w):
 
     def ret(days, annual=False):
         b = back(days)
-        if not b or not b[2]:
+        if not b or not b[2] or b[2] <= 0 or not last[2]:
             return None
         r = last[2] / b[2] - 1
         yrs = days / 365.25
@@ -174,12 +174,12 @@ def market_stats(w):
         vol = math.sqrt(sum((x - m) ** 2 for x in rs) / (len(rs) - 1)) * math.sqrt(52)
     peak, mdd = None, 0.0
     for x in w:
-        if x[2] is None:
+        if x[2] is None or x[2] <= 0:                  # a zero adjusted close in an old bar: skipped, not a division by zero
             continue
         peak = x[2] if peak is None or x[2] > peak else peak
         mdd = min(mdd, x[2] / peak - 1)
     dv = [x[1] * x[3] for x in w[-13:] if x[3]]
-    return {'price': last[1], 'price_date': last[0], 'r1m': ret(30), 'r3m': ret(91), 'ytd': (last[2] / ytd[-1][2] - 1) if ytd and ytd[-1][2] else None,
+    return {'price': last[1], 'price_date': last[0], 'r1m': ret(30), 'r3m': ret(91), 'ytd': (last[2] / ytd[-1][2] - 1) if ytd and ytd[-1][2] and ytd[-1][2] > 0 and last[2] else None,
             'r1y': ret(365), 'r3y': ret(3 * 365, True), 'r5y': ret(5 * 365, True), 'vol1y': vol, 'max_dd': mdd if len(w) > 26 else None,
             'dollar_vol': sum(dv) / len(dv) / 5 if dv else None}
 
