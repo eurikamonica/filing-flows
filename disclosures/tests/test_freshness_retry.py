@@ -48,8 +48,31 @@ class FreshnessRegression(unittest.TestCase):
             a=senate.collect(client,self.root)
             b=senate.collect(client,self.root)
             self.assertEqual(opening.call_count,1)
-        self.assertEqual(a['status'],'error');self.assertEqual(b['skipped'],'access cooldown')
+        # eFD's access check turning the runner away is a blocked source (a warning, retried later), not a failed run
+        self.assertEqual(a['status'],'blocked');self.assertEqual(b['skipped'],'access cooldown');self.assertEqual(b['status'],'blocked')
         self.assertTrue(b['next_retry_at'])
+        self.assertFalse(collect._flag('senate',a)) ; self.assertFalse(collect._flag('senate',b))
+        first=record(self.root,'senate',{'status':'error','error':'HTTP 403'})
+        cooled=record(self.root,'senate',b)
+        self.assertEqual(cooled['status'],'blocked')
+
+    def test_senate_other_errors_still_fail(self):
+        with patch.object(senate,'open_session',side_effect=RuntimeError('eFD home page without the agreement form')):
+            a=senate.collect(Mock(),self.root)
+        self.assertEqual(a['status'],'error');self.assertTrue(collect._flag('senate',a))
+
+    def test_oversized_data_file_is_named_before_push(self):
+        import os, persist_snapshot
+        cwd=os.getcwd();os.chdir(self.root)
+        try:
+            Path('docs/data').mkdir(parents=True)
+            with open('docs/data/live.json','wb') as f:f.truncate(persist_snapshot.GITHUB_FILE_LIMIT+1)
+            with open('docs/data/live.js','wb') as f:f.truncate(persist_snapshot.WARN_BYTES+1)
+            Path('docs/data/small.json').write_text('{}')
+            errors,warnings=persist_snapshot.too_large(['disclosures/docs/data/live.json','disclosures/docs/data/live.js','disclosures/docs/data/small.json','disclosures/docs/data/gone.json'])
+        finally:os.chdir(cwd)
+        self.assertEqual(len(errors),1);self.assertIn('live.json',errors[0])
+        self.assertEqual(len(warnings),1);self.assertIn('live.js',warnings[0])
 
     def test_form4_bytes_header_and_durable_retry(self):
         client=Mock();client.get.side_effect=RuntimeError('HTTP 403')

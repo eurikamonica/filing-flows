@@ -131,6 +131,7 @@ jobs:
         # running it before every 15-minute disclosure poll delays freshness.
         if: github.event_name != 'schedule' || github.event.schedule == '43 10 * * *'
         run: |
+          python -m pip install --quiet numpy    # the price-path / analog / index-RRG modules' tests (not needed to collect)
           python -m unittest discover -s tests -v
           node --check docs/app.js
           node --check docs/extensions.js

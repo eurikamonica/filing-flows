@@ -32,6 +32,11 @@ def _flag(key,result):
     st=result.get('status')
     if st=='ok':
         return False
+    if st=='blocked':
+        # the source's own access check turned the runner away (e.g. eFD's HTTP 403): kept on the site's status
+        # page as blocked and retried after its cooldown, but not a failed run every half hour
+        print(f"::warning::{key}: blocked — {str(result.get('error'))[:200]}",flush=True)
+        return False
     msg=f"{key}: {st}"+(f" — {str(result.get('error'))[:200]}" if result.get('error') else '')
     print(('::error::' if st=='error' else '::warning::')+msg,flush=True)
     return st=='error'

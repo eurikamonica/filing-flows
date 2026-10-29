@@ -63,6 +63,20 @@ class DiscoveryTests(unittest.TestCase):
    compact=read_json(Path(d)/'live.json',{});publish_shards(d,compact)
    self.assertEqual(before,(Path(d)/'shards/congress/house-1.json').read_bytes())
    self.assertEqual(hydrate(d,read_json(Path(d)/'live.json',{})),payload)
+ def test_page_text_stays_in_the_shard(self):
+  # every statement's page text lives in its shard only: in live.json it pushed the file past GitHub's 100 MiB limit
+  row={'report_id':'house-2','person':'A','text_preview':'— Page 1 —\nlong text','page_methods':[{'page':1,'method':'ocr'}],'candidates':[{'id':'c'}]}
+  with tempfile.TemporaryDirectory()as d:
+   publish_shards(d,{'modules':{'congress':{'reports':[row]}}})
+   small=read_json(Path(d)/'live.json',{});summary=small['modules']['congress']['reports'][0]
+   self.assertNotIn('text_preview',summary);self.assertNotIn('page_methods',summary);self.assertEqual(summary['person'],'A')
+   self.assertEqual(read_json(Path(d)/'shards/congress/house-2.json',{})['text_preview'],row['text_preview'])
+   self.assertEqual(hydrate(d,small)['modules']['congress']['reports'][0],row)
+   # rows already published before the change (lazy, with the text) lose it on the next publish; the shard keeps it
+   lazy={**{k:v for k,v in row.items() if k!='candidates'},'shard':'shards/congress/house-2.json','candidate_count':1}
+   publish_shards(d,{'modules':{'congress':{'reports':[lazy]}}})
+   again=read_json(Path(d)/'live.json',{})['modules']['congress']['reports'][0]
+   self.assertNotIn('text_preview',again);self.assertEqual(read_json(Path(d)/'shards/congress/house-2.json',{})['text_preview'],row['text_preview'])
  def test_blank_house_filing_date_preserved(self):
   from congress import house_meta
   row={'DocID':'10001','Year':'2025','First':'Test','Last':'Filer','FilingType':'O','FilingDate':''}
