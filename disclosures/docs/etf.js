@@ -241,6 +241,7 @@ function etfOne(){
  if(d.short)out+=`<p class="sub"><b>Short interest</b> (FINRA, ${esc(d.short.settlement||'')}): ${fmt(d.short.short)} shares, ${d.short.change_pct!=null?(d.short.change_pct>0?'+':'')+fmt(d.short.change_pct,1)+'% since the previous report':''}, ${fmt(d.short.dtc,1)} days to cover.</p>`;
  if(d.npx)out+=`<p class="sub"><b>Proxy votes</b>: the trust files N-PX (${fmt(d.npx.filing_count)} on file, latest ${esc(d.npx.latest_filing||'')}) — every vote is in the N-PX tab.</p>`;
  out+=`</div>`;
+ out+=`<div class="panel"><div id="etf-opp" data-t="${esc(sym)}"></div></div>`;   // the odds (opportunity-view.js)
  return out;
 }
 function etfOverlap(){
@@ -287,5 +288,7 @@ function bindEtf(){
   render();scrollTo({top:0,behavior:'smooth'})});
  for(const k of ['eq','esym','ea','eb','ehold'])if($(k)){$(k).onchange=e=>{state[k]=e.target.value;state.page=0;render()};$(k).onkeydown=e=>{if(e.key==='Enter')e.target.blur()}}
  document.querySelectorAll('#workspace [data-etf]').forEach(b=>b.onclick=()=>{state.eview='one';state.esym=b.dataset.etf;render();scrollTo({top:0,behavior:'smooth'})});
+ const opp=$('etf-opp');
+ if(opp&&window.OpportunityView&&opp.dataset.drawn!==opp.dataset.t){opp.dataset.drawn=opp.dataset.t;OpportunityView.render(opp,{ticker:opp.dataset.t,kind:'etfs',hub:''})}
  document.querySelectorAll('#workspace [data-cco]').forEach(b=>b.onclick=()=>{state.tab='consensus';state.cview='company';state.cq=b.dataset.cco;syncPills();try{history.replaceState(null,'','#consensus')}catch(e){}render();scrollTo({top:0,behavior:'smooth'})});
 }

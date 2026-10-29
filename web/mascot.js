@@ -45,6 +45,7 @@
     // widen these when web/flo-questions.js gains a phrasing Flo misses (tests/test_mascot.cjs checks every one)
     ['options', /\boptions?\b|max ?pain|put wall|call wall|option walls?|implied (move|vol|range)|expected move|\d+% range|\biv\b|\bstrikes?\b|expir|期权|最大痛点|看涨墙|看跌墙|隐含波动|隐含区间|预期波动|行权价|到期/i],
     ['industry', /\bindustr(y|ies)\b|\bsector\b|\bpeers?\b|行业|板块|同业/i],
+    ['opportunity', /\bopportunit|\bup or down\b|\bhigher or lower\b|\brise or fall\b|\bodds\b|\bshort(ing)?\b(?![- ](interest|squeeze|term|sellers?|ratio))|win rate|chances? (of |that )?(a |the )?([a-z$.-]+ )?(rises?|go(es)? up|falls?|go(es)? down|(is|be|ends?) (higher|lower|up|down)|profits?|makes? money)|(probability|chance) of (a )?(profit|gain|rise|fall)|机遇|机会|胜率|做空|涨还是跌|会涨吗|会跌吗|涨的概率|跌的概率|上涨概率|下跌概率|盈利概率|赚钱的概率|买还是卖/i],
     ['rotation', /\brrg\b|rotation|rotating|momentum|quadrant|leading|lagging|weakening|improving|relative strength|rs-?ratio|outperform|underperform|beating the market|markov|next week|轮动|象限|动量|领先|落后|转弱|改善|相对强弱|跑赢|跑输|强于大盘|弱于大盘|马尔科夫|轮出|轮入|下周/i],
     ['credit', /\bdebt\b|credit|default|bankrupt|distress|altman|solven|leverage|balance sheet|债务|违约|信用|破产|偿债|杠杆|利差|还得起债|财务困境|负债/i],
     ['analysts', /analyst|price target|target price|consensus|polymarket|kalshi|wall street|prediction markets?|\btargets?\b|\bstreet\b|\brating\b|分析师|目标价|一致预期|预测市场|华尔街|评级/i],
@@ -56,6 +57,7 @@
     const out = [];
     for (const [k, rx] of INTENTS) if (rx.test(String(q || ''))) out.push(k);
     if (out.includes('industry') && out.includes('rotation')) out.splice(out.indexOf('rotation'), 1);   // "how is its industry rotating"
+    if (out.includes('rotation') && !out.includes('opportunity') && /next week|下周|下星期/i.test(String(q || ''))) out.push('opportunity');   // "next week?": the odds too
     return out;
   }
   const ZH_NAMES = { '苹果': 'AAPL', '英伟达': 'NVDA', '微软': 'MSFT', '谷歌': 'GOOGL', '亚马逊': 'AMZN', '特斯拉': 'TSLA', '脸书': 'META', '伯克希尔': 'BRK-B',
@@ -88,10 +90,10 @@
 
   /* ---------- the page it is on: default questions and the greeting follow it ---------- */
   // company page tab → the topic it is about (#c-<cik>-x-options, #c-<cik>-debt …); the plain company page is its earnings
-  const TAB_TOPIC = { 'x-fairvalue': 'valuation', value: 'valuation', 'x-rotation': 'rotation', 'x-options': 'options', debt: 'credit', consensus: 'analysts', revisions: 'analysts' };
+  const TAB_TOPIC = { 'x-fairvalue': 'valuation', value: 'valuation', 'x-rotation': 'rotation', 'x-options': 'options', debt: 'credit', consensus: 'analysts', revisions: 'analysts', 'x-opportunity': 'opportunity' };
   // disclosures-hub tab → topic
-  const HUB_TOPIC = { filings: 'filings', valuation: 'valuation', rotation: 'rotation', options: 'options', debt: 'credit', consensus: 'analysts', earnings: 'earnings', quality: 'earnings', filings: 'earnings' };
-  const TOPICS = ['filings', 'valuation', 'rotation', 'options', 'earnings', 'industry', 'credit', 'analysts'];
+  const HUB_TOPIC = { filings: 'filings', valuation: 'valuation', rotation: 'rotation', options: 'options', debt: 'credit', consensus: 'analysts', earnings: 'earnings', quality: 'earnings', filings: 'earnings', opportunity: 'opportunity' };
+  const TOPICS = ['filings', 'valuation', 'rotation', 'options', 'earnings', 'industry', 'credit', 'analysts', 'opportunity'];
   const byRevenue = (list, f) => list.filter(f).sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 3);
   // → {kind: company|industry|group|hub|home, co?, cos?, topic?, label?, ind?, key}; `loc` is window.location (or a stand-in in tests)
   function pageContext(ix, loc, inds) {
@@ -131,6 +133,7 @@
     industry: [(t) => `How is ${t}'s industry rotating?`, (t) => `${t} 所在行业轮动`, (t) => `Is ${t}'s industry Leading?`, (t) => `${t} 所在行业处于哪个象限？`],
     credit: [(t) => `${t} debt and default risk`, (t) => `${t} 的债务和违约风险`, (t) => `${t} Altman Z and credit spread`, (t) => `${t} 的信用利差和 Altman Z`],
     analysts: [(t) => `${t} analyst price target`, (t) => `${t} 分析师目标价`, (t) => `${t} Polymarket implied price`, (t) => `${t} 预测市场隐含价格`],
+    opportunity: [(t) => `Will ${t} go up or down next month?`, (t) => `${t} 下个月会涨吗？`, (t) => `Odds a buy of ${t} makes money`, (t) => `${t} 买入盈利概率`],
   };
   // the bank (web/flo-questions.js) when it is loaded; the two built-in questions per topic otherwise
   function pool(topic, zh) {
@@ -159,8 +162,8 @@
     }
     return [q1('valuation', T(0), zh), q1('rotation', T(1), zh), q1('options', T(2), zh), q1('earnings', T(0), zh), q1('industry', T(1), zh)];
   }
-  const TOPIC_NAME = { en: { filings: 'SEC filings', valuation: 'fair value', rotation: 'rotation (RRG)', options: 'options', earnings: 'earnings', credit: 'debt and credit', analysts: 'analysts' },
-    zh: { filings: 'SEC 申报', valuation: '估值', rotation: 'RRG 轮动', options: '期权', earnings: '财报', credit: '债务与信用', analysts: '分析师' } };
+  const TOPIC_NAME = { en: { filings: 'SEC filings', valuation: 'fair value', rotation: 'rotation (RRG)', options: 'options', earnings: 'earnings', credit: 'debt and credit', analysts: 'analysts', opportunity: 'opportunity (the odds)' },
+    zh: { filings: 'SEC 申报', valuation: '估值', rotation: 'RRG 轮动', options: '期权', earnings: '财报', credit: '债务与信用', analysts: '分析师', opportunity: '机遇（概率）' } };
   // one line that says Flo knows where you are; null on the home page (the full help is shown there)
   function greetFor(ctx, zh) {
     const lg = zh ? 'zh' : 'en', N = TOPIC_NAME[lg];
@@ -358,7 +361,34 @@
       ...(r.ir_url ? [[r.ir_url, L(lg, 'Original issuer transcript', '公司官方逐字稿')]] : [])]};
   }
 
-  const HANDLERS = { filings, calls, valuation, rotation, industry, options, earnings, credit, analysts };
+  // the odds (disclosures/data/market/history/opportunity-stocks/<A>.json, app/opportunity.py): higher in 1 week / 1 month /
+  // 3 months, a buy or a short making money after costs, the flag where flags have worked out of sample
+  async function opportunity(c, lg) {
+    const T = fileT(c.ticker), sh = /[A-Z0-9]/.test(T[0] || '') ? T[0] : '_';
+    const d = await json(HUB + 'market/history/opportunity-stocks/' + sh + '.json');
+    const r = d && d.rows && d.rows[T];
+    if (!r) return null;
+    const F = d.fields_h || [], ix = (k) => F.indexOf(k);
+    const HN = { '1w': ['1 week', '1 周'], '1m': ['1 month', '1 个月'], '3m': ['3 months', '3 个月'] };
+    const hs = ['1w', '1m', '3m'].filter((k) => r.h && r.h[k]);
+    const sep = lg === 'zh' ? '，' : ', ', hn = (k) => HN[k][lg === 'zh' ? 1 : 0];
+    const list = (f) => hs.map((k) => `${hn(k)} ${pc(r.h[k][ix(f)])}`).join(sep);
+    const auc = (((d.cards || {})['1m'] || {}).up || {}).auc;
+    const flag = r.side === 'buy' || r.side === 'short'
+      ? L(lg, `Flag: <b>${r.side}</b> over ${hn(r.best_h)} (score ${num(r.score)}/100 — its edge ranks among the strongest this week, at a horizon where such flags have made money out of sample).`,
+        `信号：<b>${hn(r.best_h)}${r.side === 'buy' ? '买入' : '做空'}</b>（评分 ${num(r.score)}/100：本周优势排在前列，且这一期限的信号在样本外赚过钱）。`)
+      : L(lg, 'No flag: its edge is not among the strongest this week, or flags have not worked at that horizon.', '没有信号：本周优势不突出，或这一期限的信号在样本外没有赚到钱。');
+    const facts = [`odds for the week ending ${d.asof}: higher ${hs.map((k) => `${k} ${pc(r.h[k][ix('p_up')])}`).join(', ')}`,
+      `a buy makes money after costs ${hs.map((k) => `${k} ${pc(r.h[k][ix('p_buy')])}`).join(', ')}`,
+      `a short makes money after costs and borrow ${hs.map((k) => `${k} ${pc(r.h[k][ix('p_short')])}`).join(', ')}`,
+      r.side !== 'none' ? `flag ${r.side} ${r.best_h}, score ${num(r.score)}` : 'no flag'];
+    const p = [L(lg, `<b>${esc(c.ticker)}</b>, odds from the week ending ${esc(d.asof)} — chance it is higher: ${list('p_up')}.`, `<b>${esc(c.ticker)}</b>（${esc(d.asof)} 当周的概率）上涨概率：${list('p_up')}。`),
+      L(lg, `A buy makes money after costs: ${list('p_buy')}; a short: ${list('p_short')}.`, `买入扣除成本后赚钱的概率：${list('p_buy')}；做空：${list('p_short')}。`), flag,
+      L(lg, `These odds lean, they don't predict (direction AUC ${num(auc, 2)}; 0.5 is a coin flip).`, `这些概率只是倾向，不是预测（方向 AUC ${num(auc, 2)}，0.5 等于抛硬币）。`)];
+    return { html: p.join(' '), facts, mood: r.side === 'buy' ? 'happy' : r.side === 'short' ? 'worried' : 'talk',
+      links: [[`${BASE}#c-${c.cik}-x-opportunity`, L(lg, 'Opportunity — the odds and the model card', 'Opportunity 页：概率与模型卡')]] };
+  }
+  const HANDLERS = { filings, calls, valuation, rotation, industry, options, earnings, credit, analysts, opportunity };
 
   function helpAnswer(lg, company) {
     const t = company ? company.ticker : 'NVDA';

@@ -113,6 +113,16 @@ jobs:
         timeout-minutes: 5
         continue-on-error: true
         run: python disclosures/app/forecast_ledger.py --root hist --sha "$GITHUB_SHA"
+      - name: Opportunity (direction, buy and short odds; public/opportunity-stocks*.json, ledger/opportunity-stocks.json)
+        # For every stock: P(higher in 1 week / 1 month / 3 months), P(a buy makes money after costs), P(a short does, after
+        # costs and the borrow fee), the return range, the edge over no signal and the signals behind it — one walk-forward
+        # model per horizon on the weekly closes (app/opportunity.py, about two minutes). Each closed week's odds are frozen
+        # in hist/ledger/opportunity-stocks.json and scored once known (public/opportunity-ledger-stocks.json).
+        timeout-minutes: 20
+        continue-on-error: true
+        run: |
+          python -m pip install --quiet numpy
+          python disclosures/app/opportunity.py --public hist/public --ledger hist/ledger/opportunity-stocks.json --sha "$GITHUB_SHA"
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd hist

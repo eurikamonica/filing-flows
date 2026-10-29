@@ -67,6 +67,14 @@ jobs:
       - name: Build public/
         timeout-minutes: 15
         run: python disclosures/app/etf.py build --root etf --hub disclosures/docs/data --consensus _consensus-history/public --debt _debt-history/public
+      - name: Opportunity (direction, buy and short odds for every ETF; public/opportunity-etfs*.json)
+        # The stocks' walk-forward model (app/opportunity.py) fitted on the ETFs' own weekly bars since 1993: total-return
+        # closes, the category as peers, cash-like funds left out. Each closed week is frozen in ledger/opportunity-etfs.json.
+        timeout-minutes: 20
+        continue-on-error: true
+        run: |
+          python -m pip install --quiet numpy
+          python disclosures/app/opportunity.py --kind etfs --root etf --ledger etf/ledger/opportunity-etfs.json --sha "$GITHUB_SHA"
       - name: Source-dated ETF weight history diagnostics
         run: |
           python - <<'PY'

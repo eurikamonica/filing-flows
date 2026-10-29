@@ -1,5 +1,26 @@
 # Changelog
 
+## Opportunity: the odds that a stock or ETF is higher, and that a buy or a short makes money
+
+`app/opportunity.py` (run by rotation-history.yml for stocks and etf.yml for ETFs): for every name, at 1 week, 1 month
+and 3 months, the probability that the total return is positive, that a buy makes money after the round-trip trading
+cost (by weekly dollar volume: 0.1% to 2%) and that a short makes money after the cost and a 0.5% a year borrow fee,
+with the 10–90% return range, the edge (how much the timing signals raise the better trade's odds against the same name
+with its own volatility, cost and size and no signal), a 0–100 score and the four signals that move it most. One pooled
+ridge model per horizon on cross-sectionally ranked signals (momentum 4/13/26 weeks and 12-1, last week's reversal,
+52-week high and low, the 40-week average, volatility and its change, the return against the sector or category,
+dollar volume) predicting the volatility-scaled return; probabilities from the model's own residuals, Platt-calibrated;
+every year predicted only from the years before it. A name is flagged buy or short only when its edge is in the
+strongest fifth of the week, the trade itself is more likely than not to make money, and flags at that horizon and side
+made money out of sample (more often than not, on the median and the capped average, 2 points above the average name):
+for stocks today that is buys at 1 and 3 months; shorts are often right but lose on average, so they stay unflagged;
+names under $5, under $5M a week and leveraged or inverse ETFs are never flagged short. Each closed week's odds are
+frozen in `ledger/opportunity-<kind>.json` and scored once known. Hub tab "Opportunity" (screener with horizon, flag,
+sector, liquidity and search filters; one name; the model card with calibration, edge deciles, flagged against all,
+weights and year by year; the track record), a card on each company page (views.json) and each ETF page, and Flo
+answers "up or down?", "odds a buy makes money", "should I short …" and adds the odds to "next week?". Tests:
+`tests/test_opportunity.py`, `tests/test_opportunity_view.cjs`.
+
 ## Fair value: nine more lenses, the return the price implies, the market as a whole
 
 `app/valuation_extra.py` (called by `valuation.analyse` for every company): the Graham number, the Graham formula
