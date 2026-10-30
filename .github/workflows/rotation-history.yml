@@ -135,6 +135,20 @@ jobs:
           python -m pip install --quiet numpy
           python disclosures/app/strategies.py --public hist/public --ledger hist/ledger/strategies.json \
             --quarters disclosures/docs/data/market/by-ticker-quarters.json --sha "$GITHUB_SHA"
+      - name: Odds (probability models with their records; public/odds*.json, ledger/odds.json)
+        # A US recession 12 months out from the yield curve (the New York Fed's probit), SPY's regime (a two-state hidden
+        # Markov model), every stock's chance of a 10% / 20% move, of beating SPY, of joining the S&P 500 and of cutting its
+        # dividend, and Merton's default odds from Debt & rates — each with its walk-forward calibration (app/odds.py,
+        # about two minutes). The S&P 500 history and the distance to default are read from the published site.
+        timeout-minutes: 12
+        continue-on-error: true
+        run: |
+          python -m pip install --quiet numpy
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          curl -fsSL --retry 3 "${site%/}/disclosures/data/etf/members.json" -o site/members.json || echo "::warning::no index membership file"
+          curl -fsSL --retry 3 "${site%/}/disclosures/data/debt/index.json" -o site/debt-index.json || echo "::warning::no Debt & rates index"
+          python disclosures/app/odds.py --public hist/public --root hist --members site/members.json --debt site/debt-index.json \
+            --site-index site/index.json --ledger hist/ledger/odds.json --sha "$GITHUB_SHA"
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd hist

@@ -1,5 +1,25 @@
 # Changelog
 
+## Odds: probability models, each with its walk-forward record and a live ledger
+
+`app/odds.py` (run by rotation-history.yml after Strategies, about two minutes): the chance the US is in recession 12
+months out from the yield curve (the New York Fed's probit with its published coefficients, scored against NBER months;
+the Sahm rule beside it), SPY's regime (a two-state hidden Markov model refitted each year, the stressed-state
+probability and the chance SPY is lower in 13 weeks), and for every stock the chance of a 10% fall or rise within 4
+weeks and 20% within 13 (first-passage odds from its own volatility on weekly closes, Platt-recalibrated by year), of
+beating SPY over 13 and 52 weeks (logistic on momentum against SPY, the 52-week high and volatility), of joining the
+S&P 500 within a year (logistic on market value and rank, positive earnings, trading and momentum, recalibrated; foreign
+private issuers and partnerships left out) and of cutting or skipping its dividend within a year (yield, payout ratio,
+losses, falling earnings, price), with Merton's 1-year default probability from Debt & rates' distance to default
+(readings below −0.5 left out as inconsistent; not scored — the companies on file are survivors). Each model's record is
+walk-forward (every year predicted from the years before it): Brier skill against the base rate the past implied, AUC
+and a calibration table. Each closed week's odds are frozen in `ledger/odds.json` and scored as outcomes arrive. Ten or
+more S&P 500 "removals" on one day within four months of the membership file's build are read as a change in its source,
+not removals (on 2026-10-01 38 members, nearly all domiciled outside the US, dropped out of the IVV-based list). The
+loader (`strategies.load`) also reads dividends and the split-adjusted close. Hub tab Odds (`docs/odds.js`: market,
+leaders, one company, track record) and Odds on every company page (`docs/odds-view.js`, views.json). Tests:
+`tests/test_odds.py`, `tests/test_odds_view.cjs`.
+
 ## Strategies: published trading rules with costs, out-of-sample splits, overfitting tests and a live ledger
 
 `app/strategies.py` (run by rotation-history.yml after Opportunity, under a minute) tests 19 rules and 3 benchmarks on

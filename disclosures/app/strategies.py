@@ -78,7 +78,7 @@ def _rolling_mean(a, w):
         return np.where(c >= max(1, w // 2), s / np.maximum(c, 1), np.nan)
 
 
-def load(public, quarters_file=None, limit=None, today=None):
+def load(public, quarters_file=None, limit=None, today=None, dividends=False):
     """Every t/<T>.json on one Friday grid → D: tickers, sectors, is_etf, dates, C (adjusted), PX (as traded, splits
     undone), DV (weekly dollar volume), R (weekly simple returns), cost (one-way), rf (weekly cash return), and the SEC
     and 13F panels when on file."""
@@ -92,7 +92,7 @@ def load(public, quarters_file=None, limit=None, today=None):
     if limit:
         keep = {f'{t}.json' for t in ETF_SET + SECTORS}
         files = [f for f in files if f.name in keep] + [f for f in files if f.name not in keep][:limit]
-    T, S, E, Cs, Ps, DVs = [], [], [], [], [], []
+    T, S, E, Cs, Ps, DVs, DIVs, PSs = [], [], [], [], [], [], [], []
     for f in files:
         try:
             d = json.loads(f.read_text())
@@ -110,6 +110,8 @@ def load(public, quarters_file=None, limit=None, today=None):
         prow = np.full(W, np.nan)
         if len(p) >= n:
             prow[i0:i0 + n] = [x if fin(x) and x > 0 else np.nan for x in p[:n]]
+            if dividends:
+                PSs.append(prow.copy())
             undo = np.ones(n)                                   # the close as traded then: later splits undone
             for wk, ratio in d.get('sp') or []:
                 if fin(ratio) and ratio > 0 and 0 < wk <= n:
@@ -117,6 +119,8 @@ def load(public, quarters_file=None, limit=None, today=None):
             prow[i0:i0 + n] *= undo
         else:
             prow[i0:i0 + n] = row[i0:i0 + n]
+            if dividends:
+                PSs.append(prow.copy())
         v = d.get('v') or []
         dvrow = np.full(W, np.nan)
         if len(v) >= n:
@@ -125,6 +129,12 @@ def load(public, quarters_file=None, limit=None, today=None):
         is_etf = t in etf_ids or d.get('s') in (None, '', 'etf')
         T.append(t); S.append('etf' if is_etf else (d.get('s') or 'other')); E.append(is_etf)
         Cs.append(row); Ps.append(prow); DVs.append(dvrow)
+        if dividends:                                           # dividends per share by week (split-adjusted, as p)
+            drow = np.zeros(W)
+            for wk, amt in d.get('d') or []:
+                if fin(amt) and amt > 0 and 0 <= i0 + int(wk) < W:
+                    drow[i0 + int(wk)] += amt
+            DIVs.append(drow)
     C, PX, DV = np.array(Cs), np.array(Ps), np.array(DVs)
     last = int(np.where(np.isfinite(C).any(0))[0].max()) + 1
     C, PX, DV = C[:, :last], PX[:, :last], DV[:, :last]
@@ -136,6 +146,9 @@ def load(public, quarters_file=None, limit=None, today=None):
     dv13 = _rolling_mean(DV, 13)
     D = {'tickers': T, 'sectors': S, 'is_etf': np.array(E), 'dates': dates, 'C': C, 'PX': PX, 'DV': dv13, 'R': R,
          'cost': cost_one_way(dv13), 'ix': {t: i for i, t in enumerate(T)}}
+    if dividends:
+        D['DIV'] = np.array(DIVs)[:, :last]
+        D['PS'] = np.array(PSs)[:, :last]                       # the close split-adjusted (as p), the dividends' basis
     D['rf'] = cash_rate(public, dates)
     D['month_end'] = np.array([(dates[i] + WEEK).astype('datetime64[M]') != dates[i].astype('datetime64[M]') for i in range(len(dates))])
     D['complete'] = np.array([dates[i] + DAY <= today for i in range(len(dates))])   # a Friday's week is closed from Saturday
