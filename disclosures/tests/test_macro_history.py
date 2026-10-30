@@ -84,6 +84,17 @@ class Clock(unittest.TestCase):
             w0, X = M.weekly_matrix(doc)
             self.assertEqual(w0, (dt.date.fromisoformat(doc['weekly']['start']) - M.GRID0).days // 7)
             json.loads((Path(d) / 'public' / 'macro.json').read_text())
+            self.assertEqual(doc['levels']['start'], '1995-01')
+
+    def test_levels_by_the_month_described(self):
+        raw = {'CPIAUCSL': monthly(f=lambda i: 100 + i),                     # Jan 1993 = 100
+               'DGS3MO': [(dt.date(1995, 1, 3), 5.0), (dt.date(1995, 1, 4), 6.0), (dt.date(1995, 3, 1), 4.0)]}
+        L = M.levels(raw, until=dt.date(1995, 4, 30))
+        self.assertEqual(L['start'], '1995-01')
+        self.assertEqual(L['cpi'][:4], [124.0, 125.0, 126.0, 127.0])          # no publication lag
+        self.assertEqual(L['bill3m'][:4], [5.5, None, 4.0, None])            # the month's average yield
+        self.assertEqual(len(L['cpi']), 4)
+        self.assertIsNone(M.levels({}))
 
 
 if __name__ == '__main__':

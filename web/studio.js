@@ -21,10 +21,19 @@
    (split out or left out) from the weekly history's dividend list (t/<SYM>.json: d, p). Whichever way they are used,
    the dividends and interest paid are counted in dollars as paid (the shares then held × the amount per share; with
    dividends reinvested, the shares are the total-return value over the price as traded): on the labels, on a panel of
-   their own if asked, on the end card and in the caption.
+   their own if asked (a running total, or each calendar year as bars), on the end card and in the caption.
+   Adjustments: a tax on dividends (only the rest is reinvested: the total return is rebuilt from the price and the
+   net dividends); a cash line (the same money on the same dates at a fixed rate or the 3-month Treasury bill, its
+   future value), and the dividends taken as cash earning it; inflation as a line that keeps up with prices, or every
+   value in dollars of the start (a fixed rate or the CPI: market/history/macro.json, levels — or, until those are
+   published, the CPI rebuilt from its year-on-year rates and cash at the Fed funds rate); a discount rate for the
+   present value of each end value and the NPV of the plan.
    Under the video, the results: its figures as a table (for a growth race: the money put in, the end value, the gain,
    the money-weighted return a year, the dividends paid and those of the last 12 months, the worst drop, the best and
-   worst calendar years), the caption, the notes; copied as text, the weekly series as a CSV, the frame as a PNG.
+   worst calendar years, and with the adjustments the rate after inflation, the gap to cash and the present value),
+   the dividends paid each calendar year, the caption, the notes; copied as text, the weekly series as a CSV, the
+   frame as a PNG. The dividend snowball's report: the money in, the shares, the dividends received, a month now and in
+   year one, the income's growth, the yield on cost, and its dividends month by month (CSV).
    Styles: line race, bar race, areas, counters, columns, the RRG, leaderboard, heatmap, histogram; themes; 16:9, 9:16
    and 1:1; any length, five paces and the pause at the end; 30 or 60 frames a second.
    Export: every frame drawn on a canvas and encoded with WebCodecs (H.264, else VP9) into an MP4 (mp4-muxer); a browser
@@ -152,6 +161,47 @@
     if (!last.length) return 0;
     return last[last.length - 1][0] > g - 400 * DAY ? last.reduce((a, d) => a + d[1], 0) : 0;
   }
+  /* ---------- data: consumer prices and the cash rate (market/history/macro.json, from FRED) ---------- */
+  // month by month: the CPI index and the 3-month Treasury bill's yield, by the month described (levels); until those
+  // are published, the CPI rebuilt from its year-on-year rates and cash at the Fed funds rate (both approximate)
+  let MACRO = null;
+  const macro = () => MACRO || (MACRO = json(HUB + 'market/history/macro.json').then((d) => {
+    if (!d) return null;
+    const ym = (x) => [+x.slice(0, 4), +x.slice(5, 7) - 1], Lv = d.levels;
+    if (Lv && Lv.start && Array.isArray(Lv.cpi) && Lv.cpi.some(fin)) { const [y0, m0] = ym(Lv.start); return { y0, m0, cpi: Lv.cpi, bill: Lv.bill3m || [], exact: true }; }
+    const M = d.monthly || {}, months = M.months || [], D = M.data || {}, yoy = D.cpi || [];
+    if (!months.length) return null;
+    const [y0, m0] = ym(months[0]), cpi = []; let v = 100;
+    months.forEach((_, i) => { if (i) v *= fin(yoy[i]) ? Math.pow(1 + yoy[i] / 100, 1 / 12) : 1; cpi.push(v); });
+    return { y0, m0, cpi, bill: D.ff || [], exact: false };
+  }));
+  // a month's figure for each week: the last on file for the weeks after it, the first for those before
+  function monthlyOn(Mc, arr, G) {
+    if (!Mc || !Array.isArray(arr)) return null;
+    const a = arr.findIndex(fin); let b = arr.length - 1; while (b >= 0 && !fin(arr[b])) b--;
+    if (a < 0) return null;
+    return G.map((g) => { const d = new Date(g); let j = clamp((d.getUTCFullYear() - Mc.y0) * 12 + d.getUTCMonth() - Mc.m0, a, b); while (j > a && !fin(arr[j])) j--; return +arr[j]; });
+  }
+  // $1 week by week at a fixed rate a year, or at each week's rate (%), compounded
+  function growIdx(G, rates, fixed) {
+    const out = [1];
+    for (let i = 1; i < G.length; i++) { const r = fixed != null ? fixed : rates ? rates[i - 1] : 0; out.push(out[i - 1] * Math.pow(1 + (fin(r) ? r : 0) / 100, (G[i] - G[i - 1]) / (365.25 * DAY))); }
+    return out;
+  }
+  // the total return with the dividends after a tax: each close plus the (net) dividends that went ex since the last
+  // close, over that close
+  function netTR(pr, dv, i0) {
+    const out = pr.map(() => null); let v = null, last = null, pend = 0;
+    for (let i = i0; i < pr.length; i++) {
+      pend += (dv && dv[i]) || 0;
+      if (!fin(pr[i]) || pr[i] <= 0) { out[i] = v; continue; }
+      v = v == null ? +pr[i] : v * (pr[i] + pend) / last;
+      pend = 0; last = +pr[i]; out[i] = v;
+    }
+    return out;
+  }
+  const rateOf = (x) => (x !== '' && x != null && fin(+x) ? +x : null);
+
   /* ---------- recurring buys and the money-weighted return ---------- */
   const UNITS = { d: ['trading day', 'trading days'], w: ['week', 'weeks'], m: ['month', 'months'], y: ['year', 'years'] };
   // the amount bought in each grid week: `amt` every n trading days (five a week), weeks, months or years, from the start
@@ -384,7 +434,7 @@
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
     rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
-    goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA', dinc: 'label' };
+    goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
     ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials history'], ['holdings', '13F / Officials latest mix'],
     ['sankey', 'Earnings flow'], ['snowball', 'Dividend snowball'], ['timing', 'Timing']];
@@ -393,7 +443,7 @@
     rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']],
     bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas'], ['companies', 'Company share areas'], ['changes', 'Weight changes (pp)']], holdings: [['bars', 'Actual holdings bars']], sankey: [['sankey', 'Flow']], snowball: [['snow', 'Shares and income']],
     timing: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']] };
-  const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold', 'dinc'];        // redrawn, not rebuilt
+  const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold', 'dinc', 'dview'];        // redrawn, not rebuilt
   const tickers = (st) => [...new Set(String(st.t || '').split(/[\s,;]+/).map(norm).filter(Boolean))].slice(0, 10);
 
   /* ---------- leaderboards: every company of the site, month by month (app/rank_panel.py) ---------- */
@@ -906,6 +956,14 @@
   // Realized historical dividend income (not a forward-yield promise).
   // 52 observed weekly periods form the terminal annual dividend window.
   const snowIncome = paid => paid.slice(-52).reduce((sum, x) => sum + (x || 0), 0);
+  // payments week by week → {year: dollars}; and whether the window holds the whole of a calendar year
+  function byYear(G, paid) { const out = {}; G.forEach((g, i) => { if (paid[i]) { const y = new Date(g).getUTCFullYear(); out[y] = (out[y] || 0) + paid[i]; } }); return out; }
+  function fullYears(G) {
+    if (!G.length) return () => false;
+    const a = new Date(G[0]), b = new Date(G[G.length - 1]);
+    const y0 = a.getUTCFullYear() + (a.getUTCMonth() === 0 && a.getUTCDate() <= 7 ? 0 : 1), y1 = b.getUTCFullYear() - (b.getUTCMonth() === 11 && b.getUTCDate() >= 24 ? 0 : 1);
+    return (y) => y >= y0 && y <= y1;
+  }
   async function buildSnowball(st, out, T) {
     if (!T.length) throw new Error('Add a dividend payer, e.g. SCHD or KO');
     const P = new Map();
@@ -929,6 +987,7 @@
     // The schedule is computed once at $1 per buy. Simulation is linear
     // in starting capital and contributions, including compounded DRIP units.
     const unitBuys = buySchedule(G, 1, every, unit, from);
+    const tax = clamp(+st.dtax || 0, 0, 95) / 100;
     const target = +st.sgoal || 0, reverse = target > 0;
     if (reverse && (!Number.isFinite(target) || target > 1e12))
       throw Error('Enter a finite positive terminal dividend goal below $1 trillion');
@@ -943,26 +1002,27 @@
       if (i0 < 0) continue;
       // Dividend payment happens before new purchases in this weekly slot.
       function simulate(lump, perBuy) {
-        let shares = 0, bought = 0, fromDiv = 0, last = null, firstShares = null;
+        let shares = 0, bought = 0, fromDiv = 0, last = null, firstShares = null, put = 0;
         const v = [], sh = [], inc = [], paid = G.map(() => 0);
         for (let i = 0; i < G.length; i++) {
           const px = fin(pr[i]) ? pr[i] : last;
           if (fin(px) && px > 0) last = px;
           if (i < i0 || !last) { v.push(null); sh.push(null); inc.push(null); continue; }
           if (i > i0 && dv[i]) {
-            const cash = shares * dv[i];
+            const cash = shares * dv[i] * (1 - tax);
             paid[i] = cash;
             const added = cash / last;
             shares += added; fromDiv += added;
           }
           const contribution = (i === i0 ? lump : 0) + unitBuys[i] * perBuy;
-          if (contribution) { shares += contribution / last; bought += contribution / last; }
+          if (contribution) { shares += contribution / last; bought += contribution / last; put += contribution; }
           if (i === i0) firstShares = shares;
           v.push(shares * last); sh.push(shares);
           inc.push(i - i0 >= 51 ? snowIncome(paid.slice(0, i + 1)) : null);
         }
         const annualIncome = snowIncome(paid);
-        return { v, sh, inc, paid, bought, fromDiv, initialShares: firstShares,
+        const firstAnnual = G.length - 1 - i0 >= 103 ? paid.slice(i0 + 1, i0 + 53).reduce((a, x) => a + x, 0) : null;   // the first 52 weeks, when there are two years
+        return { v, sh, inc, paid, bought, fromDiv, initialShares: firstShares, put, firstAnnual,
           finalShares: sh[sh.length - 1], annualIncome, monthlyIncome: annualIncome / 12 };
       }
       let lump = initial, perBuy = recurring;
@@ -986,7 +1046,7 @@
       out.series.push({ key: sym, label: sym, name: p.name, v:r.v, sh:r.sh, inc:r.inc,
         paid:r.paid, yearly, bought:r.bought, fromDiv:r.fromDiv, sh0:r.initialShares,
         initialShares:r.initialShares, finalShares:r.finalShares, annualIncome:r.annualIncome,
-        monthlyIncome:r.monthlyIncome, initialCash:lump, perBuy, purchases:unitBuys.filter(Boolean).length });
+        monthlyIncome:r.monthlyIncome, initialCash:lump, perBuy, purchases:unitBuys.filter(Boolean).length, put:r.put, firstAnnual:r.firstAnnual });
       if (reverse) out.snowGoal.results.push({ticker:sym, initialCash:lump, perBuy,
         annualIncome:r.annualIncome, monthlyIncome:r.monthlyIncome, initialShares:r.initialShares,
         finalShares:r.finalShares, annualGoal:targetAnnual, achieved:r.annualIncome >= targetAnnual - .01});
@@ -1006,8 +1066,9 @@
       ' terminal dividend target · reverse-calculated ' + (solveFor === 'lump' ? 'starting capital' : 'scheduled buy') +
       ' · dividends reinvested · ' + dayLabel(G[0]) + ' → ' + dayLabel(G[G.length - 1]) :
       money(initial, 0) + ' to start' + (recurring ? ' + ' + money(recurring, 0) + ' every ' + interval : '') +
-      ' · every dividend buys more shares at that week’s price · ' +
+      ' · every dividend buys more shares at that week’s price' + (tax ? ` (after a ${Math.round(tax * 100)}% tax)` : '') + ' · ' +
       dayLabel(G[0]) + ' → ' + dayLabel(G[G.length - 1]);
+    if (tax) out.notes.add(`Dividends are counted after a ${Math.round(tax * 100)}% tax: only the rest buys shares.`);
     if (reverse) out.notes.add('Backward calculation is an IN-SAMPLE historical scenario, NOT a future forecast. Terminal income is actual gross distributions received over the final 52 weekly observations; monthly equivalent = annual / 12, even if payments are quarterly. Dividends are reinvested.');
     return out;
   }
@@ -1126,6 +1187,23 @@
       const nEv = Math.max(1, Math.round(+st.ri || 1)), unit = UNITS[st.ru] ? st.ru : 'm';
       const buys1 = buySchedule(G, 1, nEv, unit, st.from ? Date.parse(st.from + 'T00:00:00Z') : G[0]);
       const L = G.length - 1;
+      // adjustments: a tax on dividends; a cash line at a fixed rate or the 3-month bill (and the dividends taken as cash
+      // earning it); inflation as a line that keeps up with prices, or every value in dollars of the start
+      const tax = clamp(+st.dtax || 0, 0, 95) / 100, cashR = rateOf(st.cashr), inflR = rateOf(st.inflr);
+      const wantCash = st.cashl === '1' && !solve, wantInt = st.dint === '1' && st.div === 'split', wantInfl = (st.infl === 'line' || st.infl === 'real') && !solve;
+      const Mc = ((wantCash || wantInt) && cashR == null) || (wantInfl && inflR == null) ? await macro() : null;
+      let cashIdx = null, cpiIdx = null;
+      if (wantCash || wantInt) {
+        const bill = cashR == null ? monthlyOn(Mc, Mc && Mc.bill, G) : null;
+        if (cashR != null || bill) cashIdx = growIdx(G, bill, cashR);
+        else notes.add('Cash: the interest-rate history did not load, so cash is left out');
+      }
+      if (wantInfl) {
+        const c = inflR == null ? monthlyOn(Mc, Mc && Mc.cpi, G) : null;
+        if (inflR != null) cpiIdx = growIdx(G, null, inflR); else if (c) cpiIdx = c.map((x) => x / c[0]);
+        else notes.add('Inflation: the consumer-price history did not load, so nothing is adjusted for it');
+      }
+      const cashG = wantInt && cashIdx ? cashIdx.map((x, i) => (i ? x / cashIdx[i - 1] : 1)) : null;
       // one ticker, a lump of `lump` and `each` on every scheduled buy: the value, the price-only value and the cash, week by
       // week; and the distributions paid in dollars (shares held × the amount per share that went ex that week) whichever
       // way they are used: taken as cash, reinvested (the total-return line holds them already) or left out. The shares
@@ -1140,7 +1218,7 @@
           const d = i > i0 && dv ? dv[i] || 0 : 0;                 // paid on the shares held before this week's buy
           const now = d && sh ? sh * d : 0;
           paid += now;
-          if (mode !== 'tr') cash += units * d;
+          if (mode !== 'tr') cash = (cashG && i > i0 ? cash * cashG[i] : cash) + units * d;
           if (px) units += inflow[i] / px;
           last = px;
           const val = px ? units * px : null;
@@ -1160,11 +1238,17 @@
         const tr = trOn(p, G), pr = priceOn(p, G), dv = divsOn(p, G);
         let mode = st.div;
         if ((mode === 'price' || mode === 'split') && (!pr || !pr.some(fin))) { notes.add(`${s}: dividends are not on file yet for this ticker — shown with dividends reinvested (total return)`); mode = 'tr'; }
-        const base = mode === 'tr' ? tr : pr, i0 = base.findIndex(fin);
+        let base = mode === 'tr' ? tr : pr;
+        const i0 = base.findIndex(fin);
         if (i0 < 0) continue;
+        const dvN = dv && tax ? dv.map((x) => x * (1 - tax)) : dv;
+        if (tax && mode === 'tr') {
+          if (pr && fin(pr[i0])) base = netTR(pr, dvN, i0);
+          else notes.add(`${s}: no price as traded on file at the start, so the tax is not taken off its dividends`);
+        }
         let lump = lumpIn, each = rec;
         if (solve) {
-          const endOf = (a, b) => { const r = run(base, dv, mode, i0, a, b, pr).v[L]; return fin(r) ? r : 0; };
+          const endOf = (a, b) => { const r = run(base, dvN, mode, i0, a, b, pr).v[L]; return fin(r) ? r : 0; };
           if (solve === 'lump') {
             const fromBuys = recIn > 0 ? endOf(0, recIn) : 0, perDollar = endOf(1, 0);
             if (!(perDollar > 0)) continue;
@@ -1177,7 +1261,7 @@
             if (fromLump >= goal) notes.add(`${s}: the money at the start alone ends above ${money(goal, 0)}, so no further buys are needed`);
           }
         }
-        const r = run(base, dv, mode, i0, lump, each, pr);
+        const r = run(base, dvN, mode, i0, lump, each, pr);
         let c = 0;
         const sc = r.inflow.map((x, i) => (i < i0 ? null : (c += x))), sf = r.inflow.map((x, i) => [G[i], -x]).filter(([, a]) => a);
         if (!contrib) { contrib = sc; flows = sf; }
@@ -1186,10 +1270,10 @@
         // bought are worth at the end — the total-return value less the same money in the price alone
         if (dv && r.known >= 0) {
           const paid52 = L - i0 >= 51 ? r.pd.slice(L - 51).reduce((a, x) => a + (x || 0), 0) : null;
-          row.dist = r.dc;
-          row.inc = { total: r.dc[L], last12: paid52, shares: r.sh[L], from: r.known, mode };
+          row.dist = r.dc; row.paid = r.pd;
+          row.inc = { total: r.dc[L], last12: paid52, shares: r.sh[L], from: r.known, mode, years: byYear(G, r.pd) };
           if (mode === 'tr' && pr && fin(pr[i0]) && r.known <= i0 + 2) {
-            const po = run(pr, dv, 'price', i0, lump, each, pr).v[L];
+            const po = run(pr, dvN, 'price', i0, lump, each, pr).v[L];
             if (fin(po) && fin(r.v[L])) row.inc.worth = r.v[L] - po;
           }
           if (r.known > i0 + 2) notes.add(`${s}: distributions are on file from ${dayLabel(G[r.known])}; those paid before then are not counted`);
@@ -1197,8 +1281,15 @@
         if (solve) { Object.assign(row, { contrib: sc, flows: sf, put: sc[L], lump, each }); need.push(row); }
         out.series.push(row);
       }
-      const md = { tr: 'dividends reinvested', price: 'price only (dividends left out)', split: 'price + dividends taken as cash' }[st.div];
-      const names = out.series.map((x) => x.key).join(' vs ');
+      const lead = out.series[0], i0b = lead ? lead.v.findIndex(fin) : 0;
+      if (lead && !solve) {                                     // the same money in cash, or keeping up with prices
+        const line = (key, label, name, idx, kind) => { const r = run(idx, null, 'price', i0b, lumpIn, rec, idx); out.series.push({ key, label, name, v: r.v, price: null, cash: null, mode: 'price', idx, bench: kind }); };
+        if (wantCash && cashIdx) line('CASH', 'Cash', cashR != null ? `Cash at ${cashR}% a year` : Mc && Mc.exact ? 'Cash in 3-month Treasury bills' : 'Cash at the Fed funds rate', cashIdx, 'cash');
+        if (st.infl === 'line' && cpiIdx) line('CPI', 'Inflation', inflR != null ? `Prices rising ${inflR}% a year` : 'Keeping up with consumer prices (CPI)', cpiIdx, 'infl');
+      }
+      const md = { tr: 'dividends reinvested', price: 'price only (dividends left out)', split: 'price + dividends taken as cash' }[st.div]
+        + (tax ? ` after a ${Math.round(tax * 100)}% tax` : '') + (cashG ? ', earning the cash rate' : '');
+      const names = out.series.filter((x) => !x.bench).map((x) => x.key).join(' vs ');
       const nb = Math.round(buys1.reduce((a, x) => a + x, 0));
       const per = `every ${nEv > 1 ? nEv + ' ' + UNITS[unit][1] : UNITS[unit][0]}`, every = `${money(rec, 0)} ${per}`;
       if (solve) {
@@ -1220,6 +1311,29 @@
       }
       out.split = st.div === 'split' && out.series.some((x) => x.cash);
       out.div = st.div;
+      const df = cpiIdx ? cpiIdx.map((x) => cpiIdx[i0b] / x) : null;   // a week's dollars in dollars of the start
+      out.adj = { tax, cash: cashIdx ? { rate: cashR, src: cashR != null ? 'fixed' : Mc && Mc.exact ? 'bill' : 'ff' } : null,
+        infl: cpiIdx ? { mode: st.infl, rate: inflR, src: inflR != null ? 'fixed' : Mc && Mc.exact ? 'cpi' : 'cpi-yoy', df, rise: cpiIdx[L] / cpiIdx[i0b] - 1 } : null,
+        disc: rateOf(st.disc), interest: !!cashG, flowsNom: out.flows };
+      if (st.infl === 'real' && df) {
+        const dfl = (a) => (a ? a.map((x, i) => (fin(x) ? x * df[i] : x)) : a), at = new Map(G.map((g, i) => [g, i]));
+        for (const x of out.series) {
+          x.nom = x.v; x.v = dfl(x.v); x.price = dfl(x.price); x.cash = dfl(x.cash); x.idx = dfl(x.idx);
+          if (x.paid) {
+            x.paid = dfl(x.paid); let c = 0; x.dist = x.dist.map((d, i) => (d == null ? null : (c += x.paid[i] || 0)));
+            Object.assign(x.inc, { total: x.dist[L], years: byYear(G, x.paid), last12: fin(x.inc.last12) ? x.paid.slice(L - 51).reduce((a, y) => a + (y || 0), 0) : null, worth: fin(x.inc.worth) ? x.inc.worth * df[L] : x.inc.worth });
+          }
+        }
+        if (out.contrib) { let c = 0; const raw = out.contrib; out.contrib = raw.map((x, i) => (x == null ? null : (c += (x - (i && raw[i - 1] != null ? raw[i - 1] : 0)) * df[i]))); }
+        if (out.flows) out.flows = out.flows.map(([t, a]) => [t, a * df[at.get(t)]]);
+        if (out.dca) out.dca.put = out.contrib[L];
+        out.real = true;
+        out.sub = out.sub + ` · after inflation, in ${monthYear(G[i0b])} dollars`;
+        notes.add(`After inflation: every value in dollars of ${monthYear(G[i0b])} (${inflR != null ? `prices rising ${inflR}% a year` : 'the consumer price index'}); prices rose ${pctf(out.adj.infl.rise, 1).replace('+', '')} over the window.`);
+      }
+      if (cpiIdx && inflR == null && !(Mc && Mc.exact)) notes.add('Consumer prices are rebuilt from the year-on-year CPI rates month by month (approximate) until the CPI index itself is published.');
+      if (cashIdx && cashR == null) notes.add(Mc && Mc.exact ? 'Cash earns the 3-month Treasury bill yield of each month (FRED DGS3MO), compounded weekly.' : 'Cash earns the Fed funds rate of each month (FRED FEDFUNDS), compounded weekly, until the 3-month bill history is published.');
+      if (tax) notes.add(`Dividends are counted after a ${Math.round(tax * 100)}% tax${st.div === 'tr' ? ': only the rest is reinvested (the total return is rebuilt from the price and the dividends)' : ''}.`);
       if ((dca || solve === 'rec') && unit === 'd') notes.add('Prices are weekly closes: buys on the trading days of a week all use that week\'s close');
     } else if (k === 'momentum') {
       const B = P.get(bench); if (!B) throw new Error('No prices for the benchmark ' + bench);
@@ -1292,6 +1406,7 @@
     if (!fin(a)) return fin(b) && f - i > 0.5 ? b : null;
     return fin(b) ? lerp(a, b, f - i) : a;
   };
+  const benchCol = (th, kind) => { const light = luminance(th.text) < 0.4; return kind === 'cash' ? (light ? '#6b6a66' : '#cfd8e3') : (light ? '#9c4f2e' : '#f2b39b'); };
   const upDown = (th, up) => (th.text === '#1d1d1b' || luminance(th.text) < 0.4 ? (up ? '#17734a' : '#c0392b') : (up ? '#3ee39a' : '#ff6b6b'));
   // distributions reinvested, in dollars as paid, beside each ticker: shown with dividends reinvested unless turned off,
   // and left off the chart whose own panel draws them
@@ -1323,7 +1438,7 @@
   function draw(ctx, W, H, V, opt, t) {
     const th = (opt.theme === 'appearance' ? (opt.appearanceTheme || root.FFAppearance?.videoTheme()) : THEMES[opt.theme]) || THEMES.bull, S = Math.min(W, H) / 1080, tm = timing(V, opt), f = frameIndex(V, tm, t);
     const portrait = H > W * 1.2, square = !portrait && H > W * 0.8;
-    const pal = (i) => th.pal[i % th.pal.length];
+    const pal = (i) => { const x = V.series && V.series[i]; return x && x.bench ? benchCol(th, x.bench) : th.pal[i % th.pal.length]; };
     const F = (w, px) => `${w} ${Math.round(px * S)}px ${th.font}`;
     // background: a deep gradient, a soft light, a faint grid of dots
     const g = ctx.createLinearGradient(0, 0, W * 0.4, H);
@@ -1370,10 +1485,12 @@
       const gap = 70 * S, h1 = (box.h - gap) * 0.64, h2 = box.h - gap - h1, cashPanel = V.split;
       lineRace(ctx, cashPanel ? V : Object.assign({}, V, { divAbove: true }), f, { x: box.x, y: box.y, w: box.w, h: h1 }, S, th, F, pal, false, true);
       const D = Object.assign({}, V, { series: V.series.map((s) => ({ key: s.key + ' dist', label: s.label + (cashPanel ? ' distributions' : ' dividends'), name: s.name, v: cashPanel ? s.cash : s.dist || s.v.map(() => null) })), base: null, split: false, zero: true, divPanel: true });
+      const yearly = V.dview === 'year';
       ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.font = F(600, 22); ctx.fillStyle = th.muted;
-      ctx.fillText(cashPanel ? 'Distributions received — cumulative cash, not reinvested' : 'Dividends & interest paid — reinvested, in dollars as paid', box.x, box.y + h1 + gap - 12 * S, box.w * (cashPanel ? 0.55 : 0.7));
-      ctx.textAlign = 'right'; ctx.fillText(cashPanel ? 'solid: price + distributions · dashed: price only' : 'cumulative, each paid on the shares then held', box.x + box.w, box.y + h1 + gap - 12 * S, box.w * (cashPanel ? 0.42 : 0.28));
-      lineRace(ctx, D, f, { x: box.x, y: box.y + h1 + gap, w: box.w, h: h2 }, S, th, F, pal, false, false);
+      ctx.fillText(cashPanel ? (yearly ? 'Distributions received each year — cash, not reinvested · * part of a year' : 'Distributions received — cumulative cash, not reinvested') : (yearly ? 'Dividends & interest paid each year — reinvested' : 'Dividends & interest paid — reinvested, in dollars as paid'), box.x, box.y + h1 + gap - 12 * S, box.w * (cashPanel ? 0.55 : 0.62));
+      ctx.textAlign = 'right'; ctx.fillText(cashPanel ? 'solid: price + distributions · dashed: price only' : yearly ? 'in dollars as paid · * a part year' : 'cumulative, each paid on the shares then held', box.x + box.w, box.y + h1 + gap - 12 * S, box.w * (cashPanel ? 0.42 : 0.36));
+      if (yearly) cashBars(ctx, V, f, { x: box.x, y: box.y + h1 + gap, w: box.w, h: h2 }, S, th, F, pal, false);
+      else lineRace(ctx, D, f, { x: box.x, y: box.y + h1 + gap, w: box.w, h: h2 }, S, th, F, pal, false, false);
     }
     else if (V.panels && (style === 'line' || style === 'area')) {
       const n = V.series.length, gap = 54 * S, ph = (box.h - gap * (n - 1)) / n;
@@ -1476,7 +1593,7 @@
       for (let i = 0; i <= Math.floor(f) && i < n; i++) if (fin(s.v[i])) pts.push([X(G[i]), Y(s.v[i]), i]);
       const hv = valAt(s.v, f); if (fin(hv)) pts.push([X(tCur), Y(hv), f]);
       if (pts.length < 1) return;
-      if (area || (k === 0 && V.series.length <= 3)) {                    // a soft fill under the line
+      if (!s.bench && (area || (k === 0 && V.series.length <= 3))) {      // a soft fill under the line
         const band = area && V.split && s.price, fillTo = band ? null : (V.zero && !log && lo < 0 ? Y(0) : b.y + b.h);
         const gr = ctx.createLinearGradient(0, b.y, 0, b.y + b.h); gr.addColorStop(0, alpha(col, area ? 0.30 : 0.18)); gr.addColorStop(1, alpha(col, 0));
         ctx.fillStyle = gr; ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
@@ -1493,10 +1610,11 @@
         const pv = valAt(s.price, f); if (fin(pv)) ctx.lineTo(X(tCur), Y(pv));
         ctx.stroke(); ctx.setLineDash([]);
       }
-      ctx.strokeStyle = col; ctx.lineWidth = 5 * S; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-      if (th.glow) { ctx.shadowColor = col; ctx.shadowBlur = th.glow * S; }
+      ctx.strokeStyle = col; ctx.lineWidth = (s.bench ? 3.5 : 5) * S; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      if (th.glow && !s.bench) { ctx.shadowColor = col; ctx.shadowBlur = th.glow * S; }
+      if (s.bench) ctx.setLineDash([12 * S, 8 * S]);
       ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.stroke();
-      ctx.shadowBlur = 0;
+      ctx.shadowBlur = 0; ctx.setLineDash([]);
       const h = pts[pts.length - 1];
       heads.push({ x: h[0], y: h[1], col, s, v: hv, k });
     });
@@ -1542,9 +1660,10 @@
       const r = lerp(r0.get(k), r1.get(k), easeIO(fr)), y = b.y + r * slot + (slot - bh) / 2, v = vals[k];
       if (!fin(v)) return;
       const w = Math.abs(v) * unit, x = v >= 0 ? x0 : x0 - w, col = pal(k);
-      const gr = ctx.createLinearGradient(x, 0, x + w, 0); gr.addColorStop(0, alpha(col, 0.75)); gr.addColorStop(1, col);
-      ctx.fillStyle = gr; if (th.glow) { ctx.shadowColor = col; ctx.shadowBlur = th.glow * 0.8 * S; }
+      const gr = ctx.createLinearGradient(x, 0, x + w, 0); gr.addColorStop(0, alpha(col, s.bench ? 0.18 : 0.75)); gr.addColorStop(1, alpha(col, s.bench ? 0.32 : 1));
+      ctx.fillStyle = gr; if (th.glow && !s.bench) { ctx.shadowColor = col; ctx.shadowBlur = th.glow * 0.8 * S; }
       roundRect(ctx, x, y, Math.max(w, 6 * S), bh, Math.min(14 * S, bh / 3)); ctx.fill(); ctx.shadowBlur = 0;
+      if (s.bench) { ctx.save(); ctx.setLineDash([8 * S, 6 * S]); ctx.strokeStyle = col; ctx.lineWidth = 2.5 * S; ctx.stroke(); ctx.restore(); }
       const cash = V.split && s.cash ? valAt(s.cash, f) : null;
       if (fin(cash) && cash > 0 && v > 0) {                   // the distributions: their own segment at the end of the bar
         const cw = Math.min(w, cash * unit);
@@ -1562,7 +1681,7 @@
       if (fin(cash) && cash > 0) { ctx.font = F(500, 20); ctx.fillStyle = th.muted; ctx.fillText(`incl. ${money(cash)} distributions`, x + w + 14 * S, y + bh / 2 + 18 * S); }
       else if (dn) { ctx.font = F(500, 20); ctx.fillStyle = th.muted; ctx.fillText(dn, x + w + 14 * S, y + bh / 2 + 18 * S); }
       else if (s.need && v >= 0) { ctx.font = F(600, 20); ctx.fillStyle = th.muted; ctx.fillText(s.need, x + w + 14 * S, y + bh / 2 + 24 * S); }
-      if (s.name && s.name !== s.label && bh > 54 * S && w > 260 * S) { ctx.textAlign = 'left'; ctx.font = F(500, 20); ctx.fillStyle = luminance(col) > 0.55 ? 'rgba(10,18,32,0.75)' : 'rgba(255,255,255,0.85)'; ctx.fillText(String(s.name).slice(0, 34), x + 14 * S, y + bh / 2); }
+      if (s.name && s.name !== s.label && bh > 54 * S && w > 260 * S && (ctx.font = F(500, 20), ctx.measureText(String(s.name).slice(0, 34)).width < w - 28 * S)) { ctx.textAlign = 'left'; ctx.font = F(500, 20); ctx.fillStyle = s.bench ? th.muted : luminance(col) > 0.55 ? 'rgba(10,18,32,0.75)' : 'rgba(255,255,255,0.85)'; ctx.fillText(String(s.name).slice(0, 34), x + 14 * S, y + bh / 2); }
     });
   }
   const easeIO = (u) => u * u * (3 - 2 * u);
@@ -1971,47 +2090,54 @@
     lineRace(ctx, D, f, {x:b.x,y:b.y,w:b.w,h:h1}, S, th, F, pal, false, true);
     const monthly = V.scf !== 'annual';
     ctx.textAlign='left';ctx.textBaseline='bottom';ctx.font=F(600,22);ctx.fillStyle=th.muted;
-    ctx.fillText(monthly?'Monthly gross dividends (reinvested) · last 24 months':
-      'Annual gross dividends (reinvested)',b.x,b.y+h1+gap-12*S,b.w);
-    const G=V.grid,uptoIndex=Math.max(0,Math.min(G.length-1,Math.floor(f)));
-    const period = ms => {
-      const d=new Date(ms);
-      return monthly ? d.toISOString().slice(0,7) : String(d.getUTCFullYear());
-    };
-    const keys=[...new Set(G.slice(0,uptoIndex+1).map(period))].sort();
-    const periods=monthly?keys.slice(-24):keys;
-    const firstIndex=G.length?period(G[0]):null;
-    const totals=V.series.map(s=>{
-      const map=new Map();
-      G.forEach((g,i)=>{
-        if(i>uptoIndex)return;
-        const key=period(g);
-        const amount=s.paid[i]||0;
-        map.set(key,(map.get(key)||0)+amount);
+    ctx.fillText(monthly?'Dividends received each month (reinvested) · last 24 months · dashed: last 12 months ÷ 12':
+      'Dividends received each year (reinvested)',b.x,b.y+h1+gap-12*S,b.w);
+    cashBars(ctx, V, f, {x:b.x,y:b.y+h1+gap,w:b.w,h:h2}, S, th, F, pal, monthly);
+  }
+  // dividends paid as bars, month by month (the last 24 months) or year by year, up to this frame, in dollars as paid.
+  // Months carry the last twelve months ÷ 12 as a dashed line (a quarterly payer leaves two months in three empty); a
+  // year the window does not hold whole (the first, or the one still running) is drawn lighter
+  function cashBars(ctx, V, f, yb, S, th, F, pal, monthly) {
+    const G = V.grid, upto = clamp(Math.floor(f), 0, G.length - 1);
+    const key = (ms) => { const d = new Date(ms); return monthly ? d.toISOString().slice(0, 7) : String(d.getUTCFullYear()); };
+    const keys = [...new Set(G.slice(0, upto + 1).map(key))];
+    const periods = monthly ? keys.slice(-24) : keys, whole = fullYears(G.slice(0, upto + 1));
+    const totals = V.series.map((s) => { const m = new Map(); for (let i = 0; i <= upto; i++) { const v = s.paid && s.paid[i]; if (v) m.set(key(G[i]), (m.get(key(G[i])) || 0) + v); } return m; });
+    const rates = monthly ? V.series.map((s) => {                 // the trailing 52 weeks ÷ 12 at the end of each month
+      const out = new Map(), i0 = (s.v || []).findIndex(fin); let run = 0;
+      for (let i = 0; i <= upto; i++) { run += (s.paid && s.paid[i]) || 0; if (i >= 52) run -= (s.paid && s.paid[i - 52]) || 0; if (i0 >= 0 && i - i0 >= 51) out.set(key(G[i]), run / 12); }
+      return out;
+    }) : null;
+    const m = V.series.length, slot = yb.w / Math.max(1, periods.length), bw = slot * 0.8 / Math.max(1, m);
+    const hi = Math.max(1, ...totals.flatMap((t) => periods.map((p) => t.get(p) || 0)), ...(rates || []).flatMap((r) => periods.map((p) => r.get(p) || 0))) * 1.16;
+    const Y = (v) => yb.y + yb.h - Math.min(v / hi, 1) * yb.h;
+    ctx.lineWidth = 1.2 * S; ctx.font = F(500, 18); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (const t of niceTicks(0, hi / 1.16, 3)) { if (t <= 0) continue; const y = Y(t); ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(yb.x, y); ctx.lineTo(yb.x + yb.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(money(t), yb.x - 14 * S, y); }
+    const every = Math.max(1, Math.ceil(periods.length / (monthly ? 8 : 12)));
+    periods.forEach((p, j) => {
+      const part = !monthly && !whole(+p);
+      V.series.forEach((s, k) => {
+        const v = totals[k].get(p) || 0; if (v <= 0) return;
+        const x = yb.x + j * slot + slot * 0.1 + k * bw, w = Math.max(1 * S, bw * 0.88), r = Math.min(5 * S, bw * 0.23);
+        ctx.fillStyle = alpha(pal(k), part ? 0.4 : 0.85); roundRect(ctx, x, Y(v), w, yb.y + yb.h - Y(v), r); ctx.fill();
+        if (part) { ctx.save(); ctx.setLineDash([5 * S, 4 * S]); ctx.strokeStyle = alpha(pal(k), 0.9); ctx.lineWidth = 1.5 * S; roundRect(ctx, x, Y(v), w, yb.y + yb.h - Y(v), r); ctx.stroke(); ctx.restore(); }
+        if ((j === periods.length - 1 || (!monthly && periods.length <= 14)) && bw > 22 * S) { ctx.font = F(700, bw > 44 * S ? 15 : 13); ctx.fillStyle = th.text; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(money(v, v >= 10 ? 0 : 2), x + w / 2, Y(v) - 4 * S, bw * (m > 1 ? 1 : 1.6)); }
       });
-      return map;
-    });
-    const yb={x:b.x,y:b.y+h1+gap,w:b.w,h:h2};
-    const m=V.series.length,slot=yb.w/Math.max(1,periods.length),bw=slot*.8/Math.max(1,m);
-    const hi=Math.max(1,...totals.flatMap(map=>periods.flatMap(key=>[map.get(key)||0])))*1.16;
-    const Y=v=>yb.y+yb.h-Math.min(v/hi,1)*yb.h;
-    periods.forEach((key,j)=>{
-      V.series.forEach((s,k)=>{
-        const v=totals[k].get(key)||0;
-        if(v<=0)return;
-        const x=yb.x+j*slot+slot*.1+k*bw;
-        ctx.fillStyle=alpha(pal(k),.85);
-        roundRect(ctx,x,Y(v),Math.max(1*S,bw*.88),yb.y+yb.h-Y(v),Math.min(5*S,bw*.23));ctx.fill();
-        if((j===periods.length-1||!monthly&&periods.length<=10)&&bw>25*S){
-          ctx.font=F(700,14);ctx.fillStyle=th.text;ctx.textAlign='center';
-          ctx.textBaseline='bottom';ctx.fillText(money(v),x+bw*.44,Y(v)-4*S,bw*1.5);
-        }
-      });
-      const every=monthly?Math.max(1,Math.ceil(periods.length/8)):Math.max(1,Math.ceil(periods.length/12));
-      if(j%every===0||j===periods.length-1){
-        ctx.font=F(500,16);ctx.fillStyle=th.axis;ctx.textAlign='center';ctx.textBaseline='top';
-        ctx.fillText(monthly?key.slice(2):key,yb.x+j*slot+slot/2,yb.y+yb.h+5*S,slot*every);
+      if (j % every === 0 || j === periods.length - 1) {
+        const d = monthly ? new Date(p + '-01T00:00:00Z') : null;
+        ctx.font = F(500, 16); ctx.fillStyle = th.axis; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(monthly ? `${MON[d.getUTCMonth()]} '${String(d.getUTCFullYear()).slice(2)}` : p + (part ? '*' : ''), yb.x + j * slot + slot / 2, yb.y + yb.h + 5 * S, slot * every);
       }
+    });
+    if (rates) V.series.forEach((s, k) => {                          // the monthly rate, dashed, with its value at the end
+      const pts = periods.map((p, j) => [yb.x + j * slot + slot / 2, rates[k].get(p)]).filter((q) => fin(q[1]));
+      if (pts.length < 2) return;
+      ctx.save(); ctx.setLineDash([9 * S, 6 * S]); ctx.strokeStyle = pal(k); ctx.lineWidth = 3 * S; ctx.beginPath();
+      pts.forEach(([x, v], i) => (i ? ctx.lineTo(x, Y(v)) : ctx.moveTo(x, Y(v)))); ctx.stroke(); ctx.restore();
+      const [lx, lv] = pts[pts.length - 1], txt = `${money(lv)}/mo`, rx = Math.min(lx + slot * 0.45, yb.x + yb.w), ty = Y(lv) - 8 * S - k * 26 * S;
+      ctx.font = F(700, 17); const tw = ctx.measureText(txt).width;
+      ctx.fillStyle = th.panel; roundRect(ctx, rx - tw - 10 * S, ty - 21 * S, tw + 12 * S, 24 * S, 6 * S); ctx.fill();
+      ctx.fillStyle = pal(k); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(txt, rx - 4 * S, ty);
     });
   }
 
@@ -2150,7 +2276,7 @@
         V.snowballSummary.push({
           k, ticker:s.label, initial:shfmt(initialShares), final:shfmt(finalShares),
           monthly:money(monthly), annual:money(annual),
-          monthlyNote:'Trailing 52-week gross / 12',
+          monthlyNote: fin(s.firstAnnual) && s.firstAnnual > 0 ? 'Year one ' + money(s.firstAnnual / 12) + ' · last 52 weeks ÷ 12' : 'Trailing 52-week gross / 12',
           investment, initialCash:s.initialCash, perBuy:s.perBuy,
           monthly_cashflow_usd:monthAmounts, initial_shares:initialShares,
           final_shares:finalShares, annualIncome:annual, monthlyIncome:monthly
@@ -2273,45 +2399,89 @@
     const R = { kind: V.kind, title: V.title || '', sub: V.sub || '', cols: [], rows: [], caption: V.caption || '', notes: [...(V.notes || [])], foot: '' };
     const cell = (t, small, n) => [t == null || t === '' ? '—' : String(t), small || '', fin(n) ? +n : null];
     if (V.kind === 'growth') {
-      const yrs = L > 0 ? (G[L] - G[0]) / (365.25 * DAY) : 0, mode = V.div || 'tr';
-      const anyDiv = V.series.some((s) => s.inc && s.inc.total > 0);
+      const yrs = L > 0 ? (G[L] - G[0]) / (365.25 * DAY) : 0, mode = V.div || 'tr', A = V.adj || {}, I = A.infl, C = A.cash;
+      const anyDiv = V.series.some((s) => s.inc && s.inc.total > 0), whole = fullYears(G), taxed = A.tax ? `, after ${Math.round(A.tax * 100)}% tax` : '';
+      const cashRow = V.series.find((s) => s.bench === 'cash'), t0 = G[Math.max(0, (V.series[0] && V.series[0].v.findIndex(fin)) || 0)];
+      const growth = (years) => { const ys = Object.keys(years || {}).map(Number).filter((y) => whole(y) && years[y] > 0).sort((a, b) => a - b); if (ys.length < 2) return null; const a = ys[0], b = ys[ys.length - 1]; return { a, b, r: Math.pow(years[b] / years[a], 1 / (b - a)) - 1 }; };
+      const anyGrowth = V.series.some((s) => s.inc && growth(s.inc.years));
       R.cols = [
         ...(V.goal ? [['need', 'Needed', 'The amount worked back from the end value']] : []),
-        ['put', 'Put in', 'All the money put in'], ['end', 'End value', dayLabel(G[L])], ['gain', 'Gain', 'The end value against the money put in'],
-        ['yr', 'A year', 'The money-weighted return a year (XIRR)'],
-        ...(anyDiv ? [['div', { tr: 'Dividends paid, reinvested', split: 'Dividends paid, as cash', price: 'Dividends left out' }[mode] || 'Dividends paid', 'In dollars as paid: each payment is the shares then held × the amount per share'],
+        ['put', 'Put in', 'All the money put in' + (V.real ? ', in dollars of the start' : '')], ['end', 'End value', dayLabel(G[L]) + (V.real ? ', in dollars of the start' : '')], ['gain', 'Gain', 'The end value against the money put in'],
+        ['yr', V.real ? 'A year, after inflation' : 'A year', 'The money-weighted return a year (XIRR)' + (V.real ? ' in dollars of the start' : '')],
+        ...(I && !V.real ? [['real', 'A year, after inflation', 'The money-weighted return a year with every amount in dollars of the start']] : []),
+        ...(cashRow ? [['vsc', 'Against cash', 'The end value less the same money kept in cash']] : []),
+        ...(A.disc != null ? [['pv', `Present value at ${A.disc}%`, `The end value discounted to ${dayLabel(t0)} at ${A.disc}% a year; NPV: the same, less every amount put in discounted alike`]] : []),
+        ...(anyDiv ? [['div', ({ tr: 'Dividends paid, reinvested', split: 'Dividends paid, as cash', price: 'Dividends left out' }[mode] || 'Dividends paid') + taxed, 'In dollars as paid: each payment is the shares then held × the amount per share' + (V.real ? ', then in dollars of the start' : '')],
           ['l12', 'Last 12 months', 'Dividends paid in the last 52 weeks, and that as a share of the money put in']] : []),
+        ...(anyGrowth ? [['ig', 'Dividend income growth', 'A year, between the first and the last full calendar year of dividends paid']] : []),
         ['dd', 'Worst drop', 'The largest fall from a high of the ' + (mode === 'tr' ? 'total-return' : 'price') + ' line'],
         ['cy', 'Best · worst year', 'Full calendar years in the window'],
       ];
+      const irrOf = (flows, v) => (flows && yrs >= 1 && fin(v) ? xirr(flows.concat([[G[L], v]])) : null);
+      const cashIrr = cashRow ? irrOf(cashRow.flows || V.flows, cashRow.v[L]) : null;
       R.rows = V.series.map((s, k) => {
         const v = s.v[L], put = s.put != null ? s.put : V.contrib ? V.contrib[L] : V.base, flows = s.flows || V.flows;
-        const irr = flows && yrs >= 1 && fin(v) ? xirr(flows.concat([[G[L], v]])) : null;
+        const irr = irrOf(flows, v);
         const dd = worstDrop(s.idx || s.v, G), cy = calYears(s.idx || s.v, G);
         const best = cy.length ? cy.reduce((m, x) => (x[1] > m[1] ? x : m)) : null, worst = cy.length ? cy.reduce((m, x) => (x[1] < m[1] ? x : m)) : null;
-        const inc = s.inc, c = {
-          put: cell(money(put, 0), '', put), end: cell(V.fmt(v), '', v),
+        const inc = s.inc, ig = inc ? growth(inc.years) : null, c = {
+          put: cell(money(put, 0), '', put), end: cell(V.fmt(v), V.real && s.nom ? `${money(s.nom[L], 0)} as paid then` : '', v),
           gain: cell(fin(v) && put ? pctf(v / put - 1) : '', fin(v) && fin(put) ? (v >= put ? '+' : '') + money(v - put, 0) : '', fin(v) && put ? v / put - 1 : null),
-          yr: cell(fin(irr) ? (100 * irr).toFixed(1) + '%' : '', '', irr),
+          yr: cell(fin(irr) ? pct1(irr) : '', V.real && s.nom ? (() => { const n = irrOf(A.flowsNom, s.nom[L]); return fin(n) ? `${pct1(n)} before inflation` : ''; })() : '', irr),
           dd: cell(dd.at ? pctf(dd.v, 1) : (s.idx || s.v).some(fin) ? 'None' : '', dd.at ? monthYear(dd.at) : '', dd.at ? dd.v : 0),
           cy: cell(best ? `${best[0]} ${pctf(best[1], 1)}` : '', worst && worst !== best ? `${worst[0]} ${pctf(worst[1], 1)}` : '', best ? best[1] : null),
         };
+        if (I && !V.real) {                                     // every amount in dollars of the start, then the rate
+          const df = I.df, at = new Map(G.map((g, i) => [g, i]));
+          const rr = flows && fin(v) && yrs >= 1 ? xirr(flows.map(([t, a]) => [t, a * df[at.get(t)]]).concat([[G[L], v * df[L]]])) : null;
+          c.real = cell(fin(rr) ? pct1(rr) : '', fin(v) ? `${money(v * df[L], 0)} in ${new Date(t0).getUTCFullYear()} dollars` : '', rr);
+        }
+        if (cashRow) c.vsc = s === cashRow ? cell('') : cell(fin(v) ? (v >= cashRow.v[L] ? '+' : '−') + money(Math.abs(v - cashRow.v[L]), 0) : '', fin(irr) && fin(cashIrr) ? `${irr >= cashIrr ? '+' : '−'}${Math.abs(100 * (irr - cashIrr)).toFixed(1)} pts a year` : '', fin(v) ? v - cashRow.v[L] : null);
+        if (A.disc != null && fin(v)) {
+          const pvf = (t) => Math.pow(1 + A.disc / 100, -(t - t0) / (365.25 * DAY)), pv = v * pvf(G[L]);
+          const npv = flows ? flows.reduce((a2, [t, a]) => a2 + a * pvf(t), pv) : null;
+          c.pv = cell(money(pv, 0), fin(npv) ? `NPV ${npv >= 0 ? '+' : '−'}${money(Math.abs(npv), 0)}` : '', pv);
+        }
         if (V.goal) c.need = cell(s.need, '', V.goal.solve === 'lump' ? s.lump : s.each);
         if (anyDiv) {
-          c.div = inc ? cell(money(inc.total, 0), inc.mode === 'tr' && fin(inc.worth) ? `worth ${money(inc.worth, 0)} now` : inc.mode === 'price' ? 'not in the value' : '', inc.total) : cell('');
+          const kept = inc && inc.mode === 'split' && A.interest && s.cash ? s.cash[L] : null;
+          c.div = inc ? cell(money(inc.total, 0), inc.mode === 'tr' && fin(inc.worth) ? `worth ${money(inc.worth, 0)} now` : fin(kept) ? `${money(kept, 0)} with interest` : inc.mode === 'price' ? 'not in the value' : '', inc.total) : cell('');
           c.l12 = inc && fin(inc.last12) ? cell(money(inc.last12, 0), put > 0 ? `${(100 * inc.last12 / put).toFixed(1)}% on cost` : '', inc.last12) : cell('');
         }
-        return { k, label: s.label, name: s.name, cells: c };
+        if (anyGrowth) c.ig = ig ? cell(pctf(ig.r, 1), `${ig.a} → ${ig.b}`, ig.r) : cell('');
+        return { k, label: s.label, name: s.name, bench: s.bench, cells: c };
       });
-      R.foot = (anyDiv ? 'Dividends and interest in dollars as paid, before tax: each payment is the shares then held × the amount per share'
-        + (mode === 'tr' ? '; reinvested, it bought more shares that week, and “worth now” is what those shares are worth at the end (the total-return value less the same money in the price alone)' : mode === 'split' ? '; taken as cash, kept beside the shares (not reinvested)' : '; the price-only line leaves them out') + '. ' : '')
-        + 'A year: the money-weighted return a year (XIRR), which for one sum at the start is the yearly growth rate. Weekly closes.';
+      // dividends year by year, in dollars as paid (or of the start): the cash each ticker paid
+      const ys = [...new Set(V.series.flatMap((s) => (s.inc ? Object.keys(s.inc.years || {}) : [])))].map(Number).sort((a, b) => a - b), payers = V.series.filter((s) => s.inc && s.inc.total > 0);
+      if (ys.length && payers.length) R.years = { title: `Dividends paid each year${V.real ? ', in dollars of the start' : ', in dollars as paid'}${taxed} — ${({ tr: 'reinvested', split: 'taken as cash', price: 'left out of the value' })[mode] || ''}`,
+        cols: payers.map((s) => ({ label: s.label, k: V.series.indexOf(s) })), rows: ys.map((y) => ({ y, part: !whole(y), v: payers.map((s) => s.inc.years[y] || 0) })) };
+      const src = (x) => ({ fixed: '', bill: '3-month Treasury bills (FRED DGS3MO)', ff: 'the Fed funds rate (FRED FEDFUNDS) until the 3-month bill history is published', cpi: 'the consumer price index (FRED CPIAUCSL)', 'cpi-yoy': 'consumer prices rebuilt from the year-on-year CPI rates (approximate)' })[x] || '';
+      R.foot = (anyDiv ? 'Dividends and interest in dollars as paid' + (A.tax ? `, after a ${Math.round(A.tax * 100)}% tax` : ', before tax') + ': each payment is the shares then held × the amount per share'
+        + (mode === 'tr' ? '; reinvested, it bought more shares that week, and “worth now” is what those shares are worth at the end (the total-return value less the same money in the price alone)' : mode === 'split' ? (A.interest ? '; taken as cash, which then earns the cash rate' : '; taken as cash, kept beside the shares (not reinvested)') : '; the price-only line leaves them out') + '. ' : '')
+        + 'A year: the money-weighted return a year (XIRR), which for one sum at the start is the yearly growth rate. '
+        + (C ? `Cash: the same money put in on the same dates, earning ${C.rate != null ? C.rate + '% a year' : src(C.src)} — its future value. ` : '')
+        + (I ? (V.real ? `After inflation: every amount in dollars of ${monthYear(t0)}, by ${I.rate != null ? 'prices rising ' + I.rate + '% a year' : src(I.src)}; prices rose ${pctf(I.rise, 1).replace('+', '')} over the window. ` : `Inflation: the money put in, rising with ${I.rate != null ? 'prices at ' + I.rate + '% a year' : src(I.src)} (prices rose ${pctf(I.rise, 1).replace('+', '')}) — what keeps its buying power. `) : '')
+        + (A.disc != null ? `Present value: the end value discounted to ${dayLabel(t0)} at ${A.disc}% a year; NPV adds every amount put in, discounted alike (above zero: better than ${A.disc}% a year). ` : '')
+        + 'Weekly closes.';
       return R;
     }
     if (V.kind === 'snowball' && Array.isArray(V.snowballSummary)) {
       R.title = V.endTitle || R.title; R.sub = V.endSub || R.sub;
-      R.cols = [['inv', 'Money in'], ['sh0', 'Shares at the start'], ['sh1', 'Shares at the end'], ['mo', 'A month (equivalent)'], ['yr', 'A year']];
-      R.rows = V.snowballSummary.map((r) => ({ k: r.k, label: r.ticker, cells: { inv: cell(r.investment), sh0: cell(r.initial, '', r.initial_shares), sh1: cell(r.final, '', r.final_shares), mo: cell(r.monthly, 'last 52 weeks ÷ 12', r.monthlyIncome), yr: cell(r.annual, '', r.annualIncome) } }));
+      const whole = fullYears(G);
+      R.cols = [['inv', 'Money in'], ['put', 'Put in'], ['sh', 'Shares', 'At the start → at the end, and the share of the end bought by dividends'], ['all', 'Dividends received', 'In all, in dollars as paid — every one reinvested'],
+        ['mo', 'A month now', 'The last 52 weeks ÷ 12 (payments may come quarterly)'], ['one', 'Year one', 'The first 52 weeks ÷ 12'], ['ig', 'Income growth', 'A year, between the first and the last full calendar year'], ['yoc', 'On cost', 'A year of dividends now, as a share of the money put in'], ['end', 'End value']];
+      R.rows = V.snowballSummary.map((r) => {
+        const s = V.series[r.k] || {}, ys = Object.keys(s.yearly || {}).map(Number).filter((y) => whole(y) && s.yearly[y] > 0).sort((a, b) => a - b);
+        const ig = ys.length >= 2 ? Math.pow(s.yearly[ys[ys.length - 1]] / s.yearly[ys[0]], 1 / (ys[ys.length - 1] - ys[0])) - 1 : null, all = (s.paid || []).reduce((a, x) => a + (x || 0), 0);
+        return { k: r.k, label: r.ticker, name: s.name, cells: {
+          inv: cell(r.investment), put: cell(money(s.put, 0), '', s.put), sh: cell(`${r.initial} → ${r.final}`, s.bought ? `+${(100 * s.fromDiv / s.bought).toFixed(0)}% from dividends` : '', r.final_shares),
+          all: cell(money(all, 0), 'reinvested', all), mo: cell(r.monthly, `${r.annual} a year`, r.monthlyIncome), one: cell(fin(s.firstAnnual) ? money(s.firstAnnual / 12) : '', fin(s.firstAnnual) ? `${money(s.firstAnnual, 0)} a year` : '', fin(s.firstAnnual) ? s.firstAnnual / 12 : null),
+          ig: cell(fin(ig) ? pctf(ig, 1) : '', fin(ig) ? `${ys[0]} → ${ys[ys.length - 1]}` : '', ig), yoc: cell(s.put > 0 ? (100 * r.annualIncome / s.put).toFixed(1) + '%' : '', '', s.put > 0 ? r.annualIncome / s.put : null),
+          end: cell(money(s.v ? s.v[L] : null, 0), '', s.v ? s.v[L] : null) } };
+      });
+      const ys = [...new Set(V.series.flatMap((s) => Object.keys(s.yearly || {})))].map(Number).sort((a, b) => a - b);
+      if (ys.length) R.years = { title: 'Dividends received each year, in dollars as paid — every one reinvested', cols: V.series.map((s, k) => ({ label: s.label, k })), rows: ys.map((y) => ({ y, part: !whole(y), v: V.series.map((s) => (s.yearly || {})[y] || 0) })) };
+      R.foot = 'Dividends in dollars as paid: the shares then held × the amount per share, each buying more shares at that week’s close. A month now: the last 52 weeks ÷ 12. Weekly closes.';
       return R;
     }
     R.title = V.endTitle || R.title; R.sub = V.endSub || R.sub;
@@ -2319,17 +2489,26 @@
     R.rows = (V.final || []).map((r) => ({ k: r.k || 0, sec: r.sec, label: r.label, cells: { value: cell(r.value, '', fin(r.v) ? r.v : null), change: cell(r.change) } }));
     return R;
   }
+  const pct1 = (x) => (x < 0 ? '−' : '') + Math.abs(100 * x).toFixed(1) + '%';
   const tsv = (x) => String(x == null ? '' : x).replace(/[\t\n]+/g, ' ');
   function reportText(R, link) {                             // the report as plain text: a table with tabs, then the caption
     const head = [''].concat(R.cols.map((c) => c[1])).map(tsv).join('\t');
     const rows = R.rows.map((r) => [r.label].concat(R.cols.map(([k]) => { const c = r.cells[k] || ['—', '']; return c[0] + (c[1] ? ` (${c[1]})` : ''); })).map(tsv).join('\t'));
-    return [R.title, R.sub, '', head, ...rows, '', R.caption, ...(R.notes.length ? ['', ...R.notes.map((n) => '• ' + n)] : []), ...(R.foot ? ['', R.foot] : []), '', 'filing-flows.com' + (link ? ' · ' + link : '')]
+    const Y = R.years, years = Y && Y.rows.length ? ['', Y.title, ['Year'].concat(Y.cols.map((c) => c.label)).map(tsv).join('\t'), ...Y.rows.map((r) => [r.y + (r.part ? ' (part)' : '')].concat(r.v.map((v) => (v > 0 ? money(v, 0) : '—'))).map(tsv).join('\t'))] : [];
+    return [R.title, R.sub, '', head, ...rows, ...years, '', R.caption, ...(R.notes.length ? ['', ...R.notes.map((n) => '• ' + n)] : []), ...(R.foot ? ['', R.foot] : []), '', 'filing-flows.com' + (link ? ' · ' + link : '')]
       .filter((x, i, a) => !(x === '' && (i === 0 || a[i - 1] === ''))).join('\n').trim();
   }
   const csvCell = (x) => { const s = x == null ? '' : typeof x === 'number' ? (Number.isFinite(x) ? String(+x.toFixed(6)) : '') : String(x); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   // the series behind the video, one row a week (a month, a quarter); without such series, the report's table
   function csvOf(V, R) {
     const G = V.grid || [], rows = [];
+    if (V.kind === 'snowball' && V.series && V.series.length) {   // month by month: the dividends received and the shares at the month's end
+      const mk = (g) => iso(g).slice(0, 7), months = [...new Set(G.map(mk))];
+      rows.push(['month', ...V.series.flatMap((s) => [s.label + ' dividends', s.label + ' shares'])]);
+      months.forEach((m) => { const idx = G.map((g, i) => (mk(g) === m ? i : -1)).filter((i) => i >= 0), lastI = idx[idx.length - 1];
+        rows.push([m, ...V.series.flatMap((s) => [idx.reduce((a, i) => a + ((s.paid || [])[i] || 0), 0), (s.sh || [])[lastI]])]); });
+      return rows.map((r) => r.map(csvCell).join(',')).join('\n') + '\n';
+    }
     const lined = V.series && V.series.length && V.series.every((s) => (Array.isArray(s.v) && s.v.length === G.length) || (Array.isArray(s.x) && s.x.length === G.length));
     if (lined && !['sankey', 'snowball', 'calendar', 'dist', 'treemap', 'bubble'].includes(V.kind)) {
       const head = ['date'], get = [];
@@ -2349,6 +2528,8 @@
     }
     return rows.map((r) => r.map(csvCell).join(',')).join('\n') + '\n';
   }
+
+  const yearsCSV = (R) => { const Y = R.years; if (!Y) return ''; return [['year', 'part of the year', ...Y.cols.map((c) => c.label)], ...Y.rows.map((r) => [r.y, r.part ? 'yes' : '', ...r.v])].map((r) => r.map(csvCell).join(',')).join('\n') + '\n'; };
 
   /* ---------- export: WebCodecs + mp4-muxer, or MediaRecorder ---------- */
   const MUXER = 'https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.5/build/mp4-muxer.js';
@@ -2422,8 +2603,15 @@
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 60000);
   }
+  function yearsTable(R, esc2, colK) {                          // dividends by year: rows of years, a column a ticker, the change on the year before
+    const Y = R.years; if (!Y || !Y.rows.length) return '';
+    const tot = Y.cols.map((_, j) => Y.rows.reduce((a, r) => a + (r.v[j] || 0), 0));
+    return `<div class="st-yh"><h3>${esc2(Y.title)}</h3><button class="btn small" type="button" data-rep="ycsv">CSV ↓</button></div><div class="tbl-wrap st-years"><table class="st-tbl"><thead><tr><th scope="col">Year</th>${Y.cols.map((c) => `<th scope="col" class="num"><i style="background:${esc2(colK(c.k))}"></i>${esc2(c.label)}</th>`).join('')}</tr></thead><tbody>`
+      + Y.rows.map((r, i) => `<tr><th scope="row">${r.y}${r.part ? '<small>part of the year</small>' : ''}</th>${r.v.map((v, j) => { const p = i ? Y.rows[i - 1] : null, g = p && !p.part && !r.part && p.v[j] > 0 && v > 0 ? v / p.v[j] - 1 : null; return `<td class="num">${v > 0 ? esc2(money(v, v >= 100 ? 0 : 2)) : '—'}${fin(g) ? `<small>${esc2(pctf(g, 0))} on the year</small>` : ''}</td>`; }).join('')}</tr>`).join('')
+      + `<tr class="st-tot"><th scope="row">In all</th>${tot.map((v) => `<td class="num">${esc2(money(v, 0))}</td>`).join('')}</tr></tbody></table></div>`;
+  }
   function reportHTML(R, th) {
-    const col = (r) => (r.sec ? secCol(th, r.sec) : th.pal[(r.k || 0) % th.pal.length]);
+    const col = (r) => (r.bench ? benchCol(th, r.bench) : r.sec ? secCol(th, r.sec) : th.pal[(r.k || 0) % th.pal.length]);
     const cls = (k, c) => (k === 'gain' && c[2] != null ? (c[2] >= 0 ? 'num up' : 'num down') : 'num');
     const head = `<tr><th scope="col"><span class="st-sr">Series</span></th>${R.cols.map(([, l, help]) => `<th scope="col" class="num"${help ? ` title="${esc(help)}"` : ''}>${esc(l)}</th>`).join('')}</tr>`;
     const body = R.rows.map((r) => `<tr><th scope="row"><i style="background:${esc(col(r))}"></i>${esc(r.label)}${r.name && r.name !== r.label ? `<small>${esc(String(r.name).slice(0, 38))}</small>` : ''}</th>`
@@ -2434,6 +2622,7 @@
       // on a phone the same figures turned around: a row for each figure, a column for each series
       + (R.rows.length ? `<div class="tbl-wrap st-tall"><table class="st-tbl"><thead><tr><th scope="col"><span class="st-sr">Figure</span></th>${R.rows.map((r) => `<th scope="col" class="num"><i style="background:${esc(col(r))}"></i>${esc(r.label)}</th>`).join('')}</tr></thead><tbody>`
         + R.cols.map(([k, l, help]) => `<tr><th scope="row"${help ? ` title="${esc(help)}"` : ''}>${esc(l)}</th>${R.rows.map((r) => { const c = r.cells[k] || ['—', '']; return `<td class="${cls(k, c)}">${esc(c[0])}${c[1] ? `<small>${esc(c[1])}</small>` : ''}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>' : '')
+      + yearsTable(R, esc, (k) => th.pal[(k || 0) % th.pal.length])
       + (R.caption ? `<div class="st-capbox"><div class="st-caph"><span>Caption to post</span><button class="btn small" type="button" data-rep="cap">Copy</button></div><div class="st-cap" id="st-cap">${esc(R.caption)}</div></div>` : '')
       + (R.notes.length ? `<ul class="st-notes" id="st-notes">${R.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '')
       + (R.foot ? `<p class="st-rep-foot">${esc(R.foot)}</p>` : '');
@@ -2501,6 +2690,7 @@
 .st-rep .tbl-wrap{margin:2px 0 10px}.st-rep td small,.st-rep tbody th small{display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:1px}.st-rep thead th{white-space:normal;min-width:76px;vertical-align:bottom}
 .st-rep tbody th{position:sticky;left:0;z-index:1;background:var(--surface);text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:600}.st-rep tbody th i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
 .st-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.st-tall{display:none}@media(max-width:640px){.st-wide{display:none}.st-tall{display:block}.st-tall th,.st-tall td{padding:8px 7px}.st-tall tbody th{font-size:12.5px;font-weight:500;color:var(--muted);white-space:normal;min-width:80px;max-width:100px}.st-tall thead th{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink);font-weight:600}.st-tall thead th i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.st-rep{padding:12px}}
+.st-yh{display:flex;align-items:center;gap:10px;margin:6px 0 6px}.st-yh h3{font-size:13.5px;margin:0;font-weight:600;color:var(--ink-2)}.st-years{max-height:420px;overflow:auto;width:max-content;max-width:100%}.st-years table{width:auto}.st-years td{min-width:96px}.st-years tbody th{min-width:0}.st-rep tr.st-tot th,.st-rep tr.st-tot td{font-weight:600;border-top:1px solid var(--line)}
 .st-rep td.up{color:var(--accent-ink)}.st-rep td.down{color:var(--neg)}.st-capbox{margin-top:4px}.st-caph{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:4px}.st-rep-foot{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 0 0}
 .st-help{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}.st-help code{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);padding:0 4px;border-radius:4px}.st-cap{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border-radius:8px;padding:8px 10px;margin-top:8px;word-break:break-word}`;
     document.head.appendChild(s);
@@ -2654,8 +2844,17 @@
           + `<div class="st-help" id="st-goal-help">${L.help}</div>`;
         h += `<label for="st-div">Dividends</label>${sel('st-div', [['tr', 'Reinvested (total return)'], ['split', 'Taken as cash: their own line'], ['price', 'Left out (price only)']], st.div)}`;
         if (st.div === 'tr') h += `<label for="st-dinc">Dividends paid, in dollars as paid</label>${sel('st-dinc', [['label', 'On the labels and the end card'], ['panel', 'Also their own panel (line race)'], ['off', 'Not on the video (in the results only)']], st.dinc)}`;
+        if (st.div === 'split' || (st.div === 'tr' && st.dinc === 'panel')) h += `<label for="st-dview">The dividends panel (line race) shows</label>${sel('st-dview', [['total', 'The running total'], ['year', 'Each calendar year, as bars']], st.dview)}`;
         h += `<label for="st-scale">Scale</label>${sel('st-scale', [['lin', 'Linear'], ['log', 'Logarithmic']], st.scale)}`;
+        // adjustments: a tax on dividends, cash, inflation, a discount rate for present values
+        h += `<h3>Adjust</h3><label for="st-dtax">Tax on dividends (%)</label><input class="input" id="st-dtax" inputmode="decimal" value="${esc(st.dtax)}" placeholder="0 — before tax">`
+          + `<div class="st-row"><div><label for="st-cashl">Compare with cash</label>${sel('st-cashl', [['0', 'No'], ['1', 'Yes: a cash line']], st.cashl)}</div><div><label for="st-cashr">Cash rate, %/yr</label><input class="input" id="st-cashr" inputmode="decimal" value="${esc(st.cashr)}" placeholder="T-bills, actual"></div></div>`
+          + (st.div === 'split' ? `<label for="st-dint">Dividends taken as cash</label>${sel('st-dint', [['0', 'Kept as cash, no interest'], ['1', 'Earn interest at the cash rate']], st.dint)}` : '')
+          + `<div class="st-row"><div><label for="st-infl">Inflation</label>${sel('st-infl', [['none', 'Not adjusted'], ['line', 'A line keeping up with prices'], ['real', 'Every value after inflation']], st.infl)}</div><div><label for="st-inflr">Inflation, %/yr</label><input class="input" id="st-inflr" inputmode="decimal" value="${esc(st.inflr)}" placeholder="CPI, actual"></div></div>`
+          + `<label for="st-disc">Discount rate for present value, %/yr</label><input class="input" id="st-disc" inputmode="decimal" value="${esc(st.disc)}" placeholder="blank: none (shown in the results)">`
+          + `<div class="st-help">A blank rate uses history: the 3-month Treasury bill for cash, the consumer price index for inflation. Cash and inflation take the same money on the same dates, grown at that rate (its future value); after inflation, every value is in dollars of the start; present value discounts each end value back to the start.</div>`;
       }
+      if (k === 'snowball') h += `<label for="st-dtax">Tax on dividends (%)</label><input class="input" id="st-dtax" inputmode="decimal" value="${esc(st.dtax)}" placeholder="0 — before tax">`;
       if (k === 'rrg') h += `<div class="st-row"><div><label for="st-bench">Benchmark</label><input class="input" id="st-bench" value="${esc(st.bench)}"></div><div><label for="st-tail">Tail (weeks)</label>${sel('st-tail', [['5', '5'], ['8', '8'], ['10', '10'], ['13', '13'], ['26', '26']], st.tail)}</div></div><label for="st-n">RS window</label>${sel('st-n', [['10', '10 weeks'], ['14', '14 weeks'], ['26', '26 weeks']], st.n)}`;
       if (k === 'momentum') h += `<div class="st-row"><div><label for="st-bench">Against</label><input class="input" id="st-bench" value="${esc(st.bench)}"></div><div><label for="st-lb">Look-back</label>${sel('st-lb', [['13', '13 weeks'], ['26', '26 weeks'], ['52', '52 weeks']], st.lb)}</div></div>`;
       if (k === 'fund') h += `<label for="st-m">Figure</label>${sel('st-m', Object.entries(FIG), st.m)}<label for="st-ttm">Periods</label>${sel('st-ttm', [['0', 'Each quarter'], ['1', 'Trailing four quarters']], st.ttm)}`;
@@ -2716,7 +2915,7 @@
       try {
         const v = await build(st);
         if (my !== token || !here()) return;
-        v.style = st.style; v.scale = st.scale; v.endCard = st.end === '1'; v.dinc = st.dinc;
+        v.style = st.style; v.scale = st.scale; v.endCard = st.end === '1'; v.dinc = st.dinc; v.dview = st.dview;
         finish(v, st);
         V = v;
         status();
@@ -2755,6 +2954,7 @@
       if (what === 'copy') copyText(reportText(R, linkOf()), b);
       else if (what === 'cap') copyText(R.caption, b);
       else if (what === 'csv') download(new Blob([csvOf(V, R)], { type: 'text/csv;charset=utf-8' }), fileStem(V) + '.csv');
+      else if (what === 'ycsv') download(new Blob([yearsCSV(R)], { type: 'text/csv;charset=utf-8' }), fileStem(V) + '-dividends-by-year.csv');
       else if (what === 'png') {                              // this frame, at the size of the video
         const dim = { '16x9': [1920, 1080], '9x16': [1080, 1920], '1x1': [1080, 1080] }[st.ar] || [1920, 1080], c = document.createElement('canvas');
         c.width = dim[0]; c.height = dim[1];
@@ -2820,7 +3020,7 @@
       // Actual weight bars and sector areas require distinct portfolios, not just a repaint.
       if (key === 'style' && st.k === 'actual') { side(); rebuild(); return; }
       if (LOOK.includes(key)) {
-        if (V) { V.style = st.style; V.scale = st.scale; V.endCard = st.end === '1'; V.dinc = st.dinc; delete V._dom; sizeCanvas(); paint(); save(); status(); if (key === 'theme') showReport(); }
+        if (V) { V.style = st.style; V.scale = st.scale; V.endCard = st.end === '1'; V.dinc = st.dinc; V.dview = st.dview; delete V._dom; sizeCanvas(); paint(); save(); status(); if (key === 'theme') showReport(); if (key === 'dinc') side(); }
         else rebuild();
         return;
       }
@@ -2877,6 +3077,6 @@
     if (+st.yrs > 0) { const end = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(); st = Object.assign({}, st, { from: iso(end - (+st.yrs) * 365.25 * DAY) }); }
     const V = await buildRaw(st); V._title = V.title; V._sub = V.sub; if (st.title) V.title = st.title; if (st.sub) V.sub = st.sub; return V; }
 
-  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, worstDrop, calYears, resetPanel: () => PANEL.clear() } };
+  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
   if (typeof module !== 'undefined') module.exports = root.FFStudio;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
