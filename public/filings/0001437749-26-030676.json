@@ -1,0 +1,3913 @@
+{
+  "cik": 832489,
+  "name": "GeoVax Labs, Inc.",
+  "form": "S-1",
+  "filed": "2026-09-17",
+  "accession": "0001437749-26-030676",
+  "source_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774926030676/govx20260911c_s1.htm",
+  "file_number": "333-298989",
+  "accepted": "2026-09-17T20:06:33+00:00",
+  "method": "inline_xbrl",
+  "document_sha256": "78562db8eabf924ec713d1059e447bc7df98198d3e5deadb774c2d1bea0b1071",
+  "periods": [
+    {
+      "start": "2024-01-01",
+      "end": "2024-12-31",
+      "label": "2024-01-01 \u2192 2024-12-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 3954576.0,
+        "rd": 23713602.0,
+        "ga": 5385254.0,
+        "opex_total": 29098856.0,
+        "oi": -25144280.0,
+        "ni": -24992296.0,
+        "ocf": -24675511.0,
+        "da": 95368.0,
+        "dep": 80368.0,
+        "sbc": 528644.0,
+        "rev_contract": 3954576.0,
+        "capex": 20653.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "rev_contract": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -6.358274565971168,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -6.319842127196443,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -6.23973619422158,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -6.244958751582976,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.1336790593985297,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": 5.996496716715016,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.005222557361396013,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2025-01-01",
+      "end": "2025-06-30",
+      "label": "2025-01-01 \u2192 2025-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 2489145.0,
+        "rd": 10083586.0,
+        "ga": 3229635.0,
+        "opex_total": 13313221.0,
+        "oi": -10824076.0,
+        "ni": -10727434.0,
+        "ocf": -10300078.0,
+        "da": 33724.0,
+        "sbc": 585484.0,
+        "rev_contract": 2489145.0,
+        "capex": 27612.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "rev_contract": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -4.348511637530156,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -4.309686257731069,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -4.13799838900506,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -4.149091354661942,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.23521490310930057,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": 4.051023945973417,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.011092965656882182,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "label": "2025-01-01 \u2192 2025-12-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 2489145.0,
+        "rd": 18121519.0,
+        "ga": 6006673.0,
+        "opex_total": 24128192.0,
+        "oi": -21639047.0,
+        "ni": -21464771.0,
+        "ocf": -21473969.0,
+        "da": 68756.0,
+        "dep": 68756.0,
+        "sbc": 1115154.0,
+        "rev_contract": 2489145.0,
+        "capex": 27612.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "rev_contract": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -8.693365392534384,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -8.623350989998574,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -8.62704623475129,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -8.638139200408173,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.4480068457241342,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": 7.280218307892871,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.011092965656882182,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2025-04-01",
+      "end": "2025-06-30",
+      "label": "2025-04-01 \u2192 2025-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 852282.0,
+        "rd": 4728998.0,
+        "ga": 1542190.0,
+        "opex_total": 6271188.0,
+        "oi": -5418906.0,
+        "tax": 0.0,
+        "ni": -5369783.0,
+        "rev_contract": 852282.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "rev_contract": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -6.3581138637211625,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -6.300476837478675,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": null,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": 5.548630617565547,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2026-01-01",
+      "end": "2026-06-30",
+      "label": "2026-01-01 \u2192 2026-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 0.0,
+        "rd": 7013971.0,
+        "ga": 2700982.0,
+        "opex_total": 9714953.0,
+        "oi": -9714953.0,
+        "ni": -9688499.0,
+        "ocf": -7195824.0,
+        "da": 24152.0,
+        "sbc": 383063.0,
+        "rev_contract": 0.0,
+        "capex": -0.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "rev_contract": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": null,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": null,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": null,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "label": "2026-04-01 \u2192 2026-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 0.0,
+        "rd": 3110508.0,
+        "ga": 1331564.0,
+        "opex_total": 4442072.0,
+        "oi": -4442072.0,
+        "tax": 0.0,
+        "ni": -4426578.0,
+        "rev_contract": 0.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "ga": {
+          "label": "GeneralAndAdministrativeExpense"
+        },
+        "opex_total": {
+          "label": "OperatingExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "rev_contract": {
+          "label": "RevenueFromContractWithCustomerIncludingAssessedTax"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": null,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": null,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": null,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": null,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": null,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    }
+  ],
+  "limitations": [
+    "IPO price, proceeds and dilution are not inferred from funding announcements.",
+    "Commitments, recognized lease liabilities and cash expenses may overlap and must not be added.",
+    "Company-specific cost presentation does not establish cost of revenue or gross margin."
+  ],
+  "classification": "registration_unclassified",
+  "sections": [
+    {
+      "title": "Prospectus Summary",
+      "excerpt": "PROSPECTUS SUMMARY 2 RISK FACTORS 6 CAUTIONARY NOTE REGARDING FORWARD LOOKING STATEMENTS 18 MARKET AND INDUSTRY DATA AND FORECASTS 19 USE OF PROCEEDS 19 DETERMINATION OF OFFERING PRICE 19 DIVIDEND POLICY 19 CAPITALIZATION 20 BUSINESS 21 MANAGEMENT\u2019S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS 33 MANAGEMENT 41 CERTAIN RELATIONSHIPS AND RELATED PERSON TRANSACTIONS 48 SELLING STOCKHOLDER 52 DESCRIPTION OF SECURITIES 53 PLAN OF DISTRIBUTION 57 LEGAL MATTERS 58 EXPERTS 59 WHERE YOU CAN FIND MORE INFORMATION 59 INDEX TO\u00a0FINANCIAL STATEMENTS F-1 i ABOUT THIS PROSPECTUS This prospectus is part of a registration statement that we filed with the SEC. As permitted by the rules and regulations of the SEC, the registration statement filed by us includes additional information not contained in this prospectus. You may read the registration statement and the other reports w",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Use of Proceeds",
+      "excerpt": "Use of proceeds We will not receive any proceeds from the sale of the shares of Common Stock by the Selling Stockholder. All net proceeds from the sale of the shares of Common Stock covered by this prospectus will go to the Selling Stockholder. However, we will receive the proceeds from any cash exercise of the August 2026 Common Warrant. See \u201cUse of Proceeds.\u201d Trading symbol Our Common Stock is listed on the Nasdaq under the symbol \u201cGOVX\u201d. Risk factors Investment in our Common Stock involves a high degree of risk and could result in a loss of your entire investment. Before investing in our Common Stock, you should carefully read and consider the \u201cRisk Factors\u201d\u00a0beginning on page 6 of this prospectus. Unless otherwise indicated, the number of shares of our Common Stock outstanding prior to this offering is based on 10,102,871 shares of Common Stock outstanding as of September 14, 2026, an",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Risk Factors",
+      "excerpt": "Risk factors Investment in our Common Stock involves a high degree of risk and could result in a loss of your entire investment. Before investing in our Common Stock, you should carefully read and consider the \u201cRisk Factors\u201d\u00a0beginning on page 6 of this prospectus. Unless otherwise indicated, the number of shares of our Common Stock outstanding prior to this offering is based on 10,102,871 shares of Common Stock outstanding as of September 14, 2026, and excludes as of such date: \u25cf 2,964,000 shares of Common Stock held in abeyance from the August 2026 Warrant Inducement; \u25cf 14,239,319 shares of Common Stock issuable upon the exercise of outstanding warrants with a weighted-average exercise price of $0.92 per share; and \u25cf 331,342, shares of Common Stock which are reserved for issuance under our Stock Incentive Plans, of which 310,179 shares of Common Stock are issuable upon exercise of outst",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Dividend Policy",
+      "excerpt": "DIVIDEND POLICY To date, we have paid no cash dividends on our shares of Common Stock and we do not expect to pay cash dividends on our Common Stock in the foreseeable future. We intend to retain future earnings, if any, to provide funds for operations of our business. Therefore, any potential return investors may have in our Common Stock will be in the form of appreciation, if any, in the market value of their shares of Common Stock. We are not subject to any legal restrictions respecting the payment of dividends, except that we may not pay dividends if the payment would render us insolvent. Any future determination as to the payment of cash dividends on our Common Stock will be at the discretion of our Board of Directors. 19 CAPITALIZATION The following table sets forth our capitalization as of June 30, 2026: \u25cf on an actual basis; and \u25cf on an as adjusted basis to give effect to (i) the",
+      "status": "source_excerpt_not_model_conclusion"
+    }
+  ],
+  "source_tables": [
+    {
+      "table_index": 87,
+      "rows": [
+        [
+          "",
+          "",
+          "Years Ended December 31,",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          "",
+          "",
+          "Change",
+          ""
+        ],
+        [
+          "Revenue from government contract",
+          "",
+          "$",
+          "2,489,145",
+          "",
+          "",
+          "$",
+          "3,954,576",
+          "",
+          "",
+          "$",
+          "(1,465,431",
+          ")"
+        ],
+        [
+          "Operating expenses:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Research and development",
+          "",
+          "",
+          "18,121,519",
+          "",
+          "",
+          "",
+          "23,713,602",
+          "",
+          "",
+          "",
+          "(5,592,083",
+          ")"
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "6,006,673",
+          "",
+          "",
+          "",
+          "5,385,254",
+          "",
+          "",
+          "",
+          "621,419",
+          ""
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "",
+          "24,128,192",
+          "",
+          "",
+          "",
+          "29,098,856",
+          "",
+          "",
+          "",
+          "(4,970,664",
+          ")"
+        ],
+        [
+          "Loss from operations",
+          "",
+          "",
+          "(21,639,047",
+          ")",
+          "",
+          "",
+          "(25,144,280",
+          ")",
+          "",
+          "",
+          "3,505,233",
+          ""
+        ],
+        [
+          "Interest income",
+          "",
+          "",
+          "174,276",
+          "",
+          "",
+          "",
+          "173,359",
+          "",
+          "",
+          "",
+          "917",
+          ""
+        ],
+        [
+          "Interest expense",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "(21,375",
+          ")",
+          "",
+          "",
+          "21,375",
+          ""
+        ],
+        [
+          "Net loss",
+          "",
+          "$",
+          "(21,464,771",
+          ")",
+          "",
+          "$",
+          "(24,992,296",
+          ")",
+          "",
+          "$",
+          "3,527,525",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 88,
+      "rows": [
+        [
+          "",
+          "",
+          "Three Months Ended June 30,",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "Change",
+          ""
+        ],
+        [
+          "Revenue from government contract",
+          "",
+          "$",
+          "-",
+          "",
+          "",
+          "$",
+          "852,282",
+          "",
+          "",
+          "$",
+          "(852,282",
+          ")"
+        ],
+        [
+          "Operating expenses:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Research and development",
+          "",
+          "",
+          "3,110,508",
+          "",
+          "",
+          "",
+          "4,728,998",
+          "",
+          "",
+          "",
+          "(1,618,490",
+          ")"
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "1,331,564",
+          "",
+          "",
+          "",
+          "1,542,190",
+          "",
+          "",
+          "",
+          "(210,626",
+          ")"
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "",
+          "4,442,072",
+          "",
+          "",
+          "",
+          "6,271,188",
+          "",
+          "",
+          "",
+          "(1,829,116",
+          ")"
+        ],
+        [
+          "Loss from operations",
+          "",
+          "",
+          "(4,442,072",
+          ")",
+          "",
+          "",
+          "(5,418,906",
+          ")",
+          "",
+          "",
+          "976,834",
+          ""
+        ],
+        [
+          "Interest income",
+          "",
+          "",
+          "15,494",
+          "",
+          "",
+          "",
+          "49,123",
+          "",
+          "",
+          "",
+          "(33,629",
+          ")"
+        ],
+        [
+          "Net loss",
+          "",
+          "$",
+          "(4,426,578",
+          ")",
+          "",
+          "$",
+          "(5,369,783",
+          ")",
+          "",
+          "$",
+          "943,205",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 89,
+      "rows": [
+        [
+          "",
+          "",
+          "Six Months Ended June 30,",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "Change",
+          ""
+        ],
+        [
+          "Revenue from government contract",
+          "",
+          "$",
+          "-",
+          "",
+          "",
+          "$",
+          "2,489,145",
+          "",
+          "",
+          "$",
+          "(2,489,145",
+          ")"
+        ],
+        [
+          "Operating expenses:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Research and development",
+          "",
+          "",
+          "7,013,971",
+          "",
+          "",
+          "",
+          "10,083,586",
+          "",
+          "",
+          "",
+          "(3,069,615",
+          ")"
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "2,700,982",
+          "",
+          "",
+          "",
+          "3,229,635",
+          "",
+          "",
+          "",
+          "(528,653",
+          ")"
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "",
+          "9,714,953",
+          "",
+          "",
+          "",
+          "13,313,221",
+          "",
+          "",
+          "",
+          "(3,598,268",
+          ")"
+        ],
+        [
+          "Loss from operations",
+          "",
+          "",
+          "(9,714,953",
+          ")",
+          "",
+          "",
+          "(10,824,076",
+          ")",
+          "",
+          "",
+          "1,109,123",
+          ""
+        ],
+        [
+          "Interest income",
+          "",
+          "",
+          "26,454",
+          "",
+          "",
+          "",
+          "96,642",
+          "",
+          "",
+          "",
+          "(70,188",
+          ")"
+        ],
+        [
+          "Net loss",
+          "",
+          "$",
+          "(9,688,499",
+          ")",
+          "",
+          "$",
+          "(10,727,434",
+          ")",
+          "",
+          "$",
+          "1,038,935",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 91,
+      "rows": [
+        [
+          "",
+          "",
+          "Year Ended December 31,",
+          ""
+        ],
+        [
+          "Cash Flow Data",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          ""
+        ],
+        [
+          "Net cash provided by (used in):",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Operating activities",
+          "",
+          "$",
+          "(21,473,969",
+          ")",
+          "",
+          "$",
+          "(24,675,511",
+          ")"
+        ],
+        [
+          "Investing activities",
+          "",
+          "",
+          "(27,612",
+          ")",
+          "",
+          "",
+          "(20,653",
+          ")"
+        ],
+        [
+          "Financing activities",
+          "",
+          "",
+          "19,080,381",
+          "",
+          "",
+          "",
+          "23,750,516",
+          ""
+        ],
+        [
+          "Net decrease in cash and cash equivalents",
+          "",
+          "$",
+          "(2,421,200",
+          ")",
+          "",
+          "$",
+          "(945,648",
+          ")"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 92,
+      "rows": [
+        [
+          "",
+          "",
+          "Six Months Ended June 30,",
+          ""
+        ],
+        [
+          "Cash Flow Data",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          ""
+        ],
+        [
+          "Net cash provided by (used in):",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Operating activities",
+          "",
+          "$",
+          "(7,195,824",
+          ")",
+          "",
+          "$",
+          "(10,300,078",
+          ")"
+        ],
+        [
+          "Investing activities",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "(27,612",
+          ")"
+        ],
+        [
+          "Financing activities",
+          "",
+          "",
+          "7,253,505",
+          "",
+          "",
+          "",
+          "7,914,611",
+          ""
+        ],
+        [
+          "Net increase (decrease) in cash and cash equivalents",
+          "",
+          "$",
+          "57,681",
+          "",
+          "",
+          "$",
+          "(2,413,079",
+          ")"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 151,
+      "rows": [
+        [
+          "2025 Audited Financial Statements :",
+          ""
+        ],
+        [
+          "Report of Independent Registered Public Accounting Firm",
+          "F-2"
+        ],
+        [
+          "Consolidated Balance Sheets as of December 31, 2025 and 2024",
+          "F-4"
+        ],
+        [
+          "Consolidated Statements of Operations for the years ended December 31, 2025 and 2024",
+          "F-5"
+        ],
+        [
+          "Consolidated Statements of Stockholders\u2019\u00a0Equity for the years ended December 31, 2025 and 2024",
+          "F-6"
+        ],
+        [
+          "Consolidated Statements of Cash Flows for the years ended December 31, 2025 and 2024",
+          "F-7"
+        ],
+        [
+          "Notes to Consolidated Financial Statements",
+          "F-8"
+        ],
+        [
+          "Financial Statement Schedule: Schedule II \u2013\u00a0Valuation and Qualifying Accounts for the Years Ended December 31, 2025 and 2024",
+          "F-18"
+        ],
+        [
+          "2026 Interim Financial Statements (unaudited) :",
+          ""
+        ],
+        [
+          "Condensed Consolidated Balance Sheets as of June 30, 2026 and December 31, 2025",
+          "F-19"
+        ],
+        [
+          "Condensed Consolidated Statements of Operations for the Three-Month and Six-Month Periods Ended June 30, 2026 and 2025",
+          "F-20"
+        ],
+        [
+          "Condensed Consolidated Statements of Changes in Stockholders\u2019\u00a0Equity for the Three-Month and Six-Month Periods Ended June 30, 2026 and 2025",
+          "F-21"
+        ],
+        [
+          "Condensed Consolidated Statements of Cash Flows for the Six-Month Periods Ended June 30, 2026 and 2025",
+          "F-22"
+        ],
+        [
+          "Notes to Condensed Consolidated Financial Statements",
+          "F-23"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 156,
+      "rows": [
+        [
+          "",
+          "",
+          "Years Ended December 31,",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          ""
+        ],
+        [
+          "Revenue from government contract",
+          "",
+          "$",
+          "2,489,145",
+          "",
+          "",
+          "$",
+          "3,954,576",
+          ""
+        ],
+        [
+          "Operating expenses:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Research and development",
+          "",
+          "",
+          "18,121,519",
+          "",
+          "",
+          "",
+          "23,713,602",
+          ""
+        ],
+        [
+          "General and administrative",
+          "",
+          "",
+          "6,006,673",
+          "",
+          "",
+          "",
+          "5,385,254",
+          ""
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "",
+          "24,128,192",
+          "",
+          "",
+          "",
+          "29,098,856",
+          ""
+        ],
+        [
+          "Loss from operations",
+          "",
+          "",
+          "( 21,639,047",
+          ")",
+          "",
+          "",
+          "( 25,144,280",
+          ")"
+        ],
+        [
+          "Other income (expense):",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Interest income",
+          "",
+          "",
+          "174,276",
+          "",
+          "",
+          "",
+          "173,359",
+          ""
+        ],
+        [
+          "Interest expense",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "( 21,375",
+          ")"
+        ],
+        [
+          "Total other income (expense)",
+          "",
+          "",
+          "174,276",
+          "",
+          "",
+          "",
+          "151,984",
+          ""
+        ],
+        [
+          "Net loss",
+          "",
+          "$",
+          "( 21,464,771",
+          ")",
+          "",
+          "$",
+          "( 24,992,296",
+          ")"
+        ],
+        [
+          "Basic and diluted:",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Net loss per common share",
+          "",
+          "$",
+          "( 22.40",
+          ")",
+          "",
+          "$",
+          "( 120.46",
+          ")"
+        ],
+        [
+          "Weighted average shares outstanding",
+          "",
+          "",
+          "958,443",
+          "",
+          "",
+          "",
+          "207,482",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 158,
+      "rows": [
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "Total",
+          ""
+        ],
+        [
+          "",
+          "",
+          "Common Stock",
+          "",
+          "",
+          "Additional",
+          "",
+          "",
+          "Accumulated",
+          "",
+          "",
+          "Stockholders\u2019",
+          ""
+        ],
+        [
+          "",
+          "",
+          "Shares",
+          "",
+          "",
+          "Amount",
+          "",
+          "",
+          "Paid-in Capital",
+          "",
+          "",
+          "Deficit",
+          "",
+          "",
+          "Equity",
+          ""
+        ],
+        [
+          "Balance at December 31, 2023",
+          "",
+          "",
+          "79,086",
+          "",
+          "",
+          "$",
+          "79",
+          "",
+          "",
+          "$",
+          "110,127,044",
+          "",
+          "",
+          "$",
+          "( 104,363,785",
+          ")",
+          "",
+          "$",
+          "5,763,338",
+          ""
+        ],
+        [
+          "Sale of common stock and warrants for cash",
+          "",
+          "",
+          "195,561",
+          "",
+          "",
+          "",
+          "196",
+          "",
+          "",
+          "",
+          "21,398,187",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "21,398,383",
+          ""
+        ],
+        [
+          "Issuance of common stock upon warrant exercise",
+          "",
+          "",
+          "144,343",
+          "",
+          "",
+          "",
+          "144",
+          "",
+          "",
+          "",
+          "2,366,989",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "2,367,133",
+          ""
+        ],
+        [
+          "Issuance of common stock for services",
+          "",
+          "",
+          "268",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "37,500",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "37,500",
+          ""
+        ],
+        [
+          "Fractional share roundup following reverse split",
+          "",
+          "",
+          "2,217",
+          "",
+          "",
+          "",
+          "2",
+          "",
+          "",
+          "",
+          "( 2",
+          ")",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          ""
+        ],
+        [
+          "Stock option expense",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "474,477",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "474,477",
+          ""
+        ],
+        [
+          "Net loss for the year ended December 31, 2024",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "( 24,992,296",
+          ")",
+          "",
+          "",
+          "( 24,992,296",
+          ")"
+        ],
+        [
+          "Balance at December 31, 2024",
+          "",
+          "",
+          "421,475",
+          "",
+          "",
+          "$",
+          "421",
+          "",
+          "",
+          "$",
+          "134,404,195",
+          "",
+          "",
+          "$",
+          "( 129,356,081",
+          ")",
+          "",
+          "$",
+          "5,048,535",
+          ""
+        ],
+        [
+          "Sale of common stock and warrants for cash",
+          "",
+          "",
+          "1,212,459",
+          "",
+          "",
+          "",
+          "1,213",
+          "",
+          "",
+          "",
+          "18,922,959",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "18,924,172",
+          ""
+        ],
+        [
+          "Issuance of common stock upon warrant exercises",
+          "",
+          "",
+          "93,005",
+          "",
+          "",
+          "",
+          "93",
+          "",
+          "",
+          "",
+          "156,116",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "156,209",
+          ""
+        ],
+        [
+          "Issuance of common stock for services",
+          "",
+          "",
+          "5,208",
+          "",
+          "",
+          "",
+          "5",
+          "",
+          "",
+          "",
+          "49,995",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "50,000",
+          ""
+        ],
+        [
+          "Stock option expense",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "1,110,987",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "1,110,987",
+          ""
+        ],
+        [
+          "Net loss for the year ended December 31, 2025",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "-",
+          "",
+          "",
+          "",
+          "( 21,464,771",
+          ")",
+          "",
+          "",
+          "( 21,464,771",
+          ")"
+        ],
+        [
+          "Balance at December 31, 2025",
+          "",
+          "",
+          "1,732,147",
+          "",
+          "",
+          "$",
+          "1,732",
+          "",
+          "",
+          "$",
+          "154,644,252",
+          "",
+          "",
+          "$",
+          "( 150,820,852",
+          ")",
+          "",
+          "$",
+          "3,825,132",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    }
+  ],
+  "analysis_state": "parsed",
+  "parser_version": 1,
+  "filings": [
+    {
+      "accession": "9999999995-26-003048",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2026-09-23",
+      "accepted": "2026-09-24T04:15:12+00:00",
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999526003048/9999999995-26-003048-index.html",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999526003048/xslEFFECTX01/primary_doc.xml",
+      "file_number": "333-298989",
+      "discovered_at": "2026-10-26T18:35:52+00:00",
+      "state": "document_only",
+      "last_attempt": "2026-10-30T02:29:26+00:00",
+      "last_success": "2026-10-30T02:29:27+00:00",
+      "error": "Not a supported public prospectus form",
+      "classification": "lifecycle_document"
+    },
+    {
+      "accession": "0001437749-26-030676",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2026-09-17",
+      "accepted": "2026-09-17T20:06:33+00:00",
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774926030676/0001437749-26-030676-index.html",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774926030676/govx20260911c_s1.htm",
+      "file_number": "333-298989",
+      "discovered_at": "2026-10-26T18:35:52+00:00",
+      "state": "parsed",
+      "last_attempt": "2026-10-30T22:55:32+00:00",
+      "last_success": "2026-10-30T22:55:33+00:00",
+      "error": null,
+      "classification": "registration_unclassified"
+    },
+    {
+      "accession": "9999999995-26-001874",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2026-06-03",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999526001874/9999999995-26-001874-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-26-018320",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2026-05-26",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774926018320/0001437749-26-018320-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-26-001278",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2026-04-21",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999526001278/9999999995-26-001278-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-26-001277",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2026-04-21",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999526001277/9999999995-26-001277-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-26-001237",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2026-04-17",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999526001237/9999999995-26-001237-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-26-001232",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2026-04-17",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999526001232/9999999995-26-001232-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-26-001231",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2026-04-17",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999526001231/9999999995-26-001231-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-26-001230",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2026-04-17",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999526001230/9999999995-26-001230-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-26-001227",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2026-04-17",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999526001227/9999999995-26-001227-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-26-012440",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2026-04-16",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774926012440/0001437749-26-012440-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-26-012439",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2026-04-16",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774926012439/0001437749-26-012439-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:30+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-26-004267",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2026-02-17",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774926004267/0001437749-26-004267-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-26-002009",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2026-01-26",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774926002009/0001437749-26-002009-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T18:43:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-038476",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B4",
+      "filed": "2025-12-22",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925038476/0001437749-25-038476-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-003872",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2025-12-19",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999525003872/9999999995-25-003872-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-037757",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2025-12-12",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925037757/0001437749-25-037757-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0000832489-25-000002",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "DRS",
+      "filed": "2025-11-25",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000083248925000002/0000832489-25-000002-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-034900",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-11-13",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925034900/0001437749-25-034900-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-034899",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-11-13",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925034899/0001437749-25-034899-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-034898",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-11-13",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925034898/0001437749-25-034898-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-034897",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-11-13",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925034897/0001437749-25-034897-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-033876",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-11-07",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925033876/0001437749-25-033876-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-031281",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2025-10-17",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925031281/0001437749-25-031281-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-030067",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2025-09-30",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925030067/0001437749-25-030067-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-029482",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2025-09-19",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925029482/0001437749-25-029482-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-023688",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-07-29",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925023688/0001437749-25-023688-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-023687",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-07-29",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925023687/0001437749-25-023687-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-023686",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-07-29",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925023686/0001437749-25-023686-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-023685",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-07-29",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925023685/0001437749-25-023685-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-023684",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-07-29",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925023684/0001437749-25-023684-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-021857",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B4",
+      "filed": "2025-07-02",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925021857/0001437749-25-021857-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-002096",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2025-06-30",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999525002096/9999999995-25-002096-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-021364",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1/A",
+      "filed": "2025-06-26",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925021364/0001437749-25-021364-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-020507",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2025-06-16",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925020507/0001437749-25-020507-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-019155",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "DRS",
+      "filed": "2025-06-02",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925019155/0001437749-25-019155-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-014158",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-05-01",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925014158/0001437749-25-014158-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-014157",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-05-01",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925014157/0001437749-25-014157-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-014156",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-05-01",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925014156/0001437749-25-014156-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-014155",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-05-01",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925014155/0001437749-25-014155-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-014152",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2025-05-01",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925014152/0001437749-25-014152-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-000828",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2025-03-28",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999525000828/9999999995-25-000828-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-000827",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2025-03-28",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999525000827/9999999995-25-000827-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-000826",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2025-03-28",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999525000826/9999999995-25-000826-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-000824",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2025-03-28",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999525000824/9999999995-25-000824-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-25-000821",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2025-03-28",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999525000821/9999999995-25-000821-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-25-009046",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2025-03-25",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774925009046/0001437749-25-009046-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T19:57:31+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-034615",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-11-12",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924034615/0001437749-24-034615-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-034614",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-11-12",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924034614/0001437749-24-034614-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-034613",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-11-12",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924034613/0001437749-24-034613-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-034612",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-11-12",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924034612/0001437749-24-034612-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-034611",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-11-12",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924034611/0001437749-24-034611-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-031265",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2024-10-15",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924031265/0001437749-24-031265-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:44+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-029995",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2024-09-25",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924029995/0001437749-24-029995-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-002844",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2024-09-13",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999524002844/9999999995-24-002844-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-002843",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2024-09-13",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999524002843/9999999995-24-002843-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-028643",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2024-09-06",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924028643/0001437749-24-028643-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-028640",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2024-09-06",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924028640/0001437749-24-028640-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-028093",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2024-08-30",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924028093/0001437749-24-028093-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-027434",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2024-08-21",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924027434/0001437749-24-027434-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-002506",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2024-08-12",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999524002506/9999999995-24-002506-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-024956",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-08-06",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924024956/0001437749-24-024956-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-024955",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-08-06",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924024955/0001437749-24-024955-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-024954",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-08-06",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924024954/0001437749-24-024954-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-024949",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2024-08-06",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924024949/0001437749-24-024949-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-022600",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2024-07-12",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924022600/0001437749-24-022600-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:21:45+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-001885",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2024-06-18",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999524001885/9999999995-24-001885-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-019645",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2024-06-07",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924019645/0001437749-24-019645-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-017783",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B5",
+      "filed": "2024-05-21",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924017783/0001437749-24-017783-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-016705",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-05-14",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924016705/0001437749-24-016705-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-016703",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-05-14",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924016703/0001437749-24-016703-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-016702",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-05-14",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924016702/0001437749-24-016702-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-016701",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-05-14",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924016701/0001437749-24-016701-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:51+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-000655",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2024-03-13",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999524000655/9999999995-24-000655-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-000628",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2024-03-08",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999524000628/9999999995-24-000628-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-000621",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2024-03-08",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999524000621/9999999995-24-000621-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-000620",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2024-03-08",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999524000620/9999999995-24-000620-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-000619",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2024-03-08",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999524000619/9999999995-24-000619-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-001277",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "424B3",
+      "filed": "2024-01-12",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924001277/0001437749-24-001277-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "9999999995-24-000107",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "EFFECT",
+      "filed": "2024-01-11",
+      "accepted": null,
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/999999999524000107/9999999995-24-000107-index.html",
+      "source_url": null,
+      "file_number": null,
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "queued",
+      "last_attempt": null,
+      "last_success": null,
+      "error": null,
+      "classification": "unclassified"
+    },
+    {
+      "accession": "0001437749-24-000191",
+      "cik": 832489,
+      "name": "GeoVax Labs, Inc.",
+      "form": "S-1",
+      "filed": "2024-01-02",
+      "accepted": "2024-01-02T21:10:31+00:00",
+      "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/0001437749-24-000191-index.html",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774924000191/govx20231222_s1.htm",
+      "file_number": "333-276345",
+      "discovered_at": "2026-10-26T20:56:52+00:00",
+      "state": "parsed",
+      "last_attempt": "2026-10-27T15:23:14+00:00",
+      "last_success": "2026-10-27T15:23:16+00:00",
+      "error": null,
+      "classification": "resale_language_identified"
+    }
+  ],
+  "latest_discovered": {
+    "accession": "0001437749-26-030676",
+    "cik": 832489,
+    "name": "GeoVax Labs, Inc.",
+    "form": "S-1",
+    "filed": "2026-09-17",
+    "accepted": "2026-09-17T20:06:33+00:00",
+    "index_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774926030676/0001437749-26-030676-index.html",
+    "source_url": "https://www.sec.gov/Archives/edgar/data/832489/000143774926030676/govx20260911c_s1.htm",
+    "file_number": "333-298989",
+    "discovered_at": "2026-10-26T18:35:52+00:00",
+    "state": "parsed",
+    "last_attempt": "2026-10-30T22:55:32+00:00",
+    "last_success": "2026-10-30T22:55:33+00:00",
+    "error": null,
+    "classification": "registration_unclassified"
+  },
+  "generated_at": "2026-10-30T22:55:44+00:00"
+}
