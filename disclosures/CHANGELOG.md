@@ -1,5 +1,26 @@
 # Changelog
 
+## Notes & ties: every note of the latest 10-K drawn, every tie recomputed (勾稽), the lines linked to their notes
+
+`app/notes.py` with the XBRL reader `app/xbrl_filing.py` (run by notes.yml every four hours, a batch of companies of the
+Sankey site, largest first, then whenever a newer annual report is filed): the latest 10-K (20-F, 40-F, 10-KT) is read
+from its XBRL on EDGAR — the instance, the presentation, calculation, definition and label linkbases (also when they sit
+inside the schema), FilingSummary.xml and MetaLinks.json. Each note gets its text, its detail tables matched to it (by
+the SEC's parent chain, the note's name, or the note it sits between in the SEC's list), and a chart per table chosen by
+its shape: a roll-forward or a calculation as a waterfall, the income-tax dollar reconciliation as a rate bridge from
+the statutory to the effective rate, maturities as a schedule, components as a composition, splits by segment, market,
+product or region as members. The checks: every calculation sum, every roll-forward (opening + movements = closing, the
+movements' directions from their debit / credit balance), splits by member against their total, named ties between the
+statements and the notes (assets = liabilities + equity, net income, EPS = income ÷ shares, cash at the end, the tax
+rate, …), the same figure in a note and a statement, and the change of each working-capital line on the balance sheet
+against the cash flow statement, with the known reasons for a difference named (acquisitions, capital spending not yet
+paid, restricted cash). A check ties, is within rounding, has an explained difference, or does not tie. Each statement
+line links to the notes and checks behind it, and each note gets a short analysis (days of inventory and receivables,
+growth, concentration, the largest member, the biggest movement). A written reading can be added per filing
+(`app/notes_reads/<TICKER>.json`, used only for the accession it names; NVIDIA's FY2026 10-K is the first). Kept on the
+branch notes-history and read from the repository's raw files; shown on the hub (Notes & ties, `docs/notes.js`) and on
+every company page (Cash & capital → Notes, `docs/notes-view.js`). Tests: `tests/test_notes.py`.
+
 ## Guidance record: every release's guidance kept, the hit rate against what was reported, the moves between releases
 
 `app/guidance_history.py` (run with the 8-K events, every light run): each earnings release's guidance per company is
