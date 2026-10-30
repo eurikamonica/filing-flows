@@ -175,6 +175,29 @@ class Ledger(unittest.TestCase):
         self.assertLess(sc['up']['brier'], 0.05)
 
 
+class StockLoader(unittest.TestCase):
+    def test_grid_runs_to_the_last_week_when_spy_starts_later(self):
+        """Production: the grid starts in 1990 but SPY's line in 1993 — the grid must still run to the latest week
+        (it once took SPY's length and ended three years early)."""
+        with tempfile.TemporaryDirectory() as d:
+            pub = Path(d)
+            (pub / 't').mkdir()
+            start = dt.date(1990, 1, 5)
+            last = start + dt.timedelta(days=7 * ((dt.date.today() - start).days // 7 - 1))      # last week's Friday
+            weeks = (last - start).days // 7 + 1
+            b0 = 160                                                                             # SPY from 1993
+            json.dump({'start': start.isoformat(), 'bench': {'start': (start + dt.timedelta(days=7 * b0)).isoformat(), 'c': [100.0] * (weeks - b0 - 150)},
+                       'series': []}, open(pub / 'rrg.json', 'w'))
+            for i, t in enumerate(('AAA', 'BBB')):
+                s0 = start + dt.timedelta(days=7 * (300 + i))
+                n = (last - s0).days // 7 + 1
+                json.dump({'t': t, 'n': t, 's': 'tech', 'start': s0.isoformat(), 'c': [10.0 + 0.01 * k for k in range(n)], 'v': [100.0] * n}, open(pub / 't' / f'{t}.json', 'w'))
+            P = O.load_panel(pub)
+            self.assertEqual(str(P['dates'][-1]), last.isoformat())
+            self.assertTrue(np.isfinite(P['C'][:, -1]).all())
+            self.assertTrue(np.isnan(P['spx'][b0 - 1]) and P['spx'][b0] == 100.0)
+
+
 class Etf(unittest.TestCase):
     def test_loader(self):
         with tempfile.TemporaryDirectory() as d:

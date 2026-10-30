@@ -240,11 +240,12 @@
       <div class="stage">
         <div class="sheet"><div class="loading">Drawing…</div></div>
         <aside class="notes" aria-live="polite"></aside>
-      </div>`;
+      </div>
+      <section class="guide-record" hidden aria-label="Guidance record"></section>`;
     const sheet = $('.sheet', el), notes = $('.notes', el);
     const baseById = new Map(spec.nodes.map((n) => [n.id, n]));
     // "Show guidance" (web/guidance.js): the next period as guided; its own spec, nodes and notes while it is on
-    const guide = { on: false, doc: undefined, spec: null, byId: null, cmp: '' };
+    const guide = { on: false, open: false, doc: undefined, spec: null, byId: null, cmp: '' };
     const futureOn = () => guide.on && guide.spec && !guide.spec.error;
     const byId = { get: (id) => (futureOn() ? guide.byId : baseById).get(id), has: (id) => (futureOn() ? guide.byId : baseById).has(id) };
     let scene = null, selected = null;
@@ -325,7 +326,14 @@
       $$('[data-view]', el).forEach((b) => b.classList.toggle('on', !futureOn() && b.dataset.view === (mode() || 'std')));
       $('.dec-toggle', el).hidden = futureOn() ? !guide.cmp : !mode();
       const gb = $('[data-guide]', el);
-      if (gb) { gb.classList.toggle('on', guide.on); gb.setAttribute('aria-pressed', guide.on ? 'true' : 'false'); }
+      if (gb) { gb.classList.toggle('on', guide.open); gb.setAttribute('aria-pressed', guide.open ? 'true' : 'false'); }
+      const gr = $('.guide-record', el);
+      if (gr) {
+        // the guidance record (web/guidance.js record): each guided period against what was reported, and the moves
+        const rec = guide.open && guide.spec && guide.spec.record;
+        gr.hidden = !rec;
+        if (rec && gr.dataset.drawn !== '1') { gr.innerHTML = window.FFGuidance.recordHTML(rec, t); gr.dataset.drawn = '1'; }
+      }
       const gs = $('.gseg', el);
       if (gs) {
         gs.hidden = !futureOn();
@@ -368,7 +376,7 @@
           <div class="k">${t(n.name)}</div><div class="v">${(n.lines || []).slice(1).map((l) => `<div>${t(l[1])}</div>`).join('')}${
             [['q', n.cmp, guide.spec.compare], ['y', n.cmp_y, guide.spec.compare_y]].filter(([, c, sp]) => Array.isArray(c) && sp)
               .map(([, c, sp]) => `<div class="gchg ${c[0]}">${t(c[1])} <span class="muted">vs ${t(sp.vs)}</span></div>`).join('')}</div>
-          ${window.FFGuidance.noteHTML(n, guide.doc, t)}
+          ${window.FFGuidance.noteHTML(n, guide.doc && guide.doc.g, t, guide.spec.record)}
           <button class="btn" type="button" data-clear>Close note</button>`;
       }
       const lines = (n.lines || []).slice(1).map((l) => `<div>${t(l[1])}</div>`).join('') + (mode() && (mode() === 'y' ? n.cmp_y : n.cmp) ? `<div>${t(mode() === 'y' ? n.cmp_y : n.cmp)}</div>` : '');
@@ -466,7 +474,7 @@
     const gmsg = $('.guide-msg', el);
     const gbtn = $('[data-guide]', el);
     if (gbtn) gbtn.addEventListener('click', async () => {
-      if (guide.on) { guide.on = false; gmsg.hidden = true; selected = null; draw(); return; }
+      if (guide.open) { guide.on = false; guide.open = false; gmsg.hidden = true; selected = null; draw(); return; }
       gbtn.disabled = true;
       try {
         if (guide.doc === undefined) guide.doc = await ctx.guide.load();
@@ -475,6 +483,7 @@
         guide.spec = { error: `Guidance could not be read (${err.message}).` };
       } finally { gbtn.disabled = false; }
       guide.on = true;
+      guide.open = true;                          // the record shows even when the next period cannot be drawn
       if (guide.spec && !guide.spec.error) {
         guide.byId = new Map(guide.spec.nodes.map((n) => [n.id, n]));
         gmsg.hidden = true;
@@ -488,7 +497,7 @@
     });
     $$('[data-gcmp]', el).forEach((b) => b.addEventListener('click', () => { guide.cmp = b.dataset.gcmp; draw(); }));
     $$('[data-view]', el).forEach((b) => b.addEventListener('click', () => {
-      if (guide.on) { guide.on = false; gmsg.hidden = true; selected = null; }
+      if (guide.on || guide.open) { guide.on = false; guide.open = false; gmsg.hidden = true; selected = null; }
       const v = b.dataset.view === 'std' ? null : b.dataset.view;
       if (ctx.custom) own = v;
       else { state.compare = v; prefs.set('compare', v); }
@@ -792,8 +801,10 @@
       trend: (id) => trendSeries(fy ? ys : qs, q, id, fy), cik: p.cik,
       // "Show guidance": the latest period only, reported in dollars (web/guidance.js; holders/<ticker>.json → guidance)
       guide: window.FFGuidance && ticker && own === 'USD' && (q === qs[0] || (fy && q === ys[0])) ? {
-        load: () => fetch(`disclosures/data/holders/${encodeURIComponent(ticker)}.json`).then((r) => (r.ok ? r.json() : null)).then((h) => (h && h.guidance) || null).catch(() => null),
-        build: (g) => window.FFGuidance.future(q, g, { company: c, name: S.dec(p.name) }),
+        // the latest guidance and every earlier release's (the guidance record: hit rate and moves)
+        load: () => fetch(`disclosures/data/holders/${encodeURIComponent(ticker)}.json`).then((r) => (r.ok ? r.json() : null))
+          .then((h) => (h && (h.guidance || h.guidance_history) ? { g: h.guidance || null, hist: h.guidance_history || null } : null)).catch(() => null),
+        build: (d) => window.FFGuidance.future(q, d && d.g, { company: c, name: S.dec(p.name), history: d && d.hist }),
       } : null,
     });
     body.appendChild(ui);
@@ -940,9 +951,9 @@
   // five groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
     ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
-    ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-quality'], ['x-workforce']]],
+    ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
-    ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-opportunity']]],
+    ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-opportunity']]],
     ['Holders & trades', [['holders', '13F funds & officials'], ['x-insiders']]],
     ['Relationships & model', [['links', 'Customers, suppliers & model'], ['shock', 'Shock panel'], ['x-outside']]],
   ];

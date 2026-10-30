@@ -1,0 +1,79 @@
+# 10-K notes, drawn and checked (Disclosures → Notes & ties, and the "Notes" view on every company page). For each company
+# of the Sankey site, largest first, the latest 10-K (20-F, 40-F) is read from its XBRL on EDGAR: every note and detail
+# table, a chart per table, and every tie recomputed (sums, roll-forwards, splits, statement ↔ note ties, balance sheet
+# changes ↔ cash flow) by app/notes.py. Results are kept on the branch "notes-history" (data only; the first run creates
+# it) as public/c/<TICKER>.json, public/index.json and state.json, and read by the site straight from the repository's
+# raw files. Each run builds a batch of companies never read, or with a newer annual report; the branch keeps one commit
+# (force-pushed). Run it by hand (Actions → Notes → Run workflow) to build given tickers now.
+name: Notes
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Build these first (comma separated, e.g. NVDA, AAPL)'
+        default: ''
+      minutes:
+        description: 'Minutes to spend reading filings this run'
+        default: '38'
+  schedule:
+    - cron: '23 */4 * * *'           # every four hours: a batch, until every company is on file; then new 10-Ks
+permissions:
+  contents: write
+concurrency:
+  group: notes-history
+  cancel-in-progress: false
+jobs:
+  notes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            disclosures/app
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The notes branch (created by the first run)
+        id: branch
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" notes-history >/dev/null; then
+            git clone --quiet --depth 1 --branch notes-history "$url" nh
+          else
+            mkdir nh && git -C nh init --quiet -b notes-history && git -C nh remote add origin "$url"
+          fi
+          du -sh nh; ls nh
+      - name: The Sankey site's companies (largest first)
+        run: |
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          mkdir -p site
+          curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
+          python -c "import json; d=json.load(open('site/index.json')); print(len(d.get('companies', [])), 'companies on the site')"
+      - name: Read the 10-Ks (new companies first, then newer annual reports)
+        timeout-minutes: 48
+        env:
+          TICKERS: ${{ inputs.tickers }}
+        run: |
+          python disclosures/app/notes.py collect --root nh --site-index site/index.json \
+            --minutes "${{ inputs.minutes || '38' }}" --tickers "$TICKERS"
+      - name: Save to the branch (one commit, force-pushed)
+        # also after a batch stopped from outside: what it read is kept and the list rebuilt
+        if: ${{ always() && steps.branch.outcome == 'success' }}
+        run: |
+          rm -rf nh/_cache
+          python disclosures/app/notes.py index --root nh
+          cd nh
+          printf '%s\n' '# notes-history (data only)' '' \
+            'Every company'"'"'s latest 10-K notes, drawn and checked (public/c/<TICKER>.json, public/index.json) and progress' \
+            '(state.json), kept by .github/workflows/notes.yml on main (app/notes.py). Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "notes $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "notes $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:notes-history && break; sleep $((i * 10)); done
+          python -c "import json; print(json.dumps(json.load(open('public/status.json'))))"

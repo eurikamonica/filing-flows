@@ -308,6 +308,12 @@ jobs:
       - name: Add the Disclosure Hub (disclosures/docs → /disclosures/ on the site)
         run: python disclosures/automation/stage-public.py --out _site/disclosures --site-data _site/data --history _hist/public --debt _debt/public --consensus _cons/public --etf _etf/public --smart _smart/public --ladders _lad/public --research _research
 
+      - name: Forward-looking statements and the guidance hit-rate board
+        continue-on-error: true
+        run: |
+          python -m pipeline.outlook publish --store store --out _site/data/outlook
+          node scripts/guidance_board.cjs --site _site
+
       - name: Build compact Flo alerts from already published 8-K, 13F, news and daily close snapshots
         run: |
           python scripts/build_flo_alerts.py --root _site/disclosures/data/market

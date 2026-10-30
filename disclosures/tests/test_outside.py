@@ -215,3 +215,97 @@ class Build(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+FIN = [{'cik': 19617, 'ticker': 'JPM', 'name': 'JPMORGAN CHASE & CO', 'sector': 'financials', 'sic': '6021', 'revenue': 2.5e11},
+       {'cik': 70858, 'ticker': 'BAC', 'name': 'BANK OF AMERICA CORP /DE/', 'sector': 'financials', 'sic': '6021', 'revenue': 1.9e11},
+       {'cik': 831001, 'ticker': 'C', 'name': 'CITIGROUP INC', 'sector': 'financials', 'sic': '6021', 'revenue': 1.6e11},
+       {'cik': 1, 'ticker': 'FXNC', 'name': 'FIRST NATIONAL CORP', 'sector': 'financials', 'sic': '6022', 'revenue': 1e8},
+       {'cik': 2, 'ticker': 'BA', 'name': 'BOEING CO', 'sector': 'industrials', 'sic': '3721', 'revenue': 7e10},
+       {'cik': 93410, 'ticker': 'CVX', 'name': 'CHEVRON CORP', 'sector': 'energy', 'sic': '2911', 'revenue': 2e11},
+       {'cik': 107263, 'ticker': 'WMB', 'name': 'WILLIAMS COMPANIES, INC.', 'sector': 'energy', 'sic': '4922', 'revenue': 1e10},
+       {'cik': 1166691, 'ticker': 'NUE', 'name': 'NUCOR CORP', 'sector': 'materials', 'sic': '3312', 'revenue': 3e10}]
+
+
+def fin_universe(d):
+    p = Path(d) / 'index.json'
+    p.write_text(json.dumps({'companies': COS + FIN}))
+    return O.universe(p)
+
+
+class Complaints(unittest.TestCase):
+    def test_matching_is_strict(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = O.cfpb_matcher(fin_universe(d))
+        self.assertEqual(f('JPMORGAN CHASE & CO.')['ticker'], 'JPM')
+        self.assertEqual(f('BANK OF AMERICA, NATIONAL ASSOCIATION')['ticker'], 'BAC')     # the bank, banking words after
+        self.assertEqual(f('CITIBANK, N.A.')['ticker'], 'C')                              # a known alias
+        self.assertEqual(f('FORD MOTOR CREDIT CO.')['ticker'], 'F')                       # a captive lender
+        self.assertIsNone(f('FIRST NATIONAL BANK OF OMAHA'))                              # a common word is never enough
+        self.assertIsNone(f("BOEING EMPLOYEES' CREDIT UNION"))                            # credit unions never
+        self.assertIsNone(f('Tesla Land Transfer'))                                       # not a lender's name
+
+    def test_summary(self):
+        years = [{'A': 120, 'B': 30}, {'A': 100}, {'A': 80}]
+        det = {'total': 150, 'products': [['Credit card', 90]], 'issues': [['Billing', 40]],
+               'responses': [['Closed with explanation', 120], ['Closed with monetary relief', 15], ['Closed with non-monetary relief', 15]],
+               'timely': [['Yes', 147], ['No', 3]]}
+        s = O.cfpb_summary(['A', 'B'], years, det, 3e9)
+        self.assertEqual(s['last_12m'], 150)
+        self.assertEqual(s['years'], [80, 100, 150])                                      # oldest first
+        self.assertAlmostEqual(s['change'], 0.5)
+        self.assertEqual(s['per_bn'], 50.0)
+        self.assertAlmostEqual(s['relief_share'], 0.1)
+        self.assertAlmostEqual(s['any_relief_share'], 0.2)
+        self.assertAlmostEqual(s['late_share'], 0.02)
+        self.assertIsNone(O.cfpb_summary(['Z'], years, None, 1e9))
+
+    def test_windows(self):
+        w = O.cfpb_windows(TODAY, 3)
+        self.assertEqual(w[0], ('2025-10-29', '2026-10-29'))
+        self.assertEqual(w[1][1], '2025-10-28')                                           # no overlap
+
+
+class Environment(unittest.TestCase):
+    HEAD = ['REGISTRY_ID', 'FAC_NAME', 'FAC_CITY', 'FAC_STATE', 'FAC_ACTIVE_FLAG', 'FAC_COMPLIANCE_STATUS', 'FAC_SIC_CODES', 'FAC_NAICS_CODES',
+            'FAC_PROGRAMS_WITH_SNC', 'CWA_SNC_FLAG', 'RCRA_SNC_FLAG', 'SDWA_SNC_FLAG', 'CAA_HPV_FLAG', 'FAC_QTRS_WITH_NC', 'FAC_INSPECTION_COUNT',
+            'FAC_FORMAL_ACTION_COUNT', 'FAC_DATE_LAST_FORMAL_ACTION', 'FAC_TOTAL_PENALTIES', 'FAC_PENALTY_COUNT', 'FAC_DATE_LAST_PENALTY',
+            'FAC_MAJOR_FLAG', 'GHG_CO2_RELEASES', 'TRI_ON_SITE_RELEASES']
+
+    def fac(self, rid, name, sic='', naics='', status='No Violation Identified', snc='0', pen='', pdate='', co2='', active='Y'):
+        return [rid, name, 'X', 'TX', active, status, sic, naics, snc, 'N', 'N', 'N', 'N', '0', '2', '1' if pen else '0', '', pen, '1' if pen else '0',
+                pdate, 'Y', co2, '']
+
+    def test_bulk_and_summary(self):
+        import csv
+        import io
+        import zipfile
+        rows = [self.fac('1', 'CHEVRON REFINERY RICHMOND', sic='2911', status='Significant Violation', snc='1', pen='$3,000,000', pdate='05/07/2026', co2='4366329'),
+                self.fac('2', 'CHEVRON 53504', naics='447110'),                                    # a branded gas station: retail, not refining
+                self.fac('3', 'CHEVRON USA - WELL 6H', naics='211120', pen='$3,000,000', pdate='05/07/2026'),   # the same settlement again
+                self.fac('4', 'NUCOR STEEL', sic='3312', pen='$100,000', pdate='01/02/2025'),
+                self.fac('5', 'NUCOR CORP', active='N'),                                           # inactive
+                self.fac('6', 'WILLIAMS ROGER MEDICAL CENTER', naics='622110'),                     # an ordinary word: never alone
+                self.fac('7', 'TRANSCONTINENTAL GAS PIPELINE COMPANY', naics='486210')]             # an alias
+        with tempfile.TemporaryDirectory() as d:
+            comps = fin_universe(d)
+            buf = io.StringIO()
+            w = csv.writer(buf, quoting=csv.QUOTE_ALL)
+            w.writerow(self.HEAD)
+            w.writerows(rows)
+            z = Path(d) / 'e.zip'
+            with zipfile.ZipFile(z, 'w') as zf:
+                zf.writestr('ECHO_EXPORTER.csv', buf.getvalue())
+            m = O.epa_bulk(z, comps, lambda c: c['sector'] in O.EPA_SECTORS)
+        names = {k: sorted(r[0] for r in v) for k, v in m.items()}
+        self.assertEqual(names[93410], ['CHEVRON REFINERY RICHMOND', 'CHEVRON USA - WELL 6H'])
+        self.assertEqual(names[1166691], ['NUCOR STEEL'])
+        self.assertEqual(names[107263], ['TRANSCONTINENTAL GAS PIPELINE COMPANY'])
+        s = O.epa_summary(m[93410], 2e11)
+        self.assertEqual(s['facilities'], 2)
+        self.assertEqual(s['snc'], 1)
+        self.assertEqual(s['in_violation'], 1)
+        self.assertEqual(s['penalties_5y'], 3_000_000)                                       # counted once
+        self.assertEqual(s['last_penalty'], '2026-05-07')
+        self.assertEqual(s['co2_t'], 4366329)
+        self.assertEqual(s['top'][0][0], 'CHEVRON REFINERY RICHMOND')

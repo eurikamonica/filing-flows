@@ -1,8 +1,8 @@
 {
   "version": 2,
   "source": "SEC EDGAR + issuer official IR",
-  "generated_at": "2026-10-29T13:36:02+00:00",
-  "last_attempt": "2026-10-29T13:36:02+00:00",
+  "generated_at": "2026-10-30T13:32:48+00:00",
+  "last_attempt": "2026-10-30T13:32:48+00:00",
   "last_success": null,
   "status": "partial",
   "errors": [
@@ -12,46 +12,59 @@
     "MSFT": {
       "sec": "ok",
       "ir": "ok",
-      "last_attempt": "2026-10-29T13:35:57+00:00"
+      "last_attempt": "2026-10-30T13:32:43+00:00"
     },
     "NVDA": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T13:35:59+00:00",
+      "last_attempt": "2026-10-30T13:32:45+00:00",
       "ir_discovery": "ok"
     },
     "AAPL": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T13:36:00+00:00",
+      "last_attempt": "2026-10-30T13:32:45+00:00",
       "ir_discovery": "ok"
     },
     "AMZN": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T13:36:00+00:00",
+      "last_attempt": "2026-10-30T13:32:45+00:00",
       "ir_discovery": "ok"
     },
     "META": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T13:36:01+00:00",
+      "last_attempt": "2026-10-30T13:32:46+00:00",
       "ir_discovery": "ok"
     },
     "GOOGL": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T13:36:01+00:00",
+      "last_attempt": "2026-10-30T13:32:47+00:00",
       "ir_discovery": "ok"
     },
     "TSLA": {
       "sec": "ok",
       "ir": "unconfigured",
-      "last_attempt": "2026-10-29T13:36:02+00:00",
+      "last_attempt": "2026-10-30T13:32:47+00:00",
       "ir_discovery": "partial"
     }
   },
   "rows": [
+    {
+      "id": "sec:0001018724-26-000038",
+      "ticker": "AMZN",
+      "kind": "sec_earnings_evidence",
+      "date": "2026-10-29",
+      "filed_date": "2026-10-29",
+      "accession": "0001018724-26-000038",
+      "form": "8-K",
+      "items": "2.02,9.01",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000038/amzn-20261029.htm",
+      "transcript_status": "not_verified",
+      "note": "8-K Item 2.02 earnings disclosure, not an earnings-call transcript."
+    },
     {
       "id": "sec:0001652044-26-000080",
       "ticker": "GOOGL",
@@ -77,6 +90,31 @@
       "sec_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526436122/msft-20261028.htm",
       "transcript_status": "not_verified",
       "note": "8-K Item 2.02 earnings disclosure, not an earnings-call transcript."
+    },
+    {
+      "id": "ir:MSFT:2026-10-28",
+      "ticker": "MSFT",
+      "kind": "official_ir_transcript",
+      "date": "2026-10-28",
+      "ir_url": "https://www.microsoft.com/en-us/investor/events/fy-2027/earnings-fy-2027-q1",
+      "source": "Official Investor Relations",
+      "transcript_status": "verified_official_link",
+      "speaker_count": 3,
+      "content_sha256": "687fe2f261d745c264cc0b19049315e2596d26d59a187f90fbb85f9fd649fa50",
+      "validation": "heading_and_multiple_speaker_turns",
+      "sec_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526436122/msft-20261028.htm",
+      "sec_accession": "0001193125-26-436122",
+      "guidance": [],
+      "qa_topic_counts": {},
+      "analyst_questions": [],
+      "quantitative_exercises": [],
+      "qa_count_detected": 0,
+      "extraction": "rules_v1_no_llm",
+      "source_text_public": false,
+      "verified_at": "2026-10-30T01:33:58+00:00",
+      "guidance_changes": [],
+      "qa_topic_changes": {},
+      "comparison_period": "2026-07-29"
     },
     {
       "id": "sec:0001628280-26-066738",
@@ -307,12 +345,12 @@
     }
   ],
   "counts": {
-    "official_transcripts": 1,
+    "official_transcripts": 2,
     "official_ir_candidates": 4,
-    "sec_earnings_evidence": 14,
+    "sec_earnings_evidence": 15,
     "guidance_ranges": 0,
     "quantitative_exercises": 0
   },
-  "latest_source_date": "2026-10-28",
+  "latest_source_date": "2026-10-29",
   "rights": "Public metadata and original-source links only; calculations based on unreconciled management speech."
 }

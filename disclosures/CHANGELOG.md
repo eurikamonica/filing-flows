@@ -1,5 +1,42 @@
 # Changelog
 
+## Notes & ties: every note of the latest 10-K drawn, every tie recomputed (勾稽), the lines linked to their notes
+
+`app/notes.py` with the XBRL reader `app/xbrl_filing.py` (run by notes.yml every four hours, a batch of companies of the
+Sankey site, largest first, then whenever a newer annual report is filed): the latest 10-K (20-F, 40-F, 10-KT) is read
+from its XBRL on EDGAR — the instance, the presentation, calculation, definition and label linkbases (also when they sit
+inside the schema), FilingSummary.xml and MetaLinks.json. Each note gets its text, its detail tables matched to it (by
+the SEC's parent chain, the note's name, or the note it sits between in the SEC's list), and a chart per table chosen by
+its shape: a roll-forward or a calculation as a waterfall, the income-tax dollar reconciliation as a rate bridge from
+the statutory to the effective rate, maturities as a schedule, components as a composition, splits by segment, market,
+product or region as members. The checks: every calculation sum, every roll-forward (opening + movements = closing, the
+movements' directions from their debit / credit balance), splits by member against their total, named ties between the
+statements and the notes (assets = liabilities + equity, net income, EPS = income ÷ shares, cash at the end, the tax
+rate, …), the same figure in a note and a statement, and the change of each working-capital line on the balance sheet
+against the cash flow statement, with the known reasons for a difference named (acquisitions, capital spending not yet
+paid, restricted cash). A check ties, is within rounding, has an explained difference, or does not tie. Each statement
+line links to the notes and checks behind it, and each note gets a short analysis (days of inventory and receivables,
+growth, concentration, the largest member, the biggest movement). A written reading can be added per filing
+(`app/notes_reads/<TICKER>.json`, used only for the accession it names; NVIDIA's FY2026 10-K is the first). Kept on the
+branch notes-history and read from the repository's raw files; shown on the hub (Notes & ties, `docs/notes.js`) and on
+every company page (Cash & capital → Notes, `docs/notes-view.js`). Tests: `tests/test_notes.py`.
+
+## Guidance record: every release's guidance kept, the hit rate against what was reported, the moves between releases
+
+`app/guidance_history.py` (run with the 8-K events, every light run): each earnings release's guidance per company is
+kept in `cache/guidance/<cik>.json.gz` for good (the last 16 releases), not only for the 8-K store's 120 days; the
+companies that guide get their older releases read a few per run (`events8k.guidance_history.budget`, default 8, back
+`years` 3) from their EDGAR filing list (8-Ks with item 2.02), with the same reader as the 8-K events. The latest
+release's prior ranges now come from this history too, so a full year guided months ago is still compared. Published in
+each holders file as `guidance_history`. On the company page, "Show guidance" adds the guidance record (web/guidance.js
+`record`): each guided period against the GAAP figures the company then reported (above / within / below the range;
+a single "approximately" figure is in line within 1%, 0.25 pts for a rate; adjusted guidance shows its moves only), the
+hit rate per metric ("met or beat 7 of 7"), a strip of dots against the guided range and the table of every guide with
+its moves between releases (▲ raised, ▼ lowered, = reaffirmed, →← narrowed, ←→ widened). The guidance Sankey's footer
+and its notes carry the same record. The guidance reader also learned "fourth quarter and full year 2023" headlines,
+year-less quarters ("the first quarter" in a fourth-quarter release) and that "AMD expects revenue" or "Q2 Holdings"
+are not a segment or a period. Tests: `tests/test_guidance_history.py`, `tests/test_guidance_record.cjs`.
+
 ## Opportunity: the odds that a stock or ETF is higher, and that a buy or a short makes money
 
 `app/opportunity.py` (run by rotation-history.yml for stocks and etf.yml for ETFs): for every name, at 1 week, 1 month

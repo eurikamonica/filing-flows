@@ -1,0 +1,77 @@
+# Buyouts (Disclosures → Buyouts, the "LBO & takeover" view of each company page). Daily: EDGAR's quarterly form indexes
+# (merger proxies, tender-offer responses, going-private statements since 2011), the SEC's annual XBRL frames, the
+# premiums the merger proxies state (a batch per run), news headlines about sales and approaches; then public/ is built
+# (disclosures/app/lbo.py) with each company's LBO inputs (research-valuation), the debt market (debt/rates.json), its
+# history score and its rumors, and the board runs the LBO model on every company (disclosures/app/lbo_board.cjs).
+# Kept on the branch "research-lbo" (one commit, force-pushed); scan.yml publishes public/ at disclosures/data/research/lbo/.
+name: Research — buyouts
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Minutes for collecting (the first runs read the history; later runs top it up)'
+        default: '35'
+  schedule:
+    - cron: '23 10 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: research-lbo
+  cancel-in-progress: false
+jobs:
+  lbo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            /disclosures/app/
+            /disclosures/docs/lbo-model.js
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --quiet numpy
+      - name: The data branch, the valuation inputs and the site's files
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" research-lbo >/dev/null; then
+            git clone --quiet --depth 1 --branch research-lbo "$url" rl
+          else
+            mkdir rl && git -C rl init --quiet -b research-lbo && git -C rl remote add origin "$url"
+          fi
+          git clone --quiet --depth 1 --filter=blob:none --sparse --branch research-valuation "$url" _val && git -C _val sparse-checkout set public || echo "::warning::no valuation inputs"
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          site="$(printf '%s' "$site" | grep -oE 'https?://[^ "]+' | head -1)"
+          mkdir -p site sd
+          curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
+          for f in market/events8k.json market/stakes.json research/filings/deals.json debt/rates.json; do
+            curl -fsSL --retry 3 "${site%/}/disclosures/data/$f" -o "sd/$(basename "$f")" || echo "::warning::$f not read"
+          done
+          du -sh rl _val/public 2>/dev/null || true
+      - name: Collect
+        timeout-minutes: 50
+        run: python disclosures/app/lbo.py collect --root rl --site-index site/index.json --minutes "${{ inputs.minutes || '35' }}"
+      - name: Build public/ and the board
+        id: build
+        timeout-minutes: 10
+        run: |
+          python disclosures/app/lbo.py build --root rl --site-index site/index.json --valuation _val/public --site-data sd 2>&1 | tee build.log; rc=${PIPESTATUS[0]}
+          if [ "$rc" != 0 ]; then grep -E "Error|Traceback|line [0-9]+" build.log | tail -4 | sed 's/^/::error::lbo build: /'; exit "$rc"; fi
+          node disclosures/app/lbo_board.cjs rl/public
+      - name: Save to the branch (one commit, force-pushed)
+        if: always()
+        run: |
+          cd rl
+          printf '%s\n' '# research-lbo (data only)' '' 'Caches of EDGAR form indexes, XBRL frames, merger-proxy premiums and deal headlines (cache/) and the' \
+            'files the site publishes (public/), kept by .github/workflows/research-lbo.yml on main. Force-pushed as a single commit on every run.' > README.md
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "lbo $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "lbo $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:research-lbo && break; sleep $((i * 10)); done
+          [ -f public/status.json ] && python -c "import json; s=json.load(open('public/status.json')); print('::notice::lbo: ' + json.dumps({k: v for k, v in s.items() if k != 'last_collect'}) + ' · last collect: ' + json.dumps(s.get('last_collect'))[:500])" || true

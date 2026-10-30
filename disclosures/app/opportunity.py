@@ -83,7 +83,8 @@ def load_panel(public, kind='stocks', limit=None):
     public = Path(public)
     rrg = json.loads((public / 'rrg.json').read_text())
     start = np.datetime64(rrg['start'])
-    W = len(rrg['bench']['c'])
+    b0 = int((np.datetime64(rrg['bench'].get('start') or rrg['start']) - start).astype(int) // 7)   # SPY from 1993 on a 1990 grid
+    W = int((np.datetime64(dt.date.today()) - start).astype(int) // 7) + 2                          # to this week; trimmed below
     dates = start + 7 * np.arange(W)
     etf_ids = {s['id'] for s in rrg['series'] if not str(s['id']).startswith('s:')}
     files = sorted((public / 't').glob('*.json'))
@@ -108,7 +109,9 @@ def load_panel(public, kind='stocks', limit=None):
             continue
         row[i0:i0 + n], vrow[i0:i0 + n] = c[:n], v[:n] * 1e3 * c[:n] if len(v) >= n else np.nan
         T.append(t); N.append(d.get('n') or t); S.append(d.get('s') or 'other'); Cs.append(row); Vs.append(vrow)
-    spx = np.array([x if fin(x) else np.nan for x in rrg['bench']['c']], dtype=float)
+    spx = np.full(W, np.nan)
+    bc = np.array([x if fin(x) else np.nan for x in rrg['bench']['c']], dtype=float)[:max(0, W - b0)]
+    spx[b0:b0 + len(bc)] = bc
     sectors = {s['id'][2:]: np.array([x if fin(x) else np.nan for x in s.get('c') or []], dtype=float)
                for s in rrg['series'] if str(s['id']).startswith('s:')}
     for k, a in list(sectors.items()):                       # each sector line on the grid from its own start
@@ -116,7 +119,10 @@ def load_panel(public, kind='stocks', limit=None):
         row = np.full(W, np.nan)
         row[i0:i0 + len(a)] = a[:W - i0]
         sectors[k] = row
-    return {'tickers': T, 'names': N, 'sectors': S, 'dates': dates, 'C': np.array(Cs), 'V': np.array(Vs), 'spx': spx, 'sector_lines': sectors}
+    C, V = np.array(Cs), np.array(Vs)
+    last = int(np.where(np.isfinite(C).any(0))[0].max()) + 1 if C.size else W   # the grid ends with the last week on file
+    return {'tickers': T, 'names': N, 'sectors': S, 'dates': dates[:last], 'C': C[:, :last], 'V': V[:, :last], 'spx': spx[:last],
+            'sector_lines': {k: v[:last] for k, v in sectors.items()}}
 
 
 ETF_START = np.datetime64('1993-01-01')      # a Friday: the grid of week-ending Fridays for the ETFs
