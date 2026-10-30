@@ -16,6 +16,12 @@
      drawdown  how far below its highest close each ticker stood, week by week.
      calendar  one ticker's monthly returns as a heatmap that fills in month by month.
      dist      the spread of every company's return each year, as a histogram that morphs from year to year.
+     cash      where a company's cash went, fiscal year by fiscal year (or the last eight quarters): operating cash flow,
+               capital spending, free cash flow, acquisitions, buybacks, dividends, taxes on employee shares,
+               investments, borrowing, down to what was added to cash or drawn from it — as a waterfall that moves
+               from period to period, or the periods as columns (quality.cap of data/c/<cik>.json: pipeline/capital.py).
+               The company video adds free cash flow, capital spending and shareholder returns (the cash flow
+               statements' last eight quarters and five years), the operating cash margin and cash conversion.
    Growth races take a lump sum and/or the same amount bought every n trading days, weeks, months or years (the money put
    in drawn as a dashed line; the end card gives each ticker's money-weighted return a year). Stocks get dividends
    (split out or left out) from the weekly history's dividend list (t/<SYM>.json: d, p). Whichever way they are used,
@@ -241,7 +247,9 @@
   }
 
   /* ---------- data: company figures (data/c/<cik>.json, quality.hist: ten years from the filings) ---------- */
-  const FIG = { revenue: 'Revenue', oi: 'Operating profit', ni: 'Net earnings', ocf: 'Operating cash flow', om: 'Operating margin', nm: 'Net margin', growth: 'Revenue growth, Y/Y' };
+  const FIG = { revenue: 'Revenue', oi: 'Operating profit', ni: 'Net earnings', ocf: 'Operating cash flow', fcf: 'Free cash flow', capex: 'Capital spending', ret: 'Returned to shareholders',
+    om: 'Operating margin', nm: 'Net margin', ocfm: 'Operating cash margin', conv: 'Cash conversion (operating cash ÷ net earnings)', growth: 'Revenue growth, Y/Y' };
+  const RATIO = new Set(['om', 'nm', 'growth', 'ocfm', 'conv']), CAPQ = new Set(['fcf', 'capex', 'ret']);
   const COS = new Map();
   async function company(sym) {
     sym = norm(sym);
@@ -251,7 +259,7 @@
       if (!row) return null;
       const c = await json(SITE + 'c/' + row.cik + '.json');
       if (!c) return null;
-      const out = { sym, cik: row.cik, name: (c.profile && c.profile.name) || row.name || sym, q: {}, lab: new Map() };
+      const out = { sym, cik: row.cik, name: (c.profile && c.profile.name) || row.name || sym, q: {}, fy: {}, lab: new Map() };
       const H = (c.quality || {}).hist, derived = new Set();
       if (H && H.periods && H.v) {
         for (const [k, rows] of Object.entries(H.v)) {
@@ -261,6 +269,7 @@
             if (p[3]) out.lab.set(p[1], p[2] === 'fy' ? String(p[3]).replace(/^FY/, 'Q4 FY') : p[3]);      // the company's own quarter names
             if (p[2] === 'q') m.set(p[1], +vals[0][0]); else if (p[2] === 'fy') fy.push([p[1], +vals[0][0]]);
           }
+          out.fy[k] = new Map(fy);
           // a 10-K reports the year, not its fourth quarter: the year less its first three quarters
           for (const [end, v] of fy) {
             if (m.has(end)) continue;
@@ -273,6 +282,16 @@
           out.q[k] = m;
         }
       }
+      for (const r of (((c.quality || {}).cap || {}).q || [])) {     // the cash flow statements' last eight quarters: capital spending, free cash flow, shareholder returns
+        const it = r.items || {}; if (!r.end || !fin(it.ocf)) continue;
+        const capx = (fin(it.capex) ? +it.capex : 0) + (fin(it.realestate) ? +it.realestate : 0), put = (k, v) => { (out.q[k] = out.q[k] || new Map()).set(r.end, v); };
+        put('capex', -capx); put('fcf', +it.ocf + capx); put('ret', -((fin(it.buyback) ? +it.buyback : 0) + (fin(it.div) ? +it.div : 0)));
+      }
+      for (const r of (((c.quality || {}).cap || {}).fy || [])) {    // and its last five years, as filed
+        const it = r.items || {}; if (!r.end || !fin(it.ocf)) continue;
+        const capx = (fin(it.capex) ? +it.capex : 0) + (fin(it.realestate) ? +it.realestate : 0), put = (k, v) => { (out.fy[k] = out.fy[k] || new Map()).set(r.end, v); };
+        put('capex', -capx); put('fcf', +it.ocf + capx); put('ret', -((fin(it.buyback) ? +it.buyback : 0) + (fin(it.div) ? +it.div : 0)));
+      }
       for (const q of c.quarters || []) {                     // the latest quarters on the page fill the newest ends
         const h = q.headline || {};
         if (q.end && q.label && /^Q/i.test(q.label)) out.lab.set(q.end, q.label);
@@ -284,16 +303,18 @@
   }
   // [[end ms, value]] of one figure: quarterly or trailing four quarters; margins and growth derived
   function figure(C, key, ttm) {
-    const base = (k) => [...((C.q[k] || new Map()).entries())].map(([e, v]) => [Date.parse(e + 'T00:00:00Z'), v]).sort((a, b) => a[0] - b[0]);
+    const base = (k) => Object.assign([...((C.q[k] || new Map()).entries())].map(([e, v]) => [Date.parse(e + 'T00:00:00Z'), v]).sort((a, b) => a[0] - b[0]), { k });
     const roll = (rows) => {                                 // four consecutive quarters (about a year between the first and last)
       if (!ttm) return rows;
       const out = [];
       for (let i = 3; i < rows.length; i++) { const span = (rows[i][0] - rows[i - 3][0]) / DAY; if (span > 240 && span < 300) out.push([rows[i][0], rows[i - 3][1] + rows[i - 2][1] + rows[i - 1][1] + rows[i][1]]); }
-      return out;
+      // a year as filed where its quarters are not all on file (a 10-Q gives cash flows for the year to date only)
+      for (const [e, v] of ((C.fy || {})[rows.k] || new Map())) { const t = Date.parse(e + 'T00:00:00Z'); if (fin(v) && !out.some(([t2]) => Math.abs(t2 - t) < 20 * DAY)) out.push([t, v]); }
+      return out.sort((a, b) => a[0] - b[0]);
     };
-    if (key === 'om' || key === 'nm') {
-      const num = new Map(roll(base(key === 'om' ? 'oi' : 'ni'))), den = roll(base('revenue'));
-      return den.filter(([e, v]) => v > 0 && num.has(e)).map(([e, v]) => [e, num.get(e) / v]);
+    if (key === 'om' || key === 'nm' || key === 'ocfm' || key === 'conv') {
+      const num = new Map(roll(base(key === 'om' ? 'oi' : key === 'nm' ? 'ni' : 'ocf'))), den = roll(base(key === 'conv' ? 'ni' : 'revenue'));
+      return den.filter(([e, v]) => v > 0 && num.has(e) && !(key === 'conv' && Math.abs(num.get(e) / v) > 4)).map(([e, v]) => [e, num.get(e) / v]);
     }
     if (key === 'growth') {
       const r = roll(base('revenue')), m = new Map(r), out = [];
@@ -302,7 +323,7 @@
     }
     return roll(base(key));
   }
-  const figFmt = (key) => (key === 'om' || key === 'nm' || key === 'growth' ? (v) => (fin(v) ? (100 * v).toFixed(1) + '%' : '—') : (v) => money(v));
+  const figFmt = (key) => (RATIO.has(key) ? (v) => (fin(v) ? (100 * v).toFixed(key === 'conv' ? 0 : 1) + '%' : '—') : (v) => money(v));
 
   /* ---------- formulas: + − × ÷ ^ and functions over the weekly series ---------- */
   const FUNCS = {
@@ -434,14 +455,14 @@
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
     rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
-    goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '' };
+    goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', cper: 'fy', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
     ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials history'], ['holdings', '13F / Officials latest mix'],
-    ['sankey', 'Earnings flow'], ['snowball', 'Dividend snowball'], ['timing', 'Timing']];
+    ['sankey', 'Earnings flow'], ['cash', 'Where the cash went'], ['snowball', 'Dividend snowball'], ['timing', 'Timing']];
   const STYLES = { growth: [['line', 'Line race'], ['bars', 'Bar race'], ['area', 'Areas'], ['tiles', 'Counters']], rrg: [['rrg', 'RRG']], momentum: [['bars', 'Bar race'], ['line', 'Lines']],
     fund: [['columns', 'Columns'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], formula: [['line', 'Lines'], ['area', 'Areas'], ['tiles', 'Counters'], ['bars', 'Bar race']],
     rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']],
-    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas'], ['companies', 'Company share areas'], ['changes', 'Weight changes (pp)']], holdings: [['bars', 'Actual holdings bars']], sankey: [['sankey', 'Flow']], snowball: [['snow', 'Shares and income']],
+    bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas'], ['companies', 'Company share areas'], ['changes', 'Weight changes (pp)']], holdings: [['bars', 'Actual holdings bars']], sankey: [['sankey', 'Flow']], cash: [['fall', 'Waterfall'], ['columns', 'Period by period']], snowball: [['snow', 'Shares and income']],
     timing: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']] };
   const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold', 'dinc', 'dview'];        // redrawn, not rebuilt
   const tickers = (st) => [...new Set(String(st.t || '').split(/[\s,;]+/).map(norm).filter(Boolean))].slice(0, 10);
@@ -952,6 +973,46 @@
     out.sub = out.sub || `${span} · ${out.sk.simple ? 'revenue → costs and operating profit → net earnings' : 'revenue → costs and profit → cash'} · GAAP, from SEC filings`;
     return out;
   }
+  /* ---------- where the cash went: a company's cash flow statement, period by period (quality.cap: pipeline/capital.py) ---------- */
+  // [key, name, the cash effects it adds up (+ in, − out)]; no list: a subtotal (free cash flow) or the end (the change in cash)
+  const CASH_STEPS = [['ocf', 'Operating cash flow', ['ocf']], ['capex', 'Capital spending', ['capex', 'realestate']], ['fcf', 'Free cash flow', null],
+    ['acq', 'Acquisitions', ['acq']], ['buyback', 'Buybacks', ['buyback']], ['div', 'Dividends', ['div']], ['withhold', 'Taxes on employee shares', ['withhold']],
+    ['invest', 'Investments, net', ['inv_other', 'sales']], ['borrow', 'Borrowing, net', ['borrow']], ['other', 'Other', ['stock', 'nci', 'fin_other', 'fx', 'unrec']], ['dcash', 'Change in cash', null]];
+  async function buildCash(st, out, T) {
+    const sym = T[0]; if (!sym) throw new Error('Add a company ticker');
+    const c = await companyRaw(sym); if (!c) throw new Error('No company figures on file for ' + sym);
+    const cap = (c.quality || {}).cap || {}, per = st.cper === 'q' ? 'q' : 'fy';
+    const from = st.from ? Date.parse(st.from + 'T00:00:00Z') : -Infinity, to = st.to ? Date.parse(st.to + 'T00:00:00Z') : Infinity;
+    const rows = (cap[per] || []).filter((r) => r && r.end && r.items && fin(r.items.ocf)).map((r) => [Date.parse(r.end + 'T00:00:00Z'), r]).filter(([e]) => e >= from && e <= to).sort((a, b) => a[0] - b[0]);
+    if (rows.length < 2) throw new Error(`Fewer than two ${per === 'q' ? 'quarters' : 'fiscal years'} of cash flows on file for ${sym}` + (per === 'fy' && (cap.q || []).length > 1 ? ' — try quarters' : ''));
+    const name = ((c.profile && c.profile.name) || sym).replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO)\.?$/i, '').replace(/\.$/, '');
+    const C = await company(sym), revQ = (C && C.q.revenue) || new Map();
+    const revOf = (end) => {                                   // the period's revenue: its quarter, or the four quarters to a year's end
+      if (per === 'q') return revQ.has(iso(end)) ? revQ.get(iso(end)) : null;
+      const qs = [...revQ.entries()].filter(([e]) => { const d = (end - Date.parse(e + 'T00:00:00Z')) / DAY; return d >= -10 && d < 355; });
+      return qs.length === 4 ? qs.reduce((a, x) => a + x[1], 0) : null;
+    };
+    const shares = new Map((cap.shares || []).filter((x) => x.end && fin(x.diluted)).map((x) => [x.end, +x.diluted]));
+    const periods = rows.map(([end, r]) => {
+      const it = r.items, v = {};
+      for (const [k, , keys] of CASH_STEPS) if (keys) v[k] = keys.reduce((a, x) => a + (fin(it[x]) ? +it[x] : 0), 0);
+      v.fcf = v.ocf + v.capex;
+      v.dcash = fin(it.cash) ? -it.cash : fin(r.dcash) ? +r.dcash : 0;
+      const gap = v.dcash - CASH_STEPS.filter((x) => x[2]).reduce((a, [k]) => a + v[k], 0);
+      if (Math.abs(gap) > 0.5) v.other += gap;                   // what the statement does not split out
+      return { end, label: r.label, v, rev: revOf(end), shares: shares.has(r.end) ? shares.get(r.end) : null };
+    });
+    const steps = CASH_STEPS.filter(([k, , keys]) => !keys || periods.some((p) => Math.abs(p.v[k]) >= 0.5));
+    out.kind = 'cash'; out.grid = periods.map((p) => p.end); out.quarterly = true;
+    const lab = new Map(periods.map((p) => [p.end, p.label])); out.qlabel = (g) => lab.get(g) || quarterLabel(g);
+    out.cf = { per, periods, steps, sym, name };
+    out.series = [{ key: sym, label: sym, name, v: periods.map((p) => p.v.fcf) }];
+    out.fmt = (v) => money(v); out.unit = '$'; out.metric = 'Free cash flow';
+    out.title = out.title || `Where ${name}’s cash went`;
+    out.sub = out.sub || `${periods[0].label} → ${periods[periods.length - 1].label} · ${per === 'fy' ? 'fiscal year by fiscal year' : 'quarter by quarter'} · from its cash flow statements (SEC filings)`;
+    if (per === 'q' && (cap.fy || []).length > 1) out.notes.add('Quarters are each quarter on its own (a 10-Q reports the year to date: the quarters before are taken off).');
+    return out;
+  }
   // the dividend snowball: dividends buying more shares, which pay more dividends
   // Realized historical dividend income (not a forward-yield promise).
   // 52 observed weekly periods form the terminal annual dividend window.
@@ -1122,6 +1183,7 @@
     if (k === 'actual') return root.FFActual.build(st, out, { json, hub: HUB, rankMeta });
     if (k === 'holdings') return root.FFHoldingsVideo.build(st, out, { json, hub: HUB, rankMeta });
     if (k === 'sankey') return buildSankey(st, out, T);
+    if (k === 'cash') return buildCash(st, out, T);
     if (k === 'snowball') return buildSnowball(st, out, T);
     if (k === 'timing') return buildTiming(st, out, T);
     if (k === 'fund') {
@@ -1129,7 +1191,8 @@
       const cos = (await Promise.all(T.map(company))).filter(Boolean);
       T.filter((s, i) => !cos.find((c) => c.sym === s)).forEach((s) => notes.add(s + ': no company figures on file (the site draws companies that file 10-Qs and 10-Ks)'));
       if (!cos.length) throw new Error('None of these companies has figures on file');
-      const key = st.m in FIG ? st.m : 'revenue', ttm = st.ttm === '1' || key === 'growth' || key === 'om' || key === 'nm';
+      const key = st.m in FIG ? st.m : 'revenue', ttm = st.ttm === '1' || RATIO.has(key);
+      if (CAPQ.has(key)) notes.add('Capital spending, free cash flow and shareholder returns come from the cash flow statements of the last eight quarters' + (ttm ? ': trailing four quarters from the fourth on' : ''));
       const from = st.from ? Date.parse(st.from + 'T00:00:00Z') : -Infinity, to = st.to ? Date.parse(st.to + 'T00:00:00Z') : Infinity;
       const rows = cos.map((C) => ({ C, r: figure(C, key, ttm).filter(([e]) => e >= from && e <= to) }));
       const ends = [...new Set(rows.flatMap((x) => x.r.map((p) => p[0])))].sort((a, b) => a - b);
@@ -1139,9 +1202,11 @@
       // one company: its own fiscal quarter names (Q2 FY27); several: the month each quarter ended
       const lab = cos.length === 1 ? cos[0].lab : null;
       out.qlabel = (g) => (lab ? lab.get(iso(g)) || quarterLabel(g) : monthYear(g));
-      out.grid = G; out.quarterly = true; out.fmt = figFmt(key); out.unit = key === 'om' || key === 'nm' || key === 'growth' ? '%' : '$';
-      out.metric = FIG[key] + (ttm && key !== 'om' && key !== 'nm' && key !== 'growth' ? ', trailing four quarters' : key === 'om' || key === 'nm' ? ' (trailing four quarters)' : '');
-      out.series = rows.map(({ C, r }) => ({ key: C.sym, label: C.sym, name: C.name, v: G.map((g) => { const p = r.find(([e]) => Math.abs(e - g) <= 45 * DAY); return p ? p[1] : null; }) }));
+      out.grid = G; out.quarterly = true; out.fmt = figFmt(key); out.unit = RATIO.has(key) ? '%' : '$';
+      out.metric = FIG[key] + (ttm && !RATIO.has(key) ? ', trailing four quarters' : RATIO.has(key) && key !== 'growth' ? ' (trailing four quarters)' : '');
+      out.series = rows.map(({ C, r }) => ({ key: C.sym, label: C.sym, name: C.name, v: G.map((g) => { let p = null; for (const x of r) if (x[0] <= g + 45 * DAY && x[0] >= g - 100 * DAY) p = x; return p ? p[1] : null; }) }));
+      if (cos.length > 1) notes.add('Each company at its latest figure on file at each step (up to a quarter old): fiscal calendars and filing dates differ.');
+      if (key === 'conv') notes.add('Cash conversion is left out where net earnings were too small for the ratio to mean much (over 400%).');
       out.title = out.title || (cos.length === 1 ? `${cos[0].name.replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO)\.?$/i, '')}: ${FIG[key].toLowerCase()}` : `${FIG[key]}: ${cos.map((c) => c.sym).join(' vs ')}`);
       out.sub = out.sub || `${out.metric} · ${dayLabel(G[0])} – ${dayLabel(G[G.length - 1])} · from SEC filings`;
       return out;
@@ -1406,6 +1471,7 @@
     if (!fin(a)) return fin(b) && f - i > 0.5 ? b : null;
     return fin(b) ? lerp(a, b, f - i) : a;
   };
+  const roleCol = (th, role) => { const light = luminance(th.text) < 0.4; return ({ in: light ? '#17734a' : '#3ccf8e', out: light ? '#c0392b' : '#ff7a6b', sub: light ? '#b7791f' : th.accent, end: light ? '#2a78d6' : '#5ab0ff', sh: light ? '#7a7974' : '#c9d3e0' })[role] || th.text; };
   const benchCol = (th, kind) => { const light = luminance(th.text) < 0.4; return kind === 'cash' ? (light ? '#6b6a66' : '#cfd8e3') : (light ? '#9c4f2e' : '#f2b39b'); };
   const upDown = (th, up) => (th.text === '#1d1d1b' || luminance(th.text) < 0.4 ? (up ? '#17734a' : '#c0392b') : (up ? '#3ee39a' : '#ff6b6b'));
   // distributions reinvested, in dollars as paid, beside each ticker: shown with dividends reinvested unless turned off,
@@ -1474,6 +1540,12 @@
     else if (V.kind === 'treemap') treemapChart(ctx, V, f, box, S, th, F);
     else if (V.kind === 'sectors') stackChart(ctx, V, f, { x: box.x, y: box.y, w: box.w - 150 * S, h: box.h - 40 * S }, S, th, F);
     else if (V.kind === 'sankey') sankeyChart(ctx, V, f, box, S, th, F);
+    else if (V.kind === 'cash' && style !== 'columns') cashFlowChart(ctx, V, f, box, S, th, F);
+    else if (V.kind === 'cash') {                             // period by period: operating and free cash flow, capital spending, shareholder returns
+      const P = V.cf.periods, light = luminance(th.text) < 0.4, cols = [light ? '#7a7974' : '#c9d3e0', light ? '#c0392b' : '#ff7a6b', light ? '#17734a' : '#3ccf8e', light ? '#2a78d6' : '#5ab0ff'];
+      const D = Object.assign({}, V, { series: [['Operating cash flow', (p) => p.v.ocf], ['Capital spending', (p) => -p.v.capex], ['Free cash flow', (p) => p.v.fcf], ['Returned to shareholders', (p) => -(p.v.buyback + p.v.div)]].map(([label, g]) => ({ key: label, label, v: P.map(g) })) });
+      columns(ctx, D, f, { x: box.x, y: box.y + 40 * S, w: box.w, h: box.h - 40 * S }, S, th, F, (k) => cols[k % cols.length]);
+    }
     else if (V.kind === 'snowball') snowballChart(ctx, V, f, box, S, th, F, pal);
     else if (style === 'heat') heatmap(ctx, V, f, box, S, th, F);
     else if (style === 'hist') histChart(ctx, V, f, { x: box.x + 60 * S, y: box.y, w: box.w - 60 * S, h: box.h }, S, th, F);
@@ -1500,7 +1572,7 @@
     const k = clamp(Math.round(f), 0, V.grid.length - 1);
     ctx.textAlign = 'right'; ctx.fillStyle = alpha(th.text === '#1d1d1b' ? '#1d1d1b' : '#ffffff', opt.theme === 'clean' ? 0.10 : 0.12);
     ctx.font = F(700, portrait ? 120 : 110);
-    if (!V.yearly && style !== 'heat' && !['sankey', 'treemap', 'bubble'].includes(V.kind)) ctx.fillText(V.actual ? dayLabel(V.grid[k]) : V.quarterly ? (V.qlabel || quarterLabel)(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (flat ? (V.kind === 'rank' ? 70 : 10) : 24) * S);
+    if (!V.yearly && style !== 'heat' && !['sankey', 'treemap', 'bubble'].includes(V.kind) && !(V.kind === 'cash' && style !== 'columns')) ctx.fillText(V.actual ? dayLabel(V.grid[k]) : V.quarterly ? (V.qlabel || quarterLabel)(V.grid[k]) : monthYear(V.grid[k]), W - pad, bottom - (flat ? (V.kind === 'rank' ? 70 : 10) : 24) * S);
     if (V.kind === 'treemap') { ctx.font = F(800, 64); ctx.fillStyle = th.text; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.fillText(monthYear(V.grid[k]), W - pad, top - 10 * S); }
     brand(ctx, W, H, S, th, F, portrait);
     ctx.fillStyle = alpha(th.accent, 0.9); ctx.fillRect(0, H - 6 * S, W * clamp(t / tm.D, 0, 1), 6 * S);
@@ -2094,6 +2166,57 @@
       'Dividends received each year (reinvested)',b.x,b.y+h1+gap-12*S,b.w);
     cashBars(ctx, V, f, {x:b.x,y:b.y+h1+gap,w:b.w,h:h2}, S, th, F, pal, monthly);
   }
+  // the cash flow as a waterfall: operating cash flow, what it paid for (free cash flow on the way) and what was left,
+  // added to cash or drawn from it. Each period holds a moment, then the bars move to the next; the axis never moves
+  function cashFlowChart(ctx, V, f, b, S, th, F) {
+    const C = V.cf, P = C.periods, n = P.length, i = clamp(Math.floor(f), 0, n - 1), j = Math.min(n - 1, i + 1);
+    const e = easeIO(clamp((f - i - 0.3) / 0.4, 0, 1)), val = (k) => lerp(P[i].v[k], P[j].v[k], e);
+    const light = luminance(th.text) < 0.4, IN = light ? '#17734a' : '#3ccf8e', OUT = light ? '#c0392b' : '#ff7a6b', SUB = light ? '#b7791f' : th.accent, END = light ? '#2a78d6' : '#5ab0ff';
+    if (!C.dom) {
+      let lo = 0, hi = 0;
+      for (const p of P) { let run = 0; for (const [k, , keys] of C.steps) { if (k === 'ocf') run = p.v.ocf; else if (keys) run += p.v[k]; lo = Math.min(lo, run); hi = Math.max(hi, run); } }
+      const pad = (hi - lo) * 0.14; C.dom = [lo < 0 ? lo - pad * 0.7 : 0, hi + pad];
+    }
+    const narrow = b.w / C.steps.length < 120 * S;               // narrow slots (a phone's shape): the names turned on a slant
+    const [lo, hi] = C.dom, top = b.y + 54 * S, h = b.h - 54 * S - (narrow ? 150 : 62) * S, Y = (v) => top + h - (v - lo) / ((hi - lo) || 1) * h;
+    ctx.lineWidth = 1.2 * S; ctx.font = F(500, 20); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (const t of niceTicks(lo, hi, 5)) { const y = Y(t); if (y < top - 2 || y > top + h + 2) continue; ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(money(t), b.x - 14 * S, y); }
+    ctx.strokeStyle = th.axis; ctx.lineWidth = 2 * S; ctx.beginPath(); ctx.moveTo(b.x, Y(0)); ctx.lineTo(b.x + b.w, Y(0)); ctx.stroke();
+    const m = C.steps.length, slot = b.w / m, bw = Math.min(slot * 0.66, 160 * S);
+    let run = 0, prev = null;
+    C.steps.forEach(([k, name, keys], q) => {
+      const x = b.x + q * slot + (slot - bw) / 2;
+      let a, z, v, col;
+      if (k === 'ocf') { v = val('ocf'); a = 0; z = v; run = v; col = v >= 0 ? IN : OUT; }
+      else if (!keys) { v = run; a = 0; z = run; col = k === 'fcf' ? SUB : END; }
+      else { v = val(k); a = run; z = run + v; run = z; col = v >= 0 ? IN : OUT; }
+      if (prev != null) { ctx.save(); ctx.setLineDash([6 * S, 5 * S]); ctx.strokeStyle = alpha(th.axis, 0.8); ctx.lineWidth = 1.6 * S; ctx.beginPath(); ctx.moveTo(prev, Y(keys || k === 'ocf' ? a : z)); ctx.lineTo(x, Y(keys || k === 'ocf' ? a : z)); ctx.stroke(); ctx.restore(); }
+      const y0 = Y(Math.max(a, z)), hh = Math.max(2 * S, Math.abs(Y(a) - Y(z))), none = keys && k !== 'ocf' && Math.abs(v) < 0.5e6;
+      if (none) { ctx.font = F(600, 18); ctx.fillStyle = th.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('none', x + bw / 2, Y(a) - 6 * S); }
+      ctx.fillStyle = keys ? alpha(col, none ? 0 : 0.88) : col; if (th.glow) { ctx.shadowColor = col; ctx.shadowBlur = th.glow * 0.6 * S; }
+      roundRect(ctx, x, y0, bw, hh, Math.min(10 * S, bw * 0.12)); ctx.fill(); ctx.shadowBlur = 0;
+      if (!keys) { ctx.strokeStyle = th.text; ctx.globalAlpha = 0.35; ctx.lineWidth = 2 * S; ctx.stroke(); ctx.globalAlpha = 1; }
+      const txt = none ? '' : (keys && k !== 'ocf' ? (v >= 0 ? '+' : '−') : v < 0 ? '−' : '') + money(Math.abs(v));
+      ctx.font = F(700, slot > 150 * S ? 23 : 19); ctx.fillStyle = th.text; ctx.textAlign = 'center';
+      if (!txt) { /* nothing this period */ } else if (z >= a) { ctx.textBaseline = 'bottom'; ctx.fillText(txt, x + bw / 2, y0 - 7 * S, slot - 6 * S); } else { ctx.textBaseline = 'top'; ctx.fillText(txt, x + bw / 2, y0 + hh + 7 * S, slot - 6 * S); }
+      const label = k === 'dcash' ? (v >= 0 ? 'Added to cash' : 'Drawn from cash') : name;
+      ctx.font = F(600, slot > 150 * S ? 19 : narrow ? 18 : 16); ctx.fillStyle = keys ? th.muted : th.text;
+      if (narrow) { ctx.save(); ctx.translate(x + bw / 2, top + h + 14 * S); ctx.rotate(-Math.PI / 4); ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(label, 0, 0); ctx.restore(); }
+      else {
+        ctx.textBaseline = 'top';
+        const words = label.split(' '), l1 = [], l2 = [];
+        for (const w of words) { (ctx.measureText([...l1, w].join(' ')).width <= slot - 8 * S && !l2.length ? l1 : l2).push(w); }
+        ctx.fillText(l1.join(' '), x + bw / 2, top + h + 14 * S, slot - 4 * S); if (l2.length) ctx.fillText(l2.join(' '), x + bw / 2, top + h + 36 * S, slot - 4 * S);
+      }
+      prev = x + bw;
+    });
+    // the period, large, and what went back to shareholders against free cash flow
+    const cur = e < 0.5 ? P[i] : P[j], fcf = val('fcf'), ret = -(val('buyback') + val('div'));
+    ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.font = F(800, 46); ctx.fillStyle = th.text; ctx.fillText(cur.label, b.x + b.w, b.y + 36 * S);
+    ctx.textAlign = 'left'; ctx.font = F(600, 22); ctx.fillStyle = th.muted;
+    const say = [fin(fcf) ? `Free cash flow ${fcf < 0 ? '−' : ''}${money(Math.abs(fcf))}` : '', ret > 0.5 ? `returned to shareholders ${money(ret)}` + (fcf > 0 ? ` (${Math.round(100 * ret / fcf)}% of it)` : '') : ''].filter(Boolean).join(' · ');
+    ctx.fillText(say, b.x, b.y + 30 * S, b.w * 0.72);
+  }
   // dividends paid as bars, month by month (the last 24 months) or year by year, up to this frame, in dollars as paid.
   // Months carry the last twelve months ÷ 12 as a dashed line (a quarterly payer leaves two months in three empty); a
   // year the window does not hold whole (the first, or the one still running) is drawn lighter
@@ -2193,14 +2316,14 @@
         const valueW = Math.min(usable * .30, 235 * S);
         const labelW = Math.max(70 * S, usable - valueW - changeW - 22 * S);
         const right = x + w - pad;
-        ctx.fillStyle = r.sec ? secCol(th, r.sec) : pal(r.k || 0);
+        ctx.fillStyle = r.role ? roleCol(th, r.role) : r.sec ? secCol(th, r.sec) : pal(r.k || 0);
         ctx.beginPath(); ctx.arc(x + pad + 8 * S, yy - 8 * S, 7 * S, 0, Math.PI * 2); ctx.fill();
         ctx.font = F(700, 27); ctx.fillStyle = th.text; ctx.textAlign = 'left';
         ctx.fillText(String(r.label || ''), x + pad + 22 * S, yy, labelW - 18 * S);
         ctx.textAlign = 'right';
         ctx.fillText(String(r.value || ''), right - changeW - (changeW ? 10 * S : 0), yy, valueW);
         if (change) {
-          ctx.font = F(650, 24); ctx.fillStyle = upDown(th, r.up);
+          ctx.font = F(650, 24); ctx.fillStyle = r.neutral ? th.muted : upDown(th, r.up);
           ctx.fillText(change, right, yy, changeW);
         }
         const sub = two ? subOf(r) : '';
@@ -2253,6 +2376,25 @@
       if (fin(h.oi) && h.revenue) V.final.push({ k: 0, label: 'Operating margin', value: (h.oi < 0 ? '−' : '') + Math.abs(100 * h.oi / h.revenue).toFixed(1) + '%', change: fin(h0.oi) && h0.revenue ? `${h.oi / h.revenue >= h0.oi / h0.revenue ? '+' : '−'}${Math.abs(100 * (h.oi / h.revenue - h0.oi / h0.revenue)).toFixed(1)} pts` : '', up: true });
       V.endTitle = `${V.series[0].label} ${fr.label}`; V.endSub = `change since ${f0.label}`;
       V.caption = `${V.series[0].name.replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO)\.?$/i, '')}, ${f0.label} → ${fr.label}: ` + V.final.map((r) => `${r.label.toLowerCase()} ${r.value}${r.change ? ' (' + r.change + ')' : ''}`).join(', ');
+      return;
+    }
+    if (V.kind === 'cash') {
+      const P = V.cf.periods, a = P[0], z = P[P.length - 1];
+      const sgn = (x) => (x < 0 ? '−' : '') + money(Math.abs(x)), chg = (x, x0) => (fin(x) && fin(x0) && x0 > 0 && x > 0 ? pctf(x / x0 - 1, 0) : '');
+      const ret = (p) => -(p.v.buyback + p.v.div);
+      V.final = [
+        { k: 0, label: 'Operating cash flow', value: sgn(z.v.ocf), change: chg(z.v.ocf, a.v.ocf), up: z.v.ocf >= a.v.ocf, role: 'in' },
+        { k: 0, label: 'Capital spending', value: money(-z.v.capex), change: chg(-z.v.capex, -a.v.capex), neutral: true, role: 'out' },
+        { k: 0, label: 'Free cash flow', value: sgn(z.v.fcf), change: chg(z.v.fcf, a.v.fcf), up: z.v.fcf >= a.v.fcf, role: 'sub', sub: z.rev > 0 ? `${(100 * z.v.fcf / z.rev).toFixed(1)}% of revenue` : '' },
+      ];
+      if (ret(z) > 0.5 || ret(a) > 0.5) V.final.push({ k: 0, label: 'Returned to shareholders', value: money(ret(z)), change: chg(ret(z), ret(a)), up: ret(z) >= ret(a), role: 'out', sub: `buybacks ${money(-z.v.buyback)} · dividends ${money(-z.v.div)}` + (z.v.fcf > 0 ? ` · ${Math.round(100 * ret(z) / z.v.fcf)}% of free cash flow` : '') });
+      if (Math.abs(z.v.acq) >= 0.5) V.final.push({ k: 0, label: 'Acquisitions', value: money(-z.v.acq), change: '', role: 'out' });
+      V.final.push({ k: 0, label: z.v.dcash >= 0 ? 'Added to cash' : 'Drawn from cash', value: money(Math.abs(z.v.dcash)), change: '', role: 'end' });
+      if (fin(z.shares) && fin(a.shares) && a.shares > 0) V.final.push({ k: 0, label: 'Diluted shares', value: (z.shares / 1e9 >= 1 ? (z.shares / 1e9).toFixed(2) + 'B' : (z.shares / 1e6).toFixed(0) + 'M'), change: pctf(z.shares / a.shares - 1, 1), up: z.shares <= a.shares, role: 'sh' });
+      V.endTitle = `${V.cf.name}, ${z.label}`; V.endSub = `change since ${a.label} · from the cash flow statements`;
+      V.caption = `${V.cf.name}, ${z.label}: operating cash flow ${sgn(z.v.ocf)}, capital spending ${money(-z.v.capex)}, free cash flow ${sgn(z.v.fcf)}`
+        + (ret(z) > 0.5 ? `, returned to shareholders ${money(ret(z))} (buybacks ${money(-z.v.buyback)}, dividends ${money(-z.v.div)})` : '')
+        + ` · ${a.label}: free cash flow ${sgn(a.v.fcf)}` + (ret(a) > 0.5 ? `, returned ${money(ret(a))}` : '');
       return;
     }
     if (V.kind === 'snowball') {
@@ -2465,6 +2607,28 @@
         + 'Weekly closes.';
       return R;
     }
+    if (V.kind === 'cash' && V.cf) {
+      const P = V.cf.periods, sum = (g) => P.reduce((a, p) => a + (fin(g(p)) ? g(p) : 0), 0), sgn = (x) => (fin(x) ? (Math.abs(x) < 0.5 ? '—' : (x < 0 ? '−' : '+') + money(Math.abs(x))) : '');
+      R.cols = P.map((p, j) => ['p' + j, p.label, dayLabel(p.end)]).concat([['all', 'In all', `${P[0].label} → ${P[P.length - 1].label}`]]);
+      const line = (label, g, o = {}) => {
+        const cells = {}; P.forEach((p, j) => { const x = g(p); cells['p' + j] = cell(o.fmt ? o.fmt(x) : sgn(x), '', x); });
+        const tot = o.all ? o.all() : sum(g); cells.all = cell(o.fmt ? o.fmt(tot) : sgn(tot), '', tot);
+        return { label, role: o.role, strong: !!o.strong, cells };
+      };
+      const role = (k) => (k === 'ocf' ? 'in' : k === 'fcf' ? 'sub' : k === 'dcash' ? 'end' : null);
+      R.rows = V.cf.steps.map(([k, name, keys]) => line(k === 'dcash' ? 'Change in cash (+ added, − drawn)' : name, (p) => p.v[k], { role: role(k) || (keys ? null : 'sub'), strong: !keys || k === 'ocf' }));
+      const ret = (p) => -(p.v.buyback + p.v.div), pct = (x) => (fin(x) ? (100 * x).toFixed(0) + '%' : '—');
+      R.rows.push(line('Returned to shareholders', ret, { role: 'out', fmt: (x) => money(x) }));
+      if (P.some((p) => p.rev > 0)) R.rows.push(line('Free cash flow ÷ revenue', (p) => (p.rev > 0 ? p.v.fcf / p.rev : null), { fmt: pct, all: () => { const r = sum((p) => (p.rev > 0 ? p.rev : null)); return r > 0 ? sum((p) => (p.rev > 0 ? p.v.fcf : null)) / r : null; } }));
+      R.rows.push(line('Returned ÷ free cash flow', (p) => (p.v.fcf > 0 ? ret(p) / p.v.fcf : null), { fmt: pct, all: () => { const f2 = sum((p) => p.v.fcf); return f2 > 0 ? sum(ret) / f2 : null; } }));
+      R.rows.push(line('Capital spending ÷ operating cash', (p) => (p.v.ocf > 0 ? -p.v.capex / p.v.ocf : null), { fmt: pct, all: () => { const o = sum((p) => p.v.ocf); return o > 0 ? -sum((p) => p.v.capex) / o : null; } }));
+      if (P.some((p) => fin(p.shares))) R.rows.push(line('Diluted shares', (p) => p.shares, { fmt: (x) => (fin(x) ? (x / 1e9 >= 1 ? (x / 1e9).toFixed(2) + 'B' : (x / 1e6).toFixed(0) + 'M') : '—'), all: () => { const a = P.find((p) => fin(p.shares)), z = [...P].reverse().find((p) => fin(p.shares)); return a && z && a !== z ? z.shares / a.shares - 1 : null; } }));
+      const sh = R.rows.find((r) => r.label === 'Diluted shares'); if (sh && fin(sh.cells.all[2])) sh.cells.all = cell(pctf(sh.cells.all[2], 1), 'change', sh.cells.all[2]);
+      R.foot = 'Cash effects from the cash flow statements (SEC filings): + money in, − money out. Free cash flow = operating cash flow less capital spending. '
+        + 'Investments, net: marketable securities bought and sold, and businesses or assets sold. Other: shares issued, partners in subsidiaries, other financing, exchange rates and anything not split out. '
+        + (V.cf.per === 'q' ? 'Each quarter on its own. ' : 'Fiscal years. ') + 'The change in cash is what was left after everything, added to the cash on hand (or drawn from it).';
+      return R;
+    }
     if (V.kind === 'snowball' && Array.isArray(V.snowballSummary)) {
       R.title = V.endTitle || R.title; R.sub = V.endSub || R.sub;
       const whole = fullYears(G);
@@ -2510,7 +2674,7 @@
       return rows.map((r) => r.map(csvCell).join(',')).join('\n') + '\n';
     }
     const lined = V.series && V.series.length && V.series.every((s) => (Array.isArray(s.v) && s.v.length === G.length) || (Array.isArray(s.x) && s.x.length === G.length));
-    if (lined && !['sankey', 'snowball', 'calendar', 'dist', 'treemap', 'bubble'].includes(V.kind)) {
+    if (lined && !['sankey', 'snowball', 'calendar', 'dist', 'treemap', 'bubble', 'cash'].includes(V.kind)) {
       const head = ['date'], get = [];
       if (V.kind === 'growth' && (V.contrib || V.base)) { head.push('put in'); get.push((i) => (V.contrib ? V.contrib[i] : V.base)); }
       V.series.forEach((s) => {
@@ -2611,16 +2775,16 @@
       + `<tr class="st-tot"><th scope="row">In all</th>${tot.map((v) => `<td class="num">${esc2(money(v, 0))}</td>`).join('')}</tr></tbody></table></div>`;
   }
   function reportHTML(R, th) {
-    const col = (r) => (r.bench ? benchCol(th, r.bench) : r.sec ? secCol(th, r.sec) : th.pal[(r.k || 0) % th.pal.length]);
+    const col = (r) => (r.role ? roleCol(th, r.role) : r.bench ? benchCol(th, r.bench) : r.sec ? secCol(th, r.sec) : R.kind === 'cash' ? 'transparent' : th.pal[(r.k || 0) % th.pal.length]);
     const cls = (k, c) => (k === 'gain' && c[2] != null ? (c[2] >= 0 ? 'num up' : 'num down') : 'num');
     const head = `<tr><th scope="col"><span class="st-sr">Series</span></th>${R.cols.map(([, l, help]) => `<th scope="col" class="num"${help ? ` title="${esc(help)}"` : ''}>${esc(l)}</th>`).join('')}</tr>`;
-    const body = R.rows.map((r) => `<tr><th scope="row"><i style="background:${esc(col(r))}"></i>${esc(r.label)}${r.name && r.name !== r.label ? `<small>${esc(String(r.name).slice(0, 38))}</small>` : ''}</th>`
+    const body = R.rows.map((r) => `<tr${r.strong ? ' class="st-strong"' : ''}><th scope="row"><i style="background:${esc(col(r))}"></i>${esc(r.label)}${r.name && r.name !== r.label ? `<small>${esc(String(r.name).slice(0, 38))}</small>` : ''}</th>`
       + R.cols.map(([k]) => { const c = r.cells[k] || ['—', '']; return `<td class="${cls(k, c)}">${esc(c[0])}${c[1] ? `<small>${esc(c[1])}</small>` : ''}</td>`; }).join('') + '</tr>').join('');
     return `<div class="st-rep-head"><div><div class="st-rep-k">Results</div><h2>${esc(R.title)}</h2>${R.sub ? `<div class="st-rep-sub">${esc(R.sub)}</div>` : ''}</div>`
       + `<div class="st-rep-act"><button class="btn small" type="button" data-rep="copy" title="The table, the caption and the notes as text">Copy text</button><button class="btn small" type="button" data-rep="csv" title="The figures behind the video, week by week">CSV ↓</button><button class="btn small" type="button" data-rep="png" title="This frame as a picture, at the size of the video">Image ↓</button></div></div>`
-      + (R.rows.length ? `<div class="tbl-wrap st-wide"><table class="st-tbl"><thead>${head}</thead><tbody>${body}</tbody></table></div>` : '')
+      + (R.rows.length ? `<div class="tbl-wrap ${R.kind === 'cash' ? 'st-keep' : 'st-wide'}"><table class="st-tbl"><thead>${head}</thead><tbody>${body}</tbody></table></div>` : '')
       // on a phone the same figures turned around: a row for each figure, a column for each series
-      + (R.rows.length ? `<div class="tbl-wrap st-tall"><table class="st-tbl"><thead><tr><th scope="col"><span class="st-sr">Figure</span></th>${R.rows.map((r) => `<th scope="col" class="num"><i style="background:${esc(col(r))}"></i>${esc(r.label)}</th>`).join('')}</tr></thead><tbody>`
+      + (R.rows.length && R.kind !== 'cash' ? `<div class="tbl-wrap st-tall"><table class="st-tbl"><thead><tr><th scope="col"><span class="st-sr">Figure</span></th>${R.rows.map((r) => `<th scope="col" class="num"><i style="background:${esc(col(r))}"></i>${esc(r.label)}</th>`).join('')}</tr></thead><tbody>`
         + R.cols.map(([k, l, help]) => `<tr><th scope="row"${help ? ` title="${esc(help)}"` : ''}>${esc(l)}</th>${R.rows.map((r) => { const c = r.cells[k] || ['—', '']; return `<td class="${cls(k, c)}">${esc(c[0])}${c[1] ? `<small>${esc(c[1])}</small>` : ''}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>' : '')
       + yearsTable(R, esc, (k) => th.pal[(k || 0) % th.pal.length])
       + (R.caption ? `<div class="st-capbox"><div class="st-caph"><span>Caption to post</span><button class="btn small" type="button" data-rep="cap">Copy</button></div><div class="st-cap" id="st-cap">${esc(R.caption)}</div></div>` : '')
@@ -2658,6 +2822,9 @@
     { name: 'What the Dow is made of', note: 'Sector weights by share price, as the index counts', s: { k: 'sectors', idx: 'dji', sw: 'index', from: '2012-01-31', style: 'stack', theme: 'clean', dur: '30' } },
     { name: 'What it took to reach $1M', note: 'QQQ vs SPY: the monthly amount, worked back', s: { k: 'growth', t: 'QQQ,SPY', goal: '1000000', solve: 'rec', amt: '0', from: '2016-10-28', style: 'line', theme: 'bull' } },
     { name: 'Nvidia: where the money goes', note: 'The earnings flow, quarter by quarter', s: { k: 'sankey', t: 'NVDA', sm: 'detail', style: 'sankey', theme: 'clean', dur: '20' } },
+    { name: 'Where Apple’s cash went', note: 'Cash flow, fiscal year by fiscal year', s: { k: 'cash', t: 'AAPL', cper: 'fy', style: 'fall', theme: 'clean', dur: '20' } },
+    { name: 'Free cash flow: Big Tech', note: 'Trailing four quarters, from the cash flow statements', s: { k: 'fund', t: 'AAPL,MSFT,GOOGL,AMZN,META,NVDA', m: 'fcf', ttm: '1', style: 'bars', theme: 'sunset' } },
+    { name: 'Cash conversion: Big Tech', note: 'Operating cash ÷ net earnings, ten years', s: { k: 'fund', t: 'AAPL,MSFT,GOOGL,AMZN,META', m: 'conv', ttm: '1', style: 'line', theme: 'bull' } },
     { name: 'The dividend snowball', note: 'SCHD vs KO, dividends buying shares', s: { k: 'snowball', t: 'SCHD,KO', amt: '10000', from: '2012-01-06', style: 'snow', theme: 'bull', dur: '30' } },
     { name: 'Bought at the top every year', note: '$2,000 a year into SPY: timing vs none', s: { k: 'timing', t: 'SPY', yb: '2000', from: '2006-01-01', style: 'line', theme: 'sunset', dur: '30' } },
   ];
@@ -2691,6 +2858,7 @@
 .st-rep tbody th{position:sticky;left:0;z-index:1;background:var(--surface);text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:600}.st-rep tbody th i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
 .st-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.st-tall{display:none}@media(max-width:640px){.st-wide{display:none}.st-tall{display:block}.st-tall th,.st-tall td{padding:8px 7px}.st-tall tbody th{font-size:12.5px;font-weight:500;color:var(--muted);white-space:normal;min-width:80px;max-width:100px}.st-tall thead th{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink);font-weight:600}.st-tall thead th i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.st-rep{padding:12px}}
 .st-yh{display:flex;align-items:center;gap:10px;margin:6px 0 6px}.st-yh h3{font-size:13.5px;margin:0;font-weight:600;color:var(--ink-2)}.st-years{max-height:420px;overflow:auto;width:max-content;max-width:100%}.st-years table{width:auto}.st-years td{min-width:96px}.st-years tbody th{min-width:0}.st-rep tr.st-tot th,.st-rep tr.st-tot td{font-weight:600;border-top:1px solid var(--line)}
+.st-rep tr.st-strong th,.st-rep tr.st-strong td{font-weight:600}
 .st-rep td.up{color:var(--accent-ink)}.st-rep td.down{color:var(--neg)}.st-capbox{margin-top:4px}.st-caph{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:4px}.st-rep-foot{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 0 0}
 .st-help{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}.st-help code{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);padding:0 4px;border-radius:4px}.st-cap{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border-radius:8px;padding:8px 10px;margin-top:8px;word-break:break-word}`;
     document.head.appendChild(s);
@@ -2792,10 +2960,11 @@
       else if (k === 'actual') h += actualSide();
       else if (k === 'holdings') h += holdingsSide();
       else if (k !== 'formula') {
-        const one = k === 'calendar' || k === 'sankey' || k === 'timing';
-        const lbl = { fund: 'Companies (tickers)', sankey: 'Company (ticker)', calendar: 'Ticker — an ETF or a stock', timing: 'Ticker — an index fund or a stock', snowball: 'Dividend payers (up to three)' }[k] || 'Tickers — ETFs or stocks, two or more';
-        const ph = { fund: 'NVDA, AMD', sankey: 'NVDA', calendar: 'NVDA', timing: 'SPY', snowball: 'SCHD, KO' }[k] || 'QQQ, SPY, SCHD';
+        const one = k === 'calendar' || k === 'sankey' || k === 'timing' || k === 'cash';
+        const lbl = { fund: 'Companies (tickers)', sankey: 'Company (ticker)', cash: 'Company (ticker)', calendar: 'Ticker — an ETF or a stock', timing: 'Ticker — an index fund or a stock', snowball: 'Dividend payers (up to three)' }[k] || 'Tickers — ETFs or stocks, two or more';
+        const ph = { fund: 'NVDA, AMD', sankey: 'NVDA', cash: 'AAPL', calendar: 'NVDA', timing: 'SPY', snowball: 'SCHD, KO' }[k] || 'QQQ, SPY, SCHD';
         h += `<label for="st-t">${lbl}</label><input class="input" id="st-t" value="${esc(one ? tickers(st)[0] || '' : st.t)}" placeholder="${ph}" list="st-list" autocomplete="off"><datalist id="st-list"></datalist>`;
+        if (k === 'cash') h += `<label for="st-cper">Periods</label>${sel('st-cper', [['fy', 'Fiscal years (up to five)'], ['q', 'Quarters (the last eight)']], st.cper)}<div class="st-help">From each company's cash flow statements: operating cash flow, then capital spending, acquisitions, buybacks, dividends, investments and borrowing, down to what was added to cash or drawn from it.</div>`;
         if (k === 'sankey') h += `<label for="st-sm">Quarters</label>${sel('st-sm', [['detail', 'The detailed flow (the latest quarters on file)'], ['long', 'Ten years: revenue → profit → earnings']], st.sm)}`;
         if (k === 'timing') h += `<label for="st-yb">Money each year ($)</label><input class="input" id="st-yb" inputmode="numeric" value="${esc(st.yb)}"><div class="st-help">Each year's money goes in at that year's highest close (bought at the top), its lowest (perfect timing), its first week, or spread over its months — with hindsight, to show what timing is worth.</div>`;
         if (k === 'snowball') {
@@ -2876,8 +3045,8 @@
     function save() { try { history.replaceState(null, '', '#' + serialize(st)); } catch (e) { /* file:// */ } }
     function status() {
       if (!V) return;
-      const tm = timing(V, opt()), per = (V.grid.length - 1) / tm.run, unit = V.yearly ? 'years' : V.quarterly ? 'quarters' : V.kind === 'rank' && st.step === 'm' || ['calendar', 'bubble', 'treemap', 'sectors'].includes(V.kind) ? 'months' : 'weeks';
-      const what = V.actual ? (' ' + (V.group || 'holdings')) : ['rank', 'bubble', 'treemap'].includes(V.kind) ? ' companies' : V.kind === 'sectors' ? ' sectors' : V.kind === 'timing' ? ' plans' : ' series';
+      const tm = timing(V, opt()), per = (V.grid.length - 1) / tm.run, unit = V.yearly || (V.cf && V.cf.per === 'fy') ? 'years' : V.quarterly ? 'quarters' : V.kind === 'rank' && st.step === 'm' || ['calendar', 'bubble', 'treemap', 'sectors'].includes(V.kind) ? 'months' : 'weeks';
+      const what = V.actual ? (' ' + (V.group || 'holdings')) : V.kind === 'cash' ? ' company' : ['rank', 'bubble', 'treemap'].includes(V.kind) ? ' companies' : V.kind === 'sectors' ? ' sectors' : V.kind === 'timing' ? ' plans' : ' series';
       $('#st-status').textContent = V.actual && V.actual.fallback === 'single-disclosure'
         ? 'Only one real disclosure available · showing dated holdings, NOT weight changes · ' + V.series.length + what + ' · ' + tm.D + ' s'
         : V.actual ? `${V.series.length + what} · ${V.grid.length} actual dated snapshot${V.grid.length === 1 ? '' : 's'} · ${tm.D} s${V.grid.length === 1 ? ' (single-date card)' : ' (transitions illustrative)'}`
@@ -2987,7 +3156,8 @@
       const kb = e.target.closest('[data-kind]');
       if (kb) {
         st.k = kb.dataset.kind; st.style = STYLES[st.k][0][0]; st.title = ''; st.sub = '';
-        if ((st.k === 'fund' || st.k === 'calendar' || st.k === 'sankey') && !/^[A-Z]/.test(st.t)) st.t = 'NVDA';
+        if ((st.k === 'fund' || st.k === 'calendar' || st.k === 'sankey' || st.k === 'cash') && !/^[A-Z]/.test(st.t)) st.t = 'NVDA';
+        if (st.k === 'cash') { if (st.t === DEF.t) st.t = 'AAPL'; st.theme = 'clean'; }
         if (st.k === 'snowball' && st.t === DEF.t) st.t = 'SCHD';
         if (st.k === 'timing' && st.t === DEF.t) st.t = 'SPY';
         if (st.k === 'sankey') st.theme = 'clean';

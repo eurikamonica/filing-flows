@@ -247,6 +247,64 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     }
     delete files['disclosures/data/market/history/macro.json']; S.resetMacro();
   }
+  // where the cash went: a company's cash flow statement year by year or quarter by quarter, and the cash figures of
+  // the company video (free cash flow, capital spending, shareholder returns, cash margin and conversion)
+  {
+    const B = 1e9, item = (o) => Object.assign({ ocf: 0, capex: 0, acq: 0, buyback: 0, div: 0, withhold: 0, inv_other: 0, borrow: 0, fin_other: 0 }, o);
+    // each year balances: the cash item is minus the change in cash
+    const yr = (end, label, o) => { const it = item(o), gap = it.cashGap || 0; delete it.cashGap; it.cash = -Object.values(it).reduce((a, x) => a + x, 0) + gap; return { end, kind: 'fy', label, items: it }; };
+    const fy = [yr('2023-12-31', 'FY23', { ocf: 100 * B, capex: -20 * B, buyback: -50 * B, div: -15 * B, borrow: 5 * B }),
+      yr('2024-12-31', 'FY24', { ocf: 120 * B, capex: -25 * B, acq: -10 * B, buyback: -60 * B, div: -16 * B, inv_other: 3 * B }),
+      yr('2025-12-31', 'FY25', { ocf: 150 * B, capex: -30 * B, buyback: -70 * B, div: -17 * B, borrow: -8 * B, fin_other: -1 * B, cashGap: 2 * B })];
+    const qe = ['2025-03-31', '2025-06-30', '2025-09-30', '2025-12-31'], q = qe.map((e, i) => yr(e, 'Q' + (i + 1) + ' 2025', { ocf: (30 + 5 * i) * B, capex: -(7 + i) * B, buyback: -15 * B, div: -4 * B }));
+    const periods = [], v = { revenue: [], ni: [], ocf: [] };
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(Date.UTC(2023, 3 * i + 3, 0)), e = d.toISOString().slice(0, 10);
+      periods.push(['', e, 'q', 'Q' + (i % 4 + 1)]);
+      v.revenue.push([i, [[(100 + 5 * i) * B, [0, '3m', []]]]]); v.ni.push([i, [[(i === 2 ? 0.5 : 25) * B, [0, '3m', []]]]]); v.ocf.push([i, [[30 * B, [0, '3m', []]]]]);
+    }
+    files['data/index.json'].companies.push({ ticker: 'CSH', cik: 11, name: 'Cash Corp', revenue: 1 });
+    files['data/c/11.json'] = { profile: { name: 'Example Cash Inc.' }, quality: { hist: { periods, v }, cap: { fy, q, shares: [{ end: '2023-12-31', diluted: 5e9 }, { end: '2025-12-31', diluted: 4.5e9 }] } }, quarters: [] };
+    let V = await S.build(Object.assign(S.parseState('k=cash'), { t: 'CSH' }));
+    const P = V.cf.periods, last = P[2].v;
+    ok(V.kind === 'cash' && P.length === 3 && V.cf.per === 'fy' && last.fcf === 120 * B && last.dcash === Math.round(-fy[2].items.cash), 'fiscal years: free cash flow and the change in cash');
+    ok(Math.abs(V.cf.steps.filter((x) => x[2]).reduce((a, [k]) => a + last[k], 0) - last.dcash) < 1, 'every year adds up to the change in cash');
+    ok(Math.abs(last.other - (-1 * B - 2 * B)) < 1 && !V.cf.steps.some((x) => x[0] === 'withhold'), 'what is not split out goes to other; a step that is never there is left out');
+    ok(V.title === 'Where Example Cash’s cash went' && /FY23 → FY25/.test(V.sub), 'title: ' + V.title);
+    V.endCard = true; S.finish(V, V);
+    const fin2 = (l) => V.final.find((r) => r.label === l);
+    ok(fin2('Free cash flow').value === S.money(120 * B) && fin2('Returned to shareholders').sub.includes('73% of free cash flow') && fin2('Diluted shares').change === '−10.0%' && fin2('Capital spending').neutral, 'end card: ' + V.final.map((r) => r.label + ' ' + r.value).join(' | '));
+    ok(/^Example Cash, FY25: operating cash flow \$150B, capital spending \$30\.0B, free cash flow \$120B, returned to shareholders \$87\.0B/.test(V.caption), 'caption: ' + V.caption);
+    const R = S.report(V), row = (l) => R.rows.find((r) => r.label === l);
+    ok(R.cols.map((c) => c[1]).join() === 'FY23,FY24,FY25,In all' && row('Free cash flow').cells.all[2] === (80 + 95 + 120) * B && row('Free cash flow').strong, 'report columns and totals');
+    ok(row('Returned ÷ free cash flow').cells.p2[0] === '73%' && row('Acquisitions').cells.p0[0] === '—' && row('Diluted shares').cells.all[0] === '−10.0%', 'report ratios: ' + JSON.stringify(row('Returned ÷ free cash flow').cells));
+    ok(row('Free cash flow ÷ revenue').cells.p2[0] === Math.round(100 * 120 / ((100 + 5 * 8) + (100 + 5 * 9) + (100 + 5 * 10) + (100 + 5 * 11))) + '%', 'free cash flow over the year\'s revenue: ' + row('Free cash flow ÷ revenue').cells.p2[0]);
+    const csv = S.csvOf(V, R).trim().split('\n');
+    ok(csv[0] === ',FY23,FY24,FY25,In all' && csv.some((l) => l.startsWith('Free cash flow,80000000000,95000000000,120000000000')), 'the CSV is the table: ' + csv[0]);
+    for (const style of ['fall', 'columns']) for (const ar of [[1920, 1080], [1080, 1920], [1080, 1080]]) { V.style = style; for (const t of [0, 2.5, 6, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: style === 'fall' ? 'clean' : 'bull', dur: 12 }, t); n++; }
+    V = await S.build(Object.assign(S.parseState('k=cash'), { t: 'CSH', cper: 'q' }));
+    ok(V.cf.periods.length === 4 && V.cf.periods[3].v.fcf === 35 * B && V.qlabel(V.grid[1]) === 'Q2 2025', 'quarters');
+    files['data/index.json'].companies.push({ ticker: 'ONE', cik: 13, name: 'One Year Inc', revenue: 1 });
+    files['data/c/13.json'] = { profile: { name: 'One Year Inc' }, quality: { cap: { fy: fy.slice(0, 1), q } }, quarters: [] };
+    await assert.rejects(S.build(Object.assign(S.parseState('k=cash'), { t: 'ONE' })), /Fewer than two fiscal years.*try quarters/); n++;
+    // the company video's cash figures: from the last eight quarters (and the years as filed), cash margin and conversion
+    const F = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'fcf', ttm: '0' }));
+    ok(F.series[0].v.filter((x) => x != null).length === 4 && F.series[0].v[F.grid.length - 1] === 35 * B && /eight quarters/.test([...F.notes].join(' ')), 'free cash flow each quarter');
+    const Ft = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'fcf', ttm: '1' }));
+    ok(Ft.series[0].v[Ft.grid.length - 1] === (23 + 27 + 31 + 35) * B && Ft.grid.length >= 3, 'trailing four quarters, the earlier years as filed: ' + Ft.grid.length);
+    const Fr = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'ret', ttm: '0' }));
+    ok(Fr.series[0].v[Fr.grid.length - 1] === 19 * B, 'shareholder returns each quarter');
+    const Fc = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'conv' })), Fm = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'ocfm' }));
+    ok(Fc.unit === '%' && Math.abs(Fc.series[0].v[Fc.grid.length - 1] - 120 / 100) < 1e-9 && Fm.series[0].v[Fm.grid.length - 1] > 0.2, 'cash conversion and margin');
+    ok(!Fc.grid.some((g, i) => Fc.series[0].v[i] > 4) && [...Fc.notes].some((x) => /400%/.test(x)), 'a runaway conversion is left out');
+    // staggered calendars: each company at its latest quarter, up to a quarter old
+    const lag = JSON.parse(JSON.stringify(files['data/c/11.json'])); lag.quality.hist.periods = lag.quality.hist.periods.map((p) => { const d = new Date(Date.parse(p[1] + 'T00:00:00Z') + 31 * 864e5); return [p[0], d.toISOString().slice(0, 10), p[2], p[3]]; });
+    lag.quality.hist.periods.pop(); lag.quality.hist.v.revenue.pop(); lag.quality.hist.v.ni.pop(); lag.quality.hist.v.ocf.pop(); lag.quality.cap = {};
+    files['data/index.json'].companies.push({ ticker: 'LAG', cik: 12, name: 'Lag Inc', revenue: 1 }); files['data/c/12.json'] = lag;
+    const Two = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH,LAG', m: 'revenue', ttm: '0' }));
+    ok(Two.series.every((x) => x.v[Two.grid.length - 1] != null) && [...Two.notes].some((x) => /latest figure on file/.test(x)), 'a company a quarter behind still shows its latest figure');
+    ok(S.TEMPLATES.some((t) => t.s.k === 'cash') && S.TEMPLATES.some((t) => t.s.m === 'fcf') && S.TEMPLATES.some((t) => t.s.m === 'conv'), 'templates for the cash videos');
+  }
   // the report of the other kinds: their end figures, empty columns left out
   {
     const V = await S.build(Object.assign(S.parseState('k=drawdown'), { t: 'AAA,BBB', from: start }));
