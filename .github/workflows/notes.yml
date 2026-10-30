@@ -14,7 +14,7 @@ on:
         default: ''
       minutes:
         description: 'Minutes to spend reading filings this run'
-        default: '40'
+        default: '38'
   schedule:
     - cron: '23 */4 * * *'           # every four hours: a batch, until every company is on file; then new 10-Ks
 permissions:
@@ -39,6 +39,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: The notes branch (created by the first run)
+        id: branch
         run: |
           url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           if git ls-remote --exit-code --heads "$url" notes-history >/dev/null; then
@@ -59,9 +60,13 @@ jobs:
           TICKERS: ${{ inputs.tickers }}
         run: |
           python disclosures/app/notes.py collect --root nh --site-index site/index.json \
-            --minutes "${{ inputs.minutes || '40' }}" --tickers "$TICKERS"
+            --minutes "${{ inputs.minutes || '38' }}" --tickers "$TICKERS"
       - name: Save to the branch (one commit, force-pushed)
+        # also after a batch stopped from outside: what it read is kept and the list rebuilt
+        if: ${{ always() && steps.branch.outcome == 'success' }}
         run: |
+          rm -rf nh/_cache
+          python disclosures/app/notes.py index --root nh
           cd nh
           printf '%s\n' '# notes-history (data only)' '' \
             'Every company'"'"'s latest 10-K notes, drawn and checked (public/c/<TICKER>.json, public/index.json) and progress' \

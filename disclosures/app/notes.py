@@ -40,6 +40,7 @@ import json
 import math
 import os
 import re
+import signal
 import sys
 import time
 import urllib.request
@@ -98,6 +99,7 @@ class Filing:
                 self.num[key] = (f['v'], dec, f.get('u'))
             elif old is not None and abs(old[0] - f['v']) > self.tol_of(old[1]) + self.tol_of(dec):
                 self.dups = getattr(self, 'dups', []) + [(key, old, (f['v'], dec))]
+        self.cp = {(k[0], k[1]) for k in self.num}       # (concept, period) pairs with a figure, any member
         self.reports = F['reports']
         self.by_local = {}
         for c in self.by_c:
@@ -462,7 +464,7 @@ def rollforward_checks(FL, K, report_of_role, periods):
                         vals.append([lab, m['c'], r[0], s, r[1]])
                     if not vals:
                         continue
-                    elsewhere = {m['c'] for m in moves if any(k[0] == m['c'] and k[1] == p for k in FL.num)}
+                    elsewhere = {m['c'] for m in moves if (m['c'], p) in FL.cp}
                     target = e[0] - o[0]
                     if len({x[1] for x in vals}) < len(elsewhere) and _status(target - sum(x[3] * x[2] for x in vals), 0, e[0]) != 'tie':
                         continue                          # some movements are reported only by member: not a check here
@@ -1391,6 +1393,13 @@ def run_one(cik, folder, ua, ticker=None, sleep=0.12, info=None):
     return build(FL, meta)
 
 
+PER_COMPANY_SECONDS = 240                              # a filing that takes longer is left for a later run (and retried)
+
+
+def _too_long(*_):
+    raise TimeoutError(f'over {PER_COMPANY_SECONDS} s')
+
+
 VERSION = 2                                            # raise when the checks change: every company is read again, after new ones
 INDEX_FIELDS = ['ticker', 'name', 'cik', 'form', 'fy', 'fy_end', 'filed', 'notes', 'tables', 'checks', 'tie', 'round', 'info', 'gap', 'revenue']
 
@@ -1436,6 +1445,7 @@ def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tick
         if time.time() - t0 > minutes * 60:
             break
         t = c['ticker']
+        t1 = time.time()
         s_ = state.setdefault(t, {})
         try:
             info = latest_10k(c['cik'], ua)
@@ -1447,7 +1457,13 @@ def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tick
                 s_['checked'] = now.isoformat(timespec='seconds')
                 same += 1
                 continue
-            doc = run_one(c['cik'], cache, ua, t, info=info)
+            if hasattr(signal, 'SIGALRM'):
+                signal.alarm(PER_COMPANY_SECONDS)
+            try:
+                doc = run_one(c['cik'], cache, ua, t, info=info)
+            finally:
+                if hasattr(signal, 'SIGALRM'):
+                    signal.alarm(0)
             if not doc:
                 s_.update(checked=now.isoformat(timespec='seconds'), error='no FilingSummary or instance')
                 continue
@@ -1460,20 +1476,31 @@ def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tick
                            sum(len(n['tables']) for n in doc['notes']), sm.get('all', len(doc['checks'])), sm.get('tie', 0), sm.get('round', 0), sm.get('info', 0), sm.get('gap', 0),
                            c.get('revenue')])
             done += 1
+            print(f"{t}: {len(doc['notes'])} notes, {sm.get('all', 0)} checks, {sm.get('gap', 0)} do not tie ({time.time() - t1:.0f} s)", flush=True)
         except Exception as exc:                          # one company never stops the batch
             errs += 1
+            print(f'{t}: {type(exc).__name__}: {str(exc)[:120]} ({time.time() - t1:.0f} s)', flush=True)
             fails = (s_.get('fails') or 0) + 1
             s_.update(error=f'{type(exc).__name__}: {str(exc)[:160]}', fails=fails,
                       retry_after=(now + dt.timedelta(hours=min(168, 12 * 2 ** fails))).isoformat(timespec='seconds'))
         finally:
             shutil.rmtree(cache, ignore_errors=True)
-        if (done + errs) % 25 == 0:
-            st_p.write_text(json.dumps(state, separators=(',', ':')))
+        if done and (done + errs) % 25 == 0:          # so a batch stopped from outside keeps what it read
+            write_index(root, state, {'this_run': done, 'unchanged': same, 'errors': errs, 'due_left': max(0, len(order) - done - same - errs)})
+    return write_index(root, state, {'this_run': done, 'unchanged': same, 'errors': errs, 'due_left': max(0, len(order) - done - same - errs)})
+
+
+def write_index(root, state=None, extra=None):
+    """state.json, public/index.json (one row per company on file) and public/status.json."""
+    root = Path(root)
+    pub, st_p = root / 'public', root / 'state.json'
+    if state is None:
+        state = json.loads(st_p.read_text()) if st_p.exists() else {}
     st_p.write_text(json.dumps(state, separators=(',', ':')))
     rows = [v['row'] for k, v in state.items() if v.get('row') and (pub / 'c' / f'{k}.json').exists()]
     gen = dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
     (pub / 'index.json').write_text(json.dumps({'generated_at': gen, 'fields': INDEX_FIELDS, 'rows': rows}, separators=(',', ':')), encoding='utf-8')
-    status = {'built_at': gen, 'companies': len(rows), 'this_run': done, 'unchanged': same, 'errors': errs, 'due_left': max(0, len(order) - done - same - errs)}
+    status = {'built_at': gen, 'companies': len(rows), **(extra or {})}
     (pub / 'status.json').write_text(json.dumps(status))
     return status
 
@@ -1492,9 +1519,16 @@ def main():
     c.add_argument('--minutes', type=float, default=40)
     c.add_argument('--limit', type=int, default=None)
     c.add_argument('--tickers', default='')
+    i = sub.add_parser('index')
+    i.add_argument('--root', required=True)
     a = ap.parse_args()
     ua = os.environ.get('SEC_USER_AGENT') or UA_DEFAULT
+    if a.cmd == 'index':
+        print(json.dumps(write_index(a.root)))
+        return
     if a.cmd == 'collect':
+        if hasattr(signal, 'SIGALRM'):
+            signal.signal(signal.SIGALRM, _too_long)
         print(json.dumps(collect(a.root, a.site_index, ua, a.minutes, limit=a.limit, tickers=a.tickers)))
         return
     if a.cmd == 'one':
