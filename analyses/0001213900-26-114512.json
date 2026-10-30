@@ -1,0 +1,2172 @@
+{
+  "cik": 2108121,
+  "name": "Ionetix Corp / DE /",
+  "form": "S-1/A",
+  "filed": "2026-10-30",
+  "accession": "0001213900-26-114512",
+  "source_url": "https://www.sec.gov/Archives/edgar/data/2108121/000121390026114512/ea0309922-s1a1_ionetix.htm",
+  "file_number": "333-298160",
+  "accepted": "2026-10-30T21:23:29+00:00",
+  "method": "inline_xbrl",
+  "document_sha256": "d0fab9b8c4aaa0f5378f409202d2deca9a2eb243a7cdbb4499fd198a783f6e1f",
+  "periods": [
+    {
+      "start": "2024-01-01",
+      "end": "2024-12-31",
+      "label": "2024-01-01 \u2192 2024-12-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 3585000.0,
+        "cor": 4709000.0,
+        "rd": 4351000.0,
+        "sga": 12943000.0,
+        "costs_total": 22003000.0,
+        "oi": -18418000.0,
+        "pretax": -30062000.0,
+        "tax": 2000.0,
+        "ni": -30064000.0,
+        "pl": 30100000.0,
+        "ocf": -17842000.0,
+        "da": 2519000.0,
+        "dep": 2500000.0,
+        "sbc": 513000.0,
+        "capex": 3239000.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "sga": {
+          "label": "SellingGeneralAndAdministrativeExpense"
+        },
+        "costs_total": {
+          "label": "CostsAndExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -5.137517433751744,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -8.3860529986053,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -4.976847977684797,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -5.880334728033473,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.14309623430962343,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": 1.213668061366806,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.903486750348675,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2025-01-01",
+      "end": "2025-06-30",
+      "label": "2025-01-01 \u2192 2025-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 3673000.0,
+        "cor": 3153000.0,
+        "rd": 2645000.0,
+        "sga": 5619000.0,
+        "costs_total": 11417000.0,
+        "oi": -7744000.0,
+        "pretax": -10375000.0,
+        "tax": 6000.0,
+        "ni": -10381000.0,
+        "pl": -10400000.0,
+        "ocf": -7991000.0,
+        "da": 1628000.0,
+        "dep": 1600000.0,
+        "sbc": 289000.0,
+        "capex": 1184000.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "sga": {
+          "label": "SellingGeneralAndAdministrativeExpense"
+        },
+        "costs_total": {
+          "label": "CostsAndExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -2.1083582902259734,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -2.826300027225701,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -2.175605771848625,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -2.497958072420365,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.07868227606860877,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": 0.7201197930846719,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.32235230057173975,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "label": "2025-01-01 \u2192 2025-12-31",
+      "unit": "USD",
+      "values": {
+        "revenue": 6012000.0,
+        "cor": 6160000.0,
+        "rd": 5129000.0,
+        "sga": 14540000.0,
+        "costs_total": 25829000.0,
+        "oi": -19817000.0,
+        "pretax": -39665000.0,
+        "tax": 6000.0,
+        "ni": -39671000.0,
+        "pl": -39700000.0,
+        "ocf": -11349000.0,
+        "da": 3589000.0,
+        "dep": 3600000.0,
+        "sbc": 553000.0,
+        "capex": 3025000.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "sga": {
+          "label": "SellingGeneralAndAdministrativeExpense"
+        },
+        "costs_total": {
+          "label": "CostsAndExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -3.296240851630073,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -6.598636061210912,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -1.8877245508982037,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -2.3908848968729206,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.09198270126413839,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": 0.8531270791749833,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 0.5031603459747173,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2025-04-01",
+      "end": "2025-06-30",
+      "label": "2025-04-01 \u2192 2025-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 1083000.0,
+        "cor": 1063000.0,
+        "rd": 1298000.0,
+        "sga": 2737000.0,
+        "costs_total": 5098000.0,
+        "oi": -4015000.0,
+        "pretax": -7984000.0,
+        "tax": 6000.0,
+        "ni": -7990000.0,
+        "pl": -8000000.0,
+        "dep": 800000.0,
+        "sbc": 106000.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "sga": {
+          "label": "SellingGeneralAndAdministrativeExpense"
+        },
+        "costs_total": {
+          "label": "CostsAndExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "sbc": {
+          "label": "AllocatedShareBasedCompensationExpense"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -3.7072945521698983,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -7.377654662973223,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": null,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.09787626962142197,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": 1.1985226223453371,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2026-01-01",
+      "end": "2026-06-30",
+      "label": "2026-01-01 \u2192 2026-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 2252000.0,
+        "cor": 2916000.0,
+        "rd": 1415000.0,
+        "sga": 6215000.0,
+        "costs_total": 10546000.0,
+        "oi": -8294000.0,
+        "pretax": -22236000.0,
+        "tax": 4000.0,
+        "ni": -22240000.0,
+        "pl": -22200000.0,
+        "ocf": -9529000.0,
+        "da": 1771000.0,
+        "dep": 1800000.0,
+        "sbc": 276000.0,
+        "capex": 4968000.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "sga": {
+          "label": "SellingGeneralAndAdministrativeExpense"
+        },
+        "costs_total": {
+          "label": "CostsAndExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "ocf": {
+          "label": "NetCashProvidedByUsedInOperatingActivities"
+        },
+        "da": {
+          "label": "DepreciationDepletionAndAmortization"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "sbc": {
+          "label": "ShareBasedCompensation"
+        },
+        "capex": {
+          "label": "PaymentsToAcquirePropertyPlantAndEquipment"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -3.6829484902309058,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -9.875666074600355,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": -4.231349911190053,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": -6.4373889875666075,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.12255772646536411,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": 0.6283303730017762,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": 2.206039076376554,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    },
+    {
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "label": "2026-04-01 \u2192 2026-06-30",
+      "unit": "USD",
+      "values": {
+        "revenue": 1181000.0,
+        "cor": 1419000.0,
+        "rd": 713000.0,
+        "sga": 3311000.0,
+        "costs_total": 5443000.0,
+        "oi": -4262000.0,
+        "pretax": -15295000.0,
+        "tax": 4000.0,
+        "ni": -15299000.0,
+        "pl": -15300000.0,
+        "dep": 900000.0,
+        "sbc": 151000.0
+      },
+      "evidence": {
+        "revenue": {
+          "label": "Revenues"
+        },
+        "cor": {
+          "label": "CostOfRevenue"
+        },
+        "rd": {
+          "label": "ResearchAndDevelopmentExpense"
+        },
+        "sga": {
+          "label": "SellingGeneralAndAdministrativeExpense"
+        },
+        "costs_total": {
+          "label": "CostsAndExpenses"
+        },
+        "oi": {
+          "label": "OperatingIncomeLoss"
+        },
+        "pretax": {
+          "label": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+        },
+        "tax": {
+          "label": "IncomeTaxExpenseBenefit"
+        },
+        "ni": {
+          "label": "NetIncomeLoss"
+        },
+        "pl": {
+          "label": "ProfitLoss"
+        },
+        "dep": {
+          "label": "Depreciation"
+        },
+        "sbc": {
+          "label": "AllocatedShareBasedCompensationExpense"
+        }
+      },
+      "metrics": [
+        {
+          "id": "gross_margin",
+          "label": "Gross margin",
+          "value": null,
+          "formula": "Gross profit / revenue",
+          "inputs": [
+            "gp",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "operating_margin",
+          "label": "Operating margin",
+          "value": -3.6088060965283657,
+          "formula": "Operating income / revenue",
+          "inputs": [
+            "oi",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "net_margin",
+          "label": "Net margin",
+          "value": -12.954276037256562,
+          "formula": "Net income / revenue",
+          "inputs": [
+            "ni",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "ocf_margin",
+          "label": "Operating cash margin",
+          "value": null,
+          "formula": "Operating cash flow / revenue",
+          "inputs": [
+            "ocf",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "fcf_margin",
+          "label": "Free cash flow margin",
+          "value": null,
+          "formula": "(Operating cash flow \u2212 cash CapEx) / revenue",
+          "inputs": [
+            "ocf",
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "cash_conversion",
+          "label": "Cash conversion",
+          "value": null,
+          "formula": "Operating cash flow / positive net income",
+          "inputs": [
+            "ocf",
+            "ni"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        },
+        {
+          "id": "sbc_intensity",
+          "label": "Stock compensation / revenue",
+          "value": 0.12785774767146485,
+          "formula": "Stock compensation / revenue; not an extra deduction from GAAP earnings",
+          "inputs": [
+            "sbc",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "rd_intensity",
+          "label": "R&D / revenue",
+          "value": 0.6037256562235394,
+          "formula": "R&D expense / revenue; investment intensity, not a quality verdict",
+          "inputs": [
+            "rd",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "available"
+        },
+        {
+          "id": "capex_intensity",
+          "label": "Cash CapEx / revenue",
+          "value": null,
+          "formula": "Cash CapEx / revenue; excludes noncash additions",
+          "inputs": [
+            "capex",
+            "revenue"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "accrual_ratio",
+          "label": "Accrual ratio",
+          "value": null,
+          "formula": "(Net income \u2212 operating cash flow) / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "ocf",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "roa",
+          "label": "Return on average assets",
+          "value": null,
+          "formula": "Net income / average assets; not annualized",
+          "inputs": [
+            "ni",
+            "assets_open",
+            "assets_close"
+          ],
+          "format": "percent",
+          "status": "not_available"
+        },
+        {
+          "id": "current_ratio",
+          "label": "Current ratio",
+          "value": null,
+          "formula": "Current assets / current liabilities",
+          "inputs": [
+            "current_assets",
+            "current_liabilities"
+          ],
+          "format": "multiple",
+          "status": "not_available"
+        }
+      ],
+      "reconciled": false
+    }
+  ],
+  "limitations": [
+    "IPO price, proceeds and dilution are not inferred from funding announcements.",
+    "Commitments, recognized lease liabilities and cash expenses may overlap and must not be added.",
+    "Company-specific cost presentation does not establish cost of revenue or gross margin."
+  ],
+  "classification": "registration_unclassified",
+  "sections": [
+    {
+      "title": "Prospectus Summary",
+      "excerpt": "PROSPECTUS SUMMARY 1 THE OFFERING 7 RISK FACTORS 8 USE OF PROCEEDS 37 DIVIDEND POLICY 38 DETERMINATION OF OFFERING PRICE 39 MARKET INFORMATION FOR OUR COMMON STOCK 39 DESCRIPTION OF THE MERGER, THE PRIVATE PLACEMENT, AND RELATED TRANSACTIONS 40 DESCRIPTION OF OUR BUSINESS 46 MANAGEMENT\u2019S DISCUSSION AND ANALYSIS OF FINANCIAL\u00a0\u00a0CONDITION AND RESULTS OF OPERATIONS 55 MANAGEMENT 68 COMPENSATION OF DIRECTORS AND EXECUTIVE OFFICERS 73 CERTAIN RELATIONSHIPS AND RELATED PARTY TRANSACTIONS 81 SECURITY OWNERSHIP OF CERTAIN BENEFICIAL OWNERS AND MANAGEMENT 84 SELLING STOCKHOLDERS 85 PLAN OF DISTRIBUTION 107 DESCRIPTION OF CAPITAL STOCK 109 SHARES ELIGIBLE FOR FUTURE SALE 114 LEGAL MATTERS 117 EXPERTS 117 WHERE YOU CAN FIND MORE INFORMATION 117 UNAUDITED PRO FORMA CONDENSED COMBINED FINANCIAL INFORMATION 118 INDEX TO FINANCIAL STATEMENTS F-1 PART\u00a0II II-1 EXHIBIT INDEX II-4 SIGNATURES II-6 Field: Page",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Use of Proceeds",
+      "excerpt": "Use of proceeds We will not receive any proceeds from the sale of the shares of common stock offered by the selling stockholders. Offering price The selling stockholders     may only sell their shares of common stock pursuant to this prospectus at a fixed price of $3.00 per share until such time as our     common stock is quoted on the OTCQB or the OTCQX or listed on a national securities exchange. At and after such time, the selling     stockholders may sell all or a portion of their shares through public or private transactions at prevailing market prices or at privately     negotiated prices. Risk factors You should read the \u201cRisk Factors\u201d section of this prospectus for a discussion of factors to consider carefully before deciding to invest in shares of our common stock. Market for our shares There is not now and never has been any market for our securities and an active market may ne",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Risk Factors",
+      "excerpt": "Risk factors You should read the \u201cRisk Factors\u201d section of this prospectus for a discussion of factors to consider carefully before deciding to invest in shares of our common stock. Market for our shares There is not now and never has been any market for our securities and an active market may never develop. We intend to arrange for a broker-dealer to apply to have our common stock quoted on the OTCQB or another over-the-counter system. In the future, we intend to seek to have the common stock listed on a national securities exchange. However, we may not be successful in having our shares quoted on an over-the-counter market or listed on a national securities exchange. The number of shares of common stock outstanding is based on an aggregate of 106,313,117 shares outstanding as of September 30, 2026 but excludes: \u25cf 6,742,311 shares of common stock issuable upon the exercise of stock opti",
+      "status": "source_excerpt_not_model_conclusion"
+    },
+    {
+      "title": "Dividend Policy",
+      "excerpt": "DIVIDEND POLICY 38 DETERMINATION OF OFFERING PRICE 39 MARKET INFORMATION FOR OUR COMMON STOCK 39 DESCRIPTION OF THE MERGER, THE PRIVATE PLACEMENT, AND RELATED TRANSACTIONS 40 DESCRIPTION OF OUR BUSINESS 46 MANAGEMENT\u2019S DISCUSSION AND ANALYSIS OF FINANCIAL\u00a0\u00a0CONDITION AND RESULTS OF OPERATIONS 55 MANAGEMENT 68 COMPENSATION OF DIRECTORS AND EXECUTIVE OFFICERS 73 CERTAIN RELATIONSHIPS AND RELATED PARTY TRANSACTIONS 81 SECURITY OWNERSHIP OF CERTAIN BENEFICIAL OWNERS AND MANAGEMENT 84 SELLING STOCKHOLDERS 85 PLAN OF DISTRIBUTION 107 DESCRIPTION OF CAPITAL STOCK 109 SHARES ELIGIBLE FOR FUTURE SALE 114 LEGAL MATTERS 117 EXPERTS 117 WHERE YOU CAN FIND MORE INFORMATION 117 UNAUDITED PRO FORMA CONDENSED COMBINED FINANCIAL INFORMATION 118 INDEX TO FINANCIAL STATEMENTS F-1 PART\u00a0II II-1 EXHIBIT INDEX II-4 SIGNATURES II-6 Field: Page; Sequence: 3; Options: NewSection; Value: 1 Field: Sequence; Type: Lo",
+      "status": "source_excerpt_not_model_conclusion"
+    }
+  ],
+  "source_tables": [
+    {
+      "table_index": 173,
+      "rows": [
+        [
+          "",
+          "",
+          "Three Months Ended June 30,",
+          "",
+          "",
+          "Six Months Ended June 30,",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          ""
+        ],
+        [
+          "",
+          "",
+          "(in thousands)",
+          "",
+          "",
+          "(in thousands)",
+          ""
+        ],
+        [
+          "Revenue",
+          "",
+          "$",
+          "1,181",
+          "",
+          "",
+          "$",
+          "1,083",
+          "",
+          "",
+          "$",
+          "2,252",
+          "",
+          "",
+          "$",
+          "3,673",
+          ""
+        ],
+        [
+          "Operating expenses",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Cost of revenue",
+          "",
+          "",
+          "1,419",
+          "",
+          "",
+          "",
+          "1,063",
+          "",
+          "",
+          "",
+          "2,916",
+          "",
+          "",
+          "",
+          "3,153",
+          ""
+        ],
+        [
+          "Selling, general and administrative",
+          "",
+          "",
+          "3,311",
+          "",
+          "",
+          "",
+          "2,737",
+          "",
+          "",
+          "",
+          "6,215",
+          "",
+          "",
+          "",
+          "5,619",
+          ""
+        ],
+        [
+          "Research and development",
+          "",
+          "",
+          "713",
+          "",
+          "",
+          "",
+          "1,298",
+          "",
+          "",
+          "",
+          "1,415",
+          "",
+          "",
+          "",
+          "2,645",
+          ""
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "",
+          "5,443",
+          "",
+          "",
+          "",
+          "5,098",
+          "",
+          "",
+          "",
+          "10,546",
+          "",
+          "",
+          "",
+          "11,417",
+          ""
+        ],
+        [
+          "Loss from operations",
+          "",
+          "",
+          "(4,262",
+          ")",
+          "",
+          "",
+          "(4,015",
+          ")",
+          "",
+          "",
+          "(8,294",
+          ")",
+          "",
+          "",
+          "(7,744",
+          ")"
+        ],
+        [
+          "Interest income (expense), net",
+          "",
+          "",
+          "60",
+          "",
+          "",
+          "",
+          "(800",
+          ")",
+          "",
+          "",
+          "(314",
+          ")",
+          "",
+          "",
+          "(1,580",
+          ")"
+        ],
+        [
+          "Other income (expense), net",
+          "",
+          "",
+          "(11,093",
+          ")",
+          "",
+          "",
+          "(3,169",
+          ")",
+          "",
+          "",
+          "(13,628",
+          ")",
+          "",
+          "",
+          "(1,051",
+          ")"
+        ],
+        [
+          "Loss before provision for income taxes",
+          "",
+          "",
+          "(15,295",
+          ")",
+          "",
+          "",
+          "(7,984",
+          ")",
+          "",
+          "",
+          "(22,236",
+          ")",
+          "",
+          "",
+          "(10,375",
+          ")"
+        ],
+        [
+          "Provision for income taxes",
+          "",
+          "",
+          "4",
+          "",
+          "",
+          "",
+          "6",
+          "",
+          "",
+          "",
+          "4",
+          "",
+          "",
+          "",
+          "6",
+          ""
+        ],
+        [
+          "Net loss",
+          "",
+          "$",
+          "(15,299",
+          ")",
+          "",
+          "$",
+          "(7,990",
+          ")",
+          "",
+          "$",
+          "(22,240",
+          ")",
+          "",
+          "$",
+          "(10,381",
+          ")"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 174,
+      "rows": [
+        [
+          "",
+          "",
+          "Three Months Ended June 30,",
+          "",
+          "",
+          "Change",
+          "",
+          "",
+          "Six Months Ended June 30,",
+          "",
+          "",
+          "Change",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "%",
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "%",
+          ""
+        ],
+        [
+          "",
+          "",
+          "(in thousands)",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "(in thousands)",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Revenue",
+          "",
+          "$",
+          "1,181",
+          "",
+          "",
+          "$",
+          "1,083",
+          "",
+          "",
+          "",
+          "9",
+          "%",
+          "",
+          "$",
+          "2,252",
+          "",
+          "",
+          "$",
+          "3,673",
+          "",
+          "",
+          "",
+          "-39",
+          "%"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 175,
+      "rows": [
+        [
+          "",
+          "",
+          "Three Months Ended June 30,",
+          "",
+          "",
+          "Change",
+          "",
+          "",
+          "Six Months Ended June 30,",
+          "",
+          "",
+          "Change",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "%",
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "%",
+          ""
+        ],
+        [
+          "",
+          "",
+          "(in thousands)",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "(in thousands)",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Cost of revenue",
+          "",
+          "$",
+          "1,419",
+          "",
+          "",
+          "$",
+          "1,063",
+          "",
+          "",
+          "",
+          "33",
+          "%",
+          "",
+          "$",
+          "2,916",
+          "",
+          "",
+          "$",
+          "3,153",
+          "",
+          "",
+          "",
+          "-8",
+          "%"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 180,
+      "rows": [
+        [
+          "",
+          "",
+          "Year Ended December 31,",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          ""
+        ],
+        [
+          "",
+          "",
+          "(In thousands)",
+          ""
+        ],
+        [
+          "Revenue",
+          "",
+          "$",
+          "6,012",
+          "",
+          "",
+          "$",
+          "3,585",
+          ""
+        ],
+        [
+          "Operating expense",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Cost of revenue",
+          "",
+          "",
+          "6,160",
+          "",
+          "",
+          "",
+          "4,709",
+          ""
+        ],
+        [
+          "Selling, general and administrative",
+          "",
+          "",
+          "14,540",
+          "",
+          "",
+          "",
+          "12,943",
+          ""
+        ],
+        [
+          "Research and development",
+          "",
+          "",
+          "5,129",
+          "",
+          "",
+          "",
+          "4,351",
+          ""
+        ],
+        [
+          "Total operating expenses",
+          "",
+          "",
+          "25,829",
+          "",
+          "",
+          "",
+          "22,003",
+          ""
+        ],
+        [
+          "Loss from operations",
+          "",
+          "",
+          "(19,817",
+          ")",
+          "",
+          "",
+          "(18,418",
+          ")"
+        ],
+        [
+          "Interest expense, net",
+          "",
+          "",
+          "(3,254",
+          ")",
+          "",
+          "",
+          "(2,235",
+          ")"
+        ],
+        [
+          "Other expenses, net",
+          "",
+          "",
+          "(16,594",
+          ")",
+          "",
+          "",
+          "(9,409",
+          ")"
+        ],
+        [
+          "Loss before provision for income taxes",
+          "",
+          "",
+          "(39,665",
+          ")",
+          "",
+          "",
+          "(30,062",
+          ")"
+        ],
+        [
+          "Provision for income taxes",
+          "",
+          "",
+          "6",
+          "",
+          "",
+          "",
+          "2",
+          ""
+        ],
+        [
+          "Net loss",
+          "",
+          "$",
+          "(39,671",
+          ")",
+          "",
+          "$",
+          "(30,064",
+          ")"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 181,
+      "rows": [
+        [
+          "",
+          "",
+          "Year Ended December 31,",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          "",
+          "",
+          "Change %",
+          ""
+        ],
+        [
+          "",
+          "",
+          "(In thousands)",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Revenue",
+          "",
+          "$",
+          "6,012",
+          "",
+          "",
+          "$",
+          "3,585",
+          "",
+          "",
+          "",
+          "68",
+          "%"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 182,
+      "rows": [
+        [
+          "",
+          "",
+          "Year Ended December 31,",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          "",
+          "",
+          "Change %",
+          ""
+        ],
+        [
+          "",
+          "",
+          "(In thousands)",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "Cost of Revenue",
+          "",
+          "$",
+          "6,160",
+          "",
+          "",
+          "$",
+          "4,709",
+          "",
+          "",
+          "",
+          "31",
+          "%"
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 187,
+      "rows": [
+        [
+          "",
+          "",
+          "Six Months Ended June 30,",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2026",
+          "",
+          "",
+          "2025",
+          ""
+        ],
+        [
+          "",
+          "",
+          "(in thousands)",
+          ""
+        ],
+        [
+          "Net cash used in operating activities",
+          "",
+          "$",
+          "(9,529",
+          ")",
+          "",
+          "$",
+          "(7,991",
+          ")"
+        ],
+        [
+          "Net cash used in investing activities",
+          "",
+          "$",
+          "(4,968",
+          ")",
+          "",
+          "$",
+          "(1,184",
+          ")"
+        ],
+        [
+          "Net cash provided by financing activities",
+          "",
+          "$",
+          "24,979",
+          "",
+          "",
+          "$",
+          "4,326",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    },
+    {
+      "table_index": 188,
+      "rows": [
+        [
+          "",
+          "",
+          "Year Ended December 31,",
+          ""
+        ],
+        [
+          "",
+          "",
+          "2025",
+          "",
+          "",
+          "2024",
+          ""
+        ],
+        [
+          "",
+          "",
+          "(In thousands)",
+          ""
+        ],
+        [
+          "Net cash used in operating activities",
+          "",
+          "$",
+          "(11,349",
+          ")",
+          "",
+          "$",
+          "(17,842",
+          ")"
+        ],
+        [
+          "Net cash used in investing activities",
+          "",
+          "$",
+          "(3,025",
+          ")",
+          "",
+          "$",
+          "(3,239",
+          ")"
+        ],
+        [
+          "Net cash provided by financing activities",
+          "",
+          "$",
+          "9,468",
+          "",
+          "",
+          "$",
+          "25,616",
+          ""
+        ]
+      ],
+      "status": "unmapped_source_table",
+      "note": "Original columns retained; periods and scale require review before modeling."
+    }
+  ],
+  "analysis_state": "parsed",
+  "parser_version": 1
+}
