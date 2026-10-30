@@ -178,6 +178,75 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     W2.series[0].inc = null; W2.series[0].dist = null; S.finish(W2, W2);
     ok(!S.report(W2).cols.some((c) => c[0] === 'div') && !W2.final[0].sub, 'no distributions: no column');
   }
+  // adjustments: a tax on dividends, cash, inflation, a discount rate; the dividends year by year; the snowball's report
+  {
+    const Y = 365.25 * 864e5;
+    // the total return rebuilt after a tax: a flat $100 with $1 a quarter reinvests 0.85% a payment
+    const pr = Array(60).fill(100), dvx = Array(60).fill(0); [6, 19, 32, 45, 58].forEach((w) => { dvx[w] = 1; });
+    const nt = S.netTR(pr, dvx.map((x) => x * 0.85), 0);
+    ok(Math.abs(nt[59] / nt[0] - Math.pow(1.0085, 5)) < 1e-12 && Math.abs(S.netTR(pr, dvx, 0)[59] / 100 - Math.pow(1.01, 5)) < 1e-12, 'total return after a tax');
+    const G = Array.from({ length: 53 }, (_, i) => Date.UTC(2021, 0, 1) + 7 * i * 864e5);
+    ok(Math.abs(S.growIdx(G, null, 4)[52] - Math.pow(1.04, 364 / 365.25)) < 1e-12, 'a fixed rate compounded week by week');
+    ok(Math.abs(S.growIdx(G, G.map(() => 5), null)[52] - Math.pow(1.05, 364 / 365.25)) < 1e-12, 'a rate week by week');
+    const mo = S.monthlyOn({ y0: 2020, m0: 11 }, [10, 11, null, 13], G.slice(0, 15));
+    ok(mo[0] === 11 && mo[5] === 11 && mo[6] === 11 && mo[10] === 13 && mo[14] === 13, 'a month\'s figure for each week, the last on file after: ' + mo);
+    // the fixture of before (flat $100, $1 a quarter): a 15% tax, cash at 4%, prices rising 3%
+    const base = { k: 'growth', t: 'FLT', from: '2020-01-10', to: '2022-04-25', amt: '10000', div: 'tr' };
+    const T15 = await S.build(Object.assign(S.parseState(''), base, { dtax: '15' })), L = T15.grid.length - 1, f15 = T15.series[0];
+    const paidN = [6, 19, 32, 45, 58, 71, 84, 97, 110].filter((w) => w > 0 && w <= L).length;
+    ok(Math.abs(f15.inc.shares - 100 * Math.pow(1.0085, paidN)) < 1e-9 && Math.abs(f15.inc.total - 10000 * (Math.pow(1.0085, paidN) - 1)) < 1e-6, `after a 15% tax: ${f15.inc.total}`);
+    ok(/after a 15% tax/.test(T15.sub) && [...T15.notes].some((x) => /15% tax/.test(x)), 'the tax is named');
+    const A = await S.build(Object.assign(S.parseState(''), base, { cashl: '1', cashr: '4', infl: 'line', inflr: '3', disc: '5' }));
+    const cash = A.series.find((x) => x.key === 'CASH'), cpi = A.series.find((x) => x.key === 'CPI'), yrs = (A.grid[L] - A.grid[0]) / Y;
+    ok(cash.bench === 'cash' && Math.abs(cash.v[L] - 10000 * S.growIdx(A.grid, null, 4)[L]) < 1e-6 && cpi.bench === 'infl' && Math.abs(cpi.v[L] - 10000 * S.growIdx(A.grid, null, 3)[L]) < 1e-6, 'cash and inflation lines: the same money at their rate');
+    ok(A.title === '$10,000 invested in FLT', 'the title names the tickers only: ' + A.title);
+    A.endCard = true; A.style = 'line'; S.finish(A, A);
+    const R = S.report(A), keys = R.cols.map((c) => c[0]), row = (k) => R.rows.find((x) => x.label === k);
+    ok(['real', 'vsc', 'pv'].every((k) => keys.includes(k)) && row('Cash').bench === 'cash', 'after inflation, against cash and present value: ' + keys);
+    const v = A.series[0].v[L], nominal = Math.pow(v / 10000, 1 / yrs) - 1;
+    ok(Math.abs(row('FLT').cells.real[2] - ((1 + nominal) / 1.03 - 1)) < 2e-3 && Math.abs(row('Inflation').cells.real[2]) < 1e-6, 'the rate after inflation: ' + row('FLT').cells.real[2]);
+    const pv5 = v / Math.pow(1.05, yrs), npv5 = pv5 - 10000;
+    ok(Math.abs(row('FLT').cells.pv[2] - pv5) < 1e-6 && row('FLT').cells.pv[1] === `NPV ${npv5 >= 0 ? '+' : '−'}${S.money(Math.abs(npv5), 0)}`, 'present value and NPV: ' + row('FLT').cells.pv);
+    ok(Math.abs(row('FLT').cells.vsc[2] - (v - cash.v[L])) < 1e-6, 'against cash');
+    ok(R.years && R.years.rows[0].part && R.years.rows.map((r) => r.y).join() === '2020,2021,2022' && R.years.rows[1].v[0] > 0 && !R.years.rows[1].part && R.years.rows[2].part, 'dividends by year, the part years marked');
+    ok(S.yearsCSV(R).split('\n')[0] === 'year,part of the year,FLT' && S.reportText(R).includes(R.years.title), 'the years as CSV and text');
+    // every value in dollars of the start: prices rising 3% a year
+    const Rl = await S.build(Object.assign(S.parseState(''), base, { infl: 'real', inflr: '3' })), fr = Rl.series[0], df = 1 / S.growIdx(Rl.grid, null, 3)[L];
+    ok(Rl.real && Math.abs(fr.v[L] - fr.nom[L] * df) < 1e-6 && Math.abs(fr.v[0] - 10000) < 1e-9 && /after inflation, in Jan 2020 dollars/.test(Rl.sub), 'real values: ' + fr.v[L]);
+    S.finish(Rl, Rl); const Rr = S.report(Rl).rows[0];
+    ok(Math.abs(Rr.cells.yr[2] - ((1 + nominal) / 1.03 - 1)) < 2e-3 && /before inflation/.test(Rr.cells.yr[1]) && /as paid then/.test(Rr.cells.end[1]), 'the report after inflation');
+    // dividends taken as cash earning 4%: each payment compounds to the end
+    const Sp = await S.build(Object.assign(S.parseState(''), base, { div: 'split', dint: '1', cashr: '4' })), sp = Sp.series[0], gi = S.growIdx(Sp.grid, null, 4);
+    const want = [6, 19, 32, 45, 58, 71, 84, 97, 110].filter((w) => w > 0 && w <= L).reduce((a, w) => a + 100 * gi[L] / gi[w], 0);
+    ok(Math.abs(sp.cash[L] - want) < 1e-6 && Math.abs(sp.inc.total - 100 * paidN) < 1e-9 && /earning the cash rate/.test(Sp.sub), 'cash from dividends earning interest: ' + sp.cash[L] + ' vs ' + want);
+    // history: the CPI index and the 3-month bill when published; before that the year-on-year CPI and the Fed funds rate
+    S.resetMacro();
+    const months = Array.from({ length: 48 }, (_, i) => `${2019 + Math.floor(i / 12)}-${String(i % 12 + 1).padStart(2, '0')}`);
+    files['disclosures/data/market/history/macro.json'] = { monthly: { months, data: { cpi: months.map(() => 2.4), ff: months.map(() => 1.5) } } };
+    const H1 = await S.build(Object.assign(S.parseState(''), base, { cashl: '1', infl: 'line' }));
+    const c1 = H1.series.find((x) => x.key === 'CASH'), i1 = H1.series.find((x) => x.key === 'CPI'), yrs1 = (H1.grid[L] - H1.grid[0]) / Y;
+    ok(Math.abs(c1.v[L] / 10000 - Math.pow(1.015, yrs1)) < 2e-3 && Math.abs(i1.v[L] / 10000 - Math.pow(1.024, yrs1)) < 3e-3 && c1.name === 'Cash at the Fed funds rate' && [...H1.notes].some((x) => /approximate/.test(x)), 'the fallbacks: ' + c1.v[L] + ' / ' + i1.v[L]);
+    S.resetMacro();
+    files['disclosures/data/market/history/macro.json'] = { levels: { start: '2019-01', cpi: months.map((_, i) => 250 * Math.pow(1.002, i)), bill3m: months.map(() => 3) } };
+    const H2 = await S.build(Object.assign(S.parseState(''), base, { cashl: '1', infl: 'real' }));
+    const c2 = H2.series.find((x) => x.key === 'CASH');
+    ok(c2.name === 'Cash in 3-month Treasury bills' && Math.abs(c2.nom[L] / 10000 - Math.pow(1.03, yrs1)) < 2e-3 && H2.real && ![...H2.notes].some((x) => /approximate/.test(x)), 'the published levels');
+    // the snowball: a tax on dividends, its report and its months
+    const Sn0 = await S.build(Object.assign(S.parseState('k=snowball'), { t: 'FLT', amt: '10000', from: '2020-01-10', to: '2022-04-25' }));
+    const Sn = await S.build(Object.assign(S.parseState('k=snowball'), { t: 'FLT', amt: '10000', from: '2020-01-10', to: '2022-04-25', dtax: '15' }));
+    const p0 = Sn0.series[0].paid.reduce((a, x) => a + x, 0), p1 = Sn.series[0].paid.reduce((a, x) => a + x, 0);
+    ok(Math.abs(p1 - 10000 * (Math.pow(1.0085, paidN) - 1)) < 1e-6 && p1 < p0 && /15% tax/.test(Sn.sub), 'the snowball after a tax: ' + p1);
+    S.finish(Sn, Sn); const Rs = S.report(Sn);
+    ok(['put', 'sh', 'all', 'mo', 'one', 'yoc', 'end'].every((k) => Rs.cols.some((c) => c[0] === k)) && Rs.years && Rs.rows[0].cells.put[2] === 10000, 'snowball report: ' + Rs.cols.map((c) => c[0]));
+    const sc = S.csvOf(Sn, Rs).trim().split('\n');
+    ok(sc[0] === 'month,FLT dividends,FLT shares' && sc.length === new Set(Sn.grid.map((g) => new Date(g).toISOString().slice(0, 7))).size + 1, 'the snowball month by month: ' + sc[0]);
+    // the bars of dividends: the snowball by month and by year, the growth race's panel by year
+    for (const scf of ['monthly', 'annual']) { Sn.scf = scf; Sn.endCard = true; for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 4, 11.9]) S.draw(ctx, ar[0], ar[1], Sn, { theme: 'bull', dur: 12 }, t); n++; }
+    for (const V of [A, Sp, T15]) for (const dview of ['total', 'year']) for (const style of ['line', 'bars', 'area', 'tiles']) {
+      V.style = style; V.dview = dview; V.dinc = 'panel'; for (const t of [0, 6, 11.9]) S.draw(ctx, 1920, 1080, V, { theme: 'clean', dur: 12 }, t); n++;
+    }
+    delete files['disclosures/data/market/history/macro.json']; S.resetMacro();
+  }
   // the report of the other kinds: their end figures, empty columns left out
   {
     const V = await S.build(Object.assign(S.parseState('k=drawdown'), { t: 'AAA,BBB', from: start }));
