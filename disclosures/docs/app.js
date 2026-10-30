@@ -82,9 +82,16 @@ function derivedMarketNotice(tab,modules,markets,nowMs=Date.now()){
    ' · '+(built?'Generated '+built:'Generation time unavailable')+
    ' · '+sources.join(' · ')+details};
 }
+function niceTimes(text){
+ return String(text).replace(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]00:?00)/g,(m)=>{
+  const d=new Date(m);if(isNaN(d))return m;
+  const mins=Math.round((Date.now()-d)/60000),ago=mins<1?'just now':mins<60?mins+' min ago':mins<48*60?Math.round(mins/60)+' h ago':Math.round(mins/1440)+' days ago';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'})+', '+m.slice(11,16)+' UTC ('+ago+')'});
+}
 function baseRender(){
  const d=data(),m=moduleData();
- $('buildtime').textContent='Snapshot built: '+(d.generated_at||'Not generated')+(window.HUB_BUILD&&window.HUB_BUILD.published_at?` · published ${window.HUB_BUILD.published_at}${window.HUB_BUILD.commit?' (build '+window.HUB_BUILD.commit+')':''}`:'');
+ $('buildtime').textContent=niceTimes('Data snapshot '+(d.generated_at||'not generated yet')+(window.HUB_BUILD&&window.HUB_BUILD.published_at?` · page published ${window.HUB_BUILD.published_at}`:''));
+ if(window.HUB_BUILD&&window.HUB_BUILD.commit)$('buildtime').title='build '+window.HUB_BUILD.commit;
  const published=window.HUB_BUILD?.published_at;
  const derived=state.mode!=='official'?null:
    state.tab==='rotation'?rotationNotice(typeof marketStore!=='undefined'?activeRotationReport(marketStore):{},published):
@@ -97,6 +104,7 @@ function baseRender(){
    state.tab==='status'?'Sources run independently. Errors retain the previous valid data and never substitute demo figures.':
    derived?derived.text:
    `Official snapshot · Status ${m.status||'Not collected'} · Last success/partial completion ${m.updated_at||'—'} · Last attempt ${m.last_attempt||'—'}${m.error?' · '+m.error:''}`;
+ $('notice').textContent=niceTimes($('notice').textContent);
 }
 function lineChart(rows,key,unit){
  if(!rows.length)return empty('No data in this date range');
@@ -236,8 +244,12 @@ function csvCell(v){let s=typeof v==='object'&&v!==null?JSON.stringify(v):String
 function downloadCSV(){if(!exported.length)return;const keys=uniq(exported.flatMap(Object.keys));const csv='\ufeff'+[keys.map(csvCell).join(','),...exported.map(r=>keys.map(k=>csvCell(r[k])).join(','))].join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`disclosure-${state.tab}-${state.mode}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 $('mode').onchange=e=>{state.mode=e.target.value;state.page=0;state.date='';state.filing='';render()};
 const TABS=[...document.querySelectorAll('nav button[data-tab]')].map(b=>b.dataset.tab);
-function syncPills(){document.querySelectorAll('nav button[data-tab]').forEach(x=>{const on=x.dataset.tab===state.tab;x.classList.toggle('active',on);x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))})}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.page=0;state.date='';syncPills();try{history.replaceState(null,'','#'+state.tab)}catch(e){}render()});
+function syncPills(){const cur=qs1(`nav button[data-tab="${state.tab}"]`),lab=document.getElementById('hub-pick-label');if(cur&&lab)lab.textContent=cur.textContent;document.querySelectorAll('nav button[data-tab]').forEach(x=>{const on=x.dataset.tab===state.tab;x.classList.toggle('active',on);x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on))})}
+document.querySelectorAll('nav button[data-tab]').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;state.page=0;state.date='';syncPills();hubPick(false);try{history.replaceState(null,'','#'+state.tab)}catch(e){}render()});
+/* phones: the sections open as a sheet from one "Section ▾" button */
+const qs1=(sel)=>typeof document.querySelector==='function'?document.querySelector(sel):null;
+function hubPick(open){const nav=qs1('nav.modules'),b=qs1('.hub-pick');if(!nav||!b)return;nav.classList.toggle('open',open);b.setAttribute('aria-expanded',String(open))}
+{const b=qs1('.hub-pick');if(b)b.onclick=()=>hubPick(!qs1('nav.modules').classList.contains('open'));addEventListener('keydown',e=>{if(e.key==='Escape')hubPick(false)});if(typeof document.addEventListener==='function')document.addEventListener('click',e=>{const n=qs1('nav.modules');if(n&&n.classList.contains('open')&&!e.target.closest('.hub-groups')&&!e.target.closest('.hub-pick'))hubPick(false)})}
 /* deep links: disclosures/#signals, #flows, #trades, #holdings … */
 /* deep links from the site's search: #holdings/<manager CIK>, #trades/<official's name>, #etf/<ticker> */
 function deepLink(h,v){if(!v)return;if(h==='holdings')state.manager=v.replace(/\D/g,'');else if(h==='trades'){state.tperson=v;state.page=0}else if(h==='etf'){state.eview='one';state.esym=v.toUpperCase()}}

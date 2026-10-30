@@ -400,7 +400,7 @@
       const source = sourceBlock(n, spec.cite, ctx.cik);                    // where the figure was taken from
       // Ask the existing Spin Sankey Flo to explain the exact selected node,
       // with the current report period and source, without fabricating value.
-      const flo = !ctx.group ? '<button class="btn" type="button" data-flo-node>Ask Flo · explain this number</button>' : '';
+      const flo = !ctx.group ? '<button class="btn primary" type="button" data-flo-node>Ask Flo what moved this number</button>' : '';
       return `<div class="eyebrow">${ctx.group ? t(ctx.groupName) : t(ctx.company)} · ${t(ctx.label)}</div>
         <div class="k">${t(n.name)}</div><div class="v">${lines}</div>${source}${trend}${body}${flo}
         <button class="btn" type="button" data-clear>Close note</button>`;
@@ -434,7 +434,10 @@
         window.FFMascot.explain({
           cik: ctx.cik, label: S.dec(n.name), period: ctx.label,
           display: n.lines && n.lines[1] ? S.dec(n.lines[1][1]) : '',
-          docUrl: ctx.docUrl || null
+          docUrl: ctx.docUrl || null,
+          // the chart's own figures, so Flo can say what moved this line (web/flo-features.js explainFigures)
+          id: n.id, nodes: spec.nodes.map((x) => ({ id: x.id, name: x.name, v: x.v, q: x.q, y: x.y })),
+          links: spec.links.map((l) => ({ s: l.s, t: l.t, v: l.v, q: l.q, y: l.y }))
         });
       });
     }
@@ -596,27 +599,30 @@
     const groups = ix.sectors.length + ix.industries.length;
     if (!here()) return;
     app.innerHTML = `
+      <div class="home-top">
       <section class="hero">
         <div class="eyebrow">SEC EDGAR · 10-Q, 10-K and 8-K earnings releases</div>
         <h1>Every new quarterly report, drawn as one flow from revenue to cash</h1>
-        <p>A scan of EDGAR every 15 minutes picks up new 10-Q and 10-K filings and earnings releases (8-K), reads their financial statements and draws revenue, costs, profit and operating cash flow as a Sankey. Click any node for what the company itself wrote about that line.</p>
+        <p>EDGAR is scanned every 15 minutes for new 10-Q and 10-K filings and earnings releases (8-K); each is drawn from revenue to costs, profit and operating cash flow. Click any part of a chart for what the company wrote about that line.</p>
         ${ix.demo ? `<p class="note-rule">${t(ix.demo)}</p>` : ''}
-        <div class="status"><span>Last update <b>${date(ix.generated)}</b> ${t((ix.generated || '').slice(11, 16))} UTC</span>
-          <span><b>${ix.companies.length}</b> companies</span><span><b>${groups}</b> sector and industry charts</span><span>Scans every 15 minutes</span></div>
+        <div class="status"><span>Updated <b>${date(ix.generated)}</b> ${t((ix.generated || '').slice(11, 16))} UTC</span>
+          <span><b>${ix.companies.length.toLocaleString('en-US')}</b> companies</span><span><b>${groups}</b> sector and industry charts</span></div>
       </section>
+      <section class="cta" id="cta" hidden>
+        <div><h2>New charts in your inbox</h2>
+          <p class="muted">Pick companies or sectors. One e-mail at 8:00 your time with each new filing’s chart and analysis, or each chart as it is filed. No password: sign in with a code sent to your inbox.</p></div>
+        <form class="cta-form" id="cta-form"><input type="email" required placeholder="you@example.com" aria-label="E-mail address" autocomplete="email">
+          <button class="btn primary" type="submit">Get alerts</button></form>
+      </section>
+      </div>
+      <section class="section" id="earnings-day"></section>
       ${stars.length ? `<section class="section">
-        <div class="section-head"><h2>Starred</h2><span class="muted">Multi-quarter history${site.repo ? ` · add companies in <a href="https://github.com/${t(site.repo)}/edit/main/config/starred.txt" target="_blank" rel="noopener">config/starred.txt</a>` : ''}</span></div>
+        <div class="section-head"><h2>Starred</h2><span class="muted">Companies with their full multi-quarter history</span></div>
         <div class="cards">${stars.map((c) => `<a class="card" href="#c-${c.cik}">
           <div class="t"><span class="mono">${t(c.ticker)}</span><span>${t(c.name)}</span></div>
           <div class="big">${t(c.rev)}</div>
           <div class="n">${t(c.label)} revenue · <span class="${tone(c.yoy)}">${pct(c.yoy)} Y/Y</span> · ${margin(c.om)} op. margin</div></a>`).join('')}</div>
       </section>` : ''}
-      <section class="cta" id="cta" hidden>
-        <div><h2>Get new charts by e-mail</h2>
-          <p class="muted">Pick companies or sectors; a daily report arrives every morning at 8:00 your time with each new filing’s chart and analysis (or get each one as soon as it is out). No password: sign in with a code sent to your inbox.</p></div>
-        <form class="cta-form" id="cta-form"><input type="email" required placeholder="you@example.com" aria-label="E-mail address" autocomplete="email">
-          <button class="btn primary" type="submit">Get alerts</button></form>
-      </section>
       <section class="section daily" id="daily" hidden></section>
       <section class="section">
         <div class="section-head"><h2>Latest filings</h2><span class="muted">Newest first</span></div>
@@ -653,7 +659,14 @@
       }
       box.hidden = false;
     }).catch(() => {});
-    dailyPanel($('#daily'), ix).catch((e) => console.warn('daily report panel:', e.message));
+    if (window.FFEarningsDay) window.FFEarningsDay.mount($('#earnings-day'), ix, {           // web/earnings-day.js
+      onAll: () => { const r = $('#rows'); if (r) r.closest('section').scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+      onDay: (iso) => { const b = $(`#daily [data-day="${iso}"]`); if (b && !b.disabled && !b.classList.contains('on')) b.click(); } });
+    app.classList.add('has-ed');
+    dailyPanel($('#daily'), ix).then(() => {
+      const on = $('#earnings-day .day.on'), b = on && $(`#daily [data-day="${on.dataset.edDay}"]`);
+      if (b && !b.disabled && !b.classList.contains('on')) b.click();
+    }).catch((e) => console.warn('daily report panel:', e.message));
     let limit = 60;
     const draw = () => {
       const q = $('#f-text').value.trim().toLowerCase(), sec = $('#f-sector').value;
@@ -713,15 +726,19 @@
       <div class="page-head">
         <div class="crumbs"><a href="#home">Latest</a><span>/</span>${hasSec ? `<a href="#s-${p.sector}">${t(sectors[p.sector])}</a>` : `<span>${t(sectors[p.sector] || 'Other')}</span>`}
           <span>/</span>${hasInd ? `<a href="#i-${indSlug}">${t(p.industry)}</a>` : `<span>${t(p.industry || 'SIC ' + p.sic)}</span>`}</div>
-        <h1>${t(p.name)}</h1>
+        <div class="co-head">
+          <div class="co-title"><h1>${t(p.name)}</h1>${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}${(p.exchanges || []).filter(Boolean).slice(0, 1).map((x) => `<span class="muted">${t(x)}</span>`).join('')}</div>
+          <div class="co-actions">
+            ${ticker ? `<button class="btn follow primary" type="button" hidden data-follow="ticker:${t(ticker)}">☆ Follow</button>` : ''}
+            ${cmpId ? '' : `<button class="btn send" type="button" hidden data-send="${p.cik}|${(all ? qs : [q]).map((x) => x.end).join(',')}|${fy ? 'fy' : 'q'}"
+              title="Sent to the address you signed in with: chart, analysis and what changed">✉ Email me ${all ? `all ${qs.length} quarters` : t(q.label) + (fy ? ' full year' : '')}</button>`}
+            ${ticker ? `<a class="btn" href="#studio/k=fund&amp;t=${encodeURIComponent(ticker)}&amp;m=revenue&amp;ttm=0" title="Animated videos of this company's figures and its share price (web/studio.js)">▶ <span class="co-long">Make a </span>video</a>` : ''}
+          </div>
+        </div>
         <div class="meta">
-          ${ticker ? `<span class="tag mono">${t(ticker)}</span>` : ''}${(p.exchanges || []).filter(Boolean).slice(0, 1).map((x) => `<span>${t(x)}</span>`).join('')}${ticker ? `<a class="tag" href="#studio/k=fund&amp;t=${encodeURIComponent(ticker)}&amp;m=revenue&amp;ttm=0" title="Animated videos of this company's figures and its share price (web/studio.js)">▶ Make a video</a>` : ''}
-          ${ticker ? `<button class="btn follow" type="button" hidden data-follow="ticker:${t(ticker)}">☆ Follow</button>` : ''}
-          ${cmpId ? '' : `<button class="btn send" type="button" hidden data-send="${p.cik}|${(all ? qs : [q]).map((x) => x.end).join(',')}|${fy ? 'fy' : 'q'}"
-            title="Sent to the address you signed in with: chart, analysis and what changed">✉ Email me ${all ? `all ${qs.length} quarters` : t(q.label) + (fy ? ' full year' : '')}</button>`}
           ${c.starred ? '<span class="tag star">★ Starred · multi-quarter history</span>' : ''}${!all && !cmpId && q.form === '8-K' ? prelimTag : ''}${!all && !cmpId && q.release_check ? finalTag(q.release_check) : ''}
-          <span>CIK <span class="mono">${p.cik}</span></span><span>SIC <span class="mono">${t(p.sic)}</span> ${t(p.industry)}</span>
-          ${fye ? `<span>Fiscal year ends ${fye}</span>` : ''}${p.category ? `<span>${t(String(p.category).split(/\s*<br\s*\/?>\s*/i).filter(Boolean).join(' · '))}</span>` : ''}
+          <details class="co-codes"><summary>Company details</summary><span>CIK <span class="mono">${p.cik}</span></span><span>SIC <span class="mono">${t(p.sic)}</span> ${t(p.industry)}</span>${
+            fye ? `<span>Fiscal year ends ${fye}</span>` : ''}${p.category ? `<span>${t(String(p.category).split(/\s*<br\s*\/?>\s*/i).filter(Boolean).join(' · '))}</span>` : ''}</details>
         </div>
         ${freshLine(qs[0], ix.generated)}
         <div class="meta co-chains" id="co-chains" hidden></div>
@@ -729,10 +746,13 @@
         ${introHTML(c.intro)}
         ${companyTabs(cik, '')}
       </div>
-      <div class="pills" role="tablist" aria-label="Period">
-        ${qs.map((x) => `<a class="pill ${!all && !fy && !cmpId && x === q ? 'on' : ''}" href="#c-${cik}-${x.end}">${t(x.label)}${x.form === '8-K' ? ' · 8-K' : ''}</a>`).join('')}
-        ${ys.map((x) => `<a class="pill year ${fy && x === q ? 'on' : ''}" href="#c-${cik}-fy-${x.end}" title="The full fiscal year, from the 10-K">${t(x.label)} · full year</a>`).join('')}
-        ${qs.length > 1 ? `<a class="pill ${all ? 'on' : ''}" href="#c-${cik}-all">All ${qs.length} quarters</a>` : ''}
+      <div class="pills co-period" id="co-period">
+        <label class="co-period-pick"><span>Period</span><select id="co-period-sel" aria-label="Period">
+          <optgroup label="Quarters">${qs.map((x) => `<option value="#c-${cik}-${x.end}" ${!all && !fy && !cmpId && x === q ? 'selected' : ''}>${t(x.label)}${x.form === '8-K' ? ' · 8-K' : ''} · ${t(x.end)}</option>`).join('')}</optgroup>
+          ${ys.length ? `<optgroup label="Full years">${ys.map((x) => `<option value="#c-${cik}-fy-${x.end}" ${fy && x === q ? 'selected' : ''}>${t(x.label)} · full year</option>`).join('')}</optgroup>` : ''}
+          ${qs.length > 1 ? `<optgroup label="History"><option value="#c-${cik}-all" ${all ? 'selected' : ''}>All ${qs.length} quarters</option></optgroup>` : ''}
+          ${cmpId ? '<option value="" selected>A comparison you asked for</option>' : ''}
+        </select></label>
         <button class="pill cmp ${cmpId ? 'on' : ''}" type="button" id="cmp-open" hidden aria-expanded="false" aria-controls="cmp-panel">⇄ Compare any two</button>
       </div>
       ${own !== 'USD' ? ccyBar(own, inUsd, !!c.usd, q) : ''}
@@ -741,6 +761,7 @@
       <div id="ff-company-disclosures"></div>
       <div id="body"></div>
       <p class="co-more muted" id="co-more"></p>`;
+    $('#co-period-sel').addEventListener('change', (ev) => { if (ev.target.value) location.hash = ev.target.value.slice(1); });
     if (ticker) coChains($('#co-chains'), ticker);
     if (ticker) coIndex($('#co-index'), ticker);
     $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-x-fairvalue">fair value</a> · <a href="#c-${cik}-value">DCF calculator</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a>`;
@@ -787,6 +808,8 @@
       } : null,
     });
     body.appendChild(ui);
+    const ctl = $('.controls', ui), per = $('#co-period');
+    if (ctl && per) { per.classList.add('in-chart'); ctl.prepend(per); }   // the period sits on the chart it changes
     if (window.matchMedia && matchMedia('(max-width: 560px)').matches && $('#ff-overview')) ui.after($('#ff-overview'));   // phones: the chart first
     if (window.FFEditor && !fy && (own === 'USD' || inUsd)) window.FFEditor.mount(body, { q, c, ticker, slug: `${(ticker || p.cik)}-${q.label}`.replace(/\s+/g, '-') });   // web/editor.js: edit / what-if
     const acc = accession(q.index_url);
@@ -822,6 +845,8 @@
         </dl>
       </div>`;
     body.appendChild(text);
+    const disc = $('#ff-company-disclosures');                 // debt and disclosure signals: after the chart and its analysis
+    if (disc) text.after(disc);
     // Created by ChatGPT (OpenAI): user-initiated loopback assistant, separate from rule-based analysis.
     // owner tool only (see #owner): it needs the Windows companion running on this computer
     if (window.LocalFilingModel && prefs.get('owner', false)) window.LocalFilingModel.mount(body, p, q);
@@ -923,13 +948,14 @@
       if (here()) body.innerHTML = `<p class="muted">${t(v.label)} could not load (${t(err.message)}).</p>`;
     }
   }
-  // four groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
+  // five groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
     ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
     ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-opportunity']]],
-    ['Relationships & model', [['links', 'Customers, suppliers & model'], ['shock', 'Shock panel'], ['x-outside'], ['x-insiders']]],
+    ['Holders & trades', [['holders', '13F funds & officials'], ['x-insiders']]],
+    ['Relationships & model', [['links', 'Customers, suppliers & model'], ['shock', 'Shock panel'], ['x-outside']]],
   ];
   function tabGroups() {
     const ext = new Map(EXT_VIEWS.map((v) => ['x-' + v.id, v.label]));
@@ -938,7 +964,7 @@
       if (k.startsWith('x-')) { if (!ext.has(k)) return null; used.add(k); return [k, l || ext.get(k)]; }
       return [k, l];
     }).filter(Boolean)]);
-    ext.forEach((l, k) => { if (!used.has(k)) groups[3][1].push([k, l]); });   // a new Disclosure Hub view: the last group
+    ext.forEach((l, k) => { if (!used.has(k)) groups[groups.length - 1][1].push([k, l]); });   // a new Disclosure Hub view: the last group
     return groups;
   }
   const companyTabs = (cik, active) => {
@@ -1039,6 +1065,7 @@
       return;
     }
     if (which === 'posts') return postsSection(body, c, ticker, here);
+    if (which === 'holders') return ticker ? holdersSection(body, ticker, here) : (body.innerHTML = '<p class="muted">No ticker on file, so the 13F and officials\u2019 records cannot be matched to this company.</p>');
     if (which === 'links') return linksSection(body, c, ticker, here);
     if (which.startsWith('x-')) return extView(body, which.slice(2), c, ticker, here);
     const D = c.quality;
@@ -5308,7 +5335,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|risk|consensus|eps|posts|links|shock|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|risk|consensus|eps|posts|links|shock|holders|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

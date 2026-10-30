@@ -98,4 +98,4 @@ function bindDashboard(){
  if($('npx-more'))$('npx-more').onclick=()=>loadMoreVotes(data().modules.npx.filings.find(f=>f.accession===state.filing));
  document.querySelectorAll('[data-security]').forEach(b=>{b.onclick=()=>{state.security=b.dataset.security;render();$('security')?.scrollIntoView?.({block:'center',behavior:'smooth'})};b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();b.onclick()}}});
 }
-function navigate(tab){state.tab=tab;state.page=0;document.querySelectorAll('nav button').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab);b.setAttribute('aria-pressed',String(b.dataset.tab===tab))});render()}
+function navigate(tab){state.tab=tab;state.page=0;document.querySelectorAll('nav button[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab);b.setAttribute('aria-pressed',String(b.dataset.tab===tab))});render()}

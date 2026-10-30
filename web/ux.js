@@ -59,8 +59,9 @@
     a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
-  // a categorical palette for series (colour-blind safe order); a series keeps its slot as others come and go
-  const PALETTE = ['#2a78d6', '#d9822b', '#17734a', '#8a4fd6', '#c0392b', '#16a085', '#7a7974', '#b5446e'];
+  // a categorical palette for series; a series keeps its slot as others come and go
+  // the same order as the 13F pies (web/styles.css .pie13): every multi-series chart on the site reads one palette
+  const PALETTE = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#8a4fd6', '#7a7974'];
   // diluted weighted-average shares: the last fiscal year on file (Capital allocation data), else null
   function shares(c) {
     const R = (((c || {}).quality || {}).cap || {}).shares || [];

@@ -42,7 +42,15 @@
       return `<div class="nav-group" data-group="${g.id}"><button class="nav-top" type="button" aria-expanded="false" aria-haspopup="true">${esc(g.label)}<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
         <div class="nav-menu" role="menu">${g.items.map(([id, h, l, d]) =>
           `<a role="menuitem" href="${esc(href(base, h, here))}" data-nav="${id}"${here === id ? ' class="on" aria-current="page"' : ''}><b>${esc(l)}</b><span>${esc(d)}</span></a>`).join('')}</div></div>`;
-    }).join('');
+    }).join('') +
+      // phones: the site's settings live in this menu instead of a lone button beside the logo (web/appearance.js)
+      '<button class="nav-top nav-settings" type="button">Settings &amp; appearance</button>';
+    const settings = nav.querySelector('.nav-settings');
+    settings.addEventListener('click', () => {
+      setMobile(false);
+      const A = global.FFAppearance;
+      if (A && A.open) A.open(); else { const b = document.getElementById('ff-appearance-button'); if (b) b.click(); }
+    });
     const groups = Array.from(nav.querySelectorAll('.nav-group'));
     const close = (except) => groups.forEach((g) => { if (g !== except) { g.classList.remove('open'); g.querySelector('.nav-top').setAttribute('aria-expanded', 'false'); } });
     groups.forEach((g) => {

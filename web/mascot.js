@@ -31,6 +31,7 @@
   const academy = () => root.FFFloAcademy || (typeof module !== 'undefined' ? require('./flo-academy.js') : null);
   const workbooks = () => root.FFFloWorkbook || (typeof module !== 'undefined' ? require('./flo-workbook.js') : null);
   const realWorkbooks = () => root.FFFloRealWorkbook || (typeof module !== 'undefined' ? require('./flo-real-workbook.js') : null);
+  const features = () => root.FFFloFeatures || (typeof module !== 'undefined' && typeof require === 'function' ? require('./flo-features.js') : null);
   const memo = new Map();
   const json = (u) => { if (!memo.has(u)) memo.set(u, fetch(u, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)); return memo.get(u); };
   const fileT = (t) => String(t || '').toUpperCase().replace(/\./g, '-');
@@ -413,6 +414,29 @@
     if(pulse && pulse.intent && pulse.intent(q) && pulse.report)
       return { ...pulse.report(q,lg==='zh'), company:co||null };
 
+    // web/flo-features.js: the page guide, the watchlist and two companies side by side
+    const FX = features();
+    if (FX) {
+      if (FX.isTour(q)) {
+        const kind = FX.tourKind(pageContext(ix, root.location));
+        if (kind && ui && !ui.panel.hidden) close();                    // the guide points at the page, not at Flo
+        const ok = kind && FX.startTour(kind, lg);
+        return { html: ok ? L(lg, 'Here is the page, one part at a time. Press Esc to stop.', '带你一步步看这一页，按 Esc 可以随时停止。') : L(lg, 'The page guide covers company pages, the home page and Disclosures.', '页面指南适用于公司页、首页和 Disclosures。'), mood: 'wave', facts: [], links: [], company: co };
+      }
+      if (FX.isDigest(q)) {
+        const d = FX.watched().length ? FX.digest(ix, FX.watched(), null, lg) : null;
+        return d ? { ...d, company: co } : { html: L(lg, 'You are not following any company here yet. Say “follow NVDA”.', '你还没有在这里关注公司。试试「关注 NVDA」。'), mood: 'think', facts: [], links: [] };
+      }
+      const named = findCompany(q, ix);
+      if (FX.isCompare(q)) {
+        const cos = FX.findCompanies(q, ix, findCompany, ZH_NAMES);       // two companies named: "AMD vs NVDA", "苹果和微软对比"
+        if (cos.length === 2) {
+          const r = await FX.compare(cos, lg, (c) => json(DATA + 'c/' + c.cik + '.json'));
+          if (r) return { ...r, company: cos[0], intents: ['compare'] };
+        }
+      }
+      if (FX.isWatch(q) && (named || !cls.length)) return FX.watchAnswer(q, named || co, lg);
+    }
     const SECWB = realWorkbooks();
     if (SECWB && SECWB.route(q)) return { ...SECWB.launch(q,co), company: co || null };
     const WB = workbooks();
@@ -808,10 +832,14 @@
   }
 
   async function explainNode(context) {
-    const A = academy(); if (!A) return null;
-    const ix = await index();
+    const A = academy(), FX = features();
+    if (!A && !FX) return null;
+    const ix = await index(), lg = zhUI() ? 'zh' : 'en';
     const co = ((ix && ix.companies) || []).find(c => +c.cik === +(context && context.cik)) || null;
-    const answer = A.explain(co, zhUI() ? 'zh' : 'en', context || {});
+    const figs = FX && context && context.nodes ? FX.explainFigures(context, lg) : null;
+    const base = A ? A.explain(co, lg, context || {}) : { html: '', links: [], actions: [] };
+    const answer = figs ? { ...base, html: figs.html + (A ? '<details class="flo-def"><summary>' + (lg === 'zh' ? '定义' : 'How it is defined') + '</summary>' + base.html + '</details>' : ''),
+      links: figs.links.concat((base.links || []).filter(l => !figs.links.some(f => f[0] === l[0]))), facts: figs.facts } : base;
     if (!ui) return answer;
     open();
     const msg = addMsg(answer.html + (answer.links && answer.links.length ?
@@ -879,6 +907,17 @@
     if (!ui.log.childElementCount) {
       const g = greetFor(ui.ctx, zhUI());
       addMsg(g || helpAnswer(zhUI() ? 'zh' : 'en', ui.co).html, 'bot'); ui.greeted = ui.ctx && ui.ctx.key;
+      const FX = features();
+      if (FX) {
+        index().then((ix) => { const d = FX.visitDigest(ix, zhUI() ? 'zh' : 'en'); if (d && ui) addMsg(d.html, 'bot'); }).catch(() => {});
+        const kind = FX.tourKind(ui.ctx);
+        if (kind && !FX.toured(kind)) {
+          const m = addMsg(zhUI() ? '第一次来这一页？' : 'New to this page?', 'bot');
+          const b = doc.createElement('button'); b.type = 'button'; b.className = 'flo-action'; b.textContent = zhUI() ? '带我看看' : 'Show me around';
+          b.addEventListener('click', () => { close(); FX.startTour(kind, zhUI() ? 'zh' : 'en'); });
+          m.appendChild(b);
+        }
+      }
     }
     renderChips();
     layout();
@@ -935,6 +974,8 @@
     root.addEventListener('resize', layout);
     ui.input.addEventListener('input', () => { const t = nowMs(); ui.typingUntil = t + 1500; ui.halves[1].hop = t + 260; });
     r.querySelector('.flo-hint button').addEventListener('click', (e) => { e.stopPropagation(); e.currentTarget.parentElement.hidden = true; store.set('seen', '1'); });
+    // the first-visit greeting steps out of the way of the page after a few seconds (it sits over the content)
+    if (!store.get('seen')) setTimeout(() => { const h = r.querySelector('.flo-hint'); if (h && ui.panel.hidden) { h.hidden = true; store.set('seen', '1'); } }, 9000);
     r.querySelector('.flo-x').addEventListener('click', close);
     r.querySelector('.flo-resize').addEventListener('click', () => {
       ui.expanded = !ui.expanded;
@@ -1025,7 +1066,10 @@
       event.ticker+' · '+(zhUI()?'电话会议资料已更新':'Verified earnings call'));
     return true;
   }
-  root.FFMascot = { open, ask, explain: explainNode, mount, classify, findCompany, lang, pageContext, chipsFor,
+  // from the search palette: ask now, or put a half-typed question in the box ("NVDA vs ")
+  function say(q) { if (!ui) return false; open(); send(q); return true; }
+  function prefill(q) { if (!ui) return false; open(); ui.input.value = q; setTimeout(() => { ui.input.focus({ preventScroll: true }); ui.input.setSelectionRange(q.length, q.length); }, 360); return true; }
+  root.FFMascot = { open, ask, say, prefill, explain: explainNode, mount, classify, findCompany, lang, pageContext, chipsFor,
     signalReaction, showSignal, refreshSignalData, openTool, toolHost, notify, notifyEarnings,
     refreshAppearance() { if (ui && ui.panel.hidden) mood('idle'); }
   };

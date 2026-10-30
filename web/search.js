@@ -17,7 +17,7 @@
   function load() {
     if (IX) return Promise.resolve(IX);
     if (!loading) {
-      loading = Promise.all([U.site('index.json'), U.site('search.json'), U.site('companies.json')]).then(([ix, sx, all]) => {
+      loading = Promise.all([U.site('index.json'), U.site('search.json'), U.site('companies.json'), U.site('chains/index.json')]).then(([ix, sx, all, ch]) => {
         const site = ((ix && ix.companies) || []).map((c) => ({ k: 'company', id: +c.cik, tk: c.ticker || '', name: U.dec(c.name), rev: c.revenue || 0, href: `#c-${c.cik}` }));
         const have = new Set(site.map((c) => c.id));
         const sec = ((all && all.companies) || []).filter((r) => !have.has(+r[0])).map((r, i) => ({ k: 'company', id: +r[0], tk: r[1] || '', name: r[2] || '', rev: -i, off: true, href: `#c-${r[0]}` }));
@@ -26,7 +26,12 @@
         const off = (sxx.officials || []).map((r) => ({ k: 'official', id: r[0], tk: '', name: r[0], sub: [r[1], r[2] ? `${r[2]} trades` : ''].filter(Boolean).join(' · '), w: r[2] || 0, href: `disclosures/#trades/${encodeURIComponent(r[0])}` }));
         const etf = (sxx.etfs || []).map((r) => ({ k: 'etf', id: r[0], tk: r[0], name: r[1] || r[0], w: r[2] || 0, href: `disclosures/#etf/${encodeURIComponent(r[0])}` }));
         const pages = PAGES.map(([n, h]) => ({ k: 'page', id: h, tk: '', name: n, href: h }));
-        IX = { site, sec, mgr, off, etf, pages };
+        // sectors, SIC industries and the supply chains / themes, each with its own page
+        const names = (ix && ix.sector_names) || {};
+        const groups = [].concat(((ix && ix.sectors) || []).map((g) => ({ k: 'sector', id: 's' + g.id, tk: '', name: U.dec(g.name || names[g.id] || g.id), sub: 'sector', href: `#s-${g.id}` })),
+          ((ix && ix.industries) || []).map((g) => ({ k: 'industry', id: 'i' + g.id, tk: '', name: U.dec(g.name), sub: `industry · SIC ${g.id}`, href: `#i-${g.id}` })),
+          ((ch && ch.chains) || []).map((g) => ({ k: 'chain', id: 'c' + g.id, tk: '', name: U.dec(g.name || g.title || g.id), sub: 'supply chain / theme', href: `#chain-${g.id}` })));
+        IX = { site, sec, mgr, off, etf, pages, groups };
         return IX;
       });
     }
@@ -57,16 +62,16 @@
       .sort((a, b) => b[0] - a[0] || tie(b[1]) - tie(a[1])).slice(0, n).map((x) => x[1]);
     const co = pick(IX.site, per, (e) => e.rev);
     const more = co.length < per ? pick(IX.sec, per - co.length, (e) => e.rev) : [];
-    return [['Companies', co.concat(more)], ['13F managers', pick(IX.mgr, 4, (e) => e.w)], ['Officials', pick(IX.off, 4, (e) => e.w)],
+    return [['Companies', co.concat(more)], ['Industries & themes', pick((IX.groups || []).filter((e) => score(e, q) >= 400), 3, () => 0)], ['13F managers', pick(IX.mgr, 4, (e) => e.w)], ['Officials', pick(IX.off, 4, (e) => e.w)],
       ['ETFs', pick(IX.etf, 4, (e) => e.w)], ['Pages', pick(IX.pages, 3, () => 0)]].filter((g) => g[1].length);
   }
-  const KIND = { company: '', manager: '13F', official: 'Official', etf: 'ETF', page: 'Page' };
+  const KIND = { company: '', manager: '13F', official: 'Official', etf: 'ETF', page: 'Page', sector: 'Sector', industry: 'Industry', chain: 'Theme', action: 'Do', flo: 'Flo' };
   const row = (e, i, hi) => `<a href="${U.esc(e.href)}" class="${i === hi ? 'hi' : ''}${e.off ? ' off' : ''}" data-i="${i}">${e.tk ? `<span class="mono">${U.esc(e.tk)}</span>` : `<span class="fx-kind">${KIND[e.k]}</span>`}<span>${U.esc(e.name)}${e.sub ? ` <small class="muted">${U.esc(e.sub)}</small>` : ''}</span>${e.off ? '<span class="tag">no chart yet</span>' : ''}</a>`;
 
   // the header box: hub people and funds under the company results (never companies: app.js lists those)
   function moreHTML(q) {
     if (!IX) { load(); return ''; }
-    const groups = find(q, 0).filter((g) => g[0] !== 'Companies' && g[0] !== 'Pages');
+    const groups = find(q, 0).filter((g) => g[0] !== 'Companies' && g[0] !== 'Pages' && g[0] !== 'Industries & themes');
     return groups.map(([h, list]) => `<div class="fx-sg">${U.esc(h)}</div>` + list.map((e) => row(e, -1, -2)).join('')).join('');
   }
 
@@ -79,14 +84,14 @@
     dlg.setAttribute('role', 'dialog');
     dlg.setAttribute('aria-modal', 'true');
     dlg.setAttribute('aria-label', 'Search everything');
-    dlg.innerHTML = `<div class="fx-pal-box"><input type="search" class="fx-pal-in" placeholder="Company, ticker, 13F manager, official, ETF or page" aria-label="Search everything" autocomplete="off">
+    dlg.innerHTML = `<div class="fx-pal-box"><input type="search" class="fx-pal-in" placeholder="Company, ticker, industry, theme, 13F manager, official or ETF — or ask Flo" aria-label="Search everything" autocomplete="off">
       <div class="fx-pal-list" role="listbox"><div class="muted fx-pal-hint">Type to search companies, 13F managers, officials and ETFs. ↑↓ to move, Enter to open, Esc to close.</div></div>
       <div class="fx-pal-foot muted">Ctrl/⌘ K anywhere · data: SEC EDGAR via this site and the Disclosure Hub</div></div>`;
     document.body.appendChild(dlg);
     const input = dlg.querySelector('input'), list = dlg.querySelector('.fx-pal-list');
     let flat = [], hi = 0;
     const draw = () => {
-      const groups = find(input.value, 6);
+      const groups = find(input.value, 6).concat(actions(input.value));
       flat = groups.flatMap((g) => g[1]);
       hi = Math.min(hi, Math.max(0, flat.length - 1));
       let i = 0;
@@ -104,13 +109,37 @@
         const cur = list.querySelector('a.hi'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (flat[hi]) { go(flat[hi].href); }
+        if (flat[hi]) { act(flat[hi]); }
       } else if (e.key === 'Escape') close();
     });
-    list.addEventListener('click', (e) => { if (e.target.closest('a')) close(); });
+    list.addEventListener('click', (e) => {
+      const a = e.target.closest('a');
+      if (!a) return;
+      const x = flat[+a.dataset.i];
+      if (x && x.flo != null) { e.preventDefault(); act(x); } else close();
+    });
     dlg.addEventListener('mousedown', (e) => { if (e.target === dlg) close(); });
     if (initial) input.value = initial;
     input.focus();
+  }
+  // what the palette can do besides opening a page: compare the top company with another, or ask Flo (web/mascot.js)
+  function actions(q) {
+    q = String(q || '').trim();
+    if (!q || !IX) return [];
+    const top = (find(q, 1)[0] || [])[0] === 'Companies' ? find(q, 1)[0][1][0] : null, out = [];
+    const flo = typeof root.FFMascot === 'object' && root.FFMascot;
+    if (top && !top.off && top.tk) {
+      if (flo) out.push({ k: 'action', name: `Compare ${top.tk} with…`, sub: 'side by side, with Flo', href: '#', flo: `${top.tk} vs `, fill: true });
+      if (flo) out.push({ k: 'flo', name: `What changed at ${top.name} last quarter?`, sub: 'ask Flo', href: '#', flo: `${top.tk} latest earnings` });
+    }
+    if (flo) out.push({ k: 'flo', name: `Ask Flo: “${q.slice(0, 60)}”`, sub: '', href: '#', flo: q });
+    return out.length ? [['Do something', out]] : [];
+  }
+  function act(e) {
+    if (e.flo == null) return go(e.href);
+    close();
+    const F = root.FFMascot;
+    if (F && e.fill && F.prefill) F.prefill(e.flo); else if (F && F.say) F.say(e.flo);
   }
   function go(href) {
     close();
@@ -130,7 +159,7 @@
     const q = document.getElementById('q');
     if (q) q.addEventListener('focus', () => load(), { once: true });
   }
-  root.FFSearch = { load, find, score, moreHTML, open, close, _setIndex: (ix) => { IX = ix; } };
+  root.FFSearch = { load, find, actions, score, moreHTML, open, close, _setIndex: (ix) => { IX = ix; } };
   if (typeof module !== 'undefined') module.exports = root.FFSearch;
   else setup();
 })(typeof globalThis !== 'undefined' ? globalThis : this);
