@@ -22,6 +22,13 @@
                from period to period, or the periods as columns (quality.cap of data/c/<cik>.json: pipeline/capital.py).
                The company video adds free cash flow, capital spending and shareholder returns (the cash flow
                statements' last eight quarters and five years), the operating cash margin and cash conversion.
+     spend     spend or invest: a thing bought — an iPhone every year (Apple's launch prices), a car, furniture, a house, a
+               graphics card — or a habit (a coffee a day, Netflix, sneakers), with its value falling (or rising) a set
+               share a year, replaced every n years and traded in, kept up ($ a year and a share of its value), bought
+               with a loan, saving a rent, and one-off costs; against the same money on the same dates in stocks (the
+               maker's and an index), money that comes back taken out of them. Events (purchases, trade-ins, a loan paid
+               off, repairs) are marked on the time axis and spelled out as they come; the report gives each side, the
+               money year by year and every event.
    Growth races take a lump sum and/or the same amount bought every n trading days, weeks, months or years (the money put
    in drawn as a dashed line; the end card gives each ticker's money-weighted return a year). Stocks get dividends
    (split out or left out) from the weekly history's dividend list (t/<SYM>.json: d, p). Whichever way they are used,
@@ -455,15 +462,15 @@
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
     rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
-    goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', cper: 'fy', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '' };
+    goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA', dinc: 'label', dview: 'total', cper: 'fy', sp: 'phone', spi: 'iPhone', spp: '999', spinf: 'pro', spir: '', spn: '1', sptr: '1', spd1: '-40', spd: '-25', spf: '5', spu: '100', spup: '0', sps: '0', spl: '0', spld: '20', splr: '6', splt: '5', spbc: '0', spsc: '0', sphab: '0', sphe: 'm', sphn: '1', spe: '', dtax: '', cashl: '0', cashr: '', infl: 'none', inflr: '', dint: '0', disc: '' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
     ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials history'], ['holdings', '13F / Officials latest mix'],
-    ['sankey', 'Earnings flow'], ['cash', 'Where the cash went'], ['snowball', 'Dividend snowball'], ['timing', 'Timing']];
+    ['sankey', 'Earnings flow'], ['cash', 'Where the cash went'], ['snowball', 'Dividend snowball'], ['timing', 'Timing'], ['spend', 'Spend or invest']];
   const STYLES = { growth: [['line', 'Line race'], ['bars', 'Bar race'], ['area', 'Areas'], ['tiles', 'Counters']], rrg: [['rrg', 'RRG']], momentum: [['bars', 'Bar race'], ['line', 'Lines']],
     fund: [['columns', 'Columns'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], formula: [['line', 'Lines'], ['area', 'Areas'], ['tiles', 'Counters'], ['bars', 'Bar race']],
     rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']],
     bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas'], ['companies', 'Company share areas'], ['changes', 'Weight changes (pp)']], holdings: [['bars', 'Actual holdings bars']], sankey: [['sankey', 'Flow']], cash: [['fall', 'Waterfall'], ['columns', 'Period by period']], snowball: [['snow', 'Shares and income']],
-    timing: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']] };
+    timing: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']], spend: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']] };
   const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold', 'dinc', 'dview'];        // redrawn, not rebuilt
   const tickers = (st) => [...new Set(String(st.t || '').split(/[\s,;]+/).map(norm).filter(Boolean))].slice(0, 10);
 
@@ -1013,6 +1020,131 @@
     if (per === 'q' && (cap.fy || []).length > 1) out.notes.add('Quarters are each quarter on its own (a 10-Q reports the year to date: the quarters before are taken off).');
     return out;
   }
+  /* ---------- spend or invest: a thing bought, kept up, replaced and paid off, against the same money in stocks ---------- */
+  // the iPhone's US launch prices (base storage), by the September of each year: the base model, and the top one (the
+  // Plus until 2016, then the X, XS and Pro); a later year uses the latest on file
+  const IPHONE = { base: { 2012: 649, 2013: 649, 2014: 649, 2015: 649, 2016: 649, 2017: 699, 2018: 749, 2019: 699, 2020: 799, 2021: 799, 2022: 799, 2023: 799, 2024: 799, 2025: 799 },
+    pro: { 2014: 749, 2015: 749, 2016: 769, 2017: 999, 2018: 999, 2019: 999, 2020: 999, 2021: 999, 2022: 999, 2023: 999, 2024: 999, 2025: 1099 } };
+  function iphonePrice(tier, t) {
+    const T = IPHONE[tier] || IPHONE.base, ys = Object.keys(T).map(Number).sort((a, b) => a - b), d = new Date(t);
+    const y = clamp(d.getUTCFullYear() - (d.getUTCMonth() < 8 || (d.getUTCMonth() === 8 && d.getUTCDate() < 15) ? 1 : 0), ys[0], ys[ys.length - 1]);
+    return T[y];
+  }
+  // scenarios: what is bought and how it keeps its value, what it costs to keep, what it saves; the stocks to buy instead
+  const SPEND = {
+    phone: { label: 'A new iPhone every year — or Apple', s: { t: 'AAPL,SPY', spi: 'iPhone', spp: '999', spinf: 'pro', spn: '1', sptr: '1', spd1: '-40', spd: '-25', spf: '5', spu: '100', spup: '0', sps: '0', spl: '0', spbc: '0', spsc: '0', sphab: '0' } },
+    car: { label: 'A car every six years — or carmakers', s: { t: 'TSLA,F,GM,CARZ', spi: 'Car', spp: '35000', spinf: 'cpi', spn: '6', sptr: '1', spd1: '-20', spd: '-15', spf: '5', spu: '4500', spup: '0', sps: '0', spl: '1', spld: '20', splr: '6', splt: '5', spbc: '0', spsc: '0', sphab: '0' } },
+    furniture: { label: 'Furniture — or home stores', s: { t: 'HD,LOW,WSM', spi: 'Furniture', spp: '6000', spinf: 'cpi', spn: '8', sptr: '1', spd1: '-35', spd: '-15', spf: '5', spu: '150', spup: '0', sps: '0', spl: '0', spbc: '0', spsc: '0', sphab: '0' } },
+    house: { label: 'A house — or renting and investing', s: { t: 'SPY,VNQ,ITB', spi: 'House', spp: '400000', spinf: 'cpi', spn: '0', sptr: '0', spd1: '4', spd: '4', spf: '0', spu: '1500', spup: '2.1', sps: '2000', spl: '1', spld: '20', splr: '4', splt: '30', spbc: '3', spsc: '6', sphab: '0' } },
+    coffee: { label: 'A coffee a day — or Starbucks', s: { t: 'SBUX,SPY', spi: 'Coffee', spp: '4.5', spinf: 'cpi', sphab: '1', sphe: 'd', spu: '0', spup: '0', sps: '0', spl: '0' } },
+    netflix: { label: 'Netflix — or Netflix stock', s: { t: 'NFLX,SPY', spi: 'Netflix', spp: '10.99', spinf: 'cpi', sphab: '1', sphe: 'm', spu: '0', spup: '0', sps: '0', spl: '0' } },
+    sneakers: { label: 'Two pairs of sneakers a year — or Nike', s: { t: 'NKE,SPY', spi: 'Sneakers', spp: '120', spinf: 'cpi', sphab: '1', sphe: 'y', sphn: '2', spu: '0', spup: '0', sps: '0', spl: '0' } },
+    gpu: { label: 'A graphics card every three years — or Nvidia', s: { t: 'NVDA,SPY', spi: 'Graphics card', spp: '700', spinf: 'cpi', spn: '3', sptr: '1', spd1: '-30', spd: '-25', spf: '5', spu: '0', spup: '0', sps: '0', spl: '0', spbc: '0', spsc: '0', sphab: '0' } },
+    custom: { label: 'Anything else (set it below)', s: {} },
+  };
+  const ANNUITY = (P, r, n) => (r > 0 ? P * r / (1 - Math.pow(1 + r, -n)) : P / n);
+  // "date, amount, what" a line: one-off costs (a repair, new tyres); a negative amount is money back
+  function oneOffs(text) {
+    return String(text || '').split(/\n|;/).map((l) => l.trim()).filter(Boolean).map((l) => {
+      const m = /^(\d{4}-\d{2}(?:-\d{2})?)\s*[,\s]\s*(-?[\d.,]+)\s*[,\s]?\s*(.*)$/.exec(l); if (!m) return null;
+      const t = Date.parse((m[1].length === 7 ? m[1] + '-15' : m[1]) + 'T00:00:00Z'), a = +m[2].replace(/,/g, '');
+      return fin(t) && fin(a) ? { t, amount: a, label: m[3].trim() || 'One-off cost' } : null;
+    }).filter(Boolean);
+  }
+  const lowerName = (x) => (/^[A-Z][a-z]+(?: [a-z]+)*$/.test(x) ? x.toLowerCase() : x);
+  const MASS = /^(furniture|coffee|clothing|clothes|gear|equipment|software|jewelry|jewellery|luggage|food|groceries|sneakers|shoes)$/i;   // no "a" before them
+  async function buildSpend(st, out, T) {
+    const notes = out.notes, item = String(st.spi || 'It').trim().slice(0, 40) || 'It', habit = st.sphab === '1', lw = lowerName(item);
+    const syms = T.slice(0, 5); if (!syms.length) throw new Error('Add a stock to buy instead, e.g. AAPL');
+    const P = new Map(); await Promise.all(syms.map(async (s) => { const p = await price(s); if (p) P.set(s, p); }));
+    syms.filter((s) => !P.has(s)).forEach((s) => notes.add(s + ': no weekly prices on file' + (/^(VWAGY|VOW|TM|HMC|STLA|BMW)/.test(s) ? ' (not a US SEC filer: CARZ, a fund of the world\'s carmakers, holds it)' : '')));
+    if (!P.size) throw new Error('No prices on file for ' + syms.join(', '));
+    const have = [...P.values()];
+    let from = st.from ? Date.parse(st.from + 'T00:00:00Z') : Date.now() - 10 * 365.25 * DAY;
+    const start = Math.max(...have.map(first)); if (start > from + 10 * DAY) { notes.add(`Starts ${dayLabel(start)}, when every stock has prices`); from = start; }
+    const to = Math.min(st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(), ...have.map(last));
+    const G = weeklyGrid(iso(from), iso(to)); if (G.length < 8) throw new Error('Fewer than eight weeks in that range');
+    const L = G.length - 1, YR = 365.25 * DAY;
+    // prices, upkeep and savings rise with consumer prices (or a fixed rate, or not at all); the iPhone by its price list
+    const rate = rateOf(st.spir);
+    let grow = null;
+    if (st.spinf === 'fixed') grow = growIdx(G, null, rate != null ? rate : 3);
+    else if (st.spinf === 'none') grow = G.map(() => 1);
+    else {
+      const Mc = await macro(), c = monthlyOn(Mc, Mc && Mc.cpi, G);
+      if (c) grow = c.map((x) => x / c[0]); else { grow = growIdx(G, null, 3); notes.add('Consumer prices did not load: prices rise 3% a year'); }
+      if (c && !(Mc && Mc.exact)) notes.add('Consumer prices are rebuilt from the year-on-year CPI rates (approximate) until the CPI index itself is published.');
+    }
+    const table = (st.spinf === 'pro' || st.spinf === 'base') && /iphone/i.test(item) ? st.spinf : null;
+    const price0 = Math.max(0, +st.spp || 0), priceAt = (i) => (table ? iphonePrice(table, G[i]) : price0 * grow[i]);
+    const N = habit ? 0 : Math.max(0, Math.round(+st.spn || 0)), tradeIn = st.sptr !== '0';
+    const d1 = clamp((+st.spd1 || 0) / 100, -0.99, 2), d2 = clamp((st.spd === '' || st.spd == null ? +st.spd1 : +st.spd) / 100 || 0, -0.99, 2), floor = clamp((+st.spf || 0) / 100, 0, 1);
+    const upY = Math.max(0, +st.spu || 0), upP = Math.max(0, +st.spup || 0) / 100, saveM = Math.max(0, +st.sps || 0);
+    const loan = st.spl === '1' && !habit ? { down: clamp((+st.spld || 0) / 100, 0, 1), r: Math.max(0, +st.splr || 0) / 100, n: Math.max(1, Math.round(+st.splt || 5)) } : null;
+    const buyC = Math.max(0, +st.spbc || 0) / 100, sellC = Math.max(0, +st.spsc || 0) / 100;
+    if (!habit && !(price0 > 0) && !table) throw new Error('Set the price of what is bought');
+    const months = buySchedule(G, 1, 1, 'm', G[0]), renew = N ? buySchedule(G, 1, N, 'y', G[0]) : G.map((_, i) => (i ? 0 : 1));
+    // a habit: the price each time, every day (seven a week), week, month or year (n times)
+    const hu = { d: 'd', w: 'w', m: 'm', y: 'y' }[st.sphe] || 'm', hn = Math.max(1, Math.round(+st.sphn || 1));
+    const hab = habit ? (hu === 'd' ? G.map((_, i) => (i ? 7 : 1)) : hu === 'y' ? buySchedule(G, 1, 1, 'y', G[0]).map((x) => x * hn) : buySchedule(G, 1, 1, hu, G[0])) : null;
+    const extra = oneOffs(st.spe).filter((e) => e.t >= G[0] - 3 * DAY && e.t <= G[L] + 3 * DAY).map((e) => ({ ...e, i: clamp(Math.round((e.t - G[0]) / WEEK), 0, L) }));
+    // the week by week of the thing: its value, the loan, what goes out and comes in
+    let owned = false, value = 0, cost0 = 0, age = 0, bal = 0, pay = 0, count = 0;
+    const val = [], eq = [], net = [], parts = { buy: 0, trade: 0, upkeep: 0, interest: 0, principal: 0, saved: 0, oneoff: 0, habit: 0, down: 0, fees: 0 }, byYr = {}, events = [];
+    const add = (i, k, a) => { parts[k] += a; const y = new Date(G[i]).getUTCFullYear(); (byYr[y] = byYr[y] || { buy: 0, trade: 0, upkeep: 0, interest: 0, principal: 0, saved: 0, oneoff: 0, habit: 0, down: 0, fees: 0 })[k] += a; };
+    for (let i = 0; i <= L; i++) {
+      let o = 0, n2 = 0;
+      if (owned && i) { value *= Math.pow(1 + (age < 52 ? d1 : d2), 7 / 365.25); value = Math.max(value, floor * cost0); age++; }
+      if (!habit && renew[i]) {
+        if (owned) {
+          const back = tradeIn ? value * (1 - sellC) : 0;
+          if (back > 0) { n2 += back; add(i, 'trade', back); }
+          if (bal > 0) { o += bal; add(i, 'principal', bal); bal = 0; }
+          events.push({ i, kind: 'trade', label: tradeIn ? `Old ${lw} traded in` : `Old ${lw} let go`, amount: back });
+        }
+        const pr = priceAt(i), fee = pr * buyC;
+        if (loan) { const dn = pr * loan.down; o += dn + fee; add(i, 'down', dn); bal = pr - dn; pay = ANNUITY(bal, loan.r / 12, loan.n * 12); }
+        else { o += pr + fee; add(i, 'buy', pr); }
+        if (fee) add(i, 'fees', fee);
+        value = pr; cost0 = pr; age = 0; owned = true; count++;
+        events.push({ i, kind: 'buy', label: (count === 1 ? item : `New ${lw}`) + (table ? ` (${table === 'pro' ? 'top model' : 'base model'})` : '') + (loan ? `, ${Math.round(loan.down * 100)}% down` : ''), amount: -pr });
+      }
+      for (let m = 0; m < months[i]; m++) {
+        if (bal > 0) {
+          const int = bal * loan.r / 12, p = Math.min(pay, bal + int), pri = p - int;
+          o += p; add(i, 'interest', int); add(i, 'principal', pri); bal -= pri;
+          if (bal < 0.005) { bal = 0; events.push({ i, kind: 'paid', label: 'Loan paid off', amount: 0 }); }
+        }
+        if (owned) { const u = upY / 12 * grow[i] + upP / 12 * value; if (u) { o += u; add(i, 'upkeep', u); } }
+        if (owned && saveM) { const sv = saveM * grow[i]; n2 += sv; add(i, 'saved', sv); }
+      }
+      if (hab && hab[i]) { const h = hab[i] * price0 * grow[i]; o += h; add(i, 'habit', h); }
+      for (const e of extra) if (e.i === i) { o += e.amount; add(i, 'oneoff', e.amount); events.push({ i, kind: 'oneoff', label: e.label, amount: -e.amount }); }
+      net.push(o - n2); val.push(owned ? value : 0); eq.push((owned ? value : 0) - bal);
+    }
+    // the same money, week by week, into each stock (total return); money that comes back is taken out of it
+    let cum = 0; const contrib = net.map((x) => (cum += x)), flows = net.map((x, i) => [G[i], -x]).filter(([, a]) => Math.abs(a) > 1e-9);
+    out.series = [];
+    for (const s of syms) {
+      const p = P.get(s); if (!p) continue;
+      const tr = trOn(p, G); let units = 0, lastPx = null; const v = [];
+      for (let i = 0; i <= L; i++) { const px = fin(tr[i]) ? tr[i] : lastPx; if (px) { units += net[i] / px; lastPx = px; } v.push(px ? units * px : null); }
+      out.series.push({ key: s, label: `${s} instead`, name: p.name, v, idx: tr });
+    }
+    out.series.push({ key: 'ITEM', label: habit ? `${item}` : `Your ${lw}`, name: habit ? 'Spent, nothing left to sell' : loan ? 'Its value less the loan still owed' : 'What it would sell for', v: eq, role: 'out', mine: true });
+    out.kind = 'spend'; out.grid = G; out.contrib = contrib; out.flows = flows; out.fmt = (v) => money(v); out.unit = '$'; out.zero = eq.some((x) => x < 0) || out.series.some((x) => (x.v || []).some((y) => y < 0));
+    out.spend = { item, habit, count, parts, byYr, events, loan, bal, sellC, val, eq, table, N, d1, d2, upY, upP, saveM, hu, hn, price0, buyC, tradeIn, extra: extra.length };
+    const lead = syms.find((s) => P.has(s)), names = syms.filter((s) => P.has(s)).join(', ');
+    const every = { d: 'a day', w: 'a week', m: 'a month', y: hn > 1 ? `${hn} times a year` : 'a year' }[hu];
+    const a1 = MASS.test(item) ? '' : 'a ', A1 = MASS.test(item) ? '' : 'A ';
+    out.title = out.title || (habit ? `${item}: ${money(price0)} ${every} — or ${lead}` : saveM && loan ? `Buying ${a1}${lw} — or renting and investing in ${lead}` : N ? `${MASS.test(item) ? 'New' : 'A new'} ${lw} every ${N === 1 ? 'year' : N + ' years'} — or ${lead}` : `${A1 ? A1 + lw : item} — or ${lead}`);
+    const vtxt = d1 >= 0 && d2 >= 0 ? `its value ${pctf(d2, 0)} a year` : `its value ${pctf(d1, 0)} the first year, ${pctf(d2, 0)} a year after`;
+    out.sub = out.sub || `${dayLabel(G[0])} → ${dayLabel(G[L])} · ` + (habit ? `the price rising with ${st.spinf === 'none' ? 'nothing' : st.spinf === 'fixed' ? `${rate != null ? rate : 3}% a year` : 'consumer prices'}` : `${table ? 'Apple’s launch prices' : money(price0, 0)}, ${vtxt}` + (upY || upP ? ', upkeep' : '') + (loan ? `, a ${loan.n}-year loan at ${+(loan.r * 100).toFixed(2)}%` : '') + (saveM ? `, ${money(saveM, 0)} a month of rent saved` : '')) + ` · the same money into ${names}, dividends reinvested`;
+    if (P.has('CARZ') || /car/i.test(item)) notes.add('Volkswagen, Toyota and Honda do not file with the SEC, so their shares are not on the site; CARZ, a fund of the world\'s largest carmakers, holds them.');
+    if (table) notes.add('iPhone prices: Apple’s US launch prices (base storage), each September' + (table === 'pro' ? ': the Plus to 2016, then the X, XS and Pro' : '') + '; later years use the latest on file.');
+    if (saveM) notes.add('The rent saved goes to the house; the renter puts in the same money each month less the rent, and takes from the stocks when the rent costs more.');
+    return out;
+  }
   // the dividend snowball: dividends buying more shares, which pay more dividends
   // Realized historical dividend income (not a forward-yield promise).
   // 52 observed weekly periods form the terminal annual dividend window.
@@ -1184,6 +1316,7 @@
     if (k === 'holdings') return root.FFHoldingsVideo.build(st, out, { json, hub: HUB, rankMeta });
     if (k === 'sankey') return buildSankey(st, out, T);
     if (k === 'cash') return buildCash(st, out, T);
+    if (k === 'spend') return buildSpend(st, out, T);
     if (k === 'snowball') return buildSnowball(st, out, T);
     if (k === 'timing') return buildTiming(st, out, T);
     if (k === 'fund') {
@@ -1460,6 +1593,13 @@
   };
 
   /* ---------- drawing ---------- */
+  // a logarithmic axis: 1, 2 and 5 of each power of ten in the range (the 1s alone when that is too many)
+  function logTicks(a, b) {
+    const out = [];
+    if (!(a > 0) || !(b > a)) return out;
+    for (let e = Math.floor(Math.log10(a)); e <= Math.ceil(Math.log10(b)); e++) for (const m of [1, 2, 5]) { const v = m * Math.pow(10, e); if (v >= a && v <= b) out.push(v); }
+    return out.length > 7 ? out.filter((v) => Math.abs(Math.log10(v) % 1) < 1e-9) : out;
+  }
   function niceTicks(lo, hi, n = 5) {
     if (!(hi > lo)) return [lo];
     const step0 = (hi - lo) / n, p = Math.pow(10, Math.floor(Math.log10(step0))), m = [1, 2, 2.5, 5, 10].find((x) => x * p >= step0) * p;
@@ -1504,7 +1644,7 @@
   function draw(ctx, W, H, V, opt, t) {
     const th = (opt.theme === 'appearance' ? (opt.appearanceTheme || root.FFAppearance?.videoTheme()) : THEMES[opt.theme]) || THEMES.bull, S = Math.min(W, H) / 1080, tm = timing(V, opt), f = frameIndex(V, tm, t);
     const portrait = H > W * 1.2, square = !portrait && H > W * 0.8;
-    const pal = (i) => { const x = V.series && V.series[i]; return x && x.bench ? benchCol(th, x.bench) : th.pal[i % th.pal.length]; };
+    const pal = (i) => { const x = V.series && V.series[i]; return x && x.role ? roleCol(th, x.role) : x && x.bench ? benchCol(th, x.bench) : th.pal[i % th.pal.length]; };
     const F = (w, px) => `${w} ${Math.round(px * S)}px ${th.font}`;
     // background: a deep gradient, a soft light, a faint grid of dots
     const g = ctx.createLinearGradient(0, 0, W * 0.4, H);
@@ -1568,6 +1708,7 @@
       const n = V.series.length, gap = 54 * S, ph = (box.h - gap * (n - 1)) / n;
       V.series.forEach((s, i) => { const sub = Object.assign({}, V, { series: [s], zero: s.v.some((x) => x < 0) && s.v.some((x) => x > 0) }); lineRace(ctx, sub, f, { x: box.x, y: box.y + i * (ph + gap), w: box.w, h: ph }, S, th, F, (j) => pal(i + j), style === 'area', i < n - 1); });
     } else lineRace(ctx, banded ? Object.assign({}, V, { divAbove: true }) : V, f, box, S, th, F, pal, style === 'area');
+    if (V.kind === 'spend' && (style === 'line' || style === 'area')) spendEvents(ctx, V, f, box, S, th, F);
     // the date, large and faint; the brand mark; the progress hairline
     const k = clamp(Math.round(f), 0, V.grid.length - 1);
     ctx.textAlign = 'right'; ctx.fillStyle = alpha(th.text === '#1d1d1b' ? '#1d1d1b' : '#ffffff', opt.theme === 'clean' ? 0.10 : 0.12);
@@ -1615,7 +1756,7 @@
     });
     return top + rows * (ch + gap) - gap;
   }
-  function yRange(V, f, area) {
+  function yRange(V, f, area, logMode) {
     let lo = Infinity, hi = -Infinity;
     const n = Math.floor(f);
     for (const s of V.series) {
@@ -1628,6 +1769,7 @@
     if (V.contrib && !V.divPanel) { for (let i = 0; i <= n && i < V.contrib.length; i++) if (fin(V.contrib[i])) { lo = Math.min(lo, V.contrib[i]); hi = Math.max(hi, V.contrib[i]); } }
     if (V.zero || area) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
     if (!Number.isFinite(lo)) return [0, 1];
+    if (logMode && lo > 0) { const a = Math.log(lo), b = Math.log(hi), sp = (b - a) || 0.1; return [Math.exp(a - sp * 0.06), Math.exp(b + sp * 0.1)]; }
     if (hi - lo < 1e-9) { hi += Math.abs(hi) * 0.05 || 1; lo -= Math.abs(lo) * 0.05 || 1; }
     const span = hi - lo;
     return [lo - span * (V.zero || area || lo === 0 ? 0.04 : 0.08), hi + span * 0.1];
@@ -1636,12 +1778,12 @@
     const G = V.grid, n = G.length, tEnd = G[n - 1], tCur = lerp(G[Math.floor(f)], G[Math.min(n - 1, Math.floor(f) + 1)], f - Math.floor(f));
     const xMax = Math.max(tCur, G[0] + (tEnd - G[0]) * 0.12), X = (t) => b.x + (t - G[0]) / ((xMax - G[0]) || 1) * b.w;
     const log = V.scale === 'log' && V.series.every((s) => s.v.every((v) => !fin(v) || v > 0));
-    let [lo, hi] = yRange(V, f, area);
+    let [lo, hi] = yRange(V, f, area, log);
     if (log) { lo = Math.log(Math.max(lo, 1e-9)); hi = Math.log(hi); }
     const Y = (v) => b.y + b.h - ((log ? Math.log(Math.max(v, 1e-9)) : v) - lo) / ((hi - lo) || 1) * b.h;
     // grid and axes
     ctx.lineWidth = 1.2 * S; ctx.font = F(500, 22); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    const ticks = log ? niceTicks(Math.exp(lo), Math.exp(hi), 5) : niceTicks(lo, hi, 5);
+    const ticks = log ? logTicks(Math.exp(lo), Math.exp(hi)) : niceTicks(lo, hi, 5);
     for (const v of ticks) { const y = Y(v); if (y < b.y - 2 || y > b.y + b.h + 2) continue; ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillStyle = th.axis; ctx.fillText(V.tickFmt ? V.tickFmt(v) : V.unit === '$' ? money(v) : V.unit === '%' ? (V.kind === 'fund' ? (100 * v).toFixed(0) + '%' : pctf(v, 0)) : plain(v), b.x - 14 * S, y); }
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     const years = []; for (let y = new Date(G[0]).getUTCFullYear() + 1; y <= new Date(xMax).getUTCFullYear(); y++) years.push(y);
@@ -2166,6 +2308,31 @@
       'Dividends received each year (reinvested)',b.x,b.y+h1+gap-12*S,b.w);
     cashBars(ctx, V, f, {x:b.x,y:b.y+h1+gap,w:b.w,h:h2}, S, th, F, pal, monthly);
   }
+  // spend or invest: each purchase, trade-in, loan paid off and one-off cost as a mark on the time axis, the latest one
+  // spelled out for a while; a habit's running total instead
+  function spendEvents(ctx, V, f, b, S, th, F) {
+    const G = V.grid, n = G.length, i0 = Math.floor(f), tCur = lerp(G[i0], G[Math.min(n - 1, i0 + 1)], f - i0);
+    const xMax = Math.max(tCur, G[0] + (G[n - 1] - G[0]) * 0.12), X = (t) => b.x + (t - G[0]) / ((xMax - G[0]) || 1) * b.w, Sx = V.spend;
+    const col = (k) => roleCol(th, k === 'buy' ? 'out' : k === 'trade' ? 'in' : k === 'paid' ? 'end' : 'sub');
+    const ev = Sx.events.filter((e) => e.i <= f);
+    for (const e of ev) { const x = X(G[e.i]), y = b.y + b.h; ctx.fillStyle = col(e.kind); ctx.beginPath(); ctx.moveTo(x, y - 2 * S); ctx.lineTo(x - 7 * S, y - 16 * S); ctx.lineTo(x + 7 * S, y - 16 * S); ctx.closePath(); ctx.fill(); }
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    if (Sx.habit) {
+      const spent = valAt(V.contrib, f); if (!fin(spent)) return;
+      const txt = `${Sx.item}: ${money(spent, 0)} spent so far`; ctx.font = F(700, 24); const w = ctx.measureText(txt).width + 28 * S;
+      ctx.fillStyle = th.panel; roundRect(ctx, b.x + 10 * S, b.y + 4 * S, w, 44 * S, 12 * S); ctx.fill(); ctx.fillStyle = roleCol(th, 'out'); ctx.fillText(txt, b.x + 24 * S, b.y + 27 * S);
+      return;
+    }
+    const recent = ev.filter((e) => f - e.i < 26 && e.kind !== 'paid' || (e.kind === 'paid' && f - e.i < 18)).slice(-2);
+    recent.forEach((e, j) => {
+      const age = f - e.i, a = clamp(age < 2 ? age / 2 : age > 20 ? (26 - age) / 6 : 1, 0, 1); if (a <= 0) return;
+      const amt = e.amount ? (e.amount > 0 ? '+' : '−') + money(Math.abs(e.amount), 0) : '';
+      const txt = `${monthYear(G[e.i])} · ${e.label}${amt ? '  ' + amt : ''}`;
+      ctx.font = F(700, 23); const w = ctx.measureText(txt).width + 30 * S, x = b.x + 12 * S, y = b.y + 6 * S + j * 52 * S;   // the top left, clear of the labels at the heads
+      ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = th.panel; roundRect(ctx, x, y, w, 44 * S, 12 * S); ctx.fill();
+      ctx.strokeStyle = col(e.kind); ctx.lineWidth = 2 * S; ctx.stroke(); ctx.fillStyle = th.text; ctx.fillText(txt, x + 15 * S, y + 23 * S); ctx.restore();
+    });
+  }
   // the cash flow as a waterfall: operating cash flow, what it paid for (free cash flow on the way) and what was left,
   // added to cash or drawn from it. Each period holds a moment, then the bars move to the next; the axis never moves
   function cashFlowChart(ctx, V, f, b, S, th, F) {
@@ -2376,6 +2543,18 @@
       if (fin(h.oi) && h.revenue) V.final.push({ k: 0, label: 'Operating margin', value: (h.oi < 0 ? '−' : '') + Math.abs(100 * h.oi / h.revenue).toFixed(1) + '%', change: fin(h0.oi) && h0.revenue ? `${h.oi / h.revenue >= h0.oi / h0.revenue ? '+' : '−'}${Math.abs(100 * (h.oi / h.revenue - h0.oi / h0.revenue)).toFixed(1)} pts` : '', up: true });
       V.endTitle = `${V.series[0].label} ${fr.label}`; V.endSub = `change since ${f0.label}`;
       V.caption = `${V.series[0].name.replace(/,? (INC|CORP|CORPORATION|LTD|PLC|CO)\.?$/i, '')}, ${f0.label} → ${fr.label}: ` + V.final.map((r) => `${r.label.toLowerCase()} ${r.value}${r.change ? ' (' + r.change + ')' : ''}`).join(', ');
+      return;
+    }
+    if (V.kind === 'spend') {
+      const Sx = V.spend, put = V.contrib[L], mine = V.series.find((s) => s.mine), full = G[L] - G[0] >= 360 * DAY;
+      const irr = (s) => (full && fin(s.v[L]) ? xirr(V.flows.concat([[G[L], s.v[L]]])) : null), pr = Sx.parts;
+      const parts = [pr.buy + pr.down ? `bought ${money(pr.buy + pr.down + pr.principal, 0)}` : '', pr.habit ? `${money(pr.habit, 0)} on ${lowerName(Sx.item)}` : '', pr.trade ? `trade-ins back ${money(pr.trade, 0)}` : '',
+        pr.upkeep ? `upkeep ${money(pr.upkeep, 0)}` : '', pr.interest ? `interest ${money(pr.interest, 0)}` : '', pr.saved ? `rent saved ${money(pr.saved, 0)}` : '', pr.oneoff ? `one-offs ${money(pr.oneoff, 0)}` : '', pr.fees ? `fees ${money(pr.fees, 0)}` : ''].filter(Boolean).join(' · ');
+      V.final = V.series.map((s, k) => { const r = irr(s); return { k, role: s.mine ? 'out' : null, name: s.label, label: s.label + (fin(r) ? ` · ${pct1(r)}/yr` : ''), value: money(s.v[L]), change: put > 0 && fin(s.v[L]) ? pctf(s.v[L] / put - 1, 0) : '', up: s.v[L] >= put, v: fin(s.v[L]) ? s.v[L] : -Infinity, irr: r, sub: s.mine ? parts : '' }; }).sort((a, c) => c.v - a.v);
+      const best = V.final.find((r) => r.name !== mine.label);
+      V.endTitle = `${money(put, 0)} put in: ${mine.label.toLowerCase().startsWith('your') ? mine.label : 'the ' + lowerName(mine.label)} ${money(mine.v[L])}` + (best ? `, ${best.name} ${best.value}` : '');
+      V.endSub = `${span} · the same money on the same dates` + (Sx.count > 1 ? ` · ${Sx.count} bought` : '');
+      V.caption = `${V.title} (${span}): ${money(put, 0)} put in · ` + V.final.map((r) => `${r.name} ${r.value}${r.change ? ' (' + r.change + ')' : ''}`).join(' vs ') + (parts ? ` · ${parts}` : '');
       return;
     }
     if (V.kind === 'cash') {
@@ -2607,6 +2786,30 @@
         + 'Weekly closes.';
       return R;
     }
+    if (V.kind === 'spend' && V.spend) {
+      const Sx = V.spend, put = V.contrib[L], full = G[L] - G[0] >= 360 * DAY, pr = Sx.parts;
+      R.cols = [['put', 'Put in', 'The money that left your pocket, net of trade-ins and savings'], ['end', 'Value now', dayLabel(G[L])], ['gain', 'Gain or loss', 'The value now against the money put in'],
+        ['yr', 'A year', 'The money-weighted return a year (XIRR) on the same dates and amounts'], ['sold', 'If sold now', 'Less selling costs and the loan still owed']];
+      R.rows = V.series.map((s, k) => {
+        const v = s.v[L], r = full && fin(v) ? xirr(V.flows.concat([[G[L], v]])) : null;
+        const sold = s.mine ? (Sx.habit ? 0 : Sx.val[L] * (1 - Sx.sellC) - Sx.bal) : v;
+        return { k, label: s.label, name: s.name, role: s.mine ? 'out' : null, cells: { put: cell(money(put, 0), '', put), end: cell(money(v), '', v), gain: cell(put > 0 && fin(v) ? pctf(v / put - 1) : '', fin(v) ? (v >= put ? '+' : '−') + money(Math.abs(v - put), 0) : '', put > 0 && fin(v) ? v / put - 1 : null),
+          yr: cell(fin(r) ? pct1(r) : '', '', r), sold: cell(money(sold, 0), s.mine && Sx.bal > 0 ? `${money(Sx.bal, 0)} still owed` : '', sold) } };
+      });
+      // year by year: what went out and came back, and what each side was worth at the year's end
+      const lead = V.series.find((s) => !s.mine), yrs = Object.keys(Sx.byYr).map(Number).sort((a, b) => a - b), endOf = (y, arr) => { let j = -1; G.forEach((g, i) => { if (new Date(g).getUTCFullYear() === y) j = i; }); return j >= 0 ? arr[j] : null; };
+      const C = [['buy', 'Bought', (b) => b.buy + b.down], ['habit', 'Spent', (b) => b.habit], ['trade', 'Trade-ins', (b) => -b.trade], ['upkeep', 'Upkeep', (b) => b.upkeep], ['interest', 'Loan interest', (b) => b.interest],
+        ['principal', 'Loan paid down', (b) => b.principal], ['saved', 'Rent saved', (b) => -b.saved], ['oneoff', 'One-offs', (b) => b.oneoff], ['fees', 'Fees', (b) => b.fees]].filter(([, , g]) => Math.abs(g(pr)) > 0.005);
+      R.years = { title: 'Year by year: the money out (+) and back (−), and what each side was worth at the year’s end', plain: true,
+        cols: C.map(([, l]) => ({ label: l })).concat([{ label: 'Net put in' }, { label: V.series.find((s) => s.mine).label, noTotal: true, role: 'out' }].concat(lead ? [{ label: lead.label, noTotal: true, k: V.series.indexOf(lead) }] : [])),
+        rows: yrs.map((y) => { const b = Sx.byYr[y], parts = C.map(([, , g]) => g(b)); return { y, part: !fullYears(G)(y), v: parts.concat([parts.reduce((a, x) => a + x, 0), endOf(y, Sx.eq)].concat(lead ? [endOf(y, lead.v)] : [])) }; }) };
+      R.events = Sx.events.map((e) => ({ date: dayLabel(G[e.i]), label: e.label, amount: e.amount }));
+      R.foot = 'Put in: what was bought' + (pr.upkeep ? ', its upkeep' : '') + (pr.interest ? ', the loan’s payments' : '') + (pr.oneoff ? ', one-off costs' : '') + (pr.trade ? ', less what trade-ins brought back' : '') + (pr.saved ? ', less the rent saved' : '')
+        + '. The stocks get the same money on the same dates (dividends reinvested), and give back what comes back. '
+        + (Sx.habit ? 'A habit leaves nothing to sell. ' : `Its value: ${pctf(Sx.d1, 0)} the first year, ${pctf(Sx.d2, 0)} a year after` + (Sx.tradeIn && Sx.N ? ', traded in at that value' : '') + '. ')
+        + (Sx.table ? 'iPhone prices: Apple’s US launch prices. ' : 'Prices, upkeep and rent rise with consumer prices unless set otherwise. ') + 'Weekly closes.';
+      return R;
+    }
     if (V.kind === 'cash' && V.cf) {
       const P = V.cf.periods, sum = (g) => P.reduce((a, p) => a + (fin(g(p)) ? g(p) : 0), 0), sgn = (x) => (fin(x) ? (Math.abs(x) < 0.5 ? '—' : (x < 0 ? '−' : '+') + money(Math.abs(x))) : '');
       R.cols = P.map((p, j) => ['p' + j, p.label, dayLabel(p.end)]).concat([['all', 'In all', `${P[0].label} → ${P[P.length - 1].label}`]]);
@@ -2658,8 +2861,8 @@
   function reportText(R, link) {                             // the report as plain text: a table with tabs, then the caption
     const head = [''].concat(R.cols.map((c) => c[1])).map(tsv).join('\t');
     const rows = R.rows.map((r) => [r.label].concat(R.cols.map(([k]) => { const c = r.cells[k] || ['—', '']; return c[0] + (c[1] ? ` (${c[1]})` : ''); })).map(tsv).join('\t'));
-    const Y = R.years, years = Y && Y.rows.length ? ['', Y.title, ['Year'].concat(Y.cols.map((c) => c.label)).map(tsv).join('\t'), ...Y.rows.map((r) => [r.y + (r.part ? ' (part)' : '')].concat(r.v.map((v) => (v > 0 ? money(v, 0) : '—'))).map(tsv).join('\t'))] : [];
-    return [R.title, R.sub, '', head, ...rows, ...years, '', R.caption, ...(R.notes.length ? ['', ...R.notes.map((n) => '• ' + n)] : []), ...(R.foot ? ['', R.foot] : []), '', 'filing-flows.com' + (link ? ' · ' + link : '')]
+    const Y = R.years, years = Y && Y.rows.length ? ['', Y.title, ['Year'].concat(Y.cols.map((c) => c.label)).map(tsv).join('\t'), ...Y.rows.map((r) => [r.y + (r.part ? ' (part)' : '')].concat(r.v.map((v) => (Y.plain ? (fin(v) && Math.abs(v) >= 0.5 ? (v < 0 ? '−' : '') + money(Math.abs(v), 0) : '—') : v > 0 ? money(v, 0) : '—'))).map(tsv).join('\t'))] : [];
+    return [R.title, R.sub, '', head, ...rows, ...years, ...eventsText(R), '', R.caption, ...(R.notes.length ? ['', ...R.notes.map((n) => '• ' + n)] : []), ...(R.foot ? ['', R.foot] : []), '', 'filing-flows.com' + (link ? ' · ' + link : '')]
       .filter((x, i, a) => !(x === '' && (i === 0 || a[i - 1] === ''))).join('\n').trim();
   }
   const csvCell = (x) => { const s = x == null ? '' : typeof x === 'number' ? (Number.isFinite(x) ? String(+x.toFixed(6)) : '') : String(x); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
@@ -2694,6 +2897,7 @@
   }
 
   const yearsCSV = (R) => { const Y = R.years; if (!Y) return ''; return [['year', 'part of the year', ...Y.cols.map((c) => c.label)], ...Y.rows.map((r) => [r.y, r.part ? 'yes' : '', ...r.v])].map((r) => r.map(csvCell).join(',')).join('\n') + '\n'; };
+  const eventsText = (R) => (R.events && R.events.length ? ['', 'Events', ...R.events.map((e) => `${e.date}\t${e.label}\t${e.amount ? (e.amount > 0 ? '+' : '−') + money(Math.abs(e.amount), 0) : ''}`)] : []);
 
   /* ---------- export: WebCodecs + mp4-muxer, or MediaRecorder ---------- */
   const MUXER = 'https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.5/build/mp4-muxer.js';
@@ -2769,10 +2973,10 @@
   }
   function yearsTable(R, esc2, colK) {                          // dividends by year: rows of years, a column a ticker, the change on the year before
     const Y = R.years; if (!Y || !Y.rows.length) return '';
-    const tot = Y.cols.map((_, j) => Y.rows.reduce((a, r) => a + (r.v[j] || 0), 0));
-    return `<div class="st-yh"><h3>${esc2(Y.title)}</h3><button class="btn small" type="button" data-rep="ycsv">CSV ↓</button></div><div class="tbl-wrap st-years"><table class="st-tbl"><thead><tr><th scope="col">Year</th>${Y.cols.map((c) => `<th scope="col" class="num"><i style="background:${esc2(colK(c.k))}"></i>${esc2(c.label)}</th>`).join('')}</tr></thead><tbody>`
-      + Y.rows.map((r, i) => `<tr><th scope="row">${r.y}${r.part ? '<small>part of the year</small>' : ''}</th>${r.v.map((v, j) => { const p = i ? Y.rows[i - 1] : null, g = p && !p.part && !r.part && p.v[j] > 0 && v > 0 ? v / p.v[j] - 1 : null; return `<td class="num">${v > 0 ? esc2(money(v, v >= 100 ? 0 : 2)) : '—'}${fin(g) ? `<small>${esc2(pctf(g, 0))} on the year</small>` : ''}</td>`; }).join('')}</tr>`).join('')
-      + `<tr class="st-tot"><th scope="row">In all</th>${tot.map((v) => `<td class="num">${esc2(money(v, 0))}</td>`).join('')}</tr></tbody></table></div>`;
+    const tot = Y.cols.map((c, j) => (c.noTotal ? null : Y.rows.reduce((a, r) => a + (r.v[j] || 0), 0)));
+    return `<div class="st-yh"><h3>${esc2(Y.title)}</h3><button class="btn small" type="button" data-rep="ycsv">CSV ↓</button></div><div class="tbl-wrap st-years"><table class="st-tbl"><thead><tr><th scope="col">Year</th>${Y.cols.map((c) => `<th scope="col" class="num">${c.k != null || c.role ? `<i style="background:${esc2(colK(c.k, c.role))}"></i>` : ''}${esc2(c.label)}</th>`).join('')}</tr></thead><tbody>`
+      + Y.rows.map((r, i) => `<tr><th scope="row">${r.y}${r.part ? '<small>part of the year</small>' : ''}</th>${r.v.map((v, j) => { const p = i ? Y.rows[i - 1] : null, g = !Y.plain && p && !p.part && !r.part && p.v[j] > 0 && v > 0 ? v / p.v[j] - 1 : null; return `<td class="num">${Y.plain ? (fin(v) && Math.abs(v) >= 0.5 ? esc2((v < 0 ? '−' : '') + money(Math.abs(v), 0)) : '—') : v > 0 ? esc2(money(v, v >= 100 ? 0 : 2)) : '—'}${fin(g) ? `<small>${esc2(pctf(g, 0))} on the year</small>` : ''}</td>`; }).join('')}</tr>`).join('')
+      + `<tr class="st-tot"><th scope="row">In all</th>${tot.map((v) => `<td class="num">${v == null ? '' : esc2((v < 0 ? '−' : '') + money(Math.abs(v), 0))}</td>`).join('')}</tr></tbody></table></div>`;
   }
   function reportHTML(R, th) {
     const col = (r) => (r.role ? roleCol(th, r.role) : r.bench ? benchCol(th, r.bench) : r.sec ? secCol(th, r.sec) : R.kind === 'cash' ? 'transparent' : th.pal[(r.k || 0) % th.pal.length]);
@@ -2786,7 +2990,8 @@
       // on a phone the same figures turned around: a row for each figure, a column for each series
       + (R.rows.length && R.kind !== 'cash' ? `<div class="tbl-wrap st-tall"><table class="st-tbl"><thead><tr><th scope="col"><span class="st-sr">Figure</span></th>${R.rows.map((r) => `<th scope="col" class="num"><i style="background:${esc(col(r))}"></i>${esc(r.label)}</th>`).join('')}</tr></thead><tbody>`
         + R.cols.map(([k, l, help]) => `<tr><th scope="row"${help ? ` title="${esc(help)}"` : ''}>${esc(l)}</th>${R.rows.map((r) => { const c = r.cells[k] || ['—', '']; return `<td class="${cls(k, c)}">${esc(c[0])}${c[1] ? `<small>${esc(c[1])}</small>` : ''}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>' : '')
-      + yearsTable(R, esc, (k) => th.pal[(k || 0) % th.pal.length])
+      + yearsTable(R, esc, (k, role) => (role ? roleCol(th, role) : th.pal[(k || 0) % th.pal.length]))
+      + (R.events && R.events.length ? `<div class="st-yh"><h3>Events</h3></div><div class="tbl-wrap st-years"><table class="st-tbl"><tbody>${R.events.map((e) => `<tr><th scope="row">${esc(e.date)}</th><td>${esc(e.label)}</td><td class="num">${e.amount ? esc((e.amount > 0 ? '+' : '−') + money(Math.abs(e.amount), 0)) : ''}</td></tr>`).join('')}</tbody></table></div>` : '')
       + (R.caption ? `<div class="st-capbox"><div class="st-caph"><span>Caption to post</span><button class="btn small" type="button" data-rep="cap">Copy</button></div><div class="st-cap" id="st-cap">${esc(R.caption)}</div></div>` : '')
       + (R.notes.length ? `<ul class="st-notes" id="st-notes">${R.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '')
       + (R.foot ? `<p class="st-rep-foot">${esc(R.foot)}</p>` : '');
@@ -2822,6 +3027,11 @@
     { name: 'What the Dow is made of', note: 'Sector weights by share price, as the index counts', s: { k: 'sectors', idx: 'dji', sw: 'index', from: '2012-01-31', style: 'stack', theme: 'clean', dur: '30' } },
     { name: 'What it took to reach $1M', note: 'QQQ vs SPY: the monthly amount, worked back', s: { k: 'growth', t: 'QQQ,SPY', goal: '1000000', solve: 'rec', amt: '0', from: '2016-10-28', style: 'line', theme: 'bull' } },
     { name: 'Nvidia: where the money goes', note: 'The earnings flow, quarter by quarter', s: { k: 'sankey', t: 'NVDA', sm: 'detail', style: 'sankey', theme: 'clean', dur: '20' } },
+    { name: 'A new iPhone every year — or Apple', note: 'Ten years of iPhones against the same money in AAPL', s: Object.assign({ k: 'spend', sp: 'phone', from: '2016-09-16', style: 'line', theme: 'bull', dur: '25' }, SPEND.phone.s) },
+    { name: 'A car every six years — or carmakers', note: 'With a loan, upkeep and trade-ins; Tesla, Ford, GM, CARZ', s: Object.assign({ k: 'spend', sp: 'car', from: '2016-01-04', style: 'line', theme: 'sunset', dur: '25' }, SPEND.car.s) },
+    { name: 'Buying a house — or renting and investing', note: 'A mortgage, upkeep, rent saved vs SPY, VNQ, ITB', s: Object.assign({ k: 'spend', sp: 'house', from: '2016-01-04', style: 'line', theme: 'clean', dur: '25' }, SPEND.house.s) },
+    { name: 'A coffee a day — or Starbucks', note: 'The latte factor, against SBUX and SPY', s: Object.assign({ k: 'spend', sp: 'coffee', from: '2016-01-04', style: 'line', theme: 'bull', dur: '20' }, SPEND.coffee.s) },
+    { name: 'Furniture — or Home Depot', note: 'New furniture every eight years vs HD, LOW, WSM', s: Object.assign({ k: 'spend', sp: 'furniture', from: '2016-01-04', style: 'bars', theme: 'clean', dur: '20' }, SPEND.furniture.s) },
     { name: 'Where Apple’s cash went', note: 'Cash flow, fiscal year by fiscal year', s: { k: 'cash', t: 'AAPL', cper: 'fy', style: 'fall', theme: 'clean', dur: '20' } },
     { name: 'Free cash flow: Big Tech', note: 'Trailing four quarters, from the cash flow statements', s: { k: 'fund', t: 'AAPL,MSFT,GOOGL,AMZN,META,NVDA', m: 'fcf', ttm: '1', style: 'bars', theme: 'sunset' } },
     { name: 'Cash conversion: Big Tech', note: 'Operating cash ÷ net earnings, ten years', s: { k: 'fund', t: 'AAPL,MSFT,GOOGL,AMZN,META', m: 'conv', ttm: '1', style: 'line', theme: 'bull' } },
@@ -2857,7 +3067,7 @@
 .st-rep .tbl-wrap{margin:2px 0 10px}.st-rep td small,.st-rep tbody th small{display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:1px}.st-rep thead th{white-space:normal;min-width:76px;vertical-align:bottom}
 .st-rep tbody th{position:sticky;left:0;z-index:1;background:var(--surface);text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:600}.st-rep tbody th i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
 .st-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.st-tall{display:none}@media(max-width:640px){.st-wide{display:none}.st-tall{display:block}.st-tall th,.st-tall td{padding:8px 7px}.st-tall tbody th{font-size:12.5px;font-weight:500;color:var(--muted);white-space:normal;min-width:80px;max-width:100px}.st-tall thead th{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink);font-weight:600}.st-tall thead th i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.st-rep{padding:12px}}
-.st-yh{display:flex;align-items:center;gap:10px;margin:6px 0 6px}.st-yh h3{font-size:13.5px;margin:0;font-weight:600;color:var(--ink-2)}.st-years{max-height:420px;overflow:auto;width:max-content;max-width:100%}.st-years table{width:auto}.st-years td{min-width:96px}.st-years tbody th{min-width:0}.st-rep tr.st-tot th,.st-rep tr.st-tot td{font-weight:600;border-top:1px solid var(--line)}
+.st-years thead th i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.st-yh{display:flex;align-items:center;gap:10px;margin:6px 0 6px}.st-yh h3{font-size:13.5px;margin:0;font-weight:600;color:var(--ink-2)}.st-years{max-height:420px;overflow:auto;width:max-content;max-width:100%}.st-years table{width:auto}.st-years td{min-width:96px}.st-years tbody th{min-width:0}.st-rep tr.st-tot th,.st-rep tr.st-tot td{font-weight:600;border-top:1px solid var(--line)}
 .st-rep tr.st-strong th,.st-rep tr.st-strong td{font-weight:600}
 .st-rep td.up{color:var(--accent-ink)}.st-rep td.down{color:var(--neg)}.st-capbox{margin-top:4px}.st-caph{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:4px}.st-rep-foot{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 0 0}
 .st-help{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}.st-help code{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);padding:0 4px;border-radius:4px}.st-cap{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border-radius:8px;padding:8px 10px;margin-top:8px;word-break:break-word}`;
@@ -2875,7 +3085,7 @@
     if (root.FFAppearance?.get().video !== 'default' && root.FFAppearance?.videoTheme()) st.theme = 'appearance';
     const sel = (id, items, v) => `<select id="${id}">${items.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
     app.innerHTML = `<div class="page-head"><div class="eyebrow"><a href="#chart">← Charts</a> · Videos</div><h1>Make a market video</h1>
-      <p class="muted" style="max-width:76ch">Growth races of any ETFs or stocks — a lump sum or the same amount bought every few days, weeks or months, with dividends reinvested, taken as cash on their own line, or left out — leaderboards of every company by market value, revenue, profit, P/E, P/B, volume or return, drawdowns, monthly-return heatmaps, the spread of every stock's year, RRG and momentum replays, companies' own figures and any formula. Animated in four looks and three shapes, at the length and pace you set, saved as an MP4 to post. Everything is drawn from the site's own data in your browser.</p></div>
+      <p class="muted" style="max-width:76ch">Growth races of any ETFs or stocks — a lump sum or the same amount bought every few days, weeks or months, with dividends reinvested, taken as cash on their own line, or left out, against cash and inflation — what spending costs against investing (a new iPhone every year or Apple stock, a car, a house or renting, a coffee a day), where a company's cash went, leaderboards of every company by market value, revenue, profit, P/E, P/B, volume or return, drawdowns, monthly-return heatmaps, the spread of every stock's year, RRG and momentum replays, companies' own figures and any formula. Animated in four looks and three shapes, at the length and pace you set, saved as an MP4 to post. Everything is drawn from the site's own data in your browser.</p></div>
       <div class="st-tpl-bar"><span>Start from a template</span><span class="sp"></span><button class="btn small" id="st-tpl-all" type="button" aria-expanded="false" aria-controls="st-tpl">All ${TEMPLATES.length} ▾</button></div>
       <div class="st-tpl" id="st-tpl">${TEMPLATES.map((x, i) => `<button type="button" data-tpl="${i}"><b>${esc(x.name)}</b><span>${esc(x.note)}</span></button>`).join('')}</div>
       <div class="st-wrap"><div class="st-side" id="st-side"></div><div class="st-main">
@@ -2952,6 +3162,26 @@
       h += `<label>Market value range ($B, blank = any)</label><div class="st-row"><div><input class="input" id="st-cmin" inputmode="decimal" placeholder="from" value="${esc(st.cmin)}" aria-label="Market value from"></div><div><input class="input" id="st-cmax" inputmode="decimal" placeholder="to" value="${esc(st.cmax)}" aria-label="Market value to"></div></div>`;
       return h + `<div class="st-help">From the site's month-by-month data on every company it draws. Market values start with each company's first XBRL filing (2009–2011: every filer from mid-2011), so a market-value video is best started in 2012. Today's companies only: those delisted, merged or bankrupt are missing from earlier years.</div>`;
     }
+    function spendSide() {
+      const habit = st.sphab === '1', num = (id, v, ph, lab) => `<input class="input" id="st-${id}" inputmode="decimal" value="${esc(v)}" placeholder="${esc(ph || '')}"${lab ? ` aria-label="${esc(lab)}"` : ''}>`;
+      let h = `<h3>What is bought</h3><label for="st-sp">Scenario</label>${sel('st-sp', Object.entries(SPEND).map(([kk, v]) => [kk, v.label]), st.sp)}`;
+      h += `<div class="st-row"><div><label for="st-spi">The thing</label><input class="input" id="st-spi" value="${esc(st.spi)}"></div><div><label for="st-spp">${habit ? 'Price each time, $' : 'Price, $'}</label>${num('spp', st.spp)}</div></div>`;
+      h += `<label for="st-spinf">${habit ? 'Its price later' : 'The price of the next one'}</label>${sel('st-spinf', [['cpi', 'Rises with consumer prices'], ['fixed', 'Rises at a fixed rate'], ['none', 'Stays the same']].concat(/iphone/i.test(st.spi) ? [['pro', 'Apple’s launch prices: the top model'], ['base', 'Apple’s launch prices: the base model']] : []), st.spinf)}`;
+      if (st.spinf === 'fixed') h += `<label for="st-spir">Rate, % a year</label>${num('spir', st.spir, '3')}`;
+      h += `<label for="st-sphab">Kind</label>${sel('st-sphab', [['0', 'Something kept (it has a value)'], ['1', 'A habit (spent, nothing left)']], st.sphab)}`;
+      if (habit) h += `<div class="st-row"><div><label for="st-sphe">Bought</label>${sel('st-sphe', [['d', 'Every day'], ['w', 'Every week'], ['m', 'Every month'], ['y', 'Every year']], st.sphe)}</div>` + (st.sphe === 'y' ? `<div><label for="st-sphn">Times a year</label>${num('sphn', st.sphn, '1')}</div>` : '') + '</div>';
+      else {
+        h += `<div class="st-row"><div><label for="st-spn">Replace it every … years</label>${num('spn', st.spn, '0 = keep it')}</div><div><label for="st-sptr">The old one</label>${sel('st-sptr', [['1', 'Traded in'], ['0', 'Kept or thrown away']], st.sptr)}</div></div>`;
+        h += `<label>Its value, % a year (− loses, + gains)</label><div class="st-row"><div>${num('spd1', st.spd1, '-20', 'The first year')}</div><div>${num('spd', st.spd, '-15', 'Each year after')}</div><div>${num('spf', st.spf, '5', 'Never below, % of its price')}</div></div><div class="st-help">The first year · each year after · never below this share of its price.</div>`;
+        h += `<div class="st-row"><div><label for="st-spu">Upkeep, $ a year</label>${num('spu', st.spu, '0')}</div><div><label for="st-spup">+ % of its value a year</label>${num('spup', st.spup, '0')}</div></div>`;
+        h += `<label for="st-sps">It saves you, $ a month</label>${num('sps', st.sps, '0 — e.g. the rent of the home you own')}`;
+        h += `<label for="st-spl">Loan</label>${sel('st-spl', [['0', 'No: paid in cash'], ['1', 'Yes']], st.spl)}`;
+        if (st.spl === '1') h += `<div class="st-row"><div><label for="st-spld">Down, %</label>${num('spld', st.spld, '20')}</div><div><label for="st-splr">Rate, %</label>${num('splr', st.splr, '6')}</div><div><label for="st-splt">Years</label>${num('splt', st.splt, '5')}</div></div>`;
+        h += `<div class="st-row"><div><label for="st-spbc">Buying costs, %</label>${num('spbc', st.spbc, '0')}</div><div><label for="st-spsc">Selling costs, %</label>${num('spsc', st.spsc, '0')}</div></div>`;
+      }
+      h += `<label for="st-spe">One-off costs — a line each: date, amount, what</label><textarea id="st-spe" spellcheck="false" placeholder="2021-06-15, 1200, New transmission">${esc(st.spe)}</textarea>`;
+      return h + `<div class="st-help">The same money goes into the stocks on the same dates, dividends reinvested; money that comes back (a trade-in, rent saved) is taken out of them.</div>`;
+    }
     function side() {
       const k = st.k, styles = STYLES[k];
       let h = `<h3>Video</h3><div class="st-pills">${KINDS.map(([v, l]) => `<button type="button" class="pill${v === k ? ' on' : ''}" data-kind="${v}">${esc(l)}</button>`).join('')}</div>`;
@@ -2961,8 +3191,8 @@
       else if (k === 'holdings') h += holdingsSide();
       else if (k !== 'formula') {
         const one = k === 'calendar' || k === 'sankey' || k === 'timing' || k === 'cash';
-        const lbl = { fund: 'Companies (tickers)', sankey: 'Company (ticker)', cash: 'Company (ticker)', calendar: 'Ticker — an ETF or a stock', timing: 'Ticker — an index fund or a stock', snowball: 'Dividend payers (up to three)' }[k] || 'Tickers — ETFs or stocks, two or more';
-        const ph = { fund: 'NVDA, AMD', sankey: 'NVDA', cash: 'AAPL', calendar: 'NVDA', timing: 'SPY', snowball: 'SCHD, KO' }[k] || 'QQQ, SPY, SCHD';
+        const lbl = { fund: 'Companies (tickers)', sankey: 'Company (ticker)', cash: 'Company (ticker)', spend: 'Stocks to buy instead (tickers, the first is the maker)', calendar: 'Ticker — an ETF or a stock', timing: 'Ticker — an index fund or a stock', snowball: 'Dividend payers (up to three)' }[k] || 'Tickers — ETFs or stocks, two or more';
+        const ph = { fund: 'NVDA, AMD', sankey: 'NVDA', cash: 'AAPL', spend: 'AAPL, SPY', calendar: 'NVDA', timing: 'SPY', snowball: 'SCHD, KO' }[k] || 'QQQ, SPY, SCHD';
         h += `<label for="st-t">${lbl}</label><input class="input" id="st-t" value="${esc(one ? tickers(st)[0] || '' : st.t)}" placeholder="${ph}" list="st-list" autocomplete="off"><datalist id="st-list"></datalist>`;
         if (k === 'cash') h += `<label for="st-cper">Periods</label>${sel('st-cper', [['fy', 'Fiscal years (up to five)'], ['q', 'Quarters (the last eight)']], st.cper)}<div class="st-help">From each company's cash flow statements: operating cash flow, then capital spending, acquisitions, buybacks, dividends, investments and borrowing, down to what was added to cash or drawn from it.</div>`;
         if (k === 'sankey') h += `<label for="st-sm">Quarters</label>${sel('st-sm', [['detail', 'The detailed flow (the latest quarters on file)'], ['long', 'Ten years: revenue → profit → earnings']], st.sm)}`;
@@ -3002,6 +3232,7 @@
           'Leave the target blank to simulate using your selected starting capital and recurring buys.') +
           ' Uses actual historical distributions, reinvested, with final 52 weeks of dividends / 12 as monthly equivalent. Not a guaranteed forward dividend.</div>';
       }
+      if (k === 'spend') h += spendSide();
       if (k === 'snowball') h += '<label for="st-scf">Dividend cash-flow chart</label>' + sel('st-scf', [['monthly', 'Monthly (trailing 24 months)'], ['annual', 'Annual (full history)']], st.scf);
       if (k === 'growth') {
         const L = growthLabels(st);
@@ -3158,6 +3389,7 @@
         st.k = kb.dataset.kind; st.style = STYLES[st.k][0][0]; st.title = ''; st.sub = '';
         if ((st.k === 'fund' || st.k === 'calendar' || st.k === 'sankey' || st.k === 'cash') && !/^[A-Z]/.test(st.t)) st.t = 'NVDA';
         if (st.k === 'cash') { if (st.t === DEF.t) st.t = 'AAPL'; st.theme = 'clean'; }
+        if (st.k === 'spend') Object.assign(st, (SPEND[st.sp] || SPEND.phone).s);
         if (st.k === 'snowball' && st.t === DEF.t) st.t = 'SCHD';
         if (st.k === 'timing' && st.t === DEF.t) st.t = 'SPY';
         if (st.k === 'sankey') st.theme = 'clean';
@@ -3194,7 +3426,8 @@
         else rebuild();
         return;
       }
-      if (key === 'rm' || key === 'bx' || key === 'by' || key === 'sw' || key === 'aw' || key === 'hsrc' || key === 'ssolve' || key === 'sgoal' || key === 'div') side();
+      if (key === 'sp' && SPEND[st.sp]) { Object.assign(st, SPEND[st.sp].s); st.title = ''; st.sub = ''; }
+      if (['rm', 'bx', 'by', 'sw', 'aw', 'hsrc', 'ssolve', 'sgoal', 'div', 'sp', 'sphab', 'spl', 'spinf', 'sphe'].includes(key)) side();
       rebuild();
     });
     const tplAll = (on) => { const g = $('#st-tpl'), b = $('#st-tpl-all'); g.classList.toggle('all', on); b.setAttribute('aria-expanded', String(on)); b.textContent = on ? 'Fewer ▴' : `All ${TEMPLATES.length} ▾`; };
@@ -3247,6 +3480,6 @@
     if (+st.yrs > 0) { const end = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(); st = Object.assign({}, st, { from: iso(end - (+st.yrs) * 365.25 * DAY) }); }
     const V = await buildRaw(st); V._title = V.title; V._sub = V.sub; if (st.title) V.title = st.title; if (st.sub) V.sub = st.sub; return V; }
 
-  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
+  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, yearsCSV, iphonePrice, oneOffs, SPEND, ANNUITY, worstDrop, calYears, netTR, growIdx, monthlyOn, resetMacro: () => { MACRO = null; }, resetPanel: () => PANEL.clear() } };
   if (typeof module !== 'undefined') module.exports = root.FFStudio;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

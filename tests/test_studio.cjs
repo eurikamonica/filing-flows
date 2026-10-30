@@ -305,6 +305,60 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     ok(Two.series.every((x) => x.v[Two.grid.length - 1] != null) && [...Two.notes].some((x) => /latest figure on file/.test(x)), 'a company a quarter behind still shows its latest figure');
     ok(S.TEMPLATES.some((t) => t.s.k === 'cash') && S.TEMPLATES.some((t) => t.s.m === 'fcf') && S.TEMPLATES.some((t) => t.s.m === 'conv'), 'templates for the cash videos');
   }
+  // spend or invest: a thing bought, its value, upkeep, a loan, trade-ins, rent saved, habits, one-off costs — against
+  // the same money on the same dates in a stock. A stock whose price never moves keeps exactly the money put in
+  {
+    const nw = 170, d0 = '2020-01-06';
+    files['disclosures/data/etf/px/FLAT.json'] = { name: 'Flat Fund', d0, t: Array.from({ length: nw }, (_, i) => 7 * i), c: Array(nw).fill(100), a: Array(nw).fill(100), div: [] };
+    files['disclosures/data/etf/px/UP.json'] = { name: 'Up Fund', d0, t: Array.from({ length: nw }, (_, i) => 7 * i), c: Array.from({ length: nw }, (_, i) => 100 * Math.pow(1.003, i)), a: Array.from({ length: nw }, (_, i) => 100 * Math.pow(1.003, i)), div: [] };
+    const base = (x) => Object.assign(S.parseState('k=spend'), { t: 'FLAT,UP', from: '2020-01-10', to: '2023-01-06', spinf: 'none', spi: 'Gadget', spp: '1000', spn: '0', sptr: '1', spd1: '-40', spd: '-20', spf: '5', spu: '0', spup: '0', sps: '0', spl: '0', spbc: '0', spsc: '0', sphab: '0', spe: '' }, x);
+    // the iPhone's price list: September to September, the latest on file after
+    ok(S.iphonePrice('pro', Date.UTC(2019, 8, 20)) === 999 && S.iphonePrice('pro', Date.UTC(2019, 8, 1)) === 999 && S.iphonePrice('pro', Date.UTC(2016, 8, 1)) === 749 && S.iphonePrice('base', Date.UTC(2025, 9, 1)) === 799 && S.iphonePrice('pro', Date.UTC(2026, 9, 1)) === 1099, 'iPhone launch prices');
+    // kept: its value falls 40% over the first year, then 20% a year; the flat stock keeps the $1,000
+    let V = await S.build(base({})); const L = V.grid.length - 1, it = V.series.find((x) => x.mine), flat = V.series.find((x) => x.key === 'FLAT');
+    ok(Math.abs(it.v[52] - 1000 * Math.pow(0.6, 364 / 365.25)) < 1e-6 && Math.abs(it.v[104] - 1000 * Math.pow(0.6, 364 / 365.25) * Math.pow(0.8, 364 / 365.25)) < 1e-6, 'the value year by year: ' + it.v[52]);
+    ok(flat.v.every((x, i) => Math.abs(x - V.contrib[i]) < 1e-6) && V.contrib[L] === 1000 && V.spend.count === 1, 'the flat stock keeps the money put in');
+    ok(V.title === 'A gadget — or FLAT' && V.series.find((x) => x.key === 'UP').label === 'UP instead', 'title and labels: ' + V.title);
+    // replaced every year and traded in (less 10% selling costs): next year's money is the price less the trade-in
+    V = await S.build(base({ spn: '1', spsc: '10' }));
+    const w1 = V.spend.events.find((e) => e.kind === 'trade').i; let vv = 1000; for (let a = 0; a < w1; a++) vv *= Math.pow(a < 52 ? 0.6 : 0.8, 7 / 365.25);
+    const back = vv * 0.9;
+    ok(V.spend.count === 3 && Math.abs((V.contrib[w1] - V.contrib[w1 - 1]) - (1000 - back)) < 1e-6 && V.spend.events.filter((e) => e.kind === 'trade').length === 2, 'trade-ins: ' + (V.contrib[w1] - V.contrib[w1 - 1]));
+    // a loan: the annuity each month, paid off at the end of its term; interest = all paid less the amount borrowed
+    V = await S.build(base({ spl: '1', spld: '20', splr: '6', splt: '2' }));
+    const pay = S.ANNUITY(800, 0.005, 24), pr = V.spend.parts;
+    ok(Math.abs(pr.down - 200) < 1e-9 && Math.abs(pr.interest + pr.principal - 24 * pay) < 1e-6 && Math.abs(pr.principal - 800) < 1e-6 && V.spend.events.some((e) => e.kind === 'paid') && V.spend.bal === 0, 'a two-year loan: ' + (pr.interest + pr.principal) + ' vs ' + 24 * pay);
+    ok(Math.abs(V.contrib[L] - (200 + 24 * pay)) < 1e-6, 'all put in: the down payment and the payments');
+    // upkeep $120 a year (monthly) and 12% of its value; a house's rent saved comes back out of the stocks
+    V = await S.build(base({ spu: '120', spd1: '0', spd: '0', sps: '50' }));
+    const months = V.spend.events.length === 1 ? Math.round(V.spend.parts.upkeep / 10) : null;
+    ok(Math.abs(V.spend.parts.upkeep - 10 * months) < 1e-9 && Math.abs(V.spend.parts.saved - 50 * months) < 1e-9 && Math.abs(V.contrib[L] - (1000 + 10 * months - 50 * months)) < 1e-6, 'upkeep and savings each month: ' + months);
+    const flat2 = V.series.find((x) => x.key === 'FLAT');
+    ok(Math.abs(flat2.v[L] - V.contrib[L]) < 1e-6 && flat2.v[L] < 1000, 'money that comes back is taken out of the stock');
+    // a habit: $5 every day is $35 a week; nothing is left to sell; a price rising 10% a year
+    V = await S.build(base({ sphab: '1', sphe: 'd', spp: '5', spi: 'Coffee' }));
+    ok(Math.abs(V.contrib[3] - 5 * (1 + 7 * 3)) < 1e-9 && V.series.find((x) => x.mine).v.every((x) => x === 0) && /Coffee: \$5\.00 a day — or FLAT/.test(V.title), 'a daily habit');
+    V = await S.build(base({ sphab: '1', sphe: 'y', sphn: '2', spp: '100', spinf: 'fixed', spir: '10' }));
+    ok(V.spend.parts.habit > 600 && V.spend.parts.habit < 700 && Math.abs(V.contrib[0] - 200) < 1e-9, 'twice a year, the price rising 10% a year: ' + V.spend.parts.habit);
+    // one-off costs: a date (or a month), an amount, what it was
+    ok(S.oneOffs('2021-06-15, 1200, New transmission\n2022-03, 500, Tyres\nnot a line').map((e) => [new Date(e.t).toISOString().slice(0, 10), e.amount, e.label]).join('|') === '2021-06-15,1200,New transmission|2022-03-15,500,Tyres', 'one-off costs read');
+    V = await S.build(base({ spe: '2021-06-15, 1200, New transmission' }));
+    ok(Math.abs(V.spend.parts.oneoff - 1200) < 1e-9 && V.spend.events.some((e) => e.label === 'New transmission' && e.amount === -1200), 'a one-off cost on its week');
+    // the end card, the report: each side, year by year, the events
+    V = await S.build(base({ spn: '1', spu: '60', spl: '1', spld: '50', splr: '5', splt: '1' }));
+    V.endCard = true; V.style = 'line'; S.finish(V, V);
+    const mine = V.final.find((r) => r.name === 'Your gadget');
+    ok(mine && /bought .* · trade-ins back .* · upkeep .* · interest/.test(mine.sub) && /put in: Your gadget/.test(V.endTitle), 'end card: ' + V.endTitle + ' | ' + (mine && mine.sub));
+    const R = S.report(V);
+    ok(R.cols.map((c) => c[0]).join() === 'put,end,gain,yr,sold' && R.rows.length === 3 && R.years.plain && R.years.cols.some((c) => c.label === 'Trade-ins') && R.events.length >= 5, 'report: ' + R.years.cols.map((c) => c.label));
+    ok(S.reportText(R).includes('\nEvents\n') && S.yearsCSV(R).startsWith('year,part of the year,Bought'), 'report text and ledger CSV');
+    for (const style of ['line', 'bars', 'tiles', 'area']) for (const ar of [[1920, 1080], [1080, 1920]]) { V.style = style; for (const t of [0, 3, 6, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: 'bull', dur: 12 }, t); n++; }
+    // the scenarios fill every setting they need; each has a template or a place in the list
+    ok(['phone', 'car', 'house', 'coffee', 'furniture'].every((k) => S.TEMPLATES.some((t) => t.s.k === 'spend' && t.s.sp === k)) && Object.values(S.SPEND).every((x) => x.label), 'spend templates');
+    const H = await S.build(Object.assign(S.parseState('k=spend'), S.SPEND.house.s, { t: 'FLAT', from: '2020-01-10', to: '2023-01-06', spinf: 'none' }));
+    const Hp = H.spend.parts;
+    ok(Math.abs(Hp.down - 80000) < 1e-6 && Math.abs(Hp.fees - 12000) < 1e-6 && Hp.saved > 0 && /renting and investing/.test(H.title) && Math.abs(H.contrib[H.grid.length - 1] - (Hp.down + Hp.fees + Hp.upkeep + Hp.interest + Hp.principal - Hp.saved)) < 1e-3, 'a house against renting: ' + H.title);
+  }
   // the report of the other kinds: their end figures, empty columns left out
   {
     const V = await S.build(Object.assign(S.parseState('k=drawdown'), { t: 'AAA,BBB', from: start }));
