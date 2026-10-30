@@ -550,6 +550,11 @@ def process_filing(store, cik, accn, form, starred=False):
                 m = text.match_notes(md, words, fallback=key != "net sales")
                 if m:
                     notes[key] = m
+            try:                                          # its forward-looking statements (outlook.py)
+                from . import outlook
+                outlook.keep(EPS_ROOT[0], cik, "mdna", form, accn, row.get("filingDate"), doc_url, end, md)
+            except Exception as e:
+                print(f"  outlook skipped for {cik} {accn}: {e}", file=sys.stderr)
     except Exception as e:
         print(f"  notes skipped for {cik} {accn}: {e}", file=sys.stderr)
     try:
@@ -977,6 +982,11 @@ def process_release(store, cik, accn, form, starred=False):
             eps_guide.keep(EPS_ROOT[0], cik, g, accn, row.get("filingDate"), ex_url)
     except Exception as e:
         print(f"  EPS guidance skipped for {cik} {accn}: {e}", file=sys.stderr)
+    try:                                                  # the release's forward-looking statements (outlook.py)
+        from . import outlook
+        outlook.keep(EPS_ROOT[0], cik, "release", "8-K", accn, row.get("filingDate"), ex_url, None, text.paragraphs(doc))
+    except Exception as e:
+        print(f"  outlook skipped for {cik} {accn}: {e}", file=sys.stderr)
     if intro_rank(c) < INTRO_RANK["8-K"]:                # no 10-K description yet: the release's "About" paragraph
         try:
             if set_intro(c, text.about(doc, [c["profile"]["name"]], c["profile"].get("tickers")), ex_url,
@@ -1798,6 +1808,11 @@ def run(args):
     refresh_da(store)
     refresh_reported(store)
     refresh_quality(store)
+    try:                                                         # forward-looking statements of companies not read yet
+        from . import outlook
+        outlook.refresh(store, sec, text, lambda: time_up(CATCH_UP_SHARE, "forward-looking statements"))
+    except Exception as e:
+        print(f"::warning::forward-looking statements not caught up: {e}")
     try:                                                         # supply chains: segments, customers, backlog (chains.py)
         chains.refresh(store, sec, dims, text, lambda: time_up(CATCH_UP_SHARE, "supply-chain facts"),
                        queue_history=lambda cik: queue_history(store, cik))
