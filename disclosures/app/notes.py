@@ -90,6 +90,10 @@ class Filing:
             key = (f['c'], self.pkey(k), tuple(sorted(k['dims'].items())))
             dec = self.dec(f.get('d'))
             old = self.num.get(key)
+            if old is not None and old[2] != f.get('u'):         # the same amount in another currency (notional in EUR and USD)
+                if f.get('u') == 'USD':
+                    self.num[key] = (f['v'], dec, f.get('u'))
+                continue
             if old is None or (dec is None) or (old[1] is not None and dec > old[1]):
                 self.num[key] = (f['v'], dec, f.get('u'))
             elif old is not None and abs(old[0] - f['v']) > self.tol_of(old[1]) + self.tol_of(dec):
@@ -432,6 +436,8 @@ def rollforward_checks(FL, K, report_of_role, periods):
             left_out = [m for m in between if m not in moves]
             if not moves:
                 continue
+            layered = any(FL.by_c.get(m['c']) and all('i' in FL.ctx[f['ctx']] for f in FL.by_c[m['c']])
+                          for m in between)              # other balances inside it: a roll-forward in layers
             bal = FL.crdr.get(c)
             dimsets = {tuple(sorted(FL.ctx[f['ctx']]['dims'].items())) for f in FL.by_c.get(c, [])}
             for p in durs:
@@ -475,12 +481,17 @@ def rollforward_checks(FL, K, report_of_role, periods):
                         if best:
                             for s, x in zip(best[1], vals):
                                 x[3] = s
+                    if layered and _status(target - sum(x[3] * x[2] for x in vals), tol, e[0]) == 'gap':
+                        continue                          # its layers move between other balances: not a check of this one
                     parts = [('Opening balance', c, o[0], 1, o[1])] + [tuple(x) for x in vals]
                     t = FL.label(c, 'total')
                     if dims:
                         t += ' — ' + ', '.join(FL.label(mm) for _, mm in dims)
-                    K.add('rollfwd', t + ' (roll-forward)', parts, ('Closing balance', c, e[0], e[1]), where=[rid] if rid else [], period=p,
-                          key=('roll', c, p, dims))
+                    ch = K.add('rollfwd', t + ' (roll-forward)', parts, ('Closing balance', c, e[0], e[1]), where=[rid] if rid else [], period=p,
+                               key=('roll', c, p, dims))
+                    if ch and ch['status'] == 'gap':
+                        ch['explain'] = ('Recomputed from the lines tagged in the XBRL. A movement tagged with another element, only by member or only '
+                                         'inside a subtotal leaves the tagged lines short of the closing balance even when the printed table adds up.')
 
 
 CHART_SKIP_AXES = re.compile(r'(?i)(EquityComponents|SubsequentEvent|BalanceSheetLocation|DerivativeInstrumentRisk)')
@@ -651,7 +662,9 @@ def tie_checks(FL, K, where_of):
             sh, eps = first(FL, sh_names, dur), first(FL, eps_names, dur)
             if ni and sh and eps and sh[1]:
                 K.add('tie', title, [(f'{FL.label(ni[0])} ÷ shares', ni[0], ni[1] / sh[1], 1, 3)], (FL.label(eps[0]), eps[0], eps[1], eps[2] if eps[2] is not None else 2),
-                      where=W(eps[0], sh[0]), period=dur, key=('eps', eps_names[0], dur))
+                      where=W(eps[0], sh[0]), period=dur, key=('eps', eps_names[0], dur), info=True,
+                      explain='EPS divides the income left to common shareholders: after preferred dividends and the earnings allocated to '
+                              'participating securities (the two-class method), and for diluted EPS with dilutive items added back.')
         # splits into current + long-term
         for tot, cur, non, title in ((['LongTermDebt', 'DebtLongtermAndShorttermCombinedAmount'], ['LongTermDebtCurrent', 'DebtCurrent'], ['LongTermDebtNoncurrent'], 'Debt = short-term portion + long-term debt'),
                                      (['OperatingLeaseLiability'], ['OperatingLeaseLiabilityCurrent'], ['OperatingLeaseLiabilityNoncurrent'], 'Operating lease liabilities = current + long-term'),
@@ -675,10 +688,16 @@ def tie_checks(FL, K, where_of):
                       ('Closing goodwill', g1[0], g1[1], g1[2]), where=W(g1[0], gm[0]), period=dur, key=('gw', dur))
             # accumulated other comprehensive income moves by other comprehensive income
             aoci1, aoci0 = first(FL, ['AccumulatedOtherComprehensiveIncomeLossNetOfTax'], end), first(FL, ['AccumulatedOtherComprehensiveIncomeLossNetOfTax'], opening)
-            oci = first(FL, ['OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent', 'OtherComprehensiveIncomeLossNetOfTax'], dur)
+            ocis = [x for x in (first(FL, [nm], dur) for nm in ('OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent', 'OtherComprehensiveIncomeLossNetOfTax',
+                                                                'OtherComprehensiveIncomeLossNetOfTaxIncludingPortionAttributableToNoncontrollingInterest')) if x]
+            oci = None
+            if aoci1 and aoci0 and ocis:                 # the version of other comprehensive income that closes the balance, else the first
+                oci = min(ocis, key=lambda x: abs(aoci1[1] - aoci0[1] - x[1]))
             if aoci1 and aoci0 and oci:
                 K.add('tie', 'Accumulated OCI: opening + other comprehensive income = closing', [('Opening AOCI', aoci0[0], aoci0[1], 1, aoci0[2]), (FL.label(oci[0]), oci[0], oci[1], 1, oci[2])],
-                      ('Closing AOCI', aoci1[0], aoci1[1], aoci1[2]), where=W(aoci1[0], oci[0]), period=dur, key=('aoci', dur))
+                      ('Closing AOCI', aoci1[0], aoci1[1], aoci1[2]), where=W(aoci1[0], oci[0]), period=dur, key=('aoci', dur), info=True,
+                      explain='Accumulated OCI also moves by amounts booked to it directly: the effect of adopting a new standard, balances moved to '
+                              'retained earnings, the share of noncontrolling interests, businesses sold or bought.')
             # balance sheet changes against the cash flow statement's working-capital lines
             for name, bs_names, cf_names, sign in WC:
                 b1, b0 = first(FL, bs_names, end), None
@@ -1372,6 +1391,7 @@ def run_one(cik, folder, ua, ticker=None, sleep=0.12, info=None):
     return build(FL, meta)
 
 
+VERSION = 2                                            # raise when the checks change: every company is read again, after new ones
 INDEX_FIELDS = ['ticker', 'name', 'cik', 'form', 'fy', 'fy_end', 'filed', 'notes', 'tables', 'checks', 'tie', 'round', 'info', 'gap', 'revenue']
 
 
@@ -1402,8 +1422,10 @@ def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tick
             return 0
         if c.get('form') in ANNUAL and c.get('filed') and c['filed'] > (s_.get('filed') or ''):
             return 1                                       # the site has a newer annual report than the one on file
+        if s_.get('v') != VERSION:
+            return 0                                       # read with an older version of these checks: again, largest first with the new
         if not s_.get('checked') or (now - dt.datetime.fromisoformat(s_['checked'])).days >= recheck_days:
-            return 2
+            return 3
         return None
     order = sorted([(due(c), i, c) for i, c in enumerate(cos) if due(c) is not None], key=lambda x: (x[0], x[1]))
     if tickers:
@@ -1421,7 +1443,7 @@ def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tick
             if not info:
                 s_.update(checked=now.isoformat(timespec='seconds'), error='no annual report with XBRL')
                 continue
-            if info['accession'] == s_.get('accession') and (pub / 'c' / f'{t}.json').exists():
+            if info['accession'] == s_.get('accession') and s_.get('v') == VERSION and (pub / 'c' / f'{t}.json').exists():
                 s_['checked'] = now.isoformat(timespec='seconds')
                 same += 1
                 continue
@@ -1433,7 +1455,7 @@ def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tick
             (pub / 'c' / f'{t}.json').write_text(json.dumps(doc, separators=(',', ':')), encoding='utf-8')
             sm = doc['summary']
             s_.clear()
-            s_.update(cik=int(c['cik']), accession=doc['accession'], filed=doc['filed'], checked=now.isoformat(timespec='seconds'),
+            s_.update(cik=int(c['cik']), accession=doc['accession'], filed=doc['filed'], checked=now.isoformat(timespec='seconds'), v=VERSION,
                       row=[t, doc.get('name'), int(c['cik']), doc.get('form'), doc.get('fy'), doc.get('fy_end'), doc.get('filed'), len(doc['notes']),
                            sum(len(n['tables']) for n in doc['notes']), sm.get('all', len(doc['checks'])), sm.get('tie', 0), sm.get('round', 0), sm.get('info', 0), sm.get('gap', 0),
                            c.get('revenue')])
