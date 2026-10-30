@@ -321,7 +321,7 @@ def plain(h, limit=None):
     s = re.sub(r'<[^>]+>', ' ', s)
     s = H.unescape(s)
     s = re.sub(r'[ \t\xa0]+', ' ', s)
-    s = re.sub(r'(\s*\|\s*)+\n', '\n', s)
+    s = '\n'.join(ln.rstrip(' \t|') for ln in s.split('\n'))   # empty cells at a line's end (rstrip, not a regex: linear)
     s = re.sub(r'\n\s*\n+', '\n', s).strip()
     return s[:limit] if limit else s
 
