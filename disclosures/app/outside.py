@@ -9,6 +9,11 @@ filings, and the "Beyond the filings" view of each company page). Kept on the br
   fedreg     the Federal Register (no key): rules, proposed rules and notices that name the company, by agency.
   fec        OpenFEC (an api.data.gov key, DATA_GOV_API_KEY): the company's political action committee — money raised and
              spent this cycle and the one before, the largest recipients.
+  complaints CFPB consumer complaint database (no key): complaints filed against banks, card issuers, lenders, servicers
+             and fintechs — five trailing years, products, issues, how the company responded, relief given.
+  environment EPA ECHO exporter (weekly bulk file, no key): the company's active regulated facilities, matched by name —
+             significant violators, facilities in violation, inspections, formal enforcement actions and penalties over five
+             years, greenhouse-gas (CO2e) and toxic (TRI) releases.
   wiki       Wikipedia page views (Wikimedia REST, no key; the article from Wikidata's SEC CIK property P5531): attention.
   costs      cost shocks (FRED: oil, natural gas, diesel, jet fuel, electricity, wages, steel, copper): how each sector's
              and company's margins have moved with each input, year on year, and what a shock would do.
@@ -163,7 +168,7 @@ def universe(site_index):
     return out
 
 
-def matcher(companies):
+def matcher(companies, extra=None):
     """A function source-name → company (or None): the company whose name key starts the source's name key (longest
     key wins; at least five letters or two words, so 'AT' or 'GE' alone never match), else an alias."""
     keys = {}
@@ -173,7 +178,7 @@ def matcher(companies):
                 keys.setdefault(k, c)
     by_t = {c['ticker']: c for c in companies}
     order = sorted(keys, key=len, reverse=True)
-    alias = sorted(((k, t) for k, t in ALIASES.items() if t), key=lambda x: -len(x[0]))
+    alias = sorted([(k, t) for k, t in ALIASES.items() if t] + [(norm(k), t) for k, t in (extra or {}).items() if t], key=lambda x: -len(x[0]))
 
     def find(src):
         s = norm(src)
@@ -535,6 +540,280 @@ def fec(company, key, cycles, fetch=get_json):
     return out
 
 
+# ---------------------------------------------------------------- CFPB consumer complaints
+CFPB = 'https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/'
+# the names complaints are filed under → ticker (banks file as their bank, lenders as their servicer)
+CFPB_ALIASES = {
+    'citibank': 'C', 'citigroup': 'C', 'synchrony': 'SYF', 'u s bancorp': 'USB', 'us bancorp': 'USB', 'u s bank': 'USB', 'pnc bank': 'PNC',
+    'pnc financial': 'PNC', 'discover bank': 'COF', 'discover financial': 'COF', 'td bank': 'TD', 'santander': 'SAN', 'barclays bank': 'BCS',
+    'rocket mortgage': 'RKT', 'quicken loans': 'RKT', 'nationstar mortgage': 'RKT', 'mr cooper': 'RKT', 'ocwen': 'ONIT', 'onity': 'ONIT',
+    'phh mortgage': 'ONIT', 'nelnet': 'NNI', 'regions': 'RF', 'fifth third': 'FITB', 'huntington national bank': 'HBAN', 'huntington bancshares': 'HBAN',
+    'm t bank': 'MTB', 'toyota motor credit': 'TM', 'american honda finance': 'HMC', 'lendingclub': 'LC', 'lending club': 'LC', 'credit karma': 'INTU',
+    'wells fargo': 'WFC', 'jpmorgan': 'JPM', 'charles schwab': 'SCHW', 'hsbc': 'HSBC', 'bmo harris': 'BMO', 'comerica': 'CMA', 'zions': 'ZION',
+    'webster bank': 'WBS', 'east west bank': 'EWBC', 'first horizon': 'FHN', 'navient': 'NAVI', 'sallie mae': 'SLM', 'green dot': 'GDOT',
+    'marqeta': 'MQ', 'dave operating': 'DAVE', 'moneylion': 'ML', 'lendingtree': 'TREE', 'loandepot': 'LDI', 'united wholesale mortgage': 'UWMC',
+    'guild mortgage': 'GHLD', 'pennymac': 'PFSI', 'onemain': 'OMF', 'one main': 'OMF', 'american express': 'AXP', 'visa': 'V', 'mastercard': 'MA',
+    'gm financial': 'GM', 'general motors financial': 'GM', 'ford motor credit': 'F', 'harley davidson financial': 'HOG', 'lennar financial': 'LEN',
+    'tesla': 'TSLA', 'carmax': 'KMX', 'carvana': 'CVNA', 'toyota financial': 'TM', 'nissan motor acceptance': 'NSANY',
+}
+CFPB_EXTRA = r'\b(bank|banks|bancorp|bancshares|banc|financial|finance|credit|mortgage|card|cards|n a|national association|securities|markets|usa)\b'
+
+
+def _fin(c):
+    return 6000 <= c['sic'] <= 6799 or 7370 <= c['sic'] <= 7399 or 5500 <= c['sic'] <= 5599
+
+
+def cfpb_matcher(companies):
+    """Complaint company name → listed company, stricter than matcher(): a financial company whose name is the source's
+    name, or a large bank or lender whose name starts it and the rest is banking words ('Bank of America, National
+    Association'); else a known servicer or captive lender. Credit unions never match."""
+    find = matcher(companies)
+    by_t = {c['ticker']: c for c in companies}
+    al = sorted(((norm(k), t) for k, t in CFPB_ALIASES.items() if t), key=lambda x: -len(x[0]))
+
+    def f(name):
+        s = norm(name)
+        if not s or re.search(r'\b(credit union|employees|federal credit)\b', s):
+            return None
+        banking = lambda rest: all(w in ('of', 'and', 'the') for w in re.sub(CFPB_EXTRA, ' ', rest).split())   # noqa: E731
+        for k, t in al:
+            if (s == k or s.startswith(k + ' ') and (' ' in k or banking(s[len(k):]))) and t in by_t:
+                return by_t[t]
+        c = find(name)
+        if not c or not _fin(c):
+            return None
+        cs = core(name)
+        if cs == c['core'] or s == c['key']:
+            return c
+        rest = s[len(c['key']):] if s.startswith(c['key'] + ' ') else (cs[len(c['core']):] if cs.startswith(c['core'] + ' ') else '')
+        if (c['core'].split(' ')[0] not in COMMON and 6000 <= c['sic'] <= 6799 and (c['revenue'] or 0) >= 1e9 and rest.strip()
+                and banking(rest)):
+            return c
+        return None
+    return f
+
+
+def _buckets(aggs, k):
+    a = (aggs or {}).get(k) or {}
+    return (a.get(k) or a).get('buckets') or []
+
+
+def cfpb_windows(today, years=5):
+    """Trailing twelve-month windows, newest first: [(start, end), ...]."""
+    out, end = [], today
+    for _ in range(years):
+        start = end - dt.timedelta(days=365)
+        out.append((start.isoformat(), end.isoformat()))
+        end = start - dt.timedelta(days=1)
+    return out
+
+
+def cfpb_counts(start, end, fetch=get_json):
+    d = fetch(CFPB, {'size': 0, 'date_received_min': start, 'date_received_max': end}, timeout=120)
+    return {x['key']: x['doc_count'] for x in _buckets(d.get('aggregations'), 'company')}
+
+
+def cfpb_detail(names, start, end, fetch=get_json):
+    d = fetch(CFPB, [('size', 0), ('date_received_min', start), ('date_received_max', end)] + [('company', n) for n in names], timeout=120)
+    a = d.get('aggregations') or {}
+    top = lambda k, n=6: [[x['key'], x['doc_count']] for x in _buckets(a, k)[:n]]   # noqa: E731
+    return {'total': ((d.get('hits') or {}).get('total') or {}).get('value'), 'products': top('product'), 'issues': top('issue', 8),
+            'responses': top('company_response', 8), 'timely': top('timely', 3), 'via': top('submitted_via', 6), 'states': top('state', 8),
+            'window': [start, end]}
+
+
+def cfpb_summary(names, years, detail, revenue):
+    """years: [{name: n}] trailing windows newest first."""
+    ys = [sum(w.get(n, 0) for n in names) for w in years]
+    if not ys or not ys[0]:
+        return None
+    out = {'names': names, 'last_12m': ys[0], 'prev_12m': ys[1] if len(ys) > 1 else None, 'years': ys[::-1],
+           'change': round(ys[0] / ys[1] - 1, 3) if len(ys) > 1 and ys[1] else None,
+           'per_bn': round(ys[0] / (revenue / 1e9), 1) if revenue and revenue >= 1e8 else None}
+    if detail:
+        tot = detail.get('total') or 0
+        resp = dict(detail.get('responses') or [])
+        tim = dict(detail.get('timely') or [])
+        out.update({'products': detail.get('products'), 'issues': detail.get('issues'), 'responses': detail.get('responses'),
+                    'relief_share': round((resp.get('Closed with monetary relief', 0)) / tot, 4) if tot else None,
+                    'any_relief_share': round((resp.get('Closed with monetary relief', 0) + resp.get('Closed with non-monetary relief', 0)) / tot, 4) if tot else None,
+                    'late_share': round(tim.get('No', 0) / tot, 4) if tot else None, 'states': detail.get('states')})
+    return out
+
+
+def cfpb_names(companies, cache, min_n=10):
+    """{cik: [complaint company names]} for the companies with at least min_n complaints in the latest window."""
+    f = cfpb_matcher(companies)
+    counts = cache.get('counts') or []
+    out = {}
+    for w in counts:
+        for name in w:
+            c = f(name)
+            if c:
+                out.setdefault(c['cik'], set()).add(name)
+    latest = counts[0] if counts else {}
+    return {cik: sorted(ns) for cik, ns in out.items() if sum(latest.get(n, 0) for n in ns) >= min_n}
+
+
+# ---------------------------------------------------------------- EPA ECHO environmental compliance
+ECHO = 'https://echodata.epa.gov/echo/echo_rest_services.'
+EPA_ALIASES = {
+    'exxonmobil': 'XOM', 'exxon': 'XOM', 'mobil': 'XOM', 'dow chemical': 'DOW', 'dow silicones': 'DOW', 'union carbide': 'DOW',
+    'georgia power': 'SO', 'alabama power': 'SO', 'mississippi power': 'SO', 'southern california edison': 'EIX', 'pacific gas electric': 'PCG',
+    'consumers energy': 'CMS', 'dte electric': 'DTE', 'detroit edison': 'DTE', 'florida power light': 'NEE', 'appalachian power': 'AEP',
+    'indiana michigan power': 'AEP', 'ohio power': 'AEP', 'public service company of colorado': 'XEL', 'northern states power': 'XEL',
+    'virginia electric power': 'D', 'dominion energy': 'D', 'commonwealth edison': 'EXC', 'peco energy': 'EXC', 'baltimore gas electric': 'EXC',
+    'waste management': 'WM', 'marathon petroleum': 'MPC', 'tesoro': 'MPC', 'valero': 'VLO', 'chevron': 'CVX', 'conocophillips': 'COP',
+    'occidental': 'OXY', 'oxy usa': 'OXY', 'anadarko': 'OXY', 'pioneer natural resources': 'XOM', 'devon energy': 'DVN', 'eog resources': 'EOG',
+    'noble energy': 'CVX', 'southern california gas': 'SRE', 'san diego gas electric': 'SRE', 'tyson': 'TSN', 'pilgrim s pride': 'PPC', 'dupont': 'DD', 'chemours': 'CC', 'eastman chemical': 'EMN', 'lyondell': 'LYB', 'equistar': 'LYB',
+    'nucor': 'NUE', 'steel dynamics': 'STLD', 'cleveland cliffs': 'CLF', 'alcoa': 'AA', 'freeport mcmillan': 'FCX', 'international paper': 'IP',
+    'kinder morgan': 'KMI', 'tennessee gas pipeline': 'KMI', 'el paso natural gas': 'KMI', 'williams': 'WMB', 'transcontinental gas': 'WMB',
+}
+EPA_SECTORS = {'industrials', 'materials', 'consumer-staples', 'utilities', 'energy', 'consumer-disc', 'health', 'technology'}
+EPA_ZIP = 'https://echo.epa.gov/files/echodownloads/echo_exporter.zip'
+EPA_FIELDS = ['name', 'city', 'state', 'snc', 'qtrs_nc', 'status', 'inspections', 'formal', 'last_formal', 'penalties', 'penalty_n', 'last_penalty',
+              'major', 'co2_t', 'tri_lb', 'registry']
+
+
+def _money(s):
+    try:
+        return float(re.sub(r'[^0-9.\-]', '', str(s or '')) or 0)
+    except ValueError:
+        return 0.0
+
+
+def prefix_matcher(companies, extra=None):
+    """matcher()'s rule — a company key is a whole-word prefix of the name's core (else of the whole name), longest first —
+    with the aliases in the same table, by dictionary lookup: fast enough for the 1.5 million facilities of the EPA
+    exporter. find(name) → (company, the matched key) or (None, '')."""
+    keys = {}
+    for c in sorted(companies, key=lambda c: -(c['revenue'] or 0)):
+        for k in (c['key'], c.get('core') or c['key']):
+            if len(k) >= 5 or ' ' in k:
+                keys.setdefault(k, c)
+    by_t = {c['ticker']: c for c in companies}
+    for k, t in list(ALIASES.items()) + [(norm(k), t) for k, t in (extra or {}).items()]:
+        if t and t in by_t and (len(k) >= 4 or ' ' in k):
+            keys[k] = by_t[t]
+
+    def find(src):
+        s = norm(src)
+        if not s:
+            return None, 0
+        for words in (core(src).split(' '), s.split(' ')):
+            for n in range(min(len(words), 7), 0, -1):
+                k = ' '.join(words[:n])
+                hit = keys.get(k)
+                if hit:
+                    return hit, k
+        return None, ''
+    return find
+
+
+def _fam_sic(code):
+    try:
+        g = int(str(code).strip()[:2])
+    except ValueError:
+        return None
+    return ('ag' if g < 10 else 'mining' if g < 15 else 'constr' if g < 18 else 'manuf' if g < 40 else 'transport' if g < 48 else
+            'telecom' if g == 48 else 'util' if g == 49 else 'wholesale' if g < 52 else 'retail' if g < 60 else 'fin' if g < 68 else 'services')
+
+
+def _fam_naics(code):
+    try:
+        g = int(str(code).strip()[:2])
+    except ValueError:
+        return None
+    return {11: 'ag', 21: 'mining', 22: 'util', 23: 'constr', 31: 'manuf', 32: 'manuf', 33: 'manuf', 42: 'wholesale', 44: 'retail', 45: 'retail',
+            48: 'transport', 49: 'transport', 51: 'telecom', 52: 'fin', 53: 'fin', 72: 'retail'}.get(g, 'services')
+
+
+FAM_OK = {'mining': {'mining', 'manuf', 'util', 'transport', 'wholesale'}, 'manuf': {'manuf', 'mining', 'wholesale', 'transport', 'util'},
+          'util': {'util', 'mining', 'transport', 'manuf', 'constr'}, 'transport': {'transport', 'wholesale', 'retail', 'services'},
+          'retail': {'retail', 'wholesale', 'transport', 'services'}, 'wholesale': {'wholesale', 'retail', 'transport', 'manuf'},
+          'constr': {'constr', 'manuf', 'mining', 'services'}, 'ag': {'ag', 'manuf', 'wholesale'}, 'telecom': {'telecom', 'services', 'util'},
+          'services': {'services', 'telecom', 'transport', 'retail'}, 'fin': {'fin', 'services'}}
+
+
+# words too ordinary to identify a company on a facility's name by themselves
+EPA_STOP = {'industrial', 'northwest', 'northeast', 'southwest', 'southeast', 'midwest', 'heritage', 'frontier', 'century', 'crown', 'castle',
+            'harmony', 'sunshine', 'hudson', 'rogers', 'trinity', 'miller', 'williams', 'noble', 'phoenix', 'eagle', 'diamond', 'golden', 'silver',
+            'valley', 'river', 'mountain', 'lake', 'park', 'city', 'county', 'state', 'service', 'services', 'environmental', 'energy', 'power',
+            'cumberland', 'superior', 'genesis', 'legacy', 'patriot', 'victory', 'triumph', 'compass', 'meridian', 'horizon', 'ascent', 'insight'}
+
+
+def epa_bulk(zip_path, companies, pick=lambda c: True):
+    """{cik: [facility rows]} from the ECHO exporter: active facilities whose name matches a picked company. A match on a
+    one-word name ('Williams', 'Crown') also needs the facility's industry codes to be in the company's line of business,
+    so Roger Williams Medical Center is not the Williams Companies and an Exxon-branded gas station is not ExxonMobil — and
+    an ordinary word never matches alone; nor does one where most facilities named with it are in other industries
+    (unless the company is very large: Chevron-branded gas stations outnumber Chevron's own plants)."""
+    import csv
+    import io
+    import zipfile
+    find = prefix_matcher(companies, EPA_ALIASES)
+    out, seen, kept, pend = {}, {}, {}, []
+    with zipfile.ZipFile(zip_path) as z:
+        name = next(i.filename for i in z.infolist() if i.filename.lower().endswith('.csv'))
+        with z.open(name) as f:
+            for r in csv.DictReader(io.TextIOWrapper(f, encoding='latin-1', newline='')):
+                if r.get('FAC_ACTIVE_FLAG') == 'N' or r.get('FAC_COMPLIANCE_STATUS') == 'Inactive':
+                    continue
+                c, key = find(r.get('FAC_NAME'))
+                if not c or not pick(c):
+                    continue
+                one = ' ' not in key
+                if one:
+                    if key in COMMON or key in EPA_STOP:
+                        continue
+                    seen[key] = seen.get(key, 0) + 1
+                    fams = {_fam_sic(x) for x in (r.get('FAC_SIC_CODES') or '').split()} | {_fam_naics(x) for x in (r.get('FAC_NAICS_CODES') or '').split()}
+                    fams.discard(None)
+                    if not fams & FAM_OK.get(_fam_sic(f"{c['sic']:04d}") or '', set()):
+                        continue
+                    kept[key] = kept.get(key, 0) + 1
+                snc = int(_money(r.get('FAC_PROGRAMS_WITH_SNC'))) > 0 or 'Y' in (r.get('CWA_SNC_FLAG'), r.get('RCRA_SNC_FLAG'), r.get('SDWA_SNC_FLAG'), r.get('CAA_HPV_FLAG'))
+                pend.append((c['cik'], key if one else None, [
+                    r.get('FAC_NAME'), r.get('FAC_CITY'), r.get('FAC_STATE'), 'Y' if snc else 'N', int(_money(r.get('FAC_QTRS_WITH_NC'))),
+                    r.get('FAC_COMPLIANCE_STATUS'), int(_money(r.get('FAC_INSPECTION_COUNT'))), int(_money(r.get('FAC_FORMAL_ACTION_COUNT'))),
+                    r.get('FAC_DATE_LAST_FORMAL_ACTION'), _money(r.get('FAC_TOTAL_PENALTIES')), int(_money(r.get('FAC_PENALTY_COUNT'))),
+                    r.get('FAC_DATE_LAST_PENALTY'), r.get('FAC_MAJOR_FLAG'), round(_money(r.get('GHG_CO2_RELEASES'))), round(_money(r.get('TRI_ON_SITE_RELEASES'))),
+                    r.get('REGISTRY_ID')]))
+    by_cik = {c['cik']: c for c in companies}
+    for cik, key, row in pend:
+        if key and kept[key] / seen[key] < 0.3 and (by_cik[cik]['revenue'] or 0) < 20e9:
+            continue
+        out.setdefault(cik, []).append(row)
+    return out
+
+
+def _us_date(s):
+    m = re.fullmatch(r'(\d{2})/(\d{2})/(\d{4})', str(s or '').strip())
+    return f'{m[3]}-{m[1]}-{m[2]}' if m else None
+
+
+def epa_summary(rows, revenue):
+    if not rows:
+        return None
+    viol = [r for r in rows if r[5] and 'violation' in r[5].lower() and not r[5].lower().startswith('no ')]
+    # one settlement often sits on every facility it covers (same amount, same date): count each amount-and-date once
+    pen = sum(a for a, _ in {(r[9], r[11]) for r in rows if r[9]})
+    states = {}
+    for r in rows:
+        states[r[2]] = states.get(r[2], 0) + 1
+    lastp = max((d for d in (_us_date(r[11]) for r in rows) if d), default=None)
+    row = lambda r: [r[0], r[1], r[2], r[3], r[4], r[5], r[7], round(r[9]), _us_date(r[11]), r[13] or None, r[14] or None, r[15]]   # noqa: E731
+    top = sorted(rows, key=lambda r: (-r[9], -r[7], -(r[3] == 'Y'), -r[4]))[:10]
+    emit = sorted((r for r in rows if r[13]), key=lambda r: -r[13])[:6]
+    co2, tri = sum(r[13] for r in rows), sum(r[14] for r in rows)
+    return {'facilities': len(rows), 'major': sum(1 for r in rows if r[12] == 'Y'), 'snc': sum(1 for r in rows if r[3] == 'Y'),
+            'in_violation': len(viol), 'qtrs_nc': sum(r[4] for r in rows), 'inspections_5y': sum(r[6] for r in rows),
+            'formal_5y': sum(r[7] for r in rows), 'penalties_5y': round(pen), 'penalty_n': sum(r[10] for r in rows), 'last_penalty': lastp,
+            'co2_t': co2 or None, 'tri_lb': tri or None, 'per_bn': round(pen / (revenue / 1e9)) if revenue and revenue >= 1e8 else None,
+            'co2_per_mn': round(co2 / (revenue / 1e6), 1) if co2 and revenue and revenue >= 1e8 else None,
+            'states': sorted(states.items(), key=lambda x: -x[1])[:8], 'top': [row(r) for r in top], 'emitters': [row(r) for r in emit]}
+
+
 # ---------------------------------------------------------------- cost shocks
 COSTS = [('oil', 'Crude oil (WTI)', 'DCOILWTICO'), ('gas', 'Natural gas (Henry Hub)', 'DHHNGSP'), ('diesel', 'Diesel', 'GASDESW'),
          ('jet', 'Jet fuel', 'DJFUELUSGULF'), ('power', 'Industrial electricity (PPI)', 'WPU0543'), ('wages', 'Hourly earnings, private sector', 'CES0500000003'),
@@ -702,6 +981,31 @@ def collect(root, site_index, minutes=40, today=None, only=None):
         run('fec', lambda: per_company('fec', lambda c: (c['revenue'] or 0) >= 2e9, lambda c: fec(c, key, [cy, cy - 2]), 14, 0.3))
     else:
         res['fec'] = {'skipped': 'no DATA_GOV_API_KEY (free at api.data.gov/signup); the demo key allows ten requests an hour'}
+    def cfpb_bulk():
+        if fresh('cfpb', 1) and (root / 'cache' / 'cfpb_years.json').exists():
+            return 'fresh'
+        wins = cfpb_windows(today)
+        write_json(root / 'cache' / 'cfpb_years.json', {'at': now(), 'windows': wins, 'counts': [cfpb_counts(a, b) for a, b in wins]})
+        state['cfpb'] = now()
+        return 'fetched'
+    run('cfpb_bulk', cfpb_bulk)
+    cf = read_json(root / 'cache' / 'cfpb_years.json', {}) or {}
+    cmap = cfpb_names(comps, cf) if cf.get('counts') else {}
+    run('cfpb', lambda: per_company('cfpb', lambda c: c['cik'] in cmap, lambda c: cfpb_detail(cmap[c['cik']], *cf['windows'][0]), 7, 0.15))
+    def epa():
+        if fresh('epa', 6) and (root / 'cache' / 'epa.json').exists():
+            return 'fresh'
+        tmp = root.parent / 'echo_exporter.zip'
+        with open(tmp, 'wb') as f:
+            f.write(get(EPA_ZIP, timeout=900, tries=3))
+        try:
+            m = epa_bulk(tmp, comps, lambda c: c['sector'] in EPA_SECTORS)
+        finally:
+            tmp.unlink(missing_ok=True)
+        write_json(root / 'cache' / 'epa.json', {'at': now(), 'by_cik': {str(k): v for k, v in m.items()}})
+        state['epa'] = now()
+        return {'companies': len(m), 'facilities': sum(len(v) for v in m.values())}
+    run('epa', epa)
     run('wiki', lambda: pageviews(root, comps, wiki_map(root), budget_s=max(60, left() * 0.8), today=today))
     run('costs', lambda: {k: len(v) for k, v in fred_quarterly(root).items()})
     state['last_collect'] = {'at': now(), 'seconds': round(time.time() - t0), **{k: v for k, v in res.items()}}
@@ -751,6 +1055,19 @@ def build(root, site_index, frames_root=None, today=None):
         cik = int(p.stem)
         if a and cik in docs:
             docs[cik]['attention'] = {'article': d.get('article'), **a}
+    # consumer complaints (CFPB) and environmental compliance (EPA ECHO)
+    cf = read_json(root / 'cache' / 'cfpb_years.json', {}) or {}
+    if cf.get('counts'):
+        for cik, names in cfpb_names(comps, cf).items():
+            det = (read_json(root / 'cache' / 'cfpb' / f'{cik}.json', {}) or {}).get('data')
+            s = cfpb_summary(names, cf['counts'], det, by_cik[cik]['revenue'])
+            if s and cik in docs:
+                docs[cik]['complaints'] = {**s, 'window': cf['windows'][0]}
+    for k, rows in ((read_json(root / 'cache' / 'epa.json', {}) or {}).get('by_cik') or {}).items():
+        cik = int(k)
+        s = epa_summary(rows, (by_cik.get(cik) or {}).get('revenue'))
+        if s and cik in docs:
+            docs[cik]['environment'] = s
     # cost shocks
     costs = {}
     sec_fit, co_fit = {}, {}
@@ -781,12 +1098,15 @@ def build(root, site_index, frames_root=None, today=None):
         c = by_cik[cik]
         write_json(pub / 'c' / f'{cik}.json', {'cik': cik, 'ticker': c['ticker'], 'name': c['name'], 'sector': c['sector'], 'generated_at': now(), **d})
         t, r, f, w, fe = d.get('trials') or {}, d.get('recalls') or {}, d.get('fedreg') or {}, d.get('attention') or {}, d.get('fec') or {}
+        cp, en = d.get('complaints') or {}, d.get('environment') or {}
         cy = sorted((fe.get('cycles') or {}).items())[-1][1] if fe.get('cycles') else {}
         index.append([cik, c['ticker'], c['name'], c['sector'], t.get('active'), (t.get('phases') or {}).get('PHASE3', {}).get('active'),
                       len(t.get('due') or []) or None, r.get('last_12m'), r.get('n'), r.get('class1'), f.get('count'), w.get('avg7'), w.get('ratio'),
-                      cy.get('receipts'), cy.get('to_candidates'), c['revenue'] or None])
+                      cy.get('receipts'), cy.get('to_candidates'), cp.get('last_12m'), cp.get('change'), cp.get('per_bn'),
+                      en.get('facilities'), en.get('snc'), en.get('in_violation'), en.get('penalties_5y'), en.get('co2_t'), c['revenue'] or None])
     fields = ['cik', 'ticker', 'name', 'sector', 'trials_active', 'phase3_active', 'catalysts', 'recalls_12m', 'recalls_5y', 'class1',
-              'fedreg_12m', 'views_7d', 'views_ratio', 'pac_receipts', 'pac_to_candidates', 'revenue']
+              'fedreg_12m', 'views_7d', 'views_ratio', 'pac_receipts', 'pac_to_candidates', 'complaints_12m', 'complaints_change', 'complaints_per_bn',
+              'epa_facilities', 'epa_snc', 'epa_violation', 'epa_penalties_5y', 'epa_co2_t', 'revenue']
     write_json(pub / 'index.json', {'generated_at': now(), 'fields': fields, 'rows': sorted(index, key=lambda r: -(r[-1] or 0))})
     # the cross-company lists: catalysts due, the latest recalls, the latest rules
     cat, recent, regs = [], [], []
@@ -806,7 +1126,8 @@ def build(root, site_index, frames_root=None, today=None):
     status = {'built_at': now(), 'companies': len(index), 'trials': sum(1 for d in docs.values() if d.get('trials')),
               'recalls': sum(1 for d in docs.values() if d.get('recalls')), 'fedreg': sum(1 for d in docs.values() if d.get('fedreg')),
               'fec': sum(1 for d in docs.values() if d.get('fec')), 'attention': sum(1 for d in docs.values() if d.get('attention')),
-              'costs': sum(1 for d in docs.values() if d.get('costs')), 'last_collect': st.get('last_collect')}
+              'costs': sum(1 for d in docs.values() if d.get('costs')), 'complaints': sum(1 for d in docs.values() if d.get('complaints')),
+              'environment': sum(1 for d in docs.values() if d.get('environment')), 'last_collect': st.get('last_collect')}
     write_json(pub / 'status.json', status)
     return status
 
@@ -818,7 +1139,7 @@ def main():
     c.add_argument('--root', required=True)
     c.add_argument('--site-index', required=True)
     c.add_argument('--minutes', type=float, default=40)
-    c.add_argument('--only', default='', help='comma-separated: bulk,trials,fda,fedreg,fec,wiki,costs')
+    c.add_argument('--only', default='', help='comma-separated: bulk,trials,fda,fedreg,fec,cfpb_bulk,cfpb,epa,wiki,costs')
     b = sub.add_parser('build')
     b.add_argument('--root', required=True)
     b.add_argument('--site-index', required=True)

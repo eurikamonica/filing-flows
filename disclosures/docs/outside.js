@@ -13,14 +13,15 @@ function ouData(name) {
   return m;
 }
 const OU_VIEWS = [['companies', 'Every company'], ['catalysts', 'Clinical catalysts due'], ['recalls', 'Latest recalls'], ['regulation', 'Federal Register'],
-  ['attention', 'Attention spikes (Wikipedia)'], ['politics', 'Political action committees'], ['costs', 'Cost shocks by sector'], ['one', 'One company']];
+  ['complaints', 'Consumer complaints (CFPB)'], ['environment', 'Environmental enforcement (EPA)'], ['attention', 'Attention spikes (Wikipedia)'], ['politics', 'Political action committees'], ['costs', 'Cost shocks by sector'], ['one', 'One company']];
 const OU_PH = { EARLY_PHASE1: 'Early 1', PHASE1: '1', PHASE2: '2', PHASE3: '3', PHASE4: '4' };
 const ouN = (v, d = 0) => v == null || !Number.isFinite(+v) ? '—' : (+v).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
 const ouTk = (t, cik) => `<button class="text-button" data-out="${esc(cik)}" data-outt="${esc(t)}"><b>${esc(t)}</b></button>`;
 function ouRows(d) { const F = d.fields || []; return (d.rows || []).map(r => { const o = {}; F.forEach((k, i) => o[k] = r[i]); return o }) }
 function ouCompanies(d) {
   const S = [['revenue', 'Revenue'], ['trials_active', 'Active trials'], ['phase3_active', 'Phase 3 active'], ['catalysts', 'Catalysts due'], ['recalls_12m', 'Recalls, 12 months'],
-    ['class1', 'Class I recalls'], ['fedreg_12m', 'Federal Register, 12 months'], ['views_ratio', 'Attention: last week vs 90 days'], ['views_7d', 'Daily views'], ['pac_receipts', 'PAC raised']];
+    ['class1', 'Class I recalls'], ['fedreg_12m', 'Federal Register, 12 months'], ['views_ratio', 'Attention: last week vs 90 days'], ['views_7d', 'Daily views'], ['pac_receipts', 'PAC raised'],
+    ['complaints_12m', 'Consumer complaints, 12 months'], ['epa_penalties_5y', 'EPA penalties, 5 years'], ['epa_co2_t', 'Greenhouse gases']];
   state.ous = S.some(x => x[0] === state.ous) ? state.ous : 'revenue';
   const q = (state.ouq || '').trim().toUpperCase();
   let L = ouRows(d).filter(r => !q || r.ticker.includes(q) || String(r.name || '').toUpperCase().includes(q));
@@ -65,6 +66,24 @@ function ouRegulation(d, ix) {
     <h3>The latest</h3><div class="tablebox"><table><thead><tr><th>Date</th><th>Company</th><th>Type</th><th>Document</th></tr></thead><tbody>
     ${R.slice(0, 200).map(r => `<tr><td>${esc(r[0])}</td><td>${ouTk(r[1], r[2])}</td><td>${esc(r[3])}</td><td><a href="${esc(r[6])}" target="_blank" rel="noopener">${esc(r[5])}</a><br><span class="sub">${esc(r[4])}</span></td></tr>`).join('')}</tbody></table></div>`;
 }
+function ouComplaints(ix) {
+  const S = [['complaints_12m', 'Most complaints'], ['complaints_change', 'Fastest rising'], ['complaints_per_bn', 'Most per $1B of revenue']];
+  state.ouck = S.some(x => x[0] === state.ouck) ? state.ouck : 'complaints_12m';
+  const k = state.ouck, L = ouRows(ix).filter(r => r.complaints_12m && (k !== 'complaints_change' || r.complaints_12m >= 100) && r[k] != null).sort((a, b) => b[k] - a[k]).slice(0, 100);
+  if (!L.length) return empty('Consumer complaints are fetched on the next run.');
+  return `<div class="toolbar">${field('ouck', 'Rank by', S, k)}</div><div class="explain">Complaints sent to the Consumer Financial Protection Bureau about banks, card issuers, lenders, loan servicers, payment apps and debt collectors, over the last twelve months against the twelve before. A sharp rise often comes before an enforcement action or a hit to the business; the three credit bureaus get the most by far. Not verified by the CFPB.${k === 'complaints_change' ? ' Companies with at least 100 complaints.' : ''}</div>
+    <div class="tablebox"><table><thead><tr><th>Company</th><th>Last 12 months</th><th>vs the 12 before</th><th>Per $1B revenue</th></tr></thead><tbody>
+    ${L.map(r => `<tr><td>${ouTk(r.ticker, r.cik)} <span class="sub">${esc(r.name)}</span></td><td>${ouN(r.complaints_12m)}</td><td class="${(r.complaints_change || 0) >= 0.25 ? 'negative' : (r.complaints_change || 0) < 0 ? 'positive' : ''}">${r.complaints_change == null ? '—' : (r.complaints_change >= 0 ? '+' : '−') + Math.abs(100 * r.complaints_change).toFixed(0) + '%'}</td><td>${ouN(r.complaints_per_bn)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function ouEnvironment(ix) {
+  const S = [['epa_penalties_5y', 'Penalties, 5 years'], ['epa_co2_t', 'Greenhouse gases'], ['epa_violation', 'Facilities in violation'], ['epa_snc', 'Significant violators'], ['epa_facilities', 'Regulated facilities']];
+  state.ouek = S.some(x => x[0] === state.ouek) ? state.ouek : 'epa_penalties_5y';
+  const k = state.ouek, L = ouRows(ix).filter(r => r.epa_facilities && r[k]).sort((a, b) => b[k] - a[k]).slice(0, 100);
+  if (!L.length) return empty('EPA facilities are fetched on the next run (a weekly bulk file).');
+  return `<div class="toolbar">${field('ouek', 'Rank by', S, k)}</div><div class="explain">EPA's enforcement and compliance records (ECHO) for the facilities named after each company: penalties and formal enforcement over five years, facilities in violation now, significant violators, and reported greenhouse-gas emissions (tonnes of CO₂ equivalent a year). Matched by name: subsidiaries under other names are missed, and a settlement shared by several sites counts once.</div>
+    <div class="tablebox"><table><thead><tr><th>Company</th><th>Penalties, 5 years</th><th>CO₂e, t a year</th><th>In violation</th><th>Significant</th><th>Facilities</th></tr></thead><tbody>
+    ${L.map(r => `<tr><td>${ouTk(r.ticker, r.cik)} <span class="sub">${esc(r.name)}</span></td><td>${r.epa_penalties_5y ? '$' + compact(r.epa_penalties_5y) : '—'}</td><td>${r.epa_co2_t ? compact(r.epa_co2_t) : '—'}</td><td>${ouN(r.epa_violation)}</td><td class="${r.epa_snc ? 'negative' : ''}">${ouN(r.epa_snc)}</td><td>${ouN(r.epa_facilities)}</td></tr>`).join('')}</tbody></table></div>`;
+}
 function ouAttention(ix) {
   const L = ouRows(ix).filter(r => r.views_ratio != null && (r.views_7d || 0) >= 200).sort((a, b) => b.views_ratio - a.views_ratio).slice(0, 60);
   return `<div class="explain">Daily English Wikipedia views of each company's article (people, not bots) over the last week against the 90 days before. A spike follows news; attention often comes with heavier trading. Companies with at least 200 views a day.</div>
@@ -93,7 +112,7 @@ function ouCosts(C) {
 function outsideView() {
   state.ouv = OU_VIEWS.some(v => v[0] === state.ouv) ? state.ouv : 'companies';
   let out = `<div class="section-head"><h2>Beyond the filings</h2><span class="tag">FREE PUBLIC DATA · DAILY</span></div>
-    <p class="sub">What free public data says about companies outside their 10-Q and 10-K: drug pipelines and the results due, recalls, regulation, political money, attention and cost shocks — from ClinicalTrials.gov, the FDA, CPSC, NHTSA, the Federal Register, the FEC, Wikipedia and FRED. Matched by name, conservatively: a company with no match shows nothing, not "none".</p>
+    <p class="sub">What free public data says about companies outside their 10-Q and 10-K: drug pipelines and the results due, recalls, consumer complaints, environmental enforcement, regulation, political money, attention and cost shocks — from ClinicalTrials.gov, the FDA, CPSC, NHTSA, the CFPB, the EPA, the Federal Register, the FEC, Wikipedia and FRED. Matched by name, conservatively: a company with no match shows nothing, not "none".</p>
     <div class="toolbar">${field('ouv', 'View', OU_VIEWS, state.ouv)}</div>`;
   const ix = ouData('index'), li = ouData('lists'), st = ouData('status');
   if (ix.err) return out + empty(`Beyond the filings could not load (${ix.err}). It is rebuilt daily by the research-outside workflow.`);
@@ -103,12 +122,12 @@ function outsideView() {
   if (!ix.data || (['catalysts', 'recalls', 'regulation'].includes(state.ouv) && !li.data)) return out + empty('Loading…');
   const v = state.ouv;
   out += v === 'companies' ? ouCompanies(ix.data) : v === 'catalysts' ? ouCatalysts(li.data) : v === 'recalls' ? ouRecalls(li.data) : v === 'regulation' ? ouRegulation(li.data, ix.data)
-    : v === 'attention' ? ouAttention(ix.data) : ouPolitics(ix.data, st.data);
+    : v === 'complaints' ? ouComplaints(ix.data) : v === 'environment' ? ouEnvironment(ix.data) : v === 'attention' ? ouAttention(ix.data) : ouPolitics(ix.data, st.data);
   return out;
 }
 function bindOutside() {
   if (state.tab !== 'outside') return;
-  ['ouv', 'ous', 'ouph', 'ousrc', 'oush', 'oum'].forEach(id => { if ($(id)) $(id).onchange = e => { state[id] = e.target.value; state.page = 0; render() } });
+  ['ouv', 'ous', 'ouph', 'ousrc', 'oush', 'oum', 'ouck', 'ouek'].forEach(id => { if ($(id)) $(id).onchange = e => { state[id] = e.target.value; state.page = 0; render() } });
   if ($('ouq')) $('ouq').onchange = e => { state.ouq = e.target.value; state.page = 0; render() };
   document.querySelectorAll('#workspace [data-oupage]').forEach(b => b.onclick = () => { state.page = Math.max(0, (state.page || 0) + +b.dataset.oupage); render() });
   const one = (cik, t) => { state.ouv = 'one'; state.ouone = cik; state.ouonet = t; render(); };
@@ -131,7 +150,7 @@ function outsideNotice() {
   if (s.err) return { stale: true, text: 'Official derived view · Beyond the filings status unavailable · ' + s.err };
   if (!d) return { stale: false, text: 'Official derived view · Beyond the filings loading…' };
   const age = (Date.now() - Date.parse(d.built_at)) / 3600000;
-  return { stale: !(age <= 36), text: `Official derived view · Beyond the filings built ${d.built_at} · ${fmt(d.companies)} companies · trials ${fmt(d.trials)} · recalls ${fmt(d.recalls)} · Federal Register ${fmt(d.fedreg)} · Wikipedia ${fmt(d.attention)} · costs ${fmt(d.costs)}` + (d.fec ? ` · PACs ${fmt(d.fec)}` : '') + ' · refreshed daily' + (age > 36 ? ' · stale' : '') };
+  return { stale: !(age <= 36), text: `Official derived view · Beyond the filings built ${d.built_at} · ${fmt(d.companies)} companies · trials ${fmt(d.trials)} · recalls ${fmt(d.recalls)} · Federal Register ${fmt(d.fedreg)} · complaints ${fmt(d.complaints || 0)} · EPA ${fmt(d.environment || 0)} · Wikipedia ${fmt(d.attention)} · costs ${fmt(d.costs)}` + (d.fec ? ` · PACs ${fmt(d.fec)}` : '') + ' · refreshed daily' + (age > 36 ? ' · stale' : '') };
 }
 window.HUB_VIEWS = Object.assign(window.HUB_VIEWS || {}, { outside: outsideView });
 window.HUB_BINDS = Object.assign(window.HUB_BINDS || {}, { outside: bindOutside });

@@ -2,7 +2,7 @@
 # Daily: ClinicalTrials.gov studies of drug, biotech and device companies; FDA enforcement reports, CPSC and NHTSA recalls;
 # the Federal Register documents naming each company; corporate PACs from the FEC (needs DATA_GOV_API_KEY, free at
 # https://api.data.gov/signup); Wikipedia page views (articles from Wikidata's SEC CIK property); FRED input prices for
-# the cost shocks — each topped up within a time budget, then public/ is rebuilt (disclosures/app/outside.py).
+# the cost shocks; CFPB consumer complaints; the EPA ECHO exporter (weekly bulk file) — each topped up within a time budget, then public/ is rebuilt (disclosures/app/outside.py).
 # Kept on the branch "research-outside" (one commit, force-pushed); scan.yml publishes public/ at disclosures/data/research/outside/.
 name: Research — beyond the filings
 on:
@@ -62,7 +62,7 @@ jobs:
         if: always() && steps.collect.outcome != 'skipped'
         run: |
           cd ro
-          printf '%s\n' '# research-outside (data only)' '' 'Caches of ClinicalTrials.gov, FDA, CPSC, NHTSA, the Federal Register, the FEC, Wikipedia page views and FRED' \
+          printf '%s\n' '# research-outside (data only)' '' 'Caches of ClinicalTrials.gov, FDA, CPSC, NHTSA, CFPB, EPA ECHO, the Federal Register, the FEC, Wikipedia page views and FRED' \
             '(cache/) and the files the site publishes (public/), kept by .github/workflows/research-outside.yml on main.' \
             'Force-pushed as a single commit on every run.' > README.md
           git add -A

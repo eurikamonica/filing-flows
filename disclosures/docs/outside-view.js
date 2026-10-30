@@ -23,7 +23,7 @@
 .ov h3{margin:0 0 6px;font-size:1rem}.ov .ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}.ov .ov-big{font-size:1.5rem;font-weight:600;margin-right:6px}
 .ov table{border-collapse:collapse;width:100%;min-width:0!important;font-size:.85rem}.ov td,.ov th{padding:3px 6px;border-bottom:1px solid var(--line,#e4e7ec);text-align:left;vertical-align:top;white-space:normal;overflow-wrap:anywhere}
 .ov th{position:static}.ov td.n,.ov th.n{text-align:right;white-space:nowrap;overflow-wrap:normal;font-variant-numeric:tabular-nums}.ov .muted{opacity:.75;font-size:.82rem}.ov svg{display:block;width:100%;height:auto;max-width:820px}
-.ov .ov-bar{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:.85rem}.ov .ov-bar b{display:inline-block;height:12px;border-radius:3px;background:#3b6fb6}.ov .ov-bar span{min-width:92px}
+.ov .ov-bar{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:.85rem}.ov .ov-bar b{display:inline-block;height:12px;border-radius:3px;background:#3b6fb6}.ov .ov-bar span{min-width:92px;white-space:nowrap}
 .ov .ov-wide{grid-column:1/-1}.ov td.d,.ov th{white-space:nowrap;overflow-wrap:normal;word-break:normal}.ov td.l{min-width:9em}.ov .bad{color:#b42318}.ov .ok{color:#17734a}.ov .ov-tag{display:inline-block;font-size:.72rem;border:1px solid currentColor;border-radius:999px;padding:0 6px;opacity:.8}`;
     document.head.appendChild(s);
   }
@@ -54,6 +54,30 @@
       <table><thead><tr><th>Date</th><th>Recall</th></tr></thead><tbody>${(r.latest || []).slice(0, 8).map((x) => `<tr><td class="d">${esc(x.date)}<br><span class="muted">${esc(x.source)}</span></td>
         <td>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.what)}</a>` : esc(x.what)}<br><span class="muted">${[x.class ? (x.class === 'Class I' ? '<b class="bad">Class I</b>' : esc(String(x.class).toLowerCase())) : '', x.why ? esc(String(x.why).length > 110 ? String(x.why).slice(0, 108) + '…' : x.why) : '', x.firm ? 'as ' + esc(x.firm) : ''].filter(Boolean).join(' · ')}</span></td></tr>`).join('')}</tbody></table>
       <p class="muted">FDA enforcement reports (drugs, devices, food), CPSC consumer products and NHTSA vehicles, matched by the recalling firm's name (its own and its known brands). A company not matched shows nothing here — not "no recalls".</p></div>`;
+  }
+  function complaints(c) {
+    if (!c) return '';
+    const y = c.years || [], m = Math.max(1, ...y), w = c.window || [], end = w[1] ? +w[1].slice(0, 4) : null;
+    const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], mo = w[1] ? MO[+w[1].slice(5, 7) - 1] : '';
+    const lab = (i) => (end ? `year to ${mo} ${end - (y.length - 1 - i)}` : '');
+    const bars = y.map((n, i) => `<div class="ov-bar"><span>${lab(i)}</span><b style="width:${Math.max(n ? 2 : 0, 70 * n / m)}%;background:#7a5af8"></b>${num(n)}</div>`).join('');
+    const top = (L) => (L || []).slice(0, 5).map(([k, n]) => `${esc(k)} (${num(n)})`).join(', ');
+    return `<div class="ov-card"><h3>Consumer complaints (CFPB)</h3><p><span class="ov-big ${fin(c.change) && c.change >= 0.25 ? 'bad' : ''}">${num(c.last_12m)}</span>in the last twelve months · ${fin(c.change) ? pc(c.change) + ' on the year before' : ''}${fin(c.per_bn) ? ` · ${num(c.per_bn)} per $1B of revenue` : ''}</p>
+      ${bars}
+      ${c.products ? `<p class="muted">Products: ${top(c.products)}.</p><p class="muted">Issues: ${top(c.issues)}.</p>` : ''}
+      ${fin(c.relief_share) ? `<p>Closed with money back: <b>${pc(c.relief_share, 1).replace('+', '')}</b> · any relief: ${pc(c.any_relief_share, 1).replace('+', '')}${fin(c.late_share) && c.late_share > 0 ? ` · <span class="bad">answered late: ${pc(c.late_share, 1).replace('+', '')}</span>` : ''}</p>` : ''}
+      <p class="muted">Complaints sent to the Consumer Financial Protection Bureau, filed as ${(c.names || []).map((n) => esc(String(n).replace(/\.$/, ''))).join('; ')}. Rising complaints often come before regulatory action; relief shows how many the company had to make good. Not verified by the CFPB, and big lenders get more because they have more customers.</p></div>`;
+  }
+  function environment(e) {
+    if (!e) return '';
+    const st = (s) => (/significant/i.test(s || '') ? `<span class="bad">${esc(s)}</span>` : esc(s || '—'));
+    const row = (r) => `<tr><td><a href="https://echo.epa.gov/detailed-facility-report?fid=${esc(r[11])}" target="_blank" rel="noopener">${esc(r[0])}</a><br><span class="muted">${esc(r[1])}, ${esc(r[2])} · ${st(r[5])}${r[6] ? ` · ${num(r[6])} formal action${r[6] > 1 ? 's' : ''}` : ''}</span></td><td class="n">${r[7] ? big(r[7]) : '—'}${r[8] ? `<br><span class="muted">${esc(r[8])}</span>` : ''}</td></tr>`;
+    const top = (e.top || []).filter((r) => r[7] || r[6] || /violation/i.test(r[5] || '') && !/^no /i.test(r[5] || '')).slice(0, 8);
+    return `<div class="ov-card"><h3>Environmental compliance (EPA)</h3><p><span class="ov-big ${e.snc ? 'bad' : ''}">${num(e.in_violation)}</span>facilities with violations now · ${num(e.snc)} significant violator${e.snc === 1 ? '' : 's'} · of ${num(e.facilities)} regulated facilities (${num(e.major)} major)</p>
+      <p>Penalties, five years: <b>${big(e.penalties_5y)}</b>${e.last_penalty ? ` · latest ${esc(e.last_penalty)}` : ''} · ${num(e.formal_5y)} formal actions · ${num(e.inspections_5y)} inspections${fin(e.co2_t) ? ` · greenhouse gases <b>${num(e.co2_t / 1e6, 2)}M t CO₂e</b>/yr` : ''}${fin(e.tri_lb) ? ` · toxic releases ${num(e.tri_lb / 1e6, 2)}M lb` : ''}</p>
+      ${top.length ? `<table><thead><tr><th>Facility</th><th class="n">Penalties</th></tr></thead><tbody>${top.map(row).join('')}</tbody></table>` : ''}
+      ${(e.emitters || []).length ? `<p class="muted">Largest emitters: ${e.emitters.slice(0, 4).map((r) => `${esc(r[0])} (${num(r[9] / 1e6, 2)}M t)`).join(', ')}.</p>` : ''}
+      <p class="muted">EPA ECHO: facilities regulated under the Clean Air Act, Clean Water Act and hazardous-waste law (RCRA) whose name is the company's${e.states && e.states.length ? `, most in ${e.states.slice(0, 4).map((x) => esc(x[0])).join(', ')}` : ''}. Matched by name, so subsidiaries under other names are missed and a franchise or branded site may be counted. A penalty shared by several facilities is counted once.</p></div>`;
   }
   function regulation(f) {
     if (!f) return '';
@@ -101,11 +125,11 @@
     try { [d, C] = await Promise.all([load(hub, `c/${cik}.json`).catch((e) => { if (e.status === 404) return null; throw e; }), load(hub, 'costs.json').catch(() => null)]); }
     catch (e) { if (el.isConnected) el.innerHTML = `<div class="ov-card"><p class="muted">Beyond the filings is temporarily unavailable (${esc(e.message)}).</p></div>`; return; }
     if ((opt && opt.here && !opt.here()) || !el.isConnected) return;
-    if (!d) { el.innerHTML = '<div class="ov"><div class="ov-card"><h3>Beyond the filings</h3><p class="muted">Nothing matched for this company yet: no clinical trials, recalls, Federal Register documents, PAC or Wikipedia article found under its name. Matching is by name and conservative, so this is not proof of none.</p></div></div>'; return; }
+    if (!d) { el.innerHTML = '<div class="ov"><div class="ov-card"><h3>Beyond the filings</h3><p class="muted">Nothing matched for this company yet: no clinical trials, recalls, consumer complaints, EPA facilities, Federal Register documents, PAC or Wikipedia article found under its name. Matching is by name and conservative, so this is not proof of none.</p></div></div>'; return; }
     if (d.costs) d.costs._sector = d.sector;
-    const parts = [pipeline(d.trials), recalls(d.recalls), regulation(d.fedreg), politics(d.fec), attention(d.attention), costs(d.costs, C)].filter(Boolean);
+    const parts = [pipeline(d.trials), recalls(d.recalls), complaints(d.complaints), environment(d.environment), regulation(d.fedreg), politics(d.fec), attention(d.attention), costs(d.costs, C)].filter(Boolean);
     el.innerHTML = `<div class="ov"><div class="ov-card"><h3>${esc(d.name)} <span class="muted">${esc(d.ticker)} · beyond the filings</span></h3>
-      <p class="muted">Free public sources outside the 10-Q and 10-K: ClinicalTrials.gov, FDA, CPSC and NHTSA recalls, the Federal Register, the FEC, Wikipedia and FRED. Updated daily. ${hub ? `<a href="${hub}#outside">Every company →</a>` : ''}</p></div>
+      <p class="muted">Free public sources outside the 10-Q and 10-K: ClinicalTrials.gov, FDA, CPSC and NHTSA recalls, CFPB consumer complaints, EPA enforcement, the Federal Register, the FEC, Wikipedia and FRED. Updated daily. ${hub ? `<a href="${hub}#outside">Every company →</a>` : ''}</p></div>
       <div class="ov-grid">${parts.join('')}</div></div>`;
   }
   window.OutsideView = { render };
