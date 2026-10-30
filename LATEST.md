@@ -1,4 +1,4 @@
-# Hourly FSA question bank: 2026-10-30T22:00:00+00:00
+# Hourly FSA question bank: 2026-10-30T23:00:00+00:00
 New questions: 13. Ready: 13; needs review: 0.
 
 ## Backlog
@@ -9,12 +9,12 @@ New questions: 13. Ready: 13; needs review: 0.
 - P2 Reasoning and abstention: Require stepwise verification and unsupported-value nulls
 - P2 Larger model distillation: Queue teacher answers; require independent gold verification
 - P1 Research rights gate: Human-approved licensed/public-domain/owned factual excerpts only
-- P0 New hourly experiment: Failure analysis: Design sign and scaling adversarial exercises
+- P0 New hourly experiment: Insufficient evidence: Null output and abstention on partial reporting
 
 ## Generated question categories
 - accounting_equation: 3
 - accrual_ratio: 3
-- journal_entry: 1
+- evidence_abstention: 1
 - numeric_sign_units: 3
 - three_statements: 3
 
