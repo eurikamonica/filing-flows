@@ -289,7 +289,26 @@
     return x ? `${x} of ${par.label}` : '';
   }
 
+  // the guidance view plus the company's guidance record (opts.history: holders/<TICKER>.json → guidance_history)
   function future(base, g, opts) {
+    const o = opts || {};
+    const rec = o.history ? record(o.history, o.company) : null;
+    const out = futureSpec(base, g, o);
+    if (rec && rec.metrics.length) {
+      out.record = rec;
+      if (!out.error) {
+        const lines = rec.metrics.filter((m) => m.hits.n).slice(0, 3).map((m) => summaryLine(m));
+        const moved = rec.metrics.filter((m) => movesLine(m)).slice(0, 2).map((m) => `${m.name} guides between releases: ${movesLine(m)}`);
+        if (lines.length || moved.length) {
+          out.footer.splice(1, 0, `Guidance record (${rec.releases} release${rec.releases === 1 ? '' : 's'} since ${fdate(rec.since)}, held to the reported GAAP figures): ` +
+            lines.concat(moved).join('; ') + '.');
+        }
+      }
+    }
+    return out;
+  }
+
+  function futureSpec(base, g, opts) {
     const o = opts || {};
     if (!g || !(g.items || []).length) return { error: 'No guidance on file for this company in the last 120 days of 8-K earnings releases.' };
     if (g.label === 'withdrawn' && !usable(g).length) return { error: 'The company withdrew its guidance.' };
@@ -449,22 +468,288 @@
     return out;
   }
 
+  // ---------- the record: every guided period against what the company then reported, and how each guide moved ----------
+  // history: holders/<TICKER>.json → guidance_history {releases: [{filed, accession, url, label, tags, items}] newest first}
+  // company: the site's company file (quarters, years, periods) — the reported figures, GAAP
+  const HIGHER_IS_BETTER = { revenue: true, gross_profit: true, gross_margin: true, operating_income: true, operating_margin: true,
+    net_income: true, other_income: true, opex: false, tax_rate: false };
+  // other income is left out: its guidance usually excludes the gains and losses on investments the statements include
+  const RECORD_METRICS = ['revenue', 'gross_margin', 'gross_profit', 'operating_margin', 'operating_income', 'opex', 'net_income', 'tax_rate'];
+  function nodeV(spec, id) { const n = (spec.nodes || []).find((x) => x.id === id); return n ? +n.v : null; }
+  // the reported value of a guided metric in a period (null when the chart has no such line)
+  function reported(metric, spec) {
+    const r = nodeV(spec, 'revenue');
+    switch (metric) {
+      case 'revenue': return r;
+      case 'gross_profit': return nodeV(spec, 'gp');
+      case 'gross_margin': { const gp = nodeV(spec, 'gp'); return gp != null && r > 0 ? gp / r * 100 : null; }
+      case 'operating_income': return nodeV(spec, 'oi');
+      case 'operating_margin': { const oi = nodeV(spec, 'oi'); return oi != null && r > 0 ? oi / r * 100 : null; }
+      case 'opex': return nodeV(spec, 'opex');
+      case 'net_income': return nodeV(spec, 'net');
+      case 'tax_rate': { const tx = nodeV(spec, 'tax'), pt = nodeV(spec, 'pretax'); return tx != null && pt > 0 ? tx / pt * 100 : null; }
+      case 'other_income': return nodeV(spec, 'nonop_in');
+      default: return null;
+    }
+  }
+  // the site's periods: [{kind 'q' | 'fy', q, fy, end, filed, label, spec}]
+  function periodsOf(company) {
+    const per = (company && company.periods) || {};
+    const qi = new Map((per.q || []).map((x) => [x.end, x])), yi = new Map((per.fy || []).map((x) => [x.end, x]));
+    return {
+      q: ((company && company.quarters) || []).map((s) => Object.assign({ kind: 'q', spec: s, end: s.end, filed: s.filed, label: s.label }, qi.get(s.end) || {})),
+      y: ((company && company.years) || []).map((s) => Object.assign({ kind: 'fy', spec: s, end: s.end, filed: s.filed, label: s.label }, yi.get(s.end) || {})),
+      allq: per.q || [], ally: per.fy || [],
+    };
+  }
+  // a guided period ("Q3 FY2027", "Q4 2025", "FY2026") → the site's period it was about
+  function periodFor(period, filed, P) {
+    const p = parsePeriod(period);
+    if (!p) return null;
+    if (p.q === null) return P.y.find((x) => x.fy === p.y) || null;
+    const direct = P.q.find((x) => x.q === p.q && x.fy === p.y);
+    if (direct) return direct;
+    // the release's own next quarter (a fiscal-year company that wrote a calendar quarter, or the other way round)
+    const before = P.allq.filter((x) => x.end < filed).sort((a, b) => (a.end < b.end ? 1 : -1))[0];
+    const next = before && P.allq.filter((x) => x.end > before.end).sort((a, b) => (a.end < b.end ? -1 : 1))[0];
+    return next && next.q === p.q ? P.q.find((x) => x.end === next.end) || null : null;
+  }
+  function cmpRange(cur, old) {
+    const scale = Math.max(Math.abs(old.lo), Math.abs(old.hi), Math.abs(cur.lo), Math.abs(cur.hi), 1e-9), eps = scale * 0.002;
+    const mid = (cur.lo + cur.hi) / 2, pmid = (old.lo + old.hi) / 2, w = cur.hi - cur.lo, pw = old.hi - old.lo;
+    return { change: mid > pmid + eps ? 'raised' : mid < pmid - eps ? 'lowered' : 'reaffirmed', range: w < pw - eps ? 'narrowed' : w > pw + eps ? 'widened' : null };
+  }
+  function outcome(actual, it) {
+    const tolU = it.unit === 'usd' ? Math.max(Math.abs(it.hi), Math.abs(it.lo)) * 0.001 : it.unit === 'ps' ? 0.005 : 0.05;
+    if (it.bound === 'min') return actual >= it.lo - tolU ? 'met' : 'below';
+    if (it.bound === 'max') return actual <= it.hi + tolU ? 'met' : 'above';
+    let lo = it.lo, hi = it.hi;
+    if (Math.abs(hi - lo) <= tolU) {               // a point guide ("approximately $9.2 billion"): within 1% (0.25 pts) is in line
+      const band = it.unit === 'usd' ? Math.abs(lo) * 0.01 : 0.25;
+      lo -= band; hi += band;
+    }
+    return actual > hi + tolU ? 'above' : actual < lo - tolU ? 'below' : 'within';
+  }
+  const okBasis = (it) => (it.metric === 'revenue' || it.metric === 'tax_rate' || it.metric === 'other_income') ? it.basis !== 'non-GAAP' : it.basis === 'GAAP';
+
+  function record(history, company) {
+    const rels = ((history && history.releases) || []).filter((r) => r && r.filed).slice().sort((a, b) => (a.filed < b.filed ? -1 : 1));
+    if (!rels.length) return null;
+    const P = periodsOf(company || {});
+    // every guide of a metric (basis, unit) for a period, oldest first
+    const series = new Map();
+    rels.forEach((r) => (r.items || []).forEach((it, i, all) => {
+      if (it.lo == null || !it.period || it.period === 'long-term' || it.scope || !['usd', 'pct', 'ps'].includes(it.unit)) return;
+      // a rate or cost with no basis next to the same metric with one ("in the mid-70s" beside the GAAP and
+      // non-GAAP margins): a remark, not a guide of its own
+      if (!it.basis && it.metric !== 'revenue' && all.some((x) => x.metric === it.metric && x.basis)) return;
+      const k = [it.metric, it.basis || '', it.unit, it.period].join('|');
+      if (!series.has(k)) series.set(k, { metric: it.metric, basis: it.basis || '', unit: it.unit, period: it.period, guides: [] });
+      const sr = series.get(k);
+      if (sr.guides.some((x) => x.filed === r.filed)) return;
+      sr.guides.push({ filed: r.filed, url: r.url, lo: it.lo, hi: it.hi, approx: it.approx, bound: it.bound, said: it.said });
+    }));
+    const rows = [];
+    series.forEach((sr) => {
+      const per = periodFor(sr.period, sr.guides[0].filed, P);
+      // a figure for a period already reported is a result quoted in a later release, not guidance; so is one given
+      // after the period ended (the site knows every period's end, also of quarters whose figures it no longer keeps)
+      if (per && per.filed) sr.guides = sr.guides.filter((x) => x.filed < per.filed);
+      const pp = parsePeriod(sr.period);
+      const ended = pp && (pp.q === null ? P.ally.find((x) => x.fy === pp.y) : P.allq.find((x) => x.q === pp.q && x.fy === pp.y));
+      if (ended && ended.end) sr.guides = sr.guides.filter((x) => x.filed <= ended.end);
+      if (!sr.guides.length) return;
+      sr.guides.forEach((gd, i) => {
+        if (i) Object.assign(gd, cmpRange(gd, sr.guides[i - 1]));
+        else gd.change = gd.said === 'initiated' ? 'initiated' : 'first';
+      });
+      sr.first = sr.guides[0];
+      if (per) {
+        // the guides given before the figures were reported; the last of them is the one the result is held to
+        const before = sr.guides.filter((x) => !per.filed || x.filed < per.filed);
+        if (before.length && okBasis(sr) && RECORD_METRICS.includes(sr.metric)) {
+          const actual = reported(sr.metric, per.spec);
+          if (actual != null) {
+            const last = before[before.length - 1], mid = (last.lo + last.hi) / 2;
+            Object.assign(sr, { site: per, actual, final: last, outcome: outcome(actual, Object.assign({ unit: sr.unit }, last)),
+              vsMid: sr.unit === 'pct' ? actual - mid : mid ? (actual / mid - 1) * 100 : null,
+              vsFirst: before.length > 1 ? outcome(actual, Object.assign({ unit: sr.unit }, before[0])) : null });
+          }
+        }
+      }
+      rows.push(sr);
+    });
+    // per metric: the hit rate on the periods with a reported figure, and the moves of the guides revised in between
+    const byMetric = new Map();
+    rows.forEach((sr) => {
+      const k = `${sr.metric}|${sr.basis}|${sr.unit}`;
+      if (!byMetric.has(k)) byMetric.set(k, { metric: sr.metric, basis: sr.basis, unit: sr.unit, rows: [] });
+      byMetric.get(k).rows.push(sr);
+    });
+    const metrics = [...byMetric.values()].map((m) => {
+      m.rows.sort((a, b) => ((a.site && a.site.end) || a.first.filed) < ((b.site && b.site.end) || b.first.filed) ? 1 : -1);
+      const done = m.rows.filter((x) => x.outcome);
+      const count = (o) => done.filter((x) => x.outcome === o).length;
+      const better = HIGHER_IS_BETTER[m.metric] !== false;
+      m.hits = { n: done.length, above: count('above'), within: count('within'), below: count('below'), met: count('met'),
+        better: better ? 'higher' : 'lower' };
+      m.hits.hitOrBeat = m.hits.within + m.hits.met + (better ? m.hits.above : m.hits.below);
+      const mids = done.map((x) => x.vsMid).filter((x) => x != null && isFinite(x));
+      m.hits.avgVsMid = mids.length ? mids.reduce((a, b) => a + b, 0) / mids.length : null;
+      const moves = { raised: 0, lowered: 0, reaffirmed: 0, narrowed: 0, widened: 0 };
+      m.rows.forEach((sr) => sr.guides.slice(1).forEach((gd) => { moves[gd.change] = (moves[gd.change] || 0) + 1; if (gd.range) moves[gd.range] += 1; }));
+      m.moves = moves;
+      m.name = `${m.basis === 'non-GAAP' ? 'Adjusted ' : m.basis === 'GAAP' && m.metric !== 'revenue' ? 'GAAP ' : ''}${(NAMES[m.metric] || m.metric).replace(/^./, (c) => (m.basis ? c.toLowerCase() : c))}`;
+      m.name = m.name.replace(/^(GAAP|Adjusted) (.)/, (x, a, b) => `${a} ${b.toLowerCase()}`).replace(/^./, (c) => c.toUpperCase());
+      return m;
+    }).filter((m) => m.rows.length);
+    const order = (m) => [RECORD_METRICS.indexOf(m.metric) < 0 ? 99 : RECORD_METRICS.indexOf(m.metric), m.basis === 'non-GAAP' ? 1 : 0, -m.hits.n];
+    metrics.sort((a, b) => { const x = order(a), y = order(b); return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]; });
+    // the releases' own words over time ("raised", "lowered" …) — the other half of the record of moves
+    const said = { raised: 0, lowered: 0, narrowed: 0, widened: 0, reaffirmed: 0, initiated: 0, withdrawn: 0 };
+    rels.forEach((r) => (r.tags || []).forEach((t) => { if (t in said) said[t] += 1; }));
+    // a period not on the site: still to be reported when it was guided after the latest figures on file; otherwise it
+    // is older than the quarters the site keeps (left out of the table unless its guide moved)
+    const lastFiled = [...P.q, ...P.y].map((x) => x.filed || '').sort().pop() || '';
+    const lastQ = P.q.filter((x) => x.q && x.fy).sort((a, b) => (a.end < b.end ? 1 : -1))[0];
+    const fiscalStyle = P.q.some((x) => /FY\d{2}$/.test(x.label || ''));
+    const later = (period) => {                     // a period after the latest one on the site
+      const p = parsePeriod(period);
+      if (!p || !lastQ) return null;
+      return p.q === null ? p.y > lastQ.fy || (p.y === lastQ.fy && lastQ.q < 4) : p.y > lastQ.fy || (p.y === lastQ.fy && p.q > lastQ.q);
+    };
+    metrics.forEach((m) => m.rows.forEach((r) => {
+      if (!r.site) {
+        const l = later(r.period);
+        r.pending = l === null ? (r.guides[r.guides.length - 1].filed || '') >= lastFiled : l;
+      }
+      r.label = r.site ? r.site.label : fiscalStyle ? r.period.replace(/FY(\d{2})(\d{2})$/, 'FY$2') : r.period.replace(/ FY(\d{4})$/, ' $1');
+    }));
+    return { metrics, releases: rels.length, since: rels[0].filed, latest: rels[rels.length - 1].filed, said, complete: !!(history && history.complete) };
+  }
+
+  const OUT = { above: 'above the range', within: 'within the range', below: 'below the range', met: 'met' };
+  function fmtVal(v, unit, fm) {
+    if (v == null) return '—';
+    if (unit === 'usd') return fm ? fm(v) : money(v);
+    if (unit === 'ps') return `$${v.toFixed(2)}`;
+    return `${(+v).toFixed(1)}%`;
+  }
+  function guideText(gd, unit) {
+    return range(Object.assign({ unit }, gd));
+  }
+  // the one-line summary of a metric's record: "Revenue: in or above the guided range 8 of 8 quarters (5 above, 3 within) · avg +3.1% vs midpoint"
+  function summaryLine(m) {
+    const h = m.hits;
+    if (!h.n) return '';
+    const good = h.better === 'higher' ? 'in or above' : 'in or below';
+    const parts = [];
+    if (h.above) parts.push(`${h.above} above`);
+    if (h.within) parts.push(`${h.within} within`);
+    if (h.below) parts.push(`${h.below} below`);
+    if (h.met) parts.push(`${h.met} met`);
+    const avg = h.avgVsMid == null ? '' : m.unit === 'pct' ? ` · on average ${h.avgVsMid >= 0 ? '+' : '−'}${Math.abs(h.avgVsMid).toFixed(1)} pts vs the midpoint`
+      : ` · on average ${h.avgVsMid >= 0 ? '+' : '−'}${Math.abs(h.avgVsMid).toFixed(1)}% vs the midpoint`;
+    return `${m.name}: ${good} the guided range ${h.hitOrBeat} of ${h.n} period${h.n === 1 ? '' : 's'} (${parts.join(', ')})${avg}`;
+  }
+  function movesLine(m) {
+    const mv = m.moves, parts = [];
+    if (mv.raised) parts.push(`▲ raised ${mv.raised}×`);
+    if (mv.lowered) parts.push(`▼ lowered ${mv.lowered}×`);
+    if (mv.reaffirmed) parts.push(`= reaffirmed ${mv.reaffirmed}×`);
+    if (mv.narrowed) parts.push(`→← narrowed ${mv.narrowed}×`);
+    if (mv.widened) parts.push(`←→ widened ${mv.widened}×`);
+    return parts.join(' · ');
+  }
+
+  // the record as HTML: per metric a summary, a strip of dots (each period's result against its guided range, drawn as
+  // % from the guided midpoint) and the table of guides, moves and results
+  function recordHTML(rec, esc, opts) {
+    const e = esc || enc, o = opts || {};
+    if (!rec || !rec.metrics.length) return '';
+    const fm = o.money || money;
+    const COL = { above: '#0b7a75', within: '#3a2a8c', below: '#d9480f', met: '#0b7a75' };
+    const keepRow = (r) => r.outcome || r.pending || r.guides.length > 1;
+    const show = rec.metrics.filter((m) => m.hits.n || m.rows.some((r) => r.guides.length > 1)).slice(0, o.max || 6);
+    const dev = (m, v, mid) => (m.unit === 'pct' ? v - mid : mid ? (v / mid - 1) * 100 : 0);
+    // each reported period as a dot against its guided range, all on one scale: % (points for a rate) from the midpoint
+    const strip = (m) => {
+      const done = m.rows.filter((r) => r.outcome && r.vsMid != null).slice(0, 10).reverse();
+      if (!done.length) return '';
+      const halfs = done.map((r) => {
+        const g = r.final, mid = (g.lo + g.hi) / 2, point = Math.abs(g.hi - g.lo) < 1e-9 * Math.max(1, Math.abs(g.hi));
+        return point ? (m.unit === 'pct' ? 0.25 : 1) : Math.abs(dev(m, g.hi, mid));
+      });
+      const devs = done.map((r) => Math.abs(r.vsMid)).sort((a, b) => a - b);
+      const typical = devs[Math.floor((devs.length - 1) * 0.8)];      // an outlier does not squeeze the others
+      const span = Math.max(1, ...halfs.map((h) => h * 1.6), typical * 1.25);
+      const W = 600, rowH = 24, H = done.length * rowH + 30, x0 = 92, x1 = W - 54;
+      const X = (v) => x0 + (Math.max(-span, Math.min(span, v)) + span) / (2 * span) * (x1 - x0);
+      const u = m.unit === 'pct' ? ' pts' : '%';
+      let svg = `<svg class="gr-strip" viewBox="0 0 ${W} ${H}" role="img" aria-label="${e(m.name)}: what was reported against the guided range, period by period">`;
+      svg += `<line x1="${X(0).toFixed(1)}" x2="${X(0).toFixed(1)}" y1="2" y2="${H - 24}" stroke="#8c8a84" stroke-dasharray="3 3"/>`;
+      svg += `<text x="${X(0).toFixed(1)}" y="${H - 8}" text-anchor="middle" class="gr-ax">guided midpoint</text>`;
+      svg += `<text x="${x0}" y="${H - 8}" class="gr-ax">−${span.toFixed(1)}${u}</text><text x="${x1}" y="${H - 8}" text-anchor="end" class="gr-ax">+${span.toFixed(1)}${u}</text>`;
+      done.forEach((r, i) => {
+        const y = 4 + i * rowH, g = r.final, mid = (g.lo + g.hi) / 2;
+        const point = Math.abs(g.hi - g.lo) < 1e-9 * Math.max(1, Math.abs(g.hi));
+        const lo = point ? -(m.unit === 'pct' ? 0.25 : 1) : dev(m, g.lo, mid), hi = point ? (m.unit === 'pct' ? 0.25 : 1) : dev(m, g.hi, mid);
+        svg += `<text x="0" y="${y + 14}" class="gr-lab">${e(r.label)}</text>`;
+        svg += `<rect x="${X(lo).toFixed(1)}" y="${y + 3}" width="${Math.max(2, X(hi) - X(lo)).toFixed(1)}" height="14" rx="3" fill="#e4dff7" stroke="#8f84c9"${point ? ' stroke-dasharray="3 2"' : ''}/>`;
+        const out = Math.abs(r.vsMid) > span, cx = X(r.vsMid), col = COL[r.outcome] || '#6b6a80';
+        svg += `<circle cx="${cx.toFixed(1)}" cy="${y + 10}" r="5.5" fill="${col}"><title>${e(`${r.label}: reported ${fmtVal(r.actual, m.unit, fm)} vs guided ${guideText(r.final, m.unit)} — ${OUT[r.outcome]}`)}</title></circle>`;
+        // beyond the scale: the dot stays at the edge, its value written beside it inside the plot
+        if (out) svg += `<text x="${(r.vsMid > 0 ? cx - 9 : cx + 9).toFixed(1)}" y="${y + 14}" text-anchor="${r.vsMid > 0 ? 'end' : 'start'}" class="gr-ax gr-out-lab" fill="${col}">${r.vsMid > 0 ? '+' : '−'}${Math.abs(r.vsMid).toFixed(1)}${u}</text>`;
+      });
+      return svg + '</svg>';
+    };
+    const chips = (m) => {
+      const h = m.hits;
+      if (!h.n) return '<p class="muted">No reported figure to hold it to (adjusted figures are not in the GAAP statements); its moves between releases are below.</p>';
+      const pct = Math.round(h.hitOrBeat / h.n * 100);
+      const avg = h.avgVsMid == null ? '' : `<span class="gr-chip">avg ${h.avgVsMid >= 0 ? '+' : '−'}${Math.abs(h.avgVsMid).toFixed(1)}${m.unit === 'pct' ? ' pts' : '%'} vs midpoint</span>`;
+      return `<p class="gr-chips"><span class="gr-chip good"><b>${h.better === 'higher' ? 'Met or beat' : 'Met or came in lower'} ${h.hitOrBeat} of ${h.n}</b> (${pct}%)</span>` +
+        `<span class="gr-chip within">● inside the range ${h.within + h.met}</span><span class="gr-chip above">● above ${h.above}</span><span class="gr-chip below">● below ${h.below}</span>${avg}</p>`;
+    };
+    const table = (m) => {
+      const rows = m.rows.filter(keepRow).slice(0, 10).map((r) => {
+        const moves = r.guides.map((gd, i) => `<span class="gr-move ${i ? gd.change : 'first'}">${i ? e((WORD[gd.change] || gd.change) + (gd.range ? ' ' + WORD[gd.range] : '')) + ' ' : ''}${e(guideText(gd, m.unit))} <span class="muted">${e(fdate(gd.filed))}</span></span>`).join('<span class="gr-arrow">→</span>');
+        const res = r.outcome ? `<span class="gr-out ${r.outcome}">● ${e(OUT[r.outcome])}</span>${r.vsFirst && r.vsFirst !== r.outcome ? `<br><span class="muted">vs the first guide: ${e(OUT[r.vsFirst])}</span>` : ''}`
+          : r.pending ? '<span class="muted">to be reported</span>' : '<span class="muted">before the periods on this site</span>';
+        const vm = r.vsMid == null ? '' : m.unit === 'pct' ? `${r.vsMid >= 0 ? '+' : '−'}${Math.abs(r.vsMid).toFixed(1)} pts` : `${r.vsMid >= 0 ? '+' : '−'}${Math.abs(r.vsMid).toFixed(1)}%`;
+        return `<tr><td>${e(r.label)}</td><td class="gr-moves">${moves}</td><td class="num">${r.actual != null ? e(fmtVal(r.actual, m.unit, fm)) : '—'}</td><td>${res}</td><td class="num">${e(vm)}</td></tr>`;
+      }).join('');
+      return rows ? `<div class="table-wrap"><table class="gr-table"><thead><tr><th>Period</th><th>Guided, and how it moved (release dates)</th><th class="num">Reported</th><th>Result</th><th class="num">vs midpoint</th></tr></thead><tbody>${rows}</tbody></table></div>` : '';
+    };
+    const sd = rec.said, words = Object.keys(sd).filter((k) => sd[k]).map((k) => `${WORD[k] || k} ${sd[k]}×`).join(' · ');
+    return `<div class="gr-head"><h3>Guidance record</h3><span class="muted">${rec.releases} earnings release${rec.releases === 1 ? '' : 's'} with guidance since ${e(fdate(rec.since))}${rec.complete ? '' : ' (earlier releases are still being read)'}${words ? ` · what the releases said: ${e(words)}` : ''}</span></div>` +
+      // the first metric open, the others one click away (their summary stays in view)
+      show.map((m, i) => `<details class="gr-metric"${i === 0 ? ' open' : ''}><summary><h4>${e(m.name)}</h4>${chips(m)}</summary>
+        ${movesLine(m) ? `<p class="gr-moves-sum">Moves between releases: ${e(movesLine(m))}</p>` : ''}
+        ${strip(m)}${table(m)}</details>`).join('') +
+      `<p class="muted gr-note">Each guided period is held to the last guidance given before its figures were reported; a single figure ("approximately") counts as in line within 1% (0.25 pts for a rate), drawn as a dashed box. Reported figures are GAAP, from the company's 10-Q / 10-K or earnings release on this site; adjusted (non-GAAP) guidance shows its moves only. ● teal = above, ● indigo = inside, ● orange = below the range.</p>`;
+  }
+
   // the notes panel of a node in the guidance view (HTML)
-  function noteHTML(n, g, esc) {
+  const NODE_METRIC = { revenue: ['revenue'], gp: ['gross_margin', 'gross_profit'], opex: ['opex'], oi: ['operating_margin', 'operating_income'],
+    net: ['net_income'], tax: ['tax_rate'] };
+  function noteHTML(n, g, esc, rec) {
     const e = esc || enc;
     const note = n.gnote || {};
+    const mine = rec && (NODE_METRIC[n.id] || []).map((k) => rec.metrics.find((m) => m.metric === k && m.basis !== 'non-GAAP' && m.hits.n)).find(Boolean);
+    const track = mine ? `<p class="gr-note-line"><b>Track record:</b> ${e(summaryLine(mine).replace(mine.name + ': ', ''))}${movesLine(mine) ? ` · ${e(movesLine(mine))}` : ''}</p>` : '';
     if (note.guided) {
       const it = note.item;
       const w = words(it);
-      return `<p><b>Guided:</b> ${e(range(it))}${it.basis ? ` (${e(it.basis)})` : ''}${it.period ? ` for ${e(it.period)}` : ''}${w.length ? ` · ${e(w.join(' · '))}` : ''}</p>` +
+      return track + `<p><b>Guided:</b> ${e(range(it))}${it.basis ? ` (${e(it.basis)})` : ''}${it.period ? ` for ${e(it.period)}` : ''}${w.length ? ` · ${e(w.join(' · '))}` : ''}</p>` +
         (it.prior ? `<p class="muted">${e(priorText(it))}</p>` : '') +
         (it.quote ? `<blockquote><p>${e(it.quote)}</p></blockquote>` : '') +
         `<div class="src">From the earnings release${g && g.filed ? ` filed ${e(fdate(g.filed))}` : ''}${g && g.url ? ` · <a href="${e(g.url)}" target="_blank" rel="noopener">open filing ↗</a>` : ''}</div>`;
     }
-    return '<p class="empty">Not guided: the line keeps its share of its parent from the period on file, so the chart adds up. It is an assumption, not a figure the company gave.</p>';
+    return track + '<p class="empty">Not guided: the line keeps its share of its parent from the period on file, so the chart adds up. It is an assumption, not a figure the company gave.</p>';
   }
 
-  const api = { future, target, usable, words, range, priorText, noteHTML, WORD, NAMES, money };
+  const api = { future, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.FFGuidance = api;
 })(typeof window !== 'undefined' ? window : globalThis);

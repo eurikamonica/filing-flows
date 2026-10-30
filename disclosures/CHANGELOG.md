@@ -1,5 +1,21 @@
 # Changelog
 
+## Guidance record: every release's guidance kept, the hit rate against what was reported, the moves between releases
+
+`app/guidance_history.py` (run with the 8-K events, every light run): each earnings release's guidance per company is
+kept in `cache/guidance/<cik>.json.gz` for good (the last 16 releases), not only for the 8-K store's 120 days; the
+companies that guide get their older releases read a few per run (`events8k.guidance_history.budget`, default 8, back
+`years` 3) from their EDGAR filing list (8-Ks with item 2.02), with the same reader as the 8-K events. The latest
+release's prior ranges now come from this history too, so a full year guided months ago is still compared. Published in
+each holders file as `guidance_history`. On the company page, "Show guidance" adds the guidance record (web/guidance.js
+`record`): each guided period against the GAAP figures the company then reported (above / within / below the range;
+a single "approximately" figure is in line within 1%, 0.25 pts for a rate; adjusted guidance shows its moves only), the
+hit rate per metric ("met or beat 7 of 7"), a strip of dots against the guided range and the table of every guide with
+its moves between releases (▲ raised, ▼ lowered, = reaffirmed, →← narrowed, ←→ widened). The guidance Sankey's footer
+and its notes carry the same record. The guidance reader also learned "fourth quarter and full year 2023" headlines,
+year-less quarters ("the first quarter" in a fourth-quarter release) and that "AMD expects revenue" or "Q2 Holdings"
+are not a segment or a period. Tests: `tests/test_guidance_history.py`, `tests/test_guidance_record.cjs`.
+
 ## Opportunity: the odds that a stock or ETF is higher, and that a buy or a short makes money
 
 `app/opportunity.py` (run by rotation-history.yml for stocks and etf.yml for ETFs): for every name, at 1 week, 1 month

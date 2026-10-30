@@ -396,6 +396,11 @@
     "backfill_days": 30,
     "index_days_per_run": 3,
     "keep_days": 120,
+    "guidance_history": {
+      "budget": 8,
+      "years": 3,
+      "_note": "Every earnings release's guidance kept for good (cache/guidance/<cik>.json.gz, the last 16 releases); `budget` older 8-K earnings releases of the companies that guide read per run, back `years` years (app/guidance_history.py)."
+    },
     "_note": "Every 8-K and 8-K/A: the newest from the EDGAR feed, then the daily indexes back `backfill_days`; `batch` filings read per run, kept `keep_days`."
   },
   "news": {

@@ -458,7 +458,17 @@ def collect(client, root, cfg=None, today=None):
                                      'updated_at': now()})
     write_json(cdir / 'seen.json', sorted(empty))
     retry.save()
+    # every release's guidance kept for good, and a few older releases read per run (app/guidance_history.py)
+    gh = None
+    if (cfg.get('guidance_history') or {}).get('enabled', True):
+        try:
+            import guidance_history as GH
+            gh = GH.collect(client, root, cfg.get('guidance_history'), today)
+        except Exception as exc:
+            gh = {'status': 'error', 'error': str(exc)[:200]}
+            print(f'::warning::guidance history: {str(exc)[:200]}', flush=True)
     return {'status': 'partial' if errors or retry.rows or queue or redo else 'ok', **retry.summary(), 'read': read, 'kept': kept, 'waiting': len(queue), 'reparse_left': len(redo),
+            **({'guidance_history': gh} if gh else {}),
             'errors': errors, 'latest_filing_date': max((r.get('filed', '') for r in shards.all()), default=None),
             'on_file': len(shards.uids()), 'index_days': len(done_days & window), 'updated_at': now()}
 
@@ -543,6 +553,13 @@ def guidance_by_ticker(root, today=None, days=120):
             continue
         top = rows[0]
         earlier = [(x.get('filed'), x['guidance_items']) for x in rows[1:] if x.get('accession') != top.get('accession')]
+        try:                                          # older releases (beyond the 120 days) from the guidance history
+            import guidance_history as GH
+            seen = {x.get('accession') for x in rows}
+            earlier += [(f, items) for f, items, acc in GH.earlier(root, cik, top.get('accession'), top.get('filed')) if acc not in seen]
+            earlier.sort(key=lambda x: x[0] or '', reverse=True)
+        except Exception as exc:
+            print(f'guidance history {cik}: {exc}', flush=True)
         items = G.diff(top['guidance_items'], earlier)
         tags = G.tags_of(items, top.get('guidance_tags') or [])
         out[t] = {'filed': top.get('filed'), 'accession': top.get('accession'), 'url': top.get('url'), 'form': top.get('form'),
