@@ -1,0 +1,70 @@
+# Market value before XBRL: the shares outstanding on the cover page of every 10-K (then every 10-Q) each company of the
+# Sankey site filed from 1993 until its first XBRL filing, read from EDGAR's text (app/cover_shares.py), largest
+# companies first, a batch per run. The counts are kept on the branch rotation-history (cache/cover/<CIK>.json,
+# cover-state.json) and used by rank_panel.py on the next rotation-history run: market value month by month from the
+# 1990s instead of from 2009–2011 (the video studio's leaderboards, the value strategies). Runs one at a time with
+# rotation-history.yml (the same concurrency group), so neither overwrites the other's push. Once every company's
+# filings are read, a run only checks for companies new to the site.
+name: Cover-page shares (before XBRL)
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: 'Read these first (comma separated)'
+        default: ''
+      minutes:
+        description: 'Minutes to spend reading filings'
+        default: '38'
+  schedule:
+    - cron: '47 1-23/4 * * *'        # every four hours, between the rotation-history runs
+permissions:
+  contents: write
+concurrency:
+  group: rotation-history
+  cancel-in-progress: false
+jobs:
+  cover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            disclosures/app
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: The history branch
+        id: branch
+        run: |
+          url="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git clone --quiet --depth 1 --branch rotation-history "$url" hist
+          du -sh hist/cache/cover 2>/dev/null || echo "no cover counts yet"
+      - name: The Sankey site's companies (largest first)
+        run: |
+          site="${SITE_URL:-https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          mkdir -p site
+          curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
+      - name: Read the cover pages (annual reports first, then quarterly)
+        timeout-minutes: 46
+        env:
+          TICKERS: ${{ inputs.tickers }}
+        run: |
+          python disclosures/app/cover_shares.py collect --root hist --site-index site/index.json \
+            --minutes "${{ inputs.minutes || '38' }}" --tickers "$TICKERS"
+      - name: Save to the branch (one commit, force-pushed)
+        # also after a batch stopped from outside: the counts read so far are kept
+        if: ${{ always() && steps.branch.outcome == 'success' }}
+        run: |
+          cd hist
+          git add -A cache/cover cover-state.json 2>/dev/null || true
+          git add -A
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "cover counts $(date -u +%Y-%m-%dT%H:%MZ)" || true
+          git checkout -q --orphan fresh
+          git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "rotation history $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push -q --force origin fresh:rotation-history && break; sleep $((i * 10)); done
+          ls cache/cover | wc -l

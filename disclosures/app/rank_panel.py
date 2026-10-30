@@ -22,7 +22,8 @@ weighted-average shares of the quarter, the weighted average is used (net income
 a figure tagged in thousands is caught against its neighbours). Shares are put on today's basis with Yahoo's
 split history (a share counted before a 2-for-1 split is two of today's), and multiplied by the month-end close as
 traded (split-adjusted), so market value = the price then × the shares then. A share count is used for at most 400
-days, so a company's first XBRL filing (2009–2011) starts its market value. Companies whose split history is not on file
+days. Before the company's first XBRL filing (2009–2011), the counts come from the cover pages of its earlier 10-Ks and
+10-Qs, read from EDGAR's text (cover_shares.py, from 1993; companies are read a batch at a time, largest first). Companies whose split history is not on file
 yet (fetched before dividends and splits were kept) get no market value until their next full fetch.
 
 Today's market value from Nasdaq's screener checks every company: where the latest share count differs by more than
@@ -204,6 +205,24 @@ def share_history(dei, wavg, splits, eps_sh=None, now=None):
     return keep
 
 
+def with_cover(dei, root, cik):
+    """The XBRL cover counts, preceded by the counts read from the cover pages of the 10-Ks and 10-Qs filed before them
+    (cover_shares.py, cache/cover/<CIK>.json: 1993 to the first XBRL filing)."""
+    dei = list(dei or [])
+    if not root or not cik:
+        return dei
+    try:
+        import cover_shares
+        old = cover_shares.points(root, cik)
+    except Exception:
+        return dei
+    if not old:
+        return dei
+    first = min((d for d, _ in dei), default='9999')
+    cut = (dt.date.fromisoformat(first) - dt.timedelta(days=30)).isoformat() if first != '9999' else '9999'
+    return sorted([(d, v) for d, v in old if d < cut] + dei)
+
+
 def asof(points, day, stale=400):
     """The last (date, value) on or before `day` — None when older than `stale` days."""
     best = None
@@ -324,7 +343,7 @@ def build(out_dir, companies, docs, frames_root=None, today=None, names=None, na
         cap = [None] * len(grid)
         ev = doc.get('ev')
         n_now = caps[t][0] / caps[t][1] if t in caps else None
-        sh = share_history(dei.get(cik), wavg.get(cik), (ev or {}).get('split'), eps_sh.get(cik), now=n_now) if cik else []
+        sh = share_history(with_cover(dei.get(cik), frames_root, cik), wavg.get(cik), (ev or {}).get('split'), eps_sh.get(cik), now=n_now) if cik else []
         if ev is None:
             stats['splits_unknown'] += 1
         else:

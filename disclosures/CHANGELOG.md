@@ -1,5 +1,20 @@
 # Changelog
 
+## Market value before XBRL: share counts from the cover pages of the 1990s and 2000s
+
+`app/cover_shares.py` (run by cover.yml every four hours, a batch of companies, largest first) reads the shares
+outstanding off the cover page of each company's 10-Ks (pass 1) and 10-Qs (pass 2) filed from 1993 until its first
+XBRL filing (the voluntary XBRL of 2005–08 aside): the company's EDGAR filing list, then the first 160 KB of each main
+document (the full .txt submission where the document is not on its own). The count is the answer to the cover's
+"number of shares outstanding … as of the latest practicable date" in the forms it was written in (a sentence, a table
+of classes — summed —, "123.4 million shares"); dollar amounts, shares held by insiders and authorized shares are not
+counts, the date beside the count is its date. A count over 4 times off from two neighbours that agree is dropped. On
+30 random companies, 96% of the annual reports gave a count. `rank_panel.with_cover` puts these counts before the
+first XBRL count, so market value (the studio's leaderboards and the value strategies) runs from the 1990s; every
+count is put on today's split basis there. Kept on the branch rotation-history (`cache/cover/<CIK>.json`,
+`cover-state.json`); cover.yml shares rotation-history.yml's concurrency group so their pushes never overlap. Tests:
+`tests/test_cover_shares.py`.
+
 ## Odds: probability models, each with its walk-forward record and a live ledger
 
 `app/odds.py` (run by rotation-history.yml after Strategies, about two minutes): the chance the US is in recession 12
