@@ -18,7 +18,13 @@
      dist      the spread of every company's return each year, as a histogram that morphs from year to year.
    Growth races take a lump sum and/or the same amount bought every n trading days, weeks, months or years (the money put
    in drawn as a dashed line; the end card gives each ticker's money-weighted return a year). Stocks get dividends
-   (split out or left out) from the weekly history's dividend list (t/<SYM>.json: d, p).
+   (split out or left out) from the weekly history's dividend list (t/<SYM>.json: d, p). Whichever way they are used,
+   the dividends and interest paid are counted in dollars as paid (the shares then held × the amount per share; with
+   dividends reinvested, the shares are the total-return value over the price as traded): on the labels, on a panel of
+   their own if asked, on the end card and in the caption.
+   Under the video, the results: its figures as a table (for a growth race: the money put in, the end value, the gain,
+   the money-weighted return a year, the dividends paid and those of the last 12 months, the worst drop, the best and
+   worst calendar years), the caption, the notes; copied as text, the weekly series as a CSV, the frame as a PNG.
    Styles: line race, bar race, areas, counters, columns, the RRG, leaderboard, heatmap, histogram; themes; 16:9, 9:16
    and 1:1; any length, five paces and the pause at the end; 30 or 60 frames a second.
    Export: every frame drawn on a canvas and encoded with WebCodecs (H.264, else VP9) into an MP4 (mp4-muxer); a browser
@@ -378,7 +384,7 @@
     title: '', sub: '', bench: 'SPY', tail: '10', n: '14', lb: '26', m: 'revenue', ttm: '1', expr: 'QQQ/SPY', scale: 'lin', end: '1',
     rec: '0', ri: '1', ru: 'm', pace: 'steady', hold: 'auto', bx: 'growth', by: 'ret', bs: 'cap', bn: '25', bt: '', tn: '50', tc: 'ret', sa: 'share', sm: 'detail', aw: 'index', at: 'dji', ah: 'SPY', ac: '1067983', ap: 'Nancy Pelosi', ao: 'all', ag: 'company', an: '12', hsrc: '13f', hid: '', hv: 'company', scf: 'monthly', sgoal: '', sunit: 'monthly', ssolve: 'lump', yb: '2000',
     rm: 'cap', top: '10', cmin: '', cmax: '', capby: 'then', sec: '', step: 'm', ord: 'desc', win: '12', minrev: '1', idx: '', idxw: 'then',
-    goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA' };
+    goal: '', solve: 'rec', yrs: '', sw: 'index', sf: 'DIA', dinc: 'label' };
   const KINDS = [['growth', 'Growth race'], ['rank', 'Leaderboard'], ['rrg', 'RRG replay'], ['momentum', 'Momentum race'], ['fund', 'Company figures'], ['formula', 'Formula & ratios'],
     ['drawdown', 'Drawdowns'], ['calendar', 'Monthly returns'], ['dist', 'Return spread'], ['bubble', 'Bubbles'], ['treemap', 'Market map'], ['sectors', 'Sector weights'], ['actual', 'ETF / 13F / officials history'], ['holdings', '13F / Officials latest mix'],
     ['sankey', 'Earnings flow'], ['snowball', 'Dividend snowball'], ['timing', 'Timing']];
@@ -387,7 +393,7 @@
     rank: [['bars', 'Bar race']], drawdown: [['area', 'Underwater areas'], ['line', 'Lines'], ['bars', 'Bar race'], ['tiles', 'Counters']], calendar: [['heat', 'Heatmap']], dist: [['hist', 'Histogram']],
     bubble: [['bubble', 'Bubbles']], treemap: [['treemap', 'Treemap']], sectors: [['stack', 'Stacked areas']], actual: [['bars', 'Holdings bar race'], ['stack', 'Sector share areas'], ['companies', 'Company share areas'], ['changes', 'Weight changes (pp)']], holdings: [['bars', 'Actual holdings bars']], sankey: [['sankey', 'Flow']], snowball: [['snow', 'Shares and income']],
     timing: [['line', 'Line race'], ['bars', 'Bar race'], ['tiles', 'Counters']] };
-  const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold'];        // redrawn, not rebuilt
+  const LOOK = ['theme', 'ar', 'dur', 'fps', 'q', 'style', 'scale', 'end', 'pace', 'hold', 'dinc'];        // redrawn, not rebuilt
   const tickers = (st) => [...new Set(String(st.t || '').split(/[\s,;]+/).map(norm).filter(Boolean))].slice(0, 10);
 
   /* ---------- leaderboards: every company of the site, month by month (app/rank_panel.py) ---------- */
@@ -1120,22 +1126,31 @@
       const nEv = Math.max(1, Math.round(+st.ri || 1)), unit = UNITS[st.ru] ? st.ru : 'm';
       const buys1 = buySchedule(G, 1, nEv, unit, st.from ? Date.parse(st.from + 'T00:00:00Z') : G[0]);
       const L = G.length - 1;
-      // one ticker, a lump of `lump` and `each` on every scheduled buy: the value, the price-only value and the cash, week by week
-      const run = (base, dv, mode, i0, lump, each) => {
+      // one ticker, a lump of `lump` and `each` on every scheduled buy: the value, the price-only value and the cash, week by
+      // week; and the distributions paid in dollars (shares held × the amount per share that went ex that week) whichever
+      // way they are used: taken as cash, reinvested (the total-return line holds them already) or left out. The shares
+      // held are the units themselves on the price as traded, and the total-return value over the price as traded (pr)
+      const run = (base, dv, mode, i0, lump, each, pr) => {
         const inflow = G.map((_, i) => (i < i0 ? 0 : (i === i0 ? lump : 0) + each * buys1[i]));
-        let units = 0, cash = 0, last = null;
-        const v = [], pv = [], cv = [];
+        let units = 0, cash = 0, last = null, sh = null, paid = 0, known = -1;
+        const v = [], pv = [], cv = [], dc = [], pd = [], shs = [];
         for (let i = 0; i < G.length; i++) {
-          if (i < i0) { v.push(null); pv.push(null); cv.push(null); continue; }
+          if (i < i0) { v.push(null); pv.push(null); cv.push(null); dc.push(null); pd.push(null); shs.push(null); continue; }
           const px = fin(base[i]) ? base[i] : last;
-          if (mode !== 'tr' && i > i0 && dv) cash += units * (dv[i] || 0);     // paid on the shares held before this week's buy
+          const d = i > i0 && dv ? dv[i] || 0 : 0;                 // paid on the shares held before this week's buy
+          const now = d && sh ? sh * d : 0;
+          paid += now;
+          if (mode !== 'tr') cash += units * d;
           if (px) units += inflow[i] / px;
           last = px;
           const val = px ? units * px : null;
-          pv.push(val); cv.push(cash);
+          if (mode !== 'tr') sh = units;
+          else if (val != null && pr && fin(pr[i]) && pr[i] > 0) sh = val / pr[i];
+          if (known < 0 && sh) known = i;
+          pv.push(val); cv.push(cash); dc.push(paid); pd.push(now); shs.push(sh);
           v.push(val == null ? null : mode === 'split' ? val + cash : val);
         }
-        return { v, pv, cv, inflow };
+        return { v, pv, cv, inflow, dc, pd, sh: shs, known };
       };
       out.amt = lumpIn;
       let contrib = null, flows = null;
@@ -1149,7 +1164,7 @@
         if (i0 < 0) continue;
         let lump = lumpIn, each = rec;
         if (solve) {
-          const endOf = (a, b) => { const r = run(base, dv, mode, i0, a, b).v[L]; return fin(r) ? r : 0; };
+          const endOf = (a, b) => { const r = run(base, dv, mode, i0, a, b, pr).v[L]; return fin(r) ? r : 0; };
           if (solve === 'lump') {
             const fromBuys = recIn > 0 ? endOf(0, recIn) : 0, perDollar = endOf(1, 0);
             if (!(perDollar > 0)) continue;
@@ -1162,11 +1177,23 @@
             if (fromLump >= goal) notes.add(`${s}: the money at the start alone ends above ${money(goal, 0)}, so no further buys are needed`);
           }
         }
-        const r = run(base, dv, mode, i0, lump, each);
+        const r = run(base, dv, mode, i0, lump, each, pr);
         let c = 0;
         const sc = r.inflow.map((x, i) => (i < i0 ? null : (c += x))), sf = r.inflow.map((x, i) => [G[i], -x]).filter(([, a]) => a);
         if (!contrib) { contrib = sc; flows = sf; }
-        const row = { key: s, label: s, name: p.name, v: r.v, price: mode === 'tr' ? null : r.pv, cash: mode === 'split' ? r.cv : null };
+        const row = { key: s, label: s, name: p.name, v: r.v, price: mode === 'tr' ? null : r.pv, cash: mode === 'split' ? r.cv : null, mode, idx: base };
+        // the distributions paid, in dollars as paid: in all, the last 52 weeks, and (reinvested) what the shares they
+        // bought are worth at the end — the total-return value less the same money in the price alone
+        if (dv && r.known >= 0) {
+          const paid52 = L - i0 >= 51 ? r.pd.slice(L - 51).reduce((a, x) => a + (x || 0), 0) : null;
+          row.dist = r.dc;
+          row.inc = { total: r.dc[L], last12: paid52, shares: r.sh[L], from: r.known, mode };
+          if (mode === 'tr' && pr && fin(pr[i0]) && r.known <= i0 + 2) {
+            const po = run(pr, dv, 'price', i0, lump, each, pr).v[L];
+            if (fin(po) && fin(r.v[L])) row.inc.worth = r.v[L] - po;
+          }
+          if (r.known > i0 + 2) notes.add(`${s}: distributions are on file from ${dayLabel(G[r.known])}; those paid before then are not counted`);
+        }
         if (solve) { Object.assign(row, { contrib: sc, flows: sf, put: sc[L], lump, each }); need.push(row); }
         out.series.push(row);
       }
@@ -1192,6 +1219,7 @@
         out.dca = dca ? { every, buys: nbR, put } : null;
       }
       out.split = st.div === 'split' && out.series.some((x) => x.cash);
+      out.div = st.div;
       if ((dca || solve === 'rec') && unit === 'd') notes.add('Prices are weekly closes: buys on the trading days of a week all use that week\'s close');
     } else if (k === 'momentum') {
       const B = P.get(bench); if (!B) throw new Error('No prices for the benchmark ' + bench);
@@ -1264,6 +1292,15 @@
     if (!fin(a)) return fin(b) && f - i > 0.5 ? b : null;
     return fin(b) ? lerp(a, b, f - i) : a;
   };
+  const upDown = (th, up) => (th.text === '#1d1d1b' || luminance(th.text) < 0.4 ? (up ? '#17734a' : '#c0392b') : (up ? '#3ee39a' : '#ff6b6b'));
+  // distributions reinvested, in dollars as paid, beside each ticker: shown with dividends reinvested unless turned off,
+  // and left off the chart whose own panel draws them
+  const reinvOn = (V) => V.kind === 'growth' && V.div === 'tr' && V.dinc !== 'off' && !V.divPanel && !V.divAbove && V.series.some((s) => s.inc && s.inc.total > 0);
+  function reinvNote(V, s, f, short) {
+    if (!s.dist) return '';
+    const d = valAt(s.dist, f);
+    return fin(d) && d > 0 ? (short ? `+${money(d)} dividends` : `${money(d)} dividends reinvested`) : '';
+  }
   function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
   const alpha = (hex, a) => { if (!/^#/.test(hex)) return hex; const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
 
@@ -1310,8 +1347,10 @@
     const bottom = H - (portrait ? 230 : 96) * S;
     // live values band (counters) for line / area styles on tall or square frames
     const style = V.style;
+    let banded = false;
     if ((portrait || square) && (style === 'line' || style === 'area') && V.kind !== 'rrg' && V.kind !== 'calendar') {
       top = counters(ctx, V, f, top, W, S, th, F, pal, portrait ? 2 : Math.min(4, V.series.length)) + 26 * S;
+      banded = true;                                          // the band shows the reinvested dividends: the line labels need not
     }
     const flat = style === 'bars' || V.kind === 'rank' || style === 'hist' || ['treemap', 'sankey'].includes(V.kind);
     const box = { x: pad + (flat ? 0 : 70 * S), y: top, w: W - 2 * pad - (flat ? 0 : 70 * S) - (style === 'line' || style === 'area' ? (portrait ? 150 : 210) * S : 0), h: bottom - top };
@@ -1327,19 +1366,19 @@
     else if (style === 'bars') barRace(ctx, V, f, box, S, th, F, pal);
     else if (style === 'tiles') tiles(ctx, V, f, box, S, th, F, pal, t, tm);
     else if (style === 'columns') columns(ctx, V, f, box, S, th, F, pal);
-    else if (V.split && style === 'line') {                   // distributions get their own line, on their own scale below
-      const gap = 70 * S, h1 = (box.h - gap) * 0.64, h2 = box.h - gap - h1;
-      lineRace(ctx, V, f, { x: box.x, y: box.y, w: box.w, h: h1 }, S, th, F, pal, false, true);
-      const D = Object.assign({}, V, { series: V.series.map((s) => ({ key: s.key + ' dist', label: s.label + ' distributions', name: s.name, v: s.cash })), base: null, split: false, zero: true, divPanel: true });
+    else if ((V.split || (V.dinc === 'panel' && reinvOn(V))) && style === 'line') {   // distributions on their own lines, on their own scale below
+      const gap = 70 * S, h1 = (box.h - gap) * 0.64, h2 = box.h - gap - h1, cashPanel = V.split;
+      lineRace(ctx, cashPanel ? V : Object.assign({}, V, { divAbove: true }), f, { x: box.x, y: box.y, w: box.w, h: h1 }, S, th, F, pal, false, true);
+      const D = Object.assign({}, V, { series: V.series.map((s) => ({ key: s.key + ' dist', label: s.label + (cashPanel ? ' distributions' : ' dividends'), name: s.name, v: cashPanel ? s.cash : s.dist || s.v.map(() => null) })), base: null, split: false, zero: true, divPanel: true });
       ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.font = F(600, 22); ctx.fillStyle = th.muted;
-      ctx.fillText('Distributions received — cumulative cash, not reinvested', box.x, box.y + h1 + gap - 12 * S);
-      ctx.textAlign = 'right'; ctx.fillText('solid: price + distributions · dashed: price only', box.x + box.w, box.y + h1 + gap - 12 * S);
+      ctx.fillText(cashPanel ? 'Distributions received — cumulative cash, not reinvested' : 'Dividends & interest paid — reinvested, in dollars as paid', box.x, box.y + h1 + gap - 12 * S, box.w * (cashPanel ? 0.55 : 0.7));
+      ctx.textAlign = 'right'; ctx.fillText(cashPanel ? 'solid: price + distributions · dashed: price only' : 'cumulative, each paid on the shares then held', box.x + box.w, box.y + h1 + gap - 12 * S, box.w * (cashPanel ? 0.42 : 0.28));
       lineRace(ctx, D, f, { x: box.x, y: box.y + h1 + gap, w: box.w, h: h2 }, S, th, F, pal, false, false);
     }
     else if (V.panels && (style === 'line' || style === 'area')) {
       const n = V.series.length, gap = 54 * S, ph = (box.h - gap * (n - 1)) / n;
       V.series.forEach((s, i) => { const sub = Object.assign({}, V, { series: [s], zero: s.v.some((x) => x < 0) && s.v.some((x) => x > 0) }); lineRace(ctx, sub, f, { x: box.x, y: box.y + i * (ph + gap), w: box.w, h: ph }, S, th, F, (j) => pal(i + j), style === 'area', i < n - 1); });
-    } else lineRace(ctx, V, f, box, S, th, F, pal, style === 'area');
+    } else lineRace(ctx, banded ? Object.assign({}, V, { divAbove: true }) : V, f, box, S, th, F, pal, style === 'area');
     // the date, large and faint; the brand mark; the progress hairline
     const k = clamp(Math.round(f), 0, V.grid.length - 1);
     ctx.textAlign = 'right'; ctx.fillStyle = alpha(th.text === '#1d1d1b' ? '#1d1d1b' : '#ffffff', opt.theme === 'clean' ? 0.10 : 0.12);
@@ -1381,7 +1420,9 @@
       ctx.textAlign = 'left'; ctx.font = F(700, 28); ctx.fillStyle = pal(i); ctx.fillText(s.label, x + 22 * S, y + 40 * S);
       ctx.font = F(700, 40); ctx.fillStyle = th.text; ctx.fillText(V.fmt(v), x + 22 * S, y + 86 * S);
       const ref = V.base || (V.contrib ? valAt(V.contrib, f) : s.contrib ? valAt(s.contrib, f) : null);
-      if (ref && fin(v)) { ctx.textAlign = 'right'; ctx.font = F(600, 24); ctx.fillStyle = v >= ref ? '#3ee39a' : '#ff6b6b'; ctx.fillText(pctf(v / ref - 1), x + cw - 18 * S, y + 40 * S); }
+      if (ref && fin(v)) { ctx.textAlign = 'right'; ctx.font = F(600, 24); ctx.fillStyle = upDown(th, v >= ref); ctx.fillText(pctf(v / ref - 1), x + cw - 18 * S, y + 40 * S); }
+      const dn = reinvOn(V) ? reinvNote(V, s, f, true) : '';
+      if (dn) { ctx.textAlign = 'right'; ctx.font = F(500, 20); ctx.fillStyle = th.muted; ctx.fillText(dn, x + cw - 18 * S, y + 84 * S, cw * 0.45); }
     });
     return top + rows * (ch + gap) - gap;
   }
@@ -1462,16 +1503,20 @@
     ctx.restore();
     // heads: a dot with a halo; labels to the right, pushed apart so they never overlap
     heads.forEach((h) => { ctx.fillStyle = alpha(h.col, 0.25); ctx.beginPath(); ctx.arc(h.x, h.y, 16 * S, 0, 7); ctx.fill(); ctx.fillStyle = h.col; ctx.beginPath(); ctx.arc(h.x, h.y, 8 * S, 0, 7); ctx.fill(); });
-    const lh = (V.split && area ? 76 : 50) * S, sorted = heads.slice().sort((a, c) => a.y - c.y);
+    const rv = reinvOn(V) && V.series.length <= 4, lh = ((V.split && area) || rv ? 76 : 50) * S, sorted = heads.slice().sort((a, c) => a.y - c.y);
     sorted.forEach((h, i) => { h.ly = Math.max(h.y, i ? sorted[i - 1].ly + lh : b.y + lh / 2); });
     for (let i = sorted.length - 1; i >= 0; i--) { const lim = i === sorted.length - 1 ? b.y + b.h - lh / 2 : sorted[i + 1].ly - lh; if (sorted[i].ly > lim) sorted[i].ly = lim; }
     sorted.forEach((h) => {
       ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-      const txt = `${h.s.label}${h.s.need ? ' · ' + h.s.need : ''}  ${V.fmt(h.v)}`; ctx.font = F(700, 26);
-      const w = ctx.measureText(txt).width + 24 * S, x = Math.min(h.x + 22 * S, ctx.canvas.width - 24 * S - w);
+      const txt = `${h.s.label}${h.s.need ? ' · ' + h.s.need : ''}  ${V.fmt(h.v)}`;
+      // a second line under the label: the distributions taken as cash (areas) or reinvested, kept inside the frame too
+      const sub = V.split && area && h.s.cash ? `${money(valAt(h.s.cash, f))} from distributions` : rv ? reinvNote(V, h.s, f) : '';
+      ctx.font = F(500, 19); const sw = sub ? ctx.measureText(sub).width + 8 * S : 0;
+      ctx.font = F(700, 26);
+      const w = ctx.measureText(txt).width + 24 * S, x = Math.min(h.x + 22 * S, ctx.canvas.width - 24 * S - Math.max(w, sw));
       ctx.fillStyle = alpha(h.col, 0.92); roundRect(ctx, x, h.ly - 20 * S, w, 40 * S, 12 * S); ctx.fill();
       ctx.fillStyle = luminance(h.col) > 0.55 ? '#0b1220' : '#ffffff'; ctx.fillText(txt, x + 12 * S, h.ly + 1 * S);
-      if (V.split && area && h.s.cash) { const c = valAt(h.s.cash, f); ctx.font = F(500, 19); ctx.fillStyle = th.muted; ctx.fillText(`${money(c)} from distributions`, x + 4 * S, h.ly + 32 * S); }
+      if (sub) { ctx.font = F(500, 19); ctx.fillStyle = th.muted; ctx.fillText(sub, x + 4 * S, h.ly + 32 * S); }
     });
   }
   function luminance(hex) { if (!/^#/.test(hex)) return 0.5; const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) / 255; }
@@ -1484,7 +1529,7 @@
     const pos = Math.max(0, ...finite), negm = Math.max(0, ...finite.map((v) => -v)), neg = negm > 0;
     // with values below zero the axis moves right in proportion, and each ticker sits on the far side of its bar's start
     ctx.font = F(700, 30);                                                // room for the longest label (up to a third)
-    const lab = neg ? 0 : clamp(Math.max(...V.series.map((s) => ctx.measureText(String(s.label)).width)) + 30 * S, 150 * S, b.w / 3), room = b.w - lab - (neg ? 300 : V.split || V.goal ? 270 : 140) * S;
+    const lab = neg ? 0 : clamp(Math.max(...V.series.map((s) => ctx.measureText(String(s.label)).width)) + 30 * S, 150 * S, b.w / 3), room = b.w - lab - (neg ? 300 : V.split || V.goal || reinvOn(V) ? 270 : 140) * S;
     const share = neg ? clamp(negm / ((negm + pos) || 1), pos > 0 ? 0.18 : 0.8, pos > 0 ? 0.82 : 0.8) : 0;
     const x0 = b.x + lab + (neg ? 150 * S + room * share : 0), unit = room / Math.max(1e-9, neg ? (pos > 0 ? Math.max(negm / share, pos / (1 - share)) : negm / share) : pos), wMax = null;
     if (neg) { ctx.strokeStyle = th.axis; ctx.lineWidth = 2 * S; ctx.beginPath(); ctx.moveTo(x0, b.y); ctx.lineTo(x0, b.y + b.h); ctx.stroke(); }
@@ -1511,9 +1556,11 @@
       ctx.textBaseline = 'middle'; ctx.font = F(700, 30); ctx.fillStyle = th.text;
       if (neg) { ctx.textAlign = v >= 0 ? 'right' : 'left'; ctx.fillText(s.label, v >= 0 ? x0 - 14 * S : x0 + 14 * S, y + bh / 2); }
       else { ctx.textAlign = 'right'; ctx.fillText(s.label, b.x + lab - 18 * S, y + bh / 2); }
+      const dn = !(fin(cash) && cash > 0) && v > 0 && reinvOn(V) ? reinvNote(V, s, f) : '';
       ctx.textAlign = v >= 0 ? 'left' : 'right'; ctx.font = F(700, 28); ctx.fillStyle = th.text;
-      ctx.fillText(V.fmt(v), v >= 0 ? x + w + 14 * S : x - 14 * S, y + bh / 2 - (fin(cash) && cash > 0 ? 12 * S : 0));
+      ctx.fillText(V.fmt(v), v >= 0 ? x + w + 14 * S : x - 14 * S, y + bh / 2 - ((fin(cash) && cash > 0) || dn ? 12 * S : 0));
       if (fin(cash) && cash > 0) { ctx.font = F(500, 20); ctx.fillStyle = th.muted; ctx.fillText(`incl. ${money(cash)} distributions`, x + w + 14 * S, y + bh / 2 + 18 * S); }
+      else if (dn) { ctx.font = F(500, 20); ctx.fillStyle = th.muted; ctx.fillText(dn, x + w + 14 * S, y + bh / 2 + 18 * S); }
       else if (s.need && v >= 0) { ctx.font = F(600, 20); ctx.fillStyle = th.muted; ctx.fillText(s.need, x + w + 14 * S, y + bh / 2 + 24 * S); }
       if (s.name && s.name !== s.label && bh > 54 * S && w > 260 * S) { ctx.textAlign = 'left'; ctx.font = F(500, 20); ctx.fillStyle = luminance(col) > 0.55 ? 'rgba(10,18,32,0.75)' : 'rgba(255,255,255,0.85)'; ctx.fillText(String(s.name).slice(0, 34), x + 14 * S, y + bh / 2); }
     });
@@ -1530,9 +1577,10 @@
       ctx.font = F(500, 20); ctx.fillStyle = th.muted; ctx.fillText(String(s.name || '').slice(0, 40), x + 28 * S, y + 88 * S);
       ctx.font = F(700, Math.min(84, ch / S * 0.26)); ctx.fillStyle = th.text; ctx.fillText(V.fmt(v), x + 28 * S, y + ch * 0.55);
       const sc = V.contrib || s.contrib, v0 = sc ? valAt(sc, f) : s.v.find(fin);
-      if (fin(v) && fin(v0) && v0 !== 0 && V.unit !== '%') { ctx.font = F(700, 30); ctx.fillStyle = v >= v0 ? '#3ee39a' : '#ff6b6b'; ctx.fillText(pctf(v / v0 - 1), x + 28 * S, y + ch * 0.55 + 46 * S); }
-      if (sc && fin(v0)) { ctx.font = F(600, 22); ctx.fillStyle = th.muted; ctx.fillText(`on ${money(v0)} put in` + (s.need ? ' · ' + s.need : ''), x + 160 * S, y + ch * 0.55 + 46 * S); }
-      if (V.split && s.cash) { const c = valAt(s.cash, f); ctx.font = F(600, 22); ctx.fillStyle = th.muted; ctx.fillText(`incl. ${money(c)} distributions`, x + 220 * S, y + ch * 0.55 + 46 * S); }
+      if (fin(v) && fin(v0) && v0 !== 0 && V.unit !== '%') { ctx.font = F(700, 30); ctx.fillStyle = upDown(th, v >= v0); ctx.fillText(pctf(v / v0 - 1), x + 28 * S, y + ch * 0.55 + 46 * S); }
+      const extra = [sc && fin(v0) ? `on ${money(v0)} put in` + (s.need ? ' · ' + s.need : '') : '',
+        V.split && s.cash ? `incl. ${money(valAt(s.cash, f))} distributions` : reinvOn(V) ? reinvNote(V, s, f) : ''].filter(Boolean).join(' · ');
+      if (extra) { ctx.font = F(600, 22); ctx.fillStyle = th.muted; ctx.fillText(extra, x + 170 * S, y + ch * 0.55 + 46 * S, cw - 198 * S); }
       // a sparkline, drawn up to this frame
       const sx = x + 28 * S, sw = cw - 56 * S, sy = y + ch * 0.68, sh = ch * 0.24, vs = s.v.filter(fin);
       if (vs.length > 1) {
@@ -1975,8 +2023,10 @@
     const pad = 34 * S, capW = (portrait ? 920 : 1100) * S;
     const w = Math.min(W - 64 * S, capW);
     const availableH = H - 72 * S, headerH = snow ? 164 * S : 145 * S;
-    const rh = Math.max(38 * S, Math.min(snow ? 126 * S : 78 * S,
+    const subOf = (r) => (r.sub && !(r.subTr && V.dinc === 'off') ? r.sub : ''), hasSub = !snow && rows.some(subOf);
+    const rh = Math.max(38 * S, Math.min(snow ? 126 * S : hasSub ? 98 * S : 78 * S,
       (availableH - headerH - 32 * S) / Math.max(1, rows.length)));
+    const two = hasSub && rh >= 72 * S;
     const h = Math.min(availableH, headerH + rows.length * rh + 24 * S);
     const x = (W - w) / 2, y = (H - h) / 2 + (1 - a) * 36 * S;
     ctx.fillStyle = 'rgba(0,0,0,' + (0.45 * a) + ')'; ctx.fillRect(0, 0, W, H);
@@ -2011,7 +2061,7 @@
     } else {
       const usable = w - 2 * pad;
       rows.forEach((r, i) => {
-        const yy = y + headerH + i * rh + rh * .60;
+        const yy = y + headerH + i * rh + rh * (two ? .46 : .60);
         const change = String(r.change || '');
         const changeW = change ? Math.min(usable * .25, 186 * S) : 0;
         const valueW = Math.min(usable * .30, 235 * S);
@@ -2024,9 +2074,11 @@
         ctx.textAlign = 'right';
         ctx.fillText(String(r.value || ''), right - changeW - (changeW ? 10 * S : 0), yy, valueW);
         if (change) {
-          ctx.font = F(650, 24); ctx.fillStyle = r.up ? '#3ee39a' : '#ff6b6b';
+          ctx.font = F(650, 24); ctx.fillStyle = upDown(th, r.up);
           ctx.fillText(change, right, yy, changeW);
         }
+        const sub = two ? subOf(r) : '';
+        if (sub) { ctx.font = F(500, 19); ctx.fillStyle = th.muted; ctx.textAlign = 'left'; ctx.fillText(sub, x + pad + 22 * S, yy + 31 * S, usable - 22 * S); }
       });
     }
     ctx.restore();
@@ -2149,16 +2201,19 @@
       return;
     }
     const yrs = (G[L] - G[0]) / (365.25 * DAY);
+    // the distributions paid, in dollars as paid: under each row of the end card and in the caption
+    const divTxt = (s) => (V.kind === 'growth' && s.inc && s.inc.total > 0 && s.inc.mode !== 'price' ? `${money(s.inc.total, 0)} dividends ${s.inc.mode === 'tr' ? 'reinvested' : 'taken as cash'}` : '');
+    const divSub = (s) => { const t = divTxt(s); if (!t) return ''; const l = s.inc.last12; return `Paid ${t.replace(' dividends', ' in dividends,')}` + (fin(l) && l > 0 ? ` · ${money(l, 0)} in the last 12 months` : ''); };
     if (V.kind === 'growth' && V.goal) {                      // an end value to reach: the amount each ticker needed, smallest first
       const g = V.goal, mode = V.split ? ' · price + dividends as cash' : st.div === 'price' ? ' · price only' : ' · dividends reinvested';
       V.final = V.series.map((s, k) => {
         const r = yrs >= 1 ? xirr(s.flows.concat([[G[L], s.v[L]]])) : null, amt = g.solve === 'lump' ? s.lump : s.each;
-        return { k, name: s.label, label: s.label + (fin(r) ? ` · ${(100 * r).toFixed(1)}%/yr` : ''), value: s.need, change: `${money(s.put, 0)} put in`, up: true, irr: r, amt, v: -amt };
+        return { k, name: s.label, label: s.label + (fin(r) ? ` · ${(100 * r).toFixed(1)}%/yr` : ''), value: s.need, change: `${money(s.put, 0)} put in`, up: true, irr: r, amt, v: -amt, sub: divSub(s), subTr: s.mode === 'tr', div: divTxt(s) };
       }).sort((a, c) => a.amt - c.amt);
       const f0 = V.final[0];
       V.endTitle = f0 ? `${money(g.value, 0)} by ${dayLabel(G[L])}: ${f0.name} needed ${f0.value}` : '';
       V.endSub = `${span}${mode}` + (g.solve === 'lump' && g.recIn > 0 ? ` · plus ${money(g.recIn, 0)} ${g.per}` : g.solve === 'rec' && g.lumpIn > 0 ? ` · plus ${money(g.lumpIn, 0)} to start` : '');
-      V.caption = `To reach ${money(g.value, 0)} (${span}): ` + V.final.map((r) => `${r.name} ${r.value} (${r.change}${fin(r.irr) ? ', ' + (100 * r.irr).toFixed(1) + '%/yr' : ''})`).join(' vs ');
+      V.caption = `To reach ${money(g.value, 0)} (${span}): ` + V.final.map((r) => `${r.name} ${r.value} (${r.change}${fin(r.irr) ? ', ' + (100 * r.irr).toFixed(1) + '%/yr' : ''}${r.div ? ', ' + r.div : ''})`).join(' vs ');
       return;
     }
     const rows = V.series.map((s, k) => {
@@ -2168,7 +2223,7 @@
       const ref = V.base || (V.contrib ? V.contrib[L] : null);
       const change = ref ? pctf(v / ref - 1) : (fin(v0) && v0 !== 0 && V.unit !== '%' && V.kind !== 'formula' ? pctf(v / v0 - 1) : '');
       const irr = V.kind === 'growth' && V.flows && yrs >= 1 && fin(v) ? xirr(V.flows.concat([[G[L], v]])) : null;
-      return { k, label: s.label + (fin(irr) ? ` · ${(100 * irr).toFixed(1)}%/yr` : ''), name: s.label, value: V.fmt(v), change, irr, up: ref ? v >= ref : v >= v0, v: fin(v) ? v : -Infinity };
+      return { k, label: s.label + (fin(irr) ? ` · ${(100 * irr).toFixed(1)}%/yr` : ''), name: s.label, value: V.fmt(v), change, irr, up: ref ? v >= ref : v >= v0, v: fin(v) ? v : -Infinity, sub: divSub(s), subTr: s.mode === 'tr', div: divTxt(s) };
     }).sort((a, b) => b.v - a.v);
     V.final = rows;
     if (V.kind === 'formula' && V.series.length > 1) {          // lines of very different sizes get a panel each
@@ -2183,11 +2238,116 @@
       V.endTitle = V.kind === 'rrg' ? 'Where they stand' : V.kind === 'drawdown' ? 'Below the high: now · worst' : V.kind === 'growth' ? (rows[0] ? `${rows[0].name} ${rows[0].value} (${rows[0].change})` : '') : (V.metric || V.title);
       V.endSub = span + (V.kind === 'growth' ? mode + (yrs >= 1 ? ' · a year, money-weighted' : '') : '');
     }
-    const yr = (r) => (fin(r.irr) ? `, ${(100 * r.irr).toFixed(1)}%/yr` : '');
+    const yr = (r) => (fin(r.irr) ? `, ${(100 * r.irr).toFixed(1)}%/yr` : '') + (r.div ? ', ' + r.div : '');
     V.caption = V.kind === 'growth' ? (V.dca ? `${V.dca.every}, ${span}: ` : '') + rows.map((r) => `${r.name} ${r.value} (${r.change}${yr(r)})`).join(' vs ') + (V.dca ? ` · ${money(V.dca.put, 0)} put in` : '')
       : V.kind === 'rrg' ? rows.map((r) => `${r.label}: ${r.value}`).join(' · ')
         : V.kind === 'drawdown' ? rows.map((r) => `${r.label} ${r.value} now, worst ${r.change}`).join(' · ')
           : rows.map((r) => `${r.label} ${r.value}${r.change ? ' (' + r.change + ')' : ''}`).join(' · ');
+  }
+
+  /* ---------- the report under the video: its figures as a table, as text to copy and as a CSV ---------- */
+  // the worst fall from a high, and each full calendar year's return, of the line a ticker follows (total return or price)
+  function worstDrop(a, G) {
+    let peak = -Infinity, pk = -1, worst = 0, at = -1, from = -1;
+    for (let i = 0; i < a.length; i++) {
+      const x = a[i]; if (!fin(x) || x <= 0) continue;
+      if (x > peak) { peak = x; pk = i; }
+      if (x / peak - 1 < worst) { worst = x / peak - 1; at = i; from = pk; }
+    }
+    return at < 0 ? { v: 0, at: null, from: null } : { v: worst, at: G[at], from: G[from] };
+  }
+  function calYears(a, G) {                                  // [[year, return]], from the last close of the year before
+    const end = new Map(), out = [];
+    for (let i = 0; i < G.length; i++) if (fin(a[i]) && a[i] > 0) end.set(new Date(G[i]).getUTCFullYear(), [G[i], +a[i]]);
+    for (const [y, [t, v]] of end) { const p = end.get(y - 1), d = new Date(t); if (p && d.getUTCMonth() === 11 && d.getUTCDate() >= 24) out.push([y, v / p[1] - 1]); }
+    return out;
+  }
+  // {title, sub, cols [[key, label, help]], rows [{k, label, name, sec, cells {key: [text, small, number]}}], caption, notes, foot}
+  function report(V) {
+    const R = reportOf(V);
+    R.cols = R.cols.filter(([k]) => R.rows.some((r) => r.cells[k] && r.cells[k][0] !== '—'));
+    return R;
+  }
+  function reportOf(V) {
+    const G = V.grid || [], L = G.length - 1;
+    const R = { kind: V.kind, title: V.title || '', sub: V.sub || '', cols: [], rows: [], caption: V.caption || '', notes: [...(V.notes || [])], foot: '' };
+    const cell = (t, small, n) => [t == null || t === '' ? '—' : String(t), small || '', fin(n) ? +n : null];
+    if (V.kind === 'growth') {
+      const yrs = L > 0 ? (G[L] - G[0]) / (365.25 * DAY) : 0, mode = V.div || 'tr';
+      const anyDiv = V.series.some((s) => s.inc && s.inc.total > 0);
+      R.cols = [
+        ...(V.goal ? [['need', 'Needed', 'The amount worked back from the end value']] : []),
+        ['put', 'Put in', 'All the money put in'], ['end', 'End value', dayLabel(G[L])], ['gain', 'Gain', 'The end value against the money put in'],
+        ['yr', 'A year', 'The money-weighted return a year (XIRR)'],
+        ...(anyDiv ? [['div', { tr: 'Dividends paid, reinvested', split: 'Dividends paid, as cash', price: 'Dividends left out' }[mode] || 'Dividends paid', 'In dollars as paid: each payment is the shares then held × the amount per share'],
+          ['l12', 'Last 12 months', 'Dividends paid in the last 52 weeks, and that as a share of the money put in']] : []),
+        ['dd', 'Worst drop', 'The largest fall from a high of the ' + (mode === 'tr' ? 'total-return' : 'price') + ' line'],
+        ['cy', 'Best · worst year', 'Full calendar years in the window'],
+      ];
+      R.rows = V.series.map((s, k) => {
+        const v = s.v[L], put = s.put != null ? s.put : V.contrib ? V.contrib[L] : V.base, flows = s.flows || V.flows;
+        const irr = flows && yrs >= 1 && fin(v) ? xirr(flows.concat([[G[L], v]])) : null;
+        const dd = worstDrop(s.idx || s.v, G), cy = calYears(s.idx || s.v, G);
+        const best = cy.length ? cy.reduce((m, x) => (x[1] > m[1] ? x : m)) : null, worst = cy.length ? cy.reduce((m, x) => (x[1] < m[1] ? x : m)) : null;
+        const inc = s.inc, c = {
+          put: cell(money(put, 0), '', put), end: cell(V.fmt(v), '', v),
+          gain: cell(fin(v) && put ? pctf(v / put - 1) : '', fin(v) && fin(put) ? (v >= put ? '+' : '') + money(v - put, 0) : '', fin(v) && put ? v / put - 1 : null),
+          yr: cell(fin(irr) ? (100 * irr).toFixed(1) + '%' : '', '', irr),
+          dd: cell(dd.at ? pctf(dd.v, 1) : (s.idx || s.v).some(fin) ? 'None' : '', dd.at ? monthYear(dd.at) : '', dd.at ? dd.v : 0),
+          cy: cell(best ? `${best[0]} ${pctf(best[1], 1)}` : '', worst && worst !== best ? `${worst[0]} ${pctf(worst[1], 1)}` : '', best ? best[1] : null),
+        };
+        if (V.goal) c.need = cell(s.need, '', V.goal.solve === 'lump' ? s.lump : s.each);
+        if (anyDiv) {
+          c.div = inc ? cell(money(inc.total, 0), inc.mode === 'tr' && fin(inc.worth) ? `worth ${money(inc.worth, 0)} now` : inc.mode === 'price' ? 'not in the value' : '', inc.total) : cell('');
+          c.l12 = inc && fin(inc.last12) ? cell(money(inc.last12, 0), put > 0 ? `${(100 * inc.last12 / put).toFixed(1)}% on cost` : '', inc.last12) : cell('');
+        }
+        return { k, label: s.label, name: s.name, cells: c };
+      });
+      R.foot = (anyDiv ? 'Dividends and interest in dollars as paid, before tax: each payment is the shares then held × the amount per share'
+        + (mode === 'tr' ? '; reinvested, it bought more shares that week, and “worth now” is what those shares are worth at the end (the total-return value less the same money in the price alone)' : mode === 'split' ? '; taken as cash, kept beside the shares (not reinvested)' : '; the price-only line leaves them out') + '. ' : '')
+        + 'A year: the money-weighted return a year (XIRR), which for one sum at the start is the yearly growth rate. Weekly closes.';
+      return R;
+    }
+    if (V.kind === 'snowball' && Array.isArray(V.snowballSummary)) {
+      R.title = V.endTitle || R.title; R.sub = V.endSub || R.sub;
+      R.cols = [['inv', 'Money in'], ['sh0', 'Shares at the start'], ['sh1', 'Shares at the end'], ['mo', 'A month (equivalent)'], ['yr', 'A year']];
+      R.rows = V.snowballSummary.map((r) => ({ k: r.k, label: r.ticker, cells: { inv: cell(r.investment), sh0: cell(r.initial, '', r.initial_shares), sh1: cell(r.final, '', r.final_shares), mo: cell(r.monthly, 'last 52 weeks ÷ 12', r.monthlyIncome), yr: cell(r.annual, '', r.annualIncome) } }));
+      return R;
+    }
+    R.title = V.endTitle || R.title; R.sub = V.endSub || R.sub;
+    R.cols = [['value', 'Value'], ['change', 'Change']];
+    R.rows = (V.final || []).map((r) => ({ k: r.k || 0, sec: r.sec, label: r.label, cells: { value: cell(r.value, '', fin(r.v) ? r.v : null), change: cell(r.change) } }));
+    return R;
+  }
+  const tsv = (x) => String(x == null ? '' : x).replace(/[\t\n]+/g, ' ');
+  function reportText(R, link) {                             // the report as plain text: a table with tabs, then the caption
+    const head = [''].concat(R.cols.map((c) => c[1])).map(tsv).join('\t');
+    const rows = R.rows.map((r) => [r.label].concat(R.cols.map(([k]) => { const c = r.cells[k] || ['—', '']; return c[0] + (c[1] ? ` (${c[1]})` : ''); })).map(tsv).join('\t'));
+    return [R.title, R.sub, '', head, ...rows, '', R.caption, ...(R.notes.length ? ['', ...R.notes.map((n) => '• ' + n)] : []), ...(R.foot ? ['', R.foot] : []), '', 'filing-flows.com' + (link ? ' · ' + link : '')]
+      .filter((x, i, a) => !(x === '' && (i === 0 || a[i - 1] === ''))).join('\n').trim();
+  }
+  const csvCell = (x) => { const s = x == null ? '' : typeof x === 'number' ? (Number.isFinite(x) ? String(+x.toFixed(6)) : '') : String(x); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  // the series behind the video, one row a week (a month, a quarter); without such series, the report's table
+  function csvOf(V, R) {
+    const G = V.grid || [], rows = [];
+    const lined = V.series && V.series.length && V.series.every((s) => (Array.isArray(s.v) && s.v.length === G.length) || (Array.isArray(s.x) && s.x.length === G.length));
+    if (lined && !['sankey', 'snowball', 'calendar', 'dist', 'treemap', 'bubble'].includes(V.kind)) {
+      const head = ['date'], get = [];
+      if (V.kind === 'growth' && (V.contrib || V.base)) { head.push('put in'); get.push((i) => (V.contrib ? V.contrib[i] : V.base)); }
+      V.series.forEach((s) => {
+        if (s.x) { head.push(s.label + ' RS-ratio', s.label + ' RS-momentum'); get.push((i) => s.x[i], (i) => s.y[i]); return; }
+        head.push(V.kind === 'growth' ? s.label + ' value' : s.label); get.push((i) => s.v[i]);
+        if (V.kind === 'growth' && s.price) { head.push(s.label + ' price only'); get.push((i) => s.price[i]); }
+        if (V.kind === 'growth' && s.dist) { head.push(s.label + ' dividends paid (cumulative)'); get.push((i) => s.dist[i]); }
+        if (V.kind === 'growth' && s.contrib) { head.push(s.label + ' put in'); get.push((i) => s.contrib[i]); }
+      });
+      rows.push(head);
+      G.forEach((g, i) => rows.push([iso(g), ...get.map((f) => f(i))]));
+    } else {
+      rows.push([''].concat(R.cols.map((c) => c[1])));
+      R.rows.forEach((r) => rows.push([r.label].concat(R.cols.map(([k]) => { const c = r.cells[k]; return c ? (c[2] != null ? c[2] : c[0]) : ''; }))));
+    }
+    return rows.map((r) => r.map(csvCell).join(',')).join('\n') + '\n';
   }
 
   /* ---------- export: WebCodecs + mp4-muxer, or MediaRecorder ---------- */
@@ -2232,21 +2392,52 @@
     onProgress(1);
     return { blob: new Blob([muxer.target.buffer], { type: 'video/mp4' }), codec: pick.codec, w, h, fps, frames: N };
   }
-  function recordPreview(canvas, V, opt, onProgress) {           // the fallback: record the canvas while it plays in real time
+  function recordPreview(canvas, V, opt, onProgress, cancel) {   // the fallback: record the canvas while it plays in real time
     return new Promise((ok, bad) => {
       if (!canvas.captureStream || typeof MediaRecorder === 'undefined') { bad(new Error('this browser cannot record video')); return; }
       const fps = +opt.fps === 60 ? 60 : 30, stream = canvas.captureStream(fps);
       const type = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9', 'video/webm'].find((t) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || '';
       const rec = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 8e6 } : undefined), parts = [];
       rec.ondataavailable = (e) => { if (e.data.size) parts.push(e.data); };
-      rec.onstop = () => ok({ blob: new Blob(parts, { type: type.split(';')[0] || 'video/webm' }), codec: type || 'default', recorded: true });
+      let stopped = false;
+      rec.onstop = () => ok(stopped ? 'cancelled' : { blob: new Blob(parts, { type: type.split(';')[0] || 'video/webm' }), codec: type || 'default', recorded: true });
       const ctx = canvas.getContext('2d'), D = timing(V, opt).D, t0 = performance.now();
       rec.start(250);
-      (function tick() { const t = (performance.now() - t0) / 1000; draw(ctx, canvas.width, canvas.height, V, opt, Math.min(t, D)); onProgress(Math.min(1, t / D)); if (t < D) requestAnimationFrame(tick); else setTimeout(() => rec.stop(), 120); })();
+      (function tick() {
+        if (cancel && cancel()) { stopped = true; rec.stop(); return; }
+        const t = (performance.now() - t0) / 1000; draw(ctx, canvas.width, canvas.height, V, opt, Math.min(t, D)); onProgress(Math.min(1, t / D));
+        if (t < D) requestAnimationFrame(tick); else setTimeout(() => rec.stop(), 120);
+      })();
     });
   }
 
   /* ---------- the page ---------- */
+  function fileStem(V) {
+    const slug = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const what = V.actual ? `actual-weights-${V.actual.fund}-${V.kind === 'sectors' ? 'sectors' : 'holdings'}` : V.kind === 'rank' ? `top-${V.rankN}-${slug(V.metric)}` : V.kind === 'dist' ? 'return-spread' : V.kind === 'calendar' ? V.series[0].key + '-monthly-returns'
+      : V.series.map((s) => s.key).join('-').replace(/[^A-Za-z0-9-]+/g, '').slice(0, 40) + (V.kind === 'drawdown' ? '-drawdowns' : V.dca ? '-monthly-buys' : '');
+    return 'filing-flows-' + (what.slice(0, 60) || 'video');
+  }
+  function download(blob, name) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  }
+  function reportHTML(R, th) {
+    const col = (r) => (r.sec ? secCol(th, r.sec) : th.pal[(r.k || 0) % th.pal.length]);
+    const cls = (k, c) => (k === 'gain' && c[2] != null ? (c[2] >= 0 ? 'num up' : 'num down') : 'num');
+    const head = `<tr><th scope="col"><span class="st-sr">Series</span></th>${R.cols.map(([, l, help]) => `<th scope="col" class="num"${help ? ` title="${esc(help)}"` : ''}>${esc(l)}</th>`).join('')}</tr>`;
+    const body = R.rows.map((r) => `<tr><th scope="row"><i style="background:${esc(col(r))}"></i>${esc(r.label)}${r.name && r.name !== r.label ? `<small>${esc(String(r.name).slice(0, 38))}</small>` : ''}</th>`
+      + R.cols.map(([k]) => { const c = r.cells[k] || ['—', '']; return `<td class="${cls(k, c)}">${esc(c[0])}${c[1] ? `<small>${esc(c[1])}</small>` : ''}</td>`; }).join('') + '</tr>').join('');
+    return `<div class="st-rep-head"><div><div class="st-rep-k">Results</div><h2>${esc(R.title)}</h2>${R.sub ? `<div class="st-rep-sub">${esc(R.sub)}</div>` : ''}</div>`
+      + `<div class="st-rep-act"><button class="btn small" type="button" data-rep="copy" title="The table, the caption and the notes as text">Copy text</button><button class="btn small" type="button" data-rep="csv" title="The figures behind the video, week by week">CSV ↓</button><button class="btn small" type="button" data-rep="png" title="This frame as a picture, at the size of the video">Image ↓</button></div></div>`
+      + (R.rows.length ? `<div class="tbl-wrap st-wide"><table class="st-tbl"><thead>${head}</thead><tbody>${body}</tbody></table></div>` : '')
+      // on a phone the same figures turned around: a row for each figure, a column for each series
+      + (R.rows.length ? `<div class="tbl-wrap st-tall"><table class="st-tbl"><thead><tr><th scope="col"><span class="st-sr">Figure</span></th>${R.rows.map((r) => `<th scope="col" class="num"><i style="background:${esc(col(r))}"></i>${esc(r.label)}</th>`).join('')}</tr></thead><tbody>`
+        + R.cols.map(([k, l, help]) => `<tr><th scope="row"${help ? ` title="${esc(help)}"` : ''}>${esc(l)}</th>${R.rows.map((r) => { const c = r.cells[k] || ['—', '']; return `<td class="${cls(k, c)}">${esc(c[0])}${c[1] ? `<small>${esc(c[1])}</small>` : ''}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>' : '')
+      + (R.caption ? `<div class="st-capbox"><div class="st-caph"><span>Caption to post</span><button class="btn small" type="button" data-rep="cap">Copy</button></div><div class="st-cap" id="st-cap">${esc(R.caption)}</div></div>` : '')
+      + (R.notes.length ? `<ul class="st-notes" id="st-notes">${R.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '')
+      + (R.foot ? `<p class="st-rep-foot">${esc(R.foot)}</p>` : '');
+  }
   const TEMPLATES = [
     { name: '$10,000: QQQ vs SPY', note: 'Ten years, distributions reinvested', s: { k: 'growth', t: 'QQQ,SPY', from: '2016-10-28', amt: '10000', div: 'tr', style: 'line', theme: 'bull' } },
     { name: 'Dividend ETFs, split out', note: 'SCHD vs VYM vs SPY: price + cash', s: { k: 'growth', t: 'SCHD,VYM,SPY', from: '2016-10-28', amt: '10000', div: 'split', style: 'line', theme: 'bull' } },
@@ -2294,14 +2485,23 @@
   function css() {
     if (document.getElementById('st-css')) return;
     const s = document.createElement('style'); s.id = 'st-css';
-    s.textContent = `.st-wrap{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:22px;align-items:start}@media(max-width:900px){.st-wrap{grid-template-columns:1fr}}
+    s.textContent = `.st-wrap{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:22px;align-items:start}.st-main{min-width:0}@media(max-width:900px){.st-wrap{grid-template-columns:1fr}.st-main{order:-1}}
 .st-side{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--surface)}.st-side h3{margin:14px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .st-side h3:first-child{margin-top:2px}.st-side label{display:block;font-size:12.5px;color:var(--muted);margin:8px 0 3px}.st-side .input,.st-side select,.st-side textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 .st-side textarea{min-height:84px;font-family:var(--mono);font-size:13px}.st-row{display:flex;gap:8px}.st-row>*{flex:1}.st-pills{display:flex;flex-wrap:wrap;gap:6px}.st-pills .pill{font-size:12.5px;padding:5px 10px}
 .st-stage{background:#0b1220;border-radius:14px;overflow:hidden;display:flex;justify-content:center;align-items:center;box-shadow:var(--shadow)}.st-stage canvas{display:block;max-width:100%;max-height:72vh;height:auto}
 .st-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 6px}.st-bar .sp{flex:1}.st-status{font-size:13px;color:var(--muted)}.st-prog{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:6px 0}.st-prog i{display:block;height:100%;background:var(--accent);width:0}
-.st-notes{font-size:12.5px;color:var(--muted);line-height:1.5}.st-notes li{margin:2px 0}.st-tpl{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:18px 0 6px}
-.st-tpl button{text-align:left;font:inherit;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);cursor:pointer;color:var(--ink)}.st-tpl button:hover{border-color:var(--ink-2)}.st-tpl b{display:block;font-size:14px}.st-tpl span{font-size:12px;color:var(--muted)}
+.st-notes{font-size:12.5px;color:var(--muted);line-height:1.5;margin:8px 0 0;padding-left:18px}.st-notes li{margin:2px 0}
+.st-tpl-bar{display:flex;align-items:center;gap:10px;margin:16px 0 8px}.st-tpl-bar>span{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.st-tpl-bar .sp{flex:1}
+.st-tpl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(196px,228px);gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 10px;margin:0 0 6px;-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent);mask-image:linear-gradient(90deg,#000 90%,transparent)}
+.st-tpl.all{grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));grid-auto-columns:auto;overflow:visible;-webkit-mask-image:none;mask-image:none}
+.st-tpl button{scroll-snap-align:start;text-align:left;font:inherit;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);cursor:pointer;color:var(--ink)}.st-tpl button:hover{border-color:var(--ink-2)}.st-tpl b{display:block;font-size:14px}.st-tpl span{font-size:12px;color:var(--muted)}
+.st-rep{margin-top:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:14px 16px}.st-rep-head{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.st-rep-k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}.st-rep h2{font-size:17px;margin:2px 0;line-height:1.3}.st-rep-sub{font-size:13px;color:var(--muted)}.st-rep-act{display:flex;gap:6px;flex-wrap:wrap}
+.st-rep .tbl-wrap{margin:2px 0 10px}.st-rep td small,.st-rep tbody th small{display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:1px}.st-rep thead th{white-space:normal;min-width:76px;vertical-align:bottom}
+.st-rep tbody th{position:sticky;left:0;z-index:1;background:var(--surface);text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);font-weight:600}.st-rep tbody th i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.st-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.st-tall{display:none}@media(max-width:640px){.st-wide{display:none}.st-tall{display:block}.st-tall th,.st-tall td{padding:8px 7px}.st-tall tbody th{font-size:12.5px;font-weight:500;color:var(--muted);white-space:normal;min-width:80px;max-width:100px}.st-tall thead th{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink);font-weight:600}.st-tall thead th i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.st-rep{padding:12px}}
+.st-rep td.up{color:var(--accent-ink)}.st-rep td.down{color:var(--neg)}.st-capbox{margin-top:4px}.st-caph{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:4px}.st-rep-foot{font-size:12px;color:var(--muted);line-height:1.5;margin:8px 0 0}
 .st-help{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}.st-help code{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);padding:0 4px;border-radius:4px}.st-cap{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border-radius:8px;padding:8px 10px;margin-top:8px;word-break:break-word}`;
     document.head.appendChild(s);
   }
@@ -2318,16 +2518,17 @@
     const sel = (id, items, v) => `<select id="${id}">${items.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
     app.innerHTML = `<div class="page-head"><div class="eyebrow"><a href="#chart">← Charts</a> · Videos</div><h1>Make a market video</h1>
       <p class="muted" style="max-width:76ch">Growth races of any ETFs or stocks — a lump sum or the same amount bought every few days, weeks or months, with dividends reinvested, taken as cash on their own line, or left out — leaderboards of every company by market value, revenue, profit, P/E, P/B, volume or return, drawdowns, monthly-return heatmaps, the spread of every stock's year, RRG and momentum replays, companies' own figures and any formula. Animated in four looks and three shapes, at the length and pace you set, saved as an MP4 to post. Everything is drawn from the site's own data in your browser.</p></div>
+      <div class="st-tpl-bar"><span>Start from a template</span><span class="sp"></span><button class="btn small" id="st-tpl-all" type="button" aria-expanded="false" aria-controls="st-tpl">All ${TEMPLATES.length} ▾</button></div>
       <div class="st-tpl" id="st-tpl">${TEMPLATES.map((x, i) => `<button type="button" data-tpl="${i}"><b>${esc(x.name)}</b><span>${esc(x.note)}</span></button>`).join('')}</div>
       <div class="st-wrap"><div class="st-side" id="st-side"></div><div class="st-main">
         <div class="st-stage"><canvas id="st-canvas" width="1280" height="720" aria-label="Video preview"></canvas></div>
         <div class="st-bar"><button class="btn primary" id="st-play" type="button">▶ Play</button><button class="btn" id="st-restart" type="button">⟲ Restart</button><span class="sp"></span>
           <button class="btn primary" id="st-export" type="button">Export MP4 ↓</button><button class="btn" id="st-link" type="button">Copy link</button></div>
         <div class="st-prog" id="st-prog" hidden><i></i></div><div class="st-status" id="st-status"></div>
-        <div id="st-cap"></div><ul class="st-notes" id="st-notes"></ul>
+        <section class="st-rep" id="st-rep" aria-label="Results" hidden></section>
       </div></div>`;
     const $ = (s) => app.querySelector(s), canvas = $('#st-canvas'), ctx = canvas.getContext('2d');
-    let V = null, playing = false, t0 = 0, tNow = 0, raf = 0, token = 0, exporting = false;
+    let V = null, playing = false, t0 = 0, tNow = 0, raf = 0, token = 0, exporting = false, cancelReq = false;
     const opt = () => ({ appearanceTheme: st.theme === 'appearance' ? root.FFAppearance?.videoTheme() : null, theme: st.theme, ar: st.ar, q: st.q, fps: st.fps, dur: clamp(+st.dur || 20, 4, 300), pace: st.pace, hold: st.hold });
     function rankSide(k) {
       let h = '';
@@ -2451,7 +2652,9 @@
         h += `<label for="st-rec">${L.rec}</label><div class="st-row"><div><input class="input" id="st-rec" inputmode="numeric" placeholder="$ each time" value="${+st.rec > 0 ? esc(st.rec) : ''}" aria-label="Amount each time"></div>`
           + `<div style="flex:.7"><input class="input" id="st-ri" type="number" min="1" max="60" value="${esc(st.ri)}" aria-label="Every how many"></div><div>${sel('st-ru', [['d', 'trading days'], ['w', 'weeks'], ['m', 'months'], ['y', 'years']], st.ru)}</div></div>`
           + `<div class="st-help" id="st-goal-help">${L.help}</div>`;
-        h += `<label for="st-div">Dividends</label>${sel('st-div', [['tr', 'Reinvested (total return)'], ['split', 'Taken as cash: their own line'], ['price', 'Left out (price only)']], st.div)}<label for="st-scale">Scale</label>${sel('st-scale', [['lin', 'Linear'], ['log', 'Logarithmic']], st.scale)}`;
+        h += `<label for="st-div">Dividends</label>${sel('st-div', [['tr', 'Reinvested (total return)'], ['split', 'Taken as cash: their own line'], ['price', 'Left out (price only)']], st.div)}`;
+        if (st.div === 'tr') h += `<label for="st-dinc">Dividends paid, in dollars as paid</label>${sel('st-dinc', [['label', 'On the labels and the end card'], ['panel', 'Also their own panel (line race)'], ['off', 'Not on the video (in the results only)']], st.dinc)}`;
+        h += `<label for="st-scale">Scale</label>${sel('st-scale', [['lin', 'Linear'], ['log', 'Logarithmic']], st.scale)}`;
       }
       if (k === 'rrg') h += `<div class="st-row"><div><label for="st-bench">Benchmark</label><input class="input" id="st-bench" value="${esc(st.bench)}"></div><div><label for="st-tail">Tail (weeks)</label>${sel('st-tail', [['5', '5'], ['8', '8'], ['10', '10'], ['13', '13'], ['26', '26']], st.tail)}</div></div><label for="st-n">RS window</label>${sel('st-n', [['10', '10 weeks'], ['14', '14 weeks'], ['26', '26 weeks']], st.n)}`;
       if (k === 'momentum') h += `<div class="st-row"><div><label for="st-bench">Against</label><input class="input" id="st-bench" value="${esc(st.bench)}"></div><div><label for="st-lb">Look-back</label>${sel('st-lb', [['13', '13 weeks'], ['26', '26 weeks'], ['52', '52 weeks']], st.lb)}</div></div>`;
@@ -2493,7 +2696,7 @@
       if (root.FFAppearance?.videoTheme()) st.theme = 'appearance';
       else if (st.theme === 'appearance') st.theme = originalTheme;
       const picker = $('#st-theme'); if(picker)picker.value=st.theme;
-      if (!exporting) paint();
+      if (!exporting) { paint(); if (V) showReport(); }
     };
     root.addEventListener('ff:appearancechange', appearanceChanged);
     function loop(ts) {
@@ -2513,12 +2716,11 @@
       try {
         const v = await build(st);
         if (my !== token || !here()) return;
-        v.style = st.style; v.scale = st.scale; v.endCard = st.end === '1';
+        v.style = st.style; v.scale = st.scale; v.endCard = st.end === '1'; v.dinc = st.dinc;
         finish(v, st);
         V = v;
         status();
-        $('#st-notes').innerHTML = [...V.notes].map((n) => `<li>${esc(n)}</li>`).join('');
-        $('#st-cap').innerHTML = V.caption ? `<div class="st-cap" title="A caption to post with the video">${esc(V.caption)}</div>` : '';
+        showReport();
         const ti = $('#st-title'), su = $('#st-sub'); if (ti) ti.placeholder = V.title; if (su) su.placeholder = V.sub;
         tNow = autoplay ? 0 : timing(V, opt()).D * 0.62;
         paint();
@@ -2528,9 +2730,38 @@
         V = null; pause();
         ctx.fillStyle = '#0b1220'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#e8eef7'; ctx.font = '600 28px "IBM Plex Sans", Arial'; ctx.textAlign = 'center'; ctx.fillText(e.message, canvas.width / 2, canvas.height / 2);
-        $('#st-status').textContent = e.message; $('#st-notes').innerHTML = ''; $('#st-cap').innerHTML = '';
+        $('#st-status').textContent = e.message; const rp = $('#st-rep'); rp.hidden = true; rp.innerHTML = '';
       }
     }
+    const themeOf = () => (st.theme === 'appearance' ? root.FFAppearance?.videoTheme() : THEMES[st.theme]) || THEMES.bull;
+    function showReport() {
+      const box = $('#st-rep');
+      let R = null;
+      try { R = report(V); } catch (e) { console.error('studio report', e); }
+      V._report = R;
+      if (!R) { box.hidden = true; return; }
+      box.innerHTML = reportHTML(R, themeOf());
+      box.hidden = false;
+    }
+    const linkOf = () => location.href.split('#')[0] + '#' + serialize(st);
+    function copyText(text, btn) {
+      const done = () => { const was = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = was; }, 1600); };
+      const fallback = () => { const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); let okc = false; try { okc = document.execCommand('copy'); } catch (e) { /* none */ } ta.remove(); if (okc) done(); else prompt('Copy this', text.length > 2000 ? text.slice(0, 2000) : text); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+    }
+    $('#st-rep').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-rep]'); if (!b || !V || !V._report) return;
+      const R = V._report, what = b.dataset.rep;
+      if (what === 'copy') copyText(reportText(R, linkOf()), b);
+      else if (what === 'cap') copyText(R.caption, b);
+      else if (what === 'csv') download(new Blob([csvOf(V, R)], { type: 'text/csv;charset=utf-8' }), fileStem(V) + '.csv');
+      else if (what === 'png') {                              // this frame, at the size of the video
+        const dim = { '16x9': [1920, 1080], '9x16': [1080, 1920], '1x1': [1080, 1080] }[st.ar] || [1920, 1080], c = document.createElement('canvas');
+        c.width = dim[0]; c.height = dim[1];
+        draw(c.getContext('2d'), c.width, c.height, V, opt(), tNow);
+        c.toBlob((blob) => { if (blob) download(blob, fileStem(V) + '.png'); }, 'image/png');
+      }
+    });
     async function suggest() {
       const list = $('#st-list'); if (!list || list.dataset.done) return; list.dataset.done = '1';
       const [ix, ex] = await Promise.all([json(SITE + 'index.json'), st.k === 'fund' ? null : json(HUB + 'etf/index.json')]);
@@ -2589,42 +2820,46 @@
       // Actual weight bars and sector areas require distinct portfolios, not just a repaint.
       if (key === 'style' && st.k === 'actual') { side(); rebuild(); return; }
       if (LOOK.includes(key)) {
-        if (V) { V.style = st.style; V.scale = st.scale; V.endCard = st.end === '1'; delete V._dom; sizeCanvas(); paint(); save(); status(); }
+        if (V) { V.style = st.style; V.scale = st.scale; V.endCard = st.end === '1'; V.dinc = st.dinc; delete V._dom; sizeCanvas(); paint(); save(); status(); if (key === 'theme') showReport(); }
         else rebuild();
         return;
       }
-      if (key === 'rm' || key === 'bx' || key === 'by' || key === 'sw' || key === 'aw' || key === 'hsrc' || key === 'ssolve' || key === 'sgoal') side();
+      if (key === 'rm' || key === 'bx' || key === 'by' || key === 'sw' || key === 'aw' || key === 'hsrc' || key === 'ssolve' || key === 'sgoal' || key === 'div') side();
       rebuild();
     });
+    const tplAll = (on) => { const g = $('#st-tpl'), b = $('#st-tpl-all'); g.classList.toggle('all', on); b.setAttribute('aria-expanded', String(on)); b.textContent = on ? 'Fewer ▴' : `All ${TEMPLATES.length} ▾`; };
+    $('#st-tpl-all').addEventListener('click', () => tplAll(!$('#st-tpl').classList.contains('all')));
     app.querySelector('#st-tpl').addEventListener('click', (e) => {
       const b = e.target.closest('[data-tpl]'); if (!b) return;
       Object.assign(st, DEF, TEMPLATES[+b.dataset.tpl].s); side(); rebuild(true);
+      tplAll(false);
       app.querySelector('.st-stage').scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
     $('#st-play').addEventListener('click', () => (playing ? pause() : play()));
     $('#st-restart').addEventListener('click', () => { tNow = 0; play(); });
-    $('#st-link').addEventListener('click', () => { const u = location.href.split('#')[0] + '#' + serialize(st); (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => { $('#st-link').textContent = 'Copied'; setTimeout(() => { $('#st-link').textContent = 'Copy link'; }, 1600); }).catch(() => prompt('Copy this link', u)); });
+    $('#st-link').addEventListener('click', () => copyText(linkOf(), $('#st-link')));
     $('#st-export').addEventListener('click', async () => {
-      if (!V || exporting) return;
-      exporting = true; pause();
-      const btn = $('#st-export'), prog = $('#st-prog'); btn.disabled = true; prog.hidden = false;
-      const set = (p) => { prog.firstElementChild.style.width = (100 * p).toFixed(1) + '%'; $('#st-status').textContent = `Rendering ${Math.round(100 * p)}%…`; };
+      if (exporting) { cancelReq = true; $('#st-status').textContent = 'Cancelling…'; return; }
+      if (!V) return;
+      exporting = true; cancelReq = false; pause();
+      const btn = $('#st-export'), prog = $('#st-prog'), began = performance.now(); btn.textContent = 'Cancel'; btn.classList.remove('primary'); prog.hidden = false;
+      const set = (p) => {
+        prog.firstElementChild.style.width = (100 * p).toFixed(1) + '%';
+        const spent = (performance.now() - began) / 1000, left = p > 0.03 ? spent * (1 - p) / p : null;
+        $('#st-status').textContent = `Rendering ${Math.round(100 * p)}%` + (left != null && left >= 2 && p < 1 ? ` · about ${left < 90 ? Math.ceil(left) + ' s' : Math.round(left / 60) + ' min'} left` : '') + '…';
+      };
+      const stop = () => !here() || cancelReq;
       try {
-        let r = await exportMp4(V, opt(), set, () => !here());
-        if (r === 'cancelled') return;
-        if (!r) { $('#st-status').textContent = 'Recording the preview in real time (this browser has no video encoder)…'; r = await recordPreview(canvas, V, opt(), set); }
-        const ext = r.blob.type.includes('mp4') ? 'mp4' : 'webm';
-        const slug = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        const what = V.actual ? `actual-weights-${V.actual.fund}-${V.kind === 'sectors' ? 'sectors' : 'holdings'}` : V.kind === 'rank' ? `top-${V.rankN}-${slug(V.metric)}` : V.kind === 'dist' ? 'return-spread' : V.kind === 'calendar' ? V.series[0].key + '-monthly-returns'
-          : V.series.map((s) => s.key).join('-').replace(/[^A-Za-z0-9-]+/g, '').slice(0, 40) + (V.kind === 'drawdown' ? '-drawdowns' : V.dca ? '-monthly-buys' : '');
-        const name = 'filing-flows-' + (what.slice(0, 60) || 'video') + '.' + ext;
-        const a = document.createElement('a'); a.href = URL.createObjectURL(r.blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(a.href), 60000);
-        $('#st-status').textContent = `Saved ${name} · ${(r.blob.size / 1e6).toFixed(1)} MB${r.w ? ` · ${r.w}×${r.h}, ${r.fps} fps, ${r.codec}` : ''}`;
+        let r = await exportMp4(V, opt(), set, stop);
+        if (!r) { $('#st-status').textContent = 'Recording the preview in real time (this browser has no video encoder)…'; r = await recordPreview(canvas, V, opt(), set, stop); }
+        if (r === 'cancelled') { if (here()) $('#st-status').textContent = 'Export cancelled'; return; }
+        const name = fileStem(V) + '.' + (r.blob.type.includes('mp4') ? 'mp4' : 'webm');
+        download(r.blob, name);
+        $('#st-status').textContent = `Saved ${name} · ${(r.blob.size / 1e6).toFixed(1)} MB${r.w ? ` · ${r.w}×${r.h}, ${r.fps} fps, ${r.codec}` : ''} · made in ${Math.round((performance.now() - began) / 1000)} s`;
         root.FFStudio._last = r;
       } catch (err) {
         $('#st-status').textContent = 'The video could not be made: ' + err.message;
-      } finally { exporting = false; btn.disabled = false; prog.hidden = true; }
+      } finally { exporting = false; cancelReq = false; btn.textContent = 'Export MP4 ↓'; btn.classList.add('primary'); prog.hidden = true; }
     });
     side();
     await rebuild(false);
@@ -2642,6 +2877,6 @@
     if (+st.yrs > 0) { const end = st.to ? Date.parse(st.to + 'T00:00:00Z') : Date.now(); st = Object.assign({}, st, { from: iso(end - (+st.yrs) * 365.25 * DAY) }); }
     const V = await buildRaw(st); V._title = V.title; V._sub = V.sub; if (st.title) V.title = st.title; if (st.sub) V.sub = st.sub; return V; }
 
-  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, resetPanel: () => PANEL.clear() } };
+  root.FFStudio = { render, _t: { tokenize, parse, evaluate, formulas, ids, figure, weeklyGrid, asof, divsOn, divTTM, trOn, priceOn, rrgXY, build, finish, draw, timing, frameIndex, parseState, serialize, exportMp4, money, THEMES, TEMPLATES, buySchedule, xirr, historyPx, squarify, report, reportText, csvOf, worstDrop, calYears, resetPanel: () => PANEL.clear() } };
   if (typeof module !== 'undefined') module.exports = root.FFStudio;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

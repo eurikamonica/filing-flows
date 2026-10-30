@@ -121,6 +121,72 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     ok(tm.hold === 0 && tm.run > 18 && S.frameIndex(V, tm, tm.intro + tm.run / 2) > L * 0.6, 'slow-motion finish runs ahead early');
     ok(Math.abs(S.frameIndex(V, S.timing(V, { dur: 20, pace: 'linear' }), 0.8 + S.timing(V, { dur: 20, pace: 'linear' }).run / 2) - L / 2) < 1e-6, 'an even pace');
   }
+  // dividends paid in dollars, whichever way they are used: each payment is the shares then held × the amount per share.
+  // A flat price with $1 a quarter on $100: reinvested, each payment buys 1% more shares, so after n payments the shares
+  // are 100 × 1.01^n and all paid is 10000 × (1.01^n − 1), worth exactly that at the flat price; as cash it is $100 each
+  {
+    const nw = 120, d0 = '2020-01-06', day = (i) => new Date(Date.UTC(2020, 0, 6) + 7 * i * 864e5).toISOString().slice(0, 10);
+    const exw = Array.from({ length: 9 }, (_, q) => 13 * q + 6);           // the weeks a dividend goes ex
+    const tr = (c, D) => { const a = [c[0]]; for (let i = 1; i < c.length; i++) a.push(a[i - 1] * (c[i] + (D[i] || 0)) / c[i - 1]); return a; };
+    const D = Array(nw).fill(0); exw.forEach((w) => { D[w] = 1; });
+    const flat = Array(nw).fill(100);
+    files['disclosures/data/etf/px/FLT.json'] = { name: 'Flat Fund', d0, t: Array.from({ length: nw }, (_, i) => 7 * i), c: flat, a: tr(flat, D), div: exw.map((w) => [day(w), 1]) };
+    const rise = Array.from({ length: nw }, (_, i) => 100 * Math.pow(1.004, i));
+    files['disclosures/data/etf/px/RSE.json'] = { name: 'Rising Fund', d0, t: Array.from({ length: nw }, (_, i) => 7 * i), c: rise, a: tr(rise, D), div: exw.map((w) => [day(w), 1]) };
+    const base = { k: 'growth', t: 'FLT,RSE', from: '2020-01-10', to: day(nw - 1), amt: '10000' };
+    const V = await S.build(Object.assign(S.parseState(''), base, { div: 'tr' }));
+    const L = V.grid.length - 1, f = V.series.find((x) => x.key === 'FLT'), r = V.series.find((x) => x.key === 'RSE');
+    const paidN = exw.filter((w) => w > 0 && w <= L).length;
+    ok(Math.abs(f.inc.total - 10000 * (Math.pow(1.01, paidN) - 1)) < 1e-6 && Math.abs(f.inc.shares - 100 * Math.pow(1.01, paidN)) < 1e-9, `reinvested on a flat price: ${f.inc.total} after ${paidN} payments`);
+    ok(Math.abs(f.inc.worth - f.inc.total) < 1e-6 && Math.abs(f.v[L] - 10000 - f.inc.total) < 1e-6, 'on a flat price the reinvested dividends are worth what was paid');
+    // a rising price: the same as buying the shares by hand with each payment at that week's close
+    let sh = 10000 / rise[0], paid = 0;
+    for (let i = 1; i <= L; i++) if (D[i]) { paid += sh * D[i]; sh += sh * D[i] / rise[i]; }
+    ok(Math.abs(r.inc.total - paid) < 1e-6 && Math.abs(r.inc.shares - sh) < 1e-9, `reinvested on a rising price: ${r.inc.total} vs ${paid} by hand`);
+    const last4 = exw.filter((w) => w > 0 && w <= L && w > L - 52).length;
+    ok(last4 === 4 && r.inc.last12 > 0 && Math.abs(r.inc.last12 - (r.dist[L] - r.dist[L - 52])) < 1e-9, 'the last 52 weeks of payments');
+    ok(r.dist.every((x, i) => i === 0 || x == null || r.dist[i - 1] == null || x >= r.dist[i - 1]), 'all paid only grows');
+    const Sp = await S.build(Object.assign(S.parseState(''), base, { div: 'split' })), Pr = await S.build(Object.assign(S.parseState(''), base, { div: 'price' }));
+    const fs2 = Sp.series.find((x) => x.key === 'FLT'), fp = Pr.series.find((x) => x.key === 'FLT');
+    ok(Math.abs(fs2.inc.total - 100 * paidN) < 1e-9 && Math.abs(fs2.cash[L] - fs2.inc.total) < 1e-9 && Math.abs(fp.inc.total - 100 * paidN) < 1e-9 && Math.abs(fp.v[L] - 10000) < 1e-9, 'as cash and left out: $100 a payment on the 100 shares bought');
+    // the end card and the caption carry them; the report has the columns, its text and the weekly CSV
+    V.endCard = true; V.style = 'line'; S.finish(V, V);
+    ok(V.final.every((x) => /^Paid \$[\d,]+ in dividends, reinvested/.test(x.sub) && x.subTr) && /dividends reinvested\)/.test(V.caption), 'end card rows and caption: ' + V.final[0].sub + ' | ' + V.caption);
+    const R = S.report(V), keys = R.cols.map((c) => c[0]);
+    ok(['put', 'end', 'gain', 'yr', 'div', 'l12', 'dd'].every((k) => keys.includes(k)) && R.cols.find((c) => c[0] === 'div')[1] === 'Dividends paid, reinvested', 'report columns: ' + keys);
+    const rf = R.rows.find((x) => x.label === 'FLT');
+    ok(rf.cells.div[0] === S.money(f.inc.total, 0) && /^worth \$[\d,]+ now$/.test(rf.cells.div[1]) && rf.cells.put[2] === 10000 && /% on cost$/.test(rf.cells.l12[1]), 'report cells: ' + JSON.stringify(rf.cells.div));
+    const txt = S.reportText(R, 'https://example/#studio');
+    ok(txt.startsWith(V.title) && txt.includes('\tPut in\tEnd value') && txt.includes(V.caption) && txt.trim().endsWith('https://example/#studio'), 'report text');
+    const csv = S.csvOf(V, R).trim().split('\n');
+    ok(csv.length === V.grid.length + 1 && csv[0] === 'date,put in,FLT value,FLT dividends paid (cumulative),RSE value,RSE dividends paid (cumulative)' && +csv[csv.length - 1].split(',')[3] === +f.inc.total.toFixed(6), 'weekly CSV: ' + csv[0]);
+    ok(S.report(Pr).cols.find((c) => c[0] === 'div')[1] === 'Dividends left out' && S.report(Sp).cols.find((c) => c[0] === 'div')[1] === 'Dividends paid, as cash', 'the column names the use');
+    S.finish(Pr, Pr); ok(Pr.final.every((x) => !x.sub) && !/dividends/.test(Pr.caption), 'price only: no dividends on the video');
+    // the worst drop and the calendar years
+    const G = Array.from({ length: 160 }, (_, i) => Date.UTC(2020, 0, 3) + 7 * i * 864e5), a = G.map((_, i) => (i < 40 ? 100 + i : i < 60 ? 139 - 2 * (i - 39) : 99 + (i - 59)));
+    const dd = S.worstDrop(a, G);
+    ok(Math.abs(dd.v - (99 / 139 - 1)) < 1e-12 && dd.from === G[39] && dd.at === G[59], 'worst drop: ' + dd.v);
+    const cy = S.calYears(a, G);
+    ok(cy.map((x) => x[0]).join() === '2021,2022' && Math.abs(cy[0][1] - (a[104] / a[51] - 1)) < 1e-12 && Math.abs(cy[1][1] - (a[156] / a[104] - 1)) < 1e-12, 'full calendar years only: ' + cy.map((x) => x[0]));
+    // every style draws them: on the labels, on their own panel, or not at all
+    for (const dinc of ['label', 'panel', 'off']) for (const style of ['line', 'bars', 'area', 'tiles']) for (const ar of [[1920, 1080], [1080, 1920], [1080, 1080]]) {
+      V.style = style; V.dinc = dinc; for (const t of [0, 4, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: 'bull', dur: 12 }, t);
+      n++;
+    }
+    // a ticker without distributions on file shows none, and the report says nothing about them
+    const W2 = await S.build(Object.assign(S.parseState(''), { k: 'growth', t: 'AAA', from: start, div: 'tr' }));
+    W2.series[0].inc = null; W2.series[0].dist = null; S.finish(W2, W2);
+    ok(!S.report(W2).cols.some((c) => c[0] === 'div') && !W2.final[0].sub, 'no distributions: no column');
+  }
+  // the report of the other kinds: their end figures, empty columns left out
+  {
+    const V = await S.build(Object.assign(S.parseState('k=drawdown'), { t: 'AAA,BBB', from: start }));
+    S.finish(V, V);
+    const R = S.report(V);
+    ok(R.rows.length === 2 && R.cols.map((c) => c[0]).join() === 'value,change' && R.title === V.endTitle, 'drawdown report');
+    const csv = S.csvOf(V, R).trim().split('\n');
+    ok(csv[0] === 'date,AAA,BBB' && csv.length === V.grid.length + 1, 'drawdown CSV');
+  }
   // a stock's dividends from its weekly history: the price as traded rebuilt from the adjusted closes
   {
     const th = { start: '2024-01-05', c: [9.5, 9.6, 10, 10.2], d: [[2, 0.5]] };
