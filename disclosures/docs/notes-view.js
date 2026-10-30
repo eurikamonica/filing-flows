@@ -344,7 +344,7 @@ ${list.slice(0, 400).map((c) => checkHTML(c, noteLabel)).join('') || '<p class="
   /* ---------------- the input-output account (io_table.py) ---------------- */
   const IO_COL = { out: 'var(--mk-rev,#7a7974)', goods: 'var(--mk-cost,#ea6a52)', resale: 'var(--mk-cost,#ea6a52)', services: '#f0a28f', other: '#f0a28f', all: 'var(--mk-cost,#ea6a52)',
     fin: '#c98b6b', comp: 'var(--slate,#5b7fa6)', taxp: 'var(--warn-ink,#8a4b00)', da: 'var(--mk-noncash,#5b7fa6)', interest: '#9a8fb8', inctax: '#c9a227',
-    ni: 'var(--mk-profit,#17734a)', dinv: '#8fc7a9', gos_rest: 'var(--line,#ccc)', gains: '#8fc7a9' };
+    ni: 'var(--mk-profit,#17734a)', impair: '#b9b4cf', dinv: '#8fc7a9', gos_rest: 'var(--line,#ccc)', gains: '#8fc7a9' };
   function sankey3(left, mid, right) {
     const SW = 860, LAB = 15, H = Math.max(300, (LAB + 4) * Math.max(left.length, right.length) + 60), T = 22, B = 12, gap = 4;
     const tot = Math.max(left.reduce((a, n) => a + n.v, 0), right.reduce((a, n) => a + n.v, 0)) || 1;
@@ -384,8 +384,10 @@ ${list.slice(0, 400).map((c) => checkHTML(c, noteLabel)).join('') || '<p class="
     if (rest < 0) left.push({ label: 'Non-operating gains', v: -rest, col: IO_COL.gains });
     const right = [];
     (io.inputs && io.inputs.length ? io.inputs : [{ k: 'all', name: 'Purchased goods and services', v: v('inter') }]).forEach((gp) => { if (gp.v > 0) right.push({ label: gp.name, v: gp.v, col: IO_COL[gp.k] || IO_COL.all }); });
-    [['finc', io.fin_label || 'Financial inputs'], ['comp', 'Employees (pay)'], ['taxp', 'Taxes on production'], ['da', 'Depreciation & amortization'], ['interest', 'Interest to lenders'], ['inctax', 'Income tax'], ['ni', 'Net income'], ['dinv_kept', 'Kept as inventory'], ['gos_rest', 'Other non-operating costs']]
+    [['finc', io.fin_label || 'Financial inputs'], ['comp', 'Employees (pay)'], ['taxp', 'Taxes on production'], ['da', 'Depreciation & amortization'], ['impair', 'Write-downs'], ['interest', 'Interest to lenders'], ['inctax', 'Income tax'], ['ni', 'Net income'], ['dinv_kept', 'Kept as inventory'], ['gos_rest', 'Other non-operating costs']]
       .forEach(([k, l]) => { const x = Lk[k]; if (x && x.v > 0) right.push({ label: l, v: x.v, col: IO_COL[k.replace('_kept', '')] || IO_COL.gos_rest }); });
+    const gapLR = right.reduce((a, n) => a + n.v, 0) - left.reduce((a, n) => a + n.v, 0);
+    if (gapLR > 0.005 * out) left.push({ label: 'Loss: spent beyond output', v: gapLR, col: 'var(--neg,#b4432f)' });
     h += `<div class="nv-card"><h3>From output to the factors</h3>${sankey3(left, 'Gross output', right)}<p class="muted" style="font-size:.78rem">Left: revenue by ${sp.segment ? 'segment' : sp.product ? 'product or service' : sp.region ? 'region' : 'its total'} (the revenue note)${rest < 0 ? ', and non-operating gains that added to net income' : ''}. Right: purchases, then value added — employees, taxes on production, and the operating surplus to capital (depreciation), lenders, the state and owners.</p></div>`;
     // the account
     const chip = (l) => (l.notes || []).map((n) => `<button class="nv-chip nv-n" style="white-space:nowrap" data-nv-note="${n}">${esc(noteLabel(n))}</button>`).join(' ');

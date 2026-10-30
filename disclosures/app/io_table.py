@@ -50,6 +50,7 @@ SBC = ['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense']
 TAXPROD = ['TaxesExcludingIncomeAndExciseTaxes', 'ExciseAndSalesTaxes', 'OtherTaxExpenseBenefit', 'TaxesOther']
 INTEREST = ['InterestExpense', 'InterestExpenseNonoperating', 'InterestExpenseDebt', 'InterestAndDebtExpense', 'InterestExpenseOperating', 'FinanceCosts']
 PROV = ['ProvisionForLoanLeaseAndOtherLosses', 'ProvisionForCreditLossesNet', 'ProvisionForLoanAndLeaseLosses', 'CreditLossExpenseReversal',
+        'FinancingReceivableCreditLossExpenseReversal', 'ProvisionForLoanLossesExpensed', 'ProvisionForCreditLossesExcludingAdditionalAccruedInterest',
         'PolicyholderBenefitsAndClaimsIncurredNet', 'BenefitsLossesAndExpenses', 'PolicyholderBenefitsAndClaimsIncurredGross']
 INCTAX = ['IncomeTaxExpenseBenefit', 'IncomeTaxExpenseContinuingOperations']
 NI = ['NetIncomeLoss', 'ProfitLoss', 'NetIncomeLossAvailableToCommonStockholdersBasic']
@@ -69,6 +70,11 @@ PURCH = ['UnrecordedUnconditionalPurchaseObligationBalanceSheetAmount', 'Purchas
          'ContractualObligation']
 INTANG = ['IntangibleAssetsNetExcludingGoodwill', 'FiniteLivedIntangibleAssetsNet']
 GW = ['Goodwill']
+IMPAIR = ['GoodwillAndIntangibleAssetImpairment', 'GoodwillImpairmentLoss', 'AssetImpairmentCharges', 'ImpairmentOfIntangibleAssetsExcludingGoodwill',
+          'ImpairmentOfIntangibleAssetsIndefinitelivedExcludingGoodwill', 'ImpairmentOfLongLivedAssetsHeldForUse', 'OtherAssetImpairmentCharges',
+          'ImpairmentOfIntangibleAssetsFinitelived', 'ImpairmentOfRealEstate']
+BANK_REV = ['Revenues', 'RevenuesNetOfInterestExpense']
+NII = ['InterestIncomeExpenseNet', 'InterestIncomeExpenseOperatingNet', 'NetInterestIncome']
 TAX_CAP = 0.04                                   # taxes on production (property, payroll) per dollar of spending, at most
 GOODS = ('11', '21', '31', '32', '33', '42')      # BEA industries whose output is goods (and the wholesale margin on them)
 OTHER_NAMES = {'_OTHER': 'Other commodities (scrap, used goods)', 'S00101': 'Federal government enterprises', 'S00102': 'Federal electric utilities',
@@ -228,13 +234,17 @@ def account(FL, g, p, i_end, i_open, sic, fin_co, employees, mix, io, pay):
         if r:
             a[key], src[key] = r[1], r[0]
         return r
-    rev = take('revenue', REV)
-    if not rev and fin_co:
+    bank = fin_co and sic[:2] in ('60', '61', '62')
+    rev = take('revenue', BANK_REV if bank else REV)
+    if not rev and bank:                               # banks: net interest income + noninterest income (net revenue), else gross
+        nii, nonint = g(NII, p), g(['NoninterestIncome'], p)
         ii = g(['InterestAndDividendIncomeOperating', 'InterestIncomeOperating'], p)
-        ni_ = g(['NoninterestIncome'], p)
-        if ii:
-            a['revenue'] = ii[1] + (ni_[1] if ni_ else 0)
-            src['revenue'] = ii[0]
+        if nii:
+            a['revenue'], src['revenue'] = nii[1] + (nonint[1] if nonint else 0), nii[0]
+        elif ii:
+            a['revenue'], src['revenue'] = ii[1] + (nonint[1] if nonint else 0), ii[0]
+    if not a.get('revenue') and fin_co:
+        rev = take('revenue', REV)
     if not a.get('revenue') or a['revenue'] <= 0:
         return None
     for k, names in (('cogs', COGS), ('rnd', RND), ('sga', SGA), ('oi', OI), ('ebt', EBT), ('sbc', SBC), ('pay', PAY), ('taxprod', TAXPROD),
@@ -245,6 +255,11 @@ def account(FL, g, p, i_end, i_open, sic, fin_co, employees, mix, io, pay):
         if d1 or d2:
             a['da'] = (_v(d1) or 0) + (_v(d2) or 0)
             src['da'] = (d1 or d2)[0]
+    imp = [g([nm], p) for nm in IMPAIR]
+    imp = [x for x in imp if x and x[1]]
+    if imp:                                            # write-downs: capital lost, not spending on production
+        best = max(imp, key=lambda x: abs(x[1]))
+        a['impair'], src['impair'] = abs(best[1]), best[0]
     for k in ('interest', 'capex', 'da', 'sbc', 'lease', 'adv', 'prov'):
         if k in a:
             a[k] = abs(a[k])
@@ -269,7 +284,7 @@ def account(FL, g, p, i_end, i_open, sic, fin_co, employees, mix, io, pay):
         if 'ebt' not in a:
             return None
         costs = R - a['ebt']
-        gross_interest = src.get('revenue', '').split(':')[-1].startswith('Interest')   # revenue read as interest income + other
+        gross_interest = src.get('revenue', '').split(':')[-1] in ('InterestAndDividendIncomeOperating', 'InterestIncomeOperating')  # gross interest income + other
         finc = a.get('prov', 0.0) + (a.get('interest', 0.0) if gross_interest else 0.0)    # banks' net revenue is after interest
         a['gross_interest'] = gross_interest
     else:
@@ -283,7 +298,9 @@ def account(FL, g, p, i_end, i_open, sic, fin_co, employees, mix, io, pay):
     da = a.get('da', 0.0)
     if 'da' not in a:
         notes.append('No depreciation and amortization tagged: capital consumption is left at zero.')
-    spend = max(0.0, costs - finc - da)
+    wd = a.get('impair', 0.0) if a.get('impair', 0.0) < 0.9 * max(costs - finc - da, 0) else 0.0
+    a['impair'] = wd or None
+    spend = max(0.0, costs - finc - da - wd)
     # the industry's shares (BEA Use table): pay, purchases and taxes on production per dollar of operating spending
     I = (io or {}).get('industries', {})
     w = {b: x for b, x in mix.items() if b in I}
@@ -327,9 +344,9 @@ def account(FL, g, p, i_end, i_open, sic, fin_co, employees, mix, io, pay):
     a['va'], a['gos'] = va, gos
     # the surplus: who received it
     if fin_co:
-        rest = gos - da - a.get('inctax', 0.0) - a.get('ni', 0.0) - (dinv or 0.0)
+        rest = gos - da - wd - a.get('inctax', 0.0) - a.get('ni', 0.0) - (dinv or 0.0)
     else:
-        rest = gos - da - a.get('interest', 0.0) - a.get('inctax', 0.0) - a.get('ni', 0.0) - (dinv or 0.0)
+        rest = gos - da - wd - a.get('interest', 0.0) - a.get('inctax', 0.0) - a.get('ni', 0.0) - (dinv or 0.0)
     a['gos_rest'] = rest
     a['notes'] = notes
     a['src'] = src
@@ -441,7 +458,7 @@ def build_io(FL, meta, concept_notes, sic=None, employees=None):
         B['inter'] = max(0.0, B['spend'] - B['comp'] - B['taxp'])
         B['va'] = B['output'] - B['inter'] - B['finc']
         B['gos'] = B['va'] - B['comp'] - B['taxp']
-        B['gos_rest'] = B['gos'] - B.get('da', 0) - (0 if fin_co else B.get('interest', 0)) - B.get('inctax', 0) - B.get('ni', 0)
+        B['gos_rest'] = B['gos'] - B.get('da', 0) - (B.get('impair') or 0) - (0 if fin_co else B.get('interest', 0)) - B.get('inctax', 0) - B.get('ni', 0) - (B.get('dinv') or 0)
 
     def ln(group, key, label, src=None, how=None, note=None, of=None):
         v = A.get(key)
@@ -474,6 +491,7 @@ def build_io(FL, meta, concept_notes, sic=None, employees=None):
             note=None if A['taxp_how'] == 'disclosed' else f"{A['shares']['tax'] * 100:.1f}% of operating spending (BEA Use table)"),
          ln('va', 'gos', 'Gross operating surplus (to capital, lenders, the state and owners)', how='derived'),
          ln('gos', 'da', 'Capital consumption: depreciation and amortization'),
+         ln('gos', 'impair', 'Write-downs (impairments): capital lost') if A.get('impair') else None,
          ln('gos', 'interest', 'Interest to lenders') if not fin_co else None,
          ln('gos', 'inctax', 'Income tax'),
          ln('gos', 'ni', 'Net income to owners'),

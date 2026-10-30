@@ -1406,7 +1406,7 @@ def _too_long(*_):
     raise TimeoutError(f'over {PER_COMPANY_SECONDS} s')
 
 
-VERSION = 3                                            # raise when the checks change: every company is read again, after new ones
+VERSION = 4                                            # raise when the checks change: every company is read again, after new ones
 INDEX_FIELDS = ['ticker', 'name', 'cik', 'form', 'fy', 'fy_end', 'filed', 'notes', 'tables', 'checks', 'tie', 'round', 'info', 'gap', 'revenue',
                 'va_share', 'labor_share', 'inter_share']
 

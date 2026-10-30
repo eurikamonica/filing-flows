@@ -113,6 +113,18 @@ class Account(unittest.TestCase):
         out, inter, finc, va = (line(io, k)['v'] for k in ('output', 'inter', 'finc', 'va'))
         self.assertAlmostEqual(out, inter + finc + va, delta=2)
 
+    def test_writedowns_are_not_purchases(self):
+        base = IO.build_io(filing(), {}, {}, sic='2000')
+        hit = IO.build_io(filing(extra={'GoodwillImpairmentLoss': 100e6, 'OperatingIncomeLoss': 0}), {}, {}, sic='2000')
+        self.assertEqual(line(hit, 'impair')['v'], 100e6)
+        # the impairment lowered operating income by 100 (200 → 100 after the duplicate fact is ignored, or 0): purchases do
+        # not grow by it — it sits in the surplus as capital lost
+        self.assertLessEqual(line(hit, 'inter')['v'], line(base, 'inter')['v'] + 1)
+
+    def test_bank_revenue_is_not_fee_income(self):
+        io = IO.build_io(filing(bank=True, extra={'RevenueFromContractWithCustomerExcludingAssessedTax': 50e6}), {}, {}, sic='6021')
+        self.assertEqual(line(io, 'revenue')['v'], 1000e6)                 # Revenues, not the fee income of ASC 606
+
     def test_mix(self):
         io = IO._json(IO.BEA_IO)
         self.assertEqual(IO.bea_mix(io, '3674'), {'334413': 1.0})
