@@ -39,3 +39,21 @@ const mem = d.notes.flatMap((x) => x.tables).flatMap((t) => t.charts).find((c) =
 ok(mem && /Segment A/.test(V._chart(mem)), 'a split by segment names its members');
 ok(V._money(1.234e9, 'USD') === '$1.2B' || /1\.2/.test(V._money(1.234e9, 'USD')), 'money in billions');
 console.log(`notes-view: ${n} checks passed`);
+
+// the input-output pane (io_table.py) from the synthetic filing of tests/test_io_table.py
+{
+  const o = spawnSync(py, ['-c', `import sys, json; sys.path[:0] = ['app', 'tests']; import io_table as IO, test_io_table as T
+print(json.dumps(IO.build_io(T.filing(), {}, {'us-gaap:Revenues': {'n1'}}, sic='3674', employees={'employees': 1000})))`],
+  { cwd: path.join(__dirname, '..'), encoding: 'utf8', maxBuffer: 1 << 26 });
+  assert.equal(o.status, 0, o.stderr);
+  const io = JSON.parse(o.stdout);
+  const h = V._io(io, (id) => 'Note ' + id.slice(1));
+  ok(/From output to the factors/.test(h) && /<svg/.test(h), 'the input-output flow is drawn');
+  ok(/The account/.test(h) && /data-nv-note="n1"/.test(h), 'the account links its lines to their notes');
+  ok(/Inputs by supplying industry/.test(h) && /Imports/.test(h), 'purchases by supplying industry, with imports');
+  ok(/Alpha/.test(h) && /Customer A/.test(h), 'output by segment and the named customer');
+  ok(/1,000 employees/.test(h), 'the headcount');
+  ok(!/NaN|undefined/.test(h), 'no NaN or undefined in the pane');
+  ok(/No input-output account/.test(V._io(null, (x) => x)), 'a filing without one says so');
+  console.log(`notes-view io: ${n} checks passed`);
+}

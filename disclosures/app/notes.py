@@ -48,6 +48,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import xbrl_filing as X
+import io_table
 
 DAY = dt.timedelta(days=1)
 STATEMENT_KINDS = [('oci', r'comprehensive (income|loss)'), ('cf', r'cash flow'), ('eq', r"(stockholders|shareholders|owners)['’]? (equity|deficit)|changes in equity|statements? of equity"),
@@ -1162,7 +1163,7 @@ def ratios(FL):
 
 
 # ------------------------------------------------------------------ build
-def build(FL, meta):
+def build(FL, meta, extra=None):
     statements, notes = classify_reports(FL)
     report_of_role = {r['role']: r['r'] for r in FL.reports}
     rep_by_r = {r['r']: r for r in FL.reports}
@@ -1273,7 +1274,12 @@ def build(FL, meta):
             ln['checks'] = [i for i in ln['checks'] if i in keep_ids]
     for n_ in note_out:
         n_['checks'] = [i for i in n_['checks'] if i in keep_ids]
-    doc = {**meta, 'fy': FL.fy_label(0), 'fy_end': FL.fy[1] if FL.fy else None, 'periods': {'cur': FL.dur(0), 'prev': FL.dur(1), 'end': FL.inst(0), 'end_prev': FL.inst(1)},
+    extra = extra or {}
+    try:                                           # the input-output account (io_table.py)
+        io = io_table.build_io(FL, meta, concept_notes, extra.get('sic'), extra.get('employees'))
+    except Exception as exc:                       # never stops the notes
+        io = {'error': f'{type(exc).__name__}: {str(exc)[:160]}'}
+    doc = {**meta, 'fy': FL.fy_label(0), 'fy_end': FL.fy[1] if FL.fy else None, 'io': io, 'periods': {'cur': FL.dur(0), 'prev': FL.dur(1), 'end': FL.inst(0), 'end_prev': FL.inst(1)},
            'statements': st_out, 'notes': note_out, 'checks': [slim_check(ch, FL) for ch in K.items if ch['id'] in keep_ids], 'summary': summary, 'read': read,
            'built_at': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')}
     return doc
@@ -1372,7 +1378,7 @@ def crdr_of(meta_links_path, xsd_path=None):
     return out
 
 
-def run_one(cik, folder, ua, ticker=None, sleep=0.12, info=None):
+def run_one(cik, folder, ua, ticker=None, sleep=0.12, info=None, extra=None):
     info = info or latest_10k(cik, ua)
     if not info:
         return None
@@ -1390,7 +1396,7 @@ def run_one(cik, folder, ua, ticker=None, sleep=0.12, info=None):
     meta = {'ticker': ticker or (info['tickers'][0] if info['tickers'] else None), 'cik': int(cik), 'name': info['name'], 'form': info['form'],
             'accession': info['accession'], 'filed': info['filed'], 'period': info['period'],
             'url': f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{info['accession'].replace('-', '')}/{info['doc']}"}
-    return build(FL, meta)
+    return build(FL, meta, extra)
 
 
 PER_COMPANY_SECONDS = 240                              # a filing that takes longer is left for a later run (and retried)
@@ -1400,11 +1406,25 @@ def _too_long(*_):
     raise TimeoutError(f'over {PER_COMPANY_SECONDS} s')
 
 
-VERSION = 2                                            # raise when the checks change: every company is read again, after new ones
-INDEX_FIELDS = ['ticker', 'name', 'cik', 'form', 'fy', 'fy_end', 'filed', 'notes', 'tables', 'checks', 'tie', 'round', 'info', 'gap', 'revenue']
+VERSION = 3                                            # raise when the checks change: every company is read again, after new ones
+INDEX_FIELDS = ['ticker', 'name', 'cik', 'form', 'fy', 'fy_end', 'filed', 'notes', 'tables', 'checks', 'tie', 'round', 'info', 'gap', 'revenue',
+                'va_share', 'labor_share', 'inter_share']
 
 
-def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tickers=None):
+def employee_counts(path):
+    """{cik: {'employees', 'as_of'}} from the Workforce index (app/employees.py's public/index.json)."""
+    try:
+        d = json.loads(Path(path).read_text())
+    except (OSError, ValueError, TypeError):
+        return {}
+    F = d.get('fields') or []
+    if 'cik' not in F or 'employees' not in F:
+        return {}
+    ic, ie, ia = F.index('cik'), F.index('employees'), F.index('as_of') if 'as_of' in F else None
+    return {int(r[ic]): {'employees': r[ie], 'as_of': r[ia] if ia is not None else None} for r in d.get('rows') or [] if r[ic] and fin(r[ie]) and r[ie] > 0}
+
+
+def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tickers=None, employees=None):
     """The site's companies, largest first: a company is (re)built when never built, when the site shows a 10-K filed after
     the one on file, or when it was last checked a week ago and has a newer annual report. public/c/<T>.json per company;
     public/index.json the list; state.json what was read when. Raw XBRL files are deleted once read."""
@@ -1418,6 +1438,7 @@ def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tick
     cos = json.loads(Path(site_index).read_text()).get('companies') or []
     cos = [c for c in cos if c.get('ticker') and c.get('cik')]
     cos.sort(key=lambda c: -(c.get('revenue') or 0))
+    emp = employee_counts(employees) if employees else {}
     if tickers:
         want = [t.strip().upper() for t in tickers.split(',') if t.strip()]
         cos = [c for c in cos if c['ticker'].upper() in want] + [c for c in cos if c['ticker'].upper() not in want]
@@ -1460,7 +1481,7 @@ def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tick
             if hasattr(signal, 'SIGALRM'):
                 signal.alarm(PER_COMPANY_SECONDS)
             try:
-                doc = run_one(c['cik'], cache, ua, t, info=info)
+                doc = run_one(c['cik'], cache, ua, t, info=info, extra={'sic': c.get('sic'), 'employees': emp.get(int(c['cik']))})
             finally:
                 if hasattr(signal, 'SIGALRM'):
                     signal.alarm(0)
@@ -1474,7 +1495,7 @@ def collect(root, site_index, ua, minutes=40.0, recheck_days=7, limit=None, tick
             s_.update(cik=int(c['cik']), accession=doc['accession'], filed=doc['filed'], checked=now.isoformat(timespec='seconds'), v=VERSION,
                       row=[t, doc.get('name'), int(c['cik']), doc.get('form'), doc.get('fy'), doc.get('fy_end'), doc.get('filed'), len(doc['notes']),
                            sum(len(n['tables']) for n in doc['notes']), sm.get('all', len(doc['checks'])), sm.get('tie', 0), sm.get('round', 0), sm.get('info', 0), sm.get('gap', 0),
-                           c.get('revenue')])
+                           c.get('revenue')] + [((doc.get('io') or {}).get('ratios') or {}).get(k) for k in ('va_share', 'labor_share', 'inter_share')])
             done += 1
             print(f"{t}: {len(doc['notes'])} notes, {sm.get('all', 0)} checks, {sm.get('gap', 0)} do not tie ({time.time() - t1:.0f} s)", flush=True)
         except Exception as exc:                          # one company never stops the batch
@@ -1513,12 +1534,15 @@ def main():
     o.add_argument('--ticker')
     o.add_argument('--out', required=True)
     o.add_argument('--cache', default=None)
+    o.add_argument('--sic', default=None)
+    o.add_argument('--employees', type=float, default=None)
     c = sub.add_parser('collect')
     c.add_argument('--root', required=True)
     c.add_argument('--site-index', required=True)
     c.add_argument('--minutes', type=float, default=40)
     c.add_argument('--limit', type=int, default=None)
     c.add_argument('--tickers', default='')
+    c.add_argument('--employees', default=None, help="Workforce's index.json (each company's 10-K headcount)")
     i = sub.add_parser('index')
     i.add_argument('--root', required=True)
     a = ap.parse_args()
@@ -1529,10 +1553,11 @@ def main():
     if a.cmd == 'collect':
         if hasattr(signal, 'SIGALRM'):
             signal.signal(signal.SIGALRM, _too_long)
-        print(json.dumps(collect(a.root, a.site_index, ua, a.minutes, limit=a.limit, tickers=a.tickers)))
+        print(json.dumps(collect(a.root, a.site_index, ua, a.minutes, limit=a.limit, tickers=a.tickers, employees=a.employees)))
         return
     if a.cmd == 'one':
-        doc = run_one(a.cik, a.cache or Path(a.out) / '_cache', ua, a.ticker)
+        doc = run_one(a.cik, a.cache or Path(a.out) / '_cache', ua, a.ticker,
+                      extra={'sic': a.sic, 'employees': {'employees': a.employees} if a.employees else None})
         out = Path(a.out) / 'c'
         out.mkdir(parents=True, exist_ok=True)
         (out / f"{doc['ticker']}.json").write_text(json.dumps(doc, separators=(',', ':')), encoding='utf-8')

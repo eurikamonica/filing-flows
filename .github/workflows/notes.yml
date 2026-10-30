@@ -34,6 +34,7 @@ jobs:
         with:
           sparse-checkout: |
             disclosures/app
+            pipeline/data/bea_io.json
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
         with:
@@ -54,13 +55,15 @@ jobs:
           mkdir -p site
           curl -fsSL --retry 4 --retry-delay 5 "${site%/}/data/index.json" -o site/index.json
           python -c "import json; d=json.load(open('site/index.json')); print(len(d.get('companies', [])), 'companies on the site')"
+          # each company's 10-K headcount (Workforce, app/employees.py): the input-output account's pay per employee
+          curl -fsSL --retry 3 "${site%/}/disclosures/data/research/employees/index.json" -o site/employees.json || echo "::warning::no headcounts"
       - name: Read the 10-Ks (new companies first, then newer annual reports)
         timeout-minutes: 48
         env:
           TICKERS: ${{ inputs.tickers }}
         run: |
           python disclosures/app/notes.py collect --root nh --site-index site/index.json \
-            --minutes "${{ inputs.minutes || '38' }}" --tickers "$TICKERS"
+            --minutes "${{ inputs.minutes || '38' }}" --tickers "$TICKERS" --employees site/employees.json
       - name: Save to the branch (one commit, force-pushed)
         # also after a batch stopped from outside: what it read is kept and the list rebuilt
         if: ${{ always() && steps.branch.outcome == 'success' }}

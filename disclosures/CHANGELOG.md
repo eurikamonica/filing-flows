@@ -1,5 +1,26 @@
 # Changelog
 
+## Inputs & outputs (投入产出): every company's 10-K as one producer of an input-output table
+
+`app/io_table.py`, built by notes.py with each company's notes (Notes & ties → a company → Inputs & outputs; the company
+page's Notes view too): gross output (revenue plus the year's build-up of finished goods and work in progress) by
+segment, product or region and the customers the concentration note names; purchases (operating spending less pay and
+taxes on production) — for goods producers split into materials, components and contract manufacturing (cost of
+revenue less the pay and depreciation it carries) and services, rent and energy, for retailers and wholesalers into
+merchandise for resale and the rest — each spread over the supplying industries of the company's industry in BEA's
+input-output table (pipeline/data/bea_io.json, by SIC; imports at each commodity's import share); value added = pay +
+taxes on production + operating surplus, the surplus split into depreciation, interest, income tax, net income, output
+kept as inventory and non-operating items; capital (capital spending by the industry's asset mix, property and
+equipment, leases, inventories, purchase commitments) and the factor ratios (purchases and value added per dollar of
+output, the employees' and capital's shares of value added, import content, per employee). Pay is the 10-K's where
+tagged; else the 10-K headcount (Workforce) × the industry's compensation per employee — `app/data/bea_pay.json`, BEA
+NIPA tables 6.2D, 6.4D, 6.5D and 6.6D for 2025 — plus stock-based pay; else the industry's share of spending.
+Estimated taxes on production are capped at 4% of spending (BEA's include sales taxes, which revenue leaves out). For
+banks and insurers credit losses and claims are financial inputs (and interest paid when revenue is gross). Every line
+says whether it is the 10-K's (with its note), derived or estimated, with the year before. The notes are rebuilt for
+every company (VERSION 3); the hub list gains value added ÷ output and the employees' share. Tests:
+`tests/test_io_table.py`, `tests/test_notes_view.cjs`.
+
 ## Market value before XBRL: share counts from the cover pages of the 1990s and 2000s
 
 `app/cover_shares.py` (run by cover.yml every four hours, a batch of companies, largest first) reads the shares

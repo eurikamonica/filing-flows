@@ -243,7 +243,7 @@ ${c.explain ? `<p class="muted" style="margin:4px 0 0 26px;font-size:.8rem">${es
 <p class="muted">${esc(d.form || '10-K')} for ${esc(d.fy || '')} (year ended ${esc(d.fy_end || '')}), filed ${esc(d.filed || '')} · <a href="${esc(d.url || '#')}" target="_blank" rel="noopener">the filing on EDGAR ↗</a></p>
 <div class="nv-pills"><span class="nv-pill">${d.notes.length} notes</span><span class="nv-pill">${d.notes.reduce((a, n) => a + n.tables.length, 0)} detail tables</span><span class="nv-pill">${S.all || d.checks.length} checks</span><span class="nv-pill nv-ok">✓ ${S.tie || 0} tie</span>${S.round ? `<span class="nv-pill nv-round">≈ ${S.round} within rounding</span>` : ''}${S.info ? `<span class="nv-pill nv-info">Δ ${S.info} explained</span>` : ''}${S.gap ? `<span class="nv-pill nv-bad">✗ ${S.gap} do not tie</span>` : ''}</div>
 <p class="muted" style="font-size:.8rem">Every number is the company's own XBRL. Each check recomputes a total, a roll-forward or a tie across statements and notes from those facts; ✓ means it agrees to the rounding the filing uses.</p></div>`;
-    const seg = `<div class="nv-seg">${[['read', 'Read & map'], ['statements', 'Statements'], ['notes', 'Notes'], ['checks', 'Checks (勾稽)']].map(([k, l]) => `<button data-nv-tab="${k}" aria-pressed="${st.tab === k}">${l}</button>`).join('')}</div>`;
+    const seg = `<div class="nv-seg">${[['read', 'Read & map'], ['statements', 'Statements'], ['notes', 'Notes'], ['checks', 'Checks (勾稽)'], ['io', 'Inputs & outputs (投入产出)']].map(([k, l]) => `<button data-nv-tab="${k}" aria-pressed="${st.tab === k}">${l}</button>`).join('')}</div>`;
     el.innerHTML = `<div class="nv">${head}${seg}<div class="nv-pane"></div></div>`;
     const pane = el.querySelector('.nv-pane');
 
@@ -303,7 +303,7 @@ ${list.slice(0, 400).map((c) => checkHTML(c, noteLabel)).join('') || '<p class="
     }
     function show() {
       el.querySelectorAll('[data-nv-tab]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.nvTab === st.tab)));
-      pane.innerHTML = st.tab === 'statements' ? paneStatements() : st.tab === 'notes' ? paneNotes() : st.tab === 'checks' ? paneChecks() : paneRead();
+      pane.innerHTML = st.tab === 'statements' ? paneStatements() : st.tab === 'notes' ? paneNotes() : st.tab === 'checks' ? paneChecks() : st.tab === 'io' ? ioHTML(d.io, noteLabel) : paneRead();
       if (st.tab === 'notes') {
         pane.querySelectorAll('details.nv-note').forEach((det) => {
           const fill = () => { const b = det.querySelector('[data-nv-body]'); if (b && !b.dataset.done) { b.dataset.done = 1; b.innerHTML = noteBody(noteById[det.dataset.nvNid]); } };
@@ -340,7 +340,97 @@ ${list.slice(0, 400).map((c) => checkHTML(c, noteLabel)).join('') || '<p class="
     show();
   }
 
-  const api = { render, _draw: draw, _money: money, _chart: chartHTML };
+
+  /* ---------------- the input-output account (io_table.py) ---------------- */
+  const IO_COL = { out: 'var(--mk-rev,#7a7974)', goods: 'var(--mk-cost,#ea6a52)', resale: 'var(--mk-cost,#ea6a52)', services: '#f0a28f', other: '#f0a28f', all: 'var(--mk-cost,#ea6a52)',
+    fin: '#c98b6b', comp: 'var(--slate,#5b7fa6)', taxp: 'var(--warn-ink,#8a4b00)', da: 'var(--mk-noncash,#5b7fa6)', interest: '#9a8fb8', inctax: '#c9a227',
+    ni: 'var(--mk-profit,#17734a)', dinv: '#8fc7a9', gos_rest: 'var(--line,#ccc)', gains: '#8fc7a9' };
+  function sankey3(left, mid, right) {
+    const SW = 860, LAB = 15, H = Math.max(300, (LAB + 4) * Math.max(left.length, right.length) + 60), T = 22, B = 12, gap = 4;
+    const tot = Math.max(left.reduce((a, n) => a + n.v, 0), right.reduce((a, n) => a + n.v, 0)) || 1;
+    const avail = (n) => H - T - B - (gap + LAB) * Math.max(0, n);
+    const k = Math.max(0.1, Math.min(avail(left.length), avail(right.length))) / tot;
+    const xl = 200, xm = 400, xr = 560, bw = 12;
+    // each node at least a label's height apart, so small ones stay readable
+    const place = (nodes) => { let y = T; return nodes.map((n) => { const h = Math.max(1.5, n.v * k), o = { ...n, y, h }; y += Math.max(h, LAB) + gap; return o; }); };
+    const L = place(left), R = place(right), mh = tot * k, my = T + (H - T - B - mh) / 2;
+    const rib = (x0, y0, h0, x1, y1, col) => { const c = (x0 + x1) / 2; return `<path d="M${x0},${y0}C${c},${y0} ${c},${y1} ${x1},${y1}L${x1},${y1 + h0}C${c},${y1 + h0} ${c},${y0 + h0} ${x0},${y0 + h0}Z" fill="${col}" opacity=".32"/>`; };
+    let g = '', ym = my;
+    for (const n of L) { g += rib(xl + bw, n.y, n.h, xm, ym, n.col); ym += n.h; }
+    ym = my;
+    for (const n of R) { g += rib(xm + bw, ym, n.h, xr, n.y, n.col); ym += n.h; }
+    for (const n of L) g += `<rect x="${xl}" y="${n.y.toFixed(1)}" width="${bw}" height="${n.h.toFixed(1)}" fill="${n.col}"/><text x="${xl - 6}" y="${(n.y + Math.max(n.h, 11) / 2 + 4).toFixed(1)}" text-anchor="end" font-size="11">${esc(short(n.label, 26))} <tspan class="mut">${esc(money(n.v))}</tspan><title>${esc(n.label)}</title></text>`;
+    g += `<rect x="${xm}" y="${my.toFixed(1)}" width="${bw}" height="${mh.toFixed(1)}" fill="var(--ink,#333)"/><text x="${xm + bw / 2}" y="${(my - 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700">${esc(mid)}</text>`;
+    for (const n of R) g += `<rect x="${xr}" y="${n.y.toFixed(1)}" width="${bw}" height="${n.h.toFixed(1)}" fill="${n.col}"/><text x="${xr + bw + 6}" y="${(n.y + Math.max(n.h, 11) / 2 + 4).toFixed(1)}" font-size="11">${esc(short(n.label, 34))} <tspan class="mut">${esc(money(n.v))} · ${(n.v / tot * 100).toFixed(n.v / tot < 0.1 ? 1 : 0)}%</tspan><title>${esc(n.label)}</title></text>`;
+    const used = Math.max(my + mh, ...L.map((n) => n.y + Math.max(n.h, LAB)), ...R.map((n) => n.y + Math.max(n.h, LAB))) + B;
+    return `<div style="overflow-x:auto"><svg viewBox="0 0 ${SW} ${Math.ceil(used)}" style="min-width:640px" role="img" aria-label="Where the output came from and where it went">${g}</svg></div>`;
+  }
+  function ioHTML(io, noteLabel) {
+    if (!io) return '<div class="nv-card"><p class="muted">No input-output account for this filing (no revenue or operating income tagged).</p></div>';
+    if (io.error) return `<div class="nv-card"><p class="muted">The input-output account could not be built (${esc(io.error)}).</p></div>`;
+    const Lk = {}; io.lines.forEach((l) => { Lk[l.k + (l.g === 'gos' && l.k === 'dinv' ? '_kept' : '')] = l; });
+    const v = (k) => (Lk[k] ? Lk[k].v : 0), R = io.ratios || {}, pct = (x, d) => (fin(x) ? (x * 100).toFixed(d == null ? 0 : d) + '%' : '—');
+    const out = v('output') || v('revenue');
+    let h = `<div class="nv-card"><h3>Inputs & outputs · ${esc(io.fy)}</h3><p class="muted" style="font-size:.84rem">The company as one producer in an input-output table: what it produced and for whom, what it bought and from which industries, and how the value it added was paid to its factors — employees, capital, the state, lenders and owners. Lines from the 10-K link to their note; purchases by supplying industry are estimates from BEA's input-output table for its industry${io.industry && io.industry.length ? ' (' + io.industry.map((x) => esc(x[1])).join('; ') + ')' : ''}.</p>
+<div class="nv-pills"><span class="nv-pill">Gross output ${esc(money(out))}</span><span class="nv-pill">Value added ${esc(money(v('va')))} · ${pct(R.va_share)} of output</span><span class="nv-pill">Purchases ${pct(R.inter_share)} of output</span><span class="nv-pill">Employees' share of value added ${pct(R.labor_share)}</span><span class="nv-pill">Capital's share ${pct(R.capital_share)}</span>${io.labor ? `<span class="nv-pill">${Number(io.labor.employees).toLocaleString('en-US')} employees · ${esc(money(io.labor.va_per))} value added each</span>` : ''}</div></div>`;
+    // the flow: sources → output → uses
+    const sp = io.splits || {}, src = sp.segment || sp.product || sp.region;
+    let left = src && src.length ? src.map(([l, x]) => ({ label: l, v: x, col: IO_COL.out })) : [{ label: 'Revenue', v: v('revenue'), col: IO_COL.out }];
+    const ssum = left.reduce((a, n) => a + n.v, 0);
+    if (src && v('revenue') - ssum > 0.01 * v('revenue')) left.push({ label: 'Other / eliminations', v: v('revenue') - ssum, col: IO_COL.out });
+    if (src && ssum > v('revenue') * 1.001) { const f = v('revenue') / ssum; left = left.map((n) => ({ ...n, v: n.v * f })); }
+    if (Lk.dinv && Lk.dinv.v > 0) left.push({ label: 'Inventory build', v: Lk.dinv.v, col: IO_COL.dinv });
+    const rest = Lk.gos_rest ? Lk.gos_rest.v : 0;
+    if (rest < 0) left.push({ label: 'Non-operating gains', v: -rest, col: IO_COL.gains });
+    const right = [];
+    (io.inputs && io.inputs.length ? io.inputs : [{ k: 'all', name: 'Purchased goods and services', v: v('inter') }]).forEach((gp) => { if (gp.v > 0) right.push({ label: gp.name, v: gp.v, col: IO_COL[gp.k] || IO_COL.all }); });
+    [['finc', io.fin_label || 'Financial inputs'], ['comp', 'Employees (pay)'], ['taxp', 'Taxes on production'], ['da', 'Depreciation & amortization'], ['interest', 'Interest to lenders'], ['inctax', 'Income tax'], ['ni', 'Net income'], ['dinv_kept', 'Kept as inventory'], ['gos_rest', 'Other non-operating costs']]
+      .forEach(([k, l]) => { const x = Lk[k]; if (x && x.v > 0) right.push({ label: l, v: x.v, col: IO_COL[k.replace('_kept', '')] || IO_COL.gos_rest }); });
+    h += `<div class="nv-card"><h3>From output to the factors</h3>${sankey3(left, 'Gross output', right)}<p class="muted" style="font-size:.78rem">Left: revenue by ${sp.segment ? 'segment' : sp.product ? 'product or service' : sp.region ? 'region' : 'its total'} (the revenue note)${rest < 0 ? ', and non-operating gains that added to net income' : ''}. Right: purchases, then value added — employees, taxes on production, and the operating surplus to capital (depreciation), lenders, the state and owners.</p></div>`;
+    // the account
+    const chip = (l) => (l.notes || []).map((n) => `<button class="nv-chip nv-n" style="white-space:nowrap" data-nv-note="${n}">${esc(noteLabel(n))}</button>`).join(' ');
+    const tag = (l) => (l.src === '10-K' ? '<span class="nv-pill nv-ok" style="font-size:.72rem">10-K</span>' : l.src === 'estimate' ? '<span class="nv-pill nv-info" style="font-size:.72rem">estimate</span>' : '<span class="nv-pill" style="font-size:.72rem">derived</span>');
+    const GN = { output: 'Output', inter: 'Inputs bought', fin: 'Financial inputs', va: 'Value added (primary inputs)', gos: 'Operating surplus: who received it' };
+    let rows = '', grp = '';
+    for (const l of io.lines) {
+      if (l.g !== grp) { grp = l.g; rows += `<tr><td colspan="6" style="font-weight:700;background:var(--bg,#f6f5f1)">${esc(GN[grp] || grp)}</td></tr>`; }
+      const bold = ['output', 'va', 'gos', 'inter'].includes(l.k);
+      rows += `<tr><td style="padding-left:${bold ? 6 : 16}px;${bold ? 'font-weight:600' : ''}">${esc(l.label)}${l.note ? `<br><span class="mut" style="font-size:.76rem">${esc(l.note)}</span>` : ''}</td><td class="n">${esc(money(l.v))}</td><td class="n mut">${esc(money(l.v0))}</td><td class="n">${fin(l.pct) ? (l.pct * 100).toFixed(1) + '%' : ''}</td><td>${tag(l)}</td><td>${chip(l)}</td></tr>`;
+    }
+    h += `<div class="nv-card"><h3>The account</h3><div class="nv-wrap"><table><tr><th></th><th class="n">${esc(io.fy)}</th><th class="n">${esc(io.fy_prev || 'Year before')}</th><th class="n">% of output</th><th>From</th><th>Note</th></tr>${rows}</table></div>
+<p class="muted" style="font-size:.78rem">Purchases = operating spending (revenue less operating income and depreciation) less pay and taxes on production; value added = output less purchases${io.financial ? ' and financial inputs' : ''} = pay + taxes on production + operating surplus. ${io.comp_how === 'disclosed' ? 'Pay is as the 10-K states it.' : io.comp_how === 'headcount' ? 'Pay is estimated from the 10-K\'s headcount and its industry\'s average pay per employee (BEA), plus stock-based pay.' : 'Pay is estimated at its industry\'s share of operating spending (BEA): the 10-K gives neither pay nor a headcount the site could read.'}${(io.notes || []).length ? ' ' + io.notes.map(esc).join(' ') : ''}</p></div>`;
+    // inputs by supplying industry
+    if (io.inputs && io.inputs.length) {
+      h += `<div class="nv-card"><h3>Inputs by supplying industry <span class="muted" style="font-weight:400">· estimated</span></h3>`;
+      for (const gp of io.inputs) {
+        h += `<h4 style="margin:10px 0 2px">${esc(gp.name)} · ${esc(money(gp.v))}</h4>${gp.note ? `<p class="mut" style="font-size:.78rem;margin:0 0 4px">${esc(gp.note)}</p>` : ''}`;
+        const r = (gp.suppliers || []).map(([n, x]) => ({ label: n, vals: [x] }));
+        if (gp.imports) r.push({ label: 'Imports', vals: [gp.imports], bold: true });
+        if (r.length) h += hbars(r, 'USD');
+      }
+      h += `<p class="muted" style="font-size:.78rem">Each group spread over the industries its industry buys from in BEA's input-output table (2017 detail, the Use and Make tables; the imported share of each commodity goes to imports). The table describes US establishments of its industry: a company that has its products made abroad buys more from abroad than this shows.</p></div>`;
+    }
+    // output in detail
+    const sec = [['segment', 'By segment'], ['product', 'By product or service'], ['region', 'By region']].filter(([k]) => (sp[k] || []).length);
+    if (sec.length || (io.customers || []).length) {
+      h += `<div class="nv-card"><h3>Output: what and for whom</h3>`;
+      for (const [k, t] of sec) h += `<h4 style="margin:8px 0 2px">${t}</h4>` + hbars(sp[k].map(([l, x]) => ({ label: l, vals: [x] })), 'USD');
+      if ((io.customers || []).length) h += `<h4 style="margin:8px 0 2px">Customers named in the concentration note</h4>` + hbars(io.customers.map(([l, x]) => ({ label: l, vals: [x] })), 'pure');
+      h += '</div>';
+    }
+    // capital and labour
+    const cap = (io.capital || []).map((l) => `<tr><td>${esc(l.label)}</td><td class="n">${esc(money(l.v))}</td><td class="n mut">${esc(money(l.v0))}</td><td>${chip(l)}</td></tr>`).join('');
+    const ratio = [['Purchases ÷ output', pct(R.inter_share)], ['Value added ÷ output', pct(R.va_share)], ["Employees' share of value added", pct(R.labor_share)], ["Capital's share (operating surplus ÷ value added)", pct(R.capital_share)],
+      ['Taxes (production and income) ÷ value added', pct(R.tax_share)], ['Depreciation ÷ value added', pct(R.da_share)], ['Property, plant and equipment ÷ revenue', fin(R.capital_output) ? R.capital_output.toFixed(2) + '×' : '—'],
+      ['Capital spending ÷ depreciation', fin(R.capex_to_da) ? R.capex_to_da.toFixed(2) + '×' : '—'], ['R&D ÷ revenue', pct(R.rnd_intensity, 1)], ['Import content of purchases and investment (estimated)', pct(R.import_content)]];
+    if (io.labor) ratio.push(['Employees (the 10-K)', Number(io.labor.employees).toLocaleString('en-US')], ['Revenue per employee', money(io.labor.revenue_per)], ['Value added per employee', money(io.labor.va_per)], ['Pay per employee', money(io.labor.pay_per)], ['Property, plant and equipment per employee', money(io.labor.ppe_per)]);
+    h += `<div class="nv-grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))"><div class="nv-card"><h3>Capital</h3>${cap ? `<div class="nv-wrap"><table><tr><th></th><th class="n">${esc(io.fy)}</th><th class="n">${esc(io.fy_prev || '')}</th><th>Note</th></tr>${cap}</table></div>` : '<p class="muted">No capital figures tagged.</p>'}
+${(io.capex_suppliers || []).length ? `<h4 style="margin:10px 0 2px">Capital spending by supplying industry <span class="mut" style="font-weight:400">· estimated (BEA fixed assets)</span></h4>` + hbars([...io.capex_suppliers.map(([n, x]) => ({ label: n, vals: [x] })), ...(io.capex_imports ? [{ label: 'Imports', vals: [io.capex_imports], bold: true }] : [])], 'USD') : ''}</div>
+<div class="nv-card"><h3>Factor ratios</h3><div class="nv-wrap"><table>${ratio.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="n">${esc(b)}</td></tr>`).join('')}</table></div></div></div>`;
+    return h;
+  }
+
+  const api = { render, _draw: draw, _money: money, _chart: chartHTML, _io: ioHTML };
   if (typeof window !== 'undefined') window.NotesView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

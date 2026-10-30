@@ -10,7 +10,7 @@ function ntIndex(){
  m.loading=fetch(b+'index.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{m.data=d;render()}).catch(e=>{m.err=e.message;render()});
  return m;
 }
-const NT_SORT=[['revenue','Largest revenue first'],['gap','Most ties that do not hold'],['info','Most explained differences'],['checks','Most checks'],['filed','Latest filed']];
+const NT_SORT=[['revenue','Largest revenue first'],['va_share','Most value added per dollar of output'],['labor_share',"Largest employees' share of value added"],['inter_share','Most bought in per dollar of output'],['gap','Most ties that do not hold'],['info','Most explained differences'],['checks','Most checks'],['filed','Latest filed']];
 function notesView(){
  let out=head('Notes &amp; ties','Every note of a company\'s latest 10-K, drawn: each detail table as a chart (roll-forwards, schedules, compositions, splits by segment, market and region, the tax-rate bridge), and every tie recomputed from the company\'s own XBRL — its sums, roll-forwards, splits against totals, ties between the statements and the notes, and balance sheet changes against the cash flow statement (勾稽). Click a line to find the notes behind it.','10-K · XBRL · EVERY NOTE');
  out+=`<div class="toolbar"><div class="field wide"><label for="ntq">Company (ticker)</label><input id="ntq" value="${esc(state.ntq||'')}" placeholder="e.g. NVDA · Enter"></div>${field('nts','Sort',NT_SORT,state.nts||'revenue')}</div>`;
@@ -26,7 +26,7 @@ function notesView(){
  const tot=f=>rows.reduce((a,r)=>a+(r[f]||0),0);
  out+=`<div class="metrics">${kpi('Companies',fmt(rows.length),'latest 10-K read')}${kpi('Checks',fmt(tot('checks')),'recomputed from the facts')}${kpi('Tie',fmt(tot('tie')),'within the filing\'s rounding')}${kpi('Do not tie',fmt(tot('gap')),'worth a look')}</div>`;
  out+=`<div class="section-head"><h3>Companies on file</h3><button class="action" id="csv">Export CSV ↓</button></div>`;
- return out+table(['Company','10-K','Filed','Notes','Detail tables','Checks','Tie','Explained','Do not tie'],rows.map(r=>[`<button class="text-button" data-ntco="${esc(r.ticker)}"><b>${esc(r.ticker)}</b></button> <span class="muted">${esc(r.name||'')}</span>`,esc(r.fy||''),esc(r.filed||''),fmt(r.notes),fmt(r.tables),fmt(r.checks),fmt(r.tie),fmt(r.info),r.gap?`<span class="negative">${fmt(r.gap)}</span>`:'0']));
+ return out+table(['Company','10-K','Filed','Notes','Detail tables','Checks','Tie','Explained','Do not tie','Value added ÷ output',"Employees' share"],rows.map(r=>[`<button class="text-button" data-ntco="${esc(r.ticker)}"><b>${esc(r.ticker)}</b></button> <span class="muted">${esc(r.name||'')}</span>`,esc(r.fy||''),esc(r.filed||''),fmt(r.notes),fmt(r.tables),fmt(r.checks),fmt(r.tie),fmt(r.info),r.gap?`<span class="negative">${fmt(r.gap)}</span>`:'0',r.va_share==null?'—':fmt(r.va_share*100,0)+'%',r.labor_share==null?'—':fmt(r.labor_share*100,0)+'%']));
 }
 function bindNotes(){
  if(state.tab!=='notes')return;
