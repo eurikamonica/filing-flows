@@ -1,5 +1,27 @@
 # Changelog
 
+## Strategies: published trading rules with costs, out-of-sample splits, overfitting tests and a live ledger
+
+`app/strategies.py` (run by rotation-history.yml after Opportunity, under a minute) tests 19 rules and 3 benchmarks on
+the weekly closes since 1995: trend (Faber's 10-month average), dual momentum (Antonacci), time-series momentum across
+asset classes (Moskowitz, Ooi and Pedersen), stock momentum long-only and long-short (Jegadeesh and Titman), the 52-week
+high (George and Hwang), sector rotation (Moskowitz and Grinblatt), low volatility, earnings yield and return on equity
+from the site's SEC figures, 13F breadth from the site's 13F history (Chen, Hong and Stein), short-term reversal, a
+Bollinger dip rule, Sell in May, the January effect, volatility targeting (Moreira and Muir), risk parity, pairs trading
+by the distance method (Gatev, Goetzmann and Rouwenhorst) and an inverse-volatility ensemble of them all. The engine
+decides on a week's close and earns over the next: one-way costs by weekly dollar volume (5 to 100 bp), the Fed funds
+rate on cash, cash + 0.5% on borrowed money, a 0.5% borrow fee on shorts, weights drifting between rebalances; the stock
+universe is $5+ as traded (splits undone) and $5M+ a week. Each rule keeps its paper's settings; results are split
+before and after the paper was published (the out-of-sample test), and nearby settings are run only to measure
+overfitting: the PBO by combinatorially symmetric cross-validation (10 blocks, 252 splits) and the deflated Sharpe ratio
+over every setting tried (71). The backtest stops at the last week that nine in ten names have closed. Each closed
+week's positions are frozen in `ledger/strategies.json` on the data branch and scored on the next weeks' prices (a
+freeze made after the next week began counts from the week after). Survivorship (today's companies only) is stated and
+the equal-weighted universe of the same survivors is the stock rules' benchmark. Hub tab Strategies (`docs/strategies.js`):
+every rule, one rule (growth of $1 against SPY and the survivors, drawdown, year by year, before and after publication,
+nearby settings, holdings, live record) and the overfitting view (each rule against the luck bar). Tests:
+`tests/test_strategies.py`, `tests/test_strategies_view.cjs`.
+
 ## Notes & ties: every note of the latest 10-K drawn, every tie recomputed (勾稽), the lines linked to their notes
 
 `app/notes.py` with the XBRL reader `app/xbrl_filing.py` (run by notes.yml every four hours, a batch of companies of the

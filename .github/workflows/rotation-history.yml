@@ -51,6 +51,7 @@ jobs:
             disclosures/docs/data/market/by-ticker.json
             disclosures/docs/data/market/officials-trades.json
             disclosures/docs/data/market/options13f.json
+            disclosures/docs/data/market/by-ticker-quarters.json
             disclosures/docs/data/cache/options/history.json
           sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
@@ -123,6 +124,17 @@ jobs:
         run: |
           python -m pip install --quiet numpy
           python disclosures/app/opportunity.py --public hist/public --ledger hist/ledger/opportunity-stocks.json --sha "$GITHUB_SHA"
+      - name: Strategies (published rules with costs, overfitting tests, live ledger; public/strategies*.json, ledger/strategies.json)
+        # Trend, momentum, mean reversion, seasonality, factors from the site's SEC and 13F data, pairs, sector rotation,
+        # volatility targeting, risk parity and their ensemble, each as its paper published it, on the weekly closes since
+        # 1995 (app/strategies.py, under a minute). Each closed week's positions are frozen in hist/ledger/strategies.json
+        # and scored on the following weeks' prices (the live record).
+        timeout-minutes: 10
+        continue-on-error: true
+        run: |
+          python -m pip install --quiet numpy
+          python disclosures/app/strategies.py --public hist/public --ledger hist/ledger/strategies.json \
+            --quarters disclosures/docs/data/market/by-ticker-quarters.json --sha "$GITHUB_SHA"
       - name: Save to the branch (one commit, force-pushed)
         run: |
           cd hist
