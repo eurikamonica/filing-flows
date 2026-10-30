@@ -7,6 +7,8 @@
                      observation is placed at the day it was published (period end + a publication lag), so nothing
                      uses a figure before its release; plus derived features (13-week changes, year-on-year rates)
             monthly  month-end values on the same rule, since 1995
+            levels   month by month since 1995, by the month the figure describes (no publication lag): the CPI index and
+                     the 3-month Treasury bill's average yield — for the video studio's inflation and cash adjustments
             clock    the macro (investment) clock month by month: growth and inflation composites (z-scores of several
                      series, each standardised with data up to that month only), their 6-month momentum and the phase;
                      a walk-forward forecast of next month's point with an 80% range and the error of every past one
@@ -370,6 +372,28 @@ def _f(v):
 
 
 # ------------------------------------------------------------------ build
+def levels(raw, first=dt.date(1995, 1, 1), until=None):
+    """{'start': 'YYYY-MM', 'cpi': [CPI index of each month], 'bill3m': [the month's average 3-month bill yield, %]}:
+    by the month described, not when it was published (history read after the fact, to deflate or to earn cash)."""
+    cpi = {(d.year, d.month): v for d, v in raw.get('CPIAUCSL', [])}
+    bill = {}
+    for d, v in raw.get('DGS3MO', []):
+        bill.setdefault((d.year, d.month), []).append(v)
+    keys = sorted(set(cpi) | set(bill))
+    if not keys:
+        return None
+    last = max(keys) if until is None else min(max(keys), (until.year, until.month))
+    y, m, out = first.year, first.month, {'start': f'{first.year}-{first.month:02d}', 'cpi': [], 'bill3m': []}
+    while (y, m) <= last:
+        out['cpi'].append(round(cpi[(y, m)], 3) if (y, m) in cpi else None)
+        b = bill.get((y, m))
+        out['bill3m'].append(round(sum(b) / len(b), 3) if b else None)
+        y, m = y + (m == 12), m % 12 + 1
+    while out['cpi'] and out['cpi'][-1] is None and out['bill3m'][-1] is None:
+        out['cpi'].pop(); out['bill3m'].pop()
+    return out
+
+
 def build(root, today=None, verbose=True):
     root = Path(root); raw = load_cache(root)
     if not raw:
@@ -390,6 +414,7 @@ def build(root, today=None, verbose=True):
            'weekly': {'start': str(weeks[w0]), 'grid_index0': w0, 'data': {k: _r(v[w0:]) for k, v in Fw.items()}},
            'monthly': {'months': [d.strftime('%Y-%m') for d in months], 'data': {k: _r(v) for k, v in Fm.items()}},
            'clock': clock(Fm, months),
+           'levels': levels(raw, until=today),
            'note': ('Every value is placed at the day it was published (period end plus the usual release lag), so a chart '
                     'or a model reading a week sees only what was public that week. FRED serves the latest vintage: '
                     'revised series (payrolls, industrial production, retail sales, PCE) include later revisions.')}

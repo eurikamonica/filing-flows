@@ -121,6 +121,253 @@ const ctx = new Proxy({ canvas: { width: 1920, height: 1080 } }, {
     ok(tm.hold === 0 && tm.run > 18 && S.frameIndex(V, tm, tm.intro + tm.run / 2) > L * 0.6, 'slow-motion finish runs ahead early');
     ok(Math.abs(S.frameIndex(V, S.timing(V, { dur: 20, pace: 'linear' }), 0.8 + S.timing(V, { dur: 20, pace: 'linear' }).run / 2) - L / 2) < 1e-6, 'an even pace');
   }
+  // dividends paid in dollars, whichever way they are used: each payment is the shares then held × the amount per share.
+  // A flat price with $1 a quarter on $100: reinvested, each payment buys 1% more shares, so after n payments the shares
+  // are 100 × 1.01^n and all paid is 10000 × (1.01^n − 1), worth exactly that at the flat price; as cash it is $100 each
+  {
+    const nw = 120, d0 = '2020-01-06', day = (i) => new Date(Date.UTC(2020, 0, 6) + 7 * i * 864e5).toISOString().slice(0, 10);
+    const exw = Array.from({ length: 9 }, (_, q) => 13 * q + 6);           // the weeks a dividend goes ex
+    const tr = (c, D) => { const a = [c[0]]; for (let i = 1; i < c.length; i++) a.push(a[i - 1] * (c[i] + (D[i] || 0)) / c[i - 1]); return a; };
+    const D = Array(nw).fill(0); exw.forEach((w) => { D[w] = 1; });
+    const flat = Array(nw).fill(100);
+    files['disclosures/data/etf/px/FLT.json'] = { name: 'Flat Fund', d0, t: Array.from({ length: nw }, (_, i) => 7 * i), c: flat, a: tr(flat, D), div: exw.map((w) => [day(w), 1]) };
+    const rise = Array.from({ length: nw }, (_, i) => 100 * Math.pow(1.004, i));
+    files['disclosures/data/etf/px/RSE.json'] = { name: 'Rising Fund', d0, t: Array.from({ length: nw }, (_, i) => 7 * i), c: rise, a: tr(rise, D), div: exw.map((w) => [day(w), 1]) };
+    const base = { k: 'growth', t: 'FLT,RSE', from: '2020-01-10', to: day(nw - 1), amt: '10000' };
+    const V = await S.build(Object.assign(S.parseState(''), base, { div: 'tr' }));
+    const L = V.grid.length - 1, f = V.series.find((x) => x.key === 'FLT'), r = V.series.find((x) => x.key === 'RSE');
+    const paidN = exw.filter((w) => w > 0 && w <= L).length;
+    ok(Math.abs(f.inc.total - 10000 * (Math.pow(1.01, paidN) - 1)) < 1e-6 && Math.abs(f.inc.shares - 100 * Math.pow(1.01, paidN)) < 1e-9, `reinvested on a flat price: ${f.inc.total} after ${paidN} payments`);
+    ok(Math.abs(f.inc.worth - f.inc.total) < 1e-6 && Math.abs(f.v[L] - 10000 - f.inc.total) < 1e-6, 'on a flat price the reinvested dividends are worth what was paid');
+    // a rising price: the same as buying the shares by hand with each payment at that week's close
+    let sh = 10000 / rise[0], paid = 0;
+    for (let i = 1; i <= L; i++) if (D[i]) { paid += sh * D[i]; sh += sh * D[i] / rise[i]; }
+    ok(Math.abs(r.inc.total - paid) < 1e-6 && Math.abs(r.inc.shares - sh) < 1e-9, `reinvested on a rising price: ${r.inc.total} vs ${paid} by hand`);
+    const last4 = exw.filter((w) => w > 0 && w <= L && w > L - 52).length;
+    ok(last4 === 4 && r.inc.last12 > 0 && Math.abs(r.inc.last12 - (r.dist[L] - r.dist[L - 52])) < 1e-9, 'the last 52 weeks of payments');
+    ok(r.dist.every((x, i) => i === 0 || x == null || r.dist[i - 1] == null || x >= r.dist[i - 1]), 'all paid only grows');
+    const Sp = await S.build(Object.assign(S.parseState(''), base, { div: 'split' })), Pr = await S.build(Object.assign(S.parseState(''), base, { div: 'price' }));
+    const fs2 = Sp.series.find((x) => x.key === 'FLT'), fp = Pr.series.find((x) => x.key === 'FLT');
+    ok(Math.abs(fs2.inc.total - 100 * paidN) < 1e-9 && Math.abs(fs2.cash[L] - fs2.inc.total) < 1e-9 && Math.abs(fp.inc.total - 100 * paidN) < 1e-9 && Math.abs(fp.v[L] - 10000) < 1e-9, 'as cash and left out: $100 a payment on the 100 shares bought');
+    // the end card and the caption carry them; the report has the columns, its text and the weekly CSV
+    V.endCard = true; V.style = 'line'; S.finish(V, V);
+    ok(V.final.every((x) => /^Paid \$[\d,]+ in dividends, reinvested/.test(x.sub) && x.subTr) && /dividends reinvested\)/.test(V.caption), 'end card rows and caption: ' + V.final[0].sub + ' | ' + V.caption);
+    const R = S.report(V), keys = R.cols.map((c) => c[0]);
+    ok(['put', 'end', 'gain', 'yr', 'div', 'l12', 'dd'].every((k) => keys.includes(k)) && R.cols.find((c) => c[0] === 'div')[1] === 'Dividends paid, reinvested', 'report columns: ' + keys);
+    const rf = R.rows.find((x) => x.label === 'FLT');
+    ok(rf.cells.div[0] === S.money(f.inc.total, 0) && /^worth \$[\d,]+ now$/.test(rf.cells.div[1]) && rf.cells.put[2] === 10000 && /% on cost$/.test(rf.cells.l12[1]), 'report cells: ' + JSON.stringify(rf.cells.div));
+    const txt = S.reportText(R, 'https://example/#studio');
+    ok(txt.startsWith(V.title) && txt.includes('\tPut in\tEnd value') && txt.includes(V.caption) && txt.trim().endsWith('https://example/#studio'), 'report text');
+    const csv = S.csvOf(V, R).trim().split('\n');
+    ok(csv.length === V.grid.length + 1 && csv[0] === 'date,put in,FLT value,FLT dividends paid (cumulative),RSE value,RSE dividends paid (cumulative)' && +csv[csv.length - 1].split(',')[3] === +f.inc.total.toFixed(6), 'weekly CSV: ' + csv[0]);
+    ok(S.report(Pr).cols.find((c) => c[0] === 'div')[1] === 'Dividends left out' && S.report(Sp).cols.find((c) => c[0] === 'div')[1] === 'Dividends paid, as cash', 'the column names the use');
+    S.finish(Pr, Pr); ok(Pr.final.every((x) => !x.sub) && !/dividends/.test(Pr.caption), 'price only: no dividends on the video');
+    // the worst drop and the calendar years
+    const G = Array.from({ length: 160 }, (_, i) => Date.UTC(2020, 0, 3) + 7 * i * 864e5), a = G.map((_, i) => (i < 40 ? 100 + i : i < 60 ? 139 - 2 * (i - 39) : 99 + (i - 59)));
+    const dd = S.worstDrop(a, G);
+    ok(Math.abs(dd.v - (99 / 139 - 1)) < 1e-12 && dd.from === G[39] && dd.at === G[59], 'worst drop: ' + dd.v);
+    const cy = S.calYears(a, G);
+    ok(cy.map((x) => x[0]).join() === '2021,2022' && Math.abs(cy[0][1] - (a[104] / a[51] - 1)) < 1e-12 && Math.abs(cy[1][1] - (a[156] / a[104] - 1)) < 1e-12, 'full calendar years only: ' + cy.map((x) => x[0]));
+    // every style draws them: on the labels, on their own panel, or not at all
+    for (const dinc of ['label', 'panel', 'off']) for (const style of ['line', 'bars', 'area', 'tiles']) for (const ar of [[1920, 1080], [1080, 1920], [1080, 1080]]) {
+      V.style = style; V.dinc = dinc; for (const t of [0, 4, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: 'bull', dur: 12 }, t);
+      n++;
+    }
+    // a ticker without distributions on file shows none, and the report says nothing about them
+    const W2 = await S.build(Object.assign(S.parseState(''), { k: 'growth', t: 'AAA', from: start, div: 'tr' }));
+    W2.series[0].inc = null; W2.series[0].dist = null; S.finish(W2, W2);
+    ok(!S.report(W2).cols.some((c) => c[0] === 'div') && !W2.final[0].sub, 'no distributions: no column');
+  }
+  // adjustments: a tax on dividends, cash, inflation, a discount rate; the dividends year by year; the snowball's report
+  {
+    const Y = 365.25 * 864e5;
+    // the total return rebuilt after a tax: a flat $100 with $1 a quarter reinvests 0.85% a payment
+    const pr = Array(60).fill(100), dvx = Array(60).fill(0); [6, 19, 32, 45, 58].forEach((w) => { dvx[w] = 1; });
+    const nt = S.netTR(pr, dvx.map((x) => x * 0.85), 0);
+    ok(Math.abs(nt[59] / nt[0] - Math.pow(1.0085, 5)) < 1e-12 && Math.abs(S.netTR(pr, dvx, 0)[59] / 100 - Math.pow(1.01, 5)) < 1e-12, 'total return after a tax');
+    const G = Array.from({ length: 53 }, (_, i) => Date.UTC(2021, 0, 1) + 7 * i * 864e5);
+    ok(Math.abs(S.growIdx(G, null, 4)[52] - Math.pow(1.04, 364 / 365.25)) < 1e-12, 'a fixed rate compounded week by week');
+    ok(Math.abs(S.growIdx(G, G.map(() => 5), null)[52] - Math.pow(1.05, 364 / 365.25)) < 1e-12, 'a rate week by week');
+    const mo = S.monthlyOn({ y0: 2020, m0: 11 }, [10, 11, null, 13], G.slice(0, 15));
+    ok(mo[0] === 11 && mo[5] === 11 && mo[6] === 11 && mo[10] === 13 && mo[14] === 13, 'a month\'s figure for each week, the last on file after: ' + mo);
+    // the fixture of before (flat $100, $1 a quarter): a 15% tax, cash at 4%, prices rising 3%
+    const base = { k: 'growth', t: 'FLT', from: '2020-01-10', to: '2022-04-25', amt: '10000', div: 'tr' };
+    const T15 = await S.build(Object.assign(S.parseState(''), base, { dtax: '15' })), L = T15.grid.length - 1, f15 = T15.series[0];
+    const paidN = [6, 19, 32, 45, 58, 71, 84, 97, 110].filter((w) => w > 0 && w <= L).length;
+    ok(Math.abs(f15.inc.shares - 100 * Math.pow(1.0085, paidN)) < 1e-9 && Math.abs(f15.inc.total - 10000 * (Math.pow(1.0085, paidN) - 1)) < 1e-6, `after a 15% tax: ${f15.inc.total}`);
+    ok(/after a 15% tax/.test(T15.sub) && [...T15.notes].some((x) => /15% tax/.test(x)), 'the tax is named');
+    const A = await S.build(Object.assign(S.parseState(''), base, { cashl: '1', cashr: '4', infl: 'line', inflr: '3', disc: '5' }));
+    const cash = A.series.find((x) => x.key === 'CASH'), cpi = A.series.find((x) => x.key === 'CPI'), yrs = (A.grid[L] - A.grid[0]) / Y;
+    ok(cash.bench === 'cash' && Math.abs(cash.v[L] - 10000 * S.growIdx(A.grid, null, 4)[L]) < 1e-6 && cpi.bench === 'infl' && Math.abs(cpi.v[L] - 10000 * S.growIdx(A.grid, null, 3)[L]) < 1e-6, 'cash and inflation lines: the same money at their rate');
+    ok(A.title === '$10,000 invested in FLT', 'the title names the tickers only: ' + A.title);
+    A.endCard = true; A.style = 'line'; S.finish(A, A);
+    const R = S.report(A), keys = R.cols.map((c) => c[0]), row = (k) => R.rows.find((x) => x.label === k);
+    ok(['real', 'vsc', 'pv'].every((k) => keys.includes(k)) && row('Cash').bench === 'cash', 'after inflation, against cash and present value: ' + keys);
+    const v = A.series[0].v[L], nominal = Math.pow(v / 10000, 1 / yrs) - 1;
+    ok(Math.abs(row('FLT').cells.real[2] - ((1 + nominal) / 1.03 - 1)) < 2e-3 && Math.abs(row('Inflation').cells.real[2]) < 1e-6, 'the rate after inflation: ' + row('FLT').cells.real[2]);
+    const pv5 = v / Math.pow(1.05, yrs), npv5 = pv5 - 10000;
+    ok(Math.abs(row('FLT').cells.pv[2] - pv5) < 1e-6 && row('FLT').cells.pv[1] === `NPV ${npv5 >= 0 ? '+' : '−'}${S.money(Math.abs(npv5), 0)}`, 'present value and NPV: ' + row('FLT').cells.pv);
+    ok(Math.abs(row('FLT').cells.vsc[2] - (v - cash.v[L])) < 1e-6, 'against cash');
+    ok(R.years && R.years.rows[0].part && R.years.rows.map((r) => r.y).join() === '2020,2021,2022' && R.years.rows[1].v[0] > 0 && !R.years.rows[1].part && R.years.rows[2].part, 'dividends by year, the part years marked');
+    ok(S.yearsCSV(R).split('\n')[0] === 'year,part of the year,FLT' && S.reportText(R).includes(R.years.title), 'the years as CSV and text');
+    // every value in dollars of the start: prices rising 3% a year
+    const Rl = await S.build(Object.assign(S.parseState(''), base, { infl: 'real', inflr: '3' })), fr = Rl.series[0], df = 1 / S.growIdx(Rl.grid, null, 3)[L];
+    ok(Rl.real && Math.abs(fr.v[L] - fr.nom[L] * df) < 1e-6 && Math.abs(fr.v[0] - 10000) < 1e-9 && /after inflation, in Jan 2020 dollars/.test(Rl.sub), 'real values: ' + fr.v[L]);
+    S.finish(Rl, Rl); const Rr = S.report(Rl).rows[0];
+    ok(Math.abs(Rr.cells.yr[2] - ((1 + nominal) / 1.03 - 1)) < 2e-3 && /before inflation/.test(Rr.cells.yr[1]) && /as paid then/.test(Rr.cells.end[1]), 'the report after inflation');
+    // dividends taken as cash earning 4%: each payment compounds to the end
+    const Sp = await S.build(Object.assign(S.parseState(''), base, { div: 'split', dint: '1', cashr: '4' })), sp = Sp.series[0], gi = S.growIdx(Sp.grid, null, 4);
+    const want = [6, 19, 32, 45, 58, 71, 84, 97, 110].filter((w) => w > 0 && w <= L).reduce((a, w) => a + 100 * gi[L] / gi[w], 0);
+    ok(Math.abs(sp.cash[L] - want) < 1e-6 && Math.abs(sp.inc.total - 100 * paidN) < 1e-9 && /earning the cash rate/.test(Sp.sub), 'cash from dividends earning interest: ' + sp.cash[L] + ' vs ' + want);
+    // history: the CPI index and the 3-month bill when published; before that the year-on-year CPI and the Fed funds rate
+    S.resetMacro();
+    const months = Array.from({ length: 48 }, (_, i) => `${2019 + Math.floor(i / 12)}-${String(i % 12 + 1).padStart(2, '0')}`);
+    files['disclosures/data/market/history/macro.json'] = { monthly: { months, data: { cpi: months.map(() => 2.4), ff: months.map(() => 1.5) } } };
+    const H1 = await S.build(Object.assign(S.parseState(''), base, { cashl: '1', infl: 'line' }));
+    const c1 = H1.series.find((x) => x.key === 'CASH'), i1 = H1.series.find((x) => x.key === 'CPI'), yrs1 = (H1.grid[L] - H1.grid[0]) / Y;
+    ok(Math.abs(c1.v[L] / 10000 - Math.pow(1.015, yrs1)) < 2e-3 && Math.abs(i1.v[L] / 10000 - Math.pow(1.024, yrs1)) < 3e-3 && c1.name === 'Cash at the Fed funds rate' && [...H1.notes].some((x) => /approximate/.test(x)), 'the fallbacks: ' + c1.v[L] + ' / ' + i1.v[L]);
+    S.resetMacro();
+    files['disclosures/data/market/history/macro.json'] = { levels: { start: '2019-01', cpi: months.map((_, i) => 250 * Math.pow(1.002, i)), bill3m: months.map(() => 3) } };
+    const H2 = await S.build(Object.assign(S.parseState(''), base, { cashl: '1', infl: 'real' }));
+    const c2 = H2.series.find((x) => x.key === 'CASH');
+    ok(c2.name === 'Cash in 3-month Treasury bills' && Math.abs(c2.nom[L] / 10000 - Math.pow(1.03, yrs1)) < 2e-3 && H2.real && ![...H2.notes].some((x) => /approximate/.test(x)), 'the published levels');
+    // the snowball: a tax on dividends, its report and its months
+    const Sn0 = await S.build(Object.assign(S.parseState('k=snowball'), { t: 'FLT', amt: '10000', from: '2020-01-10', to: '2022-04-25' }));
+    const Sn = await S.build(Object.assign(S.parseState('k=snowball'), { t: 'FLT', amt: '10000', from: '2020-01-10', to: '2022-04-25', dtax: '15' }));
+    const p0 = Sn0.series[0].paid.reduce((a, x) => a + x, 0), p1 = Sn.series[0].paid.reduce((a, x) => a + x, 0);
+    ok(Math.abs(p1 - 10000 * (Math.pow(1.0085, paidN) - 1)) < 1e-6 && p1 < p0 && /15% tax/.test(Sn.sub), 'the snowball after a tax: ' + p1);
+    S.finish(Sn, Sn); const Rs = S.report(Sn);
+    ok(['put', 'sh', 'all', 'mo', 'one', 'yoc', 'end'].every((k) => Rs.cols.some((c) => c[0] === k)) && Rs.years && Rs.rows[0].cells.put[2] === 10000, 'snowball report: ' + Rs.cols.map((c) => c[0]));
+    const sc = S.csvOf(Sn, Rs).trim().split('\n');
+    ok(sc[0] === 'month,FLT dividends,FLT shares' && sc.length === new Set(Sn.grid.map((g) => new Date(g).toISOString().slice(0, 7))).size + 1, 'the snowball month by month: ' + sc[0]);
+    // the bars of dividends: the snowball by month and by year, the growth race's panel by year
+    for (const scf of ['monthly', 'annual']) { Sn.scf = scf; Sn.endCard = true; for (const ar of [[1920, 1080], [1080, 1920]]) for (const t of [0, 4, 11.9]) S.draw(ctx, ar[0], ar[1], Sn, { theme: 'bull', dur: 12 }, t); n++; }
+    for (const V of [A, Sp, T15]) for (const dview of ['total', 'year']) for (const style of ['line', 'bars', 'area', 'tiles']) {
+      V.style = style; V.dview = dview; V.dinc = 'panel'; for (const t of [0, 6, 11.9]) S.draw(ctx, 1920, 1080, V, { theme: 'clean', dur: 12 }, t); n++;
+    }
+    delete files['disclosures/data/market/history/macro.json']; S.resetMacro();
+  }
+  // where the cash went: a company's cash flow statement year by year or quarter by quarter, and the cash figures of
+  // the company video (free cash flow, capital spending, shareholder returns, cash margin and conversion)
+  {
+    const B = 1e9, item = (o) => Object.assign({ ocf: 0, capex: 0, acq: 0, buyback: 0, div: 0, withhold: 0, inv_other: 0, borrow: 0, fin_other: 0 }, o);
+    // each year balances: the cash item is minus the change in cash
+    const yr = (end, label, o) => { const it = item(o), gap = it.cashGap || 0; delete it.cashGap; it.cash = -Object.values(it).reduce((a, x) => a + x, 0) + gap; return { end, kind: 'fy', label, items: it }; };
+    const fy = [yr('2023-12-31', 'FY23', { ocf: 100 * B, capex: -20 * B, buyback: -50 * B, div: -15 * B, borrow: 5 * B }),
+      yr('2024-12-31', 'FY24', { ocf: 120 * B, capex: -25 * B, acq: -10 * B, buyback: -60 * B, div: -16 * B, inv_other: 3 * B }),
+      yr('2025-12-31', 'FY25', { ocf: 150 * B, capex: -30 * B, buyback: -70 * B, div: -17 * B, borrow: -8 * B, fin_other: -1 * B, cashGap: 2 * B })];
+    const qe = ['2025-03-31', '2025-06-30', '2025-09-30', '2025-12-31'], q = qe.map((e, i) => yr(e, 'Q' + (i + 1) + ' 2025', { ocf: (30 + 5 * i) * B, capex: -(7 + i) * B, buyback: -15 * B, div: -4 * B }));
+    const periods = [], v = { revenue: [], ni: [], ocf: [] };
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(Date.UTC(2023, 3 * i + 3, 0)), e = d.toISOString().slice(0, 10);
+      periods.push(['', e, 'q', 'Q' + (i % 4 + 1)]);
+      v.revenue.push([i, [[(100 + 5 * i) * B, [0, '3m', []]]]]); v.ni.push([i, [[(i === 2 ? 0.5 : 25) * B, [0, '3m', []]]]]); v.ocf.push([i, [[30 * B, [0, '3m', []]]]]);
+    }
+    files['data/index.json'].companies.push({ ticker: 'CSH', cik: 11, name: 'Cash Corp', revenue: 1 });
+    files['data/c/11.json'] = { profile: { name: 'Example Cash Inc.' }, quality: { hist: { periods, v }, cap: { fy, q, shares: [{ end: '2023-12-31', diluted: 5e9 }, { end: '2025-12-31', diluted: 4.5e9 }] } }, quarters: [] };
+    let V = await S.build(Object.assign(S.parseState('k=cash'), { t: 'CSH' }));
+    const P = V.cf.periods, last = P[2].v;
+    ok(V.kind === 'cash' && P.length === 3 && V.cf.per === 'fy' && last.fcf === 120 * B && last.dcash === Math.round(-fy[2].items.cash), 'fiscal years: free cash flow and the change in cash');
+    ok(Math.abs(V.cf.steps.filter((x) => x[2]).reduce((a, [k]) => a + last[k], 0) - last.dcash) < 1, 'every year adds up to the change in cash');
+    ok(Math.abs(last.other - (-1 * B - 2 * B)) < 1 && !V.cf.steps.some((x) => x[0] === 'withhold'), 'what is not split out goes to other; a step that is never there is left out');
+    ok(V.title === 'Where Example Cash’s cash went' && /FY23 → FY25/.test(V.sub), 'title: ' + V.title);
+    V.endCard = true; S.finish(V, V);
+    const fin2 = (l) => V.final.find((r) => r.label === l);
+    ok(fin2('Free cash flow').value === S.money(120 * B) && fin2('Returned to shareholders').sub.includes('73% of free cash flow') && fin2('Diluted shares').change === '−10.0%' && fin2('Capital spending').neutral, 'end card: ' + V.final.map((r) => r.label + ' ' + r.value).join(' | '));
+    ok(/^Example Cash, FY25: operating cash flow \$150B, capital spending \$30\.0B, free cash flow \$120B, returned to shareholders \$87\.0B/.test(V.caption), 'caption: ' + V.caption);
+    const R = S.report(V), row = (l) => R.rows.find((r) => r.label === l);
+    ok(R.cols.map((c) => c[1]).join() === 'FY23,FY24,FY25,In all' && row('Free cash flow').cells.all[2] === (80 + 95 + 120) * B && row('Free cash flow').strong, 'report columns and totals');
+    ok(row('Returned ÷ free cash flow').cells.p2[0] === '73%' && row('Acquisitions').cells.p0[0] === '—' && row('Diluted shares').cells.all[0] === '−10.0%', 'report ratios: ' + JSON.stringify(row('Returned ÷ free cash flow').cells));
+    ok(row('Free cash flow ÷ revenue').cells.p2[0] === Math.round(100 * 120 / ((100 + 5 * 8) + (100 + 5 * 9) + (100 + 5 * 10) + (100 + 5 * 11))) + '%', 'free cash flow over the year\'s revenue: ' + row('Free cash flow ÷ revenue').cells.p2[0]);
+    const csv = S.csvOf(V, R).trim().split('\n');
+    ok(csv[0] === ',FY23,FY24,FY25,In all' && csv.some((l) => l.startsWith('Free cash flow,80000000000,95000000000,120000000000')), 'the CSV is the table: ' + csv[0]);
+    for (const style of ['fall', 'columns']) for (const ar of [[1920, 1080], [1080, 1920], [1080, 1080]]) { V.style = style; for (const t of [0, 2.5, 6, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: style === 'fall' ? 'clean' : 'bull', dur: 12 }, t); n++; }
+    V = await S.build(Object.assign(S.parseState('k=cash'), { t: 'CSH', cper: 'q' }));
+    ok(V.cf.periods.length === 4 && V.cf.periods[3].v.fcf === 35 * B && V.qlabel(V.grid[1]) === 'Q2 2025', 'quarters');
+    files['data/index.json'].companies.push({ ticker: 'ONE', cik: 13, name: 'One Year Inc', revenue: 1 });
+    files['data/c/13.json'] = { profile: { name: 'One Year Inc' }, quality: { cap: { fy: fy.slice(0, 1), q } }, quarters: [] };
+    await assert.rejects(S.build(Object.assign(S.parseState('k=cash'), { t: 'ONE' })), /Fewer than two fiscal years.*try quarters/); n++;
+    // the company video's cash figures: from the last eight quarters (and the years as filed), cash margin and conversion
+    const F = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'fcf', ttm: '0' }));
+    ok(F.series[0].v.filter((x) => x != null).length === 4 && F.series[0].v[F.grid.length - 1] === 35 * B && /eight quarters/.test([...F.notes].join(' ')), 'free cash flow each quarter');
+    const Ft = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'fcf', ttm: '1' }));
+    ok(Ft.series[0].v[Ft.grid.length - 1] === (23 + 27 + 31 + 35) * B && Ft.grid.length >= 3, 'trailing four quarters, the earlier years as filed: ' + Ft.grid.length);
+    const Fr = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'ret', ttm: '0' }));
+    ok(Fr.series[0].v[Fr.grid.length - 1] === 19 * B, 'shareholder returns each quarter');
+    const Fc = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'conv' })), Fm = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH', m: 'ocfm' }));
+    ok(Fc.unit === '%' && Math.abs(Fc.series[0].v[Fc.grid.length - 1] - 120 / 100) < 1e-9 && Fm.series[0].v[Fm.grid.length - 1] > 0.2, 'cash conversion and margin');
+    ok(!Fc.grid.some((g, i) => Fc.series[0].v[i] > 4) && [...Fc.notes].some((x) => /400%/.test(x)), 'a runaway conversion is left out');
+    // staggered calendars: each company at its latest quarter, up to a quarter old
+    const lag = JSON.parse(JSON.stringify(files['data/c/11.json'])); lag.quality.hist.periods = lag.quality.hist.periods.map((p) => { const d = new Date(Date.parse(p[1] + 'T00:00:00Z') + 31 * 864e5); return [p[0], d.toISOString().slice(0, 10), p[2], p[3]]; });
+    lag.quality.hist.periods.pop(); lag.quality.hist.v.revenue.pop(); lag.quality.hist.v.ni.pop(); lag.quality.hist.v.ocf.pop(); lag.quality.cap = {};
+    files['data/index.json'].companies.push({ ticker: 'LAG', cik: 12, name: 'Lag Inc', revenue: 1 }); files['data/c/12.json'] = lag;
+    const Two = await S.build(Object.assign(S.parseState('k=fund'), { t: 'CSH,LAG', m: 'revenue', ttm: '0' }));
+    ok(Two.series.every((x) => x.v[Two.grid.length - 1] != null) && [...Two.notes].some((x) => /latest figure on file/.test(x)), 'a company a quarter behind still shows its latest figure');
+    ok(S.TEMPLATES.some((t) => t.s.k === 'cash') && S.TEMPLATES.some((t) => t.s.m === 'fcf') && S.TEMPLATES.some((t) => t.s.m === 'conv'), 'templates for the cash videos');
+  }
+  // spend or invest: a thing bought, its value, upkeep, a loan, trade-ins, rent saved, habits, one-off costs — against
+  // the same money on the same dates in a stock. A stock whose price never moves keeps exactly the money put in
+  {
+    const nw = 170, d0 = '2020-01-06';
+    files['disclosures/data/etf/px/FLAT.json'] = { name: 'Flat Fund', d0, t: Array.from({ length: nw }, (_, i) => 7 * i), c: Array(nw).fill(100), a: Array(nw).fill(100), div: [] };
+    files['disclosures/data/etf/px/UP.json'] = { name: 'Up Fund', d0, t: Array.from({ length: nw }, (_, i) => 7 * i), c: Array.from({ length: nw }, (_, i) => 100 * Math.pow(1.003, i)), a: Array.from({ length: nw }, (_, i) => 100 * Math.pow(1.003, i)), div: [] };
+    const base = (x) => Object.assign(S.parseState('k=spend'), { t: 'FLAT,UP', from: '2020-01-10', to: '2023-01-06', spinf: 'none', spi: 'Gadget', spp: '1000', spn: '0', sptr: '1', spd1: '-40', spd: '-20', spf: '5', spu: '0', spup: '0', sps: '0', spl: '0', spbc: '0', spsc: '0', sphab: '0', spe: '' }, x);
+    // the iPhone's price list: September to September, the latest on file after
+    ok(S.iphonePrice('pro', Date.UTC(2019, 8, 20)) === 999 && S.iphonePrice('pro', Date.UTC(2019, 8, 1)) === 999 && S.iphonePrice('pro', Date.UTC(2016, 8, 1)) === 749 && S.iphonePrice('base', Date.UTC(2025, 9, 1)) === 799 && S.iphonePrice('pro', Date.UTC(2026, 9, 1)) === 1099, 'iPhone launch prices');
+    // kept: its value falls 40% over the first year, then 20% a year; the flat stock keeps the $1,000
+    let V = await S.build(base({})); const L = V.grid.length - 1, it = V.series.find((x) => x.mine), flat = V.series.find((x) => x.key === 'FLAT');
+    ok(Math.abs(it.v[52] - 1000 * Math.pow(0.6, 364 / 365.25)) < 1e-6 && Math.abs(it.v[104] - 1000 * Math.pow(0.6, 364 / 365.25) * Math.pow(0.8, 364 / 365.25)) < 1e-6, 'the value year by year: ' + it.v[52]);
+    ok(flat.v.every((x, i) => Math.abs(x - V.contrib[i]) < 1e-6) && V.contrib[L] === 1000 && V.spend.count === 1, 'the flat stock keeps the money put in');
+    ok(V.title === 'A gadget — or FLAT' && V.series.find((x) => x.key === 'UP').label === 'UP instead', 'title and labels: ' + V.title);
+    // replaced every year and traded in (less 10% selling costs): next year's money is the price less the trade-in
+    V = await S.build(base({ spn: '1', spsc: '10' }));
+    const w1 = V.spend.events.find((e) => e.kind === 'trade').i; let vv = 1000; for (let a = 0; a < w1; a++) vv *= Math.pow(a < 52 ? 0.6 : 0.8, 7 / 365.25);
+    const back = vv * 0.9;
+    ok(V.spend.count === 3 && Math.abs((V.contrib[w1] - V.contrib[w1 - 1]) - (1000 - back)) < 1e-6 && V.spend.events.filter((e) => e.kind === 'trade').length === 2, 'trade-ins: ' + (V.contrib[w1] - V.contrib[w1 - 1]));
+    // a loan: the annuity each month, paid off at the end of its term; interest = all paid less the amount borrowed
+    V = await S.build(base({ spl: '1', spld: '20', splr: '6', splt: '2' }));
+    const pay = S.ANNUITY(800, 0.005, 24), pr = V.spend.parts;
+    ok(Math.abs(pr.down - 200) < 1e-9 && Math.abs(pr.interest + pr.principal - 24 * pay) < 1e-6 && Math.abs(pr.principal - 800) < 1e-6 && V.spend.events.some((e) => e.kind === 'paid') && V.spend.bal === 0, 'a two-year loan: ' + (pr.interest + pr.principal) + ' vs ' + 24 * pay);
+    ok(Math.abs(V.contrib[L] - (200 + 24 * pay)) < 1e-6, 'all put in: the down payment and the payments');
+    // upkeep $120 a year (monthly) and 12% of its value; a house's rent saved comes back out of the stocks
+    V = await S.build(base({ spu: '120', spd1: '0', spd: '0', sps: '50' }));
+    const months = V.spend.events.length === 1 ? Math.round(V.spend.parts.upkeep / 10) : null;
+    ok(Math.abs(V.spend.parts.upkeep - 10 * months) < 1e-9 && Math.abs(V.spend.parts.saved - 50 * months) < 1e-9 && Math.abs(V.contrib[L] - (1000 + 10 * months - 50 * months)) < 1e-6, 'upkeep and savings each month: ' + months);
+    const flat2 = V.series.find((x) => x.key === 'FLAT');
+    ok(Math.abs(flat2.v[L] - V.contrib[L]) < 1e-6 && flat2.v[L] < 1000, 'money that comes back is taken out of the stock');
+    // a habit: $5 every day is $35 a week; nothing is left to sell; a price rising 10% a year
+    V = await S.build(base({ sphab: '1', sphe: 'd', spp: '5', spi: 'Coffee' }));
+    ok(Math.abs(V.contrib[3] - 5 * (1 + 7 * 3)) < 1e-9 && V.series.find((x) => x.mine).v.every((x) => x === 0) && /Coffee: \$5\.00 a day — or FLAT/.test(V.title), 'a daily habit');
+    V = await S.build(base({ sphab: '1', sphe: 'y', sphn: '2', spp: '100', spinf: 'fixed', spir: '10' }));
+    ok(V.spend.parts.habit > 600 && V.spend.parts.habit < 700 && Math.abs(V.contrib[0] - 200) < 1e-9, 'twice a year, the price rising 10% a year: ' + V.spend.parts.habit);
+    // one-off costs: a date (or a month), an amount, what it was
+    ok(S.oneOffs('2021-06-15, 1200, New transmission\n2022-03, 500, Tyres\nnot a line').map((e) => [new Date(e.t).toISOString().slice(0, 10), e.amount, e.label]).join('|') === '2021-06-15,1200,New transmission|2022-03-15,500,Tyres', 'one-off costs read');
+    V = await S.build(base({ spe: '2021-06-15, 1200, New transmission' }));
+    ok(Math.abs(V.spend.parts.oneoff - 1200) < 1e-9 && V.spend.events.some((e) => e.label === 'New transmission' && e.amount === -1200), 'a one-off cost on its week');
+    // the end card, the report: each side, year by year, the events
+    V = await S.build(base({ spn: '1', spu: '60', spl: '1', spld: '50', splr: '5', splt: '1' }));
+    V.endCard = true; V.style = 'line'; S.finish(V, V);
+    const mine = V.final.find((r) => r.name === 'Your gadget');
+    ok(mine && /bought .* · trade-ins back .* · upkeep .* · interest/.test(mine.sub) && /put in: Your gadget/.test(V.endTitle), 'end card: ' + V.endTitle + ' | ' + (mine && mine.sub));
+    const R = S.report(V);
+    ok(R.cols.map((c) => c[0]).join() === 'put,end,gain,yr,sold' && R.rows.length === 3 && R.years.plain && R.years.cols.some((c) => c.label === 'Trade-ins') && R.events.length >= 5, 'report: ' + R.years.cols.map((c) => c.label));
+    ok(S.reportText(R).includes('\nEvents\n') && S.yearsCSV(R).startsWith('year,part of the year,Bought'), 'report text and ledger CSV');
+    for (const style of ['line', 'bars', 'tiles', 'area']) for (const ar of [[1920, 1080], [1080, 1920]]) { V.style = style; for (const t of [0, 3, 6, 11.9]) S.draw(ctx, ar[0], ar[1], V, { theme: 'bull', dur: 12 }, t); n++; }
+    // the scenarios fill every setting they need; each has a template or a place in the list
+    ok(['phone', 'car', 'house', 'coffee', 'furniture'].every((k) => S.TEMPLATES.some((t) => t.s.k === 'spend' && t.s.sp === k)) && Object.values(S.SPEND).every((x) => x.label), 'spend templates');
+    const H = await S.build(Object.assign(S.parseState('k=spend'), S.SPEND.house.s, { t: 'FLAT', from: '2020-01-10', to: '2023-01-06', spinf: 'none' }));
+    const Hp = H.spend.parts;
+    ok(Math.abs(Hp.down - 80000) < 1e-6 && Math.abs(Hp.fees - 12000) < 1e-6 && Hp.saved > 0 && /renting and investing/.test(H.title) && Math.abs(H.contrib[H.grid.length - 1] - (Hp.down + Hp.fees + Hp.upkeep + Hp.interest + Hp.principal - Hp.saved)) < 1e-3, 'a house against renting: ' + H.title);
+  }
+  // the report of the other kinds: their end figures, empty columns left out
+  {
+    const V = await S.build(Object.assign(S.parseState('k=drawdown'), { t: 'AAA,BBB', from: start }));
+    S.finish(V, V);
+    const R = S.report(V);
+    ok(R.rows.length === 2 && R.cols.map((c) => c[0]).join() === 'value,change' && R.title === V.endTitle, 'drawdown report');
+    const csv = S.csvOf(V, R).trim().split('\n');
+    ok(csv[0] === 'date,AAA,BBB' && csv.length === V.grid.length + 1, 'drawdown CSV');
+  }
   // a stock's dividends from its weekly history: the price as traded rebuilt from the adjusted closes
   {
     const th = { start: '2024-01-05', c: [9.5, 9.6, 10, 10.2], d: [[2, 0.5]] };
