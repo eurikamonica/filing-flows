@@ -180,6 +180,22 @@ class Tables(unittest.TestCase):
         self.assertIn(('gross_margin', 'non-GAAP', 'Q4 2026', 38.0, 38.0), rows)
         self.assertIn(('eps', 'GAAP', 'Q4 2026', -0.07, -0.07), rows)
 
+    def test_column_titles_on_their_own_lines_and_a_not_applicable_cell(self):
+        # Sandisk: the scale, then "GAAP(1)" and "Non-GAAP(1)" each on a line (not the end of the section); "N/A" in the
+        # GAAP column leaves the figure to the non-GAAP one
+        r = G.read(['Sandisk Reports Fiscal First Quarter 2027 Financial Results', 'Business Outlook for Fiscal Second Quarter of 2027',
+                    '(in millions, except per share amounts)', 'GAAP(1)', 'Non-GAAP(1)', 'Revenue $12,200 - $12,600 $12,200 - $12,600',
+                    'Gross Margin 84.4% - 85.4% 84.5% - 85.5%', 'Operating Expenses $677 - $745 $540 - $560',
+                    'Diluted Net Income Per Share N/A $55.00 - $57.00'], filed='2026-10-29')
+        rows = self.rows(r)
+        self.assertIn(('gross_margin', 'GAAP', 'Q2 FY2027', 84.4, 85.4), rows)
+        self.assertIn(('gross_margin', 'non-GAAP', 'Q2 FY2027', 84.5, 85.5), rows)
+        self.assertIn(('opex', 'GAAP', 'Q2 FY2027', 677e6, 745e6), rows)
+        self.assertIn(('opex', 'non-GAAP', 'Q2 FY2027', 540e6, 560e6), rows)
+        self.assertIn(('eps', 'non-GAAP', 'Q2 FY2027', 55.0, 57.0), rows)
+        self.assertNotIn(('eps', '', 'Q2 FY2027', 55.0, 57.0), rows)
+        self.assertTrue(any(x[0] == 'revenue' and x[3] == 12.2e9 and x[1] != 'non-GAAP' for x in rows))
+
     def test_fiscal_quarter_with_dash(self):
         self.assertEqual(G.period('FQ1-27 GAAP Outlook', None), 'Q1 FY2027')
 

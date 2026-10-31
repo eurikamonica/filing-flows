@@ -226,10 +226,14 @@ def collect(client, root, cfg=None, today=None):
     rank = {c: i for i, c in enumerate(ranked_ciks(root))}       # the largest companies first, then the latest guidance
     queue.sort(key=lambda d: d['releases'][0].get('filed') or '', reverse=True)
     queue.sort(key=lambda d: rank.get(str(d['cik']).lstrip('0'), 10 ** 6))
+    # a company with one release on file cannot be held to the guidance of the quarter it just reported: its release before
+    # comes first (two reads each), then the deeper history
+    queue.sort(key=lambda d: len(d['releases']) >= 2)
     read, errors, done = 0, 0, 0
     for doc in queue:
         if read >= budget or errors > 5:
             break
+        cap = read + (2 if len(doc['releases']) < 2 else budget)
         bf = doc.setdefault('backfill', {})
         try:
             sub = client.json(SUBMISSIONS.format(cik=int(doc['cik'])), sec=True)
@@ -241,7 +245,7 @@ def collect(client, root, cfg=None, today=None):
         tried = bf.setdefault('tried', {})
         todo = [x for x in earnings_8ks(sub, since) if x[0] not in have and tried.get(x[0], 0) < 3][:KEEP]
         for acc, folder, filed in todo:
-            if read >= budget:
+            if read >= budget or read >= cap:
                 break
             read += 1
             try:

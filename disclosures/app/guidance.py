@@ -20,7 +20,7 @@ src}, change, range, ends, quote}. Fixed rules, no model: a sentence it cannot r
 """
 import re
 
-VERSION = 3                   # bump when read() changes: the releases kept (app/guidance_history.py) are read again
+VERSION = 4                   # bump when read() changes: the releases kept (app/guidance_history.py) are read again
                               # 2: a comparison base ("compared with … fourth quarter 2025") no longer dates the guide
                               # 3: the audit of the largest companies' releases — the base figures a guide is built on
                               #    ("based on the following Q3 FY26 figures") are not guides; a short heading or table
@@ -29,6 +29,10 @@ VERSION = 3                   # bump when read() changes: the releases kept (app
                               #    ("Original … As of … As of …", "Unchanged"); "$X for Q3 and $Y for FY27"; "raises …
                               #    by $200M, $300M in CC" are changes; a product's or business's revenue ("AI server
                               #    revenue") is not the company's; rows of results (this year, last year, % change) skipped
+                              # 4: an outlook table's column titles on lines of their own ("GAAP(1)", "Non-GAAP(1)", after
+                              #    "(in millions, except per share amounts)") are its columns, not the end of the section; a
+                              #    row with "N/A" in the GAAP column ("Diluted Net Income Per Share N/A $55.00 - $57.00") is
+                              #    the non-GAAP figure
 
 # ------------------------------------------------------------------ change words
 NOUN = r'(?:guidance|outlook|forecasts?|financial (?:targets?|framework)|targets?|expectations?|projections?|guidance ranges?|range)'
@@ -496,7 +500,7 @@ FORWARD = re.compile(r'(?i)\b(?:expect\w*|anticipat\w*|guidance|outlook|forecast
                      r'sees|estimates?|plans? to|is likely|range of|for the (?:full )?(?:fiscal )?year|fourth quarter|next quarter)\b')
 PAST = re.compile(r'(?i)\b(?:was|were|totaled|came in at|reported|delivered|achieved|grew|generated|posted|recorded)\b')
 HEAD = re.compile(r'(?i)(?:outlook|guidance|forecast|expectations|financial targets)\b')
-STOP_HEAD = re.compile(r'(?i)^(?:forward[- ]looking|about |conference call|webcast|earnings call|non-gaap(?!\s*(?:\(\d+\)\s*)?(?:outlook|guidance|estimates?))|use of non|reconciliation|contacts?\b|investor|media|'
+STOP_HEAD = re.compile(r'(?i)^(?:forward[- ]looking|about |conference call|webcast|earnings call|non-gaap(?!\s*(?:\(\w{1,3}\)\s*|\*+\s*)?(?:outlook|guidance|estimates?|$))|use of non|reconciliation|contacts?\b|investor|media|'
                        r'safe harbor|cautionary|condensed|consolidated (?:statements|balance)|balance sheet|cash flow|dividend|share repurchase|'
                        r'(?:third|second|first|fourth) quarter (?:\d{4} )?(?:highlights|results|financial)|highlights|recent|business update|segment results)')
 
@@ -646,7 +650,13 @@ def _items_of(s, ctx, said, ends, table=False, scale=1.0, columns=None, carry=No
         if columns and vals and all(str(c).startswith('basis:') for c in columns):
             # a GAAP column and a non-GAAP column; one figure for both (revenue): the row's own basis
             vals = [v for v in vals if not v.get('growth') and not v.get('delta')]
-            if len(vals) == 1:
+            na = re.search(r'(?i)(?:^|\s)(?:n/?a|not applicable|not provided|none|—|–)(?=\s|$)', clause)
+            if len(vals) == 1 and na and re.search(r'[$~(]?\d', clause[na.end():]) and len(columns) == 2:
+                # "Diluted Net Income Per Share N/A $55.00 - $57.00": no figure in the first column, the one given is the second's
+                item = _item(k, name, columns[1][6:], per, vals[0], None, w, ends, s, sc, table)
+                if item:
+                    out.append(item)
+            elif len(vals) == 1:
                 item = _item(k, name, b, per, vals[0], None, w, ends, s, sc, table)
                 if item:
                     out.append(item)
@@ -924,6 +934,9 @@ def read(paras, limit=1500, filed=None):
             sc = _section_scale(p)
             if sc and len(p) < 160:
                 section['scale'] = sc
+                if not values(p) and not _columns(p) and section.get('head_seq') is not None and section.get('head_seq') >= section['seq'] - 1:
+                    section['head_seq'] = section['seq']       # "(in millions, except per share amounts)": still the table's header
+                    continue
             cols = _columns(p)
             if cols and not values(p):
                 section['columns'] = cols

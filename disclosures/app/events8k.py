@@ -370,7 +370,8 @@ def parse_daily_index(text):
     return out
 
 
-PARSER = 7          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
+PARSER = 8          # bump when parse_8k changes: the filings on file are read again (newest first) and their rows replaced
+                    # 8: guidance.VERSION 4 (outlook tables with their column titles on lines of their own)
                     # 6: the guided period no longer taken from a comparison base (guidance.py VERSION 2)
 
 
