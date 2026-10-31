@@ -991,5 +991,11 @@ body.ffu-open { overflow: hidden; }
 .ffu-info .ffu-btn { margin: 4px 6px 0 0; }
 .ffu-msg { position: absolute; left: 12px; bottom: 8px; margin: 0; padding: 6px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; color: var(--muted); }
 .ffu-hint { padding: 6px 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); background: var(--surface); }
-@media (max-width: 640px) { .ffu-bar { gap: 4px 6px; padding: 6px 8px; } .ffu-seg button, .ffu-btn { padding: 5px 7px; font-size: 12px; } .ffu-hint { display: none; } }
+@media (max-width: 640px) {
+  .ffu-bar { flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding: 6px 8px; -webkit-overflow-scrolling: touch; }
+  .ffu-bar > * { flex: none; }
+  .ffu-seg button, .ffu-btn { padding: 5px 7px; font-size: 12px; }
+  .ffu-close { position: sticky; right: 0; background: var(--surface); }
+  .ffu-hint { display: none; }
+}
 body.ffu-open .flo-launch, body.ffu-open .flo-half, body.ffu-open .flo-panel { display: none !important; }   /* the assistant waits behind the canvas */

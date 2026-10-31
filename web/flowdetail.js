@@ -459,11 +459,13 @@
       const r = stage.getBoundingClientRect(), k = Math.max(1, Math.max(v[2] / Math.max(r.width, 1), v[3] / Math.max(r.height, 1)));
       svg.querySelectorAll('.ffu-tog').forEach((g) => g.setAttribute('transform', `translate(${g.dataset.x} ${g.dataset.y}) scale(${k.toFixed(3)})`));
     }
-    function fit() {
+    function fit(whole) {
       if (!scene) return;
-      const r = stage.getBoundingClientRect(), k = Math.max(scene.W / Math.max(r.width, 1), scene.H / Math.max(r.height, 1));
+      const r = stage.getBoundingClientRect(), kFit = Math.max(scene.W / Math.max(r.width, 1), scene.H / Math.max(r.height, 1));
+      // a phone: the whole chart would be too small to read; it opens at the left (revenue) at a readable size instead
+      const k = whole ? kFit : Math.min(kFit, Math.max(1.6, scene.H / Math.max(r.height, 1)));
       const w = r.width * k, h = r.height * k;
-      vb = [(scene.W - w) / 2, (scene.H - h) / 2, w, h];
+      vb = [k < kFit ? 0 : (scene.W - w) / 2, (scene.H - h) / 2, w, h];
       applyView();
     }
     async function draw(keep) {
@@ -545,7 +547,7 @@
     $('[data-per]').addEventListener('change', (e) => { idx = +e.target.value; st.opened.clear(); st.closed.clear(); draw(); });
     function zoom(k, px, py) {
       if (!scene) return;
-      if (!k) { fit(); return; }
+      if (!k) { fit(true); return; }
       const v = vb || [0, 0, scene.W, scene.H];
       const cx = px == null ? v[0] + v[2] / 2 : px, cy = py == null ? v[1] + v[3] / 2 : py;
       const w = Math.min(Math.max(v[2] * k, 120), scene.W * 4), h = w * v[3] / v[2];
