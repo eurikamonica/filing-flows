@@ -724,6 +724,47 @@
     return `<td><span class="co"><span class="mono">${t(c.ticker || '')}</span><a class="name" href="#c-${c.cik}">${t(c.name)}</a></span></td>`;
   }
 
+  // the first screen: find any company, and a real company's Sankey right away (the largest that reported this week)
+  function heroSearch(ix, here) {
+    const cos = ix.companies.filter((c) => c.ticker);
+    const dl = $('#hero-list');
+    if (dl) dl.innerHTML = cos.slice().sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 400)
+      .map((c) => `<option value="${t(c.ticker)}">${t(c.name)}</option>`).join('');
+    const go = (q) => {
+      const s = String(q || '').trim().toLowerCase();
+      if (!s) return;
+      const hit = cos.find((c) => c.ticker.toLowerCase() === s) || cos.find((c) => c.name.toLowerCase().startsWith(s)) || cos.find((c) => c.name.toLowerCase().includes(s));
+      if (hit) { location.hash = `c-${hit.cik}`; return; }
+      const m = $('#hero-miss');
+      if (m) { m.hidden = false; m.innerHTML = `“${t(q)}” is not among the latest filings here — <a href="c/">browse every company page</a> or <a href="disclosures/">search the Disclosure Hub</a>.`; }
+    };
+    const f = $('#hero-search');
+    if (f) f.addEventListener('submit', (ev) => { ev.preventDefault(); go($('#hero-q').value); });
+    const week = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
+    const fresh = cos.filter((c) => (c.filed || '') >= week && /10-Q|10-K|8-K/.test(c.form || '')).sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
+    const famous = ['NVDA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'COST'].map((tk) => cos.find((c) => c.ticker === tk)).filter(Boolean);
+    const chips = [...new Map([...fresh.slice(0, 4), ...famous].map((c) => [c.cik, c])).values()].slice(0, 8);
+    const box = $('#hero-chips');
+    if (box) box.innerHTML = chips.map((c) => `<button type="button" class="chip" data-cik="${c.cik}"><b>${t(c.ticker)}</b> <span class="${tone(c.yoy)}">${pct(c.yoy)}</span></button>`).join('');
+    const pick = fresh[0] || famous[0];
+    const show = async (c) => {
+      const sec = $('#hero-preview');
+      if (!sec || !c || !window.Sankey) return;
+      let d;
+      try { d = await getJSON(`c/${c.cik}.json`); } catch (e) { return; }
+      if (!here()) return;
+      const q = (d.quarters || [])[0];
+      if (!q || !q.nodes) return;
+      sec.hidden = false;
+      sec.innerHTML = `<div class="section-head"><h2>${t(c.name)} · ${t(q.label)}</h2><span class="muted">${c.filed >= week ? 'reported this week · ' : ''}${t(c.form)} filed ${date(c.filed)} · revenue ${t(c.rev)} <span class="${tone(c.yoy)}">${pct(c.yoy)} Y/Y</span></span></div>
+        <div class="hero-sk"></div><p><a class="btn primary" href="#c-${c.cik}">Open ${t(c.ticker || c.name)}: every quarter, Q/Q and Y/Y, notes →</a></p>`;
+      try { sec.querySelector('.hero-sk').innerHTML = Sankey.toSVG(Sankey.layout(q, {}), Sankey.dec(q.title)); } catch (e) { sec.hidden = true; }
+      $$('#hero-chips .chip').forEach((b) => b.classList.toggle('on', +b.dataset.cik === +c.cik));
+    };
+    if (box) box.addEventListener('click', (ev) => { const b = ev.target.closest('[data-cik]'); if (b) show(cos.find((c) => +c.cik === +b.dataset.cik)); });
+    show(pick);
+  }
+
   async function home() {
     const here = live();
     setNav('home');
@@ -738,9 +779,13 @@
     app.innerHTML = `
       <div class="home-top">
       <section class="hero">
-        <div class="eyebrow">SEC EDGAR · 10-Q, 10-K and 8-K earnings releases</div>
-        <h1>Every new quarterly report, drawn as one flow from revenue to cash</h1>
-        <p>EDGAR is scanned every 15 minutes for new 10-Q and 10-K filings and earnings releases (8-K); each is drawn from revenue to costs, profit and operating cash flow. Click any part of a chart for what the company wrote about that line.</p>
+        <div class="eyebrow">SEC EDGAR · 10-Q, 10-K, 8-K, 13F · every filing, every 15 minutes</div>
+        <h1>See Where the Money Really Goes.</h1>
+        <p>Turn SEC filings into visual cash flows, institutional holdings, and company insights. Every new 10-Q, 10-K and earnings release is drawn from revenue to costs, profit and cash — click any part of a chart for what the company wrote about it.</p>
+        <form class="hero-search" id="hero-search" role="search"><input id="hero-q" type="search" list="hero-list" placeholder="Ticker or company, e.g. NVDA" aria-label="Find a company" autocomplete="off">
+          <datalist id="hero-list"></datalist><button class="btn primary" type="submit">Show its flows</button></form>
+        <p class="muted" id="hero-miss" hidden></p>
+        <div class="hero-chips" id="hero-chips"></div>
         ${ix.demo ? `<p class="note-rule">${t(ix.demo)}</p>` : ''}
         <div class="status"><span>Updated <b>${date(ix.generated)}</b> ${t((ix.generated || '').slice(11, 16))} UTC</span>
           <span><b>${ix.companies.length.toLocaleString('en-US')}</b> companies</span><span><b>${groups}</b> sector and industry charts</span></div>
@@ -752,6 +797,7 @@
           <button class="btn primary" type="submit">Get alerts</button></form>
       </section>
       </div>
+      <section class="section hero-preview" id="hero-preview" hidden></section>
       <section class="section" id="earnings-day"></section>
       ${stars.length ? `<section class="section">
         <div class="section-head"><h2>Starred</h2><span class="muted">Companies with their full multi-quarter history</span></div>
@@ -781,6 +827,7 @@
           <div class="t"><span>${t(s.name)}</span></div><div class="n">${s.count} companies · ${calLabel(s.cal)}</div></a>`).join('') ||
           '<p class="muted">Sector charts appear once two companies in a sector have reported for the same quarter.</p>'}</div>
       </section>`;
+    heroSearch(ix, here);
     $('#cta-form').addEventListener('submit', (ev) => {
       ev.preventDefault();
       prefs.set('signin-email', $('#cta-form input').value.trim());

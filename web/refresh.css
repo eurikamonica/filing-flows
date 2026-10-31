@@ -131,3 +131,14 @@
   .co-period.in-chart .co-period-pick select { flex: 1; }
   #app { padding-bottom: 96px; }               /* the last lines scroll clear of Flo */
 }
+
+/* the first screen: search and a real Sankey */
+.hero h1 { font-size: clamp(30px, 5vw, 48px); letter-spacing: -.02em; line-height: 1.08; margin: 4px 0 6px; }
+.hero-search { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.hero-search input { flex: 1 1 260px; min-width: 0; font-size: 16px; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.hero-search input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hero-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hero-chips .chip { cursor: pointer; padding: 5px 11px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font: inherit; font-size: 13px; }
+.hero-chips .chip.on, .hero-chips .chip:hover { border-color: var(--accent); }
+.hero-preview .hero-sk { background: #fcfcfb; border: 1px solid var(--line); border-radius: 14px; padding: 8px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+.hero-preview .hero-sk svg { display: block; width: 100%; height: auto; min-width: 760px; }
