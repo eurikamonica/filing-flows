@@ -1495,10 +1495,8 @@ def collect(root, site_index, ua, minutes=40.0, tickers=None, limit=None, rechec
             return -1
         if s_.get('retry_after') and s_['retry_after'] > now.isoformat():
             return None
-        if not s_.get('filed'):
-            return 0
-        if s_.get('v') != VERSION:
-            return 1
+        if not s_.get('filed') or s_.get('v') != VERSION:
+            return 0                                     # never built, or by an older reader: by size, largest first
         if c.get('filed') and c['filed'] > s_['filed']:
             return 2
         if not s_.get('checked') or (now - dt.datetime.fromisoformat(s_['checked'])).days >= recheck_days:
