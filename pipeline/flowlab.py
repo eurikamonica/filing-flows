@@ -203,7 +203,9 @@ def view_people(members, io):
         d.node("e:out", 0, "Employees — outside the US (estimate)", "#b0a68f", "C")
         d.node("p:abroad", 1, "Pay abroad (not split: no comparable table)", "#c9c2b3", "C")
         d.link("e:out", "p:abroad", abroad, "C", "employee pay outside the US, Beta 1.1 (FIGARO / ADB multi-country tables)")
-    return d, {"us": us, "abroad": abroad}
+    mem = [[m["cik"], round(fl["spend"].get("employees", 0.0)), round(fl["spend"].get("employees_out", 0.0))]
+           for m, fl in members if fl["spend"].get("employees", 0.0) > 0]
+    return d, {"us": us, "abroad": abroad, "members": sorted(mem, key=lambda r: -r[1])[:400]}
 
 
 def tier_split(d, io, by_ind, src_of, col, grade="C"):

@@ -9,6 +9,11 @@ or layoffs year on year.
   build    public/: index.json (one row per company), c/<cik>.json (the years, the sentences, the peers), status.json.
            Revenue and net income are the hub's annual XBRL frames (app/frames.py), matched to each fiscal year end.
 
+Median employee pay: the pay-ratio disclosure every US proxy statement (DEF 14A) carries since 2018 (Regulation S-K
+Item 402(u)): "the annual total compensation of our median employee was $58,226" and the CEO's pay as a multiple of it.
+The latest proxy of each company is read once (cache/pay.json, by accession). The median is of all employees worldwide
+(the company may leave out up to 5% abroad), counting salary, bonus, overtime and benefits as the company measures them.
+
 A headcount is what the company says at one date (usually its fiscal year end); some count full-time employees only,
 some include contractors or part-time staff, and the wording is kept so a reader can tell. Not investment advice.
 
@@ -138,6 +143,80 @@ def iso_date(s):
         return None
 
 
+# ---------------------------------------------------------------- the median employee's pay (DEF 14A pay ratio)
+MONEY = re.compile(r'\$\s?(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d{4,7}(?:\.\d+)?)')
+RATIO = re.compile(r'\b(\d{1,3}(?:,\d{3})*(?:\.\d+)?)(?:\s*(?:to|:|-to-)\s*(?:1|one)\b|\s+times\b)', re.I)
+MEDIAN_WHO = re.compile(r'median\s+(?:of\s+the\s+annual\s+total\s+compensation|(?:annual\s+)?total\s+compensation\s+of\s+all|(?:[\w&.\'’-]+\s+){0,3}?(?:employee|associate|team member|colleague|worker))', re.I)
+BEFORE = re.compile(r'\$\s?(\d{1,3}(?:,\d{3})+|\d{4,7})(?:\.\d+)?\s+(?:for|to|of)\s+(?:our|the)\s+median\s+(?:[\w&.\'’-]+\s+){0,3}?(?:employee|associate|team member)', re.I)
+
+
+def median_pay(doc):
+    """{'pay', 'ratio', 'sentence'} from a proxy statement's pay-ratio paragraph, or None. The amount is the first dollar
+    figure after the words "median employee" (or "median of the annual total compensation"), between $5,000 and $1M; the
+    paragraph is found by "pay ratio" or "median employee", the CEO's amount is not taken."""
+    text = plain(doc)
+    low = text.lower()
+    spans, i = [], low.find('pay ratio')
+    while i >= 0 and len(spans) < 4:
+        spans.append(text[max(0, i - 200):i + 5000])
+        i = low.find('pay ratio', i + 5000)
+    for where, body in (('pay ratio section', '\n'.join(spans)), ('document', text)):
+        best = None
+        for s in sentences(body):
+            m = MEDIAN_WHO.search(s)
+            if not m or not re.search(r'compensation|pay|earn', s, re.I):
+                continue
+            b = BEFORE.search(s)                                # "$21,005,009 for our CEO and $66,524 for our median employee"
+            if b and 5_000 <= float(b.group(1).replace(',', '')) <= 1_000_000:
+                r = RATIO.search(s)
+                cand = {'pay': round(float(b.group(1).replace(',', ''))), 'ratio': float(r.group(1).replace(',', '')) if r else None, 'sentence': s[:600], 'where': where}
+                if best is None or 3 > best[0]:
+                    best = (3, cand)
+                continue
+            after = s[m.end():m.end() + 320]
+            for mm in MONEY.finditer(after):
+                v = float(mm.group(1).replace(',', ''))
+                if 5_000 <= v <= 1_000_000:
+                    pre = re.sub(r'(?:other than|excluding|except(?: for)?|not including)\s+(?:our|the)?\s*(?:chief executive officer|ceo)', '',
+                                 after[max(0, mm.start() - 80):mm.start()].lower())
+                    if re.search(r'chief executive|\bceo\b|our president', pre) and not re.search(r'median', pre):
+                        continue
+                    if re.search(r'cost of|added|adding|includ(?:ed|ing)|benefits?\s*\(?$|\($', pre[-40:]):
+                        continue                                # "added the cost of medical and dental benefits ($16,795)"
+                    own = RATIO.search(s)
+                    r = own or RATIO.search(body[body.find(s):body.find(s) + 1500] if s in body else '')
+                    ratio = float(r.group(1).replace(',', '')) if r else None
+                    cand = {'pay': round(v), 'ratio': ratio if ratio and 1 <= ratio <= 50_000 else None, 'sentence': s[:600], 'where': where}
+                    score = (2 if 'annual total compensation' in s.lower() else 0) + (1 if own else 0) + (1 if re.search(r'(?:was|of|totaled|were|is)\s*$', pre) else 0)
+                    if best is None or score > best[0]:
+                        best = (score, cand)
+                    break
+        if best:
+            return best[1]
+        flat = re.sub(r'\s+', ' ', body)                         # a sentence broken across lines by the layout
+        b = BEFORE.search(flat)
+        if b and 5_000 <= float(b.group(1).replace(',', '')) <= 1_000_000:
+            r = RATIO.search(flat[b.start():b.start() + 800])
+            return {'pay': round(float(b.group(1).replace(',', ''))), 'ratio': float(r.group(1).replace(',', '')) if r else None,
+                    'sentence': flat[max(0, b.start() - 200):b.end() + 100], 'where': where}
+    return None
+
+
+def proxies(subs, n=1):
+    """The latest proxy statements (DEF 14A): [{'acc', 'doc', 'filed', 'form'}], newest first."""
+    r = (subs.get('filings') or {}).get('recent') or {}
+    out = []
+    for i, form in enumerate(r.get('form') or []):
+        if form != 'DEF 14A':
+            continue
+        doc = (r.get('primaryDocument') or [''])[i] if i < len(r.get('primaryDocument') or []) else ''
+        if doc:
+            out.append({'acc': r['accessionNumber'][i], 'doc': doc, 'filed': r['filingDate'][i], 'form': form})
+        if len(out) >= n:
+            break
+    return out
+
+
 # ---------------------------------------------------------------- the SEC
 class Sec:
     def __init__(self):
@@ -193,10 +272,10 @@ def collect(root, universe_path, minutes=25, years=YEARS, sec=None, refresh_days
     root = Path(root)
     t0 = time.monotonic()
     sec = sec or Sec()
-    found_p, subs_p = root / 'cache' / 'found.json', root / 'cache' / 'subs.json'
-    found, subs = read_json(found_p, {}), read_json(subs_p, {})
+    found_p, subs_p, pay_p = root / 'cache' / 'found.json', root / 'cache' / 'subs.json', root / 'cache' / 'pay.json'
+    found, subs, pay = read_json(found_p, {}), read_json(subs_p, {}), read_json(pay_p, {})
     cos = universe(universe_path)
-    stats = {'docs': 0, 'found': 0, 'subs': 0, 'errors': 0, 'left': 0}
+    stats = {'docs': 0, 'found': 0, 'subs': 0, 'errors': 0, 'left': 0, 'proxies': 0, 'pay_found': 0}
     stale = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=refresh_days)).isoformat()
 
     def out_of_time():
@@ -205,14 +284,15 @@ def collect(root, universe_path, minutes=25, years=YEARS, sec=None, refresh_days
     # 1) the list of annual reports, refreshed every two weeks (a new 10-K a year per company)
     for c in cos:
         k = str(int(c['cik']))
-        if (subs.get(k) or {}).get('at', '') > stale:
+        if (subs.get(k) or {}).get('at', '') > stale and 'proxies' in (subs.get(k) or {}):
             continue
         if out_of_time():
             stats['left'] += 1
             continue
         try:
             body = sec.get(SUBS.format(cik=int(k)))
-            subs[k] = {'at': now(), 'reports': tenks(json.loads(body)) if body else []}
+            js = json.loads(body) if body else {}
+            subs[k] = {'at': now(), 'reports': tenks(js) if body else [], 'proxies': proxies(js) if body else []}
             stats['subs'] += 1
         except Exception as exc:                        # noqa: BLE001
             stats['errors'] += 1
@@ -244,8 +324,33 @@ def collect(root, universe_path, minutes=25, years=YEARS, sec=None, refresh_days
                 print(f'employees doc {k} {rp["acc"]}: {str(exc)[:120]}', flush=True)
         if stats['docs'] and stats['docs'] % 200 == 0:
             write_json(found_p, found)
+        if depth == 0:                                  # 3) after everyone's latest 10-K: everyone's latest proxy (median pay)
+            for c in cos:
+                k = str(int(c['cik']))
+                for rp in (subs.get(k) or {}).get('proxies') or []:
+                    if rp['acc'] in (pay.get(k) or {}):
+                        continue
+                    if out_of_time():
+                        stats['left'] += 1
+                        continue
+                    url = DOC.format(cik=int(k), acc=rp['acc'].replace('-', ''), doc=rp['doc'])
+                    try:
+                        doc = sec.get(url)
+                        mp = median_pay(doc) if doc else None
+                        if mp:
+                            mp.update({'filed': rp['filed'], 'form': rp['form'], 'url': url})
+                            stats['pay_found'] += 1
+                        pay.setdefault(k, {})[rp['acc']] = mp
+                        stats['proxies'] += 1
+                    except Exception as exc:            # noqa: BLE001
+                        stats['errors'] += 1
+                        print(f'employees proxy {k} {rp["acc"]}: {str(exc)[:120]}', flush=True)
+                if stats['proxies'] and stats['proxies'] % 200 == 0:
+                    write_json(pay_p, pay)
+            write_json(pay_p, pay)
     write_json(found_p, found)
     write_json(subs_p, subs)
+    write_json(pay_p, pay)
     stats['seconds'] = round(time.monotonic() - t0)
     return stats
 
@@ -295,6 +400,11 @@ def build(root, universe_path, hub_root=None, out=None):
     out = Path(out or root / 'public')
     t0 = time.monotonic()
     found = read_json(root / 'cache' / 'found.json', {})
+    paid = {}
+    for k, per in (read_json(root / 'cache' / 'pay.json', {}) or {}).items():
+        got = [x for x in per.values() if x]
+        if got:
+            paid[k] = max(got, key=lambda x: x.get('filed') or '')
     cos = {str(int(c['cik'])): c for c in universe(universe_path)}
     fig = _frames(hub_root) if hub_root else {}
     rows, docs = {}, {}
@@ -338,6 +448,9 @@ def build(root, universe_path, hub_root=None, out=None):
                    'employees': last['count'], 'as_of': last.get('as_of') or last['period'], 'change': last.get('change'),
                    'change_n': last.get('change_n'), 'rev_growth': last.get('rev_growth'), 'rev_emp': last.get('rev_emp'),
                    'ni_emp': last.get('ni_emp'), 'years': len(ys)}
+        mp = paid.get(k)
+        if mp:
+            rows[k].update({'median_pay': mp['pay'], 'pay_ratio': mp.get('ratio'), 'pay_filed': mp.get('filed')})
         docs[k] = ys
     # peers: the same 3-digit SIC industry when it has five companies, else the sector
     def ind(r):
@@ -358,20 +471,20 @@ def build(root, universe_path, hub_root=None, out=None):
         r['flag'] = ('layoffs' if (r.get('change') or 0) <= -0.05 else 'hiring' if (r.get('change') or 0) >= 0.1 else None)
         if r['flag'] == 'layoffs' and (r.get('rev_growth') or 0) > 0:
             r['flag'] = 'fewer people, more revenue'
-        doc = {'generated_at': now(), 'row': _clean(r), 'years': _clean(docs[k]),
+        doc = {'generated_at': now(), 'row': _clean(r), 'years': _clean(docs[k]), 'pay': _clean(paid.get(k)),
                'peers': [[rows[p]['ticker'], rows[p]['name'], rows[p]['employees'], _r(rows[p].get('rev_emp'), 0), _r(rows[p].get('ni_emp'), 0), _r(rows[p].get('change'), 4)]
                          for p in sorted(peers, key=lambda p: -(rows[p].get('rev_emp') or 0))[:40]]}
         (out / 'c').mkdir(parents=True, exist_ok=True)
         write_json(out / 'c' / f'{k}.json', doc)
     fields = ['cik', 'ticker', 'name', 'sector', 'employees', 'as_of', 'change', 'change_n', 'rev_growth', 'rev_emp', 'ni_emp', 'rev_emp_pct',
-              'ni_emp_pct', 'rev_emp_med', 'change_pct', 'flag', 'peer_group', 'years']
+              'ni_emp_pct', 'rev_emp_med', 'change_pct', 'flag', 'peer_group', 'years', 'median_pay', 'pay_ratio']
     srt = sorted(rows.values(), key=lambda r: -(r['employees'] or 0))
     write_json(out / 'index.json', {'generated_at': now(), 'fields': fields, 'rows': [[_clean(r.get(f)) for f in fields] for r in srt],
                                     'note': ('Headcounts as each company states them in its 10-K (the sentence is kept); revenue and net income '
                                              'from its XBRL facts for the fiscal year nearest the headcount date. Peers: the same 3-digit SIC '
                                              'industry when it has five companies on file, else the sector.')})
     st = {'built_at': now(), 'companies': len(rows), 'with_change': sum(1 for r in rows.values() if r.get('change') is not None),
-          'reports_read': sum(len(v) for v in found.values()), 'headcounts_found': sum(1 for v in found.values() for x in v.values() if x),
+          'reports_read': sum(len(v) for v in found.values()), 'median_pay': sum(1 for r in rows.values() if r.get('median_pay')), 'headcounts_found': sum(1 for v in found.values() for x in v.values() if x),
           'universe': len(cos), 'seconds': round(time.monotonic() - t0)}
     write_json(out / 'status.json', st)
     return st

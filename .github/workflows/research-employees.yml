@@ -58,7 +58,7 @@ jobs:
         run: |
           cd emp
           [ -d cache ] || exit 0
-          printf '%s\n' '# research-employees (data only)' '' 'Headcounts read from 10-Ks (cache/found.json, by accession, with the sentence), the filing lists' \
+          printf '%s\n' '# research-employees (data only)' '' 'Headcounts read from 10-Ks (cache/found.json), median employee pay from proxy statements (cache/pay.json), the filing lists' \
             '(cache/subs.json) and the files the site publishes (public/), kept by .github/workflows/research-employees.yml on main.' > README.md
           git add -A
           git -c user.name="filing-flows" -c user.email="actions@users.noreply.github.com" commit -q -m "employees $(date -u +%Y-%m-%dT%H:%MZ)" || true

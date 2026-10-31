@@ -95,6 +95,86 @@
     return sc;
   }
 
+  // ---------------------------------------------------------------- pay → which US households → how they spend
+  // BLS Consumer Expenditure Survey 2022, income-quintile table 1101 (aggregate × quintile share ÷ consumer units: per
+  // household a year). Cash contributions of the second fifth are suppressed by BLS (interpolated between its neighbours).
+  const CEX_Q = [
+    { inc: 14191, aft: 16337, earn: 0.4, c: { food: 5081, housing: 13343, apparel: 902, transport: 4910, healthcare: 3359, entertainment: 1226, education: 653, charity: 866, insurance: 655, other: 1567 } },
+    { inc: 37441, aft: 39300, earn: 0.9, c: { food: 6533, housing: 17972, apparel: 1214, transport: 8172, healthcare: 4444, entertainment: 1970, education: 507, charity: 1363, insurance: 2359, other: 2086 } },
+    { inc: 65659, aft: 63676, earn: 1.3, c: { food: 8581, housing: 21600, apparel: 1728, transport: 10745, healthcare: 5965, entertainment: 2935, education: 657, charity: 1854, insurance: 5444, other: 2555 } },
+    { inc: 108730, aft: 99891, earn: 1.8, c: { food: 10754, housing: 26168, apparel: 2258, transport: 14713, healthcare: 6680, entertainment: 3758, education: 1179, charity: 2170, insurance: 10766, other: 3367 } },
+    { inc: 244025, aft: 196794, earn: 2.1, c: { food: 15737, housing: 42411, apparel: 3616, transport: 22937, healthcare: 8807, entertainment: 7384, education: 3680, charity: 6407, insurance: 24529, other: 5151 } },
+  ];
+  const Q_NAME = ['lowest fifth', 'second fifth', 'middle fifth', 'fourth fifth', 'top fifth'];
+  const HH_CAT = [['housing', 'Housing'], ['transport', 'Transportation'], ['food', 'Food'], ['insurance', 'Social Security & pensions (payroll)'],
+    ['healthcare', 'Healthcare'], ['entertainment', 'Entertainment'], ['charity', 'Cash contributions'], ['apparel', 'Apparel & services'],
+    ['education', 'Education'], ['other', 'Personal care, alcohol, tobacco & other']];
+  // usual weekly earnings of full-time wage and salary workers, Q3 2026 (BLS CPS, table 5) × 52: 10th, 25th, 50th, 75th, 90th
+  const EARN = [[10, 32968], [25, 44148], [50, 64064], [75, 99216], [90, 151788]];
+  const HH_SRC = 'Pay: proxy statement (DEF 14A pay ratio: the median employee’s annual total compensation) or estimated pay ÷ the 10-K headcount. ' +
+    'US earnings: BLS usual weekly earnings of full-time workers, Q3 2026, × 52. Households: BLS Consumer Expenditure Survey 2022 by income fifth ' +
+    '(income before and after taxes, spending by category), matched by income per earner; the lowest fifth (mostly retirees and students) is not used for workers.';
+  function earnPct(pay) {
+    if (!fin(pay) || pay <= 0) return null;
+    if (pay <= EARN[0][1]) return { p: 10, below: true };
+    if (pay >= EARN[4][1]) return { p: 90, above: true };
+    for (let i = 0; i < EARN.length - 1; i++) {
+      const [p0, v0] = EARN[i], [p1, v1] = EARN[i + 1];
+      if (pay <= v1) return { p: p0 + (p1 - p0) * Math.log(pay / v0) / Math.log(v1 / v0) };
+    }
+    return null;
+  }
+  const pctText = (e) => (!e ? '—' : e.below ? 'below the 10th percentile' : e.above ? 'above the 90th percentile' : `about the ${Math.round(e.p)}th percentile`);
+  // a worker's pay → weights over the income fifths, by household income per earner (second fifth to top fifth)
+  function fifths(pay) {
+    const per = CEX_Q.map((q) => q.inc / q.earn), w = [0, 0, 0, 0, 0];
+    if (!fin(pay) || pay <= per[1]) { w[1] = 1; return w; }
+    if (pay >= per[4]) { w[4] = 1; return w; }
+    for (let i = 1; i < 4; i++) {
+      if (pay <= per[i + 1]) { const f = Math.log(pay / per[i]) / Math.log(per[i + 1] / per[i]); w[i] = 1 - f; w[i + 1] = f; return w; }
+    }
+    w[4] = 1; return w;
+  }
+  // one dollar of wages, as households of that mix use it: taxes, spending by category, saving
+  function budget(w) {
+    const out = { tax: 0, save: 0, over: 0, cat: {} };
+    HH_CAT.forEach(([k]) => { out.cat[k] = 0; });
+    w.forEach((wq, i) => {
+      if (!wq) return;
+      const q = CEX_Q[i], tax = Math.max(0, 1 - q.aft / q.inc), avail = 1 - tax;
+      const raw = {}; let s = 0;
+      HH_CAT.forEach(([k]) => { raw[k] = q.c[k] / q.inc; s += raw[k]; });
+      const k0 = s > avail ? avail / s : 1;
+      out.tax += wq * tax; out.save += wq * Math.max(0, avail - s); out.over += wq * Math.max(0, s / avail - 1);
+      HH_CAT.forEach(([k]) => { out.cat[k] += wq * raw[k] * k0; });
+    });
+    return out;
+  }
+  const mixText = (w) => w.map((x, i) => [x, i]).filter((z) => z[0] > 0.04).sort((a, b) => b[0] - a[0]).map(([x, i]) => `${Math.round(100 * x)}% ${Q_NAME[i]}`).join(', ');
+  // a view: wages → taxes / spending / saving → categories
+  function householdView(wages, b, label) {
+    const v = { cols: ['Wages', 'Taxes, spending, saving', 'Spent on'], nodes: [], links: [], notes: [HH_SRC, 'Federal, state and local income and other personal taxes: (income before taxes − after taxes) ÷ income before taxes for the matched households (BLS CEX)', 'Saving: after-tax income less spending for the matched households (BLS CEX)'] };
+    v.nodes.push(['w', 0, label, '#9a8f7a', 'C'], ['tax', 1, 'Income & other personal taxes', '#a08a5a', 'D'], ['spend', 1, 'Household spending', '#7f97b3', 'D']);
+    v.links.push(['w', 'tax', wages * b.tax, 'D', 1]);
+    let sp = 0;
+    HH_CAT.forEach(([k, l]) => { const x = wages * b.cat[k]; if (x > 0) { v.nodes.push(['c:' + k, 2, l, k === 'insurance' ? '#a08a5a' : '#88a3c0', 'D']); v.links.push(['spend', 'c:' + k, x, 'D', 0]); sp += x; } });
+    v.links.push(['w', 'spend', sp, 'D', 0]);
+    if (b.save > 0) { v.nodes.push(['save', 1, 'Saving', '#2e8b57', 'D']); v.links.push(['w', 'save', wages * b.save, 'D', 2]); }
+    return v;
+  }
+  let empIdx = null;
+  const empIndex = () => empIdx || (empIdx = getJSON('disclosures/data/research/employees/index.json').then((d) => {
+    const F = d.fields || [], m = new Map();
+    (d.rows || []).forEach((r) => { const o = {}; F.forEach((k, i) => { o[k] = r[i]; }); m.set(+o.cik, o); });
+    return m;
+  }).catch(() => new Map()));
+  const WAGE_SHARE = 0.8259;                       // wages in employee compensation (BEA NIPA 2025)
+  function payOf(row, compUS, compOut) {           // [pay, how, grade]
+    if (row && fin(row.median_pay) && row.median_pay > 0) return [row.median_pay, 'median employee, proxy statement', 'A'];
+    if (row && row.employees > 0 && (compUS + compOut) > 0) return [(compUS + compOut) * WAGE_SHARE / row.employees, 'estimated wages ÷ 10-K headcount', 'C'];
+    return [null, null, null];
+  }
+
   // ---------------------------------------------------------------- industries
   const VIEWS = [
     ['alloc', 'Revenue allocation (corrected)'], ['cash', 'Filed cash flow'], ['people', 'Pay → households'],
@@ -136,14 +216,37 @@
     async function show() {
       press();
       const chart = $('#fl-chart'), more = $('#fl-more'), panel = $('#fl-panel');
-      chart.innerHTML = '<p class="muted">Loading…</p>'; more.innerHTML = ''; panel.innerHTML = ''; $('#fl-share').innerHTML = '';
+      chart.innerHTML = '<p class="muted">Loading…</p>'; more.innerHTML = ''; delete more.dataset.pay; panel.innerHTML = ''; $('#fl-share').innerHTML = '';
       $('#fl-intro').textContent = INTRO[st.view];
       if (st.view === 'alloc') return showAlloc(chart, more, panel);
       let d = null;
       try { d = await getJSON(`data/gamma/flowlab/${st.key}.json`); } catch (e) { d = null; }
       if (!here()) return;
-      const v = d && d.views && d.views[st.view];
+      let v = d && d.views && d.views[st.view];
       if (!v) { chart.innerHTML = '<p class="muted">Not built for this level yet: its companies need four quarters of figures' + (st.view === 'cash' ? ' and a cash-flow statement read (the scan reads a few dozen companies a run)' : '') + ', or the view did not pass the checks.</p>'; return; }
+      if (st.view === 'people' && (v.meta || {}).members && (v.meta.members || []).length) {
+        const idx = await empIndex();
+        if (!here()) return;
+        const mm = v.meta.members.map(([cik, us, out]) => { const r = idx.get(+cik); const [pay, how, g] = payOf(r, us, out); return { cik, us, pay, how, g, t: (r || {}).ticker || cik, name: (r || {}).name || '' }; }).filter((x) => fin(x.pay));
+        const W = mm.reduce((a, x) => a + x.us, 0);
+        if (W > 0) {
+          const w = [0, 0, 0, 0, 0];
+          mm.forEach((x) => { fifths(x.pay).forEach((f, i) => { w[i] += f * x.us / W; }); });
+          const b = budget(w);
+          const wagesTotal = v.links.filter((l) => l[1] === 'p:wages').reduce((a, l) => a + l[2], 0);
+          const keep = v.links.filter((l) => l[0] !== 'p:wages');
+          const nv = { cols: v.cols, meta: v.meta, notes: v.notes.concat([HH_SRC]), nodes: v.nodes.filter((n) => !String(n[0]).startsWith('h:')), links: keep };
+          const ni = nv.notes.length - 1;
+          nv.links.push(['p:wages', 'hh:tax', wagesTotal * b.tax, 'D', ni]);
+          nv.nodes.push(['hh:tax', 2, 'Income & other personal taxes', '#a08a5a', 'D']);
+          HH_CAT.forEach(([k, l]) => { const x = wagesTotal * b.cat[k]; if (x > 0) { nv.nodes.push(['hh:' + k, 2, l, k === 'insurance' ? '#a08a5a' : '#7f97b3', 'D']); nv.links.push(['p:wages', 'hh:' + k, x, 'D', ni]); } });
+          if (b.save > 0) { nv.nodes.push(['hh:save', 2, 'Saving', '#2e8b57', 'D']); nv.links.push(['p:wages', 'hh:save', wagesTotal * b.save, 'D', ni]); }
+          v = nv;
+          const shown = mm.length, filedN = mm.filter((x) => x.g === 'A').length;
+          $('#fl-intro').textContent = INTRO.people + ` Wages here are spent as US households earning like these companies’ employees spend: ${shown} of ${v.meta.members.length} companies with a pay figure (${filedN} from proxy statements), weighted by their US pay — ${mixText(w)} by household income.`;
+          more.dataset.pay = JSON.stringify(mm.sort((a, b2) => b2.us - a.us).slice(0, 15));
+        }
+      }
       const label = (VIEWS.find((x) => x[0] === st.view) || [])[1];
       const first = v.links.filter((l) => (v.nodes.find((n) => n[0] === l[0]) || [])[1] === 0).reduce((a, l) => a + l[2], 0);
       const sub = { cash: `${usd(first)} of cash moved · ${(v.meta || {}).companies || 0} of ${d.companies} companies with a cash-flow statement read · all filed`,
@@ -160,6 +263,11 @@
         ends.slice(0, 24).map(([n, x]) => `<tr><td>${esc(n[2])}</td><td class="num">${usd(x)}</td><td class="num">${(100 * x / (first || 1)).toFixed(1)}%</td><td>${chip(n[4])} ${esc(WORD[n[4]])}</td></tr>`).join('')}</tbody></table></div>` +
         `<details class="method-note"><summary>Sources and how each band is computed</summary><ul>${v.notes.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` +
         (d.sources ? `<p class="small">${esc(d.sources.pay)}. ${esc(d.sources.households)}. ${esc(d.sources.wages)}. BEA input-output ${esc(d.sources.bea_year)}, scaled to ${esc(d.sources.scale_year)}.</p>` : '') + '</details>';
+      if (more.dataset.pay) {
+        const mm = JSON.parse(more.dataset.pay);
+        more.innerHTML += `<h3>Pay at the largest employers here</h3><div class="tbl-wrap"><table><thead><tr><th>Company</th><th class="num">Pay</th><th>From</th><th>Place in US full-time earnings</th><th>Households like theirs</th></tr></thead><tbody>${
+          mm.map((x) => `<tr><td><a href="#c-${esc(x.cik)}-dollar"><b>${esc(x.t)}</b></a> <span class="muted small">${esc(x.name)}</span></td><td class="num">${usd(x.pay)}</td><td>${chip(x.g)} ${esc(x.how)}</td><td>${esc(pctText(earnPct(x.pay)))}</td><td>${esc(mixText(fifths(x.pay)))}</td></tr>`).join('')}</tbody></table></div>`;
+      }
     }
     async function showAlloc(chart, more, panel) {
       let d = null;
@@ -226,7 +334,48 @@
         'Estimates are industry averages, not the company’s actual payments. Not investment advice.'] };
     const sc = draw(root.querySelector('#fl-chart'), root.querySelector('#fl-panel'), d, opts);
     if (sc) withShare((S) => { const el = root.querySelector('#fl-share'); if (el && here()) el.innerHTML = S.bar({ key: 'dollar-' + d.cik, title: opts.title, scene: () => sc, post: () => companyPost(d, rows) }); });
+    households(root, d, o, here);
   }
 
-  global.FFFlowLab = { industry, company };
+  // ---- the company's employees: what they are paid, where that sits among US earners, how households like theirs spend
+  async function households(root, d, o, here) {
+    const box = document.createElement('section');
+    box.className = 'section';
+    root.appendChild(box);
+    const link = (id) => (d.links.find((l) => l[0] === 'all' && l[1] === id) || [])[2] || 0;
+    const compUS = link('k:emp'), compOut = link('k:employees_out');
+    const wages = (d.links.find((l) => l[0] === 'k:emp' && l[1] === 'p:wages') || [])[2] || compUS * WAGE_SHARE;
+    let row = null, one = null;
+    try { row = (await empIndex()).get(+d.cik) || null; } catch (e) { row = null; }
+    try { one = await getJSON(`disclosures/data/research/employees/c/${+d.cik}.json`); } catch (e) { one = null; }
+    if (!here()) return;
+    const P = (one && one.pay) || null;
+    const [pay, how] = payOf(row, compUS, compOut);
+    const head = `<div class="section-head"><h2>Who the pay goes to, and how they spend it <span class="fl-beta">Beta</span></h2><span class="muted">Pay matched to US households</span></div>`;
+    if (!fin(pay) || wages <= 0) {
+      box.innerHTML = head + `<p class="muted">No pay figure for ${esc(d.name)} yet: the median employee’s pay is read from its proxy statement (DEF 14A), and the headcount from its 10-K, a few hundred companies a day.</p>`;
+      return;
+    }
+    const e = earnPct(pay), w = fifths(pay), b = budget(w);
+    const est = row && row.employees > 0 ? (compUS + compOut) * WAGE_SHARE / row.employees : null;
+    const cards = [
+      P ? ['Median employee pay (proxy)', usd(P.pay), `${P.form || 'DEF 14A'} filed ${P.filed || ''}${P.ratio ? ` · CEO pay ${Math.round(P.ratio)}× this` : ''}`] : null,
+      fin(est) ? ['Average wage (estimate)', usd(est), `estimated wages ÷ ${Number(row.employees).toLocaleString('en-US')} employees (10-K)`] : null,
+      ['Place in US full-time earnings', e ? (e.below ? '<10th pct.' : e.above ? '>90th pct.' : Math.round(e.p) + 'th pct.') : '—', 'BLS weekly earnings, Q3 2026'],
+      ['Households like theirs', mixText(w), 'by income per earner (BLS CEX)'],
+    ].filter(Boolean);
+    box.innerHTML = head + `<p>${esc(d.name)}’s pay figure is <b>${usd(pay)}</b> (${esc(how)}) — ${esc(pctText(e))} of US full-time earners. Households earning like that per worker are the ${esc(mixText(w))} of US households by income. Below, the company’s estimated US wages (${usd(wages)}) are spent the way those households spend: taxes, then housing, transport, food and the rest, and what they save.${b.over > 0.02 ? ` Those households spend about ${Math.round(100 * b.over)}% more than their after-tax income (savings drawn, help from family); the spending is scaled to the pay.` : ''}</p>
+      <div class="fl-cards">${cards.map((c) => `<div class="fl-card"><span>${esc(c[0])}</span><strong>${esc(c[1])}</strong><span>${esc(c[2])}</span></div>`).join('')}</div>
+      ${P && P.sentence ? `<p class="small muted">“${esc(String(P.sentence).slice(0, 320))}” ${P.url ? `<a href="${esc(P.url)}" target="_blank" rel="noopener">proxy statement</a>` : ''}</p>` : ''}
+      <div class="fl-chart" id="fl-hh-chart"></div><div class="fl-panel" id="fl-hh-panel"></div>
+      <details class="method-note"><summary>How the pay is matched</summary><p>${esc(HH_SRC)}</p>
+      <p>The proxy’s median covers employees worldwide (up to 5% abroad may be left out) and is total compensation as the company measures it; a company with many part-time or overseas staff has a low median. Households are matched by income per earner because most households have more than one; the result is how US households at that income spend on average, not these employees’ own records.</p></details>`;
+    const v = householdView(wages, b, 'Wages — US (estimate)');
+    draw(box.querySelector('#fl-hh-chart'), box.querySelector('#fl-hh-panel'), v, { title: `How ${d.ticker || d.name}’s US wages are spent (beta model)`, perDollar: true,
+      subtitle: `${usd(wages)} of estimated US wages · pay ${usd(pay)} (${how}) · spent like the ${mixText(w)} of US households`,
+      footer: ['Wages: BEA input-output estimate. Pay: proxy statement or estimate ÷ headcount. Households: BLS Consumer Expenditure Survey 2022 by income fifth; earnings: BLS CPS Q3 2026.',
+        'A national-average model of households at that income, not these employees’ own spending. Not investment advice.'] });
+  }
+
+  global.FFFlowLab = { industry, company, _hh: { earnPct, fifths, budget } };
 })(window);

@@ -86,3 +86,33 @@ class Build(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+PAY_CASES = [  # pay-ratio wordings from proxy statements (DEF 14A) → the median employee's pay, the ratio
+    ("As a result, the median of the annual total compensation of all of our employees (other than our CEO) was $58,226, and the ratio of our CEO's pay to that of our median employee was 245 to 1.", 58226, 245),
+    ("For 2025, the annual total compensation of our CEO was $25,123,456 and the annual total compensation of our median employee was $73,120.", 73120, None),
+    ("Our CEO's total compensation of $12,500,000 was approximately 180 times the total compensation of our median employee of $69,400.", 69400, 180),
+    ("The estimated annual total compensation of the median Wells Fargo employee (other than our CEO) was $82,044.", 82044, None),
+    ("The median annual total compensation of all employees of the Corporation, except the CEO, for 2025 was $183,084. The ratio was 181:1.", 183084, None),
+    ("After identifying the median employee, we added the cost of medical and dental benefits ($16,795) in the calculation. The annual total compensation of our median employee was $145,528, resulting in a ratio of 166:1.", 145528, 166),
+]
+
+
+class Pay(unittest.TestCase):
+    def test_wordings(self):
+        for s, pay, ratio in PAY_CASES:
+            m = E.median_pay(f'<html><body><h2>CEO Pay Ratio</h2><p>{s}</p></body></html>')
+            self.assertIsNotNone(m, s)
+            self.assertEqual(m['pay'], pay, s)
+            if ratio:
+                self.assertEqual(m['ratio'], ratio, s)
+
+    def test_line_break_and_none(self):
+        m = E.median_pay('<p>CEO Pay Ratio</p><p>the 2025 total compensation was $21,005,009 for our CEO</p><p>and $66,524 for our median employee.</p>')
+        self.assertEqual(m['pay'], 66524)
+        self.assertIsNone(E.median_pay('<p>Director pay was below the peer group median of $205,000.</p>'))
+
+    def test_proxies(self):
+        subs = {'filings': {'recent': {'form': ['8-K', 'DEFA14A', 'DEF 14A', 'DEF 14A'], 'accessionNumber': ['a', 'b', 'c', 'd'],
+                                       'primaryDocument': ['x.htm', 'y.htm', 'p.htm', 'p0.htm'], 'filingDate': ['2026-05-01', '2026-04-02', '2026-04-01', '2025-04-01']}}}
+        self.assertEqual([r['acc'] for r in E.proxies(subs)], ['c'])
