@@ -21,7 +21,7 @@ def _e(s):
 def _fig(svg, title, note=None, w=640, h=240):
     cap = f"<figcaption class='muted small'>{_e(note)}</figcaption>" if note else ''
     return (f"<figure class='seo-svg' style='margin:14px 0'><svg viewBox='0 0 {w} {h}' width='100%' role='img' aria-label='{_e(title)}' "
-            f"xmlns='http://www.w3.org/2000/svg' {FONT} style='max-width:{w}px;height:auto'><title>{_e(title)}</title>"
+            f"xmlns='http://www.w3.org/2000/svg' {FONT} style='height:auto'><title>{_e(title)}</title>"
             f"<text x='0' y='16' font-size='14' font-weight='600' fill='{INK}'>{_e(title)}</text>{svg}</svg>{cap}</figure>")
 
 
@@ -209,6 +209,8 @@ def scatter(points, xlab, ylab, title, me=None, note=None, xfmt=lambda v: f'{v:+
         out.append(f"<circle cx='{X(p[1]):.0f}' cy='{Y(p[2]):.0f}' r='{r:.1f}' fill='{GREY}' opacity='.45'><title>{_e(p[0])}</title></circle>")
     if mine:
         r = 3 + 9 * ((mine[3] or 0) / smax) ** .5
+        right = X(mine[1]) > W - 190                      # near the right edge: the name goes to its left
+        tx = X(mine[1]) - max(r, 6) - 4 if right else X(mine[1]) + max(r, 6) + 4
         out.append(f"<circle cx='{X(mine[1]):.0f}' cy='{Y(mine[2]):.0f}' r='{max(r, 6):.1f}' fill='{BLUE}' stroke='#fff' stroke-width='2'/>"
-                   f"<text x='{X(mine[1]) + max(r, 6) + 4:.0f}' y='{Y(mine[2]) + 4:.0f}' font-size='12' font-weight='600' fill='{INK}'>{_e(me)} ({_e(xfmt(mine[1]))}, {_e(yfmt(mine[2]))})</text>")
+                   f"<text x='{tx:.0f}' y='{Y(mine[2]) + 4:.0f}' font-size='12' font-weight='600' fill='{INK}' text-anchor='{'end' if right else 'start'}'>{_e(me)} ({_e(xfmt(mine[1]))}, {_e(yfmt(mine[2]))})</text>")
     return _fig(''.join(out), title, note, W, H)

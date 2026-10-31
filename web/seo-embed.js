@@ -16,24 +16,25 @@
   let company = {};
   const getCompany = (cik) => company[cik] || (company[cik] = fetch(BASE + 'data/c/' + cik + '.json').then((r) => (r.ok ? r.json() : null)).catch(() => null));
   const gone = (el) => el.remove();
+  const keep = (el) => { const s = el.querySelector('summary'); el.innerHTML = ''; if (s) el.appendChild(s); };
   async function draw(el) {
     const d = el.dataset, kind = d.kind, body = document.createElement('div');
     const live = () => document.body.contains(el);
     try {
       if (kind === 'flowlab') {
         if (!window.FFFlowLab) return gone(el);
-        el.innerHTML = ''; el.appendChild(body);
+        keep(el); el.appendChild(body);
         await window.FFFlowLab.company(body, { cik: d.cik, ticker: d.ticker, here: live });
         if (!body.querySelector('svg')) gone(el);
       } else if (kind === 'asia') {
         if (!window.FFAsia) return gone(el);
-        body.hidden = true; el.innerHTML = ''; el.appendChild(body);
+        body.hidden = true; keep(el); el.appendChild(body);
         await window.FFAsia.company(body, d.cik, document.querySelector('h1') ? document.querySelector('h1').textContent.split(' (')[0] : '');
         if (body.hidden) gone(el);
       } else if (kind === 'industry') {
         if (!window.FFFlowLab) return gone(el);
-        const h = el.querySelector('h2');
-        el.innerHTML = ''; if (h) el.appendChild(h); el.appendChild(body);
+        if (el.tagName === 'DETAILS') keep(el); else { const h = el.querySelector('h2'); el.innerHTML = ''; if (h) el.appendChild(h); }
+        el.appendChild(body);
         window.FFFlowLab.industry(body, { sic: d.sic, sector: d.sector, here: live });
       } else if (kind.startsWith('hub:')) {
         const v = (await getViews()).find((x) => x.id === kind.slice(4));
@@ -42,8 +43,7 @@
         const V = window[v.global];
         if (!V || !V.render) return gone(el);
         const c = await getCompany(d.cik);
-        const h = el.querySelector('h2');
-        el.innerHTML = ''; if (h) el.appendChild(h); el.appendChild(body);
+        keep(el); el.appendChild(body);
         await V.render(body, { cik: +d.cik, ticker: d.ticker, company: c, here: live, hub: BASE + 'disclosures/', quiet: true });
         if (!body.textContent.trim()) gone(el);
       }
@@ -51,9 +51,15 @@
   }
   function start() {
     const els = Array.from(document.querySelectorAll('.seo-live'));
-    if (!('IntersectionObserver' in window)) { els.forEach(draw); return; }
-    const io = new IntersectionObserver((ents) => ents.forEach((en) => { if (en.isIntersecting) { io.unobserve(en.target); draw(en.target); } }), { rootMargin: '400px' });
-    els.forEach((el) => io.observe(el));
+    els.forEach((el) => {
+      if (el.tagName === 'DETAILS') {                   // drawn when opened (the first is open: drawn when scrolled to)
+        el.addEventListener('toggle', () => { if (el.open && !el.dataset.drawn) { el.dataset.drawn = 1; draw(el); } });
+      }
+    });
+    const want = els.filter((el) => el.tagName !== 'DETAILS' || el.open);
+    if (!('IntersectionObserver' in window)) { want.forEach((el) => { el.dataset.drawn = 1; draw(el); }); return; }
+    const io = new IntersectionObserver((ents) => ents.forEach((en) => { if (en.isIntersecting) { io.unobserve(en.target); if (!en.target.dataset.drawn) { en.target.dataset.drawn = 1; draw(en.target); } } }), { rootMargin: '400px' });
+    want.forEach((el) => io.observe(el));
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

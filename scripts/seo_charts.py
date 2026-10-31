@@ -80,7 +80,7 @@ def static(c, r, peers_all, money):
         out.append(SV.scatter(pts, 'revenue growth, year over year', 'operating margin', f"{name} in its industry: growth against margin ({len(pts)} companies, SIC {sic})",
                               me=me, note=f"{r.get('industry') or 'Same SIC industry'}; dot size is quarterly revenue; dashed lines are the industry's medians."))
     body = ''.join(x for x in out if x)
-    return f"<h2>Charts</h2>{body}" if body else ''
+    return f"<h2 id='charts'>Charts</h2><div class='seo-grid'>{body}</div>" if body else ''
 
 
 def live(cik, ticker, sic, sector, chains, images, depth=2):
@@ -93,15 +93,18 @@ def live(cik, ticker, sic, sector, chains, images, depth=2):
                   ('hub:investments', 'Investments: gains and what it bought', '')]
     if sic:
         slots.append(('industry', 'Its industry’s money flow (input-output)', ''))
-    s = ''.join(f"<section class='seo-live' data-kind='{_e(k)}' data-cik='{_e(cik)}' data-ticker='{_e(ticker)}' data-sic='{_e(sic)}' data-sector='{_e(sector)}'>"
-                f"<h2>{_e(t)}</h2><p class='muted'>Loading the interactive chart…</p></section>" for k, t, _ in slots)
+    icons = {'flowlab': '💵', 'asia': '🌏', 'hub:rotation': '🔄', 'hub:quality': '🔍', 'hub:fairvalue': '⚖️', 'hub:outlook': '🔭', 'hub:investments': '📈', 'industry': '🏭'}
+    s = ''.join(f"<details class='seo-live' data-kind='{_e(k)}' data-cik='{_e(cik)}' data-ticker='{_e(ticker)}' data-sic='{_e(sic)}' data-sector='{_e(sector)}'"
+                f"{' open' if i == 0 else ''}><summary><span class='seo-ic'>{icons.get(k, '📊')}</span>{_e(t)}<span class='seo-tap'>interactive</span></summary>"
+                f"<p class='muted'>Loading the interactive chart…</p></details>" for i, (k, t, _) in enumerate(slots))
+    s = f"<h2 id='interactive'>Interactive views</h2><p class='muted'>The same charts as the app — open one to draw it.</p>{s}"
     th = ''
     for ch in chains[:6]:
         img = images.get(f"chain-{ch['id']}")
         th += (f"<a class='seo-theme' href='{up}chains/{_e(ch['id'])}/'>" + (f"<img loading='lazy' src='{_e(img)}' alt='{_e(ch['name'])} money flow' width='600' height='315'>" if img else '')
                + f"<span>{_e(ch['name'])} · {_e(ch['role'])}</span></a>")
     if th:
-        th = f"<h2>In supply chains and themes</h2><div class='seo-themes'>{th}</div>"
+        th = f"<h2 id='themes'>In supply chains and themes</h2><div class='seo-themes'>{th}</div>"
     return (th + s + f"<script>window.FF_BASE='{up}';</script><script src='{up}chains.js' defer></script><script src='{up}flowlab.js' defer></script>"
             f"<script src='{up}asia-links.js' defer></script><script src='{up}seo-embed.js' defer></script>")
 

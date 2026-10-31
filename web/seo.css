@@ -41,3 +41,63 @@ body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(-
 .seo-sk-modes button[aria-pressed="true"]{background:#184a68;color:#fff;border-color:#184a68}.seo-sk-notes ul{margin:4px 0 0 18px}.seo-sk-notes h3{margin:8px 0 2px;font-size:15px}
 .seo-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:860px){.seo-two{grid-template-columns:1fr}}
 .seo-two h3{margin:4px 0;font-size:15px}
+
+/* ---- 2026-10 look: cards, the headline, sign colours, a contents bar, collapsible interactive views ---- */
+.seo { max-width: 1040px; }
+.seo h2 { position: relative; padding-left: 12px; scroll-margin-top: 64px; }
+.seo h2::before { content: ''; position: absolute; left: 0; top: .2em; bottom: .2em; width: 4px; border-radius: 2px; background: var(--accent); }
+.seo h1 + .muted, .seo h1 + p.muted { margin-top: -4px; }
+.seo-hl { margin: 14px 0 6px; padding: 14px 18px; border-radius: 12px; font-size: 18px; line-height: 1.5; background: var(--surface);
+  border: 1px solid var(--line); border-left: 6px solid var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.seo-hl.down { border-left-color: #c0563d; }
+.seo-hl > span { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 99px; background: var(--surface-2); font: 600 12.5px/1.8 var(--mono); vertical-align: 2px; }
+.seo-hl b { font-weight: 650; }
+.seo-tile { box-shadow: 0 1px 2px rgba(0,0,0,.04); transition: transform .12s ease; }
+.seo-tile:hover { transform: translateY(-1px); }
+.seo-tile.up b { color: #17734a; }
+.seo-tile.down b { color: #b8432f; }
+.seo-toc { position: sticky; top: 0; z-index: 5; display: flex; gap: 6px; overflow-x: auto; margin: 6px -16px 4px; padding: 8px 16px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+.seo-toc a { flex: none; padding: 5px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font-size: 13.5px; text-decoration: none; }
+.seo-toc a:hover { border-color: var(--accent); color: var(--accent); }
+.seo-note { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px 18px; }
+.seo-note p { margin: 12px 0; }
+/* drawn charts as cards (light, like the Sankey, so the dark text reads in dark mode too) */
+figure.seo-svg { margin: 14px 0; padding: 14px 16px 10px; background: #fcfcfb; color: #2b2b2b; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+figure.seo-svg figcaption { margin-top: 6px; color: #6b6a66; }
+.seo-grid figure.seo-svg { break-inside: avoid; }
+/* tables: scroll sideways inside their box, never the page */
+.seo .tbl-wrap, .seo .tablebox { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin: 12px 0; }
+.seo .tbl-wrap table, .seo .tablebox table { margin: 0; }
+.seo tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--surface-2) 35%, transparent); }
+.seo tbody tr:hover td { background: var(--accent-soft, #dcebe2); }
+/* interactive views: one row each, opened to draw */
+details.seo-live { margin: 10px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow-x: auto; max-width: 100%; }
+details.seo-live > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-weight: 600; font-size: 16px; }
+details.seo-live > summary::-webkit-details-marker { display: none; }
+details.seo-live > summary::after { content: '▸'; margin-left: auto; color: var(--muted); transition: transform .15s; }
+details.seo-live[open] > summary::after { transform: rotate(90deg); }
+details.seo-live[open] > summary { border-bottom: 1px solid var(--line); }
+details.seo-live > :not(summary) { padding: 0 14px; }
+.seo-ic { font-size: 20px; }
+.seo-tap { font: 500 11px/1.8 var(--mono); padding: 0 8px; border-radius: 99px; background: var(--accent-soft, #dcebe2); color: var(--accent-ink, #0f5134); }
+.seo-live table { font-size: 13px; }
+/* side by side: each Sankey fills its column and scrolls inside it */
+.seo-two .seo-chart { width: auto; margin: 8px 0; }
+.seo-two > div { min-width: 0; }
+@media (max-width: 700px) {
+  .seo { padding: 16px 14px 40px; }
+  .seo h2 { font-size: 18px; }
+  .seo-tiles { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seo-tile b { font-size: 19px; }
+  .seo-hl { font-size: 16px; padding: 12px 14px; }
+  .seo-chart { position: relative; }
+  .seo-chart::after { content: '← swipe →'; position: sticky; left: 0; display: block; text-align: center; font: 500 11px var(--mono); color: var(--muted); padding-top: 4px; }
+  figure.seo-svg { padding: 10px 8px 6px; margin: 10px -4px; }
+}
+.seo-themes { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+@media (max-width: 700px) {
+  .seo-toc { margin: 6px -14px 4px; padding: 8px 14px; }
+  figure.seo-svg { overflow-x: auto; }
+  figure.seo-svg svg { min-width: 560px; }           /* legible labels: the chart scrolls sideways instead of shrinking */
+}

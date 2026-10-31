@@ -141,7 +141,11 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
     url = f"{base}/c/{slug}/{qslug(lab)}/"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › {e(lab)}</p>"
             f"<h1>{e(who)} {e(words)} results ({e(lab)})</h1><p class='muted'>{e(q.get('form'))} filed {e(fdate(q.get('filed')))}</p>"
-            f"<nav class='seo-more'>{' · '.join(navs)}</nav><p class='lead'>{e(lead)}</p>{sankey_figure(r['cik'], lab, f'{who} {lab} income statement Sankey')}"
+            f"<nav class='seo-more'>{' · '.join(navs)}</nav><p class='lead'>{e(lead)}</p>"
+            + "<div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{k}</span><b>{e(v)}</b></div>" for k, v in (
+                ('Revenue', money(rev[1])), ('Year over year', pc(yoy)), ('Quarter over quarter', pc(qoq)),
+                ('Operating margin', f'{om:.1f}%' if om is not None else '—'), ('Net earnings', money(n['net'][1]) if 'net' in n else '—'))) + "</div>"
+            + f"{sankey_figure(r['cik'], lab, f'{who} {lab} income statement Sankey')}"
             f"<div class='tbl-wrap'><table><thead><tr><th>{e(lab)}</th><th class='num'>Amount</th><th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>"
             + (f"<h2>What changed</h2>{analysis}" if analysis else '') + faq(qa)
             + f"<p><a class='seo-cta' href='../../../#c-{r['cik']}'>Open the interactive Sankey →</a></p>"

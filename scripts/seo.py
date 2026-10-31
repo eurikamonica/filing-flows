@@ -69,7 +69,16 @@ def slug_for(e_):
     return t if re.fullmatch(r"[a-z0-9-]{1,12}", t) else f"cik-{e_['cik']}"
 
 
+_TILE = re.compile(r"<div class='seo-tile'><span>([^<]*)</span><b>([+−-])")
+
+
+def _signs(body):
+    """A tile whose figure starts with + is green, with − red (the growth and the losses stand out)."""
+    return _TILE.sub(lambda m: f"<div class='seo-tile {'up' if m.group(2) == '+' else 'down'}'><span>{m.group(1)}</span><b>{m.group(2)}", body)
+
+
 def page(title, desc, canonical, body, depth, image, jsonld=None):
+    body = _signs(body)
     up = "../" * depth
     ld = f'<script type="application/ld+json">{json.dumps(jsonld, ensure_ascii=False)}</script>' if jsonld else ""
     return f"""<!doctype html>
@@ -121,12 +130,21 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     charts = (SV.bars([(l, hh.get("revenue")) for l, hh in hq], money, f"{name} revenue by quarter")
               + SV.bars([(l, hh.get("ni")) for l, hh in hq], money, f"{name} net earnings by quarter"))
     intro = c.get("intro") or {}
-    about = (f"<h2>About {e(name)}</h2><blockquote>{e((intro.get('text') or '')[:900])}</blockquote>"
+    about = (f"<h2 id='about'>About {e(name)}</h2><blockquote>{e((intro.get('text') or '')[:900])}</blockquote>"
              f"<p class='muted'>In its own words, from its {e(intro.get('source') or 'annual report')}"
              + (f", filed {e(fdate(intro.get('filed')))}" if intro.get("filed") else "") + ".</p>") if intro.get("text") else ""
     peer_links = "".join(f"<li><a href='../{slug_for(x)}/'>{e(display_name(x.get('name')))}{' (' + e(x['ticker']) + ')' if x.get('ticker') else ''}</a> "
                          f"<span class='muted'>{e(x.get('label'))} · revenue {e(x.get('rev') or '—')}{' · ' + pct(x.get('yoy')) + ' Y/Y' if x.get('yoy') is not None else ''}</span></li>"
                          for x in peers)
+    rev, ni_, yoy_ = h.get("revenue"), h.get("ni"), h.get("yoy")
+    bits = []
+    if rev and yoy_ is not None:
+        bits.append(f"Revenue {'up' if yoy_ >= 0 else 'down'} <b>{abs(yoy_):.0f}%</b> year over year to <b>{e(h.get('rev_fmt') or money(rev))}</b>")
+    if rev and ni_ is not None and rev > 0:
+        bits.append(f"<b>{100 * ni_ / rev:.0f}¢</b> of every $1 of revenue {'kept as net profit' if ni_ >= 0 else 'lost'}")
+    if h.get("om") is not None:
+        bits.append(f"operating margin <b>{h['om']:.1f}%</b>")
+    highlight = (f"<p class='seo-hl {'up' if (yoy_ or 0) >= 0 else 'down'}'><span>{e(q.get('label', ''))}</span> " + " · ".join(bits) + "</p>") if bits else ""
     tiles = "".join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (
         ("Revenue", h.get("rev_fmt") or money(h.get("revenue"))), ("Year over year", pct(h.get("yoy"))),
         ("Operating margin", pct(h.get("om"), False)), ("Net earnings", h.get("ni_fmt") or money(h.get("ni"))),
@@ -134,14 +152,16 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     body = f"""<p class="crumbs"><a href="../../">Filing Flows</a> › <a href="../../sector/{e(p.get('sector') or 'other')}/">{e(sector_name)}</a> › {e(who)}</p>
 <h1>{e(who)} reports {e(words)} results</h1>
 <p class="muted">{e(q.get('label', ''))} earnings · {e(form)} filed {e(fdate(q.get('filed')))}</p>
+{highlight}
 <p class="lead">{e(desc)}</p>
 <div class="seo-tiles">{tiles}</div>
+<nav class="seo-toc" aria-label="On this page"><a href="#sankey">Sankey</a>{'<a href="#changed">What changed</a>' if analysis else ''}<a href="#history">History</a>{'<a href="#charts">Charts</a>' if drawn else ''}<a href="#interactive">Interactive</a>{'<a href="#about">About</a>' if about else ''}</nav>
 <figure class="seo-chart" id="sankey" data-src="../../data/c/{e(p['cik'])}.json" data-label="{e(q.get('label', ''))}" data-filed="{e(q.get('filed') or '')}" aria-label="{e(who)} {e(q.get('label', ''))} income statement and cash flow Sankey"><p class="muted">Drawing the Sankey…</p></figure>
 <noscript><p class="muted">The Sankey needs JavaScript; the figures are in the table below.</p></noscript>
 <p><a class="seo-cta" href="{e(app)}">Open the interactive Sankey →</a> <span class="muted">click any line for what the company wrote about it, compare Y/Y and Q/Q, export as PNG or PDF</span></p>
 <script src="../../sankey.js"></script><script src="../../seo-quarter.js" defer></script>
-{f'<h2>What changed this quarter</h2>{analysis}' if analysis else ''}
-<h2>Quarterly history</h2>
+{f'<h2 id="changed">What changed this quarter</h2><div class="seo-note">{analysis}</div>' if analysis else ''}
+<h2 id="history">Quarterly history</h2>
 {charts}
 <div class="tbl-wrap"><table><thead><tr><th>Quarter</th><th>Form</th><th>Filed</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Op. margin</th><th class="num">Net earnings</th><th class="num">Op. cash flow</th></tr></thead><tbody>{rows}</tbody></table></div>
 {drawn}
