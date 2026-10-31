@@ -161,12 +161,12 @@ class Ultra(unittest.TestCase):
         kids = {D.local(D.parse_key(k)[0]): w for k, w in seg['J'][east]}
         # revenue less cost of revenue and SG&A make the profit; depreciation is a memo line, not one of the expenses
         self.assertEqual(kids, {'Revenues': 1.0, 'CostOfRevenue': -1.0, 'SellingGeneralAndAdministrativeExpense': -1.0})
-        self.assertIn(('gap:seg', 1.0), [tuple(x) for x in seg['J'][G + 'OperatingIncomeLoss']])
+        self.assertIn(('#gap:seg', 1.0), [tuple(x) for x in seg['J'][G + 'OperatingIncomeLoss']])
         self.assertEqual(U['cash_uses']['order'], ['capex', 'buyback', 'dividend'])
         vals = D.synth(U, F['vals']['cur'])
-        self.assertAlmostEqual(vals['gap:seg'], -15e9)                   # 35 − 35 − 15: what the segments do not carry
-        self.assertAlmostEqual(vals['cat:fcf'], 17e9)                    # operating cash flow 35 less capital spending 20 net of 2 of sales
-        self.assertEqual(D.label_of(None, 'cat:buyback'), 'Share buybacks')
+        self.assertAlmostEqual(vals['#gap:seg'], -15e9)                   # 35 − 35 − 15: what the segments do not carry
+        self.assertAlmostEqual(vals['#cat:fcf'], 17e9)                    # operating cash flow 35 less capital spending 20 net of 2 of sales
+        self.assertEqual(D.label_of(None, '#cat:buyback'), 'Share buybacks')
 
 
 class Forward(unittest.TestCase):

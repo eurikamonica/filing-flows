@@ -16,7 +16,8 @@
   'use strict';
   const MAIN = {
     revenue: ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'RevenueFromContractWithCustomerIncludingAssessedTax', 'SalesRevenueNet',
-      'RevenuesNetOfInterestExpense', 'SalesRevenueGoodsNet', 'SalesRevenueServicesNet'],
+      'RevenuesNetOfInterestExpense', 'SalesRevenueGoodsNet', 'SalesRevenueServicesNet', 'RegulatedAndUnregulatedOperatingRevenue',
+      'RegulatedOperatingRevenue', 'ElectricUtilityRevenue'],
     cor: ['CostOfRevenue', 'CostOfGoodsAndServicesSold', 'CostOfGoodsSold', 'CostOfGoodsAndServiceExcludingDepreciationDepletionAndAmortization'],
     gp: ['GrossProfit'], opex: ['OperatingExpenses'], costs: ['CostsAndExpenses', 'OperatingCostsAndExpenses', 'BenefitsLossesAndExpenses'],
     oi: ['OperatingIncomeLoss'], nonop: ['NonoperatingIncomeExpense'],
@@ -48,7 +49,7 @@
   const local = (c) => c.split(':').pop();
   const concept = (k) => { let c = k.startsWith('cf>') ? k.slice(3) : k; return c.split('|')[0]; };
   function mainOf(k) {
-    if (!k || k.includes('~') || /^(gap:|cat:|seg>)/.test(k)) return null;
+    if (!k || k.includes('~') || /^(#|seg>)/.test(k)) return null;
     const c = k.startsWith('cf>') ? k.slice(3) : k;
     if (c.includes('|') || c.startsWith('seg>')) return null;
     return MAIN_OF[local(c)] || null;
@@ -83,7 +84,7 @@
       const ocf = (J[u.cash_root] || []).map(([k]) => k).find((k) => mainOf(k) === 'ocf');
       const drop = (k) => { if (k === ocf || !J[k]) return; const kids = J[k]; delete J[k]; kids.forEach(([x]) => drop(x)); };
       drop(u.cash_root);
-      Object.entries(u.cash_uses.J).forEach(([t, kids]) => { J[t] = kids; if (t === u.cash_root || t === 'cat:fcf') defOpen.add(t); });
+      Object.entries(u.cash_uses.J).forEach(([t, kids]) => { J[t] = kids; if (t === u.cash_root || t === '#cat:fcf') defOpen.add(t); });
     }
     return { J, runs, alias, defOpen };
   }
@@ -235,7 +236,7 @@
     const opened = o.opened || new Set(), closed = o.closed || new Set();
     const isOpen = (X) => !!o.all || (S.defOpen.has(X) && !closed.has(X)) || opened.has(X);
     const fl = flows(S, u, now, R, isOpen, null);
-    if (u.seg && o.costs === 'segments') (u.seg.J[u.seg.rev] || []).forEach(([k]) => { if (!k.startsWith('gap:')) fl.parent.set(k, u.seg.src); });
+    if (u.seg && o.costs === 'segments') (u.seg.J[u.seg.rev] || []).forEach(([k]) => { if (!k.startsWith('#gap:')) fl.parent.set(k, u.seg.src); });
     let fq = q ? flows(S, u, q, R, isOpen, fl.decided) : null;
     let fy = y ? flows(S, u, y, R, isOpen, fl.decided) : null;
     const unit = R >= 1e9 ? 'B' : 'M';
@@ -251,7 +252,7 @@
     const keys = fl.order.filter((k) => ins.has(k) || outs.has(k));
     // columns: in each junction the inflows one column before the outflows; the cash flows after the income statement
     const col = new Map([[u.root, 0]]);
-    const cashJ = (a, b) => a.concat(b).some((k) => k.startsWith('cf>') || k.startsWith('cat:') || mainOf(k) === 'ocf');
+    const cashJ = (a, b) => a.concat(b).some((k) => k.startsWith('cf>') || k.startsWith('#cat:') || mainOf(k) === 'ocf');
     function settle(js, shift) {
       for (let pass = 0; pass < js.length + 2; pass++) {
         let ch = false;
@@ -287,7 +288,7 @@
     const color = (k) => {
       if (k === rev || into.has(k)) return 'rev';
       const kd = fl.kind.get(k) || 'src';
-      if ((k.startsWith('cf>') || k.startsWith('cat:')) && k !== ocf && mainOf(k) !== 'cash_chg') return kd === 'use' ? 'cost' : k === 'cat:fcf' ? 'profit' : 'noncash';
+      if ((k.startsWith('cf>') || k.startsWith('#cat:')) && k !== ocf && mainOf(k) !== 'cash_chg') return kd === 'use' ? 'cost' : k === '#cat:fcf' ? 'profit' : 'noncash';
       return kd === 'src' ? 'profit' : 'cost';
     };
     const lab = u.labels || {};
@@ -298,7 +299,7 @@
       let name = NAMES[m] || lab[k] || local(concept(k));
       if (m === 'net' && concept(k).endsWith('ProfitLoss')) name = 'Net earnings (incl. minority interests)';
       if (m === 'cash_chg') name = (now[k] || 0) > 0 ? 'Added to cash' : 'Drawn from cash';
-      if (k === 'cat:fcf') name = 'Free cash flow';
+      if (k === '#cat:fcf') name = 'Free cash flow';
       return name;
     };
     const toggles = new Map();                              // node id → '+' (closed, can open) | '−' (open, can close)
@@ -315,7 +316,7 @@
       const isO = isOpen(k) && pairs.some(([s, t]) => (s === k || t === k) && fl.jx.some((jj) => jj[2] === k));
       if (canOpen && !isOpen(k)) toggles.set(i, '+');
       else if (canOpen && isO && k !== u.root && !CHAIN.has(m) && k !== u.cash_root && !k.startsWith('seg>') &&
-        !(o.costs === 'segments' && u.seg && u.seg.J[k]) && k !== 'cat:fcf') toggles.set(i, '−');   // the view's own skeleton stays
+        !(o.costs === 'segments' && u.seg && u.seg.J[k]) && k !== '#cat:fcf') toggles.set(i, '−');   // the view's own skeleton stays
       nodes.push(n);
       byk.set(k, n);
     });
@@ -346,12 +347,12 @@
       n.lines = lines;
       n.cmp = delta(n, p, 'q', 'no prior quarter', unit);
       n.cmp_y = delta(n, p, 'y', o.annual ? 'no prior year' : 'no year-ago quarter', unit);
-      const via = (u.via || {})[k] || (u.seg && u.seg.J[k] ? 'the segment note' : k.startsWith('cat:') ? 'the cash flow statement (grouped by use)' : null);
+      const via = (u.via || {})[k] || (u.seg && u.seg.J[k] ? 'the segment note' : k.startsWith('#cat:') ? 'the cash flow statement (grouped by use)' : null);
       const src = [];
       if (n.full) src.push(n.full + '.');
       if (k.includes('~')) src.push('Small parts summed here: ' + (fl.folded.get(k) || []).map((x) => `${lab[x] || local(concept(x))} ${money(Math.abs(now[x] || 0), unit)}`).join('; ') + '.');
-      else if (k.startsWith('gap:')) src.push('What the split leaves of the total (not assigned to a member or segment).');
-      else if (!k.startsWith('cat:') && !k.startsWith('seg>')) src.push('XBRL: ' + concept(k) + (k.includes('|') ? ' · ' + k.split('|').slice(1).map((d) => d.split('=').map((x) => x.split(':').pop()).join(' = ')).join(' · ') : '') + '.');
+      else if (k.startsWith('#gap:')) src.push('What the split leaves of the total (not assigned to a member or segment).');
+      else if (!k.startsWith('#') && !k.startsWith('seg>')) src.push('XBRL: ' + concept(k) + (k.includes('|') ? ' · ' + k.split('|').slice(1).map((d) => d.split('=').map((x) => x.split(':').pop()).join(' = ')).join(' · ') : '') + '.');
       if (via && fl.jx.some((jj) => jj[2] === k)) src.push(String(via).startsWith('dims:') ? `Split by the filing’s ${(AXIS_WORD[via.slice(5)] || 'members').toLowerCase()}.` : `Split by “${dec(via)}”.`);
       if (of) src.push(`Inside it, from the notes: stock-based pay ${money(of.sbc, unit)}${of.amort ? `, amortization of acquired intangibles ${money(of.amort, unit)}` : ''}.`);
       n.source = esc(src.join(' '));

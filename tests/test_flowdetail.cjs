@@ -30,7 +30,7 @@ const u = {
   seg: {
     profit: G + 'OperatingIncomeLoss', rev: 'seg>' + G + 'Revenues', src: G + 'Revenues', members: ['x:East', 'x:West'],
     J: {
-      [G + 'OperatingIncomeLoss']: [[k('OperatingIncomeLoss', SEG, 'East'), 1], [k('OperatingIncomeLoss', SEG, 'West'), 1], ['gap:seg', 1]],
+      [G + 'OperatingIncomeLoss']: [[k('OperatingIncomeLoss', SEG, 'East'), 1], [k('OperatingIncomeLoss', SEG, 'West'), 1], ['#gap:seg', 1]],
       [k('OperatingIncomeLoss', SEG, 'East')]: [[k('Revenues', SEG, 'East'), 1], [k('CostOfRevenue', SEG, 'East'), -1]],
       [k('OperatingIncomeLoss', SEG, 'West')]: [[k('Revenues', SEG, 'West'), 1], [k('CostOfRevenue', SEG, 'West'), -1]],
       ['seg>' + G + 'Revenues']: [[k('Revenues', SEG, 'East'), 1], [k('Revenues', SEG, 'West'), 1]],
@@ -39,11 +39,11 @@ const u = {
   cash_uses: {
     order: ['capex', 'buyback', 'dividend'],
     J: {
-      'cat:capex': [['cf>' + G + 'PaymentsToAcquirePropertyPlantAndEquipment', -1]],
-      'cat:buyback': [['cf>' + G + 'PaymentsForRepurchaseOfCommonStock', -1]],
-      'cat:dividend': [['cf>' + G + 'PaymentsOfDividends', -1]],
-      'cat:fcf': [['cf>' + G + 'NetCashProvidedByUsedInOperatingActivities', 1], ['cat:capex', 1]],
-      ['cf>' + G + 'CashPeriodIncreaseDecrease']: [['cat:fcf', 1], ['cat:buyback', 1], ['cat:dividend', 1]],
+      '#cat:capex': [['cf>' + G + 'PaymentsToAcquirePropertyPlantAndEquipment', -1]],
+      '#cat:buyback': [['cf>' + G + 'PaymentsForRepurchaseOfCommonStock', -1]],
+      '#cat:dividend': [['cf>' + G + 'PaymentsOfDividends', -1]],
+      '#cat:fcf': [['cf>' + G + 'NetCashProvidedByUsedInOperatingActivities', 1], ['#cat:capex', 1]],
+      ['cf>' + G + 'CashPeriodIncreaseDecrease']: [['#cat:fcf', 1], ['#cat:buyback', 1], ['#cat:dividend', 1]],
     },
   },
   of: { [G + 'ResearchAndDevelopmentExpense']: { sbc: `${G}ShareBasedCompensation|${G}IncomeStatementLocationAxis=${G}ResearchAndDevelopmentExpenseMember` } },
@@ -58,8 +58,8 @@ const now = {
   ['cf>' + G + 'PaymentsForRepurchaseOfCommonStock']: 10, ['cf>' + G + 'PaymentsOfDividends']: 4, ['cf>' + G + 'NetCashProvidedByUsedInFinancingActivities']: -14,
   ['cf>' + G + 'CashPeriodIncreaseDecrease']: 6,
   [k('Revenues', SEG, 'East')]: 70, [k('Revenues', SEG, 'West')]: 30, [k('CostOfRevenue', SEG, 'East')]: 30, [k('CostOfRevenue', SEG, 'West')]: 20,
-  [k('OperatingIncomeLoss', SEG, 'East')]: 40, [k('OperatingIncomeLoss', SEG, 'West')]: 10, 'gap:seg': -15, ['seg>' + G + 'Revenues']: 100,
-  'cat:capex': -12, 'cat:buyback': -10, 'cat:dividend': -4, 'cat:fcf': 20,
+  [k('OperatingIncomeLoss', SEG, 'East')]: 40, [k('OperatingIncomeLoss', SEG, 'West')]: 10, '#gap:seg': -15, ['seg>' + G + 'Revenues']: 100,
+  '#cat:capex': -12, '#cat:buyback': -10, '#cat:dividend': -4, '#cat:fcf': 20,
   [`${G}ShareBasedCompensation|${G}IncomeStatementLocationAxis=${G}ResearchAndDevelopmentExpenseMember`]: 3,
 };
 const scale = (o, f) => Object.fromEntries(Object.entries(o).map(([a, b]) => [a, b * f]));
@@ -102,7 +102,7 @@ const east = id(sp, k('Revenues', SEG, 'East')), eastP = id(sp, k('OperatingInco
 assert.strictEqual(l.get(`revenue>${east}`), 70);
 assert.strictEqual(l.get(`${east}>${eastP}`), 40);
 assert.strictEqual(l.get(`${east}>${id(sp, k('CostOfRevenue', SEG, 'East'))}`), 30);
-assert.ok(sp.nodes.some((n) => n.key === 'gap:seg'), 'what the segments do not carry');
+assert.ok(sp.nodes.some((n) => n.key === '#gap:seg'), 'what the segments do not carry');
 assert.ok(!sp.nodes.some((n) => n.id === 'gp'), 'no company-level gross profit in the segment view');
 assert.strictEqual(sp.nodes.find((n) => n.id === east).color, 'rev');
 const col = (i) => sp.nodes.find((n) => n.id === i).col;
@@ -113,10 +113,10 @@ assert.ok(sp.nodes.some((n) => n.key === k('Revenues', P, 'Hw')), 'revenue still
 sp = F.build(u, { cash: 'uses' });
 assert.deepStrictEqual(balanced(sp), []);
 l = L(sp);
-assert.strictEqual(l.get(`ocf>${id(sp, 'cat:capex')}`), 12);
-assert.strictEqual(l.get(`ocf>${id(sp, 'cat:fcf')}`), 20);
-assert.strictEqual(sp.toggles.get(id(sp, 'cat:capex')), '+');
-sp = F.build(u, { cash: 'uses', opened: new Set(['cat:capex']) });
+assert.strictEqual(l.get(`ocf>${id(sp, '#cat:capex')}`), 12);
+assert.strictEqual(l.get(`ocf>${id(sp, '#cat:fcf')}`), 20);
+assert.strictEqual(sp.toggles.get(id(sp, '#cat:capex')), '+');
+sp = F.build(u, { cash: 'uses', opened: new Set(['#cat:capex']) });
 assert.ok(sp.nodes.some((n) => n.key === 'cf>' + G + 'PaymentsToAcquirePropertyPlantAndEquipment'));
 assert.deepStrictEqual(balanced(sp), []);
 

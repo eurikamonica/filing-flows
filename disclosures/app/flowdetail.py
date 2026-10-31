@@ -46,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import xbrl_filing as X
 import notes as N
 
-VERSION = 3                  # 2: what the notes already commit (forward figures); 3: the ultra-detailed canvas (u)
+VERSION = 4                  # 2: forward figures from the notes; 3: the ultra-detailed canvas (u); 4: made-up lines "#…", segment groups
 FOLD = 0.003                 # parts under 0.3% of revenue are summed into "Other …" (per junction and side)
 MAX_PARTS = 9                # at most this many parts per side of a junction; the smallest beyond it are summed too
 NOTE_DEPTH = 2               # a line split by a note, its parts by another note: this many levels at most
@@ -55,7 +55,8 @@ NOTE_DEPTH_ULTRA = 4         # the ultra-detailed canvas: deeper (its extra leve
 # the site's ids for the main lines (pipeline/sankey.py): the guidance comparison and the colours rest on them
 MAIN = [
     ('revenue', ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'RevenueFromContractWithCustomerIncludingAssessedTax',
-                 'SalesRevenueNet', 'RevenuesNetOfInterestExpense', 'SalesRevenueGoodsNet', 'SalesRevenueServicesNet']),
+                 'SalesRevenueNet', 'RevenuesNetOfInterestExpense', 'SalesRevenueGoodsNet', 'SalesRevenueServicesNet',
+                 'RegulatedAndUnregulatedOperatingRevenue', 'RegulatedOperatingRevenue', 'ElectricUtilityRevenue']),
     ('cor', ['CostOfRevenue', 'CostOfGoodsAndServicesSold', 'CostOfGoodsSold', 'CostOfGoodsAndServiceExcludingDepreciationDepletionAndAmortization']),
     ('gp', ['GrossProfit']),
     ('opex', ['OperatingExpenses']),
@@ -107,7 +108,7 @@ def parse_key(k):
     if k.startswith('cf>'):
         k = k[3:]
     c, *ds = k.split('|')
-    return c, tuple(tuple(d.split('=', 1)) for d in ds)
+    return c, tuple(tuple(d.split('=', 1)) for d in ds if '=' in d)
 
 
 # ------------------------------------------------------------------ periods of one filing
@@ -175,7 +176,7 @@ class Tree:
         self.stmt_title = {s['report']['role']: N.title_of(FL, s['report']) for s in st}
 
     def v(self, key, p):
-        if p is None:
+        if p is None or key.startswith(('#', 'seg>')):    # made-up lines: computed (synth)
             return None
         c, dims = parse_key(key)
         return self.FL.v(c, p, dims)
@@ -287,7 +288,7 @@ class Tree:
                     top, groups = got
                     J = {}
                     mk = lambda x: key_of(cc, ((axis, x),))
-                    J[total] = [(mk(x), 1.0) for x in top] + ([('gap:' + total, 1.0)] if gap else [])
+                    J[total] = [(mk(x), 1.0) for x in top] + ([('#gap:' + total, 1.0)] if gap else [])
                     for g, parts in groups.items():
                         J[mk(g)] = [(mk(x), 1.0) for x in parts]
                     return axis, cc, J
@@ -520,9 +521,10 @@ ISL_AXIS = 'us-gaap:IncomeStatementLocationAxis'
 # segment profit measures, in the order tried (the consolidated line they reconcile to must be on the chart)
 SEG_PROFIT = ['OperatingIncomeLoss', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest',
               'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments',
-              'GrossProfit']
+              'GrossProfit', 'NetIncomeLoss', 'ProfitLoss']
 SEG_REV = ['RevenueFromContractWithCustomerExcludingAssessedTax', 'Revenues', 'RevenueForReportableSegments',
-           'RevenueFromContractWithCustomerIncludingAssessedTax']
+           'RevenueFromContractWithCustomerIncludingAssessedTax', 'RegulatedAndUnregulatedOperatingRevenue']
+SEG_COSTS = ['us-gaap:CostsAndExpenses', 'us-gaap:OperatingCostsAndExpenses', 'us-gaap:BenefitsLossesAndExpenses']
 # lines a segment table shows beside its expenses without being one of them
 SEG_MEMO = re.compile(r'(?i)Depreciation|Amortization$|AdjustmentFor|Expenditure|Assets|Goodwill|Intersegment|PercentageChange|'
                       r'Capital|Interest(?:Income|Revenue)|Employees|Restructuring')
@@ -597,19 +599,67 @@ def segments(T, J, ub):
         if key_of(c) in tree and sum(1 for m in by.values() if c in m) >= 2:
             pc = c
             break
+    synthetic = False
+    if not pc and key_of('us-gaap:OperatingIncomeLoss') in tree:
+        # no profit per segment, but its revenue and its costs (Alphabet): the profit is what the costs leave
+        if sum(1 for cs in by.values() if any(c in cs for c in SEG_COSTS)) >= 2:
+            pc, synthetic = 'us-gaap:OperatingIncomeLoss', True
     if not pc:
         return None
-    members = [m for m, cs in by.items() if pc in cs]
-    rc = next(('us-gaap:' + x for x in SEG_REV if all('us-gaap:' + x in by[m] for m in members)), None)
-    if not rc:
+    # the consolidated line the segments reconcile to must be on the flows' way down from net income
+    seen, todo = set(), [ub['root']]
+    while todo:
+        t = todo.pop()
+        if t in seen:
+            continue
+        seen.add(t)
+        todo += [k for k, _ in J.get(t, [])]
+    if key_of(pc) not in seen:
+        return None
+    if synthetic:
+        members = [m for m, cs in by.items() if any(c in cs for c in SEG_COSTS)]
+    else:
+        members = [m for m, cs in by.items() if pc in cs]
+    rc = max(('us-gaap:' + x for x in SEG_REV), key=lambda c: sum(1 for m in members if c in by[m]))
+    members = [m for m in members if rc in by[m]]      # a segment without its revenue: in what is not allocated
+    # a member that sums others (Intel's "Client Computing Group + Datacenter", UnitedHealth's "Total Optum", Caterpillar's
+    # reportable segments in aggregate) is a group, not a segment of its own
+    rv = {m: by[m][rc][1] for m in members}
+    groups = set()
+    for g in sorted(members, key=lambda m: -abs(rv[m])):
+        rest = [m for m in members if m != g and m not in groups and abs(rv[m]) < abs(rv[g])]
+        sub = _subset(rest, rv, rv[g], max(abs(rv[g]) * 0.0015, 1.0))
+        if (sub and len(sub) >= 2) or re.search(r'(?i)Aggregat|Total', local(g)):
+            groups.add(g)
+    members = [m for m in members if m not in groups]
+    if len(members) < 2:
         return None
     cal = FL.F['cal']
     SJ, profits, revs = {}, [], []
     for m in members:
         cs = by[m]
+        rdims = cs[rc][0]
+        k = lambda c, d: key_of(c, d)
+        rev = cs[rc][1]
+        if synthetic:
+            ck = next(c for c in SEG_COSTS if c in cs)
+            pk = '#segp:' + m
+            kids = [(k(rc, rdims), 1.0), (k(ck, cs[ck][0]), -1.0)]
+            # the costs split into the lines that make them up (labour + other costs)
+            parts = [(c, cs[c][1]) for c in cs if c not in (rc, ck) and not SEG_MEMO.search(local(c)) and not local(c).startswith('Revenue') and cs[c][1]]
+            for n_ in range(len(parts), 1, -1):
+                import itertools
+                sub = next((list(cmb) for cmb in itertools.combinations(parts, n_)
+                            if abs(sum(v for _, v in cmb) - cs[ck][1]) <= max(abs(cs[ck][1]) * 0.0015, 1.0)), None)
+                if sub:
+                    SJ[k(ck, cs[ck][0])] = [(k(c, cs[c][0]), 1.0) for c, _ in sub]
+                    break
+            SJ[pk] = kids
+            profits.append(pk)
+            revs.append(k(rc, rdims))
+            continue
         dims = cs[pc][0]
-        k = lambda c, d=dims: key_of(c, d)
-        prof, rev = cs[pc][1], cs[rc][1]
+        prof = cs[pc][1]
         kids = None
         for role, tr in cal.items():                     # the segment note's own calculation of the profit
             if pc not in tr:
@@ -629,22 +679,21 @@ def segments(T, J, ub):
                     score = (sum(1 for sg in signs if sg == 1), -sum(1 for sg in signs if sg == -1))
                     if not best or score > best[0]:
                         best = (score, signs)
-            if not best:
-                return None
-            kids = [(k(rc, cs[rc][0]), 1.0)] + [(k(c, cs[c][0]), -float(sg)) for (c, v), sg in zip(items, best[1]) if sg]
-        SJ[k(pc)] = kids
-        profits.append(k(pc))
-        revs.append(next(x for x, _ in kids if parse_key(x)[0] == rc))
-    if len(SJ) < 2:
-        return None
-    # the segments' revenue adds up to which line (total revenue, or the sales within it)
+            if best:
+                kids = [(k(rc, rdims), 1.0)] + [(k(c, cs[c][0]), -float(sg)) for (c, v), sg in zip(items, best[1]) if sg]
+            else:                                        # the expenses not itemized (a utility's segment): one line
+                kids = [(k(rc, rdims), 1.0), (f'#gap:segc|{m}', -1.0)]
+        SJ[k(pc, dims)] = kids
+        profits.append(k(pc, dims))
+        revs.append(k(rc, rdims))
+    # the segments' revenue adds up to which line (total revenue, or the sales within it); intersegment sales may add to it
     total = sum(by[m][rc][1] for m in members)
     src = min((x for x in (ub['rev'], next((k for kids in J.values() for k, _ in kids if main_of(k) == 'revenue'), None)) if x),
               key=lambda x: abs((T.v(x, cur) or 0) - total), default=None)
-    if not src or abs((T.v(src, cur) or 0) - total) > 0.25 * abs(total):
+    if not src or abs((T.v(src, cur) or 0) - total) > 0.6 * abs(total):
         return None
-    SJ[key_of(pc)] = [(x, 1.0) for x in profits] + [('gap:seg', 1.0)]
-    SJ['seg>' + src] = [(x, 1.0) for x in revs] + [('gap:seg>' + src, 1.0)]
+    SJ[key_of(pc)] = [(x, 1.0) for x in profits] + [('#gap:seg', 1.0)]
+    SJ['seg>' + src] = [(x, 1.0) for x in revs] + [('#gap:seg>' + src, 1.0)]
     return {'J': SJ, 'profit': key_of(pc), 'rev': 'seg>' + src, 'src': src, 'members': members}
 
 
@@ -681,14 +730,14 @@ def cash_uses(J, ub):
         cats.setdefault(cat, []).append((k, w))
     if len(cats) < 2:
         return None
-    UJ = {f'cat:{c}': kids for c, kids in cats.items()}
+    UJ = {f'#cat:{c}': kids for c, kids in cats.items()}
     top = []
     if 'capex' in cats:
-        UJ['cat:fcf'] = [(ocf, 1.0), ('cat:capex', 1.0)]
-        top.append(('cat:fcf', 1.0))
+        UJ['#cat:fcf'] = [(ocf, 1.0), ('#cat:capex', 1.0)]
+        top.append(('#cat:fcf', 1.0))
     else:
         top.append((ocf, 1.0))
-    top += [(f'cat:{c}', 1.0) for c in CASH_CATS if c in cats and c != 'capex']
+    top += [(f'#cat:{c}', 1.0) for c in CASH_CATS if c in cats and c != 'capex']
     UJ[cr] = top
     return {'J': UJ, 'order': [c for c in CASH_CATS if c in cats]}
 
@@ -697,7 +746,7 @@ def of_lines(T, J):
     """Stock pay and amortization of acquired intangibles inside each cost line (the notes' tables by income statement
     line): {line key: {'sbc': key, 'amort': key}}."""
     FL, cur = T.FL, T.P['cur']
-    lines = [k for k in set(J) | {k for kids in J.values() for k, _ in kids} if not parse_key(k)[1] and not k.startswith(('cf>', 'gap:', 'cat:'))]
+    lines = [k for k in set(J) | {k for kids in J.values() for k, _ in kids} if not parse_key(k)[1] and not k.startswith(('cf>', '#gap:', '#cat:'))]
     want = [('CostOf', ('CostOf',)), ('ResearchAndDevelopment', ('ResearchAndDevelopment',)), ('SellingGeneralAndAdministrative', ('SellingGeneralAndAdministrative',)),
             ('SellingAndMarketing|SalesAndMarketing|MarketingAndSales', ('SellingAndMarketing', 'MarketingAndAdvertising')), ('GeneralAndAdministrative', ('GeneralAndAdministrative',)),
             ('OperatingExpense', ('OperatingExpenses',))]
@@ -719,7 +768,7 @@ def of_lines(T, J):
 
 
 def synth(U, vals):
-    """The canvas's made-up lines in one period's figures: the segment split's revenue, what a split leaves (gap:), the cash
+    """The canvas's made-up lines in one period's figures: the segment split's revenue, what a split leaves (#gap:), the cash
     groups (cat:)."""
     vals = dict(vals)
     if U.get('seg'):
@@ -728,28 +777,32 @@ def synth(U, vals):
             vals['seg>' + src] = vals[src]
     cu = (U.get('cash_uses') or {}).get('J') or {}
     for c in list(CASH_CATS) + ['fcf']:
-        kids = cu.get(f'cat:{c}')
+        kids = cu.get(f'#cat:{c}')
         if kids and all(k in vals for k, _ in kids):        # a group with a line missing this period has no total
-            vals[f'cat:{c}'] = sum(w * vals[k] for k, w in kids)
+            vals[f'#cat:{c}'] = sum(w * vals[k] for k, w in kids)
     for Jx in [U['J']] + list((U.get('alt') or {}).values()) + ([U['seg']['J']] if U.get('seg') else []):
         _residuals({t: kids for t, kids in Jx.items()}, vals)
     return vals
 
 
 def label_of(FL, k):
-    if k.startswith('gap:seg>'):
-        return 'Revenue outside the segments'
-    if k.startswith('gap:seg'):
+    if k.startswith('#gap:seg>'):
+        return 'Reconciling items (corporate, eliminations)'
+    if k.startswith('#gap:segc|'):
+        return f"{FL.label(k.split('|', 1)[1])} · costs (not itemized)"
+    if k.startswith('#gap:seg'):
         return 'Corporate & unallocated'
-    if k.startswith('gap:'):
+    if k.startswith('#segp:'):
+        return f'{FL.label(k[6:])} · segment profit'
+    if k.startswith('#gap:'):
         return 'Other (outside the split)'
-    if k.startswith('cat:'):
-        return CASH_CATS.get(k[4:], ('', k[4:]))[1]
+    if k.startswith('#cat:'):
+        return CASH_CATS.get(k[5:], ('', k[5:]))[1]
     if k.startswith('seg>'):
         return 'Revenue'
     c, dims = parse_key(k)
     seg = dict(dims).get(SEG_AXIS)
-    if seg and not re.match(r'Revenue|Sales', local(c)):
+    if seg and not re.search(r'Revenue|Sales', local(c)):
         # a segment's own line: "Americas · cost of sales", "Americas · segment profit"
         line = 'segment profit' if local(c) in SEG_PROFIT else tidy(FL.label(c, 'terse'))
         return f'{FL.label(seg)} · {line[0].lower() + line[1:] if line[:2] != line[:2].upper() else line}'
@@ -787,6 +840,9 @@ def _residuals(J, vals):
             if t in vals and len(miss) == 1 and len(kids) >= 2:
                 (k, w), = miss
                 vals[k] = (vals[t] - sum(ww * vals[x] for x, ww in kids if x in vals)) / w
+                ch = True
+            elif t not in vals and not miss and kids and t.startswith('#segp:'):
+                vals[t] = sum(w * vals[x] for x, w in kids)
                 ch = True
         if not ch:
             break
@@ -1120,7 +1176,7 @@ def esc(s):
 
 def main_of(k):
     c, dims = parse_key(k)
-    return None if dims or '~' in k or k.startswith('gap:') else MAIN_OF.get(local(c))
+    return None if dims or '~' in k or k.startswith('#gap:') else MAIN_OF.get(local(c))
 
 
 def spec_of(F, now, q=None, y=None, annual=False):
@@ -1262,7 +1318,7 @@ def spec_of(F, now, q=None, y=None, annual=False):
             if k in F['J'] and F['via'].get(k):
                 v0 = F['via'][k]
                 txt.append('Split into its parts by ' + (f"the filing’s {AXIS_WORD.get(v0[5:], 'members')}" if v0.startswith('dims:') else f'“{v0}”') + '.')
-            if k.startswith('gap:'):
+            if k.startswith('#gap:'):
                 txt.append('What the split leaves of the total (items the filing does not assign to a member).')
             else:
                 txt.append('XBRL: ' + c + ''.join(f' · {a.split(":")[-1]} = {m.split(":")[-1]}' for a, m in dims) + '.')
