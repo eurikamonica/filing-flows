@@ -23,6 +23,7 @@ from xml.sax.saxutils import escape as xesc
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
+import seo_svg as SV  # noqa: E402
 
 e, display_name, slug_for, fdate = seo.e, seo.display_name, seo.slug_for, seo.fdate
 PERIOD_PAGES = 2                   # quarters with Q/Q and Y/Y pages (the newest)
@@ -188,7 +189,8 @@ def period_page(r, c, i, base, slug, who, name, mode):
     url = f"{base}/c/{slug}/{qslug(lab)}-vs-{qslug(other)}/"
     title = f"{who} {lab} vs {other}: {what} revenue {pc(chg(rev[1], rev[j]))}, margins and every line compared | Filing Flows"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › <a href='../{qslug(lab)}/'>{e(lab)}</a> › vs {e(other)}</p>"
-            f"<h1>{e(who)} {e(lab)} vs {e(other)} ({e(what)})</h1><p class='lead'>{e(lead)}</p>"
+            f"<h1>{e(who)} {e(lab)} vs {e(other)} ({e(what)})</h1><p class='lead'>{e(lead)}</p>" + SV.diverging(sorted(((v[0], v[1] - v[j]) for k, v in n.items() if v[1] is not None and v[j] is not None and k != 'revenue'),
+                                                                      key=lambda z: -abs(z[1])), money, f"{name}: what changed, {lab} vs {other}")
             + (f"<h2>Margins</h2><div class='tbl-wrap'><table><thead><tr><th></th><th class='num'>{e(lab)}</th><th class='num'>{e(other)}</th><th class='num'>Change</th></tr></thead><tbody>{mrows}</tbody></table></div>" if mrows else '')
             + f"<h2>Every line</h2><div class='tbl-wrap'><table><thead><tr><th>Line</th><th class='num'>{e(lab)}</th><th class='num'>{e(other)}</th><th class='num'>Change</th><th class='num'>%</th></tr></thead><tbody>{rows}</tbody></table></div>"
             + faq([x for x in qa if x[1]]) + f"<p><a href='../{qslug(lab)}/'>{e(lab)} results →</a> · <a class='seo-cta' href='../../../#c-{r['cik']}'>Compare in the interactive Sankey →</a></p>")
@@ -231,8 +233,8 @@ def metric_page(r, c, base, slug, who, name, mslug, label, key, kind):
     url = f"{base}/c/{slug}/{mslug}/"
     title = f"{who} {label} by quarter: {fmt(latest[1])} in {latest[0]} | Filing Flows"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › {e(label[0].upper() + label[1:])}</p>"
-            f"<h1>{e(who)} {e(label)} by quarter</h1><p class='lead'>{e(lead)}</p>"
-            f"<div class='tbl-wrap'><table><thead><tr><th>Quarter</th><th class='num'>{e(label[0].upper() + label[1:])}</th><th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>"
+            f"<h1>{e(who)} {e(label)} by quarter</h1><p class='lead'>{e(lead)}</p>" + SV.bars([(x[0], x[1]) for x in reversed(s)], fmt, f"{name} {label} by quarter")
+            + f"<div class='tbl-wrap'><table><thead><tr><th>Quarter</th><th class='num'>{e(label[0].upper() + label[1:])}</th><th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>"
             + faq(qa) + f"<p><a href='../{qslug(latest[0])}/'>{e(latest[0])} results →</a> · <a href='../revenue/'>How {e(name)} makes money →</a></p>")
     crumbs = [('Filing Flows', base + '/'), (who, f'{base}/c/{slug}/'), (label, url)]
     mod = (latest[2] or '')[:10] or None
@@ -296,7 +298,10 @@ def guidance_page(r, rec, base, slug, who, name):
             rows += (f"<tr><td>{e(x.get('label'))}</td><td>{e(guides)}</td><td class='num'>{e(unit_fmt(x.get('actual'), m['unit']))}</td><td>{e(res)}</td>"
                      f"<td class='num'>{e(vs_mid(x.get('vsMid'), m['unit']))}</td></tr>")
         h = m.get('hits') or {}
-        body += (f"<h2>{e(m['name'])}</h2>" + (f"<p>Met or beat {h['hitOrBeat']} of {h['n']} periods ({h.get('above', 0)} above, {h.get('within', 0) + h.get('met', 0)} within, {h.get('below', 0)} below).</p>" if h.get('n') else
+        chart = SV.ranges([(x.get('label'), (x.get('guides') or [{}])[-1].get('lo'), (x.get('guides') or [{}])[-1].get('hi'), x.get('actual'))
+                           for x in reversed(m['rows'][:10]) if (x.get('guides') or [{}])[-1].get('lo') is not None],
+                          lambda v, u=m['unit']: unit_fmt(v, u), f"{name} {m['name']}: last guidance vs reported")
+        body += (f"<h2>{e(m['name'])}</h2>" + chart + (f"<p>Met or beat {h['hitOrBeat']} of {h['n']} periods ({h.get('above', 0)} above, {h.get('within', 0) + h.get('met', 0)} within, {h.get('below', 0)} below).</p>" if h.get('n') else
                                                "<p class='muted'>No reported figure to hold it to yet (adjusted figures are not in the GAAP statements, or the period is still to be reported).</p>")
                  + f"<div class='tbl-wrap'><table><thead><tr><th>Period</th><th>Guided (and how it moved)</th><th class='num'>Reported</th><th>Result</th><th class='num'>vs midpoint</th></tr></thead><tbody>{rows}</tbody></table></div>")
     qa = [(f"Does {name} beat its guidance?", lead.split(' Its releases')[0] if n else lead)]

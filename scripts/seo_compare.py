@@ -19,6 +19,7 @@ from xml.sax.saxutils import escape as xesc
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
+import seo_svg as SV  # noqa: E402
 
 e, display_name, slug_for, fdate = seo.e, seo.display_name, seo.slug_for, seo.fdate
 
@@ -132,7 +133,12 @@ def page_for(a, b, fa, fb, va, vb, base):
         qa.append((f"Which is more profitable, {na} or {nb}?", parts[2]))
     sa, sb = slug_for(a), slug_for(b)
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows</a> › <a href='../'>Comparisons</a> › {e(ta)} vs {e(tb)}</p>"
-            f"<h1>{e(na)} vs {e(nb)}: {e(ta)} and {e(tb)} compared</h1><p class='lead'>{e(lead)}</p>{tbl}"
+            f"<h1>{e(na)} vs {e(nb)}: {e(ta)} and {e(tb)} compared</h1><p class='lead'>{e(lead)}</p>"
+            + SV.pair([('Revenue', fa.get('revenue'), fb.get('revenue'), money), ('Revenue growth, Y/Y', fa.get('yoy'), fb.get('yoy'), lambda v: pct(v, True)),
+                       ('Gross margin', fa.get('gm'), fb.get('gm'), pct), ('Operating margin', fa.get('om'), fb.get('om'), pct),
+                       ('Net margin', fa.get('nm'), fb.get('nm'), pct), ('Free cash flow', fa.get('fcf'), fb.get('fcf'), money)],
+                      (f'{na} ({ta})', f'{nb} ({tb})'), f'{na} vs {nb}, latest quarter')
+            + f"{tbl}"
             + (f"<h2>Where the revenue comes from</h2>{seg}" if seg else '')
             + '<h2>Questions</h2>' + ''.join(f'<h3>{e(q)}</h3><p>{e(x)}</p>' for q, x in qa)
             + f"<p>More: <a href='../../c/{sa}/'>{e(na)} earnings</a> · <a href='../../c/{sa}/revenue/'>how {e(na)} makes money</a> · "

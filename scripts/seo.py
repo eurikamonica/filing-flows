@@ -88,7 +88,7 @@ def page(title, desc, canonical, body, depth, image, jsonld=None):
 </body></html>"""
 
 
-def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None):
+def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all_rows=None, chains=None, images=None):
     p, quarters = c["profile"], c.get("quarters") or []
     q = quarters[0] if quarters else {}
     h = q.get("headline") or {}
@@ -113,6 +113,13 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None):
         f"<td class='num'>{e(money((x.get('headline') or {}).get('ni')))}</td><td class='num'>{e(money((x.get('headline') or {}).get('ocf')))}</td></tr>"
         for x in quarters[:8])
     analysis = "".join(f"<p>{e(a)}</p>" for a in (q.get("analysis") or [])[:4])
+    import seo_svg as SV                                   # charts drawn into the page (no script)
+    import seo_charts as SC
+    drawn = SC.static(c, ix_entry, all_rows or [], money)
+    live = SC.live(p['cik'], t, ix_entry.get('sic'), ix_entry.get('sector'), chains or [], images or {}, depth)
+    hq = [(x.get("label"), x.get("headline") or {}) for x in reversed(quarters[:8])]
+    charts = (SV.bars([(l, hh.get("revenue")) for l, hh in hq], money, f"{name} revenue by quarter")
+              + SV.bars([(l, hh.get("ni")) for l, hh in hq], money, f"{name} net earnings by quarter"))
     intro = c.get("intro") or {}
     about = (f"<h2>About {e(name)}</h2><blockquote>{e((intro.get('text') or '')[:900])}</blockquote>"
              f"<p class='muted'>In its own words, from its {e(intro.get('source') or 'annual report')}"
@@ -147,7 +154,10 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None):
 }})();</script>
 {f'<h2>What changed this quarter</h2>{analysis}' if analysis else ''}
 <h2>Quarterly history</h2>
+{charts}
 <div class="tbl-wrap"><table><thead><tr><th>Quarter</th><th>Form</th><th>Filed</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Op. margin</th><th class="num">Net earnings</th><th class="num">Op. cash flow</th></tr></thead><tbody>{rows}</tbody></table></div>
+{drawn}
+{live}
 {about}
 {f'<h2>Other {e(p.get("industry") or sector_name)} companies</h2><ul class="seo-list">{peer_links}</ul>' if peer_links else ''}
 <p class="muted">Source: <a href="{e(q.get('index_url') or q.get('doc_url') or '')}" rel="nofollow">{e(name)} {e(form)} on SEC EDGAR</a> · CIK {e(p['cik'])} · {e(p.get('industry') or '')}</p>"""
@@ -362,6 +372,16 @@ def write_pages(data_dir, out_dir, base):
     for r in rows:                                  # one page per company: its newest quarter
         if r["cik"] not in latest or (r.get("filed") or "") > (latest[r["cik"]].get("filed") or ""):
             latest[r["cik"]] = r
+    chain_of = {}                                   # ticker → the supply chains and themes it is in (pipeline/chains.py)
+    try:
+        for ch in (json.load(open(os.path.join(data_dir, "chains", "index.json"), encoding="utf-8")).get("chains") or []):
+            for tk in ch.get("buyers") or []:
+                chain_of.setdefault(str(tk).upper(), []).append({"id": ch["id"], "name": ch.get("name") or ch["id"], "role": "buyer"})
+            for L in ch.get("layers") or []:
+                for tk in L.get("tickers") or []:
+                    chain_of.setdefault(str(tk).upper(), []).append({"id": ch["id"], "name": ch.get("name") or ch["id"], "role": L.get("name") or "supplier"})
+    except (OSError, ValueError, KeyError, AttributeError):
+        pass
     by_industry = {}
     for r in latest.values():
         by_industry.setdefault(r.get("sic") or r.get("industry"), []).append(r)
@@ -372,7 +392,8 @@ def write_pages(data_dir, out_dir, base):
         except (OSError, ValueError):
             continue
         peers = sorted((x for x in by_industry.get(r.get("sic") or r.get("industry"), []) if x["cik"] != cik), key=lambda x: -(x.get("revenue") or 0))[:8]
-        url, doc = company_page(c, r, peers, names.get(r.get("sector"), r.get("sector") or "Other"), base, image=images.get(f"c-{cik}"))
+        url, doc = company_page(c, r, peers, names.get(r.get("sector"), r.get("sector") or "Other"), base, image=images.get(f"c-{cik}"),
+                                all_rows=by_industry.get(r.get("sic") or r.get("industry"), []), chains=chain_of.get(str(r.get("ticker") or "").upper(), []), images=images)
         d = os.path.join(out_dir, "c", slug_for(r))
         os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)

@@ -20,6 +20,8 @@ from xml.sax.saxutils import escape as xesc
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
+import seo_svg as SV  # noqa: E402
+from seo_history import sankey_figure  # noqa: E402
 
 e, display_name, slug_for = seo.e, seo.display_name, seo.slug_for
 
@@ -59,6 +61,7 @@ L = {
         'beat': lambda b: f' Superó la estimación de BPA en el {b}% de los trimestres registrados.',
         'tiles': ['Ingresos', 'Interanual', 'Margen operativo', 'Beneficio neto', 'Flujo de caja operativo'],
         'h_seg': lambda n, per: f'Ingresos de {n} por segmento ({per})', 'seg_head': ['Segmento', 'Ingresos', 'Peso', 'Interanual'],
+        'chart_rev': 'ingresos por trimestre', 'chart_ni': 'beneficio neto por trimestre', 'chart_sankey': 'diagrama Sankey de ingresos, beneficios y caja',
         'h_hist': 'Resultados trimestrales recientes', 'hist_head': ['Trimestre', 'Ingresos', 'Interanual', 'Margen operativo', 'Beneficio neto'],
         'faq': 'Preguntas frecuentes', 'q_last': lambda n: f'¿Cómo fueron los últimos resultados de {n}?', 'q_how': lambda n: f'¿Cómo gana dinero {n}?',
         'q_when': lambda n: f'¿Cuándo presenta resultados {n}?',
@@ -89,6 +92,7 @@ L = {
         'beat': lambda b: f' Le BPA a dépassé le consensus dans {b} % des trimestres connus.',
         'tiles': ['Chiffre d’affaires', 'Sur un an', 'Marge opérationnelle', 'Bénéfice net', 'Flux de trésorerie d’exploitation'],
         'h_seg': lambda n, per: f'Chiffre d’affaires de {n} par segment ({per})', 'seg_head': ['Segment', 'Chiffre d’affaires', 'Part', 'Sur un an'],
+        'chart_rev': 'chiffre d’affaires par trimestre', 'chart_ni': 'bénéfice net par trimestre', 'chart_sankey': 'diagramme de Sankey du chiffre d’affaires au cash',
         'h_hist': 'Résultats trimestriels récents', 'hist_head': ['Trimestre', 'Chiffre d’affaires', 'Sur un an', 'Marge opérationnelle', 'Bénéfice net'],
         'faq': 'Questions fréquentes', 'q_last': lambda n: f'Quels sont les derniers résultats de {n} ?', 'q_how': lambda n: f'Comment {n} gagne-t-il de l’argent ?',
         'q_when': lambda n: f'Quand {n} publie-t-il ses résultats ?',
@@ -187,6 +191,11 @@ def company(lang, r, c, er, cons, base, langs):
     if beat is not None:
         nxt += t['beat'](round(100 * beat))
     nxt = nxt.strip()
+    hq = [(x.get('label'), x.get('headline') or {}) for x in reversed(qs[:8])]
+    fm = lambda v: money(v, t)
+    charts = (SV.bars([(l, h2.get('revenue')) for l, h2 in hq], fm, f"{en} — {t['chart_rev']}")
+              + SV.bars([(l, h2.get('ni')) for l, h2 in hq], fm, f"{en} — {t['chart_ni']}")
+              + (SV.hbars([(k, v[0]) for k, v in segs], fm, f"{en} — {t['h_seg'](en, per)}") if len(segs) > 1 else ''))
     slug = slug_for(r)
     url = f'{base}/{lang}/c/{slug}/'
     seg_rows = ''.join(f"<tr><td>{e(k)}</td><td class='num'>{e(money(v[0], t))}</td><td class='num'>{e(num(100 * v[0] / rev))}{e(t['pct'])}</td>"
@@ -204,7 +213,8 @@ def company(lang, r, c, er, cons, base, langs):
     others = ' · '.join(f"<a href='{u}' hreflang='{k}'>{LANG_NAME[k]}</a>" for k, u in (('en', f'../../../c/{slug}/'), ('zh-Hans', f'../../../zh/c/{slug}/'),
                         ('es', f'../../../es/c/{slug}/'), ('fr', f'../../../fr/c/{slug}/')) if k in langs and k != lang)
     body = (f"<p class='crumbs'><a href='../../'>{e(t['crumb'])}</a> › {e(who)}</p><h1>{e(t['h1'](who, per))}</h1><p class='lead'>{e(lead)}</p>"
-            f"<div class='seo-tiles'>{tiles}</div>" + (f'<p>{e(nxt)}</p>' if nxt else '')
+            f"<div class='seo-tiles'>{tiles}</div>" + sankey_figure(r['cik'], q.get('label'), f"{who} — {t['chart_sankey']}") + charts
+            + (f'<p>{e(nxt)}</p>' if nxt else '')
             + (f"<h2>{e(t['h_seg'](en, per))}</h2><div class='tbl-wrap'><table><thead><tr>" + ''.join(f"<th{' class=num' if i else ''}>{e(x)}</th>" for i, x in enumerate(t['seg_head']))
                + f"</tr></thead><tbody>{seg_rows}</tbody></table></div>" if len(segs) > 1 else '')
             + f"<h2>{e(t['h_hist'])}</h2><div class='tbl-wrap'><table><thead><tr>" + ''.join(f"<th{' class=num' if i else ''}>{e(x)}</th>" for i, x in enumerate(t['hist_head']))

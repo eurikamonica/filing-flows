@@ -163,7 +163,7 @@ def main():
         import sys
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         import seo
-        for name in ("seo.css", "og.png", "seo-quarter.js"):
+        for name in ("seo.css", "og.png", "seo-quarter.js", "seo-embed.js", "flowlab.js", "asia-links.js", "chains.js"):
             if os.path.exists(os.path.join(WEB, name)):
                 shutil.copy(os.path.join(WEB, name), os.path.join(args.out, name))
         base = setting("SITE_URL", url=True)

@@ -26,6 +26,7 @@ from xml.sax.saxutils import escape as xesc
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
+import seo_svg as SV  # noqa: E402
 
 e, display_name, slug_for, fdate = seo.e, seo.display_name, seo.slug_for, seo.fdate
 
@@ -119,6 +120,8 @@ def forecast(co, v, cons):
                + (f"<div class='seo-tile'><span>Fair value, middle</span><b>{usd(mid)}</b></div>" if mid is not None else '')
                + (f"<div class='seo-tile'><span>DCF</span><b>{usd(dcf)}</b></div>" if dcf else '')
                + (f"<div class='seo-tile'><span>EPS beat rate</span><b>{round(100 * beat)}%</b></div>" if beat is not None else '') + "</div>")
+            + SV.ranges([(x.get('method'), x.get('low'), x.get('high'), x.get('point')) for x in fb[:10] if x.get('low') is not None],
+                        usd, f"{name} fair value by method (price {usd(price)})", legend=('low – high', 'point estimate'))
             + (f"<h2>Fair value by method</h2><div class='tbl-wrap'><table><thead><tr><th>Method</th><th class='num'>Low</th><th class='num'>Point</th>"
                f"<th class='num'>High</th><th class='num'>vs price</th></tr></thead><tbody>{rows}</tbody></table></div>" if rows else ''))
     return {'title': f"{name} ({t}) stock forecast, price target and fair value", 'h1': f"{name} ({t}) stock forecast and fair value",
@@ -168,6 +171,7 @@ def owners(co, h):
     if short and len(short) >= 3:
         qa.append((f"What is the short interest in {t}?", f"{short[1]:,.0f} shares were sold short at the {short[0]} settlement, {short[2]}% of the float."))
     body = (f"<p class='lead'>{e(lead)}</p>"
+            + SV.hbars([(display_name(r.get('manager')), r.get('value_usd')) for r in top], money, f"Largest holders of {t} (13F)")
             + (f"<h2>Largest holders (13F)</h2><div class='tbl-wrap'><table><thead><tr><th>Fund</th><th class='num'>Shares</th><th class='num'>Value</th>"
                f"<th>Change</th><th>Quarter</th></tr></thead><tbody>{rows}</tbody></table></div>" if rows else '')
             + (f"<h2>Trades by Congress and other officials</h2><div class='tbl-wrap'><table><thead><tr><th>Date</th><th>Who</th><th>Trade</th><th class='num'>Amount</th></tr></thead><tbody>{orow}</tbody></table></div>" if orow else ''))
@@ -349,6 +353,9 @@ def revenue(co, c):
         qa.append((f"What is {name}'s profit margin?", f"Net earnings were {money(net)}, {100 * net / tot:.1f}% of revenue, in the {words}"
                    + (f"; the operating margin was {100 * oi / tot:.1f}%." if oi is not None else '.')))
     body = (f"<p class='lead'>{e(lead)}</p>"
+            + (SV.hbars([(n_, v[0]) for n_, v, _ in segs], money, f"{name} revenue by segment, {q.get('label')}") if len(segs) > 1 else '')
+            + SV.bars([(x.get('label'), (x.get('headline') or {}).get('revenue')) for x in reversed(qs[:8])], money, f"{name} revenue by quarter")
+            + SV.hbars([(k, x) for k, x in ladder[1:] if x is not None and x > 0], lambda v, tt=tot: f"{100 * v / tt:.0f}¢", f"{name}: where each dollar of revenue goes", n=9)
             + (f"<h2>Revenue by segment, {e(q.get('label'))}</h2><div class='tbl-wrap'><table><thead><tr><th>Segment</th><th class='num'>Revenue</th><th class='num'>Share</th>"
                f"<th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>" if len(segs) > 1 else '')
             + f"<h2>Where each dollar of revenue goes</h2><div class='tbl-wrap'><table><thead><tr><th>Line</th><th class='num'>{e(q.get('label'))}</th><th class='num'>% of revenue</th></tr></thead><tbody>{lad}</tbody></table></div>"
@@ -465,7 +472,22 @@ def write(site, base, limit=None):
         try:
             txt = open(main, encoding='utf-8').read()
             if 'class="seo-more-main"' not in txt and '</main>' in txt:
-                block = (f'<section class="seo-more-main"><h2>More on {e(t)}</h2><ul class="seo-list">'
+                charts13 = ''
+                if h:                                                   # 13F: the largest holders and the funds' net buying
+                    inst = sorted(h.get('institutional') or [], key=lambda x: -(x.get('value_usd') or 0))[:10]
+                    charts13 += SV.hbars([(display_name(x.get('manager')), x.get('value_usd')) for x in inst], money, f"Largest holders of {t} (13F)")
+                    q13 = h.get('q13f') or {}
+                    F = q13.get('fields') or []
+                    if 'usd_net' in F and q13.get('periods'):
+                        cov = q13.get('coverage') or []
+                        top = max(cov) if cov else 0
+                        pts = [(pq[:7], dict(zip(F, row)).get('usd_net')) for i, (pq, row) in enumerate(zip(q13['periods'], q13.get('rows') or []))
+                               if isinstance(row, (list, tuple)) and (not cov or cov[i] >= 0.5 * top)]
+                        charts13 += SV.bars(pts[-8:], money, f"Funds' net buying of {t} by quarter (13F)", color=None,
+                                            note='Value of shares 13F filers added minus the value they sold, each quarter (quarters with most filings in).')
+                if charts13:
+                    charts13 = f"<h2>13F: who owns {e(t)} and who is buying</h2>" + charts13
+                block = (f'<section class="seo-more-main">{charts13}<h2>More on {e(t)}</h2><ul class="seo-list">'
                          + ''.join(f"<li><a href='{k}/'>{e(LINK[k](co['who_name']))}</a></li>" for k, l, _ in TOPICS if k in have) + '</ul></section>')
                 open(main, 'w', encoding='utf-8').write(txt.replace('</main>', block + '</main>', 1))
         except OSError:

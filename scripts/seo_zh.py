@@ -18,6 +18,8 @@ from xml.sax.saxutils import escape as xesc
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
+import seo_svg as SV  # noqa: E402
+from seo_history import sankey_figure  # noqa: E402
 
 e, display_name, slug_for = seo.e, seo.display_name, seo.slug_for
 # the names Chinese readers search by (well-known US-listed companies); the rest keep their English name
@@ -162,6 +164,10 @@ def company(r, c, er, cons, base, en_has):
     hist = ''.join(f"<tr><td>{e(period(x.get('label')))}</td><td class='num'>{e(yuan((x.get('headline') or {}).get('revenue')))}</td>"
                    f"<td class='num'>{e(zpct((x.get('headline') or {}).get('yoy')))}</td><td class='num'>{e(zpct((x.get('headline') or {}).get('om'), False))}</td>"
                    f"<td class='num'>{e(yuan((x.get('headline') or {}).get('ni')))}</td></tr>" for x in qs[:8])
+    hq = [(x.get('label'), x.get('headline') or {}) for x in reversed(qs[:8])]
+    charts = (SV.bars([(l, h2.get('revenue')) for l, h2 in hq], yuan, f'{zh or en}季度营收')
+              + SV.bars([(l, h2.get('ni')) for l, h2 in hq], yuan, f'{zh or en}季度净利润', color=None)
+              + (SV.hbars([(k, v[0]) for k, v in segs], yuan, f'{zh or en}收入构成（{per}）') if len(segs) > 1 else ''))
     slug = slug_for(r)
     url, en_url = f'{base}/zh/c/{slug}/', f'{base}/c/{slug}/'
     name_for_q = zh or en
@@ -177,6 +183,8 @@ def company(r, c, er, cons, base, en_has):
         ('guidance', '业绩指引（英文）')) if k in en_has)
     body = (f"<p class='crumbs'><a href='../../'>Filing Flows 中文</a> › {e(who)}</p>"
             f"<h1>{e(who)}{e(per)}财报</h1><p class='lead'>{e(lead)}</p><div class='seo-tiles'>{tiles}</div>"
+            + sankey_figure(r['cik'], q.get('label'), f'{who}{per}收入、利润与现金流 Sankey 图')
+            + charts
             + (f"<p>{e(nxt)}</p>" if nxt else '')
             + (f"<h2>{e(name_for_q)}收入构成（{e(per)}）</h2><div class='tbl-wrap'><table><thead><tr><th>业务</th><th class='num'>收入</th><th class='num'>占比</th><th class='num'>同比</th></tr></thead><tbody>{seg_rows}</tbody></table></div>" if len(segs) > 1 else '')
             + f"<h2>近期季度业绩</h2><div class='tbl-wrap'><table><thead><tr><th>季度</th><th class='num'>营收</th><th class='num'>同比</th><th class='num'>营业利润率</th><th class='num'>净利润</th></tr></thead><tbody>{hist}</tbody></table></div>"

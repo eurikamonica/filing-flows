@@ -30,7 +30,7 @@
     return `<div class="tbl-wrap"><table><thead><tr><th>Company</th><th>Listed in</th><th class="num">${role === 'suppliers' ? `Share of its sales to ${esc(who)}` : `Share of its purchases from ${esc(who)}`}</th><th class="num">Amount a year</th><th style="width:18%"></th><th>Year</th><th>As written</th></tr></thead><tbody>${
       rows.map((r) => {
         const nm = r.name_en || r.name;
-        const link = r.self && r.self.cik ? `<a href="#c-${esc(r.self.cik)}"><b>${esc(nm)}</b></a>` : `<b>${esc(nm)}</b>`;
+        const link = r.self && r.self.cik ? `<a href="${global.FF_BASE || ''}#c-${esc(r.self.cik)}"><b>${esc(nm)}</b></a>` : `<b>${esc(nm)}</b>`;
         const amt = fin(r.usd) ? `${usd(r.usd)}${r.computed ? '*' : ''}<br><span class="muted small">${esc(local(r.amount, r.currency))}</span>` : '—';
         return `<tr><td>${link}${r.name_en && r.name && r.name !== r.name_en ? `<br><span class="muted small">${esc(r.name)}</span>` : ''}</td><td>${esc(FLAG[r.mk] || r.mk)}</td>` +
           `<td class="num">${pct(r.share)}</td><td class="num">${amt}</td><td>${fin(r.usd) ? `<div style="height:8px;border-radius:4px;background:#5d7fa3;width:${Math.max(2, 100 * r.usd / max).toFixed(1)}%"></div>` : ''}</td>` +
@@ -42,7 +42,7 @@
     if (!box) return;
     let d = null;
     try {
-      const r = await fetch(`disclosures/data/research/asia/c/${parseInt(cik, 10)}.json`, { cache: 'no-cache' });
+      const r = await fetch(`${global.FF_BASE || ''}disclosures/data/research/asia/c/${parseInt(cik, 10)}.json`, { cache: 'no-cache' });
       d = r.ok ? await r.json() : null;
     } catch (e) { d = null; }
     if (!d || !((d.suppliers || []).length || (d.customers || []).length)) return;

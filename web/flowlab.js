@@ -8,6 +8,7 @@
   'use strict';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fin = (v) => v != null && Number.isFinite(+v);
+  const B = () => global.FF_BASE || '';                // the site root from a search page (c/<slug>/ → '../../')
   function usd(v) {
     if (!fin(v)) return '—';
     const a = Math.abs(v), s = v < 0 ? '−$' : '$';
@@ -27,7 +28,7 @@
   let shareP = null;
   function withShare(fn) {
     if (global.FFShare) return fn(global.FFShare);
-    if (!shareP) shareP = new Promise((res) => { const sc = document.createElement('script'); sc.src = 'disclosures/chart-share.js'; sc.onload = () => res(global.FFShare || null); sc.onerror = () => res(null); document.head.appendChild(sc); });
+    if (!shareP) shareP = new Promise((res) => { const sc = document.createElement('script'); sc.src = B() + 'disclosures/chart-share.js'; sc.onload = () => res(global.FFShare || null); sc.onerror = () => res(null); document.head.appendChild(sc); });
     shareP.then((S) => { if (S) fn(S); });
   }
   const chip = (g) => `<span class="fl-g fl-g-${esc(g)}" title="${esc(GRADE[g] || '')}">${esc(g)}</span>`;
@@ -163,7 +164,7 @@
     return v;
   }
   let empIdx = null;
-  const empIndex = () => empIdx || (empIdx = getJSON('disclosures/data/research/employees/index.json').then((d) => {
+  const empIndex = () => empIdx || (empIdx = getJSON(B() + 'disclosures/data/research/employees/index.json').then((d) => {
     const F = d.fields || [], m = new Map();
     (d.rows || []).forEach((r) => { const o = {}; F.forEach((k, i) => { o[k] = r[i]; }); m.set(+o.cik, o); });
     return m;
@@ -220,7 +221,7 @@
       $('#fl-intro').textContent = INTRO[st.view];
       if (st.view === 'alloc') return showAlloc(chart, more, panel);
       let d = null;
-      try { d = await getJSON(`data/gamma/flowlab/${st.key}.json`); } catch (e) { d = null; }
+      try { d = await getJSON(B() + `data/gamma/flowlab/${st.key}.json`); } catch (e) { d = null; }
       if (!here()) return;
       let v = d && d.views && d.views[st.view];
       if (!v) { chart.innerHTML = '<p class="muted">Not built for this level yet: its companies need four quarters of figures' + (st.view === 'cash' ? ' and a cash-flow statement read (the scan reads a few dozen companies a run)' : '') + ', or the view did not pass the checks.</p>'; return; }
@@ -266,12 +267,12 @@
       if (more.dataset.pay) {
         const mm = JSON.parse(more.dataset.pay);
         more.innerHTML += `<h3>Pay at the largest employers here</h3><div class="tbl-wrap"><table><thead><tr><th>Company</th><th class="num">Pay</th><th>From</th><th>Place in US full-time earnings</th><th>Households like theirs</th></tr></thead><tbody>${
-          mm.map((x) => `<tr><td><a href="#c-${esc(x.cik)}-dollar"><b>${esc(x.t)}</b></a> <span class="muted small">${esc(x.name)}</span></td><td class="num">${usd(x.pay)}</td><td>${chip(x.g)} ${esc(x.how)}</td><td>${esc(pctText(earnPct(x.pay)))}</td><td>${esc(mixText(fifths(x.pay)))}</td></tr>`).join('')}</tbody></table></div>`;
+          mm.map((x) => `<tr><td><a href="${B()}#c-${esc(x.cik)}-dollar"><b>${esc(x.t)}</b></a> <span class="muted small">${esc(x.name)}</span></td><td class="num">${usd(x.pay)}</td><td>${chip(x.g)} ${esc(x.how)}</td><td>${esc(pctText(earnPct(x.pay)))}</td><td>${esc(mixText(fifths(x.pay)))}</td></tr>`).join('')}</tbody></table></div>`;
       }
     }
     async function showAlloc(chart, more, panel) {
       let d = null;
-      try { d = await getJSON(`data/gamma/io-beta/${st.key}.json`); } catch (e) { d = null; }
+      try { d = await getJSON(B() + `data/gamma/io-beta/${st.key}.json`); } catch (e) { d = null; }
       if (!here()) return;
       if (!d || !(d.links || []).length) { chart.innerHTML = '<p class="muted">The corrected allocation is not built for this level (or held back by its checks).</p>'; return; }
       const v = { cols: d.cols.map((c) => c.name), notes: [], nodes: d.nodes.map((n) => [n.id, n.col, n.label, n.color, n.grade]),
@@ -285,7 +286,7 @@
       draw(chart, panel, v, opts);
       more.innerHTML = `<div class="fl-cards">${[['Revenue (filed)', F.revenue], ['Operating cash flow (filed)', F.ocf], ['Capital spending (filed)', F.capex], ['Free cash flow (filed)', F.fcf], ['EBITDA − capital spending', F.ebitda_capex]]
         .filter((z) => fin(z[1])).map((z) => `<div class="fl-card"><span>${esc(z[0])}</span><strong>${usd(z[1])}</strong></div>`).join('')}</div>` +
-        '<p class="small">The chart above calls EBITDA − capital spending “operating cash left over”; it is not operating cash flow (it is before interest, tax and working capital) and not free cash flow — both are shown here as filed. <a href="beta/money-flow.html#' + esc(st.key) + '">Open the full Beta 1.1 page →</a></p>';
+        '<p class="small">The chart above calls EBITDA − capital spending “operating cash left over”; it is not operating cash flow (it is before interest, tax and working capital) and not free cash flow — both are shown here as filed. <a href="' + B() + 'beta/money-flow.html#' + esc(st.key) + '">Open the full Beta 1.1 page →</a></p>';
     }
     root.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => { st.key = b.dataset.k; show(); }));
     root.querySelectorAll('[data-v]').forEach((b) => b.addEventListener('click', () => { st.view = b.dataset.v; show(); }));
@@ -306,7 +307,7 @@
     const here = o.here || (() => true);
     root.innerHTML = '<p class="muted">Loading…</p>';
     let d = null;
-    try { d = await getJSON(`data/flowlab/c/${parseInt(o.cik, 10)}.json`); } catch (e) { d = null; }
+    try { d = await getJSON(B() + `data/flowlab/c/${parseInt(o.cik, 10)}.json`); } catch (e) { d = null; }
     if (!here()) return;
     if (!d) {
       root.innerHTML = `<section class="section"><div class="section-head"><h2>Where each $1 goes <span class="fl-beta">Beta</span></h2></div><p class="muted">Not built for ${esc(o.name || 'this company')} yet: it needs four quarters of revenue and operating income and an SIC code with a BEA industry. Foreign filers without dollar figures are left out.</p></section>`;
@@ -347,7 +348,7 @@
     const wages = (d.links.find((l) => l[0] === 'k:emp' && l[1] === 'p:wages') || [])[2] || compUS * WAGE_SHARE;
     let row = null, one = null;
     try { row = (await empIndex()).get(+d.cik) || null; } catch (e) { row = null; }
-    try { one = await getJSON(`disclosures/data/research/employees/c/${+d.cik}.json`); } catch (e) { one = null; }
+    try { one = await getJSON(B() + `disclosures/data/research/employees/c/${+d.cik}.json`); } catch (e) { one = null; }
     if (!here()) return;
     const P = (one && one.pay) || null;
     const [pay, how] = payOf(row, compUS, compOut);
