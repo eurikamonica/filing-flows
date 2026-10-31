@@ -124,3 +124,53 @@ def test_generic_prospectus_form_supported():
     html='''<xbrli:context id="c"><xbrli:period><xbrli:startDate>2025-01-01</xbrli:startDate><xbrli:endDate>2025-12-31</xbrli:endDate></xbrli:period></xbrli:context><xbrli:unit id="u"><xbrli:measure>iso4217:USD</xbrli:measure></xbrli:unit><ix:nonFraction name="us-gaap:Revenues" contextRef="c" unitRef="u" scale="6">100</ix:nonFraction>'''
     d=M.analyze(html,row(form='S-11'))
     assert d['analysis_state']=='parsed' and d['periods'][0]['values']['revenue']==100e6
+
+
+PROSPECTUS='''<p>This is our initial public offering. We intend to list our common stock on the Nasdaq Global Market under the
+symbol “EXMP.”</p><p><a href="#s">Prospectus Summary</a> <a href="#r">Risk Factors</a> <a href="#u">Use of Proceeds</a>
+<a href="#m">Management’s Discussion and Analysis of Financial Condition and Results of Operations</a></p>
+<p id="s"><b>PROSPECTUS SUMMARY</b></p><p>'''+('We make example products for customers around the world. '*8)+'''</p>
+<p id="r"><b>RISK FACTORS</b></p><p><b>Risks Related to Our Business</b></p><p><b><i>We have a history of losses and may not
+achieve or maintain profitability in the future.</i></b></p><p>'''+('Our losses could continue for the foreseeable future. '*8)+'''</p>
+<p id="u"><b>USE OF PROCEEDS</b></p><p>'''+('We intend to use the net proceeds for working capital and general corporate purposes. '*5)+'''</p>
+<p id="m"><b>MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS</b></p><p>'''+('We discuss our results below. '*10)+'</p>'
+
+
+def test_prospectus_reading_written_and_published(tmp_path):
+    db=M.connect(tmp_path);M.remember(db,[row()],'feed',M.utcnow())
+    with patch.object(M,'get',side_effect=[index(),PROSPECTUS]):M.process(db,tmp_path,1)
+    rd=json.loads(M.reader_path(tmp_path,ACC).read_text())
+    assert rd['accession']==ACC and rd['cover']['symbol']=='EXMP'
+    assert [s['title'] for s in rd['sections']][:2]==['Prospectus Summary','Risk Factors']
+    M.publish(db,tmp_path,tmp_path/'public')
+    d=json.loads((tmp_path/'public/1234567.json').read_text())
+    assert d['reader']['path']==f'reader/{ACC}.json' and d['reader']['cover']['symbol']=='EXMP' and d['reader']['risks']==1
+    assert json.loads((tmp_path/'public/reader'/f'{ACC}.json').read_text())['sections']
+    i=json.loads((tmp_path/'public/index.json').read_text())
+    assert i['companies'][0]['symbol']=='EXMP'
+
+
+def test_older_prospectuses_are_read_a_few_per_run(tmp_path):
+    db=M.connect(tmp_path);M.remember(db,[row(),row(ACC2,'S-1/A','2026-10-20')],'feed',M.utcnow())
+    db.execute("UPDATE filings SET classification='ipo_language_identified',state='needs_review',source_url=?",
+               (M.sec.filing_base(1234567,ACC)+'/x.htm',));db.commit()
+    with patch.object(M,'get',return_value=PROSPECTUS) as g:
+        assert M.refresh_readers(db,tmp_path,limit=1)==1
+    assert g.call_count==1 and M.reader_path(tmp_path,ACC2).exists() and not M.reader_path(tmp_path,ACC).exists()
+    with patch.object(M,'get',side_effect=RuntimeError('SEC unavailable')):
+        M.refresh_readers(db,tmp_path,limit=3)                     # a failed download is retried next run
+    assert not M.reader_path(tmp_path,ACC).exists()
+    with patch.object(M,'get',return_value=PROSPECTUS):M.refresh_readers(db,tmp_path,limit=3)
+    with patch.object(M,'get',side_effect=AssertionError('already read')):
+        assert M.refresh_readers(db,tmp_path,limit=3)==0
+
+
+def test_parsed_periods_get_standard_sankeys(tmp_path):
+    db=M.connect(tmp_path);M.seed(db,tmp_path);M.publish(db,tmp_path,tmp_path/'public')
+    d=json.loads((tmp_path/'public/2130357.json').read_text())
+    c=d['charts']
+    assert c['default']=='2026-01-01_2026-06-30' and len(c['periods'])==5
+    h1=c['periods'][0]
+    assert h1['label']=='H1 2026' and h1['vs']=='H1 2025' and h1['nodes'] and h1['analysis']
+    row0=next(r for r in json.loads((tmp_path/'public/index.json').read_text())['companies'] if r['cik']==2130357)
+    assert row0['headline']['label']=='H1 2026' and row0['headline']['rev_fmt']=='$16.3B'

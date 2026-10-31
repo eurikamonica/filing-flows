@@ -7,7 +7,7 @@ import datetime as dt
 import math
 
 from . import fx, reported
-from .model import ITEM_LABELS, quantities
+from .model import item_label, quantities
 
 FOLD = 0.003            # lines smaller than 0.3% of revenue are folded into a label note
 
@@ -146,14 +146,15 @@ def _recon(Q):
         Q["rev_more"] = -Q["rev_less"]                          # > 0: other revenues add to it
 
 
-def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
-    """Return (nodes, links, layout_kind) for the current quarter."""
+def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None), scale=None):
+    """Return (nodes, links, layout_kind) for the current quarter. scale: the amount that picks the money unit
+    (revenue by default; a prospectus whose losses dwarf its revenue passes its largest flow)."""
     Qc = quantities(Nc, _lines_values(lines_struct, lines_vals[0]))
     Qq = quantities(Nq, _lines_values(lines_struct, lines_vals[1])) if Nq else {}
     Qy = quantities(Ny, _lines_values(lines_struct, lines_vals[2])) if Ny else {}
     for Q in (Qc, Qq, Qy):
         _recon(Q)
-    f = Fmt(Nc["R"])
+    f = Fmt(scale or Nc["R"])
     S = Spec(Qc, Qq, Qy, f)
     R = Nc["R"]
 
@@ -198,7 +199,7 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
             S.node("contract", rcol, "line:__contract", "rev", lines_struct["recon"].get("label") or RECON_LABEL, "above",
                    extra=["what the revenue lines add up to"])
             col = rcol + 1
-    loss = Nc["oi"] < 0 or Nc["pretax"] < 0 or Nc["pl"] < 0
+    loss = loss_case(Nc)
     S.node("revenue", col, "revenue", "rev", "Revenue", "above" if col else "left", style="big",
            extra=[f"sum of the revenue lines; total revenues {f.money(Nc['rev_calc'])}"] if Nc.get("rev_calc") else [],
            notekeys=["net sales", "total revenue", "revenue"])
@@ -210,14 +211,25 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
         S.link("contract", "revenue", "revenue", "rev")
         S.link("contract", "rev_less", "rev_less", "cost")
     nonop_small = abs(Nc["nonop"]) < FOLD * R
-    fold_note = (f"after {f.delta(Nc['nonop'])} interest &amp; other" if nonop_small and abs(Nc["nonop"]) > 0 else None)
+    nl = _nonop_lines(Nc, R)                        # the non-operating lines one by one (opt-in), or None
+    if nl and not loss_case(Nc) and Qc["oi_after_nl"] < 0:
+        nl = None                                   # the expenses exceed operating profit: drawn as one net line
+    fold_note = (f"after {f.delta(Nc['nonop'])} interest &amp; other" if nonop_small and abs(Nc["nonop"]) > 0
+                 and not nl else None)
     item_parent = "opex" if Nc["gp_path"] else "costs"
 
     def cost_items(c, parent, plabel):
         for k, v in Nc["items"]:
-            S.node("I:" + k, c, "item:" + k, "cost", ITEM_LABELS[k], "right", parent, plabel,
-                   notekeys=NOTE_KEYS.get(k, []))
+            S.node("I:" + k, c, "item:" + k, "cost", item_label(Nc, k), "right", parent, plabel,
+                   notekeys=NOTE_KEYS.get(k, [item_label(Nc, k).lower()]))
             S.link(parent, "I:" + k, "item:" + k, "cost")
+
+    def nl_nodes(sign, c, pos, parent, plabel, color):
+        """The income (sign 1) or expense (sign -1) lines of the non-operating lines, as nodes."""
+        for k, label, v, note in nl or ():
+            if v * sign > 0:
+                S.node("NL:" + k, c, "nl:" + k, color, label, pos, parent, plabel, sign=sign,
+                       extra=[note] if note else [], notekeys=[label.lower()])
 
     if not loss:
         rc = col
@@ -226,7 +238,9 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
             S.node("cor", rc + 1, "cor", "cost", "Cost of revenue", "right", "revenue", "revenue", notekeys=NOTE_KEYS["cor"])
             S.link("revenue", "gp", "gp", "profit"); S.link("revenue", "cor", "cor", "cost")
             oc = rc + 2
-            if not nonop_small and Nc["nonop"] > 0:
+            if nl:
+                nl_nodes(1, oc, "left", "pretax", "pre-tax", "profit")
+            elif not nonop_small and Nc["nonop"] > 0:
                 S.node("nonop_in", oc, "nonop", "profit", "Other income, net", "left", "pretax", "pre-tax",
                        notekeys=NOTE_KEYS["nonop"])
             S.node("oi", oc, "oi", "profit", "Operating profit", "above", "gp", "gross profit", notekeys=NOTE_KEYS["oi"])
@@ -236,7 +250,9 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
             cost_parent, cost_plabel = "opex", "opex"
         else:
             oc = rc + 1
-            if not nonop_small and Nc["nonop"] > 0:
+            if nl:
+                nl_nodes(1, oc, "left", "pretax", "pre-tax", "profit")
+            elif not nonop_small and Nc["nonop"] > 0:
                 S.node("nonop_in", oc, "nonop", "profit", "Other income, net", "left", "pretax", "pre-tax",
                        notekeys=NOTE_KEYS["nonop"])
             S.node("oi", oc, "oi", "profit", "Operating profit", "above", "revenue", "revenue", notekeys=NOTE_KEYS["oi"])
@@ -246,7 +262,15 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
             cost_parent, cost_plabel = "costs", "costs"
         S.node("pretax", oc + 1, "pretax", "profit", "Pre-tax earnings", "above", "revenue", "revenue",
                extra=[fold_note] if fold_note else [], notekeys=NOTE_KEYS["pretax"])
-        if not nonop_small and Nc["nonop"] < 0:
+        if nl:
+            nl_nodes(-1, oc + 1, "right", "oi", "operating profit", "cost")
+            for k, _, v, _ in nl:
+                if v < 0:
+                    S.link("oi", "NL:" + k, "nl:" + k, "cost", sign=-1)
+                else:
+                    S.link("NL:" + k, "pretax", "nl:" + k, "profit")
+            S.link("oi", "pretax", "oi_after_nl", "profit")
+        elif not nonop_small and Nc["nonop"] < 0:
             S.node("nonop_out", oc + 1, "nonop", "cost", "Other expense, net", "right", "oi", "operating profit",
                    sign=-1, notekeys=NOTE_KEYS["nonop"])
             S.link("oi", "nonop_out", "nonop", "cost", sign=-1)
@@ -288,7 +312,9 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
         kind = "profit"
     else:
         rc = col
-        if not nonop_small and Nc["nonop"] > 0:
+        if nl:
+            nl_nodes(1, rc, "left", "total", "costs", "profit")
+        elif not nonop_small and Nc["nonop"] > 0:
             S.node("nonop_in", rc, "nonop", "profit", "Other income, net", "left", "total", "costs",
                    notekeys=NOTE_KEYS["nonop"])
         if Nc["tax"] < 0:
@@ -296,10 +322,14 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
         if Nc["pl"] < 0:
             S.node("netloss", rc, "netloss", "cost", "Net loss", "left", "total", "costs",
                    extra=["Y/Y, Q/Q compare the size of the loss"], notekeys=NOTE_KEYS["net"])
-        S.node("total", rc + 1, "funding", "cost", "Costs &amp; expenses", "above", "revenue", "revenue")
+        S.node("total", rc + 1, "funding_nl" if nl else "funding", "cost", "Costs &amp; expenses", "above", "revenue",
+               "revenue")
         S.link("revenue", "total", "revenue", "rev")
         if "nonop_in" in S.ids:
             S.link("nonop_in", "total", "nonop", "profit")
+        for k, _, v, _ in nl or ():
+            if v > 0:
+                S.link("NL:" + k, "total", "nl:" + k, "profit")
         if "taxben" in S.ids:
             S.link("taxben", "total", "taxben", "profit")
         if "netloss" in S.ids:
@@ -310,7 +340,12 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
         S.node("opcosts", rc + 2, "opcosts", "cost", "Operating costs", "above",
                "total", "costs", extra=extra, notekeys=NOTE_KEYS["costs"])
         S.link("total", "opcosts", "opcosts", "cost")
-        if not nonop_small and Nc["nonop"] < 0:
+        if nl:
+            nl_nodes(-1, rc + 2, "right", "total", "costs", "cost")
+            for k, _, v, _ in nl:
+                if v < 0:
+                    S.link("total", "NL:" + k, "nl:" + k, "cost", sign=-1)
+        elif not nonop_small and Nc["nonop"] < 0:
             S.node("nonop_out", rc + 2, "nonop", "cost", "Interest &amp; other, net", "right", "total", "costs",
                    sign=-1, notekeys=NOTE_KEYS["nonop"])
             S.link("total", "nonop_out", "nonop", "cost", sign=-1)
@@ -327,7 +362,7 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
         else:
             parts = [(k, "item:" + k) for k, _ in Nc["items"]]
         for k, key in parts:
-            label = "Operating expenses" if k == "opex" else ITEM_LABELS[k]
+            label = "Operating expenses" if k == "opex" else item_label(Nc, k)
             S.node("I:" + k, rc + 3, key, "cost", label, "right", "opcosts", "operating costs",
                    notekeys=NOTE_KEYS.get(k, []))
             S.link("opcosts", "I:" + k, key, "cost")
@@ -342,18 +377,43 @@ def build(Nc, Nq, Ny, lines_struct=None, lines_vals=(None, None, None)):
     return nodes, links, kind
 
 
+def loss_case(Nc):
+    """The loss layout: revenue and the loss together fund the costs."""
+    return Nc["oi"] < 0 or Nc["pretax"] < 0 or Nc["pl"] < 0
+
+
+def _nonop_lines(Nc, R):
+    """The non-operating lines drawn one by one (normalize: raw["nonop_lines"]), when one of them is large enough."""
+    lines = [x for x in Nc.get("nonop_lines") or () if x[2]]
+    return lines if any(abs(v) >= FOLD * R for _, _, v, _ in lines) else None
+
+
+def _bridge_lines(Nc):
+    """Named non-cash items of the cash bridge (normalize: raw["bridge_lines"]): (add-backs, removals)."""
+    lines = [x for x in Nc.get("bridge_lines") or () if x[2]]
+    return [x for x in lines if x[2] > 0], [x for x in lines if x[2] < 0]
+
+
 def _bridge(S, Nc, nc, net_id, net_key, has_nci, f):
     """Operating-cash-flow bridge attached to the Net earnings node (profitable case)."""
     rkey = "r_nci" if has_nci else "r"
     rx = S.Qc[rkey]
     nib = S.Qc[net_key]
-    if nib > 0 and Nc["ocf"] > 0 and nib + min(rx, 0) >= 0:
+    adds, removes = _bridge_lines(Nc)
+    removed = -sum(v for _, _, v, _ in removes)
+
+    def removed_in(Q):
+        return -sum(Q.get("bl:" + k) or 0 for k, _, _, _ in removes)
+    if nib > 0 and Nc["ocf"] > 0 and nib + min(rx, 0) - removed >= 0:
         ac, oc = nc + 1, nc + 2
         if Nc["da"] > 0:
             S.node("da", ac, "da", "profit", Nc.get("da_label") or "Depreciation &amp; amortization", "left", "ocf", "OCF",
                    notekeys=NOTE_KEYS["da"])
         if Nc["sbc"] > 0:
             S.node("sbc", ac, "sbc", "profit", "Share-based compensation", "left", "ocf", "OCF", notekeys=NOTE_KEYS["sbc"])
+        for k, label, _, xnote in adds:
+            S.node("BL:" + k, ac, "bl:" + k, "profit", label, "left", "ocf", "OCF", extra=[xnote] if xnote else [],
+                   notekeys=[label.lower()])
         note = ["incl. minority interests"] if has_nci else []
         if rx > 0:
             S.node("wc_in", ac, rkey, "profit", "Working capital &amp; other", "left", "ocf", "OCF", extra=note,
@@ -361,19 +421,26 @@ def _bridge(S, Nc, nc, net_id, net_key, has_nci, f):
         else:
             S.node("wc_out", oc, rkey, "noncash", "Working capital &amp; other", "right", "net", "net earnings",
                    sign=-1, extra=["non-cash or timing, removed"] + note, notekeys=NOTE_KEYS["wc"])
+        for k, label, _, xnote in removes:
+            S.node("BL:" + k, oc, "bl:" + k, "noncash", label, "right", "net", "net earnings", sign=-1,
+                   extra=[xnote or "non-cash, removed"], notekeys=[label.lower()])
         conv = round(Nc["ocf"] / nib * 100) if nib else None
         S.node("ocf", oc, "ocf", "profit", "Operating cash flow", "right", "revenue", "revenue", style="ocf",
                extra=[f"{conv}% of net earnings"] if conv is not None else [],
                notekeys=NOTE_KEYS["ocf"])
-        S.Qc["_net_to_ocf"] = nib + min(rx, 0)
+        S.Qc["_net_to_ocf"] = nib + min(rx, 0) - removed
         if S.Qq.get(net_key) is not None and S.Qq.get(rkey) is not None:
-            S.Qq["_net_to_ocf"] = S.Qq[net_key] + min(S.Qq[rkey], 0)
+            S.Qq["_net_to_ocf"] = S.Qq[net_key] + min(S.Qq[rkey], 0) - removed_in(S.Qq)
         if rx < 0:
             S.link(net_id, "wc_out", rkey, "noncash", sign=-1)
+        for k, _, _, _ in removes:
+            S.link(net_id, "BL:" + k, "bl:" + k, "noncash", sign=-1)
         S.link(net_id, "ocf", "_net_to_ocf", "profit")
         for k in ("da", "sbc"):
             if k in S.ids:
                 S.link(k, "ocf", k, "profit")
+        for k, _, _, _ in adds:
+            S.link("BL:" + k, "ocf", "bl:" + k, "profit")
         if rx > 0:
             S.link("wc_in", "ocf", rkey, "profit")
         _capex(S, Nc, oc, f)
@@ -430,12 +497,16 @@ def _bridge_general(S, Nc, c0, f, net_id=None, net_key=None, rkey="r"):
     """Sources -> 'Operating cash sources' -> uses, for losses, negative OCF or heavy working-capital drains."""
     rx = S.Qc[rkey]
     srcs, uses = [], []
+    adds, removes = _bridge_lines(Nc)
+    named = {"BL:" + k: (label, xnote) for k, label, _, xnote in adds + removes}
     if net_id and S.Qc[net_key] > 0:
         srcs.append((net_id, net_key, 1, None, "net"))
     if Nc["da"] > 0:
         srcs.append(("da", "da", 1, Nc.get("da_label") or "Depreciation &amp; amortization", "da"))
     if Nc["sbc"] > 0:
         srcs.append(("sbc", "sbc", 1, "Share-based compensation", "sbc"))
+    for k, label, _, _ in adds:
+        srcs.append(("BL:" + k, "bl:" + k, 1, label, None))
     if rx > 0:
         srcs.append(("wc_in", rkey, 1, "Working capital &amp; other", "wc"))
     if Nc["ocf"] < 0:
@@ -444,6 +515,8 @@ def _bridge_general(S, Nc, c0, f, net_id=None, net_key=None, rkey="r"):
         uses.append(("loss_abs", "netloss", 1, "Net loss absorbed", "cost", "net"))
     if rx < 0:
         uses.append(("wc_out", rkey, -1, "Working capital &amp; other", "noncash", "wc"))
+    for k, label, _, _ in removes:
+        uses.append(("BL:" + k, "bl:" + k, -1, label, "noncash", None))
     if Nc["ocf"] >= 0:
         uses.append(("ocf", "ocf", 1, "Operating cash flow", "profit", "ocf"))
 
@@ -460,11 +533,12 @@ def _bridge_general(S, Nc, c0, f, net_id=None, net_key=None, rkey="r"):
     S.node("bridge", c0 + 1, "bridge_total", "profit", "Operating cash sources", "above", "revenue", "revenue")
     for nid, key, sign, name, nk in srcs:
         if nid != net_id:
+            xnote = named.get(nid, (None, None))[1]
             S.node(nid, c0, key, "cost" if nid == "burn" else "profit", name, "left", "bridge", "sources", sign=sign,
-                   notekeys=NOTE_KEYS[nk])
+                   extra=[xnote] if xnote else [], notekeys=NOTE_KEYS[nk] if nk else [name.lower()])
         S.link(nid, "bridge", key, "cost" if nid == "burn" else "profit", sign=sign)
     for nid, key, sign, name, color, nk in uses:
-        extra = []
+        extra = [named[nid][1] or "non-cash, removed"] if nid in named else []
         if nid == "ocf":
             extra = [f"{share(S.Qc['ocf'], S.Qc['bridge_total'])} of cash sources"]
         if nid == "loss_abs":
@@ -473,7 +547,7 @@ def _bridge_general(S, Nc, c0, f, net_id=None, net_key=None, rkey="r"):
             extra = ["timing items, removed"]
         S.node(nid, c0 + 2, key, color, name, "right", "revenue" if nid == "ocf" else "bridge",
                "revenue" if nid == "ocf" else "sources", sign=sign, style="ocf" if nid == "ocf" else "name",
-               extra=extra, notekeys=NOTE_KEYS[nk])
+               extra=extra, notekeys=NOTE_KEYS[nk] if nk else [name.lower()])
         S.link("bridge", nid, key, color, sign=sign)
     if "ocf" in S.ids:
         _capex(S, Nc, c0 + 2, f)

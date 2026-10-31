@@ -1,4 +1,5 @@
 """Rule-based English analysis paragraphs (no language model): every sentence is computed from the numbers."""
+from .model import item_label
 
 
 def _pct(a, b):
@@ -26,6 +27,14 @@ def _pp(a, b):
     if abs(d) < 0.05:
         return "unchanged"
     return f"{'up' if d > 0 else 'down'} {abs(d):.1f} points"
+
+
+def _plain(text):
+    return (text or "").replace("&amp;", "&")
+
+
+def _and(parts):
+    return parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]
 
 
 def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None), py_label="a year earlier"):
@@ -91,9 +100,8 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
         fast = [x for x in fast if x[2] is not None]
         if fast:
             k, v, g = max(fast, key=lambda x: x[2])
-            from .model import ITEM_LABELS
             if g > 10:
-                s += f" The fastest-growing cost line was {ITEM_LABELS[k].replace('&amp;', '&')} ({g:+.0f}%)."
+                s += f" The fastest-growing cost line was {_plain(item_label(Nc, k))} ({g:+.0f}%)."
     if Nc["pl"] >= 0:
         gni = _pct(Nc["ni"], Ny and Ny["ni"])
         s += f" Net earnings were {f.money(Nc['ni'])}" + (f", {_chg_words(gni)} year over year" if gni is not None else "") + "."
@@ -106,7 +114,13 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
                   f"{f.money(-Nq['pl'])} loss" if Nq["pl"] < 0 else f", after a profit of {f.money(Nq['pl'])} the previous quarter")
         s += "."
         if Nc["nonop"] < 0 and -Nc["nonop"] > 0.5 * -Nc["pl"]:
-            s += f" Net interest and other expense of {f.money(-Nc['nonop'])} was the main reason."
+            worst = min(Nc.get("nonop_lines") or [(None, None, 0, None)], key=lambda x: x[2])
+            if worst[2] < 0 and -worst[2] > 0.5 * -Nc["nonop"]:      # one line of them (the filing's own lines)
+                s += (f" Non-operating items of {f.money(-Nc['nonop'])} were the main reason, chiefly "
+                      f"{_plain(worst[1])[:1].lower() + _plain(worst[1])[1:]} ({f.money(-worst[2])}"
+                      f"{(', non-cash' if worst[3].startswith('non-cash') else ', ' + _plain(worst[3])) if worst[3] else ''}).")
+            else:
+                s += f" Net interest and other expense of {f.money(-Nc['nonop'])} was the main reason."
     if abs(Nc["nonop"]) > 0.2 * max(abs(Nc["pretax"]), 1) and Nc["nonop"] > 0:
         s += (f" Non-operating items added {f.money(Nc['nonop'])}, "
               f"{Nc['nonop'] / Nc['pretax'] * 100:.0f}% of pre-tax earnings, so the bottom line overstates operating performance.")
@@ -123,9 +137,14 @@ def paragraphs(f, label, Nc, Nq, Ny, lines_struct=None, lines=(None, None, None)
         s += "."
         da_words = (Nc.get("da_label") or "depreciation and amortization").replace("&amp;", "and").lower()
         adds = [(n, v) for n, v in ((da_words, Nc["da"]), ("share-based compensation", Nc["sbc"])) if v]
+        named = Nc.get("bridge_lines") or []
+        adds += [(_plain(label)[:1].lower() + _plain(label)[1:], v) for _, label, v, _ in named if v > 0]
         if adds:
-            s += " Non-cash charges added back " + " and ".join(f"{f.money(v)} of {n}" for n, v in adds) + "."
-        r = Nc["ocf"] - Nc["pl"] - Nc["da"] - Nc["sbc"]
+            s += " Non-cash charges added back " + _and([f"{f.money(v)} of {n}" for n, v in adds]) + "."
+        cuts = [(_plain(label)[:1].lower() + _plain(label)[1:], -v) for _, label, v, _ in named if v < 0]
+        if cuts:
+            s += " Non-cash gains removed " + _and([f"{f.money(v)} of {n}" for n, v in cuts]) + "."
+        r = Nc["ocf"] - Nc["pl"] - Nc["da"] - Nc["sbc"] - sum(v for _, _, v, _ in named)
         if abs(r) > 0.05 * abs(Nc["ocf"]):
             s += f" Working capital and other items {'added' if r > 0 else 'used'} {f.money(abs(r))}."
         use = Nc.get("co_fcf_use")
@@ -144,7 +163,6 @@ def compare_bullets(f, q1_label, Nc, Nq, lines_struct=None, lines=(None, None, N
     """Three 'what changed vs the previous quarter' bullets for the comparison view."""
     if not Nq:
         return []
-    from .model import ITEM_LABELS
     out = []
     R0, R1, o0, o1 = Nq["R"], Nc["R"], Nq["oi"], Nc["oi"]
     dR, dO = R1 - R0, o1 - o0
@@ -178,8 +196,14 @@ def compare_bullets(f, q1_label, Nc, Nq, lines_struct=None, lines=(None, None, N
     qmap = dict(Nq["items"])
     for k, v in Nc["items"]:
         if k in qmap:
-            cands.append((ITEM_LABELS[k].replace("&amp;", "&"), v - qmap[k], qmap[k]))
-    cands.append(("Non-operating income and expense", Nc["nonop"] - Nq["nonop"], None))
+            cands.append((_plain(item_label(Nc, k)), v - qmap[k], qmap[k]))
+    prior_lines = {k: v for k, _, v, _ in Nq.get("nonop_lines") or ()}
+    if Nc.get("nonop_lines") and prior_lines:                  # the filing's own non-operating lines, one by one
+        for k, label, v, _ in Nc["nonop_lines"]:
+            if k in prior_lines:
+                cands.append(("nonop:" + _plain(label), v - prior_lines[k], v))
+    else:
+        cands.append(("Non-operating income and expense", Nc["nonop"] - Nq["nonop"], None))
     cands.append(("Income tax", -(Nc["tax"] - Nq["tax"]), None))
     if cands:
         lab, d, base = max(cands, key=lambda x: abs(x[1]))
@@ -187,6 +211,10 @@ def compare_bullets(f, q1_label, Nc, Nq, lines_struct=None, lines=(None, None, N
             pct = f" ({d / base * 100:+.0f}%)".replace("-", "−") if base and base > 0 else ""
             if lab == "Income tax":
                 out.append(f"The largest single swing was income tax, {'lower' if d > 0 else 'higher'} by {f.money(abs(d))}.")
+            elif lab.startswith("nonop:"):
+                name = lab[6:][:1].lower() + lab[6:][1:]
+                out.append(f"The largest single swing was {name}, {'up' if d > 0 else 'down'} {f.money(abs(d))} "
+                           f"to {f.delta(base)}.")
             elif lab.startswith("Non-operating"):
                 out.append(f"The largest single swing was non-operating items, {'up' if d > 0 else 'down'} {f.money(abs(d))} "
                            f"to {f.delta(Nc['nonop'])}.")

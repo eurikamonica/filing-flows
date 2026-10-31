@@ -5,6 +5,21 @@ ITEM_LABELS = {"cor": "Cost of revenue", "rd": "Research &amp; development", "sm
                "other_opex": "Other operating costs", "prov": "Credit loss provision", "nonint": "Noninterest expense"}
 
 
+def item_label(N, k):
+    """A cost line's name: the filing's own (raw["cost_lines"]) or the standard one."""
+    return ((N or {}).get("labels") or {}).get(k) or ITEM_LABELS.get(k) or k
+
+
+def _lines(rows):
+    """[(key, label, value, note)] from [(key, label, value[, note])] with a value."""
+    out = []
+    for r in rows or ():
+        k, label, v = r[0], r[1], r[2]
+        if v is not None:
+            out.append((k, label, float(v), r[3] if len(r) > 3 else None))
+    return out
+
+
 def _close(a, b, tol=0.01):
     return a is not None and b is not None and abs(a - b) <= tol * max(abs(a), abs(b), 1)
 
@@ -66,6 +81,10 @@ def normalize(raw):
         items.append(("da_op", raw["da_op"]))
     if raw.get("rev_bank"):                             # a bank (facts.bank_revenue): its two cost lines instead
         items = [("prov", raw.get("prov")), ("nonint", raw.get("nonint_exp"))]
+    labels = {}
+    if raw.get("cost_lines"):                           # the filing's own cost lines, by its own names (a prospectus:
+        items = [(k, v) for k, _, v, _ in _lines(raw["cost_lines"])]                   # pipeline/ipo_charts.py)
+        labels = {k: label for k, label, _, _ in _lines(raw["cost_lines"])}
     items = [(k, v) for k, v in items if v and v > 0]
     used = sum(v for _, v in items)
     if pool <= 0 or used > pool * 1.005:
@@ -83,6 +102,13 @@ def normalize(raw):
         da = None
     if sbc is not None and sbc < 0:
         sbc = None
+    # opt-in: the non-operating lines one by one (signed: income > 0) when they add up to pre-tax minus operating
+    # profit, and named non-cash items of the cash bridge (signed: added back > 0) taken out of working capital & other
+    nonop_lines = _lines(raw.get("nonop_lines"))
+    if nonop_lines and abs(sum(v for _, _, v, _ in nonop_lines) - nonop) > max(0.003 * abs(nonop), 0.0005 * R, 1):
+        nonop_lines = []
+        flags.append("nonop_lines_dropped")
+    bridge_lines = _lines(raw.get("bridge_lines")) if ocf is not None else []
     return {
         "R": R, "gp": gp, "cor": cor if gp_path else (cor if cor and cor < pool else None), "gp_path": gp_path,
         "pool": pool, "items": items, "oi": oi, "nonop": nonop, "pretax": pretax, "tax": tax,
@@ -92,6 +118,9 @@ def normalize(raw):
         # a bank's two cost lines even when the chart shows the total only (a period without a provision): the
         # comparisons with that period still have them
         "bank_costs": {"prov": raw.get("prov"), "nonint": raw.get("nonint_exp")} if raw.get("rev_bank") else None,
+        **({"labels": labels} if labels else {}),
+        **({"nonop_lines": nonop_lines} if nonop_lines else {}),
+        **({"bridge_lines": bridge_lines} if bridge_lines else {}),
     }
 
 
@@ -108,8 +137,17 @@ def quantities(N, lines=None):
     for k, v in (N.get("bank_costs") or {}).items():
         if v is not None:
             Q.setdefault("item:" + k, v)
+    for k, _, v, _ in N.get("nonop_lines") or ():
+        Q["nl:" + k] = v
+    if N.get("nonop_lines"):
+        Q["nl_in"] = sum(v for _, _, v, _ in N["nonop_lines"] if v > 0)
+        Q["nl_out"] = -sum(v for _, _, v, _ in N["nonop_lines"] if v < 0)
+        Q["oi_after_nl"] = N["oi"] - Q["nl_out"]          # operating profit left after the non-operating expenses
     if N["ocf"] is not None:
         r = N["ocf"] - N["pl"] - N["da"] - N["sbc"]
+        for k, _, v, _ in N.get("bridge_lines") or ():   # named non-cash items: no longer in working capital & other
+            Q["bl:" + k] = v
+            r -= v
         Q["r"] = r
         Q["r_nci"] = r + N["nci"]
         Q["ni_to_ocf"] = N["ni"] + min(r + N["nci"], 0)
@@ -127,6 +165,8 @@ def quantities(N, lines=None):
     Q["pretax_less_nci"] = N["pretax"] - N["nci"]
     Q["opcosts"] = N["R"] - N["oi"]
     Q["funding"] = N["R"] + max(N["nonop"], 0) + max(-N["tax"], 0) + max(-N["pl"], 0)
+    if N.get("nonop_lines"):                           # each non-operating income line flows in on its own
+        Q["funding_nl"] = N["R"] + Q["nl_in"] + max(-N["tax"], 0) + max(-N["pl"], 0)
     Q["netloss"] = -N["pl"]
     Q["taxben"] = -N["tax"]
     for lid, v in (lines or {}).items():

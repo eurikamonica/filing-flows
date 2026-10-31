@@ -14,7 +14,7 @@ from pathlib import Path
 from urllib.parse import urljoin, urlparse, parse_qs
 from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
-from . import ipo, sec
+from . import ipo, ipo_charts, ipo_reader, sec
 
 REGISTRATION = {'S-1','S-1/A','F-1','F-1/A','S-11','S-11/A'}
 PROSPECTUS = {'424B1','424B3','424B4','424B5'}
@@ -268,6 +268,52 @@ def narrative(html):
     return kind,sections,tables
 
 
+def reader_path(root,acc):
+    """The reading of one prospectus (pipeline/ipo_reader.py): kept with the analyses, published for the company."""
+    return Path(root)/'analyses'/'reader'/f'{acc}.json'
+
+
+def wants_reader(form,classification):
+    return form in REGISTRATION|PROSPECTUS and classification=='ipo_language_identified'
+
+
+def read_prospectus(html,meta,doc=None):
+    """The reader's output for one document, with the MD&A passages about each chart line of its periods."""
+    doc=doc or {}
+    r=ipo_reader.read(html,meta.get('source_url'),ipo_charts.note_keys(doc.get('method')),ipo_charts.reader_periods(doc))
+    return {**r,'accession':meta['accession'],'cik':meta['cik'],'form':meta['form'],'filed':meta['filed'],'read_at':utcnow()}
+
+
+def refresh_readers(db,root,limit=3,deadline=None):
+    """Read the IPO prospectuses analysed before the reader existed or by an older reader: newest first, a few per
+    run. A download failure is retried next run; a document the reader cannot read is marked and left alone."""
+    forms=sorted(REGISTRATION|PROSPECTUS)
+    rows=db.execute(f"""SELECT * FROM filings WHERE classification='ipo_language_identified' AND source_url IS NOT NULL
+                       AND form IN ({','.join('?'*len(forms))}) ORDER BY filed DESC,accession DESC""",forms).fetchall()
+    done=0
+    for r in rows:
+        if done>=limit or (deadline is not None and time.monotonic()>deadline):break
+        path=reader_path(root,r['accession'])
+        if path.exists():
+            try:
+                if json.loads(path.read_text()).get('v')==ipo_reader.READER_VERSION:continue
+            except ValueError:
+                pass
+        done+=1
+        meta={k:r[k] for k in ('cik','name','form','filed','accession','source_url')}
+        try:
+            html=get(r['source_url'])
+        except (Exception,SystemExit):
+            continue
+        a=Path(root)/'analyses'/f"{r['accession']}.json"
+        try:
+            doc=json.loads(a.read_text()) if a.exists() else {}
+            ipo.write(path,read_prospectus(html,meta,doc))
+        except (ValueError,IndexError,KeyError,TypeError,RecursionError) as exc:
+            ipo.write(path,{'v':ipo_reader.READER_VERSION,'accession':r['accession'],'error':str(exc)[:200],'read_at':utcnow()})
+    return done
+
+
 def analyze(html,meta):
     kind,sections,tables=narrative(html)
     try:
@@ -303,6 +349,11 @@ def process(db,root,batch=30,deadline=None,retry_review=False):
             doc=analyze(html,meta)
             if row['form'] in LIFECYCLE:
                 doc.update(classification='lifecycle_document',analysis_state='document_only')
+            if wants_reader(row['form'],doc.get('classification')):
+                try:                                   # the reader never holds up the analysis
+                    ipo.write(reader_path(root,acc),read_prospectus(html,meta,doc))
+                except (ValueError,IndexError,KeyError,TypeError,RecursionError) as exc:
+                    doc['reader_error']=str(exc)[:200]
             ipo.write(Path(root)/'analyses'/f'{acc}.json',doc)
             db.execute('''UPDATE filings SET source_url=?,file_number=?,accepted=?,state=?,classification=?,last_success=?,error=?,next_retry=NULL,parser_version=? WHERE accession=?''',
                        (url,file_number,accepted,doc['analysis_state'],doc['classification'],utcnow(),doc.get('parse_error'),PARSER_VERSION,acc))
@@ -324,6 +375,47 @@ def seed(db,root):
     db.commit()
 
 
+def load_reader(root,acc):
+    p=reader_path(root,acc)
+    if not p.exists():return None
+    try:
+        d=json.loads(p.read_text())
+    except ValueError:
+        return None
+    return d if d.get('sections') else None
+
+
+def reader_summary(rd):
+    """What the company page shows before it loads the whole reading: where it is, the cover facts and the sizes."""
+    risks=rd.get('risks') or {}
+    return {'accession':rd['accession'],'path':f"reader/{rd['accession']}.json",'form':rd.get('form'),'filed':rd.get('filed'),
+            'url':rd.get('url'),'cover':rd.get('cover') or {},'sections':len(rd['sections']),'risks':risks.get('count'),
+            'risk_summary':len(risks.get('summary') or []),'notes':len(rd.get('notes') or []),
+            'holders':bool(rd.get('holders')),'classes':bool(rd.get('classes'))}
+
+
+def with_charts(doc,rd=None):
+    """The analysis with its standard Sankeys (pipeline/ipo_charts.py) and, when its own prospectus was read, the
+    MD&A passages about each line quoted on the chart."""
+    if not doc.get('periods'):return doc
+    notes=(rd or {}).get('node_notes') if rd and rd.get('accession')==doc.get('accession') else None
+    try:
+        c=ipo_charts.charts(doc,notes)
+    except (ValueError,KeyError,TypeError,ZeroDivisionError) as exc:
+        c={'v':ipo_charts.VERSION,'periods':[],'default':None,'error':str(exc)[:200]}
+    return {**doc,'charts':c} if c else doc
+
+
+def headline(doc):
+    """The default period's figures for the market index: label, revenue, its growth and the net result."""
+    c=doc.get('charts') or {}
+    p=next((x for x in c.get('periods') or () if x.get('key')==c.get('default')),None)
+    if not p:return None
+    h=p['headline']
+    return {'label':p['label'],'vs':p.get('vs'),'revenue':h['revenue'],'rev_fmt':h['rev_fmt'],'yoy':h['yoy'],'ni':h['ni'],
+            'ni_fmt':h['ni_fmt'],'om':h['om'],'ocf_fmt':h.get('ocf_fmt')}
+
+
 def public_row(r):
     keys=('accession','cik','name','form','filed','accepted','index_url','source_url','file_number','discovered_at','state','last_attempt','last_success','error','classification')
     return {k:r[k] for k in keys}
@@ -338,22 +430,34 @@ def publish(db,root,out):
         # EFFECT/RW only annotate the same SEC file number; unrelated offerings never change an IPO's state.
         registrations=[r for r in rows if r['form'] in REGISTRATION|PROSPECTUS|DRAFT]
         if not registrations:continue
-        latest=registrations[0];chosen=None
+        latest=registrations[0];chosen=None;readers={}
         for r in rows:
             p=Path(root)/'analyses'/f"{r['accession']}.json"
             if p.exists():
-                doc=json.loads(p.read_text());ipo.write(out/'filings'/f"{r['accession']}.json",{**doc,'filings':rows,'latest_discovered':latest,'generated_at':now})
+                doc=json.loads(p.read_text());rd=load_reader(root,r['accession'])
+                if rd:
+                    readers[r['accession']]=rd;ipo.write(out/'reader'/f"{r['accession']}.json",rd)
+                doc=with_charts(doc,rd)
+                ipo.write(out/'filings'/f"{r['accession']}.json",{**doc,'filings':rows,'latest_discovered':latest,'generated_at':now,
+                          **({'reader':reader_summary(rd)} if rd else {})})
                 if chosen is None and r['form'] not in LIFECYCLE and doc.get('periods'):chosen=doc
         if chosen is None:
             p=Path(root)/'analyses'/f"{latest['accession']}.json"
             chosen=json.loads(p.read_text()) if p.exists() else {**latest,'periods':[],'method':'metadata_only','limitations':['Document analysis is queued.']}
         related=[r for r in rows if latest['file_number'] and r['file_number']==latest['file_number']]
         lifecycle=next((r['form'] for r in related if r['form'] in LIFECYCLE),None)
+        # the reading: of the analysed filing, else of the newest registration statement read
+        rd=readers.get(chosen.get('accession')) or next((readers[r['accession']] for r in rows if r['accession'] in readers),None)
         d={**chosen,'filings':rows,'latest_discovered':latest,'lifecycle':lifecycle,'generated_at':now,
-           'scan':{'state':latest['state'],'last_attempt':latest['last_attempt'],'last_success':latest['last_success']}}
+           'scan':{'state':latest['state'],'last_attempt':latest['last_attempt'],'last_success':latest['last_success']},
+           **({'reader':reader_summary(rd)} if rd else {})}
         ipo.write(out/f'{cik}.json',d)
+        cover=(rd or {}).get('cover') or {}
         companies.append({**latest,'filing_count':len(rows),'parsed_periods':len(chosen.get('periods',[])),
-                          'analysis_accession':chosen['accession'],'lifecycle':lifecycle})
+                          'analysis_accession':chosen['accession'],'lifecycle':lifecycle,
+                          **({'headline':h} if (h:=headline(chosen)) else {}),
+                          **({'symbol':cover['symbol']} if cover.get('symbol') else {}),
+                          **({'exchange':cover['exchange']} if cover.get('exchange') else {})})
     sources=[dict(r) for r in db.execute('SELECT * FROM sources ORDER BY url')]
     start=setting(db,'coverage_start','2024-01-01');today=dt.datetime.now(ZoneInfo('America/New_York')).date()
     wanted={f'{y}-Q{q}' for y,q in quarters(dt.date.fromisoformat(start),today)}
@@ -381,7 +485,9 @@ def main():
     try:
         if a.discover:discover(db,a.backfill_from,a.quarter_batch,deadline=time.monotonic()+a.minutes*60*.5)
         publish(db,a.root,out)
-        if a.discover:process(db,a.root,a.batch,deadline,a.retry_review)
+        if a.discover:
+            process(db,a.root,a.batch,deadline,a.retry_review)
+            refresh_readers(db,a.root,3,deadline)
     finally:
         result=publish(db,a.root,out);db.close()
         print(json.dumps({k:result[k] for k in ('issuer_count','filing_count','quarters_completed','quarters_total','feed_state','states')}))

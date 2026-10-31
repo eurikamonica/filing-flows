@@ -105,6 +105,7 @@
   const mdnaItem = (form) => (form === '10-K' ? 'Item 7' : 'Item 2');
   // where node notes come from: the MD&A of a 10-Q/10-K, or the press release of an 8-K
   const noteSource = (form) => (form === '8-K' ? 'the earnings release (8-K, Exhibit 99.1)' : form === '6-K' ? 'the results release (6-K exhibit)'
+    : /^(?:S-1|F-1|S-11|424B)/.test(form || '') ? `the ${form} prospectus (Management’s Discussion and Analysis)`   // an IPO page
     : `the ${form} (${mdnaItem(form)}, Management’s Discussion and Analysis)`);
   const prelimTag = '<span class="tag prelim" title="Read from the 8-K earnings release; replaced by the 10-Q/10-K when filed">Preliminary · 8-K</span>';
   const finalTag = (rc) => `<span class="tag final" title="${t(releaseCheckText(rc))}">Final · ${rc.ok ? 'confirms' : 'revises'} the 8-K</span>`;
@@ -3934,7 +3935,7 @@
     const line = panels.map(linePanel).join('');
     const chgs = (p) => [p.yoy != null ? `Y/Y ${pct(p.yoy)}` : null, p.qoq != null ? `${p.period === 'half' ? 'H/H' : 'Q/Q'} ${pct(p.qoq)}` : null].filter(Boolean);
     const hits = pts.map((p, i) => `<rect class="tr-hit" data-i="${i}" x="${f(PL + band * i)}" y="0" width="${f(band)}" height="${H - XL}" fill="transparent"><title>${t(p.label)}: ${[money(p.v)].concat(chgs(p)).join(' · ')}</title></rect>`).join('');
-    const unit = series.years ? 'fiscal years' : 'quarters';
+    const unit = series.unit || (series.years ? 'fiscal years' : 'quarters');      // a prospectus: half years too
     const aria = `${S.dec(n.name)}, last ${pts.length} ${unit}: ` + pts.map((p) => `${S.dec(p.label)} ${money(p.v)}${chgs(p).length ? ` (${chgs(p).join(', ')})` : ''}`).join('; ');
     const data = t(JSON.stringify(pts.map((p) => [S.dec(p.label), money(p.v)].concat(chgs(p)))));
     return `<figure class="trend" data-pts="${data}">
@@ -5524,6 +5525,7 @@
   // what the discovery & UX modules (web/feed.js, charts.js) need from the app
   window.FFApp = {
     getJSON, setNav, here: () => true,
+    chartUI, trendSeries,                                // the standard chart for prospectus periods (web/quality-ipo.js)
     async loadFollows() {
       const user = await currentUser().catch(() => null);
       if (!user) return { signedIn: false, tickers: [] };
