@@ -142,3 +142,8 @@
 .hero-chips .chip.on, .hero-chips .chip:hover { border-color: var(--accent); }
 .hero-preview .hero-sk { background: #fcfcfb; border: 1px solid var(--line); border-radius: 14px; padding: 8px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
 .hero-preview .hero-sk svg { display: block; width: 100%; height: auto; min-width: 760px; }
+
+/* the home page's plain HTML before the app starts (scripts/seo_home.py) */
+.static-home { max-width: 860px; padding: 24px 0; }
+.static-home h1 { font-size: clamp(28px, 4.5vw, 44px); margin: 0 0 8px; }
+.static-home ul { columns: 2 260px; padding-left: 18px; }

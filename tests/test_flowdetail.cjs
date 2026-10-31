@@ -177,4 +177,23 @@ for (const cash of ['uses', 'statement']) {
   assert.ok(near(vals[G + 'Revenues'] / 1e9, 108) && near(vals[k('Revenues', P, 'Hw')] / 1e9, 108 * 0.6), 'low case revenue and its parts');
   assert.ok(near(vals['cf>' + G + 'PaymentsToAcquirePropertyPlantAndEquipment'] / 1e9, 45), 'a point guide stays');
 }
+// the risks the filing lists and the figures that rest on estimates, each on its line (pipeline/outlook.py)
+{
+  const sp = F.build(u, {});
+  const ol = { docs: [
+    { kind: 'mdna', form: '10-Q', filed: '2026-10-30', estimates: [{ ref: true }],
+      risks: [{ t: 'tariff and trade policies', lines: ['cor', 'costs'], status: 'new' }, { t: 'interest rates', lines: ['interest'], status: 'repeated' },
+        { t: 'risks of inventory management', lines: ['k~Inventor', 'cor'], status: 'repeated' }],
+      risks_dropped: [{ t: 'payments risks', lines: ['revenue'] }] },
+    { kind: 'mdna', form: '10-K', filed: '2026-02-01', estimates: [{ name: 'Income Taxes', t: 'Estimates and judgments.', lines: ['tax'],
+      sens: [{ pct: 1, unit: 'pct', of: 'our effective tax rate', usd: 1e9, t: 'A 1% change in our effective tax rate would change tax by $1.0 billion.' }] }] }] };
+  const r = F.risksOn(ol, sp);
+  assert.deepStrictEqual(r.map.get('cor').map((x) => x.status), ['new', 'repeated'], 'tariffs and inventory on cost of revenue (no inventory line here)');
+  assert.strictEqual(r.map.get('net')[0].t, 'interest rates', 'no interest line: the bottom line');
+  assert.strictEqual(r.map.get('revenue')[0].status, 'dropped');
+  const e = F.estimatesOn(ol, sp);
+  assert.strictEqual(e.doc.form, '10-K', 'the 10-Q points to the annual report: its estimates');
+  assert.ok(e.map.get('tax')[0].viaRef && e.map.get('tax')[0].sens[0].usd === 1e9);
+  assert.strictEqual(F.nodeFor(['#cat:capex'], F.build(u, { cash: 'uses' })).key, '#cat:capex');
+}
 console.log('flowdetail canvas: ok');

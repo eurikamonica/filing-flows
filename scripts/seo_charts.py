@@ -131,9 +131,10 @@ def guidance_outlook(name, rec, ol, money):
         c = doc['counts']
         out.append(SV.hbars([(k.replace('_', ' ').capitalize(), v) for k, v in c.get('topics') or []], str,
                              f"{name}: what its forward-looking statements are about ({doc.get('form')} filed {doc.get('filed')})",
-                             note=f"{c.get('n', 0)} statements; tone {c.get('tone', 0):+.2f} (−1 all cautious, +1 all confident); {c.get('hedged', 0)} hedged."))
-        out.append(SV.hbars([('New', c.get('new')), ('Updated', c.get('updated')), ('Dropped', c.get('dropped')),
-                             ('Confident', c.get('positive')), ('Cautious', c.get('negative'))], str,
+                             note=f"{c.get('n') or 0} statements" + (f"; tone {c['tone']:+.2f} (−1 all cautious, +1 all confident)" if isinstance(c.get('tone'), (int, float)) else '')
+                             + f"; {c.get('hedged') or 0} hedged."))
+        out.append(SV.hbars([(k, v) for k, v in (('New', c.get('new')), ('Updated', c.get('updated')), ('Dropped', c.get('dropped')),
+                             ('Confident', c.get('positive')), ('Cautious', c.get('negative'))) if isinstance(v, (int, float))], str,
                             f"{name}: outlook statements against the filing before", color=SV.GREY))
     body = ''.join(x for x in out if x)
     return f"<h2>Guidance and outlook</h2>{body}" if body else ''

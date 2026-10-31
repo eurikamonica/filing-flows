@@ -22,10 +22,12 @@
   const COL = { up: 'var(--mk-profit, #17734a)', down: 'var(--mk-cost, #c0392b)', band: 'var(--rot-1, #2a78d6)', ink: 'var(--ink, #222)',
     mute: 'var(--muted, #888)', line: 'var(--line, #e3e3e3)', all: 'var(--muted, #9a9a9a)', warn: 'var(--q-warm, #d9822b)', calm: '#5b7fa6' };
   const QS = [5, 10, 25, 50, 75, 90, 95];
-  const H = [[1, 'Next day'], [5, 'Next week'], [10, 'Next 2 weeks'], [21, 'Next month']];
+  const H = [[1, 'Next day'], [5, 'Next week'], [10, 'Next 2 weeks'], [21, 'Next month'], [63, 'Next quarter']];
   const RGRID = [5, 10, 21, 63, 126, 252, 504];                                  // a week, two, a month, 3 and 6 months, a year, two
   const WIN = [[1, '1 day'], [5, '1 week'], [21, '1 month']];
-  const BANDS = [1, 2.5, 5, 10];
+  const BANDS = [0.25, 0.5, 1, 2.5, 5, 10];                                     // presets; the slider steps by 0.1
+  const PATH_D = 63, PATH_MARKS = [[1, '1 day'], [5, '1 week'], [10, '2 weeks'], [21, '1 month'], [63, '1 quarter']];
+  const fb = (b) => { const v = +b; return Number.isInteger(v) ? String(v) : v.toFixed(v < 1 ? 2 : 1).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, ''); };
   const HLS = [[0, 'the same'], [10, '½ every 10 yrs'], [5, '½ every 5 yrs'], [2, '½ every 2 yrs'], [1, '½ every year']];   // older days count …
   const hlWords = (hl) => (hl === 1 ? 'every year' : `every ${hl} years`);
   const HERE = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) ? document.currentScript.src.replace(/[^/]*$/, '') : '';
@@ -359,7 +361,7 @@
 .mv-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted,#777);margin:4px 0 8px}.mv-legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 .mv-g{stroke:var(--line,#e3e3e3);stroke-width:1}.mv-t{fill:var(--muted,#777);font-size:12px}.mv-l{fill:var(--ink,#222);font-size:12.5px;paint-order:stroke;stroke:var(--surface,#fff);stroke-width:3px}
 .mv-note{font-size:12px;color:var(--muted,#777);line-height:1.55;margin-top:10px;max-width:92ch}.mv-apx{border:1px solid var(--line,#ddd);border-radius:10px;padding:6px 12px;margin:10px 0;max-width:980px}
-.mv-apx summary{cursor:pointer;font-size:13.5px}.mv-apx p{font-size:13px;line-height:1.55;margin:6px 0;max-width:92ch}.mv-err{color:var(--mk-cost,#c0392b);font-size:13px}
+.mv-apx summary{cursor:pointer;font-size:13.5px}.mv-apx p{font-size:13px;line-height:1.55;margin:6px 0;max-width:92ch}.mv-err{color:var(--mk-cost,#c0392b);font-size:13px}.mv-range{width:200px;accent-color:var(--ink,#222);vertical-align:middle}.mv-cases{max-height:620px;overflow:auto;border:1px solid var(--line,#e5e5e5);border-radius:10px}.mv-cases .mv-tbl{margin:0}.mv-cases th{position:sticky;top:0;background:var(--surface,#fff);z-index:1}.mv-cases td.news{white-space:normal;min-width:260px;max-width:520px;font-size:12.5px;line-height:1.45}.mv-news{margin:0 0 6px}.mv-news:last-child{margin:0}.mv-chip{display:inline-block;font-size:11px;border:1px solid var(--line,#ddd);border-radius:999px;padding:0 7px;margin:0 4px 2px 0;color:var(--muted,#666)}.mv-chip.hot{border-color:var(--q-warm,#d9822b);color:var(--q-warm,#b5651d)}.mv-news a{color:inherit}.mv-news .q{color:var(--muted,#777);display:block}.mv-cases tr.now td{background:color-mix(in srgb,var(--q-warm,#d9822b) 10%,transparent)}
 .mv-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}@media (max-width:860px){.mv-two{grid-template-columns:minmax(0,1fr)}}
 .mv-png{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:4px 0 12px;padding:8px 10px;border:1px dashed var(--line,#ccc);border-radius:10px;font-size:13px}
 .mv-png-l{font-weight:600}.mv-png label{display:inline-flex;gap:4px;align-items:center;cursor:pointer}.mv-png-out img{display:block;max-width:min(100%,900px);height:auto;border:1px solid var(--line,#ddd);border-radius:10px;margin:6px 0}
@@ -532,7 +534,7 @@
     return Math.abs(z) >= 2 ? `<b class="${z > 0 ? 'mv-up' : 'mv-down'}">${z > 0 ? 'better' : 'worse'} than usual</b>` : '<span class="mv-sub" style="display:inline">within chance</span>';
   }
   function nextTable(R, o) {
-    const label = { sim: `Days like it (±${o.band} pts)`, ext: `At least as ${R.side > 0 ? 'high' : 'low'}`, all: 'Every day' };
+    const label = { sim: `Days like it (±${fb(o.band)} pts)`, ext: `At least as ${R.side > 0 ? 'high' : 'low'}`, all: 'Every day' };
     const col = { sim: COL.band, ext: sideCol(R, o), all: COL.all };
     let h = '<div class="mv-wrap"><table class="mv-tbl"><thead><tr><th></th><th class="n">Median</th><th class="n">Rose</th><th>Range: 5–95% (line), 25–75% (box), median</th><th class="n">Mean</th><th class="n">5% worst</th><th class="n">5% best</th><th class="n">Days</th><th class="n">Episodes</th><th>vs every day</th></tr></thead><tbody>';
     for (const [hz, hl] of H) {
@@ -572,7 +574,8 @@
     const eg = st.measure === 'vol' ? 'e.g. -3' : st.measure === 'level' ? 'e.g. 30' : st.measure === 'rv' ? 'e.g. 60' : 'e.g. -5';
     return `<div class="mv-bar"><div><label>Move</label><div class="mv-pills">${WIN.map(([w, l]) => pill('w', w, l, st.w === w && !lv, lv)).join('')}</div></div>`
       + `<div><label>Measured as</label><div class="mv-pills">${measures}</div></div>`
-      + `<div><label>Days like it: within</label><div class="mv-pills">${BANDS.map((b) => pill('band', b, '±' + b + ' pts', st.band === b)).join('')}</div></div>`
+      + `<div><label>Days like it: within <b data-mvbl style="color:var(--ink,#222)">±${esc(fb(st.band))}</b> pts</label><div class="mv-pills">${BANDS.map((b) => pill('band', b, '±' + fb(b), Math.abs(st.band - b) < 1e-9)).join('')}`
+      + `<input class="mv-range" type="range" min="0.1" max="10" step="0.1" value="${esc(st.band)}" data-mvband aria-label="Days like it: within this many percentile points"></div></div>`
       + (volIdx ? `<div><label>Then</label><div class="mv-pills">${pill('outcome', 'spx', 'the S&P 500', st.outcome !== 'self')}${pill('outcome', 'self', 'the index itself', st.outcome === 'self')}</div></div>`
         : `<div><label>Volatility then</label><div class="mv-pills">${pill('vreg', 'any', 'any', st.vreg !== 'similar')}${pill('vreg', 'similar', 'similar (±15 pts)', st.vreg === 'similar')}</div></div>`) + '</div>'
       + `<div class="mv-bar"><div><label>Look at</label><div class="mv-pills">${pill('mode', 'latest', lv ? 'the latest' : 'the latest move', st.mode === 'latest')}${pill('mode', 'date', 'a past day', st.mode === 'date')}${pill('mode', 'whatif', 'what if…', st.mode === 'whatif')}</div></div>`
@@ -582,13 +585,158 @@
       + '</div>';
   }
 
+  /* ---------- each day like it: the path after it, and what the company filed ---------- */
+  // the cases: every chosen day (a move longer than a day counts once: chosen days within its length of the one before
+  // belong to it), with the path of simple returns from its close over the next PATH_D trading days (as far as known)
+  function cases(R, o, which) {
+    const mask = R[which], A = R.A, c = cum(A.r), N = A.days.length - 1, w = o.w || 1;
+    const end = o.before && o.mode === 'date' && R.t >= 0 ? R.t : N;
+    const out = [];
+    let last = -Infinity;
+    for (let j = 0; j <= N; j++) {
+      if (!mask[j]) continue;
+      const join = j - last < w;
+      last = j;
+      if (join) continue;
+      const path = [];
+      for (let h = 0; h <= PATH_D && j + h <= end; h++) path.push(Math.expm1(c[j + h] - c[j]));
+      out.push({ j, path });
+    }
+    return out;
+  }
+  // the expected path (the mean of the cases' returns at each day after), the median and the middle half
+  function expectedOf(cs) {
+    const mean = [], med = [], q25 = [], q75 = [], n = [];
+    for (let h = 0; h <= PATH_D; h++) {
+      const v = Float64Array.from(cs.map((x) => x.path[h]).filter(Number.isFinite)).sort();
+      if (v.length < 2) break;
+      n.push(v.length); mean.push(v.reduce((a, b) => a + b, 0) / v.length); med.push(quantile(v, 50)); q25.push(quantile(v, 25)); q75.push(quantile(v, 75));
+    }
+    return { mean, med, q25, q75, n };
+  }
+  // the path of the day looked at, as far as it is known
+  function nowPath(R) {
+    if (R.t < 0) return null;
+    const c = cum(R.A.r), N = R.A.days.length - 1, p = [];
+    for (let h = 0; h <= PATH_D && R.t + h <= N; h++) p.push(Math.expm1(c[R.t + h] - c[R.t]));
+    return p.length > 1 ? p : null;
+  }
+  const px = (h) => Math.sqrt(h / PATH_D);                                   // the days after on a square-root scale
+  function pathsSvg(R, o, cs, E) {
+    const W = o.narrow ? 440 : 760, Hh = o.narrow ? 300 : 340, L = 48, Rr = o.narrow ? 54 : 70, T = 18, B = 34;
+    const pts = [];
+    cs.forEach((x) => x.path.forEach((v) => pts.push(v)));
+    const now = nowPath(R);
+    if (!pts.length) return '<p class="mv-sub">No days to draw.</p>';
+    const sv = Float64Array.from(pts).sort();
+    let lo = Math.min(quantile(sv, 1.5), 0, ...E.mean), hi = Math.max(quantile(sv, 98.5), 0, ...E.mean);
+    if (now) { lo = Math.min(lo, ...now); hi = Math.max(hi, ...now); }
+    const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+    const sx = (h) => L + px(h) * (W - L - Rr), sy = (v) => T + (hi - v) / (hi - lo) * (Hh - T - B);
+    const line = (p) => p.map((v, h) => `${h ? 'L' : 'M'}${sx(h).toFixed(1)},${sy(v).toFixed(1)}`).join('');
+    const clip = 'mvc' + Math.random().toString(36).slice(2, 8);       // lines beyond the axis are cut at its edge, not flattened
+    let g = `<svg class="mv-chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="The path after each day like it (dashed), and the expected path"><defs><clipPath id="${clip}"><rect x="${L}" y="${T}" width="${W - L - Rr + 2}" height="${Hh - T - B}"/></clipPath></defs>`;
+    ticks(lo * 100, hi * 100, 6).forEach((v) => { g += `<line class="mv-g" x1="${L}" x2="${W - Rr}" y1="${sy(v / 100)}" y2="${sy(v / 100)}"/><text class="mv-t" x="${L - 6}" y="${sy(v / 100) + 4}" text-anchor="end">${esc(sgn(v, Math.abs(v) < 1 && v !== 0 ? 1 : 0))}</text>`; });
+    g += `<line x1="${L}" x2="${W - Rr}" y1="${sy(0)}" y2="${sy(0)}" style="stroke:${COL.mute};stroke-width:1"/>`;
+    PATH_MARKS.forEach(([h, l]) => { g += `<line class="mv-g" x1="${sx(h)}" x2="${sx(h)}" y1="${T}" y2="${Hh - B}" style="stroke-dasharray:2 3"/><text class="mv-t" x="${sx(h)}" y="${Hh - B + 16}" text-anchor="middle">${esc(o.narrow && h === 10 ? '2w' : l)}</text>`; });
+    // the middle half of the cases, then each case dashed, the median dotted, the expected path, the day looked at
+    g += `<g clip-path="url(#${clip})">`;
+    if (E.mean.length > 1) {
+      const up = E.q75.map((v, h) => `${h ? 'L' : 'M'}${sx(h).toFixed(1)},${sy(v).toFixed(1)}`).join(''), dn = E.q25.map((v, h) => `L${sx(h).toFixed(1)},${sy(v).toFixed(1)}`).reverse().join('');
+      g += `<path d="${up}${dn}Z" style="fill:${COL.band};opacity:.10"/>`;
+    }
+    const op = Math.max(0.12, Math.min(0.75, 2.6 / Math.sqrt(cs.length)));
+    cs.forEach((x) => {
+      if (x.path.length < 2) return;
+      const f = x.path[x.path.length - 1];
+      g += `<path d="${line(x.path)}" style="fill:none;stroke:${f >= 0 ? COL.up : COL.down};stroke-width:1.1;stroke-dasharray:4 3;opacity:${op.toFixed(2)}"><title>${esc(mdy(R.A.days[x.j]))}: ${esc(fmtX(o, R.x[x.j]))} · then ${PATH_MARKS.filter(([h]) => h < x.path.length).map(([h, l]) => `${l} ${sp(x.path[h])}`).join(', ')}</title></path>`;
+    });
+    if (E.med.length > 1) g += `<path d="${line(E.med)}" style="fill:none;stroke:${COL.ink};stroke-width:1.4;stroke-dasharray:1.5 3;opacity:.8"/>`;
+    if (E.mean.length > 1) g += `<path d="${line(E.mean)}" style="fill:none;stroke:${COL.band};stroke-width:3"/>`;
+    if (now) g += `<path d="${line(now)}" style="fill:none;stroke:${COL.warn};stroke-width:2.4"/>`;
+    g += '</g>';
+    PATH_MARKS.forEach(([h]) => {
+      if (h >= E.mean.length) return;
+      const v = E.mean[h], y = sy(v);
+      g += `<circle cx="${sx(h)}" cy="${y}" r="3.6" style="fill:${COL.band};stroke:#fff;stroke-width:1.2"/>`;
+      if (h === PATH_D || h === E.mean.length - 1 || !o.narrow) g += `<text class="mv-l" x="${sx(h) + (h === PATH_D ? 7 : 0)}" y="${y - 8}" text-anchor="${h === PATH_D ? 'start' : 'middle'}" style="font-weight:650;fill:${COL.band}">${esc(sp(v))}</text>`;
+    });
+    g += `<text class="mv-t" x="${L}" y="${Hh - 4}">trading days after the day (square-root scale) · ${esc(num(cs.length))} case${cs.length === 1 ? '' : 's'}</text>`;
+    return g + '</svg>';
+  }
+  // the filings that could move a day: filed that day before the close (16:00 New York time), or after the close of the
+  // trading day before (and over a weekend or holiday)
+  const ITEM_WORD = { '1.01': 'material agreement', '1.02': 'agreement ended', '1.03': 'bankruptcy', '1.05': 'cybersecurity incident', '2.01': 'acquisition or sale completed',
+    '2.02': 'earnings', '2.03': 'new debt', '2.05': 'restructuring', '2.06': 'impairment', '3.01': 'listing notice', '3.02': 'unregistered share sale',
+    '4.01': 'auditor change', '4.02': 'restatement', '5.01': 'change in control', '5.02': 'executive or board change', '5.03': 'bylaws or fiscal year',
+    '5.07': 'shareholder vote', '7.01': 'Reg FD disclosure', '8.01': 'other events' };
+  const FORM_WORD = (f) => (/^10-Q/.test(f) ? 'quarterly report (10-Q)' : /^10-K/.test(f) ? 'annual report (10-K)' : /^(20|40)-F/.test(f) ? 'annual report (' + f + ')'
+    : /^424B|^S-|^F-[134]/.test(f) ? 'offering prospectus (' + f + ')' : /13D/.test(f) ? 'a 5%+ stake (Schedule 13D)' : /^SC TO/.test(f) ? 'tender offer'
+      : /14D9/.test(f) ? 'response to a tender offer' : /M14A/.test(f) ? 'merger proxy' : /^25-NSE|^15-12B/.test(f) ? 'delisting' : /^NT 10/.test(f) ? 'late filing notice' : /^6-K/.test(f) ? 'foreign issuer report (6-K)' : f);
+  const HOT = new Set(['2.02', '1.05', '2.05', '2.06', '4.02', '3.01', '1.03', '5.01']);
+  function newsIndex(news, days) {
+    const by = new Map();
+    if (!news || !news.events) return by;
+    for (const e of news.events) {
+      const [d, hm] = e;
+      let k = lower(days, d);
+      if (k < days.length && days[k] === d && hm && hm >= '16:00') k++;
+      if (k >= days.length) continue;
+      if (!by.has(k)) by.set(k, []);
+      by.get(k).push(e);
+    }
+    return by;
+  }
+  function newsCell(list, cik) {
+    if (!list || !list.length) return '';
+    return list.slice(0, 4).map(([d, hm, form, items, head, q, topics, acc, g]) => {
+      const its = String(items || '').split(',').filter((x) => x && x !== '9.01');
+      const chips = (form.startsWith('8-K') ? its.map((x) => `<span class="mv-chip${HOT.has(x) ? ' hot' : ''}">${esc(ITEM_WORD[x] || 'Item ' + x)}</span>`) : [`<span class="mv-chip">${esc(FORM_WORD(form))}</span>`])
+        .concat((topics || []).filter((t) => t !== 'earnings').map((t) => `<span class="mv-chip hot">${esc(String(t).replace(/_/g, ' '))}</span>`))
+        .concat(g ? [`<span class="mv-chip hot">guidance ${esc(g)}</span>`] : []).join('');
+      const url = cik && acc ? `https://www.sec.gov/Archives/edgar/data/${+cik}/${String(acc).replace(/-/g, '')}/` : '';
+      const when = `${mdy(d)}${hm ? ' ' + hm + ' ET' : ''}`;
+      return `<p class="mv-news">${chips}${head ? `<a href="${esc(url)}" target="_blank" rel="noopener"><b>${esc(head)}</b></a>` : url ? `<a href="${esc(url)}" target="_blank" rel="noopener">the filing ↗</a>` : ''}`
+        + ` <span class="mv-sub" style="display:inline">${esc(when)}</span>${q ? `<span class="q">${esc(q)}</span>` : ''}</p>`;
+    }).join('') + (list.length > 4 ? `<span class="mv-sub">+${list.length - 4} more filings</span>` : '');
+  }
+  function casesTable(R, o, cs, news, doc) {
+    const by = newsIndex(news, R.A.days), cols = PATH_MARKS;
+    const rows = cs.slice().sort((a, b) => b.j - a.j);
+    const hasNews = doc.kind === 'stock';
+    let h = `<div class="mv-cases"><table class="mv-tbl"><thead><tr><th>Day</th><th class="n">Move</th><th class="n">Pct</th>${cols.map(([, l]) => `<th class="n">${esc(l)}</th>`).join('')}${hasNews ? '<th>What the company filed (that day, or after the close before it)</th>' : ''}</tr></thead><tbody>`;
+    const nowRow = R.t >= 0 && o.mode !== 'whatif' ? { j: R.t, path: nowPath(R) || [0] } : null;
+    for (const x of (nowRow ? [nowRow] : []).concat(rows)) {
+      const isNow = nowRow && x === nowRow;
+      h += `<tr${isNow ? ' class="now"' : ''}><td>${esc(mdy(R.A.days[x.j]))}${isNow ? ' <span class="mv-chip hot">this day</span>' : ''}</td><td class="n ${tone(R.x[x.j])}">${esc(fmtX(o, R.x[x.j]))}</td><td class="n">${num(pctOf(R.s, R.x[x.j]), 1)}</td>`
+        + cols.map(([hz]) => { const v = x.path[hz]; return `<td class="n ${tone(v)}">${fin(v) ? sp(v) : '—'}</td>`; }).join('')
+        + (hasNews ? `<td class="news">${newsCell(by.get(x.j), doc.cik) || `<span class="mv-sub">${news ? 'no filing that day' : '…'}</span>`}</td>` : '') + '</tr>';
+    }
+    return h + '</tbody></table></div>';
+  }
+  function casesSection(R, o, doc, news) {
+    const which = o.set === 'ext' ? 'ext' : 'sim';
+    const cs = cases(R, o, which), E = expectedOf(cs);
+    const lab = which === 'sim' ? `day${cs.length === 1 ? '' : 's'} like it (within ±${fb(o.band)} percentile points)` : `day${cs.length === 1 ? '' : 's'} at least as ${R.side > 0 ? 'high' : 'low'}`;
+    const many = cs.length === 1 ? 'The one' : `Each of the ${num(cs.length)}`;
+    let h = `<h3>Each day like it, and the path after it</h3>`;
+    h += `<p class="mv-sub">${many} ${esc(lab)}${o.w > 1 ? ' (overlapping days of one move counted once)' : ''} is a dashed line (green when it ended up, red when down), from its close over the next day, week, two weeks, month and quarter; the thick blue line is the expected path (the average of the cases at each day after), the dotted one the median, the shaded band the middle half${R.t >= 0 && o.mode !== 'whatif' ? `; orange: what followed ${esc(mdy(R.A.days[R.t]))}` : ''}. Move the slider above to take a narrower or wider band of days.</p>`;
+    if (E.mean.length > 1) {
+      h += `<p class="mv-head" style="font-size:15.5px">Expected after a day like it: ${PATH_MARKS.filter(([hz]) => hz < E.mean.length).map(([hz, l]) => `${esc(l)} <b class="${tone(E.mean[hz])}">${sp(E.mean[hz])}</b>`).join(' · ')}`
+        + ` <span class="mv-sub" style="display:inline">(${share(cs.filter((x) => fin(x.path[Math.min(21, x.path.length - 1)]) && x.path[Math.min(21, x.path.length - 1)] > 0).length / Math.max(1, cs.length))} up after a month)</span></p>`;
+    }
+    h += pathsSvg(R, o, cs, E);
+    h += `<div class="mv-legend"><span><b style="background:none;border-top:2px dashed ${COL.up};height:0;width:14px;border-radius:0"></b><b style="background:none;border-top:2px dashed ${COL.down};height:0;width:14px;border-radius:0"></b>each case</span><span><b style="background:${COL.band}"></b>expected (average)</span><span><b style="background:none;border-top:2px dotted ${COL.ink};height:0;width:14px;border-radius:0"></b>median</span><span><b style="background:${COL.band};opacity:.25"></b>middle half</span>${R.t >= 0 && o.mode !== 'whatif' ? `<span><b style="background:${COL.warn}"></b>this day</span>` : ''}</div>`;
+    h += `<p class="mv-sub">${doc.kind === 'stock' ? 'Each case with what the company filed with the SEC that could have moved it: 8-K items (the press release\'s headline and key sentences, read for the days of its biggest moves), quarterly and annual reports, offerings and stakes. Filings are read a batch at a time, the largest companies and most extreme days first; a day may show its filing before its headline.' : 'Company filings are shown for a company: switch to “this company” above.'}</p>`;
+    return h + casesTable(R, o, cs, news, doc);
+  }
 
   /* ---------- how long it took: climbing back, a new high ---------- */
   const RLAB = (rs, kind) => (kind === 'high' ? (rs < 0 ? 'back to a new high' : 'the next new high') : (rs < 0 ? 'back to the close before the move' : 'gave the rise back'));
   const dayWords = (d) => (d == null ? '—' : d <= 1 ? `${d} day` : `${num(d)} days`);
   function recSets(R, o) {
     const rs = R.rec.side;
-    return [['sim', COL.band, `Days like it (±${o.band} pts)`], ['ext', R.side > 0 ? COL.up : COL.down, `At least as ${R.side > 0 ? 'high' : 'low'}`],
+    return [['sim', COL.band, `Days like it (±${fb(o.band)} pts)`], ['ext', R.side > 0 ? COL.up : COL.down, `At least as ${R.side > 0 ? 'high' : 'low'}`],
       ['base', COL.all, `Every ${rs < 0 ? 'down' : 'up'} ${o.w === 1 ? 'day' : o.w === 5 ? 'week' : 'month'}`]];
   }
   function recoverySvg(R, o, kind) {
@@ -692,7 +840,7 @@
   }
 
   /* ---------- a picture to share: the chosen panels in one PNG ---------- */
-  const PANELS = [['now', 'Now'], ['1', 'Next day'], ['5', '1 week'], ['10', '2 weeks'], ['21', '1 month'], ['back', 'Climb back'], ['high', 'New high'], ['vol', 'Volatility']];
+  const PANELS = [['now', 'Now'], ['paths', 'Each case'], ['1', 'Next day'], ['5', '1 week'], ['10', '2 weeks'], ['21', '1 month'], ['63', '1 quarter'], ['back', 'Climb back'], ['high', 'New high'], ['vol', 'Volatility']];
   const canDraw = (R, k) => ((k !== 'back' && k !== 'high') || !!R.rec) && (k !== 'vol' || !R.volIdx);
   const PC = { bg: '#fcfcfb', card: '#ffffff', ink: '#1d1d1b', ink2: '#3d3c39', muted: '#6b6a66', line: '#e3e1dc', up: '#17734a', down: '#c0392b', band: '#2a78d6', warn: '#d9822b', calm: '#5b7fa6', grey: '#9a9893' };
   // a Gaussian kernel density of sorted values over n points from lo to hi (Silverman's bandwidth); with weights wts
@@ -765,7 +913,7 @@
   }
   function drawHorizon(x, box, R, o, hz, which) {
     const S = R.h[hz][which], A = R.h[hz].all, hl = H.find((v) => v[0] === hz)[1];
-    const P = card(x, box.x, box.y, box.w, box.h, `${hl}${hz === 1 ? '' : ` (${hz} trading days)`}`, `after the ${which === 'sim' ? `days like it (±${o.band} pts)` : `days at least as ${R.side > 0 ? 'high' : 'low'}`} · after every day`);
+    const P = card(x, box.x, box.y, box.w, box.h, `${hl}${hz === 1 ? '' : ` (${hz} trading days)`}`, `after the ${which === 'sim' ? `days like it (±${fb(o.band)} pts)` : `days at least as ${R.side > 0 ? 'high' : 'low'}`} · after every day`);
     if (!S || !A || S.s.length < 3) { x.fillStyle = PC.muted; x.font = pngFont(13); x.fillText('Too few days to draw.', P.x, P.y + 40); return; }
     const sv = Array.from(S.s, (v) => v * 100), av = Array.from(A.s, (v) => v * 100), pool = Float64Array.from([...sv, ...av]).sort();
     let lo = Math.min(quantile(pool, 1), 0), hi = Math.max(quantile(pool, 99), 0);
@@ -845,6 +993,40 @@
     x.beginPath(); x.arc(sx(V.t), sy(V.now), 4.5, 0, 2 * Math.PI); x.fillStyle = PC.band; x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1.5; x.stroke();
     label(x, `now ${num(V.now * 100, 0)}% a year · ${rankWords(V.pct)} · typical ${num(V.med * 100, 0)}%${V.vix && Number.isFinite(V.vixNow) ? ` · VIX ${num(V.vixNow * 100, 1)}` : ''}`, P.x + P.w, P.y + 10, PC.band, pngFont(13, 650), 'right');
   }
+  function drawPaths(x, box, R, o) {
+    const which = o.set === 'ext' ? 'ext' : 'sim', cs = cases(R, o, which), E = expectedOf(cs), now = nowPath(R);
+    const P = card(x, box.x, box.y, box.w, box.h, `Each ${which === 'sim' ? 'day like it' : 'day at least as ' + (R.side > 0 ? 'high' : 'low')} and the path after it`,
+      `${num(cs.length)} cases, dashed (green ended up, red down) · thick blue: the expected path (average) · dotted: median${now ? ' · orange: this day' : ''}`);
+    const pts = []; cs.forEach((c) => c.path.forEach((v) => pts.push(v)));
+    if (pts.length < 3) { x.fillStyle = PC.muted; x.font = pngFont(13); x.fillText('Too few days to draw.', P.x, P.y + 40); return; }
+    const sv = Float64Array.from(pts).sort();
+    let lo = Math.min(quantile(sv, 1.5), 0, ...E.mean), hi = Math.max(quantile(sv, 98.5), 0, ...E.mean);
+    if (now) { lo = Math.min(lo, ...now); hi = Math.max(hi, ...now); }
+    const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+    const L = P.x + 46, Wd = P.w - 46 - 70, top = P.y + 8, bot = P.y + P.h - 22;
+    const sx = (h) => L + px(h) * Wd, sy = (v) => bot - (v - lo) / (hi - lo) * (bot - top);
+    x.font = pngFont(12); x.fillStyle = PC.muted; x.strokeStyle = PC.line; x.lineWidth = 1;
+    ticks(lo * 100, hi * 100, 5).forEach((v) => { x.beginPath(); x.moveTo(L, sy(v / 100)); x.lineTo(L + Wd, sy(v / 100)); x.stroke(); x.textAlign = 'right'; x.fillText(sgn(v, Math.abs(v) < 1 && v !== 0 ? 1 : 0), L - 6, sy(v / 100) + 4); });
+    x.textAlign = 'center';
+    PATH_MARKS.forEach(([h, l]) => { x.save(); x.setLineDash([2, 3]); x.beginPath(); x.moveTo(sx(h), top); x.lineTo(sx(h), bot); x.stroke(); x.restore(); x.fillText(l, sx(h), P.y + P.h - 4); });
+    x.textAlign = 'left';
+    const path = (p) => { x.beginPath(); p.forEach((v, h) => { if (h) x.lineTo(sx(h), sy(v)); else x.moveTo(sx(h), sy(v)); }); };
+    const op = Math.max(0.12, Math.min(0.75, 2.6 / Math.sqrt(cs.length)));
+    x.save(); x.beginPath(); x.rect(L, top, Wd + 2, bot - top); x.clip();
+    x.save(); x.setLineDash([4, 3]); x.lineWidth = 1.1;
+    cs.forEach((c) => { if (c.path.length < 2) return; x.globalAlpha = op; x.strokeStyle = c.path[c.path.length - 1] >= 0 ? PC.up : PC.down; path(c.path); x.stroke(); });
+    x.restore();
+    if (E.med.length > 1) { x.save(); x.setLineDash([1.5, 3]); x.strokeStyle = PC.ink; x.lineWidth = 1.4; path(E.med); x.stroke(); x.restore(); }
+    if (E.mean.length > 1) { x.strokeStyle = PC.band; x.lineWidth = 3; path(E.mean); x.stroke(); }
+    if (now) { x.strokeStyle = PC.warn; x.lineWidth = 2.4; path(now); x.stroke(); }
+    x.restore();
+    PATH_MARKS.forEach(([h]) => {
+      if (h >= E.mean.length) return;
+      const X = sx(h), Y = sy(E.mean[h]);
+      x.beginPath(); x.arc(X, Y, 4, 0, Math.PI * 2); x.fillStyle = PC.band; x.fill();
+      label(x, sp(E.mean[h]), h === PATH_D ? X + 8 : X, Y - 9, PC.band, pngFont(13, 650), h === PATH_D ? 'left' : 'center');
+    });
+  }
   async function picture(R, o, doc, picks, hub) {
     if (typeof document === 'undefined') return null;
     if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) { /* draw with what is loaded */ } }
@@ -852,7 +1034,7 @@
     if (!order.length) return null;
     const Wd = 1200, M = 32, G = 22, full = Wd - 2 * M, half = (full - G) / 2, ph = 300;
     const rows = []; let rest = order.slice();
-    if (rest[0] === 'now') { rows.push(['now']); rest = rest.slice(1); }
+    for (const wide of ['now', 'paths']) if (rest[0] === wide) { rows.push([wide]); rest = rest.slice(1); }
     while (rest.length) { rows.push(rest.length === 1 ? [rest[0]] : [rest[0], rest[1]]); rest = rest.slice(2); }
     const headH = R.hl ? 124 : 104, footH = 64, Hh = headH + rows.length * (ph + G) + footH;
     const c = document.createElement('canvas'), sc = 2; c.width = Wd * sc; c.height = Hh * sc;
@@ -867,7 +1049,7 @@
       : `${name} ${verb} ${num(Math.abs(raw) * 100, 1)}%${o.w === 1 ? '' : o.w === 5 ? ' in a week' : ' in a month'}${when}: a ${rankWords(R.at)} ${o.w === 1 ? 'day' : 'move'}`;
     x.fillStyle = PC.ink; x.font = pngFont(27, 650); x.fillText(title, M, 46);
     x.fillStyle = PC.muted; x.font = pngFont(14.5);
-    x.fillText(`${doc.name || name}${doc.members ? ` · equal-weighted, ${num(doc.members)} companies` : ''} · ${what(o)}${o.measure === 'raw' || o.measure === 'level' || o.measure === 'rv' ? '' : ', ' + measureName(o, doc.kind)}${R.out ? ` · then: ${R.out}` : ''} · ranked among ${num(R.n)} since ${mdy(R.A.days[0])} · days like it: within ±${o.band} percentile points`, M, 74);
+    x.fillText(`${doc.name || name}${doc.members ? ` · equal-weighted, ${num(doc.members)} companies` : ''} · ${what(o)}${o.measure === 'raw' || o.measure === 'level' || o.measure === 'rv' ? '' : ', ' + measureName(o, doc.kind)}${R.out ? ` · then: ${R.out}` : ''} · ranked among ${num(R.n)} since ${mdy(R.A.days[0])} · days like it: within ±${fb(o.band)} percentile points`, M, 74);
     if (R.hl) {                                              // older days counting less: say so, and what the dashed lines are
       x.fillStyle = PC.band; x.font = pngFont(14.5, 600);
       x.fillText(`Older days count less: a day's weight halves ${hlWords(R.hl)} away from ${mdy(R.ref)}${R.eq ? ` (unweighted: ${rankWords(R.eq.at)})` : ''} · dashed lines: unweighted`, M, 98);
@@ -877,6 +1059,7 @@
       row.forEach((k, i) => {
         const box = { x: M + i * (half + G), y, w: row.length === 1 ? full : half, h: ph };
         if (k === 'now') drawNow(x, box, R, o);
+        else if (k === 'paths') drawPaths(x, box, R, o);
         else if (k === 'back' || k === 'high') drawRecovery(x, box, R, o, k, doc);
         else if (k === 'vol') drawVol(x, box, R, o, doc);
         else drawHorizon(x, box, R, o, +k, o.set === 'ext' ? 'ext' : 'sim');
@@ -902,20 +1085,20 @@
       + `<button type="button" class="mv-pill on" data-mvpng="1">Make the picture</button><span class="mv-sub" data-mvmsg style="margin:0"></span></div><div class="mv-png-out"></div>`;
   }
 
-  function body(R, st, doc) {
+  function body(R, st, doc, news) {
     if (R.error) return `<p class="mv-err">${esc(R.error)}</p>`;
     const which = st.set === 'ext' ? 'ext' : 'sim';
     let h = headline(R, st, doc) + weightNote(R, st) + cards(R, st) + pngBar(st, R);
     h += `<h3>Where it ranks</h3><p class="mv-sub">Every ${esc(what(st))} ${st.measure === 'raw' || st.measure === 'level' || st.measure === 'rv' ? '' : esc(measureName(st, doc.kind)) + ' '}on file. The coloured bars are the ${st.measure === 'level' || st.measure === 'rv' ? 'days' : 'moves'} at least as ${R.side > 0 ? 'high' : 'low'}; the dashed line is the one looked at.${st.before && st.mode === 'date' ? ' Only the days up to it are counted.' : ''}</p>${rankSvg(R, st)}`;
-    h += `<h3>What came next${R.out ? ` for ${esc(R.out)}` : ''}</h3><p class="mv-sub">${R.out ? `${esc(R.out)}'s close-to-close returns from each day:` : 'Close-to-close returns from the day of each move:'} after the days whose ${st.measure === 'level' ? 'level' : st.measure === 'rv' ? 'volatility' : 'move'} ranked within ±${st.band} percentile points of this one, after the days at least as ${R.side > 0 ? 'high' : 'low'}, and after every day. An episode groups chosen days that fall within the horizon of each other: they are the independent tries, and what "within chance" is judged on.${R.hl ? ` With older days counting less, the medians, shares and ranges are weighted; ≈ is how many days of full weight the days are worth, and the episodes are scaled by it.` : ''}</p>`;
+    h += `<h3>What came next${R.out ? ` for ${esc(R.out)}` : ''}</h3><p class="mv-sub">${R.out ? `${esc(R.out)}'s close-to-close returns from each day:` : 'Close-to-close returns from the day of each move:'} after the days whose ${st.measure === 'level' ? 'level' : st.measure === 'rv' ? 'volatility' : 'move'} ranked within ±${fb(st.band)} percentile points of this one, after the days at least as ${R.side > 0 ? 'high' : 'low'}, and after every day. An episode groups chosen days that fall within the horizon of each other: they are the independent tries, and what "within chance" is judged on.${R.hl ? ` With older days counting less, the medians, shares and ranges are weighted; ≈ is how many days of full weight the days are worth, and the episodes are scaled by it.` : ''}</p>`;
     h += nextTable(R, st);
     h += `<div class="mv-bar"><div><label>Distribution</label><div class="mv-pills">${H.map(([hz, l]) => `<button type="button" class="mv-pill${st.h === hz ? ' on' : ''}" data-mv="h" data-v="${hz}">${esc(l)}</button>`).join('')}</div></div>`
       + `<div><label>Compared with every day</label><div class="mv-pills"><button type="button" class="mv-pill${which === 'sim' ? ' on' : ''}" data-mv="set" data-v="sim">days like it</button><button type="button" class="mv-pill${which === 'ext' ? ' on' : ''}" data-mv="set" data-v="ext">at least as ${R.side > 0 ? 'high' : 'low'}</button></div></div></div>`;
     h += nextSvg(R, st, st.h, which) + `<div class="mv-legend"><span><b style="background:${COL.up};opacity:.6"></b><b style="background:${COL.down};opacity:.6"></b>after the ${which === 'sim' ? 'days like it' : 'more extreme days'} (share of those days)</span><span><b style="background:none;border:1.5px solid ${COL.ink}"></b>after every day</span>${R.eq ? `<span><b style="background:none;border-top:2px dashed ${COL.band};height:0"></b>${which === 'sim' ? 'days like it' : 'the more extreme days'}, unweighted</span>` : ''}${fin(R.actual[st.h]) ? `<span><b style="background:${COL.warn}"></b>what happened after this day</span>` : ''}</div>`;
+    h += casesSection(R, st, doc, news);
     h += recoverySection(R, st, doc);
     h += volSection(R, st, doc);
     h += `<h3>When ${st.measure === 'level' ? 'levels' : st.measure === 'rv' ? 'volatility' : 'moves'} like this happened</h3><p class="mv-sub">Every ${esc(what(st))} over time; the coloured dots are the days like this one (larger) and the days at least as ${R.side > 0 ? 'high' : 'low'}. Big moves come in clusters, in volatile years.</p>${timeSvg(R, st)}`;
-    h += `<h3>The latest days like it</h3><p class="mv-sub">${which === 'sim' ? `Moves within ±${st.band} percentile points of this one` : `Moves at least as ${R.side > 0 ? 'high' : 'low'}`}, most recent first, and what followed.</p>${recentTable(R, st, which)}`;
     h += `<details class="mv-apx"><summary>How this is worked out</summary>`
       + `<p><b>The move.</b> The close-to-close change over one day, a week (5 trading days) or a month (21), on prices adjusted for dividends and splits (the indices: price only). Measured against its own volatility, it is divided by the standard deviation of the 63 daily returns before the move began (scaled to its length), so a 3% day counts for more in a calm stretch than in a wild one. Beyond the market, it is the move less beta times the S&P 500's move over the same days, beta from the year of daily returns before it.</p>`
       + `<p><b>The percentile.</b> Its mid-rank among every move of the same length on file: 2.5 means 2.5% of moves were lower. "Days like it" are those within the chosen number of percentile points of it; "at least as high / low" those as far out or further on the same side.</p>`
@@ -942,7 +1125,7 @@
       return;
     }
     const st = Object.assign({ key: home, w: 1, measure: homeDoc.kind === 'volatility' ? 'level' : 'raw', mode: 'latest', date: '', whatif: '', band: 2.5, before: false,
-      h: 21, set: 'sim', rk: 'back', outcome: 'spx', vreg: 'any', hl: 0, png: ['now', '5', '10', '21', 'back', 'high'] }, opts.state || {});
+      h: 21, set: 'sim', rk: 'back', outcome: 'spx', vreg: 'any', hl: 0, png: ['now', 'paths', '5', '21', '63', 'back'] }, opts.state || {});
     const egOf = (m) => (m === 'vol' ? -3 : m === 'level' ? 30 : m === 'rv' ? 60 : -5);
     const docs = { [home]: homeDoc }, dec = {};
     const assets = [[home, homeDoc.kind === 'stock' ? homeDoc.ticker || home : homeDoc.name, homeDoc.kind === 'stock' ? 'this company' : homeDoc.kind]];
@@ -976,7 +1159,10 @@
       let h = '<div class="mv">';
       if (names.length > 1) h += `<div class="mv-assets" role="group" aria-label="What to look at">${names.map(([k, l, role]) => `<button type="button" class="mv-asset${k === st.key ? ' on' : ''}" data-mva="${esc(k)}"><small>${esc(role)}</small>${esc(l)}</button>`).join('')}</div>`;
       h += `<p class="mv-sub">${esc(doc.name || doc.key)} · daily closes ${esc(mdy(doc.d0))} – ${esc(mdy(doc.as_of))}${doc.members ? ` · equal-weighted, ${num(doc.members)} companies` : ''}${doc.kind === 'index' ? ' · price only' : ''}</p>`;
-      h += controls(st, doc) + body(R, st, doc) + '</div>';
+      let news = null;
+      if (doc.kind === 'stock') { try { news = await get(`${hub}data/research/paths/moves/n/${encodeURIComponent(st.key)}.json`); } catch (e) { news = null; } }
+      if (!here()) return;
+      h += controls(st, doc) + body(R, st, doc, news) + '</div>';
       el.innerHTML = h;
       el.querySelectorAll('[data-mva]').forEach((b) => { b.onclick = () => { st.key = b.dataset.mva; if (st.mode === 'whatif') st.whatif = egOf(st.measure); draw(); }; });
       el.querySelectorAll('[data-mv]').forEach((b) => {
@@ -990,6 +1176,11 @@
         };
       });
       el.querySelectorAll('[data-mvin]').forEach((inp) => { inp.onchange = () => { st[inp.dataset.mvin] = inp.value; draw(); }; });
+      const rg = el.querySelector('[data-mvband]'), rl = el.querySelector('[data-mvbl]');
+      if (rg) {
+        rg.oninput = () => { if (rl) rl.textContent = '±' + fb(rg.value); };
+        rg.onchange = () => { st.band = Math.round(+rg.value * 10) / 10; draw(); };
+      }
       el.querySelectorAll('[data-mvp]').forEach((cb) => { cb.onchange = () => { const k = cb.dataset.mvp; st.png = PANELS.map(([q]) => q).filter((q) => (q === k ? cb.checked : st.png.includes(q))); }; });
       const mk = el.querySelector('[data-mvpng]'), out = el.querySelector('.mv-png-out'), msg = el.querySelector('[data-mvmsg]');
       if (mk && out && !R.error) mk.onclick = async () => {
@@ -1012,7 +1203,7 @@
     await draw();
   }
 
-  const api = { render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw };
+  const api = { render, decode, cum, moves, ahead, pctOf, quantile, pctW, wquant, ageWeights, volScaled, residual, realized, volData, stats, analyze, sparse, firstAt, km, recovery, kde, picture, PANELS, canDraw, cases, expectedOf, newsIndex, casesSection, fb };
   if (typeof window !== 'undefined') window.MovesView = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

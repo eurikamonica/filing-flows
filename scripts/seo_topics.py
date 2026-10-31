@@ -488,73 +488,79 @@ def write(site, base, limit=None):
     images = seo.og_images(base)
     order = sorted(latest.values(), key=lambda r: -(r.get('revenue') or 0))[:limit]
     for r in order:
-        cik, slug, t = r['cik'], slug_for(r), (r.get('ticker') or '')
-        if not t:
-            continue
-        co = {'who_name': display_name(r.get('name')), 'ticker': t, 'cik': cik}
-        h = read(os.path.join(hub, 'holders', f'{t}.json'))
-        cdoc = read(os.path.join(site, 'data', 'c', f'{cik}.json'))
-        pages = {
-            'revenue': lambda: revenue(co, cdoc),
-            'earnings-date': lambda: earnings_date(co, read(os.path.join(hub, 'research', 'earnings', 'c', f'{t}.json')), cdoc, read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
-            'stock-forecast': lambda: forecast(co, read(os.path.join(hub, 'research', 'valuation', 'c', f'{cik}.json')), read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
-            'who-owns': lambda: owners(co, h),
-            'guidance': lambda: guidance(co, h, read(os.path.join(site, 'data', 'outlook', f'{cik}.json')),
-                                         read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json'))),
-            'takeover': lambda: takeover(co, read(os.path.join(hub, 'research', 'lbo', 'c', f'{cik}.json')), brow.get(cik)),
-            'risks': lambda: risks(co, read(os.path.join(hub, 'research', 'outside', 'c', f'{cik}.json'))),
-        }
-        pages = {k: safe(f, k, t) for k, f in pages.items()}
-        latest_q = (((cdoc or {}).get('quarters') or [{}])[0] or {}).get('label')
-        have = [k for k, v in pages.items() if v]
-        if not have:
-            continue
-        for topic, p in pages.items():
-            if not p:
-                continue
-            url = f'{base}/c/{slug}/{topic}/'
-            app = next(a for k, _, a in TOPICS if k == topic)
-            crumbs = [('Filing Flows', base + '/'), (f"{co['who_name']} ({t})", f'{base}/c/{slug}/'), (p['h1'], url)]
-            body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(co['who_name'])} ({e(t)})</a> › {e(next(l for k, l, _ in TOPICS if k == topic))}</p>"
-                    f"<h1>{e(p['h1'])}</h1>{nav(slug, topic, have, cik)}{p['body']}"
-                    + (f"<h2>{e(co['who_name'])}'s latest quarter</h2>" + sankey_figure(cik, latest_q, f"{co['who_name']} {latest_q} income statement Sankey") if latest_q and topic != 'revenue' else '')
-                    + f"{faq_html(p['qa'])}"
-                    f"<p><a class='seo-cta' href='../../../#c-{cik}{('-' + app) if app else ''}'>Open the interactive view →</a></p>"
-                    f"<p class='muted'>Updated {e(fdate(today))}. Read automatically from SEC filings and public data; errors are possible. Not investment advice.</p>")
-            mod = p.get('modified') or week
-            doc = seo.page(seo.fit(p['title']), p['desc'], url, body, 3, images.get(f"c-{cik}") or base + '/og.png', ld_for(co['who_name'], t, url, crumbs, p['qa'], mod))
-            d = os.path.join(site, 'c', slug, topic)
-            os.makedirs(d, exist_ok=True)
-            with open(os.path.join(d, 'index.html'), 'w', encoding='utf-8') as f:
-                f.write(doc)
-            urls.append((url, mod))
-            counts[topic] += 1
-        main = os.path.join(site, 'c', slug, 'index.html')            # the company page links to its topics
         try:
-            txt = open(main, encoding='utf-8').read()
-            if 'class="seo-more-main"' not in txt and '</main>' in txt:
-                charts13 = ''
-                if h:                                                   # 13F: the largest holders and the funds' net buying
-                    inst = sorted(h.get('institutional') or [], key=lambda x: -(x.get('value_usd') or 0))[:10]
-                    charts13 += SV.hbars([(display_name(x.get('manager')), x.get('value_usd')) for x in inst], money, f"Largest holders of {t} (13F)")
-                    q13 = h.get('q13f') or {}
-                    F = q13.get('fields') or []
-                    if 'usd_net' in F and q13.get('periods'):
-                        cov = q13.get('coverage') or []
-                        top = max(cov) if cov else 0
-                        pts = [(pq[:7], dict(zip(F, row)).get('usd_net')) for i, (pq, row) in enumerate(zip(q13['periods'], q13.get('rows') or []))
-                               if isinstance(row, (list, tuple)) and (not cov or cov[i] >= 0.5 * top)]
-                        charts13 += SV.bars(pts[-8:], money, f"Funds' net buying of {t} by quarter (13F)", color=None,
-                                            note='Value of shares 13F filers added minus the value they sold, each quarter (quarters with most filings in).')
-                if charts13:
-                    charts13 = f"<h2>13F: who owns {e(t)} and who is buying</h2>" + charts13
-                charts13 = SC.guidance_outlook(co['who_name'], read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json')),
-                                               read(os.path.join(site, 'data', 'outlook', f'{cik}.json')), money) + charts13
-                block = (f'<section class="seo-more-main">{charts13}<h2>More on {e(t)}</h2><ul class="seo-list">'
-                         + ''.join(f"<li><a href='{k}/'>{e(LINK[k](co['who_name']))}</a></li>" for k, l, _ in TOPICS if k in have) + '</ul></section>')
-                open(main, 'w', encoding='utf-8').write(txt.replace('</main>', block + '</main>', 1))
-        except OSError:
-            pass
+            cik, slug, t = r['cik'], slug_for(r), (r.get('ticker') or '')
+            if not t:
+                continue
+            co = {'who_name': display_name(r.get('name')), 'ticker': t, 'cik': cik}
+            h = read(os.path.join(hub, 'holders', f'{t}.json'))
+            cdoc = read(os.path.join(site, 'data', 'c', f'{cik}.json'))
+            pages = {
+                'revenue': lambda: revenue(co, cdoc),
+                'earnings-date': lambda: earnings_date(co, read(os.path.join(hub, 'research', 'earnings', 'c', f'{t}.json')), cdoc, read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
+                'stock-forecast': lambda: forecast(co, read(os.path.join(hub, 'research', 'valuation', 'c', f'{cik}.json')), read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
+                'who-owns': lambda: owners(co, h),
+                'guidance': lambda: guidance(co, h, read(os.path.join(site, 'data', 'outlook', f'{cik}.json')),
+                                             read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json'))),
+                'takeover': lambda: takeover(co, read(os.path.join(hub, 'research', 'lbo', 'c', f'{cik}.json')), brow.get(cik)),
+                'risks': lambda: risks(co, read(os.path.join(hub, 'research', 'outside', 'c', f'{cik}.json'))),
+            }
+            pages = {k: safe(f, k, t) for k, f in pages.items()}
+            latest_q = (((cdoc or {}).get('quarters') or [{}])[0] or {}).get('label')
+            have = [k for k, v in pages.items() if v]
+            if not have:
+                continue
+            for topic, p in pages.items():
+                if not p:
+                    continue
+                url = f'{base}/c/{slug}/{topic}/'
+                app = next(a for k, _, a in TOPICS if k == topic)
+                crumbs = [('Filing Flows', base + '/'), (f"{co['who_name']} ({t})", f'{base}/c/{slug}/'), (p['h1'], url)]
+                body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(co['who_name'])} ({e(t)})</a> › {e(next(l for k, l, _ in TOPICS if k == topic))}</p>"
+                        f"<h1>{e(p['h1'])}</h1>{nav(slug, topic, have, cik)}{p['body']}"
+                        + (f"<h2>{e(co['who_name'])}'s latest quarter</h2>" + sankey_figure(cik, latest_q, f"{co['who_name']} {latest_q} income statement Sankey") if latest_q and topic != 'revenue' else '')
+                        + f"{faq_html(p['qa'])}"
+                        f"<p><a class='seo-cta' href='../../../#c-{cik}{('-' + app) if app else ''}'>Open the interactive view →</a></p>"
+                        f"<p class='muted'>Updated {e(fdate(today))}. Read automatically from SEC filings and public data; errors are possible. Not investment advice.</p>")
+                mod = p.get('modified') or week
+                doc = seo.page(seo.fit(p['title']), p['desc'], url, body, 3, images.get(f"c-{cik}") or base + '/og.png', ld_for(co['who_name'], t, url, crumbs, p['qa'], mod))
+                d = os.path.join(site, 'c', slug, topic)
+                os.makedirs(d, exist_ok=True)
+                with open(os.path.join(d, 'index.html'), 'w', encoding='utf-8') as f:
+                    f.write(doc)
+                urls.append((url, mod))
+                counts[topic] += 1
+            main = os.path.join(site, 'c', slug, 'index.html')            # the company page links to its topics
+            try:
+                txt = open(main, encoding='utf-8').read()
+                if 'class="seo-more-main"' not in txt and '</main>' in txt:
+                    charts13 = ''
+                    if h:                                                   # 13F: the largest holders and the funds' net buying
+                        inst = sorted(h.get('institutional') or [], key=lambda x: -(x.get('value_usd') or 0))[:10]
+                        charts13 += SV.hbars([(display_name(x.get('manager')), x.get('value_usd')) for x in inst], money, f"Largest holders of {t} (13F)")
+                        q13 = h.get('q13f') or {}
+                        F = q13.get('fields') or []
+                        if 'usd_net' in F and q13.get('periods'):
+                            cov = q13.get('coverage') or []
+                            top = max(cov) if cov else 0
+                            pts = [(pq[:7], dict(zip(F, row)).get('usd_net')) for i, (pq, row) in enumerate(zip(q13['periods'], q13.get('rows') or []))
+                                   if isinstance(row, (list, tuple)) and (not cov or cov[i] >= 0.5 * top)]
+                            charts13 += SV.bars(pts[-8:], money, f"Funds' net buying of {t} by quarter (13F)", color=None,
+                                                note='Value of shares 13F filers added minus the value they sold, each quarter (quarters with most filings in).')
+                    if charts13:
+                        charts13 = f"<h2>13F: who owns {e(t)} and who is buying</h2>" + charts13
+                    try:
+                        charts13 = SC.guidance_outlook(co['who_name'], read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json')),
+                                                       read(os.path.join(site, 'data', 'outlook', f'{cik}.json')), money) + charts13
+                    except Exception as err:  # noqa: BLE001                 # one company's odd figures never stop the other pages
+                        print(f"  {t} guidance charts: skipped ({type(err).__name__}: {err})")
+                    block = (f'<section class="seo-more-main">{charts13}<h2>More on {e(t)}</h2><ul class="seo-list">'
+                             + ''.join(f"<li><a href='{k}/'>{e(LINK[k](co['who_name']))}</a></li>" for k, l, _ in TOPICS if k in have) + '</ul></section>')
+                    open(main, 'w', encoding='utf-8').write(txt.replace('</main>', block + '</main>', 1))
+            except Exception as err:  # noqa: BLE001
+                print(f"  {t} company-page block: skipped ({type(err).__name__}: {err})")
+        except Exception as err:  # noqa: BLE001              # one company never stops the rest (and the sitemap)
+            print(f"  {r.get('ticker') or r.get('cik')}: topic pages skipped ({type(err).__name__}: {err})")
     sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     sm += [f'<url><loc>{xesc(u)}</loc><lastmod>{m}</lastmod></url>' for u, m in urls]
     sm.append('</urlset>')
