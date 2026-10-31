@@ -363,6 +363,9 @@ jobs:
           python scripts/seo_compare.py --site _site
           python scripts/seo_zh.py --site _site
           python scripts/seo_intl.py --site _site
+      - name: One sitemap index (sitemap-index.xml) listing every sitemap in robots.txt
+        continue-on-error: true
+        run: python scripts/sitemap_index.py --site _site
 
       - name: Integrate SIC relationships, markets and audit-visible research pages
         run: |
