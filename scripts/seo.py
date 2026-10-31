@@ -117,7 +117,57 @@ def segments(q):
     return sorted(out, key=lambda x: -x[1])
 
 
-def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all_rows=None, chains=None, images=None):
+def embed_box(url, image, alt, caption):
+    """'Embed this chart': the picture linked to its page (a link back to the site wherever it is posted), or the
+    interactive chart in a frame with the same credit line under it"""
+    img = (f'<a href="{url}"><img src="{image}" alt="{alt}" width="600" style="max-width:100%;height:auto"></a>'
+           f'<br><small>{caption} — <a href="{url}">Filing Flows</a></small>')
+    frame = (f'<iframe src="{url}embed/" width="100%" height="460" style="border:0;max-width:900px" loading="lazy" title="{alt}"></iframe>'
+             f'<br><small>{caption} — <a href="{url}">Filing Flows</a></small>')
+    box = lambda i, lab, code: (f"<label for='emb-{i}'>{e(lab)}</label><textarea id='emb-{i}' readonly rows='3' onclick='this.select()'>{e(code)}</textarea>")
+    return (f"<details class='seo-embed'><summary>Embed this chart on your site</summary>{box('img', 'Picture with a link (blogs, newsletters, forums)', img)}"
+            f"{box('frame', 'Interactive chart', frame)}<p class='muted'>Free to use with the credit line. Click a box to select the code.</p></details>")
+
+
+def embed_page(c, r, url):
+    name = display_name((c.get("profile") or {}).get("name") or r.get("name"))
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{e(name)} Sankey | Filing Flows</title><meta name="robots" content="noindex, follow"><link rel="canonical" href="{e(url)}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>body{{margin:0;background:#fbfaf7;font:13px/1.4 'IBM Plex Sans',system-ui,sans-serif;color:#2b2b2b}}.seo-chart{{margin:0}}.seo-chart svg{{width:100%;height:auto;display:block}}
+.seo-sk-modes{{display:flex;gap:6px;padding:6px}}.seo-sk-modes button{{font:inherit;border:1px solid #d8d4cc;background:#fff;border-radius:99px;padding:3px 10px;cursor:pointer}}
+.seo-sk-modes button[aria-pressed=true]{{background:#17734a;color:#fff;border-color:#17734a}}.seo-sk-notes{{display:none}}.cr{{padding:4px 8px;color:#6b6b6b}}.cr a{{color:#17734a}}</style></head>
+<body><figure class="seo-chart" data-src="../../../data/c/{e(r['cik'])}.json" aria-label="{e(name)} income statement and cash flow Sankey"><p>Drawing…</p></figure>
+<p class="cr">{e(name)} earnings Sankey · <a href="{e(url)}" target="_blank" rel="noopener">Filing Flows — every quarter, from the SEC filing</a></p>
+<script src="../../../sankey.js"></script><script src="../../../seo-quarter.js" defer></script></body></html>"""
+
+
+def ties_section(ties, cik, pages):
+    """customers and suppliers named in annual reports (data/gamma/<sic>.json relationships), linked to their pages"""
+    sells, buys = [], []
+    for x in ties:
+        if str(x.get("supplier_cik")) == str(cik):
+            sells.append((x.get("customer"), x.get("customer_cik"), x))
+        elif str(x.get("customer_cik")) == str(cik):
+            buys.append((x.get("supplier"), x.get("supplier_cik"), x))
+    if not sells and not buys:
+        return ""
+    def li(n, k, x, side):
+        pg = pages.get(int(k)) if str(k or "").isdigit() else None
+        who = f"<a href='../{pg}/'>{e(n)}</a>" if pg else e(n)
+        share = f" — {100 * x['share']:.0f}% of {'its' if side == 'sells' else 'the supplier’s'} revenue" if x.get("share") else ""
+        return (f"<li>{who}<span class='muted'>{e(share)} · {e(x.get('evidence_level') or 'named in a filing')}"
+                + (f" · <a href='{e(x['source_url'])}' rel='nofollow'>source</a>" if x.get("source_url") else "") + "</span></li>")
+    seen = lambda xs: list({(n, str(k)): (n, k, x) for n, k, x in xs}.values())
+    out = "<h2 id='ties'>Customers and suppliers named in filings</h2>"
+    if sells:
+        out += "<h3>Sells to</h3><ul class='seo-list'>" + "".join(li(n, k, x, 'sells') for n, k, x in sorted(seen(sells), key=lambda s: -(s[2].get('share') or 0))[:12]) + "</ul>"
+    if buys:
+        out += "<h3>Buys from</h3><ul class='seo-list'>" + "".join(li(n, k, x, 'buys') for n, k, x in sorted(seen(buys), key=lambda s: -(s[2].get('share') or 0))[:12]) + "</ul>"
+    return out
+
+
+def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all_rows=None, chains=None, images=None, ties=None, pages=None):
     p, quarters = c["profile"], c.get("quarters") or []
     q = quarters[0] if quarters else {}
     h = q.get("headline") or {}
@@ -174,7 +224,9 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     alt = f"{name} {q.get('label', '')} revenue breakdown: Sankey diagram of revenue" + (f" ({', '.join(n for n, _ in segs[:4])})" if segs else "") + ", costs, profit and cash flow"
     share = (f"<figure class='seo-share'><a href='{e(image)}'><img src='{e(image)}' alt='{e(alt)}' width='1200' height='630' loading='lazy'></a>"
              f"<figcaption>{e(name)} {e(q.get('label', ''))} revenue breakdown — free to share with a link to this page. "
-             f"<a href='https://x.com/intent/tweet?text={quote(tweet)}&amp;url={quote(url)}' rel='noopener'>Share on X</a></figcaption></figure>") if image else ""
+             f"<a href='https://x.com/intent/tweet?text={quote(tweet)}&amp;url={quote(url)}' rel='noopener'>Share on X</a></figcaption>"
+             + embed_box(url, image, alt, f"{name} {q.get('label', '')} revenue breakdown") + "</figure>") if image else ""
+    ties_html = ties_section(ties or [], p['cik'], pages or {})
     body = f"""<p class="crumbs"><a href="../../">Filing Flows</a> › <a href="../../sector/{e(p.get('sector') or 'other')}/">{e(sector_name)}</a> › {e(who)}</p>
 <h1>{e(who)} reports {e(words)} results</h1>
 <p class="muted">{e(q.get('label', ''))} earnings · {e(form)} filed {e(fdate(q.get('filed')))}</p>
@@ -193,11 +245,14 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
 <div class="tbl-wrap"><table><thead><tr><th>Quarter</th><th>Form</th><th>Filed</th><th class="num">Revenue</th><th class="num">Y/Y</th><th class="num">Op. margin</th><th class="num">Net earnings</th><th class="num">Op. cash flow</th></tr></thead><tbody>{rows}</tbody></table></div>
 {drawn}
 {live}
+{ties_html}
 {about}
 {f'<h2>Other {e(p.get("industry") or sector_name)} companies</h2><ul class="seo-list">{peer_links}</ul>' if peer_links else ''}
 <p class="muted">Source: <a href="{e(q.get('index_url') or q.get('doc_url') or '')}" rel="nofollow">{e(name)} {e(form)} on SEC EDGAR</a> · CIK {e(p['cik'])} · {e(p.get('industry') or '')}</p>"""
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "Corporation", "name": name, "tickerSymbol": t or None, "url": url},
+        {"@type": "WebPage", "name": title, "url": url, "datePublished": q.get("filed"), "dateModified": q.get("filed"),
+         **({"primaryImageOfPage": {"@type": "ImageObject", "contentUrl": image}} if image else {})},
         *([{"@type": "ImageObject", "contentUrl": image, "name": alt, "width": 1200, "height": 630, "creditText": "Filing Flows",
             "creator": {"@type": "Organization", "name": "Filing Flows"}, "copyrightNotice": "Filing Flows — free to share with a link"}] if image else []),
         {"@type": "BreadcrumbList", "itemListElement": [
@@ -476,6 +531,17 @@ def write_pages(data_dir, out_dir, base):
                     chain_of.setdefault(str(tk).upper(), []).append({"id": ch["id"], "name": ch.get("name") or ch["id"], "role": L.get("name") or "supplier"})
     except (OSError, ValueError, KeyError, AttributeError):
         pass
+    ties = {}                                       # cik → customer and supplier links named in filings
+    try:
+        for f in os.listdir(os.path.join(data_dir, "gamma")):
+            if f.endswith(".json") and f[:-5].isdigit():
+                for x in (_load(os.path.join(data_dir, "gamma", f)) or {}).get("relationships") or []:
+                    for k in (x.get("supplier_cik"), x.get("customer_cik")):
+                        if k:
+                            ties.setdefault(str(k), []).append(x)
+    except OSError:
+        pass
+    pages = {int(r["cik"]): slug_for(r) for r in latest.values()}
     by_industry = {}
     for r in latest.values():
         by_industry.setdefault(r.get("sic") or r.get("industry"), []).append(r)
@@ -487,10 +553,13 @@ def write_pages(data_dir, out_dir, base):
             continue
         peers = sorted((x for x in by_industry.get(r.get("sic") or r.get("industry"), []) if x["cik"] != cik), key=lambda x: -(x.get("revenue") or 0))[:8]
         url, doc = company_page(c, r, peers, names.get(r.get("sector"), r.get("sector") or "Other"), base, image=images.get(f"c-{cik}"),
-                                all_rows=by_industry.get(r.get("sic") or r.get("industry"), []), chains=chain_of.get(str(r.get("ticker") or "").upper(), []), images=images)
+                                all_rows=by_industry.get(r.get("sic") or r.get("industry"), []), chains=chain_of.get(str(r.get("ticker") or "").upper(), []), images=images,
+                                ties=ties.get(str(cik)), pages=pages)
         d = os.path.join(out_dir, "c", slug_for(r))
         os.makedirs(d, exist_ok=True)
         open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(doc)
+        os.makedirs(os.path.join(d, "embed"), exist_ok=True)       # the frame other sites embed (not indexed itself)
+        open(os.path.join(d, "embed", "index.html"), "w", encoding="utf-8").write(embed_page(c, r, url))
         urls.append((url, r.get("filed")))
         if images.get(f"c-{cik}"):
             pics[url] = images[f"c-{cik}"]
