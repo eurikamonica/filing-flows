@@ -250173,6 +250173,40 @@
       "cache": "cache/holdings/2162587.json.gz",
       "shard": "shards/holdings/2162587.json",
       "backfill": true
+    },
+    "717799": {
+      "cik": "717799",
+      "name": "BERTHEL, FISHER & COMPANY FINANCIAL SERVICES, INC.",
+      "label": "BERTHEL, FISHER & COMPANY FINANCIAL SERVICES, INC.",
+      "since": "2025-01-01",
+      "as_of": null,
+      "notices": [],
+      "last_success": "2026-10-31T04:50:12+00:00",
+      "stale": false,
+      "period_count": 8,
+      "latest_period": "2026-06-30",
+      "position_count": 2389,
+      "total_usd": 743234191,
+      "cache": "cache/holdings/717799.json.gz",
+      "shard": "shards/holdings/717799.json",
+      "backfill": true
+    },
+    "2159390": {
+      "cik": "2159390",
+      "name": "MFG Investments, LLC",
+      "label": "MFG Investments, LLC",
+      "since": "2025-01-01",
+      "as_of": null,
+      "notices": [],
+      "last_success": "2026-10-31T04:50:14+00:00",
+      "stale": false,
+      "period_count": 1,
+      "latest_period": "2026-09-30",
+      "position_count": 79,
+      "total_usd": 92844394,
+      "cache": "cache/holdings/2159390.json.gz",
+      "shard": "shards/holdings/2159390.json",
+      "backfill": true
     }
   },
   "attempts": {
@@ -319540,19 +319574,23 @@
       "error": null,
       "fails": 0,
       "retry_after": null
+    },
+    "717799": {
+      "last_attempt": "2026-10-31T04:50:07+00:00",
+      "last_success": "2026-10-31T04:50:12+00:00",
+      "error": null,
+      "fails": 0,
+      "retry_after": null
+    },
+    "2159390": {
+      "last_attempt": "2026-10-31T04:50:13+00:00",
+      "last_success": "2026-10-31T04:50:14+00:00",
+      "error": null,
+      "fails": 0,
+      "retry_after": null
     }
   },
   "runs": [
-    {
-      "at": "2026-10-27T01:01:46+00:00",
-      "minutes": 9.5,
-      "managers": 0,
-      "errors": 256,
-      "requests": 2611,
-      "megabytes": 198.9,
-      "remaining": 0,
-      "blocked": null
-    },
     {
       "at": "2026-10-27T02:38:40+00:00",
       "minutes": 0.0,
@@ -320042,7 +320080,17 @@
       "megabytes": 0.0,
       "remaining": 0,
       "blocked": null
+    },
+    {
+      "at": "2026-10-31T04:50:14+00:00",
+      "minutes": 0.1,
+      "managers": 2,
+      "errors": 0,
+      "requests": 29,
+      "megabytes": 8.0,
+      "remaining": 0,
+      "blocked": null
     }
   ],
-  "updated_at": "2026-10-31T02:51:50+00:00"
+  "updated_at": "2026-10-31T04:50:14+00:00"
 }
