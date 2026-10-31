@@ -340,6 +340,11 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}               # your own domain: canonical links and sitemap-people.xml use it, not github.io
         run: python scripts/seo_people.py --people _site/disclosures/data/research/people --out _site
+      - name: Pages for search engines per company and topic (c/<slug>/stock-forecast/, who-owns/, guidance/, takeover/, risks/)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_topics.py --site _site
 
       - name: Integrate SIC relationships, markets and audit-visible research pages
         run: |

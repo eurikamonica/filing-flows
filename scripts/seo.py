@@ -27,7 +27,8 @@ def display_name(name):
     name = re.sub(r"\s*[/(\\][A-Z]{2}[/)\\]?\s*$", "", (name or "").strip())
     if name.upper() == name:
         name = " ".join(w if (w.upper() in KEEP_UPPER or re.search(r"\d", w)) else w.capitalize() for w in name.split())
-    return re.sub(r",?\s+(Inc|Corp|Corporation|Co|Ltd|Plc|Holdings|Group)\.?$", "", name)
+    name = re.sub(r",?\s+(?:&\s+)?(Inc|Corp|Corporation|Co|Ltd|Plc|Holdings|Group)\.?$", "", name)
+    return re.sub(r"\bJpmorgan\b", "JPMorgan", name).rstrip(" &,")
 
 
 def money(v):
@@ -47,6 +48,20 @@ def fdate(s):
         return f"{d:%b} {d.day}, {d.year}"
     except ValueError:
         return s or ""
+
+
+ORD = {"1": "first", "2": "second", "3": "third", "4": "fourth"}
+
+
+def period_words(label):
+    """'Q2 2026' → 'second quarter 2026', 'Q2 FY27' → 'second quarter fiscal 2027', 'FY2025' → 'fiscal 2025' — the words
+    earnings releases use in their headlines ("Onto Innovation reports second quarter 2026 results"), and people search."""
+    m = re.fullmatch(r"Q([1-4])\s+(?:FY)?(\d{2}|\d{4})", (label or "").strip())
+    if m:
+        y = m[2] if len(m[2]) == 4 else "20" + m[2]
+        return f"{ORD[m[1]]} quarter {'fiscal ' if 'FY' in label else ''}{y}"
+    m = re.fullmatch(r"FY\s?(\d{2}|\d{4})", (label or "").strip())
+    return f"fiscal {m[1] if len(m[1]) == 4 else '20' + m[1]}" if m else (label or "")
 
 
 def slug_for(e_):
@@ -81,7 +96,8 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None):
     who = f"{name} ({t})" if t else name
     form = q.get("form") or ""
     status = " (preliminary, from the earnings release)" if form == "8-K" else ""
-    title = f"{who} {q.get('label', '')} earnings: revenue {h.get('rev_fmt') or money(h.get('revenue'))}" + (
+    words = period_words(q.get("label"))
+    title = f"{who} {words} results ({q.get('label', '')} earnings): revenue {h.get('rev_fmt') or money(h.get('revenue'))}" + (
         f", {pct(h.get('yoy'))} Y/Y" if h.get("yoy") is not None else "") + " | Filing Flows"
     desc = (f"{name}'s {q.get('label', '')} {form} filed {fdate(q.get('filed'))}{status}: revenue {h.get('rev_fmt') or money(h.get('revenue'))}"
             + (f" ({pct(h.get('yoy'))} Y/Y)" if h.get("yoy") is not None else "")
@@ -109,7 +125,8 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None):
         ("Operating margin", pct(h.get("om"), False)), ("Net earnings", h.get("ni_fmt") or money(h.get("ni"))),
         ("Operating cash flow", money(h.get("ocf")))))
     body = f"""<p class="crumbs"><a href="../../">Filing Flows</a> › <a href="../../sector/{e(p.get('sector') or 'other')}/">{e(sector_name)}</a> › {e(who)}</p>
-<h1>{e(who)} earnings: {e(q.get('label', ''))}</h1>
+<h1>{e(who)} reports {e(words)} results</h1>
+<p class="muted">{e(q.get('label', ''))} earnings · {e(form)} filed {e(fdate(q.get('filed')))}</p>
 <p class="lead">{e(desc)}</p>
 <div class="seo-tiles">{tiles}</div>
 <figure class="seo-chart" id="sankey" data-src="../../data/c/{e(p['cik'])}.json" data-label="{e(q.get('label', ''))}" data-filed="{e(q.get('filed') or '')}" aria-label="{e(who)} {e(q.get('label', ''))} income statement and cash flow Sankey"><p class="muted">Drawing the Sankey…</p></figure>
@@ -364,7 +381,8 @@ def write_pages(data_dir, out_dir, base):
     az = sorted(latest.values(), key=lambda x: display_name(x.get("name")).lower())
     os.makedirs(os.path.join(out_dir, "c"), exist_ok=True)
     open(os.path.join(out_dir, "c", "index.html"), "w", encoding="utf-8").write(list_page(
-        "Every company, A–Z", "Earnings Sankeys for every company that filed a 10-Q, 10-K or earnings release, A–Z.",
+        f"Earnings results of {len(az):,} US companies, A–Z: revenue, margins and cash flow as Sankey charts",
+        f"The latest quarterly results of {len(az):,} US-listed companies, read from their 10-Q, 10-K and earnings releases: revenue, growth, operating margin, net income and cash flow, each as a Sankey chart. A–Z.",
         base + "/c/", f"{len(az)} companies with an income-statement Sankey, newest quarter first in each page.", az, 1))
     urls.append((base + "/c/", None))
     for sid, sname in names.items():
