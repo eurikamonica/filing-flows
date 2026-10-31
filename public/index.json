@@ -1,0 +1,429 @@
+{
+  "generated_at": "2026-10-31T19:20:06+00:00",
+  "fields": [
+    "ticker",
+    "cik",
+    "index",
+    "open",
+    "resolved",
+    "spot",
+    "next_end",
+    "next_ev",
+    "next_lo",
+    "next_hi"
+  ],
+  "rows": [
+    [
+      "AAPL",
+      320193,
+      null,
+      4,
+      22,
+      344.63,
+      "2026-11-02",
+      343.5131,
+      333.9563,
+      352.2377
+    ],
+    [
+      "AMZN",
+      1018724,
+      null,
+      4,
+      23,
+      240.35,
+      "2026-11-02",
+      255.8834,
+      228.1585,
+      253.5891
+    ],
+    [
+      "DJIA",
+      null,
+      "dji",
+      1,
+      0,
+      51770.31,
+      "2027-01-01",
+      54742.5099,
+      51254.2713,
+      54799.5185
+    ],
+    [
+      "GOOGL",
+      1652044,
+      null,
+      4,
+      23,
+      279.84,
+      "2026-11-02",
+      282.1913,
+      271.1375,
+      288.8334
+    ],
+    [
+      "META",
+      1326801,
+      null,
+      4,
+      23,
+      614.99,
+      "2026-11-02",
+      612.5975,
+      599.4038,
+      630.4149
+    ],
+    [
+      "MSFT",
+      789019,
+      null,
+      4,
+      23,
+      521.91,
+      "2026-11-02",
+      523.6526,
+      511.6731,
+      531.5626
+    ],
+    [
+      "MU",
+      723125,
+      null,
+      3,
+      7,
+      884.74,
+      "2026-11-06",
+      896.4008,
+      803.3071,
+      959.7032
+    ],
+    [
+      "NDX",
+      null,
+      "ndx",
+      3,
+      10,
+      28384.846,
+      "2026-11-02",
+      28932.751,
+      27830.3813,
+      28924.2727
+    ],
+    [
+      "NFLX",
+      1065280,
+      null,
+      3,
+      7,
+      62.08,
+      "2026-11-06",
+      69.7492,
+      38.5893,
+      74.3058
+    ],
+    [
+      "NVDA",
+      1045810,
+      null,
+      4,
+      23,
+      204.64,
+      "2026-11-02",
+      203.7925,
+      196.8966,
+      211.6608
+    ],
+    [
+      "OPEN",
+      1801169,
+      null,
+      3,
+      7,
+      1.8,
+      "2026-11-06",
+      2.5443,
+      0.6209,
+      5.6111
+    ],
+    [
+      "PLTR",
+      1321655,
+      null,
+      3,
+      7,
+      184.11,
+      "2026-11-06",
+      179.4664,
+      162.418,
+      205.1291
+    ],
+    [
+      "SPCX",
+      1181412,
+      null,
+      3,
+      7,
+      134.72,
+      "2026-11-06",
+      132.5226,
+      117.1308,
+      147.6629
+    ],
+    [
+      "SPX",
+      null,
+      "spx",
+      6,
+      26,
+      7580.07,
+      "2026-11-02",
+      7577.316,
+      7462.1526,
+      7649.3755
+    ],
+    [
+      "TSLA",
+      1318605,
+      null,
+      4,
+      23,
+      399.81,
+      "2026-11-02",
+      394.0779,
+      375.5882,
+      420.2861
+    ]
+  ],
+  "resolved": 231,
+  "backtest": [
+    {
+      "bucket": "≤ 6 hours",
+      "markets": 231,
+      "readings": 1195,
+      "mae": {
+        "price": 0.00428,
+        "ev": 0.02882,
+        "median": 0.01378,
+        "max_pain": 0.02341,
+        "combined": 0.00428
+      },
+      "inside80": {
+        "ladder": 0.90575,
+        "options": 0.93774,
+        "walls": 0.73072,
+        "combined": 0.80089
+      },
+      "brier": {
+        "ladder": 0.02148,
+        "options": 0.0176,
+        "markets_both": 155,
+        "ladder_all": 0.02617
+      },
+      "model": {
+        "w_ev": 0.0,
+        "w_mp": 0.0,
+        "rw": {
+          "ladder": 0.209,
+          "options": 1.0,
+          "walls": 0.109
+        },
+        "k": 0.423,
+        "basis": "backtest",
+        "n": 231
+      },
+      "oos": {
+        "train": 161,
+        "test": 70,
+        "mae": {
+          "price": 0.00453,
+          "ev": 0.04396,
+          "median": 0.01727,
+          "max_pain": 0.03045,
+          "combined": 0.00453
+        },
+        "inside80": 0.77905
+      }
+    },
+    {
+      "bucket": "6–24 hours",
+      "markets": 231,
+      "readings": 2724,
+      "mae": {
+        "price": 0.01791,
+        "ev": 0.03623,
+        "median": 0.02375,
+        "max_pain": 0.03328,
+        "combined": 0.01791
+      },
+      "inside80": {
+        "ladder": 0.82235,
+        "options": 0.73415,
+        "walls": 0.71004,
+        "combined": 0.8
+      },
+      "brier": {
+        "ladder": 0.08431,
+        "options": 0.08314,
+        "markets_both": 155,
+        "ladder_all": 0.09149
+      },
+      "model": {
+        "w_ev": 0.0,
+        "w_mp": 0.0,
+        "rw": {
+          "ladder": 0.486,
+          "options": 1.0,
+          "walls": 0.364
+        },
+        "k": 0.743,
+        "basis": "backtest",
+        "n": 231
+      },
+      "oos": {
+        "train": 161,
+        "test": 70,
+        "mae": {
+          "price": 0.02261,
+          "ev": 0.0526,
+          "median": 0.02647,
+          "max_pain": 0.04177,
+          "combined": 0.02261
+        },
+        "inside80": 0.78972
+      }
+    },
+    {
+      "bucket": "1–3 days",
+      "markets": 217,
+      "readings": 2136,
+      "mae": {
+        "price": 0.02563,
+        "ev": 0.03863,
+        "median": 0.0297,
+        "max_pain": 0.04054,
+        "combined": 0.02563
+      },
+      "inside80": {
+        "ladder": 0.79315,
+        "options": 0.76347,
+        "walls": 0.69279,
+        "combined": 0.7996
+      },
+      "brier": {
+        "ladder": 0.11981,
+        "options": 0.11298,
+        "markets_both": 133,
+        "ladder_all": 0.11634
+      },
+      "model": {
+        "w_ev": 0.0,
+        "w_mp": 0.0,
+        "rw": {
+          "ladder": 0.623,
+          "options": 1.0,
+          "walls": 0.457
+        },
+        "k": 0.837,
+        "basis": "backtest",
+        "n": 217
+      },
+      "oos": {
+        "train": 151,
+        "test": 66,
+        "mae": {
+          "price": 0.0357,
+          "ev": 0.0624,
+          "median": 0.0396,
+          "max_pain": 0.04968,
+          "combined": 0.0357
+        },
+        "inside80": 0.75262
+      }
+    },
+    {
+      "bucket": "3–7 days",
+      "markets": 112,
+      "readings": 1144,
+      "mae": {
+        "price": 0.04168,
+        "ev": 0.07779,
+        "median": 0.05938,
+        "max_pain": 0.05761,
+        "combined": 0.04168
+      },
+      "inside80": {
+        "ladder": 0.78831,
+        "options": 0.75663,
+        "walls": 0.49383,
+        "combined": 0.80569
+      },
+      "brier": {
+        "ladder": 0.13613,
+        "options": 0.11793,
+        "markets_both": 67,
+        "ladder_all": 0.1412
+      },
+      "model": {
+        "w_ev": 0.0,
+        "w_mp": 0.0,
+        "rw": {
+          "ladder": 0.44,
+          "options": 1.0,
+          "walls": 0.334
+        },
+        "k": 0.956,
+        "basis": "backtest",
+        "n": 112
+      },
+      "oos": {
+        "train": 78,
+        "test": 34,
+        "mae": {
+          "price": 0.052,
+          "ev": 0.12881,
+          "median": 0.07779,
+          "max_pain": 0.07472,
+          "combined": 0.052
+        },
+        "inside80": 0.85784
+      }
+    },
+    {
+      "bucket": "1–4 weeks",
+      "markets": 12,
+      "readings": 144,
+      "mae": {
+        "price": 0.07788,
+        "ev": 0.11817,
+        "median": 0.10067,
+        "max_pain": 0.10541,
+        "combined": 0.09757
+      },
+      "inside80": {
+        "ladder": 0.81061,
+        "options": 0.81061,
+        "walls": 0.44444,
+        "combined": 0.78472
+      },
+      "brier": {
+        "ladder": 0.11814,
+        "options": 0.09811,
+        "markets_both": 11,
+        "ladder_all": 0.11792
+      },
+      "model": {
+        "w_ev": 0.5,
+        "w_mp": 0.1,
+        "rw": {
+          "ladder": 1.0,
+          "options": 1.0,
+          "walls": 1.0
+        },
+        "k": 1.0,
+        "basis": "prior",
+        "n": 12
+      }
+    }
+  ],
+  "note": "Hourly readings of every Polymarket / Kalshi closing-price ladder; the close from Yahoo Finance; options from CBOE delayed quotes. Errors are |forecast ÷ close − 1|, each ladder counted once (its readings at that horizon averaged). Brier: (P(close > K) − outcome)² over the ladder's strikes, on readings where the options had a view too."
+}
