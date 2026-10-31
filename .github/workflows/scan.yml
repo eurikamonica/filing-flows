@@ -345,6 +345,11 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/seo_topics.py --site _site
+      - name: Daily pages for search engines (daily/ insider buying and selling, Congress trades, guidance, takeover rumors, earnings calendar, 13D stakes)
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python scripts/seo_daily.py --site _site
 
       - name: Integrate SIC relationships, markets and audit-visible research pages
         run: |

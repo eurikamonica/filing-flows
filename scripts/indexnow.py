@@ -21,7 +21,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG = os.path.join(ROOT, "config", "indexnow.json")
-SITEMAPS = ("sitemap.xml", "sitemap-people.xml", "sitemap-topics.xml")
+SITEMAPS = ("sitemap.xml", "sitemap-people.xml", "sitemap-topics.xml", "sitemap-daily.xml")
 BATCH = 10000                      # the protocol's limit per request
 NS = "{http://www.sitemaps.org/schemas/sitemap/0.9}"
 UA = "FilingFlows-IndexNow/1.0 (+https://filing-flows.com/)"

@@ -32,9 +32,11 @@ e, display_name, slug_for, fdate = seo.e, seo.display_name, seo.slug_for, seo.fd
 
 def money(v):
     return '—' if v is None else (('−' if v < 0 else '') + f'${abs(v) / 1e12:.2f}T') if abs(v) >= 1e12 else seo.money(v)
-TOPICS = [('stock-forecast', 'Stock forecast & fair value', 'x-fairvalue'), ('who-owns', 'Who owns the stock', 'holders'),
+TOPICS = [('revenue', 'How it makes money', ''), ('earnings-date', 'Next earnings date', 'eps'),
+          ('stock-forecast', 'Stock forecast & fair value', 'x-fairvalue'), ('who-owns', 'Who owns the stock', 'holders'),
           ('guidance', 'Guidance & outlook', 'x-outlook'), ('takeover', 'Takeover & LBO', 'x-lbo'), ('risks', 'Recalls, complaints & regulation', 'x-outside')]
-LINK = {'stock-forecast': lambda n: f'{n} stock forecast, price target and fair value', 'who-owns': lambda n: f'Who owns {n} stock: holders, funds and Congress trades',
+LINK = {'revenue': lambda n: f'How {n} makes money: revenue by segment', 'earnings-date': lambda n: f'{n} next earnings date and what analysts expect',
+        'stock-forecast': lambda n: f'{n} stock forecast, price target and fair value', 'who-owns': lambda n: f'Who owns {n} stock: holders, funds and Congress trades',
         'guidance': lambda n: f'{n} guidance and outlook', 'takeover': lambda n: f'Is {n} a takeover target? LBO and rumors',
         'risks': lambda n: f'{n} recalls, complaints and regulation'}
 GUIDE = {'raised': 'raised', 'lowered': 'lowered', 'narrowed': 'narrowed', 'widened': 'widened', 'reaffirmed': 'reaffirmed', 'initiated': 'initiated',
@@ -258,6 +260,142 @@ def risks(co, out):
             'desc': desc[:300], 'body': f"<p class='lead'>{e(desc)}</p>" + body, 'qa': qa}
 
 
+# ---------------------------------------------------------------- revenue and earnings date
+def _flows(q):
+    """(labels, inflow per node {id: [v, q, y]}, children {id: [ids]}) of a Sankey spec."""
+    import html as H
+    lab = {n['id']: H.unescape(n.get('label') or n.get('name') or n['id']) for n in q.get('nodes') or []}
+    into, kids = {}, {}
+    for ln in q.get('links') or []:
+        a = into.setdefault(ln['t'], [0.0, 0.0, 0.0])
+        for i, k in enumerate(('v', 'q', 'y')):
+            a[i] += ln.get(k) or 0
+        kids.setdefault(ln['t'], []).append(ln['s'])
+    return lab, into, kids
+
+
+def _from(links, node, target):
+    v = [0.0, 0.0, 0.0]
+    for ln in links:
+        if ln['s'] == node and ln['t'] == target:
+            for i, k in enumerate(('v', 'q', 'y')):
+                v[i] += ln.get(k) or 0
+    return v
+
+
+def revenue(co, c):
+    qs = (c or {}).get('quarters') or []
+    if not qs or not qs[0].get('links'):
+        return None
+    q = qs[0]
+    name, t = co['who_name'], co['ticker']
+    lab, into, kids = _flows(q)
+    links = q['links']
+    rev = into.get('revenue')
+    if not rev:
+        out = [0.0, 0.0, 0.0]
+        for ln in links:
+            if ln['s'] == 'revenue':
+                for i, k in enumerate(('v', 'q', 'y')):
+                    out[i] += ln.get(k) or 0
+        rev = out
+    if not rev or not rev[0] or rev[0] <= 0:
+        return None
+    words = seo.period_words(q.get('label'))
+    chg = lambda a, b: (a / b - 1) * 100 if a and b else None    # noqa: E731
+    segs = []
+    for s_ in dict.fromkeys(kids.get('revenue', [])):
+        sub = [(lab.get(k, k), _from(links, k, s_)) for k in dict.fromkeys(kids.get(s_, []))]
+        segs.append((lab.get(s_, s_), _from(links, s_, 'revenue'), sorted(sub, key=lambda x: -x[1][0])))
+    segs.sort(key=lambda x: -x[1][0])
+    tot = rev[0]
+    val = lambda nid: (into.get(nid) or [None])[0]               # noqa: E731
+    gp, oi, net = val('gp'), val('oi'), val('net')
+    g = chg(rev[0], rev[2])
+    lead = f"{name} ({t}) made {money(tot)} of revenue in the {words} ({q.get('label')})" + (f", {g:+.0f}% from a year earlier" if g is not None else '') + '.'
+    if len(segs) > 1:
+        lead += ' ' + '; '.join(f"{n_} brought in {money(v[0])} ({100 * v[0] / tot:.0f}%)" for n_, v, _ in segs[:3]) + '.'
+    cents = [(k, x) for k, x in (('gross profit', gp), ('operating profit', oi), ('net earnings', net)) if x is not None]
+    if cents:
+        lead += ' Of every dollar of revenue, ' + ', '.join(f"{100 * x / tot:.0f}¢ was left as {k}" for k, x in cents) + '.'
+    rows = ''
+    for n_, v, sub in segs:
+        rows += (f"<tr><td><b>{e(n_)}</b></td><td class='num'>{e(money(v[0]))}</td><td class='num'>{100 * v[0] / tot:.1f}%</td>"
+                 f"<td class='num'>{e(pc(chg(v[0], v[1])))}</td><td class='num'>{e(pc(chg(v[0], v[2])))}</td></tr>")
+        for sn, sv in sub[:8]:
+            rows += (f"<tr><td>&nbsp;&nbsp;↳ {e(sn)}</td><td class='num'>{e(money(sv[0]))}</td><td class='num'>{100 * sv[0] / tot:.1f}%</td>"
+                     f"<td class='num'>{e(pc(chg(sv[0], sv[1])))}</td><td class='num'>{e(pc(chg(sv[0], sv[2])))}</td></tr>")
+    ladder = [('Revenue', tot), ('Cost of revenue', val('cor')), ('Gross profit', gp), ('Operating expenses', val('opex')), ('Operating profit', oi),
+              ('Income tax', val('tax')), ('Net earnings', net), ('Operating cash flow', val('ocf')), ('Free cash flow', val('fcf'))]
+    lad = ''.join(f"<tr><td>{e(k)}</td><td class='num'>{e(money(x))}</td><td class='num'>{100 * x / tot:.1f}%</td></tr>" for k, x in ladder if x is not None)
+    hist = ''.join(f"<tr><td>{e(x.get('label'))}</td><td class='num'>{e((x.get('headline') or {}).get('rev_fmt') or money((x.get('headline') or {}).get('revenue')))}</td>"
+                   f"<td class='num'>{e(pc((x.get('headline') or {}).get('yoy')))}</td></tr>" for x in qs[:8])
+    qa = [(f"How does {name} make money?", lead)]
+    if len(segs) > 1:
+        s0 = segs[0]
+        g0 = chg(s0[1][0], s0[1][2])
+        qa.append((f"What is {name}'s biggest business?", f"{s0[0]}: {money(s0[1][0])} in the {words}, {100 * s0[1][0] / tot:.0f}% of revenue"
+                   + (f", {g0:+.0f}% from a year earlier" if g0 is not None else '') + '.'))
+    if net is not None:
+        qa.append((f"What is {name}'s profit margin?", f"Net earnings were {money(net)}, {100 * net / tot:.1f}% of revenue, in the {words}"
+                   + (f"; the operating margin was {100 * oi / tot:.1f}%." if oi is not None else '.')))
+    body = (f"<p class='lead'>{e(lead)}</p>"
+            + (f"<h2>Revenue by segment, {e(q.get('label'))}</h2><div class='tbl-wrap'><table><thead><tr><th>Segment</th><th class='num'>Revenue</th><th class='num'>Share</th>"
+               f"<th class='num'>Q/Q</th><th class='num'>Y/Y</th></tr></thead><tbody>{rows}</tbody></table></div>" if len(segs) > 1 else '')
+            + f"<h2>Where each dollar of revenue goes</h2><div class='tbl-wrap'><table><thead><tr><th>Line</th><th class='num'>{e(q.get('label'))}</th><th class='num'>% of revenue</th></tr></thead><tbody>{lad}</tbody></table></div>"
+            + f"<h2>Revenue, quarter by quarter</h2><div class='tbl-wrap'><table><thead><tr><th>Quarter</th><th class='num'>Revenue</th><th class='num'>Y/Y</th></tr></thead><tbody>{hist}</tbody></table></div>"
+            + f"<p class='muted'>From {e(name)}'s {e(q.get('form'))} filed {e(fdate(q.get('filed')))}" + (f" (<a href='{e(q.get('doc_url'))}' rel='nofollow'>on EDGAR</a>)" if q.get('doc_url') else '') + '.</p>')
+    return {'title': f"How {name} ({t}) makes money: revenue by segment, {q.get('label')}", 'h1': f"How {name} ({t}) makes money",
+            'desc': lead[:300], 'body': body, 'qa': qa, 'modified': (q.get('filed') or '')[:10] or None}
+
+
+def earnings_date(co, er, c, cons):
+    if not er or not er.get('report_date'):
+        return None
+    name, t = co['who_name'], co['ticker']
+    cs = er.get('consensus') or {}
+    d = er['report_date']
+    try:
+        days = (dt.date.fromisoformat(d) - dt.date.today()).days
+    except ValueError:
+        return None
+    when = fdate(d) + (' (estimated)' if er.get('date_estimated') else '')
+    q = ((c or {}).get('quarters') or [{}])[0]
+    h = q.get('headline') or {}
+    if days >= 0:
+        lead = (f"{name} ({t}) is expected to report earnings on {when}" + (f", in {days} days" if days else ', today')
+                + (f", for the quarter ending {fdate(er.get('quarter'))}" if er.get('quarter') else '') + '.')
+        if cs.get('eps') is not None:
+            lead += (f" Analysts expect EPS of ${cs['eps']:.2f}"
+                     + (f" (${cs['eps_low']:.2f} to ${cs['eps_high']:.2f}, {cs['n']:.0f} estimates)" if cs.get('eps_low') is not None and cs.get('n') else '')
+                     + (f" on revenue of {money(cs['rev'])}" if cs.get('rev') else '')
+                     + ((f", against ${cs['year_ago_eps']:.2f}" + (f" and {money(cs['year_ago_rev'])}" if cs.get('year_ago_rev') else '') + ' a year ago')
+                        if cs.get('year_ago_eps') is not None else '') + '.')
+    else:
+        lead = (f"{name} ({t}) last reported on {fdate(d)}"
+                + (f": revenue {h.get('rev_fmt') or money(h.get('revenue'))} for the {seo.period_words(q.get('label'))}" if h.get('revenue') else '')
+                + '. The next date is not set yet.')
+    beat = (cons or {}).get('beat_rate')
+    p = (er.get('model') or {}).get('p')
+    if beat is not None:
+        lead += f" It beat the EPS estimate in {round(100 * beat)}% of the quarters on record"
+        lead += f"; Filing Flows' model gives it a {round(100 * p)}% chance of beating this time." if p is not None and days >= 0 else '.'
+    qa = [(f"When does {t} report earnings?", lead.split('. ')[0].rstrip('.') + '.')]
+    if cs.get('eps') is not None and days >= 0:
+        qa.append((f"What are analysts expecting from {name}?", f"EPS of ${cs['eps']:.2f}" + (f" and revenue of {money(cs['rev'])}" if cs.get('rev') else '') + ' for the quarter.'))
+    if beat is not None:
+        qa.append((f"Does {name} usually beat earnings?", f"It beat the consensus EPS estimate in {round(100 * beat)}% of the quarters on record."))
+    tiles = ''.join(f"<div class='seo-tile'><span>{e(k)}</span><b>{e(v)}</b></div>" for k, v in (
+        ('Report date', when), ('Days to go', str(days) if days >= 0 else '—'), ('EPS estimate', f"${cs['eps']:.2f}" if cs.get('eps') is not None and days >= 0 else '—'),
+        ('Revenue estimate', money(cs.get('rev')) if cs.get('rev') and days >= 0 else '—'), ('Beat rate', f"{round(100 * beat)}%" if beat is not None else '—')))
+    last = (f"<h2>The last report</h2><p>{e(name)} reported revenue of {e(h.get('rev_fmt') or money(h.get('revenue')))} for the {e(seo.period_words(q.get('label')))}"
+            + (f" ({e(pc(h.get('yoy')))} Y/Y)" if h.get('yoy') is not None else '') + (f", net earnings {e(h.get('ni_fmt') or money(h.get('ni')))}" if h.get('ni') is not None else '')
+            + ". <a href='../revenue/'>How it makes money →</a></p>") if h.get('revenue') else ''
+    body = f"<p class='lead'>{e(lead)}</p><div class='seo-tiles'>{tiles}</div>{last}"
+    return {'title': f"{name} ({t}) earnings date {d[:4]}: next report {fdate(d)}, EPS estimate", 'h1': f"{name} ({t}) next earnings date",
+            'desc': lead[:300], 'body': body, 'qa': qa}
+
+
 # ---------------------------------------------------------------- write
 def write(site, base, limit=None):
     base = base.rstrip('/')
@@ -282,7 +420,10 @@ def write(site, base, limit=None):
             continue
         co = {'who_name': display_name(r.get('name')), 'ticker': t}
         h = read(os.path.join(hub, 'holders', f'{t}.json'))
+        cdoc = read(os.path.join(site, 'data', 'c', f'{cik}.json'))
         pages = {
+            'revenue': revenue(co, cdoc),
+            'earnings-date': earnings_date(co, read(os.path.join(hub, 'research', 'earnings', 'c', f'{t}.json')), cdoc, read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
             'stock-forecast': forecast(co, read(os.path.join(hub, 'research', 'valuation', 'c', f'{cik}.json')), read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
             'who-owns': owners(co, h),
             'guidance': guidance(co, h, read(os.path.join(site, 'data', 'outlook', f'{cik}.json'))),
@@ -300,7 +441,7 @@ def write(site, base, limit=None):
             crumbs = [('Filing Flows', base + '/'), (f"{co['who_name']} ({t})", f'{base}/c/{slug}/'), (p['h1'], url)]
             body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(co['who_name'])} ({e(t)})</a> › {e(next(l for k, l, _ in TOPICS if k == topic))}</p>"
                     f"<h1>{e(p['h1'])}</h1>{nav(slug, topic, have, cik)}{p['body']}{faq_html(p['qa'])}"
-                    f"<p><a class='seo-cta' href='../../../#c-{cik}-{app}'>Open the interactive view →</a></p>"
+                    f"<p><a class='seo-cta' href='../../../#c-{cik}{('-' + app) if app else ''}'>Open the interactive view →</a></p>"
                     f"<p class='muted'>Updated {e(fdate(today))}. Read automatically from SEC filings and public data; errors are possible. Not investment advice.</p>")
             mod = p.get('modified') or week
             doc = seo.page(f"{p['title']} | Filing Flows", p['desc'], url, body, 3, base + '/og.png', ld_for(co['who_name'], t, url, crumbs, p['qa'], mod))
