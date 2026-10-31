@@ -1,0 +1,276 @@
+{
+  "built_at": "2026-10-25T07:14:21+00:00",
+  "tickers": [
+    "TSM",
+    "GS",
+    "ETN",
+    "INTU",
+    "KMI",
+    "FANG",
+    "TEVA",
+    "CCL",
+    "CLS",
+    "CASY",
+    "EXE",
+    "CF",
+    "TYL",
+    "AKAM",
+    "PEN",
+    "TXRH",
+    "KNX",
+    "DAR",
+    "SPXC",
+    "ACA",
+    "IOVA",
+    "TFX",
+    "EPRT",
+    "MIDD",
+    "SITE",
+    "KGS",
+    "PVH",
+    "NATL",
+    "SDRL",
+    "NRIX",
+    "DXC",
+    "PRGO",
+    "AMR",
+    "OMER",
+    "CNMD",
+    "SLVM",
+    "EE",
+    "BALY",
+    "LEGH",
+    "GTN"
+  ],
+  "horizon": 63,
+  "window": 756,
+  "paths": {
+    "joint_bootstrap": {
+      "n": 446,
+      "cover80": 0.8318,
+      "cover50": 0.5448,
+      "pinball": 0.06084,
+      "width80": 0.5741,
+      "skill": 0.02447
+    },
+    "block_bootstrap": {
+      "n": 446,
+      "cover80": 0.7803,
+      "cover50": 0.4865,
+      "pinball": 0.06085,
+      "width80": 0.536,
+      "skill": 0.02435
+    },
+    "fhs": {
+      "n": 446,
+      "cover80": 0.7915,
+      "cover50": 0.4843,
+      "pinball": 0.06076,
+      "width80": 0.5353,
+      "skill": 0.02578
+    },
+    "factor": {
+      "n": 446,
+      "cover80": 0.8161,
+      "cover50": 0.5314,
+      "pinball": 0.06154,
+      "width80": 0.5738,
+      "skill": 0.01327
+    },
+    "cholesky": {
+      "n": 446,
+      "cover80": 0.8296,
+      "cover50": 0.5583,
+      "pinball": 0.06105,
+      "width80": 0.5874,
+      "skill": 0.02113
+    },
+    "t_copula": {
+      "n": 446,
+      "cover80": 0.8184,
+      "cover50": 0.5179,
+      "pinball": 0.06025,
+      "width80": 0.5559,
+      "skill": 0.034
+    },
+    "dcc_garch": {
+      "n": 446,
+      "cover80": 0.7915,
+      "cover50": 0.509,
+      "pinball": 0.06053,
+      "width80": 0.5436,
+      "skill": 0.02944
+    },
+    "ensemble": {
+      "n": 446,
+      "cover80": 0.8184,
+      "cover50": 0.5314,
+      "pinball": 0.06052,
+      "width80": 0.561,
+      "skill": 0.02956
+    },
+    "naive_normal": {
+      "n": 446,
+      "cover80": 0.8341,
+      "cover50": 0.5448,
+      "pinball": 0.06237,
+      "width80": 0.5842,
+      "skill": 0.0
+    }
+  },
+  "analogs": {
+    "self": {
+      "method": "self",
+      "n": 372,
+      "cover80": 0.6801,
+      "cover50": 0.457,
+      "pinball": 0.05488,
+      "ic": -0.0814,
+      "pit_hist": [
+        36,
+        21,
+        35,
+        38,
+        37,
+        30,
+        37,
+        27,
+        28,
+        83
+      ],
+      "n_skipped": 28,
+      "n_tickers": 40,
+      "n_origins": 10,
+      "ic_xs": -0.0728
+    },
+    "pooled": {
+      "method": "pooled",
+      "n": 376,
+      "cover80": 0.766,
+      "cover50": 0.4574,
+      "pinball": 0.04982,
+      "ic": 0.053,
+      "pit_hist": [
+        21,
+        25,
+        46,
+        27,
+        49,
+        34,
+        28,
+        45,
+        34,
+        67
+      ],
+      "n_skipped": 24,
+      "n_tickers": 40,
+      "n_origins": 10,
+      "ic_xs": 0.0347
+    },
+    "peer": {
+      "method": "peer",
+      "n": 372,
+      "cover80": 0.7177,
+      "cover50": 0.4516,
+      "pinball": 0.05032,
+      "ic": 0.0129,
+      "pit_hist": [
+        38,
+        25,
+        34,
+        41,
+        33,
+        36,
+        35,
+        31,
+        32,
+        67
+      ],
+      "n_skipped": 28,
+      "n_tickers": 40,
+      "n_origins": 10,
+      "ic_xs": -0.0211
+    },
+    "leadlag": {
+      "method": "leadlag",
+      "n": 106,
+      "cover80": 0.7453,
+      "cover50": 0.4906,
+      "pinball": 0.04689,
+      "ic": -0.0493,
+      "pit_hist": [
+        11,
+        6,
+        16,
+        7,
+        13,
+        15,
+        6,
+        8,
+        8,
+        16
+      ],
+      "n_skipped": 294,
+      "n_tickers": 40,
+      "n_origins": 10,
+      "ic_xs": 0.0825
+    },
+    "naive": {
+      "method": "naive",
+      "n": 376,
+      "cover80": 0.6197,
+      "cover50": 0.3564,
+      "pinball": 0.05681,
+      "ic": -0.0948,
+      "pit_hist": [
+        51,
+        29,
+        28,
+        30,
+        24,
+        35,
+        26,
+        28,
+        33,
+        92
+      ],
+      "n_skipped": 24,
+      "n_tickers": 40,
+      "n_origins": 10,
+      "ic_xs": -0.0255
+    }
+  },
+  "info": {
+    "paths": {
+      "joint_bootstrap": {
+        "name": "Joint bootstrap",
+        "short": "Replays random whole past days for every asset at once: real correlations and fat tails, no memory."
+      },
+      "block_bootstrap": {
+        "name": "Stationary block bootstrap",
+        "short": "Replays runs of consecutive past days (10 on average), so calm and stormy stretches stay together."
+      },
+      "fhs": {
+        "name": "Filtered historical simulation",
+        "short": "Past shocks rescaled to today's GARCH volatility, which then evolves day by day."
+      },
+      "factor": {
+        "name": "Market + sector factor model",
+        "short": "Each stock = alpha + betas x the simulated market and sector + its own resampled noise."
+      },
+      "cholesky": {
+        "name": "Correlated normal (Cholesky)",
+        "short": "Textbook correlated random walk with the sample mean and covariance; thin tails."
+      },
+      "t_copula": {
+        "name": "Student-t copula",
+        "short": "Each asset's own return distribution, joined by a t copula so crashes come together."
+      },
+      "dcc_garch": {
+        "name": "DCC-GARCH",
+        "short": "Volatility and correlation both start from today's levels and drift back to normal."
+      }
+    },
+    "analogs": {}
+  }
+}
