@@ -120,7 +120,12 @@ def congress(hub, link, today):
     people = len({r.get('person') for r in rows})
     lead = (f"{people} members of Congress and other officials disclosed {len(rows)} stock trades made in the last 45 days: {len(buys)} purchases and "
             f"{len(rows) - len(buys)} sales. Disclosures are filed up to 45 days after the trade; amounts are given in ranges.")
-    body = ''
+    agg = {}
+    for r in rows:
+        mid = ((r.get('amount_min') or 0) + (r.get('amount_max') or r.get('amount_min') or 0)) / 2
+        agg[r['ticker']] = agg.get(r['ticker'], 0) + (mid if r.get('type') == 'purchase' else -mid)
+    body = SV.diverging(sorted(agg.items(), key=lambda kv: -abs(kv[1])), lambda v: money(abs(v)),
+                        'Officials\' trades by stock, last 45 days (bought → right, sold ← left; middle of the reported ranges)', n=14)
     for day, rs in by_date(rows, lambda r: r.get('date')):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Who', 'Trade', 'Amount', 'Disclosed'], [
             [link(r['ticker'], r['ticker'], 'who-owns'), e(r.get('person')) + f" <span class='muted'>{e(r.get('jurisdiction') or '')}</span>", e(r.get('type')),
@@ -141,7 +146,9 @@ def guidance(hub, link, today):
     down = [r for r in rows if r['guidance'] in ('lowered', 'withdrawn')]
     lead = (f"{len(rows)} companies updated their guidance in earnings releases over the last two weeks: {len(up)} raised it and {len(down)} lowered or withdrew it."
             + (' Raised: ' + ', '.join(r['ticker'] for r in up[:8]) + '.' if up else '') + (' Lowered: ' + ', '.join(r['ticker'] for r in down[:6]) + '.' if down else ''))
-    body = ''
+    body = SV.bars([(fdate(day)[:6], sum(1 for r in rs if r['guidance'] == 'raised') - sum(1 for r in rs if r['guidance'] in ('lowered', 'withdrawn')))
+                    for day, rs in sorted(by_date(rows, lambda r: r.get('filed')), key=lambda x: x[0])], lambda v: f"{v:+.0f}",
+                   'Guidance raised minus lowered, day by day (companies)')
     for day, rs in by_date(rows, lambda r: r.get('filed')):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Guidance', 'Release'], [
             [link(r['ticker'], r['ticker'], 'guidance'), e(GUIDE.get(r['guidance'], r['guidance'])),
@@ -187,7 +194,8 @@ def calendar(hub, link, today):
     first = sorted(rows, key=lambda r: r['report_date'])
     lead = (f"{len(rows)} companies report earnings in the next two weeks. Coming up first: "
             + ', '.join(f"{r['ticker']} ({fdate(r['report_date'])})" for r in first[:8]) + '.')
-    body = ''
+    body = SV.bars([(fdate(day)[:6], len(rs)) for day, rs in sorted(by_date(rows, lambda r: r.get('report_date')), key=lambda x: x[0])],
+                   lambda v: f"{v:.0f}", 'Companies reporting, day by day', color=SV.GREY)
     for day, rs in sorted(by_date(rows, lambda r: r.get('report_date')), key=lambda x: x[0]):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'EPS estimate', 'Analysts', 'Beat rate', 'Beat odds (model)'], [
             [link(r['ticker'], f"{r['ticker']} · {display_name(r.get('name'))}", 'earnings-date'), e(f"${r['eps']:.2f}" if r.get('eps') is not None else '—'),
@@ -207,7 +215,8 @@ def stakes(hub, link, today):
     lead = (f"{len(rows)} Schedule 13D filings in the last two weeks, {len(new)} of them new: holders above 5% of a company who may seek to influence it. "
             + ('Largest new stakes: ' + '; '.join(f"{r.get('filer')} {r.get('percent')}% of {r.get('issuer')}" for r in sorted(new, key=lambda r: -(r.get('percent') or 0))[:3]) + '.' if new else ''))
     tick = lambda r: (r.get('ticker') or '')   # noqa: E731
-    body = ''
+    body = SV.hbars([(f"{r.get('issuer')} · {r.get('filer') or r.get('person')}", r.get('percent')) for r in sorted(rows, key=lambda r: -(r.get('percent') or 0))],
+                    lambda v: f"{v:.1f}%", 'Largest stakes filed (Schedule 13D), last two weeks', n=12)
     for day, rs in by_date(rows, lambda r: r.get('filed')):
         body += f"<h2>{e(fdate(day))}</h2>" + table(['Company', 'Holder', 'Stake', 'Filing', 'Purpose'], [
             [link(tick(r), r.get('issuer')) if tick(r) else e(r.get('issuer')), e(r.get('filer') or r.get('person')), e(f"{r.get('percent')}%" if r.get('percent') is not None else '—'),

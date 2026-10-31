@@ -17,6 +17,7 @@ from xml.sax.saxutils import escape as xesc
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
+import seo_svg as SV  # noqa: E402
 
 e = seo.e
 MAX_PAGES = 400             # per kind: the page count and the build stay small
@@ -89,6 +90,9 @@ value-weighted over the common-share positions with a price ({pct(c.get('coverag
 {c.get('filings') or 0} filings since {e(seo.fdate(c.get('first_filing')))}. Price returns for the clone and SPY alike (no dividends,
 no costs). A 13F lists only US long positions at quarter end, reported up to 45 days later.</p>
 <h2>Largest holdings ({e(m['period'])})</h2>
+{SV.hbars([(f"{h[0]} · {h[1]}", h[3]) for h in (m.get('holdings') or []) if h[0]], money, f"{name}: largest 13F holdings, {m['period']}", n=15)}
+{SV.diverging([(a[0], a[2]) for a in (m.get('adds') or []) if a[2] is not None] + [(a[0], -abs(a[2])) for a in (m.get('cuts') or []) if a[2] is not None],
+              lambda v: f"{v:+.0f}%", f"{name}: biggest adds and cuts in the quarter (change in shares)", n=14)}
 <div class="tbl-wrap"><table><thead><tr><th>Ticker</th><th>Company</th><th class="num">Weight</th><th class="num">Value</th><th>Change in the quarter</th></tr></thead><tbody>{rows}</tbody></table></div>
 <h2>Biggest adds</h2><ul class="seo-list">{lst(m.get('adds') or []) or '<li class="muted">None reported.</li>'}</ul>
 <h2>Biggest cuts</h2><ul class="seo-list">{lst(m.get('cuts') or []) or '<li class="muted">None reported.</li>'}</ul>
@@ -123,12 +127,20 @@ def official_page(o, base):
                  f"<td>{e(x['committee'])}</td><td>{e(x['area'])}</td></tr>" for x in o.get("overlaps") or [])
     rec = "".join(f"<tr><td>{e(t[0])}</td><td><b>{e(t[1])}</b></td><td>{e(t[2])}</td><td>{e(amount(t[3], t[4]))}</td><td>{e(t[5] or '')}</td><td>{e(t[6] or '')}</td></tr>"
                   for t in (o.get("recent") or [])[:30])
+    tot = {}
+    for x in o.get("recent") or []:
+        mid = ((x[3] or 0) + (x[4] or x[3] or 0)) / 2
+        k = (x[1], 'buy' if 'purchase' in str(x[2]).lower() else 'sell')
+        tot[k] = tot.get(k, 0) + mid
+    items = sorted(((f"{tk} ({'bought' if s == 'buy' else 'sold'})", v if s == 'buy' else -v) for (tk, s), v in tot.items()), key=lambda z: -abs(z[1]))
+    trade_chart = SV.diverging(items, lambda v: money(abs(v)), f"{name}: recent trades by stock (middle of each reported range; bought → right, sold ← left)", n=14)
     body = f"""<p class="crumbs"><a href="../../">Filing Flows</a> › <a href="../">Officials</a> › {e(name)}</p>
 <h1>{e(who)}: disclosed stock trades</h1>
 <p class="lead">{e(desc)}</p>
 <div class="seo-tiles">{tiles}</div>
 {f'<h2>Committees</h2><ul class="seo-list">{coms}</ul>' if coms else ''}
 {f'<h2>Trades in sectors under their committees</h2><p class="muted">A trade in a sector that one of the member’s committees oversees (the map is published with the data). A fact pattern from public disclosures, not a finding of wrongdoing.</p><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Ticker</th><th>Type</th><th>Amount</th><th>Committee</th><th>Area</th></tr></thead><tbody>{ov}</tbody></table></div>' if ov else ''}
+{trade_chart}
 {f'<h2>Recent disclosed trades</h2><div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Ticker</th><th>Type</th><th>Amount</th><th>Owner</th><th>Filed</th></tr></thead><tbody>{rec}</tbody></table></div>' if rec else ''}
 <p class="muted">Performance: each scored trade’s stock return less SPY’s over the 63 trading days after it was disclosed (a sale counts when the
 stock then lagged), weighted by the middle of the reported amount range{', ' + str(perf.get('first')) + ' to ' + str(perf.get('last')) if perf.get('first') else ''}.</p>

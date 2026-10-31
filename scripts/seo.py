@@ -158,6 +158,18 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     return url, page(title, desc, url, body, depth, image or base + "/og.png", ld)
 
 
+def index_charts(latest, names):
+    """The A–Z page's charts: the largest companies, and the sectors by companies and combined revenue."""
+    import seo_svg as SV
+    rows = sorted(latest.values(), key=lambda x: -(x.get("revenue") or 0))
+    by = {}
+    for x in rows:
+        k = names.get(x.get("sector"), x.get("sector") or "Other")
+        by[k] = by.get(k, 0) + (x.get("revenue") or 0)
+    return (SV.hbars([(x.get("ticker") or display_name(x.get("name")), x.get("revenue")) for x in rows], money, "The largest companies by quarterly revenue", n=20)
+            + SV.hbars(sorted(by.items(), key=lambda kv: -kv[1]), money, "Combined quarterly revenue by sector", color=SV.GREY, n=14))
+
+
 def sector_charts(items, sname):
     """A sector page's charts: the largest companies, growth against margin, and the largest one's Sankey."""
     import seo_svg as SV
@@ -437,7 +449,7 @@ def write_pages(data_dir, out_dir, base):
     open(os.path.join(out_dir, "c", "index.html"), "w", encoding="utf-8").write(list_page(
         f"Earnings results of {len(az):,} US companies, A–Z: revenue, margins and cash flow as Sankey charts",
         f"The latest quarterly results of {len(az):,} US-listed companies, read from their 10-Q, 10-K and earnings releases: revenue, growth, operating margin, net income and cash flow, each as a Sankey chart. A–Z.",
-        base + "/c/", f"{len(az)} companies with an income-statement Sankey, newest quarter first in each page.", az, 1))
+        base + "/c/", f"{len(az)} companies with an income-statement Sankey, newest quarter first in each page.", az, 1, index_charts(latest, names)))
     urls.append((base + "/c/", None))
     for sid, sname in names.items():
         items = sorted((x for x in latest.values() if x.get("sector") == sid), key=lambda x: -(x.get("revenue") or 0))
