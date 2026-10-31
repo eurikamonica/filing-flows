@@ -1,0 +1,755 @@
+{
+  "ticker": "LOAR",
+  "row": {
+    "ticker": "LOAR",
+    "cik": 2000178,
+    "name": "Loar Holdings Inc.",
+    "sector": "industrials",
+    "mcap": 5738418849,
+    "price": 61.25,
+    "f_score": 5,
+    "f_n": 9,
+    "z": 4.618,
+    "z_model": "Z",
+    "z_zone": "safe",
+    "m_score": -2.697,
+    "m_flag": false,
+    "sy": -0.00032,
+    "div_y": 0.0,
+    "bb_y": -0.00032,
+    "fcf_y": 0.01957,
+    "fcf_sbc_y": 0.01696,
+    "oe_y": null,
+    "roic": 0.061,
+    "roic_inc": 0.0461,
+    "wacc": 0.087476,
+    "spread": -0.0265,
+    "dol": 0.99,
+    "fixed_q": 2726461,
+    "var_ratio": 0.7588,
+    "accruals": -0.0645,
+    "gp_a": 0.1287,
+    "asset_g": 0.3993,
+    "net_iss": 0.0459,
+    "ev_s": 10.866,
+    "growth": 0.2976,
+    "margin": 0.2186,
+    "r40": 51.62,
+    "fy_end": "2025-12-31",
+    "dechow_f": 1.911,
+    "dechow_band": "substantial",
+    "c_score": 3,
+    "c_n": 5,
+    "sd_roa": 0.0026,
+    "smooth": 0.118,
+    "cash_tax": 1.21,
+    "gw_equity": 1.375,
+    "gw_assets": 0.7955,
+    "ng_gap": 32.9267,
+    "beta": 0.3,
+    "ivol": 0.3975,
+    "resid": 1.1186,
+    "line_ev_s": 3.55,
+    "da": -0.0127,
+    "da_abs": 0.0127,
+    "da_pct": 0.249,
+    "qmj": -0.605,
+    "qmj_rank": 0.258,
+    "qmj_sec_rank": 0.228,
+    "qmj_prof": -0.773,
+    "qmj_growth": 0.703,
+    "qmj_safety": 0.825,
+    "qmj_payout": -2.14,
+    "composite": 0.2065,
+    "comp_rank": 0.0374,
+    "margin_fc4": 0.2027
+  },
+  "metrics": {
+    "fy_end": "2025-12-31",
+    "piotroski": {
+      "score": 5,
+      "n": 9,
+      "signals": [
+        {
+          "key": "roa",
+          "label": "Positive return on assets",
+          "pass": true,
+          "detail": 0.0
+        },
+        {
+          "key": "cfo",
+          "label": "Positive operating cash flow",
+          "pass": true,
+          "detail": 0.0774
+        },
+        {
+          "key": "droa",
+          "label": "Return on assets up on the year",
+          "pass": true,
+          "detail": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "key": "accrual",
+          "label": "Cash flow above net income (low accruals)",
+          "pass": true,
+          "detail": [
+            0.0774,
+            0.0
+          ]
+        },
+        {
+          "key": "lev",
+          "label": "Long-term debt / assets down",
+          "pass": false,
+          "detail": [
+            0.1912,
+            0.3526
+          ]
+        },
+        {
+          "key": "liq",
+          "label": "Current ratio up",
+          "pass": false,
+          "detail": [
+            5.278,
+            4.7
+          ]
+        },
+        {
+          "key": "shares",
+          "label": "No new shares issued",
+          "pass": false,
+          "detail": [
+            91684,
+            95893
+          ]
+        },
+        {
+          "key": "gm",
+          "label": "Gross margin up",
+          "pass": true,
+          "detail": [
+            0.4936,
+            0.5266
+          ]
+        },
+        {
+          "key": "turn",
+          "label": "Asset turnover up",
+          "pass": false,
+          "detail": [
+            0.3835,
+            0.3421
+          ]
+        }
+      ]
+    },
+    "beneish": {
+      "m": -2.697,
+      "flag": false,
+      "idx": {
+        "dsri": 1.119,
+        "gmi": 0.937,
+        "aqi": 1.022,
+        "sgi": 1.232,
+        "depi": 1.0,
+        "sgai": 1.039,
+        "lvgi": 1.745,
+        "tata": -0.055
+      },
+      "neutral": [
+        "depi"
+      ]
+    },
+    "altman": {
+      "z": 4.618,
+      "model": "Z",
+      "zone": "safe",
+      "parts": {
+        "wc_ta": 0.1158,
+        "re_ta": 0.0254,
+        "ebit_ta": 0.0523,
+        "mve_tl": 6.7106,
+        "sales_ta": 0.2445
+      }
+    },
+    "yields": {
+      "div_y": 0.0,
+      "bb_y": -0.00032,
+      "sy": -0.00032,
+      "fcf": 112280000,
+      "fcf_y": 0.01957,
+      "sbc": 14931000,
+      "fcf_sbc_y": 0.01696
+    },
+    "owner": null,
+    "roic": {
+      "roic": 0.061,
+      "nopat": 95125313.08794,
+      "ic": 1805626000,
+      "tax_rate": 0.105,
+      "roic_inc": 0.0461,
+      "inc_years": 2
+    },
+    "wacc": {
+      "wacc": 0.087476,
+      "beta": 0.3,
+      "ke": 0.066,
+      "kd": 0.056,
+      "w_equity": 0.889,
+      "rf": 0.051,
+      "source": "research/valuation"
+    },
+    "spread": -0.0265,
+    "accruals": -0.0645,
+    "asset_g": 0.3993,
+    "net_iss": 0.0459,
+    "gp_a": 0.1287
+  },
+  "cost": {
+    "fixed_q": 2726461.45104,
+    "var_ratio": 0.7588,
+    "r2": 0.988,
+    "dol": 0.99,
+    "reliable": true,
+    "n": 12,
+    "points": [
+      [
+        82807000,
+        65705000
+      ],
+      [
+        86435000,
+        68729000
+      ],
+      [
+        91844000,
+        70487000
+      ],
+      [
+        97015000,
+        74827000
+      ],
+      [
+        103519000,
+        80671000
+      ],
+      [
+        110441000,
+        89202000
+      ],
+      [
+        114659000,
+        88515000
+      ],
+      [
+        123123000,
+        95806000
+      ],
+      [
+        126751000,
+        97731000
+      ],
+      [
+        131750000,
+        107988000
+      ],
+      [
+        156088000,
+        122571000
+      ],
+      [
+        171579000,
+        129727000
+      ]
+    ]
+  },
+  "records": [
+    {
+      "end": "2023-12-31",
+      "rev": 317477000,
+      "gp": 154264000,
+      "cogs": 163213000,
+      "oi": 69491000,
+      "ni": -4615000,
+      "ocf": 12813000,
+      "sbc": 372000,
+      "interest": 67054000,
+      "tax": 7052000,
+      "pretax": 2437000,
+      "sga": 82141000,
+      "dil": 204,
+      "eps": -22620.18,
+      "tax_paid": 5044000,
+      "gw_imp": 0,
+      "debt_issue": 53000000,
+      "assets": 1050445000,
+      "ca": 170676000,
+      "cl": 51480000,
+      "liab": 632304000,
+      "eq": 418141000,
+      "cash": 21489000,
+      "ltd": 535478000,
+      "ltd_nc": 528582000,
+      "ltd_c": 6896000,
+      "ar": 59002000,
+      "ppe": 72174000,
+      "inv": 77962000,
+      "oca": 11830000,
+      "gw": 470888000,
+      "intang": 316542000
+    },
+    {
+      "end": "2024-12-31",
+      "rev": 402819000,
+      "gp": 198825000,
+      "cogs": 203994000,
+      "oi": 87632000,
+      "ni": 22231,
+      "ocf": 54971000,
+      "sbc": 11103000,
+      "issue": 636969000,
+      "interest": 52112000,
+      "tax": 6830000,
+      "pretax": 29061000,
+      "sga": 112255000,
+      "dil": 91684,
+      "eps": 0.24,
+      "tax_paid": 12567000,
+      "gw_imp": 0,
+      "debt_issue": 360000000,
+      "assets": 1450618000,
+      "ca": 220670000,
+      "cl": 41806000,
+      "liab": 362113000,
+      "eq": 1088505000,
+      "re": -20560000,
+      "cash": 54066000,
+      "ltd": 277293000,
+      "ltd_nc": 277293000,
+      "ltd_c": 0,
+      "ar": 63834000,
+      "ppe": 76605000,
+      "inv": 92639000,
+      "oca": 9499000,
+      "gw": 693537000,
+      "intang": 434662000
+    },
+    {
+      "end": "2025-12-31",
+      "rev": 496283000,
+      "gp": 261325000,
+      "cogs": 234958000,
+      "oi": 106243000,
+      "ni": 72146,
+      "ocf": 112280000,
+      "sbc": 14931000,
+      "issue": 1859000,
+      "interest": 25665000,
+      "tax": 8432000,
+      "pretax": 80578000,
+      "sga": 143642000,
+      "dil": 95893,
+      "eps": 0.75,
+      "tax_paid": 9394000,
+      "gw_imp": 0,
+      "debt_issue": 446500000,
+      "assets": 2029875000,
+      "ca": 298498000,
+      "cl": 63506000,
+      "liab": 855122000,
+      "eq": 1174753000,
+      "re": 51586000,
+      "cash": 84827000,
+      "ltd": 715700000,
+      "ltd_nc": 711338000,
+      "ltd_c": 4362000,
+      "ar": 88026000,
+      "ppe": 82536000,
+      "inv": 109036000,
+      "oca": 11123000,
+      "gw": 1008377000,
+      "intang": 606406000
+    }
+  ],
+  "ttm": {
+    "rev": 586168000,
+    "oi": 128151000,
+    "end": "CY2026Q2"
+  },
+  "ttm_year_ago": {
+    "rev": 451742000,
+    "oi": 97548000,
+    "end": "CY2025Q2"
+  },
+  "ev": 6369291849,
+  "debt": 715700000,
+  "cash": 84827000,
+  "shares": 93688471,
+  "more": {
+    "dechow": {
+      "f": 1.911,
+      "prob": 0.00707,
+      "band": "substantial",
+      "x": {
+        "rsst_acc": 0.0319,
+        "ch_rec": 0.0139,
+        "ch_inv": 0.0094,
+        "soft_assets": 0.9176,
+        "ch_cs": 0.1862,
+        "ch_roa": 0.0,
+        "issue": 1.0
+      },
+      "w": {
+        "rsst_acc": 0.79,
+        "ch_rec": 2.518,
+        "ch_inv": 1.191,
+        "soft_assets": 1.979,
+        "ch_cs": 0.171,
+        "ch_roa": -0.932,
+        "issue": 1.029
+      },
+      "assumed": []
+    },
+    "cscore": {
+      "score": 3,
+      "n": 5,
+      "signs": [
+        {
+          "key": "gap",
+          "label": "Profit pulling away from operating cash flow",
+          "on": false,
+          "detail": [
+            -54948769,
+            -112207854
+          ]
+        },
+        {
+          "key": "dso",
+          "label": "Days sales outstanding up",
+          "on": true,
+          "detail": [
+            57.8,
+            64.7
+          ]
+        },
+        {
+          "key": "dsi",
+          "label": "Days of inventory up",
+          "on": true,
+          "detail": [
+            165.8,
+            169.4
+          ]
+        },
+        {
+          "key": "oca",
+          "label": "Other current assets up relative to revenue",
+          "on": false,
+          "detail": [
+            0.0236,
+            0.0224
+          ]
+        },
+        {
+          "key": "dep",
+          "label": "Depreciation down relative to PP&E",
+          "on": null,
+          "detail": [
+            null,
+            null
+          ]
+        },
+        {
+          "key": "ag",
+          "label": "Total assets up more than 10% in a year",
+          "on": true,
+          "detail": 0.3993
+        }
+      ]
+    },
+    "stability": {
+      "years": 3,
+      "sd_roa": 0.0026,
+      "sd_cfoa": 0.0217,
+      "sd_gm": 0.0216,
+      "sd_om": 0.0025,
+      "smooth": 0.118,
+      "loss_years": 1,
+      "neg_ocf_years": 0,
+      "roa": [
+        [
+          "2023-12-31",
+          -0.0044
+        ],
+        [
+          "2024-12-31",
+          0.0
+        ],
+        [
+          "2025-12-31",
+          0.0
+        ]
+      ],
+      "cfoa": [
+        [
+          "2023-12-31",
+          0.0122
+        ],
+        [
+          "2024-12-31",
+          0.0379
+        ],
+        [
+          "2025-12-31",
+          0.0553
+        ]
+      ],
+      "sd_ttm_om": 0.0029,
+      "ttm_om": [
+        0.2189,
+        0.2202,
+        0.2188,
+        0.222,
+        0.2175,
+        0.2171,
+        0.2159,
+        0.2184,
+        0.2141,
+        0.2113,
+        0.2186
+      ]
+    },
+    "taxes": {
+      "years": 3,
+      "paid": 27005000,
+      "book": 22314000,
+      "cash_to_book": 1.21,
+      "cash_etr": 0.241,
+      "book_etr": 0.1991,
+      "by_year": [
+        [
+          "2023-12-31",
+          5044000,
+          7052000,
+          2437000
+        ],
+        [
+          "2024-12-31",
+          12567000,
+          6830000,
+          29061000
+        ],
+        [
+          "2025-12-31",
+          9394000,
+          8432000,
+          80578000
+        ]
+      ]
+    },
+    "goodwill": {
+      "gw": 1008377000,
+      "intang": 606406000,
+      "gw_assets": 0.7955,
+      "gw_equity": 1.375,
+      "tangible_equity": -440030000,
+      "impairments": [],
+      "signs": [
+        "Goodwill and intangibles exceed shareholders' equity (negative tangible equity)"
+      ],
+      "history": [
+        [
+          "2023-12-31",
+          470888000,
+          316542000,
+          1050445000,
+          418141000
+        ],
+        [
+          "2024-12-31",
+          693537000,
+          434662000,
+          1450618000,
+          1088505000
+        ],
+        [
+          "2025-12-31",
+          1008377000,
+          606406000,
+          2029875000,
+          1174753000
+        ]
+      ]
+    },
+    "nongaap": {
+      "street_ttm": 1.33,
+      "gaap_ttm": -42.462,
+      "gap": 32.9267,
+      "ratio": null,
+      "quarters": [
+        [
+          "2025-09-30",
+          0.35,
+          287.8834
+        ],
+        [
+          "2025-12-31",
+          0.26,
+          -621.1387
+        ],
+        [
+          "2026-03-31",
+          0.34,
+          116.2024
+        ],
+        [
+          "2026-06-30",
+          0.38,
+          174.5904
+        ]
+      ]
+    },
+    "qmj_inputs": {
+      "gpoa": 0.12874,
+      "roa": 4e-05,
+      "cfoa": 0.05531,
+      "acc": -0.05528,
+      "lev": 0.35258,
+      "roe": 6e-05,
+      "gmar": 0.52656,
+      "d_gpoa": 0.05096,
+      "d_roa": 0.00223,
+      "d_cfoa": 0.04735,
+      "d_roe": 0.0056,
+      "d_gmar": 0.16861,
+      "growth_years": 2,
+      "evol": 0.0064,
+      "beta": 0.3,
+      "ivol": 0.3975,
+      "z": 4.618,
+      "eiss": 0.04489,
+      "diss": 0.30222
+    },
+    "jones": {
+      "latest": {
+        "da": -0.0127,
+        "na": -0.0646,
+        "ta": -0.0774,
+        "group": "industrials|2025",
+        "n": 642,
+        "r2": 0.531,
+        "coef": [
+          -0.06271,
+          0.00019,
+          -0.01923,
+          -0.02029,
+          0.42662
+        ]
+      },
+      "history": [
+        [
+          "2024-12-31",
+          0.0067,
+          -0.0523,
+          -0.059
+        ],
+        [
+          "2025-12-31",
+          -0.0127,
+          -0.0774,
+          -0.0646
+        ]
+      ],
+      "sector_pct": 0.249
+    },
+    "persistence": {
+      "a": -0.064,
+      "b_cash": 1.032,
+      "b_acc": 0.447,
+      "r2": 0.511,
+      "b_roa": 0.663,
+      "r2_roa": 0.486,
+      "n": 2653,
+      "cash_roa": 0.0645,
+      "acc_roa": -0.0645
+    },
+    "qmj": {
+      "profitability": -0.773,
+      "growth": 0.703,
+      "safety": 0.825,
+      "payout": -2.14,
+      "qmj": -0.605,
+      "rank": 0.258,
+      "sector_rank": 0.228
+    }
+  },
+  "margins": {
+    "q": "CY2026Q2",
+    "margin": 0.2186,
+    "sector_median": 0.0471,
+    "phi": 0.976,
+    "path": [
+      0.2145,
+      0.2105,
+      0.2066,
+      0.2027
+    ],
+    "history": [
+      [
+        "CY2023Q4",
+        0.2189
+      ],
+      [
+        "CY2024Q1",
+        0.2202
+      ],
+      [
+        "CY2024Q2",
+        0.2188
+      ],
+      [
+        "CY2024Q3",
+        0.222
+      ],
+      [
+        "CY2024Q4",
+        0.2175
+      ],
+      [
+        "CY2025Q1",
+        0.2171
+      ],
+      [
+        "CY2025Q2",
+        0.2159
+      ],
+      [
+        "CY2025Q3",
+        0.2184
+      ],
+      [
+        "CY2025Q4",
+        0.2141
+      ],
+      [
+        "CY2026Q1",
+        0.2113
+      ],
+      [
+        "CY2026Q2",
+        0.2186
+      ]
+    ]
+  },
+  "line": {
+    "a": 0.23848,
+    "b": 0.019926,
+    "r2": 0.198,
+    "n": 275
+  },
+  "sector_name": "Industrials"
+}
