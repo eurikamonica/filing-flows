@@ -7,6 +7,8 @@ XBRL, and the companies it names as investees in its 10-Q and 10-K. Behind the c
                    measurement alternative (cost − impairment ± observable price changes): most private-company stakes
                em  equity-method investments (ASC 323: significant influence, usually 20–50% of the investee)
                fv  marketable equity securities at fair value through net income (FV-NI)
+               lt  long-term investments as tagged, only for a company that tags neither nm nor em (Salesforce's
+                   "Strategic investments")
              A filer that tags a balance only on a dimension (Alphabet's marketable equity in 2026, "recurring fair value
              measurements") gets it from the filing's own XBRL instance once that filing has been read.
   gains      by quarter: gains (losses) on investments as the company totals them (GainLossOnInvestments,
@@ -67,11 +69,6 @@ GAIN = {
     "pti": ["IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
             "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments"],
 }
-ROLE_NAME = {"nm": "Non-marketable equity securities", "em": "Equity-method investments", "lt": "Long-term investments",
-             "fv": "Marketable equity securities (fair value)", "g": "Gains (losses) on investments",
-             "gfv": "Gains on equity securities at fair value", "up": "Upward adjustments (non-marketable)",
-             "dn": "Downward adjustments (non-marketable)", "imp": "Impairments (non-marketable)",
-             "emi": "Equity-method income", "pti": "Pretax income"}
 
 
 def _d(s):
