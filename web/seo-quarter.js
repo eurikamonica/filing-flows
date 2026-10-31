@@ -8,7 +8,9 @@
   if (window.__ffSeoSankey) return;          // the script may be on a page twice (two charts)
   window.__ffSeoSankey = true;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const MODES = [['', 'This quarter'], ['q', 'vs previous quarter (Q/Q)'], ['y', 'vs a year earlier (Y/Y)']];
+  const LANG = { 'zh-Hans': ['本季度', '对比上一季度（环比）', '对比去年同期（同比）'], es: ['Este trimestre', 'vs trimestre anterior', 'vs hace un año'],
+    fr: ['Ce trimestre', 'vs trimestre précédent', 'vs il y a un an'] }[document.documentElement.lang] || ['This quarter', 'vs previous quarter (Q/Q)', 'vs a year earlier (Y/Y)'];
+  const MODES = [['', LANG[0]], ['q', LANG[1]], ['y', LANG[2]]];
   async function one(f) {
     try {
       const d = await (await fetch(f.dataset.src)).json();
