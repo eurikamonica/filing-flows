@@ -31,9 +31,10 @@ OLDER = 'https://data.sec.gov/submissions/{name}'
 ARCHIVE = 'https://www.sec.gov/Archives/edgar/data/{cik}/{folder}/'
 REFRESH_DAYS = 7               # a company's filing list is asked again after a week
 # the forms kept: what a reader would call news (insider forms 3/4/5, 144 and the like are left out)
-# (prospectus supplements 424B2 / 424B3 are mostly structured notes and resales: left out; one prospectus a day at most)
+# (prospectus supplements 424B2 / 424B3 are mostly structured notes and resales, a Form 25 mostly notes that matured: left
+# out; one prospectus a day at most)
 FORMS = {'8-K', '8-K/A', '6-K', '10-Q', '10-K', '10-K/A', '20-F', '40-F', 'S-1', 'S-3', 'S-4', 'F-1', 'F-3', 'F-4', '424B1', '424B4',
-         '424B5', 'SC 13D', 'SC 13D/A', 'SC TO-T', 'SC TO-I', 'SC 14D9', 'DEFM14A', 'PREM14A', '25-NSE', '15-12B',
+         '424B5', 'SC 13D', 'SC 13D/A', 'SC TO-T', 'SC TO-I', 'SC 14D9', 'DEFM14A', 'PREM14A', '15-12B',
          'NT 10-K', 'NT 10-Q', 'SCHEDULE 13D', 'SCHEDULE 13D/A'}
 READ_ITEMS = {'1.01', '1.02', '1.03', '1.05', '2.01', '2.02', '2.03', '2.05', '2.06', '3.01', '3.02', '4.01', '4.02', '5.01', '5.02',
               '5.03', '7.01', '8.01'}

@@ -51,7 +51,8 @@ def test_history(tmp_path):
     n = SH.write(str(s), "https://example.com")
     assert n == {"quarters": 4, "qoq": 2, "yoy": 2, "metrics": 6, "guidance": 1}
     q = (s / "c" / "nvda" / "q2-fy27" / "index.html").read_text()
-    assert "<h1>NVIDIA (NVDA) second quarter fiscal 2027 results (Q2 FY27)</h1>" in q
+    assert "<h1>NVIDIA (NVDA) Q2 FY27 earnings results (second quarter fiscal 2027)</h1>" in q
+    assert "<title>NVIDIA (NVDA) Q2 FY27 Earnings Results: Revenue $96.2B, +106%" in q
     assert "reported revenue of $96.2B for the second quarter fiscal 2027 (Q2 FY27), +106% from a year earlier and +10% from the quarter before" in q
     assert '"text": "NVIDIA (NVDA) reported revenue of $96.2B' in q and "data-label='Q2 FY27'" in q and "seo-quarter.js" in q
     assert "q2-fy27-vs-q1-fy27/" in q and "q2-fy27-vs-q2-fy26/" in q and "../q1-fy27/" in q

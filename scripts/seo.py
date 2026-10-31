@@ -177,7 +177,9 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
     status = " (preliminary, from the earnings release)" if form == "8-K" else ""
     words = period_words(q.get("label"))
     revs = h.get('rev_fmt') or money(h.get('revenue'))
-    title = fit(f"{who} {q.get('label', '')} Earnings: Revenue Breakdown {revs}" + (f" ({pct(h.get('yoy'))})" if h.get("yoy") is not None else ""))
+    # the company page is the evergreen one ("amazon earnings", "amazon revenue breakdown"); the quarter's own page
+    # (c/<slug>/q3-2026/) answers "amazon q3 2026 earnings": two pages aimed at one query split its ranking
+    title = fit(f"{who} Earnings & Revenue Breakdown: {revs}" + (f" ({pct(h.get('yoy'))})" if h.get("yoy") is not None else ""))
     segs = segments(q)
     desc = (f"{name} made {revs} in {q.get('label', '')}" + (f" ({pct(h.get('yoy'))} Y/Y)" if h.get("yoy") is not None else "")
             + (": " + ", ".join(f"{n} {money(v)}" for n, v in segs[:3]) if len(segs) >= 2 else "")
@@ -221,6 +223,9 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
         ("Operating margin", pct(h.get("om"), False)), ("Net earnings", h.get("ni_fmt") or money(h.get("ni"))),
         ("Operating cash flow", money(h.get("ocf")))))
     tweet = f"{who} {q.get('label', '')} revenue breakdown"
+    import seo_history as SH
+    qs_ = SH.qslug(q.get('label') or '')
+    qlink = f" · <a href='{qs_}/'>{e(who)} {e(q.get('label', ''))} earnings results →</a>" if qs_ and form != '8-K' else ''
     alt = f"{name} {q.get('label', '')} revenue breakdown: Sankey diagram of revenue" + (f" ({', '.join(n for n, _ in segs[:4])})" if segs else "") + ", costs, profit and cash flow"
     share = (f"<figure class='seo-share'><a href='{e(image)}'><img src='{e(image)}' alt='{e(alt)}' width='1200' height='630' loading='lazy'></a>"
              f"<figcaption>{e(name)} {e(q.get('label', ''))} revenue breakdown — free to share with a link to this page. "
@@ -228,8 +233,8 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
              + embed_box(url, image, alt, f"{name} {q.get('label', '')} revenue breakdown") + "</figure>") if image else ""
     ties_html = ties_section(ties or [], p['cik'], pages or {})
     body = f"""<p class="crumbs"><a href="../../">Filing Flows</a> › <a href="../../sector/{e(p.get('sector') or 'other')}/">{e(sector_name)}</a> › {e(who)}</p>
-<h1>{e(who)} reports {e(words)} results</h1>
-<p class="muted">{e(q.get('label', ''))} earnings · {e(form)} filed {e(fdate(q.get('filed')))}</p>
+<h1>{e(who)} earnings and revenue breakdown</h1>
+<p class="muted">Latest: {e(q.get('label', ''))} · {e(form)} filed {e(fdate(q.get('filed')))}{qlink}</p>
 {highlight}
 <p class="lead">{e(desc)}</p>
 <div class="seo-tiles">{tiles}</div>
