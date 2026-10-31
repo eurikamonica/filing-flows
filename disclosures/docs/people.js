@@ -45,13 +45,14 @@ function peManagers(){
  const rows=peFilter(peRows(d.data),['name','cik']);
  exported=rows;
  return `<div class="explain">${esc(d.data.note||'')}</div>`+table(['Manager','13F assets','Quarter','Positions','Clone since','Clone return','SPY, same days','Difference','Clone max drawdown','Priced share','Record (right side of SPY)'],
-  rows.map(r=>[`<button class="text-button" data-pem="${esc(r.cik)}"><b>${esc(r.name)}</b></button>`,peUsd(r.aum),esc(r.period),fmt(r.positions),esc(r.clone_start||'—'),peSp(r.clone_total),peSp(r.spy_total),peSp(r.excess),peSp(r.max_dd),pct(r.coverage,0),r.hit==null?'—':`${pct(r.hit,0)} of ${fmt(r.decisions)}`]));
+  rows.map(r=>[`<button class="text-button" data-pem="${esc(r.cik)}"><b>${esc(r.name)}</b></button>${r.corporate?' <span class="tag" title="A listed company filing a 13F for its own portfolio">company</span>':''}`,peUsd(r.aum),esc(r.period),fmt(r.positions),esc(r.clone_start||'—'),peSp(r.clone_total),peSp(r.spy_total),peSp(r.excess),peSp(r.max_dd),pct(r.coverage,0),r.hit==null?'—':`${pct(r.hit,0)} of ${fmt(r.decisions)}`]));
 }
 function peManager(cik){
  const d=peData('m/'+cik);if(d.err)return empty('This manager could not load ('+d.err+').');if(!d.data)return empty('Loading…');
  const m=d.data,c=m.clone||{};
  let out=`<p><button class="text-button" data-peback="1">← All managers</button> · <a href="../m/${esc(m.slug)}/">page for search engines ↗</a></p>`;
  out+=`<div class="section-head"><div><h2>${esc(m.name)}</h2><p class="sub">13F for the quarter ended ${esc(m.period)}, filed ${esc(m.filed)} · CIK ${esc(m.cik)}</p></div><span class="tag">13F</span></div>`;
+ if(m.corporate)out+=`<div class="explain">${esc(m.name)} is a listed company investing its own capital. A 13F lists listed shares only; its stakes in private companies are in its 10-Q and 10-K: <a href="../#c-${esc(m.cik)}-invest">its investments, and the companies it names as investees →</a></div>`;
  out+=`<div class="metrics">${kpi('13F assets',peUsd(m.aum),'all reported positions')}${kpi('Positions',fmt(m.positions),'common shares')}${kpi('Clone return',c.total==null?'—':(c.total>0?'+':'')+fmt(c.total*100,1)+'%',c.start?`${c.start} → ${c.end}`:'')}${kpi('SPY, same days',c.spy_total==null?'—':(c.spy_total>0?'+':'')+fmt(c.spy_total*100,1)+'%',`max drawdown ${c.max_dd==null?'—':fmt(c.max_dd*100,1)+'%'} vs ${c.spy_max_dd==null?'—':fmt(c.spy_max_dd*100,1)+'%'}`)}</div>`;
  out+=`<div class="panel"><h3>Copying each 13F the day after it was filed</h3>${peLine(c.monthly)||empty('Not enough priced history yet.')}<p class="sub">Value-weighted over the common-share positions with a price (${pct(c.coverage,0)} of the portfolio on average), held until the next 13F; ${fmt(c.filings)} filings since ${esc(c.first_filing||'—')}. Price returns, no dividends or costs, for the clone and SPY alike.</p></div>`;
  out+=table(['Ticker','Company','Weight','Value','Change in the quarter'],(m.holdings||[]).filter(h=>h[0]).map(h=>[`<b>${esc(h[0])}</b>`,esc(h[1]),pct(h[2]),peUsd(h[3]),esc((h[4]||'unchanged').toLowerCase())+(h[5]!=null&&['INCREASE','DECREASE'].includes(h[4])?' '+peSp(h[5]/100):'')]));

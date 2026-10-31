@@ -799,7 +799,7 @@
     $('#co-period-sel').addEventListener('change', (ev) => { if (ev.target.value) location.hash = ev.target.value.slice(1); });
     if (ticker) coChains($('#co-chains'), ticker);
     if (ticker) coIndex($('#co-index'), ticker);
-    $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-x-fairvalue">fair value</a> · <a href="#c-${cik}-value">DCF calculator</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a>`;
+    $('#co-more').innerHTML = `More on ${t(p.name)}: <a href="#c-${cik}-cash">profit &amp; cash</a> · <a href="#c-${cik}-x-fairvalue">fair value</a> · <a href="#c-${cik}-value">DCF calculator</a> · <a href="#c-${cik}-links">customers, suppliers &amp; growth model</a> · <a href="#c-${cik}-invest">investments</a>`;
     const body = $('#body');
     if (window.FFCompanyDisclosures && !cmpId && !all) window.FFCompanyDisclosures.mount($('#ff-company-disclosures'), { cik: p.cik, here, compact: true });
     if (window.FFOverview && !cmpId && !all) window.FFOverview.mount($('#ff-overview'), { c, q, ticker, cik: p.cik, here });   // web/overview.js
@@ -994,7 +994,7 @@
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-opportunity'], ['x-odds']]],
     ['Holders & trades', [['holders', '13F funds & officials'], ['x-insiders']]],
-    ['Relationships & model', [['links', 'Customers, suppliers & model'], ['shock', 'Shock panel'], ['x-outside']]],
+    ['Relationships & model', [['links', 'Customers, suppliers & model'], ['invest', 'Investments'], ['shock', 'Shock panel'], ['x-outside']]],
   ];
   function tabGroups() {
     const ext = new Map(EXT_VIEWS.map((v) => ['x-' + v.id, v.label]));
@@ -1109,6 +1109,11 @@
     if (which === 'holders') return ticker ? holdersSection(body, ticker, here) : (body.innerHTML = '<p class="muted">No ticker on file, so the 13F and officials\u2019 records cannot be matched to this company.</p>');
     if (which === 'links') return linksSection(body, c, ticker, here);
     if (which === 'dollar') return window.FFFlowLab ? window.FFFlowLab.company(body, { cik: p.cik, ticker, name: p.name, here }) : (body.innerHTML = '<p class="muted">The money flow script did not load.</p>');
+    if (which === 'invest') {                                  // what it invests in (web/investors.js)
+      if (window.FFInvestors) return window.FFInvestors.company(body, c, { getJSON, here });
+      body.innerHTML = '<p class="muted">The investments script did not load.</p>';
+      return;
+    }
     if (which.startsWith('x-')) return extView(body, which.slice(2), c, ticker, here);
     const D = c.quality;
     if (!D || !((D.q || []).length || (D.fy || []).length)) {
@@ -5377,7 +5382,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|dollar|capital|bs|value|revisions|debt|risk|consensus|eps|posts|links|shock|holders|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|dollar|capital|bs|value|revisions|debt|risk|consensus|eps|posts|links|invest|shock|holders|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');
@@ -5387,6 +5392,8 @@
       else if (h === 'feed' && window.FFFeed) await window.FFFeed.render(app, Object.assign({}, window.FFApp, { here }));
       else if ((m = /^chart(?:\/(.*))?$/.exec(h)) && window.FFCharts) await window.FFCharts.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
       else if ((m = /^studio(?:\/([\s\S]*))?$/.exec(h)) && window.FFStudio) await window.FFStudio.render(app, Object.assign({}, window.FFApp, { here }), m[1] || '');
+      else if (h === 'investors' && window.FFInvestors) await window.FFInvestors.index(app, { getJSON, setNav, here });
+      else if ((m = /^investee-(.+)$/.exec(h)) && window.FFInvestors) await window.FFInvestors.investee(app, m[1], { getJSON, setNav, here });
       else if (h === 'chains' && window.FFChains) await window.FFChains.index(app, chainCtx());
       else if (h === 'model' && window.FFModel) await window.FFModel.overview(app, chainCtx());
       else if (h === 'gamma' && window.FFGamma) await window.FFGamma.index(app, chainCtx());

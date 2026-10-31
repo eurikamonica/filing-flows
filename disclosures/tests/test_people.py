@@ -164,3 +164,23 @@ class Targets(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class Managers(unittest.TestCase):
+    def test_a_company_filing_a_13f_is_flagged_and_listed(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            (root / 'cache').mkdir()
+            snap = ['2026-06-30', '2026-08-07', 99e9, [['C1', 1000, 94e9], ['C2', 10, 5e9]], {'C1': ['NEW', None]}]
+            P.SM.save_gz(root / 'cache' / 'managers.json.gz', {
+                'managers': {'1652044': {'name': 'Alphabet Inc.', 'aum': 99e9}, '102909': {'name': 'VANGUARD GROUP INC', 'aum': 7e12}},
+                'history': {'1652044': [snap], '102909': [['2026-06-30', '2026-08-10', 7e12, [['C2', 5, 7e12]], {}]]}})
+            cfg = {'top_managers': 1, 'managers_include': {'1652044': {'label': 'Alphabet', 'corporate': True}}}
+            summary, pages = P.manager_pages(root, None, cfg, FakeU(), {})
+            rows = [dict(zip(summary['fields'], r)) for r in summary['rows']]
+            by = {r['cik']: r for r in rows}
+            self.assertEqual(set(by), {'102909', '1652044'})          # the largest manager, and the company always
+            self.assertEqual((by['1652044']['corporate'], by['102909']['corporate']), (1, 0))
+            self.assertTrue(pages['1652044']['corporate'] and pages['1652044']['name'] == 'Alphabet')
+            self.assertNotIn('corporate', pages['102909'])
+            self.assertEqual(pages['1652044']['holdings'][0][:2], ['AAA', 'AAA Inc'])

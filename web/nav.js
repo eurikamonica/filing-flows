@@ -24,6 +24,7 @@
       ['etfs', 'disclosures/#etf', 'ETF scanner', 'Every US-listed ETF: prices, distributions, prospectus, holdings'],
       ['disclosures', 'disclosures/', 'Disclosures', '13F flows, insiders, officials, short interest…'],
       ['cross', 'disclosures/#cross', 'Cross-holdings', 'Who holds whom: US government, the President, Congress, Nvidia, Alphabet…'],
+      ['investors', '#investors', 'Corporate investors', 'What companies invest in: private stakes, 13F holdings, who backs Anthropic'],
       ['account', '#account', 'Alerts', 'E-mail when your companies file'],
     ] },
     { id: 'method', label: 'Method', href: '#method', nav: 'method' },
