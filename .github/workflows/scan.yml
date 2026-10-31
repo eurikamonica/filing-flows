@@ -350,6 +350,13 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: python scripts/seo_daily.py --site _site
+      - name: Comparison pages (compare/<a>-vs-<b>/) and Chinese pages (zh/c/<slug>/) for search engines
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          python scripts/seo_compare.py --site _site
+          python scripts/seo_zh.py --site _site
 
       - name: Integrate SIC relationships, markets and audit-visible research pages
         run: |
