@@ -174,6 +174,12 @@ def norm(s):
     return s
 
 
+# what may follow a parent's name in a subsidiary's ("Apple Operations International", "Google Asia Pacific", "アップルジャパン")
+SUBSID = (r'^(?:社|グループ|集團|集团|及其|그룹|及|コリア|ジャパン|合同会社|日本|台灣|台湾|中国|中國|코리아|operations|international|inc|asia|'
+          r'asiapacific|japan|korea|taiwan|china|singapore|ireland|europe|emea|americas|usa|us|global|technology|technologies|'
+          r'semiconductor|services|sales|distribution|manufacturing|holdings|\(|（)')
+
+
 class Matcher:
     """Counterparty label → (cik, ticker, name) of a company on the site, or None. Aliases first, then the exact
     normalised English name of an SEC filer; a label of fewer than 3 characters (A社, 甲) never matches."""
@@ -201,9 +207,11 @@ class Matcher:
         if len(k) < 2 or re.fullmatch(r'[a-z]|[甲乙丙丁戊己庚]|客戶[a-z0-9]+|顧客[a-z0-9]+|[a-z]社|[a-z]公司', k):
             return None
         c = self.alias.get(k) or self.by_n.get(k)
+        if not c and k.startswith('日本') and len(k) > 4:     # 日本マイクロソフト, 日本オラクル: the Japanese subsidiary
+            c = self.alias.get(k[2:]) or self.by_n.get(k[2:])
         if not c:                                   # "Apple Inc. 及其子公司", "アップル社", "Apple Operations International"
             for a, cc in self.long:
-                if (k.startswith(a) and re.match(r'^(?:社|グループ|集團|集团|及其|operations|international|inc|그룹|及)', k[len(a):] or '社')):
+                if (k.startswith(a) and re.match(SUBSID, k[len(a):] or '社')):
                     c = cc
                     break
         return c
