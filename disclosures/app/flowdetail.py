@@ -668,8 +668,8 @@ class Flows:
     ('src': money that flows on — revenue, profit, gains, cash sources; 'use': a cost, a loss absorbed, a cash use) and the
     node its share is given of."""
 
-    def __init__(self, F, vals, ref_total, fold=None):
-        self.F, self.vals = F, vals
+    def __init__(self, F, vals, ref_total, fold=None, skip=()):
+        self.F, self.vals, self.skip = F, vals, set(skip)
         self.fold = fold               # {junction: {side: [keys]}} decided on the period shown (reused for Q/Q, Y/Y)
         self.ref = abs(ref_total or 0) or 1.0
         self.links, self.kind, self.parent, self.order, self.folded, self.decided = {}, {}, {}, [], {}, {}
@@ -704,7 +704,7 @@ class Flows:
 
     def junction(self, X, sigma, depth=0):
         """X = Σ w·part: inflows (σ·w·v > 0) fill outflows in order; X itself is the outflow (or, for a loss, the inflow)."""
-        if depth > 14 or X not in self.F['J']:
+        if depth > 14 or X not in self.F['J'] or X in self.skip:
             return
         vX = self.v(X)
         if vX is None:
@@ -850,8 +850,15 @@ def spec_of(F, now, q=None, y=None, annual=False):
         next((k for j in F['J'].values() for k, _ in j if main_of(k) == 'revenue' and k in now), None)
     R = abs(now.get(rev) or 0) if rev else 0
     fl = Flows(F, now, R).run()
-    fq = Flows(F, q, R, fl.decided).run() if q else None
-    fy = Flows(F, y, R, fl.decided).run() if y else None
+    skip = ()
+    big = max((v for (a, b), v in fl.links.items() if a.startswith('cf>') or b.startswith('cf>')), default=0)
+    if R and big > 3 * R:
+        # gross borrowing and repaying (a revolver drawn and repaid, a REIT's or a lender's) would dwarf the business:
+        # investing and financing drawn as their net totals
+        skip = {k for k in F['J'] if main_of(k) in ('icf', 'fincf')}
+        fl = Flows(F, now, R, skip=skip).run()
+    fq = Flows(F, q, R, fl.decided, skip).run() if q else None
+    fy = Flows(F, y, R, fl.decided, skip).run() if y else None
     unit = 'B' if R >= 1e9 else 'M'
 
     def node_v(f, k):
