@@ -951,7 +951,7 @@
   // five groups of company views; the active group's views show as a second row (the routes stay #c-<cik>-<view>)
   const TAB_GROUPS = [
     ['Earnings', [['', 'Earnings'], ['x-charts'], ['eps', 'EPS forecast & preview'], ['x-filings'], ['x-events'], ['posts', 'Posts']]],
-    ['Cash & capital', [['cash', 'Profit & cash'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-workforce']]],
+    ['Cash & capital', [['cash', 'Profit & cash'], ['dollar', 'Where each $1 goes'], ['capital', 'Capital allocation'], ['bs', 'Balance sheet'], ['debt', 'Debt & rates'], ['risk', 'Disclosures & risk'], ['x-notes'], ['x-quality'], ['x-workforce']]],
     // the Disclosure Hub's fair value (every method, its football field, sensitivity, credit) leads; the DCF you can edit next
     ['Valuation & expectations', [['x-fairvalue'], ['value', 'DCF calculator'], ['consensus', 'Consensus'], ['revisions', 'Revisions'], ['x-outlook'], ['x-lbo'], ['x-hype'], ['x-rotation'], ['x-options'], ['x-paths'], ['x-opportunity'], ['x-odds']]],
     ['Holders & trades', [['holders', '13F funds & officials'], ['x-insiders']]],
@@ -1067,6 +1067,7 @@
     if (which === 'posts') return postsSection(body, c, ticker, here);
     if (which === 'holders') return ticker ? holdersSection(body, ticker, here) : (body.innerHTML = '<p class="muted">No ticker on file, so the 13F and officials\u2019 records cannot be matched to this company.</p>');
     if (which === 'links') return linksSection(body, c, ticker, here);
+    if (which === 'dollar') return window.FFFlowLab ? window.FFFlowLab.company(body, { cik: p.cik, ticker, name: p.name, here }) : (body.innerHTML = '<p class="muted">The money flow script did not load.</p>');
     if (which.startsWith('x-')) return extView(body, which.slice(2), c, ticker, here);
     const D = c.quality;
     if (!D || !((D.q || []).length || (D.fy || []).length)) {
@@ -5335,7 +5336,7 @@
         history.replaceState(null, '', location.pathname + location.search + '#c-' + cik);
         h = 'c-' + cik;
       }
-      if ((m = /^c-(\d+)-(cash|capital|bs|value|revisions|debt|risk|consensus|eps|posts|links|shock|holders|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
+      if ((m = /^c-(\d+)-(cash|dollar|capital|bs|value|revisions|debt|risk|consensus|eps|posts|links|shock|holders|x-[a-z0-9]+)$/.exec(h))) await analysisPage(m[1], m[2]);
       else if ((m = /^c-(\d+)-fy-(\d{4}-\d{2}-\d{2})$/.exec(h))) await company(m[1], m[2], false, { fy: true });
       else if ((m = /^c-(\d+)-cmp-(\d+)$/.exec(h))) await company(m[1], null, false, { cmp: m[2] });
       else if ((m = /^c-(\d+)(?:-(\d{4}-\d{2}-\d{2}|all))?$/.exec(h))) await company(m[1], m[2] !== 'all' ? m[2] : null, m[2] === 'all');

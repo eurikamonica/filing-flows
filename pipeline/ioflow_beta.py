@@ -38,7 +38,7 @@ import os
 import re
 from collections import defaultdict
 
-from . import chains, ioflow, mrio, sectors
+from . import chains, flowlab, ioflow, mrio, sectors
 
 VERSION = "beta-1.1"
 GRADES = {"A": "Filed figure (SEC financial statements)",
@@ -768,6 +768,10 @@ def build(store, out, index, usd_recs=None, path=ioflow.DATA, mrio_path=mrio.DAT
         if not fl:
             skipped["no four quarters of revenue and income"] += 1
             continue
+        try:                                                    # for the money flow lab (pipeline/flowlab.py)
+            fl["x"] = {"cash": flowlab.cash_period(rec), "tax": ioflow.ttm(co, "tax", latest)[0]}
+        except Exception:                                       # noqa: BLE001
+            fl["x"] = {}
         m = {"cik": int(p["cik"]), "ticker": p.get("ticker") or "", "name": p.get("name") or "", "sic": sic,
              "sector": p.get("sector") or sectors.sector_of(sic), "industry": p.get("industry") or ""}
         rec_all.append((m, fl))
@@ -783,7 +787,7 @@ def build(store, out, index, usd_recs=None, path=ioflow.DATA, mrio_path=mrio.DAT
         names.setdefault(m["sic"], m["industry"] or "SIC " + m["sic"])
         groups["sic2-" + m["sic"][:2]].append((m, fl))
         groups["sector-" + m["sector"]].append((m, fl))
-    idx, failed = [], []
+    idx, failed, lab_groups = [], [], {}
     for key, members in groups.items():
         if key.startswith("sic2-"):
             d2 = key[5:]
@@ -792,6 +796,7 @@ def build(store, out, index, usd_recs=None, path=ioflow.DATA, mrio_path=mrio.DAT
             title, level = sectors.SECTORS.get(key[7:], key[7:]), "sector"
         else:
             title, level = f"SIC {key} · {names[key]}", "industry"
+        lab_groups[key] = (title, level, members)
         doc, links, nodes = doc_for(key, title, level, members, listed, io)
         bad = check(doc, links, nodes)
         if bad:
@@ -806,6 +811,10 @@ def build(store, out, index, usd_recs=None, path=ioflow.DATA, mrio_path=mrio.DAT
         json.dump({"version": VERSION, "generated": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                    "levels": sorted(idx, key=lambda r: r["key"]), "failed": failed, "skipped": dict(skipped),
                    "bea": {"year": io["year"], "scale_year": io["scale_year"]}}, f, separators=(",", ":"))
+    try:                                                        # the lab beside it: cash, people, tiers, capex; each company's dollar
+        flowlab.build(out, rec_all, io, lab_groups)
+    except Exception as e:                                      # noqa: BLE001
+        print(f"::warning::money flow lab not built: {e}")
     print(f"money flow beta: {len(idx)} levels written, {len(failed)} held back by the checks, from {len(rec_all)} companies")
     if failed:
         print("::warning::money flow beta: " + "; ".join(f"{x['key']}: {x['why'][0]}" for x in failed[:5]))

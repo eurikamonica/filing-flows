@@ -274,6 +274,8 @@
       '<section class="section" id="gamma-model" hidden></section>'+
       '<section class="section"><div class="section-head"><h2>Estimated money flow (BEA input-output)</h2>'+
       '<span class="muted">Every number an estimate at industry-average precision</span></div><div id="gamma-io"></div></section>'+
+      '<section class="section"><div class="section-head"><h2>Money flow lab <span class="fl-beta">Beta</span></h2>'+
+      '<span class="muted">Experimental: the chart above corrected, the filed cash flow, pay followed to households, two tiers of suppliers, capital spending by asset</span></div><div id="gamma-lab"></div></section>'+
       '<section class="section"><div class="section-head"><h2>Reported supplier & customer relationships</h2>'+
       '<span class="muted">Customers and suppliers named in annual reports (10-K, 20-F)</span></div>'+
       '<div id="gamma-relations"></div></section>'+
@@ -333,6 +335,7 @@
     draw();
     relationshipExplorer(get('gamma-relations'),d.relationships||[],members,d.sic);
     ioFlow(get('gamma-io'),ctx,here,d.sic,d.sector);
+    if(global.FFFlowLab)global.FFFlowLab.industry(get('gamma-lab'),{sic:d.sic,sector:d.sector,here:here});
   }
 
   // Estimated money flow: where the industry's money comes from, what it spends it on, which industries supply it and
