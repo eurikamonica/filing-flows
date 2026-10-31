@@ -12,7 +12,7 @@ function gbData() {
     .then(d => { m.data = d; if (state.tab === 'guidance') render() }).catch(e => { m.err = e.message; if (state.tab === 'guidance') render() });
   return m;
 }
-const GB_VIEWS = [['hit', 'Hit rate: guided vs reported'], ['changes', 'Latest guidance changes (8-K)'], ['fls', 'Forward-looking statements'], ['one', 'One company']];
+const GB_VIEWS = [['screens', 'Screens: who to look at'], ['hit', 'Hit rate: guided vs reported'], ['changes', 'Latest guidance changes (8-K)'], ['fls', 'Forward-looking statements'], ['one', 'One company']];
 const GB_WORD = { raised: '▲ raised', lowered: '▼ lowered', narrowed: '→← narrowed', widened: '←→ widened', reaffirmed: '= reaffirmed', initiated: '✦ initiated',
   withdrawn: '✕ withdrawn', mixed: '▲▼ mixed', updated: 'updated' };
 const gbTk = (t, cik) => `<button class="text-button" data-gbo="${esc(cik)}" data-gbt="${esc(t)}"><b>${esc(t)}</b></button>`;
@@ -54,8 +54,56 @@ function gbFls(B) {
     ${L.slice(0, 200).map(({ r, f }) => `<tr><td>${gbTk(r.t, r.cik)}<br><span class="sub">${esc(r.name || '')}</span></td><td>${esc(f[0])}<br><span class="sub">${esc(f[1])}</span></td><td>${f[2]}</td><td>${f[3]}</td><td>${f[4]}</td><td>${f[5]}</td>
       <td class="${(f[6] || 0) > 0.1 ? 'positive' : (f[6] || 0) < -0.1 ? 'negative' : ''}">${f[6] == null ? '—' : (f[6] > 0 ? '+' : '') + Math.round(100 * f[6])}</td><td>${f[2] ? Math.round(100 * f[7] / f[2]) + '%' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
 }
+// Screens: ready-made lists from the same data — the latest raises and cuts, conservative and optimistic guiders (where
+// their results land in their ranges), outlooks that turned and the most new statements
+const GB_SCREENS = [
+  ['raised', 'Raised guidance, last 30 days'], ['cut', 'Lowered or withdrew guidance, last 30 days'],
+  ['cons', 'Conservative guiders: land in the better third or beyond'], ['opt', 'Optimistic guiders: land in the worse third or beyond'],
+  ['toneup', 'Outlook turned more positive (MD&A tone vs the filing before)'], ['tonedn', 'Outlook turned more negative'],
+  ['fresh', 'Most new forward-looking statements'],
+];
+function gbScreens(B) {
+  state.gbsc = GB_SCREENS.some(x => x[0] === state.gbsc) ? state.gbsc : 'raised';
+  const k = state.gbsc, since = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+  const byT = new Map(B.rows.map(r => [r.t, r]));
+  const tools = `<div class="toolbar">${field('gbsc', 'Screen', GB_SCREENS, k)}</div>`;
+  const tone = (v) => v == null ? '—' : (v > 0 ? '+' : '') + Math.round(100 * v);
+  let head = '', rows = [], note = '';
+  if (k === 'raised' || k === 'cut') {
+    const want = k === 'raised' ? /raised/ : /lowered|withdrawn/;
+    const seen = new Set();
+    rows = B.recent.filter(r => r[0] >= since && want.test(r[3]) && !seen.has(r[1]) && seen.add(r[1])).map(r => {
+      const x = byT.get(r[1]) || {};
+      return `<tr><td>${gbTk(r[1], r[2] || '')}<br><span class="sub">${esc(x.name || '')}</span></td><td>${esc(r[0])}</td><td>${gbMove(r[3])}</td><td>${x.n ? `${Math.round(100 * x.rate)}% <span class="sub">(${x.hit} of ${x.n})</span>` : '—'}</td><td>${r[5] ? `<a href="${esc(r[5])}" target="_blank" rel="noopener">${esc(r[4] || 'Release')}</a>` : esc(r[4])}</td></tr>`;
+    });
+    head = '<th>Company</th><th>Filed</th><th>Guidance</th><th>Hit rate so far</th><th>Release</th>';
+    note = 'From the earnings releases filed with 8-Ks in the last 30 days; the hit rate is how often the company met or beat its guidance before — a raise from a company that usually beats means more than one from a company that often misses.';
+  } else if (k === 'cons' || k === 'opt') {
+    const L = B.rows.filter(r => r.land && r.land.reduce((a, b) => a + b, 0) >= 4).map(r => {
+      const n = r.land.reduce((a, b) => a + b, 0), good = (r.land[3] + r.land[4]) / n, bad = (r.land[0] + r.land[1]) / n;
+      return { r, n, good, bad };
+    }).filter(x => (k === 'cons' ? x.good >= 0.6 : x.bad >= 0.5)).sort((a, b) => (k === 'cons' ? b.good - a.good : b.bad - a.bad) || b.n - a.n);
+    rows = L.slice(0, 150).map(({ r, n, good, bad }) => `<tr><td>${gbTk(r.t, r.cik)}<br><span class="sub">${esc(r.name || '')}</span></td><td><b class="${k === 'cons' ? 'positive' : 'negative'}">${Math.round(100 * (k === 'cons' ? good : bad))}%</b> <span class="sub">of ${n}</span></td>
+      <td class="sub">${r.land.map((v, i) => `<span title="${['worse than the range', 'worse third', 'middle third', 'better third', 'better than the range'][i]}">${v}</span>`).join(' · ')}</td><td>${r.g ? gbMove(r.g[0]) + `<br><span class="sub">${esc(r.g[1])}</span>` : '—'}</td></tr>`);
+    head = `<th>Company</th><th>${k === 'cons' ? 'Better third or beyond' : 'Worse third or beyond'}</th><th>Worse · worse third · middle · better third · better</th><th>Latest guidance</th>`;
+    note = 'Every guided GAAP or basis-free figure held to what was then reported (at least four), in thirds of its range; right = better (above the range for revenue and profit, below it for costs and tax). A company that keeps landing in the better third sets ranges it can beat.';
+  } else if (k === 'toneup' || k === 'tonedn') {
+    const L = B.rows.filter(r => r.fls && r.fls[6] != null && r.tone0 != null && r.fls[2] >= 5).map(r => ({ r, d: r.fls[6] - r.tone0 }))
+      .filter(x => (k === 'toneup' ? x.d >= 0.15 : x.d <= -0.15)).sort((a, b) => (k === 'toneup' ? b.d - a.d : a.d - b.d));
+    rows = L.slice(0, 150).map(({ r, d }) => `<tr><td>${gbTk(r.t, r.cik)}<br><span class="sub">${esc(r.name || '')}</span></td><td>${esc(r.fls[0])}<br><span class="sub">${esc(r.fls[1])}</span></td>
+      <td>${tone(r.tone0)} → <b class="${d > 0 ? 'positive' : 'negative'}">${tone(r.fls[6])}</b></td><td>${r.fls[3]} new · ${r.fls[5]} no longer said</td></tr>`);
+    head = '<th>Company</th><th>Latest MD&amp;A</th><th>Tone, the filing before → now</th><th>Statements</th>';
+    note = 'The tone of the forward-looking statements in the latest 10-Q / 10-K MD&A (positive minus negative, of all, −100 to +100) against the filing before it; a swing of 15 points or more, with at least five statements.';
+  } else {
+    const L = B.rows.filter(r => r.fls && r.fls[3] >= 3).sort((a, b) => b.fls[3] - a.fls[3]);
+    rows = L.slice(0, 150).map(r => `<tr><td>${gbTk(r.t, r.cik)}<br><span class="sub">${esc(r.name || '')}</span></td><td>${esc(r.fls[0])}<br><span class="sub">${esc(r.fls[1])}</span></td><td><b>${r.fls[3]}</b> of ${r.fls[2]}</td><td>${r.fls[5]}</td><td>${tone(r.fls[6])}</td></tr>`);
+    head = '<th>Company</th><th>Latest MD&amp;A</th><th>New statements</th><th>No longer said</th><th>Tone</th>';
+    note = 'Companies whose latest 10-Q / 10-K says the most new things about the future — a new plan, a new risk, a target that was not there in the filing before.';
+  }
+  return tools + `<div class="explain">${note}</div>` + (rows.length ? `<div class="tablebox"><table><thead><tr>${head}</tr></thead><tbody>${rows.join('')}</tbody></table></div>` : empty('No company fits this screen yet: the lists fill as more releases and filings are read.'));
+}
 function guidanceView() {
-  state.gbv = GB_VIEWS.some(v => v[0] === state.gbv) ? state.gbv : 'hit';
+  state.gbv = GB_VIEWS.some(v => v[0] === state.gbv) ? state.gbv : 'screens';
   let out = `<div class="section-head"><h2>Guidance</h2><span class="tag">8-K · 10-Q · 10-K</span></div>
     <p class="sub">What companies say about the future and how it turned out: the guidance in their earnings releases, raised, lowered or reaffirmed; how often the reported figures met or beat it; and the forward-looking statements of their 10-Q and 10-K. Read by fixed rules from the filings, no language model.</p>
     <div class="toolbar">${field('gbv', 'View', GB_VIEWS, state.gbv)}</div>`;
@@ -63,11 +111,11 @@ function guidanceView() {
   const b = gbData();
   if (b.err) return out + empty(`The guidance board could not load (${b.err}). It is rebuilt with every site update.`);
   if (!b.data) return out + empty('Loading…');
-  return out + (state.gbv === 'changes' ? gbChanges(b.data) : state.gbv === 'fls' ? gbFls(b.data) : gbHit(b.data));
+  return out + (state.gbv === 'changes' ? gbChanges(b.data) : state.gbv === 'fls' ? gbFls(b.data) : state.gbv === 'screens' ? gbScreens(b.data) : gbHit(b.data));
 }
 function bindGuidance() {
   if (state.tab !== 'guidance') return;
-  ['gbv', 'gbs', 'gbmin', 'gbk', 'gbf'].forEach(id => { if ($(id)) $(id).onchange = e => { state[id] = e.target.value; render() } });
+  ['gbv', 'gbs', 'gbmin', 'gbk', 'gbf', 'gbsc'].forEach(id => { if ($(id)) $(id).onchange = e => { state[id] = e.target.value; render() } });
   if ($('gbq')) $('gbq').onchange = e => { state.gbq = e.target.value; render() };
   const one = (cik, t) => { state.gbv = 'one'; state.gbone = cik; state.gbonet = t; render(); };
   document.querySelectorAll('#workspace [data-gbt]').forEach(b => b.onclick = () => one(b.dataset.gbo, b.dataset.gbt));

@@ -38,10 +38,11 @@ function board(site) {
     const h = readJSON(path.join(holdersDir, `${co.ticker}.json`));
     const ol = readJSON(path.join(site, 'data', 'outlook', `${co.cik}.json`));
     const merged = OV.merge(h && h.guidance_history, ol);
-    const latestDoc = ((ol && ol.docs) || []).find((d) => d.kind === 'mdna');
+    const mdnas = ((ol && ol.docs) || []).filter((d) => d.kind === 'mdna');
+    const latestDoc = mdnas[0], prevDoc = mdnas[1];
     const g = h && h.guidance;
     if (!merged && !latestDoc && !(g && g.label)) continue;
-    let hr = null, said = null;
+    let hr = null, said = null, land = null;
     if (merged) {
       withHistory += 1;
       const comp = readJSON(path.join(site, 'data', 'c', `${co.cik}.json`));
@@ -49,6 +50,7 @@ function board(site) {
         const rec = G.record(merged, comp || {});
         hr = OV.hitRate(rec);
         said = rec && rec.said;
+        land = rec ? G.landingBins(rec) : null;
         if (rec && rec.metrics.length && recordsDir) records[co.cik] = compact(rec);
       } catch (e) { /* a record that cannot be read is left out */ }
     }
@@ -57,7 +59,10 @@ function board(site) {
       n: hr ? hr.n : 0, hit: hr ? hr.hit : 0, beat: hr ? hr.beat : 0, miss: hr ? hr.miss : 0, rate: hr ? Math.round(hr.rate * 1000) / 1000 : null,
       metrics: hr ? hr.metrics.slice(0, 4) : [], raised: said ? said.raised : 0, lowered: said ? said.lowered : 0,
       g: g && g.label ? [g.label, g.filed] : null,
-      fls: latestDoc ? [latestDoc.form, latestDoc.filed, c.n || 0, c.new || 0, c.updated || 0, c.dropped || 0, c.tone == null ? null : c.tone, c.hedged || 0] : null });
+      fls: latestDoc ? [latestDoc.form, latestDoc.filed, c.n || 0, c.new || 0, c.updated || 0, c.dropped || 0, c.tone == null ? null : c.tone, c.hedged || 0] : null,
+      // the screens (guidance-board.js): where results landed in the ranges (right = better), the outlook's tone a filing before
+      land: land && land.some(Boolean) ? land : null,
+      tone0: prevDoc && prevDoc.counts && prevDoc.counts.tone != null ? prevDoc.counts.tone : null });
   }
   const ev = readJSON(path.join(site, 'disclosures', 'data', 'market', 'events8k.json')) || {};
   const recent = (ev.rows || []).filter((r) => r.guidance && r.ticker).slice(0, 150)

@@ -868,10 +868,10 @@
   // Where the results landed in the guided ranges, every metric and period together, oriented so that right is better
   // (above the range for revenue and profit, below it for costs and the tax rate): a company that lands in the better
   // third or beyond most of the time guides conservatively.
-  function landingHTML(rec, esc) {
-    const e = esc || enc;
-    if (!rec || !rec.metrics) return '';
+  // [worse than the range, worse third, middle third, better third, better than the range]: every figure held to a result
+  function landingBins(rec) {
     const bins = [0, 0, 0, 0, 0];
+    if (!rec || !rec.metrics) return bins;
     rec.metrics.forEach((m) => m.rows.forEach((r) => {
       if (!r.outcome || !r.final || r.actual == null) return;
       const g = r.final, better = HIGHER_IS_BETTER[m.metric] !== false;
@@ -881,6 +881,12 @@
       if (!better) k = 4 - k;
       bins[k] += 1;
     }));
+    return bins;
+  }
+  function landingHTML(rec, esc) {
+    const e = esc || enc;
+    if (!rec || !rec.metrics) return '';
+    const bins = landingBins(rec);
     const n = bins.reduce((a, b) => a + b, 0);
     if (n < 2) return '';
     const names = ['Worse than the range', 'Worse third', 'Middle third', 'Better third', 'Better than the range'];
@@ -986,7 +992,7 @@
     return track + '<p class="empty">Not guided: the line keeps its share of its parent from the period on file, so the chart adds up. It is an assumption, not a figure the company gave.</p>';
   }
 
-  const api = { future, versus, pathHTML, landingHTML, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
+  const api = { future, versus, pathHTML, landingHTML, landingBins, target, usable, words, range, priorText, noteHTML, record, recordHTML, summaryLine, movesLine, outcome, WORD, NAMES, money };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else global.FFGuidance = api;
 })(typeof window !== 'undefined' ? window : globalThis);

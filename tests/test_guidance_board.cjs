@@ -39,7 +39,8 @@ const w = (p, o) => { fs.mkdirSync(path.dirname(path.join(site, p)), { recursive
 w('data/index.json', { companies: [{ cik: 1, ticker: 'AAA', name: 'A Co', sector: 'industrials' }, { cik: 2, ticker: 'BBB', name: 'B Co' }, { cik: 3, ticker: 'CCC', name: 'C Co' }] });
 w('disclosures/data/holders/AAA.json', { guidance_history: hist, guidance: { label: 'raised', filed: '2026-07-30' } });
 w('data/c/1.json', { profile: { cik: 1 }, quarters: [], years: [] });
-w('data/outlook/2.json', { cik: 2, docs: [{ kind: 'mdna', form: '10-K', filed: '2026-02-20', counts: { n: 9, new: 4, updated: 1, dropped: 2, tone: 0.3, hedged: 3 }, items: [] }] });
+w('data/outlook/2.json', { cik: 2, docs: [{ kind: 'mdna', form: '10-K', filed: '2026-02-20', counts: { n: 9, new: 4, updated: 1, dropped: 2, tone: 0.3, hedged: 3 }, items: [] },
+  { kind: 'mdna', form: '10-Q', filed: '2025-11-01', counts: { n: 8, tone: -0.1 }, items: [] }] });
 w('disclosures/data/market/events8k.json', { rows: [{ filed: '2026-10-29', ticker: 'AAA', cik: '1', guidance: 'raised', headline: 'A Co results', url: 'u' }, { filed: '2026-10-29', ticker: 'ZZZ', guidance: null }] });
 const b = board(site);
 assert.strictEqual(b.companies, 2);
@@ -49,4 +50,6 @@ assert.deepStrictEqual(a.g, ['raised', '2026-07-30']);
 assert.strictEqual(a.n, 0);                                  // nothing reported yet for FY2026
 assert.deepStrictEqual(bb.fls, ['10-K', '2026-02-20', 9, 4, 1, 2, 0.3, 3]);
 assert.deepStrictEqual(b.recent, [['2026-10-29', 'AAA', '1', 'raised', 'A Co results', 'u']]);
+assert.strictEqual(bb.tone0, -0.1, 'the MD&A before: the tone it turned from (the screens)');
+assert.strictEqual(a.land, null, 'nothing held to a result yet: no landing bins');
 console.log('guidance board: ok');
