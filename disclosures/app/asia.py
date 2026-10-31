@@ -365,7 +365,7 @@ def build(root, universe_path, out=None):
                   'currency': cur, 'revenue': r.get('revenue'), 'url': r.get('url'), 'conc': r.get('concentration') or {},
                   'sec': {'cik': int(self_sec['cik']), 't': self_sec.get('ticker')} if self_sec else None, 'named': 0}
             for x in r.get('rows') or []:
-                if x.get('anonymous'):
+                if x.get('anonymous') or junk(x.get('label')):
                     continue
                 c = match(x.get('label'))
                 amount = x.get('amount')
@@ -406,6 +406,17 @@ def build(root, universe_path, out=None):
     st = {'built_at': now(), 'markets': counts, 'relations': len(rels), 'us_companies': len(per_us)}
     write_json(out / 'status.json', st)
     return st
+
+
+# not a counterparty: table words, totals, units, kinds of customer ("지자체" local governments, "가맹점" franchisees)
+JUNK = re.compile(r'^(?:from|to|the|total|others?|other customers?|(?:rmb|hk\$|us\$|nt\$|usd)\s?[\d.,]+.*|rmb|hk\$|us\$|ntd?|usd|[\d.,%\s"“”\'-]+|.*(?:\d[\d,.]*\s*%|百分之|低\s*於|未有達|其他|合計|小計|'
+                  r'營收淨額|銷貨淨額|進貨淨額|供應商$|客戶$|原料供應商$)|지자체|가맹점|건설업|상품|제품|교육기관|관공서|정부|개인|기타|국내|해외|.*부문|'
+                  r'[\d]+\s*\D{0,2}份有限公司.*|^\d[\u4e00-\u9fff].*)$', re.I)
+
+
+def junk(label):
+    s = str(label or '').strip().strip('"“”\' ')
+    return len(s) < 2 or bool(JUNK.match(s)) or bool(re.match(r'^[A-Z]?\d{3,}$', s))
 
 
 def module_currency(mk):
