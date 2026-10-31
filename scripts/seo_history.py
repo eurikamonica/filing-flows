@@ -140,7 +140,7 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
         qa.append((f"Was {name} profitable in the {words}?", f"Operating profit was {money(n['oi'][1])} ({om:.1f}% of revenue)" + (f" and net earnings {money(n['net'][1])}." if 'net' in n and n['net'][1] is not None else '.')))
     url = f"{base}/c/{slug}/{qslug(lab)}/"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › {e(lab)}</p>"
-            f"<h1>{e(who)} {e(words)} results ({e(lab)})</h1><p class='muted'>{e(q.get('form'))} filed {e(fdate(q.get('filed')))}</p>"
+            f"<h1>{e(who)} {e(lab)} earnings results ({e(words)})</h1><p class='muted'>{e(q.get('form'))} filed {e(fdate(q.get('filed')))}</p>"
             f"<nav class='seo-more'>{' · '.join(navs)}</nav><p class='lead'>{e(lead)}</p>"
             + "<div class='seo-tiles'>" + ''.join(f"<div class='seo-tile'><span>{k}</span><b>{e(v)}</b></div>" for k, v in (
                 ('Revenue', money(rev[1])), ('Year over year', pc(yoy)), ('Quarter over quarter', pc(qoq)),
@@ -150,7 +150,7 @@ def quarter_page(r, c, i, base, slug, who, name, has_period):
             + (f"<h2>What changed</h2>{analysis}" if analysis else '') + faq(qa)
             + f"<p><a class='seo-cta' href='../../../#c-{r['cik']}'>Open the interactive Sankey →</a></p>"
             + (f"<p class='muted'>Source: <a href='{e(q.get('doc_url'))}' rel='nofollow'>{e(name)} {e(q.get('form'))} on SEC EDGAR</a>.</p>" if q.get('doc_url') else ''))
-    title = f"{who} {words} results ({lab}): revenue {money(rev[1])}" + (f", {pc(yoy)} Y/Y" if yoy is not None else '') + ' | Filing Flows'
+    title = seo.fit(f"{who} {lab} Earnings Results: Revenue {money(rev[1])}" + (f", {pc(yoy)}" if yoy is not None else ''))
     crumbs = [('Filing Flows', base + '/'), (who, f'{base}/c/{slug}/'), (f'{lab} results', url)]
     return url, (q.get('filed') or '')[:10] or None, seo.page(title, lead[:300], url, body, 3, base + '/og.png', ld(base, crumbs, qa, (q.get('filed') or '')[:10] or None))
 
