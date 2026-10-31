@@ -122,7 +122,7 @@ def ranges(rows, fmt, title, note=None, legend=('guided range', 'reported (above
     rs = [r for r in rows if r[1] is not None]
     if len(rs) < 1:
         return ''
-    W, H, top, bot = 640, 230, 40, 34
+    W, H, top, bot = 640, 250, 58, 34
     vals = [v for r in rs for v in (r[1], r[2], r[3]) if v is not None]
     lo, hi = min(vals), max(vals)
     pad = (hi - lo) * 0.12 or abs(hi) * 0.1 or 1
@@ -139,8 +139,8 @@ def ranges(rows, fmt, title, note=None, legend=('guided range', 'reported (above
             c = GREEN if act >= b else RED if act < a else BLUE
             out.append(f"<circle cx='{cx:.0f}' cy='{Y(act):.0f}' r='6' fill='{c}'/><text x='{cx + 10:.0f}' y='{Y(act) + 4:.0f}' font-size='11' fill='{INK}'>{_e(fmt(act))}</text>")
         out.append(f"<text x='{cx:.0f}' y='{H - 12}' font-size='11' text-anchor='middle' fill='{MUTED}'>{_e(_clip(l, 12))}</text>")
-    legend = (f"<rect x='330' y='6' width='14' height='10' fill='{GREY}' opacity='.45'/><text x='348' y='15' font-size='11' fill='{MUTED}'>{_e(legend[0])}</text>"
-              f"<circle cx='450' cy='11' r='5' fill='{GREEN}'/><text x='459' y='15' font-size='11' fill='{MUTED}'>{_e(legend[1])}</text>")
+    legend = (f"<rect x='0' y='26' width='14' height='10' fill='{GREY}' opacity='.45'/><text x='18' y='35' font-size='11' fill='{MUTED}'>{_e(legend[0])}</text>"
+              f"<circle cx='160' cy='31' r='5' fill='{GREEN}'/><text x='169' y='35' font-size='11' fill='{MUTED}'>{_e(legend[1])}</text>")
     return _fig(legend + ''.join(out), title, note, W, H)
 
 
@@ -169,6 +169,9 @@ def duo(points, names, fmt, title, note=None):
             x = cx - bw - 1 if j == 0 else cx + 1
             y = y0 - hgt if v >= 0 else y0
             out.append(f"<rect x='{x:.0f}' y='{y:.0f}' width='{bw:.0f}' height='{max(hgt, 1):.0f}' rx='2' fill='{RED if v < 0 else c}'/>")
+            if len(pts) <= 8:
+                ty = y - 4 if v >= 0 else y + hgt + 11
+                out.append(f"<text x='{x + bw / 2:.0f}' y='{ty:.0f}' font-size='10' text-anchor='middle' fill='{INK}'>{_e(fmt(v))}</text>")
         out.append(f"<text x='{cx:.0f}' y='{H - 12}' font-size='11' text-anchor='middle' fill='{MUTED}'>{_e(_clip(l, 12))}</text>")
     last = pts[-1]
     note = note or f"Latest ({last[0]}): {names[0]} {fmt(last[1])}, {names[1]} {fmt(last[2])}."

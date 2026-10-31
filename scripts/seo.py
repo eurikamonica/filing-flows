@@ -139,19 +139,7 @@ def company_page(c, ix_entry, peers, sector_name, base, depth=2, image=None, all
 <figure class="seo-chart" id="sankey" data-src="../../data/c/{e(p['cik'])}.json" data-label="{e(q.get('label', ''))}" data-filed="{e(q.get('filed') or '')}" aria-label="{e(who)} {e(q.get('label', ''))} income statement and cash flow Sankey"><p class="muted">Drawing the Sankey…</p></figure>
 <noscript><p class="muted">The Sankey needs JavaScript; the figures are in the table below.</p></noscript>
 <p><a class="seo-cta" href="{e(app)}">Open the interactive Sankey →</a> <span class="muted">click any line for what the company wrote about it, compare Y/Y and Q/Q, export as PNG or PDF</span></p>
-<script src="../../sankey.js"></script>
-<script>(async () => {{
-  const f = document.getElementById('sankey');
-  try {{
-    const d = await (await fetch(f.dataset.src)).json(), q = (d.quarters || [])[0];
-    if (!q || !q.nodes || !window.Sankey) {{ f.remove(); return; }}
-    if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    f.innerHTML = Sankey.toSVG(Sankey.layout(q, {{}}), Sankey.dec(q.title));
-    if (q.label !== f.dataset.label || (q.filed || '') !== f.dataset.filed)      // the data moved on since this page was built
-      f.insertAdjacentHTML('afterend', '<p class="muted">The chart shows the newest filing (' + q.label + ', filed ' + (q.filed || '') + '); the figures on this page are from ' + f.dataset.label + ' and update with the next build.</p>');
-    f.querySelectorAll('.note-mark, .hit').forEach((x) => x.remove());
-  }} catch (err) {{ f.innerHTML = '<p class="muted">The Sankey could not load here — open the interactive one below.</p>'; }}
-}})();</script>
+<script src="../../sankey.js"></script><script src="../../seo-quarter.js" defer></script>
 {f'<h2>What changed this quarter</h2>{analysis}' if analysis else ''}
 <h2>Quarterly history</h2>
 {charts}

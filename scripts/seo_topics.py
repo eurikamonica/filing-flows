@@ -27,6 +27,7 @@ from xml.sax.saxutils import escape as xesc
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import seo  # noqa: E402
 import seo_svg as SV  # noqa: E402
+import seo_charts as SC  # noqa: E402
 
 e, display_name, slug_for, fdate = seo.e, seo.display_name, seo.slug_for, seo.fdate
 
@@ -179,7 +180,7 @@ def owners(co, h):
             'desc': lead[:300], 'body': body, 'qa': qa}
 
 
-def guidance(co, h, ol):
+def guidance(co, h, ol, rec=None):
     g = (h or {}).get('guidance') or {}
     docs = (ol or {}).get('docs') or []
     md = next((d for d in docs if d.get('kind') == 'mdna'), None)
@@ -206,7 +207,7 @@ def guidance(co, h, ol):
                   for s in (md or {}).get('statements', [])[:12])
     items = ''.join(f"<tr><td>{e(i.get('name') or i.get('metric'))}</td><td>{e(i.get('period'))}</td><td class='num'>{e(i.get('lo'))}–{e(i.get('hi'))} {e(i.get('unit'))}</td>"
                     f"<td>{e(i.get('change') or '')}</td></tr>" for i in (g.get('items') or [])[:12] if i.get('lo') is not None)
-    body = (f"<p class='lead'>{e(lead.strip())}</p>"
+    body = (f"<p class='lead'>{e(lead.strip())}</p>" + SC.guidance_outlook(name, rec, ol, money)
             + (f"<h2>Latest guidance</h2><div class='tbl-wrap'><table><thead><tr><th>Metric</th><th>Period</th><th class='num'>Range</th><th>Change</th></tr></thead><tbody>{items}</tbody></table></div>"
                + (f"<p class='muted'>From the earnings release filed {e(fdate(g.get('filed')))} (<a href='{e(g.get('url'))}' rel='nofollow'>8-K on EDGAR</a>).</p>" if g.get('url') else '') if items else '')
             + (f"<h2>Forward-looking statements, {e(md.get('form'))} filed {e(fdate(md.get('filed')))}</h2><ul class='seo-list'>{stm}</ul>" if stm else ''))
@@ -442,7 +443,8 @@ def write(site, base, limit=None):
             'earnings-date': lambda: earnings_date(co, read(os.path.join(hub, 'research', 'earnings', 'c', f'{t}.json')), cdoc, read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
             'stock-forecast': lambda: forecast(co, read(os.path.join(hub, 'research', 'valuation', 'c', f'{cik}.json')), read(os.path.join(hub, 'consensus', 'c', f'{cik}.json'))),
             'who-owns': lambda: owners(co, h),
-            'guidance': lambda: guidance(co, h, read(os.path.join(site, 'data', 'outlook', f'{cik}.json'))),
+            'guidance': lambda: guidance(co, h, read(os.path.join(site, 'data', 'outlook', f'{cik}.json')),
+                                         read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json'))),
             'takeover': lambda: takeover(co, read(os.path.join(hub, 'research', 'lbo', 'c', f'{cik}.json')), brow.get(cik)),
             'risks': lambda: risks(co, read(os.path.join(hub, 'research', 'outside', 'c', f'{cik}.json'))),
         }
@@ -487,6 +489,8 @@ def write(site, base, limit=None):
                                             note='Value of shares 13F filers added minus the value they sold, each quarter (quarters with most filings in).')
                 if charts13:
                     charts13 = f"<h2>13F: who owns {e(t)} and who is buying</h2>" + charts13
+                charts13 = SC.guidance_outlook(co['who_name'], read(os.path.join(site, 'data', 'guidance-record', f'{cik}.json')),
+                                               read(os.path.join(site, 'data', 'outlook', f'{cik}.json')), money) + charts13
                 block = (f'<section class="seo-more-main">{charts13}<h2>More on {e(t)}</h2><ul class="seo-list">'
                          + ''.join(f"<li><a href='{k}/'>{e(LINK[k](co['who_name']))}</a></li>" for k, l, _ in TOPICS if k in have) + '</ul></section>')
                 open(main, 'w', encoding='utf-8').write(txt.replace('</main>', block + '</main>', 1))

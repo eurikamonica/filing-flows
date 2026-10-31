@@ -29,6 +29,16 @@ def static(c, r, peers_all, money):
     p = c.get('profile') or {}
     name = p.get('name') or r.get('name') or ''
     out = []
+    qs8 = [x for x in (c.get('quarters') or [])[:9] if (x.get('headline') or {}).get('revenue')]
+    gr = []
+    for i, x in enumerate(qs8[:8]):
+        hh, prev = x['headline'], (qs8[i + 1]['headline'] if i + 1 < len(qs8) else {})
+        qoq = (hh['revenue'] / prev['revenue'] - 1) * 100 if prev.get('revenue') and prev['revenue'] > 0 else None
+        gr.append((x.get('label'), hh.get('yoy'), qoq))
+    if sum(1 for g in gr if g[1] is not None or g[2] is not None) >= 3:
+        cap_ = lambda v: None if v is None else max(-150.0, min(400.0, v))
+        out.append(SV.duo([(l, cap_(y), cap_(q)) for l, y, q in reversed(gr)], ('Y/Y', 'Q/Q'), lambda v: '—' if v is None else f"{v:+.0f}%",
+                          f"{name}: revenue growth, year over year and quarter over quarter"))
     Q = c.get('quality') or {}
     cap = Q.get('cap') or {}
     per = cap.get('ttm') or ((cap.get('fy') or [None])[-1])
@@ -93,3 +103,32 @@ def live(cik, ticker, sic, sector, chains, images, depth=2):
         th = f"<h2>In supply chains and themes</h2><div class='seo-themes'>{th}</div>"
     return (th + s + f"<script>window.FF_BASE='{up}';</script><script src='{up}chains.js' defer></script><script src='{up}flowlab.js' defer></script>"
             f"<script src='{up}asia-links.js' defer></script><script src='{up}seo-embed.js' defer></script>")
+
+
+def _ufmt(unit):
+    return (lambda v: f"${v:.2f}") if unit == 'ps' else (lambda v: f"{v:.1f}%") if unit == 'pct' else None
+
+
+def guidance_outlook(name, rec, ol, money):
+    """Guided ranges against what was reported (data/guidance-record/<cik>.json) and the latest forward-looking
+    statements (data/outlook/<cik>.json): topics, and what is new, updated or dropped since the filing before."""
+    out = []
+    for m in [m for m in (rec or {}).get('metrics') or [] if sum(1 for x in m.get('rows') or [] if (x.get('guides') or []))][:2]:
+        f = _ufmt(m.get('unit')) or money
+        rows = [(x.get('label'), (x.get('guides') or [{}])[-1].get('lo'), (x.get('guides') or [{}])[-1].get('hi'), x.get('actual'))
+                for x in reversed((m.get('rows') or [])[:8]) if (x.get('guides') or [{}])[-1].get('lo') is not None]
+        h = m.get('hits') or {}
+        out.append(SV.ranges(rows, f, f"{name} {m.get('name')}: guidance against what was reported",
+                             note=(f"Met or beat {h['hitOrBeat']} of {h['n']} guided periods." if h.get('n') else 'No guided period reported yet.')
+                             + ' Grey: the last range guided before the figures came out; dot: the reported figure.'))
+    doc = next((d for d in (ol or {}).get('docs') or [] if d.get('kind') == 'mdna' and d.get('counts')), None)
+    if doc:
+        c = doc['counts']
+        out.append(SV.hbars([(k.replace('_', ' ').capitalize(), v) for k, v in c.get('topics') or []], str,
+                             f"{name}: what its forward-looking statements are about ({doc.get('form')} filed {doc.get('filed')})",
+                             note=f"{c.get('n', 0)} statements; tone {c.get('tone', 0):+.2f} (−1 all cautious, +1 all confident); {c.get('hedged', 0)} hedged."))
+        out.append(SV.hbars([('New', c.get('new')), ('Updated', c.get('updated')), ('Dropped', c.get('dropped')),
+                             ('Confident', c.get('positive')), ('Cautious', c.get('negative'))], str,
+                            f"{name}: outlook statements against the filing before", color=SV.GREY))
+    body = ''.join(x for x in out if x)
+    return f"<h2>Guidance and outlook</h2>{body}" if body else ''

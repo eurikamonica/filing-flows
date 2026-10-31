@@ -78,9 +78,9 @@ def margin(n, k, i):
 KEY = [('revenue', 'Revenue'), ('gp', 'Gross profit'), ('oi', 'Operating profit'), ('net', 'Net earnings'), ('ocf', 'Operating cash flow'), ('fcf', 'Free cash flow')]
 
 
-def sankey_figure(cik, label, alt):
+def sankey_figure(cik, label, alt, compare=''):
     """drawn in the browser from the company's data by seo-quarter.js (one shared script, not one per page)"""
-    return (f"<figure class='seo-chart' id='sankey' data-src='../../../data/c/{e(cik)}.json' data-label='{e(label)}' aria-label='{e(alt)}'>"
+    return (f"<figure class='seo-chart' data-src='../../../data/c/{e(cik)}.json' data-label='{e(label)}' data-compare='{e(compare)}' aria-label='{e(alt)}'>"
             "<p class='muted'>Drawing the Sankey…</p></figure><script src='../../../sankey.js' defer></script><script src='../../../seo-quarter.js' defer></script>")
 
 
@@ -189,7 +189,9 @@ def period_page(r, c, i, base, slug, who, name, mode):
     url = f"{base}/c/{slug}/{qslug(lab)}-vs-{qslug(other)}/"
     title = f"{who} {lab} vs {other}: {what} revenue {pc(chg(rev[1], rev[j]))}, margins and every line compared | Filing Flows"
     body = (f"<p class='crumbs'><a href='../../../'>Filing Flows</a> › <a href='../'>{e(who)}</a> › <a href='../{qslug(lab)}/'>{e(lab)}</a> › vs {e(other)}</p>"
-            f"<h1>{e(who)} {e(lab)} vs {e(other)} ({e(what)})</h1><p class='lead'>{e(lead)}</p>" + SV.diverging(sorted(((v[0], v[1] - v[j]) for k, v in n.items() if v[1] is not None and v[j] is not None and k != 'revenue'),
+            f"<h1>{e(who)} {e(lab)} vs {e(other)} ({e(what)})</h1><p class='lead'>{e(lead)}</p>"
+            + sankey_figure(r['cik'], lab, f"{who} {lab} vs {other} Sankey: increases drawn inside each band", 'q' if mode == 'qoq' else 'y')
+            + SV.diverging(sorted(((v[0], v[1] - v[j]) for k, v in n.items() if v[1] is not None and v[j] is not None and k != 'revenue'),
                                                                       key=lambda z: -abs(z[1])), money, f"{name}: what changed, {lab} vs {other}")
             + (f"<h2>Margins</h2><div class='tbl-wrap'><table><thead><tr><th></th><th class='num'>{e(lab)}</th><th class='num'>{e(other)}</th><th class='num'>Change</th></tr></thead><tbody>{mrows}</tbody></table></div>" if mrows else '')
             + f"<h2>Every line</h2><div class='tbl-wrap'><table><thead><tr><th>Line</th><th class='num'>{e(lab)}</th><th class='num'>{e(other)}</th><th class='num'>Change</th><th class='num'>%</th></tr></thead><tbody>{rows}</tbody></table></div>"
