@@ -1022,10 +1022,12 @@
     const cik = c.profile.cik;
     body.innerHTML = `<div class="section" id="co-links-chains" hidden></div>
       <section class="section" id="co-network" hidden></section>
+      <section class="section" id="co-asia" hidden></section>
       <section class="section" id="co-model" hidden></section>
       <p class="muted" id="co-links-none" hidden>No customer or supplier is named for ${t(S.dec(c.profile.name))} in the annual reports read so far, and the growth model has no fit for it yet: the scan reads a few dozen annual reports a run, largest companies first.</p>`;
     const jobs = [];
     if (window.FFNetwork) jobs.push(window.FFNetwork.company($('#co-network'), cik));
+    if (window.FFAsia) jobs.push(window.FFAsia.company($('#co-asia'), cik, S.dec(c.profile.name)));
     if (window.FFModel) jobs.push(window.FFModel.company($('#co-model'), cik));
     if (ticker) {
       const box = $('#co-links-chains');
@@ -1043,7 +1045,7 @@
     }
     await Promise.all(jobs.map((j) => Promise.resolve(j).catch(() => {})));
     if (here && !here()) return;
-    if (['#co-network', '#co-model', '#co-links-chains'].every((id) => !$(id) || $(id).hidden)) $('#co-links-none').hidden = false;
+    if (['#co-network', '#co-asia', '#co-model', '#co-links-chains'].every((id) => !$(id) || $(id).hidden)) $('#co-links-none').hidden = false;
   }
 
   async function analysisPage(cik, which) {
