@@ -35,6 +35,9 @@ on:
       - 'scripts/build_flo_alerts.py'
       - 'web/studio.js'
       - 'scripts/build_site.py'
+      - 'scripts/seo*.py'             # the static search pages and their stylesheet and scripts: live on merge
+      - 'web/seo.css'
+      - 'web/seo-*.js'
       - '.github/workflows/scan.yml'
   schedule:
     - cron: "4,19,34,49 * * * *"   # every 15 minutes, away from :00 and :30 (GitHub delays busy minutes most)
