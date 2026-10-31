@@ -109,5 +109,88 @@ class Store(unittest.TestCase):
             self.assertTrue(all(x.get("status") == "first" for x in next(x for x in doc["docs"] if x["accn"] == "A1")["statements"]))
 
 
+FLS_OLD = ("Forward-looking statements reflect management’s current expectations and are inherently uncertain. Actual results and "
+           "outcomes could differ materially for a variety of reasons, including, among others, fluctuations in foreign exchange rates, "
+           "changes in global economic conditions and customer demand and spending, inflation, interest rates, regional labor market "
+           "constraints, world events, the outcomes of claims, litigation, government investigations, and other proceedings, fulfillment, "
+           "sortation, delivery, and data center optimization, risks of inventory management, and payments risks. These risks are described "
+           "in greater detail in Item 1A of Part II, “Risk Factors.”")
+FLS_NEW = ("Forward-looking statements reflect management’s current expectations and are inherently uncertain. Actual results and "
+           "outcomes could differ materially for a variety of reasons, including, among others, fluctuations in foreign exchange rates and "
+           "energy prices, changes in global economic conditions, tariff and trade policies, resource and supply volatility, including for "
+           "memory chips, and customer demand and spending, inflation, interest rates, regional labor market constraints, world events, the "
+           "outcomes of claims, litigation, government investigations, and other proceedings, fulfillment, sortation, delivery, and data "
+           "center optimization, risks of inventory management, the degree to which we enter into, maintain, and develop commercial "
+           "agreements, and risks of fulfillment throughput and productivity. These risks are described in greater detail in Item 1A of "
+           "Part II, “Risk Factors.”")
+CAE = [
+    {"text": "Critical Accounting Estimates", "heading": True},
+    {"text": "Our financial statements are prepared in accordance with U.S. GAAP, which requires estimates.", "heading": False},
+    {"text": "Inventories", "heading": True},
+    {"text": "We charge cost of sales for inventory provisions to write down inventory to the lower of cost or net realizable value. "
+             "The net effect on our gross margin from inventory provisions was an unfavorable impact of 2.6% in fiscal year 2026.", "heading": False},
+    {"text": "Income Taxes", "heading": True},
+    {"text": "We are subject to income taxes in the U.S. and foreign jurisdictions. A 1% change in our effective tax rate would have "
+             "changed our income tax expense by approximately $85 million.", "heading": False},
+    {"text": "Revenue Recognition", "heading": True},
+    {"text": "Revenue Allowances", "heading": True},
+    {"text": "For products sold with a right of return, we record a reduction to revenue for estimated returns.", "heading": False},
+    {"text": "Recent Accounting Pronouncements", "heading": True},
+    {"text": "We do not expect ASU 2023-09 to have a material impact.", "heading": False},
+]
+
+
+class Risks(unittest.TestCase):
+    def test_the_list_split_into_items_and_pinned_to_lines(self):
+        rs = O.risks([{"text": "Forward-Looking Statements", "heading": True}, {"text": FLS_NEW, "heading": False}])
+        t = {r["t"]: r["lines"] for r in rs}
+        self.assertIn("resource and supply volatility, including for memory chips", t)
+        self.assertEqual(t["resource and supply volatility, including for memory chips"], ["cor", "capex"])
+        self.assertIn("the outcomes of claims, litigation, government investigations, and other proceedings", t)
+        self.assertIn("fulfillment, sortation, delivery, and data center optimization", t)
+        self.assertIn("the degree to which we enter into, maintain, and develop commercial agreements", t)
+        self.assertEqual(t["interest rates"], ["interest"])
+        self.assertIn("cor", t["fluctuations in foreign exchange rates and energy prices"])     # the energy prices part
+        self.assertIn("revenue", t["fluctuations in foreign exchange rates and energy prices"])
+        self.assertEqual(t["risks of inventory management"][0], "k~Inventor")
+        self.assertFalse(any("Risk Factors" in r["t"] for r in rs))
+
+    def test_added_and_dropped_against_the_filing_before(self):
+        with tempfile.TemporaryDirectory() as d:
+            O.keep(d, 1018724, "mdna", "10-Q", "Q2", "2026-07-31", "u1", "2026-06-30", MDNA_Q2 + [{"text": FLS_OLD, "heading": False}])
+            O.keep(d, 1018724, "mdna", "10-Q", "Q3", "2026-10-30", "u2", "2026-09-30", MDNA_Q3 + [{"text": FLS_NEW, "heading": False}])
+            doc = O.load(d, 1018724)
+            q3 = next(x for x in doc["docs"] if x["accn"] == "Q3")
+            st = {r["t"]: r["status"] for r in q3["risks"]}
+            self.assertEqual(st["tariff and trade policies"], "new")
+            self.assertEqual(st["resource and supply volatility, including for memory chips"], "new")
+            self.assertEqual(st["inflation"], "repeated")
+            self.assertTrue(any(x["t"] == "payments risks" for x in q3["risks_dropped"]))
+            q2 = next(x for x in doc["docs"] if x["accn"] == "Q2")
+            self.assertTrue(all(r["status"] == "first" for r in q2["risks"]))
+
+
+class Estimates(unittest.TestCase):
+    def test_critical_accounting_estimates(self):
+        es = O.estimates(CAE)
+        names = [e["name"] for e in es]
+        self.assertEqual(names, ["Inventories", "Income Taxes", "Revenue Recognition — Revenue Allowances"])
+        tax = es[1]
+        self.assertEqual(tax["lines"], ["tax"])
+        self.assertEqual(tax["sens"][0]["pct"], 1.0)
+        self.assertAlmostEqual(tax["sens"][0]["usd"], 85e6)
+        self.assertIn("effective tax rate", tax["sens"][0]["of"])
+        self.assertIn("2.6%", es[0]["effect"])
+        self.assertEqual(es[0]["lines"][:2], ["k~Inventor", "cor"])
+        self.assertEqual(es[2]["lines"], ["revenue"])
+
+    def test_a_quarterly_report_pointing_to_the_annual_one(self):
+        es = O.estimates([{"text": "Critical Accounting Estimates", "heading": True},
+                          {"text": "There have been no material changes to our critical accounting estimates as described in our 2025 Annual Report on Form 10-K.", "heading": False},
+                          {"text": "Liquidity and Capital Resources", "heading": True}])
+        self.assertEqual(len(es), 1)
+        self.assertTrue(es[0]["ref"])
+
+
 if __name__ == "__main__":
     unittest.main()

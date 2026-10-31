@@ -402,6 +402,51 @@
     return out;
   }
 
+  // ---------- the risks a filing lists, and the numbers that rest on estimates (pipeline/outlook.py risks / estimates) ----------
+  // a line spec: a node id ('revenue', 'cor', 'tax' …), a group by use ('#cat:acq'), or 'k~Inventor' (a node whose key names it)
+  function nodeFor(specs, sp) {
+    const byKey = new Map(sp.nodes.map((n) => [n.key, n])), byId = new Map(sp.nodes.map((n) => [n.id, n]));
+    for (const x of specs || []) {
+      if (x.startsWith('k~')) { const w = x.slice(2).toLowerCase(); const n = sp.nodes.find((m) => (m.key || '').toLowerCase().includes(w)); if (n) return n; continue; }
+      const n = byId.get(x) || byKey.get(x);
+      if (n) return n;
+    }
+    return byId.get('net') || null;
+  }
+  // the latest MD&A's safe-harbor list (else the latest earnings release's): each risk on the line it would move, the
+  // risks no longer listed with them
+  function risksOn(ol, sp) {
+    const out = new Map();
+    if (!ol || !ol.docs || !sp) return { map: out, doc: null };
+    const doc = ol.docs.find((d) => d.kind === 'mdna' && (d.risks || []).length) || ol.docs.find((d) => (d.risks || []).length);
+    if (!doc) return { map: out, doc: null };
+    const add = (r, status) => {
+      const n = nodeFor(r.lines, sp);
+      if (!n) return;
+      if (!out.has(n.id)) out.set(n.id, []);
+      out.get(n.id).push({ t: r.t, status });
+    };
+    doc.risks.forEach((r) => add(r, r.status || 'first'));
+    (doc.risks_dropped || []).forEach((r) => add(r, 'dropped'));
+    return { map: out, doc };
+  }
+  // the critical accounting estimates: the latest MD&A's, else (a 10-Q pointing to the annual report) the latest 10-K's
+  function estimatesOn(ol, sp) {
+    const out = new Map();
+    if (!ol || !ol.docs || !sp) return { map: out, doc: null };
+    const has = (d) => (d.estimates || []).some((e) => e.name);
+    const doc = ol.docs.find((d) => d.kind === 'mdna' && has(d));
+    if (!doc) return { map: out, doc: null };
+    const latest = ol.docs.find((d) => d.kind === 'mdna' && d.estimates);
+    doc.estimates.filter((e) => e.name).forEach((e) => {
+      const n = nodeFor(e.lines, sp);
+      if (!n) return;
+      if (!out.has(n.id)) out.set(n.id, []);
+      out.get(n.id).push(Object.assign({}, e, { form: doc.form, filed: doc.filed, viaRef: latest && latest !== doc }));
+    });
+    return { map: out, doc };
+  }
+
   // the lines that moved most (the comparison's notes under the chart)
   function movers(sp, attr) {
     const unit = Math.max(...sp.nodes.map((n) => n.v || 0)) >= 1e9 ? 'B' : 'M';
@@ -620,7 +665,7 @@
     const list = (o.fy ? o.doc.years : o.doc.quarters) || [];
     const near = (a, b) => a && b && Math.abs(Date.parse(a) - Date.parse(b)) <= 6 * 864e5;
     let idx = Math.max(0, list.findIndex((x) => near(x.end, o.end)));
-    const st = { revAxis: null, costs: 'accounts', cash: 'statement', opened: new Set(), closed: new Set(), all: false, cmp: '', guide: false, next: false, says: true, case: 'mid' };
+    const st = { revAxis: null, costs: 'accounts', cash: 'statement', opened: new Set(), closed: new Set(), all: false, cmp: '', guide: false, next: false, says: true, risks: true, est: true, case: 'mid' };
     let vb = null, scene = null, sel = null, src = null, srcP = null;
     const el = document.createElement('div');
     el.className = 'ffu';
@@ -637,6 +682,8 @@
         <button type="button" class="ffu-btn" data-next title="The next period as the company guided it (earnings release and 10-Q / 10-K outlook), drawn in this detail: guided lines in violet, the rest at today’s shares">◇ Next period as guided</button>
         <span class="ffu-seg" data-g="case" hidden title="The guided ranges: the low case takes the end of every range that leaves less profit (revenue and margins low, costs and capital spending high), the high case the other end"><span>Case</span><button type="button" data-case="low">Low</button><button type="button" data-case="mid">Mid</button><button type="button" data-case="high">High</button></span>
         <button type="button" class="ffu-btn" data-says title="What the company says ahead (its MD&amp;A and earnings release), pinned to the line each statement is about">💬 Outlook</button>
+        <button type="button" class="ffu-btn" data-risks title="The risks the filing's forward-looking statements list, each on the line it would move: orange = new since the filing before, struck through = no longer listed">⚠ Risks</button>
+        <button type="button" class="ffu-btn" data-est title="The critical accounting estimates: the figures that rest on management's judgment, with the sensitivity the company gives (± bracket)">≈ Estimates</button>
         <button type="button" class="ffu-btn" data-all>Open everything</button>
         <button type="button" class="ffu-btn" data-std>Back to detailed</button>
         <span class="ffu-seg"><button type="button" data-z="out" aria-label="Zoom out">−</button><button type="button" data-z="fit">Fit</button><button type="button" data-z="in" aria-label="Zoom in">+</button></span>
@@ -689,6 +736,8 @@
       $('[data-g="case"]').hidden = !st.next;
       $$('[data-case]').forEach((b) => b.classList.toggle('on', b.dataset.case === st.case));
       $('[data-says]').classList.toggle('on', st.says);
+      $('[data-risks]').classList.toggle('on', st.risks);
+      $('[data-est]').classList.toggle('on', st.est);
       $$('[data-cmp]').forEach((b) => { if (st.next) b.disabled = true; });
       $('[data-all]').classList.toggle('on', st.all);
       $('[data-per]').value = String(idx);
@@ -755,8 +804,15 @@
         } catch (err) { msg.textContent = 'The guidance could not be read.'; msg.hidden = false; }
       }
       scene = S.layout(shown, { compare: st.next ? null : st.cmp || null, guide: guided });
-      const says = st.says && src ? outlookOn(src.outlook, Object.assign({}, sp, { nodes: shown.nodes.map((n) => Object.assign({}, n, { key: (sp.nodes.find((x) => x.id === n.id) || {}).key })) })) : new Map();
+      const keyed = Object.assign({}, sp, { nodes: shown.nodes.map((n) => Object.assign({}, n, { key: (sp.nodes.find((x) => x.id === n.id) || {}).key })) });
+      if ((st.says || st.risks || st.est) && !srcP) srcP = Promise.resolve(o.guidance ? o.guidance() : null).catch(() => null);
+      if (srcP && !src) src = await srcP;
+      const says = st.says && src ? outlookOn(src.outlook, keyed) : new Map();
+      const rk = st.risks && src ? risksOn(src.outlook, keyed) : { map: new Map(), doc: null };
+      const es = st.est && src ? estimatesOn(src.outlook, keyed) : { map: new Map(), doc: null };
       st.saysMap = says;
+      st.riskMap = rk;
+      st.estMap = es;
       // + / − on the lines that open: drawn over the chart (screen only)
       // the + / − and the 💬 sit beside the bar, on the side away from its label (readable at any zoom); a label above or
       // below the bar leaves them on its right, lifted a little off a label underneath
@@ -766,9 +822,12 @@
         const under = !side && L.length && L[1] >= y + h - 1;
         return { s: side || 1, ax: side < 0 ? x : x + w, ay: y + Math.min(h / 2, 12), dy: under ? -8 : 0 };
       };
+      // the marks beside a bar, one after another: + / −, 💬, ⚠, ≈
+      const used = new Map();
+      const slot = (id) => { const k = used.get(id) || 0; used.set(id, k + 1); return 14 + 27 * k; };
       const tog = scene.nodes.filter((n) => sp.toggles.has(n.id)).map((n) => {
         const t = sp.toggles.get(n.id), c = ctl(n);
-        return `<g class="ffu-tog" data-tog="${esc(n.id)}" data-x="${c.ax.toFixed(1)}" data-y="${c.ay.toFixed(1)}" transform="translate(${c.ax.toFixed(1)} ${c.ay.toFixed(1)})"><title>${t === '+' ? 'Open its parts' : 'Close its parts'}</title><g transform="translate(${c.s * 14} ${c.dy})"><circle r="11" fill="${t === '+' ? '#1d1d1b' : '#6b6a66'}" stroke="#fff" stroke-width="2"/>` +
+        return `<g class="ffu-tog" data-tog="${esc(n.id)}" data-x="${c.ax.toFixed(1)}" data-y="${c.ay.toFixed(1)}" transform="translate(${c.ax.toFixed(1)} ${c.ay.toFixed(1)})"><title>${t === '+' ? 'Open its parts' : 'Close its parts'}</title><g transform="translate(${c.s * slot(n.id)} ${c.dy})"><circle r="11" fill="${t === '+' ? '#1d1d1b' : '#6b6a66'}" stroke="#fff" stroke-width="2"/>` +
           `<path d="M-5 0H5${t === '+' ? 'M0 -5V5' : ''}" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></g></g>`;
       }).join('');
       // 💬 what the company says ahead about the line: a bubble with the number of statements, coloured by their tone
@@ -776,12 +835,37 @@
       const bub = scene.nodes.filter((n) => says.has(n.id)).map((n) => {
         const xs = says.get(n.id), pos = xs.filter((x) => x.tone === 'positive').length, neg = xs.filter((x) => x.tone === 'negative').length;
         const tone = pos > neg ? 'positive' : neg > pos ? 'negative' : 'neutral';
-        const c = ctl(n), dx = c.s * (sp.toggles.has(n.id) ? 40 : 16);
+        const c = ctl(n), dx = c.s * slot(n.id);
         return `<g class="ffu-tog ffu-say" data-say="${esc(n.id)}" data-x="${c.ax.toFixed(1)}" data-y="${c.ay.toFixed(1)}" transform="translate(${c.ax.toFixed(1)} ${c.ay.toFixed(1)})"><title>${xs.length} statement${xs.length === 1 ? '' : 's'} about what is ahead</title><g transform="translate(${dx} ${c.dy})">` +
           `<path d="M-10 -9h20a2 2 0 0 1 2 2v11a2 2 0 0 1 -2 2h-12l-5 4v-4h-3a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2z" fill="${TONE[tone]}" stroke="#fff" stroke-width="1.5"/>` +
           `<text x="0" y="2.5" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">${xs.length}</text></g></g>`;
       }).join('');
-      host.innerHTML = S.toSVG(scene, `${o.name} ultra-detailed flow`).replace('</svg>', `<g>${bub}${tog}</g></svg>`);
+      // ⚠ the risks listed for the line: orange when one is new since the filing before, a dashed outline when one is no
+      // longer listed
+      const rsk = scene.nodes.filter((n) => rk.map.has(n.id)).map((n) => {
+        const xs = rk.map.get(n.id), nw = xs.filter((x) => x.status === 'new').length, gone = xs.filter((x) => x.status === 'dropped').length;
+        const c = ctl(n), dx = c.s * slot(n.id), live = xs.length - gone;
+        const fill = nw ? '#d9480f' : live ? '#6b6a80' : '#fff', ink = nw || live ? '#fff' : '#6b6a80';
+        return `<g class="ffu-tog ffu-risk" data-risk="${esc(n.id)}" data-x="${c.ax.toFixed(1)}" data-y="${c.ay.toFixed(1)}" transform="translate(${c.ax.toFixed(1)} ${c.ay.toFixed(1)})"><title>${live} risk${live === 1 ? '' : 's'} listed${nw ? `, ${nw} new` : ''}${gone ? `, ${gone} no longer listed` : ''}</title><g transform="translate(${dx} ${c.dy})">` +
+          `<path d="M0 -11L11.5 9H-11.5Z" fill="${fill}" stroke="${gone && !nw ? '#6b6a80' : '#fff'}" stroke-width="1.5"${gone ? ' stroke-dasharray="3 2"' : ''} stroke-linejoin="round"/>` +
+          `<text x="0" y="6.5" font-size="9.5" font-weight="700" fill="${ink}" text-anchor="middle">${nw ? '+' + nw : live || '−' + gone}</text></g></g>`;
+      }).join('');
+      // ≈ a figure that rests on an estimate; the sensitivity the company gives as a ± bracket beside the bar (chart units)
+      const vOf = new Map(shown.nodes.map((n) => [n.id, +n.v]));
+      const est = scene.nodes.filter((n) => es.map.has(n.id)).map((n) => {
+        const xs = es.map.get(n.id), c = ctl(n), dx = c.s * slot(n.id);
+        const sens = xs.flatMap((x) => x.sens || []).filter((x) => x.usd > 0).sort((a, b) => b.usd - a.usd)[0];
+        let br = '';
+        const v = vOf.get(n.id), [x, y, w, h] = n.bar;
+        if (sens && v > 0 && h > 4) {
+          const half = Math.min(h * 1.5, sens.usd / v * h), bx = c.s > 0 ? x - 5 : x + w + 5, cy = y + h / 2;
+          br = `<path class="ffu-sens" d="M${(bx - 3).toFixed(1)} ${(cy - half).toFixed(1)}h6M${bx.toFixed(1)} ${(cy - half).toFixed(1)}V${(cy + half).toFixed(1)}M${(bx - 3).toFixed(1)} ${(cy + half).toFixed(1)}h6" stroke="#2f6f9e" stroke-width="1.6" fill="none"><title>${esc(sens.t || '')}</title></path>`;
+        }
+        return br + `<g class="ffu-tog ffu-est" data-est="${esc(n.id)}" data-x="${c.ax.toFixed(1)}" data-y="${c.ay.toFixed(1)}" transform="translate(${c.ax.toFixed(1)} ${c.ay.toFixed(1)})"><title>${xs.length} critical accounting estimate${xs.length === 1 ? '' : 's'}${sens ? ' · with a sensitivity' : ''}</title><g transform="translate(${dx} ${c.dy})">` +
+          `<rect x="-10" y="-10" width="20" height="20" rx="4" fill="#2f6f9e" stroke="#fff" stroke-width="1.5"/>` +
+          `<text x="0" y="4.5" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">≈</text></g></g>`;
+      }).join('');
+      host.innerHTML = S.toSVG(scene, `${o.name} ultra-detailed flow`).replace('</svg>', `<g>${est}${rsk}${bub}${tog}</g></svg>`);
       const svg = host.querySelector('svg');
       svg.removeAttribute('width'); svg.removeAttribute('height');
       svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
@@ -804,7 +888,16 @@
       const xs = (st.saysMap && st.saysMap.get(id)) || [];
       const says = xs.length ? `<div class="ffu-says"><div class="ffu-k2">What the company says ahead</div>${xs.slice(0, 8).map((x) =>
         `<p class="ffu-say-${esc(x.tone || 'neutral')}">${esc(x.t)} <span class="muted">— ${esc(x.src)}${x.filed ? ' ' + esc(x.filed) : ''}${x.status && x.status !== 'repeated' ? ' · ' + esc(x.status) : ''}${x.hedge ? ' · hedged' : ''}</span></p>`).join('')}</div>` : '';
-      info.innerHTML = `<div class="ffu-k">${n.name}</div><div class="ffu-v">${lines}${cm ? `<div>${esc(cm)}</div>` : ''}</div>${says}` +
+      const rk = (st.riskMap && st.riskMap.map.get(id)) || [];
+      const rd = st.riskMap && st.riskMap.doc;
+      const ST = { new: 'new since the filing before', dropped: 'no longer listed', repeated: '', first: '' };
+      const risks = rk.length ? `<div class="ffu-says ffu-risks"><div class="ffu-k2">Risks the filing lists${rd ? ` <span class="muted">(${esc(rd.kind === 'mdna' ? rd.form + ' MD&A' : 'earnings release')} ${esc(rd.filed || '')}, forward-looking statements)</span>` : ''}</div>` +
+        rk.slice().sort((a, b) => ({ new: 0, dropped: 1 }[a.status] ?? 2) - ({ new: 0, dropped: 1 }[b.status] ?? 2)).slice(0, 14).map((x) =>
+          `<p class="ffu-risk-${esc(x.status)}">${esc(x.t)}${ST[x.status] ? ` <span class="muted">— ${ST[x.status]}</span>` : ''}</p>`).join('') + '</div>' : '';
+      const ex = (st.estMap && st.estMap.map.get(id)) || [];
+      const ests = ex.length ? `<div class="ffu-says ffu-ests"><div class="ffu-k2">This figure rests on estimates <span class="muted">(critical accounting estimates, ${esc(ex[0].form || '')} ${esc(ex[0].filed || '')}${ex[0].viaRef ? '; the latest 10-Q refers to it' : ''})</span></div>` +
+        ex.slice(0, 6).map((x) => `<p><b>${esc(x.name)}</b> — ${esc(x.t)}${(x.sens || []).map((y) => `<br><span class="ffu-sens-t">± ${esc(y.t)}</span>`).join('')}${x.effect ? `<br><span class="muted">${esc(x.effect)}</span>` : ''}</p>`).join('') + '</div>' : '';
+      info.innerHTML = `<div class="ffu-k">${n.name}</div><div class="ffu-v">${lines}${cm ? `<div>${esc(cm)}</div>` : ''}</div>${says}${risks}${ests}` +
         `${n.source ? `<p class="ffu-src">${n.source}</p>` : ''}${st.sp.toggles.has(id) ? `<button type="button" class="ffu-btn" data-tog-info="${esc(id)}">${st.sp.toggles.get(id) === '+' ? '+ Open its parts' : '− Close its parts'}</button>` : ''}` +
         '<button type="button" class="ffu-btn" data-info-close>Close</button>';
       info.hidden = false;
@@ -820,6 +913,8 @@
       const b = e.target.closest('button, .ffu-tog, [data-node]');
       if (!b) return;
       if (b.matches('.ffu-say')) { e.stopPropagation(); showInfo(b.dataset.say); return; }
+      if (b.matches('.ffu-risk')) { e.stopPropagation(); showInfo(b.dataset.risk); return; }
+      if (b.matches('.ffu-est')) { e.stopPropagation(); showInfo(b.dataset.est); return; }
       if (b.matches('.ffu-tog')) { e.stopPropagation(); toggle(b.dataset.tog); return; }
       if (b.dataset.togInfo) { toggle(b.dataset.togInfo); return; }
       if (b.hasAttribute('data-info-close')) { info.hidden = true; sel = null; return; }
@@ -836,6 +931,8 @@
       }
       if (b.dataset.case) { st.case = b.dataset.case; draw(); return; }
       if (b.hasAttribute('data-says')) { st.says = !st.says; draw(); return; }
+      if (b.hasAttribute('data-risks')) { st.risks = !st.risks; draw(); return; }
+      if (b.hasAttribute('data-est')) { st.est = !st.est; draw(); return; }
       if (b.hasAttribute('data-all')) { st.all = !st.all; if (!st.all) st.opened.clear(); draw(); return; }
       if (b.hasAttribute('data-std')) { Object.assign(st, { revAxis: null, costs: 'accounts', cash: 'statement', all: false }); st.opened.clear(); st.closed.clear(); draw(); return; }
       if (b.dataset.z) { zoom(b.dataset.z === 'in' ? 0.7 : b.dataset.z === 'out' ? 1 / 0.7 : 0); return; }
@@ -898,6 +995,6 @@
     return el;
   }
 
-  global.FFFlow = { build, views, structure, mainOf, money, AXIS_WORD, open, guidedValues, guidedFlows, impliedQ4, outlookOn, guidanceDoc };
+  global.FFFlow = { build, views, structure, mainOf, money, AXIS_WORD, open, guidedValues, guidedFlows, impliedQ4, outlookOn, guidanceDoc, risksOn, estimatesOn, nodeFor };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.FFFlow;
 })(typeof window !== 'undefined' ? window : globalThis);

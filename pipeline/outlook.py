@@ -34,6 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "disclosures" / "ap
 KEEP = 10                      # documents kept per company
 REFRESH_PER_RUN = 30           # companies caught up per scan
 DEPTH = 4                      # MD&As caught up per company (the latest and three before it: a year of filings to compare)
+REANNOTATE_PER_RUN = 25         # companies whose MD&As on file are read again per scan for their risks and estimates
 
 FWD = re.compile(r"(?i)\b(?:expect(?:s|ed|ing)?|anticipat(?:e|es|ed|ing)|plan(?:s|ned)? to|intend(?:s|ed)? to|project(?:s|ed)?|"
                  r"forecast(?:s|ed)?|estimates? that|target(?:s|ed|ing)?|aim(?:s)? to|on track|outlook|guidance|going forward|"
@@ -219,6 +220,260 @@ def counts(stmts):
     return c
 
 
+# ---------- the risks a filing lists, and the numbers that rest on estimates ----------
+# The safe-harbor paragraph ("Actual results and outcomes could differ materially for a variety of reasons, including,
+# among others, fluctuations in foreign exchange rates and energy prices, … tariff and trade policies, resource and supply
+# volatility, including for memory chips, …") is boilerplate on its own, but its list changes: a risk added since the
+# filing before (or one no longer named) says what management has started to worry about. Each item is split out and
+# pinned to the lines it would move. The MD&A's "Critical Accounting Estimates" names the reported figures that rest on
+# judgment (inventories, income taxes, useful lives …), with a sensitivity when the company gives one ("a 10% change in
+# … would have changed … by $X million").
+RISK_V = 1                     # bump when risks() / estimates() change: the MD&As on file are read again (refresh)
+FLS_PARA = re.compile(r"(?i)differ materially|cause (?:our )?actual results|actual (?:results|outcomes) (?:and outcomes )?(?:may|could|might)|"
+                      r"factors that could cause|risks and uncertainties|materially (?:affected|different)|subject to (?:substantial |significant )?uncertaint")
+LIST_INTRO = re.compile(r"(?i)(?:for a variety of reasons,? including,?(?:\s*(?:but not limited to|among others),?)?|"
+                        r"(?:factors|risks|uncertainties|reasons)[^.;]{0,90}?\b(?:include|includes|including|are)\b,?(?:\s*(?:but (?:are )?not limited to|without limitation|among others),?)?|"
+                        r"(?:factors|risks|uncertainties)[^.;]{0,40}?,?\s*such as|"
+                        r"including,? (?:but not limited to|without limitation|among others),?|as a result of)\s*:?\s*")
+RISK_LINES = [
+    (r"foreign (?:exchange|currency)|currenc", ["revenue"]),
+    (r"energy|fuel|power (?:prices|costs)|electricity", ["cor", "costs", "opex"]),
+    (r"memory|chips?\b|semiconductor|component|resource and supply|supply|supplier|shortage|raw material|commodit", ["cor", "capex"]),
+    (r"tariff|trade (?:polic|restriction|tension)|export control", ["cor", "costs"]),
+    (r"inflation", ["cor", "costs", "opex"]),
+    (r"interest rate", ["interest"]),
+    (r"\btax", ["tax"]),
+    (r"inventor", ["k~Inventor", "cor"]),
+    (r"labor|workforce|wage|employee|talent|personnel", ["opex", "costs"]),
+    (r"data cent|capacity|infrastructure|fulfillment|sortation|delivery|facilit|invest\w* in new|timing of (?:those )?investments", ["capex"]),
+    (r"acquisition|strategic transaction|merger|divest", ["#cat:acq"]),
+    (r"debt|credit|financing|liquidity|capital markets", ["#cat:debt"]),
+    (r"litigation|claims|government investigations|legal|regulat|proceedings|compliance|antitrust", ["opex", "costs"]),
+    (r"cyber|security (?:breach|incident)|data (?:privacy|protection)|system (?:failure|interruption)|outage|fraud", ["opex", "costs"]),
+    (r"compet|pricing|price", ["revenue", "gp"]),
+    (r"demand|spending|econom|recession|consumer|customer|market (?:conditions|demand|share)|markets|growth|internet|online|cloud|world events|geopolit|mix|payment|commercial agreement|technolog", ["revenue"]),
+]
+RISK_LINES = [(re.compile(r"(?i)" + p), ls) for p, ls in RISK_LINES]
+EST_LINES = [
+    (r"inventor", ["k~Inventor", "cor"]),
+    (r"income tax|\btax", ["tax"]),
+    (r"useful li|depreciat|property(?:,)? (?:plant )?and equipment|servers?\b|long-lived", ["da", "capex"]),
+    (r"goodwill|intangible|impairment", ["opex", "costs"]),
+    (r"revenue|returns? allowance|rebate|performance obligation|variable consideration|customer program", ["revenue"]),
+    (r"lease", ["opex", "costs"]),
+    (r"contingenc|litigation|legal|loss reserves", ["opex", "costs"]),
+    (r"stock-based|share-based|equity award", ["sbc"]),
+    (r"credit loss|allowance for (?:doubtful|credit)|receivable", ["revenue"]),
+    (r"pension|postretirement|retirement benefit", ["opex", "costs"]),
+    (r"warrant", ["cor"]),
+    (r"business combination|acquisition|purchase price allocation", ["#cat:acq"]),
+    (r"insurance|claims? reserves|self-insur", ["costs", "opex"]),
+    (r"non-marketable|equity securities|investments?|fair value", ["nonop", "nonop_in"]),
+]
+EST_LINES = [(re.compile(r"(?i)" + p), ls) for p, ls in EST_LINES]
+CAE_HEAD = re.compile(r"(?i)^critical accounting (?:estimates|policies|judgments)(?: and (?:estimates|judgments|policies))?\b")
+CAE_END = re.compile(r"(?i)^(?:recent(?:ly)? (?:issued |adopted )?accounting|new accounting|accounting (?:standards|pronouncements)|"
+                     r"liquidity|results of operations|overview|non-gaap|off-balance|contractual obligations|quantitative and qualitative|"
+                     r"item\s*\d|financial condition|capital resources|segment (?:results|information)|executive summary|outlook|guidance|"
+                     r"(?:fiscal )?(?:20\d\d|first|second|third|fourth) (?:quarter|year)|three months|six months|nine months)")
+CAE_REF = re.compile(r"(?i)no (?:material |significant )?changes? (?:to|in) (?:our )?critical accounting|"
+                     r"(?:described|discussed|included|disclosed) in (?:item 7|part ii|our (?:20\d\d |most recent )?annual report|our form 10-k)")
+SENS = re.compile(r"(?i)\b(?:a|an|each)\s+(?:hypothetical\s+|one\s+)?(\d+(?:\.\d+)?)\s*(%|percent(?:age points?)?|basis points?|bps)\s+"
+                  r"(?:(?:increase|decrease|change|reduction|decline|rise|movement)\s+)?(?:in|of|to)\s+(.{3,90}?)\s+would\s+(?:have\s+)?"
+                  r"(?:resulted in|result in|increased?|decreased?|reduced?|changed?|impacted?|affected?|had)\b[^.$]{0,90}?\$\s?([\d.,]+)\s*(million|billion|thousand)?")
+EFFECT = re.compile(r"(?i)\b(?:impact|effect|benefit|charge|expense|provision|write-?down|adjustment)s?\b[^.]{0,80}?(?:\$\s?[\d.,]+\s*(?:million|billion)|\d+(?:\.\d+)?\s?%)")
+
+
+def _text(p):
+    return (p.get("text", "") if isinstance(p, dict) else str(p)).strip()
+
+
+def _lines_of(t, table):
+    """The lines a phrase would move: every rule it matches ("foreign exchange rates and energy prices": revenue and the
+    costs), the bottom line when none does."""
+    out = []
+    for rx, ls in table:
+        if rx.search(t):
+            out += [x for x in ls if x not in out]
+    return out[:5] or ["net"]
+
+
+def _split_list(s):
+    """'fluctuations in foreign exchange rates and energy prices, changes in global economic conditions, … including for
+    memory chips, and customer demand and spending, …' → its items ('including …' stays with the item before it)."""
+    s = re.sub(r"\s+", " ", s).strip().rstrip(".")
+    parts = [x for x in re.split(r";\s*", s) if x.strip()]
+    if len(parts) < 3:
+        parts = re.split(r",\s+(?![^()]*\))", s)
+    # a list inside an item ("the outcomes of claims, litigation, government investigations, and other proceedings";
+    # "fulfillment, sortation, delivery, and data center optimization"): short parts ending in an "and …" part of at most
+    # four words are one item with the part before them
+    parts = [x.strip() for x in parts if x.strip()]
+    nw = lambda x: len(re.sub(r"(?i)^(?:and|or)\s+", "", x).split())
+    merged, k = [], 0
+    while k < len(parts):
+        x = parts[k]
+        if re.match(r"(?i)^(?:and|or)\s", x) and nw(x) <= 4 and merged:
+            j = len(merged)
+            while j > 0 and len(merged) - j < 5 and nw(merged[j - 1][0]) <= 3 and not merged[j - 1][1] and not re.match(r"(?i)^(?:and|or)\s", merged[j - 1][0]):
+                j -= 1
+            if j < len(merged):                       # at least one short part before it
+                if j > 0 and not merged[j - 1][1] and not re.match(r"(?i)^(?:and|or)\s", merged[j - 1][0]) and nw(merged[j - 1][0]) > 3:
+                    j -= 1                            # the longer part that heads the list ("the outcomes of claims")
+                head = ", ".join(m[0] for m in merged[j:]) + ", " + x
+                merged = merged[:j] + [(head, True)]
+                k += 1
+                continue
+        merged.append((x, False))
+        k += 1
+    out = []
+    for x, _ in merged:
+        x = re.sub(r"(?i)^(?:and|or|as well as)\s+", "", x.strip()).strip(" ,")
+        if not x:
+            continue
+        if out and re.match(r"(?i)^(?:including|particularly|especially|such as|in particular|notably)\b", x):
+            out[-1] = f"{out[-1]}, {x}"
+        else:
+            out.append(x)
+    return [x for x in out if 4 <= len(x) <= 160 and not re.search(r"(?i)\b(?:are described|see item|risk factors”?|in greater detail|"
+                                                                 r"factors (?:detailed|discussed|described|listed|set forth)|in addition to (?:the|those))\b", x)]
+
+
+def risks(paras, limit=60):
+    """The items of the safe-harbor risk list: [{t, lines}] in the filing's order."""
+    out, seen = [], set()
+    ps = [_text(p) for p in paras]
+    last = -1
+    for i, t in enumerate(ps):
+        if not t or not FLS_PARA.search(t):
+            continue
+        # after the list (one paragraph or a few next to each other), only a further list of its own ("Additional factors
+        # include …", the end of an earnings release)
+        if out and i > last + 3 and not re.search(r"(?i)\b(?:other|additional|important|further) (?:risk )?factors\b|factors that (?:could|may|might)|variety of reasons", t):
+            continue
+        n0 = len(out)
+        for s in sentences(t):
+            m = LIST_INTRO.search(s) if FLS_PARA.search(s) or re.search(r"(?i)\bfactors\b", s) else None
+            if not m:
+                continue
+            body = s[m.end():]
+            items = _split_list(body) if len(body) > 30 else []
+            # "… include the following:" and the items as bullets
+            if not items and s.rstrip().endswith(":"):
+                for q in ps[i + 1:i + 40]:
+                    if not q or len(q) > 400:
+                        break
+                    items.append(re.sub(r"^[•·◦▪\-–—]\s*", "", q).rstrip(";,. "))
+            for x in items:
+                k = " ".join(sorted(words(x)))
+                if k and k not in seen:
+                    seen.add(k)
+                    out.append({"t": x, "lines": _lines_of(x, RISK_LINES)})
+            if len(out) >= limit:
+                return out[:limit]
+        if len(out) > n0:
+            last = i
+    return out
+
+
+def estimates(paras):
+    """The MD&A's critical accounting estimates: [{name, t, lines, sens: [{pct, unit, of, usd}], effect}], or
+    [{'ref': True}] when the section points to the annual report without listing them."""
+    rows = [(p.get("heading", False) if isinstance(p, dict) else len(_text(p)) <= 90 and not _text(p).endswith("."), _text(p)) for p in paras]
+    starts = [i for i, (h, t) in enumerate(rows) if CAE_HEAD.match(t) and len(t) <= 120]
+    if not starts:
+        return []
+    body = []
+    for h, t in rows[starts[-1] + 1:]:
+        if h and CAE_END.match(t):
+            break
+        if re.match(r"(?i)^table of contents$|^\d+$", t):
+            continue
+        body.append((h, t))
+        if len(body) > 80:
+            break
+    out, cur, parent = [], None, None
+    for h, t in body:
+        if h and len(t) <= 90:
+            if cur and not cur["_body"]:
+                parent = cur["name"]                  # a heading with only sub-headings under it ("Revenue Recognition")
+                out.pop()
+            cur = {"name": f"{parent} — {t}" if parent and cur is not None and not cur["_body"] else t, "_body": []}
+            out.append(cur)
+            continue
+        if cur is None:
+            cur = {"name": None, "_body": []}
+            out.append(cur)
+        cur["_body"].append(t)
+    res = []
+    for e in out:
+        txt = " ".join(e["_body"])
+        if not e["name"]:
+            if CAE_REF.search(txt):
+                res.append({"ref": True, "t": sentences(txt)[0][:300] if txt else ""})
+            continue
+        if not txt:
+            continue
+        sens = []
+        for m in SENS.finditer(txt):
+            mult = {"million": 1e6, "billion": 1e9, "thousand": 1e3}.get((m.group(5) or "million").lower(), 1e6)
+            try:
+                usd = float(m.group(4).replace(",", "")) * mult
+            except ValueError:
+                continue
+            sens.append({"pct": float(m.group(1)), "unit": "bps" if re.match(r"(?i)b", m.group(2)) else "pct", "of": m.group(3).strip()[:90],
+                         "usd": usd, "t": next((s for s in sentences(txt) if m.group(0)[:40] in s), m.group(0))[:300]})
+        eff = next((s for s in sentences(txt) if EFFECT.search(s) and not SENS.search(s)), None)
+        # the sentence that says what is estimated ("… based on certain estimates and judgments …"), else the first
+        ss = sentences(txt)
+        first = next((x for x in ss if re.search(r"(?i)estimat|judg(?:e)?ment|assum|uncertain|forecast|significant", x) and x != eff), ss[0] if ss else "")
+        res.append({"name": e["name"][:90], "t": first[:300] + ("…" if len(first) > 300 else ""), "lines": _lines_of(e["name"] + " " + first, EST_LINES),
+                    **({"sens": sens[:3]} if sens else {}), **({"effect": eff[:300]} if eff else {})})
+    if not res and CAE_REF.search(" ".join(t for _, t in body)):
+        res.append({"ref": True, "t": sentences(" ".join(t for _, t in body))[0][:300]})
+    return res[:16]
+
+
+def rerisk(doc):
+    """Each document's risks against the document of the same kind before it: new / repeated, and the ones no longer
+    listed (kept as risks_dropped)."""
+    by = {}
+    for d in doc.get("docs") or []:
+        if "risks" in d:
+            by.setdefault(d.get("kind"), []).append(d)
+    for ds in by.values():
+        ds.sort(key=lambda d: (d.get("filed") or "", d.get("accn") or ""))
+        prev = None
+        for d in ds:
+            used = set()
+            for r in d["risks"]:
+                best, bi = 0.0, None
+                for j, o in enumerate(prev["risks"] if prev else []):
+                    if j in used:
+                        continue
+                    v = similar(r["t"], o["t"])
+                    if v > best:
+                        best, bi = v, j
+                if prev is not None and prev["risks"] and best >= 0.6:
+                    used.add(bi)
+                    r["status"] = "repeated"
+                else:
+                    r["status"] = "new" if prev is not None and prev["risks"] else "first"
+            d["risks_dropped"] = ([{"t": o["t"], "lines": o.get("lines")} for j, o in enumerate(prev["risks"]) if j not in used][:12]
+                                  if prev is not None and prev["risks"] else [])
+            prev = d
+    return doc
+
+
+def annotate(entry, paras):
+    """The risk list and the critical accounting estimates of one document, into its entry."""
+    entry["risks"] = risks(paras)
+    if entry.get("kind") == "mdna":
+        entry["estimates"] = estimates(paras)
+    entry["rv"] = RISK_V
+    return entry
+
+
 def path(root, cik):
     return Path(root) / "outlook" / f"{int(cik)}.json"
 
@@ -263,8 +518,10 @@ def keep(root, cik, kind, form, accn, filed, url, end, paras):
     doc = load(root, cik)
     if any(d.get("accn") == accn for d in doc["docs"]):
         return None
+    paras = list(paras or [])
     stmts = statements(paras)
-    if not stmts:
+    extra = annotate({"kind": kind}, paras)
+    if not stmts and not extra["risks"] and not extra.get("estimates"):
         return None
     prev = next((d for d in sorted(doc["docs"], key=lambda d: d.get("filed") or "", reverse=True)
                  if d.get("kind") == kind and (d.get("filed") or "") <= (filed or "")), None)
@@ -274,9 +531,11 @@ def keep(root, cik, kind, form, accn, filed, url, end, paras):
              **({"vs": prev["accn"]} if prev else {})}
     entry["counts"] = counts(stmts)
     entry["counts"]["dropped"] = len(dropped) if prev else 0
+    entry.update({k: v for k, v in extra.items() if k != "kind"})
     doc["docs"] = sorted(doc["docs"] + [entry], key=lambda d: d.get("filed") or "", reverse=True)[:KEEP]
     if any((d.get("filed") or "") > (filed or "") and d.get("kind") == kind for d in doc["docs"]):
         restatus(doc)                                # an older document arrived after newer ones: compare them again
+    rerisk(doc)
     p = path(root, cik)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(doc, separators=(",", ":")))
@@ -320,6 +579,49 @@ def refresh(store, sec, text, time_up, limit=REFRESH_PER_RUN):
         n += 1
     if todo:
         print(f"forward-looking statements: {n} companies caught up, {max(len(todo) - n, 0)} to go")
+    if not time_up():
+        reannotate(store, sec, text, time_up)
+    return n
+
+
+def reannotate(store, sec, text, time_up, limit=REANNOTATE_PER_RUN):
+    """The MD&As on file read again for their risk list and critical accounting estimates (RISK_V), the two latest of
+    each company (so the first view already shows the risks added or dropped), largest companies first."""
+    root = store.root if hasattr(store, "root") else None
+    if not root:
+        return 0
+    todo = []
+    for cik in store.ciks():
+        doc = load(root, cik)
+        md = sorted((d for d in doc["docs"] if d.get("kind") == "mdna" and d.get("url")), key=lambda d: d.get("filed") or "", reverse=True)[:2]
+        need = [d for d in md if d.get("rv") != RISK_V]
+        if not need:
+            continue
+        c = store.company(cik)
+        qs = sorted((q for q in (c.get("quarters") or {}).values() if q.get("form") in ("10-Q", "10-K")), key=lambda q: q.get("end") or "", reverse=True)
+        size = -(((qs[0] if qs else {}).get("raw") or {}).get("revenue") or 0)
+        todo.append((size, cik, [d.get("accn") for d in need]))
+    n = 0
+    for _, cik, accns in sorted(todo)[:limit]:
+        if time_up():
+            break
+        doc = load(root, cik)
+        for d in doc["docs"]:
+            if d.get("accn") not in accns:
+                continue
+            try:
+                annotate(d, text.mdna(sec.get(d["url"])))
+            except Exception as e:
+                print(f"  risks and estimates skipped for {cik} {d.get('accn')}: {e}", file=sys.stderr)
+                d["rv_fail"] = d.get("rv_fail", 0) + 1
+                if d["rv_fail"] >= 3:
+                    d["rv"] = RISK_V                 # not tried again until RISK_V changes
+        rerisk(doc)
+        p = path(root, cik)
+        p.write_text(json.dumps(doc, separators=(",", ":")))
+        n += 1
+    if todo:
+        print(f"risks and critical accounting estimates: {n} companies read, {max(len(todo) - n, 0)} to go")
     return n
 
 
