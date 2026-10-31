@@ -5,7 +5,8 @@
 # historical simulation, factor model, Cholesky, t-copula, DCC-GARCH), analogs and correlated-asset historical simulation,
 # rule-based price action with its pooled out-of-sample evidence, portfolios of 13F managers and officials, and the
 # weekly ledger of frozen forecasts. Then public/moves/ (app/moves.py, the Move odds): each asset's daily returns, the
-# latest moves and their percentiles; the style ETFs and the market indices' daily history since 1970 are collected for it.
+# latest moves and their percentiles; the style ETFs and the market indices' daily history since 1970 are collected for it;
+# public/moves/n/ (app/move_news.py): each company's filings around its moves, the 8-Ks around the biggest ones read.
 # Kept on the branch "research-paths" (one commit, force-pushed); scan.yml publishes public/ at
 # disclosures/data/research/paths/.
 name: Research — price paths & patterns
@@ -75,6 +76,15 @@ jobs:
         continue-on-error: true
         timeout-minutes: 20
         run: python disclosures/app/paths.py moves --root pth --universe _research-valuation/public/index.json
+      - name: Move odds news (public/moves/n/)
+        # the company filings around each day of the move odds (app/move_news.py): EDGAR filing lists (a week old at most)
+        # and the 8-Ks filed around the biggest moves (press release headline and key sentences), a budget per run
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 30
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || vars.SEC_USER_AGENT }}
+        run: python disclosures/app/paths.py movenews --root pth --universe _research-valuation/public/index.json --subs 400 --reads 300 --minutes 24
       - name: Save to the branch (one commit, force-pushed)
         if: always()
         run: |

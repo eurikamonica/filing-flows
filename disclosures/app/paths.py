@@ -318,7 +318,7 @@ def collect(client, root, tickers, batch=2000, refresh=2500, minutes=25.0, first
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('cmd', choices=['collect', 'build', 'moves'])
+    ap.add_argument('cmd', choices=['collect', 'build', 'moves', 'movenews'])
     ap.add_argument('--root', default='paths')
     ap.add_argument('--universe', default=None, help="research-valuation's public/index.json")
     ap.add_argument('--people', default=None, help="the hub's research/people folder (managers.json, m/, officials.json, o/)")
@@ -327,6 +327,8 @@ def main():
     ap.add_argument('--minutes', type=float, default=25)
     ap.add_argument('--tickers', default='')
     ap.add_argument('--limit', type=int, default=0, help='build: only the first N companies (tests)')
+    ap.add_argument('--subs', type=int, default=300, help='movenews: filing lists asked per run')
+    ap.add_argument('--reads', type=int, default=250, help='movenews: 8-Ks read per run')
     a = ap.parse_args()
     if a.cmd == 'collect':
         import tempfile
@@ -341,6 +343,24 @@ def main():
     elif a.cmd == 'moves':
         import moves
         print(json.dumps(moves.build(a.root, a.universe, limit=a.limit)))
+    elif a.cmd == 'movenews':
+        # the company filings around each day of the move odds (app/move_news.py): EDGAR, with SEC_USER_AGENT
+        import tempfile
+        import move_news
+        import moves
+        cfg = read_json(Path(__file__).resolve().parents[1] / 'config' / 'settings.json', {})
+        client = Client(tempfile.mkdtemp(prefix='paths-news-'), {**cfg.get('http', {}), 'max_response_mb': 40})
+        comps = universe(a.universe)[: a.limit or None]
+        memo = {}
+
+        def bars_of(t):
+            if t not in memo:
+                b = load(a.root, t)
+                memo[t] = moves.series(b) if b else None
+            return memo[t]
+        st = move_news.refresh(client, a.root, comps, bars_of, a.subs, a.reads, a.minutes)
+        st['published'] = move_news.publish(a.root, comps, bars_of)
+        print(json.dumps(st))
     else:
         import paths_build
         print(json.dumps(paths_build.build(a.root, a.universe, a.people, limit=a.limit)))

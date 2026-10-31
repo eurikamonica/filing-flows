@@ -138,7 +138,23 @@ const normal = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math
   const vals = Float64Array.from({ length: 2000 }, () => normal()).sort();
   const D = V.kde(vals, -6, 6, 241);
   near(D.ys.reduce((a, y) => a + y, 0) * (12 / 240), 1, 'the density integrates to one', 0.01);
-  ok(V.PANELS.map((p) => p[0]).join() === 'now,1,5,10,21,back,high', 'the panels a picture can hold');
+  ok(V.PANELS.map((p) => p[0]).join() === 'now,paths,1,5,10,21,63,back,high', 'the panels a picture can hold');
+  // each case and the expected path after it: one line per chosen day, the mean of the cases at each day after
+  const cs = V.cases(R, { w: 1, band: 5 }, 'sim');
+  let nSim = 0; for (let j = 0; j < R.sim.length; j++) if (R.sim[j]) nSim++;
+  ok(cs.length === nSim, 'a one-day move: every chosen day is a case');
+  const E = V.expectedOf(cs);
+  const at5 = cs.map((x) => x.path[5]).filter(Number.isFinite);
+  near(E.mean[5], at5.reduce((a, b) => a + b, 0) / at5.length, 'the expected path is the average of the cases', 1e-12);
+  ok(cs.every((x) => x.path[0] === 0 && x.path.length <= 64), 'each path starts at the day and runs a quarter at most');
+  near(cs[0].path[21], Math.expm1(cc[cs[0].j + 21] - cc[cs[0].j]), 'a case a month on', 1e-12);
+  const R5 = V.analyze(A, { w: 5, measure: 'raw', mode: 'latest', band: 10 });
+  const c5 = V.cases(R5, { w: 5, band: 10 }, 'sim');
+  ok(c5.every((x, i) => i === 0 || x.j - c5[i - 1].j >= 1) && c5.length <= R5.h[5].sim.n, 'a five-day move: overlapping days count once');
+  // the filings that could move a day: after the close, the next trading day
+  const ix = V.newsIndex({ events: [[A.days[100], '16:05', '8-K', '2.02'], [A.days[100], '09:00', '8-K', '8.01'], [A.days[100], '', '10-Q', '']] }, A.days);
+  ok(ix.get(101).length === 1 && ix.get(100).length === 2, 'a release after the close moves the next day');
+  ok(V.fb(2.5) === '2.5' && V.fb(0.25) === '0.25' && V.fb('1.30') === '1.3' && V.fb(5) === '5', 'band labels');
 }
 
 // 6. the hub tab from an index file
